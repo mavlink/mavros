@@ -77,6 +77,25 @@ generate_messages(
   std_msgs
 )
 
+## Generate MAVLink headers
+include(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.cmake)
+
+set(MAVLINK_DEF
+  ardupilotmega.xml
+  autoquad.xml
+  common.xml
+  matrixpilot.xml
+  minimal.xml
+  pixhawk.xml
+  slugs.xml
+  test.xml
+  ualberta.xml
+  sensesoar.xml
+)
+
+generate_mavlink("1.0" "${MAVLINK_DEF}")
+
+
 ###################################
 ## catkin specific configuration ##
 ###################################
