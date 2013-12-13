@@ -33,6 +33,8 @@ namespace sig2 = boost::signals2;
 
 class MAVConnInterface {
 public:
+	virtual ~MAVConnInterface() {};
+
 	inline void send_message(const mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);
 	};
