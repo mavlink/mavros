@@ -121,15 +121,16 @@ catkin_package(
 # include_directories(include)
 # TODO: Check names of system library include directories (boost)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${boost_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(mavros
-#   src/${PROJECT_NAME}/mavros.cpp
-# )
+add_library(mavconn
+   src/mavconn/mavconn_interface.cpp
+)
 
 ## Declare a cpp executable
 # add_executable(mavros_node src/mavros_node.cpp)
