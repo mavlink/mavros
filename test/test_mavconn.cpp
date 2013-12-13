@@ -41,21 +41,17 @@ void sig_recv(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 
 TEST(MAVConn, test_connection)
 {
-	boost::system_time t;
 	MAVConnInterface *conn;
 
 	conn = new MAVConnSerial(42, 200, "/dev/ttyACM0", 115200);
 
 	conn->message_received.connect(sig_recv);
 
-	while (true);
-
-	t = boost::get_system_time() +
-		boost::posix_time::milliseconds(60000);
-	mutex.timed_lock(t);
-	EXPECT_GT(sig_recv_cnt, 0);
+	//while (true);
+	sleep(10);
 
 	delete conn;
+	EXPECT_GT(sig_recv_cnt, 0);
 }
 
 

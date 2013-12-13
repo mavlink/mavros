@@ -51,15 +51,21 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 MAVConnSerial::~MAVConnSerial()
 {
 	io_service.stop();
+	serial_dev.close();
+	delete_channel(channel);
 }
 
-bool MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	ROS_ASSERT(message != NULL);
 	uint8_t buffer[MAVLINK_MAX_PACKET_LEN + 2];
 	mavlink_message_t msg = *message;
 
+#if MAVLINK_CRC_EXTRA
 	mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, mavlink_crcs[msg.msgid]);
+#else
+	mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
+#endif
 	size_t length = mavlink_msg_to_send_buffer(buffer, &msg);
 
 	ROS_DEBUG_NAMED("mavconn", "serial::send_message: Message-ID: %d [%zu bytes]", message->msgid, length);
@@ -95,8 +101,8 @@ void MAVConnSerial::async_read_end(boost::system::error_code error, size_t bytes
 
 		for (size_t i = 0; i < bytes_transfered; i++) {
 			if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-				ROS_DEBUG_NAMED("mavconn", "serial::async_read_end: recv Message-Id: %d Sys-Id: %d Comp-Id: %d",
-						message.msgid, message.sysid, message.compid);
+				ROS_DEBUG_NAMED("mavconn", "serial::async_read_end: recv Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+						message.msgid, message.len, message.sysid, message.compid);
 
 				/* emit */ message_received(&message, message.sysid, message.compid);
 			}

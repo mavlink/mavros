@@ -33,21 +33,31 @@ namespace sig2 = boost::signals2;
 
 class MAVConnInterface {
 public:
-	virtual bool send_message(const mavlink_message_t *message) = 0;
-	virtual bool send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+	inline void send_message(const mavlink_message_t *message) {
+		send_message(message, sys_id, comp_id);
+	};
+	virtual void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
 
 	sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> message_received;
 	sig2::signal<void()> port_closed;
 
-	virtual mavlink_status_t *get_status() = 0;
+	virtual mavlink_status_t get_status() = 0;
 	virtual bool is_open() = 0;
 
+	inline int get_channel() { return channel; };
+	inline uint8_t get_system_id() { return sys_id; };
+	inline void set_system_id(uint8_t sysid) { sys_id = sysid; };
+	inline uint8_t get_component_id() { return comp_id; };
+	inline void set_component_id(uint8_t compid) { comp_id = compid; };
+
 protected:
-	uint8_t channel;
+	int channel;
 	uint8_t sys_id;
 	uint8_t comp_id;
 
+#if MAVLINK_CRC_EXTRA
 	static const uint8_t mavlink_crcs[];
+#endif
 
 	static int new_channel();
 	static void delete_channel(int chan);
