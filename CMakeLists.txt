@@ -132,6 +132,7 @@ include_directories(
 add_library(mavconn
    src/mavconn/mavconn_interface.cpp
    src/mavconn/mavconn_serial.cpp
+   src/mavconn/mavconn_udp.cpp
 )
 add_dependencies(mavconn ardupilotmega.xml-v1.0-stamp)
 target_link_libraries(mavconn

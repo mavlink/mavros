@@ -6,26 +6,22 @@
 
 #include <mavros/mavconn_interface.h>
 #include "mavconn_serial.h"
+#include "mavconn_udp.h"
 
 using namespace mavconn;
 
-#if 0
 TEST(MAVConn, allocate_check)
 {
-	MAVConnInterface *conns[3];
+	std::auto_ptr<MAVConnInterface> conns[3];
 
-	conns[0] = new MAVConnSerial(42, 200, "/dev/ttyUSB0", 115200);
-	conns[1] = new MAVConnSerial(42, 201, "/dev/ttyS1", 115200);
-	conns[3] = new MAVConnSerial(42, 202, "/dev/ttyS3", 115200);
+	conns[0].reset(new MAVConnUDP(42, 200, "localhost", 45000));
+	conns[1].reset(new MAVConnUDP(42, 201, "localhost", 45001));
+	conns[2].reset(new MAVConnUDP(42, 202, "localhost", 45002));
 
-	delete conns[1];
-	conns[1] = new MAVConnSerial(42, 203, "/dev/ttyS4", 115200);
-
-	delete conns[0];
-	delete conns[1];
-	delete conns[2];
+	conns[1].reset(); // delete before allocation to ensure index
+	conns[1].reset(new MAVConnUDP(42, 203, "localhost", 45003));
+	EXPECT_EQ(conns[1]->get_channel(), 1);
 }
-#endif
 
 boost::recursive_timed_mutex mutex;
 int sig_recv_cnt = 0;
