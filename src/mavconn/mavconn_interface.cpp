@@ -24,6 +24,7 @@
 using namespace mavconn;
 
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
+std::set<int> MAVConnInterface::allocated_channels;
 
 int MAVConnInterface::new_channel()
 {
