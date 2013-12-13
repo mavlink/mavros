@@ -122,6 +122,7 @@ catkin_package(
 # TODO: Check names of system library include directories (boost)
 include_directories(
   include
+  src/mavconn
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${boost_INCLUDE_DIRS}
@@ -132,6 +133,13 @@ add_library(mavconn
    src/mavconn/mavconn_interface.cpp
    src/mavconn/mavconn_serial.cpp
 )
+add_dependencies(mavconn ardupilotmega.xml-v1.0-stamp)
+target_link_libraries(mavconn
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${boost_LIBRARIES}
+)
+
 
 ## Declare a cpp executable
 # add_executable(mavros_node src/mavros_node.cpp)
@@ -187,10 +195,10 @@ add_library(mavconn
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mavros.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
+if(TARGET mavconn-test)
+	target_link_libraries(mavconn-test mavconn)
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
