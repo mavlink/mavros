@@ -23,6 +23,8 @@
 
 using namespace mavconn;
 
+const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
+
 int MAVConnInterface::new_channel()
 {
 	int chan = 0;

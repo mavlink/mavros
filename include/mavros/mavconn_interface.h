@@ -36,16 +36,18 @@ public:
 	virtual bool send_message(const mavlink_message_t *message) = 0;
 	virtual bool send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
 
-	sig2::signal<void(const mavlink_message_t *massage, uint8_t sysid, uint8_t compid)> message_received;
+	sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> message_received;
 	sig2::signal<void()> port_closed;
 
-	virtual mavlink_status_t *get_status();
+	virtual mavlink_status_t *get_status() = 0;
 	virtual bool is_open() = 0;
 
 protected:
-	uint8_t conn_id;
+	uint8_t channel;
 	uint8_t sys_id;
 	uint8_t comp_id;
+
+	static const uint8_t mavlink_crcs[];
 
 	static int new_channel();
 	static void delete_channel(int chan);

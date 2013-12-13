@@ -130,6 +130,7 @@ include_directories(
 ## Declare a cpp library
 add_library(mavconn
    src/mavconn/mavconn_interface.cpp
+   src/mavconn/mavconn_serial.cpp
 )
 
 ## Declare a cpp executable
