@@ -23,18 +23,45 @@
 #include <ros/assert.h>
 
 using namespace mavconn;
+using namespace boost::asio::ip;
 
 MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
-		std::string server_addr, unsigned server_port) :
+		std::string server_addr, unsigned short server_port,
+		std::string listner_addr, unsigned short listner_port) :
+	MAVConnInterface(system_id, component_id),
 	io_service(),
-	io_work(new boost::asio::io_service::work(io_service)),
-	socket(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), server_port)),
+	io_work(new asio::io_service::work(io_service)),
+	socket(io_service),
 	sender_exists(false)
 {
-	sys_id = system_id;
-	comp_id = component_id;
-	channel = new_channel();
-	ROS_ASSERT_MSG(channel >= 0, "channel allocation failure");
+	udp::resolver resolver(io_service);
+
+	udp::resolver::query server_query(server_addr, "");
+	for(udp::resolver::iterator i = resolver.resolve(server_query);
+			i != udp::resolver::iterator();
+			++i) {
+
+		server_endpoint = *i;
+		server_endpoint.port(server_port);
+		ROS_INFO_STREAM_NAMED("mavconn", "udp: Bind address: " << server_endpoint);
+	}
+
+	if (listner_addr != "") {
+		udp::resolver::query listner_query(listner_addr, "");
+		for(udp::resolver::iterator i = resolver.resolve(listner_query);
+				i != udp::resolver::iterator();
+				++i) {
+
+			sender_endpoint = *i;
+			sender_endpoint.port(listner_port);
+			prev_sender_endpoint = sender_endpoint;
+			sender_exists = true;
+			ROS_INFO_STREAM_NAMED("mavconn", "udp: GCS address: " << sender_endpoint);
+		}
+	}
+
+	socket.open(udp::v4());
+	socket.bind(server_endpoint);
 
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnUDP::do_read, this));
@@ -48,7 +75,6 @@ MAVConnUDP::~MAVConnUDP()
 {
 	io_work.reset();
 	io_service.stop();
-	delete_channel(channel);
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -76,12 +102,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 void MAVConnUDP::do_read(void)
 {
 	socket.async_receive_from(
-			boost::asio::buffer(rx_buf, sizeof(rx_buf)),
+			asio::buffer(rx_buf, sizeof(rx_buf)),
 			sender_endpoint,
 			boost::bind(&MAVConnUDP::async_read_end,
 				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
+				asio::placeholders::error,
+				asio::placeholders::bytes_transferred));
 }
 
 void MAVConnUDP::async_read_end(boost::system::error_code error, size_t bytes_transfered)
@@ -96,7 +122,11 @@ void MAVConnUDP::async_read_end(boost::system::error_code error, size_t bytes_tr
 		mavlink_message_t message;
 		mavlink_status_t status;
 
-		sender_exists = true;
+		if (sender_endpoint != prev_sender_endpoint) {
+			ROS_INFO_STREAM_NAMED("mavconn", "udp: GCS address: " << sender_endpoint);
+			prev_sender_endpoint = sender_endpoint;
+			sender_exists = true;
+		}
 
 		for (size_t i = 0; i < bytes_transfered; i++) {
 			if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
@@ -113,7 +143,7 @@ void MAVConnUDP::async_read_end(boost::system::error_code error, size_t bytes_tr
 
 void MAVConnUDP::do_write(void)
 {
-	if (sender_exists) {
+	if (!sender_exists) {
 		ROS_DEBUG_NAMED("mavconn", "udp::do_write: sender do not exists!");
 		return;
 	}
@@ -128,11 +158,11 @@ void MAVConnUDP::do_write(void)
 		tx_q.clear();
 
 		socket.async_send_to(
-				boost::asio::buffer(tx_buf.get(), tx_buf_size),
+				asio::buffer(tx_buf.get(), tx_buf_size),
 				sender_endpoint,
 				boost::bind(&MAVConnUDP::async_write_end,
 					this,
-					boost::asio::placeholders::error));
+					asio::placeholders::error));
 	}
 }
 
@@ -153,11 +183,11 @@ void MAVConnUDP::async_write_end(boost::system::error_code error)
 		tx_q.clear();
 
 		socket.async_send_to(
-				boost::asio::buffer(tx_buf.get(), tx_buf_size),
+				asio::buffer(tx_buf.get(), tx_buf_size),
 				sender_endpoint,
 				boost::bind(&MAVConnUDP::async_write_end,
 					this,
-					boost::asio::placeholders::error));
+					asio::placeholders::error));
 	} else {
 		if (socket.is_open()) {
 			socket.close();

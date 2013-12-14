@@ -28,8 +28,9 @@ namespace mavconn {
 
 class MAVConnUDP : public MAVConnInterface {
 public:
-	MAVConnUDP(uint8_t system_id, uint8_t component_id,
-			std::string server_addr, unsigned server_port);
+	MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
+			std::string server_addr = "localhost", unsigned short server_port = 14555,
+			std::string listner_addr = "", unsigned short listner_port = 14550);
 	~MAVConnUDP();
 
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
@@ -38,11 +39,13 @@ public:
 	inline bool is_open() { return socket.is_open(); };
 
 private:
-	boost::asio::io_service io_service;
-	std::auto_ptr<boost::asio::io_service::work> io_work;
+	asio::io_service io_service;
+	std::auto_ptr<asio::io_service::work> io_work;
 	boost::thread io_thread;
-	boost::asio::ip::udp::socket socket;
-	boost::asio::ip::udp::endpoint sender_endpoint;
+	asio::ip::udp::socket socket;
+	asio::ip::udp::endpoint server_endpoint;
+	asio::ip::udp::endpoint sender_endpoint;
+	asio::ip::udp::endpoint prev_sender_endpoint;
 
 	static const size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
 	uint8_t rx_buf[RX_BUFSIZE];

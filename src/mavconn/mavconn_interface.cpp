@@ -20,6 +20,7 @@
 
 #include <mavros/mavconn_interface.h>
 #include <ros/console.h>
+#include <ros/assert.h>
 
 using namespace mavconn;
 
@@ -27,6 +28,14 @@ using namespace mavconn;
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
 std::set<int> MAVConnInterface::allocated_channels;
+
+MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
+	sys_id(system_id),
+	comp_id(component_id)
+{
+	channel = new_channel();
+	ROS_ASSERT_MSG(channel >= 0, "channel allocation failure");
+}
 
 int MAVConnInterface::new_channel()
 {

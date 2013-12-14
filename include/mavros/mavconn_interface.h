@@ -30,10 +30,14 @@
 
 namespace mavconn {
 namespace sig2 = boost::signals2;
+namespace asio = boost::asio;
 
 class MAVConnInterface {
 public:
-	virtual ~MAVConnInterface() {};
+	MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+	virtual ~MAVConnInterface() {
+		delete_channel(channel);
+	};
 
 	inline void send_message(const mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);

@@ -28,8 +28,8 @@ namespace mavconn {
 
 class MAVConnSerial : public MAVConnInterface {
 public:
-	MAVConnSerial(uint8_t system_id, uint8_t component_id,
-			std::string device, unsigned baudrate);
+	MAVConnSerial(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
+			std::string device = "/dev/ttyACM0", unsigned baudrate = 57600);
 	~MAVConnSerial();
 
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
@@ -38,9 +38,9 @@ public:
 	inline bool is_open() { return serial_dev.is_open(); };
 
 private:
-	boost::asio::io_service io_service;
+	asio::io_service io_service;
 	boost::thread io_thread;
-	boost::asio::serial_port serial_dev;
+	asio::serial_port serial_dev;
 
 	static const size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
 	uint8_t rx_buf[RX_BUFSIZE];

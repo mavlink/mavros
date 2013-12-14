@@ -26,25 +26,21 @@ using namespace mavconn;
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		std::string device, unsigned baudrate) :
+	MAVConnInterface(system_id, component_id),
 	io_service(),
 	serial_dev(io_service, device)
 {
-	sys_id = system_id;
-	comp_id = component_id;
-	channel = new_channel();
-	ROS_ASSERT_MSG(channel >= 0, "channel allocation failure");
-
-	serial_dev.set_option(boost::asio::serial_port_base::baud_rate(baudrate));
-	serial_dev.set_option(boost::asio::serial_port_base::character_size(8));
-	serial_dev.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
-	serial_dev.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
-	serial_dev.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
+	serial_dev.set_option(asio::serial_port_base::baud_rate(baudrate));
+	serial_dev.set_option(asio::serial_port_base::character_size(8));
+	serial_dev.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+	serial_dev.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
+	serial_dev.set_option(asio::serial_port_base::flow_control(asio::serial_port_base::flow_control::none));
 
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnSerial::do_read, this));
 
 	// run io_service for async io
-	boost::thread t(boost::bind(&boost::asio::io_service::run, &this->io_service));
+	boost::thread t(boost::bind(&asio::io_service::run, &this->io_service));
 	io_thread.swap(t);
 }
 
@@ -52,7 +48,6 @@ MAVConnSerial::~MAVConnSerial()
 {
 	io_service.stop();
 	serial_dev.close();
-	delete_channel(channel);
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
