@@ -33,6 +33,7 @@ public:
 			std::string listner_addr = "", unsigned short listner_port = 14550);
 	~MAVConnUDP();
 
+	using MAVConnInterface::send_message;
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
