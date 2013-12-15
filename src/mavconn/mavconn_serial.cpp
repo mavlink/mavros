@@ -36,6 +36,8 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	serial_dev.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
 	serial_dev.set_option(asio::serial_port_base::flow_control(asio::serial_port_base::flow_control::none));
 
+	ROS_INFO_STREAM_NAMED("mavconn", "serial: device: " << device << " @ " << baudrate << " bps");
+
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnSerial::do_read, this));
 
