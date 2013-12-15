@@ -106,10 +106,10 @@ generate_mavlink("1.0" "${MAVLINK_DEF}")
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES mavros
-#  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater message_generation message_runtime pluginlib roscpp sensor_msgs std_msgs
-#  DEPENDS boost
+  INCLUDE_DIRS include
+  LIBRARIES mavros
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs
+  DEPENDS boost
 )
 
 ###########
@@ -143,18 +143,17 @@ target_link_libraries(mavconn
 
 
 ## Declare a cpp executable
-# add_executable(mavros_node src/mavros_node.cpp)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(mavros_node mavros_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(mavros_node
-#   ${catkin_LIBRARIES}
-#   ${Boost_LIBRARIES}
-#   ${boost_LIBRARIES}
-# )
+add_executable(mavros_node src/mavros_node.cpp)
+add_dependencies(mavros_node
+  mavros_generate_messages_cpp
+  mavconn
+)
+target_link_libraries(mavros_node
+  mavconn
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${boost_LIBRARIES}
+)
 
 #############
 ## Install ##
