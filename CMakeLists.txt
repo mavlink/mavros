@@ -107,7 +107,7 @@ generate_mavlink("1.0" "${MAVLINK_DEF}")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mavros
+  LIBRARIES mavconn
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs
   DEPENDS boost
 )
@@ -128,6 +128,10 @@ include_directories(
   ${boost_INCLUDE_DIRS}
 )
 
+add_definitions(
+    -std=c++11
+)
+
 ## Declare a cpp library
 add_library(mavconn
    src/mavconn/mavconn_interface.cpp
@@ -136,6 +140,20 @@ add_library(mavconn
 )
 add_dependencies(mavconn ardupilotmega.xml-v1.0-stamp)
 target_link_libraries(mavconn
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${boost_LIBRARIES}
+)
+
+add_library(mavros_plugins
+  src/plugins/dummy.cpp
+)
+add_dependencies(mavros_plugins
+  mavros_generate_messages_cpp
+  mavconn
+)
+target_link_libraries(mavros_plugins
+  mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${boost_LIBRARIES}
@@ -170,18 +188,17 @@ target_link_libraries(mavros_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mavros mavros_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS mavconn mavros_plugins mavros_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

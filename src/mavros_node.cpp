@@ -20,16 +20,20 @@
 
 #include <ros/ros.h>
 #include <ros/console.h>
-
 #include <diagnostic_updater/diagnostic_updater.h>
+
 #include <mavros/mavconn_interface.h>
 #include "mavconn_serial.h"
 #include "mavconn_udp.h"
+
+#include <pluginlib/class_loader.h>
+#include <mavros/mavros_plugin.h>
 
 #include <mavros/Mavlink.h>
 
 using namespace mavros;
 using namespace mavconn;
+using namespace mavplugin;
 
 
 class MavlinkDiag : public diagnostic_updater::DiagnosticTask
@@ -42,7 +46,7 @@ public:
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		if (boost::shared_ptr<mavconn::MAVConnInterface> link = weak_link.lock()) {
+		if (boost::shared_ptr<MAVConnInterface> link = weak_link.lock()) {
 			mavlink_status_t mav_status = link->get_status();
 
 			stat.addf("Received packets:", "%u", mav_status.packet_rx_success_count);
@@ -64,13 +68,13 @@ public:
 		}
 	};
 
-	void set_mavconn(const boost::shared_ptr<mavconn::MAVConnInterface> &link)
+	void set_mavconn(const boost::shared_ptr<MAVConnInterface> &link)
 	{
 		weak_link = link;
 	};
 
 private:
-	boost::weak_ptr<mavconn::MAVConnInterface> weak_link;
+	boost::weak_ptr<MAVConnInterface> weak_link;
 	unsigned int last_drop_count;
 };
 
@@ -82,7 +86,9 @@ public:
 		node_handle(nh_),
 		mavlink_node_handle("/mavlink"), // for compatible reasons
 		serial_link_diag("FCU connection"),
-		udp_link_diag("UDP bridge")
+		udp_link_diag("UDP bridge"),
+		plugin_loader("mavros", "mavplugin::MavRosPlugin"),
+		message_route_table(256)
 	{
 		std::string serial_port;
 		int serial_baud;
@@ -106,17 +112,26 @@ public:
 		diag_updater.add(serial_link_diag);
 		diag_updater.add(udp_link_diag);
 
-		serial_link.reset(new mavconn::MAVConnSerial(system_id, component_id, serial_port, serial_baud));
-		udp_link.reset(new mavconn::MAVConnUDP(system_id, component_id, bind_host, bind_port, gcs_host, gcs_port));
+		serial_link.reset(new MAVConnSerial(system_id, component_id, serial_port, serial_baud));
+		udp_link.reset(new MAVConnUDP(system_id, component_id, bind_host, bind_port, gcs_host, gcs_port));
 
 		mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 1000);
 		serial_link->message_received.connect(boost::bind(&MAVConnUDP::send_message, udp_link.get(), _1, _2, _3));
 		serial_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
+		serial_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
 		serial_link_diag.set_mavconn(serial_link);
 
 		mavlink_sub = mavlink_node_handle.subscribe("to", 1000, &MavRos::mavlink_sub_cb, this);
 		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
 		udp_link_diag.set_mavconn(udp_link);
+
+
+		std::vector<std::string> plugins = plugin_loader.getDeclaredClasses();
+		loaded_plugins.reserve(plugins.size());
+		for (std::vector<std::string>::iterator it = plugins.begin();
+				it != plugins.end();
+				++it)
+			add_plugin(*it);
 	};
 
 	~MavRos() {};
@@ -136,7 +151,6 @@ private:
 	ros::NodeHandle mavlink_node_handle;
 	boost::shared_ptr<MAVConnSerial> serial_link;
 	boost::shared_ptr<MAVConnUDP> udp_link;
-	//std::list<std::auto_ptr<MAVPlugin> > plugins;
 
 	ros::Publisher mavlink_pub;
 	ros::Subscriber mavlink_sub;
@@ -144,6 +158,11 @@ private:
 	diagnostic_updater::Updater diag_updater;
 	MavlinkDiag serial_link_diag;
 	MavlinkDiag udp_link_diag;
+
+	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
+	std::vector<boost::shared_ptr<MavRosPlugin> > loaded_plugins;
+	std::vector<sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> >
+		message_route_table; // link interface -> router -> plugin callback
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 		Mavlink rmsg;
@@ -168,6 +187,35 @@ private:
 		copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64); // TODO: add paranoic checks
 
 		serial_link->send_message(&mmsg); // use dafault sys/comp ids
+	};
+
+	void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
+		message_route_table[mmsg->msgid](mmsg, sysid, compid);
+	};
+
+	void add_plugin(std::string pl_name) {
+		boost::shared_ptr<mavplugin::MavRosPlugin> plugin;
+
+		try {
+			plugin = plugin_loader.createInstance(pl_name);
+			plugin->initialize(node_handle, serial_link, diag_updater);
+			loaded_plugins.push_back(plugin);
+
+			ROS_INFO_STREAM_NAMED("mavros", "Plugin " << plugin->get_name() <<
+					" [alias " << pl_name << "] loaded and initialized");
+
+			std::vector<uint8_t> sup_msgs = plugin->get_supported_messages();
+			for (std::vector<uint8_t>::iterator it = sup_msgs.begin();
+					it != sup_msgs.end();
+					++it) {
+				ROS_DEBUG_NAMED("mavros", "Add %s to route msgid: %d", pl_name.c_str(), *it);
+				message_route_table[*it].connect(
+						boost::bind(&MavRosPlugin::message_rx_cb, plugin.get(), _1, _2, _3));
+			}
+
+		} catch (pluginlib::PluginlibException& ex) {
+			ROS_ERROR_STREAM_NAMED("mavros", "Plugin load exception: " << ex.what());
+		}
 	};
 };
 

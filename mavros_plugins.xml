@@ -1,8 +1,9 @@
 <library path="lib/libmavros_plugins">
-	<class name="mavros/DummyPlugin" type="mavplugin::DummyPlugin" base_class_type="mavplungin::MavRosPlugin">
-		<description>
-			Dummy test plugin.
-		</description>
+	<class name="dummy" type="mavplugin::DummyPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Dummy test plugin.</description>
 	</class>
+	<!--<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish IMU state plugin.</description>
+	</class>-->
 </library>
 

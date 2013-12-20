@@ -28,12 +28,16 @@ namespace mavplugin {
 class MavRosPlugin
 {
 public:
-	virtual void init(ros::NodeHandle &nh,
+	virtual ~MavRosPlugin() {};
+	virtual void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater);
-	virtual std::string get_name();
-	virtual std::vector<uint8_t> get_supported_messages();
-	virtual void message_rx_cb(mavlink_message_t *msg, uint8_t sysid, uint8_t compid);
+			diagnostic_updater::Updater &diag_updater) = 0;
+	virtual std::string get_name() = 0;
+	virtual std::vector<uint8_t> get_supported_messages() = 0;
+	virtual void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) = 0;
+
+protected:
+	MavRosPlugin() {};
 };
 
 }; // namespace mavplugin
