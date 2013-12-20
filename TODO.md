@@ -1,9 +1,9 @@
 TO DO LIST
 ==========
 
-  * diagnostics
+  * diagnostics (for plugins)
   * pluginlib
-  * pub/sub Mavlink.msg
+  * check HEARTBEAT from FCU
   * mavlink parameters ros interface
   * mavlink waypoints ros interface
   * imu pub
