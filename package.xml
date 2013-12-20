@@ -52,6 +52,6 @@
     <!-- <metapackage/> -->
 
     <!-- Other tools can request additional information be placed here -->
-
+    <mavros plugin="${prefix}/mavros_plugins.xml" />
   </export>
 </package>

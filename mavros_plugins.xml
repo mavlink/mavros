@@ -1,0 +1,8 @@
+<library path="lib/libmavros_plugins">
+	<class name="mavros/DummyPlugin" type="mavplugin::DummyPlugin" base_class_type="mavplungin::MavRosPlugin">
+		<description>
+			Dummy test plugin.
+		</description>
+	</class>
+</library>
+
