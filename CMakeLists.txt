@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ generate_mavlink("1.0" "${MAVLINK_DEF}")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavconn
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf
   DEPENDS boost
 )
 
@@ -148,6 +149,7 @@ target_link_libraries(mavconn
 add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
+  src/plugins/imu_pub.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

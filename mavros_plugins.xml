@@ -5,8 +5,8 @@
 	<class name="sys_status" type="mavplugin::SystemStatusPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish system status.</description>
 	</class>
-	<!--<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Publish IMU state plugin.</description>
-	</class>-->
+	<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish IMU state.</description>
+	</class>
 </library>
 
