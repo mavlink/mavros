@@ -147,6 +147,7 @@ target_link_libraries(mavconn
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
+  src/plugins/sys_status.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp
