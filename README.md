@@ -35,7 +35,7 @@ Links
   * [mavlink\_ros][3] -- original ROS node (few messages, no proxy)
   * [ArduPilot][2] -- tested autopilot APM:Plane (default command set)
   * [QGroundControl][1] -- tested ground control station for linux
-  * [DroidPlanner][6] -- GCS for Android (TODO test)
+  * [DroidPlanner][6] -- tested GCS for Android
 
 
 [1]: http://qgroundcontrol.org/
