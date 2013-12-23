@@ -167,6 +167,9 @@ private:
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 		Mavlink rmsg;
 
+		if  (mavlink_pub.getNumSubscribers() == 0)
+			return;
+
 		rmsg.header.stamp = ros::Time::now();
 		rmsg.len = mmsg->len;
 		rmsg.seq = mmsg->seq;
