@@ -1,4 +1,5 @@
 /**
+ * @brief IMU publish plugin
  * @file imu_pub.cpp
  * @author Vladimit Ermkov <voon341@gmail.com>
  */

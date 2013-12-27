@@ -1,4 +1,5 @@
 /**
+ * @brief System Status plugin
  * @file sys_status.cpp
  * @author Vladimit Ermkov <voon341@gmail.com>
  */
