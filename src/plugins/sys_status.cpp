@@ -63,7 +63,7 @@ public:
 		last_hb = hb_struct;
 	}
 
-	virtual void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
 		boost::mutex::scoped_lock lock(lock_);
 		ros::Time curtime = ros::Time::now();
 		int curseq = count_;
@@ -112,11 +112,48 @@ private:
 };
 
 
+class MemInfo : public diagnostic_updater::DiagnosticTask
+{
+public:
+	MemInfo(const std::string name) :
+		diagnostic_updater::DiagnosticTask(name),
+		freemem(-1),
+		brkval(0)
+	{};
+
+	void set(uint16_t f, uint16_t b) {
+		boost::mutex::scoped_lock lock(lock_);
+		freemem = f;
+		brkval = b;
+	}
+
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+		boost::mutex::scoped_lock lock(lock_);
+
+		if (freemem < 0)
+			stat.summary(2, "No data");
+		else if (freemem < 200)
+			stat.summary(1, "Low mem");
+		else
+			stat.summary(0, "Normal");
+
+		stat.addf("Free memory (B)", "%zd", freemem);
+		stat.addf("Heap top", "0x%04X", brkval);
+	}
+
+private:
+	boost::mutex lock_;
+	ssize_t freemem;
+	uint16_t brkval;
+};
+
+
 class SystemStatusPlugin : public MavRosPlugin
 {
 public:
 	SystemStatusPlugin() :
-		hb_diag("FCU Heartbeat", 10)
+		hb_diag("FCU Heartbeat", 10),
+		mem_diag("FCU Memory")
 	{};
 
 	void initialize(ros::NodeHandle &nh,
@@ -124,6 +161,9 @@ public:
 			diagnostic_updater::Updater &diag_updater) {
 
 		diag_updater.add(hb_diag);
+#ifdef MAVLINK_MSG_ID_MEMINFO
+		diag_updater.add(mem_diag);
+#endif
 	}
 
 	std::string get_name() {
@@ -133,8 +173,10 @@ public:
 	std::vector<uint8_t> get_supported_messages() {
 		return {
 			MAVLINK_MSG_ID_HEARTBEAT,
-			MAVLINK_MSG_ID_SYSTEM_TIME,
-			MAVLINK_MSG_ID_SYS_STATUS
+			MAVLINK_MSG_ID_SYS_STATUS,
+#ifdef MAVLINK_MSG_ID_MEMINFO
+			MAVLINK_MSG_ID_MEMINFO
+#endif
 		};
 	}
 
@@ -148,16 +190,24 @@ public:
 			}
 			break;
 
-		case MAVLINK_MSG_ID_SYSTEM_TIME:
-			break;
-
 		case MAVLINK_MSG_ID_SYS_STATUS:
 			break;
+
+#ifdef MAVLINK_MSG_ID_MEMINFO
+		case MAVLINK_MSG_ID_MEMINFO:
+			{
+				mavlink_meminfo_t mem;
+				mavlink_msg_meminfo_decode(msg, &mem);
+				mem_diag.set(mem.freemem, mem.brkval);
+			}
+			break;
+#endif
 		};
 	}
 
 private:
 	HeartbeatStatus hb_diag;
+	MemInfo mem_diag;
 };
 
 }; // namespace mavplugin
