@@ -8,5 +8,8 @@
 	<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish IMU state.</description>
 	</class>
+	<class name="gps" type="mavplugin::GPSPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish GPS fix.</description>
+	</class>
 </library>
 

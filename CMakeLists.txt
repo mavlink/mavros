@@ -150,6 +150,7 @@ add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
   src/plugins/imu_pub.cpp
+  src/plugins/gps.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

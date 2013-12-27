@@ -48,7 +48,7 @@ public:
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		nh.param<std::string>("imu_frame_id", frame_id, "fcu");
+		nh.param<std::string>("imu/frame_id", frame_id, "fcu");
 
 		imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 10);
 		magn_pub = nh.advertise<sensor_msgs::MagneticField>("mag", 10);
