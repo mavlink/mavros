@@ -139,7 +139,7 @@ add_library(mavconn
    src/mavconn/mavconn_serial.cpp
    src/mavconn/mavconn_udp.cpp
 )
-add_dependencies(mavconn ardupilotmega.xml-v1.0-stamp)
+add_dependencies(mavconn ardupilotmega.xml-v1.0)
 target_link_libraries(mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

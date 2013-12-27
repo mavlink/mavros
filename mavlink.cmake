@@ -16,7 +16,7 @@ macro(generate_mavlink version definitions)
 	    COMMAND ${PYTHON_EXECUTABLE} ${MAVGEN_PY} --lang=C --wire-protocol=${version}
 	    --output=${CATKIN_DEVEL_PREFIX}/include/mavlink/v${version} ${definitionAbsPath}
             COMMAND touch ${targetName}-stamp
-            DEPENDS ${definitionAbsPath} ${mavgen}
+	    DEPENDS ${definitionAbsPath} ${MAVGEN_PY}
             )
         add_custom_target(${targetName} ALL DEPENDS ${targetName}-stamp)
     endforeach()
