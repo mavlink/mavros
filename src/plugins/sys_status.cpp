@@ -175,6 +175,7 @@ public:
 		return {
 			MAVLINK_MSG_ID_HEARTBEAT,
 			MAVLINK_MSG_ID_SYS_STATUS,
+			MAVLINK_MSG_ID_STATUSTEXT,
 #ifdef MAVLINK_MSG_ID_MEMINFO
 			MAVLINK_MSG_ID_MEMINFO
 #endif
@@ -192,6 +193,58 @@ public:
 			break;
 
 		case MAVLINK_MSG_ID_SYS_STATUS:
+			break;
+
+		case MAVLINK_MSG_ID_STATUSTEXT:
+			{
+				mavlink_statustext_t textm;
+				mavlink_msg_statustext_decode(msg, &textm);
+
+				std::string text(textm.text, sizeof(textm.text));
+				switch (textm.severity) {
+#ifdef USE_MAV_SEVERITY
+				case MAV_SEVERITY_EMERGENCY:
+				case MAV_SEVERITY_ALERT:
+				case MAV_SEVERITY_CRITICAL:
+				case MAV_SEVERITY_ERROR:
+					ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				case MAV_SEVERITY_WARNING:
+				case MAV_SEVERITY_NOTICE:
+					ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				case MAV_SEVERITY_INFO:
+					ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				case MAV_SEVERITY_DEBUG:
+				default:
+					ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+#else /* APM:Plane numbers */
+				case 1: // SEVERITY_LOW
+					ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				case 2: // SEVERITY_MEDIUM
+					ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				case 3: // SEVERITY_HIGH
+				case 4: // SEVERITY_CRITICAL
+				case 5: // SEVERITY_USER_RESPONSE
+					ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+					break;
+
+				default:
+					ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: UNK(" <<
+							(int)textm.severity << "): " << text);
+					break;
+#endif /* USE_MAV_SEVERITY */
+				};
+			}
 			break;
 
 #ifdef MAVLINK_MSG_ID_MEMINFO
