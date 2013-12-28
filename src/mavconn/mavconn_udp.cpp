@@ -90,7 +90,8 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 #endif
 	size_t length = mavlink_msg_to_send_buffer(buffer, &msg);
 
-	ROS_DEBUG_NAMED("mavconn", "udp::send_message: Message-ID: %d [%zu bytes]", message->msgid, length);
+	ROS_DEBUG_NAMED("mavconn", "udp::send_message: Message-ID: %d [%zu bytes] Sys-Id: %d Comp-Id: %d",
+			message->msgid, length, sysid, compid);
 
 	{
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -144,7 +145,7 @@ void MAVConnUDP::async_read_end(boost::system::error_code error, size_t bytes_tr
 void MAVConnUDP::do_write(void)
 {
 	if (!sender_exists) {
-		ROS_DEBUG_NAMED("mavconn", "udp::do_write: sender do not exists!");
+		ROS_DEBUG_THROTTLE_NAMED(10, "mavconn", "udp::do_write: sender do not exists!");
 		return;
 	}
 
