@@ -119,12 +119,12 @@ public:
 		serial_link->message_received.connect(boost::bind(&MAVConnUDP::send_message, udp_link.get(), _1, _2, _3));
 		serial_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 		serial_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
+		serial_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
 		serial_link_diag.set_mavconn(serial_link);
 
 		mavlink_sub = mavlink_node_handle.subscribe("to", 1000, &MavRos::mavlink_sub_cb, this);
 		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
 		udp_link_diag.set_mavconn(udp_link);
-
 
 		std::vector<std::string> plugins = plugin_loader.getDeclaredClasses();
 		loaded_plugins.reserve(plugins.size());
@@ -132,6 +132,8 @@ public:
 				it != plugins.end();
 				++it)
 			add_plugin(*it);
+
+		ROS_INFO_NAMED("mavros", "MAVROS started on MAV %d (component %d)", system_id, component_id);
 	};
 
 	~MavRos() {};
@@ -219,6 +221,11 @@ private:
 		} catch (pluginlib::PluginlibException& ex) {
 			ROS_ERROR_STREAM_NAMED("mavros", "Plugin load exception: " << ex.what());
 		}
+	};
+
+	void terminate_cb() {
+		ROS_ERROR_NAMED("mavros", "Serial port closed. mavros will be terminated.");
+		ros::requestShutdown();
 	};
 };
 
