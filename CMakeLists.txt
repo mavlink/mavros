@@ -109,7 +109,7 @@ generate_mavlink("1.0" "${MAVLINK_DEF}")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavconn
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
   DEPENDS boost
 )
 

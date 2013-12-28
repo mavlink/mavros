@@ -10,7 +10,7 @@ Feutures
   * Communication with autopilot via serial port (e.g. [ArduPilot][2])
   * UDP proxy for Ground Control Station
   * [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
-  * Plugin system for ROS-MAVLink translation (TODO)
+  * Plugin system for ROS-MAVLink translation
 
 
 Limitations
