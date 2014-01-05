@@ -1,7 +1,8 @@
 MAVROS
 ======
 
-MAVLink communication node for ROS with UDP proxy for Ground Control Station (e.g. [QGroundControl][1]).
+MAVLink extendable communication node for ROS
+with UDP proxy for Ground Control Station (e.g. [QGroundControl][1]).
 
 
 Feutures

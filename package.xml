@@ -1,28 +1,19 @@
 <?xml version="1.0"?>
 <package>
   <name>mavros</name>
-  <version>0.0.0</version>
-  <description>The mavros package</description>
+  <version>0.1.0</version>
+  <description>
+    MAVROS -- MAVLink extendable communication node for ROS
+    with UDP proxy for Ground Control Station.
+  </description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
-
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
   <license>GPLv3</license>
 
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
   <!-- <url type="website">http://wiki.ros.org/mavros</url> -->
-
-
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintianers, but could be -->
-  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+  <url type="repository">https://github.com/vooon/mavros.git</url>
+  <url type="bugtracker">https://github.com/vooon/mavros/issues</url>
 
 
   <!-- The *_depend tags are used to specify dependencies -->
@@ -50,12 +41,7 @@
   <run_depend>tf</run_depend>
   <test_depend>gtest</test_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- You can specify that this package is a metapackage here: -->
-    <!-- <metapackage/> -->
-
-    <!-- Other tools can request additional information be placed here -->
     <mavros plugin="${prefix}/mavros_plugins.xml" />
   </export>
 </package>
