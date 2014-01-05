@@ -1,6 +1,9 @@
 /**
+ * @brief MAVROS Plugin base
  * @file mavros_plugin.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup plugin
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -24,6 +27,7 @@
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavros/mavconn_interface.h>
+#include <mavros/mavros_context.h>
 
 namespace mavplugin {
 
@@ -33,7 +37,8 @@ public:
 	virtual ~MavRosPlugin() {};
 	virtual void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater) = 0;
+			diagnostic_updater::Updater &diag_updater,
+			MavContext &context) = 0;
 	virtual std::string get_name() = 0;
 	virtual std::vector<uint8_t> get_supported_messages() = 0;
 	virtual void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) = 0;

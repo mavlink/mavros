@@ -2,6 +2,8 @@
  * @brief System Status plugin
  * @file sys_status.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup plugin
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -161,8 +163,10 @@ public:
 
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater) {
+			diagnostic_updater::Updater &diag_updater,
+			MavContext &context) {
 
+		mav_context = &context;
 		diag_updater.add(hb_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
@@ -191,6 +195,7 @@ public:
 				mavlink_heartbeat_t hb;
 				mavlink_msg_heartbeat_decode(msg, &hb);
 				hb_diag.tick(hb);
+				mav_context->update_heartbeat(hb.type, hb.autopilot);
 			}
 			break;
 
@@ -203,49 +208,11 @@ public:
 				mavlink_msg_statustext_decode(msg, &textm);
 
 				std::string text(textm.text, sizeof(textm.text));
-				switch (textm.severity) {
-#ifdef USE_MAV_SEVERITY
-				case MAV_SEVERITY_EMERGENCY:
-				case MAV_SEVERITY_ALERT:
-				case MAV_SEVERITY_CRITICAL:
-				case MAV_SEVERITY_ERROR:
-					ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
 
-				case MAV_SEVERITY_WARNING:
-				case MAV_SEVERITY_NOTICE:
-					ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-
-				case MAV_SEVERITY_INFO:
-					ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-
-				case MAV_SEVERITY_DEBUG:
-				default:
-					ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-#else /* APM:Plane numbers */
-				case 1: // SEVERITY_LOW
-					ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-
-				case 2: // SEVERITY_MEDIUM
-					ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-
-				case 3: // SEVERITY_HIGH
-				case 4: // SEVERITY_CRITICAL
-				case 5: // SEVERITY_USER_RESPONSE
-					ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
-					break;
-
-				default:
-					ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: UNK(" <<
-							(int)textm.severity << "): " << text);
-					break;
-#endif /* USE_MAV_SEVERITY */
-				};
+				if (mav_context->is_ardupilotmega())
+					process_statustext_apm_quirk(textm.severity, text);
+				else
+					process_statustext_normal(textm.severity, text);
 			}
 			break;
 
@@ -264,6 +231,57 @@ public:
 private:
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
+	MavContext *mav_context;
+
+	void process_statustext_normal(uint8_t severity, std::string &text) {
+		switch (severity) {
+		case MAV_SEVERITY_EMERGENCY:
+		case MAV_SEVERITY_ALERT:
+		case MAV_SEVERITY_CRITICAL:
+		case MAV_SEVERITY_ERROR:
+			ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		case MAV_SEVERITY_WARNING:
+		case MAV_SEVERITY_NOTICE:
+			ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		case MAV_SEVERITY_INFO:
+			ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		case MAV_SEVERITY_DEBUG:
+		default:
+			ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+		};
+
+	}
+
+	void process_statustext_apm_quirk(uint8_t severity, std::string &text) {
+		switch (severity) {
+		case 1: // SEVERITY_LOW
+			ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		case 2: // SEVERITY_MEDIUM
+			ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		case 3: // SEVERITY_HIGH
+		case 4: // SEVERITY_CRITICAL
+		case 5: // SEVERITY_USER_RESPONSE
+			ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+			break;
+
+		default:
+			ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: UNK(" <<
+					(int)severity << "): " << text);
+			break;
+		};
+
+	}
 };
 
 }; // namespace mavplugin

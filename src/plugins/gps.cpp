@@ -2,6 +2,8 @@
  * @brief GPS publish plugin
  * @file gps.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup plugin
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -78,7 +80,8 @@ public:
 
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater)
+			diagnostic_updater::Updater &diag_updater,
+			MavContext &context)
 	{
 		nh.param<std::string>("gps/frame_id", frame_id, "gps");
 		nh.param<std::string>("gps/time_ref_source", time_ref_source, frame_id);

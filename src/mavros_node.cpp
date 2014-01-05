@@ -1,8 +1,11 @@
 /**
- * @file mavconn_interface.h
- * @author Vladimit Ermkov <voon341@gmail.com>
+ * @brief MAVROS Node
+ * @file mavros_node.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
+ * Copyright 2013 Vladimir Ermakov.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -165,6 +168,7 @@ private:
 	std::vector<boost::shared_ptr<MavRosPlugin> > loaded_plugins;
 	std::vector<sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> >
 		message_route_table; // link interface -> router -> plugin callback
+	MavContext mav_context;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 		Mavlink rmsg;
@@ -203,7 +207,7 @@ private:
 
 		try {
 			plugin = plugin_loader.createInstance(pl_name);
-			plugin->initialize(node_handle, serial_link, diag_updater);
+			plugin->initialize(node_handle, serial_link, diag_updater, mav_context);
 			loaded_plugins.push_back(plugin);
 
 			ROS_INFO_STREAM_NAMED("mavros", "Plugin " << plugin->get_name() <<
