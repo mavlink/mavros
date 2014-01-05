@@ -1,6 +1,9 @@
 /**
+ * @brief MAVConn class interface
  * @file mavconn_interface.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup mavconn
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -28,7 +31,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-#include <mavlink/v1.0/ardupilotmega/mavlink.h>
+#include <mavros/mavconn_mavlink.h>
 
 namespace mavconn {
 namespace sig2 = boost::signals2;

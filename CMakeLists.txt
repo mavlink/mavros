@@ -81,6 +81,20 @@ generate_messages(
 ## Generate MAVLink headers
 include(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.cmake)
 
+set(MAVLINK_DIALECT "ardupilotmega" CACHE STRING "MAVLink dialect selector")
+set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS
+  "ardupilotmega"
+  "autoquad"
+  "common"
+  "matrixpilot"
+  "minimal"
+  "pixhawk"
+  "slugs"
+  "test"
+  "ualberta"
+  "sensoar"
+)
+
 set(MAVLINK_DEF
   ardupilotmega.xml
   autoquad.xml
@@ -131,6 +145,7 @@ include_directories(
 
 add_definitions(
     -std=c++11
+    -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
 )
 
 ## Declare a cpp library
@@ -139,7 +154,7 @@ add_library(mavconn
    src/mavconn/mavconn_serial.cpp
    src/mavconn/mavconn_udp.cpp
 )
-add_dependencies(mavconn ardupilotmega.xml-v1.0)
+add_dependencies(mavconn ${MAVLINK_DIALECT}.xml-v1.0)
 target_link_libraries(mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
