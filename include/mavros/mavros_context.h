@@ -36,7 +36,9 @@ class MavContext {
 public:
 	MavContext() :
 		type(MAV_TYPE_GENERIC),
-		autopilot(MAV_AUTOPILOT_GENERIC)
+		autopilot(MAV_AUTOPILOT_GENERIC),
+		target_system(1), // XXX: TODO
+		target_component(1)
 	{};
 	~MavContext() {};
 
@@ -60,6 +62,14 @@ public:
 		return autopilot;
 	};
 
+	inline uint8_t get_tgt_system() {
+		return target_system;
+	};
+
+	inline uint8_t get_tgt_component() {
+		return target_component;
+	};
+
 	/**
 	 * For APM quirks
 	 */
@@ -71,6 +81,8 @@ private:
 	boost::recursive_mutex mutex;
 	enum MAV_TYPE type;
 	enum MAV_AUTOPILOT autopilot;
+	uint8_t target_system;
+	uint8_t target_component;
 };
 
 }; // namespace mavplugin
