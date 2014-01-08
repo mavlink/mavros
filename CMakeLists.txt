@@ -92,7 +92,7 @@ set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS
   "slugs"
   "test"
   "ualberta"
-  "sensoar"
+  "sensesoar"
 )
 
 set(MAVLINK_DEF

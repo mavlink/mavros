@@ -48,8 +48,8 @@
 #  include <mavlink/v1.0/test/mavlink.h>
 #elif MAVLINK_DIALECT == ualberta
 #  include <mavlink/v1.0/ualberta/mavlink.h>
-#elif MAVLINK_DIALECT == sensoar
-#  include <mavlink/v1.0/sensoar/mavlink.h>
+#elif MAVLINK_DIALECT == sensesoar
+#  include <mavlink/v1.0/sensesoar/mavlink.h>
 #else
 #  error "Unknown MAVLINK_DIALECT " MAVLINK_DIALECT
 #endif
