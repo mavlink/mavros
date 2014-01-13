@@ -99,21 +99,25 @@ public:
 		int bind_port;
 		std::string gcs_host;
 		int gcs_port;
-		int system_id;
-		int component_id;
+		int system_id, component_id;
+		int tgt_system_id, tgt_component_id;
 
 		node_handle.param<std::string>("serial_port", serial_port, "/dev/ttyACM0");
-		node_handle.param<int>("serial_baud", serial_baud, 57600);
+		node_handle.param("serial_baud", serial_baud, 57600);
 		node_handle.param<std::string>("bind_host", bind_host, "0.0.0.0");
-		node_handle.param<int>("bind_port", bind_port, 14555);
+		node_handle.param("bind_port", bind_port, 14555);
 		node_handle.param<std::string>("gcs_host", gcs_host, "");
-		node_handle.param<int>("gcs_port", gcs_port, 14550);
-		node_handle.param<int>("system_id", system_id, 1);
+		node_handle.param("gcs_port", gcs_port, 14550);
+		node_handle.param("system_id", system_id, 1);
 		node_handle.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
+		node_handle.param("target_system_id", tgt_system_id, 1);
+		node_handle.param("target_component_id", tgt_component_id, 1);
 
 		diag_updater.setHardwareID("Mavlink");
 		diag_updater.add(serial_link_diag);
 		diag_updater.add(udp_link_diag);
+
+		mav_context.set_tgt(tgt_system_id, tgt_component_id);
 
 		serial_link.reset(new MAVConnSerial(system_id, component_id, serial_port, serial_baud));
 		udp_link.reset(new MAVConnUDP(system_id, component_id, bind_host, bind_port, gcs_host, gcs_port));

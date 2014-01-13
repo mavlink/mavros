@@ -37,7 +37,7 @@ public:
 	MavContext() :
 		type(MAV_TYPE_GENERIC),
 		autopilot(MAV_AUTOPILOT_GENERIC),
-		target_system(1), // XXX: TODO
+		target_system(1),
 		target_component(1)
 	{};
 	~MavContext() {};
@@ -63,11 +63,16 @@ public:
 	};
 
 	inline uint8_t get_tgt_system() {
-		return target_system;
+		return target_system; // not changed after configuration
 	};
 
 	inline uint8_t get_tgt_component() {
-		return target_component;
+		return target_component; // not changed after configuration
+	};
+
+	inline void set_tgt(uint8_t sys, uint8_t comp) {
+		target_system = sys;
+		target_component = comp;
 	};
 
 	/**
