@@ -23,6 +23,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <cmath>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_datatypes.h>
@@ -53,12 +54,38 @@ public:
 			diagnostic_updater::Updater &diag_updater,
 			MavContext &context)
 	{
-		nh.param<std::string>("imu/frame_id", frame_id, "fcu");
+		double linear_stdev, angular_stdev, orientation_stdev;
 
-		imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 10);
-		magn_pub = nh.advertise<sensor_msgs::MagneticField>("mag", 10);
-		temp_pub = nh.advertise<sensor_msgs::Imu>("temperature", 10);
-		imu_raw_pub = nh.advertise<sensor_msgs::Imu>("raw/imu", 10);
+		nh.param<std::string>("imu/frame_id", frame_id, "fcu");
+		nh.param("imu/linear_acceleration_stdev", linear_stdev, 0.0003); // check default by MPU6000 spec
+		nh.param("imu/angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0)); // check default by MPU6000 spec
+		nh.param("imu/orientation_stdev", orientation_stdev, 1.0);
+
+		std::fill(linear_acceleration_cov.begin(),
+				linear_acceleration_cov.end(),
+				0.0);
+		linear_acceleration_cov[0+0] =
+			linear_acceleration_cov[3+1] =
+			linear_acceleration_cov[6+2] = std::pow(linear_stdev, 2);
+
+		std::fill(angular_velocity_cov.begin(),
+				angular_velocity_cov.end(),
+				0.0);
+		angular_velocity_cov[0+0] =
+			angular_velocity_cov[3+1] =
+			angular_velocity_cov[6+2] = std::pow(angular_stdev, 2);
+
+		std::fill(orientation_cov.begin(),
+				orientation_cov.end(),
+				0.0);
+		orientation_cov[0+0] =
+			orientation_cov[3+1] =
+			orientation_cov[6+2] = std::pow(orientation_stdev, 2);
+
+		imu_pub = nh.advertise<sensor_msgs::Imu>("imu/data", 10);
+		magn_pub = nh.advertise<sensor_msgs::MagneticField>("imu/mag", 10);
+		temp_pub = nh.advertise<sensor_msgs::Imu>("imu/temperature", 10);
+		imu_raw_pub = nh.advertise<sensor_msgs::Imu>("imu/data_raw", 10);
 	}
 
 	std::string get_name() {
@@ -93,14 +120,9 @@ public:
 				imu_msg->linear_acceleration.y = -imu_raw.yacc;
 				imu_msg->linear_acceleration.z = -imu_raw.zacc;
 
-				// TODO: can we fill in the covariance here
-				// from a parameter that we set from the specs/experience?
-				std::fill(imu_msg->orientation_covariance.begin(),
-						imu_msg->orientation_covariance.end(), 0);
-				std::fill(imu_msg->angular_velocity_covariance.begin(),
-						imu_msg->angular_velocity_covariance.end(), 0);
-				std::fill(imu_msg->linear_acceleration_covariance.begin(),
-						imu_msg->linear_acceleration_covariance.end(), 0);
+				imu_msg->orientation_covariance = orientation_cov;
+				imu_msg->angular_velocity_covariance = angular_velocity_cov;
+				imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 				imu_msg->header.frame_id = frame_id;
 				imu_msg->header.seq = imu_raw.time_usec / 1000;
@@ -122,7 +144,7 @@ public:
 				if (imu_raw_pub.getNumSubscribers() > 0 &&
 						imu_raw.fields_updated & 0x003f) {
 					sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
-					// TODO: same as for ATTITUDE
+
 					imu_msg->angular_velocity.x = imu_raw.xgyro;
 					imu_msg->angular_velocity.y = -imu_raw.ygyro;
 					imu_msg->angular_velocity.z = -imu_raw.xgyro;
@@ -131,11 +153,12 @@ public:
 					imu_msg->linear_acceleration.y = -imu_raw.yacc;
 					imu_msg->linear_acceleration.z = -imu_raw.zacc;
 
+					std::fill(imu_msg->orientation_covariance.begin(),
+							imu_msg->orientation_covariance.end(), 0);
 					imu_msg->orientation_covariance[0] = -1;
-					std::fill(imu_msg->angular_velocity_covariance.begin(),
-							imu_msg->angular_velocity_covariance.end(), 0);
-					std::fill(imu_msg->linear_acceleration_covariance.begin(),
-							imu_msg->linear_acceleration_covariance.end(), 0);
+
+					imu_msg->angular_velocity_covariance = angular_velocity_cov;
+					imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 					imu_msg->header = header;
 					imu_raw_pub.publish(imu_msg);
@@ -181,6 +204,9 @@ private:
 	ros::Publisher temp_pub;
 
 	mavlink_highres_imu_t imu_raw;
+	boost::array<double, 9> linear_acceleration_cov;
+	boost::array<double, 9> angular_velocity_cov;
+	boost::array<double, 9> orientation_cov;
 };
 
 }; // namespace mavplugin
