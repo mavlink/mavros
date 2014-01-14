@@ -25,14 +25,21 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-//#include <boost/variant.hpp>
 #include <boost/any.hpp>
+
+#include <std_srvs/Empty.h>
+#include <mavros/ParamSet.h>
+#include <mavros/ParamGet.h>
 
 namespace mavplugin {
 
+/**
+ * @brief Parameter storage
+ *
+ * Stores parameter value.
+ */
 class Parameter {
 public:
-	//typedef boost::variant<uint8_t, int8_t, uint16_t, int16_t, float> param_t;
 	typedef boost::any param_t;
 
 	std::string param_id;
@@ -41,6 +48,9 @@ public:
 	uint16_t param_count;
 	bool update_pending_ack;
 
+	/**
+	 * Convert mavlink_param_value_t to internal format
+	 */
 	static param_t from_param_value(mavlink_param_value_t &pmsg) {
 		mavlink_param_union_t uv;
 		uv.param_float = pmsg.param_value;
@@ -72,6 +82,9 @@ public:
 		};
 	}
 
+	/**
+	 * Variation of @a Parameter::from_param_value with quirks for ArduPilotMega
+	 */
 	static param_t from_param_value_apm_quirk(mavlink_param_value_t &pmsg) {
 		switch (pmsg.param_type) {
 		case MAV_PARAM_TYPE_UINT8:
@@ -99,7 +112,115 @@ public:
 			return param_t();
 		};
 	}
+
+	static std::string to_string_vt(param_t p) {
+		std::ostringstream sout;
+
+		if (p.type() == typeid(uint8_t))
+			sout << (unsigned) boost::any_cast<uint8_t>(p) << " ub";
+		else if (p.type() == typeid(int8_t))
+			sout << (int) boost::any_cast<int8_t>(p) << " b";
+		else if (p.type() == typeid(uint16_t))
+			sout << boost::any_cast<uint16_t>(p) << " us";
+		else if (p.type() == typeid(int16_t))
+			sout << boost::any_cast<int16_t>(p) << " s";
+		else if (p.type() == typeid(uint32_t))
+			sout << boost::any_cast<uint32_t>(p) << " ui";
+		else if (p.type() == typeid(int32_t))
+			sout << boost::any_cast<int32_t>(p) << " i";
+		else if (p.type() == typeid(float))
+			sout << boost::any_cast<float>(p) << " f";
+		else {
+			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			sout << "UNK " << p.type().name();
+		}
+
+		return sout.str();
+	};
+
+	/**
+	 * Convert internal type to mavlink_param_union_t
+	 */
+	static mavlink_param_union_t to_param_union(param_t p) {
+		mavlink_param_union_t ret;
+
+		if (p.type() == typeid(uint8_t)) {
+			ret.param_uint8 = boost::any_cast<uint8_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT8;
+		}
+		else if (p.type() == typeid(int8_t)) {
+			ret.param_int8 = boost::any_cast<int8_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT8;
+		}
+		else if (p.type() == typeid(uint16_t)) {
+			ret.param_uint16 = boost::any_cast<uint16_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT16;
+		}
+		else if (p.type() == typeid(int16_t)){
+			ret.param_int16 = boost::any_cast<int16_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT16;
+		}
+		else if (p.type() == typeid(uint32_t)) {
+			ret.param_uint32 = boost::any_cast<uint32_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT32;
+		}
+		else if (p.type() == typeid(int32_t)) {
+			ret.param_int32 = boost::any_cast<int32_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT32;
+		}
+		else if (p.type() == typeid(float)) {
+			ret.param_float = boost::any_cast<float>(p);
+			ret.type = MAV_PARAM_TYPE_REAL32;
+		}
+		else {
+			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+		}
+
+		return ret;
+	};
+
+	/**
+	 * Variation of @a Parameter::to_param_union with quirks for ArduPilotMega
+	 */
+	static mavlink_param_union_t to_param_union_apm_quirk(param_t p) {
+		mavlink_param_union_t ret;
+
+		if (p.type() == typeid(uint8_t)) {
+			ret.param_float = boost::any_cast<uint8_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT8;
+		}
+		else if (p.type() == typeid(int8_t)) {
+			ret.param_float = boost::any_cast<int8_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT8;
+		}
+		else if (p.type() == typeid(uint16_t)) {
+			ret.param_float = boost::any_cast<uint16_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT16;
+		}
+		else if (p.type() == typeid(int16_t)){
+			ret.param_float = boost::any_cast<int16_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT16;
+		}
+		else if (p.type() == typeid(uint32_t)) {
+			ret.param_float = boost::any_cast<uint32_t>(p);
+			ret.type = MAV_PARAM_TYPE_UINT32;
+		}
+		else if (p.type() == typeid(int32_t)) {
+			ret.param_float = boost::any_cast<int32_t>(p);
+			ret.type = MAV_PARAM_TYPE_INT32;
+		}
+		else if (p.type() == typeid(float)) {
+			ret.param_float = boost::any_cast<float>(p);
+			ret.type = MAV_PARAM_TYPE_REAL32;
+		}
+		else {
+			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+		}
+
+		return ret;
+	};
 };
+
 
 class ParamPlugin : public MavRosPlugin {
 public:
@@ -114,7 +235,9 @@ public:
 		mav_link = mav_link_;
 		mav_context = &context;
 
-		//param_request_list();
+		param_nh = ros::NodeHandle(nh, "param");
+
+		fetch_srv = param_nh.advertiseService("fetch", &ParamPlugin::fetch_cb, this);
 	}
 
 	std::string get_name() {
@@ -131,7 +254,8 @@ public:
 		mavlink_param_value_t pmsg;
 		mavlink_msg_param_value_decode(msg, &pmsg);
 
-		std::string param_id(pmsg.param_id, sizeof(pmsg.param_id));
+		std::string param_id(pmsg.param_id,
+				strnlen(pmsg.param_id, sizeof(pmsg.param_id)));
 
 		boost::mutex::scoped_lock lock(lock_);
 		// search
@@ -149,7 +273,7 @@ public:
 					"Param " << param_id << " index/count changed! FCU changed?");
 			ROS_DEBUG_STREAM_NAMED("mavros", "Update param " << param_id <<
 					" (" << p->param_index << "/" << p->param_count <<
-					")"); // value: " << p->param_value);
+					") value: " << Parameter::to_string_vt(p->param_value));
 		}
 		else {
 			// insert new element
@@ -164,7 +288,7 @@ public:
 
 			ROS_DEBUG_STREAM_NAMED("mavros", "New param " << param_id <<
 					" (" << p.param_index << "/" << p.param_count <<
-					")"); // value: " << p.param_value);
+					") value: " << Parameter::to_string_vt(p.param_value));
 		}
 	}
 
@@ -174,6 +298,10 @@ private:
 	MavContext *mav_context;
 	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
 
+	ros::NodeHandle param_nh;
+	ros::ServiceServer fetch_srv;
+	ros::ServiceServer update_srv;
+
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (mav_context->is_ardupilotmega())
 			return Parameter::from_param_value_apm_quirk(msg);
@@ -181,15 +309,67 @@ private:
 			return Parameter::from_param_value(msg);
 	}
 
+	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
+		if (mav_context->is_ardupilotmega())
+			return Parameter::to_param_union_apm_quirk(p);
+		else
+			return Parameter::to_param_union(p);
+	}
+
 	void param_request_list() {
 		mavlink_message_t msg;
-		mavlink_param_request_list_t rql = {
-			mav_context->get_tgt_system(),
-			mav_context->get_tgt_component()
-		};
 
-		mavlink_msg_param_request_list_encode(0, 0, &msg, &rql);
+		mavlink_msg_param_request_list_pack(0, 0, &msg,
+				mav_context->get_tgt_system(),
+				mav_context->get_tgt_component()
+				);
 		mav_link->send_message(&msg);
+	}
+
+	void param_request_read(std::string id, int16_t index=-1) {
+		ROS_ASSERT(index >= -1);
+
+		mavlink_message_t msg;
+		char param_id[sizeof(mavlink_param_request_read_t::param_id)];
+
+		if (index != -1) {
+			// by specs if len < 16: place null termination
+			// else if len == 16: don't
+			strncpy(param_id, id.c_str(), sizeof(param_id));
+		}
+		else
+			param_id[0] = '\0'; // force NULL termination
+
+		mavlink_msg_param_request_read_pack(0, 0, &msg,
+				mav_context->get_tgt_system(),
+				mav_context->get_tgt_component(),
+				param_id,
+				index
+				);
+		mav_link->send_message(&msg);
+	}
+
+	void param_set(Parameter &param) {
+		mavlink_param_union_t pu = to_param_union(param.param_value);
+
+		mavlink_message_t msg;
+		char param_id[sizeof(mavlink_param_set_t::param_id)];
+		strncpy(param_id, param.param_id.c_str(), sizeof(param_id));
+
+		mavlink_msg_param_set_pack(0, 0, &msg,
+				mav_context->get_tgt_system(),
+				mav_context->get_tgt_component(),
+				param_id,
+				pu.param_float,
+				pu.type
+				);
+		mav_link->send_message(&msg);
+	}
+
+	bool fetch_cb(std_srvs::Empty::Request &req,
+			std_srvs::Empty::Response &res) {
+		param_request_list();
+		return true;
 	}
 };
 
