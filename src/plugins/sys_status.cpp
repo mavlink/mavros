@@ -207,7 +207,8 @@ public:
 				mavlink_statustext_t textm;
 				mavlink_msg_statustext_decode(msg, &textm);
 
-				std::string text(textm.text, sizeof(textm.text));
+				std::string text(textm.text,
+						strnlen(textm.text, sizeof(textm.text)));
 
 				if (mav_context->is_ardupilotmega())
 					process_statustext_apm_quirk(textm.severity, text);
