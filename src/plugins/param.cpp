@@ -237,7 +237,10 @@ public:
 
 		param_nh = ros::NodeHandle(nh, "param");
 
-		fetch_srv = param_nh.advertiseService("fetch", &ParamPlugin::fetch_cb, this);
+		pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
+		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
+		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
+		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 	}
 
 	std::string get_name() {
@@ -299,8 +302,10 @@ private:
 	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
 
 	ros::NodeHandle param_nh;
-	ros::ServiceServer fetch_srv;
-	ros::ServiceServer update_srv;
+	ros::ServiceServer pull_srv;
+	ros::ServiceServer push_srv;
+	ros::ServiceServer set_srv;
+	ros::ServiceServer get_srv;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (mav_context->is_ardupilotmega())
@@ -366,10 +371,47 @@ private:
 		mav_link->send_message(&msg);
 	}
 
-	bool fetch_cb(std_srvs::Empty::Request &req,
-			std_srvs::Empty::Response &res) {
+	bool fetch_all() {
 		param_request_list();
 		return true;
+	}
+
+	/**
+	 * @brief fetches all parameters from device
+	 * @service ~param/pull
+	 * TODO blocking
+	 */
+	bool pull_cb(std_srvs::Empty::Request &req,
+			std_srvs::Empty::Response &res) {
+		return fetch_all();
+	}
+
+	/**
+	 * @brief push all parameter value to device
+	 * @service ~param/push
+	 * TODO blocking, success return
+	 */
+	bool push_cb(std_srvs::Empty::Request &req,
+			std_srvs::Empty::Response &res) {
+		return false;
+	}
+
+	/**
+	 * @brief sets parameter value
+	 * @service ~param/set
+	 */
+	bool set_cb(mavros::ParamSet::Request &req,
+			mavros::ParamSet::Response &res) {
+		return false;
+	}
+
+	/**
+	 * @brief get parameter
+	 * @service ~param/get
+	 */
+	bool get_cb(mavros::ParamGet::Request &req,
+			mavros::ParamGet::Response &res) {
+		return false;
 	}
 };
 
