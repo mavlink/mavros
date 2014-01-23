@@ -44,13 +44,13 @@ public:
 	{};
 
 	void set_gps_raw(mavlink_gps_raw_int_t &gps) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		satellites_visible = gps.satellites_visible;
 		fix_type = gps.fix_type;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		if (satellites_visible < 0)
 			stat.summary(2, "No satellites");
@@ -66,7 +66,7 @@ public:
 	}
 
 private:
-	boost::mutex lock_;
+	boost::recursive_mutex mutex;
 	ssize_t satellites_visible;
 	int fix_type;
 };

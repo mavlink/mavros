@@ -50,7 +50,7 @@ public:
 	}
 
 	void clear() {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		ros::Time curtime = ros::Time::now();
 		count_ = 0;
 
@@ -64,13 +64,13 @@ public:
 	}
 
 	void tick(mavlink_heartbeat_t &hb_struct) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		count_++;
 		last_hb = hb_struct;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		ros::Time curtime = ros::Time::now();
 		int curseq = count_;
 		int events = curseq - seq_nums_[hist_indx_];
@@ -109,7 +109,7 @@ private:
 	std::vector<ros::Time> times_;
 	std::vector<int> seq_nums_;
 	int hist_indx_;
-	boost::mutex lock_;
+	boost::recursive_mutex mutex;
 	const size_t window_size_;
 	const double min_freq_;
 	const double max_freq_;
@@ -128,13 +128,13 @@ public:
 	{};
 
 	void set(uint16_t f, uint16_t b) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		freemem = f;
 		brkval = b;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		if (freemem < 0)
 			stat.summary(2, "No data");
@@ -148,7 +148,7 @@ public:
 	}
 
 private:
-	boost::mutex lock_;
+	boost::recursive_mutex mutex;
 	ssize_t freemem;
 	uint16_t brkval;
 };

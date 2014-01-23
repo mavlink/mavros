@@ -265,7 +265,7 @@ public:
 		std::string param_id(pmsg.param_id,
 				strnlen(pmsg.param_id, sizeof(pmsg.param_id)));
 
-		boost::mutex::scoped_lock lock(lock_);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		// search
 		std::map<std::string, Parameter>::iterator
 			param_it = parameters.find(param_id);
@@ -302,7 +302,7 @@ public:
 
 private:
 	std::map<std::string, Parameter> parameters;
-	boost::mutex lock_;
+	boost::recursive_mutex mutex;
 	MavContext *mav_context;
 	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
 
