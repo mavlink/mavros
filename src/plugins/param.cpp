@@ -25,6 +25,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/any.hpp>
 
 #include <std_srvs/Empty.h>
@@ -243,7 +244,8 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
-		//mav_context->sig_connection_changed.connect(informer);
+		param_timer.reset(new boost::asio::deadline_timer(timer_service));
+		mav_context->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
 	std::string get_name() {
@@ -310,6 +312,8 @@ private:
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
 
+	std::unique_ptr<boost::asio::deadline_timer> param_timer;
+
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (mav_context->is_ardupilotmega())
 			return Parameter::from_param_value_apm_quirk(msg);
@@ -374,8 +378,27 @@ private:
 		mav_link->send_message(&msg);
 	}
 
-	bool fetch_all() {
+	void connection_cb(bool connected) {
+		if (connected) {
+			param_timer->cancel();
+			param_timer->expires_from_now(boost::posix_time::seconds(20)); // APM boot time ~20 sec
+			param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
+		}
+		else {
+			/* TODO: stop param requests */
+		}
+	}
+
+	void start_fetch_cb(boost::system::error_code error) {
+		if (error)
+			return;
+
+		ROS_DEBUG_NAMED("mavros", "Requesting parameters");
 		param_request_list();
+	}
+
+	bool fetch_all() {
+		start_fetch_cb(boost::system::error_code());
 		return true;
 	}
 
