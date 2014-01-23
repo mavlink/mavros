@@ -21,6 +21,7 @@
  */
 
 #include "mavconn_serial.h"
+#include <mavros/utils.h>
 #include <ros/console.h>
 #include <ros/assert.h>
 
@@ -45,6 +46,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	boost::thread t(boost::bind(&asio::io_service::run, &this->io_service));
+	mavutils::set_thread_name(t, "MAVConnSerial%d", channel);
 	io_thread.swap(t);
 }
 

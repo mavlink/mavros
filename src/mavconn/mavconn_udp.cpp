@@ -21,6 +21,7 @@
  */
 
 #include "mavconn_udp.h"
+#include <mavros/utils.h>
 #include <ros/console.h>
 #include <ros/assert.h>
 
@@ -70,6 +71,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	boost::thread t(boost::bind(&boost::asio::io_service::run, &this->io_service));
+	mavutils::set_thread_name(t, "MAVConnUDP%d", channel);
 	io_thread.swap(t);
 }
 
