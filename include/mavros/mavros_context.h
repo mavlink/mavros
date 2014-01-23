@@ -38,7 +38,8 @@ public:
 		type(MAV_TYPE_GENERIC),
 		autopilot(MAV_AUTOPILOT_GENERIC),
 		target_system(1),
-		target_component(1)
+		target_component(1),
+		connected(false)
 	{};
 	~MavContext() {};
 
@@ -50,6 +51,18 @@ public:
 
 		type = static_cast<enum MAV_TYPE>(type_);
 		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
+	};
+
+	/**
+	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
+	 */
+	void update_connection_status(bool conn_) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (conn_ != connected) {
+			connected = conn_;
+			sig_connection_changed(connected);
+		}
 	};
 
 	inline enum MAV_TYPE get_type() {
@@ -82,12 +95,25 @@ public:
 		return MAV_AUTOPILOT_ARDUPILOTMEGA == get_autopilot();
 	};
 
+	/**
+	 * This signal emith when status was changes
+	 *
+	 * @param bool connection status
+	 */
+	boost::signals2::signal<void(bool)> sig_connection_changed;
+
+	inline bool get_connection_status() {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		return connected;
+	};
+
 private:
 	boost::recursive_mutex mutex;
 	enum MAV_TYPE type;
 	enum MAV_AUTOPILOT autopilot;
 	uint8_t target_system;
 	uint8_t target_component;
+	bool connected;
 };
 
 }; // namespace mavplugin

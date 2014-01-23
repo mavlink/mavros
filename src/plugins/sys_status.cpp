@@ -25,6 +25,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace mavplugin {
 
@@ -164,13 +165,21 @@ public:
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
 			diagnostic_updater::Updater &diag_updater,
-			MavContext &context) {
+			MavContext &context,
+			boost::asio::io_service &timer_service)
+	{
 
 		mav_context = &context;
 		diag_updater.add(hb_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
 #endif
+
+		double conn_timeout_d;
+		nh.param("conn_timeout", conn_timeout_d, 30.0);
+		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
+
+		timeout_timer.reset(new boost::asio::deadline_timer(timer_service, conn_timeout));
 	}
 
 	std::string get_name() {
@@ -192,10 +201,17 @@ public:
 		switch (msg->msgid) {
 		case MAVLINK_MSG_ID_HEARTBEAT:
 			{
+				ros::Time curtime = ros::Time::now();
 				mavlink_heartbeat_t hb;
 				mavlink_msg_heartbeat_decode(msg, &hb);
 				hb_diag.tick(hb);
+
+				// update context && setup connection timeout
 				mav_context->update_heartbeat(hb.type, hb.autopilot);
+				mav_context->update_connection_status(true);
+				timeout_timer->cancel();
+				timeout_timer->expires_from_now(conn_timeout);
+				timeout_timer->async_wait(boost::bind(&SystemStatusPlugin::timeout_cb, this, _1));
 			}
 			break;
 
@@ -233,6 +249,8 @@ private:
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
 	MavContext *mav_context;
+	boost::posix_time::time_duration conn_timeout;
+	std::unique_ptr<boost::asio::deadline_timer> timeout_timer;
 
 	void process_statustext_normal(uint8_t severity, std::string &text) {
 		switch (severity) {
@@ -282,6 +300,13 @@ private:
 			break;
 		};
 
+	}
+
+	void timeout_cb(boost::system::error_code error) {
+		if (error)
+			return;
+
+		mav_context->update_connection_status(false);
 	}
 };
 

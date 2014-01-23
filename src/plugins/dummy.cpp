@@ -38,7 +38,8 @@ public:
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
 			diagnostic_updater::Updater &diag_updater,
-			MavContext &context)
+			MavContext &context,
+			boost::asio::io_service &timer_service)
 	{
 		std::cout << "initialize" << std::endl;
 	};

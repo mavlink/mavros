@@ -31,6 +31,7 @@
 
 #include <pluginlib/class_loader.h>
 #include <mavros/mavros_plugin.h>
+#include <mavros/utils.h>
 
 #include <mavros/Mavlink.h>
 
@@ -91,7 +92,9 @@ public:
 		serial_link_diag("FCU connection"),
 		udp_link_diag("UDP bridge"),
 		plugin_loader("mavros", "mavplugin::MavRosPlugin"),
-		message_route_table(256)
+		message_route_table(256),
+		timer_service(),
+		timer_work(new asio::io_service::work(timer_service))
 	{
 		std::string serial_port;
 		int serial_baud;
@@ -133,6 +136,11 @@ public:
 		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
 		udp_link_diag.set_mavconn(udp_link);
 
+		// run io_service for async timers
+		boost::thread t(boost::bind(&boost::asio::io_service::run, &this->timer_service));
+		mavutils::set_thread_name(t, "TimerService");
+		timer_thread.swap(t);
+
 		std::vector<std::string> plugins = plugin_loader.getDeclaredClasses();
 		loaded_plugins.reserve(plugins.size());
 		for (std::vector<std::string>::iterator it = plugins.begin();
@@ -153,6 +161,9 @@ public:
 
 			loop_rate.sleep();
 		}
+
+		timer_work.reset();
+		timer_service.stop();
 	};
 
 private:
@@ -173,6 +184,11 @@ private:
 	std::vector<sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> >
 		message_route_table; // link interface -> router -> plugin callback
 	MavContext mav_context;
+
+	// for plugin timers
+	asio::io_service timer_service;
+	std::unique_ptr<asio::io_service::work> timer_work;
+	boost::thread timer_thread;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 		Mavlink rmsg;
@@ -211,7 +227,8 @@ private:
 
 		try {
 			plugin = plugin_loader.createInstance(pl_name);
-			plugin->initialize(node_handle, serial_link, diag_updater, mav_context);
+			plugin->initialize(node_handle, serial_link, diag_updater,
+					mav_context, timer_service);
 			loaded_plugins.push_back(plugin);
 
 			ROS_INFO_STREAM_NAMED("mavros", "Plugin " << plugin->get_name() <<

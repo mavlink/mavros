@@ -81,7 +81,8 @@ public:
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
 			diagnostic_updater::Updater &diag_updater,
-			MavContext &context)
+			MavContext &context,
+			boost::asio::io_service &timer_service)
 	{
 		nh.param<std::string>("gps/frame_id", frame_id, "gps");
 		nh.param<std::string>("gps/time_ref_source", time_ref_source, frame_id);

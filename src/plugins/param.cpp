@@ -230,7 +230,8 @@ public:
 	void initialize(ros::NodeHandle &nh,
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link_,
 			diagnostic_updater::Updater &diag_updater,
-			MavContext &context)
+			MavContext &context,
+			boost::asio::io_service &timer_service)
 	{
 		mav_link = mav_link_;
 		mav_context = &context;
@@ -241,6 +242,8 @@ public:
 		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
+
+		//mav_context->sig_connection_changed.connect(informer);
 	}
 
 	std::string get_name() {
