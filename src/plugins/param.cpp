@@ -251,15 +251,71 @@ public:
 		else
 			return 0.0;
 	};
-};
 
+	/**
+	 * Convert internal value to rosparam XmlRpcValue
+	 */
+	static XmlRpc::XmlRpcValue to_xmlrpc_value(param_t &p) {
+		if (p.type() == typeid(uint8_t))
+			return (int) boost::any_cast<uint8_t>(p);
+		else if (p.type() == typeid(int8_t))
+			return (int) boost::any_cast<int8_t>(p);
+		else if (p.type() == typeid(uint16_t))
+			return (int) boost::any_cast<uint16_t>(p);
+		else if (p.type() == typeid(int16_t))
+			return (int) boost::any_cast<int16_t>(p);
+		else if (p.type() == typeid(uint32_t))
+			return (int) boost::any_cast<uint32_t>(p);
+		else if (p.type() == typeid(int32_t))
+			return (int) boost::any_cast<int32_t>(p);
+		else if (p.type() == typeid(float))
+			return (double) boost::any_cast<float>(p);
+		else {
+			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			return XmlRpc::XmlRpcValue();
+		}
+	};
+
+	/**
+	 * Convert rosparam to internal value
+	 */
+	static param_t from_xmlrpc_value(XmlRpc::XmlRpcValue &xml) {
+		switch (xml.getType()) {
+		case XmlRpc::XmlRpcValue::TypeBoolean:
+			return (uint8_t) static_cast<bool>(xml);
+		case XmlRpc::XmlRpcValue::TypeInt:
+			return static_cast<int32_t>(xml);
+		case XmlRpc::XmlRpcValue::TypeDouble:
+			return (float) static_cast<double>(xml);
+
+		default:
+			ROS_FATAL_NAMED("mavros", "Unsupported XmlRpcValye type: %d", xml.getType());
+			return param_t();
+		};
+	};
+
+	/**
+	 * Exclude this parameters from ~param/push
+	 */
+	static bool check_exclude_param_id(std::string param_id) {
+		return	param_id == "SYSID_SW_MREV"	||
+			param_id == "SYS_NUM_RESETS"	||
+			param_id == "ARSPD_OFFSET"	||
+			param_id == "GND_ABS_PRESS"	||
+			param_id == "GND_TEMP"		||
+			param_id == "CMD_TOTAL"		||
+			param_id == "CMD_INDEX"		||
+			param_id == "LOG_LASTFILE"	||
+			param_id == "FENCE_TOTAL"	||
+			param_id == "FORMAT_VERSION";
+	}
+};
 
 class ParamSetOpt {
 public:
 	Parameter param;
 	int retries_remaining;
 };
-
 
 class ParamPlugin : public MavRosPlugin {
 public:
@@ -465,7 +521,6 @@ private:
 			param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
 		}
 		else {
-			/* TODO: stop param requests */
 			param_timer->cancel();
 		}
 	}
@@ -574,7 +629,17 @@ private:
 		lock.lock();
 		res.param_received = parameters.size();
 
-		/* TODO: prameters -> rosparam */
+		for (std::map<std::string, Parameter>::iterator
+				param_it = parameters.begin();
+				param_it != parameters.end();
+				param_it++) {
+			Parameter *p = &param_it->second;
+			XmlRpc::XmlRpcValue pv = Parameter::to_xmlrpc_value(p->param_value);
+
+			lock.unlock();
+			param_nh.setParam(p->param_id, pv);
+			lock.lock();
+		}
 
 		return true;
 	}
@@ -586,11 +651,48 @@ private:
 	bool push_cb(mavros::ParamPush::Request &req,
 			mavros::ParamPush::Response &res) {
 
-		/* TODO walk throuth ~param/
-		 *  and send one by one to device
-		 */
+		XmlRpc::XmlRpcValue param_dict;
+		if (!param_nh.getParam("", param_dict))
+			return true;
 
-		return false;
+		ROS_ASSERT(param_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
+
+		int tx_count = 0;
+		for (XmlRpc::XmlRpcValue::iterator param = param_dict.begin();
+				param != param_dict.end();
+				param++) {
+			if (Parameter::check_exclude_param_id(param->first)) {
+				ROS_DEBUG_STREAM_NAMED("mavros", "Exclude param: " << param->first);
+				continue;
+			}
+
+			boost::recursive_mutex::scoped_lock lock(mutex);
+			std::map<std::string, Parameter>::iterator
+				param_it = parameters.find(param->first);
+			if (param_it != parameters.end()) {
+				Parameter *p = &param_it->second;
+				Parameter to_send = *p;
+
+				p->pending_ack = true;
+				to_send.param_value = Parameter::from_xmlrpc_value(param->second);
+
+				lock.unlock();
+				start_param_set(to_send);
+				bool set_res = wait_param_set_ack();
+				lock.lock();
+
+				if (set_res)
+					tx_count++;
+			}
+			else {
+				ROS_WARN_STREAM_NAMED("mavros", "Unknown rosparam: " << param->first);
+			}
+		}
+
+		res.success = true;
+		res.param_transfered = tx_count;
+
+		return true;
 	}
 
 	/**
@@ -629,13 +731,16 @@ private:
 
 			res.integer = Parameter::to_integer(p->param_value);
 			res.real = Parameter::to_real(p->param_value);
+
+			XmlRpc::XmlRpcValue pv = Parameter::to_xmlrpc_value(p->param_value);
+			lock.unlock();
+
+			param_nh.setParam(p->param_id, pv);
 		}
 		else {
 			ROS_WARN_STREAM_NAMED("mavros", "ParamSet: Unknown parameter: " << req.param_id);
 			res.success = false;
 		}
-
-		/* TODO: parameter -> rosparam */
 
 		return true;
 	}
