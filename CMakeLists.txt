@@ -61,6 +61,8 @@ add_service_files(
    FILES
    ParamSet.srv
    ParamGet.srv
+   ParamPull.srv
+   ParamPush.srv
 )
 
 ## Generate actions in the 'action' folder

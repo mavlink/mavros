@@ -28,9 +28,10 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/any.hpp>
 
-#include <std_srvs/Empty.h>
 #include <mavros/ParamSet.h>
 #include <mavros/ParamGet.h>
+#include <mavros/ParamPull.h>
+#include <mavros/ParamPush.h>
 
 namespace mavplugin {
 
@@ -47,7 +48,6 @@ public:
 	param_t param_value;
 	uint16_t param_index;
 	uint16_t param_count;
-	bool update_pending_ack;
 
 	/**
 	 * Convert mavlink_param_value_t to internal format
@@ -114,23 +114,26 @@ public:
 		};
 	}
 
+	/**
+	 * Convert internal type to std::string (for debugging)
+	 */
 	static std::string to_string_vt(param_t p) {
 		std::ostringstream sout;
 
 		if (p.type() == typeid(uint8_t))
-			sout << (unsigned) boost::any_cast<uint8_t>(p) << " ub";
+			sout << (unsigned) boost::any_cast<uint8_t>(p) << " ubyte";
 		else if (p.type() == typeid(int8_t))
-			sout << (int) boost::any_cast<int8_t>(p) << " b";
+			sout << (int) boost::any_cast<int8_t>(p) << " byte";
 		else if (p.type() == typeid(uint16_t))
-			sout << boost::any_cast<uint16_t>(p) << " us";
+			sout << boost::any_cast<uint16_t>(p) << " ushort";
 		else if (p.type() == typeid(int16_t))
-			sout << boost::any_cast<int16_t>(p) << " s";
+			sout << boost::any_cast<int16_t>(p) << " short";
 		else if (p.type() == typeid(uint32_t))
-			sout << boost::any_cast<uint32_t>(p) << " ui";
+			sout << boost::any_cast<uint32_t>(p) << " uint";
 		else if (p.type() == typeid(int32_t))
-			sout << boost::any_cast<int32_t>(p) << " i";
+			sout << boost::any_cast<int32_t>(p) << " int";
 		else if (p.type() == typeid(float))
-			sout << boost::any_cast<float>(p) << " f";
+			sout << boost::any_cast<float>(p) << " float";
 		else {
 			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
 			sout << "UNK " << p.type().name();
@@ -234,6 +237,7 @@ public:
 			MavContext &context,
 			boost::asio::io_service &timer_service)
 	{
+		param_count = -1;
 		mav_link = mav_link_;
 		mav_context = &context;
 
@@ -273,7 +277,6 @@ public:
 			// parameter exists
 			Parameter *p = &param_it->second;
 			p->param_value = from_param_value(pmsg);
-			p->update_pending_ack = false;
 
 			ROS_WARN_STREAM_COND_NAMED((p->param_index != pmsg.param_index ||
 					p->param_count != pmsg.param_count),
@@ -290,7 +293,6 @@ public:
 			p.param_index = pmsg.param_index;
 			p.param_count = pmsg.param_count;
 			p.param_value = from_param_value(pmsg);
-			p.update_pending_ack = false;
 
 			parameters[param_id] = p;
 
@@ -298,10 +300,26 @@ public:
 					" (" << p.param_index << "/" << p.param_count <<
 					") value: " << Parameter::to_string_vt(p.param_value));
 		}
+
+		if (in_list_receiving) {
+			/* we received first param. setup list timeout */
+			if (param_count == -1) {
+				param_count = pmsg.param_count;
+				param_timer->cancel();
+				param_timer->expires_from_now(boost::posix_time::milliseconds(LIST_TIMEOUT_MS));
+				param_timer->async_wait(boost::bind(&ParamPlugin::restart_fetch_cb, this, _1));
+			}
+
+			/* index starting from 0, receivig done */
+			if (pmsg.param_index + 1 == param_count) {
+				in_list_receiving = false;
+				param_timer->cancel();
+				list_receiving.notify_all();
+			}
+		}
 	}
 
 private:
-	std::map<std::string, Parameter> parameters;
 	boost::recursive_mutex mutex;
 	MavContext *mav_context;
 	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
@@ -313,6 +331,14 @@ private:
 	ros::ServiceServer get_srv;
 
 	std::unique_ptr<boost::asio::deadline_timer> param_timer;
+	const int BOOTUP_TIME_MS = 10000;	//!< APM boot time
+	const int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
+	const int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
+
+	std::map<std::string, Parameter> parameters;
+	ssize_t param_count;
+	bool in_list_receiving;
+	boost::condition_variable list_receiving;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (mav_context->is_ardupilotmega())
@@ -379,13 +405,18 @@ private:
 	}
 
 	void connection_cb(bool connected) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (connected) {
+			parameters.clear();
+			param_count = -1;
+
 			param_timer->cancel();
-			param_timer->expires_from_now(boost::posix_time::seconds(20)); // APM boot time ~20 sec
+			param_timer->expires_from_now(boost::posix_time::milliseconds(BOOTUP_TIME_MS));
 			param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
 		}
 		else {
 			/* TODO: stop param requests */
+			param_timer->cancel();
 		}
 	}
 
@@ -393,23 +424,68 @@ private:
 		if (error)
 			return;
 
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
 		ROS_DEBUG_NAMED("mavros", "Requesting parameters");
+		in_list_receiving = true;
 		param_request_list();
+
+		// resend PARAM_REQUEST_LIST if no PARAM_VALUE received before timeout
+		param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
+		param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
+	}
+
+	void restart_fetch_cb(boost::system::error_code error) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		in_list_receiving = false;
+		if (!error) {
+			ROS_WARN_NAMED("mavros", "Request parameter list timed out!");
+			param_count = -1;
+		}
+
+		start_fetch_cb(error);
+	}
+
+	bool wait_fetch_all() {
+		boost::mutex cond_mutex;
+		boost::unique_lock<boost::mutex> lock(cond_mutex);
+
+		return list_receiving.timed_wait(lock, boost::posix_time::milliseconds(LIST_TIMEOUT_MS));
 	}
 
 	bool fetch_all() {
 		start_fetch_cb(boost::system::error_code());
-		return true;
+		return wait_fetch_all();
 	}
 
 	/**
 	 * @brief fetches all parameters from device
 	 * @service ~param/pull
-	 * TODO blocking
 	 */
-	bool pull_cb(std_srvs::Empty::Request &req,
-			std_srvs::Empty::Response &res) {
-		return fetch_all();
+	bool pull_cb(mavros::ParamPull::Request &req,
+			mavros::ParamPull::Response &res) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (!in_list_receiving && param_count < 0) {
+			lock.unlock();
+			res.success = fetch_all();
+		}
+		else if (in_list_receiving) {
+			lock.unlock();
+			res.success = wait_fetch_all();
+		}
+		else {
+			lock.unlock();
+			res.success = true;
+		}
+
+		lock.lock();
+		res.param_received = parameters.size();
+
+		/* TODO: prameters -> rosparam */
+
+		return true;
 	}
 
 	/**
@@ -417,8 +493,8 @@ private:
 	 * @service ~param/push
 	 * TODO blocking, success return
 	 */
-	bool push_cb(std_srvs::Empty::Request &req,
-			std_srvs::Empty::Response &res) {
+	bool push_cb(mavros::ParamPush::Request &req,
+			mavros::ParamPush::Response &res) {
 		return false;
 	}
 

@@ -1,0 +1,7 @@
+# Send current send
+#
+# Returns success status and param_transfered count
+
+---
+bool success
+uint32 param_transfered
