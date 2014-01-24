@@ -223,6 +223,33 @@ public:
 
 		return ret;
 	};
+
+	/**
+	 * For get/set services
+	 */
+	static int64_t to_integer(param_t &p) {
+		if (p.type() == typeid(uint8_t))
+			return boost::any_cast<uint8_t>(p);
+		else if (p.type() == typeid(int8_t))
+			return boost::any_cast<int8_t>(p);
+		else if (p.type() == typeid(uint16_t))
+			return boost::any_cast<uint16_t>(p);
+		else if (p.type() == typeid(int16_t))
+			return boost::any_cast<int16_t>(p);
+		else if (p.type() == typeid(uint32_t))
+			return boost::any_cast<uint32_t>(p);
+		else if (p.type() == typeid(int32_t))
+			return boost::any_cast<int32_t>(p);
+		else
+			return 0;
+	};
+
+	static double to_real(param_t &p) {
+		if (p.type() == typeid(float))
+			return boost::any_cast<float>(p);
+		else
+			return 0.0;
+	};
 };
 
 
@@ -513,7 +540,23 @@ private:
 	 */
 	bool get_cb(mavros::ParamGet::Request &req,
 			mavros::ParamGet::Response &res) {
-		return false;
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		std::map<std::string, Parameter>::iterator
+			param_it = parameters.find(req.param_id);
+		if (param_it != parameters.end()) {
+			Parameter *p = &param_it->second;
+
+			res.success = true;
+			res.integer = Parameter::to_integer(p->param_value);
+			res.real = Parameter::to_real(p->param_value);
+		}
+		else {
+			ROS_WARN_STREAM_NAMED("mavros", "ParamGet: Unknown parameter: " << req.param_id);
+			res.success = false;
+		}
+
+		return true;
 	}
 };
 
