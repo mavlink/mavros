@@ -11,3 +11,5 @@ int64 integer
 float64 real
 ---
 bool success
+int64 integer
+float64 real

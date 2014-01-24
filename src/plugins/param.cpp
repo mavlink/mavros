@@ -48,6 +48,7 @@ public:
 	param_t param_value;
 	uint16_t param_index;
 	uint16_t param_count;
+	bool pending_ack;
 
 	/**
 	 * Convert mavlink_param_value_t to internal format
@@ -253,6 +254,13 @@ public:
 };
 
 
+class ParamSetOpt {
+public:
+	Parameter param;
+	int retries_remaining;
+};
+
+
 class ParamPlugin : public MavRosPlugin {
 public:
 	ParamPlugin() {
@@ -262,11 +270,12 @@ public:
 			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link_,
 			diagnostic_updater::Updater &diag_updater,
 			MavContext &context,
-			boost::asio::io_service &timer_service)
+			boost::asio::io_service &timer_service_)
 	{
 		param_count = -1;
 		mav_link = mav_link_;
 		mav_context = &context;
+		timer_service = &timer_service_;
 
 		param_nh = ros::NodeHandle(nh, "param");
 
@@ -275,7 +284,7 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
-		param_timer.reset(new boost::asio::deadline_timer(timer_service));
+		param_timer.reset(new boost::asio::deadline_timer(timer_service_));
 		mav_context->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
@@ -305,10 +314,19 @@ public:
 			Parameter *p = &param_it->second;
 			p->param_value = from_param_value(pmsg);
 
-			ROS_WARN_STREAM_COND_NAMED((p->param_index != pmsg.param_index ||
-					p->param_count != pmsg.param_count),
+			if (p->pending_ack) {
+				p->pending_ack = false;
+				param_timer->cancel();
+				set_acked.notify_all();
+			}
+
+			ROS_WARN_STREAM_COND_NAMED(((p->param_index != pmsg.param_index &&
+						    pmsg.param_index != UINT16_MAX) ||
+						p->param_count != pmsg.param_count),
 					"mavros",
-					"Param " << param_id << " index/count changed! FCU changed?");
+					"Param " << param_id << " index(" << p->param_index <<
+					"->" << pmsg.param_index << ")/count(" << p->param_count <<
+					"->" << pmsg.param_count << ") changed! FCU changed?");
 			ROS_DEBUG_STREAM_NAMED("mavros", "Update param " << param_id <<
 					" (" << p->param_index << "/" << p->param_count <<
 					") value: " << Parameter::to_string_vt(p->param_value));
@@ -320,6 +338,7 @@ public:
 			p.param_index = pmsg.param_index;
 			p.param_count = pmsg.param_count;
 			p.param_value = from_param_value(pmsg);
+			p.pending_ack = false;
 
 			parameters[param_id] = p;
 
@@ -357,6 +376,7 @@ private:
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
 
+	boost::asio::io_service *timer_service;
 	std::unique_ptr<boost::asio::deadline_timer> param_timer;
 	const int BOOTUP_TIME_MS = 10000;	//!< APM boot time
 	const int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
@@ -366,6 +386,9 @@ private:
 	ssize_t param_count;
 	bool in_list_receiving;
 	boost::condition_variable list_receiving;
+	boost::condition_variable set_acked;
+
+	const int RETRIES_COUNT = 3;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (mav_context->is_ardupilotmega())
@@ -486,6 +509,47 @@ private:
 		return wait_fetch_all();
 	}
 
+	void resend_set_cb(boost::system::error_code error, boost::shared_ptr<ParamSetOpt> opt) {
+		if (error)
+			return;
+
+		if (--(opt->retries_remaining) > 0) {
+			boost::recursive_mutex::scoped_lock lock(mutex);
+			param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
+			param_timer->async_wait(boost::bind(&ParamPlugin::resend_set_cb, this, _1, opt));
+		}
+		else {
+			ROS_ERROR_STREAM_NAMED("mavros", "ParamSet: set failed: " << opt->param.param_id);
+		}
+	}
+
+	bool wait_param_set_ack() {
+		boost::mutex cond_mutex;
+		boost::unique_lock<boost::mutex> lock(cond_mutex);
+
+		return set_acked.timed_wait(lock, boost::posix_time::milliseconds(PARAM_TIMEOUT_MS * RETRIES_COUNT));
+	}
+
+	/**
+	 * Prepare resend timer & send PARAM_SET
+	 */
+	void start_param_set(Parameter &param) {
+		boost::shared_ptr<ParamSetOpt> opt(new ParamSetOpt);
+
+		opt->param = param;
+		opt->retries_remaining = RETRIES_COUNT;
+
+		// first try
+		param_set(param);
+
+		{
+			boost::recursive_mutex::scoped_lock lock(mutex);
+			param_timer->cancel();
+			param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
+			param_timer->async_wait(boost::bind(&ParamPlugin::resend_set_cb, this, _1, opt));
+		}
+	}
+
 	/**
 	 * @brief fetches all parameters from device
 	 * @service ~param/pull
@@ -518,10 +582,14 @@ private:
 	/**
 	 * @brief push all parameter value to device
 	 * @service ~param/push
-	 * TODO blocking, success return
 	 */
 	bool push_cb(mavros::ParamPush::Request &req,
 			mavros::ParamPush::Response &res) {
+
+		/* TODO walk throuth ~param/
+		 *  and send one by one to device
+		 */
+
 		return false;
 	}
 
@@ -531,7 +599,45 @@ private:
 	 */
 	bool set_cb(mavros::ParamSet::Request &req,
 			mavros::ParamSet::Response &res) {
-		return false;
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (in_list_receiving || param_count < 0)
+			return false;
+
+		std::map<std::string, Parameter>::iterator
+			param_it = parameters.find(req.param_id);
+		if (param_it != parameters.end()) {
+			Parameter *p = &param_it->second;
+			Parameter to_send = *p;
+
+			p->pending_ack = true;
+
+			// according to ParamSet/Get description
+			if (req.integer > 0)
+				to_send.param_value = (uint32_t) req.integer;
+			else if (req.integer < 0)
+				to_send.param_value = (int32_t) req.integer;
+			else if (req.real != 0.0)
+				to_send.param_value = (float) req.real;
+			else
+				to_send.param_value = (uint32_t) 0;
+
+			lock.unlock();
+			start_param_set(to_send);
+			res.success = wait_param_set_ack();
+			lock.lock();
+
+			res.integer = Parameter::to_integer(p->param_value);
+			res.real = Parameter::to_real(p->param_value);
+		}
+		else {
+			ROS_WARN_STREAM_NAMED("mavros", "ParamSet: Unknown parameter: " << req.param_id);
+			res.success = false;
+		}
+
+		/* TODO: parameter -> rosparam */
+
+		return true;
 	}
 
 	/**
