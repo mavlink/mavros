@@ -6,7 +6,7 @@
  * @addtogroup plugin
  */
 /*
- * Copyright 2013 Vladimir Ermakov.
+ * Copyright 2014 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
