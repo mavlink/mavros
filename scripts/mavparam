@@ -38,32 +38,6 @@ class Parameter(object):
     def __repr__(self):
         return "<Parameter '{}': {}>".format(self.param_id, self.param_value)
 
-    def _to_integer(self):
-        if isinstance(self.param_value, int):
-            return self.param_value
-        else:
-            return 0
-
-    def _to_real(self):
-        if isinstance(self.param_value, float):
-            return self.param_value
-        else:
-            return 0.0
-
-    def to_msg_int_real(self):
-        return (
-            self._to_integer,
-            self._to_real
-        )
-
-    def from_msg(self, integer, real):
-        if integer != 0:
-            self.param_value = integer
-        elif real != 0:
-            self.param_value = real
-        else:
-            self.param_value = 0
-
 
 class ParamFile(object):
     """Base class for param file parsers"""
@@ -96,7 +70,7 @@ class MissionPlannerParam(ParamFile):
             if len(data) != 2:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[0], to_numeric(data[1]));
+            yield Parameter(data[0].strip(), to_numeric(data[1]));
 
     def write(self, file_, parameters):
         writer = csv.writer(file_, self.CSVDialect)
