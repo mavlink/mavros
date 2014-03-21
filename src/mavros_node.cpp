@@ -135,9 +135,9 @@ public:
 		mav_uas.set_tgt(tgt_system_id, tgt_component_id);
 		mav_uas.set_mav_link(serial_link);
 
-		std::vector<std::string> plugins = plugin_loader.getDeclaredClasses();
+		auto plugins = plugin_loader.getDeclaredClasses();
 		loaded_plugins.reserve(plugins.size());
-		for (std::vector<std::string>::iterator it = plugins.begin();
+		for (auto it = plugins.begin();
 				it != plugins.end();
 				++it)
 			add_plugin(*it);
@@ -223,7 +223,7 @@ private:
 					" [alias " << pl_name << "] loaded and initialized");
 
 			std::vector<uint8_t> sup_msgs = plugin->get_supported_messages();
-			for (std::vector<uint8_t>::iterator it = sup_msgs.begin();
+			for (auto it = sup_msgs.begin();
 					it != sup_msgs.end();
 					++it) {
 				ROS_DEBUG("Route msgid %d to %s", *it, repr_name.c_str());

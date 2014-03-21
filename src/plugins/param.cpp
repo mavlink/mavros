@@ -359,8 +359,7 @@ public:
 
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		// search
-		std::map<std::string, Parameter>::iterator
-			param_it = parameters.find(param_id);
+		auto param_it = parameters.find(param_id);
 		if (param_it != parameters.end()) {
 			// parameter exists
 			Parameter *p = &param_it->second;
@@ -624,12 +623,11 @@ private:
 		lock.lock();
 		res.param_received = parameters.size();
 
-		for (std::map<std::string, Parameter>::iterator
-				param_it = parameters.begin();
+		for (auto param_it = parameters.begin();
 				param_it != parameters.end();
 				param_it++) {
 			Parameter *p = &param_it->second;
-			XmlRpc::XmlRpcValue pv = Parameter::to_xmlrpc_value(p->param_value);
+			auto pv = Parameter::to_xmlrpc_value(p->param_value);
 
 			lock.unlock();
 			param_nh.setParam(p->param_id, pv);
@@ -653,7 +651,7 @@ private:
 		ROS_ASSERT(param_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
 
 		int tx_count = 0;
-		for (XmlRpc::XmlRpcValue::iterator param = param_dict.begin();
+		for (auto param = param_dict.begin();
 				param != param_dict.end();
 				param++) {
 			if (Parameter::check_exclude_param_id(param->first)) {
@@ -662,8 +660,7 @@ private:
 			}
 
 			boost::recursive_mutex::scoped_lock lock(mutex);
-			std::map<std::string, Parameter>::iterator
-				param_it = parameters.find(param->first);
+			auto param_it = parameters.find(param->first);
 			if (param_it != parameters.end()) {
 				Parameter *p = &param_it->second;
 				Parameter to_send = *p;
@@ -701,8 +698,7 @@ private:
 		if (in_list_receiving || param_count < 0)
 			return false;
 
-		std::map<std::string, Parameter>::iterator
-			param_it = parameters.find(req.param_id);
+		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {
 			Parameter *p = &param_it->second;
 			Parameter to_send = *p;
@@ -727,7 +723,7 @@ private:
 			res.integer = Parameter::to_integer(p->param_value);
 			res.real = Parameter::to_real(p->param_value);
 
-			XmlRpc::XmlRpcValue pv = Parameter::to_xmlrpc_value(p->param_value);
+			auto pv = Parameter::to_xmlrpc_value(p->param_value);
 			lock.unlock();
 
 			param_nh.setParam(p->param_id, pv);
@@ -748,8 +744,7 @@ private:
 			mavros::ParamGet::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		std::map<std::string, Parameter>::iterator
-			param_it = parameters.find(req.param_id);
+		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {
 			Parameter *p = &param_it->second;
 
