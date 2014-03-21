@@ -54,6 +54,8 @@ find_package(Boost REQUIRED COMPONENTS system thread timer date_time)
 add_message_files(
   FILES
   Mavlink.msg
+  Waypoint.msg
+  WaypointList.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -63,6 +65,9 @@ add_service_files(
    ParamGet.srv
    ParamPull.srv
    ParamPush.srv
+   WaypointSet.srv
+   WaypointPull.srv
+   WaypointPush.srv
 )
 
 ## Generate actions in the 'action' folder

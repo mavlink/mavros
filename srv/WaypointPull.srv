@@ -1,0 +1,7 @@
+# Requests waypoints from device
+#
+# Returns success status and received count
+
+---
+bool success
+uint32 wp_received

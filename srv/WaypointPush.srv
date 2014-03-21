@@ -1,0 +1,8 @@
+# Send waypoints to device
+#
+# Returns success status and transfered count
+
+mavros/Waypoint[] waypoints
+---
+bool success
+uint32 wp_transfered
