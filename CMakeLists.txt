@@ -188,7 +188,10 @@ target_link_libraries(mavros_plugins
 
 
 ## Declare a cpp executable
-add_executable(mavros_node src/mavros_node.cpp)
+add_executable(mavros_node
+	src/mavros_node.cpp
+	src/uas.cpp
+)
 add_dependencies(mavros_node
   mavros_generate_messages_cpp
   mavconn

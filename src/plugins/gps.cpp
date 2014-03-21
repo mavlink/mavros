@@ -78,11 +78,9 @@ public:
 		gps_diag("FCU GPS")
 	{};
 
-	void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service)
+	void initialize(UAS &uas,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 		nh.param<std::string>("gps/frame_id", frame_id, "gps");
 		nh.param<std::string>("gps/time_ref_source", time_ref_source, frame_id);
@@ -118,7 +116,7 @@ public:
 
 				gps_diag.set_gps_raw(raw_gps);
 				if (raw_gps.fix_type < 2) {
-					ROS_WARN_THROTTLE_NAMED(60, "mavros", "GPS: no fix");
+					ROS_WARN_THROTTLE_NAMED(60, "gps", "GPS: no fix");
 					return;
 				}
 
@@ -178,7 +176,7 @@ public:
 				mavlink_gps_status_t gps_stat;
 				mavlink_msg_gps_status_decode(msg, &gps_stat);
 
-				ROS_DEBUG_NAMED("mavros", "GPS stat sat visible: %d", gps_stat.satellites_visible);
+				ROS_DEBUG_NAMED("gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
 			}
 			break;
 
@@ -188,7 +186,7 @@ public:
 				mavlink_msg_system_time_decode(msg, &mtime);
 
 				if (mtime.time_unix_usec == 0) {
-					ROS_WARN_THROTTLE_NAMED(60, "mavros", "Wrong system time. Is GPS Ok? (boot_ms: %u)",
+					ROS_WARN_THROTTLE_NAMED(60, "gps", "Wrong system time. Is GPS Ok? (boot_ms: %u)",
 							mtime.time_boot_ms);
 					return;
 				}

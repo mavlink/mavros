@@ -49,11 +49,9 @@ public:
 		};
 	};
 
-	void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service)
+	void initialize(UAS &uas,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 		double linear_stdev, angular_stdev, orientation_stdev;
 

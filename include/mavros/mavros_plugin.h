@@ -27,7 +27,7 @@
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavros/mavconn_interface.h>
-#include <mavros/mavros_context.h>
+#include <mavros/mavros_uas.h>
 
 namespace mavplugin {
 
@@ -35,11 +35,9 @@ class MavRosPlugin
 {
 public:
 	virtual ~MavRosPlugin() {};
-	virtual void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service) = 0;
+	virtual void initialize(UAS &uas,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater) = 0;
 	virtual std::string get_name() = 0;
 	virtual std::vector<uint8_t> get_supported_messages() = 0;
 	virtual void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) = 0;

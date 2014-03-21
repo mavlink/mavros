@@ -30,40 +30,27 @@
 namespace mavplugin {
 
 /**
- * @brief MAV Context storage
+ * @brief UAS handler for plugins
  */
-class MavContext {
+class UAS {
 public:
-	MavContext() :
-		type(MAV_TYPE_GENERIC),
-		autopilot(MAV_AUTOPILOT_GENERIC),
-		target_system(1),
-		target_component(1),
-		connected(false)
-	{};
-	~MavContext() {};
+	UAS();
+	~UAS() {};
+
+	/**
+	 * Stop UAS
+	 */
+	void stop(void);
 
 	/**
 	 * Update autopilot type on every HEARTBEAT
 	 */
-	void update_heartbeat(uint8_t type_, uint8_t autopilot_) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
-
-		type = static_cast<enum MAV_TYPE>(type_);
-		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
-	};
+	void update_heartbeat(uint8_t type_, uint8_t autopilot_);
 
 	/**
 	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
 	 */
-	void update_connection_status(bool conn_) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
-
-		if (conn_ != connected) {
-			connected = conn_;
-			sig_connection_changed(connected);
-		}
-	};
+	void update_connection_status(bool conn_);
 
 	inline enum MAV_TYPE get_type() {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -107,6 +94,20 @@ public:
 		return connected;
 	};
 
+	/**
+	 * MAVLink device conection
+	 */
+	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
+
+	inline void set_mav_link(const boost::shared_ptr<mavconn::MAVConnInterface> &link_) {
+		mav_link = link_;
+	};
+
+	/**
+	 * for plugin timers
+	 */
+	boost::asio::io_service timer_service;
+
 private:
 	boost::recursive_mutex mutex;
 	enum MAV_TYPE type;
@@ -114,6 +115,8 @@ private:
 	uint8_t target_system;
 	uint8_t target_component;
 	bool connected;
+	std::unique_ptr<boost::asio::io_service::work> timer_work;
+	boost::thread timer_thread;
 };
 
 }; // namespace mavplugin

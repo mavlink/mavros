@@ -35,11 +35,9 @@ public:
 		std::cout << "dummy constructor" << std::endl;
 	};
 
-	void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service)
+	void initialize(UAS &uas,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 		std::cout << "initialize" << std::endl;
 	};

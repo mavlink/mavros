@@ -162,14 +162,12 @@ public:
 		mem_diag("FCU Memory")
 	{};
 
-	void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service)
+	void initialize(UAS &uas_,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 
-		mav_context = &context;
+		uas = &uas_;
 		diag_updater.add(hb_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
@@ -179,7 +177,7 @@ public:
 		nh.param("conn_timeout", conn_timeout_d, 30.0);
 		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
 
-		timeout_timer.reset(new boost::asio::deadline_timer(timer_service, conn_timeout));
+		timeout_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_timeout));
 	}
 
 	std::string get_name() {
@@ -207,8 +205,8 @@ public:
 				hb_diag.tick(hb);
 
 				// update context && setup connection timeout
-				mav_context->update_heartbeat(hb.type, hb.autopilot);
-				mav_context->update_connection_status(true);
+				uas->update_heartbeat(hb.type, hb.autopilot);
+				uas->update_connection_status(true);
 				timeout_timer->cancel();
 				timeout_timer->expires_from_now(conn_timeout);
 				timeout_timer->async_wait(boost::bind(&SystemStatusPlugin::timeout_cb, this, _1));
@@ -226,7 +224,7 @@ public:
 				std::string text(textm.text,
 						strnlen(textm.text, sizeof(textm.text)));
 
-				if (mav_context->is_ardupilotmega())
+				if (uas->is_ardupilotmega())
 					process_statustext_apm_quirk(textm.severity, text);
 				else
 					process_statustext_normal(textm.severity, text);
@@ -248,7 +246,7 @@ public:
 private:
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
-	MavContext *mav_context;
+	UAS *uas;
 	boost::posix_time::time_duration conn_timeout;
 	std::unique_ptr<boost::asio::deadline_timer> timeout_timer;
 
@@ -258,21 +256,21 @@ private:
 		case MAV_SEVERITY_ALERT:
 		case MAV_SEVERITY_CRITICAL:
 		case MAV_SEVERITY_ERROR:
-			ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		case MAV_SEVERITY_WARNING:
 		case MAV_SEVERITY_NOTICE:
-			ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		case MAV_SEVERITY_INFO:
-			ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		case MAV_SEVERITY_DEBUG:
 		default:
-			ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 		};
 
@@ -281,21 +279,21 @@ private:
 	void process_statustext_apm_quirk(uint8_t severity, std::string &text) {
 		switch (severity) {
 		case 1: // SEVERITY_LOW
-			ROS_INFO_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		case 2: // SEVERITY_MEDIUM
-			ROS_WARN_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		case 3: // SEVERITY_HIGH
 		case 4: // SEVERITY_CRITICAL
 		case 5: // SEVERITY_USER_RESPONSE
-			ROS_ERROR_STREAM_NAMED("mavfcu", "FCU: " << text);
+			ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
 		default:
-			ROS_DEBUG_STREAM_NAMED("mavfcu", "FCU: UNK(" <<
+			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: UNK(" <<
 					(int)severity << "): " << text);
 			break;
 		};
@@ -306,7 +304,7 @@ private:
 		if (error)
 			return;
 
-		mav_context->update_connection_status(false);
+		uas->update_connection_status(false);
 	}
 };
 

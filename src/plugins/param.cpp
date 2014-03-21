@@ -77,7 +77,7 @@ public:
 		case MAV_PARAM_TYPE_UINT64:
 		case MAV_PARAM_TYPE_INT64:
 		case MAV_PARAM_TYPE_REAL64:
-			ROS_WARN_NAMED("mavros", "Unsupported param '%.16s' type: %d, index: %d of %d",
+			ROS_WARN_NAMED("param", "Unsupported param '%.16s' type: %d, index: %d of %d",
 					pmsg.param_id, pmsg.param_type,
 					pmsg.param_index, pmsg.param_count);
 			return param_t();
@@ -108,7 +108,7 @@ public:
 		case MAV_PARAM_TYPE_UINT64:
 		case MAV_PARAM_TYPE_INT64:
 		case MAV_PARAM_TYPE_REAL64:
-			ROS_WARN_NAMED("mavros", "Unsupported param '%.16s' type: %d, index: %d of %d",
+			ROS_WARN_NAMED("param", "Unsupported param '%.16s' type: %d, index: %d of %d",
 					pmsg.param_id, pmsg.param_type,
 					pmsg.param_index, pmsg.param_count);
 			return param_t();
@@ -136,7 +136,7 @@ public:
 		else if (p.type() == typeid(float))
 			sout << boost::any_cast<float>(p) << " float";
 		else {
-			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
 			sout << "UNK " << p.type().name();
 		}
 
@@ -178,7 +178,7 @@ public:
 			ret.type = MAV_PARAM_TYPE_REAL32;
 		}
 		else {
-			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
 		}
 
 		return ret;
@@ -219,7 +219,7 @@ public:
 			ret.type = MAV_PARAM_TYPE_REAL32;
 		}
 		else {
-			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
 		}
 
 		return ret;
@@ -271,7 +271,7 @@ public:
 		else if (p.type() == typeid(float))
 			return (double) boost::any_cast<float>(p);
 		else {
-			ROS_FATAL_STREAM_NAMED("mavros", "Wrong param_t type: " << p.type().name());
+			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
 			return XmlRpc::XmlRpcValue();
 		}
 	};
@@ -289,7 +289,7 @@ public:
 			return (float) static_cast<double>(xml);
 
 		default:
-			ROS_FATAL_NAMED("mavros", "Unsupported XmlRpcValye type: %d", xml.getType());
+			ROS_FATAL_NAMED("param", "Unsupported XmlRpcValye type: %d", xml.getType());
 			return param_t();
 		};
 	};
@@ -322,16 +322,12 @@ public:
 	ParamPlugin() {
 	};
 
-	void initialize(ros::NodeHandle &nh,
-			const boost::shared_ptr<mavconn::MAVConnInterface> &mav_link_,
-			diagnostic_updater::Updater &diag_updater,
-			MavContext &context,
-			boost::asio::io_service &timer_service_)
+	void initialize(UAS &uas_,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 		param_count = -1;
-		mav_link = mav_link_;
-		mav_context = &context;
-		timer_service = &timer_service_;
+		uas = &uas_;
 
 		param_nh = ros::NodeHandle(nh, "param");
 
@@ -340,8 +336,8 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
-		param_timer.reset(new boost::asio::deadline_timer(timer_service_));
-		mav_context->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
+		param_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
+		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
 	std::string get_name() {
@@ -379,11 +375,11 @@ public:
 			ROS_WARN_STREAM_COND_NAMED(((p->param_index != pmsg.param_index &&
 						    pmsg.param_index != UINT16_MAX) ||
 						p->param_count != pmsg.param_count),
-					"mavros",
+					"param",
 					"Param " << param_id << " index(" << p->param_index <<
 					"->" << pmsg.param_index << ")/count(" << p->param_count <<
 					"->" << pmsg.param_count << ") changed! FCU changed?");
-			ROS_DEBUG_STREAM_NAMED("mavros", "Update param " << param_id <<
+			ROS_DEBUG_STREAM_NAMED("param", "Update param " << param_id <<
 					" (" << p->param_index << "/" << p->param_count <<
 					") value: " << Parameter::to_string_vt(p->param_value));
 		}
@@ -398,7 +394,7 @@ public:
 
 			parameters[param_id] = p;
 
-			ROS_DEBUG_STREAM_NAMED("mavros", "New param " << param_id <<
+			ROS_DEBUG_STREAM_NAMED("param", "New param " << param_id <<
 					" (" << p.param_index << "/" << p.param_count <<
 					") value: " << Parameter::to_string_vt(p.param_value));
 		}
@@ -423,8 +419,7 @@ public:
 
 private:
 	boost::recursive_mutex mutex;
-	MavContext *mav_context;
-	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
+	UAS *uas;
 
 	ros::NodeHandle param_nh;
 	ros::ServiceServer pull_srv;
@@ -447,14 +442,14 @@ private:
 	const int RETRIES_COUNT = 3;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
-		if (mav_context->is_ardupilotmega())
+		if (uas->is_ardupilotmega())
 			return Parameter::from_param_value_apm_quirk(msg);
 		else
 			return Parameter::from_param_value(msg);
 	}
 
 	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
-		if (mav_context->is_ardupilotmega())
+		if (uas->is_ardupilotmega())
 			return Parameter::to_param_union_apm_quirk(p);
 		else
 			return Parameter::to_param_union(p);
@@ -464,10 +459,10 @@ private:
 		mavlink_message_t msg;
 
 		mavlink_msg_param_request_list_pack(0, 0, &msg,
-				mav_context->get_tgt_system(),
-				mav_context->get_tgt_component()
+				uas->get_tgt_system(),
+				uas->get_tgt_component()
 				);
-		mav_link->send_message(&msg);
+		uas->mav_link->send_message(&msg);
 	}
 
 	void param_request_read(std::string id, int16_t index=-1) {
@@ -485,12 +480,12 @@ private:
 			param_id[0] = '\0'; // force NULL termination
 
 		mavlink_msg_param_request_read_pack(0, 0, &msg,
-				mav_context->get_tgt_system(),
-				mav_context->get_tgt_component(),
+				uas->get_tgt_system(),
+				uas->get_tgt_component(),
 				param_id,
 				index
 				);
-		mav_link->send_message(&msg);
+		uas->mav_link->send_message(&msg);
 	}
 
 	void param_set(Parameter &param) {
@@ -501,13 +496,13 @@ private:
 		strncpy(param_id, param.param_id.c_str(), sizeof(param_id));
 
 		mavlink_msg_param_set_pack(0, 0, &msg,
-				mav_context->get_tgt_system(),
-				mav_context->get_tgt_component(),
+				uas->get_tgt_system(),
+				uas->get_tgt_component(),
 				param_id,
 				pu.param_float,
 				pu.type
 				);
-		mav_link->send_message(&msg);
+		uas->mav_link->send_message(&msg);
 	}
 
 	void connection_cb(bool connected) {
@@ -531,7 +526,7 @@ private:
 
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		ROS_DEBUG_NAMED("mavros", "Requesting parameters");
+		ROS_DEBUG_NAMED("param", "Requesting parameters");
 		in_list_receiving = true;
 		param_request_list();
 
@@ -545,7 +540,7 @@ private:
 
 		in_list_receiving = false;
 		if (!error) {
-			ROS_WARN_NAMED("mavros", "Request parameter list timed out!");
+			ROS_WARN_NAMED("param", "Request parameter list timed out!");
 			param_count = -1;
 		}
 
@@ -574,7 +569,7 @@ private:
 			param_timer->async_wait(boost::bind(&ParamPlugin::resend_set_cb, this, _1, opt));
 		}
 		else {
-			ROS_ERROR_STREAM_NAMED("mavros", "ParamSet: set failed: " << opt->param.param_id);
+			ROS_ERROR_STREAM_NAMED("param", "ParamSet: set failed: " << opt->param.param_id);
 		}
 	}
 
@@ -738,7 +733,7 @@ private:
 			param_nh.setParam(p->param_id, pv);
 		}
 		else {
-			ROS_WARN_STREAM_NAMED("mavros", "ParamSet: Unknown parameter: " << req.param_id);
+			ROS_WARN_STREAM_NAMED("param", "ParamSet: Unknown parameter: " << req.param_id);
 			res.success = false;
 		}
 
@@ -763,7 +758,7 @@ private:
 			res.real = Parameter::to_real(p->param_value);
 		}
 		else {
-			ROS_WARN_STREAM_NAMED("mavros", "ParamGet: Unknown parameter: " << req.param_id);
+			ROS_WARN_STREAM_NAMED("param", "ParamGet: Unknown parameter: " << req.param_id);
 			res.success = false;
 		}
 
