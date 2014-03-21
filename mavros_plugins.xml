@@ -14,5 +14,8 @@
 	<class name="param" type="mavplugin::ParamPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Access to FCU parameters.</description>
 	</class>
+	<class name="waypoint" type="mavplugin::WaypointPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Access to FCU mission.</description>
+	</class>
 </library>
 

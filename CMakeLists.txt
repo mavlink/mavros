@@ -174,6 +174,7 @@ add_library(mavros_plugins
   src/plugins/imu_pub.cpp
   src/plugins/gps.cpp
   src/plugins/param.cpp
+  src/plugins/waypoint.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp
