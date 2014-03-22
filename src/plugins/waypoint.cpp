@@ -141,7 +141,10 @@ public:
 
 class WaypointPlugin : public MavRosPlugin {
 public:
-	WaypointPlugin() {
+	WaypointPlugin() :
+		wp_state(WP_IDLE),
+		wp_retries(RETRIES_COUNT)
+	{
 	};
 
 	void initialize(UAS &uas_,
@@ -150,7 +153,6 @@ public:
 	{
 		uas = &uas_;
 		wp_state = WP_IDLE;
-		wp_retries = RETRIES_COUNT;
 
 		wp_nh = ros::NodeHandle(nh, "mission");
 
@@ -240,7 +242,7 @@ private:
 		WP_TXWP,
 		WP_CLEAR,
 		WP_SET_CUR
-	} wp_state = WP_IDLE;
+	} wp_state;
 
 	size_t wp_count;
 	size_t wp_cur_id;
@@ -283,7 +285,6 @@ private:
 					" y: " << wpi.y_long <<
 					" z: " << wpi.z_alt);
 
-			wp_retries = RETRIES_COUNT;
 			waypoints.push_back(wpi);
 			if (++wp_cur_id < wp_count) {
 				restart_timeout_timer();
@@ -299,14 +300,13 @@ private:
 	void handle_mission_request(mavlink_mission_request_t &mreq) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		if ((wp_state == WP_TXLIST && mreq.seq == 0) || (wp_state == WP_TXWP)) {
-			if (mreq.seq != wp_cur_id || mreq.seq != wp_cur_id + 1) {
-				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request");
+			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
+				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
+						mreq.seq, wp_cur_id);
 				return;
 			}
 
-			wp_retries = RETRIES_COUNT;
 			restart_timeout_timer();
-
 			if (mreq.seq < send_waypoints.size()) {
 				wp_state = WP_TXWP;
 				wp_cur_id = mreq.seq;
@@ -316,7 +316,7 @@ private:
 				ROS_ERROR_NAMED("wp", "WP: FCU require seq out of range");
 		}
 		else
-			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state");
+			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state %d", wp_state);
 	}
 
 	void handle_mission_current(mavlink_mission_current_t &mcur) {
@@ -333,7 +333,6 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: count %d", mcnt.count);
 
 			wp_count = mcnt.count;
-			wp_retries = RETRIES_COUNT;
 			wp_cur_id = 0;
 
 			waypoints.clear();
@@ -366,8 +365,7 @@ private:
 				&& (wp_cur_id == send_waypoints.size() - 1)
 				&& (mack.type == MAV_MISSION_ACCEPTED)) {
 
-			wp_timer->cancel();
-			wp_state = WP_IDLE;
+			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
 
@@ -377,8 +375,7 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: mission sended");
 		}
 		else if (wp_state == WP_TXLIST || wp_state == WP_TXWP) {
-			wp_timer->cancel();
-			wp_state = WP_IDLE;
+			go_idle();
 			/* use this flag for failure report */
 			is_timedout = true;
 			lock.unlock();
@@ -449,11 +446,11 @@ private:
 				break;
 			}
 
-			restart_timeout_timer();
+			restart_timeout_timer_int();
 		}
 		else {
 			ROS_ERROR_NAMED("wp", "WP: timed out.");
-			wp_state = WP_IDLE;
+			wp_state = WP_IDLE; // go_idle()
 			is_timedout = true;
 			/* prevent waiting cond var timeout */
 			list_receiving.notify_all();
@@ -465,13 +462,22 @@ private:
 		/* possibly not needed if count == 0 (QGC impl) */
 		mission_ack(MAV_MISSION_ACCEPTED);
 
-		wp_state = WP_IDLE;
-		wp_timer->cancel();
+		go_idle();
 		list_receiving.notify_all();
 		ROS_DEBUG_NAMED("wp", "WP: mission received");
 	}
 
+	void go_idle(void) {
+		wp_state = WP_IDLE;
+		wp_timer->cancel();
+	}
+
 	void restart_timeout_timer(void) {
+		wp_retries = RETRIES_COUNT;
+		restart_timeout_timer_int();
+	}
+
+	void restart_timeout_timer_int(void) {
 		is_timedout = false;
 		wp_timer->cancel();
 		wp_timer->expires_from_now(boost::posix_time::milliseconds(WP_TIMEOUT_MS));
@@ -624,7 +630,7 @@ private:
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
-			/* Wrong initial state, other operation in progress? */
+			// Wrong initial state, other operation in progress?
 			return false;
 
 		wp_state = WP_RXLIST;
@@ -640,6 +646,7 @@ private:
 
 		lock.unlock();
 		publish_waypoints();
+		go_idle(); // not nessessary, but prevents from blocking
 		return true;
 	}
 
@@ -648,7 +655,7 @@ private:
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
-			/* Wrong initial state, other operation in progress? */
+			// Wrong initial state, other operation in progress?
 			return false;
 
 		wp_state = WP_TXLIST;
@@ -672,6 +679,7 @@ private:
 
 		lock.lock();
 		res.wp_transfered = wp_cur_id;
+		go_idle(); // same as in pull_cb
 		return true;
 	}
 
