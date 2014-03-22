@@ -65,7 +65,8 @@ add_service_files(
    ParamGet.srv
    ParamPull.srv
    ParamPush.srv
-   WaypointSet.srv
+   WaypointSetCurrent.srv
+   WaypointClear.srv
    WaypointPull.srv
    WaypointPush.srv
 )
