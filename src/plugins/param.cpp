@@ -426,7 +426,6 @@ private:
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
 
-	boost::asio::io_service *timer_service;
 	std::unique_ptr<boost::asio::deadline_timer> param_timer;
 	const int BOOTUP_TIME_MS = 10000;	//!< APM boot time
 	const int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
