@@ -143,7 +143,9 @@ class WaypointPlugin : public MavRosPlugin {
 public:
 	WaypointPlugin() :
 		wp_state(WP_IDLE),
-		wp_retries(RETRIES_COUNT)
+		wp_retries(RETRIES_COUNT),
+		do_pull_after_gcs(false),
+		reshedule_pull(false)
 	{
 	};
 
@@ -156,6 +158,8 @@ public:
 
 		wp_nh = ros::NodeHandle(nh, "mission");
 
+		wp_nh.param("pull_after_gcs", do_pull_after_gcs, false);
+
 		wp_list_pub = wp_nh.advertise<mavros::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
@@ -163,7 +167,8 @@ public:
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
 
 		wp_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
-		//uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
+		shedule_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
+		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
 
 	std::string get_name() {
@@ -255,9 +260,12 @@ private:
 
 	std::unique_ptr<boost::asio::deadline_timer> wp_timer;
 	std::unique_ptr<boost::asio::deadline_timer> shedule_timer;
+	bool do_pull_after_gcs;
+	bool reshedule_pull;
 	const int BOOT_TIME_MS = 15000;
 	const int LIST_TIMEOUT_MS = 30000;
 	const int WP_TIMEOUT_MS = 1000;
+	const int RESHEDULE_MS = 5000;
 	const int RETRIES_COUNT = 3;
 
 	/* -*- rx handlers -*- */
@@ -296,8 +304,13 @@ private:
 				publish_waypoints();
 			}
 		}
-		else
+		else {
 			ROS_DEBUG_NAMED("wp", "WP: rejecting message, wrong state");
+			if (do_pull_after_gcs && reshedule_pull) {
+				ROS_DEBUG_NAMED("wp", "WP: reshedule pull");
+				shedule_pull(WP_TIMEOUT_MS);
+			}
+		}
 	}
 
 	void handle_mission_request(mavlink_mission_request_t &mreq) {
@@ -373,7 +386,12 @@ private:
 		}
 		else {
 			ROS_INFO_NAMED("wp", "WP: seems GCS requesting mission");
-			/* TODO shedule pull after GCS done */
+			/* shedule pull after GCS done */
+			if (do_pull_after_gcs) {
+				ROS_INFO_NAMED("wp", "WP: sheduling pull after GCS is done");
+				reshedule_pull = true;
+				shedule_pull(RESHEDULE_MS);
+			}
 		}
 	}
 
@@ -495,6 +513,33 @@ private:
 		}
 	}
 
+	void connection_cb(bool connected) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		if (connected)
+			shedule_pull(BOOT_TIME_MS);
+		else
+			shedule_timer->cancel();
+	}
+
+	void sheduled_pull_cb(boost::system::error_code error) {
+		if (error)
+			return;
+
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		if (wp_state != WP_IDLE) {
+			/* try later */
+			ROS_DEBUG_NAMED("wp", "WP: busy, reshedule pull");
+			shedule_pull(RESHEDULE_MS);
+			return;
+		}
+
+		ROS_DEBUG_NAMED("wp", "WP: start sheduled pull");
+		wp_state = WP_RXLIST;
+		wp_count = 0;
+		restart_timeout_timer();
+		mission_request_list();
+	}
+
 	void request_mission_done(void) {
 		/* possibly not needed if count == 0 (QGC impl) */
 		mission_ack(MAV_MISSION_ACCEPTED);
@@ -505,6 +550,7 @@ private:
 	}
 
 	void go_idle(void) {
+		reshedule_pull = false;
 		wp_state = WP_IDLE;
 		wp_timer->cancel();
 	}
@@ -519,6 +565,12 @@ private:
 		wp_timer->cancel();
 		wp_timer->expires_from_now(boost::posix_time::milliseconds(WP_TIMEOUT_MS));
 		wp_timer->async_wait(boost::bind(&WaypointPlugin::timeout_cb, this, _1));
+	}
+
+	void shedule_pull(int millis) {
+		shedule_timer->cancel();
+		shedule_timer->expires_from_now(boost::posix_time::milliseconds(millis));
+		shedule_timer->async_wait(boost::bind(&WaypointPlugin::sheduled_pull_cb, this, _1));
 	}
 
 	void send_waypoint(size_t seq) {
