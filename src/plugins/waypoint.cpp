@@ -290,8 +290,11 @@ private:
 				restart_timeout_timer();
 				mission_request(wp_cur_id);
 			}
-			else
+			else {
 				request_mission_done();
+				lock.unlock();
+				publish_waypoints();
+			}
 		}
 		else
 			ROS_DEBUG_NAMED("wp", "WP: rejecting message, wrong state");
@@ -320,9 +323,28 @@ private:
 	}
 
 	void handle_mission_current(mavlink_mission_current_t &mcur) {
-		ROS_DEBUG_COND_NAMED(wp_cur_active != mcur.seq, "wp", "WP: current #%d", mcur.seq);
-		wp_cur_active = mcur.seq;
-		/* TODO: fix current flag in IDLE */
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (wp_state == WP_SET_CUR) {
+			/* MISSION_SET_CURRENT ACK */
+			ROS_DEBUG_NAMED("wp", "WP: set current #%d done", mcur.seq);
+			go_idle();
+			wp_cur_active = mcur.seq;
+			set_current_waypoint(wp_cur_active);
+
+			lock.unlock();
+			list_sending.notify_all();
+			publish_waypoints();
+		}
+		else if (wp_state == WP_IDLE && wp_cur_active != mcur.seq) {
+			/* update active */
+			ROS_DEBUG_NAMED("wp", "WP: update current #%d", mcur.seq);
+			wp_cur_active = mcur.seq;
+			set_current_waypoint(wp_cur_active);
+
+			lock.unlock();
+			publish_waypoints();
+		}
 	}
 
 	void handle_mission_count(mavlink_mission_count_t &mcnt) {
@@ -345,6 +367,8 @@ private:
 			}
 			else {
 				request_mission_done();
+				lock.unlock();
+				publish_waypoints();
 			}
 		}
 		else {
@@ -395,7 +419,7 @@ private:
 				break;
 
 			case MAV_MISSION_NO_SPACE:
-				ROS_ERROR_NAMED("wp", "WP: upload failed: no space on mission storage");
+				ROS_ERROR_NAMED("wp", "WP: upload failed: no space left on mission storage");
 				break;
 
 			case MAV_MISSION_DENIED:
@@ -408,7 +432,20 @@ private:
 			}
 		}
 		else if (wp_state == WP_CLEAR) {
-			/* TODO */
+			go_idle();
+			if (mack.type != MAV_MISSION_ACCEPTED) {
+				is_timedout = true;
+				lock.unlock();
+				ROS_ERROR_NAMED("wp", "WP: clear failed: error #%d", mack.type);
+			}
+			else {
+				waypoints.clear();
+				lock.unlock();
+				publish_waypoints();
+				ROS_DEBUG_NAMED("wp", "WP: mission cleared");
+			}
+
+			list_sending.notify_all();
 		}
 		else
 			ROS_DEBUG_NAMED("wp", "WP: not planned ACK, type: %d", mack.type);
@@ -517,6 +554,13 @@ private:
 
 		return list_sending.timed_wait(lock, boost::posix_time::milliseconds(LIST_TIMEOUT_MS))
 			&& !is_timedout;
+	}
+
+	void set_current_waypoint(size_t seq) {
+		for (auto it = waypoints.begin();
+				it != waypoints.end();
+				++it)
+			it->current = (it->seq == seq) ? true : false;
 	}
 
 	void publish_waypoints() {
@@ -643,9 +687,6 @@ private:
 		lock.lock();
 
 		res.wp_received = waypoints.size();
-
-		lock.unlock();
-		publish_waypoints();
 		go_idle(); // not nessessary, but prevents from blocking
 		return true;
 	}
@@ -676,9 +717,9 @@ private:
 		lock.unlock();
 		mission_count(wp_count);
 		res.success = wait_push_all();
-
 		lock.lock();
-		res.wp_transfered = wp_cur_id;
+
+		res.wp_transfered = wp_cur_id + 1;
 		go_idle(); // same as in pull_cb
 		return true;
 	}
@@ -686,11 +727,40 @@ private:
 	bool clear_cb(mavros::WaypointClear::Request &req,
 			mavros::WaypointClear::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (wp_state != WP_IDLE)
+			return false;
+
+		wp_state = WP_CLEAR;
+		restart_timeout_timer();
+
+		lock.unlock();
+		mission_clear_all();
+		res.success = wait_push_all();
+
+		lock.lock();
+		go_idle(); // same as in pull_cb
+		return true;
 	}
 
 	bool set_cur_cb(mavros::WaypointSetCurrent::Request &req,
 			mavros::WaypointSetCurrent::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (wp_state != WP_IDLE)
+			return false;
+
+		wp_state = WP_SET_CUR;
+		wp_set_active = req.wp_seq;
+		restart_timeout_timer();
+
+		lock.unlock();
+		mission_set_current(wp_set_active);
+		res.success = wait_push_all();
+
+		lock.lock();
+		go_idle(); // same as in pull_cb
+		return true;
 	}
 };
 
