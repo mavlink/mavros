@@ -9,7 +9,7 @@
 uint8 frame
 uint8 FRAME_GLOBAL = 0
 uint8 FRAME_LOCAL_NED = 1
-uint8 FRAME_MESSION = 2
+uint8 FRAME_MISSION = 2
 uint8 FRAME_GLOBAL_REL_ALT = 3
 uint8 FRAME_LOCAL_ENU = 4
 
