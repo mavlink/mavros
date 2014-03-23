@@ -1,0 +1,7 @@
+# Request go to waypoint
+#
+# Only supported FCU will return result
+
+mavros/Waypoint waypoint
+---
+bool success

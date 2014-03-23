@@ -32,6 +32,7 @@
 #include <mavros/WaypointClear.h>
 #include <mavros/WaypointPull.h>
 #include <mavros/WaypointPush.h>
+#include <mavros/WaypointGOTO.h>
 
 namespace mavplugin {
 
@@ -40,7 +41,7 @@ public:
 	uint16_t seq;
 	enum MAV_FRAME frame;
 	enum MAV_CMD command;
-	bool current;
+	uint8_t current; /* APM use some magical numbers */
 	bool autocontinue;
 	float param1;
 	float param2;
@@ -55,7 +56,7 @@ public:
 
 		ret.frame = static_cast<uint8_t>(wp.frame);
 		ret.command = static_cast<uint16_t>(wp.command);
-		ret.is_current = wp.current;
+		ret.is_current = !!wp.current;
 		ret.autocontinue = wp.autocontinue;
 		ret.param1 = wp.param1;
 		ret.param2 = wp.param1;
@@ -165,6 +166,7 @@ public:
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
+		goto_srv = wp_nh.advertiseService("goto", &WaypointPlugin::goto_cb, this);
 
 		wp_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
 		shedule_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
@@ -236,6 +238,7 @@ private:
 	ros::ServiceServer push_srv;
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
+	ros::ServiceServer goto_srv;
 
 	std::vector<WaypointItem> waypoints;
 	std::vector<WaypointItem> send_waypoints;
@@ -811,6 +814,39 @@ private:
 		res.success = wait_push_all();
 
 		lock.lock();
+		go_idle(); // same as in pull_cb
+		return true;
+	}
+
+	bool goto_cb(mavros::WaypointGOTO::Request &req,
+			mavros::WaypointGOTO::Response &res) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (wp_state != WP_IDLE)
+			return false;
+
+		if (!uas->is_ardupilotmega()) {
+			ROS_ERROR_NAMED("wp", "WP: FCU not support GOTO command");
+			return false;
+		}
+
+		wp_state = WP_TXWP;
+
+		WaypointItem wpi = WaypointItem::from_msg(req.waypoint, 0);
+		wpi.current = 2; /* APM's magic */
+
+		send_waypoints.clear();
+		send_waypoints.push_back(wpi);
+
+		wp_count = 1;
+		wp_cur_id = 0;
+		restart_timeout_timer();
+
+		lock.unlock();
+		send_waypoint(wp_cur_id);
+		res.success = wait_push_all();
+		lock.lock();
+
 		go_idle(); // same as in pull_cb
 		return true;
 	}

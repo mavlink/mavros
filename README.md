@@ -12,6 +12,7 @@ Feutures
   * UDP proxy for Ground Control Station
   * [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
   * Plugin system for ROS-MAVLink translation
+  * Parameter manipulation tool
 
 
 Limitations
@@ -47,6 +48,7 @@ Plugins parameters:
   * ~imu/angular\_velocity\_stdev -- gyro's standard deviation \[rad\] (default: 0.02°)
   * ~imu/orientation\_stdev -- deviation for IMU.orientation (default: 1.0)
   * ~param/\* -- FCU parameters mapped by ParamPlugin
+  * ~mission/pull\_after\_gcs -- automatically pull waypoints if GCS pulls (default: off)
 
 
 Servicies
@@ -58,6 +60,14 @@ ParamPlugin:
   * ~param/push -- Push rosparam to FCU
   * ~param/get -- Get one FCU parameter
   * ~param/set -- Set one FCU parameter and update rosparam with actual value
+
+WaypointPlugin:
+
+  * ~mission/pull -- Pulls FCU waypoints and publish
+  * ~mission/push -- Push new waypoint list to FCU
+  * ~mission/clear -- Clear waypoint list
+  * ~mission/set\_current -- Set current active waypoint (in list)
+  * ~mission/goto -- send one waypoint (only APM)
 
 
 Testing

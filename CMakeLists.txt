@@ -69,6 +69,7 @@ add_service_files(
    WaypointClear.srv
    WaypointPull.srv
    WaypointPush.srv
+   WaypointGOTO.srv
 )
 
 ## Generate actions in the 'action' folder
