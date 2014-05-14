@@ -13,13 +13,14 @@ Feutures
   * [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
   * Plugin system for ROS-MAVLink translation
   * Parameter manipulation tool
+  * Waypoint manipulation tool
 
 
 Limitations
 -----------
 
 Only for linux. Depends on [Boost library][4] >= 1.49.
-Catkin build system required (tested with ROS Hydro Medusa).
+Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 
 
 Parameters
