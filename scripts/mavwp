@@ -146,6 +146,25 @@ def fault(*args, **kvargs):
     sys.exit(1)
 
 
+def _pull(args):
+    try:
+        pull_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/pull", WaypointPull)
+        ret = pull_cl()
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    print_if(args.verbose, "Waypoints received:", ret.wp_received)
+    return ret
+
+
+def do_pull(args):
+    rospy.init_node("mavwp", anonymous=True)
+    _pull(args)
+
+
 def do_show(args):
     rospy.init_node("mavwp", anonymous=True)
 
@@ -192,6 +211,9 @@ def do_show(args):
         if not args.follow:
             done_evt.set()
 
+    if args.pull:
+        _pull(args)
+
     # Waypoints topic is latched type, and it updates after pull
     sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _show_table)
     if not done_evt.wait(30.0):
@@ -216,25 +238,6 @@ def do_load(args):
         fault("Request failed. Check mavros logs")
 
     print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
-
-
-def _pull(args):
-    try:
-        pull_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/pull", WaypointPull)
-        ret = pull_cl()
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    print_if(args.verbose, "Waypoints received:", ret.wp_received)
-    return ret
-
-
-def do_pull(args):
-    rospy.init_node("mavwp", anonymous=True)
-    _pull(args)
 
 
 def do_dump(args):
@@ -320,6 +323,7 @@ def main():
     if not no_prettytable:
         show_args = subarg.add_parser('show', help="Show waypoints")
         show_args.add_argument('-f', '--follow', action='store_true', help="watch and show new data")
+        show_args.add_argument('-p', '--pull', action='store_true', help="pull waypoints from FCU before show")
         show_args.set_defaults(func=do_show)
 
     load_args = subarg.add_parser('load', help="load waypoints from file")
