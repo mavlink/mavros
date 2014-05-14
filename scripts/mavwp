@@ -70,11 +70,6 @@ class WaypointFile(object):
         raise NotImplementedError
 
 
-class MissionPlannerWP(WaypointFile):
-    """Parse MissionPlanner waypoint file"""
-    # TODO: do MP really have wp save???
-
-
 class QGroundControlWP(WaypointFile):
     """Parse QGC waypoint file"""
 
@@ -142,21 +137,7 @@ def print_if(cond, *args, **kvargs):
 
 
 def get_wp_file_io(args):
-    if args.mission_planner:
-        print_if(args.verbose, "MissionPlanner format")
-        return MissionPlannerWP()
-
-    elif args.qgroundcontrol:
-        print_if(args.verbose, "QGroundControl format")
-        return QGroundControlWP()
-
-    else:
-        if args.file.name.endswith('.txt'):
-            print_if(args.verbose, "Suggestion: QGroundControl format")
-            return QGroundControlWP()
-        else:
-            print_if(args.verbose, "Suggestion: MissionPlanner format")
-            return MissionPlannerWP()
+    return QGroundControlWP()
 
 
 def fault(*args, **kvargs):
@@ -343,20 +324,14 @@ def main():
 
     load_args = subarg.add_parser('load', help="load waypoints from file")
     load_args.set_defaults(func=do_load)
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file")
-    load_format = load_args.add_mutually_exclusive_group()
-    load_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
-    load_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
 
     pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
     dump_args = subarg.add_parser('dump', help="dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file")
-    dump_format = dump_args.add_mutually_exclusive_group()
-    dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
-    dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file (QGC format)")
 
     clear_args = subarg.add_parser('clear', help="clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
