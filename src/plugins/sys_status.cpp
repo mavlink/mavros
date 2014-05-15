@@ -128,18 +128,35 @@ public:
 		diagnostic_updater::DiagnosticTask(name)
 	{};
 
-	void set(uint16_t f, uint16_t b) {
+	void set(mavlink_sys_status_t &st) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
+		last_st = st;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
+		if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled)
+				!= last_st.onboard_control_sensors_enabled)
+			stat.summary(2, "Sensor helth");
+		else
+			stat.summary(0, "Normal");
 
+		stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
+		stat.addf("Sensor enabled", "0x%08X", last_st.onboard_control_sensors_enabled);
+		stat.addf("Sensor helth", "0x%08X", last_st.onboard_control_sensors_health);
+		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
+		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
+		stat.addf("Errors comm", "%d", last_st.errors_comm);
+		stat.addf("Errors count #1", "%d", last_st.errors_count1);
+		stat.addf("Errors count #2", "%d", last_st.errors_count2);
+		stat.addf("Errors count #3", "%d", last_st.errors_count3);
+		stat.addf("Errors count #4", "%d", last_st.errors_count4);
 	}
 
 private:
 	boost::recursive_mutex mutex;
+	mavlink_sys_status_t last_st;
 };
 
 
@@ -176,9 +193,9 @@ public:
 		else
 			stat.summary(0, "Normal");
 
-		stat.addf("Voltage", "%.2f V", voltage);
-		stat.addf("Current", "%.1f A", current);
-		stat.addf("Remaining", "%.1f %%", remaining * 100);
+		stat.addf("Voltage", "%.2f", voltage);
+		stat.addf("Current", "%.1f", current);
+		stat.addf("Remaining", "%.1f", remaining * 100);
 	}
 
 private:
@@ -286,7 +303,7 @@ public:
 	{
 		uas = &uas_;
 		diag_updater.add(hb_diag);
-		//diag_updater.add(sys_diag);
+		diag_updater.add(sys_diag);
 		diag_updater.add(batt_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
@@ -358,8 +375,6 @@ public:
 				mavlink_sys_status_t stat;
 				mavlink_msg_sys_status_decode(msg, &stat);
 
-				// TODO: sensor diag
-
 				float volt = stat.voltage_battery / 1000.0;	// mV
 				float curr = stat.current_battery / 100.0;	// 10 mA or -1
 				float rem = stat.battery_remaining / 100.0;	// or -1
@@ -370,6 +385,7 @@ public:
 				batt_msg->current = curr;
 				batt_msg->remaining = rem;
 
+				sys_diag.set(stat);
 				batt_diag.set(volt, curr, rem);
 				batt_pub.publish(batt_msg);
 			}
