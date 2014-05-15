@@ -154,30 +154,85 @@ private:
 };
 
 
+class HwStatus : public diagnostic_updater::DiagnosticTask
+{
+public:
+	HwStatus(const std::string name) :
+		diagnostic_updater::DiagnosticTask(name),
+		vcc(-1.0),
+		i2cerr(0),
+		i2cerr_last(0)
+	{};
+
+	void set(uint16_t v, uint8_t e) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		vcc = v / 1000.0;
+		i2cerr = e;
+	}
+
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (vcc < 0)
+			stat.summary(2, "No data");
+		else if (vcc < 4.5)
+			stat.summary(1, "Low voltage");
+		else if (i2cerr != i2cerr_last) {
+			i2cerr_last = i2cerr;
+			stat.summary(1, "New I2C error");
+		}
+		else
+			stat.summary(0, "Normal");
+
+		stat.addf("Core voltage", "%f", vcc);
+		stat.addf("I2C errors", "%zu", i2cerr);
+	}
+
+private:
+	boost::recursive_mutex mutex;
+	float vcc;
+	size_t i2cerr;
+	size_t i2cerr_last;
+};
+
+
+
 class SystemStatusPlugin : public MavRosPlugin
 {
 public:
 	SystemStatusPlugin() :
 		hb_diag("FCU Heartbeat", 10),
-		mem_diag("FCU Memory")
+		mem_diag("FCU Memory"),
+		hwst_diag("FCU hardware")
 	{};
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-
 		uas = &uas_;
 		diag_updater.add(hb_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
 #endif
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+		diag_updater.add(hwst_diag);
+#endif
 
 		double conn_timeout_d;
-		nh.param("conn_timeout", conn_timeout_d, 30.0);
-		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
+		double conn_heartbeat_d;
 
+		nh.param("conn_timeout", conn_timeout_d, 30.0);
+		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
+
+		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
 		timeout_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_timeout));
+
+		if (conn_heartbeat_d > 0.0) {
+			conn_heartbeat = boost::posix_time::seconds(conn_timeout_d);
+			heartbeat_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_heartbeat));
+			heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
+		}
 	}
 
 	std::string get_name() {
@@ -188,9 +243,12 @@ public:
 		return {
 			MAVLINK_MSG_ID_HEARTBEAT,
 			MAVLINK_MSG_ID_SYS_STATUS,
-			MAVLINK_MSG_ID_STATUSTEXT,
+			MAVLINK_MSG_ID_STATUSTEXT
 #ifdef MAVLINK_MSG_ID_MEMINFO
-			MAVLINK_MSG_ID_MEMINFO
+			, MAVLINK_MSG_ID_MEMINFO
+#endif
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+			, MAVLINK_MSG_ID_HWSTATUS
 #endif
 		};
 	}
@@ -231,6 +289,8 @@ public:
 			}
 			break;
 
+		/* -*- APM additional messages -*- */
+
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		case MAVLINK_MSG_ID_MEMINFO:
 			{
@@ -240,15 +300,28 @@ public:
 			}
 			break;
 #endif
+
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+		case MAVLINK_MSG_ID_HWSTATUS:
+			{
+				mavlink_hwstatus_t hwst;
+				mavlink_msg_hwstatus_decode(msg, &hwst);
+				hwst_diag.set(hwst.Vcc, hwst.I2Cerr);
+			}
+			break;
+#endif
 		};
 	}
 
 private:
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
+	HwStatus hwst_diag;
 	UAS *uas;
 	boost::posix_time::time_duration conn_timeout;
+	boost::posix_time::time_duration conn_heartbeat;
 	std::unique_ptr<boost::asio::deadline_timer> timeout_timer;
+	std::unique_ptr<boost::asio::deadline_timer> heartbeat_timer;
 
 	void process_statustext_normal(uint8_t severity, std::string &text) {
 		switch (severity) {
@@ -305,6 +378,13 @@ private:
 			return;
 
 		uas->update_connection_status(false);
+	}
+
+	void heartbeat_cb(boost::system::error_code error) {
+		if (error)
+			return;
+
+		//uas->update_connection_status(false);
 	}
 };
 
