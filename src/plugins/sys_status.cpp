@@ -27,6 +27,9 @@
 #include <pluginlib/class_list_macros.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <mavros/State.h>
+#include <mavros/BatteryStatus.h>
+
 namespace mavplugin {
 
 /**
@@ -118,6 +121,75 @@ private:
 };
 
 
+class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
+{
+public:
+	SystemStatusDiag(const std::string name) :
+		diagnostic_updater::DiagnosticTask(name)
+	{};
+
+	void set(uint16_t f, uint16_t b) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+	}
+
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+
+	}
+
+private:
+	boost::recursive_mutex mutex;
+};
+
+
+class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
+{
+public:
+	BatteryStatusDiag(const std::string name) :
+		diagnostic_updater::DiagnosticTask(name),
+		voltage(-1.0),
+		current(0.0),
+		remaining(0.0),
+		min_voltage(6)
+	{};
+
+	void set_min_voltage(float volt) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		min_voltage = volt;
+	}
+
+	void set(float volt, float curr, float rem) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		voltage = volt;
+		current = curr;
+		remaining = rem;
+	}
+
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (voltage < 0)
+			stat.summary(2, "No data");
+		else if (voltage < min_voltage)
+			stat.summary(1, "Low voltage");
+		else
+			stat.summary(0, "Normal");
+
+		stat.addf("Voltage", "%.2f V", voltage);
+		stat.addf("Current", "%.1f A", current);
+		stat.addf("Remaining", "%.1f %%", remaining * 100);
+	}
+
+private:
+	boost::recursive_mutex mutex;
+	float voltage;
+	float current;
+	float remaining;
+	float min_voltage;
+};
+
+
 class MemInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -203,7 +275,9 @@ public:
 	SystemStatusPlugin() :
 		hb_diag("FCU Heartbeat", 10),
 		mem_diag("FCU Memory"),
-		hwst_diag("FCU hardware")
+		hwst_diag("FCU Hardware"),
+		sys_diag("FCU System"),
+		batt_diag("FCU Battery")
 	{};
 
 	void initialize(UAS &uas_,
@@ -212,6 +286,8 @@ public:
 	{
 		uas = &uas_;
 		diag_updater.add(hb_diag);
+		//diag_updater.add(sys_diag);
+		diag_updater.add(batt_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
 		diag_updater.add(mem_diag);
 #endif
@@ -221,9 +297,13 @@ public:
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
+		double min_voltage;
 
 		nh.param("conn_timeout", conn_timeout_d, 30.0);
 		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
+		nh.param("sys/min_voltage", min_voltage, 6.0);
+
+		batt_diag.set_min_voltage(min_voltage);
 
 		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
 		timeout_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_timeout));
@@ -233,6 +313,9 @@ public:
 			heartbeat_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_heartbeat));
 			heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
 		}
+
+		state_pub = nh.advertise<mavros::State>("state", 10);
+		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
 	}
 
 	std::string get_name() {
@@ -257,7 +340,6 @@ public:
 		switch (msg->msgid) {
 		case MAVLINK_MSG_ID_HEARTBEAT:
 			{
-				ros::Time curtime = ros::Time::now();
 				mavlink_heartbeat_t hb;
 				mavlink_msg_heartbeat_decode(msg, &hb);
 				hb_diag.tick(hb);
@@ -272,6 +354,25 @@ public:
 			break;
 
 		case MAVLINK_MSG_ID_SYS_STATUS:
+			{
+				mavlink_sys_status_t stat;
+				mavlink_msg_sys_status_decode(msg, &stat);
+
+				// TODO: sensor diag
+
+				float volt = stat.voltage_battery / 1000.0;	// mV
+				float curr = stat.current_battery / 100.0;	// 10 mA or -1
+				float rem = stat.battery_remaining / 100.0;	// or -1
+
+				mavros::BatteryStatusPtr batt_msg(new mavros::BatteryStatus);
+				batt_msg->header.stamp = ros::Time::now();
+				batt_msg->voltage = volt;
+				batt_msg->current = curr;
+				batt_msg->remaining = rem;
+
+				batt_diag.set(volt, curr, rem);
+				batt_pub.publish(batt_msg);
+			}
 			break;
 
 		case MAVLINK_MSG_ID_STATUSTEXT:
@@ -317,11 +418,16 @@ private:
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
 	HwStatus hwst_diag;
+	SystemStatusDiag sys_diag;
+	BatteryStatusDiag batt_diag;
 	UAS *uas;
 	boost::posix_time::time_duration conn_timeout;
 	boost::posix_time::time_duration conn_heartbeat;
 	std::unique_ptr<boost::asio::deadline_timer> timeout_timer;
 	std::unique_ptr<boost::asio::deadline_timer> heartbeat_timer;
+
+	ros::Publisher state_pub;
+	ros::Publisher batt_pub;
 
 	void process_statustext_normal(uint8_t severity, std::string &text) {
 		switch (severity) {

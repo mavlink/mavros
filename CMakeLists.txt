@@ -56,6 +56,8 @@ add_message_files(
   Mavlink.msg
   Waypoint.msg
   WaypointList.msg
+  BatteryStatus.msg
+  State.msg
 )
 
 ## Generate services in the 'srv' folder
