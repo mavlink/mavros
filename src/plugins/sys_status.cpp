@@ -367,6 +367,14 @@ public:
 				timeout_timer->cancel();
 				timeout_timer->expires_from_now(conn_timeout);
 				timeout_timer->async_wait(boost::bind(&SystemStatusPlugin::timeout_cb, this, _1));
+
+				mavros::StatePtr state_msg(new mavros::State);
+				state_msg->header.stamp = ros::Time::now();
+				state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
+				state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
+				state_msg->mode = str_mode_v10(hb.base_mode, hb.custom_mode);
+
+				state_pub.publish(state_msg);
 			}
 			break;
 
@@ -493,6 +501,88 @@ private:
 			break;
 		};
 
+	}
+
+	static std::string str_base_mode(int base_mode) {
+		std::ostringstream mode;
+		mode << "MODE(0x" << std::hex << std::uppercase << base_mode << ")";
+		return mode.str();
+	}
+
+	static std::string str_custom_mode(int custom_mode) {
+		std::ostringstream mode;
+		mode << "CMODE(" << custom_mode << ")";
+		return mode.str();
+	}
+
+	//! APM:Plane custom mode -> string
+	static std::string str_mode_arduplane(int custom_mode) {
+		switch (custom_mode) {
+		case 0: return "MANUAL";	break;
+		case 1: return "CIRCLE";	break;
+		case 2: return "STABILIZE";	break;
+		case 3: return "TRAINING";	break;
+		case 4: return "ACRO";		break;
+		case 5: return "FBWA";		break;
+		case 6: return "FBWB";		break;
+		case 7: return "CRUISE";	break;
+		case 8: return "AUTOTUNE";	break;
+		case 10: return "AUTO";		break;
+		case 11: return "RTL";		break;
+		case 12: return "LOITER";	break;
+		case 14: return "LAND";		break;
+		case 15: return "GUIDED";	break;
+		case 16: return "INITIALISING";	break;
+		default:
+			 return str_custom_mode(custom_mode);
+			 break;
+		}
+	};
+
+	//! APM:Copter custom mode -> string
+	static std::string str_mode_arducopter(int custom_mode) {
+		switch (custom_mode) {
+		case 0: return "STABILIZE";	break;
+		case 1: return "ACRO";		break;
+		case 2: return "ALT_HOLD";	break;
+		case 3: return "AUTO";		break;
+		case 4: return "GUIDED";	break;
+		case 5: return "LOITER";	break;
+		case 6: return "RTL";		break;
+		case 7: return "CIRCLE";	break;
+		case 8: return "POSITION";	break;
+		case 9: return "LAND";		break;
+		case 10: return "OF_LOITER";	break;
+		case 11: return "APPROACH";	break;
+		default:
+			 return str_custom_mode(custom_mode);
+			 break;
+		}
+	};
+
+	//! Port pymavlink mavutil.mode_string_v10
+	std::string str_mode_v10(int base_mode, int custom_mode) {
+
+		if (!(base_mode && MAV_MODE_FLAG_CUSTOM_MODE_ENABLED))
+			return str_base_mode(base_mode);
+
+		enum MAV_TYPE type = uas->get_type();
+		if (uas->is_ardupilotmega()) {
+			if (type == MAV_TYPE_QUADROTOR ||
+					type == MAV_TYPE_HEXAROTOR ||
+					type == MAV_TYPE_OCTOROTOR ||
+					type == MAV_TYPE_TRICOPTER ||
+					type == MAV_TYPE_COAXIAL)
+				return str_mode_arducopter(custom_mode);
+			else if (type == MAV_TYPE_FIXED_WING)
+				return str_mode_arduplane(custom_mode);
+			else
+				/* TODO: APM:Rover */
+				return str_custom_mode(custom_mode);
+		}
+		else
+			/* TODO: other autopilot */
+			return str_custom_mode(custom_mode);
 	}
 
 	void timeout_cb(boost::system::error_code error) {
