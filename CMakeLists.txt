@@ -208,6 +208,19 @@ target_link_libraries(mavros_node
   ${boost_LIBRARIES}
 )
 
+add_executable(ros_udp
+	src/ros_udp.cpp
+)
+add_dependencies(ros_udp
+  mavconn
+)
+target_link_libraries(ros_udp
+  mavconn
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############

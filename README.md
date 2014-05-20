@@ -71,6 +71,53 @@ WaypointPlugin:
   * ~mission/goto -- send one waypoint (only APM)
 
 
+Programs
+--------
+
+mavros\_node -- main communication node
+- - - - - - - - - - - - - - - - - - - -
+
+Main node.
+
+Run example:
+
+    rosrun mavros mavros_node _serial_port:=/dev/ttyACM0 _serial_baud:=115200 _gcs_host:=localhost
+
+
+ros\_udp -- additional UDP proxy
+- - - - - - - - - - - - - - - - -
+
+Allows you to add a UDP channel for GCS.
+For example if you need to connect one GCS for HIL and the second on the tablet.
+
+Example (HIL & DroidPlanner):
+
+    rosrun mavros mavros_node _gcs_host:='hil-host' _gcs_port:=14556 _bind_port:=14551 &
+    rosrun mavros ros_udp _gcs_host:='nexus7'
+
+
+mavparam -- parameter manipulation
+- - - - - - - - - - - - - - - - - -
+
+Just see `--help`.
+
+Examples:
+
+    rosrun mavros mavparam dump /tmp/apm.param
+    rosrun mavros mavparam load /tmp/apm2.param
+
+
+mavwp -- mission manipulation
+- - - - - - - - - - - - - - -
+
+See `--help`.
+
+Examples:
+
+    rosrun mavros mavwp show -p
+    rosrun mavros dump /tmp/mission.txt
+
+
 Testing
 -------
 
