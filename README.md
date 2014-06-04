@@ -114,6 +114,17 @@ Examples:
     rosrun mavros dump /tmp/mission.txt
 
 
+Installation
+------------
+
+Use `wstool` utility for installation. In your workspace do:
+
+    wstool add -t src --git https://github.com/vooon/mavros.git
+    wstool update -t src
+
+Then use regular `catkin_make` for biuld and install.
+
+
 Testing
 -------
 
