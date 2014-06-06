@@ -58,6 +58,8 @@ add_message_files(
   WaypointList.msg
   BatteryStatus.msg
   State.msg
+  RCIn.msg
+  RCOut.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +74,7 @@ add_service_files(
    WaypointPull.srv
    WaypointPush.srv
    WaypointGOTO.srv
+   OverrideRCIn.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -179,6 +182,7 @@ add_library(mavros_plugins
   src/plugins/gps.cpp
   src/plugins/param.cpp
   src/plugins/waypoint.cpp
+  src/plugins/rc_io.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

@@ -1,6 +1,6 @@
 /**
- * @brief Dummy plugin
- * @file dummy.cpp
+ * @brief Parameter plugin
+ * @file param.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin

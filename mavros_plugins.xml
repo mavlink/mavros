@@ -17,5 +17,8 @@
 	<class name="waypoint" type="mavplugin::WaypointPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Access to FCU mission.</description>
 	</class>
+	<class name="rc_io" type="mavplugin::RCIOPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish RC IO state.</description>
+	</class>
 </library>
 
