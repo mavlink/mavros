@@ -31,6 +31,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
+#include <set>
 #include <mavros/mavconn_mavlink.h>
 
 namespace mavconn {
