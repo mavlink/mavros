@@ -70,6 +70,12 @@ WaypointPlugin:
   * ~mission/set\_current -- Set current active waypoint (in list)
   * ~mission/goto -- send one waypoint (only APM)
 
+CommandPlugin:
+
+  * ~cmd/command -- Send any COMMAND\_LONG (all FCU)
+  * ~cmd/arming -- Arm/Disarm command
+  * ~cmd/set\_mode -- Set FCU operation mode
+  * ~cmd/set\_home -- Set home position (if supported)
 
 Programs
 --------
