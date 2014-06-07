@@ -28,6 +28,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <mavros/CommandLong.h>
+#include <mavros/CommandBool.h>
+#include <mavros/CommandMode.h>
+#include <mavros/CommandHome.h>
 
 namespace mavplugin {
 
@@ -57,6 +60,9 @@ public:
 
 		cmd_nh = ros::NodeHandle(nh, "cmd");
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
+		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
+		set_mode_srv = cmd_nh.advertiseService("set_mode", &CommandPlugin::set_mode_cb, this);
+		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 	}
 
 	std::string get_name() {
@@ -92,6 +98,9 @@ private:
 
 	ros::NodeHandle cmd_nh;
 	ros::ServiceServer command_long_srv;
+	ros::ServiceServer arming_srv;
+	ros::ServiceServer set_mode_srv;
+	ros::ServiceServer set_home_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
 	const int ACK_TIMEOUT_MS = 5000;
@@ -199,6 +208,42 @@ private:
 				req.param3, req.param4,
 				req.param5, req.param6,
 				req.param7,
+				res.success, res.result);
+	}
+
+	bool arming_cb(mavros::CommandBool::Request &req,
+			mavros::CommandBool::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_COMPONENT_ARM_DISARM, 1,
+				(req.value)? 1.0 : 0.0,
+				0, 0, 0, 0, 0, 0,
+				res.success, res.result);
+	}
+
+	bool set_mode_cb(mavros::CommandMode::Request &req,
+			mavros::CommandMode::Response &res) {
+
+		if (req.mode > 256) {
+			ROS_ERROR_NAMED("cmd", "Unknown mode %u", req.mode);
+			return false;
+		}
+
+		/* TODO: Add FCU-specific mode set
+		 * like APM LAND,TAKEOFF and other
+		 */
+
+		return send_command_long_and_wait(MAV_CMD_DO_SET_MODE, 1,
+				req.mode,
+				0, 0, 0, 0, 0, 0,
+				res.success, res.result);
+	}
+
+	bool set_home_cb(mavros::CommandHome::Request &req,
+			mavros::CommandHome::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_DO_SET_HOME, 1,
+				(req.current_gps)? 1.0 : 0.0,
+				0, 0, 0, req.latitude, req.longitude, req.altitude,
 				res.success, res.result);
 	}
 };

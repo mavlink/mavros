@@ -76,6 +76,9 @@ add_service_files(
    WaypointGOTO.srv
    OverrideRCIn.srv
    CommandLong.srv
+   CommandBool.srv
+   CommandMode.srv
+   CommandHome.srv
 )
 
 ## Generate actions in the 'action' folder
