@@ -31,12 +31,22 @@
 
 namespace mavplugin {
 
+class CommandTransaction {
+public:
+	boost::condition_variable ack;
+	uint16_t expected_command;
+	uint8_t result;
+
+	CommandTransaction(uint16_t command) :
+		ack(),
+		expected_command(command),
+		result(MAV_RESULT_FAILED)
+	{ }
+};
+
 class CommandPlugin : public MavRosPlugin {
 public:
-	CommandPlugin() :
-		expected_command(0),
-		last_result(0),
-		in_transaction(false)
+	CommandPlugin()
 	{ };
 
 	void initialize(UAS &uas_,
@@ -64,14 +74,16 @@ public:
 		mavlink_msg_command_ack_decode(msg, &ack);
 
 		boost::recursive_mutex::scoped_lock lock(mutex);
-		if (ack.command != expected_command) {
-			ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u (not %u), result %u",
-					ack.command, expected_command, ack.result);
-			return;
-		}
+		for (auto it = ack_waiting_list.cbegin();
+				it != ack_waiting_list.cend(); it++)
+			if ((*it)->expected_command == ack.command) {
+				(*it)->result = ack.result;
+				(*it)->ack.notify_all();
+				return;
+			}
 
-		last_result = ack.result;
-		command_ack.notify_all();
+		ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u, result %u",
+			ack.command, ack.result);
 	}
 
 private:
@@ -81,20 +93,76 @@ private:
 	ros::NodeHandle cmd_nh;
 	ros::ServiceServer command_long_srv;
 
-	boost::condition_variable command_ack;
-	uint16_t expected_command;
-	uint8_t last_result;
-	bool in_transaction;
-
+	std::list<CommandTransaction *> ack_waiting_list;
 	const int ACK_TIMEOUT_MS = 5000;
 
 	/* -*- mid-level functions -*- */
 
-	bool wait_ack() {
+	bool wait_ack_for(CommandTransaction *tr) {
 		boost::mutex cond_mutex;
 		boost::unique_lock<boost::mutex> lock(cond_mutex);
 
-		return command_ack.timed_wait(lock, boost::posix_time::milliseconds(ACK_TIMEOUT_MS));
+		return tr->ack.timed_wait(lock, boost::posix_time::milliseconds(ACK_TIMEOUT_MS));
+	}
+
+	/**
+	 * Common function for command service callbacks.
+	 *
+	 * NOTE: success is bool in messages, but has unsigned char type in C++
+	 */
+	bool send_command_long_and_wait(uint16_t command, uint8_t confirmation,
+			float param1, float param2,
+			float param3, float param4,
+			float param5, float param6,
+			float param7,
+			unsigned char &success, uint8_t &result) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		/* check transactions */
+		for (auto it = ack_waiting_list.cbegin();
+				it != ack_waiting_list.cend(); it++)
+			if ((*it)->expected_command == command) {
+				ROS_WARN_THROTTLE_NAMED(10, "cmd", "Command %u alredy in progress", command);
+				return false;
+			}
+
+		bool is_ack_required = confirmation != 0 || uas->is_ardupilotmega();
+		if (is_ack_required)
+			ack_waiting_list.push_back(new CommandTransaction(command));
+
+		command_long(command, confirmation,
+				param1, param2,
+				param3, param4,
+				param5, param6,
+				param7);
+
+		if (is_ack_required) {
+			auto it = ack_waiting_list.begin();
+			for (; it != ack_waiting_list.end(); it++)
+				if ((*it)->expected_command == command)
+					break;
+
+			if (it == ack_waiting_list.end()) {
+				ROS_ERROR_NAMED("cmd", "CommandTransaction not found for %u", command);
+				return false;
+			}
+
+			lock.unlock();
+			bool is_not_timeout = wait_ack_for(*it);
+			lock.lock();
+
+			success = is_not_timeout && (*it)->result == MAV_RESULT_ACCEPTED;
+			result = (*it)->result;
+
+			delete *it;
+			ack_waiting_list.erase(it);
+		}
+		else {
+			success = true;
+			result = MAV_RESULT_ACCEPTED;
+		}
+
+		return true;
 	}
 
 	/* -*- low-level send -*- */
@@ -125,30 +193,13 @@ private:
 
 	bool command_long_cb(mavros::CommandLong::Request &req,
 			mavros::CommandLong::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		if (in_transaction)
-			return false;	// another transaction in progress
-
-		in_transaction = true;
-		expected_command = req.command;
-		last_result = MAV_RESULT_FAILED;
-
-		lock.unlock();
-		command_long(req.command, req.confirmation,
+		return send_command_long_and_wait(req.command, req.confirmation,
 				req.param1, req.param2,
 				req.param3, req.param4,
 				req.param5, req.param6,
-				req.param7);
-		bool isto = wait_ack();
-		lock.lock();
-
-		in_transaction = false;
-		expected_command = 0;
-		res.success = isto && last_result == MAV_RESULT_ACCEPTED;
-		res.result = last_result;
-
-		return true;
+				req.param7,
+				res.success, res.result);
 	}
 };
 
