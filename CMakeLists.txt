@@ -75,6 +75,7 @@ add_service_files(
    WaypointPush.srv
    WaypointGOTO.srv
    OverrideRCIn.srv
+   CommandLong.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -183,6 +184,7 @@ add_library(mavros_plugins
   src/plugins/param.cpp
   src/plugins/waypoint.cpp
   src/plugins/rc_io.cpp
+  src/plugins/command.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

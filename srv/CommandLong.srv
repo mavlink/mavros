@@ -1,0 +1,37 @@
+# Generic COMMAND_LONG
+
+# some common MAV_CMD
+uint16 CMD_DO_SET_MODE = 176
+uint16 CMD_DO_JUMP = 177
+uint16 CMD_DO_CHANGE_SPEED = 178
+uint16 CMD_DO_SET_HOME = 179
+uint16 CMD_DO_SET_RELAY = 181
+uint16 CMD_DO_REPEAT_RELAY = 182
+uint16 CMD_DO_SET_SERVO = 183
+uint16 CMD_DO_REPEAT_SERVO = 184
+uint16 CMD_DO_CONTROL_VIDEO = 200
+uint16 CMD_DO_SET_ROI = 201
+uint16 CMD_DO_MOUNT_CONTROL = 205
+uint16 CMD_DO_SET_CAM_TRIGG_DIST = 206
+uint16 CMD_DO_FENCE_ENABLE = 207
+uint16 CMD_DO_PARACHUTE = 208
+uint16 CMD_DO_INVERTED_FLOGHT = 210
+uint16 CMD_DO_MOUNT_CONTROL_QUAT = 220
+uint16 CMD_PREFLIGHT_CALIBRATION = 241
+uint16 CMD_MISSION_START = 300
+uint16 CMD_COMPONENT_ARM_DISARM = 400
+uint16 CMD_START_RX_PAIR = 500
+
+uint16 command
+uint8 confirmation
+float32 param1
+float32 param2
+float32 param3
+float32 param4
+float32 param5	# x_lat
+float32 param6	# y_lon
+float32 param7	# z_alt
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
