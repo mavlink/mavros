@@ -30,27 +30,43 @@
 # warning "No MAVLINK_DIALECT specified. fallback to " MAVLINK_DIALECT
 #endif
 
-#  if MAVLINK_DIALECT == ardupilotmega
+/* C preprocessor could not compare strings directly
+ * See: http://c-faq.com/cpp/ifstrcmp.html
+ */
+#define _DIALECT(name)		_DIALECT_CONCAT(name)
+#define _DIALECT_CONCAT(name)	_DIALECT_ ## name
+#define _DIALECT_ardupilotmega	1
+#define _DIALECT_autoquad	2
+#define _DIALECT_common		3
+#define _DIALECT_matrixpilot	4
+#define _DIALECT_minimal	5
+#define _DIALECT_pixhawk	6
+#define _DIALECT_slugs		7
+#define _DIALECT_test		8
+#define _DIALECT_ualberta	9
+#define _DIALECT_sensesoar	10
+
+#  if _DIALECT(MAVLINK_DIALECT) == _DIALECT_ardupilotmega
 #  include <mavlink/v1.0/ardupilotmega/mavlink.h>
-#elif MAVLINK_DIALECT == autoquad
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_autoquad
 #  include <mavlink/v1.0/autoquad/mavlink.h>
-#elif MAVLINK_DIALECT == common
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_common
 #  include <mavlink/v1.0/common/mavlink.h>
-#elif MAVLINK_DIALECT == matrixpilot
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_matrixpilot
 #  include <mavlink/v1.0/matrixpilot/mavlink.h>
-#elif MAVLINK_DIALECT == minimal
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_minimal
 #  include <mavlink/v1.0/minimal/mavlink.h>
-#elif MAVLINK_DIALECT == pixhawk
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_pixhawk
 #  include <mavlink/v1.0/pixhawk/mavlink.h>
-#elif MAVLINK_DIALECT == slugs
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_slugs
 #  include <mavlink/v1.0/slugs/mavlink.h>
-#elif MAVLINK_DIALECT == test
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_test
 #  include <mavlink/v1.0/test/mavlink.h>
-#elif MAVLINK_DIALECT == ualberta
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_ualberta
 #  include <mavlink/v1.0/ualberta/mavlink.h>
-#elif MAVLINK_DIALECT == sensesoar
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_sensesoar
 #  include <mavlink/v1.0/sensesoar/mavlink.h>
 #else
-#  error "Unknown MAVLINK_DIALECT " MAVLINK_DIALECT
+#  error "Unknown MAVLINK_DIALECT"
 #endif
 
