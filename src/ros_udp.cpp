@@ -51,14 +51,14 @@ void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid
 	mavlink_pub.publish(rmsg);
 };
 
-void mavlink_sub_cb(const Mavlink &rmsg) {
+void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 	mavlink_message_t mmsg;
 
-	mmsg.msgid = rmsg.msgid;
-	mmsg.len = rmsg.len;
-	copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64); // TODO: add paranoic checks
+	mmsg.msgid = rmsg->msgid;
+	mmsg.len = rmsg->len;
+	copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64); // TODO: add paranoic checks
 
-	udp_link->send_message(&mmsg, rmsg.sysid, rmsg.compid);
+	udp_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 };
 
 int main(int argc, char *argv[])
@@ -82,7 +82,10 @@ int main(int argc, char *argv[])
 	mavlink_pub = mavlink_nh.advertise<Mavlink>("to", 10);
 	udp_link->message_received.connect(mavlink_pub_cb);
 
-	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb);
+	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
+			ros::TransportHints()
+				.unreliable()
+				.maxDatagramSize(1024));
 
 	ros::spin();
 	return 0;

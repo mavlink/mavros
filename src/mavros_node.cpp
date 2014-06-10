@@ -121,14 +121,17 @@ public:
 		serial_link.reset(new MAVConnSerial(system_id, component_id, serial_port, serial_baud));
 		udp_link.reset(new MAVConnUDP(system_id, component_id, bind_host, bind_port, gcs_host, gcs_port));
 
-		mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 1000);
+		mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
 		serial_link->message_received.connect(boost::bind(&MAVConnUDP::send_message, udp_link.get(), _1, _2, _3));
 		serial_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 		serial_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
 		serial_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
 		serial_link_diag.set_mavconn(serial_link);
 
-		mavlink_sub = mavlink_node_handle.subscribe("to", 1000, &MavRos::mavlink_sub_cb, this);
+		mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
+				ros::TransportHints()
+					.unreliable()
+					.maxDatagramSize(1024));
 		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
 		udp_link_diag.set_mavconn(udp_link);
 
@@ -179,31 +182,31 @@ private:
 	UAS mav_uas;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
-		Mavlink rmsg;
+		MavlinkPtr rmsg(new Mavlink);
 
 		if  (mavlink_pub.getNumSubscribers() == 0)
 			return;
 
-		rmsg.header.stamp = ros::Time::now();
-		rmsg.len = mmsg->len;
-		rmsg.seq = mmsg->seq;
-		rmsg.sysid = mmsg->sysid;
-		rmsg.compid = mmsg->compid;
-		rmsg.msgid = mmsg->msgid;
+		rmsg->header.stamp = ros::Time::now();
+		rmsg->len = mmsg->len;
+		rmsg->seq = mmsg->seq;
+		rmsg->sysid = mmsg->sysid;
+		rmsg->compid = mmsg->compid;
+		rmsg->msgid = mmsg->msgid;
 		for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
-			rmsg.payload64.push_back(mmsg->payload64[i]);
+			rmsg->payload64.push_back(mmsg->payload64[i]);
 
 		mavlink_pub.publish(rmsg);
 	};
 
-	void mavlink_sub_cb(const Mavlink &rmsg) {
+	void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 		mavlink_message_t mmsg;
 
-		mmsg.msgid = rmsg.msgid;
-		mmsg.len = rmsg.len;
-		copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64); // TODO: add paranoic checks
+		mmsg.msgid = rmsg->msgid;
+		mmsg.len = rmsg->len;
+		copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64); // TODO: add paranoic checks
 
-		serial_link->send_message(&mmsg); // use dafault sys/comp ids
+		serial_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 	};
 
 	void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
