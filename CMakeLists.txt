@@ -140,9 +140,9 @@ generate_mavlink("1.0" "${MAVLINK_DEF}")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mavconn
+  LIBRARIES mavconn mavros_plugins
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
-  DEPENDS boost
+  DEPENDS Boost
 )
 
 ###########
@@ -158,7 +158,6 @@ include_directories(
   src/mavconn
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${boost_INCLUDE_DIRS}
 )
 
 add_definitions(
@@ -197,7 +196,6 @@ target_link_libraries(mavros_plugins
   mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${boost_LIBRARIES}
 )
 
 
@@ -214,7 +212,6 @@ target_link_libraries(mavros_node
   mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${boost_LIBRARIES}
 )
 
 add_executable(ros_udp
@@ -227,7 +224,6 @@ target_link_libraries(ros_udp
   mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${boost_LIBRARIES}
 )
 
 #############
@@ -246,7 +242,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavconn mavros_plugins mavros_node
+install(TARGETS mavconn mavros_plugins mavros_node ros_udp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -259,11 +255,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+  mavros_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##
