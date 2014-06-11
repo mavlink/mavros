@@ -45,7 +45,8 @@ class MavlinkDiag : public diagnostic_updater::DiagnosticTask
 public:
 	MavlinkDiag(std::string name) :
 		diagnostic_updater::DiagnosticTask(name),
-		last_drop_count(0)
+		last_drop_count(0),
+		is_connected(false)
 	{};
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
@@ -63,8 +64,11 @@ public:
 			if (mav_status.packet_rx_drop_count > last_drop_count)
 				stat.summaryf(1, "%d packeges dropped since last report",
 						mav_status.packet_rx_drop_count - last_drop_count);
+			else if (is_connected)
+				stat.summary(0, "connected");
 			else
-				stat.summary(0, "connected"); // TODO add HEARTBEAT check
+				// link operational, but not connected
+				stat.summary(1, "not connected");
 
 			last_drop_count = mav_status.packet_rx_drop_count;
 		} else {
@@ -76,9 +80,14 @@ public:
 		weak_link = link;
 	}
 
+	void set_connection_status(bool connected) {
+		is_connected = connected;
+	}
+
 private:
 	boost::weak_ptr<MAVConnInterface> weak_link;
 	unsigned int last_drop_count;
+	bool is_connected;
 };
 
 
@@ -135,9 +144,11 @@ public:
 					.maxDatagramSize(1024));
 		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
 		udp_link_diag.set_mavconn(udp_link);
+		udp_link_diag.set_connection_status(true);
 
 		mav_uas.set_tgt(tgt_system_id, tgt_component_id);
 		mav_uas.set_mav_link(serial_link);
+		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &serial_link_diag, _1));
 
 		auto plugins = plugin_loader.getDeclaredClasses();
 		loaded_plugins.reserve(plugins.size());
