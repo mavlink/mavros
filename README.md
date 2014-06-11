@@ -38,6 +38,7 @@ General node parametars:
   * ~/component\_id -- Node MAVLink Component ID (default: 240 == UDP\_BRIDGE)
   * ~/target\_system\_id -- FCU System ID (default: 1)
   * ~/target\_component\_id -- FCU Component ID (default: 1)
+  * ~/startup\_px4\_usb\_quirk -- autostart mavlink via USB on PX4
 
 Plugins parameters:
 

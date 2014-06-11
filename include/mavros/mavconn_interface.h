@@ -49,6 +49,7 @@ public:
 		send_message(message, sys_id, comp_id);
 	};
 	virtual void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+	virtual void send_bytes(const uint8_t *bytes, size_t length) = 0;
 
 	sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> message_received;
 	sig2::signal<void()> port_closed;

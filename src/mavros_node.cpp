@@ -70,12 +70,11 @@ public:
 		} else {
 			stat.summary(2, "not connected");
 		}
-	};
+	}
 
-	void set_mavconn(const boost::shared_ptr<MAVConnInterface> &link)
-	{
+	void set_mavconn(const boost::shared_ptr<MAVConnInterface> &link) {
 		weak_link = link;
-	};
+	}
 
 private:
 	boost::weak_ptr<MAVConnInterface> weak_link;
@@ -102,6 +101,7 @@ public:
 		int gcs_port;
 		int system_id, component_id;
 		int tgt_system_id, tgt_component_id;
+		bool px4_usb_quirk;
 
 		node_handle.param<std::string>("serial_port", serial_port, "/dev/ttyACM0");
 		node_handle.param("serial_baud", serial_baud, 57600);
@@ -113,6 +113,7 @@ public:
 		node_handle.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
 		node_handle.param("target_system_id", tgt_system_id, 1);
 		node_handle.param("target_component_id", tgt_component_id, 1);
+		node_handle.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 
 		diag_updater.setHardwareID("Mavlink");
 		diag_updater.add(serial_link_diag);
@@ -145,8 +146,11 @@ public:
 				++it)
 			add_plugin(*it);
 
+		if (px4_usb_quirk)
+			startup_px4_usb_quirk();
+
 		ROS_INFO("MAVROS started on MAV %d (component %d)", system_id, component_id);
-	};
+	}
 
 	~MavRos() {};
 
@@ -160,7 +164,7 @@ public:
 		}
 
 		mav_uas.stop();
-	};
+	}
 
 private:
 	ros::NodeHandle node_handle;
@@ -197,7 +201,7 @@ private:
 			rmsg->payload64.push_back(mmsg->payload64[i]);
 
 		mavlink_pub.publish(rmsg);
-	};
+	}
 
 	void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 		mavlink_message_t mmsg;
@@ -207,11 +211,11 @@ private:
 		copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64); // TODO: add paranoic checks
 
 		serial_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
-	};
+	}
 
 	void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 		message_route_table[mmsg->msgid](mmsg, sysid, compid);
-	};
+	}
 
 	void add_plugin(std::string pl_name) {
 		boost::shared_ptr<mavplugin::MavRosPlugin> plugin;
@@ -237,12 +241,23 @@ private:
 		} catch (pluginlib::PluginlibException& ex) {
 			ROS_ERROR_STREAM("Plugin load exception: " << ex.what());
 		}
-	};
+	}
 
 	void terminate_cb() {
 		ROS_ERROR("Serial port closed. mavros will be terminated.");
 		ros::requestShutdown();
-	};
+	}
+
+	void startup_px4_usb_quirk(void) {
+		/* sample code from QGC */
+		const uint8_t init[] = {0x0d, 0x0d, 0x0d, 0};
+		const uint8_t nsh[] = "sh /etc/init.d/rc.usb\n";
+
+		ROS_INFO("Autostarting mavlink via USB on PX4");
+		serial_link->send_bytes(init, 3);
+		serial_link->send_bytes(nsh, sizeof(nsh) - 1);
+		serial_link->send_bytes(init, 4);	/* NOTE in original init[3] */
+	}
 };
 
 

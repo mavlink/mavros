@@ -56,6 +56,15 @@ MAVConnSerial::~MAVConnSerial()
 	serial_dev.close();
 }
 
+void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
+{
+	{
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		tx_q.insert(tx_q.end(), bytes, bytes + length);
+	}
+	io_service.post(boost::bind(&MAVConnSerial::do_write, this));
+}
+
 void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	ROS_ASSERT(message != NULL);
@@ -70,12 +79,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid
 	size_t length = mavlink_msg_to_send_buffer(buffer, &msg);
 
 	ROS_DEBUG_NAMED("mavconn", "serial::send_message: Message-ID: %d [%zu bytes]", message->msgid, length);
-
-	{
-		boost::recursive_mutex::scoped_lock lock(mutex);
-		tx_q.insert(tx_q.end(), buffer, buffer + length);
-	}
-	io_service.post(boost::bind(&MAVConnSerial::do_write, this));
+	send_bytes(buffer, length);
 }
 
 void MAVConnSerial::do_read(void)

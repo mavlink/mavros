@@ -81,6 +81,15 @@ MAVConnUDP::~MAVConnUDP()
 	io_service.stop();
 }
 
+void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
+{
+	{
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		tx_q.insert(tx_q.end(), bytes, bytes + length);
+	}
+	io_service.post(boost::bind(&MAVConnUDP::do_write, this));
+}
+
 void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	ROS_ASSERT(message != NULL);
@@ -96,12 +105,7 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 
 	ROS_DEBUG_NAMED("mavconn", "udp::send_message: Message-ID: %d [%zu bytes] Sys-Id: %d Comp-Id: %d",
 			message->msgid, length, sysid, compid);
-
-	{
-		boost::recursive_mutex::scoped_lock lock(mutex);
-		tx_q.insert(tx_q.end(), buffer, buffer + length);
-	}
-	io_service.post(boost::bind(&MAVConnUDP::do_write, this));
+	send_bytes(buffer, length);
 }
 
 void MAVConnUDP::do_read(void)
