@@ -215,7 +215,7 @@ private:
 
 	/* -*- low-level send functions -*- */
 
-	void rc_channels_override(uint16_t channels[8]) {
+	void rc_channels_override(boost::array<uint16_t, 8> &channels) {
 		mavlink_message_t msg;
 
 		mavlink_msg_rc_channels_override_pack(0, 0, &msg,
@@ -244,8 +244,10 @@ private:
 
 	bool override_cb(mavros::OverrideRCIn::Request &req,
 			mavros::OverrideRCIn::Response &res) {
-		/* TODO */
-		return false;
+
+		rc_channels_override(req.channels);
+		res.success = true;
+		return true;
 	}
 };
 
