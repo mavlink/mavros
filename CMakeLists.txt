@@ -79,6 +79,7 @@ add_service_files(
    CommandBool.srv
    CommandMode.srv
    CommandHome.srv
+   StreamRate.srv
 )
 
 ## Generate actions in the 'action' folder

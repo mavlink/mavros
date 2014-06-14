@@ -29,6 +29,7 @@
 
 #include <mavros/State.h>
 #include <mavros/BatteryStatus.h>
+#include <mavros/StreamRate.h>
 
 namespace mavplugin {
 
@@ -333,6 +334,7 @@ public:
 
 		state_pub = nh.advertise<mavros::State>("state", 10);
 		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
+		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 	}
 
 	std::string get_name() {
@@ -452,6 +454,7 @@ private:
 
 	ros::Publisher state_pub;
 	ros::Publisher batt_pub;
+	ros::ServiceServer rate_srv;
 
 	void process_statustext_normal(uint8_t severity, std::string &text) {
 		switch (severity) {
@@ -610,6 +613,22 @@ private:
 		/* restart timer */
 		heartbeat_timer->expires_from_now(conn_heartbeat);
 		heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
+	}
+
+	bool set_rate_cb(mavros::StreamRate::Request &req,
+			mavros::StreamRate::Response &res) {
+
+		mavlink_message_t msg;
+		mavlink_msg_request_data_stream_pack(0, 0, &msg,
+				uas->get_tgt_system(),
+				uas->get_tgt_component(),
+				req.stream_id,
+				req.message_rate,
+				(req.on_off)? 1 : 0
+				);
+
+		uas->mav_link->send_message(&msg);
+		return true;
 	}
 };
 
