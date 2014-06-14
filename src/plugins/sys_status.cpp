@@ -323,11 +323,11 @@ public:
 
 		batt_diag.set_min_voltage(min_voltage);
 
-		conn_timeout = boost::posix_time::seconds(conn_timeout_d);
+		conn_timeout = boost::posix_time::milliseconds(conn_timeout_d * 1000);
 		timeout_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_timeout));
 
 		if (conn_heartbeat_d > 0.0) {
-			conn_heartbeat = boost::posix_time::seconds(conn_heartbeat_d);
+			conn_heartbeat = boost::posix_time::milliseconds(conn_heartbeat_d * 1000);
 			heartbeat_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_heartbeat));
 			heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
 		}
