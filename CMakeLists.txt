@@ -162,9 +162,21 @@ include_directories(
 )
 
 add_definitions(
-    -std=c++11
     -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
 )
+
+## Enable C++11 on gcc 4.6 too
+# thanks for: http://www.guyrutenberg.com/2014/01/05/enabling-c11-c0x-in-cmake/
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
 
 ## Declare a cpp library
 add_library(mavconn
@@ -176,7 +188,6 @@ add_dependencies(mavconn ${MAVLINK_DIALECT}.xml-v1.0)
 target_link_libraries(mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${boost_LIBRARIES}
 )
 
 add_library(mavros_plugins
