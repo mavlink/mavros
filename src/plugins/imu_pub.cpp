@@ -41,7 +41,12 @@ public:
 	IMUPubPlugin() :
 		linear_accel_vec(),
 		has_hr_imu(false),
-		has_scaled_imu(false)
+		has_scaled_imu(false),
+		gauss_to_tesla(1.0e-4),
+		millit_to_tesla(1000.0),
+		millirs_to_radsec(1000.0),
+		millig_to_ms2(9.80665 / 1000.00),
+		millibar_to_pascal(1.0e5)
 	{
 	};
 
@@ -137,11 +142,11 @@ private:
 	boost::array<double, 9> angular_velocity_cov;
 	boost::array<double, 9> orientation_cov;
 
-	const double gauss_to_tesla = 1.0e-4;
-	const double millit_to_tesla = 1000.0;
-	const double millirs_to_radsec = 1000.0;
-	const double millig_to_ms2 = 9.80665 / 1000.0;
-	const double millibar_to_pascal = 1.0e5;
+	const double gauss_to_tesla;		// = 1.0e-4;
+	const double millit_to_tesla;		// = 1000.0;
+	const double millirs_to_radsec;		// = 1000.0;
+	const double millig_to_ms2;		// = 9.80665 / 1000.0;
+	const double millibar_to_pascal;	// = 1.0e5;
 
 
 	void handle_attitude(const mavlink_message_t *msg) {
