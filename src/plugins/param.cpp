@@ -322,7 +322,8 @@ public:
 	ParamPlugin() :
 		BOOTUP_TIME_MS(10000),
 		PARAM_TIMEOUT_MS(1000),
-		LIST_TIMEOUT_MS(30000)
+		LIST_TIMEOUT_MS(30000),
+		RETRIES_COUNT(3)
 	{
 	};
 
@@ -441,7 +442,7 @@ private:
 	boost::condition_variable list_receiving;
 	boost::condition_variable set_acked;
 
-	const int RETRIES_COUNT = 3;
+	const int RETRIES_COUNT;	// = 3;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (uas->is_ardupilotmega())
