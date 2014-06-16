@@ -146,7 +146,12 @@ public:
 		wp_state(WP_IDLE),
 		wp_retries(RETRIES_COUNT),
 		do_pull_after_gcs(false),
-		reshedule_pull(false)
+		reshedule_pull(false),
+		BOOT_TIME_MS(15000),
+		LIST_TIMEOUT_MS(30000),
+		WP_TIMEOUT_MS(1000),
+		RESHEDULE_MS(5000),
+		RETRIES_COUNT(3)
 	{
 	};
 
@@ -265,11 +270,11 @@ private:
 	std::unique_ptr<boost::asio::deadline_timer> shedule_timer;
 	bool do_pull_after_gcs;
 	bool reshedule_pull;
-	const int BOOT_TIME_MS = 15000;
-	const int LIST_TIMEOUT_MS = 30000;
-	const int WP_TIMEOUT_MS = 1000;
-	const int RESHEDULE_MS = 5000;
-	const int RETRIES_COUNT = 3;
+	const int BOOT_TIME_MS;		// = 15000;
+	const int LIST_TIMEOUT_MS;	// = 30000;
+	const int WP_TIMEOUT_MS;	// = 1000;
+	const int RESHEDULE_MS;		// = 5000;
+	const int RETRIES_COUNT;	// = 3;
 
 	/* -*- rx handlers -*- */
 

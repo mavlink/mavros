@@ -319,7 +319,11 @@ public:
 
 class ParamPlugin : public MavRosPlugin {
 public:
-	ParamPlugin() {
+	ParamPlugin() :
+		BOOTUP_TIME_MS(10000),
+		PARAM_TIMEOUT_MS(1000),
+		LIST_TIMEOUT_MS(30000)
+	{
 	};
 
 	void initialize(UAS &uas_,
@@ -427,9 +431,9 @@ private:
 	ros::ServiceServer get_srv;
 
 	std::unique_ptr<boost::asio::deadline_timer> param_timer;
-	const int BOOTUP_TIME_MS = 10000;	//!< APM boot time
-	const int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
-	const int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
+	const int BOOTUP_TIME_MS;	// = 10000;	//!< APM boot time
+	const int PARAM_TIMEOUT_MS;	// = 1000;	//!< Param wait time
+	const int LIST_TIMEOUT_MS;	// = 30000;	//!< Receive all time
 
 	std::map<std::string, Parameter> parameters;
 	ssize_t param_count;

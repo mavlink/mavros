@@ -49,7 +49,8 @@ public:
 
 class CommandPlugin : public MavRosPlugin {
 public:
-	CommandPlugin()
+	CommandPlugin() :
+		ACK_TIMEOUT_MS(5000)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -103,7 +104,7 @@ private:
 	ros::ServiceServer set_home_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
-	const int ACK_TIMEOUT_MS = 5000;
+	const int ACK_TIMEOUT_MS;	// = 5000;
 
 	/* -*- mid-level functions -*- */
 
