@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system thread date_time)
-
+find_package(mavlink REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -97,8 +97,9 @@ generate_messages(
   std_msgs
 )
 
-## Generate MAVLink headers
-include(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.cmake)
+## Select MAVLink dialect
+#
+# TODO: move dialect list to mavlink package
 
 set(MAVLINK_DIALECT "ardupilotmega" CACHE STRING "MAVLink dialect selector")
 set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS
@@ -114,21 +115,6 @@ set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS
   "sensesoar"
 )
 
-set(MAVLINK_DEF
-  ardupilotmega.xml
-  autoquad.xml
-  common.xml
-  matrixpilot.xml
-  minimal.xml
-  pixhawk.xml
-  slugs.xml
-  test.xml
-  ualberta.xml
-  sensesoar.xml
-)
-
-generate_mavlink("1.0" "${MAVLINK_DEF}")
-
 
 ###################################
 ## catkin specific configuration ##
@@ -143,7 +129,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavconn mavros_plugins
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
-  DEPENDS Boost
+  DEPENDS Boost mavlink
 )
 
 ###########
@@ -159,6 +145,7 @@ include_directories(
   src/mavconn
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${mavlink_INCLUDE_DIRS}
 )
 
 add_definitions(

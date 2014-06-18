@@ -4,6 +4,8 @@ MAVROS
 MAVLink extendable communication node for ROS
 with UDP proxy for Ground Control Station (e.g. [QGroundControl][1]).
 
+ROS API documentation moved to [wiki.ros.org][9].
+
 
 Feutures
 --------
@@ -22,61 +24,9 @@ Limitations
 Only for linux. Depends on [Boost library][4] >= 1.49.
 Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 
+This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][7].
+Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
-Parameters
-----------
-
-General node parametars:
-
-  * ~/serial\_port -- FCU serial device (default: /dev/ttyACM0)
-  * ~/serial\_baud -- serial baud rate (default: 57600)
-  * ~/bind\_host -- UDP proxy listen host (default: 0.0.0.0)
-  * ~/bind\_port -- UDP proxy port (default: 14555)
-  * ~/gcs\_host -- GCS host
-  * ~/gcs\_port -- GCS UDP port (default: 14550)
-  * ~/system\_id -- Node MAVLink System ID (default: 1)
-  * ~/component\_id -- Node MAVLink Component ID (default: 240 == UDP\_BRIDGE)
-  * ~/target\_system\_id -- FCU System ID (default: 1)
-  * ~/target\_component\_id -- FCU Component ID (default: 1)
-  * ~/startup\_px4\_usb\_quirk -- autostart mavlink via USB on PX4
-
-Plugins parameters:
-
-  * ~conn\_timeout -- FCU connection timeout \[sec\] (default: 30.0)
-  * ~gps/frame\_id -- GPS Header.frame\_id (default: 'gps')
-  * ~gps/time\_ref\_source -- TimeRefrence Header frame\_id (default: 'gps')
-  * ~imu/frame\_id -- IMU Header.frame\_id (default: 'fcu')
-  * ~imu/linear\_acceleration\_stdev -- accel's standard deviation (default: 0.0003)
-  * ~imu/angular\_velocity\_stdev -- gyro's standard deviation \[rad\] (default: 0.02°)
-  * ~imu/orientation\_stdev -- deviation for IMU.orientation (default: 1.0)
-  * ~param/\* -- FCU parameters mapped by ParamPlugin
-  * ~mission/pull\_after\_gcs -- automatically pull waypoints if GCS pulls (default: off)
-
-
-Servicies
----------
-
-ParamPlugin:
-
-  * ~param/pull -- Pulls FCU params to rosparam
-  * ~param/push -- Push rosparam to FCU
-  * ~param/get -- Get one FCU parameter
-  * ~param/set -- Set one FCU parameter and update rosparam with actual value
-
-WaypointPlugin:
-
-  * ~mission/pull -- Pulls FCU waypoints and publish
-  * ~mission/push -- Push new waypoint list to FCU
-  * ~mission/clear -- Clear waypoint list
-  * ~mission/set\_current -- Set current active waypoint (in list)
-  * ~mission/goto -- send one waypoint (only APM)
-
-CommandPlugin:
-
-  * ~cmd/command -- Send any COMMAND\_LONG (all FCU)
-  * ~cmd/arming -- Arm/Disarm command
-  * ~cmd/set\_mode -- Set FCU operation mode
-  * ~cmd/set\_home -- Set home position (if supported)
 
 Programs
 --------
@@ -128,8 +78,23 @@ Use `wstool` utility for installation. In your workspace do:
 
     wstool set -t src --git https://github.com/vooon/mavros.git
     wstool update -t src
+    rosdep install --from-paths src --ignore-src --rosdistro hydro -y
 
 Then use regular `catkin_make` for biuld and install.
+Notes: since v0.5 (and [#35][8]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][7].
+
+### Installing ros-\*-mavlink from source
+
+If rosdep could'not install mavlink library, you could install it from source:
+
+    mkdir -p ~/ros_deps/src
+    cd ~/ros_deps
+    rosinstall_generate mavlink | tee rosinstall.yaml
+    wstool init src ./rosinstall.yaml
+    catkin_make_isolated --install-space $ROSINSTALL --install -DCMAKE_BUILD_TYPE=Release
+
+$ROSINSTALL must be writable for user.
+Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][7].
 
 
 Testing
@@ -156,3 +121,6 @@ Links
 [4]: http://www.boost.org/
 [5]: http://mavlink.org/mavlink/start
 [6]: https://github.com/arthurbenemann/droidplanner/
+[7]: https://github.com/vooon/mavlink-gbp-release
+[8]: https://github.com/vooon/mavros/issues/35
+[9]: http://wiki.ros.org/mavros
