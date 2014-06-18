@@ -2,6 +2,30 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2014-06-19)
+------------------
+* Remove mavlink submodule and move it to package dependency
+  Bloom release tool don't support git submodules,
+  so i've ceate a package as described in http://wiki.ros.org/bloom/Tutorials/ReleaseThirdParty .
+  Fix `#35 <https://github.com/vooon/mavros/issues/35>`_.
+* plugins: param: add missing gcc 4.6 fix.
+* plugins: fix const initializers for gcc 4.6
+* plugins: imu_pub: fix const initializers for gcc 4.6
+  Fix for build failure devel-hydro-mavros `#4 <https://github.com/vooon/mavros/issues/4>`_.
+* Add support for GCC 4.6 (C++0x, ubuntu 12.04)
+  I don't use complete c++11, so we could switch to c++0x if it supported.
+* plugins: rc_io: Add override rcin service
+  Fix: `#22 <https://github.com/vooon/mavros/issues/22>`_.
+* plugins: sys_status: fix timeouts
+  Fix `#26 <https://github.com/vooon/mavros/issues/26>`_.
+* plugins: sys_status: add set stream rate service
+  Some additional testing required.
+  Fix `#23 <https://github.com/vooon/mavros/issues/23>`_.
+* Remove unused boost libarary: timer
+  Build on jenkins for hydro failed on find boost_timer.
+* 0.4.1
+* Add changelog for releasing via bloom
+
 0.4.1 (2014-06-11)
 ------------------
 * node: Show serial link status in diag
@@ -224,3 +248,4 @@ Changelog for package mavros
   Import Mavlink.msg from mavlink_ros package
   ( https://github.com/mavlink/mavlink_ros ).
 * Contributors: Vladimir Ermakov
+
