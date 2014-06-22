@@ -97,14 +97,6 @@ $ROSINSTALL must be writable for user.
 Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][7].
 
 
-Testing
--------
-
-Simple communication library test (serial-udp bridge):
-
-    catkin_make mavudpproxy && ./devel/lib/mavros/mavudpproxy /dev/ttyACM0 115200
-
-
 Links
 -----
 
