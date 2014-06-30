@@ -44,7 +44,7 @@ int MAVConnInterface::new_channel()
 {
 	int chan = 0;
 
-	for (chan = 0; chan <= MAVLINK_COMM_NUM_BUFFERS; chan++) {
+	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
 		if (allocated_channels.count(chan) == 0) {
 			ROS_DEBUG_NAMED("mavconn", "Allocate new channel: %d", chan);
 			allocated_channels.insert(chan);
@@ -52,10 +52,8 @@ int MAVConnInterface::new_channel()
 		}
 	}
 
-	if (chan >= MAVLINK_COMM_NUM_BUFFERS) {
-		ROS_ERROR_NAMED("mavconn", "channel overrun");
-		return -1;
-	}
+	ROS_ERROR_NAMED("mavconn", "channel overrun");
+	return -1;
 }
 
 void MAVConnInterface::delete_channel(int chan)

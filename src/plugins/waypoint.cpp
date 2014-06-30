@@ -506,6 +506,9 @@ private:
 			case WP_SET_CUR:
 				mission_set_current(wp_set_active);
 				break;
+
+			case WP_IDLE:
+				break;
 			}
 
 			restart_timeout_timer_int();
