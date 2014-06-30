@@ -32,6 +32,7 @@
 #include <pluginlib/class_loader.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/utils.h>
+#include <fnmatch.h>
 
 #include <mavros/Mavlink.h>
 
@@ -123,6 +124,7 @@ public:
 		node_handle.param("target_system_id", tgt_system_id, 1);
 		node_handle.param("target_component_id", tgt_component_id, 1);
 		node_handle.param("startup_px4_usb_quirk", px4_usb_quirk, false);
+		node_handle.getParam("plugin_blacklist", plugin_blacklist);
 
 		diag_updater.setHardwareID("Mavlink");
 		diag_updater.add(serial_link_diag);
@@ -192,6 +194,7 @@ private:
 
 	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
 	std::vector<boost::shared_ptr<MavRosPlugin> > loaded_plugins;
+	std::vector<std::string> plugin_blacklist;
 	std::vector<sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> >
 		message_route_table; // link interface -> router -> plugin callback
 	UAS mav_uas;
@@ -220,8 +223,28 @@ private:
 		message_route_table[mmsg->msgid](mmsg, sysid, compid);
 	}
 
+	bool check_in_blacklist(std::string pl_name) {
+		for (auto it = plugin_blacklist.cbegin();
+				it != plugin_blacklist.cend();
+				it++) {
+			int cmp = fnmatch(it->c_str(), pl_name.c_str(), FNM_CASEFOLD);
+			if (cmp == 0)
+				return true;
+			else if (cmp != FNM_NOMATCH)
+				ROS_ERROR("Blacklist check error! fnmatch('%s', '%s')",
+						it->c_str(), pl_name.c_str());
+		}
+
+		return false;
+	}
+
 	void add_plugin(std::string pl_name) {
 		boost::shared_ptr<mavplugin::MavRosPlugin> plugin;
+
+		if (check_in_blacklist(pl_name)) {
+			ROS_INFO_STREAM("Plugin [alias " << pl_name << "] blacklisted");
+			return;
+		}
 
 		try {
 			plugin = plugin_loader.createInstance(pl_name);
