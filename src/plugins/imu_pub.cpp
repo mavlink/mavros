@@ -41,12 +41,7 @@ public:
 	IMUPubPlugin() :
 		linear_accel_vec(),
 		has_hr_imu(false),
-		has_scaled_imu(false),
-		gauss_to_tesla(1.0e-4),
-		millit_to_tesla(1000.0),
-		millirs_to_radsec(1000.0),
-		millig_to_ms2(9.80665 / 1000.00),
-		millibar_to_pascal(1.0e5)
+		has_scaled_imu(false)
 	{
 	};
 
@@ -54,7 +49,7 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		double linear_stdev, angular_stdev, orientation_stdev;
+		double linear_stdev, angular_stdev, orientation_stdev, mag_stdev;
 
 		uas = &uas_;
 
@@ -62,6 +57,7 @@ public:
 		nh.param("imu/linear_acceleration_stdev", linear_stdev, 0.0003); // check default by MPU6000 spec
 		nh.param("imu/angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0)); // check default by MPU6000 spec
 		nh.param("imu/orientation_stdev", orientation_stdev, 1.0);
+		nh.param("imu/magnetic_stdev", mag_stdev, 0.0);
 
 		std::fill(linear_acceleration_cov.begin(),
 				linear_acceleration_cov.end(),
@@ -83,6 +79,18 @@ public:
 		orientation_cov[0+0] =
 			orientation_cov[3+1] =
 			orientation_cov[6+2] = std::pow(orientation_stdev, 2);
+
+		std::fill(magnetic_cov.begin(), magnetic_cov.end(), 0.0);
+		if (mag_stdev == 0.0)
+			magnetic_cov[0] = -1.0;
+		else {
+			magnetic_cov[0+0] =
+				magnetic_cov[3+1] =
+				magnetic_cov[6+2] = std::pow(mag_stdev, 2);
+		}
+
+		std::fill(unk_orientation_cov.begin(), unk_orientation_cov.end(), 0.0);
+		unk_orientation_cov[0] = -1.0;
 
 		imu_pub = nh.advertise<sensor_msgs::Imu>("imu/data", 10);
 		magn_pub = nh.advertise<sensor_msgs::MagneticField>("imu/mag", 10);
@@ -141,12 +149,14 @@ private:
 	boost::array<double, 9> linear_acceleration_cov;
 	boost::array<double, 9> angular_velocity_cov;
 	boost::array<double, 9> orientation_cov;
+	boost::array<double, 9> unk_orientation_cov;
+	boost::array<double, 9> magnetic_cov;
 
-	const double gauss_to_tesla;		// = 1.0e-4;
-	const double millit_to_tesla;		// = 1000.0;
-	const double millirs_to_radsec;		// = 1000.0;
-	const double millig_to_ms2;		// = 9.80665 / 1000.0;
-	const double millibar_to_pascal;	// = 1.0e5;
+	static constexpr double GAUSS_TO_TESLA = 1.0e-4;
+	static constexpr double MILLIT_TO_TESLA = 1000.0;
+	static constexpr double MILLIRS_TO_RADSEC = 1000.0;
+	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
+	static constexpr double MILLIBAR_TO_PASCAL = 1.0e5;
 
 
 	void handle_attitude(const mavlink_message_t *msg) {
@@ -212,10 +222,7 @@ private:
 					imu_hr.xacc, -imu_hr.yacc, -imu_hr.zacc);
 			linear_accel_vec = imu_msg->linear_acceleration;
 
-			std::fill(imu_msg->orientation_covariance.begin(),
-					imu_msg->orientation_covariance.end(), 0);
-			imu_msg->orientation_covariance[0] = -1;
-
+			imu_msg->orientation_covariance = unk_orientation_cov;
 			imu_msg->angular_velocity_covariance = angular_velocity_cov;
 			imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
@@ -227,14 +234,11 @@ private:
 				imu_hr.fields_updated & 0x01c0) {
 			sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
 
-			magn_msg->magnetic_field.x = imu_hr.xmag * gauss_to_tesla;
-			magn_msg->magnetic_field.y = imu_hr.ymag * gauss_to_tesla;
-			magn_msg->magnetic_field.z = imu_hr.zmag * gauss_to_tesla;
+			magn_msg->magnetic_field.x = imu_hr.xmag * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.y = imu_hr.ymag * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.z = imu_hr.zmag * GAUSS_TO_TESLA;
 
-			// TODO: again covariance
-			std::fill(magn_msg->magnetic_field_covariance.begin(),
-					magn_msg->magnetic_field_covariance.end(), 0);
-			magn_msg->magnetic_field_covariance[0] = -1;
+			magn_msg->magnetic_field_covariance = magnetic_cov;
 
 			magn_msg->header = header;
 			magn_pub.publish(magn_msg);
@@ -244,7 +248,7 @@ private:
 				imu_hr.fields_updated & 0x0e00) {
 			sensor_msgs::FluidPressurePtr atmp_msg(new sensor_msgs::FluidPressure);
 
-			atmp_msg->fluid_pressure = imu_hr.abs_pressure * millibar_to_pascal;
+			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
 			atmp_msg->header = header;
 			press_pub.publish(atmp_msg);
 		}
@@ -273,25 +277,22 @@ private:
 
 		/* NOTE: APM send SCALED_IMU data as RAW_IMU */
 		fill_imu_msg_vec(imu_msg,
-				imu_raw.xgyro * millirs_to_radsec,
-				-imu_raw.ygyro * millirs_to_radsec,
-				-imu_raw.zgyro * millirs_to_radsec,
-				imu_raw.xacc * millig_to_ms2,
-				-imu_raw.yacc * millig_to_ms2,
-				-imu_raw.zacc * millig_to_ms2);
+				imu_raw.xgyro * MILLIRS_TO_RADSEC,
+				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
+				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
+				imu_raw.xacc * MILLIG_TO_MS2,
+				-imu_raw.yacc * MILLIG_TO_MS2,
+				-imu_raw.zacc * MILLIG_TO_MS2);
 
 		if (!uas->is_ardupilotmega()) {
 			ROS_WARN_THROTTLE_NAMED(60, "imu", "RAW_IMU: linear acceleration known on APM only");
-			linear_accel_vec.x = 0;
-			linear_accel_vec.y = 0;
-			linear_accel_vec.z = 0;
+			linear_accel_vec.x = 0.0;
+			linear_accel_vec.y = 0.0;
+			linear_accel_vec.z = 0.0;
 		} else
 			linear_accel_vec = imu_msg->linear_acceleration;
 
-		std::fill(imu_msg->orientation_covariance.begin(),
-				imu_msg->orientation_covariance.end(), 0);
-		imu_msg->orientation_covariance[0] = -1;
-
+		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
@@ -301,14 +302,11 @@ private:
 		/* -*- magnetic vector -*- */
 		sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
 
-		magn_msg->magnetic_field.x = imu_raw.xmag * millit_to_tesla;
-		magn_msg->magnetic_field.y = -imu_raw.ymag * millit_to_tesla;
-		magn_msg->magnetic_field.z = -imu_raw.zmag * millit_to_tesla;
+		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
 
-		// TODO: again covariance
-		std::fill(magn_msg->magnetic_field_covariance.begin(),
-				magn_msg->magnetic_field_covariance.end(), 0);
-		magn_msg->magnetic_field_covariance[0] = -1;
+		magn_msg->magnetic_field_covariance = magnetic_cov;
 
 		magn_msg->header = header;
 		magn_pub.publish(magn_msg);
@@ -330,18 +328,15 @@ private:
 		header.frame_id = frame_id;
 
 		fill_imu_msg_vec(imu_msg,
-				imu_raw.xgyro * millirs_to_radsec,
-				-imu_raw.ygyro * millirs_to_radsec,
-				-imu_raw.zgyro * millirs_to_radsec,
-				imu_raw.xacc * millig_to_ms2,
-				-imu_raw.yacc * millig_to_ms2,
-				-imu_raw.zacc * millig_to_ms2);
+				imu_raw.xgyro * MILLIRS_TO_RADSEC,
+				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
+				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
+				imu_raw.xacc * MILLIG_TO_MS2,
+				-imu_raw.yacc * MILLIG_TO_MS2,
+				-imu_raw.zacc * MILLIG_TO_MS2);
 		linear_accel_vec = imu_msg->linear_acceleration;
 
-		std::fill(imu_msg->orientation_covariance.begin(),
-				imu_msg->orientation_covariance.end(), 0);
-		imu_msg->orientation_covariance[0] = -1;
-
+		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
@@ -351,14 +346,11 @@ private:
 		/* -*- magnetic vector -*- */
 		sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
 
-		magn_msg->magnetic_field.x = imu_raw.xmag * millit_to_tesla;
-		magn_msg->magnetic_field.y = -imu_raw.ymag * millit_to_tesla;
-		magn_msg->magnetic_field.z = -imu_raw.zmag * millit_to_tesla;
+		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
 
-		// TODO: again covariance
-		std::fill(magn_msg->magnetic_field_covariance.begin(),
-				magn_msg->magnetic_field_covariance.end(), 0);
-		magn_msg->magnetic_field_covariance[0] = -1;
+		magn_msg->magnetic_field_covariance = magnetic_cov;
 
 		magn_msg->header = header;
 		magn_pub.publish(magn_msg);
@@ -386,6 +378,14 @@ private:
 		press_pub.publish(atmp_msg);
 	}
 };
+
+#if 0
+const double IMUPubPlugin::GAUSS_TO_TESLA = 1.0e-4;
+const double IMUPubPlugin::MILLIT_TO_TESLA = 1000.0;
+const double IMUPubPlugin::MILLIRS_TO_RADSEC = 1000.0;
+const double IMUPubPlugin::MILLIG_TO_MS2 = 9.80665 / 1000.00;
+const double IMUPubPlugin::MILLIBAR_TO_PASCAL = 1.0e5;
+#endif
 
 }; // namespace mavplugin
 
