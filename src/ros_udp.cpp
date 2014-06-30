@@ -24,6 +24,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
+#include <mavros/utils.h>
 #include <mavros/mavconn_interface.h>
 #include "mavconn_udp.h"
 
@@ -40,25 +41,17 @@ void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid
 	MavlinkPtr rmsg(new Mavlink);
 
 	rmsg->header.stamp = ros::Time::now();
-	rmsg->len = mmsg->len;
-	rmsg->seq = mmsg->seq;
-	rmsg->sysid = mmsg->sysid;
-	rmsg->compid = mmsg->compid;
-	rmsg->msgid = mmsg->msgid;
-	for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
-		rmsg->payload64.push_back(mmsg->payload64[i]);
-
+	mavutils::copy_mavlink_to_ros(mmsg, rmsg);
 	mavlink_pub.publish(rmsg);
 };
 
 void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 	mavlink_message_t mmsg;
 
-	mmsg.msgid = rmsg->msgid;
-	mmsg.len = rmsg->len;
-	copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64); // TODO: add paranoic checks
-
-	udp_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+	if (mavutils::copy_ros_to_mavlink(rmsg, mmsg))
+		udp_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+	else
+		ROS_ERROR("Packet drop: illegal payload64 size");
 };
 
 int main(int argc, char *argv[])

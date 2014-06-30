@@ -31,6 +31,9 @@
 #include <cstdarg>
 #include <pthread.h>
 
+#include <mavros/Mavlink.h>
+#include <mavros/mavconn_mavlink.h>
+
 namespace mavutils {
 
 /**
@@ -59,6 +62,37 @@ inline bool set_thread_name(boost::thread &thd, const char *name, ...)
 inline bool set_thread_name(boost::thread &thd, std::string name)
 {
 	return set_thread_name(thd, name.c_str());
+};
+
+/**
+ * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
+ */
+inline bool copy_ros_to_mavlink(const mavros::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg)
+{
+	if (rmsg->payload64.size() > sizeof(mmsg.payload64) / sizeof(mmsg.payload64[0])) {
+		return false;
+	}
+
+	mmsg.msgid = rmsg->msgid;
+	mmsg.len = rmsg->len;
+	copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64);
+	return true;
+};
+
+/**
+ * @brief Copy mavlink_message_t to mavros/Mavlink.msg
+ */
+inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPtr &rmsg)
+{
+	rmsg->len = mmsg->len;
+	rmsg->seq = mmsg->seq;
+	rmsg->sysid = mmsg->sysid;
+	rmsg->compid = mmsg->compid;
+	rmsg->msgid = mmsg->msgid;
+
+	rmsg->payload64.reserve((mmsg->len + 7) / 8);
+	for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
+		rmsg->payload64.push_back(mmsg->payload64[i]);
 };
 
 }; // namespace mavutils
