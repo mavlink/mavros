@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <boost/thread/thread.hpp>
 
 #include <cstdio>
@@ -53,6 +54,7 @@ inline bool set_thread_name(boost::thread &thd, const char *name, ...)
 
 	char new_name[256];
 	vsnprintf(new_name, sizeof(new_name), name, arg_list);
+	va_end(arg_list);
 	return pthread_setname_np(pth, new_name) == 0;
 };
 
@@ -75,7 +77,7 @@ inline bool copy_ros_to_mavlink(const mavros::Mavlink::ConstPtr &rmsg, mavlink_m
 
 	mmsg.msgid = rmsg->msgid;
 	mmsg.len = rmsg->len;
-	copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64);
+	std::copy(rmsg->payload64.begin(), rmsg->payload64.end(), mmsg.payload64);
 	return true;
 };
 

@@ -37,7 +37,7 @@ namespace mavplugin {
 class GPSInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
-	GPSInfo(const std::string name) :
+	explicit GPSInfo(const std::string name) :
 		diagnostic_updater::DiagnosticTask(name),
 		satellites_visible(-1),
 		fix_type(0)

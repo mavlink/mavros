@@ -40,7 +40,7 @@ public:
 	uint16_t expected_command;
 	uint8_t result;
 
-	CommandTransaction(uint16_t command) :
+	explicit CommandTransaction(uint16_t command) :
 		ack(),
 		expected_command(command),
 		result(MAV_RESULT_FAILED)

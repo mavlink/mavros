@@ -24,6 +24,7 @@
 #include <mavros/utils.h>
 #include <ros/console.h>
 #include <ros/assert.h>
+#include <algorithm>
 
 using namespace mavconn;
 

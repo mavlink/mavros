@@ -43,7 +43,7 @@ using namespace mavplugin;
 class MavlinkDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-	MavlinkDiag(std::string name) :
+	explicit MavlinkDiag(std::string name) :
 		diagnostic_updater::DiagnosticTask(name),
 		last_drop_count(0),
 		is_connected(false)
@@ -94,7 +94,7 @@ private:
 class MavRos
 {
 public:
-	MavRos(ros::NodeHandle &nh_) :
+	explicit MavRos(const ros::NodeHandle &nh_) :
 		node_handle(nh_),
 		mavlink_node_handle("/mavlink"), // for compatible reasons
 		serial_link_diag("FCU connection"),

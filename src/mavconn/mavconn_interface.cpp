@@ -23,6 +23,7 @@
 #include <mavros/mavconn_interface.h>
 #include <ros/console.h>
 #include <ros/assert.h>
+#include <set>
 
 using namespace mavconn;
 
