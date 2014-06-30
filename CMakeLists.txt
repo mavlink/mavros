@@ -171,7 +171,9 @@ add_library(mavconn
    src/mavconn/mavconn_serial.cpp
    src/mavconn/mavconn_udp.cpp
 )
-add_dependencies(mavconn ${MAVLINK_DIALECT}.xml-v1.0)
+add_dependencies(mavconn
+  mavros_generate_messages_cpp
+)
 target_link_libraries(mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
