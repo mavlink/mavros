@@ -213,8 +213,7 @@ private:
 		header.frame_id = frame_id;
 
 		/* imu/data_raw filled by HR IMU */
-		if (imu_raw_pub.getNumSubscribers() > 0 &&
-				imu_hr.fields_updated & 0x003f) {
+		if (imu_hr.fields_updated & 0x003f) {
 			sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
 
 			fill_imu_msg_vec(imu_msg,
@@ -230,8 +229,7 @@ private:
 			imu_raw_pub.publish(imu_msg);
 		}
 
-		if (magn_pub.getNumSubscribers() > 0 &&
-				imu_hr.fields_updated & 0x01c0) {
+		if (imu_hr.fields_updated & 0x01c0) {
 			sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
 
 			magn_msg->magnetic_field.x = imu_hr.xmag * GAUSS_TO_TESLA;
@@ -244,8 +242,7 @@ private:
 			magn_pub.publish(magn_msg);
 		}
 
-		if (press_pub.getNumSubscribers() > 0 &&
-				imu_hr.fields_updated & 0x0e00) {
+		if (imu_hr.fields_updated & 0x0e00) {
 			sensor_msgs::FluidPressurePtr atmp_msg(new sensor_msgs::FluidPressure);
 
 			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
@@ -253,8 +250,7 @@ private:
 			press_pub.publish(atmp_msg);
 		}
 
-		if (temp_pub.getNumSubscribers() > 0 &&
-				imu_hr.fields_updated & 0x1000) {
+		if (imu_hr.fields_updated & 0x1000) {
 			sensor_msgs::TemperaturePtr temp_msg(new sensor_msgs::Temperature);
 
 			temp_msg->temperature = imu_hr.temperature;
@@ -378,14 +374,6 @@ private:
 		press_pub.publish(atmp_msg);
 	}
 };
-
-#if 0
-const double IMUPubPlugin::GAUSS_TO_TESLA = 1.0e-4;
-const double IMUPubPlugin::MILLIT_TO_TESLA = 1000.0;
-const double IMUPubPlugin::MILLIRS_TO_RADSEC = 1000.0;
-const double IMUPubPlugin::MILLIG_TO_MS2 = 9.80665 / 1000.00;
-const double IMUPubPlugin::MILLIBAR_TO_PASCAL = 1.0e5;
-#endif
 
 }; // namespace mavplugin
 
