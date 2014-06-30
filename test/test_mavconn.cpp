@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 
 #include <mavros/mavconn_interface.h>
-#include "mavconn_serial.h"
-#include "mavconn_udp.h"
+#include <mavros/mavconn_serial.h>
+#include <mavros/mavconn_udp.h>
 
 using namespace mavconn;
 
