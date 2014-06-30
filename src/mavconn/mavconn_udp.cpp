@@ -20,7 +20,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include "mavconn_udp.h"
+#include <mavros/mavconn_udp.h>
 #include <mavros/utils.h>
 #include <ros/console.h>
 #include <ros/assert.h>

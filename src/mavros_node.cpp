@@ -25,9 +25,8 @@
 #include <ros/console.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <mavros/mavconn_interface.h>
-#include "mavconn_serial.h"
-#include "mavconn_udp.h"
+#include <mavros/mavconn_serial.h>
+#include <mavros/mavconn_udp.h>
 
 #include <pluginlib/class_loader.h>
 #include <mavros/mavros_plugin.h>

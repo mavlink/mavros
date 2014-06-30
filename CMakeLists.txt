@@ -142,7 +142,6 @@ catkin_package(
 # TODO: Check names of system library include directories (boost)
 include_directories(
   include
-  src/mavconn
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
