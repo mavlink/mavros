@@ -23,6 +23,9 @@ TEST(MAVConn, allocate_check)
 	EXPECT_EQ(conns[1]->get_channel(), 1);
 }
 
+#if 0
+/* This test can not be started on ROS buildfarm, need new test */
+
 boost::recursive_timed_mutex mutex;
 int sig_recv_cnt = 0;
 
@@ -49,7 +52,7 @@ TEST(MAVConn, test_connection)
 	delete conn;
 	EXPECT_GT(sig_recv_cnt, 0);
 }
-
+#endif
 
 int main(int argc, char **argv){
 	testing::InitGoogleTest(&argc, argv);

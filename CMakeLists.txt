@@ -269,10 +269,5 @@ if(TARGET mavconn-test)
 	target_link_libraries(mavconn-test mavconn)
 endif()
 
-catkin_add_gtest(mavudpproxy test/mavudpproxy.cpp)
-if(TARGET mavudpproxy)
-	target_link_libraries(mavudpproxy mavconn)
-endif()
-
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
