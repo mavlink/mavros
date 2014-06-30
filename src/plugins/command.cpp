@@ -47,10 +47,14 @@ public:
 	{ }
 };
 
+/**
+ * @brief Command plugin.
+ *
+ * Send any command via COMMAND_LONG
+ */
 class CommandPlugin : public MavRosPlugin {
 public:
-	CommandPlugin() :
-		ACK_TIMEOUT_MS(5000)
+	CommandPlugin()
 	{ };
 
 	void initialize(UAS &uas_,
@@ -104,7 +108,7 @@ private:
 	ros::ServiceServer set_home_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
-	const int ACK_TIMEOUT_MS;	// = 5000;
+	static constexpr int ACK_TIMEOUT_MS = 5000;
 
 	/* -*- mid-level functions -*- */
 

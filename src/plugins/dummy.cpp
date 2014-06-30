@@ -28,33 +28,53 @@
 
 namespace mavplugin {
 
+/**
+ * @brief Dummy plugin.
+ * Example and "how to" for users.
+ *
+ * @example
+ */
 class DummyPlugin : public MavRosPlugin {
 public:
-	DummyPlugin()
-	{
-		std::cout << "dummy constructor" << std::endl;
+	DummyPlugin() {
+		ROS_INFO_NAMED("dummy", "dummy constructor");
 	};
 
+	/**
+	 * Plugin initializer. Constructor should not do this.
+	 */
 	void initialize(UAS &uas,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		std::cout << "initialize" << std::endl;
+		ROS_INFO_NAMED("dummy", "initialize");
 	};
 
-	std::string get_name()
-	{
+	/**
+	 * Returns plugin name (CamelCase)
+	 */
+	std::string get_name() {
 		return "Dummy";
 	};
 
-	std::vector<uint8_t> get_supported_messages()
-	{
-		return {0, 1, 2, 3, 4};
+	/**
+	 * Returns vector with MSGID processed by message_rx_cb()
+	 */
+	std::vector<uint8_t> get_supported_messages() {
+		return {
+			MAVLINK_MSG_ID_HEARTBEAT,
+			MAVLINK_MSG_ID_SYS_STATUS,
+			MAVLINK_MSG_ID_STATUSTEXT
+		};
 	};
 
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)
-	{
-		std::cout << "Dummy::message_rx_cb" << std::endl;
+	/**
+	 * Message receive handler (FCU->MAVROS)
+	 * called only for messages listed in get_supported_messages()
+	 */
+	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		ROS_INFO_NAMED("dummy", "Dummy::message_rx_cb(%p, %u, %u) MSGID: %u",
+				msg, sysid, compid, msg->msgid);
 	};
 };
 

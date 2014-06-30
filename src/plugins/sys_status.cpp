@@ -286,7 +286,10 @@ private:
 };
 
 
-
+/**
+ * @brief System status plugin.
+ * Required for most applications.
+ */
 class SystemStatusPlugin : public MavRosPlugin
 {
 public:

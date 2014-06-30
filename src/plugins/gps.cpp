@@ -72,6 +72,11 @@ private:
 };
 
 
+/**
+ * @brief GPS plugin
+ *
+ * This plugin implements same ROS topics as nmea_navsat_driver package.
+ */
 class GPSPlugin : public MavRosPlugin {
 public:
 	GPSPlugin() :

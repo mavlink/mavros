@@ -33,14 +33,16 @@
 
 namespace mavplugin {
 
+/**
+ * @brief RC IO plugin
+ */
 class RCIOPlugin : public MavRosPlugin {
 public:
 	RCIOPlugin() :
 		raw_rc_in(0),
 		raw_rc_out(0),
 		has_rc_channels_msg(false)
-	{
-	};
+	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,

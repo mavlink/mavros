@@ -317,15 +317,13 @@ public:
 	int retries_remaining;
 };
 
+/**
+ * @brief Parameter manipulation plugin
+ */
 class ParamPlugin : public MavRosPlugin {
 public:
-	ParamPlugin() :
-		BOOTUP_TIME_MS(10000),
-		PARAM_TIMEOUT_MS(1000),
-		LIST_TIMEOUT_MS(30000),
-		RETRIES_COUNT(3)
-	{
-	};
+	ParamPlugin()
+	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
@@ -432,9 +430,9 @@ private:
 	ros::ServiceServer get_srv;
 
 	std::unique_ptr<boost::asio::deadline_timer> param_timer;
-	const int BOOTUP_TIME_MS;	// = 10000;	//!< APM boot time
-	const int PARAM_TIMEOUT_MS;	// = 1000;	//!< Param wait time
-	const int LIST_TIMEOUT_MS;	// = 30000;	//!< Receive all time
+	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
+	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
+	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
 
 	std::map<std::string, Parameter> parameters;
 	ssize_t param_count;
@@ -442,7 +440,7 @@ private:
 	boost::condition_variable list_receiving;
 	boost::condition_variable set_acked;
 
-	const int RETRIES_COUNT;	// = 3;
+	static constexpr int RETRIES_COUNT = 3;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (uas->is_ardupilotmega())

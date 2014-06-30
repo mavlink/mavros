@@ -36,14 +36,16 @@
 
 namespace mavplugin {
 
+/**
+ * @brief IMU data publication plugin
+ */
 class IMUPubPlugin : public MavRosPlugin {
 public:
 	IMUPubPlugin() :
 		linear_accel_vec(),
 		has_hr_imu(false),
 		has_scaled_imu(false)
-	{
-	};
+	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,

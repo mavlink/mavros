@@ -140,20 +140,18 @@ public:
 	}
 };
 
+
+/**
+ * @brief Mission manupulation plugin
+ */
 class WaypointPlugin : public MavRosPlugin {
 public:
 	WaypointPlugin() :
 		wp_state(WP_IDLE),
 		wp_retries(RETRIES_COUNT),
 		do_pull_after_gcs(false),
-		reshedule_pull(false),
-		BOOT_TIME_MS(15000),
-		LIST_TIMEOUT_MS(30000),
-		WP_TIMEOUT_MS(1000),
-		RESHEDULE_MS(5000),
-		RETRIES_COUNT(3)
-	{
-	};
+		reshedule_pull(false)
+	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
@@ -270,11 +268,12 @@ private:
 	std::unique_ptr<boost::asio::deadline_timer> shedule_timer;
 	bool do_pull_after_gcs;
 	bool reshedule_pull;
-	const int BOOT_TIME_MS;		// = 15000;
-	const int LIST_TIMEOUT_MS;	// = 30000;
-	const int WP_TIMEOUT_MS;	// = 1000;
-	const int RESHEDULE_MS;		// = 5000;
-	const int RETRIES_COUNT;	// = 3;
+
+	static constexpr int BOOT_TIME_MS = 15000;
+	static constexpr int LIST_TIMEOUT_MS = 30000;
+	static constexpr int WP_TIMEOUT_MS = 1000;
+	static constexpr int RESHEDULE_MS = 5000;
+	static constexpr int RETRIES_COUNT = 3;
 
 	/* -*- rx handlers -*- */
 
