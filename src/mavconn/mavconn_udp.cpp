@@ -67,6 +67,9 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	socket.open(udp::v4());
 	socket.bind(server_endpoint);
 
+	// reserve some space in tx queue
+	tx_q.reserve(RX_BUFSIZE);
+
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnUDP::do_read, this));
 
@@ -151,6 +154,21 @@ void MAVConnUDP::async_read_end(boost::system::error_code error, size_t bytes_tr
 	}
 }
 
+void MAVConnUDP::copy_and_async_write(void)
+{
+	tx_buf_size = tx_q.size();
+	tx_buf.reset(new uint8_t[tx_buf_size]);
+	std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
+	tx_q.clear();
+
+	socket.async_send_to(
+			asio::buffer(tx_buf.get(), tx_buf_size),
+			sender_endpoint,
+			boost::bind(&MAVConnUDP::async_write_end,
+				this,
+				asio::placeholders::error));
+}
+
 void MAVConnUDP::do_write(void)
 {
 	if (!sender_exists) {
@@ -161,18 +179,7 @@ void MAVConnUDP::do_write(void)
 	// if write not in progress
 	if (tx_buf == 0) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
-
-		tx_buf_size = tx_q.size();
-		tx_buf.reset(new uint8_t[tx_buf_size]);
-		std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
-		tx_q.clear();
-
-		socket.async_send_to(
-				asio::buffer(tx_buf.get(), tx_buf_size),
-				sender_endpoint,
-				boost::bind(&MAVConnUDP::async_write_end,
-					this,
-					asio::placeholders::error));
+		copy_and_async_write();
 	}
 }
 
@@ -187,17 +194,7 @@ void MAVConnUDP::async_write_end(boost::system::error_code error)
 			return;
 		}
 
-		tx_buf_size = tx_q.size();
-		tx_buf.reset(new uint8_t[tx_buf_size]);
-		std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
-		tx_q.clear();
-
-		socket.async_send_to(
-				asio::buffer(tx_buf.get(), tx_buf_size),
-				sender_endpoint,
-				boost::bind(&MAVConnUDP::async_write_end,
-					this,
-					asio::placeholders::error));
+		copy_and_async_write();
 	} else {
 		if (socket.is_open()) {
 			socket.close();

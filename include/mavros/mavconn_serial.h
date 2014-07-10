@@ -1,6 +1,10 @@
 /**
+ * @brief MAVConn Serial link class
  * @file mavconn_serial.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup mavconn
+ * @{
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -28,8 +32,17 @@
 
 namespace mavconn {
 
+/**
+ * @brief Serial interface
+ */
 class MAVConnSerial : public MAVConnInterface {
 public:
+	/**
+	 * Open and run serial link.
+	 *
+	 * @param[in] device    TTY device path
+	 * @param[in] baudrate  serial baudrate
+	 */
 	MAVConnSerial(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string device = "/dev/ttyACM0", unsigned baudrate = 57600);
 	~MAVConnSerial();
@@ -46,7 +59,7 @@ private:
 	boost::thread io_thread;
 	asio::serial_port serial_dev;
 
-	static const size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
+	static constexpr size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
 	uint8_t rx_buf[RX_BUFSIZE];
 	std::vector<uint8_t> tx_q;
 	boost::shared_array<uint8_t> tx_buf;
@@ -55,6 +68,7 @@ private:
 
 	void do_read(void);
 	void async_read_end(boost::system::error_code ec, size_t bytes_transfered);
+	void copy_and_async_write(void);
 	void do_write(void);
 	void async_write_end(boost::system::error_code ec);
 };

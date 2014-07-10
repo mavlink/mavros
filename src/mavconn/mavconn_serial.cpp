@@ -42,6 +42,9 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	ROS_INFO_STREAM_NAMED("mavconn", "serial: device: " << device << " @ " << baudrate << " bps");
 
+	// reserve some space in tx queue
+	tx_q.reserve(RX_BUFSIZE);
+
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnSerial::do_read, this));
 
@@ -53,8 +56,8 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 MAVConnSerial::~MAVConnSerial()
 {
-	io_service.stop();
 	serial_dev.close();
+	io_service.stop();
 }
 
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
@@ -118,22 +121,26 @@ void MAVConnSerial::async_read_end(boost::system::error_code error, size_t bytes
 	}
 }
 
+void MAVConnSerial::copy_and_async_write(void)
+{
+	tx_buf_size = tx_q.size();
+	tx_buf.reset(new uint8_t[tx_buf_size]);
+	std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
+	tx_q.clear();
+
+	boost::asio::async_write(serial_dev,
+			boost::asio::buffer(tx_buf.get(), tx_buf_size),
+			boost::bind(&MAVConnSerial::async_write_end,
+				this,
+				boost::asio::placeholders::error));
+}
+
 void MAVConnSerial::do_write(void)
 {
 	// if write not in progress
 	if (tx_buf == 0) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
-
-		tx_buf_size = tx_q.size();
-		tx_buf.reset(new uint8_t[tx_buf_size]);
-		std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
-		tx_q.clear();
-
-		boost::asio::async_write(serial_dev,
-				boost::asio::buffer(tx_buf.get(), tx_buf_size),
-				boost::bind(&MAVConnSerial::async_write_end,
-					this,
-					boost::asio::placeholders::error));
+		copy_and_async_write();
 	}
 }
 
@@ -148,16 +155,7 @@ void MAVConnSerial::async_write_end(boost::system::error_code error)
 			return;
 		}
 
-		tx_buf_size = tx_q.size();
-		tx_buf.reset(new uint8_t[tx_buf_size]);
-		std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
-		tx_q.clear();
-
-		boost::asio::async_write(serial_dev,
-				boost::asio::buffer(tx_buf.get(), tx_buf_size),
-				boost::bind(&MAVConnSerial::async_write_end,
-					this,
-					boost::asio::placeholders::error));
+		copy_and_async_write();
 	} else {
 		if (serial_dev.is_open()) {
 			serial_dev.close();

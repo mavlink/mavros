@@ -4,6 +4,11 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn
+ * @{
+ *  @brief MAVConn connection handling library
+ *
+ *  This lib provide simple interface to MAVLink enabled devices
+ *  such as autopilots.
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -28,18 +33,27 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include <set>
+#include <memory>
 #include <mavros/mavconn_mavlink.h>
 
 namespace mavconn {
 namespace sig2 = boost::signals2;
 namespace asio = boost::asio;
 
-class MAVConnInterface {
+/**
+ * @brief Generic mavlink interface
+ */
+class MAVConnInterface : private boost::noncopyable {
 public:
+	/**
+	 * @param[in] system_id     sysid for send_message
+	 * @param[in] component_id  compid for send_message
+	 */
 	MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 	virtual ~MAVConnInterface() {
 		delete_channel(channel);
@@ -48,9 +62,25 @@ public:
 	inline void send_message(const mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);
 	};
+
+	/**
+	 * @brief Send message
+	 * Can be used in message_received signal.
+	 *
+	 * @param[in] *message  not changed
+	 * @param[in] sysid     message sys id
+	 * @param[in] compid    message component id
+	 */
 	virtual void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+
+	/**
+	 * @brief Send raw bytes (for some quirks)
+	 */
 	virtual void send_bytes(const uint8_t *bytes, size_t length) = 0;
 
+	/**
+	 * @brief Message receive signal
+	 */
 	sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> message_received;
 	sig2::signal<void()> port_closed;
 
