@@ -98,14 +98,23 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 {
 	ROS_ASSERT(message != NULL);
 	uint8_t buffer[MAVLINK_MAX_PACKET_LEN + 2];
-	mavlink_message_t msg = *message;
+	size_t length;
+
+	/* if sysid/compid pair not match we need explicit finalize
+	 * else just copy to buffer */
+	if (message->sysid != sysid || message->compid != compid) {
+		mavlink_message_t msg = *message;
 
 #if MAVLINK_CRC_EXTRA
-	mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, mavlink_crcs[msg.msgid]);
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, mavlink_crcs[msg.msgid]);
 #else
-	mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
 #endif
-	size_t length = mavlink_msg_to_send_buffer(buffer, &msg);
+
+		length = mavlink_msg_to_send_buffer(buffer, &msg);
+	}
+	else
+		length = mavlink_msg_to_send_buffer(buffer, message);
 
 	ROS_DEBUG_NAMED("mavconn", "udp::send_message: Message-ID: %d [%zu bytes] Sys-Id: %d Comp-Id: %d",
 			message->msgid, length, sysid, compid);
