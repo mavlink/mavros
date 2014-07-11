@@ -97,11 +97,11 @@ public:
 		vel_pub = nh.advertise<geometry_msgs::TwistStamped>("gps_vel", 10);
 	}
 
-	std::string get_name() {
+	std::string const get_name() const {
 		return "GPS";
 	}
 
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_GPS_RAW_INT,
 			MAVLINK_MSG_ID_GPS_STATUS,

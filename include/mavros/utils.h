@@ -61,7 +61,7 @@ inline bool set_thread_name(boost::thread &thd, const char *name, ...)
 /**
  * @brief Set boost::thread name (std::string variation)
  */
-inline bool set_thread_name(boost::thread &thd, std::string name)
+inline bool set_thread_name(boost::thread &thd, std::string &name)
 {
 	return set_thread_name(thd, name.c_str());
 };

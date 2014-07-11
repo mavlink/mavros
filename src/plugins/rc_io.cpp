@@ -58,11 +58,11 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	std::string get_name() {
+	std::string const get_name() const {
 		return "RCIO";
 	};
 
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_RC_CHANNELS_RAW,
 			MAVLINK_MSG_ID_RC_CHANNELS,

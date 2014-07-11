@@ -343,11 +343,11 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
-	std::string get_name() {
+	std::string const get_name() const {
 		return "Param";
 	}
 
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_PARAM_VALUE
 		};

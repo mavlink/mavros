@@ -340,11 +340,11 @@ public:
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 	}
 
-	std::string get_name() {
+	const std::string get_name() const {
 		return "SystemStatus";
 	}
 
-	std::vector<uint8_t> get_supported_messages() {
+	const std::vector<uint8_t> get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_HEARTBEAT,
 			MAVLINK_MSG_ID_SYS_STATUS,

@@ -101,11 +101,11 @@ public:
 		imu_raw_pub = nh.advertise<sensor_msgs::Imu>("imu/data_raw", 10);
 	}
 
-	std::string get_name() {
+	std::string const get_name() const {
 		return "IMUPub";
 	}
 
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_ATTITUDE,
 			MAVLINK_MSG_ID_RAW_IMU,

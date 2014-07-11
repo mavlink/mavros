@@ -4,6 +4,8 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
+ *  @brief MAVROS Plugin system
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -29,20 +31,49 @@
 #include <mavros/mavconn_interface.h>
 #include <mavros/mavros_uas.h>
 
+#include <boost/noncopyable.hpp>
+
 namespace mavplugin {
 
-class MavRosPlugin
+/**
+ * @brief MAVROS Plugin base class
+ */
+class MavRosPlugin : private boost::noncopyable
 {
 public:
 	virtual ~MavRosPlugin() {};
+
+	/**
+	 * @brief Plugin initializer
+	 *
+	 * @param[in] uas           UAS instance (handles FCU connection and some statuses)
+	 * @param[in] nh            main mavros ros::NodeHandle (private)
+	 * @param[in] diag_updater  main diagnostic updater
+	 */
 	virtual void initialize(UAS &uas,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater) = 0;
-	virtual std::string get_name() = 0;
-	virtual std::vector<uint8_t> get_supported_messages() = 0;
+
+	/**
+	 * @brief Plugin name (CamelCase)
+	 */
+	virtual const std::string get_name() const = 0;
+
+	/**
+	 * @brief List of messages supported by message_rx_cb()
+	 */
+	virtual const std::vector<uint8_t> get_supported_messages() const = 0;
+
+	/**
+	 * @brief Message receive callback
+	 */
 	virtual void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) = 0;
 
 protected:
+	/**
+	 * @brief Plugin constructor
+	 * Should not do anything before initialize()
+	 */
 	MavRosPlugin() {};
 };
 

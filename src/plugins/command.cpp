@@ -70,11 +70,11 @@ public:
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 	}
 
-	std::string get_name() {
+	std::string const get_name() const {
 		return "Command";
 	}
 
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_COMMAND_ACK
 		};

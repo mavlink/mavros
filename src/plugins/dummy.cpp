@@ -53,14 +53,14 @@ public:
 	/**
 	 * Returns plugin name (CamelCase)
 	 */
-	std::string get_name() {
+	std::string const get_name() const {
 		return "Dummy";
 	};
 
 	/**
 	 * Returns vector with MSGID processed by message_rx_cb()
 	 */
-	std::vector<uint8_t> get_supported_messages() {
+	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_HEARTBEAT,
 			MAVLINK_MSG_ID_SYS_STATUS,
