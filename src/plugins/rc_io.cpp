@@ -220,9 +220,8 @@ private:
 	void rc_channels_override(boost::array<uint16_t, 8> &channels) {
 		mavlink_message_t msg;
 
-		mavlink_msg_rc_channels_override_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component(),
+		mavlink_msg_rc_channels_override_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
 				channels[0],
 				channels[1],
 				channels[2],

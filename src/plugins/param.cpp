@@ -459,9 +459,8 @@ private:
 	void param_request_list() {
 		mavlink_message_t msg;
 
-		mavlink_msg_param_request_list_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component()
+		mavlink_msg_param_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas)
 				);
 		uas->mav_link->send_message(&msg);
 	}
@@ -480,9 +479,8 @@ private:
 		else
 			param_id[0] = '\0'; // force NULL termination
 
-		mavlink_msg_param_request_read_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component(),
+		mavlink_msg_param_request_read_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
 				param_id,
 				index
 				);
@@ -496,9 +494,8 @@ private:
 		char param_id[sizeof(mavlink_param_set_t::param_id)];
 		strncpy(param_id, param.param_id.c_str(), sizeof(param_id));
 
-		mavlink_msg_param_set_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component(),
+		mavlink_msg_param_set_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
 				param_id,
 				pu.param_float,
 				pu.type

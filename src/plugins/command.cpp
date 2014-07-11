@@ -188,9 +188,8 @@ private:
 			float param7) {
 		mavlink_message_t msg;
 
-		mavlink_msg_command_long_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component(),
+		mavlink_msg_command_long_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
 				command,
 				confirmation,
 				param1,

@@ -30,6 +30,26 @@
 namespace mavplugin {
 
 /**
+ * @brief helper for mavlink_msg_*_pack_chan()
+ *
+ * Filler for first elements of pack functions.
+ */
+#define UAS_PACK_CHAN(uasobjptr)			\
+	(uasobjptr)->mav_link->get_system_id(), 	\
+	(uasobjptr)->mav_link->get_component_id(), 	\
+	(uasobjptr)->mav_link->get_channel()
+
+/**
+ * @brief helper for pack messages with target fields
+ *
+ * Filler for target_system, target_component fields.
+ */
+#define UAS_PACK_TGT(uasobjptr)				\
+	(uasobjptr)->get_tgt_system(), 			\
+	(uasobjptr)->get_tgt_component()
+
+
+/**
  * @brief UAS handler for plugins
  */
 class UAS {

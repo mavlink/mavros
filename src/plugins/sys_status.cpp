@@ -603,7 +603,7 @@ private:
 			return;
 
 		mavlink_message_t msg;
-		mavlink_msg_heartbeat_pack(0, 0, &msg,
+		mavlink_msg_heartbeat_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				MAV_TYPE_ONBOARD_CONTROLLER,
 				MAV_AUTOPILOT_INVALID,
 				MAV_MODE_MANUAL_ARMED,
@@ -622,9 +622,8 @@ private:
 			mavros::StreamRate::Response &res) {
 
 		mavlink_message_t msg;
-		mavlink_msg_request_data_stream_pack(0, 0, &msg,
-				uas->get_tgt_system(),
-				uas->get_tgt_component(),
+		mavlink_msg_request_data_stream_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
 				req.stream_id,
 				req.message_rate,
 				(req.on_off)? 1 : 0
