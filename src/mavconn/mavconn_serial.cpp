@@ -32,7 +32,10 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		std::string device, unsigned baudrate) :
 	MAVConnInterface(system_id, component_id),
 	io_service(),
-	serial_dev(io_service, device)
+	serial_dev(io_service, device),
+	tx_buf_size(0),
+	tx_buf_max_size(0),
+	tx_in_process(false)
 {
 	serial_dev.set_option(asio::serial_port_base::baud_rate(baudrate));
 	serial_dev.set_option(asio::serial_port_base::character_size(8));
@@ -43,7 +46,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	ROS_INFO_STREAM_NAMED("mavconn", "serial: device: " << device << " @ " << baudrate << " bps");
 
 	// reserve some space in tx queue
-	tx_q.reserve(RX_BUFSIZE);
+	tx_q.reserve(TX_EXTENT * 2);
 
 	// give some work to io_service before start
 	io_service.post(boost::bind(&MAVConnSerial::do_read, this));
@@ -132,8 +135,22 @@ void MAVConnSerial::async_read_end(boost::system::error_code error, size_t bytes
 
 void MAVConnSerial::copy_and_async_write(void)
 {
+	// should called with locked mutex from io_service thread
+
 	tx_buf_size = tx_q.size();
-	tx_buf.reset(new uint8_t[tx_buf_size]);
+	// mark transmission in progress
+	tx_in_process = true;
+
+	if (tx_buf_max_size > TX_DELSIZE ||
+			tx_buf_size >= tx_buf_max_size) {
+
+		// Set buff eq. or gt than tx_buf_size
+		tx_buf_max_size = (tx_buf_size % TX_EXTENT == 0)? tx_buf_size :
+			(tx_buf_size / TX_EXTENT + 1) * TX_EXTENT;
+
+		tx_buf.reset(new uint8_t[tx_buf_max_size]);
+	}
+
 	std::copy(tx_q.begin(), tx_q.end(), tx_buf.get());
 	tx_q.clear();
 
@@ -147,7 +164,7 @@ void MAVConnSerial::copy_and_async_write(void)
 void MAVConnSerial::do_write(void)
 {
 	// if write not in progress
-	if (tx_buf == 0) {
+	if (!tx_in_process) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		copy_and_async_write();
 	}
@@ -159,7 +176,7 @@ void MAVConnSerial::async_write_end(boost::system::error_code error)
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		if (tx_q.empty()) {
-			tx_buf.reset();
+			tx_in_process = false;
 			tx_buf_size = 0;
 			return;
 		}

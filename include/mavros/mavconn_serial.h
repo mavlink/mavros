@@ -62,8 +62,12 @@ private:
 	static constexpr size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
 	uint8_t rx_buf[RX_BUFSIZE];
 	std::vector<uint8_t> tx_q;
+	static constexpr size_t TX_EXTENT = 256;	//!< extent size for tx buffer
+	static constexpr size_t TX_DELSIZE = 4096;	//!< buffer delete condition
 	boost::shared_array<uint8_t> tx_buf;
-	size_t tx_buf_size;
+	size_t tx_buf_size;				//!< size of current buffer()
+	size_t tx_buf_max_size;				//!< allocated buffer size
+	bool tx_in_process;				//!< tx status
 	boost::recursive_mutex mutex;
 
 	void do_read(void);
