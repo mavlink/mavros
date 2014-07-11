@@ -23,7 +23,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <cmath>
+#include <angles/angles.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -143,7 +143,7 @@ public:
 					// From nmea_navsat_driver
 					fix->position_covariance[0] = hdop2;
 					fix->position_covariance[4] = hdop2;
-					fix->position_covariance[8] = pow(2 * hdop, 2);
+					fix->position_covariance[8] = std::pow(2 * hdop, 2);
 					fix->position_covariance_type =
 						sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 				}
@@ -160,7 +160,7 @@ public:
 				if (raw_gps.vel != UINT16_MAX &&
 						raw_gps.cog != UINT16_MAX) {
 					double speed = raw_gps.vel / 1E2; // m/s
-					double course = raw_gps.cog / 1E2; // deg
+					double course = angles::from_degrees(raw_gps.cog / 1E2); // rad
 
 					// From nmea_navsat_driver
 					vel->twist.linear.x = speed * std::sin(course);
