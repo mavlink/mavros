@@ -23,5 +23,8 @@
 	<class name="command" type="mavplugin::CommandPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send commands to FCU.</description>
 	</class>
+	<class name="local_position" type="mavplugin::LocalPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Access to FCU local position.</description>
+	</class>
 </library>
 

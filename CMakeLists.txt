@@ -188,6 +188,7 @@ add_library(mavros_plugins
   src/plugins/waypoint.cpp
   src/plugins/rc_io.cpp
   src/plugins/command.cpp
+  src/plugins/local_position.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

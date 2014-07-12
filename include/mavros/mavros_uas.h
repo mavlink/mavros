@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <tf/transform_datatypes.h>
 #include <mavros/mavconn_interface.h>
 
 namespace mavplugin {
@@ -97,6 +98,22 @@ public:
 	};
 
 	/**
+	 * @brief Get Attitude angular velocity vector ENU
+	 */
+	inline tf::Vector3 get_attitude_angular_velocity() {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		return angular_velocity;
+	}
+
+	/**
+	 * @brief Store Attitude angular velocity vector ENU
+	 */
+	inline void set_attitude_angular_velocity(tf::Vector3 &vec) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		angular_velocity = vec;
+	}
+
+	/**
 	 * For APM quirks
 	 */
 	inline bool is_ardupilotmega() {
@@ -136,6 +153,7 @@ private:
 	uint8_t target_system;
 	uint8_t target_component;
 	bool connected;
+	tf::Vector3 angular_velocity;
 	std::unique_ptr<boost::asio::io_service::work> timer_work;
 	boost::thread timer_thread;
 };

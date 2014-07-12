@@ -161,6 +161,11 @@ private:
 		imu_msg->angular_velocity.y = -att.pitchspeed;
 		imu_msg->angular_velocity.z = -att.yawspeed;
 
+		// store gyro data to UAS
+		tf::Vector3 angular_velocity;
+		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
+		uas->set_attitude_angular_velocity(angular_velocity);
+
 		// vector from HIGHRES_IMU or RAW_IMU
 		imu_msg->linear_acceleration = linear_accel_vec;
 
