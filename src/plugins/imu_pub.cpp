@@ -178,7 +178,7 @@ private:
 	{
 		imu_msg->angular_velocity.x = xg;
 		imu_msg->angular_velocity.y = yg;
-		imu_msg->angular_velocity.z = xg;
+		imu_msg->angular_velocity.z = zg;
 
 		imu_msg->linear_acceleration.x = xa;
 		imu_msg->linear_acceleration.y = ya;
@@ -217,8 +217,8 @@ private:
 			sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
 
 			magn_msg->magnetic_field.x = imu_hr.xmag * GAUSS_TO_TESLA;
-			magn_msg->magnetic_field.y = imu_hr.ymag * GAUSS_TO_TESLA;
-			magn_msg->magnetic_field.z = imu_hr.zmag * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.y = -imu_hr.ymag * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.z = -imu_hr.zmag * GAUSS_TO_TESLA;
 
 			magn_msg->magnetic_field_covariance = magnetic_cov;
 
