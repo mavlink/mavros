@@ -61,38 +61,11 @@ public:
 		nh.param("imu/orientation_stdev", orientation_stdev, 1.0);
 		nh.param("imu/magnetic_stdev", mag_stdev, 0.0);
 
-		std::fill(linear_acceleration_cov.begin(),
-				linear_acceleration_cov.end(),
-				0.0);
-		linear_acceleration_cov[0+0] =
-			linear_acceleration_cov[3+1] =
-			linear_acceleration_cov[6+2] = std::pow(linear_stdev, 2);
-
-		std::fill(angular_velocity_cov.begin(),
-				angular_velocity_cov.end(),
-				0.0);
-		angular_velocity_cov[0+0] =
-			angular_velocity_cov[3+1] =
-			angular_velocity_cov[6+2] = std::pow(angular_stdev, 2);
-
-		std::fill(orientation_cov.begin(),
-				orientation_cov.end(),
-				0.0);
-		orientation_cov[0+0] =
-			orientation_cov[3+1] =
-			orientation_cov[6+2] = std::pow(orientation_stdev, 2);
-
-		std::fill(magnetic_cov.begin(), magnetic_cov.end(), 0.0);
-		if (mag_stdev == 0.0)
-			magnetic_cov[0] = -1.0;
-		else {
-			magnetic_cov[0+0] =
-				magnetic_cov[3+1] =
-				magnetic_cov[6+2] = std::pow(mag_stdev, 2);
-		}
-
-		std::fill(unk_orientation_cov.begin(), unk_orientation_cov.end(), 0.0);
-		unk_orientation_cov[0] = -1.0;
+		setup_covariance(linear_acceleration_cov, linear_stdev);
+		setup_covariance(angular_velocity_cov, angular_stdev);
+		setup_covariance(orientation_cov, orientation_stdev);
+		setup_covariance(magnetic_cov, mag_stdev);
+		setup_covariance(unk_orientation_cov, 0.0);
 
 		imu_pub = nh.advertise<sensor_msgs::Imu>("imu/data", 10);
 		magn_pub = nh.advertise<sensor_msgs::MagneticField>("imu/mag", 10);
@@ -160,6 +133,15 @@ private:
 	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
 	static constexpr double MILLIBAR_TO_PASCAL = 1.0e5;
 
+
+	void setup_covariance(boost::array<double, 9> &cov, double stdev) {
+		std::fill(cov.begin(), cov.end(), 0.0);
+		if (stdev == 0.0)
+			cov[0] = -1.0;
+		else {
+			cov[0+0] = cov[3+1] = cov[6+2] = std::pow(stdev, 2);
+		}
+	}
 
 	void handle_attitude(const mavlink_message_t *msg) {
 		if (imu_pub.getNumSubscribers() == 0)
