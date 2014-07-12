@@ -161,7 +161,9 @@ public:
 		if (px4_usb_quirk)
 			startup_px4_usb_quirk();
 
-		ROS_INFO("MAVROS started on MAV %d (component %d)", system_id, component_id);
+		ROS_INFO("MAVROS started. MY ID [%d, %d], TARGET ID [%d, %d]",
+				system_id, component_id,
+				tgt_system_id, tgt_component_id);
 	}
 
 	~MavRos() {};
