@@ -114,6 +114,38 @@ public:
 	}
 
 	/**
+	 * @brief Get Attitude linear acceleration vector ENU
+	 */
+	inline tf::Vector3 get_attitude_linear_acceleration() {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		return linear_acceleration;
+	}
+
+	/**
+	 * @brief Store Attitude linear acceleration vector ENU
+	 */
+	inline void set_attitude_linear_acceleration(tf::Vector3 &vec) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		linear_acceleration = vec;
+	}
+
+	/**
+	 * @brief Get Attitude orientation quaternion ENU
+	 */
+	inline tf::Quaternion get_attitude_orientation() {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		return orientation;
+	}
+
+	/**
+	 * @brief Store Attitude orientation quaternion ENU
+	 */
+	inline void set_attitude_orientation(tf::Quaternion &quat) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		orientation = quat;
+	}
+
+	/**
 	 * For APM quirks
 	 */
 	inline bool is_ardupilotmega() {
@@ -154,6 +186,8 @@ private:
 	uint8_t target_component;
 	bool connected;
 	tf::Vector3 angular_velocity;
+	tf::Vector3 linear_acceleration;
+	tf::Quaternion orientation;
 	std::unique_ptr<boost::asio::io_service::work> timer_work;
 	boost::thread timer_thread;
 };

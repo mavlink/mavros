@@ -154,18 +154,15 @@ private:
 		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// TODO: check/verify that these are body-fixed
-		imu_msg->orientation = tf::createQuaternionMsgFromRollPitchYaw(
+		tf::Quaternion orientation = tf::createQuaternionFromRPY(
 				att.roll, -att.pitch, -att.yaw);
+		tf::quaternionTFToMsg(orientation, imu_msg->orientation);
 
 		imu_msg->angular_velocity.x = att.rollspeed;
 		imu_msg->angular_velocity.y = -att.pitchspeed;
 		imu_msg->angular_velocity.z = -att.yawspeed;
 
 		// store gyro data to UAS
-		tf::Vector3 angular_velocity;
-		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
-		uas->set_attitude_angular_velocity(angular_velocity);
-
 		// vector from HIGHRES_IMU or RAW_IMU
 		imu_msg->linear_acceleration = linear_accel_vec;
 
@@ -176,6 +173,16 @@ private:
 		imu_msg->header.frame_id = frame_id;
 		imu_msg->header.stamp = ros::Time::now();
 		imu_pub.publish(imu_msg);
+
+		// store data in UAS
+		tf::Vector3 angular_velocity;
+		tf::Vector3 linear_acceleration;
+		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
+		tf::vector3MsgToTF(imu_msg->linear_acceleration, linear_acceleration);
+
+		uas->set_attitude_angular_velocity(angular_velocity);
+		uas->set_attitude_linear_acceleration(linear_acceleration);
+		uas->set_attitude_orientation(orientation);
 	}
 
 	void fill_imu_msg_vec(sensor_msgs::ImuPtr &imu_msg,

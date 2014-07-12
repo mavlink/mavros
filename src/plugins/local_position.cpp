@@ -94,12 +94,11 @@ private:
 				pos_ned.vx, pos_ned.vy, pos_ned.vz);
 
 		/* TODO: check convertion to ENU
-		 * velocity stored in ENU
+		 * orientation in ENU
 		 */
-		tf::Vector3 avel = uas->get_attitude_angular_velocity();
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.x, -pos_ned.y, -pos_ned.z));
-		transform.setRotation(tf::createQuaternionFromRPY(avel.x(), avel.y(), avel.z()));
+		transform.setRotation(uas->get_attitude_orientation());
 
 		if (send_tf)
 			tf_broadcaster.sendTransform(
