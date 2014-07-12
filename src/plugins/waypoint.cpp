@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.
@@ -626,7 +627,7 @@ private:
 	}
 
 	void publish_waypoints() {
-		mavros::WaypointListPtr wpl(new mavros::WaypointList);
+		mavros::WaypointListPtr wpl = boost::make_shared<mavros::WaypointList>();
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
 		wpl->waypoints.clear();

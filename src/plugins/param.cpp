@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.
@@ -582,7 +583,7 @@ private:
 	 * Prepare resend timer & send PARAM_SET
 	 */
 	void start_param_set(Parameter &param) {
-		boost::shared_ptr<ParamSetOpt> opt(new ParamSetOpt);
+		boost::shared_ptr<ParamSetOpt> opt = boost::make_shared<ParamSetOpt>();
 
 		opt->param = param;
 		opt->retries_remaining = RETRIES_COUNT;

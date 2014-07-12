@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -150,7 +151,7 @@ private:
 		mavlink_attitude_t att;
 		mavlink_msg_attitude_decode(msg, &att);
 
-		sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
+		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// TODO: check/verify that these are body-fixed
 		imu_msg->orientation = tf::createQuaternionMsgFromRollPitchYaw(
@@ -198,7 +199,7 @@ private:
 
 		/* imu/data_raw filled by HR IMU */
 		if (imu_hr.fields_updated & 0x003f) {
-			sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
+			sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 			fill_imu_msg_vec(imu_msg,
 					imu_hr.xgyro, -imu_hr.ygyro, -imu_hr.zgyro,
@@ -214,7 +215,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & 0x01c0) {
-			sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
+			sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 			magn_msg->magnetic_field.x = imu_hr.xmag * GAUSS_TO_TESLA;
 			magn_msg->magnetic_field.y = -imu_hr.ymag * GAUSS_TO_TESLA;
@@ -227,7 +228,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & 0x0e00) {
-			sensor_msgs::FluidPressurePtr atmp_msg(new sensor_msgs::FluidPressure);
+			sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
 			atmp_msg->header = header;
@@ -235,7 +236,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & 0x1000) {
-			sensor_msgs::TemperaturePtr temp_msg(new sensor_msgs::Temperature);
+			sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
 			temp_msg->temperature = imu_hr.temperature;
 			temp_msg->header = header;
@@ -247,7 +248,7 @@ private:
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
-		sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
+		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 		mavlink_raw_imu_t imu_raw;
 		mavlink_msg_raw_imu_decode(msg, &imu_raw);
 
@@ -280,7 +281,7 @@ private:
 		imu_raw_pub.publish(imu_msg);
 
 		/* -*- magnetic vector -*- */
-		sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
+		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
@@ -299,7 +300,7 @@ private:
 		ROS_INFO_COND_NAMED(!has_scaled_imu, "imu", "Scaled IMU message used.");
 		has_scaled_imu = true;
 
-		sensor_msgs::ImuPtr imu_msg(new sensor_msgs::Imu);
+		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 		mavlink_scaled_imu_t imu_raw;
 		mavlink_msg_scaled_imu_decode(msg, &imu_raw);
 
@@ -324,7 +325,7 @@ private:
 		imu_raw_pub.publish(imu_msg);
 
 		/* -*- magnetic vector -*- */
-		sensor_msgs::MagneticFieldPtr magn_msg(new sensor_msgs::MagneticField);
+		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
@@ -347,12 +348,12 @@ private:
 		header.stamp = ros::Time::now();
 		header.frame_id = frame_id;
 
-		sensor_msgs::TemperaturePtr temp_msg(new sensor_msgs::Temperature);
+		sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 		temp_msg->temperature = press.temperature / 100.0;
 		temp_msg->header = header;
 		temp_pub.publish(temp_msg);
 
-		sensor_msgs::FluidPressurePtr atmp_msg(new sensor_msgs::FluidPressure);
+		sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 		atmp_msg->fluid_pressure = press.press_abs * 100.0;
 		atmp_msg->header = header;
 		press_pub.publish(atmp_msg);

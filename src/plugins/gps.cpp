@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -116,8 +117,8 @@ public:
 				mavlink_gps_raw_int_t raw_gps;
 				mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
 
-				sensor_msgs::NavSatFixPtr fix(new sensor_msgs::NavSatFix);
-				geometry_msgs::TwistStampedPtr vel(new geometry_msgs::TwistStamped);
+				sensor_msgs::NavSatFixPtr fix = boost::make_shared<sensor_msgs::NavSatFix>();
+				geometry_msgs::TwistStampedPtr vel = boost::make_shared<geometry_msgs::TwistStamped>();
 
 				gps_diag.set_gps_raw(raw_gps);
 				if (raw_gps.fix_type < 2) {
@@ -196,7 +197,7 @@ public:
 					return;
 				}
 
-				sensor_msgs::TimeReferencePtr time(new sensor_msgs::TimeReference);
+				sensor_msgs::TimeReferencePtr time = boost::make_shared<sensor_msgs::TimeReference>();
 				ros::Time time_ref(
 						mtime.time_unix_usec / 1000000,			// t_sec
 						(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec

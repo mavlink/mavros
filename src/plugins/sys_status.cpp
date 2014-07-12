@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
@@ -373,7 +374,7 @@ public:
 				timeout_timer->expires_from_now(conn_timeout);
 				timeout_timer->async_wait(boost::bind(&SystemStatusPlugin::timeout_cb, this, _1));
 
-				mavros::StatePtr state_msg(new mavros::State);
+				mavros::StatePtr state_msg = boost::make_shared<mavros::State>();
 				state_msg->header.stamp = ros::Time::now();
 				state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 				state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
@@ -392,7 +393,7 @@ public:
 				float curr = stat.current_battery / 100.0;	// 10 mA or -1
 				float rem = stat.battery_remaining / 100.0;	// or -1
 
-				mavros::BatteryStatusPtr batt_msg(new mavros::BatteryStatus);
+				mavros::BatteryStatusPtr batt_msg = boost::make_shared<mavros::BatteryStatus>();
 				batt_msg->header.stamp = ros::Time::now();
 				batt_msg->voltage = volt;
 				batt_msg->current = curr;

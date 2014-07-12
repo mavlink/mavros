@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.
@@ -131,7 +132,7 @@ private:
 		SET_RC_IN(8);
 #undef SET_RC_IN
 
-		mavros::RCInPtr rcin_msg(new mavros::RCIn);
+		mavros::RCInPtr rcin_msg = boost::make_shared<mavros::RCIn>();
 
 		rcin_msg->header.stamp = ros::Time::now();
 		rcin_msg->rssi = port.rssi;
@@ -178,7 +179,7 @@ private:
 		IFSET_RC_IN(18);
 #undef IFSET_RC_IN
 
-		mavros::RCInPtr rcin_msg(new mavros::RCIn);
+		mavros::RCInPtr rcin_msg = boost::make_shared<mavros::RCIn>();
 
 		rcin_msg->header.stamp = ros::Time::now();
 		rcin_msg->rssi = channels.rssi;
@@ -207,7 +208,7 @@ private:
 		SET_RC_OUT(8);
 #undef SET_RC_OUT
 
-		mavros::RCOutPtr rcout_msg(new mavros::RCOut);
+		mavros::RCOutPtr rcout_msg = boost::make_shared<mavros::RCOut>();
 
 		rcout_msg->header.stamp = ros::Time::now();
 		rcout_msg->channels = raw_rc_out;
