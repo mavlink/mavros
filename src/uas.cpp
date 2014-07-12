@@ -2,6 +2,9 @@
  * @brief MAVROS UAS manager
  * @file uas.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup plugin
+ * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.

@@ -4,6 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn
+ * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.

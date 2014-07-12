@@ -37,7 +37,7 @@ ros::Subscriber mavlink_sub;
 boost::shared_ptr<MAVConnInterface> udp_link;
 
 void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
-	MavlinkPtr rmsg(new Mavlink);
+	MavlinkPtr rmsg = boost::make_shared<Mavlink>();
 
 	rmsg->header.stamp = ros::Time::now();
 	mavutils::copy_mavlink_to_ros(mmsg, rmsg);

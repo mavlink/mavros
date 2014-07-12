@@ -4,6 +4,8 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavutils
+ * @{
+ *  @brief Some useful utils
  */
 /*
  * Copyright 2014 Vladimir Ermakov.

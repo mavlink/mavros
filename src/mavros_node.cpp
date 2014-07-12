@@ -199,7 +199,7 @@ private:
 	UAS mav_uas;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
-		MavlinkPtr rmsg(new Mavlink);
+		MavlinkPtr rmsg = boost::make_shared<Mavlink>();
 
 		if  (mavlink_pub.getNumSubscribers() == 0)
 			return;
