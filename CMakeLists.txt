@@ -102,19 +102,14 @@ generate_messages(
 #
 # TODO: move dialect list to mavlink package
 
+if(NOT DEFINED mavlink_DIALECTS)
+  list(APPEND mavlink_DIALECTS "ardupilotmega")
+  list(APPEND mavlink_DIALECTS "pixhawk")
+  list(APPEND mavlink_DIALECTS "common")
+endif()
+
 set(MAVLINK_DIALECT "ardupilotmega" CACHE STRING "MAVLink dialect selector")
-set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS
-  "ardupilotmega"
-  "autoquad"
-  "common"
-  "matrixpilot"
-  "minimal"
-  "pixhawk"
-  "slugs"
-  "test"
-  "ualberta"
-  "sensesoar"
-)
+set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS ${mavlink_DIALECTS})
 
 
 ###################################
