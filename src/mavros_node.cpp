@@ -150,6 +150,7 @@ public:
 		mav_uas.set_tgt(tgt_system_id, tgt_component_id);
 		mav_uas.set_mav_link(serial_link);
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &serial_link_diag, _1));
+		mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
 		auto plugins = plugin_loader.getDeclaredClasses();
 		loaded_plugins.reserve(plugins.size());
@@ -284,6 +285,14 @@ private:
 		serial_link->send_bytes(init, 3);
 		serial_link->send_bytes(nsh, sizeof(nsh) - 1);
 		serial_link->send_bytes(init, 4);	/* NOTE in original init[3] */
+	}
+
+	void log_connect_change(bool connected) {
+		/* note: sys_status plugin required */
+		if (connected)
+			ROS_INFO("CON: Got HEARTBEAT, connected.");
+		else
+			ROS_WARN("CON: Lost connection, HEARTBEAT timed out.");
 	}
 };
 
