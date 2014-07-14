@@ -185,6 +185,7 @@ add_library(mavros_plugins
   src/plugins/command.cpp
   src/plugins/local_position.cpp
   src/plugins/vision_position.cpp
+  src/plugins/setpoint_position.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

@@ -1,14 +1,13 @@
 /**
- * @brief VisionPosition plugin
- * @file vision_position.cpp
- * @author M.H.Kabir <mhkabir98@gmail.com>
+ * @brief SetpointPosition plugin
+ * @file setpoint_position.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2014 M.H.Kabir.
+ * Copyright 2014 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,14 +33,13 @@
 namespace mavplugin {
 
 /**
- * @brief Vision position plugin
+ * @brief Setpoint position plugin
  *
- * Send position estimation from various vision estimators
- * to FCU position controller.
+ * Send setpoint positions to FCU controller.
  */
-class VisionPositionPlugin : public MavRosPlugin {
+class SetpointPositionPlugin : public MavRosPlugin {
 public:
-	VisionPositionPlugin()
+	SetpointPositionPlugin()
 	{ };
 
 	void initialize(UAS &uas_,
@@ -50,11 +48,11 @@ public:
 	{
 		uas = &uas_;
 
-		vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cb, this);
+		setpoint_sub = nh.subscribe("position/local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
 	}
 
 	const std::string get_name() const {
-		return "VisionPosition";
+		return "SetpointPosition";
 	}
 
 	const std::vector<uint8_t> get_supported_messages() const {
@@ -67,54 +65,65 @@ public:
 private:
 	UAS *uas;
 
-	ros::Subscriber vision_sub;
+	ros::Subscriber setpoint_sub;
 
 	/* -*- low-level send -*- */
 
-	void vision_position_estimate(uint64_t usec,
+	void local_ned_position_setpoint_external(uint32_t time_boot_ms, uint8_t coordinate_frame,
+			uint16_t type_mask,
 			float x, float y, float z,
-			float roll, float pitch, float yaw) {
+			float vx, float vy, float vz,
+			float afx, float afy, float afz) {
 		mavlink_message_t msg;
-		mavlink_msg_vision_position_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				usec,
-				x,
-				y,
-				z,
-				roll,
-				pitch,
-				yaw);
+		mavlink_msg_local_ned_position_setpoint_external_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				time_boot_ms, // why it not usec timestamp?
+				UAS_PACK_TGT(uas),
+				coordinate_frame,
+				type_mask,
+				x, y, z,
+				vz, vy, vz,
+				afx, afy, afz);
 		uas->mav_link->send_message(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send vision estimate transform to FCU position controller
+	 * Send transform to FCU position controller
+	 *
+	 * Note: send only XYZ,
+	 * velocity and af vector could be in Twist message
+	 * but it needs additional work.
 	 */
-	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		// origin and RPY in ENU frame
+	void send_setpoint_transform(const tf::Transform &transform, const ros::Time &stamp) {
+		// ENU frame
 		tf::Vector3 origin = transform.getOrigin();
-		double roll, pitch, yaw;
-		tf::Matrix3x3 orientation(transform.getBasis());
-		orientation.getRPY(roll, pitch, yaw);
+
+		/* Documentation start from bit 1 instead 0,
+		 * but implementation PX4 Firmware #1151 starts from 0
+		 */
+		uint16_t ignore_all_except_xyz = (4<<6)|(4<<3);
 
 		// TODO: check conversion. Issue #49.
-		vision_position_estimate(stamp.toNSec() / 1000,
+		local_ned_position_setpoint_external(stamp.toNSec() / 1000000,
+				MAV_FRAME_LOCAL_NED,
+				ignore_all_except_xyz,
 				origin.y(), origin.x(), -origin.z(),
-				roll, -pitch, -yaw); // ??? please check!
+				0.0, 0.0, 0.0,
+				0.0, 0.0, 0.0);
 	}
 
 	/* -*- callbacks -*- */
 
 	/* TODO: tf listener */
 
-	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
+	void setpoint_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
 		tf::Transform transform;
 		poseMsgToTF(req->pose, transform);
-		send_vision_transform(transform, req->header.stamp);
+		send_setpoint_transform(transform, req->header.stamp);
 	}
 };
 
 }; // namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionPositionPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointPositionPlugin, mavplugin::MavRosPlugin)

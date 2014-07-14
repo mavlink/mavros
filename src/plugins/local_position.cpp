@@ -28,7 +28,6 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-//#include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
 

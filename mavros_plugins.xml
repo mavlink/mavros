@@ -24,10 +24,13 @@
 		<description>Send commands to FCU.</description>
 	</class>
 	<class name="local_position" type="mavplugin::LocalPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Access to FCU local position.</description>
+		<description>Publish FCU local position.</description>
 	</class>
 	<class name="vision_position" type="mavplugin::VisionPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU vision position estimates.</description>
+	</class>
+	<class name="setpoint_position" type="mavplugin::SetpointPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external setpoint.</description>
 	</class>
 </library>
 
