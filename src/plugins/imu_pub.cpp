@@ -229,8 +229,9 @@ private:
 		if (imu_hr.fields_updated & 0x01c0) {
 			sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-			magn_msg->magnetic_field.x = imu_hr.xmag * GAUSS_TO_TESLA;
-			magn_msg->magnetic_field.y = -imu_hr.ymag * GAUSS_TO_TESLA;
+			// Convert from local NED plane to ENU
+			magn_msg->magnetic_field.x = imu_hr.ymag * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.y = imu_hr.xmag * GAUSS_TO_TESLA;
 			magn_msg->magnetic_field.z = -imu_hr.zmag * GAUSS_TO_TESLA;
 
 			magn_msg->magnetic_field_covariance = magnetic_cov;
@@ -295,8 +296,9 @@ private:
 		/* -*- magnetic vector -*- */
 		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
+		// Convert from local NED plane to ENU
+		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = imu_raw.xmag * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
 
 		magn_msg->magnetic_field_covariance = magnetic_cov;
@@ -339,8 +341,9 @@ private:
 		/* -*- magnetic vector -*- */
 		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-		magn_msg->magnetic_field.x = imu_raw.xmag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.y = -imu_raw.ymag * MILLIT_TO_TESLA;
+		// Convert from local NED plane to ENU
+		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = imu_raw.xmag * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
 
 		magn_msg->magnetic_field_covariance = magnetic_cov;
