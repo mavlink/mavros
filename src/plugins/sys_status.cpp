@@ -295,11 +295,11 @@ class SystemStatusPlugin : public MavRosPlugin
 {
 public:
 	SystemStatusPlugin() :
-		hb_diag("FCU Heartbeat", 10),
-		mem_diag("FCU Memory"),
-		hwst_diag("FCU Hardware"),
-		sys_diag("FCU System"),
-		batt_diag("FCU Battery")
+		hb_diag("Heartbeat", 10),
+		mem_diag("APM Memory"),
+		hwst_diag("APM Hardware"),
+		sys_diag("System"),
+		batt_diag("Battery")
 	{};
 
 	void initialize(UAS &uas_,

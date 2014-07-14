@@ -81,7 +81,7 @@ private:
 class GPSPlugin : public MavRosPlugin {
 public:
 	GPSPlugin() :
-		gps_diag("FCU GPS")
+		gps_diag("GPS")
 	{};
 
 	void initialize(UAS &uas,
