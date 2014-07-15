@@ -30,6 +30,7 @@
 
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 namespace mavplugin {
 
@@ -48,9 +49,18 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
+		bool pose_with_covariance;
+
 		uas = &uas_;
 
-		vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cb, this);
+		nh.param("position/vision_pose_with_covariance", pose_with_covariance, false);
+		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
+				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
+
+		if (pose_with_covariance)
+			vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
+		else
+			vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cb, this);
 	}
 
 	const std::string get_name() const {
@@ -93,20 +103,26 @@ private:
 	 */
 	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// origin and RPY in ENU frame
-		tf::Vector3 origin = transform.getOrigin();
+		tf::Vector3 position = transform.getOrigin();
 		double roll, pitch, yaw;
 		tf::Matrix3x3 orientation(transform.getBasis());
 		orientation.getRPY(roll, pitch, yaw);
 
 		// TODO: check conversion. Issue #49.
 		vision_position_estimate(stamp.toNSec() / 1000,
-				origin.y(), origin.x(), -origin.z(),
+				position.y(), position.x(), -position.z(),
 				roll, -pitch, -yaw); // ??? please check!
 	}
 
 	/* -*- callbacks -*- */
 
 	/* TODO: tf listener */
+
+	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req) {
+		tf::Transform transform;
+		poseMsgToTF(req->pose.pose, transform);
+		send_vision_transform(transform, req->header.stamp);
+	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
 		tf::Transform transform;
