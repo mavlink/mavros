@@ -24,6 +24,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -46,9 +47,24 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		uas = &uas_;
+		bool listen_tf;
 
-		setpoint_sub = nh.subscribe("position/local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
+		uas = &uas_;
+		pos_nh = ros::NodeHandle(nh, "position");
+
+		pos_nh.param("setpoint/listen_tf", listen_tf, false);
+		pos_nh.param<std::string>("setpoint/farme_id", frame_id, "local_origin");
+		pos_nh.param<std::string>("setpoint/child_farme_id", child_frame_id, "fcu");
+
+		setpoint_sub = pos_nh.subscribe("local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
+
+		if (listen_tf) {
+			ROS_INFO_STREAM_NAMED("position", "Listen to setpoint transform " << frame_id
+					<< " -> " << child_frame_id);
+			boost::thread t(boost::bind(&SetpointPositionPlugin::tf_listener, this));
+			mavutils::set_thread_name(t, "SetpointTF");
+			tf_thread.swap(t);
+		}
 	}
 
 	const std::string get_name() const {
@@ -65,7 +81,13 @@ public:
 private:
 	UAS *uas;
 
+	ros::NodeHandle pos_nh;
 	ros::Subscriber setpoint_sub;
+
+	std::string frame_id;
+	std::string child_frame_id;
+
+	boost::thread tf_thread;
 
 	/* -*- low-level send -*- */
 
@@ -115,7 +137,23 @@ private:
 
 	/* -*- callbacks -*- */
 
-	/* TODO: tf listener */
+	void tf_listener(void) {
+		// Note: have spin_sthread switch, but not documented
+		// perhaps need set it to false.
+		tf::TransformListener listener(pos_nh);
+		tf::StampedTransform transform;
+		while (pos_nh.ok()) {
+			// Wait up to 3s for transform
+			listener.waitForTransform(frame_id, child_frame_id, ros::Time(0), ros::Duration(3.0));
+			try{
+				listener.lookupTransform(frame_id, child_frame_id, ros::Time(0), transform);
+				send_setpoint_transform(static_cast<tf::Transform>(transform), transform.stamp_);
+			}
+			catch (tf::TransformException ex){
+				ROS_ERROR_NAMED("position", "SetpointTF: %s", ex.what());
+			}
+		}
+	}
 
 	void setpoint_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
 		tf::Transform transform;

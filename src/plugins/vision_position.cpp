@@ -25,6 +25,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -50,17 +51,31 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool pose_with_covariance;
+		bool listen_tf;
 
 		uas = &uas_;
+		pos_nh = ros::NodeHandle(nh, "position");
 
-		nh.param("position/vision_pose_with_covariance", pose_with_covariance, false);
+		pos_nh.param("vision/pose_with_covariance", pose_with_covariance, false);
+		pos_nh.param("vision/listen_tf", listen_tf, false);
+		pos_nh.param<std::string>("vision/farme_id", frame_id, "local_origin");
+		pos_nh.param<std::string>("vision/child_farme_id", child_frame_id, "fcu");
+
 		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
 				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
 
 		if (pose_with_covariance)
-			vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
+			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
 		else
-			vision_sub = nh.subscribe("position/vision", 10, &VisionPositionPlugin::vision_cb, this);
+			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cb, this);
+
+		if (listen_tf) {
+			ROS_INFO_STREAM_NAMED("position", "Listen to vision transform " << frame_id
+					<< " -> " << child_frame_id);
+			boost::thread t(boost::bind(&VisionPositionPlugin::tf_listener, this));
+			mavutils::set_thread_name(t, "VisionTF");
+			tf_thread.swap(t);
+		}
 	}
 
 	const std::string get_name() const {
@@ -77,7 +92,13 @@ public:
 private:
 	UAS *uas;
 
+	ros::NodeHandle pos_nh;
 	ros::Subscriber vision_sub;
+
+	std::string frame_id;
+	std::string child_frame_id;
+
+	boost::thread tf_thread;
 
 	/* -*- low-level send -*- */
 
@@ -116,7 +137,23 @@ private:
 
 	/* -*- callbacks -*- */
 
-	/* TODO: tf listener */
+	void tf_listener(void) {
+		// Note: have spin_sthread switch, but not documented
+		// perhaps need set it to false.
+		tf::TransformListener listener(pos_nh);
+		tf::StampedTransform transform;
+		while (pos_nh.ok()) {
+			// Wait up to 3s for transform
+			listener.waitForTransform(frame_id, child_frame_id, ros::Time(0), ros::Duration(3.0));
+			try{
+				listener.lookupTransform(frame_id, child_frame_id, ros::Time(0), transform);
+				send_vision_transform(static_cast<tf::Transform>(transform), transform.stamp_);
+			}
+			catch (tf::TransformException ex){
+				ROS_ERROR_NAMED("position", "VisionTF: %s", ex.what());
+			}
+		}
+	}
 
 	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req) {
 		tf::Transform transform;

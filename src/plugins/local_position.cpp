@@ -51,9 +51,9 @@ public:
 
 		pos_nh = ros::NodeHandle(nh, "position");
 
-		pos_nh.param("send_tf", send_tf, true);
-		pos_nh.param<std::string>("parent_frame_id", parent_frame_id, "local_origin");
-		pos_nh.param<std::string>("frame_id", frame_id, "fcu");
+		pos_nh.param("local/send_tf", send_tf, true);
+		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
+		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
 
 		local_position = pos_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
 	}
@@ -81,12 +81,12 @@ private:
 	ros::Publisher local_position;
 	tf::TransformBroadcaster tf_broadcaster;
 
-	std::string parent_frame_id;	//!< origin for TF
-	std::string frame_id;		//!< frame for TF and Pose
+	std::string frame_id;		//!< origin for TF
+	std::string child_frame_id;	//!< frame for TF and Pose
 	bool send_tf;
 
 	void handle_local_position_ned(mavlink_local_position_ned_t &pos_ned) {
-		ROS_DEBUG_THROTTLE_NAMED(10, "locpos", "Local position NED: boot_ms:%06d "
+		ROS_DEBUG_THROTTLE_NAMED(10, "position", "Local position NED: boot_ms:%06d "
 				"position:(%1.3f %1.3f %1.3f) speed:(%1.3f %1.3f %1.3f)",
 				pos_ned.time_boot_ms,
 				pos_ned.x, pos_ned.y, pos_ned.z,
@@ -108,7 +108,7 @@ private:
 					tf::StampedTransform(
 						transform,
 						ros::Time::now(),
-						parent_frame_id, frame_id));
+						frame_id, child_frame_id));
 
 		// publish pose
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
