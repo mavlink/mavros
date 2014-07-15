@@ -58,8 +58,8 @@ public:
 
 		pos_nh.param("vision/pose_with_covariance", pose_with_covariance, false);
 		pos_nh.param("vision/listen_tf", listen_tf, false);
-		pos_nh.param<std::string>("vision/farme_id", frame_id, "local_origin");
-		pos_nh.param<std::string>("vision/child_farme_id", child_frame_id, "fcu");
+		pos_nh.param<std::string>("vision/frame_id", frame_id, "local_origin");
+		pos_nh.param<std::string>("vision/child_frame_id", child_frame_id, "fcu");
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
 				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
