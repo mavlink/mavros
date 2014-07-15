@@ -54,9 +54,7 @@ public:
 
 		pos_nh.param("setpoint/listen_tf", listen_tf, false);
 		pos_nh.param<std::string>("setpoint/frame_id", frame_id, "local_origin");
-		pos_nh.param<std::string>("setpoint/child_frame_id", child_frame_id, "fcu");
-
-		setpoint_sub = pos_nh.subscribe("local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
+		pos_nh.param<std::string>("setpoint/child_frame_id", child_frame_id, "setpoint");
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("position", "Listen to setpoint transform " << frame_id
@@ -64,6 +62,9 @@ public:
 			boost::thread t(boost::bind(&SetpointPositionPlugin::tf_listener, this));
 			mavutils::set_thread_name(t, "SetpointTF");
 			tf_thread.swap(t);
+		}
+		else {
+			setpoint_sub = pos_nh.subscribe("local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
 		}
 	}
 

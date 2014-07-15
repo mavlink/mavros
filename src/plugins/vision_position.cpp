@@ -59,15 +59,10 @@ public:
 		pos_nh.param("vision/pose_with_covariance", pose_with_covariance, false);
 		pos_nh.param("vision/listen_tf", listen_tf, false);
 		pos_nh.param<std::string>("vision/frame_id", frame_id, "local_origin");
-		pos_nh.param<std::string>("vision/child_frame_id", child_frame_id, "fcu");
+		pos_nh.param<std::string>("vision/child_frame_id", child_frame_id, "vision");
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
 				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
-
-		if (pose_with_covariance)
-			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
-		else
-			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cb, this);
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("position", "Listen to vision transform " << frame_id
@@ -76,6 +71,10 @@ public:
 			mavutils::set_thread_name(t, "VisionTF");
 			tf_thread.swap(t);
 		}
+		else if (pose_with_covariance)
+			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
+		else
+			vision_sub = pos_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cb, this);
 	}
 
 	const std::string get_name() const {
