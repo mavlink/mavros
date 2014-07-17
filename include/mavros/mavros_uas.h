@@ -34,7 +34,7 @@ namespace mavplugin {
 /**
  * @brief helper for mavlink_msg_*_pack_chan()
  *
- * Filler for first elements of pack functions.
+ * Filler for first arguments of *_pack_chan functions.
  */
 #define UAS_PACK_CHAN(uasobjptr)			\
 	(uasobjptr)->mav_link->get_system_id(), 	\
@@ -84,10 +84,16 @@ public:
 		return autopilot;
 	};
 
+	/**
+	 * @brief Return communication target system
+	 */
 	inline uint8_t get_tgt_system() {
 		return target_system; // not changed after configuration
 	};
 
+	/**
+	 * @brief Return communication target component
+	 */
 	inline uint8_t get_tgt_component() {
 		return target_component; // not changed after configuration
 	};
@@ -98,7 +104,8 @@ public:
 	};
 
 	/**
-	 * @brief Get Attitude angular velocity vector ENU
+	 * @brief Get Attitude angular velocity vector
+	 * @return angilar velocity [ENU, body-fixed]
 	 */
 	inline tf::Vector3 get_attitude_angular_velocity() {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -106,7 +113,8 @@ public:
 	}
 
 	/**
-	 * @brief Store Attitude angular velocity vector ENU
+	 * @brief Store Attitude angular velocity vector
+	 * @param[in] vec angular velocity [ENU, body-fixed]
 	 */
 	inline void set_attitude_angular_velocity(tf::Vector3 &vec) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -114,7 +122,8 @@ public:
 	}
 
 	/**
-	 * @brief Get Attitude linear acceleration vector ENU
+	 * @brief Get Attitude linear acceleration vector
+	 * @return linear acceleration [ENU, body-fixed]
 	 */
 	inline tf::Vector3 get_attitude_linear_acceleration() {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -122,7 +131,8 @@ public:
 	}
 
 	/**
-	 * @brief Store Attitude linear acceleration vector ENU
+	 * @brief Store Attitude linear acceleration vector
+	 * @param[in] vec linear acceleration [ENU, body-fixed]
 	 */
 	inline void set_attitude_linear_acceleration(tf::Vector3 &vec) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -130,7 +140,8 @@ public:
 	}
 
 	/**
-	 * @brief Get Attitude orientation quaternion ENU
+	 * @brief Get Attitude orientation quaternion
+	 * @return orientation quaternion [ENU, body-fixed]
 	 */
 	inline tf::Quaternion get_attitude_orientation() {
 		boost::recursive_mutex::scoped_lock lock(mutex);
@@ -138,7 +149,8 @@ public:
 	}
 
 	/**
-	 * @brief Store Attitude orientation quaternion ENU
+	 * @brief Store Attitude orientation quaternion
+	 * @param[in] quat orientation [ENU, body-fixed]
 	 */
 	inline void set_attitude_orientation(tf::Quaternion &quat) {
 		boost::recursive_mutex::scoped_lock lock(mutex);

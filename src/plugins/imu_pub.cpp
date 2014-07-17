@@ -145,9 +145,6 @@ private:
 	}
 
 	void handle_attitude(const mavlink_message_t *msg) {
-		if (imu_pub.getNumSubscribers() == 0)
-			return;
-
 		mavlink_attitude_t att;
 		mavlink_msg_attitude_decode(msg, &att);
 
@@ -170,19 +167,20 @@ private:
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
-		imu_msg->header.frame_id = frame_id;
-		imu_msg->header.stamp = ros::Time::now();
-		imu_pub.publish(imu_msg);
-
 		// store data in UAS
 		tf::Vector3 angular_velocity;
 		tf::Vector3 linear_acceleration;
 		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
 		tf::vector3MsgToTF(imu_msg->linear_acceleration, linear_acceleration);
 
+		uas->set_attitude_orientation(orientation);
 		uas->set_attitude_angular_velocity(angular_velocity);
 		uas->set_attitude_linear_acceleration(linear_acceleration);
-		uas->set_attitude_orientation(orientation);
+
+		// publish data
+		imu_msg->header.frame_id = frame_id;
+		imu_msg->header.stamp = ros::Time::now();
+		imu_pub.publish(imu_msg);
 	}
 
 	void fill_imu_msg_vec(sensor_msgs::ImuPtr &imu_msg,
