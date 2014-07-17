@@ -26,9 +26,10 @@
 
 #pragma once
 
+#include <list>
+#include <ev++.h>
 #include <mavros/mavconn_interface.h>
-#include <boost/asio/serial_port.hpp>
-#include <boost/shared_array.hpp>
+#include <mavros/mavconn_msgbuffer.h>
 
 namespace mavconn {
 
@@ -47,34 +48,25 @@ public:
 			std::string device = "/dev/ttyACM0", unsigned baudrate = 57600);
 	~MAVConnSerial();
 
+	void close();
+
 	using MAVConnInterface::send_message;
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
-	inline bool is_open() { return serial_dev.is_open(); };
+	inline bool is_open() { return fd != -1; };
 
 private:
-	asio::io_service io_service;
-	boost::thread io_thread;
-	asio::serial_port serial_dev;
+	ev::io io;
+	int fd;
 
-	static constexpr size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
-	uint8_t rx_buf[RX_BUFSIZE];
-	std::vector<uint8_t> tx_q;
-	static constexpr size_t TX_EXTENT = 256;	//!< extent size for tx buffer
-	static constexpr size_t TX_DELSIZE = 4096;	//!< buffer delete condition
-	boost::shared_array<uint8_t> tx_buf;
-	size_t tx_buf_size;				//!< size of current buffer()
-	size_t tx_buf_max_size;				//!< allocated buffer size
-	bool tx_in_process;				//!< tx status
+	std::list<MsgBuffer*> tx_q;
 	boost::recursive_mutex mutex;
 
-	void do_read(void);
-	void async_read_end(boost::system::error_code ec, size_t bytes_transfered);
-	void copy_and_async_write(void);
-	void do_write(void);
-	void async_write_end(boost::system::error_code ec);
+	void event_cb(ev::io &watcher, int revents);
+	void read_cb(ev::io &watcher);
+	void write_cb(ev::io &watcher);
 };
 
 }; // namespace mavconn

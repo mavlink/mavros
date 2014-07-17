@@ -30,12 +30,14 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
 #include <boost/signals2.hpp>
-#include <boost/noncopyable.hpp>
+
+// cleanup {{
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+// }}
 
 #include <set>
 #include <memory>
@@ -46,9 +48,45 @@ namespace sig2 = boost::signals2;
 namespace asio = boost::asio;
 
 /**
+ * @brief Common exception for communication error
+ */
+class DeviceError : public std::exception {
+private:
+	std::string e_what_;
+
+public:
+	/**
+	 * @breif Construct error with description.
+	 */
+	explicit DeviceError(const char *module, const char *description) {
+		std::stringstream ss;
+		ss << "DeviceError:" << module << ": " << description;
+		e_what_ = ss.str();
+	}
+
+	/**
+	 * @brief Construct error from errno
+	 */
+	explicit DeviceError(const char *module, int errnum) {
+		std::ostringstream ss;
+		ss << "DeviceError:" << module << ":" << errnum << ": " << strerror(errnum);
+		e_what_ = ss.str();
+	}
+
+	DeviceError(const DeviceError& other) : e_what_(other.e_what_) {}
+	virtual ~DeviceError() throw() {}
+	virtual const char *what() const throw() {
+		return e_what_.c_str();
+	}
+};
+
+/**
  * @brief Generic mavlink interface
  */
-class MAVConnInterface : private boost::noncopyable {
+class MAVConnInterface {
+private:
+	MAVConnInterface(const MAVConnInterface&) = delete;
+
 public:
 	/**
 	 * @param[in] system_id     sysid for send_message
@@ -58,6 +96,8 @@ public:
 	virtual ~MAVConnInterface() {
 		delete_channel(channel);
 	};
+
+	virtual void close() = 0;
 
 	inline void send_message(const mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);
@@ -93,6 +133,18 @@ public:
 	inline uint8_t get_component_id() { return comp_id; };
 	inline void set_component_id(uint8_t compid) { comp_id = compid; };
 
+	/**
+	 * @brief Construct connection from URL
+	 * @param[in] url           resource locator
+	 * @param[in] system_id     optional system id
+	 * @param[in] component_id  optional component id
+	 *
+	 * @todo Implementation
+	 * @todo Documentation
+	 */
+	static boost::shared_ptr<MAVConnInterface> open_url(std::string url,
+			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+
 protected:
 	int channel;
 	uint8_t sys_id;
@@ -104,6 +156,8 @@ protected:
 
 	static int new_channel();
 	static void delete_channel(int chan);
+
+	static void start_default_loop();
 
 private:
 	static std::set<int> allocated_channels;

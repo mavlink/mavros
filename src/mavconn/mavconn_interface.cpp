@@ -20,17 +20,40 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <set>
+#include <ev++.h>
 #include <mavros/mavconn_interface.h>
+#include <mavros/utils.h>
 #include <ros/console.h>
 #include <ros/assert.h>
-#include <set>
+#include <ros/ros.h>
 
-using namespace mavconn;
+namespace mavconn {
 
 #if MAVLINK_CRC_EXTRA
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
 std::set<int> MAVConnInterface::allocated_channels;
+
+static ev::default_loop default_loop;
+static boost::thread default_loop_thd;
+
+static void loop_spinner() {
+	while (ros::ok()) {
+		ROS_DEBUG_NAMED("mavconn", "EV: starting default loop");
+		default_loop.run(0);
+		ROS_DEBUG_NAMED("mavconn", "EV: default loop stopped");
+	}
+}
+
+void MAVConnInterface::start_default_loop() {
+	if (default_loop_thd.joinable())
+		return;
+
+	boost::thread t(loop_spinner);
+	mavutils::set_thread_name(t, "ev_default_loop");
+	default_loop_thd.swap(t);
+}
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
@@ -40,8 +63,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	ROS_ASSERT_MSG(channel >= 0, "channel allocation failure");
 }
 
-int MAVConnInterface::new_channel()
-{
+int MAVConnInterface::new_channel() {
 	int chan = 0;
 
 	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
@@ -56,9 +78,15 @@ int MAVConnInterface::new_channel()
 	return -1;
 }
 
-void MAVConnInterface::delete_channel(int chan)
-{
+void MAVConnInterface::delete_channel(int chan) {
 	ROS_DEBUG_NAMED("mavconn", "Freeing channel: %d", chan);
 	allocated_channels.erase(allocated_channels.find(chan));
-};
+}
 
+boost::shared_ptr<MAVConnInterface> MAVConnInterface::open_url(std::string url,
+		uint8_t system_id, uint8_t component_id) {
+	// TODO
+	return boost::shared_ptr<MAVConnInterface>();
+}
+
+}; // namespace mavconn
