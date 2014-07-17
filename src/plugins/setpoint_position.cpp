@@ -139,8 +139,6 @@ private:
 	/* -*- callbacks -*- */
 
 	void tf_listener(void) {
-		// Note: have spin_sthread switch, but not documented
-		// perhaps need set it to false.
 		tf::TransformListener listener(pos_nh);
 		tf::StampedTransform transform;
 		while (pos_nh.ok()) {
