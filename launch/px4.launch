@@ -1,0 +1,23 @@
+<launch>
+	<!-- vim: ft=roslaunch -->
+	<!-- example launch script for PX4 based FCU's -->
+
+	<arg name="serial_port" default="/dev/ttyACM0" />
+	<arg name="serial_baud" default="57600" />
+	<arg name="gcs_host" default="" />
+
+	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="screen">
+		<param name="serial_port" value="$(arg serial_port)" />
+		<param name="serial_baud" value="$(arg serial_baud)" />
+		<param name="gcs_host" value="$(arg gcs_host)" />
+
+		<!-- bugs in command and waypoint plugins -->
+		<rosparam command="load" file="$(find mavros)/launch/px4_blacklist.yaml" />
+
+		<!-- enable heartbeat send and reduce timeout -->
+		<param name="conn_heartbeat" value="5.0" />
+		<param name="conn_timeout" value="10.0" />
+		<!-- enable mavlink autostart on USB port -->
+		<param name="startup_px4_usb_quirk" value="true" />
+	</node>
+</launch>
