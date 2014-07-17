@@ -2,6 +2,104 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.0 (2014-07-17)
+------------------
+* plugin: local_position: Use same timestamp in topic and TF.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugins: TF thread required, remove notes.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* launch: Add example launch for PX4
+  Issue `#45 <https://github.com/vooon/mavros/issues/45>`_.
+* plugin: imu_pub: Fix attitude store in UAS
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+  Fix `#53 <https://github.com/vooon/mavros/issues/53>`_.
+* plugins: Disable position topics if tf_listen enabled
+  Also change default frame names: `vision` and `setpoint`.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugins: Fix typo in frame_id params.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugins: Add vision and setpoint TF listeners
+  Also change parameter names to same style.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugin: vision_position: Add PositionWithCovarianceStamped option
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* Add boost filesystem lib to link
+  On some platforms its absence breaks build by:
+  undefined reference to `boost::filesystem::path::codecvt()`
+* launch: Add example for APM2
+  Fix `#45 <https://github.com/vooon/mavros/issues/45>`_.
+* plugin: setpoint_position: Initial import
+  And some small doc changes in other position plugins.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* node: Add connection change message
+  Fix `#52 <https://github.com/vooon/mavros/issues/52>`_.
+* plugins: vision_position: Initial import
+  TODO: check ENU->NED maths.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugins: Remove unneded 'FCU' from diag
+* plugin: local_position: Change plane conversion
+  Bug: `#49 <https://github.com/vooon/mavros/issues/49>`_.
+* plugin: imu_pub: Fix magnetic vector convertions
+  Bug: `#49 <https://github.com/vooon/mavros/issues/49>`_.
+* Use dialects list from package
+* plugin: local_position: Fix orientation source
+  Part of `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* node: Show target system on startup
+  Fix `#47 <https://github.com/vooon/mavros/issues/47>`_.
+* plugin: local_position: Initial add
+  Receive LOCAL_POSITION_NED message and publish it via TF and PoseStamped
+  topic in ENU frame.
+  Part of `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* node: Use boost::make_shared for message allocation
+  Fix `#46 <https://github.com/vooon/mavros/issues/46>`_.
+* plugins: Use boost::make_shared for message allocation
+  Part of `#46 <https://github.com/vooon/mavros/issues/46>`_.
+* plugin: imu_pub: Fix misprint in fill function
+  Fix magnetometer vector convertion (HR IMU).
+  Related `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugin: imu_pub: setup cleanup.
+* Update readme
+* plugin: gps: Fix gps_vel calculation
+  Fix `#42 <https://github.com/vooon/mavros/issues/42>`_.
+* plugins: Make name and messages methods const. (breaking).
+  WARNING: this change broke external plugins.
+  Please add const to get_name() and get_supported_messages().
+  Part of `#38 <https://github.com/vooon/mavros/issues/38>`_.
+* plugins: Use mavlink_msg_*_pack_chan() functions
+  Fix `#43 <https://github.com/vooon/mavros/issues/43>`_.
+* mavconn: Reuse tx buffer (resize by extents)
+  Part of `#38 <https://github.com/vooon/mavros/issues/38>`_.
+* mavconn: Do not finalize messages if id pair match
+  mavlink_*_pack also do finalize, so explicit finalization just
+  recalculate crc and seq number (doubles work).
+  Test later if we need check seq too.
+* mavconn: Documentation and cleanup
+  Make MAVConn classes noncopyable.
+  Remove copy-paste copy and following async_write calls.
+  Reserve some space in tx queues.
+  Replace auto_ptr with unique_ptr.
+* test: Fix header include
+* mavconn: Fix possible array overrun in channel alocation.
+  Problem found by clang.
+* fix some roslint errors
+* mavconn: move headers to include
+* node: Implement plugin blacklist.
+  New parameter: `~/plugin_blacklist` lists plugin aliases
+  with glob syntax.
+  Fix `#36 <https://github.com/vooon/mavros/issues/36>`_.
+* plugins: Change constants to constexpr (for gcc 4.6)
+* mavconn: Add gencpp dependency (utils.h requiers generated header)
+* Move duplicate Mavlink.msg copy to utils.h
+* Remove tests that requires connection to FCU
+* plugins: imu_pub: Fix PX4 imu/data linear_accelerarion field
+  Should fix: `#39 <https://github.com/vooon/mavros/issues/39>`_.
+* plugins: imu_pub: Add magnitic covariance
+  Trying to move constants with constexpr.
+  Related: `#13 <https://github.com/vooon/mavros/issues/13>`_.
+* Remove testing info
+  Need to remove tests that could not run on build farm.
+* Contributors: Vladimir Ermakov
+
 0.5.0 (2014-06-19)
 ------------------
 * Remove mavlink submodule and move it to package dependency
