@@ -103,19 +103,18 @@ private:
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
 		transform.setRotation(uas->get_attitude_orientation());
 
+		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
+
+		tf::poseTFToMsg(transform, pose->pose);
+		pose->header.frame_id = frame_id;
+		pose->header.stamp = ros::Time::now();
+
 		if (send_tf)
 			tf_broadcaster.sendTransform(
 					tf::StampedTransform(
 						transform,
-						ros::Time::now(),
+						pose->header.stamp,
 						frame_id, child_frame_id));
-
-		// publish pose
-		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
-
-		tf::poseTFToMsg(transform, pose->pose);
-		pose->header.stamp = ros::Time::now();
-		pose->header.frame_id = frame_id;
 
 		local_position.publish(pose);
 	}
