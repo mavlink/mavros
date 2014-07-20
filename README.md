@@ -27,6 +27,7 @@ Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][7].
 Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
+Also since 2014-07-20 (pre 0.7.0) it depends on [libev-dev][10] system package.
 
 Programs
 --------
@@ -117,3 +118,4 @@ Links
 [7]: https://github.com/vooon/mavlink-gbp-release
 [8]: https://github.com/vooon/mavros/issues/35
 [9]: http://wiki.ros.org/mavros
+[10]: http://software.schmorp.de/pkg/libev

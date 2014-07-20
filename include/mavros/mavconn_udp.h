@@ -26,14 +26,20 @@
 
 #pragma once
 
+#include <list>
+#include <ev++.h>
 #include <mavros/mavconn_interface.h>
-#include <boost/asio/serial_port.hpp>
-#include <boost/shared_array.hpp>
+#include <mavros/mavconn_msgbuffer.h>
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 namespace mavconn {
 
 /**
  * @brief UDP interface
+ *
+ * @note IPv4 only
  */
 class MAVConnUDP : public MAVConnInterface {
 public:
@@ -48,39 +54,30 @@ public:
 			std::string listner_addr = "", unsigned short listner_port = 14550);
 	~MAVConnUDP();
 
+	void close();
+
 	using MAVConnInterface::send_message;
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
-	inline bool is_open() { return socket.is_open(); };
+	inline bool is_open() { return sockfd != -1; };
 
 private:
-	asio::io_service io_service;
-	std::unique_ptr<asio::io_service::work> io_work;
-	boost::thread io_thread;
-	asio::ip::udp::socket socket;
-	asio::ip::udp::endpoint server_endpoint;
-	asio::ip::udp::endpoint sender_endpoint;
-	asio::ip::udp::endpoint prev_sender_endpoint;
+	ev::io io;
+	int sockfd;
 
-	static constexpr size_t RX_BUFSIZE = MAVLINK_MAX_PACKET_LEN;
-	uint8_t rx_buf[RX_BUFSIZE];
-	std::vector<uint8_t> tx_q;
-	static constexpr size_t TX_EXTENT = 256;	//!< extent size for tx buffer
-	static constexpr size_t TX_DELSIZE = 4096;	//!< buffer delete condition
-	boost::shared_array<uint8_t> tx_buf;
-	size_t tx_buf_size;				//!< size of current buffer()
-	size_t tx_buf_max_size;				//!< allocated buffer size
-	bool tx_in_process;				//!< tx status
+	bool remote_exists;
+	sockaddr_in remote_addr;
+	sockaddr_in last_remote_addr;
+	sockaddr_in bind_addr;
+
+	std::list<MsgBuffer*> tx_q;
 	boost::recursive_mutex mutex;
-	bool sender_exists;
 
-	void do_read(void);
-	void async_read_end(boost::system::error_code ec, size_t bytes_transfered);
-	void copy_and_async_write(void);
-	void do_write(void);
-	void async_write_end(boost::system::error_code ec);
+	void event_cb(ev::io &watcher, int revents);
+	void read_cb(ev::io &watcher);
+	void write_cb(ev::io &watcher);
 };
 
 }; // namespace mavconn
