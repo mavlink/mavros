@@ -30,7 +30,6 @@
 #include <cstdlib>
 #include <cerrno>
 
-
 namespace mavconn {
 
 static void set_speed(struct termios &ts, unsigned baudrate) {
@@ -111,7 +110,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) == -1)
 		throw DeviceError("serial: fcntl", errno);
 
-	// run io_service for async io
+	// run io for async io
 	io.set<MAVConnSerial, &MAVConnSerial::event_cb>(this);
 	io.start(fd, ev::READ);
 	start_default_loop();
