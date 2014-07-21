@@ -96,7 +96,7 @@ If rosdep could not install mavlink library, you could install it from source:
 
 $ROSINSTALL must be writable for user or you can add `sudo -s` to last command.
 Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][7]
-(common naming: `debian/<rosdistro>/<osdistro>/<package>`).
+(common naming: `debian/<rosdistro>/<osdistro>/<package>`) using `dh binary`.
 
 
 Links
