@@ -90,11 +90,11 @@ If rosdep could not install mavlink library, you could install it from source:
 
     mkdir -p ~/ros_deps/src
     cd ~/ros_deps
-    rosinstall_generate mavlink | tee rosinstall.yaml
+    rosinstall_generator mavlink | tee rosinstall.yaml
     wstool init src ./rosinstall.yaml
     catkin_make_isolated --install-space $ROSINSTALL --install -DCMAKE_BUILD_TYPE=Release
 
-$ROSINSTALL must be writable for user.
+$ROSINSTALL must be writable for user or you can add `sudo -s` to last command.
 Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][7]
 (common naming: `debian/<rosdistro>/<osdistro>/<package>`).
 
