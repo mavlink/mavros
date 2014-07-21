@@ -1,4 +1,0 @@
-# temporary rosdep file before it merged to main list
-libev-dev:
-  debian: [libev-dev]
-  ubuntu: [libev-dev]

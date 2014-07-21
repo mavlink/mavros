@@ -27,7 +27,8 @@ Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][7].
 Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
-Also since 2014-07-20 (pre 0.7.0) it depends on [libev-dev][10] system package.
+Also since 0.7.0 (and [#54][11]) it depends on [libev-dev][10] system package (resolved by rosdep).
+
 
 Programs
 --------
@@ -84,6 +85,7 @@ Use `wstool` utility for installation. In your workspace do:
 Then use regular `catkin_make` for build and install.
 Notes: since v0.5 (and [#35][8]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][7].
 
+
 ### Installing ros-\*-mavlink from source
 
 If rosdep could not install mavlink library, you could install it from source:
@@ -119,3 +121,4 @@ Links
 [8]: https://github.com/vooon/mavros/issues/35
 [9]: http://wiki.ros.org/mavros
 [10]: http://software.schmorp.de/pkg/libev
+[11]: https://github.com/vooon/mavros/issues/54
