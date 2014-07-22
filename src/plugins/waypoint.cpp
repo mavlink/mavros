@@ -26,7 +26,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <mavros/WaypointList.h>
 #include <mavros/WaypointSetCurrent.h>
@@ -151,7 +150,11 @@ public:
 		wp_state(WP_IDLE),
 		wp_retries(RETRIES_COUNT),
 		do_pull_after_gcs(false),
-		reshedule_pull(false)
+		reshedule_pull(false),
+		BOOT_TIME_DT(BOOT_TIME_MS / 1000.0),
+		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
+		WP_TIMEOUT_DT(WP_TIMEOUT_MS/ 1000.0),
+		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -172,8 +175,10 @@ public:
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
 		goto_srv = wp_nh.advertiseService("goto", &WaypointPlugin::goto_cb, this);
 
-		wp_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
-		shedule_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
+		wp_timer = wp_nh.createTimer(WP_TIMEOUT_DT, &WaypointPlugin::timeout_cb, this, true);
+		wp_timer.stop();
+		shedule_timer = wp_nh.createTimer(BOOT_TIME_DT, &WaypointPlugin::sheduled_pull_cb, this, true);
+		shedule_timer.stop();
 		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
 
@@ -265,8 +270,8 @@ private:
 	boost::condition_variable list_receiving;
 	boost::condition_variable list_sending;
 
-	std::unique_ptr<boost::asio::deadline_timer> wp_timer;
-	std::unique_ptr<boost::asio::deadline_timer> shedule_timer;
+	ros::Timer wp_timer;
+	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
 	bool reshedule_pull;
 
@@ -275,6 +280,11 @@ private:
 	static constexpr int WP_TIMEOUT_MS = 1000;
 	static constexpr int RESHEDULE_MS = 5000;
 	static constexpr int RETRIES_COUNT = 3;
+
+	const ros::Duration BOOT_TIME_DT;
+	const ros::Duration LIST_TIMEOUT_DT;
+	const ros::Duration WP_TIMEOUT_DT;
+	const ros::Duration RESHEDULE_DT;
 
 	/* -*- rx handlers -*- */
 
@@ -285,7 +295,8 @@ private:
 		/* receive item only in RX state */
 		if (wp_state == WP_RXWP) {
 			if (mit.seq != wp_cur_id) {
-				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping packet");
+				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping item (%d != %zu)",
+						mit.seq, wp_cur_id);
 				return;
 			}
 
@@ -313,10 +324,10 @@ private:
 			}
 		}
 		else {
-			ROS_DEBUG_NAMED("wp", "WP: rejecting message, wrong state");
+			ROS_DEBUG_NAMED("wp", "WP: rejecting item, wrong state %d", wp_state);
 			if (do_pull_after_gcs && reshedule_pull) {
 				ROS_DEBUG_NAMED("wp", "WP: reshedule pull");
-				shedule_pull(WP_TIMEOUT_MS);
+				shedule_pull(WP_TIMEOUT_DT);
 			}
 		}
 	}
@@ -398,7 +409,7 @@ private:
 			if (do_pull_after_gcs) {
 				ROS_INFO_NAMED("wp", "WP: sheduling pull after GCS is done");
 				reshedule_pull = true;
-				shedule_pull(RESHEDULE_MS);
+				shedule_pull(RESHEDULE_DT);
 			}
 		}
 	}
@@ -479,10 +490,7 @@ private:
 
 	/* -*- mid-level helpers -*- */
 
-	void timeout_cb(boost::system::error_code error) {
-		if (error)
-			return;
-
+	void timeout_cb(const ros::TimerEvent &event) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (wp_retries > 0) {
 			wp_retries--;
@@ -516,9 +524,10 @@ private:
 		}
 		else {
 			ROS_ERROR_NAMED("wp", "WP: timed out.");
-			wp_state = WP_IDLE; // go_idle()
+			go_idle();
 			is_timedout = true;
 			/* prevent waiting cond var timeout */
+			lock.unlock();
 			list_receiving.notify_all();
 			list_sending.notify_all();
 		}
@@ -527,20 +536,17 @@ private:
 	void connection_cb(bool connected) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (connected)
-			shedule_pull(BOOT_TIME_MS);
+			shedule_pull(BOOT_TIME_DT);
 		else
-			shedule_timer->cancel();
+			shedule_timer.stop();
 	}
 
-	void sheduled_pull_cb(boost::system::error_code error) {
-		if (error)
-			return;
-
+	void sheduled_pull_cb(const ros::TimerEvent &event) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (wp_state != WP_IDLE) {
 			/* try later */
 			ROS_DEBUG_NAMED("wp", "WP: busy, reshedule pull");
-			shedule_pull(RESHEDULE_MS);
+			shedule_pull(RESHEDULE_DT);
 			return;
 		}
 
@@ -563,7 +569,7 @@ private:
 	void go_idle(void) {
 		reshedule_pull = false;
 		wp_state = WP_IDLE;
-		wp_timer->cancel();
+		wp_timer.stop();
 	}
 
 	void restart_timeout_timer(void) {
@@ -573,15 +579,14 @@ private:
 
 	void restart_timeout_timer_int(void) {
 		is_timedout = false;
-		wp_timer->cancel();
-		wp_timer->expires_from_now(boost::posix_time::milliseconds(WP_TIMEOUT_MS));
-		wp_timer->async_wait(boost::bind(&WaypointPlugin::timeout_cb, this, _1));
+		wp_timer.stop();
+		wp_timer.start();
 	}
 
-	void shedule_pull(int millis) {
-		shedule_timer->cancel();
-		shedule_timer->expires_from_now(boost::posix_time::milliseconds(millis));
-		shedule_timer->async_wait(boost::bind(&WaypointPlugin::sheduled_pull_cb, this, _1));
+	void shedule_pull(const ros::Duration &dt) {
+		shedule_timer.stop();
+		shedule_timer.setPeriod(dt);
+		shedule_timer.start();
 	}
 
 	void send_waypoint(size_t seq) {
@@ -607,7 +612,7 @@ private:
 		boost::mutex cond_mutex;
 		boost::unique_lock<boost::mutex> lock(cond_mutex);
 
-		return list_receiving.timed_wait(lock, boost::posix_time::milliseconds(LIST_TIMEOUT_MS))
+		return list_receiving.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
 			&& !is_timedout;
 	}
 
@@ -615,7 +620,7 @@ private:
 		boost::mutex cond_mutex;
 		boost::unique_lock<boost::mutex> lock(cond_mutex);
 
-		return list_sending.timed_wait(lock, boost::posix_time::milliseconds(LIST_TIMEOUT_MS))
+		return list_sending.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
 			&& !is_timedout;
 	}
 
@@ -668,6 +673,7 @@ private:
 	void mission_request(uint16_t seq) {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: request #%u", seq);
 		mavlink_msg_mission_request_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				seq
@@ -678,6 +684,7 @@ private:
 	void mission_set_current(uint16_t seq) {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: set current #%u", seq);
 		mavlink_msg_mission_set_current_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				seq
@@ -688,6 +695,7 @@ private:
 	void mission_request_list() {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: request list");
 		mavlink_msg_mission_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
@@ -697,6 +705,7 @@ private:
 	void mission_count(uint16_t cnt) {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: count %u", cnt);
 		mavlink_msg_mission_count_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				cnt
@@ -707,6 +716,7 @@ private:
 	void mission_clear_all() {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: clear all");
 		mavlink_msg_mission_clear_all_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
@@ -716,6 +726,7 @@ private:
 	void mission_ack(enum MAV_MISSION_RESULT type) {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("wp", "WP:m: ACK %u", type);
 		mavlink_msg_mission_ack_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				type
