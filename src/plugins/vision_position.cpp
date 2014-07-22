@@ -60,6 +60,7 @@ public:
 		pos_nh.param("vision/listen_tf", listen_tf, false);
 		pos_nh.param<std::string>("vision/frame_id", frame_id, "local_origin");
 		pos_nh.param<std::string>("vision/child_frame_id", child_frame_id, "vision");
+		pos_nh.param("vision/tf_rate_limit", tf_rate, 50.0);
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
 				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
@@ -98,6 +99,7 @@ private:
 	std::string child_frame_id;
 
 	boost::thread tf_thread;
+	double tf_rate;
 
 	/* -*- low-level send -*- */
 
@@ -139,6 +141,7 @@ private:
 	void tf_listener(void) {
 		tf::TransformListener listener(pos_nh);
 		tf::StampedTransform transform;
+		ros::Rate rate(tf_rate);
 		while (pos_nh.ok()) {
 			// Wait up to 3s for transform
 			listener.waitForTransform(frame_id, child_frame_id, ros::Time(0), ros::Duration(3.0));
@@ -149,6 +152,7 @@ private:
 			catch (tf::TransformException ex){
 				ROS_ERROR_NAMED("position", "VisionTF: %s", ex.what());
 			}
+			rate.sleep();
 		}
 	}
 
