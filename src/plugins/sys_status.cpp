@@ -26,7 +26,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <mavros/State.h>
 #include <mavros/BatteryStatus.h>
@@ -327,13 +326,15 @@ public:
 
 		batt_diag.set_min_voltage(min_voltage);
 
-		conn_timeout = boost::posix_time::milliseconds(conn_timeout_d * 1000);
-		timeout_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_timeout));
+		// one-shot timeout timer
+		timeout_timer = nh.createTimer(ros::Duration(conn_timeout_d),
+				&SystemStatusPlugin::timeout_cb, this, true);
+		timeout_timer.start();
 
 		if (conn_heartbeat_d > 0.0) {
-			conn_heartbeat = boost::posix_time::milliseconds(conn_heartbeat_d * 1000);
-			heartbeat_timer.reset(new boost::asio::deadline_timer(uas->timer_service, conn_heartbeat));
-			heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
+			heartbeat_timer = nh.createTimer(ros::Duration(conn_heartbeat_d),
+					&SystemStatusPlugin::heartbeat_cb, this);
+			heartbeat_timer.start();
 		}
 
 		state_pub = nh.advertise<mavros::State>("state", 10);
@@ -362,62 +363,15 @@ public:
 	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		switch (msg->msgid) {
 		case MAVLINK_MSG_ID_HEARTBEAT:
-			{
-				mavlink_heartbeat_t hb;
-				mavlink_msg_heartbeat_decode(msg, &hb);
-				hb_diag.tick(hb);
-
-				// update context && setup connection timeout
-				uas->update_heartbeat(hb.type, hb.autopilot);
-				uas->update_connection_status(true);
-				timeout_timer->cancel();
-				timeout_timer->expires_from_now(conn_timeout);
-				timeout_timer->async_wait(boost::bind(&SystemStatusPlugin::timeout_cb, this, _1));
-
-				mavros::StatePtr state_msg = boost::make_shared<mavros::State>();
-				state_msg->header.stamp = ros::Time::now();
-				state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
-				state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
-				state_msg->mode = str_mode_v10(hb.base_mode, hb.custom_mode);
-
-				state_pub.publish(state_msg);
-			}
+			handle_heartbeat(msg);
 			break;
 
 		case MAVLINK_MSG_ID_SYS_STATUS:
-			{
-				mavlink_sys_status_t stat;
-				mavlink_msg_sys_status_decode(msg, &stat);
-
-				float volt = stat.voltage_battery / 1000.0;	// mV
-				float curr = stat.current_battery / 100.0;	// 10 mA or -1
-				float rem = stat.battery_remaining / 100.0;	// or -1
-
-				mavros::BatteryStatusPtr batt_msg = boost::make_shared<mavros::BatteryStatus>();
-				batt_msg->header.stamp = ros::Time::now();
-				batt_msg->voltage = volt;
-				batt_msg->current = curr;
-				batt_msg->remaining = rem;
-
-				sys_diag.set(stat);
-				batt_diag.set(volt, curr, rem);
-				batt_pub.publish(batt_msg);
-			}
+			handle_sys_status(msg);
 			break;
 
 		case MAVLINK_MSG_ID_STATUSTEXT:
-			{
-				mavlink_statustext_t textm;
-				mavlink_msg_statustext_decode(msg, &textm);
-
-				std::string text(textm.text,
-						strnlen(textm.text, sizeof(textm.text)));
-
-				if (uas->is_ardupilotmega())
-					process_statustext_apm_quirk(textm.severity, text);
-				else
-					process_statustext_normal(textm.severity, text);
-			}
+			handle_statustext(msg);
 			break;
 
 		/* -*- APM additional messages -*- */
@@ -451,15 +405,20 @@ private:
 	SystemStatusDiag sys_diag;
 	BatteryStatusDiag batt_diag;
 	UAS *uas;
-	boost::posix_time::time_duration conn_timeout;
-	boost::posix_time::time_duration conn_heartbeat;
-	std::unique_ptr<boost::asio::deadline_timer> timeout_timer;
-	std::unique_ptr<boost::asio::deadline_timer> heartbeat_timer;
+	ros::Timer timeout_timer;
+	ros::Timer heartbeat_timer;
 
 	ros::Publisher state_pub;
 	ros::Publisher batt_pub;
 	ros::ServiceServer rate_srv;
 
+	/* -*- mid-level helpers -*- */
+
+	/**
+	 * Sent STATUSTEXT message to rosout
+	 *
+	 * @param[in] severity  Levels defined in common.xml
+	 */
 	void process_statustext_normal(uint8_t severity, std::string &text) {
 		switch (severity) {
 		case MAV_SEVERITY_EMERGENCY:
@@ -486,6 +445,11 @@ private:
 
 	}
 
+	/**
+	 * Send STATUSTEXT messate to rosout with APM severity levels
+	 *
+	 * @param[in] severity  APM levels.
+	 */
 	void process_statustext_apm_quirk(uint8_t severity, std::string &text) {
 		switch (severity) {
 		case 1: // SEVERITY_LOW
@@ -592,17 +556,67 @@ private:
 			return str_custom_mode(custom_mode);
 	}
 
-	void timeout_cb(boost::system::error_code error) {
-		if (error)
-			return;
+	/* -*- message handlers -*- */
 
+	void handle_heartbeat(const mavlink_message_t *msg) {
+		mavlink_heartbeat_t hb;
+		mavlink_msg_heartbeat_decode(msg, &hb);
+		hb_diag.tick(hb);
+
+		// update context && setup connection timeout
+		uas->update_heartbeat(hb.type, hb.autopilot);
+		uas->update_connection_status(true);
+		timeout_timer.stop();
+		timeout_timer.start();
+
+		mavros::StatePtr state_msg = boost::make_shared<mavros::State>();
+		state_msg->header.stamp = ros::Time::now();
+		state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
+		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
+		state_msg->mode = str_mode_v10(hb.base_mode, hb.custom_mode);
+
+		state_pub.publish(state_msg);
+	}
+
+	void handle_sys_status(const mavlink_message_t *msg) {
+		mavlink_sys_status_t stat;
+		mavlink_msg_sys_status_decode(msg, &stat);
+
+		float volt = stat.voltage_battery / 1000.0;	// mV
+		float curr = stat.current_battery / 100.0;	// 10 mA or -1
+		float rem = stat.battery_remaining / 100.0;	// or -1
+
+		mavros::BatteryStatusPtr batt_msg = boost::make_shared<mavros::BatteryStatus>();
+		batt_msg->header.stamp = ros::Time::now();
+		batt_msg->voltage = volt;
+		batt_msg->current = curr;
+		batt_msg->remaining = rem;
+
+		sys_diag.set(stat);
+		batt_diag.set(volt, curr, rem);
+		batt_pub.publish(batt_msg);
+	}
+
+	void handle_statustext(const mavlink_message_t *msg) {
+		mavlink_statustext_t textm;
+		mavlink_msg_statustext_decode(msg, &textm);
+
+		std::string text(textm.text,
+				strnlen(textm.text, sizeof(textm.text)));
+
+		if (uas->is_ardupilotmega())
+			process_statustext_apm_quirk(textm.severity, text);
+		else
+			process_statustext_normal(textm.severity, text);
+	}
+
+	/* -*- timer callbacks -*- */
+
+	void timeout_cb(const ros::TimerEvent &event) {
 		uas->update_connection_status(false);
 	}
 
-	void heartbeat_cb(boost::system::error_code error) {
-		if (error)
-			return;
-
+	void heartbeat_cb(const ros::TimerEvent &event) {
 		mavlink_message_t msg;
 		mavlink_msg_heartbeat_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				MAV_TYPE_ONBOARD_CONTROLLER,
@@ -613,11 +627,9 @@ private:
 				);
 
 		uas->mav_link->send_message(&msg);
-
-		/* restart timer */
-		heartbeat_timer->expires_from_now(conn_heartbeat);
-		heartbeat_timer->async_wait(boost::bind(&SystemStatusPlugin::heartbeat_cb, this, _1));
 	}
+
+	/* -*- ros callbacks -*- */
 
 	bool set_rate_cb(mavros::StreamRate::Request &req,
 			mavros::StreamRate::Response &res) {
