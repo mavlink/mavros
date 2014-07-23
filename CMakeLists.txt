@@ -190,6 +190,7 @@ add_library(mavros_plugins
   src/plugins/local_position.cpp
   src/plugins/vision_position.cpp
   src/plugins/setpoint_position.cpp
+  src/plugins/safety_area.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp
