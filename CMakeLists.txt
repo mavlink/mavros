@@ -242,6 +242,7 @@ target_link_libraries(ros_udp
 install(PROGRAMS
   scripts/mavparam
   scripts/mavwp
+  scripts/mavsafety
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
