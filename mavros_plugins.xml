@@ -35,5 +35,8 @@
 	<class name="safety_area" type="mavplugin::SafetyAreaPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU safety allowed area.</description>
 	</class>
+	<class name="3dr_radio" type="mavplugin::TDRRadioPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish 3DR Radio modem status.</description>
+	</class>
 </library>
 
