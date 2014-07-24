@@ -44,5 +44,8 @@
 	<class name="setpoint_accel" type="mavplugin::SetpointAccelerationPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU external acceleration/force setpoint.</description>
 	</class>
+	<class name="setpoint_attitude" type="mavplugin::SetpointAttitudePlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external attitude setpoint.</description>
+	</class>
 </library>
 
