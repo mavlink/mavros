@@ -53,22 +53,22 @@ public:
 		bool listen_tf;
 
 		uas = &uas_;
-		pos_nh = ros::NodeHandle(nh, "position");
+		sp_nh = ros::NodeHandle(nh, "setpoint");
 
-		pos_nh.param("setpoint/listen_tf", listen_tf, false);
-		pos_nh.param<std::string>("setpoint/frame_id", frame_id, "local_origin");
-		pos_nh.param<std::string>("setpoint/child_frame_id", child_frame_id, "setpoint");
-		pos_nh.param("setpoint/tf_rate_limit", tf_rate, 50.0);
+		sp_nh.param("position/listen_tf", listen_tf, false);
+		sp_nh.param<std::string>("position/frame_id", frame_id, "local_origin");
+		sp_nh.param<std::string>("position/child_frame_id", child_frame_id, "setpoint");
+		sp_nh.param("position/tf_rate_limit", tf_rate, 50.0);
 
 		if (listen_tf) {
-			ROS_INFO_STREAM_NAMED("position", "Listen to setpoint transform " << frame_id
+			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
 					<< " -> " << child_frame_id);
 			boost::thread t(boost::bind(&SetpointPositionPlugin::tf_listener, this));
-			mavutils::set_thread_name(t, "SetpointTF");
+			mavutils::set_thread_name(t, "PosSetpointTF");
 			tf_thread.swap(t);
 		}
 		else {
-			setpoint_sub = pos_nh.subscribe("local_setpoint", 10, &SetpointPositionPlugin::setpoint_cb, this);
+			setpoint_sub = sp_nh.subscribe("local_position", 10, &SetpointPositionPlugin::setpoint_cb, this);
 		}
 	}
 
@@ -87,7 +87,7 @@ private:
 	friend class LocalNEDPositionSetpointExternalMixin;
 	UAS *uas;
 
-	ros::NodeHandle pos_nh;
+	ros::NodeHandle sp_nh;
 	ros::Subscriber setpoint_sub;
 
 	std::string frame_id;
@@ -126,10 +126,10 @@ private:
 	/* -*- callbacks -*- */
 
 	void tf_listener(void) {
-		tf::TransformListener listener(pos_nh);
+		tf::TransformListener listener(sp_nh);
 		tf::StampedTransform transform;
 		ros::Rate rate(tf_rate);
-		while (pos_nh.ok()) {
+		while (sp_nh.ok()) {
 			// Wait up to 3s for transform
 			listener.waitForTransform(frame_id, child_frame_id, ros::Time(0), ros::Duration(3.0));
 			try{
@@ -137,7 +137,7 @@ private:
 				send_setpoint_transform(static_cast<tf::Transform>(transform), transform.stamp_);
 			}
 			catch (tf::TransformException ex){
-				ROS_ERROR_NAMED("position", "SetpointTF: %s", ex.what());
+				ROS_ERROR_NAMED("setpoint", "PosSetpointTF: %s", ex.what());
 			}
 			rate.sleep();
 		}
