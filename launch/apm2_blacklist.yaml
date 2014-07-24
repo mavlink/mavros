@@ -1,3 +1,4 @@
 plugin_blacklist:
 - '*_position'
 - 'safety_area'
+- 'setpoint_*'
