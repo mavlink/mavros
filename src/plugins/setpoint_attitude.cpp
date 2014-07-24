@@ -137,12 +137,12 @@ private:
 		const uint8_t ignore_all_except_q = (7<<0);
 		float q[4];
 
-		// XXX: need add ENU->NED conversion
+		// ENU->NED, description in #49.
 		tf::Quaternion tf_q = transform.getRotation();
 		q[0] = tf_q.w();
-		q[1] = tf_q.x();
-		q[2] = tf_q.y();
-		q[3] = tf_q.z();
+		q[1] = tf_q.y();
+		q[2] = tf_q.x();
+		q[3] = -tf_q.z();
 
 		// Don't know if it turns out to be a problem to send 0.0;
 		// maybe in the PX4 side throttle can be discarded
