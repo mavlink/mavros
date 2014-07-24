@@ -26,7 +26,10 @@
 
 #pragma once
 
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
+
+#include <tf/transform_listener.h>
 
 namespace mavplugin {
 
@@ -35,7 +38,7 @@ namespace mavplugin {
  *
  * @note derived class should provide UAS pointer in uas member.
  */
-template <class Derived>
+template <class D>
 class LocalNEDPositionSetpointExternalMixin {
 public:
 	void local_ned_position_setpoint_external(uint32_t time_boot_ms, uint8_t coordinate_frame,
@@ -43,7 +46,7 @@ public:
 			float x, float y, float z,
 			float vx, float vy, float vz,
 			float afx, float afy, float afz) {
-		UAS *_uas = static_cast<Derived *>(this)->uas;
+		UAS *_uas = static_cast<D *>(this)->uas;
 		mavlink_message_t msg;
 		mavlink_msg_local_ned_position_setpoint_external_pack_chan(UAS_PACK_CHAN(_uas), &msg,
 				time_boot_ms, // why it not usec timestamp?
@@ -54,6 +57,45 @@ public:
 				vz, vy, vz,
 				afx, afy, afz);
 		_uas->mav_link->send_message(&msg);
+	}
+};
+
+template <class D>
+class TFListenerMixin {
+public:
+	boost::thread tf_thread;
+	std::string thd_name;
+	boost::function<void (const tf::Transform&, const ros::Time&)> tf_transform_cb;
+
+	void tf_start(const char *_thd_name, void (D::*cbp)(const tf::Transform&, const ros::Time&) ) {
+		thd_name = _thd_name;
+		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1, _2);
+
+		boost::thread t(boost::bind(&TFListenerMixin::tf_listener, this));
+		mavutils::set_thread_name(t, thd_name);
+		tf_thread.swap(t);
+	}
+
+	void tf_listener(void) {
+		ros::NodeHandle &_sp_nh = static_cast<D *>(this)->sp_nh;
+		std::string &_frame_id = static_cast<D *>(this)->frame_id;
+		std::string &_child_frame_id = static_cast<D *>(this)->child_frame_id;
+
+		tf::TransformListener listener(_sp_nh);
+		tf::StampedTransform transform;
+		ros::Rate rate(static_cast<D *>(this)->tf_rate);
+		while (_sp_nh.ok()) {
+			// Wait up to 3s for transform
+			listener.waitForTransform(_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
+			try {
+				listener.lookupTransform(_frame_id, _child_frame_id, ros::Time(0), transform);
+				tf_transform_cb(static_cast<tf::Transform>(transform), transform.stamp_);
+			}
+			catch (tf::TransformException ex) {
+				ROS_ERROR_NAMED("setpoint", "%s: %s", thd_name.c_str(), ex.what());
+			}
+			rate.sleep();
+		}
 	}
 };
 
