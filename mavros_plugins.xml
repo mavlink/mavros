@@ -30,13 +30,16 @@
 		<description>Send to FCU vision position estimates.</description>
 	</class>
 	<class name="setpoint_position" type="mavplugin::SetpointPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Send to FCU external setpoint.</description>
+		<description>Send to FCU external position setpoint.</description>
 	</class>
 	<class name="safety_area" type="mavplugin::SafetyAreaPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU safety allowed area.</description>
 	</class>
 	<class name="3dr_radio" type="mavplugin::TDRRadioPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish 3DR Radio modem status.</description>
+	</class>
+	<class name="setpoint_velocity" type="mavplugin::SetpointVelocityPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external velocity setpoint.</description>
 	</class>
 </library>
 

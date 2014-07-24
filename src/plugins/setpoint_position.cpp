@@ -31,6 +31,8 @@
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
 
+#include "setpoint_mixin.h"
+
 namespace mavplugin {
 
 /**
@@ -38,7 +40,8 @@ namespace mavplugin {
  *
  * Send setpoint positions to FCU controller.
  */
-class SetpointPositionPlugin : public MavRosPlugin {
+class SetpointPositionPlugin : public MavRosPlugin,
+	private LocalNEDPositionSetpointExternalMixin<SetpointPositionPlugin> {
 public:
 	SetpointPositionPlugin()
 	{ };
@@ -81,6 +84,7 @@ public:
 	}
 
 private:
+	friend class LocalNEDPositionSetpointExternalMixin;
 	UAS *uas;
 
 	ros::NodeHandle pos_nh;
@@ -91,25 +95,6 @@ private:
 
 	boost::thread tf_thread;
 	double tf_rate;
-
-	/* -*- low-level send -*- */
-
-	void local_ned_position_setpoint_external(uint32_t time_boot_ms, uint8_t coordinate_frame,
-			uint16_t type_mask,
-			float x, float y, float z,
-			float vx, float vy, float vz,
-			float afx, float afy, float afz) {
-		mavlink_message_t msg;
-		mavlink_msg_local_ned_position_setpoint_external_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_boot_ms, // why it not usec timestamp?
-				UAS_PACK_TGT(uas),
-				coordinate_frame,
-				type_mask,
-				x, y, z,
-				vz, vy, vz,
-				afx, afy, afz);
-		uas->mav_link->send_message(&msg);
-	}
 
 	/* -*- mid-level helpers -*- */
 
@@ -127,7 +112,7 @@ private:
 		/* Documentation start from bit 1 instead 0,
 		 * but implementation PX4 Firmware #1151 starts from 0
 		 */
-		uint16_t ignore_all_except_xyz = (4<<6)|(4<<3);
+		uint16_t ignore_all_except_xyz = (7<<6)|(7<<3);
 
 		// TODO: check conversion. Issue #49.
 		local_ned_position_setpoint_external(stamp.toNSec() / 1000000,
