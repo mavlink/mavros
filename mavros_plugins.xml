@@ -41,5 +41,8 @@
 	<class name="setpoint_velocity" type="mavplugin::SetpointVelocityPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU external velocity setpoint.</description>
 	</class>
+	<class name="setpoint_accel" type="mavplugin::SetpointAccelerationPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external acceleration/force setpoint.</description>
+	</class>
 </library>
 

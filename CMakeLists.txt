@@ -193,6 +193,7 @@ add_library(mavros_plugins
   src/plugins/safety_area.cpp
   src/plugins/3dr_radio.cpp
   src/plugins/setpoint_velocity.cpp
+  src/plugins/setpoint_accel.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp
