@@ -2,4 +2,3 @@ plugin_blacklist:
 - '*_position'
 - 'safety_area'
 - 'setpoint_*'
-- '3dr_radio'
