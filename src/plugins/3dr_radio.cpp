@@ -27,26 +27,24 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
+#include <mavros/RadioStatus.h>
+
 namespace mavplugin {
 
 class TDRRadioStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
 	TDRRadioStatus(const std::string name) :
-		diagnostic_updater::DiagnosticTask(name),
-		data_received(false)
+		diagnostic_updater::DiagnosticTask(name, uint8_t _low_rssi),
+		data_received(false),
+		low_rssi(_low_rssi)
 	{
 		memset(&last_rst, 0, sizeof(last_rst));
 	}
 
 
-	void set(mavlink_radio_status_t &rst) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
-		data_received = true;
-		last_rst = rst;
-	}
-
-	void set(mavlink_radio_t &rst) {
+	template <typename msgT>
+	void set(msgT &rst) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		data_received = true;
 #define RST_COPY(field)	last_rst.field = rst.field
@@ -68,15 +66,20 @@ public:
 
 		if (!data_received)
 			stat.summary(2, "No data");
-		else if (last_rst.rssi < 20)
+		else if (last_rst.rssi < low_rssi)
 			stat.summary(1, "Low RSSI");
-		else if (last_rst.remrssi < 20)
+		else if (last_rst.remrssi < low_rssi)
 			stat.summary(1, "Low remote RSSI");
 		else
 			stat.summary(0, "Normal");
 
+		float rssi_dbm = (last_rst.rssi / 1.9) - 127;
+		float remrssi_dbm = (last_rst.remrssi / 1.9) - 127;
+
 		stat.addf("RSSI", "%u", last_rst.rssi);
+		stat.addf("RSSI (dBm)", "%.1f", rssi_dbm);
 		stat.addf("Remote RSSI", "%u", last_rst.remrssi);
+		stat.addf("Remote RSSI (dBm)", "%.1f", remrssi_dbm);
 		stat.addf("Tx buffer (%)", "%u", last_rst.txbuf);
 		stat.addf("Noice level", "%u", last_rst.noise);
 		stat.addf("Remote noice level", "%u", last_rst.remnoise);
@@ -88,6 +91,7 @@ private:
 	boost::recursive_mutex mutex;
 	mavlink_radio_status_t last_rst;
 	bool data_received;
+	const uint8_t low_rssi;
 };
 
 
@@ -97,7 +101,8 @@ private:
 class TDRRadioPlugin : public MavRosPlugin {
 public:
 	TDRRadioPlugin() :
-		tdr_diag("3DR Radio")
+		tdr_diag("3DR Radio", 40),
+		has_radio_status(false)
 	{ }
 
 	void initialize(UAS &uas,
@@ -105,6 +110,7 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		diag_updater.add(tdr_diag);
+		status_pub = nh.advertise<mavros::RadioStatus>("radio_status", 10);
 	}
 
 	std::string const get_name() const {
@@ -126,17 +132,21 @@ public:
 			{
 				mavlink_radio_status_t rst;
 				mavlink_msg_radio_status_decode(msg, &rst);
-				tdr_diag.set(rst);
+				has_radio_status = true;
+				handle_message(rst, sysid, compid);
 			}
 			break;
 
 #ifdef MAVLINK_MSG_ID_RADIO
 		case MAVLINK_MSG_ID_RADIO:
 			{
+				if (has_radio_status)
+					return;
+
 				// actually the same data, but from earlier modems
 				mavlink_radio_t rst;
 				mavlink_msg_radio_decode(msg, &rst);
-				tdr_diag.set(rst);
+				handle_message(rst, sysid, compid);
 			}
 			break;
 #endif
@@ -145,6 +155,32 @@ public:
 
 private:
 	TDRRadioStatus tdr_diag;
+	bool has_radio_status;
+
+	ros::Publisher status_pub;
+
+	template<typename msgT>
+	void handle_message(msgT &rst, uint8_t sysid, uint8_t compid) {
+		if (sysid != '3' || compid != 'D')
+			ROS_WARN_THROTTLE_NAMED(30, "radio", "RADIO_STATUS not from 3DR modem?");
+
+		tdr_diag.set(rst);
+
+		mavros::RadioStatusPtr msg = boost::make_shared<mavros::RadioStatus>();
+
+#define RST_COPY(field)	msg->field = rst.field
+		RST_COPY(rssi);
+		RST_COPY(remrssi);
+		RST_COPY(txbuf);
+		RST_COPY(noise);
+		RST_COPY(remnoise);
+		RST_COPY(rxerrors);
+		RST_COPY(fixed);
+#undef RST_COPY
+
+		msg->header.stamp = ros::Time::now();
+		status_pub.publish(msg);
+	}
 };
 
 }; // namespace mavplugin

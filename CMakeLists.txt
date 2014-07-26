@@ -63,6 +63,7 @@ add_message_files(
   State.msg
   RCIn.msg
   RCOut.msg
+  RadioStatus.msg
 )
 
 ## Generate services in the 'srv' folder
