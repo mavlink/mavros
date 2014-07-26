@@ -34,8 +34,8 @@ namespace mavplugin {
 class TDRRadioStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-	TDRRadioStatus(const std::string name) :
-		diagnostic_updater::DiagnosticTask(name, uint8_t _low_rssi),
+	TDRRadioStatus(const std::string name, uint8_t _low_rssi) :
+		diagnostic_updater::DiagnosticTask(name),
 		data_received(false),
 		low_rssi(_low_rssi)
 	{
