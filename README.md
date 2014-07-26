@@ -73,6 +73,16 @@ Examples:
     rosrun mavros dump /tmp/mission.txt
 
 
+### mavsafety -- safety tool
+
+See `--help`.
+
+Examples:
+
+    rosrun mavros mavsafety arm
+    rosrun mavros mavsafety disarm
+
+
 Installation
 ------------
 
