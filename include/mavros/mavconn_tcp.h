@@ -45,11 +45,17 @@ namespace mavconn {
 class MAVConnTCPClient : public MAVConnInterface {
 public:
 	/**
+	 * Create generic TCP client (connect to the server)
 	 * @param[id] server_addr    remote host
 	 * @param[id] server_port    remote port
 	 */
 	MAVConnTCPClient(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string server_host = "localhost", unsigned short server_port = 5760);
+	/**
+	 * Special client variation for use in MAVConnTCPServer
+	 * @param[in] client_sd    socket descriptor
+	 */
+	explicit MAVConnTCPClient(uint8_t system_id, uint8_t component_id, int client_sd, sockaddr_in &client_addr);
 	~MAVConnTCPClient();
 
 	void close();
@@ -62,43 +68,11 @@ public:
 	inline bool is_open() { return sockfd != -1; };
 
 private:
+	friend class MAVConnTCPServer;
 	ev::io io;
 	int sockfd;
 
 	sockaddr_in server_addr;
-
-	std::list<MsgBuffer*> tx_q;
-	boost::recursive_mutex mutex;
-
-	void event_cb(ev::io &watcher, int revents);
-	void read_cb(ev::io &watcher);
-	void write_cb(ev::io &watcher);
-};
-
-#if 0
-
-/**
- * @brief TCP server internal client class
- *
- * @note Because mavlink_message_parse() require chanel allocation,
- *       this class also use MAVConnInterface.
- */
-class MAVConnTCPServerClient : public MAVConnInterface {
-public:
-	/**
-	 * @param[in] clientfd    socket from MAVConnTCPServer
-	 */
-	MAVConnTCPServerClient(uint8_t system_id, uint8_t component_id, int clientfd);
-	~MAVConnTCPServerClient();
-
-	void close();
-
-	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
-	void send_bytes(const uint8_t *bytes, size_t length);
-
-private:
-	ev::io io;
-	int sockfd;
 
 	std::list<MsgBuffer*> tx_q;
 	boost::recursive_mutex mutex;
@@ -121,7 +95,7 @@ public:
 	 * @param[id] server_port    bind port
 	 */
 	MAVConnTCPServer(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-			std::string server_addr = "localhost", unsigned short server_port = 5760);
+			std::string bind_host = "localhost", unsigned short bind_port = 5760);
 	~MAVConnTCPServer();
 
 	void close();
@@ -139,13 +113,15 @@ private:
 
 	sockaddr_in bind_addr;
 
-	std::list<MAVConnTCPServerClient *> client_list;
+	std::list<MAVConnTCPClient *> client_list;
 	boost::recursive_mutex mutex;
 
-	void event_cb(ev::io &watcher, int revents);
-};
+	void accept_cb(ev::io &watcher, int revents);
 
-#endif
+	// client slots
+	void client_closed(MAVConnTCPClient *instp);
+	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+};
 
 }; // namespace mavconn
 
