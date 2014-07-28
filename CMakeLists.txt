@@ -169,6 +169,7 @@ add_library(mavconn
    src/mavconn/mavconn_interface.cpp
    src/mavconn/mavconn_serial.cpp
    src/mavconn/mavconn_udp.cpp
+   src/mavconn/mavconn_tcp.cpp
 )
 add_dependencies(mavconn
   mavros_generate_messages_cpp
