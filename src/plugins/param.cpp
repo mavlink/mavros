@@ -583,6 +583,11 @@ private:
 
 	void shedule_cb(const ros::TimerEvent &event) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
+		if (param_state != PR_IDLE) {
+			// try later
+			ROS_DEBUG_NAMED("param", "PR: busy, reshedule pull");
+			shedule_pull(BOOTUP_TIME_DT);
+		}
 
 		ROS_DEBUG_NAMED("param", "PR: start sheduled pull");
 		param_state = PR_RXLIST;
