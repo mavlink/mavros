@@ -181,7 +181,7 @@ def do_dump(args):
 
     try:
         pull_cl = rospy.ServiceProxy(args.mavros_ns + "/param/pull", ParamPull)
-        ret = pull_cl()
+        ret = pull_cl(force_pull=args.force)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -269,6 +269,7 @@ def main():
     dump_args = subarg.add_parser('dump', help="dump parameters to file")
     dump_args.set_defaults(func=do_dump)
     dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file")
+    dump_args.add_argument('-f', '--force', action="store_true", help="Force pull params from FCU, not cache.")
     dump_format = dump_args.add_mutually_exclusive_group()
     dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
     dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
