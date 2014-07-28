@@ -99,6 +99,7 @@ private:
 	std::string child_frame_id;
 
 	double tf_rate;
+	ros::Time last_transform_stamp;
 
 	/* -*- low-level send -*- */
 
@@ -128,6 +129,15 @@ private:
 		double roll, pitch, yaw;
 		tf::Matrix3x3 orientation(transform.getBasis());
 		orientation.getRPY(roll, pitch, yaw);
+
+		/* Issue #60.
+		 * Note: this now affects pose callbacks too, but i think its not big deal.
+		 */
+		if (last_transform_stamp == stamp) {
+			ROS_DEBUG_THROTTLE_NAMED(10, "position", "Vision: Same transform as last one, dropped.");
+			return;
+		}
+		last_transform_stamp = stamp;
 
 		// TODO: check conversion. Issue #49.
 		vision_position_estimate(stamp.toNSec() / 1000,
