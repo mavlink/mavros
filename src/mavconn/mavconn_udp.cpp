@@ -25,6 +25,7 @@
 #include <ros/assert.h>
 
 #include <unistd.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <cstring>
 #include <cstdlib>

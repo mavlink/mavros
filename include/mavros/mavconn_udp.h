@@ -32,6 +32,7 @@
 #include <mavros/mavconn_msgbuffer.h>
 
 #include <arpa/inet.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 namespace mavconn {

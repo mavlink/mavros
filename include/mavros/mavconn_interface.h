@@ -30,14 +30,10 @@
 
 #pragma once
 
-#include <boost/signals2.hpp>
-
-// cleanup {{
 #include <boost/bind.hpp>
-#include <boost/asio.hpp>
+#include <boost/signals2.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-// }}
 
 #include <set>
 #include <memory>
@@ -45,7 +41,6 @@
 
 namespace mavconn {
 namespace sig2 = boost::signals2;
-namespace asio = boost::asio;
 
 /**
  * @brief Common exception for communication error
@@ -156,6 +151,7 @@ protected:
 
 	static int new_channel();
 	static void delete_channel(int chan);
+	static int channes_available();
 
 	static void start_default_loop();
 

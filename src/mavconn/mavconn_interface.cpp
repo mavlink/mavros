@@ -83,6 +83,10 @@ void MAVConnInterface::delete_channel(int chan) {
 	allocated_channels.erase(allocated_channels.find(chan));
 }
 
+int MAVConnInterface::channes_available() {
+	return MAVLINK_COMM_NUM_BUFFERS - allocated_channels.size();
+}
+
 boost::shared_ptr<MAVConnInterface> MAVConnInterface::open_url(std::string url,
 		uint8_t system_id, uint8_t component_id) {
 	// TODO
