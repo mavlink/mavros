@@ -26,7 +26,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/any.hpp>
 
 #include <mavros/ParamSet.h>
@@ -49,7 +48,6 @@ public:
 	param_t param_value;
 	uint16_t param_index;
 	uint16_t param_count;
-	bool pending_ack;
 
 	/**
 	 * Convert mavlink_param_value_t to internal format
@@ -312,27 +310,45 @@ public:
 	}
 };
 
+
+/**
+ * @brief Parameter set transaction data
+ */
 class ParamSetOpt {
 public:
+	ParamSetOpt(Parameter &_p, size_t _rem) :
+		param(_p),
+		retries_remaining(_rem),
+		is_timedout(false)
+	{ };
+
 	Parameter param;
-	int retries_remaining;
+	size_t retries_remaining;
+	bool is_timedout;
+	boost::condition_variable ack;
 };
+
 
 /**
  * @brief Parameter manipulation plugin
  */
 class ParamPlugin : public MavRosPlugin {
 public:
-	ParamPlugin()
+	ParamPlugin() :
+		param_count(-1),
+		param_state(PR_IDLE),
+		is_timedout(false),
+		param_rx_retries(RETRIES_COUNT),
+		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
+		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0),
+		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0)
 	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		param_count = -1;
 		uas = &uas_;
-
 		param_nh = ros::NodeHandle(nh, "param");
 
 		pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
@@ -340,7 +356,10 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
-		param_timer.reset(new boost::asio::deadline_timer(uas->timer_service));
+		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
+		shedule_timer.stop();
+		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
+		timeout_timer.stop();
 		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
@@ -369,20 +388,20 @@ public:
 			Parameter *p = &param_it->second;
 			p->param_value = from_param_value(pmsg);
 
-			if (p->pending_ack) {
-				p->pending_ack = false;
-				param_timer->cancel();
-				set_acked.notify_all();
+			// check that ack required
+			auto set_it = set_parameters.find(param_id);
+			if (set_it != set_parameters.end()) {
+				set_it->second->ack.notify_all();
 			}
 
 			ROS_WARN_STREAM_COND_NAMED(((p->param_index != pmsg.param_index &&
 						    pmsg.param_index != UINT16_MAX) ||
 						p->param_count != pmsg.param_count),
 					"param",
-					"Param " << param_id << " index(" << p->param_index <<
+					"PR: Param " << param_id << " index(" << p->param_index <<
 					"->" << pmsg.param_index << ")/count(" << p->param_count <<
 					"->" << pmsg.param_count << ") changed! FCU changed?");
-			ROS_DEBUG_STREAM_NAMED("param", "Update param " << param_id <<
+			ROS_DEBUG_STREAM_NAMED("param", "PR: Update param " << param_id <<
 					" (" << p->param_index << "/" << p->param_count <<
 					") value: " << Parameter::to_string_vt(p->param_value));
 		}
@@ -393,28 +412,47 @@ public:
 			p.param_index = pmsg.param_index;
 			p.param_count = pmsg.param_count;
 			p.param_value = from_param_value(pmsg);
-			p.pending_ack = false;
 
 			parameters[param_id] = p;
 
-			ROS_DEBUG_STREAM_NAMED("param", "New param " << param_id <<
+			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << param_id <<
 					" (" << p.param_index << "/" << p.param_count <<
 					") value: " << Parameter::to_string_vt(p.param_value));
 		}
 
-		if (in_list_receiving) {
-			/* we received first param. setup list timeout */
-			if (param_count == -1) {
+		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
+			// we received first param. setup list timeout
+			if (param_state == PR_RXLIST) {
 				param_count = pmsg.param_count;
-				param_timer->cancel();
-				param_timer->expires_from_now(boost::posix_time::milliseconds(LIST_TIMEOUT_MS));
-				param_timer->async_wait(boost::bind(&ParamPlugin::restart_fetch_cb, this, _1));
+				param_state = PR_RXPARAM;
+
+				parameters_missing_idx.clear();
+				if (param_count != UINT16_MAX) {
+					ROS_DEBUG_NAMED("param", "PR: waiting %zu parameters", param_count);
+					// declare that all parameters are missing
+					for (uint16_t idx = 0; idx < param_count; idx++)
+						parameters_missing_idx.push_back(idx);
+				}
+				else
+					ROS_WARN_NAMED("param", "PR: FCU does not know index for first element! "
+							"Param list may be truncated.");
 			}
 
+			// remove idx for that message
+			parameters_missing_idx.remove(pmsg.param_index);
+
+			// in receiving mode we use param_rx_retries for LIST and PARAM
+			param_rx_retries = RETRIES_COUNT;
+			restart_timeout_timer();
+
 			/* index starting from 0, receivig done */
-			if (pmsg.param_index + 1 == param_count) {
-				in_list_receiving = false;
-				param_timer->cancel();
+			if (parameters_missing_idx.empty()) {
+				ssize_t missed = param_count - parameters.size();
+				ROS_DEBUG_COND_NAMED(missed == 0, "param", "PR: parameters list received");
+				ROS_WARN_COND_NAMED(missed > 0, "param",
+						"PR: parameters list received, but %zd parametars are missed",
+						missed);
+				go_idle();
 				list_receiving.notify_all();
 			}
 		}
@@ -430,18 +468,32 @@ private:
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
 
-	std::unique_ptr<boost::asio::deadline_timer> param_timer;
+	ros::Timer shedule_timer;			//!< for startup shedule fetch
+	ros::Timer timeout_timer;			//!< for timeout resend
+
 	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
 	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
 	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
+	static constexpr int RETRIES_COUNT = 3;
+
+	const ros::Duration BOOTUP_TIME_DT;
+	const ros::Duration PARAM_TIMEOUT_DT;
+	const ros::Duration LIST_TIMEOUT_DT;
 
 	std::map<std::string, Parameter> parameters;
+	std::list<uint16_t> parameters_missing_idx;
+	std::map<std::string, ParamSetOpt*> set_parameters;
 	ssize_t param_count;
-	bool in_list_receiving;
-	boost::condition_variable list_receiving;
-	boost::condition_variable set_acked;
+	enum {
+		PR_IDLE,
+		PR_RXLIST,
+		PR_RXPARAM,
+		PR_TXPARAM
+	} param_state;
 
-	static constexpr int RETRIES_COUNT = 3;
+	size_t param_rx_retries;
+	bool is_timedout;
+	boost::condition_variable list_receiving;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (uas->is_ardupilotmega())
@@ -457,9 +509,12 @@ private:
 			return Parameter::to_param_union(p);
 	}
 
+	/* -*- low-level send function -*- */
+
 	void param_request_list() {
 		mavlink_message_t msg;
 
+		ROS_DEBUG_NAMED("param", "PR:m: request list");
 		mavlink_msg_param_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
@@ -472,6 +527,7 @@ private:
 		mavlink_message_t msg;
 		char param_id[sizeof(mavlink_param_request_read_t::param_id)];
 
+		ROS_DEBUG_NAMED("param", "PR:m: request '%s', idx %d", id.c_str(), index);
 		if (index != -1) {
 			// by specs if len < 16: place null termination
 			// else if len == 16: don't
@@ -495,6 +551,9 @@ private:
 		char param_id[sizeof(mavlink_param_set_t::param_id)];
 		strncpy(param_id, param.param_id.c_str(), sizeof(param_id));
 
+		ROS_DEBUG_STREAM_NAMED("param", "PR:m: set param " << param.param_id <<
+				" (" << param.param_index << "/" << param.param_count <<
+				") value: " << Parameter::to_string_vt(param.param_value));
 		mavlink_msg_param_set_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				param_id,
@@ -504,100 +563,161 @@ private:
 		uas->mav_link->send_message(&msg);
 	}
 
+	/* -*- mid-level functions -*- */
+
 	void connection_cb(bool connected) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (connected) {
-			parameters.clear();
-			param_count = -1;
-
-			param_timer->cancel();
-			param_timer->expires_from_now(boost::posix_time::milliseconds(BOOTUP_TIME_MS));
-			param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
+			shedule_pull(BOOTUP_TIME_DT);
 		}
 		else {
-			param_timer->cancel();
+			shedule_timer.stop();
 		}
 	}
 
-	void start_fetch_cb(boost::system::error_code error) {
-		if (error)
-			return;
+	void shedule_pull(const ros::Duration &dt) {
+		shedule_timer.stop();
+		shedule_timer.setPeriod(dt);
+		shedule_timer.start();
+	}
 
+	void shedule_cb(const ros::TimerEvent &event) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		ROS_DEBUG_NAMED("param", "Requesting parameters");
-		in_list_receiving = true;
+		ROS_DEBUG_NAMED("param", "PR: start sheduled pull");
+		param_state = PR_RXLIST;
+		param_rx_retries = RETRIES_COUNT;
+		parameters.clear();
+
+		restart_timeout_timer();
 		param_request_list();
-
-		// resend PARAM_REQUEST_LIST if no PARAM_VALUE received before timeout
-		param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
-		param_timer->async_wait(boost::bind(&ParamPlugin::start_fetch_cb, this, _1));
 	}
 
-	void restart_fetch_cb(boost::system::error_code error) {
+	void timeout_cb(const ros::TimerEvent &event) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
+		if (param_state == PR_RXLIST && param_rx_retries > 0) {
+			param_rx_retries--;
+			ROS_WARN_NAMED("param", "PR: request list timeout, retries left %zu", param_rx_retries);
 
-		in_list_receiving = false;
-		if (!error) {
-			ROS_WARN_NAMED("param", "Request parameter list timed out!");
-			param_count = -1;
+			restart_timeout_timer();
+			param_request_list();
 		}
+		else if (param_state == PR_RXPARAM) {
+			if (parameters_missing_idx.empty()) {
+				ROS_WARN_NAMED("param", "PR: missing list is clear, but we in RXPARAM state, "
+						"maybe last rerequest fails. Params missed: %zd",
+						param_count - parameters.size());
+				go_idle();
+				list_receiving.notify_all();
+				return;
+			}
 
-		start_fetch_cb(error);
+			uint16_t first_miss_idx = parameters_missing_idx.front();
+			if (param_rx_retries > 0) {
+				param_rx_retries--;
+				ROS_WARN_NAMED("param", "PR: request param #%u timeout, retries left %zu, and %zu params still missing",
+						first_miss_idx, param_rx_retries, parameters_missing_idx.size());
+				restart_timeout_timer();
+				param_request_read("", first_miss_idx);
+			}
+			else {
+				ROS_ERROR_NAMED("param", "PR: request param #%u completely missing.", first_miss_idx);
+				parameters_missing_idx.pop_front();
+				restart_timeout_timer();
+				if (!parameters_missing_idx.empty()) {
+					param_rx_retries = RETRIES_COUNT;
+					first_miss_idx = parameters_missing_idx.front();
+
+					ROS_WARN_NAMED("param", "PR: %zu params still missing, trying to request next: #%u",
+							parameters_missing_idx.size(), first_miss_idx);
+					param_request_read("", first_miss_idx);
+				}
+			}
+		}
+		else if (param_state == PR_TXPARAM) {
+			auto it = set_parameters.begin();
+			if (it == set_parameters.end()) {
+				ROS_DEBUG_NAMED("param", "PR: send list empty, but state TXPARAM");
+				go_idle();
+				return;
+			}
+
+			if (it->second->retries_remaining > 0) {
+				it->second->retries_remaining--;
+				ROS_WARN_NAMED("param", "PR: Resend param set for %s, retries left %zu",
+						it->second->param.param_id.c_str(),
+						it->second->retries_remaining);
+				restart_timeout_timer();
+				param_set(it->second->param);
+			}
+			else {
+				ROS_ERROR_NAMED("param", "PR: Param set for %s timed out.",
+						it->second->param.param_id.c_str());
+				it->second->is_timedout = true;
+				it->second->ack.notify_all();
+			}
+		}
+		else {
+			ROS_DEBUG_NAMED("param", "PR: timeout in IDLE!");
+		}
+	}
+
+	void restart_timeout_timer() {
+		is_timedout = false;
+		timeout_timer.stop();
+		timeout_timer.start();
+	}
+
+	void go_idle() {
+		param_state = PR_IDLE;
+		timeout_timer.stop();
 	}
 
 	bool wait_fetch_all() {
 		boost::mutex cond_mutex;
 		boost::unique_lock<boost::mutex> lock(cond_mutex);
 
-		return list_receiving.timed_wait(lock, boost::posix_time::milliseconds(LIST_TIMEOUT_MS));
+		return list_receiving.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
+			&& !is_timedout;
 	}
 
-	bool fetch_all() {
-		start_fetch_cb(boost::system::error_code());
-		return wait_fetch_all();
-	}
-
-	void resend_set_cb(boost::system::error_code error, boost::shared_ptr<ParamSetOpt> opt) {
-		if (error)
-			return;
-
-		if (--(opt->retries_remaining) > 0) {
-			boost::recursive_mutex::scoped_lock lock(mutex);
-			param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
-			param_timer->async_wait(boost::bind(&ParamPlugin::resend_set_cb, this, _1, opt));
-		}
-		else {
-			ROS_ERROR_STREAM_NAMED("param", "ParamSet: set failed: " << opt->param.param_id);
-		}
-	}
-
-	bool wait_param_set_ack() {
+	bool wait_param_set_ack_for(ParamSetOpt *opt) {
 		boost::mutex cond_mutex;
 		boost::unique_lock<boost::mutex> lock(cond_mutex);
 
-		return set_acked.timed_wait(lock, boost::posix_time::milliseconds(PARAM_TIMEOUT_MS * RETRIES_COUNT));
+		return opt->ack.timed_wait(lock, PARAM_TIMEOUT_DT.toBoost() * (RETRIES_COUNT + 2))
+			&& !opt->is_timedout;
 	}
 
-	/**
-	 * Prepare resend timer & send PARAM_SET
-	 */
-	void start_param_set(Parameter &param) {
-		boost::shared_ptr<ParamSetOpt> opt = boost::make_shared<ParamSetOpt>();
+	bool send_param_set_and_wait(Parameter &param) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		opt->param = param;
-		opt->retries_remaining = RETRIES_COUNT;
+		// add to waiting list
+		set_parameters[param.param_id] = new ParamSetOpt(param, RETRIES_COUNT);
 
-		// first try
+		auto it = set_parameters.find(param.param_id);
+		if (it == set_parameters.end()) {
+			ROS_ERROR_STREAM_NAMED("param", "ParamSetOpt not found for " << param.param_id);
+			return false;
+		}
+
+		param_state = PR_TXPARAM;
+		restart_timeout_timer();
 		param_set(param);
 
-		{
-			boost::recursive_mutex::scoped_lock lock(mutex);
-			param_timer->cancel();
-			param_timer->expires_from_now(boost::posix_time::milliseconds(PARAM_TIMEOUT_MS));
-			param_timer->async_wait(boost::bind(&ParamPlugin::resend_set_cb, this, _1, opt));
-		}
+		lock.unlock();
+		bool is_not_timeout = wait_param_set_ack_for(it->second);
+		lock.lock();
+
+		// free opt data
+		set_parameters.erase(it);
+		delete it->second;
+
+		go_idle();
+		return is_not_timeout;
 	}
+
+	/* -*- ROS callbacks -*- */
 
 	/**
 	 * @brief fetches all parameters from device
@@ -607,11 +727,25 @@ private:
 			mavros::ParamPull::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		if (!in_list_receiving && param_count < 0) {
+		if (param_state == PR_IDLE && parameters.empty()
+				|| req.force_pull) {
+			if (!req.force_pull)
+				ROS_DEBUG_NAMED("param", "PR: start pull");
+			else
+				ROS_INFO_NAMED("param", "PR: start force pull");
+
+			param_state = PR_RXLIST;
+			param_rx_retries = RETRIES_COUNT;
+			parameters.clear();
+
+			shedule_timer.stop();
+			restart_timeout_timer();
+			param_request_list();
+
 			lock.unlock();
-			res.success = fetch_all();
+			res.success = wait_fetch_all();
 		}
-		else if (in_list_receiving) {
+		else if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
@@ -655,7 +789,7 @@ private:
 				param != param_dict.end();
 				param++) {
 			if (Parameter::check_exclude_param_id(param->first)) {
-				ROS_DEBUG_STREAM_NAMED("mavros", "Exclude param: " << param->first);
+				ROS_DEBUG_STREAM_NAMED("param", "PR: Exclude param: " << param->first);
 				continue;
 			}
 
@@ -665,19 +799,17 @@ private:
 				Parameter *p = &param_it->second;
 				Parameter to_send = *p;
 
-				p->pending_ack = true;
 				to_send.param_value = Parameter::from_xmlrpc_value(param->second);
 
 				lock.unlock();
-				start_param_set(to_send);
-				bool set_res = wait_param_set_ack();
+				bool set_res = send_param_set_and_wait(to_send);
 				lock.lock();
 
 				if (set_res)
 					tx_count++;
 			}
 			else {
-				ROS_WARN_STREAM_NAMED("mavros", "Unknown rosparam: " << param->first);
+				ROS_WARN_STREAM_NAMED("param", "PR: Unknown rosparam: " << param->first);
 			}
 		}
 
@@ -695,15 +827,15 @@ private:
 			mavros::ParamSet::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		if (in_list_receiving || param_count < 0)
+		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
+			ROS_ERROR_NAMED("param", "PR: receiving not complete");
 			return false;
+		}
 
 		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {
 			Parameter *p = &param_it->second;
 			Parameter to_send = *p;
-
-			p->pending_ack = true;
 
 			// according to ParamSet/Get description
 			if (req.integer > 0)
@@ -716,8 +848,7 @@ private:
 				to_send.param_value = (uint32_t) 0;
 
 			lock.unlock();
-			start_param_set(to_send);
-			res.success = wait_param_set_ack();
+			res.success = send_param_set_and_wait(to_send);
 			lock.lock();
 
 			res.integer = Parameter::to_integer(p->param_value);
@@ -729,7 +860,7 @@ private:
 			param_nh.setParam(p->param_id, pv);
 		}
 		else {
-			ROS_WARN_STREAM_NAMED("param", "ParamSet: Unknown parameter: " << req.param_id);
+			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to set: " << req.param_id);
 			res.success = false;
 		}
 
@@ -753,7 +884,7 @@ private:
 			res.real = Parameter::to_real(p->param_value);
 		}
 		else {
-			ROS_WARN_STREAM_NAMED("param", "ParamGet: Unknown parameter: " << req.param_id);
+			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to get: " << req.param_id);
 			res.success = false;
 		}
 
