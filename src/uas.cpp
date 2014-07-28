@@ -34,20 +34,12 @@ UAS::UAS() :
 	autopilot(MAV_AUTOPILOT_GENERIC),
 	target_system(1),
 	target_component(1),
-	connected(false),
-	timer_service(),
-	timer_work(new boost::asio::io_service::work(timer_service))
+	connected(false)
 {
-	// run io_service for async timers
-	boost::thread t(boost::bind(&boost::asio::io_service::run, &this->timer_service));
-	mavutils::set_thread_name(t, "TimerService");
-	timer_thread.swap(t);
 }
 
 void UAS::stop(void)
 {
-	timer_work.reset();
-	timer_service.stop();
 }
 
 void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_) {

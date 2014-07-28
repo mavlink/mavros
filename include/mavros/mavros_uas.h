@@ -185,11 +185,6 @@ public:
 		mav_link = link_;
 	};
 
-	/**
-	 * for plugin timers
-	 */
-	boost::asio::io_service timer_service;
-
 private:
 	boost::recursive_mutex mutex;
 	enum MAV_TYPE type;
@@ -200,8 +195,6 @@ private:
 	tf::Vector3 angular_velocity;
 	tf::Vector3 linear_acceleration;
 	tf::Quaternion orientation;
-	std::unique_ptr<boost::asio::io_service::work> timer_work;
-	boost::thread timer_thread;
 };
 
 }; // namespace mavplugin
