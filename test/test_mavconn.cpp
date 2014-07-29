@@ -158,6 +158,74 @@ TEST(SERIAL, open_error)
 	ASSERT_THROW(serial.reset(new MAVConnSerial(42, 200, "/some/magic/not/exist/path", 57600)), DeviceError);
 }
 
+TEST(URL, open_url)
+{
+	boost::shared_ptr<MAVConnInterface>
+		serial,
+		udp,
+		tcp_server,
+		tcp_client;
+
+	MAVConnSerial *serial_p;
+	MAVConnUDP *udp_p;
+	MAVConnTCPServer *tcp_server_p;
+	MAVConnTCPClient *tcp_client_p;
+
+#if 0
+	/* not best way to test tty access,
+	 * but it does not require any preparation
+	 * Disabled because it breaks terminal.
+	 */
+	EXPECT_NO_THROW({
+		serial = MAVConnInterface::open_url("/dev/tty:115200");
+		serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
+		EXPECT_NE(serial_p, nullptr);
+	});
+
+	EXPECT_NO_THROW({
+		serial = MAVConnInterface::open_url("serial:///dev/tty:115200?ids=2,240");
+		serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
+		EXPECT_NE(serial_p, nullptr);
+	});
+#endif
+
+	EXPECT_NO_THROW({
+		udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
+		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(udp.get());
+		EXPECT_NE(udp_p, nullptr);
+		EXPECT_EQ(tcp_server_p, nullptr);
+	});
+
+	EXPECT_NO_THROW({
+		udp = MAVConnInterface::open_url("udp://@localhost:45005");
+		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+		EXPECT_NE(udp_p, nullptr);
+	});
+
+	EXPECT_NO_THROW({
+		udp = MAVConnInterface::open_url("udp://localhost:45000@");
+		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+		EXPECT_NE(udp_p, nullptr);
+	});
+
+	EXPECT_THROW({
+		udp = MAVConnInterface::open_url("udp://localhost:45000");
+	}, DeviceError);
+
+	EXPECT_NO_THROW({
+		tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
+		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
+		EXPECT_NE(tcp_server_p, nullptr);
+	});
+
+	EXPECT_NO_THROW({
+		tcp_client = MAVConnInterface::open_url("tcp://localhost:57600");
+		tcp_client_p = dynamic_cast<MAVConnTCPClient*>(tcp_client.get());
+		EXPECT_NE(tcp_client_p, nullptr);
+	});
+}
+
 int main(int argc, char **argv){
 	ros::init(argc, argv, "mavconn_test", ros::init_options::AnonymousName);
 	::testing::InitGoogleTest(&argc, argv);

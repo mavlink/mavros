@@ -1,6 +1,9 @@
 /**
  * @file mavconn_serial.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup mavconn
+ * @{
  */
 /*
  * Copyright 2013 Vladimir Ermakov.
