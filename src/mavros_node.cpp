@@ -25,8 +25,7 @@
 #include <ros/console.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <mavros/mavconn_serial.h>
-#include <mavros/mavconn_udp.h>
+#include <mavros/mavconn_interface.h>
 
 #include <pluginlib/class_loader.h>
 #include <mavros/mavros_plugin.h>
@@ -97,27 +96,16 @@ public:
 	explicit MavRos(const ros::NodeHandle &nh_) :
 		node_handle(nh_),
 		mavlink_node_handle("/mavlink"), // for compatible reasons
-		serial_link_diag("FCU connection"),
-		udp_link_diag("UDP bridge"),
+		fcu_link_diag("FCU connection"),
+		gcs_link_diag("GCS bridge"),
 		plugin_loader("mavros", "mavplugin::MavRosPlugin"),
 		message_route_table(256)
 	{
-		std::string serial_port;
-		int serial_baud;
-		std::string bind_host;
-		int bind_port;
-		std::string gcs_host;
-		int gcs_port;
+		std::string fcu_url, gcs_url;
 		int system_id, component_id;
 		int tgt_system_id, tgt_component_id;
 		bool px4_usb_quirk;
 
-		node_handle.param<std::string>("serial_port", serial_port, "/dev/ttyACM0");
-		node_handle.param("serial_baud", serial_baud, 57600);
-		node_handle.param<std::string>("bind_host", bind_host, "0.0.0.0");
-		node_handle.param("bind_port", bind_port, 14555);
-		node_handle.param<std::string>("gcs_host", gcs_host, "");
-		node_handle.param("gcs_port", gcs_port, 14550);
 		node_handle.param("system_id", system_id, 1);
 		node_handle.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
 		node_handle.param("target_system_id", tgt_system_id, 1);
@@ -125,31 +113,55 @@ public:
 		node_handle.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 		node_handle.getParam("plugin_blacklist", plugin_blacklist);
 
-		diag_updater.setHardwareID("Mavlink");
-		diag_updater.add(serial_link_diag);
-		diag_updater.add(udp_link_diag);
+		if (!node_handle.getParam("fcu_url", fcu_url))
+			fcu_url = get_default_fcu_url();
 
-		serial_link.reset(new MAVConnSerial(system_id, component_id, serial_port, serial_baud));
-		udp_link.reset(new MAVConnUDP(system_id, component_id, bind_host, bind_port, gcs_host, gcs_port));
+		if (!node_handle.getParam("gcs_url", gcs_url))
+			gcs_url = get_default_gcs_url();
+
+		diag_updater.setHardwareID("Mavlink");
+		diag_updater.add(fcu_link_diag);
+
+		ROS_INFO_STREAM("FCU URL: " << fcu_url);
+		fcu_link = MAVConnInterface::open_url(fcu_url, system_id, component_id);
+		// may be overridden by URL
+		system_id = fcu_link->get_system_id();
+		component_id = fcu_link->get_component_id();
+
+		if (gcs_url != "") {
+			ROS_INFO_STREAM("GCS URL: " << gcs_url);
+			diag_updater.add(gcs_link_diag);
+			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
+		}
+		else
+			ROS_INFO("GCS bridge disabled");
 
 		mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
-		serial_link->message_received.connect(boost::bind(&MAVConnUDP::send_message, udp_link.get(), _1, _2, _3));
-		serial_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
-		serial_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
-		serial_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
-		serial_link_diag.set_mavconn(serial_link);
+
+		if (gcs_link)
+			fcu_link->message_received.connect(
+					boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
+
+		fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
+		fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
+		fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
+		fcu_link_diag.set_mavconn(fcu_link);
 
 		mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
 				ros::TransportHints()
 					.unreliable()
 					.maxDatagramSize(1024));
-		udp_link->message_received.connect(boost::bind(&MAVConnSerial::send_message, serial_link.get(), _1, _2, _3));
-		udp_link_diag.set_mavconn(udp_link);
-		udp_link_diag.set_connection_status(true);
+
+		if (gcs_link) {
+			gcs_link->message_received.connect(
+					boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
+			gcs_link_diag.set_mavconn(gcs_link);
+			gcs_link_diag.set_connection_status(true);
+		}
 
 		mav_uas.set_tgt(tgt_system_id, tgt_component_id);
-		mav_uas.set_mav_link(serial_link);
-		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &serial_link_diag, _1));
+		mav_uas.set_mav_link(fcu_link);
+		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
 		auto plugins = plugin_loader.getDeclaredClasses();
@@ -184,15 +196,15 @@ public:
 private:
 	ros::NodeHandle node_handle;
 	ros::NodeHandle mavlink_node_handle;
-	boost::shared_ptr<MAVConnSerial> serial_link;
-	boost::shared_ptr<MAVConnUDP> udp_link;
+	boost::shared_ptr<MAVConnInterface> fcu_link;
+	boost::shared_ptr<MAVConnInterface> gcs_link;
 
 	ros::Publisher mavlink_pub;
 	ros::Subscriber mavlink_sub;
 
 	diagnostic_updater::Updater diag_updater;
-	MavlinkDiag serial_link_diag;
-	MavlinkDiag udp_link_diag;
+	MavlinkDiag fcu_link_diag;
+	MavlinkDiag gcs_link_diag;
 
 	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
 	std::vector<boost::shared_ptr<MavRosPlugin> > loaded_plugins;
@@ -216,7 +228,7 @@ private:
 		mavlink_message_t mmsg;
 
 		if (mavutils::copy_ros_to_mavlink(rmsg, mmsg))
-			serial_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+			fcu_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 		else
 			ROS_ERROR("Drop mavlink packet: illegal payload64 size");
 	}
@@ -263,7 +275,7 @@ private:
 					++it) {
 				ROS_DEBUG("Route msgid %d to %s", *it, repr_name.c_str());
 				message_route_table[*it].connect(
-						boost::bind(&MavRosPlugin::message_rx_cb, plugin.get(), _1, _2, _3));
+						boost::bind(&MavRosPlugin::message_rx_cb, plugin, _1, _2, _3));
 			}
 
 		} catch (pluginlib::PluginlibException& ex) {
@@ -282,9 +294,9 @@ private:
 		const uint8_t nsh[] = "sh /etc/init.d/rc.usb\n";
 
 		ROS_INFO("Autostarting mavlink via USB on PX4");
-		serial_link->send_bytes(init, 3);
-		serial_link->send_bytes(nsh, sizeof(nsh) - 1);
-		serial_link->send_bytes(init, 4);	/* NOTE in original init[3] */
+		fcu_link->send_bytes(init, 3);
+		fcu_link->send_bytes(nsh, sizeof(nsh) - 1);
+		fcu_link->send_bytes(init, 4);	/* NOTE in original init[3] */
 	}
 
 	void log_connect_change(bool connected) {
@@ -293,6 +305,60 @@ private:
 			ROS_INFO("CON: Got HEARTBEAT, connected.");
 		else
 			ROS_WARN("CON: Lost connection, HEARTBEAT timed out.");
+	}
+
+	std::string get_default_fcu_url() {
+		std::ostringstream os_url;
+		std::string serial_port;
+		int serial_baud;
+
+		os_url << "serial://";
+
+		if (node_handle.getParam("serial_port", serial_port)) {
+			ROS_WARN("Parameter ~serial_port deprecated, use ~fcu_url instead!");
+			os_url << serial_port;
+		}
+		else
+			os_url << "/dev/ttyACM0";
+
+		if (node_handle.getParam("serial_baud", serial_baud)) {
+			ROS_WARN("Parameter ~serial_baud deprecated, use ~fcu_url instead!");
+			os_url << ":" << serial_baud;
+		}
+
+		return os_url.str();
+	}
+
+	std::string get_default_gcs_url() {
+		std::ostringstream os_url;
+		std::string bind_host, gcs_host;
+		int bind_port, gcs_port;
+
+		os_url << "udp://";
+
+		// construct bind address
+		if (node_handle.getParam("bind_host", bind_host)) {
+			ROS_WARN("Parameter ~bind_host deprecated, use ~gcs_url instead!");
+			os_url << bind_host;
+		}
+		if (node_handle.getParam("bind_port", bind_port)) {
+			ROS_WARN("Parameter ~bind_port deprecated, use ~gcs_url instead!");
+			os_url << ":" << bind_port;
+		}
+
+		os_url << "@";
+
+		// construct gcs address
+		if (node_handle.getParam("gcs_host", gcs_host)) {
+			ROS_WARN("Parameter ~gcs_host deprecated, use ~gcs_url instead!");
+			os_url << gcs_host;
+		}
+		if (node_handle.getParam("gcs_port", gcs_port)) {
+			ROS_WARN("Parameter ~gcs_port deprecated, use ~gcs_url instead!");
+			os_url << ":" << gcs_port;
+		}
+
+		return os_url.str();
 	}
 };
 

@@ -2,7 +2,7 @@ MAVROS
 ======
 
 MAVLink extendable communication node for ROS
-with UDP proxy for Ground Control Station (e.g. [QGroundControl][1]).
+with proxy for Ground Control Station (e.g. [QGroundControl][1]).
 
 ROS API documentation moved to [wiki.ros.org][9].
 
@@ -10,12 +10,12 @@ ROS API documentation moved to [wiki.ros.org][9].
 Feutures
 --------
 
-  * Communication with autopilot via serial port (e.g. [ArduPilot][2])
-  * UDP proxy for Ground Control Station
-  * [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
-  * Plugin system for ROS-MAVLink translation
-  * Parameter manipulation tool
-  * Waypoint manipulation tool
+  - Communication with autopilot via serial port, UDP or TCP (e.g. [ArduPilot][2])
+  - Internal proxy for Ground Control Station (serial, UDP, TCP)
+  - [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
+  - Plugin system for ROS-MAVLink translation
+  - Parameter manipulation tool
+  - Waypoint manipulation tool
 
 
 Limitations
@@ -30,29 +30,45 @@ Since 2014-06-19 it exists in hydro and indigo package index (so you can install
 Also since 0.7.0 (and [#54][11]) it depends on [libev-dev][10] system package (resolved by rosdep).
 
 
+Connection URL
+--------------
+
+*New in 0.7.0*. Connection now defined by URL,
+you can use any supported type for FCU and GCS.
+
+Supported schemas:
+
+  - Serial: `/path/to/serial/device[:baudrate]`
+  - Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
+  - UDP: `udp://[bind_host[:port]]@[remote_host[:port]][/?ids=sysid,compid]`
+  - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
+  - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
+
+Note: ids from URL overrides ids given by parameters.
+
 Programs
 --------
 
 ### mavros\_node -- main communication node
 
-Main node.
+Main node. Allow disable GCS proxy by setting empty URL.
 
 Run example:
 
-    rosrun mavros mavros_node _serial_port:=/dev/ttyACM0 _serial_baud:=115200 _gcs_host:=localhost
+    rosrun mavros mavros_node _fcu_url:=/dev/ttyACM0:115200 _gcs_url:=tcp-l://
 
 
 ### gcs\_bridge -- additional UDP proxy
 
-Allows you to add a UDP channel for GCS.
+Allows you to add a channel for GCS.
 For example if you need to connect one GCS for HIL and the second on the tablet.
 
 Previous name: `ros_udp`.
 
 Example (HIL & DroidPlanner):
 
-    rosrun mavros mavros_node _gcs_host:='hil-host' _gcs_port:=14556 _bind_port:=14551 &
-    rosrun mavros gcs_bridge _gcs_host:='nexus7'
+    rosrun mavros mavros_node _gcs_url:='udp://:14556@hil-host:14551' &
+    rosrun mavros gcs_bridge _gcs_url:='udp://@nexus7'
 
 
 ### mavparam -- parameter manipulation
