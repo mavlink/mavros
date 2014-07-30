@@ -1,4 +1,7 @@
-mavros_extras
+mavros extras
 =============
 
-Some extra plugins and nodes for mavros
+Some extra plugins and nodes for [mavros][mr].
+
+
+[mr]: https://github.com/vooon/mavros
