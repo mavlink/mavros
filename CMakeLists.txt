@@ -103,8 +103,7 @@ generate_messages(
 
 ## Select MAVLink dialect
 #
-# TODO: move dialect list to mavlink package
-
+# fallback for older mavlink package.
 if(NOT DEFINED mavlink_DIALECTS)
   list(APPEND mavlink_DIALECTS "ardupilotmega")
   list(APPEND mavlink_DIALECTS "pixhawk")
@@ -268,7 +267,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
   mavros_plugins.xml
-  launch/apm2.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
