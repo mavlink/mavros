@@ -25,7 +25,7 @@
 #include <ros/console.h>
 
 #include <mavros/utils.h>
-#include <mavros/mavconn_udp.h>
+#include <mavros/mavconn_interface.h>
 
 #include <mavros/Mavlink.h>
 
@@ -34,7 +34,7 @@ using namespace mavconn;
 
 ros::Publisher mavlink_pub;
 ros::Subscriber mavlink_sub;
-boost::shared_ptr<MAVConnInterface> udp_link;
+boost::shared_ptr<MAVConnInterface> gcs_link;
 
 void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 	MavlinkPtr rmsg = boost::make_shared<Mavlink>();
@@ -48,31 +48,62 @@ void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 	mavlink_message_t mmsg;
 
 	if (mavutils::copy_ros_to_mavlink(rmsg, mmsg))
-		udp_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+		gcs_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 	else
 		ROS_ERROR("Packet drop: illegal payload64 size");
 };
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "mav_udp", ros::init_options::AnonymousName);
+	ros::init(argc, argv, "gcs_bridge", ros::init_options::AnonymousName);
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
 
+	// deprecated
 	std::string bind_host;
 	int bind_port;
 	std::string gcs_host;
 	int gcs_port;
 
-	priv_nh.param<std::string>("bind_host", bind_host, "0.0.0.0");
-	priv_nh.param("bind_port", bind_port, 14555);
-	priv_nh.param<std::string>("gcs_host", gcs_host, "");
-	priv_nh.param("gcs_port", gcs_port, 14550);
+	// new method
+	std::string gcs_url;
 
-	udp_link.reset(new MAVConnUDP(0, 0, bind_host, bind_port, gcs_host, gcs_port));
+	if (!priv_nh.getParam("gcs_url", gcs_url)) {
+		// no URL given, try old UDP params
+		std::ostringstream os_url;
+
+		os_url << "udp://";
+
+		// construct bind address
+		if (priv_nh.getParam("bind_host", bind_host)) {
+			ROS_WARN("Parameter ~bind_host deprecated, use ~gcs_url instead!");
+			os_url << bind_host;
+		}
+		if (priv_nh.getParam("bind_port", bind_port)) {
+			ROS_WARN("Parameter ~bind_port deprecated, use ~gcs_url instead!");
+			os_url << ":" << bind_port;
+		}
+
+		os_url << "@";
+
+		// construct gcs address
+		if (priv_nh.getParam("gcs_host", gcs_host)) {
+			ROS_WARN("Parameter ~gcs_host deprecated, use ~gcs_url instead!");
+			os_url << gcs_host;
+		}
+		if (priv_nh.getParam("gcs_port", gcs_port)) {
+			ROS_WARN("Parameter ~gcs_port deprecated, use ~gcs_url instead!");
+			os_url << ":" << gcs_port;
+		}
+
+		gcs_url = os_url.str();
+		ROS_DEBUG_STREAM("Use default URL: " << gcs_url);
+	}
+
+	gcs_link = MAVConnInterface::open_url(gcs_url);
 
 	mavlink_pub = mavlink_nh.advertise<Mavlink>("to", 10);
-	udp_link->message_received.connect(mavlink_pub_cb);
+	gcs_link->message_received.connect(mavlink_pub_cb);
 
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
 			ros::TransportHints()
