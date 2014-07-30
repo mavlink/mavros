@@ -6,7 +6,7 @@ project(mavros_extras)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   image_transport
-  mavlink
+  cv_bridge
   mavros
   roscpp
   sensor_msgs
@@ -134,16 +134,12 @@ target_link_libraries(mavros_extras
 )
 
 ## Declare a cpp executable
-# add_executable(mavros_extras_node src/mavros_extras_node.cpp)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(mavros_extras_node mavros_extras_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(mavros_extras_node
-#   ${catkin_LIBRARIES}
-# )
+add_executable(gcs_image_bridge
+  src/gcs_image_bridge.cpp
+)
+target_link_libraries(gcs_image_bridge
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -160,7 +156,7 @@ target_link_libraries(mavros_extras
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras
+install(TARGETS mavros_extras gcs_image_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
