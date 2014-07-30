@@ -284,7 +284,7 @@ private:
 	}
 
 	void terminate_cb() {
-		ROS_ERROR("Serial port closed. mavros will be terminated.");
+		ROS_ERROR("FCU connection closed, mavros will be terminated.");
 		ros::requestShutdown();
 	}
 
