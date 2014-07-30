@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(mavlink REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -46,11 +46,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  OpticalFlow.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -67,10 +66,16 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  mavros
+  sensor_msgs
+)
+
+## Select MAVLink dialect
+set(MAVLINK_DIALECT "ardupilotmega" CACHE STRING "MAVLink dialect selector")
+set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS ${mavlink_DIALECTS})
+
 
 ###################################
 ## catkin specific configuration ##
@@ -83,9 +88,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mavros_extras
-#  CATKIN_DEPENDS image_transport mavlink mavros roscpp sensor_msgs
-#  DEPENDS system_lib
+  LIBRARIES mavros_extras
+  CATKIN_DEPENDS image_transport mavros roscpp sensor_msgs
+  DEPENDS Boost mavlink
 )
 
 ###########
@@ -97,12 +102,36 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${mavlink_INCLUDE_DIRS}
 )
 
+add_definitions(
+    -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
+)
+
+## Enable C++11 on gcc 4.6 too
+# thanks for: http://www.guyrutenberg.com/2014/01/05/enabling-c11-c0x-in-cmake/
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
 ## Declare a cpp library
-# add_library(mavros_extras
-#   src/${PROJECT_NAME}/mavros_extras.cpp
-# )
+add_library(mavros_extras
+  src/plugins/px4flow.cpp
+)
+add_dependencies(mavros_extras
+  mavros_extras_generate_messages_cpp
+)
+target_link_libraries(mavros_extras
+  ${catkin_LIBRARIES}
+)
 
 ## Declare a cpp executable
 # add_executable(mavros_extras_node src/mavros_extras_node.cpp)
@@ -131,11 +160,11 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mavros_extras mavros_extras_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS mavros_extras
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -145,11 +174,10 @@ include_directories(
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+  extras_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

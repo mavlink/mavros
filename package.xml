@@ -27,5 +27,6 @@
   <run_depend>sensor_msgs</run_depend>
 
   <export>
+    <mavros plugin="${prefix}/extras_plugins.xml" />
   </export>
 </package>
