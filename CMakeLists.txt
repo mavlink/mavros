@@ -224,13 +224,13 @@ target_link_libraries(mavros_node
   ${Boost_LIBRARIES}
 )
 
-add_executable(ros_udp
-	src/ros_udp.cpp
+add_executable(gcs_bridge
+	src/gcs_bridge.cpp
 )
-add_dependencies(ros_udp
+add_dependencies(gcs_bridge
   mavconn
 )
-target_link_libraries(ros_udp
+target_link_libraries(gcs_bridge
   mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -253,7 +253,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavconn mavros_plugins mavros_node ros_udp
+install(TARGETS mavconn mavros_plugins mavros_node gcs_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
