@@ -42,7 +42,7 @@ int main(int argc, char **argv){
 
 	// create echo server
 	server.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45000));
-	//echo->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo.get(), _1, _2, _3));
+	server->message_received.connect(boost::bind(&MAVConnInterface::send_message, server.get(), _1, _2, _3));
 
 	// create client
 	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45001, "localhost", 45000));

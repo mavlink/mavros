@@ -40,9 +40,7 @@ public:
 }
 #endif
 
-#if 0
-// Starnge, but this does not work. Sometimes TCP connection goes after 60 sec,
-// somtimes not, and boost generates assertion on pthread_mutex_lock().
+// This tests broken by mavconn-libev version. Issue #72.
 class MessageHandler {
 private:
 	boost::condition_variable cond_var;
@@ -53,7 +51,7 @@ public:
 
 	MessageHandler() :
 		message_id(255),
-		wait_dt(30.0)	// strange, but sometimes data arrives only after ~60 sec
+		wait_dt(10.0)
 	{ }
 
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) {
@@ -78,7 +76,6 @@ public:
 		ip->send_message(&msg);
 	}
 };
-#endif
 
 TEST(UDP, bind_error)
 {
@@ -88,9 +85,9 @@ TEST(UDP, bind_error)
 	ASSERT_THROW(conns[1].reset(new MAVConnUDP(42, 200, "localhost", 45000)), DeviceError);
 }
 
-#if 0 // This test dont work, need additional info howto write tests for async systems
 TEST(UDP, send_message)
 {
+	// Issue #72
 	std::unique_ptr<MAVConnInterface> echo;
 	std::unique_ptr<MAVConnInterface> client;
 
@@ -111,7 +108,6 @@ TEST(UDP, send_message)
 	EXPECT_EQ(handler.wait_one(), true);
 	EXPECT_EQ(handler.message_id, MAVLINK_MSG_ID_HEARTBEAT);
 }
-#endif
 
 TEST(TCP, bind_error)
 {
@@ -127,9 +123,9 @@ TEST(TCP, connect_error)
 	ASSERT_THROW(client.reset(new MAVConnTCPClient(42, 200, "localhost", 57666)), DeviceError);
 }
 
-#if 0 // This test don't work
 TEST(TCP, send_message)
 {
+	// Issue #72
 	std::unique_ptr<MAVConnInterface> echo_server;
 	std::unique_ptr<MAVConnInterface> client;
 
@@ -150,7 +146,6 @@ TEST(TCP, send_message)
 	EXPECT_EQ(handler.wait_one(), true);
 	ASSERT_EQ(handler.message_id, MAVLINK_MSG_ID_HEARTBEAT);
 }
-#endif
 
 TEST(SERIAL, open_error)
 {
