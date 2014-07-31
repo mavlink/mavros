@@ -155,7 +155,8 @@ void image_cb(const sensor_msgs::Image::ConstPtr &img_msg)
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "gcs_image_bridge", ros::init_options::AnonymousName);
+	//ros::init(argc, argv, "gcs_image_bridge", ros::init_options::AnonymousName);
+	ros::init(argc, argv, "gcs_image_bridge");
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
 	ros::Subscriber mavlink_sub;

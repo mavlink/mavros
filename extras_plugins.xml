@@ -1,5 +1,8 @@
 <library path="lib/libmavros_extras">
-	<class name="PX4Flow" type="mavplugin::PX4FlowPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="px4flow" type="mavplugin::PX4FlowPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
+	</class>
+	<class name="image_pub" type="mavplugin::ImagePubPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish images from PX4Flow module.</description>
 	</class>
 </library>
