@@ -55,7 +55,8 @@ void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "gcs_bridge", ros::init_options::AnonymousName);
+	//ros::init(argc, argv, "gcs_bridge", ros::init_options::AnonymousName);
+	ros::init(argc, argv, "gcs_bridge");
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
 
