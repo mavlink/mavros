@@ -96,7 +96,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	io_service.post(boost::bind(&MAVConnUDP::do_recvfrom, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&boost::asio::io_service::run, &this->io_service));
+	std::thread t(boost::bind(&io_service::run, &this->io_service));
 	mavutils::set_thread_name(t, "MAVConnUDP%d", channel);
 	io_thread.swap(t);
 }
