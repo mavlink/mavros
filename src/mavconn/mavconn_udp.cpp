@@ -33,7 +33,7 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
-using lock_guard = std::lock_guard<std::recursive_mutex>;
+typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
 static bool resolve_address_udp(io_service &io, std::string host, unsigned short port, udp::endpoint &ep)

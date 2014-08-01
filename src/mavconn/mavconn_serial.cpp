@@ -33,7 +33,7 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::serial_port_base;
 using boost::asio::buffer;
-using lock_guard = std::lock_guard<std::recursive_mutex>;
+typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
