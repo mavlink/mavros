@@ -27,13 +27,10 @@
 #pragma once
 
 #include <list>
-#include <ev++.h>
+#include <atomic>
+#include <boost/asio.hpp>
 #include <mavros/mavconn_interface.h>
 #include <mavros/mavconn_msgbuffer.h>
-
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
 namespace mavconn {
 
@@ -45,14 +42,14 @@ namespace mavconn {
 class MAVConnUDP : public MAVConnInterface {
 public:
 	/**
-	 * @param[id] server_addr    bind host
-	 * @param[id] server_port    bind port
-	 * @param[id] listener_addr  remote host (optional)
-	 * @param[id] listener_port  remote port (optional)
+	 * @param[id] bind_host    bind host
+	 * @param[id] bind_port    bind port
+	 * @param[id] remote_host  remote host (optional)
+	 * @param[id] remote_port  remote port (optional)
 	 */
 	MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-			std::string server_addr = "localhost", unsigned short server_port = 14555,
-			std::string listner_addr = "", unsigned short listner_port = 14550);
+			std::string bind_host = "localhost", unsigned short bind_port = 14555,
+			std::string remote_host = "", unsigned short remote_port = 14550);
 	~MAVConnUDP();
 
 	void close();
@@ -62,23 +59,28 @@ public:
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
-	inline bool is_open() { return sockfd != -1; };
+	inline bool is_open() { return socket.is_open(); };
 
 private:
-	ev::io io;
-	int sockfd;
+	boost::asio::io_service io_service;
+	std::unique_ptr<boost::asio::io_service::work> io_work;
+	std::thread io_thread;
 
-	bool remote_exists;
-	sockaddr_in remote_addr;
-	sockaddr_in last_remote_addr;
-	sockaddr_in bind_addr;
+	std::atomic<bool> remote_exists;
+	boost::asio::ip::udp::socket socket;
+	boost::asio::ip::udp::endpoint remote_ep;
+	boost::asio::ip::udp::endpoint last_remote_ep;
+	boost::asio::ip::udp::endpoint bind_ep;
 
+	std::atomic<bool> tx_in_progress;
 	std::list<MsgBuffer*> tx_q;
-	boost::recursive_mutex mutex;
+	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
+	std::recursive_mutex mutex;
 
-	void event_cb(ev::io &watcher, int revents);
-	void read_cb(ev::io &watcher);
-	void write_cb(ev::io &watcher);
+	void do_recvfrom();
+	void async_receive_end(boost::system::error_code, size_t bytes_transferred);
+	void do_sendto(bool check_tx_state);
+	void async_sendto_end(boost::system::error_code, size_t bytes_transferred);
 };
 
 }; // namespace mavconn

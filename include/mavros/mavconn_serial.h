@@ -27,7 +27,8 @@
 #pragma once
 
 #include <list>
-#include <ev++.h>
+#include <atomic>
+#include <boost/asio.hpp>
 #include <mavros/mavconn_interface.h>
 #include <mavros/mavconn_msgbuffer.h>
 
@@ -55,18 +56,22 @@ public:
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
-	inline bool is_open() { return fd != -1; };
+	inline bool is_open() { return serial_dev.is_open(); };
 
 private:
-	ev::io io;
-	int fd;
+	boost::asio::io_service io_service;
+	std::thread io_thread;
+	boost::asio::serial_port serial_dev;
 
+	std::atomic<bool> tx_in_progress;
 	std::list<MsgBuffer*> tx_q;
-	boost::recursive_mutex mutex;
+	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
+	std::recursive_mutex mutex;
 
-	void event_cb(ev::io &watcher, int revents);
-	void read_cb(ev::io &watcher);
-	void write_cb(ev::io &watcher);
+	void do_read();
+	void async_read_end(boost::system::error_code, size_t bytes_transferred);
+	void do_write(bool check_tx_state);
+	void async_write_end(boost::system::error_code, size_t bytes_transferred);
 };
 
 }; // namespace mavconn

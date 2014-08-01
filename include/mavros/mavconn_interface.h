@@ -32,11 +32,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <boost/system/system_error.hpp>
 
 #include <set>
+#include <mutex>
+#include <thread>
 #include <memory>
+#include <sstream>
 #include <mavros/mavconn_mavlink.h>
 
 namespace mavconn {
@@ -54,7 +56,7 @@ public:
 	 * @breif Construct error with description.
 	 */
 	explicit DeviceError(const char *module, const char *description) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "DeviceError:" << module << ": " << description;
 		e_what_ = ss.str();
 	}
@@ -65,6 +67,15 @@ public:
 	explicit DeviceError(const char *module, int errnum) {
 		std::ostringstream ss;
 		ss << "DeviceError:" << module << ":" << errnum << ": " << strerror(errnum);
+		e_what_ = ss.str();
+	}
+
+	/**
+	 * @brief Construct error from boost error exception
+	 */
+	explicit DeviceError(const char *module, boost::system::system_error &err) {
+		std::ostringstream ss;
+		ss << "DeviceError:" << module << ":" << err.what();
 		e_what_ = ss.str();
 	}
 
@@ -152,8 +163,6 @@ protected:
 	static int new_channel();
 	static void delete_channel(int chan);
 	static int channes_available();
-
-	static void start_default_loop();
 
 private:
 	static std::set<int> allocated_channels;
