@@ -34,15 +34,11 @@
 #include <boost/signals2.hpp>
 #include <boost/system/system_error.hpp>
 
-// cleanup @{
-#include <boost/thread/thread.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-// @}
-
 #include <set>
 #include <mutex>
 #include <thread>
 #include <memory>
+#include <sstream>
 #include <mavros/mavconn_mavlink.h>
 
 namespace mavconn {
@@ -60,7 +56,7 @@ public:
 	 * @breif Construct error with description.
 	 */
 	explicit DeviceError(const char *module, const char *description) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "DeviceError:" << module << ": " << description;
 		e_what_ = ss.str();
 	}

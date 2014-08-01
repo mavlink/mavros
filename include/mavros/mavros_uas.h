@@ -29,6 +29,9 @@
 #include <tf/transform_datatypes.h>
 #include <mavros/mavconn_interface.h>
 
+// TODO: replace with C++11
+#include <boost/thread/recursive_mutex.hpp>
+
 namespace mavplugin {
 
 /**
