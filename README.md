@@ -27,8 +27,6 @@ Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][7].
 Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
-Also since 0.7.0 (and [#54][11]) it depends on [libev-dev][10] system package (resolved by rosdep).
-
 
 Connection URL
 --------------
@@ -45,6 +43,7 @@ Supported schemas:
   - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
 
 Note: ids from URL overrides ids given by parameters.
+
 
 Programs
 --------
@@ -132,11 +131,11 @@ Or you could build debian package by pulling right bloom branch from [mavlink-gb
 Links
 -----
 
-  * [MAVLink][5] -- communication protocol
-  * [mavlink\_ros][3] -- original ROS node (few messages, no proxy)
-  * [ArduPilot][2] -- tested autopilot APM:Plane (default command set)
-  * [QGroundControl][1] -- tested ground control station for linux
-  * [DroidPlanner][6] -- tested GCS for Android
+  - [MAVLink][5] -- communication protocol
+  - [mavlink\_ros][3] -- original ROS node (few messages, no proxy)
+  - [ArduPilot][2] -- tested autopilot APM:Plane (default command set)
+  - [QGroundControl][1] -- tested ground control station for linux
+  - [DroidPlanner][6] -- tested GCS for Android
 
 
 [1]: http://qgroundcontrol.org/
@@ -148,5 +147,3 @@ Links
 [7]: https://github.com/vooon/mavlink-gbp-release
 [8]: https://github.com/vooon/mavros/issues/35
 [9]: http://wiki.ros.org/mavros
-[10]: http://software.schmorp.de/pkg/libev
-[11]: https://github.com/vooon/mavros/issues/54
