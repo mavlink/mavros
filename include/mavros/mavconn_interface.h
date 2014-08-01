@@ -32,10 +32,16 @@
 
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
+#include <boost/system/system_error.hpp>
+
+// cleanup @{
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+// @}
 
 #include <set>
+#include <mutex>
+#include <thread>
 #include <memory>
 #include <mavros/mavconn_mavlink.h>
 
@@ -65,6 +71,15 @@ public:
 	explicit DeviceError(const char *module, int errnum) {
 		std::ostringstream ss;
 		ss << "DeviceError:" << module << ":" << errnum << ": " << strerror(errnum);
+		e_what_ = ss.str();
+	}
+
+	/**
+	 * @brief Construct error from boost error exception
+	 */
+	explicit DeviceError(const char *module, boost::system::system_error &err) {
+		std::ostringstream ss;
+		ss << "DeviceError:" << module << ":" << err.what();
 		e_what_ = ss.str();
 	}
 
