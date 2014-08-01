@@ -55,13 +55,14 @@ public:
 	int8_t message_id;
 
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) {
+		ROS_DEBUG("Got message %d, len: %d", message->msgid, message->len);
 		message_id = message->msgid;
 		cond.notify_one();
 	}
 
 	bool wait_one() {
 		std::unique_lock<std::mutex> lock(mutex);
-		return cond.wait_for(lock, std::chrono::seconds(1)) == std::cv_status::no_timeout;
+		return cond.wait_for(lock, std::chrono::seconds(2)) == std::cv_status::no_timeout;
 	}
 };
 
@@ -103,8 +104,8 @@ TEST_F(TCP, bind_error)
 {
 	std::unique_ptr<MAVConnInterface> conns[2];
 
-	//conns[0].reset(new MAVConnTCPServer(42, 200, "localhost", 57600));
-	//ASSERT_THROW(conns[1].reset(new MAVConnTCPServer(42, 200, "localhost", 57600)), DeviceError);
+	conns[0].reset(new MAVConnTCPServer(42, 200, "localhost", 57600));
+	ASSERT_THROW(conns[1].reset(new MAVConnTCPServer(42, 200, "localhost", 57600)), DeviceError);
 }
 
 TEST_F(TCP, connect_error)
@@ -122,12 +123,14 @@ TEST_F(TCP, send_message)
 	message_id = 255;
 
 	// create echo server
-	//echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	//echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
+	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
+	echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
 
 	// create client
 	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
 	client->message_received.connect(boost::bind(&TCP::recv_message, this, _1, _2, _3));
+
+	usleep(500000);
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -152,7 +155,7 @@ TEST(URL, open_url)
 
 	MAVConnSerial *serial_p;
 	MAVConnUDP *udp_p;
-	//MAVConnTCPServer *tcp_server_p;
+	MAVConnTCPServer *tcp_server_p;
 	MAVConnTCPClient *tcp_client_p;
 
 #if 0
@@ -176,9 +179,9 @@ TEST(URL, open_url)
 	EXPECT_NO_THROW({
 		udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
 		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
-		//tcp_server_p = dynamic_cast<MAVConnTCPServer*>(udp.get());
+		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(udp.get());
 		EXPECT_NE(udp_p, nullptr);
-		//EXPECT_EQ(tcp_server_p, nullptr);
+		EXPECT_EQ(tcp_server_p, nullptr);
 	});
 
 	EXPECT_NO_THROW({
@@ -199,8 +202,8 @@ TEST(URL, open_url)
 
 	EXPECT_NO_THROW({
 		tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
-		//tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
-		//EXPECT_NE(tcp_server_p, nullptr);
+		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
+		EXPECT_NE(tcp_server_p, nullptr);
 	});
 
 	EXPECT_NO_THROW({

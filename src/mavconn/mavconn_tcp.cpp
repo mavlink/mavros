@@ -92,27 +92,20 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	io_thread.swap(t);
 }
 
-#if 0
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
-		int client_sd, sockaddr_in &client_addr) :
+		boost::asio::io_service &server_io, int server_channel,
+		tcp::socket &client_sock, tcp::endpoint &client_ep) :
 	MAVConnInterface(system_id, component_id),
-	sockfd(client_sd),
-	server_addr(client_addr)
+	socket(std::move(client_sock)),
+	server_ep(std::move(client_ep))
 {
-	ROS_INFO_NAMED("mavconn", "tcp-l: Got client, channel %d, address: %s:%d",
-			channel,
-			inet_ntoa(server_addr.sin_addr),
-			ntohs(server_addr.sin_port));
+	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << server_channel <<
+			": Got client, channel: " << channel <<
+			", address: " << server_ep);
 
-	if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK) == -1)
-		throw DeviceError("tcp-l: fcntl", errno);
-
-	// run io for async io
-	io.set<MAVConnTCPClient, &MAVConnTCPClient::event_cb>(this);
-	io.start(sockfd, ev::READ);
-	start_default_loop(); // XXX: alredy started by server
+	// start recv on server io service
+	server_io.post(boost::bind(&MAVConnTCPClient::do_recv, this));
 }
-#endif
 
 MAVConnTCPClient::~MAVConnTCPClient() {
 	close();
@@ -126,14 +119,15 @@ void MAVConnTCPClient::close() {
 	io_work.reset();
 	io_service.stop();
 	socket.close();
-	/* emit */ port_closed();
 
 	// clear tx queue
 	std::for_each(tx_q.begin(), tx_q.end(),
 			[](MsgBuffer *p) { delete p; });
 	tx_q.clear();
 
-	io_thread.join();
+	/* emit */ port_closed();
+	if (io_thread.joinable())
+		io_thread.join();
 }
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
@@ -255,39 +249,38 @@ void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred
 
 
 /* -*- TCP server variant -*- */
-#if 0
+
 MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 		std::string server_host, unsigned short server_port) :
 	MAVConnInterface(system_id, component_id),
-	sockfd(-1)
+	io_service(),
+	//io_work(new io_service::work(io_service)),
+	acceptor(io_service),
+	client_sock(io_service)
 {
-	if (!resolve_address_tcp(server_host, server_port, bind_addr))
+	if (!resolve_address_tcp(io_service, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
 
-	ROS_INFO_NAMED("mavconn", "tcp-l: Bind address: %s:%d",
-			inet_ntoa(bind_addr.sin_addr), ntohs(bind_addr.sin_port));
+	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
+			": Bind address: " << bind_ep);
 
-	sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-		throw DeviceError("tcp-l: socket", errno);
+	try {
+		acceptor.open(tcp::v4());
+		acceptor.set_option(tcp::acceptor::reuse_address(true));
+		acceptor.bind(bind_ep);
+		acceptor.listen(channes_available());
+	}
+	catch (boost::system::system_error &err) {
+		throw DeviceError("tcp-l", err);
+	}
 
-	int one = 1;
-	if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
-		throw DeviceError("tcp-l: setsockopt", errno);
+	// give some work to io_service before start
+	io_service.post(boost::bind(&MAVConnTCPServer::do_accept, this));
 
-	if (::bind(sockfd, (sockaddr *)&bind_addr, sizeof(bind_addr)) < 0)
-		throw DeviceError("tcp-l: bind", errno);
-
-	if (::listen(sockfd, channes_available()))
-		throw DeviceError("tcp-l: listen", errno);
-
-	if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK) == -1)
-		throw DeviceError("tcp-l: fcntl", errno);
-
-	// run io for async io
-	io.set<MAVConnTCPServer, &MAVConnTCPServer::accept_cb>(this);
-	io.start(sockfd, ev::READ);
-	start_default_loop();
+	// run io_service for async io
+	std::thread t(boost::bind(&io_service::run, &this->io_service));
+	mavutils::set_thread_name(t, "MAVConnTCPs%d", channel);
+	io_thread.swap(t);
 }
 
 MAVConnTCPServer::~MAVConnTCPServer() {
@@ -295,77 +288,90 @@ MAVConnTCPServer::~MAVConnTCPServer() {
 }
 
 void MAVConnTCPServer::close() {
-	if (sockfd < 0)
+	lock_guard lock(mutex);
+	if (!acceptor.is_open())
 		return;
 
-	std::for_each(client_list.cbegin(), client_list.cend(),
-			[](MAVConnTCPClient *instp) {
-		instp->close();
-	});
+	ROS_INFO_NAMED("mavconn", "tcp-l%d: Terminating server. "
+			"All connections will be closed.", channel);
 
-	io.stop();
-	::close(sockfd); sockfd = -1;
+	if (!client_list.empty()) {
+		std::for_each(client_list.begin(), client_list.end(),
+				[&](MAVConnTCPClient *instp) {
+				ROS_DEBUG_STREAM_NAMED("mavconn", "tcp-l" << channel <<
+					": Close client " << instp->server_ep <<
+					", channel " << instp->channel);
+				instp->port_closed.disconnect_all_slots();
+				instp->close();
+				delete instp;
+				});
+		client_list.clear();
+	}
 
+	//io_work.reset();
+	io_service.stop();
+	acceptor.close();
 	/* emit */ port_closed();
+
+	if (io_thread.joinable())
+		io_thread.join();
 }
 
 void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
 {
-	boost::recursive_mutex::scoped_lock lock(mutex);
+	lock_guard lock(mutex);
 	std::for_each(client_list.begin(), client_list.end(),
-			[bytes, length](MAVConnTCPClient *instp) {
+			[&](MAVConnTCPClient *instp) {
 		instp->send_bytes(bytes, length);
 	});
 }
 
 void MAVConnTCPServer::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	boost::recursive_mutex::scoped_lock lock(mutex);
+	lock_guard lock(mutex);
 	std::for_each(client_list.begin(), client_list.end(),
-			[message, sysid, compid](MAVConnTCPClient *instp) {
+			[&](MAVConnTCPClient *instp) {
 		instp->send_message(message, sysid, compid);
 	});
 }
 
-void MAVConnTCPServer::accept_cb(ev::io &watcher, int revents)
+void MAVConnTCPServer::do_accept()
 {
-	if (ev::ERROR & revents) {
-		ROS_ERROR_NAMED("mavconn", "accept_cb::revents: 0x%08x", revents);
+	acceptor.async_accept(
+			client_sock,
+			client_ep,
+			boost::bind(&MAVConnTCPServer::async_accept_end,
+				this,
+				boost::asio::placeholders::error));
+}
+
+void MAVConnTCPServer::async_accept_end(error_code error)
+{
+	if (error) {
+		ROS_ERROR_STREAM_NAMED("mavconn", "tcp-l" << channel << ":accept error: " << error);
 		close();
-		return;
-	}
-
-	if (!(ev::READ & revents))
-		return;
-
-	struct sockaddr_in client_addr;
-	socklen_t client_len = sizeof(client_addr);
-
-	int client_sd = accept(watcher.fd, (struct sockaddr *)&client_addr, &client_len);
-	if (client_sd < 0) {
-		ROS_ERROR_NAMED("mavconn", "tcp-l: accept: %s", strerror(errno));
 		return;
 	}
 
 	if (channes_available() <= 0) {
 		ROS_ERROR_NAMED("mavconn", "tcp-l:accept_cb: all channels in use, drop connection");
-		::close(client_sd);
+		client_sock.close();
 		return;
 	}
 
-	MAVConnTCPClient *instp = new MAVConnTCPClient(sys_id, comp_id, client_sd, client_addr);
+	MAVConnTCPClient *instp = new MAVConnTCPClient(sys_id, comp_id, io_service, channel, client_sock, client_ep);
 	instp->message_received.connect(boost::bind(&MAVConnTCPServer::recv_message, this, _1, _2, _3));
 	instp->port_closed.connect(boost::bind(&MAVConnTCPServer::client_closed, this, instp));
 
 	client_list.push_back(instp);
+	do_accept();
 }
 
 void MAVConnTCPServer::client_closed(MAVConnTCPClient *instp)
 {
-	ROS_INFO_NAMED("mavconn", "tcp-l: Client connection closed, channel %d, address: %s:%d",
-			instp->channel,
-			inet_ntoa(instp->server_addr.sin_addr),
-			ntohs(instp->server_addr.sin_port));
+	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
+			": Client connection closed, channel: " << instp->channel <<
+			", address: " << instp->server_ep);
 
 	client_list.remove(instp);
 	delete instp;
@@ -375,5 +381,5 @@ void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sy
 {
 	message_received(message, sysid, compid);
 }
-#endif
+
 }; // namespace mavconn

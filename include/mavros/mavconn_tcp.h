@@ -48,13 +48,14 @@ public:
 	 */
 	MAVConnTCPClient(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string server_host = "localhost", unsigned short server_port = 5760);
-#if 0
 	/**
 	 * Special client variation for use in MAVConnTCPServer
-	 * @param[in] client_sd    socket descriptor
 	 */
-	explicit MAVConnTCPClient(uint8_t system_id, uint8_t component_id, int client_sd, sockaddr_in &client_addr);
-#endif
+	explicit MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
+			boost::asio::io_service &server_io,
+			int server_channel,
+			boost::asio::ip::tcp::socket &client_sock,
+			boost::asio::ip::tcp::endpoint &client_ep);
 	~MAVConnTCPClient();
 
 	void close();
@@ -86,7 +87,6 @@ private:
 	void async_send_end(boost::system::error_code, size_t bytes_transferred);
 };
 
-#if 0
 /**
  * @brief TCP server interface
  *
@@ -109,24 +109,28 @@ public:
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
-	inline bool is_open() { return sockfd != -1; };
+	inline bool is_open() { return acceptor.is_open(); };
 
 private:
-	ev::io io;
-	int sockfd;
+	boost::asio::io_service io_service;
+	std::unique_ptr<boost::asio::io_service::work> io_work;
+	std::thread io_thread;
 
-	sockaddr_in bind_addr;
+	boost::asio::ip::tcp::acceptor acceptor;
+	boost::asio::ip::tcp::endpoint bind_ep;
+	boost::asio::ip::tcp::socket client_sock;
+	boost::asio::ip::tcp::endpoint client_ep;
 
 	std::list<MAVConnTCPClient *> client_list;
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 
-	void accept_cb(ev::io &watcher, int revents);
+	void do_accept();
+	void async_accept_end(boost::system::error_code);
 
 	// client slots
 	void client_closed(MAVConnTCPClient *instp);
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 };
-#endif
 
 }; // namespace mavconn
 
