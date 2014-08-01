@@ -24,7 +24,6 @@
  */
 
 #include <set>
-#include <ev++.h>
 #include <mavros/mavconn_interface.h>
 #include <mavros/utils.h>
 #include <ros/console.h>
@@ -42,25 +41,6 @@ const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
 std::set<int> MAVConnInterface::allocated_channels;
 
-static ev::default_loop default_loop;
-static boost::thread default_loop_thd;
-
-static void loop_spinner() {
-	while (ros::ok()) {
-		ROS_DEBUG_NAMED("mavconn", "EV: starting default loop");
-		default_loop.run(0);
-		ROS_DEBUG_NAMED("mavconn", "EV: default loop stopped");
-	}
-}
-
-void MAVConnInterface::start_default_loop() {
-	if (default_loop_thd.joinable())
-		return;
-
-	boost::thread t(loop_spinner);
-	mavutils::set_thread_name(t, "ev_default_loop");
-	default_loop_thd.swap(t);
-}
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),

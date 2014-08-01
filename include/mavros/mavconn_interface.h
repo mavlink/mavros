@@ -168,8 +168,6 @@ protected:
 	static void delete_channel(int chan);
 	static int channes_available();
 
-	static void start_default_loop();
-
 private:
 	static std::set<int> allocated_channels;
 };
