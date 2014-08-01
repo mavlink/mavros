@@ -233,8 +233,9 @@ static boost::shared_ptr<MAVConnInterface> url_parse_tcp_server(
 	url_parse_host(host, bind_host, bind_port, "0.0.0.0", 5760);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnTCPServer>(system_id, component_id,
-			bind_host, bind_port);
+	//return boost::make_shared<MAVConnTCPServer>(system_id, component_id,
+	//		bind_host, bind_port);
+	return boost::shared_ptr<MAVConnInterface>();
 }
 
 boost::shared_ptr<MAVConnInterface> MAVConnInterface::open_url(std::string url,

@@ -114,6 +114,12 @@ void MAVConnUDP::close() {
 	io_service.stop();
 	socket.close();
 	/* emit */ port_closed();
+
+	// clear tx queue
+	std::for_each(tx_q.begin(), tx_q.end(),
+			[](MsgBuffer *p) { delete p; });
+	tx_q.clear();
+
 	io_thread.join();
 }
 
