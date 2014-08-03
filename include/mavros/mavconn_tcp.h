@@ -52,10 +52,7 @@ public:
 	 * Special client variation for use in MAVConnTCPServer
 	 */
 	explicit MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
-			boost::asio::io_service &server_io,
-			int server_channel,
-			boost::asio::ip::tcp::socket &client_sock,
-			boost::asio::ip::tcp::endpoint &client_ep);
+			boost::asio::io_service &server_io);
 	~MAVConnTCPClient();
 
 	void close();
@@ -80,6 +77,11 @@ private:
 	std::list<MsgBuffer*> tx_q;
 	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
 	std::recursive_mutex mutex;
+
+	/**
+	 * This special function called by TCP server when connection accepted.
+	 */
+	void client_connected(boost::asio::io_service &server_io, int server_channel);
 
 	void do_recv();
 	void async_receive_end(boost::system::error_code, size_t bytes_transferred);
@@ -118,17 +120,16 @@ private:
 
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::ip::tcp::endpoint bind_ep;
-	boost::asio::ip::tcp::socket client_sock;
-	boost::asio::ip::tcp::endpoint client_ep;
 
-	std::list<MAVConnTCPClient *> client_list;
+	boost::shared_ptr<MAVConnTCPClient> acceptor_client;
+	std::list<boost::shared_ptr<MAVConnTCPClient> > client_list;
 	std::recursive_mutex mutex;
 
 	void do_accept();
 	void async_accept_end(boost::system::error_code);
 
 	// client slots
-	void client_closed(MAVConnTCPClient *instp);
+	void client_closed(boost::shared_ptr<MAVConnTCPClient> instp);
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 };
 
