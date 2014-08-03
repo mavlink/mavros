@@ -160,6 +160,7 @@ protected:
 	static const uint8_t mavlink_crcs[];
 #endif
 
+	static std::recursive_mutex channel_mutex;
 	static int new_channel();
 	static void delete_channel(int chan);
 	static int channes_available();

@@ -40,6 +40,7 @@ namespace mavconn {
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
 std::set<int> MAVConnInterface::allocated_channels;
+std::recursive_mutex MAVConnInterface::channel_mutex;
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
@@ -51,6 +52,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 }
 
 int MAVConnInterface::new_channel() {
+	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
 	int chan = 0;
 
 	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
@@ -66,11 +68,13 @@ int MAVConnInterface::new_channel() {
 }
 
 void MAVConnInterface::delete_channel(int chan) {
+	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
 	ROS_DEBUG_NAMED("mavconn", "Freeing channel: %d", chan);
 	allocated_channels.erase(allocated_channels.find(chan));
 }
 
 int MAVConnInterface::channes_available() {
+	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
 	return MAVLINK_COMM_NUM_BUFFERS - allocated_channels.size();
 }
 
