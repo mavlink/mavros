@@ -74,7 +74,7 @@ MAVConnSerial::~MAVConnSerial() {
 
 void MAVConnSerial::close() {
 	lock_guard lock(mutex);
-	if (!serial_dev.is_open())
+	if (!is_open())
 		return;
 
 	serial_dev.close();
@@ -85,9 +85,10 @@ void MAVConnSerial::close() {
 			[](MsgBuffer *p) { delete p; });
 	tx_q.clear();
 
-	/* emit */ port_closed();
 	if (io_thread.joinable())
 		io_thread.join();
+
+	/* emit */ port_closed();
 }
 
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
@@ -101,8 +102,8 @@ void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
 	}
+	io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -120,8 +121,8 @@ void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
 	}
+	io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
 }
 
 void MAVConnSerial::do_read(void)
@@ -140,7 +141,7 @@ void MAVConnSerial::async_read_end(error_code error, size_t bytes_transferred)
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":receive: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":receive: " << error.message());
 		close();
 		return;
 	}
@@ -166,6 +167,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
 	if (tx_q.empty())
 		return;
 
+	tx_in_progress = true;
 	MsgBuffer *buf = tx_q.front();
 	serial_dev.async_write_some(
 			buffer(buf->dpos(), buf->nbytes()),
@@ -178,15 +180,16 @@ void MAVConnSerial::do_write(bool check_tx_state)
 void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":write: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":write: " << error.message());
 		close();
 		return;
 	}
 
 	lock_guard lock(mutex);
-	if (tx_q.empty())
+	if (tx_q.empty()) {
+		tx_in_progress = false;
 		return;
-
+	}
 
 	MsgBuffer *buf = tx_q.front();
 	buf->pos += bytes_transferred;
@@ -197,6 +200,8 @@ void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
 
 	if (!tx_q.empty())
 		do_write(false);
+	else
+		tx_in_progress = false;
 }
 
 }; // namespace mavconn

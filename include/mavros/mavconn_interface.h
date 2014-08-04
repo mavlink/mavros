@@ -162,7 +162,6 @@ protected:
 	static const uint8_t mavlink_crcs[];
 #endif
 
-	static std::recursive_mutex channel_mutex;
 	static int new_channel();
 	static void delete_channel(int chan);
 	static int channes_available();
@@ -173,6 +172,7 @@ protected:
 	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 
 private:
+	static std::recursive_mutex channel_mutex;
 	static std::set<int> allocated_channels;
 };
 

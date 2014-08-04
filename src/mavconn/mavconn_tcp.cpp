@@ -53,7 +53,7 @@ static bool resolve_address_tcp(io_service &io, std::string host, unsigned short
 		});
 
 	if (ec) {
-		ROS_WARN_STREAM_NAMED("mavconn", "tcp: resolve error: " << ec);
+		ROS_WARN_STREAM_NAMED("mavconn", "tcp: resolve error: " << ec.message());
 		result = false;
 	}
 
@@ -116,7 +116,7 @@ MAVConnTCPClient::~MAVConnTCPClient() {
 
 void MAVConnTCPClient::close() {
 	lock_guard lock(mutex);
-	if (!socket.is_open())
+	if (!is_open())
 		return;
 
 	io_work.reset();
@@ -128,9 +128,10 @@ void MAVConnTCPClient::close() {
 			[](MsgBuffer *p) { delete p; });
 	tx_q.clear();
 
-	/* emit */ port_closed();
 	if (io_thread.joinable())
 		io_thread.join();
+
+	/* emit */ port_closed();
 }
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
@@ -144,8 +145,8 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 	}
+	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -164,8 +165,8 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 	}
+	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 }
 
 void MAVConnTCPClient::do_recv()
@@ -184,7 +185,7 @@ void MAVConnTCPClient::async_receive_end(error_code error, size_t bytes_transfer
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":receive: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":receive: " << error.message());
 		close();
 		return;
 	}
@@ -210,6 +211,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 	if (tx_q.empty())
 		return;
 
+	tx_in_progress = true;
 	MsgBuffer *buf = tx_q.front();
 	socket.async_send(
 			buffer(buf->dpos(), buf->nbytes()),
@@ -222,14 +224,16 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":sendto: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":sendto: " << error.message());
 		close();
 		return;
 	}
 
 	lock_guard lock(mutex);
-	if (tx_q.empty())
+	if (tx_q.empty()) {
+		tx_in_progress = false;
 		return;
+	}
 
 	MsgBuffer *buf = tx_q.front();
 	buf->pos += bytes_transferred;
@@ -240,6 +244,8 @@ void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred
 
 	if (!tx_q.empty())
 		do_send(false);
+	else
+		tx_in_progress = false;
 }
 
 
@@ -281,22 +287,21 @@ MAVConnTCPServer::~MAVConnTCPServer() {
 }
 
 void MAVConnTCPServer::close() {
-	//lock_guard lock(mutex);
-	if (!acceptor.is_open())
+	lock_guard lock(mutex);
+	if (!is_open())
 		return;
 
 	ROS_INFO_NAMED("mavconn", "tcp-l%d: Terminating server. "
 			"All connections will be closed.", channel);
 
-	if (!client_list.empty())
-		client_list.clear();
-
+	client_list.clear();
 	io_service.stop();
 	acceptor.close();
-	/* emit */ port_closed();
 
 	if (io_thread.joinable())
 		io_thread.join();
+
+	/* emit */ port_closed();
 }
 
 void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
@@ -332,7 +337,7 @@ void MAVConnTCPServer::do_accept()
 void MAVConnTCPServer::async_accept_end(error_code error)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp-l" << channel << ":accept error: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "tcp-l" << channel << ":accept: " << error.message());
 		close();
 		return;
 	}
@@ -359,7 +364,6 @@ void MAVConnTCPServer::async_accept_end(error_code error)
 void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp)
 {
 	if (auto instp = weak_instp.lock()) {
-		lock_guard lock(mutex);
 		ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
 				": Client connection closed, channel: " << instp->channel <<
 				", address: " << instp->server_ep);

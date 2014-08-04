@@ -52,7 +52,7 @@ static bool resolve_address_udp(io_service &io, std::string host, unsigned short
 		});
 
 	if (ec) {
-		ROS_WARN_STREAM_NAMED("mavconn", "udp: resolve error: " << ec);
+		ROS_WARN_STREAM_NAMED("mavconn", "udp: resolve error: " << ec.message());
 		result = false;
 	}
 
@@ -107,7 +107,7 @@ MAVConnUDP::~MAVConnUDP() {
 
 void MAVConnUDP::close() {
 	lock_guard lock(mutex);
-	if (!socket.is_open())
+	if (!is_open())
 		return;
 
 	io_work.reset();
@@ -119,9 +119,10 @@ void MAVConnUDP::close() {
 			[](MsgBuffer *p) { delete p; });
 	tx_q.clear();
 
-	/* emit */ port_closed();
 	if (io_thread.joinable())
 		io_thread.join();
+
+	/* emit */ port_closed();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
@@ -140,8 +141,8 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
 	}
+	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -165,8 +166,8 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
 	}
+	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
 }
 
 void MAVConnUDP::do_recvfrom()
@@ -186,7 +187,7 @@ void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":receive: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":receive: " << error.message());
 		close();
 		return;
 	}
@@ -218,6 +219,7 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 	if (tx_q.empty())
 		return;
 
+	tx_in_progress = true;
 	MsgBuffer *buf = tx_q.front();
 	socket.async_send_to(
 			buffer(buf->dpos(), buf->nbytes()),
@@ -231,14 +233,16 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":sendto: " << error);
+		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":sendto: " << error.message());
 		close();
 		return;
 	}
 
 	lock_guard lock(mutex);
-	if (tx_q.empty())
+	if (tx_q.empty()) {
+		tx_in_progress = false;
 		return;
+	}
 
 	MsgBuffer *buf = tx_q.front();
 	buf->pos += bytes_transferred;
@@ -249,6 +253,8 @@ void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 
 	if (!tx_q.empty())
 		do_sendto(false);
+	else
+		tx_in_progress = false;
 }
 
 }; // namespace mavconn
