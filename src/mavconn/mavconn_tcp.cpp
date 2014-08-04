@@ -294,7 +294,6 @@ void MAVConnTCPServer::close() {
 	ROS_INFO_NAMED("mavconn", "tcp-l%d: Terminating server. "
 			"All connections will be closed.", channel);
 
-	client_list.clear();
 	io_service.stop();
 	acceptor.close();
 
@@ -364,11 +363,15 @@ void MAVConnTCPServer::async_accept_end(error_code error)
 void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp)
 {
 	if (auto instp = weak_instp.lock()) {
+		bool locked = mutex.try_lock();
 		ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
 				": Client connection closed, channel: " << instp->channel <<
 				", address: " << instp->server_ep);
 
 		client_list.remove(instp);
+
+		if (locked)
+			mutex.unlock();
 	}
 }
 

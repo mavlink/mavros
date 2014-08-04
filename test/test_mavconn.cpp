@@ -143,20 +143,12 @@ TEST(SERIAL, open_error)
 	ASSERT_THROW(serial.reset(new MAVConnSerial(42, 200, "/some/magic/not/exist/path", 57600)), DeviceError);
 }
 
-TEST(URL, open_url)
-{
-	boost::shared_ptr<MAVConnInterface>
-		serial,
-		udp,
-		tcp_server,
-		tcp_client;
-
-	MAVConnSerial *serial_p;
-	MAVConnUDP *udp_p;
-	MAVConnTCPServer *tcp_server_p;
-	MAVConnTCPClient *tcp_client_p;
-
 #if 0
+TEST(URL, open_url_serial)
+{
+	boost::shared_ptr<MAVConnInterface> serial;
+	MAVConnSerial *serial_p;
+
 	/* not best way to test tty access,
 	 * but it does not require any preparation
 	 * Disabled because it breaks terminal.
@@ -172,14 +164,18 @@ TEST(URL, open_url)
 		serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
 		EXPECT_NE(serial_p, nullptr);
 	});
+}
 #endif
+
+TEST(URL, open_url_udp)
+{
+	boost::shared_ptr<MAVConnInterface> udp;
+	MAVConnUDP *udp_p;
 
 	EXPECT_NO_THROW({
 		udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
 		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
-		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(udp.get());
 		EXPECT_NE(udp_p, nullptr);
-		EXPECT_EQ(tcp_server_p, nullptr);
 	});
 
 	EXPECT_NO_THROW({
@@ -197,6 +193,16 @@ TEST(URL, open_url)
 	EXPECT_THROW({
 		udp = MAVConnInterface::open_url("udp://localhost:45000");
 	}, DeviceError);
+}
+
+TEST(URL, open_url_tcp)
+{
+	boost::shared_ptr<MAVConnInterface>
+		tcp_server,
+		tcp_client;
+
+	MAVConnTCPServer *tcp_server_p;
+	MAVConnTCPClient *tcp_client_p;
 
 	EXPECT_NO_THROW({
 		tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
