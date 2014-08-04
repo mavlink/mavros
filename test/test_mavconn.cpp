@@ -130,8 +130,6 @@ TEST_F(TCP, send_message)
 	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
 	client->message_received.connect(boost::bind(&TCP::recv_message, this, _1, _2, _3));
 
-	usleep(500000);
-
 	// wait echo
 	send_heartbeat(client.get());
 	send_heartbeat(client.get());
