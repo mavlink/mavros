@@ -101,13 +101,13 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	// waiting when server call client_connected()
 }
 
-void MAVConnTCPClient::client_connected(boost::asio::io_service &server_io, int server_channel) {
+void MAVConnTCPClient::client_connected(int server_channel) {
 	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << server_channel <<
 			": Got client, channel: " << channel <<
 			", address: " << server_ep);
 
-	// start recv on server io service
-	server_io.post(boost::bind(&MAVConnTCPClient::do_recv, this));
+	// start recv
+	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_recv, this));
 }
 
 MAVConnTCPClient::~MAVConnTCPClient() {
@@ -140,7 +140,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnTCPClient::do_send, this, true));
+		socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 	}
 }
 
@@ -172,7 +172,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
-		io_service.post(boost::bind(&MAVConnTCPClient::do_send, this, true));
+		socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
 	}
 }
 
@@ -355,7 +355,7 @@ void MAVConnTCPServer::async_accept_end(error_code error)
 	//}
 
 	lock_guard lock(mutex);
-	acceptor_client->client_connected(io_service, channel);
+	acceptor_client->client_connected(channel);
 	acceptor_client->message_received.connect(boost::bind(&MAVConnTCPServer::recv_message, this, _1, _2, _3));
 	acceptor_client->port_closed.connect(boost::bind(&MAVConnTCPServer::client_closed, this, acceptor_client));
 

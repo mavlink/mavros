@@ -81,7 +81,7 @@ private:
 	/**
 	 * This special function called by TCP server when connection accepted.
 	 */
-	void client_connected(boost::asio::io_service &server_io, int server_channel);
+	void client_connected(int server_channel);
 
 	void do_recv();
 	void async_receive_end(boost::system::error_code, size_t bytes_transferred);
