@@ -129,7 +129,7 @@ private:
 	void async_accept_end(boost::system::error_code);
 
 	// client slots
-	void client_closed(boost::shared_ptr<MAVConnTCPClient> instp);
+	void client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp);
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 };
 

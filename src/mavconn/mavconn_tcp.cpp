@@ -349,20 +349,23 @@ void MAVConnTCPServer::async_accept_end(error_code error)
 	lock_guard lock(mutex);
 	acceptor_client->client_connected(channel);
 	acceptor_client->message_received.connect(boost::bind(&MAVConnTCPServer::recv_message, this, _1, _2, _3));
-	acceptor_client->port_closed.connect(boost::bind(&MAVConnTCPServer::client_closed, this, acceptor_client));
+	acceptor_client->port_closed.connect(boost::bind(&MAVConnTCPServer::client_closed, this,
+				boost::weak_ptr<MAVConnTCPClient>(acceptor_client)));
 
 	client_list.push_back(acceptor_client);
 	do_accept();
 }
 
-void MAVConnTCPServer::client_closed(boost::shared_ptr<MAVConnTCPClient> instp)
+void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp)
 {
-	lock_guard lock(mutex);
-	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
-			": Client connection closed, channel: " << instp->channel <<
-			", address: " << instp->server_ep);
+	if (auto instp = weak_instp.lock()) {
+		lock_guard lock(mutex);
+		ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
+				": Client connection closed, channel: " << instp->channel <<
+				", address: " << instp->server_ep);
 
-	client_list.remove(instp);
+		client_list.remove(instp);
+	}
 }
 
 void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
