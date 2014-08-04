@@ -1,17 +1,61 @@
+# thanks to jsk-ros-pkg
 language: cpp
-script: "echo 'No build jobs for travis, its done by ros buildfarm, but i want coverity scan'"
+compiler: gcc
 env:
   global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "ORA0MsiEB+R3pk8qKFRllVDK7eEQGo0LoRy6VtdyU0SOw00lEWCSD8FFJM922H5e18ZME9fIfc0ttKvbEhRwPx/AUCME+0lLkcHmogc7UyB8Gu6yqXfcp0XLVKPeLK/9+9geFmb5v9P0CH3cX4PYzimzt1ay0BVfomXX4+NkipE="
-
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "ORA0MsiEB+R3pk8qKFRllVDK7eEQGo0LoRy6VtdyU0SOw00lEWCSD8FFJM922H5e18ZME9fIfc0ttKvbEhRwPx/AUCME+0lLkcHmogc7UyB8Gu6yqXfcp0XLVKPeLK/9+9geFmb5v9P0CH3cX4PYzimzt1ay0BVfomXX4+NkipE="
+    - ROS_DISTRO=hydro
+before_install:
+  - export CI_SOURCE_PATH=$(pwd)
+  - export REPOSITORY_NAME=${PWD##*/}
+  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall
+  # MongoDB hack - I don't fully understand this but its for moveit_warehouse
+  - sudo apt-get remove -y mongodb mongodb-10gen
+  - sudo apt-get install -y mongodb-clients mongodb-server -o Dpkg::Options::="--force-confdef" # default actions
+  ##### quick hack for missing python-tk on hrpsys/waitInput.py
+  - sudo apt-get install -qq -y python-tk
+  # Setup rosdep
+  - sudo rosdep init
+  - rosdep update
+install:
+  # Create workspace
+  - mkdir -p ~/ros/ws_$REPOSITORY_NAME/src
+  - cd ~/ros/ws_$REPOSITORY_NAME/src
+  - wstool init .
+  - wstool set $REPOSITORY_NAME --git https://github.com/vooon/mavros.git -y
+  - wstool update -j10
+  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
+  - cd ../
+  # Install dependencies for source repos
+  - find -L src -name package.xml -exec dirname {} \; | xargs -n 1 -i find {} -name manifest.xml | xargs -n 1 -i mv {} {}.deprecated
+  - rosdep install -r -n --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+  - find -L src -name manifest.xml.deprecated | xargs -n 1 -i dirname {} | xargs -n 1 -i ln -sf `pwd`/{}/manifest.xml.deprecated `pwd`/{}/manifest.xml
+before_script: # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
+  - source /opt/ros/$ROS_DISTRO/setup.bash
+  - export CATKIN_PACKAGES="`find $CI_SOURCE_PATH -name package.xml | xargs -n 1 dirname | xargs -n 1 basename`"
+script: # All commands must exit with code 0 on success. Anything else is considered failure.
+  - cd ~/ros/ws_$REPOSITORY_NAME
+  - rospack profile
+  - catkin_make -j4
+  - if [ "$CATKIN_PACKAGES" != "" ]; then catkin_make test --pkg $CATKIN_PACKAGES; fi
+  - catkin_make install
+  - rm -fr devel src build; source install/setup.bash
+after_failure:
+  - if [ -e ./build/Testing/Temporary/LastTest.log ]; then cat ./build/Testing/Temporary/LastTest.log; fi
+  - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;
+  - for file in ${HOME}/.ros/log/rostest-*; do echo "=== $file ==="; cat $file; done
 addons:
   coverity_scan:
     project:
       name: "vooon/mavros"
       description: "Build submitted via Travis CI"
     notification_email: vooon341@gmail.com
-    build_command_prepend: "cmake ."
-    build_command:   "make -j 4"
+    #build_command_prepend: "catkin_make"
+    build_command:   "catkin_make -j 4"
     branch_pattern: coverity_scan
