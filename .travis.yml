@@ -30,7 +30,7 @@ install:
   - wstool init .
   - wstool set $REPOSITORY_NAME --git https://github.com/vooon/mavros.git -y
   - wstool update -j10
-  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
+  #- ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
   - cd ../
   # Install dependencies for source repos
   - find -L src -name package.xml -exec dirname {} \; | xargs -n 1 -i find {} -name manifest.xml | xargs -n 1 -i mv {} {}.deprecated
