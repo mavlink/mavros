@@ -1,3 +1,5 @@
+language: cpp
+script: "echo 'No build jobs for travis, its done by ros buildfarm, but i want coverity scan'"
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
