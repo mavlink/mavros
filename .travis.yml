@@ -39,13 +39,15 @@ install:
 before_script: # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - export CATKIN_PACKAGES="`find $CI_SOURCE_PATH -name package.xml | xargs -n 1 dirname | xargs -n 1 basename`"
-script: # All commands must exit with code 0 on success. Anything else is considered failure.
-  - cd ~/ros/ws_$REPOSITORY_NAME
-  - rospack profile
-  - catkin_make -j4
-  - if [ "$CATKIN_PACKAGES" != "" ]; then catkin_make test --pkg $CATKIN_PACKAGES; fi
-  - catkin_make install
-  - rm -fr devel src build; source install/setup.bash
+#script: # All commands must exit with code 0 on success. Anything else is considered failure.
+#  - cd ~/ros/ws_$REPOSITORY_NAME
+#  - rospack profile
+#  - catkin_make -j4
+#  - if [ "$CATKIN_PACKAGES" != "" ]; then catkin_make test --pkg $CATKIN_PACKAGES; fi
+#  - catkin_make install
+#  - rm -fr devel src build; source install/setup.bash
+script:
+  - echo 'Nothing to do'
 after_failure:
   - if [ -e ./build/Testing/Temporary/LastTest.log ]; then cat ./build/Testing/Temporary/LastTest.log; fi
   - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;
