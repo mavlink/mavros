@@ -137,6 +137,28 @@ TEST_F(TCP, send_message)
 	ASSERT_EQ(message_id, MAVLINK_MSG_ID_HEARTBEAT);
 }
 
+TEST_F(TCP, client_reconnect)
+{
+	std::unique_ptr<MAVConnInterface> echo_server;
+	std::unique_ptr<MAVConnInterface> client1, client2;
+
+	// create echo server
+	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
+	echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
+
+	EXPECT_NO_THROW({
+		client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
+	});
+
+	EXPECT_NO_THROW({
+		client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57600));
+	});
+
+	EXPECT_NO_THROW({
+		client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57600));
+	});
+}
+
 TEST(SERIAL, open_error)
 {
 	std::unique_ptr<MAVConnInterface> serial;
