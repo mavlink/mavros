@@ -732,7 +732,7 @@ private:
 			mavros::ParamPull::Response &res) {
 		boost::recursive_mutex::scoped_lock lock(mutex);
 
-		if (param_state == PR_IDLE && parameters.empty()
+		if ((param_state == PR_IDLE && parameters.empty())
 				|| req.force_pull) {
 			if (!req.force_pull)
 				ROS_DEBUG_NAMED("param", "PR: start pull");

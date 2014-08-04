@@ -64,7 +64,7 @@ public:
 		sp_nh.param("vision/tf_rate_limit", tf_rate, 50.0);
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
-				(pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped");
+				((pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped"));
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("position", "Listen to vision transform " << frame_id
