@@ -44,6 +44,8 @@
 namespace mavconn {
 namespace sig2 = boost::signals2;
 
+class MsgBuffer;
+
 /**
  * @brief Common exception for communication error
  */
@@ -164,6 +166,11 @@ protected:
 	static int new_channel();
 	static void delete_channel(int chan);
 	static int channes_available();
+
+	/**
+	 * This helper function construct new MsgBuffer from message.
+	 */
+	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 
 private:
 	static std::set<int> allocated_channels;

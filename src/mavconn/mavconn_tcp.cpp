@@ -135,7 +135,11 @@ void MAVConnTCPClient::close() {
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 {
-	ROS_ASSERT_MSG(is_open(), "Should not send messages on closed channel!");
+	if (!is_open()) {
+		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "tcp%d:send: channel closed!", channel);
+		return;
+	}
+
 	MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
@@ -146,29 +150,17 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 
 void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	ROS_ASSERT_MSG(is_open(), "Should not send messages on closed channel!");
 	ROS_ASSERT(message != nullptr);
-	MsgBuffer *buf = nullptr;
 
-	/* if sysid/compid pair not match we need explicit finalize
-	 * else just copy to buffer */
-	if (message->sysid != sysid || message->compid != compid) {
-		mavlink_message_t msg = *message;
-
-#if MAVLINK_CRC_EXTRA
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, mavlink_crcs[msg.msgid]);
-#else
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
-#endif
-
-		buf = new MsgBuffer(&msg);
+	if (!is_open()) {
+		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "tcp%d:send: channel closed!", channel);
+		return;
 	}
-	else
-		buf = new MsgBuffer(message);
 
 	ROS_DEBUG_NAMED("mavconn", "tcp%d:send: Message-ID: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 			channel, message->msgid, message->len, sysid, compid);
 
+	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);

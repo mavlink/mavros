@@ -30,6 +30,7 @@
 #include <ros/assert.h>
 #include <ros/ros.h>
 
+#include <mavros/mavconn_msgbuffer.h>
 #include <mavros/mavconn_serial.h>
 #include <mavros/mavconn_udp.h>
 #include <mavros/mavconn_tcp.h>
@@ -76,6 +77,27 @@ void MAVConnInterface::delete_channel(int chan) {
 int MAVConnInterface::channes_available() {
 	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
 	return MAVLINK_COMM_NUM_BUFFERS - allocated_channels.size();
+}
+
+MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
+		uint8_t sysid, uint8_t compid)
+{
+	/* if sysid/compid pair not match we need explicit finalize
+	 * else just copy to buffer */
+	if (message->sysid != sysid || message->compid != compid) {
+		mavlink_message_t msg = *message;
+
+#if MAVLINK_CRC_EXTRA
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len,
+				mavlink_crcs[msg.msgid]);
+#else
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
+#endif
+
+		return new MsgBuffer(&msg);
+	}
+	else
+		return new MsgBuffer(message);
 }
 
 /**
