@@ -715,8 +715,8 @@ private:
 		lock.lock();
 
 		// free opt data
-		set_parameters.erase(it);
 		delete it->second;
+		set_parameters.erase(it);
 
 		go_idle();
 		return is_not_timeout;
