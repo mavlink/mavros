@@ -3,14 +3,12 @@
 	<!-- example launch script for ArduPilotMega based FCU's -->
 	<!-- This file almost same as apm2.launch but defaults set for connections via 3DR Radio modem -->
 
-	<arg name="serial_port" default="/dev/ttyUSB0" />
-	<arg name="serial_baud" default="57600" />
-	<arg name="gcs_host" default="" />
+	<arg name="fcu_url" default="/dev/ttyUSB0:57600" />
+	<arg name="gcs_url" default="" />
 
 	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="screen">
-		<param name="serial_port" value="$(arg serial_port)" />
-		<param name="serial_baud" value="$(arg serial_baud)" />
-		<param name="gcs_host" value="$(arg gcs_host)" />
+		<param name="fcu_url" value="$(arg fcu_url)" />
+		<param name="gcs_url" value="$(arg gcs_url)" />
 
 		<!-- position plugins supported only by PX4 experimental branch -->
 		<rosparam command="load" file="$(find mavros)/launch/apm2_radio_blacklist.yaml" />

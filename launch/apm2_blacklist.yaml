@@ -1,7 +1,8 @@
 plugin_blacklist:
+- '3dr_radio'
 - '*_position'
 - 'safety_area'
 - 'setpoint_*'
-- '3dr_radio'
 - 'px4flow'
 - 'image_pub'
+- 'vision_*'

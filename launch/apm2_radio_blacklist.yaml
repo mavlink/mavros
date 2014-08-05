@@ -4,3 +4,4 @@ plugin_blacklist:
 - 'setpoint_*'
 - 'px4flow'
 - 'image_pub'
+- 'vision_*'
