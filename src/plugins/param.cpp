@@ -335,6 +335,7 @@ public:
 class ParamPlugin : public MavRosPlugin {
 public:
 	ParamPlugin() :
+		uas(nullptr),
 		param_count(-1),
 		param_state(PR_IDLE),
 		is_timedout(false),
