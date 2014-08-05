@@ -147,8 +147,10 @@ public:
 class WaypointPlugin : public MavRosPlugin {
 public:
 	WaypointPlugin() :
+		uas(nullptr),
 		wp_state(WP_IDLE),
 		wp_retries(RETRIES_COUNT),
+		is_timedout(false),
 		do_pull_after_gcs(false),
 		reshedule_pull(false),
 		BOOT_TIME_DT(BOOT_TIME_MS / 1000.0),

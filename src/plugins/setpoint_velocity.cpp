@@ -42,7 +42,8 @@ namespace mavplugin {
 class SetpointVelocityPlugin : public MavRosPlugin,
 	private LocalNEDPositionSetpointExternalMixin<SetpointVelocityPlugin> {
 public:
-	SetpointVelocityPlugin()
+	SetpointVelocityPlugin() :
+		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,

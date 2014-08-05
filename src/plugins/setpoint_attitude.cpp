@@ -44,7 +44,9 @@ namespace mavplugin {
 class SetpointAttitudePlugin : public MavRosPlugin,
 	private TFListenerMixin<SetpointAttitudePlugin> {
 public:
-	SetpointAttitudePlugin()
+	SetpointAttitudePlugin() :
+		uas(nullptr),
+		tf_rate(10.0)
 	{ };
 
 	void initialize(UAS &uas_,

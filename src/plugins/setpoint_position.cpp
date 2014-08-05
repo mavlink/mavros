@@ -42,7 +42,9 @@ class SetpointPositionPlugin : public MavRosPlugin,
 	private LocalNEDPositionSetpointExternalMixin<SetpointPositionPlugin>,
 	private TFListenerMixin<SetpointPositionPlugin> {
 public:
-	SetpointPositionPlugin()
+	SetpointPositionPlugin() :
+		uas(nullptr),
+		tf_rate(10.0)
 	{ };
 
 	void initialize(UAS &uas_,
