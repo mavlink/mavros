@@ -1,6 +1,8 @@
 # thanks to jsk-ros-pkg
 language: cpp
-compiler: gcc
+compiler:
+  - gcc
+  - clang
 env:
   global:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
