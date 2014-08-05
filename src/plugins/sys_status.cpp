@@ -148,6 +148,38 @@ public:
 		stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
 		stat.addf("Sensor enabled", "0x%08X", last_st.onboard_control_sensors_enabled);
 		stat.addf("Sensor helth", "0x%08X", last_st.onboard_control_sensors_health);
+
+		// decode sensor health mask
+#define STAT_ADD_SENSOR(msg, sensor_mask)	\
+		if (last_st.onboard_control_sensors_enabled & sensor_mask)	\
+			stat.add(msg, (last_st.onboard_control_sensors_health & sensor_mask)? "Ok" : "Fail")
+
+		STAT_ADD_SENSOR("Sensor 3D Gyro", MAV_SYS_STATUS_SENSOR_3D_GYRO);
+		STAT_ADD_SENSOR("Sensor 3D Accel", MAV_SYS_STATUS_SENSOR_3D_ACCEL);
+		STAT_ADD_SENSOR("Sensor 3D Mag", MAV_SYS_STATUS_SENSOR_3D_MAG);
+		STAT_ADD_SENSOR("Sensor Abs Pressure", MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE);
+		STAT_ADD_SENSOR("Sensor Diff Pressure", MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE);
+		STAT_ADD_SENSOR("Sensor GPS", MAV_SYS_STATUS_SENSOR_GPS);
+		STAT_ADD_SENSOR("Sensor Optical Flow", MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW);
+		STAT_ADD_SENSOR("Sensor Vision Position", MAV_SYS_STATUS_SENSOR_VISION_POSITION);
+		STAT_ADD_SENSOR("Sensor Laser Position", MAV_SYS_STATUS_SENSOR_LASER_POSITION);
+		STAT_ADD_SENSOR("Sensor Ext Grount Truth", MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH);
+		STAT_ADD_SENSOR("Sensor Ang Rate Control", MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL);
+		STAT_ADD_SENSOR("Sensor Attitude Stab", MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION);
+		STAT_ADD_SENSOR("Sensor Yaw Position", MAV_SYS_STATUS_SENSOR_YAW_POSITION);
+		STAT_ADD_SENSOR("Sensor Z/Alt Control", MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL);
+		STAT_ADD_SENSOR("Sensor X/Y Pos Control", MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL);
+		STAT_ADD_SENSOR("Sensor Motor Outputs", MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS);
+		STAT_ADD_SENSOR("Sensor RC Receiver", MAV_SYS_STATUS_SENSOR_RC_RECEIVER);
+		STAT_ADD_SENSOR("Sensor 3D Gyro 2", MAV_SYS_STATUS_SENSOR_3D_GYRO2);
+		STAT_ADD_SENSOR("Sensor 3D Accel 2", MAV_SYS_STATUS_SENSOR_3D_ACCEL2);
+		STAT_ADD_SENSOR("Sensor 3D Mag 2", MAV_SYS_STATUS_SENSOR_3D_MAG2);
+		STAT_ADD_SENSOR("Geofence health", MAV_SYS_STATUS_GEOFENCE);
+		STAT_ADD_SENSOR("AHRS health", MAV_SYS_STATUS_AHRS);
+		//STAT_ADD_SENSOR("Terrain health", MAV_SYS_STATUS_TERRAIN);
+
+#undef STAT_ADD_SENSOR
+
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
 		stat.addf("Errors comm", "%d", last_st.errors_comm);
