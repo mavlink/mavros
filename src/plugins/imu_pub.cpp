@@ -133,7 +133,7 @@ private:
 	static constexpr double MILLIT_TO_TESLA = 1000.0;
 	static constexpr double MILLIRS_TO_RADSEC = 1000.0;
 	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
-	static constexpr double MILLIBAR_TO_PASCAL = 1.0e5;
+	static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 
 
 	void setup_covariance(boost::array<double, 9> &cov, double stdev) {
