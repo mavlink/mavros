@@ -43,6 +43,7 @@ namespace mavplugin {
 class IMUPubPlugin : public MavRosPlugin {
 public:
 	IMUPubPlugin() :
+		uas(nullptr),
 		linear_accel_vec(),
 		has_hr_imu(false),
 		has_scaled_imu(false)

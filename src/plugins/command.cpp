@@ -55,7 +55,8 @@ public:
  */
 class CommandPlugin : public MavRosPlugin {
 public:
-	CommandPlugin()
+	CommandPlugin() :
+		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,

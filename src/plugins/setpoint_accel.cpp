@@ -43,7 +43,9 @@ namespace mavplugin {
 class SetpointAccelerationPlugin : public MavRosPlugin,
 	private LocalNEDPositionSetpointExternalMixin<SetpointAccelerationPlugin> {
 public:
-	SetpointAccelerationPlugin()
+	SetpointAccelerationPlugin() :
+		uas(nullptr),
+		send_force(false)
 	{ };
 
 	void initialize(UAS &uas_,

@@ -39,7 +39,8 @@ namespace mavplugin {
  */
 class SafetyAreaPlugin : public MavRosPlugin {
 public:
-	SafetyAreaPlugin()
+	SafetyAreaPlugin() :
+		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,

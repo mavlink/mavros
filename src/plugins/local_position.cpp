@@ -40,7 +40,9 @@ namespace mavplugin {
  */
 class LocalPositionPlugin : public MavRosPlugin {
 public:
-	LocalPositionPlugin()
+	LocalPositionPlugin() :
+		uas(nullptr),
+		send_tf(false)
 	{ };
 
 	void initialize(UAS &uas_,
