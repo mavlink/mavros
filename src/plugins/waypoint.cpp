@@ -240,7 +240,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	UAS *uas;
 
 	ros::NodeHandle wp_nh;
@@ -292,7 +292,7 @@ private:
 
 	void handle_mission_item(mavlink_mission_item_t &mit) {
 		WaypointItem wpi = WaypointItem::from_mission_item(mit);
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		/* receive item only in RX state */
 		if (wp_state == WP_RXWP) {
@@ -335,7 +335,7 @@ private:
 	}
 
 	void handle_mission_request(mavlink_mission_request_t &mreq) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if ((wp_state == WP_TXLIST && mreq.seq == 0) || (wp_state == WP_TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
@@ -357,7 +357,7 @@ private:
 	}
 
 	void handle_mission_current(mavlink_mission_current_t &mcur) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state == WP_SET_CUR) {
 			/* MISSION_SET_CURRENT ACK */
@@ -382,7 +382,7 @@ private:
 	}
 
 	void handle_mission_count(mavlink_mission_count_t &mcnt) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state == WP_RXLIST) {
 			/* FCU report of MISSION_REQUEST_LIST */
@@ -422,7 +422,7 @@ private:
 	}
 
 	void handle_mission_ack(mavlink_mission_ack_t &mack) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if ((wp_state == WP_TXLIST || wp_state == WP_TXWP)
 				&& (wp_cur_id == send_waypoints.size() - 1)
@@ -493,7 +493,7 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	void timeout_cb(const ros::TimerEvent &event) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 		if (wp_retries > 0) {
 			wp_retries--;
 			ROS_WARN_NAMED("wp", "WP: timeout, retries left %zu", wp_retries);
@@ -536,7 +536,7 @@ private:
 	}
 
 	void connection_cb(bool connected) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if (connected)
 			shedule_pull(BOOT_TIME_DT);
 		else
@@ -544,7 +544,7 @@ private:
 	}
 
 	void sheduled_pull_cb(const ros::TimerEvent &event) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if (wp_state != WP_IDLE) {
 			/* try later */
 			ROS_DEBUG_NAMED("wp", "WP: busy, reshedule pull");
@@ -635,7 +635,7 @@ private:
 
 	void publish_waypoints() {
 		mavros::WaypointListPtr wpl = boost::make_shared<mavros::WaypointList>();
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		wpl->waypoints.clear();
 		wpl->waypoints.reserve(waypoints.size());
@@ -740,7 +740,7 @@ private:
 
 	bool pull_cb(mavros::WaypointPull::Request &req,
 			mavros::WaypointPull::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
 			// Wrong initial state, other operation in progress?
@@ -762,7 +762,7 @@ private:
 
 	bool push_cb(mavros::WaypointPush::Request &req,
 			mavros::WaypointPush::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
 			// Wrong initial state, other operation in progress?
@@ -795,7 +795,7 @@ private:
 
 	bool clear_cb(mavros::WaypointClear::Request &req,
 			mavros::WaypointClear::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
 			return false;
@@ -814,7 +814,7 @@ private:
 
 	bool set_cur_cb(mavros::WaypointSetCurrent::Request &req,
 			mavros::WaypointSetCurrent::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
 			return false;
@@ -834,7 +834,7 @@ private:
 
 	bool goto_cb(mavros::WaypointGOTO::Request &req,
 			mavros::WaypointGOTO::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (wp_state != WP_IDLE)
 			return false;

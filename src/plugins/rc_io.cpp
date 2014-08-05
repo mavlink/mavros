@@ -95,7 +95,7 @@ public:
 	};
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	UAS *uas;
 
 	std::vector<uint16_t> raw_rc_in;
@@ -111,7 +111,7 @@ private:
 
 	void handle_rc_channels_raw(const mavlink_message_t *msg,
 			mavlink_rc_channels_raw_t &port) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		/* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW */
 		if (has_rc_channels_msg)
@@ -144,7 +144,7 @@ private:
 
 	void handle_rc_channels(const mavlink_message_t *msg,
 			mavlink_rc_channels_t &channels) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		has_rc_channels_msg = true;
 
@@ -191,7 +191,7 @@ private:
 
 	void handle_servo_output_raw(const mavlink_message_t *msg,
 			mavlink_servo_output_raw_t &port) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		size_t offset = port.port * 8;
 		if (raw_rc_out.size() < offset + 8)
@@ -239,7 +239,7 @@ private:
 	/* -*- callbacks -*- */
 
 	void connection_cb(bool connected) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		raw_rc_in.clear();
 		raw_rc_out.clear();
 		has_rc_channels_msg = false;

@@ -381,7 +381,7 @@ public:
 		std::string param_id(pmsg.param_id,
 				strnlen(pmsg.param_id, sizeof(pmsg.param_id)));
 
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		// search
 		auto param_it = parameters.find(param_id);
 		if (param_it != parameters.end()) {
@@ -460,7 +460,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	UAS *uas;
 
 	ros::NodeHandle param_nh;
@@ -567,7 +567,7 @@ private:
 	/* -*- mid-level functions -*- */
 
 	void connection_cb(bool connected) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if (connected) {
 			shedule_pull(BOOTUP_TIME_DT);
 		}
@@ -583,7 +583,7 @@ private:
 	}
 
 	void shedule_cb(const ros::TimerEvent &event) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if (param_state != PR_IDLE) {
 			// try later
 			ROS_DEBUG_NAMED("param", "PR: busy, reshedule pull");
@@ -600,7 +600,7 @@ private:
 	}
 
 	void timeout_cb(const ros::TimerEvent &event) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		if (param_state == PR_RXLIST && param_rx_retries > 0) {
 			param_rx_retries--;
 			ROS_WARN_NAMED("param", "PR: request list timeout, retries left %zu", param_rx_retries);
@@ -696,7 +696,7 @@ private:
 	}
 
 	bool send_param_set_and_wait(Parameter &param) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		// add to waiting list
 		set_parameters[param.param_id] = new ParamSetOpt(param, RETRIES_COUNT);
@@ -731,7 +731,7 @@ private:
 	 */
 	bool pull_cb(mavros::ParamPull::Request &req,
 			mavros::ParamPull::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if ((param_state == PR_IDLE && parameters.empty())
 				|| req.force_pull) {
@@ -799,7 +799,7 @@ private:
 				continue;
 			}
 
-			boost::recursive_mutex::scoped_lock lock(mutex);
+			unique_lock lock(mutex);
 			auto param_it = parameters.find(param->first);
 			if (param_it != parameters.end()) {
 				Parameter *p = &param_it->second;
@@ -831,7 +831,7 @@ private:
 	 */
 	bool set_cb(mavros::ParamSet::Request &req,
 			mavros::ParamSet::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
 			ROS_ERROR_NAMED("param", "PR: receiving not complete");
@@ -879,7 +879,7 @@ private:
 	 */
 	bool get_cb(mavros::ParamGet::Request &req,
 			mavros::ParamGet::Response &res) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {

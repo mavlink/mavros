@@ -44,7 +44,7 @@ public:
 
 	template <typename msgT>
 	void set(msgT &rst) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		data_received = true;
 #define RST_COPY(field)	last_rst.field = rst.field
 		RST_COPY(rssi);
@@ -61,7 +61,7 @@ public:
 	 * @todo check RSSI warning level
 	 */
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		if (!data_received)
 			stat.summary(2, "No data");
@@ -87,7 +87,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	mavlink_radio_status_t last_rst;
 	bool data_received;
 	const uint8_t low_rssi;

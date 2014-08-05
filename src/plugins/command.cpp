@@ -86,7 +86,7 @@ public:
 		mavlink_command_ack_t ack;
 		mavlink_msg_command_ack_decode(msg, &ack);
 
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		for (auto it = ack_waiting_list.cbegin();
 				it != ack_waiting_list.cend(); it++)
 			if ((*it)->expected_command == ack.command) {
@@ -100,7 +100,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	UAS *uas;
 
 	ros::NodeHandle cmd_nh;
@@ -132,7 +132,7 @@ private:
 			float param5, float param6,
 			float param7,
 			unsigned char &success, uint8_t &result) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		unique_lock lock(mutex);
 
 		/* check transactions */
 		for (auto it = ack_waiting_list.cbegin();

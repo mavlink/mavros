@@ -54,7 +54,7 @@ public:
 	}
 
 	void clear() {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		ros::Time curtime = ros::Time::now();
 		count_ = 0;
 
@@ -68,13 +68,13 @@ public:
 	}
 
 	void tick(mavlink_heartbeat_t &hb_struct) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		count_++;
 		last_hb = hb_struct;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		ros::Time curtime = ros::Time::now();
 		int curseq = count_;
 		int events = curseq - seq_nums_[hist_indx_];
@@ -113,7 +113,7 @@ private:
 	std::vector<ros::Time> times_;
 	std::vector<int> seq_nums_;
 	int hist_indx_;
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	const size_t window_size_;
 	const double min_freq_;
 	const double max_freq_;
@@ -131,12 +131,12 @@ public:
 	{ };
 
 	void set(mavlink_sys_status_t &st) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		last_st = st;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled)
 				!= last_st.onboard_control_sensors_enabled)
@@ -189,7 +189,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	mavlink_sys_status_t last_st;
 };
 
@@ -206,19 +206,19 @@ public:
 	{};
 
 	void set_min_voltage(float volt) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		min_voltage = volt;
 	}
 
 	void set(float volt, float curr, float rem) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		voltage = volt;
 		current = curr;
 		remaining = rem;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		if (voltage < 0)
 			stat.summary(2, "No data");
@@ -233,7 +233,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	float voltage;
 	float current;
 	float remaining;
@@ -251,13 +251,13 @@ public:
 	{};
 
 	void set(uint16_t f, uint16_t b) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		freemem = f;
 		brkval = b;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		if (freemem < 0)
 			stat.summary(2, "No data");
@@ -271,7 +271,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	ssize_t freemem;
 	uint16_t brkval;
 };
@@ -288,13 +288,13 @@ public:
 	{};
 
 	void set(uint16_t v, uint8_t e) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 		vcc = v / 1000.0;
 		i2cerr = e;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		boost::recursive_mutex::scoped_lock lock(mutex);
+		lock_guard lock(mutex);
 
 		if (vcc < 0)
 			stat.summary(2, "No data");
@@ -312,7 +312,7 @@ public:
 	}
 
 private:
-	boost::recursive_mutex mutex;
+	std::recursive_mutex mutex;
 	float vcc;
 	size_t i2cerr;
 	size_t i2cerr_last;
