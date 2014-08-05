@@ -24,9 +24,10 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <chrono>
+#include <condition_variable>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <mavros/CommandLong.h>
 #include <mavros/CommandBool.h>
@@ -37,7 +38,8 @@ namespace mavplugin {
 
 class CommandTransaction {
 public:
-	boost::condition_variable ack;
+	std::mutex cond_mutex;
+	std::condition_variable ack;
 	uint16_t expected_command;
 	uint8_t result;
 
@@ -115,10 +117,10 @@ private:
 	/* -*- mid-level functions -*- */
 
 	bool wait_ack_for(CommandTransaction *tr) {
-		boost::mutex cond_mutex;
-		boost::unique_lock<boost::mutex> lock(cond_mutex);
+		std::unique_lock<std::mutex> lock(tr->cond_mutex);
 
-		return tr->ack.timed_wait(lock, boost::posix_time::milliseconds(ACK_TIMEOUT_MS));
+		return tr->ack.wait_for(lock, std::chrono::milliseconds(ACK_TIMEOUT_MS))
+			== std::cv_status::no_timeout;
 	}
 
 	/**

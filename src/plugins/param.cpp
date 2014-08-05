@@ -24,6 +24,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <chrono>
+#include <condition_variable>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 #include <boost/any.hpp>
@@ -325,7 +327,8 @@ public:
 	Parameter param;
 	size_t retries_remaining;
 	bool is_timedout;
-	boost::condition_variable ack;
+	std::mutex cond_mutex;
+	std::condition_variable ack;
 };
 
 
@@ -341,8 +344,7 @@ public:
 		is_timedout(false),
 		param_rx_retries(RETRIES_COUNT),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
-		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0),
-		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0)
+		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -479,7 +481,6 @@ private:
 
 	const ros::Duration BOOTUP_TIME_DT;
 	const ros::Duration PARAM_TIMEOUT_DT;
-	const ros::Duration LIST_TIMEOUT_DT;
 
 	std::map<std::string, Parameter> parameters;
 	std::list<uint16_t> parameters_missing_idx;
@@ -494,7 +495,8 @@ private:
 
 	size_t param_rx_retries;
 	bool is_timedout;
-	boost::condition_variable list_receiving;
+	std::mutex list_cond_mutex;
+	std::condition_variable list_receiving;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
 		if (uas->is_ardupilotmega())
@@ -680,18 +682,18 @@ private:
 	}
 
 	bool wait_fetch_all() {
-		boost::mutex cond_mutex;
-		boost::unique_lock<boost::mutex> lock(cond_mutex);
+		std::unique_lock<std::mutex> lock(list_cond_mutex);
 
-		return list_receiving.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
+		return list_receiving.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}
 
 	bool wait_param_set_ack_for(ParamSetOpt *opt) {
-		boost::mutex cond_mutex;
-		boost::unique_lock<boost::mutex> lock(cond_mutex);
+		std::unique_lock<std::mutex> lock(opt->cond_mutex);
 
-		return opt->ack.timed_wait(lock, PARAM_TIMEOUT_DT.toBoost() * (RETRIES_COUNT + 2))
+		return opt->ack.wait_for(lock, std::chrono::nanoseconds(PARAM_TIMEOUT_DT.toNSec()) * (RETRIES_COUNT + 2))
+			== std::cv_status::no_timeout
 			&& !opt->is_timedout;
 	}
 

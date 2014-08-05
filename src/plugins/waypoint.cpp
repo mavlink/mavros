@@ -24,6 +24,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <chrono>
+#include <condition_variable>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -153,8 +155,7 @@ public:
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		reshedule_pull(false),
-		BOOT_TIME_DT(BOOT_TIME_MS / 1000.0),
-		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
+		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		WP_TIMEOUT_DT(WP_TIMEOUT_MS/ 1000.0),
 		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
 	{ };
@@ -179,7 +180,7 @@ public:
 
 		wp_timer = wp_nh.createTimer(WP_TIMEOUT_DT, &WaypointPlugin::timeout_cb, this, true);
 		wp_timer.stop();
-		shedule_timer = wp_nh.createTimer(BOOT_TIME_DT, &WaypointPlugin::sheduled_pull_cb, this, true);
+		shedule_timer = wp_nh.createTimer(BOOTUP_TIME_DT, &WaypointPlugin::sheduled_pull_cb, this, true);
 		shedule_timer.stop();
 		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
@@ -269,22 +270,23 @@ private:
 	size_t wp_set_active;
 	size_t wp_retries;
 	bool is_timedout;
-	boost::condition_variable list_receiving;
-	boost::condition_variable list_sending;
+	std::mutex recv_cond_mutex;
+	std::mutex send_cond_mutex;
+	std::condition_variable list_receiving;
+	std::condition_variable list_sending;
 
 	ros::Timer wp_timer;
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
 	bool reshedule_pull;
 
-	static constexpr int BOOT_TIME_MS = 15000;
-	static constexpr int LIST_TIMEOUT_MS = 30000;
+	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
+	static constexpr int LIST_TIMEOUT_MS = 30000;	//! Timeout for pull/push operations
 	static constexpr int WP_TIMEOUT_MS = 1000;
 	static constexpr int RESHEDULE_MS = 5000;
 	static constexpr int RETRIES_COUNT = 3;
 
-	const ros::Duration BOOT_TIME_DT;
-	const ros::Duration LIST_TIMEOUT_DT;
+	const ros::Duration BOOTUP_TIME_DT;
 	const ros::Duration WP_TIMEOUT_DT;
 	const ros::Duration RESHEDULE_DT;
 
@@ -538,7 +540,7 @@ private:
 	void connection_cb(bool connected) {
 		lock_guard lock(mutex);
 		if (connected)
-			shedule_pull(BOOT_TIME_DT);
+			shedule_pull(BOOTUP_TIME_DT);
 		else
 			shedule_timer.stop();
 	}
@@ -611,18 +613,18 @@ private:
 	}
 
 	bool wait_fetch_all() {
-		boost::mutex cond_mutex;
-		boost::unique_lock<boost::mutex> lock(cond_mutex);
+		std::unique_lock<std::mutex> lock(recv_cond_mutex);
 
-		return list_receiving.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
+		return list_receiving.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}
 
 	bool wait_push_all() {
-		boost::mutex cond_mutex;
-		boost::unique_lock<boost::mutex> lock(cond_mutex);
+		std::unique_lock<std::mutex> lock(send_cond_mutex);
 
-		return list_sending.timed_wait(lock, LIST_TIMEOUT_DT.toBoost())
+		return list_sending.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}
 
