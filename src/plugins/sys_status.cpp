@@ -353,10 +353,12 @@ public:
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
+		double conn_system_time_d;
 		double min_voltage;
 
 		nh.param("conn_timeout", conn_timeout_d, 30.0);
 		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
+		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		nh.param("sys/min_voltage", min_voltage, 6.0);
 
 		batt_diag.set_min_voltage(min_voltage);
@@ -370,6 +372,12 @@ public:
 			heartbeat_timer = nh.createTimer(ros::Duration(conn_heartbeat_d),
 					&SystemStatusPlugin::heartbeat_cb, this);
 			heartbeat_timer.start();
+		}
+
+		if (conn_system_time_d > 0.0) {
+			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
+					&SystemStatusPlugin::sys_time_cb, this);
+			sys_time_timer.start();
 		}
 
 		state_pub = nh.advertise<mavros::State>("state", 10);
@@ -442,6 +450,7 @@ private:
 	UAS *uas;
 	ros::Timer timeout_timer;
 	ros::Timer heartbeat_timer;
+	ros::Timer sys_time_timer;
 
 	ros::Publisher state_pub;
 	ros::Publisher batt_pub;
@@ -661,6 +670,16 @@ private:
 				MAV_STATE_ACTIVE
 				);
 
+		uas->mav_link->send_message(&msg);
+	}
+
+	void sys_time_cb(const ros::TimerEvent &event) {
+		mavlink_message_t msg;
+		auto stamp = ros::Time::now();
+		mavlink_msg_system_time_pack_chan(UAS_PACK_CHAN(uas), &msg,
+			stamp.toNSec() / 1000, /* nano -> micro */
+			0
+			);
 		uas->mav_link->send_message(&msg);
 	}
 
