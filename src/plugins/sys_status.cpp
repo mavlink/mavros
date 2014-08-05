@@ -126,10 +126,9 @@ class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
 	SystemStatusDiag(const std::string name) :
-		diagnostic_updater::DiagnosticTask(name)
-	{
-		memset(&last_st, 0, sizeof(last_st));
-	};
+		diagnostic_updater::DiagnosticTask(name),
+		last_st{}
+	{ };
 
 	void set(mavlink_sys_status_t &st) {
 		boost::recursive_mutex::scoped_lock lock(mutex);

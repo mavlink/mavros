@@ -37,10 +37,9 @@ public:
 	TDRRadioStatus(const std::string name, uint8_t _low_rssi) :
 		diagnostic_updater::DiagnosticTask(name),
 		data_received(false),
-		low_rssi(_low_rssi)
-	{
-		memset(&last_rst, 0, sizeof(last_rst));
-	}
+		low_rssi(_low_rssi),
+		last_rst{}
+	{ }
 
 
 	template <typename msgT>
