@@ -42,19 +42,3 @@ void UAS::stop(void)
 {
 }
 
-void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_) {
-	boost::recursive_mutex::scoped_lock lock(mutex);
-
-	type = static_cast<enum MAV_TYPE>(type_);
-	autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
-}
-
-void UAS::update_connection_status(bool conn_) {
-	boost::recursive_mutex::scoped_lock lock(mutex);
-
-	if (conn_ != connected) {
-		connected = conn_;
-		sig_connection_changed(connected);
-	}
-}
-

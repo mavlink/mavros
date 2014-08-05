@@ -70,12 +70,24 @@ public:
 	/**
 	 * Update autopilot type on every HEARTBEAT
 	 */
-	void update_heartbeat(uint8_t type_, uint8_t autopilot_);
+	void update_heartbeat(uint8_t type_, uint8_t autopilot_) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		type = static_cast<enum MAV_TYPE>(type_);
+		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
+	}
 
 	/**
 	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
 	 */
-	void update_connection_status(bool conn_);
+	void update_connection_status(bool conn_) {
+		boost::recursive_mutex::scoped_lock lock(mutex);
+
+		if (conn_ != connected) {
+			connected = conn_;
+			sig_connection_changed(connected);
+		}
+	}
 
 	inline enum MAV_TYPE get_type() {
 		boost::recursive_mutex::scoped_lock lock(mutex);
