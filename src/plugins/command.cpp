@@ -58,7 +58,8 @@ public:
 class CommandPlugin : public MavRosPlugin {
 public:
 	CommandPlugin() :
-		uas(nullptr)
+		uas(nullptr),
+		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -114,12 +115,14 @@ private:
 	std::list<CommandTransaction *> ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS = 5000;
 
+	const ros::Duration ACK_TIMEOUT_DT;
+
 	/* -*- mid-level functions -*- */
 
 	bool wait_ack_for(CommandTransaction *tr) {
 		std::unique_lock<std::mutex> lock(tr->cond_mutex);
 
-		return tr->ack.wait_for(lock, std::chrono::milliseconds(ACK_TIMEOUT_MS))
+		return tr->ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec()))
 			== std::cv_status::no_timeout;
 	}
 

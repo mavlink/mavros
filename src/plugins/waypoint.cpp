@@ -156,6 +156,7 @@ public:
 		do_pull_after_gcs(false),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
+		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
 		WP_TIMEOUT_DT(WP_TIMEOUT_MS/ 1000.0),
 		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
 	{ };
@@ -287,6 +288,7 @@ private:
 	static constexpr int RETRIES_COUNT = 3;
 
 	const ros::Duration BOOTUP_TIME_DT;
+	const ros::Duration LIST_TIMEOUT_DT;
 	const ros::Duration WP_TIMEOUT_DT;
 	const ros::Duration RESHEDULE_DT;
 
@@ -615,7 +617,7 @@ private:
 	bool wait_fetch_all() {
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
 
-		return list_receiving.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
 			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}
@@ -623,7 +625,7 @@ private:
 	bool wait_push_all() {
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
 
-		return list_sending.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+		return list_sending.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
 			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}

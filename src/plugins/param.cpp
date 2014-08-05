@@ -344,6 +344,7 @@ public:
 		is_timedout(false),
 		param_rx_retries(RETRIES_COUNT),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
+		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
 		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
 	{ };
 
@@ -480,6 +481,7 @@ private:
 	static constexpr int RETRIES_COUNT = 3;
 
 	const ros::Duration BOOTUP_TIME_DT;
+	const ros::Duration LIST_TIMEOUT_DT;
 	const ros::Duration PARAM_TIMEOUT_DT;
 
 	std::map<std::string, Parameter> parameters;
@@ -684,7 +686,7 @@ private:
 	bool wait_fetch_all() {
 		std::unique_lock<std::mutex> lock(list_cond_mutex);
 
-		return list_receiving.wait_for(lock, std::chrono::milliseconds(LIST_TIMEOUT_MS))
+		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
 			== std::cv_status::no_timeout
 			&& !is_timedout;
 	}
