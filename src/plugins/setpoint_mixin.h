@@ -63,7 +63,7 @@ public:
 template <class D>
 class TFListenerMixin {
 public:
-	boost::thread tf_thread;
+	std::thread tf_thread;
 	std::string thd_name;
 	boost::function<void (const tf::Transform&, const ros::Time&)> tf_transform_cb;
 
@@ -71,7 +71,7 @@ public:
 		thd_name = _thd_name;
 		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1, _2);
 
-		boost::thread t(boost::bind(&TFListenerMixin::tf_listener, this));
+		std::thread t(boost::bind(&TFListenerMixin::tf_listener, this));
 		mavutils::set_thread_name(t, thd_name);
 		tf_thread.swap(t);
 	}

@@ -30,9 +30,6 @@
 #include <tf/transform_datatypes.h>
 #include <mavros/mavconn_interface.h>
 
-// TODO: replace with C++11
-#include <boost/thread/recursive_mutex.hpp>
-
 namespace mavplugin {
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 typedef std::unique_lock<std::recursive_mutex> unique_lock;
