@@ -47,5 +47,8 @@
 	<class name="setpoint_attitude" type="mavplugin::SetpointAttitudePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU external attitude setpoint.</description>
 	</class>
+	<class name="vision_speed" type="mavplugin::VisionSpeedPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send vision speed estimate to FCU.</description>
+	</class>
 </library>
 
