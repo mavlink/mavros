@@ -101,6 +101,16 @@ Examples:
     rosrun mavros mavsafety disarm
 
 
+### mavcmd -- commander tool
+
+See `--help`.
+
+Examples:
+
+    rosrun mavros mavcmd takeoff 20 15 0 0 50
+    rosrun mavros mavcmd sethome --current-gps 0 0 0
+
+
 Installation
 ------------
 
