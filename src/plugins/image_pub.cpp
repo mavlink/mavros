@@ -6,6 +6,23 @@
  * @addtogroup plugin
  * @{
  */
+/*
+ * Copyright 2014 Vladimir Ermakov.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
@@ -16,20 +33,29 @@
 #include <cv.h>
 #include <highgui.h>
 
+namespace mavplugin {
 namespace enc = sensor_msgs::image_encodings;
 
-namespace mavplugin {
-
+/**
+ * @brief Image pub plugin
+ *
+ * This plugin recive image from mavlink stream and publish in ROS.
+ */
 class ImagePubPlugin : public MavRosPlugin {
 public:
-	ImagePubPlugin()
+	ImagePubPlugin() :
+		im_width(0), im_height(0),
+		im_size(0), im_packets(0), im_payload(0),
+		im_seqnr(0), im_type(255),
+		im_buffer{}
 	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		waiting_data = false;
+		nh.param<std::string>("camera_frame_id", frame_id, "px4flow");
+
 		itp = boost::make_shared<image_transport::ImageTransport>(nh);
 		image_pub = itp->advertise("camera_image", 1);
 	}
@@ -61,26 +87,76 @@ private:
 	boost::shared_ptr<image_transport::ImageTransport> itp;
 	image_transport::Publisher image_pub;
 
-	bool waiting_data;
+	std::string frame_id;
+
 	size_t im_width, im_height;
 	size_t im_size, im_packets, im_payload;
 	size_t im_seqnr;
 	uint8_t im_type;
 	std::vector<uint8_t> im_buffer;
 
-	static constexpr size_t MAX_BUFFER_RESERVE_DIFF = 0x10000;
+	//! Maximum difference for im_buffer.capacity() and im_size (100 KiB)
+	static constexpr size_t MAX_BUFFER_RESERVE_DIFF = 0x20000;
 
-	bool check_supported_type(uint8_t type) {
+	bool check_supported_type(uint8_t type) const {
 		return (type == MAVLINK_DATA_STREAM_IMG_JPEG ||
 				type == MAVLINK_DATA_STREAM_IMG_BMP ||
 				type == MAVLINK_DATA_STREAM_IMG_RAW8U ||
-				type == MAVLINK_DATA_STREAM_IMG_RAW32U ||
+				/*type == MAVLINK_DATA_STREAM_IMG_RAW32U ||*/
 				type == MAVLINK_DATA_STREAM_IMG_PGM ||
 				type == MAVLINK_DATA_STREAM_IMG_PNG);
 	}
 
+	void publish_raw8u_image() {
+		sensor_msgs::ImagePtr image = boost::make_shared<sensor_msgs::Image>();
+
+		image->header.frame_id = frame_id;
+		image->header.stamp = ros::Time::now();
+		image->height = im_height;
+		image->width = im_width;
+		image->encoding = enc::MONO8;
+		image->is_bigendian = false;
+		image->step = im_width;
+		image->data = im_buffer;
+
+		image_pub.publish(image);
+	}
+
+	void publish_compressed_image() {
+		cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
+
+		cv_ptr->header.frame_id = frame_id;
+		cv_ptr->header.stamp = ros::Time::now();
+
+		try {
+			cv_ptr->image = cv::imdecode(cv::Mat(im_buffer), CV_LOAD_IMAGE_UNCHANGED);
+			if (cv_ptr->image.channels() == 1)
+				cv_ptr->encoding = enc::MONO8;
+			else
+				cv_ptr->encoding = enc::BGR8;
+		}
+		catch (cv::Exception &ex) {
+			ROS_ERROR_NAMED("image", "IMG: %s", ex.what());
+			return;
+		}
+
+		image_pub.publish(cv_ptr->toImageMsg());
+	}
+
 	void publish_image() {
-		ROS_WARN("data available: %zu, %zu", im_size, im_buffer.size());
+		switch (im_type) {
+		case MAVLINK_DATA_STREAM_IMG_RAW8U:
+			publish_raw8u_image();
+			break;
+		case MAVLINK_DATA_STREAM_IMG_JPEG:
+		case MAVLINK_DATA_STREAM_IMG_BMP:
+		case MAVLINK_DATA_STREAM_IMG_PGM:
+		case MAVLINK_DATA_STREAM_IMG_PNG:
+			publish_compressed_image();
+			break;
+		default:
+			ROS_ERROR_NAMED("image", "IMG: Unsupported image type: %d", im_type);
+		}
 	}
 
 	void handle_data_transmission_handshake(const mavlink_message_t *msg) {
@@ -89,12 +165,11 @@ private:
 
 		if (!check_supported_type(img_header.type)) {
 			ROS_WARN_NAMED("image", "IMG: Unknown stream type: %d", img_header.type);
-			waiting_data = false;
+			im_packets = 0;
 			return;
 		}
 
 		// Note: no mutex, because all work done by one thread (reader)
-		waiting_data = true;
 		im_seqnr = 0;
 		im_type = img_header.type;
 		im_size = img_header.size;
@@ -102,6 +177,10 @@ private:
 		im_height = img_header.height;
 		im_packets = img_header.packets;
 		im_payload = img_header.payload;
+
+		ROS_DEBUG_NAMED("image", "IMG: header: %zu x %zu t:%d, %zu bytes in %zu packets",
+				im_width, im_height, im_type,
+				im_size, im_packets);
 
 		// prepare image buffer
 		im_buffer.clear();
@@ -112,35 +191,46 @@ private:
 	}
 
 	void handle_encapsulated_data(const mavlink_message_t *msg) {
-		if (!waiting_data)
+		if (im_packets == 0)
 			return;
 
 		mavlink_encapsulated_data_t img_data;
 		mavlink_msg_encapsulated_data_decode(msg, &img_data);
 
 		size_t seqnr = img_data.seqnr;
-		if (seqnr != im_seqnr) {
-			// TODO: fill lost data by zeroes, and try to decode
-			ROS_ERROR_NAMED("image", "IMG: Lost sync, seq: %zu, waiting: %zu", seqnr, im_seqnr);
-			waiting_data = false;
+		//ROS_DEBUG_NAMED("image", "IMG: chunk %2zu, waiting %2zu", seqnr, im_seqnr);
+
+		if (seqnr + 1 > im_packets) {
+			ROS_ERROR_NAMED("image", "IMG: More data packets, than specified in handshake, seqnr: %zu, packets: %zu",
+					seqnr, im_packets);
+			im_packets = 0;
 			return;
 		}
 
-		if (seqnr + 1 > im_packets) {
-			ROS_DEBUG_NAMED("image", "IMG: More data packets, than specified in handshake, seq: %zu", seqnr);
-			waiting_data = false;
-			return;
+		if (seqnr > im_seqnr) {
+			ROS_WARN_NAMED("image", "IMG: %zu data packets probably lost", seqnr - im_seqnr);
+			// we lost some packets (or packet ordering changed by underlining transport (UDP)
+			im_buffer.resize(std::min(im_size, (seqnr - 1) * im_payload), 0);
+			im_seqnr = seqnr;
 		}
 
 		size_t bytes_to_copy = im_payload;
 		if (seqnr * im_payload + bytes_to_copy >= im_size)
 			bytes_to_copy = im_size - seqnr * im_payload;
 
-		im_seqnr++;
-		im_buffer.insert(im_buffer.end(), img_data.data, img_data.data + bytes_to_copy);
+		if (seqnr == im_seqnr) {
+			// insert waiting packet
+			im_seqnr++;
+			im_buffer.insert(im_buffer.end(), img_data.data, img_data.data + bytes_to_copy);
+		}
+		else {
+			// reordered packet arrives (seqnr < im_seqnr)
+			ROS_DEBUG_NAMED("image", "IMG: reordered data message, seqnr: %zu", seqnr);
+			memcpy(im_buffer.data() + (seqnr * im_payload), img_data.data, bytes_to_copy);
+		}
 
-		if (seqnr + 1 == im_payload) {
-			waiting_data = false;
+		if (seqnr + 1 == im_packets) {
+			im_packets = 0;
 			publish_image();
 		}
 	}
