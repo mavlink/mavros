@@ -2,29 +2,30 @@ MAVROS
 ======
 
 MAVLink extendable communication node for ROS
-with proxy for Ground Control Station (e.g. [QGroundControl][1]).
+with proxy for Ground Control Station (e.g. [QGroundControl][qgc]).
 
-ROS API documentation moved to [wiki.ros.org][9].
+ROS API documentation moved to [wiki.ros.org][wiki].
 
 
-Feutures
+Features
 --------
 
-  - Communication with autopilot via serial port, UDP or TCP (e.g. [ArduPilot][2])
+  - Communication with autopilot via serial port, UDP or TCP (e.g. [ArduPilot][apm])
   - Internal proxy for Ground Control Station (serial, UDP, TCP)
-  - [mavlink\_ros][3] compatible ROS topics (Mavlink.msg)
+  - [mavlink\_ros][mlros] compatible ROS topics (Mavlink.msg)
   - Plugin system for ROS-MAVLink translation
   - Parameter manipulation tool
   - Waypoint manipulation tool
+  - PX4Flow support (by [mavros\_extras][mrext])
 
 
 Limitations
 -----------
 
-Only for linux. Depends on [Boost library][4] >= 1.46 (hydro on 12.04).
+Only for linux. Depends on [Boost library][boost] >= 1.46 (hydro on 12.04).
 Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 
-This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][7].
+This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][mlgbp].
 Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
 
@@ -42,7 +43,7 @@ Supported schemas:
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
   - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
 
-Note: ids from URL overrides ids given by parameters.
+Note: ids from URL overrides ids given by system\_id & component\_id parameters.
 
 
 Programs
@@ -110,7 +111,7 @@ Use `wstool` utility for installation. In your workspace do:
     rosdep install --from-paths src --ignore-src --rosdistro hydro -y
 
 Then use regular `catkin_make` for build and install.
-Notes: since v0.5 (and [#35][8]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][7].
+Notes: since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlgbp].
 
 
 ### Installing ros-\*-mavlink from source
@@ -124,7 +125,7 @@ If rosdep could not install mavlink library, you could install it from source:
     catkin_make_isolated --install-space $ROSINSTALL --install -DCMAKE_BUILD_TYPE=Release
 
 $ROSINSTALL must be writable for user or you can add `sudo -s` to last command.
-Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][7]
+Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][mlgbp]
 (common naming: `debian/<rosdistro>/<osdistro>/<package>`) using `dh binary`.
 
 
@@ -139,19 +140,21 @@ CI Statuses
 Links
 -----
 
-  - [MAVLink][5] -- communication protocol
-  - [mavlink\_ros][3] -- original ROS node (few messages, no proxy)
-  - [ArduPilot][2] -- tested autopilot APM:Plane (default command set)
-  - [QGroundControl][1] -- tested ground control station for linux
-  - [DroidPlanner][6] -- tested GCS for Android
+  - [MAVLink][ml] -- communication protocol
+  - [mavlink\_ros][mlros] -- original ROS node (few messages, no proxy)
+  - [ArduPilot][apm] -- tested autopilot APM:Plane (default command set)
+  - [QGroundControl][qgc] -- tested ground control station for linux
+  - [DroidPlanner][dp] -- tested GCS for Android
+  - [mavros\_extras][mrext] -- extra plugins & node for mavros
 
 
-[1]: http://qgroundcontrol.org/
-[2]: http://ardupilot.com/
-[3]: https://github.com/mavlink/mavlink_ros
-[4]: http://www.boost.org/
-[5]: http://mavlink.org/mavlink/start
-[6]: https://github.com/arthurbenemann/droidplanner/
-[7]: https://github.com/vooon/mavlink-gbp-release
-[8]: https://github.com/vooon/mavros/issues/35
-[9]: http://wiki.ros.org/mavros
+[qgc]: http://qgroundcontrol.org/
+[apm]: http://ardupilot.com/
+[mlros]: https://github.com/mavlink/mavlink_ros
+[boost]: http://www.boost.org/
+[ml]: http://mavlink.org/mavlink/start
+[dp]: https://github.com/arthurbenemann/droidplanner/
+[mlgbp]: https://github.com/vooon/mavlink-gbp-release
+[iss35]: https://github.com/vooon/mavros/issues/35
+[wiki]: http://wiki.ros.org/mavros
+[mrext]: https://github.com/vooon/mavros_extras
