@@ -23,8 +23,14 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
+		bool mode_tx;
 		uas = &uas_;
-		flow_pub = nh.advertise<mavros_extras::OpticalFlow>("optical_flow", 10);
+
+		nh.param("optical_flow_tx", mode_tx, false);
+		if (!mode_tx)
+			flow_pub = nh.advertise<mavros_extras::OpticalFlow>("optical_flow", 10);
+		else
+			flow_sub = nh.subscribe("optical_flow", 10, &PX4FlowPlugin::send_flow_cb, this);
 	}
 
 	const std::string get_name() const {
@@ -45,6 +51,7 @@ private:
 	UAS *uas;
 
 	ros::Publisher flow_pub;
+	ros::Subscriber flow_sub;
 
 	void handle_flow(const mavlink_message_t *msg) {
 		if (flow_pub.getNumSubscribers() == 0)
@@ -56,15 +63,47 @@ private:
 		mavros_extras::OpticalFlowPtr flow_msg =
 			boost::make_shared<mavros_extras::OpticalFlow>();
 
-		flow_msg->flow_x = flow.flow_x;
-		flow_msg->flow_y = flow.flow_y;
-		flow_msg->flow_comp_m_x	 = flow.flow_comp_m_x;
-		flow_msg->flow_comp_m_y	 = flow.flow_comp_m_y;
+		// Note: for ENU->NED conversion i swap x & y.
+		flow_msg->header.stamp = ros::Time::now();
+		flow_msg->flow_x = flow.flow_y;
+		flow_msg->flow_y = flow.flow_x;
+		flow_msg->flow_comp_m_x	 = flow.flow_comp_m_y;
+		flow_msg->flow_comp_m_y	 = flow.flow_comp_m_x;
 		flow_msg->quality = flow.quality;
 		flow_msg->ground_distance = flow.ground_distance;
 
-		//TODO header
 		flow_pub.publish(flow_msg);
+
+		/* Optional TODO: send ground_distance in sensor_msgs/Range
+		 *                with data filled by spec on used sonar.
+		 */
+	}
+
+	void optical_flow(uint64_t time_usec, uint8_t sensor_id,
+			uint16_t flow_x, uint16_t flow_y,
+			float flow_comp_m_x, float flow_comp_m_y,
+			uint8_t quality,
+			float ground_distance) {
+		mavlink_message_t msg;
+		mavlink_msg_optical_flow_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				time_usec, sensor_id,
+				flow_x, flow_y,
+				flow_comp_m_x, flow_comp_m_y,
+				quality, ground_distance);
+		uas->mav_link->send_message(&msg);
+	}
+
+	/* -*- ROS callbacks -*- */
+
+	void send_flow_cb(const mavros_extras::OpticalFlow::ConstPtr flow_msg) {
+		optical_flow(flow_msg->header.stamp.toNSec() / 1000,
+				0, /* maybe we need parameter? */
+				flow_msg->flow_y,
+				flow_msg->flow_x,
+				flow_msg->flow_comp_m_y,
+				flow_msg->flow_comp_m_x,
+				flow_msg->quality,
+				flow_msg->ground_distance);
 	}
 };
 
