@@ -44,7 +44,9 @@ namespace mavplugin {
 class VisionPositionPlugin : public MavRosPlugin,
 	private TFListenerMixin<VisionPositionPlugin> {
 public:
-	VisionPositionPlugin()
+	VisionPositionPlugin() :
+		uas(nullptr),
+		tf_rate(10.0)
 	{ };
 
 	void initialize(UAS &uas_,

@@ -48,7 +48,8 @@ public:
 		max_freq_(100),
 		tolerance_(0.1),
 		times_(win_size),
-		seq_nums_(win_size)
+		seq_nums_(win_size),
+		last_hb{}
 	{
 		clear();
 	}

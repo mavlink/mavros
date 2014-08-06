@@ -180,6 +180,8 @@ public:
 		}
 		else {
 			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
+			ret.param_float = 0.0;
+			ret.type = 255;
 		}
 
 		return ret;
@@ -221,6 +223,8 @@ public:
 		}
 		else {
 			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
+			ret.param_float = 0.0;
+			ret.type = 255;
 		}
 
 		return ret;
