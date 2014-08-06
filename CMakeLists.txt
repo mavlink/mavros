@@ -172,8 +172,12 @@ install(TARGETS mavros_extras gcs_image_bridge
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
-  extras_plugins.xml
+  mavros_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
 #############

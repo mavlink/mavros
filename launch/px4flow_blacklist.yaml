@@ -1,0 +1,12 @@
+plugin_blacklist:
+  - imu_pub
+  - gps
+  #- param
+  - waypoint
+  - rc_io
+  #- command
+  - '*_position'
+  - safety_area
+  - 3dr_radio
+  - 'setpoint_*'
+  - 'vision_*'

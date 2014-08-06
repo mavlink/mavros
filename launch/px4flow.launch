@@ -1,0 +1,29 @@
+<launch>
+	<!-- vim: ft=roslaunch -->
+	<!-- launch script for PX4Flow -->
+
+	<arg name="fcu_url" default="serial:///dev/ttyACM0:921600" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="81" />
+	<arg name="tgt_component" default="50" />
+
+	<node pkg="mavros" type="mavros_node" name="px4flow" required="true" clear_params="true" output="screen">
+		<param name="fcu_url" value="$(arg fcu_url)" />
+		<param name="gcs_url" value="$(arg gcs_url)" />
+		<param name="target_system_id" value="$(arg tgt_system)" />
+		<param name="target_component_id" value="$(arg tgt_component)" />
+
+		<!-- remap mavlink bridge topics -->
+		<remap from="/mavlink/to" to="/px4flow/mavlink_to" />
+		<remap from="/mavlink/from" to="/px4flow/mavlink_from" />
+
+		<!-- blacklist all unused plugins -->
+		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_blacklist.yaml" />
+
+		<!-- enable heartbeat and system time send, reduce timeout -->
+		<param name="conn_heartbeat" value="5.0" />
+		<param name="conn_timeout" value="10.0" />
+		<param name="conn_system_time" value="2.0" />
+		<param name="sys/disable_diag" value="true" />
+	</node>
+</launch>

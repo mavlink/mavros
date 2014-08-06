@@ -225,7 +225,8 @@ private:
 		}
 		else {
 			// reordered packet arrives (seqnr < im_seqnr)
-			ROS_DEBUG_NAMED("image", "IMG: reordered data message, seqnr: %zu", seqnr);
+			ROS_DEBUG_NAMED("image", "IMG: reordered data message, seqnr: %zu, waiting: %zu",
+					seqnr, im_seqnr);
 			memcpy(im_buffer.data() + (seqnr * im_payload), img_data.data, bytes_to_copy);
 		}
 
