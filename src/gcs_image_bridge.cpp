@@ -65,24 +65,24 @@ void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg)
 void send_jpeg_image(std::vector<uint8_t> &jpeg_buffer, int jpeg_quality,
 		int height, int width)
 {
-	const size_t PAYLOAD_SIZE = sizeof(mavlink_encapsulated_data_t::data);
+	constexpr size_t PAYLOAD_SIZE = sizeof(mavlink_encapsulated_data_t::data);
 	mavlink_message_t msg;
 
 	if (jpeg_buffer.empty()) {
-		ROS_ERROR("IMAGE: Empty JPEG buffer!");
+		ROS_ERROR("IMG: Empty JPEG buffer!");
 		return;
 	}
 
 	size_t packet_count = jpeg_buffer.size() / PAYLOAD_SIZE + 1;
 	if (jpeg_buffer.capacity() < packet_count * PAYLOAD_SIZE) {
 		// preventing copying unowned data in next step
-		ROS_DEBUG("IMAGE: Reserved: %zu -> %zu bytes", jpeg_buffer.capacity(),
+		ROS_DEBUG("IMG: Reserved: %zu -> %zu bytes", jpeg_buffer.capacity(),
 				packet_count * PAYLOAD_SIZE);
 		jpeg_buffer.reserve(packet_count * PAYLOAD_SIZE);
 	}
 
-	ROS_DEBUG("IMAGE: Send image %d x %d in %zu packets",
-			width, height, packet_count);
+	ROS_DEBUG("IMG: Send image %d x %d, %zu bytes in %zu packets",
+			width, height, jpeg_buffer.size(), packet_count);
 
 	mavlink_msg_data_transmission_handshake_pack_chan(
 		gcs_link->get_system_id(),
@@ -107,11 +107,15 @@ void send_jpeg_image(std::vector<uint8_t> &jpeg_buffer, int jpeg_quality,
 				seqnr,
 				jpeg_buffer.data() + (PAYLOAD_SIZE * seqnr));
 		gcs_link->send_message(&msg);
+
+		//ROS_DEBUG("IMG: chunk %2zu, %p->%p", seqnr, jpeg_buffer.data(),
+		//		jpeg_buffer.data() + (PAYLOAD_SIZE * seqnr));
 	}
 }
 
 void image_cb(const sensor_msgs::Image::ConstPtr &img_msg)
 {
+	constexpr size_t PAYLOAD_SIZE = sizeof(mavlink_encapsulated_data_t::data);
 	cv_bridge::CvImageConstPtr cv_ptr;
 
 	try {
@@ -124,6 +128,8 @@ void image_cb(const sensor_msgs::Image::ConstPtr &img_msg)
 		std::vector<int> params;
 		std::vector<uint8_t> jpeg_buffer;
 		params.resize(3, 0);
+		// typical image size 60-70 packet
+		jpeg_buffer.reserve(80 * PAYLOAD_SIZE);
 
 		params[0] = CV_IMWRITE_JPEG_QUALITY;
 		params[1] = jpeg_quality;
@@ -134,22 +140,22 @@ void image_cb(const sensor_msgs::Image::ConstPtr &img_msg)
 					cv_ptr->image.elemSize())
 				/ jpeg_buffer.size();
 
-			ROS_DEBUG("JPEG quality %d, ratio %f", jpeg_quality, comp_ratio);
+			ROS_DEBUG("IMG: JPEG quality %d, ratio %f", jpeg_quality, comp_ratio);
 
 			send_jpeg_image(jpeg_buffer, jpeg_quality,
 					cv_ptr->image.rows,
 					cv_ptr->image.cols);
 		}
 		else {
-			ROS_ERROR("cv::imencode (jpeg) failed");
+			ROS_ERROR("IMG: cv::imencode (jpeg) failed");
 			return;
 		}
 	}
 	catch (cv_bridge::Exception &ex) {
-		ROS_ERROR("%s", ex.what());
+		ROS_ERROR("IMG: %s", ex.what());
 	}
 	catch (cv::Exception &ex) {
-		ROS_ERROR("%s", ex.what());
+		ROS_ERROR("IMG: %s", ex.what());
 	}
 }
 
