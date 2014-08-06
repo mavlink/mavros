@@ -340,27 +340,34 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-		diag_updater.add(hb_diag);
-		diag_updater.add(sys_diag);
-		diag_updater.add(batt_diag);
-#ifdef MAVLINK_MSG_ID_MEMINFO
-		diag_updater.add(mem_diag);
-#endif
-#ifdef MAVLINK_MSG_ID_HWSTATUS
-		diag_updater.add(hwst_diag);
-#endif
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
 		double conn_system_time_d;
 		double min_voltage;
+		bool disable_diag;
 
 		nh.param("conn_timeout", conn_timeout_d, 30.0);
 		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		nh.param("sys/min_voltage", min_voltage, 6.0);
+		nh.param("sys/disable_diag", disable_diag, false);
 
-		batt_diag.set_min_voltage(min_voltage);
+		// heartbeat diag always enabled
+		diag_updater.add(hb_diag);
+		if (!disable_diag) {
+			diag_updater.add(sys_diag);
+			diag_updater.add(batt_diag);
+#ifdef MAVLINK_MSG_ID_MEMINFO
+			diag_updater.add(mem_diag);
+#endif
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+			diag_updater.add(hwst_diag);
+#endif
+
+			batt_diag.set_min_voltage(min_voltage);
+		}
+
 
 		// one-shot timeout timer
 		timeout_timer = nh.createTimer(ros::Duration(conn_timeout_d),
