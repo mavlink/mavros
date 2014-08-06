@@ -147,7 +147,7 @@ def main():
 
     land_args = subarg.add_parser('land', help="Request land")
     land_args.set_defaults(func=do_land)
-    land_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    land_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_args.add_argument('latitude', type=float, help="Latitude")
     land_args.add_argument('longitude', type=float, help="Longitude")
     land_args.add_argument('altitude', type=float, help="Altitude")
