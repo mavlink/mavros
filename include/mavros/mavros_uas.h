@@ -27,6 +27,7 @@
 #pragma once
 
 #include <mutex>
+#include <atomic>
 #include <tf/transform_datatypes.h>
 #include <mavros/mavconn_interface.h>
 
@@ -71,8 +72,6 @@ public:
 	 * Update autopilot type on every HEARTBEAT
 	 */
 	void update_heartbeat(uint8_t type_, uint8_t autopilot_) {
-		lock_guard lock(mutex);
-
 		type = static_cast<enum MAV_TYPE>(type_);
 		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
 	}
@@ -90,12 +89,10 @@ public:
 	}
 
 	inline enum MAV_TYPE get_type() {
-		lock_guard lock(mutex);
 		return type;
 	};
 
 	inline enum MAV_AUTOPILOT get_autopilot() {
-		lock_guard lock(mutex);
 		return autopilot;
 	};
 
@@ -180,6 +177,13 @@ public:
 	};
 
 	/**
+	 * For PX4 quirks
+	 */
+	inline bool is_px4() {
+		return MAV_AUTOPILOT_PX4 == get_autopilot();
+	}
+
+	/**
 	 * This signal emith when status was changes
 	 *
 	 * @param bool connection status
@@ -202,8 +206,8 @@ public:
 
 private:
 	std::recursive_mutex mutex;
-	enum MAV_TYPE type;
-	enum MAV_AUTOPILOT autopilot;
+	std::atomic<enum MAV_TYPE> type;
+	std::atomic<enum MAV_AUTOPILOT> autopilot;
 	uint8_t target_system;
 	uint8_t target_component;
 	bool connected;
