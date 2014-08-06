@@ -81,6 +81,7 @@ add_service_files(
    CommandBool.srv
    CommandMode.srv
    CommandHome.srv
+   CommandTOL.srv
    StreamRate.srv
 )
 

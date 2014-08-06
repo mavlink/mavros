@@ -33,6 +33,7 @@
 #include <mavros/CommandBool.h>
 #include <mavros/CommandMode.h>
 #include <mavros/CommandHome.h>
+#include <mavros/CommandTOL.h>
 
 namespace mavplugin {
 
@@ -73,6 +74,8 @@ public:
 		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
 		set_mode_srv = cmd_nh.advertiseService("set_mode", &CommandPlugin::set_mode_cb, this);
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
+		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
+		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -111,6 +114,8 @@ private:
 	ros::ServiceServer arming_srv;
 	ros::ServiceServer set_mode_srv;
 	ros::ServiceServer set_home_srv;
+	ros::ServiceServer takeoff_srv;
+	ros::ServiceServer land_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS = 5000;
@@ -256,6 +261,27 @@ private:
 		return send_command_long_and_wait(MAV_CMD_DO_SET_HOME, 1,
 				(req.current_gps)? 1.0 : 0.0,
 				0, 0, 0, req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool takeoff_cb(mavros::CommandTOL::Request &req,
+			mavros::CommandTOL::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_NAV_TAKEOFF, 1,
+				req.min_pitch,
+				0, 0,
+				req.yaw,
+				req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool land_cb(mavros::CommandTOL::Request &req,
+			mavros::CommandTOL::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_NAV_LAND, 1,
+				0, 0, 0,
+				req.yaw,
+				req.latitude, req.longitude, req.altitude,
 				res.success, res.result);
 	}
 };
