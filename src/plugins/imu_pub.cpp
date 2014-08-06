@@ -46,7 +46,8 @@ public:
 		uas(nullptr),
 		linear_accel_vec(),
 		has_hr_imu(false),
-		has_scaled_imu(false)
+		has_scaled_imu(false),
+		has_att_quat(false)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -83,6 +84,7 @@ public:
 	std::vector<uint8_t> const get_supported_messages() const {
 		return {
 			MAVLINK_MSG_ID_ATTITUDE,
+			MAVLINK_MSG_ID_ATTITUDE_QUATERNION,
 			MAVLINK_MSG_ID_RAW_IMU,
 			MAVLINK_MSG_ID_SCALED_IMU,
 			MAVLINK_MSG_ID_HIGHRES_IMU,
@@ -94,6 +96,9 @@ public:
 		switch (msg->msgid) {
 		case MAVLINK_MSG_ID_ATTITUDE:
 			handle_attitude(msg);
+			break;
+		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+			handle_attitude_quaternion(msg);
 			break;
 		case MAVLINK_MSG_ID_HIGHRES_IMU:
 			handle_highres_imu(msg);
@@ -122,6 +127,7 @@ private:
 
 	bool has_hr_imu;
 	bool has_scaled_imu;
+	bool has_att_quat;
 	geometry_msgs::Vector3 linear_accel_vec;
 	boost::array<double, 9> linear_acceleration_cov;
 	boost::array<double, 9> angular_velocity_cov;
@@ -135,6 +141,7 @@ private:
 	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
 	static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 
+	/* -*- helpers -*- */
 
 	void setup_covariance(boost::array<double, 9> &cov, double stdev) {
 		std::fill(cov.begin(), cov.end(), 0.0);
@@ -145,46 +152,41 @@ private:
 		}
 	}
 
-	void handle_attitude(const mavlink_message_t *msg) {
-		mavlink_attitude_t att;
-		mavlink_msg_attitude_decode(msg, &att);
+	void uas_store_attitude(tf::Quaternion &orientation,
+			geometry_msgs::Vector3 &gyro_vec,
+			geometry_msgs::Vector3 &acc_vec)
+	{
+		tf::Vector3 angular_velocity;
+		tf::Vector3 linear_acceleration;
+		tf::vector3MsgToTF(gyro_vec, angular_velocity);
+		tf::vector3MsgToTF(acc_vec, linear_acceleration);
 
-		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+		uas->set_attitude_orientation(orientation);
+		uas->set_attitude_angular_velocity(angular_velocity);
+		uas->set_attitude_linear_acceleration(linear_acceleration);
+	}
 
-		// TODO: check/verify that these are body-fixed
-		tf::Quaternion orientation = tf::createQuaternionFromRPY(
-				att.roll, -att.pitch, -att.yaw);
+	//! fill imu/data message
+	void fill_imu_msg_attitude(sensor_msgs::ImuPtr &imu_msg,
+			tf::Quaternion &orientation,
+			double xg, double yg, double zg)
+	{
 		tf::quaternionTFToMsg(orientation, imu_msg->orientation);
 
-		imu_msg->angular_velocity.x = att.rollspeed;
-		imu_msg->angular_velocity.y = -att.pitchspeed;
-		imu_msg->angular_velocity.z = -att.yawspeed;
+		imu_msg->angular_velocity.x = xg;
+		imu_msg->angular_velocity.y = yg;
+		imu_msg->angular_velocity.z = zg;
 
-		// store gyro data to UAS
 		// vector from HIGHRES_IMU or RAW_IMU
 		imu_msg->linear_acceleration = linear_accel_vec;
 
 		imu_msg->orientation_covariance = orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
-
-		// store data in UAS
-		tf::Vector3 angular_velocity;
-		tf::Vector3 linear_acceleration;
-		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
-		tf::vector3MsgToTF(imu_msg->linear_acceleration, linear_acceleration);
-
-		uas->set_attitude_orientation(orientation);
-		uas->set_attitude_angular_velocity(angular_velocity);
-		uas->set_attitude_linear_acceleration(linear_acceleration);
-
-		// publish data
-		imu_msg->header.frame_id = frame_id;
-		imu_msg->header.stamp = ros::Time::now();
-		imu_pub.publish(imu_msg);
 	}
 
-	void fill_imu_msg_vec(sensor_msgs::ImuPtr &imu_msg,
+	//! fill imu/data_raw message, store linear acceleration for imu/data
+	void fill_imu_msg_raw(sensor_msgs::ImuPtr &imu_msg,
 			double xg, double yg, double zg,
 			double xa, double ya, double za)
 	{
@@ -195,6 +197,69 @@ private:
 		imu_msg->linear_acceleration.x = xa;
 		imu_msg->linear_acceleration.y = ya;
 		imu_msg->linear_acceleration.z = za;
+		linear_accel_vec = imu_msg->linear_acceleration;
+
+		imu_msg->orientation_covariance = unk_orientation_cov;
+		imu_msg->angular_velocity_covariance = angular_velocity_cov;
+		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
+	}
+
+	/* -*- message handlers -*- */
+
+	void handle_attitude(const mavlink_message_t *msg) {
+		if (has_att_quat)
+			return;
+
+		mavlink_attitude_t att;
+		mavlink_msg_attitude_decode(msg, &att);
+
+		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+
+		// NED -> ENU (body-fixed)
+		tf::Quaternion orientation = tf::createQuaternionFromRPY(
+				att.roll, -att.pitch, -att.yaw);
+
+		fill_imu_msg_attitude(imu_msg, orientation,
+				att.rollspeed,
+				-att.pitchspeed,
+				-att.yawspeed);
+
+		uas_store_attitude(orientation,
+				imu_msg->angular_velocity,
+				imu_msg->linear_acceleration);
+
+		// publish data
+		imu_msg->header.frame_id = frame_id;
+		imu_msg->header.stamp = ros::Time::now();
+		imu_pub.publish(imu_msg);
+	}
+
+	// almost the same as handle_attitude(), but for ATTITUDE_QUATERNION
+	void handle_attitude_quaternion(const mavlink_message_t *msg) {
+		mavlink_attitude_quaternion_t att_q;
+		mavlink_msg_attitude_quaternion_decode(msg, &att_q);
+
+		ROS_INFO_COND_NAMED(!has_att_quat, "imu", "Attitude quaternion IMU detected!");
+		has_att_quat = true;
+
+		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+
+		// PX4 NED (w x y z) -> ROS ENU (x -y -z w) (body-fixed)
+		tf::Quaternion orientation(att_q.q2, -att_q.q3, -att_q.q4, att_q.q1);
+
+		fill_imu_msg_attitude(imu_msg, orientation,
+				att_q.rollspeed,
+				-att_q.pitchspeed,
+				-att_q.yawspeed);
+
+		uas_store_attitude(orientation,
+				imu_msg->angular_velocity,
+				imu_msg->linear_acceleration);
+
+		// publish data
+		imu_msg->header.frame_id = frame_id;
+		imu_msg->header.stamp = ros::Time::now();
+		imu_pub.publish(imu_msg);
 	}
 
 	void handle_highres_imu(const mavlink_message_t *msg) {
@@ -209,23 +274,18 @@ private:
 		header.frame_id = frame_id;
 
 		/* imu/data_raw filled by HR IMU */
-		if (imu_hr.fields_updated & 0x003f) {
+		if (imu_hr.fields_updated & ((7<<3)|(7<<0))) {
 			sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-			fill_imu_msg_vec(imu_msg,
+			fill_imu_msg_raw(imu_msg,
 					imu_hr.xgyro, -imu_hr.ygyro, -imu_hr.zgyro,
 					imu_hr.xacc, -imu_hr.yacc, -imu_hr.zacc);
-			linear_accel_vec = imu_msg->linear_acceleration;
-
-			imu_msg->orientation_covariance = unk_orientation_cov;
-			imu_msg->angular_velocity_covariance = angular_velocity_cov;
-			imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 			imu_msg->header = header;
 			imu_raw_pub.publish(imu_msg);
 		}
 
-		if (imu_hr.fields_updated & 0x01c0) {
+		if (imu_hr.fields_updated & (7<<6)) {
 			sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 			// Convert from local NED plane to ENU
@@ -239,7 +299,7 @@ private:
 			magn_pub.publish(magn_msg);
 		}
 
-		if (imu_hr.fields_updated & 0x0e00) {
+		if (imu_hr.fields_updated & (1<<9)) {
 			sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
@@ -247,7 +307,7 @@ private:
 			press_pub.publish(atmp_msg);
 		}
 
-		if (imu_hr.fields_updated & 0x1000) {
+		if (imu_hr.fields_updated & (1<<12)) {
 			sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
 			temp_msg->temperature = imu_hr.temperature;
@@ -269,7 +329,7 @@ private:
 		header.frame_id = frame_id;
 
 		/* NOTE: APM send SCALED_IMU data as RAW_IMU */
-		fill_imu_msg_vec(imu_msg,
+		fill_imu_msg_raw(imu_msg,
 				imu_raw.xgyro * MILLIRS_TO_RADSEC,
 				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
 				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
@@ -282,12 +342,7 @@ private:
 			linear_accel_vec.x = 0.0;
 			linear_accel_vec.y = 0.0;
 			linear_accel_vec.z = 0.0;
-		} else
-			linear_accel_vec = imu_msg->linear_acceleration;
-
-		imu_msg->orientation_covariance = unk_orientation_cov;
-		imu_msg->angular_velocity_covariance = angular_velocity_cov;
-		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
+		}
 
 		imu_msg->header = header;
 		imu_raw_pub.publish(imu_msg);
@@ -321,18 +376,13 @@ private:
 		header.stamp = ros::Time::now();
 		header.frame_id = frame_id;
 
-		fill_imu_msg_vec(imu_msg,
+		fill_imu_msg_raw(imu_msg,
 				imu_raw.xgyro * MILLIRS_TO_RADSEC,
 				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
 				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
 				imu_raw.xacc * MILLIG_TO_MS2,
 				-imu_raw.yacc * MILLIG_TO_MS2,
 				-imu_raw.zacc * MILLIG_TO_MS2);
-		linear_accel_vec = imu_msg->linear_acceleration;
-
-		imu_msg->orientation_covariance = unk_orientation_cov;
-		imu_msg->angular_velocity_covariance = angular_velocity_cov;
-		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 		imu_msg->header = header;
 		imu_raw_pub.publish(imu_msg);
