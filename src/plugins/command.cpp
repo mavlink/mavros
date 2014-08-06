@@ -147,7 +147,8 @@ private:
 				return false;
 			}
 
-		bool is_ack_required = confirmation != 0 || uas->is_ardupilotmega();
+		//! @note APM always send COMMAND_ACK, while PX4 never.
+		bool is_ack_required = (confirmation != 0 || uas->is_ardupilotmega()) && !uas->is_px4();
 		if (is_ack_required)
 			ack_waiting_list.push_back(new CommandTransaction(command));
 
