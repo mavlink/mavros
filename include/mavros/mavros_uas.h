@@ -72,8 +72,8 @@ public:
 	 * Update autopilot type on every HEARTBEAT
 	 */
 	void update_heartbeat(uint8_t type_, uint8_t autopilot_) {
-		type = static_cast<enum MAV_TYPE>(type_);
-		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
+		type = type_;
+		autopilot = autopilot_;
 	}
 
 	/**
@@ -89,11 +89,13 @@ public:
 	}
 
 	inline enum MAV_TYPE get_type() {
-		return type;
+		uint8_t type_ = type;
+		return static_cast<enum MAV_TYPE>(type_);
 	};
 
 	inline enum MAV_AUTOPILOT get_autopilot() {
-		return autopilot;
+		uint8_t autopilot_ = autopilot;
+		return static_cast<enum MAV_AUTOPILOT>(autopilot_);
 	};
 
 	/**
@@ -206,8 +208,8 @@ public:
 
 private:
 	std::recursive_mutex mutex;
-	std::atomic<enum MAV_TYPE> type;
-	std::atomic<enum MAV_AUTOPILOT> autopilot;
+	std::atomic<uint8_t> type;
+	std::atomic<uint8_t> autopilot;
 	uint8_t target_system;
 	uint8_t target_component;
 	bool connected;
