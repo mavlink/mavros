@@ -123,6 +123,17 @@ Use `wstool` utility for installation. In your workspace do:
 Then use regular `catkin_make` for build and install.
 Notes: since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlgbp].
 
+*Important*. The current implementation of mavlink does not allow to select dialect in run-time,
+so mavros package (and all plugin packages) have compile-time option `MAVLINK_DIALECT`, default is 'aurdupilotmega'.
+
+If you want change dialect you can:
+
+1. Add cmake definition to catkin: `catkin_make -DMAVLINK_DIALECT=pixhawk`
+2. Edit configuration by `catkin_make edit_cache`
+3. Use `cmake-gui build`, better: it creates drop-down list with all available dialects
+   plus it will be used in next `catkin_make edit_cache`.
+   Ubuntu: `sudo apt-get install cmake-qt-gui`
+
 
 ### Installing ros-\*-mavlink from source
 
