@@ -443,7 +443,7 @@ private:
 			lock.unlock();
 			list_sending.notify_all();
 			publish_waypoints();
-			ROS_DEBUG_NAMED("wp", "WP: mission sended");
+			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
 		else if (wp_state == WP_TXLIST || wp_state == WP_TXWP) {
 			go_idle();
@@ -489,7 +489,7 @@ private:
 				waypoints.clear();
 				lock.unlock();
 				publish_waypoints();
-				ROS_DEBUG_NAMED("wp", "WP: mission cleared");
+				ROS_INFO_NAMED("wp", "WP: mission cleared");
 			}
 
 			list_sending.notify_all();
@@ -573,7 +573,7 @@ private:
 
 		go_idle();
 		list_receiving.notify_all();
-		ROS_DEBUG_NAMED("wp", "WP: mission received");
+		ROS_INFO_NAMED("wp", "WP: mission received");
 	}
 
 	void go_idle(void) {

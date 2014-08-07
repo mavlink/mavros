@@ -456,7 +456,7 @@ public:
 			/* index starting from 0, receivig done */
 			if (parameters_missing_idx.empty()) {
 				ssize_t missed = param_count - parameters.size();
-				ROS_DEBUG_COND_NAMED(missed == 0, "param", "PR: parameters list received");
+				ROS_INFO_COND_NAMED(missed == 0, "param", "PR: parameters list received");
 				ROS_WARN_COND_NAMED(missed > 0, "param",
 						"PR: parameters list received, but %zd parametars are missed",
 						missed);
