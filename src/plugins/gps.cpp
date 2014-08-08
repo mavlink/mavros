@@ -42,34 +42,33 @@ public:
 		diagnostic_updater::DiagnosticTask(name),
 		satellites_visible(-1),
 		fix_type(0)
-	{};
+	{ };
 
 	void set_gps_raw(mavlink_gps_raw_int_t &gps) {
-		lock_guard lock(mutex);
 		satellites_visible = gps.satellites_visible;
 		fix_type = gps.fix_type;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		lock_guard lock(mutex);
+		int satellites_visible_ = satellites_visible;
+		int fix_type_ = fix_type;
 
-		if (satellites_visible < 0)
+		if (satellites_visible_ < 0)
 			stat.summary(2, "No satellites");
-		else if (fix_type < 2 || fix_type > 3)
+		else if (fix_type_ < 2 || fix_type_ > 3)
 			stat.summary(1, "No fix");
-		else if (fix_type == 2)
+		else if (fix_type_ == 2)
 			stat.summary(0, "2D fix");
-		else if (fix_type == 3)
+		else if (fix_type_ == 3)
 			stat.summary(0, "3D fix");
 
-		stat.addf("Satellites visible", "%zd", satellites_visible);
-		stat.addf("Fix type", "%d", fix_type);
+		stat.addf("Satellites visible", "%zd", satellites_visible_);
+		stat.addf("Fix type", "%d", fix_type_);
 	}
 
 private:
-	std::recursive_mutex mutex;
-	ssize_t satellites_visible;
-	int fix_type;
+	std::atomic<int> satellites_visible;
+	std::atomic<int> fix_type;
 };
 
 
@@ -81,13 +80,16 @@ private:
 class GPSPlugin : public MavRosPlugin {
 public:
 	GPSPlugin() :
+		uas(nullptr),
 		gps_diag("GPS")
-	{};
+	{ };
 
-	void initialize(UAS &uas,
+	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
+		uas = &uas_;
+
 		nh.param<std::string>("gps/frame_id", frame_id, "gps");
 		nh.param<std::string>("gps/time_ref_source", time_ref_source, frame_id);
 
@@ -113,107 +115,21 @@ public:
 	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		switch (msg->msgid) {
 		case MAVLINK_MSG_ID_GPS_RAW_INT:
-			{
-				mavlink_gps_raw_int_t raw_gps;
-				mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
-
-				sensor_msgs::NavSatFixPtr fix = boost::make_shared<sensor_msgs::NavSatFix>();
-				geometry_msgs::TwistStampedPtr vel = boost::make_shared<geometry_msgs::TwistStamped>();
-
-				gps_diag.set_gps_raw(raw_gps);
-				if (raw_gps.fix_type < 2) {
-					ROS_WARN_THROTTLE_NAMED(60, "gps", "GPS: no fix");
-					return;
-				}
-
-				fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-				if (raw_gps.fix_type == 2 || raw_gps.fix_type == 3)
-					fix->status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
-				else
-					fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
-
-				fix->latitude = raw_gps.lat / 1E7; // deg
-				fix->longitude = raw_gps.lon / 1E7; // deg
-				fix->altitude = raw_gps.alt / 1E3; // m
-
-				if (raw_gps.eph != UINT16_MAX) {
-					double hdop = raw_gps.eph / 1E2;
-					double hdop2 = std::pow(hdop, 2);
-
-					// TODO: Check
-					// From nmea_navsat_driver
-					fix->position_covariance[0] = hdop2;
-					fix->position_covariance[4] = hdop2;
-					fix->position_covariance[8] = std::pow(2 * hdop, 2);
-					fix->position_covariance_type =
-						sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
-				}
-				else {
-					fix->position_covariance_type =
-						sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
-				}
-
-				fix->header.frame_id = frame_id;
-				fix->header.stamp = ros::Time::now();
-
-				fix_pub.publish(fix);
-
-				if (raw_gps.vel != UINT16_MAX &&
-						raw_gps.cog != UINT16_MAX) {
-					double speed = raw_gps.vel / 1E2; // m/s
-					double course = angles::from_degrees(raw_gps.cog / 1E2); // rad
-
-					// From nmea_navsat_driver
-					vel->twist.linear.x = speed * std::sin(course);
-					vel->twist.linear.y = speed * std::cos(course);
-
-					vel->header.frame_id = frame_id;
-					vel->header.stamp = fix->header.stamp;
-
-					vel_pub.publish(vel);
-				}
-			}
+			handle_gps_raw_int(msg);
 			break;
 
 		case MAVLINK_MSG_ID_GPS_STATUS:
-			{
-				// TODO: not supported by APM:Plane,
-				//       no standard ROS messages
-				mavlink_gps_status_t gps_stat;
-				mavlink_msg_gps_status_decode(msg, &gps_stat);
-
-				ROS_DEBUG_NAMED("gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
-			}
+			handle_gps_status(msg);
 			break;
 
 		case MAVLINK_MSG_ID_SYSTEM_TIME:
-			{
-				mavlink_system_time_t mtime;
-				mavlink_msg_system_time_decode(msg, &mtime);
-
-				if (mtime.time_unix_usec == 0) {
-					ROS_WARN_THROTTLE_NAMED(60, "gps", "Wrong system time. Is GPS Ok? (boot_ms: %u)",
-							mtime.time_boot_ms);
-					return;
-				}
-
-				sensor_msgs::TimeReferencePtr time = boost::make_shared<sensor_msgs::TimeReference>();
-				ros::Time time_ref(
-						mtime.time_unix_usec / 1000000,			// t_sec
-						(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
-
-				time->source = time_ref_source;
-				time->time_ref = time_ref;
-				time->header.frame_id = time_ref_source;
-				time->header.stamp = ros::Time::now();
-
-				time_ref_pub.publish(time);
-			}
+			handle_system_time(msg);
 			break;
 		};
 	}
 
 private:
+	UAS *uas;
 	std::string frame_id;
 	std::string time_ref_source;
 
@@ -222,6 +138,99 @@ private:
 	ros::Publisher fix_pub;
 	ros::Publisher time_ref_pub;
 	ros::Publisher vel_pub;
+
+	void handle_gps_raw_int(const mavlink_message_t *msg) {
+		mavlink_gps_raw_int_t raw_gps;
+		mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
+
+		sensor_msgs::NavSatFixPtr fix = boost::make_shared<sensor_msgs::NavSatFix>();
+		geometry_msgs::TwistStampedPtr vel = boost::make_shared<geometry_msgs::TwistStamped>();
+
+		gps_diag.set_gps_raw(raw_gps);
+		if (raw_gps.fix_type < 2) {
+			ROS_WARN_THROTTLE_NAMED(60, "gps", "GPS: no fix");
+			return;
+		}
+
+		fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+		if (raw_gps.fix_type == 2 || raw_gps.fix_type == 3)
+			fix->status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
+		else
+			fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+
+		fix->latitude = raw_gps.lat / 1E7; // deg
+		fix->longitude = raw_gps.lon / 1E7; // deg
+		fix->altitude = raw_gps.alt / 1E3; // m
+
+		if (raw_gps.eph != UINT16_MAX) {
+			double hdop = raw_gps.eph / 1E2;
+			double hdop2 = std::pow(hdop, 2);
+
+			// TODO: Check
+			// From nmea_navsat_driver
+			fix->position_covariance[0] = hdop2;
+			fix->position_covariance[4] = hdop2;
+			fix->position_covariance[8] = std::pow(2 * hdop, 2);
+			fix->position_covariance_type =
+				sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+		}
+		else {
+			fix->position_covariance_type =
+				sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+		}
+
+		fix->header.frame_id = frame_id;
+		fix->header.stamp = ros::Time::now();
+
+		fix_pub.publish(fix);
+
+		if (raw_gps.vel != UINT16_MAX &&
+				raw_gps.cog != UINT16_MAX) {
+			double speed = raw_gps.vel / 1E2; // m/s
+			double course = angles::from_degrees(raw_gps.cog / 1E2); // rad
+
+			// From nmea_navsat_driver
+			vel->twist.linear.x = speed * std::sin(course);
+			vel->twist.linear.y = speed * std::cos(course);
+
+			vel->header.frame_id = frame_id;
+			vel->header.stamp = fix->header.stamp;
+
+			vel_pub.publish(vel);
+		}
+	}
+
+	void handle_gps_status(const mavlink_message_t *msg) {
+		// TODO: not supported by APM:Plane,
+		//       no standard ROS messages
+		mavlink_gps_status_t gps_stat;
+		mavlink_msg_gps_status_decode(msg, &gps_stat);
+
+		ROS_INFO_THROTTLE_NAMED(30, "gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
+	}
+
+	void handle_system_time(const mavlink_message_t *msg) {
+		mavlink_system_time_t mtime;
+		mavlink_msg_system_time_decode(msg, &mtime);
+
+		if (mtime.time_unix_usec == 0) {
+			ROS_WARN_THROTTLE_NAMED(60, "gps", "Wrong system time. Is GPS Ok? (boot_ms: %u)",
+					mtime.time_boot_ms);
+			return;
+		}
+
+		sensor_msgs::TimeReferencePtr time = boost::make_shared<sensor_msgs::TimeReference>();
+		ros::Time time_ref(
+				mtime.time_unix_usec / 1000000,			// t_sec
+				(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
+
+		time->source = time_ref_source;
+		time->time_ref = time_ref;
+		time->header.frame_id = time_ref_source;
+		time->header.stamp = ros::Time::now();
+
+		time_ref_pub.publish(time);
+	}
 };
 
 }; // namespace mavplugin
