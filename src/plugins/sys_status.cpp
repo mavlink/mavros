@@ -31,6 +31,8 @@
 #include <mavros/BatteryStatus.h>
 #include <mavros/StreamRate.h>
 
+#include "px4_custom_mode.h"
+
 namespace mavplugin {
 
 /**
@@ -559,7 +561,7 @@ private:
 			 return str_custom_mode(custom_mode);
 			 break;
 		}
-	};
+	}
 
 	//! APM:Copter custom mode -> string
 	static std::string str_mode_arducopter(int custom_mode) {
@@ -580,7 +582,37 @@ private:
 			 return str_custom_mode(custom_mode);
 			 break;
 		}
-	};
+	}
+
+	static std::string str_mode_px4(int custom_mode_int) {
+		px4::custom_mode custom_mode;
+		custom_mode.data = custom_mode_int;
+
+		switch (custom_mode.main_mode) {
+		case px4::custom_mode::MAIN_MODE_MANUAL:   return "MANUAL";	break;
+		case px4::custom_mode::MAIN_MODE_ACRO:     return "ACRO";	break;
+		case px4::custom_mode::MAIN_MODE_ALTCTL:   return "ALTCTL";	break;
+		case px4::custom_mode::MAIN_MODE_POSCTL:   return "POSCTL";	break;
+		case px4::custom_mode::MAIN_MODE_OFFBOARD: return "OFFBOARD";	break;
+		case px4::custom_mode::MAIN_MODE_AUTO:
+			switch (custom_mode.sub_mode) {
+			case px4::custom_mode::SUB_MODE_AUTO_MISSION: return "AUTO.MISSION";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_LOITER:  return "AUTO.LOITER";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_RTL:     return "AUTO.RTL";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_LAND:    return "AUTO.LAND";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_RTGS:    return "AUTO.RTGS";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_READY:   return "AUTO.READY";	break;
+			case px4::custom_mode::SUB_MODE_AUTO_TAKEOFF: return "AUTO.TAKEOFF";	break;
+			default:
+				return str_custom_mode(custom_mode_int);
+				break;
+			}
+			break;
+		default:
+			return str_custom_mode(custom_mode_int);
+			break;
+		}
+	}
 
 	//! Port pymavlink mavutil.mode_string_v10
 	std::string str_mode_v10(int base_mode, int custom_mode) {
@@ -602,6 +634,8 @@ private:
 				/* TODO: APM:Rover */
 				return str_custom_mode(custom_mode);
 		}
+		else if (uas->is_px4())
+			return str_mode_px4(custom_mode);
 		else
 			/* TODO: other autopilot */
 			return str_custom_mode(custom_mode);
