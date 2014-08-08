@@ -40,57 +40,55 @@ class GPSInfo : public diagnostic_updater::DiagnosticTask
 public:
 	explicit GPSInfo(const std::string name) :
 		diagnostic_updater::DiagnosticTask(name),
-		status{}
+		satellites_visible(-1),
+		fix_type(0),
+		eph(UINT16_MAX),
+		epv(UINT16_MAX)
 	{ };
 
 	void set_gps_raw(mavlink_gps_raw_int_t &gps) {
-		struct status s = {
-			gps.satellites_visible,
-			gps.fix_type,
-			gps.eph,
-			gps.epv
-		};
-
-		status = s;
+		satellites_visible = gps.satellites_visible;
+		fix_type = gps.fix_type;
+		eph = gps.eph;
+		epv = gps.epv;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		struct status s = status;
+		const int satellites_visible_ = satellites_visible;
+		const int fix_type_ = fix_type;
+		const uint16_t eph_ = eph;
+		const uint16_t epv_ = epv;
 
-		if (s.satellites_visible < 0)
+		if (satellites_visible_ < 0)
 			stat.summary(2, "No satellites");
-		else if (s.fix_type < 2 || s.fix_type > 3)
+		else if (fix_type_ < 2 || fix_type_ > 3)
 			stat.summary(1, "No fix");
-		else if (s.fix_type == 2)
+		else if (fix_type_ == 2)
 			stat.summary(0, "2D fix");
-		else if (s.fix_type == 3)
+		else if (fix_type_ == 3)
 			stat.summary(0, "3D fix");
 
-		stat.addf("Satellites visible", "%zd", s.satellites_visible);
-		stat.addf("Fix type", "%d", s.fix_type);
+		stat.addf("Satellites visible", "%zd", satellites_visible_);
+		stat.addf("Fix type", "%d", fix_type_);
 
 		// EPH in centimeters
-		if (s.eph != UINT16_MAX)
-			stat.addf("EPH (m)", "%.2f", s.eph / 1E2F);
+		if (eph_ != UINT16_MAX)
+			stat.addf("EPH (m)", "%.2f", eph_ / 1E2F);
 		else
 			stat.add("EPH (m)", "Unknown");
 
 		// EPV in centimeters
-		if (s.epv != UINT16_MAX)
-			stat.addf("EPV (m)", "%.2f", s.epv / 1E2F);
+		if (epv_ != UINT16_MAX)
+			stat.addf("EPV (m)", "%.2f", epv_ / 1E2F);
 		else
 			stat.add("EPV (m)", "Unknown");
 	}
 
 private:
-	struct status {
-		int satellites_visible;
-		int fix_type;
-		uint16_t eph;
-		uint16_t epv;
-	};
-
-	std::atomic<struct status> status;
+	std::atomic<int> satellites_visible;
+	std::atomic<int> fix_type;
+	std::atomic<uint16_t> eph;
+	std::atomic<uint16_t> epv;
 };
 
 

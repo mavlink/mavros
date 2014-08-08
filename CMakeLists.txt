@@ -203,7 +203,6 @@ target_link_libraries(mavros_plugins
   mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  atomic
 )
 
 
