@@ -25,7 +25,7 @@ Limitations
 Only for linux. Depends on [Boost library][boost] >= 1.46 (hydro on 12.04).
 Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
 
-This package are dependent on ros-\*-mavlink build from [mavlink-gbp-release][mlgbp].
+This package are dependent on [ros-\*-mavlink][mlwiki] build from [mavlink-gbp-release][mlgbp].
 Since 2014-06-19 it exists in hydro and indigo package index (so you can install via rosdep).
 
 
@@ -179,3 +179,4 @@ Links
 [iss35]: https://github.com/vooon/mavros/issues/35
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/vooon/mavros_extras
+[mlwiki]: http://wiki.ros.org/mavlink
