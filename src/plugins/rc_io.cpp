@@ -55,7 +55,7 @@ public:
 		rc_nh = ros::NodeHandle(nh, "rc");
 		rc_in_pub = rc_nh.advertise<mavros::RCIn>("in", 10);
 		rc_out_pub = rc_nh.advertise<mavros::RCOut>("out", 10);
-		override_srv = rc_nh.advertiseService("override", &RCIOPlugin::override_cb, this);
+		override_sub = rc_nh.subscribe("override", 10, &RCIOPlugin::override_cb, this);
 
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
@@ -105,7 +105,7 @@ private:
 	ros::NodeHandle rc_nh;
 	ros::Publisher rc_in_pub;
 	ros::Publisher rc_out_pub;
-	ros::ServiceServer override_srv;
+	ros::Subscriber override_sub;
 
 	/* -*- rx handlers -*- */
 
@@ -146,6 +146,7 @@ private:
 			mavlink_rc_channels_t &channels) {
 		lock_guard lock(mutex);
 
+		ROS_INFO_COND_NAMED(!has_rc_channels_msg, "rc", "RC_CHANNELS message detected!");
 		has_rc_channels_msg = true;
 
 		if (channels.chancount > 18) {
@@ -219,7 +220,7 @@ private:
 
 	/* -*- low-level send functions -*- */
 
-	void rc_channels_override(boost::array<uint16_t, 8> &channels) {
+	void rc_channels_override(const boost::array<uint16_t, 8> &channels) {
 		mavlink_message_t msg;
 
 		mavlink_msg_rc_channels_override_pack_chan(UAS_PACK_CHAN(uas), &msg,
@@ -245,12 +246,9 @@ private:
 		has_rc_channels_msg = false;
 	}
 
-	bool override_cb(mavros::OverrideRCIn::Request &req,
-			mavros::OverrideRCIn::Response &res) {
+	void override_cb(const mavros::OverrideRCIn::ConstPtr req) {
 
-		rc_channels_override(req.channels);
-		res.success = true;
-		return true;
+		rc_channels_override(req->channels);
 	}
 };
 

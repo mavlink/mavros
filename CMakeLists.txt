@@ -62,6 +62,7 @@ add_message_files(
   RCIn.msg
   RCOut.msg
   RadioStatus.msg
+  OverrideRCIn.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -76,7 +77,6 @@ add_service_files(
    WaypointPull.srv
    WaypointPush.srv
    WaypointGOTO.srv
-   OverrideRCIn.srv
    CommandLong.srv
    CommandBool.srv
    CommandMode.srv
