@@ -2,16 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-11)
+------------------
+* Add package index readme, Fix `#101 <https://github.com/vooon/mavros/issues/101>`_
+* move mavros to subdirectory, `#101 <https://github.com/vooon/mavros/issues/101>`_
 * Merge branch 'master' of github.com:vooon/mavros
   * 'master' of github.com:vooon/mavros:
-  Add link to ros-*-mavlink package wiki page.
+  Add link to ros-\*-mavlink package wiki page.
 * plugins: setpoint: Update setpoint message name.
   Issue `#94 <https://github.com/vooon/mavros/issues/94>`_, Fix `#97 <https://github.com/vooon/mavros/issues/97>`_.
 * plugin: setpoint_attitude: Update message name.
   Issues `#94 <https://github.com/vooon/mavros/issues/94>`_, `#97 <https://github.com/vooon/mavros/issues/97>`_.
-* Add link to ros-*-mavlink package wiki page.
+* Add link to ros-\*-mavlink package wiki page.
 * plugin: gps: Fix gcc 4.6 build (atomic).
   Not recommended to use std::atomic with gcc 4.6.
   So i limited to prederined atomics for simple types like int, float etc.
@@ -48,7 +50,7 @@ Forthcoming
   Issue `#68 <https://github.com/vooon/mavros/issues/68>`_.
 * plugin: imu_pub: Fix HRIMU pressure calc. 1 mBar is 100 Pa.
   Fix `#79 <https://github.com/vooon/mavros/issues/79>`_.
-* plugins: C++11 chrono want time by ref, return *_DT
+* plugins: C++11 chrono want time by ref, return \*_DT
   Fix `#80 <https://github.com/vooon/mavros/issues/80>`_.
 * plugins: Replace boost threads with C++11.
   And remove boost thread library from build rules.
@@ -80,18 +82,6 @@ Forthcoming
 * plugins: Init ctor
 * plugins: Add ctor initialization.
   Coverity recommends init all data members.
-* test: coverity again
-* test: cov fails on collecting git info
-* test: cov-build fails with catkin, use cmake & make
-* test: disable travis build, preparations needed for coverity
-* test: travis...
-* test: trying solution from jsk-ros-pkg/jsk_robot.
-* test: travis...
-* test: fix coverity token
-* test: add travis
-* test: coverity recommend commit travis.yml to special branch
-* test: travis..
-* test: Select language for travis
 * test: trying travis-ci && coverity integration.
   Real ci doing by ros buildfarm.
 * plugins: Fix clang-check errors.
@@ -238,7 +228,7 @@ Forthcoming
 * mavconn: Move MAVConnSerial to libev.
   Adds stub for open URL function.
   Issure `#54 <https://github.com/vooon/mavros/issues/54>`_.
-* Contributors: Vladimir Ermakov
+* Contributors: Vladimir Ermakov, M.H.Kabir, Nuno Marques, Glenn Gregory
 
 0.6.0 (2014-07-17)
 ------------------
