@@ -2,6 +2,244 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' of github.com:vooon/mavros
+  * 'master' of github.com:vooon/mavros:
+  Add link to ros-*-mavlink package wiki page.
+* plugins: setpoint: Update setpoint message name.
+  Issue `#94 <https://github.com/vooon/mavros/issues/94>`_, Fix `#97 <https://github.com/vooon/mavros/issues/97>`_.
+* plugin: setpoint_attitude: Update message name.
+  Issues `#94 <https://github.com/vooon/mavros/issues/94>`_, `#97 <https://github.com/vooon/mavros/issues/97>`_.
+* Add link to ros-*-mavlink package wiki page.
+* plugin: gps: Fix gcc 4.6 build (atomic).
+  Not recommended to use std::atomic with gcc 4.6.
+  So i limited to prederined atomics for simple types like int, float etc.
+* plugin: sys_status: Implement PX4 mode decoding.
+  Fix `#84 <https://github.com/vooon/mavros/issues/84>`_.
+* plugin: gps: Add EPH & EPV to diagnostic.
+  Issue `#95 <https://github.com/vooon/mavros/issues/95>`_
+* plugin: gps: Move message processing to individual handlers.
+  Issue `#95 <https://github.com/vooon/mavros/issues/95>`_.
+* plugin: rc_io: Replace override service with topic. (ROS API change).
+  Fix `#93 <https://github.com/vooon/mavros/issues/93>`_.
+* Add dialect selection notes
+* plugins: Change severity for param & wp done messages.
+* plugins: Store raw autopilot & mav type values.
+  This may fix or not issue `#89 <https://github.com/vooon/mavros/issues/89>`_.
+* plugins: init ctor (coverity)
+* plugin: imu_pub: Add ATTITUDE_QUATERNION support.
+  Also reduce copy-paste and use mode readable bitmask check.
+  Fix `#85 <https://github.com/vooon/mavros/issues/85>`_.
+* scriptis: mavcmd: Spelling
+* scripits: Add mavcmd tool
+* Add links to mavros_extras
+* param: sys_status: Option to disable diagnostics (except heartbeat)
+* plugin: command: Add takeoff and land aliases.
+  Issue `#68 <https://github.com/vooon/mavros/issues/68>`_.
+* plugin: command: Add quirk for PX4.
+  Fix `#82 <https://github.com/vooon/mavros/issues/82>`_.
+* plugin: Add UAS.is_px4() helper. Replace some locks with atomic.
+  Issue `#82 <https://github.com/vooon/mavros/issues/82>`_.
+* launch: Clear PX4 blacklist.
+  Issue `#68 <https://github.com/vooon/mavros/issues/68>`_.
+* launch: Add target ids.
+  Also fix PX4 wrong ?ids usage (it set mavros ids, not target).
+  Issue `#68 <https://github.com/vooon/mavros/issues/68>`_.
+* plugin: imu_pub: Fix HRIMU pressure calc. 1 mBar is 100 Pa.
+  Fix `#79 <https://github.com/vooon/mavros/issues/79>`_.
+* plugins: C++11 chrono want time by ref, return *_DT
+  Fix `#80 <https://github.com/vooon/mavros/issues/80>`_.
+* plugins: Replace boost threads with C++11.
+  And remove boost thread library from build rules.
+  Issue `#80 <https://github.com/vooon/mavros/issues/80>`_.
+* plugins: Replace Boost condition variables with C++11
+  Issue `#80 <https://github.com/vooon/mavros/issues/80>`_.
+* plugins: Replace boost mutexes with C++11.
+  Issue `#80 <https://github.com/vooon/mavros/issues/80>`_.
+* travis clang to old, fails on boost signals2 library. disable.
+* travis: enable clang build.
+* node: Make project buildable by clang.
+  Clang produce more readable errors and provide
+  some static code analysis, so i want ability to build mavros
+  with that compilator.
+* plugins: replace initial memset with c++ initializer list
+* launch: PX4 default ids=1,50.
+  Also waypoint plugin works (with first_pos_control_flight-5273-gd3d5aa9).
+  Issue `#68 <https://github.com/vooon/mavros/issues/68>`_.
+* launch: Use connection URL
+* plugin: vision_speed: Initial import.
+  Fix `#67 <https://github.com/vooon/mavros/issues/67>`_.
+* plugin: sys_status: Add SYSTEM_TIME sync send.
+  Fix `#78 <https://github.com/vooon/mavros/issues/78>`_.
+* plugin: sys_status: Decode sensor health field.
+  Fix `#75 <https://github.com/vooon/mavros/issues/75>`_.
+* Add ci badges to readme
+* plugin: param: erase invalidates iterator.
+  Real error found by coverity :)
+* plugins: Init ctor
+* plugins: Add ctor initialization.
+  Coverity recommends init all data members.
+* test: coverity again
+* test: cov fails on collecting git info
+* test: cov-build fails with catkin, use cmake & make
+* test: disable travis build, preparations needed for coverity
+* test: travis...
+* test: trying solution from jsk-ros-pkg/jsk_robot.
+* test: travis...
+* test: fix coverity token
+* test: add travis
+* test: coverity recommend commit travis.yml to special branch
+* test: travis..
+* test: Select language for travis
+* test: trying travis-ci && coverity integration.
+  Real ci doing by ros buildfarm.
+* plugins: Fix clang-check errors.
+* test: Add tcp client reconnect test.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* test: Split open_url test to individual tests.
+  Also removed tcp client deletion on close, heisenbug here.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Emit port_closed after thread stop.
+  Also use tx state flag, improve error messages and move io post out of
+  critical section.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Fix TCP server client deletion.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* test: Remove not needed sleep.
+* mavconn: Remove new MsgBuffer dup. Message drop if closed.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Fix TCP server.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* launch: APM2: Blacklist extras.
+* mavconn: Add mutex to channel allocation.
+* mavconn: Fix TCP server for gcc 4.6
+  Fix `#74 <https://github.com/vooon/mavros/issues/74>`_.
+* Remove libev from package.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: GCC 4.6 does not support typedef like using.
+  Issue `#74 <https://github.com/vooon/mavros/issues/74>`_.
+* Merge pull request `#73 <https://github.com/vooon/mavros/issues/73>`_ from vooon/mavconn-revert-asio
+  mavconn: Revert to Boost.ASIO
+* mavconn: Cleanup boost threads.
+  I will use C++11 standard libs.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Remove libev default loop thread.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Port MAVConnTCPServer to Boost.ASIO.
+  TCP send test fails.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Port MAVConnTCPClient to Boost.ASIO.
+  Also it disables MAVConnTCPServer before i rewrite it.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Revert MAConnSerial back to Boost.ASIO.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* test: Fix send_message tests. Use C++11.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* mavconn: Revert MAVConnUDP back to Boost.ASIO.
+  Also starting to change boost threads and mutexes to C++11.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* test: Enable send tests.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* test: And hand test for mavconn hangs.
+  Issue `#72 <https://github.com/vooon/mavros/issues/72>`_.
+* node: Remove anonimous flag from gcs_bridge.
+  Rename node if you want start several copies.
+* install: Remove duplicate
+* node: Fix mavros_node termination message.
+  Issue `#58 <https://github.com/vooon/mavros/issues/58>`_.
+* node: Use URL in mavros_node.
+  Fix `#58 <https://github.com/vooon/mavros/issues/58>`_.
+* node: Use URL in gcs_bridge.
+  Issue `#58 <https://github.com/vooon/mavros/issues/58>`_.
+* node: Rename ros_udp to gcs_bridge.
+  Because now it's not UDP only.
+  Issue `#58 <https://github.com/vooon/mavros/issues/58>`_.
+* Cleanup boost components
+* mavconn: Implement URL parsing.
+  Supported shemas:
+  * Serial: `/path/to/serial/device[:baudrate]`
+  * Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
+  * UDP: `udp://[bind_host[:port]]@[remote_host[:port]][/?ids=sysid,compid]`
+  * TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
+  * TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
+  Note: ids from URL overrides ids given to open_url().
+  Issue `#58 <https://github.com/vooon/mavros/issues/58>`_.
+* test: Add tests for UDP, TCP, SERIAL.
+  Send message testa are broken, need to find workaround.
+  Fix `#70 <https://github.com/vooon/mavros/issues/70>`_.
+* plugin: vision_position: Add transform timestamp check.
+  Issue `#60 <https://github.com/vooon/mavros/issues/60>`_.
+* mavconn: Implement TCP server mode.
+  Fix `#57 <https://github.com/vooon/mavros/issues/57>`_.
+* mavconn: Initial support for TCP client mode.
+  Issue `#57 <https://github.com/vooon/mavros/issues/57>`_.
+* mavconn: Boost::asio cleanup.
+* plugin: Remove TimerService from UAS.
+  Fix `#59 <https://github.com/vooon/mavros/issues/59>`_.
+* plugin: param: Add state check to sheduled pull.
+* mavparam: Add force pull.
+* plugin: param: Use ros::Timer for timeouts
+  Also new option for force pull parameters from FCU instead of cache.
+  Fix `#59 <https://github.com/vooon/mavros/issues/59>`_.
+* Add mavsafety info to README.
+* launch: Add apm2_radio.launch (for use with 3DR Radio)
+* plugin: 3dr_radio: Fix build error.
+  Issue `#62 <https://github.com/vooon/mavros/issues/62>`_.
+* plugin: 3dr_radio: Publish status data for rqt_plot
+  Also tested with SiK 1.7.
+  Fix `#62 <https://github.com/vooon/mavros/issues/62>`_.
+* plugin: setpoint_attitude: Fix ENU->NED conversion.
+  Fix `#64 <https://github.com/vooon/mavros/issues/64>`_.
+  Related `#33 <https://github.com/vooon/mavros/issues/33>`_, `#49 <https://github.com/vooon/mavros/issues/49>`_.
+* launch: Add setpoint plugins to APM2 blacklist
+* plugin: setpoint_attitude: Initial import.
+  XXX: need frame conversion `#49 <https://github.com/vooon/mavros/issues/49>`_.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_, `#64 <https://github.com/vooon/mavros/issues/64>`_.
+* plugin: Move common tf code to mixin.
+  Remove copy-paste tf_listener.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugin: setpoint_position: Generalize topic NS with other `setpoint_*`
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_, `#61 <https://github.com/vooon/mavros/issues/61>`_.
+* plugin: setpoint_accel: Initial import.
+  Issues: `#33 <https://github.com/vooon/mavros/issues/33>`_, `#61 <https://github.com/vooon/mavros/issues/61>`_.
+* plugin: position_velocity: Initial import.
+  Also it fix ignore mask in setpoint_position.
+  Issues `#33 <https://github.com/vooon/mavros/issues/33>`_, `#61 <https://github.com/vooon/mavros/issues/61>`_.
+* plugins: 3rd_radio: Initial import.
+  Untested.
+  Issue `#61 <https://github.com/vooon/mavros/issues/61>`_.
+* scripts: Add mavsafety tool.
+  Also add safety_area to APM2 blacklist.
+  Fix `#51 <https://github.com/vooon/mavros/issues/51>`_.
+* plugins: safty_area: Initial import.
+  This plugin listen `~/safety_area/set` and send it's data to FCU.
+  Issue `#51 <https://github.com/vooon/mavros/issues/51>`_.
+* plugins: position: Add TF rate limit.
+  Issue `#33 <https://github.com/vooon/mavros/issues/33>`_.
+* plugin: waypoint: Use ros::Timer for timeouts.
+  Also add some debug messages for next debugging PX4.
+  Issue `#59 <https://github.com/vooon/mavros/issues/59>`_.
+* plugin: sys_status: Use ros::Timer for timeouts
+  Also move message rx to it's own handlers.
+  Issue `#59 <https://github.com/vooon/mavros/issues/59>`_.
+* Remove rosdep.yaml and update readme
+* Add deb build notes to readme.
+  Issue `#55 <https://github.com/vooon/mavros/issues/55>`_.
+* Add sudo notes to readme.
+* Merge pull request `#56 <https://github.com/vooon/mavros/issues/56>`_ from vooon/54_try_libev
+  Switch to libev
+* Add libev to README
+* package: Add temporary rosdep for libev-dev.
+  Issue `#54 <https://github.com/vooon/mavros/issues/54>`_.
+* mavconn: Move MAVConnUDP to libev.
+  And fix docs in serial.
+  Issue `#54 <https://github.com/vooon/mavros/issues/54>`_.
+* mavconn: Move MAVConnSerial to libev.
+  Adds stub for open URL function.
+  Issure `#54 <https://github.com/vooon/mavros/issues/54>`_.
+* Contributors: Vladimir Ermakov
+
 0.6.0 (2014-07-17)
 ------------------
 * plugin: local_position: Use same timestamp in topic and TF.
