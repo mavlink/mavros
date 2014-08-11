@@ -112,13 +112,13 @@ private:
 
 	/* -*- low-level send -*- */
 
-	void attitude_setpoint_external(uint32_t time_boot_ms,
+	void set_attitude_target(uint32_t time_boot_ms,
 			uint8_t type_mask,
 			float q[4],
 			float roll_rate, float pitch_rate, float yaw_rate,
 			float thrust) {
 		mavlink_message_t msg;
-		mavlink_msg_attitude_setpoint_external_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_set_attitude_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				time_boot_ms,
 				UAS_PACK_TGT(uas),
 				type_mask,
@@ -133,10 +133,11 @@ private:
 	/**
 	 * Send attitude setpoint to FCU attitude controller
 	 *
-	 * @todo Q ENU->NED conv
+	 * ENU frame.
 	 */
 	void send_attitude_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		const uint8_t ignore_all_except_q = (7<<0);
+		// Thrust + RPY, also bits noumbering started from 1 in docs
+		const uint8_t ignore_all_except_q = (1<<6)|(7<<0);
 		float q[4];
 
 		// ENU->NED, description in #49.
@@ -146,9 +147,7 @@ private:
 		q[2] = tf_q.x();
 		q[3] = -tf_q.z();
 
-		// Don't know if it turns out to be a problem to send 0.0;
-		// maybe in the PX4 side throttle can be discarded
-		attitude_setpoint_external(stamp.toNSec() / 1000000,
+		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_q,
 				q,
 				0.0, 0.0, 0.0,
@@ -160,12 +159,12 @@ private:
 	 *
 	 * ENU frame.
 	 */
-	void send_attitude_ang_velocity(const float vx, const float vy,const float vz) {
-		const uint8_t ignore_all_except_rpy = (1<<7);
+	void send_attitude_ang_velocity(const float vx, const float vy, const float vz) {
+		// Q + Thrust, also bits noumbering started from 1 in docs
+		const uint8_t ignore_all_except_rpy = (1<<7)|(1<<6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
-		// same as in prev method
-		attitude_setpoint_external(ros::Time::now().toNSec() / 1000000,
+		set_attitude_target(ros::Time::now().toNSec() / 1000000,
 				ignore_all_except_rpy,
 				q,
 				vy, vx, -vz,
