@@ -39,16 +39,16 @@ namespace mavplugin {
  * @note derived class should provide UAS pointer in uas member.
  */
 template <class D>
-class LocalNEDPositionSetpointExternalMixin {
+class SetPositionTargetLocalNEDMixin {
 public:
-	void local_ned_position_setpoint_external(uint32_t time_boot_ms, uint8_t coordinate_frame,
+	void set_position_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
 			float x, float y, float z,
 			float vx, float vy, float vz,
 			float afx, float afy, float afz) {
 		UAS *_uas = static_cast<D *>(this)->uas;
 		mavlink_message_t msg;
-		mavlink_msg_local_ned_position_setpoint_external_pack_chan(UAS_PACK_CHAN(_uas), &msg,
+		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(_uas), &msg,
 				time_boot_ms, // why it not usec timestamp?
 				UAS_PACK_TGT(_uas),
 				coordinate_frame,

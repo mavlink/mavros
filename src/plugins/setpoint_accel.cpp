@@ -41,7 +41,7 @@ namespace mavplugin {
  * Send setpoint accelerations/forces to FCU controller.
  */
 class SetpointAccelerationPlugin : public MavRosPlugin,
-	private LocalNEDPositionSetpointExternalMixin<SetpointAccelerationPlugin> {
+	private SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin> {
 public:
 	SetpointAccelerationPlugin() :
 		uas(nullptr),
@@ -72,7 +72,7 @@ public:
 	}
 
 private:
-	friend class LocalNEDPositionSetpointExternalMixin;
+	friend class SetPositionTargetLocalNEDMixin;
 	UAS *uas;
 
 	ros::NodeHandle sp_nh;
@@ -92,15 +92,13 @@ private:
 		/* Documentation start from bit 1 instead 0,
 		 * but implementation PX4 Firmware #1151 starts from 0
 		 */
-		uint16_t ignore_all_except_a_xyz;
+		uint16_t ignore_all_except_a_xyz = (7<<3)|(7<<0);
 
 		if (send_force)
-			ignore_all_except_a_xyz = (1<<9)|(7<<3)|(7<<0);
-		else
-			ignore_all_except_a_xyz = (7<<3)|(7<<0);
+			ignore_all_except_a_xyz |= (1<<9);
 
-		// TODO: check conversion. Issue #49.
-		local_ned_position_setpoint_external(ros::Time::now().toNSec() / 1000000,
+		// ENU->NED. Issue #49.
+		set_position_target_local_ned(ros::Time::now().toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,

@@ -39,7 +39,7 @@ namespace mavplugin {
  * Send setpoint positions to FCU controller.
  */
 class SetpointPositionPlugin : public MavRosPlugin,
-	private LocalNEDPositionSetpointExternalMixin<SetpointPositionPlugin>,
+	private SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
 	private TFListenerMixin<SetpointPositionPlugin> {
 public:
 	SetpointPositionPlugin() :
@@ -83,7 +83,7 @@ public:
 	}
 
 private:
-	friend class LocalNEDPositionSetpointExternalMixin;
+	friend class SetPositionTargetLocalNEDMixin;
 	friend class TFListenerMixin;
 	UAS *uas;
 
@@ -113,8 +113,8 @@ private:
 		 */
 		uint16_t ignore_all_except_xyz = (7<<6)|(7<<3);
 
-		// TODO: check conversion. Issue #49.
-		local_ned_position_setpoint_external(stamp.toNSec() / 1000000,
+		// ENU->NED. Issue #49.
+		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_xyz,
 				origin.y(), origin.x(), -origin.z(),

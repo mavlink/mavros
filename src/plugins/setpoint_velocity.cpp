@@ -40,7 +40,7 @@ namespace mavplugin {
  * Send setpoint velocities to FCU controller.
  */
 class SetpointVelocityPlugin : public MavRosPlugin,
-	private LocalNEDPositionSetpointExternalMixin<SetpointVelocityPlugin> {
+	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
 	SetpointVelocityPlugin() :
 		uas(nullptr)
@@ -69,7 +69,7 @@ public:
 	}
 
 private:
-	friend class LocalNEDPositionSetpointExternalMixin;
+	friend class SetPositionTargetLocalNEDMixin;
 	UAS *uas;
 
 	ros::NodeHandle sp_nh;
@@ -89,8 +89,8 @@ private:
 		 */
 		uint16_t ignore_all_except_v_xyz = (7<<6)|(7<<0);
 
-		// TODO: check conversion. Issue #49.
-		local_ned_position_setpoint_external(ros::Time::now().toNSec() / 1000000,
+		// ENU->NED. Issue #49.
+		set_position_target_local_ned(ros::Time::now().toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_v_xyz,
 				0.0, 0.0, 0.0,
