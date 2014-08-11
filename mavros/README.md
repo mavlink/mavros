@@ -178,5 +178,5 @@ Links
 [mlgbp]: https://github.com/vooon/mavlink-gbp-release
 [iss35]: https://github.com/vooon/mavros/issues/35
 [wiki]: http://wiki.ros.org/mavros
-[mrext]: https://github.com/vooon/mavros_extras
+[mrext]: https://github.com/vooon/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
