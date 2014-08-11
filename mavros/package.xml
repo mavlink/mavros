@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<package>
+  <name>mavros</name>
+  <version>0.6.0</version>
+  <description>
+    MAVROS -- MAVLink extendable communication node for ROS
+    with UDP proxy for Ground Control Station.
+  </description>
+
+  <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+  <license>GPLv3</license>
+
+  <url type="website">http://wiki.ros.org/mavros</url>
+  <url type="repository">https://github.com/vooon/mavros.git</url>
+  <url type="bugtracker">https://github.com/vooon/mavros/issues</url>
+
+
+  <!-- The *_depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>diagnostic_msgs</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>mavlink</build_depend>
+  <build_depend>angles</build_depend>
+  <run_depend>boost</run_depend>
+  <run_depend>diagnostic_msgs</run_depend>
+  <run_depend>diagnostic_updater</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>mavlink</run_depend>
+  <run_depend>angles</run_depend>
+  <test_depend>gtest</test_depend>
+
+  <export>
+    <mavros plugin="${prefix}/mavros_plugins.xml" />
+    <rosdoc config="rosdoc.yaml" />
+  </export>
+</package>

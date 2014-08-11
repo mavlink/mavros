@@ -1,0 +1,160 @@
+#!/usr/bin/env python
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2014 Vladimir Ermakov.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+from __future__ import print_function
+
+import sys
+import argparse
+
+import rospy
+from mavros.srv import CommandLong, CommandHome, CommandTOL
+
+
+def print_if(cond, *args, **kvargs):
+    if cond:
+        print(*args, **kvargs)
+
+
+def fault(*args, **kvargs):
+    kvargs['file'] = sys.stderr
+    print(*args, **kvargs)
+    sys.exit(1)
+
+
+def _check_ret(args, ret):
+    if not ret.success:
+        fault("Request failed. Chack mavros logs. ACK:", ret.result)
+
+    print_if(args.verbose, "Command ACK:", ret.result)
+
+
+def do_long(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    try:
+        long_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command", CommandLong)
+        ret = long_cl(command=args.command, confirmation=int(args.confirmation),
+                      param1=args.param1,
+                      param2=args.param2,
+                      param3=args.param3,
+                      param4=args.param4,
+                      param5=args.param5,
+                      param6=args.param6)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
+
+def do_set_home(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    try:
+        set_home_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/set_home", CommandHome)
+        ret = set_home_cl(current_gps=args.current_gps,
+                          latitude=args.latitude,
+                          longitude=args.longitude,
+                          altitude=args.altitude)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
+
+def do_takeoff(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    try:
+        takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
+        ret = takeoff_cl(min_pitch=args.min_pitch,
+                         yaw=args.yaw,
+                         latitude=args.latitude,
+                         longitude=args.longitude,
+                         altitude=args.altitude)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
+
+def do_land(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    try:
+        land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
+        ret = land_cl(min_pitch=0.0,
+                      yaw=args.yaw,
+                      latitude=args.latitude,
+                      longitude=args.longitude,
+                      altitude=args.altitude)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    subarg = parser.add_subparsers()
+
+    long_args = subarg.add_parser('long', help="Send any command (COMMAND_LONG)")
+    long_args.set_defaults(func=do_long)
+    long_args.add_argument('-c', '--confirmation', action='store_true', help="Require confirmation")
+    long_args.add_argument('command', type=int, help="Command Code")
+    long_args.add_argument('param1', type=float, help="param1")
+    long_args.add_argument('param2', type=float, help="param2")
+    long_args.add_argument('param3', type=float, help="param3")
+    long_args.add_argument('param4', type=float, help="param4")
+    long_args.add_argument('param5', type=float, help="param5 / x_lat")
+    long_args.add_argument('param6', type=float, help="param6 / y_long")
+    long_args.add_argument('param7', type=float, help="param7 / z_alt")
+
+    # Note: arming service provided by mavsafety
+
+    set_home_args = subarg.add_parser('sethome', help="Request change home position")
+    set_home_args.set_defaults(func=do_set_home)
+    set_home_args.add_argument('-c', '--current-gps', action='store_true',
+                                 help="Use current GPS location (use 0 0 0 for location args)")
+    set_home_args.add_argument('latitude', type=float, help="Latitude")
+    set_home_args.add_argument('longitude', type=float, help="Longitude")
+    set_home_args.add_argument('altitude', type=float, help="Altitude")
+
+    takeoff_args = subarg.add_parser('takeoff', help="Request takeoff")
+    takeoff_args.set_defaults(func=do_takeoff)
+    takeoff_args.add_argument('min_pitch', type=float, help="Min pitch")
+    takeoff_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_args.add_argument('latitude', type=float, help="Latitude")
+    takeoff_args.add_argument('longitude', type=float, help="Longitude")
+    takeoff_args.add_argument('altitude', type=float, help="Altitude")
+
+    land_args = subarg.add_parser('land', help="Request land")
+    land_args.set_defaults(func=do_land)
+    land_args.add_argument('yaw', type=float, help="Desired Yaw")
+    land_args.add_argument('latitude', type=float, help="Latitude")
+    land_args.add_argument('longitude', type=float, help="Longitude")
+    land_args.add_argument('altitude', type=float, help="Altitude")
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()

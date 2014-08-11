@@ -1,0 +1,292 @@
+#!/usr/bin/env python
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2014 Vladimir Ermakov.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+from __future__ import print_function
+
+import sys
+import csv
+import time
+import argparse
+
+import roslib; roslib.load_manifest("mavros")
+import rospy
+from mavros.srv import ParamPull, ParamPush, ParamGet, ParamSet
+
+
+class Parameter(object):
+    """Class representing one parameter"""
+    def __init__(self, param_id, param_value=0):
+        self.param_id = param_id
+        self.param_value = param_value
+
+    def __repr__(self):
+        return "<Parameter '{}': {}>".format(self.param_id, self.param_value)
+
+
+class ParamFile(object):
+    """Base class for param file parsers"""
+    def __init__(self, args):
+        pass
+
+    def read(self, file_):
+        """Returns a iterable of Parameters"""
+        raise NotImplementedError
+
+    def write(self, file_, parametes):
+        """Writes Parameters to file"""
+        raise NotImplementedError
+
+
+class MissionPlannerParam(ParamFile):
+    """Parse MissionPlanner param files"""
+
+    class CSVDialect(csv.Dialect):
+        delimiter = ','
+        doublequote = False
+        skipinitialspace = True
+        lineterminator = '\r\n'
+        quoting = csv.QUOTE_NONE
+
+    def read(self, file_):
+        to_numeric = lambda x: float(x) if '.' in x else int(x)
+
+        for data in csv.reader(file_, self.CSVDialect):
+            if data[0].startswith('#'):
+                continue # skip comments
+
+            if len(data) != 2:
+                raise ValueError("wrong field count")
+
+            yield Parameter(data[0].strip(), to_numeric(data[1]));
+
+    def write(self, file_, parameters):
+        writer = csv.writer(file_, self.CSVDialect)
+        writer.writerow(("#NOTE: " + time.strftime("%d.%m.%Y %T") ,))
+        for p in parameters:
+            writer.writerow((p.param_id, p.param_value))
+
+
+class QGroundControlParam(ParamFile):
+    """Parse QGC param files"""
+
+    class CSVDialect(csv.Dialect):
+        delimiter = '\t'
+        doublequote = False
+        skipinitialspace = True
+        lineterminator = '\n'
+        quoting = csv.QUOTE_NONE
+
+    def __init__(self, args):
+        self.mavros_ns = args.mavros_ns
+
+    def read(self, file_):
+        to_numeric = lambda x: float(x) if '.' in x else int(x)
+
+        for data in csv.reader(file_, self.CSVDialect):
+            if data[0].startswith('#'):
+                continue # skip comments
+
+            if len(data) != 5:
+                raise ValueError("wrong field count")
+
+            yield Parameter(data[2].strip(), to_numeric(data[3]));
+
+    def write(self, file_, parameters):
+        def to_type(x):
+            if isinstance(x, float):
+                return 9 # REAL32
+            elif isinstance(x, int):
+                return 6 # INT32
+            else:
+                raise ValueError("unknown type: " + repr(type(x)))
+
+        sysid = rospy.get_param(self.mavros_ns + "/target_system_id", 1)
+        compid = rospy.get_param(self.mavros_ns + "/target_component_id", 1)
+
+        writer = csv.writer(file_, self.CSVDialect)
+        writer.writerow(("# NOTE: " + time.strftime("%d.%m.%Y %T"), ))
+        writer.writerow(("# Onboard parameters saved by mavparam for ({}, {})".format(sysid, compid), ))
+        writer.writerow(("# MAV ID" , "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
+        for p in parameters:
+            writer.writerow((sysid, compid, p.param_id, p.param_value, to_type(p.param_value), )) # XXX
+
+
+def print_if(cond, *args, **kvargs):
+    if cond:
+        print(*args, **kvargs)
+
+
+def fault(*args, **kvargs):
+    kvargs['file'] = sys.stdout
+    print(*args, **kvargs)
+    sys.exit(1)
+
+
+def get_param_file_io(args):
+    if args.mission_planner:
+        print_if(args.verbose, "MissionPlanner format")
+        return MissionPlannerParam(args)
+
+    elif args.qgroundcontrol:
+        print_if(args.verbose, "QGroundControl format")
+        return QGroundControlParam(args)
+
+    else:
+        if args.file.name.endswith('.txt'):
+            print_if(args.verbose, "Suggestion: QGroundControl format")
+            return QGroundControlParam(args)
+        else:
+            print_if(args.verbose, "Suggestion: MissionPlanner format")
+            return MissionPlannerParam(args)
+
+
+def do_load(args):
+    rospy.init_node("mavparam", anonymous=True)
+
+    param_file = get_param_file_io(args)
+    with args.file:
+        for p in param_file.read(args.file):
+            rospy.set_param(args.mavros_ns + "/param/" + p.param_id, p.param_value)
+
+    try:
+        push_cl = rospy.ServiceProxy(args.mavros_ns + "/param/push", ParamPush)
+        ret = push_cl()
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    print_if(args.verbose, "Parameters transfered:", ret.param_transfered)
+
+
+def do_dump(args):
+    rospy.init_node("mavparam", anonymous=True)
+
+    try:
+        pull_cl = rospy.ServiceProxy(args.mavros_ns + "/param/pull", ParamPull)
+        ret = pull_cl(force_pull=args.force)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    print_if(args.verbose, "Parameters received:", ret.param_received)
+
+    try:
+        params = rospy.get_param(args.mavros_ns + "/param")
+    except KeyError as ex:
+        fault("ROS params not exist:", ex)
+
+    param_file = get_param_file_io(args)
+    with args.file:
+        param_file.write(args.file,
+                         sorted((Parameter(k, v) for k, v in params.iteritems()),
+                                cmp=lambda x, y: cmp(x.param_id, y.param_id))
+                        )
+
+
+def do_get(args):
+    rospy.init_node("mavparam", anonymous=True)
+
+    try:
+        get_cl = rospy.ServiceProxy(args.mavros_ns + "/param/get", ParamGet)
+        ret = get_cl(param_id=args.param_id)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    if ret.integer != 0:
+        print(ret.integer)
+    elif ret.real != 0.0:
+        print(ret.real)
+    else:
+        print(0)
+
+
+def do_set(args):
+    rospy.init_node("mavparam", anonymous=True)
+
+    if '.' in args.value:
+        val_i = 0
+        val_f = float(args.value)
+    else:
+        val_i = int(args.value)
+        val_f = 0.0
+
+    try:
+        set_cl = rospy.ServiceProxy(args.mavros_ns + "/param/set", ParamSet)
+        ret = set_cl(param_id=args.param_id,
+                     integer=val_i,
+                     real=val_f
+                    )
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    if ret.integer != 0:
+        print(ret.integer)
+    elif ret.real != 0.0:
+        print(ret.real)
+    else:
+        print(0)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Commad line tool for getting, setting, parameters from MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    subarg = parser.add_subparsers()
+
+    load_args = subarg.add_parser('load', help="load parameters from file")
+    load_args.set_defaults(func=do_load)
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file")
+    load_format = load_args.add_mutually_exclusive_group()
+    load_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
+    load_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+
+    dump_args = subarg.add_parser('dump', help="dump parameters to file")
+    dump_args.set_defaults(func=do_dump)
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file")
+    dump_args.add_argument('-f', '--force', action="store_true", help="Force pull params from FCU, not cache.")
+    dump_format = dump_args.add_mutually_exclusive_group()
+    dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
+    dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+
+    get_args = subarg.add_parser('get', help="get parameter")
+    get_args.set_defaults(func=do_get)
+    get_args.add_argument('param_id', help="Parameter ID string")
+
+    set_args = subarg.add_parser('set', help="set parameter")
+    set_args.set_defaults(func=do_set)
+    set_args.add_argument('param_id', help="Parameter ID string")
+    set_args.add_argument('value', help="new value")
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()
+
