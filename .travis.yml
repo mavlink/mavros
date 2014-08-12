@@ -38,7 +38,6 @@ install:
   - find -L src -name package.xml -exec dirname {} \; | xargs -n 1 -i find {} -name manifest.xml | xargs -n 1 -i mv {} {}.deprecated
   - rosdep install -r -n --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
   - find -L src -name manifest.xml.deprecated | xargs -n 1 -i dirname {} | xargs -n 1 -i ln -sf `pwd`/{}/manifest.xml.deprecated `pwd`/{}/manifest.xml
-mavlink_install:
   # temporary hack: use mavlink from shadow repo
   - wget http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-hydro-mavlink/ros-hydro-mavlink_1.0.9-7precise-20140809-1711-+0000_amd64.deb
   - sudo dpkg -i ros-hydro-mavlink_1.0.9-7precise-20140809-1711-+0000_amd64.deb
