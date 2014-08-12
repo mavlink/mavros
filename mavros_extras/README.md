@@ -13,7 +13,7 @@ Plugin for mavros. Publicate `OPTICAL_FLOW` data.
 image\_pub
 ----------
 
-Plugin for mavros, publicate images from mavlink device.
+Plugin for mavros, publish images from mavlink device.
 
 
 gcs\_image\_bridge
