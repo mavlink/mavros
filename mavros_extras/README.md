@@ -7,7 +7,7 @@ Some extra plugins and nodes for [mavros][mr].
 px4flow
 -------
 
-Plugin for mavros. Publicate `OPTICAL_FLOW` data.
+Plugin for mavros. Publish `OPTICAL_FLOW` data.
 
 
 image\_pub
