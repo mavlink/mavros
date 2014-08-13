@@ -8,7 +8,8 @@ env:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     #   via the "travis encrypt" command using the project repo's public key
     - secure: "ORA0MsiEB+R3pk8qKFRllVDK7eEQGo0LoRy6VtdyU0SOw00lEWCSD8FFJM922H5e18ZME9fIfc0ttKvbEhRwPx/AUCME+0lLkcHmogc7UyB8Gu6yqXfcp0XLVKPeLK/9+9geFmb5v9P0CH3cX4PYzimzt1ay0BVfomXX4+NkipE="
-    - ROS_DISTRO=hydro
+    - ROS_DISTRO=hydro MAVLINK_DIALECT=ardupilotmega
+    - ROS_DISTRO=hydro MAVLINK_DIALECT=pixhawk
 before_install:
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
@@ -47,7 +48,7 @@ before_script: # Use this to prepare your build for testing e.g. copy database c
 script: # All commands must exit with code 0 on success. Anything else is considered failure.
   - cd ~/ros/ws_$REPOSITORY_NAME
   - rospack profile
-  - catkin_make -j4 -DMAVLINK_DIALECT=pixhawk
+  - catkin_make -j4 -DMAVLINK_DIALECT=$MAVLINK_DIALECT
 #  - if [ "$CATKIN_PACKAGES" != "" ]; then catkin_make test --pkg $CATKIN_PACKAGES; fi
   - catkin_make install
   - rm -fr devel src build; source install/setup.bash
