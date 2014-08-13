@@ -57,11 +57,6 @@ addons:
       name: "vooon/mavros"
       description: "Build submitted via Travis CI"
     notification_email: vooon341@gmail.com
-    build_command_prepend:
-      - cd ~/ros/ws_$REPOSITORY_NAME/src/mavros
-      - echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt
-      - echo 'add_subdirectory(mavros)' >> CMakeLists.txt
-      - echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt
-      - cmake .
+    build_command_prepend: "cd ~/ros/ws_$REPOSITORY_NAME/src/mavros && echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt && echo 'add_subdirectory(mavros)' >> CMakeLists.txt && echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt && cmake ."
     build_command: "make -j4"
     branch_pattern: coverity_scan
