@@ -150,14 +150,6 @@ Or you could build debian package by pulling right bloom branch from [mavlink-gb
 (common naming: `debian/<rosdistro>/<osdistro>/<package>`) using `dh binary`.
 
 
-CI Statuses
------------
-
-  - ROS Hydro: [![Hydro build status](http://jenkins.ros.org/buildStatus/icon?job=devel-hydro-mavros)](http://jenkins.ros.org/job/devel-hydro-mavros/)
-  - ROS Indigo: [![Indigo build status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-mavros)](http://jenkins.ros.org/job/devel-indigo-mavros/)
-  - Travis Hydro (Coverity Scan): [![Hydro scan status](https://travis-ci.org/vooon/mavros.svg?branch=coverity_scan)](https://travis-ci.org/vooon/mavros)
-
-
 Links
 -----
 

@@ -47,7 +47,7 @@ before_script: # Use this to prepare your build for testing e.g. copy database c
 script: # All commands must exit with code 0 on success. Anything else is considered failure.
   - cd ~/ros/ws_$REPOSITORY_NAME
   - rospack profile
-  - catkin_make -j4
+  - catkin_make -j4 -DMAVLINK_DIALECT=pixhawk
 #  - if [ "$CATKIN_PACKAGES" != "" ]; then catkin_make test --pkg $CATKIN_PACKAGES; fi
   - catkin_make install
   - rm -fr devel src build; source install/setup.bash
