@@ -224,13 +224,12 @@ private:
 				send_attitude_throttle(throttle_normalized);
         }
         else {
-			if ( throttle_normalized < 0.0 || throttle_normalized > 1.0 ) {
-
+            if ( throttle_normalized < 0.0 || throttle_normalized > 1.0 ) {
                 ROS_ERROR_NAMED("attitude_throttle","Warning: Not normalized values of throttle! Values should be between 0.0 and 1.0");
-				return;
-			}
-			else
-                send_attitude_throttle(throttle_normalized);
+                return;
+            }
+            else
+            send_attitude_throttle(throttle_normalized);
         }
 	}
 };
