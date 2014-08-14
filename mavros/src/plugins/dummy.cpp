@@ -59,24 +59,34 @@ public:
 	};
 
 	/**
-	 * Returns vector with MSGID processed by message_rx_cb()
+	 * This function returns message<->handler mapping
+	 *
+	 * Each entry defined by @a MESSAGE_HANDLER() macro
 	 */
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_HEARTBEAT,
-			MAVLINK_MSG_ID_SYS_STATUS,
-			MAVLINK_MSG_ID_STATUSTEXT
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &DummyPlugin::handle_heartbeat),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &DummyPlugin::handle_sys_status),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &DummyPlugin::handle_statustext)
 		};
-	};
+	}
 
-	/**
-	 * Message receive handler (FCU->MAVROS)
-	 * called only for messages listed in get_supported_messages()
-	 */
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		ROS_INFO_NAMED("dummy", "Dummy::message_rx_cb(%p, %u, %u) MSGID: %u",
-				msg, sysid, compid, msg->msgid);
-	};
+private:
+	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		ROS_INFO_NAMED("dummy", "Dummy::handle_heartbeat(%p, %u, %u)",
+				msg, sysid, compid);
+	}
+
+	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		ROS_INFO_NAMED("dummy", "Dummy::handle_sys_status(%p, %u, %u)",
+				msg, sysid, compid);
+	}
+
+	void handle_statustext(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext(%p, %u, %u)",
+				msg, sysid, compid);
+
+	}
 };
 
 }; // namespace mavplugin

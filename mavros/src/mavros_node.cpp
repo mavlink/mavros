@@ -269,13 +269,12 @@ private:
 			ROS_INFO_STREAM("Plugin " << repr_name <<
 					" [alias " << pl_name << "] loaded and initialized");
 
-			std::vector<uint8_t> sup_msgs = plugin->get_supported_messages();
-			for (auto it = sup_msgs.begin();
-					it != sup_msgs.end();
+			auto sub_map = plugin->get_rx_handlers();
+			for (auto it = sub_map.begin();
+					it != sub_map.end();
 					++it) {
-				ROS_DEBUG("Route msgid %d to %s", *it, repr_name.c_str());
-				message_route_table[*it].connect(
-						boost::bind(&MavRosPlugin::message_rx_cb, plugin, _1, _2, _3));
+				ROS_DEBUG("Route msgid %d to %s", it->first, repr_name.c_str());
+				message_route_table[it->first].connect(it->second);
 			}
 
 		} catch (pluginlib::PluginlibException& ex) {
