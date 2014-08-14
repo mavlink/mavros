@@ -186,6 +186,7 @@ add_library(mavros_plugins
   src/plugins/rc_io.cpp
   src/plugins/command.cpp
   src/plugins/local_position.cpp
+  src/plugins/global_position.cpp
   src/plugins/vision_position.cpp
   src/plugins/setpoint_position.cpp
   src/plugins/safety_area.cpp
