@@ -398,65 +398,27 @@ public:
 		return "SystemStatus";
 	}
 
-	const std::vector<uint8_t> get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_HEARTBEAT,
-			MAVLINK_MSG_ID_SYS_STATUS,
-			MAVLINK_MSG_ID_STATUSTEXT
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &SystemStatusPlugin::handle_sys_status),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &SystemStatusPlugin::handle_statustext),
 #ifdef MAVLINK_MSG_ID_MEMINFO
-			, MAVLINK_MSG_ID_MEMINFO
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MEMINFO, &SystemStatusPlugin::handle_meminfo),
 #endif
 #ifdef MAVLINK_MSG_ID_HWSTATUS
-			, MAVLINK_MSG_ID_HWSTATUS
-#endif
-		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_HEARTBEAT:
-			handle_heartbeat(msg);
-			break;
-
-		case MAVLINK_MSG_ID_SYS_STATUS:
-			handle_sys_status(msg);
-			break;
-
-		case MAVLINK_MSG_ID_STATUSTEXT:
-			handle_statustext(msg);
-			break;
-
-		/* -*- APM additional messages -*- */
-
-#ifdef MAVLINK_MSG_ID_MEMINFO
-		case MAVLINK_MSG_ID_MEMINFO:
-			{
-				mavlink_meminfo_t mem;
-				mavlink_msg_meminfo_decode(msg, &mem);
-				mem_diag.set(mem.freemem, mem.brkval);
-			}
-			break;
-#endif
-
-#ifdef MAVLINK_MSG_ID_HWSTATUS
-		case MAVLINK_MSG_ID_HWSTATUS:
-			{
-				mavlink_hwstatus_t hwst;
-				mavlink_msg_hwstatus_decode(msg, &hwst);
-				hwst_diag.set(hwst.Vcc, hwst.I2Cerr);
-			}
-			break;
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_HWSTATUS, &SystemStatusPlugin::handle_hwstatus),
 #endif
 		};
 	}
 
 private:
+	UAS *uas;
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
 	HwStatus hwst_diag;
 	SystemStatusDiag sys_diag;
 	BatteryStatusDiag batt_diag;
-	UAS *uas;
 	ros::Timer timeout_timer;
 	ros::Timer heartbeat_timer;
 	ros::Timer sys_time_timer;
@@ -643,7 +605,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_heartbeat(const mavlink_message_t *msg) {
+	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_heartbeat_t hb;
 		mavlink_msg_heartbeat_decode(msg, &hb);
 		hb_diag.tick(hb);
@@ -663,7 +625,7 @@ private:
 		state_pub.publish(state_msg);
 	}
 
-	void handle_sys_status(const mavlink_message_t *msg) {
+	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_sys_status_t stat;
 		mavlink_msg_sys_status_decode(msg, &stat);
 
@@ -682,7 +644,7 @@ private:
 		batt_pub.publish(batt_msg);
 	}
 
-	void handle_statustext(const mavlink_message_t *msg) {
+	void handle_statustext(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_statustext_t textm;
 		mavlink_msg_statustext_decode(msg, &textm);
 
@@ -694,6 +656,22 @@ private:
 		else
 			process_statustext_normal(textm.severity, text);
 	}
+
+#ifdef MAVLINK_MSG_ID_MEMINFO
+	void handle_meminfo(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_meminfo_t mem;
+		mavlink_msg_meminfo_decode(msg, &mem);
+		mem_diag.set(mem.freemem, mem.brkval);
+	}
+#endif
+
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+	void handle_hwstatus(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_hwstatus_t hwst;
+		mavlink_msg_hwstatus_decode(msg, &hwst);
+		hwst_diag.set(hwst.Vcc, hwst.I2Cerr);
+	}
+#endif
 
 	/* -*- timer callbacks -*- */
 

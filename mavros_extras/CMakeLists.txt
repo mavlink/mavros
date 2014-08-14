@@ -157,7 +157,7 @@ target_link_libraries(gcs_image_bridge
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras gcs_image_bridge
+install(TARGETS #mavros_extras gcs_image_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
