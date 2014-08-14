@@ -49,7 +49,7 @@ public:
 		bool use_pose;
 
 		uas = &uas_;
-		mp_nh = ros::NodeHandle(nh, "mocap_pose");
+		mp_nh = ros::NodeHandle(nh, "mocap");
 
 		mp_nh.param("mocap/use_tf", use_tf, false);  // Vicon
 		mp_nh.param("mocap/use_pose", use_pose, true);  // Optitrack
@@ -66,7 +66,7 @@ public:
 		}
 		else
 		{
-			ROS_ERROR_THROTTLE(1, "Use one motion capture source.");
+			ROS_ERROR_THROTTLE_NAMED(1, "mocap", "Use one motion capture source.");
 		}
 	}
 
