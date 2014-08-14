@@ -179,21 +179,21 @@ target_link_libraries(mavconn
 add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
-  src/plugins/imu_pub.cpp
-  src/plugins/gps.cpp
-  src/plugins/param.cpp
-  src/plugins/waypoint.cpp
-  src/plugins/rc_io.cpp
-  src/plugins/command.cpp
-  src/plugins/local_position.cpp
-  src/plugins/vision_position.cpp
-  src/plugins/setpoint_position.cpp
-  src/plugins/safety_area.cpp
-  src/plugins/3dr_radio.cpp
-  src/plugins/setpoint_velocity.cpp
-  src/plugins/setpoint_accel.cpp
-  src/plugins/setpoint_attitude.cpp
-  src/plugins/vision_speed.cpp
+#  src/plugins/imu_pub.cpp
+#  src/plugins/gps.cpp
+#  src/plugins/param.cpp
+#  src/plugins/waypoint.cpp
+#  src/plugins/rc_io.cpp
+#  src/plugins/command.cpp
+#  src/plugins/local_position.cpp
+#  src/plugins/vision_position.cpp
+#  src/plugins/setpoint_position.cpp
+#  src/plugins/safety_area.cpp
+#  src/plugins/3dr_radio.cpp
+#  src/plugins/setpoint_velocity.cpp
+#  src/plugins/setpoint_accel.cpp
+#  src/plugins/setpoint_attitude.cpp
+#  src/plugins/vision_speed.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp

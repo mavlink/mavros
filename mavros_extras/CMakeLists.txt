@@ -123,16 +123,16 @@ else()
 endif()
 
 ## Declare a cpp library
-add_library(mavros_extras
-  src/plugins/px4flow.cpp
-  src/plugins/image_pub.cpp
-)
-add_dependencies(mavros_extras
-  mavros_extras_generate_messages_cpp
-)
-target_link_libraries(mavros_extras
-  ${catkin_LIBRARIES}
-)
+#add_library(mavros_extras
+#  src/plugins/px4flow.cpp
+#  src/plugins/image_pub.cpp
+#)
+#add_dependencies(mavros_extras
+#  mavros_extras_generate_messages_cpp
+#)
+#target_link_libraries(mavros_extras
+#  ${catkin_LIBRARIES}
+#)
 
 ## Declare a cpp executable
 add_executable(gcs_image_bridge
@@ -157,7 +157,7 @@ target_link_libraries(gcs_image_bridge
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras gcs_image_bridge
+install(TARGETS #mavros_extras gcs_image_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
