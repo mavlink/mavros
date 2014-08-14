@@ -1,7 +1,7 @@
 /**
  * @brief SetpointVelocity plugin
  * @file setpoint_velocity.cpp
- * @author Nuno Marques
+ * @author Nuno Marques <n.marques21@hotmail.com>
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
@@ -28,7 +28,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #include "setpoint_mixin.h"
 
@@ -79,7 +79,7 @@ private:
 	 *
 	 * Note: send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(float vx, float vy, float vz) {
+	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz) {
 
 		/* Documentation start from bit 1 instead 0,
 		 * but implementation PX4 Firmware #1151 starts from 0
@@ -87,7 +87,7 @@ private:
 		uint16_t ignore_all_except_v_xyz = (7<<6)|(7<<0);
 
 		// ENU->NED. Issue #49.
-		set_position_target_local_ned(ros::Time::now().toNSec() / 1000000,
+		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_v_xyz,
 				0.0, 0.0, 0.0,
@@ -97,8 +97,11 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void vel_cb(const geometry_msgs::Twist::ConstPtr &req) {
-		send_setpoint_velocity(req->linear.x, req->linear.y, req->linear.z);
+	void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
+		send_setpoint_velocity(req->header.stamp,
+					req->twist.linear.x,
+					req->twist.linear.y,
+					req->twist.linear.z);
 	}
 };
 
