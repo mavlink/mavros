@@ -1,7 +1,7 @@
 /**
  * @brief SafetyArea plugin
  * @file safety_area.cpp
- * @author Nuno Marques
+ * @author Nuno Marques <n.marques21@hotmail.com>
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
