@@ -216,31 +216,20 @@ private:
 		float throttle_normalized = req->data;
 
 		if (reverse_throttle)
-			if ( throttle_normalized < -1.0 || throttle_normalized > 1.0 ) {
-<<<<<<< HEAD
+            if ( throttle_normalized < -1.0 || throttle_normalized > 1.0 ) {
                 ROS_ERROR_NAMED("attitude_throttle","Warning: Not normalized values of throttle! Values should be between -1.0 and 1.0");
-=======
-				ROS_DEBUG_ONCE("Warning: Not normalized values of throttle! Values should be between -1.0 and 1.0");
->>>>>>> upstream/master
 				return;
 			}
 			else
 				send_attitude_throttle(throttle_normalized);
 		else
 			if ( throttle_normalized < 0.0 || throttle_normalized > 1.0 ) {
-<<<<<<< HEAD
-                ROS_ERROR_NAMED("attitude_throttle","Warning: Not normalized values of throttle! Values should be between 0.0 and 1.0");
-				return;
-			}
-			else
-				send_attitude_throttle(throttle_normalized);		
-=======
+
 				ROS_DEBUG_ONCE("Warning: Not normalized values of throttle! Values should be between 0.0 and 1.0");
 				return;
 			}
 			else
-				send_attitude_throttle(throttle_normalized);
->>>>>>> upstream/master
+                send_attitude_throttle(throttle_normalized);
 	}
 };
 
