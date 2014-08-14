@@ -98,8 +98,7 @@ private:
 	 * Send transform to FCU position controller
 	 *
 	 * Note: send only XYZ,
-	 * velocity and af vector could be in Twist message
-	 * but it needs additional work.
+	 * 
 	 */
 	void send_setpoint_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// ENU frame

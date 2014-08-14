@@ -1,7 +1,7 @@
 /**
  * @brief SetpointAcceleration plugin
  * @file setpoint_accel.cpp
- * @author Nuno Marques
+ * @author Nuno Marques <n.marques21@hotmail.com>
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
@@ -29,7 +29,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 #include "setpoint_mixin.h"
 
@@ -84,7 +84,7 @@ private:
 	 *
 	 * Note: send only AFX AFY AFZ. ENU frame.
 	 */
-	void send_setpoint_acceleration(float afx, float afy, float afz) {
+	void send_setpoint_acceleration(const ros::Time &stamp, float afx, float afy, float afz) {
 
 		/* Documentation start from bit 1 instead 0,
 		 * but implementation PX4 Firmware #1151 starts from 0
@@ -95,7 +95,7 @@ private:
 			ignore_all_except_a_xyz |= (1<<9);
 
 		// ENU->NED. Issue #49.
-		set_position_target_local_ned(ros::Time::now().toNSec() / 1000000,
+		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,
@@ -105,8 +105,11 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void accel_cb(const geometry_msgs::Vector3::ConstPtr &req) {
-		send_setpoint_acceleration(req->x, req->y, req->z);
+	void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr &req) {
+		send_setpoint_acceleration(req->header.stamp,
+					    req->vector.x,
+					    req->vector.y,
+					    req->vector.z);
 	}
 };
 
