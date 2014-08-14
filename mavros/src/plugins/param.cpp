@@ -375,13 +375,67 @@ public:
 		return "Param";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_PARAM_VALUE
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
 		};
 	}
 
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+private:
+	std::recursive_mutex mutex;
+	UAS *uas;
+
+	ros::NodeHandle param_nh;
+	ros::ServiceServer pull_srv;
+	ros::ServiceServer push_srv;
+	ros::ServiceServer set_srv;
+	ros::ServiceServer get_srv;
+
+	ros::Timer shedule_timer;			//!< for startup shedule fetch
+	ros::Timer timeout_timer;			//!< for timeout resend
+
+	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
+	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
+	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
+	static constexpr int RETRIES_COUNT = 3;
+
+	const ros::Duration BOOTUP_TIME_DT;
+	const ros::Duration LIST_TIMEOUT_DT;
+	const ros::Duration PARAM_TIMEOUT_DT;
+
+	std::map<std::string, Parameter> parameters;
+	std::list<uint16_t> parameters_missing_idx;
+	std::map<std::string, ParamSetOpt*> set_parameters;
+	ssize_t param_count;
+	enum {
+		PR_IDLE,
+		PR_RXLIST,
+		PR_RXPARAM,
+		PR_TXPARAM
+	} param_state;
+
+	size_t param_rx_retries;
+	bool is_timedout;
+	std::mutex list_cond_mutex;
+	std::condition_variable list_receiving;
+
+	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
+		if (uas->is_ardupilotmega())
+			return Parameter::from_param_value_apm_quirk(msg);
+		else
+			return Parameter::from_param_value(msg);
+	}
+
+	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
+		if (uas->is_ardupilotmega())
+			return Parameter::to_param_union_apm_quirk(p);
+		else
+			return Parameter::to_param_union(p);
+	}
+
+	/* -*- message handlers -*- */
+
+	void handle_param_value(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_param_value_t pmsg;
 		mavlink_msg_param_value_decode(msg, &pmsg);
 
@@ -464,58 +518,6 @@ public:
 				list_receiving.notify_all();
 			}
 		}
-	}
-
-private:
-	std::recursive_mutex mutex;
-	UAS *uas;
-
-	ros::NodeHandle param_nh;
-	ros::ServiceServer pull_srv;
-	ros::ServiceServer push_srv;
-	ros::ServiceServer set_srv;
-	ros::ServiceServer get_srv;
-
-	ros::Timer shedule_timer;			//!< for startup shedule fetch
-	ros::Timer timeout_timer;			//!< for timeout resend
-
-	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
-	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
-	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
-	static constexpr int RETRIES_COUNT = 3;
-
-	const ros::Duration BOOTUP_TIME_DT;
-	const ros::Duration LIST_TIMEOUT_DT;
-	const ros::Duration PARAM_TIMEOUT_DT;
-
-	std::map<std::string, Parameter> parameters;
-	std::list<uint16_t> parameters_missing_idx;
-	std::map<std::string, ParamSetOpt*> set_parameters;
-	ssize_t param_count;
-	enum {
-		PR_IDLE,
-		PR_RXLIST,
-		PR_RXPARAM,
-		PR_TXPARAM
-	} param_state;
-
-	size_t param_rx_retries;
-	bool is_timedout;
-	std::mutex list_cond_mutex;
-	std::condition_variable list_receiving;
-
-	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
-		if (uas->is_ardupilotmega())
-			return Parameter::from_param_value_apm_quirk(msg);
-		else
-			return Parameter::from_param_value(msg);
-	}
-
-	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
-		if (uas->is_ardupilotmega())
-			return Parameter::to_param_union_apm_quirk(p);
-		else
-			return Parameter::to_param_union(p);
 	}
 
 	/* -*- low-level send function -*- */
