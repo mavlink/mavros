@@ -184,7 +184,7 @@ add_library(mavros_plugins
   src/plugins/param.cpp
   src/plugins/waypoint.cpp
   src/plugins/rc_io.cpp
-#  src/plugins/command.cpp
+  src/plugins/command.cpp
 #  src/plugins/local_position.cpp
 #  src/plugins/vision_position.cpp
 #  src/plugins/setpoint_position.cpp
