@@ -187,7 +187,7 @@ add_library(mavros_plugins
   src/plugins/command.cpp
   src/plugins/local_position.cpp
   src/plugins/vision_position.cpp
-#  src/plugins/setpoint_position.cpp
+  src/plugins/setpoint_position.cpp
 #  src/plugins/safety_area.cpp
 #  src/plugins/3dr_radio.cpp
 #  src/plugins/setpoint_velocity.cpp
