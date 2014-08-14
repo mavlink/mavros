@@ -31,6 +31,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
 
 #include "setpoint_mixin.h"
 
@@ -85,6 +86,8 @@ public:
 			ROS_DEBUG_NAMED("attitude", "Setpoint attitude topic type: PoseStamped");
 			att_sub = sp_nh.subscribe("attitude", 10, &SetpointAttitudePlugin::pose_cb, this);
 		}
+
+		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this);
 	}
 
 	const std::string get_name() const {
@@ -104,6 +107,7 @@ private:
 
 	ros::NodeHandle sp_nh;
 	ros::Subscriber att_sub;
+	ros::Subscriber throttle_sub;
 
 	std::string frame_id;
 	std::string child_frame_id;
@@ -172,8 +176,19 @@ private:
 	}
 
 	/**
-	 * TODO: Thrust control message reception
+	 * Send throttle to FCU attitude controller
 	 */
+	void send_attitude_throttle(const float throttle) {
+		// Q + RPY
+		const uint8_t ignore_all_except_throttle = (1<<7)|(7<<0);
+		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
+
+		set_attitude_target(ros::Time::now().toNSec() / 1000000,
+				ignore_all_except_throttle,
+				q,
+				0.0, 0.0, 0.0,
+				throttle);
+	}
 
 	/* -*- callbacks -*- */
 
@@ -194,6 +209,10 @@ private:
 				req->angular.x,
 				req->angular.y,
 				req->angular.z);
+	}
+
+	void throttle_cb(const std_msgs::Float64::ConstPtr &req) {
+		send_attitude_throttle(req->data);
 	}
 };
 
