@@ -8,9 +8,9 @@
   <author email="vooon341@gmail.com">Vladimir Ermakov</author>
   <license>GPLv3</license>
 
-  <!-- <url type="website">http://wiki.ros.org/mavros_extras</url> -->
-  <url type="repository">https://github.com/vooon/mavros_extras.git</url>
-  <url type="bugtracker">https://github.com/vooon/mavros_extras/issues</url>
+  <url type="website">http://wiki.ros.org/mavros_extras</url>
+  <url type="repository">https://github.com/vooon/mavros.git</url>
+  <url type="bugtracker">https://github.com/vooon/mavros/issues</url>
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
