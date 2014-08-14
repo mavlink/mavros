@@ -56,7 +56,7 @@ public:
 private:
     UAS *uas;
 
-    ros::NodeHandle sp_nh;
+    ros::NodeHandle mp_nh;
     ros::Subscriber mocap_pose_sub;
     ros::Subscriber mocap_tf_sub;
 
@@ -87,7 +87,7 @@ private:
         tf::quaternionMsgToTF(pose->orientation, quat);
         double roll, pitch, yaw;
         tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-        // Covert to malink body frame
+        // Convert to mavlink body frame
         mocap_pose_send(stamp.toNSec() / 1000,
                 pose->position.x,
                 -pose->position.y,
@@ -101,7 +101,7 @@ private:
         tf::quaternionMsgToTF(trans->transform.rotation, quat);
         double roll, pitch, yaw;
         tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-        // Covert to malink body frame
+        // Convert to mavlink body frame
         mocap_pose_send(trans->header.stamp.toNSec() / 1000,
                 trans->transform.translation.x,
                 -trans->transform.translation.y,
