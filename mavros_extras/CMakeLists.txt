@@ -125,7 +125,7 @@ endif()
 ## Declare a cpp library
 add_library(mavros_extras
   src/plugins/px4flow.cpp
-#  src/plugins/image_pub.cpp
+  src/plugins/image_pub.cpp
 )
 add_dependencies(mavros_extras
   mavros_extras_generate_messages_cpp

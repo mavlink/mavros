@@ -64,23 +64,11 @@ public:
 		return "ImagePub";
 	}
 
-	const std::vector<uint8_t> get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE,
-			MAVLINK_MSG_ID_ENCAPSULATED_DATA
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, &ImagePubPlugin::handle_data_transmission_handshake),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_ENCAPSULATED_DATA, &ImagePubPlugin::handle_encapsulated_data)
 		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
-			handle_data_transmission_handshake(msg);
-			break;
-
-		case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
-			handle_encapsulated_data(msg);
-			break;
-		}
 	}
 
 private:
@@ -159,7 +147,7 @@ private:
 		}
 	}
 
-	void handle_data_transmission_handshake(const mavlink_message_t *msg) {
+	void handle_data_transmission_handshake(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_data_transmission_handshake_t img_header;
 		mavlink_msg_data_transmission_handshake_decode(msg, &img_header);
 
@@ -190,7 +178,7 @@ private:
 		}
 	}
 
-	void handle_encapsulated_data(const mavlink_message_t *msg) {
+	void handle_encapsulated_data(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (im_packets == 0)
 			return;
 
