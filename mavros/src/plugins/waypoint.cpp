@@ -194,55 +194,15 @@ public:
 		return "Waypoint";
 	};
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_MISSION_ITEM,
-			MAVLINK_MSG_ID_MISSION_REQUEST,
-			MAVLINK_MSG_ID_MISSION_CURRENT,
-			MAVLINK_MSG_ID_MISSION_COUNT,
-			MAVLINK_MSG_ID_MISSION_ITEM_REACHED,
-			MAVLINK_MSG_ID_MISSION_ACK
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_REQUEST, &WaypointPlugin::handle_mission_request),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_CURRENT, &WaypointPlugin::handle_mission_current),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_COUNT, &WaypointPlugin::handle_mission_count),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM_REACHED, &WaypointPlugin::handle_mission_item_reached),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ACK, &WaypointPlugin::handle_mission_ack),
 		};
-	};
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_MISSION_ITEM:
-			mavlink_mission_item_t mit;
-			mavlink_msg_mission_item_decode(msg, &mit);
-			handle_mission_item(mit);
-			break;
-
-		case MAVLINK_MSG_ID_MISSION_REQUEST:
-			mavlink_mission_request_t mreq;
-			mavlink_msg_mission_request_decode(msg, &mreq);
-			handle_mission_request(mreq);
-			break;
-
-		case MAVLINK_MSG_ID_MISSION_CURRENT:
-			mavlink_mission_current_t mcur;
-			mavlink_msg_mission_current_decode(msg, &mcur);
-			handle_mission_current(mcur);
-			break;
-
-		case MAVLINK_MSG_ID_MISSION_COUNT:
-			mavlink_mission_count_t mcnt;
-			mavlink_msg_mission_count_decode(msg, &mcnt);
-			handle_mission_count(mcnt);
-			break;
-
-		case MAVLINK_MSG_ID_MISSION_ITEM_REACHED:
-			mavlink_mission_item_reached_t mitr;
-			mavlink_msg_mission_item_reached_decode(msg, &mitr);
-			handle_mission_item_reached(mitr);
-			break;
-
-		case MAVLINK_MSG_ID_MISSION_ACK:
-			mavlink_mission_ack_t mack;
-			mavlink_msg_mission_ack_decode(msg, &mack);
-			handle_mission_ack(mack);
-			break;
-		}
 	}
 
 private:
@@ -298,7 +258,9 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	void handle_mission_item(mavlink_mission_item_t &mit) {
+	void handle_mission_item(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_item_t mit;
+		mavlink_msg_mission_item_decode(msg, &mit);
 		WaypointItem wpi = WaypointItem::from_mission_item(mit);
 		unique_lock lock(mutex);
 
@@ -342,8 +304,11 @@ private:
 		}
 	}
 
-	void handle_mission_request(mavlink_mission_request_t &mreq) {
+	void handle_mission_request(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_request_t mreq;
+		mavlink_msg_mission_request_decode(msg, &mreq);
 		lock_guard lock(mutex);
+
 		if ((wp_state == WP_TXLIST && mreq.seq == 0) || (wp_state == WP_TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
@@ -364,7 +329,9 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state %d", wp_state);
 	}
 
-	void handle_mission_current(mavlink_mission_current_t &mcur) {
+	void handle_mission_current(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_current_t mcur;
+		mavlink_msg_mission_current_decode(msg, &mcur);
 		unique_lock lock(mutex);
 
 		if (wp_state == WP_SET_CUR) {
@@ -389,7 +356,9 @@ private:
 		}
 	}
 
-	void handle_mission_count(mavlink_mission_count_t &mcnt) {
+	void handle_mission_count(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_count_t mcnt;
+		mavlink_msg_mission_count_decode(msg, &mcnt);
 		unique_lock lock(mutex);
 
 		if (wp_state == WP_RXLIST) {
@@ -424,12 +393,17 @@ private:
 		}
 	}
 
-	void handle_mission_item_reached(mavlink_mission_item_reached_t &mitr) {
+	void handle_mission_item_reached(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_item_reached_t mitr;
+		mavlink_msg_mission_item_reached_decode(msg, &mitr);
+
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
 	}
 
-	void handle_mission_ack(mavlink_mission_ack_t &mack) {
+	void handle_mission_ack(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_mission_ack_t mack;
+		mavlink_msg_mission_ack_decode(msg, &mack);
 		unique_lock lock(mutex);
 
 		if ((wp_state == WP_TXLIST || wp_state == WP_TXWP)
