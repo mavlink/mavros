@@ -116,40 +116,13 @@ public:
 		return "3DRRadio";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_RADIO_STATUS
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO_STATUS, &TDRRadioPlugin::handle_radio_status),
 #ifdef MAVLINK_MSG_ID_RADIO
-			, MAVLINK_MSG_ID_RADIO
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO, &TDRRadioPlugin::handle_radio),
 #endif
 		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_RADIO_STATUS:
-			{
-				mavlink_radio_status_t rst;
-				mavlink_msg_radio_status_decode(msg, &rst);
-				has_radio_status = true;
-				handle_message(rst, sysid, compid);
-			}
-			break;
-
-#ifdef MAVLINK_MSG_ID_RADIO
-		case MAVLINK_MSG_ID_RADIO:
-			{
-				if (has_radio_status)
-					return;
-
-				// actually the same data, but from earlier modems
-				mavlink_radio_t rst;
-				mavlink_msg_radio_decode(msg, &rst);
-				handle_message(rst, sysid, compid);
-			}
-			break;
-#endif
-		}
 	}
 
 private:
@@ -157,6 +130,27 @@ private:
 	bool has_radio_status;
 
 	ros::Publisher status_pub;
+
+	/* -*- message handlers -*- */
+
+	void handle_radio_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_radio_status_t rst;
+		mavlink_msg_radio_status_decode(msg, &rst);
+		has_radio_status = true;
+		handle_message(rst, sysid, compid);
+	}
+
+#ifdef MAVLINK_MSG_ID_RADIO
+	void handle_radio(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		if (has_radio_status)
+			return;
+
+		// actually the same data, but from earlier modems
+		mavlink_radio_t rst;
+		mavlink_msg_radio_decode(msg, &rst);
+		handle_message(rst, sysid, compid);
+	}
+#endif
 
 	template<typename msgT>
 	void handle_message(msgT &rst, uint8_t sysid, uint8_t compid) {
