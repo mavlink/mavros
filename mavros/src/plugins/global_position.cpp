@@ -68,7 +68,9 @@ public:
 
 		fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
 		pos_pub = gp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("local", 10);
-		vel_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gps_vel", 10);
+		vel_pub = gp_nh.advertise<geometry_msgs::Vector3Stamped>("gps_vel", 10);
+		rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
+		hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
 
 	std::string const get_name() const {
@@ -85,10 +87,11 @@ private:
 	UAS *uas;
 
 	ros::NodeHandle gp_nh;
-	ros::Publisher pos_pub;
 	ros::Publisher fix_pub;
-	ros::Publisher time_ref_pub;
+	ros::Publisher pos_pub;
 	ros::Publisher vel_pub;
+	ros::Publisher hdg_pub;
+	ros::Publisher rel_alt_pub;
 	
 	tf::TransformBroadcaster tf_broadcaster;
 
