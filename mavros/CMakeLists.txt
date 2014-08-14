@@ -195,6 +195,7 @@ add_library(mavros_plugins
   src/plugins/setpoint_accel.cpp
   src/plugins/setpoint_attitude.cpp
   src/plugins/vision_speed.cpp
+  src/plugins/mocap_pose_estimate.cpp
 )
 add_dependencies(mavros_plugins
   mavros_generate_messages_cpp
