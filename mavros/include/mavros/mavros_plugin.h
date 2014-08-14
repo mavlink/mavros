@@ -27,20 +27,32 @@
 
 #pragma once
 
+#include <map>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavros/mavconn_interface.h>
 #include <mavros/mavros_uas.h>
 
-#include <boost/noncopyable.hpp>
-
 namespace mavplugin {
+
+/**
+ * @brief Helper macros to define message handler map item
+ */
+#define MESSAGE_HANDLER(_message_id, _class_method_ptr)	\
+	{ _message_id, boost::bind(_class_method_ptr, this, _1, _2, _3) }
 
 /**
  * @brief MAVROS Plugin base class
  */
-class MavRosPlugin : private boost::noncopyable
+class MavRosPlugin
 {
+private:
+	MavRosPlugin(const MavRosPlugin&) = delete;
+
 public:
+	typedef boost::function<void(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)>
+		message_handler;
+	typedef std::map<uint8_t, message_handler> message_map;
+
 	virtual ~MavRosPlugin() {};
 
 	/**
@@ -60,14 +72,9 @@ public:
 	virtual const std::string get_name() const = 0;
 
 	/**
-	 * @brief List of messages supported by message_rx_cb()
+	 * @brief Return map with message rx handlers
 	 */
-	virtual const std::vector<uint8_t> get_supported_messages() const = 0;
-
-	/**
-	 * @brief Message receive callback
-	 */
-	virtual void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) = 0;
+	virtual const message_map get_rx_handlers() = 0;
 
 protected:
 	/**

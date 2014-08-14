@@ -64,35 +64,13 @@ public:
 		return "RCIO";
 	};
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_RC_CHANNELS_RAW,
-			MAVLINK_MSG_ID_RC_CHANNELS,
-			MAVLINK_MSG_ID_SERVO_OUTPUT_RAW
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS, &RCIOPlugin::handle_rc_channels),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SERVO_OUTPUT_RAW, &RCIOPlugin::handle_servo_output_raw),
 		};
-	};
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-			mavlink_rc_channels_raw_t iport;
-			mavlink_msg_rc_channels_raw_decode(msg, &iport);
-			handle_rc_channels_raw(msg, iport);
-			break;
-
-		case MAVLINK_MSG_ID_RC_CHANNELS:
-			mavlink_rc_channels_t channels;
-			mavlink_msg_rc_channels_decode(msg, &channels);
-			handle_rc_channels(msg, channels);
-			break;
-
-		case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
-			mavlink_servo_output_raw_t oport;
-			mavlink_msg_servo_output_raw_decode(msg, &oport);
-			handle_servo_output_raw(msg, oport);
-			break;
-		}
-	};
+	}
 
 private:
 	std::recursive_mutex mutex;
@@ -109,8 +87,9 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	void handle_rc_channels_raw(const mavlink_message_t *msg,
-			mavlink_rc_channels_raw_t &port) {
+	void handle_rc_channels_raw(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_rc_channels_raw_t port;
+		mavlink_msg_rc_channels_raw_decode(msg, &port);
 		lock_guard lock(mutex);
 
 		/* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW */
@@ -142,8 +121,9 @@ private:
 		rc_in_pub.publish(rcin_msg);
 	}
 
-	void handle_rc_channels(const mavlink_message_t *msg,
-			mavlink_rc_channels_t &channels) {
+	void handle_rc_channels(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_rc_channels_t channels;
+		mavlink_msg_rc_channels_decode(msg, &channels);
 		lock_guard lock(mutex);
 
 		ROS_INFO_COND_NAMED(!has_rc_channels_msg, "rc", "RC_CHANNELS message detected!");
@@ -190,8 +170,9 @@ private:
 		rc_in_pub.publish(rcin_msg);
 	}
 
-	void handle_servo_output_raw(const mavlink_message_t *msg,
-			mavlink_servo_output_raw_t &port) {
+	void handle_servo_output_raw(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_servo_output_raw_t port;
+		mavlink_msg_servo_output_raw_decode(msg, &port);
 		lock_guard lock(mutex);
 
 		size_t offset = port.port * 8;

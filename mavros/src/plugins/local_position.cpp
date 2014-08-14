@@ -64,16 +64,10 @@ public:
 		return "LocalPosition";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_LOCAL_POSITION_NED
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
 		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_local_position_ned_t pos_ned;
-		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
-		handle_local_position_ned(pos_ned);
 	}
 
 private:
@@ -87,7 +81,10 @@ private:
 	std::string child_frame_id;	//!< frame for TF and Pose
 	bool send_tf;
 
-	void handle_local_position_ned(mavlink_local_position_ned_t &pos_ned) {
+	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_local_position_ned_t pos_ned;
+		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
+
 		ROS_DEBUG_THROTTLE_NAMED(10, "position", "Local position NED: boot_ms:%06d "
 				"position:(%1.3f %1.3f %1.3f) speed:(%1.3f %1.3f %1.3f)",
 				pos_ned.time_boot_ms,

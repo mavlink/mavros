@@ -85,14 +85,11 @@ public:
 		return "SafetyArea";
 	}
 
-	const std::vector<uint8_t> get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 		/**
 		 * @todo Publish SAFETY_ALLOWED_AREA message
 		 */
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 	}
 
 private:

@@ -82,27 +82,10 @@ public:
 		return "Command";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_COMMAND_ACK
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)
 		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_command_ack_t ack;
-		mavlink_msg_command_ack_decode(msg, &ack);
-
-		lock_guard lock(mutex);
-		for (auto it = ack_waiting_list.cbegin();
-				it != ack_waiting_list.cend(); it++)
-			if ((*it)->expected_command == ack.command) {
-				(*it)->result = ack.result;
-				(*it)->ack.notify_all();
-				return;
-			}
-
-		ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u, result %u",
-			ack.command, ack.result);
 	}
 
 private:
@@ -121,6 +104,25 @@ private:
 	static constexpr int ACK_TIMEOUT_MS = 5000;
 
 	const ros::Duration ACK_TIMEOUT_DT;
+
+	/* -*- message handlers -*- */
+
+	void handle_command_ack(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_command_ack_t ack;
+		mavlink_msg_command_ack_decode(msg, &ack);
+
+		lock_guard lock(mutex);
+		for (auto it = ack_waiting_list.cbegin();
+				it != ack_waiting_list.cend(); it++)
+			if ((*it)->expected_command == ack.command) {
+				(*it)->result = ack.result;
+				(*it)->ack.notify_all();
+				return;
+			}
+
+		ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u, result %u",
+			ack.command, ack.result);
+	}
 
 	/* -*- mid-level functions -*- */
 
