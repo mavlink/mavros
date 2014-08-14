@@ -60,46 +60,8 @@ int main(int argc, char *argv[])
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
 
-	// deprecated
-	std::string bind_host;
-	int bind_port;
-	std::string gcs_host;
-	int gcs_port;
-
-	// new method
 	std::string gcs_url;
-
-	if (!priv_nh.getParam("gcs_url", gcs_url)) {
-		// no URL given, try old UDP params
-		std::ostringstream os_url;
-
-		os_url << "udp://";
-
-		// construct bind address
-		if (priv_nh.getParam("bind_host", bind_host)) {
-			ROS_WARN("Parameter ~bind_host deprecated, use ~gcs_url instead!");
-			os_url << bind_host;
-		}
-		if (priv_nh.getParam("bind_port", bind_port)) {
-			ROS_WARN("Parameter ~bind_port deprecated, use ~gcs_url instead!");
-			os_url << ":" << bind_port;
-		}
-
-		os_url << "@";
-
-		// construct gcs address
-		if (priv_nh.getParam("gcs_host", gcs_host)) {
-			ROS_WARN("Parameter ~gcs_host deprecated, use ~gcs_url instead!");
-			os_url << gcs_host;
-		}
-		if (priv_nh.getParam("gcs_port", gcs_port)) {
-			ROS_WARN("Parameter ~gcs_port deprecated, use ~gcs_url instead!");
-			os_url << ":" << gcs_port;
-		}
-
-		gcs_url = os_url.str();
-		ROS_DEBUG_STREAM("Use default URL: " << gcs_url);
-	}
+	priv_nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 
 	gcs_link = MAVConnInterface::open_url(gcs_url);
 
