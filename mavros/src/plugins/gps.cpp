@@ -124,27 +124,11 @@ public:
 		return "GPS";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_GPS_RAW_INT,
-			MAVLINK_MSG_ID_GPS_STATUS,
-			MAVLINK_MSG_ID_SYSTEM_TIME
-		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_GPS_RAW_INT:
-			handle_gps_raw_int(msg);
-			break;
-
-		case MAVLINK_MSG_ID_GPS_STATUS:
-			handle_gps_status(msg);
-			break;
-
-		case MAVLINK_MSG_ID_SYSTEM_TIME:
-			handle_system_time(msg);
-			break;
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GPSPlugin::handle_gps_raw_int),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_STATUS, &GPSPlugin::handle_gps_status),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &GPSPlugin::handle_system_time),
 		};
 	}
 
@@ -159,7 +143,7 @@ private:
 	ros::Publisher time_ref_pub;
 	ros::Publisher vel_pub;
 
-	void handle_gps_raw_int(const mavlink_message_t *msg) {
+	void handle_gps_raw_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_gps_raw_int_t raw_gps;
 		mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
 
@@ -220,7 +204,7 @@ private:
 		}
 	}
 
-	void handle_gps_status(const mavlink_message_t *msg) {
+	void handle_gps_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		// TODO: not supported by APM:Plane,
 		//       no standard ROS messages
 		mavlink_gps_status_t gps_stat;
@@ -229,7 +213,7 @@ private:
 		ROS_INFO_THROTTLE_NAMED(30, "gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
 	}
 
-	void handle_system_time(const mavlink_message_t *msg) {
+	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
 		mavlink_msg_system_time_decode(msg, &mtime);
 
