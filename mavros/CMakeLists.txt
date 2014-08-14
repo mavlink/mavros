@@ -179,7 +179,7 @@ target_link_libraries(mavconn
 add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
-#  src/plugins/imu_pub.cpp
+  src/plugins/imu_pub.cpp
 #  src/plugins/gps.cpp
 #  src/plugins/param.cpp
 #  src/plugins/waypoint.cpp

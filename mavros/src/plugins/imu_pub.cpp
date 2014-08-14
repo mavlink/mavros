@@ -81,37 +81,14 @@ public:
 		return "IMUPub";
 	}
 
-	std::vector<uint8_t> const get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_ATTITUDE,
-			MAVLINK_MSG_ID_ATTITUDE_QUATERNION,
-			MAVLINK_MSG_ID_RAW_IMU,
-			MAVLINK_MSG_ID_SCALED_IMU,
-			MAVLINK_MSG_ID_HIGHRES_IMU,
-			MAVLINK_MSG_ID_SCALED_PRESSURE
-		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		switch (msg->msgid) {
-		case MAVLINK_MSG_ID_ATTITUDE:
-			handle_attitude(msg);
-			break;
-		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-			handle_attitude_quaternion(msg);
-			break;
-		case MAVLINK_MSG_ID_HIGHRES_IMU:
-			handle_highres_imu(msg);
-			break;
-		case MAVLINK_MSG_ID_RAW_IMU:
-			handle_raw_imu(msg);
-			break;
-		case MAVLINK_MSG_ID_SCALED_IMU:
-			handle_scaled_imu(msg);
-			break;
-		case MAVLINK_MSG_ID_SCALED_PRESSURE:
-			handle_scaled_pressure(msg);
-			break;
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_QUATERNION, &IMUPubPlugin::handle_attitude_quaternion),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_HIGHRES_IMU, &IMUPubPlugin::handle_highres_imu),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_RAW_IMU, &IMUPubPlugin::handle_raw_imu),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_IMU, &IMUPubPlugin::handle_scaled_imu),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_PRESSURE, &IMUPubPlugin::handle_scaled_pressure),
 		};
 	}
 
@@ -206,7 +183,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_attitude(const mavlink_message_t *msg) {
+	void handle_attitude(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_att_quat)
 			return;
 
@@ -235,7 +212,7 @@ private:
 	}
 
 	// almost the same as handle_attitude(), but for ATTITUDE_QUATERNION
-	void handle_attitude_quaternion(const mavlink_message_t *msg) {
+	void handle_attitude_quaternion(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_attitude_quaternion_t att_q;
 		mavlink_msg_attitude_quaternion_decode(msg, &att_q);
 
@@ -262,7 +239,7 @@ private:
 		imu_pub.publish(imu_msg);
 	}
 
-	void handle_highres_imu(const mavlink_message_t *msg) {
+	void handle_highres_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_highres_imu_t imu_hr;
 		mavlink_msg_highres_imu_decode(msg, &imu_hr);
 
@@ -316,7 +293,7 @@ private:
 		}
 	}
 
-	void handle_raw_imu(const mavlink_message_t *msg) {
+	void handle_raw_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
@@ -361,7 +338,7 @@ private:
 		magn_pub.publish(magn_msg);
 	}
 
-	void handle_scaled_imu(const mavlink_message_t *msg) {
+	void handle_scaled_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu)
 			return;
 
@@ -401,7 +378,7 @@ private:
 		magn_pub.publish(magn_msg);
 	}
 
-	void handle_scaled_pressure(const mavlink_message_t *msg) {
+	void handle_scaled_pressure(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu)
 			return;
 
