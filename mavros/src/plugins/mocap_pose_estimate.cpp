@@ -4,13 +4,10 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TransformStamped.h>
 
-#include "setpoint_mixin.h"
 
 namespace mavplugin {
 
-
-class MocapPosePlugin : public MavRosPlugin,
-    private TFListenerMixin<MocapPosePlugin>
+class MocapPosePlugin : public MavRosPlugin
 {
 public:
     MocapPosePlugin() :
@@ -25,20 +22,20 @@ public:
         bool use_pose;
 
         uas = &uas_;
-        sp_nh = ros::NodeHandle(nh, "mocap_pose");
+        mp_nh = ros::NodeHandle(nh, "mocap_pose");
 
-        sp_nh.param("mocap/use_tf", use_tf, false);  // Vicon
-        sp_nh.param("mocap/use_pose", use_pose, true);  // Optitrack
+        mp_nh.param("mocap/use_tf", use_tf, false);  // Vicon
+        mp_nh.param("mocap/use_pose", use_pose, true);  // Optitrack
 
 
         if (use_tf && !use_pose)
         {
-            mocap_tf_sub = sp_nh.subscribe("mocap/tf", 1, &MocapPosePlugin::mocap_tf_cb, this);
+            mocap_tf_sub = mp_nh.subscribe("mocap/tf", 1, &MocapPosePlugin::mocap_tf_cb, this);
         }
 
         if (use_pose && !use_tf)
         {
-            mocap_pose_sub = sp_nh.subscribe("mocap/pose", 1, &MocapPosePlugin::mocap_pose_cb, this);
+            mocap_pose_sub = mp_nh.subscribe("mocap/pose", 1, &MocapPosePlugin::mocap_pose_cb, this);
         }
 				else
 				{
@@ -57,7 +54,6 @@ public:
     }
 
 private:
-    friend class TFListenerMixin;
     UAS *uas;
 
     ros::NodeHandle sp_nh;
@@ -86,30 +82,30 @@ private:
 
     void mocap_pose_cb(const geometry_msgs::Pose::ConstPtr &pose)
     {	
-				ros::Time stamp = ros::Time::now();
-				tf::Quaternion quat;
+        ros::Time stamp = ros::Time::now();
+        tf::Quaternion quat;
         tf::quaternionMsgToTF(pose->orientation, quat);
         double roll, pitch, yaw;
         tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-				// Covert to malink body frame
+        // Covert to malink body frame
         mocap_pose_send(stamp.toNSec() / 1000,
                 pose->position.x,
-							  -pose->position.y,
-							  -pose->position.z,
+                -pose->position.y,
+                -pose->position.z,
                 roll, -pitch, -yaw); 
     }
 
     void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
     {
-				tf::Quaternion quat;
+        tf::Quaternion quat;
         tf::quaternionMsgToTF(trans->transform.rotation, quat);
         double roll, pitch, yaw;
         tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-				// Covert to malink body frame
+        // Covert to malink body frame
         mocap_pose_send(trans->header.stamp.toNSec() / 1000,
                 trans->transform.translation.x,
-							  -trans->transform.translation.y,
-							  -trans->transform.translation.z,
+                -trans->transform.translation.y,
+                -trans->transform.translation.z,
                 roll, -pitch, -yaw); 
     }
 };
