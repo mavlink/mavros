@@ -40,7 +40,8 @@ namespace mavplugin {
  */
 class PX4FlowPlugin : public MavRosPlugin {
 public:
-	PX4FlowPlugin()
+	PX4FlowPlugin() :
+		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
