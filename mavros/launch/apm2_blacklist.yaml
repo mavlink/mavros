@@ -6,3 +6,4 @@ plugin_blacklist:
 - 'px4flow'
 - 'image_pub'
 - 'vision_*'
+- 'mocap_*'
