@@ -62,14 +62,10 @@ public:
 		return "PX4Flow";
 	}
 
-	const std::vector<uint8_t> get_supported_messages() const {
+	const message_map get_rx_handlers() {
 		return {
-			MAVLINK_MSG_ID_OPTICAL_FLOW
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW, &PX4FlowPlugin::handle_optical_flow)
 		};
-	}
-
-	void message_rx_cb(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		handle_flow(msg);
 	}
 
 private:
@@ -78,7 +74,7 @@ private:
 	ros::Publisher flow_pub;
 	ros::Subscriber flow_sub;
 
-	void handle_flow(const mavlink_message_t *msg) {
+	void handle_optical_flow(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (flow_pub.getNumSubscribers() == 0)
 			return;
 

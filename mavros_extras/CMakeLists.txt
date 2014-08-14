@@ -123,16 +123,16 @@ else()
 endif()
 
 ## Declare a cpp library
-#add_library(mavros_extras
-#  src/plugins/px4flow.cpp
+add_library(mavros_extras
+  src/plugins/px4flow.cpp
 #  src/plugins/image_pub.cpp
-#)
-#add_dependencies(mavros_extras
-#  mavros_extras_generate_messages_cpp
-#)
-#target_link_libraries(mavros_extras
-#  ${catkin_LIBRARIES}
-#)
+)
+add_dependencies(mavros_extras
+  mavros_extras_generate_messages_cpp
+)
+target_link_libraries(mavros_extras
+  ${catkin_LIBRARIES}
+)
 
 ## Declare a cpp executable
 add_executable(gcs_image_bridge
