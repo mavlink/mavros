@@ -182,6 +182,7 @@ public:
 	 */
 	inline void set_gps_llae(double latitude, double longitude, double altitude,
 			double eph, double epv) {
+		lock_guard lock(mutex);
 		gps_latitude = latitude;
 		gps_longitude = longitude;
 		gps_altitude = altitude;
@@ -190,22 +191,27 @@ public:
 	}
 
 	inline double get_gps_latitude() {
+		lock_guard lock(mutex);
 		return gps_latitude;
 	}
 
 	inline double get_gps_longitude() {
+		lock_guard lock(mutex);
 		return gps_longitude;
 	}
 
 	inline double get_gps_altitude() {
+		lock_guard lock(mutex);
 		return gps_altitude;
 	}
 
 	inline double get_gps_eph() {
+		lock_guard lock(mutex);
 		return gps_eph;
 	}
 
 	inline double get_gps_epv() {
+		lock_guard lock(mutex);
 		return gps_epv;
 	}
 
@@ -262,11 +268,11 @@ private:
 	tf::Vector3 angular_velocity;
 	tf::Vector3 linear_acceleration;
 	tf::Quaternion orientation;
-	std::atomic<double> gps_latitude;
-	std::atomic<double> gps_longitude;
-	std::atomic<double> gps_altitude;
-	std::atomic<double> gps_eph;
-	std::atomic<double> gps_epv;
+	double gps_latitude;
+	double gps_longitude;
+	double gps_altitude;
+	double gps_eph;
+	double gps_epv;
 	std::atomic<bool> fix_status;
 };
 
