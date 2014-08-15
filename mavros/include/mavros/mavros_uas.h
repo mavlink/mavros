@@ -172,6 +172,52 @@ public:
 	}
 
 	/**
+	 * @brief Store GPS Lat/Long/Alt and EPH/EPV data
+	 *
+	 * @param[in] latitude  in deg
+	 * @param[in] longitude in deg
+	 * @param[in] altitude  in m
+	 * @param[in] eph       in m
+	 * @param[in] epv       in m
+	 */
+	inline void set_gps_llae(double latitude, double longitude, double altitude,
+			double eph, double epv) {
+		gps_latitude = latitude;
+		gps_longitude = longitude;
+		gps_altitude = altitude;
+		gps_eph = eph;
+		gps_epv = epv;
+	}
+
+	inline double get_gps_latitude() {
+		return gps_latitude;
+	}
+
+	inline double get_gps_longitude() {
+		return gps_longitude;
+	}
+
+	inline double get_gps_altitude() {
+		return gps_altitude;
+	}
+
+	inline double get_gps_eph() {
+		return gps_eph;
+	}
+
+	inline double get_gps_epv() {
+		return gps_epv;
+	}
+
+	inline void set_gps_status(bool fix_status_) {
+		fix_status = fix_status_;
+	}
+
+	inline bool get_gps_status() {
+		return fix_status;
+	}
+
+	/**
 	 * For APM quirks
 	 */
 	inline bool is_ardupilotmega() {
@@ -216,6 +262,12 @@ private:
 	tf::Vector3 angular_velocity;
 	tf::Vector3 linear_acceleration;
 	tf::Quaternion orientation;
+	std::atomic<double> gps_latitude;
+	std::atomic<double> gps_longitude;
+	std::atomic<double> gps_altitude;
+	std::atomic<double> gps_eph;
+	std::atomic<double> gps_epv;
+	std::atomic<bool> fix_status;
 };
 
 }; // namespace mavplugin

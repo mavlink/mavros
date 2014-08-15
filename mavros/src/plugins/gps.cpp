@@ -186,6 +186,12 @@ private:
 		fix->header.frame_id = frame_id;
 		fix->header.stamp = ros::Time::now();
 
+		// store GPS data in UAS
+		double eph = (raw_gps.eph != UINT16_MAX)? raw_gps.eph / 1E2 : NAN;
+		double epv = (raw_gps.epv != UINT16_MAX)? raw_gps.epv / 1E2 : NAN;
+		uas->set_gps_llae(fix->latitude, fix->longitude, fix->altitude, eph, epv);
+		uas->set_gps_status(fix->status.status == sensor_msgs::NavSatStatus::STATUS_FIX);
+
 		fix_pub.publish(fix);
 
 		if (raw_gps.vel != UINT16_MAX &&
