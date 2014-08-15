@@ -7,3 +7,4 @@ plugin_blacklist:
 - 'image_pub'
 - 'vision_*'
 - 'mocap_*'
+- 'global_*'
