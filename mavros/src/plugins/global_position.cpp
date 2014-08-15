@@ -30,9 +30,11 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <geometry_msgs/Quaternion.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 
@@ -61,9 +63,9 @@ public:
 
 		gp_nh = ros::NodeHandle(nh, "global_position");
 
-		gp_nh.param("global/send_tf", send_tf, true);
-		gp_nh.param<std::string>("global/frame_id", frame_id, "local_origin");
-		gp_nh.param<std::string>("global/child_frame_id", child_frame_id, "fcu");
+		gp_nh.param("send_tf", send_tf, true);
+		gp_nh.param<std::string>("frame_id", frame_id, "local_origin");
+		gp_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
 		gp_nh.param<double>("rot_covariance", rot_cov, 99999.0);
 
 		fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
@@ -156,12 +158,12 @@ private:
 		pose_cov->header = header;
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
-		pose_cov->pose.pose.position.z = gp_pos.alt;
-
-		pose_cov->pose.pose.orientation.x = 0;
-		pose_cov->pose.pose.orientation.y = 0;
-		pose_cov->pose.pose.orientation.z = 0;
-		pose_cov->pose.pose.orientation.w = 1;
+		pose_cov->pose.pose.position.z = gp_pos.relative_alt / 1E3;
+		
+		geometry_msgs::Quaternion q_aux;
+		tf::Quaternion q(uas->get_attitude_orientation());
+		tf::quaternionTFToMsg(q, q_aux);
+		pose_cov->pose.pose.orientation = q_aux;
 
 		/*
 		 * TODO: calculate position covariance from GPS_RAW_INT data
@@ -202,10 +204,7 @@ private:
 						pose_cov->pose.pose.position.x,
 						-pose_cov->pose.pose.position.z));
 
-			transform.setRotation(tf::Quaternion(pose_cov->pose.pose.orientation.y,
-						pose_cov->pose.pose.orientation.x,
-						-pose_cov->pose.pose.orientation.z,
-						pose_cov->pose.pose.orientation.w));
+			transform.setRotation(uas->get_attitude_orientation());
 
 			tf_broadcaster.sendTransform(
 					tf::StampedTransform(
