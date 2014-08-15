@@ -129,18 +129,21 @@ private:
 		std_msgs::Float64Ptr compass_heading = boost::make_shared<std_msgs::Float64>();
 
 		gps_cord->header = header;
-		gps_cord->latitude = gp_pos.lat;
-		gps_cord->longitude = gp_pos.lon;
-		gps_cord->altitude = gp_pos.alt;
+		gps_cord->latitude = gp_pos.lat / 1E7;
+		gps_cord->longitude = gp_pos.lon / 1E7;
+		gps_cord->altitude = gp_pos.alt / 1E3; // in meters
+
+		/* TODO: If we use GPS topic, we must fill all fields
+		 */
 
 		gps_vel->header = header;
-		gps_vel->vector.x = gp_pos.vx;
-		gps_vel->vector.y = gp_pos.vy;
-		gps_vel->vector.z = gp_pos.vz;
+		gps_vel->vector.x = gp_pos.vx / 1E2; // in m/s
+		gps_vel->vector.y = gp_pos.vy / 1E2;
+		gps_vel->vector.z = gp_pos.vz / 1E2;
 
-		// XXX TODO
-		compass_heading->data;
-		relative_alt->data;
+		relative_alt->data = gp_pos.relative_alt / 1E3; // in meters
+		if (gp_pos.hdg != UINT16_MAX)
+			compass_heading->data = gp_pos.hdg / 1E2; // in degrees
 
 		double northing, easting;
 		std::string zone;
@@ -159,6 +162,10 @@ private:
 		pose_cov->pose.pose.orientation.y = 0;
 		pose_cov->pose.pose.orientation.z = 0;
 		pose_cov->pose.pose.orientation.w = 1;
+
+		/*
+		 * TODO: calculate position covariance from GPS_RAW_INT data
+		 */
 
 		// Use ENU covariance to build XYZRPY covariance
 		boost::array<double, 36> covariance = {
@@ -179,9 +186,14 @@ private:
 			0, 0, 0, 0, 0, rot_cov
 		};
 
+		pose_cov->pose.covariance = covariance;
+
 		fix_pub.publish(gps_cord);
 		pos_pub.publish(pose_cov);
 		vel_pub.publish(gps_vel);
+		rel_alt_pub.publish(relative_alt);
+		if (gp_pos.hdg != UINT16_MAX)
+			hdg_pub.publish(compass_heading);
 
 		if (send_tf) {
 			tf::Transform transform;
