@@ -26,14 +26,13 @@
  */
 
 #include <mavros/mavros_plugin.h>
+#include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Float64.h>
-
-#include "setpoint_mixin.h"
 
 namespace mavplugin {
 
