@@ -30,9 +30,11 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <geometry_msgs/Quaternion.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 
@@ -157,11 +159,11 @@ private:
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = gp_pos.relative_alt / 1E3;
-
-		pose_cov->pose.pose.orientation.x = 0;
-		pose_cov->pose.pose.orientation.y = 0;
-		pose_cov->pose.pose.orientation.z = 0;
-		pose_cov->pose.pose.orientation.w = 1;
+		
+		geometry_msgs::Quaternion q_aux;
+		tf::Quaternion q(uas->get_attitude_orientation());
+		tf::quaternionTFToMsg(q, q_aux);
+		pose_cov->pose.pose.orientation = q_aux;
 
 		/*
 		 * TODO: calculate position covariance from GPS_RAW_INT data
