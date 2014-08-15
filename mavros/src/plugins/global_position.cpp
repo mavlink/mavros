@@ -33,6 +33,7 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <sensor_msgs/NavSatStatus.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <geometry_msgs/Quaternion.h>
 #include <std_msgs/Float64.h>
@@ -135,8 +136,29 @@ private:
 		gps_cord->longitude = gp_pos.lon / 1E7;
 		gps_cord->altitude = gp_pos.alt / 1E3; // in meters
 
-		/* TODO: If we use GPS topic, we must fill all fields
-		 */
+		// fill GPS status fields
+		gps_cord->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+		if (uas->get_gps_status())
+			gps_cord->status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
+		else
+			gps_cord->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+
+		// try compute LLA covariance from GPS_RAW_INT data
+		double hdop = uas->get_gps_eph();
+		if (!isnan(hdop)) {
+			double hdop2 = std::pow(hdop, 2);
+
+			// From nmea_navsat_driver
+			gps_cord->position_covariance[0] = hdop2;
+			gps_cord->position_covariance[4] = hdop2;
+			gps_cord->position_covariance[8] = std::pow(2 * hdop, 2);
+			gps_cord->position_covariance_type =
+				sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+		}
+		else {
+			gps_cord->position_covariance_type =
+				sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+		}
 
 		gps_vel->header = header;
 		gps_vel->vector.x = gp_pos.vx / 1E2; // in m/s
@@ -159,15 +181,11 @@ private:
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = gp_pos.relative_alt / 1E3;
-		
+
 		geometry_msgs::Quaternion q_aux;
 		tf::Quaternion q(uas->get_attitude_orientation());
 		tf::quaternionTFToMsg(q, q_aux);
 		pose_cov->pose.pose.orientation = q_aux;
-
-		/*
-		 * TODO: calculate position covariance from GPS_RAW_INT data
-		 */
 
 		// Use ENU covariance to build XYZRPY covariance
 		boost::array<double, 36> covariance = {
