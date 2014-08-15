@@ -156,7 +156,7 @@ private:
 		pose_cov->header = header;
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
-		pose_cov->pose.pose.position.z = gp_pos.alt;
+		pose_cov->pose.pose.position.z = gp_pos.relative_alt / 1E3;
 
 		pose_cov->pose.pose.orientation.x = 0;
 		pose_cov->pose.pose.orientation.y = 0;

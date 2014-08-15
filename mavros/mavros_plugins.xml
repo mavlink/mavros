@@ -53,7 +53,7 @@
 	<class name="vision_speed" type="mavplugin::VisionSpeedPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send vision speed estimate to FCU.</description>
 	</class>
-	<class name="mocap_pose_estimate" type="mavpluginEstimate::MocapPosePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="mocap_pose_estimate" type="mavplugin::MocapPoseEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send mocap's pose data to FCU.</description>
 	</class>
 </library>
