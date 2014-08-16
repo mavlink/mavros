@@ -126,6 +126,9 @@ endif()
 add_library(mavros_extras
   src/plugins/px4flow.cpp
   src/plugins/image_pub.cpp
+  src/plugins/mocap_pose_estimate.cpp
+  src/plugins/vision_pose_estimate.cpp
+  src/plugins/vision_speed_estimate.cpp
 )
 add_dependencies(mavros_extras
   mavros_extras_generate_messages_cpp

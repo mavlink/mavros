@@ -1,6 +1,6 @@
 /**
- * @brief VisionPosition plugin
- * @file vision_position.cpp
+ * @brief VisionPoseEstimate plugin
+ * @file vision_pose_estimate.cpp
  * @author M.H.Kabir <mhkabir98@gmail.com>
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
@@ -35,15 +35,16 @@
 namespace mavplugin {
 
 /**
- * @brief Vision position plugin
+ * @brief Vision pose estimate plugin
  *
- * Send position estimation from various vision estimators
+ * Send pose estimation from various vision estimators
  * to FCU position controller.
+ * 
  */
-class VisionPositionPlugin : public MavRosPlugin,
-	private TFListenerMixin<VisionPositionPlugin> {
+class VisionPoseEstimatePlugin : public MavRosPlugin,
+	private TFListenerMixin<VisionPoseEstimatePlugin> {
 public:
-	VisionPositionPlugin() :
+	VisionPoseEstimatePlugin() :
 		uas(nullptr),
 		tf_rate(10.0)
 	{ };
@@ -64,22 +65,22 @@ public:
 		sp_nh.param<std::string>("vision/child_frame_id", child_frame_id, "vision");
 		sp_nh.param("vision/tf_rate_limit", tf_rate, 50.0);
 
-		ROS_DEBUG_STREAM_NAMED("position", "Vision position topic type: " <<
+		ROS_DEBUG_STREAM_NAMED("position", "Vision pose topic type: " <<
 				((pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped"));
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("position", "Listen to vision transform " << frame_id
 					<< " -> " << child_frame_id);
-			tf_start("VisionTF", &VisionPositionPlugin::send_vision_transform);
+			tf_start("VisionTF", &VisionPoseEstimatePlugin::send_vision_transform);
 		}
 		else if (pose_with_covariance)
-			vision_sub = sp_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cov_cb, this);
+			vision_sub = sp_nh.subscribe("vision", 10, &VisionPoseEstimatePlugin::vision_cov_cb, this);
 		else
-			vision_sub = sp_nh.subscribe("vision", 10, &VisionPositionPlugin::vision_cb, this);
+			vision_sub = sp_nh.subscribe("vision", 10, &VisionPoseEstimatePlugin::vision_cb, this);
 	}
 
 	const std::string get_name() const {
-		return "VisionPosition";
+		return "VisionPoseEstimate";
 	}
 
 	const message_map get_rx_handlers() {
@@ -162,4 +163,4 @@ private:
 
 }; // namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionPositionPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavplugin::VisionPoseEstimatePlugin, mavplugin::MavRosPlugin)

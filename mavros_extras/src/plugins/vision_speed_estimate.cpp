@@ -1,5 +1,5 @@
 /**
- * @brief VisionSpeed plugin
+ * @brief VisionSpeedEstimate plugin
  * @file vision_speed.cpp
  * @author Nuno Marques <n.marques21@hotmail.com>
  * @author Vladimir Ermakov <vooon341@gmail.com>
@@ -34,14 +34,15 @@
 namespace mavplugin {
 
 /**
- * @brief Vision speed plugin
+ * @brief Vision speed estimate plugin
  *
  * Send speed estimation from various vision estimators
  * to FCU position controller.
+ * 
  */
-class VisionSpeedPlugin : public MavRosPlugin {
+class VisionSpeedEstimatePlugin : public MavRosPlugin {
 public:
-	VisionSpeedPlugin() :
+	VisionSpeedEstimatePlugin() :
 		uas(nullptr)
 	{ };
 
@@ -56,13 +57,13 @@ public:
 		sp_nh.param("listen_twist", listen_twist, false);
 
 		if(listen_twist)
-			vision_vel_sub = sp_nh.subscribe("speed_twist", 10, &VisionSpeedPlugin::vel_twist_cb, this);
+			vision_vel_sub = sp_nh.subscribe("speed_twist", 10, &VisionSpeedEstimatePlugin::vel_twist_cb, this);
 		else
-			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedPlugin::vel_speed_cb, this);
+			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vel_speed_cb, this);
 	}
 
 	const std::string get_name() const {
-		return "VisionSpeed";
+		return "VisionSpeedEstimate";
 	}
 
 	const message_map get_rx_handlers() {
@@ -111,4 +112,4 @@ private:
 
 }; // namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionSpeedPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavplugin::VisionSpeedEstimatePlugin, mavplugin::MavRosPlugin)
