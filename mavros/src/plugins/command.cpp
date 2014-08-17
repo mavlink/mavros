@@ -75,7 +75,9 @@ public:
 		set_mode_srv = cmd_nh.advertiseService("set_mode", &CommandPlugin::set_mode_cb, this);
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
+		takeoff_curr_srv = cmd_nh.advertiseService("takeoff_curr", &CommandPlugin::takeoff_curr_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
+		land_curr_srv = cmd_nh.advertiseService("land_curr", &CommandPlugin::land_curr_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -99,6 +101,8 @@ private:
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
+	ros::ServiceServer takeoff_curr_srv;
+	ros::ServiceServer land_curr_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS = 5000;
@@ -278,6 +282,27 @@ private:
 	}
 
 	bool land_cb(mavros::CommandTOL::Request &req,
+			mavros::CommandTOL::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_NAV_LAND, 1,
+				0, 0, 0,
+				req.yaw,
+				req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+	
+	bool takeoff_curr_cb(mavros::CommandTOL::Request &req,
+			mavros::CommandTOL::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_NAV_TAKEOFF, 1,
+				req.min_pitch,
+				0, 0,
+				req.yaw,
+				req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool land_curr_cb(mavros::CommandTOL::Request &req,
 			mavros::CommandTOL::Response &res) {
 
 		return send_command_long_and_wait(MAV_CMD_NAV_LAND, 1,
