@@ -124,7 +124,7 @@ private:
 	void send_safety_set_allowed_area(float p1x, float p1y, float p1z,
 			float p2x, float p2y, float p2z) {
 
-		ROS_INFO_NAMED("safetyarea", "SA: Set safty area: P1(%f %f %f) P2(%f %f %f)",
+		ROS_INFO_NAMED("safetyarea", "SA: Set safety area: P1(%f %f %f) P2(%f %f %f)",
 				p1x, p1y, p1z,
 				p2x, p2y, p2z);
 

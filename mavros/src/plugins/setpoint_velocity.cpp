@@ -42,18 +42,43 @@ class SetpointVelocityPlugin : public MavRosPlugin,
 	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
 	SetpointVelocityPlugin() :
-		uas(nullptr)
+		uas(nullptr),
+		manual_def(false),
+		srv_def(true)
+		
 	{ };
 
 	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
+		bool manual_def = false;
+		bool srv_def = true;
+		double vx, vy, vz;		
+
 		uas = &uas_;
 		sp_nh = ros::NodeHandle(nh, "setpoint");
 
-		//cmd_vel usually is the topic used for velocity control in many controllers / planners
-		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
+		if (sp_nh.getParam("vx", vx) &&
+				sp_nh.getParam("vy", vy) &&
+				sp_nh.getParam("vz", vz)) {
+			manual_def = true;
+			ROS_DEBUG_NAMED("setpoint", "SP_vel: Manual set: lin_vel(%f %f %f)",
+					vx, vy, vz);
+		}
+		
+		else
+			manual_def = false;
+
+		if (manual_def) // defined when running the node
+			send_setpoint_velocity(ros::Time::now(),
+						vx, vy, vz);
+		
+		else if (srv_def) // defined by mavsetp service
+			vel_sub = sp_nh.subscribe("local/vel/set", 10, &SetpointVelocityPlugin::vel_cb, this);
+		
+		else // defined by a topic - usually a controller/planner topic - cmd_vel is a commin vel control topic
+			vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
 	}
 
 	const std::string get_name() const {
@@ -70,6 +95,9 @@ private:
 
 	ros::NodeHandle sp_nh;
 	ros::Subscriber vel_sub;
+	
+	bool manual_def;
+	bool srv_def;
 
 	/* -*- mid-level helpers -*- */
 
@@ -78,7 +106,7 @@ private:
 	 *
 	 * Note: send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz) {
+	void send_setpoint_velocity(const ros::Time &stamp, double vx, double vy, double vz) {
 
 		/* Documentation start from bit 1 instead 0,
 		 * but implementation PX4 Firmware #1151 starts from 0

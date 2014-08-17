@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2014 Nuno Marques, Vladimir Ermakov.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+from __future__ import print_function
+
+import sys
+import argparse
+
+import rospy
+from geometry_msgs.msg import TwistStamped, Vector3
+
+_ONCE_DELAY = 3
+
+
+def print_if(cond, *args, **kvargs):
+    if cond:
+        print(*args, **kvargs)
+
+
+def fault(*args, **kvargs):
+    kvargs['file'] = sys.stderr
+    print(*args, **kvargs)
+    sys.exit(1)
+
+
+def do_setp_local_vel(args):
+    pub = rospy.Publisher(args.mavros_ns + "/setpoint/local/vel/set", TwistStamped,
+                          queue_size=10, latch=True)
+    rospy.init_node("mavsetp", anonymous=True)
+
+    vel = TwistStamped()
+    vel.header.frame_id = 'mavsetp'
+    vel.header.stamp = rospy.get_rostime()
+    vel.twist.linear = Vector3(x=args.vel[0], y=args.vel[1], z=args.vel[2])
+
+    pub.publish(vel)
+    print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/local/vel/set")
+
+    # stick around long enough for others to grab
+    timeout_t = rospy.get_time() + _ONCE_DELAY
+    while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
+        rospy.sleep(0.2)
+        
+
+def do_setp_global_vel(args):
+    pub = rospy.Publisher(args.mavros_ns + "/setpoint/global/vel/set", TwistStamped,
+                          queue_size=10, latch=True)
+    rospy.init_node("mavsetp", anonymous=True)
+
+    vel = TwistStamped()
+    vel.header.frame_id = 'mavsetp'
+    vel.header.stamp = rospy.get_rostime()
+    vel.twist.linear = Vector3(x=args.vel[0], y=args.vel[1], z=args.vel[2])
+
+    pub.publish(vel)
+    print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/global/vel/set")
+
+    # stick around long enough for others to grab
+    timeout_t = rospy.get_time() + _ONCE_DELAY
+    while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
+        rospy.sleep(0.2)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Commad line tool for control the device by setpoints.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    subarg = parser.add_subparsers()
+    
+    setp_local_vel_args = subarg.add_parser('local', help="Send local setpoint")
+    setp_local_vel_args.set_defaults(func=do_setp_local_vel)
+    setp_local_vel_args.add_argument('-vel', type=float, nargs=3, metavar=('vx', 'vy', 'vz'),
+                                  required=True, help="Linear velocity")
+    
+    setp_global_vel_args = subarg.add_parser('global', help="Send local setpoint")
+    setp_global_vel_args.set_defaults(func=do_setp_global_vel)
+    setp_global_vel_args.add_argument('-vel', type=float, nargs=3, metavar=('vx', 'vy', 'vz'),
+                                  required=True, help="Linear velocity")
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()

@@ -246,6 +246,7 @@ install(PROGRAMS
   scripts/mavwp
   scripts/mavsafety
   scripts/mavcmd
+  scripts/mavsetp
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -95,7 +95,6 @@ def do_set_home(args):
     _check_ret(args, ret)
     
 
-
 def do_takeoff(args):
     rospy.init_node("mavcmd", anonymous=True)
 
@@ -112,6 +111,7 @@ def do_takeoff(args):
         fault(ex)
 
     _check_ret(args, ret)
+    
     
 def do_takeoff_curr(args):
   
@@ -137,8 +137,7 @@ def do_takeoff_curr(args):
 
     _check_ret(args, ret) 
     
-
-
+    
 def do_land(args):
     rospy.init_node("mavcmd", anonymous=True)
 
@@ -156,8 +155,7 @@ def do_land(args):
 
     _check_ret(args, ret)
 
-    
-    
+       
 def do_land_curr(args):
   
     global latitude 
@@ -182,8 +180,7 @@ def do_land_curr(args):
 
     _check_ret(args, ret)
     
-    
-    
+       
 def main():
     
     rospy.Subscriber("/mavros/global_position/global", NavSatFix, gps_cb, queue_size=10)
