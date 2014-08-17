@@ -77,14 +77,14 @@ def do_safetyarea(args):
     ]
 
     pub.publish(poly)
-    print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ",
-             args.mavros_ns + "/safety_area/set")
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/safety_area/set")
 
 
 def main():

@@ -50,14 +50,14 @@ def do_setp_local_vel(args):
     vel.twist.linear = Vector3(x=args.vel[0], y=args.vel[1], z=args.vel[2])
 
     pub.publish(vel)
-    print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ",
-             args.mavros_ns + "/setpoint/local/vel/set")
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/local/vel/set")
         
 
 def do_setp_global_vel(args):
@@ -71,16 +71,16 @@ def do_setp_global_vel(args):
     vel.twist.linear = Vector3(x=args.vel[0], y=args.vel[1], z=args.vel[2])
 
     pub.publish(vel)
-    print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ",
-             args.mavros_ns + "/setpoint/global/vel/set")
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/local/vel/set")
 
-
+             
 def main():
     parser = argparse.ArgumentParser(description="Commad line tool for control the device by setpoints.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
