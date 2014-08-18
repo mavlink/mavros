@@ -215,7 +215,7 @@ private:
 				channels[6],
 				channels[7]
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- callbacks -*- */

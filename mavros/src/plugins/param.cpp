@@ -529,7 +529,7 @@ private:
 		mavlink_msg_param_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void param_request_read(std::string id, int16_t index=-1) {
@@ -552,7 +552,7 @@ private:
 				param_id,
 				index
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void param_set(Parameter &param) {
@@ -571,7 +571,7 @@ private:
 				pu.param_float,
 				pu.type
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- mid-level functions -*- */

@@ -84,7 +84,7 @@ private:
 		mavlink_msg_vision_speed_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				usec,
 				x, y, z);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */

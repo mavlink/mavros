@@ -689,7 +689,7 @@ private:
 				MAV_STATE_ACTIVE
 				);
 
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void sys_time_cb(const ros::TimerEvent &event) {
@@ -699,7 +699,7 @@ private:
 			stamp.toNSec() / 1000, /* nano -> micro */
 			0
 			);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- ros callbacks -*- */
@@ -715,7 +715,7 @@ private:
 				(req.on_off)? 1 : 0
 				);
 
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 		return true;
 	}
 };

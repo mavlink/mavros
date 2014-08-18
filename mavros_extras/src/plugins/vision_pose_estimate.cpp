@@ -114,7 +114,7 @@ private:
 				roll,
 				pitch,
 				yaw);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */

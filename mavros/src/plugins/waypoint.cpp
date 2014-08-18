@@ -651,7 +651,7 @@ private:
 				wp.y_long,
 				wp.z_alt
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_request(uint16_t seq) {
@@ -662,7 +662,7 @@ private:
 				UAS_PACK_TGT(uas),
 				seq
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_set_current(uint16_t seq) {
@@ -673,7 +673,7 @@ private:
 				UAS_PACK_TGT(uas),
 				seq
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_request_list() {
@@ -683,7 +683,7 @@ private:
 		mavlink_msg_mission_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_count(uint16_t cnt) {
@@ -694,7 +694,7 @@ private:
 				UAS_PACK_TGT(uas),
 				cnt
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_clear_all() {
@@ -704,7 +704,7 @@ private:
 		mavlink_msg_mission_clear_all_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas)
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	void mission_ack(enum MAV_MISSION_RESULT type) {
@@ -715,7 +715,7 @@ private:
 				UAS_PACK_TGT(uas),
 				type
 				);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- ROS callbacks -*- */

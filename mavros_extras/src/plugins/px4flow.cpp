@@ -111,7 +111,7 @@ private:
 				flow_x, flow_y,
 				flow_comp_m_x, flow_comp_m_y,
 				quality, ground_distance);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- ROS callbacks -*- */

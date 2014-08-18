@@ -105,6 +105,7 @@ public:
 		int system_id, component_id;
 		int tgt_system_id, tgt_component_id;
 		bool px4_usb_quirk;
+		boost::shared_ptr<MAVConnInterface> fcu_link;
 
 		node_handle.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 		node_handle.param<std::string>("gcs_url", gcs_url, "udp://@");
@@ -156,7 +157,7 @@ public:
 		}
 
 		mav_uas.set_tgt(tgt_system_id, tgt_component_id);
-		mav_uas.set_mav_link(fcu_link);
+		UAS_FCU(&mav_uas) = fcu_link;
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
@@ -186,13 +187,14 @@ public:
 			loop_rate.sleep();
 		}
 
+		ROS_INFO("Stopping mavros...");
 		mav_uas.stop();
 	}
 
 private:
 	ros::NodeHandle node_handle;
 	ros::NodeHandle mavlink_node_handle;
-	boost::shared_ptr<MAVConnInterface> fcu_link;
+	// fcu_link stored in mav_uas
 	boost::shared_ptr<MAVConnInterface> gcs_link;
 
 	ros::Publisher mavlink_pub;
@@ -224,7 +226,7 @@ private:
 		mavlink_message_t mmsg;
 
 		if (mavutils::copy_ros_to_mavlink(rmsg, mmsg))
-			fcu_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+			UAS_FCU(&mav_uas)->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 		else
 			ROS_ERROR("Drop mavlink packet: illegal payload64 size");
 	}
@@ -289,9 +291,9 @@ private:
 		const uint8_t nsh[] = "sh /etc/init.d/rc.usb\n";
 
 		ROS_INFO("Autostarting mavlink via USB on PX4");
-		fcu_link->send_bytes(init, 3);
-		fcu_link->send_bytes(nsh, sizeof(nsh) - 1);
-		fcu_link->send_bytes(init, 4);	/* NOTE in original init[3] */
+		UAS_FCU(&mav_uas)->send_bytes(init, 3);
+		UAS_FCU(&mav_uas)->send_bytes(nsh, sizeof(nsh) - 1);
+		UAS_FCU(&mav_uas)->send_bytes(init, 4);	/* NOTE in original init[3] */
 	}
 
 	void log_connect_change(bool connected) {

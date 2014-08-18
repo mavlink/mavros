@@ -56,7 +56,7 @@ public:
 				x, y, z,
 				vz, vy, vz,
 				afx, afy, afz);
-		_uas->mav_link->send_message(&msg);
+		UAS_FCU(_uas)->send_message(&msg);
 	}
 };
 

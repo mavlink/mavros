@@ -110,7 +110,7 @@ private:
 				coordinate_frame,
 				p1x, p1y, p1z,
 				p2x, p2y, p2z);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */

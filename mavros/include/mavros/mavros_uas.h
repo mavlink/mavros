@@ -36,14 +36,20 @@ typedef std::lock_guard<std::recursive_mutex> lock_guard;
 typedef std::unique_lock<std::recursive_mutex> unique_lock;
 
 /**
+ * @brief helper accessor to FCU link interface
+ */
+#define UAS_FCU(uasobjptr)				\
+	((uasobjptr)->fcu_link)
+
+/**
  * @brief helper for mavlink_msg_*_pack_chan()
  *
  * Filler for first arguments of *_pack_chan functions.
  */
 #define UAS_PACK_CHAN(uasobjptr)			\
-	(uasobjptr)->mav_link->get_system_id(), 	\
-	(uasobjptr)->mav_link->get_component_id(), 	\
-	(uasobjptr)->mav_link->get_channel()
+	UAS_FCU(uasobjptr)->get_system_id(), 		\
+	UAS_FCU(uasobjptr)->get_component_id(), 	\
+	UAS_FCU(uasobjptr)->get_channel()
 
 /**
  * @brief helper for pack messages with target fields
@@ -53,7 +59,6 @@ typedef std::unique_lock<std::recursive_mutex> unique_lock;
 #define UAS_PACK_TGT(uasobjptr)				\
 	(uasobjptr)->get_tgt_system(), 			\
 	(uasobjptr)->get_tgt_component()
-
 
 /**
  * @brief UAS handler for plugins
@@ -250,13 +255,9 @@ public:
 	};
 
 	/**
-	 * MAVLink device conection
+	 * MAVLink FCU device conection
 	 */
-	boost::shared_ptr<mavconn::MAVConnInterface> mav_link;
-
-	inline void set_mav_link(const boost::shared_ptr<mavconn::MAVConnInterface> &link_) {
-		mav_link = link_;
-	};
+	boost::shared_ptr<mavconn::MAVConnInterface> fcu_link;
 
 private:
 	std::recursive_mutex mutex;

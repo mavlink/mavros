@@ -128,7 +128,7 @@ private:
 				q,
 				roll_rate, pitch_rate, yaw_rate,
 				thrust);
-		uas->mav_link->send_message(&msg);
+		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */
