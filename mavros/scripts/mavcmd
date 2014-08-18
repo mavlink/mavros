@@ -268,6 +268,93 @@ def do_land_cur_gps(args):
         fault("Something went wrong. Topic timed out.")
 
 
+<<<<<<< HEAD
+>>>>>>> 7b7790026f710c2888ff28cc181e46b6b94acdbd
+=======
+def _find_gps_topic(args, op_name):
+    global_fix = args.mavros_ns + "/global_position/global"
+    gps_fix = args.mavros_ns + "/fix"
+
+    topics = rospy.get_published_topics()
+    # need find more elegant way
+    if len([topic for topic, type_ in topics if topic == global_fix]):
+        return global_fix
+    elif len([topic for topic, type_ in topics if topic == gps_fix]):
+        print_if(args.verbose, "Use GPS_RAW_INT data!")
+        return gps_fix
+    elif args.any_gps:
+        t = [topic for topic, type_ in topics if type_ == 'sensor_msgs/NavSatFix']
+        if len(t) > 0:
+            print("Use", t[0], "NavSatFix topic for", op_name)
+            return t[0]
+
+    return None
+
+
+def do_takeoff_cur_gps(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    done_evt = threading.Event()
+    def fix_cb(fix):
+        print("Taking-off from current coord: Lat:", fix.latitude,
+              "Long:", fix.longitude)
+        print_if(args.verbose, "With desired Altitude:", args.altitude,
+                 "Yaw:", args.yaw, "Pitch angle:", args.min_pitch)
+
+        try:
+            takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
+            ret = takeoff_cl(min_pitch=args.min_pitch,
+                             yaw=args.yaw,
+                             latitude=fix.latitude,
+                             longitude=fix.longitude,
+                             altitude=args.altitude)
+        except rospy.ServiceException as ex:
+            fault(ex)
+
+        _check_ret(args, ret)
+        done_evt.set()
+
+    topic = _find_gps_topic(args, "takeoff")
+    if topic is None:
+        fault("NavSatFix topic not exist")
+
+    sub = rospy.Subscriber(topic, NavSatFix, fix_cb)
+    if not done_evt.wait(10.0):
+        fault("Something went wrong. Topic timed out.")
+
+
+def do_land_cur_gps(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    done_evt = threading.Event()
+    def fix_cb(fix):
+        print("Landing on current coord: Lat:", fix.latitude,
+              "Long:", fix.longitude)
+        print_if(args.verbose, "With desired Altitude:", args.altitude,
+                 "Yaw:", args.yaw)
+
+        try:
+            land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
+            ret = land_cl(min_pitch=0.0,
+                          yaw=args.yaw,
+                          latitude=fix.latitude,
+                          longitude=fix.longitude,
+                          altitude=args.altitude)
+        except rospy.ServiceException as ex:
+            fault(ex)
+
+        _check_ret(args, ret)
+        done_evt.set()
+
+    topic = _find_gps_topic(args, "landing")
+    if topic is None:
+        fault("NavSatFix topic not exist")
+
+    sub = rospy.Subscriber(topic, NavSatFix, fix_cb)
+    if not done_evt.wait(10.0):
+        fault("Something went wrong. Topic timed out.")
+
+
 >>>>>>> 7b7790026f710c2888ff28cc181e46b6b94acdbd
 def main():
     
@@ -325,6 +412,19 @@ def main():
     land_curr_args.set_defaults(func=do_land_curr)
     land_curr_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_curr_args.add_argument('altitude', type=float, help="Altitude")
+
+    takeoff_cur_args = subarg.add_parser('takeoffcur', help="Request takeoff from current GPS coordinates")
+    takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
+    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    takeoff_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
+    takeoff_cur_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_cur_args.add_argument('altitude', type=float, help="Altitude")
+
+    land_cur_args = subarg.add_parser('landcur', help="Request land on current GPS coordinates")
+    land_cur_args.set_defaults(func=do_land_cur_gps)
+    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
+    land_cur_args.add_argument('altitude', type=float, help="Altitude")
 
     takeoff_cur_args = subarg.add_parser('takeoffcur', help="Request takeoff from current GPS coordinates")
     takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
