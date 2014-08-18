@@ -51,6 +51,9 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool listen_tf;
+		bool manual_def = false;
+		bool srv_def = true;
+		double x, y, z;
 
 		uas = &uas_;
 		sp_nh = ros::NodeHandle(nh, "setpoint");
@@ -60,13 +63,42 @@ public:
 		sp_nh.param<std::string>("position/child_frame_id", child_frame_id, "setpoint");
 		sp_nh.param("position/tf_rate_limit", tf_rate, 50.0);
 
-		if (listen_tf) {
-			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
-					<< " -> " << child_frame_id);
-			tf_start("PositionSpTF", &SetpointPositionPlugin::send_setpoint_transform);
+		if (sp_nh.getParam("x", x) &&
+				sp_nh.getParam("y", y) &&
+				sp_nh.getParam("z", z)) {
+			manual_def = true;
+			ROS_DEBUG_NAMED("setpoint", "SP_pos: Manual set: local_pos(%f %f %f)",
+					x, y, z);
 		}
+		
+		else
+			manual_def = false;
+
+		if (manual_def) { // defined when running the node
+			
+			geometry_msgs::Pose pose;
+			pose.position.x=x;
+			pose.position.y=y;
+			pose.position.z=z;
+			
+			tf::Transform transform;
+			poseMsgToTF(pose, transform);
+		
+			send_setpoint_transform(transform, ros::Time::now());
+		}
+		
+		else if (srv_def) // defined by mavsetp service
+			pos_sub = sp_nh.subscribe("local/pos/set", 10, &SetpointPositionPlugin::position_cb, this);
+		
 		else {
-			setpoint_sub = sp_nh.subscribe("local_position", 10, &SetpointPositionPlugin::setpoint_cb, this);
+		  
+			if (listen_tf) {
+				ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
+						<< " -> " << child_frame_id);
+				tf_start("PositionSpTF", &SetpointPositionPlugin::send_setpoint_transform);
+			}
+			else
+				pos_sub = sp_nh.subscribe("local_position", 10, &SetpointPositionPlugin::position_cb, this);
 		}
 	}
 
@@ -84,7 +116,7 @@ private:
 	UAS *uas;
 
 	ros::NodeHandle sp_nh;
-	ros::Subscriber setpoint_sub;
+	ros::Subscriber pos_sub;
 
 	std::string frame_id;
 	std::string child_frame_id;
@@ -121,7 +153,7 @@ private:
 
 	/* common TF listener moved to mixin */
 
-	void setpoint_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
+	void position_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
 		tf::Transform transform;
 		poseMsgToTF(req->pose, transform);
 		send_setpoint_transform(transform, req->header.stamp);

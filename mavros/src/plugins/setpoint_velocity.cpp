@@ -42,10 +42,7 @@ class SetpointVelocityPlugin : public MavRosPlugin,
 	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
 	SetpointVelocityPlugin() :
-		uas(nullptr),
-		manual_def(false),
-		srv_def(true)
-		
+		uas(nullptr)		
 	{ };
 
 	void initialize(UAS &uas_,
@@ -95,9 +92,6 @@ private:
 
 	ros::NodeHandle sp_nh;
 	ros::Subscriber vel_sub;
-	
-	bool manual_def;
-	bool srv_def;
 
 	/* -*- mid-level helpers -*- */
 

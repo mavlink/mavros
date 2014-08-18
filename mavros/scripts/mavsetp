@@ -23,7 +23,7 @@ import sys
 import argparse
 
 import rospy
-from geometry_msgs.msg import TwistStamped, Vector3
+from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Point
 
 _ONCE_DELAY = 3
 
@@ -38,6 +38,48 @@ def fault(*args, **kvargs):
     print(*args, **kvargs)
     sys.exit(1)
 
+    
+def do_setp_local_pos(args):
+    pub = rospy.Publisher(args.mavros_ns + "/setpoint/local/pos/set", PoseStamped,
+                          queue_size=10, latch=True)
+    rospy.init_node("mavsetp", anonymous=True)
+
+    pos = PoseStamped()
+    pos.header.frame_id = 'mavsetp'
+    pos.header.stamp = rospy.get_rostime()
+    pos.pose.position = Point(x=args.pos[0], y=args.pos[1], z=args.pos[2])
+
+    pub.publish(pos)
+
+    # stick around long enough for others to grab
+    timeout_t = rospy.get_time() + _ONCE_DELAY
+    while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
+        rospy.sleep(0.2)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/local/pos/set")
+        
+
+def do_setp_global_pos(args):
+    pub = rospy.Publisher(args.mavros_ns + "/setpoint/local/pos/set", PoseStamped,
+                          queue_size=10, latch=True)
+    rospy.init_node("mavsetp", anonymous=True)
+
+    pos = PoseStamped()
+    pos.header.frame_id = 'mavsetp'
+    pos.header.stamp = rospy.get_rostime()
+    pos.pose.position = Point(x=args.pos[0], y=args.pos[1], z=args.pos[2])
+
+    pub.publish(pos)
+
+    # stick around long enough for others to grab
+    timeout_t = rospy.get_time() + _ONCE_DELAY
+    while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
+        rospy.sleep(0.2)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to ",
+             args.mavros_ns + "/setpoint/local/pos/set")    
+    
 
 def do_setp_local_vel(args):
     pub = rospy.Publisher(args.mavros_ns + "/setpoint/local/vel/set", TwistStamped,
@@ -87,12 +129,23 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     subarg = parser.add_subparsers()
     
+    
+    setp_local_pos_args = subarg.add_parser('local', help="Send local setpoint")
+    setp_local_pos_args.set_defaults(func=do_setp_local_vel)
+    setp_local_pos_args.add_argument('-pos', type=float, nargs=3, metavar=('x', 'y', 'z'),
+                                  required=True, help="Local position")
+    
     setp_local_vel_args = subarg.add_parser('local', help="Send local setpoint")
     setp_local_vel_args.set_defaults(func=do_setp_local_vel)
     setp_local_vel_args.add_argument('-vel', type=float, nargs=3, metavar=('vx', 'vy', 'vz'),
                                   required=True, help="Linear velocity")
     
-    setp_global_vel_args = subarg.add_parser('global', help="Send local setpoint")
+    setp_global_pos_args = subarg.add_parser('global', help="Send global setpoint")
+    setp_global_pos_args.set_defaults(func=do_setp_global_vel)
+    setp_global_pos_args.add_argument('-pos', type=float, nargs=3, metavar=('x', 'y', 'z'),
+                                  required=True, help="Global position")
+    
+    setp_global_vel_args = subarg.add_parser('global', help="Send global setpoint")
     setp_global_vel_args.set_defaults(func=do_setp_global_vel)
     setp_global_vel_args.add_argument('-vel', type=float, nargs=3, metavar=('vx', 'vy', 'vz'),
                                   required=True, help="Linear velocity")
