@@ -76,6 +76,7 @@ public:
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
+		guided_srv = cmd_nh.advertiseService("guided_enable", &CommandPlugin::guided_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -99,6 +100,7 @@ private:
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
+	ros::ServiceServer guided_srv;
 
 	std::list<CommandTransaction *> ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS = 5000;
@@ -284,6 +286,15 @@ private:
 				0, 0, 0,
 				req.yaw,
 				req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool guided_cb(mavros::CommandBool::Request &req,
+			mavros::CommandBool::Response &res) {
+
+		return send_command_long_and_wait(MAV_CMD_NAV_GUIDED_ENABLE, 1,
+				(req.value)? 1.0 : 0.0,
+				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
 };
