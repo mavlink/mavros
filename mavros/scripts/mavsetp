@@ -25,6 +25,7 @@ import argparse
 import rospy
 from std_msgs.msg import Header
 from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Point
+from mavros.srv import CommandBool
 
 _ONCE_DELAY = 3
 
@@ -51,6 +52,14 @@ def publish_once(args, pub, msg):
         rospy.sleep(0.2)
 
 
+def enable_offboard(args):
+    try:
+        guided_enable_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
+        ret = guided_enable_cl(value=True)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+
 def do_local_pos(args):
     pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped,
                           queue_size=10, latch=True)
@@ -60,6 +69,7 @@ def do_local_pos(args):
     pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
 
     publish_once(args, pub, pos)
+    enable_offboard(args)
 
 
 def do_local_vel(args):
@@ -71,6 +81,7 @@ def do_local_vel(args):
     vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
 
     publish_once(args, pub, vel)
+    enable_offboard(args)
 
 
 def do_local_selector(args):
