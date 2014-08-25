@@ -30,6 +30,7 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <mavros/CommandLong.h>
+#include <mavros/CommandInt.h>
 #include <mavros/CommandBool.h>
 #include <mavros/CommandMode.h>
 #include <mavros/CommandHome.h>
@@ -71,6 +72,7 @@ public:
 
 		cmd_nh = ros::NodeHandle(nh, "cmd");
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
+		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
 		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
 		set_mode_srv = cmd_nh.advertiseService("set_mode", &CommandPlugin::set_mode_cb, this);
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
@@ -95,6 +97,7 @@ private:
 
 	ros::NodeHandle cmd_nh;
 	ros::ServiceServer command_long_srv;
+	ros::ServiceServer command_int_srv;
 	ros::ServiceServer arming_srv;
 	ros::ServiceServer set_mode_srv;
 	ros::ServiceServer set_home_srv;
@@ -196,6 +199,29 @@ private:
 		return true;
 	}
 
+	/**
+	 * Common function for COMMAND_INT service callbacks.
+	 */
+	bool send_command_int(uint8_t frame, uint16_t command,
+			uint8_t current, uint8_t autocontinue,
+			float param1, float param2,
+			float param3, float param4,
+			int32_t x, int32_t y,
+			float z,
+			unsigned char &success) {
+
+		/* Note: seems that COMMAND_INT don't produce COMMAND_ACK
+		 * so wait don't needed.
+		 */
+		command_int(frame, command, current, autocontinue,
+				param1, param2,
+				param3, param4,
+				x, y, z);
+
+		success = true;
+		return true;
+	}
+
 	/* -*- low-level send -*- */
 
 	void command_long(uint16_t command, uint8_t confirmation,
@@ -209,13 +235,30 @@ private:
 				UAS_PACK_TGT(uas),
 				command,
 				confirmation,
-				param1,
-				param2,
-				param3,
-				param4,
-				param5,
-				param6,
+				param1, param2,
+				param3, param4,
+				param5, param6,
 				param7);
+		UAS_FCU(uas)->send_message(&msg);
+	}
+
+	void command_int(uint8_t frame, uint16_t command,
+			uint8_t current, uint8_t autocontinue,
+			float param1, float param2,
+			float param3, float param4,
+			int32_t x, int32_t y,
+			float z) {
+		mavlink_message_t msg;
+
+		mavlink_msg_command_int_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				UAS_PACK_TGT(uas),
+				frame,
+				command,
+				current,
+				autocontinue,
+				param1, param2,
+				param3, param4,
+				x, y, z);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
@@ -230,6 +273,16 @@ private:
 				req.param5, req.param6,
 				req.param7,
 				res.success, res.result);
+	}
+
+	bool command_int_cb(mavros::CommandInt::Request &req,
+			mavros::CommandInt::Response &res) {
+		return send_command_int(req.frame, req.command,
+				req.current, req.autocontinue,
+				req.param1, req.param2,
+				req.param3, req.param4,
+				req.x, req.y, req.z,
+				res.success);
 	}
 
 	bool arming_cb(mavros::CommandBool::Request &req,

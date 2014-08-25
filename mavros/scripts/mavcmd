@@ -24,7 +24,7 @@ import argparse
 import threading
 
 import rospy
-from mavros.srv import CommandLong, CommandHome, CommandTOL, CommandBool
+from mavros.srv import CommandLong, CommandInt, CommandHome, CommandTOL, CommandBool
 from sensor_msgs.msg import NavSatFix
 
 
@@ -62,6 +62,30 @@ def do_long(args):
         fault(ex)
 
     _check_ret(args, ret)
+
+
+def do_int(args):
+    rospy.init_node("mavcmd", anonymous=True)
+
+    try:
+        int_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command_int", CommandInt)
+        ret = int_cl(frame=args.frame, command=args.command,
+                     current=int(args.current),
+                     autocontinue=int(args.autocontinue),
+                     param1=args.param1,
+                     param2=args.param2,
+                     param3=args.param3,
+                     param4=args.param4,
+                     x=args.x,
+                     y=args.y,
+                     z=args.z)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs.")
+
+    print_if(args.verbose, "Request done.")
 
 
 def do_set_home(args):
@@ -224,6 +248,20 @@ def main():
     long_args.add_argument('param5', type=float, help="param5 / x_lat")
     long_args.add_argument('param6', type=float, help="param6 / y_long")
     long_args.add_argument('param7', type=float, help="param7 / z_alt")
+
+    int_args = subarg.add_parser('int', help="Send any command (COMMAND_INT)")
+    int_args.set_defaults(func=do_int)
+    int_args.add_argument('-c', '--current', action='store_true', help="Is current?")
+    int_args.add_argument('-a', '--autocontinue', action='store_true', help="Is autocontinue?")
+    int_args.add_argument('-f', '--frame', type=int, default=3, help="Frame Code (default: %(default)s)")
+    int_args.add_argument('command', type=int, help="Command Code")
+    int_args.add_argument('param1', type=float, help="param1")
+    int_args.add_argument('param2', type=float, help="param2")
+    int_args.add_argument('param3', type=float, help="param3")
+    int_args.add_argument('param4', type=float, help="param4")
+    int_args.add_argument('x', type=int, help="latitude in deg*1E7 or X*1E4 m")
+    int_args.add_argument('y', type=int, help="longitude in deg*1E7 or Y*1E4 m")
+    int_args.add_argument('z', type=float, help="altitude in m, depending on frame")
 
     # Note: arming service provided by mavsafety
 

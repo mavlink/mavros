@@ -78,6 +78,7 @@ add_service_files(
    WaypointPush.srv
    WaypointGOTO.srv
    CommandLong.srv
+   CommandInt.srv
    CommandBool.srv
    CommandMode.srv
    CommandHome.srv
