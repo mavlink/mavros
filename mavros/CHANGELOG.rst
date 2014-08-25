@@ -2,6 +2,88 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.1 (2014-08-25)
+------------------
+* plugins: setpoint: Update SET_POSITION_TARGET_LOCAL_NED message.
+  Fix `#131 <https://github.com/vooon/mavros/issues/131>`_.
+* scripts: mavsetp: Enable OFFBOARD mode.
+  Issue `#126 <https://github.com/vooon/mavros/issues/126>`_.
+* plugin: command: Add guided_enable shortcut
+  It enable PX4 OFFBOARD mode.
+  Issue `#126 <https://github.com/vooon/mavros/issues/126>`_.
+* scripts: Add mavsetp script.
+  Only local setpoint for now.
+  Issue `#126 <https://github.com/vooon/mavros/issues/126>`_.
+* plugins: Change UAS FCU link name.
+  Reduce smart pointer count, that hold fcu link object.
+* scripts: mavcmd: Add takeoffcur and landcur commands
+  Fix `#91 <https://github.com/vooon/mavros/issues/91>`_, `#92 <https://github.com/vooon/mavros/issues/92>`_. Inspired by `#125 <https://github.com/vooon/mavros/issues/125>`_.
+* Closes `#122 <https://github.com/vooon/mavros/issues/122>`_, closes `#123 <https://github.com/vooon/mavros/issues/123>`_; plugins: move mocap & vision plugins to extras, change vision plugins name
+* plugins: UAS remove std::atomic<double>
+  It don't work at some compilers.
+  Issue `#89 <https://github.com/vooon/mavros/issues/89>`_.
+* plugin: global_position: Fill NavSatFix status filed.
+  Issue `#87 <https://github.com/vooon/mavros/issues/87>`_, `#118 <https://github.com/vooon/mavros/issues/118>`_.
+* plugins: Add GPS data to UAS
+* plugins: Move setpoint_mixin.h
+  Fix `#120 <https://github.com/vooon/mavros/issues/120>`_.
+* plugin: mocap: Fix load.
+  Issue `#121 <https://github.com/vooon/mavros/issues/121>`_.
+* plugins: global_position: get pose orientation from the one stored in uas
+* plugins: global_position: use relative_alt on position.z;
+  mavros_plugins.xml - corrected declaration of mocap_pose_estimate
+* plugin - global_position - changed parameter path / orientation source
+* launch: APM2 blacklist global_position plugin
+* plugin: global_position: Unit unification.
+* plugin: global_position: Move heaedr; Style fix.
+* added rel_pos and compass_hdg pub; minor corrections
+* Merge branch 'master' of https://github.com/vooon/mavros into global_position
+* global_position plugin - initial commit
+* launch: APM2 blacklist mocap plugin.
+* Updated mavros_plugins.xml
+* Fixed dual sources error warning.
+* Fixed styles.
+* Minor changes.
+* added time stamp to received msgs
+* Removed un-needed times.
+* Added mocap_pose_estimate plugin.
+* Code style update
+* setpoint attitude change - warning message
+* Update on setpoint_attitude plugin
+  * changed Twist to TwistStamped
+  * added reverse_throttle option for throttle control
+  * use cmd_vel as the same topic to control linear a angular velocities (it's commonly used by controllers)
+  * added normalization filter to thrust
+* node: Remove deprecated conn parameters.
+  Fix `#108 <https://github.com/vooon/mavros/issues/108>`_
+* plugin: vision_speed: Update plugin API.
+* plugin: setpoint_attitude: Update plugin API.
+* plugin: setpoint_accel: Update plugin API.
+* plugin: setpoint_velocity: Update plugin API.
+* plugin: 3dr_radio: Update plugin API.
+* plugin: safety_area: Update plugin API.
+* plugin: setpoint_position: Update plugin API.
+* plugin: vision_position: Update plugin API.
+* plugin: local_position: Update plugin API.
+* plugin: command: Update plugin API.
+* plugin: rc_io: Update plugin API.
+* plugin: waypoint: Update plugin API.
+* plugin: param: Update plugin API.
+* plugin: gps: Update plugin API.
+* plugin: imu_pub: Update plugin API.
+* plugin: sys_status: Update plugin API.
+* plugin: Update plugin API.
+* plugins: disable most of plugins
+* plugin: setpoint_attitude: Add thrust topic.
+  Fix `#106 <https://github.com/vooon/mavros/issues/106>`_.
+* Fix URLs in readme
+* mavros -> ros-message parameter fix
+  only parameter1 was forwarded into the ros message
+* Switch travis to pixhawk dialect.
+  Default dialect build by ros buildfarm.
+  Also remove duplicate ci statuses from mavros readme.
+* Contributors: Nuno Marques, Tony Baltovski, Vladimir Ermakov, mthz
+
 0.7.0 (2014-08-11)
 ------------------
 * Add package index readme, Fix `#101 <https://github.com/vooon/mavros/issues/101>`_
