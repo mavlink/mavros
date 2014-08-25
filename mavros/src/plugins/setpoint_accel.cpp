@@ -85,10 +85,10 @@ private:
 	 */
 	void send_setpoint_acceleration(const ros::Time &stamp, float afx, float afy, float afz) {
 
-		/* Documentation start from bit 1 instead 0,
-		 * but implementation PX4 Firmware #1151 starts from 0
+		/* Documentation start from bit 1 instead 0.
+		 * Ignore position and velocity vectors, yaw and yaw rate
 		 */
-		uint16_t ignore_all_except_a_xyz = (7<<3)|(7<<0);
+		uint16_t ignore_all_except_a_xyz = (3<<10)|(7<<3)|(7<<0);
 
 		if (send_force)
 			ignore_all_except_a_xyz |= (1<<9);
@@ -99,7 +99,8 @@ private:
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				afy, afx, -afz);
+				afy, afx, -afz,
+				0.0, 0.0);
 	}
 
 	/* -*- callbacks -*- */

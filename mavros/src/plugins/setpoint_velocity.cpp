@@ -78,20 +78,21 @@ private:
 	 *
 	 * Note: send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz) {
+	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz, float yaw_rate) {
 
 		/* Documentation start from bit 1 instead 0,
-		 * but implementation PX4 Firmware #1151 starts from 0
+		 * Ignore position and accel vectors, yaw
 		 */
-		uint16_t ignore_all_except_v_xyz = (7<<6)|(7<<0);
+		uint16_t ignore_all_except_v_xyz_yr = (1<<10)|(7<<6)|(7<<0);
 
 		// ENU->NED. Issue #49.
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
-				ignore_all_except_v_xyz,
+				ignore_all_except_v_xyz_yr,
 				0.0, 0.0, 0.0,
 				vy, vx, -vz,
-				0.0, 0.0, 0.0);
+				0.0, 0.0, 0.0,
+				0.0, yaw_rate);
 	}
 
 	/* -*- callbacks -*- */
@@ -100,7 +101,8 @@ private:
 		send_setpoint_velocity(req->header.stamp,
 					req->twist.linear.x,
 					req->twist.linear.y,
-					req->twist.linear.z);
+					req->twist.linear.z,
+					req->twist.angular.z);
 	}
 };
 

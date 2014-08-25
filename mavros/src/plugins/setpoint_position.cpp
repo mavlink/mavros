@@ -96,25 +96,26 @@ private:
 	/**
 	 * Send transform to FCU position controller
 	 *
-	 * Note: send only XYZ,
-	 * 
+	 * Note: send only XYZ, Yaw
 	 */
 	void send_setpoint_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// ENU frame
 		tf::Vector3 origin = transform.getOrigin();
+		tf::Quaternion q = transform.getRotation();
 
 		/* Documentation start from bit 1 instead 0,
-		 * but implementation PX4 Firmware #1151 starts from 0
+		 * Ignore velocity and accel vectors, yaw rate
 		 */
-		uint16_t ignore_all_except_xyz = (7<<6)|(7<<3);
+		uint16_t ignore_all_except_xyzy = (1<<11)|(7<<6)|(7<<3);
 
 		// ENU->NED. Issue #49.
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
-				ignore_all_except_xyz,
+				ignore_all_except_xyzy,
 				origin.y(), origin.x(), -origin.z(),
 				0.0, 0.0, 0.0,
-				0.0, 0.0, 0.0);
+				0.0, 0.0, 0.0,
+				tf::getYaw(q), 0.0);
 	}
 
 	/* -*- callbacks -*- */

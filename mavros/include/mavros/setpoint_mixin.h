@@ -34,7 +34,7 @@
 namespace mavplugin {
 
 /**
- * @brief This mixin adds local_ned_position_setpoint_extarnal()
+ * @brief This mixin adds set_position_target_local_ned()
  *
  * @note derived class should provide UAS pointer in uas member.
  */
@@ -45,7 +45,8 @@ public:
 			uint16_t type_mask,
 			float x, float y, float z,
 			float vx, float vy, float vz,
-			float afx, float afy, float afz) {
+			float afx, float afy, float afz,
+			float yaw, float yaw_rate) {
 		UAS *_uas = static_cast<D *>(this)->uas;
 		mavlink_message_t msg;
 		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(_uas), &msg,
@@ -55,7 +56,8 @@ public:
 				type_mask,
 				x, y, z,
 				vz, vy, vz,
-				afx, afy, afz);
+				afx, afy, afz,
+				yaw, yaw_rate);
 		UAS_FCU(_uas)->send_message(&msg);
 	}
 };
