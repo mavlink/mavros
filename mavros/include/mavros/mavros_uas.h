@@ -260,6 +260,17 @@ public:
 	 */
 	boost::shared_ptr<mavconn::MAVConnInterface> fcu_link;
 
+
+	/**
+	 * Port pymavlink mavutil.mode_string_v10
+	 *
+	 * Support FCU's:
+	 * - APM:Plane
+	 * - APM:Copter
+	 * - PX4
+	 */
+	std::string str_mode_v10(int base_mode, int custom_mode);
+
 private:
 	std::recursive_mutex mutex;
 	std::atomic<uint8_t> type;

@@ -31,8 +31,6 @@
 #include <mavros/BatteryStatus.h>
 #include <mavros/StreamRate.h>
 
-#include "px4_custom_mode.h"
-
 namespace mavplugin {
 
 /**
@@ -489,120 +487,6 @@ private:
 
 	}
 
-	static std::string str_base_mode(int base_mode) {
-		std::ostringstream mode;
-		mode << "MODE(0x" << std::hex << std::uppercase << base_mode << ")";
-		return mode.str();
-	}
-
-	static std::string str_custom_mode(int custom_mode) {
-		std::ostringstream mode;
-		mode << "CMODE(" << custom_mode << ")";
-		return mode.str();
-	}
-
-	//! APM:Plane custom mode -> string
-	static std::string str_mode_arduplane(int custom_mode) {
-		switch (custom_mode) {
-		case 0: return "MANUAL";	break;
-		case 1: return "CIRCLE";	break;
-		case 2: return "STABILIZE";	break;
-		case 3: return "TRAINING";	break;
-		case 4: return "ACRO";		break;
-		case 5: return "FBWA";		break;
-		case 6: return "FBWB";		break;
-		case 7: return "CRUISE";	break;
-		case 8: return "AUTOTUNE";	break;
-		case 10: return "AUTO";		break;
-		case 11: return "RTL";		break;
-		case 12: return "LOITER";	break;
-		case 14: return "LAND";		break;
-		case 15: return "GUIDED";	break;
-		case 16: return "INITIALISING";	break;
-		default:
-			 return str_custom_mode(custom_mode);
-			 break;
-		}
-	}
-
-	//! APM:Copter custom mode -> string
-	static std::string str_mode_arducopter(int custom_mode) {
-		switch (custom_mode) {
-		case 0: return "STABILIZE";	break;
-		case 1: return "ACRO";		break;
-		case 2: return "ALT_HOLD";	break;
-		case 3: return "AUTO";		break;
-		case 4: return "GUIDED";	break;
-		case 5: return "LOITER";	break;
-		case 6: return "RTL";		break;
-		case 7: return "CIRCLE";	break;
-		case 8: return "POSITION";	break;
-		case 9: return "LAND";		break;
-		case 10: return "OF_LOITER";	break;
-		case 11: return "APPROACH";	break;
-		default:
-			 return str_custom_mode(custom_mode);
-			 break;
-		}
-	}
-
-	static std::string str_mode_px4(int custom_mode_int) {
-		px4::custom_mode custom_mode;
-		custom_mode.data = custom_mode_int;
-
-		switch (custom_mode.main_mode) {
-		case px4::custom_mode::MAIN_MODE_MANUAL:   return "MANUAL";	break;
-		case px4::custom_mode::MAIN_MODE_ACRO:     return "ACRO";	break;
-		case px4::custom_mode::MAIN_MODE_ALTCTL:   return "ALTCTL";	break;
-		case px4::custom_mode::MAIN_MODE_POSCTL:   return "POSCTL";	break;
-		case px4::custom_mode::MAIN_MODE_OFFBOARD: return "OFFBOARD";	break;
-		case px4::custom_mode::MAIN_MODE_AUTO:
-			switch (custom_mode.sub_mode) {
-			case px4::custom_mode::SUB_MODE_AUTO_MISSION: return "AUTO.MISSION";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_LOITER:  return "AUTO.LOITER";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_RTL:     return "AUTO.RTL";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_LAND:    return "AUTO.LAND";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_RTGS:    return "AUTO.RTGS";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_READY:   return "AUTO.READY";	break;
-			case px4::custom_mode::SUB_MODE_AUTO_TAKEOFF: return "AUTO.TAKEOFF";	break;
-			default:
-				return str_custom_mode(custom_mode_int);
-				break;
-			}
-			break;
-		default:
-			return str_custom_mode(custom_mode_int);
-			break;
-		}
-	}
-
-	//! Port pymavlink mavutil.mode_string_v10
-	std::string str_mode_v10(int base_mode, int custom_mode) {
-
-		if (!(base_mode && MAV_MODE_FLAG_CUSTOM_MODE_ENABLED))
-			return str_base_mode(base_mode);
-
-		enum MAV_TYPE type = uas->get_type();
-		if (uas->is_ardupilotmega()) {
-			if (type == MAV_TYPE_QUADROTOR ||
-					type == MAV_TYPE_HEXAROTOR ||
-					type == MAV_TYPE_OCTOROTOR ||
-					type == MAV_TYPE_TRICOPTER ||
-					type == MAV_TYPE_COAXIAL)
-				return str_mode_arducopter(custom_mode);
-			else if (type == MAV_TYPE_FIXED_WING)
-				return str_mode_arduplane(custom_mode);
-			else
-				/* TODO: APM:Rover */
-				return str_custom_mode(custom_mode);
-		}
-		else if (uas->is_px4())
-			return str_mode_px4(custom_mode);
-		else
-			/* TODO: other autopilot */
-			return str_custom_mode(custom_mode);
-	}
-
 	/* -*- message handlers -*- */
 
 	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -620,7 +504,7 @@ private:
 		state_msg->header.stamp = ros::Time::now();
 		state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
-		state_msg->mode = str_mode_v10(hb.base_mode, hb.custom_mode);
+		state_msg->mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
 
 		state_pub.publish(state_msg);
 	}
