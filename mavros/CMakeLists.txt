@@ -175,9 +175,9 @@ target_link_libraries(mavconn
 )
 
 add_library(mavros
-  src/uas.cpp
-  src/mavros.cpp
-  src/mavlink_diag.cpp
+  src/lib/uas.cpp
+  src/lib/mavros.cpp
+  src/lib/mavlink_diag.cpp
 )
 add_dependencies(mavros
   mavros_generate_messages_cpp
