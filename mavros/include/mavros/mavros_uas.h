@@ -3,7 +3,7 @@
  * @file mavros_plugin.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
- * @addtogroup plugin
+ * @addtogroup nodelib
  * @{
  */
 /*
@@ -31,9 +31,7 @@
 #include <tf/transform_datatypes.h>
 #include <mavros/mavconn_interface.h>
 
-namespace mavplugin {
-typedef std::lock_guard<std::recursive_mutex> lock_guard;
-typedef std::unique_lock<std::recursive_mutex> unique_lock;
+namespace mavros {
 
 /**
  * @brief helper accessor to FCU link interface
@@ -65,6 +63,9 @@ typedef std::unique_lock<std::recursive_mutex> unique_lock;
  */
 class UAS {
 public:
+	typedef std::lock_guard<std::recursive_mutex> lock_guard;
+	typedef std::unique_lock<std::recursive_mutex> unique_lock;
+
 	UAS();
 	~UAS() {};
 
@@ -277,4 +278,4 @@ private:
 	std::atomic<bool> fix_status;
 };
 
-}; // namespace mavplugin
+}; // namespace mavros

@@ -67,7 +67,7 @@ private:
 	std::vector<std::string> plugin_blacklist;
 	std::array<mavconn::MAVConnInterface::MessageSig, 256>
 		message_route_table; // link interface -> router -> plugin callback
-	mavplugin::UAS mav_uas;
+	UAS mav_uas;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
 	void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg);

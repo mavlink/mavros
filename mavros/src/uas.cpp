@@ -27,7 +27,7 @@
 #include <mavros/mavros_uas.h>
 #include <mavros/utils.h>
 
-using namespace mavplugin;
+using namespace mavros;
 
 UAS::UAS() :
 	type(MAV_TYPE_GENERIC),

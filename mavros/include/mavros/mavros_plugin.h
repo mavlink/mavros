@@ -33,6 +33,9 @@
 #include <mavros/mavros_uas.h>
 
 namespace mavplugin {
+using mavros::UAS;
+typedef std::lock_guard<std::recursive_mutex> lock_guard;
+typedef std::unique_lock<std::recursive_mutex> unique_lock;
 
 /**
  * @brief Helper macros to define message handler map item
