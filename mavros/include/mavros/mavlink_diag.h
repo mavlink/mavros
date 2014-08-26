@@ -1,10 +1,13 @@
 /**
- * @brief MAVROS Node
- * @file mavros_node.cpp
+ * @brief Mavlink diag class
+ * @file mavlink_diag.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
+ *
+ * @addtogroup nodelib
+ * @{
  */
 /*
- * Copyright 2013 Vladimir Ermakov.
+ * Copyright 2014 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +24,33 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <mavros/mavros.h>
+#pragma once
 
-int main(int argc, char *argv[])
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <mavros/mavconn_interface.h>
+
+namespace mavros {
+
+class MavlinkDiag : public diagnostic_updater::DiagnosticTask
 {
-	ros::init(argc, argv, "mavros");
-	ros::NodeHandle nh("~");
+public:
+	explicit MavlinkDiag(std::string name);
 
-	mavros::MavRos mavros(nh);
-	mavros.spin();
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
-	return 0;
-}
+	void set_mavconn(const mavconn::MAVConnInterface::Ptr &link) {
+		weak_link = link;
+	}
+
+	void set_connection_status(bool connected) {
+		is_connected = connected;
+	}
+
+private:
+	mavconn::MAVConnInterface::WeakPtr weak_link;
+	unsigned int last_drop_count;
+	bool is_connected;
+};
+
+}; // namespace mavros
 

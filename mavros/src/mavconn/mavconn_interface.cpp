@@ -171,7 +171,7 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 			sysid, compid);
 }
 
-static boost::shared_ptr<MAVConnInterface> url_parse_serial(
+static MAVConnInterface::Ptr url_parse_serial(
 		std::string path, std::string query,
 		uint8_t system_id, uint8_t component_id)
 {
@@ -186,7 +186,7 @@ static boost::shared_ptr<MAVConnInterface> url_parse_serial(
 			file_path, baudrate);
 }
 
-static boost::shared_ptr<MAVConnInterface> url_parse_udp(
+static MAVConnInterface::Ptr url_parse_udp(
 		std::string hosts, std::string query,
 		uint8_t system_id, uint8_t component_id)
 {
@@ -213,7 +213,7 @@ static boost::shared_ptr<MAVConnInterface> url_parse_udp(
 			remote_host, remote_port);
 }
 
-static boost::shared_ptr<MAVConnInterface> url_parse_tcp_client(
+static MAVConnInterface::Ptr url_parse_tcp_client(
 		std::string host, std::string query,
 		uint8_t system_id, uint8_t component_id)
 {
@@ -228,7 +228,7 @@ static boost::shared_ptr<MAVConnInterface> url_parse_tcp_client(
 			server_host, server_port);
 }
 
-static boost::shared_ptr<MAVConnInterface> url_parse_tcp_server(
+static MAVConnInterface::Ptr url_parse_tcp_server(
 		std::string host, std::string query,
 		uint8_t system_id, uint8_t component_id)
 {
@@ -243,7 +243,7 @@ static boost::shared_ptr<MAVConnInterface> url_parse_tcp_server(
 			bind_host, bind_port);
 }
 
-boost::shared_ptr<MAVConnInterface> MAVConnInterface::open_url(std::string url,
+MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		uint8_t system_id, uint8_t component_id) {
 
 	/* Based on code found here:

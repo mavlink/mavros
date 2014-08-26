@@ -96,6 +96,11 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
+	typedef sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> MessageSig;
+	typedef boost::shared_ptr<MAVConnInterface> Ptr;
+	typedef boost::shared_ptr<MAVConnInterface const> ConstPtr;
+	typedef boost::weak_ptr<MAVConnInterface> WeakPtr;
+
 	/**
 	 * @param[in] system_id     sysid for send_message
 	 * @param[in] component_id  compid for send_message
@@ -129,7 +134,7 @@ public:
 	/**
 	 * @brief Message receive signal
 	 */
-	sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> message_received;
+	MessageSig message_received;
 	sig2::signal<void()> port_closed;
 
 	virtual mavlink_status_t get_status() = 0;
@@ -150,7 +155,7 @@ public:
 	 * @todo Implementation
 	 * @todo Documentation
 	 */
-	static boost::shared_ptr<MAVConnInterface> open_url(std::string url,
+	static Ptr open_url(std::string url,
 			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
 protected:

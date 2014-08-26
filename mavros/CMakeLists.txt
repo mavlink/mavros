@@ -67,23 +67,23 @@ add_message_files(
 
 ## Generate services in the 'srv' folder
 add_service_files(
-   FILES
-   ParamSet.srv
-   ParamGet.srv
-   ParamPull.srv
-   ParamPush.srv
-   WaypointSetCurrent.srv
-   WaypointClear.srv
-   WaypointPull.srv
-   WaypointPush.srv
-   WaypointGOTO.srv
-   CommandLong.srv
-   CommandInt.srv
-   CommandBool.srv
-   CommandMode.srv
-   CommandHome.srv
-   CommandTOL.srv
-   StreamRate.srv
+  FILES
+  ParamSet.srv
+  ParamGet.srv
+  ParamPull.srv
+  ParamPush.srv
+  WaypointSetCurrent.srv
+  WaypointClear.srv
+  WaypointPull.srv
+  WaypointPush.srv
+  WaypointGOTO.srv
+  CommandLong.srv
+  CommandInt.srv
+  CommandBool.srv
+  CommandMode.srv
+  CommandHome.srv
+  CommandTOL.srv
+  StreamRate.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -125,7 +125,7 @@ set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS ${mavlink_DIALECTS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mavconn mavros_plugins
+  LIBRARIES mavconn mavros
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
   DEPENDS Boost mavlink
 )
@@ -146,7 +146,7 @@ include_directories(
 )
 
 add_definitions(
-    -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
+  -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
 )
 
 ## Enable C++11 on gcc 4.6 too
@@ -155,24 +155,36 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 ## Declare a cpp library
 add_library(mavconn
-   src/mavconn/mavconn_interface.cpp
-   src/mavconn/mavconn_serial.cpp
-   src/mavconn/mavconn_udp.cpp
-   src/mavconn/mavconn_tcp.cpp
-)
-add_dependencies(mavconn
-  mavros_generate_messages_cpp
+  src/mavconn/mavconn_interface.cpp
+  src/mavconn/mavconn_serial.cpp
+  src/mavconn/mavconn_udp.cpp
+  src/mavconn/mavconn_tcp.cpp
 )
 target_link_libraries(mavconn
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_library(mavros
+  src/uas.cpp
+  src/mavros.cpp
+  src/mavlink_diag.cpp
+)
+add_dependencies(mavros
+  mavros_generate_messages_cpp
+  mavconn
+)
+target_link_libraries(mavros
+  mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -196,33 +208,30 @@ add_library(mavros_plugins
   src/plugins/setpoint_attitude.cpp
 )
 add_dependencies(mavros_plugins
-  mavros_generate_messages_cpp
-  mavconn
+  mavros
 )
 target_link_libraries(mavros_plugins
   mavconn
+  mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-
 ## Declare a cpp executable
 add_executable(mavros_node
-	src/mavros_node.cpp
-	src/uas.cpp
+  src/mavros_node.cpp
 )
 add_dependencies(mavros_node
-  mavros_generate_messages_cpp
-  mavconn
+  mavros
 )
 target_link_libraries(mavros_node
-  mavconn
+  mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 add_executable(gcs_bridge
-	src/gcs_bridge.cpp
+  src/gcs_bridge.cpp
 )
 add_dependencies(gcs_bridge
   mavconn
@@ -249,7 +258,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavconn mavros_plugins mavros_node gcs_bridge
+install(TARGETS mavconn mavros mavros_plugins mavros_node gcs_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -279,8 +288,10 @@ install(DIRECTORY launch/
 ## Add gtest based cpp test target and link libraries
 catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
 if(TARGET mavconn-test)
-	target_link_libraries(mavconn-test mavconn)
+  target_link_libraries(mavconn-test mavconn)
 endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+# vim: ts=2 sw=2 et:
