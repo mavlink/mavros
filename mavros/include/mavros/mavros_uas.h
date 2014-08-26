@@ -271,6 +271,15 @@ public:
 	 */
 	std::string str_mode_v10(int base_mode, int custom_mode);
 
+	/**
+	 * Lookup custom mode for given string
+	 *
+	 * Complimentary to @a str_mode_v10()
+	 *
+	 * @return true if success
+	 */
+	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
+
 private:
 	std::recursive_mutex mutex;
 	std::atomic<uint8_t> type;
