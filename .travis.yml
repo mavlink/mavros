@@ -14,7 +14,8 @@ before_install:
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  #- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros-shadow-fixed/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall
@@ -35,9 +36,6 @@ install:
   - cd ../
   # Install dependencies for source repos
   - rosdep install -r -n --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-  # temporary hack: use mavlink from shadow repo
-  #- wget http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-hydro-mavlink/ros-hydro-mavlink_1.0.9-7precise-20140809-1711-+0000_amd64.deb
-  #- sudo dpkg -i ros-hydro-mavlink_1.0.9-7precise-20140809-1711-+0000_amd64.deb
 before_script: # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - export CATKIN_PACKAGES="`find $CI_SOURCE_PATH -name package.xml | xargs -n 1 dirname | xargs -n 1 basename`"
