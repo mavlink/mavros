@@ -36,7 +36,16 @@ UAS::UAS() :
 	autopilot(MAV_AUTOPILOT_GENERIC),
 	target_system(1),
 	target_component(1),
-	connected(false)
+	connected(false),
+	angular_velocity{},
+	linear_acceleration{},
+	orientation{},
+	gps_latitude(0),
+	gps_longitude(0),
+	gps_altitude(0),
+	gps_eph(0),
+	gps_epv(0),
+	fix_status(0)
 {
 }
 
