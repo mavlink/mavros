@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <array>
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
 #include <mavros/mavconn_interface.h>
