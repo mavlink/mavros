@@ -32,7 +32,6 @@
 #include <mavros/CommandLong.h>
 #include <mavros/CommandInt.h>
 #include <mavros/CommandBool.h>
-#include <mavros/CommandMode.h>
 #include <mavros/CommandHome.h>
 #include <mavros/CommandTOL.h>
 
@@ -74,7 +73,6 @@ public:
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
 		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
-		set_mode_srv = cmd_nh.advertiseService("set_mode", &CommandPlugin::set_mode_cb, this);
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
@@ -99,7 +97,6 @@ private:
 	ros::ServiceServer command_long_srv;
 	ros::ServiceServer command_int_srv;
 	ros::ServiceServer arming_srv;
-	ros::ServiceServer set_mode_srv;
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
@@ -290,24 +287,6 @@ private:
 
 		return send_command_long_and_wait(MAV_CMD_COMPONENT_ARM_DISARM, 1,
 				(req.value)? 1.0 : 0.0,
-				0, 0, 0, 0, 0, 0,
-				res.success, res.result);
-	}
-
-	bool set_mode_cb(mavros::CommandMode::Request &req,
-			mavros::CommandMode::Response &res) {
-
-		if (req.mode > 256) {
-			ROS_ERROR_NAMED("cmd", "Unknown mode %u", req.mode);
-			return false;
-		}
-
-		/* TODO: Add FCU-specific mode set
-		 * like APM LAND,TAKEOFF and other
-		 */
-
-		return send_command_long_and_wait(MAV_CMD_DO_SET_MODE, 1,
-				req.mode,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}

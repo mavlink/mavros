@@ -80,10 +80,10 @@ add_service_files(
   CommandLong.srv
   CommandInt.srv
   CommandBool.srv
-  CommandMode.srv
   CommandHome.srv
   CommandTOL.srv
   StreamRate.srv
+  SetMode.srv
 )
 
 ## Generate actions in the 'action' folder

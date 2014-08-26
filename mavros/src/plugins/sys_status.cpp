@@ -30,6 +30,7 @@
 #include <mavros/State.h>
 #include <mavros/BatteryStatus.h>
 #include <mavros/StreamRate.h>
+#include <mavros/SetMode.h>
 
 namespace mavplugin {
 
@@ -390,6 +391,7 @@ public:
 		state_pub = nh.advertise<mavros::State>("state", 10);
 		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
+		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
 	}
 
 	const std::string get_name() const {
@@ -424,6 +426,7 @@ private:
 	ros::Publisher state_pub;
 	ros::Publisher batt_pub;
 	ros::ServiceServer rate_srv;
+	ros::ServiceServer mode_srv;
 
 	/* -*- mid-level helpers -*- */
 
@@ -600,6 +603,30 @@ private:
 				);
 
 		UAS_FCU(uas)->send_message(&msg);
+		return true;
+	}
+
+	bool set_mode_cb(mavros::SetMode::Request &req,
+			mavros::SetMode::Response &res) {
+		mavlink_message_t msg;
+		uint8_t base_mode = req.base_mode;
+		uint32_t custom_mode = 0;
+
+		if (req.custom_mode != "") {
+			if (!uas->cmode_from_str(req.custom_mode, custom_mode)) {
+				res.success = false;
+				return true;
+			}
+
+			base_mode |= MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+		}
+
+		mavlink_msg_set_mode_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				uas->get_tgt_system(),
+				base_mode,
+				custom_mode);
+		UAS_FCU(uas)->send_message(&msg);
+		res.success = true;
 		return true;
 	}
 };

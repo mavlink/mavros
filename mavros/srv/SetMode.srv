@@ -13,10 +13,7 @@ uint8 MAV_MODE_AUTO_ARMED		= 220
 uint8 MAV_MODE_TEST_DISARMED		= 66
 uint8 MAV_MODE_TEST_ARMED		= 194
 
-# FCU specific mode change commands starts from 1000
-# TODO
-
-uint16 mode
+uint8 base_mode		# filled by MAV_MODE enum value or 0 if custom_mode != ''
+string custom_mode	# string mode representation or integer
 ---
 bool success
-uint8 result
