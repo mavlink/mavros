@@ -25,7 +25,7 @@ import threading
 
 import rospy
 from mavros.msg import State
-from mavros.srv import SetMode, StreamRate
+from mavros.srv import SetMode, StreamRate, StreamRateRequest
 
 
 def print_if(cond, *args, **kvargs):
@@ -78,16 +78,29 @@ def do_mode(args):
 
 
 
-def _set_rate(args, id, rate):
-    try:
-        rate_cl = rospy.ServiceProxy(args.mavros_ns + "/set_stream_rate", StreamRate)
-        rate_cl(stream_id=id, message_rate=rate, on_off=(rate != 0))
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-
 def do_rate(args):
     rospy.init_node("mavsys", anonymous=True)
+
+    def _test_set_rate(rate_arg, id):
+        if rate_arg is not None:
+            try:
+                rate_cl = rospy.ServiceProxy(args.mavros_ns + "/set_stream_rate", StreamRate)
+                rate_cl(stream_id=id, message_rate=rate_arg, on_off=(rate_arg != 0))
+            except rospy.ServiceException as ex:
+                fault(ex)
+
+    _test_set_rate(args.all, StreamRateRequest.STREAM_ALL)
+    _test_set_rate(args.raw_sensors, StreamRateRequest.STREAM_RAW_SENSORS)
+    _test_set_rate(args.ext_status, StreamRateRequest.STREAM_EXTENDED_STATUS)
+    _test_set_rate(args.rc_channels, StreamRateRequest.STREAM_RC_CHANNELS)
+    _test_set_rate(args.raw_controller, StreamRateRequest.STREAM_RAW_CONTROLLER)
+    _test_set_rate(args.position, StreamRateRequest.STREAM_POSITION)
+    _test_set_rate(args.extra1, StreamRateRequest.STREAM_EXTRA1)
+    _test_set_rate(args.extra2, StreamRateRequest.STREAM_EXTRA2)
+    _test_set_rate(args.extra3, StreamRateRequest.STREAM_EXTRA3)
+
+    if args.stream_id is not None:
+        _test_set_rate(args.stream_id[1], args.stream_id[0])
 
 
 
@@ -105,6 +118,16 @@ def main():
 
     rate_args = subarg.add_parser('rate', help="Set stream rate")
     rate_args.set_defaults(func=do_rate)
+    rate_args.add_argument('--all', type=int, metavar='rate', help="All streams")
+    rate_args.add_argument('--raw-sensors', type=int, metavar='rate', help="raw sensors stream")
+    rate_args.add_argument('--ext-status', type=int, metavar='rate', help="extended status stream")
+    rate_args.add_argument('--rc-channels', type=int, metavar='rate', help="RC channels stream")
+    rate_args.add_argument('--raw-controller', type=int, metavar='rate', help="raw conptoller stream")
+    rate_args.add_argument('--position', type=int, metavar='rate', help="position stream")
+    rate_args.add_argument('--extra1', type=int, metavar='rate', help="Extra 1 stream")
+    rate_args.add_argument('--extra2', type=int, metavar='rate', help="Extra 1 stream")
+    rate_args.add_argument('--extra3', type=int, metavar='rate', help="Extra 1 stream")
+    rate_args.add_argument('--stream-id', type=int, nargs=2, metavar=('id', 'rate'), help="any stream")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
     args.func(args)
