@@ -117,42 +117,56 @@ public:
 		node_handle.getParam("plugin_blacklist", plugin_blacklist);
 
 		diag_updater.setHardwareID("Mavlink");
-		diag_updater.add(fcu_link_diag);
 
 		ROS_INFO_STREAM("FCU URL: " << fcu_url);
-		fcu_link = MAVConnInterface::open_url(fcu_url, system_id, component_id);
-		// may be overridden by URL
-		system_id = fcu_link->get_system_id();
-		component_id = fcu_link->get_component_id();
+		try {
+			fcu_link = MAVConnInterface::open_url(fcu_url, system_id, component_id);
+			// may be overridden by URL
+			system_id = fcu_link->get_system_id();
+			component_id = fcu_link->get_component_id();
+
+			fcu_link_diag.set_mavconn(fcu_link);
+			diag_updater.add(fcu_link_diag);
+		}
+		catch (mavconn::DeviceError &ex) {
+			ROS_FATAL("FCU: %s", ex.what());
+			ros::shutdown();
+			return;
+		}
 
 		if (gcs_url != "") {
 			ROS_INFO_STREAM("GCS URL: " << gcs_url);
-			diag_updater.add(gcs_link_diag);
-			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
+			try {
+				gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
+
+				gcs_link_diag.set_mavconn(gcs_link);
+				diag_updater.add(gcs_link_diag);
+			}
+			catch (mavconn::DeviceError &ex) {
+				ROS_FATAL("GCS: %s", ex.what());
+				ros::shutdown();
+				return;
+			}
 		}
 		else
 			ROS_INFO("GCS bridge disabled");
 
+		// ROS mavlink bridge
 		mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
-
-		if (gcs_link)
-			fcu_link->message_received.connect(
-					boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
-
-		fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
-		fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
-		fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
-		fcu_link_diag.set_mavconn(fcu_link);
-
 		mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
 				ros::TransportHints()
 					.unreliable()
 					.maxDatagramSize(1024));
 
+		fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
+		fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
+		fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
+
 		if (gcs_link) {
+			fcu_link->message_received.connect(
+					boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
 			gcs_link->message_received.connect(
 					boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
-			gcs_link_diag.set_mavconn(gcs_link);
 			gcs_link_diag.set_connection_status(true);
 		}
 
@@ -161,12 +175,8 @@ public:
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
 		mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
-		auto plugins = plugin_loader.getDeclaredClasses();
-		loaded_plugins.reserve(plugins.size());
-		for (auto it = plugins.begin();
-				it != plugins.end();
-				++it)
-			add_plugin(*it);
+		for (auto &name : plugin_loader.getDeclaredClasses())
+			add_plugin(name);
 
 		if (px4_usb_quirk)
 			startup_px4_usb_quirk();
@@ -235,22 +245,20 @@ private:
 		message_route_table[mmsg->msgid](mmsg, sysid, compid);
 	}
 
-	bool check_in_blacklist(std::string pl_name) {
-		for (auto it = plugin_blacklist.cbegin();
-				it != plugin_blacklist.cend();
-				it++) {
-			int cmp = fnmatch(it->c_str(), pl_name.c_str(), FNM_CASEFOLD);
+	bool check_in_blacklist(std::string &pl_name) {
+		for (auto &pattern : plugin_blacklist) {
+			int cmp = fnmatch(pattern.c_str(), pl_name.c_str(), FNM_CASEFOLD);
 			if (cmp == 0)
 				return true;
 			else if (cmp != FNM_NOMATCH)
-				ROS_ERROR("Blacklist check error! fnmatch('%s', '%s')",
-						it->c_str(), pl_name.c_str());
+				ROS_ERROR("Blacklist check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
+						pattern.c_str(), pl_name.c_str(), cmp);
 		}
 
 		return false;
 	}
 
-	void add_plugin(std::string pl_name) {
+	void add_plugin(std::string &pl_name) {
 		boost::shared_ptr<mavplugin::MavRosPlugin> plugin;
 
 		if (check_in_blacklist(pl_name)) {
@@ -267,16 +275,13 @@ private:
 			ROS_INFO_STREAM("Plugin " << repr_name <<
 					" [alias " << pl_name << "] loaded and initialized");
 
-			auto sub_map = plugin->get_rx_handlers();
-			for (auto it = sub_map.begin();
-					it != sub_map.end();
-					++it) {
-				ROS_DEBUG("Route msgid %d to %s", it->first, repr_name.c_str());
-				message_route_table[it->first].connect(it->second);
+			for (auto &pair : plugin->get_rx_handlers()) {
+				ROS_DEBUG("Route msgid %d to %s", pair.first, repr_name.c_str());
+				message_route_table[pair.first].connect(pair.second);
 			}
 
-		} catch (pluginlib::PluginlibException& ex) {
-			ROS_ERROR_STREAM("Plugin load exception: " << ex.what());
+		} catch (pluginlib::PluginlibException &ex) {
+			ROS_ERROR_STREAM("Plugin [alias " << pl_name << "] load exception: " << ex.what());
 		}
 	}
 
