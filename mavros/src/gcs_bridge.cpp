@@ -1,6 +1,6 @@
 /**
- * @brief MAVROS UDP proxy
- * @file mavros_udp.cpp
+ * @brief MAVROS GCS proxy
+ * @file gcs_bridge.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
@@ -34,7 +34,7 @@ using namespace mavconn;
 
 ros::Publisher mavlink_pub;
 ros::Subscriber mavlink_sub;
-boost::shared_ptr<MAVConnInterface> gcs_link;
+MAVConnInterface::Ptr gcs_link;
 
 void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 	MavlinkPtr rmsg = boost::make_shared<Mavlink>();
@@ -55,7 +55,6 @@ void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 
 int main(int argc, char *argv[])
 {
-	//ros::init(argc, argv, "gcs_bridge", ros::init_options::AnonymousName);
 	ros::init(argc, argv, "gcs_bridge");
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
@@ -63,7 +62,13 @@ int main(int argc, char *argv[])
 	std::string gcs_url;
 	priv_nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 
-	gcs_link = MAVConnInterface::open_url(gcs_url);
+	try {
+		gcs_link = MAVConnInterface::open_url(gcs_url);
+	}
+	catch (mavconn::DeviceError &ex) {
+		ROS_FATAL("GCS: %s", ex.what());
+		return 1;
+	}
 
 	mavlink_pub = mavlink_nh.advertise<Mavlink>("to", 10);
 	gcs_link->message_received.connect(mavlink_pub_cb);

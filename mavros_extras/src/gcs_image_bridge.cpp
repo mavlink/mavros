@@ -40,7 +40,7 @@ using namespace mavconn;
 namespace enc = sensor_msgs::image_encodings;
 
 int jpeg_quality;
-boost::shared_ptr<MAVConnInterface> gcs_link;
+MAVConnInterface::Ptr gcs_link;
 ros::Publisher mavlink_pub;
 
 void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid)
@@ -161,7 +161,6 @@ void image_cb(const sensor_msgs::Image::ConstPtr &img_msg)
 
 int main(int argc, char *argv[])
 {
-	//ros::init(argc, argv, "gcs_image_bridge", ros::init_options::AnonymousName);
 	ros::init(argc, argv, "gcs_image_bridge");
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
@@ -173,7 +172,13 @@ int main(int argc, char *argv[])
 	priv_nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 	priv_nh.param("jpeg_quality", jpeg_quality, 60);
 
-	gcs_link = MAVConnInterface::open_url(gcs_url);
+	try {
+		gcs_link = MAVConnInterface::open_url(gcs_url);
+	}
+	catch (mavconn::DeviceError &ex) {
+		ROS_FATAL("GCS: %s", ex.what());
+		return 0;
+	}
 
 	mavlink_pub = mavlink_nh.advertise<Mavlink>("to", 10);
 	gcs_link->message_received.connect(mavlink_pub_cb);
