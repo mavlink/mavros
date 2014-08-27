@@ -53,13 +53,13 @@ def publish_once(args, pub, msg):
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
         print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to", pub.name)
+                 "Mavros not started, nobody subcsribes to", pub.name)
 
 
 def enable_offboard(args):
     try:
         guided_enable_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
-        ret = guided_enable_cl(value=True)
+        guided_enable_cl(value=True)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -71,7 +71,7 @@ def do_local_pos(args):
 
     pos = PoseStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
     pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
-    
+
     yaw = math.radians(args.position[3]) if args.degrees else args.position[3]
     q = quaternion_from_euler(0, 0, yaw)
     pos.pose.orientation = Quaternion(*q)
@@ -86,11 +86,11 @@ def do_local_vel(args):
 
     vel = TwistStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
     vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
-    vel.twist.angular = Vector3(0.0, 0.0, y_rate=args.velocity[3])
+    vel.twist.angular = Vector3(y=args.velocity[3])
 
     publish_once(args, pub, vel)
-    
-    
+
+
 def do_local_accel(args):
     pub = rospy.Publisher(args.mavros_ns + "/setpoint/accel", Vector3Stamped,
                           queue_size=10, latch=True)
@@ -100,7 +100,7 @@ def do_local_accel(args):
     vel.vector = Vector3(x=args.acceleration[0], y=args.acceleration[1], z=args.acceleration[2])
 
     publish_once(args, pub, vel)
-    
+
 
 def do_local_selector(args):
     if args.position is not None:
@@ -130,7 +130,7 @@ def main():
 
     local_group.add_argument('-v', '--velocity', type=float, nargs=4,
                              metavar=('vx', 'vy', 'vz', 'y_rate'), help="Linear velocity & desired yaw rate")
-    
+
     local_group.add_argument('-a', '--acceleration', type=float, nargs=3,
                              metavar=('afx', 'afy', 'afz'), help="Linear acceleration/force")
 
