@@ -24,7 +24,7 @@ import argparse
 
 import rospy
 from std_msgs.msg import Header
-from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Point
+from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Vector3Stamped, Point
 from mavros.srv import CommandBool
 
 _ONCE_DELAY = 3
@@ -43,12 +43,13 @@ def fault(*args, **kvargs):
 
 def publish_once(args, pub, msg):
     pub.publish(msg)
+    rospy.sleep(0.2)
+    enable_offboard(args)
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
-        enable_offboard(args)
         print_if(pub.get_num_connections() < 1,
              "Mavros not started, nobody subcsribes to", pub.name)
 
@@ -67,7 +68,8 @@ def do_local_pos(args):
     rospy.init_node("mavsetp", anonymous=True)
 
     pos = PoseStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
+    pos.pose.position = Point(x=args.position[0], y=args.position[1],
+					z=args.position[2], y_ang=args.position[3])
 
     publish_once(args, pub, pos)
 
@@ -78,7 +80,19 @@ def do_local_vel(args):
     rospy.init_node("mavsetp", anonymous=True)
 
     vel = TwistStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
+    vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1],
+					z=args.velocity[2], y_rate=args.velocity[3])
+
+    publish_once(args, pub, vel)
+    
+    
+def do_local_accel(args):
+    pub = rospy.Publisher(args.mavros_ns + "/setpoint/accel", Vector3Stamped,
+                          queue_size=10, latch=True)
+    rospy.init_node("mavsetp", anonymous=True)
+
+    vel = Vector3Stamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
+    vel.vector = Vector3(x=args.acceleration[0], y=args.acceleration[1], z=args.acceleration[2])
 
     publish_once(args, pub, vel)
     
@@ -86,8 +100,10 @@ def do_local_vel(args):
 def do_local_selector(args):
     if args.position is not None:
         do_local_pos(args)
-    else:
+    elif args.velocity is not None:
         do_local_vel(args)
+    else:
+        do_local_accel(args)
 
 
 # TODO: other stuff
@@ -104,11 +120,14 @@ def main():
     local_args.set_defaults(func=do_local_selector)
     local_group = local_args.add_mutually_exclusive_group(required=True)
 
-    local_group.add_argument('-p', '--position', type=float, nargs=3,
-                             metavar=('x', 'y', 'z'), help="Local position")
+    local_group.add_argument('-p', '--position', type=float, nargs=4,
+                             metavar=('x', 'y', 'z', 'y_ang'), help="Local position & desired yaw angle")
 
-    local_group.add_argument('-v', '--velocity', type=float, nargs=3,
-                             metavar=('vx', 'vy', 'vz'), help="Linear velocity")
+    local_group.add_argument('-v', '--velocity', type=float, nargs=4,
+                             metavar=('vx', 'vy', 'vz', 'y_rate'), help="Linear velocity & desired yaw rate")
+    
+    local_group.add_argument('-a', '--acceleration', type=float, nargs=3,
+                             metavar=('afx', 'afy', 'afz'), help="Linear acceleration/force")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
     args.func(args)
