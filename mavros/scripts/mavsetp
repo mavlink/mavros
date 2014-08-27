@@ -43,13 +43,14 @@ def fault(*args, **kvargs):
 
 def publish_once(args, pub, msg):
     pub.publish(msg)
-    print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to", pub.name)
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
     while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
         rospy.sleep(0.2)
+        enable_offboard(args)
+        print_if(pub.get_num_connections() < 1,
+             "Mavros not started, nobody subcsribes to", pub.name)
 
 
 def enable_offboard(args):
@@ -69,7 +70,6 @@ def do_local_pos(args):
     pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
 
     publish_once(args, pub, pos)
-    enable_offboard(args)
 
 
 def do_local_vel(args):
@@ -81,8 +81,7 @@ def do_local_vel(args):
     vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
 
     publish_once(args, pub, vel)
-    enable_offboard(args)
-
+    
 
 def do_local_selector(args):
     if args.position is not None:
