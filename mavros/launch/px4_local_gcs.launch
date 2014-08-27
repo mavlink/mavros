@@ -4,7 +4,7 @@
 	<!-- This file almost same as px4.launch but adds connection to local GCS -->
 
 	<arg name="fcu_url" default="serial:///dev/ttyACM0:57600" />
-	<arg name="gcs_url" default="udp://localhost" />
+	<arg name="gcs_url" default="udp://@localhost" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="50" />
 
