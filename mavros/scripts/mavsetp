@@ -24,7 +24,8 @@ import argparse
 
 import rospy
 from std_msgs.msg import Header
-from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Vector3Stamped, Point
+from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Vector3Stamped, Point, Quaternion
+from tf.transformations import quaternion_from_euler
 from mavros.srv import CommandBool
 
 _ONCE_DELAY = 3
@@ -68,8 +69,10 @@ def do_local_pos(args):
     rospy.init_node("mavsetp", anonymous=True)
 
     pos = PoseStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    pos.pose.position = Point(x=args.position[0], y=args.position[1],
-					z=args.position[2], y_ang=args.position[3])
+    pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
+    
+    q = tf.transformations.quaternion_from_euler(0, 0, y_angl=args.postion[3])
+    pos.pose.orientation = Quaternion(*q)
 
     publish_once(args, pub, pos)
 
@@ -80,8 +83,8 @@ def do_local_vel(args):
     rospy.init_node("mavsetp", anonymous=True)
 
     vel = TwistStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1],
-					z=args.velocity[2], y_rate=args.velocity[3])
+    vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
+    vel.twist.angular = Vector3(0.0, 0.0, y_rate=args.velocity[3])
 
     publish_once(args, pub, vel)
     
