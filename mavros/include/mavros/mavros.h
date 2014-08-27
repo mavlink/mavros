@@ -1,10 +1,11 @@
 /**
- * @brief Mavlink diag class
- * @file mavlink_diag.h
+ * @brief MavRos node implementation class
+ * @file mavros.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup nodelib
  * @{
+ *  @brief MAVROS node implementation
  */
 /*
  * Copyright 2014 Vladimir Ermakov.

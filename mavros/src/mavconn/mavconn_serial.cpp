@@ -1,4 +1,5 @@
 /**
+ * @brief MAVConn Serial link class
  * @file mavconn_serial.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *

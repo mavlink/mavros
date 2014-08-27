@@ -1,4 +1,5 @@
 /**
+ * @brief MAVConn class interface
  * @file mavconn_interface.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *

@@ -110,8 +110,14 @@ public:
 		delete_channel(channel);
 	};
 
+	/**
+	 * @brief Close connection.
+	 */
 	virtual void close() = 0;
 
+	/**
+	 * @brief Send message with default link system/component id
+	 */
 	inline void send_message(const mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);
 	};
@@ -148,12 +154,20 @@ public:
 
 	/**
 	 * @brief Construct connection from URL
+	 *
+	 * Supported URL schemas:
+	 * - serial://
+	 * - udp://
+	 * - tcp://
+	 * - tcp-l://
+	 *
+	 * Please see user's documentation for details.
+	 *
 	 * @param[in] url           resource locator
 	 * @param[in] system_id     optional system id
 	 * @param[in] component_id  optional component id
-	 *
-	 * @todo Implementation
-	 * @todo Documentation
+	 * @return @a Ptr to constructed interface class,
+	 *         or throw @a DeviceError if error occured.
 	 */
 	static Ptr open_url(std::string url,
 			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);

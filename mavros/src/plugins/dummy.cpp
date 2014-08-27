@@ -3,6 +3,7 @@
  * @file dummy.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
+ * @example dummy.cpp
  * @addtogroup plugin
  * @{
  */
@@ -31,9 +32,8 @@ namespace mavplugin {
 
 /**
  * @brief Dummy plugin.
- * Example and "how to" for users.
  *
- * @example
+ * Example and "how to" for users.
  */
 class DummyPlugin : public MavRosPlugin {
 public:

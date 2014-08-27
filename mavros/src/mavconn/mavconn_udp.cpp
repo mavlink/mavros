@@ -1,4 +1,5 @@
 /**
+ * @brief MAVConn UDP link class
  * @file mavconn_udp.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *

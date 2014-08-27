@@ -62,6 +62,12 @@ public:
 	}
 };
 
+/**
+ * @brief This mixin adds TF listener to plugin
+ *
+ * It requires ros::NodeHandle named sp_nh,
+ * frame_id and child_frame_id strings and tf_rate double.
+ */
 template <class D>
 class TFListenerMixin {
 public:
@@ -69,6 +75,12 @@ public:
 	std::string thd_name;
 	boost::function<void (const tf::Transform&, const ros::Time&)> tf_transform_cb;
 
+	/**
+	 * @brief start tf listener
+	 *
+	 * @param _thd_name  listener thread name
+	 * @param cbp        plugin callback function
+	 */
 	void tf_start(const char *_thd_name, void (D::*cbp)(const tf::Transform&, const ros::Time&) ) {
 		thd_name = _thd_name;
 		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1, _2);

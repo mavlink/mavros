@@ -1,6 +1,6 @@
 /**
- * @brief RC plugin
- * @file rc.cpp
+ * @brief RC IO plugin
+ * @file rc_io.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup plugin
@@ -26,7 +26,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <mavros/RCIn.h>
 #include <mavros/RCOut.h>

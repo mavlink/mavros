@@ -30,5 +30,6 @@
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
+    <rosdoc config="rosdoc.yaml" />
   </export>
 </package>

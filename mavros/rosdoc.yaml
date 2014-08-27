@@ -1,2 +1,2 @@
 - builder: doxygen
-  exclude_patterns: '*/mavlink/* */.git/*'
+  exclude_patterns: '*/.git/* */test/*'

@@ -2,9 +2,6 @@
  * @brief MAVROS UAS manager
  * @file uas.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
- *
- * @addtogroup plugin
- * @{
  */
 /*
  * Copyright 2014 Vladimir Ermakov.
@@ -57,18 +54,6 @@ void UAS::stop(void)
 
 typedef std::map<uint32_t, std::string> cmode_map;
 
-static std::string str_base_mode(int base_mode) {
-	std::ostringstream mode;
-	mode << "MODE(0x" << std::hex << std::uppercase << base_mode << ")";
-	return mode.str();
-}
-
-static std::string str_custom_mode(int custom_mode) {
-	std::ostringstream mode;
-	mode << "CMODE(" << custom_mode << ")";
-	return mode.str();
-}
-
 //! APM:Plane custom mode -> string
 static const cmode_map arduplane_cmode_map = {
 	{ 0, "MANUAL" },
@@ -120,7 +105,19 @@ static const cmode_map px4_cmode_map = {
 	{ px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_TAKEOFF), "AUTO.TAKEOFF" }
 };
 
-static inline std::string str_mode_cmap(const cmode_map &cmap, int custom_mode) {
+static inline std::string str_base_mode(int base_mode) {
+	std::ostringstream mode;
+	mode << "MODE(0x" << std::hex << std::uppercase << base_mode << ")";
+	return mode.str();
+}
+
+static std::string str_custom_mode(uint32_t custom_mode) {
+	std::ostringstream mode;
+	mode << "CMODE(" << custom_mode << ")";
+	return mode.str();
+}
+
+static std::string str_mode_cmap(const cmode_map &cmap, uint32_t custom_mode) {
 	auto it = cmap.find(custom_mode);
 	if (it != cmap.end())
 		return it->second;
@@ -128,31 +125,35 @@ static inline std::string str_mode_cmap(const cmode_map &cmap, int custom_mode) 
 		return str_custom_mode(custom_mode);
 }
 
-static inline std::string str_mode_px4(int custom_mode_int) {
+static inline std::string str_mode_px4(uint32_t custom_mode_int) {
 	px4::custom_mode custom_mode(custom_mode_int);
 
 	// clear fields
 	custom_mode.reserved = 0;
 	if (custom_mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
-		ROS_WARN_COND(custom_mode.sub_mode != 0, "PX4: Unknown sub-mode");
+		ROS_WARN_COND_NAMED(custom_mode.sub_mode != 0, "uas", "PX4: Unknown sub-mode");
 		custom_mode.sub_mode = 0;
 	}
 
 	return str_mode_cmap(px4_cmode_map, custom_mode.data);
 }
 
-std::string UAS::str_mode_v10(int base_mode, int custom_mode) {
+static inline bool is_apm_copter(enum MAV_TYPE &type) {
+	return type == MAV_TYPE_QUADROTOR ||
+		type == MAV_TYPE_HEXAROTOR ||
+		type == MAV_TYPE_OCTOROTOR ||
+		type == MAV_TYPE_TRICOPTER ||
+		type == MAV_TYPE_COAXIAL;
+}
+
+std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {
 	if (!(base_mode && MAV_MODE_FLAG_CUSTOM_MODE_ENABLED))
 		return str_base_mode(base_mode);
 
 	auto type = get_type();
 	auto ap = get_autopilot();
 	if (MAV_AUTOPILOT_ARDUPILOTMEGA == ap) {
-		if (type == MAV_TYPE_QUADROTOR ||
-				type == MAV_TYPE_HEXAROTOR ||
-				type == MAV_TYPE_OCTOROTOR ||
-				type == MAV_TYPE_TRICOPTER ||
-				type == MAV_TYPE_COAXIAL)
+		if (is_apm_copter(type))
 			return str_mode_cmap(arducopter_cmode_map, custom_mode);
 		else if (type == MAV_TYPE_FIXED_WING)
 			return str_mode_cmap(arduplane_cmode_map, custom_mode);
@@ -177,7 +178,7 @@ static bool cmode_find_cmap(const cmode_map &cmap, std::string &cmode_str, uint3
 	}
 
 	// 2. try convert integer
-	// TODO: parse CMODE(dec)
+	//! @todo parse CMODE(dec)
 	try {
 		cmode = std::stoi(cmode_str, 0, 0);
 		return true;
@@ -204,19 +205,14 @@ bool UAS::cmode_from_str(std::string cmode_str, uint32_t &custom_mode) {
 	auto type = get_type();
 	auto ap = get_autopilot();
 	if (MAV_AUTOPILOT_ARDUPILOTMEGA == ap) {
-		if (type == MAV_TYPE_QUADROTOR ||
-				type == MAV_TYPE_HEXAROTOR ||
-				type == MAV_TYPE_OCTOROTOR ||
-				type == MAV_TYPE_TRICOPTER ||
-				type == MAV_TYPE_COAXIAL)
+		if (is_apm_copter(type))
 			return cmode_find_cmap(arducopter_cmode_map, cmode_str, custom_mode);
 		else if (type == MAV_TYPE_FIXED_WING)
 			return cmode_find_cmap(arduplane_cmode_map, cmode_str, custom_mode);
 	}
 	else if (MAV_AUTOPILOT_PX4 == ap)
 		return cmode_find_cmap(px4_cmode_map, cmode_str, custom_mode);
-	else
-		ROS_ERROR_STREAM_NAMED("uas", "MODE: Unsupported FCU");
 
+	ROS_ERROR_NAMED("uas", "MODE: Unsupported FCU");
 	return false;
 }
