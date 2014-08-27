@@ -86,7 +86,7 @@ def do_local_vel(args):
 
     vel = TwistStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
     vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
-    vel.twist.angular = Vector3(y=args.velocity[3])
+    vel.twist.angular = Vector3(z=args.velocity[3])
 
     publish_once(args, pub, vel)
 
