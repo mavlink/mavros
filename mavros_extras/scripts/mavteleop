@@ -95,7 +95,7 @@ def rc_override_control(args):
     for k, v in rc_channels.iteritems():
         v.load_param()
 
-    override_pub = rospy.Publisher(args.mavros_ns + "rc/override", OverrideRCIn, queue_size=10)
+    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
         def get_axes(n):
