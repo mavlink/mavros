@@ -21,6 +21,7 @@ from __future__ import print_function
 
 import sys
 import argparse
+import math
 
 import rospy
 from std_msgs.msg import Header
@@ -71,7 +72,8 @@ def do_local_pos(args):
     pos = PoseStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
     pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
     
-    q = tf.transformations.quaternion_from_euler(0, 0, y_angl=args.postion[3])
+    yaw = math.radians(args.position[3]) if args.degrees else args.position[3]
+    q = quaternion_from_euler(0, 0, yaw)
     pos.pose.orientation = Quaternion(*q)
 
     publish_once(args, pub, pos)
@@ -118,8 +120,8 @@ def main():
     parser.add_argument('-V', '--verbose', action='store_true', help="verbose output")
     subarg = parser.add_subparsers()
 
-
     local_args = subarg.add_parser('local', help="Send local setpoint")
+    local_args.add_argument('-d', '--degrees', action='store_true', help="Yaw angle in degrees")
     local_args.set_defaults(func=do_local_selector)
     local_group = local_args.add_mutually_exclusive_group(required=True)
 
