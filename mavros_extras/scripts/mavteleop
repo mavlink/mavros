@@ -23,7 +23,10 @@ import sys
 import argparse
 
 import rospy
+from tf.transformations import quaternion_from_euler
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Header, Float64
+from geometry_msgs.msg import PoseStamped, TwistStamped, Quaternion
 from mavros.msg import OverrideRCIn
 
 
@@ -80,14 +83,18 @@ rc_channels = {
 }
 
 
+def load_map(m, n):
+    for k, v in m.iteritems():
+        m[k] = rospy.get_param(n + k, v)
+
+
+def get_axis(j, n):
+    return j.axes[axes_map[n]] * axes_scale[n]
+
 
 def rc_override_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: RC Override control type.")
-
-    def load_map(m, n):
-        for k, v in m.iteritems():
-            m[k] = rospy.get_param(n + k, v)
 
     load_map(axes_map, '~axes_map/')
     load_map(axes_scale, '~axes_scale/')
@@ -98,14 +105,11 @@ def rc_override_control(args):
     override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
-        def get_axes(n):
-            return joy.axes[axes_map[n]] * axes_scale[n]
-
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
-        roll = get_axes('roll')
-        pitch = get_axes('pitch')
-        yaw = get_axes('yaw')
-        throttle = arduino_map(get_axes('throttle'), -1.0, 1.0, 0.0, 1.0)
+        roll = get_axis(joy, 'roll')
+        pitch = get_axis(joy, 'pitch')
+        yaw = get_axis(joy, 'yaw')
+        throttle = arduino_map(get_axis(joy, 'throttle'), -1.0, 1.0, 0.0, 1.0)
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
@@ -127,16 +131,60 @@ def rc_override_control(args):
     rospy.spin()
 
 
+def attitude_setpoint_control(args):
+    rospy.init_node("mavteleop")
+    rospy.loginfo("MAV-Teleop: Attitude setpoint control type.")
+
+    load_map(axes_map, '~axes_map/')
+    load_map(axes_scale, '~axes_scale/')
+    load_map(button_map, '~button_map/')
+
+    att_pub = rospy.Publisher(args.mavros_ns + "/setpoint/attitude", PoseStamped, queue_size=10)
+    thd_pub = rospy.Publisher(args.mavros_ns + "/setpoint/att_throttle", Float64, queue_size=10)
+
+    if rospy.get_param(args.mavros_ns + "/setpoint/attitude/reverse_throttle", False):
+        def thd_normalize(v):
+            return v
+    else:
+        def thd_normalize(v):
+            return arduino_map(v, -1.0, 1.0, 0.0, 1.0)
+
+    def joy_cb(joy):
+        # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
+        roll = get_axis(joy, 'roll')
+        pitch = get_axis(joy, 'pitch')
+        yaw = get_axis(joy, 'yaw')
+        throttle = thd_normalize(get_axis(joy, 'throttle'))
+
+        rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
+
+        # TODO: Twist variation
+        pose = PoseStamped(header=Header(stamp=rospy.get_rostime()))
+        q = quaternion_from_euler(roll, pitch, yaw)
+        pose.pose.orientation = Quaternion(*q)
+
+        att_pub.publish(pose)
+        thd_pub.publish(data=throttle)
+
+
+    jsub = rospy.Subscriber("/joy", Joy, joy_cb)
+    rospy.spin()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Teleoperation script for Copter-UAV")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
-    parser.add_argument('-rc', '--rc-override', action='store_true', help="use rc override control type")
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument('-rc', '--rc-override', action='store_true', help="use rc override control type")
+    mode_group.add_argument('-att', '--sp-attitude', action='store_true', help="use attitude setpoint control type")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 
     if args.rc_override:
         rc_override_control(args)
+    if args.sp_attitude:
+        attitude_setpoint_control(args)
     else:
         raise NotImplementedError
 
