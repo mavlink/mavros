@@ -20,7 +20,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(mavlink REQUIRED)
+
+# add package modules path, not needed in dependend packages
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+include(EnableCXX11)
+include(MavrosMavlink)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -101,18 +105,6 @@ generate_messages(
   std_msgs
 )
 
-## Select MAVLink dialect
-#
-# fallback for older mavlink package.
-if(NOT DEFINED mavlink_DIALECTS)
-  list(APPEND mavlink_DIALECTS "ardupilotmega")
-  list(APPEND mavlink_DIALECTS "pixhawk")
-  list(APPEND mavlink_DIALECTS "common")
-endif()
-
-set(MAVLINK_DIALECT "ardupilotmega" CACHE STRING "MAVLink dialect selector")
-set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS ${mavlink_DIALECTS})
-
 
 ###################################
 ## catkin specific configuration ##
@@ -128,6 +120,7 @@ catkin_package(
   LIBRARIES mavconn mavros
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
   DEPENDS Boost mavlink
+  CFG_EXTRAS mavros-extras.cmake
 )
 
 ###########
@@ -144,23 +137,6 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
 )
-
-add_definitions(
-  -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
-)
-
-## Enable C++11 on gcc 4.6 too
-# thanks for: http://www.guyrutenberg.com/2014/01/05/enabling-c11-c0x-in-cmake/
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
 
 ## Declare a cpp library
 add_library(mavconn
@@ -283,6 +259,10 @@ install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
+## Install cmake files (thanks to cmake_modules package)
+install(DIRECTORY cmake/Modules
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
+)
 
 #############
 ## Testing ##
