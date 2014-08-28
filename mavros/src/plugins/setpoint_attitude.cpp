@@ -46,7 +46,8 @@ class SetpointAttitudePlugin : public MavRosPlugin,
 public:
 	SetpointAttitudePlugin() :
 		uas(nullptr),
-		tf_rate(10.0)
+		tf_rate(10.0),
+		reverse_throttle(false)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -56,7 +57,6 @@ public:
 		bool pose_with_covariance;
 		bool listen_tf;
 		bool listen_twist;
-		bool reverse_throttle;
 
 		uas = &uas_;
 		sp_nh = ros::NodeHandle(nh, "setpoint");
@@ -211,23 +211,29 @@ private:
 				req->twist.angular.z);
 	}
 
+	inline bool is_normalized(float throttle, const float min, const float max) {
+		if (throttle < min) {
+			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) < Min(%f)", throttle, min);
+			return false;
+		}
+		else if (throttle > max) {
+			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) > Max(%f)", throttle, max);
+			return false;
+		}
+
+		return true;
+	}
+
 	void throttle_cb(const std_msgs::Float64::ConstPtr &req) {
 		float throttle_normalized = req->data;
 
-		if (reverse_throttle)
-			if ( throttle_normalized < -1.0 || throttle_normalized > 1.0 ) {
-				ROS_WARN_NAMED("attitude_throttle","Not normalized values of throttle! Values should be between -1.0 and 1.0");
-				return;
-			}
-			else
-				send_attitude_throttle(throttle_normalized);
-		else
-			if ( throttle_normalized < 0.0 || throttle_normalized > 1.0 ) {
-				ROS_WARN_NAMED("attitude_throttle","Not normalized values of throttle! Values should be between 0.0 and 1.0");
-				return;
-			}
-			else
-				send_attitude_throttle(throttle_normalized);
+		// note: && are lazy, is_normalized() should be called only if reverse_throttle are true.
+		if (reverse_throttle && !is_normalized(throttle_normalized, -1.0, 1.0))
+			return;
+		else if (!is_normalized(throttle_normalized, 0.0, 1.0))
+			return;
+
+		send_attitude_throttle(throttle_normalized);
 	}
 };
 
