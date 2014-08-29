@@ -96,9 +96,10 @@ def rc_override_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: RC Override control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
+    
     for k, v in rc_channels.iteritems():
         v.load_param()
 
@@ -135,9 +136,9 @@ def attitude_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Attitude setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     att_pub = rospy.Publisher(args.mavros_ns + "/setpoint/attitude", PoseStamped, queue_size=10)
     thd_pub = rospy.Publisher(args.mavros_ns + "/setpoint/att_throttle", Float64, queue_size=10)
@@ -175,9 +176,9 @@ def velocity_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Velocity setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     vel_pub = rospy.Publisher(args.mavros_ns + "/setpoint/cmd_vel", TwistStamped, queue_size=10)
 
@@ -209,9 +210,9 @@ def position_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Position setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped, queue_size=10)
 
