@@ -6,7 +6,7 @@ axes_map:
   yaw: 0
   throttle: 1
 axes_scale:
-  poll: 1.0
+  roll: 1.0
   pitch: 1.0
   yaw: 1.0
   throttle: 1.0
