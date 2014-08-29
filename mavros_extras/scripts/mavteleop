@@ -53,14 +53,14 @@ class RCChan(object):
 
 
 # Mode 2 on Logitech F710 gamepad
-axes_map = {
+axis_map = {
     'roll': 3,
     'pitch': 4,
     'yaw': 0,
     'throttle': 1
 }
 
-axes_scale = {
+axis_scale = {
     'roll': 1.0,
     'pitch': 1.0,
     'yaw': 1.0,
@@ -89,15 +89,15 @@ def load_map(m, n):
 
 
 def get_axis(j, n):
-    return j.axes[axes_map[n]] * axes_scale[n]
+    return j.axis[axis_map[n]] * axis_scale[n]
 
 
 def rc_override_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: RC Override control type.")
 
-    load_map(axes_map, '/mavros/axes_map/')
-    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(axis_map, '/mavros/axis_map/')
+    load_map(axis_scale, '/mavros/axis_scale/')
     load_map(button_map, '/mavros/button_map/')
     
     for k, v in rc_channels.iteritems():
@@ -106,7 +106,7 @@ def rc_override_control(args):
     override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
-        # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
+        # get axis normalized to -1.0..+1.0 RPY, 0.0..1.0 T
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
         yaw = get_axis(joy, 'yaw')
@@ -136,8 +136,8 @@ def attitude_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Attitude setpoint control type.")
 
-    load_map(axes_map, '/mavros/axes_map/')
-    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(axis_map, '/mavros/axis_map/')
+    load_map(axis_scale, '/mavros/axis_scale/')
     load_map(button_map, '/mavros/button_map/')
 
     att_pub = rospy.Publisher(args.mavros_ns + "/setpoint/attitude", PoseStamped, queue_size=10)
@@ -151,7 +151,7 @@ def attitude_setpoint_control(args):
             return arduino_map(v, -1.0, 1.0, 0.0, 1.0)
 
     def joy_cb(joy):
-        # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
+        # get axis normalized to -1.0..+1.0 RPY, 0.0..1.0 T
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
         yaw = get_axis(joy, 'yaw')
@@ -176,14 +176,14 @@ def velocity_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Velocity setpoint control type.")
 
-    load_map(axes_map, '/mavros/axes_map/')
-    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(axis_map, '/mavros/axis_map/')
+    load_map(axis_scale, '/mavros/axis_scale/')
     load_map(button_map, '/mavros/button_map/')
 
     vel_pub = rospy.Publisher(args.mavros_ns + "/setpoint/cmd_vel", TwistStamped, queue_size=10)
 
     def joy_cb(joy):
-        # get axes normalized to -1.0..+1.0 RPYT
+        # get axis normalized to -1.0..+1.0 RPYT
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
         yaw = get_axis(joy, 'yaw')
@@ -192,7 +192,6 @@ def velocity_setpoint_control(args):
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
         # Based on QGC UAS joystickinput_settargets branch
-        # not shure that it really need inegrating, as it done in QGC.
         twist = TwistStamped(header=Header(stamp=rospy.get_rostime()))
         twist.twist.linear = Vector3(x=roll, y=pitch, z=throttle)
         twist.twist.angular = Vector3(z=yaw)
@@ -210,15 +209,15 @@ def position_setpoint_control(args):
     rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Position setpoint control type.")
 
-    load_map(axes_map, '/mavros/axes_map/')
-    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(axis_map, '/mavros/axis_map/')
+    load_map(axis_scale, '/mavros/axis_scale/')
     load_map(button_map, '/mavros/button_map/')
 
     pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped, queue_size=10)
 
     def joy_cb(joy):
         global px, py, pz
-        # get axes normalized to -1.0..+1.0 RPY
+        # get axis normalized to -1.0..+1.0 RPY
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
         yaw = get_axis(joy, 'yaw')
