@@ -1,6 +1,7 @@
 # FTP::Open
 #
 # :file_path: used as session id in all other services
+# :size: file size returned for MODE_READ
 
 # 2014.09.01 Notes:
 # Current PX4 implementation don't allow anything except
@@ -15,4 +16,5 @@ uint8 MODE_WRITE = 1
 string file_path
 uint8 mode
 ---
+uint32 size
 bool success
