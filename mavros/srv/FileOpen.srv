@@ -1,0 +1,18 @@
+# FTP::Open
+#
+# :file_path: used as session id in all other services
+
+# 2014.09.01 Notes:
+# Current PX4 implementation don't allow anything except
+# read file or list dir.
+#
+# Also it don't have command for mkdir(), rmdir() and append write,
+# don't expose stat() information.
+
+uint8 MODE_READ = 0
+uint8 MODE_WRITE = 1
+
+string file_path
+uint8 mode
+---
+bool success

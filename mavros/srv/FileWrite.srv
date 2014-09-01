@@ -1,0 +1,9 @@
+# FTP::Write
+#
+# Call FTP::Open first.
+
+string file_path
+uint64 offset
+uint8[] data
+---
+bool success

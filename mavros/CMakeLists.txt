@@ -89,6 +89,12 @@ add_service_files(
   CommandTOL.srv
   StreamRate.srv
   SetMode.srv
+  FileOpen.srv
+  FileClose.srv
+  FileRead.srv
+  FileWrite.srv
+  FileList.srv
+  FileRemove.srv
 )
 
 ## Generate actions in the 'action' folder

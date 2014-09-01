@@ -1,0 +1,7 @@
+# FTP::List
+
+string dir_path
+---
+string[] files
+string[] dirs
+bool success
