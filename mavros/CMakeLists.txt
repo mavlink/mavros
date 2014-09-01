@@ -68,6 +68,7 @@ add_message_files(
   RadioStatus.msg
   OverrideRCIn.msg
   VFR_HUD.msg
+  FileEntry.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -193,6 +194,7 @@ add_library(mavros_plugins
   src/plugins/setpoint_accel.cpp
   src/plugins/setpoint_attitude.cpp
   src/plugins/vfr_hud.cpp
+  src/plugins/ftp.cpp
 )
 add_dependencies(mavros_plugins
   mavros
