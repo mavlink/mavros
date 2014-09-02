@@ -268,7 +268,16 @@ private:
 class FTPPlugin : public MavRosPlugin {
 public:
 	FTPPlugin() :
-		op_state(OP_IDLE)
+		uas(nullptr),
+		op_state(OP_IDLE),
+		last_send_seqnr(0),
+		active_session(0),
+		is_error(false),
+		list_offset(0),
+		read_offset(0),
+		open_size(0),
+		read_size(0),
+		read_buffer{}
 	{ }
 
 	void initialize(UAS &uas_,
