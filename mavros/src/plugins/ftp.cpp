@@ -27,6 +27,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
+#include <mavros/FileEntry.h>
 #include <mavros/FileList.h>
 
 namespace mavplugin {
@@ -291,8 +292,11 @@ private:
 
 	OpState op_state;
 	uint16_t last_send_seqnr;
-	size_t list_offset;
+
+	// FTP:List
+	uint32_t list_offset;
 	std::string list_path;
+	std::vector<mavros::FileEntry> list_entries;
 
 	/* -*- message handler -*- */
 
@@ -349,6 +353,7 @@ private:
 
 		if (prev_op == OP_LIST && error == FTPRequest::kErrEOF) {
 			/* dir list done */
+			list_directory_end();
 		}
 		else if (prev_op == OP_READ && error == FTPRequest::kErrEOF) {
 			/* read done */
@@ -358,9 +363,57 @@ private:
 	}
 
 	void handle_ack_list(FTPRequest &req) {
-		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK List");
+		auto hdr = req.header();
 
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK List SZ(%u) OFF(%u)", hdr->size, hdr->offset);
+		if (hdr->offset != list_offset) {
+			ROS_ERROR_NAMED("ftp", "FTP: Wring list offset, req %u, ret %u",
+					list_offset, hdr->offset);
+			go_idle(true);
+			return;
+		}
 
+		uint8_t off = 0;
+		uint32_t n_list_entries = 0;
+
+		while (off < hdr->size) {
+			const char *ptr = req.data_c() + off;
+			const size_t bytes_left = hdr->size - off;
+
+			size_t slen = strnlen(ptr, bytes_left);
+			if (slen < 2) {
+				ROS_ERROR_NAMED("ftp", "FTP: Incorrect list entry: %s", ptr);
+				go_idle(true);
+				return;
+			}
+			else if (slen == bytes_left) {
+				ROS_ERROR_NAMED("ftp", "FTP: Missing NULL termination in list entry");
+				go_idle(true);
+				return;
+			}
+
+			if (ptr[0] == FTPRequest::DIRENT_FILE ||
+					ptr[0] == FTPRequest::DIRENT_DIR) {
+				add_dirent(ptr, slen);
+			}
+			else {
+				ROS_WARN_NAMED("ftp", "FTP: Unknown list entry: %s", ptr);
+			}
+
+			off += slen + 1;
+			n_list_entries++;
+		}
+
+		if (hdr->size == 0) {
+			// dir empty, we are done
+			list_directory_end();
+		}
+		else {
+			ROS_ASSERT_MSG(n_list_entries > 0, "FTP:List don't parse entries");
+			// Possibly more to come, try get more
+			list_offset += n_list_entries;
+			send_list_command();
+		}
 	}
 
 	void handle_ack_open(FTPRequest &req) {
@@ -379,6 +432,7 @@ private:
 
 	void send_reset() {
 		ROS_DEBUG_NAMED("ftp", "FTP:m: kCmdReset");
+		op_state = OP_ACK;
 		FTPRequest req(FTPRequest::kCmdReset);
 		req.send(uas, last_send_seqnr);
 	}
@@ -393,10 +447,50 @@ private:
 
 	/* -*- helpers -*- */
 
+	void add_dirent(const char *ptr, size_t slen) {
+		mavros::FileEntry ent;
+		ent.size = 0;
+
+		if (ptr[0] == FTPRequest::DIRENT_DIR) {
+			ent.name.assign(ptr + 1, slen - 1);
+			ent.type = mavros::FileEntry::TYPE_DIRECTORY;
+
+			ROS_DEBUG_STREAM_NAMED("ftp", "FTP:List Dir: " << ent.name);
+		}
+		else {
+			// ptr[0] == FTPRequest::DIRENT_FILE
+			std::string name_size(ptr + 1, slen - 1);
+
+			auto sep_it = std::find(name_size.begin(), name_size.end(), '\t');
+			ent.name.assign(name_size.begin(), sep_it);
+			ent.type = mavros::FileEntry::TYPE_FILE;
+
+			if (sep_it != name_size.end()) {
+				name_size.erase(name_size.begin(), sep_it + 1);
+				if (name_size.size() != 0)
+					ent.size = std::stoi(name_size);
+			}
+
+			ROS_DEBUG_STREAM_NAMED("ftp", "FTP:List File: " << ent.name << " SZ: " << ent.size);
+		}
+
+		// skip adding special files
+		if (ent.name == "." || ent.name == "..")
+			return;
+
+		list_entries.push_back(ent);
+	}
+
+	void list_directory_end() {
+		ROS_DEBUG_NAMED("ftp", "FTP:List done");
+		go_idle(false);
+	}
+
 	void list_directory(std::string path) {
 
 		list_offset = 0;
 		list_path = path;
+		list_entries.clear();
 		op_state = OP_LIST;
 
 		send_list_command();
@@ -407,6 +501,12 @@ private:
 	bool list_cb(mavros::FileList::Request &req,
 			mavros::FileList::Response &res) {
 
+		//if (op_state != OP_IDLE) {
+		//	ROS_ERROR_NAMED("ftp", "FTP: Busy");
+		//	return false;
+		//}
+
+		// XXX: wait result
 		list_directory(req.dir_path);
 		return false;
 	}
