@@ -29,6 +29,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
+#include <std_srvs/Empty.h>
 #include <mavros/FileEntry.h>
 #include <mavros/FileList.h>
 #include <mavros/FileOpen.h>
@@ -98,6 +99,11 @@ uint32_t crc32part(const uint8_t *src, size_t len, uint32_t crc32val)
 // XXX: end
 
 
+/**
+ * @brief FTP Request message abstraction class
+ *
+ * @note This class not portable, and works on little-endian machines only.
+ */
 class FTPRequest {
 public:
 	/// @brief This is the payload which is in mavlink_file_transfer_protocol_t.payload.
@@ -277,6 +283,7 @@ public:
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
 		close_srv = ftp_nh.advertiseService("close", &FTPPlugin::close_cb, this);
 		read_srv = ftp_nh.advertiseService("read", &FTPPlugin::read_cb, this);
+		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -296,6 +303,7 @@ private:
 	ros::ServiceServer open_srv;
 	ros::ServiceServer close_srv;
 	ros::ServiceServer read_srv;
+	ros::ServiceServer reset_srv;
 
 	enum OpState {
 		OP_IDLE,
@@ -338,6 +346,9 @@ private:
 
 	//! Maximum difference between allocated space and used
 	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
+
+	//! @todo timeout timer
+	//! @todo write support
 
 	/* -*- message handler -*- */
 
@@ -472,6 +483,7 @@ private:
 		}
 		else if (hdr->size == 0) {
 			// kCmdCreate ACK
+			open_size = 0;
 		}
 
 		ROS_DEBUG_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
@@ -510,9 +522,8 @@ private:
 			read_offset += bytes_to_copy;
 			send_read_command();
 		}
-		else {
+		else
 			read_file_end();
-		}
 	}
 
 	/* -*- send helpers -*- */
@@ -573,7 +584,7 @@ private:
 		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRead: " << active_session << " off: " << read_offset);
 		FTPRequest req(FTPRequest::kCmdRead, active_session);
 		req.header()->offset = read_offset;
-		req.header()->size = FTPRequest::DATA_MAXSZ;
+		req.header()->size = 0 /* FTPRequest::DATA_MAXSZ */;
 		req.send(uas, last_send_seqnr);
 	}
 
@@ -769,6 +780,16 @@ private:
 		if (res.success)
 			res.data = read_buffer;
 
+		return true;
+	}
+
+	/**
+	 * @brief Reset communication on both sides.
+	 * @note This call break other calls, so use carefully.
+	 */
+	bool reset_cb(std_srvs::Empty::Request &req,
+			std_srvs::Empty::Response &res) {
+		send_reset();
 		return true;
 	}
 };
