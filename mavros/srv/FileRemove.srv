@@ -1,0 +1,5 @@
+# FTP::Remove
+
+string file_path
+---
+bool success

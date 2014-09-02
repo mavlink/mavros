@@ -1,0 +1,10 @@
+# FTP::Read
+#
+# Call FTP::Open first.
+
+string file_path
+uint64 offset
+uint64 size
+---
+uint8[] data
+bool success

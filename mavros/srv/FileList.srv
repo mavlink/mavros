@@ -1,0 +1,6 @@
+# FTP::List
+
+string dir_path
+---
+FileEntry[] list
+bool success

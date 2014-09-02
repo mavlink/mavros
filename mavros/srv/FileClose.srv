@@ -1,0 +1,7 @@
+# FTP::Close
+#
+# Call FTP::Open first.
+
+string file_path
+---
+bool success

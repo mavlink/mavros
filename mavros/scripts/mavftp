@@ -1,0 +1,156 @@
+#!/usr/bin/env python
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2014 Vladimir Ermakov.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+from __future__ import print_function
+
+import sys
+import argparse
+
+import rospy
+from std_srvs.srv import Empty
+from mavros.msg import FileEntry
+from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest
+
+
+def print_if(cond, *args, **kvargs):
+    if cond:
+        print(*args, **kvargs)
+
+
+def fault(*args, **kvargs):
+    kvargs['file'] = sys.stdout
+    print(*args, **kvargs)
+    sys.exit(1)
+
+
+
+def do_list(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    try:
+        list_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/list", FileList)
+        ret = list_cl(dir_path=args.path)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    for ent in ret.list:
+        n = ent.name
+        if ent.type == FileEntry.TYPE_DIRECTORY:
+            n += '/'
+        else:
+            n += '\t{}'.format(ent.size)
+
+        print(n)
+
+
+def open_file(args, path, mode):
+    if mode == 'w':
+        m = FileOpenRequest.MODE_WRITE
+    else:
+        m = FileOpenRequest.MODE_READ
+
+    try:
+        open_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/open", FileOpen)
+        ret = open_cl(file_path=path, mode=m)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    return (ret.success, ret.size)
+
+
+
+def close_file(args, path):
+    try:
+        close_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/close", FileClose)
+        ret = close_cl(file_path=path)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    return ret.success
+
+
+
+def read_file(args, path, offset, size):
+    try:
+        read_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/read", FileRead)
+        ret = read_cl(file_path=path, offset=offset, size=size)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    return (ret.success, bytearray(ret.data))
+
+
+
+def do_cat(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    st, size = open_file(args, args.path, 'r')
+    if not st:
+        fault("Can't open file. Check logs.")
+
+    try:
+        st, data = read_file(args, args.path, 0, size)
+        if not st:
+            fault("Failed to read data")
+    finally:
+        close_file(args, args.path)
+
+    if st:
+        print(str(data))
+
+
+
+def do_reset(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    try:
+        reset_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/reset", Empty)
+        ret = reset_cl()
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description="File manipulation tool for MAVLink-FTP.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    subarg = parser.add_subparsers()
+
+    list_args = subarg.add_parser('list', help="list files and dirs")
+    list_args.set_defaults(func=do_list)
+    list_args.add_argument('path', type=str, help="directory path")
+
+    cat_args = subarg.add_parser('cat', help="cat file")
+    cat_args.set_defaults(func=do_cat)
+    cat_args.add_argument('path', type=str, help="file path")
+
+    reset_args = subarg.add_parser('reset', help="reset")
+    reset_args.set_defaults(func=do_reset)
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()
+
