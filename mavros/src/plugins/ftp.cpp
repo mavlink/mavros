@@ -31,6 +31,8 @@
 
 #include <mavros/FileEntry.h>
 #include <mavros/FileList.h>
+#include <mavros/FileOpen.h>
+#include <mavros/FileClose.h>
 
 namespace mavplugin {
 
@@ -164,6 +166,10 @@ public:
 		return reinterpret_cast<char *>(header()->data);
 	}
 
+	uint32_t *data_u32() {
+		return reinterpret_cast<uint32_t *>(header()->data);
+	}
+
 	char *data_c_str() {
 
 		// force null-termination
@@ -267,6 +273,8 @@ public:
 		ftp_nh = ros::NodeHandle(nh, "ftp");
 
 		list_srv = ftp_nh.advertiseService("list", &FTPPlugin::list_cb, this);
+		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
+		close_srv = ftp_nh.advertiseService("close", &FTPPlugin::close_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -283,6 +291,8 @@ private:
 	UAS *uas;
 	ros::NodeHandle ftp_nh;
 	ros::ServiceServer list_srv;
+	ros::ServiceServer open_srv;
+	ros::ServiceServer close_srv;
 
 	enum OpState {
 		OP_IDLE,
@@ -305,7 +315,20 @@ private:
 	std::string list_path;
 	std::vector<mavros::FileEntry> list_entries;
 
+	// FTP:Open / FTP:Close
+	std::string open_path;
+	size_t open_size;
+	std::map<std::string, uint32_t> session_file_map;
+
+	// FTP:Read
+	size_t read_size;
+	std::vector<uint8_t> read_buffer;
+
+	// FTP:Write not implemented in FW
+
+	// Timeouts
 	static constexpr int LIST_TIMEOUT_MS = 15000;
+	static constexpr int OPEN_TIMEOUT_MS = 500;
 
 	/* -*- message handler -*- */
 
@@ -369,7 +392,8 @@ private:
 			/* read done */
 		}
 
-		ROS_ERROR_NAMED("ftp", "FTP: NAck: %u", error);
+		ROS_ERROR_NAMED("ftp", "FTP: NAck: %u State: %u", error, prev_op);
+		go_idle(true);
 	}
 
 	void handle_ack_list(FTPRequest &req) {
@@ -427,7 +451,22 @@ private:
 	}
 
 	void handle_ack_open(FTPRequest &req) {
-		ROS_WARN_NAMED("ftp", "FTP: open ack");
+		auto hdr = req.header();
+
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Open SZ(%u)", hdr->size);
+		ROS_ASSERT(hdr->size == 0 || hdr->size == sizeof(uint32_t));
+		if (hdr->size == sizeof(uint32_t)) {
+			// kCmdOpen ACK
+			open_size = *req.data_u32();
+		}
+		else if (hdr->size == 0) {
+			// kCmdCreate ACK
+		}
+
+		ROS_DEBUG_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
+				open_path.c_str(), hdr->session, open_size);
+		session_file_map[open_path] = hdr->session;
+		go_idle(false);
 	}
 
 	void handle_ack_read(FTPRequest &req) {
@@ -444,6 +483,12 @@ private:
 
 	void send_reset() {
 		ROS_DEBUG_NAMED("ftp", "FTP:m: kCmdReset");
+		if (session_file_map.size() > 0) {
+			ROS_WARN_NAMED("ftp", "FTP: Reset closes %zu sessons",
+					session_file_map.size());
+			session_file_map.clear();
+		}
+
 		op_state = OP_ACK;
 		FTPRequest req(FTPRequest::kCmdReset);
 		req.send(uas, last_send_seqnr);
@@ -456,6 +501,32 @@ private:
 		req.set_data_string(list_path);
 		req.send(uas, last_send_seqnr);
 	}
+
+	void send_open_command() {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdOpen: " << open_path);
+		FTPRequest req(FTPRequest::kCmdOpen);
+		req.header()->offset = 0;
+		req.set_data_string(open_path);
+		req.send(uas, last_send_seqnr);
+	}
+
+	void send_create_command() {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdCreate: " << open_path);
+		FTPRequest req(FTPRequest::kCmdCreate);
+		req.header()->offset = 0;
+		req.set_data_string(open_path);
+		req.send(uas, last_send_seqnr);
+	}
+
+	void send_terminate_command(uint32_t session) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdTerminate: " << session);
+		FTPRequest req(FTPRequest::kCmdTerminate, session);
+		req.header()->offset = 0;
+		req.header()->size = 0;
+		req.send(uas, last_send_seqnr);
+	}
+
+	/* how to open existing file to write? */
 
 	/* -*- helpers -*- */
 
@@ -499,13 +570,39 @@ private:
 	}
 
 	void list_directory(std::string path) {
-
 		list_offset = 0;
 		list_path = path;
 		list_entries.clear();
 		op_state = OP_LIST;
 
 		send_list_command();
+	}
+
+	bool open_file(std::string path, int mode) {
+		open_path = path;
+		open_size = 0;
+		op_state = OP_OPEN;
+
+		if (mode == mavros::FileOpenRequest::MODE_READ)
+			send_open_command();
+		//else if (mode == mavros::FileOpenRequest::MODE_WRITE)
+		//	send_create_command();
+		else
+			return false;
+
+		return true;
+	}
+
+	bool close_file(std::string path) {
+		auto it = session_file_map.find(path);
+		if (it == session_file_map.end()) {
+			ROS_ERROR_NAMED("ftp", "FTP:Close %s: not opened", path.c_str());
+			return true;
+		}
+
+		op_state = OP_ACK;
+		send_terminate_command(it->second);
+		session_file_map.erase(it);
 	}
 
 	bool wait_completion(const int msecs) {
@@ -520,7 +617,6 @@ private:
 
 	bool list_cb(mavros::FileList::Request &req,
 			mavros::FileList::Response &res) {
-
 		if (op_state != OP_IDLE) {
 			ROS_ERROR_NAMED("ftp", "FTP: Busy");
 			return false;
@@ -530,6 +626,47 @@ private:
 		res.success = wait_completion(LIST_TIMEOUT_MS);
 		if (res.success)
 			res.list = list_entries;
+
+		return true;
+	}
+
+	bool open_cb(mavros::FileOpen::Request &req,
+			mavros::FileOpen::Response &res) {
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
+
+		// only one session per file
+		auto it = session_file_map.find(req.file_path);
+		if (it != session_file_map.end()) {
+			ROS_ERROR_NAMED("ftp", "FTP: File %s: already opened",
+					req.file_path.c_str());
+			return false;
+		}
+
+		res.success = open_file(req.file_path, req.mode);
+		if (res.success)
+			res.success = wait_completion(OPEN_TIMEOUT_MS);
+		if (res.success)
+			res.size = open_size;
+
+		//! @todo return system error code for fuse driver
+		//! @todo inactivity close timer
+
+		return true;
+	}
+
+	bool close_cb(mavros::FileClose::Request &req,
+			mavros::FileClose::Response &res) {
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
+
+		res.success = close_file(req.file_path);
+		if (res.success)
+			res.success = wait_completion(OPEN_TIMEOUT_MS);
 
 		return true;
 	}
