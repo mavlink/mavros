@@ -24,6 +24,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include <chrono>
+#include <condition_variable>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -252,7 +254,8 @@ private:
  */
 class FTPPlugin : public MavRosPlugin {
 public:
-	FTPPlugin()
+	FTPPlugin() :
+		op_state(OP_IDLE)
 	{ }
 
 	void initialize(UAS &uas_,
@@ -293,10 +296,16 @@ private:
 	OpState op_state;
 	uint16_t last_send_seqnr;
 
+	std::mutex cond_mutex;
+	std::condition_variable cond;	//!< wait condvar
+	bool is_error;			//!< error signaling flag (timeout/proto error)
+
 	// FTP:List
 	uint32_t list_offset;
 	std::string list_path;
 	std::vector<mavros::FileEntry> list_entries;
+
+	static constexpr int LIST_TIMEOUT_MS = 15000;
 
 	/* -*- message handler -*- */
 
@@ -354,6 +363,7 @@ private:
 		if (prev_op == OP_LIST && error == FTPRequest::kErrEOF) {
 			/* dir list done */
 			list_directory_end();
+			return;
 		}
 		else if (prev_op == OP_READ && error == FTPRequest::kErrEOF) {
 			/* read done */
@@ -426,8 +436,10 @@ private:
 
 	/* -*- send helpers -*- */
 
-	void go_idle(bool is_error) {
+	void go_idle(bool is_error_) {
 		op_state = OP_IDLE;
+		is_error = is_error_;
+		cond.notify_all();
 	}
 
 	void send_reset() {
@@ -496,19 +508,30 @@ private:
 		send_list_command();
 	}
 
+	bool wait_completion(const int msecs) {
+		std::unique_lock<std::mutex> lock(cond_mutex);
+
+		return cond.wait_for(lock, std::chrono::milliseconds(msecs))
+			== std::cv_status::no_timeout
+			&& !is_error;
+	}
+
 	/* -*- service callbacks -*- */
 
 	bool list_cb(mavros::FileList::Request &req,
 			mavros::FileList::Response &res) {
 
-		//if (op_state != OP_IDLE) {
-		//	ROS_ERROR_NAMED("ftp", "FTP: Busy");
-		//	return false;
-		//}
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
 
-		// XXX: wait result
 		list_directory(req.dir_path);
-		return false;
+		res.success = wait_completion(LIST_TIMEOUT_MS);
+		if (res.success)
+			res.list = list_entries;
+
+		return true;
 	}
 };
 
