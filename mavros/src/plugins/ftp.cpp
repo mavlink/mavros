@@ -587,8 +587,10 @@ private:
 			send_open_command();
 		//else if (mode == mavros::FileOpenRequest::MODE_WRITE)
 		//	send_create_command();
-		else
+		else {
+			op_state = OP_IDLE;
 			return false;
+		}
 
 		return true;
 	}
