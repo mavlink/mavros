@@ -33,6 +33,7 @@
 #include <mavros/FileList.h>
 #include <mavros/FileOpen.h>
 #include <mavros/FileClose.h>
+#include <mavros/FileRead.h>
 
 namespace mavplugin {
 
@@ -275,6 +276,7 @@ public:
 		list_srv = ftp_nh.advertiseService("list", &FTPPlugin::list_cb, this);
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
 		close_srv = ftp_nh.advertiseService("close", &FTPPlugin::close_cb, this);
+		read_srv = ftp_nh.advertiseService("read", &FTPPlugin::read_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -293,6 +295,7 @@ private:
 	ros::ServiceServer list_srv;
 	ros::ServiceServer open_srv;
 	ros::ServiceServer close_srv;
+	ros::ServiceServer read_srv;
 
 	enum OpState {
 		OP_IDLE,
@@ -305,6 +308,7 @@ private:
 
 	OpState op_state;
 	uint16_t last_send_seqnr;
+	uint32_t active_session;
 
 	std::mutex cond_mutex;
 	std::condition_variable cond;	//!< wait condvar
@@ -322,6 +326,7 @@ private:
 
 	// FTP:Read
 	size_t read_size;
+	uint32_t read_offset;
 	std::vector<uint8_t> read_buffer;
 
 	// FTP:Write not implemented in FW
@@ -329,6 +334,10 @@ private:
 	// Timeouts
 	static constexpr int LIST_TIMEOUT_MS = 15000;
 	static constexpr int OPEN_TIMEOUT_MS = 500;
+	static constexpr int CHUNK_TIMEOUT_MS = 500;
+
+	//! Maximum difference between allocated space and used
+	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
 
 	/* -*- message handler -*- */
 
@@ -390,6 +399,8 @@ private:
 		}
 		else if (prev_op == OP_READ && error == FTPRequest::kErrEOF) {
 			/* read done */
+			read_file_end();
+			return;
 		}
 
 		ROS_ERROR_NAMED("ftp", "FTP: NAck: %u State: %u", error, prev_op);
@@ -470,7 +481,38 @@ private:
 	}
 
 	void handle_ack_read(FTPRequest &req) {
-		ROS_WARN_NAMED("ftp", "FTP: read ack");
+		auto hdr = req.header();
+
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Read SZ(%u)", hdr->size);
+		if (hdr->session != active_session) {
+			ROS_ERROR_NAMED("ftp", "FTP:Read unexpected session");
+			go_idle(true);
+			return;
+		}
+
+		if (hdr->offset != read_offset) {
+			ROS_ERROR_NAMED("ftp", "FTP:Read different offset");
+			go_idle(true);
+			return;
+		}
+
+		// kCmdRead return cunks of DATA_MAXSZ or smaller (last chunk)
+		// We requested specific amount of data, that can be smaller,
+		// but not larger.
+		const size_t bytes_left = read_size - read_buffer.size();
+		const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr->size);
+
+		read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
+		//! @todo excancge speed calculation
+
+		if (bytes_to_copy == FTPRequest::DATA_MAXSZ) {
+			// Possibly more data
+			read_offset += bytes_to_copy;
+			send_read_command();
+		}
+		else {
+			read_file_end();
+		}
 	}
 
 	/* -*- send helpers -*- */
@@ -523,6 +565,15 @@ private:
 		FTPRequest req(FTPRequest::kCmdTerminate, session);
 		req.header()->offset = 0;
 		req.header()->size = 0;
+		req.send(uas, last_send_seqnr);
+	}
+
+	void send_read_command() {
+		// read operation always try read DATA_MAXSZ block (hdr->size ignored)
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRead: " << active_session << " off: " << read_offset);
+		FTPRequest req(FTPRequest::kCmdRead, active_session);
+		req.header()->offset = read_offset;
+		req.header()->size = FTPRequest::DATA_MAXSZ;
 		req.send(uas, last_send_seqnr);
 	}
 
@@ -599,12 +650,44 @@ private:
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Close %s: not opened", path.c_str());
-			return true;
+			return false;
 		}
 
 		op_state = OP_ACK;
 		send_terminate_command(it->second);
 		session_file_map.erase(it);
+		return true;
+	}
+
+	void read_file_end() {
+		ROS_DEBUG_NAMED("ftp", "FTP:Read done");
+		go_idle(false);
+	}
+
+	bool read_file(std::string path, size_t off, size_t len) {
+		auto it = session_file_map.find(path);
+		if (it == session_file_map.end()) {
+			ROS_ERROR_NAMED("ftp", "FTP:Read %s: not opened", path.c_str());
+			return false;
+		}
+
+		op_state = OP_READ;
+		active_session = it->second;
+		read_size = len;
+		read_offset = off;
+		read_buffer.clear();
+		if (read_buffer.capacity() < len ||
+				read_buffer.capacity() > len + MAX_RESERVE_DIFF) {
+			// reserve memory
+			read_buffer.reserve(len);
+		}
+
+		send_read_command();
+		return true;
+	}
+
+	static constexpr int read_compute_timeout(size_t len) {
+		return CHUNK_TIMEOUT_MS * (len + 1) / FTPRequest::DATA_MAXSZ;
 	}
 
 	bool wait_completion(const int msecs) {
@@ -669,6 +752,22 @@ private:
 		res.success = close_file(req.file_path);
 		if (res.success)
 			res.success = wait_completion(OPEN_TIMEOUT_MS);
+
+		return true;
+	}
+
+	bool read_cb(mavros::FileRead::Request &req,
+			mavros::FileRead::Response &res) {
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
+
+		res.success = read_file(req.file_path, req.offset, req.size);
+		if (res.success)
+			res.success = wait_completion(read_compute_timeout(req.size));
+		if (res.success)
+			res.data = read_buffer;
 
 		return true;
 	}
