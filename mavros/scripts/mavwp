@@ -228,16 +228,40 @@ def do_load(args):
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
-    try:
-        push_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/push", WaypointPush)
-        ret = push_cl(waypoints=wps)
-    except rospy.ServiceException as ex:
-        fault(ex)
+    def _load_call(waypoint_list):
+        try:
+            push_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/push", WaypointPush)
+            ret = push_cl(waypoints=waypoint_list)
+        except rospy.ServiceException as ex:
+            fault(ex)
 
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
+        if not ret.success:
+            fault("Request failed. Check mavros logs")
 
-    print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
+        print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
+
+    done_evt = threading.Event()
+    def _fix_wp0(topic):
+        if len(topic.waypoints) > 0:
+            wps[0] = topic.waypoints[0]
+            print_if(args.verbose, "HOME location: latitude:", wps[0].x_lat,
+                     "longitude:", wps[0].y_long, "altitude:", wps[0].z_alt)
+        else:
+            print("Failed to get WP0! WP0 will be loaded from file.", file=sys.stderr)
+
+        done_evt.set()
+
+    if not args.preserve_home:
+        _load_call(wps)
+    else:
+        # Note: _load_call() emit publish on this topic, so callback only changes
+        # waypoint 0, and signal done event.
+        sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _fix_wp0)
+        if not done_evt.wait(30.0):
+            fault("Something went wrong. Topic timed out.")
+        else:
+            sub.unregister()
+            _load_call(wps)
 
 
 def do_dump(args):
@@ -328,6 +352,7 @@ def main():
 
     load_args = subarg.add_parser('load', help="load waypoints from file")
     load_args.set_defaults(func=do_load)
+    load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0)")
     load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
 
     pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
