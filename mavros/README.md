@@ -116,6 +116,7 @@ Installation
 
 Use `wstool` utility for installation. In your workspace do:
 
+    wstool init src (if not already initialized)
     wstool set -t src mavros --git https://github.com/vooon/mavros.git
     wstool update -t src
     rosdep install --from-paths src --ignore-src --rosdistro hydro -y
