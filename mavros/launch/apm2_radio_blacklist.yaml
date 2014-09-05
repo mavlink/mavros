@@ -7,3 +7,4 @@ plugin_blacklist:
 - 'vision_*'
 - 'mocap_*'
 - 'global_*'
+- 'ftp'
