@@ -54,7 +54,19 @@ NAV_CMDS = {
     Waypoint.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
     Waypoint.NAV_RETURN_TO_LAUNCH: 'RTL',
     Waypoint.NAV_TAKEOFF: 'TAKEOFF',
-    Waypoint.NAV_WAYPOINT: 'WAYPOINT'
+    Waypoint.NAV_WAYPOINT: 'WAYPOINT',
+    # Maybe later i will add this enum to message
+    112: 'COND-DELAY',
+    113: 'COND-CHANGE-ALT',
+    114: 'COND-DISTANCE',
+    115: 'COND-YAW',
+    177: 'DO-JUMP',
+    178: 'DO-CHANGE-SPEED',
+    181: 'DO-SET-RELAY',
+    182: 'DO-REPEAT-RELAY',
+    183: 'DO-SET-SERVO',
+    184: 'DO-REPEAT-SERVO',
+    201: 'DO-SET-ROI',
 }
 
 
