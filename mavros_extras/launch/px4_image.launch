@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=roslaunch -->
+	<!-- vim: ft=xml -->
 	<!-- example launch script for PX4 based FCU's with gcs_image_bridge -->
 
 	<arg name="fcu_url" default="serial:///dev/ttyACM0:57600" />
@@ -7,22 +7,12 @@
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="50" />
 
-	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="screen">
-		<param name="fcu_url" value="$(arg fcu_url)" />
-		<!-- disable internal gcs bridge -->
-		<param name="gcs_url" value="" />
-		<param name="target_system_id" value="$(arg tgt_system)" />
-		<param name="target_component_id" value="$(arg tgt_component)" />
-
-		<!-- load px4 blacklist -->
-		<rosparam command="load" file="$(find mavros)/launch/px4_blacklist.yaml" />
-
-		<!-- enable heartbeat send and reduce timeout -->
-		<param name="conn_heartbeat" value="5.0" />
-		<param name="conn_timeout" value="10.0" />
-		<!-- enable mavlink autostart on USB port -->
-		<param name="startup_px4_usb_quirk" value="true" />
-	</node>
+	<include file="$(find mavros)/launch/px4.launch">
+		<arg name="fcu_url" value="$(arg fcu_url)" />
+		<arg name="gcs_url" value="" />
+		<arg name="tgt_system" value="$(arg tgt_system)" />
+		<arg name="tgt_component" value="$(arg tgt_component)" />
+	</include>
 
 	<node pkg="mavros_extras" type="gcs_image_bridge" name="gcs_image_bridge" clear_params="true" output="screen">
 		<!-- <remap from="/mavlink/gcs_image" to="/image/source" /> -->

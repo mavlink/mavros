@@ -10,3 +10,5 @@ plugin_blacklist:
   - 3dr_radio
   - 'setpoint_*'
   - 'vision_*'
+  - vfr_hud
+  - ftp

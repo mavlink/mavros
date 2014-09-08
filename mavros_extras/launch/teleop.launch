@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=roslaunch -->
+	<!-- vim: ft=xml -->
 	<!-- mavteleop example launch script -->
 
 	<!-- <include file="$(find mavros)/launch/px4.launch" /> -->

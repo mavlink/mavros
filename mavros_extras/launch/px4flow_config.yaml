@@ -1,0 +1,17 @@
+# Common configuration for PX4Flow module
+#
+# node:
+#startup_px4_usb_quirk: false
+
+# sys_status
+conn_heartbeat: 5.0 # send hertbeat every n secs
+conn_timeout: 10.0  # hertbeat timeout n secs
+conn_system_time: 2.0 # send system time every n secs
+sys:
+  min_voltage: 10.0  # diagnostics min voltage
+  disable_diag: true
+
+# image_pub [extras]
+camera_frame_id: "pf4flow"
+
+# vim:set ts=2 sw=2 et:
