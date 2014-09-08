@@ -1,0 +1,22 @@
+<launch>
+	<!-- vim: ft=roslaunch -->
+	<!-- base node launch file-->
+
+	<arg name="fcu_url" />
+	<arg name="gcs_url" />
+	<arg name="tgt_system" />
+	<arg name="tgt_component" />
+	<arg name="blacklist_yaml" />
+	<arg name="config_yaml" />
+
+	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="screen">
+		<param name="fcu_url" value="$(arg fcu_url)" />
+		<param name="gcs_url" value="$(arg gcs_url)" />
+		<param name="target_system_id" value="$(arg tgt_system)" />
+		<param name="target_component_id" value="$(arg tgt_component)" />
+
+		<!-- load blacklist, config -->
+		<rosparam command="load" file="$(arg blacklist_yaml)" />
+		<rosparam command="load" file="$(arg config_yaml)" />
+	</node>
+</launch>
