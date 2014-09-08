@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=roslaunch -->
+	<!-- vim: ft=xml -->
 	<!-- base node launch file-->
 
 	<arg name="fcu_url" />
