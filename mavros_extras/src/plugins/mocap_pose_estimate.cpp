@@ -51,22 +51,21 @@ public:
 		uas = &uas_;
 		mp_nh = ros::NodeHandle(nh, "mocap");
 
-		mp_nh.param("mocap/use_tf", use_tf, false);  // Vicon
-		mp_nh.param("mocap/use_pose", use_pose, true);  // Optitrack
+		mp_nh.param("use_tf", use_tf, false);  // Vicon
+		mp_nh.param("use_pose", use_pose, true);  // Optitrack
 
 
 		if (use_tf && !use_pose)
 		{
-			mocap_tf_sub = mp_nh.subscribe("mocap/tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
+			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
-
 		else if (use_pose && !use_tf)
 		{
-			mocap_pose_sub = mp_nh.subscribe("mocap/pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);
+			mocap_pose_sub = mp_nh.subscribe("pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);
 		}
 		else
 		{
-			ROS_ERROR_THROTTLE_NAMED(1, "mocap", "Use one motion capture source.");
+			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
 	}
 
