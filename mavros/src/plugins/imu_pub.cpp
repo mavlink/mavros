@@ -114,7 +114,7 @@ private:
 
 	static constexpr double GAUSS_TO_TESLA = 1.0e-4;
 	static constexpr double MILLIT_TO_TESLA = 1000.0;
-	static constexpr double MILLIRS_TO_RADSEC = 1000.0;
+	static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
 	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
 	static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 
