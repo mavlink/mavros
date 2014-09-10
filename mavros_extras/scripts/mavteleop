@@ -28,6 +28,7 @@ from sensor_msgs.msg import Joy
 from std_msgs.msg import Header, Float64
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion, Point
 from mavros.msg import OverrideRCIn
+from mavros.srv import CommandBool
 
 
 def arduino_map(x, inmin, inmax, outmin, outmax):
@@ -69,9 +70,11 @@ axes_scale = {
 
 # XXX: todo
 button_map = {
-    'takeoff': 0,
-    'land': 1,
-    'enable': 2
+    'arm' : 0,
+    'disarm' : 1,
+    'takeoff': 2,
+    'land': 3,
+    'enable': 4
 }
 
 
@@ -82,6 +85,18 @@ rc_channels = {
     'throttle': RCChan('throttle', 2, 0.0)
 }
 
+def arm(args, state):
+    try:
+        arming_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/arming", CommandBool)
+        ret = arming_cl(value=state)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        rospy.loginfo("Request failed.")
+    else:
+        rospy.loginfo("Request success.")
+
 
 def load_map(m, n):
     for k, v in m.iteritems():
@@ -91,6 +106,8 @@ def load_map(m, n):
 def get_axis(j, n):
     return j.axes[axes_map[n]] * axes_scale[n]
 
+def get_buttons(j, n):
+    return j.buttons[ button_map[n]]
 
 def rc_override_control(args):
     rospy.init_node("mavteleop")
@@ -120,6 +137,11 @@ def rc_override_control(args):
             rospy.logdebug("RC%d (%s): %d us", ch.chan, ch.name, ch.calc_us(v))
 
         # XXX: buttons
+        if get_buttons(joy,'arm') == 1:
+            arm(args, True)
+        elif get_buttons(joy,'disarm') == 1:
+            arm(args, False)
+
         set_chan('roll', roll)
         set_chan('pitch', pitch)
         set_chan('yaw', yaw)
@@ -127,7 +149,7 @@ def rc_override_control(args):
         override_pub.publish(rc)
 
 
-    jsub = rospy.Subscriber("/joy", Joy, joy_cb)
+    jsub = rospy.Subscriber("joy", Joy, joy_cb)
     rospy.spin()
 
 
@@ -157,6 +179,11 @@ def attitude_setpoint_control(args):
         throttle = thd_normalize(get_axis(joy, 'throttle'))
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
+        
+        if get_buttons(joy,'arm') == 1:
+            arm(args, True)
+        elif get_buttons(joy,'disarm') == 1:
+            arm(args, False)
 
         # TODO: Twist variation
         pose = PoseStamped(header=Header(stamp=rospy.get_rostime()))
