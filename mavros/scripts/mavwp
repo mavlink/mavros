@@ -219,17 +219,17 @@ def do_show(args):
 
         print(pt, file=sys.stdout)
         sys.stdout.flush()
-
-        if not args.follow:
-            done_evt.set()
+        done_evt.set()
 
     if args.pull:
         _pull(args)
 
     # Waypoints topic is latched type, and it updates after pull
     sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _show_table)
-    if not done_evt.wait(30.0):
+    if not args.follow and not done_evt.wait(30.0):
         fault("Something went wrong. Topic timed out.")
+    else:
+        rospy.spin()
 
 
 def do_load(args):
