@@ -35,6 +35,8 @@
 #include <mavros/FileOpen.h>
 #include <mavros/FileClose.h>
 #include <mavros/FileRead.h>
+#include <mavros/FileMakeDir.h>
+#include <mavros/FileRemoveDir.h>
 
 // enable debugging messages
 #define FTP_LL_DEBUG
@@ -217,6 +219,8 @@ public:
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
 		close_srv = ftp_nh.advertiseService("close", &FTPPlugin::close_cb, this);
 		read_srv = ftp_nh.advertiseService("read", &FTPPlugin::read_cb, this);
+		mkdir_srv = ftp_nh.advertiseService("mkdir", &FTPPlugin::mkdir_cb, this);
+		rmdir_srv = ftp_nh.advertiseService("rmdir", &FTPPlugin::rmdir_cb, this);
 		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
 	}
 
@@ -237,6 +241,8 @@ private:
 	ros::ServiceServer open_srv;
 	ros::ServiceServer close_srv;
 	ros::ServiceServer read_srv;
+	ros::ServiceServer mkdir_srv;
+	ros::ServiceServer rmdir_srv;
 	ros::ServiceServer reset_srv;
 
 	enum OpState {
@@ -527,6 +533,22 @@ private:
 		req.send(uas, last_send_seqnr);
 	}
 
+	void send_create_dir_command(std::string path) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdCreateDirectory: " << path);
+		FTPRequest req(FTPRequest::kCmdCreateDirectory);
+		req.header()->offset = 0;
+		req.set_data_string(path);
+		req.send(uas, last_send_seqnr);
+	}
+
+	void send_remove_dir_command(std::string path) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRemoveDirectory: " << path);
+		FTPRequest req(FTPRequest::kCmdRemoveDirectory);
+		req.header()->offset = 0;
+		req.set_data_string(path);
+		req.send(uas, last_send_seqnr);
+	}
+
 	/* how to open existing file to write? */
 
 	/* -*- helpers -*- */
@@ -636,6 +658,16 @@ private:
 		return true;
 	}
 
+	void create_directory(std::string path) {
+		op_state = OP_ACK;
+		send_create_dir_command(path);
+	}
+
+	void remove_directory(std::string path) {
+		op_state = OP_ACK;
+		send_remove_dir_command(path);
+	}
+
 	static constexpr int read_compute_timeout(size_t len) {
 		return CHUNK_TIMEOUT_MS * (len + 1) / FTPRequest::DATA_MAXSZ;
 	}
@@ -718,6 +750,32 @@ private:
 			res.success = wait_completion(read_compute_timeout(req.size));
 		if (res.success)
 			res.data = read_buffer;
+
+		return true;
+	}
+
+	bool mkdir_cb(mavros::FileMakeDir::Request &req,
+			mavros::FileMakeDir::Response &res) {
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
+
+		create_directory(req.dir_path);
+		res.success = wait_completion(OPEN_TIMEOUT_MS);
+
+		return true;
+	}
+
+	bool rmdir_cb(mavros::FileRemoveDir::Request &req,
+			mavros::FileRemoveDir::Response &res) {
+		if (op_state != OP_IDLE) {
+			ROS_ERROR_NAMED("ftp", "FTP: Busy");
+			return false;
+		}
+
+		remove_directory(req.dir_path);
+		res.success = wait_completion(OPEN_TIMEOUT_MS);
 
 		return true;
 	}

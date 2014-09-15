@@ -1,0 +1,5 @@
+# FTP::RemoveDir
+
+string dir_path
+---
+bool success

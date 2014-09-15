@@ -1,0 +1,5 @@
+# FTP::MakeDir
+
+string dir_path
+---
+bool success

@@ -97,6 +97,8 @@ add_service_files(
   FileWrite.srv
   FileList.srv
   FileRemove.srv
+  FileMakeDir.srv
+  FileRemoveDir.srv
 )
 
 ## Generate actions in the 'action' folder
