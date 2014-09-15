@@ -25,7 +25,7 @@ import argparse
 import rospy
 from std_srvs.srv import Empty
 from mavros.msg import FileEntry
-from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest
+from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, FileMakeDir, FileRemoveDir
 
 
 def print_if(cond, *args, **kvargs):
@@ -124,10 +124,31 @@ def do_reset(args):
 
     try:
         reset_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/reset", Empty)
-        ret = reset_cl()
+        reset_cl()
     except rospy.ServiceException as ex:
         fault(ex)
 
+
+def do_mkdir(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    try:
+        mkdir_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/mkdir", FileMakeDir)
+        ret = mkdir_cl(dir_path=args.path)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    # TODO: check success
+
+
+def do_rmdir(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    try:
+        rmdir_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/rmdir", FileRemoveDir)
+        ret = rmdir_cl(dir_path=args.path)
+    except rospy.ServiceException as ex:
+        fault(ex)
 
 
 def main():
@@ -143,6 +164,15 @@ def main():
     cat_args = subarg.add_parser('cat', help="cat file")
     cat_args.set_defaults(func=do_cat)
     cat_args.add_argument('path', type=str, help="file path")
+
+    mkdir_args = subarg.add_parser('mkdir', help="create direcotory")
+    mkdir_args.set_defaults(func=do_mkdir)
+    #mkdir_args.add_argument('-p', action='store_true', help="dir path")
+    mkdir_args.add_argument('path', type=str, help="dir path")
+
+    rmdir_args = subarg.add_parser('rmdir', help="remove directory")
+    rmdir_args.set_defaults(func=do_rmdir)
+    rmdir_args.add_argument('path', type=str, help="dir path")
 
     reset_args = subarg.add_parser('reset', help="reset")
     reset_args.set_defaults(func=do_reset)
