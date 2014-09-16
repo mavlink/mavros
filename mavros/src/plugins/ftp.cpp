@@ -95,6 +95,7 @@ public:
 
 	static const char	DIRENT_FILE = 'F';
 	static const char	DIRENT_DIR = 'D';
+	static const char	DIRENT_SKIP = 'S';
 	static const uint8_t	DATA_MAXSZ = MAVLINK_MSG_FILE_TRANSFER_PROTOCOL_FIELD_PAYLOAD_LEN - sizeof(PayloadHeader);
 
 	uint8_t *raw_payload() {
@@ -382,7 +383,8 @@ private:
 			const size_t bytes_left = hdr->size - off;
 
 			size_t slen = strnlen(ptr, bytes_left);
-			if (slen < 2) {
+			if ((ptr[0] == FTPRequest::DIRENT_SKIP && slen > 1) ||
+					(ptr[0] != FTPRequest::DIRENT_SKIP && slen < 2)) {
 				ROS_ERROR_NAMED("ftp", "FTP: Incorrect list entry: %s", ptr);
 				go_idle(true);
 				return;
@@ -396,6 +398,9 @@ private:
 			if (ptr[0] == FTPRequest::DIRENT_FILE ||
 					ptr[0] == FTPRequest::DIRENT_DIR) {
 				add_dirent(ptr, slen);
+			}
+			else if (ptr[0] == FTPRequest::DIRENT_SKIP) {
+				// do nothing
 			}
 			else {
 				ROS_WARN_NAMED("ftp", "FTP: Unknown list entry: %s", ptr);
