@@ -36,6 +36,8 @@
 #include <mavros/FileOpen.h>
 #include <mavros/FileClose.h>
 #include <mavros/FileRead.h>
+#include <mavros/FileWrite.h>
+#include <mavros/FileRemove.h>
 #include <mavros/FileMakeDir.h>
 #include <mavros/FileRemoveDir.h>
 
@@ -223,6 +225,7 @@ public:
 		read_srv = ftp_nh.advertiseService("read", &FTPPlugin::read_cb, this);
 		mkdir_srv = ftp_nh.advertiseService("mkdir", &FTPPlugin::mkdir_cb, this);
 		rmdir_srv = ftp_nh.advertiseService("rmdir", &FTPPlugin::rmdir_cb, this);
+		remove_srv = ftp_nh.advertiseService("remove", &FTPPlugin::remove_cb, this);
 		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
 	}
 
@@ -245,6 +248,7 @@ private:
 	ros::ServiceServer read_srv;
 	ros::ServiceServer mkdir_srv;
 	ros::ServiceServer rmdir_srv;
+	ros::ServiceServer remove_srv;
 	ros::ServiceServer reset_srv;
 
 	enum OpState {
@@ -290,8 +294,9 @@ private:
 	//! Maximum difference between allocated space and used
 	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
 
-	//! @todo timeout timer
 	//! @todo write support
+	//! @todo exchange speed calculation
+	//! @todo diagnostics
 
 	/* -*- message handler -*- */
 
@@ -440,7 +445,7 @@ private:
 
 		ROS_DEBUG_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
 				open_path.c_str(), hdr->session, open_size);
-		session_file_map[open_path] = hdr->session;
+		session_file_map.insert(std::make_pair(open_path, hdr->session));
 		go_idle(false);
 	}
 
@@ -467,7 +472,6 @@ private:
 		const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr->size);
 
 		read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
-		//! @todo excancge speed calculation
 
 		if (bytes_to_copy == FTPRequest::DATA_MAXSZ) {
 			// Possibly more data
@@ -545,6 +549,14 @@ private:
 		FTPRequest req(FTPRequest::kCmdReadFile, active_session);
 		req.header()->offset = read_offset;
 		req.header()->size = 0 /* FTPRequest::DATA_MAXSZ */;
+		req.send(uas, last_send_seqnr);
+	}
+
+	void send_remove_command(std::string path) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRemoveFile: " << path);
+		FTPRequest req(FTPRequest::kCmdRemoveFile);
+		req.header()->offset = 0;
+		req.set_data_string(path);
 		req.send(uas, last_send_seqnr);
 	}
 
@@ -669,6 +681,11 @@ private:
 		return true;
 	}
 
+	void remove_file(std::string path) {
+		op_state = OP_ACK;
+		send_remove_command(path);
+	}
+
 	void create_directory(std::string path) {
 		op_state = OP_ACK;
 		send_create_dir_command(path);
@@ -702,12 +719,18 @@ private:
 
 	/* -*- service callbacks -*- */
 
+	/**
+	 * Service handler common header code.
+	 */
+#define SERVICE_IDLE_CHECK()				\
+	if (op_state != OP_IDLE) {			\
+		ROS_ERROR_NAMED("ftp", "FTP: Busy");	\
+		return false;				\
+	}
+
 	bool list_cb(mavros::FileList::Request &req,
 			mavros::FileList::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		list_directory(req.dir_path);
 		res.success = wait_completion(LIST_TIMEOUT_MS);
@@ -722,10 +745,7 @@ private:
 
 	bool open_cb(mavros::FileOpen::Request &req,
 			mavros::FileOpen::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		// only one session per file
 		auto it = session_file_map.find(req.file_path);
@@ -748,10 +768,7 @@ private:
 
 	bool close_cb(mavros::FileClose::Request &req,
 			mavros::FileClose::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		res.success = close_file(req.file_path);
 		if (res.success)
@@ -762,10 +779,7 @@ private:
 
 	bool read_cb(mavros::FileRead::Request &req,
 			mavros::FileRead::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		res.r_errno = EINVAL;
 		res.success = read_file(req.file_path, req.offset, req.size);
@@ -781,12 +795,20 @@ private:
 		return true;
 	}
 
+	bool remove_cb(mavros::FileRemove::Request &req,
+			mavros::FileRemove::Response &res) {
+		SERVICE_IDLE_CHECK();
+
+		remove_file(req.file_path);
+		res.success = wait_completion(OPEN_TIMEOUT_MS);
+		res.r_errno = r_errno;
+
+		return true;
+	}
+
 	bool mkdir_cb(mavros::FileMakeDir::Request &req,
 			mavros::FileMakeDir::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		create_directory(req.dir_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
@@ -797,10 +819,7 @@ private:
 
 	bool rmdir_cb(mavros::FileRemoveDir::Request &req,
 			mavros::FileRemoveDir::Response &res) {
-		if (op_state != OP_IDLE) {
-			ROS_ERROR_NAMED("ftp", "FTP: Busy");
-			return false;
-		}
+		SERVICE_IDLE_CHECK();
 
 		remove_directory(req.dir_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
@@ -808,6 +827,8 @@ private:
 
 		return true;
 	}
+
+#undef SERVICE_IDLE_CHECK
 
 	/**
 	 * @brief Reset communication on both sides.
