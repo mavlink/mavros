@@ -25,6 +25,7 @@
  */
 
 #include <chrono>
+#include <cerrno>
 #include <condition_variable>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
@@ -262,6 +263,7 @@ private:
 	std::mutex cond_mutex;
 	std::condition_variable cond;	//!< wait condvar
 	bool is_error;			//!< error signaling flag (timeout/proto error)
+	int r_errno;			//!< store errno from server
 
 	// FTP:List
 	uint32_t list_offset;
@@ -306,7 +308,7 @@ private:
 		if (incoming_seqnr != expected_seqnr) {
 			ROS_WARN_NAMED("ftp", "FTP: Lost sync! seqnr: %u != %u",
 					incoming_seqnr, expected_seqnr);
-			go_idle(true);
+			go_idle(true, EILSEQ);
 			return;
 		}
 
@@ -319,7 +321,7 @@ private:
 			handle_req_nack(req);
 		else {
 			ROS_ERROR_NAMED("ftp", "FTP: Unknown request response: %u", req.header()->opcode);
-			go_idle(true);
+			go_idle(true, EBADRQC);
 		}
 	}
 
@@ -332,7 +334,7 @@ private:
 		case OP_READ: handle_ack_read(req);	break;
 		default:
 			ROS_ERROR_NAMED("ftp", "FTP: wrong op_state");
-			go_idle(true);
+			go_idle(true, EBADRQC);
 		}
 	}
 
@@ -346,7 +348,7 @@ private:
 
 		op_state = OP_IDLE;
 		if (error_code == FTPRequest::kErrFailErrno)
-			req_errno = req.data()[1];
+			r_errno = req_errno = req.data()[1];
 
 		if (prev_op == OP_LIST && error_code == FTPRequest::kErrEOF) {
 			/* dir list done */
@@ -371,7 +373,7 @@ private:
 		if (hdr->offset != list_offset) {
 			ROS_ERROR_NAMED("ftp", "FTP: Wring list offset, req %u, ret %u",
 					list_offset, hdr->offset);
-			go_idle(true);
+			go_idle(true, EBADE);
 			return;
 		}
 
@@ -386,12 +388,12 @@ private:
 			if ((ptr[0] == FTPRequest::DIRENT_SKIP && slen > 1) ||
 					(ptr[0] != FTPRequest::DIRENT_SKIP && slen < 2)) {
 				ROS_ERROR_NAMED("ftp", "FTP: Incorrect list entry: %s", ptr);
-				go_idle(true);
+				go_idle(true, ERANGE);
 				return;
 			}
 			else if (slen == bytes_left) {
 				ROS_ERROR_NAMED("ftp", "FTP: Missing NULL termination in list entry");
-				go_idle(true);
+				go_idle(true, EOVERFLOW);
 				return;
 			}
 
@@ -448,13 +450,13 @@ private:
 		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Read SZ(%u)", hdr->size);
 		if (hdr->session != active_session) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read unexpected session");
-			go_idle(true);
+			go_idle(true, EBADSLT);
 			return;
 		}
 
 		if (hdr->offset != read_offset) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read different offset");
-			go_idle(true);
+			go_idle(true, EBADE);
 			return;
 		}
 
@@ -478,9 +480,17 @@ private:
 
 	/* -*- send helpers -*- */
 
-	void go_idle(bool is_error_) {
+	/**
+	 * @brief Go to IDLE mode
+	 *
+	 * @param is_error_ mark that caused in error case
+	 * @param r_errno_ set r_errno in error case
+	 */
+	void go_idle(bool is_error_, int r_errno_ = 0) {
 		op_state = OP_IDLE;
 		is_error = is_error_;
+		if (is_error && r_errno_ != 0)	r_errno = r_errno_;
+		else if (!is_error)		r_errno = 0;
 		cond.notify_all();
 	}
 
@@ -585,10 +595,6 @@ private:
 			ROS_DEBUG_STREAM_NAMED("ftp", "FTP:List File: " << ent.name << " SZ: " << ent.size);
 		}
 
-		// skip adding special files (now it skipped at server)
-		//if (ent.name == "." || ent.name == "..")
-		//	return;
-
 		list_entries.push_back(ent);
 	}
 
@@ -680,9 +686,18 @@ private:
 	bool wait_completion(const int msecs) {
 		std::unique_lock<std::mutex> lock(cond_mutex);
 
-		return cond.wait_for(lock, std::chrono::milliseconds(msecs))
-			== std::cv_status::no_timeout
-			&& !is_error;
+		bool is_timedout = cond.wait_for(lock, std::chrono::milliseconds(msecs))
+			== std::cv_status::timeout;
+
+		if (is_timedout) {
+			// If timeout occurs don't forget to reset state
+			op_state = OP_IDLE;
+			r_errno = ETIMEDOUT;
+			return false;
+		}
+		else
+			// if go_idle() occurs before timeout
+			return !is_error;
 	}
 
 	/* -*- service callbacks -*- */
@@ -696,8 +711,11 @@ private:
 
 		list_directory(req.dir_path);
 		res.success = wait_completion(LIST_TIMEOUT_MS);
-		if (res.success)
-			res.list = list_entries;
+		res.r_errno = r_errno;
+		if (res.success) {
+			res.list = std::move(list_entries);
+			list_entries.clear();	// not shure that it's needed
+		}
 
 		return true;
 	}
@@ -717,14 +735,13 @@ private:
 			return false;
 		}
 
+		res.r_errno = EINVAL;
 		res.success = open_file(req.file_path, req.mode);
-		if (res.success)
+		if (res.success) {
 			res.success = wait_completion(OPEN_TIMEOUT_MS);
-		if (res.success)
+			res.r_errno = r_errno;
 			res.size = open_size;
-
-		//! @todo return system error code for fuse driver
-		//! @todo inactivity close timer
+		}
 
 		return true;
 	}
@@ -750,11 +767,16 @@ private:
 			return false;
 		}
 
+		res.r_errno = EINVAL;
 		res.success = read_file(req.file_path, req.offset, req.size);
-		if (res.success)
+		if (res.success) {
 			res.success = wait_completion(read_compute_timeout(req.size));
-		if (res.success)
-			res.data = read_buffer;
+			res.r_errno = r_errno;
+		}
+		if (res.success) {
+			res.data = std::move(read_buffer);
+			read_buffer.clear();	// same as for list_entries
+		}
 
 		return true;
 	}
@@ -768,6 +790,7 @@ private:
 
 		create_directory(req.dir_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
+		res.r_errno = r_errno;
 
 		return true;
 	}
@@ -781,6 +804,7 @@ private:
 
 		remove_directory(req.dir_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
+		res.r_errno = r_errno;
 
 		return true;
 	}

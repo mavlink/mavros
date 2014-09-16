@@ -1,6 +1,7 @@
 # FTP::Close
 #
 # Call FTP::Open first.
+# Note: r_errno not exist, because server don't report it
 
 string file_path
 ---
