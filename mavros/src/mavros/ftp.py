@@ -23,7 +23,7 @@ import rospy
 from std_srvs.srv import Empty
 from mavros.msg import FileEntry
 from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
-    FileMakeDir, FileRemoveDir, FileRemove, FileWrite
+    FileMakeDir, FileRemoveDir, FileRemove, FileWrite, FileTruncate
 
 
 class FTPFile(object):
@@ -121,7 +121,13 @@ class FTPFile(object):
             raise ValueError("Unknown whence")
 
     def truncate(self, size=0):
-        raise NotImplementedError
+        try:
+            truncate_cl = rospy.ServiceProxy(self.mavros_ns + "/ftp/truncate", FileTruncate)
+            ret = truncate_cl(file_path=self.name, length=size)
+        except rospy.ServiceException as ex:
+            raise IOError(str(ex))
+
+        self._check_raise_errno(ret)
 
     @property
     def closed(self):
