@@ -40,6 +40,7 @@
 #include <mavros/FileRemove.h>
 #include <mavros/FileMakeDir.h>
 #include <mavros/FileRemoveDir.h>
+#include <mavros/FileTruncate.h>
 
 // enable debugging messages
 #define FTP_LL_DEBUG
@@ -80,6 +81,7 @@ public:
 		kCmdCreateDirectory,	///< Creates directory at <path>
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
 		kCmdOpenFileWO,		///< Opens file at <path> for writing, returns <session>
+		kCmdTruncateFile,	///< Truncate file at <path> to <offset> length
 
 		kRspAck = 128,		///< Ack response
 		kRspNak			///< Nak response
@@ -228,6 +230,7 @@ public:
 		mkdir_srv = ftp_nh.advertiseService("mkdir", &FTPPlugin::mkdir_cb, this);
 		rmdir_srv = ftp_nh.advertiseService("rmdir", &FTPPlugin::rmdir_cb, this);
 		remove_srv = ftp_nh.advertiseService("remove", &FTPPlugin::remove_cb, this);
+		truncate_srv = ftp_nh.advertiseService("truncate", &FTPPlugin::truncate_cb, this);
 		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
 	}
 
@@ -252,6 +255,7 @@ private:
 	ros::ServiceServer mkdir_srv;
 	ros::ServiceServer rmdir_srv;
 	ros::ServiceServer remove_srv;
+	ros::ServiceServer truncate_srv;
 	ros::ServiceServer reset_srv;
 
 	//! This type used in servicies to store 'data' fileds.
@@ -305,6 +309,7 @@ private:
 	//! Maximum difference between allocated space and used
 	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
 
+	//! @todo translete nack's to errno
 	//! @todo exchange speed calculation
 	//! @todo diagnostics
 
@@ -377,7 +382,7 @@ private:
 			return;
 		}
 
-		ROS_ERROR_NAMED("ftp", "FTP: NAck: %u Opcode: %u State: %u Errno: %d (%s)",
+		ROS_ERROR_NAMED("ftp", "FTP: NAK: %u Opcode: %u State: %u Errno: %d (%s)",
 				error_code, hdr->req_opcode, prev_op, req_errno, strerror(req_errno));
 		go_idle(true);
 	}
@@ -549,33 +554,29 @@ private:
 		req.send(uas, last_send_seqnr);
 	}
 
-	void send_list_command() {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdListDirectory: " << list_path << " off: " << list_offset);
-		FTPRequest req(FTPRequest::kCmdListDirectory);
-		req.header()->offset = list_offset;
-		req.set_data_string(list_path);
-		req.send(uas, last_send_seqnr);
-	}
-
-	/// Send any command with zero offset and string payload (usually file/dir path)
-	inline void send_any_path_command(FTPRequest::Opcode op, const std::string debug_msg, std::string &path) {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: " << debug_msg << path);
+	/// Send any command with string payload (usually file/dir path)
+	inline void send_any_path_command(FTPRequest::Opcode op, const std::string debug_msg, std::string &path, uint32_t offset) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: " << debug_msg << path << " off: " << offset);
 		FTPRequest req(op);
-		req.header()->offset = 0;
+		req.header()->offset = offset;
 		req.set_data_string(path);
 		req.send(uas, last_send_seqnr);
 	}
 
+	void send_list_command() {
+		send_any_path_command(FTPRequest::kCmdListDirectory, "kCmdListDirectory: ", list_path, list_offset);
+	}
+
 	void send_open_ro_command() {
-		send_any_path_command(FTPRequest::kCmdOpenFileRO, "kCmdOpenFileRO: ", open_path);
+		send_any_path_command(FTPRequest::kCmdOpenFileRO, "kCmdOpenFileRO: ", open_path, 0);
 	}
 
 	void send_open_wo_command() {
-		send_any_path_command(FTPRequest::kCmdOpenFileWO, "kCmdOpenFileWO: ", open_path);
+		send_any_path_command(FTPRequest::kCmdOpenFileWO, "kCmdOpenFileWO: ", open_path, 0);
 	}
 
 	void send_create_command() {
-		send_any_path_command(FTPRequest::kCmdCreateFile, "kCmdCreateFile: ", open_path);
+		send_any_path_command(FTPRequest::kCmdCreateFile, "kCmdCreateFile: ", open_path, 0);
 	}
 
 	void send_terminate_command(uint32_t session) {
@@ -606,15 +607,19 @@ private:
 	}
 
 	void send_remove_command(std::string path) {
-		send_any_path_command(FTPRequest::kCmdRemoveFile, "kCmdRemoveFile: ", path);
+		send_any_path_command(FTPRequest::kCmdRemoveFile, "kCmdRemoveFile: ", path, 0);
+	}
+
+	void send_truncate_command(std::string path, size_t length) {
+		send_any_path_command(FTPRequest::kCmdTruncateFile, "kCmdTruncateFile: ", path, length);
 	}
 
 	void send_create_dir_command(std::string path) {
-		send_any_path_command(FTPRequest::kCmdCreateDirectory, "kCmdCreateDirectory: ", path);
+		send_any_path_command(FTPRequest::kCmdCreateDirectory, "kCmdCreateDirectory: ", path, 0);
 	}
 
 	void send_remove_dir_command(std::string path) {
-		send_any_path_command(FTPRequest::kCmdRemoveDirectory, "kCmdRemoveDirectory: ", path);
+		send_any_path_command(FTPRequest::kCmdRemoveDirectory, "kCmdRemoveDirectory: ", path, 0);
 	}
 
 	/* how to open existing file to write? */
@@ -756,6 +761,11 @@ private:
 		send_remove_command(path);
 	}
 
+	void truncate_file(std::string path, size_t length) {
+		op_state = OP_ACK;
+		send_truncate_command(path, length);
+	}
+
 	void create_directory(std::string path) {
 		op_state = OP_ACK;
 		send_create_dir_command(path);
@@ -890,6 +900,18 @@ private:
 
 		remove_file(req.file_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
+		res.r_errno = r_errno;
+
+		return true;
+	}
+
+	bool truncate_cb(mavros::FileTruncate::Request &req,
+			mavros::FileTruncate::Response &res) {
+		SERVICE_IDLE_CHECK();
+
+		// Note: emulated truncate() can take a while
+		truncate_file(req.file_path, req.length);
+		res.success = wait_completion(LIST_TIMEOUT_MS * 5);
 		res.r_errno = r_errno;
 
 		return true;
