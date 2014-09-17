@@ -17,114 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-from __future__ import print_function
-
-import csv
-import time
 import argparse
 
-import roslib; roslib.load_manifest("mavros")
 import rospy
 from mavros.utils import *
-from mavros.srv import ParamPull, ParamPush, ParamGet, ParamSet
-
-
-class Parameter(object):
-    """Class representing one parameter"""
-    def __init__(self, param_id, param_value=0):
-        self.param_id = param_id
-        self.param_value = param_value
-
-    def __repr__(self):
-        return "<Parameter '{}': {}>".format(self.param_id, self.param_value)
-
-
-class ParamFile(object):
-    """Base class for param file parsers"""
-    def __init__(self, args):
-        pass
-
-    def read(self, file_):
-        """Returns a iterable of Parameters"""
-        raise NotImplementedError
-
-    def write(self, file_, parametes):
-        """Writes Parameters to file"""
-        raise NotImplementedError
-
-
-class MissionPlannerParam(ParamFile):
-    """Parse MissionPlanner param files"""
-
-    class CSVDialect(csv.Dialect):
-        delimiter = ','
-        doublequote = False
-        skipinitialspace = True
-        lineterminator = '\r\n'
-        quoting = csv.QUOTE_NONE
-
-    def read(self, file_):
-        to_numeric = lambda x: float(x) if '.' in x else int(x)
-
-        for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
-                continue # skip comments
-
-            if len(data) != 2:
-                raise ValueError("wrong field count")
-
-            yield Parameter(data[0].strip(), to_numeric(data[1]));
-
-    def write(self, file_, parameters):
-        writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow(("#NOTE: " + time.strftime("%d.%m.%Y %T") ,))
-        for p in parameters:
-            writer.writerow((p.param_id, p.param_value))
-
-
-class QGroundControlParam(ParamFile):
-    """Parse QGC param files"""
-
-    class CSVDialect(csv.Dialect):
-        delimiter = '\t'
-        doublequote = False
-        skipinitialspace = True
-        lineterminator = '\n'
-        quoting = csv.QUOTE_NONE
-
-    def __init__(self, args):
-        self.mavros_ns = args.mavros_ns
-
-    def read(self, file_):
-        to_numeric = lambda x: float(x) if '.' in x else int(x)
-
-        for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
-                continue # skip comments
-
-            if len(data) != 5:
-                raise ValueError("wrong field count")
-
-            yield Parameter(data[2].strip(), to_numeric(data[3]));
-
-    def write(self, file_, parameters):
-        def to_type(x):
-            if isinstance(x, float):
-                return 9 # REAL32
-            elif isinstance(x, int):
-                return 6 # INT32
-            else:
-                raise ValueError("unknown type: " + repr(type(x)))
-
-        sysid = rospy.get_param(self.mavros_ns + "/target_system_id", 1)
-        compid = rospy.get_param(self.mavros_ns + "/target_component_id", 1)
-
-        writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow(("# NOTE: " + time.strftime("%d.%m.%Y %T"), ))
-        writer.writerow(("# Onboard parameters saved by mavparam for ({}, {})".format(sysid, compid), ))
-        writer.writerow(("# MAV ID" , "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
-        for p in parameters:
-            writer.writerow((sysid, compid, p.param_id, p.param_value, to_type(p.param_value), )) # XXX
+from mavros.param import *
 
 
 def get_param_file_io(args):
@@ -150,96 +47,37 @@ def do_load(args):
 
     param_file = get_param_file_io(args)
     with args.file:
-        for p in param_file.read(args.file):
-            rospy.set_param(args.mavros_ns + "/param/" + p.param_id, p.param_value)
+        param_transfered = param_set_list(param_file.read(args.file), args.mavros_ns)
 
-    try:
-        push_cl = rospy.ServiceProxy(args.mavros_ns + "/param/push", ParamPush)
-        ret = push_cl()
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    print_if(args.verbose, "Parameters transfered:", ret.param_transfered)
+    print_if(args.verbose, "Parameters transfered:", param_transfered)
 
 
 def do_dump(args):
     rospy.init_node("mavparam", anonymous=True)
 
-    try:
-        pull_cl = rospy.ServiceProxy(args.mavros_ns + "/param/pull", ParamPull)
-        ret = pull_cl(force_pull=args.force)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    print_if(args.verbose, "Parameters received:", ret.param_received)
-
-    try:
-        params = rospy.get_param(args.mavros_ns + "/param")
-    except KeyError as ex:
-        fault("ROS params not exist:", ex)
+    param_received, param_list = param_get_all(args.force, args.mavros_ns)
+    print_if(args.verbose, "Parameters received:", param_received)
 
     param_file = get_param_file_io(args)
     with args.file:
-        param_file.write(args.file,
-                         sorted((Parameter(k, v) for k, v in params.iteritems()),
-                                cmp=lambda x, y: cmp(x.param_id, y.param_id))
-                        )
+        param_file.write(args.file, param_list)
 
 
 def do_get(args):
     rospy.init_node("mavparam", anonymous=True)
 
-    try:
-        get_cl = rospy.ServiceProxy(args.mavros_ns + "/param/get", ParamGet)
-        ret = get_cl(param_id=args.param_id)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    if ret.integer != 0:
-        print(ret.integer)
-    elif ret.real != 0.0:
-        print(ret.real)
-    else:
-        print(0)
+    print(param_get(args.param_id, args.mavros_ns))
 
 
 def do_set(args):
     rospy.init_node("mavparam", anonymous=True)
 
     if '.' in args.value:
-        val_i = 0
-        val_f = float(args.value)
+        val = float(args.value)
     else:
-        val_i = int(args.value)
-        val_f = 0.0
+        val = int(args.value)
 
-    try:
-        set_cl = rospy.ServiceProxy(args.mavros_ns + "/param/set", ParamSet)
-        ret = set_cl(param_id=args.param_id,
-                     integer=val_i,
-                     real=val_f
-                    )
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    if ret.integer != 0:
-        print(ret.integer)
-    elif ret.real != 0.0:
-        print(ret.real)
-    else:
-        print(0)
+    print(param_set(args.param_id, val, args.mavros_ns))
 
 
 def main():
@@ -278,4 +116,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
