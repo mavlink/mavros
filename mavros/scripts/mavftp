@@ -19,13 +19,15 @@
 
 from __future__ import print_function
 
+import os
 import sys
 import argparse
 
 import rospy
 from std_srvs.srv import Empty
 from mavros.msg import FileEntry
-from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, FileMakeDir, FileRemoveDir
+from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
+    FileMakeDir, FileRemoveDir, FileRemove, FileWrite
 
 
 def print_if(cond, *args, **kvargs):
@@ -39,6 +41,10 @@ def fault(*args, **kvargs):
     sys.exit(1)
 
 
+def check_ret(operation, ret):
+    if not ret.success:
+        fault(operation, "failed:", os.strerror(ret.r_errno))
+
 
 def do_list(args):
     rospy.init_node("mavftp", anonymous=True)
@@ -49,8 +55,7 @@ def do_list(args):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
+    check_ret("List", ret)
 
     for ent in ret.list:
         n = ent.name
@@ -74,8 +79,7 @@ def open_file(args, path, mode):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    return (ret.success, ret.size)
-
+    return (ret, ret.size)
 
 
 def close_file(args, path):
@@ -85,8 +89,7 @@ def close_file(args, path):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    return ret.success
-
+    return ret
 
 
 def read_file(args, path, offset, size):
@@ -96,27 +99,35 @@ def read_file(args, path, offset, size):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    return (ret.success, bytearray(ret.data))
-
+    return (ret, bytearray(ret.data))
 
 
 def do_cat(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    st, size = open_file(args, args.path, 'r')
-    if not st:
-        fault("Can't open file. Check logs.")
+    ret, size = open_file(args, args.path, 'r')
+    check_ret("Open", ret)
 
     try:
-        st, data = read_file(args, args.path, 0, size)
-        if not st:
-            fault("Failed to read data")
+        ret, data = read_file(args, args.path, 0, size)
+        check_ret("Read", ret)
     finally:
         close_file(args, args.path)
 
-    if st:
-        print(str(data))
+    if ret.success:
+        sys.stdout.write(data)
 
+
+def do_remove(args):
+    rospy.init_node("mavftp", anonymous=True)
+
+    try:
+        remove_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/remove", FileRemove)
+        ret = remove_cl(file_path=args.path)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    check_ret("Remove", ret)
 
 
 def do_reset(args):
@@ -138,7 +149,7 @@ def do_mkdir(args):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    # TODO: check success
+    check_ret("Mkdir", ret)
 
 
 def do_rmdir(args):
@@ -149,6 +160,8 @@ def do_rmdir(args):
         ret = rmdir_cl(dir_path=args.path)
     except rospy.ServiceException as ex:
         fault(ex)
+
+    check_ret("Rmdir", ret)
 
 
 def main():
@@ -165,9 +178,13 @@ def main():
     cat_args.set_defaults(func=do_cat)
     cat_args.add_argument('path', type=str, help="file path")
 
+    remove_args = subarg.add_parser('remove', help="remove file")
+    remove_args.set_defaults(func=do_remove)
+    remove_args.add_argument('path', type=str, help="file path")
+
     mkdir_args = subarg.add_parser('mkdir', help="create direcotory")
     mkdir_args.set_defaults(func=do_mkdir)
-    #mkdir_args.add_argument('-p', action='store_true', help="dir path")
+    # mkdir_args.add_argument('-p', action='store_true', help="dir path")
     mkdir_args.add_argument('path', type=str, help="dir path")
 
     rmdir_args = subarg.add_parser('rmdir', help="remove directory")
@@ -183,4 +200,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
