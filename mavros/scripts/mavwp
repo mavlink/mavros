@@ -19,7 +19,6 @@
 
 from __future__ import print_function
 
-import sys
 import csv
 import time
 import argparse
@@ -27,6 +26,7 @@ import threading
 
 import roslib; roslib.load_manifest("mavros")
 import rospy
+from mavros.utils import *
 from mavros.msg import Waypoint, WaypointList
 from mavros.srv import WaypointPull, WaypointPush, WaypointClear, \
         WaypointSetCurrent, WaypointGOTO
@@ -142,20 +142,8 @@ class QGroundControlWP(WaypointFile):
             ))
 
 
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
 def get_wp_file_io(args):
     return QGroundControlWP()
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stderr
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def _pull(args):
@@ -399,4 +387,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

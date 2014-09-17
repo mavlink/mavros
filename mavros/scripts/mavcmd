@@ -19,24 +19,13 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
 import threading
 
 import rospy
+from mavros.utils import *
 from mavros.srv import CommandLong, CommandInt, CommandHome, CommandTOL, CommandBool
 from sensor_msgs.msg import NavSatFix
-
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stderr
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def _check_ret(args, ret):

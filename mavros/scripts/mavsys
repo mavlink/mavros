@@ -19,25 +19,13 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
 import threading
 
 import rospy
+from mavros.utils import *
 from mavros.msg import State
 from mavros.srv import SetMode, StreamRate, StreamRateRequest
-
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stderr
-    print(*args, **kvargs)
-    sys.exit(1)
-
 
 
 def do_mode(args):

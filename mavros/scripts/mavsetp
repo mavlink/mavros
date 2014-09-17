@@ -19,28 +19,17 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
 import math
 
 import rospy
+from mavros.utils import *
 from std_msgs.msg import Header
 from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Vector3Stamped, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 from mavros.srv import CommandBool
 
 _ONCE_DELAY = 3
-
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stderr
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def publish_once(args, pub, msg):

@@ -19,13 +19,13 @@
 
 from __future__ import print_function
 
-import sys
 import csv
 import time
 import argparse
 
 import roslib; roslib.load_manifest("mavros")
 import rospy
+from mavros.utils import *
 from mavros.srv import ParamPull, ParamPush, ParamGet, ParamSet
 
 
@@ -125,17 +125,6 @@ class QGroundControlParam(ParamFile):
         writer.writerow(("# MAV ID" , "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
         for p in parameters:
             writer.writerow((sysid, compid, p.param_id, p.param_value, to_type(p.param_value), )) # XXX
-
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stdout
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def get_param_file_io(args):

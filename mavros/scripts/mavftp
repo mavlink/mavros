@@ -19,17 +19,11 @@
 
 from __future__ import print_function
 
-import os
-import sys
 import argparse
 
 import rospy
+from mavros.utils import *
 from mavros.ftp import *
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stdout
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def check_ret(operation, ret):

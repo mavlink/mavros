@@ -19,23 +19,12 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
 
 import rospy
+from mavros.utils import *
 from geometry_msgs.msg import PolygonStamped, Point32
 from mavros.srv import CommandBool
-
-
-def print_if(cond, *args, **kvargs):
-    if cond:
-        print(*args, **kvargs)
-
-
-def fault(*args, **kvargs):
-    kvargs['file'] = sys.stderr
-    print(*args, **kvargs)
-    sys.exit(1)
 
 
 def _arm(args, state):
