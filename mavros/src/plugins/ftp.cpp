@@ -72,13 +72,14 @@ public:
 		kCmdTerminateSession,	///< Terminates open Read session
 		kCmdResetSessions,	///< Terminates all open Read sessions
 		kCmdListDirectory,	///< List files in <path> from <offset>
-		kCmdOpenFile,		///< Opens file at <path> for reading, returns <session>
+		kCmdOpenFileRO,		///< Opens file at <path> for reading, returns <session>
 		kCmdReadFile,		///< Reads <size> bytes from <offset> in <session>
 		kCmdCreateFile,		///< Creates file at <path> for writing, returns <session>
-		kCmdWriteFile,		///< Appends <size> bytes to file in <session>
+		kCmdWriteFile,		///< Writes <size> bytes to <offset> in <session>
 		kCmdRemoveFile,		///< Remove file at <path>
 		kCmdCreateDirectory,	///< Creates directory at <path>
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
+		kCmdOpenFileWO,		///< Opens file at <path> for writing, returns <session>
 
 		kRspAck = 128,		///< Ack response
 		kRspNak			///< Nak response
@@ -223,6 +224,7 @@ public:
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
 		close_srv = ftp_nh.advertiseService("close", &FTPPlugin::close_cb, this);
 		read_srv = ftp_nh.advertiseService("read", &FTPPlugin::read_cb, this);
+		write_srv = ftp_nh.advertiseService("write", &FTPPlugin::write_cb, this);
 		mkdir_srv = ftp_nh.advertiseService("mkdir", &FTPPlugin::mkdir_cb, this);
 		rmdir_srv = ftp_nh.advertiseService("rmdir", &FTPPlugin::rmdir_cb, this);
 		remove_srv = ftp_nh.advertiseService("remove", &FTPPlugin::remove_cb, this);
@@ -246,23 +248,27 @@ private:
 	ros::ServiceServer open_srv;
 	ros::ServiceServer close_srv;
 	ros::ServiceServer read_srv;
+	ros::ServiceServer write_srv;
 	ros::ServiceServer mkdir_srv;
 	ros::ServiceServer rmdir_srv;
 	ros::ServiceServer remove_srv;
 	ros::ServiceServer reset_srv;
+
+	//! This type used in servicies to store 'data' fileds.
+	typedef std::vector<uint8_t> V_FileData;
 
 	enum OpState {
 		OP_IDLE,
 		OP_ACK,
 		OP_LIST,
 		OP_OPEN,
-		OP_READ
-		// TODO other functions
+		OP_READ,
+		OP_WRITE
 	};
 
 	OpState op_state;
-	uint16_t last_send_seqnr;
-	uint32_t active_session;
+	uint16_t last_send_seqnr;	//!< seqNumber for send.
+	uint32_t active_session;	//!< session id of current operation
 
 	std::mutex cond_mutex;
 	std::condition_variable cond;	//!< wait condvar
@@ -282,19 +288,23 @@ private:
 	// FTP:Read
 	size_t read_size;
 	uint32_t read_offset;
-	std::vector<uint8_t> read_buffer;
+	V_FileData read_buffer;
 
-	// FTP:Write not implemented in FW
+	// FTP:Write
+	uint32_t write_offset;
+	V_FileData write_buffer;
+	V_FileData::iterator write_it;
 
-	// Timeouts
-	static constexpr int LIST_TIMEOUT_MS = 15000;
-	static constexpr int OPEN_TIMEOUT_MS = 500;
-	static constexpr int CHUNK_TIMEOUT_MS = 500;
+	// Timeouts,
+	// computed as x4 time that needed for transmission of
+	// one message at 57600 baud rate
+	static constexpr int LIST_TIMEOUT_MS = 5000;
+	static constexpr int OPEN_TIMEOUT_MS = 200;
+	static constexpr int CHUNK_TIMEOUT_MS = 200;
 
 	//! Maximum difference between allocated space and used
 	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
 
-	//! @todo write support
 	//! @todo exchange speed calculation
 	//! @todo diagnostics
 
@@ -337,6 +347,7 @@ private:
 		case OP_LIST: handle_ack_list(req);	break;
 		case OP_OPEN: handle_ack_open(req);	break;
 		case OP_READ: handle_ack_read(req);	break;
+		case OP_WRITE: handle_ack_write(req);	break;
 		default:
 			ROS_ERROR_NAMED("ftp", "FTP: wrong op_state");
 			go_idle(true, EBADRQC);
@@ -432,16 +443,9 @@ private:
 	void handle_ack_open(FTPRequest &req) {
 		auto hdr = req.header();
 
-		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Open SZ(%u)", hdr->size);
-		ROS_ASSERT(hdr->size == 0 || hdr->size == sizeof(uint32_t));
-		if (hdr->size == sizeof(uint32_t)) {
-			// kCmdOpenFile ACK
-			open_size = *req.data_u32();
-		}
-		else if (hdr->size == 0) {
-			// kCmdCreateFile ACK
-			open_size = 0;
-		}
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Open OPCODE(%u)", hdr->req_opcode);
+		ROS_ASSERT(hdr->size == sizeof(uint32_t));
+		open_size = *req.data_u32();
 
 		ROS_DEBUG_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
 				open_path.c_str(), hdr->session, open_size);
@@ -482,6 +486,40 @@ private:
 			read_file_end();
 	}
 
+	void handle_ack_write(FTPRequest &req) {
+		auto hdr = req.header();
+
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Write SZ(%u)", hdr->size);
+		if (hdr->session != active_session) {
+			ROS_ERROR_NAMED("ftp", "FTP:Write unexpected session");
+			go_idle(true, EBADSLT);
+			return;
+		}
+
+		if (hdr->offset != write_offset) {
+			ROS_ERROR_NAMED("ftp", "FTP:Write different offset");
+			go_idle(true, EBADE);
+			return;
+		}
+
+		// check that reported size not out of range
+		const size_t bytes_left_before_advance = std::distance(write_it, write_buffer.end());
+		ROS_ASSERT_MSG(hdr->size <= bytes_left_before_advance, "Bad write size");
+		ROS_ASSERT(hdr->size != 0);
+
+		// move iterator to written size
+		std::advance(write_it, hdr->size);
+
+		const size_t bytes_to_copy = write_bytes_to_copy();
+		if (bytes_to_copy > 0) {
+			// More data to write
+			write_offset += bytes_to_copy;
+			send_write_command(bytes_to_copy);
+		}
+		else
+			write_file_end();
+	}
+
 	/* -*- send helpers -*- */
 
 	/**
@@ -519,20 +557,25 @@ private:
 		req.send(uas, last_send_seqnr);
 	}
 
-	void send_open_command() {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdOpenFile: " << open_path);
-		FTPRequest req(FTPRequest::kCmdOpenFile);
+	/// Send any command with zero offset and string payload (usually file/dir path)
+	inline void send_any_path_command(FTPRequest::Opcode op, const std::string debug_msg, std::string &path) {
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: " << debug_msg << path);
+		FTPRequest req(op);
 		req.header()->offset = 0;
-		req.set_data_string(open_path);
+		req.set_data_string(path);
 		req.send(uas, last_send_seqnr);
 	}
 
+	void send_open_ro_command() {
+		send_any_path_command(FTPRequest::kCmdOpenFileRO, "kCmdOpenFileRO: ", open_path);
+	}
+
+	void send_open_wo_command() {
+		send_any_path_command(FTPRequest::kCmdOpenFileWO, "kCmdOpenFileWO: ", open_path);
+	}
+
 	void send_create_command() {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdCreateFile: " << open_path);
-		FTPRequest req(FTPRequest::kCmdCreateFile);
-		req.header()->offset = 0;
-		req.set_data_string(open_path);
-		req.send(uas, last_send_seqnr);
+		send_any_path_command(FTPRequest::kCmdCreateFile, "kCmdCreateFile: ", open_path);
 	}
 
 	void send_terminate_command(uint32_t session) {
@@ -552,28 +595,26 @@ private:
 		req.send(uas, last_send_seqnr);
 	}
 
-	void send_remove_command(std::string path) {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRemoveFile: " << path);
-		FTPRequest req(FTPRequest::kCmdRemoveFile);
-		req.header()->offset = 0;
-		req.set_data_string(path);
+	void send_write_command(const size_t bytes_to_copy) {
+		// write chunk from write_buffer [write_it..bytes_to_copy]
+		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdWriteFile: " << active_session << " off: " << write_offset << " sz: " << bytes_to_copy);
+		FTPRequest req(FTPRequest::kCmdWriteFile, active_session);
+		req.header()->offset = write_offset;
+		req.header()->size = bytes_to_copy;
+		std::copy(write_it, write_it + bytes_to_copy, req.data());
 		req.send(uas, last_send_seqnr);
+	}
+
+	void send_remove_command(std::string path) {
+		send_any_path_command(FTPRequest::kCmdRemoveFile, "kCmdRemoveFile: ", path);
 	}
 
 	void send_create_dir_command(std::string path) {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdCreateDirectory: " << path);
-		FTPRequest req(FTPRequest::kCmdCreateDirectory);
-		req.header()->offset = 0;
-		req.set_data_string(path);
-		req.send(uas, last_send_seqnr);
+		send_any_path_command(FTPRequest::kCmdCreateDirectory, "kCmdCreateDirectory: ", path);
 	}
 
 	void send_remove_dir_command(std::string path) {
-		ROS_DEBUG_STREAM_NAMED("ftp", "FTP:m: kCmdRemoveDirectory: " << path);
-		FTPRequest req(FTPRequest::kCmdRemoveDirectory);
-		req.header()->offset = 0;
-		req.set_data_string(path);
-		req.send(uas, last_send_seqnr);
+		send_any_path_command(FTPRequest::kCmdRemoveDirectory, "kCmdRemoveDirectory: ", path);
 	}
 
 	/* how to open existing file to write? */
@@ -630,11 +671,15 @@ private:
 		op_state = OP_OPEN;
 
 		if (mode == mavros::FileOpenRequest::MODE_READ)
-			send_open_command();
-		//else if (mode == mavros::FileOpenRequest::MODE_WRITE)
-		//	send_create_command();
+			send_open_ro_command();
+		else if (mode == mavros::FileOpenRequest::MODE_WRITE)
+			send_open_wo_command();
+		else if (mode == mavros::FileOpenRequest::MODE_CREATE)
+			send_create_command();
 		else {
+			ROS_ERROR_NAMED("ftp", "FTP: Unsupported open mode: %d", mode);
 			op_state = OP_IDLE;
+			r_errno = EINVAL;
 			return false;
 		}
 
@@ -645,6 +690,7 @@ private:
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Close %s: not opened", path.c_str());
+			r_errno = EBADF;
 			return false;
 		}
 
@@ -663,6 +709,7 @@ private:
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read %s: not opened", path.c_str());
+			r_errno = EBADF;
 			return false;
 		}
 
@@ -681,6 +728,29 @@ private:
 		return true;
 	}
 
+	void write_file_end() {
+		ROS_DEBUG_NAMED("ftp", "FTP:Write done");
+		go_idle(false);
+	}
+
+	bool write_file(std::string path, size_t off, V_FileData &data) {
+		auto it = session_file_map.find(path);
+		if (it == session_file_map.end()) {
+			ROS_ERROR_NAMED("ftp", "FTP:Write %s: not opened", path.c_str());
+			r_errno = EBADF;
+			return false;
+		}
+
+		op_state = OP_WRITE;
+		active_session = it->second;
+		write_offset = off;
+		write_buffer = std::move(data);
+		write_it = write_buffer.begin();
+
+		send_write_command(write_bytes_to_copy());
+		return true;
+	}
+
 	void remove_file(std::string path) {
 		op_state = OP_ACK;
 		send_remove_command(path);
@@ -696,8 +766,13 @@ private:
 		send_remove_dir_command(path);
 	}
 
-	static constexpr int read_compute_timeout(size_t len) {
-		return CHUNK_TIMEOUT_MS * (len + 1) / FTPRequest::DATA_MAXSZ;
+	static constexpr int compute_rw_timeout(size_t len) {
+		return CHUNK_TIMEOUT_MS * (len / FTPRequest::DATA_MAXSZ + 1);
+	}
+
+	size_t write_bytes_to_copy() {
+		return std::min<size_t>(std::distance(write_it, write_buffer.end()),
+				FTPRequest::DATA_MAXSZ);
 	}
 
 	bool wait_completion(const int msecs) {
@@ -755,13 +830,12 @@ private:
 			return false;
 		}
 
-		res.r_errno = EINVAL;
 		res.success = open_file(req.file_path, req.mode);
 		if (res.success) {
 			res.success = wait_completion(OPEN_TIMEOUT_MS);
-			res.r_errno = r_errno;
 			res.size = open_size;
 		}
+		res.r_errno = r_errno;
 
 		return true;
 	}
@@ -771,8 +845,10 @@ private:
 		SERVICE_IDLE_CHECK();
 
 		res.success = close_file(req.file_path);
-		if (res.success)
+		if (res.success) {
 			res.success = wait_completion(OPEN_TIMEOUT_MS);
+		}
+		res.r_errno = r_errno;
 
 		return true;
 	}
@@ -781,16 +857,29 @@ private:
 			mavros::FileRead::Response &res) {
 		SERVICE_IDLE_CHECK();
 
-		res.r_errno = EINVAL;
 		res.success = read_file(req.file_path, req.offset, req.size);
-		if (res.success) {
-			res.success = wait_completion(read_compute_timeout(req.size));
-			res.r_errno = r_errno;
-		}
+		if (res.success)
+			res.success = wait_completion(compute_rw_timeout(req.size));
 		if (res.success) {
 			res.data = std::move(read_buffer);
 			read_buffer.clear();	// same as for list_entries
 		}
+		res.r_errno = r_errno;
+
+		return true;
+	}
+
+	bool write_cb(mavros::FileWrite::Request &req,
+			mavros::FileWrite::Response &res) {
+		SERVICE_IDLE_CHECK();
+
+		const size_t data_size = req.data.size();
+		res.success = write_file(req.file_path, req.offset, req.data);
+		if (res.success) {
+			res.success = wait_completion(compute_rw_timeout(data_size));
+		}
+		write_buffer.clear();
+		res.r_errno = r_errno;
 
 		return true;
 	}
