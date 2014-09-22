@@ -41,6 +41,7 @@
 #include <mavros/FileMakeDir.h>
 #include <mavros/FileRemoveDir.h>
 #include <mavros/FileTruncate.h>
+#include <mavros/FileRename.h>
 
 // enable debugging messages
 #define FTP_LL_DEBUG
@@ -82,6 +83,7 @@ public:
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
 		kCmdOpenFileWO,		///< Opens file at <path> for writing, returns <session>
 		kCmdTruncateFile,	///< Truncate file at <path> to <offset> length
+		kCmdRename,		///< Rename <path1> to <path2>
 
 		kRspAck = 128,		///< Ack response
 		kRspNak			///< Nak response
@@ -124,19 +126,19 @@ public:
 		return reinterpret_cast<uint32_t *>(header()->data);
 	}
 
-	char *data_c_str() {
-		// force null-termination
-		if (header()->size < DATA_MAXSZ)
-			data()[header()->size] = '\0';
-		else
-			data()[DATA_MAXSZ - 1] = '\0';
-
-		return data_c();
-	}
-
+	/**
+	 * @brief Copy string to payload
+	 *
+	 * @param[in] s  payload string
+	 * @note this function allow null termination inside string
+	 *       it used to send multiple strings in one message
+	 */
 	void set_data_string(std::string &s) {
-		strncpy(data_c(), s.c_str(), DATA_MAXSZ - 1);
-		header()->size = strnlen(data_c(), DATA_MAXSZ);
+		size_t sz = (s.size() < DATA_MAXSZ - 1)? s.size() : DATA_MAXSZ - 1;
+
+		memcpy(data_c(), s.c_str(), sz);
+		data_c()[sz] = '\0';
+		header()->size = sz;
 	}
 
 	uint8_t get_target_system_id() {
@@ -232,6 +234,7 @@ public:
 		remove_srv = ftp_nh.advertiseService("remove", &FTPPlugin::remove_cb, this);
 		truncate_srv = ftp_nh.advertiseService("truncate", &FTPPlugin::truncate_cb, this);
 		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
+		rename_srv = ftp_nh.advertiseService("rename", &FTPPlugin::rename_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -255,6 +258,7 @@ private:
 	ros::ServiceServer mkdir_srv;
 	ros::ServiceServer rmdir_srv;
 	ros::ServiceServer remove_srv;
+	ros::ServiceServer rename_srv;
 	ros::ServiceServer truncate_srv;
 	ros::ServiceServer reset_srv;
 
@@ -606,19 +610,35 @@ private:
 		req.send(uas, last_send_seqnr);
 	}
 
-	void send_remove_command(std::string path) {
+	void send_remove_command(std::string &path) {
 		send_any_path_command(FTPRequest::kCmdRemoveFile, "kCmdRemoveFile: ", path, 0);
 	}
 
-	void send_truncate_command(std::string path, size_t length) {
+	bool send_rename_command(std::string &old_path, std::string &new_path) {
+		std::ostringstream os;
+		os << old_path;
+		os << '\0';
+		os << new_path;
+
+		std::string paths = os.str();
+		if (paths.size() >= FTPRequest::DATA_MAXSZ) {
+			ROS_ERROR_NAMED("ftp", "FTP: rename file paths is too long: %zu", paths.size());
+			return false;
+		}
+
+		send_any_path_command(FTPRequest::kCmdRename, "kCmdRename: ", paths, 0);
+		return true;
+	}
+
+	void send_truncate_command(std::string &path, size_t length) {
 		send_any_path_command(FTPRequest::kCmdTruncateFile, "kCmdTruncateFile: ", path, length);
 	}
 
-	void send_create_dir_command(std::string path) {
+	void send_create_dir_command(std::string &path) {
 		send_any_path_command(FTPRequest::kCmdCreateDirectory, "kCmdCreateDirectory: ", path, 0);
 	}
 
-	void send_remove_dir_command(std::string path) {
+	void send_remove_dir_command(std::string &path) {
 		send_any_path_command(FTPRequest::kCmdRemoveDirectory, "kCmdRemoveDirectory: ", path, 0);
 	}
 
@@ -661,7 +681,7 @@ private:
 		go_idle(false);
 	}
 
-	void list_directory(std::string path) {
+	void list_directory(std::string &path) {
 		list_offset = 0;
 		list_path = path;
 		list_entries.clear();
@@ -670,7 +690,7 @@ private:
 		send_list_command();
 	}
 
-	bool open_file(std::string path, int mode) {
+	bool open_file(std::string &path, int mode) {
 		open_path = path;
 		open_size = 0;
 		op_state = OP_OPEN;
@@ -691,7 +711,7 @@ private:
 		return true;
 	}
 
-	bool close_file(std::string path) {
+	bool close_file(std::string &path) {
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Close %s: not opened", path.c_str());
@@ -710,7 +730,7 @@ private:
 		go_idle(false);
 	}
 
-	bool read_file(std::string path, size_t off, size_t len) {
+	bool read_file(std::string &path, size_t off, size_t len) {
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read %s: not opened", path.c_str());
@@ -738,7 +758,7 @@ private:
 		go_idle(false);
 	}
 
-	bool write_file(std::string path, size_t off, V_FileData &data) {
+	bool write_file(std::string &path, size_t off, V_FileData &data) {
 		auto it = session_file_map.find(path);
 		if (it == session_file_map.end()) {
 			ROS_ERROR_NAMED("ftp", "FTP:Write %s: not opened", path.c_str());
@@ -756,22 +776,27 @@ private:
 		return true;
 	}
 
-	void remove_file(std::string path) {
+	void remove_file(std::string &path) {
 		op_state = OP_ACK;
 		send_remove_command(path);
 	}
 
-	void truncate_file(std::string path, size_t length) {
+	bool rename_(std::string &old_path, std::string &new_path) {
+		op_state = OP_ACK;
+		return send_rename_command(old_path, new_path);
+	}
+
+	void truncate_file(std::string &path, size_t length) {
 		op_state = OP_ACK;
 		send_truncate_command(path, length);
 	}
 
-	void create_directory(std::string path) {
+	void create_directory(std::string &path) {
 		op_state = OP_ACK;
 		send_create_dir_command(path);
 	}
 
-	void remove_directory(std::string path) {
+	void remove_directory(std::string &path) {
 		op_state = OP_ACK;
 		send_remove_dir_command(path);
 	}
@@ -904,6 +929,20 @@ private:
 
 		return true;
 	}
+
+	bool rename_cb(mavros::FileRename::Request &req,
+			mavros::FileRename::Response &res) {
+		SERVICE_IDLE_CHECK();
+
+		res.success = rename_(req.old_path, req.new_path);
+		if (res.success) {
+			res.success = wait_completion(OPEN_TIMEOUT_MS);
+		}
+		res.r_errno = r_errno;
+
+		return true;
+	}
+
 
 	bool truncate_cb(mavros::FileTruncate::Request &req,
 			mavros::FileTruncate::Response &res) {
