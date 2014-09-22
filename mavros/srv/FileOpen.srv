@@ -1,16 +1,12 @@
 # FTP::Open
 #
-# :file_path:	used as session id in all other services
+# :file_path:	used as session id in read/write/close services
 # :size:	file size returned for MODE_READ
 # :success:	indicates success end of request
 # :r_errno:	remote errno if applicapable
 
-# 2014.09.01 Notes:
-# Current PX4 implementation don't allow anything except
-# read file or list dir.
-
 uint8 MODE_READ = 0	# open for read
-uint8 MODE_WRITE = 1	# open for write (not supported)
+uint8 MODE_WRITE = 1	# open for write
 uint8 MODE_CREATE = 2	# do creat()
 
 string file_path

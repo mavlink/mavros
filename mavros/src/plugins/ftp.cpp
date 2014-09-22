@@ -45,7 +45,7 @@
 #include <mavros/FileChecksum.h>
 
 // enable debugging messages
-#define FTP_LL_DEBUG
+//#define FTP_LL_DEBUG
 
 namespace mavplugin {
 
@@ -474,7 +474,7 @@ private:
 		ROS_ASSERT(hdr->size == sizeof(uint32_t));
 		open_size = *req.data_u32();
 
-		ROS_DEBUG_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
+		ROS_INFO_NAMED("ftp", "FTP:Open %s: success, session %u, size %zu",
 				open_path.c_str(), hdr->session, open_size);
 		session_file_map.insert(std::make_pair(open_path, hdr->session));
 		go_idle(false);
@@ -675,8 +675,6 @@ private:
 	void send_calc_file_crc32_command(std::string &path) {
 		send_any_path_command(FTPRequest::kCmdCalcFileCRC32, "kCmdCalcFileCRC32: ", path, 0);
 	}
-
-	/* how to open existing file to write? */
 
 	/* -*- helpers -*- */
 

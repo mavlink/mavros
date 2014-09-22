@@ -1,4 +1,4 @@
-# FTP:Checksum
+# FTP::Checksum
 #
 # :file_path:	file to calculate checksum
 # :crc32:	file checksum
