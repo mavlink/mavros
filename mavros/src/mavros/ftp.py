@@ -163,7 +163,6 @@ def ftp_unlink(path, ns="/mavros"):
         raise IOError(str(ex))
 
     _check_raise_errno(ret)
-    return ret.list
 
 
 def ftp_mkdir(path, ns="/mavros"):
@@ -202,7 +201,7 @@ def ftp_rename(old_path, new_path, ns="/mavros"):
 def ftp_checksum(path, ns="/mavros"):
     """Calculate CRC32 for :path:"""
     try:
-        checksum_cl = rospy.ServiceProxy(ns + "/ftp/rename", FileChecksum)
+        checksum_cl = rospy.ServiceProxy(ns + "/ftp/checksum", FileChecksum)
         ret = checksum_cl(file_path=path)
     except rospy.ServiceException as ex:
         raise IOError(str(ex))

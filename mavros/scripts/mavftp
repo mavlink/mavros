@@ -26,13 +26,6 @@ from mavros.utils import *
 from mavros.ftp import *
 
 
-def check_ret(operation, ret):
-    if not ret.success:
-        fault(operation, "failed:", os.strerror(ret.r_errno))
-
-# -*- subcommand handlers -*-
-
-
 def do_list(args):
     rospy.init_node("mavftp", anonymous=True)
 
@@ -79,7 +72,18 @@ def do_rmdir(args):
 
 
 def do_upload(args):
-    raise NotImplementedError
+    rospy.init_node("mavftp", anonymous=True)
+
+    mode = 'cw' if args.no_overwrite else 'w'
+
+    with args.file as from_fd:
+        with FTPFile(args.path, mode) as to_fd:
+            while True:
+                buf = from_fd.read(1024)
+                if len(buf) == 0:
+                    break;
+
+                to_fd.write(buf)
 
 
 def main():
@@ -113,6 +117,7 @@ def main():
     upload_args.set_defaults(func=do_upload)
     upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
     upload_args.add_argument('path', type=str, help="save path")
+    upload_args.add_argument('-n', '--no-overwrite', action="store_true", help="do not overwrite existing file")
 
     reset_args = subarg.add_parser('reset', help="reset")
     reset_args.set_defaults(func=do_reset)
