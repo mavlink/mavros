@@ -36,15 +36,7 @@ def check_ret(operation, ret):
 def do_list(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    try:
-        list_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/list", FileList)
-        ret = list_cl(dir_path=args.path)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    check_ret("List", ret)
-
-    for ent in ret.list:
+    for ent in ftp_listdir(args.path, args.mavros_ns):
         n = ent.name
         if ent.type == FileEntry.TYPE_DIRECTORY:
             n += '/'
@@ -65,47 +57,29 @@ def do_cat(args):
 def do_remove(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    try:
-        remove_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/remove", FileRemove)
-        ret = remove_cl(file_path=args.path)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    check_ret("Remove", ret)
+    ftp_unlink(args.path, args.mavros_ns)
 
 
 def do_reset(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    try:
-        reset_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/reset", Empty)
-        reset_cl()
-    except rospy.ServiceException as ex:
-        fault(ex)
+    ftp_reset_server(args.mavros_ns)
 
 
 def do_mkdir(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    try:
-        mkdir_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/mkdir", FileMakeDir)
-        ret = mkdir_cl(dir_path=args.path)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    check_ret("Mkdir", ret)
+    ftp_mkdir(args.path, args.mavros_ns)
 
 
 def do_rmdir(args):
     rospy.init_node("mavftp", anonymous=True)
 
-    try:
-        rmdir_cl = rospy.ServiceProxy(args.mavros_ns + "/ftp/rmdir", FileRemoveDir)
-        ret = rmdir_cl(dir_path=args.path)
-    except rospy.ServiceException as ex:
-        fault(ex)
+    ftp_rmdir(args.path, args.mavros_ns)
 
-    check_ret("Rmdir", ret)
+
+def do_upload(args):
+    raise NotImplementedError
 
 
 def main():
@@ -134,6 +108,11 @@ def main():
     rmdir_args = subarg.add_parser('rmdir', help="remove directory")
     rmdir_args.set_defaults(func=do_rmdir)
     rmdir_args.add_argument('path', type=str, help="dir path")
+
+    upload_args = subarg.add_parser('upload', help="upload file")
+    upload_args.set_defaults(func=do_upload)
+    upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
+    upload_args.add_argument('path', type=str, help="save path")
 
     reset_args = subarg.add_parser('reset', help="reset")
     reset_args.set_defaults(func=do_reset)

@@ -23,7 +23,13 @@ import rospy
 from std_srvs.srv import Empty
 from mavros.msg import FileEntry
 from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
-    FileMakeDir, FileRemoveDir, FileRemove, FileWrite, FileTruncate
+    FileMakeDir, FileRemoveDir, FileRemove, FileWrite, FileTruncate, FileRename, \
+    FileChecksum
+
+
+def _check_raise_errno(ret):
+        if not ret.success:
+            raise IOError(ret.r_errno, os.strerror(ret.r_errno))
 
 
 class FTPFile(object):
@@ -35,10 +41,6 @@ class FTPFile(object):
 
     def __del__(self):
         self.close()
-
-    def _check_raise_errno(self, ret):
-        if not ret.success:
-            raise IOError(os.strerror(ret.r_errno))
 
     def open(self, path, mode):
         """
@@ -62,7 +64,7 @@ class FTPFile(object):
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 
-        self._check_raise_errno(ret)
+        _check_raise_errno(ret)
 
         self._read_cl = rospy.ServiceProxy(self.mavros_ns + "/ftp/read", FileRead)
         self._write_cl = rospy.ServiceProxy(self.mavros_ns + "/ftp/write", FileWrite)
@@ -83,7 +85,7 @@ class FTPFile(object):
             raise IOError(str(ex))
 
         self.name = None
-        self._check_raise_errno(ret)
+        _check_raise_errno(ret)
 
     def read(self, size=1):
         try:
@@ -91,7 +93,7 @@ class FTPFile(object):
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 
-        self._check_raise_errno(ret)
+        _check_raise_errno(ret)
         self.offset += len(ret.data)
         return bytearray(ret.data)
 
@@ -102,7 +104,7 @@ class FTPFile(object):
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 
-        self._check_raise_errno(ret)
+        _check_raise_errno(ret)
         self.offset += data_len
         if self.offset > self.size:
             self.size = self.offset
@@ -127,7 +129,7 @@ class FTPFile(object):
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 
-        self._check_raise_errno(ret)
+        _check_raise_errno(ret)
 
     @property
     def closed(self):
@@ -138,3 +140,80 @@ class FTPFile(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+
+def ftp_listdir(path, ns="/mavros"):
+    """List directory :path: contents"""
+    try:
+        list_cl = rospy.ServiceProxy(ns + "/ftp/list", FileList)
+        ret = list_cl(dir_path=path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+    return ret.list
+
+
+def ftp_unlink(path, ns="/mavros"):
+    """Remove :path: file"""
+    try:
+        remove_cl = rospy.ServiceProxy(ns + "/ftp/remove", FileRemove)
+        ret = remove_cl(file_path=path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+    return ret.list
+
+
+def ftp_mkdir(path, ns="/mavros"):
+    """Create directory :path:"""
+    try:
+        mkdir_cl = rospy.ServiceProxy(ns + "/ftp/mkdir", FileMakeDir)
+        ret = mkdir_cl(dir_path=path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+
+
+def ftp_rmdir(path, ns="/mavros"):
+    """Remove directory :path:"""
+    try:
+        rmdir_cl = rospy.ServiceProxy(ns + "/ftp/rmdir", FileRemoveDir)
+        ret = rmdir_cl(dir_path=path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+
+
+def ftp_rename(old_path, new_path, ns="/mavros"):
+    """Rename :old_path: to :new_path:"""
+    try:
+        rename_cl = rospy.ServiceProxy(ns + "/ftp/rename", FileRename)
+        ret = rename_cl(old_path=old_path, new_path=new_path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+
+
+def ftp_checksum(path, ns="/mavros"):
+    """Calculate CRC32 for :path:"""
+    try:
+        checksum_cl = rospy.ServiceProxy(ns + "/ftp/rename", FileChecksum)
+        ret = checksum_cl(file_path=path)
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
+
+    _check_raise_errno(ret)
+    return ret.crc32
+
+
+def ftp_reset_server(ns="/mavros"):
+    try:
+        reset_cl = rospy.ServiceProxy(ns + "/ftp/reset", Empty)
+        reset_cl()
+    except rospy.ServiceException as ex:
+        raise IOError(str(ex))
