@@ -531,7 +531,7 @@ private:
 		const size_t bytes_to_copy = write_bytes_to_copy();
 		if (bytes_to_copy > 0) {
 			// More data to write
-			write_offset += bytes_to_copy;
+			write_offset += hdr->size;
 			send_write_command(bytes_to_copy);
 		}
 		else
