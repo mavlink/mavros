@@ -42,6 +42,7 @@
 #include <mavros/FileRemoveDir.h>
 #include <mavros/FileTruncate.h>
 #include <mavros/FileRename.h>
+#include <mavros/FileChecksum.h>
 
 // enable debugging messages
 #define FTP_LL_DEBUG
@@ -84,6 +85,7 @@ public:
 		kCmdOpenFileWO,		///< Opens file at <path> for writing, returns <session>
 		kCmdTruncateFile,	///< Truncate file at <path> to <offset> length
 		kCmdRename,		///< Rename <path1> to <path2>
+		kCmdCalcFileCRC32,	///< Calculate CRC32 for file at <path>
 
 		kRspAck = 128,		///< Ack response
 		kRspNak			///< Nak response
@@ -235,6 +237,7 @@ public:
 		truncate_srv = ftp_nh.advertiseService("truncate", &FTPPlugin::truncate_cb, this);
 		reset_srv = ftp_nh.advertiseService("reset", &FTPPlugin::reset_cb, this);
 		rename_srv = ftp_nh.advertiseService("rename", &FTPPlugin::rename_cb, this);
+		checksum_srv = ftp_nh.advertiseService("checksum", &FTPPlugin::checksum_cb, this);
 	}
 
 	std::string const get_name() const {
@@ -261,6 +264,7 @@ private:
 	ros::ServiceServer rename_srv;
 	ros::ServiceServer truncate_srv;
 	ros::ServiceServer reset_srv;
+	ros::ServiceServer checksum_srv;
 
 	//! This type used in servicies to store 'data' fileds.
 	typedef std::vector<uint8_t> V_FileData;
@@ -271,7 +275,8 @@ private:
 		OP_LIST,
 		OP_OPEN,
 		OP_READ,
-		OP_WRITE
+		OP_WRITE,
+		OP_CHECKSUM
 	};
 
 	OpState op_state;
@@ -302,6 +307,9 @@ private:
 	uint32_t write_offset;
 	V_FileData write_buffer;
 	V_FileData::iterator write_it;
+
+	// FTP:CalcCRC32
+	uint32_t checksum_crc32;
 
 	// Timeouts,
 	// computed as x4 time that needed for transmission of
@@ -351,12 +359,13 @@ private:
 
 	void handle_req_ack(FTPRequest &req) {
 		switch (op_state) {
-		case OP_IDLE: send_reset();		break;
-		case OP_ACK:  go_idle(false);		break;
-		case OP_LIST: handle_ack_list(req);	break;
-		case OP_OPEN: handle_ack_open(req);	break;
-		case OP_READ: handle_ack_read(req);	break;
-		case OP_WRITE: handle_ack_write(req);	break;
+		case OP_IDLE:		send_reset();			break;
+		case OP_ACK:		go_idle(false);			break;
+		case OP_LIST:		handle_ack_list(req);		break;
+		case OP_OPEN:		handle_ack_open(req);		break;
+		case OP_READ:		handle_ack_read(req);		break;
+		case OP_WRITE:		handle_ack_write(req);		break;
+		case OP_CHECKSUM:	handle_ack_checksum(req);	break;
 		default:
 			ROS_ERROR_NAMED("ftp", "FTP: wrong op_state");
 			go_idle(true, EBADRQC);
@@ -529,6 +538,17 @@ private:
 			write_file_end();
 	}
 
+	void handle_ack_checksum(FTPRequest &req) {
+		auto hdr = req.header();
+
+		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK CalcFileCRC32 OPCODE(%u)", hdr->req_opcode);
+		ROS_ASSERT(hdr->size == sizeof(uint32_t));
+		checksum_crc32 = *req.data_u32();
+
+		ROS_DEBUG_NAMED("ftp", "FTP:Checksum: success, crc32: 0x%08x", checksum_crc32);
+		go_idle(false);
+	}
+
 	/* -*- send helpers -*- */
 
 	/**
@@ -640,6 +660,10 @@ private:
 
 	void send_remove_dir_command(std::string &path) {
 		send_any_path_command(FTPRequest::kCmdRemoveDirectory, "kCmdRemoveDirectory: ", path, 0);
+	}
+
+	void send_calc_file_crc32_command(std::string &path) {
+		send_any_path_command(FTPRequest::kCmdCalcFileCRC32, "kCmdCalcFileCRC32: ", path, 0);
 	}
 
 	/* how to open existing file to write? */
@@ -799,6 +823,12 @@ private:
 	void remove_directory(std::string &path) {
 		op_state = OP_ACK;
 		send_remove_dir_command(path);
+	}
+
+	void checksum_crc32_file(std::string &path) {
+		op_state = OP_CHECKSUM;
+		checksum_crc32 = 0;
+		send_calc_file_crc32_command(path);
 	}
 
 	static constexpr int compute_rw_timeout(size_t len) {
@@ -973,6 +1003,18 @@ private:
 
 		remove_directory(req.dir_path);
 		res.success = wait_completion(OPEN_TIMEOUT_MS);
+		res.r_errno = r_errno;
+
+		return true;
+	}
+
+	bool checksum_cb(mavros::FileChecksum::Request &req,
+			mavros::FileChecksum::Response &res) {
+		SERVICE_IDLE_CHECK();
+
+		checksum_crc32_file(req.file_path);
+		res.success = wait_completion(LIST_TIMEOUT_MS);
+		res.crc32 = checksum_crc32;
 		res.r_errno = r_errno;
 
 		return true;
