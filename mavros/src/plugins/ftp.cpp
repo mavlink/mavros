@@ -321,7 +321,6 @@ private:
 	//! Maximum difference between allocated space and used
 	static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
 
-	//! @todo translete nack's to errno
 	//! @todo exchange speed calculation
 	//! @todo diagnostics
 
@@ -375,14 +374,24 @@ private:
 	void handle_req_nack(FTPRequest &req) {
 		auto hdr = req.header();
 		auto error_code = static_cast<FTPRequest::ErrorCode>(req.data()[0]);
-		int req_errno = 0;
 		OpState prev_op = op_state;
 
 		ROS_ASSERT(hdr->size == 1 || (error_code == FTPRequest::kErrFailErrno && hdr->size == 2));
 
 		op_state = OP_IDLE;
 		if (error_code == FTPRequest::kErrFailErrno)
-			r_errno = req_errno = req.data()[1];
+			r_errno = req.data()[1];
+		// translate other protocol errors to errno
+		else if (error_code == FTPRequest::kErrFail)
+			r_errno = EFAULT;
+		else if (error_code == FTPRequest::kErrInvalidDataSize)
+			r_errno = EMSGSIZE;
+		else if (error_code == FTPRequest::kErrInvalidSession)
+			r_errno = EBADFD;
+		else if (error_code == FTPRequest::kErrNoSessionsAvailable)
+			r_errno = EMFILE;
+		else if (error_code == FTPRequest::kErrUnknownCommand)
+			r_errno = ENOSYS;
 
 		if (prev_op == OP_LIST && error_code == FTPRequest::kErrEOF) {
 			/* dir list done */
@@ -396,7 +405,7 @@ private:
 		}
 
 		ROS_ERROR_NAMED("ftp", "FTP: NAK: %u Opcode: %u State: %u Errno: %d (%s)",
-				error_code, hdr->req_opcode, prev_op, req_errno, strerror(req_errno));
+				error_code, hdr->req_opcode, prev_op, r_errno, strerror(r_errno));
 		go_idle(true);
 	}
 
@@ -643,6 +652,7 @@ private:
 		std::string paths = os.str();
 		if (paths.size() >= FTPRequest::DATA_MAXSZ) {
 			ROS_ERROR_NAMED("ftp", "FTP: rename file paths is too long: %zu", paths.size());
+			r_errno = ENAMETOOLONG;
 			return false;
 		}
 
