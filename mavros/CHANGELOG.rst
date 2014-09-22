@@ -2,6 +2,149 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2014-09-22)
+------------------
+* plugin: ftp: Disable debugging and change level for some log messages.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Translate protocol errors to errno.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* scripts: mavftp: Add upload subcommand.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* python: Add more ftp utils.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Fix write offset calculation.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add FTP:Checksum.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add support for FTP:Rename.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* python: Add FTP:Truncate
+* plugin: ftp: Add FTP:Truncate call.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* python: Move common mission classes to mavros.mission module.
+  Issue `#157 <https://github.com/vooon/mavros/issues/157>`_.
+* python: Move useful utils to mavros.param module.
+  Issue `#157 <https://github.com/vooon/mavros/issues/157>`_.
+* python: Move common utils to mavros.utils module.
+  Issue `#157 <https://github.com/vooon/mavros/issues/157>`_.
+* python: Create python module for ftp utils.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_, `#157 <https://github.com/vooon/mavros/issues/157>`_.
+* scripts: ftp: Implement file-like object for IO.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implement write file.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* scripts: mavftp: Add remove subcommand.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add FTP:Remove call.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add response errno from server.
+* plugin: ftp: Add support for 'Skip' list entries.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* scripts: mavftp: Add mkdir/rmdir support.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add mkdir/rmdir support.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugins: ftp: Update protocol headers.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* Revert "Update package.xml format to REP140 (2)."
+  This reverts commit 81286eb84090a95759591cfab89dd9718ff35b7e.
+  ROS Hydro don't fully support REP140: rospack can't find plugin
+  descriptions.
+  Fix `#151 <https://github.com/vooon/mavros/issues/151>`_.
+* scripts: mavwp: Fix --follow mode
+* plugin: imu_pub: Fix RAW_IMU/SCALED_IMU angular scale constant.
+  Fix `#152 <https://github.com/vooon/mavros/issues/152>`_.
+* launch: remove px4_local_gcs.launch again.
+  It removed in 826be386938c2735c9dab72283ba4ac1c68dc860,
+  but accidentally returned.
+* extras: launch: Use includes.
+  Fix `#144 <https://github.com/vooon/mavros/issues/144>`_.
+* launch: PX4: use node.launch in PX4 scripts.
+  Also remove px4_local_gcs.launch: please use
+  `roslaunch mavros px4.launch gcs_url:=udp://@localhost` instead.
+  Issue `#144 <https://github.com/vooon/mavros/issues/144>`_.
+* launch: APM2: Add node.launch and update apm scripts to use it.
+  Issue `#144 <https://github.com/vooon/mavros/issues/144>`_.
+* plugin: command: Fix CommandInt x,y types.
+* Update package.xml format to REP140 (2).
+  Fix `#104 <https://github.com/vooon/mavros/issues/104>`_.
+* launch: Blacklist FTP for APM.
+* scripts: mavwp: Add decoding for some DO-* mission items.
+* scripts: mavwp: Add preserve home location option at load operation.
+  Useful if FCU stores home location in WP0 (APM).
+* Added src location.
+* Updated README wstool instructions.
+* plugin: ftp: Init ctor
+* service: mavftp: Initial import.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implemnet reset call.
+  Sometimes kCmdReset can restore normal operation,
+  but it might be dangerous.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implement FTP:Read call.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Fix open error.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implement FTP:Open (read) and FTP:Close.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implement FTP:List method.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Implement list parsing
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Fix CRC32 calculation.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add plugin skeleton.
+  Based on QGroundContol QGCUASFileManager.h/cc.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: ftp: Add size info
+* plugin: ftp: Add plugin service API.
+  Issue `#128 <https://github.com/vooon/mavros/issues/128>`_.
+* plugin: vfr_hud: Initial import.
+  Also this plugin publish APM specific WIND estimation message.
+  Fix `#86 <https://github.com/vooon/mavros/issues/86>`_.
+* node: coverity fails at UAS initilizer list
+* plugin: setpoint_attitude: Init ctor, remove code dup.
+* cmake: Add check MAVLINK_DIALECT value
+  Fix `#139 <https://github.com/vooon/mavros/issues/139>`_.
+* Move common cmake rules to modules.
+  Same mech as in `cmake_modules` package.
+  Issue `#139 <https://github.com/vooon/mavros/issues/139>`_.
+* launch: corrected launch for gcs bridge
+* scripts: mavsetp: Fix misprint.
+* launch files: added px4 launch files for connection with radio and gcs
+* scripts: mavsetp: Fix twist.angular vector construction.
+  Small style fix.
+* Update doxygen documentation.
+  Add split lines in UAS, and make UAS.connection atomic.
+  Add rosdoc configuration for mavros_extras.
+* scripts: mavsetp: corrected API; added possibility of parse angles in dg or rad
+* scripts: mavsetp: corrected msg API; mavteleop: added prefix to rc override
+* scripts: mavsetp: added local accel; corrected how the OFFBOARD mode is swtch.
+* scripts: mavsetp: changed the way offboard mode is switched
+* node: init ctor (coverity)
+* nodelib: add std::array header
+* return msg generator deps for mavconn
+* scripts: mavsys: Implement set rate command.
+* scripts: Add mavsys tool.
+  Implented only `mode` operation.
+  Issue `#134 <https://github.com/vooon/mavros/issues/134>`_.
+* plugin: sys_status: Implement set_mode service.
+  Previous command shortcut removed.
+  Issue `#136 <https://github.com/vooon/mavros/issues/136>`_, `#134 <https://github.com/vooon/mavros/issues/134>`_.
+* node: Implement reverse mode lookup.
+  Issue `#136 <https://github.com/vooon/mavros/issues/136>`_.
+* plugin: sys_status: Move custom mode decoder to UAS.
+  Issue `#136 <https://github.com/vooon/mavros/issues/136>`_.
+* node: Catch URL open exception.
+  Also update connection pointer type.
+* nodelib: move sources to subdir
+* node: Move UAS to mavros namespace
+* node: Move node code to library.
+* node: Catch DeviceError; use C++11 foreach shugar.
+* plugin: command: Add COMMAND_INT suport.
+  Fix `#98 <https://github.com/vooon/mavros/issues/98>`_.
+* Contributors: Nuno Marques, Tony Baltovski, Vladimir Ermakov
+
 0.7.1 (2014-08-25)
 ------------------
 * plugins: setpoint: Update SET_POSITION_TARGET_LOCAL_NED message.
