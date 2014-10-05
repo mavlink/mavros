@@ -529,18 +529,21 @@ private:
 			return;
 		}
 
+		ROS_ASSERT(hdr->size == sizeof(uint32_t));
+		const size_t bytes_written = *req.data_u32();
+
 		// check that reported size not out of range
 		const size_t bytes_left_before_advance = std::distance(write_it, write_buffer.end());
-		ROS_ASSERT_MSG(hdr->size <= bytes_left_before_advance, "Bad write size");
-		ROS_ASSERT(hdr->size != 0);
+		ROS_ASSERT_MSG(bytes_written <= bytes_left_before_advance, "Bad write size");
+		ROS_ASSERT(bytes_written != 0);
 
 		// move iterator to written size
-		std::advance(write_it, hdr->size);
+		std::advance(write_it, bytes_written);
 
 		const size_t bytes_to_copy = write_bytes_to_copy();
 		if (bytes_to_copy > 0) {
 			// More data to write
-			write_offset += hdr->size;
+			write_offset += bytes_written;
 			send_write_command(bytes_to_copy);
 		}
 		else
