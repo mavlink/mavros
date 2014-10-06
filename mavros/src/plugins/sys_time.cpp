@@ -51,7 +51,7 @@ public:
 		//timer for sending time sync messages
 		if (conn_system_time_d > 0.0) {
 			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
-					&SystemStatusPlugin::sys_time_cb, this);
+					&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
 		
@@ -131,8 +131,8 @@ private:
 		//offset publisher
 		sensor_msgs::TimeReferencePtr time_offset = boost::make_shared<sensor_msgs::TimeReference>();
 		ros::Time time_ref(
-				time_offset / 1000,	// t_sec
-				time_offset * 1000);	// t_nsec
+				time_offset/1000,	// t_sec
+				time_offset*1000);	// t_nsec
 
 		time_offset->source = time_ref_source;
 		time_offset->time_ref = time_ref;
