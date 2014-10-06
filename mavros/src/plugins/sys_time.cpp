@@ -44,6 +44,8 @@ public:
 		
 		uas = &uas_;		
 
+		double conn_system_time_d;
+		
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		
 		//timer for sending time sync messages
@@ -104,11 +106,11 @@ private:
 		if(dt > 2000 || dt < -2000) //2 sec
 		{
 		ROS_WARN_THROTTLE_NAMED(60, "time", "Large clock skew detected. Resyncing clocks");
-		time_offset = ((time_unix_usec/1000) - mtime.time_boot_ms));
+		time_offset = (time_unix_usec/1000) - mtime.time_boot_ms;
 		}
 		else
 		{
-		time_offset = (time_offset + ((time_unix_usec/1000) - mtime.time_boot_ms)))/2; 
+		time_offset = (time_offset + ((time_unix_usec/1000) - mtime.time_boot_ms))/2; 
 		}
 
 		if(fcu_unix_valid) //continious publish for ntpd
