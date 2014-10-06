@@ -1,9 +1,8 @@
 /**
- * @brief Dummy plugin
- * @file dummy.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @brief System Time plugin
+ * @file sys_time.cpp
+ * @author M.H.Kabir mhkabir98@gmail.com>
  *
- * @example dummy.cpp
  * @addtogroup plugin
  * @{
  */
