@@ -33,10 +33,15 @@ class SystemTimePlugin : public MavRosPlugin {
 public:
 	SystemTimePlugin():
 	uas(nullptr)	
-	 {
+	 {};
+
+	void initialize(UAS &uas,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
+	{
+		
 		uas = &uas_;		
-	
-		bool companion_reboot = true;
+
 		uint64_t time_offset;
 		bool fcu_unix_valid;
 		bool ros_unix_valid;
@@ -48,13 +53,7 @@ public:
 					&SystemStatusPlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
-
-	};
-
-	void initialize(UAS &uas,
-			ros::NodeHandle &nh,
-			diagnostic_updater::Updater &diag_updater)
-	{
+		
 		nh.param<std::string>("frame_id", frame_id, "fcu"); 
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);		
 
@@ -83,6 +82,8 @@ private:
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		
+		// We use 1/1/2011 as check for validity of UNIX time = 1293840000 s
+		
 		mavlink_system_time_t mtime;
 		mavlink_msg_system_time_decode(msg, &mtime);
 
@@ -95,21 +96,12 @@ private:
 
 		if(dt > 2000 || dt < -2000) //2 sec
 		{
-		ROS_WARN_THROTTLE_NAMED(60, "time", "Companion reboot / clock skew");
-		companion_reboot = true;
+		ROS_WARN_THROTTLE_NAMED(60, "time", "Large clock skew detected. Resyncing clocks");
+		time_offset = ((time_unix_usec/1000) - mtime.time_boot_ms));
 		}
 		else
 		{
 		time_offset = (time_offset + ((time_unix_usec/1000) - mtime.time_boot_ms)))/2; 
-		companion_reboot = false;
-		}
-
-		// px4 incoming msgs ADD
-		if(companion_reboot)
-		{
-		ROS_WARN_THROTTLE_NAMED(60, "time", "Large clock skew detected. Resyncing clocks");
-		time_offset = ((time_unix_usec/1000) - mtime.time_boot_ms));
-		companion_reboot = false;
 		}
 
 		if(fcu_unix_valid) //continious publish for ntpd
@@ -145,10 +137,10 @@ private:
 	void sys_time_cb(const ros::TimerEvent &event) {
 		mavlink_message_t msg;
 
-		time_unix_usec = ros::Time::now().toNSec() / 1000;
+		time_unix_usec = ros::Time::now().toNSec() / 1000;  //nano -> micro 
 		
 		mavlink_msg_system_time_pack_chan(UAS_PACK_CHAN(uas), &msg,
-			time_unix_usec, /* nano -> micro */
+			time_unix_usec, 
 			0
 			);
 		UAS_FCU(uas)->send_message(&msg);
