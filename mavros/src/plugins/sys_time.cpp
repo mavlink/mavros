@@ -42,11 +42,6 @@ public:
 		
 		uas = &uas_;		
 
-		uint64_t time_offset;
-		bool fcu_unix_valid;
-		bool ros_unix_valid;
-		uint64_t time_unix_usec;
-
 		//timer for sending time sync messages
 		if (conn_system_time_d > 0.0) {
 			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
@@ -75,7 +70,15 @@ public:
 	}
 
 private:
-	ros::Timer sys_time_timer;	
+	UAS *uas;
+	
+	
+	uint64_t time_offset;
+	bool fcu_unix_valid;
+	bool ros_unix_valid;
+	uint64_t time_unix_usec;
+	
+	ros::Timer sys_time_timer;		
 
 	ros::Publisher time_ref_pub;
 	ros::Publisher time_offset_pub;
