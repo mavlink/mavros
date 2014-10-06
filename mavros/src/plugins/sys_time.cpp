@@ -27,6 +27,8 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
+#include <sensor_msgs/TimeReference.h>
+
 namespace mavplugin {
 
 class SystemTimePlugin : public MavRosPlugin {
@@ -35,13 +37,15 @@ public:
 	uas(nullptr)	
 	 {};
 
-	void initialize(UAS &uas,
+	void initialize(UAS &uas_,
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		
 		uas = &uas_;		
 
+		nh.param("conn_system_time", conn_system_time_d, 0.0);
+		
 		//timer for sending time sync messages
 		if (conn_system_time_d > 0.0) {
 			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
@@ -52,11 +56,9 @@ public:
 		nh.param<std::string>("frame_id", frame_id, "fcu"); 
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);		
 
-		nh.param("conn_system_time", conn_system_time_d, 0.0);
-
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 		time_offset_pub = nh.advertise<sensor_msgs::TimeReference>("time_offset", 10);
-	};
+	}
 
 	
 	std::string const get_name() const {
@@ -65,13 +67,12 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time);
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
 		};
 	}
 
 private:
 	UAS *uas;
-	
 	
 	uint64_t time_offset;
 	bool fcu_unix_valid;
@@ -82,6 +83,9 @@ private:
 
 	ros::Publisher time_ref_pub;
 	ros::Publisher time_offset_pub;
+	
+	std::string frame_id;
+	std::string time_ref_source;
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		
@@ -94,7 +98,7 @@ private:
 
 		int64_t dt = ((time_unix_usec/1000) - mtime.time_boot_ms) - time_offset ;
 		
-		fcu_unix_valid = mtime.tv_sec > 1293840000; 
+		fcu_unix_valid = (mtime.time_unix_usec/1000) > 1293840000; 
 		ros_unix_valid = (time_unix_usec/1000) > 1293840000;
 
 		if(dt > 2000 || dt < -2000) //2 sec
