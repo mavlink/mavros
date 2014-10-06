@@ -185,6 +185,7 @@ target_link_libraries(mavros
 add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
+  src/plugins/sys_time.cpp
   src/plugins/imu_pub.cpp
   src/plugins/gps.cpp
   src/plugins/param.cpp
