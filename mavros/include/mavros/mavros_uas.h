@@ -272,6 +272,15 @@ public:
 		return fix_status;
 	}
 
+	/* -*- time sync -*- */
+	inline void set_time_offset(uint64_t offset) {
+		time_offset = offset;
+	}
+
+	inline uint64_t get_time_offset(void) {
+		return time_offset;
+	}
+
 	/* -*- utils -*- */
 
 	/**
@@ -314,6 +323,16 @@ public:
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
+	/**
+	 * @brief Compute FCU message time from time_boot_ms field
+	 *
+	 * Uses time_offset for calculation
+	 *
+	 * @todo
+	 * @return FCU time if if is known else current wall time.
+	 */
+	//ros::Time fcu_time(uint32_t time_boot_ms);
+
 private:
 	std::recursive_mutex mutex;
 	std::atomic<uint8_t> type;
@@ -330,6 +349,7 @@ private:
 	double gps_eph;
 	double gps_epv;
 	std::atomic<bool> fix_status;
+	std::atomic<uint64_t> time_offset;
 };
 
 }; // namespace mavros

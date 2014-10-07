@@ -124,6 +124,7 @@ private:
 
 		offset->data = time_ref;
 
+		uas->set_time_offset(time_offset);
 		time_offset_pub.publish(offset);
 	}
 
