@@ -28,6 +28,7 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <sensor_msgs/TimeReference.h>
+#include <std_msgs/Duration.h>
 
 namespace mavplugin {
 
@@ -59,7 +60,7 @@ public:
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);		
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
-		time_offset_pub = nh.advertise<sensor_msgs::TimeReference>("time_offset", 10);
+		time_offset_pub = nh.advertise<std_msgs::Duration>("time_offset", 10);
 	}
 
 	
@@ -129,17 +130,14 @@ private:
 		}
 
 		//offset publisher
-		sensor_msgs::TimeReferencePtr time_offset = boost::make_shared<sensor_msgs::TimeReference>();
+		std_msgs::DurationPtr offset = boost::make_shared<std_msgs::Duration>();
 		ros::Time time_ref(
 				time_offset/1000,	// t_sec
 				time_offset*1000);	// t_nsec
 
-		time_offset->source = time_ref_source;
-		time_offset->time_ref = time_ref;
-		time_offset->header.frame_id = time_ref_source;
-		time_offset->header.stamp = ros::Time::now();
+		offset->data = time_ref;
 
-		time_offset_pub.publish(time_offset);
+		time_offset_pub.publish(offset);
 
 	}
 
@@ -161,4 +159,3 @@ private:
 }; // namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SystemTimePlugin, mavplugin::MavRosPlugin)
-
