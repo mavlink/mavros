@@ -28,4 +28,4 @@ px-ros-pkg replacement
 Use `roslaunch mavros_extras px4flow.launch` for that.
 
 
-[mr]: https://github.com/vooon/mavros
+[mr]: https://github.com/mavlink/mavros

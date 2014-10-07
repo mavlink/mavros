@@ -23,9 +23,9 @@ CI Statuses
 
   - ROS Hydro: [![Hydro build status](http://jenkins.ros.org/buildStatus/icon?job=devel-hydro-mavros)](http://jenkins.ros.org/job/devel-hydro-mavros/)
   - ROS Indigo: [![Indigo build status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-mavros)](http://jenkins.ros.org/job/devel-indigo-mavros/)
-  - Travis Hydro (PX4): [![Hydro px4 status](https://travis-ci.org/vooon/mavros.svg?branch=master)](https://travis-ci.org/vooon/mavros)
-  - Travis Hydro (Coverity Scan): [![Hydro scan status](https://travis-ci.org/vooon/mavros.svg?branch=coverity_scan)](https://travis-ci.org/vooon/mavros)
+  - Travis Hydro (PX4): [![Hydro px4 status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
+  - Travis Hydro (Coverity Scan): [![Hydro scan status](https://travis-ci.org/mavlink/mavros.svg?branch=coverity_scan)](https://travis-ci.org/mavlink/mavros)
 
 
-[mrrm]: https://github.com/vooon/mavros/blob/master/mavros/README.md
-[exrm]: https://github.com/vooon/mavros/blob/master/mavros_extras/README.md
+[mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
+[exrm]: https://github.com/mavlink/mavros/blob/master/mavros_extras/README.md

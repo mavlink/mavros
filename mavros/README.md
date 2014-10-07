@@ -117,7 +117,7 @@ Installation
 Use `wstool` utility for installation. In your workspace do:
 
     wstool init src (if not already initialized)
-    wstool set -t src mavros --git https://github.com/vooon/mavros.git
+    wstool set -t src mavros --git https://github.com/mavlink/mavros.git
     wstool update -t src
     rosdep install --from-paths src --ignore-src --rosdistro hydro -y
 
@@ -168,8 +168,8 @@ Links
 [boost]: http://www.boost.org/
 [ml]: http://mavlink.org/mavlink/start
 [dp]: https://github.com/arthurbenemann/droidplanner/
-[mlgbp]: https://github.com/vooon/mavlink-gbp-release
-[iss35]: https://github.com/vooon/mavros/issues/35
+[mlgbp]: https://github.com/mavlink/mavlink-gbp-release
+[iss35]: https://github.com/mavlink/mavros/issues/35
 [wiki]: http://wiki.ros.org/mavros
-[mrext]: https://github.com/vooon/mavros/tree/master/mavros_extras
+[mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
