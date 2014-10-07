@@ -7,7 +7,7 @@ env:
   global:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     #   via the "travis encrypt" command using the project repo's public key
-    - secure: "ORA0MsiEB+R3pk8qKFRllVDK7eEQGo0LoRy6VtdyU0SOw00lEWCSD8FFJM922H5e18ZME9fIfc0ttKvbEhRwPx/AUCME+0lLkcHmogc7UyB8Gu6yqXfcp0XLVKPeLK/9+9geFmb5v9P0CH3cX4PYzimzt1ay0BVfomXX4+NkipE="
+    - secure: "ieyA/jKHN1rVAQ8qFvXx6wdcUozFR5QBxUpQuEcItl4yv0bPnRp0xO9X/BhNFt6V85L8jEw9XNz4uHTUeAtghZZxpKCQ8de1NP49d7boyCTLQx/WsJ/bSPubAZOcnvbi9SoOTyymM94jdA1k46ndznI1ZZ713uSrPdIcg6o8Q9A="
     #- ROS_DISTRO=hydro MAVLINK_DIALECT=ardupilotmega
     - ROS_DISTRO=hydro MAVLINK_DIALECT=pixhawk
 before_install:
@@ -52,7 +52,7 @@ after_failure:
 addons:
   coverity_scan:
     project:
-      name: "vooon/mavros"
+      name: "mavlink/mavros"
       description: "Build submitted via Travis CI"
     notification_email: vooon341@gmail.com
     build_command_prepend: "cd ~/ros/ws_$REPOSITORY_NAME/src/mavros && echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt && echo 'add_subdirectory(mavros)' >> CMakeLists.txt && echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt && cmake ."
