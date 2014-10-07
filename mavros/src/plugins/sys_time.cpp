@@ -131,7 +131,7 @@ private:
 
 		//offset publisher
 		std_msgs::DurationPtr offset = boost::make_shared<std_msgs::Duration>();
-		ros::Time time_ref(
+		ros::Duration time_ref(
 				time_offset/1000,	// t_sec
 				time_offset*1000);	// t_nsec
 
