@@ -128,7 +128,6 @@ public:
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GPSPlugin::handle_gps_raw_int),
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_STATUS, &GPSPlugin::handle_gps_status),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &GPSPlugin::handle_system_time),
 		};
 	}
 
@@ -219,28 +218,6 @@ private:
 		ROS_INFO_THROTTLE_NAMED(30, "gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
 	}
 
-	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_system_time_t mtime;
-		mavlink_msg_system_time_decode(msg, &mtime);
-
-		if (mtime.time_unix_usec == 0) {
-			ROS_WARN_THROTTLE_NAMED(60, "gps", "Wrong system time. Is GPS Ok? (boot_ms: %u)",
-					mtime.time_boot_ms);
-			return;
-		}
-
-		sensor_msgs::TimeReferencePtr time = boost::make_shared<sensor_msgs::TimeReference>();
-		ros::Time time_ref(
-				mtime.time_unix_usec / 1000000,			// t_sec
-				(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
-
-		time->source = time_ref_source;
-		time->time_ref = time_ref;
-		time->header.frame_id = time_ref_source;
-		time->header.stamp = ros::Time::now();
-
-		time_ref_pub.publish(time);
-	}
 };
 
 }; // namespace mavplugin

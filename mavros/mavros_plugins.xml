@@ -53,5 +53,8 @@
 	<class name="ftp" type="mavplugin::FTPPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Access to files on FCU via MAVLink-FTP.</description>
 	</class>
+	<class name="sys_time" type="mavplugin::SystemTimePlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Synchronise clocks with FCU.</description>
+	</class>
 </library>
 
