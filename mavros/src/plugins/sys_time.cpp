@@ -35,7 +35,8 @@ namespace mavplugin {
 class SystemTimePlugin : public MavRosPlugin {
 public:
 	SystemTimePlugin():
-		uas(nullptr)
+		uas(nullptr),
+		time_offset_ms(0)
 	{};
 
 	void initialize(UAS &uas_,
@@ -80,28 +81,30 @@ private:
 
 	std::string frame_id;
 	std::string time_ref_source;
-	uint64_t time_offset;
+	uint64_t time_offset_ms;
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
 		mavlink_msg_system_time_decode(msg, &mtime);
 
-		uint64_t time_unix_ms = ros::Time::now().toNSec() / 1000000;
-		int64_t dt = (time_unix_ms - mtime.time_boot_ms) - time_offset;
+		uint64_t now_ms = ros::Time::now().toNSec() / 1000000;
 
-		// We use 1/1/2011 as check for validity of UNIX time = 1293840000 s
-		bool fcu_unix_valid = (mtime.time_unix_usec / 1000) > 1293840000;
-		bool ros_unix_valid = time_unix_ms > 1293840000;
+		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
+		const bool fcu_time_valid = mtime.time_unix_usec > 1234567890L * 1000000;
+		const bool ros_time_valid = now_ms > 1234567890L * 1000;
 
+		int64_t offset_ms = now_ms - mtime.time_boot_ms;
+		int64_t dt = offset_ms - time_offset_ms;
 		if (std::abs(dt) > 2000 /* milliseconds */) {
-			ROS_WARN_THROTTLE_NAMED(10, "time", "Large clock skew detected. Resyncing clocks.");
-			time_offset = time_unix_ms - mtime.time_boot_ms;
+			ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Large clock skew detected (%0.3f s). "
+					"Resyncing clocks.", dt / 1000.0);
+			time_offset_ms = offset_ms;
 		}
 		else {
-			time_offset = (time_offset + (time_unix_ms - mtime.time_boot_ms)) / 2;
+			time_offset_ms = (time_offset_ms + offset_ms) / 2;
 		}
 
-		if (fcu_unix_valid) {
+		if (fcu_time_valid) {
 			// continious publish for ntpd
 			sensor_msgs::TimeReferencePtr time_unix = boost::make_shared<sensor_msgs::TimeReference>();
 			ros::Time time_ref(
@@ -110,28 +113,30 @@ private:
 
 			time_unix->source = time_ref_source;
 			time_unix->time_ref = time_ref;
-			time_unix->header.frame_id = time_ref_source;
 			time_unix->header.stamp = ros::Time::now();
 
 			time_ref_pub.publish(time_unix);
+		}
+		else {
+			ROS_WARN_THROTTLE_NAMED(60, "time", "TM: Wrong GPS time.");
 		}
 
 		// offset publisher
 		std_msgs::DurationPtr offset = boost::make_shared<std_msgs::Duration>();
 		ros::Duration time_ref(
-				time_offset / 1000,			// t_sec
-				(time_offset % 1000) * 1000000);	// t_nsec
+				time_offset_ms / 1000,			// t_sec
+				(time_offset_ms % 1000) * 1000000);	// t_nsec
 
 		offset->data = time_ref;
 
-		uas->set_time_offset(time_offset);
+		uas->set_time_offset(time_offset_ms);
 		time_offset_pub.publish(offset);
 	}
 
 	void sys_time_cb(const ros::TimerEvent &event) {
 		mavlink_message_t msg;
 
-		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;  //nano -> micro
+		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;  // nano -> micro
 
 		mavlink_msg_system_time_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				time_unix_usec,
