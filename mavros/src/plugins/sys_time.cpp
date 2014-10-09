@@ -194,8 +194,8 @@ private:
 		uint64_t now_ms = ros::Time::now().toNSec() / 1000000;
 
 		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
-		const bool fcu_time_valid = mtime.time_unix_usec > 1234567890L * 1000000;
-		const bool ros_time_valid = now_ms > 1234567890L * 1000;
+		const bool fcu_time_valid = mtime.time_unix_usec > 1234567890ULL * 1000000;
+		const bool ros_time_valid = now_ms > 1234567890ULL * 1000;
 
 		int64_t offset_us = (now_ms - mtime.time_boot_ms) * 1000;
 		int64_t dt = offset_us - time_offset_us;
