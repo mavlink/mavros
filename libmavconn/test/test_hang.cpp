@@ -12,10 +12,10 @@
 
 #include <ros/ros.h>
 
-#include <mavros/mavconn_interface.h>
-#include <mavros/mavconn_serial.h>
-#include <mavros/mavconn_udp.h>
-//#include <mavros/mavconn_tcp.h>
+#include <mavconn/interface.h>
+#include <mavconn/serial.h>
+#include <mavconn/udp.h>
+//#include <mavconn/tcp.h>
 
 using namespace mavconn;
 

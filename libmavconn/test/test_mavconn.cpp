@@ -16,10 +16,10 @@
 #include <chrono>
 #include <condition_variable>
 
-#include <mavros/mavconn_interface.h>
-#include <mavros/mavconn_serial.h>
-#include <mavros/mavconn_udp.h>
-#include <mavros/mavconn_tcp.h>
+#include <mavconn/interface.h>
+#include <mavconn/serial.h>
+#include <mavconn/udp.h>
+#include <mavconn/tcp.h>
 
 using namespace mavconn;
 
@@ -55,7 +55,7 @@ public:
 	int8_t message_id;
 
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) {
-		ROS_DEBUG("Got message %d, len: %d", message->msgid, message->len);
+		//ROS_DEBUG("Got message %d, len: %d", message->msgid, message->len);
 		message_id = message->msgid;
 		cond.notify_one();
 	}
@@ -240,7 +240,7 @@ TEST(URL, open_url_tcp)
 }
 
 int main(int argc, char **argv){
-	ros::init(argc, argv, "mavconn_test", ros::init_options::AnonymousName);
+	//ros::init(argc, argv, "mavconn_test", ros::init_options::AnonymousName);
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }

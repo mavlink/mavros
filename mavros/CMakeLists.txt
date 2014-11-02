@@ -258,10 +258,10 @@ install(DIRECTORY launch/
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-if(TARGET mavconn-test)
-  target_link_libraries(mavconn-test mavconn)
-endif()
+#catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
+#if(TARGET mavconn-test)
+#  target_link_libraries(mavconn-test mavconn)
+#endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
