@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   angles
   libmavconn
+  rosconsole_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -155,6 +156,7 @@ add_library(mavros
   src/lib/uas.cpp
   src/lib/mavros.cpp
   src/lib/mavlink_diag.cpp
+  src/lib/rosconsole_bridge.cpp
 )
 add_dependencies(mavros
   mavros_generate_messages_cpp
