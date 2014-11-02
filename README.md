@@ -18,6 +18,13 @@ mavros\_extras package
 This package contain some extra nodes and plugins for mavros, please see it's [README][exrm].
 
 
+libmavconn package
+------------------
+
+This package contain mavconn library, see it's [README][libmc].
+MAVConn may be used outside of ROS environment.
+
+
 CI Statuses
 -----------
 
@@ -29,3 +36,4 @@ CI Statuses
 
 [mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
 [exrm]: https://github.com/mavlink/mavros/blob/master/mavros_extras/README.md
+[libmc]: https://github.com/mavlink/mavros/blob/master/libmavconn/README.md

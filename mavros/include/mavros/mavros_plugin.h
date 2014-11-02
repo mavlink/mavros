@@ -29,7 +29,7 @@
 
 #include <map>
 #include <diagnostic_updater/diagnostic_updater.h>
-#include <mavros/mavconn_interface.h>
+#include <mavconn/interface.h>
 #include <mavros/mavros_uas.h>
 
 namespace mavplugin {

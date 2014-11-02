@@ -27,7 +27,7 @@
 #pragma once
 
 #include <diagnostic_updater/diagnostic_updater.h>
-#include <mavros/mavconn_interface.h>
+#include <mavconn/interface.h>
 
 namespace mavros {
 

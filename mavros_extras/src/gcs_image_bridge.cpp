@@ -25,7 +25,7 @@
 #include <ros/console.h>
 
 #include <mavros/utils.h>
-#include <mavros/mavconn_interface.h>
+#include <mavconn/interface.h>
 
 #include <mavros/Mavlink.h>
 

@@ -1,6 +1,6 @@
 /**
  * @brief MAVConn TCP link classes
- * @file mavconn_tcp.cpp
+ * @file tcp.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn

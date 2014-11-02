@@ -30,7 +30,7 @@
 #include <array>
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
-#include <mavros/mavconn_interface.h>
+#include <mavconn/interface.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/mavlink_diag.h>
 

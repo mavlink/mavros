@@ -29,7 +29,7 @@
 #include <mutex>
 #include <atomic>
 #include <tf/transform_datatypes.h>
-#include <mavros/mavconn_interface.h>
+#include <mavconn/interface.h>
 
 namespace mavros {
 
