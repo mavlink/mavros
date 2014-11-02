@@ -29,8 +29,8 @@
 #include <list>
 #include <atomic>
 #include <boost/asio.hpp>
-#include <mavros/mavconn_interface.h>
-#include <mavros/mavconn_msgbuffer.h>
+#include <mavconn/interface.h>
+#include <mavconn/msgbuffer.h>
 
 namespace mavconn {
 

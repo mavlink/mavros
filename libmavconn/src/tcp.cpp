@@ -24,17 +24,18 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <mavros/utils.h>
-#include <mavros/mavconn_tcp.h>
-#include <ros/console.h>
-#include <ros/assert.h>
-#include <boost/make_shared.hpp>
+#include <cassert>
+#include <console_bridge/console.h>
+
+#include <mavconn/thread_utils.h>
+#include <mavconn/tcp.h>
 
 namespace mavconn {
 using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
+using mavutils::to_string_cs;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
@@ -50,11 +51,11 @@ static bool resolve_address_tcp(io_service &io, std::string host, unsigned short
 			ep = q_ep;
 			ep.port(port);
 			result = true;
-			ROS_DEBUG_STREAM_NAMED("mavconn", "tcp: host " << host << " resolved as " << ep);
+			logDebug("tcp: host %s resolved as %s", host.c_str(), to_string_cs(ep));
 		});
 
 	if (ec) {
-		ROS_WARN_STREAM_NAMED("mavconn", "tcp: resolve error: " << ec.message());
+		logWarn("tcp: resolve error: %s", ec.message().c_str());
 		result = false;
 	}
 
@@ -75,7 +76,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_tcp(io_service, server_host, server_port, server_ep))
 		throw DeviceError("tcp: resolve", "Bind address resolve failed");
 
-	ROS_INFO_STREAM_NAMED("mavconn", "tcp" << channel << ": Server address: " << server_ep);
+	logInform("tcp%d: Server address: %s", channel, to_string_cs(server_ep));
 
 	try {
 		socket.open(tcp::v4());
@@ -103,9 +104,8 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 }
 
 void MAVConnTCPClient::client_connected(int server_channel) {
-	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << server_channel <<
-			": Got client, channel: " << channel <<
-			", address: " << server_ep);
+	logInform("tcp-l%d: Got client, channel: %d, address: %s",
+			server_channel, channel, to_string_cs(server_ep));
 
 	// start recv
 	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_recv, this));
@@ -138,7 +138,7 @@ void MAVConnTCPClient::close() {
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "tcp%d:send: channel closed!", channel);
+		logError("tcp%d:send: channel closed!", channel);
 		return;
 	}
 
@@ -152,14 +152,14 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 
 void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	ROS_ASSERT(message != nullptr);
+	assert(message != nullptr);
 
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "tcp%d:send: channel closed!", channel);
+		logError("tcp%d:send: channel closed!", channel);
 		return;
 	}
 
-	ROS_DEBUG_NAMED("mavconn", "tcp%d:send: Message-ID: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+	logDebug("tcp%d:send: Message-ID: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 			channel, message->msgid, message->len, sysid, compid);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
@@ -186,14 +186,14 @@ void MAVConnTCPClient::async_receive_end(error_code error, size_t bytes_transfer
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":receive: " << error.message());
+		logError("tcp%d:receive: %s", channel, error.message().c_str());
 		close();
 		return;
 	}
 
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			ROS_DEBUG_NAMED("mavconn", "tcp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+			logDebug("tcp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 					channel, message.msgid, message.len, message.sysid, message.compid);
 
 			/* emit */ message_received(&message, message.sysid, message.compid);
@@ -225,7 +225,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp" << channel << ":sendto: " << error.message());
+		logError("tcp%d:sendto: %s", channel, error.message().c_str());
 		close();
 		return;
 	}
@@ -261,8 +261,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_tcp(io_service, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
 
-	ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
-			": Bind address: " << bind_ep);
+	logInform("tcp-l%d: Bind address: %s", channel, to_string_cs(bind_ep));
 
 	try {
 		acceptor.open(tcp::v4());
@@ -292,7 +291,7 @@ void MAVConnTCPServer::close() {
 	if (!is_open())
 		return;
 
-	ROS_INFO_NAMED("mavconn", "tcp-l%d: Terminating server. "
+	logInform("tcp-l%d: Terminating server. "
 			"All connections will be closed.", channel);
 
 	io_service.stop();
@@ -337,7 +336,7 @@ void MAVConnTCPServer::do_accept()
 void MAVConnTCPServer::async_accept_end(error_code error)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "tcp-l" << channel << ":accept: " << error.message());
+		logError("tcp-l%d:accept: ", channel, error.message().c_str());
 		close();
 		return;
 	}
@@ -365,9 +364,8 @@ void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_inst
 {
 	if (auto instp = weak_instp.lock()) {
 		bool locked = mutex.try_lock();
-		ROS_INFO_STREAM_NAMED("mavconn", "tcp-l" << channel <<
-				": Client connection closed, channel: " << instp->channel <<
-				", address: " << instp->server_ep);
+		logInform("tcp-l%d: Client connection closed, channel: %d, address: %s",
+				channel, instp->channel, to_string_cs(instp->server_ep));
 
 		client_list.remove(instp);
 

@@ -1,6 +1,6 @@
 /**
  * @brief MAVConn class interface
- * @file mavconn_interface.h
+ * @file interface.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn
@@ -32,6 +32,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
+#include <boost/smart_ptr.hpp>
 #include <boost/system/system_error.hpp>
 
 #include <set>
@@ -39,7 +40,7 @@
 #include <thread>
 #include <memory>
 #include <sstream>
-#include <mavros/mavconn_mavlink.h>
+#include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
 namespace sig2 = boost::signals2;

@@ -1,6 +1,6 @@
 /**
  * @brief MAVConn message buffer class (internal)
- * @file mavconn_msgbuffer.h
+ * @file msgbuffer.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn
@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <mavros/mavconn_mavlink.h>
-#include <ros/assert.h>
+#include <cassert>
+#include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
 
@@ -54,7 +54,7 @@ struct MsgBuffer {
 	{
 		len = mavlink_msg_to_send_buffer(data, msg);
 		// paranoic check, it must be less than MAVLINK_MAX_PACKET_LEN
-		ROS_ASSERT(len < MAX_SIZE);
+		assert(len < MAX_SIZE);
 	}
 
 	/**
@@ -65,7 +65,7 @@ struct MsgBuffer {
 		pos(0),
 		len(nbytes)
 	{
-		ROS_ASSERT_MSG(0 < nbytes && nbytes < MAX_SIZE, "MsgBuffer overrun");
+		assert(0 < nbytes && nbytes < MAX_SIZE);
 		memcpy(data, bytes, nbytes);
 	}
 

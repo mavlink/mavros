@@ -25,16 +25,14 @@
  */
 
 #include <set>
-#include <mavros/mavconn_interface.h>
-#include <mavros/utils.h>
-#include <ros/console.h>
-#include <ros/assert.h>
-#include <ros/ros.h>
+#include <cassert>
+#include <console_bridge/console.h>
 
-#include <mavros/mavconn_msgbuffer.h>
-#include <mavros/mavconn_serial.h>
-#include <mavros/mavconn_udp.h>
-#include <mavros/mavconn_tcp.h>
+#include <mavconn/interface.h>
+#include <mavconn/msgbuffer.h>
+#include <mavconn/serial.h>
+#include <mavconn/udp.h>
+#include <mavconn/tcp.h>
 
 namespace mavconn {
 
@@ -50,7 +48,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	comp_id(component_id)
 {
 	channel = new_channel();
-	ROS_ASSERT_MSG(channel >= 0, "channel allocation failure");
+	assert(channel >= 0);
 }
 
 int MAVConnInterface::new_channel() {
@@ -59,19 +57,19 @@ int MAVConnInterface::new_channel() {
 
 	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
 		if (allocated_channels.count(chan) == 0) {
-			ROS_DEBUG_NAMED("mavconn", "Allocate new channel: %d", chan);
+			logDebug("Allocate new channel: %d", chan);
 			allocated_channels.insert(chan);
 			return chan;
 		}
 	}
 
-	ROS_ERROR_NAMED("mavconn", "channel overrun");
+	logError("channel overrun");
 	return -1;
 }
 
 void MAVConnInterface::delete_channel(int chan) {
 	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	ROS_DEBUG_NAMED("mavconn", "Freeing channel: %d", chan);
+	logDebug("Freeing channel: %d", chan);
 	allocated_channels.erase(allocated_channels.find(chan));
 }
 
@@ -151,14 +149,14 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	auto ids_it = std::search(query.begin(), query.end(),
 			ids_end.begin(), ids_end.end());
 	if (ids_it == query.end()) {
-		ROS_WARN_NAMED("mavconn", "URL: unknown query arguments");
+		logWarn("URL: unknown query arguments");
 		return;
 	}
 
 	std::advance(ids_it, ids_end.length());
 	auto comma_it = std::find(ids_it, query.end(), ',');
 	if (comma_it == query.end()) {
-		ROS_ERROR_NAMED("mavconn", "URL: no comma in ids= query");
+		logError("URL: no comma in ids= query");
 		return;
 	}
 
@@ -168,8 +166,7 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	sysid = std::stoi(sys);
 	compid = std::stoi(comp);
 
-	ROS_DEBUG_NAMED("mavconn", "URL: found system/component id = [%u, %u]",
-			sysid, compid);
+	logDebug("URL: found system/component id = [%u, %u]", sysid, compid);
 }
 
 static MAVConnInterface::Ptr url_parse_serial(
@@ -197,7 +194,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 	auto sep_it = std::find(hosts.begin(), hosts.end(), '@');
 	if (sep_it == hosts.end()) {
-		ROS_ERROR_NAMED("mavconn", "UDP URL should contain @!");
+		logError("UDP URL should contain @!");
 		throw DeviceError("url", "UDP separator not found");
 	}
 
@@ -262,7 +259,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			proto_end.begin(), proto_end.end());
 	if (proto_it == url.end()) {
 		// looks like file path
-		ROS_DEBUG_NAMED("mavconn", "URL: %s: looks like file path", url.c_str());
+		logDebug("URL: %s: looks like file path", url.c_str());
 		return url_parse_serial(url, "", system_id, component_id);
 	}
 
@@ -286,8 +283,9 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		++query_it;
 	query.assign(query_it, url.end());
 
-	ROS_DEBUG_NAMED("mavconn", "URL: %s: proto: %s, host: %s, path: %s, query: %s",
-			url.c_str(), proto.c_str(), host.c_str(), path.c_str(), query.c_str());
+	logDebug("URL: %s: proto: %s, host: %s, path: %s, query: %s",
+			url.c_str(), proto.c_str(), host.c_str(),
+			path.c_str(), query.c_str());
 
 	if (proto == "udp")
 		return url_parse_udp(host, query, system_id, component_id);

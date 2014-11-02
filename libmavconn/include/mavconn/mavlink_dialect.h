@@ -1,6 +1,6 @@
 /**
  * @brief MAVConn mavlink.h selector
- * @file mavconn_mavlink.h
+ * @file mavlink_dialect.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn

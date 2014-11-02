@@ -1,0 +1,2 @@
+- builder: doxygen
+  exclude_patterns: '*/.git/* */test/*'

@@ -1,6 +1,6 @@
 /**
  * @brief MAVConn Serial link class
- * @file mavconn_serial.cpp
+ * @file serial.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavconn
@@ -24,10 +24,11 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <mavros/utils.h>
-#include <mavros/mavconn_serial.h>
-#include <ros/console.h>
-#include <ros/assert.h>
+#include <cassert>
+#include <console_bridge/console.h>
+
+#include <mavconn/thread_utils.h>
+#include <mavconn/serial.h>
 
 namespace mavconn {
 using boost::system::error_code;
@@ -44,7 +45,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	serial_dev(io_service)
 {
-	ROS_INFO_STREAM_NAMED("mavconn", "serial" << channel << ": device: " << device << " @ " << baudrate << " bps");
+	logInform("serial%d: device: %s @ %d bps", channel, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
@@ -95,7 +96,7 @@ void MAVConnSerial::close() {
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "serial%d:send: channel closed!", channel);
+		logError("serial%d:send: channel closed!", channel);
 		return;
 	}
 
@@ -109,14 +110,14 @@ void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 
 void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	ROS_ASSERT(message != nullptr);
+	assert(message != nullptr);
 
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "serial%d:send: channel closed!", channel);
+		logError("serial%d:send: channel closed!", channel);
 		return;
 	}
 
-	ROS_DEBUG_NAMED("mavconn", "serial%d:send: Message-Id: %d [%d bytes]", channel, message->msgid, message->len);
+	logDebug("serial%d:send: Message-Id: %d [%d bytes]", channel, message->msgid, message->len);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
@@ -142,14 +143,14 @@ void MAVConnSerial::async_read_end(error_code error, size_t bytes_transferred)
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":receive: " << error.message());
+		logError("serial%d:receive: %s", channel, error.message().c_str());
 		close();
 		return;
 	}
 
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			ROS_DEBUG_NAMED("mavconn", "serial%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+			logDebug("serial%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 					channel, message.msgid, message.len, message.sysid, message.compid);
 
 			/* emit */ message_received(&message, message.sysid, message.compid);
@@ -181,7 +182,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
 void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "serial" << channel << ":write: " << error.message());
+		logError("serial%d:write: %s", channel, error.message().c_str());
 		close();
 		return;
 	}

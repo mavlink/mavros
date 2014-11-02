@@ -24,16 +24,18 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <mavros/utils.h>
-#include <mavros/mavconn_udp.h>
-#include <ros/console.h>
-#include <ros/assert.h>
+#include <cassert>
+#include <console_bridge/console.h>
+
+#include <mavconn/thread_utils.h>
+#include <mavconn/udp.h>
 
 namespace mavconn {
 using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
+using mavutils::to_string_cs;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
@@ -49,11 +51,11 @@ static bool resolve_address_udp(io_service &io, std::string host, unsigned short
 			ep = q_ep;
 			ep.port(port);
 			result = true;
-			ROS_DEBUG_STREAM_NAMED("mavconn", "udp: host " << host << " resolved as " << ep);
+			logDebug("udp: host %s resolved as %s", host.c_str(), to_string_cs(ep));
 		});
 
 	if (ec) {
-		ROS_WARN_STREAM_NAMED("mavconn", "udp: resolve error: " << ec.message());
+		logWarn("udp: resolve error: %s", ec.message().c_str());
 		result = false;
 	}
 
@@ -74,15 +76,15 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_udp(io_service, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	ROS_INFO_STREAM_NAMED("mavconn", "udp" << channel << ": Bind address: " << bind_ep);
+	logInform("udp%d: Bind address: %s", channel, to_string_cs(bind_ep));
 
 	if (remote_host != "") {
 		remote_exists = resolve_address_udp(io_service, remote_host, remote_port, remote_ep);
 
 		if (remote_exists)
-			ROS_INFO_STREAM_NAMED("mavconn", "udp" << channel << ": Remote address: " << remote_ep);
+			logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
 		else
-			ROS_WARN_NAMED("mavconn", "udp%d: Remote address resolve failed.", channel);
+			logWarn("udp%d: Remote address resolve failed.", channel);
 	}
 
 	try {
@@ -129,12 +131,12 @@ void MAVConnUDP::close() {
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "udp%d:send: channel closed!", channel);
+		logError("udp%d:send: channel closed!", channel);
 		return;
 	}
 
 	if (!remote_exists) {
-		ROS_DEBUG_NAMED("mavconn", "udp%d:send:: Remote not known, message dropped.", channel);
+		logDebug("udp%d:send: Remote not known, message dropped.", channel);
 		return;
 	}
 
@@ -148,19 +150,19 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 
 void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	ROS_ASSERT(message != nullptr);
+	assert(message != nullptr);
 
 	if (!is_open()) {
-		ROS_ERROR_THROTTLE_NAMED(10, "mavconn", "udp%d:send: channel closed!", channel);
+		logError("udp%d:send: channel closed!", channel);
 		return;
 	}
 
 	if (!remote_exists) {
-		ROS_DEBUG_NAMED("mavconn", "udp%d:send: Remote not known, message dropped.", channel);
+		logDebug("udp%d:send: Remote not known, message dropped.", channel);
 		return;
 	}
 
-	ROS_DEBUG_NAMED("mavconn", "udp%d:send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+	logDebug("udp%d:send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 			channel, message->msgid, message->len, sysid, compid);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
@@ -188,20 +190,20 @@ void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
 	mavlink_status_t status;
 
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":receive: " << error.message());
+		logError("udp%d:receive: %s", channel, error.message().c_str());
 		close();
 		return;
 	}
 
 	if (remote_ep != last_remote_ep) {
-		ROS_INFO_STREAM_NAMED("mavconn", "udp" << channel << ": Remote address: " << remote_ep);
+		logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
 		remote_exists = true;
 		last_remote_ep = remote_ep;
 	}
 
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			ROS_DEBUG_NAMED("mavconn", "udp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
+			logDebug("udp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
 					channel, message.msgid, message.len, message.sysid, message.compid);
 
 			/* emit */ message_received(&message, message.sysid, message.compid);
@@ -234,7 +236,7 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 {
 	if (error) {
-		ROS_ERROR_STREAM_NAMED("mavconn", "udp" << channel << ":sendto: " << error.message());
+		logError("udp%d:sendto: %s", channel, error.message().c_str());
 		close();
 		return;
 	}

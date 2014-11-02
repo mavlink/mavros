@@ -22,8 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
 
-# add package modules path, not needed in dependend packages
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(EnableCXX11)
 include(MavrosMavlink)
 
@@ -134,7 +132,6 @@ catkin_package(
   LIBRARIES mavconn mavros
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
   DEPENDS Boost mavlink
-  CFG_EXTRAS mavros-extras.cmake
 )
 
 ###########
@@ -152,20 +149,6 @@ include_directories(
   ${mavlink_INCLUDE_DIRS}
 )
 
-## Declare a cpp library
-add_library(mavconn
-  src/mavconn/mavconn_interface.cpp
-  src/mavconn/mavconn_serial.cpp
-  src/mavconn/mavconn_udp.cpp
-  src/mavconn/mavconn_tcp.cpp
-)
-add_dependencies(mavconn
-  mavros_generate_messages_cpp
-)
-target_link_libraries(mavconn
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
 
 add_library(mavros
   src/lib/uas.cpp
@@ -254,7 +237,7 @@ catkin_install_python(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavconn mavros mavros_plugins mavros_node gcs_bridge
+install(TARGETS mavros mavros_plugins mavros_node gcs_bridge
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -274,11 +257,6 @@ install(FILES
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
-
-## Install cmake files (thanks to cmake_modules package)
-install(DIRECTORY cmake/Modules
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
 )
 
 #############
