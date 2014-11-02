@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   tf
   angles
+  libmavconn
 )
 
 ## System dependencies are found with CMake's conventions
@@ -129,8 +130,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mavconn mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs
+  LIBRARIES mavros
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs libmavconn
   DEPENDS Boost mavlink
 )
 
@@ -157,10 +158,8 @@ add_library(mavros
 )
 add_dependencies(mavros
   mavros_generate_messages_cpp
-  mavconn
 )
 target_link_libraries(mavros
-  mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -190,7 +189,6 @@ add_dependencies(mavros_plugins
   mavros
 )
 target_link_libraries(mavros_plugins
-  mavconn
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -212,11 +210,7 @@ target_link_libraries(mavros_node
 add_executable(gcs_bridge
   src/gcs_bridge.cpp
 )
-add_dependencies(gcs_bridge
-  mavconn
-)
 target_link_libraries(gcs_bridge
-  mavconn
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

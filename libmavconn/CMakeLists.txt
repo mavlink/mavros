@@ -20,7 +20,7 @@ include(MavrosMavlink)
 ###################################
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES libmavconn
+  LIBRARIES mavconn
   DEPENDS Boost mavlink console_bridge
   CFG_EXTRAS libmavconn-extras.cmake
 )
@@ -31,7 +31,6 @@ catkin_package(
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
@@ -45,7 +44,6 @@ add_library(mavconn
   src/tcp.cpp
 )
 target_link_libraries(mavconn
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${console_bridge_LIBRARIES}
 )
