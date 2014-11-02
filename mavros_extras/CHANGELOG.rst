@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.1 (2014-11-02)
+------------------
+* mavconn `#161 <https://github.com/vooon/mavros/issues/161>`_: Fix headers used in mavros. Add readme.
+* Update repo links.
+  Package moved to mavlink organization.
+* Contributors: Vladimir Ermakov
+
 0.8.0 (2014-09-22)
 ------------------
 * Revert "Update package.xml format to REP140 (2)."
