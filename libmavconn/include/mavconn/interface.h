@@ -33,6 +33,7 @@
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/system/system_error.hpp>
 
 #include <set>
