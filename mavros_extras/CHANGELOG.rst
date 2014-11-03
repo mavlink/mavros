@@ -2,6 +2,9 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.0 (2014-11-03)
+------------------
+
 0.8.2 (2014-11-03)
 ------------------
 * REP140: update package.xml format.
