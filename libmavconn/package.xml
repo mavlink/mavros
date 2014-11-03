@@ -22,6 +22,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>boost</depend>
+  <depend>mavlink</depend>
   <depend>libconsole-bridge-dev</depend>
 
   <test_depend>gtest</test_depend>
