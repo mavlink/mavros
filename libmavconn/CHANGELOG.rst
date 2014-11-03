@@ -2,6 +2,12 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.4 (2014-11-03)
+------------------
+* Fix libmavconn deps.
+  Releases 0.9 and 0.8.3 ar broken because i forgot to add mavlink dep.
+* Contributors: Vladimir Ermakov
+
 0.8.3 (2014-11-03)
 ------------------
 * 0.8.2
