@@ -114,15 +114,27 @@ Examples:
 Installation
 ------------
 
+### Binary installation (debian)
+
+Since v0.5 that programs available in precompiled debian packages for x86 and amd64 (x86\_64).
+Just use `apt-get` for installation:
+
+    sudo apt-get install ros-indigo-mavros ros-indigo-mavros-extras
+
+
+### Source installation
+
 Use `wstool` utility for installation. In your workspace do:
 
     wstool init src (if not already initialized)
     wstool set -t src mavros --git https://github.com/mavlink/mavros.git
     wstool update -t src
-    rosdep install --from-paths src --ignore-src --rosdistro hydro -y
+    rosdep install --from-paths src --ignore-src --rosdistro indigo -y
 
 Then use regular `catkin_make` for build and install.
-Notes: since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlwiki].
+Notes:
+  - since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlwiki].
+  - since 2014-11-02 hydro support splitted to branch hydro-devel, add `--version hydro-devel` to wstool set.
 
 *Important*. The current implementation of mavlink does not allow to select dialect in run-time,
 so mavros package (and all plugin packages) have compile-time option `MAVLINK_DIALECT`, default is 'aurdupilotmega'.
