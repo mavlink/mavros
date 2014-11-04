@@ -2,6 +2,9 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.2 (2014-11-04)
+------------------
+
 0.9.1 (2014-11-03)
 ------------------
 * Update installation notes for `#162 <https://github.com/vooon/mavros/issues/162>`_
