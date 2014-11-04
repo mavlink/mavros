@@ -2,6 +2,15 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.5 (2014-11-04)
+------------------
+* Fix libmavconn include destination.
+  Before that change headers installed in include/libmavconn (package name)
+  and it broke release builds for 0.9.1 and 0.8.4.
+  Strange that prerelease build runs without errors.
+  Issue `#162 <https://github.com/vooon/mavros/issues/162>`_.
+* Contributors: Vladimir Ermakov
+
 0.8.4 (2014-11-03)
 ------------------
 * Fix libmavconn deps.
