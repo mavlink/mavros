@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>mavros_extras</name>
-  <version>0.8.4</version>
+  <version>0.8.5</version>
   <description>Extra nodes and plugins for mavros</description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>

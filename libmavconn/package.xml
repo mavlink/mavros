@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>libmavconn</name>
-  <version>0.8.4</version>
+  <version>0.8.5</version>
   <description>
     MAVLink communication library.
     This library provide unified connection handling classes
