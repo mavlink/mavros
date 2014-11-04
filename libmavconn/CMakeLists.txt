@@ -65,7 +65,7 @@ install(TARGETS mavconn
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/mavconn/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
   FILES_MATCHING PATTERN "*.h"
 )
 
