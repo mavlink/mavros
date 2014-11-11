@@ -46,6 +46,7 @@
 #define _DIALECT_test		8
 #define _DIALECT_ualberta	9
 #define _DIALECT_sensesoar	10
+#define _DIALECT_ASLUAV		11
 
 #  if _DIALECT(MAVLINK_DIALECT) == _DIALECT_ardupilotmega
 #  include <mavlink/v1.0/ardupilotmega/mavlink.h>
@@ -67,6 +68,8 @@
 #  include <mavlink/v1.0/ualberta/mavlink.h>
 #elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_sensesoar
 #  include <mavlink/v1.0/sensesoar/mavlink.h>
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_ASLUAV
+#  include <mavlink/v1.0/ASLUAV/mavlink.h>
 #else
 #  error "Unknown MAVLINK_DIALECT"
 #endif
