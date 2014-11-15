@@ -48,14 +48,13 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		bool mode_tx;
 		uas = &uas_;
 
-		nh.param("optical_flow_tx", mode_tx, false);
-		if (!mode_tx)
-			flow_pub = nh.advertise<mavros_extras::OpticalFlow>("optical_flow", 10);
-		else
-			flow_sub = nh.subscribe("optical_flow", 10, &PX4FlowPlugin::send_flow_cb, this);
+		flow_pub = nh.advertise<mavros_extras::OpticalFlow>("optical_flow", 10);
+		flow_rad_pub = nh.advertise<mavros_extras::OpticalFlowRad>("optical_flow_rad", 10);
+		twist_pub = nh.advertise<geometry_msgs::Twist>("velocity", 10);
+			// distance ranger and temperature too ?
+
 	}
 
 	const std::string get_name() const {
@@ -65,6 +64,7 @@ public:
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW, &PX4FlowPlugin::handle_optical_flow)
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW_RAD, &PX4FlowPlugin::handle_optical_flow_rad)
 		};
 	}
 
@@ -84,7 +84,7 @@ private:
 		mavros_extras::OpticalFlowPtr flow_msg =
 			boost::make_shared<mavros_extras::OpticalFlow>();
 
-		// Note: for ENU->NED conversion i swap x & y.
+		// Note: for ENU->NED conversion XXX CHECK DIS
 		flow_msg->header.stamp = ros::Time::now();
 		flow_msg->flow_x = flow.flow_y;
 		flow_msg->flow_y = flow.flow_x;
@@ -100,32 +100,39 @@ private:
 		 */
 	}
 
-	void optical_flow(uint64_t time_usec, uint8_t sensor_id,
-			uint16_t flow_x, uint16_t flow_y,
-			float flow_comp_m_x, float flow_comp_m_y,
-			uint8_t quality,
-			float ground_distance) {
-		mavlink_message_t msg;
-		mavlink_msg_optical_flow_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_usec, sensor_id,
-				flow_x, flow_y,
-				flow_comp_m_x, flow_comp_m_y,
-				quality, ground_distance);
-		UAS_FCU(uas)->send_message(&msg);
+	void handle_optical_flow_rad(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		if (flow_pub.getNumSubscribers() == 0)
+			return;
+
+		mavlink_optical_flow_rad_t flow_rad;
+		mavlink_msg_optical_flow_rad_decode(msg, &flow_rad);
+
+		mavros_extras::OpticalFlowRadPtr flow_rad_msg =
+			boost::make_shared<mavros_extras::OpticalFlowRad>();
+
+		
+		flow_rad_msg->header.stamp = ros::Time::now(); // TODO use PX4flow stamp?
+		
+		// Note: for ENU->NED conversion XXX CHECK DIS
+		flow_msg->integration_time_us = flow_rad.integration_time_us;
+		flow_msg->integrated_x = flow_rad.integrated_x;
+		flow_msg->integrated_y = flow_rad.integrated_y;
+		flow_msg->integrated_xgyro = flow_rad.integrated_xgyro;
+		flow_msg->integrated_ygyro = flow_rad.integrated_ygyro;
+		flow_msg->integrated_zgyro = flow_rad.integrated_zgyro;
+		flow_msg->temperature = flow_rad.temperature;
+		flow_msg->time_delta_distance_us = flow_rad.time_delta_distance_us
+		flow_msg->distance = flow_rad.distance;
+
+		flow_rad_pub.publish(flow_rad_msg);
+
+		/* Optional TODO: send ground_distance in sensor_msgs/Range and temperature too
+
+		 *                with data filled by spec on used sonar.
+
+		 */
 	}
 
-	/* -*- ROS callbacks -*- */
-
-	void send_flow_cb(const mavros_extras::OpticalFlow::ConstPtr flow_msg) {
-		optical_flow(flow_msg->header.stamp.toNSec() / 1000,
-				0, /* maybe we need parameter? */
-				flow_msg->flow_y,
-				flow_msg->flow_x,
-				flow_msg->flow_comp_m_y,
-				flow_msg->flow_comp_m_x,
-				flow_msg->quality,
-				flow_msg->ground_distance);
-	}
 };
 
 }; // namespace mavplugin
