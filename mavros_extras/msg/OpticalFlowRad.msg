@@ -1,13 +1,14 @@
 # OPTICAL_FLOW_RAD message data
 
 Header header
-uint32_t integration_time_us
-float integrated_x
-float integrated_y
-float integrated_xgyro
-float integrated_ygyro
-float integrated_zgyro
-int16_t temperature
+
+uint32 integration_time_us
+float32 integrated_x
+float32 integrated_y
+float32 integrated_xgyro
+float32 integrated_ygyro
+float32 integrated_zgyro
+int16 temperature
 uint8 quality
-uint32_t time_delta_distance_us
-float distance
+uint32 time_delta_distance_us
+float32 distance
