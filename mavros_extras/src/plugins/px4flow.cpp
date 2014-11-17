@@ -53,23 +53,22 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
+
+		flow_nh = ros::NodeHandle(nh, "px4flow");
 		
-		nh.param<std::string>("px4flow/frame_id", frame_id, "px4flow");
+		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
 		//Default rangefinder is Maxbotix HRLV-EZ4
-		nh.param("px4flow/ranger_type", ranger_type, 0);	// See sensor_msgs/Range docs 
-		nh.param("px4flow/ranger_fov", ranger_fov, 0.0); 	// TODO
-		nh.param("px4flow/ranger_min_range", ranger_min_range, 0.3);	
-		nh.param("px4flow/ranger_max_range", ranger_max_range, 5.0);
-		flow_pub = nh.advertise<mavros_extras::OpticalFlow>("/px4flow/optical_flow", 10);
+		flow_nh.param("ranger_type", ranger_type, 0);	// See sensor_msgs/Range docs 
+		flow_nh.param("ranger_fov", ranger_fov, 0.0); 	// TODO
+		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);	
+		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
 
-		flow_rad_pub = nh.advertise<mavros_extras::OpticalFlowRad>("px4flow/optical_flow_rad", 10);
-		twist_pub = nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("px4flow/velocity", 10);
-		range_pub = nh.advertise<sensor_msgs::Range>("px4flow/ground_distance", 10);
-		temp_pub = nh.advertise<sensor_msgs::Temperature>("px4flow/temperature", 10);
-
-		//set rangefinder params here.
-			
+		flow_pub = flow_nh.advertise<mavros_extras::OpticalFlow>("raw/optical_flow", 10);
+		flow_rad_pub = flow_nh.advertise<mavros_extras::OpticalFlowRad>("raw/optical_flow_rad", 10);
+		twist_pub = flow_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity", 10);
+		range_pub = flow_nh.advertise<sensor_msgs::Range>("ground_distance", 10);
+		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
 
 	}
 
@@ -105,22 +104,23 @@ private:
 		mavlink_optical_flow_t flow;
 		mavlink_msg_optical_flow_decode(msg, &flow);
 
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
+		header.frame_id = frame_id;
+
 		mavros_extras::OpticalFlowPtr flow_msg =
 			boost::make_shared<mavros_extras::OpticalFlow>();
+	
+		flow_msg->header = header;
 
-		flow_msg->header.stamp = ros::Time::now();
 		flow_msg->flow_x = flow.flow_x;
-		flow_msg->flow_y = -flow.flow_y;
+		flow_msg->flow_y = -flow.flow_y; //NED -> ENU
 		flow_msg->flow_comp_m_x	 = flow.flow_comp_m_x;
-		flow_msg->flow_comp_m_y	 = flow.flow_comp_m_y;
+		flow_msg->flow_comp_m_y	 = -flow.flow_comp_m_y; //NED -> ENU
 		flow_msg->quality = flow.quality;
 		flow_msg->ground_distance = flow.ground_distance;
 
 		flow_pub.publish(flow_msg);
-
-		/* Optional TODO: send ground_distance in sensor_msgs/Range
-		 *                with data filled by spec on used sonar.
-		 */
 	}
 	
 	void handle_optical_flow_rad(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -135,7 +135,6 @@ private:
 		// Raw message with axes mapped to ROS conventions and temp in degrees celsius
 		mavros_extras::OpticalFlowRadPtr flow_rad_msg =
 			boost::make_shared<mavros_extras::OpticalFlowRad>();
-
 		
 		flow_rad_msg->header = header; 
 		
@@ -151,9 +150,9 @@ private:
 
 		flow_rad_pub.publish(flow_rad_msg);
 				
-		if(flow_rad.quality > 0) // don't publish garbage
+		if(flow_rad.quality > 0) // don't publish invalid data
 		{
-		//Twist - PX4flow is rotated 90 degrees yaw
+		//Twist
 		geometry_msgs::TwistWithCovarianceStampedPtr twist_msg =
 		boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
 
@@ -161,10 +160,10 @@ private:
 		
 		twist_msg->twist.twist.linear.x = ((flow_rad.integrated_x/flow_rad.integration_time_us)/flow_rad.distance)*1000000 ;
 		twist_msg->twist.twist.linear.y = -((flow_rad.integrated_y/flow_rad.integration_time_us)/flow_rad.distance)*1000000;// NED -> ENU
-		twist_msg->twist.twist.linear.z = 0; 
-		twist_msg->twist.twist.angular.x = flow_rad.integrated_xgyro/flow_rad.integration_time_us;
-		twist_msg->twist.twist.angular.y = -(flow_rad.integrated_ygyro/flow_rad.integration_time_us);// NED -> ENU
-		twist_msg->twist.twist.angular.z = -(flow_rad.integrated_zgyro/flow_rad.integration_time_us);// NED -> ENU
+		twist_msg->twist.twist.linear.z = 0; //from sonar?
+		twist_msg->twist.twist.angular.x = (flow_rad.integrated_xgyro/flow_rad.integration_time_us)*1000000;
+		twist_msg->twist.twist.angular.y = -(flow_rad.integrated_ygyro/flow_rad.integration_time_us)*1000000;// NED -> ENU
+		twist_msg->twist.twist.angular.z = -(flow_rad.integrated_zgyro/flow_rad.integration_time_us)*1000000;// NED -> ENU
 
 		//TODO : Covariances from quality?
 
