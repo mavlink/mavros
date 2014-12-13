@@ -151,6 +151,11 @@ public:
 
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		nh.param("conn_timesync", conn_timesync_d, 0.0);
+		nh.param("offset_average_alpha", offset_avg_alpha, 0.8); 
+		/* 
+		 * alpha for exponential moving average. The closer alpha is to 1.0, 
+		 * the faster the moving average updates in response to new offset samples.
+		 */
 
 		nh.param<std::string>("frame_id", frame_id, "fcu");
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
@@ -197,7 +202,8 @@ private:
 
 	std::string frame_id;
 	std::string time_ref_source;
-	uint64_t time_offset_ns;
+	int64_t time_offset_ns;
+	double offset_avg_alpha;
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
@@ -219,6 +225,9 @@ private:
 
 			time_ref_pub.publish(time_unix);
 		}
+		else {
+			ROS_WARN_THROTTLE_NAMED(60, "time", "TM: Wrong FCU time.");
+		}
 		
 	}
 
@@ -238,21 +247,28 @@ private:
 		uint64_t now_ns = ros::Time::now().toNSec();
 		
 		if(tsync.tc1 == 0) { 
-			// case 1 : empty msg from PX4
+			
 			send_timesync_msg(tsync.tc1, now_ns);
 		}
 		else if(tsync.tc1 > 0) { 
-			// case 2 : filled reply from PX4
-			int64_t dt = time_offset_ns - (((tsync.ts1 + now_ns)-(tsync.tc1*2))/2);
 
-			if(std::abs(dt) > 2000000) { 
-				// 2 millisecond skew
-				time_offset_ns = ((tsync.ts1 + now_ns)-(tsync.tc1*2))/2; // hard-set it.
+			int64_t offset_ns = ((tsync.ts1 + now_ns)-(tsync.tc1*2))/2; // new sample
+			int64_t dt = time_offset_ns - offset_ns;
+			
+			if(std::abs(dt) > 1000000) { 
+				// 1 millisecond skew
+				time_offset_ns = offset_ns; // hard-set it.
 				uas->set_time_offset(time_offset_ns);
-				// stream warning
+
+				dt_diag.clear();
+				dt_diag.set_timestamp(tsync.tc1);
+
+				ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Clock skew detected (%0.9f s). "
+					"Hard syncing clocks.", dt / 1e9);
 			}
 			else {
-				converge_offset(dt); // try to converge on offset
+				average_offset(offset_ns);
+				dt_diag.tick(dt, tsync.tc1);
 			} 
 
 		}
@@ -289,9 +305,10 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}	
 
-	void converge_offset(int64_t dt) {
+	void average_offset(int64_t offset_ns) { 
 		
-		// simple complementary filter?
+		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
+		
 		uas->set_time_offset(time_offset_ns);
 	}
 
