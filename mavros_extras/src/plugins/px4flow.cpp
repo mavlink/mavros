@@ -86,6 +86,8 @@ public:
 private:
 	UAS *uas;
 
+	ros::NodeHandle flow_nh;
+
 	std::string frame_id;
 	
 	int ranger_type;
@@ -121,6 +123,21 @@ private:
 		flow_msg->ground_distance = flow.ground_distance;
 
 		flow_pub.publish(flow_msg);
+					
+		if(flow.quality > 0) // don't publish invalid data
+		{
+		//Twist
+		geometry_msgs::TwistWithCovarianceStampedPtr twist_msg =
+		boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
+
+		twist_msg->header = header; 
+		
+		twist_msg->twist.twist.linear.x = flow.flow_comp_m_x;
+		twist_msg->twist.twist.linear.y = -flow.flow_comp_m_y;
+	
+		twist_pub.publish(twist_msg);
+
+		}
 	}
 	
 	void handle_optical_flow_rad(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -149,28 +166,7 @@ private:
 		flow_rad_msg->distance = flow_rad.distance; 
 
 		flow_rad_pub.publish(flow_rad_msg);
-				
-		if(flow_rad.quality > 0) // don't publish invalid data
-		{
-		//Twist
-		geometry_msgs::TwistWithCovarianceStampedPtr twist_msg =
-		boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
-
-		twist_msg->header = header; 
-		
-		twist_msg->twist.twist.linear.x = ((flow_rad.integrated_x/flow_rad.integration_time_us)/flow_rad.distance)*1000000 ;
-		twist_msg->twist.twist.linear.y = -((flow_rad.integrated_y/flow_rad.integration_time_us)/flow_rad.distance)*1000000;// NED -> ENU
-		twist_msg->twist.twist.linear.z = 0; //from sonar?
-		twist_msg->twist.twist.angular.x = (flow_rad.integrated_xgyro/flow_rad.integration_time_us)*1000000;
-		twist_msg->twist.twist.angular.y = -(flow_rad.integrated_ygyro/flow_rad.integration_time_us)*1000000;// NED -> ENU
-		twist_msg->twist.twist.angular.z = -(flow_rad.integrated_zgyro/flow_rad.integration_time_us)*1000000;// NED -> ENU
-
-		//TODO : Covariances from quality?
-
-		twist_pub.publish(twist_msg);
-
-		}
-
+	
 		// Temperature
 		sensor_msgs::TemperaturePtr temp_msg = 
 			boost::make_shared<sensor_msgs::Temperature>();
