@@ -137,7 +137,7 @@ public:
 	SystemTimePlugin():
 		uas(nullptr),
 		dt_diag("Time Sync", 10),
-		time_offset_us(0)
+		time_offset_ns(0)
 	{};
 
 	void initialize(UAS &uas_,
@@ -145,23 +145,32 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		double conn_system_time_d;
+		double conn_timesync_d;
 
 		uas = &uas_;
 
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
+		nh.param("conn_timesync", conn_timesync_d, 0.0);
+
 		nh.param<std::string>("frame_id", frame_id, "fcu");
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
 
 		diag_updater.add(dt_diag);
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
-		time_offset_pub = nh.advertise<std_msgs::Duration>("time_offset", 10);
 
-		// timer for sending time sync messages
+		// timer for sending system time messages
 		if (conn_system_time_d > 0.0) {
 			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
 					&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
+		}
+
+		// timer for sending timesync messages
+		if (conn_timesync_d > 0.0) {
+			timesync_timer = nh.createTimer(ros::Duration(conn_timesync_d),
+					&SystemTimePlugin::timesync_cb, this);
+			timesync_timer.start();
 		}
 	}
 
@@ -173,44 +182,30 @@ public:
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
 		};
 	}
 
 private:
 	UAS *uas;
 	ros::Publisher time_ref_pub;
-	ros::Publisher time_offset_pub;
+
 	ros::Timer sys_time_timer;
+	ros::Timer timesync_timer;
+
 	TimeSyncStatus dt_diag;
 
 	std::string frame_id;
 	std::string time_ref_source;
-	uint64_t time_offset_us;
+	uint64_t time_offset_ns;
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
 		mavlink_msg_system_time_decode(msg, &mtime);
 
-		uint64_t now_ms = ros::Time::now().toNSec() / 1000000;
-
 		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
 		const bool fcu_time_valid = mtime.time_unix_usec > 1234567890ULL * 1000000;
-		const bool ros_time_valid = now_ms > 1234567890ULL * 1000;
-
-		int64_t offset_us = (now_ms - mtime.time_boot_ms) * 1000;
-		int64_t dt = offset_us - time_offset_us;
-		if (std::abs(dt) > 2000000 /* microseconds */) {
-			ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Large clock skew detected (%0.6f s). "
-					"Resyncing clocks.", dt / 1e6);
-			time_offset_us = offset_us;
-			dt_diag.clear();
-			dt_diag.set_timestamp(mtime.time_unix_usec);
-		}
-		else {
-			time_offset_us = (time_offset_us + offset_us) / 2;
-			dt_diag.tick(dt, mtime.time_unix_usec);
-		}
-
+		
 		if (fcu_time_valid) {
 			// continious publish for ntpd
 			sensor_msgs::TimeReferencePtr time_unix = boost::make_shared<sensor_msgs::TimeReference>();
@@ -224,33 +219,82 @@ private:
 
 			time_ref_pub.publish(time_unix);
 		}
-		else {
-			ROS_WARN_THROTTLE_NAMED(60, "time", "TM: Wrong GPS time.");
+		
+	}
+
+	void handle_timesync(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		
+		/*
+		tc1 -> receiver(client) replies with this filled in.
+		ts1 -> sender(server) fills and sends
+
+		System_time message -> used for Epoch/Filesystem time only
+		Timesync message -> Sync time among systems.
+		*/
+
+		mavlink_timesync_t tsync;
+		mavlink_msg_timesync_decode(msg, &tsync);
+
+		uint64_t now_ns = ros::Time::now().toNSec();
+		
+		if(tsync.tc1 == 0) { 
+			// case 1 : empty msg from PX4
+			send_timesync_msg(tsync.tc1, now_ns);
+		}
+		else if(tsync.tc1 > 0) { 
+			// case 2 : filled reply from PX4
+			int64_t dt = time_offset_ns - (((tsync.ts1 + now_ns)-(tsync.tc1*2))/2);
+
+			if(std::abs(dt) > 2000000) { 
+				// 2 millisecond skew
+				time_offset_ns = ((tsync.ts1 + now_ns)-(tsync.tc1*2))/2; // hard-set it.
+				uas->set_time_offset(time_offset_ns);
+				// stream warning
+			}
+			else {
+				converge_offset(dt); // try to converge on offset
+			} 
+
 		}
 
-		// offset publisher
-		std_msgs::DurationPtr offset = boost::make_shared<std_msgs::Duration>();
-		ros::Duration time_ref(
-				time_offset_us / 1000000,		// t_sec
-				(time_offset_us % 1000000) * 1000);	// t_nsec
-
-		offset->data = time_ref;
-
-		uas->set_time_offset(time_offset_us);
-		time_offset_pub.publish(offset);
 	}
 
 	void sys_time_cb(const ros::TimerEvent &event) {
+		
+		// For filesystem only
 		mavlink_message_t msg;
 
 		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;  // nano -> micro
-
+		
 		mavlink_msg_system_time_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				time_unix_usec,
 				0
 				);
 		UAS_FCU(uas)->send_message(&msg);
 	}
+
+	void timesync_cb(const ros::TimerEvent &event) {
+		
+		send_timesync_msg( 0, ros::Time::now().toNSec());
+		
+	}
+
+	void send_timesync_msg(uint64_t tc1, uint64_t ts1) {
+		mavlink_message_t msg;
+
+		mavlink_msg_timesync_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				tc1,
+				ts1
+				);
+		UAS_FCU(uas)->send_message(&msg);
+	}	
+
+	void converge_offset(int64_t dt) {
+		
+		// simple complementary filter?
+		uas->set_time_offset(time_offset_ns);
+	}
+
 };
 
 }; // namespace mavplugin
