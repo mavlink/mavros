@@ -62,7 +62,7 @@ public:
 #define RETURN_TYPE(type)						\
 		{							\
 			type ## _t ret_ ## type = uv.param_ ## type;	\
-			return ret_ ## type				\
+			return ret_ ## type;				\
 		}
 
 		switch (pmsg.param_type) {
