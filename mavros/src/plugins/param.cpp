@@ -78,9 +78,10 @@ public:
 			RETURN_TYPE(uint32);
 		case MAV_PARAM_TYPE_INT32:
 			RETURN_TYPE(int32);
-		case MAV_PARAM_TYPE_REAL32:
-			float ret_float = uv.param_float;
-			return ret_float;
+		case MAV_PARAM_TYPE_REAL32: {
+				float ret_float = uv.param_float;
+				return ret_float;
+			}
 
 #undef RETURN_TYPE
 
