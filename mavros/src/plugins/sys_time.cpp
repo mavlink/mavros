@@ -110,9 +110,9 @@ public:
 		stat.addf("Events since startup", "%d", count_);
 		stat.addf("Duration of window (s)", "%f", window);
 		stat.addf("Actual frequency (Hz)", "%f", freq);
-		stat.addf("Last dt (ms)", "%0.3f", last_dt / 1000.0);
-		stat.addf("Mean dt (ms)", "%0.3f", (count_)? dt_sum / count_ / 1000.0 : 0.0);
-		stat.addf("Last system time (s)", "%0.6f", last_ts / 1e6);
+		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1000000.0);
+		stat.addf("Mean dt (ms)", "%0.6f", (count_)? dt_sum / count_ / 1000000.0 : 0.0);
+		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
 	}
 
 private:
