@@ -59,9 +59,11 @@ public:
 		uv.param_float = pmsg.param_value;
 
 		// Fix for #170 by copying to temporary var.
-#define RETURN_TYPE(type)					\
-		type ## _t ret_ ## type = uv.param_ ## type;	\
-		return ret_ ## type
+#define RETURN_TYPE(type)						\
+		{							\
+			type ## _t ret_ ## type = uv.param_ ## type;	\
+			return ret_ ## type				\
+		}
 
 		switch (pmsg.param_type) {
 		case MAV_PARAM_TYPE_UINT8:
