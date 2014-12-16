@@ -69,12 +69,13 @@ public:
 		hist_indx_ = 0;
 	}
 
-	void tick(int64_t dt, uint64_t timestamp_us) {
+	void tick(int64_t dt, uint64_t timestamp_us, int64_t time_offset) {
 		lock_guard lock(mutex);
 		count_++;
 		last_dt = dt;
 		dt_sum += dt;
 		last_ts = timestamp_us;
+		offset = time_offset;
 	}
 
 	void set_timestamp(uint64_t timestamp_us) {
@@ -113,6 +114,7 @@ public:
 		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1000000.0);
 		stat.addf("Mean dt (ms)", "%0.6f", (count_)? dt_sum / count_ / 1000000.0 : 0.0);
 		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
+		stat.addf("Time offset (s)", "%0.9f", offset / 1e9);
 		
 	}
 
@@ -129,6 +131,8 @@ private:
 	int64_t last_dt;
 	int64_t dt_sum;
 	uint64_t last_ts;
+	int64_t offset;
+	
 };
 
 
@@ -254,7 +258,7 @@ private:
 			}
 			else {
 				time_offset_ns = offset_ns;
-				dt_diag.tick(dt, tsync.tc1);
+				dt_diag.tick(dt, tsync.tc1, time_offset_ns);
 
 				uas->set_time_offset(time_offset_ns);
 			} 
