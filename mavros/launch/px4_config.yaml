@@ -10,8 +10,8 @@ sys:
   min_voltage: 10.0  # diagnostics min voltage
 
 # sys_time
-conn_timesync: 0.05
-conn_system_time: 0.1
+conn_timesync: 0.1
+conn_system_time: 1.0
 
 # imu_pub
 imu:
