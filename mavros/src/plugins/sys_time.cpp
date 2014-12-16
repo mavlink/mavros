@@ -245,7 +245,7 @@ private:
 		}
 		else if(tsync.tc1 > 0) { 
 
-			int64_t offset_ns = ((tsync.ts1 - tsync.tc1) + (now_ns - tsync.tc1))/2; // new sample
+			int64_t offset_ns = (tsync.ts1 - tsync.tc1) + (now_ns - tsync.tc1)/2; // new sample
 			int64_t dt = time_offset_ns - offset_ns;
 			
 			if(std::abs(dt) > 10000000) { 
