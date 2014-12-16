@@ -113,6 +113,7 @@ public:
 		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1000000.0);
 		stat.addf("Mean dt (ms)", "%0.6f", (count_)? dt_sum / count_ / 1000000.0 : 0.0);
 		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
+		
 	}
 
 private:
@@ -151,7 +152,7 @@ public:
 
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		nh.param("conn_timesync", conn_timesync_d, 0.0);
-		nh.param("offset_average_alpha", offset_avg_alpha, 0.8); 
+		nh.param("offset_average_alpha", offset_avg_alpha, 0.75); 
 		/* 
 		 * alpha for exponential moving average. The closer alpha is to 1.0, 
 		 * the faster the moving average updates in response to new offset samples.
@@ -233,30 +234,22 @@ private:
 
 	void handle_timesync(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		
-		/*
-		tc1 -> receiver(client) replies with this filled in.
-		ts1 -> sender(server) fills and sends
-
-		System_time message -> used for Epoch/Filesystem time only
-		Timesync message -> Sync time among systems.
-		*/
-
 		mavlink_timesync_t tsync;
 		mavlink_msg_timesync_decode(msg, &tsync);
 
 		uint64_t now_ns = ros::Time::now().toNSec();
 		
 		if(tsync.tc1 == 0) { 
-			
-			send_timesync_msg(tsync.tc1, now_ns);
+			send_timesync_msg(now_ns, tsync.ts1);
+			return;
 		}
 		else if(tsync.tc1 > 0) { 
 
-			int64_t offset_ns = ((tsync.ts1 + now_ns)-(tsync.tc1*2))/2; // new sample
+			int64_t offset_ns = ((tsync.ts1 - tsync.tc1) + (now_ns - tsync.tc1))/2; // new sample
 			int64_t dt = time_offset_ns - offset_ns;
 			
-			if(std::abs(dt) > 1000000) { 
-				// 1 millisecond skew
+			if(std::abs(dt) > 10000000) { 
+				// 10 millisecond skew
 				time_offset_ns = offset_ns; // hard-set it.
 				uas->set_time_offset(time_offset_ns);
 
