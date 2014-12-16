@@ -30,6 +30,7 @@
 
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 
 namespace mavplugin {
 
@@ -42,7 +43,8 @@ class LocalPositionPlugin : public MavRosPlugin {
 public:
 	LocalPositionPlugin() :
 		uas(nullptr),
-		send_tf(false)
+		send_tf(false),
+		publish_markers(false)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -54,10 +56,12 @@ public:
 		pos_nh = ros::NodeHandle(nh, "position");
 
 		pos_nh.param("local/send_tf", send_tf, true);
+		pos_nh.param("local/publish_markers", publish_markers, true);
 		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
 		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
 
 		local_position = pos_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
+		position_marker = pos_nh.advertise<visualization_msgs::Marker>("markers", 10);
 	}
 
 	std::string const get_name() const {
@@ -75,11 +79,13 @@ private:
 
 	ros::NodeHandle pos_nh;
 	ros::Publisher local_position;
+	ros::Publisher position_marker;
 	tf::TransformBroadcaster tf_broadcaster;
 
 	std::string frame_id;		//!< origin for TF
-	std::string child_frame_id;	//!< frame for TF and Pose
+	std::string child_frame_id;	//!< frame for TF, Pose and Visualisation Markers
 	bool send_tf;
+	bool publish_markers;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
@@ -116,6 +122,28 @@ private:
 						frame_id, child_frame_id));
 
 		local_position.publish(pose);
+
+		if (publish_markers)
+			publish_vis_marker(pose);
+	}
+
+	void publish_vis_marker(geometry_msgs::PoseStampedPtr pose)
+	{
+		visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
+		
+		marker->header = pose->header;
+		marker->type = visualization_msgs::Marker::CUBE;
+		marker->pose = pose->pose;
+		marker->scale.x = 0.005;
+		marker->scale.y = 0.005;
+		marker->scale.z = 0.005;
+		
+		marker->color.a = 1.0;
+		marker->color.r = 1.0;
+		marker->color.g = 0.0;
+		marker->color.b = 1.0;
+
+		position_marker.publish(marker);
 	}
 };
 
