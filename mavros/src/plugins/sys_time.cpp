@@ -49,7 +49,9 @@ public:
 		times_(win_size),
 		seq_nums_(win_size),
 		last_dt(0),
-		dt_sum(0)
+		dt_sum(0),
+		last_ts(0),
+		offset(0)
 	{
 		clear();
 	}
@@ -132,7 +134,6 @@ private:
 	int64_t dt_sum;
 	uint64_t last_ts;
 	int64_t offset;
-	
 };
 
 
