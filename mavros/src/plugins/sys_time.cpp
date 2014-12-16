@@ -152,12 +152,7 @@ public:
 
 		nh.param("conn_system_time", conn_system_time_d, 0.0);
 		nh.param("conn_timesync", conn_timesync_d, 0.0);
-		nh.param("offset_average_alpha", offset_avg_alpha, 0.75); 
-		/* 
-		 * alpha for exponential moving average. The closer alpha is to 1.0, 
-		 * the faster the moving average updates in response to new offset samples.
-		 */
-
+	
 		nh.param<std::string>("frame_id", frame_id, "fcu");
 		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
 
@@ -204,7 +199,6 @@ private:
 	std::string frame_id;
 	std::string time_ref_source;
 	int64_t time_offset_ns;
-	double offset_avg_alpha;
 
 	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
@@ -245,12 +239,11 @@ private:
 		}
 		else if(tsync.tc1 > 0) { 
 
-			int64_t offset_ns = (tsync.ts1 - tsync.tc1) + (now_ns - tsync.tc1)/2; // new sample
+			int64_t offset_ns = (9*time_offset_ns + (tsync.ts1 + now_ns - tsync.tc1*2)/2 )/10; // average offset
 			int64_t dt = time_offset_ns - offset_ns;
 			
-			if(std::abs(dt) > 10000000) { 
-				// 10 millisecond skew
-				time_offset_ns = offset_ns; // hard-set it.
+			if(std::abs(dt) > 10000000) { // 10 millisecond skew
+				time_offset_ns = (tsync.ts1 + now_ns - tsync.tc1*2)/2 ; // hard-set it.
 				uas->set_time_offset(time_offset_ns);
 
 				dt_diag.clear();
@@ -260,8 +253,10 @@ private:
 					"Hard syncing clocks.", dt / 1e9);
 			}
 			else {
-				average_offset(offset_ns);
+				time_offset_ns = offset_ns;
 				dt_diag.tick(dt, tsync.tc1);
+
+				uas->set_time_offset(time_offset_ns);
 			} 
 
 		}
@@ -298,12 +293,6 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}	
 
-	void average_offset(int64_t offset_ns) { 
-		
-		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
-		
-		uas->set_time_offset(time_offset_ns);
-	}
 
 };
 
