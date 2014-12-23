@@ -38,7 +38,9 @@ namespace mavplugin {
 class VisualizationPlugin : public MavRosPlugin {
 public:
 	VisualizationPlugin() :
-		uas(nullptr)
+		uas(nullptr),
+		marker_scale(0),
+		marker_id(0)
 	{ };
 
 	void initialize(UAS &uas_,
@@ -81,7 +83,7 @@ private:
 	std::string child_frame_id;	// frame for visualization markers
 
 	double marker_scale;
-	int marker_id = 0;
+	int marker_id;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
