@@ -20,6 +20,7 @@
   <depend>mavros</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
+  <depend>visualization_msgs</depend>
   <exec_depend>python-argparse</exec_depend>
 
   <export>
