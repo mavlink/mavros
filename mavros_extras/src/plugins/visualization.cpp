@@ -79,8 +79,6 @@ private:
 	std::string child_frame_id;	// frame for visualization markers
 	double marker_scale;
 
-	// int marker_id = 0;
-
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
@@ -125,8 +123,11 @@ private:
 
 	void publish_vehicle_marker(int marker_scale) {
 	
-  		const double sqrt2_2 = sqrt(2) / 2;
+		/** Hexacopter marker visualisation code adapted from libsfly_viz
+		 *  Thanks to Markus Achtelik. 		 
+		 */
 
+  		const double sqrt2_2 = sqrt(2) / 2;
 		int id = 1;
 
  		visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
