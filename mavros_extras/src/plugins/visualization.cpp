@@ -48,7 +48,8 @@ public:
 		uas = &uas_;
 
 		viz_nh = ros::NodeHandle(nh, "visualization");
-
+		
+		viz_nh.param<std::string>("visualization/fixed_frame_id", fixed_frame_id, "local_origin");
 		viz_nh.param<std::string>("visualization/child_frame_id", child_frame_id, "fcu");
 		viz_nh.param<double>("visualization/marker_scale", marker_scale, 2.0);		
 
@@ -76,8 +77,11 @@ private:
 	ros::Publisher track_marker;
 	ros::Publisher vehicle_marker;
 
+	std::string fixed_frame_id;
 	std::string child_frame_id;	// frame for visualization markers
+
 	double marker_scale;
+	int marker_id = 0;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
@@ -90,10 +94,10 @@ private:
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
 		tf::poseTFToMsg(transform, pose->pose);
-		pose->header.frame_id = child_frame_id;
+		pose->header.frame_id = fixed_frame_id;
 		pose->header.stamp = ros::Time();
 
-		publish_vehicle_marker(marker_scale); 
+		publish_vehicle_marker(); 
 		publish_vis_marker(pose);
 
 	}
@@ -105,12 +109,12 @@ private:
 		marker->header = pose->header;
 		marker->type = visualization_msgs::Marker::CUBE;
 		marker->ns = "fcu";
-		marker->id = pose->header.seq;
+		marker->id = marker_id++;
 		marker->action = visualization_msgs::Marker::ADD;
 		marker->pose = pose->pose;
-		marker->scale.x = 0.015;
-		marker->scale.y = 0.015;
-		marker->scale.z = 0.015;
+		marker->scale.x = marker_scale*0.015;
+		marker->scale.y = marker_scale*0.015;
+		marker->scale.z = marker_scale*0.015;
 		
 		marker->color.a = 1.0;
 		marker->color.r = 0.0;
@@ -121,10 +125,10 @@ private:
 
 	}
 
-	void publish_vehicle_marker(int marker_scale) {
+	void publish_vehicle_marker() {
 	
-		/** Hexacopter marker visualisation code adapted from libsfly_viz
-		 *  Thanks to Markus Achtelik. 		 
+		/** Hexacopter marker code adapted from libsfly_viz
+		 *  thanks to Markus Achtelik. 		 
 		 */
 
   		const double sqrt2_2 = sqrt(2) / 2;
