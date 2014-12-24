@@ -123,3 +123,4 @@ private:
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::LocalPositionPlugin, mavplugin::MavRosPlugin)
 
+
