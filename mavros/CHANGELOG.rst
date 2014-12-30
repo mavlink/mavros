@@ -2,6 +2,26 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.3 (2014-12-30)
+------------------
+* plugin: visualization finshed
+* Restore EMA. Works better for low rates.
+* Update sys_time.cpp
+* plugin : add time offset field to dt_diag
+* Final fixes
+* minor
+* plugin : fixes timesync. FCU support checked.
+* Visualisation system import
+* param: Fix float copying too
+* param: Fix missing
+* param: Trynig to fix 'crosses initialization of XXX' error.
+* param: Try to fix `#170 <https://github.com/vooon/mavros/issues/170>`_.
+* Update units
+* New message, moving average compensation
+* Initial import new sync interface
+* plugin: sys_status: Enable TERRAIN health decoding.
+* Contributors: Kabir Mohammed, M.H.Kabir, Mohammed Kabir, Vladimir Ermakov
+
 0.9.2 (2014-11-04)
 ------------------
 

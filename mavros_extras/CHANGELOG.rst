@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.3 (2014-12-30)
+------------------
+* Initiliser fix
+* plugin: visualisation - Fixes CI build
+* plugin: visualisation
+* plugin: visualization minor patch
+* plugin: visualization finshed
+* Contributors: M.H.Kabir
+
 0.9.2 (2014-11-04)
 ------------------
 
