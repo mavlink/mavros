@@ -252,11 +252,11 @@ private:
 		}
 		else if(tsync.tc1 > 0) { 
 
-			int64_t offset_ns = (9*time_offset_ns + (tsync.ts1 + now_ns - tsync.tc1*2)/2 )/10; // average offset
+			int64_t offset_ns = (tsync.ts1 + now_ns - tsync.tc1*2)/2 ; 
 			int64_t dt = time_offset_ns - offset_ns;
 			
 			if(std::abs(dt) > 10000000) { // 10 millisecond skew
-				time_offset_ns = (tsync.ts1 + now_ns - tsync.tc1*2)/2 ; // hard-set it.
+				time_offset_ns = offset_ns ; // hard-set it.
 				uas->set_time_offset(time_offset_ns);
 
 				dt_diag.clear();
@@ -266,7 +266,7 @@ private:
 					"Hard syncing clocks.", dt / 1e9);
 			}
 			else {
-				time_offset_ns = offset_ns;
+				average_offset(offset_ns);
 				dt_diag.tick(dt, tsync.tc1, time_offset_ns);
 
 				uas->set_time_offset(time_offset_ns);
