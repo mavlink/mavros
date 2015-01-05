@@ -2,6 +2,9 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.4 (2015-01-06)
+------------------
+
 0.9.3 (2014-12-30)
 ------------------
 * mavconn: Add ASLUAV dialect selection.

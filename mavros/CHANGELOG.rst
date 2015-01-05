@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.4 (2015-01-06)
+------------------
+* plugin: sys_time: enable EMA
+* Contributors: M.H.Kabir
+
 0.9.3 (2014-12-30)
 ------------------
 * plugin: visualization finshed
