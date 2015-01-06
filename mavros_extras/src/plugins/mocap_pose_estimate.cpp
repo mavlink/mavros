@@ -28,7 +28,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 
@@ -106,18 +106,17 @@ private:
 	}
 
 
-	void mocap_pose_cb(const geometry_msgs::Pose::ConstPtr &pose)
-	{	
-		ros::Time stamp = ros::Time::now();
+	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
+	{
 		tf::Quaternion quat;
-		tf::quaternionMsgToTF(pose->orientation, quat);
+		tf::quaternionMsgToTF(pose->pose.orientation, quat);
 		double roll, pitch, yaw;
 		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
 		// Convert to mavlink body frame
-		mocap_pose_send(stamp.toNSec() / 1000,
-			pose->position.x,
-			-pose->position.y,
-			-pose->position.z,
+		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
+			pose->pose.position.x,
+			-pose->pose.position.y,
+			-pose->pose.position.z,
 			roll, -pitch, -yaw); 
 	}
 
