@@ -77,7 +77,7 @@ private:
 		mavlink_msg_vfr_hud_decode(msg, &vfr_hud);
 
 		auto vmsg = boost::make_shared<mavros::VFR_HUD>();
-		vmsg->header.stamp = ros::Time::now();
+		vmsg->header.stamp = uas->synchronise_stamp(vfr_hud.time_boot_ms);
 		vmsg->airspeed = vfr_hud.airspeed;
 		vmsg->groundspeed = vfr_hud.groundspeed;
 		vmsg->heading = vfr_hud.heading;
@@ -100,7 +100,7 @@ private:
 		const double course = angles::from_degrees(wind.direction);
 
 		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
-		twist->header.stamp = ros::Time::now();
+		twist->header.stamp = uas->synchronise_stamp(wind.time_boot_ms);
 		// TODO: check math's
 		twist->twist.linear.x = speed * std::sin(course);
 		twist->twist.linear.y = speed * std::cos(course);
