@@ -324,14 +324,23 @@ public:
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
 	/**
-	 * @brief Compute FCU message time from time_boot_ms field
+	 * @brief Compute FCU message time from time_boot_ms or time_usec field
 	 *
 	 * Uses time_offset for calculation
 	 *
-	 * @todo
-	 * @return FCU time if if is known else current wall time.
+	 * @return FCU time if it is known else current wall time.
 	 */
-	//ros::Time fcu_time(uint32_t time_boot_ms);
+	inline ros::Time synchronise_stamp(uint32_t time_boot_ms) {
+		if(time_offset > 0)		
+			return ros::Time(time_boot_ms + time_offset/1000000);
+		else return ros::Time::now();
+	}
+
+	inline ros::Time synchronise_stamp(uint64_t time_usec) {
+		if(time_offset > 0)
+			return ros::Time(time_usec + time_offset/1000);
+		else return ros::Time::now();
+	}
 
 private:
 	std::recursive_mutex mutex;
