@@ -58,3 +58,10 @@ addons:
     build_command_prepend: "cd ~/ros/ws_$REPOSITORY_NAME/src/mavros && echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt && echo 'add_subdirectory(mavros)' >> CMakeLists.txt && echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt && cmake ."
     build_command: "make -j4"
     branch_pattern: coverity_scan
+notifications:
+  webhooks:
+    urls:
+    - https://webhooks.gitter.im/e/b856f174ff9736ad23ec
+    on_success: change
+    on_failure: always
+    on_start: false
