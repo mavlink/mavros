@@ -183,7 +183,7 @@ private:
 		}
 
 		fix->header.frame_id = frame_id;
-		fix->header.stamp = ros::Time::now();
+		fix->header.stamp = ros::Time::now(); // TODO: Check type of stamp in message
 
 		// store GPS data in UAS
 		double eph = (raw_gps.eph != UINT16_MAX)? raw_gps.eph / 1E2 : NAN;

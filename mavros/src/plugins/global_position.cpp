@@ -122,7 +122,7 @@ private:
 
 		std_msgs::Header header;
 		header.frame_id = frame_id;
-		header.stamp = ros::Time::now();
+		header.stamp = uas->synchronise_stamp(gp_pos.time_boot_ms);
 
 		sensor_msgs::NavSatFixPtr gps_cord =
 			boost::make_shared<sensor_msgs::NavSatFix>();
