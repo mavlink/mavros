@@ -50,6 +50,37 @@ void UAS::stop(void)
 {
 }
 
+/* -*- time syncronise functions -*- */
+
+static inline ros::Time ros_time_from_ns(uint64_t &stamp_ns) {
+	return ros::Time(
+			stamp_ns / 1000000000UL,	// t_sec
+			stamp_ns % 1000000000UL);	// t_nsec
+}
+
+ros::Time UAS::synchronise_stamp(uint32_t time_boot_ms) {
+	// copy offset from atomic var
+	uint64_t offset_ns = time_offset;
+
+	if (offset_ns > 0) {
+		uint64_t stamp_ns = static_cast<uint64_t>(time_boot_ms) * 1000000UL + offset_ns;
+		return ros_time_from_ns(stamp_ns);
+	}
+	else
+		return ros::Time::now();
+}
+
+ros::Time UAS::synchronise_stamp(uint64_t time_usec) {
+	uint64_t offset_ns = time_offset;
+
+	if (offset_ns > 0) {
+		uint64_t stamp_ns = time_usec * 1000UL + offset_ns;
+		return ros_time_from_ns(stamp_ns);
+	}
+	else
+		return ros::Time::now();
+}
+
 /* -*- mode stringify functions -*- */
 
 typedef std::map<uint32_t, std::string> cmode_map;

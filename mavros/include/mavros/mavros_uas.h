@@ -273,8 +273,8 @@ public:
 	}
 
 	/* -*- time sync -*- */
-	inline void set_time_offset(uint64_t offset) {
-		time_offset = offset;
+	inline void set_time_offset(uint64_t offset_ns) {
+		time_offset = offset_ns;
 	}
 
 	inline uint64_t get_time_offset(void) {
@@ -330,17 +330,8 @@ public:
 	 *
 	 * @return FCU time if it is known else current wall time.
 	 */
-	inline ros::Time synchronise_stamp(uint32_t time_boot_ms) {
-		if(time_offset > 0)		
-			return ros::Time(time_boot_ms + time_offset/1000000);
-		else return ros::Time::now();
-	}
-
-	inline ros::Time synchronise_stamp(uint64_t time_usec) {
-		if(time_offset > 0)
-			return ros::Time(time_usec + time_offset/1000);
-		else return ros::Time::now();
-	}
+	ros::Time synchronise_stamp(uint32_t time_boot_ms);
+	ros::Time synchronise_stamp(uint64_t time_usec);
 
 private:
 	std::recursive_mutex mutex;
