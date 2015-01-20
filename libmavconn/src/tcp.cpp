@@ -35,7 +35,7 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
-using mavutils::to_string_cs;
+using mavutils::to_string_ss;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
@@ -51,7 +51,7 @@ static bool resolve_address_tcp(io_service &io, std::string host, unsigned short
 			ep = q_ep;
 			ep.port(port);
 			result = true;
-			logDebug("tcp: host %s resolved as %s", host.c_str(), to_string_cs(ep));
+			logDebug("tcp: host %s resolved as %s", host.c_str(), to_string_ss(ep).c_str());
 		});
 
 	if (ec) {
@@ -76,7 +76,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_tcp(io_service, server_host, server_port, server_ep))
 		throw DeviceError("tcp: resolve", "Bind address resolve failed");
 
-	logInform("tcp%d: Server address: %s", channel, to_string_cs(server_ep));
+	logInform("tcp%d: Server address: %s", channel, to_string_ss(server_ep).c_str());
 
 	try {
 		socket.open(tcp::v4());
@@ -105,7 +105,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 
 void MAVConnTCPClient::client_connected(int server_channel) {
 	logInform("tcp-l%d: Got client, channel: %d, address: %s",
-			server_channel, channel, to_string_cs(server_ep));
+			server_channel, channel, to_string_ss(server_ep).c_str());
 
 	// start recv
 	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_recv, this));
@@ -261,7 +261,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_tcp(io_service, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
 
-	logInform("tcp-l%d: Bind address: %s", channel, to_string_cs(bind_ep));
+	logInform("tcp-l%d: Bind address: %s", channel, to_string_ss(bind_ep).c_str());
 
 	try {
 		acceptor.open(tcp::v4());
@@ -365,7 +365,7 @@ void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_inst
 	if (auto instp = weak_instp.lock()) {
 		bool locked = mutex.try_lock();
 		logInform("tcp-l%d: Client connection closed, channel: %d, address: %s",
-				channel, instp->channel, to_string_cs(instp->server_ep));
+				channel, instp->channel, to_string_ss(instp->server_ep).c_str());
 
 		client_list.remove(instp);
 
