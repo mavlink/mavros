@@ -38,5 +38,16 @@
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
     <rosdoc config="rosdoc.yaml" />
+    <rosindex>
+      <!-- ROSIndex metadata. Wait until <include> will work -->
+      <tags>
+        <tag>uav</tag>
+        <tag>mav</tag>
+        <tag>mavlink</tag>
+        <tag>plugin</tag>
+        <tag>apm</tag>
+        <tag>px4</tag>
+      </tags>
+    </rosindex>
   </export>
 </package>
