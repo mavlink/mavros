@@ -91,7 +91,19 @@ private:
 
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		transform.setRotation(uas->get_attitude_orientation());
+		geometry_msgs::Quaternion q_body = uas->get_attitude_orientation();
+
+
+		try
+		{
+			geometry_msgs::Quaternion q_world;
+			listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_world);
+			transform.setRotation(q_world);
+		}
+		catch (tf::TransformException ex)
+		{
+			ROS_ERROR("%s",ex.what());
+		}
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
@@ -136,11 +148,11 @@ private:
   		const double sqrt2_2 = sqrt(2) / 2;
 		int id = 1;
 
- 		visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
+			visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
 
   		// the marker will be displayed in frame_id
   		marker->header.stamp = ros::Time();
-		marker->header.frame_id = child_frame_id;
+			marker->header.frame_id = child_frame_id;
   		marker->ns = "fcu";
   		marker->action = visualization_msgs::Marker::ADD;
   		marker->id = id; 
@@ -152,7 +164,7 @@ private:
   		marker->scale.z = 0.01*marker_scale;
   		marker->color.r = 0.4;
   		marker->color.g = 0.4;
- 	 	marker->color.b = 0.4;
+			marker->color.b = 0.4;
   		marker->color.a = 0.8;
   		marker->pose.position.z = 0;
 
@@ -179,7 +191,7 @@ private:
   		vehicle_marker.publish(marker);
 
   		// back left/right
- 		marker->pose.position.x = -0.19*marker_scale;
+ 			marker->pose.position.x = -0.19*marker_scale;
   		marker->pose.position.y = 0.11*marker_scale;
   		marker->id--;
   		vehicle_marker.publish(marker);

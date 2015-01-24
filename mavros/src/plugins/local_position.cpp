@@ -100,7 +100,19 @@ private:
 		 */
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		transform.setRotation(uas->get_attitude_orientation());
+		geometry_msgs::Quaternion q_body = uas->get_attitude_orientation();
+
+
+		try
+		{
+			geometry_msgs::Quaternion q_world;
+			listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_world);
+			transform.setRotation(q_world);
+		}
+		catch (tf::TransformException ex)
+		{
+			ROS_ERROR("%s",ex.what());
+		}
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
