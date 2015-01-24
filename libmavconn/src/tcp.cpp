@@ -125,8 +125,8 @@ void MAVConnTCPClient::close() {
 	socket.close();
 
 	// clear tx queue
-	std::for_each(tx_q.begin(), tx_q.end(),
-			[](MsgBuffer *p) { delete p; });
+	for (auto &p : tx_q)
+		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -310,8 +310,7 @@ mavlink_status_t MAVConnTCPServer::get_status()
 	mavlink_status_t status{};
 
 	lock_guard lock(mutex);
-	std::for_each(client_list.begin(), client_list.end(),
-			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+	for (auto &instp : client_list) {
 		auto inst_status = instp->get_status();
 
 #define ADD_STATUS(_field)	\
@@ -324,7 +323,7 @@ mavlink_status_t MAVConnTCPServer::get_status()
 		/* seq counters always 0 for this connection type */
 
 #undef ADD_STATUS
-	});
+	};
 
 	return status;
 }
@@ -334,8 +333,7 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 	MAVConnInterface::IOStat iostat{};
 
 	lock_guard lock(mutex);
-	std::for_each(client_list.begin(), client_list.end(),
-			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+	for (auto &instp : client_list) {
 		auto inst_iostat = instp->get_iostat();
 
 #define ADD_IOSTAT(_field)	\
@@ -347,7 +345,7 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 		ADD_IOSTAT(rx_speed);
 
 #undef ADD_IOSTAT
-	});
+	};
 
 	return iostat;
 }
@@ -355,19 +353,17 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
 {
 	lock_guard lock(mutex);
-	std::for_each(client_list.begin(), client_list.end(),
-			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+	for (auto &instp : client_list) {
 		instp->send_bytes(bytes, length);
-	});
+	};
 }
 
 void MAVConnTCPServer::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	lock_guard lock(mutex);
-	std::for_each(client_list.begin(), client_list.end(),
-			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+	for (auto &instp : client_list) {
 		instp->send_message(message, sysid, compid);
-	});
+	};
 }
 
 void MAVConnTCPServer::do_accept()
