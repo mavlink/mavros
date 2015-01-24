@@ -27,10 +27,10 @@ before_install:
   - rosdep update
 install:
   # GCC 4.9 for proper C++11
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get -qq update
-  - sudo sudo apt-get -qq install gcc-4.9 g++-4.9
-  - export CXX="g++-4.9" CC="gcc-4.9"
+  #- sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  #- sudo apt-get -qq update
+  #- sudo sudo apt-get -qq install gcc-4.9 g++-4.9
+  #- export CXX="g++-4.9" CC="gcc-4.9"
   # Create workspace
   - mkdir -p ~/ros/ws_$REPOSITORY_NAME/src
   - cd ~/ros/ws_$REPOSITORY_NAME/src
