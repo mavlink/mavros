@@ -305,7 +305,52 @@ void MAVConnTCPServer::close() {
 	/* emit */ port_closed();
 }
 
-/* TODO: get_iostat() */
+mavlink_status_t MAVConnTCPServer::get_status()
+{
+	mavlink_status_t status{};
+
+	lock_guard lock(mutex);
+	std::for_each(client_list.begin(), client_list.end(),
+			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+		auto inst_status = instp->get_status();
+
+#define ADD_STATUS(_field)	\
+		status._field += inst_status._field
+
+		ADD_STATUS(packet_rx_success_count);
+		ADD_STATUS(packet_rx_drop_count);
+		ADD_STATUS(buffer_overrun);
+		ADD_STATUS(parse_error);
+		/* seq counters always 0 for this connection type */
+
+#undef ADD_STATUS
+	});
+
+	return status;
+}
+
+MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
+{
+	MAVConnInterface::IOStat iostat{};
+
+	lock_guard lock(mutex);
+	std::for_each(client_list.begin(), client_list.end(),
+			[&](boost::shared_ptr<MAVConnTCPClient> instp) {
+		auto inst_iostat = instp->get_iostat();
+
+#define ADD_IOSTAT(_field)	\
+		iostat._field += inst_iostat._field
+
+		ADD_IOSTAT(tx_total_bytes);
+		ADD_IOSTAT(rx_total_bytes);
+		ADD_IOSTAT(tx_speed);
+		ADD_IOSTAT(rx_speed);
+
+#undef ADD_IOSTAT
+	});
+
+	return iostat;
+}
 
 void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
 {

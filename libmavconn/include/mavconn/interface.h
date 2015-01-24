@@ -154,8 +154,8 @@ public:
 	MessageSig message_received;
 	sig2::signal<void()> port_closed;
 
-	mavlink_status_t get_status();
-	IOStat get_iostat();
+	virtual mavlink_status_t get_status();
+	virtual IOStat get_iostat();
 	virtual bool is_open() = 0;
 
 	inline int get_channel() { return channel; };
