@@ -108,7 +108,7 @@ private:
 
 		geometry_msgs::Quaternion q_inertial;
 		listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_inertial);
-		transform.setRotation(q_world);
+		transform.setRotation(q_inertial);
 
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
