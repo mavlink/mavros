@@ -201,6 +201,7 @@ void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
 		last_remote_ep = remote_ep;
 	}
 
+	iostat_rx_add(bytes_transferred);
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
 			logDebug("udp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
@@ -241,6 +242,7 @@ void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 		return;
 	}
 
+	iostat_tx_add(bytes_transferred);
 	lock_guard lock(mutex);
 	if (tx_q.empty()) {
 		tx_in_progress = false;

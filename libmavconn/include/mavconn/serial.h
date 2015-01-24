@@ -55,7 +55,6 @@ public:
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
-	inline mavlink_status_t get_status() { return *mavlink_get_channel_status(channel); };
 	inline bool is_open() { return serial_dev.is_open(); };
 
 private:

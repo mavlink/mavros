@@ -191,6 +191,7 @@ void MAVConnTCPClient::async_receive_end(error_code error, size_t bytes_transfer
 		return;
 	}
 
+	iostat_rx_add(bytes_transferred);
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
 			logDebug("tcp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
@@ -230,6 +231,7 @@ void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred
 		return;
 	}
 
+	iostat_tx_add(bytes_transferred);
 	lock_guard lock(mutex);
 	if (tx_q.empty()) {
 		tx_in_progress = false;
@@ -302,6 +304,8 @@ void MAVConnTCPServer::close() {
 
 	/* emit */ port_closed();
 }
+
+/* TODO: get_iostat() */
 
 void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
 {
