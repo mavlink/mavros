@@ -75,7 +75,7 @@ private:
 	UAS *uas;
 
 	ros::NodeHandle viz_nh;
-	
+
 	ros::Publisher track_marker;
 	ros::Publisher vehicle_marker;
 
@@ -91,19 +91,14 @@ private:
 
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		geometry_msgs::Quaternion q_body = uas->get_attitude_orientation();
+		geometry_msgs::QuaternionStamped q_body;
+		q_body.quaternion = uas->get_attitude_orientation();
+		q_body.header.frame_id = child_frame_id;
+		q_body.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 
-
-		try
-		{
-			geometry_msgs::Quaternion q_world;
-			listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_world);
-			transform.setRotation(q_world);
-		}
-		catch (tf::TransformException ex)
-		{
-			ROS_ERROR("%s",ex.what());
-		}
+		geometry_msgs::Quaternion q_inertial;
+		listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_inertial);
+		transform.setRotation(q_world);
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
@@ -119,7 +114,7 @@ private:
 	void publish_vis_marker(geometry_msgs::PoseStampedPtr pose)
 	{
 		visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
-		
+
 		marker->header = pose->header;
 		marker->type = visualization_msgs::Marker::CUBE;
 		marker->ns = "fcu";
@@ -129,12 +124,11 @@ private:
 		marker->scale.x = marker_scale*0.015;
 		marker->scale.y = marker_scale*0.015;
 		marker->scale.z = marker_scale*0.015;
-		
+
 		marker->color.a = 1.0;
 		marker->color.r = 0.0;
 		marker->color.g = 0.0;
 		marker->color.b = 0.5;
-	
 		track_marker.publish(marker);
 
 	}
@@ -145,93 +139,93 @@ private:
 		 *  thanks to Markus Achtelik. 		 
 		 */
 
-  		const double sqrt2_2 = sqrt(2) / 2;
+		const double sqrt2_2 = sqrt(2) / 2;
 		int id = 1;
 
-			visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
+		visualization_msgs::MarkerPtr marker = boost::make_shared<visualization_msgs::Marker>();
 
-  		// the marker will be displayed in frame_id
-  		marker->header.stamp = ros::Time();
-			marker->header.frame_id = child_frame_id;
-  		marker->ns = "fcu";
-  		marker->action = visualization_msgs::Marker::ADD;
-  		marker->id = id; 
+		// the marker will be displayed in frame_id
+		marker->header.stamp = ros::Time();
+		marker->header.frame_id = child_frame_id;
+		marker->ns = "fcu";
+		marker->action = visualization_msgs::Marker::ADD;
+		marker->id = id; 
 
-  		// make rotors
-  		marker->type = visualization_msgs::Marker::CYLINDER;
-  		marker->scale.x = 0.2*marker_scale;
-  		marker->scale.y = 0.2*marker_scale;
-  		marker->scale.z = 0.01*marker_scale;
-  		marker->color.r = 0.4;
-  		marker->color.g = 0.4;
-			marker->color.b = 0.4;
-  		marker->color.a = 0.8;
-  		marker->pose.position.z = 0;
+		// make rotors
+		marker->type = visualization_msgs::Marker::CYLINDER;
+		marker->scale.x = 0.2*marker_scale;
+		marker->scale.y = 0.2*marker_scale;
+		marker->scale.z = 0.01*marker_scale;
+		marker->color.r = 0.4;
+		marker->color.g = 0.4;
+		marker->color.b = 0.4;
+		marker->color.a = 0.8;
+		marker->pose.position.z = 0;
 
-  		// front left/right
-  		marker->pose.position.x = 0.19*marker_scale;
-  		marker->pose.position.y = 0.11*marker_scale;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		// front left/right
+		marker->pose.position.x = 0.19*marker_scale;
+		marker->pose.position.y = 0.11*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		marker->pose.position.x = 0.19*marker_scale;
-  		marker->pose.position.y = -0.11*marker_scale;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
-	
-  		// left/right
-  		marker->pose.position.x = 0;
-  		marker->pose.position.y = 0.22*marker_scale;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		marker->pose.position.x = 0.19*marker_scale;
+		marker->pose.position.y = -0.11*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		marker->pose.position.x = 0;
-  		marker->pose.position.y = -0.22*marker_scale;
- 		marker->id--;
-  		vehicle_marker.publish(marker);
+		// left/right
+		marker->pose.position.x = 0;
+		marker->pose.position.y = 0.22*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		// back left/right
- 			marker->pose.position.x = -0.19*marker_scale;
-  		marker->pose.position.y = 0.11*marker_scale;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		marker->pose.position.x = 0;
+		marker->pose.position.y = -0.22*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		marker->pose.position.x = -0.19*marker_scale;
-  		marker->pose.position.y = -0.11*marker_scale;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		// back left/right
+		marker->pose.position.x = -0.19*marker_scale;
+		marker->pose.position.y = 0.11*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		// make arms
-  		marker->type = visualization_msgs::Marker::CUBE;
-  		marker->scale.x = 0.44*marker_scale;
-  		marker->scale.y = 0.02*marker_scale;
-  		marker->scale.z = 0.01*marker_scale;
-  		marker->color.r = 0.0;
-  		marker->color.g = 0.0;
-  		marker->color.b = 1.0;
-  		marker->color.a = 1.0;
+		marker->pose.position.x = -0.19*marker_scale;
+		marker->pose.position.y = -0.11*marker_scale;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		marker->pose.position.x = 0;
-  		marker->pose.position.y = 0;
-  		marker->pose.position.z = -0.015*marker_scale;
-  		marker->pose.orientation.x = 0;
-  		marker->pose.orientation.y = 0;
+		// make arms
+		marker->type = visualization_msgs::Marker::CUBE;
+		marker->scale.x = 0.44*marker_scale;
+		marker->scale.y = 0.02*marker_scale;
+		marker->scale.z = 0.01*marker_scale;
+		marker->color.r = 0.0;
+		marker->color.g = 0.0;
+		marker->color.b = 1.0;
+		marker->color.a = 1.0;
 
-  		marker->pose.orientation.w = sqrt2_2;
-  		marker->pose.orientation.z = sqrt2_2;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		marker->pose.position.x = 0;
+		marker->pose.position.y = 0;
+		marker->pose.position.z = -0.015*marker_scale;
+		marker->pose.orientation.x = 0;
+		marker->pose.orientation.y = 0;
 
-  		// 30 deg rotation  0.9659  0  0  0.2588
-  		marker->pose.orientation.w = 0.9659;
-  		marker->pose.orientation.z = 0.2588;
-  		marker->id--;
-  		vehicle_marker.publish(marker);
+		marker->pose.orientation.w = sqrt2_2;
+		marker->pose.orientation.z = sqrt2_2;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
-  		marker->pose.orientation.w = 0.9659;
-  		marker->pose.orientation.z = -0.2588;
- 		marker->id--;
-  		vehicle_marker.publish(marker);
+		// 30 deg rotation  0.9659  0  0  0.2588
+		marker->pose.orientation.w = 0.9659;
+		marker->pose.orientation.z = 0.2588;
+		marker->id--;
+		vehicle_marker.publish(marker);
+
+		marker->pose.orientation.w = 0.9659;
+		marker->pose.orientation.z = -0.2588;
+		marker->id--;
+		vehicle_marker.publish(marker);
 
 	}
 
