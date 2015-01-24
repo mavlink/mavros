@@ -34,7 +34,8 @@ MavlinkDiag::MavlinkDiag(std::string name) :
 void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
 	if (auto link = weak_link.lock()) {
-		mavlink_status_t mav_status = link->get_status();
+		auto mav_status = link->get_status();
+		auto iostat = link->get_iostat();
 
 		stat.addf("Received packets:", "%u", mav_status.packet_rx_success_count);
 		stat.addf("Dropped packets:", "%u", mav_status.packet_rx_drop_count);
@@ -42,6 +43,11 @@ void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.addf("Parse errors:", "%u", mav_status.parse_error);
 		stat.addf("Rx sequence number:", "%u", mav_status.current_rx_seq);
 		stat.addf("Tx sequence number:", "%u", mav_status.current_tx_seq);
+
+		stat.addf("Rx total bytes:", "%u", iostat.rx_total_bytes);
+		stat.addf("Tx total bytes:", "%u", iostat.tx_total_bytes);
+		stat.addf("Rx speed:", "%f", iostat.rx_speed);
+		stat.addf("Tx speed:", "%f", iostat.tx_speed);
 
 		if (mav_status.packet_rx_drop_count > last_drop_count)
 			stat.summaryf(1, "%d packeges dropped since last report",
