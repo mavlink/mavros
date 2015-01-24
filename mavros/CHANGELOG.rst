@@ -2,6 +2,26 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.0 (2015-01-24)
+-------------------
+* mavros `#154 <https://github.com/vooon/mavros/issues/154>`_: Add IO stats to diagnostics.
+  Fix `#154 <https://github.com/vooon/mavros/issues/154>`_.
+* Add rosindex metadata
+* plugin: ftp: init ctor.
+* plugin: sts_time: Code cleanup and codestyle fix.
+* plugin: command: Quirk for older FCU's (component_id)
+  Older FCU's expect that commands addtessed to MAV_COMP_ID_SYSTEM_CONTROL.
+  Now there parameter: `~cmd/use_comp_id_system_control`
+* plugin: rc_io: `#185 <https://github.com/vooon/mavros/issues/185>`_ Use synchronized timestamp.
+* plugin: gps: `#185 <https://github.com/vooon/mavros/issues/185>`_ use synchronized timestamp
+  common.xml tells that GPS_RAW_INT have time_usec stamps.
+* uas: Fix ros timestamp calculation.
+  Issues: `#186 <https://github.com/vooon/mavros/issues/186>`_, `#185 <https://github.com/vooon/mavros/issues/185>`_.
+* plugin: add synchronisation to most plugins (fixed)
+  Closes `#186 <https://github.com/vooon/mavros/issues/186>`_.
+* readme: Add notes about coordinate frame conversions `#49 <https://github.com/vooon/mavros/issues/49>`_
+* Contributors: M.H.Kabir, Vladimir Ermakov
+
 0.9.4 (2015-01-06)
 ------------------
 * plugin: sys_time: enable EMA

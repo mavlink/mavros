@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.0 (2015-01-24)
+-------------------
+* mocap_pose_estimate: Switched from pose to poseStamped.
+* Contributors: Tony Baltovski
+
 0.9.4 (2015-01-06)
 ------------------
 
