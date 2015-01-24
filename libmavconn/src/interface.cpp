@@ -50,7 +50,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	rx_total_bytes(0),
 	last_tx_total_bytes(0),
 	last_rx_total_bytes(0),
-	last_iostat(std::chrono::steady_clock::now())
+	last_iostat(steady_clock::now())
 {
 	channel = new_channel();
 	assert(channel >= 0);
@@ -122,7 +122,7 @@ MAVConnInterface::IOStat MAVConnInterface::get_iostat()
 	last_tx_total_bytes = stat.tx_total_bytes;
 	last_rx_total_bytes = stat.rx_total_bytes;
 
-	auto now = std::chrono::steady_clock::now();
+	auto now = steady_clock::now();
 	auto dt = now - last_iostat;
 	last_iostat = now;
 
