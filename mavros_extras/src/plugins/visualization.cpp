@@ -52,14 +52,14 @@ public:
 		uas = &uas_;
 
 		viz_nh = ros::NodeHandle(nh, "visualization");
-		
+
 		viz_nh.param<std::string>("visualization/fixed_frame_id", fixed_frame_id, "local_origin");
 		viz_nh.param<std::string>("visualization/child_frame_id", child_frame_id, "fcu");
-		viz_nh.param<double>("visualization/marker_scale", marker_scale, 2.0);		
+		viz_nh.param<double>("visualization/marker_scale", marker_scale, 2.0);
 
 		track_marker = viz_nh.advertise<visualization_msgs::Marker>("track_markers", 10);
 		vehicle_marker = viz_nh.advertise<visualization_msgs::Marker>("vehicle_marker", 10);
-		
+
 	}
 
 	std::string const get_name() const {
@@ -99,7 +99,7 @@ private:
 		q_body.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 		geometry_msgs::QuaternionStamped q_inertial;
 		tf::TransformListener listener;
-		listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_inertial);
+		listener.transformQuaternion(fixed_frame_id, q_body, q_inertial);
 		transform.setRotation(tf::Quaternion(q_inertial.quaternion.x, q_inertial.quaternion.y,
 			q_inertial.quaternion.z, q_inertial.quaternion.w));
 

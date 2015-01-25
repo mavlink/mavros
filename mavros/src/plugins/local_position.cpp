@@ -108,7 +108,7 @@ private:
 		q_body.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 		geometry_msgs::QuaternionStamped q_inertial;
 		tf::TransformListener listener;
-		listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, frame_id, q_inertial);
+		listener.transformQuaternion(frame_id, q_body, q_inertial);
 		transform.setRotation(tf::Quaternion(q_inertial.quaternion.x, q_inertial.quaternion.y,
 			q_inertial.quaternion.z, q_inertial.quaternion.w));
 
