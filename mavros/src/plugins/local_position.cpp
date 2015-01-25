@@ -30,6 +30,7 @@
 
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/QuaternionStamped.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
@@ -55,6 +56,7 @@ public:
 
 		pos_nh = ros::NodeHandle(nh, "position");
 
+		tf_listener.reset(new tf::TransformListener);
 		pos_nh.param("local/send_tf", send_tf, true);
 		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
 		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
@@ -81,6 +83,7 @@ private:
 
 	std::string frame_id;		//!< origin for TF
 	std::string child_frame_id;	//!< frame for TF and Pose
+	boost::shared_ptr<tf::TransformListener> tf_listener;
 	bool send_tf;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -102,15 +105,12 @@ private:
 		 */
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		geometry_msgs::QuaternionStamped q_body;
-		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q_body.quaternion);
-		q_body.header.frame_id = child_frame_id;
-		q_body.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
-		geometry_msgs::QuaternionStamped q_inertial;
-		tf::TransformListener listener;
-		listener.transformQuaternion(frame_id, q_body, q_inertial);
-		transform.setRotation(tf::Quaternion(q_inertial.quaternion.x, q_inertial.quaternion.y,
-			q_inertial.quaternion.z, q_inertial.quaternion.w));
+		geometry_msgs::QuaternionStampedPtr q = boost::make_shared<geometry_msgs::QuaternionStamped>();
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q->quaternion);
+		q->header.frame_id = child_frame_id;
+		q->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
+		tf_listener->transformQuaternion(frame_id, *q, *q);
+		transform.setRotation(tf::Quaternion(q->quaternion.x, q->quaternion.y, q->quaternion.z, q->quaternion.w));
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
