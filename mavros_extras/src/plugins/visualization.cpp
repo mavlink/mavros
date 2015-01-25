@@ -28,6 +28,8 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <visualization_msgs/Marker.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 
 namespace mavplugin {
 
@@ -92,13 +94,14 @@ private:
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
 		geometry_msgs::QuaternionStamped q_body;
-		q_body.quaternion = uas->get_attitude_orientation();
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q_body.quaternion);
 		q_body.header.frame_id = child_frame_id;
 		q_body.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
-
-		geometry_msgs::Quaternion q_inertial;
+		geometry_msgs::QuaternionStamped q_inertial;
+		tf::TransformListener listener;
 		listener.transformQuaternion(child_frame_id, ros::Time::now(), q_body, fixed_frame_id, q_inertial);
-		transform.setRotation(q_inertial);
+		transform.setRotation(tf::Quaternion(q_inertial.quaternion.x, q_inertial.quaternion.y,
+			q_inertial.quaternion.z, q_inertial.quaternion.w));
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
