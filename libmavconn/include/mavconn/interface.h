@@ -50,6 +50,14 @@ namespace sig2 = boost::signals2;
 
 class MsgBuffer;
 
+#if __cplusplus == 201103L
+using steady_clock = std::chrono::steady_clock;
+#elif defined(__GXX_EXPERIMENTAL_CXX0X__)
+typedef std::chrono::monotonic_clock steady_clock;
+#else
+#error Unknown C++11 or C++0x wall clock class
+#endif
+
 /**
  * @brief Common exception for communication error
  */
@@ -212,7 +220,7 @@ private:
 	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
 	std::recursive_mutex iostat_mutex;
 	size_t last_tx_total_bytes, last_rx_total_bytes;
-	std::chrono::time_point<std::chrono::steady_clock> last_iostat;
+	std::chrono::time_point<steady_clock> last_iostat;
 };
 
 }; // namespace mavconn

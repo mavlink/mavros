@@ -83,8 +83,8 @@ void MAVConnSerial::close() {
 	io_service.stop();
 
 	// clear tx queue
-	std::for_each(tx_q.begin(), tx_q.end(),
-			[](MsgBuffer *p) { delete p; });
+	for (auto &p : tx_q)
+		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
