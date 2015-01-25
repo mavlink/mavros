@@ -51,7 +51,6 @@ public:
 	{
 		uas = &uas_;
 
-		tf_listener.reset(new tf::TransformListener);
 		viz_nh = ros::NodeHandle(nh, "visualization");
 
 		viz_nh.param<std::string>("visualization/fixed_frame_id", fixed_frame_id, "local_origin");
@@ -84,7 +83,7 @@ private:
 
 	std::string fixed_frame_id;
 	std::string child_frame_id;	// frame for visualization markers
-	boost::shared_ptr<tf::TransformListener> tf_listener;
+	tf::TransformListener tf_listener;
 
 	double marker_scale;
 	int marker_id;
@@ -93,14 +92,15 @@ private:
 		mavlink_local_position_ned_t pos_ned;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 
+		geometry_msgs::QuaternionStamped q;
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q.quaternion);
+		q.header.frame_id = child_frame_id;
+		q.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
+		tf_listener.transformQuaternion(fixed_frame_id, q, q);
+
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		geometry_msgs::QuaternionStampedPtr q = boost::make_shared<geometry_msgs::QuaternionStamped>();
-		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q->quaternion);
-		q->header.frame_id = child_frame_id;
-		q->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
-		tf_listener->transformQuaternion(fixed_frame_id, *q, *q);
-		transform.setRotation(tf::Quaternion(q->quaternion.x, q->quaternion.y, q->quaternion.z, q->quaternion.w));
+		transform.setRotation(tf::Quaternion(q.quaternion.x, q.quaternion.y, q.quaternion.z, q.quaternion.w));
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
@@ -123,9 +123,9 @@ private:
 		marker->id = marker_id++;
 		marker->action = visualization_msgs::Marker::ADD;
 		marker->pose = pose->pose;
-		marker->scale.x = marker_scale*0.015;
-		marker->scale.y = marker_scale*0.015;
-		marker->scale.z = marker_scale*0.015;
+		marker->scale.x = marker_scale *0.015;
+		marker->scale.y = marker_scale * 0.015;
+		marker->scale.z = marker_scale * 0.015;
 
 		marker->color.a = 1.0;
 		marker->color.r = 0.0;
@@ -155,9 +155,9 @@ private:
 
 		// make rotors
 		marker->type = visualization_msgs::Marker::CYLINDER;
-		marker->scale.x = 0.2*marker_scale;
-		marker->scale.y = 0.2*marker_scale;
-		marker->scale.z = 0.01*marker_scale;
+		marker->scale.x = 0.2 * marker_scale;
+		marker->scale.y = 0.2 * marker_scale;
+		marker->scale.z = 0.01 * marker_scale;
 		marker->color.r = 0.4;
 		marker->color.g = 0.4;
 		marker->color.b = 0.4;
@@ -165,43 +165,43 @@ private:
 		marker->pose.position.z = 0;
 
 		// front left/right
-		marker->pose.position.x = 0.19*marker_scale;
-		marker->pose.position.y = 0.11*marker_scale;
+		marker->pose.position.x = 0.19 * marker_scale;
+		marker->pose.position.y = 0.11 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
-		marker->pose.position.x = 0.19*marker_scale;
-		marker->pose.position.y = -0.11*marker_scale;
+		marker->pose.position.x = 0.19 * marker_scale;
+		marker->pose.position.y = -0.11 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
 		// left/right
 		marker->pose.position.x = 0;
-		marker->pose.position.y = 0.22*marker_scale;
+		marker->pose.position.y = 0.22 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
 		marker->pose.position.x = 0;
-		marker->pose.position.y = -0.22*marker_scale;
+		marker->pose.position.y = -0.22 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
 		// back left/right
-		marker->pose.position.x = -0.19*marker_scale;
-		marker->pose.position.y = 0.11*marker_scale;
+		marker->pose.position.x = -0.19 * marker_scale;
+		marker->pose.position.y = 0.11 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
-		marker->pose.position.x = -0.19*marker_scale;
-		marker->pose.position.y = -0.11*marker_scale;
+		marker->pose.position.x = -0.19 * marker_scale;
+		marker->pose.position.y = -0.11 * marker_scale;
 		marker->id--;
 		vehicle_marker.publish(marker);
 
 		// make arms
 		marker->type = visualization_msgs::Marker::CUBE;
-		marker->scale.x = 0.44*marker_scale;
-		marker->scale.y = 0.02*marker_scale;
-		marker->scale.z = 0.01*marker_scale;
+		marker->scale.x = 0.44 * marker_scale;
+		marker->scale.y = 0.02 * marker_scale;
+		marker->scale.z = 0.01 * marker_scale;
 		marker->color.r = 0.0;
 		marker->color.g = 0.0;
 		marker->color.b = 1.0;
@@ -209,7 +209,7 @@ private:
 
 		marker->pose.position.x = 0;
 		marker->pose.position.y = 0;
-		marker->pose.position.z = -0.015*marker_scale;
+		marker->pose.position.z = -0.015 * marker_scale;
 		marker->pose.orientation.x = 0;
 		marker->pose.orientation.y = 0;
 

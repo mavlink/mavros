@@ -56,8 +56,6 @@ public:
 
 		pos_nh = ros::NodeHandle(nh, "position");
 
-		tf_listener.reset(new tf::TransformListener);
-		tf_broadcaster.reset(new tf::TransformBroadcaster);
 		pos_nh.param("local/send_tf", send_tf, true);
 		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
 		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
@@ -80,11 +78,11 @@ private:
 
 	ros::NodeHandle pos_nh;
 	ros::Publisher local_position;
-	boost::shared_ptr<tf::TransformBroadcaster> tf_broadcaster;
+	tf::TransformBroadcaster tf_broadcaster;
 
 	std::string frame_id;		//!< origin for TF
 	std::string child_frame_id;	//!< frame for TF and Pose
-	boost::shared_ptr<tf::TransformListener> tf_listener;
+	tf::TransformListener tf_listener;
 	bool send_tf;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -97,14 +95,15 @@ private:
 				pos_ned.x, pos_ned.y, pos_ned.z,
 				pos_ned.vx, pos_ned.vy, pos_ned.vz);
 
+		geometry_msgs::QuaternionStamped q;
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q.quaternion);
+		q.header.frame_id = child_frame_id;
+		q.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
+		tf_listener.transformQuaternion(frame_id, q, q);
+
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		geometry_msgs::QuaternionStampedPtr q = boost::make_shared<geometry_msgs::QuaternionStamped>();
-		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q->quaternion);
-		q->header.frame_id = child_frame_id;
-		q->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
-		tf_listener->transformQuaternion(frame_id, *q, *q);
-		transform.setRotation(tf::Quaternion(q->quaternion.x, q->quaternion.y, q->quaternion.z, q->quaternion.w));
+		transform.setRotation(tf::Quaternion(q.quaternion.x, q.quaternion.y, q.quaternion.z, q.quaternion.w));
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
@@ -113,7 +112,7 @@ private:
 		pose->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 
 		if (send_tf)
-			tf_broadcaster->sendTransform(
+			tf_broadcaster.sendTransform(
 					tf::StampedTransform(
 						transform,
 						pose->header.stamp,
