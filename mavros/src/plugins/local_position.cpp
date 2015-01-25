@@ -57,6 +57,7 @@ public:
 		pos_nh = ros::NodeHandle(nh, "position");
 
 		tf_listener.reset(new tf::TransformListener);
+		tf_broadcaster.reset(new tf::TransformBroadcaster);
 		pos_nh.param("local/send_tf", send_tf, true);
 		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
 		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
@@ -79,7 +80,7 @@ private:
 
 	ros::NodeHandle pos_nh;
 	ros::Publisher local_position;
-	tf::TransformBroadcaster tf_broadcaster;
+	boost::shared_ptr<tf::TransformBroadcaster> tf_broadcaster;
 
 	std::string frame_id;		//!< origin for TF
 	std::string child_frame_id;	//!< frame for TF and Pose
@@ -119,7 +120,7 @@ private:
 		pose->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 
 		if (send_tf)
-			tf_broadcaster.sendTransform(
+			tf_broadcaster->sendTransform(
 					tf::StampedTransform(
 						transform,
 						pose->header.stamp,
