@@ -10,6 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   mavros
   roscpp
   sensor_msgs
+  geometry_msgs
+  std_msgs
   visualization_msgs
 )
 
@@ -50,7 +52,7 @@ include(MavrosMavlink)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  OpticalFlow.msg
+  OpticalFlowRad.msg
 )
 
 ## Generate services in the 'srv' folder

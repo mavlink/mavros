@@ -6,6 +6,7 @@ plugin_blacklist:
   - rc_io
   #- command
   - '*_position'
+  - mocap
   - safety_area
   - 3dr_radio
   - 'setpoint_*'

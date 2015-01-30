@@ -28,7 +28,9 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/OpticalFlow.h>
+#include <mavros_extras/OpticalFlowRad.h>
+#include <sensor_msgs/Temperature.h>
+#include <sensor_msgs/Range.h>
 
 namespace mavplugin {
 
@@ -36,7 +38,6 @@ namespace mavplugin {
  * @brief PX4 Optical Flow plugin
  *
  * This plugin can publish data from PX4Flow camera to ROS
- * and send it to FCU.
  */
 class PX4FlowPlugin : public MavRosPlugin {
 public:
@@ -48,14 +49,21 @@ public:
 			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		bool mode_tx;
 		uas = &uas_;
 
-		nh.param("optical_flow_tx", mode_tx, false);
-		if (!mode_tx)
-			flow_pub = nh.advertise<mavros_extras::OpticalFlow>("optical_flow", 10);
-		else
-			flow_sub = nh.subscribe("optical_flow", 10, &PX4FlowPlugin::send_flow_cb, this);
+		flow_nh = ros::NodeHandle(nh, "px4flow");
+		
+		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
+
+		//Default rangefinder is Maxbotix HRLV-EZ4
+		flow_nh.param("ranger_fov", ranger_fov, 0.0); 	// TODO
+		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);	
+		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
+
+		flow_rad_pub = flow_nh.advertise<mavros_extras::OpticalFlowRad>("raw/optical_flow_rad", 10);
+		range_pub = flow_nh.advertise<sensor_msgs::Range>("ground_distance", 10);
+		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
+
 	}
 
 	const std::string get_name() const {
@@ -64,68 +72,82 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW, &PX4FlowPlugin::handle_optical_flow)
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW_RAD, &PX4FlowPlugin::handle_optical_flow_rad)
 		};
 	}
 
 private:
 	UAS *uas;
 
-	ros::Publisher flow_pub;
-	ros::Subscriber flow_sub;
+	ros::NodeHandle flow_nh;
 
-	void handle_optical_flow(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		if (flow_pub.getNumSubscribers() == 0)
-			return;
+	std::string frame_id;
+	
+	int ranger_type;
+	double ranger_fov;
+	double ranger_min_range;
+	double ranger_max_range;
 
-		mavlink_optical_flow_t flow;
-		mavlink_msg_optical_flow_decode(msg, &flow);
+	ros::Publisher flow_rad_pub;
+	ros::Publisher range_pub;
+	ros::Publisher temp_pub;
 
-		mavros_extras::OpticalFlowPtr flow_msg =
-			boost::make_shared<mavros_extras::OpticalFlow>();
+	void handle_optical_flow_rad(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 
-		// Note: for ENU->NED conversion i swap x & y.
-		flow_msg->header.stamp = ros::Time::now();
-		flow_msg->flow_x = flow.flow_y;
-		flow_msg->flow_y = flow.flow_x;
-		flow_msg->flow_comp_m_x	 = flow.flow_comp_m_y;
-		flow_msg->flow_comp_m_y	 = flow.flow_comp_m_x;
-		flow_msg->quality = flow.quality;
-		flow_msg->ground_distance = flow.ground_distance;
+		mavlink_optical_flow_rad_t flow_rad;
+		mavlink_msg_optical_flow_rad_decode(msg, &flow_rad);
+	
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
+		header.frame_id = frame_id;
 
-		flow_pub.publish(flow_msg);
-
-		/* Optional TODO: send ground_distance in sensor_msgs/Range
-		 *                with data filled by spec on used sonar.
+		/* Raw message with axes mapped to ROS conventions and temp in degrees celsius
+		 * The optical flow camera is essentially an angular sensor, so conversion is like 
+		 * gyroscope. (body-fixed NED -> ENU)
 		 */
+
+		mavros_extras::OpticalFlowRadPtr flow_rad_msg =
+			boost::make_shared<mavros_extras::OpticalFlowRad>();
+		
+		flow_rad_msg->header = header; 
+		
+		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
+		flow_rad_msg->integrated_x = flow_rad.integrated_x;
+		flow_rad_msg->integrated_y = -flow_rad.integrated_y; // NED -> ENU
+		flow_rad_msg->integrated_xgyro = flow_rad.integrated_xgyro;
+		flow_rad_msg->integrated_ygyro = -flow_rad.integrated_ygyro; // NED -> ENU
+		flow_rad_msg->integrated_zgyro = -flow_rad.integrated_zgyro; // NED -> ENU
+		flow_rad_msg->temperature = flow_rad.temperature/100.0f; // in degrees celsius
+		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
+		flow_rad_msg->distance = flow_rad.distance; 
+
+		flow_rad_pub.publish(flow_rad_msg);
+	
+		// Temperature
+		sensor_msgs::TemperaturePtr temp_msg = 
+			boost::make_shared<sensor_msgs::Temperature>();
+		
+		temp_msg->header = header;	
+
+		temp_msg->temperature = flow_rad.temperature/100.0f; 
+		
+		temp_pub.publish(temp_msg);
+
+		// Rangefinder
+		sensor_msgs::RangePtr range_msg = 
+			boost::make_shared<sensor_msgs::Range>();
+
+		range_msg->header = header;
+		
+		range_msg->radiation_type = sensor_msgs::Range::ULTRASOUND;
+		range_msg->field_of_view = ranger_fov;
+		range_msg->min_range = ranger_min_range;
+		range_msg->max_range = ranger_max_range;
+		range_msg->range = flow_rad.distance;
+
+		range_pub.publish(range_msg);
 	}
 
-	void optical_flow(uint64_t time_usec, uint8_t sensor_id,
-			uint16_t flow_x, uint16_t flow_y,
-			float flow_comp_m_x, float flow_comp_m_y,
-			uint8_t quality,
-			float ground_distance) {
-		mavlink_message_t msg;
-		mavlink_msg_optical_flow_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_usec, sensor_id,
-				flow_x, flow_y,
-				flow_comp_m_x, flow_comp_m_y,
-				quality, ground_distance);
-		UAS_FCU(uas)->send_message(&msg);
-	}
-
-	/* -*- ROS callbacks -*- */
-
-	void send_flow_cb(const mavros_extras::OpticalFlow::ConstPtr flow_msg) {
-		optical_flow(flow_msg->header.stamp.toNSec() / 1000,
-				0, /* maybe we need parameter? */
-				flow_msg->flow_y,
-				flow_msg->flow_x,
-				flow_msg->flow_comp_m_y,
-				flow_msg->flow_comp_m_x,
-				flow_msg->quality,
-				flow_msg->ground_distance);
-	}
 };
 
 }; // namespace mavplugin
