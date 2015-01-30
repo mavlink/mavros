@@ -85,7 +85,10 @@ ros::Time UAS::synchronise_stamp(uint64_t time_usec) {
 
 typedef std::map<uint32_t, std::string> cmode_map;
 
-//! APM:Plane custom mode -> string
+/** APM:Plane custom mode -> string
+ *
+ * ArduPlane/defines.h
+ */
 static const cmode_map arduplane_cmode_map = {
 	{ 0, "MANUAL" },
 	{ 1, "CIRCLE" },
@@ -99,12 +102,15 @@ static const cmode_map arduplane_cmode_map = {
 	{ 10, "AUTO" },
 	{ 11, "RTL" },
 	{ 12, "LOITER" },
-	{ 14, "LAND" },
+	{ 14, "LAND" },		// not in list
 	{ 15, "GUIDED" },
 	{ 16, "INITIALISING" }
 };
 
-//! APM:Copter custom mode -> string
+/** APM:Copter custom mode -> string
+ *
+ * ArduCopter/defines.h
+ */
 static const cmode_map arducopter_cmode_map = {
 	{ 0, "STABILIZE" },
 	{ 1, "ACRO" },
@@ -114,10 +120,14 @@ static const cmode_map arducopter_cmode_map = {
 	{ 5, "LOITER" },
 	{ 6, "RTL" },
 	{ 7, "CIRCLE" },
-	{ 8, "POSITION" },
+	{ 8, "POSITION" },	// not in list
 	{ 9, "LAND" },
 	{ 10, "OF_LOITER" },
-	{ 11, "APPROACH" }
+	{ 11, "DRIFT" },	// renamed, prev name: APPROACH
+	{ 13, "SPORT" },
+	{ 14, "FLIP" },
+	{ 15, "AUTOTUNE" },
+	{ 16, "POSHOLD" },
 };
 
 //! PX4 custom mode -> string
