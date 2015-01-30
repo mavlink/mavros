@@ -60,6 +60,7 @@ class CommandPlugin : public MavRosPlugin {
 public:
 	CommandPlugin() :
 		uas(nullptr),
+		use_comp_id_system_control(false),
 		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
 	{ };
 
@@ -70,6 +71,9 @@ public:
 		uas = &uas_;
 
 		cmd_nh = ros::NodeHandle(nh, "cmd");
+
+		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
+
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
 		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
@@ -101,6 +105,8 @@ private:
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
 	ros::ServiceServer guided_srv;
+
+	bool use_comp_id_system_control;
 
 	std::list<CommandTransaction *> ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS = 5000;
@@ -227,9 +233,12 @@ private:
 			float param5, float param6,
 			float param7) {
 		mavlink_message_t msg;
+		const uint8_t tgt_comp_id = (use_comp_id_system_control)?
+			MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
 
 		mavlink_msg_command_long_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas),
+				uas->get_tgt_system(),
+				tgt_comp_id,
 				command,
 				confirmation,
 				param1, param2,
@@ -246,9 +255,12 @@ private:
 			int32_t x, int32_t y,
 			float z) {
 		mavlink_message_t msg;
+		const uint8_t tgt_comp_id = (use_comp_id_system_control)?
+			MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
 
 		mavlink_msg_command_int_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas),
+				uas->get_tgt_system(),
+				tgt_comp_id,
 				frame,
 				command,
 				current,

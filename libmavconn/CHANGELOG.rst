@@ -2,6 +2,22 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.0 (2015-01-24)
+-------------------
+* libmavconn `#154 <https://github.com/vooon/mavros/issues/154>`_: Stat sum for tcp server mode.
+* libmavconn `#154 <https://github.com/vooon/mavros/issues/154>`_: Add IO usage statistics.
+  TODO: tcp-l.
+* libmavconn: Fix coverity CID 85784 (use of freed object)
+* Contributors: Vladimir Ermakov
+
+0.9.4 (2015-01-06)
+------------------
+
+0.9.3 (2014-12-30)
+------------------
+* mavconn: Add ASLUAV dialect selection.
+* Contributors: Vladimir Ermakov
+
 0.9.2 (2014-11-04)
 ------------------
 * Fix libmavconn include destination.

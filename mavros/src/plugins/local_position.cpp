@@ -106,7 +106,7 @@ private:
 
 		tf::poseTFToMsg(transform, pose->pose);
 		pose->header.frame_id = frame_id;
-		pose->header.stamp = ros::Time::now();
+		pose->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
 
 		if (send_tf)
 			tf_broadcaster.sendTransform(
@@ -122,4 +122,5 @@ private:
 }; // namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::LocalPositionPlugin, mavplugin::MavRosPlugin)
+
 

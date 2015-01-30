@@ -14,4 +14,7 @@
 	<class name="vision_speed_estimate" type="mavplugin::VisionSpeedEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send vision speed estimate to FCU.</description>
 	</class>
+	<class name="visualization" type="mavplugin::VisualizationPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Display position track of MAV in RViz</description>
+	</class>
 </library>

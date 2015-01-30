@@ -83,8 +83,8 @@ void MAVConnSerial::close() {
 	io_service.stop();
 
 	// clear tx queue
-	std::for_each(tx_q.begin(), tx_q.end(),
-			[](MsgBuffer *p) { delete p; });
+	for (auto &p : tx_q)
+		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -148,6 +148,7 @@ void MAVConnSerial::async_read_end(error_code error, size_t bytes_transferred)
 		return;
 	}
 
+	iostat_rx_add(bytes_transferred);
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
 			logDebug("serial%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
@@ -187,6 +188,7 @@ void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
 		return;
 	}
 
+	iostat_tx_add(bytes_transferred);
 	lock_guard lock(mutex);
 	if (tx_q.empty()) {
 		tx_in_progress = false;

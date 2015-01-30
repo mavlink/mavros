@@ -58,21 +58,32 @@ public:
 		mavlink_param_union_t uv;
 		uv.param_float = pmsg.param_value;
 
+		// Fix for #170 by copying to temporary var.
+#define RETURN_TYPE(type)						\
+		{							\
+			type ## _t ret_ ## type = uv.param_ ## type;	\
+			return ret_ ## type;				\
+		}
+
 		switch (pmsg.param_type) {
 		case MAV_PARAM_TYPE_UINT8:
-			return uv.param_uint8;
+			RETURN_TYPE(uint8);
 		case MAV_PARAM_TYPE_INT8:
-			return uv.param_int8;
+			RETURN_TYPE(int8);
 		case MAV_PARAM_TYPE_UINT16:
-			return uv.param_uint16;
+			RETURN_TYPE(uint16);
 		case MAV_PARAM_TYPE_INT16:
-			return uv.param_int16;
+			RETURN_TYPE(int16);
 		case MAV_PARAM_TYPE_UINT32:
-			return uv.param_uint32;
+			RETURN_TYPE(uint32);
 		case MAV_PARAM_TYPE_INT32:
-			return uv.param_int32;
-		case MAV_PARAM_TYPE_REAL32:
-			return uv.param_float;
+			RETURN_TYPE(int32);
+		case MAV_PARAM_TYPE_REAL32: {
+				float ret_float = uv.param_float;
+				return ret_float;
+			}
+
+#undef RETURN_TYPE
 
 		default:
 		case MAV_PARAM_TYPE_UINT64:

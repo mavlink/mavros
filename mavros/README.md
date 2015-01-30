@@ -46,6 +46,13 @@ Supported schemas:
 Note: ids from URL overrides ids given by system\_id & component\_id parameters.
 
 
+Coordinate frames
+-----------------
+
+MAVROS does translate Aerospace NED frames, used in FCU's to ROS ENU frames.
+Rules descrided in [issue #49][iss49].
+
+
 Programs
 --------
 
@@ -182,6 +189,7 @@ Links
 [dp]: https://github.com/arthurbenemann/droidplanner/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
+[iss49]: https://github.com/mavlink/mavros/issues/49
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink

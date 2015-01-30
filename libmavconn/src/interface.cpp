@@ -45,7 +45,12 @@ std::recursive_mutex MAVConnInterface::channel_mutex;
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
-	comp_id(component_id)
+	comp_id(component_id),
+	tx_total_bytes(0),
+	rx_total_bytes(0),
+	last_tx_total_bytes(0),
+	last_rx_total_bytes(0),
+	last_iostat(steady_clock::now())
 {
 	channel = new_channel();
 	assert(channel >= 0);
@@ -97,6 +102,46 @@ MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
 	}
 	else
 		return new MsgBuffer(message);
+}
+
+mavlink_status_t MAVConnInterface::get_status()
+{
+	return *mavlink_get_channel_status(channel);
+}
+
+MAVConnInterface::IOStat MAVConnInterface::get_iostat()
+{
+	std::lock_guard<std::recursive_mutex> lock(iostat_mutex);
+	IOStat stat;
+
+	stat.tx_total_bytes = tx_total_bytes;
+	stat.rx_total_bytes = rx_total_bytes;
+
+	auto d_tx = stat.tx_total_bytes - last_tx_total_bytes;
+	auto d_rx = stat.rx_total_bytes - last_rx_total_bytes;
+	last_tx_total_bytes = stat.tx_total_bytes;
+	last_rx_total_bytes = stat.rx_total_bytes;
+
+	auto now = steady_clock::now();
+	auto dt = now - last_iostat;
+	last_iostat = now;
+
+	float dt_s = std::chrono::duration_cast<std::chrono::seconds>(dt).count();
+
+	stat.tx_speed = d_tx / dt_s;
+	stat.rx_speed = d_rx / dt_s;
+
+	return stat;
+}
+
+void MAVConnInterface::iostat_tx_add(size_t bytes)
+{
+	tx_total_bytes += bytes;
+}
+
+void MAVConnInterface::iostat_rx_add(size_t bytes)
+{
+	rx_total_bytes += bytes;
 }
 
 /**

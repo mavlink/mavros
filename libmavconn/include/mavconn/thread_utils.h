@@ -69,11 +69,11 @@ inline bool set_thread_name(Thread &thd, std::string &name)
  * @brief Convert to string objects with operator <<
  */
 template <typename T>
-inline const char *to_string_cs(T &obj)
+inline const std::string to_string_ss(T &obj)
 {
 	std::ostringstream ss;
 	ss << obj;
-	return ss.str().c_str();
+	return ss.str();
 }
 
 }; // namespace mavutils

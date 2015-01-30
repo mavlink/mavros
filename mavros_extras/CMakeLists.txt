@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   std_msgs
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -112,6 +113,7 @@ add_library(mavros_extras
   src/plugins/mocap_pose_estimate.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
+  src/plugins/visualization.cpp
 )
 add_dependencies(mavros_extras
   mavros_extras_generate_messages_cpp

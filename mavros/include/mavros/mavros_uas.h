@@ -273,8 +273,8 @@ public:
 	}
 
 	/* -*- time sync -*- */
-	inline void set_time_offset(uint64_t offset) {
-		time_offset = offset;
+	inline void set_time_offset(uint64_t offset_ns) {
+		time_offset = offset_ns;
 	}
 
 	inline uint64_t get_time_offset(void) {
@@ -324,14 +324,14 @@ public:
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
 	/**
-	 * @brief Compute FCU message time from time_boot_ms field
+	 * @brief Compute FCU message time from time_boot_ms or time_usec field
 	 *
 	 * Uses time_offset for calculation
 	 *
-	 * @todo
-	 * @return FCU time if if is known else current wall time.
+	 * @return FCU time if it is known else current wall time.
 	 */
-	//ros::Time fcu_time(uint32_t time_boot_ms);
+	ros::Time synchronise_stamp(uint32_t time_boot_ms);
+	ros::Time synchronise_stamp(uint64_t time_usec);
 
 private:
 	std::recursive_mutex mutex;

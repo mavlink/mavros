@@ -35,7 +35,7 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
-using mavutils::to_string_cs;
+using mavutils::to_string_ss;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 
 
@@ -51,7 +51,7 @@ static bool resolve_address_udp(io_service &io, std::string host, unsigned short
 			ep = q_ep;
 			ep.port(port);
 			result = true;
-			logDebug("udp: host %s resolved as %s", host.c_str(), to_string_cs(ep));
+			logDebug("udp: host %s resolved as %s", host.c_str(), to_string_ss(ep).c_str());
 		});
 
 	if (ec) {
@@ -76,13 +76,13 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_udp(io_service, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	logInform("udp%d: Bind address: %s", channel, to_string_cs(bind_ep));
+	logInform("udp%d: Bind address: %s", channel, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
 		remote_exists = resolve_address_udp(io_service, remote_host, remote_port, remote_ep);
 
 		if (remote_exists)
-			logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
+			logInform("udp%d: Remote address: %s", channel, to_string_ss(remote_ep).c_str());
 		else
 			logWarn("udp%d: Remote address resolve failed.", channel);
 	}
@@ -118,8 +118,8 @@ void MAVConnUDP::close() {
 	socket.close();
 
 	// clear tx queue
-	std::for_each(tx_q.begin(), tx_q.end(),
-			[](MsgBuffer *p) { delete p; });
+	for (auto &p : tx_q)
+		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -196,11 +196,12 @@ void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
 	}
 
 	if (remote_ep != last_remote_ep) {
-		logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
+		logInform("udp%d: Remote address: %s", channel, to_string_ss(remote_ep).c_str());
 		remote_exists = true;
 		last_remote_ep = remote_ep;
 	}
 
+	iostat_rx_add(bytes_transferred);
 	for (ssize_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
 			logDebug("udp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
@@ -241,6 +242,7 @@ void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 		return;
 	}
 
+	iostat_tx_add(bytes_transferred);
 	lock_guard lock(mutex);
 	if (tx_q.empty()) {
 		tx_in_progress = false;

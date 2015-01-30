@@ -26,6 +26,11 @@ before_install:
   - sudo rosdep init
   - rosdep update
 install:
+  # GCC 4.9 for proper C++11
+  #- sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  #- sudo apt-get -qq update
+  #- sudo sudo apt-get -qq install gcc-4.9 g++-4.9
+  #- export CXX="g++-4.9" CC="gcc-4.9"
   # Create workspace
   - mkdir -p ~/ros/ws_$REPOSITORY_NAME/src
   - cd ~/ros/ws_$REPOSITORY_NAME/src
@@ -55,6 +60,15 @@ addons:
       name: "mavlink/mavros"
       description: "Build submitted via Travis CI"
     notification_email: vooon341@gmail.com
-    build_command_prepend: "cd ~/ros/ws_$REPOSITORY_NAME/src/mavros && echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt && echo 'add_subdirectory(mavros)' >> CMakeLists.txt && echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt && cmake ."
-    build_command: "make -j4"
+    build_command_prepend: cd ~/ros/ws_$REPOSITORY_NAME/src/mavros &&
+            echo -e 'cmake_minimum_required(VERSION 2.8.3)\nadd_subdirectory(libmavconn)\nadd_subdirectory(mavros)\nadd_subdirectory(mavros_extras)' > CMakeLists.txt &&
+      cmake .
+    build_command: make -j4
     branch_pattern: coverity_scan
+notifications:
+  webhooks:
+    urls:
+    - https://webhooks.gitter.im/e/b856f174ff9736ad23ec
+    on_success: change
+    on_failure: always
+    on_start: false

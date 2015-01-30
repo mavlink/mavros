@@ -38,6 +38,8 @@
 
 #include <set>
 #include <mutex>
+#include <atomic>
+#include <chrono>
 #include <thread>
 #include <memory>
 #include <sstream>
@@ -47,6 +49,14 @@ namespace mavconn {
 namespace sig2 = boost::signals2;
 
 class MsgBuffer;
+
+#if __cplusplus == 201103L
+using steady_clock = std::chrono::steady_clock;
+#elif defined(__GXX_EXPERIMENTAL_CXX0X__)
+typedef std::chrono::monotonic_clock steady_clock;
+#else
+#error Unknown C++11 or C++0x wall clock class
+#endif
 
 /**
  * @brief Common exception for communication error
@@ -103,6 +113,13 @@ public:
 	typedef boost::shared_ptr<MAVConnInterface const> ConstPtr;
 	typedef boost::weak_ptr<MAVConnInterface> WeakPtr;
 
+	struct IOStat {
+		size_t tx_total_bytes;	//!< total bytes transferred
+		size_t rx_total_bytes;	//!< total bytes received
+		float tx_speed;		//!< current transfer speed [B/s]
+		float rx_speed;		//!< current receive speed [B/s]
+	};
+
 	/**
 	 * @param[in] system_id     sysid for send_message
 	 * @param[in] component_id  compid for send_message
@@ -145,7 +162,8 @@ public:
 	MessageSig message_received;
 	sig2::signal<void()> port_closed;
 
-	virtual mavlink_status_t get_status() = 0;
+	virtual mavlink_status_t get_status();
+	virtual IOStat get_iostat();
 	virtual bool is_open() = 0;
 
 	inline int get_channel() { return channel; };
@@ -192,9 +210,17 @@ protected:
 	 */
 	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 
+	void iostat_tx_add(size_t bytes);
+	void iostat_rx_add(size_t bytes);
+
 private:
 	static std::recursive_mutex channel_mutex;
 	static std::set<int> allocated_channels;
+
+	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
+	std::recursive_mutex iostat_mutex;
+	size_t last_tx_total_bytes, last_rx_total_bytes;
+	std::chrono::time_point<steady_clock> last_iostat;
 };
 
 }; // namespace mavconn

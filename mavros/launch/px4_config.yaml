@@ -9,6 +9,10 @@ conn_timeout: 10.0  # hertbeat timeout n secs
 sys:
   min_voltage: 10.0  # diagnostics min voltage
 
+# sys_time
+conn_timesync: 0.1
+conn_system_time: 1.0
+
 # imu_pub
 imu:
   frame_id: "fcu"
