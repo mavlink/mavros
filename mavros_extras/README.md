@@ -21,6 +21,9 @@ gcs\_image\_bridge
 
 Variation of `gcs_bridge` that additionally sends image stream to GCS.
 
+mocap\_pose\_estimate
+----------------------
+Plugin for mavros, to send mocap data to FCU.  Currently, not used by the FCU.  Data can be send via vision_position plugin.
 
 px-ros-pkg replacement
 ----------------------
