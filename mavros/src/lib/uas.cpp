@@ -127,7 +127,22 @@ static const cmode_map arducopter_cmode_map = {
 	{ 13, "SPORT" },
 	{ 14, "FLIP" },
 	{ 15, "AUTOTUNE" },
-	{ 16, "POSHOLD" },
+	{ 16, "POSHOLD" }
+};
+
+/** APM:Rover custom mode -> string
+ *
+ * APMrover2/defines.h
+ */
+static const cmode_map apmrover2_cmode_map = {
+	{ 0, "MANUAL" },
+	{ 2, "LEARNING" },
+	{ 3, "STEERING" },
+	{ 4, "HOLD" },
+	{ 10, "AUTO" },
+	{ 11, "RTL" },
+	{ 15, "GUIDED" },
+	{ 16, "INITIALISING" }
 };
 
 //! PX4 custom mode -> string
@@ -198,9 +213,12 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {
 			return str_mode_cmap(arducopter_cmode_map, custom_mode);
 		else if (type == MAV_TYPE_FIXED_WING)
 			return str_mode_cmap(arduplane_cmode_map, custom_mode);
-		else
-			/* TODO: APM:Rover */
+		else if (type == MAV_TYPE_GROUND_ROVER)
+			return str_mode_cmap(apmrover2_cmode_map, custom_mode);
+		else {
+			ROS_WARN_THROTTLE_NAMED(30, "uas", "MODE: Unknown APM based FCU! Type: %d", type);
 			return str_custom_mode(custom_mode);
+		}
 	}
 	else if (MAV_AUTOPILOT_PX4 == ap)
 		return str_mode_px4(custom_mode);
@@ -250,6 +268,8 @@ bool UAS::cmode_from_str(std::string cmode_str, uint32_t &custom_mode) {
 			return cmode_find_cmap(arducopter_cmode_map, cmode_str, custom_mode);
 		else if (type == MAV_TYPE_FIXED_WING)
 			return cmode_find_cmap(arduplane_cmode_map, cmode_str, custom_mode);
+		else if (type == MAV_TYPE_GROUND_ROVER)
+			return cmode_find_cmap(apmrover2_cmode_map, cmode_str, custom_mode);
 	}
 	else if (MAV_AUTOPILOT_PX4 == ap)
 		return cmode_find_cmap(px4_cmode_map, cmode_str, custom_mode);
