@@ -28,7 +28,6 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/OpticalFlow.h>
 #include <mavros_extras/OpticalFlowRad.h>
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/Range.h>
@@ -39,7 +38,6 @@ namespace mavplugin {
  * @brief PX4 Optical Flow plugin
  *
  * This plugin can publish data from PX4Flow camera to ROS
- * and send it to FCU.
  */
 class PX4FlowPlugin : public MavRosPlugin {
 public:
@@ -58,7 +56,6 @@ public:
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
 		//Default rangefinder is Maxbotix HRLV-EZ4
-		flow_nh.param("ranger_type", ranger_type, 0);	// See sensor_msgs/Range docs 
 		flow_nh.param("ranger_fov", ranger_fov, 0.0); 	// TODO
 		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);	
 		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
@@ -142,7 +139,7 @@ private:
 
 		range_msg->header = header;
 		
-		range_msg->radiation_type = ranger_type;
+		range_msg->radiation_type = sensor_msgs::Range::ULTRASOUND;
 		range_msg->field_of_view = ranger_fov;
 		range_msg->min_range = ranger_min_range;
 		range_msg->max_range = ranger_max_range;
