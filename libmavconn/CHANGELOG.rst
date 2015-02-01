@@ -2,6 +2,12 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2015-02-02)
+-------------------
+* libmavconn: Workaround for gcc 4.6 <chrono>.
+* libmavconn: Use C++11 for lists for_each
+* Contributors: Vladimir Ermakov
+
 0.10.0 (2015-01-24)
 -------------------
 * libmavconn `#154 <https://github.com/vooon/mavros/issues/154>`_: Stat sum for tcp server mode.

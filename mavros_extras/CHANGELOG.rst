@@ -2,6 +2,21 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2015-02-02)
+-------------------
+* Fix @mhkabir name in contributors.
+* Updated mavros_extra README to explain the vision_estimate plugin should be used for the mocap data currently.
+* Update px4flow.cpp
+* plguin: px4flow: Remove all ref to old message
+* Merge remote-tracking branch 'upstream/master' into optflow_rad
+  Conflicts:
+  mavros_extras/CMakeLists.txt
+* Update
+* Clean up
+* New interface commit
+* Add new interface. Raw message only for now. Removed the tx functionality as it doesn't make much sense.
+* Contributors: Mohammed Kabir, Tony Baltovski, Vladimir Ermakov
+
 0.10.0 (2015-01-24)
 -------------------
 * mocap_pose_estimate: Switched from pose to poseStamped.

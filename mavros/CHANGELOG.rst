@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2015-02-02)
+-------------------
+* Fix @mhkabir name in contributors.
+* uas `#200 <https://github.com/vooon/mavros/issues/200>`_: Add APM:Rover custom mode decoding.
+  Fix `#200 <https://github.com/vooon/mavros/issues/200>`_.
+* uas `#200 <https://github.com/vooon/mavros/issues/200>`_: Update APM:Plane and APM:Copter modes.
+* Contributors: Vladimir Ermakov
+
 0.10.0 (2015-01-24)
 -------------------
 * mavros `#154 <https://github.com/vooon/mavros/issues/154>`_: Add IO stats to diagnostics.
