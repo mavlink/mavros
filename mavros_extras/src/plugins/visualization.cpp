@@ -70,7 +70,7 @@ private:
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 
 		tf::Transform transform;
-		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
+		transform.setOrigin(tf::Vector3(pos_ned.x, -pos_ned.y, -pos_ned.z));
 		transform.setRotation(uas->get_attitude_orientation());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();

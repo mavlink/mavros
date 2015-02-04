@@ -123,8 +123,8 @@ private:
 
 		// TODO: check conversion. Issue #49.
 		vision_position_estimate(stamp.toNSec() / 1000,
-				position.y(), position.x(), -position.z(),
-				roll, -pitch, -yaw);	// ??? please check!
+				position.x(), -position.y(), -position.z(),
+				roll, -pitch, -yaw); // ??? please check!
 	}
 
 	/* -*- callbacks -*- */

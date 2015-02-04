@@ -81,7 +81,7 @@ private:
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				afy, afx, -afz,
+				afx, -afy, -afz,
 				0.0, 0.0);
 	}
 

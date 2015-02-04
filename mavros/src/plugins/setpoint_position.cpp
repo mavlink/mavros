@@ -105,7 +105,7 @@ private:
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_xyz_y,
-				origin.y(), origin.x(), -origin.z(),
+				origin.x(), -origin.y(), -origin.z(),
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
 				tf::getYaw(q), 0.0);
