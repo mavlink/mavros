@@ -1,5 +1,4 @@
 <launch>
-	<!-- vim: ft=xml -->
 	<!-- Based on mavros/node.launch -->
 	<!-- Launch script for PX4Flow -->
 
@@ -23,3 +22,5 @@
 		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_config.yaml" />
 	</node>
 </launch>
+
+<!-- vim: set noet fenc=utf-8 ff=unix ft=xml sts=2 sw=2 ts=2 :

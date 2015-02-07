@@ -1,5 +1,4 @@
 <launch>
-	<!-- vim: ft=xml -->
 	<!-- example launch script for PX4 based FCU's with gcs_image_bridge -->
 
 	<arg name="fcu_url" default="serial:///dev/ttyACM0:57600" />
@@ -19,3 +18,5 @@
 		<param name="gcs_url" value="$(arg gcs_url)" />
 	</node>
 </launch>
+
+<!-- vim: set noet fenc=utf-8 ff=unix ft=xml sts=2 sw=2 ts=2 :
