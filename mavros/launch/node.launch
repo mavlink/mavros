@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- base node launch file-->
 
 	<arg name="fcu_url" />

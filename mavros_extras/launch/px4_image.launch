@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- example launch script for PX4 based FCU's with gcs_image_bridge -->
 
 	<arg name="fcu_url" default="serial:///dev/ttyACM0:57600" />

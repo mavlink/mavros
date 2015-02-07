@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- Based on mavros/node.launch -->
 	<!-- Launch script for PX4Flow -->
 

@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- This file almost same as apm2.launch but defaults set for connections via 3DR Radio modem -->
 
 	<arg name="fcu_url" default="/dev/ttyUSB0:57600" />
