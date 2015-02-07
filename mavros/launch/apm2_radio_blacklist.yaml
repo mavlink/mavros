@@ -9,4 +9,4 @@ plugin_blacklist:
 - 'global_*'
 - 'ftp'
 
-# vim: set et fenc=utf-8 ff=unix ft=yaml sts=2 sw=2 ts=2 :
+# vim: set noet fenc=utf-8 ff=unix ft=yaml :

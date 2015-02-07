@@ -85,4 +85,4 @@ target_link_libraries(mavconn-test mavconn)
 
 endif()
 
-# vim: set et fenc=utf-8 ft=cmake ff=unix sts=2 sw=2 ts=2 :
+# vim: set et fenc=utf-8 ft=cmake ff=unix:
