@@ -124,4 +124,5 @@ mission:
 #  use_tf: false   # ~mocap/tf
 #  use_pose: true  # ~mocap/pose
 
-# vim:ts=2 sw=2 et:
+
+# vim: set et fenc=utf-8 ff=unix ft=yaml sts=2 sw=2 ts=2 :

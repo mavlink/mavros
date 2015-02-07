@@ -33,4 +33,4 @@ add_definitions(
   -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
 )
 
-# vim: set ts=2 sw=2 et:
+# vim: set et fenc=utf-8 ft=cmake ff=unix sts=2 sw=2 ts=2 :

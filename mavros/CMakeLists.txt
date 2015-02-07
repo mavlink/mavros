@@ -271,4 +271,4 @@ install(DIRECTORY launch/
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-# vim: ts=2 sw=2 et:
+# vim: set et fenc=utf-8 ft=cmake ff=unix sts=2 sw=2 ts=2 :

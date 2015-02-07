@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim:set ts=4 sw=4 et:
 #
 # Copyright 2014 Vladimir Ermakov.
 #
@@ -296,3 +295,4 @@ def main():
 if __name__ == '__main__':
     main()
 
+# vim: set et fenc=utf-8 ff=unix sts=4 sw=4 ts=4 :
