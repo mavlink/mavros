@@ -1,5 +1,4 @@
 <launch>
-	<!-- vim: ft=xml -->
 	<!-- base node launch file-->
 
 	<arg name="fcu_url" />
@@ -20,3 +19,5 @@
 		<rosparam command="load" file="$(arg config_yaml)" />
 	</node>
 </launch>
+
+<!-- vim: set noet fenc= ff=unix ft=xml sts=0 sw=2 ts=2 : -->
