@@ -49,7 +49,7 @@ Note: ids from URL overrides ids given by system\_id & component\_id parameters.
 Coordinate frames
 -----------------
 
-MAVROS does translate Aerospace NED frames, used in FCU's to ROS ENU frames.
+MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames.
 Rules descrided in [issue #49][iss49].
 
 
@@ -116,6 +116,21 @@ Examples:
 
     rosrun mavros mavcmd takeoff 20 15 0 0 50
     rosrun mavros mavcmd sethome --current-gps 0 0 0
+
+
+Launch Files
+------------
+
+Launch files are provided for use with common FCUs:
+
+  * [px4.launch](launch/px4.launch) -- for use with the PX4 native flight stack
+  * [apm2.launch](launch/apm2.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
+  * *_radio.launch -- as above, but includes the `3dr_radio` plugin
+
+Examples:
+
+    roslaunch mavros px4.launch
+    roslaunch mavros apm2.launch gcs_url:=udp://@
 
 
 Installation
