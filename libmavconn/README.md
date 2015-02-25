@@ -42,6 +42,6 @@ Licensed under terms of [*LGPLv3*][lgpllic], [*BSD*][bsdlic], or [*GPLv3*][gplli
 
 
 [mr]: https://github.com/mavlink/mavros
-[lgpgllic]: https://www.gnu.org/licenses/lgpl.html
+[lgpllic]: https://www.gnu.org/licenses/lgpl.html
 [gpllic]: https://www.gnu.org/licenses/lgpl.html
 [bsdlic]: https://github.com/mavlink/mavros/blob/master/libmavconn/LICENSE-BSD.md
