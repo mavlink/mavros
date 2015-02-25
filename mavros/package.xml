@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mavros</name>
-  <version>0.10.1</version>
+  <version>0.10.2</version>
   <description>
     MAVROS -- MAVLink extendable communication node for ROS
     with UDP proxy for Ground Control Station.
