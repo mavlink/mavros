@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.2 (2015-02-25)
+-------------------
+* Document launch files
+* launch: Fix vim modelines `#213 <https://github.com/vooon/mavros/issues/213>`_
+* launch `#210 <https://github.com/vooon/mavros/issues/210>`_: blacklist image_pub by px4 default.
+  Fix `#210 <https://github.com/vooon/mavros/issues/210>`_.
+* Contributors: Clay McClure, Vladimir Ermakov
+
 0.10.1 (2015-02-02)
 -------------------
 * Fix @mhkabir name in contributors.

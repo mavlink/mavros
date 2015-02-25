@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.2 (2015-02-25)
+-------------------
+* mavconn: fix readme link
+* mavconn: Licensed under BSD 3-clause too, update headers for LGPLv3.
+  PX4 team asked me to support BSD license.
+* Contributors: Vladimir Ermakov
+
 0.10.1 (2015-02-02)
 -------------------
 * libmavconn: Workaround for gcc 4.6 <chrono>.

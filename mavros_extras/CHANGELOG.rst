@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.2 (2015-02-25)
+-------------------
+* launch: Fix vim modelines `#213 <https://github.com/vooon/mavros/issues/213>`_
+* Contributors: Vladimir Ermakov
+
 0.10.1 (2015-02-02)
 -------------------
 * Fix @mhkabir name in contributors.
