@@ -62,7 +62,7 @@ Main node. Allow disable GCS proxy by setting empty URL.
 
 Run example:
 
-    rosrun mavros mavros_node _fcu_url:=/dev/ttyACM0:115200 _gcs_url:=tcp-l://
+    rosrun mavros mavros_node fcu_url:=/dev/ttyACM0:115200 gcs_url:=tcp-l://
 
 
 ### gcs\_bridge -- additional UDP proxy
@@ -74,8 +74,8 @@ Previous name: `ros_udp`.
 
 Example (HIL & DroidPlanner):
 
-    rosrun mavros mavros_node _gcs_url:='udp://:14556@hil-host:14551' &
-    rosrun mavros gcs_bridge _gcs_url:='udp://@nexus7'
+    rosrun mavros mavros_node gcs_url:='udp://:14556@hil-host:14551' &
+    rosrun mavros gcs_bridge gcs_url:='udp://@nexus7'
 
 
 ### mavparam -- parameter manipulation
