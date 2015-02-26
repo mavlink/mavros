@@ -55,7 +55,7 @@ public:
 				coordinate_frame,
 				type_mask,
 				x, y, z,
-				vz, vy, vz,
+				vx, vy, vz,
 				afx, afy, afz,
 				yaw, yaw_rate);
 		UAS_FCU(_uas)->send_message(&msg);
