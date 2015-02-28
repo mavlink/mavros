@@ -186,6 +186,7 @@ add_library(mavros_plugins
   src/plugins/setpoint_attitude.cpp
   src/plugins/vfr_hud.cpp
   src/plugins/ftp.cpp
+  src/plugins/setpoint_actuator_control.cpp
 )
 add_dependencies(mavros_plugins
   mavros
