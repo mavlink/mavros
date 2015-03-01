@@ -71,7 +71,7 @@ private:
   /* -*- low-level send -*- */
   /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
 
-  void set_actuator_control_target(uint32_t time_boot_ms, uint8_t group_mix, const  float controls[8]) {
+  void set_actuator_control_target(const uint32_t time_boot_ms, const uint8_t group_mix, const float controls[8]) {
 
     mavlink_message_t msg;
     //todo: get correckt pack chan msg
