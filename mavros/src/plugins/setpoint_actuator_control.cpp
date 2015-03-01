@@ -25,7 +25,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
 
 #include<std_msgs/Float32MultiArray.h>
@@ -38,26 +37,23 @@ namespace mavplugin {
  *
  * Send setpoint actuator control to FCU controller.
  */
-class SetpointActuatorControlPlugin : public MavRosPlugin,
-                                      private TFListenerMixin<SetpointActuatorControlPlugin> {
- public:
-  SetpointActuatorControlPlugin() :
-      uas(nullptr),
-      reverse_throttle(false)
-  { };
+class SetpointActuatorControlPlugin : public MavRosPlugin {
 
-  void initialize(UAS &uas_,
-                  ros::NodeHandle &nh,
-                  diagnostic_updater::Updater &diag_updater)
-  {
+ public:
+
+  //constructor
+  SetpointActuatorControlPlugin() : uas(nullptr) { };
+
+  //init function
+  void initialize(UAS &uas_, ros::NodeHandle &nh, diagnostic_updater::Updater &diag_updater) {
+
     uas = &uas_;
     sp_nh_ = ros::NodeHandle(nh, "setpoint_actuator_control");
-
-    sp_nh_.param("actuator_control/reverse_throttle", reverse_throttle, false);
-
     controls_sub_ = sp_nh_.subscribe("controls", 10, &SetpointActuatorControlPlugin::control_cb, this);
+
   }
 
+  //name of object
   const std::string get_name() const {
     return "SetpointActuatorControl";
   }
@@ -67,51 +63,35 @@ class SetpointActuatorControlPlugin : public MavRosPlugin,
   }
 
 private:
-
-  friend class TFListenerMixin; //todo: need to find out what its name is mixin is needed for actuator controls
-  
+ 
   UAS *uas;
 
   ros::NodeHandle sp_nh_;
   ros::Subscriber controls_sub_;
 
-  bool reverse_throttle;
-
   /* -*- low-level send -*- */
   /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
 
-  void set_actuator_control_target(uint32_t time_boot_ms,
-                                   uint8_t group_mix,
-                                   uint8_t target_system,
-                                   uint8_t target_component,
-                                   float controls[8]) {
-    mavlink_message_t msg;
+  void set_actuator_control_target(uint32_t time_boot_ms, uint8_t group_mix,float controls[8]) {
 
+    mavlink_message_t msg;
     //todo: get correckt pack chan msg
     /*
     mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas), &msg, 
                                                       time_boot_ms,
                                                       UAS_PACK_TGT(uas),
                                                       group_mix,
-                                                      target_system,
-                                                      target_component,
                                                       controls)
     */
     UAS_FCU(uas)->send_message(&msg);
   }
 
   
-  /* -*- mid-level helpers -*- */
-  //dont think mid level helpers are needed here
-
-  
   /* -*- callbacks -*- */
   
   void control_cb(const std_msgs::Float32MultiArray::ConstPtr &req) {
     uint8_t group_mix = 0; //todo: get right group mix
-    uint8_t target_system = 1; //todo: make configurable
-    uint8_t target_component = 50; //todo: make configurable
-   
+    
     float controls[8];
     /* 0: roll
        1: pitch
@@ -127,13 +107,9 @@ private:
       controls[i]=req->data[i];
     }
 
-    //todo: check all values for valid range [-1:1] / [0:1]
- 
     //call low level send
-    set_actuator_control_target(ros::Time::now().toNSec(),
+    set_actuator_control_target(ros::Time::now().toNSec()/1000000,
                                 group_mix,
-                                target_system,
-                                target_component,
                                 controls);                                
   }
 
