@@ -117,4 +117,4 @@ private:
 
 }; // namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointActuatorControlPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavplugin::ActuatorControlPlugin, mavplugin::MavRosPlugin)
