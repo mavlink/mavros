@@ -37,19 +37,19 @@ namespace mavplugin {
  *
  * Send setpoint actuator control to FCU controller.
  */
-class SetpointActuatorControlPlugin : public MavRosPlugin {
+class ActuatorControlPlugin : public MavRosPlugin {
 
  public:
 
   //constructor
-  SetpointActuatorControlPlugin() : uas(nullptr) { };
+  ActuatorControlPlugin() : uas(nullptr) { };
 
   //init function
   void initialize(UAS &uas_, ros::NodeHandle &nh, diagnostic_updater::Updater &diag_updater) {
 
     uas = &uas_;
     sp_nh_ = ros::NodeHandle(nh, "setpoint_actuator_control");
-    controls_sub_ = sp_nh_.subscribe("controls", 10, &SetpointActuatorControlPlugin::control_cb, this);
+    controls_sub_ = sp_nh_.subscribe("actuator_controls", 10, &ActuatorControlPlugin::control_cb, this);
 
   }
 
