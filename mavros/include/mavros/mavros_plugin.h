@@ -52,8 +52,7 @@ private:
 	MavRosPlugin(const MavRosPlugin&) = delete;
 
 public:
-	typedef boost::function<void (const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)>
-	message_handler;
+	typedef boost::function<void (const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)> message_handler;
 	typedef std::map<uint8_t, message_handler> message_map;
 	// pluginlib return boost::shared_ptr
 	typedef boost::shared_ptr<MavRosPlugin> Ptr;

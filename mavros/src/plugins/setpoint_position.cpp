@@ -61,7 +61,7 @@ public:
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
-												   << " -> " << child_frame_id);
+					<< " -> " << child_frame_id);
 			tf_start("PositionSpTF", &SetpointPositionPlugin::send_setpoint_transform);
 		}
 		else {

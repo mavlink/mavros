@@ -93,8 +93,8 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 	mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
 	mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
 		ros::TransportHints()
-		.unreliable()
-		.maxDatagramSize(1024));
+			.unreliable()
+			.maxDatagramSize(1024));
 
 	fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 	fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));

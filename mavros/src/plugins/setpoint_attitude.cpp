@@ -71,7 +71,7 @@ public:
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("attitude", "Listen to desired attitude transform " << frame_id
-												  << " -> " << child_frame_id);
+					<< " -> " << child_frame_id);
 			tf_start("AttitudeSpTF", &SetpointAttitudePlugin::send_attitude_transform);
 		}
 		else if (listen_twist) {
