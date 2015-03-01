@@ -43,6 +43,7 @@ CI Statuses
 
   - ROS Hydro: [![Hydro build status](http://jenkins.ros.org/buildStatus/icon?job=devel-hydro-mavros)](http://jenkins.ros.org/job/devel-hydro-mavros/)
   - ROS Indigo: [![Indigo build status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-mavros)](http://jenkins.ros.org/job/devel-indigo-mavros/)
+  - ROS Jade: [![Jade build status](http://jenkins.ros.org/buildStatus/icon?job=devel-jade-mavros)](http://jenkins.ros.org/job/devel-jade-mavros/)
   - Travis Hydro (PX4): [![Hydro px4 status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
   - Travis Hydro (Coverity Scan): [![Hydro scan status](https://travis-ci.org/mavlink/mavros.svg?branch=coverity_scan)](https://travis-ci.org/mavlink/mavros)
     : [![Coverity Scan](https://scan.coverity.com/projects/3183/badge.svg)](https://scan.coverity.com/projects/3183)
