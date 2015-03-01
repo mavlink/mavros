@@ -125,11 +125,13 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 }
 
 void MavRos::spin() {
+	ros::AsyncSpinner spinner(4 /* threads */);
+
+	spinner.start();
+
 	ros::Rate loop_rate(1000);
 	while (node_handle.ok()) {
-		ros::spinOnce();
 		diag_updater.update();
-
 		loop_rate.sleep();
 	}
 
