@@ -36,6 +36,8 @@
 
 namespace mavconn {
 
+#define PFX	"mavconn: "
+
 #if MAVLINK_CRC_EXTRA
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
@@ -62,19 +64,19 @@ int MAVConnInterface::new_channel() {
 
 	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
 		if (allocated_channels.count(chan) == 0) {
-			logDebug("Allocate new channel: %d", chan);
+			logDebug(PFX "Allocate new channel: %d", chan);
 			allocated_channels.insert(chan);
 			return chan;
 		}
 	}
 
-	logError("channel overrun");
+	logError(PFX "channel overrun");
 	return -1;
 }
 
 void MAVConnInterface::delete_channel(int chan) {
 	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	logDebug("Freeing channel: %d", chan);
+	logDebug(PFX "Freeing channel: %d", chan);
 	allocated_channels.erase(allocated_channels.find(chan));
 }
 
@@ -194,14 +196,14 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	auto ids_it = std::search(query.begin(), query.end(),
 			ids_end.begin(), ids_end.end());
 	if (ids_it == query.end()) {
-		logWarn("URL: unknown query arguments");
+		logWarn(PFX "URL: unknown query arguments");
 		return;
 	}
 
 	std::advance(ids_it, ids_end.length());
 	auto comma_it = std::find(ids_it, query.end(), ',');
 	if (comma_it == query.end()) {
-		logError("URL: no comma in ids= query");
+		logError(PFX "URL: no comma in ids= query");
 		return;
 	}
 
@@ -211,7 +213,7 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	sysid = std::stoi(sys);
 	compid = std::stoi(comp);
 
-	logDebug("URL: found system/component id = [%u, %u]", sysid, compid);
+	logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
 }
 
 static MAVConnInterface::Ptr url_parse_serial(
@@ -239,7 +241,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 	auto sep_it = std::find(hosts.begin(), hosts.end(), '@');
 	if (sep_it == hosts.end()) {
-		logError("UDP URL should contain @!");
+		logError(PFX "UDP URL should contain @!");
 		throw DeviceError("url", "UDP separator not found");
 	}
 
@@ -304,7 +306,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			proto_end.begin(), proto_end.end());
 	if (proto_it == url.end()) {
 		// looks like file path
-		logDebug("URL: %s: looks like file path", url.c_str());
+		logDebug(PFX "URL: %s: looks like file path", url.c_str());
 		return url_parse_serial(url, "", system_id, component_id);
 	}
 
@@ -328,7 +330,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		++query_it;
 	query.assign(query_it, url.end());
 
-	logDebug("URL: %s: proto: %s, host: %s, path: %s, query: %s",
+	logDebug(PFX "URL: %s: proto: %s, host: %s, path: %s, query: %s",
 			url.c_str(), proto.c_str(), host.c_str(),
 			path.c_str(), query.c_str());
 
