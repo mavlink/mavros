@@ -1,7 +1,10 @@
 /**
- * @brief SetpointActuatorControl plugin
- * @file setpoint_actuator_control.cpp
+ * @brief ActuatorControl plugin
+ * @file actuator_control.cpp
  * @author Marcel Stüttgen <stuettgen@fh-aachen.de>
+ *
+ * This plugin will take ros message mavros::ActuatorControl and send it to FCU
+ * via MAVLINK. It can be used for direct servo control in offboard mode
  *
  * @addtogroup plugin
  * @{
