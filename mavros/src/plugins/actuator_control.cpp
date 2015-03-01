@@ -1,16 +1,9 @@
-/**
- * @brief ActuatorControl plugin
- * @file actuator_control.cpp
- * @author Marcel Stüttgen <stuettgen@fh-aachen.de>
- *
- * This plugin will take ros message mavros::ActuatorControl and send it to FCU
- * via MAVLINK. It can be used for direct servo control in offboard mode
- *
- * @addtogroup plugin
+/*
+* @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2015 Marcel Stüttgen.
+ * Copyright 2015 Marcel Stüttgen <stuettgen@fh-aachen.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,18 +22,15 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-
 #include<mavros/ActuatorControl.h>
 
 namespace mavplugin {
-
 /**
  * @brief ActuatorControl plugin
  *
  * Sends actuator controls to FCU controller.
  */
 class ActuatorControlPlugin : public MavRosPlugin {
-
  public:
 
   //constructor
@@ -48,10 +38,8 @@ class ActuatorControlPlugin : public MavRosPlugin {
 
   //init function
   void initialize(UAS &uas, ros::NodeHandle &nh, diagnostic_updater::Updater &diag_updater) {
-
     uas_ = &uas;
     actuator_controls_sub_ = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
-
   }
 
   //name of object
@@ -64,25 +52,22 @@ class ActuatorControlPlugin : public MavRosPlugin {
   }
 
 private:
- 
   UAS *uas_;
-
   ros::Subscriber actuator_controls_sub_;
 
-
-  
   /* -*- low-level send -*- */
   /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
-
-  void set_actuator_control_target(const uint32_t time_boot_ms, const uint8_t group_mix, const float controls[8]) {
+  void set_actuator_control_target(const uint32_t time_boot_ms,
+                                   const uint8_t group_mix,
+                                   const float controls[8]) {
 
     mavlink_message_t msg;
-    //todo: get correckt pack chan msg
     /*
-    mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas), &msg, 
+    mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas_),
+                                                      &msg, 
                                                       time_boot_ms,
-                                                      UAS_PACK_TGT(uas),
                                                       group_mix,
+                                                      UAS_PACK_TGT(uas_),
                                                       controls)
     */
     UAS_FCU(uas_)->send_message(&msg);
@@ -90,11 +75,8 @@ private:
 
   
   /* -*- callbacks -*- */
-  
   void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
-
-    // about groups, mixing and channels:
-    // https://pixhawk.org/dev/mixing
+    // about groups, mixing and channels: https://pixhawk.org/dev/mixing
 
     //call low level send
     set_actuator_control_target(ros::Time::now().toNSec()/1000000,
@@ -105,5 +87,4 @@ private:
 };
 
 }; // namespace mavplugin
-
 PLUGINLIB_EXPORT_CLASS(mavplugin::ActuatorControlPlugin, mavplugin::MavRosPlugin)
