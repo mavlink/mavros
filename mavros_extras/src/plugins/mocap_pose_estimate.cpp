@@ -90,48 +90,48 @@ private:
 
 	void mocap_pose_send
 		(uint64_t usec,
-		float x, float y, float z,
-		float roll, float pitch, float yaw)
+		float q[4],
+		float x, float y, float z)
 	{
 		mavlink_message_t msg;
-		mavlink_msg_vicon_position_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_att_pos_mocap_pack_chan(UAS_PACK_CHAN(uas), &msg,
 			usec,
+			q,
 			x,
 			y,
-			z,
-			roll,
-			pitch,
-			yaw);
+			z);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
 
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
-		tf::Quaternion quat;
-		tf::quaternionMsgToTF(pose->pose.orientation, quat);
-		double roll, pitch, yaw;
-		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+		float q[4];
+		q[0] =  pose->pose.orientation.y;  // w
+		q[1] =  pose->pose.orientation.x;  // x
+		q[2] = -pose->pose.orientation.z;  // y
+		q[3] =  pose->pose.orientation.w;  // z
 		// Convert to mavlink body frame
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
-			pose->pose.position.x,
+			 q,
+			 pose->pose.position.x,
 			-pose->pose.position.y,
-			-pose->pose.position.z,
-			roll, -pitch, -yaw); 
+			-pose->pose.position.z); 
 	}
 
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
-		tf::Quaternion quat;
-		tf::quaternionMsgToTF(trans->transform.rotation, quat);
-		double roll, pitch, yaw;
-		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+		float q[4];
+		q[0] =  trans->transform.rotation.y;  // w
+		q[1] =  trans->transform.rotation.x;  // x
+		q[2] = -trans->transform.rotation.z;  // y
+		q[3] =  trans->transform.rotation.w;  // z
 		// Convert to mavlink body frame
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
-			trans->transform.translation.x,
+			 q,
+			 trans->transform.translation.x,
 			-trans->transform.translation.y,
-			-trans->transform.translation.z,
-			roll, -pitch, -yaw); 
+			-trans->transform.translation.z);
 	}
 };
 
