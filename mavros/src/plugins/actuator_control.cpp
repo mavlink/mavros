@@ -28,7 +28,7 @@
 #include <pluginlib/class_list_macros.h>
 
 #include<std_msgs/Float32MultiArray.h>
-
+#include<mavros/ActuatorControl.h>
 
 namespace mavplugin {
 
@@ -49,7 +49,7 @@ class ActuatorControlPlugin : public MavRosPlugin {
 
     uas = &uas_;
     sp_nh_ = ros::NodeHandle(nh, "setpoint_actuator_control");
-    controls_sub_ = sp_nh_.subscribe("actuator_controls", 10, &ActuatorControlPlugin::control_cb, this);
+    controls_sub_ = sp_nh_.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 
   }
 
@@ -89,7 +89,7 @@ private:
   
   /* -*- callbacks -*- */
   
-  void control_cb(const std_msgs::Float32MultiArray::ConstPtr &req) {
+  void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
     uint8_t group_mix = 0; //todo: get right group mix
     
     float controls[8];
@@ -104,7 +104,7 @@ private:
 
     //copy values
     for (int i = 0; i < 8; i++) {
-      controls[i]=req->data[i];
+      controls[i]=req->channels[i];
     }
 
     //call low level send

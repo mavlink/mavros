@@ -70,6 +70,7 @@ add_message_files(
   OverrideRCIn.msg
   VFR_HUD.msg
   FileEntry.msg
+  ActuatorControl.msg
 )
 
 ## Generate services in the 'srv' folder
