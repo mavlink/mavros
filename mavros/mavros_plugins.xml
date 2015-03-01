@@ -56,5 +56,8 @@
 	<class name="sys_time" type="mavplugin::SystemTimePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Synchronise clocks with FCU.</description>
 	</class>
+	<class name="actuator_control" type="mavplugin::ActuatorControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send direct controls values to the actuators</description>
+	</class>
 </library>
 
