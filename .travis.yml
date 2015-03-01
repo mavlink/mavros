@@ -10,8 +10,8 @@ env:
     #   via the "travis encrypt" command using the project repo's public key
     - secure: "ieyA/jKHN1rVAQ8qFvXx6wdcUozFR5QBxUpQuEcItl4yv0bPnRp0xO9X/BhNFt6V85L8jEw9XNz4uHTUeAtghZZxpKCQ8de1NP49d7boyCTLQx/WsJ/bSPubAZOcnvbi9SoOTyymM94jdA1k46ndznI1ZZ713uSrPdIcg6o8Q9A="
     - ROS_DISTRO=hydro # wait until travis will update to 14.04
-  #matrix:
-  #  - MAVLINK_DIALECT=ardupilotmega
+  matrix:
+    - MAVLINK_DIALECT=common
     - MAVLINK_DIALECT=pixhawk
 
 before_install:
