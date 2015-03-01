@@ -33,11 +33,11 @@ using namespace mavplugin;
 
 MavRos::MavRos(const ros::NodeHandle &nh_) :
 	node_handle(nh_),
-	mavlink_node_handle("/mavlink"), // for compatible reasons
+	mavlink_node_handle("/mavlink"),// for compatible reasons
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
 	plugin_loader("mavros", "mavplugin::MavRosPlugin"),
-	message_route_table{}
+	message_route_table {}
 {
 	std::string fcu_url, gcs_url;
 	int system_id, component_id;
@@ -92,9 +92,9 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 	// ROS mavlink bridge
 	mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
 	mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
-			ros::TransportHints()
-			.unreliable()
-			.maxDatagramSize(1024));
+		ros::TransportHints()
+		.unreliable()
+		.maxDatagramSize(1024));
 
 	fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 	fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
@@ -102,9 +102,9 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 
 	if (gcs_link) {
 		fcu_link->message_received.connect(
-				boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
+			boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
 		gcs_link->message_received.connect(
-				boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
+			boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
 		gcs_link_diag.set_connection_status(true);
 	}
 
@@ -120,8 +120,8 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 		startup_px4_usb_quirk();
 
 	ROS_INFO("MAVROS started. MY ID [%d, %d], TARGET ID [%d, %d]",
-			system_id, component_id,
-			tgt_system_id, tgt_component_id);
+		system_id, component_id,
+		tgt_system_id, tgt_component_id);
 }
 
 void MavRos::spin() {
@@ -168,7 +168,7 @@ bool MavRos::check_in_blacklist(std::string &pl_name) {
 			return true;
 		else if (cmp != FNM_NOMATCH)
 			ROS_ERROR("Blacklist check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
-					pattern.c_str(), pl_name.c_str(), cmp);
+				pattern.c_str(), pl_name.c_str(), cmp);
 	}
 
 	return false;
@@ -189,13 +189,12 @@ void MavRos::add_plugin(std::string &pl_name) {
 		std::string repr_name = plugin->get_name();
 
 		ROS_INFO_STREAM("Plugin " << repr_name <<
-				" [alias " << pl_name << "] loaded and initialized");
+			" [alias " << pl_name << "] loaded and initialized");
 
 		for (auto &pair : plugin->get_rx_handlers()) {
 			ROS_DEBUG("Route msgid %d to %s", pair.first, repr_name.c_str());
 			message_route_table[pair.first].connect(pair.second);
 		}
-
 	} catch (pluginlib::PluginlibException &ex) {
 		ROS_ERROR_STREAM("Plugin [alias " << pl_name << "] load exception: " << ex.what());
 	}

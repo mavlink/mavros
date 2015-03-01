@@ -43,19 +43,17 @@ UAS::UAS() :
 	gps_eph(0),
 	gps_epv(0),
 	fix_status(0)
-{
-}
+{}
 
 void UAS::stop(void)
-{
-}
+{}
 
 /* -*- time syncronise functions -*- */
 
 static inline ros::Time ros_time_from_ns(uint64_t &stamp_ns) {
 	return ros::Time(
-			stamp_ns / 1000000000UL,	// t_sec
-			stamp_ns % 1000000000UL);	// t_nsec
+		stamp_ns / 1000000000UL,		// t_sec
+		stamp_ns % 1000000000UL);		// t_nsec
 }
 
 ros::Time UAS::synchronise_stamp(uint32_t time_boot_ms) {
@@ -196,10 +194,10 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int) {
 
 static inline bool is_apm_copter(enum MAV_TYPE &type) {
 	return type == MAV_TYPE_QUADROTOR ||
-		type == MAV_TYPE_HEXAROTOR ||
-		type == MAV_TYPE_OCTOROTOR ||
-		type == MAV_TYPE_TRICOPTER ||
-		type == MAV_TYPE_COAXIAL;
+	       type == MAV_TYPE_HEXAROTOR ||
+	       type == MAV_TYPE_OCTOROTOR ||
+	       type == MAV_TYPE_TRICOPTER ||
+	       type == MAV_TYPE_COAXIAL;
 }
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {

@@ -74,9 +74,9 @@ int main(int argc, char *argv[])
 	gcs_link->message_received.connect(mavlink_pub_cb);
 
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
-			ros::TransportHints()
-				.unreliable()
-				.maxDatagramSize(1024));
+		ros::TransportHints()
+		.unreliable()
+		.maxDatagramSize(1024));
 
 	ros::spin();
 	return 0;

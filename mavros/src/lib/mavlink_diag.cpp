@@ -51,7 +51,7 @@ void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 
 		if (mav_status.packet_rx_drop_count > last_drop_count)
 			stat.summaryf(1, "%d packeges dropped since last report",
-					mav_status.packet_rx_drop_count - last_drop_count);
+				mav_status.packet_rx_drop_count - last_drop_count);
 		else if (is_connected)
 			stat.summary(0, "connected");
 		else
