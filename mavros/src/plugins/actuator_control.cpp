@@ -27,7 +27,6 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include<std_msgs/Float32MultiArray.h>
 #include<mavros/ActuatorControl.h>
 
 namespace mavplugin {
@@ -42,14 +41,13 @@ class ActuatorControlPlugin : public MavRosPlugin {
  public:
 
   //constructor
-  ActuatorControlPlugin() : uas(nullptr) { };
+  ActuatorControlPlugin() : uas_(nullptr) { };
 
   //init function
-  void initialize(UAS &uas_, ros::NodeHandle &nh, diagnostic_updater::Updater &diag_updater) {
+  void initialize(UAS &uas, ros::NodeHandle &nh, diagnostic_updater::Updater &diag_updater) {
 
-    uas = &uas_;
-    sp_nh_ = ros::NodeHandle(nh, "setpoint_actuator_control");
-    controls_sub_ = sp_nh_.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
+    uas_ = &uas;
+    actuator_controls_sub_ = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 
   }
 
@@ -64,15 +62,16 @@ class ActuatorControlPlugin : public MavRosPlugin {
 
 private:
  
-  UAS *uas;
+  UAS *uas_;
 
-  ros::NodeHandle sp_nh_;
-  ros::Subscriber controls_sub_;
+  ros::Subscriber actuator_controls_sub_;
 
+
+  
   /* -*- low-level send -*- */
   /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
 
-  void set_actuator_control_target(uint32_t time_boot_ms, uint8_t group_mix,float controls[8]) {
+  void set_actuator_control_target(uint32_t time_boot_ms, uint8_t group_mix, const  float controls[8]) {
 
     mavlink_message_t msg;
     //todo: get correckt pack chan msg
@@ -83,34 +82,21 @@ private:
                                                       group_mix,
                                                       controls)
     */
-    UAS_FCU(uas)->send_message(&msg);
+    UAS_FCU(uas_)->send_message(&msg);
   }
 
   
   /* -*- callbacks -*- */
   
   void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
-    uint8_t group_mix = 0; //todo: get right group mix
-    
-    float controls[8];
-    /* 0: roll
-       1: pitch
-       2: yaw
-       3: throttle
-       4: flaps
-       5: spoilers
-       6: airbrakes
-       7: landing gear*/
 
-    //copy values
-    for (int i = 0; i < 8; i++) {
-      controls[i]=req->channels[i];
-    }
+    // about groups, mixing and channels:
+    // https://pixhawk.org/dev/mixing
 
     //call low level send
     set_actuator_control_target(ros::Time::now().toNSec()/1000000,
-                                group_mix,
-                                controls);                                
+                                req->group_mix,
+                                req->controls.data()); //"controls" is of type boost::array, so .data() will return the pointer                           
   }
 
 };

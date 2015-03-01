@@ -5,4 +5,4 @@
 
 Header header
 uint8 group_mix
-float32[8] channels
+float32[8] controls
