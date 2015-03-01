@@ -44,7 +44,7 @@ class ActuatorControlPlugin : public MavRosPlugin {
 
   //name of object
   const std::string get_name() const {
-    return "SetpointActuatorControl";
+    return "ActuatorControl";
   }
 
   const message_map get_rx_handlers() {
@@ -62,22 +62,18 @@ private:
                                    const float controls[8]) {
 
     mavlink_message_t msg;
-    
     mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas_),
                                                       &msg, 
                                                       time_usec,
                                                       group_mix,
                                                       UAS_PACK_TGT(uas_),
                                                       controls)
-    
     UAS_FCU(uas_)->send_message(&msg);
   }
 
-  
   /* -*- callbacks -*- */
   void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
     // about groups, mixing and channels: https://pixhawk.org/dev/mixing
-
     //call low level send
     send_actuator_control_target(ros::Time::now().toNSec()/1000,
                                 req->group_mix,
