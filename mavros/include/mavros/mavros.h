@@ -37,7 +37,6 @@
 #include <mavros/Mavlink.h>
 
 namespace mavros {
-
 /**
  * @brief MAVROS node class
  *
@@ -67,8 +66,8 @@ private:
 	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
 	std::vector<mavplugin::MavRosPlugin::Ptr> loaded_plugins;
 	std::vector<std::string> plugin_blacklist;
-	std::array<mavconn::MAVConnInterface::MessageSig, 256>
-		message_route_table; // link interface -> router -> plugin callback
+	// link interface -> router -> plugin callback
+	std::array<mavconn::MAVConnInterface::MessageSig, 256> message_route_table;
 	UAS mav_uas;
 
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
@@ -80,6 +79,5 @@ private:
 	void startup_px4_usb_quirk(void);
 	void log_connect_change(bool connected);
 };
-
-}; // namespace mavros
+};	// namespace mavros
 

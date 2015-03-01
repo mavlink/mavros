@@ -17,7 +17,6 @@
 //#include <stdint.h>
 
 namespace px4 {
-
 /**
  * @brief PX4 custom mode
  *
@@ -87,5 +86,4 @@ constexpr uint32_t define_mode(enum custom_mode::MAIN_MODE mm, uint8_t sm = 0) {
 constexpr uint32_t define_mode_auto(enum custom_mode::SUB_MODE_AUTO sm) {
 	return define_mode(custom_mode::MAIN_MODE_AUTO, sm);
 }
-
-}; // namespace px4
+};	// namespace px4

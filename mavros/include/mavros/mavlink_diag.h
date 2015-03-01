@@ -30,7 +30,6 @@
 #include <mavconn/interface.h>
 
 namespace mavros {
-
 class MavlinkDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -51,6 +50,5 @@ private:
 	unsigned int last_drop_count;
 	bool is_connected;
 };
-
-}; // namespace mavros
+};	// namespace mavros
 

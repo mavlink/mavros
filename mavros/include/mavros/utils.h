@@ -35,7 +35,6 @@
 
 
 namespace mavutils {
-
 /**
  * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
  */
@@ -66,5 +65,4 @@ inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPt
 	for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
 		rmsg->payload64.push_back(mmsg->payload64[i]);
 };
-
-}; // namespace mavutils
+};	// namespace mavutils
