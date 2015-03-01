@@ -1,5 +1,9 @@
-/*
-* @addtogroup plugin
+/**
+ * @brief ActuatorControl plugin
+ * @file actuator_control.cpp
+ * @author Marcel Stüttgen <stuettgen@fh-aachen.de>
+ *
+ * @addtogroup plugin
  * @{
  */
 /*
@@ -22,7 +26,8 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include<mavros/ActuatorControl.h>
+
+#include <mavros/ActuatorControl.h>
 
 namespace mavplugin {
 /**
@@ -31,59 +36,56 @@ namespace mavplugin {
  * Sends actuator controls to FCU controller.
  */
 class ActuatorControlPlugin : public MavRosPlugin {
- public:
-  //constructor
-  ActuatorControlPlugin() :
-      uas_(nullptr)
-  { };
+public:
+	ActuatorControlPlugin() :
+		uas(nullptr)
+	{ };
 
-  //init function
-  void initialize(UAS &uas,
-                  ros::NodeHandle &nh,
-                  diagnostic_updater::Updater &diag_updater) {
-    uas_ = &uas;
-    actuator_controls_sub_ = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
-  }
+	void initialize(UAS &uas_,
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater) {
+		uas = &uas_;
 
-  //name of object
-  const std::string get_name() const {
-    return "ActuatorControl";
-  }
+		actuator_controls_sub = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
+	}
 
-  const message_map get_rx_handlers() {
-    return { /* Rx disabled */ };
-  }
+	const std::string get_name() const {
+		return "ActuatorControl";
+	}
+
+	const message_map get_rx_handlers() {
+		return { /* Rx disabled */ };
+	}
 
 private:
-  UAS *uas_;
-  ros::Subscriber actuator_controls_sub_;
+	UAS *uas;
+	ros::Subscriber actuator_controls_sub;
 
-  /* -*- low-level send -*- */
-  /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
-  void send_actuator_control_target(const uint64_t time_usec,
-                                   const uint8_t group_mix,
-                                   const float controls[8]) {
+	/* -*- low-level send -*- */
 
-    mavlink_message_t msg;
-    mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas_),
-                                                      &msg, 
-                                                      time_usec,
-                                                      group_mix,
-                                                      UAS_PACK_TGT(uas_),
-                                                      controls);
-    UAS_FCU(uas_)->send_message(&msg);
-  }
+	//! message definiton here: @p https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET
+	void set_actuator_control_target(const uint64_t time_usec,
+			const uint8_t group_mix,
+			const float controls[8]) {
+		mavlink_message_t msg;
 
-  /* -*- callbacks -*- */
-  void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
-    // about groups, mixing and channels: https://pixhawk.org/dev/mixing
-    //call low level send
-    send_actuator_control_target(ros::Time::now().toNSec()/1000,
-                                req->group_mix,
-                                req->controls.data()); //"req->controls" is of type boost::array, so .data() will return the pointer                           
-  }
+		mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				time_usec,
+				group_mix,
+				UAS_PACK_TGT(uas),
+				controls);
+		UAS_FCU(uas)->send_message(&msg);
+	}
 
+	/* -*- callbacks -*- */
+
+	void actuator_control_cb(const mavros::ActuatorControl::ConstPtr &req) {
+		//! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
+		set_actuator_control_target(ros::Time::now().toNSec() / 1000,
+				req->group_mix,
+				req->controls.data());
+	}
 };
+};	// namespace mavplugin
 
-}; // namespace mavplugin
 PLUGINLIB_EXPORT_CLASS(mavplugin::ActuatorControlPlugin, mavplugin::MavRosPlugin)
