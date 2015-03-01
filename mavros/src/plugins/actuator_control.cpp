@@ -57,19 +57,19 @@ private:
 
   /* -*- low-level send -*- */
   /* message definiton here: https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET */
-  void set_actuator_control_target(const uint32_t time_boot_ms,
+  void send_actuator_control_target(const uint64_t time_usec,
                                    const uint8_t group_mix,
                                    const float controls[8]) {
 
     mavlink_message_t msg;
-    /*
+    
     mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas_),
                                                       &msg, 
-                                                      time_boot_ms,
+                                                      time_usec,
                                                       group_mix,
                                                       UAS_PACK_TGT(uas_),
                                                       controls)
-    */
+    
     UAS_FCU(uas_)->send_message(&msg);
   }
 
@@ -79,7 +79,7 @@ private:
     // about groups, mixing and channels: https://pixhawk.org/dev/mixing
 
     //call low level send
-    set_actuator_control_target(ros::Time::now().toNSec()/1000000,
+    send_actuator_control_target(ros::Time::now().toNSec()/1000,
                                 req->group_mix,
                                 req->controls.data()); //"req->controls" is of type boost::array, so .data() will return the pointer                           
   }
