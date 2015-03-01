@@ -32,7 +32,6 @@ namespace mavplugin {
  */
 class ActuatorControlPlugin : public MavRosPlugin {
  public:
-
   //constructor
   ActuatorControlPlugin() : uas_(nullptr) { };
 
@@ -67,7 +66,7 @@ private:
                                                       time_usec,
                                                       group_mix,
                                                       UAS_PACK_TGT(uas_),
-                                                      controls)
+                                                      controls);
     UAS_FCU(uas_)->send_message(&msg);
   }
 
