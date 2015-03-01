@@ -35,9 +35,9 @@
 namespace mavplugin {
 
 /**
- * @brief Setpoint actuator control plugin
+ * @brief ActuatorControl plugin
  *
- * Send setpoint actuator control to FCU controller.
+ * Sends actuator controls to FCU controller.
  */
 class ActuatorControlPlugin : public MavRosPlugin {
 
@@ -99,7 +99,7 @@ private:
     //call low level send
     set_actuator_control_target(ros::Time::now().toNSec()/1000000,
                                 req->group_mix,
-                                req->controls.data()); //"controls" is of type boost::array, so .data() will return the pointer                           
+                                req->controls.data()); //"req->controls" is of type boost::array, so .data() will return the pointer                           
   }
 
 };
