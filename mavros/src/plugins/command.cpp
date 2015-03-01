@@ -36,7 +36,6 @@
 #include <mavros/CommandTOL.h>
 
 namespace mavplugin {
-
 class CommandTransaction {
 public:
 	std::mutex cond_mutex;
@@ -89,7 +88,7 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)
 		};
 	}
 
@@ -129,7 +128,7 @@ private:
 			}
 
 		ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u, result %u",
-			ack.command, ack.result);
+				ack.command, ack.result);
 	}
 
 	/* -*- mid-level functions -*- */
@@ -138,7 +137,7 @@ private:
 		std::unique_lock<std::mutex> lock(tr->cond_mutex);
 
 		return tr->ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec()))
-			== std::cv_status::no_timeout;
+		       == std::cv_status::no_timeout;
 	}
 
 	/**
@@ -212,7 +211,6 @@ private:
 			int32_t x, int32_t y,
 			float z,
 			unsigned char &success) {
-
 		/* Note: seems that COMMAND_INT don't produce COMMAND_ACK
 		 * so wait don't needed.
 		 */
@@ -233,8 +231,8 @@ private:
 			float param5, float param6,
 			float param7) {
 		mavlink_message_t msg;
-		const uint8_t tgt_comp_id = (use_comp_id_system_control)?
-			MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
+		const uint8_t tgt_comp_id = (use_comp_id_system_control) ?
+				MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
 
 		mavlink_msg_command_long_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				uas->get_tgt_system(),
@@ -255,8 +253,8 @@ private:
 			int32_t x, int32_t y,
 			float z) {
 		mavlink_message_t msg;
-		const uint8_t tgt_comp_id = (use_comp_id_system_control)?
-			MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
+		const uint8_t tgt_comp_id = (use_comp_id_system_control) ?
+				MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
 
 		mavlink_msg_command_int_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				uas->get_tgt_system(),
@@ -275,7 +273,6 @@ private:
 
 	bool command_long_cb(mavros::CommandLong::Request &req,
 			mavros::CommandLong::Response &res) {
-
 		return send_command_long_and_wait(req.command, req.confirmation,
 				req.param1, req.param2,
 				req.param3, req.param4,
@@ -296,25 +293,22 @@ private:
 
 	bool arming_cb(mavros::CommandBool::Request &req,
 			mavros::CommandBool::Response &res) {
-
 		return send_command_long_and_wait(MAV_CMD_COMPONENT_ARM_DISARM, 1,
-				(req.value)? 1.0 : 0.0,
+				(req.value) ? 1.0 : 0.0,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
 
 	bool set_home_cb(mavros::CommandHome::Request &req,
 			mavros::CommandHome::Response &res) {
-
 		return send_command_long_and_wait(MAV_CMD_DO_SET_HOME, 1,
-				(req.current_gps)? 1.0 : 0.0,
+				(req.current_gps) ? 1.0 : 0.0,
 				0, 0, 0, req.latitude, req.longitude, req.altitude,
 				res.success, res.result);
 	}
 
 	bool takeoff_cb(mavros::CommandTOL::Request &req,
 			mavros::CommandTOL::Response &res) {
-
 		return send_command_long_and_wait(MAV_CMD_NAV_TAKEOFF, 1,
 				req.min_pitch,
 				0, 0,
@@ -325,7 +319,6 @@ private:
 
 	bool land_cb(mavros::CommandTOL::Request &req,
 			mavros::CommandTOL::Response &res) {
-
 		return send_command_long_and_wait(MAV_CMD_NAV_LAND, 1,
 				0, 0, 0,
 				req.yaw,
@@ -335,15 +328,13 @@ private:
 
 	bool guided_cb(mavros::CommandBool::Request &req,
 			mavros::CommandBool::Response &res) {
-
 		return send_command_long_and_wait(MAV_CMD_NAV_GUIDED_ENABLE, 1,
-				(req.value)? 1.0 : 0.0,
+				(req.value) ? 1.0 : 0.0,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::CommandPlugin, mavplugin::MavRosPlugin)
 

@@ -33,7 +33,6 @@
 #include <mavros/SetMode.h>
 
 namespace mavplugin {
-
 /**
  * Heartbeat status publisher
  *
@@ -50,7 +49,7 @@ public:
 		tolerance_(0.1),
 		times_(win_size),
 		seq_nums_(win_size),
-		last_hb{}
+		last_hb {}
 	{
 		clear();
 	}
@@ -129,7 +128,7 @@ class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
 public:
 	SystemStatusDiag(const std::string name) :
 		diagnostic_updater::DiagnosticTask(name),
-		last_st{}
+		last_st {}
 	{ };
 
 	void set(mavlink_sys_status_t &st) {
@@ -152,8 +151,8 @@ public:
 
 		// decode sensor health mask
 #define STAT_ADD_SENSOR(msg, sensor_mask)	\
-		if (last_st.onboard_control_sensors_enabled & sensor_mask)	\
-			stat.add(msg, (last_st.onboard_control_sensors_health & sensor_mask)? "Ok" : "Fail")
+	if (last_st.onboard_control_sensors_enabled & sensor_mask)	\
+		stat.add(msg, (last_st.onboard_control_sensors_health & sensor_mask) ? "Ok" : "Fail")
 
 		STAT_ADD_SENSOR("Sensor 3D Gyro", MAV_SYS_STATUS_SENSOR_3D_GYRO);
 		STAT_ADD_SENSOR("Sensor 3D Accel", MAV_SYS_STATUS_SENSOR_3D_ACCEL);
@@ -392,14 +391,14 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &SystemStatusPlugin::handle_sys_status),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &SystemStatusPlugin::handle_statustext),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &SystemStatusPlugin::handle_sys_status),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &SystemStatusPlugin::handle_statustext),
 #ifdef MAVLINK_MSG_ID_MEMINFO
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MEMINFO, &SystemStatusPlugin::handle_meminfo),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MEMINFO, &SystemStatusPlugin::handle_meminfo),
 #endif
 #ifdef MAVLINK_MSG_ID_HWSTATUS
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_HWSTATUS, &SystemStatusPlugin::handle_hwstatus),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HWSTATUS, &SystemStatusPlugin::handle_hwstatus),
 #endif
 		};
 	}
@@ -449,7 +448,6 @@ private:
 			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 		};
-
 	}
 
 	/**
@@ -459,17 +457,17 @@ private:
 	 */
 	void process_statustext_apm_quirk(uint8_t severity, std::string &text) {
 		switch (severity) {
-		case 1: // SEVERITY_LOW
+		case 1:	// SEVERITY_LOW
 			ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
-		case 2: // SEVERITY_MEDIUM
+		case 2:	// SEVERITY_MEDIUM
 			ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
-		case 3: // SEVERITY_HIGH
-		case 4: // SEVERITY_CRITICAL
-		case 5: // SEVERITY_USER_RESPONSE
+		case 3:	// SEVERITY_HIGH
+		case 4:	// SEVERITY_CRITICAL
+		case 5:	// SEVERITY_USER_RESPONSE
 			ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 
@@ -478,7 +476,6 @@ private:
 					(int)severity << "): " << text);
 			break;
 		};
-
 	}
 
 	/* -*- message handlers -*- */
@@ -574,13 +571,12 @@ private:
 
 	bool set_rate_cb(mavros::StreamRate::Request &req,
 			mavros::StreamRate::Response &res) {
-
 		mavlink_message_t msg;
 		mavlink_msg_request_data_stream_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
 				req.stream_id,
 				req.message_rate,
-				(req.on_off)? 1 : 0
+				(req.on_off) ? 1 : 0
 				);
 
 		UAS_FCU(uas)->send_message(&msg);
@@ -611,8 +607,7 @@ private:
 		return true;
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SystemStatusPlugin, mavplugin::MavRosPlugin)
 

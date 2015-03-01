@@ -34,7 +34,6 @@
 #include <geometry_msgs/TwistStamped.h>
 
 namespace mavplugin {
-
 class GPSInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -126,8 +125,8 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GPSPlugin::handle_gps_raw_int),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_STATUS, &GPSPlugin::handle_gps_status),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GPSPlugin::handle_gps_raw_int),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_STATUS, &GPSPlugin::handle_gps_status),
 		};
 	}
 
@@ -161,9 +160,9 @@ private:
 		else
 			fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
 
-		fix->latitude = raw_gps.lat / 1E7; // deg
-		fix->longitude = raw_gps.lon / 1E7; // deg
-		fix->altitude = raw_gps.alt / 1E3; // m
+		fix->latitude = raw_gps.lat / 1E7;	// deg
+		fix->longitude = raw_gps.lon / 1E7;	// deg
+		fix->altitude = raw_gps.alt / 1E3;	// m
 
 		if (raw_gps.eph != UINT16_MAX) {
 			double hdop = raw_gps.eph / 1E2;
@@ -175,19 +174,19 @@ private:
 			fix->position_covariance[4] = hdop2;
 			fix->position_covariance[8] = std::pow(2 * hdop, 2);
 			fix->position_covariance_type =
-				sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
 			fix->position_covariance_type =
-				sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 		}
 
 		fix->header.frame_id = frame_id;
 		fix->header.stamp = uas->synchronise_stamp(raw_gps.time_usec);
 
 		// store GPS data in UAS
-		double eph = (raw_gps.eph != UINT16_MAX)? raw_gps.eph / 1E2 : NAN;
-		double epv = (raw_gps.epv != UINT16_MAX)? raw_gps.epv / 1E2 : NAN;
+		double eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2 : NAN;
+		double epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2 : NAN;
 		uas->set_gps_llae(fix->latitude, fix->longitude, fix->altitude, eph, epv);
 		uas->set_gps_status(fix->status.status == sensor_msgs::NavSatStatus::STATUS_FIX);
 
@@ -195,8 +194,8 @@ private:
 
 		if (raw_gps.vel != UINT16_MAX &&
 				raw_gps.cog != UINT16_MAX) {
-			double speed = raw_gps.vel / 1E2; // m/s
-			double course = angles::from_degrees(raw_gps.cog / 1E2); // rad
+			double speed = raw_gps.vel / 1E2;	// m/s
+			double course = angles::from_degrees(raw_gps.cog / 1E2);// rad
 
 			// From nmea_navsat_driver
 			vel->twist.linear.x = speed * std::sin(course);
@@ -217,10 +216,8 @@ private:
 
 		ROS_INFO_THROTTLE_NAMED(30, "gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
 	}
-
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::GPSPlugin, mavplugin::MavRosPlugin)
 

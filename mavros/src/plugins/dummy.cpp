@@ -29,7 +29,6 @@
 #include <pluginlib/class_list_macros.h>
 
 namespace mavplugin {
-
 /**
  * @brief Dummy plugin.
  *
@@ -65,9 +64,9 @@ public:
 	 */
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &DummyPlugin::handle_heartbeat),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &DummyPlugin::handle_sys_status),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &DummyPlugin::handle_statustext)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &DummyPlugin::handle_heartbeat),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &DummyPlugin::handle_sys_status),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &DummyPlugin::handle_statustext)
 		};
 	}
 
@@ -85,11 +84,9 @@ private:
 	void handle_statustext(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext(%p, %u, %u)",
 				msg, sysid, compid);
-
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::DummyPlugin, mavplugin::MavRosPlugin)
 

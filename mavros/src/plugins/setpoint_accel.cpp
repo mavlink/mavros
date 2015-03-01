@@ -33,7 +33,6 @@
 #include <geometry_msgs/Vector3Stamped.h>
 
 namespace mavplugin {
-
 /**
  * @brief Setpoint acceleration/force plugin
  *
@@ -84,14 +83,13 @@ private:
 	 * Note: send only AFX AFY AFZ. ENU frame.
 	 */
 	void send_setpoint_acceleration(const ros::Time &stamp, float afx, float afy, float afz) {
-
 		/* Documentation start from bit 1 instead 0.
 		 * Ignore position and velocity vectors, yaw and yaw rate
 		 */
-		uint16_t ignore_all_except_a_xyz = (3<<10)|(7<<3)|(7<<0);
+		uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
 
 		if (send_force)
-			ignore_all_except_a_xyz |= (1<<9);
+			ignore_all_except_a_xyz |= (1 << 9);
 
 		// ENU->NED. Issue #49.
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
@@ -107,12 +105,11 @@ private:
 
 	void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr &req) {
 		send_setpoint_acceleration(req->header.stamp,
-					    req->vector.x,
-					    req->vector.y,
-					    req->vector.z);
+				req->vector.x,
+				req->vector.y,
+				req->vector.z);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointAccelerationPlugin, mavplugin::MavRosPlugin)

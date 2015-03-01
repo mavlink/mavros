@@ -30,7 +30,6 @@
 #include <mavros/RadioStatus.h>
 
 namespace mavplugin {
-
 class TDRRadioStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -38,7 +37,7 @@ public:
 		diagnostic_updater::DiagnosticTask(name),
 		data_received(false),
 		low_rssi(_low_rssi),
-		last_rst{}
+		last_rst {}
 	{ }
 
 
@@ -118,9 +117,9 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO_STATUS, &TDRRadioPlugin::handle_radio_status),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO_STATUS, &TDRRadioPlugin::handle_radio_status),
 #ifdef MAVLINK_MSG_ID_RADIO
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO, &TDRRadioPlugin::handle_radio),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO, &TDRRadioPlugin::handle_radio),
 #endif
 		};
 	}
@@ -175,8 +174,7 @@ private:
 		status_pub.publish(msg);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::TDRRadioPlugin, mavplugin::MavRosPlugin)
 

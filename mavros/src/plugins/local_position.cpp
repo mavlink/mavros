@@ -32,7 +32,6 @@
 #include <geometry_msgs/PoseStamped.h>
 
 namespace mavplugin {
-
 /**
  * @brief Local position plugin.
  * Publish local position to TF and PositionStamped,
@@ -66,7 +65,7 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
 		};
 	}
 
@@ -118,8 +117,7 @@ private:
 		local_position.publish(pose);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::LocalPositionPlugin, mavplugin::MavRosPlugin)
 

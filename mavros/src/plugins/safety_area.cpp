@@ -31,7 +31,6 @@
 #include <geometry_msgs/PolygonStamped.h>
 
 namespace mavplugin {
-
 /**
  * @brief Safety allopwed area plugin
  *
@@ -49,7 +48,7 @@ public:
 	{
 		bool manual_def = false;
 		double p1x, p1y, p1z,
-		       p2x, p2y, p2z;
+			p2x, p2y, p2z;
 
 		uas = &uas_;
 		safety_nh = ros::NodeHandle(nh, "safety_area");
@@ -123,7 +122,6 @@ private:
 	 */
 	void send_safety_set_allowed_area(float p1x, float p1y, float p1z,
 			float p2x, float p2y, float p2z) {
-
 		ROS_INFO_NAMED("safetyarea", "SA: Set safty area: P1(%f %f %f) P2(%f %f %f)",
 				p1x, p1y, p1z,
 				p2x, p2y, p2z);
@@ -151,7 +149,6 @@ private:
 				req->polygon.points[1].z);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SafetyAreaPlugin, mavplugin::MavRosPlugin)

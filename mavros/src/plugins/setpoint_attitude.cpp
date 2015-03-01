@@ -35,7 +35,6 @@
 #include <std_msgs/Float64.h>
 
 namespace mavplugin {
-
 /**
  * @brief Setpoint attitude plugin
  *
@@ -72,7 +71,7 @@ public:
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("attitude", "Listen to desired attitude transform " << frame_id
-					<< " -> " << child_frame_id);
+												  << " -> " << child_frame_id);
 			tf_start("AttitudeSpTF", &SetpointAttitudePlugin::send_attitude_transform);
 		}
 		else if (listen_twist) {
@@ -140,7 +139,7 @@ private:
 	 */
 	void send_attitude_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// Thrust + RPY, also bits noumbering started from 1 in docs
-		const uint8_t ignore_all_except_q = (1<<6)|(7<<0);
+		const uint8_t ignore_all_except_q = (1 << 6) | (7 << 0);
 		float q[4];
 
 		// ENU->NED, description in #49.
@@ -164,7 +163,7 @@ private:
 	 */
 	void send_attitude_ang_velocity(const ros::Time &stamp, const float vx, const float vy, const float vz) {
 		// Q + Thrust, also bits noumbering started from 1 in docs
-		const uint8_t ignore_all_except_rpy = (1<<7)|(1<<6);
+		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
 		set_attitude_target(stamp.toNSec() / 1000000,
@@ -179,7 +178,7 @@ private:
 	 */
 	void send_attitude_throttle(const float throttle) {
 		// Q + RPY
-		const uint8_t ignore_all_except_throttle = (1<<7)|(7<<0);
+		const uint8_t ignore_all_except_throttle = (1 << 7) | (7 << 0);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
 		set_attitude_target(ros::Time::now().toNSec() / 1000000,
@@ -236,7 +235,6 @@ private:
 		send_attitude_throttle(throttle_normalized);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointAttitudePlugin, mavplugin::MavRosPlugin)

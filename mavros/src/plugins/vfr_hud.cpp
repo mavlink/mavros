@@ -32,7 +32,6 @@
 #include <geometry_msgs/TwistStamped.h>
 
 namespace mavplugin {
-
 /**
  * @brief VFR HUD plugin.
  */
@@ -61,9 +60,9 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_VFR_HUD, &VfrHudPlugin::handle_vfr_hud),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VFR_HUD, &VfrHudPlugin::handle_vfr_hud),
 #ifdef MAVLINK_MSG_ID_WIND
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_WIND, &VfrHudPlugin::handle_wind),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_WIND, &VfrHudPlugin::handle_wind),
 #endif
 		};
 	}
@@ -81,7 +80,7 @@ private:
 		vmsg->airspeed = vfr_hud.airspeed;
 		vmsg->groundspeed = vfr_hud.groundspeed;
 		vmsg->heading = vfr_hud.heading;
-		vmsg->throttle = vfr_hud.throttle / 100.0; // comes in 0..100 range
+		vmsg->throttle = vfr_hud.throttle / 100.0;	// comes in 0..100 range
 		vmsg->altitude = vfr_hud.alt;
 		vmsg->climb = vfr_hud.climb;
 
@@ -110,8 +109,7 @@ private:
 	}
 #endif
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::VfrHudPlugin, mavplugin::MavRosPlugin)
 

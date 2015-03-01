@@ -40,7 +40,6 @@
 #include <std_msgs/Header.h>
 
 namespace mavplugin {
-
 /**
  * @brief Global position plugin.
  *
@@ -82,7 +81,7 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &GlobalPositionPlugin::handle_global_position_int)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &GlobalPositionPlugin::handle_global_position_int)
 		};
 	}
 
@@ -118,23 +117,23 @@ private:
 				gp_pos.vx, gp_pos.vy, gp_pos.vz, gp_pos.hdg);
 
 		geometry_msgs::PoseWithCovarianceStampedPtr pose_cov =
-			boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
+				boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
 
 		std_msgs::Header header;
 		header.frame_id = frame_id;
 		header.stamp = uas->synchronise_stamp(gp_pos.time_boot_ms);
 
 		sensor_msgs::NavSatFixPtr gps_cord =
-			boost::make_shared<sensor_msgs::NavSatFix>();
+				boost::make_shared<sensor_msgs::NavSatFix>();
 		geometry_msgs::Vector3StampedPtr gps_vel =
-			boost::make_shared<geometry_msgs::Vector3Stamped>();
+				boost::make_shared<geometry_msgs::Vector3Stamped>();
 		std_msgs::Float64Ptr relative_alt = boost::make_shared<std_msgs::Float64>();
 		std_msgs::Float64Ptr compass_heading = boost::make_shared<std_msgs::Float64>();
 
 		gps_cord->header = header;
 		gps_cord->latitude = gp_pos.lat / 1E7;
 		gps_cord->longitude = gp_pos.lon / 1E7;
-		gps_cord->altitude = gp_pos.alt / 1E3; // in meters
+		gps_cord->altitude = gp_pos.alt / 1E3;	// in meters
 
 		// fill GPS status fields
 		gps_cord->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
@@ -153,21 +152,21 @@ private:
 			gps_cord->position_covariance[4] = hdop2;
 			gps_cord->position_covariance[8] = std::pow(2 * hdop, 2);
 			gps_cord->position_covariance_type =
-				sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
 			gps_cord->position_covariance_type =
-				sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 		}
 
 		gps_vel->header = header;
-		gps_vel->vector.x = gp_pos.vx / 1E2; // in m/s
+		gps_vel->vector.x = gp_pos.vx / 1E2;	// in m/s
 		gps_vel->vector.y = gp_pos.vy / 1E2;
 		gps_vel->vector.z = gp_pos.vz / 1E2;
 
-		relative_alt->data = gp_pos.relative_alt / 1E3; // in meters
+		relative_alt->data = gp_pos.relative_alt / 1E3;	// in meters
 		if (gp_pos.hdg != UINT16_MAX)
-			compass_heading->data = gp_pos.hdg / 1E2; // in degrees
+			compass_heading->data = gp_pos.hdg / 1E2;	// in degrees
 
 		double northing, easting;
 		std::string zone;
@@ -232,7 +231,6 @@ private:
 		}
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::GlobalPositionPlugin, mavplugin::MavRosPlugin)

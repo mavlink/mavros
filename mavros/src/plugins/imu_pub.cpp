@@ -36,7 +36,6 @@
 #include <geometry_msgs/Vector3.h>
 
 namespace mavplugin {
-
 /**
  * @brief IMU data publication plugin
  */
@@ -59,8 +58,8 @@ public:
 		uas = &uas_;
 
 		nh.param<std::string>("imu/frame_id", frame_id, "fcu");
-		nh.param("imu/linear_acceleration_stdev", linear_stdev, 0.0003); // check default by MPU6000 spec
-		nh.param("imu/angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0)); // check default by MPU6000 spec
+		nh.param("imu/linear_acceleration_stdev", linear_stdev, 0.0003);// check default by MPU6000 spec
+		nh.param("imu/angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0));	// check default by MPU6000 spec
 		nh.param("imu/orientation_stdev", orientation_stdev, 1.0);
 		nh.param("imu/magnetic_stdev", mag_stdev, 0.0);
 
@@ -83,12 +82,12 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_QUATERNION, &IMUPubPlugin::handle_attitude_quaternion),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_HIGHRES_IMU, &IMUPubPlugin::handle_highres_imu),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_RAW_IMU, &IMUPubPlugin::handle_raw_imu),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_IMU, &IMUPubPlugin::handle_scaled_imu),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_PRESSURE, &IMUPubPlugin::handle_scaled_pressure),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_QUATERNION, &IMUPubPlugin::handle_attitude_quaternion),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HIGHRES_IMU, &IMUPubPlugin::handle_highres_imu),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RAW_IMU, &IMUPubPlugin::handle_raw_imu),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_IMU, &IMUPubPlugin::handle_scaled_imu),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SCALED_PRESSURE, &IMUPubPlugin::handle_scaled_pressure),
 		};
 	}
 
@@ -125,7 +124,7 @@ private:
 		if (stdev == 0.0)
 			cov[0] = -1.0;
 		else {
-			cov[0+0] = cov[3+1] = cov[6+2] = std::pow(stdev, 2);
+			cov[0 + 0] = cov[3 + 1] = cov[6 + 2] = std::pow(stdev, 2);
 		}
 	}
 
@@ -251,7 +250,7 @@ private:
 		header.frame_id = frame_id;
 
 		/* imu/data_raw filled by HR IMU */
-		if (imu_hr.fields_updated & ((7<<3)|(7<<0))) {
+		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
 			sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 			fill_imu_msg_raw(imu_msg,
@@ -262,7 +261,7 @@ private:
 			imu_raw_pub.publish(imu_msg);
 		}
 
-		if (imu_hr.fields_updated & (7<<6)) {
+		if (imu_hr.fields_updated & (7 << 6)) {
 			sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 			// Convert from local NED plane to ENU
@@ -276,7 +275,7 @@ private:
 			magn_pub.publish(magn_msg);
 		}
 
-		if (imu_hr.fields_updated & (1<<9)) {
+		if (imu_hr.fields_updated & (1 << 9)) {
 			sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
@@ -284,7 +283,7 @@ private:
 			press_pub.publish(atmp_msg);
 		}
 
-		if (imu_hr.fields_updated & (1<<12)) {
+		if (imu_hr.fields_updated & (1 << 12)) {
 			sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
 			temp_msg->temperature = imu_hr.temperature;
@@ -399,8 +398,7 @@ private:
 		press_pub.publish(atmp_msg);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::IMUPubPlugin, mavplugin::MavRosPlugin)
 

@@ -48,7 +48,6 @@
 //#define FTP_LL_DEBUG
 
 namespace mavplugin {
-
 /**
  * @brief FTP Request message abstraction class
  *
@@ -136,7 +135,7 @@ public:
 	 *       it used to send multiple strings in one message
 	 */
 	void set_data_string(std::string &s) {
-		size_t sz = (s.size() < DATA_MAXSZ - 1)? s.size() : DATA_MAXSZ - 1;
+		size_t sz = (s.size() < DATA_MAXSZ - 1) ? s.size() : DATA_MAXSZ - 1;
 
 		memcpy(data_c(), s.c_str(), sz);
 		data_c()[sz] = '\0';
@@ -178,18 +177,18 @@ public:
 #endif
 
 		mavlink_msg_file_transfer_protocol_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				0, // target_network
+				0,	// target_network
 				UAS_PACK_TGT(uas),
 				raw_payload());
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
 	FTPRequest() :
-		message{}
+		message {}
 	{ }
 
 	explicit FTPRequest(Opcode op, uint8_t session = 0) :
-		message{}
+		message {}
 	{
 		header()->session = session;
 		header()->opcode = op;
@@ -217,7 +216,7 @@ public:
 		write_offset(0),
 		open_size(0),
 		read_size(0),
-		read_buffer{},
+		read_buffer {},
 		checksum_crc32(0)
 	{ }
 
@@ -249,7 +248,7 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, &FTPPlugin::handle_file_transfer_protocol),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, &FTPPlugin::handle_file_transfer_protocol),
 		};
 	}
 
@@ -575,8 +574,8 @@ private:
 	void go_idle(bool is_error_, int r_errno_ = 0) {
 		op_state = OP_IDLE;
 		is_error = is_error_;
-		if (is_error && r_errno_ != 0)	r_errno = r_errno_;
-		else if (!is_error)		r_errno = 0;
+		if (is_error && r_errno_ != 0) r_errno = r_errno_;
+		else if (!is_error) r_errno = 0;
 		cond.notify_all();
 	}
 
@@ -858,7 +857,7 @@ private:
 		std::unique_lock<std::mutex> lock(cond_mutex);
 
 		bool is_timedout = cond.wait_for(lock, std::chrono::milliseconds(msecs))
-			== std::cv_status::timeout;
+				== std::cv_status::timeout;
 
 		if (is_timedout) {
 			// If timeout occurs don't forget to reset state
@@ -1046,8 +1045,7 @@ private:
 		return true;
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::FTPPlugin, mavplugin::MavRosPlugin)
 

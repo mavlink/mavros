@@ -36,7 +36,6 @@
 #include <mavros/ParamPush.h>
 
 namespace mavplugin {
-
 /**
  * @brief Parameter storage
  *
@@ -60,10 +59,10 @@ public:
 
 		// Fix for #170 by copying to temporary var.
 #define RETURN_TYPE(type)						\
-		{							\
-			type ## _t ret_ ## type = uv.param_ ## type;	\
-			return ret_ ## type;				\
-		}
+	{							\
+		type ## _t ret_ ## type = uv.param_ ## type;	\
+		return ret_ ## type;				\
+	}
 
 		switch (pmsg.param_type) {
 		case MAV_PARAM_TYPE_UINT8:
@@ -173,7 +172,7 @@ public:
 			ret.param_uint16 = boost::any_cast<uint16_t>(p);
 			ret.type = MAV_PARAM_TYPE_UINT16;
 		}
-		else if (p.type() == typeid(int16_t)){
+		else if (p.type() == typeid(int16_t)) {
 			ret.param_int16 = boost::any_cast<int16_t>(p);
 			ret.type = MAV_PARAM_TYPE_INT16;
 		}
@@ -216,7 +215,7 @@ public:
 			ret.param_float = boost::any_cast<uint16_t>(p);
 			ret.type = MAV_PARAM_TYPE_UINT16;
 		}
-		else if (p.type() == typeid(int16_t)){
+		else if (p.type() == typeid(int16_t)) {
 			ret.param_float = boost::any_cast<int16_t>(p);
 			ret.type = MAV_PARAM_TYPE_INT16;
 		}
@@ -314,16 +313,16 @@ public:
 	 * Exclude this parameters from ~param/push
 	 */
 	static bool check_exclude_param_id(std::string param_id) {
-		return	param_id == "SYSID_SW_MREV"	||
-			param_id == "SYS_NUM_RESETS"	||
-			param_id == "ARSPD_OFFSET"	||
-			param_id == "GND_ABS_PRESS"	||
-			param_id == "GND_TEMP"		||
-			param_id == "CMD_TOTAL"		||
-			param_id == "CMD_INDEX"		||
-			param_id == "LOG_LASTFILE"	||
-			param_id == "FENCE_TOTAL"	||
-			param_id == "FORMAT_VERSION";
+		return param_id == "SYSID_SW_MREV"     ||
+		       param_id == "SYS_NUM_RESETS"    ||
+		       param_id == "ARSPD_OFFSET"      ||
+		       param_id == "GND_ABS_PRESS"     ||
+		       param_id == "GND_TEMP"          ||
+		       param_id == "CMD_TOTAL"         ||
+		       param_id == "CMD_INDEX"         ||
+		       param_id == "LOG_LASTFILE"      ||
+		       param_id == "FENCE_TOTAL"       ||
+		       param_id == "FORMAT_VERSION";
 	}
 };
 
@@ -388,7 +387,7 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
 		};
 	}
 
@@ -468,7 +467,7 @@ private:
 			}
 
 			ROS_WARN_STREAM_COND_NAMED(((p->param_index != pmsg.param_index &&
-						    pmsg.param_index != UINT16_MAX) ||
+							pmsg.param_index != UINT16_MAX) ||
 						p->param_count != pmsg.param_count),
 					"param",
 					"PR: Param " << param_id << " index(" << p->param_index <<
@@ -543,7 +542,7 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-	void param_request_read(std::string id, int16_t index=-1) {
+	void param_request_read(std::string id, int16_t index = -1) {
 		ROS_ASSERT(index >= -1);
 
 		mavlink_message_t msg;
@@ -556,7 +555,7 @@ private:
 			strncpy(param_id, id.c_str(), sizeof(param_id));
 		}
 		else
-			param_id[0] = '\0'; // force NULL termination
+			param_id[0] = '\0';	// force NULL termination
 
 		mavlink_msg_param_request_read_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				UAS_PACK_TGT(uas),
@@ -704,16 +703,16 @@ private:
 		std::unique_lock<std::mutex> lock(list_cond_mutex);
 
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			== std::cv_status::no_timeout
-			&& !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
 	bool wait_param_set_ack_for(ParamSetOpt *opt) {
 		std::unique_lock<std::mutex> lock(opt->cond_mutex);
 
 		return opt->ack.wait_for(lock, std::chrono::nanoseconds(PARAM_TIMEOUT_DT.toNSec()) * (RETRIES_COUNT + 2))
-			== std::cv_status::no_timeout
-			&& !opt->is_timedout;
+		       == std::cv_status::no_timeout
+		       && !opt->is_timedout;
 	}
 
 	bool send_param_set_and_wait(Parameter &param) {
@@ -804,7 +803,6 @@ private:
 	 */
 	bool push_cb(mavros::ParamPush::Request &req,
 			mavros::ParamPush::Response &res) {
-
 		XmlRpc::XmlRpcValue param_dict;
 		if (!param_nh.getParam("", param_dict))
 			return true;
@@ -918,8 +916,7 @@ private:
 		return true;
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::ParamPlugin, mavplugin::MavRosPlugin)
 

@@ -31,7 +31,6 @@
 #include <std_msgs/Duration.h>
 
 namespace mavplugin {
-
 /**
  * Time syncronization status publisher
  *
@@ -114,7 +113,7 @@ public:
 		stat.addf("Duration of window (s)", "%f", window);
 		stat.addf("Actual frequency (Hz)", "%f", freq);
 		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1e6);
-		stat.addf("Mean dt (ms)", "%0.6f", (count_)? dt_sum / count_ / 1e6 : 0.0);
+		stat.addf("Mean dt (ms)", "%0.6f", (count_) ? dt_sum / count_ / 1e6 : 0.0);
 		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
 		stat.addf("Time offset (s)", "%0.9f", offset / 1e9);
 	}
@@ -136,10 +135,9 @@ private:
 };
 
 
-
 class SystemTimePlugin : public MavRosPlugin {
 public:
-	SystemTimePlugin():
+	SystemTimePlugin() :
 		uas(nullptr),
 		dt_diag("Time Sync", 10),
 		time_offset_ns(0),
@@ -192,8 +190,8 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
 		};
 	}
 
@@ -222,7 +220,7 @@ private:
 			// continious publish for ntpd
 			sensor_msgs::TimeReferencePtr time_unix = boost::make_shared<sensor_msgs::TimeReference>();
 			ros::Time time_ref(
-					 mtime.time_unix_usec / 1000000,		// t_sec
+					mtime.time_unix_usec / 1000000,			// t_sec
 					(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
 
 			time_unix->source = time_ref_source;
@@ -247,7 +245,7 @@ private:
 			return;
 		}
 		else if (tsync.tc1 > 0) {
-			int64_t offset_ns = (tsync.ts1 + now_ns - tsync.tc1 * 2) / 2 ;
+			int64_t offset_ns = (tsync.ts1 + now_ns - tsync.tc1 * 2) / 2;
 			int64_t dt = time_offset_ns - offset_ns;
 
 			if (std::abs(dt) > 10000000) {		// 10 millisecond skew
@@ -300,7 +298,6 @@ private:
 		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::SystemTimePlugin, mavplugin::MavRosPlugin)

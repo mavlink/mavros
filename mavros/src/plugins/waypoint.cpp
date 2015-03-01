@@ -37,13 +37,12 @@
 #include <mavros/WaypointGOTO.h>
 
 namespace mavplugin {
-
 class WaypointItem {
 public:
 	uint16_t seq;
 	enum MAV_FRAME frame;
 	enum MAV_CMD command;
-	uint8_t current; /* APM use some magical numbers */
+	uint8_t current;/* APM use some magical numbers */
 	bool autocontinue;
 	float param1;
 	float param2;
@@ -161,7 +160,7 @@ public:
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
-		WP_TIMEOUT_DT(WP_TIMEOUT_MS/ 1000.0),
+		WP_TIMEOUT_DT(WP_TIMEOUT_MS / 1000.0),
 		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
 	{ };
 
@@ -196,12 +195,12 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_REQUEST, &WaypointPlugin::handle_mission_request),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_CURRENT, &WaypointPlugin::handle_mission_current),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_COUNT, &WaypointPlugin::handle_mission_count),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM_REACHED, &WaypointPlugin::handle_mission_item_reached),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ACK, &WaypointPlugin::handle_mission_ack),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_REQUEST, &WaypointPlugin::handle_mission_request),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_CURRENT, &WaypointPlugin::handle_mission_current),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_COUNT, &WaypointPlugin::handle_mission_count),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM_REACHED, &WaypointPlugin::handle_mission_item_reached),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ACK, &WaypointPlugin::handle_mission_ack),
 		};
 	}
 
@@ -409,7 +408,6 @@ private:
 		if ((wp_state == WP_TXLIST || wp_state == WP_TXWP)
 				&& (wp_cur_id == send_waypoints.size() - 1)
 				&& (mack.type == MAV_MISSION_ACCEPTED)) {
-
 			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
@@ -596,16 +594,16 @@ private:
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
 
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			== std::cv_status::no_timeout
-			&& !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
 	bool wait_push_all() {
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
 
 		return list_sending.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			== std::cv_status::no_timeout
-			&& !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
 	void set_current_waypoint(size_t seq) {
@@ -738,7 +736,7 @@ private:
 		lock.lock();
 
 		res.wp_received = waypoints.size();
-		go_idle(); // not nessessary, but prevents from blocking
+		go_idle();	// not nessessary, but prevents from blocking
 		return true;
 	}
 
@@ -771,7 +769,7 @@ private:
 		lock.lock();
 
 		res.wp_transfered = wp_cur_id + 1;
-		go_idle(); // same as in pull_cb
+		go_idle();	// same as in pull_cb
 		return true;
 	}
 
@@ -790,7 +788,7 @@ private:
 		res.success = wait_push_all();
 
 		lock.lock();
-		go_idle(); // same as in pull_cb
+		go_idle();	// same as in pull_cb
 		return true;
 	}
 
@@ -810,7 +808,7 @@ private:
 		res.success = wait_push_all();
 
 		lock.lock();
-		go_idle(); // same as in pull_cb
+		go_idle();	// same as in pull_cb
 		return true;
 	}
 
@@ -829,7 +827,7 @@ private:
 		wp_state = WP_TXWP;
 
 		WaypointItem wpi = WaypointItem::from_msg(req.waypoint, 0);
-		wpi.current = 2; /* APM's magic */
+		wpi.current = 2;/* APM's magic */
 
 		send_waypoints.clear();
 		send_waypoints.push_back(wpi);
@@ -843,12 +841,11 @@ private:
 		res.success = wait_push_all();
 		lock.lock();
 
-		go_idle(); // same as in pull_cb
+		go_idle();	// same as in pull_cb
 		return true;
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::WaypointPlugin, mavplugin::MavRosPlugin)
 

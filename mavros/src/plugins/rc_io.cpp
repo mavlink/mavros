@@ -32,7 +32,6 @@
 #include <mavros/OverrideRCIn.h>
 
 namespace mavplugin {
-
 /**
  * @brief RC IO plugin
  */
@@ -65,9 +64,9 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS, &RCIOPlugin::handle_rc_channels),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_SERVO_OUTPUT_RAW, &RCIOPlugin::handle_servo_output_raw),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS, &RCIOPlugin::handle_rc_channels),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SERVO_OUTPUT_RAW, &RCIOPlugin::handle_servo_output_raw),
 		};
 	}
 
@@ -100,7 +99,7 @@ private:
 			raw_rc_in.resize(offset + 8);
 
 #define SET_RC_IN(mavidx)	\
-		raw_rc_in[offset + mavidx - 1] = port.chan ## mavidx ## _raw
+	raw_rc_in[offset + mavidx - 1] = port.chan ## mavidx ## _raw
 		SET_RC_IN(1);
 		SET_RC_IN(2);
 		SET_RC_IN(3);
@@ -138,8 +137,8 @@ private:
 			raw_rc_in.resize(channels.chancount);
 
 #define IFSET_RC_IN(mavidx)				\
-		if (channels.chancount >= mavidx)	\
-			raw_rc_in[mavidx-1] = channels.chan ## mavidx ## _raw
+	if (channels.chancount >= mavidx)	\
+		raw_rc_in[mavidx - 1] = channels.chan ## mavidx ## _raw
 		IFSET_RC_IN(1);
 		IFSET_RC_IN(2);
 		IFSET_RC_IN(3);
@@ -179,7 +178,7 @@ private:
 			raw_rc_out.resize(offset + 8);
 
 #define SET_RC_OUT(mavidx)	\
-		raw_rc_out[offset + mavidx - 1] = port.servo ## mavidx ## _raw
+	raw_rc_out[offset + mavidx - 1] = port.servo ## mavidx ## _raw
 		SET_RC_OUT(1);
 		SET_RC_OUT(2);
 		SET_RC_OUT(3);
@@ -236,8 +235,7 @@ private:
 		rc_channels_override(req->channels);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::RCIOPlugin, mavplugin::MavRosPlugin)
 
