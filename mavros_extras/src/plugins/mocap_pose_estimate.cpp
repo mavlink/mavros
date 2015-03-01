@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov, Tony Baltovski.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,17 +33,21 @@
 
 
 namespace mavplugin {
-
+/**
+ * @brief MocapPoseEstimate plugin
+ *
+ * Sends mountion capture data to FCU.
+ */
 class MocapPoseEstimatePlugin : public MavRosPlugin
 {
 public:
 	MocapPoseEstimatePlugin() :
 		uas(nullptr)
-		{ };
+	{ };
 
 	void initialize(UAS &uas_,
-		ros::NodeHandle &nh,
-		diagnostic_updater::Updater &diag_updater)
+			ros::NodeHandle &nh,
+			diagnostic_updater::Updater &diag_updater)
 	{
 		bool use_tf;
 		bool use_pose;
@@ -51,31 +55,26 @@ public:
 		uas = &uas_;
 		mp_nh = ros::NodeHandle(nh, "mocap");
 
-		mp_nh.param("use_tf", use_tf, false);  // Vicon
-		mp_nh.param("use_pose", use_pose, true);  // Optitrack
+		mp_nh.param("use_tf", use_tf, false);		// Vicon
+		mp_nh.param("use_pose", use_pose, true);	// Optitrack
 
 
-		if (use_tf && !use_pose)
-		{
+		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
-		else if (use_pose && !use_tf)
-		{
+		else if (use_pose && !use_tf) {
 			mocap_pose_sub = mp_nh.subscribe("pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);
 		}
-		else
-		{
+		else {
 			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
 	}
 
-	const std::string get_name() const
-	{
+	const std::string get_name() const {
 		return "MocapPoseEstimate";
 	}
 
-	const message_map get_rx_handlers()
-	{
+	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}
 
@@ -90,16 +89,16 @@ private:
 
 	void mocap_pose_send
 		(uint64_t usec,
-		float q[4],
-		float x, float y, float z)
+			float q[4],
+			float x, float y, float z)
 	{
 		mavlink_message_t msg;
 		mavlink_msg_att_pos_mocap_pack_chan(UAS_PACK_CHAN(uas), &msg,
-			usec,
-			q,
-			x,
-			y,
-			z);
+				usec,
+				q,
+				x,
+				y,
+				z);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
@@ -107,34 +106,33 @@ private:
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
 		float q[4];
-		q[0] =  pose->pose.orientation.y;  // w
-		q[1] =  pose->pose.orientation.x;  // x
-		q[2] = -pose->pose.orientation.z;  // y
-		q[3] =  pose->pose.orientation.w;  // z
+		q[0] =  pose->pose.orientation.y;	// w
+		q[1] =  pose->pose.orientation.x;	// x
+		q[2] = -pose->pose.orientation.z;	// y
+		q[3] =  pose->pose.orientation.w;	// z
 		// Convert to mavlink body frame
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
-			 q,
-			 pose->pose.position.x,
-			-pose->pose.position.y,
-			-pose->pose.position.z); 
+				q,
+				pose->pose.position.x,
+				-pose->pose.position.y,
+				-pose->pose.position.z);
 	}
 
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		float q[4];
-		q[0] =  trans->transform.rotation.y;  // w
-		q[1] =  trans->transform.rotation.x;  // x
-		q[2] = -trans->transform.rotation.z;  // y
-		q[3] =  trans->transform.rotation.w;  // z
+		q[0] =  trans->transform.rotation.y;	// w
+		q[1] =  trans->transform.rotation.x;	// x
+		q[2] = -trans->transform.rotation.z;	// y
+		q[3] =  trans->transform.rotation.w;	// z
 		// Convert to mavlink body frame
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
-			 q,
-			 trans->transform.translation.x,
-			-trans->transform.translation.y,
-			-trans->transform.translation.z);
+				q,
+				trans->transform.translation.x,
+				-trans->transform.translation.y,
+				-trans->transform.translation.z);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::MocapPoseEstimatePlugin, mavplugin::MavRosPlugin)
