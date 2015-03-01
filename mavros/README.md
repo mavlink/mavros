@@ -185,6 +185,18 @@ Or you could build debian package by pulling right bloom branch from [mavlink-gb
 (common naming: `debian/<rosdistro>/<osdistro>/<package>`) using `dh binary`.
 
 
+Contributing
+------------
+
+1. Fork the repo and clone it.
+2. Make feature branch (`git checkout -b patch`)
+3. ???
+4. Commit.
+5. Check code style `uncrustify -c tools/uncrustify-cpp.cfg --replace --no-backup <your-files>`
+6. Fix small code style errors.
+7. Commit & push & do PR.
+
+
 Links
 -----
 
