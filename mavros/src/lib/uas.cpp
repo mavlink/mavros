@@ -42,7 +42,9 @@ UAS::UAS() :
 	gps_altitude(0),
 	gps_eph(0),
 	gps_epv(0),
-	fix_status(0)
+	fix_status(0),
+	fcu_caps_known(false),
+	fcu_capabilities(0)
 {}
 
 void UAS::stop(void)
@@ -77,6 +79,29 @@ ros::Time UAS::synchronise_stamp(uint64_t time_usec) {
 	}
 	else
 		return ros::Time::now();
+}
+
+static uint64_t get_default_caps(uint8_t ap_type)
+{
+	// TODO: return default caps mask for known FCU's
+	return 0;
+}
+
+uint64_t UAS::get_capabilities()
+{
+	if (fcu_caps_known) {
+		uint64_t caps = fcu_capabilities;
+		return caps;
+	}
+	else {
+		return get_default_caps(get_autopilot());
+	}
+}
+
+void UAS::update_capabilities(bool known, uint64_t caps)
+{
+	fcu_caps_known = known;
+	fcu_capabilities = caps;
 }
 
 /* -*- mode stringify functions -*- */

@@ -280,6 +280,10 @@ public:
 		return time_offset;
 	}
 
+	/* -*- autopilot version -*- */
+	uint64_t get_capabilities();
+	void update_capabilities(bool known, uint64_t caps = 0);
+
 	/* -*- utils -*- */
 
 	/**
@@ -349,5 +353,7 @@ private:
 	double gps_epv;
 	std::atomic<bool> fix_status;
 	std::atomic<uint64_t> time_offset;
+	std::atomic<bool> fcu_caps_known;
+	std::atomic<uint64_t> fcu_capabilities;
 };
 };	// namespace mavros

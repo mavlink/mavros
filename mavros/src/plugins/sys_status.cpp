@@ -31,6 +31,7 @@
 #include <mavros/BatteryStatus.h>
 #include <mavros/StreamRate.h>
 #include <mavros/SetMode.h>
+#include <mavros/CommandLong.h>
 
 namespace mavplugin {
 /**
@@ -333,7 +334,8 @@ public:
 		mem_diag("APM Memory"),
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
-		batt_diag("Battery")
+		batt_diag("Battery"),
+		version_retries(RETRIES_COUNT)
 	{};
 
 	void initialize(UAS &uas_,
@@ -341,6 +343,7 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
+		g_nh = &nh;
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
@@ -379,6 +382,14 @@ public:
 			heartbeat_timer.start();
 		}
 
+		// version request timer
+		autopilot_version_timer = nh.createTimer(ros::Duration(1.0),
+				&SystemStatusPlugin::autopilot_version_cb, this);
+		autopilot_version_timer.stop();
+
+		// subscribe to connection event
+		uas->sig_connection_changed.connect(boost::bind(&SystemStatusPlugin::connection_cb, this, _1));
+
 		state_pub = nh.advertise<mavros::State>("state", 10);
 		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
@@ -400,11 +411,14 @@ public:
 #ifdef MAVLINK_MSG_ID_HWSTATUS
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HWSTATUS, &SystemStatusPlugin::handle_hwstatus),
 #endif
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_AUTOPILOT_VERSION, &SystemStatusPlugin::handle_autopilot_version),
 		};
 	}
 
 private:
 	UAS *uas;
+	ros::NodeHandle *g_nh;
+
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
 	HwStatus hwst_diag;
@@ -412,11 +426,15 @@ private:
 	BatteryStatusDiag batt_diag;
 	ros::Timer timeout_timer;
 	ros::Timer heartbeat_timer;
+	ros::Timer autopilot_version_timer;
 
 	ros::Publisher state_pub;
 	ros::Publisher batt_pub;
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
+
+	static constexpr int RETRIES_COUNT = 3;
+	int version_retries;
 
 	/* -*- mid-level helpers -*- */
 
@@ -473,7 +491,7 @@ private:
 
 		default:
 			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: UNK(" <<
-					(int)severity << "): " << text);
+					int(severity) << "): " << text);
 			break;
 		};
 	}
@@ -548,6 +566,30 @@ private:
 	}
 #endif
 
+	void handle_autopilot_version(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_autopilot_version_t apv;
+		mavlink_msg_autopilot_version_decode(msg, &apv);
+
+		autopilot_version_timer.stop();
+		uas->update_capabilities(true, apv.capabilities);
+
+		// Note based on current APM's impl.
+		// APM uses custom version array[8] as a string
+		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%*s)",
+				apv.flight_sw_version,
+				8, apv.flight_custom_version);
+		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%*s)",
+				apv.middleware_sw_version,
+				8, apv.middleware_custom_version);
+		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%*s)",
+				apv.os_sw_version,
+				8, apv.os_custom_version);
+		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
+		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+	}
+
 	/* -*- timer callbacks -*- */
 
 	void timeout_cb(const ros::TimerEvent &event) {
@@ -565,6 +607,48 @@ private:
 				);
 
 		UAS_FCU(uas)->send_message(&msg);
+	}
+
+	void autopilot_version_cb(const ros::TimerEvent &event) {
+		bool ret = false;
+
+		try {
+			auto client = g_nh->serviceClient<mavros::CommandLong>("cmd/command");
+
+			mavros::CommandLong cmd{};
+			cmd.request.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
+			cmd.request.confirmation = false;
+			cmd.request.param1 = 1.0;
+
+			ROS_DEBUG_NAMED("sys", "VER: Sending request.");
+			ret = client.call(cmd);
+		}
+		catch (ros::InvalidNameException &ex) {
+			ROS_ERROR_NAMED("sys", "VER: %s", ex.what());
+		}
+
+		ROS_ERROR_COND_NAMED(!ret, "sys", "VER: command plugin service call failed!");
+
+		if (version_retries > 0) {
+			version_retries--;
+			ROS_WARN_COND_NAMED(version_retries != RETRIES_COUNT - 1, "sys",
+					"VER: request timeout, retries left %d", version_retries);
+		}
+		else {
+			uas->update_capabilities(false);
+			autopilot_version_timer.stop();
+			ROS_WARN_NAMED("sys", "VER: your FCU don't support AUTOPILOT_VERSION, "
+					"switched to default capabilities");
+		}
+	}
+
+	void connection_cb(bool connected) {
+		// if connection changes, start delayed version request
+		version_retries = RETRIES_COUNT;
+		if (connected)
+			autopilot_version_timer.start();
+		else
+			autopilot_version_timer.stop();
 	}
 
 	/* -*- ros callbacks -*- */
