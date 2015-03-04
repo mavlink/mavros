@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,9 @@
 #include <mavros/RadioStatus.h>
 
 namespace mavplugin {
+/**
+ * @brief 3DR diagnostics
+ */
 class TDRRadioStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -56,9 +59,6 @@ public:
 #undef RST_COPY
 	}
 
-	/**
-	 * @todo check RSSI warning level
-	 */
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
 		lock_guard lock(mutex);
 

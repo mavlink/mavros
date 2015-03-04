@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2013 Vladimir Ermakov.
+ * Copyright 2013,2014,2015 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,6 +124,9 @@ private:
 };
 
 
+/**
+ * @brief System status diagnostic updater
+ */
 class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -196,6 +199,9 @@ private:
 };
 
 
+/**
+ * @brief Battery diagnostic updater
+ */
 class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -243,6 +249,9 @@ private:
 };
 
 
+/**
+ * @brief Memory usage diag (APM-only)
+ */
 class MemInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -279,6 +288,9 @@ private:
 };
 
 
+/**
+ * @brief Hardware status (APM-only)
+ */
 class HwStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -323,7 +335,8 @@ private:
 
 /**
  * @brief System status plugin.
- * Required for most applications.
+ *
+ * Required by all plugins.
  */
 class SystemStatusPlugin : public MavRosPlugin
 {

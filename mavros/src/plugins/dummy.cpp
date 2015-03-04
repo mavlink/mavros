@@ -36,9 +36,8 @@ namespace mavplugin {
  */
 class DummyPlugin : public MavRosPlugin {
 public:
-	DummyPlugin() {
-		ROS_INFO_NAMED("dummy", "dummy constructor");
-	};
+	DummyPlugin()
+	{ };
 
 	/**
 	 * Plugin initializer. Constructor should not do this.
@@ -48,14 +47,14 @@ public:
 			diagnostic_updater::Updater &diag_updater)
 	{
 		ROS_INFO_NAMED("dummy", "initialize");
-	};
+	}
 
 	/**
 	 * Returns plugin name (CamelCase)
 	 */
 	std::string const get_name() const {
 		return "Dummy";
-	};
+	}
 
 	/**
 	 * This function returns message<->handler mapping
