@@ -7,6 +7,8 @@ MAVLink extendable communication node for ROS.
 
 - Since 2014-08-11 this repository contains several packages.
 - Since 2014-11-02 hydro support splited from master to hydro-devel branch.
+- Since 2015-03-04 all packages also dual licensed under terms of BSD license.
+
 
 mavros package
 --------------
@@ -37,6 +39,7 @@ Please ask your questions not related to bugs/feauture requests on:
 - [PX4/Firmware on Gitter IM](https://gitter.im/PX4/Firmware)
 
 We'd like to keep the project bugtracker as free as possible, so please contact via the above methods. You can also PM us via Gitter.
+
 
 CI Statuses
 -----------
