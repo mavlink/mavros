@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.6 (2015-03-04)
+------------------
+* plugin: param: Fix build error `#237 <https://github.com/vooon/mavros/issues/237>`_.
+  Master alredy fixed, see `#170 <https://github.com/vooon/mavros/issues/170>`_.
+* Contributors: Vladimir Ermakov
+
 0.8.5 (2014-11-04)
 ------------------
 

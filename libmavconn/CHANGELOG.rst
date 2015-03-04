@@ -2,6 +2,9 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.6 (2015-03-04)
+------------------
+
 0.8.5 (2014-11-04)
 ------------------
 * Fix libmavconn include destination.
