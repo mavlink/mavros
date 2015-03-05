@@ -38,7 +38,7 @@ public:
 		im_width(0), im_height(0),
 		im_size(0), im_packets(0), im_payload(0),
 		im_seqnr(0), im_type(255),
-		im_buffer{}
+		im_buffer {}
 	{ };
 
 	void initialize(UAS &uas_)
@@ -51,8 +51,8 @@ public:
 
 	const message_map get_rx_handlers() {
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, &ImagePubPlugin::handle_data_transmission_handshake),
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_ENCAPSULATED_DATA, &ImagePubPlugin::handle_encapsulated_data)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, &ImagePubPlugin::handle_data_transmission_handshake),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ENCAPSULATED_DATA, &ImagePubPlugin::handle_encapsulated_data)
 		};
 	}
 
@@ -83,7 +83,7 @@ private:
 	}
 
 	void publish_raw8u_image() {
-		sensor_msgs::ImagePtr image = boost::make_shared<sensor_msgs::Image>();
+		auto image = boost::make_shared<sensor_msgs::Image>();
 
 		image->header.frame_id = frame_id;
 		image->header.stamp = ros::Time::now();
@@ -211,7 +211,6 @@ private:
 		}
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::ImagePubPlugin, mavplugin::MavRosPlugin)

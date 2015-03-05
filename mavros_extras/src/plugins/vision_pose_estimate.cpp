@@ -23,13 +23,12 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 namespace mavplugin {
-
 /**
  * @brief Vision pose estimate plugin
  *
  * Send pose estimation from various vision estimators
  * to FCU position controller.
- * 
+ *
  */
 class VisionPoseEstimatePlugin : public MavRosPlugin,
 	private TFListenerMixin<VisionPoseEstimatePlugin> {
@@ -54,11 +53,11 @@ public:
 		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision pose topic type: " <<
-				((pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped"));
+				((pose_with_covariance) ? "PoseWithCovarianceStamped" : "PoseStamped"));
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("position", "Listen to vision transform " << frame_id
-					<< " -> " << child_frame_id);
+											<< " -> " << child_frame_id);
 			tf_start("VisionTF", &VisionPoseEstimatePlugin::send_vision_transform);
 		}
 		else if (pose_with_covariance)
@@ -125,7 +124,7 @@ private:
 		// TODO: check conversion. Issue #49.
 		vision_position_estimate(stamp.toNSec() / 1000,
 				position.y(), position.x(), -position.z(),
-				roll, -pitch, -yaw); // ??? please check!
+				roll, -pitch, -yaw);	// ??? please check!
 	}
 
 	/* -*- callbacks -*- */
@@ -144,7 +143,6 @@ private:
 		send_vision_transform(transform, req->header.stamp);
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::VisionPoseEstimatePlugin, mavplugin::MavRosPlugin)
