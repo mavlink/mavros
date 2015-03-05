@@ -30,6 +30,9 @@
 
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/QuaternionStamped.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 
 namespace mavplugin {
 /**
@@ -78,6 +81,7 @@ private:
 
 	std::string frame_id;		//!< origin for TF
 	std::string child_frame_id;	//!< frame for TF and Pose
+	tf::TransformListener tf_listener;
 	bool send_tf;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -90,16 +94,15 @@ private:
 				pos_ned.x, pos_ned.y, pos_ned.z,
 				pos_ned.vx, pos_ned.vy, pos_ned.vz);
 
-		/* TODO: check convertion to ENU
-		 * I think XZY is not body-fixed, but orientation does.
-		 * Perhaps this adds additional errorprone to us.
-		 * Need more tests. Issue #49.
-		 *
-		 * orientation in ENU, body-fixed
-		 */
+		geometry_msgs::QuaternionStamped q;
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), q.quaternion);
+		q.header.frame_id = child_frame_id;
+		q.header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
+		tf_listener.transformQuaternion(frame_id, q, q);
+
 		tf::Transform transform;
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
-		transform.setRotation(uas->get_attitude_orientation());
+		transform.setRotation(tf::Quaternion(q.quaternion.x, q.quaternion.y, q.quaternion.z, q.quaternion.w));
 
 		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
