@@ -346,7 +346,8 @@ public:
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
 		batt_diag("Battery"),
-		version_retries(RETRIES_COUNT)
+		version_retries(RETRIES_COUNT),
+		disable_diag(false)
 	{};
 
 	void initialize(UAS &uas_)
@@ -356,7 +357,6 @@ public:
 		double conn_timeout_d;
 		double conn_heartbeat_d;
 		double min_voltage;
-		bool disable_diag;
 
 		nh.param("conn_timeout", conn_timeout_d, 30.0);
 		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
@@ -368,12 +368,6 @@ public:
 		if (!disable_diag) {
 			UAS_DIAG(uas).add(sys_diag);
 			UAS_DIAG(uas).add(batt_diag);
-#ifdef MAVLINK_MSG_ID_MEMINFO
-			UAS_DIAG(uas).add(mem_diag);
-#endif
-#ifdef MAVLINK_MSG_ID_HWSTATUS
-			UAS_DIAG(uas).add(hwst_diag);
-#endif
 
 			batt_diag.set_min_voltage(min_voltage);
 		}
@@ -439,6 +433,7 @@ private:
 
 	static constexpr int RETRIES_COUNT = 3;
 	int version_retries;
+	bool disable_diag;
 
 	/* -*- mid-level helpers -*- */
 
@@ -655,6 +650,27 @@ private:
 			autopilot_version_timer.start();
 		else
 			autopilot_version_timer.stop();
+
+		// add/remove APM diag tasks
+		if (connected && disable_diag && uas->is_ardupilotmega()) {
+#ifdef MAVLINK_MSG_ID_MEMINFO
+			UAS_DIAG(uas).add(mem_diag);
+#endif
+#ifdef MAVLINK_MSG_ID_HWSTATUS
+			UAS_DIAG(uas).add(hwst_diag);
+#endif
+#if !defined(MAVLINK_MSG_ID_MEMINFO) || !defined(MAVLINK_MSG_ID_HWSTATUS)
+			ROS_INFO_NAMED("sys", "SYS: APM detected, but mavros uses different dialect. "
+					"Extra diagnostic disabled.");
+#else
+			ROS_DEBUG_NAMED("sys", "SYS: APM extra diagnostics enabled.");
+#endif
+		}
+		else {
+			UAS_DIAG(uas).removeByName(mem_diag.getName());
+			UAS_DIAG(uas).removeByName(hwst_diag.getName());
+			ROS_DEBUG_NAMED("sys", "SYS: APM extra diagnostics disabled.");
+		}
 	}
 
 	/* -*- ros callbacks -*- */
