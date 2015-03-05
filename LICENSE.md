@@ -10,4 +10,4 @@ to be compatible to BSD, GPLv3 and LGPLv3.
 
 [lgpl]: https://www.gnu.org/licenses/lgpl.html
 [gpl]: https://www.gnu.org/licenses/gpl.html
-[bsd]: https://github.com/mavlink/mavros/blob/master/LICENSE-BSD.md
+[bsd]: https://github.com/mavlink/mavros/blob/master/LICENSE-BSD.txt
