@@ -55,10 +55,6 @@ public:
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "SetpointVelocity";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

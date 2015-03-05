@@ -58,10 +58,6 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	std::string const get_name() const {
-		return "RCIO";
-	};
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),

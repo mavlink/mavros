@@ -60,10 +60,6 @@ public:
 		
 	}
 
-	std::string const get_name() const {
-		return "Visualization";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &VisualizationPlugin::handle_local_position_ned)

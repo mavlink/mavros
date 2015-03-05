@@ -177,28 +177,24 @@ bool MavRos::check_in_blacklist(std::string &pl_name) {
 }
 
 void MavRos::add_plugin(std::string &pl_name) {
-	boost::shared_ptr<mavplugin::MavRosPlugin> plugin;
-
 	if (check_in_blacklist(pl_name)) {
-		ROS_INFO_STREAM("Plugin [alias " << pl_name << "] blacklisted");
+		ROS_INFO_STREAM("Plugin " << pl_name << " blacklisted");
 		return;
 	}
 
 	try {
-		plugin = plugin_loader.createInstance(pl_name);
+		auto plugin = plugin_loader.createInstance(pl_name);
 		plugin->initialize(mav_uas, node_handle, diag_updater);
 		loaded_plugins.push_back(plugin);
-		std::string repr_name = plugin->get_name();
 
-		ROS_INFO_STREAM("Plugin " << repr_name <<
-			" [alias " << pl_name << "] loaded and initialized");
+		ROS_INFO_STREAM("Plugin " << pl_name << " loaded and initialized");
 
 		for (auto &pair : plugin->get_rx_handlers()) {
-			ROS_DEBUG("Route msgid %d to %s", pair.first, repr_name.c_str());
+			ROS_DEBUG_STREAM("Route msgid " << int(pair.first) << " to " << pl_name);
 			message_route_table[pair.first].connect(pair.second);
 		}
 	} catch (pluginlib::PluginlibException &ex) {
-		ROS_ERROR_STREAM("Plugin [alias " << pl_name << "] load exception: " << ex.what());
+		ROS_ERROR_STREAM("Plugin " << pl_name << " load exception: " << ex.what());
 	}
 }
 

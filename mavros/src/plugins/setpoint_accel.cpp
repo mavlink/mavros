@@ -58,10 +58,6 @@ public:
 		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "SetpointAcceleration";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

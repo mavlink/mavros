@@ -184,10 +184,6 @@ public:
 		}
 	}
 
-	std::string const get_name() const {
-		return "SystemTime";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),

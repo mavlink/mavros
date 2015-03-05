@@ -59,10 +59,6 @@ public:
 		local_position = pos_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
 	}
 
-	std::string const get_name() const {
-		return "LocalPosition";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)

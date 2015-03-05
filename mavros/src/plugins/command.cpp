@@ -82,10 +82,6 @@ public:
 		guided_srv = cmd_nh.advertiseService("guided_enable", &CommandPlugin::guided_cb, this);
 	}
 
-	std::string const get_name() const {
-		return "Command";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)

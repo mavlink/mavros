@@ -54,10 +54,6 @@ public:
 #endif
 	}
 
-	std::string const get_name() const {
-		return "VFRHUD";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VFR_HUD, &VfrHudPlugin::handle_vfr_hud),

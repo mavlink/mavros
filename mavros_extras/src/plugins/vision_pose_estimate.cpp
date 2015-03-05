@@ -79,10 +79,6 @@ public:
 			vision_sub = sp_nh.subscribe("vision", 10, &VisionPoseEstimatePlugin::vision_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "VisionPoseEstimate";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

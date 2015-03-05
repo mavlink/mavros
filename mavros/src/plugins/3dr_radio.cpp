@@ -111,10 +111,6 @@ public:
 		status_pub = nh.advertise<mavros::RadioStatus>("radio_status", 10);
 	}
 
-	std::string const get_name() const {
-		return "3DRRadio";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO_STATUS, &TDRRadioPlugin::handle_radio_status),

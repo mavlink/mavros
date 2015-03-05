@@ -62,10 +62,6 @@ public:
 			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vel_speed_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "VisionSpeedEstimate";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

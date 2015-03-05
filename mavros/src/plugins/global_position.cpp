@@ -75,10 +75,6 @@ public:
 		hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
 
-	std::string const get_name() const {
-		return "GlobalPosition";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &GlobalPositionPlugin::handle_global_position_int)

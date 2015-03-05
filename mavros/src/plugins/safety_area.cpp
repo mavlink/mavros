@@ -80,10 +80,6 @@ public:
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "SafetyArea";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 		/**

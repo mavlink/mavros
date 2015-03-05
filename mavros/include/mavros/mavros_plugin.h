@@ -72,11 +72,6 @@ public:
 			diagnostic_updater::Updater &diag_updater) = 0;
 
 	/**
-	 * @brief Plugin name (CamelCase)
-	 */
-	virtual const std::string get_name() const = 0;
-
-	/**
 	 * @brief Return map with message rx handlers
 	 */
 	virtual const message_map get_rx_handlers() = 0;

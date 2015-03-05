@@ -60,10 +60,6 @@ public:
 		image_pub = itp->advertise("camera_image", 1);
 	}
 
-	const std::string get_name() const {
-		return "ImagePub";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, &ImagePubPlugin::handle_data_transmission_handshake),

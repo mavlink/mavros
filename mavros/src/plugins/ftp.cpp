@@ -242,10 +242,6 @@ public:
 		checksum_srv = ftp_nh.advertiseService("checksum", &FTPPlugin::checksum_cb, this);
 	}
 
-	std::string const get_name() const {
-		return "FTP";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, &FTPPlugin::handle_file_transfer_protocol),

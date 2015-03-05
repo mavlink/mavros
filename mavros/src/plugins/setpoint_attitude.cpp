@@ -90,10 +90,6 @@ public:
 		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "SetpointAttitude";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

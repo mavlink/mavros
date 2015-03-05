@@ -69,10 +69,6 @@ public:
 		}
 	}
 
-	const std::string get_name() const {
-		return "SetpointPosition";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

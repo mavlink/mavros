@@ -49,10 +49,6 @@ public:
 		actuator_controls_sub = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "ActuatorControl";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

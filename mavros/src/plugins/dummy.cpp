@@ -50,13 +50,6 @@ public:
 	}
 
 	/**
-	 * Returns plugin name (CamelCase)
-	 */
-	std::string const get_name() const {
-		return "Dummy";
-	}
-
-	/**
 	 * This function returns message<->handler mapping
 	 *
 	 * Each entry defined by @a MESSAGE_HANDLER() macro

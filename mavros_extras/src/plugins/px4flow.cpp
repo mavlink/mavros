@@ -66,10 +66,6 @@ public:
 
 	}
 
-	const std::string get_name() const {
-		return "PX4Flow";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW_RAD, &PX4FlowPlugin::handle_optical_flow_rad)

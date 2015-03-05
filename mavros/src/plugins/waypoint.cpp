@@ -189,10 +189,6 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
 
-	std::string const get_name() const {
-		return "Waypoint";
-	};
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),

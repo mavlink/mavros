@@ -70,10 +70,6 @@ public:
 		}
 	}
 
-	const std::string get_name() const {
-		return "MocapPoseEstimate";
-	}
-
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
 	}

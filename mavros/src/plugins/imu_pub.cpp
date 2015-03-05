@@ -76,10 +76,6 @@ public:
 		imu_raw_pub = nh.advertise<sensor_msgs::Imu>("imu/data_raw", 10);
 	}
 
-	std::string const get_name() const {
-		return "IMUPub";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),

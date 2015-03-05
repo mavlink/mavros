@@ -409,10 +409,6 @@ public:
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
 	}
 
-	const std::string get_name() const {
-		return "SystemStatus";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),

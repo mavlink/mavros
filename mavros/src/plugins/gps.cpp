@@ -119,10 +119,6 @@ public:
 		vel_pub = nh.advertise<geometry_msgs::TwistStamped>("gps_vel", 10);
 	}
 
-	std::string const get_name() const {
-		return "GPS";
-	}
-
 	const message_map get_rx_handlers() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GPSPlugin::handle_gps_raw_int),
