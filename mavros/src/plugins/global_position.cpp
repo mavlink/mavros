@@ -67,7 +67,7 @@ public:
 
 		fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
 		pos_pub = gp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("local", 10);
-		vel_pub = gp_nh.advertise<geometry_msgs::Vector3Stamped>("gps_vel", 10);
+		vel_pub = gp_nh.advertise<geometry_msgs::Vector3Stamped>("gp_vel", 10);
 		rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
@@ -79,9 +79,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle gp_nh;
 	UAS *uas;
 
-	ros::NodeHandle gp_nh;
 	ros::Publisher fix_pub;
 	ros::Publisher pos_pub;
 	ros::Publisher vel_pub;
@@ -103,63 +103,45 @@ private:
 		mavlink_global_position_int_t gp_pos;
 		mavlink_msg_global_position_int_decode(msg, &gp_pos);
 
-		ROS_DEBUG_THROTTLE_NAMED(10, "global", "Global position: boot_ms:%06d "
-				"lat/lon/alt:(%d %d %d) relative_alt: (%d) gps_vel:(%d %d %d) compass_heading: (%d)",
+		ROS_DEBUG_THROTTLE_NAMED(10, "global_position", "Global position: boot_ms:%06d "
+				"lat/lon/alt:(%d %d %d) relative_alt: (%d) gp_vel:(%d %d %d) compass_heading: (%d)",
 				gp_pos.time_boot_ms,
 				gp_pos.lat, gp_pos.lon, gp_pos.alt, gp_pos.relative_alt,
 				gp_pos.vx, gp_pos.vy, gp_pos.vz, gp_pos.hdg);
 
-		geometry_msgs::PoseWithCovarianceStampedPtr pose_cov =
-				boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
+		auto pose_cov = boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
+		auto gp_fix = boost::make_shared<sensor_msgs::NavSatFix>();
+		auto gp_vel = boost::make_shared<geometry_msgs::Vector3Stamped>();
+		auto relative_alt = boost::make_shared<std_msgs::Float64>();
+		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
 		std_msgs::Header header;
 		header.frame_id = frame_id;
 		header.stamp = uas->synchronise_stamp(gp_pos.time_boot_ms);
 
-		sensor_msgs::NavSatFixPtr gps_cord =
-				boost::make_shared<sensor_msgs::NavSatFix>();
-		geometry_msgs::Vector3StampedPtr gps_vel =
-				boost::make_shared<geometry_msgs::Vector3Stamped>();
-		std_msgs::Float64Ptr relative_alt = boost::make_shared<std_msgs::Float64>();
-		std_msgs::Float64Ptr compass_heading = boost::make_shared<std_msgs::Float64>();
+		// Global position fix
+		gp_fix->header = header;
+		gp_fix->latitude = gp_pos.lat / 1E7;
+		gp_fix->longitude = gp_pos.lon / 1E7;
+		gp_fix->altitude = gp_pos.alt / 1E3;	// in meters
 
-		gps_cord->header = header;
-		gps_cord->latitude = gp_pos.lat / 1E7;
-		gps_cord->longitude = gp_pos.lon / 1E7;
-		gps_cord->altitude = gp_pos.alt / 1E3;	// in meters
+		// fill GPS status fields using GPS_RAW data
+		auto raw_fix = uas->get_gps_fix();
 
-		// fill GPS status fields
-		gps_cord->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-		if (uas->get_gps_status())
-			gps_cord->status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
-		else
-			gps_cord->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+		gp_fix->status.service = raw_fix->status.service;
+		gp_fix->status.status = raw_fix->status.status;
 
-		// try compute LLA covariance from GPS_RAW_INT data
-		double hdop = uas->get_gps_eph();
-		if (!isnan(hdop)) {
-			double hdop2 = std::pow(hdop, 2);
+		gp_fix->position_covariance = raw_fix->position_covariance;
+		gp_fix->position_covariance_type = raw_fix->position_covariance_type;
 
-			// From nmea_navsat_driver
-			gps_cord->position_covariance[0] = hdop2;
-			gps_cord->position_covariance[4] = hdop2;
-			gps_cord->position_covariance[8] = std::pow(2 * hdop, 2);
-			gps_cord->position_covariance_type =
-					sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
-		}
-		else {
-			gps_cord->position_covariance_type =
-					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
-		}
-
-		gps_vel->header = header;
-		gps_vel->vector.x = gp_pos.vx / 1E2;	// in m/s
-		gps_vel->vector.y = gp_pos.vy / 1E2;
-		gps_vel->vector.z = gp_pos.vz / 1E2;
+		// Global position velocity
+		gp_vel->header = header;
+		gp_vel->vector.x = gp_pos.vx / 1E2;	// in m/s
+		gp_vel->vector.y = gp_pos.vy / 1E2;
+		gp_vel->vector.z = gp_pos.vz / 1E2;
 
 		relative_alt->data = gp_pos.relative_alt / 1E3;	// in meters
-		if (gp_pos.hdg != UINT16_MAX)
-			compass_heading->data = gp_pos.hdg / 1E2;	// in degrees
+		compass_heading->data = (gp_pos.hdg != UINT16_MAX) ? gp_pos.hdg / 1E2 : NAN;	// in degrees
 
 		double northing, easting;
 		std::string zone;
@@ -167,31 +149,31 @@ private:
 		/** Adapted from gps_umd ROS package @a http://wiki.ros.org/gps_umd
 		 *  Author: Ken Tossell <ken AT tossell DOT net>
 		 */
-		UTM::LLtoUTM(gps_cord->latitude, gps_cord->longitude, northing, easting, zone);
+		UTM::LLtoUTM(gp_fix->latitude, gp_fix->longitude, northing, easting, zone);
 
 		pose_cov->header = header;
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
-		pose_cov->pose.pose.position.z = gp_pos.relative_alt / 1E3;
+		pose_cov->pose.pose.position.z = relative_alt->data;
 
 		geometry_msgs::Quaternion q_aux;
-		tf::Quaternion q(uas->get_attitude_orientation());
+		tf::Quaternion q(uas->get_attitude_orientation());	// XXX #193?
 		tf::quaternionTFToMsg(q, q_aux);
 		pose_cov->pose.pose.orientation = q_aux;
 
 		// Use ENU covariance to build XYZRPY covariance
 		boost::array<double, 36> covariance = {
-			gps_cord->position_covariance[0],
-			gps_cord->position_covariance[1],
-			gps_cord->position_covariance[2],
+			gp_fix->position_covariance[0],
+			gp_fix->position_covariance[1],
+			gp_fix->position_covariance[2],
 			0, 0, 0,
-			gps_cord->position_covariance[3],
-			gps_cord->position_covariance[4],
-			gps_cord->position_covariance[5],
+			gp_fix->position_covariance[3],
+			gp_fix->position_covariance[4],
+			gp_fix->position_covariance[5],
 			0, 0, 0,
-			gps_cord->position_covariance[6],
-			gps_cord->position_covariance[7],
-			gps_cord->position_covariance[8],
+			gp_fix->position_covariance[6],
+			gp_fix->position_covariance[7],
+			gp_fix->position_covariance[8],
 			0, 0, 0,
 			0, 0, 0, rot_cov, 0, 0,
 			0, 0, 0, 0, rot_cov, 0,
@@ -200,12 +182,11 @@ private:
 
 		pose_cov->pose.covariance = covariance;
 
-		fix_pub.publish(gps_cord);
+		fix_pub.publish(gp_fix);
 		pos_pub.publish(pose_cov);
-		vel_pub.publish(gps_vel);
+		vel_pub.publish(gp_vel);
 		rel_alt_pub.publish(relative_alt);
-		if (gp_pos.hdg != UINT16_MAX)
-			hdg_pub.publish(compass_heading);
+		hdg_pub.publish(compass_heading);
 
 		if (send_tf) {
 			tf::Transform transform;

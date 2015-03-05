@@ -34,63 +34,6 @@
 #include <geometry_msgs/TwistStamped.h>
 
 namespace mavplugin {
-class GPSInfo : public diagnostic_updater::DiagnosticTask
-{
-public:
-	explicit GPSInfo(const std::string name) :
-		diagnostic_updater::DiagnosticTask(name),
-		satellites_visible(-1),
-		fix_type(0),
-		eph(UINT16_MAX),
-		epv(UINT16_MAX)
-	{ };
-
-	void set_gps_raw(mavlink_gps_raw_int_t &gps) {
-		satellites_visible = gps.satellites_visible;
-		fix_type = gps.fix_type;
-		eph = gps.eph;
-		epv = gps.epv;
-	}
-
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		const int satellites_visible_ = satellites_visible;
-		const int fix_type_ = fix_type;
-		const uint16_t eph_ = eph;
-		const uint16_t epv_ = epv;
-
-		if (satellites_visible_ < 0)
-			stat.summary(2, "No satellites");
-		else if (fix_type_ < 2 || fix_type_ > 3)
-			stat.summary(1, "No fix");
-		else if (fix_type_ == 2)
-			stat.summary(0, "2D fix");
-		else if (fix_type_ == 3)
-			stat.summary(0, "3D fix");
-
-		stat.addf("Satellites visible", "%zd", satellites_visible_);
-		stat.addf("Fix type", "%d", fix_type_);
-
-		// EPH in centimeters
-		if (eph_ != UINT16_MAX)
-			stat.addf("EPH (m)", "%.2f", eph_ / 1E2F);
-		else
-			stat.add("EPH (m)", "Unknown");
-
-		// EPV in centimeters
-		if (epv_ != UINT16_MAX)
-			stat.addf("EPV (m)", "%.2f", epv_ / 1E2F);
-		else
-			stat.add("EPV (m)", "Unknown");
-	}
-
-private:
-	std::atomic<int> satellites_visible;
-	std::atomic<int> fix_type;
-	std::atomic<uint16_t> eph;
-	std::atomic<uint16_t> epv;
-};
-
-
 /**
  * @brief GPS plugin
  *
@@ -100,8 +43,7 @@ class GPSPlugin : public MavRosPlugin {
 public:
 	GPSPlugin() :
 		gps_nh("~gps"),
-		uas(nullptr),
-		gps_diag("GPS")
+		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_)
@@ -111,7 +53,7 @@ public:
 		gps_nh.param<std::string>("frame_id", frame_id, "gps");
 		gps_nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
 
-		UAS_DIAG(uas).add(gps_diag);
+		UAS_DIAG(uas).add("GPS", this, &GPSPlugin::diag_run);
 
 		fix_pub = gps_nh.advertise<sensor_msgs::NavSatFix>("fix", 10);
 		vel_pub = gps_nh.advertise<geometry_msgs::TwistStamped>("gps_vel", 10);
@@ -130,36 +72,35 @@ private:
 	std::string frame_id;
 	std::string time_ref_source;
 
-	GPSInfo gps_diag;
-
 	ros::Publisher fix_pub;
 	ros::Publisher vel_pub;
+
+
+	/* -*- message handlers -*- */
 
 	void handle_gps_raw_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_gps_raw_int_t raw_gps;
 		mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
 
-		sensor_msgs::NavSatFixPtr fix = boost::make_shared<sensor_msgs::NavSatFix>();
-		geometry_msgs::TwistStampedPtr vel = boost::make_shared<geometry_msgs::TwistStamped>();
-
-		gps_diag.set_gps_raw(raw_gps);
-		if (raw_gps.fix_type < 2) {
-			ROS_WARN_THROTTLE_NAMED(60, "gps", "GPS: no fix");
-			return;
-		}
+		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 
 		fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-		if (raw_gps.fix_type == 2 || raw_gps.fix_type == 3)
+		if (raw_gps.fix_type > 2)
 			fix->status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
-		else
+		else {
+			ROS_WARN_THROTTLE_NAMED(60, "gps", "GPS: no fix");
 			fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+		}
 
 		fix->latitude = raw_gps.lat / 1E7;	// deg
 		fix->longitude = raw_gps.lon / 1E7;	// deg
 		fix->altitude = raw_gps.alt / 1E3;	// m
 
-		if (raw_gps.eph != UINT16_MAX) {
-			double hdop = raw_gps.eph / 1E2;
+		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
+		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
+
+		if (!isnan(eph)) {
+			const double hdop = eph;
 			double hdop2 = std::pow(hdop, 2);
 
 			// TODO: Check
@@ -178,18 +119,16 @@ private:
 		fix->header.frame_id = frame_id;
 		fix->header.stamp = uas->synchronise_stamp(raw_gps.time_usec);
 
-		// store GPS data in UAS
-		double eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2 : NAN;
-		double epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2 : NAN;
-		uas->set_gps_llae(fix->latitude, fix->longitude, fix->altitude, eph, epv);
-		uas->set_gps_status(fix->status.status == sensor_msgs::NavSatStatus::STATUS_FIX);
-
+		// store & publish
+		uas->update_gps_fix_epts(fix, eph, epv, raw_gps.fix_type, raw_gps.satellites_visible);
 		fix_pub.publish(fix);
 
 		if (raw_gps.vel != UINT16_MAX &&
 				raw_gps.cog != UINT16_MAX) {
 			double speed = raw_gps.vel / 1E2;	// m/s
 			double course = angles::from_degrees(raw_gps.cog / 1E2);// rad
+
+			auto vel = boost::make_shared<geometry_msgs::TwistStamped>();
 
 			// From nmea_navsat_driver
 			vel->twist.linear.x = speed * std::sin(course);
@@ -209,6 +148,39 @@ private:
 		mavlink_msg_gps_status_decode(msg, &gps_stat);
 
 		ROS_INFO_THROTTLE_NAMED(30, "gps", "GPS stat sat visible: %d", gps_stat.satellites_visible);
+	}
+
+
+	/* -*- diagnostics -*- */
+	void diag_run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+		int fix_type, satellites_visible;
+		float eph, epv;
+
+		uas->get_gps_epts(eph, epv, fix_type, satellites_visible);
+
+		if (satellites_visible <= 0)
+			stat.summary(2, "No satellites");
+		else if (fix_type < 2)
+			stat.summary(1, "No fix");
+		else if (fix_type == 2)
+			stat.summary(0, "2D fix");
+		else if (fix_type >= 3)
+			stat.summary(0, "3D fix");
+
+		stat.addf("Satellites visible", "%zd", satellites_visible);
+		stat.addf("Fix type", "%d", fix_type);
+
+		// EPH in centimeters
+		if (!isnan(eph))
+			stat.addf("EPH (m)", "%.2f", eph);
+		else
+			stat.add("EPH (m)", "Unknown");
+
+		// EPV in centimeters
+		if (!isnan(epv))
+			stat.addf("EPV (m)", "%.2f", epv);
+		else
+			stat.add("EPV (m)", "Unknown");
 	}
 };
 };	// namespace mavplugin

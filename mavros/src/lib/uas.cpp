@@ -37,18 +37,34 @@ UAS::UAS() :
 	angular_velocity(),
 	linear_acceleration(),
 	orientation(),
-	gps_latitude(0),
-	gps_longitude(0),
-	gps_altitude(0),
-	gps_eph(0),
-	gps_epv(0),
-	fix_status(0),
+	gps_eph(NAN),
+	gps_epv(NAN),
+	gps_fix_type(0),
+	gps_satellites_visible(0),
 	fcu_caps_known(false),
 	fcu_capabilities(0)
 {}
 
 void UAS::stop(void)
 {}
+
+
+/* -*- heartbeat handlers -*- */
+
+void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_)
+{
+	type = type_;
+	autopilot = autopilot_;
+}
+
+void UAS::update_connection_status(bool conn_)
+{
+	if (conn_ != connected) {
+		connected = conn_;
+		sig_connection_changed(connected);
+	}
+}
+
 
 /* -*- time syncronise functions -*- */
 
@@ -81,6 +97,9 @@ ros::Time UAS::synchronise_stamp(uint64_t time_usec) {
 		return ros::Time::now();
 }
 
+
+/* -*- autopilot version -*- */
+
 static uint64_t get_default_caps(uint8_t ap_type)
 {
 	// TODO: return default caps mask for known FCU's
@@ -103,6 +122,41 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 	fcu_caps_known = known;
 	fcu_capabilities = caps;
 }
+
+
+/* -*- GPS data -*- */
+
+void UAS::update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
+		float eph, float epv,
+		int fix_type, int satellites_visible)
+{
+	lock_guard lock(mutex);
+
+	gps_fix = fix;
+	gps_eph = eph;
+	gps_epv = epv;
+	gps_fix_type = fix_type;
+	gps_satellites_visible = satellites_visible;
+}
+
+//! Returns EPH, EPV, Fix type and satellites visible
+void UAS::get_gps_epts(float &eph, float &epv, int &fix_type, int &satellites_visible)
+{
+	lock_guard lock(mutex);
+
+	eph = gps_eph;
+	epv = gps_epv;
+	fix_type = gps_fix_type;
+	satellites_visible = gps_satellites_visible;
+}
+
+//! Retunrs last GPS RAW message
+sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
+{
+	lock_guard lock(mutex);
+	return gps_fix;
+}
+
 
 /* -*- mode stringify functions -*- */
 

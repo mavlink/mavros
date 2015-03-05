@@ -32,6 +32,9 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 
+#include <sensor_msgs/NavSatFix.h>
+
+
 namespace mavros {
 /**
  * @brief helper accessor to FCU link interface
@@ -102,26 +105,6 @@ public:
 	 */
 	diagnostic_updater::Updater diag_updater;
 
-	/* -*- HEARTBEAT data -*- */
-
-	/**
-	 * Update autopilot type on every HEARTBEAT
-	 */
-	void update_heartbeat(uint8_t type_, uint8_t autopilot_) {
-		type = type_;
-		autopilot = autopilot_;
-	}
-
-	/**
-	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
-	 */
-	void update_connection_status(bool conn_) {
-		if (conn_ != connected) {
-			connected = conn_;
-			sig_connection_changed(connected);
-		}
-	}
-
 	/**
 	 * @brief This signal emit when status was changed
 	 *
@@ -129,12 +112,18 @@ public:
 	 */
 	boost::signals2::signal<void(bool)> sig_connection_changed;
 
+
+	/* -*- HEARTBEAT data -*- */
+
 	/**
-	 * @brief Returns connection status
+	 * Update autopilot type on every HEARTBEAT
 	 */
-	inline bool get_connection_status() {
-		return connected;
-	}
+	void update_heartbeat(uint8_t type_, uint8_t autopilot_);
+
+	/**
+	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
+	 */
+	void update_connection_status(bool conn_);
 
 	/**
 	 * @brief Returns vehicle type
@@ -172,6 +161,7 @@ public:
 		target_system = sys;
 		target_component = comp;
 	}
+
 
 	/* -*- IMU data -*- */
 
@@ -229,61 +219,23 @@ public:
 		orientation = quat;
 	}
 
+
 	/* -*- GPS data -*- */
 
-	/**
-	 * @brief Store GPS Lat/Long/Alt and EPH/EPV data
-	 *
-	 * @param[in] latitude  in deg
-	 * @param[in] longitude in deg
-	 * @param[in] altitude  in m
-	 * @param[in] eph       in m
-	 * @param[in] epv       in m
-	 */
-	inline void set_gps_llae(double latitude, double longitude, double altitude,
-			double eph, double epv) {
-		lock_guard lock(mutex);
-		gps_latitude = latitude;
-		gps_longitude = longitude;
-		gps_altitude = altitude;
-		gps_eph = eph;
-		gps_epv = epv;
-	}
+	//! Store GPS RAW data
+	void update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
+			float eph, float epv,
+			int fix_type, int satellites_visible);
 
-	inline double get_gps_latitude() {
-		lock_guard lock(mutex);
-		return gps_latitude;
-	}
+	//! Returns EPH, EPV, Fix type and satellites visible
+	void get_gps_epts(float &eph, float &epv, int &fix_type, int &satellites_visible);
 
-	inline double get_gps_longitude() {
-		lock_guard lock(mutex);
-		return gps_longitude;
-	}
+	//! Retunrs last GPS RAW message
+	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
-	inline double get_gps_altitude() {
-		lock_guard lock(mutex);
-		return gps_altitude;
-	}
-
-	inline double get_gps_eph() {
-		lock_guard lock(mutex);
-		return gps_eph;
-	}
-
-	inline double get_gps_epv() {
-		lock_guard lock(mutex);
-		return gps_epv;
-	}
-
-	inline void set_gps_status(bool fix_status_) {
-		fix_status = fix_status_;
-	}
-
-	inline bool get_gps_status() {
-		return fix_status;
-	}
 
 	/* -*- time sync -*- */
+
 	inline void set_time_offset(uint64_t offset_ns) {
 		time_offset = offset_ns;
 	}
@@ -350,21 +302,27 @@ public:
 
 private:
 	std::recursive_mutex mutex;
+
 	std::atomic<uint8_t> type;
 	std::atomic<uint8_t> autopilot;
+
 	uint8_t target_system;
 	uint8_t target_component;
+
 	std::atomic<bool> connected;
+
 	tf::Vector3 angular_velocity;
 	tf::Vector3 linear_acceleration;
 	tf::Quaternion orientation;
-	double gps_latitude;
-	double gps_longitude;
-	double gps_altitude;
-	double gps_eph;
-	double gps_epv;
-	std::atomic<bool> fix_status;
+
+	sensor_msgs::NavSatFix::Ptr gps_fix;
+	float gps_eph;
+	float gps_epv;
+	int gps_fix_type;
+	int gps_satellites_visible;
+
 	std::atomic<uint64_t> time_offset;
+
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
 };
