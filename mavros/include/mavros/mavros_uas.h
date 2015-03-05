@@ -265,6 +265,11 @@ public:
 	 */
 	static std::string str_type(enum MAV_TYPE type);
 
+	/**
+	 * @brief Represent MAV_STATE as string
+	 */
+	static std::string str_system_status(enum MAV_STATE st);
+
 private:
 	std::recursive_mutex mutex;
 

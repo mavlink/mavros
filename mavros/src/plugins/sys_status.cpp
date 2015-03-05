@@ -40,7 +40,9 @@ public:
 		tolerance_(0.1),
 		times_(win_size),
 		seq_nums_(win_size),
-		last_hb {}
+		autopilot(MAV_AUTOPILOT_GENERIC),
+		type(MAV_TYPE_GENERIC),
+		system_status(MAV_STATE_UNINIT)
 	{
 		clear();
 	}
@@ -59,10 +61,15 @@ public:
 		hist_indx_ = 0;
 	}
 
-	void tick(mavlink_heartbeat_t &hb_struct) {
+	void tick(uint8_t type_, uint8_t autopilot_,
+			std::string &mode_, uint8_t system_status_) {
 		lock_guard lock(mutex);
 		count_++;
-		last_hb = hb_struct;
+
+		type = static_cast<enum MAV_TYPE>(type_);
+		autopilot = static_cast<enum MAV_AUTOPILOT>(autopilot_);
+		mode = mode_;
+		system_status = static_cast<enum MAV_STATE>(system_status_);
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
@@ -89,15 +96,12 @@ public:
 			stat.summary(0, "Normal");
 		}
 
-		stat.addf("Events in window", "%d", events);
-		stat.addf("Events since startup", "%d", count_);
-		stat.addf("Duration of window (s)", "%f", window);
-		stat.addf("Actual frequency (Hz)", "%f", freq);
-		stat.addf("MAV Type", "%u", last_hb.type);
-		stat.addf("Autopilot type", "%u", last_hb.autopilot);
-		stat.addf("Autopilot base mode", "0x%02X", last_hb.base_mode);
-		stat.addf("Autopilot custom mode", "0x%08X", last_hb.custom_mode);
-		stat.addf("Autopilot system status", "%u", last_hb.system_status);
+		stat.addf("Heartbeats since startup", "%d", count_);
+		stat.addf("Frequency (Hz)", "%f", freq);
+		stat.add("Vehicle type", mavros::UAS::str_type(type));
+		stat.add("Autopilot type", mavros::UAS::str_autopilot(autopilot));
+		stat.add("Mode", mode);
+		stat.add("System status", mavros::UAS::str_system_status(system_status));
 	}
 
 private:
@@ -110,7 +114,11 @@ private:
 	const double min_freq_;
 	const double max_freq_;
 	const double tolerance_;
-	mavlink_heartbeat_t last_hb;
+
+	enum MAV_AUTOPILOT autopilot;
+	enum MAV_TYPE type;
+	std::string mode;
+	enum MAV_STATE system_status;
 };
 
 
@@ -252,13 +260,13 @@ public:
 	{};
 
 	void set(uint16_t f, uint16_t b) {
-		lock_guard lock(mutex);
 		freemem = f;
 		brkval = b;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		lock_guard lock(mutex);
+		ssize_t freemem_ = freemem;
+		uint16_t brkval_ = brkval;
 
 		if (freemem < 0)
 			stat.summary(2, "No data");
@@ -267,14 +275,13 @@ public:
 		else
 			stat.summary(0, "Normal");
 
-		stat.addf("Free memory (B)", "%zd", freemem);
-		stat.addf("Heap top", "0x%04X", brkval);
+		stat.addf("Free memory (B)", "%zd", freemem_);
+		stat.addf("Heap top", "0x%04X", brkval_);
 	}
 
 private:
-	std::recursive_mutex mutex;
-	ssize_t freemem;
-	uint16_t brkval;
+	std::atomic<ssize_t> freemem;
+	std::atomic<uint16_t> brkval;
 };
 
 
@@ -498,7 +505,13 @@ private:
 	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_heartbeat_t hb;
 		mavlink_msg_heartbeat_decode(msg, &hb);
-		hb_diag.tick(hb);
+
+		auto state_msg = boost::make_shared<mavros::State>();
+
+		state_msg->header.stamp = ros::Time::now();
+		state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
+		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
+		state_msg->mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
 
 		// update context && setup connection timeout
 		uas->update_heartbeat(hb.type, hb.autopilot);
@@ -506,11 +519,7 @@ private:
 		timeout_timer.stop();
 		timeout_timer.start();
 
-		mavros::StatePtr state_msg = boost::make_shared<mavros::State>();
-		state_msg->header.stamp = ros::Time::now();
-		state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
-		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
-		state_msg->mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
+		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
 
 		state_pub.publish(state_msg);
 	}
@@ -519,9 +528,9 @@ private:
 		mavlink_sys_status_t stat;
 		mavlink_msg_sys_status_decode(msg, &stat);
 
-		float volt = stat.voltage_battery / 1000.0;	// mV
-		float curr = stat.current_battery / 100.0;	// 10 mA or -1
-		float rem = stat.battery_remaining / 100.0;	// or -1
+		float volt = stat.voltage_battery / 1000.0f;	// mV
+		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
+		float rem = stat.battery_remaining / 100.0f;	// or -1
 
 		mavros::BatteryStatusPtr batt_msg = boost::make_shared<mavros::BatteryStatus>();
 		batt_msg->header.stamp = ros::Time::now();

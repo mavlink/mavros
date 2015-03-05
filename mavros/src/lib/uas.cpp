@@ -449,3 +449,23 @@ std::string UAS::str_type(enum MAV_TYPE type)
 	return type_strings[idx];
 }
 
+static const std::array<const std::string, 8> state_strings = {
+	/*  0 */ "Uninit",
+	/*  1 */ "Boot",
+	/*  2 */ "Calibrating",
+	/*  3 */ "Standby",
+	/*  4 */ "Active",
+	/*  5 */ "Critical",
+	/*  6 */ "Emergency",
+	/*  7 */ "Poweroff"
+};
+
+std::string UAS::str_system_status(enum MAV_STATE st)
+{
+	size_t idx = size_t(st);
+	if (idx >= state_strings.size())
+		return std::to_string(idx);
+
+	return state_strings[idx];
+}
+
