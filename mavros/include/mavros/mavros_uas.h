@@ -255,6 +255,16 @@ public:
 	ros::Time synchronise_stamp(uint32_t time_boot_ms);
 	ros::Time synchronise_stamp(uint64_t time_usec);
 
+	/**
+	 * @brief Represent MAV_AUTOPILOT as string
+	 */
+	static std::string str_autopilot(enum MAV_AUTOPILOT ap);
+
+	/**
+	 * @brief Represent MAV_TYPE as string
+	 */
+	static std::string str_type(enum MAV_TYPE type);
+
 private:
 	std::recursive_mutex mutex;
 

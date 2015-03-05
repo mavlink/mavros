@@ -11,6 +11,8 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <array>
+#include <unordered_map>
 #include <stdexcept>
 #include <mavros/mavros_uas.h>
 #include <mavros/utils.h>
@@ -180,7 +182,7 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 
 /* -*- mode stringify functions -*- */
 
-typedef std::map<uint32_t, std::string> cmode_map;
+typedef std::unordered_map<uint32_t, const std::string> cmode_map;
 
 /** APM:Plane custom mode -> string
  *
@@ -374,3 +376,76 @@ bool UAS::cmode_from_str(std::string cmode_str, uint32_t &custom_mode) {
 	ROS_ERROR_NAMED("uas", "MODE: Unsupported FCU");
 	return false;
 }
+
+/* -*- enum stringify -*- */
+
+//! MAV_AUTOPILOT values
+static const std::array<const std::string, 18> autopilot_strings = {
+	/*  0 */ "Generic",
+	/*  1 */ "PIXHAWK",
+	/*  2 */ "SLUGS",
+	/*  3 */ "ArduPilotMega",
+	/*  4 */ "OpenPilot",
+	/*  5 */ "Generic-WP-Only",
+	/*  6 */ "Generic-WP-Simple-Nav",
+	/*  7 */ "Generic-Mission-Full",
+	/*  8 */ "INVALID",
+	/*  9 */ "Paparazzi",
+	/* 10 */ "UDB",
+	/* 11 */ "FlexiPilot",
+	/* 12 */ "PX4",
+	/* 13 */ "SMACCMPILOT",
+	/* 14 */ "AUTOQUAD",
+	/* 15 */ "ARMAZILA",
+	/* 16 */ "AEROB",
+	/* 17 */ "ASLUAV"
+};
+
+std::string UAS::str_autopilot(enum MAV_AUTOPILOT ap)
+{
+	size_t idx = size_t(ap);
+	if (idx >= autopilot_strings.size())
+		return std::to_string(idx);
+
+	return autopilot_strings[idx];
+}
+
+static const std::array<const std::string, 27> type_strings = {
+	/*  0 */ "Generic",
+	/*  1 */ "Fixed-Wing",
+	/*  2 */ "Quadrotor",
+	/*  3 */ "Coaxial",
+	/*  4 */ "Helicopter",
+	/*  5 */ "Antenna-Tracker",
+	/*  6 */ "GCS",
+	/*  7 */ "Airship",
+	/*  8 */ "Free-Balloon",
+	/*  9 */ "Rocket",
+	/* 10 */ "Ground-Rover",
+	/* 11 */ "Surface-Boat",
+	/* 12 */ "Submarine",
+	/* 13 */ "Hexarotor",
+	/* 14 */ "Octorotor",
+	/* 15 */ "Tricopter",
+	/* 16 */ "Flapping-Wing",
+	/* 17 */ "Kite",
+	/* 18 */ "Onboard-Controller",
+	/* 19 */ "VTOL-Duorotor",
+	/* 20 */ "VTOL-Quadrotor",
+	/* 21 */ "VTOL-RESERVED1",
+	/* 22 */ "VTOL-RESERVED2",
+	/* 23 */ "VTOL-RESERVED3",
+	/* 24 */ "VTOL-RESERVED4",
+	/* 25 */ "VTOL-RESERVED5",
+	/* 26 */ "Gimbal"
+};
+
+std::string UAS::str_type(enum MAV_TYPE type)
+{
+	size_t idx = size_t(type);
+	if (idx >= type_strings.size())
+		return std::to_string(idx);
+
+	return type_strings[idx];
+}
+
