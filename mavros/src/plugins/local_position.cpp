@@ -94,7 +94,7 @@ private:
 		transform.setOrigin(tf::Vector3(pos_ned.y, pos_ned.x, -pos_ned.z));
 		transform.setRotation(uas->get_attitude_orientation());
 
-		geometry_msgs::PoseStampedPtr pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
 		tf::poseTFToMsg(transform, pose->pose);
 		pose->header.frame_id = frame_id;
