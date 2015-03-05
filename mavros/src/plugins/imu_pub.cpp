@@ -73,6 +73,9 @@ public:
 		temp_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
 		press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("atm_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
+
+		// reset has_* flags on connection change
+		uas->sig_connection_changed.connect(boost::bind(&IMUPubPlugin::connection_cb, this, _1));
 	}
 
 	const message_map get_rx_handlers() {
@@ -133,13 +136,11 @@ private:
 		tf::vector3MsgToTF(gyro_vec, angular_velocity);
 		tf::vector3MsgToTF(acc_vec, linear_acceleration);
 
-		uas->set_attitude_orientation(orientation);
-		uas->set_attitude_angular_velocity(angular_velocity);
-		uas->set_attitude_linear_acceleration(linear_acceleration);
+		uas->update_attitude_imu(orientation, angular_velocity, linear_acceleration);
 	}
 
 	//! fill imu/data message
-	void fill_imu_msg_attitude(sensor_msgs::ImuPtr &imu_msg,
+	void fill_imu_msg_attitude(sensor_msgs::Imu::Ptr &imu_msg,
 			tf::Quaternion &orientation,
 			double xg, double yg, double zg)
 	{
@@ -158,7 +159,7 @@ private:
 	}
 
 	//! fill imu/data_raw message, store linear acceleration for imu/data
-	void fill_imu_msg_raw(sensor_msgs::ImuPtr &imu_msg,
+	void fill_imu_msg_raw(sensor_msgs::Imu::Ptr &imu_msg,
 			double xg, double yg, double zg,
 			double xa, double ya, double za)
 	{
@@ -185,7 +186,7 @@ private:
 		mavlink_attitude_t att;
 		mavlink_msg_attitude_decode(msg, &att);
 
-		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// NED -> ENU (body-fixed)
 		tf::Quaternion orientation = tf::createQuaternionFromRPY(
@@ -214,7 +215,7 @@ private:
 		ROS_INFO_COND_NAMED(!has_att_quat, "imu", "Attitude quaternion IMU detected!");
 		has_att_quat = true;
 
-		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// PX4 NED (w x y z) -> ROS ENU (x -y -z w) (body-fixed)
 		tf::Quaternion orientation(att_q.q2, -att_q.q3, -att_q.q4, att_q.q1);
@@ -247,7 +248,7 @@ private:
 
 		/* imu/data_raw filled by HR IMU */
 		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
-			sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+			auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 			fill_imu_msg_raw(imu_msg,
 					imu_hr.xgyro, -imu_hr.ygyro, -imu_hr.zgyro,
@@ -258,7 +259,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & (7 << 6)) {
-			sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
+			auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 			// Convert from local NED plane to ENU
 			magn_msg->magnetic_field.x = imu_hr.ymag * GAUSS_TO_TESLA;
@@ -272,7 +273,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & (1 << 9)) {
-			sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+			auto atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
 			atmp_msg->header = header;
@@ -280,7 +281,7 @@ private:
 		}
 
 		if (imu_hr.fields_updated & (1 << 12)) {
-			sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
+			auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
 			temp_msg->temperature = imu_hr.temperature;
 			temp_msg->header = header;
@@ -292,7 +293,7 @@ private:
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
-		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 		mavlink_raw_imu_t imu_raw;
 		mavlink_msg_raw_imu_decode(msg, &imu_raw);
 
@@ -320,7 +321,7 @@ private:
 		imu_raw_pub.publish(imu_msg);
 
 		/* -*- magnetic vector -*- */
-		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
+		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		// Convert from local NED plane to ENU
 		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
@@ -340,7 +341,7 @@ private:
 		ROS_INFO_COND_NAMED(!has_scaled_imu, "imu", "Scaled IMU message used.");
 		has_scaled_imu = true;
 
-		sensor_msgs::ImuPtr imu_msg = boost::make_shared<sensor_msgs::Imu>();
+		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 		mavlink_scaled_imu_t imu_raw;
 		mavlink_msg_scaled_imu_decode(msg, &imu_raw);
 
@@ -359,7 +360,7 @@ private:
 		imu_raw_pub.publish(imu_msg);
 
 		/* -*- magnetic vector -*- */
-		sensor_msgs::MagneticFieldPtr magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
+		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		// Convert from local NED plane to ENU
 		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
@@ -383,15 +384,21 @@ private:
 		header.stamp = uas->synchronise_stamp(press.time_boot_ms);
 		header.frame_id = frame_id;
 
-		sensor_msgs::TemperaturePtr temp_msg = boost::make_shared<sensor_msgs::Temperature>();
+		auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 		temp_msg->temperature = press.temperature / 100.0;
 		temp_msg->header = header;
 		temp_pub.publish(temp_msg);
 
-		sensor_msgs::FluidPressurePtr atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+		auto atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 		atmp_msg->fluid_pressure = press.press_abs * 100.0;
 		atmp_msg->header = header;
 		press_pub.publish(atmp_msg);
+	}
+
+	void connection_cb(bool connected) {
+		has_hr_imu = false;
+		has_scaled_imu = false;
+		has_att_quat = false;
 	}
 };
 };	// namespace mavplugin

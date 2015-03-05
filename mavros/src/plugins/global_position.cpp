@@ -156,10 +156,8 @@ private:
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
-		geometry_msgs::Quaternion q_aux;
-		tf::Quaternion q(uas->get_attitude_orientation());	// XXX #193?
-		tf::quaternionTFToMsg(q, q_aux);
-		pose_cov->pose.pose.orientation = q_aux;
+		// XXX Check #193
+		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
 		boost::array<double, 36> covariance = {

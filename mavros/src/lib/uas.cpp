@@ -34,9 +34,9 @@ UAS::UAS() :
 	target_system(1),
 	target_component(1),
 	connected(false),
-	angular_velocity(),
-	linear_acceleration(),
-	orientation(),
+	imu_orientation(),
+	imu_angular_velocity(),
+	imu_linear_acceleration(),
 	gps_eph(NAN),
 	gps_epv(NAN),
 	gps_fix_type(0),
@@ -121,6 +121,36 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 {
 	fcu_caps_known = known;
 	fcu_capabilities = caps;
+}
+
+
+/* -*- IMU data -*- */
+
+void UAS::update_attitude_imu(tf::Quaternion &q, tf::Vector3 &av, tf::Vector3 &lacc)
+{
+	lock_guard lock(mutex);
+
+	imu_orientation = q;
+	imu_angular_velocity = av;
+	imu_linear_acceleration = lacc;
+}
+
+tf::Vector3 UAS::get_attitude_angular_velocity()
+{
+	lock_guard lock(mutex);
+	return imu_angular_velocity;
+}
+
+tf::Vector3 UAS::get_attitude_linear_acceleration()
+{
+	lock_guard lock(mutex);
+	return imu_linear_acceleration;
+}
+
+tf::Quaternion UAS::get_attitude_orientation()
+{
+	lock_guard lock(mutex);
+	return imu_orientation;
 }
 
 

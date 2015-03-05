@@ -164,60 +164,25 @@ public:
 
 
 	/* -*- IMU data -*- */
+	void update_attitude_imu(tf::Quaternion &q, tf::Vector3 &av, tf::Vector3 &lacc);
 
 	/**
 	 * @brief Get Attitude angular velocity vector
 	 * @return angilar velocity [ENU, body-fixed]
 	 */
-	inline tf::Vector3 get_attitude_angular_velocity() {
-		lock_guard lock(mutex);
-		return angular_velocity;
-	}
-
-	/**
-	 * @brief Store Attitude angular velocity vector
-	 * @param[in] vec angular velocity [ENU, body-fixed]
-	 */
-	inline void set_attitude_angular_velocity(tf::Vector3 &vec) {
-		lock_guard lock(mutex);
-		angular_velocity = vec;
-	}
+	tf::Vector3 get_attitude_angular_velocity();
 
 	/**
 	 * @brief Get Attitude linear acceleration vector
 	 * @return linear acceleration [ENU, body-fixed]
 	 */
-	inline tf::Vector3 get_attitude_linear_acceleration() {
-		lock_guard lock(mutex);
-		return linear_acceleration;
-	}
-
-	/**
-	 * @brief Store Attitude linear acceleration vector
-	 * @param[in] vec linear acceleration [ENU, body-fixed]
-	 */
-	inline void set_attitude_linear_acceleration(tf::Vector3 &vec) {
-		lock_guard lock(mutex);
-		linear_acceleration = vec;
-	}
+	tf::Vector3 get_attitude_linear_acceleration();
 
 	/**
 	 * @brief Get Attitude orientation quaternion
 	 * @return orientation quaternion [ENU, body-fixed]
 	 */
-	inline tf::Quaternion get_attitude_orientation() {
-		lock_guard lock(mutex);
-		return orientation;
-	}
-
-	/**
-	 * @brief Store Attitude orientation quaternion
-	 * @param[in] quat orientation [ENU, body-fixed]
-	 */
-	inline void set_attitude_orientation(tf::Quaternion &quat) {
-		lock_guard lock(mutex);
-		orientation = quat;
-	}
+	tf::Quaternion get_attitude_orientation();
 
 
 	/* -*- GPS data -*- */
@@ -311,9 +276,9 @@ private:
 
 	std::atomic<bool> connected;
 
-	tf::Vector3 angular_velocity;
-	tf::Vector3 linear_acceleration;
-	tf::Quaternion orientation;
+	tf::Quaternion imu_orientation;
+	tf::Vector3 imu_angular_velocity;
+	tf::Vector3 imu_linear_acceleration;
 
 	sensor_msgs::NavSatFix::Ptr gps_fix;
 	float gps_eph;
