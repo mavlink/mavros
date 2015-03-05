@@ -99,24 +99,23 @@ private:
 class GPSPlugin : public MavRosPlugin {
 public:
 	GPSPlugin() :
+		gps_nh("~gps"),
 		uas(nullptr),
 		gps_diag("GPS")
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 
-		nh.param<std::string>("gps/frame_id", frame_id, "gps");
-		nh.param<std::string>("gps/time_ref_source", time_ref_source, frame_id);
+		gps_nh.param<std::string>("frame_id", frame_id, "gps");
+		gps_nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
 
 		diag_updater.add(gps_diag);
 
-		fix_pub = nh.advertise<sensor_msgs::NavSatFix>("fix", 10);
-		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
-		vel_pub = nh.advertise<geometry_msgs::TwistStamped>("gps_vel", 10);
+		fix_pub = gps_nh.advertise<sensor_msgs::NavSatFix>("fix", 10);
+		vel_pub = gps_nh.advertise<geometry_msgs::TwistStamped>("gps_vel", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -127,6 +126,7 @@ public:
 	}
 
 private:
+	ros::NodeHandle gps_nh;
 	UAS *uas;
 	std::string frame_id;
 	std::string time_ref_source;
@@ -134,7 +134,6 @@ private:
 	GPSInfo gps_diag;
 
 	ros::Publisher fix_pub;
-	ros::Publisher time_ref_pub;
 	ros::Publisher vel_pub;
 
 	void handle_gps_raw_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {

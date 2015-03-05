@@ -40,23 +40,21 @@ namespace mavplugin {
 class LocalPositionPlugin : public MavRosPlugin {
 public:
 	LocalPositionPlugin() :
+		lp_nh("~local_position"),
 		uas(nullptr),
 		send_tf(false)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 
-		pos_nh = ros::NodeHandle(nh, "position");
+		lp_nh.param("send_tf", send_tf, true);
+		lp_nh.param<std::string>("frame_id", frame_id, "local_origin");
+		lp_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
 
-		pos_nh.param("local/send_tf", send_tf, true);
-		pos_nh.param<std::string>("local/frame_id", frame_id, "local_origin");
-		pos_nh.param<std::string>("local/child_frame_id", child_frame_id, "fcu");
-
-		local_position = pos_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
+		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -66,9 +64,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle lp_nh;
 	UAS *uas;
 
-	ros::NodeHandle pos_nh;
 	ros::Publisher local_position;
 	tf::TransformBroadcaster tf_broadcaster;
 

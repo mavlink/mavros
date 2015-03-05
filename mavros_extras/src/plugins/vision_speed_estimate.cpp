@@ -43,16 +43,15 @@ namespace mavplugin {
 class VisionSpeedEstimatePlugin : public MavRosPlugin {
 public:
 	VisionSpeedEstimatePlugin() :
+		sp_nh("~vision_speed"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool listen_twist;
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "vision_speed");
 
 		sp_nh.param("listen_twist", listen_twist, false);
 
@@ -67,9 +66,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber vision_vel_sub;
 
 	/* -*- low-level send -*- */

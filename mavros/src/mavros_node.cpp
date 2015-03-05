@@ -4,7 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
- * Copyright 2013,2014 Vladimir Ermakov.
+ * Copyright 2013,2014,2015 Vladimir Ermakov.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,8 @@
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "mavros");
-	ros::NodeHandle nh("~");
 
-	mavros::MavRos mavros(nh);
+	mavros::MavRos mavros;
 	mavros.spin();
 
 	return 0;

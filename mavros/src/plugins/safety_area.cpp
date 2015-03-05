@@ -39,11 +39,11 @@ namespace mavplugin {
 class SafetyAreaPlugin : public MavRosPlugin {
 public:
 	SafetyAreaPlugin() :
+		safety_nh("~safety_area"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool manual_def = false;
@@ -51,7 +51,6 @@ public:
 			p2x, p2y, p2z;
 
 		uas = &uas_;
-		safety_nh = ros::NodeHandle(nh, "safety_area");
 
 		if (safety_nh.getParam("p1/x", p1x) &&
 				safety_nh.getParam("p1/y", p1y) &&
@@ -88,9 +87,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle safety_nh;
 	UAS *uas;
 
-	ros::NodeHandle safety_nh;
 	ros::Subscriber safetyarea_sub;
 
 	/* -*- low-level send -*- */

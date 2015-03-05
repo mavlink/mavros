@@ -31,9 +31,8 @@ using namespace mavconn;
 using namespace mavplugin;
 
 
-MavRos::MavRos(const ros::NodeHandle &nh_) :
-	node_handle(nh_),
-	mavlink_node_handle("/mavlink"),// for compatible reasons
+MavRos::MavRos() :
+	mavlink_nh("/mavlink"),		// for compatible reasons
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
 	plugin_loader("mavros", "mavplugin::MavRosPlugin"),
@@ -45,14 +44,16 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 	bool px4_usb_quirk;
 	MAVConnInterface::Ptr fcu_link;
 
-	node_handle.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
-	node_handle.param<std::string>("gcs_url", gcs_url, "udp://@");
-	node_handle.param("system_id", system_id, 1);
-	node_handle.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
-	node_handle.param("target_system_id", tgt_system_id, 1);
-	node_handle.param("target_component_id", tgt_component_id, 1);
-	node_handle.param("startup_px4_usb_quirk", px4_usb_quirk, false);
-	node_handle.getParam("plugin_blacklist", plugin_blacklist);
+	ros::NodeHandle nh("~");
+
+	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
+	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
+	nh.param("system_id", system_id, 1);
+	nh.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
+	nh.param("target_system_id", tgt_system_id, 1);
+	nh.param("target_component_id", tgt_component_id, 1);
+	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
+	nh.getParam("plugin_blacklist", plugin_blacklist);
 
 	diag_updater.setHardwareID("Mavlink");
 
@@ -90,8 +91,8 @@ MavRos::MavRos(const ros::NodeHandle &nh_) :
 		ROS_INFO("GCS bridge disabled");
 
 	// ROS mavlink bridge
-	mavlink_pub = mavlink_node_handle.advertise<Mavlink>("from", 100);
-	mavlink_sub = mavlink_node_handle.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
+	mavlink_pub = mavlink_nh.advertise<Mavlink>("from", 100);
+	mavlink_sub = mavlink_nh.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
 		ros::TransportHints()
 			.unreliable()
 			.maxDatagramSize(1024));
@@ -130,7 +131,7 @@ void MavRos::spin() {
 	spinner.start();
 
 	ros::Rate loop_rate(1000);
-	while (node_handle.ok()) {
+	while (ros::ok()) {
 		diag_updater.update();
 		loop_rate.sleep();
 	}
@@ -184,7 +185,7 @@ void MavRos::add_plugin(std::string &pl_name) {
 
 	try {
 		auto plugin = plugin_loader.createInstance(pl_name);
-		plugin->initialize(mav_uas, node_handle, diag_updater);
+		plugin->initialize(mav_uas, diag_updater);
 		loaded_plugins.push_back(plugin);
 
 		ROS_INFO_STREAM("Plugin " << pl_name << " loaded and initialized");

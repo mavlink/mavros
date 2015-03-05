@@ -50,18 +50,16 @@ namespace mavplugin {
 class GlobalPositionPlugin : public MavRosPlugin {
 public:
 	GlobalPositionPlugin() :
+		gp_nh("~global_position"),
 		uas(nullptr),
 		send_tf(false),
 		rot_cov(99999.0)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-
-		gp_nh = ros::NodeHandle(nh, "global_position");
 
 		gp_nh.param("send_tf", send_tf, true);
 		gp_nh.param<std::string>("frame_id", frame_id, "local_origin");

@@ -342,6 +342,7 @@ class SystemStatusPlugin : public MavRosPlugin
 {
 public:
 	SystemStatusPlugin() :
+		nh("~"),
 		uas(nullptr),
 		hb_diag("Heartbeat", 10),
 		mem_diag("APM Memory"),
@@ -352,11 +353,9 @@ public:
 	{};
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-		g_nh = &nh;
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
@@ -425,8 +424,8 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
 	UAS *uas;
-	ros::NodeHandle *g_nh;
 
 	HeartbeatStatus hb_diag;
 	MemInfo mem_diag;
@@ -622,7 +621,7 @@ private:
 		bool ret = false;
 
 		try {
-			auto client = g_nh->serviceClient<mavros::CommandLong>("cmd/command");
+			auto client = nh.serviceClient<mavros::CommandLong>("cmd/command");
 
 			mavros::CommandLong cmd{};
 			cmd.request.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;

@@ -41,15 +41,14 @@ class SetpointVelocityPlugin : public MavRosPlugin,
 	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
 	SetpointVelocityPlugin() :
+		sp_nh("~setpoint_velocity"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "setpoint");
 
 		//cmd_vel usually is the topic used for velocity control in many controllers / planners
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
@@ -61,9 +60,9 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber vel_sub;
 
 	/* -*- mid-level helpers -*- */

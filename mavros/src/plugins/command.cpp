@@ -58,18 +58,16 @@ public:
 class CommandPlugin : public MavRosPlugin {
 public:
 	CommandPlugin() :
+		cmd_nh("~cmd"),
 		uas(nullptr),
 		use_comp_id_system_control(false),
 		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-
-		cmd_nh = ros::NodeHandle(nh, "cmd");
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
 

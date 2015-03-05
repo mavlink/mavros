@@ -42,18 +42,17 @@ class SetpointAccelerationPlugin : public MavRosPlugin,
 	private SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin> {
 public:
 	SetpointAccelerationPlugin() :
+		sp_nh("~setpoint_accel"),
 		uas(nullptr),
 		send_force(false)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "setpoint");
 
-		sp_nh.param("accel/send_force", send_force, false);
+		sp_nh.param("send_force", send_force, false);
 
 		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
 	}
@@ -64,9 +63,9 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber accel_sub;
 
 	bool send_force;

@@ -352,6 +352,7 @@ public:
 class ParamPlugin : public MavRosPlugin {
 public:
 	ParamPlugin() :
+		param_nh("~param"),
 		uas(nullptr),
 		param_count(-1),
 		param_state(PR_IDLE),
@@ -363,11 +364,9 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-		param_nh = ros::NodeHandle(nh, "param");
 
 		pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
 		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
@@ -389,9 +388,9 @@ public:
 
 private:
 	std::recursive_mutex mutex;
+	ros::NodeHandle param_nh;
 	UAS *uas;
 
-	ros::NodeHandle param_nh;
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
 	ros::ServiceServer set_srv;

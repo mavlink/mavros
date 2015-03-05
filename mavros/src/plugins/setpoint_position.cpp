@@ -41,23 +41,22 @@ class SetpointPositionPlugin : public MavRosPlugin,
 	private TFListenerMixin<SetpointPositionPlugin> {
 public:
 	SetpointPositionPlugin() :
+		sp_nh("~setpoint_position"),
 		uas(nullptr),
 		tf_rate(10.0)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool listen_tf;
 
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "setpoint");
 
-		sp_nh.param("position/listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("position/frame_id", frame_id, "local_origin");
-		sp_nh.param<std::string>("position/child_frame_id", child_frame_id, "setpoint");
-		sp_nh.param("position/tf_rate_limit", tf_rate, 50.0);
+		sp_nh.param("listen_tf", listen_tf, false);
+		sp_nh.param<std::string>("frame_id", frame_id, "local_origin");
+		sp_nh.param<std::string>("child_frame_id", child_frame_id, "setpoint");
+		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
@@ -76,9 +75,9 @@ public:
 private:
 	friend class SetPositionTargetLocalNEDMixin;
 	friend class TFListenerMixin;
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber setpoint_sub;
 
 	std::string frame_id;

@@ -148,6 +148,7 @@ public:
 class WaypointPlugin : public MavRosPlugin {
 public:
 	WaypointPlugin() :
+		wp_nh("~mission"),
 		uas(nullptr),
 		wp_state(WP_IDLE),
 		wp_retries(RETRIES_COUNT),
@@ -165,13 +166,10 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 		wp_state = WP_IDLE;
-
-		wp_nh = ros::NodeHandle(nh, "mission");
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, false);
 
@@ -202,9 +200,9 @@ public:
 
 private:
 	std::recursive_mutex mutex;
+	ros::NodeHandle wp_nh;
 	UAS *uas;
 
-	ros::NodeHandle wp_nh;
 	ros::Publisher wp_list_pub;
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;

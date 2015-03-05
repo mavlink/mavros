@@ -38,11 +38,11 @@ namespace mavplugin {
 class ActuatorControlPlugin : public MavRosPlugin {
 public:
 	ActuatorControlPlugin() :
+		nh("~"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater) {
 		uas = &uas_;
 
@@ -54,6 +54,7 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
 	UAS *uas;
 	ros::Subscriber actuator_controls_sub;
 

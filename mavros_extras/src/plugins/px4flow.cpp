@@ -42,17 +42,15 @@ namespace mavplugin {
 class PX4FlowPlugin : public MavRosPlugin {
 public:
 	PX4FlowPlugin() :
+		flow_nh("~px4flow"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 
-		flow_nh = ros::NodeHandle(nh, "px4flow");
-		
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
 		//Default rangefinder is Maxbotix HRLV-EZ4
@@ -73,9 +71,8 @@ public:
 	}
 
 private:
-	UAS *uas;
-
 	ros::NodeHandle flow_nh;
+	UAS *uas;
 
 	std::string frame_id;
 	

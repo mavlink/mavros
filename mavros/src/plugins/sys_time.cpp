@@ -138,6 +138,7 @@ private:
 class SystemTimePlugin : public MavRosPlugin {
 public:
 	SystemTimePlugin() :
+		nh("~"),
 		uas(nullptr),
 		dt_diag("Time Sync", 10),
 		time_offset_ns(0),
@@ -145,7 +146,6 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		double conn_system_time_d;
@@ -192,6 +192,7 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
 	UAS *uas;
 	ros::Publisher time_ref_pub;
 

@@ -36,16 +36,19 @@ namespace mavplugin {
  */
 class DummyPlugin : public MavRosPlugin {
 public:
-	DummyPlugin()
+	DummyPlugin() :
+		nh("~"),
+		uas(nullptr)
 	{ };
 
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas,
-			ros::NodeHandle &nh,
+	void initialize(UAS &uas_,
 			diagnostic_updater::Updater &diag_updater)
 	{
+		uas = &uas_;
+
 		ROS_INFO_NAMED("dummy", "initialize");
 	}
 
@@ -63,6 +66,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
+	UAS *uas;
+
 	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		ROS_INFO_NAMED("dummy", "Dummy::handle_heartbeat(%p, %u, %u)",
 				msg, sysid, compid);

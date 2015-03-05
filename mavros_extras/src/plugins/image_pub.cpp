@@ -44,6 +44,7 @@ namespace enc = sensor_msgs::image_encodings;
 class ImagePubPlugin : public MavRosPlugin {
 public:
 	ImagePubPlugin() :
+		im_nh("~image"),
 		im_width(0), im_height(0),
 		im_size(0), im_packets(0), im_payload(0),
 		im_seqnr(0), im_type(255),
@@ -51,12 +52,11 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
-		nh.param<std::string>("camera_frame_id", frame_id, "px4flow");
+		im_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
-		itp = boost::make_shared<image_transport::ImageTransport>(nh);
+		itp = boost::make_shared<image_transport::ImageTransport>(im_nh);
 		image_pub = itp->advertise("camera_image", 1);
 	}
 
@@ -68,6 +68,8 @@ public:
 	}
 
 private:
+	ros::NodeHandle im_nh;
+
 	boost::shared_ptr<image_transport::ImageTransport> itp;
 	image_transport::Publisher image_pub;
 

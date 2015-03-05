@@ -205,6 +205,7 @@ private:
 class FTPPlugin : public MavRosPlugin {
 public:
 	FTPPlugin() :
+		ftp_nh("~ftp"),
 		uas(nullptr),
 		op_state(OP_IDLE),
 		last_send_seqnr(0),
@@ -221,12 +222,9 @@ public:
 	{ }
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
-
-		ftp_nh = ros::NodeHandle(nh, "ftp");
 
 		list_srv = ftp_nh.advertiseService("list", &FTPPlugin::list_cb, this);
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);

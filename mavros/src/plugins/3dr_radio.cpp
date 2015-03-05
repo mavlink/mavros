@@ -99,12 +99,12 @@ private:
 class TDRRadioPlugin : public MavRosPlugin {
 public:
 	TDRRadioPlugin() :
+		nh("~"),
 		tdr_diag("3DR Radio", 40),
 		has_radio_status(false)
 	{ }
 
 	void initialize(UAS &uas,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		diag_updater.add(tdr_diag);
@@ -121,6 +121,7 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
 	TDRRadioStatus tdr_diag;
 	bool has_radio_status;
 

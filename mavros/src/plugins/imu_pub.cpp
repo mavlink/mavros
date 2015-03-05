@@ -42,6 +42,7 @@ namespace mavplugin {
 class IMUPubPlugin : public MavRosPlugin {
 public:
 	IMUPubPlugin() :
+		imu_nh("~imu"),
 		uas(nullptr),
 		linear_accel_vec(),
 		has_hr_imu(false),
@@ -50,18 +51,17 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		double linear_stdev, angular_stdev, orientation_stdev, mag_stdev;
 
 		uas = &uas_;
 
-		nh.param<std::string>("imu/frame_id", frame_id, "fcu");
-		nh.param("imu/linear_acceleration_stdev", linear_stdev, 0.0003);// check default by MPU6000 spec
-		nh.param("imu/angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0));	// check default by MPU6000 spec
-		nh.param("imu/orientation_stdev", orientation_stdev, 1.0);
-		nh.param("imu/magnetic_stdev", mag_stdev, 0.0);
+		imu_nh.param<std::string>("frame_id", frame_id, "fcu");
+		imu_nh.param("linear_acceleration_stdev", linear_stdev, 0.0003);// check default by MPU6000 spec
+		imu_nh.param("angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0));	// check default by MPU6000 spec
+		imu_nh.param("orientation_stdev", orientation_stdev, 1.0);
+		imu_nh.param("magnetic_stdev", mag_stdev, 0.0);
 
 		setup_covariance(linear_acceleration_cov, linear_stdev);
 		setup_covariance(angular_velocity_cov, angular_stdev);
@@ -69,11 +69,11 @@ public:
 		setup_covariance(magnetic_cov, mag_stdev);
 		setup_covariance(unk_orientation_cov, 0.0);
 
-		imu_pub = nh.advertise<sensor_msgs::Imu>("imu/data", 10);
-		magn_pub = nh.advertise<sensor_msgs::MagneticField>("imu/mag", 10);
-		temp_pub = nh.advertise<sensor_msgs::Temperature>("imu/temperature", 10);
-		press_pub = nh.advertise<sensor_msgs::FluidPressure>("imu/atm_pressure", 10);
-		imu_raw_pub = nh.advertise<sensor_msgs::Imu>("imu/data_raw", 10);
+		imu_pub = imu_nh.advertise<sensor_msgs::Imu>("data", 10);
+		magn_pub = imu_nh.advertise<sensor_msgs::MagneticField>("mag", 10);
+		temp_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
+		press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("atm_pressure", 10);
+		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -88,8 +88,9 @@ public:
 	}
 
 private:
-	std::string frame_id;
+	ros::NodeHandle imu_nh;
 	UAS *uas;
+	std::string frame_id;
 
 	ros::Publisher imu_pub;
 	ros::Publisher imu_raw_pub;

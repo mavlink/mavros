@@ -38,19 +38,17 @@ namespace mavplugin {
 class VisualizationPlugin : public MavRosPlugin {
 public:
 	VisualizationPlugin() :
+		viz_nh("~visualization"),
 		uas(nullptr),
 		marker_scale(0),
 		marker_id(0)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 
-		viz_nh = ros::NodeHandle(nh, "visualization");
-		
 		viz_nh.param<std::string>("visualization/fixed_frame_id", fixed_frame_id, "local_origin");
 		viz_nh.param<std::string>("visualization/child_frame_id", child_frame_id, "fcu");
 		viz_nh.param<double>("visualization/marker_scale", marker_scale, 2.0);		
@@ -68,10 +66,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle viz_nh;
 	UAS *uas;
 
-	ros::NodeHandle viz_nh;
-	
 	ros::Publisher track_marker;
 	ros::Publisher vehicle_marker;
 

@@ -37,14 +37,14 @@ namespace mavplugin {
  */
 class VfrHudPlugin : public MavRosPlugin {
 public:
-	VfrHudPlugin()
+	VfrHudPlugin() :
+		nh("~")
 	{ }
 
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
 	void initialize(UAS &uas,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		vfr_pub = nh.advertise<mavros::VFR_HUD>("vfr_hud", 10);
@@ -64,6 +64,8 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
+
 	ros::Publisher vfr_pub;
 	ros::Publisher wind_pub;
 

@@ -42,18 +42,17 @@ class MocapPoseEstimatePlugin : public MavRosPlugin
 {
 public:
 	MocapPoseEstimatePlugin() :
+		mp_nh("~mocap"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool use_tf;
 		bool use_pose;
 
 		uas = &uas_;
-		mp_nh = ros::NodeHandle(nh, "mocap");
 
 		mp_nh.param("use_tf", use_tf, false);		// Vicon
 		mp_nh.param("use_pose", use_pose, true);	// Optitrack
@@ -75,9 +74,9 @@ public:
 	}
 
 private:
+	ros::NodeHandle mp_nh;
 	UAS *uas;
 
-	ros::NodeHandle mp_nh;
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
 

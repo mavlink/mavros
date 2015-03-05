@@ -44,13 +44,13 @@ class SetpointAttitudePlugin : public MavRosPlugin,
 	private TFListenerMixin<SetpointAttitudePlugin> {
 public:
 	SetpointAttitudePlugin() :
+		sp_nh("~setpoint_attitude"),
 		uas(nullptr),
 		tf_rate(10.0),
 		reverse_throttle(false)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool pose_with_covariance;
@@ -58,7 +58,6 @@ public:
 		bool listen_twist;
 
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "setpoint");
 
 		sp_nh.param("attitude/listen_twist", listen_twist, true);
 		sp_nh.param("attitude/pose_with_covariance", pose_with_covariance, false);
@@ -96,9 +95,9 @@ public:
 
 private:
 	friend class TFListenerMixin;
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber att_sub;
 	ros::Subscriber throttle_sub;
 

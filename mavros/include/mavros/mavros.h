@@ -45,14 +45,13 @@ namespace mavros {
 class MavRos
 {
 public:
-	explicit MavRos(const ros::NodeHandle &nh_);
+	MavRos();
 	~MavRos() {};
 
 	void spin();
 
 private:
-	ros::NodeHandle node_handle;
-	ros::NodeHandle mavlink_node_handle;
+	ros::NodeHandle mavlink_nh;
 	// fcu_link stored in mav_uas
 	mavconn::MAVConnInterface::Ptr gcs_link;
 

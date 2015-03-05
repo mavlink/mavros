@@ -38,6 +38,7 @@ namespace mavplugin {
 class RCIOPlugin : public MavRosPlugin {
 public:
 	RCIOPlugin() :
+		rc_nh("~rc"),
 		uas(nullptr),
 		raw_rc_in(0),
 		raw_rc_out(0),
@@ -45,12 +46,10 @@ public:
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		uas = &uas_;
 
-		rc_nh = ros::NodeHandle(nh, "rc");
 		rc_in_pub = rc_nh.advertise<mavros::RCIn>("in", 10);
 		rc_out_pub = rc_nh.advertise<mavros::RCOut>("out", 10);
 		override_sub = rc_nh.subscribe("override", 10, &RCIOPlugin::override_cb, this);
@@ -68,13 +67,13 @@ public:
 
 private:
 	std::recursive_mutex mutex;
+	ros::NodeHandle rc_nh;
 	UAS *uas;
 
 	std::vector<uint16_t> raw_rc_in;
 	std::vector<uint16_t> raw_rc_out;
 	bool has_rc_channels_msg;
 
-	ros::NodeHandle rc_nh;
 	ros::Publisher rc_in_pub;
 	ros::Publisher rc_out_pub;
 	ros::Subscriber override_sub;
@@ -106,7 +105,7 @@ private:
 		SET_RC_IN(8);
 #undef SET_RC_IN
 
-		mavros::RCInPtr rcin_msg = boost::make_shared<mavros::RCIn>();
+		auto rcin_msg = boost::make_shared<mavros::RCIn>();
 
 		rcin_msg->header.stamp = uas->synchronise_stamp(port.time_boot_ms);
 		rcin_msg->rssi = port.rssi;
@@ -155,7 +154,7 @@ private:
 		IFSET_RC_IN(18);
 #undef IFSET_RC_IN
 
-		mavros::RCInPtr rcin_msg = boost::make_shared<mavros::RCIn>();
+		auto rcin_msg = boost::make_shared<mavros::RCIn>();
 
 		rcin_msg->header.stamp = uas->synchronise_stamp(channels.time_boot_ms);
 		rcin_msg->rssi = channels.rssi;
@@ -185,7 +184,7 @@ private:
 		SET_RC_OUT(8);
 #undef SET_RC_OUT
 
-		mavros::RCOutPtr rcout_msg = boost::make_shared<mavros::RCOut>();
+		auto rcout_msg = boost::make_shared<mavros::RCOut>();
 
 		// XXX: Why time_usec id 32 bit? We should test that.
 		uint64_t time_usec = port.time_usec;

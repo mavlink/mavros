@@ -45,25 +45,24 @@ class VisionPoseEstimatePlugin : public MavRosPlugin,
 	private TFListenerMixin<VisionPoseEstimatePlugin> {
 public:
 	VisionPoseEstimatePlugin() :
+		sp_nh("~vision_pose"),
 		uas(nullptr),
 		tf_rate(10.0)
 	{ };
 
 	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
 			diagnostic_updater::Updater &diag_updater)
 	{
 		bool pose_with_covariance;
 		bool listen_tf;
 
 		uas = &uas_;
-		sp_nh = ros::NodeHandle(nh, "position");
 
-		sp_nh.param("vision/pose_with_covariance", pose_with_covariance, false);
-		sp_nh.param("vision/listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("vision/frame_id", frame_id, "local_origin");
-		sp_nh.param<std::string>("vision/child_frame_id", child_frame_id, "vision");
-		sp_nh.param("vision/tf_rate_limit", tf_rate, 50.0);
+		sp_nh.param("pose_with_covariance", pose_with_covariance, false);
+		sp_nh.param("listen_tf", listen_tf, false);
+		sp_nh.param<std::string>("frame_id", frame_id, "local_origin");
+		sp_nh.param<std::string>("child_frame_id", child_frame_id, "vision");
+		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
 
 		ROS_DEBUG_STREAM_NAMED("position", "Vision pose topic type: " <<
 				((pose_with_covariance)? "PoseWithCovarianceStamped" : "PoseStamped"));
@@ -85,9 +84,9 @@ public:
 
 private:
 	friend class TFListenerMixin;
+	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::NodeHandle sp_nh;
 	ros::Subscriber vision_sub;
 
 	std::string frame_id;
