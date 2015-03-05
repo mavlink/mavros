@@ -135,6 +135,9 @@ private:
 };
 
 
+/**
+ * @brief System time plugin
+ */
 class SystemTimePlugin : public MavRosPlugin {
 public:
 	SystemTimePlugin() :
@@ -145,8 +148,7 @@ public:
 		offset_avg_alpha(0)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		double conn_system_time_d;
 		double conn_timesync_d;
@@ -165,7 +167,7 @@ public:
 		 * We need a significant amount of smoothing , more so for lower message rates like 1Hz
 		 */
 
-		diag_updater.add(dt_diag);
+		UAS_DIAG(uas).add(dt_diag);
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 

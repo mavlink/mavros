@@ -50,8 +50,7 @@ public:
 		reverse_throttle(false)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		bool pose_with_covariance;
 		bool listen_tf;

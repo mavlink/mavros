@@ -165,8 +165,7 @@ public:
 		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 		wp_state = WP_IDLE;

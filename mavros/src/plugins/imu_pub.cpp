@@ -50,8 +50,7 @@ public:
 		has_att_quat(false)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		double linear_stdev, angular_stdev, orientation_stdev, mag_stdev;
 

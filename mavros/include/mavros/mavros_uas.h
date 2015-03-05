@@ -29,6 +29,7 @@
 #include <mutex>
 #include <atomic>
 #include <tf/transform_datatypes.h>
+#include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 
 namespace mavros {
@@ -37,6 +38,12 @@ namespace mavros {
  */
 #define UAS_FCU(uasobjptr)				\
 	((uasobjptr)->fcu_link)
+
+/**
+ * @brief helper accessor to diagnostic updater
+ */
+#define UAS_DIAG(uasobjptr)				\
+	((uasobjptr)->diag_updater)
 
 /**
  * @brief helper for mavlink_msg_*_pack_chan()
@@ -89,6 +96,11 @@ public:
 	 * @brief MAVLink FCU device conection
 	 */
 	mavconn::MAVConnInterface::Ptr fcu_link;
+
+	/**
+	 * @brief Mavros diagnostic updater
+	 */
+	diagnostic_updater::Updater diag_updater;
 
 	/* -*- HEARTBEAT data -*- */
 

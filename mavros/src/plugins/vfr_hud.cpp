@@ -44,8 +44,7 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas)
 	{
 		vfr_pub = nh.advertise<mavros::VFR_HUD>("vfr_hud", 10);
 

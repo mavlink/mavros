@@ -352,8 +352,7 @@ public:
 		version_retries(RETRIES_COUNT)
 	{};
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 
@@ -368,15 +367,15 @@ public:
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// heartbeat diag always enabled
-		diag_updater.add(hb_diag);
+		UAS_DIAG(uas).add(hb_diag);
 		if (!disable_diag) {
-			diag_updater.add(sys_diag);
-			diag_updater.add(batt_diag);
+			UAS_DIAG(uas).add(sys_diag);
+			UAS_DIAG(uas).add(batt_diag);
 #ifdef MAVLINK_MSG_ID_MEMINFO
-			diag_updater.add(mem_diag);
+			UAS_DIAG(uas).add(mem_diag);
 #endif
 #ifdef MAVLINK_MSG_ID_HWSTATUS
-			diag_updater.add(hwst_diag);
+			UAS_DIAG(uas).add(hwst_diag);
 #endif
 
 			batt_diag.set_min_voltage(min_voltage);

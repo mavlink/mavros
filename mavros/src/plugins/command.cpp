@@ -64,8 +64,7 @@ public:
 		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 

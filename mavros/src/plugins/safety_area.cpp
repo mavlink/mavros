@@ -43,8 +43,7 @@ public:
 		uas(nullptr)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		bool manual_def = false;
 		double p1x, p1y, p1z,

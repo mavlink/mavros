@@ -104,10 +104,9 @@ public:
 		has_radio_status(false)
 	{ }
 
-	void initialize(UAS &uas,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas)
 	{
-		diag_updater.add(tdr_diag);
+		UAS_DIAG(&uas).add(tdr_diag);
 		status_pub = nh.advertise<mavros::RadioStatus>("radio_status", 10);
 	}
 

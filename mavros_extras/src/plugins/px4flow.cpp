@@ -46,8 +46,7 @@ public:
 		uas(nullptr)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 

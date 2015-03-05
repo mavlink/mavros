@@ -45,8 +45,7 @@ public:
 		has_rc_channels_msg(false)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 

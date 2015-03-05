@@ -46,8 +46,7 @@ public:
 		tf_rate(10.0)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		bool listen_tf;
 

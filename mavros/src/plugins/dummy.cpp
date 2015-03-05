@@ -44,8 +44,7 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 

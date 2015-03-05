@@ -55,7 +55,8 @@ MavRos::MavRos() :
 	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 	nh.getParam("plugin_blacklist", plugin_blacklist);
 
-	diag_updater.setHardwareID("Mavlink");
+	// Now we use FCU URL as a hardware Id
+	UAS_DIAG(&mav_uas).setHardwareID(fcu_url);
 
 	ROS_INFO_STREAM("FCU URL: " << fcu_url);
 	try {
@@ -65,7 +66,7 @@ MavRos::MavRos() :
 		component_id = fcu_link->get_component_id();
 
 		fcu_link_diag.set_mavconn(fcu_link);
-		diag_updater.add(fcu_link_diag);
+		UAS_DIAG(&mav_uas).add(fcu_link_diag);
 	}
 	catch (mavconn::DeviceError &ex) {
 		ROS_FATAL("FCU: %s", ex.what());
@@ -79,7 +80,7 @@ MavRos::MavRos() :
 			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
 
 			gcs_link_diag.set_mavconn(gcs_link);
-			diag_updater.add(gcs_link_diag);
+			UAS_DIAG(&mav_uas).add(gcs_link_diag);
 		}
 		catch (mavconn::DeviceError &ex) {
 			ROS_FATAL("GCS: %s", ex.what());
@@ -132,7 +133,7 @@ void MavRos::spin() {
 
 	ros::Rate loop_rate(1000);
 	while (ros::ok()) {
-		diag_updater.update();
+		UAS_DIAG(&mav_uas).update();
 		loop_rate.sleep();
 	}
 
@@ -141,7 +142,7 @@ void MavRos::spin() {
 }
 
 void MavRos::mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
-	MavlinkPtr rmsg = boost::make_shared<Mavlink>();
+	auto rmsg = boost::make_shared<Mavlink>();
 
 	if  (mavlink_pub.getNumSubscribers() == 0)
 		return;
@@ -185,7 +186,7 @@ void MavRos::add_plugin(std::string &pl_name) {
 
 	try {
 		auto plugin = plugin_loader.createInstance(pl_name);
-		plugin->initialize(mav_uas, diag_updater);
+		plugin->initialize(mav_uas);
 		loaded_plugins.push_back(plugin);
 
 		ROS_INFO_STREAM("Plugin " << pl_name << " loaded and initialized");

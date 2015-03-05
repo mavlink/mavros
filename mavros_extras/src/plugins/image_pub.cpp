@@ -51,8 +51,7 @@ public:
 		im_buffer{}
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
 		im_nh.param<std::string>("frame_id", frame_id, "px4flow");
 

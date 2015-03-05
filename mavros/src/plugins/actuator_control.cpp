@@ -42,8 +42,8 @@ public:
 		uas(nullptr)
 	{ };
 
-	void initialize(UAS &uas_,
-			diagnostic_updater::Updater &diag_updater) {
+	void initialize(UAS &uas_)
+	{
 		uas = &uas_;
 
 		actuator_controls_sub = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
@@ -63,7 +63,8 @@ private:
 	//! message definiton here: @p https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET
 	void set_actuator_control_target(const uint64_t time_usec,
 			const uint8_t group_mix,
-			const float controls[8]) {
+			const float controls[8])
+	{
 		mavlink_message_t msg;
 
 		mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas), &msg,

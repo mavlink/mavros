@@ -64,9 +64,8 @@ public:
 	 * @brief Plugin initializer
 	 *
 	 * @param[in] uas           UAS instance (handles FCU connection and some statuses)
-	 * @param[in] diag_updater  main diagnostic updater
 	 */
-	virtual void initialize(UAS &uas, diagnostic_updater::Updater &diag_updater) = 0;
+	virtual void initialize(UAS &uas) = 0;
 
 	/**
 	 * @brief Return map with message rx handlers
