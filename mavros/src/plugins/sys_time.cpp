@@ -146,8 +146,7 @@ public:
 		nh.param("conn/system_time", conn_system_time_d, 0.0);
 		nh.param("conn/timesync", conn_timesync_d, 0.0);
 
-		nh.param<std::string>("time/frame_id", frame_id, "fcu");
-		nh.param<std::string>("time/time_ref_source", time_ref_source, frame_id);
+		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
 		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
 		/*
 		 * alpha for exponential moving average. The closer alpha is to 1.0,
@@ -192,7 +191,6 @@ private:
 
 	TimeSyncStatus dt_diag;
 
-	std::string frame_id;
 	std::string time_ref_source;
 	int64_t time_offset_ns;
 	double offset_avg_alpha;
@@ -206,14 +204,14 @@ private:
 
 		if (fcu_time_valid) {
 			// continious publish for ntpd
-			sensor_msgs::TimeReferencePtr time_unix = boost::make_shared<sensor_msgs::TimeReference>();
+			auto time_unix = boost::make_shared<sensor_msgs::TimeReference>();
 			ros::Time time_ref(
 					mtime.time_unix_usec / 1000000,			// t_sec
 					(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
 
-			time_unix->source = time_ref_source;
-			time_unix->time_ref = time_ref;
 			time_unix->header.stamp = ros::Time::now();
+			time_unix->time_ref = time_ref;
+			time_unix->source = time_ref_source;
 
 			time_ref_pub.publish(time_unix);
 		}
