@@ -1,5 +1,4 @@
 plugin_blacklist:
-- '3dr_radio'
 - '*_position'
 - 'safety_area'
 - 'px4flow'
