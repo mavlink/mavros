@@ -28,7 +28,8 @@ public:
 	TDRRadioPlugin() :
 		nh("~"),
 		has_radio_status(false),
-		diag_added(false)
+		diag_added(false),
+		low_rssi(0)
 	{ }
 
 	void initialize(UAS &uas_)
