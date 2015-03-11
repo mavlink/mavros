@@ -98,10 +98,8 @@ public:
 			stat.summary(0, "Normal");
 		}
 
-		stat.addf("Events in window", "%d", events);
-		stat.addf("Events since startup", "%d", count_);
-		stat.addf("Duration of window (s)", "%f", window);
-		stat.addf("Actual frequency (Hz)", "%f", freq);
+		stat.addf("Timesyncs since startup", "%d", count_);
+		stat.addf("Frequency (Hz)", "%f", freq);
 		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1e6);
 		stat.addf("Mean dt (ms)", "%0.6f", (count_) ? dt_sum / count_ / 1e6 : 0.0);
 		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
@@ -145,19 +143,17 @@ public:
 
 		uas = &uas_;
 
-		nh.param("conn_system_time", conn_system_time_d, 0.0);
-		nh.param("conn_timesync", conn_timesync_d, 0.0);
+		nh.param("conn/system_time", conn_system_time_d, 0.0);
+		nh.param("conn/timesync", conn_timesync_d, 0.0);
 
-		nh.param<std::string>("frame_id", frame_id, "fcu");
-		nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
-		nh.param("timesync_avg_alpha", offset_avg_alpha, 0.6);
+		nh.param<std::string>("time/frame_id", frame_id, "fcu");
+		nh.param<std::string>("time/time_ref_source", time_ref_source, frame_id);
+		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
 		/*
 		 * alpha for exponential moving average. The closer alpha is to 1.0,
 		 * the faster the moving average updates in response to new offset samples (more jitter)
 		 * We need a significant amount of smoothing , more so for lower message rates like 1Hz
 		 */
-
-		UAS_DIAG(uas).add(dt_diag);
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
@@ -170,6 +166,9 @@ public:
 
 		// timer for sending timesync messages
 		if (conn_timesync_d > 0.0) {
+			// enable timesync diag only if that feature enabled
+			UAS_DIAG(uas).add(dt_diag);
+
 			timesync_timer = nh.createTimer(ros::Duration(conn_timesync_d),
 					&SystemTimePlugin::timesync_cb, this);
 			timesync_timer.start();
