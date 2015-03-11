@@ -41,7 +41,6 @@ public:
 		uas = &uas_;
 
 		gps_nh.param<std::string>("frame_id", frame_id, "gps");
-		gps_nh.param<std::string>("time_ref_source", time_ref_source, frame_id);
 
 		UAS_DIAG(uas).add("GPS", this, &GPSPlugin::diag_run);
 
@@ -60,7 +59,6 @@ private:
 	ros::NodeHandle gps_nh;
 	UAS *uas;
 	std::string frame_id;
-	std::string time_ref_source;
 
 	ros::Publisher fix_pub;
 	ros::Publisher vel_pub;
