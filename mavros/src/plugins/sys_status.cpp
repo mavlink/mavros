@@ -358,8 +358,8 @@ public:
 		double conn_heartbeat_d;
 		double min_voltage;
 
-		nh.param("conn_timeout", conn_timeout_d, 30.0);
-		nh.param("conn_heartbeat", conn_heartbeat_d, 0.0);
+		nh.param("conn/timeout", conn_timeout_d, 30.0);
+		nh.param("conn/heartbeat", conn_heartbeat_d, 0.0);
 		nh.param("sys/min_voltage", min_voltage, 6.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
