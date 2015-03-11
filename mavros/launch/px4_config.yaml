@@ -3,15 +3,54 @@
 # node:
 startup_px4_usb_quirk: true
 
+# --- system plugins ---
+
+# sys_status & sys_time connection options
+conn:
+  heartbeat: 5.0    # send hertbeat every n seconds
+  timeout: 10.0     # hertbeat timeout in seconds
+  timesync: 0.1     # TIMESYNC period in seconds (feature disabled if 0.0)
+  system_time: 1.0  # send system time to FCU every n seconds
+
 # sys_status
-conn_heartbeat: 5.0 # send hertbeat every n secs
-conn_timeout: 10.0  # hertbeat timeout n secs
 sys:
-  min_voltage: 10.0  # diagnostics min voltage
+  min_voltage: 10.0   # diagnostics min voltage
+  disable_diag: false # disable all sys_status diagnostics, except heartbeat
 
 # sys_time
-conn_timesync: 0.1
-conn_system_time: 1.0
+time:
+  time_ref_source: "fcu"  # time_reference source
+  timesync_avg_alpha: 0.6 # timesync averaging factor
+
+# --- mavros plugins (alphabetical order) ---
+
+# 3dr_radio
+tdr_radio:
+  low_rssi: 40  # raw rssi lower level for diagnostics
+
+# actuator_control
+# None
+
+# command
+cmd:
+  use_comp_id_system_control: false # quirk for some old FCUs
+
+# dummy
+# None
+
+# ftp
+# None
+
+# global_position
+global_position:
+  send_tf: false            # send TF?
+  frame_id: "local_origin"  # pose and TF frame_id
+  child_frame_id: "fcu"     # pose and TF child_frame_id
+  rot_covariance: 99999.0   # covariance for attitude?
+
+# gps
+gps:
+  frame_id: "gps"
 
 # imu_pub
 imu:
@@ -22,106 +61,88 @@ imu:
   orientation_stdev: 1.0
   magnetic_stdev: 0.0
 
-# gps
-gps:
-  frame_id: "gps"
-  #time_ref_source: "gps"
+# local_position
+local_position:
+  send_tf: false
+  frame_id: "local_origin"
+  child_frame_id: "fcu"
 
 # param
+# None, used for FCU params
+
+# rc_io
+# None
+
+# safety_area
+safety_area:
+  p1: {x:  1.0, y:  1.0, z:  1.0}
+  p2: {x: -1.0, y: -1.0, z: -1.0}
+
+# setpoint_accel
+setpoint_accel:
+  send_force: false
+
+# setpoint_attitude
+setpoint_attitude:
+  listen_tf: false
+  listen_twist: false
+  pose_with_covariance: false
+  frame_id: "local_origin"
+  child_frame_id: "attitude"
+  tf_rate_limit: 10.0
+  reverse_throttle: false   # allow reversed throttle
+
+# setpoint_position
+setpoint_position:
+  listen_tf: false
+  frame_id: "local_origin"
+  child_frame_id: "setpoint"
+  tf_rate_limit: 50.0
+
+# setpoint_velocity
+# None
+
+# vfr_hud
 # None
 
 # waypoint
 mission:
   pull_after_gcs: true  # update mission if gcs updates
 
-# pc_io
-# None
+# --- mavros extras plugins (same order) ---
 
-# command
-# None
+# image_pub
+image:
+  frame_id: "px4flow"
 
-# *_position
-#position:
-#  # local_position
-#  local:
-#    send_tf: false
-#    frame_id: "local_origin"
-#    child_frame_id: "fcu"
-#
-#  # vision_pose_estimate [extra]
-#  vision:
-#    pose_with_covariance: false
-#    listen_tf: false
-#    frame_id: "local_origin"
-#    child_frame_id: "vision"
-#    tf_rate_limit: 10.0
+# mocap_pose_estimate
+mocap:
+  # select mocap source
+  use_tf: false   # ~mocap/tf
+  use_pose: true  # ~mocap/pose
 
-# *_setpoint
-#setpoint:
-#  # setpoint_accel
-#  accel:
-#    send_force: false
-#
-#  # setpoint_attitude
-#  attitude:
-#    listen_tf: false
-#    listen_twist: false
-#    pose_with_covariance: false
-#    frame_id: "local_origin"
-#    child_frame_id: "attitude"
-#    tf_rate_limit: 10.0
-#
-#  # setpoint_position
-#  position:
-#    listen_tf: false
-#    frame_id: "local_origin"
-#    child_frame_id: "setpoint"
-#    tf_rate_limit: 10.0
-#
-#  # setpoint_velocity
-#  # None
+px4flow:
+  frame_id: "px4flow"
+  ranger_fov: !degrees 0.0  # XXX TODO
+  ranger_min_range: 0.3     # meters
+  ranger_max_range: 5.0     # meters
 
-# safety_area
-#safety_area:
-#  p1:
-#    x: 1.0
-#    y: 1.0
-#    z: 1.0
-#  p2:
-#    x: -1.0
-#    y: -1.0
-#    z: -1.0
+# vision_pose_estimate
+vision_pose:
+  pose_with_covariance: false
+  listen_tf: false
+  frame_id: "local_origin"
+  child_frame_id: "vision"
+  tf_rate_limit: 10.0
 
-# 3dr_radio
-# None
+# vision_speed_estimate
+vision_speed:
+  listen_twist: false
 
-# global_position
-#global_position:
-#  send_tf: false
-#  frame_id: "local_origin"
-#  child_frame_id: "fcu"
-#  rot_covariance: 99999.0
-
-# vfr_hud
-# None
-
-# ftp
-# None
-
-# vision_speed_estimates [extras]
-#vision_speed:
-#  listen_twist: false
-
-# px4flow [extras]
-#optical_flow_tx: false  # publish mode (rx from FCU)
-
-# image_pub [extras]
-# None
-
-# mocap_pose_estimate [extras]
-#mocap:
-#  # select mocap source
-#  use_tf: false   # ~mocap/tf
-#  use_pose: true  # ~mocap/pose
+# visualization
+visualization:
+  fixed_frame_id: "local_origin"
+  child_frame_id: "fcu"
+  marker_scale: 2.0
 
 # vim:ts=2 sw=2 et:
