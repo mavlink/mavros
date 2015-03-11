@@ -87,13 +87,12 @@ Launch Files
 Launch files are provided for use with common FCUs:
 
   * [px4.launch](launch/px4.launch) -- for use with the PX4 native flight stack
-  * [apm2.launch](launch/apm2.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
-  * *_radio.launch -- as above, but includes the `3dr_radio` plugin
+  * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
 
 Examples:
 
     roslaunch mavros px4.launch
-    roslaunch mavros apm2.launch gcs_url:=udp://@
+    roslaunch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
 
 
 Installation
