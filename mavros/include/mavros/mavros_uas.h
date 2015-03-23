@@ -206,6 +206,20 @@ public:
 	/* -*- utils -*- */
 
 	/**
+	 * @brief Check that sys/comp id's is my target
+	 */
+	inline bool is_my_target(uint8_t sysid, uint8_t compid) {
+		return sysid == get_tgt_system() && compid == get_tgt_component();
+	}
+
+	/**
+	 * @brief Check that system id is my target
+	 */
+	inline bool is_my_target(uint8_t sysid) {
+		return sysid == get_tgt_system();
+	}
+
+	/**
 	 * @brief Check that FCU is APM
 	 */
 	inline bool is_ardupilotmega() {
