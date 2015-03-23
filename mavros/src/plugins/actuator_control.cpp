@@ -36,7 +36,7 @@ public:
 	{
 		uas = &uas_;
 
-		actuator_controls_sub = nh.subscribe("actuator_controls", 10, &ActuatorControlPlugin::actuator_control_cb, this);
+		actuator_control_sub = nh.subscribe("actuator_control", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 	}
 
 	const message_map get_rx_handlers() {
@@ -46,7 +46,7 @@ public:
 private:
 	ros::NodeHandle nh;
 	UAS *uas;
-	ros::Subscriber actuator_controls_sub;
+	ros::Subscriber actuator_control_sub;
 
 	/* -*- low-level send -*- */
 
