@@ -88,22 +88,25 @@ MavRos::MavRos() :
 			.unreliable()
 			.maxDatagramSize(1024));
 
+	// setup UAS and diag
+	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
+	UAS_FCU(&mav_uas) = fcu_link;
+	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
+	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
+
+	// connect FCU link
 	fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 	fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
 	fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
 
 	if (gcs_link) {
+		// setup GCS link bridge
 		fcu_link->message_received.connect(
 			boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
 		gcs_link->message_received.connect(
 			boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
 		gcs_link_diag.set_connection_status(true);
 	}
-
-	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
-	UAS_FCU(&mav_uas) = fcu_link;
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
 	for (auto &name : plugin_loader.getDeclaredClasses())
 		add_plugin(name);
