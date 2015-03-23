@@ -88,6 +88,11 @@ MavRos::MavRos() :
 			.unreliable()
 			.maxDatagramSize(1024));
 
+	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
+	UAS_FCU(&mav_uas) = fcu_link;
+	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
+	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
+
 	fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
 	fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
 	fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
@@ -99,11 +104,6 @@ MavRos::MavRos() :
 			boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
 		gcs_link_diag.set_connection_status(true);
 	}
-
-	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
-	UAS_FCU(&mav_uas) = fcu_link;
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
 	for (auto &name : plugin_loader.getDeclaredClasses())
 		add_plugin(name);
@@ -156,7 +156,10 @@ void MavRos::mavlink_sub_cb(const Mavlink::ConstPtr &rmsg) {
 }
 
 void MavRos::plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
-	message_route_table[mmsg->msgid](mmsg, sysid, compid);
+	// Ignore messages not sent by the target UAS
+	if (mav_uas.is_sender(sysid, compid)) {
+		message_route_table[mmsg->msgid](mmsg, sysid, compid);
+	}
 }
 
 bool MavRos::check_in_blacklist(std::string &pl_name) {
@@ -217,4 +220,3 @@ void MavRos::log_connect_change(bool connected) {
 	else
 		ROS_WARN("CON: Lost connection, HEARTBEAT timed out.");
 }
-
