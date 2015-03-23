@@ -118,11 +118,12 @@ private:
 		// fill GPS status fields using GPS_RAW data
 		auto raw_fix = uas->get_gps_fix();
 
-		gp_fix->status.service = raw_fix->status.service;
-		gp_fix->status.status = raw_fix->status.status;
-
-		gp_fix->position_covariance = raw_fix->position_covariance;
-		gp_fix->position_covariance_type = raw_fix->position_covariance_type;
+		if (raw_fix != nullptr) {
+			gp_fix->status.service = raw_fix->status.service;
+			gp_fix->status.status = raw_fix->status.status;
+			gp_fix->position_covariance = raw_fix->position_covariance;
+			gp_fix->position_covariance_type = raw_fix->position_covariance_type;
+		}
 
 		// Global position velocity
 		gp_vel->header = header;
