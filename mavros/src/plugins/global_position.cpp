@@ -117,12 +117,23 @@ private:
 
 		// fill GPS status fields using GPS_RAW data
 		auto raw_fix = uas->get_gps_fix();
-
-		if (raw_fix != nullptr) {
+		if (raw_fix) {
 			gp_fix->status.service = raw_fix->status.service;
 			gp_fix->status.status = raw_fix->status.status;
 			gp_fix->position_covariance = raw_fix->position_covariance;
 			gp_fix->position_covariance_type = raw_fix->position_covariance_type;
+		}
+		else {
+			// no GPS_RAW_INT -> fix status unknown
+			gp_fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+			gp_fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+
+			// we don't know covariance
+			std::fill(gp_fix->position_covariance.begin(),
+					gp_fix->position_covariance.end(), 0.0);
+			gp_fix->position_covariance[0] = -1.0;
+			gp_fix->position_covariance_type =
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 		}
 
 		// Global position velocity
