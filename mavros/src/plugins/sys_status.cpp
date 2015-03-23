@@ -501,6 +501,13 @@ private:
 		mavlink_heartbeat_t hb;
 		mavlink_msg_heartbeat_decode(msg, &hb);
 
+		// update context && setup connection timeout
+		uas->update_heartbeat(hb.type, hb.autopilot);
+		uas->update_connection_status(true);
+		timeout_timer.stop();
+		timeout_timer.start();
+
+		// build state message after updating uas
 		auto state_msg = boost::make_shared<mavros::State>();
 
 		state_msg->header.stamp = ros::Time::now();
@@ -508,15 +515,9 @@ private:
 		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
 		state_msg->mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
 
-		// update context && setup connection timeout
-		uas->update_heartbeat(hb.type, hb.autopilot);
-		uas->update_connection_status(true);
-		timeout_timer.stop();
-		timeout_timer.start();
+		state_pub.publish(state_msg);
 
 		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
-
-		state_pub.publish(state_msg);
 	}
 
 	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
