@@ -152,6 +152,12 @@ public:
 		target_component = comp;
 	}
 
+	/**
+	 * @brief Return true if this message was sent by this UAS
+	 */
+	inline bool is_sender(uint8_t sys, uint8_t comp) {
+		return (target_system == sys && target_component == comp);
+	}
 
 	/* -*- IMU data -*- */
 	void update_attitude_imu(tf::Quaternion &q, tf::Vector3 &av, tf::Vector3 &lacc);
