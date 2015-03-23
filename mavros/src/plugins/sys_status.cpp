@@ -461,8 +461,12 @@ private:
 			break;
 
 		case MAV_SEVERITY_DEBUG:
-		default:
 			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
+			break;
+
+		default:
+			ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" <<
+					int(severity) << "): " << text);
 			break;
 		};
 	}
@@ -489,7 +493,7 @@ private:
 			break;
 
 		default:
-			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: UNK(" <<
+			ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" <<
 					int(severity) << "): " << text);
 			break;
 		};
