@@ -53,7 +53,7 @@ public:
 			tf_start("PositionSpTF", &SetpointPositionPlugin::send_setpoint_transform);
 		}
 		else {
-			setpoint_sub = sp_nh.subscribe("local_position", 10, &SetpointPositionPlugin::setpoint_cb, this);
+			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
 		}
 	}
 
