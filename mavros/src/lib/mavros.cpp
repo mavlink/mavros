@@ -32,6 +32,7 @@ MavRos::MavRos() :
 	int system_id, component_id;
 	int tgt_system_id, tgt_component_id;
 	bool px4_usb_quirk;
+	ros::V_string plugin_blacklist{}, plugin_whitelist{};
 	MAVConnInterface::Ptr fcu_link;
 
 	ros::NodeHandle nh("~");
@@ -44,6 +45,7 @@ MavRos::MavRos() :
 	nh.param("target_component_id", tgt_component_id, 1);
 	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 	nh.getParam("plugin_blacklist", plugin_blacklist);
+	nh.getParam("plugin_whitelist", plugin_whitelist);
 
 	// Now we use FCU URL as a hardware Id
 	UAS_DIAG(&mav_uas).setHardwareID(fcu_url);
@@ -108,8 +110,13 @@ MavRos::MavRos() :
 		gcs_link_diag.set_connection_status(true);
 	}
 
+	// prepare plugin lists
+	// issue #257 2: assume that all plugins blacklisted
+	if (plugin_blacklist.empty() and !plugin_whitelist.empty())
+		plugin_blacklist.push_back("*");
+
 	for (auto &name : plugin_loader.getDeclaredClasses())
-		add_plugin(name);
+		add_plugin(name, plugin_blacklist, plugin_whitelist);
 
 	if (px4_usb_quirk)
 		startup_px4_usb_quirk();
@@ -162,21 +169,52 @@ void MavRos::plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8
 	message_route_table[mmsg->msgid](mmsg, sysid, compid);
 }
 
-bool MavRos::check_in_blacklist(std::string &pl_name) {
-	for (auto &pattern : plugin_blacklist) {
-		int cmp = fnmatch(pattern.c_str(), pl_name.c_str(), FNM_CASEFOLD);
-		if (cmp == 0)
-			return true;
-		else if (cmp != FNM_NOMATCH)
-			ROS_ERROR("Blacklist check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
+static bool pattern_match(std::string &pattern, std::string &pl_name) {
+	int cmp = fnmatch(pattern.c_str(), pl_name.c_str(), FNM_CASEFOLD);
+	if (cmp == 0)
+		return true;
+	else if (cmp != FNM_NOMATCH) {
+		// never see that, i think that it is fatal error.
+		ROS_FATAL("Plugin list check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
 				pattern.c_str(), pl_name.c_str(), cmp);
+		ros::shutdown();
 	}
 
 	return false;
 }
 
-void MavRos::add_plugin(std::string &pl_name) {
-	if (check_in_blacklist(pl_name)) {
+/**
+ * @brief Checks that plugin blacklisted
+ *
+ * Operation algo:
+ *
+ *  1. if blacklist and whitelist is empty: load all
+ *  2. if blacklist is empty and whitelist non empty: assume blacklist is ["*"]
+ *  3. if blacklist non empty: usual blacklist behavior
+ *  4. if whitelist non empty: override blacklist
+ *
+ * @note Issue #257.
+ */
+bool MavRos::is_blacklisted(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist) {
+	for (auto &bl_pattern : blacklist) {
+		if (pattern_match(bl_pattern, pl_name)) {
+			for (auto &wl_pattern : whitelist) {
+				if (pattern_match(wl_pattern, pl_name))
+					return false;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @brief Loads plugin (if not blacklisted)
+ */
+void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist) {
+	if (is_blacklisted(pl_name, blacklist, whitelist)) {
 		ROS_INFO_STREAM("Plugin " << pl_name << " blacklisted");
 		return;
 	}

@@ -53,17 +53,25 @@ private:
 
 	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
 	std::vector<mavplugin::MavRosPlugin::Ptr> loaded_plugins;
-	std::vector<std::string> plugin_blacklist;
-	// link interface -> router -> plugin callback
+	//! fcu link interface -> router -> plugin callback
 	std::array<mavconn::MAVConnInterface::MessageSig, 256> message_route_table;
+	//! UAS object passed to all plugins
 	UAS mav_uas;
 
+	//! fcu link -> ros
 	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
+	//! ros -> fcu link
 	void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg);
+
+	//! message router
 	void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
-	bool check_in_blacklist(std::string &pl_name);
-	void add_plugin(std::string &pl_name);
+
+	bool is_blacklisted(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
+	void add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
+
+	//! fcu link termination callback
 	void terminate_cb();
+	//! start mavlink app on USB
 	void startup_px4_usb_quirk(void);
 	void log_connect_change(bool connected);
 };
