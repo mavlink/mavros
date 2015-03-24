@@ -11,3 +11,6 @@ plugin_blacklist:
 - px4flow
 - 'vision_*'
 - visualization
+
+plugin_whitelist: []
+#- 'sys_*'
