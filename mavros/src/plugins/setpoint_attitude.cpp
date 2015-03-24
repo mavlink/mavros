@@ -48,14 +48,14 @@ public:
 
 		uas = &uas_;
 
-		sp_nh.param("attitude/listen_twist", listen_twist, true);
-		sp_nh.param("attitude/pose_with_covariance", pose_with_covariance, false);
+		sp_nh.param("listen_twist", listen_twist, true);
+		sp_nh.param("pose_with_covariance", pose_with_covariance, false);
 		// may be used to mimic attitude of an object, a gesture, etc.
-		sp_nh.param("attitude/listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("attitude/frame_id", frame_id, "local_origin");
-		sp_nh.param<std::string>("attitude/child_frame_id", child_frame_id, "attitude");
-		sp_nh.param("attitude/tf_rate_limit", tf_rate, 10.0);
-		sp_nh.param("attitude/reverse_throttle", reverse_throttle, false);
+		sp_nh.param("listen_tf", listen_tf, false);
+		sp_nh.param<std::string>("frame_id", frame_id, "local_origin");
+		sp_nh.param<std::string>("child_frame_id", child_frame_id, "attitude");
+		sp_nh.param("tf_rate_limit", tf_rate, 10.0);
+		sp_nh.param("reverse_throttle", reverse_throttle, false);
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("attitude", "Listen to desired attitude transform " << frame_id
