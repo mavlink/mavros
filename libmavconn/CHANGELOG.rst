@@ -2,6 +2,18 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2015-03-24)
+-------------------
+* readme: fix links
+* license `#242 <https://github.com/vooon/mavros/issues/242>`_: add license files
+* license `#242 <https://github.com/vooon/mavros/issues/242>`_: update libmavconn headers
+* libmavconn: Fix logging (now all connections use same log name)
+  Before i got several names: URL, serial0..
+  But severity only changes if i changed first registered tag (URL).
+  Now all debug will be enabled by one tag: `ros.rosconsole_bridge.mavconn`
+  And because its only used for debugging that was ok.
+* Contributors: Vladimir Ermakov
+
 0.10.2 (2015-02-25)
 -------------------
 * mavconn: fix readme link

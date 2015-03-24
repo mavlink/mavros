@@ -2,6 +2,25 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2015-03-24)
+-------------------
+* extras: vision_pose `#247 <https://github.com/vooon/mavros/issues/247>`_: rename topic
+* extras: launch `#257 <https://github.com/vooon/mavros/issues/257>`_: use white list for px4flow.
+  Also updates config `#211 <https://github.com/vooon/mavros/issues/211>`_.
+* uncrustify and fix `#207 <https://github.com/vooon/mavros/issues/207>`_
+* uncrustify extras
+* package: update lic
+* license `#242 <https://github.com/vooon/mavros/issues/242>`_: update mavros_extras headers
+* plugin api `#241 <https://github.com/vooon/mavros/issues/241>`_: move diag updater to UAS.
+* plugin api `#241 <https://github.com/vooon/mavros/issues/241>`_: remove global private node handle.
+  Now all plugins should define their local node handle (see dummy.cpp).
+  Also partially does `#233 <https://github.com/vooon/mavros/issues/233>`_ (unmerge setpoint topic namespace).
+* plugin api `#241 <https://github.com/vooon/mavros/issues/241>`_: remove `get_name()`
+* Add BSD license option `#220 <https://github.com/vooon/mavros/issues/220>`_
+* uncrustify: mocap plugin
+* Switched from mavlink VICON_POSITION_ESTIMATE to ATT_POS_MOCAP.
+* Contributors: Tony Baltovski, Vladimir Ermakov
+
 0.10.2 (2015-02-25)
 -------------------
 * launch: Fix vim modelines `#213 <https://github.com/vooon/mavros/issues/213>`_
