@@ -25,7 +25,6 @@ namespace mavplugin {
 /**
  * @brief Local position plugin.
  * Publish local position to TF and PositionStamped,
- * send local position and visual position estimates to FCU.
  */
 class LocalPositionPlugin : public MavRosPlugin {
 public:
