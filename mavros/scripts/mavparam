@@ -33,19 +33,15 @@ def get_param_file_io(args):
 
 
 def do_load(args):
-    rospy.init_node("mavparam", anonymous=True)
-
     param_file = get_param_file_io(args)
     with args.file:
-        param_transfered = param_set_list(param_file.read(args.file), args.mavros_ns)
+        param_transfered = param_set_list(param_file.read(args.file))
 
     print_if(args.verbose, "Parameters transfered:", param_transfered)
 
 
 def do_dump(args):
-    rospy.init_node("mavparam", anonymous=True)
-
-    param_received, param_list = param_get_all(args.force, args.mavros_ns)
+    param_received, param_list = param_get_all(args.force)
     print_if(args.verbose, "Parameters received:", param_received)
 
     param_file = get_param_file_io(args)
@@ -54,20 +50,16 @@ def do_dump(args):
 
 
 def do_get(args):
-    rospy.init_node("mavparam", anonymous=True)
-
-    print(param_get(args.param_id, args.mavros_ns))
+    print(param_get(args.param_id))
 
 
 def do_set(args):
-    rospy.init_node("mavparam", anonymous=True)
-
     if '.' in args.value:
         val = float(args.value)
     else:
         val = int(args.value)
 
-    print(param_set(args.param_id, val, args.mavros_ns))
+    print(param_set(args.param_id, val))
 
 
 def main():
@@ -101,6 +93,9 @@ def main():
     set_args.add_argument('value', help="new value")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavparam", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
     args.func(args)
 
 

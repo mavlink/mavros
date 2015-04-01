@@ -1,4 +1,4 @@
-# -*- python -*-
+# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
 # Copyright 2014 Vladimir Ermakov.
@@ -10,6 +10,7 @@
 import csv
 import time
 import rospy
+import mavros
 
 from mavros.srv import ParamPull, ParamPush, ParamGet, ParamSet
 
@@ -77,9 +78,6 @@ class QGroundControlParam(ParamFile):
         lineterminator = '\n'
         quoting = csv.QUOTE_NONE
 
-    def __init__(self, args):
-        self.mavros_ns = args.mavros_ns
-
     def read(self, file_):
         to_numeric = lambda x: float(x) if '.' in x else int(x)
 
@@ -101,8 +99,8 @@ class QGroundControlParam(ParamFile):
             else:
                 raise ValueError("unknown type: " + repr(type(x)))
 
-        sysid = rospy.get_param(self.mavros_ns + "/target_system_id", 1)
-        compid = rospy.get_param(self.mavros_ns + "/target_component_id", 1)
+        sysid = rospy.get_param(mavros.get_topic('target_system_id'), 1)
+        compid = rospy.get_param(mavros.get_topic('target_component_id'), 1)
 
         writer = csv.writer(file_, self.CSVDialect)
         writer.writerow(("# NOTE: " + time.strftime("%d.%m.%Y %T"), ))
@@ -121,10 +119,10 @@ def param_ret_value(ret):
         return 0
 
 
-def param_get(param_id, ns="/mavros"):
+def param_get(param_id):
     try:
-        get_cl = rospy.ServiceProxy(ns + "/param/get", ParamGet)
-        ret = get_cl(param_id=param_id)
+        get = rospy.ServiceProxy(mavros.get_topic('param', 'get'), ParamGet)
+        ret = get(param_id=param_id)
     except rospy.ServiceException as ex:
         raise IOError(str(ex))
 
@@ -134,7 +132,7 @@ def param_get(param_id, ns="/mavros"):
     return param_ret_value(ret)
 
 
-def param_set(param_id, value, ns="/mavros"):
+def param_set(param_id, value):
     if isinstance(value, float):
         val_f = value
         val_i = 0
@@ -143,11 +141,10 @@ def param_set(param_id, value, ns="/mavros"):
         val_i = value
 
     try:
-        set_cl = rospy.ServiceProxy(ns + "/param/set", ParamSet)
-        ret = set_cl(param_id=param_id,
+        set = rospy.ServiceProxy(mavros.get_topic('param', 'set'), ParamSet)
+        ret = set(param_id=param_id,
                      integer=val_i,
-                     real=val_f
-                     )
+                     real=val_f)
     except rospy.ServiceException as ex:
         raise IOError(str(ex))
 
@@ -157,32 +154,32 @@ def param_set(param_id, value, ns="/mavros"):
     return param_ret_value(ret)
 
 
-def param_get_all(force_pull=False, ns="/mavros"):
+def param_get_all(force_pull=False):
     try:
-        pull_cl = rospy.ServiceProxy(ns + "/param/pull", ParamPull)
-        ret = pull_cl(force_pull=force_pull)
+        pull = rospy.ServiceProxy(mavros.get_topic('param', 'pull'), ParamPull)
+        ret = pull(force_pull=force_pull)
     except rospy.ServiceException as ex:
         raise IOError(str(ex))
 
     if not ret.success:
         raise IOError("Request failed.")
 
-    params = rospy.get_param(ns + "/param")
+    params = rospy.get_param(mavros.get_topic('param'))
 
     return (ret.param_received,
             sorted((Parameter(k, v) for k, v in params.iteritems()),
                    cmp=lambda x, y: cmp(x.param_id, y.param_id))
             )
 
-def param_set_list(param_list, ns="/mavros"):
+def param_set_list(param_list):
     # 1. load parameters to parameter server
     for p in param_list:
-        rospy.set_param(ns + "/param/" + p.param_id, p.param_value)
+        rospy.set_param(mavros.get_topic('param', p.param_id), p.param_value)
 
     # 2. request push all
     try:
-        push_cl = rospy.ServiceProxy(ns + "/param/push", ParamPush)
-        ret = push_cl()
+        push = rospy.ServiceProxy(mavros.get_topic('param', 'push'), ParamPush)
+        ret = push()
     except rospy.ServiceException as ex:
         raise IOError(str(ex))
 
