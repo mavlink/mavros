@@ -13,14 +13,13 @@ import argparse
 import threading
 
 import rospy
+import mavros
 from mavros.utils import *
 from mavros.msg import State
 from mavros.srv import SetMode, StreamRate, StreamRateRequest
 
 
 def do_mode(args):
-    rospy.init_node("mavsys", anonymous=True)
-
     base_mode = 0
     custom_mode = ''
 
@@ -38,13 +37,13 @@ def do_mode(args):
 
     if custom_mode != '' and not custom_mode.isdigit():
         # with correct custom mode we can wait until it changes
-        sub = rospy.Subscriber(args.mavros_ns + "/state", State, state_cb)
+        sub = rospy.Subscriber(mavros.get_topic('state'), State, state_cb)
     else:
         done_evt.set()
 
     try:
-        mode_cl = rospy.ServiceProxy(args.mavros_ns + "/set_mode", SetMode)
-        ret = mode_cl(base_mode=base_mode, custom_mode=custom_mode)
+        set_mode = rospy.ServiceProxy(mavros.get_topic('set_mode'), SetMode)
+        ret = set_mode(base_mode=base_mode, custom_mode=custom_mode)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -57,13 +56,11 @@ def do_mode(args):
 
 
 def do_rate(args):
-    rospy.init_node("mavsys", anonymous=True)
-
+    set_rate = rospy.ServiceProxy(mavros.get_topic('set_stream_rate'), StreamRate)
     def _test_set_rate(rate_arg, id):
         if rate_arg is not None:
             try:
-                rate_cl = rospy.ServiceProxy(args.mavros_ns + "/set_stream_rate", StreamRate)
-                rate_cl(stream_id=id, message_rate=rate_arg, on_off=(rate_arg != 0))
+                set_rate(stream_id=id, message_rate=rate_arg, on_off=(rate_arg != 0))
             except rospy.ServiceException as ex:
                 fault(ex)
 
@@ -108,6 +105,9 @@ def main():
     rate_args.add_argument('--stream-id', type=int, nargs=2, metavar=('id', 'rate'), help="any stream")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavsys", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
     args.func(args)
 
 
