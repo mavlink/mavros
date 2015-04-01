@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
 # Copyright 2014 Vladimir Ermakov.
@@ -11,17 +12,18 @@ from __future__ import print_function
 
 import argparse
 
+import os
 import rospy
+import mavros
 from mavros.utils import *
-from mavros.ftp import *
+from mavros.nuttx_crc32 import *
+from mavros import ftp
 
 
 def do_list(args):
-    rospy.init_node("mavftp", anonymous=True)
-
-    for ent in ftp_listdir(args.path, args.mavros_ns):
+    for ent in ftp.listdir(args.path):
         n = ent.name
-        if ent.type == FileEntry.TYPE_DIRECTORY:
+        if ent.type == ftp.FileEntry.TYPE_DIRECTORY:
             n += '/'
         else:
             n += '\t{}'.format(ent.size)
@@ -30,50 +32,55 @@ def do_list(args):
 
 
 def do_cat(args):
-    rospy.init_node("mavftp", anonymous=True)
+    local_crc = 0
 
-    with FTPFile(args.path, 'r', args.mavros_ns) as fd:
-        data = fd.read(fd.size)
-        sys.stdout.write(data)
+    with ftp.open(args.path, 'r') as fd:
+        while True:
+            buf = fd.read(1024)
+            if len(buf) == 0:
+                break
+
+            local_crc = nuttx_crc32(buf, local_crc)
+            sys.stdout.write(buf)
+
+    remote_crc = ftp.checksum(args.path)
+    if local_crc != remote_crc:
+        raise IOError("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
 
 
 def do_remove(args):
-    rospy.init_node("mavftp", anonymous=True)
-
-    ftp_unlink(args.path, args.mavros_ns)
+    ftp.unlink(args.path)
 
 
 def do_reset(args):
-    rospy.init_node("mavftp", anonymous=True)
-
-    ftp_reset_server(args.mavros_ns)
+    ftp.reset_server()
 
 
 def do_mkdir(args):
-    rospy.init_node("mavftp", anonymous=True)
-
-    ftp_mkdir(args.path, args.mavros_ns)
+    ftp.mkdir(args.path)
 
 
 def do_rmdir(args):
-    rospy.init_node("mavftp", anonymous=True)
-
-    ftp_rmdir(args.path, args.mavros_ns)
+    ftp.rmdir(args.path)
 
 
 def do_upload(args):
-    rospy.init_node("mavftp", anonymous=True)
-
     mode = 'cw' if args.no_overwrite else 'w'
+    local_crc = 0
 
     with args.file as from_fd:
-        with FTPFile(args.path, mode) as to_fd:
+        with ftp.open(args.path, mode) as to_fd:
             while True:
                 buf = from_fd.read(1024)
                 if len(buf) == 0:
-                    break;
+                    break
 
+                local_crc = nuttx_crc32(buf, local_crc)
                 to_fd.write(buf)
+
+    remote_crc = ftp.checksum(args.path)
+    if local_crc != remote_crc:
+        raise IOError("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
 
 
 def main():
@@ -113,6 +120,9 @@ def main():
     reset_args.set_defaults(func=do_reset)
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavftp", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
     args.func(args)
 
 
