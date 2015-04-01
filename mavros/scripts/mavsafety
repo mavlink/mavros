@@ -12,15 +12,15 @@ from __future__ import print_function
 import argparse
 
 import rospy
+import mavros
 from mavros.utils import *
 from geometry_msgs.msg import PolygonStamped, Point32
-from mavros.srv import CommandBool
+from mavros import command
 
 
 def _arm(args, state):
     try:
-        arming_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/arming", CommandBool)
-        ret = arming_cl(value=state)
+        ret = command.arming(value=state)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -32,20 +32,18 @@ def _arm(args, state):
 
 
 def do_arm(args):
-    rospy.init_node("mavsafety", anonymous=True)
     _arm(args, True)
 
 
 def do_disarm(args):
-    rospy.init_node("mavsafety", anonymous=True)
     _arm(args, False)
 
 
 _ONCE_DELAY = 3
 def do_safetyarea(args):
-    pub = rospy.Publisher(args.mavros_ns + "/safety_area/set", PolygonStamped,
+    set_topic = mavros.get_topic('safety_area', 'set')
+    pub = rospy.Publisher(set_topic, PolygonStamped,
                           queue_size=10, latch=True)
-    rospy.init_node("mavsafety", anonymous=True)
 
     poly = PolygonStamped()
     poly.header.frame_id = 'mavsafety'
@@ -56,9 +54,9 @@ def do_safetyarea(args):
     ]
 
     pub.publish(poly)
+    # XXX maybe not worked
     print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ",
-             args.mavros_ns + "/safety_area/set")
+             "Mavros not started, nobody subcsribes to ", set_topic)
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
@@ -86,6 +84,10 @@ def main():
                                   required=True, help="Corner 2")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavsafety", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
+    command.setup_services()
     args.func(args)
 
 

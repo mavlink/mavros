@@ -13,8 +13,9 @@ import argparse
 import threading
 
 import rospy
+import mavros
 from mavros.utils import *
-from mavros.srv import CommandLong, CommandInt, CommandHome, CommandTOL, CommandBool
+from mavros import command
 from sensor_msgs.msg import NavSatFix
 
 
@@ -26,11 +27,8 @@ def _check_ret(args, ret):
 
 
 def do_long(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        long_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command", CommandLong)
-        ret = long_cl(command=args.command, confirmation=int(args.confirmation),
+        ret = command.long(command=args.command, confirmation=int(args.confirmation),
                       param1=args.param1,
                       param2=args.param2,
                       param3=args.param3,
@@ -44,11 +42,8 @@ def do_long(args):
 
 
 def do_int(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        int_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command_int", CommandInt)
-        ret = int_cl(frame=args.frame, command=args.command,
+        ret = command.int(frame=args.frame, command=args.command,
                      current=int(args.current),
                      autocontinue=int(args.autocontinue),
                      param1=args.param1,
@@ -68,11 +63,8 @@ def do_int(args):
 
 
 def do_set_home(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        set_home_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/set_home", CommandHome)
-        ret = set_home_cl(current_gps=args.current_gps,
+        ret = command.set_home(current_gps=args.current_gps,
                           latitude=args.latitude,
                           longitude=args.longitude,
                           altitude=args.altitude)
@@ -83,11 +75,8 @@ def do_set_home(args):
 
 
 def do_takeoff(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
-        ret = takeoff_cl(min_pitch=args.min_pitch,
+        ret = command.takeoff(min_pitch=args.min_pitch,
                          yaw=args.yaw,
                          latitude=args.latitude,
                          longitude=args.longitude,
@@ -99,11 +88,8 @@ def do_takeoff(args):
 
 
 def do_land(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
-        ret = land_cl(min_pitch=0.0,
+        ret = command.land(min_pitch=0.0,
                       yaw=args.yaw,
                       latitude=args.latitude,
                       longitude=args.longitude,
@@ -115,8 +101,8 @@ def do_land(args):
 
 
 def _find_gps_topic(args, op_name):
-    global_fix = args.mavros_ns + "/global_position/global"
-    gps_fix = args.mavros_ns + "/fix"
+    global_fix = mavros.get_topic('global_position', 'global')
+    gps_fix = mavros.get_topic('gps', 'fix')
 
     topics = rospy.get_published_topics()
     # need find more elegant way
@@ -135,8 +121,6 @@ def _find_gps_topic(args, op_name):
 
 
 def do_takeoff_cur_gps(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     done_evt = threading.Event()
     def fix_cb(fix):
         print("Taking-off from current coord: Lat:", fix.latitude,
@@ -145,8 +129,7 @@ def do_takeoff_cur_gps(args):
                  "Yaw:", args.yaw, "Pitch angle:", args.min_pitch)
 
         try:
-            takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
-            ret = takeoff_cl(min_pitch=args.min_pitch,
+            ret = command.takeoff(min_pitch=args.min_pitch,
                              yaw=args.yaw,
                              latitude=fix.latitude,
                              longitude=fix.longitude,
@@ -167,8 +150,6 @@ def do_takeoff_cur_gps(args):
 
 
 def do_land_cur_gps(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     done_evt = threading.Event()
     def fix_cb(fix):
         print("Landing on current coord: Lat:", fix.latitude,
@@ -177,8 +158,7 @@ def do_land_cur_gps(args):
                  "Yaw:", args.yaw)
 
         try:
-            land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
-            ret = land_cl(min_pitch=0.0,
+            ret = command.land(min_pitch=0.0,
                           yaw=args.yaw,
                           latitude=fix.latitude,
                           longitude=fix.longitude,
@@ -199,11 +179,8 @@ def do_land_cur_gps(args):
 
 
 def do_guided_en(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        guided_enable_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
-        ret = guided_enable_cl(value=args.enable)
+        ret = command.guided_enable(value=args.enable)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -287,6 +264,10 @@ def main():
     guided_group.add_argument('-d', '--disable', dest='enable', action='store_false', help="disable OFFBOARD mode")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavcmd", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
+    command.setup_services()
     args.func(args)
 
 
