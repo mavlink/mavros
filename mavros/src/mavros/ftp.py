@@ -194,7 +194,7 @@ def mkdir(path):
 
 def rmdir(path):
     """Remove directory :path:"""
-    rmdir_ = _get_proxy('rmdi', FileRemoveDir)
+    rmdir_ = _get_proxy('rmdir', FileRemoveDir)
     try:
         ret = rmdir_(dir_path=path)
     except rospy.ServiceException as ex:
