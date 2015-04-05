@@ -1,0 +1,140 @@
+#!/usr/bin/env python
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2015 Vladimir Ermakov.
+#
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
+
+from __future__ import print_function
+
+import os.path
+import sys
+import argparse
+
+import rospy
+import mavros
+
+from mavros import ftp
+from stat import S_IFDIR, S_IFREG
+
+try:
+    from fuse import FUSE, FuseOSError, Operations, \
+            fuse_get_context, ENOENT
+except ImportError:
+    print("Fuse wrapper module not found. Please install fusepy: pip install fusepy", file=os.stderr)
+    os.exit(1)
+
+
+class RosLoggingMixIn(object):
+    """
+    Same as fuse.LoggingMixIn but uses rospy logging
+    """
+
+    def __call__(self, op, path, *args):
+        rospy.logdebug('-> %s %s %s', op, path, repr(args))
+        ret = '[Unhandled Exception]'
+        try:
+            ret = getattr(self, op)(path, *args)
+            return ret
+        except OSError, e:
+            ret = str(e)
+            raise
+        finally:
+            rospy.logdebug('<- %s %s', op, repr(ret))
+
+
+class MavFtp(RosLoggingMixIn, Operations):
+    """
+    MAVLink-FTP wrapper for mavros ftp plugin.
+
+    Based on fusepy SFTP example.
+    """
+
+    def __init__(self):
+        self._attr_cache = {}
+
+    @staticmethod
+    def _make_attr(file_entry):
+        """
+        Make stat attr dict from FileEntry object.
+
+        Item mode are set for PX4:
+            - / : ROMFS (read only)
+            - /fs/microsd : MicroSD FAT (read/write)
+        """
+
+        uid, gid, pid = fuse_get_context()
+
+        dir_mode, file_mode = S_IFDIR | 0555, S_IFREG | 0444
+        if file_entry.name.startswith('/fs/microsd'):
+            dir_mode, file_mode = S_IFDIR | 0755, S_IFREG | 0644
+
+        return {
+            'st_mode': file_mode if file_entry.type == ftp.FileEntry.TYPE_FILE else dir_mode,
+            'st_size': file_entry.size,
+            'st_uid': uid,
+            'st_gid': gid,
+        }
+
+    def create(self, path, mode):
+        return ftp.open(path, 'cw')
+
+    def destroy(self, path):
+        pass
+
+    def getattr(self, path, fh=None):
+        # XXX add chaching!
+        if path == '/':
+            uid, gid, pid = fuse_get_context()
+            return {
+                'st_mode': S_IFDIR | 0755,
+                'st_uid': uid,
+                'st_gid': gid,
+            }
+
+        try:
+            fn = os.path.basename(path)
+            for it in ftp.listdir(os.path.dirname(path)):
+                if it.name == fn:
+                    return MavFtp._make_attr(it)
+
+            raise FuseOSError(ENOENT)
+        except IOError as e:
+            raise OSError(e.errno, e.message)
+
+    def readdir(self, path, fh):
+        try:
+            l = ftp.listdir(path)
+            return ['.', '..'] + [it.name for it in l if it not in ('.', '..')]
+        except IOError as e:
+            raise OSError(e.errno, e.message)
+
+    def mkdir(self, path, mode):
+        try:
+            ftp.mkdir(path)
+        except IOError as e:
+            raise OSError(e.errno, e.message)
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description="FUSE for MAVLink-FTP mavros plugin")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-d', '--debug', action='store_true', help="libfuse debug")
+    parser.add_argument('-f', '--foreground', action='store_true', help="don't daemonize")
+    parser.add_argument('path', type=str, help="mount point")
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavftp_fuse", log_level=rospy.DEBUG if args.verbose else None)
+    mavros.set_namespace(args.mavros_ns)
+
+    fuse = FUSE(MavFtp(), args.path, foreground=args.foreground, debug=args.debug)
+
+
+if __name__ == '__main__':
+    main()
+
