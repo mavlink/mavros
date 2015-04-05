@@ -45,6 +45,16 @@ class RosLoggingMixIn(object):
             rospy.logdebug('<- %s %s', op, repr(ret))
 
 
+def ioerror_to_oserror(foo):
+    def decorator(*args, **kvargs):
+        try:
+            return foo(*args, **kvargs)
+        except IOError as e:
+            raise OSError(e.errno, e.message)
+
+    return decorator
+
+
 class MavFtp(RosLoggingMixIn, Operations):
     """
     MAVLink-FTP wrapper for mavros ftp plugin.
@@ -80,12 +90,14 @@ class MavFtp(RosLoggingMixIn, Operations):
 
     def _update_attr_cache(self, dir_path, fe_list):
         rospy.logdebug("update attr cache for: %s", ', '.join((os.path.join(dir_path, fe.name) for fe in fe_list)))
+        self.fsyncdir(dir_path)
         for fe in fe_list:
             key = os.path.join(dir_path, fe.name)
             self._attr_cache[key] = MavFtp._make_attr(dir_path, fe)
 
-    def create(self, path, mode):
-        return ftp.open(path, 'cw')
+    def _update_attr_size(self, path, size):
+        if self._attr_cache.has_key(path):
+            self._attr_cache[path]['st_size'] = size
 
     def destroy(self, path):
         pass
@@ -103,7 +115,6 @@ class MavFtp(RosLoggingMixIn, Operations):
             return self._attr_cache[path]
 
         try:
-            fn = os.path.basename(path)
             dir_path = os.path.dirname(path)
             fe_list = ftp.listdir(dir_path)
             self._update_attr_cache(dir_path, fe_list)
@@ -113,31 +124,60 @@ class MavFtp(RosLoggingMixIn, Operations):
         except KeyError:
             raise FuseOSError(ENOENT)
 
+    @ioerror_to_oserror
     def readdir(self, path, fh):
-        try:
-            fe_list = ftp.listdir(path)
-            self._update_attr_cache(path, fe_list)
-            return ['.', '..'] + [fe.name for fe in fe_list if fe not in ('.', '..')]
-        except IOError as e:
-            raise OSError(e.errno, e.message)
+        fe_list = ftp.listdir(path)
+        self._update_attr_cache(path, fe_list)
+        return ['.', '..'] + [fe.name for fe in fe_list if fe not in ('.', '..')]
 
-    def fsyncdir(self, path, datasync, fh):
+    def fsyncdir(self, path, datasync=None, fh=None):
         for k in self._attr_cache.keys():
             if k.startswith(path):
                 del self._attr_cache[k]
 
+    @ioerror_to_oserror
     def mkdir(self, path, mode):
-        try:
-            ftp.mkdir(path)
-        except IOError as e:
-            raise OSError(e.errno, e.message)
+        ftp.mkdir(path)
 
+    @ioerror_to_oserror
     def rmdir(self, path):
-        self.fsyncdir(path, None, None)
-        try:
-            ftp.rmdir(path)
-        except IOError as e:
-            raise OSError(e.errno, e.message)
+        self.fsyncdir(path)
+        ftp.rmdir(path)
+
+    @ioerror_to_oserror
+    def create(self, path, mode):
+        with ftp.open(path, 'cw'):
+            return 0
+
+    @ioerror_to_oserror
+    def read(self, path, size, offset, fh):
+        with ftp.open(path, 'r') as fd:
+            self._update_attr_size(path, fd.size)
+            fd.seek(offset)
+            return str(fd.read(size))
+
+    @ioerror_to_oserror
+    def write(self, path, data, offset, fh):
+        with ftp.open(path, 'w') as fd:
+            fd.seek(offset)
+            fd.write(data)
+            self._update_attr_size(path, fd.size)
+            return len(data)
+
+    @ioerror_to_oserror
+    def unlink(self, path):
+        self.fsyncdir(path)
+        ftp.unlink(path)
+
+    @ioerror_to_oserror
+    def rename(self, old, new):
+        self.fsyncdir(old)
+        ftp.rename(old, new)
+
+    @ioerror_to_oserror
+    def truncate(self, path, length, fh=None):
+        with ftp.open(path, 'w') as fd:
+            fd.truncate(length)
 
 
 def main():
@@ -145,7 +185,6 @@ def main():
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     parser.add_argument('-d', '--debug', action='store_true', help="libfuse debug")
-    parser.add_argument('-f', '--foreground', action='store_true', help="don't daemonize")
     parser.add_argument('path', type=str, help="mount point")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
@@ -153,7 +192,7 @@ def main():
     rospy.init_node("mavftp_fuse", log_level=rospy.DEBUG if args.verbose else None)
     mavros.set_namespace(args.mavros_ns)
 
-    fuse = FUSE(MavFtp(), args.path, foreground=args.foreground, debug=args.debug)
+    fuse = FUSE(MavFtp(), args.path, foreground=True, debug=args.debug)
 
 
 if __name__ == '__main__':
