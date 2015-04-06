@@ -2,6 +2,14 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.1 (2015-04-06)
+-------------------
+* mavftpfuse `#129 <https://github.com/vooon/mavros/issues/129>`_: done!
+  Fix `#129 <https://github.com/vooon/mavros/issues/129>`_.
+* mavftpfuse `#129 <https://github.com/vooon/mavros/issues/129>`_: cache file attrs
+* mavftpfuse `#129 <https://github.com/vooon/mavros/issues/129>`_: initial import
+* Contributors: Vladimir Ermakov
+
 0.11.0 (2015-03-24)
 -------------------
 * extras: vision_pose `#247 <https://github.com/vooon/mavros/issues/247>`_: rename topic

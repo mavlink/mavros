@@ -2,6 +2,22 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.1 (2015-04-06)
+-------------------
+* scripts `#262 <https://github.com/vooon/mavros/issues/262>`_: update mavwp
+* scripts `#262 <https://github.com/vooon/mavros/issues/262>`_: mavsetp, new module mavros.setpoint
+* mavftpfuse `#129 <https://github.com/vooon/mavros/issues/129>`_: cache file attrs
+* mavparam `#262 <https://github.com/vooon/mavros/issues/262>`_: use get_topic()
+* mavsys `#262 <https://github.com/vooon/mavros/issues/262>`_: use get_topic()
+* mavcmd `#262 <https://github.com/vooon/mavros/issues/262>`_: use get_topic()
+* mavftp `#263 <https://github.com/vooon/mavros/issues/263>`_, `#262 <https://github.com/vooon/mavros/issues/262>`_: use crc32 checksums
+* python `#262 <https://github.com/vooon/mavros/issues/262>`_: add get_topic()
+* Update local_position.cpp
+  removed irritating comment
+* readme: add short glossary
+* plugin: setpoint_attitude: remove unneded ns
+* Contributors: Marcel Stuettgen, Vladimir Ermakov
+
 0.11.0 (2015-03-24)
 -------------------
 * plugin: setpoint_position `#247 <https://github.com/vooon/mavros/issues/247>`_: rename topic
@@ -100,7 +116,7 @@ Changelog for package mavros
   As of ArduCopter 3.2, APM supports position and velocity setpoints via SET_POSITION_TARGET_LOCAL_NED.
 * plugin: setpoint_velocity: Fix vx setpoint
   vz should have been vx.
-* Contributors: Clay McClure, Marcel Stuettgen, Marcel Stüttgen, Vladimir Ermakov
+* Contributors: Clay McClure, Marcel Stuettgen, Vladimir Ermakov
 
 0.10.2 (2015-02-25)
 -------------------
