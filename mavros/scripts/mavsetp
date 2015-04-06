@@ -13,11 +13,11 @@ import argparse
 import math
 
 import rospy
+import mavros
+
+from mavros import command, setpoint as sp
 from mavros.utils import *
-from std_msgs.msg import Header
-from geometry_msgs.msg import TwistStamped, PoseStamped, Vector3, Vector3Stamped, Point, Quaternion
 from tf.transformations import quaternion_from_euler
-from mavros.srv import CommandBool
 
 _ONCE_DELAY = 3
 
@@ -25,7 +25,7 @@ _ONCE_DELAY = 3
 def publish_once(args, pub, msg):
     pub.publish(msg)
     rospy.sleep(0.2)
-    enable_offboard(args)
+    enable_offboard()
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
@@ -35,48 +35,41 @@ def publish_once(args, pub, msg):
                  "Mavros not started, nobody subcsribes to", pub.name)
 
 
-def enable_offboard(args):
+def enable_offboard():
     try:
-        guided_enable_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
-        guided_enable_cl(value=True)
+        command.guided_enable(value=True)
     except rospy.ServiceException as ex:
         fault(ex)
 
 
 def do_local_pos(args):
-    pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped,
-                          queue_size=10, latch=True)
-    rospy.init_node("mavsetp", anonymous=True)
+    pub = sp.get_pub_position_local(queue_size=10, latch=True)
 
-    pos = PoseStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    pos.pose.position = Point(x=args.position[0], y=args.position[1], z=args.position[2])
+    pos = sp.PoseStamped(header=sp.Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
+    pos.pose.position = sp.Point(x=args.position[0], y=args.position[1], z=args.position[2])
 
     yaw = math.radians(args.position[3]) if args.degrees else args.position[3]
     q = quaternion_from_euler(0, 0, yaw)
-    pos.pose.orientation = Quaternion(*q)
+    pos.pose.orientation = sp.Quaternion(*q)
 
     publish_once(args, pub, pos)
 
 
 def do_local_vel(args):
-    pub = rospy.Publisher(args.mavros_ns + "/setpoint/cmd_vel", TwistStamped,
-                          queue_size=10, latch=True)
-    rospy.init_node("mavsetp", anonymous=True)
+    pub = sp.get_pub_velocity_cmd_vel(queue_size=10, latch=True)
 
-    vel = TwistStamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    vel.twist.linear = Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
-    vel.twist.angular = Vector3(z=args.velocity[3])
+    vel = sp.TwistStamped(header=sp.Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
+    vel.twist.linear = sp.Vector3(x=args.velocity[0], y=args.velocity[1], z=args.velocity[2])
+    vel.twist.angular = sp.Vector3(z=args.velocity[3])
 
     publish_once(args, pub, vel)
 
 
 def do_local_accel(args):
-    pub = rospy.Publisher(args.mavros_ns + "/setpoint/accel", Vector3Stamped,
-                          queue_size=10, latch=True)
-    rospy.init_node("mavsetp", anonymous=True)
+    pub = sp.get_pub_accel_accel(queue_size=10, latch=True)
 
-    vel = Vector3Stamped(header=Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
-    vel.vector = Vector3(x=args.acceleration[0], y=args.acceleration[1], z=args.acceleration[2])
+    vel = sp.Vector3Stamped(header=sp.Header(frame_id='mavsetp', stamp=rospy.get_rostime()))
+    vel.vector = sp.Vector3(x=args.acceleration[0], y=args.acceleration[1], z=args.acceleration[2])
 
     publish_once(args, pub, vel)
 
@@ -114,6 +107,11 @@ def main():
                              metavar=('afx', 'afy', 'afz'), help="Linear acceleration/force")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavsetp", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
+    command.setup_services()
+
     args.func(args)
 
 
