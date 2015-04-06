@@ -10,6 +10,9 @@
 import csv
 import time
 
+import rospy
+import mavros
+
 from mavros.msg import Waypoint, WaypointList
 from mavros.srv import WaypointPull, WaypointPush, WaypointClear, \
     WaypointSetCurrent, WaypointGOTO
@@ -115,3 +118,30 @@ class QGroundControlWP(WaypointFile):
                 w.z_alt,
                 int(w.autocontinue)
             ))
+
+
+
+pull = None
+push = None
+clear = None
+set_current = None
+goto = None
+
+
+def subscribe_waypoints(cb, **kvargs):
+    return rospy.Subscriber(mavros.get_topic('mission', 'waypoints'), WaypointList, cb, **kvargs)
+
+
+def setup_services():
+    global pull, push, clear, set_current, goto
+
+    def _get_proxy(name, type):
+        return rospy.ServiceProxy(mavros.get_topic('mission', name), type)
+
+    pull = _get_proxy('pull', WaypointPull)
+    push = _get_proxy('push', WaypointPush)
+    clear = _get_proxy('clear', WaypointClear)
+    set_current = _get_proxy('set_current', WaypointSetCurrent)
+    goto = _get_proxy('goto', WaypointGOTO)
+
+setup_services()
