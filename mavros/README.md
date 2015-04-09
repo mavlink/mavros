@@ -120,6 +120,7 @@ Then use regular `catkin_make` for build and install.
 Notes:
   - since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlwiki].
   - since 2014-11-02 hydro support splitted to branch hydro-devel, add `--version hydro-devel` to wstool set.
+  - in ROS Jade instead of `catkin_make` better use `catkin build`.
 
 *Important*. The current implementation of mavlink does not allow to select dialect in run-time,
 so mavros package (and all plugin packages) have compile-time option `MAVLINK_DIALECT`, default is 'aurdupilotmega'.
@@ -131,20 +132,25 @@ If you want change dialect you can:
 3. Use `cmake-gui build`, better: it creates drop-down list with all available dialects
    plus it will be used in next `catkin_make edit_cache`.
    Ubuntu: `sudo apt-get install cmake-qt-gui`
+4. With `catkin`: `catkin config --cmake-args -DMAVLINK_DIALECT=pixhawk`
 
 
 ### Installing ros-\*-mavlink from source
 
 If rosdep could not install mavlink library, you could install it from source:
 
-    mkdir -p ~/ros_deps/src
+    mkdir -p ~/ros_deps/src # different workspace for building pure cmake packages by catkin_make_isolated
     cd ~/ros_deps
     rosinstall_generator mavlink | tee rosinstall.yaml
     wstool init src ./rosinstall.yaml
     catkin_make_isolated --install-space $ROSINSTALL --install -DCMAKE_BUILD_TYPE=Release
 
 $ROSINSTALL must be writable for user or you can add `sudo -s` to last command.
-Or you could build debian package by pulling right bloom branch from [mavlink-gbp-release][mlgbp]
+
+
+### Building ros-\*-mavlink debian package
+
+You could build debian package by pulling right bloom branch from [mavlink-gbp-release][mlgbp]
 (common naming: `debian/<rosdistro>/<osdistro>/<package>`) using `dh binary`.
 
     cd /tmp
@@ -152,6 +158,19 @@ Or you could build debian package by pulling right bloom branch from [mavlink-gb
     cd mavlink-gbp-release
     fakeroot dh binary
     # deb will be in /tmp
+
+
+### Installing ros-\*-mavlink from source with catkin tool
+
+In ROS Jade there new tool named `catkin`. It is more powerful and more comfortable that `catkin_make`.
+With that tool you may place mavlink package in your mavros workspace.
+
+    cd ~catkin_ws/src # your mavros workspace
+    rosinstall_generator mavlink | tee /tmp/rosinstall.yaml
+    wstool merge /tmp/rosinstall.yaml
+    wstool up -j4
+    catkin clean --all # not nessessary
+    catkin build # also will build mavros
 
 
 Contributing
