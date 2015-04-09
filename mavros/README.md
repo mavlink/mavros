@@ -190,7 +190,7 @@ Glossary
 
   - *GCS* — Ground Control Station
   - *FCU* — Flight Control Unit (aka *FC*)
-  - *OBS* — OnBoard Computer (your odroid or raspberry)
+  - *OBC* — OnBoard Computer (your odroid or raspberry)
 
 
 Links
