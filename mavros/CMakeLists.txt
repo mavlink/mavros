@@ -218,6 +218,7 @@ add_dependencies(gcs_bridge
   mavros_generate_messages_cpp
 )
 target_link_libraries(gcs_bridge
+  mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

@@ -38,7 +38,7 @@ public:
 private:
 	mavconn::MAVConnInterface::WeakPtr weak_link;
 	unsigned int last_drop_count;
-	bool is_connected;
+	std::atomic<bool> is_connected;
 };
 };	// namespace mavros
 

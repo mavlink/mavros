@@ -15,6 +15,7 @@
 #include <ros/console.h>
 
 #include <mavros/utils.h>
+#include <mavros/mavlink_diag.h>
 #include <mavconn/interface.h>
 
 #include <mavros/Mavlink.h>
@@ -155,6 +156,8 @@ int main(int argc, char *argv[])
 	ros::NodeHandle priv_nh("~");
 	ros::NodeHandle mavlink_nh("/mavlink");
 	ros::Subscriber mavlink_sub;
+	diagnostic_updater::Updater updater;
+	mavros::MavlinkDiag gcs_link_diag("GCS bridge");
 	image_transport::ImageTransport it(mavlink_nh);
 	image_transport::Subscriber image_sub;
 
@@ -164,6 +167,8 @@ int main(int argc, char *argv[])
 
 	try {
 		gcs_link = MAVConnInterface::open_url(gcs_url);
+		gcs_link_diag.set_mavconn(gcs_link);
+		gcs_link_diag.set_connection_status(true);
 	}
 	catch (mavconn::DeviceError &ex) {
 		ROS_FATAL("GCS: %s", ex.what());
@@ -179,6 +184,17 @@ int main(int argc, char *argv[])
 				.maxDatagramSize(1024));
 
 	image_sub = it.subscribe("gcs_image", 1, image_cb);
+
+	// setup updater
+	updater.setHardwareID(gcs_url);
+	updater.add(gcs_link_diag);
+
+	// updater spinner
+	auto diag_timer = priv_nh.createTimer(ros::Duration(1.0),
+			[&](const ros::TimerEvent &evt) {
+				updater.update();
+			});
+	diag_timer.start();
 
 	ros::spin();
 	return 0;
