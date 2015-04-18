@@ -494,11 +494,17 @@ private:
 							"Param list may be truncated.");
 			}
 
+			// trying to avoid endless rerequest loop
+			// Issue #276
+			bool it_is_first_requested = parameters_missing_idx.front() == pmsg.param_index;
+
 			// remove idx for that message
 			parameters_missing_idx.remove(pmsg.param_index);
 
 			// in receiving mode we use param_rx_retries for LIST and PARAM
-			param_rx_retries = RETRIES_COUNT;
+			if (it_is_first_requested)
+				param_rx_retries = RETRIES_COUNT;
+
 			restart_timeout_timer();
 
 			/* index starting from 0, receivig done */
