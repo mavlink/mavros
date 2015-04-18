@@ -152,8 +152,8 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 		return;
 	}
 
-	logDebug(PFXd "send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
-			channel, message->msgid, message->len, sysid, compid);
+	logDebug(PFXd "send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+			channel, message->msgid, message->len, sysid, compid, message->seq);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
@@ -185,10 +185,10 @@ void MAVConnTCPClient::async_receive_end(error_code error, size_t bytes_transfer
 	}
 
 	iostat_rx_add(bytes_transferred);
-	for (ssize_t i = 0; i < bytes_transferred; i++) {
+	for (size_t i = 0; i < bytes_transferred; i++) {
 		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			logDebug(PFXd "recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
-					channel, message.msgid, message.len, message.sysid, message.compid);
+			logDebug(PFXd "recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+					channel, message.msgid, message.len, message.sysid, message.compid, message.seq);
 
 			/* emit */ message_received(&message, message.sysid, message.compid);
 		}
