@@ -38,6 +38,7 @@ include_directories(
 
 ## Declare a cpp library
 add_library(mavconn
+  src/mavlink_helpers.cpp
   src/interface.cpp
   src/serial.cpp
   src/udp.cpp

@@ -22,6 +22,19 @@
 # warning "No MAVLINK_DIALECT specified. fallback to " MAVLINK_DIALECT
 #endif
 
+/* Do not use default inlined mavlink functions!
+ * Issue #269
+ */
+#define MAVLINK_GET_CHANNEL_STATUS
+#define MAVLINK_GET_CHANNEL_BUFFER
+
+// include common types before dialect only needed for these overridden functions
+#include <mavlink/v1.0/mavlink_types.h>
+
+// definition in mavlink_helpers.cpp
+extern "C" mavlink_status_t* mavlink_get_channel_status(uint8_t chan);
+extern "C" mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan);
+
 /* C preprocessor could not compare strings directly
  * See: http://c-faq.com/cpp/ifstrcmp.html
  */
