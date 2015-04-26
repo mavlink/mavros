@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.2 (2015-04-26)
+-------------------
+* gcs bridge fix `#277 <https://github.com/vooon/mavros/issues/277>`_: add link diagnostics
+* Contributors: Vladimir Ermakov
+
 0.11.1 (2015-04-06)
 -------------------
 * mavftpfuse `#129 <https://github.com/vooon/mavros/issues/129>`_: done!

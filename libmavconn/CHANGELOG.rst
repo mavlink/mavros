@@ -2,6 +2,14 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.2 (2015-04-26)
+-------------------
+* libmavconn fix `#269 <https://github.com/vooon/mavros/issues/269>`_: override default channel getter helpers
+  Default inlined mavlink getter helpers cause issue, when each
+  plugin has it's own sequence number.
+* libmavconn `#269 <https://github.com/vooon/mavros/issues/269>`_: add seq number to debug
+* Contributors: Vladimir Ermakov
+
 0.11.1 (2015-04-06)
 -------------------
 

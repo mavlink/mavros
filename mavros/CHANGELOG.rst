@@ -2,6 +2,17 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.2 (2015-04-26)
+-------------------
+* plugin: param fix `#276 <https://github.com/vooon/mavros/issues/276>`_: add check before reset request downcounter.
+  If on MR request FCU responses param with different `param_index`
+  do not reset repeat counter to prevent endless loop.
+* gcs bridge fix `#277 <https://github.com/vooon/mavros/issues/277>`_: add link diagnostics
+* plugin: setpoint_position `#273 <https://github.com/vooon/mavros/issues/273>`_: add quirk for PX4.
+* readme: fir glossary misprint
+* readme: add notes about catkin tool
+* Contributors: Vladimir Ermakov
+
 0.11.1 (2015-04-06)
 -------------------
 * scripts `#262 <https://github.com/vooon/mavros/issues/262>`_: update mavwp
