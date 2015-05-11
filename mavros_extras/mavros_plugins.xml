@@ -1,4 +1,7 @@
 <library path="lib/libmavros_extras">
+	<class name="distance_sensor" type="mavplugin::DistanceSensorPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
+	</class>
 	<class name="px4flow" type="mavplugin::PX4FlowPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
 	</class>
