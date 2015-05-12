@@ -210,7 +210,7 @@ private:
 	}
 
 	/**
-	 * Send laser rangefinder distance sensor data to FCU.
+	 * Send sonar rangefinder distance sensor data to FCU.
 	 */
 	void send_sonar_dist_sensor_data(const ros::Time &stamp, uint16_t min_distance,
 			uint16_t max_distance, uint16_t current_distance) {
