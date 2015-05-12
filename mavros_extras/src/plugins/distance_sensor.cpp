@@ -206,7 +206,7 @@ private:
 				current_distance,
 				0, laser_id,
 				laser_orientation,
-				sonar_covariance);
+				laser_covariance);
 	}
 
 	/**
@@ -220,7 +220,7 @@ private:
 				current_distance,
 				1, sonar_id,
 				sonar_orientation,
-				laser_covariance);
+				sonar_covariance);
 	}
 
 	/* -*- callbacks -*- */
