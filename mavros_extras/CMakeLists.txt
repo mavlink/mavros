@@ -53,8 +53,7 @@ include(MavrosMavlink)
 add_message_files(
   FILES
   OpticalFlowRad.msg
-  LaserDistanceSensor.msg
-  SonarDistanceSensor.msg
+  DistanceSensor.msg
 )
 
 ## Generate services in the 'srv' folder
