@@ -17,10 +17,50 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
+#include <unordered_map>
+
 #include <sensor_msgs/Range.h>
-#include <std_msgs/Float32.h>
 
 namespace mavplugin {
+
+class DistanceSensorPlugin;
+
+/**
+ * @brief Distance sensor mapping storage item
+ */
+class DistanceSensorItem {
+public:
+	typedef boost::shared_ptr<DistanceSensorItem> Ptr;
+
+	DistanceSensorItem() :
+		owner(nullptr),
+		is_subscriber(false),
+		sensor_id(0),
+		orientation(-1),
+		covariance(0)
+	{ }
+
+	// params
+	bool is_subscriber;	//!< this item is subscriber, else publisher
+	uint8_t sensor_id; 	//!< id of sensor
+	int orientation;	//!< check orientation of sensor if != -1
+	int covariance;		//!< in centimeters, current specification
+	std::string frame_id;	//!< frame id for send
+
+	// topic handle
+	ros::Publisher pub;
+	ros::Subscriber sub;
+	std::string topic_name;
+
+	DistanceSensorPlugin *owner;
+
+	void range_cb(const sensor_msgs::Range::ConstPtr &msg) {
+		ROS_WARN("CB XXXX TODO: id: %d, owner: %p", sensor_id, owner);
+	}
+
+	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
+};
+
 /**
  * @brief Distance sensor plugin
  *
@@ -38,42 +78,23 @@ public:
 	{
 		uas = &uas_;
 
-		dist_nh.param("input/rangefinder_type", rangefinder_type, 0);	// default = laser (0)
-
-		//Default sonar rangefinder is Maxbotix HRLV-EZ4
-		dist_nh.param("input/sonar_fov", sonar_fov, 0.0);	// TODO
-		dist_nh.param("input/sonar_min_range", sonar_min_range, 30.0); // in centimeters
-		dist_nh.param("input/sonar_max_range", sonar_max_range, 500.0); 
-
-		dist_nh.param("output/sonar_covariance", sonar_covariance, 0);
-		dist_nh.param("output/sonar_orientation", sonar_orientation, 0); // TODO: Check!
-		dist_nh.param("output/sonar_id", sonar_id, 1);
-
-		//Default laser rangefinder is PulsedLight LIDAR Lite (fixed orientation)
-		dist_nh.param("input/laser_fov", laser_fov, 0.0);	// TODO
-		dist_nh.param("input/laser_min_range", laser_min_range, 1.0); // in centimeters
-		dist_nh.param("input/laser_max_range", laser_max_range, 4000.0);
-
-		dist_nh.param("output/laser_covariance", laser_covariance, 0);
-		dist_nh.param("output/laser_orientation", sonar_orientation, 0); // TODO: Check!
-		dist_nh.param("output/laser_id", laser_id, 0);
-
-		// TODO:
-		//		- variable topic advertising depending on the rangefinder type;
-		//		this means incrementing number of the publishing topics and change their names according to
-		//		the the type of sensor and its ID. p.e.: topics "laser_distance_1", "laser_distance_2"...
-
-		if (rangefinder_type == 0) {
-			dist_laser_in_pub = dist_nh.advertise<sensor_msgs::Range>("laser_distance", 10);
-			dist_cov_in_pub = dist_nh.advertise<std_msgs::Float32>("laser_covariance", 10);
+		XmlRpc::XmlRpcValue map_dict;
+		if (!dist_nh.getParam("", map_dict)) {
+			ROS_WARN_NAMED("distance_sensor", "DS: plugin not configured!");
+			return;
 		}
-		else if (rangefinder_type == 1) {
-			dist_sonar_in_pub = dist_nh.advertise<sensor_msgs::Range>("sonar_distance", 10);
-			dist_cov_in_pub = dist_nh.advertise<std_msgs::Float32>("sonar_covariance", 10);
-		}
-		else ROS_ERROR_NAMED("rangefinder_type", "Invalid rangefinder type! Valid values are 0 (laser) and 1 (ultrasound)!");
 
-		dist_sensor_sub = dist_nh.subscribe("range_data", 10, &DistanceSensorPlugin::dist_sensor_cb, this);
+		ROS_ASSERT(map_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
+
+		for (auto &pair : map_dict) {
+			ROS_DEBUG_NAMED("distance_sensor", "DS: initializing mapping for %s", pair.first.c_str());
+			auto it = DistanceSensorItem::create_item(this, pair.first);
+
+			if (it)
+				sensor_map[it->sensor_id] = it;
+			else
+				ROS_ERROR_NAMED("distance_sensor", "DS: bad config for %s", pair.first.c_str());
+		}
 	}
 
 	const message_map get_rx_handlers() {
@@ -83,34 +104,12 @@ public:
 	}
 
 private:
+	friend class DistanceSensorItem;
+
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
-	/* -*- variables -*- */
-	//std::string frame_id;
-
-	double sonar_fov;
-	double laser_fov;
-	double sonar_min_range;
-	double laser_min_range;
-	double sonar_max_range;
-	double laser_max_range;
-
-	int rangefinder_type;
-	int sonar_id;
-	int laser_id;
-	int sonar_orientation;
-	int laser_orientation;
-	int sonar_covariance;
-	int laser_covariance;
-
-	/* -*- publishers -*- */
-	ros::Publisher dist_laser_in_pub;
-	ros::Publisher dist_sonar_in_pub;
-	ros::Publisher dist_cov_in_pub;
-
-	/* -*- subscribers -*- */
-	ros::Subscriber dist_sensor_sub;
+	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
@@ -138,6 +137,7 @@ private:
 	 * Receive distance sensor data from FCU.
 	 */
 	void handle_distance_sensor(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+#if 0
 		mavlink_distance_sensor_t dist_sen;
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
@@ -193,6 +193,7 @@ private:
 			dist_sonar_in_pub.publish(dist_sonar_msg);
 		}
 		
+#endif
 	}
 
 	// XXX TODO: Calculate laser/sonar covariances (both in FCU and on the ROS app side)
@@ -200,7 +201,7 @@ private:
 	// XXX TODO: Determine FOV for Sonar
 
 	// XXX TODO: Use the sensors orientation to publish a transform between the sensor frame and FCU frame
-
+#if 0
 	/**
 	 * Send laser rangefinder distance sensor data to FCU.
 	 */
@@ -244,7 +245,63 @@ private:
 					req->range * 1E-2);
 		}
 	}
+#endif
 };
+
+DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
+{
+	auto p = boost::make_shared<DistanceSensorItem>();
+
+	ros::NodeHandle pnh(owner->dist_nh, topic_name);
+
+	p->owner = owner;
+	p->topic_name = topic_name;
+
+	// load and parse params
+	// first decide pub/sub type
+	pnh.param("subscriber", p->is_subscriber, false);
+
+	// sensor id
+	int id;
+	if (!pnh.getParam("id", id)) {
+		ROS_ERROR_NAMED("distance_sensor", "DS: %s: `id` not set!", topic_name.c_str());
+		return nullptr;
+	}
+	p->sensor_id = id;
+
+	if (!p->is_subscriber) {
+		// publisher params
+		// frame_id is required
+		if (!pnh.getParam("frame_id", p->frame_id)) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
+			return nullptr;
+		}
+
+		// orientation check
+		pnh.param("orientation", p->orientation, -1);
+	}
+	else {
+		// subscriber params
+		// orientation is required
+		if (!pnh.getParam("orientation", p->orientation)) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
+			return nullptr;
+		}
+
+		// optional
+		pnh.param("covariance", p->covariance, 0);
+	}
+
+	// create topic handles
+	if (!p->is_subscriber)
+		p->pub = owner->dist_nh.advertise<sensor_msgs::Range>(topic_name, 10);
+	else
+		p->sub = owner->dist_nh.subscribe(topic_name, 10, &DistanceSensorItem::range_cb, p.get());
+
+	return p;
+}
+
+
 };	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::DistanceSensorPlugin, mavplugin::MavRosPlugin)
