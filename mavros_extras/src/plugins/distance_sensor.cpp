@@ -219,7 +219,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	int id;
 	if (!pnh.getParam("id", id)) {
 		ROS_ERROR_NAMED("distance_sensor", "DS: %s: `id` not set!", topic_name.c_str());
-		return nullptr;
+		p.reset(); return p; // return nullptr cause a bug with gcc 4.6
 	}
 	p->sensor_id = id;
 
@@ -228,7 +228,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// frame_id is required
 		if (!pnh.getParam("frame_id", p->frame_id)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
-			return nullptr;
+			p.reset(); return p; // nullptr
 		}
 
 		// orientation check
@@ -239,7 +239,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// orientation is required
 		if (!pnh.getParam("orientation", p->orientation)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
-			return nullptr;
+			p.reset(); return p; // nullptr
 		}
 
 		// optional
