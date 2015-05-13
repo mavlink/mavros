@@ -54,10 +54,7 @@ public:
 
 	DistanceSensorPlugin *owner;
 
-	void range_cb(const sensor_msgs::Range::ConstPtr &msg) {
-		ROS_WARN("CB XXXX TODO: id: %d, owner: %p", sensor_id, owner);
-	}
-
+	void range_cb(const sensor_msgs::Range::ConstPtr &msg);
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
 };
 
@@ -137,116 +134,73 @@ private:
 	 * Receive distance sensor data from FCU.
 	 */
 	void handle_distance_sensor(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-#if 0
 		mavlink_distance_sensor_t dist_sen;
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
-		std_msgs::Header header;
-		header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
-
-		sensor_msgs::Range range;
-		std::string sensor_id = std::to_string(dist_sen.id);
-
-		auto covariance = boost::make_shared<std_msgs::Float32>();
-
-		if (dist_sen.type == 0) {	// Laser type
-			auto dist_laser_msg = boost::make_shared<sensor_msgs::Range>();
-
-			header.frame_id = "laser" + sensor_id + "_distance";
-
-			dist_laser_msg->header = header;
-			dist_laser_msg->radiation_type = sensor_msgs::Range::INFRARED; // FIXME: request LASER type for Range.msg
-			dist_laser_msg->field_of_view = laser_fov;
-			dist_laser_msg->min_range = laser_min_range;
-			dist_laser_msg->max_range = laser_max_range;
-			dist_laser_msg->range = dist_sen.current_distance;
-
-			//dist_laser_msg->orientation = dist_sen.orientation;
-
-			if (dist_sen.covariance != 0.0)
-				covariance->data = dist_sen.covariance;
-			else
-				covariance->data = laser_covariance;
-
-			dist_laser_in_pub.publish(dist_laser_msg);
+		auto it = sensor_map.find(dist_sen.id);
+		if (it == sensor_map.end()) {
+			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
+					dist_sen.id, dist_sen.type, dist_sen.orientation);
+			return;
 		}
 
-		else if (dist_sen.type == 1) {	// Sonar type
-			auto dist_sonar_msg = boost::make_shared<sensor_msgs::Range>();
+		auto sensor = it->second;
 
-			header.frame_id = "sonar" + sensor_id + "_distance";
-
-			dist_sonar_msg->header = header;
-			dist_sonar_msg->radiation_type = sensor_msgs::Range::ULTRASOUND;
-			dist_sonar_msg->field_of_view = sonar_fov;
-			dist_sonar_msg->min_range = sonar_min_range;
-			dist_sonar_msg->max_range = sonar_max_range;
-			dist_sonar_msg->range = dist_sen.current_distance;
-
-			//dist_sonar_msg->orientation = dist_sen.orientation;
-
-			if (dist_sen.covariance != 0.0)
-				covariance->data = dist_sen.covariance;
-			else
-				covariance->data = laser_covariance;
-
-			dist_sonar_in_pub.publish(dist_sonar_msg);
+		if (sensor->is_subscriber) {
+			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+					"DS: %s (id %d) is subscriber, but i got sensor data for that id form FCU",
+					sensor->topic_name.c_str(), sensor->sensor_id);
+			return;
 		}
-		
-#endif
-	}
 
-	// XXX TODO: Calculate laser/sonar covariances (both in FCU and on the ROS app side)
-
-	// XXX TODO: Determine FOV for Sonar
-
-	// XXX TODO: Use the sensors orientation to publish a transform between the sensor frame and FCU frame
-#if 0
-	/**
-	 * Send laser rangefinder distance sensor data to FCU.
-	 */
-	void send_laser_dist_sensor_data(const ros::Time &stamp, uint16_t min_distance,
-			uint16_t max_distance, uint16_t current_distance) {
-		distance_sensor(stamp.toNSec() / 1000000,
-				min_distance,
-				max_distance,
-				current_distance,
-				0, laser_id,
-				laser_orientation,
-				laser_covariance);
-	}
-
-	/**
-	 * Send sonar rangefinder distance sensor data to FCU.
-	 */
-	void send_sonar_dist_sensor_data(const ros::Time &stamp, uint16_t min_distance,
-			uint16_t max_distance, uint16_t current_distance) {
-		distance_sensor(stamp.toNSec() / 1000000,
-				min_distance,
-				max_distance,
-				current_distance,
-				1, sonar_id,
-				sonar_orientation,
-				sonar_covariance);
-	}
-
-	/* -*- callbacks -*- */
-	void dist_sensor_cb(const sensor_msgs::Range::ConstPtr &req) {
-		if (req->radiation_type == 0) {
-			send_sonar_dist_sensor_data(req->header.stamp,
-					req->min_range * 1E-2,
-					req->max_range * 1E-2,
-					req->range * 1E-2);
+		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
+			ROS_WARN_THROTTLE_NAMED(10, "distance_sensor",
+					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
+					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
 		}
-		else if (req->radiation_type == 1) {
-			send_laser_dist_sensor_data(req->header.stamp,
-					req->min_range * 1E-2,
-					req->max_range * 1E-2,
-					req->range * 1E-2);
-		}
+
+
+		auto range = boost::make_shared<sensor_msgs::Range>();
+
+		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
+		range->header.frame_id = sensor->frame_id;
+
+		range->min_range = 0.0; // XXX TODO
+		range->max_range = 0.0;
+		range->field_of_view = 0.0;
+
+		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER)
+			range->radiation_type = sensor_msgs::Range::INFRARED;
+		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND)
+			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
+		else
+			range->radiation_type = 0; // XXX !!!!
+
+		sensor->pub.publish(range);
 	}
-#endif
 };
+
+void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
+{
+	uint8_t type = 0;
+
+	// current mapping, may change later
+	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
+		type = MAV_DISTANCE_SENSOR_LASER;
+	else if (msg->radiation_type == sensor_msgs::Range::ULTRASOUND)
+		type = MAV_DISTANCE_SENSOR_ULTRASOUND;
+
+	owner->distance_sensor(
+			msg->header.stamp.toNSec() / 1000000,
+			msg->min_range / 1E-2,
+			msg->max_range / 1E-2,
+			msg->range / 1E-2,
+			type,
+			sensor_id,
+			orientation,
+			covariance);
+}
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
 {
