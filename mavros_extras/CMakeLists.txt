@@ -107,6 +107,7 @@ include_directories(
 
 ## Declare a cpp library
 add_library(mavros_extras
+  src/plugins/distance_sensor.cpp
   src/plugins/px4flow.cpp
   src/plugins/image_pub.cpp
   src/plugins/mocap_pose_estimate.cpp
