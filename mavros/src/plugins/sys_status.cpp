@@ -396,6 +396,9 @@ public:
 		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
+
+		// init state topic
+		publish_disconnection();
 	}
 
 	const message_map get_rx_handlers() {
@@ -497,6 +500,17 @@ private:
 					int(severity) << "): " << text);
 			break;
 		};
+	}
+
+	void publish_disconnection() {
+		auto state_msg = boost::make_shared<mavros::State>();
+		state_msg->header.stamp = ros::Time::now();
+		state_msg->connected = false;
+		state_msg->armed = false;
+		state_msg->guided = false;
+		state_msg->mode = "";
+
+		state_pub.publish(state_msg);
 	}
 
 	/* -*- message handlers -*- */
@@ -683,14 +697,7 @@ private:
 
 		if (!connected) {
 			// publish connection change
-			auto state_msg = boost::make_shared<mavros::State>();
-			state_msg->header.stamp = ros::Time::now();
-			state_msg->connected = false;
-			state_msg->armed = false;
-			state_msg->guided = false;
-			state_msg->mode = "";
-
-			state_pub.publish(state_msg);
+			publish_disconnection();
 		}
 	}
 
