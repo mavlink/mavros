@@ -22,7 +22,6 @@
 #include <sensor_msgs/Range.h>
 
 namespace mavplugin {
-
 class DistanceSensorPlugin;
 
 /**
@@ -42,7 +41,7 @@ public:
 
 	// params
 	bool is_subscriber;	//!< this item is subscriber, else publisher
-	uint8_t sensor_id; 	//!< id of sensor
+	uint8_t sensor_id;	//!< id of sensor
 	int orientation;	//!< check orientation of sensor if != -1
 	int covariance;		//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
@@ -166,7 +165,7 @@ private:
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = 0.0; // XXX TODO
+		range->min_range = 0.0;	// XXX TODO
 		range->max_range = 0.0;
 		range->field_of_view = 0.0;
 
@@ -175,7 +174,7 @@ private:
 		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND)
 			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
 		else
-			range->radiation_type = 0; // XXX !!!!
+			range->radiation_type = 0;	// XXX !!!!
 
 		sensor->pub.publish(range);
 	}
@@ -219,7 +218,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	int id;
 	if (!pnh.getParam("id", id)) {
 		ROS_ERROR_NAMED("distance_sensor", "DS: %s: `id` not set!", topic_name.c_str());
-		p.reset(); return p; // return nullptr cause a bug with gcc 4.6
+		p.reset(); return p;	// return nullptr cause a bug with gcc 4.6
 	}
 	p->sensor_id = id;
 
@@ -228,7 +227,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// frame_id is required
 		if (!pnh.getParam("frame_id", p->frame_id)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
-			p.reset(); return p; // nullptr
+			p.reset(); return p;	// nullptr
 		}
 
 		// orientation check
@@ -239,7 +238,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// orientation is required
 		if (!pnh.getParam("orientation", p->orientation)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
-			p.reset(); return p; // nullptr
+			p.reset(); return p;	// nullptr
 		}
 
 		// optional
@@ -254,8 +253,6 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 	return p;
 }
-
-
 };	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::DistanceSensorPlugin, mavplugin::MavRosPlugin)
