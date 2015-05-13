@@ -102,6 +102,12 @@ public:
 	 */
 	boost::signals2::signal<void(bool)> sig_connection_changed;
 
+	/**
+	 * @brief Return connection status
+	 */
+	inline bool is_connected() {
+		return connected;
+	}
 
 	/* -*- HEARTBEAT data -*- */
 

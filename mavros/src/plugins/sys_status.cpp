@@ -392,7 +392,7 @@ public:
 		// subscribe to connection event
 		uas->sig_connection_changed.connect(boost::bind(&SystemStatusPlugin::connection_cb, this, _1));
 
-		state_pub = nh.advertise<mavros::State>("state", 10);
+		state_pub = nh.advertise<mavros::State>("state", 10, true);
 		batt_pub = nh.advertise<mavros::BatteryStatus>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
@@ -519,6 +519,7 @@ private:
 		// build state message after updating uas
 		auto state_msg = boost::make_shared<mavros::State>();
 		state_msg->header.stamp = ros::Time::now();
+		state_msg->connected = true;
 		state_msg->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 		state_msg->guided = hb.base_mode & MAV_MODE_FLAG_GUIDED_ENABLED;
 		state_msg->mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
@@ -678,6 +679,18 @@ private:
 			UAS_DIAG(uas).removeByName(mem_diag.getName());
 			UAS_DIAG(uas).removeByName(hwst_diag.getName());
 			ROS_DEBUG_NAMED("sys", "SYS: APM extra diagnostics disabled.");
+		}
+
+		if (!connected) {
+			// publish connection change
+			auto state_msg = boost::make_shared<mavros::State>();
+			state_msg->header.stamp = ros::Time::now();
+			state_msg->connected = false;
+			state_msg->armed = false;
+			state_msg->guided = false;
+			state_msg->mode = "";
+
+			state_pub.publish(state_msg);
 		}
 	}
 
