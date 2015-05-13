@@ -17,8 +17,8 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/DistanceSensor.h>
 #include <sensor_msgs/Range.h>
+#include <std_msgs/Float32.h>
 
 namespace mavplugin {
 /**
@@ -38,8 +38,6 @@ public:
 	{
 		uas = &uas_;
 
-		dist_nh.param<std::string>("frame_id", frame_id, "distance_sensor");
-
 		dist_nh.param("input/rangefinder_type", rangefinder_type, 0);	// default = laser (0)
 
 		//Default sonar rangefinder is Maxbotix HRLV-EZ4
@@ -47,7 +45,7 @@ public:
 		dist_nh.param("input/sonar_min_range", sonar_min_range, 30.0); // in centimeters
 		dist_nh.param("input/sonar_max_range", sonar_max_range, 500.0); 
 
-		dist_nh.param("sonar_covariance", sonar_covariance, 0);
+		dist_nh.param("output/sonar_covariance", sonar_covariance, 0);
 		dist_nh.param("output/sonar_orientation", sonar_orientation, 0); // TODO: Check!
 		dist_nh.param("output/sonar_id", sonar_id, 1);
 
@@ -56,7 +54,7 @@ public:
 		dist_nh.param("input/laser_min_range", laser_min_range, 1.0); // in centimeters
 		dist_nh.param("input/laser_max_range", laser_max_range, 4000.0);
 
-		dist_nh.param("laser_covariance", laser_covariance, 0);
+		dist_nh.param("output/laser_covariance", laser_covariance, 0);
 		dist_nh.param("output/laser_orientation", sonar_orientation, 0); // TODO: Check!
 		dist_nh.param("output/laser_id", laser_id, 0);
 
@@ -65,10 +63,14 @@ public:
 		//		this means incrementing number of the publishing topics and change their names according to
 		//		the the type of sensor and its ID. p.e.: topics "laser_distance_1", "laser_distance_2"...
 
-		if (rangefinder_type == 0)
-			dist_laser_in_pub = dist_nh.advertise<mavros_extras::DistanceSensor>("laser_distance", 10);
-		else if (rangefinder_type == 1)
-			dist_sonar_in_pub = dist_nh.advertise<mavros_extras::DistanceSensor>("sonar_distance", 10);
+		if (rangefinder_type == 0) {
+			dist_laser_in_pub = dist_nh.advertise<sensor_msgs::Range>("laser_distance", 10);
+			dist_cov_in_pub = dist_nh.advertise<std_msgs::Float32>("laser_covariance", 10);
+		}
+		else if (rangefinder_type == 1) {
+			dist_sonar_in_pub = dist_nh.advertise<sensor_msgs::Range>("sonar_distance", 10);
+			dist_cov_in_pub = dist_nh.advertise<std_msgs::Float32>("sonar_covariance", 10);
+		}
 		else ROS_ERROR_NAMED("rangefinder_type", "Invalid rangefinder type! Valid values are 0 (laser) and 1 (ultrasound)!");
 
 		dist_sensor_sub = dist_nh.subscribe("range_data", 10, &DistanceSensorPlugin::dist_sensor_cb, this);
@@ -85,7 +87,7 @@ private:
 	UAS *uas;
 
 	/* -*- variables -*- */
-	std::string frame_id;
+	//std::string frame_id;
 
 	double sonar_fov;
 	double laser_fov;
@@ -105,6 +107,7 @@ private:
 	/* -*- publishers -*- */
 	ros::Publisher dist_laser_in_pub;
 	ros::Publisher dist_sonar_in_pub;
+	ros::Publisher dist_cov_in_pub;
 
 	/* -*- subscribers -*- */
 	ros::Subscriber dist_sensor_sub;
@@ -140,53 +143,56 @@ private:
 
 		std_msgs::Header header;
 		header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
-		header.frame_id = frame_id;
 
 		sensor_msgs::Range range;
+		std::string sensor_id = std::to_string(dist_sen.id);
+
+		auto covariance = boost::make_shared<std_msgs::Float32>();
 
 		if (dist_sen.type == 0) {	// Laser type
-			auto dist_laser_msg = boost::make_shared<mavros_extras::DistanceSensor>();
+			auto dist_laser_msg = boost::make_shared<sensor_msgs::Range>();
+
+			header.frame_id = "laser" + sensor_id + "_distance";
 
 			dist_laser_msg->header = header;
+			dist_laser_msg->radiation_type = sensor_msgs::Range::INFRARED; // FIXME: request LASER type for Range.msg
+			dist_laser_msg->field_of_view = laser_fov;
+			dist_laser_msg->min_range = laser_min_range;
+			dist_laser_msg->max_range = laser_max_range;
+			dist_laser_msg->range = dist_sen.current_distance;
 
-			dist_laser_msg->range.header = header;
-			dist_laser_msg->range.radiation_type = sensor_msgs::Range::INFRARED; // FIXME: request LASER type for Range.msg
-			dist_laser_msg->range.field_of_view = laser_fov;
-			dist_laser_msg->range.min_range = laser_min_range;
-			dist_laser_msg->range.max_range = laser_max_range;
-			dist_laser_msg->range.range = dist_sen.current_distance;
+			//dist_laser_msg->orientation = dist_sen.orientation;
 
-			dist_laser_msg->type = dist_sen.type;
-			dist_laser_msg->id = dist_sen.id;
-			dist_laser_msg->orientation = dist_sen.orientation;
-
-			if (dist_laser_msg->covariance != 0.0) dist_laser_msg->covariance = dist_sen.covariance;
-			else dist_laser_msg->covariance = laser_covariance;
+			if (dist_sen.covariance != 0.0)
+				covariance->data = dist_sen.covariance;
+			else
+				covariance->data = laser_covariance;
 
 			dist_laser_in_pub.publish(dist_laser_msg);
 		}
 
 		else if (dist_sen.type == 1) {	// Sonar type
-			auto dist_sonar_msg = boost::make_shared<mavros_extras::DistanceSensor>();
+			auto dist_sonar_msg = boost::make_shared<sensor_msgs::Range>();
+
+			header.frame_id = "sonar" + sensor_id + "_distance";
 
 			dist_sonar_msg->header = header;
+			dist_sonar_msg->radiation_type = sensor_msgs::Range::ULTRASOUND;
+			dist_sonar_msg->field_of_view = sonar_fov;
+			dist_sonar_msg->min_range = sonar_min_range;
+			dist_sonar_msg->max_range = sonar_max_range;
+			dist_sonar_msg->range = dist_sen.current_distance;
 
-			dist_sonar_msg->range.header = header;
-			dist_sonar_msg->range.radiation_type = sensor_msgs::Range::ULTRASOUND;
-			dist_sonar_msg->range.field_of_view = sonar_fov;
-			dist_sonar_msg->range.min_range = sonar_min_range;
-			dist_sonar_msg->range.max_range = sonar_max_range;
-			dist_sonar_msg->range.range = dist_sen.current_distance;
+			//dist_sonar_msg->orientation = dist_sen.orientation;
 
-			dist_sonar_msg->type = dist_sen.type;
-			dist_sonar_msg->id = dist_sen.id;
-			dist_sonar_msg->orientation = dist_sen.orientation;
-
-			if (dist_sonar_msg->covariance != 0.0) dist_sonar_msg->covariance = dist_sen.covariance;
-			else dist_sonar_msg->covariance = sonar_covariance;
+			if (dist_sen.covariance != 0.0)
+				covariance->data = dist_sen.covariance;
+			else
+				covariance->data = laser_covariance;
 
 			dist_sonar_in_pub.publish(dist_sonar_msg);
 		}
+		
 	}
 
 	// XXX TODO: Calculate laser/sonar covariances (both in FCU and on the ROS app side)
