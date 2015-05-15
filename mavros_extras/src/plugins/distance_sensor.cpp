@@ -38,7 +38,8 @@ public:
 		sensor_id(0),
 		orientation(-1),
 		covariance(0),
-		cov_is_def(false)
+		cov_is_def(false),
+		data_index(0)
 	{ }
 
 	// params
