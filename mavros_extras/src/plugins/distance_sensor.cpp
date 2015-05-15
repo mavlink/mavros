@@ -14,6 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <vector>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -42,8 +43,6 @@ public:
 	// params
 	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
 	uint8_t sensor_id;		//!< id of the sensor
-	double min_range;		//!< minimum range of the sensor
-	double max_range;		//!< maximum range of the sensor
 	double field_of_view;	//!< FOV of the sensor
 	int orientation;		//!< check orientation of sensor if != -1
 	int covariance;			//!< in centimeters, current specification
@@ -58,6 +57,34 @@ public:
 
 	void range_cb(const sensor_msgs::Range::ConstPtr &msg);
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
+
+private:
+	std::vector<float> data;
+	bool cov_is_def = false;
+	/**
+	 * Calculate measurements variance to send to the FCU.
+	 */
+	float calculate_variance(float range) {
+		data.push_back(range);
+
+	    float average, variance, sum = 0, sum_ = 0;
+
+	    /*  Compute the sum of all elements */
+	    for (auto i:data)
+	    {
+	        sum = sum + data.at(i);
+	    }
+	    average = sum / (float)data.size();
+
+	    /*  Compute the variance*/
+	    for (auto i:data)
+	    {
+	        sum_ = sum_ + pow((data.at(i) - average), 2);
+	    }
+	    variance = sum_ / (float)data.size();
+
+	    return variance;
+	}
 };
 
 /**
@@ -108,10 +135,7 @@ private:
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
-	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
-
-	static int readings;	//!< number of sensor readings
-	static float data[];	
+	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;	
 
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
@@ -145,23 +169,22 @@ private:
 		auto it = sensor_map.find(dist_sen.id);
 
 		if (it == sensor_map.end()) {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
 					dist_sen.id, dist_sen.type, dist_sen.orientation);
 			return;
 		}
 
 		auto sensor = it->second;
-
 		if (sensor->is_subscriber) {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
 					sensor->topic_name.c_str(), sensor->sensor_id);
 			return;
 		}
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
 					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
 		}
@@ -171,8 +194,8 @@ private:
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = sensor->min_range;
-		range->max_range = sensor->max_range;
+		range->min_range = dist_sen.min_distance;
+		range->max_range = dist_sen.max_distance;
 		range->field_of_view = sensor->field_of_view;
 
 		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER){
@@ -182,7 +205,7 @@ private:
 			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
 		}
 		else {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
 					sensor->topic_name.c_str(), dist_sen.type);
 			return;
@@ -192,38 +215,15 @@ private:
 
 		sensor->pub.publish(range);
 	}
-
-	/**
-	 * Calculate measurements variance to send to the FCU.
-	 */
-	float calculate_variance(float range) {
-		data[readings] = range;
-		int i, n = sizeof(data[readings]);
-	    float average, variance, sum = 0, sum_ = 0;
-
-	    /*  Compute the sum of all elements */
-	    for (i = 0; i < n; i++)
-	    {
-	        sum = sum + data[i];
-	    }
-	    average = sum / (float)n;
-
-	    /*  Compute the variance*/
-	    for (i = 0; i < n; i++)
-	    {
-	        sum_ = sum_ + pow((data[i] - average), 2);
-	    }
-	    variance = sum_ / (float)n;
-
-	    readings++;
-	    return variance;
-	}
 };
 
 void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 {
 	uint8_t type = 0;
-	float covariance = owner->calculate_variance(msg->range / 1E-2);
+	uint8_t covariance_ = 0;
+
+	if (cov_is_def) covariance_ = covariance;
+	else covariance_ = (uint8_t)DistanceSensorItem::calculate_variance(msg->range / 1E-2);
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
@@ -239,7 +239,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 			type,
 			sensor_id,
 			orientation,
-			covariance);
+			covariance_);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
@@ -265,19 +265,9 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 	if (!p->is_subscriber) {
 		// publisher params
-		// frame_id, min_range, max_range and FOV is required
+		// frame_id and FOV is required
 		if (!pnh.getParam("frame_id", p->frame_id)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
-			p.reset(); return p;	// nullptr
-		}
-
-		if (!pnh.getParam("min_range", p->min_range)) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: minimum sensor range not set!", topic_name.c_str());
-			p.reset(); return p;	// nullptr
-		}
-
-		if (!pnh.getParam("max_range", p->max_range)) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: maximum sensor range not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
@@ -298,7 +288,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// optional
-		pnh.param("covariance", p->covariance, 0);
+		if (pnh.getParam("covariance", p->covariance)) p->cov_is_def = true;
 	}
 
 	// create topic handles
