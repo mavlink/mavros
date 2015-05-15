@@ -60,11 +60,11 @@ public:
 	void range_cb(const sensor_msgs::Range::ConstPtr &msg);
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
 
-	bool cov_is_def = false;//!< if the cov is defined in params, uses that value; else, uses the computed value
-	uint8_t data_index = 0;	//!< array index
+	bool cov_is_def;		//!< if the cov is defined in params, uses that value; else, uses the computed value
 
 private:
-	std::vector<float> data;	// array allocation for measurements
+	std::vector<float> data;//!< array allocation for measurements
+	uint8_t data_index;		//!< array index
 
 	/**
 	 * Calculate measurements variance to send to the FCU.
