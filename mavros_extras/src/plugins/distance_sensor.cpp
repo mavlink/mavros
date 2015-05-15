@@ -73,7 +73,7 @@ private:
 			data.push_back(range);
 		else {
 			data.at(data_index) = range;	// it starts rewriting the values from 1st element
-			if (data_index == 49) data_index == 0;	// restarts the index when achieves the last element
+			if (data_index == 49) data_index = 0;	// restarts the index when achieves the last element
 			else data_index++;
 		}
 
