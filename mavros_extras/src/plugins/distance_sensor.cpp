@@ -37,7 +37,9 @@ public:
 		is_subscriber(false),
 		sensor_id(0),
 		orientation(-1),
-		covariance(0)
+		covariance(0),
+		cov_is_def(false),
+		data_index(0)
 	{ }
 
 	// params
@@ -47,7 +49,6 @@ public:
 	int orientation;		//!< check orientation of sensor if != -1
 	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
-	bool cov_is_def = false;
 
 	// topic handle
 	ros::Publisher pub;
@@ -60,28 +61,37 @@ public:
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
 
 private:
-	std::vector<float> data;
+	std::vector<float> data;	// array allocation for measurements
+	uint8_t data_index = 0;		// array index
+	bool cov_is_def = false;	// if the cov is defined in params, uses that value; else, uses the computed value
+
 	/**
 	 * Calculate measurements variance to send to the FCU.
 	 */
 	float calculate_variance(float range) {
-		data.push_back(range);
+		if (data.size() != 50)		// limits the size of the array to 50 elements
+			data.push_back(range);
+		else {
+			data.at(data_index) = range;	// it starts rewriting the values from 1st element
+			if (data_index == 49) data_index == 0;	// restarts the index when achieves the last element
+			else data_index++;
+		}
 
 		float average, variance, sum = 0, sum_ = 0;
 
 		/*  Compute the sum of all elements */
 		for (auto i : data)
 		{
-			sum = sum + data.at(i);
+			sum += i;
 		}
-		average = sum / (float)data.size();
+		average = sum / data.size();
 
-		/*  Compute the variance*/
+		/*  Compute the variance */
 		for (auto i : data)
 		{
-			sum_ = sum_ + pow((data.at(i) - average), 2);
+			sum_ += pow((i - average), 2);
 		}
-		variance = sum_ / (float)data.size();
+		variance = sum_ / data.size();
 
 		return variance;
 	}
@@ -194,8 +204,8 @@ private:
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = dist_sen.min_distance;
-		range->max_range = dist_sen.max_distance;
+		range->min_range = dist_sen.min_distance * 1E-2; // in meters
+		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
 		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER) {
@@ -211,7 +221,7 @@ private:
 			return;
 		}
 
-		range->range = dist_sen.current_distance * 1E-2;
+		range->range = dist_sen.current_distance * 1E-2; // in meters
 
 		sensor->pub.publish(range);
 	}
@@ -222,8 +232,8 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
-	if (cov_is_def) covariance_ = covariance;
-	else covariance_ = (uint8_t) DistanceSensorItem::calculate_variance(msg->range / 1E-2);
+	if (cov_is_def != -1) covariance_ = covariance;
+	else covariance_ = uint8_t(calculate_variance(msg->range * 1E2)); // in cm
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
@@ -288,7 +298,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// optional
-		if (pnh.getParam("covariance", p->covariance)) p->cov_is_def = true;
+		if (pnh.getParam("covariance", p->covariance)>=0) p->cov_is_def = true;
 	}
 
 	// create topic handles
