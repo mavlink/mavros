@@ -67,23 +67,23 @@ private:
 	float calculate_variance(float range) {
 		data.push_back(range);
 
-	    float average, variance, sum = 0, sum_ = 0;
+		float average, variance, sum = 0, sum_ = 0;
 
-	    /*  Compute the sum of all elements */
-	    for (auto i:data)
-	    {
-	        sum = sum + data.at(i);
-	    }
-	    average = sum / (float)data.size();
+		/*  Compute the sum of all elements */
+		for (auto i : data)
+		{
+			sum = sum + data.at(i);
+		}
+		average = sum / (float)data.size();
 
-	    /*  Compute the variance*/
-	    for (auto i:data)
-	    {
-	        sum_ = sum_ + pow((data.at(i) - average), 2);
-	    }
-	    variance = sum_ / (float)data.size();
+		/*  Compute the variance*/
+		for (auto i : data)
+		{
+			sum_ = sum_ + pow((data.at(i) - average), 2);
+		}
+		variance = sum_ / (float)data.size();
 
-	    return variance;
+		return variance;
 	}
 };
 
@@ -135,7 +135,7 @@ private:
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
-	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;	
+	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
@@ -198,7 +198,7 @@ private:
 		range->max_range = dist_sen.max_distance;
 		range->field_of_view = sensor->field_of_view;
 
-		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER){
+		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER) {
 			range->radiation_type = sensor_msgs::Range::INFRARED;
 		}
 		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND) {
@@ -223,7 +223,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t covariance_ = 0;
 
 	if (cov_is_def) covariance_ = covariance;
-	else covariance_ = (uint8_t)DistanceSensorItem::calculate_variance(msg->range / 1E-2);
+	else covariance_ = (uint8_t) DistanceSensorItem::calculate_variance(msg->range / 1E-2);
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
