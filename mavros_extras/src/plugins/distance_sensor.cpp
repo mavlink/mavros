@@ -40,10 +40,13 @@ public:
 	{ }
 
 	// params
-	bool is_subscriber;	//!< this item is subscriber, else publisher
-	uint8_t sensor_id;	//!< id of sensor
-	int orientation;	//!< check orientation of sensor if != -1
-	int covariance;		//!< in centimeters, current specification
+	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
+	uint8_t sensor_id;		//!< id of the sensor
+	double min_range;		//!< minimum range of the sensor
+	double max_range;		//!< maximum range of the sensor
+	double field_of_view;	//!< FOV of the sensor
+	int orientation;		//!< check orientation of sensor if != -1
+	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
 	// topic handle
@@ -107,6 +110,9 @@ private:
 
 	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
+	static int readings;	//!< number of sensor readings
+	static float data[];	
+
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
 			uint32_t min_distance,
@@ -137,6 +143,7 @@ private:
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
 		auto it = sensor_map.find(dist_sen.id);
+
 		if (it == sensor_map.end()) {
 			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
 					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
@@ -148,41 +155,75 @@ private:
 
 		if (sensor->is_subscriber) {
 			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
-					"DS: %s (id %d) is subscriber, but i got sensor data for that id form FCU",
+					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
 					sensor->topic_name.c_str(), sensor->sensor_id);
 			return;
 		}
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
-			ROS_WARN_THROTTLE_NAMED(10, "distance_sensor",
+			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
 					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
 					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
 		}
-
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
 
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = 0.0;	// XXX TODO
-		range->max_range = 0.0;
-		range->field_of_view = 0.0;
+		range->min_range = sensor->min_range;
+		range->max_range = sensor->max_range;
+		range->field_of_view = sensor->field_of_view;
 
-		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER)
+		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER){
 			range->radiation_type = sensor_msgs::Range::INFRARED;
-		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND)
+		}
+		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND) {
 			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
-		else
-			range->radiation_type = 0;	// XXX !!!!
+		}
+		else {
+			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+					"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
+					sensor->topic_name.c_str(), dist_sen.type);
+			return;
+		}
+
+		range->range = dist_sen.current_distance * 1E-2;
 
 		sensor->pub.publish(range);
+	}
+
+	/**
+	 * Calculate measurements variance to send to the FCU.
+	 */
+	float calculate_variance(float range) {
+		data[readings] = range;
+		int i, n = sizeof(data[readings]);
+	    float average, variance, sum = 0, sum_ = 0;
+
+	    /*  Compute the sum of all elements */
+	    for (i = 0; i < n; i++)
+	    {
+	        sum = sum + data[i];
+	    }
+	    average = sum / (float)n;
+
+	    /*  Compute the variance*/
+	    for (i = 0; i < n; i++)
+	    {
+	        sum_ = sum_ + pow((data[i] - average), 2);
+	    }
+	    variance = sum_ / (float)n;
+
+	    readings++;
+	    return variance;
 	}
 };
 
 void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 {
 	uint8_t type = 0;
+	float covariance = owner->calculate_variance(msg->range / 1E-2);
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
@@ -211,22 +252,37 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	p->topic_name = topic_name;
 
 	// load and parse params
-	// first decide pub/sub type
+	// first decide the type of topic (sub or pub)
 	pnh.param("subscriber", p->is_subscriber, false);
 
 	// sensor id
 	int id;
 	if (!pnh.getParam("id", id)) {
 		ROS_ERROR_NAMED("distance_sensor", "DS: %s: `id` not set!", topic_name.c_str());
-		p.reset(); return p;	// return nullptr cause a bug with gcc 4.6
+		p.reset(); return p;	// return nullptr because of a bug related to gcc 4.6
 	}
 	p->sensor_id = id;
 
 	if (!p->is_subscriber) {
 		// publisher params
-		// frame_id is required
+		// frame_id, min_range, max_range and FOV is required
 		if (!pnh.getParam("frame_id", p->frame_id)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+
+		if (!pnh.getParam("min_range", p->min_range)) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: minimum sensor range not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+
+		if (!pnh.getParam("max_range", p->max_range)) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: maximum sensor range not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+
+		if (!pnh.getParam("field_of_view", p->field_of_view)) {
+			ROS_ERROR_NAMED("field_of_view", "DS: %s: sensor FOV not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
