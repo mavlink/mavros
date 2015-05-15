@@ -47,6 +47,7 @@ public:
 	int orientation;		//!< check orientation of sensor if != -1
 	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
+	bool cov_is_def = false;
 
 	// topic handle
 	ros::Publisher pub;
@@ -60,7 +61,6 @@ public:
 
 private:
 	std::vector<float> data;
-	bool cov_is_def = false;
 	/**
 	 * Calculate measurements variance to send to the FCU.
 	 */
