@@ -229,7 +229,7 @@ private:
 		if (sensor->send_tf) {
 			tf::Transform transform;
 			transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));		// TODO: define the position of the sensor in parameters
-			transform.setRotation(uas->get_attitude_orientation());		//TODO: change orientation according to 'orientation' parameter
+			transform.setRotation(uas->get_attitude_orientation());		// TODO: change orientation according to 'orientation' parameter
 
 			tf_broadcaster.sendTransform(
 					tf::StampedTransform(
