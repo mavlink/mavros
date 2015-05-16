@@ -13,8 +13,6 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
-
-#include <vector>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -233,7 +231,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
-	if (cov_is_def != -1) covariance_ = covariance;
+	if (cov_is_def == false) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range * 1E2));	// in cm
 
 	// current mapping, may change later
