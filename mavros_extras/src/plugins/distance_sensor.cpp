@@ -230,10 +230,9 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
-	//if (cov_is_def == true) covariance_ = covariance;
 	if (covariance >= 0) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
-	
+
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
 		type = MAV_DISTANCE_SENSOR_LASER;
@@ -297,7 +296,6 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// optional
-		//if (pnh.getParam("covariance", p->covariance) > 0) p->cov_is_def = true;
 		pnh.param("covariance", p->covariance, -1);
 	}
 
