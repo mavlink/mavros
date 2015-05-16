@@ -202,7 +202,7 @@ private:
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = dist_sen.min_distance * 1E-2;// in meters
+		range->min_range = dist_sen.min_distance * 1E-2;	// in meters
 		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
@@ -219,7 +219,7 @@ private:
 			return;
 		}
 
-		range->range = dist_sen.current_distance * 1E-2;// in meters
+		range->range = dist_sen.current_distance * 1E-2;	// in meters
 
 		sensor->pub.publish(range);
 	}
@@ -231,7 +231,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t covariance_ = 0;
 
 	if (cov_is_def == true) covariance_ = covariance;
-	else covariance_ = uint8_t(calculate_variance(msg->range * 1E2));	// in cm
+	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
@@ -296,7 +296,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// optional
-		if (pnh.getParam("covariance", p->covariance) >= 0) p->cov_is_def = true;
+		if (pnh.getParam("covariance", p->covariance) > 0) p->cov_is_def = true;
 	}
 
 	// create topic handles
