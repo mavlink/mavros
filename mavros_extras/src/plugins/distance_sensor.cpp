@@ -62,7 +62,7 @@ public:
 
 private:
 	std::vector<float> data;//!< array allocation for measurements
-	uint8_t data_index;		//!< array index
+	size_t data_index;		//!< array index
 
 	/**
 	 * Calculate measurements variance to send to the FCU.
@@ -72,8 +72,7 @@ private:
 			data.push_back(range);
 		else {
 			data.at(data_index) = range;	// it starts rewriting the values from 1st element
-			if (data_index == 49) data_index = 0;	// restarts the index when achieves the last element
-			else data_index++;
+			if (++data_index > 49) data_index = 0;	// restarts the index when achieves the last element
 		}
 
 		float average, variance, sum = 0, sum_ = 0;
