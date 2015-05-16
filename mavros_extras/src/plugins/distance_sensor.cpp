@@ -226,11 +226,11 @@ private:
 
 		range->range = dist_sen.current_distance * 1E-2;	// in meters
 
-		tf::Transform transform;
-		transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));		// TODO: define the position of the sensor in parameters
-		transform.setRotation(uas->get_attitude_orientation());		//TODO: change orientation according to 'orientation' parameter
-
 		if (sensor->send_tf) {
+			tf::Transform transform;
+			transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));		// TODO: define the position of the sensor in parameters
+			transform.setRotation(uas->get_attitude_orientation());		//TODO: change orientation according to 'orientation' parameter
+
 			tf_broadcaster.sendTransform(
 					tf::StampedTransform(
 						transform,
@@ -247,7 +247,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
-	if (covariance >= 0) covariance_ = covariance;
+	if (covariance > 0) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
 
 	// current mapping, may change later
@@ -316,7 +316,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// optional
-		pnh.param("covariance", p->covariance, -1);
+		pnh.param("covariance", p->covariance, 0);
 	}
 
 	// create topic handles
