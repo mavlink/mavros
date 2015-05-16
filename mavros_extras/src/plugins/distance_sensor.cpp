@@ -311,7 +311,6 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		pnh.param("orientation", p->orientation, -1);
 
 		// optional (sensor position required if 'send_tf' set)
-		//pnh.param("send_tf", p->send_tf, false);
 		if (pnh.getParam("send_tf", p->send_tf)) {
 			if (pnh.getParam("sensor_posisiton/x", p->spx) &&
 					pnh.getParam("sensor_posisiton/y", p->spy) &&
