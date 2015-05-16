@@ -118,11 +118,13 @@ distance_sensor:
     frame_id: "hrlv_ez4_sonar"
     orientation: 1
     field_of_view: 0.0  # XXX TODO
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.3}
   lidarlite_pub:
     id: 1
     frame_id: "lidarlite_laser"
     orientation: 1
     field_of_view: 0.0  # XXX TODO
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.3}
   sonar_1_sub:
     subscriber: true
     id: 2
