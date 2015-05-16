@@ -19,6 +19,7 @@
 #include <unordered_map>
 
 #include <sensor_msgs/Range.h>
+#include <tf/transform_broadcaster.h>
 
 namespace mavplugin {
 class DistanceSensorPlugin;
@@ -33,6 +34,7 @@ public:
 	DistanceSensorItem() :
 		owner(nullptr),
 		is_subscriber(false),
+		send_tf(false),
 		sensor_id(0),
 		orientation(-1),
 		covariance(0),
@@ -42,6 +44,7 @@ public:
 
 	// params
 	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
+	bool send_tf;			//!< defines if a transform is sent or not
 	uint8_t sensor_id;		//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
 	int orientation;		//!< check orientation of sensor if != -1
@@ -143,6 +146,8 @@ private:
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
+	tf::TransformBroadcaster tf_broadcaster;
+
 	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
 	/* -*- low-level send -*- */
@@ -221,6 +226,18 @@ private:
 
 		range->range = dist_sen.current_distance * 1E-2;	// in meters
 
+		tf::Transform transform;
+		transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));		// TODO: define the position of the sensor in parameters
+		transform.setRotation(uas->get_attitude_orientation());		//TODO: change orientation according to 'orientation' parameter
+
+		if (sensor->send_tf) {
+			tf_broadcaster.sendTransform(
+					tf::StampedTransform(
+						transform,
+						range->header.stamp,
+						"fcu", range->header.frame_id));
+		}
+
 		sensor->pub.publish(range);
 	}
 };
@@ -286,6 +303,9 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 		// orientation check
 		pnh.param("orientation", p->orientation, -1);
+
+		// optional
+		pnh.param("send_tf", p->send_tf, false);
 	}
 	else {
 		// subscriber params
