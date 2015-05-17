@@ -306,19 +306,14 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
-		if (p->send_tf) {	// sensor position required if 'send_tf' set to TRUE
+		if (p->send_tf) {	// sensor position defined if 'send_tf' set to TRUE
 			double x, y, z;
-			if (pnh.getParam("sensor_position/x", x) &&
-					pnh.getParam("sensor_position/y", y) &&
-					pnh.getParam("sensor_position/z", z)) {
-				p->position.setX(x); p->position.setX(y); p->position.setZ(z);
-				ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
-						p->position.getX(), p->position.getY(), p->position.getZ());
-			}
-			else {
-				ROS_ERROR_NAMED("sensor_pos", "DS: %s: sensor position not set!", topic_name.c_str());
-				p.reset(); return p;	// nullptr
-			}
+			pnh.param("sensor_position/x", x, 0.0);
+			pnh.param("sensor_position/x", y, 0.0);
+			pnh.param("sensor_position/x", z, 0.0);
+			p->position = tf::Vector3(x, y, z);
+			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
+					p->position.getX(), p->position.getY(), p->position.getZ());
 		}
 	}
 	else {
