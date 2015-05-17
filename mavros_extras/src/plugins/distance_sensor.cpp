@@ -37,12 +37,8 @@ public:
 		send_tf(false),
 		sensor_id(0),
 		field_of_view(0),
-		spx(0),
-		spy(0),
-		spz(0),
 		orientation(-1),
 		covariance(0),
-		cov_is_def(false),
 		data_index(0)
 	{ }
 
@@ -51,7 +47,7 @@ public:
 	bool send_tf;			//!< defines if a transform is sent or not
 	uint8_t sensor_id;		//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
-	double spx, spy, spz;	//!< sensor position
+	tf::Vector3 position;	//!< sensor position
 	int orientation;		//!< check orientation of sensor if != -1
 	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
@@ -66,8 +62,6 @@ public:
 	void range_cb(const sensor_msgs::Range::ConstPtr &msg);
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
 
-	bool cov_is_def;	//!< if the cov is defined in params, uses that value; else, uses the computed value
-
 private:
 	std::vector<float> data;	//!< array allocation for measurements
 	size_t data_index;			//!< array index
@@ -76,10 +70,10 @@ private:
 	 * Calculate measurements variance to send to the FCU.
 	 */
 	float calculate_variance(float range) {
-		if (data.size() != 50)	// limits the size of the array to 50 elements
+		if (data.size() < 50)	// limits the size of the array to 50 elements
 			data.push_back(range);
 		else {
-			data.at(data_index) = range;	// it starts rewriting the values from 1st element
+			data[data_index] = range;	// it starts rewriting the values from 1st element
 			if (++data_index > 49) data_index = 0;	// restarts the index when achieves the last element
 		}
 
@@ -233,7 +227,7 @@ private:
 
 		if (sensor->send_tf) {
 			tf::Transform transform;
-			transform.setOrigin(tf::Vector3(sensor->spx, sensor->spy, sensor->spz));	// sensor position
+			transform.setOrigin(sensor->position);
 			transform.setRotation(uas->get_attitude_orientation());	// TODO: change orientation according to 'orientation' parameter
 
 			tf_broadcaster.sendTransform(
@@ -310,12 +304,16 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// orientation check
 		pnh.param("orientation", p->orientation, -1);
 
-		// optional (sensor position required if 'send_tf' set)
-		if (pnh.getParam("send_tf", p->send_tf)) {
-			if (pnh.getParam("sensor_posisiton/x", p->spx) &&
-					pnh.getParam("sensor_posisiton/y", p->spy) &&
-					pnh.getParam("sensor_posisiton/z", p->spz)) {
-				ROS_DEBUG_NAMED("sensor_positon", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(), p->spx, p->spy, p->spz);
+		// optional
+		pnh.param("send_tf", p->send_tf, false);
+		if (p->send_tf) {	// sensor position required if 'send_tf' set to TRUE
+			double x, y, z;
+			if (pnh.getParam("sensor_position/x", x) &&
+					pnh.getParam("sensor_position/y", y) &&
+					pnh.getParam("sensor_position/z", z)) {
+				p->position.setX(x); p->position.setX(y); p->position.setZ(z);
+				ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
+						p->position.getX(), p->position.getY(), p->position.getZ());
 			}
 			else {
 				ROS_ERROR_NAMED("sensor_pos", "DS: %s: sensor position not set!", topic_name.c_str());
