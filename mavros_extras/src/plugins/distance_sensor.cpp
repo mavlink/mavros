@@ -309,8 +309,8 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		if (p->send_tf) {	// sensor position defined if 'send_tf' set to TRUE
 			double x, y, z;
 			pnh.param("sensor_position/x", x, 0.0);
-			pnh.param("sensor_position/x", y, 0.0);
-			pnh.param("sensor_position/x", z, 0.0);
+			pnh.param("sensor_position/y", y, 0.0);
+			pnh.param("sensor_position/z", z, 0.0);
 			p->position = tf::Vector3(x, y, z);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
 					p->position.getX(), p->position.getY(), p->position.getZ());
