@@ -227,10 +227,11 @@ private:
 		range->range = dist_sen.current_distance * 1E-2;	// in meters
 
 		if (sensor->send_tf) {
+			double r,p,y;
 			tf::Transform transform;
 			tf::Quaternion q(uas->get_attitude_orientation());
-			std::array<double, 3> rpy = mavutils::orientation_matching(dist_sen.orientation);
-			q.setRPY(rpy[0], rpy[1], rpy[2]);
+			tf::Vector3(r,p,y) = mavutils::orientation_matching(dist_sen.orientation);
+			q.setRPY(r,p,y);
 			transform.setRotation(q);
 			transform.setOrigin(sensor->position);
 
