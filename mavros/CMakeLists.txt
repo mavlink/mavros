@@ -158,6 +158,7 @@ add_library(mavros
   src/lib/mavros.cpp
   src/lib/mavlink_diag.cpp
   src/lib/rosconsole_bridge.cpp
+  src/lib/sensor_orientation.cpp
 )
 add_dependencies(mavros
   mavros_generate_messages_cpp

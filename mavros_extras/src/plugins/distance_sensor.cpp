@@ -13,6 +13,7 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -227,8 +228,14 @@ private:
 
 		if (sensor->send_tf) {
 			tf::Transform transform;
+			tf::Quaternion q(uas->get_attitude_orientation());
+			tf::Matrix3x3 orientation(q);
+			std::array<double, 3> rpy_sen, rpy_fcu = mavutils::orientation_matching(dist_sen.orientation);
+
+			orientation.getRPY(rpy_sen[0], rpy_sen[1], rpy_sen[2]);
+			q.setRPY(rpy_sen[0] + rpy_fcu[0], rpy_sen[1] + rpy_fcu[1], rpy_sen[2] + rpy_fcu[2]);
+			transform.setRotation(q);
 			transform.setOrigin(sensor->position);
-			transform.setRotation(uas->get_attitude_orientation());	// TODO: change orientation according to 'orientation' parameter
 
 			tf_broadcaster.sendTransform(
 					tf::StampedTransform(

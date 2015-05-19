@@ -23,7 +23,6 @@
 #include <mavros/Mavlink.h>
 #include <mavconn/mavlink_dialect.h>
 
-
 namespace mavutils {
 /**
  * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
@@ -55,4 +54,11 @@ inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPt
 	for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
 		rmsg->payload64.push_back(mmsg->payload64[i]);
 };
+
+/**
+ * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
+ * and the rotation of the sensor relative to the FCU.
+ */
+std::array<double, 3> orientation_matching(uint8_t orientation);
+
 };	// namespace mavutils
