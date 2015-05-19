@@ -229,11 +229,8 @@ private:
 		if (sensor->send_tf) {
 			tf::Transform transform;
 			tf::Quaternion q(uas->get_attitude_orientation());
-			tf::Matrix3x3 orientation(q);
-			std::array<double, 3> rpy_sen, rpy_fcu = mavutils::orientation_matching(dist_sen.orientation);
-
-			orientation.getRPY(rpy_sen[0], rpy_sen[1], rpy_sen[2]);
-			q.setRPY(rpy_sen[0] + rpy_fcu[0], rpy_sen[1] + rpy_fcu[1], rpy_sen[2] + rpy_fcu[2]);
+			std::array<double, 3> rpy = mavutils::orientation_matching(dist_sen.orientation);
+			q.setRPY(rpy[0], rpy[1], rpy[2]);
 			transform.setRotation(q);
 			transform.setOrigin(sensor->position);
 
