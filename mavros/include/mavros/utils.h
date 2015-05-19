@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <array>
 #include <algorithm>
 #include <mavconn/thread_utils.h>
 
