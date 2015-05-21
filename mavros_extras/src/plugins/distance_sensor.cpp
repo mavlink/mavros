@@ -81,17 +81,12 @@ private:
 		float average, variance, sum = 0, sum_ = 0;
 
 		/*  Compute the sum of all elements */
-		for (auto i : data)
-		{
-			sum += i;
-		}
+		for (auto d : data)	sum += d;
 		average = sum / data.size();
 
 		/*  Compute the variance */
-		for (auto i : data)
-		{
-			sum_ += pow((i - average), 2);
-		}
+		for (auto d : data)	sum_ += pow((d - average), 2);
+
 		variance = sum_ / data.size();
 
 		return variance;
