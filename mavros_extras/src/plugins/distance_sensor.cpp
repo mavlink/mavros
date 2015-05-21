@@ -13,13 +13,14 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
-
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <unordered_map>
 
 #include <sensor_msgs/Range.h>
+#include <tf/transform_broadcaster.h>
 
 namespace mavplugin {
 class DistanceSensorPlugin;
@@ -34,16 +35,22 @@ public:
 	DistanceSensorItem() :
 		owner(nullptr),
 		is_subscriber(false),
+		send_tf(false),
 		sensor_id(0),
+		field_of_view(0),
 		orientation(-1),
-		covariance(0)
+		covariance(0),
+		data_index(0)
 	{ }
 
 	// params
-	bool is_subscriber;	//!< this item is subscriber, else publisher
-	uint8_t sensor_id;	//!< id of sensor
-	int orientation;	//!< check orientation of sensor if != -1
-	int covariance;		//!< in centimeters, current specification
+	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
+	bool send_tf;			//!< defines if a transform is sent or not
+	uint8_t sensor_id;		//!< id of the sensor
+	double field_of_view;	//!< FOV of the sensor
+	tf::Vector3 position;	//!< sensor position
+	int orientation;		//!< check orientation of sensor if != -1
+	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
 	// topic handle
@@ -55,6 +62,35 @@ public:
 
 	void range_cb(const sensor_msgs::Range::ConstPtr &msg);
 	static Ptr create_item(DistanceSensorPlugin *owner, std::string topic_name);
+
+private:
+	std::vector<float> data;	//!< array allocation for measurements
+	size_t data_index;			//!< array index
+
+	/**
+	 * Calculate measurements variance to send to the FCU.
+	 */
+	float calculate_variance(float range) {
+		if (data.size() < 50)	// limits the size of the array to 50 elements
+			data.push_back(range);
+		else {
+			data[data_index] = range;	// it starts rewriting the values from 1st element
+			if (++data_index > 49) data_index = 0;	// restarts the index when achieves the last element
+		}
+
+		float average, variance, sum = 0, sum_ = 0;
+
+		/*  Compute the sum of all elements */
+		for (auto d : data)	sum += d;
+		average = sum / data.size();
+
+		/*  Compute the variance */
+		for (auto d : data)	sum_ += pow((d - average), 2);
+
+		variance = sum_ / data.size();
+
+		return variance;
+	}
 };
 
 /**
@@ -105,6 +141,8 @@ private:
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
+	tf::TransformBroadcaster tf_broadcaster;
+
 	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
 	/* -*- low-level send -*- */
@@ -137,44 +175,69 @@ private:
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
 		auto it = sensor_map.find(dist_sen.id);
+
 		if (it == sensor_map.end()) {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
 					dist_sen.id, dist_sen.type, dist_sen.orientation);
 			return;
 		}
 
 		auto sensor = it->second;
-
 		if (sensor->is_subscriber) {
-			ROS_WARN_THROTTLE_NAMED(30, "distance_sensor",
-					"DS: %s (id %d) is subscriber, but i got sensor data for that id form FCU",
+			ROS_ERROR_NAMED("distance_sensor",
+					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
 					sensor->topic_name.c_str(), sensor->sensor_id);
 			return;
 		}
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
-			ROS_WARN_THROTTLE_NAMED(10, "distance_sensor",
+			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
 					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
 		}
-
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
 
 		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
 		range->header.frame_id = sensor->frame_id;
 
-		range->min_range = 0.0;	// XXX TODO
-		range->max_range = 0.0;
-		range->field_of_view = 0.0;
+		range->min_range = dist_sen.min_distance * 1E-2;	// in meters
+		range->max_range = dist_sen.max_distance * 1E-2;
+		range->field_of_view = sensor->field_of_view;
 
-		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER)
+		if (dist_sen.type == MAV_DISTANCE_SENSOR_LASER) {
 			range->radiation_type = sensor_msgs::Range::INFRARED;
-		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND)
+		}
+		else if (dist_sen.type == MAV_DISTANCE_SENSOR_ULTRASOUND) {
 			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
-		else
-			range->radiation_type = 0;	// XXX !!!!
+		}
+		else {
+			ROS_ERROR_NAMED("distance_sensor",
+					"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
+					sensor->topic_name.c_str(), dist_sen.type);
+			return;
+		}
+
+		range->range = dist_sen.current_distance * 1E-2;	// in meters
+
+		if (sensor->send_tf) {
+			/* variables init */
+			tf::Transform transform;
+			auto rpy = mavutils::orientation_matching(dist_sen.orientation);
+			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
+
+			/* rotation and position set */
+			transform.setRotation(q);
+			transform.setOrigin(sensor->position);
+
+			/* transform broadcast */
+			tf_broadcaster.sendTransform(
+					tf::StampedTransform(
+						transform,
+						range->header.stamp,
+						"fcu", range->header.frame_id));
+		}
 
 		sensor->pub.publish(range);
 	}
@@ -183,6 +246,11 @@ private:
 void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 {
 	uint8_t type = 0;
+	uint8_t covariance_ = 0;
+
+	if (covariance > 0) covariance_ = covariance;
+	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
+	ROS_DEBUG_NAMED("distance_sensor", "DS: %d: sensor variance: %f", sensor_id, calculate_variance(msg->range) * 1E2);
 
 	// current mapping, may change later
 	if (msg->radiation_type == sensor_msgs::Range::INFRARED)
@@ -198,7 +266,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 			type,
 			sensor_id,
 			orientation,
-			covariance);
+			covariance_);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
@@ -211,27 +279,44 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	p->topic_name = topic_name;
 
 	// load and parse params
-	// first decide pub/sub type
+	// first decide the type of topic (sub or pub)
 	pnh.param("subscriber", p->is_subscriber, false);
 
 	// sensor id
 	int id;
 	if (!pnh.getParam("id", id)) {
 		ROS_ERROR_NAMED("distance_sensor", "DS: %s: `id` not set!", topic_name.c_str());
-		p.reset(); return p;	// return nullptr cause a bug with gcc 4.6
+		p.reset(); return p;	// return nullptr because of a bug related to gcc 4.6
 	}
 	p->sensor_id = id;
 
 	if (!p->is_subscriber) {
 		// publisher params
-		// frame_id is required
+		// frame_id and FOV is required
 		if (!pnh.getParam("frame_id", p->frame_id)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `frame_id` not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
+		if (!pnh.getParam("field_of_view", p->field_of_view)) {
+			ROS_ERROR_NAMED("field_of_view", "DS: %s: sensor FOV not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+
 		// orientation check
 		pnh.param("orientation", p->orientation, -1);
+
+		// optional
+		pnh.param("send_tf", p->send_tf, false);
+		if (p->send_tf) {	// sensor position defined if 'send_tf' set to TRUE
+			double x, y, z;
+			pnh.param("sensor_position/x", x, 0.0);
+			pnh.param("sensor_position/y", y, 0.0);
+			pnh.param("sensor_position/z", z, 0.0);
+			p->position = tf::Vector3(x, y, z);
+			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
+					p->position.getX(), p->position.getY(), p->position.getZ());
+		}
 	}
 	else {
 		// subscriber params

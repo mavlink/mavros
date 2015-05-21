@@ -111,6 +111,31 @@ mission:
 
 # --- mavros extras plugins (same order) ---
 
+# distance_sensor
+distance_sensor:
+  hrlv_ez4_pub:
+    id: 0
+    frame_id: "hrlv_ez4_sonar"
+    orientation: 8 # RPY:{180.0, 0.0, 0.0}
+    field_of_view: 0.0  # XXX TODO
+    send_tf: true
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+  lidarlite_pub:
+    id: 1
+    frame_id: "lidarlite_laser"
+    orientation: 8
+    field_of_view: 0.0  # XXX TODO
+    send_tf: true
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+  sonar_1_sub:
+    subscriber: true
+    id: 2
+    orientation: 8
+  laser_1_sub:
+    subscriber: true
+    id: 3
+    orientation: 8
+
 # image_pub
 image:
   frame_id: "px4flow"
@@ -121,6 +146,7 @@ mocap:
   use_tf: false   # ~mocap/tf
   use_pose: true  # ~mocap/pose
 
+# px4flow
 px4flow:
   frame_id: "px4flow"
   ranger_fov: !degrees 0.0  # XXX TODO
