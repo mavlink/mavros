@@ -16,9 +16,11 @@
 #include <array>
 #include <mavros/utils.h>
 
+#define MAV_SENSOR_ORIENTATION_MAX 40
+
 using namespace mavutils;
 
-static const std::array<const tf::Vector3, 40> sensor_orientation = {{
+static const std::array<const tf::Vector3, MAV_SENSOR_ORIENTATION_MAX> sensor_orientation = {{
 		/* 0  */ {tf::Vector3(0.0,   0.0,    0.0)	},
 		/* 1  */ {tf::Vector3(0.0,   0.0,    45.0)	},
 		/* 2  */ {tf::Vector3(0.0,   0.0,    90.0)	},
