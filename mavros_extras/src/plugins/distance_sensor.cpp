@@ -224,7 +224,7 @@ private:
 		if (sensor->send_tf) {
 			/* variables init */
 			tf::Transform transform;
-			auto rpy = mavutils::orientation_matching(dist_sen.orientation);
+			auto rpy = UAS::sensor_orientation_matching(dist_sen.orientation);
 			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
 
 			/* rotation and position set */

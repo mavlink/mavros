@@ -290,6 +290,12 @@ public:
 	 */
 	static std::string str_system_status(enum MAV_STATE st);
 
+	/**
+	 * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
+	 *        and the rotation of the sensor relative to the FCU.
+	 */
+	static tf::Vector3 sensor_orientation_matching(uint8_t orientation);
+
 private:
 	std::recursive_mutex mutex;
 

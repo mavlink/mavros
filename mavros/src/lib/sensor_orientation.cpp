@@ -14,11 +14,11 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 #include <array>
-#include <mavros/utils.h>
+#include <mavros/mavros_uas.h>
 
 #define MAV_SENSOR_ORIENTATION_MAX 39
 
-using namespace mavutils;
+using namespace mavros;
 
 static const std::array<const tf::Vector3, MAV_SENSOR_ORIENTATION_MAX> sensor_orientation = {{
 		/* 0  */ {tf::Vector3(0.0,   0.0,    0.0)	},
@@ -62,6 +62,6 @@ static const std::array<const tf::Vector3, MAV_SENSOR_ORIENTATION_MAX> sensor_or
 		/* 38 */ {tf::Vector3(315.0, 315.0,  315.0)	}
 		}};
 
-tf::Vector3 orientation_matching(uint8_t orientation){
+tf::Vector3 UAS::sensor_orientation_matching(uint8_t orientation){
 	return sensor_orientation[orientation];
 };

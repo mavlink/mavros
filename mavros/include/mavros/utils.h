@@ -17,13 +17,12 @@
 
 #pragma once
 
-#include <array>
 #include <algorithm>
 #include <mavconn/thread_utils.h>
-#include <tf/transform_datatypes.h>
 
 #include <mavros/Mavlink.h>
 #include <mavconn/mavlink_dialect.h>
+
 
 namespace mavutils {
 /**
@@ -56,10 +55,4 @@ inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPt
 	for (size_t i = 0; i < (mmsg->len + 7) / 8; i++)
 		rmsg->payload64.push_back(mmsg->payload64[i]);
 };
-
-/**
- * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
- * and the rotation of the sensor relative to the FCU.
- */
-tf::Vector3 orientation_matching(uint8_t orientation);
 };	// namespace mavutils
