@@ -71,7 +71,8 @@ private:
 	 * Calculate measurements variance to send to the FCU.
 	 */
 	float calculate_variance(float range) {
-		if (data.size() < 50)	// limits the size of the array to 50 elements
+		if (data.size() < 50)
+			// limits the size of the array to 50 elements
 			data.push_back(range);
 		else {
 			data[data_index] = range;	// it starts rewriting the values from 1st element
@@ -81,11 +82,14 @@ private:
 		float average, variance, sum = 0, sum_ = 0;
 
 		/*  Compute the sum of all elements */
-		for (auto d : data)	sum += d;
+		for (auto d : data)
+			sum += d;
+
 		average = sum / data.size();
 
 		/*  Compute the variance */
-		for (auto d : data)	sum_ += pow((d - average), 2);
+		for (auto d : data)
+			sum_ += pow((d - average), 2);
 
 		variance = sum_ / data.size();
 
@@ -175,7 +179,6 @@ private:
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
 		auto it = sensor_map.find(dist_sen.id);
-
 		if (it == sensor_map.end()) {
 			ROS_ERROR_NAMED("distance_sensor",
 					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
@@ -224,7 +227,7 @@ private:
 		if (sensor->send_tf) {
 			/* variables init */
 			tf::Transform transform;
-			auto rpy = UAS::sensor_orientation_matching(dist_sen.orientation);
+			auto rpy = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
 			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
 
 			/* rotation and position set */

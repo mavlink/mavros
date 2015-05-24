@@ -294,7 +294,7 @@ public:
 	 * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
 	 *        and the rotation of the sensor relative to the FCU.
 	 */
-	static tf::Vector3 sensor_orientation_matching(uint8_t orientation);
+	static tf::Vector3 sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
 
 private:
 	std::recursive_mutex mutex;
