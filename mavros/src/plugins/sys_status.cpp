@@ -502,6 +502,55 @@ private:
 		};
 	}
 
+	static inline std::string array_to_hex_string(uint8_t *array, size_t size)
+	{
+		// inefficient, but who care for one time call function?
+
+		std::ostringstream ss;
+		ss << std::setfill('0');
+
+		for (size_t i = 0; i < size; i++)
+			ss << std::hex << std::setw(2) << array[i];
+
+		return ss.str();
+	}
+
+	void process_autopilot_version_normal(mavlink_autopilot_version_t &apv)
+	{
+		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%s)",
+				apv.flight_sw_version,
+				array_to_hex_string(apv.flight_custom_version, 8).c_str());
+		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%s)",
+				apv.middleware_sw_version,
+				array_to_hex_string(apv.middleware_custom_version, 8).c_str());
+		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%s)",
+				apv.os_sw_version,
+				array_to_hex_string(apv.os_custom_version, 8).c_str());
+		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
+		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+	}
+
+	void process_autopilot_version_apm_quirk(mavlink_autopilot_version_t &apv)
+	{
+		// Note based on current APM's impl.
+		// APM uses custom version array[8] as a string
+		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%*s)",
+				apv.flight_sw_version,
+				8, apv.flight_custom_version);
+		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%*s)",
+				apv.middleware_sw_version,
+				8, apv.middleware_custom_version);
+		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%*s)",
+				apv.os_sw_version,
+				8, apv.os_custom_version);
+		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
+		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+	}
+
 	void publish_disconnection() {
 		auto state_msg = boost::make_shared<mavros::State>();
 		state_msg->header.stamp = ros::Time::now();
@@ -597,21 +646,10 @@ private:
 		autopilot_version_timer.stop();
 		uas->update_capabilities(true, apv.capabilities);
 
-		// Note based on current APM's impl.
-		// APM uses custom version array[8] as a string
-		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
-		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%*s)",
-				apv.flight_sw_version,
-				8, apv.flight_custom_version);
-		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%*s)",
-				apv.middleware_sw_version,
-				8, apv.middleware_custom_version);
-		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%*s)",
-				apv.os_sw_version,
-				8, apv.os_custom_version);
-		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
-		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
-		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+		if (uas->is_ardupilotmega())
+			process_autopilot_version_apm_quirk(apv);
+		else
+			process_autopilot_version_normal(apv);
 	}
 
 	/* -*- timer callbacks -*- */
