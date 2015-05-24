@@ -20,165 +20,6 @@
 
 using namespace mavros;
 
-UAS::UAS() :
-	type(MAV_TYPE_GENERIC),
-	autopilot(MAV_AUTOPILOT_GENERIC),
-	target_system(1),
-	target_component(1),
-	connected(false),
-	imu_orientation(),
-	imu_angular_velocity(),
-	imu_linear_acceleration(),
-	gps_eph(NAN),
-	gps_epv(NAN),
-	gps_fix_type(0),
-	gps_satellites_visible(0),
-	fcu_caps_known(false),
-	fcu_capabilities(0)
-{}
-
-void UAS::stop(void)
-{}
-
-
-/* -*- heartbeat handlers -*- */
-
-void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_)
-{
-	type = type_;
-	autopilot = autopilot_;
-}
-
-void UAS::update_connection_status(bool conn_)
-{
-	if (conn_ != connected) {
-		connected = conn_;
-		sig_connection_changed(connected);
-	}
-}
-
-
-/* -*- time syncronise functions -*- */
-
-static inline ros::Time ros_time_from_ns(uint64_t &stamp_ns) {
-	return ros::Time(
-		stamp_ns / 1000000000UL,		// t_sec
-		stamp_ns % 1000000000UL);		// t_nsec
-}
-
-ros::Time UAS::synchronise_stamp(uint32_t time_boot_ms) {
-	// copy offset from atomic var
-	uint64_t offset_ns = time_offset;
-
-	if (offset_ns > 0) {
-		uint64_t stamp_ns = static_cast<uint64_t>(time_boot_ms) * 1000000UL + offset_ns;
-		return ros_time_from_ns(stamp_ns);
-	}
-	else
-		return ros::Time::now();
-}
-
-ros::Time UAS::synchronise_stamp(uint64_t time_usec) {
-	uint64_t offset_ns = time_offset;
-
-	if (offset_ns > 0) {
-		uint64_t stamp_ns = time_usec * 1000UL + offset_ns;
-		return ros_time_from_ns(stamp_ns);
-	}
-	else
-		return ros::Time::now();
-}
-
-
-/* -*- autopilot version -*- */
-
-static uint64_t get_default_caps(uint8_t ap_type)
-{
-	// TODO: return default caps mask for known FCU's
-	return 0;
-}
-
-uint64_t UAS::get_capabilities()
-{
-	if (fcu_caps_known) {
-		uint64_t caps = fcu_capabilities;
-		return caps;
-	}
-	else {
-		return get_default_caps(get_autopilot());
-	}
-}
-
-void UAS::update_capabilities(bool known, uint64_t caps)
-{
-	fcu_caps_known = known;
-	fcu_capabilities = caps;
-}
-
-
-/* -*- IMU data -*- */
-
-void UAS::update_attitude_imu(tf::Quaternion &q, tf::Vector3 &av, tf::Vector3 &lacc)
-{
-	lock_guard lock(mutex);
-
-	imu_orientation = q;
-	imu_angular_velocity = av;
-	imu_linear_acceleration = lacc;
-}
-
-tf::Vector3 UAS::get_attitude_angular_velocity()
-{
-	lock_guard lock(mutex);
-	return imu_angular_velocity;
-}
-
-tf::Vector3 UAS::get_attitude_linear_acceleration()
-{
-	lock_guard lock(mutex);
-	return imu_linear_acceleration;
-}
-
-tf::Quaternion UAS::get_attitude_orientation()
-{
-	lock_guard lock(mutex);
-	return imu_orientation;
-}
-
-
-/* -*- GPS data -*- */
-
-void UAS::update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
-		float eph, float epv,
-		int fix_type, int satellites_visible)
-{
-	lock_guard lock(mutex);
-
-	gps_fix = fix;
-	gps_eph = eph;
-	gps_epv = epv;
-	gps_fix_type = fix_type;
-	gps_satellites_visible = satellites_visible;
-}
-
-//! Returns EPH, EPV, Fix type and satellites visible
-void UAS::get_gps_epts(float &eph, float &epv, int &fix_type, int &satellites_visible)
-{
-	lock_guard lock(mutex);
-
-	eph = gps_eph;
-	epv = gps_epv;
-	fix_type = gps_fix_type;
-	satellites_visible = gps_satellites_visible;
-}
-
-//! Retunrs last GPS RAW message
-sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
-{
-	lock_guard lock(mutex);
-	return gps_fix;
-}
-
 
 /* -*- mode stringify functions -*- */
 
@@ -286,7 +127,8 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int) {
 	// clear fields
 	custom_mode.reserved = 0;
 	if (custom_mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
-		ROS_WARN_COND_NAMED(custom_mode.sub_mode != 0, "uas", "PX4: Unknown sub-mode");
+		ROS_WARN_COND_NAMED(custom_mode.sub_mode != 0, "uas", "PX4: Unknown sub-mode %d.%d",
+				custom_mode.main_mode, custom_mode.sub_mode);
 		custom_mode.sub_mode = 0;
 	}
 
@@ -325,6 +167,10 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {
 		/* TODO: other autopilot */
 		return str_custom_mode(custom_mode);
 }
+
+/* XXX TODO
+ * Add a fallback CMODE(dec) decoder for unknown FCU's
+ */
 
 static bool cmode_find_cmap(const cmode_map &cmap, std::string &cmode_str, uint32_t &cmode) {
 	// 1. try find by name
