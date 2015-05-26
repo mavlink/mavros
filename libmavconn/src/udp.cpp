@@ -229,7 +229,11 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 
 void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 {
-	if (error) {
+	if (error == boost::asio::error::network_unreachable) {
+		logWarn(PFXd "sendto: %s, retrying", channel, error.message().c_str());
+		// do not return, try to resend
+	}
+	else if (error) {
 		logError(PFXd "sendto: %s", channel, error.message().c_str());
 		close();
 		return;
