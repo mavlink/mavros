@@ -191,6 +191,7 @@ def main():
     parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
     long_args = subarg.add_parser('long', help="Send any command (COMMAND_LONG)")
@@ -267,6 +268,10 @@ def main():
 
     rospy.init_node("mavcmd", anonymous=True)
     mavros.set_namespace(args.mavros_ns)
+
+    if args.wait:
+        wait_fcu_connection()
+
     command.setup_services()
     args.func(args)
 
