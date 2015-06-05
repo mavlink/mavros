@@ -83,6 +83,7 @@ def main():
     parser = argparse.ArgumentParser(description="Chnage mode and rate on MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
     mode_args = subarg.add_parser('mode', help="Set mode")
@@ -108,6 +109,10 @@ def main():
 
     rospy.init_node("mavsys", anonymous=True)
     mavros.set_namespace(args.mavros_ns)
+
+    if args.wait:
+        wait_fcu_connection()
+
     args.func(args)
 
 
