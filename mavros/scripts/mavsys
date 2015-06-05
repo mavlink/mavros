@@ -100,8 +100,8 @@ def main():
     rate_args.add_argument('--raw-controller', type=int, metavar='rate', help="raw conptoller stream")
     rate_args.add_argument('--position', type=int, metavar='rate', help="position stream")
     rate_args.add_argument('--extra1', type=int, metavar='rate', help="Extra 1 stream")
-    rate_args.add_argument('--extra2', type=int, metavar='rate', help="Extra 1 stream")
-    rate_args.add_argument('--extra3', type=int, metavar='rate', help="Extra 1 stream")
+    rate_args.add_argument('--extra2', type=int, metavar='rate', help="Extra 2 stream")
+    rate_args.add_argument('--extra3', type=int, metavar='rate', help="Extra 3 stream")
     rate_args.add_argument('--stream-id', type=int, nargs=2, metavar=('id', 'rate'), help="any stream")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
