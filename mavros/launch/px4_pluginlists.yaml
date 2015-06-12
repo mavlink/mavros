@@ -1,5 +1,6 @@
 plugin_blacklist:
 - 'image_pub'
+- 'vibration'
 
 plugin_whitelist: []
 #- 'sys_*'

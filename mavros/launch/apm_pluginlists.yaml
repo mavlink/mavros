@@ -11,6 +11,7 @@ plugin_blacklist:
 - 'vision_*'
 - visualization
 - distance_sensor
+- vibration
 
 plugin_whitelist: []
 #- 'sys_*'
