@@ -67,12 +67,12 @@ private:
 
 		vibe_msg->header = header;
 
-		vibe_msg->vibration_x = vibration.vibration_x;
-		vibe_msg->vibration_y = vibration.vibration_y;
-		vibe_msg->vibration_z = vibration.vibration_z;
-		vibe_msg->clipping_0 = vibration.clipping_0;
-		vibe_msg->clipping_1 = vibration.clipping_1;
-		vibe_msg->clipping_2 = vibration.clipping_2;
+		vibe_msg->vibration[0] = vibration.vibration_x;
+		vibe_msg->vibration[1] = vibration.vibration_y;
+		vibe_msg->vibration[2] = vibration.vibration_z;
+		vibe_msg->clipping[0] = vibration.clipping_0;
+		vibe_msg->clipping[1] = vibration.clipping_1;
+		vibe_msg->clipping[2] = vibration.clipping_2;
 
 		vibration_pub.publish(vibe_msg);
 	}
