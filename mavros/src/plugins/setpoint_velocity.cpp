@@ -72,7 +72,7 @@ private:
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_v_xyz_yr,
 				0.0, 0.0, 0.0,
-				vy, vx, -vz,
+				vx, -vy, -vz,
 				0.0, 0.0, 0.0,
 				0.0, yaw_rate);
 	}
