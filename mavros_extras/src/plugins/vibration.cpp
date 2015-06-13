@@ -67,9 +67,9 @@ private:
 
 		vibe_msg->header = header;
 
-		vibe_msg->vibration[0] = vibration.vibration_x;
-		vibe_msg->vibration[1] = vibration.vibration_y;
-		vibe_msg->vibration[2] = vibration.vibration_z;
+		vibe_msg->vibration.x = vibration.vibration_x;
+		vibe_msg->vibration.y = vibration.vibration_y;
+		vibe_msg->vibration.z = vibration.vibration_z;
 		vibe_msg->clipping[0] = vibration.clipping_0;
 		vibe_msg->clipping[1] = vibration.clipping_1;
 		vibe_msg->clipping[2] = vibration.clipping_2;

@@ -3,5 +3,5 @@
 
 Header header
 
-float32[3] vibration	# Vibration levels
-uint32[3] clipping	# Accelerometer
+geometry_msgs/Vector3 vibration		# 3-axis vibration levels
+float32[3] clipping				# Accelerometers clipping
