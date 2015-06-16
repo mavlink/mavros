@@ -141,8 +141,8 @@ public:
 		wp_nh("~mission"),
 		uas(nullptr),
 		wp_state(WP_IDLE),
-		wp_retries(RETRIES_COUNT),
 		wp_count(0),
+		wp_retries(RETRIES_COUNT),
 		wp_cur_id(0),
 		wp_cur_active(0),
 		wp_set_active(0),
@@ -590,10 +590,8 @@ private:
 	}
 
 	void set_current_waypoint(size_t seq) {
-		for (auto it = waypoints.begin();
-				it != waypoints.end();
-				++it)
-			it->current = (it->seq == seq) ? true : false;
+		for (auto &it : waypoints)
+			it.current = (it.seq == seq) ? true : false;
 	}
 
 	void publish_waypoints() {
@@ -602,10 +600,8 @@ private:
 
 		wpl->waypoints.clear();
 		wpl->waypoints.reserve(waypoints.size());
-		for (auto it = waypoints.begin();
-				it != waypoints.end();
-				++it) {
-			wpl->waypoints.push_back(WaypointItem::to_msg(*it));
+		for (auto &it : waypoints) {
+			wpl->waypoints.push_back(WaypointItem::to_msg(it));
 		}
 
 		lock.unlock();
@@ -736,10 +732,8 @@ private:
 		send_waypoints.clear();
 		send_waypoints.reserve(req.waypoints.size());
 		uint16_t seq = 0;
-		for (auto it = req.waypoints.begin();
-				it != req.waypoints.end();
-				++it, ++seq) {
-			send_waypoints.push_back(WaypointItem::from_msg(*it, seq));
+		for (auto &it : req.waypoints) {
+			send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
 		}
 
 		wp_count = send_waypoints.size();
