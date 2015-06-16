@@ -510,7 +510,7 @@ private:
 		ss << std::setfill('0');
 
 		for (size_t i = 0; i < size; i++)
-			ss << std::hex << std::setw(2) << array[i];
+			ss << std::hex << std::setw(2) << int(array[i]);
 
 		return ss.str();
 	}
