@@ -163,6 +163,14 @@ distance_sensor:
 image:
   frame_id: "px4flow"
 
+# landing_target
+landing_target:
+  send_tf: true
+  listen_tf: false
+  frame_id: "landing_target"
+  child_frame_id: "camera_center"
+  tf_rate_limit: 10.0
+
 # fake_gps
 fake_gps:
   # select data source
