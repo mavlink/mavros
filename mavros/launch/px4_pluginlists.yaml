@@ -3,6 +3,7 @@ plugin_blacklist:
 - safety_area
 # extras
 - image_pub
+- landing_target
 - vibration
 - distance_sensor
 - rangefinder
@@ -10,4 +11,3 @@ plugin_blacklist:
 
 plugin_whitelist: []
 # 'sys_*'
-
