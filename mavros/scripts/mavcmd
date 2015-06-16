@@ -99,7 +99,6 @@ def do_land(args):
 
     _check_ret(args, ret)
 
-
 def _find_gps_topic(args, op_name):
     global_fix = mavros.get_topic('global_position', 'global')
     gps_fix = mavros.get_topic('gps', 'fix')
@@ -186,6 +185,14 @@ def do_guided_en(args):
 
     _check_ret(args, ret)
 
+def do_trigger_control(args):
+    try:
+        ret = command.trigger_control(args.trigger_enable,
+                      integration_time=args.integration_time )
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
 
 def main():
     parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")
@@ -263,6 +270,13 @@ def main():
     guided_group = guided_args.add_mutually_exclusive_group()
     guided_group.add_argument('-e', '--enable', dest='enable', action='store_true', default=True, help="enable OFFBOARD mode (default)")
     guided_group.add_argument('-d', '--disable', dest='enable', action='store_false', help="disable OFFBOARD mode")
+
+    trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera trigerring system (PX4)")
+    trigger_ctrl_args.set_defaults(func=do_trigger_control)
+    trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
+    trigger_en_group.add_argument('-e', '--enable', dest='enable', action='store_true', default=True, help="enable camera trigger (default)")
+    trigger_en_group.add_argument('-d', '--disable', dest='enable', action='store_false', help="disable camera trigger")
+    trigger_ctrl_args.add_argument('-i', '--int_time', default=0.0, type=float, required=False, help="set/update shutter integration time for camera")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 
