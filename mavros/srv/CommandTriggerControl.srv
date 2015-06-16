@@ -1,0 +1,7 @@
+# Type for controlling onboard camera trigerring system
+
+bool    trigger_enable		# Trigger on/off control
+float32 integration_time	# Shutter integration time. Zero to use current onboard value.
+---
+bool success
+uint8 result

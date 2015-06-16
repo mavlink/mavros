@@ -24,6 +24,7 @@
 #include <mavros/CommandBool.h>
 #include <mavros/CommandHome.h>
 #include <mavros/CommandTOL.h>
+#include <mavros/CommandTriggerControl.h>
 
 namespace mavplugin {
 class CommandTransaction {
@@ -67,6 +68,7 @@ public:
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
 		guided_srv = cmd_nh.advertiseService("guided_enable", &CommandPlugin::guided_cb, this);
+		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 	}
 
 	const message_map get_rx_handlers() {
@@ -87,6 +89,7 @@ private:
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
 	ros::ServiceServer guided_srv;
+	ros::ServiceServer trigger_srv;
 
 	bool use_comp_id_system_control;
 
@@ -313,6 +316,14 @@ private:
 			mavros::CommandBool::Response &res) {
 		return send_command_long_and_wait(MAV_CMD_NAV_GUIDED_ENABLE, 1,
 				(req.value) ? 1.0 : 0.0,
+				0, 0, 0, 0, 0, 0,
+				res.success, res.result);
+	}
+   
+        bool trigger_control_cb(mavros::CommandTriggerControl::Request &req,
+			mavros::CommandTriggerControl::Response &res) {
+		return send_command_long_and_wait(MAV_CMD_DO_TRIGGER_CONTROL, (req.trigger_enable)? 1.0 : 0.0,
+				req.integration_time,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
