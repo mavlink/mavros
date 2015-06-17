@@ -59,7 +59,7 @@ public:
 		}
 
 		land_target_sub = sp_nh.subscribe("target", 10, &LandingTargetPlugin::land_target_cb, this);
-		local_position_sub = sp_nh.subscribe("/mavros/position/local", 10, &LandingTargetPlugin::local_pos_cb, this);
+		local_position_sub = sp_nh.subscribe("~position/local", 10, &LandingTargetPlugin::local_pos_cb, this);
 	}
 
 	const message_map get_rx_handlers() {
@@ -114,8 +114,8 @@ private:
 	*	theta = atan(y / x)
 	*	phi = atan(sqrt(x^2 + y^2) / z)
 	*
-	*	where,	theta	= angle_x		(note: notation in Mavlink/Firmware may lead to wrongly consider rectangular coordinates)
-	*			phi		= angle_y
+	*	where,	theta	= angle_x	(note: notation in Mavlink/Firmware may lead to wrongly consider rectangular coordinates)
+	*		phi	= angle_y
 	*
 	*	Conversion from spherical to rectangular coordinates:
 	*	x = d * sin(phi) * cos(theta)
