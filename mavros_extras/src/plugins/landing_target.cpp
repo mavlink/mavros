@@ -17,7 +17,6 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
-#include <boost/math/constants/constants.hpp>
 
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -109,11 +108,20 @@ private:
 
 	/* -*- mid-level helpers -*- */
 
-	/*	AUXILIAR MATH:
+	/*	AUXILIAR MATH: (for spherical coordinates)
+	*
 	*	d = sqrt(x^2 + y^2 + z^2)
-	*	x = sqrt((d^2-z^2) * cos^2(ax))
-	*	y = x*tan(ax)
-	*	z = d^2 - x^2 - y^2;
+	*	theta = atan(y / x)
+	*	phi = atan(sqrt(x^2 + y^2) / z)
+	*
+	*	where,	theta	= angle_x		(note: notation in Mavlink/Firmware may lead to wrongly consider rectangular coordinates)
+	*			phi		= angle_y
+	*
+	*	Conversion from spherical to rectangular coordinates:
+	*	x = d * sin(phi) * cos(theta)
+	*	y = d * sin(phi) * sin(theta)
+	*	z = d * cos(phi)
+	*
 	*/
 
 	/**
@@ -123,9 +131,9 @@ private:
 		// origin position in ROS ENU frame
 		tf::Vector3 pos = transf.getOrigin();
 
-		float ang_x = atan(pos.y()/pos.x());
-		float ang_y = boost::math::constants::pi<double>()/2 - atan(pos.y()/pos.x());
-		float distance = sqrt(pow(pos.x(),2) + pow(pos.y(),2) + pow(pos.z(),2));
+		float distance = sqrt(pos.x()*pos.x() + pos.y()*pos.y() + pos.z()*pos.z());
+		float theta = atan(pos.y()/pos.x());	// = angle_x
+		float phi = atan(sqrt(pos.x()*pos.x() + pos.y()*pos.y()) / pos.z());	// = angle_y	
 
 		if (last_transform_stamp == stamp) {
 			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Target: Same transform as last one, dropped.");
@@ -134,8 +142,8 @@ private:
 		last_transform_stamp = stamp;
 
 		landing_target( 0, 		// TODO: update number depending on received frame_id
-				1, 		// in NED; should user choose or do we define it?
-				ang_x, -ang_y,	// which may mean this angles should be adapted to frame
+				1, 		// in NED; should user choose or it is auto-defined?
+				theta, -phi,	// which may mean this angles should be adapted to frame
 				distance);	// TODO: add MAV_FRAME enum to uas
 	}
 
@@ -149,15 +157,21 @@ private:
 
 		tf::Vector3 target;
 		tf::Vector3 local = transform.getOrigin();
+		tf::Quaternion q;
 
-		target.setX(sqrt((pow(land_target.distance,2) - pow(local.z(),2)) * pow(cos(land_target.angle_x),2)));
-		target.setY(target.x() * tan(land_target.angle_x));
-		target.setZ(pow(land_target.distance,2) - pow(target.x(),2) - pow(target.y(),2));
+		float distance = land_target.distance;
+		float theta = land_target.angle_x;
+		float phi = land_target.angle_y;
+
+		target.setX(distance * sin(phi) * sin(theta));
+		target.setY(distance * sin(phi) * sin(theta));
+		target.setZ(distance * cos(phi));
 
 		tf::Transform target_tf;
 
 		target_tf.setOrigin(tf::Vector3(target.x(), -target.y(), -target.z())); // right now in NED but,
-		target_tf.setRotation(uas->get_attitude_orientation()); 		// TODO : Set pose depending on MAV_FRAME enum
+		q.setRPY (0, 0, 0);			// TODO : Set pose depending on MAV_FRAME enum
+		target_tf.setRotation(q);
 
 		std_msgs::Header header;
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
@@ -190,7 +204,7 @@ private:
 		tf::Transform tf;
 		poseMsgToTF(req->pose, tf);
 		transform = tf;			// to be used by handle_landing_target()
-		lp_time = req->header.stamp;// ''
+		lp_time = req->header.stamp;	// ''
 	}
 };
 };	// namespace mavplugin
