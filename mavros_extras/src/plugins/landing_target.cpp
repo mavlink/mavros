@@ -59,7 +59,6 @@ public:
 		}
 
 		land_target_sub = sp_nh.subscribe("target", 10, &LandingTargetPlugin::land_target_cb, this);
-		local_position_sub = sp_nh.subscribe("~position/local", 10, &LandingTargetPlugin::local_pos_cb, this);
 	}
 
 	const message_map get_rx_handlers() {
@@ -79,15 +78,11 @@ private:
 	ros::Time last_transform_stamp;
 	tf::TransformBroadcaster tf_broadcaster;
 
-	tf::Transform transform;
-	ros::Time lp_time;
-
 	std::string frame_id;
 	std::string child_frame_id;
 
 	ros::Publisher land_target_pub;
 	ros::Subscriber land_target_sub;
-	ros::Subscriber local_position_sub;
 
 	/* -*- low-level send -*- */
 
@@ -151,12 +146,8 @@ private:
 		mavlink_landing_target_t land_target;
 		mavlink_msg_landing_target_decode(msg, &land_target);
 
-		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
-				"frame: %d angle offset:(X: %1.3frad, Y: %1.3frad) distance: %1.3fm",
-				land_target.frame, land_target.angle_x, land_target.angle_y, land_target.distance);
-
 		tf::Vector3 target;
-		tf::Vector3 local = transform.getOrigin();
+		tf::Transform target_tf;
 		tf::Quaternion q;
 
 		float distance = land_target.distance;
@@ -167,18 +158,22 @@ private:
 		target.setY(distance * sin(phi) * sin(theta));
 		target.setZ(distance * cos(phi));
 
-		tf::Transform target_tf;
-
 		target_tf.setOrigin(tf::Vector3(target.x(), -target.y(), -target.z())); // right now in NED but,
 		q.setRPY (0, 0, 0);			// TODO : Set pose depending on MAV_FRAME enum
 		target_tf.setRotation(q);
+
+		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
+				"frame: %d angle offset:(X: %1.3frad, Y: %1.3frad) "
+				"distance: %1.3fm position:(%1.3f, %1.3f, %1.3f)",
+				land_target.frame, land_target.angle_x, land_target.angle_y, land_target.distance,
+				target.x(), -target.y(), -target.z());
 
 		std_msgs::Header header;
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
 		tf::poseTFToMsg(target_tf, pose->pose);
 		pose->header.frame_id = frame_id;
-		pose->header.stamp = lp_time;
+		pose->header.stamp = ros::Time::now();	// TODO: request adding 'time_boot_ms' to LANDING_TARGET msg
 
 		land_target_pub.publish(pose);
 
@@ -195,17 +190,11 @@ private:
 	/* common TF listener moved to mixin */
 
 	void land_target_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
-		tf::Transform tf;
-		poseMsgToTF(req->pose, tf);
+		tf::Transform transform;
+		poseMsgToTF(req->pose, transform);
 		send_landing_target(transform, req->header.stamp);
 	}
 
-	void local_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
-		tf::Transform tf;
-		poseMsgToTF(req->pose, tf);
-		transform = tf;			// to be used by handle_landing_target()
-		lp_time = req->header.stamp;	// ''
-	}
 };
 };	// namespace mavplugin
 
