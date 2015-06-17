@@ -20,7 +20,6 @@
 
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 namespace mavplugin {
 /**
@@ -173,7 +172,7 @@ private:
 
 		tf::poseTFToMsg(target_tf, pose->pose);
 		pose->header.frame_id = frame_id;
-		pose->header.stamp = ros::Time::now();	// TODO: request adding 'time_boot_ms' to LANDING_TARGET msg
+		pose->header.stamp = ros::Time::now();	// TODO: request adding 'time_usec' to LANDING_TARGET msg
 
 		land_target_pub.publish(pose);
 
