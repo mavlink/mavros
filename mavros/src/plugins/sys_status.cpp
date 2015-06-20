@@ -502,14 +502,14 @@ private:
 		};
 	}
 
-	static inline std::string array_to_hex_string(uint8_t *array, size_t size)
+	static inline std::string custom_version_to_hex_string(uint8_t array[8])
 	{
 		// inefficient, but who care for one time call function?
 
 		std::ostringstream ss;
 		ss << std::setfill('0');
 
-		for (size_t i = 0; i < size; i++)
+		for (ssize_t i = 7; i >= 0; i--)
 			ss << std::hex << std::setw(2) << int(array[i]);
 
 		return ss.str();
@@ -520,13 +520,13 @@ private:
 		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
 		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%s)",
 				apv.flight_sw_version,
-				array_to_hex_string(apv.flight_custom_version, 8).c_str());
+				custom_version_to_hex_string(apv.flight_custom_version).c_str());
 		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%s)",
 				apv.middleware_sw_version,
-				array_to_hex_string(apv.middleware_custom_version, 8).c_str());
+				custom_version_to_hex_string(apv.middleware_custom_version).c_str());
 		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%s)",
 				apv.os_sw_version,
-				array_to_hex_string(apv.os_custom_version, 8).c_str());
+				custom_version_to_hex_string(apv.os_custom_version).c_str());
 		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
 		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
 		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
