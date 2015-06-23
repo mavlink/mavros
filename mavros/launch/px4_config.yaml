@@ -109,6 +109,10 @@ setpoint_position:
 mission:
   pull_after_gcs: true  # update mission if gcs updates
 
+# setpoint_control
+setpoint_control:
+  mav_control_target: 0
+
 # --- mavros extras plugins (same order) ---
 
 # distance_sensor

@@ -32,6 +32,9 @@
 	<class name="setpoint_position" type="mavplugin::SetpointPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU external position setpoint.</description>
 	</class>
+	<class name="setpoint_control" type="mavplugin::SetpointControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external control target setpoint.</description>
+	</class>
 	<class name="safety_area" type="mavplugin::SafetyAreaPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU safety allowed area.</description>
 	</class>

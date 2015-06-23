@@ -71,6 +71,7 @@ add_message_files(
   VFR_HUD.msg
   FileEntry.msg
   ActuatorControl.msg
+  ControlSetpoint.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -183,6 +184,7 @@ add_library(mavros_plugins
   src/plugins/local_position.cpp
   src/plugins/global_position.cpp
   src/plugins/setpoint_position.cpp
+  src/plugins/setpoint_control.cpp
   src/plugins/safety_area.cpp
   src/plugins/3dr_radio.cpp
   src/plugins/setpoint_velocity.cpp
