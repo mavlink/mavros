@@ -194,6 +194,15 @@ fake_gps:
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
 
+# landing_target
+landing_target:
+  send_tf: true
+  listen_tf: false
+  frame_id: "landing_target"
+  child_frame_id: "camera_center"
+  tf_rate_limit: 10.0
+  target_size: {x:  0.2, y:  0.2}
+
 # mocap_pose_estimate
 mocap:
   # select mocap source
