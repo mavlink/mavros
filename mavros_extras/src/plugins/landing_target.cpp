@@ -48,8 +48,11 @@ public:
 		sp_nh.param<std::string>("frame_id", frame_id, "landing_target");
 		sp_nh.param<std::string>("child_frame_id", child_frame_id, "camera_center");
 		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
+		sp_nh.param("target_size/x",target_size_x, 1.0);	// in meters
+		sp_nh.param("target_size/y",target_size_y, 1.0);
 
 		land_target_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("landing_target", 10);
+		target_size_pub = sp_nh.advertise<geometry_msgs::Vector3>("target_size", 10);
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << frame_id
@@ -81,7 +84,10 @@ private:
 	std::string child_frame_id;
 
 	ros::Publisher land_target_pub;
+	ros::Publisher target_size_pub;
 	ros::Subscriber land_target_sub;
+
+	double target_size_x, target_size_y;
 
 	/* -*- low-level send -*- */
 
@@ -92,11 +98,14 @@ private:
 			float distance) {
 		mavlink_message_t msg;
 		mavlink_msg_landing_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				time_usec,
 				target_num,
 				frame,
 				angle_x,
 				angle_y,
-				distance);
+				distance
+				size_x,
+				size_y);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
@@ -126,8 +135,11 @@ private:
 		tf::Vector3 pos = transf.getOrigin();
 
 		float distance = sqrt(pos.x()*pos.x() + pos.y()*pos.y() + pos.z()*pos.z());
-		float theta = atan(pos.y()/pos.x());	// = angle_x
-		float phi = atan(sqrt(pos.x()*pos.x() + pos.y()*pos.y()) / pos.z());	// = angle_y	
+		float phi = atan(sqrt(pos.x()*pos.x() + pos.y()*pos.y()) / pos.z());	// = angle_x
+		float theta = atan(pos.y()/pos.x());	// = angle_y
+
+		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
+		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Y-axis
 
 		if (last_transform_stamp == stamp) {
 			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Target: Same transform as last one, dropped.");
@@ -135,10 +147,13 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		landing_target( 0, 		// TODO: update number depending on received frame_id
+		landing_target( stamp.toNSec() / 1000,
+				0, 		// TODO: update number depending on received frame_id
 				1, 		// in NED; should user choose or it is auto-defined?
-				theta, -phi,	// which may mean this angles should be adapted to frame
-				distance);	// TODO: add MAV_FRAME enum to uas
+				phi, -theta,	// which may mean this angles should be adapted to frame
+				distance,	// TODO: add MAV_FRAME enum to uas
+				size_x_rad,
+				size_y_rad);
 	}
 
 	void handle_landing_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -150,8 +165,8 @@ private:
 		tf::Quaternion q;
 
 		float distance = land_target.distance;
-		float theta = land_target.angle_x;
-		float phi = land_target.angle_y;
+		float phi = land_target.angle_x;
+		float theta = land_target.angle_y;
 
 		target.setX(distance * sin(phi) * sin(theta));
 		target.setY(distance * sin(phi) * sin(theta));
@@ -172,7 +187,7 @@ private:
 
 		tf::poseTFToMsg(target_tf, pose->pose);
 		pose->header.frame_id = frame_id;
-		pose->header.stamp = ros::Time::now();	// TODO: request adding 'time_usec' to LANDING_TARGET msg
+		pose->header.stamp = uas->synchronise_stamp(land_target.time_usec);
 
 		land_target_pub.publish(pose);
 
@@ -182,6 +197,15 @@ private:
 						target_tf,
 						pose->header.stamp,
 						frame_id, child_frame_id));
+
+		auto tg_size = boost::make_shared<geometry_msgs::Vector3>();
+
+		tg_size->x = land_target.size_x / phi;	// again, assuming this is the arc length of the circles in XY-plane
+		tg_size->y = land_target.size_y / theta;
+		tg_size->z = 0.0f;			// unless the target is not flat, z = 0.0
+
+		target_size_pub.publish(tg_size);
+		// TODO: add target_size and landing_target subscriber in visualization plugin, so to publish a marker of the target
 	}
 
 	/* -*- callbacks -*- */
