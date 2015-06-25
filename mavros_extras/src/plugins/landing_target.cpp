@@ -94,22 +94,24 @@ private:
 	std::string mav_frame;
 
 	/* -*- low-level send -*- */
-
-	void landing_target(uint8_t target_num,
-			uint8_t frame,
+	void landing_target(uint64_t time_usec,
 			float angle_x,
 			float angle_y,
-			float distance) {
+			float distance,
+			float size_x,
+			float size_y,
+			uint8_t target_num,
+			uint8_t frame) {
 		mavlink_message_t msg;
 		mavlink_msg_landing_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
 				time_usec,
-				target_num,
-				frame,
 				angle_x,
 				angle_y,
-				distance
+				distance,
 				size_x,
-				size_y);
+				size_y,
+				target_num,
+				frame);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
@@ -158,12 +160,12 @@ private:
 		last_transform_stamp = stamp;
 
 		landing_target( stamp.toNSec() / 1000,
-				0, 		// TODO: update number depending on received frame_id
-				frame,	// by default, in LOCAL_NED
-				phi, -theta,	// this conversion must depend on the above frame
+				phi, -theta,	// this conversion must depend on the above below
 				distance,	// TODO: add conversion to frames, on lib, according to MAV_FRAME enum
 				size_x_rad,
-				size_y_rad);
+				size_y_rad,
+				0, 		// TODO: update number depending on received frame_id
+				frame);		// by default, in LOCAL_NED			
 	}
 
 	void handle_landing_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
