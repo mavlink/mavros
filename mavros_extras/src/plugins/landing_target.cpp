@@ -14,6 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
@@ -48,8 +49,9 @@ public:
 		sp_nh.param<std::string>("frame_id", frame_id, "landing_target");
 		sp_nh.param<std::string>("child_frame_id", child_frame_id, "camera_center");
 		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
-		sp_nh.param("target_size/x",target_size_x, 1.0);	// in meters
-		sp_nh.param("target_size/y",target_size_y, 1.0);
+		sp_nh.param("target_size/x", target_size_x, 1.0);	// in meters
+		sp_nh.param("target_size/y", target_size_y, 1.0);
+		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
 
 		land_target_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("landing_target", 10);
 		target_size_pub = sp_nh.advertise<geometry_msgs::Vector3>("target_size", 10);
@@ -88,6 +90,8 @@ private:
 	ros::Subscriber land_target_sub;
 
 	double target_size_x, target_size_y;
+
+	std::string mav_frame;
 
 	/* -*- low-level send -*- */
 
@@ -141,6 +145,12 @@ private:
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
 		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Y-axis
 
+		uint8_t frame = UAS::idx_frame(mav_frame);	// MAV_FRAME index based on given frame name
+		if (frame == -1) {
+			ROS_ERROR_NAMED("landing_target", "LT: invalid MAV_FRAME %s. Please check valid frame names!", mav_frame.c_str());
+			return;
+		}
+
 		if (last_transform_stamp == stamp) {
 			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Target: Same transform as last one, dropped.");
 			return;
@@ -149,9 +159,9 @@ private:
 
 		landing_target( stamp.toNSec() / 1000,
 				0, 		// TODO: update number depending on received frame_id
-				1, 		// in NED; should user choose or it is auto-defined?
-				phi, -theta,	// which may mean this angles should be adapted to frame
-				distance,	// TODO: add MAV_FRAME enum to uas
+				frame,	// by default, in LOCAL_NED
+				phi, -theta,	// this conversion must depend on the above frame
+				distance,	// TODO: add conversion to frames, on lib, according to MAV_FRAME enum
 				size_x_rad,
 				size_y_rad);
 	}
@@ -177,9 +187,10 @@ private:
 		target_tf.setRotation(q);
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
-				"frame: %d angle offset:(X: %1.3frad, Y: %1.3frad) "
+				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
 				"distance: %1.3fm position:(%1.3f, %1.3f, %1.3f)",
-				land_target.frame, land_target.angle_x, land_target.angle_y, land_target.distance,
+				mavros::UAS::str_frame(static_cast<enum MAV_FRAME>(land_target.frame)).c_str(),
+				land_target.angle_x, land_target.angle_y, land_target.distance,
 				target.x(), -target.y(), -target.z());
 
 		std_msgs::Header header;
