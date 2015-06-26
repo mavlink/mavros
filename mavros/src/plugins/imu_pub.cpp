@@ -179,13 +179,13 @@ private:
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// NED -> ENU (body-fixed)
+		tf::Vector3 attitude = UAS::convert_attitude_rpy(att.roll, att.pitch, att.yaw);
 		tf::Quaternion orientation = tf::createQuaternionFromRPY(
-				att.roll, -att.pitch, -att.yaw);
+				attitude.x(), attitude.y(), attitude.z());
 
+		tf::Vector3 attitude_s = UAS::convert_attitude_rpy(att.rollspeed, att.pitchspeed, att.yawspeed);
 		fill_imu_msg_attitude(imu_msg, orientation,
-				att.rollspeed,
-				-att.pitchspeed,
-				-att.yawspeed);
+				attitude_s.x(), attitude_s.y(), attitude_s.z());
 
 		uas_store_attitude(orientation,
 				imu_msg->angular_velocity,
@@ -207,13 +207,13 @@ private:
 
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-		// PX4 NED (w x y z) -> ROS ENU (x -y -z w) (body-fixed)
-		tf::Quaternion orientation(att_q.q2, -att_q.q3, -att_q.q4, att_q.q1);
+		// PX4 NED -> ROS ENU (body-fixed)
+		tf::Quaternion orientation(att_q.q1, att_q.q2, att_q.q3, att_q.q4);
+		tf::Quaternion qo = UAS::convert_attitude_q(orientation);
 
+		tf::Vector3 attitude_s = UAS::convert_attitude_rpy(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
 		fill_imu_msg_attitude(imu_msg, orientation,
-				att_q.rollspeed,
-				-att_q.pitchspeed,
-				-att_q.yawspeed);
+				attitude_s.x(), attitude_s.y(), attitude_s.z());
 
 		uas_store_attitude(orientation,
 				imu_msg->angular_velocity,
@@ -240,9 +240,12 @@ private:
 		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
 			auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
+			auto hr_imu_gyro = UAS::convert_general_xyz(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro);
+			auto hr_imu_acc = UAS::convert_general_xyz(imu_hr.xacc, imu_hr.yacc, imu_hr.zacc);
+
 			fill_imu_msg_raw(imu_msg,
-					imu_hr.xgyro, -imu_hr.ygyro, -imu_hr.zgyro,
-					imu_hr.xacc, -imu_hr.yacc, -imu_hr.zacc);
+					hr_imu_gyro.x(), hr_imu_gyro.y(), hr_imu_gyro.z(),
+					hr_imu_acc.x(), hr_imu_acc.y(), hr_imu_acc.z());
 
 			imu_msg->header = header;
 			imu_raw_pub.publish(imu_msg);
@@ -252,11 +255,13 @@ private:
 			auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 			// Convert from local NED plane to ENU
-			magn_msg->magnetic_field.x = imu_hr.ymag * GAUSS_TO_TESLA;
-			magn_msg->magnetic_field.y = imu_hr.xmag * GAUSS_TO_TESLA;
-			magn_msg->magnetic_field.z = -imu_hr.zmag * GAUSS_TO_TESLA;
+			auto mag_field = UAS::convert_general_xyz(imu_hr.xmag, imu_hr.ymag, imu_hr.zmag);
 
-			magn_msg->magnetic_field_covariance = magnetic_cov;
+			magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
+			magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
+			magn_msg->magnetic_field.z = mag_field.z() * MILLIT_TO_TESLA;
+
+			magn_msg->magnetic_field_covariance = magnetic_cov; // TODO: convert covariance from NED to ENU
 
 			magn_msg->header = header;
 			magn_pub.publish(magn_msg);
@@ -292,13 +297,16 @@ private:
 		header.frame_id = frame_id;
 
 		/* NOTE: APM send SCALED_IMU data as RAW_IMU */
+		auto raw_imu_gyro = UAS::convert_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
+		auto raw_imu_acc = UAS::convert_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
+
 		fill_imu_msg_raw(imu_msg,
-				imu_raw.xgyro * MILLIRS_TO_RADSEC,
-				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
-				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
-				imu_raw.xacc * MILLIG_TO_MS2,
-				-imu_raw.yacc * MILLIG_TO_MS2,
-				-imu_raw.zacc * MILLIG_TO_MS2);
+				raw_imu_gyro.x() * MILLIRS_TO_RADSEC,
+				raw_imu_gyro.y() * MILLIRS_TO_RADSEC,
+				raw_imu_gyro.z() * MILLIRS_TO_RADSEC,
+				raw_imu_acc.x() * MILLIG_TO_MS2,
+				raw_imu_acc.y() * MILLIG_TO_MS2,
+				raw_imu_acc.z() * MILLIG_TO_MS2);
 
 		if (!uas->is_ardupilotmega()) {
 			ROS_WARN_THROTTLE_NAMED(60, "imu", "RAW_IMU: linear acceleration known on APM only");
@@ -314,11 +322,13 @@ private:
 		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		// Convert from local NED plane to ENU
-		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.y = imu_raw.xmag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
+		auto mag_field = UAS::convert_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
+		
+		magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.z = mag_field.z() * MILLIT_TO_TESLA;
 
-		magn_msg->magnetic_field_covariance = magnetic_cov;
+		magn_msg->magnetic_field_covariance = magnetic_cov; // TODO: convert covariance from NED to ENU
 
 		magn_msg->header = header;
 		magn_pub.publish(magn_msg);
@@ -338,13 +348,16 @@ private:
 		std_msgs::Header header;
 		header.stamp = uas->synchronise_stamp(imu_raw.time_boot_ms);
 
+		auto raw_imu_gyro = UAS::convert_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
+		auto raw_imu_acc = UAS::convert_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
+
 		fill_imu_msg_raw(imu_msg,
-				imu_raw.xgyro * MILLIRS_TO_RADSEC,
-				-imu_raw.ygyro * MILLIRS_TO_RADSEC,
-				-imu_raw.zgyro * MILLIRS_TO_RADSEC,
-				imu_raw.xacc * MILLIG_TO_MS2,
-				-imu_raw.yacc * MILLIG_TO_MS2,
-				-imu_raw.zacc * MILLIG_TO_MS2);
+				raw_imu_gyro.x() * MILLIRS_TO_RADSEC,
+				raw_imu_gyro.y() * MILLIRS_TO_RADSEC,
+				raw_imu_gyro.z() * MILLIRS_TO_RADSEC,
+				raw_imu_acc.x() * MILLIG_TO_MS2,
+				raw_imu_acc.y() * MILLIG_TO_MS2,
+				raw_imu_acc.z() * MILLIG_TO_MS2);
 
 		imu_msg->header = header;
 		imu_raw_pub.publish(imu_msg);
@@ -353,11 +366,13 @@ private:
 		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
 		// Convert from local NED plane to ENU
-		magn_msg->magnetic_field.x = imu_raw.ymag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.y = imu_raw.xmag * MILLIT_TO_TESLA;
-		magn_msg->magnetic_field.z = -imu_raw.zmag * MILLIT_TO_TESLA;
+		auto mag_field = UAS::convert_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
 
-		magn_msg->magnetic_field_covariance = magnetic_cov;
+		magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
+		magn_msg->magnetic_field.z = mag_field.z() * MILLIT_TO_TESLA;
+
+		magn_msg->magnetic_field_covariance = magnetic_cov; // TODO: convert covariance from NED to ENU
 
 		magn_msg->header = header;
 		magn_pub.publish(magn_msg);

@@ -76,9 +76,11 @@ private:
 	 * Send vision speed estimate to FCU velocity controller
 	 */
 	void send_vision_speed(float vx, float vy, float vz, const ros::Time &stamp) {
-		// TODO: check conversion. Issue #49.
+		// ENU->NED
+		auto vel = UAS::convert_velocity(vx, vy, vz);
+
 		vision_speed_estimate(stamp.toNSec() / 1000,
-				vy, vx, -vz);
+				vel.x(), vel.y(), vel.z());
 	}
 
 	/* -*- callbacks -*- */

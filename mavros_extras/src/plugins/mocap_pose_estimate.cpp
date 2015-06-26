@@ -69,8 +69,7 @@ private:
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
 
-	// mavlink send
-
+	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
 			float q[4],
@@ -86,35 +85,61 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-
+	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
 		float q[4];
-		q[0] =  pose->pose.orientation.y;	// w
-		q[1] =  pose->pose.orientation.x;	// x
-		q[2] = -pose->pose.orientation.z;	// y
-		q[3] =  pose->pose.orientation.w;	// z
-		// Convert to mavlink body frame
+
+		// ENU->NED
+		tf::Quaternion qo;
+		quaternionMsgToTF(pose->pose.orientation,qo);
+		auto qt = UAS::convert_attitude_q(qo);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
+
+		auto position = UAS::convert_position(pose->pose.position.x,
+					pose->pose.position.y,
+					pose->pose.position.z);
+
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
-				pose->pose.position.x,
-				-pose->pose.position.y,
-				-pose->pose.position.z);
+				position.x(),
+				position.y(),
+				position.z());
 	}
 
+	/* -*- callbacks -*- */
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		float q[4];
-		q[0] =  trans->transform.rotation.y;	// w
-		q[1] =  trans->transform.rotation.x;	// x
-		q[2] = -trans->transform.rotation.z;	// y
-		q[3] =  trans->transform.rotation.w;	// z
-		// Convert to mavlink body frame
+		q[0] = trans->transform.rotation.y;
+		q[1] = trans->transform.rotation.x;
+		q[2] = trans->transform.rotation.z;
+		q[3] = trans->transform.rotation.w;
+
+		// ENU->NED
+		tf::Transform tf;
+		transformMsgToTF(trans->transform,tf);
+		tf::Quaternion qo = tf.getRotation();
+		auto qt = UAS::convert_attitude_q(qo);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
+
+		auto position = UAS::convert_position(trans->transform.translation.x,
+					trans->transform.translation.y,
+					trans->transform.translation.z);
+
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
 				q,
-				trans->transform.translation.x,
-				-trans->transform.translation.y,
-				-trans->transform.translation.z);
+				position.x(),
+				position.y(),
+				position.z());
 	}
 };
 };	// namespace mavplugin

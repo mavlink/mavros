@@ -126,12 +126,15 @@ private:
 		const uint8_t ignore_all_except_q = (1 << 6) | (7 << 0);
 		float q[4];
 
-		// ENU->NED, description in #49.
 		tf::Quaternion tf_q = transform.getRotation();
-		q[0] = tf_q.w();
-		q[1] = tf_q.y();
-		q[2] = tf_q.x();
-		q[3] = -tf_q.z();
+		
+		// ENU->NED
+		auto qt = UAS::convert_attitude_q(tf_q);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_q,
@@ -150,10 +153,13 @@ private:
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
+		// ENU->NED
+		auto vel = UAS::convert_velocity(vx, vy, vz);
+
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,
 				q,
-				vy, vx, -vz,
+				vel.x(), vel.y(), vel.z(),
 				0.0);
 	}
 

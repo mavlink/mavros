@@ -90,13 +90,24 @@ private:
 		flow_rad_msg->header = header;
 
 		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
-		flow_rad_msg->integrated_x = flow_rad.integrated_x;
-		flow_rad_msg->integrated_y = -flow_rad.integrated_y;	// NED -> ENU
-		flow_rad_msg->integrated_xgyro = flow_rad.integrated_xgyro;
-		flow_rad_msg->integrated_ygyro = -flow_rad.integrated_ygyro;	// NED -> ENU
-		flow_rad_msg->integrated_zgyro = -flow_rad.integrated_zgyro;	// NED -> ENU
+
+		// NED->ENU
+		auto position = UAS::convert_position(flow_rad.integrated_x, flow_rad.integrated_y, 0.0);
+
+		flow_rad_msg->integrated_x = position.x();
+		flow_rad_msg->integrated_y = position.y();
+
+		// NED->ENU
+		auto flow_gyro = UAS::convert_general_xyz(flow_rad.integrated_xgyro, flow_rad.integrated_ygyro, flow_rad.integrated_zgyro);
+
+		flow_rad_msg->integrated_xgyro = flow_gyro.x();
+		flow_rad_msg->integrated_ygyro = flow_gyro.y();	
+		flow_rad_msg->integrated_zgyro = flow_gyro.z();
+
 		flow_rad_msg->temperature = flow_rad.temperature / 100.0f;	// in degrees celsius
+
 		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
+
 		flow_rad_msg->distance = flow_rad.distance;
 
 		flow_rad_pub.publish(flow_rad_msg);

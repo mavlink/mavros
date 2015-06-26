@@ -158,7 +158,6 @@ private:
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
-		// XXX Check #193
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
@@ -190,10 +189,11 @@ private:
 
 		if (send_tf) {
 			tf::Transform transform;
-			// XXX: we realy need change frame?
-			transform.setOrigin(tf::Vector3(pose_cov->pose.pose.position.y,
-						pose_cov->pose.pose.position.x,
-						-pose_cov->pose.pose.position.z));
+			auto position = UAS::convert_position(pose_cov->pose.pose.position.x,
+						pose_cov->pose.pose.position.y,
+						pose_cov->pose.pose.position.z);
+
+			transform.setOrigin(position);
 
 			transform.setRotation(uas->get_attitude_orientation());
 

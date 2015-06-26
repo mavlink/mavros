@@ -67,14 +67,17 @@ private:
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		// ENU->NED. Issue #49.
+		// ENU->NED
+		auto vel = UAS::convert_velocity(vx, vy, vz);
+		auto yr = UAS::convert_velocity(0.0, 0.0, yaw_rate);
+
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_v_xyz_yr,
 				0.0, 0.0, 0.0,
-				vx, -vy, -vz,
+				vel.x(), vel.y(), vel.z(),
 				0.0, 0.0, 0.0,
-				0.0, yaw_rate);
+				0.0, yr.z());
 	}
 
 	/* -*- callbacks -*- */

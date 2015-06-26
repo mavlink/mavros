@@ -101,14 +101,17 @@ private:
 			ignore_all_except_xyz_y = (1 << 11) | (7 << 6);
 		}
 
-		// ENU->NED. Issue #49.
+		// ENU->NED
+		auto position = UAS::convert_position(origin.x(), origin.y(), origin.z());
+		auto qt = UAS::convert_attitude_q(q);
+
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_xyz_y,
-				origin.x(), -origin.y(), -origin.z(),
+				position.x(), position.y(), position.z(),
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				tf::getYaw(q), 0.0);
+				tf::getYaw(qt), 0.0);
 	}
 
 	/* -*- callbacks -*- */

@@ -107,7 +107,7 @@ private:
 	 */
 	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// origin and RPY in ENU frame
-		tf::Vector3 position = transform.getOrigin();
+		tf::Vector3 origin = transform.getOrigin();
 		double roll, pitch, yaw;
 		tf::Matrix3x3 orientation(transform.getBasis());
 		orientation.getRPY(roll, pitch, yaw);
@@ -121,10 +121,13 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		// TODO: check conversion. Issue #49.
+		// ENU->NED
+		auto position = UAS::convert_position(origin.x(), origin.y(), origin.z());
+		tf::Vector3 rpy = UAS::convert_attitude_rpy(roll, pitch, yaw);
+		
 		vision_position_estimate(stamp.toNSec() / 1000,
-				position.x(), -position.y(), -position.z(),
-				roll, -pitch, -yaw); // ??? please check!
+				position.x(), position.y(), position.z(),
+				rpy.x(), rpy.y(), rpy.z());
 	}
 
 	/* -*- callbacks -*- */

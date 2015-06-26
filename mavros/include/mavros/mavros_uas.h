@@ -296,6 +296,36 @@ public:
 	 */
 	static tf::Vector3 sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
 
+	/**
+	 * @brief Function to convert position values from ENU to NED frames and vice-versa
+	 */
+	static tf::Vector3 convert_position(float _x, float _y, float _z);
+
+	/**
+	 * @brief Function to convert velocity values from ENU to NED frames and vice-versa
+	 */
+	static tf::Vector3 convert_velocity(float _vx, float _vy, float _vz);
+
+	/**
+	 * @brief Function to convert acceleration values from ENU to NED frames and vice-versa
+	 */
+	static tf::Vector3 convert_accel(float _ax, float _ay, float _az);
+
+	/**
+	 * @brief Function to convert general XYZ values from ENU to NED frames and vice-versa
+	 */
+	static tf::Vector3 convert_general_xyz(float _x, float _y, float _z);
+
+	/**
+	 * @brief Function to convert attitude quaternion values from ENU to NED frames and vice-versa
+	 */
+	static tf::Quaternion convert_attitude_q(tf::Quaternion qo);
+
+	/**
+	 * @brief Function to convert attitude euler angles values from ENU to NED frames and vice-versa
+	 */
+	static tf::Vector3 convert_attitude_rpy(float _roll, float _pitch, float _yaw);
+
 private:
 	std::recursive_mutex mutex;
 

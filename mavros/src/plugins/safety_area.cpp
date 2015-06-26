@@ -110,10 +110,14 @@ private:
 				p1x, p1y, p1z,
 				p2x, p2y, p2z);
 
+		// ENU->NED
+		auto p1 = UAS::convert_position(p1x, p1y, p1z);
+		auto p2 = UAS::convert_position(p2x, p2y, p2z);
+
 		safety_set_allowed_area(
-				MAV_FRAME_LOCAL_NED,
-				p1y, p1x, -p1z,
-				p2y, p2x, -p2z);
+				MAV_FRAME_LOCAL_NED, // TODO: use enum from lib
+				p1.x(), p1.y(), p1.z(),
+				p2.x(), p2.y(), p2.z());
 	}
 
 	/* -*- callbacks -*- */

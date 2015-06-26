@@ -75,13 +75,15 @@ private:
 		if (send_force)
 			ignore_all_except_a_xyz |= (1 << 9);
 
-		// ENU->NED. Issue #49.
+		// ENU->NED
+		auto accel = UAS::convert_accel(afx, afy, afz);
+
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				MAV_FRAME_LOCAL_NED,
+				MAV_FRAME_LOCAL_NED,	// TODO: use enum on lib
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				afx, -afy, -afz,
+				accel.x(), accel.y(), accel.z(),
 				0.0, 0.0);
 	}
 
