@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <array>
 #include <mutex>
 #include <atomic>
 #include <tf/transform_datatypes.h>
@@ -325,6 +326,30 @@ public:
 	 * @brief Function to convert attitude euler angles values from ENU to NED frames and vice-versa
 	 */
 	static tf::Vector3 convert_attitude_rpy(float _roll, float _pitch, float _yaw);
+
+	/**
+	 * @brief Function to convert full 6D pose covariance matrix values from ENU to NED frames and vice-versa
+	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw
+	 *
+	 * Cov_matrix =	|var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
+	 * 		|cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
+	 * 		|cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
+	 * 		|cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
+	 * 		|cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
+	 * 		|cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
+	 *
+	 * Rot_matrix = | 1	 0	 0	 0	 0	 0 |
+	 * 		| 0	-1 	 0	 0	 0	 0 |
+	 * 		| 0	 0	-1	 0	 0	 0 |
+	 * 		| 0	 0	 0	 1	 0	 0 |
+	 * 		| 0	 0	 0	 0	-1	 0 |
+	 * 		| 0	 0	 0	 0	 0	-1 |
+	 *
+	 * Compute Covariance matrix in another frame:
+	 *
+	 * 			C' = R * C * R^T
+	 */
+	static std::array<float, 36> convert_covariance_pose6x6(std::array<float, 36> _covariance);
 
 private:
 	std::recursive_mutex mutex;

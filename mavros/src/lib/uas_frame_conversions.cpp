@@ -62,3 +62,23 @@ static tf::Vector3 convert_attitude_rpy(float _roll, float _pitch, float _yaw){
 	float yaw = _yaw;
 	return tf::Vector3(roll, pitch, yaw);
 };
+
+static std::array<float, 36> convert_covariance_pose6x6(std::array<float, 36> _covariance){
+
+	std::array<float, 36> rotation = {1 ,0,0,0,0,0,
+    					  0,-1,0,0,0,0,
+    					  0,0,-1,0,0,0,
+    					  0,0,0, 1,0,0,
+    					  0,0,0,0,-1,0,
+    					  0,0,0,0,0,-1};
+
+   	std::array<float, 36> covariance;							
+	std::array<float, 36> temp;		// temporary matrix = R * C
+
+	// The rotation matrix in this case is a diagonal matrix so R = R^T
+	
+	std::transform(rotation.begin()+1, rotation.end(), _covariance.begin()+1, temp.begin(), std::multiplies<float>());
+	std::transform(temp.begin()+1, temp.end(), rotation.begin()+1, covariance.begin(), std::multiplies<float>());
+
+	return covariance;
+};
