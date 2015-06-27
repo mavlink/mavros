@@ -62,12 +62,13 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send acceleration/force to FCU acceleration controller
+	 * @brief Send acceleration/force to FCU acceleration controller.
 	 *
-	 * Note: send only AFX AFY AFZ. ENU frame.
+	 * @warning Send only AFX AFY AFZ. ENU frame.
 	 */
 	void send_setpoint_acceleration(const ros::Time &stamp, float afx, float afy, float afz) {
-		/* Documentation start from bit 1 instead 0.
+		/**
+		 * Documentation start from bit 1 instead 0.
 		 * Ignore position and velocity vectors, yaw and yaw rate
 		 */
 		uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
@@ -75,8 +76,8 @@ private:
 		if (send_force)
 			ignore_all_except_a_xyz |= (1 << 9);
 
-		// ENU->NED
-		auto accel = UAS::convert_accel(afx, afy, afz);
+		/** ENU->NED frame conversion */
+		auto accel = UAS::transform_frame_general_xyz(afx, afy, afz);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,	// TODO: use enum on lib

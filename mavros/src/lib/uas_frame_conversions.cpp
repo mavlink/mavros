@@ -21,49 +21,28 @@ const double PI = boost::math::constants::pi<double>();
 
 using namespace mavros;
 
-static tf::Vector3 convert_position(float _x, float _y, float _z){
+static tf::Vector3 transform_frame_general_xyz(float _x, float _y, float _z){
 	float x =  _x;
 	float y = -_y;
 	float z = -_z;
 	return tf::Vector3(x, y, z);
 };
 
-static tf::Vector3 convert_velocity(float _vx, float _vy, float _vz){
-	float vx =  _vx;
-	float vy = -_vy;
-	float vz = -_vz;
-	return tf::Vector3(vx, vy, vz);
-};
-
-static tf::Vector3 convert_accel(float _ax, float _ay, float _az){
-	float ax =  _ax;
-	float ay = -_ay;
-	float az = -_az;
-	return tf::Vector3(ax, ay, az);
-};
-
-static tf::Vector3 convert_general_xyz(float _x, float _y, float _z){
-	float x =  _x;
-	float y = -_y;
-	float z = -_z;
-	return tf::Vector3(x, y, z);
-};
-
-static tf::Quaternion convert_attitude_q(tf::Quaternion qo){
+static tf::Quaternion transform_frame_attitude_q(tf::Quaternion qo){
 	double roll = PI, pitch = 0.0 , yaw = 0.0f; 
 	tf::Quaternion qr = tf::createQuaternionFromRPY(roll, pitch, yaw);
 	tf::Quaternion qt = qo * qr; 
 	return qt;
 };
 
-static tf::Vector3 convert_attitude_rpy(float _roll, float _pitch, float _yaw){
+static tf::Vector3 transform_frame_attitude_rpy(float _roll, float _pitch, float _yaw){
 	float roll = _roll + PI;
 	float pitch = _pitch;
 	float yaw = _yaw;
 	return tf::Vector3(roll, pitch, yaw);
 };
 
-static std::array<float, 36> convert_covariance_pose6x6(std::array<float, 36> _covariance){
+static std::array<float, 36> transform_frame_covariance_pose6x6(std::array<float, 36> _covariance){
 
 	std::array<float, 36> rotation = {1 ,0,0,0,0,0,
     					  0,-1,0,0,0,0,
@@ -74,6 +53,23 @@ static std::array<float, 36> convert_covariance_pose6x6(std::array<float, 36> _c
 
    	std::array<float, 36> covariance;							
 	std::array<float, 36> temp;		// temporary matrix = R * C
+
+	// The rotation matrix in this case is a diagonal matrix so R = R^T
+	
+	std::transform(rotation.begin()+1, rotation.end(), _covariance.begin()+1, temp.begin(), std::multiplies<float>());
+	std::transform(temp.begin()+1, temp.end(), rotation.begin()+1, covariance.begin(), std::multiplies<float>());
+
+	return covariance;
+};
+
+static std::array<float, 9> transform_frame_covariance_general3x3(std::array<float, 9> _covariance){
+
+	std::array<float, 9> rotation = {1 ,0,0,
+    					 0,-1,0,
+    					 0,0,-1};
+
+   	std::array<float, 9> covariance;							
+	std::array<float, 9> temp;		// temporary matrix = R * C
 
 	// The rotation matrix in this case is a diagonal matrix so R = R^T
 	

@@ -24,7 +24,7 @@
 namespace mavplugin {
 /**
  * @brief Local position plugin.
- * Publish local position to TF and PositionStamped,
+ * Publish local position to TF and PositionStamped
  */
 class LocalPositionPlugin : public MavRosPlugin {
 public:
@@ -73,8 +73,9 @@ private:
 				pos_ned.vx, pos_ned.vy, pos_ned.vz);
 
 		tf::Transform transform;
-		// ENU->NED
-		auto position = UAS::convert_position(pos_ned.x, pos_ned.y, pos_ned.z);
+
+		/** NED->ENU frame conversion */
+		auto position = UAS::transform_frame_general_xyz(pos_ned.x, pos_ned.y, pos_ned.z);
 
 		transform.setOrigin(position);
 		transform.setRotation(uas->get_attitude_orientation());

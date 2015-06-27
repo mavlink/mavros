@@ -298,45 +298,30 @@ public:
 	static tf::Vector3 sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
 
 	/**
-	 * @brief Function to convert position values from ENU to NED frames and vice-versa
-	 */
-	static tf::Vector3 convert_position(float _x, float _y, float _z);
-
-	/**
-	 * @brief Function to convert velocity values from ENU to NED frames and vice-versa
-	 */
-	static tf::Vector3 convert_velocity(float _vx, float _vy, float _vz);
-
-	/**
-	 * @brief Function to convert acceleration values from ENU to NED frames and vice-versa
-	 */
-	static tf::Vector3 convert_accel(float _ax, float _ay, float _az);
-
-	/**
 	 * @brief Function to convert general XYZ values from ENU to NED frames and vice-versa
 	 */
-	static tf::Vector3 convert_general_xyz(float _x, float _y, float _z);
+	static tf::Vector3 transform_frame_general_xyz(float _x, float _y, float _z);
 
 	/**
 	 * @brief Function to convert attitude quaternion values from ENU to NED frames and vice-versa
 	 */
-	static tf::Quaternion convert_attitude_q(tf::Quaternion qo);
+	static tf::Quaternion transform_frame_attitude_q(tf::Quaternion qo);
 
 	/**
 	 * @brief Function to convert attitude euler angles values from ENU to NED frames and vice-versa
 	 */
-	static tf::Vector3 convert_attitude_rpy(float _roll, float _pitch, float _yaw);
+	static tf::Vector3 transform_frame_attitude_rpy(float _roll, float _pitch, float _yaw);
 
 	/**
 	 * @brief Function to convert full 6D pose covariance matrix values from ENU to NED frames and vice-versa
-	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw
+	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw.
 	 *
-	 * Cov_matrix =	|var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
-	 * 		|cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
-	 * 		|cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
-	 * 		|cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
-	 * 		|cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
-	 * 		|cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
+	 * Cov_matrix =	| var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
+	 * 		| cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
+	 * 		| cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
+	 * 		| cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
+	 * 		| cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
+	 * 		| cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
 	 *
 	 * Rot_matrix = | 1	 0	 0	 0	 0	 0 |
 	 * 		| 0	-1 	 0	 0	 0	 0 |
@@ -345,11 +330,41 @@ public:
 	 * 		| 0	 0	 0	 0	-1	 0 |
 	 * 		| 0	 0	 0	 0	 0	-1 |
 	 *
-	 * Compute Covariance matrix in another frame:
+	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
 	 *
 	 * 			C' = R * C * R^T
 	 */
-	static std::array<float, 36> convert_covariance_pose6x6(std::array<float, 36> _covariance);
+	static std::array<float, 36> transform_frame_covariance_pose6x6(std::array<float, 36> _covariance);
+
+	/**
+	 * @brief Function to convert position, linear acceleration, angular velocity or attitude RPY covariance matrix 
+	 * values from ENU to NED frames and vice-versa
+	 * 
+	 * Matrix formats:
+	 *
+	 * Pos_Cov_matrix =	| var_x  cov_xy cov_xz |
+	 * 			| cov_yx var_y  cov_yz |
+	 * 			| cov_zx cov_zy var_z  |
+	 *
+	 * Vel_Cov_matrix =	| var_vx  cov_vxvy cov_vxvz |
+	 * 			| cov_vyvx var_vy  cov_vyvz |
+	 * 			| cov_vzvx cov_vzvy var_vz  |
+	 *
+	 * Att_Cov_matrix =	| var_Z  cov_ZY cov_ZX |
+	 * 			| cov_YZ var_Y  cov_YX |
+	 * 			| cov_XZ cov_XY var_X  |
+	 *
+	 * Note that for ROS<->ENU frame transformations, the rotation matrix is the same for position and attitude.
+	 *
+	 * Rot_matrix = | 1	 0	 0 |
+	 * 		| 0	-1 	 0 |
+	 * 		| 0	 0	-1 |
+	 *
+	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
+	 *
+	 * 			C' = R * C * R^T
+	 */
+	static std::array<float, 9> transform_frame_covariance_general3x3(std::array<float, 9> _covariance);
 
 private:
 	std::recursive_mutex mutex;

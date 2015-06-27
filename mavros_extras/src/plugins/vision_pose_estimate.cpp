@@ -27,7 +27,7 @@ namespace mavplugin {
  * @brief Vision pose estimate plugin
  *
  * Send pose estimation from various vision estimators
- * to FCU position controller.
+ * to FCU position and attitude estimators.
  *
  */
 class VisionPoseEstimatePlugin : public MavRosPlugin,
@@ -103,17 +103,18 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send vision estimate transform to FCU position controller
+	 * @brief Send vision estimate transform to FCU position controller
 	 */
 	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		// origin and RPY in ENU frame
+		/** ENU->NED frame conversion */
 		tf::Vector3 origin = transform.getOrigin();
 		double roll, pitch, yaw;
 		tf::Matrix3x3 orientation(transform.getBasis());
 		orientation.getRPY(roll, pitch, yaw);
 
-		/* Issue #60.
-		 * Note: this now affects pose callbacks too, but i think its not big deal.
+		/**
+		 * @warning Issue #60.
+		 * This now affects pose callbacks too.
 		 */
 		if (last_transform_stamp == stamp) {
 			ROS_DEBUG_THROTTLE_NAMED(10, "vision_pose", "Vision: Same transform as last one, dropped.");
@@ -121,9 +122,9 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		// ENU->NED
-		auto position = UAS::convert_position(origin.x(), origin.y(), origin.z());
-		tf::Vector3 rpy = UAS::convert_attitude_rpy(roll, pitch, yaw);
+		/** ENU->NED frame conversion */
+		auto position = UAS::transform_frame_general_xyz(origin.x(), origin.y(), origin.z());
+		tf::Vector3 rpy = UAS::transform_frame_attitude_rpy(roll, pitch, yaw);
 		
 		vision_position_estimate(stamp.toNSec() / 1000,
 				position.x(), position.y(), position.z(),

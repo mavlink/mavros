@@ -85,9 +85,7 @@ private:
 	bool send_tf;
 	double rot_cov;
 
-	/**
-	 * @todo Handler for GLOBAL_POSITION_INT_COV
-	 */
+	/** @todo Handler for GLOBAL_POSITION_INT_COV */
 
 	void handle_global_position_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_global_position_int_t gp_pos;
@@ -148,7 +146,7 @@ private:
 		double northing, easting;
 		std::string zone;
 
-		/** Adapted from gps_umd ROS package @a http://wiki.ros.org/gps_umd
+		/** @note Adapted from gps_umd ROS package @a http://wiki.ros.org/gps_umd
 		 *  Author: Ken Tossell <ken AT tossell DOT net>
 		 */
 		UTM::LLtoUTM(gp_fix->latitude, gp_fix->longitude, northing, easting, zone);
@@ -189,7 +187,9 @@ private:
 
 		if (send_tf) {
 			tf::Transform transform;
-			auto position = UAS::convert_position(pose_cov->pose.pose.position.x,
+
+			/** ENU->NED frame conversion */
+			auto position = UAS::transform_frame_general_xyz(pose_cov->pose.pose.position.x,
 						pose_cov->pose.pose.position.y,
 						pose_cov->pose.pose.position.z);
 

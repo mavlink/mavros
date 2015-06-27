@@ -26,7 +26,7 @@ namespace mavplugin {
 /**
  * @brief MocapPoseEstimate plugin
  *
- * Sends mountion capture data to FCU.
+ * Sends motion capture data to FCU.
  */
 class MocapPoseEstimatePlugin : public MavRosPlugin
 {
@@ -43,9 +43,11 @@ public:
 
 		uas = &uas_;
 
-		mp_nh.param("use_tf", use_tf, false);		// Vicon
-		mp_nh.param("use_pose", use_pose, true);	// Optitrack
+		/** @note For VICON ROS package, subscribe to TransformStamped topic */
+		mp_nh.param("use_tf", use_tf, false);
 
+		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
+		mp_nh.param("use_pose", use_pose, true);
 
 		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
@@ -90,17 +92,18 @@ private:
 	{
 		float q[4];
 
-		// ENU->NED
+		/** ENU->NED frame conversion */
 		tf::Quaternion qo;
 		quaternionMsgToTF(pose->pose.orientation,qo);
-		auto qt = UAS::convert_attitude_q(qo);
+		auto qt = UAS::transform_frame_attitude_q(qo);
 
 		q[0] = qt.w();
 		q[1] = qt.x();
 		q[2] = qt.y();
 		q[3] = qt.z();
 
-		auto position = UAS::convert_position(pose->pose.position.x,
+		auto position = UAS::transform_frame_general_xyz(
+					pose->pose.position.x,
 					pose->pose.position.y,
 					pose->pose.position.z);
 
@@ -115,23 +118,20 @@ private:
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		float q[4];
-		q[0] = trans->transform.rotation.y;
-		q[1] = trans->transform.rotation.x;
-		q[2] = trans->transform.rotation.z;
-		q[3] = trans->transform.rotation.w;
-
-		// ENU->NED
+		
+		/** ENU->NED frame conversion */
 		tf::Transform tf;
 		transformMsgToTF(trans->transform,tf);
 		tf::Quaternion qo = tf.getRotation();
-		auto qt = UAS::convert_attitude_q(qo);
+		auto qt = UAS::transform_frame_attitude_q(qo);
 
 		q[0] = qt.w();
 		q[1] = qt.x();
 		q[2] = qt.y();
 		q[3] = qt.z();
 
-		auto position = UAS::convert_position(trans->transform.translation.x,
+		auto position = UAS::transform_frame_general_xyz(
+					trans->transform.translation.x,
 					trans->transform.translation.y,
 					trans->transform.translation.z);
 

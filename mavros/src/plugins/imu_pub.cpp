@@ -178,12 +178,12 @@ private:
 
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-		// NED -> ENU (body-fixed)
-		tf::Vector3 attitude = UAS::convert_attitude_rpy(att.roll, att.pitch, att.yaw);
+		/** NED->ENU frame conversion */
+		tf::Vector3 attitude = UAS::transform_frame_attitude_rpy(att.roll, att.pitch, att.yaw);
 		tf::Quaternion orientation = tf::createQuaternionFromRPY(
 				attitude.x(), attitude.y(), attitude.z());
 
-		tf::Vector3 attitude_s = UAS::convert_attitude_rpy(att.rollspeed, att.pitchspeed, att.yawspeed);
+		tf::Vector3 attitude_s = UAS::transform_frame_attitude_rpy(att.rollspeed, att.pitchspeed, att.yawspeed);
 		fill_imu_msg_attitude(imu_msg, orientation,
 				attitude_s.x(), attitude_s.y(), attitude_s.z());
 
@@ -207,11 +207,11 @@ private:
 
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-		// PX4 NED -> ROS ENU (body-fixed)
+		/** NED->ENU frame conversion */
 		tf::Quaternion orientation(att_q.q1, att_q.q2, att_q.q3, att_q.q4);
-		tf::Quaternion qo = UAS::convert_attitude_q(orientation);
+		tf::Quaternion qo = UAS::transform_frame_attitude_q(orientation);
 
-		tf::Vector3 attitude_s = UAS::convert_attitude_rpy(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
+		tf::Vector3 attitude_s = UAS::transform_frame_attitude_rpy(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
 		fill_imu_msg_attitude(imu_msg, orientation,
 				attitude_s.x(), attitude_s.y(), attitude_s.z());
 
@@ -240,8 +240,9 @@ private:
 		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
 			auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-			auto hr_imu_gyro = UAS::convert_general_xyz(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro);
-			auto hr_imu_acc = UAS::convert_general_xyz(imu_hr.xacc, imu_hr.yacc, imu_hr.zacc);
+			/** NED->ENU frame conversion */
+			auto hr_imu_gyro = UAS::transform_frame_general_xyz(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro);
+			auto hr_imu_acc = UAS::transform_frame_general_xyz(imu_hr.xacc, imu_hr.yacc, imu_hr.zacc);
 
 			fill_imu_msg_raw(imu_msg,
 					hr_imu_gyro.x(), hr_imu_gyro.y(), hr_imu_gyro.z(),
@@ -254,8 +255,8 @@ private:
 		if (imu_hr.fields_updated & (7 << 6)) {
 			auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-			// Convert from local NED plane to ENU
-			auto mag_field = UAS::convert_general_xyz(imu_hr.xmag, imu_hr.ymag, imu_hr.zmag);
+			/** NED->ENU frame conversion */
+			auto mag_field = UAS::transform_frame_general_xyz(imu_hr.xmag, imu_hr.ymag, imu_hr.zmag);
 
 			magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
 			magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
@@ -296,9 +297,11 @@ private:
 		header.stamp = uas->synchronise_stamp(imu_raw.time_usec);
 		header.frame_id = frame_id;
 
-		/* NOTE: APM send SCALED_IMU data as RAW_IMU */
-		auto raw_imu_gyro = UAS::convert_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
-		auto raw_imu_acc = UAS::convert_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
+		/** @note APM send SCALED_IMU data as RAW_IMU */
+
+		/** NED->ENU frame conversion */
+		auto raw_imu_gyro = UAS::transform_frame_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
+		auto raw_imu_acc = UAS::transform_frame_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
 
 		fill_imu_msg_raw(imu_msg,
 				raw_imu_gyro.x() * MILLIRS_TO_RADSEC,
@@ -321,9 +324,9 @@ private:
 		/* -*- magnetic vector -*- */
 		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-		// Convert from local NED plane to ENU
-		auto mag_field = UAS::convert_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
-		
+		/** NED->ENU frame conversion */
+		auto mag_field = UAS::transform_frame_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
+
 		magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.z = mag_field.z() * MILLIT_TO_TESLA;
@@ -348,8 +351,9 @@ private:
 		std_msgs::Header header;
 		header.stamp = uas->synchronise_stamp(imu_raw.time_boot_ms);
 
-		auto raw_imu_gyro = UAS::convert_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
-		auto raw_imu_acc = UAS::convert_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
+		/** NED->ENU frame conversion */
+		auto raw_imu_gyro = UAS::transform_frame_general_xyz(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro);
+		auto raw_imu_acc = UAS::transform_frame_general_xyz(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
 
 		fill_imu_msg_raw(imu_msg,
 				raw_imu_gyro.x() * MILLIRS_TO_RADSEC,
@@ -365,8 +369,8 @@ private:
 		/* -*- magnetic vector -*- */
 		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-		// Convert from local NED plane to ENU
-		auto mag_field = UAS::convert_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
+		/** NED->ENU frame conversion */
+		auto mag_field = UAS::transform_frame_general_xyz(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag);
 
 		magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
 		magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
