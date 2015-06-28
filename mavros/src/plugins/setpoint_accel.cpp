@@ -66,7 +66,7 @@ private:
 	 *
 	 * @warning Send only AFX AFY AFZ. ENU frame.
 	 */
-	void send_setpoint_acceleration(const ros::Time &stamp, float afx, float afy, float afz) {
+	void send_setpoint_acceleration(const ros::Time &stamp, double afx, double afy, double afz) {
 		/**
 		 * Documentation start from bit 1 instead 0.
 		 * Ignore position and velocity vectors, yaw and yaw rate
@@ -76,8 +76,7 @@ private:
 		if (send_force)
 			ignore_all_except_a_xyz |= (1 << 9);
 
-		/** ENU->NED frame conversion */
-		auto accel = UAS::transform_frame_general_xyz(afx, afy, afz);
+		auto accel = UAS::transform_frame_enu_ned_xyz(afx, afy, afz);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,	// TODO: use enum on lib

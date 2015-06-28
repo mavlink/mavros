@@ -93,8 +93,7 @@ private:
 
 		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
 
-		/** ENU->NED frame conversion */
-		auto position = UAS::transform_frame_general_xyz(
+		auto position = UAS::transform_frame_enu_ned_xyz(
 						flow_rad.integrated_x,
 						flow_rad.integrated_y,
 						0.0);
@@ -102,8 +101,7 @@ private:
 		flow_rad_msg->integrated_x = position.x();
 		flow_rad_msg->integrated_y = position.y();
 
-		/** ENU->NED frame conversion */
-		auto flow_gyro = UAS::transform_frame_general_xyz(
+		auto flow_gyro = UAS::transform_frame_enu_ned_xyz(
 						flow_rad.integrated_xgyro,
 						flow_rad.integrated_ygyro,
 						flow_rad.integrated_zgyro);

@@ -102,9 +102,8 @@ private:
 			ignore_all_except_xyz_y = (1 << 11) | (7 << 6);
 		}
 
-		/** ENU->NED frame conversion */
-		auto position = UAS::transform_frame_general_xyz(origin.x(), origin.y(), origin.z());
-		auto qt = UAS::transform_frame_attitude_q(q);
+		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(q);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,

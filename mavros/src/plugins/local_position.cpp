@@ -74,8 +74,7 @@ private:
 
 		tf::Transform transform;
 
-		/** NED->ENU frame conversion */
-		auto position = UAS::transform_frame_general_xyz(pos_ned.x, pos_ned.y, pos_ned.z);
+		auto position = UAS::transform_frame_ned_enu_xyz(pos_ned.x, pos_ned.y, pos_ned.z);
 
 		transform.setOrigin(position);
 		transform.setRotation(uas->get_attitude_orientation());

@@ -92,17 +92,16 @@ private:
 	{
 		float q[4];
 
-		/** ENU->NED frame conversion */
 		tf::Quaternion qo;
 		quaternionMsgToTF(pose->pose.orientation,qo);
-		auto qt = UAS::transform_frame_attitude_q(qo);
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
 
 		q[0] = qt.w();
 		q[1] = qt.x();
 		q[2] = qt.y();
 		q[3] = qt.z();
 
-		auto position = UAS::transform_frame_general_xyz(
+		auto position = UAS::transform_frame_enu_ned_xyz(
 					pose->pose.position.x,
 					pose->pose.position.y,
 					pose->pose.position.z);
@@ -119,18 +118,17 @@ private:
 	{
 		float q[4];
 		
-		/** ENU->NED frame conversion */
 		tf::Transform tf;
 		transformMsgToTF(trans->transform,tf);
 		tf::Quaternion qo = tf.getRotation();
-		auto qt = UAS::transform_frame_attitude_q(qo);
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
 
 		q[0] = qt.w();
 		q[1] = qt.x();
 		q[2] = qt.y();
 		q[3] = qt.z();
 
-		auto position = UAS::transform_frame_general_xyz(
+		auto position = UAS::transform_frame_enu_ned_xyz(
 					trans->transform.translation.x,
 					trans->transform.translation.y,
 					trans->transform.translation.z);

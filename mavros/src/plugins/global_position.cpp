@@ -188,8 +188,7 @@ private:
 		if (send_tf) {
 			tf::Transform transform;
 
-			/** ENU->NED frame conversion */
-			auto position = UAS::transform_frame_general_xyz(pose_cov->pose.pose.position.x,
+			auto position = UAS::transform_frame_enu_ned_xyz(pose_cov->pose.pose.position.x,
 						pose_cov->pose.pose.position.y,
 						pose_cov->pose.pose.position.z);
 

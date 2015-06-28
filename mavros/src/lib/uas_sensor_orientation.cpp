@@ -1,6 +1,6 @@
 /**
  * @brief Sensor orientation helper function
- * @file sensor_orientation.cpp
+ * @file uas_sensor_orientation.cpp
  * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup nodelib

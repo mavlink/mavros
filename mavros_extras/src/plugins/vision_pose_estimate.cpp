@@ -106,7 +106,6 @@ private:
 	 * @brief Send vision estimate transform to FCU position controller
 	 */
 	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		/** ENU->NED frame conversion */
 		tf::Vector3 origin = transform.getOrigin();
 		double roll, pitch, yaw;
 		tf::Matrix3x3 orientation(transform.getBasis());
@@ -122,9 +121,8 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		/** ENU->NED frame conversion */
-		auto position = UAS::transform_frame_general_xyz(origin.x(), origin.y(), origin.z());
-		tf::Vector3 rpy = UAS::transform_frame_attitude_rpy(roll, pitch, yaw);
+		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
+		tf::Vector3 rpy = UAS::transform_frame_enu_ned_attitude_rpy(roll, pitch, yaw);
 		
 		vision_position_estimate(stamp.toNSec() / 1000,
 				position.x(), position.y(), position.z(),

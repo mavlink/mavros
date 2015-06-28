@@ -130,8 +130,7 @@ private:
 
 		tf::Quaternion tf_q = transform.getRotation();
 
-		/** ENU->NED frame conversion */
-		auto qt = UAS::transform_frame_attitude_q(tf_q);
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(tf_q);
 
 		q[0] = qt.w();
 		q[1] = qt.x();
@@ -150,15 +149,14 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_attitude_ang_velocity(const ros::Time &stamp, const float vx, const float vy, const float vz) {
+	void send_attitude_ang_velocity(const ros::Time &stamp, const double vx, const double vy, const double vz) {
 		/**
 		 * Q + Thrust, also bits noumbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
-		/** ENU->NED frame conversion */
-		auto vel = UAS::transform_frame_general_xyz(vx, vy, vz);
+		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,

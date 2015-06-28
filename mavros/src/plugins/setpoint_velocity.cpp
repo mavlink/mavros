@@ -61,16 +61,15 @@ private:
 	 *
 	 * @warning Send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz, float yaw_rate) {
+	void send_setpoint_velocity(const ros::Time &stamp, double vx, double vy, double vz, double yaw_rate) {
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		/** ENU->NED frame conversion */
-		auto vel = UAS::transform_frame_general_xyz(vx, vy, vz);
-		auto yr = UAS::transform_frame_general_xyz(0.0, 0.0, yaw_rate);
+		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
+		auto yr = UAS::transform_frame_enu_ned_xyz(0.0, 0.0, yaw_rate);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
