@@ -27,6 +27,7 @@ class TDRRadioPlugin : public MavRosPlugin {
 public:
 	TDRRadioPlugin() :
 		nh("~"),
+		uas(nullptr),
 		has_radio_status(false),
 		diag_added(false),
 		low_rssi(0)

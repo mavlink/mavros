@@ -32,7 +32,10 @@ class PX4FlowPlugin : public MavRosPlugin {
 public:
 	PX4FlowPlugin() :
 		flow_nh("~px4flow"),
-		uas(nullptr)
+		uas(nullptr),
+		ranger_fov(0.0),
+		ranger_min_range(0.3),
+		ranger_max_range(5.0)
 	{ };
 
 	void initialize(UAS &uas_)
@@ -63,7 +66,6 @@ private:
 
 	std::string frame_id;
 
-	int ranger_type;
 	double ranger_fov;
 	double ranger_min_range;
 	double ranger_max_range;
