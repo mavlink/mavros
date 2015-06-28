@@ -254,9 +254,9 @@ private:
 
 			auto mag_field = UAS::transform_frame_ned_enu_xyz(imu_hr.xmag, imu_hr.ymag, imu_hr.zmag);
 
-			magn_msg->magnetic_field.x = mag_field.x() * MILLIT_TO_TESLA;
-			magn_msg->magnetic_field.y = mag_field.y() * MILLIT_TO_TESLA;
-			magn_msg->magnetic_field.z = mag_field.z() * MILLIT_TO_TESLA;
+			magn_msg->magnetic_field.x = mag_field.x() * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.y = mag_field.y() * GAUSS_TO_TESLA;
+			magn_msg->magnetic_field.z = mag_field.z() * GAUSS_TO_TESLA;
 
 			magn_msg->magnetic_field_covariance = magnetic_cov; // already in ENU frame
 

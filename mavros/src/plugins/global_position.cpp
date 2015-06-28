@@ -146,7 +146,7 @@ private:
 		double northing, easting;
 		std::string zone;
 
-		/** @note Adapted from gps_umd ROS package @a http://wiki.ros.org/gps_umd
+		/** @note Adapted from gps_umd ROS package @http://wiki.ros.org/gps_umd
 		 *  Author: Ken Tossell <ken AT tossell DOT net>
 		 */
 		UTM::LLtoUTM(gp_fix->latitude, gp_fix->longitude, northing, easting, zone);
