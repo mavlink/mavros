@@ -307,8 +307,8 @@ public:
 	/**
 	 * @brief Function to convert general XYZ values from ENU to NED frames
 	 * @param _x: X coordinate value
- 	 * @param _y: Y coordinate value
- 	 * @param _z: Z coordinate value
+	 * @param _y: Y coordinate value
+	 * @param _z: Z coordinate value
 	 */
 	static inline tf::Vector3 transform_frame_enu_ned_xyz(double _x, double _y, double _z){
 		return transform_frame_xyz(_x, _y, _z);
@@ -317,8 +317,8 @@ public:
 	/**
 	 * @brief Function to convert general XYZ values from NED to ENU frames
 	 * @param _x: X coordinate value
- 	 * @param _y: Y coordinate value
- 	 * @param _z: Z coordinate value
+	 * @param _y: Y coordinate value
+	 * @param _z: Z coordinate value
 	 */
 	static inline tf::Vector3 transform_frame_ned_enu_xyz(double _x, double _y, double _z){
 		return transform_frame_xyz(_x, _y, _z);
@@ -343,7 +343,7 @@ public:
 	/**
 	 * @brief Function to convert attitude euler angle values from ENU to NED frames
 	 * @param _roll: Roll value
- 	 * @param _pitch: Pitch value
+	 * @param _pitch: Pitch value
 	 * @param _yaw: Yaw value
 	 */
 	static inline tf::Vector3 transform_frame_enu_ned_attitude_rpy(double _roll, double _pitch, double _yaw){
@@ -353,7 +353,7 @@ public:
 	/**
 	 * @brief Function to convert attitude euler angle values from NED to ENU frames
 	 * @param _roll: Roll value
- 	 * @param _pitch: Pitch value
+	 * @param _pitch: Pitch value
 	 * @param _yaw: Yaw value
 	 */
 	static inline tf::Vector3 transform_frame_ned_enu_attitude_rpy(double _roll, double _pitch, double _yaw){
@@ -382,22 +382,22 @@ public:
 	 * Matrix formats for the above funtions:
 	 *
 	 * Cov_matrix =	| var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
-	 * 		| cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
-	 * 		| cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
-	 * 		| cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
-	 * 		| cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
-	 * 		| cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
+	 *              | cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
+	 *              | cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
+	 *              | cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
+	 *              | cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
+	 *              | cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
 	 *
 	 * Rot_matrix = | 1	 0	 0	 0	 0	 0 |
-	 * 		| 0	-1 	 0	 0	 0	 0 |
-	 * 		| 0	 0	-1	 0	 0	 0 |
-	 * 		| 0	 0	 0	 1	 0	 0 |
-	 * 		| 0	 0	 0	 0	-1	 0 |
-	 * 		| 0	 0	 0	 0	 0	-1 |
+	 *              | 0	-1       0	 0	 0	 0 |
+	 *              | 0	 0	-1	 0	 0	 0 |
+	 *              | 0	 0	 0	 1	 0	 0 |
+	 *              | 0	 0	 0	 0	-1	 0 |
+	 *              | 0	 0	 0	 0	 0	-1 |
 	 *
 	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
 	 *
-	 * 			C' = R * C * R^T
+	 *                      C' = R * C * R^T
 	 */
 
 	/**
@@ -420,26 +420,26 @@ public:
 	 * Matrix formats for the above funtions:
 	 *
 	 * Pos_Cov_matrix =	| var_x  cov_xy cov_xz |
-	 * 			| cov_yx var_y  cov_yz |
-	 * 			| cov_zx cov_zy var_z  |
+	 *                      | cov_yx var_y  cov_yz |
+	 *                      | cov_zx cov_zy var_z  |
 	 *
 	 * Vel_Cov_matrix =	| var_vx  cov_vxvy cov_vxvz |
-	 * 			| cov_vyvx var_vy  cov_vyvz |
-	 * 			| cov_vzvx cov_vzvy var_vz  |
+	 *                      | cov_vyvx var_vy  cov_vyvz |
+	 *                      | cov_vzvx cov_vzvy var_vz  |
 	 *
 	 * Att_Cov_matrix =	| var_Z  cov_ZY cov_ZX |
-	 * 			| cov_YZ var_Y  cov_YX |
-	 * 			| cov_XZ cov_XY var_X  |
+	 *                      | cov_YZ var_Y  cov_YX |
+	 *                      | cov_XZ cov_XY var_X  |
 	 *
 	 * Note that for ROS<->ENU frame transformations, the rotation matrix is the same for position and attitude.
 	 *
 	 * Rot_matrix = | 1	 0	 0 |
-	 * 		| 0	-1 	 0 |
-	 * 		| 0	 0	-1 |
+	 *              | 0	-1       0 |
+	 *              | 0	 0	-1 |
 	 *
 	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
 	 *
-	 * 			C' = R * C * R^T
+	 *                      C' = R * C * R^T
 	 */
 
 private:

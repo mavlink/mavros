@@ -22,7 +22,6 @@
 #include <tf/transform_listener.h>
 
 namespace mavplugin {
-
 /**
  * @brief This mixin adds set_position_target_local_ned()
  *
@@ -40,7 +39,7 @@ public:
 		UAS *_uas = static_cast<D *>(this)->uas;
 		mavlink_message_t msg;
 		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(_uas), &msg,
-				time_boot_ms, // why it not usec timestamp?
+				time_boot_ms,	// why it not usec timestamp?
 				UAS_PACK_TGT(_uas),
 				coordinate_frame,
 				type_mask,
@@ -71,7 +70,7 @@ public:
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
-	void tf_start(const char *_thd_name, void (D::*cbp)(const tf::Transform&, const ros::Time&) ) {
+	void tf_start(const char *_thd_name, void (D::*cbp)(const tf::Transform &, const ros::Time &) ) {
 		thd_name = _thd_name;
 		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1, _2);
 
@@ -102,5 +101,4 @@ public:
 		}
 	}
 };
-
-}; // namespace mavplugin
+};	// namespace mavplugin
