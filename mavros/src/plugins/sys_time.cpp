@@ -141,10 +141,33 @@ public:
 		double conn_system_time_d;
 		double conn_timesync_d;
 
+		ros::Duration conn_system_time;
+		ros::Duration conn_timesync;
+
 		uas = &uas_;
 
-		nh.param("conn/system_time", conn_system_time_d, 0.0);
+		// deprecated params
 		nh.param("conn/timesync", conn_timesync_d, 0.0);
+
+		if (nh.getParam("conn/system_time_rate", conn_system_time_d)) {
+			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
+		}
+		else if (nh.getParam("conn/system_time", conn_system_time_d)) {
+			// XXX deprecated parameter
+			ROS_WARN_NAMED("time", "TM: parameter `~conn/system_time` deprecated, "
+				"please use `~conn/system_time_rate` instead!");
+			conn_system_time = ros::Duration(conn_system_time_d);
+		}
+
+		if (nh.getParam("conn/timesync_rate", conn_timesync_d)) {
+			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
+		}
+		else if (nh.getParam("conn/timesync", conn_timesync_d)) {
+			// XXX deprecated parameter
+			ROS_WARN_NAMED("time", "TM: parameter `~conn/timesync` deprecated, "
+				"please use `~conn/timesync_rate` instead!");
+			conn_timesync = ros::Duration(conn_timesync_d);
+		}
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
 		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
@@ -157,18 +180,18 @@ public:
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
 		// timer for sending system time messages
-		if (conn_system_time_d > 0.0) {
-			sys_time_timer = nh.createTimer(ros::Duration(conn_system_time_d),
+		if (!conn_system_time.isZero()) {
+			sys_time_timer = nh.createTimer(conn_system_time,
 					&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
 
 		// timer for sending timesync messages
-		if (conn_timesync_d > 0.0) {
+		if (!conn_timesync.isZero()) {
 			// enable timesync diag only if that feature enabled
 			UAS_DIAG(uas).add(dt_diag);
 
-			timesync_timer = nh.createTimer(ros::Duration(conn_timesync_d),
+			timesync_timer = nh.createTimer(conn_timesync,
 					&SystemTimePlugin::timesync_cb, this);
 			timesync_timer.start();
 		}
