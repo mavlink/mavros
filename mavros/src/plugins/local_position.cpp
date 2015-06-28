@@ -24,7 +24,7 @@
 namespace mavplugin {
 /**
  * @brief Local position plugin.
- * Publish local position to TF and PositionStamped,
+ * Publish local position to TF and PositionStamped
  */
 class LocalPositionPlugin : public MavRosPlugin {
 public:
@@ -72,15 +72,11 @@ private:
 				pos_ned.x, pos_ned.y, pos_ned.z,
 				pos_ned.vx, pos_ned.vy, pos_ned.vz);
 
-		/* TODO: check convertion to ENU
-		 * I think XZY is not body-fixed, but orientation does.
-		 * Perhaps this adds additional errorprone to us.
-		 * Need more tests. Issue #49.
-		 *
-		 * orientation in ENU, body-fixed
-		 */
 		tf::Transform transform;
-		transform.setOrigin(tf::Vector3(pos_ned.x, -pos_ned.y, -pos_ned.z));
+
+		auto position = UAS::transform_frame_ned_enu_xyz(pos_ned.x, pos_ned.y, pos_ned.z);
+
+		transform.setOrigin(position);
 		transform.setRotation(uas->get_attitude_orientation());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();

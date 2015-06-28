@@ -26,7 +26,7 @@ namespace mavplugin {
 /**
  * @brief MocapPoseEstimate plugin
  *
- * Sends mountion capture data to FCU.
+ * Sends motion capture data to FCU.
  */
 class MocapPoseEstimatePlugin : public MavRosPlugin
 {
@@ -43,9 +43,11 @@ public:
 
 		uas = &uas_;
 
-		mp_nh.param("use_tf", use_tf, false);		// Vicon
-		mp_nh.param("use_pose", use_pose, true);	// Optitrack
+		/** @note For VICON ROS package, subscribe to TransformStamped topic */
+		mp_nh.param("use_tf", use_tf, false);
 
+		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
+		mp_nh.param("use_pose", use_pose, true);
 
 		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
@@ -69,8 +71,7 @@ private:
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
 
-	// mavlink send
-
+	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
 			float q[4],
@@ -86,35 +87,57 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-
+	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
 		float q[4];
-		q[0] =  pose->pose.orientation.y;	// w
-		q[1] =  pose->pose.orientation.x;	// x
-		q[2] = -pose->pose.orientation.z;	// y
-		q[3] =  pose->pose.orientation.w;	// z
-		// Convert to mavlink body frame
+
+		tf::Quaternion qo;
+		quaternionMsgToTF(pose->pose.orientation,qo);
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
+
+		auto position = UAS::transform_frame_enu_ned_xyz(
+					pose->pose.position.x,
+					pose->pose.position.y,
+					pose->pose.position.z);
+
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
-				pose->pose.position.x,
-				-pose->pose.position.y,
-				-pose->pose.position.z);
+				position.x(),
+				position.y(),
+				position.z());
 	}
 
+	/* -*- callbacks -*- */
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		float q[4];
-		q[0] =  trans->transform.rotation.y;	// w
-		q[1] =  trans->transform.rotation.x;	// x
-		q[2] = -trans->transform.rotation.z;	// y
-		q[3] =  trans->transform.rotation.w;	// z
-		// Convert to mavlink body frame
+		
+		tf::Transform tf;
+		transformMsgToTF(trans->transform,tf);
+		tf::Quaternion qo = tf.getRotation();
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
+
+		auto position = UAS::transform_frame_enu_ned_xyz(
+					trans->transform.translation.x,
+					trans->transform.translation.y,
+					trans->transform.translation.z);
+
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
 				q,
-				trans->transform.translation.x,
-				-trans->transform.translation.y,
-				-trans->transform.translation.z);
+				position.x(),
+				position.y(),
+				position.z());
 	}
 };
 };	// namespace mavplugin

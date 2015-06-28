@@ -117,21 +117,25 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send attitude setpoint to FCU attitude controller
+	 * @brief Send attitude setpoint to FCU attitude controller
 	 *
-	 * ENU frame.
+	 * @note ENU frame.
 	 */
 	void send_attitude_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		// Thrust + RPY, also bits noumbering started from 1 in docs
+		/**
+		* Thrust + RPY, also bits numbering started from 1 in docs
+		*/ 
 		const uint8_t ignore_all_except_q = (1 << 6) | (7 << 0);
 		float q[4];
 
-		// ENU->NED, description in #49.
 		tf::Quaternion tf_q = transform.getRotation();
-		q[0] = tf_q.w();
-		q[1] = tf_q.y();
-		q[2] = tf_q.x();
-		q[3] = -tf_q.z();
+
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(tf_q);
+
+		q[0] = qt.w();
+		q[1] = qt.x();
+		q[2] = qt.y();
+		q[3] = qt.z();
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_q,
@@ -141,24 +145,28 @@ private:
 	}
 
 	/**
-	 * Send angular velocity setpoint to FCU attitude controller
+	 * @brief Send angular velocity setpoint to FCU attitude controller
 	 *
-	 * ENU frame.
+	 * @note ENU frame.
 	 */
-	void send_attitude_ang_velocity(const ros::Time &stamp, const float vx, const float vy, const float vz) {
-		// Q + Thrust, also bits noumbering started from 1 in docs
+	void send_attitude_ang_velocity(const ros::Time &stamp, const double vx, const double vy, const double vz) {
+		/**
+		 * Q + Thrust, also bits noumbering started from 1 in docs
+		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
+
+		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,
 				q,
-				vy, vx, -vz,
+				vel.x(), vel.y(), vel.z(),
 				0.0);
 	}
 
 	/**
-	 * Send throttle to FCU attitude controller
+	 * @brief Send throttle to FCU attitude controller
 	 */
 	void send_attitude_throttle(const float throttle) {
 		// Q + RPY
@@ -210,7 +218,9 @@ private:
 	void throttle_cb(const std_msgs::Float64::ConstPtr &req) {
 		float throttle_normalized = req->data;
 
-		// note: && are lazy, is_normalized() should be called only if reverse_throttle are true.
+		/**
+		 * && are lazy, is_normalized() should be called only if reverse_throttle are true.
+		 */
 		if (reverse_throttle && !is_normalized(throttle_normalized, -1.0, 1.0))
 			return;
 		else if (!is_normalized(throttle_normalized, 0.0, 1.0))

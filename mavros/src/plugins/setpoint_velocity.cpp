@@ -57,24 +57,27 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send velocity to FCU velocity controller
+	 * @brief Send velocity to FCU velocity controller
 	 *
-	 * Note: send only VX VY VZ. ENU frame.
+	 * @warning Send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, float vx, float vy, float vz, float yaw_rate) {
-		/* Documentation start from bit 1 instead 0,
-		 * Ignore position and accel vectors, yaw
+	void send_setpoint_velocity(const ros::Time &stamp, double vx, double vy, double vz, double yaw_rate) {
+		/**
+		 * Documentation start from bit 1 instead 0;
+		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		// ENU->NED. Issue #49.
+		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
+		auto yr = UAS::transform_frame_enu_ned_xyz(0.0, 0.0, yaw_rate);
+
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_v_xyz_yr,
 				0.0, 0.0, 0.0,
-				vx, -vy, -vz,
+				vel.x(), vel.y(), vel.z(),
 				0.0, 0.0, 0.0,
-				0.0, yaw_rate);
+				0.0, yr.z());
 	}
 
 	/* -*- callbacks -*- */

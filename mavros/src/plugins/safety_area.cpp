@@ -70,9 +70,8 @@ public:
 
 	const message_map get_rx_handlers() {
 		return { /* Rx disabled */ };
-		/**
-		 * @todo Publish SAFETY_ALLOWED_AREA message
-		 */
+		
+		/** @todo Publish SAFETY_ALLOWED_AREA message */
 	}
 
 private:
@@ -99,7 +98,7 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send a safety zone (volume), which is defined by two corners of a cube,
+	 * @brief Send a safety zone (volume), which is defined by two corners of a cube,
 	 * to the FCU.
 	 *
 	 * @note ENU frame.
@@ -110,10 +109,13 @@ private:
 				p1x, p1y, p1z,
 				p2x, p2y, p2z);
 
+		auto p1 = UAS::transform_frame_enu_ned_xyz(p1x, p1y, p1z);
+		auto p2 = UAS::transform_frame_enu_ned_xyz(p2x, p2y, p2z);
+
 		safety_set_allowed_area(
-				MAV_FRAME_LOCAL_NED,
-				p1y, p1x, -p1z,
-				p2y, p2x, -p2z);
+				MAV_FRAME_LOCAL_NED, // TODO: use enum from lib
+				p1.x(), p1.y(), p1.z(),
+				p2.x(), p2.y(), p2.z());
 	}
 
 	/* -*- callbacks -*- */

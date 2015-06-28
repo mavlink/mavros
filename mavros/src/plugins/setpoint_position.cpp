@@ -77,38 +77,41 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send transform to FCU position controller
+	 * @brief Send transform to FCU position controller.
 	 *
-	 * Note: send only XYZ, Yaw
+	 * @warning Send only XYZ, Yaw. ENU frame.
 	 */
 	void send_setpoint_transform(const tf::Transform &transform, const ros::Time &stamp) {
 		// ENU frame
 		tf::Vector3 origin = transform.getOrigin();
 		tf::Quaternion q = transform.getRotation();
 
-		/* Documentation start from bit 1 instead 0,
-		 * Ignore velocity and accel vectors, yaw rate
+		/**
+		 * Documentation start from bit 1 instead 0;
+		 * Ignore velocity and accel vectors, yaw rate.
 		 */
 		uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
 		if (uas->is_px4()) {
 			/**
-			 * Current PX4 has bug: it cuts throttle if there no velocity sp
+			 * @bug Current PX4 has a bug: it cuts out throttle if there's no velocity SP
 			 * Issue #273.
 			 *
-			 * @todo Revesit this quirk later. Should be fixed in firmware.
+			 * @todo Revisit this quirk later. Should be fixed in firmware.
 			 */
 			ignore_all_except_xyz_y = (1 << 11) | (7 << 6);
 		}
 
-		// ENU->NED. Issue #49.
+		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
+		auto qt = UAS::transform_frame_enu_ned_attitude_q(q);
+
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_xyz_y,
-				origin.x(), -origin.y(), -origin.z(),
+				position.x(), position.y(), position.z(),
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				tf::getYaw(q), 0.0);
+				tf::getYaw(qt), 0.0);
 	}
 
 	/* -*- callbacks -*- */

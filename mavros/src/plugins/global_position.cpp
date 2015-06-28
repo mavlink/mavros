@@ -85,9 +85,7 @@ private:
 	bool send_tf;
 	double rot_cov;
 
-	/**
-	 * @todo Handler for GLOBAL_POSITION_INT_COV
-	 */
+	/** @todo Handler for GLOBAL_POSITION_INT_COV */
 
 	void handle_global_position_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_global_position_int_t gp_pos;
@@ -148,7 +146,7 @@ private:
 		double northing, easting;
 		std::string zone;
 
-		/** Adapted from gps_umd ROS package @a http://wiki.ros.org/gps_umd
+		/** @note Adapted from gps_umd ROS package @http://wiki.ros.org/gps_umd
 		 *  Author: Ken Tossell <ken AT tossell DOT net>
 		 */
 		UTM::LLtoUTM(gp_fix->latitude, gp_fix->longitude, northing, easting, zone);
@@ -158,7 +156,6 @@ private:
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
-		// XXX Check #193
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
@@ -190,10 +187,12 @@ private:
 
 		if (send_tf) {
 			tf::Transform transform;
-			// XXX: we realy need change frame?
-			transform.setOrigin(tf::Vector3(pose_cov->pose.pose.position.y,
-						pose_cov->pose.pose.position.x,
-						-pose_cov->pose.pose.position.z));
+
+			auto position = UAS::transform_frame_enu_ned_xyz(pose_cov->pose.pose.position.x,
+						pose_cov->pose.pose.position.y,
+						pose_cov->pose.pose.position.z);
+
+			transform.setOrigin(position);
 
 			transform.setRotation(uas->get_attitude_orientation());
 

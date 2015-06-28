@@ -25,8 +25,8 @@ namespace mavplugin {
 /**
  * @brief Vision speed estimate plugin
  *
- * Send speed estimation from various vision estimators
- * to FCU position controller.
+ * Send velocity estimation from various vision estimators
+ * to FCU position and attitude estimators.
  *
  */
 class VisionSpeedEstimatePlugin : public MavRosPlugin {
@@ -70,15 +70,21 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
+	/**
+	 * @todo Suggest modification on PX4 firmware to MAVLINK VISION_SPEED_ESTIMATE
+	 * msg name, which should be called instead VISION_VELOCITY_ESTIMATE
+	 */
+
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * Send vision speed estimate to FCU velocity controller
+	 * @brief Send vision speed estimate to FCU velocity controller
 	 */
 	void send_vision_speed(float vx, float vy, float vz, const ros::Time &stamp) {
-		// TODO: check conversion. Issue #49.
+		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
+
 		vision_speed_estimate(stamp.toNSec() / 1000,
-				vy, vx, -vz);
+				vel.x(), vel.y(), vel.z());
 	}
 
 	/* -*- callbacks -*- */

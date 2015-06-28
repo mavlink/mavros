@@ -41,8 +41,8 @@ public:
 
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
-		//Default rangefinder is Maxbotix HRLV-EZ4
-		flow_nh.param("ranger_fov", ranger_fov, 0.0);	// TODO
+		/** Default rangefinder is Maxbotix HRLV-EZ4 */
+		flow_nh.param("ranger_fov", ranger_fov, 0.0);	/** @todo Check MAxbotix HRLV-EZ4 Field-of-View */
 		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);
 		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
 
@@ -80,7 +80,9 @@ private:
 		header.stamp = ros::Time::now();
 		header.frame_id = frame_id;
 
-		/* Raw message with axes mapped to ROS conventions and temp in degrees celsius
+		/**
+		 * Raw message with axes mapped to ROS conventions and temp in degrees celsius.
+		 *
 		 * The optical flow camera is essentially an angular sensor, so conversion is like
 		 * gyroscope. (body-fixed NED -> ENU)
 		 */
@@ -90,13 +92,28 @@ private:
 		flow_rad_msg->header = header;
 
 		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
-		flow_rad_msg->integrated_x = flow_rad.integrated_x;
-		flow_rad_msg->integrated_y = -flow_rad.integrated_y;	// NED -> ENU
-		flow_rad_msg->integrated_xgyro = flow_rad.integrated_xgyro;
-		flow_rad_msg->integrated_ygyro = -flow_rad.integrated_ygyro;	// NED -> ENU
-		flow_rad_msg->integrated_zgyro = -flow_rad.integrated_zgyro;	// NED -> ENU
+
+		auto position = UAS::transform_frame_enu_ned_xyz(
+						flow_rad.integrated_x,
+						flow_rad.integrated_y,
+						0.0);
+
+		flow_rad_msg->integrated_x = position.x();
+		flow_rad_msg->integrated_y = position.y();
+
+		auto flow_gyro = UAS::transform_frame_enu_ned_xyz(
+						flow_rad.integrated_xgyro,
+						flow_rad.integrated_ygyro,
+						flow_rad.integrated_zgyro);
+
+		flow_rad_msg->integrated_xgyro = flow_gyro.x();
+		flow_rad_msg->integrated_ygyro = flow_gyro.y();	
+		flow_rad_msg->integrated_zgyro = flow_gyro.z();
+
 		flow_rad_msg->temperature = flow_rad.temperature / 100.0f;	// in degrees celsius
+
 		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
+
 		flow_rad_msg->distance = flow_rad.distance;
 
 		flow_rad_pub.publish(flow_rad_msg);
@@ -111,6 +128,14 @@ private:
 		temp_pub.publish(temp_msg);
 
 		// Rangefinder
+		/**
+		 * @todo: use distance_sensor plugin only to publish this data
+		 * (which receives DISTANCE_SENSOR msg with multiple rangefinder
+		 * sensors data)
+		 *
+		 * @todo: suggest modification on MAVLink OPTICAL_FLOW_RAD msg
+		 * which removes sonar data fields from it
+		 */
 		auto range_msg = boost::make_shared<sensor_msgs::Range>();
 
 		range_msg->header = header;
