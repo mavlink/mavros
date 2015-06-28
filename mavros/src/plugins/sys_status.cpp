@@ -354,6 +354,8 @@ public:
 	{
 		uas = &uas_;
 
+		ros::Duration conn_heartbeat;
+
 		double conn_timeout_d;
 		double conn_heartbeat_d;
 		double min_voltage;
@@ -362,6 +364,17 @@ public:
 		nh.param("conn/heartbeat", conn_heartbeat_d, 0.0);
 		nh.param("sys/min_voltage", min_voltage, 6.0);
 		nh.param("sys/disable_diag", disable_diag, false);
+
+		// rate parameter
+		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d)) {
+			conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
+		}
+		else if (nh.getParam("conn/heartbeat", conn_heartbeat_d)) {
+			// XXX deprecated parameter
+			ROS_WARN_NAMED("sys", "SYS: parameter `~conn/heartbeat` deprecated, "
+					"please use `~conn/heartbeat_rate` instead!");
+			conn_heartbeat = ros::Duration(conn_heartbeat_d);
+		}
 
 		// heartbeat diag always enabled
 		UAS_DIAG(uas).add(hb_diag);
@@ -378,8 +391,8 @@ public:
 				&SystemStatusPlugin::timeout_cb, this, true);
 		timeout_timer.start();
 
-		if (conn_heartbeat_d > 0.0) {
-			heartbeat_timer = nh.createTimer(ros::Duration(conn_heartbeat_d),
+		if (!conn_heartbeat.isZero()) {
+			heartbeat_timer = nh.createTimer(conn_heartbeat,
 					&SystemStatusPlugin::heartbeat_cb, this);
 			heartbeat_timer.start();
 		}
