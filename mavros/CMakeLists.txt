@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_runtime
   pluginlib
   roscpp
+  geometry_msgs
   sensor_msgs
   std_msgs
   std_srvs
@@ -133,8 +134,8 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs libmavconn
-  DEPENDS Boost mavlink
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs libmavconn message_runtime
+  DEPENDS Boost
 )
 
 ###########
@@ -269,13 +270,14 @@ install(DIRECTORY launch/
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-#catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-#if(TARGET mavconn-test)
-#  target_link_libraries(mavconn-test mavconn)
-#endif()
+if(CATKIN_ENABLE_TESTING)
+
+catkin_add_gtest(libmavros-frame-test test/test_frame_conv.cpp)
+target_link_libraries(libmavros-frame-test mavros)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+endif()
 
 # vim: ts=2 sw=2 et:
