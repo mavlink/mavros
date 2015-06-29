@@ -88,6 +88,21 @@ TEST(VECTOR, transform_frame_attitude_rpy_00pi)
 }
 
 
+/* -*- test attitude quaternion transform -*- */
+
+TEST(QUATERNION,  transform_frame_attitude_q_111)
+{
+	auto input = tf::createQuaternionFromRPY(1, 1, 1);
+	auto expected_out = tf::createQuaternionFromRPY(1, -1, -1);
+
+	auto out = UAS::transform_frame_attitude_q(input);
+
+	ROS_INFO("Input: %f %f %f %f", input.x(), input.y(), input.z(), input.w());
+	ROS_INFO("Output: %f %f %f %f", out.x(), out.y(), out.z(), out.w());
+	ROS_INFO("Exp. expected_output: %f %f %f %f", expected_out.x(), expected_out.y(), expected_out.z(), expected_out.w());
+
+	EXPECT_EQ(expected_out, out);
+}
 
 
 int main(int argc, char **argv)
