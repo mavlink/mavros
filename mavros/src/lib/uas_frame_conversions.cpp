@@ -17,8 +17,6 @@
 #include <mavros/mavros_uas.h>
 #include <boost/math/constants/constants.hpp>
 
-const double PI = boost::math::constants::pi<double>();
-
 using namespace mavros;
 
 
@@ -32,7 +30,7 @@ tf::Vector3 UAS::transform_frame_xyz(double _x, double _y, double _z)
 
 tf::Quaternion UAS::transform_frame_attitude_q(tf::Quaternion qo)
 {
-	double roll = PI, pitch = 0.0, yaw = 0.0f;
+	double roll = M_PI, pitch = 0.0, yaw = 0.0;
 	tf::Quaternion qr = tf::createQuaternionFromRPY(roll, pitch, yaw);
 	tf::Quaternion qt = qo * qr;
 	return qt;
@@ -40,7 +38,7 @@ tf::Quaternion UAS::transform_frame_attitude_q(tf::Quaternion qo)
 
 tf::Vector3 UAS::transform_frame_attitude_rpy(double _roll, double _pitch, double _yaw)
 {
-	double roll = _roll + PI;
+	double roll = _roll + M_PI;
 	double pitch = _pitch;
 	double yaw = _yaw;
 	return tf::Vector3(roll, pitch, yaw);
