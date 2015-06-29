@@ -23,6 +23,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>message_generation</depend>
+  <depend>message_runtime</depend>
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
   <depend>rospy</depend>
@@ -36,6 +37,8 @@
   <depend>libmavconn</depend>
   <depend>rosconsole_bridge</depend>
   <exec_depend>python-argparse</exec_depend>
+
+  <test_depend>gtest</test_depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
