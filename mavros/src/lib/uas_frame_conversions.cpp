@@ -56,14 +56,25 @@ UAS::Covariance6x6 UAS::transform_frame_covariance_pose6x6(UAS::Covariance6x6 &_
 	};
 
 	UAS::Covariance6x6 covariance;
-	UAS::Covariance6x6 temp;		// temporary matrix = R * C
+	UAS::Covariance6x6 temp;		// temporary matrix = T * C
 
-	// The rotation matrix in this case is a diagonal matrix so R = R^T
+	// The transformation matrix in this case is a orthogonal matrix so T = T^t
 
-	std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
-	std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
-
-	return covariance;
+	/**
+	 * @note According to ROS convention, if one has no estimate for one of the data elements,
+	 * element 0 of the associated covariance matrix to is -1; So no transformation has be applied,
+	 * as the covariance is invalid/unknown; so, it returns the same cov matrix without transformation.
+	 */
+	if (_covariance.at(0) != -1) {
+		// XXX this doesn't multiply matrices correctly. We need Eigen on code!
+		std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
+		std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
+		return covariance;
+	}
+	else {
+		_covariance.at(0) = -1;
+		return _covariance;
+	}
 }
 
 UAS::Covariance3x3 UAS::transform_frame_covariance_general3x3(UAS::Covariance3x3 &_covariance)
@@ -75,12 +86,22 @@ UAS::Covariance3x3 UAS::transform_frame_covariance_general3x3(UAS::Covariance3x3
 	};
 
 	UAS::Covariance3x3 covariance;
-	UAS::Covariance3x3 temp;		// temporary matrix = R * C
+	UAS::Covariance3x3 temp;		// temporary matrix = T * C
 
-	// The rotation matrix in this case is a diagonal matrix so R = R^T
+	// The transformation matrix in this case is a orthogonal matrix so T = T^t
 
-	std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
-	std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
-
-	return covariance;
+	/**
+	 * @note According to ROS convention, if one has no estimate for one of the data elements,
+	 * element 0 of the associated covariance matrix to is -1; So no transformation has be applied,
+	 * as the covariance is invalid/unknown; so, it returns the same cov matrix without transformation.
+	 */
+	if (_covariance.at(0) != -1) {
+		// XXX this doesn't multiply matrices correctly. We need Eigen on code!
+		std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
+		std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
+		return covariance;
+	}
+	else {
+		return _covariance;
+	}
 }
