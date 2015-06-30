@@ -64,7 +64,7 @@ TEST(VECTOR, transform_frame_xyz_111)
 TEST(VECTOR, transform_frame_attitude_rpy_pi00)
 {
 	tf::Vector3 input(M_PI, 0, 0);
-	tf::Vector3 expected_out(2*M_PI, 0, 0);
+	tf::Vector3 expected_out(2 * M_PI, 0, 0);
 
 	auto out = UAS::transform_frame_attitude_rpy(input.x(), input.y(), input.z());
 
@@ -94,13 +94,12 @@ TEST(VECTOR, transform_frame_attitude_rpy_00pi)
 	EXPECT_EQ(expected_out, out);
 }
 
-
 /* -*- test attitude quaternion transform -*- */
 
 TEST(QUATERNION,  transform_frame_attitude_q_pi00)
 {
 	auto input = tf::createQuaternionFromRPY(M_PI, 0, 0);
-	auto expected_out = tf::createQuaternionFromRPY(2*M_PI, 0, 0);
+	auto expected_out = tf::createQuaternionFromRPY(2 * M_PI, 0, 0);
 
 	auto out = UAS::transform_frame_attitude_q(input);
 
