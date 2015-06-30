@@ -65,7 +65,8 @@ UAS::Covariance6x6 UAS::transform_frame_covariance_pose6x6(UAS::Covariance6x6 &_
 	 * element 0 of the associated covariance matrix to is -1; So no transformation has be applied,
 	 * as the covariance is invalid/unknown; so, it returns the same cov matrix without transformation.
 	 */
-	if (rotation.at(0) != -1) {
+	if (_covariance.at(0) != -1) {
+		// XXX this doesn't multiply matrices correctly. We need Eigen on code!
 		std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
 		std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
 		return covariance;
@@ -95,6 +96,7 @@ UAS::Covariance3x3 UAS::transform_frame_covariance_general3x3(UAS::Covariance3x3
 	 * as the covariance is invalid/unknown; so, it returns the same cov matrix without transformation.
 	 */
 	if (_covariance.at(0) != -1) {
+		// XXX this doesn't multiply matrices correctly. We need Eigen on code!
 		std::transform(rotation.begin(), rotation.end(), _covariance.begin(), temp.begin(), std::multiplies<double>());
 		std::transform(temp.begin(), temp.end(), rotation.begin(), covariance.begin(), std::multiplies<double>());
 		return covariance;
