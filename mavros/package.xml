@@ -36,6 +36,9 @@
   <depend>angles</depend>
   <depend>libmavconn</depend>
   <depend>rosconsole_bridge</depend>
+  <depend>cmake_modules</depend>
+  <depend>eigen</depend>
+  <depend>eigen_conversions</depend>
   <exec_depend>python-argparse</exec_depend>
 
   <test_depend>gtest</test_depend>

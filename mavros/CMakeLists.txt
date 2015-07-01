@@ -19,11 +19,14 @@ find_package(catkin REQUIRED COMPONENTS
   angles
   libmavconn
   rosconsole_bridge
+  cmake_modules
+  eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen REQUIRED)
 
 include(EnableCXX11)
 include(MavrosMavlink)
@@ -134,8 +137,8 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs libmavconn message_runtime
-  DEPENDS Boost
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs std_msgs tf geometry_msgs libmavconn message_runtime eigen_conversions
+  DEPENDS Boost Eigen
 )
 
 ###########
@@ -151,8 +154,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
 )
-
 
 add_library(mavros
   src/lib/uas_data.cpp
