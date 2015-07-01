@@ -9,15 +9,19 @@
 
 using mavros::UAS;
 
+static const double epsilon = 1e-6;
 
-static void log_vectors(tf::Vector3 &in, tf::Vector3 &out, tf::Vector3 &expected)
+
+template <typename T>
+static void log_vectors(T &in, T &out, T &expected)
 {
 	ROS_INFO("In (x y z): %f %f %f", in.x(), in.y(), in.z());
 	ROS_INFO("Expected:   %f %f %f", expected.x(), expected.y(), expected.z());
 	ROS_INFO("Out:        %f %f %f", out.x(), out.y(), out.z());
 }
 
-static void log_quaternion(tf::Quaternion &in, tf::Quaternion &out, tf::Quaternion &expected)
+template <typename T>
+static void log_quaternion(T &in, T &out, T &expected)
 {
 	ROS_INFO("In (x y z w): %f %f %f %f", in.x(), in.y(), in.z(), in.w());
 	ROS_INFO("Expected:     %f %f %f %f", expected.x(), expected.y(), expected.z(), expected.w());
@@ -66,6 +70,7 @@ static void log_covariance6x6(UAS::Covariance6x6 &in, UAS::Covariance6x6 &out, U
 						log_v(out,35).c_str());
 }
 
+
 /* -*- test general Vector3 transform function -*- */
 
 TEST(VECTOR, transform_frame_xyz_100)
@@ -99,6 +104,46 @@ TEST(VECTOR, transform_frame_xyz_111)
 
 	log_vectors(input, out, expected_out);
 	EXPECT_EQ(expected_out, out);
+}
+
+TEST(EIGEN_VECTOR, transform_frame_123)
+{
+	Eigen::Vector3d input(1, 2, 3);
+	Eigen::Vector3d expected_out(1, -2, -3);
+
+	auto out = UAS::transform_frame(input);
+
+	log_vectors(input, out, expected_out);
+	EXPECT_NEAR(expected_out.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected_out.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected_out.z(), out.z(), epsilon);
+}
+
+TEST(EIGEN_QUATERNION, transform_frame_123)
+{
+	Eigen::Quaterniond input =
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
+		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ());
+#if 1 // XXX we should find what method used by tf::quaternionFromRPY()
+	Eigen::Quaterniond expected_out =
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
+		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ());
+#else
+	Eigen::Quaterniond expected_out =
+		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ()) *
+		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
+#endif
+
+	auto out = UAS::transform_frame(input);
+
+	log_quaternion(input, out, expected_out);
+	EXPECT_NEAR(expected_out.w(), out.w(), epsilon);
+	EXPECT_NEAR(expected_out.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected_out.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected_out.z(), out.z(), epsilon);
 }
 
 // XXX: #321 comment out broken transform's before release 0.12

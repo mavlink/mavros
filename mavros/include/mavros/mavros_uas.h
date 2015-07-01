@@ -19,6 +19,8 @@
 #include <array>
 #include <mutex>
 #include <atomic>
+#include <Eigen/Eigen>
+#include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
@@ -298,11 +300,19 @@ public:
 	 */
 	static tf::Vector3 sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
 
+	/* -*- frame conversion utilities -*- */
+
 	static tf::Vector3 transform_frame_xyz(double _x, double _y, double _z);
 	static tf::Quaternion transform_frame_attitude_q(tf::Quaternion qo);
 	static tf::Vector3 transform_frame_attitude_rpy(double _roll, double _pitch, double _yaw);
 	static Covariance6x6 transform_frame_covariance_pose6x6(Covariance6x6 &_covariance);
 	static Covariance3x3 transform_frame_covariance_general3x3(Covariance3x3 &_covariance);
+
+	/**
+	 * XXX TODO: eigen based transform functions
+	 */
+	static Eigen::Vector3d transform_frame(Eigen::Vector3d &vec);
+	static Eigen::Quaterniond transform_frame(Eigen::Quaterniond &q);
 
 	/**
 	 * @brief Function to convert general XYZ values from ENU to NED frames
