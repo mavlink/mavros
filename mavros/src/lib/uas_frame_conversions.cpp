@@ -127,7 +127,7 @@ static const Eigen::Quaterniond FRAME_ROTATE_Q = UAS::quaternion_from_rpy(M_PI, 
 static const Eigen::Transform<double, 3, Eigen::Affine> FRAME_TRANSFORM_VECTOR3(FRAME_ROTATE_Q);
 
 
-Eigen::Quaterniond UAS::quaternion_from_rpy(double roll, double pitch, double yaw)
+Eigen::Quaterniond UAS::quaternion_from_rpy(const double roll, const double pitch, const double yaw)
 {
 #if 0
 	// RPY - XYZ
@@ -146,12 +146,12 @@ Eigen::Quaterniond UAS::quaternion_from_rpy(double roll, double pitch, double ya
 #endif
 }
 
-Eigen::Quaterniond UAS::transform_frame(Eigen::Quaterniond &q)
+Eigen::Quaterniond UAS::transform_frame(const Eigen::Quaterniond &q)
 {
 	return FRAME_ROTATE_Q * q * FRAME_ROTATE_Q.inverse();
 }
 
-Eigen::Vector3d UAS::transform_frame(Eigen::Vector3d &vec)
+Eigen::Vector3d UAS::transform_frame(const Eigen::Vector3d &vec)
 {
 	return FRAME_TRANSFORM_VECTOR3 * vec;
 }

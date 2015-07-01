@@ -78,7 +78,10 @@ class UAS {
 public:
 	typedef std::lock_guard<std::recursive_mutex> lock_guard;
 	typedef std::unique_lock<std::recursive_mutex> unique_lock;
+
+	//! Type matching rosmsg for covariance 3x3
 	typedef boost::array<double, 9> Covariance3x3;
+	//! Type matching rosmsg for covarince 6x6
 	typedef boost::array<double, 36> Covariance6x6;
 
 	UAS();
@@ -309,17 +312,48 @@ public:
 	static Covariance3x3 transform_frame_covariance_general3x3(Covariance3x3 &_covariance);
 
 	/**
-	 * XXX TODO: eigen based transform functions
-	 */
-	static Eigen::Vector3d transform_frame(Eigen::Vector3d &vec);
-	static Eigen::Quaterniond transform_frame(Eigen::Quaterniond &q);
-
-	/**
 	 * @brief Convert euler angles to quaternion.
 	 *
 	 * @return quaternion, same as @p tf::quaternionFromRPY() but in Eigen format.
 	 */
-	static Eigen::Quaterniond quaternion_from_rpy(double roll, double pitch, double yaw);
+	static Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw);
+
+	/**
+	 * @brief Convert euler angles to quaternion.
+	 */
+	static inline Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &vec) {
+		return quaternion_from_rpy(vec.x(), vec.y(), vec.z());
+	}
+
+	/**
+	 * @brief Transform frame between ROS and FCU. (Vector3d)
+	 *
+	 * General function. Please use specialized enu-ned and ned-enu variants.
+	 */
+	static Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec);
+
+	/**
+	 * @brief Transform frame between ROS and FCU. (Quaterniond)
+	 *
+	 * General function. Please use specialized enu-ned and ned-enu variants.
+	 */
+	static Eigen::Quaterniond transform_frame(const Eigen::Quaterniond &q);
+
+	/**
+	 * @brief Transform from FCU to ROS frame.
+	 */
+	template<class T>
+	static inline T transform_frame_ned_enu(const T &in) {
+		return transform_frame(in);
+	}
+
+	/**
+	 * @brief Transform from ROS to FCU frame.
+	 */
+	template<class T>
+	static inline T transform_frame_enu_ned(const T &in) {
+		return transform_frame(in);
+	}
 
 	/**
 	 * @brief Function to convert general XYZ values from ENU to NED frames
