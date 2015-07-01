@@ -315,6 +315,13 @@ public:
 	static Eigen::Quaterniond transform_frame(Eigen::Quaterniond &q);
 
 	/**
+	 * @brief Convert euler angles to quaternion.
+	 *
+	 * @return quaternion, same as @p tf::quaternionFromRPY() but in Eigen format.
+	 */
+	static Eigen::Quaterniond quaternion_from_rpy(double roll, double pitch, double yaw);
+
+	/**
 	 * @brief Function to convert general XYZ values from ENU to NED frames
 	 * @param _x: X coordinate/direction value
 	 * @param _y: Y coordinate/direction value

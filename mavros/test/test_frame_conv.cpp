@@ -96,52 +96,20 @@ TEST(BULLET,  transform_frame_attitude_q__123)
 
 TEST(EIGEN, transform_frame__quaterniond_123)
 {
-#if 0
-	Eigen::Quaterniond input =
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
-		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ());
-	Eigen::Quaterniond expected_out =
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
-		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ());
-#else
-	Eigen::Quaterniond input =
-		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ()) *
-		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
-	Eigen::Quaterniond expected_out =
-		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ()) *
-		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
-#endif
+	auto input = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+	auto expected = UAS::quaternion_from_rpy(1.0, -2.0, -3.0);
 
 	auto out = UAS::transform_frame(input);
 
-	EXPECT_NEAR(expected_out.w(), out.w(), epsilon);
-	EXPECT_NEAR(expected_out.x(), out.x(), epsilon);
-	EXPECT_NEAR(expected_out.y(), out.y(), epsilon);
-	EXPECT_NEAR(expected_out.z(), out.z(), epsilon);
-
-
+	EXPECT_NEAR(expected.w(), out.w(), epsilon);
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
 }
 
-TEST(EIGEN, check_euler_to_quaternion_compatibility)
+TEST(EIGEN, quaternion_from_rpy__check_compatibility)
 {
-#if 0
-	// RPY - XYZ
-	Eigen::Quaterniond eigen_q =
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
-		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ());
-#else
-	// YPR - ZYX
-	Eigen::Quaterniond eigen_q =
-		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ()) *
-		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
-		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
-#endif
-
+	auto eigen_q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
 	auto bt_q = tf::createQuaternionFromRPY(1.0, 2.0, 3.0);
 
 	EXPECT_NEAR(bt_q.w(), eigen_q.w(), epsilon);
