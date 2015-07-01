@@ -53,6 +53,7 @@ flags = [
 '-x',
 'c++',
 '-isystem', "/opt/ros/%s/include" % os.environ.get('ROS_DISTRO', 'indigo'),
+'-isystem', '/usr/include/eigen3',
 '-I', '.',
 '-I', './libmavconn/include',
 '-I', './mavros/include',

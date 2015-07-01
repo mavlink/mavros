@@ -12,22 +12,6 @@ using mavros::UAS;
 static const double epsilon = 1e-6;
 
 
-template <typename T>
-static void log_vectors(T &in, T &out, T &expected)
-{
-	ROS_INFO("In (x y z): %f %f %f", in.x(), in.y(), in.z());
-	ROS_INFO("Expected:   %f %f %f", expected.x(), expected.y(), expected.z());
-	ROS_INFO("Out:        %f %f %f", out.x(), out.y(), out.z());
-}
-
-template <typename T>
-static void log_quaternion(T &in, T &out, T &expected)
-{
-	ROS_INFO("In (x y z w): %f %f %f %f", in.x(), in.y(), in.z(), in.w());
-	ROS_INFO("Expected:     %f %f %f %f", expected.x(), expected.y(), expected.z(), expected.w());
-	ROS_INFO("Out:          %f %f %f %f", out.x(), out.y(), out.z(), out.w());
-}
-
 static std::string log_v(UAS::Covariance6x6 &cov, int n)
 {
 	std::stringstream cov_stream;
@@ -73,64 +57,59 @@ static void log_covariance6x6(UAS::Covariance6x6 &in, UAS::Covariance6x6 &out, U
 
 /* -*- test general Vector3 transform function -*- */
 
-TEST(VECTOR, transform_frame_xyz_100)
+TEST(BULLET, transform_frame_xyz__123)
 {
-	tf::Vector3 input(1, 0, 0);
-	tf::Vector3 expected_out(1, 0, 0);
+	tf::Vector3 input(1, 2, 3);
+	tf::Vector3 expected(1, -2, -3);
 
 	auto out = UAS::transform_frame_xyz(input.x(), input.y(), input.z());
 
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
 }
 
-TEST(VECTOR, transform_frame_xyz_110)
-{
-	tf::Vector3 input(1, 1, 0);
-	tf::Vector3 expected_out(1, -1, 0);
-
-	auto out = UAS::transform_frame_xyz(input.x(), input.y(), input.z());
-
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(VECTOR, transform_frame_xyz_111)
-{
-	tf::Vector3 input(1, 1, 1);
-	tf::Vector3 expected_out(1, -1, -1);
-
-	auto out = UAS::transform_frame_xyz(input.x(), input.y(), input.z());
-
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(EIGEN_VECTOR, transform_frame_123)
+TEST(EIGEN, transform_frame__vector3d_123)
 {
 	Eigen::Vector3d input(1, 2, 3);
-	Eigen::Vector3d expected_out(1, -2, -3);
+	Eigen::Vector3d expected(1, -2, -3);
 
 	auto out = UAS::transform_frame(input);
 
-	log_vectors(input, out, expected_out);
-	EXPECT_NEAR(expected_out.x(), out.x(), epsilon);
-	EXPECT_NEAR(expected_out.y(), out.y(), epsilon);
-	EXPECT_NEAR(expected_out.z(), out.z(), epsilon);
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
 }
 
-TEST(EIGEN_QUATERNION, transform_frame_123)
+TEST(BULLET,  transform_frame_attitude_q__123)
 {
+	auto input = tf::createQuaternionFromRPY(1, 2, 3);
+	auto expected = tf::createQuaternionFromRPY(1, -2, -3);
+
+	auto out = UAS::transform_frame_attitude_q(input);
+
+	EXPECT_NEAR(expected.w(), out.w(), epsilon);
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
+}
+
+TEST(EIGEN, transform_frame__quaterniond_123)
+{
+#if 0
 	Eigen::Quaterniond input =
 		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
 		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
 		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ());
-#if 1 // XXX we should find what method used by tf::quaternionFromRPY()
 	Eigen::Quaterniond expected_out =
 		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
 		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
 		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ());
 #else
+	Eigen::Quaterniond input =
+		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ()) *
+		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
 	Eigen::Quaterniond expected_out =
 		Eigen::AngleAxisd(-3.0, Eigen::Vector3d::UnitZ()) *
 		Eigen::AngleAxisd(-2.0, Eigen::Vector3d::UnitY()) *
@@ -139,85 +118,43 @@ TEST(EIGEN_QUATERNION, transform_frame_123)
 
 	auto out = UAS::transform_frame(input);
 
-	log_quaternion(input, out, expected_out);
 	EXPECT_NEAR(expected_out.w(), out.w(), epsilon);
 	EXPECT_NEAR(expected_out.x(), out.x(), epsilon);
 	EXPECT_NEAR(expected_out.y(), out.y(), epsilon);
 	EXPECT_NEAR(expected_out.z(), out.z(), epsilon);
+
+
 }
+
+TEST(EIGEN, check_euler_to_quaternion_compatibility)
+{
+#if 0
+	// RPY - XYZ
+	Eigen::Quaterniond eigen_q =
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX()) *
+		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ());
+#else
+	// YPR - ZYX
+	Eigen::Quaterniond eigen_q =
+		Eigen::AngleAxisd(3.0, Eigen::Vector3d::UnitZ()) *
+		Eigen::AngleAxisd(2.0, Eigen::Vector3d::UnitY()) *
+		Eigen::AngleAxisd(1.0, Eigen::Vector3d::UnitX());
+#endif
+
+	auto bt_q = tf::createQuaternionFromRPY(1.0, 2.0, 3.0);
+
+	EXPECT_NEAR(bt_q.w(), eigen_q.w(), epsilon);
+	EXPECT_NEAR(bt_q.x(), eigen_q.x(), epsilon);
+	EXPECT_NEAR(bt_q.y(), eigen_q.y(), epsilon);
+	EXPECT_NEAR(bt_q.z(), eigen_q.z(), epsilon);
+}
+
+
 
 // XXX: #321 comment out broken transform's before release 0.12
 // after we SHOULD come and fix!
 #if 0
-/* -*- test attitude RPY transform -*- */
-
-TEST(VECTOR, transform_frame_attitude_rpy_pi00)
-{
-	tf::Vector3 input(M_PI, 0, 0);
-	tf::Vector3 expected_out(2 * M_PI, 0, 0);
-
-	auto out = UAS::transform_frame_attitude_rpy(input.x(), input.y(), input.z());
-
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(VECTOR, transform_frame_attitude_rpy_0pi0)
-{
-	tf::Vector3 input(0, M_PI, 0);
-	tf::Vector3 expected_out(M_PI, M_PI, 0);
-
-	auto out = UAS::transform_frame_attitude_rpy(input.x(), input.y(), input.z());
-
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(VECTOR, transform_frame_attitude_rpy_00pi)
-{
-	tf::Vector3 input(0, 0, M_PI);
-	tf::Vector3 expected_out(M_PI, 0, M_PI);
-
-	auto out = UAS::transform_frame_attitude_rpy(input.x(), input.y(), input.z());
-
-	log_vectors(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-/* -*- test attitude quaternion transform -*- */
-
-TEST(QUATERNION,  transform_frame_attitude_q_pi00)
-{
-	auto input = tf::createQuaternionFromRPY(M_PI, 0, 0);
-	auto expected_out = tf::createQuaternionFromRPY(2 * M_PI, 0, 0);
-
-	auto out = UAS::transform_frame_attitude_q(input);
-
-	log_quaternion(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(QUATERNION,  transform_frame_attitude_q_0pi0)
-{
-	auto input = tf::createQuaternionFromRPY(0, M_PI, 0);
-	auto expected_out = tf::createQuaternionFromRPY(M_PI, M_PI, 0);
-
-	auto out = UAS::transform_frame_attitude_q(input);
-
-	log_quaternion(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
-
-TEST(QUATERNION,  transform_frame_attitude_q_00pi)
-{
-	auto input = tf::createQuaternionFromRPY(0, 0, M_PI);
-	auto expected_out = tf::createQuaternionFromRPY(M_PI, 0, M_PI);
-
-	auto out = UAS::transform_frame_attitude_q(input);
-
-	log_quaternion(input, out, expected_out);
-	EXPECT_EQ(expected_out, out);
-}
 
 /* -*- test covariance transform -*- */
 
