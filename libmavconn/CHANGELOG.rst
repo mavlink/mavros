@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2015-07-01)
+-------------------
+* libmavconn: UDP: Do not exit on Network unreachable error.
+  Requested by @mhkabir, idea given by @adamantivm in
+  https://github.com/algron/mavros/commit/48fa19f58786387b4aee804e0687d6d39a127806
+* Contributors: Vladimir Ermakov
+
 0.11.2 (2015-04-26)
 -------------------
 * libmavconn fix `#269 <https://github.com/vooon/mavros/issues/269>`_: override default channel getter helpers

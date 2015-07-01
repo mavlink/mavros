@@ -2,6 +2,65 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2015-07-01)
+-------------------
+* plugin: sys_time, sys_status `#266 <https://github.com/vooon/mavros/issues/266>`_: check that rate is zero
+* test `#321 <https://github.com/vooon/mavros/issues/321>`_: disable tests for broken transforms.
+* lib `#321 <https://github.com/vooon/mavros/issues/321>`_: frame transform are broken. again! revert old math.
+  RULE for me: do not accept patch without wide testing from author.
+  That PR changes all plugins code, instead of do API, test and only after
+  that touching working code. My bad.
+* unittest: added 6x6 Covariance conversion test
+* frame_conversions: update comments; filter covariance by value of element 0
+* unittests: corrected outputs from conversion tests
+* test: other quaternion transform tests
+* test: UAS::transform_frame_attitude_q()
+* test: test for UAS::transform_frame_attitude_rpy() (ERRORs!)
+* test: test for UAS::transform_frame_xyz()
+* test: Initial import test_frame_conv
+* coverity: make them happy
+* uncrustify: fix style on frame conversions
+* uncrustify: includes
+* plugin: sys_status `#266 <https://github.com/vooon/mavros/issues/266>`_: replace period with rate parameter
+* plugin: sys_time `#266 <https://github.com/vooon/mavros/issues/266>`_: Replace period with rate parameters
+* frame_conversion: last fix patch
+* frame_conversions: use inline functions to identify direction of conversion
+* changed frame conversion func name; add 3x3 cov matrix frame conversion; general doxygen comment cleanup
+* frame_conversions: added covariance frame conversion for full pose 6x6 matrix
+* frame_conversions: added frame_conversion specific lib file; applied correct frame conversion between ENU<->NED
+* sys_status `#300 <https://github.com/vooon/mavros/issues/300>`_: PX4 place in [0] lest significant byte of git hash.
+* sys_status fix `#300 <https://github.com/vooon/mavros/issues/300>`_: fix u8->hex func.
+* plugin: waypoint: cosmetics.
+* vibration_plugin: first commit
+* Changes some frames from world to body conversion for NED to ENU.
+* mavsys `#293 <https://github.com/vooon/mavros/issues/293>`_: add --wait option
+* mavsys: Fix arguments help
+* mavcmd `#293 <https://github.com/vooon/mavros/issues/293>`_: Add --wait option.
+  New function: util.wait_fcu_connection(timeout=None) implement wait
+  option.
+* sys_status `#300 <https://github.com/vooon/mavros/issues/300>`_: AUTOPILOT_VERSION APM quirk
+* mavros `#302 <https://github.com/vooon/mavros/issues/302>`_: fix style
+* mavros `#302 <https://github.com/vooon/mavros/issues/302>`_: split UAS impl by function blocks
+* mavros fix `#301 <https://github.com/vooon/mavros/issues/301>`_: move sensor orientation util to UAS
+* distance_sensor: typo; style fixe
+* sensor_orientation: list values correction
+* launch: APM:Plane 3.3.0 now support local_position.
+  Blacklist distance_sensor.
+* sensor_orientation: use MAX as last index macro
+* distance_sensor: changed to usable config
+* launch: APM:Plane 3.3.0 now support local_position.
+  Blacklist distance_sensor.
+* sensor_orientation: updated orientation enum; updated data type
+* sensor_orientation: included array type on utils.h
+* sensor_orientation: added sensor orientation matching helper func
+* distance_sensor: updated config file
+* distance_sensor: define sensor position through param config
+* distance_sensor: array limiting; cast correction; other minor correc
+* distance_sensor: small enhancements
+* sys_status `#293 <https://github.com/vooon/mavros/issues/293>`_: initialize state topic
+* sys_status `#293 <https://github.com/vooon/mavros/issues/293>`_: expose connection flag in mavros/State.
+* Contributors: TSC21, Tony Baltovski, Vladimir Ermakov
+
 0.11.2 (2015-04-26)
 -------------------
 * plugin: param fix `#276 <https://github.com/vooon/mavros/issues/276>`_: add check before reset request downcounter.

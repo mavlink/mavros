@@ -2,6 +2,65 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2015-07-01)
+-------------------
+* coverity: make them happy
+* frame_conversions: use inline functions to identify direction of conversion
+* changed frame conversion func name; add 3x3 cov matrix frame conversion; general doxygen comment cleanup
+* frame_conversions: added frame_conversion specific lib file; applied correct frame conversion between ENU<->NED
+* vibration_plugin: changed vibration to Vector3
+* vibration_plugin: msg reformulation
+* vibration_plugin: first commit
+* Changes some frames from world to body conversion for NED to ENU.
+* mavros `#302 <https://github.com/vooon/mavros/issues/302>`_: fix style
+* mavros fix `#301 <https://github.com/vooon/mavros/issues/301>`_: move sensor orientation util to UAS
+* distance_sensor: typo; style fixe
+* sensor_orientation: corrected rotation set sequence
+* sensor_orientation: updated orientation enum; updated data type
+* sensor_orientation: removed unecessary sum on setting rotation
+* sensor_orientation: added sensor orientation matching helper func
+* distance_sensor: minor correction
+* distance_sensor: sensor position cond changed
+* distance_sensor: tweak param check; cond routines
+* distance_sensor: removed unnecessary comment line
+* distance_sensor: ctor list update
+* distance_sensor: define sensor position through param config
+* distance_sensor: minor comment identation correction
+* distance_sensor: tf::Transform creation optional
+* distance_sensor: add tf_broadcaster between 'fcu' and the distance sensor
+* distance_sensor: remove commented code
+* distance_sensor: removed dbg msg
+* distance_sensor: cov condition defined
+* distance_sensor: covariance condition changed
+* distance_sensor: conditional state change
+* distance_sensor: covariance condition set - correction
+* distance_sensor: covariance condition set
+* distance_sensor: ctor list update (corrected)
+* distance_sensor: ctor list update
+* distance_sensor: ctor list update
+* distance_sensor: small correction
+* distance_sensor: uncrustify
+* distance_sensor: array limiting; cast correction; other minor correc
+* distance_sensor: travis build correction
+* distance_sensor: uncrustify distance_sensor.cpp
+* distance_sensor: small corrections on variable definitions, method calls
+* distance_sensor: small enhancements
+* distance_sensor `#292 <https://github.com/vooon/mavros/issues/292>`_: uncrustify
+* distance_sensor `#292 <https://github.com/vooon/mavros/issues/292>`_: fix travis build.
+* distance_sensor `#292 <https://github.com/vooon/mavros/issues/292>`_: implement message handling
+* distance_sensor `#292 <https://github.com/vooon/mavros/issues/292>`_: parse mapping configuration.
+* distance_sensor: remove DistanceSensor.msg from CMakeList
+* distance_sensor: removed DistanceSensor.msg
+* distance_sensor:
+  -> use std Range.msg
+  -> published frame_id in topics are dinamic - depend on type and id of the sensor
+* distance_sensor: comment correction
+* distance_sensor: minor correction
+* distance_sensor: minor fixes that include use Range.msg to Laser data
+* distance_sensor: add plugin file
+* distance_sensor plugin: first commit!
+* Contributors: TSC21, Tony Baltovski, Vladimir Ermakov
+
 0.11.2 (2015-04-26)
 -------------------
 * gcs bridge fix `#277 <https://github.com/vooon/mavros/issues/277>`_: add link diagnostics
