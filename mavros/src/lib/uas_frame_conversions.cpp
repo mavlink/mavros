@@ -30,18 +30,30 @@ tf::Vector3 UAS::transform_frame_xyz(double _x, double _y, double _z)
 
 tf::Quaternion UAS::transform_frame_attitude_q(tf::Quaternion qo)
 {
+	// XXX temporary
+	// same reason as for rpy: return old math.
+#if 0
 	double roll = M_PI, pitch = 0.0, yaw = 0.0;
 	tf::Quaternion qr = tf::createQuaternionFromRPY(roll, pitch, yaw);
 	tf::Quaternion qt = qo * qr;
 	return qt;
+#endif
+	return tf::Quaternion(qo.x(), -qo.y(), -qo.z(), qo.w());
 }
 
 tf::Vector3 UAS::transform_frame_attitude_rpy(double _roll, double _pitch, double _yaw)
 {
+	// XXX temporary comment-out new method.
+	// hand-test in rviz + imu plugin show wrong rotation direction on yaw.
+	// APM Planner and MAVProxy shows CW, RVIZ CCW => mavros bug.
+	// return old math.
+#if 0
 	double roll = _roll + M_PI;
 	double pitch = _pitch;
 	double yaw = _yaw;
 	return tf::Vector3(roll, pitch, yaw);
+#endif
+	return transform_frame_xyz(_roll, _pitch, _yaw);
 }
 
 UAS::Covariance6x6 UAS::transform_frame_covariance_pose6x6(UAS::Covariance6x6 &_covariance)
