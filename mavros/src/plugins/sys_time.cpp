@@ -146,10 +146,7 @@ public:
 
 		uas = &uas_;
 
-		// deprecated params
-		nh.param("conn/timesync", conn_timesync_d, 0.0);
-
-		if (nh.getParam("conn/system_time_rate", conn_system_time_d)) {
+		if (nh.getParam("conn/system_time_rate", conn_system_time_d) && conn_system_time_d != 0.0) {
 			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
 		}
 		else if (nh.getParam("conn/system_time", conn_system_time_d)) {
@@ -159,7 +156,7 @@ public:
 			conn_system_time = ros::Duration(conn_system_time_d);
 		}
 
-		if (nh.getParam("conn/timesync_rate", conn_timesync_d)) {
+		if (nh.getParam("conn/timesync_rate", conn_timesync_d) && conn_timesync_d != 0.0) {
 			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
 		}
 		else if (nh.getParam("conn/timesync", conn_timesync_d)) {

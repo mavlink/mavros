@@ -361,12 +361,11 @@ public:
 		double min_voltage;
 
 		nh.param("conn/timeout", conn_timeout_d, 30.0);
-		nh.param("conn/heartbeat", conn_heartbeat_d, 0.0);
 		nh.param("sys/min_voltage", min_voltage, 6.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// rate parameter
-		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d)) {
+		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d) && conn_heartbeat_d != 0.0) {
 			conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
 		}
 		else if (nh.getParam("conn/heartbeat", conn_heartbeat_d)) {
