@@ -6,10 +6,7 @@
 		<description>Publish system status.</description>
 	</class>
 	<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Publish IMU state.</description>
-	</class>
-	<class name="gps" type="mavplugin::GPSPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Publish GPS fix.</description>
+		<description>Publish IMU data.</description>
 	</class>
 	<class name="param" type="mavplugin::ParamPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Access to FCU parameters.</description>
@@ -27,7 +24,7 @@
 		<description>Publish FCU local position.</description>
 	</class>
 	<class name="global_position" type="mavplugin::GlobalPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Publish FCU global position.</description>
+		<description>Publish FCU fused global position and raw GPS fix.</description>
 	</class>
 	<class name="setpoint_position" type="mavplugin::SetpointPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send to FCU external position setpoint.</description>
