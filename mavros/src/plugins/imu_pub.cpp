@@ -27,6 +27,27 @@
 #include <geometry_msgs/Vector3.h>
 
 namespace mavplugin {
+
+/* Note: this coefficents before been inside plugin class,
+ * but after #320 something broken and in resulting plugins.so
+ * there no symbols for that constants.
+ * That cause plugin loader failure.
+ *
+ * objdump -x plugins.so | grep MILLI
+ */
+
+//! Gauss to Tesla coeff
+static constexpr double GAUSS_TO_TESLA = 1.0e-4;
+//! millTesla to Tesla coeff
+static constexpr double MILLIT_TO_TESLA = 1000.0;
+//! millRad/Sec to Rad/Sec coeff
+static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
+//! millG to m/s**2 coeff
+static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
+//! millBar to Pascal coeff
+static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
+
+
 /**
  * @brief IMU data publication plugin
  */
@@ -47,7 +68,7 @@ public:
 		uas = &uas_;
 
 		imu_nh.param<std::string>("frame_id", frame_id, "fcu");
-		imu_nh.param("linear_acceleration_stdev", linear_stdev, 0.0003);// check default by MPU6000 spec
+		imu_nh.param("linear_acceleration_stdev", linear_stdev, 0.0003);		// check default by MPU6000 spec
 		imu_nh.param("angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0));	// check default by MPU6000 spec
 		imu_nh.param("orientation_stdev", orientation_stdev, 1.0);
 		imu_nh.param("magnetic_stdev", mag_stdev, 0.0);
@@ -100,12 +121,6 @@ private:
 	UAS::Covariance3x3 unk_orientation_cov;
 	UAS::Covariance3x3 magnetic_cov;
 
-	static constexpr double GAUSS_TO_TESLA = 1.0e-4;
-	static constexpr double MILLIT_TO_TESLA = 1000.0;
-	static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
-	static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
-	static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
-
 	/* -*- helpers -*- */
 
 	void setup_covariance(UAS::Covariance3x3 &cov, double stdev) {
@@ -117,19 +132,19 @@ private:
 		}
 	}
 
-#if 0
-	void uas_store_attitude(tf::Quaternion &orientation,
-			geometry_msgs::Vector3 &gyro_vec,
-			geometry_msgs::Vector3 &acc_vec)
+	void uas_store_attitude(sensor_msgs::Imu::Ptr imu_msg)
 	{
 		tf::Vector3 angular_velocity;
 		tf::Vector3 linear_acceleration;
-		tf::vector3MsgToTF(gyro_vec, angular_velocity);
-		tf::vector3MsgToTF(acc_vec, linear_acceleration);
+		tf::Quaternion orientation;
 
+		tf::quaternionMsgToTF(imu_msg->orientation, orientation);
+		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
+		tf::vector3MsgToTF(imu_msg->linear_acceleration, linear_acceleration);
+
+		//! @todo replace tf data types with eigen in UAS storage.
 		uas->update_attitude_imu(orientation, angular_velocity, linear_acceleration);
 	}
-#endif
 
 	//! make message header with syncronized stamp
 	template<typename T>
@@ -161,12 +176,8 @@ private:
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
-		// XXX TODO
-		//uas_store_attitude(orientation,
-		//		imu_msg->angular_velocity,
-		//		imu_msg->linear_acceleration);
-
 		// publish
+		uas_store_attitude(imu_msg);
 		imu_pub.publish(imu_msg);
 	}
 
@@ -303,7 +314,7 @@ private:
 		auto gyro = UAS::transform_frame_ned_enu<Eigen::Vector3d>(
 				Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
 		auto accel = UAS::transform_frame_ned_enu<Eigen::Vector3d>(
-				Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.yacc));
+				Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc));
 
 		if (uas->is_ardupilotmega())
 			accel *= MILLIG_TO_MS2;
@@ -339,7 +350,7 @@ private:
 		auto gyro = UAS::transform_frame_ned_enu<Eigen::Vector3d>(
 				Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
 		auto accel = UAS::transform_frame_ned_enu<Eigen::Vector3d>(
-				Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.yacc) * MILLIG_TO_MS2);
+				Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc) * MILLIG_TO_MS2);
 
 		publish_imu_data_raw(header, gyro, accel);
 
