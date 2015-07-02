@@ -18,6 +18,7 @@
 #include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
+#include <eigen_conversions/eigen_msg.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <geometry_msgs/Vector3Stamped.h>
@@ -66,9 +67,8 @@ private:
 	 *
 	 * @warning Send only AFX AFY AFZ. ENU frame.
 	 */
-	void send_setpoint_acceleration(const ros::Time &stamp, double afx, double afy, double afz) {
-		/**
-		 * Documentation start from bit 1 instead 0.
+	void send_setpoint_acceleration(const ros::Time &stamp, Eigen::Vector3d &accel_enu) {
+		/* Documentation start from bit 1 instead 0.
 		 * Ignore position and velocity vectors, yaw and yaw rate
 		 */
 		uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
@@ -76,10 +76,10 @@ private:
 		if (send_force)
 			ignore_all_except_a_xyz |= (1 << 9);
 
-		auto accel = UAS::transform_frame_enu_ned_xyz(afx, afy, afz);
+		auto accel = UAS::transform_frame_enu_ned(accel_enu);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				MAV_FRAME_LOCAL_NED,	// TODO: use enum on lib
+				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_a_xyz,
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
@@ -90,10 +90,10 @@ private:
 	/* -*- callbacks -*- */
 
 	void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr &req) {
-		send_setpoint_acceleration(req->header.stamp,
-				req->vector.x,
-				req->vector.y,
-				req->vector.z);
+		Eigen::Vector3d accel_enu;
+
+		tf::vectorMsgToEigen(req->vector, accel_enu);
+		send_setpoint_acceleration(req->header.stamp, accel_enu);
 	}
 };
 };	// namespace mavplugin

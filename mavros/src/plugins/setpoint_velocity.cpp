@@ -62,14 +62,14 @@ private:
 	 *
 	 * @warning Send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &linear_enu, double yaw_rate) {
+	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &vel_enu, double yaw_rate) {
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		auto vel = UAS::transform_frame_enu_ned(linear_enu);
+		auto vel = UAS::transform_frame_enu_ned(vel_enu);
 		auto yr = UAS::transform_frame_enu_ned(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
@@ -84,10 +84,10 @@ private:
 	/* -*- callbacks -*- */
 
 	void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
-		Eigen::Vector3d linear;
+		Eigen::Vector3d vel_enu;
 
-		tf::vectorMsgToEigen(req->twist.linear, linear);
-		send_setpoint_velocity(req->header.stamp, linear,
+		tf::vectorMsgToEigen(req->twist.linear, vel_enu);
+		send_setpoint_velocity(req->header.stamp, vel_enu,
 				req->twist.angular.z);
 	}
 };
