@@ -75,6 +75,7 @@ public:
 		kCmdTruncateFile,	///< Truncate file at <path> to <offset> length
 		kCmdRename,		///< Rename <path1> to <path2>
 		kCmdCalcFileCRC32,	///< Calculate CRC32 for file at <path>
+		kCmdBurstReadFile,	///< Burst download session file
 
 		kRspAck = 128,		///< Ack response
 		kRspNak			///< Nak response
@@ -89,7 +90,9 @@ public:
 		kErrInvalidSession,		///< Session is not currently open
 		kErrNoSessionsAvailable,	///< All available Sessions in use
 		kErrEOF,			///< Offset past end of file for List and Read commands
-		kErrUnknownCommand		///< Unknown command opcode
+		kErrUnknownCommand,		///< Unknown command opcode
+		kErrFailFileExists,		///< File exists already
+		kErrFailFileProtected		///< File is write protected
 	};
 
 	static const char	DIRENT_FILE = 'F';
