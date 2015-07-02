@@ -18,6 +18,7 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
 
@@ -61,15 +62,15 @@ private:
 	 *
 	 * @warning Send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, double vx, double vy, double vz, double yaw_rate) {
+	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &linear_enu, double yaw_rate) {
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
-		auto yr = UAS::transform_frame_enu_ned_xyz(0.0, 0.0, yaw_rate);
+		auto vel = UAS::transform_frame_enu_ned(linear_enu);
+		auto yr = UAS::transform_frame_enu_ned(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
@@ -83,10 +84,10 @@ private:
 	/* -*- callbacks -*- */
 
 	void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
-		send_setpoint_velocity(req->header.stamp,
-				req->twist.linear.x,
-				req->twist.linear.y,
-				req->twist.linear.z,
+		Eigen::Vector3d linear;
+
+		tf::vectorMsgToEigen(req->twist.linear, linear);
+		send_setpoint_velocity(req->header.stamp, linear,
 				req->twist.angular.z);
 	}
 };
