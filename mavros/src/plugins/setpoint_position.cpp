@@ -86,21 +86,13 @@ private:
 		tf::Vector3 origin = transform.getOrigin();
 		tf::Quaternion q = transform.getRotation();
 
-		/**
-		 * Documentation start from bit 1 instead 0;
+		/* Documentation start from bit 1 instead 0;
 		 * Ignore velocity and accel vectors, yaw rate.
+		 *
+		 * In past versions on PX4 there been bug described in #273.
+		 * If you got similar issue please try update firmware first.
 		 */
-		uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
-
-		if (uas->is_px4()) {
-			/**
-			 * @bug Current PX4 has a bug: it cuts out throttle if there's no velocity SP
-			 * Issue #273.
-			 *
-			 * @todo Revisit this quirk later. Should be fixed in firmware.
-			 */
-			ignore_all_except_xyz_y = (1 << 11) | (7 << 6);
-		}
+		const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
 		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
 		auto qt = UAS::transform_frame_enu_ned_attitude_q(q);
