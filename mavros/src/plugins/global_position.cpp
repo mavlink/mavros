@@ -69,7 +69,7 @@ public:
 
 		// fused global position
 		gp_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
-		//gp_pos_pub = gp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("local", 10);
+		gp_pos_pub = gp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("local", 10);
 		gp_vel_pub = gp_nh.advertise<geometry_msgs::TwistStamped>("gp_vel", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
@@ -234,46 +234,33 @@ private:
 		double northing, easting;
 		std::string zone;
 
-#if 0
-		// temporary comment out
-
 		/** @note Adapted from gps_umd ROS package @http://wiki.ros.org/gps_umd
 		 *  Author: Ken Tossell <ken AT tossell DOT net>
 		 */
-		UTM::LLtoUTM(gfix->latitude, gfix->longitude, northing, easting, zone);
+		UTM::LLtoUTM(fix->latitude, fix->longitude, northing, easting, zone);
 
 		pose_cov->header = header;
 		pose_cov->pose.pose.position.x = easting;
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
+		// XXX FIX ME #319
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
-		boost::array<double, 36> covariance = {
-			gp_fix->position_covariance[0],
-			gp_fix->position_covariance[1],
-			gp_fix->position_covariance[2],
-			0, 0, 0,
-			gp_fix->position_covariance[3],
-			gp_fix->position_covariance[4],
-			gp_fix->position_covariance[5],
-			0, 0, 0,
-			gp_fix->position_covariance[6],
-			gp_fix->position_covariance[7],
-			gp_fix->position_covariance[8],
-			0, 0, 0,
-			0, 0, 0, rot_cov, 0, 0,
-			0, 0, 0, 0, rot_cov, 0,
-			0, 0, 0, 0, 0, rot_cov
-		};
-
-		pose_cov->pose.covariance = covariance;
-#endif
+		Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > gps_cov(fix->position_covariance.data());
+		Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > cov_out(pose_cov->pose.covariance.data());
+		cov_out <<
+			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
 
 		// publish
 		gp_fix_pub.publish(fix);
-		//gp_pos_pub.publish(pose_cov);
+		gp_pos_pub.publish(pose_cov);
 		gp_vel_pub.publish(vel);
 		gp_rel_alt_pub.publish(relative_alt);
 		gp_hdg_pub.publish(compass_heading);
