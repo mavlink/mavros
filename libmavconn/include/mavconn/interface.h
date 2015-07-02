@@ -34,6 +34,7 @@
 #include <thread>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
@@ -52,42 +53,33 @@ typedef std::chrono::monotonic_clock steady_clock;
 /**
  * @brief Common exception for communication error
  */
-class DeviceError : public std::exception {
-private:
-	std::string e_what_;
-
+class DeviceError : public std::runtime_error {
 public:
 	/**
-	 * @breif Construct error with description.
+	 * @breif Construct error.
 	 */
-	explicit DeviceError(const char *module, const char *description) {
+	template <typename T>
+	DeviceError(const char *module, T msg) :
+		std::runtime_error(make_message(module, msg))
+	{ };
+
+	template <typename T>
+	static std::string make_message(const char *module, T msg) {
 		std::ostringstream ss;
-		ss << "DeviceError:" << module << ": " << description;
-		e_what_ = ss.str();
+		ss << "DeviceError:" << module << ":" << msg_to_string(msg);
+		return ss.str();
 	}
 
-	/**
-	 * @brief Construct error from errno
-	 */
-	explicit DeviceError(const char *module, int errnum) {
-		std::ostringstream ss;
-		ss << "DeviceError:" << module << ":" << errnum << ": " << strerror(errnum);
-		e_what_ = ss.str();
+	static std::string msg_to_string(const char *description) {
+		return description;
 	}
 
-	/**
-	 * @brief Construct error from boost error exception
-	 */
-	explicit DeviceError(const char *module, boost::system::system_error &err) {
-		std::ostringstream ss;
-		ss << "DeviceError:" << module << ":" << err.what();
-		e_what_ = ss.str();
+	static std::string msg_to_string(int errnum) {
+		return strerror(errnum);
 	}
 
-	DeviceError(const DeviceError& other) : e_what_(other.e_what_) {}
-	virtual ~DeviceError() throw() {}
-	virtual const char *what() const throw() {
-		return e_what_.c_str();
+	static std::string msg_to_string(boost::system::system_error &err) {
+		return err.what();
 	}
 };
 
