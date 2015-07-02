@@ -59,7 +59,7 @@ public:
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
-		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu");
+		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu_utm");
 
 		UAS_DIAG(uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
 
@@ -95,7 +95,7 @@ private:
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
 
-	//tf::TransformBroadcaster tf_broadcaster;
+	tf2_ros::TransformBroadcaster tf2_broadcaster;
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
@@ -244,7 +244,7 @@ private:
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
-		// XXX FIX ME #319
+		// XXX FIX ME #319, We really need attitude on UTM?
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
@@ -265,26 +265,25 @@ private:
 		gp_rel_alt_pub.publish(relative_alt);
 		gp_hdg_pub.publish(compass_heading);
 
-#if 0
-		// need tf2
-		if (send_tf) {
-			tf::Transform transform;
+		// TF
+		if (tf_send) {
+			geometry_msgs::TransformStamped transform;
 
-			auto position = UAS::transform_frame_enu_ned_xyz(pose_cov->pose.pose.position.x,
-						pose_cov->pose.pose.position.y,
-						pose_cov->pose.pose.position.z);
+			transform.header.stamp = pose_cov->header.stamp;
+			transform.header.frame_id = tf_frame_id;
+			transform.child_frame_id = tf_child_frame_id;
 
-			transform.setOrigin(position);
+			// XXX do we really need rotation in UTM coordinates?
+			// setRotation()
+			transform.transform.rotation = pose_cov->pose.pose.orientation;
 
-			transform.setRotation(uas->get_attitude_orientation());
+			// setOrigin(), why to do transform_frame?
+			transform.transform.translation.x = pose_cov->pose.pose.position.x;
+			transform.transform.translation.y = pose_cov->pose.pose.position.y;
+			transform.transform.translation.z = pose_cov->pose.pose.position.z;
 
-			tf_broadcaster.sendTransform(
-					tf::StampedTransform(
-						transform,
-						pose_cov->header.stamp,
-						frame_id, child_frame_id));
+			tf2_broadcaster.sendTransform(transform);
 		}
-#endif
 	}
 
 	/* -*- diagnostics -*- */
