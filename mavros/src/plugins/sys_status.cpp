@@ -690,6 +690,9 @@ private:
 			auto client = nh.serviceClient<mavros::CommandLong>("cmd/command");
 
 			mavros::CommandLong cmd{};
+			// Request from all
+			cmd.request.target_system = 0;
+			cmd.request.target_component = 0;
 			cmd.request.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 			cmd.request.confirmation = false;
 			cmd.request.param1 = 1.0;
