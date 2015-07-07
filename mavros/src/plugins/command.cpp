@@ -48,8 +48,8 @@ public:
 class CommandPlugin : public MavRosPlugin {
 public:
 	CommandPlugin() :
-		cmd_nh("~cmd"),
 		uas(nullptr),
+		cmd_nh("~cmd"),
 		use_comp_id_system_control(false),
 		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
 	{ };
@@ -110,7 +110,7 @@ private:
 				return;
 			}
 
-		ROS_WARN_THROTTLE_NAMED(10, "cmd", "Unexpected command %u, result %u",
+		ROS_WARN_THROTTLE_NAMED(10, "cmd", "CMD: Unexpected command %u, result %u",
 				ack.command, ack.result);
 	}
 
@@ -128,41 +128,47 @@ private:
 	 *
 	 * NOTE: success is bool in messages, but has unsigned char type in C++
 	 */
-	bool send_command_long_and_wait(uint16_t command, uint8_t confirmation,
+	bool send_command_long_and_wait(bool broadcast,
+			uint16_t command, uint8_t confirmation,
 			float param1, float param2,
 			float param3, float param4,
 			float param5, float param6,
 			float param7,
-			unsigned char &success, uint8_t &result) {
+			unsigned char &success, uint8_t &result)
+	{
 		unique_lock lock(mutex);
 
 		/* check transactions */
 		for (auto it = ack_waiting_list.cbegin();
 				it != ack_waiting_list.cend(); it++)
 			if ((*it)->expected_command == command) {
-				ROS_WARN_THROTTLE_NAMED(10, "cmd", "Command %u alredy in progress", command);
+				ROS_WARN_THROTTLE_NAMED(10, "cmd", "CMD: Command %u alredy in progress", command);
 				return false;
 			}
 
-		//! @note APM always send COMMAND_ACK, while PX4 never.
+		/**
+		 * @note APM always send COMMAND_ACK, while PX4 never.
+		 * Don't expect any ACK in broadcast mode.
+		 */
 		bool is_ack_required = (confirmation != 0 || uas->is_ardupilotmega()) && !uas->is_px4();
-		if (is_ack_required)
+		if (is_ack_required && !broadcast)
 			ack_waiting_list.push_back(new CommandTransaction(command));
 
-		command_long(command, confirmation,
+		command_long(broadcast,
+				command, confirmation,
 				param1, param2,
 				param3, param4,
 				param5, param6,
 				param7);
 
-		if (is_ack_required) {
+		if (is_ack_required && !broadcast) {
 			auto it = ack_waiting_list.begin();
 			for (; it != ack_waiting_list.end(); it++)
 				if ((*it)->expected_command == command)
 					break;
 
 			if (it == ack_waiting_list.end()) {
-				ROS_ERROR_NAMED("cmd", "CommandTransaction not found for %u", command);
+				ROS_ERROR_NAMED("cmd", "CMD: CommandTransaction not found for %u", command);
 				return false;
 			}
 
@@ -187,7 +193,8 @@ private:
 	/**
 	 * Common function for COMMAND_INT service callbacks.
 	 */
-	bool send_command_int(uint8_t frame, uint16_t command,
+	bool send_command_int(bool broadcast,
+			uint8_t frame, uint16_t command,
 			uint8_t current, uint8_t autocontinue,
 			float param1, float param2,
 			float param3, float param4,
@@ -197,7 +204,8 @@ private:
 		/* Note: seems that COMMAND_INT don't produce COMMAND_ACK
 		 * so wait don't needed.
 		 */
-		command_int(frame, command, current, autocontinue,
+		command_int(broadcast,
+				frame, command, current, autocontinue,
 				param1, param2,
 				param3, param4,
 				x, y, z);
@@ -208,20 +216,25 @@ private:
 
 	/* -*- low-level send -*- */
 
-	void command_long(uint16_t command, uint8_t confirmation,
+	void command_long(bool broadcast,
+			uint16_t command, uint8_t confirmation,
 			float param1, float param2,
 			float param3, float param4,
 			float param5, float param6,
-			float param7) {
+			float param7)
+	{
 		mavlink_message_t msg;
-		const uint8_t tgt_comp_id = (use_comp_id_system_control) ?
+		const uint8_t tgt_sys_id = (broadcast) ? 0 : uas->get_tgt_system();
+		const uint8_t tgt_comp_id = (broadcast) ? 0 :
+			(use_comp_id_system_control) ?
 				MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
+		const uint8_t confirmation_fixed = (broadcast) ? 0 : confirmation;
 
 		mavlink_msg_command_long_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				uas->get_tgt_system(),
+				tgt_sys_id,
 				tgt_comp_id,
 				command,
-				confirmation,
+				confirmation_fixed,
 				param1, param2,
 				param3, param4,
 				param5, param6,
@@ -229,18 +242,22 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-	void command_int(uint8_t frame, uint16_t command,
+	void command_int(bool broadcast,
+			uint8_t frame, uint16_t command,
 			uint8_t current, uint8_t autocontinue,
 			float param1, float param2,
 			float param3, float param4,
 			int32_t x, int32_t y,
-			float z) {
+			float z)
+	{
 		mavlink_message_t msg;
-		const uint8_t tgt_comp_id = (use_comp_id_system_control) ?
+		const uint8_t tgt_sys_id = (broadcast) ? 0 : uas->get_tgt_system();
+		const uint8_t tgt_comp_id = (broadcast) ? 0 :
+			(use_comp_id_system_control) ?
 				MAV_COMP_ID_SYSTEM_CONTROL : uas->get_tgt_component();
 
 		mavlink_msg_command_int_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				uas->get_tgt_system(),
+				tgt_sys_id,
 				tgt_comp_id,
 				frame,
 				command,
@@ -256,7 +273,8 @@ private:
 
 	bool command_long_cb(mavros::CommandLong::Request &req,
 			mavros::CommandLong::Response &res) {
-		return send_command_long_and_wait(req.command, req.confirmation,
+		return send_command_long_and_wait(req.broadcast,
+				req.command, req.confirmation,
 				req.param1, req.param2,
 				req.param3, req.param4,
 				req.param5, req.param6,
@@ -266,7 +284,8 @@ private:
 
 	bool command_int_cb(mavros::CommandInt::Request &req,
 			mavros::CommandInt::Response &res) {
-		return send_command_int(req.frame, req.command,
+		return send_command_int(req.broadcast,
+				req.frame, req.command,
 				req.current, req.autocontinue,
 				req.param1, req.param2,
 				req.param3, req.param4,
@@ -276,7 +295,8 @@ private:
 
 	bool arming_cb(mavros::CommandBool::Request &req,
 			mavros::CommandBool::Response &res) {
-		return send_command_long_and_wait(MAV_CMD_COMPONENT_ARM_DISARM, 1,
+		return send_command_long_and_wait(false,
+				MAV_CMD_COMPONENT_ARM_DISARM, 1,
 				(req.value) ? 1.0 : 0.0,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
@@ -284,7 +304,8 @@ private:
 
 	bool set_home_cb(mavros::CommandHome::Request &req,
 			mavros::CommandHome::Response &res) {
-		return send_command_long_and_wait(MAV_CMD_DO_SET_HOME, 1,
+		return send_command_long_and_wait(false,
+				MAV_CMD_DO_SET_HOME, 1,
 				(req.current_gps) ? 1.0 : 0.0,
 				0, 0, 0, req.latitude, req.longitude, req.altitude,
 				res.success, res.result);
@@ -292,7 +313,8 @@ private:
 
 	bool takeoff_cb(mavros::CommandTOL::Request &req,
 			mavros::CommandTOL::Response &res) {
-		return send_command_long_and_wait(MAV_CMD_NAV_TAKEOFF, 1,
+		return send_command_long_and_wait(false,
+				MAV_CMD_NAV_TAKEOFF, 1,
 				req.min_pitch,
 				0, 0,
 				req.yaw,
@@ -302,7 +324,8 @@ private:
 
 	bool land_cb(mavros::CommandTOL::Request &req,
 			mavros::CommandTOL::Response &res) {
-		return send_command_long_and_wait(MAV_CMD_NAV_LAND, 1,
+		return send_command_long_and_wait(false,
+				MAV_CMD_NAV_LAND, 1,
 				0, 0, 0,
 				req.yaw,
 				req.latitude, req.longitude, req.altitude,
@@ -311,7 +334,8 @@ private:
 
 	bool guided_cb(mavros::CommandBool::Request &req,
 			mavros::CommandBool::Response &res) {
-		return send_command_long_and_wait(MAV_CMD_NAV_GUIDED_ENABLE, 1,
+		return send_command_long_and_wait(false,
+				MAV_CMD_NAV_GUIDED_ENABLE, 1,
 				(req.value) ? 1.0 : 0.0,
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);

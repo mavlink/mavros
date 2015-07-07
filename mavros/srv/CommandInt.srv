@@ -1,5 +1,7 @@
 # Generic COMMAND_INT
 
+bool broadcast # send this command in broadcast mode
+
 uint8 frame
 uint16 command
 uint8 current
