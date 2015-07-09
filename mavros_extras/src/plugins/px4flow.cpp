@@ -78,9 +78,7 @@ private:
 		mavlink_optical_flow_rad_t flow_rad;
 		mavlink_msg_optical_flow_rad_decode(msg, &flow_rad);
 
-		std_msgs::Header header;
-		header.stamp = ros::Time::now();
-		header.frame_id = frame_id;
+		auto header = uas->synchronized_header(frame_id, flow_rad.time_usec);
 
 		/**
 		 * Raw message with axes mapped to ROS conventions and temp in degrees celsius.
@@ -89,33 +87,32 @@ private:
 		 * gyroscope. (body-fixed NED -> ENU)
 		 */
 
+
+		auto int_xy = UAS::transform_frame_enu_ned(
+				Eigen::Vector3d(
+						flow_rad.integrated_x,
+						flow_rad.integrated_y,
+						0.0));
+		auto int_gyro = UAS::transform_frame_enu_ned(
+				Eigen::Vector3d(
+						flow_rad.integrated_xgyro,
+						flow_rad.integrated_ygyro,
+						flow_rad.integrated_zgyro));
+
 		auto flow_rad_msg = boost::make_shared<mavros_extras::OpticalFlowRad>();
 
 		flow_rad_msg->header = header;
-
 		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
 
-		auto position = UAS::transform_frame_enu_ned_xyz(
-						flow_rad.integrated_x,
-						flow_rad.integrated_y,
-						0.0);
+		flow_rad_msg->integrated_x = int_xy.x();
+		flow_rad_msg->integrated_y = int_xy.y();
 
-		flow_rad_msg->integrated_x = position.x();
-		flow_rad_msg->integrated_y = position.y();
-
-		auto flow_gyro = UAS::transform_frame_enu_ned_xyz(
-						flow_rad.integrated_xgyro,
-						flow_rad.integrated_ygyro,
-						flow_rad.integrated_zgyro);
-
-		flow_rad_msg->integrated_xgyro = flow_gyro.x();
-		flow_rad_msg->integrated_ygyro = flow_gyro.y();	
-		flow_rad_msg->integrated_zgyro = flow_gyro.z();
+		flow_rad_msg->integrated_xgyro = int_gyro.x();
+		flow_rad_msg->integrated_ygyro = int_gyro.y();
+		flow_rad_msg->integrated_zgyro = int_gyro.z();
 
 		flow_rad_msg->temperature = flow_rad.temperature / 100.0f;	// in degrees celsius
-
 		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
-
 		flow_rad_msg->distance = flow_rad.distance;
 
 		flow_rad_pub.publish(flow_rad_msg);
@@ -124,8 +121,7 @@ private:
 		auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
 		temp_msg->header = header;
-
-		temp_msg->temperature = flow_rad.temperature / 100.0f;
+		temp_msg->temperature = flow_rad_msg->temperature;
 
 		temp_pub.publish(temp_msg);
 
