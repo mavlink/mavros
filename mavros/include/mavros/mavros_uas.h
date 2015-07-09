@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -216,6 +216,33 @@ public:
 	uint64_t get_capabilities();
 	void update_capabilities(bool known, uint64_t caps = 0);
 
+	/**
+	 * @brief Compute FCU message time from time_boot_ms or time_usec field
+	 *
+	 * Uses time_offset for calculation
+	 *
+	 * @return FCU time if it is known else current wall time.
+	 */
+	ros::Time synchronise_stamp(uint32_t time_boot_ms);
+	ros::Time synchronise_stamp(uint64_t time_usec);
+
+	/**
+	 * @brief Create message header from time_boot_ms or time_usec stamps and frame_id.
+	 *
+	 * Setting frame_id and stamp are pretty common, this little helper should reduce LOC.
+	 *
+	 * @param[in] frame_id    frame for header
+	 * @param[in] time_stamp  mavlink message time
+	 * @return Header with syncronized stamp and frame id
+	 */
+	template<typename T>
+	inline std_msgs::Header synchronized_header(const std::string &frame_id, const T time_stamp) {
+		std_msgs::Header out;
+		out.frame_id = frame_id;
+		out.stamp = synchronise_stamp(time_stamp);
+		return out;
+	}
+
 	/* -*- utils -*- */
 
 	/**
@@ -271,16 +298,6 @@ public:
 	 * @return true if success
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
-
-	/**
-	 * @brief Compute FCU message time from time_boot_ms or time_usec field
-	 *
-	 * Uses time_offset for calculation
-	 *
-	 * @return FCU time if it is known else current wall time.
-	 */
-	ros::Time synchronise_stamp(uint32_t time_boot_ms);
-	ros::Time synchronise_stamp(uint64_t time_usec);
 
 	/**
 	 * @brief Represent MAV_AUTOPILOT as string
