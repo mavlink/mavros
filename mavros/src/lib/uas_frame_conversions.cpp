@@ -127,22 +127,33 @@ static const Eigen::Quaterniond FRAME_ROTATE_Q = UAS::quaternion_from_rpy(M_PI, 
 static const Eigen::Transform<double, 3, Eigen::Affine> FRAME_TRANSFORM_VECTOR3(FRAME_ROTATE_Q);
 
 
-Eigen::Quaterniond UAS::quaternion_from_rpy(const double roll, const double pitch, const double yaw)
+Eigen::Quaterniond UAS::quaternion_from_rpy(const Eigen::Vector3d &rpy)
 {
 #if 0
 	// RPY - XYZ
 	return Eigen::Quaterniond(
-			Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
-			Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-			Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ())
+			Eigen::AngleAxisd(rpy.x(), Eigen::Vector3d::UnitX()) *
+			Eigen::AngleAxisd(rpy.y(), Eigen::Vector3d::UnitY()) *
+			Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ())
 			);
 #else
 	// YPR - ZYX
 	return Eigen::Quaterniond(
-			Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
-			Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-			Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+			Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ()) *
+			Eigen::AngleAxisd(rpy.y(), Eigen::Vector3d::UnitY()) *
+			Eigen::AngleAxisd(rpy.x(), Eigen::Vector3d::UnitX())
 			);
+#endif
+}
+
+Eigen::Vector3d UAS::quaternion_to_rpy(const Eigen::Quaterniond &q)
+{
+#if 0
+	// RPY - XYZ
+	return q.toRotationMatrix().eulerAngles(0, 1, 2);
+#else
+	// YPR - ZYX
+	return q.toRotationMatrix().eulerAngles(2, 1, 0).reverse();
 #endif
 }
 

@@ -129,6 +129,16 @@ TEST(EIGEN, quaternion_from_rpy__paranoic_check)
 	EXPECT_NEAR(q1.z(), q2.z(), epsilon);
 }
 
+TEST(EIGEN, quaternion_to_rpy__123)
+{
+	auto q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+	auto rpy = UAS::quaternion_to_rpy(q);
+
+	EXPECT_NEAR(1.0, rpy.x(), epsilon);
+	EXPECT_NEAR(2.0, rpy.y(), epsilon);
+	EXPECT_NEAR(3.0, rpy.z(), epsilon);
+}
+
 // XXX: #321 comment out broken transform's before release 0.12
 // after we SHOULD come and fix!
 #if 0

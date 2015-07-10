@@ -330,16 +330,33 @@ public:
 
 	/**
 	 * @brief Convert euler angles to quaternion.
-	 *
-	 * @return quaternion, same as @p tf::quaternionFromRPY() but in Eigen format.
 	 */
-	static Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw);
+	static Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &rpy);
 
 	/**
 	 * @brief Convert euler angles to quaternion.
+	 *
+	 * @return quaternion, same as @a tf::quaternionFromRPY() but in Eigen format.
 	 */
-	static inline Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &vec) {
-		return quaternion_from_rpy(vec.x(), vec.y(), vec.z());
+	static inline Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw) {
+		return quaternion_from_rpy(Eigen::Vector3d(roll, pitch, yaw));
+	}
+
+	/**
+	 * @brief Convert quaternion to euler angles
+	 *
+	 * Reverse operation to @a quaternion_from_rpy()
+	 */
+	static Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond &q);
+
+	/**
+	 * @brief Convert quaternion to euler angles
+	 */
+	static inline void quaternion_to_rpy(const Eigen::Quaterniond &q, double &roll, double &pitch, double &yaw) {
+		const auto rpy = quaternion_to_rpy(q);
+		roll = rpy.x();
+		pitch = rpy.y();
+		yaw = rpy.z();
 	}
 
 	/**
