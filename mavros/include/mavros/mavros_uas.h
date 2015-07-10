@@ -82,16 +82,16 @@ public:
 	typedef std::unique_lock<std::recursive_mutex> unique_lock;
 
 	//! Type matching rosmsg for covariance 3x3
-	typedef boost::array<double, 9> Covariance3x3;
+	typedef boost::array<double, 9> Covariance3d;
 	//! Type matching rosmsg for covarince 6x6
-	typedef boost::array<double, 36> Covariance6x6;
+	typedef boost::array<double, 36> Covariance6d;
 
-	//! Eigen::Map for Covariance3x3
-	typedef Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapCovariance3x3;
-	typedef Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapConstCovariance3x3;
-	//! Eigen::Map for Covariance6x6
-	typedef Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapCovariance6x6;
-	typedef Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapConstCovariance6x6;
+	//! Eigen::Map for Covariance3d
+	typedef Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapCovariance3d;
+	typedef Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapConstCovariance3d;
+	//! Eigen::Map for Covariance6d
+	typedef Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapCovariance6d;
+	typedef Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapConstCovariance6d;
 
 	UAS();
 	~UAS() {};
@@ -392,14 +392,14 @@ public:
 	static Eigen::Quaterniond transform_frame(const Eigen::Quaterniond &q);
 
 	/**
-	 * @brief Transform frame between ROS and FCU. (Covariance3x3)
+	 * @brief Transform frame between ROS and FCU. (Covariance3d)
 	 *
 	 * General function. Please use specialized enu-ned and ned-enu variants.
 	 */
-	static Covariance3x3 transform_frame(const Covariance3x3 &cov);
+	static Covariance3d transform_frame(const Covariance3d &cov);
 
 	// XXX TODO implement that function
-	static Covariance6x6 transform_frame(const Covariance6x6 &cov);
+	static Covariance6d transform_frame(const Covariance6d &cov);
 
 	/**
 	 * @brief Transform from FCU to ROS frame.

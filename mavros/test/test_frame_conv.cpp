@@ -42,7 +42,7 @@ TEST(UAS, transform_frame__quaterniond_123)
 
 TEST(UAS, transform_frame__covariance3x3)
 {
-	UAS::Covariance3x3 input = {{
+	UAS::Covariance3d input = {{
 		1.0, 2.0, 3.0,
 		4.0, 5.0, 6.0,
 		7.0, 8.0, 9.0
@@ -53,7 +53,7 @@ TEST(UAS, transform_frame__covariance3x3)
 	 * input * | 0 -1  0 |
 	 *         | 0  0 -1 |
 	 */
-	UAS::Covariance3x3 expected = {{
+	UAS::Covariance3d expected = {{
 		1.0, -2.0, -3.0,
 		4.0, -5.0, -6.0,
 		7.0, -8.0, -9.0
@@ -71,7 +71,7 @@ TEST(UAS, transform_frame__covariance3x3)
 // not implemented
 TEST(UAS,  transform_frame__covariance6x6)
 {
-	UAS::Covariance6x6 input = {{
+	UAS::Covariance6d input = {{
 		 1.0,  2.0,  3.0,  4.0,  5.0,  6.0,
 		 7.0,  8.0,  9.0, 10.0, 11.0, 12.0,
 		13.0, 14.0, 15.0, 16.0, 17.0, 18.0,
@@ -80,7 +80,7 @@ TEST(UAS,  transform_frame__covariance6x6)
 		31.0, 32.0, 33.0, 34.0, 35.0, 36.0
 	}};
 
-	UAS::Covariance6x6 expected = {{
+	UAS::Covariance6d expected = {{
 		 1.0,  -2.0,  -3.0,  4.0,  -5.0,  -6.0,
 		 7.0,  -8.0,  -9.0, 10.0, -11.0, -12.0,
 		13.0, -14.0, -15.0, 16.0, -17.0, -18.0,

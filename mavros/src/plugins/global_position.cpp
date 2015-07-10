@@ -245,8 +245,8 @@ private:
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
-		Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > gps_cov(fix->position_covariance.data());
-		Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > cov_out(pose_cov->pose.covariance.data());
+		UAS::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
+		UAS::EigenMapCovariance6d cov_out(pose_cov->pose.covariance.data());
 		cov_out <<
 			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
 			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,

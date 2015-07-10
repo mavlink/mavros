@@ -68,11 +68,11 @@ Eigen::Vector3d UAS::transform_frame(const Eigen::Vector3d &vec)
 	return FRAME_TRANSFORM_VECTOR3 * vec;
 }
 
-UAS::Covariance3x3 UAS::transform_frame(const Covariance3x3 &cov)
+UAS::Covariance3d UAS::transform_frame(const Covariance3d &cov)
 {
-	Covariance3x3 cov_out_;
-	EigenMapConstCovariance3x3 cov_in(cov.data());
-	EigenMapCovariance3x3 cov_out(cov_out_.data());
+	Covariance3d cov_out_;
+	EigenMapConstCovariance3d cov_in(cov.data());
+	EigenMapCovariance3d cov_out(cov_out_.data());
 
 	// code from imu_transformer tf2_sensor_msgs.h
 	//cov_out = FRAME_ROTATE_Q * cov_in * FRAME_ROTATE_Q.inverse();
@@ -81,11 +81,11 @@ UAS::Covariance3x3 UAS::transform_frame(const Covariance3x3 &cov)
 	return cov_out_;
 }
 
-UAS::Covariance6x6 UAS::transform_frame(const Covariance6x6 &cov)
+UAS::Covariance6d UAS::transform_frame(const Covariance6d &cov)
 {
-	Covariance6x6 cov_out_;
-	EigenMapConstCovariance6x6 cov_in(cov.data());
-	EigenMapCovariance6x6 cov_out(cov_out_.data());
+	Covariance6d cov_out_;
+	EigenMapConstCovariance6d cov_in(cov.data());
+	EigenMapCovariance6d cov_out(cov_out_.data());
 
 	//! @todo implement me!!!
 	ROS_ASSERT(false);

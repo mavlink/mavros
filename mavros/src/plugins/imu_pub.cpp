@@ -115,15 +115,15 @@ private:
 	bool has_scaled_imu;
 	bool has_att_quat;
 	Eigen::Vector3d linear_accel_vec;
-	UAS::Covariance3x3 linear_acceleration_cov;
-	UAS::Covariance3x3 angular_velocity_cov;
-	UAS::Covariance3x3 orientation_cov;
-	UAS::Covariance3x3 unk_orientation_cov;
-	UAS::Covariance3x3 magnetic_cov;
+	UAS::Covariance3d linear_acceleration_cov;
+	UAS::Covariance3d angular_velocity_cov;
+	UAS::Covariance3d orientation_cov;
+	UAS::Covariance3d unk_orientation_cov;
+	UAS::Covariance3d magnetic_cov;
 
 	/* -*- helpers -*- */
 
-	void setup_covariance(UAS::Covariance3x3 &cov, double stdev) {
+	void setup_covariance(UAS::Covariance3d &cov, double stdev) {
 		std::fill(cov.begin(), cov.end(), 0.0);
 		if (stdev == 0.0)
 			cov[0] = -1.0;
