@@ -368,6 +368,15 @@ public:
 	}
 
 	/**
+	 * @brief Get Yaw angle from quaternion
+	 *
+	 * Replacement function for @a tf::getYaw()
+	 */
+	static inline double getYaw(const Eigen::Quaterniond &q) {
+		return quaternion_to_rpy(q).z();
+	}
+
+	/**
 	 * @brief Transform frame between ROS and FCU. (Vector3d)
 	 *
 	 * General function. Please use specialized enu-ned and ned-enu variants.
