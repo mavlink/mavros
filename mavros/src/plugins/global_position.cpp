@@ -122,8 +122,7 @@ private:
 
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 
-		fix->header.frame_id = frame_id;
-		fix->header.stamp = uas->synchronise_stamp(raw_gps.time_usec);
+		fix->header = uas->synchronized_header(frame_id, raw_gps.time_usec);
 
 		fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
 		if (raw_gps.fix_type > 2)
@@ -186,9 +185,7 @@ private:
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
 		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
-		std_msgs::Header header;
-		header.frame_id = frame_id;
-		header.stamp = uas->synchronise_stamp(gpos.time_boot_ms);
+		auto header = uas->synchronized_header(frame_id, gpos.time_boot_ms);
 
 		// Global position fix
 		fix->header = header;

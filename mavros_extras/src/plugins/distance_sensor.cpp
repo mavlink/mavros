@@ -202,8 +202,7 @@ private:
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
 
-		range->header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
-		range->header.frame_id = sensor->frame_id;
+		range->header = uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
 		range->min_range = dist_sen.min_distance * 1E-2;	// in meters
 		range->max_range = dist_sen.max_distance * 1E-2;
