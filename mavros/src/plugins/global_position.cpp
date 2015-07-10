@@ -21,7 +21,6 @@
 #include <mavros/gps_conversions.h>
 #include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <tf2_ros/transform_broadcaster.h>
 
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -94,8 +93,6 @@ private:
 	ros::Publisher gp_vel_pub;
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
-
-	tf2_ros::TransformBroadcaster tf2_broadcaster;
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
@@ -282,7 +279,7 @@ private:
 			transform.transform.translation.y = pose_cov->pose.pose.position.y;
 			transform.transform.translation.z = pose_cov->pose.pose.position.z;
 
-			tf2_broadcaster.sendTransform(transform);
+			uas->tf2_broadcaster.sendTransform(transform);
 		}
 	}
 

@@ -22,6 +22,8 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 
@@ -201,6 +203,12 @@ public:
 	//! Retunrs last GPS RAW message
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
+
+	/* -*- transform -*- */
+
+	tf2_ros::Buffer tf2_buffer;
+	tf2_ros::TransformListener tf2_listener;
+	tf2_ros::TransformBroadcaster tf2_broadcaster;
 
 	/* -*- time sync -*- */
 

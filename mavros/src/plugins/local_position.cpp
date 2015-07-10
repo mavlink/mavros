@@ -17,7 +17,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -61,7 +60,6 @@ private:
 	UAS *uas;
 
 	ros::Publisher local_position;
-	tf2_ros::TransformBroadcaster tf2_broadcaster;
 
 	std::string frame_id;		//!< frame for Pose
 	std::string tf_frame_id;	//!< origin for TF
@@ -96,7 +94,7 @@ private:
 			transform.transform.rotation = pose->pose.orientation;
 			tf::vectorEigenToMsg(position, transform.transform.translation);
 
-			tf2_broadcaster.sendTransform(transform);
+			uas->tf2_broadcaster.sendTransform(transform);
 		}
 	}
 };
