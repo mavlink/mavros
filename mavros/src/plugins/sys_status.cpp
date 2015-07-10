@@ -446,7 +446,7 @@ private:
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
 
-	static constexpr int RETRIES_COUNT = 3;
+	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
 
@@ -702,17 +702,21 @@ private:
 	void autopilot_version_cb(const ros::TimerEvent &event) {
 		bool ret = false;
 
+		// Request from all first 3 times, then fallback to unicast
+		bool do_broadcast = version_retries > RETRIES_COUNT / 2;
+
 		try {
 			auto client = nh.serviceClient<mavros::CommandLong>("cmd/command");
 
 			mavros::CommandLong cmd{};
-			// Request from all
-			cmd.request.broadcast = true;
+
+			cmd.request.broadcast = do_broadcast;
 			cmd.request.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 			cmd.request.confirmation = false;
 			cmd.request.param1 = 1.0;
 
-			ROS_DEBUG_NAMED("sys", "VER: Sending request.");
+			ROS_DEBUG_NAMED("sys", "VER: Sending %s request.",
+					(do_broadcast) ? "broadcast" : "unicast");
 			ret = client.call(cmd);
 		}
 		catch (ros::InvalidNameException &ex) {
@@ -724,7 +728,9 @@ private:
 		if (version_retries > 0) {
 			version_retries--;
 			ROS_WARN_COND_NAMED(version_retries != RETRIES_COUNT - 1, "sys",
-					"VER: request timeout, retries left %d", version_retries);
+					"VER: %s request timeout, retries left %d",
+					(do_broadcast) ? "broadcast" : "unicast",
+					version_retries);
 		}
 		else {
 			uas->update_capabilities(false);
