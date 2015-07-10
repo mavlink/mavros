@@ -330,12 +330,6 @@ public:
 
 	/* -*- frame conversion utilities -*- */
 
-	static tf::Vector3 transform_frame_xyz(double _x, double _y, double _z);
-	static tf::Quaternion transform_frame_attitude_q(tf::Quaternion qo);
-	static tf::Vector3 transform_frame_attitude_rpy(double _roll, double _pitch, double _yaw);
-	static Covariance6x6 transform_frame_covariance_pose6x6(Covariance6x6 &_covariance);
-	static Covariance3x3 transform_frame_covariance_general3x3(Covariance3x3 &_covariance);
-
 	/**
 	 * @brief Convert euler angles to quaternion.
 	 */
@@ -390,6 +384,11 @@ public:
 	 */
 	static Eigen::Quaterniond transform_frame(const Eigen::Quaterniond &q);
 
+	//! @todo implement that function
+	static Covariance3x3 transform_frame(const Covariance3x3 &cov);
+	//! @todo implement that function
+	static Covariance6x6 transform_frame(const Covariance6x6 &cov);
+
 	/**
 	 * @brief Transform from FCU to ROS frame.
 	 */
@@ -405,154 +404,6 @@ public:
 	static inline T transform_frame_enu_ned(const T &in) {
 		return transform_frame(in);
 	}
-
-	/**
-	 * @brief Function to convert general XYZ values from ENU to NED frames
-	 * @param _x: X coordinate/direction value
-	 * @param _y: Y coordinate/direction value
-	 * @param _z: Z coordinate/direction value
-	 * @return Translated XYZ values in NED frame
-	 */
-	static inline tf::Vector3 transform_frame_enu_ned_xyz(double _x, double _y, double _z){
-		return transform_frame_xyz(_x, _y, _z);
-	}
-
-	/**
-	 * @brief Function to convert general XYZ values from NED to ENU frames
-	 * @param _x: X coordinate value
-	 * @param _y: Y coordinate value
-	 * @param _z: Z coordinate value
-	 * @return Translated XYZ values in ENU frame
-	 */
-	static inline tf::Vector3 transform_frame_ned_enu_xyz(double _x, double _y, double _z){
-		return transform_frame_xyz(_x, _y, _z);
-	}
-
-	/**
-	 * @brief Function to convert attitude quaternion values from ENU to NED frames
-	 * @param qo: tf::Quaternion format
-	 * @return Rotated Quaternion values in NED frame
-	 */
-	static inline tf::Quaternion transform_frame_enu_ned_attitude_q(tf::Quaternion qo){
-		return transform_frame_attitude_q(qo);
-	}
-
-	/**
-	 * @brief Function to convert attitude quaternion values from NED to ENU frames
-	 * @param qo: tf::Quaternion format
-	 * @return Rotated Quaternion values in ENU frame
-	 */
-	static inline tf::Quaternion transform_frame_ned_enu_attitude_q(tf::Quaternion qo){
-		return transform_frame_attitude_q(qo);
-	}
-
-	/**
-	 * @brief Function to convert attitude euler angle values from ENU to NED frames
-	 * @param _roll: Roll value
-	 * @param _pitch: Pitch value
-	 * @param _yaw: Yaw value
-	 * @return Rotated RPY angles values in NED frame
-	 */
-	static inline tf::Vector3 transform_frame_enu_ned_attitude_rpy(double _roll, double _pitch, double _yaw){
-		return transform_frame_attitude_rpy(_roll, _pitch, _yaw);
-	}
-
-	/**
-	 * @brief Function to convert attitude euler angle values from NED to ENU frames
-	 * @param _roll: Roll value
-	 * @param _pitch: Pitch value
-	 * @param _yaw: Yaw value
-	 * @return Rotated RPY angles values in ENU frame
-	 */
-	static inline tf::Vector3 transform_frame_ned_enu_attitude_rpy(double _roll, double _pitch, double _yaw){
-		return transform_frame_attitude_rpy(_roll, _pitch, _yaw);
-	}
-
-	/**
-	 * @brief Function to convert full 6D pose covariance matrix values from ENU to NED frames
-	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw.
-	 * @param _covariance: 6x6 double precision covariance matrix
-	 * @return Propagated 6x6 covariance matrix in NED frame, if _covariance[0] != -1
-	 */
-	static inline Covariance6x6 transform_frame_enu_ned_covariance_pose6x6(Covariance6x6 _covariance){
-		return transform_frame_covariance_pose6x6(_covariance);
-	}
-
-	/**
-	 * @brief Function to convert full 6D pose covariance matrix values from NED to ENU frames
-	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw.
-	 * @param _covariance: 6x6 double precision covariance matrix
-	 * @return Propagated 6x6 covariance matrix in ENU frame, if _covariance[0] != -1
-	 */
-	static inline Covariance6x6 transform_frame_ned_enu_covariance_pose6x6(Covariance6x6 _covariance){
-		return transform_frame_covariance_pose6x6(_covariance);
-	}
-
-	/**
-	 * Matrix formats for the above funtions:
-	 *
-	 * Cov_matrix =	| var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
-	 *              | cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
-	 *              | cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
-	 *              | cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
-	 *              | cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
-	 *              | cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
-	 *
-	 * Transf_matrix = | 1	 0	 0	 0	 0	 0 |
-	 *                 | 0	-1       0	 0	 0	 0 |
-	 *                 | 0	 0	-1	 0	 0	 0 |
-	 *                 | 0	 0	 0	 1	 0	 0 |
-	 *                 | 0	 0	 0	 0	-1	 0 |
-	 *                 | 0	 0	 0	 0	 0	-1 |
-	 *
-	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
-	 *
-	 *                      C' = R * C * R^T
-	 */
-
-	/**
-	 * @brief Function to convert position, linear acceleration, angular velocity or attitude RPY covariance matrix values from ENU to NED frames
-	 * @param _covariance: 3x3 double precision covariance matrix
-	 * @return Propagated 3x3 covariance matrix in NED frame, if _covariance[0] != -1
-	 */
-	static inline Covariance3x3 transform_frame_covariance_enu_ned_general3x3(Covariance3x3 _covariance){
-		return transform_frame_covariance_general3x3(_covariance);
-	}
-
-	/**
-	 * @brief Function to convert position, linear acceleration, angular velocity or attitude RPY covariance matrix values from NED to ENU frames
-	 * @param _covariance: 3x3 double precision covariance matrix
-	 * @return Propagated 3x3 covariance matrix in ENU frame, if _covariance[0] != -1
-	 */
-	static inline Covariance3x3 transform_frame_covariance_ned_enu_general3x3(Covariance3x3 _covariance){
-		return transform_frame_covariance_general3x3(_covariance);
-	}
-
-	/**
-	 * Matrix formats for the above funtions:
-	 *
-	 * Pos_Cov_matrix =	| var_x  cov_xy cov_xz |
-	 *                      | cov_yx var_y  cov_yz |
-	 *                      | cov_zx cov_zy var_z  |
-	 *
-	 * Vel_Cov_matrix =	| var_vx  cov_vxvy cov_vxvz |
-	 *                      | cov_vyvx var_vy  cov_vyvz |
-	 *                      | cov_vzvx cov_vzvy var_vz  |
-	 *
-	 * Att_Cov_matrix =	| var_Z  cov_ZY cov_ZX |
-	 *                      | cov_YZ var_Y  cov_YX |
-	 *                      | cov_XZ cov_XY var_X  |
-	 *
-	 * Note that for ROS<->ENU frame transformations, the transformation matrix is the same for position and attitude.
-	 *
-	 * Rot_matrix = | 1	 0	 0 |
-	 *              | 0	-1       0 |
-	 *              | 0	 0	-1 |
-	 *
-	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
-	 *
-	 *                      C' = T * C * T^t
-	 */
 
 private:
 	std::recursive_mutex mutex;
