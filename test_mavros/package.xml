@@ -18,9 +18,16 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <test_depend>gtest</test_depend>
-  <test_depend>mavros</test_depend>
-  <test_depend>mavros_extras</test_depend>
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+  <depend>mavros</depend>
+  <depend>mavros_extras</depend>
+
+  <!--<test_depend>gtest</test_depend> -->
+  <!--<test_depend>mavros</test_depend> -->
+  <!--<test_depend>mavros_extras</test_depend> -->
 
   <export>
   </export>
