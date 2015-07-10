@@ -13,14 +13,13 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+#include <unordered_map>
 #include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-
-#include <unordered_map>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <sensor_msgs/Range.h>
-#include <tf/transform_broadcaster.h>
 
 namespace mavplugin {
 class DistanceSensorPlugin;
@@ -145,8 +144,6 @@ private:
 	ros::NodeHandle dist_nh;
 	UAS *uas;
 
-	tf::TransformBroadcaster tf_broadcaster;
-
 	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
 	/* -*- low-level send -*- */
@@ -225,20 +222,24 @@ private:
 
 		if (sensor->send_tf) {
 			/* variables init */
-			tf::Transform transform;
+			// XXX #319
 			auto rpy = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
+			// how it can work, if rpy in degrees, not radians?
 			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
 
+			geometry_msgs::TransformStamped transform;
+
+			// @TSC21 revisit that please!
+			// In TF1 code transform: sensor -> fcu is that true?
+			transform.header = range->header;
+			transform.child_frame_id = "fcu";
+
 			/* rotation and position set */
-			transform.setRotation(q);
-			transform.setOrigin(sensor->position);
+			tf::quaternionTFToMsg(q, transform.transform.rotation);
+			tf::vector3TFToMsg(sensor->position, transform.transform.translation);
 
 			/* transform broadcast */
-			tf_broadcaster.sendTransform(
-					tf::StampedTransform(
-						transform,
-						range->header.stamp,
-						"fcu", range->header.frame_id));
+			uas->tf2_broadcaster.sendTransform(transform);
 		}
 
 		sensor->pub.publish(range);
