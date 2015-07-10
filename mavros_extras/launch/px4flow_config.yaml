@@ -7,14 +7,14 @@ startup_px4_usb_quirk: false
 
 # sys_status & sys_time connection options
 conn:
-  heartbeat: 5.0    # send hertbeat every n seconds
-  timeout: 10.0     # hertbeat timeout in seconds
-  timesync: 0.0     # TIMESYNC period in seconds (feature disabled if 0.0)
-  system_time: 2.0  # send system time to FCU every n seconds
+  heartbeat_rate: 1.0    # send hertbeat rate in Hertz
+  timeout: 10.0          # hertbeat timeout in seconds
+  timesync_rate: 0.0     # TIMESYNC rate in Hertz (feature disabled if 0.0)
+  system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # sys_status
 sys:
-  min_voltage: 10.0   # diagnostics min voltage
+  min_voltage: 4.5   # diagnostics min voltage
   disable_diag: true  # disable all sys_status diagnostics, except heartbeat
 
 # --- mavros extras plugins (same order) ---

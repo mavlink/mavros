@@ -163,14 +163,8 @@ vision_pose:
 vision_speed:
   listen_twist: false
 
-# visualization
-visualization:
-  fixed_frame_id: "local_origin"
-  child_frame_id: "fcu"
-  marker_scale: 2.0
-
 # vibration
 vibration:
   frame_id: "vibration"
 
-# vim:ts=2 sw=2 et:
+# vim:set ts=2 sw=2 et:
