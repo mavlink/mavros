@@ -17,6 +17,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
@@ -80,8 +81,10 @@ private:
 	/**
 	 * @brief Send vision speed estimate to FCU velocity controller
 	 */
-	void send_vision_speed(float vx, float vy, float vz, const ros::Time &stamp) {
-		auto vel = UAS::transform_frame_enu_ned_xyz(vx, vy, vz);
+	void send_vision_speed(const geometry_msgs::Vector3 &vel_enu, const ros::Time &stamp) {
+		Eigen::Vector3d vel_;
+		tf::vectorMsgToEigen(vel_enu, vel_);
+		auto vel = UAS::transform_frame_enu_ned(vel_);
 
 		vision_speed_estimate(stamp.toNSec() / 1000,
 				vel.x(), vel.y(), vel.z());
@@ -90,11 +93,11 @@ private:
 	/* -*- callbacks -*- */
 
 	void vel_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
-		send_vision_speed(req->twist.linear.x, req->twist.linear.y, req->twist.linear.z, req->header.stamp);
+		send_vision_speed(req->twist.linear, req->header.stamp);
 	}
 
 	void vel_speed_cb(const geometry_msgs::Vector3Stamped::ConstPtr &req) {
-		send_vision_speed(req->vector.x, req->vector.y, req->vector.z, req->header.stamp);
+		send_vision_speed(req->vector, req->header.stamp);
 	}
 };
 };	// namespace mavplugin

@@ -17,6 +17,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -92,19 +93,18 @@ private:
 	{
 		float q[4];
 
-		tf::Quaternion qo;
-		quaternionMsgToTF(pose->pose.orientation,qo);
-		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
+		// Eigen has same order as mavlink: w x y z
+		Eigen::Quaterniond q_enu;
+		Eigen::Map<Eigen::Quaternionf> q_out(q);
 
-		q[0] = qt.w();
-		q[1] = qt.x();
-		q[2] = qt.y();
-		q[3] = qt.z();
+		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
+		q_out = UAS::transform_frame_enu_ned(q_enu).cast<float>();
 
-		auto position = UAS::transform_frame_enu_ned_xyz(
+		auto position = UAS::transform_frame_enu_ned(
+				Eigen::Vector3d(
 					pose->pose.position.x,
 					pose->pose.position.y,
-					pose->pose.position.z);
+					pose->pose.position.z));
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
@@ -117,21 +117,19 @@ private:
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		float q[4];
-		
-		tf::Transform tf;
-		transformMsgToTF(trans->transform,tf);
-		tf::Quaternion qo = tf.getRotation();
-		auto qt = UAS::transform_frame_enu_ned_attitude_q(qo);
 
-		q[0] = qt.w();
-		q[1] = qt.x();
-		q[2] = qt.y();
-		q[3] = qt.z();
+		// Eigen has same order as mavlink: w x y z
+		Eigen::Quaterniond q_enu;
+		Eigen::Map<Eigen::Quaternionf> q_out(q);
 
-		auto position = UAS::transform_frame_enu_ned_xyz(
+		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
+		q_out = UAS::transform_frame_enu_ned(q_enu).cast<float>();
+
+		auto position = UAS::transform_frame_enu_ned(
+				Eigen::Vector3d(
 					trans->transform.translation.x,
 					trans->transform.translation.y,
-					trans->transform.translation.z);
+					trans->transform.translation.z));
 
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
 				q,

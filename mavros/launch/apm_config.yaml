@@ -82,20 +82,20 @@ setpoint_accel:
 
 # setpoint_attitude
 setpoint_attitude:
-  listen_tf: false
-  listen_twist: false
-  pose_with_covariance: false
-  frame_id: "local_origin"
-  child_frame_id: "attitude"
-  tf_rate_limit: 10.0
   reverse_throttle: false   # allow reversed throttle
+  tf:
+    listen: false           # enable tf listener (disable topic subscribers)
+    frame_id: "local_origin"
+    child_frame_id: "attitude"
+    rate_limit: 10.0
 
 # setpoint_position
 setpoint_position:
-  listen_tf: false
-  frame_id: "local_origin"
-  child_frame_id: "setpoint"
-  tf_rate_limit: 50.0
+  tf:
+    listen: false           # enable tf listener (disable topic subscribers)
+    frame_id: "local_origin"
+    child_frame_id: "setpoint"
+    rate_limit: 50.0
 
 # setpoint_velocity
 # None
@@ -128,24 +128,18 @@ px4flow:
 
 # vision_pose_estimate
 vision_pose:
-  pose_with_covariance: false
-  listen_tf: false
-  frame_id: "local_origin"
-  child_frame_id: "vision"
-  tf_rate_limit: 10.0
+  tf:
+    listen: false           # enable tf listener (disable topic subscribers)
+    frame_id: "local_origin"
+    child_frame_id: "vision"
+    rate_limit: 10.0
 
 # vision_speed_estimate
 vision_speed:
   listen_twist: false
 
-# visualization
-visualization:
-  fixed_frame_id: "local_origin"
-  child_frame_id: "fcu"
-  marker_scale: 2.0
-
 # vibration
 vibration:
   frame_id: "vibration"
 
-# vim:ts=2 sw=2 et:
+# vim:set ts=2 sw=2 et:

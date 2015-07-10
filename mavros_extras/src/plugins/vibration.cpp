@@ -59,14 +59,11 @@ private:
 		mavlink_vibration_t vibration;
 		mavlink_msg_vibration_decode(msg, &vibration);
 
-		std_msgs::Header header;
-		header.stamp = uas->synchronise_stamp(vibration.time_usec);
-		header.frame_id = frame_id;
-
 		auto vibe_msg = boost::make_shared<mavros_extras::Vibration>();
 
-		vibe_msg->header = header;
+		vibe_msg->header = uas->synchronized_header(frame_id, vibration.time_usec);
 
+		// TODO no transform_frame?
 		vibe_msg->vibration.x = vibration.vibration_x;
 		vibe_msg->vibration.y = vibration.vibration_y;
 		vibe_msg->vibration.z = vibration.vibration_z;

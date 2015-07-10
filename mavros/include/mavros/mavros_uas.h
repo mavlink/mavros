@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -22,6 +22,8 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 
@@ -80,9 +82,16 @@ public:
 	typedef std::unique_lock<std::recursive_mutex> unique_lock;
 
 	//! Type matching rosmsg for covariance 3x3
-	typedef boost::array<double, 9> Covariance3x3;
+	typedef boost::array<double, 9> Covariance3d;
 	//! Type matching rosmsg for covarince 6x6
-	typedef boost::array<double, 36> Covariance6x6;
+	typedef boost::array<double, 36> Covariance6d;
+
+	//! Eigen::Map for Covariance3d
+	typedef Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapCovariance3d;
+	typedef Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapConstCovariance3d;
+	//! Eigen::Map for Covariance6d
+	typedef Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapCovariance6d;
+	typedef Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapConstCovariance6d;
 
 	UAS();
 	~UAS() {};
@@ -202,6 +211,12 @@ public:
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
 
+	/* -*- transform -*- */
+
+	tf2_ros::Buffer tf2_buffer;
+	tf2_ros::TransformListener tf2_listener;
+	tf2_ros::TransformBroadcaster tf2_broadcaster;
+
 	/* -*- time sync -*- */
 
 	inline void set_time_offset(uint64_t offset_ns) {
@@ -215,6 +230,33 @@ public:
 	/* -*- autopilot version -*- */
 	uint64_t get_capabilities();
 	void update_capabilities(bool known, uint64_t caps = 0);
+
+	/**
+	 * @brief Compute FCU message time from time_boot_ms or time_usec field
+	 *
+	 * Uses time_offset for calculation
+	 *
+	 * @return FCU time if it is known else current wall time.
+	 */
+	ros::Time synchronise_stamp(uint32_t time_boot_ms);
+	ros::Time synchronise_stamp(uint64_t time_usec);
+
+	/**
+	 * @brief Create message header from time_boot_ms or time_usec stamps and frame_id.
+	 *
+	 * Setting frame_id and stamp are pretty common, this little helper should reduce LOC.
+	 *
+	 * @param[in] frame_id    frame for header
+	 * @param[in] time_stamp  mavlink message time
+	 * @return Header with syncronized stamp and frame id
+	 */
+	template<typename T>
+	inline std_msgs::Header synchronized_header(const std::string &frame_id, const T time_stamp) {
+		std_msgs::Header out;
+		out.frame_id = frame_id;
+		out.stamp = synchronise_stamp(time_stamp);
+		return out;
+	}
 
 	/* -*- utils -*- */
 
@@ -273,16 +315,6 @@ public:
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
 	/**
-	 * @brief Compute FCU message time from time_boot_ms or time_usec field
-	 *
-	 * Uses time_offset for calculation
-	 *
-	 * @return FCU time if it is known else current wall time.
-	 */
-	ros::Time synchronise_stamp(uint32_t time_boot_ms);
-	ros::Time synchronise_stamp(uint64_t time_usec);
-
-	/**
 	 * @brief Represent MAV_AUTOPILOT as string
 	 */
 	static std::string str_autopilot(enum MAV_AUTOPILOT ap);
@@ -305,24 +337,44 @@ public:
 
 	/* -*- frame conversion utilities -*- */
 
-	static tf::Vector3 transform_frame_xyz(double _x, double _y, double _z);
-	static tf::Quaternion transform_frame_attitude_q(tf::Quaternion qo);
-	static tf::Vector3 transform_frame_attitude_rpy(double _roll, double _pitch, double _yaw);
-	static Covariance6x6 transform_frame_covariance_pose6x6(Covariance6x6 &_covariance);
-	static Covariance3x3 transform_frame_covariance_general3x3(Covariance3x3 &_covariance);
+	/**
+	 * @brief Convert euler angles to quaternion.
+	 */
+	static Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &rpy);
 
 	/**
 	 * @brief Convert euler angles to quaternion.
 	 *
-	 * @return quaternion, same as @p tf::quaternionFromRPY() but in Eigen format.
+	 * @return quaternion, same as @a tf::quaternionFromRPY() but in Eigen format.
 	 */
-	static Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw);
+	static inline Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw) {
+		return quaternion_from_rpy(Eigen::Vector3d(roll, pitch, yaw));
+	}
 
 	/**
-	 * @brief Convert euler angles to quaternion.
+	 * @brief Convert quaternion to euler angles
+	 *
+	 * Reverse operation to @a quaternion_from_rpy()
 	 */
-	static inline Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &vec) {
-		return quaternion_from_rpy(vec.x(), vec.y(), vec.z());
+	static Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond &q);
+
+	/**
+	 * @brief Convert quaternion to euler angles
+	 */
+	static inline void quaternion_to_rpy(const Eigen::Quaterniond &q, double &roll, double &pitch, double &yaw) {
+		const auto rpy = quaternion_to_rpy(q);
+		roll = rpy.x();
+		pitch = rpy.y();
+		yaw = rpy.z();
+	}
+
+	/**
+	 * @brief Get Yaw angle from quaternion
+	 *
+	 * Replacement function for @a tf::getYaw()
+	 */
+	static inline double getYaw(const Eigen::Quaterniond &q) {
+		return quaternion_to_rpy(q).z();
 	}
 
 	/**
@@ -340,6 +392,16 @@ public:
 	static Eigen::Quaterniond transform_frame(const Eigen::Quaterniond &q);
 
 	/**
+	 * @brief Transform frame between ROS and FCU. (Covariance3d)
+	 *
+	 * General function. Please use specialized enu-ned and ned-enu variants.
+	 */
+	static Covariance3d transform_frame(const Covariance3d &cov);
+
+	// XXX TODO implement that function
+	static Covariance6d transform_frame(const Covariance6d &cov);
+
+	/**
 	 * @brief Transform from FCU to ROS frame.
 	 */
 	template<class T>
@@ -354,154 +416,6 @@ public:
 	static inline T transform_frame_enu_ned(const T &in) {
 		return transform_frame(in);
 	}
-
-	/**
-	 * @brief Function to convert general XYZ values from ENU to NED frames
-	 * @param _x: X coordinate/direction value
-	 * @param _y: Y coordinate/direction value
-	 * @param _z: Z coordinate/direction value
-	 * @return Translated XYZ values in NED frame
-	 */
-	static inline tf::Vector3 transform_frame_enu_ned_xyz(double _x, double _y, double _z){
-		return transform_frame_xyz(_x, _y, _z);
-	}
-
-	/**
-	 * @brief Function to convert general XYZ values from NED to ENU frames
-	 * @param _x: X coordinate value
-	 * @param _y: Y coordinate value
-	 * @param _z: Z coordinate value
-	 * @return Translated XYZ values in ENU frame
-	 */
-	static inline tf::Vector3 transform_frame_ned_enu_xyz(double _x, double _y, double _z){
-		return transform_frame_xyz(_x, _y, _z);
-	}
-
-	/**
-	 * @brief Function to convert attitude quaternion values from ENU to NED frames
-	 * @param qo: tf::Quaternion format
-	 * @return Rotated Quaternion values in NED frame
-	 */
-	static inline tf::Quaternion transform_frame_enu_ned_attitude_q(tf::Quaternion qo){
-		return transform_frame_attitude_q(qo);
-	}
-
-	/**
-	 * @brief Function to convert attitude quaternion values from NED to ENU frames
-	 * @param qo: tf::Quaternion format
-	 * @return Rotated Quaternion values in ENU frame
-	 */
-	static inline tf::Quaternion transform_frame_ned_enu_attitude_q(tf::Quaternion qo){
-		return transform_frame_attitude_q(qo);
-	}
-
-	/**
-	 * @brief Function to convert attitude euler angle values from ENU to NED frames
-	 * @param _roll: Roll value
-	 * @param _pitch: Pitch value
-	 * @param _yaw: Yaw value
-	 * @return Rotated RPY angles values in NED frame
-	 */
-	static inline tf::Vector3 transform_frame_enu_ned_attitude_rpy(double _roll, double _pitch, double _yaw){
-		return transform_frame_attitude_rpy(_roll, _pitch, _yaw);
-	}
-
-	/**
-	 * @brief Function to convert attitude euler angle values from NED to ENU frames
-	 * @param _roll: Roll value
-	 * @param _pitch: Pitch value
-	 * @param _yaw: Yaw value
-	 * @return Rotated RPY angles values in ENU frame
-	 */
-	static inline tf::Vector3 transform_frame_ned_enu_attitude_rpy(double _roll, double _pitch, double _yaw){
-		return transform_frame_attitude_rpy(_roll, _pitch, _yaw);
-	}
-
-	/**
-	 * @brief Function to convert full 6D pose covariance matrix values from ENU to NED frames
-	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw.
-	 * @param _covariance: 6x6 double precision covariance matrix
-	 * @return Propagated 6x6 covariance matrix in NED frame, if _covariance[0] != -1
-	 */
-	static inline Covariance6x6 transform_frame_enu_ned_covariance_pose6x6(Covariance6x6 _covariance){
-		return transform_frame_covariance_pose6x6(_covariance);
-	}
-
-	/**
-	 * @brief Function to convert full 6D pose covariance matrix values from NED to ENU frames
-	 * @details Full 6D pose covariance matrix format: a 3D position plus three attitude angles: roll, pitch and yaw.
-	 * @param _covariance: 6x6 double precision covariance matrix
-	 * @return Propagated 6x6 covariance matrix in ENU frame, if _covariance[0] != -1
-	 */
-	static inline Covariance6x6 transform_frame_ned_enu_covariance_pose6x6(Covariance6x6 _covariance){
-		return transform_frame_covariance_pose6x6(_covariance);
-	}
-
-	/**
-	 * Matrix formats for the above funtions:
-	 *
-	 * Cov_matrix =	| var_x  cov_xy cov_xz cov_xZ cov_xY cov_xX |
-	 *              | cov_yx var_y  cov_yz cov_yZ cov_yY cov_yX |
-	 *              | cov_zx cov_zy var_z  cov_zZ cov_zY cov_zX |
-	 *              | cov_Zx cov_Zy cov_Zz var_Z  cov_ZY cov_ZX |
-	 *              | cov_Yx cov_Yy cov_Yz cov_YZ var_Y  cov_YX |
-	 *              | cov_Xx cov_Xy cov_Xz cov_XZ cov_XY var_X  |
-	 *
-	 * Transf_matrix = | 1	 0	 0	 0	 0	 0 |
-	 *                 | 0	-1       0	 0	 0	 0 |
-	 *                 | 0	 0	-1	 0	 0	 0 |
-	 *                 | 0	 0	 0	 1	 0	 0 |
-	 *                 | 0	 0	 0	 0	-1	 0 |
-	 *                 | 0	 0	 0	 0	 0	-1 |
-	 *
-	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
-	 *
-	 *                      C' = R * C * R^T
-	 */
-
-	/**
-	 * @brief Function to convert position, linear acceleration, angular velocity or attitude RPY covariance matrix values from ENU to NED frames
-	 * @param _covariance: 3x3 double precision covariance matrix
-	 * @return Propagated 3x3 covariance matrix in NED frame, if _covariance[0] != -1
-	 */
-	static inline Covariance3x3 transform_frame_covariance_enu_ned_general3x3(Covariance3x3 _covariance){
-		return transform_frame_covariance_general3x3(_covariance);
-	}
-
-	/**
-	 * @brief Function to convert position, linear acceleration, angular velocity or attitude RPY covariance matrix values from NED to ENU frames
-	 * @param _covariance: 3x3 double precision covariance matrix
-	 * @return Propagated 3x3 covariance matrix in ENU frame, if _covariance[0] != -1
-	 */
-	static inline Covariance3x3 transform_frame_covariance_ned_enu_general3x3(Covariance3x3 _covariance){
-		return transform_frame_covariance_general3x3(_covariance);
-	}
-
-	/**
-	 * Matrix formats for the above funtions:
-	 *
-	 * Pos_Cov_matrix =	| var_x  cov_xy cov_xz |
-	 *                      | cov_yx var_y  cov_yz |
-	 *                      | cov_zx cov_zy var_z  |
-	 *
-	 * Vel_Cov_matrix =	| var_vx  cov_vxvy cov_vxvz |
-	 *                      | cov_vyvx var_vy  cov_vyvz |
-	 *                      | cov_vzvx cov_vzvy var_vz  |
-	 *
-	 * Att_Cov_matrix =	| var_Z  cov_ZY cov_ZX |
-	 *                      | cov_YZ var_Y  cov_YX |
-	 *                      | cov_XZ cov_XY var_X  |
-	 *
-	 * Note that for ROS<->ENU frame transformations, the transformation matrix is the same for position and attitude.
-	 *
-	 * Rot_matrix = | 1	 0	 0 |
-	 *              | 0	-1       0 |
-	 *              | 0	 0	-1 |
-	 *
-	 * Compute Covariance matrix in another frame: (according to the law of propagation of covariance)
-	 *
-	 *                      C' = T * C * T^t
-	 */
 
 private:
 	std::recursive_mutex mutex;

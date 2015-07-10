@@ -31,7 +31,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>tf</depend>
+  <depend>tf2_ros</depend>
   <depend>mavlink</depend>
   <depend>angles</depend>
   <depend>libmavconn</depend>

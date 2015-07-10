@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
 
@@ -28,7 +29,7 @@ namespace mavplugin {
  */
 class SetpointPositionPlugin : public MavRosPlugin,
 	private SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
-	private TFListenerMixin<SetpointPositionPlugin> {
+	private TF2ListenerMixin<SetpointPositionPlugin> {
 public:
 	SetpointPositionPlugin() :
 		sp_nh("~setpoint_position"),
@@ -38,19 +39,20 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		bool listen_tf;
+		bool tf_listen;
 
 		uas = &uas_;
 
-		sp_nh.param("listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("frame_id", frame_id, "local_origin");
-		sp_nh.param<std::string>("child_frame_id", child_frame_id, "setpoint");
-		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
+		// tf params
+		sp_nh.param("tf/listen", tf_listen, false);
+		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "setpoint");
+		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
-		if (listen_tf) {
-			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << frame_id
-					<< " -> " << child_frame_id);
-			tf_start("PositionSpTF", &SetpointPositionPlugin::send_setpoint_transform);
+		if (tf_listen) {
+			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << tf_frame_id
+					<< " -> " << tf_child_frame_id);
+			tf2_start("PositionSpTF", &SetpointPositionPlugin::transform_cb);
 		}
 		else {
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
@@ -63,29 +65,24 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
-	friend class TFListenerMixin;
+	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
 	UAS *uas;
 
 	ros::Subscriber setpoint_sub;
 
-	std::string frame_id;
-	std::string child_frame_id;
-
+	std::string tf_frame_id;
+	std::string tf_child_frame_id;
 	double tf_rate;
 
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * @brief Send transform to FCU position controller.
+	 * @brief Send setpoint to FCU position controller.
 	 *
 	 * @warning Send only XYZ, Yaw. ENU frame.
 	 */
-	void send_setpoint_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		// ENU frame
-		tf::Vector3 origin = transform.getOrigin();
-		tf::Quaternion q = transform.getRotation();
-
+	void send_position_target(const ros::Time &stamp, const Eigen::Affine3d &tr) {
 		/* Documentation start from bit 1 instead 0;
 		 * Ignore velocity and accel vectors, yaw rate.
 		 *
@@ -94,26 +91,35 @@ private:
 		 */
 		const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
-		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
-		auto qt = UAS::transform_frame_enu_ned_attitude_q(q);
+		auto p = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		auto q = UAS::transform_frame_enu_ned(Eigen::Quaterniond(tr.rotation()));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,
 				ignore_all_except_xyz_y,
-				position.x(), position.y(), position.z(),
+				p.x(), p.y(), p.z(),
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				tf::getYaw(qt), 0.0);
+				UAS::getYaw(q), 0.0);
 	}
 
 	/* -*- callbacks -*- */
 
 	/* common TF listener moved to mixin */
+	void transform_cb(const geometry_msgs::TransformStamped &transform) {
+		Eigen::Affine3d tr;
+		// TODO: later, when tf2 5.12 will be released need to revisit and replace this to
+		// tf2::convert()
+		tf::transformMsgToEigen(transform.transform, tr);
+
+		send_position_target(transform.header.stamp, tr);
+	}
 
 	void setpoint_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
-		tf::Transform transform;
-		poseMsgToTF(req->pose, transform);
-		send_setpoint_transform(transform, req->header.stamp);
+		Eigen::Affine3d tr;
+		tf::poseMsgToEigen(req->pose, tr);
+
+		send_position_target(req->header.stamp, tr);
 	}
 };
 };	// namespace mavplugin
