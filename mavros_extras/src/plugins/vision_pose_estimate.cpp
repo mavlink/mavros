@@ -18,6 +18,7 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -31,7 +32,7 @@ namespace mavplugin {
  *
  */
 class VisionPoseEstimatePlugin : public MavRosPlugin,
-	private TFListenerMixin<VisionPoseEstimatePlugin> {
+	private TF2ListenerMixin<VisionPoseEstimatePlugin> {
 public:
 	VisionPoseEstimatePlugin() :
 		sp_nh("~vision_pose"),
@@ -41,29 +42,24 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		bool pose_with_covariance;
-		bool listen_tf;
+		bool tf_listen;
 
 		uas = &uas_;
 
-		sp_nh.param("pose_with_covariance", pose_with_covariance, false);
-		sp_nh.param("listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("frame_id", frame_id, "local_origin");
-		sp_nh.param<std::string>("child_frame_id", child_frame_id, "vision");
-		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
+		// tf params
+		sp_nh.param("tf/listen", tf_listen, false);
+		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "vision");
+		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
-		ROS_DEBUG_STREAM_NAMED("vision_pose", "Vision pose topic type: " <<
-				((pose_with_covariance) ? "PoseWithCovarianceStamped" : "PoseStamped"));
-
-		if (listen_tf) {
-			ROS_INFO_STREAM_NAMED("vision_pose", "Listen to vision transform " << frame_id
-											<< " -> " << child_frame_id);
-			tf_start("VisionPoseTF", &VisionPoseEstimatePlugin::send_vision_transform);
+		if (tf_listen) {
+			ROS_INFO_STREAM_NAMED("vision_pose", "Listen to vision transform " << tf_frame_id
+						<< " -> " << tf_child_frame_id);
+			tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
 		}
-		else if (pose_with_covariance)
-			vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cov_cb, this);
-		else
+		else {
 			vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cb, this);
+		}
 	}
 
 	const message_map get_rx_handlers() {
@@ -71,15 +67,14 @@ public:
 	}
 
 private:
-	friend class TFListenerMixin;
+	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
 	UAS *uas;
 
 	ros::Subscriber vision_sub;
 
-	std::string frame_id;
-	std::string child_frame_id;
-
+	std::string tf_frame_id;
+	std::string tf_child_frame_id;
 	double tf_rate;
 	ros::Time last_transform_stamp;
 
@@ -105,12 +100,7 @@ private:
 	/**
 	 * @brief Send vision estimate transform to FCU position controller
 	 */
-	void send_vision_transform(const tf::Transform &transform, const ros::Time &stamp) {
-		tf::Vector3 origin = transform.getOrigin();
-		double roll, pitch, yaw;
-		tf::Matrix3x3 orientation(transform.getBasis());
-		orientation.getRPY(roll, pitch, yaw);
-
+	void send_vision_estimate(const ros::Time &stamp, const Eigen::Affine3d &tr) {
 		/**
 		 * @warning Issue #60.
 		 * This now affects pose callbacks too.
@@ -121,9 +111,10 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		auto position = UAS::transform_frame_enu_ned_xyz(origin.x(), origin.y(), origin.z());
-		tf::Vector3 rpy = UAS::transform_frame_enu_ned_attitude_rpy(roll, pitch, yaw);
-		
+		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		auto rpy = UAS::quaternion_to_rpy(
+				UAS::transform_frame_ned_enu(Eigen::Quaterniond(tr.rotation())));
+
 		vision_position_estimate(stamp.toNSec() / 1000,
 				position.x(), position.y(), position.z(),
 				rpy.x(), rpy.y(), rpy.z());
@@ -133,16 +124,18 @@ private:
 
 	/* common TF listener moved to mixin */
 
-	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req) {
-		tf::Transform transform;
-		poseMsgToTF(req->pose.pose, transform);
-		send_vision_transform(transform, req->header.stamp);
+	void transform_cb(const geometry_msgs::TransformStamped &transform) {
+		Eigen::Affine3d tr;
+		tf::transformMsgToEigen(transform.transform, tr);
+
+		send_vision_estimate(transform.header.stamp, tr);
 	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
-		tf::Transform transform;
-		poseMsgToTF(req->pose, transform);
-		send_vision_transform(transform, req->header.stamp);
+		Eigen::Affine3d tr;
+		tf::poseMsgToEigen(req->pose, tr);
+
+		send_vision_estimate(req->header.stamp, tr);
 	}
 };
 };	// namespace mavplugin

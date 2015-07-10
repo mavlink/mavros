@@ -128,11 +128,11 @@ px4flow:
 
 # vision_pose_estimate
 vision_pose:
-  pose_with_covariance: false
-  listen_tf: false
-  frame_id: "local_origin"
-  child_frame_id: "vision"
-  tf_rate_limit: 10.0
+  tf:
+    listen: false           # enable tf listener (disable topic subscribers)
+    frame_id: "local_origin"
+    child_frame_id: "vision"
+    rate_limit: 10.0
 
 # vision_speed_estimate
 vision_speed:
