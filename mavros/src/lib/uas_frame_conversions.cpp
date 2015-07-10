@@ -70,10 +70,24 @@ Eigen::Vector3d UAS::transform_frame(const Eigen::Vector3d &vec)
 
 UAS::Covariance3x3 UAS::transform_frame(const Covariance3x3 &cov)
 {
-	// not implemented!
+	Covariance3x3 cov_out_;
+	EigenMapConstCovariance3x3 cov_in(cov.data());
+	EigenMapCovariance3x3 cov_out(cov_out_.data());
+
+	// code from imu_transformer tf2_sensor_msgs.h
+	//cov_out = FRAME_ROTATE_Q * cov_in * FRAME_ROTATE_Q.inverse();
+	// from comments on github about tf2_sensor_msgs.h
+	cov_out = cov_in * FRAME_ROTATE_Q;
+	return cov_out_;
 }
 
 UAS::Covariance6x6 UAS::transform_frame(const Covariance6x6 &cov)
 {
-	// not implemented!
+	Covariance6x6 cov_out_;
+	EigenMapConstCovariance6x6 cov_in(cov.data());
+	EigenMapCovariance6x6 cov_out(cov_out_.data());
+
+	//! @todo implement me!!!
+	ROS_ASSERT(false);
+	return cov_out_;
 }

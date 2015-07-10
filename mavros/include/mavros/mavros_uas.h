@@ -86,6 +86,13 @@ public:
 	//! Type matching rosmsg for covarince 6x6
 	typedef boost::array<double, 36> Covariance6x6;
 
+	//! Eigen::Map for Covariance3x3
+	typedef Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapCovariance3x3;
+	typedef Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapConstCovariance3x3;
+	//! Eigen::Map for Covariance6x6
+	typedef Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapCovariance6x6;
+	typedef Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapConstCovariance6x6;
+
 	UAS();
 	~UAS() {};
 
@@ -384,9 +391,14 @@ public:
 	 */
 	static Eigen::Quaterniond transform_frame(const Eigen::Quaterniond &q);
 
-	//! @todo implement that function
+	/**
+	 * @brief Transform frame between ROS and FCU. (Covariance3x3)
+	 *
+	 * General function. Please use specialized enu-ned and ned-enu variants.
+	 */
 	static Covariance3x3 transform_frame(const Covariance3x3 &cov);
-	//! @todo implement that function
+
+	// XXX TODO implement that function
 	static Covariance6x6 transform_frame(const Covariance6x6 &cov);
 
 	/**

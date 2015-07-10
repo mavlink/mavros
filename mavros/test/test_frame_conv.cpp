@@ -9,7 +9,9 @@
 
 using mavros::UAS;
 
-static const double epsilon = 1e-6;
+static const double epsilon = 1e-9;
+// gMock has ability to define array matcher, but there problems with that.
+// so trying good old for loop
 
 /* -*- test general transform function -*- */
 
@@ -40,36 +42,61 @@ TEST(UAS, transform_frame__quaterniond_123)
 
 TEST(UAS, transform_frame__covariance3x3)
 {
-}
+	UAS::Covariance3x3 input = {{
+		1.0, 2.0, 3.0,
+		4.0, 5.0, 6.0,
+		7.0, 8.0, 9.0
+	}};
 
-TEST(UAS,  transform_frame__covariance6x6)
-{
-	UAS::Covariance6x6 test = {
-		176.75,    1E-6,      1E-6,  1E-6,   4.14,  1E-6,
-		1E-6,    1748.8,      1E-6,   2.1,   1E-6,  1E-6,
-		1E-6,      1E-6,  11447.14,  1E-6,   4.17,  1E-6,
-		1E-6,       2.1,      1E-6, 10001,   1E-6,  1E-6,
-		4.14,      1E-6,      4.17,  1E-6,  14111,  1E-6,
-		1E-6,      1E-6,      1E-6,  1E-6,   1E-6,   101
-	};
-
-	UAS::Covariance6x6 exp_out = { // XXX Still have to confirm this output
-		176.75,    -1E-6,      -1E-6,  -1E-6,   -4.14,  -1E-6,
-		-1E-6,    1748.8,      -1E-6,   -2.1,   -1E-6,   1E-6,
-		-1E-6,     -1E-6,   11447.14,   1E-6,    4.17,   1E-6,
-		-1E-6,      -2.1,       1E-6,  10001,    1E-6,   1E-6,
-		-4.14,      1E-6,       4.17,   1E-6,   14111,   1E-6,
-		-1E-6,      1E-6,       1E-6,   1E-6,    1E-6,    101
-	};
-
-	auto input = test;
-	auto expected_out = exp_out;
+	/* Calculated as:
+	 *         | 1  0  0 |
+	 * input * | 0 -1  0 |
+	 *         | 0  0 -1 |
+	 */
+	UAS::Covariance3x3 expected = {{
+		1.0, -2.0, -3.0,
+		4.0, -5.0, -6.0,
+		7.0, -8.0, -9.0
+	}};
 
 	auto out = UAS::transform_frame(input);
 
-	//EXPECT_NEAR(expected_out, out, epsilon);
-	EXPECT_EQ(expected_out, out);
+	for (size_t idx = 0; idx < expected.size(); idx++) {
+		SCOPED_TRACE(idx);
+		EXPECT_NEAR(expected[idx], out[idx], epsilon);
+	}
 }
+
+#if 0
+// not implemented
+TEST(UAS,  transform_frame__covariance6x6)
+{
+	UAS::Covariance6x6 input = {{
+		 1.0,  2.0,  3.0,  4.0,  5.0,  6.0,
+		 7.0,  8.0,  9.0, 10.0, 11.0, 12.0,
+		13.0, 14.0, 15.0, 16.0, 17.0, 18.0,
+		19.0, 20.0, 21.0, 22.0, 23.0, 24.0,
+		25.0, 26.0, 27.0, 28.0, 29.0, 30.0,
+		31.0, 32.0, 33.0, 34.0, 35.0, 36.0
+	}};
+
+	UAS::Covariance6x6 expected = {{
+		 1.0,  -2.0,  -3.0,  4.0,  -5.0,  -6.0,
+		 7.0,  -8.0,  -9.0, 10.0, -11.0, -12.0,
+		13.0, -14.0, -15.0, 16.0, -17.0, -18.0,
+		19.0, -20.0, -21.0, 22.0, -23.0, -24.0,
+		25.0, -26.0, -27.0, 28.0, -29.0, -30.0,
+		31.0, -32.0, -33.0, 34.0, -35.0, -36.0
+	}};
+
+	auto out = UAS::transform_frame(input);
+
+	for (size_t idx = 0; idx < expected.size(); idx++) {
+		SCOPED_TRACE(idx);
+		EXPECT_NEAR(expected[idx], out[idx], epsilon);
+	}
+}
+#endif
 
 TEST(UAS, quaternion_from_rpy__check_compatibility)
 {
