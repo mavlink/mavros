@@ -8,9 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   mavros
   mavros_extras
   roscpp
-  tf
   std_msgs
   geometry_msgs
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -18,7 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 
 include(EnableCXX11)
-include(MavrosMavlink)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -88,7 +87,7 @@ include(MavrosMavlink)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES sitl_test
-  CATKIN_DEPENDS roscpp tf std_msgs geometry_msgs
+  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros
   DEPENDS Boost
 )
 
@@ -108,7 +107,7 @@ include_directories(
 ## Declare a cpp library
 add_library(
   sitl_test
-  src/sitl_test/px4/lib/sitl_test.cpp
+  sitl_test/lib/sitl_test.cpp
   include/tests/offboard_posctl_square.h
   include/sitl_test/sitl_test.h
   include/sitl_test/test_type.h
@@ -117,7 +116,7 @@ add_library(
 ## Declare a cpp executable
 add_executable(
   sitl_test_node
-  src/sitl_test/px4/sitl_test_node.cpp
+  sitl_test/sitl_test_node.cpp
 )
 
 ## Add cmake target dependencies of the executable/library

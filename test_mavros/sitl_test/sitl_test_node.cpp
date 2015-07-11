@@ -20,7 +20,6 @@ using namespace mavros;
 int main(int argc, char *argv[])
 {
 	ROS_INFO("SITL Test node started...");
-	ROS_INFO(argv[1]);
 
 	SitlTest::spin(argc, argv);
 

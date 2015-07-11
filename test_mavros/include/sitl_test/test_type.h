@@ -18,7 +18,6 @@
 #pragma once
 
 #include <tests/offboard_posctl_square.h>
-//#include <tests/offboard_posctl_eight.h>
 
 namespace testtype {
 
@@ -30,7 +29,6 @@ public:
 private:
 	/*
 	 * TODO: Here we can implement test specifities, conditions, others
-	 */
-		
+	 */		
 };
 };	// namespace testtype
