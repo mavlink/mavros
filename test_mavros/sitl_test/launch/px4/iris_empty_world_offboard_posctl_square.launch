@@ -1,0 +1,43 @@
+<launch>
+    <!-- vim: set ft=xml noet : -->
+    <!-- Offboard Position Control - square path - launch file-->
+    
+    <arg name="headless" default="false"/>
+    <arg name="gui" default="true"/>
+    <arg name="enable_logging" default="false"/>
+    <arg name="enable_ground_truth" default="true"/>
+    <arg name="ns" default="iris"/>
+    <arg name="log_file" default="$(arg ns)"/>
+
+    <include file="$(find rotors_gazebo)/launch/iris_empty_world.launch">
+        <arg name="headless" value="$(arg headless)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="enable_logging" value="$(arg enable_logging)" />
+        <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+        <arg name="log_file" value="$(arg log_file)"/>
+    </include>
+    
+    <include file="$(find px4)/launch/iris.launch">
+	   <arg name="ns" value="$(arg ns)"/>
+    </include>
+
+	<arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="50" />
+
+	<include file="$(find mavros)/launch/node.launch">
+	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+	   <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+	   <arg name="fcu_url" value="$(arg fcu_url)" />
+	   <arg name="gcs_url" value="$(arg gcs_url)" />
+	   <arg name="tgt_system" value="$(arg tgt_system)" />
+	   <arg name="tgt_component" value="$(arg tgt_component)" />
+	</include>
+
+    <node pkg="test_mavros" type="sitl_test_node" args="offboard_posctl_square"
+            name="sitl_test_offboard_posctl_square" required="true" clear_params="true" output="screen">
+    </node>
+
+</launch>
