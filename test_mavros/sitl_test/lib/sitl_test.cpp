@@ -24,11 +24,11 @@ SitlTest::SitlTest()
 
 void SitlTest::spin(int argc, char *argv[])
 {	
-	if (strcmp(argv[1],"offboard_posctl_square") == 0)
+	if (strcmp(argv[1],"offboard_control") == 0)
 	{
-		ros::init(argc, argv, "offboard_posctl_square");
-		testtype::OffboardPosCtrlSquare offboard_posctl_square;
-		offboard_posctl_square.spin(argc, argv);
+		ros::init(argc, argv, "offboard_control");
+		testtype::OffboardControl offboard_control;
+		offboard_control.spin(argc, argv);
 	}
 
 	/** @todo add more testing structures */

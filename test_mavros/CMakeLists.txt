@@ -108,9 +108,6 @@ include_directories(
 add_library(
   sitl_test
   sitl_test/lib/sitl_test.cpp
-  include/tests/offboard_posctl_square.h
-  include/sitl_test/sitl_test.h
-  include/sitl_test/test_type.h
 )
 
 ## Declare a cpp executable

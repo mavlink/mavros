@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <tests/offboard_posctl_square.h>
+#include <tests/offboard_control.h>
 
 namespace testtype {
 

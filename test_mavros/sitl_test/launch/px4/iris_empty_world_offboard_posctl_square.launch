@@ -40,7 +40,9 @@
 
     <!-- SITL test base node launcher -->
     <include file="$(find test_mavros)/sitl_test/launch/base_node.launch">
-       <arg name="args" value="offboard_posctl_square" /> <!-- for square shaped path -->
+        <arg name="args" value="offboard_control" />    <!-- offboard ctl test -->
+        <arg name="mode" value="position"/>    <!-- position ctl mode -->
+        <arg name="shape" value="square"/>    <!-- square shaped path -->
     </include>
 
 </launch>
