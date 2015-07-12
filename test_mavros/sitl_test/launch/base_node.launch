@@ -1,0 +1,9 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- Base node launch file-->
+	<arg name="args" />
+
+	<node pkg="test_mavros" type="sitl_test_node" args="$(arg args)" name="sitl_test_offboard_posctl_square" required="true" clear_params="true" output="screen">
+    </node>
+
+</launch>

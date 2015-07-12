@@ -1,6 +1,6 @@
 <launch>
     <!-- vim: set ft=xml noet : -->
-    <!-- Offboard Position Control - square path - launch file-->
+    <!-- Offboard Position Control - square path - launch file -->
     
     <arg name="headless" default="false"/>
     <arg name="gui" default="true"/>
@@ -9,6 +9,7 @@
     <arg name="ns" default="iris"/>
     <arg name="log_file" default="$(arg ns)"/>
 
+    <!-- Gazebo simulation and vehicle model launch -->
     <include file="$(find rotors_gazebo)/launch/iris_empty_world.launch">
         <arg name="headless" value="$(arg headless)"/>
         <arg name="gui" value="$(arg gui)"/>
@@ -21,6 +22,7 @@
 	   <arg name="ns" value="$(arg ns)"/>
     </include>
 
+    <!-- MAVROS launcher -->
 	<arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
 	<arg name="gcs_url" default="" />
 	<arg name="tgt_system" default="1" />
@@ -36,8 +38,9 @@
 	   <arg name="tgt_component" value="$(arg tgt_component)" />
 	</include>
 
-    <node pkg="test_mavros" type="sitl_test_node" args="offboard_posctl_square"
-            name="sitl_test_offboard_posctl_square" required="true" clear_params="true" output="screen">
-    </node>
+    <!-- SITL test base node launcher -->
+    <include file="$(find test_mavros)/sitl_test/launch/base_node.launch">
+       <arg name="args" value="offboard_posctl_square" /> <!-- for square shaped path -->
+    </include>
 
 </launch>

@@ -46,7 +46,7 @@ public:
         ROS_INFO("SITL Test: Offboard control test running!");
         ROS_INFO("Test option: square shape movement...");
 
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(100);
         uint8_t pos_target = 0;
         set_motion(loop_rate, pos_target);
     }
@@ -134,7 +134,7 @@ private:
      */
     void wait_destination(geometry_msgs::PoseStamped destination){
         bool stop = false;
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(100);
 
         geometry_msgs::Point pos = localpos.pose.position, dest = destination.pose.position;
 

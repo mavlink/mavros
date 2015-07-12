@@ -29,6 +29,9 @@ public:
 private:
 	/*
 	 * TODO: Here we can implement test specifities, conditions, others
-	 */		
+	 */
+
+protected:
+	
 };
 };	// namespace testtype
