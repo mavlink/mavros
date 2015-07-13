@@ -57,7 +57,7 @@ public:
          * - square
          * - circle
          * - eight
-         * - ellipse
+         * - ellipse (in 3D space)
          */
         nh_sp.param<std::string>("shape", shape, "square");
 
@@ -86,7 +86,8 @@ public:
             }
 
             else if(shape.compare("ellipse") == 0){
-                //TODO
+                ROS_INFO("Test option: ellipse-shaped path...");
+                ellipse_path_motion(loop_rate);
                 return;
             }
         }     
@@ -126,29 +127,45 @@ private:
     }
 
     /**
-     * @brief Defines Gerono lemniscate path
-     */
-    geometry_msgs::PoseStamped eight_shape(int angle){
-        geometry_msgs::PoseStamped sp;
-        double a = 5.0f; // vertical tangent with 5 meters size
-
-        sp.pose.position.x = a*cos(angle * M_PI/180.0);
-        sp.pose.position.y = a*sin(angle * M_PI/180.0) * cos(angle * M_PI/180.0);
-        sp.pose.position.z = 1;
-
-        return sp;
-    }
-
-    /**
      * @brief Defines circle path
      */
     geometry_msgs::PoseStamped circle_shape(int angle){
         geometry_msgs::PoseStamped sp;
         double r = 5.0f; // 5 meters radius
 
-        sp.pose.position.x = r*cos(angle * M_PI/180.0);
-        sp.pose.position.y = r*sin(angle * M_PI/180.0);
-        sp.pose.position.z = 1;
+        sp.pose.position.x = r*cos(angle * M_PI/180.0f);
+        sp.pose.position.y = r*sin(angle * M_PI/180.0f);
+        sp.pose.position.z = 1.0f;
+
+        return sp;
+    }
+
+    /**
+     * @brief Defines Gerono lemniscate path
+     */
+    geometry_msgs::PoseStamped eight_shape(int angle){
+        geometry_msgs::PoseStamped sp;
+        double a = 5.0f; // vertical tangent with 5 meters size
+
+        sp.pose.position.x = a*cos(angle * M_PI/180.0f);
+        sp.pose.position.y = a*sin(angle * M_PI/180.0f) * cos(angle * M_PI/180.0f);
+        sp.pose.position.z = 1.0f;
+
+        return sp;
+    }
+
+    /**
+     * @brief Defines ellipse path
+     */
+    geometry_msgs::PoseStamped ellipse_shape(int angle){
+        geometry_msgs::PoseStamped sp;
+        double a = 5.0f; // major axis
+        double b = 2.0f; // minor axis
+
+        // using spherical coordinates (rotation around y-axis)
+        sp.pose.position.x = a*cos(angle * M_PI/180.0f);
+        sp.pose.position.y = 0.0f;
+        sp.pose.position.z = 2.5f + b*sin(angle * M_PI/180.0f);
 
         return sp;
     }
@@ -199,6 +216,35 @@ private:
     }
 
     /**
+     * @brief Circle path motion routine
+     */
+    void circle_path_motion(ros::Rate loop_rate){
+        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+        
+        ROS_INFO("Testing...");
+
+        while(ros::ok()){
+            // starting point
+            X = 5.0f;
+            Y = 0.0f;
+            Z = 1.0f;
+            local_pos_sp_pub.publish(ps);
+            wait_destination(ps);
+
+            // motion routine
+            for(int theta = 0; theta <= 360; theta++){
+                local_pos_sp_pub.publish(circle_shape(theta));
+                if (theta == 360){
+                    ROS_INFO("Test complete!");
+                    ros::shutdown();
+                }
+                loop_rate.sleep();
+                ros::spinOnce();
+            }                
+        }
+    }
+
+    /**
      * @brief Eight path motion routine
      */
     void eight_path_motion(ros::Rate loop_rate){
@@ -208,9 +254,9 @@ private:
 
         while(ros::ok()){
             // starting point
-            X = 0;
-            Y = 0;
-            Z = 1;
+            X = 5.0f;
+            Y = 0.0f;
+            Z = 1.0f;
             local_pos_sp_pub.publish(ps);
             wait_destination(ps);
 
@@ -228,24 +274,24 @@ private:
     }
 
     /**
-     * @brief Circle path motion routine
+     * @brief Ellipse path motion routine
      */
-    void circle_path_motion(ros::Rate loop_rate){
+    void ellipse_path_motion(ros::Rate loop_rate){
         local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
         
         ROS_INFO("Testing...");
 
         while(ros::ok()){
             // starting point
-            X = 5;
-            Y = 0;
-            Z = 1;
+            X = 0.0f;
+            Y = 0.0f;
+            Z = 2.5f;
             local_pos_sp_pub.publish(ps);
             wait_destination(ps);
 
             // motion routine
             for(int theta = 0; theta <= 360; theta++){
-                local_pos_sp_pub.publish(circle_shape(theta));
+                local_pos_sp_pub.publish(ellipse_shape(theta));
                 if (theta == 360){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
