@@ -20,7 +20,6 @@
 #include <tests/offboard_control.h>
 
 namespace testtype {
-
 class TestType {
 public:
 	TestType() {};
@@ -32,6 +31,5 @@ private:
 	 */
 
 protected:
-	
 };
 };	// namespace testtype

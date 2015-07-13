@@ -33,6 +33,5 @@ public:
 	~SitlTest() {};
 
 	static void spin(int argc, char *argv[]);
-	
 };
 };	// namespace sitltest

@@ -23,7 +23,7 @@ SitlTest::SitlTest()
 {}
 
 void SitlTest::spin(int argc, char *argv[])
-{	
+{
 	if (strcmp(argv[1],"offboard_control") == 0)
 	{
 		ros::init(argc, argv, "offboard_control");

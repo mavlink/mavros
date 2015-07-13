@@ -32,100 +32,100 @@ namespace testtype {
  */
 class OffboardControl {
 public:
-    OffboardControl() :
-        nh_sp("~"),
-        mode("position"),
-        shape("square")
-    { };
+	OffboardControl() :
+		nh_sp("~"),
+		mode("position"),
+		shape("square")
+	{ };
 
-    /* -*- main routine -*- */
+	/* -*- main routine -*- */
 
-    void spin(int argc, char *argv[]) {
-        /**
-         * @brief Setpoint control mode selector
-         *
-         * Available modes:
-         * - position
-         * - velocity
-         * - acceleration
-         */
-        nh_sp.param<std::string>("mode", mode, "position");
+	void spin(int argc, char *argv[]) {
+		/**
+		 * @brief Setpoint control mode selector
+		 *
+		 * Available modes:
+		 * - position
+		 * - velocity
+		 * - acceleration
+		 */
+		nh_sp.param<std::string>("mode", mode, "position");
 
-        /**
-         * @brief Setpoint path shape selector
-         *
-         * Available shapes:
-         * - square
-         * - circle
-         * - eight
-         * - ellipse (in 3D space)
-         */
-        nh_sp.param<std::string>("shape", shape, "square");
+		/**
+		 * @brief Setpoint path shape selector
+		 *
+		 * Available shapes:
+		 * - square
+		 * - circle
+		 * - eight
+		 * - ellipse (in 3D space)
+		 */
+		nh_sp.param<std::string>("shape", shape, "square");
 
-        ros::Rate loop_rate(10);
+		ros::Rate loop_rate(10);
 
-        ROS_INFO("SITL Test: Offboard control test running!");
+		ROS_INFO("SITL Test: Offboard control test running!");
 
-        if(mode.compare("position") == 0){
-            ROS_INFO("Position control mode selected.");
-            if(shape.compare("square") == 0){
-                ROS_INFO("Test option: square-shaped path...");
-                square_path_motion(loop_rate);
-            }          
-            else if(shape.compare("circle") == 0){
-                ROS_INFO("Test option: circle-shaped path...");
-                circle_path_motion(loop_rate);
-            }
-            else if(shape.compare("eight") == 0){
-                ROS_INFO("Test option: eight-shaped path...");
-                eight_path_motion(loop_rate);
-            }
-            else if(shape.compare("ellipse") == 0){
-                ROS_INFO("Test option: ellipse-shaped path...");
-                ellipse_path_motion(loop_rate);
-            }
-        }
-        else if(mode.compare("velocity") == 0){
-            ROS_INFO("Velocity control mode selected.");
-            if(shape.compare("square") == 0){
-                ROS_INFO("Test option: square-shaped path...");
-                square_path_motion(loop_rate);
-            }          
-            else if(shape.compare("circle") == 0){
-                ROS_INFO("Test option: circle-shaped path...");
-                circle_path_motion(loop_rate);
-            }
-            else if(shape.compare("eight") == 0){
-                ROS_INFO("Test option: eight-shaped path...");
-                eight_path_motion(loop_rate);
-            }
-            else if(shape.compare("ellipse") == 0){
-                ROS_INFO("Test option: ellipse-shaped path...");
-                ellipse_path_motion(loop_rate);
-            }
-        }
-        else if(mode.compare("acceleration") == 0){
-            ROS_INFO("Velocity control mode selected.");
-            //TODO
-            return;
-        }
-    }
+		if (mode.compare("position") == 0) {
+			ROS_INFO("Position control mode selected.");
+			if (shape.compare("square") == 0) {
+				ROS_INFO("Test option: square-shaped path...");
+				square_path_motion(loop_rate);
+			}
+			else if (shape.compare("circle") == 0) {
+				ROS_INFO("Test option: circle-shaped path...");
+				circle_path_motion(loop_rate);
+			}
+			else if (shape.compare("eight") == 0) {
+				ROS_INFO("Test option: eight-shaped path...");
+				eight_path_motion(loop_rate);
+			}
+			else if (shape.compare("ellipse") == 0) {
+				ROS_INFO("Test option: ellipse-shaped path...");
+				ellipse_path_motion(loop_rate);
+			}
+		}
+		else if (mode.compare("velocity") == 0) {
+			ROS_INFO("Velocity control mode selected.");
+			if (shape.compare("square") == 0) {
+				ROS_INFO("Test option: square-shaped path...");
+				square_path_motion(loop_rate);
+			}
+			else if (shape.compare("circle") == 0) {
+				ROS_INFO("Test option: circle-shaped path...");
+				circle_path_motion(loop_rate);
+			}
+			else if (shape.compare("eight") == 0) {
+				ROS_INFO("Test option: eight-shaped path...");
+				eight_path_motion(loop_rate);
+			}
+			else if (shape.compare("ellipse") == 0) {
+				ROS_INFO("Test option: ellipse-shaped path...");
+				ellipse_path_motion(loop_rate);
+			}
+		}
+		else if (mode.compare("acceleration") == 0) {
+			ROS_INFO("Velocity control mode selected.");
+			//TODO
+			return;
+		}
+	}
 
 private:
-    ros::NodeHandle nh_sp;
-    ros::Publisher local_pos_sp_pub;
-    ros::Publisher vel_sp_pub;
-    ros::Subscriber local_pos_sub;
+	ros::NodeHandle nh_sp;
+	ros::Publisher local_pos_sp_pub;
+	ros::Publisher vel_sp_pub;
+	ros::Subscriber local_pos_sub;
 
-    std::string mode;
-    std::string shape;
+	std::string mode;
+	std::string shape;
 
-    geometry_msgs::PoseStamped localpos;
-    geometry_msgs::PoseStamped ps;
+	geometry_msgs::PoseStamped localpos;
+	geometry_msgs::PoseStamped ps;
 
-    geometry_msgs::TwistStamped vs;
+	geometry_msgs::TwistStamped vs;
 
-    /* -*- alias -*- */
+	/* -*- alias -*- */
     #define X  ps.pose.position.x
     #define Y  ps.pose.position.y
     #define Z  ps.pose.position.z
@@ -139,333 +139,332 @@ private:
     #define current_y localpos.pose.position.y
     #define current_z localpos.pose.position.z
 
-    /* -*- helper functions -*- */
+	/* -*- helper functions -*- */
 
-    /**
-     * @brief Defines single position setpoint
-     */
-    geometry_msgs::Point pos_setpoint(){
-        geometry_msgs::Point sp;
-        /** @todo Give possibility to user define amplitude of movement (square corners coordinates)*/
-        sp.x = 2.0f; // meters
-        sp.y = 2.0f;
-        sp.z = 1.0f;
-        return sp;
-    }
+	/**
+	 * @brief Defines single position setpoint
+	 */
+	geometry_msgs::Point pos_setpoint(){
+		geometry_msgs::Point sp;
+		/** @todo Give possibility to user define amplitude of movement (square corners coordinates)*/
+		sp.x = 2.0f;	// meters
+		sp.y = 2.0f;
+		sp.z = 1.0f;
+		return sp;
+	}
 
-    /**
-     * @brief Defines circle path
-     */
-    geometry_msgs::PoseStamped circle_shape(int angle){
-        geometry_msgs::PoseStamped sp;
-        double r = 5.0f; // 5 meters radius
+	/**
+	 * @brief Defines circle path
+	 */
+	geometry_msgs::PoseStamped circle_shape(int angle){
+		geometry_msgs::PoseStamped sp;
+		double r = 5.0f;// 5 meters radius
 
-        sp.pose.position.x = r*cos(angle * M_PI/180.0f);
-        sp.pose.position.y = r*sin(angle * M_PI/180.0f);
-        sp.pose.position.z = 1.0f;
+		sp.pose.position.x = r * cos(angle * M_PI / 180.0f);
+		sp.pose.position.y = r * sin(angle * M_PI / 180.0f);
+		sp.pose.position.z = 1.0f;
 
-        return sp;
-    }
+		return sp;
+	}
 
-    /**
-     * @brief Defines Gerono lemniscate path
-     */
-    geometry_msgs::PoseStamped eight_shape(int angle){
-        geometry_msgs::PoseStamped sp;
-        double a = 5.0f; // vertical tangent with 5 meters size
+	/**
+	 * @brief Defines Gerono lemniscate path
+	 */
+	geometry_msgs::PoseStamped eight_shape(int angle){
+		geometry_msgs::PoseStamped sp;
+		double a = 5.0f;// vertical tangent with 5 meters size
 
-        sp.pose.position.x = a*cos(angle * M_PI/180.0f);
-        sp.pose.position.y = a*sin(angle * M_PI/180.0f) * cos(angle * M_PI/180.0f);
-        sp.pose.position.z = 1.0f;
+		sp.pose.position.x = a * cos(angle * M_PI / 180.0f);
+		sp.pose.position.y = a * sin(angle * M_PI / 180.0f) * cos(angle * M_PI / 180.0f);
+		sp.pose.position.z = 1.0f;
 
-        return sp;
-    }
+		return sp;
+	}
 
-    /**
-     * @brief Defines ellipse path
-     */
-    geometry_msgs::PoseStamped ellipse_shape(int angle){
-        geometry_msgs::PoseStamped sp;
-        double a = 5.0f; // major axis
-        double b = 2.0f; // minor axis
+	/**
+	 * @brief Defines ellipse path
+	 */
+	geometry_msgs::PoseStamped ellipse_shape(int angle){
+		geometry_msgs::PoseStamped sp;
+		double a = 5.0f;// major axis
+		double b = 2.0f;// minor axis
 
-        // using spherical coordinates (rotation around y-axis)
-        sp.pose.position.x = a*cos(angle * M_PI/180.0f);
-        sp.pose.position.y = 0.0f;
-        sp.pose.position.z = 2.5f + b*sin(angle * M_PI/180.0f);
+		// using spherical coordinates (rotation around y-axis)
+		sp.pose.position.x = a * cos(angle * M_PI / 180.0f);
+		sp.pose.position.y = 0.0f;
+		sp.pose.position.z = 2.5f + b*sin(angle * M_PI / 180.0f);
 
-        return sp;
-    }
+		return sp;
+	}
 
-    /**
-     * @brief Square path motion routine
-     */
-    void square_path_motion(ros::Rate loop_rate){
-        uint8_t pos_target = 0;
+	/**
+	 * @brief Square path motion routine
+	 */
+	void square_path_motion(ros::Rate loop_rate){
+		uint8_t pos_target = 0;
 
-        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
-        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
-        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
+		local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+		vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+		local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
 
-        while(ros::ok()){
+		while (ros::ok()) {
+			ROS_INFO("Testing...");
 
-            ROS_INFO("Testing...");
+			if (mode.compare("position") == 0) {
+				local_pos_sp_pub.publish(ps);
+			}
+			else if (mode.compare("velocity") == 0) {
+				vel_sp_pub.publish(vs);
+			}
+			else if (mode.compare("acceleration") == 0) {
+				// TODO
+				return;
+			}
 
-            if(mode.compare("position") == 0){
-                local_pos_sp_pub.publish(ps);        
-            }
-            else if(mode.compare("velocity") == 0){
-                vel_sp_pub.publish(vs);
-            }
-            else if(mode.compare("acceleration") == 0){
-                // TODO
-                return;
-            }
+			wait_destination(ps);
 
-            wait_destination(ps);
+			// motion routine
+			switch (pos_target) {
+			case 1:
+				X = sp_X; Y = sp_Y; Z = sp_Z;
+				break;
+			case 2:
+				X = -sp_X; Y = sp_Y; Z = sp_Z;
+				break;
+			case 3:
+				X = -sp_X; Y = -sp_Y; Z = sp_Z;
+				break;
+			case 4:
+				X = sp_X; Y = -sp_Y; Z = sp_Z;
+				break;
+			case 5:
+				X = sp_X; Y = sp_Y; Z = sp_Z;
+				break;
+			default:
+				break;
+			}
 
-            // motion routine
-            switch(pos_target) {
-                case 1:
-                    X = sp_X; Y = sp_Y; Z = sp_Z;
-                    break;
-                case 2:
-                    X = -sp_X; Y = sp_Y; Z = sp_Z;
-                    break;
-                case 3:
-                    X = -sp_X; Y = -sp_Y; Z = sp_Z;
-                    break;
-                case 4:
-                    X = sp_X; Y = -sp_Y; Z = sp_Z;
-                    break;
-                case 5:
-                    X = sp_X; Y = sp_Y; Z = sp_Z;
-                    break;
-                default:
-                    break;
-            }
-            
-            if (pos_target == 6) {
-                ROS_INFO("Test complete!");
-                ros::shutdown();
-            }
-            else
-                ++pos_target;
-            
-            loop_rate.sleep();
-            ros::spinOnce();
-        }
-    }
+			if (pos_target == 6) {
+				ROS_INFO("Test complete!");
+				ros::shutdown();
+			}
+			else
+				++pos_target;
 
-    /**
-     * @brief Circle path motion routine
-     */
-    void circle_path_motion(ros::Rate loop_rate){
-        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
-        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
-        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
-        
-        ROS_INFO("Testing...");
+			loop_rate.sleep();
+			ros::spinOnce();
+		}
+	}
 
-        while(ros::ok()){
-            // starting point
-            if(mode.compare("position") == 0){
-                X = 5.0f;
-                Y = 0.0f;
-                Z = 1.0f;
-                local_pos_sp_pub.publish(ps);        
-            }
-            else if(mode.compare("velocity") == 0){
-                VX = 5.0f - current_x;
-                VY = 0.0f - current_y;
-                VZ = 1.0f - current_z;
-                vel_sp_pub.publish(vs);
-            }
-            else if(mode.compare("acceleration") == 0){
-                // TODO
-                return;
-            }
-            
-            wait_destination(ps);
+	/**
+	 * @brief Circle path motion routine
+	 */
+	void circle_path_motion(ros::Rate loop_rate){
+		local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+		vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+		local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
 
-            // motion routine
-            for(int theta = 0; theta <= 360; theta++){
-                if(mode.compare("position") == 0)
-                    local_pos_sp_pub.publish(circle_shape(theta));        
-                else if(mode.compare("velocity") == 0){
-                    VX = circle_shape(theta).pose.position.x - current_x;
-                    VY = circle_shape(theta).pose.position.y - current_y;
-                    VZ = circle_shape(theta).pose.position.z - current_z;
-                    vel_sp_pub.publish(vs);
-                }
-                else if(mode.compare("acceleration") == 0){
-                    // TODO
-                    return;
-                }
-                if (theta == 360){
-                    ROS_INFO("Test complete!");
-                    ros::shutdown();
-                }
-                loop_rate.sleep();
-                ros::spinOnce();
-            }                
-        }
-    }
+		ROS_INFO("Testing...");
 
-    /**
-     * @brief Eight path motion routine
-     */
-    void eight_path_motion(ros::Rate loop_rate){
-        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
-        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
-        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
-        
-        ROS_INFO("Testing...");
+		while (ros::ok()) {
+			// starting point
+			if (mode.compare("position") == 0) {
+				X = 5.0f;
+				Y = 0.0f;
+				Z = 1.0f;
+				local_pos_sp_pub.publish(ps);
+			}
+			else if (mode.compare("velocity") == 0) {
+				VX = 5.0f - current_x;
+				VY = 0.0f - current_y;
+				VZ = 1.0f - current_z;
+				vel_sp_pub.publish(vs);
+			}
+			else if (mode.compare("acceleration") == 0) {
+				// TODO
+				return;
+			}
 
-        while(ros::ok()){
-            // starting point
-            if(mode.compare("position") == 0){
-                X = 0.0f;
-                Y = 0.0f;
-                Z = 1.0f;
-                local_pos_sp_pub.publish(ps);        
-            }
-            else if(mode.compare("velocity") == 0){
-                VX = 0.0f - current_x;
-                VY = 0.0f - current_y;
-                VZ = 1.0f - current_z;
-                vel_sp_pub.publish(vs);
-            }
-            else if(mode.compare("acceleration") == 0){
-                // TODO
-                return;
-            }
+			wait_destination(ps);
 
-            wait_destination(ps);
+			// motion routine
+			for (int theta = 0; theta <= 360; theta++) {
+				if (mode.compare("position") == 0)
+					local_pos_sp_pub.publish(circle_shape(theta));
+				else if (mode.compare("velocity") == 0) {
+					VX = circle_shape(theta).pose.position.x - current_x;
+					VY = circle_shape(theta).pose.position.y - current_y;
+					VZ = circle_shape(theta).pose.position.z - current_z;
+					vel_sp_pub.publish(vs);
+				}
+				else if (mode.compare("acceleration") == 0) {
+					// TODO
+					return;
+				}
+				if (theta == 360) {
+					ROS_INFO("Test complete!");
+					ros::shutdown();
+				}
+				loop_rate.sleep();
+				ros::spinOnce();
+			}
+		}
+	}
 
-            // motion routine
-            for(int theta = -180; theta <= 180; theta++){
-                if(mode.compare("position") == 0)
-                    local_pos_sp_pub.publish(eight_shape(theta));        
-                else if(mode.compare("velocity") == 0){
-                    VX = eight_shape(theta).pose.position.x - current_x;
-                    VY = eight_shape(theta).pose.position.y - current_y;
-                    VZ = eight_shape(theta).pose.position.z - current_z;
-                    vel_sp_pub.publish(vs);
-                }
-                else if(mode.compare("acceleration") == 0){
-                    // TODO
-                    return;
-                }
-                if (theta == 180){
-                    ROS_INFO("Test complete!");
-                    ros::shutdown();
-                }
-                loop_rate.sleep();
-                ros::spinOnce();
-            }                
-        }
-    }
+	/**
+	 * @brief Eight path motion routine
+	 */
+	void eight_path_motion(ros::Rate loop_rate){
+		local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+		vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+		local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
 
-    /**
-     * @brief Ellipse path motion routine
-     */
-    void ellipse_path_motion(ros::Rate loop_rate){
-        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
-        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
-        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
-        
-        ROS_INFO("Testing...");
+		ROS_INFO("Testing...");
 
-        while(ros::ok()){
-            // starting point
-            if(mode.compare("position") == 0){
-                X = 0.0f;
-                Y = 0.0f;
-                Z = 2.5f;
-                local_pos_sp_pub.publish(ps);        
-            }
-            else if(mode.compare("velocity") == 0){
-            // This one gets some strange behavior, maybe due to overshoot on velocity controller
-            // TODO: find a way to limit the velocity between points (probably using ros::Rate)
-                VX = 0.0f - current_x;
-                VY = 0.0f - current_y;
-                VZ = 2.5f - current_z;
-                vel_sp_pub.publish(vs);
-            }
-            else if(mode.compare("acceleration") == 0){
-                // TODO
-                return;
-            }
+		while (ros::ok()) {
+			// starting point
+			if (mode.compare("position") == 0) {
+				X = 0.0f;
+				Y = 0.0f;
+				Z = 1.0f;
+				local_pos_sp_pub.publish(ps);
+			}
+			else if (mode.compare("velocity") == 0) {
+				VX = 0.0f - current_x;
+				VY = 0.0f - current_y;
+				VZ = 1.0f - current_z;
+				vel_sp_pub.publish(vs);
+			}
+			else if (mode.compare("acceleration") == 0) {
+				// TODO
+				return;
+			}
 
-            wait_destination(ps);
+			wait_destination(ps);
 
-            // motion routine
-            for(int theta = 0; theta <= 360; theta++){
-                if(mode.compare("position") == 0)
-                    local_pos_sp_pub.publish(ellipse_shape(theta));        
-                else if(mode.compare("velocity") == 0){
-                    VX = ellipse_shape(theta).pose.position.x - current_x;
-                    VY = ellipse_shape(theta).pose.position.y - current_y;
-                    VZ = ellipse_shape(theta).pose.position.z - current_z;
-                    vel_sp_pub.publish(vs);
-                }
-                else if(mode.compare("acceleration") == 0){
-                    // TODO
-                    return;
-                }
-                if (theta == 360){
-                    ROS_INFO("Test complete!");
-                    ros::shutdown();
-                }
-                loop_rate.sleep();
-                ros::spinOnce();
-            }                
-        }
-    }
+			// motion routine
+			for (int theta = -180; theta <= 180; theta++) {
+				if (mode.compare("position") == 0)
+					local_pos_sp_pub.publish(eight_shape(theta));
+				else if (mode.compare("velocity") == 0) {
+					VX = eight_shape(theta).pose.position.x - current_x;
+					VY = eight_shape(theta).pose.position.y - current_y;
+					VZ = eight_shape(theta).pose.position.z - current_z;
+					vel_sp_pub.publish(vs);
+				}
+				else if (mode.compare("acceleration") == 0) {
+					// TODO
+					return;
+				}
+				if (theta == 180) {
+					ROS_INFO("Test complete!");
+					ros::shutdown();
+				}
+				loop_rate.sleep();
+				ros::spinOnce();
+			}
+		}
+	}
 
-    /**
-     * @brief Defines the accepted threshold to the destination/target position
-     * before moving to the next setpoint.
-     */
-    void wait_destination(geometry_msgs::PoseStamped target){
-        bool stop = false;
-        ros::Rate loop_rate(10);
+	/**
+	 * @brief Ellipse path motion routine
+	 */
+	void ellipse_path_motion(ros::Rate loop_rate){
+		local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+		vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+		local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
 
-        geometry_msgs::Point dest = target.pose.position;
+		ROS_INFO("Testing...");
 
-        while (ros::ok() && !stop){
-            double distance = sqrt(
-                    (dest.x - current_x)*(dest.x - current_x) +
-                    (dest.y - current_y)*(dest.y - current_y) +
-                    (dest.z - current_z)*(dest.z - current_z));
-            
-            if(distance <= 0.1f) /** @todo Add gaussian threshold */
-                stop = true;
+		while (ros::ok()) {
+			// starting point
+			if (mode.compare("position") == 0) {
+				X = 0.0f;
+				Y = 0.0f;
+				Z = 2.5f;
+				local_pos_sp_pub.publish(ps);
+			}
+			else if (mode.compare("velocity") == 0) {
+				// This one gets some strange behavior, maybe due to overshoot on velocity controller
+				// TODO: find a way to limit the velocity between points (probably using ros::Rate)
+				VX = 0.0f - current_x;
+				VY = 0.0f - current_y;
+				VZ = 2.5f - current_z;
+				vel_sp_pub.publish(vs);
+			}
+			else if (mode.compare("acceleration") == 0) {
+				// TODO
+				return;
+			}
 
-            if (mode.compare("position") == 0){
-                local_pos_sp_pub.publish(target);
-            }
-            else if(mode.compare("velocity") == 0){
-                VX = dest.x - current_x;
-                VY = dest.y - current_y;
-                VZ = dest.z - current_z;
-                vel_sp_pub.publish(vs);
-            }
-            else if(mode.compare("acceleration") == 0){
-                // TODO
-                return;
-            }
-                
-            ros::spinOnce();
-            loop_rate.sleep();
-        }
-    }
+			wait_destination(ps);
 
-    /* -*- callbacks -*- */
+			// motion routine
+			for (int theta = 0; theta <= 360; theta++) {
+				if (mode.compare("position") == 0)
+					local_pos_sp_pub.publish(ellipse_shape(theta));
+				else if (mode.compare("velocity") == 0) {
+					VX = ellipse_shape(theta).pose.position.x - current_x;
+					VY = ellipse_shape(theta).pose.position.y - current_y;
+					VZ = ellipse_shape(theta).pose.position.z - current_z;
+					vel_sp_pub.publish(vs);
+				}
+				else if (mode.compare("acceleration") == 0) {
+					// TODO
+					return;
+				}
+				if (theta == 360) {
+					ROS_INFO("Test complete!");
+					ros::shutdown();
+				}
+				loop_rate.sleep();
+				ros::spinOnce();
+			}
+		}
+	}
 
-    void local_pos_cb(const geometry_msgs::PoseStampedConstPtr& msg){
-        localpos = *msg;
-    }
+	/**
+	 * @brief Defines the accepted threshold to the destination/target position
+	 * before moving to the next setpoint.
+	 */
+	void wait_destination(geometry_msgs::PoseStamped target){
+		bool stop = false;
+		ros::Rate loop_rate(10);
+
+		geometry_msgs::Point dest = target.pose.position;
+
+		while (ros::ok() && !stop) {
+			double distance = sqrt(
+					(dest.x - current_x) * (dest.x - current_x) +
+					(dest.y - current_y) * (dest.y - current_y) +
+					(dest.z - current_z) * (dest.z - current_z));
+
+			if (distance <= 0.1f)	/** @todo Add gaussian threshold */
+				stop = true;
+
+			if (mode.compare("position") == 0) {
+				local_pos_sp_pub.publish(target);
+			}
+			else if (mode.compare("velocity") == 0) {
+				VX = dest.x - current_x;
+				VY = dest.y - current_y;
+				VZ = dest.z - current_z;
+				vel_sp_pub.publish(vs);
+			}
+			else if (mode.compare("acceleration") == 0) {
+				// TODO
+				return;
+			}
+
+			ros::spinOnce();
+			loop_rate.sleep();
+		}
+	}
+
+	/* -*- callbacks -*- */
+
+	void local_pos_cb(const geometry_msgs::PoseStampedConstPtr& msg){
+		localpos = *msg;
+	}
 };
-};  // namespace testype
+};	// namespace testype
