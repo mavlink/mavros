@@ -75,7 +75,8 @@ public:
             }
             
             else if(shape.compare("circle") == 0){
-                //TODO
+                ROS_INFO("Test option: circle-shaped path...");
+                circle_path_motion(loop_rate);
                 return;
             }
 
@@ -139,6 +140,20 @@ private:
     }
 
     /**
+     * @brief Defines circle path
+     */
+    geometry_msgs::PoseStamped circle_shape(int angle){
+        geometry_msgs::PoseStamped sp;
+        double r = 5.0f; // 5 meters radius
+
+        sp.pose.position.x = r*cos(angle * M_PI/180.0);
+        sp.pose.position.y = r*sin(angle * M_PI/180.0);
+        sp.pose.position.z = 1;
+
+        return sp;
+    }
+
+    /**
      * @brief Square path motion routine
      */
     void square_path_motion(ros::Rate loop_rate, uint8_t pos_target){
@@ -184,7 +199,7 @@ private:
     }
 
     /**
-     * @brief Square path motion routine
+     * @brief Eight path motion routine
      */
     void eight_path_motion(ros::Rate loop_rate){
         local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
@@ -192,9 +207,45 @@ private:
         ROS_INFO("Testing...");
 
         while(ros::ok()){
+            // starting point
+            X = 0;
+            Y = 0;
+            Z = 1;
+            local_pos_sp_pub.publish(ps);
+            wait_destination(ps);
+
+            // motion routine
+            for(int theta = -180; theta <= 180; theta++){
+                local_pos_sp_pub.publish(eight_shape(theta));
+                if (theta == 360){
+                    ROS_INFO("Test complete!");
+                    ros::shutdown();
+                }
+                loop_rate.sleep();
+                ros::spinOnce();
+            }                
+        }
+    }
+
+    /**
+     * @brief Circle path motion routine
+     */
+    void circle_path_motion(ros::Rate loop_rate){
+        local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+        
+        ROS_INFO("Testing...");
+
+        while(ros::ok()){
+            // starting point
+            X = 5;
+            Y = 0;
+            Z = 1;
+            local_pos_sp_pub.publish(ps);
+            wait_destination(ps);
+
             // motion routine
             for(int theta = 0; theta <= 360; theta++){
-                local_pos_sp_pub.publish(eight_shape(theta));
+                local_pos_sp_pub.publish(circle_shape(theta));
                 if (theta == 360){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
