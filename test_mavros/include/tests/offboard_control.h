@@ -302,7 +302,6 @@ private:
                     // TODO
                     return;
                 }
-                
                 if (theta == 360){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
@@ -318,21 +317,47 @@ private:
      */
     void eight_path_motion(ros::Rate loop_rate){
         local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
         
         ROS_INFO("Testing...");
 
         while(ros::ok()){
             // starting point
-            X = 5.0f;
-            Y = 0.0f;
-            Z = 1.0f;
-            local_pos_sp_pub.publish(ps);
+            if(mode.compare("position") == 0){
+                X = 0.0f;
+                Y = 0.0f;
+                Z = 1.0f;
+                local_pos_sp_pub.publish(ps);        
+            }
+            else if(mode.compare("velocity") == 0){
+                VX = 0.0f - current_x;
+                VY = 0.0f - current_y;
+                VZ = 1.0f - current_z;
+                vel_sp_pub.publish(vs);
+            }
+            else if(mode.compare("acceleration") == 0){
+                // TODO
+                return;
+            }
+
             wait_destination(ps);
 
             // motion routine
             for(int theta = -180; theta <= 180; theta++){
-                local_pos_sp_pub.publish(eight_shape(theta));
-                if (theta == 360){
+                if(mode.compare("position") == 0)
+                    local_pos_sp_pub.publish(eight_shape(theta));        
+                else if(mode.compare("velocity") == 0){
+                    VX = eight_shape(theta).pose.position.x - current_x;
+                    VY = eight_shape(theta).pose.position.y - current_y;
+                    VZ = eight_shape(theta).pose.position.z - current_z;
+                    vel_sp_pub.publish(vs);
+                }
+                else if(mode.compare("acceleration") == 0){
+                    // TODO
+                    return;
+                }
+                if (theta == 180){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
                 }
@@ -347,20 +372,48 @@ private:
      */
     void ellipse_path_motion(ros::Rate loop_rate){
         local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
         
         ROS_INFO("Testing...");
 
         while(ros::ok()){
             // starting point
-            X = 0.0f;
-            Y = 0.0f;
-            Z = 2.5f;
-            local_pos_sp_pub.publish(ps);
+            if(mode.compare("position") == 0){
+                X = 0.0f;
+                Y = 0.0f;
+                Z = 2.5f;
+                local_pos_sp_pub.publish(ps);        
+            }
+            else if(mode.compare("velocity") == 0){
+            // This one gets some strange behavior, maybe due to overshoot on velocity controller
+            // TODO: find a way to limit the velocity between points (probably using ros::Rate)
+                VX = 0.0f - current_x;
+                VY = 0.0f - current_y;
+                VZ = 2.5f - current_z;
+                vel_sp_pub.publish(vs);
+            }
+            else if(mode.compare("acceleration") == 0){
+                // TODO
+                return;
+            }
+
             wait_destination(ps);
 
             // motion routine
             for(int theta = 0; theta <= 360; theta++){
-                local_pos_sp_pub.publish(ellipse_shape(theta));
+                if(mode.compare("position") == 0)
+                    local_pos_sp_pub.publish(ellipse_shape(theta));        
+                else if(mode.compare("velocity") == 0){
+                    VX = ellipse_shape(theta).pose.position.x - current_x;
+                    VY = ellipse_shape(theta).pose.position.y - current_y;
+                    VZ = ellipse_shape(theta).pose.position.z - current_z;
+                    vel_sp_pub.publish(vs);
+                }
+                else if(mode.compare("acceleration") == 0){
+                    // TODO
+                    return;
+                }
                 if (theta == 360){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
