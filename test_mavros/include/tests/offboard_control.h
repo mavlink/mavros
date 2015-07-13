@@ -135,6 +135,9 @@ private:
     #define sp_X  pos_setpoint().x
     #define sp_Y  pos_setpoint().y
     #define sp_Z  pos_setpoint().z
+    #define current_x localpos.pose.position.x
+    #define current_y localpos.pose.position.y
+    #define current_z localpos.pose.position.z
 
     /* -*- helper functions -*- */
 
@@ -259,20 +262,47 @@ private:
      */
     void circle_path_motion(ros::Rate loop_rate){
         local_pos_sp_pub = nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+        vel_sp_pub = nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
+        local_pos_sub = nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this);
         
         ROS_INFO("Testing...");
 
         while(ros::ok()){
             // starting point
-            X = 5.0f;
-            Y = 0.0f;
-            Z = 1.0f;
-            local_pos_sp_pub.publish(ps);
+            if(mode.compare("position") == 0){
+                X = 5.0f;
+                Y = 0.0f;
+                Z = 1.0f;
+                local_pos_sp_pub.publish(ps);        
+            }
+            else if(mode.compare("velocity") == 0){
+                VX = 5.0f - current_x;
+                VY = 0.0f - current_y;
+                VZ = 1.0f - current_z;
+                vel_sp_pub.publish(vs);
+            }
+            else if(mode.compare("acceleration") == 0){
+                // TODO
+                return;
+            }
+            
             wait_destination(ps);
 
             // motion routine
             for(int theta = 0; theta <= 360; theta++){
-                local_pos_sp_pub.publish(circle_shape(theta));
+                if(mode.compare("position") == 0)
+                    local_pos_sp_pub.publish(circle_shape(theta));        
+                else if(mode.compare("velocity") == 0){
+                    VX = circle_shape(theta).pose.position.x - current_x;
+                    VY = circle_shape(theta).pose.position.y - current_y;
+                    VZ = circle_shape(theta).pose.position.z - current_z;
+                    vel_sp_pub.publish(vs);
+                }
+                else if(mode.compare("acceleration") == 0){
+                    // TODO
+                    return;
+                }
+                
                 if (theta == 360){
                     ROS_INFO("Test complete!");
                     ros::shutdown();
@@ -349,14 +379,13 @@ private:
         bool stop = false;
         ros::Rate loop_rate(10);
 
-        geometry_msgs::Point current = localpos.pose.position;
         geometry_msgs::Point dest = target.pose.position;
 
         while (ros::ok() && !stop){
             double distance = sqrt(
-                    (dest.x - current.x)*(dest.x - current.x) +
-                    (dest.y - current.y)*(dest.y - current.y) +
-                    (dest.z - current.z)*(dest.z - current.z));
+                    (dest.x - current_x)*(dest.x - current_x) +
+                    (dest.y - current_y)*(dest.y - current_y) +
+                    (dest.z - current_z)*(dest.z - current_z));
             
             if(distance <= 0.1f) /** @todo Add gaussian threshold */
                 stop = true;
@@ -365,9 +394,9 @@ private:
                 local_pos_sp_pub.publish(target);
             }
             else if(mode.compare("velocity") == 0){
-                VX = dest.x - current.x;
-                VY = dest.y - current.y;
-                VZ = dest.z - current.z;
+                VX = dest.x - current_x;
+                VY = dest.y - current_y;
+                VZ = dest.z - current_z;
                 vel_sp_pub.publish(vs);
             }
             else if(mode.compare("acceleration") == 0){
@@ -376,8 +405,6 @@ private:
             }
                 
             ros::spinOnce();
-
-            current = localpos.pose.position;
             loop_rate.sleep();
         }
     }
