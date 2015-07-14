@@ -5,7 +5,7 @@
 	<arg name="fcu_url" default="serial:///dev/ttyACM0:57600" />
 	<arg name="gcs_url" default="udp://@" />
 	<arg name="tgt_system" default="1" />
-	<arg name="tgt_component" default="50" />
+	<arg name="tgt_component" default="1" />
 
 	<include file="$(find mavros)/launch/px4.launch">
 		<arg name="fcu_url" value="$(arg fcu_url)" />
