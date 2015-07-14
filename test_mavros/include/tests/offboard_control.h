@@ -110,50 +110,34 @@ public:
 
 		if (mode == POSITION) {
 			ROS_INFO("Position control mode selected.");
-			if (shape == SQUARE) {
-				ROS_INFO("Test option: square-shaped path...");
-				square_path_motion(loop_rate, mode);
-			}
-			else if (shape == CIRCLE) {
-				ROS_INFO("Test option: circle-shaped path...");
-				circle_path_motion(loop_rate, mode);
-			}
-			else if (shape == EIGHT) {
-				ROS_INFO("Test option: eight-shaped path...");
-				eight_path_motion(loop_rate, mode);
-			}
-			else if (shape == ELLIPSE) {
-				ROS_INFO("Test option: ellipse-shaped path...");
-				ellipse_path_motion(loop_rate, mode);
-			}
 		}
-
 		else if (mode == VELOCITY) {
 			ROS_INFO("Velocity control mode selected.");
-			if (shape == SQUARE) {
-				ROS_INFO("Test option: square-shaped path...");
-				square_path_motion(loop_rate, mode);
-			}
-			else if (shape == CIRCLE) {
-				ROS_INFO("Test option: circle-shaped path...");
-				circle_path_motion(loop_rate, mode);
-			}
-			else if (shape == EIGHT) {
-				ROS_INFO("Test option: eight-shaped path...");
-				eight_path_motion(loop_rate, mode);
-			}
-			else if (shape == ELLIPSE) {
-				ROS_INFO("Test option: ellipse-shaped path...");
-				ellipse_path_motion(loop_rate, mode);
-			}
 		}
-
 		else if (mode == ACCELERATION) {
-			ROS_INFO("Aceleration control mode selected.");
+			ROS_INFO("Acceleration control mode selected.");
+			ROS_ERROR_NAMED("sitl_test", "Control mode: acceleration control mode not supported in PX4 current Firmware.");
 			/**
 			 * @todo: lacks firmware support, for now
 			 */
 			return;
+		}
+
+		if (shape == SQUARE) {
+			ROS_INFO("Test option: square-shaped path...");
+			square_path_motion(loop_rate, mode);
+		}
+		else if (shape == CIRCLE) {
+			ROS_INFO("Test option: circle-shaped path...");
+			circle_path_motion(loop_rate, mode);
+		}
+		else if (shape == EIGHT) {
+			ROS_INFO("Test option: eight-shaped path...");
+			eight_path_motion(loop_rate, mode);
+		}
+		else if (shape == ELLIPSE) {
+			ROS_INFO("Test option: ellipse-shaped path...");
+			ellipse_path_motion(loop_rate, mode);
 		}
 	}
 
