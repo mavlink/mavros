@@ -3,7 +3,7 @@
  * @file sitl_test.h
  * @author Nuno Marques <n.marques21@hotmail.com>
  *
- * @addtogroup nodelib
+ * @addtogroup tests
  * @{
  *  @brief SITL test node implementation
  */

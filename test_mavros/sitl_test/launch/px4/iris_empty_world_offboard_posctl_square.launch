@@ -19,29 +19,40 @@
     </include>
     
     <include file="$(find px4)/launch/iris.launch">
-	   <arg name="ns" value="$(arg ns)"/>
+        <arg name="ns" value="$(arg ns)"/>
     </include>
 
     <!-- MAVROS launcher -->
-	<arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
-	<arg name="gcs_url" default="" />
-	<arg name="tgt_system" default="1" />
-	<arg name="tgt_component" default="50" />
+    <arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
+    <arg name="gcs_url" default="" />
+    <arg name="tgt_system" default="1" />
+    <arg name="tgt_component" default="50" />
 
-	<include file="$(find mavros)/launch/node.launch">
-	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
-	   <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+    <include file="$(find mavros)/launch/node.launch">
+        <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+        <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
 
-	   <arg name="fcu_url" value="$(arg fcu_url)" />
-	   <arg name="gcs_url" value="$(arg gcs_url)" />
-	   <arg name="tgt_system" value="$(arg tgt_system)" />
-	   <arg name="tgt_component" value="$(arg tgt_component)" />
-	</include>
+        <arg name="fcu_url" value="$(arg fcu_url)" />
+        <arg name="gcs_url" value="$(arg gcs_url)" />
+        <arg name="tgt_system" value="$(arg tgt_system)" />
+        <arg name="tgt_component" value="$(arg tgt_component)" />
+    </include>
 
     <!-- SITL test base node launcher -->
     <include file="$(find test_mavros)/sitl_test/launch/base_node.launch">
         <arg name="args" value="offboard_control" />    <!-- offboard ctl test -->
+        <!-- Available modes:
+           - * "position"
+           - * "velocity"
+           - * "acceleration" (not supported on firmware yet)
+           -->
         <arg name="mode" value="position"/>    <!-- position ctl mode -->
+        <!-- Available shapes:
+           - * "square"
+           - * "circle"
+           - * "eight"
+           - * "ellipse"
+           --> 
         <arg name="shape" value="square"/>    <!-- square shaped path -->
     </include>
 

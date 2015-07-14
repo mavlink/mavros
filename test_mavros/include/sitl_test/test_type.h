@@ -22,7 +22,6 @@
 namespace testtype {
 class TestType {
 public:
-	TestType() {};
 	virtual ~TestType() {};
 
 private:
@@ -31,5 +30,6 @@ private:
 	 */
 
 protected:
+	TestType() {};
 };
 };	// namespace testtype

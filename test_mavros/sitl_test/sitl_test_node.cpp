@@ -11,11 +11,9 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros.h>
 #include <sitl_test/sitl_test.h>
 
 using namespace sitltest;
-using namespace mavros;
 
 int main(int argc, char *argv[])
 {

@@ -11,7 +11,6 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros.h>
 #include <sitl_test/sitl_test.h>
 #include <sitl_test/test_type.h>
 #include <ros/console.h>
