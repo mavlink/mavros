@@ -11,3 +11,7 @@ plugin_blacklist:
 
 plugin_whitelist: []
 # 'sys_*'
+
+plugin_whitelist: []
+#- 'sys_*'
+>>>>>>> landing_target: adapted to latest master code

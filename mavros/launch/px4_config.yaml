@@ -265,4 +265,29 @@ wheel_odometry:
     frame_id: "map"
     child_frame_id: "base_link"
 
+# landing_target
+landing_target:
+  send_tf: true
+  listen_tf: false
+  frame_id: "landing_target"
+  child_frame_id: "camera_center"
+  tf_rate_limit: 10.0
+  target_size: {x:  0.2, y:  0.2}
+  mav_frame: "LOCAL_NED"
+
+  ## Currently valid MAV_FRAME names:
+  #  "GLOBAL"
+  #  "LOCAL_NED"
+  #  "MISSION"
+  #  "GLOBAL_RELATIVE_ALT"
+  #  "LOCAL_ENU"
+  #  "GLOBAL_INT"
+  #  "GLOBAL_RELATIVE_ALT_INT"
+  #  "LOCAL_OFFSET_NED"
+  #  "BODY_NED"
+  #  "BODY_OFFSET_NED"
+  #  "GLOBAL_TERRAIN_ALT"
+  #  "GLOBAL_TERRAIN_ALT_INT"
+  ##
+
 # vim:set ts=2 sw=2 et:
