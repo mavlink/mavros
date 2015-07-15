@@ -59,7 +59,7 @@ public:
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << tf_frame_id
-											<< " -> " << tf_child_frame_id);
+												      << " -> " << tf_child_frame_id);
 			tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
 		}
 		else {
@@ -119,20 +119,20 @@ private:
 	/* -*- mid-level helpers -*- */
 
 	/*	AUXILIAR MATH: (for spherical coordinates)
-	*
-	*	d = sqrt(x^2 + y^2 + z^2)
-	*	theta = atan(y / x)
-	*	phi = atan(sqrt(x^2 + y^2) / z)
-	*
-	*	where,	theta	= angle_x	(note: notation in Mavlink/Firmware may lead to wrongly consider rectangular coordinates)
-	*		phi	= angle_y
-	*
-	*	Conversion from spherical to rectangular coordinates:
-	*	x = d * sin(phi) * cos(theta)
-	*	y = d * sin(phi) * sin(theta)
-	*	z = d * cos(phi)
-	*
-	*/
+	 *
+	 *	d = sqrt(x^2 + y^2 + z^2)
+	 *	theta = atan(y / x)
+	 *	phi = atan(sqrt(x^2 + y^2) / z)
+	 *
+	 *	where,	theta	= angle_x	(note: notation in Mavlink/Firmware may lead to wrongly consider rectangular coordinates)
+	 *		phi	= angle_y
+	 *
+	 *	Conversion from spherical to rectangular coordinates:
+	 *	x = d * sin(phi) * cos(theta)
+	 *	y = d * sin(phi) * sin(theta)
+	 *	z = d * cos(phi)
+	 *
+	 */
 
 	/**
 	 * Send landing target transform to FCU
@@ -141,9 +141,9 @@ private:
 		// origin position in ROS ENU frame
 		auto pos = UAS::transform_frame_enu_ned(Eigen::Vector3d(transf.translation()));
 
-		float distance = Eigen::internal::psqrt(pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]);
-		float phi = atan(Eigen::internal::psqrt(pos[0]*pos[0] + pos[1]*pos[1] / pos[2]));	// = angle_x
-		float theta = atan(pos[1]/pos[0]);	// = angle_y
+		float distance = Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
+		float phi = atan(Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1] / pos[2]));		// = angle_x
+		float theta = atan(pos[1] / pos[0]);		// = angle_y
 
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
 		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Y-axis
@@ -165,8 +165,8 @@ private:
 				distance,
 				size_x_rad,
 				size_y_rad,
-				0, 		// TODO: update number depending on received frame_id
-				frame);		// by default, in LOCAL_NED			
+				0,		// TODO: update number depending on received frame_id
+				frame);		// by default, in LOCAL_NED
 	}
 
 	void handle_landing_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -178,9 +178,9 @@ private:
 		float theta = land_target.angle_y;
 
 		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(distance * sin(phi) * sin(theta),	// right now in NED
-															distance * sin(phi) * sin(theta),
-															distance * cos(phi)));	
-		auto orientation = Eigen::Quaterniond(1,0,0,0); // TODO : Set pose depending on MAV_FRAME enum
+					distance * sin(phi) * sin(theta),
+					distance * cos(phi)));
+		auto orientation = Eigen::Quaterniond(1,0,0,0);	// TODO : Set pose depending on MAV_FRAME enum
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
 				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
@@ -236,7 +236,6 @@ private:
 
 		send_landing_target(req->header.stamp, tr);
 	}
-
 };
 };	// namespace mavplugin
 
