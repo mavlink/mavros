@@ -60,7 +60,6 @@ public:
 template <class D>
 class TF2ListenerMixin {
 public:
-	ros::NodeHandle tf_nh;
 	std::thread tf_thread;
 	std::string tf_thd_name;
 	boost::function<void (const geometry_msgs::TransformStamped &)> tf_transform_cb;
@@ -86,7 +85,7 @@ public:
 		std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
 
 		ros::Rate rate(static_cast<D *>(this)->tf_rate);
-		while (tf_nh.ok()) {
+		while (ros::ok()) {
 			// Wait up to 3s for transform
 			if (_uas->tf2_buffer.canTransform(_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0))) {
 				try {
