@@ -98,6 +98,8 @@ public:
 			ROS_ERROR_NAMED("sitl_test", "Path shape: wrong/unexistant path shape name %s", shape_.c_str());
 			return;
 		}
+
+		threshold = threshold_definition();
 	}
 
 	/* -*- main routine -*- */
@@ -105,6 +107,7 @@ public:
 	void spin(int argc, char *argv[]) {
 		init();
 		ros::Rate loop_rate(10);
+
 		ROS_INFO("SITL Test: Offboard control test running!");
 
 		if (mode == POSITION) {
@@ -154,6 +157,8 @@ private:
 	geometry_msgs::TwistStamped vs;
 
 	Eigen::Vector3d current;
+
+	std::array<double, 100> threshold;
 
 	/* -*- helper functions -*- */
 
@@ -417,11 +422,14 @@ private:
 	 */
 	void wait_and_move(geometry_msgs::PoseStamped target){
 		ros::Rate loop_rate(10);
-
 		bool stop = false;
-		double distance;
 
 		Eigen::Vector3d dest;
+
+		double distance;
+		double err_th = threshold[rand() % threshold.size()];
+
+		ROS_DEBUG("Next setpoint: accepted error threshold: %1.3f", err_th);
 
 		while (ros::ok() && !stop) {
 			tf::pointMsgToEigen(target.pose.position, dest);
@@ -431,7 +439,7 @@ private:
 					(dest - current).y() * (dest - current).y() +
 					(dest - current).z() * (dest - current).z());
 
-			if (distance <= 0.1f)	/** @todo Add gaussian threshold */
+			if (distance <= err_th)
 				stop = true;
 
 			if (mode == POSITION) {
@@ -448,6 +456,19 @@ private:
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
+	}
+
+	std::array<double, 100> threshold_definition(){
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::array<double, 100> th_values;
+
+		std::normal_distribution<double> th(0.1,0.01);
+
+		for (auto &value : th_values) {
+			value = th(gen);
+		}
+		return th_values;
 	}
 
 	/* -*- callbacks -*- */
