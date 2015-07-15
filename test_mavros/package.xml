@@ -25,6 +25,9 @@
   <depend>mavros</depend>
   <depend>mavros_extras</depend>
 
+  <exec_depend>px4</exec_depend>
+  <exec_depend>rotors_simulator</exec_depend>
+
   <!--<test_depend>gtest</test_depend> -->
   <!--<test_depend>mavros</test_depend> -->
   <!--<test_depend>mavros_extras</test_depend> -->
