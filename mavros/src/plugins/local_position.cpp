@@ -17,9 +17,10 @@
 
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
-#include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 
 namespace mavplugin {
 /**
@@ -31,16 +32,19 @@ public:
 	LocalPositionPlugin() :
 		lp_nh("~local_position"),
 		uas(nullptr),
-		send_tf(false)
+		tf_send(false)
 	{ };
 
 	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 
-		lp_nh.param("send_tf", send_tf, true);
-		lp_nh.param<std::string>("frame_id", frame_id, "local_origin");
-		lp_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
+		// general params
+		lp_nh.param<std::string>("frame_id", frame_id, "fcu");
+		// tf subsection
+		lp_nh.param("tf/send", tf_send, true);
+		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
+		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu");
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
 	}
@@ -56,43 +60,42 @@ private:
 	UAS *uas;
 
 	ros::Publisher local_position;
-	tf::TransformBroadcaster tf_broadcaster;
 
-	std::string frame_id;		//!< origin for TF
-	std::string child_frame_id;	//!< frame for TF and Pose
-	bool send_tf;
+	std::string frame_id;		//!< frame for Pose
+	std::string tf_frame_id;	//!< origin for TF
+	std::string tf_child_frame_id;	//!< frame for TF
+	bool tf_send;
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 
-		ROS_DEBUG_THROTTLE_NAMED(10, "position", "Local position NED: boot_ms:%06d "
-				"position:(%1.3f %1.3f %1.3f) speed:(%1.3f %1.3f %1.3f)",
-				pos_ned.time_boot_ms,
-				pos_ned.x, pos_ned.y, pos_ned.z,
-				pos_ned.vx, pos_ned.vy, pos_ned.vz);
-
-		tf::Transform transform;
-
-		auto position = UAS::transform_frame_ned_enu_xyz(pos_ned.x, pos_ned.y, pos_ned.z);
-
-		transform.setOrigin(position);
-		transform.setRotation(uas->get_attitude_orientation());
+		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
+		auto orientation = uas->get_attitude_orientation();
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 
-		tf::poseTFToMsg(transform, pose->pose);
-		pose->header.frame_id = frame_id;
-		pose->header.stamp = uas->synchronise_stamp(pos_ned.time_boot_ms);
+		pose->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
 
-		if (send_tf)
-			tf_broadcaster.sendTransform(
-					tf::StampedTransform(
-						transform,
-						pose->header.stamp,
-						frame_id, child_frame_id));
+		tf::pointEigenToMsg(position, pose->pose.position);
+
+		// XXX FIX ME #319
+		tf::quaternionTFToMsg(orientation, pose->pose.orientation);
 
 		local_position.publish(pose);
+
+		if (tf_send) {
+			geometry_msgs::TransformStamped transform;
+
+			transform.header.stamp = pose->header.stamp;
+			transform.header.frame_id = tf_frame_id;
+			transform.child_frame_id = tf_child_frame_id;
+
+			transform.transform.rotation = pose->pose.orientation;
+			tf::vectorEigenToMsg(position, transform.transform.translation);
+
+			uas->tf2_broadcaster.sendTransform(transform);
+		}
 	}
 };
 };	// namespace mavplugin

@@ -446,7 +446,7 @@ private:
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
 
-	static constexpr int RETRIES_COUNT = 3;
+	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
 
@@ -527,40 +527,52 @@ private:
 		return ss.str();
 	}
 
-	void process_autopilot_version_normal(mavlink_autopilot_version_t &apv)
+	void process_autopilot_version_normal(mavlink_autopilot_version_t &apv, uint8_t sysid, uint8_t compid)
 	{
-		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
-		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%s)",
+		char prefix[16];
+		::snprintf(prefix, sizeof(prefix) - 1, "VER: %d.%d", sysid, compid);
+
+		ROS_INFO_NAMED("sys", "%s: Capabilities 0x%016llx", prefix, (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "%s: Flight software:     %08x (%s)",
+				prefix,
 				apv.flight_sw_version,
 				custom_version_to_hex_string(apv.flight_custom_version).c_str());
-		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%s)",
+		ROS_INFO_NAMED("sys", "%s: Middleware software: %08x (%s)",
+				prefix,
 				apv.middleware_sw_version,
 				custom_version_to_hex_string(apv.middleware_custom_version).c_str());
-		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%s)",
+		ROS_INFO_NAMED("sys", "%s: OS software:         %08x (%s)",
+				prefix,
 				apv.os_sw_version,
 				custom_version_to_hex_string(apv.os_custom_version).c_str());
-		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
-		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
-		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+		ROS_INFO_NAMED("sys", "%s: Board hardware:      %08x", prefix, apv.board_version);
+		ROS_INFO_NAMED("sys", "%s: VID/PID: %04x:%04x", prefix, apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "%s: UID: %016llx", prefix, (long long int)apv.uid);
 	}
 
-	void process_autopilot_version_apm_quirk(mavlink_autopilot_version_t &apv)
+	void process_autopilot_version_apm_quirk(mavlink_autopilot_version_t &apv, uint8_t sysid, uint8_t compid)
 	{
+		char prefix[16];
+		::snprintf(prefix, sizeof(prefix) - 1, "VER: %d.%d", sysid, compid);
+
 		// Note based on current APM's impl.
 		// APM uses custom version array[8] as a string
-		ROS_INFO_NAMED("sys", "VER: Capabilities 0x%016llx", (long long int)apv.capabilities);
-		ROS_INFO_NAMED("sys", "VER: Flight software:     %08x (%*s)",
+		ROS_INFO_NAMED("sys", "%s: Capabilities 0x%016llx", prefix, (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "%s: Flight software:     %08x (%*s)",
+				prefix,
 				apv.flight_sw_version,
 				8, apv.flight_custom_version);
-		ROS_INFO_NAMED("sys", "VER: Middleware software: %08x (%*s)",
+		ROS_INFO_NAMED("sys", "%s: Middleware software: %08x (%*s)",
+				prefix,
 				apv.middleware_sw_version,
 				8, apv.middleware_custom_version);
-		ROS_INFO_NAMED("sys", "VER: OS software:         %08x (%*s)",
+		ROS_INFO_NAMED("sys", "%s: OS software:         %08x (%*s)",
+				prefix,
 				apv.os_sw_version,
 				8, apv.os_custom_version);
-		ROS_INFO_NAMED("sys", "VER: Board hardware:      %08x", apv.board_version);
-		ROS_INFO_NAMED("sys", "VER: VID/PID: %04x:%04x", apv.vendor_id, apv.product_id);
-		ROS_INFO_NAMED("sys", "VER: UID: %016llx", (long long int)apv.uid);
+		ROS_INFO_NAMED("sys", "%s: Board hardware:      %08x", prefix, apv.board_version);
+		ROS_INFO_NAMED("sys", "%s: VID/PID: %04x:%04x", prefix, apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "%s: UID: %016llx", prefix, (long long int)apv.uid);
 	}
 
 	void publish_disconnection() {
@@ -655,13 +667,17 @@ private:
 		mavlink_autopilot_version_t apv;
 		mavlink_msg_autopilot_version_decode(msg, &apv);
 
-		autopilot_version_timer.stop();
-		uas->update_capabilities(true, apv.capabilities);
+		// we want to store only FCU caps
+		if (uas->is_my_target(sysid, compid)) {
+			autopilot_version_timer.stop();
+			uas->update_capabilities(true, apv.capabilities);
+		}
 
+		// but print all version responses
 		if (uas->is_ardupilotmega())
-			process_autopilot_version_apm_quirk(apv);
+			process_autopilot_version_apm_quirk(apv, sysid, compid);
 		else
-			process_autopilot_version_normal(apv);
+			process_autopilot_version_normal(apv, sysid, compid);
 	}
 
 	/* -*- timer callbacks -*- */
@@ -686,15 +702,21 @@ private:
 	void autopilot_version_cb(const ros::TimerEvent &event) {
 		bool ret = false;
 
+		// Request from all first 3 times, then fallback to unicast
+		bool do_broadcast = version_retries > RETRIES_COUNT / 2;
+
 		try {
 			auto client = nh.serviceClient<mavros::CommandLong>("cmd/command");
 
 			mavros::CommandLong cmd{};
+
+			cmd.request.broadcast = do_broadcast;
 			cmd.request.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 			cmd.request.confirmation = false;
 			cmd.request.param1 = 1.0;
 
-			ROS_DEBUG_NAMED("sys", "VER: Sending request.");
+			ROS_DEBUG_NAMED("sys", "VER: Sending %s request.",
+					(do_broadcast) ? "broadcast" : "unicast");
 			ret = client.call(cmd);
 		}
 		catch (ros::InvalidNameException &ex) {
@@ -706,7 +728,9 @@ private:
 		if (version_retries > 0) {
 			version_retries--;
 			ROS_WARN_COND_NAMED(version_retries != RETRIES_COUNT - 1, "sys",
-					"VER: request timeout, retries left %d", version_retries);
+					"VER: %s request timeout, retries left %d",
+					(do_broadcast) ? "broadcast" : "unicast",
+					version_retries);
 		}
 		else {
 			uas->update_capabilities(false);

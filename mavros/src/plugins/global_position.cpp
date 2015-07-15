@@ -21,7 +21,6 @@
 #include <mavros/gps_conversions.h>
 #include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <tf2_ros/transform_broadcaster.h>
 
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -95,8 +94,6 @@ private:
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
 
-	tf2_ros::TransformBroadcaster tf2_broadcaster;
-
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
@@ -125,8 +122,7 @@ private:
 
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 
-		fix->header.frame_id = frame_id;
-		fix->header.stamp = uas->synchronise_stamp(raw_gps.time_usec);
+		fix->header = uas->synchronized_header(frame_id, raw_gps.time_usec);
 
 		fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
 		if (raw_gps.fix_type > 2)
@@ -189,9 +185,7 @@ private:
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
 		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
-		std_msgs::Header header;
-		header.frame_id = frame_id;
-		header.stamp = uas->synchronise_stamp(gpos.time_boot_ms);
+		auto header = uas->synchronized_header(frame_id, gpos.time_boot_ms);
 
 		// Global position fix
 		fix->header = header;
@@ -248,8 +242,8 @@ private:
 		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
 
 		// Use ENU covariance to build XYZRPY covariance
-		Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > gps_cov(fix->position_covariance.data());
-		Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > cov_out(pose_cov->pose.covariance.data());
+		UAS::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
+		UAS::EigenMapCovariance6d cov_out(pose_cov->pose.covariance.data());
 		cov_out <<
 			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
 			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
@@ -282,7 +276,7 @@ private:
 			transform.transform.translation.y = pose_cov->pose.pose.position.y;
 			transform.transform.translation.z = pose_cov->pose.pose.position.z;
 
-			tf2_broadcaster.sendTransform(transform);
+			uas->tf2_broadcaster.sendTransform(transform);
 		}
 	}
 
