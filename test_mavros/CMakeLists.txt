@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   tf2_ros
+  eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
@@ -87,8 +88,8 @@ include(EnableCXX11)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES sitl_test
-  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros
-  DEPENDS Boost
+  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions
+  DEPENDS Boost Eigen
 )
 
 ###########
@@ -101,6 +102,7 @@ catkin_package(
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
