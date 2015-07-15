@@ -38,21 +38,33 @@ public:
 		uas(nullptr),
 		tf_rate(10.0),
 		send_tf(true),
-		listen_tf(false)
+		listen_tf(false),
+		frame(1)
 	{ };
 
 	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
 
-		sp_nh.param("send_tf", send_tf, true);
-		sp_nh.param("listen_tf", listen_tf, false);
+		// general params
+		sp_nh.param<std::string>("frame_id", frame_id, "landing_target");
+		sp_nh.param<std::string>("child_frame_id", child_frame_id, "camera_center");
+		sp_nh.param("target_size/xy", target_size_x, 1.0);	// in meters
+		sp_nh.param("target_size/z", target_size_y, 1.0);
+		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
+		// tf subsection
+		sp_nh.param("tf/send", send_tf, true);
+		sp_nh.param("tf/listen", listen_tf, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "landing_target");
 		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "camera_center");
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
-		sp_nh.param("target_size/x", target_size_x, 1.0);	// in meters
-		sp_nh.param("target_size/y", target_size_y, 1.0);
-		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
+
+		frame = UAS::idx_frame(mav_frame);	// MAV_FRAME index based on given frame name
+
+		if (frame == -1) {
+			ROS_ERROR_NAMED("landing_target", "LT: invalid MAV_FRAME %s. Please check valid frame names!", mav_frame.c_str());
+			return;
+		}
 
 		land_target_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("landing_target", 10);
 		target_size_pub = sp_nh.advertise<geometry_msgs::Vector3>("target_size", 10);
@@ -83,7 +95,9 @@ private:
 	double tf_rate;
 	ros::Time last_transform_stamp;
 
+	std::string frame_id;
 	std::string tf_frame_id;
+	std::string child_frame_id;
 	std::string tf_child_frame_id;
 
 	ros::Publisher land_target_pub;
@@ -93,6 +107,7 @@ private:
 	double target_size_x, target_size_y;
 
 	std::string mav_frame;
+	int frame;	
 
 	/* -*- low-level send -*- */
 	void landing_target(uint64_t time_usec,
@@ -141,18 +156,12 @@ private:
 		// origin position in ROS ENU frame
 		auto pos = UAS::transform_frame_enu_ned(Eigen::Vector3d(transf.translation()));
 
-		float distance = Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
-		float phi = atan(Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1]) / pos[2]);		// = angle_x
-		float theta = atan(pos[1] / pos[0]);		// = angle_y
+		float distance = sqrt(pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z());
+		float phi = atan(sqrt(pos.x() * pos.x() + pos.y() * pos.y()) / pos.z());		// = angle_x
+		float theta = atan(pos.y() / pos.x());		// = angle_y
 
-		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
-		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Y-axis
-
-		uint8_t frame = UAS::idx_frame(mav_frame);	// MAV_FRAME index based on given frame name
-		if (frame == -1) {
-			ROS_ERROR_NAMED("landing_target", "LT: invalid MAV_FRAME %s. Please check valid frame names!", mav_frame.c_str());
-			return;
-		}
+		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in XY-axis
+		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Z-axis
 
 		if (last_transform_stamp == stamp) {
 			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "LT: Same transform as last one, dropped.");
@@ -186,10 +195,10 @@ private:
 				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
 				"distance: %1.3fm position:(%1.3f, %1.3f, %1.3f)",
 				mavros::UAS::str_frame(static_cast<enum MAV_FRAME>(land_target.frame)).c_str(),
-				phi, theta, distance, position[0], position[1], position[2]);
+				phi, theta, distance, position.x(), position.y(), position.z());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
-		pose->header = uas->synchronized_header(tf_frame_id, land_target.time_usec);
+		pose->header = uas->synchronized_header(child_frame_id, land_target.time_usec);
 
 		tf::pointEigenToMsg(position, pose->pose.position);
 		tf::quaternionEigenToMsg(orientation, pose->pose.orientation);
@@ -212,7 +221,7 @@ private:
 		auto tg_size = Eigen::Vector3d(land_target.size_x / phi, land_target.size_x / (M_PI - phi), land_target.size_y / theta);
 		auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
 
-		tg_size_msg->header = uas->synchronized_header(tf_frame_id, land_target.time_usec);
+		tg_size_msg->header = uas->synchronized_header(frame_id, land_target.time_usec);
 		tf::vectorEigenToMsg(tg_size, tg_size_msg->vector);
 
 		target_size_pub.publish(tg_size_msg);
