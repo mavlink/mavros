@@ -17,6 +17,7 @@
 
 #include <sitl_test/sitl_test.h>
 #include <sitl_test/test_type.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -47,8 +48,6 @@ class OffboardControl {
 public:
 	OffboardControl() :
 		nh_sp("~"),
-		mode_("position"),
-		shape_("square"),
 		local_pos_sp_pub(nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10)),
 		vel_sp_pub(nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10)),
 		local_pos_sub(nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this))
@@ -146,127 +145,100 @@ private:
 	path_shape shape;
 
 	ros::NodeHandle nh_sp;
-	ros::Publisher local_pos_sp_pub;
-	ros::Publisher vel_sp_pub;
+	ros::Publisher local_pos_sp_pub, vel_sp_pub;
 	ros::Subscriber local_pos_sub;
 
-	std::string mode_;
-	std::string shape_;
+	std::string mode_, shape_;
 
-	geometry_msgs::PoseStamped localpos;
-	geometry_msgs::PoseStamped ps;
-
+	geometry_msgs::PoseStamped localpos, ps;
 	geometry_msgs::TwistStamped vs;
 
-	/* -*- alias -*- */
-    #define X  ps.pose.position.x
-    #define Y  ps.pose.position.y
-    #define Z  ps.pose.position.z
-    #define VX  vs.twist.linear.x
-    #define VY  vs.twist.linear.y
-    #define VZ  vs.twist.linear.z
-    #define sp_X  pos_setpoint().x
-    #define sp_Y  pos_setpoint().y
-    #define sp_Z  pos_setpoint().z
-    #define current_x localpos.pose.position.x
-    #define current_y localpos.pose.position.y
-    #define current_z localpos.pose.position.z
+	Eigen::Vector3d current;
 
 	/* -*- helper functions -*- */
 
 	/**
 	 * @brief Defines single position setpoint
 	 */
-	geometry_msgs::Point pos_setpoint(){
-		geometry_msgs::Point sp;
+	Eigen::Vector3d pos_setpoint(){
 		/** @todo Give possibility to user define amplitude of movement (square corners coordinates)*/
-		sp.x = 2.0f;	// meters
-		sp.y = 2.0f;
-		sp.z = 1.0f;
-		return sp;
+		return Eigen::Vector3d(2.0f, 2.0f, 1.0f);	// meters
 	}
 
 	/**
 	 * @brief Defines circle path
 	 */
-	geometry_msgs::PoseStamped circle_shape(int angle){
-		geometry_msgs::PoseStamped sp;
-		double r = 5.0f;// 5 meters radius
+	Eigen::Vector3d circle_shape(int angle){
+		/** @todo Give possibility to user define amplitude of movement (circle radius)*/
+		double r = 5.0f;	// 5 meters radius
 
-		sp.pose.position.x = r * cos(angle * M_PI / 180.0f);
-		sp.pose.position.y = r * sin(angle * M_PI / 180.0f);
-		sp.pose.position.z = 1.0f;
-
-		return sp;
+		return Eigen::Vector3d(r * cos(angle * M_PI / 180.0f),
+				r * sin(angle * M_PI / 180.0f),
+				1.0f);;
 	}
 
 	/**
 	 * @brief Defines Gerono lemniscate path
 	 */
-	geometry_msgs::PoseStamped eight_shape(int angle){
-		geometry_msgs::PoseStamped sp;
-		double a = 5.0f;// vertical tangent with 5 meters size
+	Eigen::Vector3d eight_shape(int angle){
+		/** @todo Give possibility to user define amplitude of movement (vertical tangent size)*/
+		double a = 5.0f;	// vertical tangent with 5 meters size
 
-		sp.pose.position.x = a * cos(angle * M_PI / 180.0f);
-		sp.pose.position.y = a * sin(angle * M_PI / 180.0f) * cos(angle * M_PI / 180.0f);
-		sp.pose.position.z = 1.0f;
-
-		return sp;
+		return Eigen::Vector3d(a * cos(angle * M_PI / 180.0f),
+				a * sin(angle * M_PI / 180.0f) * cos(angle * M_PI / 180.0f),
+				1.0f);;
 	}
 
 	/**
 	 * @brief Defines ellipse path
 	 */
-	geometry_msgs::PoseStamped ellipse_shape(int angle){
-		geometry_msgs::PoseStamped sp;
-		double a = 5.0f;// major axis
-		double b = 2.0f;// minor axis
+	Eigen::Vector3d ellipse_shape(int angle){
+		/** @todo Give possibility to user define amplitude of movement (tangent sizes)*/
+		double a = 5.0f;	// major axis
+		double b = 2.0f;	// minor axis
 
-		// using spherical coordinates (rotation around y-axis)
-		sp.pose.position.x = a * cos(angle * M_PI / 180.0f);
-		sp.pose.position.y = 0.0f;
-		sp.pose.position.z = 2.5f + b*sin(angle * M_PI / 180.0f);
-
-		return sp;
+		// rotation around y-axis
+		return Eigen::Vector3d(a * cos(angle * M_PI / 180.0f),
+				0.0f,
+				2.5f + b * sin(angle * M_PI / 180.0f));;
 	}
 
 	/**
 	 * @brief Square path motion routine
 	 */
 	void square_path_motion(ros::Rate loop_rate, control_mode mode){
-		uint8_t pos_target = 0;
+		uint8_t pos_target = 1;
+
 		ROS_INFO("Testing...");
 
 		while (ros::ok()) {
-			if (mode == POSITION) {
-				local_pos_sp_pub.publish(ps);
-			}
-			else if (mode == VELOCITY) {
-				vel_sp_pub.publish(vs);
-			}
-			else if (mode == ACCELERATION) {
-				// TODO
-				return;
-			}
-
 			wait_and_move(ps);
 
 			// motion routine
 			switch (pos_target) {
 			case 1:
-				X = sp_X; Y = sp_Y; Z = sp_Z;
+				tf::pointEigenToMsg(pos_setpoint(), ps.pose.position);
 				break;
 			case 2:
-				X = -sp_X; Y = sp_Y; Z = sp_Z;
+				tf::pointEigenToMsg(Eigen::Vector3d(-pos_setpoint().x(),
+							pos_setpoint().y(),
+							pos_setpoint().z()),
+						ps.pose.position);
 				break;
 			case 3:
-				X = -sp_X; Y = -sp_Y; Z = sp_Z;
+				tf::pointEigenToMsg(Eigen::Vector3d(-pos_setpoint().x(),
+							-pos_setpoint().y(),
+							pos_setpoint().z()),
+						ps.pose.position);
 				break;
 			case 4:
-				X = sp_X; Y = -sp_Y; Z = sp_Z;
+				tf::pointEigenToMsg(Eigen::Vector3d( pos_setpoint().x(),
+							-pos_setpoint().y(),
+							pos_setpoint().z()),
+						ps.pose.position);
 				break;
 			case 5:
-				X = sp_X; Y = sp_Y; Z = sp_Z;
+				tf::pointEigenToMsg(pos_setpoint(), ps.pose.position);
 				break;
 			default:
 				break;
@@ -288,21 +260,18 @@ private:
 	 * @brief Circle path motion routine
 	 */
 	void circle_path_motion(ros::Rate loop_rate, control_mode mode){
-		geometry_msgs::PoseStamped setpoint;
 		ROS_INFO("Testing...");
 
 		while (ros::ok()) {
+			tf::pointMsgToEigen(localpos.pose.position, current);
+
 			// starting point
 			if (mode == POSITION) {
-				X = 5.0f;
-				Y = 0.0f;
-				Z = 1.0f;
+				tf::pointEigenToMsg(Eigen::Vector3d(5.0f, 0.0f, 1.0f), ps.pose.position);
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
-				VX = 5.0f - current_x;
-				VY = 0.0f - current_y;
-				VZ = 1.0f - current_z;
+				tf::vectorEigenToMsg(Eigen::Vector3d(5.0f - current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -314,13 +283,14 @@ private:
 
 			// motion routine
 			for (int theta = 0; theta <= 360; theta++) {
-				if (mode == POSITION)
-					local_pos_sp_pub.publish(circle_shape(theta));
+				tf::pointMsgToEigen(localpos.pose.position, current);
+
+				if (mode == POSITION) {
+					tf::pointEigenToMsg(circle_shape(theta), ps.pose.position);
+					local_pos_sp_pub.publish(ps);
+				}
 				else if (mode == VELOCITY) {
-					setpoint = circle_shape(theta);
-					VX = setpoint.pose.position.x - current_x;
-					VY = setpoint.pose.position.y - current_y;
-					VZ = setpoint.pose.position.z - current_z;
+					tf::vectorEigenToMsg(circle_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -341,21 +311,18 @@ private:
 	 * @brief Eight path motion routine
 	 */
 	void eight_path_motion(ros::Rate loop_rate, control_mode mode){
-		geometry_msgs::PoseStamped setpoint;
 		ROS_INFO("Testing...");
 
 		while (ros::ok()) {
+			tf::pointMsgToEigen(localpos.pose.position, current);
+
 			// starting point
 			if (mode == POSITION) {
-				X = 0.0f;
-				Y = 0.0f;
-				Z = 1.0f;
+				tf::pointEigenToMsg(Eigen::Vector3d(0.0f, 0.0f, 1.0f), ps.pose.position);
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
-				VX = 0.0f - current_x;
-				VY = 0.0f - current_y;
-				VZ = 1.0f - current_z;
+				tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -367,13 +334,14 @@ private:
 
 			// motion routine
 			for (int theta = -180; theta <= 180; theta++) {
-				if (mode == POSITION)
-					local_pos_sp_pub.publish(eight_shape(theta));
+				tf::pointMsgToEigen(localpos.pose.position, current);
+
+				if (mode == POSITION) {
+					tf::pointEigenToMsg(eight_shape(theta), ps.pose.position);
+					local_pos_sp_pub.publish(ps);
+				}
 				else if (mode == VELOCITY) {
-					setpoint = eight_shape(theta);
-					VX = setpoint.pose.position.x - current_x;
-					VY = setpoint.pose.position.y - current_y;
-					VZ = setpoint.pose.position.z - current_z;
+					tf::vectorEigenToMsg(eight_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -394,23 +362,20 @@ private:
 	 * @brief Ellipse path motion routine
 	 */
 	void ellipse_path_motion(ros::Rate loop_rate, control_mode mode){
-		geometry_msgs::PoseStamped setpoint;
 		ROS_INFO("Testing...");
 
 		while (ros::ok()) {
+			tf::pointMsgToEigen(localpos.pose.position, current);
+
 			// starting point
 			if (mode == POSITION) {
-				X = 0.0f;
-				Y = 0.0f;
-				Z = 2.5f;
+				tf::pointEigenToMsg(Eigen::Vector3d(0.0f, 0.0f, 2.5f), ps.pose.position);
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
 				// This one gets some strange behavior, maybe due to overshoot on velocity controller
 				// TODO: find a way to limit the velocity between points (probably using ros::Rate)
-				VX = 0.0f - current_x;
-				VY = 0.0f - current_y;
-				VZ = 2.5f - current_z;
+				tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 2.5f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -422,13 +387,14 @@ private:
 
 			// motion routine
 			for (int theta = 0; theta <= 360; theta++) {
-				if (mode == POSITION)
-					local_pos_sp_pub.publish(ellipse_shape(theta));
+				tf::pointMsgToEigen(localpos.pose.position, current);
+
+				if (mode == POSITION) {
+					tf::pointEigenToMsg(ellipse_shape(theta), ps.pose.position);
+					local_pos_sp_pub.publish(ps);
+				}
 				else if (mode == VELOCITY) {
-					setpoint = ellipse_shape(theta);
-					VX = setpoint.pose.position.x - current_x;
-					VY = setpoint.pose.position.y - current_y;
-					VZ = setpoint.pose.position.z - current_z;
+					tf::vectorEigenToMsg(ellipse_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -450,16 +416,20 @@ private:
 	 * before moving to the next setpoint.
 	 */
 	void wait_and_move(geometry_msgs::PoseStamped target){
-		bool stop = false;
 		ros::Rate loop_rate(10);
 
-		geometry_msgs::Point dest = target.pose.position;
+		bool stop = false;
+		double distance;
+
+		Eigen::Vector3d dest;
 
 		while (ros::ok() && !stop) {
-			double distance = sqrt(
-					(dest.x - current_x) * (dest.x - current_x) +
-					(dest.y - current_y) * (dest.y - current_y) +
-					(dest.z - current_z) * (dest.z - current_z));
+			tf::pointMsgToEigen(target.pose.position, dest);
+			tf::pointMsgToEigen(localpos.pose.position, current);
+
+			distance = sqrt((dest - current).x() * (dest - current).x() +
+					(dest - current).y() * (dest - current).y() +
+					(dest - current).z() * (dest - current).z());
 
 			if (distance <= 0.1f)	/** @todo Add gaussian threshold */
 				stop = true;
@@ -468,18 +438,15 @@ private:
 				local_pos_sp_pub.publish(target);
 			}
 			else if (mode == VELOCITY) {
-				VX = dest.x - current_x;
-				VY = dest.y - current_y;
-				VZ = dest.z - current_z;
+				tf::vectorEigenToMsg(dest - current, vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
 				// TODO
 				return;
 			}
-
-			ros::spinOnce();
 			loop_rate.sleep();
+			ros::spinOnce();
 		}
 	}
 
