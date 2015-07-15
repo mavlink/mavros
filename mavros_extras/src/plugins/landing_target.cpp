@@ -142,7 +142,7 @@ private:
 		auto pos = UAS::transform_frame_enu_ned(Eigen::Vector3d(transf.translation()));
 
 		float distance = Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
-		float phi = atan(Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1] / pos[2]));		// = angle_x
+		float phi = atan(Eigen::internal::psqrt(pos[0] * pos[0] + pos[1] * pos[1]) / pos[2]);		// = angle_x
 		float theta = atan(pos[1] / pos[0]);		// = angle_y
 
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
