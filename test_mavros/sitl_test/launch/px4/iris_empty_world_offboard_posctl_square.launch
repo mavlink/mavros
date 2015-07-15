@@ -26,7 +26,7 @@
     <arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
     <arg name="gcs_url" default="" />
     <arg name="tgt_system" default="1" />
-    <arg name="tgt_component" default="50" />
+    <arg name="tgt_component" default="1" />
 
     <include file="$(find mavros)/launch/node.launch">
         <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
