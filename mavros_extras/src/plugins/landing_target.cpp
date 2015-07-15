@@ -58,7 +58,7 @@ public:
 		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "camera_center");
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
-		frame = UAS::idx_frame(mav_frame);	// MAV_FRAME index based on given frame name
+		frame = UAS::frame_from_str(mav_frame);	// MAV_FRAME index based on given frame name
 
 		if (frame == -1) {
 			ROS_ERROR_NAMED("landing_target", "LT: invalid MAV_FRAME %s. Please check valid frame names!", mav_frame.c_str());
