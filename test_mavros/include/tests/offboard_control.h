@@ -15,6 +15,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <array>
 #include <sitl_test/sitl_test.h>
 #include <sitl_test/test_type.h>
 #include <eigen_conversions/eigen_msg.h>
@@ -50,7 +51,8 @@ public:
 		nh_sp("~"),
 		local_pos_sp_pub(nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10)),
 		vel_sp_pub(nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10)),
-		local_pos_sub(nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this))
+		local_pos_sub(nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this)),
+		threshold(threshold_definition())
 	{ };
 
 	void init() {
@@ -98,8 +100,6 @@ public:
 			ROS_ERROR_NAMED("sitl_test", "Path shape: wrong/unexistant path shape name %s", shape_.c_str());
 			return;
 		}
-
-		threshold = threshold_definition();
 	}
 
 	/* -*- main routine -*- */
