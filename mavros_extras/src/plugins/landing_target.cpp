@@ -18,9 +18,10 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
-#include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 namespace mavplugin {
 /**
@@ -30,7 +31,7 @@ namespace mavplugin {
  * to the FCU and/or receive IRLock infrared tracking data.
  */
 class LandingTargetPlugin : public MavRosPlugin,
-	private TFListenerMixin<LandingTargetPlugin> {
+	private TF2ListenerMixin<LandingTargetPlugin> {
 public:
 	LandingTargetPlugin() :
 		sp_nh("~landing_target"),
@@ -46,9 +47,9 @@ public:
 
 		sp_nh.param("send_tf", send_tf, true);
 		sp_nh.param("listen_tf", listen_tf, false);
-		sp_nh.param<std::string>("frame_id", frame_id, "landing_target");
-		sp_nh.param<std::string>("child_frame_id", child_frame_id, "camera_center");
-		sp_nh.param("tf_rate_limit", tf_rate, 50.0);
+		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "landing_target");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "camera_center");
+		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 		sp_nh.param("target_size/x", target_size_x, 1.0);	// in meters
 		sp_nh.param("target_size/y", target_size_y, 1.0);
 		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
@@ -57,12 +58,13 @@ public:
 		target_size_pub = sp_nh.advertise<geometry_msgs::Vector3>("target_size", 10);
 
 		if (listen_tf) {
-			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << frame_id
-											<< " -> " << child_frame_id);
-			tf_start("LandingTargetTF", &LandingTargetPlugin::send_landing_target);
+			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << tf_frame_id
+											<< " -> " << tf_child_frame_id);
+			tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
 		}
-
-		land_target_sub = sp_nh.subscribe("target", 10, &LandingTargetPlugin::land_target_cb, this);
+		else {
+			land_target_sub = sp_nh.subscribe("target", 10, &LandingTargetPlugin::land_target_cb, this);
+		}
 	}
 
 	const message_map get_rx_handlers() {
@@ -72,7 +74,7 @@ public:
 	}
 
 private:
-	friend class TFListenerMixin;
+	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
 	UAS *uas;
 
@@ -80,10 +82,9 @@ private:
 	bool listen_tf;
 	double tf_rate;
 	ros::Time last_transform_stamp;
-	tf::TransformBroadcaster tf_broadcaster;
 
-	std::string frame_id;
-	std::string child_frame_id;
+	std::string tf_frame_id;
+	std::string tf_child_frame_id;
 
 	ros::Publisher land_target_pub;
 	ros::Publisher target_size_pub;
@@ -136,13 +137,13 @@ private:
 	/**
 	 * Send landing target transform to FCU
 	 */
-	void send_landing_target(const tf::Transform &transf, const ros::Time &stamp) {
+	void send_landing_target(const ros::Time &stamp, const Eigen::Affine3d &transf) {
 		// origin position in ROS ENU frame
-		tf::Vector3 pos = transf.getOrigin();
+		auto pos = UAS::transform_frame_enu_ned(Eigen::Vector3d(transf.translation()));
 
-		float distance = sqrt(pos.x()*pos.x() + pos.y()*pos.y() + pos.z()*pos.z());
-		float phi = atan(sqrt(pos.x()*pos.x() + pos.y()*pos.y()) / pos.z());	// = angle_x
-		float theta = atan(pos.y()/pos.x());	// = angle_y
+		float distance = Eigen::internal::psqrt(pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]);
+		float phi = atan(Eigen::internal::psqrt(pos[0]*pos[0] + pos[1]*pos[1] / pos[2]));	// = angle_x
+		float theta = atan(pos[1]/pos[0]);	// = angle_y
 
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in X-axis
 		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Y-axis
@@ -154,14 +155,14 @@ private:
 		}
 
 		if (last_transform_stamp == stamp) {
-			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Target: Same transform as last one, dropped.");
+			ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "LT: Same transform as last one, dropped.");
 			return;
 		}
 		last_transform_stamp = stamp;
 
 		landing_target( stamp.toNSec() / 1000,
-				phi, -theta,	// this conversion must depend on the above below
-				distance,	// TODO: add conversion to frames, on lib, according to MAV_FRAME enum
+				phi, theta,
+				distance,
 				size_x_rad,
 				size_y_rad,
 				0, 		// TODO: update number depending on received frame_id
@@ -172,63 +173,68 @@ private:
 		mavlink_landing_target_t land_target;
 		mavlink_msg_landing_target_decode(msg, &land_target);
 
-		tf::Vector3 target;
-		tf::Transform target_tf;
-		tf::Quaternion q;
-
 		float distance = land_target.distance;
 		float phi = land_target.angle_x;
 		float theta = land_target.angle_y;
 
-		target.setX(distance * sin(phi) * sin(theta));
-		target.setY(distance * sin(phi) * sin(theta));
-		target.setZ(distance * cos(phi));
-
-		target_tf.setOrigin(tf::Vector3(target.x(), -target.y(), -target.z())); // right now in NED but,
-		q.setRPY (0, 0, 0);			// TODO : Set pose depending on MAV_FRAME enum
-		target_tf.setRotation(q);
+		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(distance * sin(phi) * sin(theta),	// right now in NED
+															distance * sin(phi) * sin(theta),
+															distance * cos(phi)));	
+		auto orientation = Eigen::Quaterniond(1,0,0,0); // TODO : Set pose depending on MAV_FRAME enum
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
 				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
 				"distance: %1.3fm position:(%1.3f, %1.3f, %1.3f)",
 				mavros::UAS::str_frame(static_cast<enum MAV_FRAME>(land_target.frame)).c_str(),
-				land_target.angle_x, land_target.angle_y, land_target.distance,
-				target.x(), -target.y(), -target.z());
+				phi, theta, distance, position[0], position[1], position[2]);
 
-		std_msgs::Header header;
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		pose->header = uas->synchronized_header(tf_frame_id, land_target.time_usec);
 
-		tf::poseTFToMsg(target_tf, pose->pose);
-		pose->header.frame_id = frame_id;
-		pose->header.stamp = uas->synchronise_stamp(land_target.time_usec);
+		tf::pointEigenToMsg(position, pose->pose.position);
+		tf::quaternionEigenToMsg(orientation, pose->pose.orientation);
 
 		land_target_pub.publish(pose);
 
-		if (send_tf) 
-			tf_broadcaster.sendTransform(
-					tf::StampedTransform(
-						target_tf,
-						pose->header.stamp,
-						frame_id, child_frame_id));
+		if (send_tf) {
+			geometry_msgs::TransformStamped transform;
 
-		auto tg_size = boost::make_shared<geometry_msgs::Vector3>();
+			transform.header.stamp = pose->header.stamp;
+			transform.header.frame_id = tf_frame_id;
+			transform.child_frame_id = tf_child_frame_id;
 
-		tg_size->x = land_target.size_x / phi;	// again, assuming this is the arc length of the circles in XY-plane
-		tg_size->y = land_target.size_y / theta;
-		tg_size->z = 0.0f;			// unless the target is not flat, z = 0.0
+			transform.transform.rotation = pose->pose.orientation;
+			tf::vectorEigenToMsg(position, transform.transform.translation);
 
-		target_size_pub.publish(tg_size);
-		// TODO: add target_size and landing_target subscriber in visualization plugin, so to publish a marker of the target
+			uas->tf2_broadcaster.sendTransform(transform);
+		}
+
+		auto tg_size = Eigen::Vector3d(land_target.size_x / phi, land_target.size_x / (M_PI - phi), land_target.size_y / theta);
+		auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
+
+		tg_size_msg->header = uas->synchronized_header(tf_frame_id, land_target.time_usec);
+		tf::vectorEigenToMsg(tg_size, tg_size_msg->vector);
+
+		target_size_pub.publish(tg_size_msg);
+		/** @todo add target_size and landing_target subscriber in copter_visualization node, so to publish a marker of the target */
 	}
 
 	/* -*- callbacks -*- */
 
 	/* common TF listener moved to mixin */
 
+	void transform_cb(const geometry_msgs::TransformStamped &transform) {
+		Eigen::Affine3d tr;
+		tf::transformMsgToEigen(transform.transform, tr);
+
+		send_landing_target(transform.header.stamp, tr);
+	}
+
 	void land_target_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
-		tf::Transform transform;
-		poseMsgToTF(req->pose, transform);
-		send_landing_target(transform, req->header.stamp);
+		Eigen::Affine3d tr;
+		tf::poseMsgToEigen(req->pose, tr);
+
+		send_landing_target(req->header.stamp, tr);
 	}
 
 };
