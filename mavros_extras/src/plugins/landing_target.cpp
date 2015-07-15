@@ -48,10 +48,9 @@ public:
 
 		// general params
 		sp_nh.param<std::string>("frame_id", frame_id, "landing_target");
-		sp_nh.param<std::string>("child_frame_id", child_frame_id, "camera_center");
+		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
 		sp_nh.param("target_size/xy", target_size_x, 1.0);	// in meters
 		sp_nh.param("target_size/z", target_size_y, 1.0);
-		sp_nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
 		// tf subsection
 		sp_nh.param("tf/send", send_tf, true);
 		sp_nh.param("tf/listen", listen_tf, false);
@@ -97,7 +96,6 @@ private:
 
 	std::string frame_id;
 	std::string tf_frame_id;
-	std::string child_frame_id;
 	std::string tf_child_frame_id;
 
 	ros::Publisher land_target_pub;
@@ -198,7 +196,7 @@ private:
 				phi, theta, distance, position.x(), position.y(), position.z());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
-		pose->header = uas->synchronized_header(child_frame_id, land_target.time_usec);
+		pose->header = uas->synchronized_header(frame_id, land_target.time_usec);
 
 		tf::pointEigenToMsg(position, pose->pose.position);
 		tf::quaternionEigenToMsg(orientation, pose->pose.orientation);
@@ -221,7 +219,7 @@ private:
 		auto tg_size = Eigen::Vector3d(land_target.size_x / phi, land_target.size_x / (M_PI - phi), land_target.size_y / theta);
 		auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
 
-		tg_size_msg->header = uas->synchronized_header(frame_id, land_target.time_usec);
+		tg_size_msg->header = pose->header;
 		tf::vectorEigenToMsg(tg_size, tg_size_msg->vector);
 
 		target_size_pub.publish(tg_size_msg);
