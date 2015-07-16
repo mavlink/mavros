@@ -76,11 +76,22 @@ static const std::array<const OrientationPair, 39> sensor_orientations = {{
 /* 38 */ make_orientation("ROLL_315_PITCH_315_YAW_315", 315.0, 315.0, 315.0)
 }};
 
+std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
+{
+	size_t idx = size_t(orientation);
+	if (idx >= sensor_orientations.size()) {
+		ROS_WARN_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
+		return std::to_string(idx);
+	}
+
+	return sensor_orientations[idx].first;
+}
+
 Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
+		ROS_WARN_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
 		return Eigen::Quaterniond::Identity();
 	}
 

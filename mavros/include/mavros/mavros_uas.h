@@ -330,10 +330,15 @@ public:
 	static std::string str_system_status(enum MAV_STATE st);
 
 	/**
-	 * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
+	 * @brief Function to match the received orientation received by MAVLink msg
 	 *        and the rotation of the sensor relative to the FCU.
 	 */
 	static Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
+
+	/**
+	 * @brief Retrieve alias of the orientation received by MAVLink msg.
+	 */
+	static std::string str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation);
 
 	/* -*- frame conversion utilities -*- */
 
