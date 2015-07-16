@@ -222,20 +222,15 @@ private:
 
 		if (sensor->send_tf) {
 			/* variables init */
-			// XXX #319
-			auto rpy = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
-			// how it can work, if rpy in degrees, not radians?
-			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
+			auto q = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
 
 			geometry_msgs::TransformStamped transform;
 
-			// @TSC21 revisit that please!
-			// In TF1 code transform: sensor -> fcu is that true?
-			transform.header = range->header;
-			transform.child_frame_id = "fcu";
+			transform.header = uas->synchronized_header("fcu", dist_sen.time_boot_ms);
+			transform.child_frame_id = sensor->frame_id;
 
 			/* rotation and position set */
-			tf::quaternionTFToMsg(q, transform.transform.rotation);
+			tf::quaternionEigenToMsg(q, transform.transform.rotation);
 			tf::vector3TFToMsg(sensor->position, transform.transform.translation);
 
 			/* transform broadcast */
