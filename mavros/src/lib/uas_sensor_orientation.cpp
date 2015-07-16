@@ -14,7 +14,6 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 #include <array>
-#include <angles/angles.h>
 #include <mavros/mavros_uas.h>
 
 #define DEG_TO_RAD (M_PI / 180.0f)
@@ -69,7 +68,7 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 {
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientation.size()) {
-		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
+		ROS_WARN_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
 		return Eigen::Quaterniond(1,0,0,0);
 	}
 
