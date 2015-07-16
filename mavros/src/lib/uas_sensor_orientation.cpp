@@ -14,7 +14,6 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 #include <array>
-#include <angles/angles.h>
 #include <mavros/mavros_uas.h>
 
 #define DEG_TO_RAD (M_PI / 180.0f)
