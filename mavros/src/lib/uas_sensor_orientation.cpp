@@ -70,7 +70,7 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientation.size()) {
 		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
-		return Eigen::Quaterniond();
+		return Eigen::Quaterniond(1,0,0,0);
 	}
 
 	return UAS::quaternion_from_rpy(Eigen::Vector3d(sensor_orientation[idx].x(),
