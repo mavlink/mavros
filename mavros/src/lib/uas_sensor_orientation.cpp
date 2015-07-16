@@ -23,7 +23,7 @@ using namespace mavros;
 
 /** @todo Combine the bellow with string representation */
 
-static const std::array<const Eigen::Vector3d, 39> sensor_orientation = {
+const std::array<const Eigen::Vector3d, 39> sensor_orientation = {
 /*  0 */ Eigen::Vector3d(0.0,   0.0,    0.0),
 /*  1 */ Eigen::Vector3d(0.0,   0.0,    45.0),
 /*  2 */ Eigen::Vector3d(0.0,   0.0,    90.0),
@@ -74,6 +74,6 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 	}
 
 	return UAS::quaternion_from_rpy(Eigen::Vector3d(sensor_orientation[idx].x(),
-													sensor_orientation[idx].y(),
-													sensor_orientation[idx].z()) * DEG_TO_RAD);
+							sensor_orientation[idx].y(),
+							sensor_orientation[idx].z()) * DEG_TO_RAD);
 };
