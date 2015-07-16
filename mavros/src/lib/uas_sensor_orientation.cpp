@@ -14,6 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 #include <array>
+#include <angles/angles.h>
 #include <mavros/mavros_uas.h>
 
 using namespace mavros;
@@ -64,13 +65,13 @@ static const std::array<const tf::Vector3, 39> sensor_orientation = {
 
 tf::Vector3 UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
-	// XXX should it return radians?
-
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientation.size()) {
 		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
 		return tf::Vector3();
 	}
 
-	return sensor_orientation[idx];
+	return tf::Vector3(angles::from_degrees(sensor_orientation[idx].x()),
+						angles::from_degrees(sensor_orientation[idx].y()),
+						angles::from_degrees(sensor_orientation[idx].z()));
 };
