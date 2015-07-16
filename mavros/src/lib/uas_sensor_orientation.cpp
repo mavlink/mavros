@@ -17,6 +17,8 @@
 #include <angles/angles.h>
 #include <mavros/mavros_uas.h>
 
+#define DEG_TO_RAD (M_PI / 180.0f)
+
 using namespace mavros;
 
 /** @todo Combine the bellow with string representation */
@@ -63,15 +65,15 @@ static const std::array<const Eigen::Vector3d, 39> sensor_orientation = {
 /* 38 */ Eigen::Vector3d(315.0, 315.0,  315.0)
 };
 
-Eigen::Vector3d UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
+Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientation.size()) {
 		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
-		return Eigen::Vector3d();
+		return Eigen::Quaterniond();
 	}
 
-	return Eigen::Vector3d(angles::from_degrees(sensor_orientation[idx].x()),
-		angles::from_degrees(sensor_orientation[idx].y()),
-		angles::from_degrees(sensor_orientation[idx].z()));
+	return UAS::quaternion_from_rpy(Eigen::Vector3d(sensor_orientation[idx].x(),
+													sensor_orientation[idx].y(),
+													sensor_orientation[idx].z()) * DEG_TO_RAD);
 };

@@ -222,8 +222,7 @@ private:
 
 		if (sensor->send_tf) {
 			/* variables init */
-			auto rpy = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
-			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
+			auto q = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
 
 			geometry_msgs::TransformStamped transform;
 
@@ -231,7 +230,7 @@ private:
 			transform.child_frame_id = sensor->frame_id;
 
 			/* rotation and position set */
-			tf::quaternionTFToMsg(q, transform.transform.rotation);
+			tf::quaternionEigenToMsg(q, transform.transform.rotation);
 			tf::vector3TFToMsg(sensor->position, transform.transform.translation);
 
 			/* transform broadcast */
