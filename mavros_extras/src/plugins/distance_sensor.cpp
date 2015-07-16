@@ -194,7 +194,7 @@ private:
 		if (UAS::orientation_from_str(sensor->orientation) >= 0 && dist_sen.orientation != UAS::orientation_from_str(sensor->orientation)) {
 			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
-					sensor->topic_name.c_str(), 
+					sensor->topic_name.c_str(),
 					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation)).c_str(),
 					sensor->orientation.c_str());
 		}
