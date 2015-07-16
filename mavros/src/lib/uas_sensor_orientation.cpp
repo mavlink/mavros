@@ -97,3 +97,16 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 
 	return sensor_orientations[idx].second;
 }
+
+int UAS::orientation_from_str(std::string sensor_orientation)
+{
+	int index, idx = 0;
+	for (const auto &orientation : sensor_orientations) {
+		if (orientation.first == sensor_orientation)
+			index = idx;
+		else
+			index = -1;
+		++idx;
+	} idx = 0;
+	return index;
+}

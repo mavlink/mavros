@@ -340,6 +340,11 @@ public:
 	 */
 	static std::string str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation);
 
+	/**
+	 * @brief Retrieve sensor orientation number from alias name.
+	 */
+	static int orientation_from_str(std::string sensor_orientation);
+
 	/* -*- frame conversion utilities -*- */
 
 	/**

@@ -37,7 +37,7 @@ public:
 		send_tf(false),
 		sensor_id(0),
 		field_of_view(0),
-		orientation(-1),
+		orientation("ROLL_180"),
 		covariance(0),
 		data_index(0)
 	{ }
@@ -48,7 +48,7 @@ public:
 	uint8_t sensor_id;		//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
 	tf::Vector3 position;	//!< sensor position
-	int orientation;		//!< check orientation of sensor if != -1
+	std::string orientation;//!< check orientation of sensor if != -1
 	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
@@ -191,10 +191,12 @@ private:
 			return;
 		}
 
-		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
+		if (UAS::orientation_from_str(sensor->orientation) >= 0 && dist_sen.orientation != UAS::orientation_from_str(sensor->orientation)) {
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
-					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
+					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
+					sensor->topic_name.c_str(), 
+					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation)).c_str(),
+					sensor->orientation.c_str());
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
@@ -263,13 +265,14 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 			msg->range / 1E-2,
 			type,
 			sensor_id,
-			orientation,
+			UAS::orientation_from_str(orientation),
 			covariance_);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
 {
 	auto p = boost::make_shared<DistanceSensorItem>();
+	auto orientation_value = UAS::orientation_from_str(p->orientation);
 
 	ros::NodeHandle pnh(owner->dist_nh, topic_name);
 
@@ -302,7 +305,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// orientation check
-		pnh.param("orientation", p->orientation, -1);
+		pnh.param("orientation", orientation_value, -1);
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
