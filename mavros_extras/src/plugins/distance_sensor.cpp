@@ -227,8 +227,7 @@ private:
 
 			geometry_msgs::TransformStamped transform;
 
-			transform.header.frame_id = "fcu";
-			transform.header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
+			transform.header = uas->synchronized_header("fcu", dist_sen.time_boot_ms);
 			transform.child_frame_id = sensor->frame_id;
 
 			/* rotation and position set */
