@@ -16,6 +16,7 @@
  */
 
 #include <array>
+#include <angles/angles.h>
 #include <sitl_test/sitl_test.h>
 #include <sitl_test/test_type.h>
 #include <eigen_conversions/eigen_msg.h>
@@ -64,6 +65,7 @@ public:
 		 * - velocity
 		 * - acceleration
 		 */
+		std::string mode_;
 		nh_sp.param<std::string>("mode", mode_, "position");
 
 		/**
@@ -75,6 +77,7 @@ public:
 		 * - eight
 		 * - ellipse (in 3D space)
 		 */
+		std::string shape_;
 		nh_sp.param<std::string>("shape", shape_, "square");
 
 		if (mode_ == "position")
@@ -148,10 +151,9 @@ private:
 	path_shape shape;
 
 	ros::NodeHandle nh_sp;
-	ros::Publisher local_pos_sp_pub, vel_sp_pub;
+	ros::Publisher local_pos_sp_pub;
+	ros::Publisher vel_sp_pub;
 	ros::Subscriber local_pos_sub;
-
-	std::string mode_, shape_;
 
 	geometry_msgs::PoseStamped localpos, ps;
 	geometry_msgs::TwistStamped vs;
@@ -177,9 +179,9 @@ private:
 		/** @todo Give possibility to user define amplitude of movement (circle radius)*/
 		double r = 5.0f;	// 5 meters radius
 
-		return Eigen::Vector3d(r * cos(angle * M_PI / 180.0f),
-				r * sin(angle * M_PI / 180.0f),
-				1.0f);;
+		return Eigen::Vector3d(r * cos(angles::from_degrees(angle)),
+				r * sin(angles::from_degrees(angle)),
+				1.0f);
 	}
 
 	/**
@@ -189,9 +191,9 @@ private:
 		/** @todo Give possibility to user define amplitude of movement (vertical tangent size)*/
 		double a = 5.0f;	// vertical tangent with 5 meters size
 
-		return Eigen::Vector3d(a * cos(angle * M_PI / 180.0f),
-				a * sin(angle * M_PI / 180.0f) * cos(angle * M_PI / 180.0f),
-				1.0f);;
+		return Eigen::Vector3d(a * cos(angles::from_degrees(angle)),
+				a * sin(angles::from_degrees(angle)) * cos(angles::from_degrees(angle)),
+				1.0f);
 	}
 
 	/**
@@ -203,9 +205,9 @@ private:
 		double b = 2.0f;	// minor axis
 
 		// rotation around y-axis
-		return Eigen::Vector3d(a * cos(angle * M_PI / 180.0f),
+		return Eigen::Vector3d(a * cos(angles::from_degrees(angle)),
 				0.0f,
-				2.5f + b * sin(angle * M_PI / 180.0f));;
+				2.5f + b * sin(angles::from_degrees(angle)));
 	}
 
 	/**
