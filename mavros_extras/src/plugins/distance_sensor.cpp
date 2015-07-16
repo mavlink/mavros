@@ -227,10 +227,9 @@ private:
 
 			geometry_msgs::TransformStamped transform;
 
-			// @TSC21 revisit that please!
-			// In TF1 code transform: sensor -> fcu is that true?
-			transform.header = range->header;
-			transform.child_frame_id = "fcu";
+			transform.header.frame_id = "fcu";
+			transform.header.stamp = uas->synchronise_stamp(dist_sen.time_boot_ms);
+			transform.child_frame_id = sensor->frame_id;
 
 			/* rotation and position set */
 			tf::quaternionTFToMsg(q, transform.transform.rotation);

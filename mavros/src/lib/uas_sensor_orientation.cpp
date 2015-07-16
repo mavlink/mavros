@@ -19,7 +19,7 @@
 
 using namespace mavros;
 
-// XXX do we need combine that with string representation?
+/** @todo Combine the bellow with string representation */
 
 static const std::array<const Eigen::Vector3d, 39> sensor_orientation = {
 	/*  0 */ Eigen::Vector3d(0.0,   0.0,    0.0),
