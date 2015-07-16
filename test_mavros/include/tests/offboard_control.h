@@ -167,9 +167,9 @@ private:
 	/**
 	 * @brief Defines single position setpoint
 	 */
-	Eigen::Vector3d pos_setpoint(){
+	Eigen::Vector3d pos_setpoint(int tr_x, int tr_y, int tr_z){
 		/** @todo Give possibility to user define amplitude of movement (square corners coordinates)*/
-		return Eigen::Vector3d(2.0f, 2.0f, 1.0f);	// meters
+		return Eigen::Vector3d(tr_x * 2.0f, tr_y * 2.0f, tr_z * 1.0f);	// meters
 	}
 
 	/**
@@ -224,28 +224,19 @@ private:
 			// motion routine
 			switch (pos_target) {
 			case 1:
-				tf::pointEigenToMsg(pos_setpoint(), ps.pose.position);
+				tf::pointEigenToMsg(pos_setpoint(1, 1, 1), ps.pose.position);
 				break;
 			case 2:
-				tf::pointEigenToMsg(Eigen::Vector3d(-pos_setpoint().x(),
-							pos_setpoint().y(),
-							pos_setpoint().z()),
-						ps.pose.position);
+				tf::pointEigenToMsg(pos_setpoint(-1, 1, 1), ps.pose.position);
 				break;
 			case 3:
-				tf::pointEigenToMsg(Eigen::Vector3d(-pos_setpoint().x(),
-							-pos_setpoint().y(),
-							pos_setpoint().z()),
-						ps.pose.position);
+				tf::pointEigenToMsg(pos_setpoint(-1, -1, 1), ps.pose.position);
 				break;
 			case 4:
-				tf::pointEigenToMsg(Eigen::Vector3d( pos_setpoint().x(),
-							-pos_setpoint().y(),
-							pos_setpoint().z()),
-						ps.pose.position);
+				tf::pointEigenToMsg(pos_setpoint(1, -1, 1), ps.pose.position);
 				break;
 			case 5:
-				tf::pointEigenToMsg(pos_setpoint(), ps.pose.position);
+				tf::pointEigenToMsg(pos_setpoint(1, 1, 1), ps.pose.position);
 				break;
 			default:
 				break;
