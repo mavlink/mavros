@@ -222,9 +222,7 @@ private:
 
 		if (sensor->send_tf) {
 			/* variables init */
-			// XXX #319
 			auto rpy = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
-			// how it can work, if rpy in degrees, not radians?
 			auto q = tf::createQuaternionFromRPY(rpy.x(), rpy.y(), rpy.z());
 
 			geometry_msgs::TransformStamped transform;

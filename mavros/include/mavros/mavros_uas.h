@@ -333,7 +333,7 @@ public:
 	 * @brief Function to match the received orientation received by DISTANCE_SENSOR msg
 	 *        and the rotation of the sensor relative to the FCU.
 	 */
-	static tf::Vector3 sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
+	static Eigen::Vector3d sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
 
 	/* -*- frame conversion utilities -*- */
 

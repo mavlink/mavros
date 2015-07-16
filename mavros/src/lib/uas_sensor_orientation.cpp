@@ -21,57 +21,57 @@ using namespace mavros;
 
 // XXX do we need combine that with string representation?
 
-static const std::array<const tf::Vector3, 39> sensor_orientation = {
-	/*  0 */ tf::Vector3(0.0,   0.0,    0.0),
-	/*  1 */ tf::Vector3(0.0,   0.0,    45.0),
-	/*  2 */ tf::Vector3(0.0,   0.0,    90.0),
-	/*  3 */ tf::Vector3(0.0,   0.0,    135.0),
-	/*  4 */ tf::Vector3(0.0,   0.0,    180.0),
-	/*  5 */ tf::Vector3(0.0,   0.0,    225.0),
-	/*  6 */ tf::Vector3(0.0,   0.0,    270.0),
-	/*  7 */ tf::Vector3(0.0,   0.0,    315.0),
-	/*  8 */ tf::Vector3(180.0, 0.0,    0.0),
-	/*  9 */ tf::Vector3(180.0, 0.0,    45.0),
-	/* 10 */ tf::Vector3(180.0, 0.0,    90.0),
-	/* 11 */ tf::Vector3(180.0, 0.0,    135.0),
-	/* 12 */ tf::Vector3(0.0,   180.0,  0.0),
-	/* 13 */ tf::Vector3(180.0, 0.0,    225.0),
-	/* 14 */ tf::Vector3(180.0, 0.0,    270.0),
-	/* 15 */ tf::Vector3(180.0, 0.0,    315.0),
-	/* 16 */ tf::Vector3(90.0,  0.0,    0.0),
-	/* 17 */ tf::Vector3(90.0,  0.0,    45.0),
-	/* 18 */ tf::Vector3(90.0,  0.0,    90.0),
-	/* 19 */ tf::Vector3(90.0,  0.0,    135.0),
-	/* 20 */ tf::Vector3(270.0, 0.0,    0.0),
-	/* 21 */ tf::Vector3(270.0, 0.0,    45.0),
-	/* 22 */ tf::Vector3(270.0, 0.0,    90.0),
-	/* 23 */ tf::Vector3(270.0, 0.0,    135.0),
-	/* 24 */ tf::Vector3(0.0,   90.0,   0.0),
-	/* 25 */ tf::Vector3(0.0,   270.0,  0.0),
-	/* 26 */ tf::Vector3(0.0,   180.0,  90.0),
-	/* 27 */ tf::Vector3(0.0,   180.0,  270.0),
-	/* 28 */ tf::Vector3(90.0,  90.0,   0.0),
-	/* 29 */ tf::Vector3(180.0, 90.0,   0.0),
-	/* 30 */ tf::Vector3(270.0, 90.0,   0.0),
-	/* 31 */ tf::Vector3(90.0,  180.0,  0.0),
-	/* 32 */ tf::Vector3(270.0, 180.0,  0.0),
-	/* 33 */ tf::Vector3(90.0,  270.0,  0.0),
-	/* 34 */ tf::Vector3(180.0, 270.0,  0.0),
-	/* 35 */ tf::Vector3(270.0, 270.0,  0.0),
-	/* 36 */ tf::Vector3(90.0,  180.0,  90.0),
-	/* 37 */ tf::Vector3(90.0,  0.0,    270.0),
-	/* 38 */ tf::Vector3(315.0, 315.0,  315.0)
+static const std::array<const Eigen::Vector3d, 39> sensor_orientation = {
+	/*  0 */ Eigen::Vector3d(0.0,   0.0,    0.0),
+	/*  1 */ Eigen::Vector3d(0.0,   0.0,    45.0),
+	/*  2 */ Eigen::Vector3d(0.0,   0.0,    90.0),
+	/*  3 */ Eigen::Vector3d(0.0,   0.0,    135.0),
+	/*  4 */ Eigen::Vector3d(0.0,   0.0,    180.0),
+	/*  5 */ Eigen::Vector3d(0.0,   0.0,    225.0),
+	/*  6 */ Eigen::Vector3d(0.0,   0.0,    270.0),
+	/*  7 */ Eigen::Vector3d(0.0,   0.0,    315.0),
+	/*  8 */ Eigen::Vector3d(180.0, 0.0,    0.0),
+	/*  9 */ Eigen::Vector3d(180.0, 0.0,    45.0),
+	/* 10 */ Eigen::Vector3d(180.0, 0.0,    90.0),
+	/* 11 */ Eigen::Vector3d(180.0, 0.0,    135.0),
+	/* 12 */ Eigen::Vector3d(0.0,   180.0,  0.0),
+	/* 13 */ Eigen::Vector3d(180.0, 0.0,    225.0),
+	/* 14 */ Eigen::Vector3d(180.0, 0.0,    270.0),
+	/* 15 */ Eigen::Vector3d(180.0, 0.0,    315.0),
+	/* 16 */ Eigen::Vector3d(90.0,  0.0,    0.0),
+	/* 17 */ Eigen::Vector3d(90.0,  0.0,    45.0),
+	/* 18 */ Eigen::Vector3d(90.0,  0.0,    90.0),
+	/* 19 */ Eigen::Vector3d(90.0,  0.0,    135.0),
+	/* 20 */ Eigen::Vector3d(270.0, 0.0,    0.0),
+	/* 21 */ Eigen::Vector3d(270.0, 0.0,    45.0),
+	/* 22 */ Eigen::Vector3d(270.0, 0.0,    90.0),
+	/* 23 */ Eigen::Vector3d(270.0, 0.0,    135.0),
+	/* 24 */ Eigen::Vector3d(0.0,   90.0,   0.0),
+	/* 25 */ Eigen::Vector3d(0.0,   270.0,  0.0),
+	/* 26 */ Eigen::Vector3d(0.0,   180.0,  90.0),
+	/* 27 */ Eigen::Vector3d(0.0,   180.0,  270.0),
+	/* 28 */ Eigen::Vector3d(90.0,  90.0,   0.0),
+	/* 29 */ Eigen::Vector3d(180.0, 90.0,   0.0),
+	/* 30 */ Eigen::Vector3d(270.0, 90.0,   0.0),
+	/* 31 */ Eigen::Vector3d(90.0,  180.0,  0.0),
+	/* 32 */ Eigen::Vector3d(270.0, 180.0,  0.0),
+	/* 33 */ Eigen::Vector3d(90.0,  270.0,  0.0),
+	/* 34 */ Eigen::Vector3d(180.0, 270.0,  0.0),
+	/* 35 */ Eigen::Vector3d(270.0, 270.0,  0.0),
+	/* 36 */ Eigen::Vector3d(90.0,  180.0,  90.0),
+	/* 37 */ Eigen::Vector3d(90.0,  0.0,    270.0),
+	/* 38 */ Eigen::Vector3d(315.0, 315.0,  315.0)
 };
 
-tf::Vector3 UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
+Eigen::Vector3d UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
 	size_t idx = size_t(orientation);
 	if (idx >= sensor_orientation.size()) {
 		ROS_WARN_NAMED("uas", "SENSOR: wrong orintation index: %zu", idx);
-		return tf::Vector3();
+		return Eigen::Vector3d();
 	}
 
-	return tf::Vector3(angles::from_degrees(sensor_orientation[idx].x()),
+	return Eigen::Vector3d(angles::from_degrees(sensor_orientation[idx].x()),
 						angles::from_degrees(sensor_orientation[idx].y()),
 						angles::from_degrees(sensor_orientation[idx].z()));
 };
