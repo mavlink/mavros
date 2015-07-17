@@ -194,10 +194,10 @@ private:
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: received sensor data has different orientation (%s) than in config (%f)!",
+					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
 					sensor->topic_name.c_str(),
 					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation)).c_str(),
-					sensor->orientation);
+					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(sensor->orientation)).c_str());
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
@@ -274,6 +274,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
 {
 	auto p = boost::make_shared<DistanceSensorItem>();
+	std::string orientation_str;
 
 	ros::NodeHandle pnh(owner->dist_nh, topic_name);
 
@@ -306,7 +307,13 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// orientation check
-		pnh.param("orientation", p->orientation, -1);
+		pnh.param("orientation", orientation_str);
+		if (UAS::orientation_from_str(orientation_str) == -1) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
+			p.reset(); return p;	// nullptr
+		}
+		else
+			p->orientation = UAS::orientation_from_str(orientation_str);
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
@@ -323,14 +330,16 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	else {
 		// subscriber params
 		// orientation is required
-		if (!pnh.getParam("orientation", p->orientation)) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
+		if (!pnh.getParam("orientation", orientation_str)) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: orientation not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		} // orientation check
+		else if (UAS::orientation_from_str(orientation_str) == -1) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
-		else if (p->orientation == -1) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation is not valid!", topic_name.c_str());
-			p.reset(); return p;	// nullptr
-		}
+		else
+			p->orientation = UAS::orientation_from_str(orientation_str);
 
 		// optional
 		pnh.param("covariance", p->covariance, 0);
