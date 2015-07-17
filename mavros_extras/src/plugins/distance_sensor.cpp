@@ -43,13 +43,13 @@ public:
 	{ }
 
 	// params
-	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
-	bool send_tf;			//!< defines if a transform is sent or not
-	uint8_t sensor_id;		//!< id of the sensor
+	bool is_subscriber;	//!< this item is a subscriber, else is a publisher
+	bool send_tf;		//!< defines if a transform is sent or not
+	uint8_t sensor_id;	//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
 	tf::Vector3 position;	//!< sensor position
 	std::string orientation;//!< orientation alias name
-	int covariance;			//!< in centimeters, current specification
+	int covariance;		//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
 	// topic handle
@@ -64,7 +64,7 @@ public:
 
 private:
 	std::vector<float> data;	//!< array allocation for measurements
-	size_t data_index;			//!< array index
+	size_t data_index;		//!< array index
 
 	/**
 	 * Calculate measurements variance to send to the FCU.
@@ -75,7 +75,8 @@ private:
 			data.push_back(range);
 		else {
 			data[data_index] = range;	// it starts rewriting the values from 1st element
-			if (++data_index > 49) data_index = 0;	// restarts the index when achieves the last element
+			if (++data_index > 49)
+				data_index = 0;		// restarts the index when achieves the last element
 		}
 
 		float average, variance, sum = 0, sum_ = 0;
@@ -88,7 +89,7 @@ private:
 
 		/*  Compute the variance */
 		for (auto d : data)
-			sum_ += pow((d - average), 2);
+			sum_ += (d - average) * (d - average);
 
 		variance = sum_ / data.size();
 
@@ -204,7 +205,7 @@ private:
 
 		range->header = uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
-		range->min_range = dist_sen.min_distance * 1E-2;	// in meters
+		range->min_range = dist_sen.min_distance * 1E-2; // in meters
 		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
@@ -249,7 +250,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
-	int orient_value = UAS::orientation_from_str(orientation);
+	auto orient_value = UAS::orientation_from_str(orientation);
 
 	if (covariance > 0) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
@@ -347,6 +348,6 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 	return p;
 }
-};	// namespace mavplugin
+}; // namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::DistanceSensorPlugin, mavplugin::MavRosPlugin)
