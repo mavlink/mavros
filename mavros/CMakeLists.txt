@@ -20,14 +20,21 @@ find_package(catkin REQUIRED COMPONENTS
   angles
   libmavconn
   rosconsole_bridge
-  cmake_modules
   eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(Eigen REQUIRED)
+
+find_package(Eigen3)
+if(NOT EIGEN3_FOUND)
+  # Fallback to cmake_modules
+  find_package(cmake_modules REQUIRED)
+  find_package(Eigen REQUIRED)
+  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
+  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
+endif()
 
 include(EnableCXX11)
 include(MavrosMavlink)
@@ -155,7 +162,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(mavros
