@@ -7,11 +7,18 @@ project(test_mavros)
 find_package(catkin REQUIRED COMPONENTS
   mavros
   mavros_extras
+  roscpp
+  std_msgs
+  geometry_msgs
+  tf2_ros
+  eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
+include(EnableCXX11)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -79,10 +86,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES test_mavros
-#  CATKIN_DEPENDS mavros mavros_extras
-#  DEPENDS system_lib
+  INCLUDE_DIRS include
+  LIBRARIES sitl_test
+  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions
+  DEPENDS Boost Eigen
 )
 
 ###########
@@ -93,25 +100,42 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
+  ${Boost_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(test_mavros
-#   src/${PROJECT_NAME}/test_mavros.cpp
-# )
+add_library(
+  sitl_test
+  sitl_test/lib/sitl_test.cpp
+)
 
 ## Declare a cpp executable
-# add_executable(test_mavros_node src/test_mavros_node.cpp)
+add_executable(
+  sitl_test_node
+  sitl_test/sitl_test_node.cpp
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(test_mavros_node test_mavros_generate_messages_cpp)
+add_dependencies(
+  sitl_test_node
+  sitl_test
+)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(test_mavros_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(
+  sitl_test
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(
+  sitl_test_node
+  sitl_test
+)
 
 #############
 ## Install ##

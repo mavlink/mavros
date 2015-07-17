@@ -1,0 +1,13 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- Base node launch file-->
+	<arg name="args" />
+	<arg name="mode" />
+	<arg name="shape" />
+
+	<node pkg="test_mavros" type="sitl_test_node" args="$(arg args)" name="sitl_test_offboard_ctl" required="true" clear_params="true" output="screen">
+		<param name="mode" value="$(arg mode)" />
+		<param name="shape" value="$(arg shape)" />
+	</node>
+
+</launch>
