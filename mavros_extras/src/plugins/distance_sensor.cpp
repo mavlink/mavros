@@ -47,7 +47,7 @@ public:
 	bool send_tf;		//!< defines if a transform is sent or not
 	uint8_t sensor_id;	//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
-	tf::Vector3 position;	//!< sensor position
+	Eigen::Vector3d position;	//!< sensor position
 	int orientation;	//!< check orientation of sensor if != -1
 	int covariance;		//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
@@ -234,7 +234,7 @@ private:
 
 			/* rotation and position set */
 			tf::quaternionEigenToMsg(q, transform.transform.rotation);
-			tf::vector3TFToMsg(sensor->position, transform.transform.translation);
+			tf::vectorEigenToMsg(sensor->position, transform.transform.translation);
 
 			/* transform broadcast */
 			uas->tf2_broadcaster.sendTransform(transform);
@@ -322,9 +322,9 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 			pnh.param("sensor_position/x", x, 0.0);
 			pnh.param("sensor_position/y", y, 0.0);
 			pnh.param("sensor_position/z", z, 0.0);
-			p->position = tf::Vector3(x, y, z);
+			p->position = Eigen::Vector3d(x, y, z);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
-					p->position.getX(), p->position.getY(), p->position.getZ());
+					p->position.x(), p->position.y(), p->position.z());
 		}
 	}
 	else {
