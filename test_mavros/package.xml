@@ -27,8 +27,10 @@
   <depend>eigen</depend>
   <depend>eigen_conversions</depend>
 
+  <!-- fails prerelease build
   <exec_depend>px4</exec_depend>
   <exec_depend>rotors_simulator</exec_depend>
+  -->
 
   <!--<test_depend>gtest</test_depend> -->
   <!--<test_depend>mavros</test_depend> -->
