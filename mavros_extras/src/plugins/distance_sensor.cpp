@@ -37,7 +37,7 @@ public:
 		send_tf(false),
 		sensor_id(0),
 		field_of_view(0),
-		orientation("ROLL_180"),
+		orientation("LOCAL_NED"),
 		covariance(0),
 		data_index(0)
 	{ }
@@ -48,7 +48,7 @@ public:
 	uint8_t sensor_id;		//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
 	tf::Vector3 position;	//!< sensor position
-	std::string orientation;//!< check orientation of sensor if != -1
+	std::string orientation;//!< orientation alias name
 	int covariance;			//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
@@ -191,7 +191,8 @@ private:
 			return;
 		}
 
-		if (UAS::orientation_from_str(sensor->orientation) >= 0 && dist_sen.orientation != UAS::orientation_from_str(sensor->orientation)) {
+		auto orient_value = UAS::orientation_from_str(sensor->orientation);
+		if (orient_value >= 0 && dist_sen.orientation != orient_value) { // check orientation of sensor if != -1
 			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
 					sensor->topic_name.c_str(),
@@ -248,8 +249,11 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t type = 0;
 	uint8_t covariance_ = 0;
 
+	int orient_value = UAS::orientation_from_str(orientation);
+
 	if (covariance > 0) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
+	/** @todo Propose changing covarince from uint8_t to float */
 	ROS_DEBUG_NAMED("distance_sensor", "DS: %d: sensor variance: %f", sensor_id, calculate_variance(msg->range) * 1E2);
 
 	// current mapping, may change later
@@ -265,14 +269,14 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 			msg->range / 1E-2,
 			type,
 			sensor_id,
-			UAS::orientation_from_str(orientation),
+			orient_value,
 			covariance_);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
 {
 	auto p = boost::make_shared<DistanceSensorItem>();
-	auto orientation_value = UAS::orientation_from_str(p->orientation);
+	auto orient_value = UAS::orientation_from_str(p->orientation);
 
 	ros::NodeHandle pnh(owner->dist_nh, topic_name);
 
@@ -305,7 +309,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// orientation check
-		pnh.param("orientation", orientation_value, -1);
+		pnh.param("orientation", orient_value, -1);
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
@@ -324,6 +328,10 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// orientation is required
 		if (!pnh.getParam("orientation", p->orientation)) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+		else if (orient_value == -1) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), p->orientation.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
