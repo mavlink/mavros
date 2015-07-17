@@ -307,7 +307,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		// orientation check
-		pnh.param("orientation", orientation_str);
+		pnh.getParam("orientation", orientation_str);
 		if (UAS::orientation_from_str(orientation_str) == -1) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
