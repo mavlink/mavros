@@ -42,7 +42,7 @@
     <arg name="mode" default="position" />    <!-- position ctl mode -->
     <arg name="shape" default="square" />    <!-- square shaped path -->
 
-    <include file="$(find test_mavros)/sitl_test/launch/base_node.launch">
+    <include file="$(find test_mavros)/launch/base_node.launch">
         <arg name="args" value="offboard_control" />    <!-- offboard ctl test -->
         <!-- Available modes:
            - * "position"
