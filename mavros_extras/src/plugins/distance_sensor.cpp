@@ -32,24 +32,24 @@ public:
 	typedef boost::shared_ptr<DistanceSensorItem> Ptr;
 
 	DistanceSensorItem() :
-		owner(nullptr),
 		is_subscriber(false),
 		send_tf(false),
 		sensor_id(0),
 		field_of_view(0),
 		orientation(-1),
 		covariance(0),
+		owner(nullptr),
 		data_index(0)
 	{ }
 
 	// params
-	bool is_subscriber;		//!< this item is a subscriber, else is a publisher
-	bool send_tf;			//!< defines if a transform is sent or not
-	uint8_t sensor_id;		//!< id of the sensor
+	bool is_subscriber;	//!< this item is a subscriber, else is a publisher
+	bool send_tf;		//!< defines if a transform is sent or not
+	uint8_t sensor_id;	//!< id of the sensor
 	double field_of_view;	//!< FOV of the sensor
-	tf::Vector3 position;	//!< sensor position
-	int orientation;		//!< check orientation of sensor if != -1
-	int covariance;			//!< in centimeters, current specification
+	Eigen::Vector3d position;	//!< sensor position
+	int orientation;	//!< check orientation of sensor if != -1
+	int covariance;		//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
 
 	// topic handle
@@ -64,7 +64,7 @@ public:
 
 private:
 	std::vector<float> data;	//!< array allocation for measurements
-	size_t data_index;			//!< array index
+	size_t data_index;		//!< array index
 
 	/**
 	 * Calculate measurements variance to send to the FCU.
@@ -75,7 +75,8 @@ private:
 			data.push_back(range);
 		else {
 			data[data_index] = range;	// it starts rewriting the values from 1st element
-			if (++data_index > 49) data_index = 0;	// restarts the index when achieves the last element
+			if (++data_index > 49)
+				data_index = 0;		// restarts the index when achieves the last element
 		}
 
 		float average, variance, sum = 0, sum_ = 0;
@@ -88,7 +89,7 @@ private:
 
 		/*  Compute the variance */
 		for (auto d : data)
-			sum_ += pow((d - average), 2);
+			sum_ += (d - average) * (d - average);
 
 		variance = sum_ / data.size();
 
@@ -193,15 +194,17 @@ private:
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: received sensor data has different orientation (%d) than in config (%d)!",
-					sensor->topic_name.c_str(), dist_sen.orientation, sensor->orientation);
+					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
+					sensor->topic_name.c_str(),
+					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation)).c_str(),
+					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(sensor->orientation)).c_str());
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
 
 		range->header = uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
-		range->min_range = dist_sen.min_distance * 1E-2;	// in meters
+		range->min_range = dist_sen.min_distance * 1E-2; // in meters
 		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
@@ -231,7 +234,7 @@ private:
 
 			/* rotation and position set */
 			tf::quaternionEigenToMsg(q, transform.transform.rotation);
-			tf::vector3TFToMsg(sensor->position, transform.transform.translation);
+			tf::vectorEigenToMsg(sensor->position, transform.transform.translation);
 
 			/* transform broadcast */
 			uas->tf2_broadcaster.sendTransform(transform);
@@ -248,6 +251,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 
 	if (covariance > 0) covariance_ = covariance;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
+	/** @todo Propose changing covarince from uint8_t to float */
 	ROS_DEBUG_NAMED("distance_sensor", "DS: %d: sensor variance: %f", sensor_id, calculate_variance(msg->range) * 1E2);
 
 	// current mapping, may change later
@@ -270,6 +274,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
 {
 	auto p = boost::make_shared<DistanceSensorItem>();
+	std::string orientation_str;
 
 	ros::NodeHandle pnh(owner->dist_nh, topic_name);
 
@@ -288,6 +293,14 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	}
 	p->sensor_id = id;
 
+	// orientation, checks later
+	if (!pnh.getParam("orientation", orientation_str))
+		p->orientation = -1;	// not set
+	else
+		// lookup for numeric value
+		p->orientation = UAS::orientation_from_str(orientation_str);
+
+
 	if (!p->is_subscriber) {
 		// publisher params
 		// frame_id and FOV is required
@@ -297,30 +310,36 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		if (!pnh.getParam("field_of_view", p->field_of_view)) {
-			ROS_ERROR_NAMED("field_of_view", "DS: %s: sensor FOV not set!", topic_name.c_str());
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: sensor FOV not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
-		// orientation check
-		pnh.param("orientation", p->orientation, -1);
+		// unset allowed, setted wrong - not
+		if (p->orientation == -1 && !orientation_str.empty()) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!",
+					topic_name.c_str(), orientation_str.c_str());
+			p.reset(); return p;	// nullptr
+		}
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
 		if (p->send_tf) {	// sensor position defined if 'send_tf' set to TRUE
-			double x, y, z;
-			pnh.param("sensor_position/x", x, 0.0);
-			pnh.param("sensor_position/y", y, 0.0);
-			pnh.param("sensor_position/z", z, 0.0);
-			p->position = tf::Vector3(x, y, z);
+			pnh.param("sensor_position/x", p->position.x(), 0.0);
+			pnh.param("sensor_position/y", p->position.y(), 0.0);
+			pnh.param("sensor_position/z", p->position.z(), 0.0);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
-					p->position.getX(), p->position.getY(), p->position.getZ());
+					p->position.x(), p->position.y(), p->position.z());
 		}
 	}
 	else {
 		// subscriber params
 		// orientation is required
-		if (!pnh.getParam("orientation", p->orientation)) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: `orientation` not set!", topic_name.c_str());
+		if (!orientation_str.empty()) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: orientation not set!", topic_name.c_str());
+			p.reset(); return p;	// nullptr
+		}
+		else if (p->orientation == -1) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
@@ -336,6 +355,6 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 	return p;
 }
-};	// namespace mavplugin
+}; // namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::DistanceSensorPlugin, mavplugin::MavRosPlugin)
