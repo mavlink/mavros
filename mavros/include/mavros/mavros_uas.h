@@ -343,7 +343,7 @@ public:
 	/**
 	 * @brief Retrieve sensor orientation number from alias name.
 	 */
-	static int orientation_from_str(std::string sensor_orientation);
+	static int orientation_from_str(const std::string &sensor_orientation);
 
 	/* -*- frame conversion utilities -*- */
 

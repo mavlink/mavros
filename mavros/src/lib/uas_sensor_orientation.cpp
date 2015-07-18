@@ -97,12 +97,24 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 	return sensor_orientations[idx].second;
 }
 
-int UAS::orientation_from_str(std::string sensor_orientation)
+int UAS::orientation_from_str(const std::string &sensor_orientation)
 {
-	for (int idx = 0; idx < sensor_orientations.size(); idx++) {
+	// 1. try to find by name
+	for (size_t idx = 0; idx < sensor_orientations.size(); idx++) {
 		if (sensor_orientations[idx].first == sensor_orientation)
 			return idx;
 	}
+
+	// 2. try convert integer
+	// fallback for old configs that uses numeric orientation.
+	try {
+		return std::stoi(sensor_orientation, 0, 0);
+	}
+	catch (std::invalid_argument &ex) {
+		// failed
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "SENSOR: wrong orientation str: " << sensor_orientation);
 
 	return -1;
 }
