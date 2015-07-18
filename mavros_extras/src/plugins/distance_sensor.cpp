@@ -32,13 +32,13 @@ public:
 	typedef boost::shared_ptr<DistanceSensorItem> Ptr;
 
 	DistanceSensorItem() :
-		owner(nullptr),
 		is_subscriber(false),
 		send_tf(false),
 		sensor_id(0),
 		field_of_view(0),
 		orientation(-1),
 		covariance(0),
+		owner(nullptr),
 		data_index(0)
 	{ }
 
@@ -293,6 +293,14 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	}
 	p->sensor_id = id;
 
+	// orientation, checks later
+	if (!pnh.getParam("orientation", orientation_str))
+		p->orientation = -1;	// not set
+	else
+		// lookup for numeric value
+		p->orientation = UAS::orientation_from_str(orientation_str);
+
+
 	if (!p->is_subscriber) {
 		// publisher params
 		// frame_id and FOV is required
@@ -302,27 +310,23 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		}
 
 		if (!pnh.getParam("field_of_view", p->field_of_view)) {
-			ROS_ERROR_NAMED("field_of_view", "DS: %s: sensor FOV not set!", topic_name.c_str());
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: sensor FOV not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
-		// orientation check
-		pnh.getParam("orientation", orientation_str);
-		if (UAS::orientation_from_str(orientation_str) == -1) {
-			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
+		// unset allowed, setted wrong - not
+		if (p->orientation == -1 && !orientation_str.empty()) {
+			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!",
+					topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
-		else
-			p->orientation = UAS::orientation_from_str(orientation_str);
 
 		// optional
 		pnh.param("send_tf", p->send_tf, false);
 		if (p->send_tf) {	// sensor position defined if 'send_tf' set to TRUE
-			double x, y, z;
-			pnh.param("sensor_position/x", x, 0.0);
-			pnh.param("sensor_position/y", y, 0.0);
-			pnh.param("sensor_position/z", z, 0.0);
-			p->position = Eigen::Vector3d(x, y, z);
+			pnh.param("sensor_position/x", p->position.x(), 0.0);
+			pnh.param("sensor_position/y", p->position.y(), 0.0);
+			pnh.param("sensor_position/z", p->position.z(), 0.0);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
 					p->position.x(), p->position.y(), p->position.z());
 		}
@@ -330,16 +334,14 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	else {
 		// subscriber params
 		// orientation is required
-		if (!pnh.getParam("orientation", orientation_str)) {
+		if (!orientation_str.empty()) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: orientation not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
-		} // orientation check
-		else if (UAS::orientation_from_str(orientation_str) == -1) {
+		}
+		else if (p->orientation == -1) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!", topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
-		else
-			p->orientation = UAS::orientation_from_str(orientation_str);
 
 		// optional
 		pnh.param("covariance", p->covariance, 0);
