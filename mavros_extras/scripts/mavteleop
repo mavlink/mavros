@@ -19,6 +19,8 @@ from std_msgs.msg import Header, Float64
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion, Point
 from mavros.msg import OverrideRCIn
 from mavros.srv import CommandBool
+from mavros.srv import CommandTOL
+from mavros.srv import SetMode
 
 
 def arduino_map(x, inmin, inmax, outmin, outmax):
@@ -83,10 +85,35 @@ def arm(args, state):
         fault(ex)
 
     if not ret.success:
-        rospy.loginfo("Request failed.")
+        rospy.loginfo("ARM Request failed.")
     else:
-        rospy.loginfo("Request success.")
+        rospy.loginfo("ARM Request success.")
 
+def takeoff(args):
+    try:
+        takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
+        
+        ret = takeoff_cl(altitude=2, latitude=0, longitude=0, min_pitch=0, yaw=0)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        rospy.loginfo("TAKEOFF Request failed.")
+    else:
+        rospy.loginfo("TAKEOFF Request success.")
+
+def set_mode(args, mode):
+    try:
+        setmode_cl = rospy.ServiceProxy(args.mavros_ns + "/set_mode", SetMode)
+        
+        ret = setmode_cl(base_mode=0, custom_mode="ALT_HOLD")
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        rospy.loginfo("SET MODE Request failed.")
+    else:
+        rospy.loginfo("SET MODE Request success.")
 
 def load_map(m, n):
     for k, v in m.iteritems():
@@ -109,7 +136,7 @@ def rc_override_control(args):
     for k, v in rc_channels.iteritems():
         v.load_param()
 
-    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
+    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override_joy", OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
@@ -131,6 +158,10 @@ def rc_override_control(args):
             arm(args, True)
         elif get_buttons(joy,'disarm') == 1:
             arm(args, False)
+        elif get_buttons(joy,'takeoff') == 1:
+	    takeoff(args)
+	elif get_buttons(joy,'land') == 1:
+            set_mode(args, "ALT_HOLD")
 
         set_chan('roll', roll)
         set_chan('pitch', pitch)
@@ -151,10 +182,10 @@ def attitude_setpoint_control(args):
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    att_pub = rospy.Publisher(args.mavros_ns + "/setpoint/attitude", PoseStamped, queue_size=10)
-    thd_pub = rospy.Publisher(args.mavros_ns + "/setpoint/att_throttle", Float64, queue_size=10)
+    att_pub = rospy.Publisher(args.mavros_ns + "/setpoint_attitude/attitude", PoseStamped, queue_size=10)
+    thd_pub = rospy.Publisher(args.mavros_ns + "/setpoint_attitude/att_throttle", Float64, queue_size=10)
 
-    if rospy.get_param(args.mavros_ns + "/setpoint/attitude/reverse_throttle", False):
+    if rospy.get_param(args.mavros_ns + "/setpoint_attitude/attitude/reverse_throttle", False):
         def thd_normalize(v):
             return v
     else:
@@ -196,7 +227,7 @@ def velocity_setpoint_control(args):
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    vel_pub = rospy.Publisher(args.mavros_ns + "/setpoint/cmd_vel", TwistStamped, queue_size=10)
+    vel_pub = rospy.Publisher(args.mavros_ns + "/setpoint_velocity/cmd_vel", TwistStamped, queue_size=10)
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPYT
@@ -206,6 +237,11 @@ def velocity_setpoint_control(args):
         throttle = get_axis(joy, 'throttle')
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
+        
+        if get_buttons(joy,'arm') == 1:
+            arm(args, True)
+        elif get_buttons(joy,'disarm') == 1:
+            arm(args, False)
 
         # Based on QGC UAS joystickinput_settargets branch
         # not shure that it really need inegrating, as it done in QGC.
@@ -230,7 +266,7 @@ def position_setpoint_control(args):
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped, queue_size=10)
+    pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint_position/local", PoseStamped, queue_size=10)
 
     def joy_cb(joy):
         global px, py, pz
@@ -239,6 +275,11 @@ def position_setpoint_control(args):
         pitch = get_axis(joy, 'pitch')
         yaw = get_axis(joy, 'yaw')
         throttle = get_axis(joy, 'throttle')
+        
+        if get_buttons(joy,'arm') == 1:
+            arm(args, True)
+        elif get_buttons(joy,'disarm') == 1:
+            arm(args, False)
 
         # TODO: need integrate by time, joy_cb() called with variable frequency
         px -= pitch
