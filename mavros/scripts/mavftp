@@ -19,6 +19,11 @@ from mavros.utils import *
 from mavros.nuttx_crc32 import *
 from mavros import ftp
 
+# optimized transfer size for FTP message payload
+# XXX: bug in ftp.cpp cause a doubling request of last package.
+# -1 fixes that.
+FTP_PAGE_SIZE = 239 * 18 - 1
+
 
 def do_list(args):
     for ent in ftp.listdir(args.path):
@@ -36,7 +41,7 @@ def do_cat(args):
 
     with ftp.open(args.path, 'r') as fd:
         while True:
-            buf = fd.read(1024)
+            buf = fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
                 break
 
@@ -71,7 +76,7 @@ def do_upload(args):
     with args.file as from_fd:
         with ftp.open(args.path, mode) as to_fd:
             while True:
-                buf = from_fd.read(1024)
+                buf = from_fd.read(FTP_PAGE_SIZE)
                 if len(buf) == 0:
                     break
 
