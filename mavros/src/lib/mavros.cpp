@@ -139,25 +139,6 @@ void MavRos::spin() {
 	while (ros::ok()) {
 		UAS_DIAG(&mav_uas).update();
 		loop_rate.sleep();
-/*
-		ROS_INFO_STREAM("Incoming data b");
-		
-		mavlink_message_t msg;
-		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(&mav_uas), &msg,
-				0,	// why it not usec timestamp?
-				UAS_PACK_TGT(&mav_uas),
-				0,
-				0,
-				0, 0, 0,
-				0, 0, 0,
-				0, 0, 0,
-				0, 0);
-		UAS_FCU(&mav_uas)->send_message(&msg);
-
-
-		UAS_FCU(&mav_uas)->message_received.connect(
-				boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
-*/
 	}
 
 	ROS_INFO("Stopping mavros...");
@@ -166,8 +147,6 @@ void MavRos::spin() {
 
 void MavRos::mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 	auto rmsg = boost::make_shared<Mavlink>();
-
-//	ROS_INFO_STREAM("Incoming data");
 
 	if  (mavlink_pub.getNumSubscribers() == 0)
 		return;
