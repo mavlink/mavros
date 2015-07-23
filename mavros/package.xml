@@ -31,7 +31,6 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>tf</depend> <!-- can not remove it before #319 is fully done -->
   <depend>tf2_ros</depend>
   <depend>mavlink</depend>
   <depend>angles</depend>

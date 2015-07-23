@@ -7,6 +7,8 @@
 #include <ros/ros.h>
 #include <mavros/mavros_uas.h>
 
+#include <tf2/LinearMath/Quaternion.h>
+
 using mavros::UAS;
 
 static const double epsilon = 1e-9;
@@ -101,7 +103,8 @@ TEST(UAS,  transform_frame__covariance6x6)
 TEST(UAS, quaternion_from_rpy__check_compatibility)
 {
 	auto eigen_q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
-	auto bt_q = tf::createQuaternionFromRPY(1.0, 2.0, 3.0);
+	//auto bt_q = tf::createQuaternionFromRPY(1.0, 2.0, 3.0);	// TF1
+	tf2::Quaternion bt_q; bt_q.setRPY(1.0, 2.0, 3.0);		// TF2
 
 	EXPECT_NEAR(bt_q.w(), eigen_q.w(), epsilon);
 	EXPECT_NEAR(bt_q.x(), eigen_q.x(), epsilon);
