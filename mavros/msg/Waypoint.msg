@@ -13,16 +13,8 @@ uint8 FRAME_MISSION = 2
 uint8 FRAME_GLOBAL_REL_ALT = 3
 uint8 FRAME_LOCAL_ENU = 4
 
-# see enum MAV_CMD
+# see enum MAV_CMD and CommandCode.msg
 uint16 command
-uint16 NAV_WAYPOINT = 16
-uint16 NAV_LOITER_UNLIM = 17
-uint16 NAV_LOITER_TURNS = 18
-uint16 NAV_LOITER_TIME = 19
-uint16 NAV_RETURN_TO_LAUNCH = 20
-uint16 NAV_LAND = 21
-uint16 NAV_TAKEOFF = 22
-# TODO: ROI mode
 
 bool is_current
 bool autocontinue
