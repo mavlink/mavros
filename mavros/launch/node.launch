@@ -8,8 +8,9 @@
 	<arg name="tgt_component" />
 	<arg name="pluginlists_yaml" />
 	<arg name="config_yaml" />
+	<arg name="log_output" default="screen" />
 
-	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="screen">
+	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="$(arg log_output)">
 		<param name="fcu_url" value="$(arg fcu_url)" />
 		<param name="gcs_url" value="$(arg gcs_url)" />
 		<param name="target_system_id" value="$(arg tgt_system)" />

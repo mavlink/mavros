@@ -18,9 +18,23 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <test_depend>gtest</test_depend>
-  <test_depend>mavros</test_depend>
-  <test_depend>mavros_extras</test_depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>mavros</depend>
+  <depend>mavros_extras</depend>
+  <depend>eigen</depend>
+  <depend>eigen_conversions</depend>
+
+  <!-- fails prerelease build
+  <exec_depend>px4</exec_depend>
+  <exec_depend>rotors_simulator</exec_depend>
+  -->
+
+  <!--<test_depend>gtest</test_depend> -->
+  <!--<test_depend>mavros</test_depend> -->
+  <!--<test_depend>mavros_extras</test_depend> -->
 
   <export>
   </export>

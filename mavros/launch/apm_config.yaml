@@ -61,9 +61,11 @@ imu:
 
 # local_position
 local_position:
-  send_tf: false
-  frame_id: "local_origin"
-  child_frame_id: "fcu"
+  frame_id: "fcu"
+  tf:
+    send: false
+    frame_id: "local_origin"
+    child_frame_id: "fcu"
 
 # param
 # None, used for FCU params
