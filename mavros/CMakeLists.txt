@@ -102,6 +102,7 @@ add_service_files(
   CommandBool.srv
   CommandHome.srv
   CommandTOL.srv
+  CommandTriggerControl.srv
   StreamRate.srv
   SetMode.srv
   FileOpen.srv

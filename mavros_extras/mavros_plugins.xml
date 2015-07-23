@@ -20,4 +20,7 @@
 	<class name="vibration" type="mavplugin::VibrationPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>
+        <class name="cam_imu_sync" type="mavplugin::CamIMUSyncPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish camera trigger data for synchronisation of IMU and camera frames</description>
+	</class>
 </library>

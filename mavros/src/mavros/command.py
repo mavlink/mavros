@@ -14,11 +14,10 @@ __all__ = (
 import rospy
 import mavros
 
-from mavros.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL
+from mavros.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL, CommandTriggerControl
 
 def _get_proxy(service, type):
     return rospy.ServiceProxy(mavros.get_topic('cmd', service), type)
-
 
 
 long = None
@@ -28,10 +27,11 @@ set_home = None
 takeoff = None
 land = None
 guided_enable = None
+trigger_control = None
 
 
 def setup_services():
-    global long, int, arming, set_home, takeoff, land, guided_enable
+    global long, int, arming, set_home, takeoff, land, guided_enable, trigger_control
     long = _get_proxy('command', CommandLong)
     int = _get_proxy('command_int', CommandInt)
     arming = _get_proxy('arming', CommandBool)
@@ -39,6 +39,7 @@ def setup_services():
     takeoff = _get_proxy('takeoff', CommandTOL)
     land = _get_proxy('land', CommandTOL)
     guided_enable = _get_proxy('guided_enable', CommandBool)
+    trigger_control = _get_proxy('trigger_control', CommandTriggerControl)
 
 
 # preinit defaults
