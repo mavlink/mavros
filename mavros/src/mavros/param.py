@@ -12,6 +12,7 @@ import time
 import rospy
 import mavros
 
+from mavros.msg import ParamValue
 from mavros.srv import ParamPull, ParamPush, ParamGet, ParamSet
 
 
@@ -111,10 +112,10 @@ class QGroundControlParam(ParamFile):
 
 
 def param_ret_value(ret):
-    if ret.integer != 0:
-        return ret.integer
-    elif ret.real != 0.0:
-        return ret.real
+    if ret.value.integer != 0:
+        return ret.value.integer
+    elif ret.value.real != 0.0:
+        return ret.value.real
     else:
         return 0
 
@@ -134,17 +135,13 @@ def param_get(param_id):
 
 def param_set(param_id, value):
     if isinstance(value, float):
-        val_f = value
-        val_i = 0
+        val = ParamValue(integer=0, real=value)
     else:
-        val_f = 0.0
-        val_i = value
+        val = ParamValue(integer=value, real=0.0)
 
     try:
         set = rospy.ServiceProxy(mavros.get_topic('param', 'set'), ParamSet)
-        ret = set(param_id=param_id,
-                     integer=val_i,
-                     real=val_f)
+        ret = set(param_id=param_id, value=val)
     except rospy.ServiceException as ex:
         raise IOError(str(ex))
 

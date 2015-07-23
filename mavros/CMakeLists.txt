@@ -84,6 +84,7 @@ add_message_files(
   FileEntry.msg
   ActuatorControl.msg
   CommandCode.msg
+  ParamValue.msg
 )
 
 ## Generate services in the 'srv' folder

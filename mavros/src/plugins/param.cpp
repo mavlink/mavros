@@ -852,13 +852,13 @@ private:
 			Parameter *p = &param_it->second;
 			Parameter to_send = *p;
 
-			// according to ParamSet/Get description
-			if (req.integer > 0)
-				to_send.param_value = (uint32_t) req.integer;
-			else if (req.integer < 0)
-				to_send.param_value = (int32_t) req.integer;
-			else if (req.real != 0.0)
-				to_send.param_value = (float) req.real;
+			// according to ParamValue description
+			if (req.value.integer > 0)
+				to_send.param_value = (uint32_t) req.value.integer;
+			else if (req.value.integer < 0)
+				to_send.param_value = (int32_t) req.value.integer;
+			else if (req.value.real != 0.0)
+				to_send.param_value = (float) req.value.real;
 			else
 				to_send.param_value = (uint32_t) 0;
 
@@ -866,8 +866,8 @@ private:
 			res.success = send_param_set_and_wait(to_send);
 			lock.lock();
 
-			res.integer = Parameter::to_integer(p->param_value);
-			res.real = Parameter::to_real(p->param_value);
+			res.value.integer = Parameter::to_integer(p->param_value);
+			res.value.real = Parameter::to_real(p->param_value);
 
 			auto pv = Parameter::to_xmlrpc_value(p->param_value);
 			lock.unlock();
@@ -895,8 +895,8 @@ private:
 			Parameter *p = &param_it->second;
 
 			res.success = true;
-			res.integer = Parameter::to_integer(p->param_value);
-			res.real = Parameter::to_real(p->param_value);
+			res.value.integer = Parameter::to_integer(p->param_value);
+			res.value.real = Parameter::to_real(p->param_value);
 		}
 		else {
 			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to get: " << req.param_id);
