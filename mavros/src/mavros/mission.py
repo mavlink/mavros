@@ -13,7 +13,7 @@ import time
 import rospy
 import mavros
 
-from mavros.msg import Waypoint, WaypointList
+from mavros.msg import Waypoint, WaypointList, CommandCode
 from mavros.srv import WaypointPull, WaypointPush, WaypointClear, \
     WaypointSetCurrent, WaypointGOTO
 
@@ -27,13 +27,13 @@ FRAMES = {
 }
 
 NAV_CMDS = {
-    Waypoint.NAV_LAND: 'LAND',
-    Waypoint.NAV_LOITER_TIME: 'LOITER-TIME',
-    Waypoint.NAV_LOITER_TURNS: 'LOITER-TURNS',
-    Waypoint.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
-    Waypoint.NAV_RETURN_TO_LAUNCH: 'RTL',
-    Waypoint.NAV_TAKEOFF: 'TAKEOFF',
-    Waypoint.NAV_WAYPOINT: 'WAYPOINT',
+    CommandCode.NAV_LAND: 'LAND',
+    CommandCode.NAV_LOITER_TIME: 'LOITER-TIME',
+    CommandCode.NAV_LOITER_TURNS: 'LOITER-TURNS',
+    CommandCode.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
+    CommandCode.NAV_RETURN_TO_LAUNCH: 'RTL',
+    CommandCode.NAV_TAKEOFF: 'TAKEOFF',
+    CommandCode.NAV_WAYPOINT: 'WAYPOINT',
     # Maybe later i will add this enum to message
     112: 'COND-DELAY',
     113: 'COND-CHANGE-ALT',
