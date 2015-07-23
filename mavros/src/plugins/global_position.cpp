@@ -238,8 +238,8 @@ private:
 		pose_cov->pose.pose.position.y = northing;
 		pose_cov->pose.pose.position.z = relative_alt->data;
 
-		// XXX FIX ME #319, We really need attitude on UTM?
-		tf::quaternionTFToMsg(uas->get_attitude_orientation(), pose_cov->pose.pose.orientation);
+		// XXX We really need attitude on UTM?
+		pose_cov->pose.pose.orientation = uas->get_attitude_orientation();
 
 		// Use ENU covariance to build XYZRPY covariance
 		UAS::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());

@@ -17,7 +17,6 @@
 #include <cmath>
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
-#include <tf/transform_datatypes.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <sensor_msgs/Imu.h>
@@ -132,20 +131,6 @@ private:
 		}
 	}
 
-	void uas_store_attitude(sensor_msgs::Imu::Ptr imu_msg)
-	{
-		tf::Vector3 angular_velocity;
-		tf::Vector3 linear_acceleration;
-		tf::Quaternion orientation;
-
-		tf::quaternionMsgToTF(imu_msg->orientation, orientation);
-		tf::vector3MsgToTF(imu_msg->angular_velocity, angular_velocity);
-		tf::vector3MsgToTF(imu_msg->linear_acceleration, linear_acceleration);
-
-		//! @todo replace tf data types with eigen in UAS storage.
-		uas->update_attitude_imu(orientation, angular_velocity, linear_acceleration);
-	}
-
 	//! fill and publish imu/data message
 	void publish_imu_data(
 			uint32_t time_boot_ms,
@@ -168,7 +153,7 @@ private:
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 		// publish
-		uas_store_attitude(imu_msg);
+		uas->update_attitude_imu(imu_msg);
 		imu_pub.publish(imu_msg);
 	}
 

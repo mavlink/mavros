@@ -78,9 +78,7 @@ private:
 		pose->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
 
 		tf::pointEigenToMsg(position, pose->pose.position);
-
-		// XXX FIX ME #319
-		tf::quaternionTFToMsg(orientation, pose->pose.orientation);
+		pose->pose.orientation = orientation;
 
 		local_position.publish(pose);
 
@@ -91,7 +89,7 @@ private:
 			transform.header.frame_id = tf_frame_id;
 			transform.child_frame_id = tf_child_frame_id;
 
-			transform.transform.rotation = pose->pose.orientation;
+			transform.transform.rotation = orientation;
 			tf::vectorEigenToMsg(position, transform.transform.translation);
 
 			uas->tf2_broadcaster.sendTransform(transform);

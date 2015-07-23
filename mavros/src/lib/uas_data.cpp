@@ -27,9 +27,6 @@ UAS::UAS() :
 	target_system(1),
 	target_component(1),
 	connected(false),
-	imu_orientation(),
-	imu_angular_velocity(),
-	imu_linear_acceleration(),
 	gps_eph(NAN),
 	gps_epv(NAN),
 	gps_fix_type(0),
@@ -87,31 +84,29 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 
 /* -*- IMU data -*- */
 
-void UAS::update_attitude_imu(tf::Quaternion &q, tf::Vector3 &av, tf::Vector3 &lacc)
+void UAS::update_attitude_imu(sensor_msgs::Imu::Ptr &imu)
 {
 	lock_guard lock(mutex);
-
-	imu_orientation = q;
-	imu_angular_velocity = av;
-	imu_linear_acceleration = lacc;
+	imu_data = imu;
 }
 
-tf::Vector3 UAS::get_attitude_angular_velocity()
+sensor_msgs::Imu::Ptr UAS::get_attitude_imu()
 {
 	lock_guard lock(mutex);
-	return imu_angular_velocity;
+	return imu_data;
 }
 
-tf::Vector3 UAS::get_attitude_linear_acceleration()
+geometry_msgs::Quaternion UAS::get_attitude_orientation()
 {
 	lock_guard lock(mutex);
-	return imu_linear_acceleration;
-}
-
-tf::Quaternion UAS::get_attitude_orientation()
-{
-	lock_guard lock(mutex);
-	return imu_orientation;
+	if (imu_data)
+		return imu_data->orientation;
+	else {
+		// fallback - return identity
+		geometry_msgs::Quaternion q;
+		q.w = 1.0; q.x = q.y = q.z = 0.0;
+		return q;
+	}
 }
 
 
