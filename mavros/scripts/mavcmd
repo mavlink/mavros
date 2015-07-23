@@ -186,6 +186,7 @@ def do_guided_en(args):
 
     _check_ret(args, ret)
 
+
 def do_trigger_control(args):
     try:
         ret = command.trigger_control(trigger_enable=args.trigger_enable,
@@ -194,6 +195,7 @@ def do_trigger_control(args):
         fault(ex)
 
     _check_ret(args, ret)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")

@@ -343,7 +343,7 @@ private:
 				0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
-   
+
         bool trigger_control_cb(mavros::CommandTriggerControl::Request &req,
 			mavros::CommandTriggerControl::Response &res) {
 		return send_command_long_and_wait(MAV_CMD_DO_TRIGGER_CONTROL, 1,
