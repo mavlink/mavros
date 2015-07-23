@@ -49,7 +49,7 @@ add-dir-to-path $PWD
 
 ```
 ./sim_vehicle.sh -v ArduPlane --out udp:localhost:15550 --map
-roslaunch test_mavros/test/apm_imu_test.launch
+roslaunch test_mavros launch/apm/apm_imu_test.launch
 ```
 
 
