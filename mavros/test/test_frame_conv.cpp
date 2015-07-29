@@ -12,6 +12,7 @@
 using mavros::UAS;
 
 static const double epsilon = 1e-9;
+static const double epsilon_f = 1e-6;
 // gMock has ability to define array matcher, but there problems with that.
 // so trying good old for loop
 
@@ -100,6 +101,8 @@ TEST(UAS,  transform_frame__covariance6x6)
 }
 #endif
 
+/* -*- quaternion_from_rpy / getYaw -*- */
+
 TEST(UAS, quaternion_from_rpy__check_compatibility)
 {
 	auto eigen_q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
@@ -133,7 +136,27 @@ TEST(UAS, quaternion_to_rpy__123)
 	EXPECT_NEAR(3.0, rpy.z(), epsilon);
 }
 
-/* -*- test covariance transform -*- */
+TEST(UAS, getYaw__123)
+{
+	auto q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+
+	EXPECT_NEAR(3.0, UAS::getYaw(q), epsilon);
+}
+
+/* -*- mavlink util -*- */
+
+TEST(UAS, quaternion_to_mavlink__123)
+{
+	auto eigen_q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+	float mavlink_q[4];
+
+	UAS::quaternion_to_mavlink(eigen_q, mavlink_q);
+
+	EXPECT_NEAR(mavlink_q[0], eigen_q.w(), epsilon_f);
+	EXPECT_NEAR(mavlink_q[1], eigen_q.x(), epsilon_f);
+	EXPECT_NEAR(mavlink_q[2], eigen_q.y(), epsilon_f);
+	EXPECT_NEAR(mavlink_q[3], eigen_q.z(), epsilon_f);
+}
 
 
 int main(int argc, char **argv)

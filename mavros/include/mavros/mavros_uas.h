@@ -381,6 +381,19 @@ public:
 	}
 
 	/**
+	 * @brief Store Quaternion to MAVLink float[4] format
+	 *
+	 * MAVLink uses wxyz order, wile Eigen::Quaterniond uses xyzw internal order,
+	 * so it can't be stored to array using Eigen::Map.
+	 */
+	static inline void quaternion_to_mavlink(const Eigen::Quaterniond &q, float qmsg[4]) {
+		qmsg[0] = q.w();
+		qmsg[1] = q.x();
+		qmsg[2] = q.y();
+		qmsg[3] = q.z();
+	}
+
+	/**
 	 * @brief Transform frame between ROS and FCU. (Vector3d)
 	 *
 	 * General function. Please use specialized enu-ned and ned-enu variants.
