@@ -91,14 +91,13 @@ private:
 	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
+		Eigen::Quaterniond q_enu;
 		float q[4];
 
-		// Eigen has same order as mavlink: w x y z
-		Eigen::Quaterniond q_enu;
-		Eigen::Map<Eigen::Quaternionf> q_out(q);
-
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
-		q_out = UAS::transform_frame_enu_ned(q_enu).cast<float>();
+		UAS::quaternion_to_mavlink(
+				UAS::transform_frame_enu_ned(q_enu),
+				q);
 
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
@@ -116,14 +115,13 @@ private:
 	/* -*- callbacks -*- */
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
+		Eigen::Quaterniond q_enu;
 		float q[4];
 
-		// Eigen has same order as mavlink: w x y z
-		Eigen::Quaterniond q_enu;
-		Eigen::Map<Eigen::Quaternionf> q_out(q);
-
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
-		q_out = UAS::transform_frame_enu_ned(q_enu).cast<float>();
+		UAS::quaternion_to_mavlink(
+				UAS::transform_frame_enu_ned(q_enu),
+				q);
 
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
