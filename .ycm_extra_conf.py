@@ -85,6 +85,8 @@ default_flags = [
     # include third party libraries
     # '-isystem',
     # '/some/path/include',
+    '-isystem',
+    '/usr/include/eigen3'
 ]
 
 flags = default_flags + GetRosIncludeFlags()
