@@ -32,14 +32,14 @@ namespace mavplugin {
 class HeartbeatStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-	HeartbeatStatus(const std::string name, size_t win_size) :
+	HeartbeatStatus(const std::string &name, size_t win_size) :
 		diagnostic_updater::DiagnosticTask(name),
+		times_(win_size),
+		seq_nums_(win_size),
 		window_size_(win_size),
 		min_freq_(0.2),
 		max_freq_(100),
 		tolerance_(0.1),
-		times_(win_size),
-		seq_nums_(win_size),
 		autopilot(MAV_AUTOPILOT_GENERIC),
 		type(MAV_TYPE_GENERIC),
 		system_status(MAV_STATE_UNINIT)
@@ -52,8 +52,7 @@ public:
 		ros::Time curtime = ros::Time::now();
 		count_ = 0;
 
-		for (int i = 0; i < window_size_; i++)
-		{
+		for (size_t i = 0; i < window_size_; i++) {
 			times_[i] = curtime;
 			seq_nums_[i] = count_;
 		}
@@ -128,7 +127,7 @@ private:
 class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-	SystemStatusDiag(const std::string name) :
+	SystemStatusDiag(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		last_st {}
 	{ };
@@ -203,7 +202,7 @@ private:
 class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-	BatteryStatusDiag(const std::string name) :
+	BatteryStatusDiag(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		voltage(-1.0),
 		current(0.0),
@@ -253,7 +252,7 @@ private:
 class MemInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
-	MemInfo(const std::string name) :
+	MemInfo(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		freemem(-1),
 		brkval(0)
@@ -291,7 +290,7 @@ private:
 class HwStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-	HwStatus(const std::string name) :
+	HwStatus(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		vcc(-1.0),
 		i2cerr(0),

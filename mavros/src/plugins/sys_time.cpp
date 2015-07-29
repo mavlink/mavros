@@ -29,7 +29,7 @@ namespace mavplugin {
 class TimeSyncStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-	TimeSyncStatus(const std::string name, size_t win_size) :
+	TimeSyncStatus(const std::string &name, size_t win_size) :
 		diagnostic_updater::DiagnosticTask(name),
 		window_size_(win_size),
 		min_freq_(0.01),
