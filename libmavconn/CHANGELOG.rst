@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: simpify exception code.
+* Contributors: Vladimir Ermakov
+
 0.12.0 (2015-07-01)
 -------------------
 * libmavconn: UDP: Do not exit on Network unreachable error.

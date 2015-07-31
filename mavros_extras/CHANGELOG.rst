@@ -2,6 +2,28 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: mocap fix `#352 <https://github.com/mavlink/mavros/issues/352>`_: use new helper for quaternion.
+* Merge pull request `#312 <https://github.com/mavlink/mavros/issues/312>`_ from mhkabir/cam_imu_sync
+  Camera IMU synchronisation support added
+* distance_sensor `#342 <https://github.com/mavlink/mavros/issues/342>`_: correct orientation parameter handling.
+* distance_sensor: restructure orientation matching and verification
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: Return quaternion from UAS::sensor_matching()
+* launch fix `#340 <https://github.com/mavlink/mavros/issues/340>`_: update default component id of PX4.
+* extras: distance_sensor `#71 <https://github.com/mavlink/mavros/issues/71>`_: Purt to TF2.
+* plugin: Use UAS::syncronized_header() for reduce LOC.
+* extras: vision_pose `#71 <https://github.com/mavlink/mavros/issues/71>`_: Use TF2 listener.
+  Also `#319 <https://github.com/mavlink/mavros/issues/319>`_.
+* launch: Update configs.
+* extras: viz `#336 <https://github.com/mavlink/mavros/issues/336>`_: convert plugin to node.
+* extras: vision_speed `#319 <https://github.com/mavlink/mavros/issues/319>`_: use eigen based transform
+* extras: vibration: Use UAS::synchronized_header()
+* extras: px4flow `#319 <https://github.com/mavlink/mavros/issues/319>`_: change transform_frame()
+* extras: mocap `#319 <https://github.com/mavlink/mavros/issues/319>`_: use eigen based transform
+* Camera IMU synchronisation support added
+* Contributors: Mohammed Kabir, TSC21, Vladimir Ermakov
+
 0.12.0 (2015-07-01)
 -------------------
 * coverity: make them happy

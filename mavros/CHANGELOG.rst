@@ -2,6 +2,101 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin: setpoint_attitude `#352 <https://github.com/mavlink/mavros/issues/352>`_: use new helper.
+* plugin: sys: Fix cppcheck and YouCompleteMe warnings
+* plugin: ftp: Fix cppcheck errors.
+* lib `#352 <https://github.com/mavlink/mavros/issues/352>`_: Add helper function UAS::quaternion_to_mavlink()
+* Fixed bug in send_attitude_target()
+  The transformed quaternion wasn't being passed to set_attitude_target(), resulting in an incorrect attitude setpoint. I've now fixed this issue.
+* scripts: fix mavwp
+* test: add test cases for new sensor orientation functions
+* remove tf1 dep
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: Remove TF types from UAS
+* plugin: param: new message type: ParamValue
+* msgs: Move MAV_CMD values to separate msg
+* plugin: command: fix build
+* fix whitespaces in python scripts
+* Merge pull request `#312 <https://github.com/mavlink/mavros/issues/312>`_ from mhkabir/cam_imu_sync
+  Camera IMU synchronisation support added
+* Added launch file for PX4 posix sitl to launch gcs_bridge node for bridging posix and gazebo
+* scripts: mavftp: little speed up by aligning access to payload length
+* launch: Add optional log_output arg
+* Merge branch 'orientation_enum_name'
+  * orientation_enum_name:
+  distance_sensor `#342 <https://github.com/mavlink/mavros/issues/342>`_: correct orientation parameter handling.
+  lib `#342 <https://github.com/mavlink/mavros/issues/342>`_: try to convert numeric value too
+  px4_config: adapt to distance_sensor params to new features
+  distance_sensor: restructure orientation matching and verification
+  lib `#342 <https://github.com/mavlink/mavros/issues/342>`_: Added sensor orientation string repr.
+* lib `#342 <https://github.com/mavlink/mavros/issues/342>`_: try to convert numeric value too
+* px4_config: adapt to distance_sensor params to new features
+* lib `#342 <https://github.com/mavlink/mavros/issues/342>`_: Added sensor orientation string repr.
+* launch: update local_position conf
+* test: Add test for UAS::sensor_orientation_matching()
+* Update cmake Eigen3 finding rules.
+  Migration described at:
+  http://wiki.ros.org/jade/Migration#Eigen_CMake_Module_in_cmake_modules
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_, `#341 <https://github.com/mavlink/mavros/issues/341>`_: preparation for str->MAV_SENSOR_ORIENTATION func
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: Return quaternion from UAS::sensor_matching()
+* lib: Remove unneded NodeHandle
+* launch fix `#340 <https://github.com/mavlink/mavros/issues/340>`_: update default component id of PX4.
+* plugin: sys_status: Add fallback to adressed version request.
+* Can not remove tf package before `#319 <https://github.com/mavlink/mavros/issues/319>`_ is done.
+  tf::Vector3 and other tf1-bullet still in use.
+* plugin: sys_status: Use broadcast for version request.
+* fix `#71 <https://github.com/mavlink/mavros/issues/71>`_: replace depend tf to tf2_ros.
+* plugin: Use UAS::syncronized_header() for reduce LOC.
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: use similar names for covariances as eigen vector
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: transform_frame() for Covariance3x3
+* lib `#319 <https://github.com/mavlink/mavros/issues/319>`_: remove unused bullet based transform_frame()
+* extras: vision_pose `#71 <https://github.com/mavlink/mavros/issues/71>`_: Use TF2 listener.
+  Also `#319 <https://github.com/mavlink/mavros/issues/319>`_.
+* plugin `#71 <https://github.com/mavlink/mavros/issues/71>`_: Implement TF2 listener. Change param names.
+  Breaks extras.
+* uas `#71 <https://github.com/mavlink/mavros/issues/71>`_: Use single TF2 objects for broadcasting and subscription.
+* launch: Update configs.
+* lib: Add UAS::quaternion_to_rpy()
+* plugin: safety_area `#319 <https://github.com/mavlink/mavros/issues/319>`_: Change transform_frame()
+* plugin: local_position `#71 <https://github.com/mavlink/mavros/issues/71>`_ `#319 <https://github.com/mavlink/mavros/issues/319>`_: port to TF2 and Eigen
+* lib: Add UAS::synchonized_header()
+* plugin: command: Add command broadcasting support.
+* Perform the autopilot version request as broadcast
+* lib: Update PX4 mode list
+* plugin: global_position `#325 <https://github.com/mavlink/mavros/issues/325>`_: port tf broadcaster to tf2
+  Also `#71 <https://github.com/mavlink/mavros/issues/71>`_.
+* plugin: global_position `#325 <https://github.com/mavlink/mavros/issues/325>`_: reenable UTM calc
+* plugin: gps `#325 <https://github.com/mavlink/mavros/issues/325>`_: remove gps plugin.
+* plugin: global_position `#325 <https://github.com/mavlink/mavros/issues/325>`_: merge gps_raw_int handler
+* plugin: setpoint_accel `#319 <https://github.com/mavlink/mavros/issues/319>`_: use eigen frame transform.
+  I don't think that PX4 support any other frame than LOCAL_NED.
+  So i removed comment.
+  Also style fix in setpoint_velocity.
+* plugin: setpoint_velocity `#319 <https://github.com/mavlink/mavros/issues/319>`_: use eigen based frame transform.
+* plugin: setpoint_position `#273 <https://github.com/mavlink/mavros/issues/273>`_: remove PX4 quirk, it is fixed.
+* plugin: ftp: Update command enum.
+* plugin: imu_pub fix `#320 <https://github.com/mavlink/mavros/issues/320>`_: move constants outside class, else runtime linkage error.
+* plugin: imu_pub `#320 <https://github.com/mavlink/mavros/issues/320>`_: first attempt
+* eigen `#319 <https://github.com/mavlink/mavros/issues/319>`_: handy wrappers.
+* eigen `#319 <https://github.com/mavlink/mavros/issues/319>`_: add euler-quat function.
+  Also `#321 <https://github.com/mavlink/mavros/issues/321>`_.
+* test `#321 <https://github.com/mavlink/mavros/issues/321>`_: remove duplicated test cases, separate by library.
+  Add test for checking compatibility of tf::quaternionFromRPY() and Eigen
+  based math.
+* test `#321 <https://github.com/mavlink/mavros/issues/321>`_: testing eigen-based transforms.
+  We should check what convention used by tf::Matrix to be sure that
+  our method is compatible.
+* mavros `#319 <https://github.com/mavlink/mavros/issues/319>`_: Add Eigen dependency and cmake rule.
+* test: test for UAS::transform_frame_attitude_rpy() (ERRORs!)
+* test: test for UAS::transform_frame_xyz()
+* test: Initial import test_frame_conv
+* cam_imu_sync : fix running
+* imu_cam_sync : fix formatting
+* command handling in mavcmd for camera trigger
+* Camera IMU synchronisation support added
+* Contributors: Anurag Makineni, Lorenz Meier, Mohammed Kabir, TSC21, Vladimir Ermakov, devbharat
+
 0.12.0 (2015-07-01)
 -------------------
 * plugin: sys_time, sys_status `#266 <https://github.com/vooon/mavros/issues/266>`_: check that rate is zero
