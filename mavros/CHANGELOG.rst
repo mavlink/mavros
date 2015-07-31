@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.0 (2015-08-01)
+-------------------
 * plugin: setpoint_attitude `#352 <https://github.com/mavlink/mavros/issues/352>`_: use new helper.
 * plugin: sys: Fix cppcheck and YouCompleteMe warnings
 * plugin: ftp: Fix cppcheck errors.

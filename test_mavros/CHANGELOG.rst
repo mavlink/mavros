@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.0 (2015-08-01)
+-------------------
 * Update iris_empty_world_offboard_ctl.launch
 * test: fix prerelease building
 * test: move launch
