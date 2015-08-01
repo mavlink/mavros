@@ -100,8 +100,8 @@ Changelog for package mavros
 0.12.0 (2015-07-01)
 -------------------
 * plugin: sys_time, sys_status `#266 <https://github.com/vooon/mavros/issues/266>`_: check that rate is zero
-* test `#321 <https://github.com/vooon/mavros/issues/321>`_: disable tests for broken transforms.
-* lib `#321 <https://github.com/vooon/mavros/issues/321>`_: frame transform are broken. again! revert old math.
+* test `#321 <https://github.com/vooon/mavros/issues/321>`__: disable tests for broken transforms.
+* lib `#321 <https://github.com/vooon/mavros/issues/321>`__: frame transform are broken. again! revert old math.
   RULE for me: do not accept patch without wide testing from author.
   That PR changes all plugins code, instead of do API, test and only after
   that touching working code. My bad.
@@ -162,7 +162,7 @@ Changelog for package mavros
   If on MR request FCU responses param with different `param_index`
   do not reset repeat counter to prevent endless loop.
 * gcs bridge fix `#277 <https://github.com/vooon/mavros/issues/277>`_: add link diagnostics
-* plugin: setpoint_position `#273 <https://github.com/vooon/mavros/issues/273>`_: add quirk for PX4.
+* plugin: setpoint_position `#273 <https://github.com/vooon/mavros/issues/273>`__: add quirk for PX4.
 * readme: fir glossary misprint
 * readme: add notes about catkin tool
 * Contributors: Vladimir Ermakov
