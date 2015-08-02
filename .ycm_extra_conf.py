@@ -89,7 +89,10 @@ default_flags = [
     # '-isystem',
     # '/some/path/include',
     '-isystem',
-    '/usr/include/eigen3'
+    '/usr/include/eigen3',
+
+    # mavros flags
+    '-DMAVLINK_DIALECT=ardupilotmega',
 ]
 
 flags = default_flags + GetRosIncludeFlags()
