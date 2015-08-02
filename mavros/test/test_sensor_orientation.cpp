@@ -68,9 +68,15 @@ TEST(UAS, orientation_from_str__unknown)
 	EXPECT_LT(UAS::orientation_from_str("completely wrong identificator"), 0);
 }
 
-TEST(UAS, orientation_from_str__number_20)
+TEST(UAS, orientation_from_str__number)
 {
 	EXPECT_EQ(MAV_SENSOR_ROTATION_ROLL_270, UAS::orientation_from_str("20"));
+}
+
+TEST(UAS, orientation_from_str__wrong_number)
+{
+	// 123 >> 38 (max)
+	EXPECT_LT(UAS::orientation_from_str("123"), 0);
 }
 
 TEST(UAS, orientation_from_str__roll_180)

@@ -77,9 +77,9 @@ static const std::array<const OrientationPair, 39> sensor_orientations = {{
 
 std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
 {
-	size_t idx = size_t(orientation);
+	const size_t idx(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_WARN_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
+		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
 		return std::to_string(idx);
 	}
 
@@ -88,9 +88,9 @@ std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
 
 Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
-	size_t idx = size_t(orientation);
+	const size_t idx(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_WARN_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
+		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
 		return Eigen::Quaterniond::Identity();
 	}
 
@@ -108,7 +108,13 @@ int UAS::orientation_from_str(const std::string &sensor_orientation)
 	// 2. try convert integer
 	// fallback for old configs that uses numeric orientation.
 	try {
-		return std::stoi(sensor_orientation, 0, 0);
+		int idx = std::stoi(sensor_orientation, 0, 0);
+		if (0 > idx || size_t(idx) > sensor_orientations.size()) {
+			ROS_ERROR_NAMED("uas", "SENSOR: orientation index out of bound: %d", idx);
+			return -1;
+		}
+		else
+			return idx;
 	}
 	catch (std::invalid_argument &ex) {
 		// failed
