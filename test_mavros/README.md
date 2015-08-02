@@ -102,6 +102,10 @@ add-dir-to-path $PWD
 roslaunch test_mavros launch/apm/apm_imu_test.launch
 ```
 
+### Screen capture for that test (youtube video)
+
+[![APM SITL test video](http://img.youtube.com/vi/mUIptiNbmS4/0.jpg)](http://www.youtube.com/watch?v=mUIptiNbmS4)
+
 
 [apm-sitl-wiki]: http://dev.ardupilot.com/wiki/simulation-2/sitl-simulator-software-in-the-loop/setting-up-sitl-on-linux/
 [px4-sitl-wiki]: https://pixhawk.org/dev/ros/sitl
