@@ -12,7 +12,8 @@ To test the simulation environment all you have to do is launch the propper ROS 
 
 ### Available tests
 
-#### Offboard position and velocity control (acceleration control still not supported on PX4 Firmware side).
+#### Offboard position and velocity control
+Note: acceleration control still not supported on PX4 Firmware side.
 
 ##### Tested in launch files
 
