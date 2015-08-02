@@ -12,13 +12,13 @@ To test the simulation environment all you have to do is launch the propper ROS 
 
 ### Available tests
 
-## Offboard position and velocity control (acceleration control still not supported on PX4 Firmware side).
+#### Offboard position and velocity control (acceleration control still not supported on PX4 Firmware side).
 
-# Tested in launch files
+##### Tested in launch files
 
 - `iris_empty_world_offboard_ctl.launch`
 
-# Description
+##### Description
 
 Allows testing the offboard control routines of the PX4 firmware by issuing setpoint commands through MAVROS plugins. Current test implements code to send:
 
@@ -32,7 +32,7 @@ The tests are implemented by issuing some kind of shaped path. Current shapes ar
 - eight
 - ellipse (3D)
 
-# How to use
+##### How to use
 
 To test the different behaviors, edit `iris_empty_world_offboard_ctl.launch`. At the bottom of this file, you will find:
 
@@ -46,11 +46,12 @@ Just change the default value of them and issue `roslaunch test_mavros iris_empt
 
 Or, you can just issue the roslaunch passing the parameter values on the command line, p.e. `roslaunch test_mavros iris_empty_world_offboard_ctl.launch mode:=position shape:=square`.
 
-# TODO
+##### TODO
 
 - Implement acceleration setpoint sending, when this is implemented on Firmware side
 - Give possibility to users to define the amplitude of movement
 - Implement a PID controller for velocity to avoid overshoots in the onboard controller
+
 
 
 APM SITL
