@@ -155,8 +155,8 @@ private:
 		auto pos = UAS::transform_frame_enu_ned(Eigen::Vector3d(transf.translation()));
 
 		float distance = sqrt(pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z());
-		float phi = atan(sqrt(pos.x() * pos.x() + pos.y() * pos.y()) / pos.z());		// = angle_x
-		float theta = atan(pos.y() / pos.x());		// = angle_y
+		float phi = atan(sqrt(pos.x() * pos.x() + pos.y() * pos.y()) / pos.z());	// = angle_x
+		float theta = atan(pos.y() / pos.x());				// = angle_y
 
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in XY-axis
 		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Z-axis
@@ -172,8 +172,8 @@ private:
 				distance,
 				size_x_rad,
 				size_y_rad,
-				0,		// TODO: update number depending on received frame_id
-				frame);		// by default, in LOCAL_NED
+				0,	// TODO: update number depending on received frame_id
+				frame);	// by default, in LOCAL_NED
 	}
 
 	void handle_landing_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
