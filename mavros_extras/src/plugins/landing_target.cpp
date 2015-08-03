@@ -187,7 +187,8 @@ private:
 		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(distance * sin(phi) * sin(theta),	// right now in NED
 					distance * sin(phi) * sin(theta),
 					distance * cos(phi)));
-		auto orientation = Eigen::Quaterniond(1,0,0,0);	// TODO : Set pose depending on MAV_FRAME enum
+		// From the data coming from Firmware, it is not possible to determine the orientation, so it's kept as constant:
+		auto orientation = Eigen::Quaterniond(1,0,0,0);
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
 				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
