@@ -156,7 +156,7 @@ private:
 
 		float distance = sqrt(pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z());
 		float phi = atan(sqrt(pos.x() * pos.x() + pos.y() * pos.y()) / pos.z());	// = angle_x
-		float theta = atan(pos.y() / pos.x());				// = angle_y
+		float theta = atan(pos.y() / pos.x());						// = angle_y
 
 		float size_x_rad = target_size_x * phi;		// assuming this is the arc length of the circle in XY-axis
 		float size_y_rad = target_size_y * theta;	// assuming this is the arc length of the circle in Z-axis
