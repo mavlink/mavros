@@ -66,7 +66,7 @@ public:
 		}
 
 		land_target_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("landing_target", 10);
-		target_size_pub = sp_nh.advertise<geometry_msgs::Vector3>("target_size", 10);
+		lt_marker_pub = sp_nh.advertise<geometry_msgs::Vector3>("lt_marker", 10);
 
 		if (listen_tf) {
 			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << tf_frame_id
@@ -99,7 +99,7 @@ private:
 	std::string tf_child_frame_id;
 
 	ros::Publisher land_target_pub;
-	ros::Publisher target_size_pub;
+	ros::Publisher lt_marker_pub;
 	ros::Subscriber land_target_sub;
 
 	double target_size_x, target_size_y;
@@ -219,11 +219,9 @@ private:
 		auto tg_size = Eigen::Vector3d(land_target.size_x / phi, land_target.size_x / (M_PI - phi), land_target.size_y / theta);
 		auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
 
-		tg_size_msg->header = pose->header;
 		tf::vectorEigenToMsg(tg_size, tg_size_msg->vector);
 
-		target_size_pub.publish(tg_size_msg);
-		/** @todo add target_size and landing_target subscriber in copter_visualization node, so to publish a marker of the target */
+		lt_marker_pub.publish(tg_size_msg);
 	}
 
 	/* -*- callbacks -*- */
