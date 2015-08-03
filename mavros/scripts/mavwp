@@ -49,18 +49,8 @@ def do_pull(args):
 
 def do_show(args):
     str_bool = lambda x: 'Yes' if x else 'No'
-
-    def str_frame(f):
-        if M.FRAMES.has_key(f):
-            return M.FRAMES[f] + ' ({})'.format(f)
-        else:
-            return 'UNK ({})'.format(f)
-
-    def str_command(c):
-        if M.NAV_CMDS.has_key(c):
-            return M.NAV_CMDS[c] + ' ({})'.format(c)
-        else:
-            return 'UNK ({})'.format(c)
+    str_frame = lambda f: M.FRAMES.get(f, 'UNK') + ' ({})'.format(f)
+    str_command = lambda c: M.NAV_CMDS.get(c, 'UNK') + ' ({})'.format(c)
 
     done_evt = threading.Event()
     def _show_table(topic):

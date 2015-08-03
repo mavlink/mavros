@@ -101,8 +101,9 @@ def do_land(args):
 
 
 def _find_gps_topic(args, op_name):
+    # XXX: since 0.13 global position always exists. need redo that.
     global_fix = mavros.get_topic('global_position', 'global')
-    gps_fix = mavros.get_topic('gps', 'fix')
+    gps_fix = mavros.get_topic('global_position', 'raw', 'fix')
 
     topics = rospy.get_published_topics()
     # need find more elegant way
