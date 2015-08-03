@@ -274,7 +274,7 @@ landing_target:
     child_frame_id: "camera_center"
     rate: 10.0
   frame_id: "landing_target"
-  target_size: {xy:  0.2, y:  0.2}
+  target_size: {xy:  0.2, z:  0.2}
   mav_frame: "LOCAL_NED"
 
   ## Currently available frames of reference:
