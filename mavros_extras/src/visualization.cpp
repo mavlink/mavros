@@ -244,14 +244,15 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 	vehicle_marker->markers.push_back(body);
 }
 
-static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &target)
-{
-	publish_lt_marker(target);
-}
-
-static void landing_target_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
+static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
 	publish_track_marker(pose);
+	publish_vehicle_marker();
+}
+
+static void landing_target_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &target)
+{
+	publish_lt_marker(target);
 }
 
 static void lt_marker_sub_cb(const geometry_msgs::Vector3Stamped::ConstPtr &lt_marker)
