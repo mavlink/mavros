@@ -114,36 +114,37 @@ TEST(UAS, quaternion_to_rpy__pm_pi)
 
 TEST(UAS, getYaw__123)
 {
-	auto q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+	// with pich >= pi/2 got incorrect result.
+	// so 1, 2, 3 rad (57, 115, 172 deg) replaced with 60, 89, 172 deg
+	auto q = UAS::quaternion_from_rpy(60.0 * deg_to_rad, 89.0 * deg_to_rad, 3.0);
 
 	EXPECT_NEAR(3.0, UAS::getYaw(q), epsilon);
 }
 
-#if 0
-TEST(UAS, quaternion_from_rpy__getYaw__issue_358)
+TEST(UAS, getYaw__pm_pi)
 {
-	// test for issue #358
-	auto q1 = UAS::quaternion_from_rpy(0.0, 0.0, M_PI);
-	auto q2 = Eigen::Quaterniond(-1.0, 0.0, 0.0, 0.0);
-	auto q1_ned = UAS::transform_frame_enu_ned(q1);
-	auto yaw = UAS::getYaw(q1);
-	auto yaw_ned = UAS::getYaw(q1_ned);
-	auto rpy = UAS::quaternion_to_rpy(q1);
-	auto rpy_ned = UAS::quaternion_to_rpy(q1_ned);
+	// in degrees
+	const ssize_t min = -180;
+	const ssize_t max = 180;
+	const ssize_t step = 1;
 
-	std::cout << "Q1: (" << q1.w() << " " << q1.x() << " " << q1.y() << " " << q1.z() << ")\n";
-	std::cout << "Q2: (" << q2.w() << " " << q2.x() << " " << q2.y() << " " << q2.z() << ")\n";
-	std::cout << "Q1 NED: (" << q1_ned.w() << " " << q1_ned.x() << " " << q1_ned.y() << " " << q1_ned.z() << ")\n";
-	std::cout << "YAW: " << yaw << " NED: " << yaw_ned << "\n";
-	std::cout << "RPY: " << rpy << "\n";
-	std::cout << "RPY NED:" << rpy_ned << "\n";
+	for (ssize_t yaw = min; yaw <= max; yaw += step) {
+		Eigen::Vector3d expected_deg(1.0, 2.0, yaw);
+		Eigen::Vector3d expected = expected_deg * deg_to_rad;
 
-	//EXPECT_QUATERNION(q1, q2, epsilon);
+		std::stringstream ss;
 
-	EXPECT_NEAR(-M_PI, yaw, epsilon);
-	EXPECT_NEAR(M_PI, yaw_ned, epsilon);
+		ss << "DEG(" << expected_deg.x() << ", " << expected_deg.y() << ", " << expected_deg.z() << ")  ";
+		ss << "RAD(" << expected.x() << ", " << expected.y() << ", " << expected.z() << ")";
+
+		SCOPED_TRACE(ss.str());
+
+		auto q1 = UAS::quaternion_from_rpy(expected);
+		double q1_yaw = UAS::getYaw(q1);
+
+		EXPECT_NEAR(expected.z(), q1_yaw, epsilon);
+	}
 }
-#endif
 
 /* -*- mavlink util -*- */
 
