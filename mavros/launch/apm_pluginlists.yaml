@@ -8,9 +8,10 @@ plugin_blacklist:
 - image_pub
 - 'mocap_*'
 - px4flow
-- 'vision_*'
+- vision_speed_estimate
 - distance_sensor
 - vibration
 
 plugin_whitelist: []
 #- 'sys_*'
+
