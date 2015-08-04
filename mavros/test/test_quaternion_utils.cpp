@@ -53,6 +53,7 @@ TEST(UAS, quaternion_from_rpy__paranoic_check)
 
 TEST(UAS, quaternion_to_rpy__123)
 {
+	// this test only works on positive rpy: 0..pi
 	auto q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
 	auto rpy = UAS::quaternion_to_rpy(q);
 
@@ -61,34 +62,55 @@ TEST(UAS, quaternion_to_rpy__123)
 	EXPECT_NEAR(3.0, rpy.z(), epsilon);
 }
 
-// test fails now.
-TEST(UAS, quaternion_to_rpy__123_negative)
-{
-	auto q = UAS::quaternion_from_rpy(-1.0, -2.0, -3.0);
-	auto rpy = UAS::quaternion_to_rpy(q);
-
-	EXPECT_NEAR(-1.0, rpy.x(), epsilon);
-	EXPECT_NEAR(-2.0, rpy.y(), epsilon);
-	EXPECT_NEAR(-3.0, rpy.z(), epsilon);
-}
-
 TEST(UAS, quaternion_to_rpy__pm_pi)
 {
-	for (ssize_t deg = -180; deg <= 180; deg += 45) {
-		SCOPED_TRACE(deg);
+	// this test try large count of different angles
 
-		Eigen::Vector3d expected = Eigen::Vector3d(deg, deg, deg) * deg_to_rad;
-		auto q = UAS::quaternion_from_rpy(expected);
-		auto rpy = UAS::quaternion_to_rpy(q);
+	// in degrees
+	const ssize_t min = -180;
+	const ssize_t max = 180;
+	const ssize_t step = 15;
 
-		EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
-		EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
-		EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
+	const auto test_orientation = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+
+	for (ssize_t roll = min; roll <= max; roll += step) {
+		for (ssize_t pitch = min; pitch <= max; pitch += step) {
+			for (ssize_t yaw = min; yaw <= max; yaw += step) {
+
+				Eigen::Vector3d expected_deg(roll, pitch, yaw);
+				Eigen::Vector3d expected = expected_deg * deg_to_rad;
+
+				std::stringstream ss;
+
+				ss << "DEG(" << expected_deg.x() << ", " << expected_deg.y() << ", " << expected_deg.z() << ")  ";
+				ss << "RAD(" << expected.x() << ", " << expected.y() << ", " << expected.z() << ")";
+
+				SCOPED_TRACE(ss.str());
+
+				// rpy->q->rpy->q
+				auto q1 = UAS::quaternion_from_rpy(expected);
+				auto rpy = UAS::quaternion_to_rpy(q1);
+				auto q2 = UAS::quaternion_from_rpy(rpy);
+
+				// direct assumption is failed at ranges outside 0..pi
+				//EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
+				//EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
+				//EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
+
+				// at -pi..0 we got complimentary q2 to q
+				//EXPECT_QUATERNION(q1, q2, epsilon);
+
+				// instead of direct comparision we rotate other quaternion and then compare results
+				auto tq1 = q1 * test_orientation * q1.inverse();
+				auto tq2 = q2 * test_orientation * q2.inverse();
+
+				EXPECT_QUATERNION(tq1, tq2, epsilon);
+			}
+		}
 	}
 }
 
 // UAS::quaternion_to_rpy() is not compatible with tf2::Matrix3x3(q).getRPY()
-// tf2 returns completely different values than passed to setRPY().
 
 TEST(UAS, getYaw__123)
 {
