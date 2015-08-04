@@ -14,6 +14,7 @@ using mavros::UAS;
 
 static const double epsilon = 1e-9;
 static const double epsilon_f = 1e-6;
+static const double deg_to_rad = M_PI / 180.0;
 // gMock has ability to define array matcher, but there problems with that.
 // so trying good old for loop
 
@@ -69,6 +70,21 @@ TEST(UAS, quaternion_to_rpy__123_negative)
 	EXPECT_NEAR(-1.0, rpy.x(), epsilon);
 	EXPECT_NEAR(-2.0, rpy.y(), epsilon);
 	EXPECT_NEAR(-3.0, rpy.z(), epsilon);
+}
+
+TEST(UAS, quaternion_to_rpy__pm_pi)
+{
+	for (ssize_t deg = -180; deg <= 180; deg += 45) {
+		SCOPED_TRACE(deg);
+
+		Eigen::Vector3d expected = Eigen::Vector3d(deg, deg, deg) * deg_to_rad;
+		auto q = UAS::quaternion_from_rpy(expected);
+		auto rpy = UAS::quaternion_to_rpy(q);
+
+		EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
+		EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
+		EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
+	}
 }
 
 // UAS::quaternion_to_rpy() is not compatible with tf2::Matrix3x3(q).getRPY()
