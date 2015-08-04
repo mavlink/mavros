@@ -123,7 +123,18 @@ Eigen::Quaterniond UAS::quaternion_from_rpy(const Eigen::Vector3d &rpy)
 Eigen::Vector3d UAS::quaternion_to_rpy(const Eigen::Quaterniond &q)
 {
 	// YPR - ZYX
-	//return eulerAngles(q.toRotationMatrix(), 2, 1, 0);
-	return q.toRotationMatrix().eulerAngles(2, 1, 0).reverse();
+	//return eulerAngles(q.toRotationMatrix(), 0, 1, 2);
+	//return q.toRotationMatrix().eulerAngles(2, 1, 0).reverse();
+	//
+	// try to implement from wikipedia
+	
+	Eigen::Vector3d ret;
+
+	ret <<
+		std::atan2( 2. * (q.w() * q.x() + q.y() * q.z()), 1. - 2. * (q.x() * q.x() + q.y() * q.y())),
+		std::asin( 2. * (q.w() * q.y() - q.z() * q.x())),
+		std::atan2( 2. * (q.w() * q.z() + q.x() * q.y()), 1. - 2. * (q.y() * q.y() + q.z() * q.z()));
+
+	return ret;
 }
 
