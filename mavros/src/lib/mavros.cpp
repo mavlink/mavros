@@ -125,7 +125,7 @@ MavRos::MavRos() :
 #define STR(x)	STR2(x)
 
 	ROS_INFO("Built-in SIMD instructions: %s", Eigen::SimdInstructionSetsInUse());
-	ROS_INFO("Built-in mavlink dialect: %s", STR(MAVLINK_DIALECT));
+	ROS_INFO("Built-in MAVLink dialect: %s", STR(MAVLINK_DIALECT));
 	ROS_INFO("MAVROS started. MY ID [%d, %d], TARGET ID [%d, %d]",
 		system_id, component_id,
 		tgt_system_id, tgt_component_id);
