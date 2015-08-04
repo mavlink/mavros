@@ -371,17 +371,12 @@ public:
 		yaw = rpy.z();
 	}
 
-	static double quaternion_get_yaw(const Eigen::Quaterniond &q);
-
 	/**
 	 * @brief Get Yaw angle from quaternion
 	 *
 	 * Replacement function for @a tf::getYaw()
 	 */
-	static inline double getYaw(const Eigen::Quaterniond &q) {
-		//return quaternion_to_rpy(q).z();
-		return quaternion_get_yaw(q);
-	}
+	static double quaternion_get_yaw(const Eigen::Quaterniond &q);
 
 	/**
 	 * @brief Store Quaternion to MAVLink float[4] format

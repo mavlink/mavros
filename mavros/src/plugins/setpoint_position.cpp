@@ -100,7 +100,7 @@ private:
 				p.x(), p.y(), p.z(),
 				0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0,
-				UAS::getYaw(q), 0.0);
+				UAS::quaternion_get_yaw(q), 0.0);
 	}
 
 	/* -*- callbacks -*- */

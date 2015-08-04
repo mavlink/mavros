@@ -112,16 +112,16 @@ TEST(UAS, quaternion_to_rpy__pm_pi)
 
 // UAS::quaternion_to_rpy() is not compatible with tf2::Matrix3x3(q).getRPY()
 
-TEST(UAS, getYaw__123)
+TEST(UAS, quaternion_get_yaw__123)
 {
 	// with pich >= pi/2 got incorrect result.
 	// so 1, 2, 3 rad (57, 115, 172 deg) replaced with 60, 89, 172 deg
 	auto q = UAS::quaternion_from_rpy(60.0 * deg_to_rad, 89.0 * deg_to_rad, 3.0);
 
-	EXPECT_NEAR(3.0, UAS::getYaw(q), epsilon);
+	EXPECT_NEAR(3.0, UAS::quaternion_get_yaw(q), epsilon);
 }
 
-TEST(UAS, getYaw__pm_pi)
+TEST(UAS, quaternion_get_yaw__pm_pi)
 {
 	// in degrees
 	const ssize_t min = -180;
@@ -140,7 +140,7 @@ TEST(UAS, getYaw__pm_pi)
 		SCOPED_TRACE(ss.str());
 
 		auto q1 = UAS::quaternion_from_rpy(expected);
-		double q1_yaw = UAS::getYaw(q1);
+		double q1_yaw = UAS::quaternion_get_yaw(q1);
 
 		EXPECT_NEAR(expected.z(), q1_yaw, epsilon);
 	}
