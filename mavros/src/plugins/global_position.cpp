@@ -206,6 +206,9 @@ private:
 			fill_unknown_cov(fix);
 		}
 
+		relative_alt->data = gpos.relative_alt / 1E3;	// in meters
+		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
+
 		/* Global position odometry
 		 *
 		 * Assuming no transform is needed:
@@ -252,10 +255,6 @@ private:
 			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
 			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
 			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
-
-		relative_alt->data = gpos.relative_alt / 1E3;	// in meters
-		
-		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
 
 		// publish
 		gp_fix_pub.publish(fix);
