@@ -71,42 +71,8 @@ TEST(UAS, quaternion_to_rpy__123_negative)
 	EXPECT_NEAR(-3.0, rpy.z(), epsilon);
 }
 
-TEST(UAS, quaternion_to_rpy__check_compatibility)
-{
-	auto eigen_q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
-	auto eigen_neg_q = UAS::quaternion_from_rpy(-1.0, -2.0, -3.0);
-	tf2::Quaternion bt_q; bt_q.setRPY(1.0, 2.0, 3.0);
-	tf2::Quaternion bt_neg_q; bt_neg_q.setRPY(-1.0, -2.0, -3.0);
-
-	// ensure that quaternions are equal
-	ASSERT_QUATERNION(bt_q, eigen_q, epsilon);
-	ASSERT_QUATERNION(bt_neg_q, eigen_neg_q, epsilon);
-
-	tf2::Matrix3x3 bt_m(bt_q);
-	double bt_roll, bt_pitch, bt_yaw;
-	bt_m.getRPY(bt_roll, bt_pitch, bt_yaw);
-	auto eigen_rpy = UAS::quaternion_to_rpy(eigen_q);
-
-	// fails
-	EXPECT_NEAR(bt_roll, eigen_rpy.x(), epsilon);
-	EXPECT_NEAR(bt_pitch, eigen_rpy.y(), epsilon);
-	EXPECT_NEAR(bt_yaw, eigen_rpy.z(), epsilon);
-
-	tf2::Matrix3x3 bt_neg_m(bt_neg_q);
-	double bt_neg_roll, bt_neg_pitch, bt_neg_yaw;
-	bt_neg_m.getRPY(bt_neg_roll, bt_neg_pitch, bt_neg_yaw);
-	auto eigen_neg_rpy = UAS::quaternion_to_rpy(eigen_neg_q);
-
-	// ok
-	EXPECT_NEAR(bt_neg_roll, eigen_neg_rpy.x(), epsilon);
-	EXPECT_NEAR(bt_neg_pitch, eigen_neg_rpy.y(), epsilon);
-	EXPECT_NEAR(bt_neg_yaw, eigen_neg_rpy.z(), epsilon);
-
-	// fails!
-	//EXPECT_NEAR(-1.0, bt_neg_roll, epsilon);
-	//EXPECT_NEAR(-2.0, bt_neg_pitch, epsilon);
-	//EXPECT_NEAR(-3.0, bt_neg_yaw, epsilon);
-}
+// UAS::quaternion_to_rpy() is not compatible with tf2::Matrix3x3(q).getRPY()
+// tf2 returns completely different values than passed to setRPY().
 
 TEST(UAS, getYaw__123)
 {
