@@ -23,10 +23,10 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <std_msgs/Float64.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/NavSatStatus.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 namespace mavplugin {
@@ -68,8 +68,7 @@ public:
 
 		// fused global position
 		gp_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
-		gp_pos_pub = gp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("local", 10);
-		gp_vel_pub = gp_nh.advertise<geometry_msgs::TwistStamped>("gp_vel", 10);
+		gp_odom_pub = gp_nh.advertise<nav_msgs::Odometry>("local", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
@@ -88,9 +87,8 @@ private:
 
 	ros::Publisher raw_fix_pub;
 	ros::Publisher raw_vel_pub;
+	ros::Publisher gp_odom_pub;
 	ros::Publisher gp_fix_pub;
-	ros::Publisher gp_pos_pub;
-	ros::Publisher gp_vel_pub;
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
 
@@ -179,9 +177,8 @@ private:
 		mavlink_global_position_int_t gpos;
 		mavlink_msg_global_position_int_decode(msg, &gpos);
 
-		auto pose_cov = boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
+		auto odom = boost::make_shared<nav_msgs::Odometry>();
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
-		auto vel = boost::make_shared<geometry_msgs::TwistStamped>();
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
 		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
@@ -209,22 +206,32 @@ private:
 			fill_unknown_cov(fix);
 		}
 
-		/* Global position velocity
-		 *
-		 * No transform needed:
-		 * X: latitude m/s
-		 * Y: longitude m/s
-		 * Z: altitude m/s
-		 */
-		vel->header = header;
-		tf::vectorEigenToMsg(
-				Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
-				vel->twist.linear);
-
 		relative_alt->data = gpos.relative_alt / 1E3;	// in meters
 		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
 
-		// local position (UTM) calculation
+		/* Global position odometry
+		 *
+		 * Assuming no transform is needed:
+		 * X: latitude m
+		 * Y: longitude m
+		 * Z: altitude m
+		 * VX: latitude vel m/s
+		 * VY: longitude vel m/s
+		 * VZ: altitude vel m/s
+		 */
+		odom->header = header;
+		
+		// Velocity
+		tf::vectorEigenToMsg(
+				Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
+				odom->twist.twist.linear);
+
+		// Velocity covariance unknown
+		UAS::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
+		vel_cov_out.fill(0.0);
+		vel_cov_out(0) = -1.0;
+
+		// Local position (UTM) calculation
 		double northing, easting;
 		std::string zone;
 
@@ -233,18 +240,15 @@ private:
 		 */
 		UTM::LLtoUTM(fix->latitude, fix->longitude, northing, easting, zone);
 
-		pose_cov->header = header;
-		pose_cov->pose.pose.position.x = easting;
-		pose_cov->pose.pose.position.y = northing;
-		pose_cov->pose.pose.position.z = relative_alt->data;
-
-		// XXX We really need attitude on UTM?
-		pose_cov->pose.pose.orientation = uas->get_attitude_orientation();
+		odom->pose.pose.position.x = easting;
+		odom->pose.pose.position.y = northing;
+		odom->pose.pose.position.z = relative_alt->data;
+		odom->pose.pose.orientation = uas->get_attitude_orientation();
 
 		// Use ENU covariance to build XYZRPY covariance
 		UAS::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
-		UAS::EigenMapCovariance6d cov_out(pose_cov->pose.covariance.data());
-		cov_out <<
+		UAS::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
+		pos_cov_out <<
 			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
 			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
 			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
@@ -254,8 +258,7 @@ private:
 
 		// publish
 		gp_fix_pub.publish(fix);
-		gp_pos_pub.publish(pose_cov);
-		gp_vel_pub.publish(vel);
+		gp_odom_pub.publish(odom);
 		gp_rel_alt_pub.publish(relative_alt);
 		gp_hdg_pub.publish(compass_heading);
 
@@ -263,18 +266,17 @@ private:
 		if (tf_send) {
 			geometry_msgs::TransformStamped transform;
 
-			transform.header.stamp = pose_cov->header.stamp;
+			transform.header.stamp = odom->header.stamp;
 			transform.header.frame_id = tf_frame_id;
 			transform.child_frame_id = tf_child_frame_id;
 
-			// XXX do we really need rotation in UTM coordinates?
 			// setRotation()
-			transform.transform.rotation = pose_cov->pose.pose.orientation;
+			transform.transform.rotation = odom->pose.pose.orientation;
 
-			// setOrigin(), why to do transform_frame?
-			transform.transform.translation.x = pose_cov->pose.pose.position.x;
-			transform.transform.translation.y = pose_cov->pose.pose.position.y;
-			transform.transform.translation.z = pose_cov->pose.pose.position.z;
+			// setOrigin()
+			transform.transform.translation.x = odom->pose.pose.position.x;
+			transform.transform.translation.y = odom->pose.pose.position.y;
+			transform.transform.translation.z = odom->pose.pose.position.z;
 
 			uas->tf2_broadcaster.sendTransform(transform);
 		}
