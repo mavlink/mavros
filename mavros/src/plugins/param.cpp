@@ -388,9 +388,9 @@ private:
 	ros::Timer shedule_timer;			//!< for startup shedule fetch
 	ros::Timer timeout_timer;			//!< for timeout resend
 
-	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
+	static constexpr int BOOTUP_TIME_MS = 30000;	//!< APM boot time
 	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
-	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
+	static constexpr int LIST_TIMEOUT_MS = 40000;	//!< Receive all time
 	static constexpr int RETRIES_COUNT = 3;
 
 	const ros::Duration BOOTUP_TIME_DT;
