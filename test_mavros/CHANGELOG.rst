@@ -2,6 +2,14 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test: add link to APM sitl video
+* test_mavros: put acceleration note out of title
+* Minor titles correction
+* test_mavros: update README.md with tutorial to use PX4 ROS SITL
+* Contributors: TSC21, Vladimir Ermakov
+
 0.13.0 (2015-08-01)
 -------------------
 * Update iris_empty_world_offboard_ctl.launch
