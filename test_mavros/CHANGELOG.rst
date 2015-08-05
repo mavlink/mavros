@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.1 (2015-08-05)
+-------------------
 * test: add link to APM sitl video
 * test_mavros: put acceleration note out of title
 * Minor titles correction

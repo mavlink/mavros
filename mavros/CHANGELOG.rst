@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.1 (2015-08-05)
+-------------------
 * lib `#358 <https://github.com/mavlink/mavros/issues/358>`_: cleanup.
   Replace UAS::getYaw() with UAS::quaternion_get_yaw().
 * lib `#358 <https://github.com/mavlink/mavros/issues/358>`_: found correct getYaw(). Test for each degrees in -180..180.
