@@ -1,11 +1,11 @@
 /**
- * @brief SITL test type
- * @file test_type.h
+ * @brief SITL tests setup
+ * @file test_setup.h
  * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup sitl_test
  * @{
- *  @brief SITL tests system
+ *  @brief SITL tests setup
  */
 /*
  * Copyright 2015 Nuno Marques.
@@ -19,10 +19,10 @@
 
 #include <tests/offboard_control.h>
 
-namespace testtype {
-class TestType {
+namespace testsetup {
+class TestSetup {
 public:
-	virtual ~TestType() {};
+	virtual ~TestSetup() {};
 
 private:
 	/*
@@ -30,6 +30,6 @@ private:
 	 */
 
 protected:
-	TestType() {};
+	TestSetup() {};
 };
-};	// namespace testtype
+};	// namespace testsetup

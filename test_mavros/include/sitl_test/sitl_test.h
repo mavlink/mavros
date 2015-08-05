@@ -18,7 +18,7 @@
 #pragma once
 
 #include <ros/ros.h>
-#include <sitl_test/test_type.h>
+#include <sitl_test/test_setup.h>
 
 namespace sitltest {
 /**

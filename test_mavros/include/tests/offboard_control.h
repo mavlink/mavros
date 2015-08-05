@@ -18,14 +18,13 @@
 #include <array>
 #include <angles/angles.h>
 #include <sitl_test/sitl_test.h>
-#include <sitl_test/test_type.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
-namespace testtype {
+namespace testsetup {
 /**
  * @brief Offboard controller tester
  *
@@ -470,4 +469,4 @@ private:
 		localpos = *msg;
 	}
 };
-};	// namespace testype
+};	// namespace testsetup
