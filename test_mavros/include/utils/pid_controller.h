@@ -14,6 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <array>
 #include <control_toolbox/pid.h>
 #include <eigen_conversions/eigen_msg.h>
 

@@ -35,7 +35,7 @@ double linvel_imax;
 double linvel_imin;
 
 void PIDController::setup_linvel_pid(double p_gain, double i_gain, double d_gain, double i_max, double i_min, const ros::NodeHandle &node){
-	linvel_pid = {p_gain, i_gain, d_gain};
+	linvel_pid = { {p_gain, i_gain, d_gain} };
 	linvel_imax = i_max;
 	linvel_imin = i_min;
 
@@ -45,7 +45,7 @@ void PIDController::setup_linvel_pid(double p_gain, double i_gain, double d_gain
 }
 
 void PIDController::setup_yawrate_pid(double p_gain, double i_gain, double d_gain, double i_max, double i_min, const ros::NodeHandle &node){
-	yawrate_pid = {p_gain, i_gain, d_gain};
+	yawrate_pid = { {p_gain, i_gain, d_gain} };
 	yawrate_imax = i_max;
 	yawrate_imin = i_min;
 
