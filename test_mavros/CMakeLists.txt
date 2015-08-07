@@ -109,13 +109,9 @@ include_directories(
 
 ## Declare a cpp library
 add_library(
-  pid_controller
-  sitl_test/lib/pid_controller.cpp
-)
-
-add_library(
   sitl_test
   sitl_test/lib/sitl_test.cpp
+  sitl_test/lib/pid_controller.cpp
 )
 
 ## Declare a cpp executable
@@ -128,7 +124,6 @@ add_executable(
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(
   sitl_test_node
-  pid_controller
   sitl_test
 )
 
@@ -140,15 +135,8 @@ target_link_libraries(
 )
 
 target_link_libraries(
-  pid_controller
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
-
-target_link_libraries(
   sitl_test_node
   sitl_test
-  pid_controller
 )
 
 #############

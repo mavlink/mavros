@@ -18,22 +18,6 @@ using namespace pidcontroller;
 PIDController::PIDController()
 {};
 
-// Control toolbox PID controllers
-control_toolbox::Pid pid_linvel_x;
-control_toolbox::Pid pid_linvel_y;
-control_toolbox::Pid pid_linvel_z;
-control_toolbox::Pid pid_yaw_rate;
-
-// PID values
-std::array<double, 3> linvel_pid;
-std::array<double, 3> yawrate_pid;
-
-// Min/max bounds for the integral windup
-double yawrate_imax;
-double yawrate_imin;
-double linvel_imax;
-double linvel_imin;
-
 void PIDController::setup_linvel_pid(double p_gain, double i_gain, double d_gain, double i_max, double i_min, const ros::NodeHandle &node){
 	linvel_pid = { {p_gain, i_gain, d_gain} };
 	linvel_imax = i_max;

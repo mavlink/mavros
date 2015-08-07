@@ -85,8 +85,8 @@ public:
 			nh_sp.param("yawrate_i_min", yawrate_i_min, -0.005);
 
 			// Setup of the PID controllers
-			pidcontroller::PIDController::setup_linvel_pid(linvel_p_gain, linvel_i_gain, linvel_d_gain, linvel_i_max, linvel_i_min, nh_sp);
-			pidcontroller::PIDController::setup_yawrate_pid(yawrate_p_gain, yawrate_i_gain, yawrate_d_gain, yawrate_i_max, yawrate_i_min, nh_sp);
+			pid.setup_linvel_pid(linvel_p_gain, linvel_i_gain, linvel_d_gain, linvel_i_max, linvel_i_min, nh_sp);
+			pid.setup_yawrate_pid(yawrate_p_gain, yawrate_i_gain, yawrate_d_gain, yawrate_i_max, yawrate_i_min, nh_sp);
 		}
 
 		/**
@@ -180,6 +180,7 @@ public:
 
 private:
 	TestSetup test;
+	pidcontroller::PIDController pid;
 
 	double rate;
 	bool use_pid;
@@ -321,7 +322,7 @@ private:
 			}
 			else if (mode == VELOCITY) {
 				if (use_pid)
-					tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
 								Eigen::Vector3d(5.0f, 0.0f, 1.0f), current, last_time), vs.twist.linear);
 				else
 					tf::vectorEigenToMsg(Eigen::Vector3d(5.0f - current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
@@ -344,7 +345,7 @@ private:
 				}
 				else if (mode == VELOCITY) {
 					if (use_pid)
-						tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(circle_shape(theta), current, last_time), vs.twist.linear);
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(circle_shape(theta), current, last_time), vs.twist.linear);
 					else
 						tf::vectorEigenToMsg(circle_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
@@ -381,7 +382,7 @@ private:
 			}
 			else if (mode == VELOCITY) {
 				if (use_pid)
-					tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
 								Eigen::Vector3d(0.0f, 0.0f, 1.0f), current, last_time), vs.twist.linear);
 				else
 					tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
@@ -404,7 +405,7 @@ private:
 				}
 				else if (mode == VELOCITY) {
 					if (use_pid)
-						tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(eight_shape(theta), current, last_time), vs.twist.linear);
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(eight_shape(theta), current, last_time), vs.twist.linear);
 					else
 						tf::vectorEigenToMsg(eight_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
@@ -441,7 +442,7 @@ private:
 			}
 			else if (mode == VELOCITY) {
 				if (use_pid)
-					tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
 								Eigen::Vector3d(0.0f, 0.0f, 2.5f), current, last_time), vs.twist.linear);
 				else
 					tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 2.5f - current.z()), vs.twist.linear);
@@ -464,7 +465,7 @@ private:
 				}
 				else if (mode == VELOCITY) {
 					if (use_pid)
-						tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(ellipse_shape(theta), current, last_time), vs.twist.linear);
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(ellipse_shape(theta), current, last_time), vs.twist.linear);
 					else
 						tf::vectorEigenToMsg(ellipse_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
@@ -516,7 +517,7 @@ private:
 			}
 			else if (mode == VELOCITY) {
 				if (use_pid)
-					tf::vectorEigenToMsg(pidcontroller::PIDController::compute_linvel_effort(dest, current, last_time), vs.twist.linear);
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(dest, current, last_time), vs.twist.linear);
 				else
 					tf::vectorEigenToMsg(dest - current, vs.twist.linear);
 				vel_sp_pub.publish(vs);
