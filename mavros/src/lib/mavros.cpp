@@ -135,7 +135,7 @@ void MavRos::spin() {
 	ros::AsyncSpinner spinner(4 /* threads */);
 
 	auto diag_timer = mavlink_nh.createTimer(
-			ros::Duration(1.0),
+			ros::Duration(0.5),
 			[&](const ros::TimerEvent &) {
 				UAS_DIAG(&mav_uas).update();
 			});
@@ -146,6 +146,7 @@ void MavRos::spin() {
 
 	ROS_INFO("Stopping mavros...");
 	mav_uas.stop();
+	spinner.stop();
 }
 
 void MavRos::mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
