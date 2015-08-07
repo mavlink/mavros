@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf2_ros
   eigen_conversions
-	control_toolbox
+  control_toolbox
 )
 
 ## System dependencies are found with CMake's conventions
@@ -128,7 +128,7 @@ add_executable(
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(
   sitl_test_node
-	pid_controller
+  pid_controller
   sitl_test
 )
 
@@ -148,7 +148,7 @@ target_link_libraries(
 target_link_libraries(
   sitl_test_node
   sitl_test
-	pid_controller
+  pid_controller
 )
 
 #############
