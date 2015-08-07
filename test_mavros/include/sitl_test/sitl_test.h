@@ -19,6 +19,7 @@
 
 #include <ros/ros.h>
 #include <sitl_test/test_setup.h>
+#include <tests/offboard_control.h>
 
 namespace sitltest {
 /**

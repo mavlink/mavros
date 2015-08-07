@@ -26,6 +26,7 @@
   <depend>mavros_extras</depend>
   <depend>eigen</depend>
   <depend>eigen_conversions</depend>
+  <depend>control_toolbox</depend>
 
   <!-- fails prerelease build
   <exec_depend>px4</exec_depend>

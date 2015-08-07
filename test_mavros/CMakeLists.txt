@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf2_ros
   eigen_conversions
+	control_toolbox
 )
 
 ## System dependencies are found with CMake's conventions
@@ -88,7 +89,7 @@ include(EnableCXX11)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES sitl_test
-  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions
+  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions control_toolbox
   DEPENDS Boost Eigen
 )
 
@@ -108,6 +109,11 @@ include_directories(
 
 ## Declare a cpp library
 add_library(
+  pid_controller
+  sitl_test/lib/pid_controller.cpp
+)
+
+add_library(
   sitl_test
   sitl_test/lib/sitl_test.cpp
 )
@@ -122,6 +128,7 @@ add_executable(
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(
   sitl_test_node
+	pid_controller
   sitl_test
 )
 
@@ -133,8 +140,15 @@ target_link_libraries(
 )
 
 target_link_libraries(
+  pid_controller
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(
   sitl_test_node
   sitl_test
+	pid_controller
 )
 
 #############

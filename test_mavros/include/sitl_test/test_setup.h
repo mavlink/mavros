@@ -17,19 +17,26 @@
 
 #pragma once
 
-#include <tests/offboard_control.h>
+#include <utils/pid_controller.h>
 
 namespace testsetup {
 class TestSetup {
 public:
-	virtual ~TestSetup() {};
+	TestSetup() :
+		nh("~")
+	{ };
+	~TestSetup() {};
 
-private:
-	/*
-	 * TODO: Here we can implement test specifities, conditions, others
-	 */
+	ros::NodeHandle nh;
 
-protected:
-	TestSetup() {};
+	bool use_pid;
+	double rate;
+	int num_of_tests;
+
+	void setup(const ros::NodeHandle &nh){
+		nh.param("use_pid", use_pid, true);
+		nh.param("rate", rate, 10.0);
+		nh.param("num_of_tests", num_of_tests, 10);
+	}
 };
 };	// namespace testsetup
