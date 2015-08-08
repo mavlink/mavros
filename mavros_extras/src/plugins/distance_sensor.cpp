@@ -334,7 +334,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	else {
 		// subscriber params
 		// orientation is required
-		if (!orientation_str.empty()) {
+		if (orientation_str.empty()) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: orientation not set!", topic_name.c_str());
 			p.reset(); return p;	// nullptr
 		}
