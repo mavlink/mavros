@@ -3,8 +3,8 @@ project(mavros_msgs)
 
 find_package(catkin REQUIRED COMPONENTS message_generation std_msgs geometry_msgs)
 
-## Generate messages in the 'msg' folder
 add_message_files(
+  DIRECTORY msg
   FILES
   Mavlink.msg
   Waypoint.msg
@@ -25,8 +25,8 @@ add_message_files(
   CamIMUStamp.msg
 )
 
-## Generate services in the 'srv' folder
 add_service_files(
+  DIRECTORY srv
   FILES
   ParamSet.srv
   ParamGet.srv
@@ -58,8 +58,8 @@ add_service_files(
   FileChecksum.srv
 )
 
-## Generate actions in the 'action' folder
 # add_action_files(
+#   DIRECTORY action
 #   FILES
 #   Action1.action
 #   Action2.action
