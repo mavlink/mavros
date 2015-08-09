@@ -52,9 +52,6 @@ include(MavrosMavlink)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  OpticalFlowRad.msg
-  Vibration.msg
-  CamIMUStamp.msg
 )
 
 ## Generate services in the 'srv' folder

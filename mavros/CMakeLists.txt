@@ -69,64 +69,6 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Mavlink.msg
-  Waypoint.msg
-  WaypointList.msg
-  BatteryStatus.msg
-  State.msg
-  RCIn.msg
-  RCOut.msg
-  RadioStatus.msg
-  OverrideRCIn.msg
-  VFR_HUD.msg
-  FileEntry.msg
-  ActuatorControl.msg
-  CommandCode.msg
-  ParamValue.msg
-)
-
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  ParamSet.srv
-  ParamGet.srv
-  ParamPull.srv
-  ParamPush.srv
-  WaypointSetCurrent.srv
-  WaypointClear.srv
-  WaypointPull.srv
-  WaypointPush.srv
-  WaypointGOTO.srv
-  CommandLong.srv
-  CommandInt.srv
-  CommandBool.srv
-  CommandHome.srv
-  CommandTOL.srv
-  CommandTriggerControl.srv
-  StreamRate.srv
-  SetMode.srv
-  FileOpen.srv
-  FileClose.srv
-  FileRead.srv
-  FileWrite.srv
-  FileList.srv
-  FileRemove.srv
-  FileMakeDir.srv
-  FileRemoveDir.srv
-  FileTruncate.srv
-  FileRename.srv
-  FileChecksum.srv
-)
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
-
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
