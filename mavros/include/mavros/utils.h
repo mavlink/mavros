@@ -31,8 +31,8 @@ namespace mavutils {
  * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
  * @deprecated Please use mavros_msgs::mavlink::convert() instead.
  */
-inline bool copy_ros_to_mavlink(const mavros::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg) __attribute__((deprecated));
-bool copy_ros_to_mavlink(const mavros::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg)
+inline bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg) __attribute__((deprecated));
+bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg)
 {
 	return mavros_msgs::mavlink::convert(*rmsg, mmsg);
 };
@@ -41,8 +41,8 @@ bool copy_ros_to_mavlink(const mavros::Mavlink::ConstPtr &rmsg, mavlink_message_
  * @brief Copy mavlink_message_t to mavros/Mavlink.msg
  * @deprecated Please use mavros_msgs::mavlink::convert() instead.
  */
-inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPtr &rmsg) __attribute__((deprecated));
-void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros::MavlinkPtr &rmsg)
+inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg) __attribute__((deprecated));
+void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg)
 {
 	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
 };
