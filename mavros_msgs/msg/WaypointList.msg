@@ -1,1 +1,1 @@
-mavros/Waypoint[] waypoints
+mavros_msgs/Waypoint[] waypoints

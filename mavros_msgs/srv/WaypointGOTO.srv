@@ -2,6 +2,6 @@
 #
 # Only supported FCU will return result
 
-mavros/Waypoint waypoint
+mavros_msgs/Waypoint waypoint
 ---
 bool success
