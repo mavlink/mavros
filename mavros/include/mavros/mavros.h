@@ -23,8 +23,7 @@
 #include <mavconn/interface.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/mavlink_diag.h>
-
-#include <mavros/Mavlink.h>
+#include <mavros/utils.h>
 
 namespace mavros {
 /**

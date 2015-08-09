@@ -19,28 +19,37 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <!-- system dependencies -->
   <depend>boost</depend>
-  <depend>diagnostic_msgs</depend>
+  <build_depend>eigen</build_depend>
+  <build_export_depend>eigen</build_export_depend>
+  <build_depend>mavlink</build_depend>
+  <build_export_depend>mavlink</build_export_depend>
+  <!-- pymavlink dependency
+  <exec_depend>mavlink</exec_depend>
+  -->
+
+  <!-- packages -->
+  <build_depend>angles</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>rosconsole_bridge</build_depend>
   <depend>diagnostic_updater</depend>
-  <depend>message_generation</depend>
-  <depend>message_runtime</depend>
+  <depend>eigen_conversions</depend>
+  <depend>libmavconn</depend>
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
-  <depend>rospy</depend>
+  <depend>tf2_ros</depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rospy</exec_depend>
+
+  <!-- message packages -->
+  <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>sensor_msgs</depend>
+  <depend>mavros_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>tf2_ros</depend>
-  <depend>mavlink</depend>
-  <depend>angles</depend>
-  <depend>libmavconn</depend>
-  <depend>rosconsole_bridge</depend>
-  <depend>cmake_modules</depend>
-  <depend>eigen</depend>
-  <depend>eigen_conversions</depend>
-  <exec_depend>python-argparse</exec_depend>
 
   <test_depend>gtest</test_depend>
 

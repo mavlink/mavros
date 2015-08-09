@@ -3,7 +3,7 @@
   <name>mavros_msgs</name>
   <version>0.0.0</version>
   <description>
-    This package defines messages for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
+    mavros_msgs defines messages for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
