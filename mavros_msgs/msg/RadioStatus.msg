@@ -1,6 +1,6 @@
 # RADIO_STATUS message
 
-Header header
+std_msgs/Header header
 
 # message data
 uint8 rssi

@@ -3,6 +3,6 @@
 # about groups, mixing and channels:
 # https://pixhawk.org/dev/mixing
 
-Header header
+std_msgs/Header header
 uint8 group_mix
 float32[8] controls

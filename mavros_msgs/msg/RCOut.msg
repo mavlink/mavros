@@ -1,4 +1,4 @@
 # RAW Servo out state
 
-Header header
+std_msgs/Header header
 uint16[] channels

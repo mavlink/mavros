@@ -1,6 +1,6 @@
 # OPTICAL_FLOW_RAD message data
 
-Header header
+std_msgs/Header header
 
 uint32 integration_time_us
 float32 integrated_x

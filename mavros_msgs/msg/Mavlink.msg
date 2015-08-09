@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 uint8 len
 uint8 seq
 uint8 sysid
