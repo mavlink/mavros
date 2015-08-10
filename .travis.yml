@@ -44,13 +44,12 @@ before_script:
 script:
   - cd ~/ros/ws_$REPOSITORY_NAME
   - catkin_make -j4 -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin_make install
-  - rm -fr devel src build; source install/setup.bash
+  - catkin_make install -j4
+  - catkin_make run_tests -j4
+  #- rm -fr devel src build; source install/setup.bash
 
 after_failure:
-  - if [ -e ./build/Testing/Temporary/LastTest.log ]; then cat ./build/Testing/Temporary/LastTest.log; fi
-  - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;
-  - for file in ${HOME}/.ros/log/rostest-*; do echo "=== $file ==="; cat $file; done
+  - find ~/ros/ws_$REPOSITORY_NAME/build/test_results -type f -exec echo "==== {} ====" \; -exec cat {} \;
 
 addons:
   coverity_scan:
