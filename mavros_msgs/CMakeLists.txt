@@ -1,63 +1,63 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros_msgs)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation std_msgs)
 
 include_directories(include)
 
 add_message_files(
   DIRECTORY msg
   FILES
-  Mavlink.msg
-  Waypoint.msg
-  WaypointList.msg
+  ActuatorControl.msg
   BatteryStatus.msg
-  State.msg
+  CamIMUStamp.msg
+  CommandCode.msg
+  FileEntry.msg
+  Mavlink.msg
+  OpticalFlowRad.msg
+  OverrideRCIn.msg
+  ParamValue.msg
   RCIn.msg
   RCOut.msg
   RadioStatus.msg
-  OverrideRCIn.msg
+  State.msg
   VFR_HUD.msg
-  FileEntry.msg
-  ActuatorControl.msg
-  CommandCode.msg
-  ParamValue.msg
-  OpticalFlowRad.msg
   Vibration.msg
-  CamIMUStamp.msg
+  Waypoint.msg
+  WaypointList.msg
 )
 
 add_service_files(
   DIRECTORY srv
   FILES
-  ParamSet.srv
+  CommandBool.srv
+  CommandHome.srv
+  CommandInt.srv
+  CommandLong.srv
+  CommandTOL.srv
+  CommandTriggerControl.srv
+  FileChecksum.srv
+  FileClose.srv
+  FileList.srv
+  FileMakeDir.srv
+  FileOpen.srv
+  FileRead.srv
+  FileRemove.srv
+  FileRemoveDir.srv
+  FileRename.srv
+  FileTruncate.srv
+  FileWrite.srv
   ParamGet.srv
   ParamPull.srv
   ParamPush.srv
-  WaypointSetCurrent.srv
+  ParamSet.srv
+  SetMode.srv
+  StreamRate.srv
   WaypointClear.srv
+  WaypointGOTO.srv
   WaypointPull.srv
   WaypointPush.srv
-  WaypointGOTO.srv
-  CommandLong.srv
-  CommandInt.srv
-  CommandBool.srv
-  CommandHome.srv
-  CommandTOL.srv
-  CommandTriggerControl.srv
-  StreamRate.srv
-  SetMode.srv
-  FileOpen.srv
-  FileClose.srv
-  FileRead.srv
-  FileWrite.srv
-  FileList.srv
-  FileRemove.srv
-  FileMakeDir.srv
-  FileRemoveDir.srv
-  FileTruncate.srv
-  FileRename.srv
-  FileChecksum.srv
+  WaypointSetCurrent.srv
 )
 
 # add_action_files(
@@ -67,11 +67,11 @@ add_service_files(
 #   Action2.action
 # )
 
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
+generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS message_runtime std_msgs geometry_msgs)
+  CATKIN_DEPENDS geometry_msgs message_runtime std_msgs)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
