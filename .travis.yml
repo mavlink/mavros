@@ -45,7 +45,7 @@ script:
   - cd ~/ros/ws_$REPOSITORY_NAME
   - catkin_make -j4 -DMAVLINK_DIALECT=$MAVLINK_DIALECT
   - catkin_make install -j4
-  - catkin_make run_tests -j4
+  - catkin_make run_tests
   #- rm -fr devel src build; source install/setup.bash
 
 after_failure:
