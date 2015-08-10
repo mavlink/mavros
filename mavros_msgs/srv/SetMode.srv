@@ -1,4 +1,7 @@
 # set FCU mode
+#
+# Known custom modes listed here:
+# http://wiki.ros.org/mavros/CustomModes
 
 # basic modes from MAV_MODE
 uint8 MAV_MODE_PREFLIGHT		= 0
