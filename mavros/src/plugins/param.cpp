@@ -20,10 +20,10 @@
 #include <pluginlib/class_list_macros.h>
 #include <boost/any.hpp>
 
-#include <mavros/ParamSet.h>
-#include <mavros/ParamGet.h>
-#include <mavros/ParamPull.h>
-#include <mavros/ParamPush.h>
+#include <mavros_msgs/ParamSet.h>
+#include <mavros_msgs/ParamGet.h>
+#include <mavros_msgs/ParamPull.h>
+#include <mavros_msgs/ParamPush.h>
 
 namespace mavplugin {
 /**
@@ -739,8 +739,8 @@ private:
 	 * @brief fetches all parameters from device
 	 * @service ~param/pull
 	 */
-	bool pull_cb(mavros::ParamPull::Request &req,
-			mavros::ParamPull::Response &res) {
+	bool pull_cb(mavros_msgs::ParamPull::Request &req,
+			mavros_msgs::ParamPull::Response &res) {
 		unique_lock lock(mutex);
 
 		if ((param_state == PR_IDLE && parameters.empty())
@@ -791,8 +791,8 @@ private:
 	 * @brief push all parameter value to device
 	 * @service ~param/push
 	 */
-	bool push_cb(mavros::ParamPush::Request &req,
-			mavros::ParamPush::Response &res) {
+	bool push_cb(mavros_msgs::ParamPush::Request &req,
+			mavros_msgs::ParamPush::Response &res) {
 		XmlRpc::XmlRpcValue param_dict;
 		if (!param_nh.getParam("", param_dict))
 			return true;
@@ -838,8 +838,8 @@ private:
 	 * @brief sets parameter value
 	 * @service ~param/set
 	 */
-	bool set_cb(mavros::ParamSet::Request &req,
-			mavros::ParamSet::Response &res) {
+	bool set_cb(mavros_msgs::ParamSet::Request &req,
+			mavros_msgs::ParamSet::Response &res) {
 		unique_lock lock(mutex);
 
 		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
@@ -886,8 +886,8 @@ private:
 	 * @brief get parameter
 	 * @service ~param/get
 	 */
-	bool get_cb(mavros::ParamGet::Request &req,
-			mavros::ParamGet::Response &res) {
+	bool get_cb(mavros_msgs::ParamGet::Request &req,
+			mavros_msgs::ParamGet::Response &res) {
 		lock_guard lock(mutex);
 
 		auto param_it = parameters.find(req.param_id);
