@@ -40,7 +40,7 @@ def get_pub_attitude_posecov(**kvargs):
     """
     Returns publisher for :setpoint_attitude: plugin, :attituse: topic (with covariance)
     """
-    return rospy.Publisher(mavros.get_topic('setpoint_attitude', 'attitude'), PoseWithCovarianceStamped, **kvargs)
+    raise DeprecationWarning("PoseWithCovarianceStamped subscriber removed.")
 
 
 def get_pub_position_local(**kvargs):

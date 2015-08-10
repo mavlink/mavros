@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2015 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -24,8 +24,8 @@ import rospy
 import mavros
 
 from std_srvs.srv import Empty
-from mavros.msg import FileEntry
-from mavros.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
+from mavros_msgs.msg import FileEntry
+from mavros_msgs.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
     FileMakeDir, FileRemoveDir, FileRemove, FileWrite, FileTruncate, FileRename, \
     FileChecksum
 

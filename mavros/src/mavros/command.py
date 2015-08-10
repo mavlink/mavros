@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2015 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 __all__ = (
+    'long',
+    'int',
     'arming',
+    'set_home',
+    'takeoff',
+    'land',
+    'guided_enable',
+    'trigger_control',
 )
 
 import rospy
 import mavros
 
-from mavros.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL, CommandTriggerControl
+from mavros_msgs.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL, CommandTriggerControl
+
 
 def _get_proxy(service, type):
     return rospy.ServiceProxy(mavros.get_topic('cmd', service), type)
@@ -30,7 +38,7 @@ guided_enable = None
 trigger_control = None
 
 
-def setup_services():
+def _setup_services():
     global long, int, arming, set_home, takeoff, land, guided_enable, trigger_control
     long = _get_proxy('command', CommandLong)
     int = _get_proxy('command_int', CommandInt)
@@ -42,5 +50,5 @@ def setup_services():
     trigger_control = _get_proxy('trigger_control', CommandTriggerControl)
 
 
-# preinit defaults
-setup_services()
+# register updater
+mavros.register_on_namespace_update(_setup_services)
