@@ -13,6 +13,7 @@ env:
   matrix:
     - MAVLINK_DIALECT=common
     - MAVLINK_DIALECT=pixhawk
+    - MAVLINK_DIALECT=ardupilotmega
 
 before_install:
   - export CI_SOURCE_PATH=$(pwd)
