@@ -11,14 +11,16 @@ from __future__ import print_function
 
 import sys
 import argparse
-
 import rospy
+import mavros
+
 from tf.transformations import quaternion_from_euler
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Header, Float64
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion, Point
-from mavros.msg import OverrideRCIn
-from mavros.srv import CommandBool
+from mavros_msgs.msg import OverrideRCIn
+from mavros import command
+from mavros import setpoint as SP
 
 
 def arduino_map(x, inmin, inmax, outmin, outmax):
@@ -77,8 +79,7 @@ rc_channels = {
 
 def arm(args, state):
     try:
-        arming_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/arming", CommandBool)
-        ret = arming_cl(value=state)
+        command.arming(value=state)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -100,7 +101,6 @@ def get_buttons(j, n):
     return j.buttons[ button_map[n]]
 
 def rc_override_control(args):
-    rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: RC Override control type.")
 
     load_map(axes_map, '~axes_map/')
@@ -109,7 +109,7 @@ def rc_override_control(args):
     for k, v in rc_channels.iteritems():
         v.load_param()
 
-    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
+    override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
@@ -144,17 +144,16 @@ def rc_override_control(args):
 
 
 def attitude_setpoint_control(args):
-    rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Attitude setpoint control type.")
 
     load_map(axes_map, '~axes_map/')
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    att_pub = rospy.Publisher(args.mavros_ns + "/setpoint/attitude", PoseStamped, queue_size=10)
-    thd_pub = rospy.Publisher(args.mavros_ns + "/setpoint/att_throttle", Float64, queue_size=10)
+    att_pub = SP.get_pub_attitude_pose(queue_size=10)
+    thd_pub = SP.get_pub_attitude_throttle(queue_size=10)
 
-    if rospy.get_param(args.mavros_ns + "/setpoint/attitude/reverse_throttle", False):
+    if rospy.get_param(mavros.get_topic("setpoint_attitude", "reverse_throttle"), False):
         def thd_normalize(v):
             return v
     else:
@@ -184,19 +183,18 @@ def attitude_setpoint_control(args):
         thd_pub.publish(data=throttle)
 
 
-    jsub = rospy.Subscriber("/joy", Joy, joy_cb)
+    jsub = rospy.Subscriber("joy", Joy, joy_cb)
     rospy.spin()
 
 
 def velocity_setpoint_control(args):
-    rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Velocity setpoint control type.")
 
     load_map(axes_map, '~axes_map/')
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    vel_pub = rospy.Publisher(args.mavros_ns + "/setpoint/cmd_vel", TwistStamped, queue_size=10)
+    vel_pub = SP.get_pub_velocity_cmd_vel(queue_size=10)
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPYT
@@ -216,21 +214,20 @@ def velocity_setpoint_control(args):
         vel_pub.publish(twist)
 
 
-    jsub = rospy.Subscriber("/joy", Joy, joy_cb)
+    jsub = rospy.Subscriber("joy", Joy, joy_cb)
     rospy.spin()
 
 
 px, py, pz = 0.0, 0.0, 0.0
 
 def position_setpoint_control(args):
-    rospy.init_node("mavteleop")
     rospy.loginfo("MAV-Teleop: Position setpoint control type.")
 
     load_map(axes_map, '~axes_map/')
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
 
-    pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint/local_position", PoseStamped, queue_size=10)
+    pos_pub = SP.get_pub_position_local(queue_size=10)
 
     def joy_cb(joy):
         global px, py, pz
@@ -257,7 +254,7 @@ def position_setpoint_control(args):
         pos_pub.publish(pose)
 
 
-    jsub = rospy.Subscriber("/joy", Joy, joy_cb)
+    jsub = rospy.Subscriber("joy", Joy, joy_cb)
     rospy.spin()
 
 
@@ -272,6 +269,9 @@ def main():
     mode_group.add_argument('-pos', '--sp-position', action='store_true', help="use position setpoint control type")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavteleop")
+    mavros.set_namespace(args.mavros_ns)
 
     if args.rc_override:
         rc_override_control(args)

@@ -10,7 +10,7 @@
 import rospy
 import mavros
 
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Float64
 from geometry_msgs.msg import TwistStamped, PoseStamped, PoseWithCovarianceStamped, \
         Vector3, Vector3Stamped, Point, Quaternion
 
@@ -27,6 +27,13 @@ def get_pub_attitude_cmd_vel(**kvargs):
     Returns publisher for :setpoint_attitude: plugin, :cmd_vel: topic
     """
     return rospy.Publisher(mavros.get_topic('setpoint_attitude', 'cmd_vel'), PoseStamped, **kvargs)
+
+
+def get_pub_attitude_throttle(**kvargs):
+    """
+    Returns publisher for :setpoint_attitude: plugin, :cmd_vel: topic
+    """
+    return rospy.Publisher(mavros.get_topic('setpoint_attitude', 'att_throttle'), Float64, **kvargs)
 
 
 def get_pub_attitude_pose(**kvargs):
