@@ -56,14 +56,5 @@ private:
 	control_toolbox::Pid pid_linvel_z;
 	control_toolbox::Pid pid_yaw_rate;
 
-	// PID values
-	std::array<double, 3> linvel_pid;
-	std::array<double, 3> yawrate_pid;
-
-	// Min/max bounds for the integral windup
-	double yawrate_imax;
-	double yawrate_imin;
-	double linvel_imax;
-	double linvel_imin;
 };
 };	// namespace pidcontroller
