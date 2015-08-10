@@ -55,10 +55,7 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg)
 	rmsg.sysid = mmsg.sysid;
 	rmsg.compid = mmsg.compid;
 	rmsg.msgid = mmsg.msgid;
-
-	rmsg.payload64.reserve(payload64_len);
-	for (size_t i = 0; i < payload64_len; i++)
-		rmsg.payload64.push_back(mmsg.payload64[i]);
+	rmsg.payload64 = std::move(mavros_msgs::Mavlink::_payload64_type(mmsg.payload64, mmsg.payload64 + payload64_len));
 
 	return true;
 };
