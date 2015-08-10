@@ -18,7 +18,8 @@
 #pragma once
 
 #include <ros/ros.h>
-#include <sitl_test/test_type.h>
+#include <test_mavros/sitl_test/test_setup.h>
+#include <test_mavros/tests/offboard_control.h>
 
 namespace sitltest {
 /**

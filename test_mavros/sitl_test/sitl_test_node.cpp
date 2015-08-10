@@ -11,7 +11,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <sitl_test/sitl_test.h>
+#include <test_mavros/sitl_test/sitl_test.h>
 
 using namespace sitltest;
 

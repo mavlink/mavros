@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf2_ros
   eigen_conversions
+  control_toolbox
 )
 
 ## System dependencies are found with CMake's conventions
@@ -88,7 +89,7 @@ include(EnableCXX11)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES sitl_test
-  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions
+  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions control_toolbox
   DEPENDS Boost Eigen
 )
 
@@ -110,6 +111,7 @@ include_directories(
 add_library(
   sitl_test
   sitl_test/lib/sitl_test.cpp
+  sitl_test/lib/pid_controller.cpp
 )
 
 ## Declare a cpp executable
@@ -146,17 +148,18 @@ target_link_libraries(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+file(GLOB SCRIPTS ${PROJECT_SOURCE_DIR}/scripts/*)
+install(PROGRAMS
+  ${SCRIPTS}
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS test_mavros test_mavros_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS sitl_test sitl_test_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -171,6 +174,10 @@ target_link_libraries(
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
 
 #############
 ## Testing ##

@@ -17,15 +17,14 @@
 
 #include <array>
 #include <angles/angles.h>
-#include <sitl_test/sitl_test.h>
-#include <sitl_test/test_type.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <test_mavros/sitl_test/sitl_test.h>
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
-namespace testtype {
+namespace testsetup {
 /**
  * @brief Offboard controller tester
  *
@@ -49,7 +48,7 @@ typedef enum {
 class OffboardControl {
 public:
 	OffboardControl() :
-		nh_sp("~"),
+		nh_sp(test.nh),
 		local_pos_sp_pub(nh_sp.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10)),
 		vel_sp_pub(nh_sp.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10)),
 		local_pos_sub(nh_sp.subscribe("/mavros/local_position/local", 10, &OffboardControl::local_pos_cb, this)),
@@ -57,6 +56,39 @@ public:
 	{ };
 
 	void init() {
+		/**
+		 * @brief Setup of the test conditions
+		 */
+		test.setup(nh_sp);
+		rate = test.rate;
+		use_pid = test.use_pid;
+		num_of_tests = test.num_of_tests;
+
+		if (use_pid) {
+			/**
+			 * @note some of these are based on values defaulted @ https://bitbucket.org/enddl22/ardrone_side_project/
+			 * tweaks to them so to get a better velocity response are welcomed!
+			 */
+
+			// Linear velocity PID gains and bound of integral windup
+			nh_sp.param("linvel_p_gain", linvel_p_gain, 0.4);
+			nh_sp.param("linvel_i_gain", linvel_i_gain, 0.05);
+			nh_sp.param("linvel_d_gain", linvel_d_gain, 0.12);
+			nh_sp.param("linvel_i_max", linvel_i_max, 0.1);
+			nh_sp.param("linvel_i_min", linvel_i_min, -0.1);
+
+			// Yaw rate PID gains and bound of integral windup
+			nh_sp.param("yawrate_p_gain", yawrate_p_gain, 0.011);
+			nh_sp.param("yawrate_i_gain", yawrate_i_gain, 0.00058);
+			nh_sp.param("yawrate_d_gain", yawrate_d_gain, 0.12);
+			nh_sp.param("yawrate_i_max", yawrate_i_max, 0.005);
+			nh_sp.param("yawrate_i_min", yawrate_i_min, -0.005);
+
+			// Setup of the PID controllers
+			pid.setup_linvel_pid(linvel_p_gain, linvel_i_gain, linvel_d_gain, linvel_i_max, linvel_i_min, nh_sp);
+			pid.setup_yawrate_pid(yawrate_p_gain, yawrate_i_gain, yawrate_d_gain, yawrate_i_max, yawrate_i_min, nh_sp);
+		}
+
 		/**
 		 * @brief Setpoint control mode selector
 		 *
@@ -109,7 +141,7 @@ public:
 
 	void spin(int argc, char *argv[]) {
 		init();
-		ros::Rate loop_rate(10);
+		ros::Rate loop_rate(rate);
 
 		ROS_INFO("SITL Test: Offboard control test running!");
 
@@ -147,6 +179,25 @@ public:
 	}
 
 private:
+	TestSetup test;
+	pidcontroller::PIDController pid;
+
+	double rate;
+	bool use_pid;
+	int num_of_tests; //TODO: find a way to use this...
+
+	double linvel_p_gain;
+	double linvel_i_gain;
+	double linvel_d_gain;
+	double linvel_i_max;
+	double linvel_i_min;
+
+	double yawrate_p_gain;
+	double yawrate_i_gain;
+	double yawrate_d_gain;
+	double yawrate_i_max;
+	double yawrate_i_min;
+
 	control_mode mode;
 	path_shape shape;
 
@@ -259,6 +310,7 @@ private:
 	 */
 	void circle_path_motion(ros::Rate loop_rate, control_mode mode){
 		ROS_INFO("Testing...");
+		ros::Time last_time = ros::Time::now();
 
 		while (ros::ok()) {
 			tf::pointMsgToEigen(localpos.pose.position, current);
@@ -269,7 +321,11 @@ private:
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
-				tf::vectorEigenToMsg(Eigen::Vector3d(5.0f - current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
+				if (use_pid)
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
+								Eigen::Vector3d(5.0f, 0.0f, 1.0f), current, last_time), vs.twist.linear);
+				else
+					tf::vectorEigenToMsg(Eigen::Vector3d(5.0f - current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -288,7 +344,10 @@ private:
 					local_pos_sp_pub.publish(ps);
 				}
 				else if (mode == VELOCITY) {
-					tf::vectorEigenToMsg(circle_shape(theta) - current, vs.twist.linear);
+					if (use_pid)
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(circle_shape(theta), current, last_time), vs.twist.linear);
+					else
+						tf::vectorEigenToMsg(circle_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -299,6 +358,7 @@ private:
 					ROS_INFO("Test complete!");
 					ros::shutdown();
 				}
+				last_time = ros::Time::now();
 				loop_rate.sleep();
 				ros::spinOnce();
 			}
@@ -310,6 +370,7 @@ private:
 	 */
 	void eight_path_motion(ros::Rate loop_rate, control_mode mode){
 		ROS_INFO("Testing...");
+		ros::Time last_time = ros::Time::now();
 
 		while (ros::ok()) {
 			tf::pointMsgToEigen(localpos.pose.position, current);
@@ -320,7 +381,11 @@ private:
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
-				tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
+				if (use_pid)
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
+								Eigen::Vector3d(0.0f, 0.0f, 1.0f), current, last_time), vs.twist.linear);
+				else
+					tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 1.0f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -339,7 +404,10 @@ private:
 					local_pos_sp_pub.publish(ps);
 				}
 				else if (mode == VELOCITY) {
-					tf::vectorEigenToMsg(eight_shape(theta) - current, vs.twist.linear);
+					if (use_pid)
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(eight_shape(theta), current, last_time), vs.twist.linear);
+					else
+						tf::vectorEigenToMsg(eight_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -350,6 +418,7 @@ private:
 					ROS_INFO("Test complete!");
 					ros::shutdown();
 				}
+				last_time = ros::Time::now();
 				loop_rate.sleep();
 				ros::spinOnce();
 			}
@@ -361,6 +430,7 @@ private:
 	 */
 	void ellipse_path_motion(ros::Rate loop_rate, control_mode mode){
 		ROS_INFO("Testing...");
+		ros::Time last_time = ros::Time::now();
 
 		while (ros::ok()) {
 			tf::pointMsgToEigen(localpos.pose.position, current);
@@ -371,9 +441,11 @@ private:
 				local_pos_sp_pub.publish(ps);
 			}
 			else if (mode == VELOCITY) {
-				// This one gets some strange behavior, maybe due to overshoot on velocity controller
-				// TODO: find a way to limit the velocity between points (probably using ros::Rate)
-				tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 2.5f - current.z()), vs.twist.linear);
+				if (use_pid)
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(
+								Eigen::Vector3d(0.0f, 0.0f, 2.5f), current, last_time), vs.twist.linear);
+				else
+					tf::vectorEigenToMsg(Eigen::Vector3d(-current.x(), -current.y(), 2.5f - current.z()), vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
@@ -392,7 +464,10 @@ private:
 					local_pos_sp_pub.publish(ps);
 				}
 				else if (mode == VELOCITY) {
-					tf::vectorEigenToMsg(ellipse_shape(theta) - current, vs.twist.linear);
+					if (use_pid)
+						tf::vectorEigenToMsg(pid.compute_linvel_effort(ellipse_shape(theta), current, last_time), vs.twist.linear);
+					else
+						tf::vectorEigenToMsg(ellipse_shape(theta) - current, vs.twist.linear);
 					vel_sp_pub.publish(vs);
 				}
 				else if (mode == ACCELERATION) {
@@ -403,6 +478,7 @@ private:
 					ROS_INFO("Test complete!");
 					ros::shutdown();
 				}
+				last_time = ros::Time::now();
 				loop_rate.sleep();
 				ros::spinOnce();
 			}
@@ -414,7 +490,8 @@ private:
 	 * before moving to the next setpoint.
 	 */
 	void wait_and_move(geometry_msgs::PoseStamped target){
-		ros::Rate loop_rate(10);
+		ros::Rate loop_rate(rate);
+		ros::Time last_time = ros::Time::now();
 		bool stop = false;
 
 		Eigen::Vector3d dest;
@@ -439,24 +516,31 @@ private:
 				local_pos_sp_pub.publish(target);
 			}
 			else if (mode == VELOCITY) {
-				tf::vectorEigenToMsg(dest - current, vs.twist.linear);
+				if (use_pid)
+					tf::vectorEigenToMsg(pid.compute_linvel_effort(dest, current, last_time), vs.twist.linear);
+				else
+					tf::vectorEigenToMsg(dest - current, vs.twist.linear);
 				vel_sp_pub.publish(vs);
 			}
 			else if (mode == ACCELERATION) {
 				// TODO
 				return;
 			}
+			last_time = ros::Time::now();
 			loop_rate.sleep();
 			ros::spinOnce();
 		}
 	}
 
+	/**
+	 * @brief Gaussian noise generator for accepted position threshold
+	 */
 	std::array<double, 100> threshold_definition(){
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::array<double, 100> th_values;
 
-		std::normal_distribution<double> th(0.1,0.01);
+		std::normal_distribution<double> th(0.1f,0.05f);
 
 		for (auto &value : th_values) {
 			value = th(gen);
@@ -470,4 +554,4 @@ private:
 		localpos = *msg;
 	}
 };
-};	// namespace testype
+};	// namespace testsetup
