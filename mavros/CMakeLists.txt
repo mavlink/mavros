@@ -83,9 +83,6 @@ add_library(mavros
   src/lib/mavlink_diag.cpp
   src/lib/rosconsole_bridge.cpp
 )
-add_dependencies(mavros
-  mavros_generate_messages_cpp
-)
 target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -136,9 +133,6 @@ target_link_libraries(mavros_node
 
 add_executable(gcs_bridge
   src/gcs_bridge.cpp
-)
-add_dependencies(gcs_bridge
-  mavros_generate_messages_cpp
 )
 target_link_libraries(gcs_bridge
   mavros

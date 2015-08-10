@@ -62,9 +62,6 @@ add_library(mavros_extras
   src/plugins/vibration.cpp
   src/plugins/cam_imu_sync.cpp
 )
-add_dependencies(mavros_extras
-  mavros_extras_generate_messages_cpp
-)
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
