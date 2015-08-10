@@ -2,7 +2,9 @@
 <package format="2">
   <name>mavros_extras</name>
   <version>0.13.1</version>
-  <description>Extra nodes and plugins for mavros</description>
+  <description>
+    Extra nodes and plugins for <a href="http://wiki.rot.org/mavros">MAVROS</a>.
+  </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
   <author email="vooon341@gmail.com">Vladimir Ermakov</author>
@@ -18,12 +20,11 @@
 
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
-  <depend>mavlink</depend>
   <depend>mavros</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
+  <depend>mavros_msgs</depend>
   <depend>visualization_msgs</depend>
-  <exec_depend>python-argparse</exec_depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
