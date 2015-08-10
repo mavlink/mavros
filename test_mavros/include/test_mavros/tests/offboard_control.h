@@ -17,7 +17,7 @@
 
 #include <array>
 #include <angles/angles.h>
-#include <sitl_test/sitl_test.h>
+#include <test_mavros/sitl_test/sitl_test.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/Point.h>

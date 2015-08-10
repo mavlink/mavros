@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <utils/pid_controller.h>
+#include <test_mavros/utils/pid_controller.h>
 
 namespace testsetup {
 class TestSetup {

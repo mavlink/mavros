@@ -11,7 +11,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <utils/pid_controller.h>
+#include <test_mavros/utils/pid_controller.h>
 
 using namespace pidcontroller;
 
