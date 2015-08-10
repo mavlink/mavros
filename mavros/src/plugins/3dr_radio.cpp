@@ -17,7 +17,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros/RadioStatus.h>
+#include <mavros_msgs/RadioStatus.h>
 
 namespace mavplugin {
 /**
@@ -39,7 +39,7 @@ public:
 
 		nh.param("tdr_radio/low_rssi", low_rssi, 40);
 
-		status_pub = nh.advertise<mavros::RadioStatus>("radio_status", 10);
+		status_pub = nh.advertise<mavros_msgs::RadioStatus>("radio_status", 10);
 
 		uas->sig_connection_changed.connect(boost::bind(&TDRRadioPlugin::connection_cb, this, _1));
 	}
@@ -64,7 +64,7 @@ private:
 	ros::Publisher status_pub;
 
 	std::recursive_mutex diag_mutex;
-	mavros::RadioStatus::Ptr last_status;
+	mavros_msgs::RadioStatus::Ptr last_status;
 
 	/* -*- message handlers -*- */
 
@@ -92,7 +92,7 @@ private:
 		if (sysid != '3' || compid != 'D')
 			ROS_WARN_THROTTLE_NAMED(30, "radio", "RADIO_STATUS not from 3DR modem?");
 
-		auto msg = boost::make_shared<mavros::RadioStatus>();
+		auto msg = boost::make_shared<mavros_msgs::RadioStatus>();
 
 		msg->header.stamp = ros::Time::now();
 
