@@ -1,6 +1,9 @@
 # Mavlink message transport type.
 #
 # Used to transport mavlink_message_t via ROS topic
+#
+# Please use mavros_msgs::mavlink::convert() from <mavros_msgs/mavlink_convert.h>
+# to convert between ROS and MAVLink message type
 
 std_msgs/Header header
 uint8 len
