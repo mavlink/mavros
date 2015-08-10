@@ -87,7 +87,6 @@ def main():
 
     rospy.init_node("mavsafety", anonymous=True)
     mavros.set_namespace(args.mavros_ns)
-    command.setup_services()
     args.func(args)
 
 
