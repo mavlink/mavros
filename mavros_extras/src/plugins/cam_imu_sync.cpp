@@ -17,7 +17,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/CamIMUStamp.h>
+#include <mavros_msgs/CamIMUStamp.h>
 
 namespace mavplugin {
 /**
@@ -38,7 +38,7 @@ public:
 	{
 		uas = &uas_;
 
-		cam_imu_pub = cam_imu_sync_nh.advertise<mavros_extras::CamIMUStamp>("cam_imu_stamp", 10);
+		cam_imu_pub = cam_imu_sync_nh.advertise<mavros_msgs::CamIMUStamp>("cam_imu_stamp", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -57,7 +57,7 @@ private:
 		mavlink_camera_trigger_t ctrig;
 		mavlink_msg_camera_trigger_decode(msg, &ctrig);
 
-		auto sync_msg = boost::make_shared<mavros_extras::CamIMUStamp>();
+		auto sync_msg = boost::make_shared<mavros_msgs::CamIMUStamp>();
 
 		sync_msg->frame_stamp = uas->synchronise_stamp(ctrig.time_usec);
 		sync_msg->frame_seq_id = ctrig.seq;

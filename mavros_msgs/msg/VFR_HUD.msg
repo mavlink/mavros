@@ -2,7 +2,7 @@
 #
 # VFR_HUD message
 
-Header header
+std_msgs/Header header
 float32 airspeed	# m/s
 float32 groundspeed	# m/s
 int16 heading		# degrees 0..360

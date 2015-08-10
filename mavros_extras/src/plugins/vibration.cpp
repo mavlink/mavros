@@ -17,7 +17,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/Vibration.h>
+#include <mavros_msgs/Vibration.h>
 
 namespace mavplugin {
 /**
@@ -38,7 +38,7 @@ public:
 
 		vibe_nh.param<std::string>("frame_id", frame_id, "vibration");
 
-		vibration_pub = vibe_nh.advertise<mavros_extras::Vibration>("raw/vibration", 10);
+		vibration_pub = vibe_nh.advertise<mavros_msgs::Vibration>("raw/vibration", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -59,7 +59,7 @@ private:
 		mavlink_vibration_t vibration;
 		mavlink_msg_vibration_decode(msg, &vibration);
 
-		auto vibe_msg = boost::make_shared<mavros_extras::Vibration>();
+		auto vibe_msg = boost::make_shared<mavros_msgs::Vibration>();
 
 		vibe_msg->header = uas->synchronized_header(frame_id, vibration.time_usec);
 

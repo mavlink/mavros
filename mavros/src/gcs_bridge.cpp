@@ -18,8 +18,6 @@
 #include <mavros/mavlink_diag.h>
 #include <mavconn/interface.h>
 
-#include <mavros/Mavlink.h>
-
 using namespace mavros;
 using namespace mavconn;
 

@@ -14,7 +14,6 @@ import sys
 
 import rospy
 import mavros
-import mavros.msg
 import threading
 
 
@@ -33,8 +32,9 @@ def wait_fcu_connection(timeout=None):
     """
     Wait until establishing FCU connection
     """
+    from mavros_msgs.msg import State
     try:
-        msg = rospy.wait_for_message(mavros.get_topic('state'), mavros.msg.State, timeout)
+        msg = rospy.wait_for_message(mavros.get_topic('state'), State, timeout)
         if msg.connected:
             return True
     except rospy.ROSException as e:
@@ -47,7 +47,7 @@ def wait_fcu_connection(timeout=None):
 
     sub = rospy.Subscriber(
         mavros.get_topic('state'),
-        mavros.msg.State,
+        State,
         handler
     )
 

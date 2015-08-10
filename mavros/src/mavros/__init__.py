@@ -9,6 +9,7 @@ __all__ = (
 
 # global namespace storage
 _mavros_ns = "/mavros"
+_mavros_ns_update = []
 
 
 def get_namespace():
@@ -23,8 +24,20 @@ def set_namespace(ns):
     """
     Sets namespace of mavros node
     """
-    global _mavros_ns
+    global _mavros_ns, _mavros_ns_update
     _mavros_ns = ns
+
+    for cb in _mavros_ns_update:
+        if callable(cb):
+            cb()
+
+
+def register_on_namespace_update(cb):
+    """
+    Call callback after namespace update
+    """
+    global _mavros_ns_update
+    _mavros_ns_update.append(cb)
 
 
 def get_topic(*args):

@@ -243,7 +243,6 @@ def main():
 
     rospy.init_node("mavwp", anonymous=True)
     mavros.set_namespace(args.mavros_ns)
-    M.setup_services()
 
     args.func(args)
 

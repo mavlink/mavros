@@ -18,7 +18,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros_extras/OpticalFlowRad.h>
+#include <mavros_msgs/OpticalFlowRad.h>
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/Range.h>
 
@@ -49,7 +49,7 @@ public:
 		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);
 		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
 
-		flow_rad_pub = flow_nh.advertise<mavros_extras::OpticalFlowRad>("raw/optical_flow_rad", 10);
+		flow_rad_pub = flow_nh.advertise<mavros_msgs::OpticalFlowRad>("raw/optical_flow_rad", 10);
 		range_pub = flow_nh.advertise<sensor_msgs::Range>("ground_distance", 10);
 		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
 	}
@@ -99,7 +99,7 @@ private:
 						flow_rad.integrated_ygyro,
 						flow_rad.integrated_zgyro));
 
-		auto flow_rad_msg = boost::make_shared<mavros_extras::OpticalFlowRad>();
+		auto flow_rad_msg = boost::make_shared<mavros_msgs::OpticalFlowRad>();
 
 		flow_rad_msg->header = header;
 		flow_rad_msg->integration_time_us = flow_rad.integration_time_us;

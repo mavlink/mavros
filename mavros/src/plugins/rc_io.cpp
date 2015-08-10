@@ -17,9 +17,9 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros/RCIn.h>
-#include <mavros/RCOut.h>
-#include <mavros/OverrideRCIn.h>
+#include <mavros_msgs/RCIn.h>
+#include <mavros_msgs/RCOut.h>
+#include <mavros_msgs/OverrideRCIn.h>
 
 namespace mavplugin {
 /**
@@ -39,8 +39,8 @@ public:
 	{
 		uas = &uas_;
 
-		rc_in_pub = rc_nh.advertise<mavros::RCIn>("in", 10);
-		rc_out_pub = rc_nh.advertise<mavros::RCOut>("out", 10);
+		rc_in_pub = rc_nh.advertise<mavros_msgs::RCIn>("in", 10);
+		rc_out_pub = rc_nh.advertise<mavros_msgs::RCOut>("out", 10);
 		override_sub = rc_nh.subscribe("override", 10, &RCIOPlugin::override_cb, this);
 
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
@@ -94,7 +94,7 @@ private:
 		SET_RC_IN(8);
 #undef SET_RC_IN
 
-		auto rcin_msg = boost::make_shared<mavros::RCIn>();
+		auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
 
 		rcin_msg->header.stamp = uas->synchronise_stamp(port.time_boot_ms);
 		rcin_msg->rssi = port.rssi;
@@ -143,7 +143,7 @@ private:
 		IFSET_RC_IN(18);
 #undef IFSET_RC_IN
 
-		auto rcin_msg = boost::make_shared<mavros::RCIn>();
+		auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
 
 		rcin_msg->header.stamp = uas->synchronise_stamp(channels.time_boot_ms);
 		rcin_msg->rssi = channels.rssi;
@@ -173,7 +173,7 @@ private:
 		SET_RC_OUT(8);
 #undef SET_RC_OUT
 
-		auto rcout_msg = boost::make_shared<mavros::RCOut>();
+		auto rcout_msg = boost::make_shared<mavros_msgs::RCOut>();
 
 		// XXX: Why time_usec id 32 bit? We should test that.
 		uint64_t time_usec = port.time_usec;
@@ -212,7 +212,7 @@ private:
 		has_rc_channels_msg = false;
 	}
 
-	void override_cb(const mavros::OverrideRCIn::ConstPtr req) {
+	void override_cb(const mavros_msgs::OverrideRCIn::ConstPtr req) {
 		if (!uas->is_ardupilotmega())
 			ROS_WARN_THROTTLE_NAMED(30, "rc", "RC override not supported by this FCU!");
 

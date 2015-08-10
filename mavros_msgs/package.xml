@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mavros_extras</name>
-  <version>0.13.1</version>
+  <name>mavros_msgs</name>
+  <version>0.0.0</version>
   <description>
-    Extra nodes and plugins for <a href="http://wiki.rot.org/mavros">MAVROS</a>.
+    mavros_msgs defines messages for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
@@ -12,22 +12,21 @@
   <license>LGPLv3</license>
   <license>BSD</license>
 
-  <url type="website">http://wiki.ros.org/mavros_extras</url>
+  <url type="website">http://wiki.ros.org/mavros_msgs</url>
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>image_transport</depend>
-  <depend>cv_bridge</depend>
-  <depend>mavros</depend>
-  <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>mavros_msgs</depend>
-  <depend>visualization_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <!-- XXX needed for users of mavlink_convert.h
+  <build_export_depend>libmavconn</build_export_depend>
+  -->
 
   <export>
-    <mavros plugin="${prefix}/mavros_plugins.xml" />
-    <rosdoc config="rosdoc.yaml" />
+    <architecture_independent/>
   </export>
 </package>

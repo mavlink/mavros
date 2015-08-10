@@ -18,7 +18,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <mavros/VFR_HUD.h>
+#include <mavros_msgs/VFR_HUD.h>
 #include <geometry_msgs/TwistStamped.h>
 
 namespace mavplugin {
@@ -36,7 +36,7 @@ public:
 	 */
 	void initialize(UAS &uas)
 	{
-		vfr_pub = nh.advertise<mavros::VFR_HUD>("vfr_hud", 10);
+		vfr_pub = nh.advertise<mavros_msgs::VFR_HUD>("vfr_hud", 10);
 
 #ifdef MAVLINK_MSG_ID_WIND
 		wind_pub = nh.advertise<geometry_msgs::TwistStamped>("wind_estimation", 10);
@@ -62,7 +62,7 @@ private:
 		mavlink_vfr_hud_t vfr_hud;
 		mavlink_msg_vfr_hud_decode(msg, &vfr_hud);
 
-		auto vmsg = boost::make_shared<mavros::VFR_HUD>();
+		auto vmsg = boost::make_shared<mavros_msgs::VFR_HUD>();
 		vmsg->header.stamp = ros::Time::now();
 		vmsg->airspeed = vfr_hud.airspeed;
 		vmsg->groundspeed = vfr_hud.groundspeed;
