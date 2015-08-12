@@ -105,7 +105,7 @@ private:
 	double target_size_x, target_size_y;
 
 	std::string mav_frame;
-	int frame;	
+	int frame;
 
 	/* -*- low-level send -*- */
 	void landing_target(uint64_t time_usec,
@@ -188,7 +188,7 @@ private:
 					distance * sin(phi) * sin(theta),
 					distance * cos(phi)));
 		// From the data coming from Firmware, it is not possible to determine the orientation, so it's kept as constant:
-		auto orientation = Eigen::Quaterniond(1,0,0,0);
+		auto orientation = Eigen::Quaterniond::Identity();
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "land_target", "Landing target: "
 				"frame: %s angle offset:(X: %1.3frad, Y: %1.3frad) "
