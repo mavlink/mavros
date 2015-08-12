@@ -33,18 +33,18 @@ ros::Publisher mavlink_pub;
 
 void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid)
 {
-	MavlinkPtr rmsg = boost::make_shared<Mavlink>();
+	auto rmsg = boost::make_shared<mavros_msgs::Mavlink>();
 
 	rmsg->header.stamp = ros::Time::now();
-	mavutils::copy_mavlink_to_ros(mmsg, rmsg);
+	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
 	mavlink_pub.publish(rmsg);
 }
 
-void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg)
+void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg)
 {
 	mavlink_message_t mmsg;
 
-	if (mavutils::copy_ros_to_mavlink(rmsg, mmsg))
+	if (mavros_msgs::mavlink::convert(*rmsg, mmsg))
 		gcs_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
 	else
 		ROS_ERROR("Packet drop: illegal payload64 size");
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "gcs_image_bridge");
 	ros::NodeHandle priv_nh("~");
-	ros::NodeHandle mavlink_nh("/mavlink");
+	ros::NodeHandle mavlink_nh("mavlink");
 	ros::Subscriber mavlink_sub;
 	diagnostic_updater::Updater updater;
 	mavros::MavlinkDiag gcs_link_diag("GCS bridge");
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	mavlink_pub = mavlink_nh.advertise<Mavlink>("to", 10);
+	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
 	gcs_link->message_received.connect(mavlink_pub_cb);
 
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
