@@ -50,9 +50,18 @@ Note: ids from URL overrides ids given by system\_id & component\_id parameters.
 Coordinate frames
 -----------------
 
-MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames.
-Rules descrided in [issue #49][iss49].
+MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames and vice-versa.
+Rules are descrided as follows:
 
+| Transform:             |                       |
+|:----------------------:|:---------------------:|
+| Position (local frame) | `(x,y,z)`→`(x,-y,-z)` |
+
+| Transform:                     | Euler angles:         | Quaternions:              |
+|:------------------------------:|:---------------------:|:-------------------------:|
+| Orientation (body-fixed frame) | `(r,p,y)`→`(r,-p,-y)` | `(w,x,y,z)`→`(x,-y,-z,w)` |
+
+All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
 
 Programs
 --------
@@ -187,7 +196,7 @@ Contributing
 8. Fix small code style errors and typos;
 9. Run tests:
  - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
- - with `catkin tools`, issue `catkin build --catkin-make-args run_tests`;
+ - with `catkin tools`, issue `catkin run_tests`;
 10. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
 
@@ -218,7 +227,6 @@ Links
 [dp]: https://github.com/arthurbenemann/droidplanner/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
-[iss49]: https://github.com/mavlink/mavros/issues/49
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
