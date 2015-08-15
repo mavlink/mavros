@@ -176,13 +176,19 @@ With that tool you may place mavlink package in your mavros workspace.
 Contributing
 ------------
 
-1. Fork the repo and clone it.
-2. Make feature branch (`git checkout -b patch`)
-3. ???
-4. Commit.
-5. Check code style `uncrustify -c tools/uncrustify-cpp.cfg --replace --no-backup <your-files>`
-6. Fix small code style errors.
-7. Commit & push & do PR.
+1. Fork the repo:
+![fork](http://s24.postimg.org/pfvt9sdv9/Fork_mavros.png)
+2. Clone the repo (`git clone https://github.com/mavlink/mavros.git`);
+3. Create a remote connection to your repo (`git remote add <remote_repo> git@github.com:<YourGitUser>/mavros.git`);
+4. Create a feature/dev branch (`git checkout -b <feature_branch>`);
+5. Add the changes;
+6. Apply the changes by commiting (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
+7. Check code style `uncrustify -c ${ROS_WORKSPACE}/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>`;
+8. Fix small code style errors and typos;
+9. Run tests:
+ - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
+ - with `catkin tools`, issue `catkin build --catkin-make-args run_tests`;
+10. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
 
 Glossary
