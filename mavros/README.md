@@ -23,7 +23,7 @@ Limitations
 -----------
 
 Only for linux. Depends on [Boost library][boost] >= 1.46 (hydro on 12.04).
-Catkin build system required (tested with ROS Hydro Medusa and Indigo Igloo).
+Catkin build system required (tested with ROS Hydro Medusa, Indigo Igloo and Jade Turtle).
 
 This package are dependent on [ros-\*-mavlink][mlwiki] build from [mavlink-gbp-release][mlgbp].
 Since 2014-06-19 it exists in Hydro and Indigo package index (so you can install via rosdep).
@@ -51,17 +51,11 @@ Coordinate frames
 -----------------
 
 MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames and vice-versa.
-Rules are descrided as follows:
-
-| Transform:             |                       |
-|:----------------------:|:---------------------:|
-| Position (local frame) | `(x,y,z)`→`(x,-y,-z)` |
-
-| Transform:                     | Euler angles:         | Quaternions:              |
-|:------------------------------:|:---------------------:|:-------------------------:|
-| Orientation (body-fixed frame) | `(r,p,y)`→`(r,-p,-y)` | `(w,x,y,z)`→`(x,-y,-z,w)` |
+For translate we simply apply rotation 180° abount ROLL (X) axis.
 
 All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
+
+Related issues: [#49 (outdated)][iss49], [#216 (outdated)][iss216], [#317][iss317], [#319][iss319], [#321][iss321].
 
 Programs
 --------
@@ -227,6 +221,11 @@ Links
 [dp]: https://github.com/arthurbenemann/droidplanner/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
+[iss49]: https://github.com/mavlink/mavros/issues/49
+[iss216]: https://github.com/mavlink/mavros/issues/216
+[iss317]: https://github.com/mavlink/mavros/issues/317
+[iss319]: https://github.com/mavlink/mavros/issues/319
+[iss321]: https://github.com/mavlink/mavros/issues/321
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
