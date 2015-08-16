@@ -8,6 +8,7 @@ MAVLink extendable communication node for ROS.
 - Since 2014-08-11 this repository contains several packages.
 - Since 2014-11-02 hydro support splited from master to hydro-devel branch.
 - Since 2015-03-04 all packages also dual licensed under terms of BSD license.
+- Since 2015-08-10 all messages moved to mavros\_msgs package
 
 
 mavros package
@@ -34,6 +35,12 @@ test\_mavros package
 
 This package contain hand-tests and [manual page][test] for APM and PX4 SITL.
 Please see [README][test] first!
+
+
+mavros\_msgs package
+--------------------
+
+This package contain messages and services used in mavros.
 
 
 Support forums and chats
