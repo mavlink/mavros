@@ -50,9 +50,18 @@ Note: ids from URL overrides ids given by system\_id & component\_id parameters.
 Coordinate frames
 -----------------
 
-MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames.
-Rules descrided in [issue #49][iss49].
+MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames and vice-versa.
+Rules are descrided as follows:
 
+| Transform:             |                       |
+|:----------------------:|:---------------------:|
+| Position (local frame) | `(x,y,z)`→`(x,-y,-z)` |
+
+| Transform:                     | Euler angles:         | Quaternions:              |
+|:------------------------------:|:---------------------:|:-------------------------:|
+| Orientation (body-fixed frame) | `(r,p,y)`→`(r,-p,-y)` | `(w,x,y,z)`→`(x,-y,-z,w)` |
+
+All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
 
 Programs
 --------
@@ -176,13 +185,19 @@ With that tool you may place mavlink package in your mavros workspace.
 Contributing
 ------------
 
-1. Fork the repo and clone it.
-2. Make feature branch (`git checkout -b patch`)
-3. ???
-4. Commit.
-5. Check code style `uncrustify -c tools/uncrustify-cpp.cfg --replace --no-backup <your-files>`
-6. Fix small code style errors.
-7. Commit & push & do PR.
+1. Fork the repo:
+![fork](http://s24.postimg.org/pfvt9sdv9/Fork_mavros.png)
+2. Clone the repo (`git clone https://github.com/mavlink/mavros.git`);
+3. Create a remote connection to your repo (`git remote add <remote_repo> git@github.com:<YourGitUser>/mavros.git`);
+4. Create a feature/dev branch (`git checkout -b <feature_branch>`);
+5. Add the changes;
+6. Apply the changes by commiting (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
+7. Check code style `uncrustify -c ${ROS_WORKSPACE}/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>`;
+8. Fix small code style errors and typos;
+9. Run tests:
+ - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
+ - with `catkin tools`, issue `catkin run_tests`;
+10. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
 
 Glossary
@@ -212,7 +227,6 @@ Links
 [dp]: https://github.com/arthurbenemann/droidplanner/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
-[iss49]: https://github.com/mavlink/mavros/issues/49
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
