@@ -23,9 +23,46 @@ from mavros import ftp
 # XXX: bug in ftp.cpp cause a doubling request of last package.
 # -1 fixes that.
 FTP_PAGE_SIZE = 239 * 18 - 1
+FTP_PWD_FILE = '/tmp/.mavftp_pwd'
+
+
+def _resolve_path(path = None):
+    """
+    Resolve FTP path using PWD file
+    """
+    if os.path.exists(FTP_PWD_FILE):
+        with open(FTP_PWD_FILE, 'r') as fd:
+            pwd = fd.readline()
+    else:
+        # default home location is root directory
+        pwd = os.environ.get('MAVFTP_HOME', '/')
+
+    if not path:
+        return os.path.normpath(pwd)    # no path - PWD location
+    elif path.startswith('/'):
+        return os.path.normpath(path)   # absolute path
+    else:
+        return os.path.normpath(os.path.join(pwd, path))
+
+
+def do_change_directory(args):
+    # TODO: check that path is exist
+    path = args.path or os.environ.get('MAVFTP_HOME')
+    if args.path and not path.startswith('/'):
+        path = _resolve_path(path)
+    if path and not path.startswith('/'):
+        fault("Path is not absolute:", path)
+
+    if path:
+        with open(FTP_PWD_FILE, 'w') as fd:
+            fd.write(os.path.normpath(path))
+    else:
+        if os.path.exists(FTP_PWD_FILE):
+            os.unlink(FTP_PWD_FILE)
 
 
 def do_list(args):
+    args.path = _resolve_path(args.path)
     for ent in ftp.listdir(args.path):
         n = ent.name
         if ent.type == ftp.FileEntry.TYPE_DIRECTORY:
@@ -38,6 +75,7 @@ def do_list(args):
 
 def do_cat(args):
     local_crc = 0
+    args.path = _resolve_path(args.path)
 
     with ftp.open(args.path, 'r') as fd:
         while True:
@@ -54,6 +92,7 @@ def do_cat(args):
 
 
 def do_remove(args):
+    args.path = _resolve_path(args.path)
     ftp.unlink(args.path)
 
 
@@ -62,16 +101,19 @@ def do_reset(args):
 
 
 def do_mkdir(args):
+    args.path = _resolve_path(args.path)
     ftp.mkdir(args.path)
 
 
 def do_rmdir(args):
+    args.path = _resolve_path(args.path)
     ftp.rmdir(args.path)
 
 
 def do_upload(args):
     mode = 'cw' if args.no_overwrite else 'w'
     local_crc = 0
+    args.path = _resolve_path(args.path)
 
     with args.file as from_fd:
         with ftp.open(args.path, mode) as to_fd:
@@ -94,9 +136,16 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     subarg = parser.add_subparsers()
 
+    # argparse from python2 don't support subparser aliases
+    # there exist a hack, but i don't want it now.
+
+    cd_args = subarg.add_parser('cd', help="change directory")
+    cd_args.set_defaults(func=do_change_directory)
+    cd_args.add_argument('path', type=str, nargs='?', help="directory path")
+
     list_args = subarg.add_parser('list', help="list files and dirs")
     list_args.set_defaults(func=do_list)
-    list_args.add_argument('path', type=str, help="directory path")
+    list_args.add_argument('path', type=str, nargs='?', help="directory path")
 
     cat_args = subarg.add_parser('cat', help="cat file")
     cat_args.set_defaults(func=do_cat)
@@ -117,8 +166,8 @@ def main():
 
     upload_args = subarg.add_parser('upload', help="upload file")
     upload_args.set_defaults(func=do_upload)
-    upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
     upload_args.add_argument('path', type=str, help="save path")
+    upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
     upload_args.add_argument('-n', '--no-overwrite', action="store_true", help="do not overwrite existing file")
 
     reset_args = subarg.add_parser('reset', help="reset")
