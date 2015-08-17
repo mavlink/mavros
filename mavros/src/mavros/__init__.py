@@ -4,11 +4,14 @@
 __all__ = (
     'get_namespace',
     'set_namespace',
-    'get_topic'
+    'get_topic',
+    'DEFAULT_NAMESPACE'
 )
 
+DEFAULT_NAMESPACE = '/mavros'
+
 # global namespace storage
-_mavros_ns = "/mavros"
+_mavros_ns = None
 _mavros_ns_update = []
 
 
@@ -17,10 +20,13 @@ def get_namespace():
     Returns mavros node namespace
     """
     global _mavros_ns
+    if _mavros_ns is None:
+        raise RuntimeError("mavros namespace is uninitialized! "
+                           "Call mavros.set_namespace() first!")
     return _mavros_ns
 
 
-def set_namespace(ns):
+def set_namespace(ns=DEFAULT_NAMESPACE):
     """
     Sets namespace of mavros node
     """
