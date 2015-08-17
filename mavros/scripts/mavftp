@@ -19,6 +19,13 @@ from mavros.utils import *
 from mavros.nuttx_crc32 import *
 from mavros import ftp
 
+no_progressbar = False
+try:
+    import progressbar as pbar
+except ImportError:
+    print("Prigressbar disabled. install python-progressbar", file=sys.stderr)
+    no_progressbar = True
+
 # optimized transfer size for FTP message payload
 # XXX: bug in ftp.cpp cause a doubling request of last package.
 # -1 fixes that.
@@ -43,6 +50,35 @@ def _resolve_path(path = None):
         return os.path.normpath(path)   # absolute path
     else:
         return os.path.normpath(os.path.join(pwd, path))
+
+
+class ProgressBar:
+    """
+    Wrapper class for hiding file transfer brogressbar construction
+    """
+    def __init__(self, quiet, operation, maxval):
+        if no_progressbar or quiet or maxval == 0:
+            print_if(maxval == 0, "Can't show progressbar for unknown file size", file=sys.stderr)
+            self.pbar = None
+            return
+
+        self.pbar = pbar.ProgressBar(
+            widgets=[operation, pbar.Percentage(), ' ', pbar.Bar(), ' ', pbar.ETA(), ' ', pbar.FileTransferSpeed()],
+            maxval=maxval).start()
+
+    def update(self, value):
+        if self.pbar:
+            self.pbar.update(value)
+
+    def __enter__(self):
+        if self.pbar:
+            self.pbar.start()
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.pbar:
+            self.pbar.finish()
 
 
 def do_change_directory(args):
@@ -74,21 +110,9 @@ def do_list(args):
 
 
 def do_cat(args):
-    local_crc = 0
-    args.path = _resolve_path(args.path)
-
-    with ftp.open(args.path, 'r') as fd:
-        while True:
-            buf = fd.read(FTP_PAGE_SIZE)
-            if len(buf) == 0:
-                break
-
-            local_crc = nuttx_crc32(buf, local_crc)
-            sys.stdout.write(buf)
-
-    remote_crc = ftp.checksum(args.path)
-    if local_crc != remote_crc:
-        raise IOError("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+    args.no_progressbar = True
+    args.file = sys.stdout
+    do_download(args)
 
 
 def do_remove(args):
@@ -110,24 +134,55 @@ def do_rmdir(args):
     ftp.rmdir(args.path)
 
 
-def do_upload(args):
-    mode = 'cw' if args.no_overwrite else 'w'
+def do_download(args):
     local_crc = 0
     args.path = _resolve_path(args.path)
 
-    with args.file as from_fd:
-        with ftp.open(args.path, mode) as to_fd:
+    with args.file as to_fd:
+        with ftp.open(args.path, 'r') as fd:
             while True:
-                buf = from_fd.read(FTP_PAGE_SIZE)
+                buf = fd.read(FTP_PAGE_SIZE)
                 if len(buf) == 0:
                     break
 
                 local_crc = nuttx_crc32(buf, local_crc)
-                to_fd.write(buf)
+                sys.stdout.write(buf)
 
     remote_crc = ftp.checksum(args.path)
     if local_crc != remote_crc:
-        raise IOError("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+        fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+
+
+def do_upload(args):
+    mode = 'cw' if args.no_overwrite else 'w'
+    local_crc = 0
+
+    if args.path:
+        args.path = _resolve_path(args.path)
+    else:
+        args.path = _resolve_path(os.path.basename(args.file.name))
+
+    print_if(args.verbose, "Remote file:", args.path)
+
+    # for stdin it is 0
+    from_size = os.fstat(args.file.fileno()).st_size
+
+    with args.file as from_fd, \
+            ftp.open(args.path, mode) as to_fd, \
+            ProgressBar(args.no_progressbar, "Uploading: ", from_size) as bar:
+        while True:
+            buf = from_fd.read(FTP_PAGE_SIZE)
+            if len(buf) == 0:
+                break
+
+            local_crc = nuttx_crc32(buf, local_crc)
+            to_fd.write(buf)
+            bar.update(to_fd.tell())
+
+    if not args.no_verify:
+        remote_crc = ftp.checksum(args.path)
+        if local_crc != remote_crc:
+            fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
 
 
 def main():
@@ -164,11 +219,19 @@ def main():
     rmdir_args.set_defaults(func=do_rmdir)
     rmdir_args.add_argument('path', type=str, help="dir path")
 
+    download_args = subarg.add_parser('download', help="download file")
+    download_args.set_defaults(func=do_download)
+    download_args.add_argument('path', type=str, help="file to send")
+    download_args.add_argument('file', type=argparse.FileType('wb'), nargs='?', help="save path")
+    download_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
+
     upload_args = subarg.add_parser('upload', help="upload file")
     upload_args.set_defaults(func=do_upload)
-    upload_args.add_argument('path', type=str, help="save path")
     upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
+    upload_args.add_argument('path', type=str, nargs='?', help="save path")
     upload_args.add_argument('-n', '--no-overwrite', action="store_true", help="do not overwrite existing file")
+    upload_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
+    upload_args.add_argument('--no-verify', action="store_true", help="do not perform verify step")
 
     reset_args = subarg.add_parser('reset', help="reset")
     reset_args.set_defaults(func=do_reset)
