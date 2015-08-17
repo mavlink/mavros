@@ -2,6 +2,41 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* python: call of mavros.set_namespace() is required.
+* scripts: mavftp fix `#357 <https://github.com/mavlink/mavros/issues/357>`_: add verify command
+* scripts: mavftp `#357 <https://github.com/mavlink/mavros/issues/357>`_: progressbar on download operation
+* scripts: mavftp `#357 <https://github.com/mavlink/mavros/issues/357>`_: progress bar for upload operation.
+* scripts: mavftp: New command `cd`.
+  All path arguments now may handle relative paths.
+* readme: fix frame tansform section
+* mavros: readme: update info on frame conversions
+* mavros: readme: update contribution steps
+* node: Replace deprecated copy functions.
+  Also allow mavlink to & from topics to be namespaced.
+* extras: scripts: use API from mavros module
+* scripts: fix for new message location
+* python: update mavros lib to new message location
+* package: remove not exist dependency
+* plugin: waypoint: Fix message include
+* plugin: vfr_hud: Fix message include
+* plugin: rc_io: Fix message include
+* plugin: param: Fix message include
+* plugin: ftp: Fix message include
+* plugin: sys_status: Fix message include
+* plugin: command: Fix message include
+* plugin: 3dr_radio: Fix message include
+* plugin: actuator_control: Fix message include.
+* msgs: update copyright year
+* msgs: deprecate mavros::Mavlink and copy utils.
+* msgs: change description, make catkin lint happy
+* msgs `#354 <https://github.com/mavlink/mavros/issues/354>`_: move all messages to mavros_msgs package.
+* Minor typo fix.
+* node: increase diag timer to 2 Hz
+* node: move diagnostic to AsyncSpinner threads.
+* Contributors: TSC21, Tony Baltovski, Vladimir Ermakov
+
 0.13.1 (2015-08-05)
 -------------------
 * lib `#358 <https://github.com/mavlink/mavros/issues/358>`_: cleanup.

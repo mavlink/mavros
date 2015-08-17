@@ -2,6 +2,21 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: gcs node: replace deprecated copy function
+* extras: scripts: use API from mavros module
+* package: remove not exist dependency
+* extras: vibration: Fix message include
+* extras: px4flow: Fix message include
+* extras: cam_imu_sync: Fix message include
+* extras: update package description
+* msgs: deprecate mavros::Mavlink and copy utils.
+* msgs `#354 <https://github.com/mavlink/mavros/issues/354>`_: move all messages to mavros_msgs package.
+* opencv 3.0/2.4 header compatibility
+* fix orientation empty error
+* Contributors: Vladimir Ermakov, andre-nguyen, v01d
+
 0.13.1 (2015-08-05)
 -------------------
 

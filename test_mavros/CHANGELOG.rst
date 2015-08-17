@@ -2,6 +2,20 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test fix `#368 <https://github.com/mavlink/mavros/issues/368>`_: use mavros.setpoint module in demo
+* test: `#368 <https://github.com/mavlink/mavros/issues/368>`_: initial import of setpoint_demo.py
+* test: Fix library name.
+* test_mavros: pid_controller: declare PID variables as local
+* test_mavros: move headers to include/test_mavros and setup for install
+* test_mavros: removed pid_controller as lib; instantiate object so to use on offboard test
+* test_mavros: CMakeLists: small ident correction
+* test_mavros: pid_controller: include <array> so to make Travis happy
+* test_mavros: added PID controller utility for velocity control on tests
+* test_mavros: changed test_type to test_setup; namespace also
+* Contributors: TSC21, Vladimir Ermakov
+
 0.13.1 (2015-08-05)
 -------------------
 * test: add link to APM sitl video
