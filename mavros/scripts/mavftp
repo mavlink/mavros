@@ -111,6 +111,7 @@ def do_list(args):
 
 def do_cat(args):
     args.no_progressbar = True
+    args.no_verify = False
     args.file = sys.stdout
     do_download(args)
 
@@ -138,19 +139,29 @@ def do_download(args):
     local_crc = 0
     args.path = _resolve_path(args.path)
 
-    with args.file as to_fd:
-        with ftp.open(args.path, 'r') as fd:
-            while True:
-                buf = fd.read(FTP_PAGE_SIZE)
-                if len(buf) == 0:
-                    break
+    if not args.file:
+        # if file argument is not set, use $PWD/basename
+        args.file = open(os.path.basename(args.path), 'wb')
 
-                local_crc = nuttx_crc32(buf, local_crc)
-                sys.stdout.write(buf)
+    print_if(args.verbose, "Downloading from", args.path, "to", args.file.name, file=sys.stderr)
 
-    remote_crc = ftp.checksum(args.path)
-    if local_crc != remote_crc:
-        fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+    with args.file as to_fd, \
+            ftp.open(args.path, 'r') as from_fd, \
+            ProgressBar(args.no_progressbar, "Downloading: ", from_fd.size) as bar:
+        while True:
+            buf = from_fd.read(FTP_PAGE_SIZE)
+            if len(buf) == 0:
+                break
+
+            local_crc = nuttx_crc32(buf, local_crc)
+            to_fd.write(buf)
+            bar.update(from_fd.tell())
+
+    if not args.no_verify:
+        print_if(args.verbose, "Verifying...", file=sys.stderr)
+        remote_crc = ftp.checksum(args.path)
+        if local_crc != remote_crc:
+            fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
 
 
 def do_upload(args):
@@ -162,7 +173,7 @@ def do_upload(args):
     else:
         args.path = _resolve_path(os.path.basename(args.file.name))
 
-    print_if(args.verbose, "Remote file:", args.path)
+    print_if(args.verbose, "Uploading from", args.file.name, "to", args.path, file=sys.stderr)
 
     # for stdin it is 0
     from_size = os.fstat(args.file.fileno()).st_size
@@ -180,6 +191,7 @@ def do_upload(args):
             bar.update(to_fd.tell())
 
     if not args.no_verify:
+        print_if(args.verbose, "Verifying...", file=sys.stderr)
         remote_crc = ftp.checksum(args.path)
         if local_crc != remote_crc:
             fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
@@ -224,6 +236,7 @@ def main():
     download_args.add_argument('path', type=str, help="file to send")
     download_args.add_argument('file', type=argparse.FileType('wb'), nargs='?', help="save path")
     download_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
+    download_args.add_argument('--no-verify', action="store_true", help="do not perform verify step")
 
     upload_args = subarg.add_parser('upload', help="upload file")
     upload_args.set_defaults(func=do_upload)
