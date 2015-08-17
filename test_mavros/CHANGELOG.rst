@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.0 (2015-08-17)
+-------------------
 * test fix `#368 <https://github.com/mavlink/mavros/issues/368>`_: use mavros.setpoint module in demo
 * test: `#368 <https://github.com/mavlink/mavros/issues/368>`_: initial import of setpoint_demo.py
 * test: Fix library name.

@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.0 (2015-08-17)
+-------------------
 * python: call of mavros.set_namespace() is required.
 * scripts: mavftp fix `#357 <https://github.com/mavlink/mavros/issues/357>`_: add verify command
 * scripts: mavftp `#357 <https://github.com/mavlink/mavros/issues/357>`_: progressbar on download operation
