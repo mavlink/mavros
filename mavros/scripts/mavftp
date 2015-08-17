@@ -197,6 +197,37 @@ def do_upload(args):
             fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
 
 
+def do_verify(args):
+    local_crc = 0
+
+    if args.path:
+        args.path = _resolve_path(args.path)
+    else:
+        args.path = _resolve_path(os.path.basename(args.file.name))
+
+    print_if(args.verbose, "Verifying", args.file.name, "and", args.path, file=sys.stderr)
+
+    with args.file as fd:
+        while True:
+            buf = fd.read(4096 * 32)   # use 128k block for CRC32 calculation
+            if len(buf) == 0:
+                break
+
+            local_crc = nuttx_crc32(buf, local_crc)
+
+    remote_crc = ftp.checksum(args.path)
+
+    print_if(args.verbose, "CRC32 for local and remote files:")
+    print_if(args.verbose, "0x{local_crc:08x}  {args.file.name}".format(**locals()))
+    print_if(args.verbose, "0x{remote_crc:08x}  {args.path}".format(**locals()))
+
+    if local_crc != remote_crc:
+        print("{args.file.name}: FAULT".format(**locals()))
+        sys.exit(1)
+    else:
+        print("{args.file.name}: OK".format(**locals()))
+
+
 def main():
     parser = argparse.ArgumentParser(description="File manipulation tool for MAVLink-FTP.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
@@ -245,6 +276,11 @@ def main():
     upload_args.add_argument('-n', '--no-overwrite', action="store_true", help="do not overwrite existing file")
     upload_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
     upload_args.add_argument('--no-verify', action="store_true", help="do not perform verify step")
+
+    verify_args = subarg.add_parser('verify', help="verify files")
+    verify_args.set_defaults(func=do_verify)
+    verify_args.add_argument('file', type=argparse.FileType('rb'), help="local file")
+    verify_args.add_argument('path', type=str, nargs='?', help="remote file")
 
     reset_args = subarg.add_parser('reset', help="reset")
     reset_args.set_defaults(func=do_reset)
