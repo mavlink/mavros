@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   mavros
   roscpp
+  mavros_msgs
   sensor_msgs
   geometry_msgs
   std_msgs
@@ -16,7 +17,17 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(Eigen3)
+if(NOT EIGEN3_FOUND)
+  # Fallback to cmake_modules
+  find_package(cmake_modules REQUIRED)
+  find_package(Eigen REQUIRED)
+  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
+  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
+endif()
+
 include(EnableCXX11)
 include(MavrosMavlink)
 
@@ -39,8 +50,8 @@ include(MavrosMavlink)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-  CATKIN_DEPENDS image_transport mavros roscpp sensor_msgs
-  DEPENDS Boost mavlink
+  CATKIN_DEPENDS image_transport mavros mavros_msgs roscpp sensor_msgs geometry_msgs
+  DEPENDS Boost
 )
 
 ###########

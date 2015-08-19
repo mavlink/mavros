@@ -18,12 +18,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>cmake_modules</build_depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
   <depend>mavros</depend>
   <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>mavros_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
 
   <export>
