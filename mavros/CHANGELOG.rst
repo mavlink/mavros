@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* package: Fix depend on rosconsole-bridge
+* Removed <remap\>
+* Contributors: Vladimir Ermakov, devbharat
+
 0.14.0 (2015-08-17)
 -------------------
 * python: call of mavros.set_namespace() is required.
