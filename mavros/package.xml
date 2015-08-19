@@ -32,11 +32,11 @@
   <!-- packages -->
   <build_depend>angles</build_depend>
   <build_depend>cmake_modules</build_depend>
-  <build_depend>rosconsole_bridge</build_depend>
   <depend>diagnostic_updater</depend>
   <depend>eigen_conversions</depend>
   <depend>libmavconn</depend>
   <depend>pluginlib</depend>
+  <depend>rosconsole_bridge</depend>
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
   <exec_depend>message_runtime</exec_depend>
