@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.1 (2015-08-19)
+-------------------
 * package: Fix depend on rosconsole-bridge
 * Removed <remap\>
 * Contributors: Vladimir Ermakov, devbharat
