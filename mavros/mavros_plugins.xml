@@ -56,5 +56,8 @@
 	<class name="actuator_control" type="mavplugin::ActuatorControlPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send direct controls values to the actuators</description>
 	</class>
+	<class name="manual_control" type="mavplugin::ManualControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish manual control values</description>
+	</class>
 </library>
 
