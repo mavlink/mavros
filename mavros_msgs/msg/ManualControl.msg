@@ -1,4 +1,4 @@
-# Manual Control state, all values [-1000,1000]
+# Manual Control state
 std_msgs/Header header
 float32 x
 float32 y
