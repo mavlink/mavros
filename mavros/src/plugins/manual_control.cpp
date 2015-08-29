@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * * Copyright 2015 Matias Nitsche.
+ * Copyright 2015 Matias Nitsche.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -56,15 +56,16 @@ private:
 		mavlink_manual_control_t manual_control;
 		mavlink_msg_manual_control_decode(msg, &manual_control);
 
-		mavros_msgs::ManualControl manual_control_ros;
-		manual_control_ros.header.stamp = ros::Time::now();	// correct?
-		manual_control_ros.x = (manual_control.x / 1000.0);
-		manual_control_ros.y = (manual_control.y / 1000.0);
-		manual_control_ros.z = (manual_control.z / 1000.0);
-		manual_control_ros.r = (manual_control.r / 1000.0);
-		manual_control_ros.buttons = manual_control.buttons;
+		auto manual_control_msg = boost::make_shared<mavros_msgs::ManualControl>();
 
-		control_pub.publish(manual_control_ros);
+		manual_control_msg->header.stamp = ros::Time::now();
+		manual_control_msg->x = (manual_control.x / 1000.0);
+		manual_control_msg->y = (manual_control.y / 1000.0);
+		manual_control_msg->z = (manual_control.z / 1000.0);
+		manual_control_msg->r = (manual_control.r / 1000.0);
+		manual_control_msg->buttons = manual_control.buttons;
+
+		control_pub.publish(manual_control_msg);
 	}
 };
 };	// namespace mavplugin

@@ -13,11 +13,11 @@ add_message_files(
   CamIMUStamp.msg
   CommandCode.msg
   FileEntry.msg
+  ManualControl.msg
   Mavlink.msg
   OpticalFlowRad.msg
   OverrideRCIn.msg
   ParamValue.msg
-  ManualControl.msg
   RCIn.msg
   RCOut.msg
   RadioStatus.msg
