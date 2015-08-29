@@ -1,0 +1,6 @@
+<launch>
+	<arg name="teleop_args" default="-rc" />
+	
+	<node pkg="mavros_extras" type="mavkbteleop" name="mavkbteleop" args="$(arg teleop_args)" required="True" output="screen">
+	</node>
+</launch>
