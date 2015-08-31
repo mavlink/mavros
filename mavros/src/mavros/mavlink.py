@@ -10,35 +10,30 @@
 import struct
 from pymavlink import mavutil
 from pymavlink.generator.mavcrc import x25crc
-from mavros_msgs.msg import Mavlink
 
 
 def convert_to_bytes(msg):
     """
-    This function build wire byte stream from mavros_msgs/Mavlink
+    Re-builds the MAVLink byte stream from mavros_msgs/Mavlink messages.
     """
-    pay_len = len(msg.payload64)
-    last_len = 0
-    if pay_len < msg.len / 8:
-        raise ValueError("Message length are bigger than payload64")
-
-    if pay_len != msg.len / 8:
-        # message are shorter than payload quads
-        pay_len = msg.len / 8
-        last_len = msg.len % 8
+    payload_octets = len(msg.payload64)
+    msg_len = 6 + msg.len # header + payload length
+    if payload_octets < msg.len / 8:
+        raise ValueError("Specified payload length is bigger than actual payload64")
 
     msgdata = bytearray(
         struct.pack(
-            '<BBBBBB%dQ' % pay_len,
+            '<BBBBBB%dQ' % payload_octets,
             254, msg.len, msg.seq, msg.sysid, msg.compid, msg.msgid,
-            *(msg.payload64[:pay_len])))
-    if last_len:
-        q = struct.unpack('8B', struct.pack('<Q', msg.payload64[pay_len]))
-        msgdata += bytearray(q[:last_len])
+            *(msg.payload64[:payload_octets])))
+
+    if payload_octets != msg.len / 8:
+        # message is shorter than payload octets
+        msgdata = msgdata[:msg_len]
 
     # from MAVLink.decode()
-    type = mavutil.mavlink.mavlink_map[msg.msgid]
-    crc_extra = type.crc_extra
+    message_type = mavutil.mavlink.mavlink_map[msg.msgid]
+    crc_extra = message_type.crc_extra
 
     # calculate crc16
     crcbuf = msgdata[1:]
