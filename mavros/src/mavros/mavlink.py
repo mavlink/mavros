@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014,2015 Vladimir Ermakov.
+# Copyright 2015 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -25,7 +25,7 @@ def convert_to_bytes(msg):
         struct.pack(
             '<BBBBBB%dQ' % payload_octets,
             254, msg.len, msg.seq, msg.sysid, msg.compid, msg.msgid,
-            *(msg.payload64[:payload_octets])))
+            *msg.payload64))
 
     if payload_octets != msg.len / 8:
         # message is shorter than payload octets
