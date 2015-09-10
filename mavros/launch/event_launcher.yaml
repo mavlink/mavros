@@ -50,12 +50,15 @@ roslaunch_triggered:
   acrion: run
   roslaunch: roscpp_tutorials launch/talker_listener.launch
 
-# but for now: workaround
-bag_start:
-  service: start_record
-bag_stop:
-  service: stop_record
-rosbag_armed_shell:
-  event: bag_start, bag_stop
+talker_start:
+  service: talker_start
+talker_stop:
+  service: talker_stop
+talker_rosrun:
+  event: talker_start, talker_stop
   action: run, stop
-  shell: rosrun rosbag record __name:=rosbag -a -x '/mavlink/.*' --lz4 -o 'remove-me-please'
+  name: talker
+  namespace: /test
+  respawn: 3.0
+  output: screen
+  rosrun: roscpp_tutorials talker

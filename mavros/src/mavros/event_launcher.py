@@ -29,13 +29,11 @@ class EventHandler(object):
     """
 
     __slots__ = [
-        'name', 'process', 'args', 'events', 'actions', 'lock'
+        'name', 'events', 'actions', 'lock',
     ]
 
-    def __init__(self, name, args=[], events=[], actions=[]):
+    def __init__(self, name, events=[], actions=[]):
         self.name = name
-        self.process = None
-        self.args = args
         self.events = events
         self.actions = actions
         self.lock = threading.RLock()
@@ -66,12 +64,14 @@ class ShellHandler(EventHandler):
     """
 
     __slots__ = [
-        'command'
+        'process', 'command', 'args',
     ]
 
     def __init__(self, name, command, args=[], events=[], actions=[]):
-        super(ShellHandler, self).__init__(name, args, events, actions)
+        super(ShellHandler, self).__init__(name, events, actions)
+        self.process = None
         self.command = command
+        self.args = args
 
         # XXX TODO:
         #   simple readlines() from Popen.stdout and .stderr simply don't work - it blocks
@@ -150,8 +150,35 @@ class ShellHandler(EventHandler):
 
 
 class RosrunHandler(EventHandler):
-    def __call__(self, event):
-        raise NotImplementedError
+    """
+    Handler for rosrun-like rules
+    """
+
+    __slots__ = [
+        'node', 'process', 'roslaunch',
+    ]
+
+    def __init__(self, name, node, events=[], actions=[]):
+        super(RosrunHandler, self).__init__(name, events, actions)
+        self.process = None
+        self.node = node
+        self.roslaunch = ROSLaunch()
+        self.roslaunch.start()
+
+    def action_run(self):
+        with self.lock:
+            rospy.loginfo("%s: starting node...", self)
+
+            self.process = self.roslaunch.launch(self.node)
+
+    def action_stop(self):
+        with self.lock:
+            rospy.loginfo("%s: stopping node...", self)
+
+            self.process.stop()
+
+    def spin_once(self):
+        pass
 
 
 class RoslaunchHandler(EventHandler):
@@ -239,7 +266,35 @@ class Launcher(object):
         self.handlers.append(handler)
 
     def _load_rosrun(self, name, params):
-        pass
+        rospy.logdebug("Loading rosrun: %s", name)
+
+        events, actions = self._get_evt_act(params)
+
+        rosrun = params['rosrun']
+        if not isinstance(rosrun, list):
+            rosrun = shlex.split(rosrun)
+
+        if len(rosrun) < 2:
+            raise ValueError("wrong rosrun tag: should specify at lease package and executable")
+
+        package = rosrun[0]
+        node_type = rosrun[1]
+        args = rosrun[2:]
+        node_name = params.get('name')
+        namespace = params.get('namespace', '/')
+        respawn = params.get('respawn') is not None
+        respawn_delay = params.get('respawn', 0.0)
+        output = params.get('output')
+        remap = [] # XXX TODO
+
+        node = Node(package, node_type, node_name, namespace,
+                    args=' '.join([repr(v) for v in args]), # XXX may be buggy!
+                    respawn=respawn, respawn_delay=respawn_delay,
+                    remap_args=remap, output=output)
+
+        handler = RosrunHandler(name, node, events, actions)
+        rospy.loginfo("Rosrun: %s (%s/%s %s)", name, package, node_type, node.args)
+        self.handlers.append(handler)
 
     def _load_roslaunch(self, name, params):
         pass
