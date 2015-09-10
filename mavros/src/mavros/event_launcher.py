@@ -10,6 +10,7 @@
 from __future__ import print_function
 
 import rospy
+import mavros
 import subprocess
 from roslaunch.scriptapi import ROSLaunch, Node
 
@@ -122,23 +123,55 @@ class RoslaunchHandler(EventHandler):
         raise NotImplementedError
 
 
+class Launcher(object):
+    __slots__ = [
+        'handlers',
+        'known_events',
+        'triggers',
+        'prev_armed'
+    ]
+
+    def __init__(self):
+        self.handlers = []
+        self.known_events = ['armed', 'disarmed']
+        self.triggers = {}
+        self.prev_armed = False
+
+        self._state_sub = rospy.Subscriber(
+            mavros.get_topic('state'),
+            State,
+            self.mavros_state_cb)
+
+        # TODO param handling
+
+    def __call__(self, event):
+        for h in self.handlers:
+            h(event)
+
+    def spin(self):
+        if not self.handlers:
+            rospy.logwarn("No event handlers defined, terminating.")
+            return
+
+        rate = rospy.Rate(1.0)
+        while not rospy.is_shutdown():
+            for h in self.handlers:
+                h.spin_once()
+
+            rate.sleep()
+
+
+    def mavros_state_cb(self, msg):
+        if msg.armed != self.prev_armed:
+            self.prev_armed = msg.armed
+            self('armed' if msg.armed else 'disarmed')
+
 
 def main():
     rospy.init_node("event_launcher")
 
     rospy.loginfo("Starting event launcher...")
 
-    handlers = []
+    launcher = Launcher()
+    launcher.spin()
 
-    # TODO: load config from rosparam
-
-    if not handlers:
-        rospy.logwarn("No event handlers defined, terminating.")
-        return
-
-    rate = rospy.Rate(1.0)
-    while not rospy.is_shutdown():
-        for h in handlers:
-            h.spin_once()
-
-        rate.sleep()
