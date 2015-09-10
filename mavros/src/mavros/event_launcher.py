@@ -9,10 +9,13 @@
 
 from __future__ import print_function
 
+import os
+import time
 import shlex
 import rospy
 import mavros
-import os.path
+import signal
+import threading
 import subprocess
 from roslaunch.scriptapi import ROSLaunch, Node
 
@@ -26,7 +29,7 @@ class EventHandler(object):
     """
 
     __slots__ = [
-        'name', 'process', 'args', 'events', 'actions'
+        'name', 'process', 'args', 'events', 'actions', 'lock'
     ]
 
     def __init__(self, name, args=[], events=[], actions=[]):
@@ -35,6 +38,7 @@ class EventHandler(object):
         self.args = args
         self.events = events
         self.actions = actions
+        self.lock = threading.RLock()
 
     def __str__(self):
         return self.name
@@ -69,50 +73,80 @@ class ShellHandler(EventHandler):
         super(ShellHandler, self).__init__(name, args, events, actions)
         self.command = command
 
+        # XXX TODO:
+        #   simple readlines() from Popen.stdout and .stderr simply don't work - it blocks
+        #   so need to find a way for such logging, but for now i don't process process output.
+
     def action_run(self):
-        if self.process:
-            rospy.loginfo("Process %s still active, terminating before run", str(self))
-            self.action_stop()
+        with self.lock:
+            if self.process:
+                rospy.loginfo("%s: process still active, terminating before run", str(self))
+                self.action_stop()
 
-        rospy.loginfo("Starting %s", self)
+            rospy.loginfo("%s: starting...", self)
 
-        args = [self.command] + self.args
-        rospy.logdebug("Starting subprocess: %s", ' '.join(args))
+            args = [self.command] + self.args
+            child_stdout = subprocess.PIPE
+            child_stderr = subprocess.PIPE
 
-        child_stdout = subprocess.PIPE
-        child_stderr = subprocess.PIPE
-
-        self.process = subprocess.Popen(args, stdout=child_stdout, stderr=child_stderr, close_fds=False)
-
-        poll_result = self.process.poll()
-        if poll_result is None or poll_result == 0:
-            rospy.loginfo("Process '%s' started, pid: %s", self, self.process.pid)
-        else:
-            rospy.logerr("Failed to start '%s'", self)
-            self.process = None
-
-    def action_stop(self):
-        if self.process:
-            self._log_messages()
-            rospy.loginfo("Stopping %s", self)
-            self.process.terminate()
-            self.process = None
-
-    def _log_messages(self):
-        for msg in self.process.stdout.readlines():
-            rospy.loginfo("%s: %s", self, msg.strip())
-
-        for msg in self.process.stderr.readlines():
-            rospy.logerr("%s: %s", self, msg.strip())
-
-    def spin_once(self):
-        if self.process:
-            self._log_messages()
+            self.process = subprocess.Popen(args, stdout=child_stdout, stderr=child_stderr,
+                                            close_fds=True, preexec_fn=os.setsid)
 
             poll_result = self.process.poll()
-            if poll_result is not None:
-                rospy.loginfo("Process %s (pid %s) terminated, exit code: %s", self, self.process.pid, poll_result)
+            if poll_result is None or poll_result == 0:
+                rospy.loginfo("%s: started, pid: %s", self, self.process.pid)
+            else:
+                rospy.logerr("Failed to start '%s'", self)
                 self.process = None
+
+    def action_stop(self):
+        with self.lock:
+            if not self.process:
+                return
+
+            rospy.loginfo("%s: stoppig...", self)
+
+            # code from roslaunch.nodeprocess _stop_unix
+            pid = self.process.pid
+            pgid = os.getpgid(pid)
+
+            def poll_timeout(timeout):
+                timeout_t = time.time() + timeout
+                retcode = self.process.poll()
+                while time.time() < timeout_t and retcode is None:
+                    time.sleep(0.1)
+                    retcode = self.process.poll()
+                return retcode
+
+            try:
+                rospy.loginfo("%s: sending SIGINT to pid [%s] pgid [%s]", self, pid, pgid)
+                os.killpg(pgid, signal.SIGINT)
+
+                retcode = poll_timeout(15.0)
+                if retcode is None:
+                    rospy.logwarn("%s: escalating to SIGTERM", self)
+                    os.killpg(pgid, signal.SIGTERM)
+
+                    retcode = poll_timeout(2.0)
+                    if retcode is None:
+                        rospy.logerr("%s: escalating to SIGKILL, may still be running", self)
+                        try:
+                            os.killpg(pgid, signal.SIGKILL)
+                        except OSError as ex:
+                            rospy.logerr("%s: %s", self, ex)
+
+                if retcode is not None:
+                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s", self, pid, retcode)
+            finally:
+                self.process = None
+
+    def spin_once(self):
+        with self.lock:
+            if self.process:
+                poll_result = self.process.poll()
+                if poll_result is not None:
+                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s", self, self.process.pid, poll_result)
+                    self.process = None
 
 
 class RosrunHandler(EventHandler):

@@ -56,11 +56,6 @@ bag_start:
 bag_stop:
   service: stop_record
 rosbag_armed_shell:
-  event: bag_start, # bag_stop # something complete wrong with terminate
-  action: run, # stop
+  event: bag_start, bag_stop
+  action: run, stop
   shell: rosrun rosbag record __name:=rosbag -a -x '/mavlink/.*' --lz4 -o 'remove-me-please'
-rosbag_armed_shell_stop:
-  # rosbag won't terminate on Popen.terminate(), ugly workaround
-  event: bag_stop
-  action: run
-  shell: rosnode kill /rosbag
