@@ -9,8 +9,10 @@
 
 from __future__ import print_function
 
+import shlex
 import rospy
 import mavros
+import os.path
 import subprocess
 from roslaunch.scriptapi import ROSLaunch, Node
 
@@ -128,7 +130,8 @@ class Launcher(object):
         'handlers',
         'known_events',
         'triggers',
-        'prev_armed'
+        'prev_armed',
+        'state_sub',
     ]
 
     def __init__(self):
@@ -137,14 +140,95 @@ class Launcher(object):
         self.triggers = {}
         self.prev_armed = False
 
-        self._state_sub = rospy.Subscriber(
+        self.state_sub = rospy.Subscriber(
             mavros.get_topic('state'),
             State,
             self.mavros_state_cb)
 
-        # TODO param handling
+        try:
+            params = rospy.get_param('~')
+            if not isinstance(params, dict):
+                raise KeyError("bad configuration")
+        except KeyError as e:
+            rospy.logerr('Config error: %s', e)
+            return
+
+        # load configuration
+        for k, v in params.iteritems():
+            # TODO: add checks for mutually exclusive options
+
+            if v.has_key('service'):
+                self._load_trigger(k, v)
+            elif v.has_key('shell'):
+                self._load_shell(k, v)
+            elif v.has_key('rosrun'):
+                self._load_rosrun(k, v)
+            elif v.has_key('roslaunch'):
+                self._load_roslaunch(k, v)
+            else:
+                rospy.logwarn("Skipping unknown section: %s", k)
+
+        # check that events are known
+        rospy.loginfo("Known events: %s", ', '.join(self.known_events))
+        for h in self.handlers:
+            for evt in h.events:
+                if evt not in self.known_events:
+                    rospy.logwarn("%s: unknown event: %s", h.name, evt)
+
+    def _load_trigger(self, name, params):
+        rospy.logdebug("Loading trigger: %s", name)
+
+        def gen_cb(event):
+            def cb(req):
+                self(event)
+                return TriggerResponse(success=True)    # try later to check success
+            return cb
+
+        self.known_events.append(name)
+        self.triggers = rospy.Service(params['service'], Trigger, gen_cb(name))
+        rospy.loginfo("Trigger: %s (%s)", name, params['service'])
+
+    def _load_shell(self, name, params):
+        rospy.logdebug("Loading shell: %s", name)
+
+        events, actions = self._get_evt_act(params)
+
+        args = params['shell']
+        if not isinstance(args, list):
+            args = shlex.split(args)
+
+        command = os.path.expandvars(os.path.expanduser(args[0]))
+        args = args[1:]
+
+        handler = ShellHandler(name, command, args, events, actions)
+        rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
+        self.handlers.append(handler)
+
+    def _load_rosrun(self, name, params):
+        pass
+
+    def _load_roslaunch(self, name, params):
+        pass
+
+    def _get_evt_act(self, params):
+        evt = self._param_to_list(params['event'])
+        act = self._param_to_list(params['action'])
+        if len(evt) != len(act):
+            raise ValueError("event and action fileds has different size!")
+        return evt, act
+
+    def _param_to_list(self, str_or_list):
+        if isinstance(str_or_list, list):
+            return [it.strip() for it in str_or_list]
+        else:
+            ret = []
+            for it in str_or_list.split():
+                ret.extend([v.strip() for v in it.split(',') if v])
+            return ret
+
 
     def __call__(self, event):
+        rospy.logdebug('Event: %s', event)
         for h in self.handlers:
             h(event)
 
@@ -160,7 +244,6 @@ class Launcher(object):
 
             rate.sleep()
 
-
     def mavros_state_cb(self, msg):
         if msg.armed != self.prev_armed:
             self.prev_armed = msg.armed
@@ -169,6 +252,7 @@ class Launcher(object):
 
 def main():
     rospy.init_node("event_launcher")
+    mavros.set_namespace()  # TODO initialize me
 
     rospy.loginfo("Starting event launcher...")
 
