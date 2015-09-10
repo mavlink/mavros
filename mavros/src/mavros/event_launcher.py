@@ -69,14 +69,15 @@ class ShellHandler(EventHandler):
     #   so need to find a way for such logging, but for now i don't process process output.
 
     __slots__ = [
-        'process', 'command', 'args',
+        'process', 'command', 'args', 'logfile',
     ]
 
-    def __init__(self, name, command, args=[], events=[], actions=[]):
+    def __init__(self, name, command, args=[], logfile=None, events=[], actions=[]):
         super(ShellHandler, self).__init__(name, events, actions)
         self.process = None
         self.command = command
         self.args = args
+        self.logfile = logfile
 
     def action_run(self):
         with self.lock:
@@ -87,8 +88,12 @@ class ShellHandler(EventHandler):
             rospy.loginfo("%s: starting...", self)
 
             args = [self.command] + self.args
-            child_stdout = subprocess.PIPE
-            child_stderr = subprocess.PIPE
+            if self.logfile:
+                child_stdout = open(self.logfile, 'a')
+                child_stderr = subprocess.STDOUT
+            else:
+                child_stdout = subprocess.PIPE
+                child_stderr = subprocess.PIPE
 
             self.process = subprocess.Popen(args, stdout=child_stdout, stderr=child_stderr,
                                             close_fds=True, preexec_fn=os.setsid)
@@ -228,7 +233,9 @@ class Launcher(object):
         command = os.path.expandvars(os.path.expanduser(args[0]))
         args = args[1:]
 
-        handler = ShellHandler(name, command, args, events, actions)
+        logfile = params.get('logfile')
+
+        handler = ShellHandler(name, command, args, logfile, events, actions)
         rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
         self.handlers.append(handler)
 

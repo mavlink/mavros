@@ -65,4 +65,5 @@ rosrun_talker:
 roslaunch_triggered:
   event: start_launch, stop_all
   action: run, stop
-  shell: roslaunch roscpp_tutorials launch/talker_listener.launch
+  logfile: /tmp/launch.log
+  shell: roslaunch roscpp_tutorials talker_listener.launch
