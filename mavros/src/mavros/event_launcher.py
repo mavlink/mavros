@@ -10,14 +10,15 @@
 from __future__ import print_function
 
 import os
+import sys
 import time
 import shlex
 import rospy
 import mavros
 import signal
+import argparse
 import threading
 import subprocess
-from roslaunch.scriptapi import ROSLaunch, Node
 
 from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
 from mavros_msgs.msg import State
@@ -51,8 +52,8 @@ class EventHandler(object):
         if hasattr(self, 'action_' + action):
             getattr(self, 'action_' + action)()
         else:
-            rospy.logerr("Misconfiguration of '{}', there no action '{}'".format(
-                str(self), action))
+            rospy.logerr("Misconfiguration of %s, there no action '%s'",
+                         self, action)
 
     def spin_once(self):
         raise NotImplementedError
@@ -63,6 +64,10 @@ class ShellHandler(EventHandler):
     Simple program runner
     """
 
+    # XXX TODO:
+    #   simple readlines() from Popen.stdout and .stderr simply don't work - it blocks
+    #   so need to find a way for such logging, but for now i don't process process output.
+
     __slots__ = [
         'process', 'command', 'args',
     ]
@@ -72,10 +77,6 @@ class ShellHandler(EventHandler):
         self.process = None
         self.command = command
         self.args = args
-
-        # XXX TODO:
-        #   simple readlines() from Popen.stdout and .stderr simply don't work - it blocks
-        #   so need to find a way for such logging, but for now i don't process process output.
 
     def action_run(self):
         with self.lock:
@@ -136,7 +137,8 @@ class ShellHandler(EventHandler):
                             rospy.logerr("%s: %s", self, ex)
 
                 if retcode is not None:
-                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s", self, pid, retcode)
+                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s",
+                                  self, pid, retcode)
             finally:
                 self.process = None
 
@@ -145,45 +147,14 @@ class ShellHandler(EventHandler):
             if self.process:
                 poll_result = self.process.poll()
                 if poll_result is not None:
-                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s", self, self.process.pid, poll_result)
+                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s",
+                                  self, self.process.pid, poll_result)
                     self.process = None
 
 
-class RosrunHandler(EventHandler):
-    """
-    Handler for rosrun-like rules
-    """
-
-    __slots__ = [
-        'node', 'process', 'roslaunch',
-    ]
-
-    def __init__(self, name, node, events=[], actions=[]):
-        super(RosrunHandler, self).__init__(name, events, actions)
-        self.process = None
-        self.node = node
-        self.roslaunch = ROSLaunch()
-        self.roslaunch.start()
-
-    def action_run(self):
-        with self.lock:
-            rospy.loginfo("%s: starting node...", self)
-
-            self.process = self.roslaunch.launch(self.node)
-
-    def action_stop(self):
-        with self.lock:
-            rospy.loginfo("%s: stopping node...", self)
-
-            self.process.stop()
-
-    def spin_once(self):
-        pass
-
-
-class RoslaunchHandler(EventHandler):
-    def __call__(self, event):
-        raise NotImplementedError
+# NOTE: here was RosrunHandler and RoslaunchHandler
+#       but roslaunch.scriptapi can't launch node from worker thread
+#       so i decided to leave only ShellHandler.
 
 
 class Launcher(object):
@@ -218,14 +189,10 @@ class Launcher(object):
         for k, v in params.iteritems():
             # TODO: add checks for mutually exclusive options
 
-            if v.has_key('service'):
+            if 'service' in v:
                 self._load_trigger(k, v)
-            elif v.has_key('shell'):
+            elif 'shell' in v:
                 self._load_shell(k, v)
-            elif v.has_key('rosrun'):
-                self._load_rosrun(k, v)
-            elif v.has_key('roslaunch'):
-                self._load_roslaunch(k, v)
             else:
                 rospy.logwarn("Skipping unknown section: %s", k)
 
@@ -265,40 +232,6 @@ class Launcher(object):
         rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
         self.handlers.append(handler)
 
-    def _load_rosrun(self, name, params):
-        rospy.logdebug("Loading rosrun: %s", name)
-
-        events, actions = self._get_evt_act(params)
-
-        rosrun = params['rosrun']
-        if not isinstance(rosrun, list):
-            rosrun = shlex.split(rosrun)
-
-        if len(rosrun) < 2:
-            raise ValueError("wrong rosrun tag: should specify at lease package and executable")
-
-        package = rosrun[0]
-        node_type = rosrun[1]
-        args = rosrun[2:]
-        node_name = params.get('name')
-        namespace = params.get('namespace', '/')
-        respawn = params.get('respawn') is not None
-        respawn_delay = params.get('respawn', 0.0)
-        output = params.get('output')
-        remap = [] # XXX TODO
-
-        node = Node(package, node_type, node_name, namespace,
-                    args=' '.join([repr(v) for v in args]), # XXX may be buggy!
-                    respawn=respawn, respawn_delay=respawn_delay,
-                    remap_args=remap, output=output)
-
-        handler = RosrunHandler(name, node, events, actions)
-        rospy.loginfo("Rosrun: %s (%s/%s %s)", name, package, node_type, node.args)
-        self.handlers.append(handler)
-
-    def _load_roslaunch(self, name, params):
-        pass
-
     def _get_evt_act(self, params):
         evt = self._param_to_list(params['event'])
         act = self._param_to_list(params['action'])
@@ -314,7 +247,6 @@ class Launcher(object):
             for it in str_or_list.split():
                 ret.extend([v.strip() for v in it.split(',') if v])
             return ret
-
 
     def __call__(self, event):
         rospy.logdebug('Event: %s', event)
@@ -340,11 +272,16 @@ class Launcher(object):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="This node launch/terminate processes on events.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
     rospy.init_node("event_launcher")
-    mavros.set_namespace()  # TODO initialize me
+    mavros.set_namespace(args.mavros_ns)
 
     rospy.loginfo("Starting event launcher...")
 
     launcher = Launcher()
     launcher.spin()
-

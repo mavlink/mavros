@@ -28,37 +28,41 @@ trigger_notify2:
     - Trigger \#2
     - Started
 
+# rosbag example
+start_recorder:
+  service: start_recorder
+
+start_talker:
+  service: start_talker
+
+start_launch:
+  service: start_launch
+
+stop_all:
+  service: stop_all
+
 wireshark:
   service: run_wireshark
 
 # env-variables are expanded for first element
 trigger_wireshark:
-  event: wireshark
-  action: run
+  event: wireshark, stop_all
+  action: run, stop
   shell:
     - $HOME/bin/al76-wireshark.sh # will expand
     - $PWD  # nope
 
-# later we will support this:
 rosbag_armed:
-  event: [armed, disarmed] # yaml array is fine too
+  event: [armed, disarmed, start_recorder, stop_all] # yaml array is fine too
+  action: run, stop, run, stop
+  shell: rosrun rosbag record -a -x '/mavlink/.*' --lz4 -o 'uav'
+
+rosrun_talker:
+  event: start_talker, stop_all
   action: run, stop
-  rosrun: rosbag record -a -x '/mavlink/.*' --lz4 -o 'uav'
+  shell: rosrun roscpp_tutorials talker
 
 roslaunch_triggered:
-  event: mytrigger
-  acrion: run
-  roslaunch: roscpp_tutorials launch/talker_listener.launch
-
-talker_start:
-  service: talker_start
-talker_stop:
-  service: talker_stop
-talker_rosrun:
-  event: talker_start, talker_stop
+  event: start_launch, stop_all
   action: run, stop
-  name: talker
-  namespace: /test
-  respawn: 3.0
-  output: screen
-  rosrun: roscpp_tutorials talker
+  shell: roslaunch roscpp_tutorials launch/talker_listener.launch
