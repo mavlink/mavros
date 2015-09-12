@@ -63,7 +63,7 @@ def set_mode(args, mode):
     try:
         setmode_cl = rospy.ServiceProxy(args.mavros_ns + "/set_mode", SetMode)
         
-        ret = setmode_cl(base_mode=0, custom_mode="ALT_HOLD")
+        ret = setmode_cl(base_mode=0, custom_mode=mode)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -79,7 +79,7 @@ def rc_override_control(args):
     rospy.loginfo("MAV-Teleop: RC Override control type.")
     
 
-    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override_joy", OverrideRCIn, queue_size=10)
+    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
     
     throttle_ch = 1000
 
@@ -95,8 +95,10 @@ def rc_override_control(args):
             arm(args, False)
         elif key == 't':
 	    takeoff(args)
-	elif key == 'h':
+	elif key == 'H':
             set_mode(args, "ALT_HOLD")
+        elif key == 'L':
+            set_mode(args, "LOITER")
         elif key == 'r': #UP
 	    throttle_ch+=10
 	elif key == 'f': #FIX
