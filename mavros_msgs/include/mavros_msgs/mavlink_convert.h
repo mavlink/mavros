@@ -33,6 +33,7 @@ inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink_message_t &mmsg)
 		return false;
 	}
 
+	mmsg.magic = MAVLINK_STX;
 	mmsg.len = rmsg.len;
 	mmsg.seq = rmsg.seq;
 	mmsg.sysid = rmsg.sysid;
