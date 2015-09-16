@@ -33,8 +33,12 @@ inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink_message_t &mmsg)
 		return false;
 	}
 
-	mmsg.msgid = rmsg.msgid;
 	mmsg.len = rmsg.len;
+	mmsg.seq = rmsg.seq;
+	mmsg.sysid = rmsg.sysid;
+	mmsg.compid = rmsg.compid;
+	mmsg.msgid = rmsg.msgid;
+	mmsg.checksum = rmsg.checksum;
 	std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64);
 	return true;
 };
@@ -50,11 +54,15 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg)
 {
 	const size_t payload64_len = (mmsg.len + 7) / 8;
 
+	// XXX: remove this after #286
+	rmsg.is_valid = true;
+
 	rmsg.len = mmsg.len;
 	rmsg.seq = mmsg.seq;
 	rmsg.sysid = mmsg.sysid;
 	rmsg.compid = mmsg.compid;
 	rmsg.msgid = mmsg.msgid;
+	rmsg.checksum = mmsg.checksum;
 	rmsg.payload64 = std::move(mavros_msgs::Mavlink::_payload64_type(mmsg.payload64, mmsg.payload64 + payload64_len));
 
 	return true;
