@@ -17,7 +17,7 @@ def convert_to_bytes(msg):
     Re-builds the MAVLink byte stream from mavros_msgs/Mavlink messages.
     """
     payload_octets = len(msg.payload64)
-    msg_len = 6 + msg.len # header + payload length
+    msg_len = 6 + msg.len  # header + payload length
     if payload_octets < msg.len / 8:
         raise ValueError("Specified payload length is bigger than actual payload64")
 
@@ -31,14 +31,18 @@ def convert_to_bytes(msg):
         # message is shorter than payload octets
         msgdata = msgdata[:msg_len]
 
-    # from MAVLink.decode()
-    message_type = mavutil.mavlink.mavlink_map[msg.msgid]
-    crc_extra = message_type.crc_extra
+    if hasattr(mag, 'checksum'):
+        # since #286 Mavlink.msg save original checksum, so recalculation not needed.
+        crc16 = msg.checksum
+    else:
+        # from MAVLink.decode()
+        message_type = mavutil.mavlink.mavlink_map[msg.msgid]
+        crc_extra = message_type.crc_extra
 
-    # calculate crc16
-    crcbuf = msgdata[1:]
-    crcbuf.append(crc_extra)
-    crc16 = x25crc(crcbuf).crc
+        # calculate crc16
+        crcbuf = msgdata[1:]
+        crcbuf.append(crc_extra)
+        crc16 = x25crc(crcbuf).crc
 
     # finalize
     msgdata += struct.pack('<H', crc16)
