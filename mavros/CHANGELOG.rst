@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.0 (2015-09-17)
+-------------------
 * lib: fix timesync uninit bug.
   Uninitialized variable caused wrong timestamps with APM.
 * python `#286 <https://github.com/mavlink/mavros/issues/286>`_: use checksum - save ticks

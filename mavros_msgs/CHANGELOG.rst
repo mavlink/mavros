@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.0 (2015-09-17)
+-------------------
 * msgs `#286 <https://github.com/mavlink/mavros/issues/286>`_: fix bug with packet header.
 * msgs `#286 <https://github.com/mavlink/mavros/issues/286>`_: Add valid flag and checksum to Mavlink.msg
 * plugin: manual_control: Use shared pointer message

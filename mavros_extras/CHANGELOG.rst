@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.0 (2015-09-17)
+-------------------
 * extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: fix header stamp in joint_states
 * extras fix `#387 <https://github.com/mavlink/mavros/issues/387>`_: SSP node done.
 * extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: subscriber works, node almost done

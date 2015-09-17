@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.0 (2015-09-17)
+-------------------
 * test: update readme
 * test: add required plugins
 * test: new test for local_position + SSP (`#387 <https://github.com/mavlink/mavros/issues/387>`_) + URDF
