@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+  name="schematic_plane">
+
+  <!--
+       This file creates schematic model of plane.
+       Sizes based on Skywalker 1900.
+       -->
+
+  <xacro:property name="kgcm_to_nm" value="0.0980665" />
+
+  <!-- materials -->
+
+  <material name="dark-grey">
+    <color rgba=".2 .2 .2 1" />
+  </material>
+  <material name="grey">
+    <color rgba=".6 .6 .6 1" />
+  </material>
+  <material name="red">
+    <color rgba=".9 0 0 1" />
+  </material>
+  <material name="green">
+    <color rgba="0 .9 0 1" />
+  </material>
+  <material name="blue">
+    <color rgba="0 0 .9 1" />
+  </material>
+  <material name="yellow">
+    <color rgba=".9 .9 0 1" />
+  </material>
+
+  <!-- base_link -->
+
+  <link name="base_link">
+    <!-- Robot base link: near CoG -->
+    <!-- look <visual> at rarog_description -->
+  </link>
+
+  <link name="fcu">
+    <!-- FCU frame (mavros uses this link for most topics) -->
+    <visual>
+      <geometry>
+        <!-- Pixhawk -->
+        <box size=".085 .052 .02" />
+      </geometry>
+      <material name="dark-grey" />
+    </visual>
+  </link>
+  <joint name="base_to_fcu" type="fixed">
+    <parent link="base_link" />
+    <child link="fcu" />
+    <!-- FCU located under wing, on symmetry line,
+         +5 cm X, -3 cm Y from base_link
+         -->
+    <origin xyz="0.05 0 -0.03" rpy="0 0 0" />
+  </joint>
+
+  <!-- fuselage (simple geometric figures) -->
+
+  <link name="tail_link">
+    <visual>
+      <geometry>
+        <cylinder length="1.10" radius=".025" />
+      </geometry>
+      <material name="grey" />
+    </visual>
+  </link>
+  <joint name="base_to_tail" type="fixed">
+    <parent link="base_link" />
+    <child link="tail_link" />
+    <origin xyz="${1.10/2 - .70} 0 -.15" rpy="0 ${pi/2} 0" />
+  </joint>
+
+  <link name="wing_link">
+    <visual>
+      <geometry>
+        <box size=".20 1.9 .01" />
+      </geometry>
+      <material name="grey" />
+    </visual>
+  </link>
+  <joint name="base_to_wing" type="fixed">
+    <parent link="base_link" />
+    <child link="wing_link" />
+    <origin xyz=".05 0 .02" rpy="0 0 0" />
+  </joint>
+
+  <link name="tailplane_link">
+    <visual>
+      <geometry>
+        <box size=".10 .61 .01" />
+      </geometry>
+      <material name="grey" />
+    </visual>
+  </link>
+  <joint name="base_to_tailplane" type="fixed">
+    <parent link="base_link" />
+    <child link="tailplane_link" />
+    <origin xyz="-0.70 0 .07" rpy="0 0 0" />
+  </joint>
+
+  <link name="fin_link">
+    <visual>
+      <geometry>
+        <box size=".12 .01 .20" />
+      </geometry>
+      <material name="grey" />
+    </visual>
+  </link>
+  <joint name="base_to_fin" type="fixed">
+    <parent link="base_link" />
+    <child link="fin_link" />
+    <origin xyz="${-0.71 + .12/2} 0 ${-0.15/2 + .05}" rpy="0 0 0" />
+  </joint>
+
+  <!-- control surfaces -->
+
+  <xacro:macro name="common_servo_limit">
+      <!-- Lets say 30 deg, servo: 1.5 kg*cm (6 volt), 60 deg in 0.10 sec -->
+      <limit lower="${radians(-30)}" upper="${radians(30)}" effort="${1.5 * kgcm_to_nm}" velocity="${radians(60. / 0.10)}" />
+  </xacro:macro>
+
+  <xacro:macro name="aileron" params="link *material *origin *mimic">
+    <link name="${link}">
+      <visual>
+        <geometry>
+          <box size=".055 .245 .005" />
+        </geometry>
+        <xacro:insert_block name="material" />
+        <origin xyz="${-0.055/2} 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+
+    <joint name="${link}" type="revolute">
+      <parent link="base_link" />
+      <child link="${link}" />
+      <xacro:insert_block name="origin" />
+      <axis xyz="0 1 0" />
+      <xacro:common_servo_limit />
+      <xacro:insert_block name="mimic" />
+    </joint>
+  </xacro:macro>
+
+  <!-- conventional ailerons controlled by one axis -->
+  <link name="aileron_link" />
+  <joint name="aileron" type="revolute">
+    <parent link="base_link" />
+    <child link="aileron_link" />
+    <xacro:common_servo_limit />
+  </joint>
+
+  <!-- aileron location: 51 cm Y to 6-cm side, -5 cm on X -->
+  <xacro:aileron link="aileron_left">
+    <material name="red" />
+    <origin xyz="-0.05 ${.51 + .245/2} .02" rpy="0 0 0" />
+    <mimic joint="aileron" multiplier="-1" />
+  </xacro:aileron>
+  <xacro:aileron link="aileron_right">
+    <material name="green" />
+    <origin xyz="-0.05 ${-(.51 + .245/2)} .02" rpy="0 0 0" />
+    <mimic joint="aileron" multiplier="1" />
+  </xacro:aileron>
+
+  <!-- Elevator (T-tail) -->
+  <link name="elevator_link">
+    <visual>
+      <geometry>
+        <box size=".035 .54 .005" />
+      </geometry>
+      <material name="blue" />
+      <origin xyz="${-0.035/2} 0 0" rpy="0 0 0" />
+    </visual>
+  </link>
+  <joint name="elevator" type="revolute">
+    <parent link="base_link" />
+    <child link="elevator_link" />
+    <origin xyz="-0.75 0 .07" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <xacro:common_servo_limit />
+  </joint>
+
+  <!-- Rudder (T-tail) -->
+  <link name="rudder_link">
+    <visual>
+      <geometry>
+        <box size=".07 .005 .165" />
+      </geometry>
+      <material name="yellow" />
+      <origin xyz="${-0.07/2} 0 0" rpy="0 0 0" />
+    </visual>
+  </link>
+  <joint name="rudder" type="revolute">
+    <parent link="base_link" />
+    <child link="rudder_link" />
+    <origin xyz="-0.71 0 -0.05" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <xacro:common_servo_limit />
+  </joint>
+
+  <!-- vim: set ts=2 sw=2 et : -->
+</robot>
