@@ -28,6 +28,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>urdf</depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />

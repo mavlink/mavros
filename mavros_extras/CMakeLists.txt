@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   std_msgs
   visualization_msgs
+  urdf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -94,6 +95,13 @@ target_link_libraries(copter_visualization
   ${catkin_LIBRARIES}
 )
 
+add_executable(servo_state_publisher
+  src/servo_state_publisher.cpp
+)
+target_link_libraries(servo_state_publisher
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -110,7 +118,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras gcs_image_bridge copter_visualization
+install(TARGETS mavros_extras gcs_image_bridge copter_visualization servo_state_publisher
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
