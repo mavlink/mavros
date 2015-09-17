@@ -87,25 +87,42 @@ make -j4
 
 # also look ardupliot wiki
 
-# prepare to sim_vehicle.sh
+# add path to jsbsim binaries
 add-dir-to-path $PWD/src
 
-cd ../ardupilot/Tools/autotest/
+# path to sim_vehicle.sh
+cd ../ardupilot/Tools/autotest
 add-dir-to-path $PWD
+
+# build APM and load default params
+cd ../../ArduPlane
+sim_vehicle.sh -w
 ```
 
 
 ### How to use
 
 ```
-./sim_vehicle.sh -v ArduPlane --out udp:localhost:15550 --map
-roslaunch test_mavros launch/apm/apm_imu_test.launch
+# shell 1: in ArduPlane folder
+sim_vehicle.sh --out udp:localhost:15550 --map
+
+# shell 2: imu test
+roslaunch test_mavros apm_imu_test.launch
+
+# shell 2: URDF model + local_position
+roslaunch test_mavros apm_local_position_test.launch
 ```
 
-### Screen capture for that test (youtube video)
 
-[![APM SITL test video](http://img.youtube.com/vi/mUIptiNbmS4/0.jpg)](http://www.youtube.com/watch?v=mUIptiNbmS4)
+### Screen capture for IMU test (youtube video)
+
+[![APM SITL imu test video](http://img.youtube.com/vi/mUIptiNbmS4/0.jpg)](http://www.youtube.com/watch?v=mUIptiNbmS4)
 
 
-[apm-sitl-wiki]: http://dev.ardupilot.com/wiki/simulation-2/sitl-simulator-software-in-the-loop/setting-up-sitl-on-linux/
+### Screen capture for URDF model test
+
+[![APM SITL urdf test video](http://img.youtube.com/vi/r_IOGkmy5ZY/0.jpg)](https://www.youtube.com/watch?v=r_IOGkmy5ZY)
+
+
+[apm-sitl-wiki]: http://dev.ardupilot.com/wiki/setting-up-sitl-on-linux/
 [px4-sitl-wiki]: https://pixhawk.org/dev/ros/sitl
