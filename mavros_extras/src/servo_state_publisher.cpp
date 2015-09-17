@@ -14,6 +14,8 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
+#include <urdf/model.h>
+#include <mavros_msgs/RCOut.h>
 #include <sensor_msgs/JointState.h>
 
 class ServoDescription {
@@ -67,15 +69,19 @@ public:
 
 		ROS_ASSERT(param_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
 
+		urdf::Model model;
+		model.initParam("robot_description");
+		ROS_INFO("SSP: URDF robot: %s", model.getName().c_str());
+
 		for (auto &pair : param_dict) {
-			ROS_DEBUG("Loading joint: %s", pair.first.c_str());
+			ROS_DEBUG("SSP: Loading joint: %s", pair.first.c_str());
 
 			// inefficient, but easier to program
 			ros::NodeHandle pnh(priv_nh, pair.first);
 
 			int rc_channel, rc_min, rc_max, rc_trim;
 			if (!pnh.getParam("rc_channel", rc_channel)) {
-				ROS_ERROR("Servo joint: %s should provice rc_channel", pair.first.c_str());
+				ROS_ERROR("SSP: '%s' should provice rc_channel", pair.first.c_str());
 				continue;
 			}
 
@@ -88,23 +94,47 @@ public:
 			bool rc_rev;
 			pnh.param("rc_rev", rc_rev, false);
 
-			// XXX TODO load from URDF lower/upper limits
+			auto joint = model.getJoint(pair.first);
+			if (!joint) {
+				ROS_ERROR("SSP: URDF: there no joint '%s'", pair.first.c_str());
+				continue;
+			}
+			if (!joint->limits) {
+				ROS_ERROR("SSP: URDF: joint '%s' should provide <limit>", pair.first.c_str());
+				continue;
+			}
 
-			servos.emplace_back(pair.first, 0.0, 0.0, rc_channel, rc_min, rc_max, rc_trim, rc_rev);
-			ROS_INFO("Servo joint: %s (RC%d) loaded", pair.first.c_str(), rc_channel);
+			double lower = joint->limits->lower;
+			double upper = joint->limits->upper;
+
+			servos.emplace_back(pair.first, lower, upper, rc_channel, rc_min, rc_max, rc_trim, rc_rev);
+			ROS_INFO("SSP: joint '%s' (RC%d) loaded", pair.first.c_str(), rc_channel);
 		}
+
+		rc_out_sub = nh.subscribe("rc_out", 10, &ServoStatePublisher::rc_out_cb, this);
+		joint_states_pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
 	}
 
 	void spin() {
+		if (servos.empty()) {
+			ROS_WARN("SSP: there nothing to do, exiting");
+			return;
+		}
+
+		ROS_INFO("SSP: Initialization done. %zu joints served", servos.size());
 		ros::spin();
 	}
 
 private:
 	ros::NodeHandle nh;
 	ros::Subscriber rc_out_sub;
-	ros::Publisher joint_state_pub;
+	ros::Publisher joint_states_pub;
 
 	std::list<ServoDescription> servos;
+
+	void rc_out_cb(const mavros_msgs::RCOut::ConstPtr &msg) {
+		// TODO
+	}
 };
 
 int main(int argc, char *argv[])
