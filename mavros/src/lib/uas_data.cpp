@@ -31,6 +31,7 @@ UAS::UAS() :
 	gps_epv(NAN),
 	gps_fix_type(0),
 	gps_satellites_visible(0),
+	time_offset(0),
 	fcu_caps_known(false),
 	fcu_capabilities(0)
 {}
