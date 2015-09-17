@@ -184,6 +184,8 @@ private:
 			return;		// nothing to do
 
 		auto states = boost::make_shared<sensor_msgs::JointState>();
+		states->header.stamp = msg->header.stamp;
+
 		for (auto &desc : servos) {
 			if (!(desc.rc_channel != 0 && desc.rc_channel <= msg->channels.size()))
 				continue;	// prevent crash on servos not in that message
