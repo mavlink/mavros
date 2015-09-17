@@ -29,22 +29,24 @@ public:
 	uint16_t rc_min;
 	uint16_t rc_max;
 	uint16_t rc_trim;
+	uint16_t rc_dz;
 	bool rc_rev;
 
 	ServoDescription() :
 		joint_name{},
-		joint_lower(-M_PI),
-		joint_upper(M_PI),
+		joint_lower(-M_PI/4),
+		joint_upper(M_PI/4),
 		rc_channel(0),
 		rc_min(1000),
 		rc_max(2000),
 		rc_trim(1500),
+		rc_dz(0),
 		rc_rev(false)
 	{ };
 
 	ServoDescription(std::string joint_name_, double lower_, double upper_,
 			int channel_,
-			int min_, int max_, int trim_,
+			int min_, int max_, int trim_, int dz_,
 			bool rev_) :
 		joint_name(joint_name_),
 		joint_lower(lower_),
@@ -53,11 +55,50 @@ public:
 		rc_min(min_),
 		rc_max(max_),
 		rc_trim(trim_),
+		rc_dz(dz_),
 		rc_rev(rev_)
 	{ };
 
+	/**
+	 * Normalization code taken from PX4 Firmware
+	 * src/modules/sensors/sensors.cpp Sensors::rc_poll() line 1966
+	 */
+	inline float normalize(uint16_t pwm) {
+		// 1) fix bounds
+		pwm = std::max(pwm, rc_min);
+		pwm = std::min(pwm, rc_max);
+
+		// 2) scale around mid point
+		float chan;
+		if (pwm > (rc_trim + rc_dz)) {
+			chan = (pwm - rc_trim - rc_dz) / (float)(rc_max - rc_trim - rc_dz);
+		}
+		else if (pwm < (rc_trim - rc_dz)) {
+			chan = (pwm - rc_trim + rc_dz) / (float)(rc_trim - rc_min - rc_dz);
+		}
+		else {
+			chan = 0.0;
+		}
+
+		if (rc_rev)
+			chan *= -1;
+
+		if (!std::isfinite(chan)) {
+			ROS_DEBUG("SSP: not finite result in RC%zu channel normalization!", rc_channel);
+			chan = 0.0;
+		}
+
+		return chan;
+	}
+
 	float calculate_position(uint16_t pwm) {
-		return 0.0;
+		float channel = normalize(pwm);
+
+		// not sure should i differently map -1..0 and 0..1
+		// for now there arduino map() (explicit)
+		float position = (channel + 1.0) * (joint_upper - joint_lower) / (1.0 + 1.0) + joint_lower;
+
+		return position;
 	}
 };
 
@@ -83,7 +124,9 @@ public:
 			// inefficient, but easier to program
 			ros::NodeHandle pnh(priv_nh, pair.first);
 
-			int rc_channel, rc_min, rc_max, rc_trim;
+			bool rc_rev;
+			int rc_channel, rc_min, rc_max, rc_trim, rc_dz;
+
 			if (!pnh.getParam("rc_channel", rc_channel)) {
 				ROS_ERROR("SSP: '%s' should provice rc_channel", pair.first.c_str());
 				continue;
@@ -95,7 +138,7 @@ public:
 				rc_trim = rc_min + (rc_max - rc_min) / 2;
 			}
 
-			bool rc_rev;
+			pnh.param("rc_dz", rc_dz, 0);
 			pnh.param("rc_rev", rc_rev, false);
 
 			auto joint = model.getJoint(pair.first);
@@ -111,7 +154,7 @@ public:
 			double lower = joint->limits->lower;
 			double upper = joint->limits->upper;
 
-			servos.emplace_back(pair.first, lower, upper, rc_channel, rc_min, rc_max, rc_trim, rc_rev);
+			servos.emplace_back(pair.first, lower, upper, rc_channel, rc_min, rc_max, rc_trim, rc_dz, rc_rev);
 			ROS_INFO("SSP: joint '%s' (RC%d) loaded", pair.first.c_str(), rc_channel);
 		}
 
@@ -146,10 +189,11 @@ private:
 				continue;	// prevent crash on servos not in that message
 
 			uint16_t pwm = msg->channels[desc.rc_channel - 1];
-			float position = desc.calculate_position(pwm);
+			if (pwm == 0 || pwm == UINT16_MAX)
+				continue;	// exclude unset channels
 
 			states->name.emplace_back(desc.joint_name);
-			states->position.emplace_back(position);
+			states->position.emplace_back(desc.calculate_position(pwm));
 		}
 
 		joint_states_pub.publish(states);
