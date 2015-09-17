@@ -2,6 +2,14 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test: update readme
+* test: add required plugins
+* test: new test for local_position + SSP (`#387 <https://github.com/mavlink/mavros/issues/387>`_) + URDF
+* test: add schematic plane urdf
+* Contributors: Vladimir Ermakov
+
 0.14.2 (2015-08-20)
 -------------------
 * test: fix depend on angles, fix catkin lint warnings

@@ -2,6 +2,32 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: fix timesync uninit bug.
+  Uninitialized variable caused wrong timestamps with APM.
+* python `#286 <https://github.com/mavlink/mavros/issues/286>`_: use checksum - save ticks
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: output to log-file
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: remove RosrunHandler and RoslaunchHandler
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: attempt to implement rosrun fails.
+  ROSLaunch class wants all node operations from main thread.
+  That is not possible.
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: fix shell-killer, but logging are broken and removed
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: shell-launcher now works!
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: add example configuration
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: shell handler done. next - rosparam handling
+* script `#385 <https://github.com/mavlink/mavros/issues/385>`_: starting work on simple shell launcher
+* scripts: starting event_launcher
+* python: Remove unneded slice operation. Fix copyright year.
+  `list[:len(list)]` is equal to `list`, but creates new list with data
+  from that slice.
+* updated mavlink byte buffer conversion
+* plugin: manual_control: Use shared pointer message
+  Fix alphabetic order of msgs.
+* python: add helper for converting mavros_msgs/Mavlink to pymavlink
+* Add MANUAL_CONTROL handling with new plugin
+* Contributors: Andreas Antener, Vladimir Ermakov, v01d
+
 0.14.2 (2015-08-20)
 -------------------
 

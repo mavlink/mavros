@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: fix header stamp in joint_states
+* extras fix `#387 <https://github.com/mavlink/mavros/issues/387>`_: SSP node done.
+* extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: subscriber works, node almost done
+* extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: load URDF
+* extras `#387 <https://github.com/mavlink/mavros/issues/387>`_: initial import of servo_status_publisher
+* Contributors: Vladimir Ermakov
+
 0.14.2 (2015-08-20)
 -------------------
 * extras: fix catkin lint warnings
