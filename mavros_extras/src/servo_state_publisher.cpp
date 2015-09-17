@@ -55,6 +55,10 @@ public:
 		rc_trim(trim_),
 		rc_rev(rev_)
 	{ };
+
+	float calculate_position(uint16_t pwm) {
+		return 0.0;
+	}
 };
 
 class ServoStatePublisher {
@@ -133,7 +137,22 @@ private:
 	std::list<ServoDescription> servos;
 
 	void rc_out_cb(const mavros_msgs::RCOut::ConstPtr &msg) {
-		// TODO
+		if (msg->channels.empty())
+			return;		// nothing to do
+
+		auto states = boost::make_shared<sensor_msgs::JointState>();
+		for (auto &desc : servos) {
+			if (!(desc.rc_channel != 0 && desc.rc_channel <= msg->channels.size()))
+				continue;	// prevent crash on servos not in that message
+
+			uint16_t pwm = msg->channels[desc.rc_channel - 1];
+			float position = desc.calculate_position(pwm);
+
+			states->name.emplace_back(desc.joint_name);
+			states->position.emplace_back(position);
+		}
+
+		joint_states_pub.publish(states);
 	}
 };
 
