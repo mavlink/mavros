@@ -87,6 +87,7 @@ target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+add_dependencies(mavros mavros_msgs_generate_messages_cpp)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
