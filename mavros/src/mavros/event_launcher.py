@@ -95,6 +95,9 @@ class ShellHandler(EventHandler):
                 child_stdout = subprocess.PIPE
                 child_stderr = subprocess.PIPE
 
+            if hasattr(child_stdout, 'write'):
+                child_stdout.write("\n--- run cut: %s ---\n" % time.ctime())
+
             self.process = subprocess.Popen(args, stdout=child_stdout, stderr=child_stderr,
                                             close_fds=True, preexec_fn=os.setsid)
 
@@ -226,14 +229,19 @@ class Launcher(object):
 
         events, actions = self._get_evt_act(params)
 
+        def expandpath(p):
+            return os.path.expandvars(os.path.expanduser(p))
+
         args = params['shell']
         if not isinstance(args, list):
             args = shlex.split(args)
 
-        command = os.path.expandvars(os.path.expanduser(args[0]))
+        command = expandpath(args[0])
         args = args[1:]
 
         logfile = params.get('logfile')
+        if logfile:
+            logfile = expandpath(logfile)
 
         handler = ShellHandler(name, command, args, logfile, events, actions)
         rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
