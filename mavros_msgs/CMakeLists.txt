@@ -13,6 +13,7 @@ add_message_files(
   CamIMUStamp.msg
   CommandCode.msg
   FileEntry.msg
+  HomePosition.msg
   ManualControl.msg
   Mavlink.msg
   OpticalFlowRad.msg
