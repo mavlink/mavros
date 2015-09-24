@@ -270,7 +270,12 @@ class Launcher(object):
     def __call__(self, event):
         rospy.logdebug('Event: %s', event)
         for h in self.handlers:
-            h(event)
+            try:
+                h(event)
+            except Exception as ex:
+                import traceback
+                rospy.logerr("Event %s -> %s exception: %s", event, h, ex)
+                rospy.logerr(traceback.format_exc())
 
     def spin(self):
         if not self.handlers:
