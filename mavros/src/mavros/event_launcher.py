@@ -180,11 +180,6 @@ class Launcher(object):
         self.triggers = {}
         self.prev_armed = False
 
-        self.state_sub = rospy.Subscriber(
-            mavros.get_topic('state'),
-            State,
-            self.mavros_state_cb)
-
         try:
             params = rospy.get_param('~')
             if not isinstance(params, dict):
@@ -210,6 +205,12 @@ class Launcher(object):
             for evt in h.events:
                 if evt not in self.known_events:
                     rospy.logwarn("%s: unknown event: %s", h.name, evt)
+
+        # config loaded, we may subscribe
+        self.state_sub = rospy.Subscriber(
+            mavros.get_topic('state'),
+            State,
+            self.mavros_state_cb)
 
     def _load_trigger(self, name, params):
         rospy.logdebug("Loading trigger: %s", name)
@@ -243,8 +244,11 @@ class Launcher(object):
         if logfile:
             logfile = expandpath(logfile)
 
-        handler = ShellHandler(name, command, args, logfile, events, actions)
         rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
+        if logfile:
+            rospy.loginfo("Log: %s -> %s", name, logfile)
+
+        handler = ShellHandler(name, command, args, logfile, events, actions)
         self.handlers.append(handler)
 
     def _get_evt_act(self, params):
