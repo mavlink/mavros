@@ -59,6 +59,32 @@ def takeoff(args):
     else:
         rospy.loginfo("TAKEOFF Request success.")
 
+def land(args):
+    try:
+        land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
+        
+        ret = land_cl(altitude=0, latitude=0, longitude=0, min_pitch=0, yaw=0)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        rospy.loginfo("LAND Request failed.")
+    else:
+        rospy.loginfo("LAND Request success.")        
+
+def guided(args, state):
+    try:
+        guided_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
+        
+        ret = guided_cl(value=state)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        rospy.loginfo("GUIDED Request failed.")
+    else:
+        rospy.loginfo("GUIDED Request success.")
+
 def set_mode(args, mode):
     try:
         setmode_cl = rospy.ServiceProxy(args.mavros_ns + "/set_mode", SetMode)
@@ -80,6 +106,7 @@ def rc_override_control(args):
     
 
     override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
+    pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint_position/local", PoseStamped, queue_size=10)
     
     throttle_ch = 1000
 
@@ -88,13 +115,23 @@ def rc_override_control(args):
         roll = 1500
 	pitch = 1500
         key = getKey()
-        #rospy.loginfo("Key: %s", key)
+        #rospy.loginfo("Key: %s", key)        
         if key == 'a':
             arm(args, True)
         elif key == 'd':
             arm(args, False)
         elif key == 't':
 	    takeoff(args)
+	elif key == 'l':
+	    land(args)
+	elif key == 'z':  
+	    pose = PoseStamped(header=Header(stamp=rospy.get_rostime()))
+	    pose.pose.position = Point(x=0.0, y=0.0, z=2.0)
+	    q = quaternion_from_euler(0, 0, 0.0)
+	    pose.pose.orientation = Quaternion(*q)
+	    pos_pub.publish(pose)  
+	elif key == 'G':
+	    set_mode(args, "GUIDED")
 	elif key == 'H':
             set_mode(args, "ALT_HOLD")
         elif key == 'L':
@@ -112,7 +149,21 @@ def rc_override_control(args):
 	elif key == 'i': #FORWARD
 	    pitch=1600 
 	elif key == 'k': #BACKWARD
-	    pitch=1400  	    
+	    pitch=1400  	
+	elif key == '0': #FIX
+	    throttle_ch=1000  
+	elif key == '1':
+	    throttle_ch=1100    
+	elif key == '2':
+	    throttle_ch=1200    	    
+	elif key == '3':
+	    throttle_ch=1300
+	elif key == '4':
+	    throttle_ch=1400
+	elif key == '5':
+	    throttle_ch=1500
+	elif key == '6':
+	    throttle_ch=1600	    	    
 	if (key == '\x03'):
             break
         
