@@ -59,6 +59,7 @@ public:
 		}
 		else {
 			vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cb, this);
+			vision_cov_sub = sp_nh.subscribe("pose_cov", 10, &VisionPoseEstimatePlugin::vision_cov_cb, this);
 		}
 	}
 
@@ -72,6 +73,7 @@ private:
 	UAS *uas;
 
 	ros::Subscriber vision_sub;
+	ros::Subscriber vision_cov_sub;
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
@@ -134,6 +136,13 @@ private:
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(req->pose, tr);
+
+		send_vision_estimate(req->header.stamp, tr);
+	}
+
+	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req) {
+		Eigen::Affine3d tr;
+		tf::poseMsgToEigen(req->pose.pose, tr);
 
 		send_vision_estimate(req->header.stamp, tr);
 	}
