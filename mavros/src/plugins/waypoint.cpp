@@ -121,6 +121,8 @@ public:
 		case MAV_CMD_NAV_RETURN_TO_LAUNCH:	return "RTL";
 		case MAV_CMD_NAV_LAND:		return "LAND";
 		case MAV_CMD_NAV_TAKEOFF:	return "TAKEOFF";
+		case MAV_CMD_NAV_LAND_LOCAL:	return "LAND_LOCAL";
+		case MAV_CMD_NAV_TAKEOFF_LOCAL:	return "TAKEOFF_LOCAL";
 		case MAV_CMD_NAV_ROI:		return "ROI";
 		case MAV_CMD_NAV_PATHPLANNING:	return "PATH PLANNING";
 		default:

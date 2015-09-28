@@ -17,6 +17,7 @@ import mavros
 from mavros.utils import *
 from mavros import command
 from sensor_msgs.msg import NavSatFix
+from geometry_msgs.msg import PoseStamped
 
 
 def _check_ret(args, ret):
@@ -99,6 +100,30 @@ def do_land(args):
 
     _check_ret(args, ret)
 
+def do_takeoff_local(args):
+    try:
+        ret = command.takeoff_local(min_pitch=args.min_pitch,
+                         yaw=args.yaw,
+                         x=args.x,
+                         y=args.y,
+                         z=args.z)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
+
+def do_land_local(args):
+    try:
+        ret = command.land_local(min_pitch=0.0,
+                      yaw=args.yaw,
+                      x=args.x,
+                      y=args.y,
+                      z=args.z)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
 
 def _find_gps_topic(args, op_name):
     # XXX: since 0.13 global position always exists. need redo that.
@@ -120,6 +145,16 @@ def _find_gps_topic(args, op_name):
 
     return None
 
+def _find_local_position_topic(args, op_name):
+    # XXX: since 0.13 global position always exists. need redo that.
+    local_fix = mavros.get_topic('local_position', 'local')
+
+    topics = rospy.get_published_topics()
+    # need find more elegant way
+    if len([topic for topic, type_ in topics if topic == local_fix]):
+        return local_fix
+
+    return None
 
 def do_takeoff_cur_gps(args):
     done_evt = threading.Event()
@@ -178,6 +213,60 @@ def do_land_cur_gps(args):
     if not done_evt.wait(10.0):
         fault("Something went wrong. Topic timed out.")
 
+def do_takeoff_cur_local(args):
+    done_evt = threading.Event()
+    def pose_cb(msg):
+        print("Taking-off from current pose: X:", msg.pose.position.x, "Y:", msg.pose.position.y)
+        print_if(args.verbose, "With desired X:", args.z,
+                 "Yaw:", args.yaw, "Pitch angle:", args.min_pitch)
+
+        try:
+            ret = command.takeoff_local(min_pitch=args.min_pitch,
+                             yaw=args.yaw,
+                             x=msg.pose.position.x,
+                             y=msg.pose.position.y,
+                             z=args.z)
+        except rospy.ServiceException as ex:
+            fault(ex)
+
+        _check_ret(args, ret)
+        done_evt.set()
+
+    topic = _find_local_position_topic(args, "takeoff")
+    if topic is None:
+        fault("Local position topic not exist")
+
+    sub = rospy.Subscriber(topic, PoseStamped, pose_cb)
+    if not done_evt.wait(10.0):
+        fault("Something went wrong. Topic timed out.")
+
+
+def do_land_cur_local(args):
+    done_evt = threading.Event()
+    def pose_cb(msg):
+        print("Landing on current local coordinates: X:", msg.pose.position.x, "Y:", msg.pose.position.y)
+        print_if(args.verbose, "With desired X:", args.z,
+                 "Yaw:", args.yaw)
+
+        try:
+            ret = command.land_local(min_pitch=0.0,
+                             yaw=args.yaw,
+                             x=msg.pose.position.x,
+                             y=msg.pose.position.y,
+                             z=args.z)
+        except rospy.ServiceException as ex:
+            fault(ex)
+
+        _check_ret(args, ret)
+        done_evt.set()
+
+    topic = _find_local_position_topic(args, "takeoff")
+    if topic is None:
+        fault("Local position topic not exist")
+
+    sub = rospy.Subscriber(topic, PoseStamped, pose_cb)
+    if not done_evt.wait(10.0):
+        fault("Something went wrong. Topic timed out.")
 
 def do_guided_en(args):
     try:
@@ -268,6 +357,34 @@ def main():
     land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
+
+    takeoff_local_args = subarg.add_parser('takeoff_local', help="Request takeoff (local coordinates)")
+    takeoff_local_args.set_defaults(func=do_takeoff_local)
+    takeoff_local_args.add_argument('min_pitch', type=float, help="Min pitch")
+    takeoff_local_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_local_args.add_argument('x', type=float, help="X")
+    takeoff_local_args.add_argument('y', type=float, help="Y")
+    takeoff_local_args.add_argument('z', type=float, help="Z")
+
+    land_local_args = subarg.add_parser('land_local', help="Request land (local coordinates)")
+    land_local_args.set_defaults(func=do_land_local)
+    land_local_args.add_argument('yaw', type=float, help="Desired Yaw")
+    land_local_args.add_argument('x', type=float, help="X")
+    land_local_args.add_argument('y', type=float, help="Y")
+    land_local_args.add_argument('z', type=float, help="Z")
+
+    takeoff_local_cur_args = subarg.add_parser('takeoff_localcur', help="Request takeoff from current local coordinates")
+    takeoff_local_cur_args.set_defaults(func=do_takeoff_cur_local)
+#    takeoff_local_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    takeoff_local_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
+    takeoff_local_cur_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_local_cur_args.add_argument('z', type=float, help="Z")
+
+    land_local_cur_args = subarg.add_parser('land_localcur', help="Request land on current local coordinates")
+    land_local_cur_args.set_defaults(func=do_land_cur_local)
+#    land_local_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    land_local_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
+    land_local_cur_args.add_argument('z', type=float, help="Z")
 
     guided_args = subarg.add_parser('guided', help="Request enable OFFBOARD mode (PX4)")
     guided_args.set_defaults(func=do_guided_en)
