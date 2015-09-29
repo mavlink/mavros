@@ -245,7 +245,7 @@ def do_land_cur_local(args):
     done_evt = threading.Event()
     def pose_cb(msg):
         print("Landing on current local coordinates: X:", msg.pose.position.x, "Y:", msg.pose.position.y)
-        print_if(args.verbose, "With desired X:", args.z,
+        print_if(args.verbose, "With desired Z:", args.z,
                  "Yaw:", args.yaw)
 
         try:
