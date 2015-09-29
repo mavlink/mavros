@@ -17,7 +17,7 @@ import mavros
 from mavros.utils import *
 from mavros import command
 from sensor_msgs.msg import NavSatFix
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Point, PoseStamped
 
 
 def _check_ret(args, ret):
@@ -104,9 +104,7 @@ def do_takeoff_local(args):
     try:
         ret = command.takeoff_local(min_pitch=args.min_pitch,
                          yaw=args.yaw,
-                         x=args.x,
-                         y=args.y,
-                         z=args.z)
+                         position=Point(args.x, args.y, args.z))
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -116,10 +114,8 @@ def do_takeoff_local(args):
 def do_land_local(args):
     try:
         ret = command.land_local(min_pitch=0.0,
-                      yaw=args.yaw,
-                      x=args.x,
-                      y=args.y,
-                      z=args.z)
+                        yaw=args.yaw,
+                        position=Point(args.x, args.y, args.z))
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -222,10 +218,10 @@ def do_takeoff_cur_local(args):
 
         try:
             ret = command.takeoff_local(min_pitch=args.min_pitch,
-                             yaw=args.yaw,
-                             x=msg.pose.position.x,
-                             y=msg.pose.position.y,
-                             z=args.z)
+                            yaw=args.yaw,
+                            position=Point(msg.pose.position.x,
+                                msg.pose.position.y,
+                                args.z))
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -250,10 +246,10 @@ def do_land_cur_local(args):
 
         try:
             ret = command.land_local(min_pitch=0.0,
-                             yaw=args.yaw,
-                             x=msg.pose.position.x,
-                             y=msg.pose.position.y,
-                             z=args.z)
+                            yaw=args.yaw,
+                            position=Point(msg.pose.position.x,
+                                msg.pose.position.y,
+                                args.z))
         except rospy.ServiceException as ex:
             fault(ex)
 

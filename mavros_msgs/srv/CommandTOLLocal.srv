@@ -1,10 +1,8 @@
 # Common type for Take Off and Landing for local (NED) navigation
 
-float32 min_pitch	# used by takeoff
+float32 min_pitch   # used by takeoff
 float32 yaw
-float32 x
-float32 y
-float32 z
+geometry_msgs/Point position
 ---
 bool success
 uint8 result

@@ -342,7 +342,7 @@ private:
 
 	bool takeoff_local_cb(mavros_msgs::CommandTOLLocal::Request &req,
 			mavros_msgs::CommandTOLLocal::Response &res) {
-		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.x, req.y, req.z));
+		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.position.x, req.position.y, req.position.z));
 
 		return send_command_long_and_wait(false,
 				MAV_CMD_NAV_TAKEOFF_LOCAL, 1,
@@ -355,7 +355,7 @@ private:
 
 	bool land_local_cb(mavros_msgs::CommandTOLLocal::Request &req,
 			mavros_msgs::CommandTOLLocal::Response &res) {
-		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.x, req.y, req.z));
+		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.position.x, req.position.y, req.position.z));
 
 		return send_command_long_and_wait(false,
 				MAV_CMD_NAV_LAND_LOCAL, 1,
