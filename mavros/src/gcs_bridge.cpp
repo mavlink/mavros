@@ -67,10 +67,11 @@ int main(int argc, char *argv[])
 	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
 	gcs_link->message_received.connect(mavlink_pub_cb);
 
+	// prefer UDPROS, but allow TCPROS too
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
 		ros::TransportHints()
-			.unreliable()
-			.maxDatagramSize(1024));
+			.unreliable().maxDatagramSize(1024)
+			.reliable());
 
 	// setup updater
 	updater.setHardwareID(gcs_url);

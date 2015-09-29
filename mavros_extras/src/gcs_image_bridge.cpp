@@ -177,8 +177,8 @@ int main(int argc, char *argv[])
 
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
 			ros::TransportHints()
-				.unreliable()
-				.maxDatagramSize(1024));
+				.unreliable().maxDatagramSize(1024)
+				.reliable());
 
 	image_sub = it.subscribe("gcs_image", 1, image_cb);
 

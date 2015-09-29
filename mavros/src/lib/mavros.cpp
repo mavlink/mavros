@@ -87,8 +87,8 @@ MavRos::MavRos() :
 	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("from", 100);
 	mavlink_sub = mavlink_nh.subscribe("to", 100, &MavRos::mavlink_sub_cb, this,
 		ros::TransportHints()
-			.unreliable()
-			.maxDatagramSize(1024));
+			.unreliable().maxDatagramSize(1024)
+			.reliable());
 
 	// setup UAS and diag
 	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
