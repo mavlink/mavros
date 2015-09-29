@@ -349,7 +349,7 @@ private:
 				req.min_pitch,
 				0, 0,
 				req.yaw,
-				position.x, position.y, position.z,
+				position.x(), position.y(), position.z(),
 				res.success, res.result);
 	}
 
@@ -361,7 +361,7 @@ private:
 				MAV_CMD_NAV_LAND_LOCAL, 1,
 				0, 0, 0,
 				req.yaw,
-				position.x, position.y, position.z,
+				position.x(), position.y(), position.z(),
 				res.success, res.result);
 	}
 
