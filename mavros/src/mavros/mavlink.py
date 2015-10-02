@@ -7,9 +7,12 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
+import rospy
 import struct
 from pymavlink import mavutil
 from pymavlink.generator.mavcrc import x25crc
+from mavros_msgs.msg import Mavlink
+from std_msgs.msg import Header
 
 
 def convert_to_bytes(msg):
@@ -62,3 +65,24 @@ def convert_to_payload64(payload_bytes):
 
     return struct.unpack('<%dQ' % payload_octets, payload_bytes)
 
+
+def convert_to_rosmsg(mavmsg, stamp=None):
+    """
+    Convert pymavlink message to Mavlink.msg
+    """
+    if stamp is not None:
+        header = Header(stamp=stamp)
+    else:
+        header = Header(stamp=rospy.get_rostime())
+
+    return Mavlink(
+        header=header,
+        is_valid=True,
+        len=len(mavmsg.get_payload()),
+        seq=mavmsg.get_seq(),
+        sysid=mavmsg.get_srcSystem(),
+        compid=mavmsg.get_srcComponent(),
+        msgid=mavmsg.get_msgId(),
+        checksum=mavmsg.get_crc(),
+        payload64=convert_to_payload64(mavmsg.get_payload())
+    )
