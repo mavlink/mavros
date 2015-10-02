@@ -47,3 +47,18 @@ def convert_to_bytes(msg):
     # finalize
     msgdata += struct.pack('<H', crc16)
     return msgdata
+
+
+def convert_to_payload64(payload_bytes):
+    """
+    Convert payload bytes to Mavlink.payload64
+    """
+
+    payload_len = len(payload_bytes)
+    payload_octets = payload_len / 8
+    if payload_len % 8 > 0:
+        payload_octets += 1
+        payload_bytes += [0] * (8 - payload_len % 8)
+
+    return struct.unpack('<%dQ' % payload_octets, bytearray(payload_bytes))
+
