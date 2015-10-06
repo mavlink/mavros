@@ -110,6 +110,7 @@ add_library(mavros_plugins
   src/plugins/ftp.cpp
   src/plugins/actuator_control.cpp
   src/plugins/manual_control.cpp
+  src/plugins/setpoint_takeoff_land.cpp
 )
 add_dependencies(mavros_plugins
   mavros
