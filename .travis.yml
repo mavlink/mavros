@@ -29,7 +29,7 @@ install:
   # Create workspace
   - mkdir -p ~/ros/ws_$REPOSITORY_NAME
   - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin config --init --mkdirs -j4
+  - catkin config --init --mkdirs
   - cd src
   # Clone mavlink dependency
   - git clone https://github.com/mavlink/mavlink-gbp-release.git mavlink -b release/jade/mavlink
@@ -44,11 +44,11 @@ before_script:
 
 script:
   - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin config -p4 --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
+  - catkin config -j4 --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
   - catkin build --verbose --summary
-  - catkin config -p1 --no-install
-  - catkin run_tests --summary
-  - find ~/ros/ws_$REPOSITORY_NAME/build -maxdepth 1 -name 'build_logs' -prune -o -type d -exec echo "==== {} ====" \; -exec catkin_test_results {} \;
+  - catkin config -j4 --no-install
+  - catkin run_tests -p1 --summary
+  - catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
 
 after_failure:
   - find ~/ros/ws_$REPOSITORY_NAME/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
