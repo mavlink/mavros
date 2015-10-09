@@ -44,13 +44,12 @@ before_script:
 
 script:
   - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin config -j4 --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin build --verbose --install --summary
+  - catkin config -j4 --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
+  - catkin build --verbose --summary
   - catkin run_tests --summary
 
-# XXX: Broken, build/<pkg>/test_results always empty
-#after_failure:
-#  - find ~/ros/ws_$REPOSITORY_NAME/build/test_results -type f -exec echo "==== {} ====" \; -exec cat {} \;
+after_failure:
+  - find ~/ros/ws_$REPOSITORY_NAME/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
 
 notifications:
   webhooks:
