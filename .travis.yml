@@ -16,37 +16,41 @@ before_install:
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-    #- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  #- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo sh -c 'echo "deb http://packages.ros.org/ros-shadow-fixed/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall
-    # Setup rosdep
+  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall python-catkin-tools
+  # Setup rosdep
   - sudo rosdep init
   - rosdep update
 
 install:
   # Create workspace
-  - mkdir -p ~/ros/ws_$REPOSITORY_NAME/src
-  - cd ~/ros/ws_$REPOSITORY_NAME/src
-  - wstool init .
-  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
-  - cd ../
+  - mkdir -p ~/ros/ws_$REPOSITORY_NAME
+  - cd ~/ros/ws_$REPOSITORY_NAME
+  - catkin config --init --mkdirs
+  - cd src
+  # Clone mavlink dependency
+  - git clone https://github.com/mavlink/mavlink-gbp-release.git mavlink -b release/jade/mavlink
+  # Link the repo we are testing to the new workspace
+  - ln -s $CI_SOURCE_PATH .
   # Install dependencies for source repos
-  - rosdep install -r -n --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+  - rosdep install -r -n --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
 
 before_script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - rospack profile
+
 script:
   - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin_make -j4 -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin_make install -j4
-  - catkin_make run_tests
-  #- rm -fr devel src build; source install/setup.bash
+  - catkin config -j4 --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
+  - catkin build --verbose --install --summary
+  - catkin run_tests --summary
 
-after_failure:
-  - find ~/ros/ws_$REPOSITORY_NAME/build/test_results -type f -exec echo "==== {} ====" \; -exec cat {} \;
+# XXX: Broken, build/<pkg>/test_results always empty
+#after_failure:
+#  - find ~/ros/ws_$REPOSITORY_NAME/build/test_results -type f -exec echo "==== {} ====" \; -exec cat {} \;
 
 notifications:
   webhooks:
