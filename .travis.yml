@@ -47,7 +47,7 @@ script:
   - catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
   - catkin build -j4 --verbose --summary
   - catkin run_tests -p1 -j4 --summary
-  - catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
+  #- catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
 
 after_failure:
   - find ~/ros/ws_$REPOSITORY_NAME/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
