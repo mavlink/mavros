@@ -44,10 +44,11 @@ before_script:
 
 script:
   - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin config -j4 --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin build --verbose --summary
-  - catkin config -j4 --no-install
-  - catkin run_tests -p1 --summary
+  - catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
+  - catkin build -j4 --verbose --summary
+  - source ~/ros/ws_$REPOSITORY_NAME/install/setup.bash
+  - catkin config --no-install
+  - catkin run_tests -p1 -j4 --summary
   - catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
 
 after_failure:
