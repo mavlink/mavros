@@ -18,6 +18,7 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/ExtendedState.h>
 #include <mavros_msgs/BatteryStatus.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
@@ -404,6 +405,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&SystemStatusPlugin::connection_cb, this, _1));
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
+		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<mavros_msgs::BatteryStatus>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
@@ -424,6 +426,7 @@ public:
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HWSTATUS, &SystemStatusPlugin::handle_hwstatus),
 #endif
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_AUTOPILOT_VERSION, &SystemStatusPlugin::handle_autopilot_version),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_EXTENDED_SYS_STATE, &SystemStatusPlugin::handle_extended_sys_state),
 		};
 	}
 
@@ -441,6 +444,7 @@ private:
 	ros::Timer autopilot_version_timer;
 
 	ros::Publisher state_pub;
+	ros::Publisher extended_state_pub;
 	ros::Publisher batt_pub;
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
@@ -612,6 +616,18 @@ private:
 
 		state_pub.publish(state_msg);
 		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
+	}
+
+	void handle_extended_sys_state(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_extended_sys_state_t state;
+		mavlink_msg_extended_sys_state_decode(msg, &state);
+
+		auto state_msg = boost::make_shared<mavros_msgs::ExtendedState>();
+		state_msg->header.stamp = ros::Time::now();
+		state_msg->vtol_state = state.vtol_state;
+		state_msg->landed_state = state.landed_state;
+
+		extended_state_pub.publish(state_msg);
 	}
 
 	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
