@@ -20,6 +20,7 @@ add_message_files(
   OpticalFlowRad.msg
   OverrideRCIn.msg
   ParamValue.msg
+  PositionTarget.msg
   RCIn.msg
   RCOut.msg
   RadioStatus.msg
