@@ -17,6 +17,7 @@ Features
   - Parameter manipulation tool
   - Waypoint manipulation tool
   - PX4Flow support (by [mavros\_extras][mrext])
+  - OFFBOARD mode support.
 
 
 Limitations
@@ -40,11 +41,17 @@ Supported schemas:
 
   - Serial: `/path/to/serial/device[:baudrate]`
   - Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
-  - UDP: `udp://[bind_host[:port]]@[remote_host[:port]][/?ids=sysid,compid]`
+  - UDP: `udp://[bind_host][:port]@[remote_host][:port][/?ids=sysid,compid]`
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
-  - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
+  - TCP server: `tcp-l://[bind_host][:port][/?ids=sysid,compid]`
 
-Note: ids from URL overrides ids given by system\_id & component\_id parameters.
+Note:
+
+  - Ids from URL overrides value given by system\_id & component\_id parameters.
+  - bind\_host - default `0.0.0.0` - i.e. IP4 ANY
+  - UDP default ports: 14555 @ 14550
+  - UDP remote address updated every time with incoming packet on bind port.
+  - TCP default port: 5760
 
 
 Coordinate frames
