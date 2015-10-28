@@ -34,8 +34,7 @@ Since 2015-02-25 exists for Jade too.
 Connection URL
 --------------
 
-*New in 0.7.0*. Connection now defined by URL,
-you can use any supported type for FCU and GCS.
+Connection defined by URL, you can use any supported type for FCU and GCS.
 
 Supported schemas:
 
@@ -63,6 +62,7 @@ For translate we simply apply rotation 180° abount ROLL (X) axis.
 All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
 
 Related issues: [#49 (outdated)][iss49], [#216 (outdated)][iss216], [#317][iss317], [#319][iss319], [#321][iss321].
+
 
 Programs
 --------
@@ -119,43 +119,51 @@ Just use `apt-get` for installation:
 
 ### Source installation
 
-Use `wstool` utility for installation. In your workspace do:
+Use `wstool` utility for installation and catkin tool for build.
 
-    wstool init src # (if not already initialized)
-    wstool set -t src mavros --git https://github.com/mavlink/mavros.git
+    sudo apt-get install python-catkin-tools
+
+    # unneded if you already has workspace
+    mkdir -p ~/catkin_ws/src
+    cd ~/catkin_ws
+    catkin init
+
+    # get source (upstream - released)
+    rosinstall_generator --upstream mavros | tee /tmp/mavros.rosinstall
+    # alternative: latest source
+    rosinstall_generator --upstream-development mavros | tee /tmp/mavros.rosinstall
+
+    # workspace & deps
+    wstool merge -t src /tmp/mavros.rosinstall
     wstool update -t src
     rosdep install --from-paths src --ignore-src --rosdistro indigo -y
 
-Then use regular `catkin_make` for build and install.
-Notes:
-  - since v0.5 (and [#35][iss35]) mavlink submodule moved to special ROS 3rd party package [ros-\*-mavlink][mlwiki].
-  - since 2014-11-02 hydro support splitted to branch hydro-devel, add `--version hydro-devel` to wstool set.
-  - in ROS Jade instead of `catkin_make` better use `catkin build`.
+    # finally - build
+    catkin build
+
+
+*Build error*. if you has error with missing `mavlink_*_t` or `MAVLINK_MSGID_*` then you need fresh mavlink package.
+You may update from [ros-shadow-fixed][shadow] or build it from source (see [next section](#installing-ros--mavlink-from-source)).
 
 *Important*. The current implementation of mavlink does not allow to select dialect in run-time,
 so mavros package (and all plugin packages) have compile-time option `MAVLINK_DIALECT`, default is 'aurdupilotmega'.
 
-If you want change dialect you can:
+If you want change dialect change workspace config:
 
-1. Add cmake definition to catkin: `catkin_make -DMAVLINK_DIALECT=pixhawk`
-2. Edit configuration by `catkin_make edit_cache`
-3. Use `cmake-gui build`, better: it creates drop-down list with all available dialects
-   plus it will be used in next `catkin_make edit_cache`.
-   Ubuntu: `sudo apt-get install cmake-qt-gui`
-4. With `catkin`: `catkin config --cmake-args -DMAVLINK_DIALECT=pixhawk`
+    catkin config --cmake-args -DMAVLINK_DIALECT=pixhawk
 
 
 ### Installing ros-\*-mavlink from source
 
-If rosdep could not install mavlink library, you could install it from source:
+In ROS Jade there new tool named `catkin`. It is more powerful and more comfortable that `catkin_make`.
+With that tool you may place mavlink package in your mavros workspace.
 
-    mkdir -p ~/ros_deps/src # different workspace for building pure cmake packages by catkin_make_isolated
-    cd ~/ros_deps
-    rosinstall_generator mavlink | tee rosinstall.yaml
-    wstool init src ./rosinstall.yaml
-    catkin_make_isolated --install-space $ROSINSTALL --install -DCMAKE_BUILD_TYPE=Release
-
-$ROSINSTALL must be writable for user or you can add `sudo -s` to last command.
+    cd ~/catkin_ws/src # your mavros workspace
+    rosinstall_generator mavlink | tee /tmp/mavlink.rosinstall
+    wstool merge /tmp/mavlink.rosinstall
+    wstool up -j4
+    catkin clean --all
+    catkin build # also will build mavros
 
 
 ### Building ros-\*-mavlink debian package
@@ -168,19 +176,6 @@ You could build debian package by pulling right bloom branch from [mavlink-gbp-r
     cd mavlink-gbp-release
     fakeroot dh binary
     # deb will be in /tmp
-
-
-### Installing ros-\*-mavlink from source with catkin tool
-
-In ROS Jade there new tool named `catkin`. It is more powerful and more comfortable that `catkin_make`.
-With that tool you may place mavlink package in your mavros workspace.
-
-    cd ~catkin_ws/src # your mavros workspace
-    rosinstall_generator mavlink | tee /tmp/rosinstall.yaml
-    wstool merge /tmp/rosinstall.yaml
-    wstool up -j4
-    catkin clean --all # not nessessary
-    catkin build # also will build mavros
 
 
 Contributing
@@ -236,3 +231,4 @@ Links
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
+[shadow]: http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-jade-mavlink/
