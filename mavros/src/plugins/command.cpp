@@ -24,6 +24,7 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandHome.h>
 #include <mavros_msgs/CommandTOL.h>
+#include <mavros_msgs/CommandTOLLocal.h>
 #include <mavros_msgs/CommandTriggerControl.h>
 
 namespace mavplugin {
@@ -67,6 +68,8 @@ public:
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
+		takeoff_local_srv = cmd_nh.advertiseService("takeoff_local", &CommandPlugin::takeoff_local_cb, this);
+		land_local_srv = cmd_nh.advertiseService("land_local", &CommandPlugin::land_local_cb, this);
 		guided_srv = cmd_nh.advertiseService("guided_enable", &CommandPlugin::guided_cb, this);
 		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 	}
@@ -88,6 +91,8 @@ private:
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
+	ros::ServiceServer takeoff_local_srv;
+	ros::ServiceServer land_local_srv;
 	ros::ServiceServer guided_srv;
 	ros::ServiceServer trigger_srv;
 
@@ -332,6 +337,31 @@ private:
 				0, 0, 0,
 				req.yaw,
 				req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool takeoff_local_cb(mavros_msgs::CommandTOLLocal::Request &req,
+			mavros_msgs::CommandTOLLocal::Response &res) {
+		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.position.x, req.position.y, req.position.z));
+
+		return send_command_long_and_wait(false,
+				MAV_CMD_NAV_TAKEOFF_LOCAL, 1,
+				req.min_pitch,
+				0, 0,
+				req.yaw,
+				position.x(), position.y(), position.z(),
+				res.success, res.result);
+	}
+
+	bool land_local_cb(mavros_msgs::CommandTOLLocal::Request &req,
+			mavros_msgs::CommandTOLLocal::Response &res) {
+		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(req.position.x, req.position.y, req.position.z));
+
+		return send_command_long_and_wait(false,
+				MAV_CMD_NAV_LAND_LOCAL, 1,
+				0, 0, 0,
+				req.yaw,
+				position.x(), position.y(), position.z(),
 				res.success, res.result);
 	}
 

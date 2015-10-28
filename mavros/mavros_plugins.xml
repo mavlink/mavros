@@ -59,5 +59,8 @@
 	<class name="manual_control" type="mavplugin::ManualControlPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish manual control values</description>
 	</class>
+	<class name="setpoint_takeoff_land" type="mavplugin::SetpointTakeoffLandPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send to FCU external takeoff/land setpoint.</description>
+	</class>
 </library>
 

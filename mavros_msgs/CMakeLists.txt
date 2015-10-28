@@ -39,6 +39,7 @@ add_service_files(
   CommandInt.srv
   CommandLong.srv
   CommandTOL.srv
+  CommandTOLLocal.srv
   CommandTriggerControl.srv
   FileChecksum.srv
   FileClose.srv

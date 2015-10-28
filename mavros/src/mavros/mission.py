@@ -28,11 +28,13 @@ FRAMES = {
 
 NAV_CMDS = {
     CommandCode.NAV_LAND: 'LAND',
+    CommandCode.NAV_LAND_LOCAL: 'LAND_LOCAL',
     CommandCode.NAV_LOITER_TIME: 'LOITER-TIME',
     CommandCode.NAV_LOITER_TURNS: 'LOITER-TURNS',
     CommandCode.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
     CommandCode.NAV_RETURN_TO_LAUNCH: 'RTL',
     CommandCode.NAV_TAKEOFF: 'TAKEOFF',
+    CommandCode.NAV_TAKEOFF_LOCAL: 'TAKEOFF_LOCAL',
     CommandCode.NAV_WAYPOINT: 'WAYPOINT',
     # Maybe later i will add this enum to message
     112: 'COND-DELAY',
