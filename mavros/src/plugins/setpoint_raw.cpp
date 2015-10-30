@@ -65,7 +65,23 @@ private:
 		mavlink_position_target_local_ned_t tgt;
 		mavlink_msg_position_target_local_ned_decode(msg, &tgt);
 
-		/* TODO */
+		// Transform frame NED->ENU
+		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.x, tgt.y, tgt.z));
+		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
+		auto af = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
+
+		auto target = boost::make_shared<mavros_msgs::PositionTarget>();
+
+		target->header.stamp = uas->synchronise_stamp(tgt.time_boot_ms);
+		target->coordinate_frame = tgt.coordinate_frame;
+		target->type_mask = tgt.type_mask;
+		tf::pointEigenToMsg(position, target->position);
+		tf::vectorEigenToMsg(velocity, target->velocity);
+		tf::vectorEigenToMsg(af, target->acceleration_or_force);
+		target->yaw = tgt.yaw;
+		target->yaw_rate = tgt.yaw_rate;
+
+		target_pub.publish(target);
 	}
 
 	/* -*- callbacks -*- */
