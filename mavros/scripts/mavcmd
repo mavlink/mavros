@@ -179,15 +179,6 @@ def do_land_cur_gps(args):
         fault("Something went wrong. Topic timed out.")
 
 
-def do_guided_en(args):
-    try:
-        ret = command.guided_enable(value=args.enable)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    _check_ret(args, ret)
-
-
 def do_trigger_control(args):
     try:
         ret = command.trigger_control(trigger_enable=args.trigger_enable,
@@ -268,12 +259,6 @@ def main():
     land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
-
-    guided_args = subarg.add_parser('guided', help="Request enable OFFBOARD mode (PX4)")
-    guided_args.set_defaults(func=do_guided_en)
-    guided_group = guided_args.add_mutually_exclusive_group()
-    guided_group.add_argument('-e', '--enable', dest='enable', action='store_true', default=True, help="enable OFFBOARD mode (default)")
-    guided_group.add_argument('-d', '--disable', dest='enable', action='store_false', help="disable OFFBOARD mode")
 
     trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera trigerring system (PX4)")
     trigger_ctrl_args.set_defaults(func=do_trigger_control)

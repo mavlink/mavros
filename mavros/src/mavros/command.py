@@ -14,7 +14,6 @@ __all__ = (
     'set_home',
     'takeoff',
     'land',
-    'guided_enable',
     'trigger_control',
 )
 
@@ -34,7 +33,6 @@ arming = None
 set_home = None
 takeoff = None
 land = None
-guided_enable = None
 trigger_control = None
 
 
@@ -46,7 +44,6 @@ def _setup_services():
     set_home = _get_proxy('set_home', CommandHome)
     takeoff = _get_proxy('takeoff', CommandTOL)
     land = _get_proxy('land', CommandTOL)
-    guided_enable = _get_proxy('guided_enable', CommandBool)
     trigger_control = _get_proxy('trigger_control', CommandTriggerControl)
 
 
