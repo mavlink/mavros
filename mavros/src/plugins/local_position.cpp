@@ -20,6 +20,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 namespace mavplugin {
@@ -46,7 +47,8 @@ public:
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu");
 
-		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("local", 10);
+		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("local/position", 10);
+		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("local/velocity", 10);
 	}
 
 	const message_map get_rx_handlers() {
@@ -60,6 +62,7 @@ private:
 	UAS *uas;
 
 	ros::Publisher local_position;
+	ros::Publisher local_velocity;
 
 	std::string frame_id;		//!< frame for Pose
 	std::string tf_frame_id;	//!< origin for TF
@@ -68,19 +71,32 @@ private:
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
+		Eigen::Vector3d angular_velocity;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 
 		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
+		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
 		auto orientation = uas->get_attitude_orientation();
+		auto imu_data = uas->get_attitude_imu();
+		tf::vectorMsgToEigen(imu_data->angular_velocity, angular_velocity);
+		angular_velocity = UAS::transform_frame_ned_enu(angular_velocity);
+		
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
 
 		pose->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
+		twist->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
 
 		tf::pointEigenToMsg(position, pose->pose.position);
 		pose->pose.orientation = orientation;
 
+		tf::vectorEigenToMsg(velocity,twist->twist.linear);
+		tf::vectorEigenToMsg(angular_velocity,twist->twist.angular);
+		
+
 		local_position.publish(pose);
+		local_velocity.publish(twist);
 
 		if (tf_send) {
 			geometry_msgs::TransformStamped transform;
