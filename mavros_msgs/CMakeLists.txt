@@ -14,6 +14,7 @@ add_message_files(
   CommandCode.msg
   ExtendedState.msg
   FileEntry.msg
+  GlobalPositionTarget.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
