@@ -24,7 +24,6 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
-#include <mavros_msgs/WaypointGOTO.h>
 
 namespace mavplugin {
 class WaypointItem {
@@ -167,7 +166,6 @@ public:
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
-		goto_srv = wp_nh.advertiseService("goto", &WaypointPlugin::goto_cb, this);
 
 		wp_timer = wp_nh.createTimer(WP_TIMEOUT_DT, &WaypointPlugin::timeout_cb, this, true);
 		wp_timer.stop();
@@ -197,7 +195,6 @@ private:
 	ros::ServiceServer push_srv;
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
-	ros::ServiceServer goto_srv;
 
 	std::vector<WaypointItem> waypoints;
 	std::vector<WaypointItem> send_waypoints;
@@ -785,39 +782,6 @@ private:
 		res.success = wait_push_all();
 
 		lock.lock();
-		go_idle();	// same as in pull_cb
-		return true;
-	}
-
-	bool goto_cb(mavros_msgs::WaypointGOTO::Request &req,
-			mavros_msgs::WaypointGOTO::Response &res) {
-		unique_lock lock(mutex);
-
-		if (wp_state != WP_IDLE)
-			return false;
-
-		if (!uas->is_ardupilotmega()) {
-			ROS_ERROR_NAMED("wp", "WP: FCU not support GOTO command");
-			return false;
-		}
-
-		wp_state = WP_TXWP;
-
-		WaypointItem wpi = WaypointItem::from_msg(req.waypoint, 0);
-		wpi.current = 2;/* APM's magic */
-
-		send_waypoints.clear();
-		send_waypoints.push_back(wpi);
-
-		wp_count = 1;
-		wp_cur_id = 0;
-		restart_timeout_timer();
-
-		lock.unlock();
-		send_waypoint(wp_cur_id);
-		res.success = wait_push_all();
-		lock.lock();
-
 		go_idle();	// same as in pull_cb
 		return true;
 	}

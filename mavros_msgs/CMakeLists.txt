@@ -59,7 +59,6 @@ add_service_files(
   SetMode.srv
   StreamRate.srv
   WaypointClear.srv
-  WaypointGOTO.srv
   WaypointPull.srv
   WaypointPush.srv
   WaypointSetCurrent.srv
