@@ -489,34 +489,6 @@ private:
 		};
 	}
 
-	/**
-	 * Send STATUSTEXT messate to rosout with APM severity levels
-	 *
-	 * @param[in] severity  APM levels.
-	 */
-	void process_statustext_apm_quirk(uint8_t severity, std::string &text) {
-		switch (severity) {
-		case 1:	// SEVERITY_LOW
-			ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
-			break;
-
-		case 2:	// SEVERITY_MEDIUM
-			ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
-			break;
-
-		case 3:	// SEVERITY_HIGH
-		case 4:	// SEVERITY_CRITICAL
-		case 5:	// SEVERITY_USER_RESPONSE
-			ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
-			break;
-
-		default:
-			ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" <<
-					int(severity) << "): " << text);
-			break;
-		};
-	}
-
 	static inline std::string custom_version_to_hex_string(uint8_t array[8])
 	{
 		// inefficient, but who care for one time call function?
@@ -656,10 +628,7 @@ private:
 		std::string text(textm.text,
 				strnlen(textm.text, sizeof(textm.text)));
 
-		if (uas->is_ardupilotmega())
-			process_statustext_apm_quirk(textm.severity, text);
-		else
-			process_statustext_normal(textm.severity, text);
+		process_statustext_normal(textm.severity, text);
 	}
 
 #ifdef MAVLINK_MSG_ID_MEMINFO
