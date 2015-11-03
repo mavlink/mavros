@@ -15,6 +15,7 @@ mavros package
 --------------
 
 It is the main package, please see it's [README][mrrm].
+Here you may read [installation instructions][inst].
 
 
 mavros\_extras package
@@ -68,3 +69,4 @@ CI Statuses
 [exrm]: https://github.com/mavlink/mavros/blob/master/mavros_extras/README.md
 [libmc]: https://github.com/mavlink/mavros/blob/master/libmavconn/README.md
 [test]: https://github.com/mavlink/mavros/blob/master/test_mavros/README.md
+[inst]: https://github.com/mavlink/mavros/blob/master/mavros/README.md#installation
