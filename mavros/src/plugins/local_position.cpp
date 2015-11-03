@@ -41,6 +41,7 @@ public:
 		uas = &uas_;
 
 		// general params
+		
 		lp_nh.param<std::string>("frame_id", frame_id, "fcu");
 		// tf subsection
 		lp_nh.param("tf/send", tf_send, true);
@@ -71,30 +72,24 @@ private:
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
-		Eigen::Vector3d angular_velocity;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 
 		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
 		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
-		auto orientation = uas->get_attitude_orientation();
 		auto imu_data = uas->get_attitude_imu();
-		tf::vectorMsgToEigen(imu_data->angular_velocity, angular_velocity);
-		angular_velocity = UAS::transform_frame_ned_enu(angular_velocity);
-		
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
 
 		pose->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
-		twist->header = uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
+		twist->header = pose->header;
 
 		tf::pointEigenToMsg(position, pose->pose.position);
-		pose->pose.orientation = orientation;
+		pose->pose.orientation = imu_data->orientation;
 
 		tf::vectorEigenToMsg(velocity,twist->twist.linear);
-		tf::vectorEigenToMsg(angular_velocity,twist->twist.angular);
+		twist->twist.angular = imu_data->angular_velocity;
 		
-
 		local_position.publish(pose);
 		local_velocity.publish(twist);
 
@@ -105,7 +100,7 @@ private:
 			transform.header.frame_id = tf_frame_id;
 			transform.child_frame_id = tf_child_frame_id;
 
-			transform.transform.rotation = orientation;
+			transform.transform.rotation = imu_data->orientation;
 			tf::vectorEigenToMsg(position, transform.transform.translation);
 
 			uas->tf2_broadcaster.sendTransform(transform);
