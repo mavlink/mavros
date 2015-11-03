@@ -19,6 +19,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
 
@@ -45,14 +46,17 @@ public:
 
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
+		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
+		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
 	}
 
 	const message_map get_rx_handlers() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, &SetpointRawPlugin::handle_position_target_local_ned),
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT, &SetpointRawPlugin::handle_position_target_global_int),
+			MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_TARGET, &SetpointRawPlugin::handle_attitude_target),
 		};
 	}
 
@@ -61,8 +65,8 @@ private:
 	ros::NodeHandle sp_nh;
 	UAS *uas;
 
-	ros::Subscriber local_sub, global_sub;
-	ros::Publisher target_local_pub, target_global_pub;
+	ros::Subscriber local_sub, global_sub, attitude_sub;
+	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -112,6 +116,25 @@ private:
 		target_global_pub.publish(target);
 	}
 
+	void handle_attitude_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_attitude_target_t tgt;
+		mavlink_msg_attitude_target_decode(msg, &tgt);
+
+		// Transform frame NED->ENU
+		auto orientation = UAS::transform_frame_ned_enu(Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3]));
+		auto body_rate = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
+
+		auto target = boost::make_shared<mavros_msgs::AttitudeTarget>();
+
+		target->header.stamp = uas->synchronise_stamp(tgt.time_boot_ms);
+		target->type_mask = tgt.type_mask;
+		tf::quaternionEigenToMsg(orientation, target->orientation);
+		tf::vectorEigenToMsg(body_rate, target->body_rate);
+		target->thrust = tgt.thrust;
+
+		target_attitude_pub.publish(target);
+	}
+
 	/* -*- low-level send -*- */
 	//! Message specification: @p https://pixhawk.ethz.ch/mavlink/#SET_POSITION_TARGET_GLOBAL_INT
 	void set_position_target_global_int(uint32_t time_boot_ms, uint8_t coordinate_frame, uint8_t type_mask,
@@ -129,6 +152,26 @@ private:
 				velocity.x(), velocity.y(), velocity.z(),
 				af.x(), af.y(), af.z(),
 				yaw, yaw_rate);
+		UAS_FCU(uas)->send_message(&msg);
+	}
+
+	//! Message sepecification: @p https://pixhawk.ethz.ch/mavlink/#SET_ATTITIDE_TARGET
+	void set_attitude_target(uint32_t time_boot_ms,
+			uint8_t type_mask,
+			Eigen::Quaterniond &orientation,
+			Eigen::Vector3d &body_rate,
+			float thrust) {
+		float q[4];
+		UAS::quaternion_to_mavlink(orientation, q);
+
+		mavlink_message_t msg;
+		mavlink_msg_set_attitude_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
+				time_boot_ms,
+				UAS_PACK_TGT(uas),
+				type_mask,
+				q,
+				body_rate.x(), body_rate.y(), body_rate.z(),
+				thrust);
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
@@ -175,6 +218,25 @@ private:
 				req->altitude,
 				velocity, af,
 				req->yaw, req->yaw_rate);
+	}
+
+	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req) {
+		Eigen::Quaterniond orientation;
+		Eigen::Vector3d body_rate;
+
+		tf::quaternionMsgToEigen(req->orientation, orientation);
+		tf::vectorMsgToEigen(req->body_rate, body_rate);
+
+		// Transform frame ENU->NED
+		orientation = UAS::transform_frame_enu_ned(orientation);
+		body_rate = UAS::transform_frame_enu_ned(body_rate);
+
+		set_attitude_target(
+				req->header.stamp.toNSec() / 1000000,
+				req->type_mask,
+				orientation,
+				body_rate,
+				req->thrust);
 	}
 };
 };	// namespace mavplugin
