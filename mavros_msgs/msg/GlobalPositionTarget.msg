@@ -1,7 +1,7 @@
 # Message for SET_POSITION_TARGET_GLOBAL_INT
 #
 # Some complex system requires all feautures that mavlink
-# message provide. See issue #415.
+# message provide. See issue #402, #415.
 
 std_msgs/Header header
 
