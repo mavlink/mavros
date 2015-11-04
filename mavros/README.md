@@ -114,12 +114,12 @@ Since v0.5 that programs available in precompiled debian packages for x86 and am
 Also v0.9+ exists in ARMv7 repo for Ubuntu armhf.
 Just use `apt-get` for installation:
 
-    sudo apt-get install ros-indigo-mavros ros-indigo-mavros-extras
+    sudo apt-get install ros-jade-mavros ros-jade-mavros-extras
 
 
 ### Source installation
 
-Use `wstool` utility for retriving sources and `catkin` tool for build.
+Use `wstool` utility for retriving sources and [`catkin` tool][catkin] for build.
 
 ```sh
 sudo apt-get install python-catkin-tools
@@ -142,7 +142,7 @@ rosinstall_generator mavlink | tee -a /tmp/mavros.rosinstall
 # 4. workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
 wstool update -t src
-rosdep install --from-paths src --ignore-src --rosdistro indigo -y
+rosdep install --from-paths src --ignore-src --rosdistro jade -y
 
 # 5. finally - build
 catkin build
@@ -213,3 +213,4 @@ Links
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
 [shadow]: http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-jade-mavlink/
+[catkin]: https://catkin-tools.readthedocs.org/en/latest/
