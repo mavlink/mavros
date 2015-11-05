@@ -41,15 +41,14 @@ public:
 		uas = &uas_;
 
 		// general params
-		
 		lp_nh.param<std::string>("frame_id", frame_id, "fcu");
 		// tf subsection
 		lp_nh.param("tf/send", tf_send, true);
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu");
 
-		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("local/position", 10);
-		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("local/velocity", 10);
+		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
+		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
 	}
 
 	const message_map get_rx_handlers() {
