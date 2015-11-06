@@ -50,8 +50,8 @@ public:
 		sp_nh.param("reverse_throttle", reverse_throttle, false);
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
-		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
-		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "attitude");
+		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
 		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		if (tf_listen) {
@@ -118,8 +118,8 @@ private:
 		float q[4];
 
 		UAS::quaternion_to_mavlink(
-				UAS::transform_frame_enu_ned(Eigen::Quaterniond(tr.rotation())),
-				q);
+				UAS::transform_orientation_enu_ned(
+					UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))),q);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_q,
@@ -139,7 +139,7 @@ private:
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
-		auto av = UAS::transform_frame_enu_ned(ang_vel);
+		auto av = UAS::transform_frame_baselink_aircraft(ang_vel);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,

@@ -45,8 +45,8 @@ public:
 
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
-		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
-		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "setpoint");
+		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		if (tf_listen) {
@@ -92,7 +92,8 @@ private:
 		const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
 		auto p = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto q = UAS::transform_frame_enu_ned(Eigen::Quaterniond(tr.rotation()));
+		auto q = UAS::transform_orientation_enu_ned(
+				UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				MAV_FRAME_LOCAL_NED,

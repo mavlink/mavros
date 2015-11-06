@@ -96,7 +96,8 @@ private:
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
 		UAS::quaternion_to_mavlink(
-				UAS::transform_frame_enu_ned(q_enu),
+				UAS::transform_orientation_enu_ned(
+					UAS::transform_orientation_baselink_aircraft(q_enu)),
 				q);
 
 		auto position = UAS::transform_frame_enu_ned(
@@ -120,7 +121,8 @@ private:
 
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
 		UAS::quaternion_to_mavlink(
-				UAS::transform_frame_enu_ned(q_enu),
+				UAS::transform_orientation_enu_ned(
+					UAS::transform_orientation_baselink_aircraft(q_enu)),
 				q);
 
 		auto position = UAS::transform_frame_enu_ned(
