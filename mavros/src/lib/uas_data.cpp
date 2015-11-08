@@ -4,7 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -24,6 +24,7 @@ UAS::UAS() :
 	tf2_listener(tf2_buffer, true),
 	type(MAV_TYPE_GENERIC),
 	autopilot(MAV_AUTOPILOT_GENERIC),
+	base_mode(0),
 	target_system(1),
 	target_component(1),
 	connected(false),
@@ -42,10 +43,11 @@ void UAS::stop(void)
 
 /* -*- heartbeat handlers -*- */
 
-void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_)
+void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_, uint8_t base_mode_)
 {
 	type = type_;
 	autopilot = autopilot_;
+	base_mode = base_mode_;
 }
 
 void UAS::update_connection_status(bool conn_)

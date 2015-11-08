@@ -130,7 +130,7 @@ public:
 	/**
 	 * Update autopilot type on every HEARTBEAT
 	 */
-	void update_heartbeat(uint8_t type_, uint8_t autopilot_);
+	void update_heartbeat(uint8_t type_, uint8_t autopilot_, uint8_t base_mode_);
 
 	/**
 	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
@@ -151,6 +151,24 @@ public:
 	inline enum MAV_AUTOPILOT get_autopilot() {
 		uint8_t autopilot_ = autopilot;
 		return static_cast<enum MAV_AUTOPILOT>(autopilot_);
+	}
+
+	/**
+	 * @brief Returns arming status
+	 *
+	 * @note There may be race condition between SET_MODE and HEARTBEAT.
+	 */
+	inline bool get_armed() {
+		uint8_t base_mode_ = base_mode;
+		return base_mode_ & MAV_MODE_FLAG_SAFETY_ARMED;
+	}
+
+	/**
+	 * @brief Returns HIL status
+	 */
+	inline bool get_hil_state() {
+		uint8_t base_mode_ = base_mode;
+		return base_mode_ & MAV_MODE_FLAG_HIL_ENABLED;
 	}
 
 	/* -*- FCU target id pair -*- */
@@ -436,6 +454,7 @@ private:
 
 	std::atomic<uint8_t> type;
 	std::atomic<uint8_t> autopilot;
+	std::atomic<uint8_t> base_mode;
 
 	uint8_t target_system;
 	uint8_t target_component;

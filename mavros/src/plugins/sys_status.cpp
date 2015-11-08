@@ -573,7 +573,7 @@ private:
 		mavlink_msg_heartbeat_decode(msg, &hb);
 
 		// update context && setup connection timeout
-		uas->update_heartbeat(hb.type, hb.autopilot);
+		uas->update_heartbeat(hb.type, hb.autopilot, hb.base_mode);
 		uas->update_connection_status(true);
 		timeout_timer.stop();
 		timeout_timer.start();
