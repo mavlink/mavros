@@ -67,7 +67,8 @@ static const cmode_map arducopter_cmode_map = {
 	{ 13, "SPORT" },
 	{ 14, "FLIP" },
 	{ 15, "AUTOTUNE" },
-	{ 16, "POSHOLD" }
+	{ 16, "POSHOLD" },
+	{ 17, "BRAKE" }
 };
 
 /** APM:Rover custom mode -> string
