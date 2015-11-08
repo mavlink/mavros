@@ -787,6 +787,13 @@ private:
 				return true;
 			}
 
+			/**
+			 * @note That call may trigger unexpected arming change because
+			 *       base_mode arming flag state based on previous HEARTBEAT
+			 *       message value.
+			 */
+			base_mode |= (uas->get_armed()) ? MAV_MODE_FLAG_SAFETY_ARMED : 0;
+			base_mode |= (uas->get_hil_state()) ? MAV_MODE_FLAG_HIL_ENABLED : 0;
 			base_mode |= MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
 		}
 
