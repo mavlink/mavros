@@ -2,6 +2,42 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: Update ArduCopter mode list
+* plugin: sys_status `#423 <https://github.com/mavlink/mavros/issues/423>`_: set_mode set arming and HIL flags based on previous state
+* lib `#423 <https://github.com/mavlink/mavros/issues/423>`_: Save base_mode in UAS.
+* Finalized local position topic names
+* readme: add link to catkin-tools docs
+* readme `#409 <https://github.com/mavlink/mavros/issues/409>`_: merge mavlink and mavros installation instruction
+* Fixed redundant rotation of IMU data and redundant orientation data
+* plugin: setpoint_raw fix `#418 <https://github.com/mavlink/mavros/issues/418>`_: add attitude raw setpoint
+  Related `#402 <https://github.com/mavlink/mavros/issues/402>`_.
+* Added velocity output of FCU's local position estimate to ROS node
+* plugin: sys_status fix `#417 <https://github.com/mavlink/mavros/issues/417>`_: remove APM statustext quirk
+* plugin: waypoint fix `#414 <https://github.com/mavlink/mavros/issues/414>`_: remove GOTO service.
+  It is replaced with more standard global setpoint messages.
+* plugin: setpoint_raw fix `#415 <https://github.com/mavlink/mavros/issues/415>`_: add global position target support
+  Related to `#402 <https://github.com/mavlink/mavros/issues/402>`_.
+* plugin: command fix `#407 <https://github.com/mavlink/mavros/issues/407>`_: remove guided_enable sevice
+* plugin: setpoint_raw `#402 <https://github.com/mavlink/mavros/issues/402>`_: implement loopback.
+* plugin: setpoint_raw `#402 <https://github.com/mavlink/mavros/issues/402>`_: Initial import.
+* readme fix `#410 <https://github.com/mavlink/mavros/issues/410>`_: use only catkin tool
+* readme: add defaults for URL
+* pass new extended state to ros
+* python: add util to convert pymavlink message to Mavlink.msg
+* python: convert input to bytearray
+* python: add payload convertion util
+* gcs_bridge `#394 <https://github.com/mavlink/mavros/issues/394>`_: enable both UDPROS and TCPROS transports
+* EL: add try-except on handlers
+* event_launcher: show logfile path
+* event_launcher `#386 <https://github.com/mavlink/mavros/issues/386>`_: expand shell vars for logfile
+* Mavros library depends on mavros_msgs headers
+  Adding this dependency makes sure that mavros_msgs message headers are
+  generated before the mavros library is built, since it needs those
+  headers.
+* Contributors: Andreas Antener, Eddy, Jon Binney, Vladimir Ermakov
+
 0.15.0 (2015-09-17)
 -------------------
 * lib: fix timesync uninit bug.

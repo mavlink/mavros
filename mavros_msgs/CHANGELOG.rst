@@ -2,6 +2,19 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* msgs `#418 <https://github.com/mavlink/mavros/issues/418>`_: add message for attitude setpoints
+* plugin: waypoint fix `#414 <https://github.com/mavlink/mavros/issues/414>`_: remove GOTO service.
+  It is replaced with more standard global setpoint messages.
+* msgs `#415 <https://github.com/mavlink/mavros/issues/415>`_: Add message for raw global setpoint
+* msgs `#402 <https://github.com/mavlink/mavros/issues/402>`_: PositionTarget message type
+* setting constant values and reference docs
+* pass new extended state to ros
+* msgs `#371 <https://github.com/mavlink/mavros/issues/371>`_: add missing message
+* msgs `#371 <https://github.com/mavlink/mavros/issues/371>`_: add HomePosition message
+* Contributors: Andreas Antener, Vladimir Ermakov
+
 0.15.0 (2015-09-17)
 -------------------
 * msgs `#286 <https://github.com/mavlink/mavros/issues/286>`_: fix bug with packet header.
