@@ -213,7 +213,7 @@ private:
 	}
 
 	void override_cb(const mavros_msgs::OverrideRCIn::ConstPtr req) {
-		if (!uas->is_ardupilotmega())
+		if (!uas->is_ardupilotmega() && !uas->is_px4())
 			ROS_WARN_THROTTLE_NAMED(30, "rc", "RC override not supported by this FCU!");
 
 		rc_channels_override(req->channels);
