@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.0 (2015-11-09)
+-------------------
 * lib: Update ArduCopter mode list
 * plugin: sys_status `#423 <https://github.com/mavlink/mavros/issues/423>`_: set_mode set arming and HIL flags based on previous state
 * lib `#423 <https://github.com/mavlink/mavros/issues/423>`_: Save base_mode in UAS.
