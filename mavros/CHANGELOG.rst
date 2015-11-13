@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.1 (2015-11-13)
+-------------------
 * python: fix import error of goto service
 * don't warn anymore about px4 not supporting rc_io
 * Contributors: Andreas Antener, Vladimir Ermakov
