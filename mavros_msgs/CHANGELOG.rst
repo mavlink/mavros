@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.16.0 (2015-11-09)
 -------------------
 * msgs `#418 <https://github.com/mavlink/mavros/issues/418>`_: add message for attitude setpoints

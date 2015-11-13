@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* python: fix import error of goto service
+* don't warn anymore about px4 not supporting rc_io
+* Contributors: Andreas Antener, Vladimir Ermakov
+
 0.16.0 (2015-11-09)
 -------------------
 * lib: Update ArduCopter mode list
