@@ -449,6 +449,20 @@ public:
 		return transform_frame(in);
 	}
 
+	/**
+	 * @brief Transform heading from ROS to FCU frame.
+	 */
+	static inline double transform_frame_yaw_enu_ned(double yaw) {
+		return transform_frame_yaw(yaw);
+	}
+
+	/**
+	 * @brief Transform heading from FCU to ROS frame.
+	 */
+	static inline double transform_frame_yaw_ned_enu(double yaw) {
+		return transform_frame_yaw(yaw);
+	}
+
 private:
 	std::recursive_mutex mutex;
 
@@ -473,5 +487,9 @@ private:
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
+
+	static inline double transform_frame_yaw(double yaw) {
+		return -yaw;
+	}
 };
 };	// namespace mavros
