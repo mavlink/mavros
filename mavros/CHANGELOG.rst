@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* transform yaw and yaw rate from enu to ned
+* Contributors: Andreas Antener
+
 0.16.1 (2015-11-13)
 -------------------
 * python: fix import error of goto service
