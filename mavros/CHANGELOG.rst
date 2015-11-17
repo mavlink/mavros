@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.2 (2015-11-17)
+-------------------
 * transform yaw and yaw rate from enu to ned
 * Contributors: Andreas Antener
 
