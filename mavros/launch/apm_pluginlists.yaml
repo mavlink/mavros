@@ -11,6 +11,7 @@ plugin_blacklist:
 - 'vision_*'
 - distance_sensor
 - vibration
+- altitude
 
 plugin_whitelist: []
 #- 'sys_*'

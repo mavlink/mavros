@@ -9,6 +9,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   ActuatorControl.msg
+  Altitude.msg
   AttitudeTarget.msg
   BatteryStatus.msg
   CamIMUStamp.msg

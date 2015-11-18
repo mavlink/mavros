@@ -62,5 +62,8 @@
 	<class name="manual_control" type="mavplugin::ManualControlPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish manual control values</description>
 	</class>
+	<class name="altitude" type="mavplugin::AltitudePlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish altitude values</description>
+	</class>
 </library>
 
