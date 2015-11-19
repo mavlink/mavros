@@ -207,6 +207,12 @@ public:
 	 */
 	geometry_msgs::Quaternion get_attitude_orientation();
 
+	/**
+	 * @brief Get angular velocity from IMU data
+	 * @return vector3
+	 */
+	geometry_msgs::Vector3 get_attitude_angular_velocity();
+
 
 	/* -*- GPS data -*- */
 
