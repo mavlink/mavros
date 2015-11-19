@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* use safe methods to get imu data in local_position plugin
+* Contributors: Andreas Antener
+
 0.16.2 (2015-11-17)
 -------------------
 * transform yaw and yaw rate from enu to ned
