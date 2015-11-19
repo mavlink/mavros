@@ -112,6 +112,19 @@ geometry_msgs::Quaternion UAS::get_attitude_orientation()
 	}
 }
 
+geometry_msgs::Vector3 UAS::get_attitude_angular_velocity()
+{
+	lock_guard lock(mutex);
+	if (imu_data)
+		return imu_data->angular_velocity;
+	else {
+		// fallback
+		geometry_msgs::Vector3 v;
+		v.x = v.y = v.z = 0.0;
+		return v;
+	}
+}
+
 
 /* -*- GPS data -*- */
 
