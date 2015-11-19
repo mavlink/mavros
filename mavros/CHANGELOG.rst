@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.3 (2015-11-19)
+-------------------
 * use safe methods to get imu data in local_position plugin
 * Contributors: Andreas Antener
 
