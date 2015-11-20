@@ -55,11 +55,11 @@ private:
         auto ros_msg = boost::make_shared<mavros_msgs::Altitude>();
         ros_msg->header.stamp = ros::Time::now();
         
-        ros_msg->altitude_monotonic = altitude.altitude_monotonic;
-        ros_msg->altitude_amsl = altitude.altitude_amsl;
-        ros_msg->altitude_local = altitude.altitude_local;
-        ros_msg->altitude_relative = altitude.altitude_relative;
-        ros_msg->altitude_terrain = altitude.altitude_terrain;
+        ros_msg->monotonic = altitude.altitude_monotonic;
+        ros_msg->amsl = altitude.altitude_amsl;
+        ros_msg->local = altitude.altitude_local;
+        ros_msg->relative = altitude.altitude_relative;
+        ros_msg->terrain = altitude.altitude_terrain;
         ros_msg->bottom_clearance = altitude.bottom_clearance;
 
         altitude_pub.publish(ros_msg);
