@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2015 Vladimir Ermakov.
+ * Copyright 2015 Andreas Antener <andreas@uaventure.com>.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
