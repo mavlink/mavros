@@ -26,14 +26,17 @@ namespace mavplugin {
 class AltitudePlugin : public MavRosPlugin {
 public:
     AltitudePlugin() :
-        nh("~")
+        nh("~"),
+        uas(nullptr)
     { }
 
     /**
      * Plugin initializer. Constructor should not do this.
      */
-    void initialize(UAS &uas)
+    void initialize(UAS &uas_)
     {
+        uas = &uas_;
+        nh.param<std::string>("frame_id", frame_id, "fcu");
         altitude_pub = nh.advertise<mavros_msgs::Altitude>("altitude", 10);
     }
 
@@ -45,6 +48,8 @@ public:
 
 private:
     ros::NodeHandle nh;
+    UAS *uas;
+    std::string frame_id;
 
     ros::Publisher altitude_pub;
 
@@ -53,7 +58,7 @@ private:
         mavlink_msg_altitude_decode(msg, &altitude);
 
         auto ros_msg = boost::make_shared<mavros_msgs::Altitude>();
-        ros_msg->header.stamp = ros::Time::now();
+        ros_msg->header = uas->synchronized_header(frame_id, altitude.time_usec);
         
         ros_msg->monotonic = altitude.altitude_monotonic;
         ros_msg->amsl = altitude.altitude_amsl;
