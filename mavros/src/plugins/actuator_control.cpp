@@ -50,7 +50,7 @@ private:
 
 	/* -*- low-level send -*- */
 
-	//! message definiton here: @p https://pixhawk.ethz.ch/mavlink/#SET_ACTUATOR_CONTROL_TARGET
+	//! message definiton here: @p http://mavlink.org/messages/common#SET_ACTUATOR_CONTROL_TARGET
 	void set_actuator_control_target(const uint64_t time_usec,
 			const uint8_t group_mix,
 			const float controls[8])

@@ -1,6 +1,6 @@
 # Extended autopilot state
 #
-# https://pixhawk.ethz.ch/mavlink/#EXTENDED_SYS_STATE
+# http://mavlink.org/messages/common#EXTENDED_SYS_STATE
 
 uint8 VTOL_STATE_UNDEFINED = 0
 uint8 VTOL_STATE_TRANSITION_TO_FW = 1

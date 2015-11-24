@@ -140,7 +140,7 @@ private:
 	}
 
 	/* -*- low-level send -*- */
-	//! Message specification: @p https://pixhawk.ethz.ch/mavlink/#SET_POSITION_TARGET_GLOBAL_INT
+	//! Message specification: @p http://mavlink.org/messages/common#SET_POSITION_TARGET_GLOBAL_INT
 	void set_position_target_global_int(uint32_t time_boot_ms, uint8_t coordinate_frame, uint8_t type_mask,
 			int32_t lat_int, int32_t lon_int, float alt,
 			Eigen::Vector3d &velocity,
@@ -159,7 +159,7 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-	//! Message sepecification: @p https://pixhawk.ethz.ch/mavlink/#SET_ATTITIDE_TARGET
+	//! Message sepecification: @p http://mavlink.org/messages/common#SET_ATTITIDE_TARGET
 	void set_attitude_target(uint32_t time_boot_ms,
 			uint8_t type_mask,
 			Eigen::Quaterniond &orientation,

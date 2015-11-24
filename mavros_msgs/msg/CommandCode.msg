@@ -1,6 +1,6 @@
 # Some MAV_CMD command codes.
 # Actual meaning and params you may find in MAVLink documentation
-# https://pixhawk.ethz.ch/mavlink/
+# http://mavlink.org/messages/common#ENUM_MAV_CMD
 
 # some common MAV_CMD
 uint16 CMD_DO_SET_MODE = 176

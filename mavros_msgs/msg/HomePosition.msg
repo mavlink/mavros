@@ -1,5 +1,5 @@
 # MAVLink message: HOME_POSITION
-# https://pixhawk.ethz.ch/mavlink/#HOME_POSITION
+# http://mavlink.org/messages/common#HOME_POSITION
 
 std_msgs/Header header
 

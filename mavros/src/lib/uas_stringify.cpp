@@ -259,6 +259,7 @@ std::string UAS::str_autopilot(enum MAV_AUTOPILOT ap)
 	return autopilot_strings[idx];
 }
 
+//! @p http://mavlink.org/messages/common#ENUM_MAV_TYPE
 static const std::array<const std::string, 28> type_strings = {
 	/*  0 */ "Generic",
 	/*  1 */ "Fixed-Wing",
