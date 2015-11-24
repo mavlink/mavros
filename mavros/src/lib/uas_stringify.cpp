@@ -259,11 +259,11 @@ std::string UAS::str_autopilot(enum MAV_AUTOPILOT ap)
 	return autopilot_strings[idx];
 }
 
-static const std::array<const std::string, 27> type_strings = {
+static const std::array<const std::string, 28> type_strings = {
 	/*  0 */ "Generic",
 	/*  1 */ "Fixed-Wing",
 	/*  2 */ "Quadrotor",
-	/*  3 */ "Coaxial",
+	/*  3 */ "Coaxial-Heli",
 	/*  4 */ "Helicopter",
 	/*  5 */ "Antenna-Tracker",
 	/*  6 */ "GCS",
@@ -281,12 +281,13 @@ static const std::array<const std::string, 27> type_strings = {
 	/* 18 */ "Onboard-Controller",
 	/* 19 */ "VTOL-Duorotor",
 	/* 20 */ "VTOL-Quadrotor",
-	/* 21 */ "VTOL-RESERVED1",
+	/* 21 */ "VTOL-Tiltrotor",
 	/* 22 */ "VTOL-RESERVED2",
 	/* 23 */ "VTOL-RESERVED3",
 	/* 24 */ "VTOL-RESERVED4",
 	/* 25 */ "VTOL-RESERVED5",
-	/* 26 */ "Gimbal"
+	/* 26 */ "Gimbal",
+	/* 27 */ "ADS-B"
 };
 
 std::string UAS::str_type(enum MAV_TYPE type)
