@@ -58,7 +58,7 @@ private:
         mavlink_msg_altitude_decode(msg, &altitude);
 
         auto ros_msg = boost::make_shared<mavros_msgs::Altitude>();
-        ros_msg->header = uas->synchronized_header(frame_id, altitude.time_usec);
+        ros_msg->header = uas->synchronized_header(frame_id, time_usec());
         
         ros_msg->monotonic = altitude.altitude_monotonic;
         ros_msg->amsl = altitude.altitude_amsl;
