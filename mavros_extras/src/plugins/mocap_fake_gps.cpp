@@ -1,14 +1,13 @@
 /**
- * @brief MocapPoseEstimate plugin
- * @file mocap_pose_estimate.cpp
- * @author Tony Baltovski <tony.baltovski@gmail.com>
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @brief Fake GPS with MOCAP plugin
+ * @file mocap_fake_gps.cpp
+ * @author Christoph Tobler <toblech@ethz.ch>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov, Tony Baltovski.
+ * Copyright 2015 Christoph Tobler.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -23,15 +22,12 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <vicon_bridge/TfDistortInfo.h>
 
-
 namespace mavplugin {
 /**
  * @brief MocapFakeGPS plugin
  *
  * Sends fake GPS from motion capture data to FCU.
  */
-
-
 class MocapFakeGPSPlugin : public MavRosPlugin
 {
 public:
@@ -42,16 +38,10 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-
 		uas = &uas_;
-
 		mocap_tf_d_sub = mp_nh.subscribe("/tf_distort/out", 1, &MocapFakeGPSPlugin::mocap_tf_d_cb, this);
-
 		mocap_tf_params_sub = mp_nh.subscribe("/tf_distort/info", 1, &MocapFakeGPSPlugin::mocap_tf_params_cb, this);
-
 		mocap_tf_sub = mp_nh.subscribe("/vicon/DJI_450/DJI_450_drop", 1, &MocapFakeGPSPlugin::mocap_tf_cb, this);
-
-		
 	}
 
 	const message_map get_rx_handlers() {
@@ -99,7 +89,6 @@ private:
 		UAS_FCU(uas)->send_message(&msg);
 	}
 
-
 	void mocap_pose_send
 		(uint64_t usec,
 			float q[4],
@@ -131,7 +120,6 @@ private:
   		double lon_zurich = 8.5500 * M_PI / 180;  // rad
   		float earth_radius = 6371000;  // m
 
-
   		Eigen::Quaterniond q_enu;
 		float q[4];
 
@@ -146,8 +134,6 @@ private:
 					trans->transform.translation.y,
 					trans->transform.translation.z));
 
-
-  		
   		double north = position.x();
   		double east = position.y();
 		double n_rad = north / earth_radius;
@@ -166,12 +152,10 @@ private:
 		    	lon_rad = lon_zurich;
 		}
 
-
 		double dn = north - old_n; //[m]
 		double de = east - old_e; //[m]
 		double dz = z - old_z; //[m]
 		double dt = trans->header.stamp.toSec() - old_t; //[s]
-
 
 		//store old values
 		old_n = north;
@@ -196,11 +180,6 @@ private:
 		}
 
 		double _cog_deg = _cog_rad * 180 / M_PI;
-
-
-		
-		//ROS_WARN(" = %8.10f   dt = %8.6f", old_t, dt);
-		//ROS_WARN("test eph = %2.4f", (double)gps_eph);
 
 		uint8_t fix_type = 3; //3D
 		int32_t lat = (lat_rad * 180 / M_PI) * 10000000; // [degrees * 1E7]
