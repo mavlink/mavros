@@ -50,6 +50,9 @@ public:
 		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
 		mp_nh.param("use_pose", use_pose, true);
 
+		/** @note For Optitrack ROS package, data are sent with z as EAST, x as NORTH, and y as UP (x and z depends on ground plane calibration) */
+		mp_nh.param("use_motive_zxy", use_motive_zxy, true);
+
 		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
@@ -71,6 +74,9 @@ private:
 
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
+
+	//Defined Optitrack Coordinates
+	bool use_motive_zxy;
 
 	/* -*- low-level send -*- */
 	void mocap_pose_send
@@ -98,12 +104,27 @@ private:
 		UAS::quaternion_to_mavlink(
 				UAS::transform_frame_enu_ned(q_enu),
 				q);
+		auto x = pose->pose.position.x;
+		auto y = pose->pose.position.y;
+		auto z = pose->pose.position.z;
+
+		// this converts Optitrack's coordinates to Mavlink ones
+		if(use_motive_zxy){
+			z = y;
+			y = x;
+			x = pose->pose.position.z;
+
+			float tmp = q[2];
+			q[2] = q[1];
+			q[1] = q[0];
+			q[0] = tmp;
+		}
 
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
-					pose->pose.position.x,
-					pose->pose.position.y,
-					pose->pose.position.z));
+					x,
+					y,
+					z));
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
