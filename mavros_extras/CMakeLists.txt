@@ -69,6 +69,7 @@ add_library(mavros_extras
   src/plugins/px4flow.cpp
   src/plugins/image_pub.cpp
   src/plugins/mocap_pose_estimate.cpp
+  src/plugins/mocap_fake_gps.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/vibration.cpp
@@ -101,6 +102,7 @@ add_executable(servo_state_publisher
 target_link_libraries(servo_state_publisher
   ${catkin_LIBRARIES}
 )
+
 
 #############
 ## Install ##

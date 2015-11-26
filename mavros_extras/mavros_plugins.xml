@@ -11,6 +11,9 @@
 	<class name="mocap_pose_estimate" type="mavplugin::MocapPoseEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send motion capture pose estimate to FCU.</description>
 	</class>
+	<class name="mocap_fake_gps" type="mavplugin::MocapFakeGPSPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Send fake GPS from motion capture to FCU.</description>
+	</class>
 	<class name="vision_pose_estimate" type="mavplugin::VisionPoseEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Send vision pose estimate to FCU.</description>
 	</class>
