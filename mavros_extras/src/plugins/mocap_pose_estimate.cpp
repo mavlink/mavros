@@ -97,34 +97,32 @@ private:
 	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
+		// Transformation matrix to convert Motive Optitrack to Mavlink supported coordinates (ENU as zxy to ENU as xyz)
+		Eigen::AngleAxis<double> tf1(-M_PI_2,Eigen::Vector3d(1.,0.,0.));
+		Eigen::AngleAxis<double> tf2(-M_PI_2,Eigen::Vector3d(0.,0.,1.));
+
 		Eigen::Quaterniond q_enu;
 		float q[4];
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
+		
+		//Apply Motive Transform if needed
+		if(use_motive_zxy){
+			q_enu = (q_enu * tf1) * tf2 ;
+		}
+
 		UAS::quaternion_to_mavlink(
 				UAS::transform_frame_enu_ned(q_enu),
 				q);
-		auto x = pose->pose.position.x;
-		auto y = pose->pose.position.y;
-		auto z = pose->pose.position.z;
 
-		// this converts Optitrack's coordinates to Mavlink ones
+		Eigen::Vector3d position(pose->pose.position.x,pose->pose.position.y,pose->pose.position.z);
+
+		//Apply Motive Transform if needed
 		if(use_motive_zxy){
-			z = y;
-			y = x;
-			x = pose->pose.position.z;
-
-			float tmp = q[2];
-			q[2] = q[1];
-			q[1] = q[0];
-			q[0] = tmp;
+			position = (tf1.matrix() * tf2.matrix()) * position;
 		}
 
-		auto position = UAS::transform_frame_enu_ned(
-				Eigen::Vector3d(
-					x,
-					y,
-					z));
+		position = UAS::transform_frame_enu_ned(position);
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
