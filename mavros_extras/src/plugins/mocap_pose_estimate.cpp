@@ -98,8 +98,8 @@ private:
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
 		// Transformation matrix to convert Motive Optitrack to Mavlink supported coordinates (ENU as zxy to ENU as xyz)
-		Eigen::AngleAxis<double> tf1(-M_PI_2,Eigen::Vector3d(1.,0.,0.));
-		Eigen::AngleAxis<double> tf2(-M_PI_2,Eigen::Vector3d(0.,0.,1.));
+        Eigen::Transform3d tf(Eigen::Transform3d(Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitX()))
+                              *Eigen::Transform3d(Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitZ())));
 
 		Eigen::Quaterniond q_enu;
 		float q[4];
@@ -108,7 +108,8 @@ private:
 		
 		//Apply Motive Transform if needed
 		if(use_motive_zxy){
-			q_enu = (q_enu * tf1) * tf2 ;
+			q_enu = (q_enu * Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitX()))
+                        * Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitZ()) ;
 		}
 
 		UAS::quaternion_to_mavlink(
@@ -119,7 +120,7 @@ private:
 
 		//Apply Motive Transform if needed
 		if(use_motive_zxy){
-			position = (tf1.matrix() * tf2.matrix()) * position;
+			position = tf * position;
 		}
 
 		position = UAS::transform_frame_enu_ned(position);
