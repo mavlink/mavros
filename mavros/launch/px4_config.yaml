@@ -149,6 +149,8 @@ mocap:
   # select mocap source
   use_tf: false   # ~mocap/tf
   use_pose: true  # ~mocap/pose
+  # select Optitrack Motive coordinates
+  use_motive_zxy: false # Set true if you use Motive
 
 # px4flow
 px4flow:

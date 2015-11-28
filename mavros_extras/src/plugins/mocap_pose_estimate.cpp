@@ -50,6 +50,9 @@ public:
 		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
 		mp_nh.param("use_pose", use_pose, true);
 
+		/** @note For Optitrack ROS package, data are sent with z as EAST, x as NORTH, and y as UP (x and z depends on ground plane calibration) */
+		mp_nh.param("use_motive_zxy", use_motive_zxy, true);
+
 		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
@@ -72,6 +75,9 @@ private:
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
 
+	//Defined Optitrack Coordinates
+	bool use_motive_zxy;
+
 	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
@@ -91,19 +97,33 @@ private:
 	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
+		// Transformation matrix to convert Motive Optitrack to Mavlink supported coordinates (ENU as zxy to ENU as xyz)
+        Eigen::Transform3d tf(Eigen::Transform3d(Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitX()))
+                              *Eigen::Transform3d(Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitZ())));
+
 		Eigen::Quaterniond q_enu;
 		float q[4];
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
+		
+		//Apply Motive Transform if needed
+		if(use_motive_zxy){
+			q_enu = (q_enu * Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitX()))
+                        * Eigen::AngleAxisd(-M_PI_2,Eigen::Vector3d::UnitZ()) ;
+		}
+
 		UAS::quaternion_to_mavlink(
 				UAS::transform_frame_enu_ned(q_enu),
 				q);
 
-		auto position = UAS::transform_frame_enu_ned(
-				Eigen::Vector3d(
-					pose->pose.position.x,
-					pose->pose.position.y,
-					pose->pose.position.z));
+		Eigen::Vector3d position(pose->pose.position.x,pose->pose.position.y,pose->pose.position.z);
+
+		//Apply Motive Transform if needed
+		if(use_motive_zxy){
+			position = tf * position;
+		}
+
+		position = UAS::transform_frame_enu_ned(position);
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
