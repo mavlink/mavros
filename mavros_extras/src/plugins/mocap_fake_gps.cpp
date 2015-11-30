@@ -22,7 +22,6 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <vicon_bridge/TfDistortInfo.h>
 
-
 namespace mavplugin {
 /**
  * @brief MocapFakeGPS plugin
@@ -41,10 +40,8 @@ public:
 	void initialize(UAS &uas_)
 	{
 		uas = &uas_;
-
 		mocap_tf_d_sub = mp_nh.subscribe("/tf_distort/out", 1, &MocapFakeGPSPlugin::mocap_tf_d_cb, this);
 		mocap_tf_params_sub = mp_nh.subscribe("/tf_distort/info", 1, &MocapFakeGPSPlugin::mocap_tf_params_cb, this);
-
 	}
 
 	const message_map get_rx_handlers() {
@@ -96,6 +93,7 @@ private:
   		const double lon_zurich = 8.5500 * M_PI / 180;  // rad
   		const float earth_radius = 6371000;  // m
 
+
   		Eigen::Quaterniond q_enu;
 		float q[4];
 
@@ -109,7 +107,7 @@ private:
 					trans->transform.translation.x,
 					trans->transform.translation.y,
 					trans->transform.translation.z));
-  		
+
   		double north = position.x();
   		double east = position.y();
 		double n_rad = north / earth_radius;
