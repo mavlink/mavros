@@ -15,7 +15,7 @@ import rospy
 import sys, select, termios, tty
 from tf.transformations import quaternion_from_euler
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Header, Float64
+from std_msgs.msg import Header, Float64, Empty
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion, Point
 from mavros.msg import OverrideRCIn
 from mavros.srv import CommandBool
@@ -105,8 +105,9 @@ def rc_override_control(args):
     rospy.loginfo("MAV-Teleop: RC Override control type.")
     
 
-    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override", OverrideRCIn, queue_size=10)
+    override_pub = rospy.Publisher(args.mavros_ns + "/rc/override_joy", OverrideRCIn, queue_size=10)
     pos_pub = rospy.Publisher(args.mavros_ns + "/setpoint_position/local", PoseStamped, queue_size=10)
+    test_video_lag_pub = rospy.Publisher("/test_video_lag", Empty, queue_size=1)
     
     throttle_ch = 1000
 
@@ -126,10 +127,20 @@ def rc_override_control(args):
 	    land(args)
 	elif key == 'z':  
 	    pose = PoseStamped(header=Header(stamp=rospy.get_rostime()))
-	    pose.pose.position = Point(x=0.0, y=0.0, z=2.0)
+	    pose.pose.position = Point(x=0.0, y=0.0, z=2.3)
 	    q = quaternion_from_euler(0, 0, 0.0)
 	    pose.pose.orientation = Quaternion(*q)
 	    pos_pub.publish(pose)  
+	elif key == 'x':  
+	    pose = PoseStamped(header=Header(stamp=rospy.get_rostime()))
+	    pose.pose.position = Point(x=0.0, y=0.0, z=0.3)
+	    q = quaternion_from_euler(0, 0, 0.0)
+	    pose.pose.orientation = Quaternion(*q)
+	    pos_pub.publish(pose)      
+	elif key == 'q':  
+	    msg = Empty()
+	    test_video_lag_pub.publish(msg)  
+	    rospy.loginfo("Test video lag")
 	elif key == 'G':
 	    set_mode(args, "GUIDED")
 	elif key == 'H':
@@ -142,14 +153,14 @@ def rc_override_control(args):
 	    throttle_ch=1500
 	elif key == 'v': #DOWN
 	    throttle_ch-=10 
-	elif key == 'j': #LEFT
-	    roll=1600   
-	elif key == 'l': #RIGHT
-	    roll=1400   
-	elif key == 'i': #FORWARD
-	    pitch=1600 
-	elif key == 'k': #BACKWARD
-	    pitch=1400  	
+	#elif key == 'j': #LEFT
+	#    roll=1600   
+	#elif key == 'l': #RIGHT
+	#    roll=1400   
+	#elif key == 'i': #FORWARD
+	#    pitch=1600 
+	#elif key == 'k': #BACKWARD
+	#    pitch=1400  	
 	elif key == '0': #FIX
 	    throttle_ch=1000  
 	elif key == '1':

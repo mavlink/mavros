@@ -1,7 +1,7 @@
 # Common configuration for PX4 autopilot
 #
 # node:
-startup_px4_usb_quirk: true
+startup_px4_usb_quirk: false
 
 # --- system plugins ---
 
