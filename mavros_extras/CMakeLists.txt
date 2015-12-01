@@ -103,7 +103,6 @@ target_link_libraries(servo_state_publisher
   ${catkin_LIBRARIES}
 )
 
-
 #############
 ## Install ##
 #############
