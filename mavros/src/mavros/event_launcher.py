@@ -222,7 +222,7 @@ class Launcher(object):
             return cb
 
         self.known_events.append(name)
-        self.triggers = rospy.Service(params['service'], Trigger, gen_cb(name))
+        self.triggers[name] = rospy.Service(params['service'], Trigger, gen_cb(name))
         rospy.loginfo("Trigger: %s (%s)", name, params['service'])
 
     def _load_shell(self, name, params):
@@ -231,7 +231,7 @@ class Launcher(object):
         events, actions = self._get_evt_act(params)
 
         def expandpath(p):
-            return os.path.expandvars(os.path.expanduser(p))
+            return os.path.expanduser(os.path.expandvars(p))
 
         args = params['shell']
         if not isinstance(args, list):
