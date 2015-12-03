@@ -44,7 +44,7 @@ class SetpointPosition:
         # publisher for mavros/setpoint_position/local
         self.pub = SP.get_pub_position_local(queue_size=10)
         # subscriber for mavros/local_position/local
-        self.sub = rospy.Subscriber(mavros.get_topic('local_position', 'local'),
+        self.sub = rospy.Subscriber(mavros.get_topic('local_position', 'pose'),
                                     SP.PoseStamped, self.reached)
 
         try:
