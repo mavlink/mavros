@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2015 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -36,7 +37,8 @@ def do_long(args):
             param3=args.param3,
             param4=args.param4,
             param5=args.param5,
-            param6=args.param6)
+            param6=args.param6,
+            param7=args.param7)
     except rospy.ServiceException as ex:
         fault(ex)
 
