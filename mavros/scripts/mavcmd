@@ -28,13 +28,15 @@ def _check_ret(args, ret):
 
 def do_long(args):
     try:
-        ret = command.long(command=args.command, confirmation=int(args.confirmation),
-                      param1=args.param1,
-                      param2=args.param2,
-                      param3=args.param3,
-                      param4=args.param4,
-                      param5=args.param5,
-                      param6=args.param6)
+        ret = command.long(
+            broadcast=args.broadcast,
+            command=args.command, confirmation=int(args.confirmation),
+            param1=args.param1,
+            param2=args.param2,
+            param3=args.param3,
+            param4=args.param4,
+            param5=args.param5,
+            param6=args.param6)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -199,6 +201,7 @@ def main():
     long_args = subarg.add_parser('long', help="Send any command (COMMAND_LONG)")
     long_args.set_defaults(func=do_long)
     long_args.add_argument('-c', '--confirmation', action='store_true', help="Require confirmation")
+    long_args.add_argument('-b', '--broadcast', action='store_true', help="Broadcast command")
     long_args.add_argument('command', type=int, help="Command Code")
     long_args.add_argument('param1', type=float, help="param1")
     long_args.add_argument('param2', type=float, help="param2")
