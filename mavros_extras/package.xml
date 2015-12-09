@@ -29,6 +29,7 @@
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>urdf</depend>
+  <depend>vicon_bridge</depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
