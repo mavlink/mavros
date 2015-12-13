@@ -6,7 +6,6 @@ find_package(mavlink REQUIRED)
 # fallback for older mavlink package.
 if (NOT DEFINED mavlink_DIALECTS)
   list(APPEND mavlink_DIALECTS "ardupilotmega")
-  list(APPEND mavlink_DIALECTS "pixhawk")
   list(APPEND mavlink_DIALECTS "common")
 endif ()
 
