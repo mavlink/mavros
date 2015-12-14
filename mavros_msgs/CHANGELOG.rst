@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.4 (2015-12-14)
+-------------------
 * Update mavlink message documentation links
 * remove "altitude\_" prefix from members
 * implemented altitude plugin

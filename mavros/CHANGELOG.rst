@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.4 (2015-12-14)
+-------------------
 * scripts: checkid: be always verbose, add --follow
 * scripts: fix copyright indent
 * scripts: mavcmd: Fix bug: param7 not passed to service call!
