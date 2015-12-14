@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn `#452 <https://github.com/mavlink/mavros/issues/452>`_: remove pixhawk, add paparazzi dialects.
+  Mavlink package provide information about known dialects,
+  so we do not touch mavlink_dialect.h selection ifs.
+* Contributors: Vladimir Ermakov
+
 0.16.3 (2015-11-19)
 -------------------
 

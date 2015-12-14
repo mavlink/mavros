@@ -2,6 +2,25 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* scripts: checkid: be always verbose, add --follow
+* scripts: fix copyright indent
+* scripts: mavcmd: Fix bug: param7 not passed to service call!
+* scripts `#382 <https://github.com/mavlink/mavros/issues/382>`_: Add ID checker script.
+  It is not complete, but i hope it helps in current state.
+* scripts: mavcmd: Add support for broadcast requests
+* event_launcher: fix bug: Trigger service server is not saved in Launcher
+  Also fixes: environment variables may contain ~ (user dir) in expansion.
+* using timestamp from mavlink message
+* Update mavlink message documentation links
+* lib: update MAV_TYPE stringify
+* lib: Add RATTITUDE PX4 mode
+* remove "altitude\_" prefix from members
+* updated copyright
+* implemented altitude plugin
+* Contributors: Andreas Antener, Vladimir Ermakov
+
 0.16.3 (2015-11-19)
 -------------------
 * use safe methods to get imu data in local_position plugin
