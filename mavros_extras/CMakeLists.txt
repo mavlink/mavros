@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   urdf
   vicon_bridge
+  Eigen3
 )
 
 ## System dependencies are found with CMake's conventions
