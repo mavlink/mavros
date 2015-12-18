@@ -63,6 +63,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
+  ${vicon_bridge_INCLUDE_DIRS}
 )
 
 add_library(mavros_extras
@@ -79,6 +80,7 @@ add_library(mavros_extras
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${vicon_bridge_INCLUDE_DIRS}
 )
 
 ## Declare a cpp executable
