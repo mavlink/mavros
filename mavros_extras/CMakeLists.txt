@@ -80,7 +80,7 @@ add_library(mavros_extras
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${vicon_bridge_INCLUDE_DIRS}
+  ${vicon_bridge_LIBRARIES}
 )
 
 ## Declare a cpp executable
