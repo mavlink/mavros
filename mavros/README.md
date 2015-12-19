@@ -156,7 +156,7 @@ so mavros package (and all plugin packages) have compile-time option `MAVLINK_DI
 
 If you want change dialect change workspace config:
 
-    catkin config --cmake-args -DMAVLINK_DIALECT=pixhawk
+    catkin config --cmake-args -DMAVLINK_DIALECT=common
 
 
 Contributing
