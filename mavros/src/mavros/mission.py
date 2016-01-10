@@ -125,7 +125,6 @@ pull = None
 push = None
 clear = None
 set_current = None
-goto = None
 
 
 def subscribe_waypoints(cb, **kvargs):
@@ -133,7 +132,7 @@ def subscribe_waypoints(cb, **kvargs):
 
 
 def _setup_services():
-    global pull, push, clear, set_current, goto
+    global pull, push, clear, set_current
 
     def _get_proxy(name, type):
         return rospy.ServiceProxy(mavros.get_topic('mission', name), type)
@@ -142,7 +141,6 @@ def _setup_services():
     push = _get_proxy('push', WaypointPush)
     clear = _get_proxy('clear', WaypointClear)
     set_current = _get_proxy('set_current', WaypointSetCurrent)
-    goto = _get_proxy('goto', WaypointGOTO)
 
 
 # register updater
