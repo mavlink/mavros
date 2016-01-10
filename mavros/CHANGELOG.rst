@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.5 (2016-01-11)
+-------------------
 * scripts: mavwp `#465 <https://github.com/mavlink/mavros/issues/465>`_: Remove WaypointGOTO from scrips and python library
 * node: Report mavlink package version
 * lib: Add APM:Plane QuadPlane modes.
