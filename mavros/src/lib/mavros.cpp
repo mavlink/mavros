@@ -32,7 +32,7 @@ MavRos::MavRos() :
 	std::string fcu_url, gcs_url;
 	int system_id, component_id;
 	int tgt_system_id, tgt_component_id;
-	bool px4_usb_quirk;
+	bool px4_usb_quirk, allow_udp_broadcast;
 	ros::V_string plugin_blacklist{}, plugin_whitelist{};
 	MAVConnInterface::Ptr fcu_link;
 
@@ -47,6 +47,7 @@ MavRos::MavRos() :
 	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 	nh.getParam("plugin_blacklist", plugin_blacklist);
 	nh.getParam("plugin_whitelist", plugin_whitelist);
+	nh.param("allow_udp_broadcast", allow_udp_broadcast, false);
 
 	// Now we use FCU URL as a hardware Id
 	UAS_DIAG(&mav_uas).setHardwareID(fcu_url);
@@ -70,7 +71,7 @@ MavRos::MavRos() :
 	if (gcs_url != "") {
 		ROS_INFO_STREAM("GCS URL: " << gcs_url);
 		try {
-			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
+			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id, allow_udp_broadcast);
 
 			gcs_link_diag.set_mavconn(gcs_link);
 			UAS_DIAG(&mav_uas).add(gcs_link_diag);
