@@ -58,7 +58,7 @@ static bool resolve_address_udp(io_service &io, int chan, std::string host, unsi
 
 MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 		std::string bind_host, unsigned short bind_port,
-		std::string remote_host, unsigned short remote_port) :
+        std::string remote_host, unsigned short remote_port, bool allow_broadcast) :
 	MAVConnInterface(system_id, component_id),
 	remote_exists(false),
 	tx_in_progress(false),
@@ -82,6 +82,11 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	try {
 		socket.open(udp::v4());
+        if(allow_broadcast)
+        {
+           boost::asio::socket_base::broadcast option(true);
+           socket.set_option(option);
+        }
 		socket.bind(bind_ep);
 	}
 	catch (boost::system::system_error &err) {

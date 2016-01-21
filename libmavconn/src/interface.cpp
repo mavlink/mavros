@@ -224,7 +224,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 
 static MAVConnInterface::Ptr url_parse_udp(
 		std::string hosts, std::string query,
-		uint8_t system_id, uint8_t component_id)
+        uint8_t system_id, uint8_t component_id, bool allow_broadcast)
 {
 	std::string bind_pair, remote_pair;
 	std::string bind_host, remote_host;
@@ -246,7 +246,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 	return boost::make_shared<MAVConnUDP>(system_id, component_id,
 			bind_host, bind_port,
-			remote_host, remote_port);
+            remote_host, remote_port, allow_broadcast);
 }
 
 static MAVConnInterface::Ptr url_parse_tcp_client(
@@ -280,7 +280,7 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 }
 
 MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
-		uint8_t system_id, uint8_t component_id) {
+        uint8_t system_id, uint8_t component_id, bool allow_udp_broadcast) {
 
 	/* Based on code found here:
 	 * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
@@ -326,7 +326,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			path.c_str(), query.c_str());
 
 	if (proto == "udp")
-		return url_parse_udp(host, query, system_id, component_id);
+        return url_parse_udp(host, query, system_id, component_id, allow_udp_broadcast);
 	else if (proto == "tcp")
 		return url_parse_tcp_client(host, query, system_id, component_id);
 	else if (proto == "tcp-l")

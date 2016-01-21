@@ -173,7 +173,7 @@ public:
 	 *         or throw @a DeviceError if error occured.
 	 */
 	static Ptr open_url(std::string url,
-			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+                        uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE, bool allow_udp_broadcast = false);
 
 protected:
 	int channel;

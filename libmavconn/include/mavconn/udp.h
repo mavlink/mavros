@@ -40,7 +40,7 @@ public:
 	 */
 	MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string bind_host = "localhost", unsigned short bind_port = 14555,
-			std::string remote_host = "", unsigned short remote_port = 14550);
+                        std::string remote_host = "", unsigned short remote_port = 14550, bool allow_broadcast = false);
 	~MAVConnUDP();
 
 	void close();
