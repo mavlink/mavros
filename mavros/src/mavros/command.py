@@ -37,7 +37,7 @@ trigger_control = None
 
 
 def _setup_services():
-    global long, int, arming, set_home, takeoff, land, guided_enable, trigger_control
+    global long, int, arming, set_home, takeoff, land, trigger_control
     long = _get_proxy('command', CommandLong)
     int = _get_proxy('command_int', CommandInt)
     arming = _get_proxy('arming', CommandBool)

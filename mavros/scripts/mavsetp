@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Nuno Marques, Vladimir Ermakov.
+# Copyright 2014,2016 Nuno Marques, Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -17,6 +17,7 @@ import mavros
 
 from mavros import command, setpoint as sp
 from mavros.utils import *
+from mavros_msgs.srv import SetMode
 from tf.transformations import quaternion_from_euler
 
 _ONCE_DELAY = 3
@@ -36,10 +37,18 @@ def publish_once(args, pub, msg):
 
 
 def enable_offboard():
+    print("Requesting OFFBOARD mode...")
+
     try:
-        command.guided_enable(value=True)
+        set_mode = rospy.ServiceProxy(mavros.get_topic('set_mode'), SetMode)
+        ret = set_mode(custom_mode="OFFBOARD")
     except rospy.ServiceException as ex:
         fault(ex)
+
+    if not ret.success:
+        print("Request failed. Check mavros logs")
+    else:
+        print("OFFBOARD mode are set.")
 
 
 def do_local_pos(args):
