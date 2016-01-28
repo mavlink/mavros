@@ -48,7 +48,7 @@ public:
 		// default to map (world-fixed,ENU as per REP-105).
 		lp_nh.param<std::string>("frame_id", frame_id, "map");
 		// Important tf subsection
-		// Report the transform from world to base_link here.  
+		// Report the transform from world to base_link here.
 		lp_nh.param("tf/send", tf_send, true);
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
@@ -80,7 +80,7 @@ private:
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF
 	bool tf_send;
-	bool tf_send_fcu; //!< report NED->aircraft in tf tree
+	bool tf_send_fcu;	//!< report NED->aircraft in tf tree
 
 	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
@@ -97,7 +97,7 @@ private:
 		Eigen::Quaterniond enu_orientation;
 		tf::quaternionMsgToEigen(enu_orientation_msg,enu_orientation);
 		auto baselink_linear = UAS::transform_frame_enu_baselink(enu_velocity,enu_orientation.inverse());
-		
+
 		//--------------- Generate Message Pointers ---------------//
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
@@ -136,7 +136,7 @@ private:
 
 			uas->tf2_broadcaster.sendTransform(transform);
 		}
-		if (tf_send_fcu){
+		if (tf_send_fcu) {
 			//--------------- Report NED->aircraft transform ---------------//
 			geometry_msgs::TransformStamped ned_aircraft_tf;
 
@@ -145,13 +145,13 @@ private:
 			ned_aircraft_tf.child_frame_id = "aircraft";
 
 			//Don't just report the data from the mavlink message,
-			//actually perform rotations to see if anything is 
+			//actually perform rotations to see if anything is
 			//wrong.
 			auto ned_position = UAS::transform_frame_enu_ned(enu_position);
 			tf::vectorEigenToMsg(ned_position, ned_aircraft_tf.transform.translation);
 
 			auto ned_orientation = UAS::transform_orientation_enu_ned(
-							UAS::transform_orientation_baselink_aircraft(enu_orientation));
+					UAS::transform_orientation_baselink_aircraft(enu_orientation));
 			tf::quaternionEigenToMsg(ned_orientation,ned_aircraft_tf.transform.rotation);
 			uas->tf2_broadcaster.sendTransform(ned_aircraft_tf);
 		}

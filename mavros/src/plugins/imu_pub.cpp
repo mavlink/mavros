@@ -26,7 +26,6 @@
 #include <geometry_msgs/Vector3.h>
 
 namespace mavplugin {
-
 /* Note: this coefficents before been inside plugin class,
  * but after #320 something broken and in resulting plugins.so
  * there no symbols for that constants.
@@ -46,8 +45,7 @@ static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
 //! millBar to Pascal coeff
 static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 
-static constexpr double RAD_TO_DEG = 180.0/M_PI;
-
+static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 
 
 /**
@@ -70,10 +68,10 @@ public:
 		uas = &uas_;
 
 		// we rotate the data from the aircraft-frame to the base_link frame.
-		// Additionally we report the orientation of the vehicle to describe the 
-		// transformation from the ENU frame to the base_link frame (ENU <-> base_link).  
-		// THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft)  
-		imu_nh.param<std::string>("frame_id", frame_id, "base_link"); 
+		// Additionally we report the orientation of the vehicle to describe the
+		// transformation from the ENU frame to the base_link frame (ENU <-> base_link).
+		// THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft)
+		imu_nh.param<std::string>("frame_id", frame_id, "base_link");
 		imu_nh.param("linear_acceleration_stdev", linear_stdev, 0.0003);		// check default by MPU6000 spec
 		imu_nh.param("angular_velocity_stdev", angular_stdev, 0.02 * (M_PI / 180.0));	// check default by MPU6000 spec
 		imu_nh.param("orientation_stdev", orientation_stdev, 1.0);
@@ -215,7 +213,7 @@ private:
 		//And finally change it to baselink->ENU
 		auto enu_baselink_orientation = UAS::transform_orientation_aircraft_baselink(
 				UAS::transform_orientation_ned_enu(
-				UAS::quaternion_from_rpy(att.roll, att.pitch, att.yaw)));
+					UAS::quaternion_from_rpy(att.roll, att.pitch, att.yaw)));
 
 		//Here we have the angular velocity expressed in the aircraft frame
 		//We need to apply the static rotation to get it into the base_link frame
@@ -238,8 +236,8 @@ private:
 		//We need to change this to aircraft->ENU
 		//And finally change it to baselink->ENU
 		auto enu_baselink_orientation = UAS::transform_orientation_aircraft_baselink(
-							   UAS::transform_orientation_ned_enu(
-				Eigen::Quaterniond(att_q.q1, att_q.q2, att_q.q3, att_q.q4)));
+				UAS::transform_orientation_ned_enu(
+					Eigen::Quaterniond(att_q.q1, att_q.q2, att_q.q3, att_q.q4)));
 		//Here we have the angular velocity expressed in the aircraft frame
 		//We need to apply the static rotation to get it into the base_link frame
 		auto gyro = UAS::transform_frame_aircraft_baselink(

@@ -3,7 +3,7 @@
  * @file mavros_uas.h
  * @author Vladimir Ermakov <vooon341@gmail.com>
  * @author Eddy Scott <scott.edward@aurora.aero>
- * 
+ *
  * @addtogroup nodelib
  * @{
  */
@@ -419,17 +419,17 @@ public:
 	/**
 	 * @brief Orientation transform options when applying rotations to data
 	 */
-	enum class STATIC_TRANSFORM: uint8_t {
-		NED_TO_ENU, //! will change orinetation from being expressed WRT NED frame to WRT ENU frame
-		ENU_TO_NED,  //! change from expressed WRT ENU frame to WRT NED frame
-		AIRCRAFT_TO_BASELINK, //! change from expressed WRT aircraft frame to WRT to baselink frame
-		BASELINK_TO_AIRCRAFT //! change from expressed WRT baselnk to WRT aircraft
+	enum class STATIC_TRANSFORM : uint8_t {
+		NED_TO_ENU,	//!< will change orinetation from being expressed WRT NED frame to WRT ENU frame
+		ENU_TO_NED,	//!< change from expressed WRT ENU frame to WRT NED frame
+		AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
+		BASELINK_TO_AIRCRAFT	//!< change from expressed WRT baselnk to WRT aircraft
 	};
 
 	/**
 	 * @brief Transform representation of attitude from 1 frame to another
 	 * (e.g. transfrom attitude from representing  from base_link -> NED
-	 		 to representing base_link -> ENU)
+	                 to representing base_link -> ENU)
 
 	 * General function. Please use specialized enu-ned and ned-enu variants.
 	 */
@@ -458,7 +458,7 @@ public:
 	 * General function. Please use specialized enu-ned and ned-enu variants.
 	 */
 	static Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const STATIC_TRANSFORM transform);
-	
+
 	/**
 	 * @brief Transform convariance expressed in one frame to another
 	 *
