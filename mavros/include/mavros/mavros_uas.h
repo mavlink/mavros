@@ -429,8 +429,8 @@ public:
 	/**
 	 * @brief Transform representation of attitude from 1 frame to another
 	 * (e.g. transfrom attitude from representing  from base_link -> NED
-	                 to representing base_link -> ENU)
-
+	 *               to representing base_link -> ENU)
+	 *
 	 * General function. Please use specialized enu-ned and ned-enu variants.
 	 */
 	static Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const STATIC_TRANSFORM transform);
@@ -475,7 +475,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_orientation_ned_enu(const T &in) {
-		return transform_orientation(in,STATIC_TRANSFORM::NED_TO_ENU);
+		return transform_orientation(in, STATIC_TRANSFORM::NED_TO_ENU);
 	}
 
 	/**
@@ -484,7 +484,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_orientation_enu_ned(const T &in) {
-		return transform_orientation(in,STATIC_TRANSFORM::ENU_TO_NED);
+		return transform_orientation(in, STATIC_TRANSFORM::ENU_TO_NED);
 	}
 
 	/**
@@ -493,7 +493,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_orientation_aircraft_baselink(const T &in) {
-		return transform_orientation(in,STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
+		return transform_orientation(in, STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
 	}
 
 	/**
@@ -502,7 +502,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_orientation_baselink_aircraft(const T &in) {
-		return transform_orientation(in,STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
+		return transform_orientation(in, STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
 	}
 
 	/**
@@ -511,7 +511,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_ned_enu(const T &in) {
-		return transform_static_frame(in,STATIC_TRANSFORM::NED_TO_ENU);
+		return transform_static_frame(in, STATIC_TRANSFORM::NED_TO_ENU);
 	}
 
 	/**
@@ -520,7 +520,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_enu_ned(const T &in) {
-		return transform_static_frame(in,STATIC_TRANSFORM::ENU_TO_NED);
+		return transform_static_frame(in, STATIC_TRANSFORM::ENU_TO_NED);
 	}
 
 	/**
@@ -529,7 +529,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_aircraft_baselink(const T &in) {
-		return transform_static_frame(in,STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
+		return transform_static_frame(in, STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
 	}
 
 	/**
@@ -538,7 +538,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_baselink_aircraft(const T &in) {
-		return transform_static_frame(in,STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
+		return transform_static_frame(in, STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
 	}
 
 	/**
@@ -547,7 +547,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**
@@ -556,7 +556,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**
@@ -565,7 +565,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**
@@ -574,7 +574,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**
@@ -583,7 +583,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**
@@ -592,7 +592,7 @@ public:
 	 */
 	template<class T>
 	static inline T transform_frame_baselink_enu(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in,q);
+		return transform_frame(in, q);
 	}
 
 	/**

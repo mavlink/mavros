@@ -47,7 +47,7 @@ static inline const Eigen::Affine3d &get_static_transform_affine(const UAS::STAT
 		break;
 	}
 	default: {
-		ROS_ASSERT(false);
+		ROS_BREAK(false);
 	}
 	}
 }
@@ -75,7 +75,7 @@ Eigen::Quaterniond UAS::transform_orientation(const Eigen::Quaterniond &q, const
 	default: {
 		//We don't know how to express the attitude WRT an undefined
 		//frame.
-		ROS_ASSERT(false);
+		ROS_BREAK(false);
 		return q;
 		break;
 	}
@@ -90,13 +90,12 @@ Eigen::Vector3d UAS::transform_static_frame(const Eigen::Vector3d &vec, const UA
 
 UAS::Covariance3d UAS::transform_static_frame(const Covariance3d &cov, const UAS::STATIC_TRANSFORM transform)
 {
+	Covariance3d cov_out_;
+	EigenMapConstCovariance3d cov_in(cov.data());
+	EigenMapCovariance3d cov_out(cov_out_.data());
 	switch (transform) {
 	case STATIC_TRANSFORM::NED_TO_ENU:
 	case STATIC_TRANSFORM::ENU_TO_NED: {
-		Covariance3d cov_out_;
-		EigenMapConstCovariance3d cov_in(cov.data());
-		EigenMapCovariance3d cov_out(cov_out_.data());
-
 		// code from imu_transformer tf2_sensor_msgs.h
 		//cov_out = FRAME_ROTATE_Q * cov_in * FRAME_ROTATE_Q.inverse();
 		// from comments on github about tf2_sensor_msgs.h
@@ -106,10 +105,6 @@ UAS::Covariance3d UAS::transform_static_frame(const Covariance3d &cov, const UAS
 	}
 	case STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK:
 	case STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT: {
-		Covariance3d cov_out_;
-		EigenMapConstCovariance3d cov_in(cov.data());
-		EigenMapCovariance3d cov_out(cov_out_.data());
-
 		// code from imu_transformer tf2_sensor_msgs.h
 		//cov_out = FRAME_ROTATE_Q * cov_in * FRAME_ROTATE_Q.inverse();
 		// from comments on github about tf2_sensor_msgs.h
@@ -135,7 +130,7 @@ UAS::Covariance6d UAS::transform_static_frame(const Covariance6d &cov, const UAS
 		Covariance6d cov_out_;
 		EigenMapConstCovariance6d cov_in(cov.data());
 		EigenMapCovariance6d cov_out(cov_out_.data());
-		ROS_ASSERT(false);
+		ROS_BREAK(false);
 		return cov_out_;
 	}
 	}
@@ -167,6 +162,6 @@ UAS::Covariance6d UAS::transform_frame(const Covariance6d &cov, const Eigen::Qua
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
 	//! @todo implement me!!!
-	ROS_ASSERT(false);
+	ROS_BREAK(false);
 	return cov_out_;
 }
