@@ -47,7 +47,7 @@ static inline const Eigen::Affine3d &get_static_transform_affine(const UAS::STAT
 		break;
 	}
 	default: {
-		ROS_BREAK(false);
+		ROS_BREAK();
 	}
 	}
 }
@@ -75,7 +75,7 @@ Eigen::Quaterniond UAS::transform_orientation(const Eigen::Quaterniond &q, const
 	default: {
 		//We don't know how to express the attitude WRT an undefined
 		//frame.
-		ROS_BREAK(false);
+		ROS_BREAK();
 		return q;
 		break;
 	}
@@ -115,7 +115,7 @@ UAS::Covariance3d UAS::transform_static_frame(const Covariance3d &cov, const UAS
 	default: {
 		//We don't know the transform between the static frames.
 		//throw error and return given covariance
-		ROS_ERROR("Requested Static Frame Conversion Unkown");
+		ROS_BREAK();
 		return cov;
 		break;
 	}
@@ -130,7 +130,7 @@ UAS::Covariance6d UAS::transform_static_frame(const Covariance6d &cov, const UAS
 		Covariance6d cov_out_;
 		EigenMapConstCovariance6d cov_in(cov.data());
 		EigenMapCovariance6d cov_out(cov_out_.data());
-		ROS_BREAK(false);
+		ROS_BREAK();
 		return cov_out_;
 	}
 	}
@@ -162,6 +162,6 @@ UAS::Covariance6d UAS::transform_frame(const Covariance6d &cov, const Eigen::Qua
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
 	//! @todo implement me!!!
-	ROS_BREAK(false);
+	ROS_BREAK();
 	return cov_out_;
 }
