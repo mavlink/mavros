@@ -11,6 +11,10 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <vector>
+
+#include <tf/tf.h>
+
 #include <ros/ros.h>
 #include <ros/console.h>
 
@@ -25,7 +29,7 @@ static double marker_scale;
 // merker publishers
 ros::Publisher track_marker_pub;
 ros::Publisher vehicle_marker_pub;
-
+std::vector<visualization_msgs::Marker> vehicle_markers;
 
 /**
  * @brief publish vehicle track
@@ -57,104 +61,92 @@ static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pos
 /**
  * @brief publish vehicle
  */
-static void publish_vehicle_marker() {
+static void create_vehicle_markers( int num_rotors, float arm_len, float body_width, float body_height ) 
+{
+    if ( num_rotors <= 0 ) num_rotors=2;
+    
 	/** Hexacopter marker code adapted from libsfly_viz
 	 *  thanks to Markus Achtelik.
 	 */
+    
+    if ( !vehicle_markers.empty() )
+        return;
+        
+    vehicle_markers.reserve( 2*num_rotors + 1 );
+    
+	// rotor marker template
+    visualization_msgs::Marker rotor;
+	rotor.header.stamp = ros::Time();
+	rotor.header.frame_id = child_frame_id;
+	rotor.ns = "vehicle_rotor";
+	rotor.action = visualization_msgs::Marker::ADD;
+	rotor.type = visualization_msgs::Marker::CYLINDER;
+	rotor.scale.x = 0.2 * marker_scale;
+	rotor.scale.y = 0.2 * marker_scale;
+	rotor.scale.z = 0.01 * marker_scale;
+	rotor.color.r = 0.4;
+	rotor.color.g = 0.4;
+	rotor.color.b = 0.4;
+	rotor.color.a = 0.8;
+	rotor.pose.position.z = 0;
 
-	const double sqrt2_2 = sqrt(2) / 2;
-	int id = 1;
+	// arm marker template
+	visualization_msgs::Marker arm;
+	arm.header.stamp = ros::Time();
+	arm.header.frame_id = child_frame_id;
+	arm.ns = "vehicle_arm";
+	arm.action = visualization_msgs::Marker::ADD;
+	arm.type = visualization_msgs::Marker::CUBE;
+	arm.scale.x = arm_len * marker_scale;
+	arm.scale.y = 0.02 * marker_scale;
+	arm.scale.z = 0.01 * marker_scale;
+	arm.color.r = 0.0;
+	arm.color.g = 0.0;
+	arm.color.b = 1.0;
+	arm.color.a = 1.0;
+	arm.pose.position.z = -0.015 * marker_scale;
 
-	auto marker = boost::make_shared<visualization_msgs::Marker>();
+    float angle_increment = 2*M_PI / num_rotors;
 
-	// the marker will be displayed in frame_id
-	marker->header.stamp = ros::Time();
-	marker->header.frame_id = child_frame_id;
-	marker->ns = "fcu";
-	marker->action = visualization_msgs::Marker::ADD;
-	marker->id = id;
+    for ( float angle = angle_increment/2; angle<= (2*M_PI); angle += angle_increment )
+    {
+	    rotor.pose.position.x = arm_len * cos(angle) * marker_scale;
+	    rotor.pose.position.y = arm_len * sin(angle) * marker_scale;
+	    rotor.id++;
+	    
+	    arm.pose.position.x = rotor.pose.position.x/2;
+	    arm.pose.position.y = rotor.pose.position.y/2;
+        arm.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
+        arm.id++;
+        
+	    vehicle_markers.push_back(rotor);
+	    vehicle_markers.push_back(arm);
+    }
 
-	// make rotors
-	marker->type = visualization_msgs::Marker::CYLINDER;
-	marker->scale.x = 0.2 * marker_scale;
-	marker->scale.y = 0.2 * marker_scale;
-	marker->scale.z = 0.01 * marker_scale;
-	marker->color.r = 0.4;
-	marker->color.g = 0.4;
-	marker->color.b = 0.4;
-	marker->color.a = 0.8;
-	marker->pose.position.z = 0;
+	// body marker template
+	visualization_msgs::Marker body;
+	body.header.stamp = ros::Time();
+	body.header.frame_id = child_frame_id;
+	body.ns = "vehicle_body";
+	body.action = visualization_msgs::Marker::ADD;
+	body.type = visualization_msgs::Marker::CUBE;
+	body.scale.x = body_width * marker_scale;
+	body.scale.y = body_width * marker_scale;
+	body.scale.z = body_height * marker_scale;
+	body.color.r = 0.0;
+	body.color.g = 1.0;
+	body.color.b = 0.0;
+	body.color.a = 0.8;
 
-	// front left/right
-	marker->pose.position.x = 0.19 * marker_scale;
-	marker->pose.position.y = 0.11 * marker_scale;
-	marker->id++; // in older code there be decrement
-	vehicle_marker_pub.publish(marker);
-
-	marker->pose.position.x = 0.19 * marker_scale;
-	marker->pose.position.y = -0.11 * marker_scale;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	// left/right
-	marker->pose.position.x = 0;
-	marker->pose.position.y = 0.22 * marker_scale;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	marker->pose.position.x = 0;
-	marker->pose.position.y = -0.22 * marker_scale;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	// back left/right
-	marker->pose.position.x = -0.19 * marker_scale;
-	marker->pose.position.y = 0.11 * marker_scale;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	marker->pose.position.x = -0.19 * marker_scale;
-	marker->pose.position.y = -0.11 * marker_scale;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	// make arms
-	marker->type = visualization_msgs::Marker::CUBE;
-	marker->scale.x = 0.44 * marker_scale;
-	marker->scale.y = 0.02 * marker_scale;
-	marker->scale.z = 0.01 * marker_scale;
-	marker->color.r = 0.0;
-	marker->color.g = 0.0;
-	marker->color.b = 1.0;
-	marker->color.a = 1.0;
-
-	marker->pose.position.x = 0;
-	marker->pose.position.y = 0;
-	marker->pose.position.z = -0.015 * marker_scale;
-	marker->pose.orientation.x = 0;
-	marker->pose.orientation.y = 0;
-
-	marker->pose.orientation.w = sqrt2_2;
-	marker->pose.orientation.z = sqrt2_2;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	// 30 deg rotation  0.9659  0  0  0.2588
-	marker->pose.orientation.w = 0.9659;
-	marker->pose.orientation.z = 0.2588;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
-
-	marker->pose.orientation.w = 0.9659;
-	marker->pose.orientation.z = -0.2588;
-	marker->id++;
-	vehicle_marker_pub.publish(marker);
+    vehicle_markers.push_back(body);
 }
 
 static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
 	publish_track_marker(pose);
-	publish_vehicle_marker();
+	
+	for ( auto marker : vehicle_markers )
+    	vehicle_marker_pub.publish(marker);
 }
 
 int main(int argc, char *argv[])
@@ -163,9 +155,18 @@ int main(int argc, char *argv[])
 	ros::NodeHandle nh;
 	ros::NodeHandle priv_nh("~");
 
+    int num_rotors;
+    double arm_len, body_width, body_height;
+    
 	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "local_origin");
 	priv_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
 	priv_nh.param("marker_scale", marker_scale, 2.0);
+	priv_nh.param("num_rotors", num_rotors, 6);
+	priv_nh.param("arm_len", arm_len, 0.22 );
+	priv_nh.param("body_width", body_width, 0.15 );
+	priv_nh.param("body_height", body_height, 0.10 );
+
+	create_vehicle_markers( num_rotors, arm_len, body_width, body_height );
 
 	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
 	vehicle_marker_pub = nh.advertise<visualization_msgs::Marker>("vehicle_marker", 10);
