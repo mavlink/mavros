@@ -53,9 +53,11 @@ int main(int argc, char *argv[])
 
 	std::string gcs_url;
 	priv_nh.param<std::string>("gcs_url", gcs_url, "udp://@");
+    bool allow_udp_broadcast;
+    priv_nh.param("allow_udp_broadcast", allow_udp_broadcast, false);
 
 	try {
-		gcs_link = MAVConnInterface::open_url(gcs_url);
+        gcs_link = MAVConnInterface::open_url(gcs_url, 1, MAV_COMP_ID_UDP_BRIDGE, allow_udp_broadcast);
 		gcs_link_diag.set_mavconn(gcs_link);
 		gcs_link_diag.set_connection_status(true);
 	}
