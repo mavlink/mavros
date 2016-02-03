@@ -61,25 +61,25 @@ static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pos
 /**
  * @brief publish vehicle
  */
-static void create_vehicle_markers( int num_rotors, float arm_len, float body_width, float body_height ) 
+static void create_vehicle_markers( int num_rotors, float arm_len, float body_width, float body_height )
 {
-    if ( num_rotors <= 0 ) num_rotors=2;
-    
-    /** Create markers only once for efficiency 
-     *  TODO use visualization_msgs::MarkerArray?
-     */
+	if ( num_rotors <= 0 ) num_rotors = 2;
 
-    if ( !vehicle_markers.empty() )
-        return;
-        
-    vehicle_markers.reserve( 2*num_rotors + 1 );
-    
+	/** Create markers only once for efficiency
+	 *  TODO use visualization_msgs::MarkerArray?
+	 */
+
+	if ( !vehicle_markers.empty() )
+		return;
+
+	vehicle_markers.reserve( 2 * num_rotors + 1 );
+
 	/** Hexacopter marker code adapted from libsfly_viz
 	 *  thanks to Markus Achtelik.
 	 */
-    
+
 	// rotor marker template
-    visualization_msgs::Marker rotor;
+	visualization_msgs::Marker rotor;
 	rotor.header.stamp = ros::Time();
 	rotor.header.frame_id = child_frame_id;
 	rotor.ns = "vehicle_rotor";
@@ -110,22 +110,22 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 	arm.color.a = 1.0;
 	arm.pose.position.z = -0.015 * marker_scale;
 
-    float angle_increment = 2*M_PI / num_rotors;
+	float angle_increment = 2 * M_PI / num_rotors;
 
-    for ( float angle = angle_increment/2; angle<= (2*M_PI); angle += angle_increment )
-    {
-	    rotor.pose.position.x = arm_len * cos(angle) * marker_scale;
-	    rotor.pose.position.y = arm_len * sin(angle) * marker_scale;
-	    rotor.id++;
-	    
-	    arm.pose.position.x = rotor.pose.position.x/2;
-	    arm.pose.position.y = rotor.pose.position.y/2;
-        arm.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
-        arm.id++;
-        
-	    vehicle_markers.push_back(rotor);
-	    vehicle_markers.push_back(arm);
-    }
+	for ( float angle = angle_increment / 2; angle <= (2 * M_PI); angle += angle_increment )
+	{
+		rotor.pose.position.x = arm_len * cos(angle) * marker_scale;
+		rotor.pose.position.y = arm_len * sin(angle) * marker_scale;
+		rotor.id++;
+
+		arm.pose.position.x = rotor.pose.position.x / 2;
+		arm.pose.position.y = rotor.pose.position.y / 2;
+		arm.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
+		arm.id++;
+
+		vehicle_markers.push_back(rotor);
+		vehicle_markers.push_back(arm);
+	}
 
 	// body marker template
 	visualization_msgs::Marker body;
@@ -142,15 +142,15 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 	body.color.b = 0.0;
 	body.color.a = 0.8;
 
-    vehicle_markers.push_back(body);
+	vehicle_markers.push_back(body);
 }
 
 static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
 	publish_track_marker(pose);
-	
+
 	for ( auto marker : vehicle_markers )
-    	vehicle_marker_pub.publish(marker);
+		vehicle_marker_pub.publish(marker);
 }
 
 int main(int argc, char *argv[])
@@ -159,9 +159,9 @@ int main(int argc, char *argv[])
 	ros::NodeHandle nh;
 	ros::NodeHandle priv_nh("~");
 
-    int num_rotors;
-    double arm_len, body_width, body_height;
-    
+	int num_rotors;
+	double arm_len, body_width, body_height;
+
 	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "local_origin");
 	priv_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
 	priv_nh.param("marker_scale", marker_scale, 2.0);
