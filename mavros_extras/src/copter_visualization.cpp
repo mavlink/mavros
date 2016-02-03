@@ -65,14 +65,18 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 {
     if ( num_rotors <= 0 ) num_rotors=2;
     
-	/** Hexacopter marker code adapted from libsfly_viz
-	 *  thanks to Markus Achtelik.
-	 */
-    
+    /** Create markers only once for efficiency 
+     *  TODO use visualization_msgs::MarkerArray?
+     */
+
     if ( !vehicle_markers.empty() )
         return;
         
     vehicle_markers.reserve( 2*num_rotors + 1 );
+    
+	/** Hexacopter marker code adapted from libsfly_viz
+	 *  thanks to Markus Achtelik.
+	 */
     
 	// rotor marker template
     visualization_msgs::Marker rotor;
