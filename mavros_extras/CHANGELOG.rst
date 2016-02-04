@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.16.6 (2016-02-04)
+-------------------
 * extras: uncrustify
 * added tf
 * comments
