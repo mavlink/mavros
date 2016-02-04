@@ -2,6 +2,14 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: uncrustify
+* added tf
+* comments
+* configurable vehicle model
+* Contributors: Vladimir Ermakov, francois
+
 0.16.5 (2016-01-11)
 -------------------
 
