@@ -22,8 +22,6 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <boost/shared_ptr.hpp>
-
 // parameters
 static std::string fixed_frame_id;
 static std::string child_frame_id;
