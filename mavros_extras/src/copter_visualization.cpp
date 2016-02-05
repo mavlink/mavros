@@ -20,6 +20,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 // parameters
 static std::string fixed_frame_id;
@@ -29,7 +30,8 @@ static double marker_scale;
 // merker publishers
 ros::Publisher track_marker_pub;
 ros::Publisher vehicle_marker_pub;
-std::vector<visualization_msgs::Marker> vehicle_markers;
+
+boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
 
 /**
  * @brief publish vehicle track
@@ -69,10 +71,11 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 	 *  TODO use visualization_msgs::MarkerArray?
 	 */
 
-	if ( !vehicle_markers.empty() )
+	if ( vehicle_marker )
 		return;
 
-	vehicle_markers.reserve( 2 * num_rotors + 1 );
+	vehicle_marker = boost::make_shared<visualization_msgs::MarkerArray>();
+	vehicle_marker->markers.reserve( 2 * num_rotors + 1 );
 
 	/** Hexacopter marker code adapted from libsfly_viz
 	 *  thanks to Markus Achtelik.
@@ -123,8 +126,8 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 		arm.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
 		arm.id++;
 
-		vehicle_markers.push_back(rotor);
-		vehicle_markers.push_back(arm);
+		vehicle_marker->markers.push_back(rotor);
+		vehicle_marker->markers.push_back(arm);
 	}
 
 	// body marker template
@@ -142,15 +145,13 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 	body.color.b = 0.0;
 	body.color.a = 0.8;
 
-	vehicle_markers.push_back(body);
+	vehicle_marker->markers.push_back(body);
 }
 
 static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
 	publish_track_marker(pose);
-
-	for ( auto marker : vehicle_markers )
-		vehicle_marker_pub.publish(marker);
+	if (vehicle_marker) vehicle_marker_pub.publish(vehicle_marker);
 }
 
 int main(int argc, char *argv[])
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
 	create_vehicle_markers( num_rotors, arm_len, body_width, body_height );
 
 	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
-	vehicle_marker_pub = nh.advertise<visualization_msgs::Marker>("vehicle_marker", 10);
+	vehicle_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("vehicle_marker", 10);
 
 	auto sub = nh.subscribe("local_position", 10, local_position_sub_cb);
 
