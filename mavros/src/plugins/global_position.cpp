@@ -53,12 +53,12 @@ public:
 		uas = &uas_;
 
 		// general params
-		gp_nh.param<std::string>("frame_id", frame_id, "fcu");
+		gp_nh.param<std::string>("frame_id", frame_id, "map");
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
-		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "local_origin");
-		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fcu_utm");
+		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
+		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 
 		UAS_DIAG(uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
 

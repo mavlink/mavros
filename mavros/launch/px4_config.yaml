@@ -66,6 +66,7 @@ local_position:
     send: false
     frame_id: "local_origin"
     child_frame_id: "fcu"
+    send_fcu: false
 
 # param
 # None, used for FCU params

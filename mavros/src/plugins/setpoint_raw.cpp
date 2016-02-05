@@ -73,7 +73,7 @@ private:
 		mavlink_position_target_local_ned_t tgt;
 		mavlink_msg_position_target_local_ned_decode(msg, &tgt);
 
-		// Transform frame NED->ENU
+		// Transform desired position,velocities,and accels from ENU to NED frame
 		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.x, tgt.y, tgt.z));
 		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
 		auto af = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
@@ -98,7 +98,7 @@ private:
 		mavlink_position_target_global_int_t tgt;
 		mavlink_msg_position_target_global_int_decode(msg, &tgt);
 
-		// Transform frame NED->ENU
+		// Transform desired velocities from ENU to NED frame
 		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
 		auto af = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
 		float yaw = UAS::transform_frame_yaw_ned_enu(tgt.yaw);
@@ -124,9 +124,12 @@ private:
 		mavlink_attitude_target_t tgt;
 		mavlink_msg_attitude_target_decode(msg, &tgt);
 
-		// Transform frame NED->ENU
-		auto orientation = UAS::transform_frame_ned_enu(Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3]));
-		auto body_rate = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
+		// Transform orientation from baselink -> ENU 
+		// to aircraft -> NED
+		auto orientation = UAS::transform_orientation_ned_enu(
+						   UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3])));
+
+		auto body_rate = UAS::transform_frame_baselink_aircraft(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
 
 		auto target = boost::make_shared<mavros_msgs::AttitudeTarget>();
 
@@ -231,20 +234,25 @@ private:
 	}
 
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req) {
-		Eigen::Quaterniond orientation;
-		Eigen::Vector3d body_rate;
+		Eigen::Quaterniond desired_orientation;
+		Eigen::Vector3d baselink_angular_rate;
 
-		tf::quaternionMsgToEigen(req->orientation, orientation);
+
+		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
+
+		// Transform desired orientation to represent aircraft->NED,
+		// MAVROS operates on orientation of base_link->ENU
+		auto ned_desired_orientation = UAS::transform_orientation_enu_ned(
+			UAS::transform_orientation_baselink_aircraft(desired_orientation));
+
+		auto body_rate = UAS::transform_frame_baselink_aircraft(baselink_angular_rate);
+
 		tf::vectorMsgToEigen(req->body_rate, body_rate);
-
-		// Transform frame ENU->NED
-		orientation = UAS::transform_frame_enu_ned(orientation);
-		body_rate = UAS::transform_frame_enu_ned(body_rate);
 
 		set_attitude_target(
 				req->header.stamp.toNSec() / 1000000,
 				req->type_mask,
-				orientation,
+				desired_orientation,
 				body_rate,
 				req->thrust);
 	}

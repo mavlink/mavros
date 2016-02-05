@@ -84,16 +84,14 @@ private:
 		 * Raw message with axes mapped to ROS conventions and temp in degrees celsius.
 		 *
 		 * The optical flow camera is essentially an angular sensor, so conversion is like
-		 * gyroscope. (body-fixed NED -> ENU)
+		 * gyroscope. (aircraft -> baselink)
 		 */
-
-
-		auto int_xy = UAS::transform_frame_enu_ned(
+		auto int_xy = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
 						flow_rad.integrated_x,
 						flow_rad.integrated_y,
 						0.0));
-		auto int_gyro = UAS::transform_frame_enu_ned(
+		auto int_gyro = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
 						flow_rad.integrated_xgyro,
 						flow_rad.integrated_ygyro,

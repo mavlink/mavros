@@ -36,7 +36,7 @@ public:
     void initialize(UAS &uas_)
     {
         uas = &uas_;
-        nh.param<std::string>("frame_id", frame_id, "fcu");
+        nh.param<std::string>("frame_id", frame_id, "map");
         altitude_pub = nh.advertise<mavros_msgs::Altitude>("altitude", 10);
     }
 
