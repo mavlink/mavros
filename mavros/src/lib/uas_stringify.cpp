@@ -162,6 +162,8 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {
 			return str_mode_cmap(arduplane_cmode_map, custom_mode);
 		else if (type == MAV_TYPE_GROUND_ROVER)
 			return str_mode_cmap(apmrover2_cmode_map, custom_mode);
+		else if (type == MAV_TYPE_SUBMARINE)
+			return str_mode_cmap(arducopter_cmode_map, custom_mode);
 		else {
 			ROS_WARN_THROTTLE_NAMED(30, "uas", "MODE: Unknown APM based FCU! Type: %d", type);
 			return str_custom_mode(custom_mode);
@@ -221,6 +223,8 @@ bool UAS::cmode_from_str(std::string cmode_str, uint32_t &custom_mode) {
 			return cmode_find_cmap(arduplane_cmode_map, cmode_str, custom_mode);
 		else if (type == MAV_TYPE_GROUND_ROVER)
 			return cmode_find_cmap(apmrover2_cmode_map, cmode_str, custom_mode);
+		else if (type == MAV_TYPE_SUBMARINE)
+			return cmode_find_cmap(arducopter_cmode_map, cmode_str, custom_mode);
 	}
 	else if (MAV_AUTOPILOT_PX4 == ap)
 		return cmode_find_cmap(px4_cmode_map, cmode_str, custom_mode);
