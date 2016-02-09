@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.17.0 (2016-02-09)
+-------------------
 * update README
 * rebased with master
 * Fixed ROS_BREAK
