@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rebased with master
+* ran uncrustify
+* removed duplicate include
+* use MarkerArray for vehicle model
+* Updated frame transformations and added odom publisher to local position plugin
+* Contributors: Eddy, francois
+
 0.16.6 (2016-02-04)
 -------------------
 * extras: uncrustify

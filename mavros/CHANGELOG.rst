@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update README
+* rebased with master
+* Fixed ROS_BREAK
+* Updates for ROS_BREAK and code style
+* Nitpicks and uncrustify
+* Updated frame transformations and added odom publisher to local position plugin
+* Contributors: Eddy, Vladimir Ermakov, francois
+
 0.16.6 (2016-02-04)
 -------------------
 * node fix `#494 <https://github.com/mavlink/mavros/issues/494>`_: Report FCU firmware type in rosonsole log
