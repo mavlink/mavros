@@ -57,11 +57,14 @@ Coordinate frames
 -----------------
 
 MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames and vice-versa.
-For translate we simply apply rotation 180° abount ROLL (X) axis.
+For translate airframe related data we simply apply rotation 180° abount ROLL (X) axis.
+For local we apply 180° about ROLL (X) and 90° about YAW (Z) axes.
+Plase read documents from issue #473 for additional information.
 
 All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
 
-Related issues: [#49 (outdated)][iss49], [#216 (outdated)][iss216], [#317][iss317], [#319][iss319], [#321][iss321].
+Related issues: [#49 (outdated)][iss49], [#216 (outdated)][iss216], [#317 (outdated)][iss317], [#319 (outdated)][iss319], [#321 (outdated)][iss321], [#473][iss473].
+Documents: [Frame Conversions][iss473rfc], [Mavlink coordinate frames][iss473table].
 
 
 Programs
@@ -209,8 +212,11 @@ Links
 [iss317]: https://github.com/mavlink/mavros/issues/317
 [iss319]: https://github.com/mavlink/mavros/issues/319
 [iss321]: https://github.com/mavlink/mavros/issues/321
+[iss473]: https://github.com/mavlink/mavros/issues/473
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
 [shadow]: http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-jade-mavlink/
 [catkin]: https://catkin-tools.readthedocs.org/en/latest/
+[iss473rfc]: https://docs.google.com/document/d/1bDhaozrUu9F915T58WGzZeOM-McyU20dwxX-NRum1KA/edit
+[iss473table]: https://docs.google.com/spreadsheets/d/1LnsWTblU92J5_SMinTvBvHJWx6sqvzFa8SKbn8TXlnU/edit#gid=0
