@@ -30,6 +30,7 @@ static double marker_scale;
 // merker publishers
 ros::Publisher track_marker_pub;
 ros::Publisher vehicle_marker_pub;
+ros::Publisher wp_marker_pub;
 
 boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
 
@@ -59,6 +60,34 @@ static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pos
 
 	track_marker_pub.publish(marker);
 }
+
+static void publish_wp_marker(const geometry_msgs::PoseStamped::ConstPtr &wp)
+{
+	static boost::shared_ptr<visualization_msgs::Marker> marker;
+
+	if ( !marker )	// only instantiate marker once
+	{
+		marker = boost::make_shared<visualization_msgs::Marker>();
+
+		marker->header = wp->header;
+		marker->header.frame_id = fixed_frame_id;
+		marker->type = visualization_msgs::Marker::ARROW;
+		marker->ns = "wp";
+		marker->action = visualization_msgs::Marker::ADD;
+		marker->scale.x = marker_scale * 1.0;
+		marker->scale.y = marker_scale * 0.1;
+		marker->scale.z = marker_scale * 0.1;
+
+		marker->color.a = 1.0;
+		marker->color.r = 0.0;
+		marker->color.g = 1.0;
+		marker->color.b = 0.0;
+	}
+
+	marker->pose = wp->pose;
+	wp_marker_pub.publish(marker);
+}
+
 
 /**
  * @brief publish vehicle
@@ -154,6 +183,11 @@ static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &po
 	if (vehicle_marker) vehicle_marker_pub.publish(vehicle_marker);
 }
 
+void setpoint_local_pos_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &wp)
+{
+	publish_wp_marker(wp);
+}
+
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "copter_visualization");
@@ -165,7 +199,8 @@ int main(int argc, char *argv[])
 
 	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "local_origin");
 	priv_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
-	priv_nh.param("marker_scale", marker_scale, 2.0);
+
+	priv_nh.param("marker_scale", marker_scale, 1.0);
 	priv_nh.param("num_rotors", num_rotors, 6);
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
@@ -175,8 +210,10 @@ int main(int argc, char *argv[])
 
 	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
 	vehicle_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("vehicle_marker", 10);
+	wp_marker_pub = nh.advertise<visualization_msgs::Marker>("wp_markers", 10);
 
-	auto sub = nh.subscribe("local_position", 10, local_position_sub_cb);
+	auto pos_sub = nh.subscribe("local_position", 10, local_position_sub_cb);
+	auto wp_sub = nh.subscribe("local_setpoint", 10, setpoint_local_pos_sub_cb);
 
 	ros::spin();
 	return 0;
