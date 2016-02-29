@@ -23,4 +23,8 @@
         <class name="cam_imu_sync" type="mavplugin::CamIMUSyncPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish camera trigger data for synchronisation of IMU and camera frames</description>
 	</class>
+	</class>
+        <class name="joy_control" type="mavplugin::JoyControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Listen to sensor_msgs::Joy and convert into Mavlink manual control messages</description>
+	</class>
 </library>
