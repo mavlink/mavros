@@ -88,14 +88,14 @@ private:
 		 */
 		auto int_xy = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
-						flow_rad.integrated_x,
-						flow_rad.integrated_y,
-						0.0));
+					flow_rad.integrated_x,
+					flow_rad.integrated_y,
+					0.0));
 		auto int_gyro = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
-						flow_rad.integrated_xgyro,
-						flow_rad.integrated_ygyro,
-						flow_rad.integrated_zgyro));
+					flow_rad.integrated_xgyro,
+					flow_rad.integrated_ygyro,
+					flow_rad.integrated_zgyro));
 
 		auto flow_rad_msg = boost::make_shared<mavros_msgs::OpticalFlowRad>();
 
@@ -112,6 +112,7 @@ private:
 		flow_rad_msg->temperature = flow_rad.temperature / 100.0f;	// in degrees celsius
 		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
 		flow_rad_msg->distance = flow_rad.distance;
+		flow_rad_msg->quality = flow_rad.quality;
 
 		flow_rad_pub.publish(flow_rad_msg);
 
