@@ -112,6 +112,7 @@ private:
 		flow_rad_msg->temperature = flow_rad.temperature / 100.0f;	// in degrees celsius
 		flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
 		flow_rad_msg->distance = flow_rad.distance;
+		flow_rad_msg->quality = flow_rad.quality;
 
 		flow_rad_pub.publish(flow_rad_msg);
 
