@@ -88,14 +88,14 @@ private:
 		 */
 		auto int_xy = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
-						flow_rad.integrated_x,
-						flow_rad.integrated_y,
-						0.0));
+					flow_rad.integrated_x,
+					flow_rad.integrated_y,
+					0.0));
 		auto int_gyro = UAS::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
-						flow_rad.integrated_xgyro,
-						flow_rad.integrated_ygyro,
-						flow_rad.integrated_zgyro));
+					flow_rad.integrated_xgyro,
+					flow_rad.integrated_ygyro,
+					flow_rad.integrated_zgyro));
 
 		auto flow_rad_msg = boost::make_shared<mavros_msgs::OpticalFlowRad>();
 
