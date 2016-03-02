@@ -31,29 +31,70 @@ namespace mavplugin {
 /**
  * @brief Properties for joystick control axis
  */
-struct JoyControl
+struct JoyAxis
 {
 	int axis;
 	double scale;
 	double offset;
 	double deadzone;
 
-	double map_axis( const sensor_msgs::Joy::ConstPtr& joy ) const
+	double map_axis( const sensor_msgs::Joy& joy_msg ) const
 	{
-		if ( axis < 0 || axis >= joy->axes.size() ) throw std::out_of_range("failed to map axis");
-		double val = joy->axes[axis] + offset;
+		if ( axis < 0 || axis >= joy_msg.axes.size() ) throw std::out_of_range("failed to map axis");
+		double val = joy_msg.axes[axis] + offset;
 		return ( val > deadzone || val < -deadzone ? val * scale : 0.0 );
 	}
 
-	void load_params( ros::NodeHandle &priv_nh, const std::string& name,
-			int def_axis = 0, double def_scale = 1, double def_offset = 0, double def_deadzone = 0 )
+	void load_params( ros::NodeHandle &nh, const std::string& axis_ns,
+	                  int def_axis = 0, double def_scale = 1, double def_offset = 0, double def_deadzone = 0 )
 	{
-		auto nh = ros::NodeHandle( priv_nh, name );
+		auto axis_nh = ros::NodeHandle( nh, axis_ns );
 
-		nh.param( "axis",		axis,		def_axis		);
-		nh.param( "scale",		scale,		def_scale		);
-		nh.param( "offset",		offset,		def_offset		);
-		nh.param( "deadzone",	deadzone,	def_deadzone	);
+		axis_nh.param( "axis",          axis,           def_axis                );
+		axis_nh.param( "scale",         scale,          def_scale               );
+		axis_nh.param( "offset",        offset,         def_offset              );
+		axis_nh.param( "deadzone",      deadzone,       def_deadzone    );
+	}
+};
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+struct JoyButton
+{
+	typedef std::function< void () > Callback;
+	typedef std::function< void ( const std::string& custom_mode ) > ModeCallback;
+
+	std::vector<int> switches;
+	std::vector<int> values;
+	Callback callback;
+
+	bool toggled( const sensor_msgs::Joy& joy_msg ) const // throws
+	{
+		for ( int i=0; i< switches.size(); ++i )
+			if ( joy_msg.buttons.at( switches[i] ) != values.at(i) ) return false;
+		return true;
+	}
+
+	void handle( const sensor_msgs::Joy& joy_msg ) {
+		if ( toggled(joy_msg) ) callback();
+	}
+
+	bool load( ros::NodeHandle &nh, const std::string& button_ns, Callback new_callback )
+	{
+		callback = new_callback;
+		auto button_nh = ros::NodeHandle( nh, button_ns );
+		return button_nh.getParam( "switches", switches ) && button_nh.getParam( "values", values );
+	}
+
+	bool load( ros::NodeHandle &nh, const std::string& button_ns, ModeCallback mode_callback )
+	{
+		auto button_nh = ros::NodeHandle( nh, button_ns );
+
+		std::string custom_mode;
+		if ( !button_nh.getParam( "custom_mode", custom_mode ) ) return false;
+
+		return load( nh, button_ns, (Callback) boost::bind( mode_callback, custom_mode ) );
 	}
 };
 
@@ -69,37 +110,41 @@ class JoyControlPlugin : public MavRosPlugin
 	UAS *uas_;
 	mavros_msgs::State::ConstPtr curr_state_;
 
-	JoyControl x_, y_, z_, r_;
-
-	int arm_button_;
-	std::vector<int> mode_mapping_;
-	std::vector<std::string> mode_names_;
+	JoyAxis x_, y_, z_, r_;
+	std::vector<JoyButton> buttons_;
 
 	ros::ServiceClient arming_srv_, set_mode_srv_;
 	ros::Subscriber joystick_sub_, state_sub_;
 
 public:
+
 	JoyControlPlugin()
 		: mavros_nh_("~")
 		, plugin_nh_("~joy_control")
-		, uas_(nullptr) {}
+		, uas_(nullptr) {
+	}
 
 	void initialize(UAS &uas )
 	{
 		uas_ = &uas;
 
-		// Mode switches on remotes can be reported a single flag, or as a binary
-		// combination of several flags: eg. mode1=[0,0]=0, mode2=[1,0]=1, mode3=[0,1]=2
-		// mode_mapping={3,4} means a binary combination of the 4th and 5th values
-		// in the sensor_msgs::Joy buttons array.
+		JoyButton::Callback arm_callback = boost::bind( &JoyControlPlugin::handle_arming, this );
+		JoyButton::ModeCallback mode_callback = boost::bind( &JoyControlPlugin::handle_mode, this, _1 );
 
-		// Note: param<> template type must be specified
-		// here for compatibility with older compilers.
+		JoyButton button;
 
-		plugin_nh_.param< std::vector<int>			>("mode_mapping", mode_mapping_, {3,4} );
-		plugin_nh_.param< std::vector<std::string>  >("mode_names", mode_names_, {"MANUAL","ALTCTL","OFFBOARD"} );
+		if ( button.load( plugin_nh_, "arm", arm_callback ) ) buttons_.push_back(button);
+		else ROS_ERROR("failed to read 'arm' button");
 
-		plugin_nh_.param("arm_button", arm_button_, 2 );
+		int num_modes=0;
+		plugin_nh_.getParam( "num_modes", num_modes );
+
+		for ( int i=0; i< num_modes; ++i )
+		{
+			std::string mode_ns = "mode" + std::to_string(i+1);
+			if ( button.load( plugin_nh_, mode_ns, mode_callback ) ) buttons_.push_back(button);
+			else ROS_ERROR_STREAM("failed to read button for mode=" << mode_ns );
+		}
 
 		x_.load_params( plugin_nh_, "x", 1, 1.0, 0.0, 0.2 );
 		y_.load_params( plugin_nh_, "y", 0, 1.0, 0.0, 0.2 );
@@ -135,26 +180,25 @@ private:
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	void handle_joystick( const sensor_msgs::Joy::ConstPtr& joy )
+	void handle_joystick( const sensor_msgs::Joy& joy_msg )
 	{
 		try
 		{
-			handle_arming( joy );
-			handle_mode( joy );
+			for ( auto button : buttons_ ) button.handle(joy_msg);
 
 			// PX4 seems to ignore the buttons field when processing manual
 			// control messages so we need to handle button input ourselves
 			// @see MavlinkReceiver::handle_message_manual_control()
 
-			float x = x_.map_axis( joy );
-			float y = y_.map_axis( joy );
-			float z = z_.map_axis( joy );
-			float r = r_.map_axis( joy );
+			float x = x_.map_axis( joy_msg );
+			float y = y_.map_axis( joy_msg );
+			float z = z_.map_axis( joy_msg );
+			float r = r_.map_axis( joy_msg );
 
 			mavlink_message_t ctrl_msg;
 
 			mavlink_msg_manual_control_pack_chan( UAS_PACK_CHAN(uas_), &ctrl_msg,
-					(uas_)->get_tgt_system(), x, y, z, r, array_to_bitset(joy->buttons) );
+				                                  (uas_)->get_tgt_system(), x, y, z, r, array_to_bitset(joy_msg.buttons) );
 
 			UAS_FCU(uas_)->send_message(&ctrl_msg);
 		}
@@ -167,56 +211,41 @@ private:
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	void handle_arming( const sensor_msgs::Joy::ConstPtr& joy )
+	void handle_arming()
 	{
 		if ( !curr_state_ )
 		{
 			ROS_WARN_THROTTLE( 1, "need message on state topic to arm/disarm" );
-			return;
 		}
+		else
+		{
+			mavros_msgs::CommandBool arming;
+			arming.request.value = !curr_state_->armed;
 
-		if ( arm_button_ < 0 || arm_button_ > joy->buttons.size() )
-			throw std::out_of_range("arm button index is invalid");
-
-		bool arm_button_on = joy->buttons[arm_button_];
-		if ( !arm_button_on ) return;	// nothing to do
-
-		mavros_msgs::CommandBool arming;
-		arming.request.value = !curr_state_->armed;
-
-		if ( !arming_srv_.call(arming) || !arming.response.success )
-			ROS_WARN("call to arm/disarm service failed with result=%d", arming.response.result );
+			if ( !arming_srv_.call(arming) || !arming.response.success )
+				ROS_WARN("call to arm/disarm service failed with result=%d", arming.response.result );
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 
-	void handle_mode( const sensor_msgs::Joy::ConstPtr& joy )
+	void handle_mode( const std::string& custom_mode )
 	{
 		if ( !curr_state_ )
 		{
 			ROS_WARN_THROTTLE( 1, "need message on state topic to change mode" );
-			return;
 		}
+		else if ( custom_mode != curr_state_->mode )
+		{
+			ROS_INFO_STREAM( "setting custom mode=" << custom_mode );
 
-		int mode_idx = 0;
+			mavros_msgs::SetMode set_mode;
+			set_mode.request.custom_mode = custom_mode;
 
-		// find the mode index as a binary combination of the multiple flags
-		// eg. [0,1] <-> index=2, [1,1] <-> index=3
-
-		for ( int i = 0; i < mode_mapping_.size(); ++i )
-			mode_idx += pow(2,i) * joy->buttons.at( mode_mapping_[i] );
-
-		mavros_msgs::SetMode set_mode;
-		set_mode.request.custom_mode = mode_names_.at(mode_idx);
-
-		if ( set_mode.request.custom_mode == curr_state_->mode )
-			return;	// already in requested mode
-
-		ROS_INFO_STREAM( "setting custom mode=" << set_mode.request.custom_mode );
-
-		if ( !set_mode_srv_.call(set_mode) || !set_mode.response.success )
-			ROS_WARN_STREAM("failed to set custom mode");
+			if ( !set_mode_srv_.call(set_mode) || !set_mode.response.success )
+				ROS_WARN_STREAM("failed to set custom mode");
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -227,7 +256,7 @@ private:
 		curr_state_ = state;
 	}
 };
-};	// namespace mavplugin
+};      // namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::JoyControlPlugin, mavplugin::MavRosPlugin)
 
