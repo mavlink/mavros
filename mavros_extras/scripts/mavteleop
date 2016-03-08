@@ -99,8 +99,6 @@ rc_channels = {
     'throttle': RCChan('throttle', 2, 0.0)
 }
 
-rc = OverrideRCIn() # must be global to retain mode value
-
 def arm(args, state):
     try:
         command.arming(value=state)
@@ -134,11 +132,12 @@ def rc_override_control(args):
         v.load_param()
 
     rc_modes = RCMode.load_param()
+	rc = OverrideRCIn()
 
     override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
-        global rc
+        global rc # must be global to retain mode value
 
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
         roll = get_axis(joy, 'roll')
