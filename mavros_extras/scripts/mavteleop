@@ -132,7 +132,7 @@ def rc_override_control(args):
         v.load_param()
 
     rc_modes = RCMode.load_param()
-	rc = OverrideRCIn()
+    rc = OverrideRCIn()
 
     override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
