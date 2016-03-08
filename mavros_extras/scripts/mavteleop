@@ -45,27 +45,27 @@ class RCChan(object):
         return arduino_map(pos, self.min_pos, 1.0, self.min, self.max)
 
 class RCMode(object):
-	def __init__( self, name, joy_flags, rc_channel, rc_value ):
-		self.name = name
-		self.joy_flags = joy_flags
-		self.rc_channel = rc_channel
-		self.rc_value = rc_value
-		
-	@staticmethod
-	def load_param(ns='~rc_modes/'):
-		yaml = rospy.get_param(ns)
-		return [ RCMode( name, data['joy_flags'], data['rc_channel'], data['rc_value'] ) 
-			for name,data in yaml.iteritems() ]
-		
-	def is_toggled(self,joy):
-		for btn,flag in self.joy_flags:
-			if joy.buttons[btn] != flag:
-				return False
-		return True
-		
-	def apply_mode(self,joy,rc):
-		if self.is_toggled(joy):
-			rc.channels[self.rc_channel]=self.rc_value
+    def __init__( self, name, joy_flags, rc_channel, rc_value ):
+        self.name = name
+        self.joy_flags = joy_flags
+        self.rc_channel = rc_channel
+        self.rc_value = rc_value
+        
+    @staticmethod
+    def load_param(ns='~rc_modes/'):
+        yaml = rospy.get_param(ns)
+        return [ RCMode( name, data['joy_flags'], data['rc_channel'], data['rc_value'] ) 
+            for name,data in yaml.iteritems() ]
+        
+    def is_toggled(self,joy):
+        for btn,flag in self.joy_flags:
+            if joy.buttons[btn] != flag:
+                return False
+        return True
+        
+    def apply_mode(self,joy,rc):
+        if self.is_toggled(joy):
+            rc.channels[self.rc_channel]=self.rc_value
 
 # Mode 2 on Logitech F710 gamepad
 axes_map = {
@@ -133,13 +133,13 @@ def rc_override_control(args):
     for k, v in rc_channels.iteritems():
         v.load_param()
 
-	rc_modes = RCMode.load_param()
-	
+    rc_modes = RCMode.load_param()
+
     override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
-    	global rc
-    	
+        global rc
+
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
