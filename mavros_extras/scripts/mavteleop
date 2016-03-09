@@ -137,8 +137,6 @@ def rc_override_control(args):
     override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
-        global rc # must be global to retain mode value
-
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
         roll = get_axis(joy, 'roll')
         pitch = get_axis(joy, 'pitch')
