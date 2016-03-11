@@ -26,43 +26,48 @@
 static std::string fixed_frame_id;
 static std::string child_frame_id;
 static double marker_scale;
-static int max_track_size=100;
+static int max_track_size = 100;
 
 // merker publishers
-ros::Publisher track_marker_pub;
+ros::Publisher marker_pub;
 ros::Publisher vehicle_marker_pub;
 ros::Publisher wp_marker_pub;
 
-boost::shared_ptr<visualization_msgs::Marker> track_marker;
 boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
 
 /**
  * @brief publish vehicle track
  */
-static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pose)
+static void publish_marker(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
-	static int marker_id = 0;
+    static boost::shared_ptr<visualization_msgs::Marker> marker;
 
-    if ( !track_marker )
-    {
-        track_marker = boost::make_shared<visualization_msgs::Marker>();
-	    track_marker->type = visualization_msgs::Marker::CUBE;
-	    track_marker->ns = "fcu";
-	    track_marker->action = visualization_msgs::Marker::ADD;
-	    track_marker->scale.x = marker_scale * 0.015;
-	    track_marker->scale.y = marker_scale * 0.015;
-	    track_marker->scale.z = marker_scale * 0.015;
-	    track_marker->color.a = 1.0;
-	    track_marker->color.r = 0.0;
-	    track_marker->color.g = 0.0;
-	    track_marker->color.b = 0.5;
-    }
+	if ( !marker )
+	{
+		marker = boost::make_shared<visualization_msgs::Marker>();
+		marker->type = visualization_msgs::Marker::CUBE_LIST; // fast rendering
+		marker->ns = "fcu";
+		marker->action = visualization_msgs::Marker::ADD;
+		marker->scale.x = marker_scale * 0.015;
+		marker->scale.y = marker_scale * 0.015;
+		marker->scale.z = marker_scale * 0.015;
+		marker->color.a = 1.0;
+		marker->color.r = 0.0;
+		marker->color.g = 0.0;
+		marker->color.b = 0.5;
+		marker->points.reserve(max_track_size);
+	}
     
-    track_marker->id = ++marker_id % max_track_size;
-    track_marker->pose = pose->pose;
-    track_marker->header = pose->header;
+	static int track_idx = 0;
 
-	track_marker_pub.publish(track_marker);
+    if ( marker->points.size() < max_track_size )
+        marker->points.push_back(pose->pose.position);
+    else marker->points[track_idx] = pose->pose.position;
+
+	track_idx = ++track_idx % max_track_size;
+
+	marker->header = pose->header;
+	marker_pub.publish(marker);
 }
 
 static void publish_wp_marker(const geometry_msgs::PoseStamped::ConstPtr &wp)
@@ -183,7 +188,7 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 
 static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
-	publish_track_marker(pose);
+	publish_marker(pose);
 	if (vehicle_marker) vehicle_marker_pub.publish(vehicle_marker);
 }
 
@@ -209,11 +214,11 @@ int main(int argc, char *argv[])
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
 	priv_nh.param("body_height", body_height, 0.10 );
-	priv_nh.param("max_track_size", max_track_size, 1000 );
+	priv_nh.param("max_track_size", max_track_size, 100 );
 
 	create_vehicle_markers( num_rotors, arm_len, body_width, body_height );
 
-	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
+	marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
 	vehicle_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("vehicle_marker", 10);
 	wp_marker_pub = nh.advertise<visualization_msgs::Marker>("wp_markers", 10);
 
