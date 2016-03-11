@@ -174,10 +174,11 @@ Contributing
 6. Apply the changes by commiting (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
 7. Check code style `uncrustify -c ${ROS_WORKSPACE}/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>`;
 8. Fix small code style errors and typos;
-9. Run tests:
+9. Commit with description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commit are better than mix of style and bug fix);
+10. Run tests:
  - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
  - with `catkin tools`, issue `catkin run_tests`;
-10. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
+11. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
 
 Glossary
