@@ -44,6 +44,28 @@ class RCChan(object):
         # warn: limit check
         return arduino_map(pos, self.min_pos, 1.0, self.min, self.max)
 
+class RCMode(object):
+    def __init__( self, name, joy_flags, rc_channel, rc_value ):
+        self.name = name
+        self.joy_flags = joy_flags
+        self.rc_channel = rc_channel
+        self.rc_value = rc_value
+        
+    @staticmethod
+    def load_param(ns='~rc_modes/'):
+        yaml = rospy.get_param(ns)
+        return [ RCMode( name, data['joy_flags'], data['rc_channel'], data['rc_value'] ) 
+            for name,data in yaml.iteritems() ]
+        
+    def is_toggled(self,joy):
+        for btn,flag in self.joy_flags:
+            if joy.buttons[btn] != flag:
+                return False
+        return True
+        
+    def apply_mode(self,joy,rc):
+        if self.is_toggled(joy):
+            rc.channels[self.rc_channel]=self.rc_value
 
 # Mode 2 on Logitech F710 gamepad
 axes_map = {
@@ -109,6 +131,9 @@ def rc_override_control(args):
     for k, v in rc_channels.iteritems():
         v.load_param()
 
+    rc_modes = RCMode.load_param()
+    rc = OverrideRCIn()
+
     override_pub = rospy.Publisher(mavros.get_topic("rc", "override"), OverrideRCIn, queue_size=10)
 
     def joy_cb(joy):
@@ -120,22 +145,20 @@ def rc_override_control(args):
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
-        rc = OverrideRCIn()
         def set_chan(n, v):
             ch = rc_channels[n]
             rc.channels[ch.chan] = ch.calc_us(v)
             rospy.logdebug("RC%d (%s): %d us", ch.chan, ch.name, ch.calc_us(v))
 
-        # XXX: buttons
-        if get_buttons(joy,'arm') == 1:
-            arm(args, True)
-        elif get_buttons(joy,'disarm') == 1:
-            arm(args, False)
 
         set_chan('roll', roll)
         set_chan('pitch', pitch)
         set_chan('yaw', yaw)
         set_chan('throttle', throttle)
+        
+        for m in rc_modes:
+            m.apply_mode(joy,rc)
+        
         override_pub.publish(rc)
 
 
