@@ -47,7 +47,8 @@ static const cmode_map arduplane_cmode_map = {
 	{ 16, "INITIALISING" },
 	{ 17, "QSTABILIZE" },	// QuadPlane
 	{ 18, "QHOVER" },
-	{ 19, "QLOITER" }
+	{ 19, "QLOITER" },
+	{ 20, "QLAND" }
 };
 
 /** APM:Copter custom mode -> string
