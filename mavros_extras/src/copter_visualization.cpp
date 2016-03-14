@@ -40,7 +40,7 @@ boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
  */
 static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
-    static boost::shared_ptr<visualization_msgs::Marker> track_marker;
+	static boost::shared_ptr<visualization_msgs::Marker> track_marker;
 
 	if ( !track_marker )
 	{
@@ -57,12 +57,12 @@ static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pos
 		track_marker->color.b = 0.5;
 		track_marker->points.reserve(max_track_size);
 	}
-    
+
 	static int marker_idx = 0;
 
-    if ( track_marker->points.size() < max_track_size )
-        track_marker->points.push_back(pose->pose.position);
-    else track_marker->points[marker_idx] = pose->pose.position;
+	if ( track_marker->points.size() < max_track_size )
+		track_marker->points.push_back(pose->pose.position);
+	else track_marker->points[marker_idx] = pose->pose.position;
 
 	marker_idx = ++marker_idx % max_track_size;
 
