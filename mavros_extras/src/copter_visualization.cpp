@@ -26,6 +26,7 @@
 static std::string fixed_frame_id;
 static std::string child_frame_id;
 static double marker_scale;
+static int max_track_size = 100;
 
 // merker publishers
 ros::Publisher track_marker_pub;
@@ -39,26 +40,34 @@ boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
  */
 static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
-	static int marker_id = 0;
+	static boost::shared_ptr<visualization_msgs::Marker> track_marker;
 
-	auto marker = boost::make_shared<visualization_msgs::Marker>();
+	if ( !track_marker )
+	{
+		track_marker = boost::make_shared<visualization_msgs::Marker>();
+		track_marker->type = visualization_msgs::Marker::CUBE_LIST;
+		track_marker->ns = "fcu";
+		track_marker->action = visualization_msgs::Marker::ADD;
+		track_marker->scale.x = marker_scale * 0.015;
+		track_marker->scale.y = marker_scale * 0.015;
+		track_marker->scale.z = marker_scale * 0.015;
+		track_marker->color.a = 1.0;
+		track_marker->color.r = 0.0;
+		track_marker->color.g = 0.0;
+		track_marker->color.b = 0.5;
+		track_marker->points.reserve(max_track_size);
+	}
 
-	marker->header = pose->header;
-	marker->type = visualization_msgs::Marker::CUBE;
-	marker->ns = "fcu";
-	marker->id = marker_id++;
-	marker->action = visualization_msgs::Marker::ADD;
-	marker->pose = pose->pose;
-	marker->scale.x = marker_scale * 0.015;
-	marker->scale.y = marker_scale * 0.015;
-	marker->scale.z = marker_scale * 0.015;
+	static int marker_idx = 0;
 
-	marker->color.a = 1.0;
-	marker->color.r = 0.0;
-	marker->color.g = 0.0;
-	marker->color.b = 0.5;
+	if ( track_marker->points.size() < max_track_size )
+		track_marker->points.push_back(pose->pose.position);
+	else track_marker->points[marker_idx] = pose->pose.position;
 
-	track_marker_pub.publish(marker);
+	marker_idx = ++marker_idx % max_track_size;
+
+	track_marker->header = pose->header;
+	track_marker_pub.publish(track_marker);
 }
 
 static void publish_wp_marker(const geometry_msgs::PoseStamped::ConstPtr &wp)
@@ -205,6 +214,7 @@ int main(int argc, char *argv[])
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
 	priv_nh.param("body_height", body_height, 0.10 );
+	priv_nh.param("max_track_size", max_track_size, 1000 );
 
 	create_vehicle_markers( num_rotors, arm_len, body_width, body_height );
 
