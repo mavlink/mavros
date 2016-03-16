@@ -15,12 +15,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   visualization_msgs
   urdf
+  vicon_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
-find_package(vicon_bridge)
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
@@ -63,7 +63,6 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
-  ${vicon_bridge_INCLUDE_DIRS}
 )
 
 add_library(mavros_extras
@@ -80,7 +79,6 @@ add_library(mavros_extras
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${vicon_bridge_LIBRARIES}
 )
 
 ## Declare a cpp executable
