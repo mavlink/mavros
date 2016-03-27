@@ -84,7 +84,9 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t(boost::bind(&io_service::run, &this->io_service));
+#ifndef __APPLE__
 	mavutils::set_thread_name(t, "MAVConnTCPc%d", channel);
+#endif
 	io_thread.swap(t);
 }
 
@@ -165,6 +167,9 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 
 void MAVConnTCPClient::do_recv()
 {
+#ifdef __APPLE__
+	mavutils::set_thread_name("MAVConnTCPc%d", channel);
+#endif
 	socket.async_receive(
 			buffer(rx_buf, sizeof(rx_buf)),
 			boost::bind(&MAVConnTCPClient::async_receive_end,
@@ -273,7 +278,9 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t(boost::bind(&io_service::run, &this->io_service));
+#ifndef __APPLE__
 	mavutils::set_thread_name(t, "MAVConnTCPs%d", channel);
+#endif
 	io_thread.swap(t);
 }
 
@@ -361,6 +368,9 @@ void MAVConnTCPServer::send_message(const mavlink_message_t *message, uint8_t sy
 
 void MAVConnTCPServer::do_accept()
 {
+#ifdef __APPLE__
+	mavutils::set_thread_name("MAVConnTCPs%d", channel);
+#endif
 	acceptor_client.reset();
 	acceptor_client = boost::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
 	acceptor.async_accept(
