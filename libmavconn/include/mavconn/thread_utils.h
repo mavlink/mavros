@@ -26,6 +26,41 @@
 
 namespace mavutils {
 
+ #ifdef __APPLE__
+
+/**
+ * @brief Set std::thread name with printf-like mode
+ * @param[in] thd std::thread
+ * @param[in] name name for thread
+ * @return true if success
+ *
+ * @note Only for Linux target
+ * @todo add for other posix system
+ */
+
+inline bool set_thread_name(const char *name, ...)
+{
+	va_list arg_list;
+	va_start(arg_list, name);
+
+	char new_name[256];
+	vsnprintf(new_name, sizeof(new_name), name, arg_list);
+	va_end(arg_list);
+	return pthread_setname_np(new_name) == 0;
+}
+
+
+/**
+ * @brief Set thread name (std::string variation)
+ */
+template <typename Thread>
+inline bool set_thread_name(std::string &name)
+{
+	return set_thread_name(name.c_str());
+};
+
+#else
+
 /**
  * @brief Set std::thread name with printf-like mode
  * @param[in] thd std::thread
@@ -47,6 +82,7 @@ inline bool set_thread_name(std::thread &thd, const char *name, ...)
 	return pthread_setname_np(pth, new_name) == 0;
 }
 
+
 /**
  * @brief Set thread name (std::string variation)
  */
@@ -55,6 +91,8 @@ inline bool set_thread_name(Thread &thd, std::string &name)
 {
 	return set_thread_name(thd, name.c_str());
 };
+
+#endif
 
 /**
  * @brief Convert to string objects with operator <<

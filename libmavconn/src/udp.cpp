@@ -93,7 +93,9 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t(boost::bind(&io_service::run, &this->io_service));
+#ifndef __APPLE__
 	mavutils::set_thread_name(t, "MAVConnUDP%d", channel);
+#endif
 	io_thread.swap(t);
 }
 
@@ -168,6 +170,9 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 
 void MAVConnUDP::do_recvfrom()
 {
+#ifdef __APPLE__
+	mavutils::set_thread_name("MAVConnUDP%d", channel);
+#endif
 	socket.async_receive_from(
 			buffer(rx_buf, sizeof(rx_buf)),
 			remote_ep,
