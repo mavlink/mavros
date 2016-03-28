@@ -72,8 +72,8 @@ void MAVConnSerial::close() {
 	if (!is_open())
 		return;
 
-	serial_dev.close();
 	io_service.stop();
+	serial_dev.close();
 
 	// clear tx queue
 	for (auto &p : tx_q)
