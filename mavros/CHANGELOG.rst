@@ -2,6 +2,15 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: Add QLAND mode of APM:Plane
+  https://github.com/mavlink/mavlink/commit/a0ed95c3a7d97a8f8d86ce3f95c4bf269f439c46
+* Update contributing guide
+  We forgot to mention uncrustify commit.
+* Treat submarine vehicles like copter vehicles
+* Contributors: Josh Villbrandt, Vladimir Ermakov
+
 0.17.0 (2016-02-09)
 -------------------
 * update README

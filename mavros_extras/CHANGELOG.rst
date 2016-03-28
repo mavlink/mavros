@@ -2,6 +2,23 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ran uncrustify
+* fixed typos
+* use CUBE_LIST for faster rendering
+* limit track size
+* use local variable
+* fixed indentation
+* added rc modes
+* moved rc to rc_override_control()
+* replaced tabulations with spaces (4)
+* introducing RC modes
+* fixed
+* quality added
+* added visualization for local setpoints
+* Contributors: Joey Gong, francois
+
 0.17.0 (2016-02-09)
 -------------------
 * rebased with master

@@ -2,6 +2,24 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* MAVConnSerial: Stop io_service before closing serial device (Fixes `#130 <https://github.com/mavlink/mavros/issues/130>`_)
+  The serial device was closed before calling io_service.stop() so io_service::run() never returned, leading to hang on join in MAVConnSerial::close()
+
+  .. code-block::
+
+    Backtrace:
+    #0  0x00007f80217e966b in pthread_join (threadid=140188059690752, thread_return=0x0) at pthread_join.c:92
+    #1  0x00007f80215602d7 in std::thread::join() ()
+    #2  0x00007f8020ccc674 in mavconn::MAVConnSerial::close() ()
+    #3  0x00007f8020ccc6f5 in mavconn::MAVConnSerial::~MAVConnSerial() ()
+    #4  0x00007f8020cc7b2e in boost::detail::sp_counted_impl_pd<mavconn::MAVConnSerial*, boost::detail::sp_ms_deleter<mavconn::MAVConnSerial> >::dispose() ()
+    #5  0x000000000040ee0a in boost::detail::sp_counted_base::release() [clone .part.27] [clone .constprop.472] ()
+    #6  0x000000000041eb22 in mavros::MavRos::~MavRos() ()
+    #7  0x000000000040eb38 in main ()
+* Contributors: Kartik Mohta
+
 0.17.0 (2016-02-09)
 -------------------
 * rebased with master

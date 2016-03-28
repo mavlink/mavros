@@ -2,6 +2,9 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.17.0 (2016-02-09)
 -------------------
 * rebased with master
