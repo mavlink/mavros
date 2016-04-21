@@ -135,7 +135,7 @@ private:
 		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
 		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
 
-		if (!isnan(eph)) {
+		if (!std::isnan(eph)) {
 			const double hdop = eph;
 
 			// From nmea_navsat_driver
@@ -301,12 +301,12 @@ private:
 		stat.addf("Satellites visible", "%zd", satellites_visible);
 		stat.addf("Fix type", "%d", fix_type);
 
-		if (!isnan(eph))
+		if (!std::isnan(eph))
 			stat.addf("EPH (m)", "%.2f", eph);
 		else
 			stat.add("EPH (m)", "Unknown");
 
-		if (!isnan(epv))
+		if (!std::isnan(epv))
 			stat.addf("EPV (m)", "%.2f", epv);
 		else
 			stat.add("EPV (m)", "Unknown");
