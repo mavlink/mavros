@@ -10,7 +10,7 @@ ROS API documentation moved to [wiki.ros.org][wiki].
 Features
 --------
 
-  - Communication with autopilot via serial port, UDP or TCP (e.g. [ArduPilot][apm])
+  - Communication with autopilot via serial port, UDP or TCP (e.g. [PX4 Pro][px4] or [ArduPilot][apm])
   - Internal proxy for Ground Control Station (serial, UDP, TCP)
   - [mavlink\_ros][mlros] compatible ROS topics (Mavlink.msg)
   - Plugin system for ROS-MAVLink translation
@@ -74,37 +74,34 @@ Programs
 
 Main node. Allow disable GCS proxy by setting empty URL.
 
-Run example:
+Run example (autopilot connected via USB at 921600 baud, GCS running on the host with IP 172.16.254.1):
 
-    rosrun mavros mavros_node _fcu_url:=/dev/ttyACM0:115200 _gcs_url:=tcp-l://
-
+    rosrun mavros mavros_node _fcu_url:=/dev/ttyACM0:921600 _gcs_url:=udp://@172.16.254.1
 
 ### gcs\_bridge -- additional proxy
 
 Allows you to add a channel for GCS.
 For example if you need to connect one GCS for HIL and the second on the tablet.
 
-Previous name: `ros_udp`.
+Example (SITL & QGroundControl):
 
-Example (HIL & DroidPlanner):
+    rosrun mavros mavros_node _gcs_url:='udp://:14556@172.16.254.129:14551' &
+    rosrun mavros gcs_bridge _gcs_url:='udp://@172.16.254.129'
 
-    rosrun mavros mavros_node _gcs_url:='udp://:14556@hil-host:14551' &
-    rosrun mavros gcs_bridge _gcs_url:='udp://@nexus7'
 
-<!-- scripts moved to ROS wiki -->
 
 
 Launch Files
 ------------
 
-Launch files are provided for use with common FCUs:
+Launch files are provided for use with common FCUs, in particular [Pixhawk](pixhawk):
 
-  * [px4.launch](launch/px4.launch) -- for use with the PX4 native flight stack
+  * [px4.launch](launch/px4.launch) -- for use with the PX4 Pro flight stack (for VTOL, multicopters and planes)
   * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
 
 Examples:
 
-    roslaunch mavros px4.launch
+    roslaunch mavros px4.launch 
     roslaunch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
 
 
@@ -194,6 +191,7 @@ Links
 
   - [MAVLink][ml] -- communication protocol
   - [mavlink\_ros][mlros] -- original ROS node (few messages, no proxy)
+  - [PX4][px4] -- Reference implementation in the academic community
   - [ArduPilot][apm] -- tested autopilot APM:Plane (default command set)
   - [QGroundControl][qgc] -- tested ground control station for linux
   - [DroidPlanner][dp] -- tested GCS for Android
@@ -201,11 +199,12 @@ Links
 
 
 [qgc]: http://qgroundcontrol.org/
+[pixhawk]: http://pixhawk.org/
+[px4]: http://px4.io/
 [apm]: http://ardupilot.com/
 [mlros]: https://github.com/mavlink/mavlink_ros
 [boost]: http://www.boost.org/
 [ml]: http://mavlink.org/mavlink/start
-[dp]: https://github.com/arthurbenemann/droidplanner/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
 [iss49]: https://github.com/mavlink/mavros/issues/49
