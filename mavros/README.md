@@ -191,10 +191,10 @@ Links
 
   - [MAVLink][ml] -- communication protocol
   - [mavlink\_ros][mlros] -- original ROS node (few messages, no proxy)
+  - [Pixhawk][pixhawk] -- Reference hardware platform
   - [PX4][px4] -- Reference implementation in the academic community
   - [ArduPilot][apm] -- tested autopilot APM:Plane (default command set)
-  - [QGroundControl][qgc] -- tested ground control station for linux
-  - [DroidPlanner][dp] -- tested GCS for Android
+  - [QGroundControl][qgc] -- tested ground control station for Android, iOS, Mac OS, Linux and Windows
   - [mavros\_extras][mrext] -- extra plugins & node for mavros
 
 
