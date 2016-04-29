@@ -252,7 +252,7 @@ private:
 		set_attitude_target(
 				req->header.stamp.toNSec() / 1000000,
 				req->type_mask,
-				desired_orientation,
+				ned_desired_orientation,
 				body_rate,
 				req->thrust);
 	}
