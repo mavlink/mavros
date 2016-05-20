@@ -15,6 +15,10 @@
 #include <ros/console.h>
 #include <mavros/utils.h>
 #include <fnmatch.h>
+
+#ifdef MAVLINK_VERSION
+#undef MAVLINK_VERSION
+#endif
 #include <mavlink/config.h>
 
 using namespace mavros;
