@@ -26,9 +26,15 @@ void PIDController::setup_linvel_pid(double p_gain, double i_gain, double d_gain
 	double linvel_imin = i_min;
 	double linvel_imax = i_max;
 
+#ifdef CONTROL_TOOLBOX_PRE_1_14
 	pid_linvel_x.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, node);
 	pid_linvel_y.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, node);
 	pid_linvel_z.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, node);
+#else
+	pid_linvel_x.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, false, node);
+	pid_linvel_y.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, false, node);
+	pid_linvel_z.initPid(linvel_pid[0], linvel_pid[1], linvel_pid[2], linvel_imax, linvel_imin, false, node);
+#endif
 }
 
 void PIDController::setup_yawrate_pid(double p_gain, double i_gain, double d_gain, double i_max, double i_min, const ros::NodeHandle &node){
@@ -39,7 +45,11 @@ void PIDController::setup_yawrate_pid(double p_gain, double i_gain, double d_gai
 	double yawrate_imin = i_min;
 	double yawrate_imax = i_max;
 
+#ifdef CONTROL_TOOLBOX_PRE_1_14
 	pid_yaw_rate.initPid(yawrate_pid[0], yawrate_pid[1], yawrate_pid[2], yawrate_imax, yawrate_imin, node);
+#else
+	pid_yaw_rate.initPid(yawrate_pid[0], yawrate_pid[1], yawrate_pid[2], yawrate_imax, yawrate_imin, false, node);
+#endif
 }
 
 Eigen::Vector3d PIDController::compute_linvel_effort(Eigen::Vector3d goal, Eigen::Vector3d current, ros::Time last_time){
