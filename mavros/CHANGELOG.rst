@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: support build with mavlink 2.0 capable mavgen
+* node: Remove warning about MAVLINK_VERSION redefine
+* Fix bug with orientation in setpoint_raw plugin
+  Fixes a bug where the ned_desired_orientation was not actually passed into set_attitude_target. Instead, the desired_orientation (wrong frame) was passed.
+* Contributors: Justin Thomas, Vladimir Ermakov
+
 0.17.2 (2016-04-29)
 -------------------
 * Update README.md
