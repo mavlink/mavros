@@ -32,4 +32,11 @@ add_definitions(
   -DMAVLINK_DIALECT=${MAVLINK_DIALECT}
 )
 
+# mavlink 2.0 capable mavgen produce little different API of mavlink 1.0
+if (mavlink2_DIALECTS)
+  add_definitions(
+    -DMAVLINK2_COMPAT
+  )
+endif()
+
 # vim: set ts=2 sw=2 et:

@@ -103,7 +103,7 @@ public:
 		case MAV_PARAM_TYPE_INT32:
 			return (int32_t) pmsg.param_value;
 		case MAV_PARAM_TYPE_REAL32:
-			return pmsg.param_value;
+			return (float) pmsg.param_value;
 
 		default:
 		case MAV_PARAM_TYPE_UINT64:

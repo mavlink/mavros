@@ -84,11 +84,17 @@ MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
 	if (message->sysid != sysid || message->compid != compid) {
 		mavlink_message_t msg = *message;
 
-#if MAVLINK_CRC_EXTRA
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len,
+#ifdef MAVLINK2_COMPAT
+		// for mavlink 1.0 len == min_len
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, message->len,
 				mavlink_crcs[msg.msgid]);
 #else
+# if MAVLINK_CRC_EXTRA
+		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len,
+				mavlink_crcs[msg.msgid]);
+# else
 		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
+# endif
 #endif
 
 		return new MsgBuffer(&msg);
