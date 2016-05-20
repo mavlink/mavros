@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.17.3 (2016-05-20)
+-------------------
 * libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: support build with mavlink 2.0 capable mavgen
 * node: Remove warning about MAVLINK_VERSION redefine
 * Fix bug with orientation in setpoint_raw plugin

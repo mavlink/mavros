@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.17.3 (2016-05-20)
+-------------------
 * test `#546 <https://github.com/mavlink/mavros/issues/546>`_: Added check of control_toolbox version (1.14.0)
   In Kinetic control_toolbox changed API of Pid::initPid().
 * Contributors: Vladimir Ermakov
