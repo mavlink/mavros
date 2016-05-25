@@ -16,6 +16,7 @@
  */
 
 #include <array>
+#include <random>
 #include <angles/angles.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <test_mavros/sitl_test/sitl_test.h>
