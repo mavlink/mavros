@@ -27,7 +27,7 @@ before_install:
   #- sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-rosinstall python-catkin-tools
+  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep
   - sudo rosdep init
@@ -50,20 +50,18 @@ install:
   - rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 
 before_script:
-#  - nop
   - source /opt/ros/$ROS_DISTRO/setup.bash
 
 script:
   - cd ~/catkin_ws
-  #- catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin config --install
+  - catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
   - catkin build --verbose --summary
   - source devel/setup.bash
   - catkin run_tests -p1 --summary
-  - catkin_test_results --all ~/catkin_ws/build
+  #- catkin_test_results --all ~/catkin_ws/build
 
-#after_failure:
-#  - find ~/catkin_ws/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
+after_failure:
+  - find ~/catkin_ws/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
 
 notifications:
   webhooks:
