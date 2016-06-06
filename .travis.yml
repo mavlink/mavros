@@ -3,7 +3,7 @@
 # vim:set ts=2 sw=2 et:
 dist: trusty
 sudo: required
-language: cpp
+language: generic
 compiler:
   - gcc
 cache:
