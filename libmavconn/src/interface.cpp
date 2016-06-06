@@ -155,12 +155,10 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 	iostat_rx_add(bytes_received);
 	for (; bytes_received > 0; bytes_received--) {
 		if (mavlink_parse_char(channel, *buf++, &message, &status)) {
-
 			log_recv(pfx, message);
 
 			message_received.emit(&message, message.sysid, message.compid);
 		}
-
 	}
 }
 
@@ -170,7 +168,6 @@ void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg)
 			pfx, channel,
 			(msg.magic == MAVLINK_STX) ? "V2.0" : "V1.0",
 			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
-
 }
 
 void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)

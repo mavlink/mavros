@@ -36,7 +36,6 @@
 #include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
-
 class MsgBuffer;
 
 using steady_clock = std::chrono::steady_clock;

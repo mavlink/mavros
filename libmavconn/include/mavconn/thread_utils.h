@@ -67,4 +67,4 @@ inline const std::string to_string_ss(T &obj)
 	return ss.str();
 }
 }	// namespace utils
-} // namespace mavconn
+}	// namespace mavconn
