@@ -60,8 +60,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t([&] () {
-				// OSX do not support ptherad_setname_np() outside of thread.
-				//utils::set_thread_name(t, "MAVConnSerial%d", channel);
+				utils::set_this_thread_name("MAVConnSerial%d", channel);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -87,8 +86,7 @@ void MAVConnSerial::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	//port_closed.emit();
-	port_closed();
+	port_closed.emit();
 }
 
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)

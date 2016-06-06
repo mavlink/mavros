@@ -54,7 +54,19 @@ template <typename Thread>
 inline bool set_thread_name(Thread &thd, std::string &name)
 {
 	return set_thread_name(thd, name.c_str());
-};
+}
+
+inline bool set_this_thread_name(const char *name, ...)
+{
+	pthread_t pth = pthread_self();
+	va_list arg_list;
+	va_start(arg_list, name);
+
+	char new_name[256];
+	vsnprintf(new_name, sizeof(new_name), name, arg_list);
+	va_end(arg_list);
+	return pthread_setname_np(pth, new_name) == 0;
+}
 
 /**
  * @brief Convert to string objects with operator <<

@@ -42,16 +42,13 @@ int main(int argc, char **argv){
 
 	// create echo server
 	server.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45000));
-	//server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-	//	server->send_message(msg, sysid, compid);
-	//};
-
-	server->message_received.connect([&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg, sysid, compid); });
+	server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg, sysid, compid); };
+	//server->message_received.connect([&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg, sysid, compid); });
 
 	// create client
 	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45001, "localhost", 45000));
-	//client->message_received += recv_message;
-	client->message_received.connect(recv_message);
+	client->message_received += recv_message;
+	//client->message_received.connect(recv_message);
 
 	while (ros::ok()) {
 		send_heartbeat(client.get());

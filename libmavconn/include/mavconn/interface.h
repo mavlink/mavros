@@ -22,7 +22,6 @@
 #pragma once
 
 #include <boost/system/system_error.hpp>
-#include <boost/signals2.hpp>
 
 #include <set>
 #include <mutex>
@@ -33,7 +32,7 @@
 #include <sstream>
 #include <cassert>
 #include <stdexcept>
-//#include <mavconn/simplesignal.h>
+#include <mavconn/simplesignal.h>
 #include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
@@ -83,8 +82,7 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	//using MessageSig = signal::Signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
-	using MessageSig = boost::signals2::signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
+	using MessageSig = signal::Signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
 	using Ptr = std::shared_ptr<MAVConnInterface>;
 	using ConstPtr = std::shared_ptr<MAVConnInterface const>;
 	using WeakPtr = std::weak_ptr<MAVConnInterface>;
@@ -136,8 +134,7 @@ public:
 	 * @brief Message receive signal
 	 */
 	MessageSig message_received;
-	//signal::Signal<void()> port_closed;
-	boost::signals2::signal<void()> port_closed;
+	signal::Signal<void()> port_closed;
 
 	virtual mavlink_status_t get_status();
 	virtual IOStat get_iostat();
