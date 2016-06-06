@@ -58,7 +58,7 @@ script:
   - catkin build --verbose --summary
   - source devel/setup.bash
   - catkin run_tests -p1 -j4 --summary
-  - catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
+  - catkin_test_results --all ~/catkin_ws/build
 
 after_failure:
   - find ~/catkin_ws/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
