@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -26,10 +26,10 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
-using mavutils::to_string_ss;
-typedef std::lock_guard<std::recursive_mutex> lock_guard;
+using utils::to_string_ss;
 
-#define PFXd	"mavconn: tcp%d: "
+#define PFX	"mavconn: tcp"
+#define PFXd	PFX "%d: "
 
 
 static bool resolve_address_tcp(io_service &io, int chan, std::string host, unsigned short port, tcp::endpoint &ep)
@@ -80,11 +80,14 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	}
 
 	// give some work to io_service before start
-	io_service.post(boost::bind(&MAVConnTCPClient::do_recv, this));
+	io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnTCPc%d", channel);
+	std::thread t([&] () {
+				// OSX do not support ptherad_setname_np() outside of thread.
+				utils::set_thread_name(t, "MAVConnTCP%d", channel);
+				io_service.run();
+			});
 	io_thread.swap(t);
 }
 
@@ -101,7 +104,7 @@ void MAVConnTCPClient::client_connected(int server_channel) {
 			server_channel, channel, to_string_ss(server_ep).c_str());
 
 	// start recv
-	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_recv, this));
+	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_recv, this));
 }
 
 MAVConnTCPClient::~MAVConnTCPClient() {
@@ -125,7 +128,7 @@ void MAVConnTCPClient::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	/* emit */ port_closed();
+	port_closed.emit();
 }
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
@@ -140,7 +143,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
 	}
-	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
+	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -152,49 +155,30 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 		return;
 	}
 
-	logDebug(PFXd "send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-			channel, message->msgid, message->len, sysid, compid, message->seq);
+	log_send(PFX, message, sysid, compid);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
 	}
-	socket.get_io_service().post(boost::bind(&MAVConnTCPClient::do_send, this, true));
+	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
 
 void MAVConnTCPClient::do_recv()
 {
 	socket.async_receive(
 			buffer(rx_buf, sizeof(rx_buf)),
-			boost::bind(&MAVConnTCPClient::async_receive_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
-}
+			[&] (error_code error, size_t bytes_transferred) {
+				if (error) {
+					logError(PFXd "receive: %s", channel, error.message().c_str());
+					close();
+					return;
+				}
 
-void MAVConnTCPClient::async_receive_end(error_code error, size_t bytes_transferred)
-{
-	mavlink_message_t message;
-	mavlink_status_t status;
-
-	if (error) {
-		logError(PFXd "receive: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	iostat_rx_add(bytes_transferred);
-	for (size_t i = 0; i < bytes_transferred; i++) {
-		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			logDebug(PFXd "recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-					channel, message.msgid, message.len, message.sysid, message.compid, message.seq);
-
-			/* emit */ message_received(&message, message.sysid, message.compid);
-		}
-	}
-
-	do_recv();
+				parse_buffer(PFX, rx_buf, sizeof(rx_buf), bytes_transferred);
+				do_recv();
+			});
 }
 
 void MAVConnTCPClient::do_send(bool check_tx_state)
@@ -210,38 +194,32 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 	MsgBuffer *buf = tx_q.front();
 	socket.async_send(
 			buffer(buf->dpos(), buf->nbytes()),
-			boost::bind(&MAVConnTCPClient::async_send_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
-}
+			[&] (error_code error, size_t bytes_transferred) {
+				if (error) {
+					logError(PFXd "send: %s", channel, error.message().c_str());
+					close();
+					return;
+				}
 
-void MAVConnTCPClient::async_send_end(error_code error, size_t bytes_transferred)
-{
-	if (error) {
-		logError(PFXd "send: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
+				iostat_tx_add(bytes_transferred);
+				lock_guard lock(mutex);
+				if (tx_q.empty()) {
+					tx_in_progress = false;
+					return;
+				}
 
-	iostat_tx_add(bytes_transferred);
-	lock_guard lock(mutex);
-	if (tx_q.empty()) {
-		tx_in_progress = false;
-		return;
-	}
+				MsgBuffer *buf = tx_q.front();
+				buf->pos += bytes_transferred;
+				if (buf->nbytes() == 0) {
+					tx_q.pop_front();
+					delete buf;
+				}
 
-	MsgBuffer *buf = tx_q.front();
-	buf->pos += bytes_transferred;
-	if (buf->nbytes() == 0) {
-		tx_q.pop_front();
-		delete buf;
-	}
-
-	if (!tx_q.empty())
-		do_send(false);
-	else
-		tx_in_progress = false;
+				if (!tx_q.empty())
+					do_send(false);
+				else
+					tx_in_progress = false;
+			});
 }
 
 
@@ -269,11 +247,14 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	}
 
 	// give some work to io_service before start
-	io_service.post(boost::bind(&MAVConnTCPServer::do_accept, this));
+	io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnTCPs%d", channel);
+	std::thread t([&] () {
+				// OSX do not support ptherad_setname_np() outside of thread.
+				utils::set_thread_name(t, "MAVConnTCPs%d", channel);
+				io_service.run();
+			});
 	io_thread.swap(t);
 }
 
@@ -295,7 +276,7 @@ void MAVConnTCPServer::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	/* emit */ port_closed();
+	port_closed.emit();
 }
 
 mavlink_status_t MAVConnTCPServer::get_status()
@@ -362,43 +343,39 @@ void MAVConnTCPServer::send_message(const mavlink_message_t *message, uint8_t sy
 void MAVConnTCPServer::do_accept()
 {
 	acceptor_client.reset();
-	acceptor_client = boost::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
+	acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
 	acceptor.async_accept(
 			acceptor_client->socket,
 			acceptor_client->server_ep,
-			boost::bind(&MAVConnTCPServer::async_accept_end,
-				this,
-				boost::asio::placeholders::error));
+			[&] (error_code error) {
+				if (error) {
+					logError(PFXd "accept: %s", channel, error.message().c_str());
+					close();
+					return;
+				}
+
+				// NOTE: i want create client class *after* connection accept,
+				//       but ASIO 1.43 does not support std::move() for sockets.
+				//       Need find way how to limit channel alloc.
+				//if (channes_available() <= 0) {
+				//	ROS_ERROR_NAMED("mavconn", "tcp-l:accept_cb: all channels in use, drop connection");
+				//	client_sock.close();
+				//	return;
+				//}
+
+				std::weak_ptr<MAVConnTCPClient> weak_client = acceptor_client;
+
+				lock_guard lock(mutex);
+				acceptor_client->client_connected(channel);
+				acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
+				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
+
+				client_list.push_back(acceptor_client);
+				do_accept();
+			});
 }
 
-void MAVConnTCPServer::async_accept_end(error_code error)
-{
-	if (error) {
-		logError(PFXd "accept: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	// NOTE: i want create client class *after* connection accept,
-	//       but ASIO 1.43 does not support std::move() for sockets.
-	//       Need find way how to limit channel alloc.
-	//if (channes_available() <= 0) {
-	//	ROS_ERROR_NAMED("mavconn", "tcp-l:accept_cb: all channels in use, drop connection");
-	//	client_sock.close();
-	//	return;
-	//}
-
-	lock_guard lock(mutex);
-	acceptor_client->client_connected(channel);
-	acceptor_client->message_received.connect(boost::bind(&MAVConnTCPServer::recv_message, this, _1, _2, _3));
-	acceptor_client->port_closed.connect(boost::bind(&MAVConnTCPServer::client_closed, this,
-				boost::weak_ptr<MAVConnTCPClient>(acceptor_client)));
-
-	client_list.push_back(acceptor_client);
-	do_accept();
-}
-
-void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp)
+void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 {
 	if (auto instp = weak_instp.lock()) {
 		bool locked = mutex.try_lock();
@@ -415,6 +392,6 @@ void MAVConnTCPServer::client_closed(boost::weak_ptr<MAVConnTCPClient> weak_inst
 void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	/* retranslate message */
-	message_received(message, sysid, compid);
+	message_received.emit(message, sysid, compid);
 }
 };	// namespace mavconn
