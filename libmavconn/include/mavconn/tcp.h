@@ -24,7 +24,6 @@
 #include <mavconn/msgbuffer.h>
 
 namespace mavconn {
-
 /**
  * @brief TCP client interface
  *
@@ -52,7 +51,9 @@ public:
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
-	inline bool is_open() { return socket.is_open(); };
+	inline bool is_open() {
+		return socket.is_open();
+	};
 
 private:
 	friend class MAVConnTCPServer;
@@ -102,7 +103,9 @@ public:
 
 	mavlink_status_t get_status();
 	IOStat get_iostat();
-	inline bool is_open() { return acceptor.is_open(); };
+	inline bool is_open() {
+		return acceptor.is_open();
+	};
 
 private:
 	boost::asio::io_service io_service;
@@ -123,6 +126,5 @@ private:
 	void client_closed(boost::weak_ptr<MAVConnTCPClient> weak_instp);
 	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 };
-
-}; // namespace mavconn
+};	// namespace mavconn
 

@@ -21,7 +21,6 @@
 #include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
-
 /**
  * @brief Message buffer for internal use in libmavconn
  */
@@ -73,6 +72,5 @@ struct MsgBuffer {
 		return len - pos;
 	}
 };
-
-}; // namespace mavconn
+};	// namespace mavconn
 

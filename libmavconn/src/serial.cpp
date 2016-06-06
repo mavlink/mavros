@@ -201,5 +201,4 @@ void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
 	else
 		tx_in_progress = false;
 }
-
-}; // namespace mavconn
+};	// namespace mavconn

@@ -31,7 +31,7 @@ TEST(MAVConn, allocate_check)
 	conns[1].reset(new MAVConnUDP(42, 201, "localhost", 45001));
 	conns[2].reset(new MAVConnUDP(42, 202, "localhost", 45002));
 
-	conns[1].reset(); // delete before allocation to ensure index
+	conns[1].reset();	// delete before allocation to ensure index
 	conns[1].reset(new MAVConnUDP(42, 203, "localhost", 45003));
 	ASSERT_EQ(conns[1]->get_channel(), 1);
 }
@@ -39,11 +39,11 @@ TEST(MAVConn, allocate_check)
 static void send_heartbeat(MAVConnInterface *ip) {
 	mavlink_message_t msg;
 	mavlink_msg_heartbeat_pack_chan(ip->get_system_id(), ip->get_component_id(), ip->get_channel(), &msg,
-			MAV_TYPE_ONBOARD_CONTROLLER,
-			MAV_AUTOPILOT_INVALID,
-			MAV_MODE_MANUAL_ARMED,
-			0,
-			MAV_STATE_ACTIVE);
+		MAV_TYPE_ONBOARD_CONTROLLER,
+		MAV_AUTOPILOT_INVALID,
+		MAV_MODE_MANUAL_ARMED,
+		0,
+		MAV_STATE_ACTIVE);
 	ip->send_message(&msg);
 }
 
@@ -97,8 +97,7 @@ TEST_F(UDP, send_message)
 	EXPECT_EQ(message_id, MAVLINK_MSG_ID_HEARTBEAT);
 }
 
-class TCP : public UDP {
-};
+class TCP : public UDP {};
 
 TEST_F(TCP, bind_error)
 {
@@ -147,16 +146,16 @@ TEST_F(TCP, client_reconnect)
 	echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
 
 	EXPECT_NO_THROW({
-		client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
-	});
+			client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
+		});
 
 	EXPECT_NO_THROW({
-		client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57600));
-	});
+			client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57600));
+		});
 
 	EXPECT_NO_THROW({
-		client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57600));
-	});
+			client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57600));
+		});
 }
 
 TEST(SERIAL, open_error)
@@ -176,16 +175,16 @@ TEST(URL, open_url_serial)
 	 * Disabled because it breaks terminal.
 	 */
 	EXPECT_NO_THROW({
-		serial = MAVConnInterface::open_url("/dev/tty:115200");
-		serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
-		EXPECT_NE(serial_p, nullptr);
-	});
+			serial = MAVConnInterface::open_url("/dev/tty:115200");
+			serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
+			EXPECT_NE(serial_p, nullptr);
+		});
 
 	EXPECT_NO_THROW({
-		serial = MAVConnInterface::open_url("serial:///dev/tty:115200?ids=2,240");
-		serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
-		EXPECT_NE(serial_p, nullptr);
-	});
+			serial = MAVConnInterface::open_url("serial:///dev/tty:115200?ids=2,240");
+			serial_p = dynamic_cast<MAVConnSerial*>(serial.get());
+			EXPECT_NE(serial_p, nullptr);
+		});
 }
 #endif
 
@@ -195,48 +194,48 @@ TEST(URL, open_url_udp)
 	MAVConnUDP *udp_p;
 
 	EXPECT_NO_THROW({
-		udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
-		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
-		EXPECT_NE(udp_p, nullptr);
-	});
+			udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
+			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+			EXPECT_NE(udp_p, nullptr);
+		});
 
 	EXPECT_NO_THROW({
-		udp = MAVConnInterface::open_url("udp://@localhost:45005");
-		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
-		EXPECT_NE(udp_p, nullptr);
-	});
+			udp = MAVConnInterface::open_url("udp://@localhost:45005");
+			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+			EXPECT_NE(udp_p, nullptr);
+		});
 
 	EXPECT_NO_THROW({
-		udp = MAVConnInterface::open_url("udp://localhost:45000@");
-		udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
-		EXPECT_NE(udp_p, nullptr);
-	});
+			udp = MAVConnInterface::open_url("udp://localhost:45000@");
+			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
+			EXPECT_NE(udp_p, nullptr);
+		});
 
 	EXPECT_THROW({
-		udp = MAVConnInterface::open_url("udp://localhost:45000");
-	}, DeviceError);
+			udp = MAVConnInterface::open_url("udp://localhost:45000");
+		}, DeviceError);
 }
 
 TEST(URL, open_url_tcp)
 {
 	boost::shared_ptr<MAVConnInterface>
-		tcp_server,
+	tcp_server,
 		tcp_client;
 
 	MAVConnTCPServer *tcp_server_p;
 	MAVConnTCPClient *tcp_client_p;
 
 	EXPECT_NO_THROW({
-		tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
-		tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
-		EXPECT_NE(tcp_server_p, nullptr);
-	});
+			tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
+			tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
+			EXPECT_NE(tcp_server_p, nullptr);
+		});
 
 	EXPECT_NO_THROW({
-		tcp_client = MAVConnInterface::open_url("tcp://localhost:57600");
-		tcp_client_p = dynamic_cast<MAVConnTCPClient*>(tcp_client.get());
-		EXPECT_NE(tcp_client_p, nullptr);
-	});
+			tcp_client = MAVConnInterface::open_url("tcp://localhost:57600");
+			tcp_client_p = dynamic_cast<MAVConnTCPClient*>(tcp_client.get());
+			EXPECT_NE(tcp_client_p, nullptr);
+		});
 }
 
 int main(int argc, char **argv){

@@ -24,7 +24,6 @@
 #include <mavconn/msgbuffer.h>
 
 namespace mavconn {
-
 /**
  * @brief UDP interface
  *
@@ -49,7 +48,9 @@ public:
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
-	inline bool is_open() { return socket.is_open(); };
+	inline bool is_open() {
+		return socket.is_open();
+	};
 
 private:
 	boost::asio::io_service io_service;
@@ -72,6 +73,5 @@ private:
 	void do_sendto(bool check_tx_state);
 	void async_sendto_end(boost::system::error_code, size_t bytes_transferred);
 };
-
-}; // namespace mavconn
+};	// namespace mavconn
 

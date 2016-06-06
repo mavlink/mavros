@@ -91,7 +91,7 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	typedef sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> MessageSig;
+	typedef sig2::signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> MessageSig;
 	typedef boost::shared_ptr<MAVConnInterface> Ptr;
 	typedef boost::shared_ptr<MAVConnInterface const> ConstPtr;
 	typedef boost::weak_ptr<MAVConnInterface> WeakPtr;
@@ -149,11 +149,21 @@ public:
 	virtual IOStat get_iostat();
 	virtual bool is_open() = 0;
 
-	inline int get_channel() { return channel; };
-	inline uint8_t get_system_id() { return sys_id; };
-	inline void set_system_id(uint8_t sysid) { sys_id = sysid; };
-	inline uint8_t get_component_id() { return comp_id; };
-	inline void set_component_id(uint8_t compid) { comp_id = compid; };
+	inline int get_channel() {
+		return channel;
+	};
+	inline uint8_t get_system_id() {
+		return sys_id;
+	};
+	inline void set_system_id(uint8_t sysid) {
+		sys_id = sysid;
+	};
+	inline uint8_t get_component_id() {
+		return comp_id;
+	};
+	inline void set_component_id(uint8_t compid) {
+		comp_id = compid;
+	};
 
 	/**
 	 * @brief Construct connection from URL
@@ -205,5 +215,4 @@ private:
 	size_t last_tx_total_bytes, last_rx_total_bytes;
 	std::chrono::time_point<steady_clock> last_iostat;
 };
-
-}; // namespace mavconn
+};	// namespace mavconn

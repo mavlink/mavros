@@ -40,12 +40,12 @@ static bool resolve_address_udp(io_service &io, int chan, std::string host, unsi
 
 	udp::resolver::query query(host, "");
 	std::for_each(resolver.resolve(query, ec), udp::resolver::iterator(),
-		[&](const udp::endpoint &q_ep) {
-			ep = q_ep;
-			ep.port(port);
-			result = true;
-			logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
-		});
+			[&](const udp::endpoint & q_ep) {
+				ep = q_ep;
+				ep.port(port);
+				result = true;
+				logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
+			});
 
 	if (ec) {
 		logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());
@@ -258,5 +258,4 @@ void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
 	else
 		tx_in_progress = false;
 }
-
-}; // namespace mavconn
+};	// namespace mavconn

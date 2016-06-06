@@ -25,7 +25,6 @@
 #include <pthread.h>
 
 namespace mavutils {
-
 /**
  * @brief Set std::thread name with printf-like mode
  * @param[in] thd std::thread
@@ -66,5 +65,4 @@ inline const std::string to_string_ss(T &obj)
 	ss << obj;
 	return ss.str();
 }
-
-}; // namespace mavutils
+};	// namespace mavutils

@@ -24,7 +24,6 @@
 #include <mavconn/msgbuffer.h>
 
 namespace mavconn {
-
 /**
  * @brief Serial interface
  */
@@ -46,7 +45,9 @@ public:
 	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
-	inline bool is_open() { return serial_dev.is_open(); };
+	inline bool is_open() {
+		return serial_dev.is_open();
+	};
 
 private:
 	boost::asio::io_service io_service;
@@ -63,6 +64,5 @@ private:
 	void do_write(bool check_tx_state);
 	void async_write_end(boost::system::error_code, size_t bytes_transferred);
 };
-
-}; // namespace mavconn
+};	// namespace mavconn
 

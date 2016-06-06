@@ -40,12 +40,12 @@ static bool resolve_address_tcp(io_service &io, int chan, std::string host, unsi
 
 	tcp::resolver::query query(host, "");
 	std::for_each(resolver.resolve(query, ec), tcp::resolver::iterator(),
-		[&](const tcp::endpoint &q_ep) {
-			ep = q_ep;
-			ep.port(port);
-			result = true;
-			logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
-		});
+			[&](const tcp::endpoint & q_ep) {
+				ep = q_ep;
+				ep.port(port);
+				result = true;
+				logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
+			});
 
 	if (ec) {
 		logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());
@@ -300,14 +300,14 @@ void MAVConnTCPServer::close() {
 
 mavlink_status_t MAVConnTCPServer::get_status()
 {
-	mavlink_status_t status{};
+	mavlink_status_t status {};
 
 	lock_guard lock(mutex);
 	for (auto &instp : client_list) {
 		auto inst_status = instp->get_status();
 
 #define ADD_STATUS(_field)	\
-		status._field += inst_status._field
+	status._field += inst_status._field
 
 		ADD_STATUS(packet_rx_success_count);
 		ADD_STATUS(packet_rx_drop_count);
@@ -323,14 +323,14 @@ mavlink_status_t MAVConnTCPServer::get_status()
 
 MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 {
-	MAVConnInterface::IOStat iostat{};
+	MAVConnInterface::IOStat iostat {};
 
 	lock_guard lock(mutex);
 	for (auto &instp : client_list) {
 		auto inst_iostat = instp->get_iostat();
 
 #define ADD_IOSTAT(_field)	\
-		iostat._field += inst_iostat._field
+	iostat._field += inst_iostat._field
 
 		ADD_IOSTAT(tx_total_bytes);
 		ADD_IOSTAT(rx_total_bytes);
@@ -417,5 +417,4 @@ void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sy
 	/* retranslate message */
 	message_received(message, sysid, compid);
 }
-
-}; // namespace mavconn
+};	// namespace mavconn

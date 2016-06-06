@@ -26,7 +26,6 @@
 #include <mavconn/tcp.h>
 
 namespace mavconn {
-
 #define PFX	"mavconn: "
 
 #if MAVLINK_CRC_EXTRA
@@ -287,7 +286,6 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 
 MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		uint8_t system_id, uint8_t component_id) {
-
 	/* Based on code found here:
 	 * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
 	 */
@@ -342,5 +340,4 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 	else
 		throw DeviceError("url", "Unknown URL type");
 }
-
-}; // namespace mavconn
+};	// namespace mavconn
