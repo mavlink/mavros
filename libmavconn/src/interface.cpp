@@ -31,8 +31,11 @@ namespace mavconn {
 #if MAVLINK_CRC_EXTRA
 const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
 #endif
+
 std::set<int> MAVConnInterface::allocated_channels;
 std::recursive_mutex MAVConnInterface::channel_mutex;
+mavlink_status_t MAVConnInterface::channel_status[MAVLINK_COMM_NUM_BUFFERS];
+mavlink_message_t MAVConnInterface::channel_buffer[MAVLINK_COMM_NUM_BUFFERS];
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
@@ -142,6 +145,43 @@ void MAVConnInterface::iostat_rx_add(size_t bytes)
 	rx_total_bytes += bytes;
 }
 
+void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received)
+{
+	mavlink_status_t status;
+	mavlink_message_t message;
+
+	assert(bufsize >= bytes_received);
+
+	iostat_rx_add(bytes_received);
+	for (; bytes_received > 0; bytes_received--) {
+		if (mavlink_parse_char(channel, *buf++, &message, &status)) {
+
+			log_recv(pfx, message);
+
+			message_received.emit(&message, message.sysid, message.compid);
+		}
+
+	}
+}
+
+void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg)
+{
+	logDebug("%s%d: recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+			pfx, channel,
+			(msg.magic == MAVLINK_STX) ? "V2.0" : "V1.0",
+			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
+
+}
+
+void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)
+{
+	logDebug("%s%d: send: %s Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+			pfx, channel,
+			(msg->magic == MAVLINK_STX) ? "V2.0" : "V1.0",
+			msg->msgid, msg->len, sysid, compid, msg->seq);
+}
+
+
 /**
  * Parse host:port pairs
  */
@@ -223,7 +263,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 	url_parse_host(path, file_path, baudrate, "/dev/ttyACM0", 57600);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnSerial>(system_id, component_id,
+	return std::make_shared<MAVConnSerial>(system_id, component_id,
 			file_path, baudrate);
 }
 
@@ -249,7 +289,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 	url_parse_host(remote_pair, remote_host, remote_port, "", 14550);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnUDP>(system_id, component_id,
+	return std::make_shared<MAVConnUDP>(system_id, component_id,
 			bind_host, bind_port,
 			remote_host, remote_port);
 }
@@ -265,7 +305,7 @@ static MAVConnInterface::Ptr url_parse_tcp_client(
 	url_parse_host(host, server_host, server_port, "localhost", 5760);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnTCPClient>(system_id, component_id,
+	return std::make_shared<MAVConnTCPClient>(system_id, component_id,
 			server_host, server_port);
 }
 
@@ -280,7 +320,7 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 	url_parse_host(host, bind_host, bind_port, "0.0.0.0", 5760);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnTCPServer>(system_id, component_id,
+	return std::make_shared<MAVConnTCPServer>(system_id, component_id,
 			bind_host, bind_port);
 }
 

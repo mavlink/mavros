@@ -12,7 +12,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -21,10 +21,6 @@
 
 #pragma once
 
-#include <boost/bind.hpp>
-#include <boost/signals2.hpp>
-#include <boost/smart_ptr.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/system/system_error.hpp>
 
 #include <set>
@@ -34,21 +30,17 @@
 #include <thread>
 #include <memory>
 #include <sstream>
+#include <cassert>
 #include <stdexcept>
+#include <mavconn/simplesignal.h>
 #include <mavconn/mavlink_dialect.h>
 
 namespace mavconn {
-namespace sig2 = boost::signals2;
 
 class MsgBuffer;
 
-#if __cplusplus == 201103L
 using steady_clock = std::chrono::steady_clock;
-#elif defined(__GXX_EXPERIMENTAL_CXX0X__)
-typedef std::chrono::monotonic_clock steady_clock;
-#else
-#error Unknown C++11 or C++0x wall clock class
-#endif
+using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 /**
  * @brief Common exception for communication error
@@ -91,10 +83,10 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	typedef sig2::signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> MessageSig;
-	typedef boost::shared_ptr<MAVConnInterface> Ptr;
-	typedef boost::shared_ptr<MAVConnInterface const> ConstPtr;
-	typedef boost::weak_ptr<MAVConnInterface> WeakPtr;
+	using MessageSig = signal::Signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
+	using Ptr = std::shared_ptr<MAVConnInterface>;
+	using ConstPtr = std::shared_ptr<MAVConnInterface const>;
+	using WeakPtr = std::weak_ptr<MAVConnInterface>;
 
 	struct IOStat {
 		size_t tx_total_bytes;	//!< total bytes transferred
@@ -143,7 +135,7 @@ public:
 	 * @brief Message receive signal
 	 */
 	MessageSig message_received;
-	sig2::signal<void()> port_closed;
+	signal::Signal<void()> port_closed;
 
 	virtual mavlink_status_t get_status();
 	virtual IOStat get_iostat();
@@ -203,16 +195,29 @@ protected:
 	 */
 	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 
+	/**
+	 * Parse buffer and emit massage_received.
+	 */
+	void parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received);
+
 	void iostat_tx_add(size_t bytes);
 	void iostat_rx_add(size_t bytes);
 
+	void log_recv(const char *pfx, mavlink_message_t &msg);
+	void log_send(const char *pfx, const mavlink_message_t *msg, uint8_t sysid, uint8_t compid);
+
 private:
+	friend mavlink_status_t* ::mavlink_get_channel_status(uint8_t chan);
+	friend mavlink_message_t* ::mavlink_get_channel_buffer(uint8_t chan);
+
 	static std::recursive_mutex channel_mutex;
 	static std::set<int> allocated_channels;
+	static mavlink_status_t channel_status[MAVLINK_COMM_NUM_BUFFERS];
+	static mavlink_message_t channel_buffer[MAVLINK_COMM_NUM_BUFFERS];
 
 	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
 	std::recursive_mutex iostat_mutex;
 	size_t last_tx_total_bytes, last_rx_total_bytes;
 	std::chrono::time_point<steady_clock> last_iostat;
 };
-};	// namespace mavconn
+}	// namespace mavconn

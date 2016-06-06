@@ -17,14 +17,9 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <cassert>
-#include <mavconn/mavlink_dialect.h>
+#include <mavconn/interface.h>
 
-/* I moved those arrays outside of functions because
- * module arrays easier to find with gdb
- */
-static mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
-static mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
+using mavconn::MAVConnInterface;
 
 /**
  * Internal function to give access to the channel status for each channel
@@ -32,7 +27,7 @@ static mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 mavlink_status_t* mavlink_get_channel_status(uint8_t chan)
 {
 	assert(chan < MAVLINK_COMM_NUM_BUFFERS);
-	return &m_mavlink_status[chan];
+	return &MAVConnInterface::channel_status[chan];
 }
 
 /**
@@ -41,6 +36,5 @@ mavlink_status_t* mavlink_get_channel_status(uint8_t chan)
 mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan)
 {
 	assert(chan < MAVLINK_COMM_NUM_BUFFERS);
-	return &m_mavlink_buffer[chan];
+	return &MAVConnInterface::channel_buffer[chan];
 }
-

@@ -9,7 +9,7 @@
  */
 /*
  * libmavconn
- * Copyright 2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -24,7 +24,8 @@
 #include <cstdarg>
 #include <pthread.h>
 
-namespace mavutils {
+namespace mavconn {
+namespace utils {
 /**
  * @brief Set std::thread name with printf-like mode
  * @param[in] thd std::thread
@@ -65,4 +66,5 @@ inline const std::string to_string_ss(T &obj)
 	ss << obj;
 	return ss.str();
 }
-};	// namespace mavutils
+}	// namespace utils
+} // namespace mavconn

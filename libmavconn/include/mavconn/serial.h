@@ -60,9 +60,7 @@ private:
 	std::recursive_mutex mutex;
 
 	void do_read();
-	void async_read_end(boost::system::error_code, size_t bytes_transferred);
 	void do_write(bool check_tx_state);
-	void async_write_end(boost::system::error_code, size_t bytes_transferred);
 };
 };	// namespace mavconn
 
