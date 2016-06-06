@@ -41,6 +41,8 @@ class MsgBuffer;
 using steady_clock = std::chrono::steady_clock;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
 
+static constexpr auto MAV_COMP_ID_UDP_BRIDGE = 240;
+
 /**
  * @brief Common exception for communication error
  */
@@ -66,7 +68,7 @@ public:
 	}
 
 	static std::string msg_to_string(int errnum) {
-		return strerror(errnum);
+		return "" /*::strerror(errnum)*/;
 	}
 
 	static std::string msg_to_string(boost::system::system_error &err) {

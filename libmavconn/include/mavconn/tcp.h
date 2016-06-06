@@ -19,9 +19,11 @@
 
 #include <list>
 #include <atomic>
+#include <cstring>
 #include <boost/asio.hpp>
 #include <mavconn/interface.h>
 #include <mavconn/msgbuffer.h>
+
 
 namespace mavconn {
 /**

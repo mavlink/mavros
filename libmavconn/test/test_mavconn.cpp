@@ -125,11 +125,13 @@ TEST_F(TCP, send_message)
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
+	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		echo->send_message(msg, sysid, compid);
+	};
 
 	// create client
 	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
-	client->message_received.connect(boost::bind(&TCP::recv_message, this, _1, _2, _3));
+	client->message_received += mavconn::signal::slot(this, recv_message);
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -145,7 +147,9 @@ TEST_F(TCP, client_reconnect)
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo_server->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo_server.get(), _1, _2, _3));
+	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		echo->send_message(msg, sysid, compid);
+	};
 
 	EXPECT_NO_THROW({
 			client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
@@ -169,7 +173,7 @@ TEST(SERIAL, open_error)
 #if 0
 TEST(URL, open_url_serial)
 {
-	boost::shared_ptr<MAVConnInterface> serial;
+	MAVConnInterface::Ptr serial;
 	MAVConnSerial *serial_p;
 
 	/* not best way to test tty access,
@@ -192,7 +196,7 @@ TEST(URL, open_url_serial)
 
 TEST(URL, open_url_udp)
 {
-	boost::shared_ptr<MAVConnInterface> udp;
+	MAVConnInterface::Ptr udp;
 	MAVConnUDP *udp_p;
 
 	EXPECT_NO_THROW({
@@ -220,9 +224,7 @@ TEST(URL, open_url_udp)
 
 TEST(URL, open_url_tcp)
 {
-	boost::shared_ptr<MAVConnInterface>
-	tcp_server,
-		tcp_client;
+	MAVConnInterface::Ptr tcp_server, tcp_client;
 
 	MAVConnTCPServer *tcp_server_p;
 	MAVConnTCPClient *tcp_client_p;
