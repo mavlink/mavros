@@ -157,7 +157,8 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 		if (mavlink_parse_char(channel, *buf++, &message, &status)) {
 			log_recv(pfx, message);
 
-			message_received.emit(&message, message.sysid, message.compid);
+			//message_received.emit(&message, message.sysid, message.compid);
+			message_received(&message, message.sysid, message.compid);
 		}
 	}
 }

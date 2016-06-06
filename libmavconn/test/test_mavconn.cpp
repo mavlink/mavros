@@ -84,11 +84,13 @@ TEST_F(UDP, send_message)
 
 	// create echo server
 	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45000));
-	echo->message_received.connect(boost::bind(&MAVConnInterface::send_message, echo.get(), _1, _2, _3));
+	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		echo->send_message(msg, sysid, compid);
+	};
 
 	// create client
 	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45001, "localhost", 45000));
-	client->message_received.connect(boost::bind(&UDP::recv_message, this, _1, _2, _3));
+	client->message_received += mavconn::signal::slot(this, recv_message);
 
 	// wait echo
 	send_heartbeat(client.get());

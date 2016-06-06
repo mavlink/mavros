@@ -46,4 +46,6 @@ void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr 
 {
 	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
 };
+
+using mavconn::utils::set_thread_name;
 };	// namespace mavutils

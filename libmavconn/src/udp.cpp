@@ -96,7 +96,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	// run io_service for async io
 	std::thread t([&] () {
 				// OSX do not support ptherad_setname_np() outside of thread.
-				utils::set_thread_name(t, "MAVConnUDP%d", channel);
+				//utils::set_thread_name(t, "MAVConnUDP%d", channel);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -123,7 +123,8 @@ void MAVConnUDP::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	//port_closed.emit();
+	port_closed();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)

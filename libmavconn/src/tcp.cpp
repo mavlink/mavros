@@ -85,7 +85,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	// run io_service for async io
 	std::thread t([&] () {
 				// OSX do not support ptherad_setname_np() outside of thread.
-				utils::set_thread_name(t, "MAVConnTCP%d", channel);
+				//utils::set_thread_name(t, "MAVConnTCP%d", channel);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -128,7 +128,8 @@ void MAVConnTCPClient::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	//port_closed.emit();
+	port_closed();
 }
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
@@ -252,7 +253,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	// run io_service for async io
 	std::thread t([&] () {
 				// OSX do not support ptherad_setname_np() outside of thread.
-				utils::set_thread_name(t, "MAVConnTCPs%d", channel);
+				//utils::set_thread_name(t, "MAVConnTCPs%d", channel);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -276,7 +277,8 @@ void MAVConnTCPServer::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	//port_closed.emit();
+	port_closed();
 }
 
 mavlink_status_t MAVConnTCPServer::get_status()
@@ -367,8 +369,12 @@ void MAVConnTCPServer::do_accept()
 
 				lock_guard lock(mutex);
 				acceptor_client->client_connected(channel);
-				acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
-				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
+				//acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
+				//acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
+
+				acceptor_client->message_received.connect([this](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { recv_message(msg, sysid, compid); });
+				acceptor_client->port_closed.connect([&weak_client, this] () { client_closed(weak_client); });
+
 
 				client_list.push_back(acceptor_client);
 				do_accept();
@@ -392,6 +398,7 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
 	/* retranslate message */
-	message_received.emit(message, sysid, compid);
+	//message_received.emit(message, sysid, compid);
+	message_received(message, sysid, compid);
 }
 };	// namespace mavconn
