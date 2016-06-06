@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -26,10 +26,11 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
-using mavutils::to_string_ss;
-typedef std::lock_guard<std::recursive_mutex> lock_guard;
+using utils::to_string_ss;
 
-#define PFXd	"mavconn: udp%d: "
+
+#define PFX	"mavconn: udp"
+#define PFXd	PFX "%d: "
 
 
 static bool resolve_address_udp(io_service &io, int chan, std::string host, unsigned short port, udp::endpoint &ep)
@@ -39,6 +40,7 @@ static bool resolve_address_udp(io_service &io, int chan, std::string host, unsi
 	error_code ec;
 
 	udp::resolver::query query(host, "");
+	// XXX for(: iterable)?
 	std::for_each(resolver.resolve(query, ec), udp::resolver::iterator(),
 			[&](const udp::endpoint & q_ep) {
 				ep = q_ep;
@@ -89,11 +91,14 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	}
 
 	// give some work to io_service before start
-	io_service.post(boost::bind(&MAVConnUDP::do_recvfrom, this));
+	io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnUDP%d", channel);
+	std::thread t([&] () {
+				// OSX do not support ptherad_setname_np() outside of thread.
+				utils::set_thread_name(t, "MAVConnUDP%d", channel);
+				io_service.run();
+			});
 	io_thread.swap(t);
 }
 
@@ -118,7 +123,7 @@ void MAVConnUDP::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	/* emit */ port_closed();
+	port_closed.emit();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
@@ -138,7 +143,7 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
 	}
-	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
@@ -155,15 +160,14 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 		return;
 	}
 
-	logDebug(PFXd "send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-			channel, message->msgid, message->len, sysid, compid, message->seq);
+	log_send(PFX, message, sysid, compid);
 
 	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
 	}
-	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
 
 void MAVConnUDP::do_recvfrom()
@@ -171,40 +175,22 @@ void MAVConnUDP::do_recvfrom()
 	socket.async_receive_from(
 			buffer(rx_buf, sizeof(rx_buf)),
 			remote_ep,
-			boost::bind(&MAVConnUDP::async_receive_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
-}
+			[&] (error_code error, size_t bytes_transferred) {
+				if (error) {
+					logError(PFXd "receive: %s", channel, error.message().c_str());
+					close();
+					return;
+				}
 
-void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
-{
-	mavlink_message_t message;
-	mavlink_status_t status;
+				if (remote_ep != last_remote_ep) {
+					logInform(PFXd "Remote address: %s", channel, to_string_ss(remote_ep).c_str());
+					remote_exists = true;
+					last_remote_ep = remote_ep;
+				}
 
-	if (error) {
-		logError(PFXd "receive: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	if (remote_ep != last_remote_ep) {
-		logInform(PFXd "Remote address: %s", channel, to_string_ss(remote_ep).c_str());
-		remote_exists = true;
-		last_remote_ep = remote_ep;
-	}
-
-	iostat_rx_add(bytes_transferred);
-	for (size_t i = 0; i < bytes_transferred; i++) {
-		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			logDebug(PFXd "recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-					channel, message.msgid, message.len, message.sysid, message.compid, message.seq);
-
-			/* emit */ message_received(&message, message.sysid, message.compid);
-		}
-	}
-
-	do_recvfrom();
+				parse_buffer(PFX, rx_buf, sizeof(rx_buf), bytes_transferred);
+				do_recvfrom();
+			});
 }
 
 void MAVConnUDP::do_sendto(bool check_tx_state)
@@ -221,41 +207,35 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 	socket.async_send_to(
 			buffer(buf->dpos(), buf->nbytes()),
 			remote_ep,
-			boost::bind(&MAVConnUDP::async_sendto_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
+			[&] (error_code error, size_t bytes_transferred) {
+				if (error == boost::asio::error::network_unreachable) {
+					logWarn(PFXd "sendto: %s, retrying", channel, error.message().c_str());
+					// do not return, try to resend
+				}
+				else if (error) {
+					logError(PFXd "sendto: %s", channel, error.message().c_str());
+					close();
+					return;
+				}
+
+				iostat_tx_add(bytes_transferred);
+				lock_guard lock(mutex);
+				if (tx_q.empty()) {
+					tx_in_progress = false;
+					return;
+				}
+
+				MsgBuffer *buf = tx_q.front();
+				buf->pos += bytes_transferred;
+				if (buf->nbytes() == 0) {
+					tx_q.pop_front();
+					delete buf;
+				}
+
+				if (!tx_q.empty())
+					do_sendto(false);
+				else
+					tx_in_progress = false;
+			});
 }
-
-void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
-{
-	if (error == boost::asio::error::network_unreachable) {
-		logWarn(PFXd "sendto: %s, retrying", channel, error.message().c_str());
-		// do not return, try to resend
-	}
-	else if (error) {
-		logError(PFXd "sendto: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	iostat_tx_add(bytes_transferred);
-	lock_guard lock(mutex);
-	if (tx_q.empty()) {
-		tx_in_progress = false;
-		return;
-	}
-
-	MsgBuffer *buf = tx_q.front();
-	buf->pos += bytes_transferred;
-	if (buf->nbytes() == 0) {
-		tx_q.pop_front();
-		delete buf;
-	}
-
-	if (!tx_q.empty())
-		do_sendto(false);
-	else
-		tx_in_progress = false;
-}
-};	// namespace mavconn
+}	// namespace mavconn

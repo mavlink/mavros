@@ -260,7 +260,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 	int baudrate;
 
 	// /dev/ttyACM0:57600
-	url_parse_host(path, file_path, baudrate, "/dev/ttyACM0", 57600);
+	url_parse_host(path, file_path, baudrate, MAVConnSerial::DEFAULT_DEVICE, MAVConnSerial::DEFAULT_BAUDRATE);
 	url_parse_query(query, system_id, component_id);
 
 	return std::make_shared<MAVConnSerial>(system_id, component_id,
@@ -285,8 +285,8 @@ static MAVConnInterface::Ptr url_parse_udp(
 	remote_pair.assign(sep_it + 1, hosts.end());
 
 	// udp://0.0.0.0:14555@:14550
-	url_parse_host(bind_pair, bind_host, bind_port, "0.0.0.0", 14555);
-	url_parse_host(remote_pair, remote_host, remote_port, "", 14550);
+	url_parse_host(bind_pair, bind_host, bind_port, "0.0.0.0", MAVConnUDP::DEFAULT_BIND_PORT);
+	url_parse_host(remote_pair, remote_host, remote_port, MAVConnUDP::DEFAULT_REMOTE_HOST, MAVConnUDP::DEFAULT_REMOTE_PORT);
 	url_parse_query(query, system_id, component_id);
 
 	return std::make_shared<MAVConnUDP>(system_id, component_id,

@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -29,6 +29,9 @@ namespace mavconn {
  */
 class MAVConnSerial : public MAVConnInterface {
 public:
+	static constexpr auto DEFAULT_DEVICE = "/dev/ttyACM0";
+	static constexpr auto DEFAULT_BAUDRATE = 57600;
+
 	/**
 	 * Open and run serial link.
 	 *
@@ -36,7 +39,7 @@ public:
 	 * @param[in] baudrate  serial baudrate
 	 */
 	MAVConnSerial(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-			std::string device = "/dev/ttyACM0", unsigned baudrate = 57600);
+			std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE);
 	~MAVConnSerial();
 
 	void close();

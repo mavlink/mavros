@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -31,6 +31,11 @@ namespace mavconn {
  */
 class MAVConnUDP : public MAVConnInterface {
 public:
+	static constexpr auto DEFAULT_BIND_HOST = "localhost";
+	static constexpr auto DEFAULT_BIND_PORT = 14555;
+	static constexpr auto DEFAULT_REMOTE_HOST = "";
+	static constexpr auto DEFAULT_REMOTE_PORT = 14550;
+
 	/**
 	 * @param[id] bind_host    bind host
 	 * @param[id] bind_port    bind port
@@ -38,8 +43,8 @@ public:
 	 * @param[id] remote_port  remote port (optional)
 	 */
 	MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-			std::string bind_host = "localhost", unsigned short bind_port = 14555,
-			std::string remote_host = "", unsigned short remote_port = 14550);
+			std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT,
+			std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
 	~MAVConnUDP();
 
 	void close();
@@ -69,9 +74,7 @@ private:
 	std::recursive_mutex mutex;
 
 	void do_recvfrom();
-	void async_receive_end(boost::system::error_code, size_t bytes_transferred);
 	void do_sendto(bool check_tx_state);
-	void async_sendto_end(boost::system::error_code, size_t bytes_transferred);
 };
 };	// namespace mavconn
 
