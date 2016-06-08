@@ -11,7 +11,7 @@
 //#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <ros/ros.h>
+//#include <ros/ros.h>
 
 #include <chrono>
 #include <condition_variable>
@@ -22,29 +22,23 @@
 #include <mavconn/tcp.h>
 
 using namespace mavconn;
+using mavlink::mavlink_message_t;
 
-TEST(MAVConn, allocate_check)
-{
-	std::unique_ptr<MAVConnInterface> conns[3];
-
-	conns[0].reset(new MAVConnUDP(42, 200, "localhost", 45000));
-	conns[1].reset(new MAVConnUDP(42, 201, "localhost", 45001));
-	conns[2].reset(new MAVConnUDP(42, 202, "localhost", 45002));
-
-	conns[1].reset();	// delete before allocation to ensure index
-	conns[1].reset(new MAVConnUDP(42, 203, "localhost", 45003));
-	ASSERT_EQ(conns[1]->get_channel(), 1);
-}
 
 static void send_heartbeat(MAVConnInterface *ip) {
-	mavlink_message_t msg;
-	mavlink_msg_heartbeat_pack_chan(ip->get_system_id(), ip->get_component_id(), ip->get_channel(), &msg,
-		MAV_TYPE_ONBOARD_CONTROLLER,
-		MAV_AUTOPILOT_INVALID,
-		MAV_MODE_MANUAL_ARMED,
-		0,
-		MAV_STATE_ACTIVE);
-	ip->send_message(&msg);
+	using mavlink::common::MAV_TYPE;
+	using mavlink::common::MAV_AUTOPILOT;
+	using mavlink::common::MAV_MODE;
+	using mavlink::common::MAV_STATE;
+
+	mavlink::common::msg::HEARTBEAT hb;
+	hb.type = int(MAV_TYPE::ONBOARD_CONTROLLER);
+	hb.autopilot = int(MAV_AUTOPILOT::INVALID);
+	hb.base_mode = int(MAV_MODE::MANUAL_ARMED);
+	hb.custom_mode = 0;
+	hb.system_status = int(MAV_STATE::ACTIVE);
+
+	ip->send_message(hb);
 }
 
 class UDP : public ::testing::Test {
@@ -81,22 +75,24 @@ TEST_F(UDP, send_message)
 	std::unique_ptr<MAVConnInterface> client;
 
 	message_id = 255;
+	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
-	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45000));
+	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45002));
 	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		echo->send_message(msg, sysid, compid);
+		echo->send_message(msg);
 	};
 
 	// create client
-	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45001, "localhost", 45000));
-	client->message_received += mavconn::signal::slot(this, recv_message);
+	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45003, "localhost", 45002));
+	//client->message_received += signal::slot(this, recv_message);
+	client->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
 
 	// wait echo
 	send_heartbeat(client.get());
 	send_heartbeat(client.get());
 	EXPECT_EQ(wait_one(), true);
-	EXPECT_EQ(message_id, MAVLINK_MSG_ID_HEARTBEAT);
+	EXPECT_EQ(message_id, msgid);
 }
 
 class TCP : public UDP {};
@@ -122,22 +118,24 @@ TEST_F(TCP, send_message)
 	std::unique_ptr<MAVConnInterface> client;
 
 	message_id = 255;
+	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
-	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		echo->send_message(msg, sysid, compid);
+	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57602));
+	echo_server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		echo_server->send_message(msg);
 	};
 
 	// create client
-	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
-	client->message_received += mavconn::signal::slot(this, recv_message);
+	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57602));
+	//client->message_received += signal::slot(this, recv_message);
+	client->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
 
 	// wait echo
 	send_heartbeat(client.get());
 	send_heartbeat(client.get());
 	EXPECT_EQ(wait_one(), true);
-	ASSERT_EQ(message_id, MAVLINK_MSG_ID_HEARTBEAT);
+	EXPECT_EQ(message_id, msgid);
 }
 
 TEST_F(TCP, client_reconnect)
@@ -147,8 +145,8 @@ TEST_F(TCP, client_reconnect)
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		echo->send_message(msg, sysid, compid);
+	echo_server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		echo_server->send_message(msg);
 	};
 
 	EXPECT_NO_THROW({

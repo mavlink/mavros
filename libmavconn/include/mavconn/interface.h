@@ -69,7 +69,7 @@ public:
 	}
 
 	static std::string msg_to_string(int errnum) {
-		return "" /*::strerror(errnum)*/;
+		return ::strerror(errnum);
 	}
 
 	static std::string msg_to_string(boost::system::system_error &err) {
