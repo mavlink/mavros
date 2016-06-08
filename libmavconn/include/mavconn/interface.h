@@ -32,6 +32,7 @@
 #include <sstream>
 #include <cassert>
 #include <stdexcept>
+#include <unordered_map>
 #include <mavconn/simplesignal.h>
 #include <mavconn/mavlink_dialect.h>
 
@@ -40,6 +41,7 @@ class MsgBuffer;
 
 using steady_clock = std::chrono::steady_clock;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
+using msgid_t = uint32_t;
 
 static constexpr auto MAV_COMP_ID_UDP_BRIDGE = 240;
 
@@ -84,7 +86,7 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	using MessageSig = signal::Signal<void (const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
+	using MessageSig = signal::Signal<void (const mavlink::mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
 	using Ptr = std::shared_ptr<MAVConnInterface>;
 	using ConstPtr = std::shared_ptr<MAVConnInterface const>;
 	using WeakPtr = std::weak_ptr<MAVConnInterface>;
@@ -101,9 +103,9 @@ public:
 	 * @param[in] component_id  compid for send_message
 	 */
 	MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
-	virtual ~MAVConnInterface() {
-		delete_channel(channel);
-	};
+	//virtual ~MAVConnInterface() {
+	//	delete_channel(channel);
+	//};
 
 	/**
 	 * @brief Close connection.
@@ -113,9 +115,9 @@ public:
 	/**
 	 * @brief Send message with default link system/component id
 	 */
-	inline void send_message(const mavlink_message_t *message) {
+	inline void send_message(const mavlink::mavlink_message_t *message) {
 		send_message(message, sys_id, comp_id);
-	};
+	}
 
 	/**
 	 * @brief Send message
@@ -125,7 +127,13 @@ public:
 	 * @param[in] sysid     message sys id
 	 * @param[in] compid    message component id
 	 */
-	virtual void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+	virtual void send_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+
+	//inline void send_message(const mavlink::Message &message) {
+	//	send_message(message, sys_id, comp_id);
+	//}
+
+	//virtual void send_message(const mavlink::Message &message, uint8_t sysid, uint8_t compid) = 0;
 
 	/**
 	 * @brief Send raw bytes (for some quirks)
@@ -138,13 +146,10 @@ public:
 	MessageSig message_received;
 	signal::Signal<void()> port_closed;
 
-	virtual mavlink_status_t get_status();
+	virtual mavlink::mavlink_status_t get_status();
 	virtual IOStat get_iostat();
 	virtual bool is_open() = 0;
 
-	inline int get_channel() {
-		return channel;
-	};
 	inline uint8_t get_system_id() {
 		return sys_id;
 	};
@@ -179,22 +184,27 @@ public:
 			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
 protected:
-	int channel;
 	uint8_t sys_id;
 	uint8_t comp_id;
 
-#if MAVLINK_CRC_EXTRA
-	static const uint8_t mavlink_crcs[];
-#endif
+	static std::unordered_map<msgid_t, mavlink::mavlink_msg_entry_t> message_entries;
 
-	static int new_channel();
-	static void delete_channel(int chan);
-	static int channes_available();
+	// Bye-bye channel limitation!
+	//static int new_channel();
+	//static void delete_channel(int chan);
 
 	/**
 	 * This helper function construct new MsgBuffer from message.
 	 */
-	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	MsgBuffer *new_msgbuffer(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+
+	inline mavlink::mavlink_status_t *get_status_p(void) {
+		return &m_status;
+	}
+
+	inline mavlink::mavlink_message_t *get_buffer_p(void) {
+		return &m_buffer;
+	}
 
 	/**
 	 * Parse buffer and emit massage_received.
@@ -204,17 +214,14 @@ protected:
 	void iostat_tx_add(size_t bytes);
 	void iostat_rx_add(size_t bytes);
 
-	void log_recv(const char *pfx, mavlink_message_t &msg);
-	void log_send(const char *pfx, const mavlink_message_t *msg, uint8_t sysid, uint8_t compid);
+	void log_recv(const char *pfx, mavlink::mavlink_message_t &msg);
+	void log_send(const char *pfx, const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid);
 
 private:
-	friend mavlink_status_t* ::mavlink_get_channel_status(uint8_t chan);
-	friend mavlink_message_t* ::mavlink_get_channel_buffer(uint8_t chan);
+	friend const mavlink::mavlink_msg_entry_t* mavlink::mavlink_get_msg_entry(uint32_t msgid);
 
-	static std::recursive_mutex channel_mutex;
-	static std::set<int> allocated_channels;
-	static mavlink_status_t channel_status[MAVLINK_COMM_NUM_BUFFERS];
-	static mavlink_message_t channel_buffer[MAVLINK_COMM_NUM_BUFFERS];
+	mavlink::mavlink_status_t m_status;
+	mavlink::mavlink_message_t m_buffer;
 
 	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
 	std::recursive_mutex iostat_mutex;

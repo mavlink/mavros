@@ -28,29 +28,26 @@
 namespace mavconn {
 #define PFX	"mavconn: "
 
-#if MAVLINK_CRC_EXTRA
-const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
-#endif
-
-std::set<int> MAVConnInterface::allocated_channels;
-std::recursive_mutex MAVConnInterface::channel_mutex;
-mavlink_status_t MAVConnInterface::channel_status[MAVLINK_COMM_NUM_BUFFERS];
-mavlink_message_t MAVConnInterface::channel_buffer[MAVLINK_COMM_NUM_BUFFERS];
+using mavlink::mavlink_message_t;
+using mavlink::mavlink_status_t;
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
 	comp_id(component_id),
+	m_status{},
+	m_buffer{},
 	tx_total_bytes(0),
 	rx_total_bytes(0),
 	last_tx_total_bytes(0),
 	last_rx_total_bytes(0),
 	last_iostat(steady_clock::now())
 {
-	channel = new_channel();
-	assert(channel >= 0);
+	//channel = new_channel();
+	//assert(channel >= 0);
 }
 
+#if 0
 int MAVConnInterface::new_channel() {
 	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
 	int chan = 0;
@@ -72,11 +69,8 @@ void MAVConnInterface::delete_channel(int chan) {
 	logDebug(PFX "Freeing channel: %d", chan);
 	allocated_channels.erase(allocated_channels.find(chan));
 }
+#endif
 
-int MAVConnInterface::channes_available() {
-	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	return MAVLINK_COMM_NUM_BUFFERS - allocated_channels.size();
-}
 
 MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
 		uint8_t sysid, uint8_t compid)
@@ -86,18 +80,9 @@ MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
 	if (message->sysid != sysid || message->compid != compid) {
 		mavlink_message_t msg = *message;
 
-#ifdef MAVLINK2_COMPAT
 		// for mavlink 1.0 len == min_len
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, message->len,
-				mavlink_crcs[msg.msgid]);
-#else
-# if MAVLINK_CRC_EXTRA
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len,
-				mavlink_crcs[msg.msgid]);
-# else
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
-# endif
-#endif
+		// XXX mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, message->len,
+		//		mavlink_crcs[msg.msgid]);
 
 		return new MsgBuffer(&msg);
 	}
@@ -107,7 +92,7 @@ MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
 
 mavlink_status_t MAVConnInterface::get_status()
 {
-	return *mavlink_get_channel_status(channel);
+	return m_status;
 }
 
 MAVConnInterface::IOStat MAVConnInterface::get_iostat()
@@ -147,14 +132,33 @@ void MAVConnInterface::iostat_rx_add(size_t bytes)
 
 void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received)
 {
-	mavlink_status_t status;
-	mavlink_message_t message;
+	mavlink::mavlink_status_t status;
+	mavlink::mavlink_message_t message;
 
 	assert(bufsize >= bytes_received);
 
 	iostat_rx_add(bytes_received);
 	for (; bytes_received > 0; bytes_received--) {
-		if (mavlink_parse_char(channel, *buf++, &message, &status)) {
+		auto c = *buf++;
+
+		// based on mavlink_parse_char()
+		auto msg_received = mavlink::mavlink_frame_char_buffer(&m_buffer, &m_status, c, &message, &status);
+		if (msg_received == mavlink::MAVLINK_FRAMING_BAD_CRC ||
+				msg_received == mavlink::MAVLINK_FRAMING_BAD_SIGNATURE) {
+			mavlink::_mav_parse_error(&m_status);
+			m_status.msg_received = mavlink::MAVLINK_FRAMING_INCOMPLETE;
+			m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_IDLE;
+			if (c == MAVLINK_STX) {
+				m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_GOT_STX;
+				m_buffer.len = 0;
+				mavlink::mavlink_start_checksum(&m_buffer);
+			}
+
+			// XXX todo: provide bad data signal
+			return;
+		}
+
+		if (msg_received) {
 			log_recv(pfx, message);
 
 			message_received.emit(&message, message.sysid, message.compid);
@@ -164,16 +168,16 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 
 void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg)
 {
-	logDebug("%s%d: recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-			pfx, channel,
+	logDebug("%s%p: recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+			pfx, this,
 			(msg.magic == MAVLINK_STX) ? "V2.0" : "V1.0",
 			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
 }
 
 void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)
 {
-	logDebug("%s%d: send: %s Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-			pfx, channel,
+	logDebug("%s%p: send: %s Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+			pfx, this,
 			(msg->magic == MAVLINK_STX) ? "V2.0" : "V1.0",
 			msg->msgid, msg->len, sysid, compid, msg->seq);
 }

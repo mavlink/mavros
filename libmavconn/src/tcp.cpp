@@ -27,12 +27,14 @@ using boost::asio::io_service;
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
 using utils::to_string_ss;
+using mavlink::mavlink_message_t;
+using mavlink::mavlink_status_t;
 
 #define PFX	"mavconn: tcp"
-#define PFXd	PFX "%d: "
+#define PFXd	PFX "%p: "
 
 
-static bool resolve_address_tcp(io_service &io, int chan, std::string host, unsigned short port, tcp::endpoint &ep)
+static bool resolve_address_tcp(io_service &io, void *chan, std::string host, unsigned short port, tcp::endpoint &ep)
 {
 	bool result = false;
 	tcp::resolver resolver(io);
@@ -66,10 +68,10 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
 {
-	if (!resolve_address_tcp(io_service, channel, server_host, server_port, server_ep))
+	if (!resolve_address_tcp(io_service, this, server_host, server_port, server_ep))
 		throw DeviceError("tcp: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Server address: %s", channel, to_string_ss(server_ep).c_str());
+	logInform(PFXd "Server address: %s", this, to_string_ss(server_ep).c_str());
 
 	try {
 		socket.open(tcp::v4());
@@ -84,7 +86,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t([&] () {
-				utils::set_this_thread_name("MAVConnTCP%d", channel);
+				utils::set_this_thread_name("mtcp%p", this);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -98,9 +100,9 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	// waiting when server call client_connected()
 }
 
-void MAVConnTCPClient::client_connected(int server_channel) {
-	logInform(PFXd "Got client, channel: %d, address: %s",
-			server_channel, channel, to_string_ss(server_ep).c_str());
+void MAVConnTCPClient::client_connected(void *server_channel) {
+	logInform(PFXd "Got client, id: %p, address: %s",
+			server_channel, this, to_string_ss(server_ep).c_str());
 
 	// start recv
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_recv, this));
@@ -133,7 +135,7 @@ void MAVConnTCPClient::close() {
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
@@ -150,7 +152,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
@@ -170,7 +172,7 @@ void MAVConnTCPClient::do_recv()
 			buffer(rx_buf, sizeof(rx_buf)),
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", channel, error.message().c_str());
+					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
 					return;
 				}
@@ -195,7 +197,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 			buffer(buf->dpos(), buf->nbytes()),
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "send: %s", channel, error.message().c_str());
+					logError(PFXd "send: %s", this, error.message().c_str());
 					close();
 					return;
 				}
@@ -230,16 +232,16 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	acceptor(io_service)
 {
-	if (!resolve_address_tcp(io_service, channel, server_host, server_port, bind_ep))
+	if (!resolve_address_tcp(io_service, this, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Bind address: %s", channel, to_string_ss(bind_ep).c_str());
+	logInform(PFXd "Bind address: %s", this, to_string_ss(bind_ep).c_str());
 
 	try {
 		acceptor.open(tcp::v4());
 		acceptor.set_option(tcp::acceptor::reuse_address(true));
 		acceptor.bind(bind_ep);
-		acceptor.listen(channes_available());
+		acceptor.listen();
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("tcp-l", err);
@@ -250,7 +252,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t([&] () {
-				utils::set_this_thread_name("MAVConnTCPs%d", channel);
+				utils::set_this_thread_name("mtcps%p", this);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -266,7 +268,7 @@ void MAVConnTCPServer::close() {
 		return;
 
 	logInform(PFXd "Terminating server. "
-			"All connections will be closed.", channel);
+			"All connections will be closed.", this);
 
 	io_service.stop();
 	acceptor.close();
@@ -347,24 +349,15 @@ void MAVConnTCPServer::do_accept()
 			acceptor_client->server_ep,
 			[&] (error_code error) {
 				if (error) {
-					logError(PFXd "accept: %s", channel, error.message().c_str());
+					logError(PFXd "accept: %s", this, error.message().c_str());
 					close();
 					return;
 				}
 
-				// NOTE: i want create client class *after* connection accept,
-				//       but ASIO 1.43 does not support std::move() for sockets.
-				//       Need find way how to limit channel alloc.
-				//if (channes_available() <= 0) {
-				//	ROS_ERROR_NAMED("mavconn", "tcp-l:accept_cb: all channels in use, drop connection");
-				//	client_sock.close();
-				//	return;
-				//}
-
 				std::weak_ptr<MAVConnTCPClient> weak_client = acceptor_client;
 
 				lock_guard lock(mutex);
-				acceptor_client->client_connected(channel);
+				acceptor_client->client_connected(this);
 				acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
 				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
 
@@ -377,8 +370,8 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 {
 	if (auto instp = weak_instp.lock()) {
 		bool locked = mutex.try_lock();
-		logInform(PFXd "Client connection closed, channel: %d, address: %s",
-				channel, instp->channel, to_string_ss(instp->server_ep).c_str());
+		logInform(PFXd "Client connection closed, id: %p, address: %s",
+				this, instp.get(), to_string_ss(instp->server_ep).c_str());
 
 		client_list.remove(instp);
 

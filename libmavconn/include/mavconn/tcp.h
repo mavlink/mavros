@@ -53,7 +53,7 @@ public:
 	void close();
 
 	using MAVConnInterface::send_message;
-	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void send_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline bool is_open() {
@@ -77,7 +77,7 @@ private:
 	/**
 	 * This special function called by TCP server when connection accepted.
 	 */
-	void client_connected(int server_channel);
+	void client_connected(void *server_channel);
 
 	void do_recv();
 	void do_send(bool check_tx_state);
@@ -104,10 +104,10 @@ public:
 	void close();
 
 	using MAVConnInterface::send_message;
-	void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void send_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
-	mavlink_status_t get_status();
+	mavlink::mavlink_status_t get_status();
 	IOStat get_iostat();
 	inline bool is_open() {
 		return acceptor.is_open();
@@ -129,7 +129,7 @@ private:
 
 	// client slots
 	void client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp);
-	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void recv_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
 };
 };	// namespace mavconn
 

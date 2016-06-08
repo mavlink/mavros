@@ -26,10 +26,11 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::serial_port_base;
 using boost::asio::buffer;
+using mavlink::mavlink_message_t;
 
 
 #define PFX	"mavconn: serial"
-#define PFXd	PFX "%d: "
+#define PFXd	PFX "%p: "
 
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
@@ -39,7 +40,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	serial_dev(io_service)
 {
-	logInform(PFXd "device: %s @ %d bps", channel, device.c_str(), baudrate);
+	logInform(PFXd "device: %s @ %d bps", this, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
@@ -60,7 +61,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t([&] () {
-				utils::set_this_thread_name("MAVConnSerial%d", channel);
+				utils::set_this_thread_name("mserial%p", this);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -92,7 +93,7 @@ void MAVConnSerial::close() {
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
@@ -109,7 +110,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
@@ -129,7 +130,7 @@ void MAVConnSerial::do_read(void)
 			buffer(rx_buf, sizeof(rx_buf)),
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", channel, error.message().c_str());
+					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
 					return;
 				}
@@ -154,7 +155,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
 			buffer(buf->dpos(), buf->nbytes()),
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "write: %s", channel, error.message().c_str());
+					logError(PFXd "write: %s", this, error.message().c_str());
 					close();
 					return;
 				}

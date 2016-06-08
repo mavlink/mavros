@@ -27,20 +27,19 @@ using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
 using utils::to_string_ss;
-
+using mavlink::mavlink_message_t;
 
 #define PFX	"mavconn: udp"
-#define PFXd	PFX "%d: "
+#define PFXd	PFX "%p: "
 
 
-static bool resolve_address_udp(io_service &io, int chan, std::string host, unsigned short port, udp::endpoint &ep)
+static bool resolve_address_udp(io_service &io, void *chan, std::string host, unsigned short port, udp::endpoint &ep)
 {
 	bool result = false;
 	udp::resolver resolver(io);
 	error_code ec;
 
 	udp::resolver::query query(host, "");
-	// XXX for(: iterable)?
 	std::for_each(resolver.resolve(query, ec), udp::resolver::iterator(),
 			[&](const udp::endpoint & q_ep) {
 				ep = q_ep;
@@ -68,18 +67,18 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
 {
-	if (!resolve_address_udp(io_service, channel, bind_host, bind_port, bind_ep))
+	if (!resolve_address_udp(io_service, this, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Bind address: %s", channel, to_string_ss(bind_ep).c_str());
+	logInform(PFXd "Bind address: %s", this, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
-		remote_exists = resolve_address_udp(io_service, channel, remote_host, remote_port, remote_ep);
+		remote_exists = resolve_address_udp(io_service, this, remote_host, remote_port, remote_ep);
 
 		if (remote_exists)
-			logInform(PFXd "Remote address: %s", channel, to_string_ss(remote_ep).c_str());
+			logInform(PFXd "Remote address: %s", this, to_string_ss(remote_ep).c_str());
 		else
-			logWarn(PFXd "Remote address resolve failed.", channel);
+			logWarn(PFXd "Remote address resolve failed.", this);
 	}
 
 	try {
@@ -95,7 +94,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	std::thread t([&] () {
-				utils::set_this_thread_name("MAVConnUDP%d", channel);
+				utils::set_this_thread_name("mudp%p", this);
 				io_service.run();
 			});
 	io_thread.swap(t);
@@ -123,18 +122,17 @@ void MAVConnUDP::close() {
 		io_thread.join();
 
 	port_closed.emit();
-	//port_closed();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", channel);
+		logDebug(PFXd "send: Remote not known, message dropped.", this);
 		return;
 	}
 
@@ -151,12 +149,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", this);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", channel);
+		logDebug(PFXd "send: Remote not known, message dropped.", this);
 		return;
 	}
 
@@ -177,13 +175,13 @@ void MAVConnUDP::do_recvfrom()
 			remote_ep,
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", channel, error.message().c_str());
+					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
 					return;
 				}
 
 				if (remote_ep != last_remote_ep) {
-					logInform(PFXd "Remote address: %s", channel, to_string_ss(remote_ep).c_str());
+					logInform(PFXd "Remote address: %s", this, to_string_ss(remote_ep).c_str());
 					remote_exists = true;
 					last_remote_ep = remote_ep;
 				}
@@ -209,11 +207,11 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 			remote_ep,
 			[&] (error_code error, size_t bytes_transferred) {
 				if (error == boost::asio::error::network_unreachable) {
-					logWarn(PFXd "sendto: %s, retrying", channel, error.message().c_str());
+					logWarn(PFXd "sendto: %s, retrying", this, error.message().c_str());
 					// do not return, try to resend
 				}
 				else if (error) {
-					logError(PFXd "sendto: %s", channel, error.message().c_str());
+					logError(PFXd "sendto: %s", this, error.message().c_str());
 					close();
 					return;
 				}
