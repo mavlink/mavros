@@ -147,7 +147,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
 
-void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 {
 	assert(message != nullptr);
 
@@ -156,9 +156,27 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message, uint8_t sy
 		return;
 	}
 
-	log_send(PFX, message, sysid, compid);
+	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
+	MsgBuffer *buf = new_msgbuffer(message);
+	{
+		lock_guard lock(mutex);
+		tx_q.push_back(buf);
+	}
+	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
+}
+
+void MAVConnTCPClient::send_message(const mavlink::Message &message)
+{
+	if (!is_open()) {
+		logError(PFXd "send: channel closed!", this);
+		return;
+	}
+
+	log_send_obj(PFX, message);
+
+	// XXX decide later: locked or not
+	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);
@@ -332,11 +350,19 @@ void MAVConnTCPServer::send_bytes(const uint8_t *bytes, size_t length)
 	}
 }
 
-void MAVConnTCPServer::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnTCPServer::send_message(const mavlink_message_t *message)
 {
 	lock_guard lock(mutex);
 	for (auto &instp : client_list) {
-		instp->send_message(message, sysid, compid);
+		instp->send_message(message);
+	}
+}
+
+void MAVConnTCPServer::send_message(const mavlink::Message &message)
+{
+	lock_guard lock(mutex);
+	for (auto &instp : client_list) {
+		instp->send_message(message);
 	}
 }
 

@@ -144,7 +144,7 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
 
-void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnUDP::send_message(const mavlink_message_t *message)
 {
 	assert(message != nullptr);
 
@@ -158,9 +158,32 @@ void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, u
 		return;
 	}
 
-	log_send(PFX, message, sysid, compid);
+	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
+	MsgBuffer *buf = new_msgbuffer(message);
+	{
+		lock_guard lock(mutex);
+		tx_q.push_back(buf);
+	}
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
+}
+
+void MAVConnUDP::send_message(const mavlink::Message &message)
+{
+	if (!is_open()) {
+		logError(PFXd "send: channel closed!", this);
+		return;
+	}
+
+	if (!remote_exists) {
+		logDebug(PFXd "send: Remote not known, message dropped.", this);
+		return;
+	}
+
+	log_send_obj(PFX, message);
+
+	// XXX decide later: locked or not
+	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
 		tx_q.push_back(buf);

@@ -49,8 +49,8 @@ public:
 
 	void close();
 
-	using MAVConnInterface::send_message;
-	void send_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void send_message(const mavlink::mavlink_message_t *message);
+	void send_message(const mavlink::Message &message);
 	void send_bytes(const uint8_t *bytes, size_t length);
 
 	inline bool is_open() {

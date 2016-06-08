@@ -26,7 +26,7 @@ namespace mavconn {
  */
 struct MsgBuffer {
 	//! Maximum buffer size with padding for CRC bytes (280 + padding)
-	static constexpr ssize_t MAX_SIZE = MAVLINK_MAX_PACKET_LEN + 4;
+	static constexpr ssize_t MAX_SIZE = MAVLINK_MAX_PACKET_LEN + 16;
 	uint8_t data[MAX_SIZE];
 	ssize_t len;
 	ssize_t pos;
