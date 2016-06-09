@@ -36,6 +36,8 @@
 #include <mavconn/simplesignal.h>
 #include <mavconn/mavlink_dialect.h>
 
+#include <boost/signals2.hpp>
+
 namespace mavconn {
 class MsgBuffer;
 
@@ -85,7 +87,8 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	using MessageSig = signal::Signal<void (const mavlink::mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
+	//using MessageSig = signal::Signal<void (const mavlink::mavlink_message_t *message, uint8_t system_id, uint8_t component_id)>;
+	using MessageSig = boost::signals2::signal<void (const mavlink::mavlink_message_t *message)>;
 	using Ptr = std::shared_ptr<MAVConnInterface>;
 	using ConstPtr = std::shared_ptr<MAVConnInterface const>;
 	using WeakPtr = std::weak_ptr<MAVConnInterface>;

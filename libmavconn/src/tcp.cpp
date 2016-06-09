@@ -384,7 +384,7 @@ void MAVConnTCPServer::do_accept()
 
 				lock_guard lock(mutex);
 				acceptor_client->client_connected(this);
-				acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
+				//acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
 				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
 
 				client_list.push_back(acceptor_client);
@@ -408,6 +408,6 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 
 void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
 {
-	message_received.emit(message, sysid, compid);
+	//message_received.emit(message, sysid, compid);
 }
 };	// namespace mavconn
