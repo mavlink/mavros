@@ -196,7 +196,7 @@ void MAVConnUDP::do_recvfrom()
 	socket.async_receive_from(
 			buffer(rx_buf, sizeof(rx_buf)),
 			remote_ep,
-			[&] (error_code error, size_t bytes_transferred) {
+			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
 					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
@@ -228,7 +228,7 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 	socket.async_send_to(
 			buffer(buf->dpos(), buf->nbytes()),
 			remote_ep,
-			[&] (error_code error, size_t bytes_transferred) {
+			[this] (error_code error, size_t bytes_transferred) {
 				if (error == boost::asio::error::network_unreachable) {
 					logWarn(PFXd "sendto: %s, retrying", this, error.message().c_str());
 					// do not return, try to resend

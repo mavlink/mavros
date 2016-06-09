@@ -29,13 +29,7 @@ using mavconn::MAVConnInterface;
 
 void MAVConnInterface::init_msg_entry(void)
 {
-	mavconn::lock_guard lock(init_mutex);
-
-	// it is initialized?
-	if (message_entries.size())
-		return;
-
-	logInform("mavconn: Initialize message_entries map");
+	logDebug("mavconn: Initialize message_entries map");
 
 	auto load = [&](const char *dialect, const mavlink::mavlink_msg_entry_t &e) {
 		auto it = message_entries.find(e.msgid);

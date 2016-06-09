@@ -55,10 +55,7 @@ static void send_sys_status(MAVConnInterface *ip) {
 	st.serialize(map);
 	mavlink::mavlink_finalize_message(&msg, ip->get_system_id(), ip->get_component_id(), st.MIN_LENGTH, st.LENGTH, st.CRC_EXTRA);
 
-	const mavlink::mavlink_msg_entry_t *e = mavlink::mavlink_get_msg_entry(msg.msgid);
-	std::cout << "SS e: " << e << std::endl;
-
-	std::cout << "SS: " << msg.msgid << std::endl;
+	//const mavlink::mavlink_msg_entry_t *e = mavlink::mavlink_get_msg_entry(msg.msgid);
 
 	ip->send_message(&msg);
 }
@@ -76,13 +73,17 @@ int main(int argc, char **argv){
 	server->message_received.connect([&](const mavlink_message_t *msg) {
 			std::cout << "S:RECV: " << msg->msgid << std::endl;
 			//send_sys_status(server.get());
-			send_sys_status(client.get());
+			//send_sys_status(client.get());
+			const uint8_t bytes[] = "where leak locate???";
+			server->send_bytes(bytes, sizeof(bytes));	//-> here too.
 			});
 
 	// create client
 	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200);
 	//client->message_received += recv_message;
-	client->message_received.connect([&](const mavlink_message_t *msg) { std::cout << "C:RECV: " << msg->msgid << std::endl; });
+	client->message_received.connect([&](const mavlink_message_t *msg) {
+			std::cout << "C:RECV: " << msg->msgid << std::endl;
+			});
 
 	while (ros::ok()) {
 		send_heartbeat(client.get());

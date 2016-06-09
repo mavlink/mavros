@@ -32,7 +32,7 @@ using mavlink::mavlink_message_t;
 using mavlink::mavlink_status_t;
 
 // static members
-std::recursive_mutex MAVConnInterface::init_mutex;
+std::once_flag MAVConnInterface::init_flag;
 std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries{};
 
 
@@ -47,7 +47,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	last_rx_total_bytes(0),
 	last_iostat(steady_clock::now())
 {
-	init_msg_entry();
+	std::call_once(init_flag, init_msg_entry);
 }
 
 MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message)
