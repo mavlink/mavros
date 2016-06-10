@@ -35,7 +35,7 @@ static void send_heartbeat(MAVConnInterface *ip) {
 	using mavlink::common::MAV_MODE;
 	using mavlink::common::MAV_STATE;
 
-	mavlink::common::msg::HEARTBEAT hb{};
+	mavlink::common::msg::HEARTBEAT hb {};
 	hb.type = int(MAV_TYPE::ONBOARD_CONTROLLER);
 	hb.autopilot = int(MAV_AUTOPILOT::INVALID);
 	hb.base_mode = int(MAV_MODE::MANUAL_ARMED);
@@ -46,10 +46,10 @@ static void send_heartbeat(MAVConnInterface *ip) {
 }
 
 static void send_sys_status(MAVConnInterface *ip) {
-	mavlink_message_t msg{};
+	mavlink_message_t msg {};
 	mavlink::MsgMap map(msg);
 
-	mavlink::common::msg::SYS_STATUS st{};
+	mavlink::common::msg::SYS_STATUS st {};
 	st.load = 100;
 
 	st.serialize(map);
@@ -70,20 +70,20 @@ int main(int argc, char **argv){
 	server = MAVConnInterface::open_url("udp://:45000@localhost:45001", 42, 200);
 	//server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg); };
 	//server->message_received.connect([&](const mavlink_message_t *msg) { server->send_message(msg); });
-	server->message_received.connect([&](const mavlink_message_t *msg) {
+	server->message_received.connect([&](const mavlink_message_t * msg) {
 			//std::cout << "S:RECV: " << msg->msgid << std::endl;
 			//send_sys_status(server.get());
 			//send_sys_status(client.get());
 			const uint8_t bytes[] = "where leak locate???";
 			server->send_bytes(bytes, sizeof(bytes));	//-> here too.
-			});
+		});
 
 	// create client
 	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200);
 	//client->message_received += recv_message;
-	client->message_received.connect([&](const mavlink_message_t *msg) {
+	client->message_received.connect([&](const mavlink_message_t * msg) {
 			//std::cout << "C:RECV: " << msg->msgid << std::endl;
-			});
+		});
 
 	while (ros::ok()) {
 		send_heartbeat(client.get());

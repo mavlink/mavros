@@ -64,6 +64,8 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		std::string server_host, unsigned short server_port) :
 	MAVConnInterface(system_id, component_id),
 	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	io_service(),
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
@@ -85,16 +87,18 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
 
 	// run io_service for async io
-	std::thread t([&] () {
+	io_thread = std::thread([this] () {
 				utils::set_this_thread_name("mtcp%p", this);
 				io_service.run();
 			});
-	io_thread.swap(t);
 }
 
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		boost::asio::io_service &server_io) :
 	MAVConnInterface(system_id, component_id),
+	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	socket(server_io)
 {
 	// waiting when server call client_connected()
@@ -122,8 +126,6 @@ void MAVConnTCPClient::close() {
 	socket.close();
 
 	// clear tx queue
-	for (auto &p : tx_q)
-		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -139,10 +141,13 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 		return;
 	}
 
-	MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnTCPClient::send_bytes: TX queue overflow");
+
+		tx_q.emplace_back(bytes, length);
 	}
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
@@ -158,10 +163,13 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 
 	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message);
 	}
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
@@ -175,11 +183,13 @@ void MAVConnTCPClient::send_message(const mavlink::Message &message)
 
 	log_send_obj(PFX, message);
 
-	// XXX decide later: locked or not
-	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, this, true));
 }
@@ -188,7 +198,7 @@ void MAVConnTCPClient::do_recv()
 {
 	socket.async_receive(
 			buffer(rx_buf, sizeof(rx_buf)),
-			[&] (error_code error, size_t bytes_transferred) {
+			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
 					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
@@ -210,10 +220,12 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
-	MsgBuffer *buf = tx_q.front();
+	auto &buf_ref = tx_q.front();
 	socket.async_send(
-			buffer(buf->dpos(), buf->nbytes()),
-			[&] (error_code error, size_t bytes_transferred) {
+			buffer(buf_ref.dpos(), buf_ref.nbytes()),
+			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+				assert(bytes_transferred <= buf_ref.len);
+
 				if (error) {
 					logError(PFXd "send: %s", this, error.message().c_str());
 					close();
@@ -222,16 +234,15 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 
 				iostat_tx_add(bytes_transferred);
 				lock_guard lock(mutex);
+
 				if (tx_q.empty()) {
 					tx_in_progress = false;
 					return;
 				}
 
-				MsgBuffer *buf = tx_q.front();
-				buf->pos += bytes_transferred;
-				if (buf->nbytes() == 0) {
+				buf_ref.pos += bytes_transferred;
+				if (buf_ref.nbytes() == 0) {
 					tx_q.pop_front();
-					delete buf;
 				}
 
 				if (!tx_q.empty())
@@ -269,11 +280,10 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
 
 	// run io_service for async io
-	std::thread t([&] () {
+	io_thread = std::thread([this] () {
 				utils::set_this_thread_name("mtcps%p", this);
 				io_service.run();
 			});
-	io_thread.swap(t);
 }
 
 MAVConnTCPServer::~MAVConnTCPServer() {
@@ -368,22 +378,23 @@ void MAVConnTCPServer::send_message(const mavlink::Message &message)
 
 void MAVConnTCPServer::do_accept()
 {
-	acceptor_client.reset();
-	acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
+	auto acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
 	acceptor.async_accept(
 			acceptor_client->socket,
 			acceptor_client->server_ep,
-			[&] (error_code error) {
+			[this, acceptor_client] (error_code error) {
 				if (error) {
 					logError(PFXd "accept: %s", this, error.message().c_str());
 					close();
 					return;
 				}
 
+				lock_guard lock(mutex);
+
 				std::weak_ptr<MAVConnTCPClient> weak_client = acceptor_client;
 
-				lock_guard lock(mutex);
 				acceptor_client->client_connected(this);
+
 				//acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
 				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
 

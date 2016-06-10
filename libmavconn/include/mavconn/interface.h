@@ -39,11 +39,10 @@
 #include <boost/signals2.hpp>
 
 namespace mavconn {
-class MsgBuffer;
-
 using steady_clock = std::chrono::steady_clock;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
 
+//! Same as @p mavlink::common::MAV_COMPONENT::COMP_ID_UDP_BRIDGE
 static constexpr auto MAV_COMP_ID_UDP_BRIDGE = 240;
 
 /**
@@ -118,6 +117,7 @@ public:
 	 *
 	 * @note Does not do finalization!
 	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
 	 * @param[in] *message  not changed
 	 */
 	virtual void send_message(const mavlink::mavlink_message_t *message) = 0;
@@ -128,12 +128,14 @@ public:
 	 * Does serialization inside.
 	 * System and Component ID = from this object.
 	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
 	 * @param[in] &message  not changed
 	 */
 	virtual void send_message(const mavlink::Message &message) = 0;
 
 	/**
 	 * @brief Send raw bytes (for some quirks)
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
 	 */
 	virtual void send_bytes(const uint8_t *bytes, size_t length) = 0;
 
@@ -191,12 +193,6 @@ protected:
 
 	//! This map merge all dialect mavlink_msg_entry_t structs. Needed for packet parser.
 	static std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> message_entries;
-
-	/**
-	 * This helper function construct new MsgBuffer from message.
-	 */
-	inline MsgBuffer *new_msgbuffer(const mavlink::mavlink_message_t *message) { return nullptr; };
-	inline MsgBuffer *new_msgbuffer(const mavlink::Message &message) { return nullptr; };
 
 	inline mavlink::mavlink_status_t *get_status_p(void) {
 		return &m_status;

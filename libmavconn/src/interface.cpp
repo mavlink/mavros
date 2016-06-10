@@ -33,14 +33,14 @@ using mavlink::mavlink_status_t;
 
 // static members
 std::once_flag MAVConnInterface::init_flag;
-std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries{};
+std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries {};
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
 	comp_id(component_id),
-	m_status{},
-	m_buffer{},
+	m_status {},
+	m_buffer {},
 	tx_total_bytes(0),
 	rx_total_bytes(0),
 	last_tx_total_bytes(0),

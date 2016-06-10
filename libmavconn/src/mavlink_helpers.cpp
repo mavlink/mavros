@@ -31,7 +31,7 @@ void MAVConnInterface::init_msg_entry(void)
 {
 	logDebug("mavconn: Initialize message_entries map");
 
-	auto load = [&](const char *dialect, const mavlink::mavlink_msg_entry_t &e) {
+	auto load = [&](const char *dialect, const mavlink::mavlink_msg_entry_t & e) {
 		auto it = message_entries.find(e.msgid);
 		if (it != message_entries.end()) {
 			if (memcmp(&e, it->second, sizeof(e)) != 0) {

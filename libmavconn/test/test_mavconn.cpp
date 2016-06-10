@@ -79,14 +79,14 @@ TEST_F(UDP, send_message)
 
 	// create echo server
 	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45002));
-	echo->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	echo->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
 		echo->send_message(msg);
 	};
 
 	// create client
 	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45003, "localhost", 45002));
 	//client->message_received += signal::slot(this, recv_message);
-	client->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
+	client->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -122,14 +122,14 @@ TEST_F(TCP, send_message)
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57602));
-	echo_server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	echo_server->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
 		echo_server->send_message(msg);
 	};
 
 	// create client
 	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57602));
 	//client->message_received += signal::slot(this, recv_message);
-	client->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
+	client->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -145,7 +145,7 @@ TEST_F(TCP, client_reconnect)
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo_server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	echo_server->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
 		echo_server->send_message(msg);
 	};
 

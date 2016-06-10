@@ -70,7 +70,7 @@ private:
 	boost::asio::ip::tcp::endpoint server_ep;
 
 	std::atomic<bool> tx_in_progress;
-	std::list<MsgBuffer*> tx_q;
+	std::deque<MsgBuffer> tx_q;
 	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
 	std::recursive_mutex mutex;
 
@@ -121,7 +121,6 @@ private:
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::ip::tcp::endpoint bind_ep;
 
-	std::shared_ptr<MAVConnTCPClient> acceptor_client;
 	std::list<std::shared_ptr<MAVConnTCPClient> > client_list;
 	std::recursive_mutex mutex;
 

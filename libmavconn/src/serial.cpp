@@ -37,6 +37,8 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		std::string device, unsigned baudrate) :
 	MAVConnInterface(system_id, component_id),
 	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	io_service(),
 	serial_dev(io_service)
 {
@@ -60,11 +62,10 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	io_service.post(std::bind(&MAVConnSerial::do_read, this));
 
 	// run io_service for async io
-	std::thread t([&] () {
+	io_thread = std::thread([this] () {
 				utils::set_this_thread_name("mserial%p", this);
 				io_service.run();
 			});
-	io_thread.swap(t);
 }
 
 MAVConnSerial::~MAVConnSerial() {
@@ -80,8 +81,6 @@ void MAVConnSerial::close() {
 	serial_dev.close();
 
 	// clear tx queue
-	for (auto &p : tx_q)
-		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -97,10 +96,13 @@ void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 		return;
 	}
 
-	MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_bytes: TX queue overflow");
+
+		tx_q.emplace_back(bytes, length);
 	}
 	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
 }
@@ -116,10 +118,13 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 
 	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message);
 	}
 	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
 }
@@ -133,11 +138,13 @@ void MAVConnSerial::send_message(const mavlink::Message &message)
 
 	log_send_obj(PFX, message);
 
-	// XXX decide later: locked or not
-	MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
 	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
 }
@@ -146,7 +153,7 @@ void MAVConnSerial::do_read(void)
 {
 	serial_dev.async_read_some(
 			buffer(rx_buf, sizeof(rx_buf)),
-			[&] (error_code error, size_t bytes_transferred) {
+			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
 					logError(PFXd "receive: %s", this, error.message().c_str());
 					close();
@@ -168,10 +175,12 @@ void MAVConnSerial::do_write(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
-	MsgBuffer *buf = tx_q.front();
+	auto &buf_ref = tx_q.front();
 	serial_dev.async_write_some(
-			buffer(buf->dpos(), buf->nbytes()),
-			[&] (error_code error, size_t bytes_transferred) {
+			buffer(buf_ref.dpos(), buf_ref.nbytes()),
+			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+				assert(bytes_transferred <= buf_ref.len);
+
 				if (error) {
 					logError(PFXd "write: %s", this, error.message().c_str());
 					close();
@@ -180,16 +189,15 @@ void MAVConnSerial::do_write(bool check_tx_state)
 
 				iostat_tx_add(bytes_transferred);
 				lock_guard lock(mutex);
+
 				if (tx_q.empty()) {
 					tx_in_progress = false;
 					return;
 				}
 
-				MsgBuffer *buf = tx_q.front();
-				buf->pos += bytes_transferred;
-				if (buf->nbytes() == 0) {
+				buf_ref.pos += bytes_transferred;
+				if (buf_ref.nbytes() == 0) {
 					tx_q.pop_front();
-					delete buf;
 				}
 
 				if (!tx_q.empty())

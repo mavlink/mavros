@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <list>
 #include <atomic>
 #include <boost/asio.hpp>
 #include <mavconn/interface.h>
@@ -58,7 +57,7 @@ private:
 	boost::asio::serial_port serial_dev;
 
 	std::atomic<bool> tx_in_progress;
-	std::list<MsgBuffer*> tx_q;
+	std::deque<MsgBuffer> tx_q;
 	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
 	std::recursive_mutex mutex;
 

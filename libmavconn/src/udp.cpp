@@ -63,10 +63,11 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	MAVConnInterface(system_id, component_id),
 	remote_exists(false),
 	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	io_service(),
 	io_work(new io_service::work(io_service)),
-	socket(io_service),
-	tx_q{}
+	socket(io_service)
 {
 	if (!resolve_address_udp(io_service, this, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
@@ -114,8 +115,6 @@ void MAVConnUDP::close() {
 	socket.close();
 
 	// clear tx queue
-	//for (auto &p : tx_q)
-	//	delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -136,10 +135,12 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 		return;
 	}
 
-	//MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		//tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_bytes: TX queue overflow");
+
 		tx_q.emplace_back(bytes, length);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
@@ -161,10 +162,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 
 	log_send(PFX, message);
 
-	//MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		//tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
+
 		tx_q.emplace_back(message);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
@@ -184,11 +187,12 @@ void MAVConnUDP::send_message(const mavlink::Message &message)
 
 	log_send_obj(PFX, message);
 
-	// XXX decide later: locked or not
-	//MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		//tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
+
 		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
@@ -247,11 +251,6 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 				iostat_tx_add(bytes_transferred);
 				lock_guard lock(mutex);
 
-				// XXX testing only!
-				if (bytes_transferred != buf_ref.len) {
-					std::cout << "UDP TX done, len != buf: " << int(buf_ref.len) << " " << bytes_transferred << std::endl;
-				}
-
 				if (tx_q.empty()) {
 					tx_in_progress = false;
 					return;
@@ -263,7 +262,7 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 				}
 
 				if (!tx_q.empty())
-					do_sendto(false);	// XXX should post?
+					do_sendto(false);
 				else
 					tx_in_progress = false;
 			});
