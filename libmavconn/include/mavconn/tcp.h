@@ -58,7 +58,7 @@ public:
 
 	inline bool is_open() {
 		return socket.is_open();
-	};
+	}
 
 private:
 	friend class MAVConnTCPServer;
@@ -111,7 +111,7 @@ public:
 	IOStat get_iostat();
 	inline bool is_open() {
 		return acceptor.is_open();
-	};
+	}
 
 private:
 	boost::asio::io_service io_service;
@@ -128,7 +128,7 @@ private:
 
 	// client slots
 	void client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp);
-	void recv_message(const mavlink::mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void recv_message(const mavlink::mavlink_message_t *message, const Framing framing);
 };
-};	// namespace mavconn
+}	// namespace mavconn
 

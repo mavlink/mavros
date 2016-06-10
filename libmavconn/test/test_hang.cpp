@@ -42,7 +42,7 @@ static void send_heartbeat(MAVConnInterface *ip) {
 	hb.custom_mode = 0;
 	hb.system_status = int(MAV_STATE::ACTIVE);
 
-	ip->send_message(hb);
+	ip->send_message_ignore_drop(hb);
 }
 
 static void send_sys_status(MAVConnInterface *ip) {
@@ -57,7 +57,7 @@ static void send_sys_status(MAVConnInterface *ip) {
 
 	//const mavlink::mavlink_msg_entry_t *e = mavlink::mavlink_get_msg_entry(msg.msgid);
 
-	ip->send_message(&msg);
+	ip->send_message_ignore_drop(&msg);
 }
 
 int main(int argc, char **argv){
@@ -67,27 +67,21 @@ int main(int argc, char **argv){
 	MAVConnInterface::Ptr client;
 
 	// create echo server
-	server = MAVConnInterface::open_url("udp://:45000@localhost:45001", 42, 200);
-	//server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg); };
-	//server->message_received.connect([&](const mavlink_message_t *msg) { server->send_message(msg); });
-	server->message_received.connect([&](const mavlink_message_t * msg) {
-			//std::cout << "S:RECV: " << msg->msgid << std::endl;
-			//send_sys_status(server.get());
-			//send_sys_status(client.get());
-			const uint8_t bytes[] = "where leak locate???";
-			server->send_bytes(bytes, sizeof(bytes));	//-> here too.
-		});
+	server = MAVConnInterface::open_url("udp://:45000@", 42, 200);
+	server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
+		server->send_message_ignore_drop(msg);
+		send_sys_status(server.get());
+	};
 
 	// create client
 	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200);
-	//client->message_received += recv_message;
-	client->message_received.connect([&](const mavlink_message_t * msg) {
-			//std::cout << "C:RECV: " << msg->msgid << std::endl;
-		});
+	client->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
+		//std::cout << "C:RECV: " << msg->msgid << std::endl;
+		ROS_INFO("RECV: MsgID: %4u St: %d", msg->msgid, int(framing));
+	};
 
 	while (ros::ok()) {
 		send_heartbeat(client.get());
-		//send_sys_status(server.get());
 	}
 	return 0;
 }

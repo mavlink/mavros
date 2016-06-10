@@ -68,11 +68,13 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 			});
 }
 
-MAVConnSerial::~MAVConnSerial() {
+MAVConnSerial::~MAVConnSerial()
+{
 	close();
 }
 
-void MAVConnSerial::close() {
+void MAVConnSerial::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
@@ -86,7 +88,8 @@ void MAVConnSerial::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)

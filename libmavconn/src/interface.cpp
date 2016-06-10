@@ -102,9 +102,8 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 		auto c = *buf++;
 
 		// based on mavlink_parse_char()
-		auto msg_received = mavlink::mavlink_frame_char_buffer(&m_buffer, &m_status, c, &message, &status);
-		if (msg_received == mavlink::MAVLINK_FRAMING_BAD_CRC ||
-				msg_received == mavlink::MAVLINK_FRAMING_BAD_SIGNATURE) {
+		auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_status, c, &message, &status));
+		if (msg_received == Framing::bad_crc || msg_received == Framing::bad_signature) {
 			mavlink::_mav_parse_error(&m_status);
 			m_status.msg_received = mavlink::MAVLINK_FRAMING_INCOMPLETE;
 			m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_IDLE;
@@ -113,39 +112,71 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 				m_buffer.len = 0;
 				mavlink::mavlink_start_checksum(&m_buffer);
 			}
-
-			// XXX todo: provide bad data signal
-			return;
 		}
 
-		if (msg_received) {
-			log_recv(pfx, message);
+		if (msg_received != Framing::incomplete) {
+			log_recv(pfx, message, msg_received);
 
-			//message_received.emit(&message, message.sysid, message.compid);
-			message_received(&message);
+			if (message_received_cb)
+				message_received_cb(&message, msg_received);
 		}
 	}
 }
 
-void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg)
+void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg, Framing framing)
 {
-	logDebug("%s%p: recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+	const char *framing_str = (framing == Framing::ok) ? "OK" :
+			(framing == Framing::bad_crc) ? "!CRC" :
+			(framing == Framing::bad_signature) ? "!SIG" : "ERR";
+
+	const char *proto_version_str = (msg.magic == MAVLINK_STX) ? "v2.0" : "v1.0";
+
+	logDebug("%s%p: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
 			pfx, this,
-			(msg.magic == MAVLINK_STX) ? "V2.0" : "V1.0",
+			proto_version_str,
+			framing_str,
 			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
 }
 
 void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg)
 {
-	logDebug("%s%p: send: %s Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
+	const char *proto_version_str = (msg->magic == MAVLINK_STX) ? "v2.0" : "v1.0";
+
+	logDebug("%s%p: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
 			pfx, this,
-			(msg->magic == MAVLINK_STX) ? "V2.0" : "V1.0",
+			proto_version_str,
 			msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq);
 }
 
 void MAVConnInterface::log_send_obj(const char *pfx, const mavlink::Message &msg)
 {
 	logDebug("%s%p: send: %s", pfx, this, msg.to_yaml().c_str());
+}
+
+void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t *msg)
+{
+	try {
+		send_message(msg);
+	}
+	catch (std::length_error &e) {
+		logError(PFX "%p: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
+				this,
+				msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq,
+				e.what());
+	}
+}
+
+void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
+{
+	try {
+		send_message(msg);
+	}
+	catch (std::length_error &e) {
+		logError(PFX "%p: DROPPED Message %s: %s",
+				this,
+				msg.get_name().c_str(),
+				e.what());
+	}
 }
 
 /**
@@ -291,7 +322,8 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 }
 
 MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
-		uint8_t system_id, uint8_t component_id) {
+		uint8_t system_id, uint8_t component_id)
+{
 	/* Based on code found here:
 	 * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
 	 */
@@ -346,4 +378,4 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 	else
 		throw DeviceError("url", "Unknown URL type");
 }
-};	// namespace mavconn
+}	// namespace mavconn

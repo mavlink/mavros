@@ -54,7 +54,7 @@ public:
 
 	inline bool is_open() {
 		return socket.is_open();
-	};
+	}
 
 private:
 	boost::asio::io_service io_service;
@@ -75,5 +75,5 @@ private:
 	void do_recvfrom();
 	void do_sendto(bool check_tx_state);
 };
-};	// namespace mavconn
+}	// namespace mavconn
 

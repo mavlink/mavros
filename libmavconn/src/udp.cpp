@@ -101,11 +101,13 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 			});
 }
 
-MAVConnUDP::~MAVConnUDP() {
+MAVConnUDP::~MAVConnUDP()
+{
 	close();
 }
 
-void MAVConnUDP::close() {
+void MAVConnUDP::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
@@ -120,7 +122,8 @@ void MAVConnUDP::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)

@@ -91,5 +91,5 @@ struct MsgBuffer {
 		return len - pos;
 	}
 };
-};	// namespace mavconn
+}	// namespace mavconn
 

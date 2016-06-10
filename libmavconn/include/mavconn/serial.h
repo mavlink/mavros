@@ -64,5 +64,5 @@ private:
 	void do_read();
 	void do_write(bool check_tx_state);
 };
-};	// namespace mavconn
+}	// namespace mavconn
 

@@ -104,7 +104,8 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	// waiting when server call client_connected()
 }
 
-void MAVConnTCPClient::client_connected(void *server_channel) {
+void MAVConnTCPClient::client_connected(void *server_channel)
+{
 	logInform(PFXd "Got client, id: %p, address: %s",
 			server_channel, this, to_string_ss(server_ep).c_str());
 
@@ -112,11 +113,13 @@ void MAVConnTCPClient::client_connected(void *server_channel) {
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_recv, this));
 }
 
-MAVConnTCPClient::~MAVConnTCPClient() {
+MAVConnTCPClient::~MAVConnTCPClient()
+{
 	close();
 }
 
-void MAVConnTCPClient::close() {
+void MAVConnTCPClient::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
@@ -131,7 +134,8 @@ void MAVConnTCPClient::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
@@ -286,11 +290,13 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 			});
 }
 
-MAVConnTCPServer::~MAVConnTCPServer() {
+MAVConnTCPServer::~MAVConnTCPServer()
+{
 	close();
 }
 
-void MAVConnTCPServer::close() {
+void MAVConnTCPServer::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
@@ -304,7 +310,8 @@ void MAVConnTCPServer::close() {
 	if (io_thread.joinable())
 		io_thread.join();
 
-	port_closed.emit();
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 mavlink_status_t MAVConnTCPServer::get_status()
@@ -392,11 +399,9 @@ void MAVConnTCPServer::do_accept()
 				lock_guard lock(mutex);
 
 				std::weak_ptr<MAVConnTCPClient> weak_client = acceptor_client;
-
 				acceptor_client->client_connected(this);
-
-				//acceptor_client->message_received += signal::slot(this, &MAVConnTCPServer::recv_message);
-				acceptor_client->port_closed += [&weak_client, this] () { client_closed(weak_client); };
+				acceptor_client->message_received_cb = std::bind(&MAVConnTCPServer::recv_message, this, std::placeholders::_1, std::placeholders::_2);
+				acceptor_client->port_closed_cb = [weak_client, this] () { client_closed(weak_client); };
 
 				client_list.push_back(acceptor_client);
 				do_accept();
@@ -417,8 +422,9 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 	}
 }
 
-void MAVConnTCPServer::recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnTCPServer::recv_message(const mavlink_message_t *message, const Framing framing)
 {
-	//message_received.emit(message, sysid, compid);
+	if (message_received_cb)
+		message_received_cb(message, framing);
 }
-};	// namespace mavconn
+}	// namespace mavconn
