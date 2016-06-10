@@ -15,6 +15,8 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(EnableCXX11)
 include(MavrosMavlink)
 
+list(APPEND IGNORE_DIALECTS "autoquad") #-> enum values out of int limit
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -34,12 +36,11 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}/mcgen
 )
 
 ## Declare a cpp library
 add_library(mavconn
-  ${CMAKE_CURRENT_BINARY_DIR}/mcgen/mavlink_helpers.cpp
+  src/mavlink_helpers.cpp
   src/interface.cpp
   src/serial.cpp
   src/udp.cpp
@@ -54,12 +55,12 @@ target_link_libraries(mavconn
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
-  ${CMAKE_CURRENT_BINARY_DIR}/mcgen/mavlink_dialect.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h)
 
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
-  ${CMAKE_CURRENT_BINARY_DIR}/mcgen/mavlink_helpers.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp)
 
 #############
 ## Install ##
@@ -77,10 +78,6 @@ install(TARGETS mavconn
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/mavconn/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
-  FILES_MATCHING PATTERN "*.h"
-)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mcgen/
   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
   FILES_MATCHING PATTERN "*.h"
 )

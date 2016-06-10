@@ -28,7 +28,7 @@
 
 using mavconn::MAVConnInterface;
 
-void MAVConnInterface::init_msg_entry(void)
+void MAVConnInterface::init_msg_entry()
 {
 	logDebug("mavconn: Initialize message_entries map");
 
@@ -50,6 +50,14 @@ void MAVConnInterface::init_msg_entry(void)
 
 	@[for dialect in MAVLINK_V20_DIALECTS]for (auto &e : mavlink::@dialect::MESSAGE_ENTRIES) @(' ' * (20 - len(dialect))) load("@dialect", e);
 	@[end for]
+}
+
+std::vector<std::string> MAVConnInterface::get_known_dialects()
+{
+	return {
+		@[for dialect in MAVLINK_V20_DIALECTS]"@dialect",
+		@[end for]
+	};
 }
 
 /**

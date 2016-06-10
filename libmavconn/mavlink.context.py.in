@@ -2,6 +2,11 @@
 
 MAVLINK_V20_DIALECTS = "@mavlink2_DIALECTS@".split(';')
 
+IGNORE_DIALECTS = "@IGNORE_DIALECTS@".split(';')
+
+for dialect in IGNORE_DIALECTS:
+    MAVLINK_V20_DIALECTS.remove(dialect)
+
 if 'common' not in MAVLINK_V20_DIALECTS:
     raise ValueError("common dialect not listed!")
 
