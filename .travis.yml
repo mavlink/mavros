@@ -11,16 +11,15 @@ cache:
 
 env:
   global:
-    - ROS_DISTRO=jade
+    #- ROS_DISTRO=jade
     - ROS_CI_DESKTOP="$(lsb_release -cs)"
     - CI_SOURCE_PATH=$(pwd)
     - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
     - ROS_PARALLEL_JOBS='-j8 -l6'
 
-  matrix: # XXX obsolete after v2.0
-    - MAVLINK_DIALECT=common
-    - MAVLINK_DIALECT=ardupilotmega
-    - MAVLINK_DIALECT=paparazzi
+  matrix:
+    - ROS_DISTRO=indigo
+    - ROS_DISTRO=jade
 
 before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
@@ -54,7 +53,7 @@ before_script:
 
 script:
   - cd ~/catkin_ws
-  - catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
+  - catkin config --install
   - catkin build --verbose --summary
   - source devel/setup.bash
   - catkin run_tests -p1 --summary
