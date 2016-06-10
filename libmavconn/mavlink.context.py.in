@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+
+MAVLINK_V20_DIALECTS = "@mavlink2_DIALECTS@".split(';')
+
+if 'common' not in MAVLINK_V20_DIALECTS:
+    raise ValueError("common dialect not listed!")
+
+# common should be first
+MAVLINK_V20_DIALECTS.remove('common')
+MAVLINK_V20_DIALECTS.insert(0, 'common')

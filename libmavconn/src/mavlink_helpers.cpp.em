@@ -1,12 +1,12 @@
 /**
- * @brief MAVLink helpers
- * @file mavlink_helpers.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @@brief MAVLink helpers
+ * @@file mavlink_helpers.cpp
+ * @@author Vladimir Ermakov <vooon341@@gmail.com>
  *
  * This file defines replace for some helper function to prevent problem #269.
  *
- * @addtogroup mavconn
- * @{
+ * @@addtogroup mavconn
+ * @@{
  */
 /*
  * libmavconn
@@ -16,16 +16,17 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+@#
+@# EmPy template of dialect helpers source file
+@#
 
 #include <console_bridge/console.h>
 #include <mavconn/interface.h>
 
-using mavconn::MAVConnInterface;
+// AUTOMATIC GENERATED FILE!
+// from src/mavlink_helpers.cpp.em
 
-// Use:
-// mavlink::common::MESSAGE_ENTRIES
-//
-// And use empy to generate list
+using mavconn::MAVConnInterface;
 
 void MAVConnInterface::init_msg_entry(void)
 {
@@ -47,14 +48,8 @@ void MAVConnInterface::init_msg_entry(void)
 		}
 	};
 
-	// XXX work for empy
-	for (auto &e : mavlink::common::MESSAGE_ENTRIES) {
-		load("common", e);
-	}
-
-	for (auto &e : mavlink::ardupilotmega::MESSAGE_ENTRIES) {
-		load("ardupilotmega", e);
-	}
+	@[for dialect in MAVLINK_V20_DIALECTS]for (auto &e : mavlink::@dialect::MESSAGE_ENTRIES) @(' ' * (20 - len(dialect))) load("@dialect", e);
+	@[end for]
 }
 
 /**
