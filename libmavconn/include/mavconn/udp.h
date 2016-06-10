@@ -69,8 +69,11 @@ private:
 	boost::asio::ip::udp::endpoint bind_ep;
 
 	std::atomic<bool> tx_in_progress;
-	std::list<MsgBuffer*> tx_q;
+	//std::list<MsgBuffer*> tx_q;
+
 	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
+	std::deque<MsgBuffer> tx_q;
+
 	std::recursive_mutex mutex;
 
 	void do_recvfrom();

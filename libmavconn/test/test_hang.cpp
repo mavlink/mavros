@@ -71,7 +71,7 @@ int main(int argc, char **argv){
 	//server->message_received += [&](const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) { server->send_message(msg); };
 	//server->message_received.connect([&](const mavlink_message_t *msg) { server->send_message(msg); });
 	server->message_received.connect([&](const mavlink_message_t *msg) {
-			std::cout << "S:RECV: " << msg->msgid << std::endl;
+			//std::cout << "S:RECV: " << msg->msgid << std::endl;
 			//send_sys_status(server.get());
 			//send_sys_status(client.get());
 			const uint8_t bytes[] = "where leak locate???";
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200);
 	//client->message_received += recv_message;
 	client->message_received.connect([&](const mavlink_message_t *msg) {
-			std::cout << "C:RECV: " << msg->msgid << std::endl;
+			//std::cout << "C:RECV: " << msg->msgid << std::endl;
 			});
 
 	while (ros::ok()) {

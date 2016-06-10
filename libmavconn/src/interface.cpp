@@ -50,24 +50,6 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	std::call_once(init_flag, init_msg_entry);
 }
 
-MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message)
-{
-	return new MsgBuffer(message);
-}
-
-MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink::Message &message)
-{
-	mavlink_message_t msg;
-	mavlink::MsgMap map(msg);
-
-	auto mi = message.get_message_info();
-
-	message.serialize(map);
-	mavlink::mavlink_finalize_message_buffer(&msg, sys_id, comp_id, &m_status, mi.min_length, mi.length, mi.crc_extra);
-
-	return new MsgBuffer(&msg);
-}
-
 mavlink_status_t MAVConnInterface::get_status()
 {
 	return m_status;

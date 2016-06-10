@@ -65,7 +65,8 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	tx_in_progress(false),
 	io_service(),
 	io_work(new io_service::work(io_service)),
-	socket(io_service)
+	socket(io_service),
+	tx_q{}
 {
 	if (!resolve_address_udp(io_service, this, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
@@ -93,11 +94,10 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
 	// run io_service for async io
-	std::thread t([&] () {
+	io_thread = std::thread([this] () {
 				utils::set_this_thread_name("mudp%p", this);
 				io_service.run();
 			});
-	io_thread.swap(t);
 }
 
 MAVConnUDP::~MAVConnUDP() {
@@ -114,8 +114,8 @@ void MAVConnUDP::close() {
 	socket.close();
 
 	// clear tx queue
-	for (auto &p : tx_q)
-		delete p;
+	//for (auto &p : tx_q)
+	//	delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
@@ -136,10 +136,11 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 		return;
 	}
 
-	MsgBuffer *buf = new MsgBuffer(bytes, length);
+	//MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+		//tx_q.push_back(buf);
+		tx_q.emplace_back(bytes, length);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
@@ -160,10 +161,11 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 
 	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message);
+	//MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+		//tx_q.push_back(buf);
+		tx_q.emplace_back(message);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
@@ -183,10 +185,11 @@ void MAVConnUDP::send_message(const mavlink::Message &message)
 	log_send_obj(PFX, message);
 
 	// XXX decide later: locked or not
-	MsgBuffer *buf = new_msgbuffer(message);
+	//MsgBuffer *buf = new_msgbuffer(message);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+		//tx_q.push_back(buf);
+		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
 }
@@ -224,11 +227,13 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
-	MsgBuffer *buf = tx_q.front();
+	auto &buf_ref = tx_q.front();
 	socket.async_send_to(
-			buffer(buf->dpos(), buf->nbytes()),
+			buffer(buf_ref.dpos(), buf_ref.nbytes()),
 			remote_ep,
-			[this] (error_code error, size_t bytes_transferred) {
+			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+				assert(bytes_transferred <= buf_ref.len);
+
 				if (error == boost::asio::error::network_unreachable) {
 					logWarn(PFXd "sendto: %s, retrying", this, error.message().c_str());
 					// do not return, try to resend
@@ -241,20 +246,24 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 
 				iostat_tx_add(bytes_transferred);
 				lock_guard lock(mutex);
+
+				// XXX testing only!
+				if (bytes_transferred != buf_ref.len) {
+					std::cout << "UDP TX done, len != buf: " << int(buf_ref.len) << " " << bytes_transferred << std::endl;
+				}
+
 				if (tx_q.empty()) {
 					tx_in_progress = false;
 					return;
 				}
 
-				MsgBuffer *buf = tx_q.front();
-				buf->pos += bytes_transferred;
-				if (buf->nbytes() == 0) {
+				buf_ref.pos += bytes_transferred;
+				if (buf_ref.nbytes() == 0) {
 					tx_q.pop_front();
-					delete buf;
 				}
 
 				if (!tx_q.empty())
-					do_sendto(false);
+					do_sendto(false);	// XXX should post?
 				else
 					tx_in_progress = false;
 			});

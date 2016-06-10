@@ -23,7 +23,7 @@
 
 #include <boost/system/system_error.hpp>
 
-#include <set>
+#include <deque>
 #include <mutex>
 #include <atomic>
 #include <chrono>
@@ -184,13 +184,19 @@ protected:
 	uint8_t sys_id;
 	uint8_t comp_id;
 
+	//! Maximum mavlink packet size + some extra bytes for padding.
+	static constexpr size_t MAX_PACKET_SIZE = MAVLINK_MAX_PACKET_LEN + 16;
+	//! Maximum count of transmission buffers.
+	static constexpr size_t MAX_TXQ_SIZE = 1000;
+
+	//! This map merge all dialect mavlink_msg_entry_t structs. Needed for packet parser.
 	static std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> message_entries;
 
 	/**
 	 * This helper function construct new MsgBuffer from message.
 	 */
-	MsgBuffer *new_msgbuffer(const mavlink::mavlink_message_t *message);
-	MsgBuffer *new_msgbuffer(const mavlink::Message &message);
+	inline MsgBuffer *new_msgbuffer(const mavlink::mavlink_message_t *message) { return nullptr; };
+	inline MsgBuffer *new_msgbuffer(const mavlink::Message &message) { return nullptr; };
 
 	inline mavlink::mavlink_status_t *get_status_p(void) {
 		return &m_status;

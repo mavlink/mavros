@@ -48,6 +48,25 @@ struct MsgBuffer {
 	}
 
 	/**
+	 * @brief Buffer constructor for mavlink::Message derived object.
+	 */
+	MsgBuffer(const mavlink::Message &obj, mavlink::mavlink_status_t *status, uint8_t sysid, uint8_t compid) :
+		pos(0)
+	{
+		mavlink::mavlink_message_t msg;
+		mavlink::MsgMap map(msg);
+
+		auto mi = obj.get_message_info();
+
+		obj.serialize(map);
+		mavlink::mavlink_finalize_message_buffer(&msg, sysid, compid, status, mi.min_length, mi.length, mi.crc_extra);
+
+		len = mavlink::mavlink_msg_to_send_buffer(data, &msg);
+		// paranoic check, it must be less than MAVLINK_MAX_PACKET_LEN
+		assert(len < MAX_SIZE);
+	}
+
+	/**
 	 * @brief Buffer constructor for send_bytes()
 	 * @param[in] nbytes should be less than MAX_SIZE
 	 */
