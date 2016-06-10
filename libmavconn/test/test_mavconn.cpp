@@ -23,6 +23,7 @@
 
 using namespace mavconn;
 using mavlink::mavlink_message_t;
+using mavlink::msgid_t;
 
 
 static void send_heartbeat(MAVConnInterface *ip) {
@@ -46,10 +47,10 @@ public:
 	std::mutex mutex;
 	std::condition_variable cond;
 
-	int8_t message_id;
+	msgid_t message_id;
 
-	void recv_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) {
-		//ROS_DEBUG("Got message %d, len: %d", message->msgid, message->len);
+	void recv_message(const mavlink_message_t *message, const Framing framing) {
+		//printf("Got message %u, len: %u, framing: %d\n", message->msgid, message->len, int(framing));
 		message_id = message->msgid;
 		cond.notify_one();
 	}
@@ -74,19 +75,18 @@ TEST_F(UDP, send_message)
 	std::unique_ptr<MAVConnInterface> echo;
 	std::unique_ptr<MAVConnInterface> client;
 
-	message_id = 255;
+	message_id = std::numeric_limits<msgid_t>::max();
 	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
 	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45002));
-	echo->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
+	echo->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo->send_message(msg);
 	};
 
 	// create client
 	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45003, "localhost", 45002));
-	//client->message_received += signal::slot(this, recv_message);
-	client->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
+	client->message_received_cb = std::bind(&UDP::recv_message, this, std::placeholders::_1, std::placeholders::_2);
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -117,19 +117,18 @@ TEST_F(TCP, send_message)
 	std::unique_ptr<MAVConnInterface> echo_server;
 	std::unique_ptr<MAVConnInterface> client;
 
-	message_id = 255;
+	message_id = std::numeric_limits<msgid_t>::max();
 	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
 	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57602));
-	echo_server->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
+	echo_server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo_server->send_message(msg);
 	};
 
 	// create client
 	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57602));
-	//client->message_received += signal::slot(this, recv_message);
-	client->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid){ recv_message(msg, sysid, compid); };
+	client->message_received_cb = std::bind(&TCP::recv_message, this, std::placeholders::_1, std::placeholders::_2);
 
 	// wait echo
 	send_heartbeat(client.get());
@@ -144,21 +143,21 @@ TEST_F(TCP, client_reconnect)
 	std::unique_ptr<MAVConnInterface> client1, client2;
 
 	// create echo server
-	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57600));
-	echo_server->message_received += [&](const mavlink_message_t * msg, uint8_t sysid, uint8_t compid) {
+	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57604));
+	echo_server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo_server->send_message(msg);
 	};
 
 	EXPECT_NO_THROW({
-			client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57600));
+			client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57604));
 		});
 
 	EXPECT_NO_THROW({
-			client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57600));
+			client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57604));
 		});
 
 	EXPECT_NO_THROW({
-			client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57600));
+			client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57604));
 		});
 }
 
@@ -198,7 +197,7 @@ TEST(URL, open_url_udp)
 	MAVConnUDP *udp_p;
 
 	EXPECT_NO_THROW({
-			udp = MAVConnInterface::open_url("udp://localhost:45000@localhost:45005/?ids=2,241");
+			udp = MAVConnInterface::open_url("udp://localhost:45004@localhost:45005/?ids=2,241");
 			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
 			EXPECT_NE(udp_p, nullptr);
 		});
@@ -210,13 +209,13 @@ TEST(URL, open_url_udp)
 		});
 
 	EXPECT_NO_THROW({
-			udp = MAVConnInterface::open_url("udp://localhost:45000@");
+			udp = MAVConnInterface::open_url("udp://localhost:45004@");
 			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
 			EXPECT_NE(udp_p, nullptr);
 		});
 
 	EXPECT_THROW({
-			udp = MAVConnInterface::open_url("udp://localhost:45000");
+			udp = MAVConnInterface::open_url("udp://localhost:45004");
 		}, DeviceError);
 }
 
@@ -228,13 +227,13 @@ TEST(URL, open_url_tcp)
 	MAVConnTCPClient *tcp_client_p;
 
 	EXPECT_NO_THROW({
-			tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57600");
+			tcp_server = MAVConnInterface::open_url("tcp-l://localhost:57606");
 			tcp_server_p = dynamic_cast<MAVConnTCPServer*>(tcp_server.get());
 			EXPECT_NE(tcp_server_p, nullptr);
 		});
 
 	EXPECT_NO_THROW({
-			tcp_client = MAVConnInterface::open_url("tcp://localhost:57600");
+			tcp_client = MAVConnInterface::open_url("tcp://localhost:57606");
 			tcp_client_p = dynamic_cast<MAVConnTCPClient*>(tcp_client.get());
 			EXPECT_NE(tcp_client_p, nullptr);
 		});
