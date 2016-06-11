@@ -65,13 +65,13 @@ private:
 	void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg);
 
 	//! message router
-	//void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
+	void plugin_route_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing);
 
-	//bool is_blacklisted(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
-	//void add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
+	//! load plugin
+	void add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
 
 	//! start mavlink app on USB
-	//void startup_px4_usb_quirk();
+	void startup_px4_usb_quirk();
 	void log_connect_change(bool connected);
 };
 }	// namespace mavros
