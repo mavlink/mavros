@@ -3,67 +3,67 @@
 		<description>Dummy test plugin.</description>
 	</class>
 
-	<class name="sys_status" type="mavplugin::SystemStatusPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish system status.</description>
 	</class>
-	<class name="imu_pub" type="mavplugin::IMUPubPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="imu_pub" type="mavros::std_plugins::IMUPubPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish IMU data.</description>
 	</class>
-	<class name="param" type="mavplugin::ParamPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="param" type="mavros::std_plugins::ParamPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to FCU parameters.</description>
 	</class>
-	<class name="waypoint" type="mavplugin::WaypointPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="waypoint" type="mavros::std_plugins::WaypointPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to FCU mission.</description>
 	</class>
-	<class name="rc_io" type="mavplugin::RCIOPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish RC IO state.</description>
 	</class>
-	<class name="command" type="mavplugin::CommandPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="command" type="mavros::std_plugins::CommandPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send commands to FCU.</description>
 	</class>
-	<class name="local_position" type="mavplugin::LocalPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="local_position" type="mavros::std_plugins::LocalPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish FCU local position.</description>
 	</class>
-	<class name="global_position" type="mavplugin::GlobalPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="global_position" type="mavros::std_plugins::GlobalPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish FCU fused global position and raw GPS fix.</description>
 	</class>
-	<class name="setpoint_position" type="mavplugin::SetpointPositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="setpoint_position" type="mavros::std_plugins::SetpointPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU external position setpoint.</description>
 	</class>
-	<class name="safety_area" type="mavplugin::SafetyAreaPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="safety_area" type="mavros::std_plugins::SafetyAreaPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU safety allowed area.</description>
 	</class>
-	<class name="3dr_radio" type="mavplugin::TDRRadioPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="3dr_radio" type="mavros::std_plugins::TDRRadioPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish 3DR Radio modem status.</description>
 	</class>
-	<class name="setpoint_velocity" type="mavplugin::SetpointVelocityPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="setpoint_velocity" type="mavros::std_plugins::SetpointVelocityPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU external velocity setpoint.</description>
 	</class>
-	<class name="setpoint_accel" type="mavplugin::SetpointAccelerationPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="setpoint_accel" type="mavros::std_plugins::SetpointAccelerationPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU external acceleration/force setpoint.</description>
 	</class>
-	<class name="setpoint_attitude" type="mavplugin::SetpointAttitudePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="setpoint_attitude" type="mavros::std_plugins::SetpointAttitudePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU external attitude setpoint.</description>
 	</class>
-	<class name="setpoint_raw" type="mavplugin::SetpointRawPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="setpoint_raw" type="mavros::std_plugins::SetpointRawPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to raw POSITION_TARGET_LOCAL_NED messages.</description>
 	</class>
-	<class name="vfr_hud" type="mavplugin::VfrHudPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="vfr_hud" type="mavros::std_plugins::VfrHudPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish VFR HUD data and WIND estimations.</description>
 	</class>
-	<class name="ftp" type="mavplugin::FTPPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="ftp" type="mavros::std_plugins::FTPPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to files on FCU via MAVLink-FTP.</description>
 	</class>
-	<class name="sys_time" type="mavplugin::SystemTimePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="sys_time" type="mavros::std_plugins::SystemTimePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Synchronise clocks with FCU.</description>
 	</class>
-	<class name="actuator_control" type="mavplugin::ActuatorControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="actuator_control" type="mavros::std_plugins::ActuatorControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send direct controls values to the actuators</description>
 	</class>
-	<class name="manual_control" type="mavplugin::ManualControlPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="manual_control" type="mavros::std_plugins::ManualControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish manual control values</description>
 	</class>
-	<class name="altitude" type="mavplugin::AltitudePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish altitude values</description>
 	</class>
 </library>

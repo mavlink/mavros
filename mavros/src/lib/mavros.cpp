@@ -245,10 +245,10 @@ static bool is_blacklisted(std::string &pl_name, ros::V_string &blacklist, ros::
 	return false;
 }
 
-inline bool is_mavlink_message_t(const std::reference_wrapper<const std::type_info> &rt)
+inline bool is_mavlink_message_t(const size_t rt)
 {
 	static const auto h = typeid(mavlink_message_t).hash_code();
-	return typeid(mavlink_message_t).hash_code() == rt.get().hash_code();
+	return h == rt;
 }
 
 /**
@@ -257,14 +257,14 @@ inline bool is_mavlink_message_t(const std::reference_wrapper<const std::type_in
 void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist)
 {
 	if (is_blacklisted(pl_name, blacklist, whitelist)) {
-		ROS_INFO_STREAM("Plugin " << pl_name << std::setw(20) << " blacklisted");
+		ROS_INFO_STREAM("Plugin " << pl_name << " blacklisted");
 		return;
 	}
 
 	try {
 		auto plugin = plugin_loader.createInstance(pl_name);
 
-		ROS_INFO_STREAM("Plugin " << pl_name << std::setw(20) << " loaded");
+		ROS_INFO_STREAM("Plugin " << pl_name << " loaded");
 
 		for (auto &info : plugin->get_subscriptions()) {
 			auto msgid = std::get<0>(info);
@@ -273,12 +273,12 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 
 			std::string log_msgname;
 
-			if (is_mavlink_message_t(type_info_))
+			if (is_mavlink_message_t(type_hash_))
 				log_msgname = utils::format("MSG-ID (%u)", msgid);
 			else
 				log_msgname = utils::format("%s (%u)", msgname, msgid);
 
-			ROS_WARN_STREAM("Route " << log_msgname << " to " << pl_name);
+			ROS_DEBUG_STREAM("Route " << log_msgname << " to " << pl_name);
 
 			auto it = plugin_subscriptions.find(msgid);
 			if (it == plugin_subscriptions.end()) {
@@ -289,31 +289,29 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 			else {
 				// existing: check handler message type
 
-				bool append_allowed = !is_mavlink_message_t(type_info_);
+				bool append_allowed = !is_mavlink_message_t(type_hash_);
 				if (!append_allowed) {
 					append_allowed = true;
 					for (auto &e : it->second) {
 						auto t2 = std::get<2>(e);
-						if (!is_mavlink_message_t(t2) && t2.get().hash_code() != type_info_.get().hash_code()) {
-							ROS_ERROR_STREAM("" << log_msgname << " routed to different message type: ");
+						if (!is_mavlink_message_t(t2) && t2 != type_hash_) {
+							ROS_ERROR_STREAM(log_msgname << " routed to different message type (hash: " << t2 << ")");
 							append_allowed = false;
 						}
 					}
 				}
 
-				if (append_allowed) {
+				if (append_allowed)
 					it->second.emplace_back(info);
-				}
-				else {
-					ROS_ERROR_STREAM("" << log_msgname << " handler dropped because this ID are used for another message type");
-				}
+				else
+					ROS_ERROR_STREAM(log_msgname << " handler dropped because this ID are used for another message type");
 			}
 		}
 
 		plugin->initialize(mav_uas);
 		loaded_plugins.push_back(plugin);
 
-		ROS_INFO_STREAM("Plugin " << pl_name << std::setw(20) << " initialized");
+		ROS_INFO_STREAM("Plugin " << pl_name << " initialized");
 	} catch (pluginlib::PluginlibException &ex) {
 		ROS_ERROR_STREAM("Plugin " << pl_name << " load exception: " << ex.what());
 	}

@@ -32,14 +32,15 @@ namespace utils {
  *
  */
 template<typename ... Args>
-std::string&& format(const std::string &fmt, Args&& ... args)
+std::string format(const std::string &fmt, Args ... args)
 {
+	// C++11 specify that string store elements continously
 	std::string ret;
 
-	// TODO: do i realy need explicitely specify additional \0-terminator byte?
-	ret.reserve(std::snprintf(nullptr, 0, fmt.c_str(), args...) + 1);
-	std::snprintf(&ret.front(), ret.capacity(), fmt.c_str(), args...);
-	return std::move(ret);
+	auto sz = std::snprintf(nullptr, 0, fmt.c_str(), args...);
+	ret.reserve(sz + 1); ret.resize(sz);	// to be sure there have room for \0
+	std::snprintf(&ret.front(), ret.capacity() + 1, fmt.c_str(), args...);
+	return ret;
 }
 
 /**
