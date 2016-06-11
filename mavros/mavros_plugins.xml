@@ -1,8 +1,7 @@
 <library path="lib/libmavros_plugins">
-	<class name="dummy" type="mavros::std_plugins::DummyPlugin" base_class_type="mavros::plugin::PluginBase">
+	<!--<class name="dummy" type="mavros::std_plugins::DummyPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Dummy test plugin.</description>
-	</class>
-
+	</class>-->
 	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish system status.</description>
 	</class>
@@ -33,7 +32,7 @@
 	<class name="safety_area" type="mavros::std_plugins::SafetyAreaPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Send to FCU safety allowed area.</description>
 	</class>
-	<class name="3dr_radio" type="mavros::std_plugins::TDRRadioPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="3dr_radio" type="mavros::std_plugins::TDRRadioPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish 3DR Radio modem status.</description>
 	</class>
 	<class name="setpoint_velocity" type="mavros::std_plugins::SetpointVelocityPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
