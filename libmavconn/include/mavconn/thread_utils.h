@@ -19,53 +19,44 @@
 #pragma once
 
 #include <thread>
+#include <string>
 #include <cstdio>
 #include <sstream>
-#include <cstdarg>
 #include <pthread.h>
 
 namespace mavconn {
 namespace utils {
+
 /**
- * @brief Set std::thread name with printf-like mode
- * @param[in] thd std::thread
+ * @brief Make printf-formatted std::string
+ *
+ */
+template<typename ... Args>
+std::string&& format(const std::string &fmt, Args&& ... args)
+{
+	std::string ret;
+
+	// TODO: do i realy need explicitely specify additional \0-terminator byte?
+	ret.reserve(std::snprintf(nullptr, 0, fmt.c_str(), std::forward<Args>(args)...) + 1);
+	//std::snprintf(ret.data(), ret.capacity(), fmt.c_str(), args...);	// C++17...
+	std::snprintf(&ret.front(), ret.capacity(), fmt.c_str(), args...);
+	return std::move(ret);
+}
+
+/**
+ * @brief Set name to current thread, printf-like
  * @param[in] name name for thread
  * @return true if success
  *
  * @note Only for Linux target
  * @todo add for other posix system
  */
-inline bool set_thread_name(std::thread &thd, const char *name, ...)
-{
-	pthread_t pth = thd.native_handle();
-	va_list arg_list;
-	va_start(arg_list, name);
-
-	char new_name[256];
-	vsnprintf(new_name, sizeof(new_name), name, arg_list);
-	va_end(arg_list);
-	return pthread_setname_np(pth, new_name) == 0;
-}
-
-/**
- * @brief Set thread name (std::string variation)
- */
-template <typename Thread>
-inline bool set_thread_name(Thread &thd, std::string &name)
-{
-	return set_thread_name(thd, name.c_str());
-}
-
-inline bool set_this_thread_name(const char *name, ...)
+template<typename ... Args>
+bool set_this_thread_name(const std::string &name, Args&& ... args)
 {
 	pthread_t pth = pthread_self();
-	va_list arg_list;
-	va_start(arg_list, name);
-
-	char new_name[256];
-	vsnprintf(new_name, sizeof(new_name), name, arg_list);
-	va_end(arg_list);
-	return pthread_setname_np(pth, new_name) == 0;
+	auto new_name = format(name, std::forward<Args>(args)...);
+	return pthread_setname_np(pth, new_name.c_str()) == 0;
 }
 
 /**
