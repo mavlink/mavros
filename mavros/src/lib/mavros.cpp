@@ -31,7 +31,7 @@ MavRos::MavRos() :
 	mavlink_nh("mavlink"),		// allow to namespace it
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
-	plugin_loader("mavros", "mavplugin::MavRosPlugin"),
+	plugin_loader("mavros", "mavros::plugin::PluginBase"),
 	plugin_subscriptions{}
 {
 	std::string fcu_url, gcs_url;
@@ -247,6 +247,7 @@ static bool is_blacklisted(std::string &pl_name, ros::V_string &blacklist, ros::
 
 inline bool is_mavlink_message_t(const std::reference_wrapper<const std::type_info> &rt)
 {
+	static const auto h = typeid(mavlink_message_t).hash_code();
 	return typeid(mavlink_message_t).hash_code() == rt.get().hash_code();
 }
 
@@ -268,7 +269,7 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 		for (auto &info : plugin->get_subscriptions()) {
 			auto msgid = std::get<0>(info);
 			auto msgname = std::get<1>(info);
-			auto type_info_ = std::get<2>(info);
+			auto type_hash_ = std::get<2>(info);
 
 			std::string log_msgname;
 
@@ -294,7 +295,7 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 					for (auto &e : it->second) {
 						auto t2 = std::get<2>(e);
 						if (!is_mavlink_message_t(t2) && t2.get().hash_code() != type_info_.get().hash_code()) {
-							ROS_ERROR_STREAM("" << log_msgname << " routed to different message type: " << t2.get().name());
+							ROS_ERROR_STREAM("" << log_msgname << " routed to different message type: ");
 							append_allowed = false;
 						}
 					}

@@ -1,7 +1,8 @@
 <library path="lib/libmavros_plugins">
-	<!--<class name="dummy" type="mavplugin::DummyPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="dummy" type="mavros::std_plugins::DummyPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Dummy test plugin.</description>
-	</class>-->
+	</class>
+
 	<class name="sys_status" type="mavplugin::SystemStatusPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish system status.</description>
 	</class>

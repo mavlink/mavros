@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2013 Vladimir Ermakov.
+ * Copyright 2013,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -18,62 +18,64 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
+
 /**
  * @brief Dummy plugin.
  *
  * Example and "how to" for users.
  */
-class DummyPlugin : public MavRosPlugin {
+class DummyPlugin : public plugin::PluginBase {
 public:
 	DummyPlugin() :
-		nh("~"),
-		uas(nullptr)
-	{ };
+		nh("~")
+	{ }
 
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
 
 		ROS_INFO_NAMED("dummy", "initialize");
 	}
 
 	/**
-	 * This function returns message<->handler mapping
+	 * This function returns message subscriptions.
 	 *
-	 * Each entry defined by @a MESSAGE_HANDLER() macro
+	 * Each entry defined by @a MESSAGE_HANDLER() macro.
+	 * Macro create code for automatic message decoding.
+	 *
+	 * @a MESSAGE_HANDLER_RAW() macro doesn't do decoding.
 	 */
-	const message_map get_rx_handlers() {
-		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &DummyPlugin::handle_heartbeat),
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &DummyPlugin::handle_sys_status),
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_STATUSTEXT, &DummyPlugin::handle_statustext)
-		};
+	Subscriptions&& get_subscriptions() {
+		mavlink::common::msg::HEARTBEAT hb;
+		return std::move(Subscriptions{
+			//MESSAGE_HANDLER(mavlink::common::msg::HEARTBEAT, handle_heartbeat),
+			//MESSAGE_HANDLER(mavlink::common::msg::SYS_STATUS, handle_sys_status),
+			//MESSAGE_HANDLER_RAW(mavlink::common::msg::STATUSTEXT::MSG_ID, &DummyPlugin::handle_statustext),
+		});
 	}
 
 private:
 	ros::NodeHandle nh;
-	UAS *uas;
 
-	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		ROS_INFO_NAMED("dummy", "Dummy::handle_heartbeat(%p, %u, %u)",
-				msg, sysid, compid);
+	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HEARTBEAT &hb) {
+		ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_heartbeat: " << hb.to_yaml());
 	}
 
-	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		ROS_INFO_NAMED("dummy", "Dummy::handle_sys_status(%p, %u, %u)",
-				msg, sysid, compid);
+	void handle_sys_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYS_STATUS &st) {
+		ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_sys_status: " << st.to_yaml());
 	}
 
-	void handle_statustext(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext(%p, %u, %u)",
-				msg, sysid, compid);
+	void handle_statustext(const mavlink::mavlink_message_t *msg, const mavconn::Framing f) {
+		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext(%p, %u)", msg, msg->msgid);
 	}
 };
-};	// namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::DummyPlugin, mavplugin::MavRosPlugin)
+}	// namespace std_plugins
+}	// namespace mavros
+
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::DummyPlugin, mavros::plugin::PluginBase)
 
