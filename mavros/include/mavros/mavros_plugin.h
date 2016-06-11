@@ -72,7 +72,7 @@ protected:
 	 * @brief Plugin constructor
 	 * Should not do anything before initialize()
 	 */
-	PluginBase() {};
+	PluginBase() : m_uas(nullptr) {};
 
 	UAS *m_uas;
 

@@ -56,7 +56,7 @@
 	<class name="sys_time" type="mavros::std_plugins::SystemTimePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Synchronise clocks with FCU.</description>
 	</class>
-	<class name="actuator_control" type="mavros::std_plugins::ActuatorControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="actuator_control" type="mavros::std_plugins::ActuatorControlPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send direct controls values to the actuators</description>
 	</class>
 	<class name="manual_control" type="mavros::std_plugins::ManualControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
