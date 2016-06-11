@@ -20,6 +20,8 @@
 namespace mavros_msgs {
 namespace mavlink {
 
+using ::mavlink::mavlink_message_t;
+
 /**
  * @brief Convert mavros_msgs/Mavlink message to mavlink_message_t
  *
@@ -30,7 +32,7 @@ namespace mavlink {
  * @param[out] mmsg	mavlink_message_t struct
  * @return true if success
  */
-inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink::mavlink_message_t &mmsg)
+inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink_message_t &mmsg)
 {
 	if (rmsg.payload64.size() > sizeof(mmsg.payload64) / sizeof(mmsg.payload64[0])) {
 		return false;
@@ -63,7 +65,7 @@ inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink::mavlink_message_t
  * @param[in]  framing_status  framing parse result (OK, BAD_CRC or BAD_SIGNATURE)
  * @return true, this convertion can't fail
  */
-inline bool convert(const mavlink::mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, uint8_t framing_status = mavros_msgs::Mavlink::FRAMING_OK)
+inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, uint8_t framing_status = mavros_msgs::Mavlink::FRAMING_OK)
 {
 	const size_t payload64_len = (mmsg.len + 7) / 8;
 

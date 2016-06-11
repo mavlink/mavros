@@ -37,6 +37,7 @@ public:
 			float afx, float afy, float afz,
 			float yaw, float yaw_rate) {
 		UAS *_uas = static_cast<D *>(this)->uas;
+#if 0
 		mavlink_message_t msg;
 		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(_uas), &msg,
 				time_boot_ms,	// why it not usec timestamp?
@@ -48,6 +49,7 @@ public:
 				afx, afy, afz,
 				yaw, yaw_rate);
 		UAS_FCU(_uas)->send_message(&msg);
+#endif
 	}
 };
 

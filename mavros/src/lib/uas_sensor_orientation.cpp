@@ -77,9 +77,9 @@ static const std::array<const OrientationPair, 39> sensor_orientations = {{
 
 std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
 {
-	const size_t idx(orientation);
+	const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
+		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %d", idx);
 		return std::to_string(idx);
 	}
 
@@ -88,9 +88,10 @@ std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
 
 Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
-	const size_t idx(orientation);
+	//const size_t idx(orientation);
+	const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %zu", idx);
+		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %d", idx);
 		return Eigen::Quaterniond::Identity();
 	}
 

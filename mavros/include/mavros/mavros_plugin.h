@@ -17,12 +17,15 @@
 
 #pragma once
 
-#include <map>
+#include <tuple>
+#include <vector>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 #include <mavros/mavros_uas.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace plugin {
+
 using mavros::UAS;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 typedef std::unique_lock<std::recursive_mutex> unique_lock;
@@ -30,43 +33,56 @@ typedef std::unique_lock<std::recursive_mutex> unique_lock;
 /**
  * @brief Helper macros to define message handler map item
  */
-#define MESSAGE_HANDLER(_message_id, _class_method_ptr)	\
-	{ _message_id, boost::bind(_class_method_ptr, this, _1, _2, _3) }
+//#define MESSAGE_HANDLER(_message_id, _class_method_ptr)	\
+//	{ _message_id, boost::bind(_class_method_ptr, this, _1, _2, _3) }
+
+#define MESSAGE_HANDLER(_message_id, _class_method_ptr)
 
 /**
  * @brief MAVROS Plugin base class
  */
-class MavRosPlugin
+class PluginBase
 {
 private:
-	MavRosPlugin(const MavRosPlugin&) = delete;
+	PluginBase(const PluginBase&) = delete;
 
 public:
-	typedef boost::function<void (const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)> message_handler;
-	typedef std::map<uint8_t, message_handler> message_map;
-	// pluginlib return boost::shared_ptr
-	typedef boost::shared_ptr<MavRosPlugin> Ptr;
-	typedef boost::shared_ptr<MavRosPlugin const> ConstPtr;
+	using TypeInfoRef = std::reference_wrapper<const std::type_info>;
+	//! generic message handler callback
+	using HandlerCb = mavconn::MAVConnInterface::ReceivedCb;
+	//! Tuple: MSG ID, MSG NAME, message type into reference, message handler callback
+	using HandlerInfo = std::tuple<mavlink::msgid_t, const char *, TypeInfoRef, HandlerCb>;
+	//! Subscriptions vector
+	using Subscriptions = std::vector<HandlerInfo>;
 
-	virtual ~MavRosPlugin() {};
+	// pluginlib return boost::shared_ptr
+	using Ptr = boost::shared_ptr<PluginBase>;
+	using ConstPtr = boost::shared_ptr<PluginBase const>;
+
+	virtual ~PluginBase() {};
 
 	/**
 	 * @brief Plugin initializer
 	 *
-	 * @param[in] uas           UAS instance (handles FCU connection and some statuses)
+	 * @param[in] uas  @p UAS instance
 	 */
-	virtual void initialize(UAS &uas) = 0;
+	virtual void initialize(UAS &uas) {
+		m_uas = &uas;
+	}
 
 	/**
-	 * @brief Return map with message rx handlers
+	 * @brief Return vector of MAVLink message subscriptions (handlers)
 	 */
-	virtual const message_map get_rx_handlers() = 0;
+	virtual Subscriptions&& get_subscriptions() = 0;
 
 protected:
 	/**
 	 * @brief Plugin constructor
 	 * Should not do anything before initialize()
 	 */
-	MavRosPlugin() {};
+	PluginBase() {};
+
+	UAS *m_uas;
 };
-};	// namespace mavplugin
+}	// namespace plugin
+}	// namespace mavros

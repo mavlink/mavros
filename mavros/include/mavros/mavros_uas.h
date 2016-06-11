@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -26,9 +26,13 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
+#include <mavros/utils.h>
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
+
+// XXX decide what to do with UAS signals
+#include <boost/signals2.hpp>
 
 namespace mavros {
 /**
@@ -43,24 +47,6 @@ namespace mavros {
 #define UAS_DIAG(uasobjptr)				\
 	((uasobjptr)->diag_updater)
 
-/**
- * @brief helper for mavlink_msg_*_pack_chan()
- *
- * Filler for first arguments of *_pack_chan functions.
- */
-#define UAS_PACK_CHAN(uasobjptr)			\
-	UAS_FCU(uasobjptr)->get_system_id(),		\
-	UAS_FCU(uasobjptr)->get_component_id(),		\
-	UAS_FCU(uasobjptr)->get_channel()
-
-/**
- * @brief helper for pack messages with target fields
- *
- * Filler for target_system, target_component fields.
- */
-#define UAS_PACK_TGT(uasobjptr)				\
-	(uasobjptr)->get_tgt_system(),			\
-	(uasobjptr)->get_tgt_component()
 
 /**
  * @brief UAS for plugins
@@ -79,8 +65,17 @@ namespace mavros {
  */
 class UAS {
 public:
-	typedef std::lock_guard<std::recursive_mutex> lock_guard;
-	typedef std::unique_lock<std::recursive_mutex> unique_lock;
+	using lock_guard = std::lock_guard<std::recursive_mutex>;
+	using unique_lock = std::unique_lock<std::recursive_mutex>;
+
+	// common enums used by UAS
+	using MAV_TYPE = mavlink::common::MAV_TYPE;
+	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
+	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
+	using MAV_STATE = mavlink::common::MAV_STATE;
+	using MAV_SENSOR_ORIENTATION = mavlink::common::MAV_SENSOR_ORIENTATION;
+
+	// XXX: move transforms out of UAS
 
 	//! Type matching rosmsg for covariance 3x3
 	typedef boost::array<double, 9> Covariance3d;
@@ -96,11 +91,6 @@ public:
 
 	UAS();
 	~UAS() {};
-
-	/**
-	 * Stop UAS
-	 */
-	void stop(void);
 
 	/**
 	 * @brief MAVLink FCU device conection
@@ -141,17 +131,17 @@ public:
 	/**
 	 * @brief Returns vehicle type
 	 */
-	inline enum MAV_TYPE get_type() {
-		uint8_t type_ = type;
-		return static_cast<enum MAV_TYPE>(type_);
+	inline MAV_TYPE get_type() {
+		std::underlying_type<MAV_TYPE>::type type_ = type;
+		return static_cast<MAV_TYPE>(type_);
 	}
 
 	/**
 	 * @brief Returns autopilot type
 	 */
-	inline enum MAV_AUTOPILOT get_autopilot() {
-		uint8_t autopilot_ = autopilot;
-		return static_cast<enum MAV_AUTOPILOT>(autopilot_);
+	inline MAV_AUTOPILOT get_autopilot() {
+		std::underlying_type<MAV_AUTOPILOT>::type autopilot_ = autopilot;
+		return static_cast<MAV_AUTOPILOT>(autopilot_);
 	}
 
 	/**
@@ -161,7 +151,7 @@ public:
 	 */
 	inline bool get_armed() {
 		uint8_t base_mode_ = base_mode;
-		return base_mode_ & MAV_MODE_FLAG_SAFETY_ARMED;
+		return base_mode_ & utils::enum_value(MAV_MODE_FLAG::SAFETY_ARMED);
 	}
 
 	/**
@@ -169,7 +159,7 @@ public:
 	 */
 	inline bool get_hil_state() {
 		uint8_t base_mode_ = base_mode;
-		return base_mode_ & MAV_MODE_FLAG_HIL_ENABLED;
+		return base_mode_ & utils::enum_value(MAV_MODE_FLAG::HIL_ENABLED);
 	}
 
 	/* -*- FCU target id pair -*- */
@@ -296,14 +286,14 @@ public:
 	 * @brief Check that FCU is APM
 	 */
 	inline bool is_ardupilotmega() {
-		return MAV_AUTOPILOT_ARDUPILOTMEGA == get_autopilot();
+		return MAV_AUTOPILOT::ARDUPILOTMEGA == get_autopilot();
 	}
 
 	/**
 	 * @brief Check that FCU is PX4
 	 */
 	inline bool is_px4() {
-		return MAV_AUTOPILOT_PX4 == get_autopilot();
+		return MAV_AUTOPILOT::PX4 == get_autopilot();
 	}
 
 	/**
@@ -332,20 +322,22 @@ public:
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
+	// XXX: move out static stringify {
+
 	/**
 	 * @brief Represent MAV_AUTOPILOT as string
 	 */
-	static std::string str_autopilot(enum MAV_AUTOPILOT ap);
+	static std::string str_autopilot(MAV_AUTOPILOT ap);
 
 	/**
 	 * @brief Represent MAV_TYPE as string
 	 */
-	static std::string str_type(enum MAV_TYPE type);
+	static std::string str_type(MAV_TYPE type);
 
 	/**
 	 * @brief Represent MAV_STATE as string
 	 */
-	static std::string str_system_status(enum MAV_STATE st);
+	static std::string str_system_status(MAV_STATE st);
 
 	/**
 	 * @brief Function to match the received orientation received by MAVLink msg
@@ -362,6 +354,8 @@ public:
 	 * @brief Retrieve sensor orientation number from alias name.
 	 */
 	static int orientation_from_str(const std::string &sensor_orientation);
+
+	// XXX }
 
 	/* -*- frame conversion utilities -*- */
 

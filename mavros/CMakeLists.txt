@@ -91,27 +91,27 @@ add_dependencies(mavros mavros_msgs_generate_messages_cpp)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
-  src/plugins/sys_status.cpp
-  src/plugins/sys_time.cpp
-  src/plugins/imu_pub.cpp
-  src/plugins/param.cpp
-  src/plugins/waypoint.cpp
-  src/plugins/rc_io.cpp
-  src/plugins/command.cpp
-  src/plugins/local_position.cpp
-  src/plugins/global_position.cpp
-  src/plugins/setpoint_position.cpp
-  src/plugins/safety_area.cpp
-  src/plugins/3dr_radio.cpp
-  src/plugins/setpoint_velocity.cpp
-  src/plugins/setpoint_accel.cpp
-  src/plugins/setpoint_attitude.cpp
-  src/plugins/setpoint_raw.cpp
-  src/plugins/vfr_hud.cpp
-  src/plugins/ftp.cpp
-  src/plugins/actuator_control.cpp
-  src/plugins/manual_control.cpp
-  src/plugins/altitude.cpp
+  #src/plugins/sys_status.cpp
+  #src/plugins/sys_time.cpp
+  #src/plugins/imu_pub.cpp
+  #src/plugins/param.cpp
+  #src/plugins/waypoint.cpp
+  #src/plugins/rc_io.cpp
+  #src/plugins/command.cpp
+  #src/plugins/local_position.cpp
+  #src/plugins/global_position.cpp
+  #src/plugins/setpoint_position.cpp
+  #src/plugins/safety_area.cpp
+  #src/plugins/3dr_radio.cpp
+  #src/plugins/setpoint_velocity.cpp
+  #src/plugins/setpoint_accel.cpp
+  #src/plugins/setpoint_attitude.cpp
+  #src/plugins/setpoint_raw.cpp
+  #src/plugins/vfr_hud.cpp
+  #src/plugins/ftp.cpp
+  #src/plugins/actuator_control.cpp
+  #src/plugins/manual_control.cpp
+  #src/plugins/altitude.cpp
 )
 add_dependencies(mavros_plugins
   mavros
@@ -135,14 +135,14 @@ target_link_libraries(mavros_node
   ${Boost_LIBRARIES}
 )
 
-add_executable(gcs_bridge
-  src/gcs_bridge.cpp
-)
-target_link_libraries(gcs_bridge
-  mavros
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+#add_executable(gcs_bridge
+#  src/gcs_bridge.cpp
+#)
+#target_link_libraries(gcs_bridge
+#  mavros
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
 
 #############
 ## Install ##

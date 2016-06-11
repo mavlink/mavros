@@ -37,8 +37,7 @@ std::string&& format(const std::string &fmt, Args&& ... args)
 	std::string ret;
 
 	// TODO: do i realy need explicitely specify additional \0-terminator byte?
-	ret.reserve(std::snprintf(nullptr, 0, fmt.c_str(), std::forward<Args>(args)...) + 1);
-	//std::snprintf(ret.data(), ret.capacity(), fmt.c_str(), args...);	// C++17...
+	ret.reserve(std::snprintf(nullptr, 0, fmt.c_str(), args...) + 1);
 	std::snprintf(&ret.front(), ret.capacity(), fmt.c_str(), args...);
 	return std::move(ret);
 }

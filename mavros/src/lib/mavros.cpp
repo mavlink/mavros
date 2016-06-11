@@ -11,19 +11,19 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros.h>
 #include <ros/console.h>
+#include <mavros/mavros.h>
 #include <mavros/utils.h>
 #include <fnmatch.h>
 
-#ifdef MAVLINK_VERSION
-#undef MAVLINK_VERSION
-#endif
+// MAVLINK_VERSION string
 #include <mavlink/config.h>
 
 using namespace mavros;
-using namespace mavconn;
-using namespace mavplugin;
+using mavconn::MAVConnInterface;
+using mavconn::Framing;
+using mavlink::mavlink_message_t;
+using utils::enum_value;
 
 
 MavRos::MavRos() :
@@ -31,7 +31,7 @@ MavRos::MavRos() :
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
 	plugin_loader("mavros", "mavplugin::MavRosPlugin"),
-	message_route_table {}
+	plugin_subscriptions{}
 {
 	std::string fcu_url, gcs_url;
 	int system_id, component_id;
@@ -45,7 +45,7 @@ MavRos::MavRos() :
 	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 	nh.param("system_id", system_id, 1);
-	nh.param<int>("component_id", component_id, MAV_COMP_ID_UDP_BRIDGE);
+	nh.param<int>("component_id", component_id, mavconn::MAV_COMP_ID_UDP_BRIDGE);
 	nh.param("target_system_id", tgt_system_id, 1);
 	nh.param("target_component_id", tgt_component_id, 1);
 	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
@@ -98,41 +98,57 @@ MavRos::MavRos() :
 	// setup UAS and diag
 	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
 	UAS_FCU(&mav_uas) = fcu_link;
+
+	// XXX!!!
 	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
 	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
 
 	// connect FCU link
-	fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
-	fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
-	fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
+	//fcu_link->message_received.connect(boost::bind(&MavRos::mavlink_pub_cb, this, _1, _2, _3));
+	//fcu_link->message_received.connect(boost::bind(&MavRos::plugin_route_cb, this, _1, _2, _3));
+	//fcu_link->port_closed.connect(boost::bind(&MavRos::terminate_cb, this));
+
+
+	// XXX TODO: move workers to ROS Spinner, let mavconn threads to do only IO
+	fcu_link->message_received_cb = [this](const mavlink_message_t *msg, const Framing framing) {
+		mavlink_pub_cb(msg, framing);
+	};
+
+	fcu_link->port_closed_cb = []() {
+		ROS_ERROR("FCU connection closed, mavros will be terminated.");
+		ros::requestShutdown();
+	};
 
 	if (gcs_link) {
+		// TODO
+
 		// setup GCS link bridge
-		fcu_link->message_received.connect(
-			boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
-		gcs_link->message_received.connect(
-			boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
+		//fcu_link->message_received.connect(
+		//	boost::bind(&MAVConnInterface::send_message, gcs_link, _1, _2, _3));
+		//gcs_link->message_received.connect(
+		//	boost::bind(&MAVConnInterface::send_message, fcu_link, _1, _2, _3));
 		gcs_link_diag.set_connection_status(true);
 	}
 
 	// prepare plugin lists
 	// issue #257 2: assume that all plugins blacklisted
 	if (plugin_blacklist.empty() and !plugin_whitelist.empty())
-		plugin_blacklist.push_back("*");
+		plugin_blacklist.emplace_back("*");
 
-	for (auto &name : plugin_loader.getDeclaredClasses())
-		add_plugin(name, plugin_blacklist, plugin_whitelist);
+	//for (auto &name : plugin_loader.getDeclaredClasses())
+	//	add_plugin(name, plugin_blacklist, plugin_whitelist);
 
-	if (px4_usb_quirk)
-		startup_px4_usb_quirk();
+	//if (px4_usb_quirk)
+	//	startup_px4_usb_quirk();
 
-#define STR2(x)	#x
-#define STR(x)	STR2(x)
+	std::stringstream ss;
+	for (auto &s : mavconn::MAVConnInterface::get_known_dialects())
+		ss << " " << s;
 
 	ROS_INFO("Built-in SIMD instructions: %s", Eigen::SimdInstructionSetsInUse());
 	ROS_INFO("Built-in MAVLink package version: %s", MAVLINK_VERSION);
-	ROS_INFO("Built-in MAVLink dialect: %s", STR(MAVLINK_DIALECT));
-	ROS_INFO("MAVROS started. MY ID %d.%d, TARGET ID %d.%d",
+	ROS_INFO("Known MAVLink dialects:%s", ss.str().c_str());
+	ROS_INFO("MAVROS started. MY ID %u.%u, TARGET ID %u.%u",
 		system_id, component_id,
 		tgt_system_id, tgt_component_id);
 }
@@ -151,18 +167,17 @@ void MavRos::spin() {
 	ros::waitForShutdown();
 
 	ROS_INFO("Stopping mavros...");
-	mav_uas.stop();
 	spinner.stop();
 }
 
-void MavRos::mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
+void MavRos::mavlink_pub_cb(const mavlink_message_t *mmsg, Framing framing) {
 	auto rmsg = boost::make_shared<mavros_msgs::Mavlink>();
 
 	if  (mavlink_pub.getNumSubscribers() == 0)
 		return;
 
 	rmsg->header.stamp = ros::Time::now();
-	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
+	mavros_msgs::mavlink::convert(*mmsg, *rmsg, enum_value(framing));
 	mavlink_pub.publish(rmsg);
 }
 
@@ -170,11 +185,12 @@ void MavRos::mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg) {
 	mavlink_message_t mmsg;
 
 	if (mavros_msgs::mavlink::convert(*rmsg, mmsg))
-		UAS_FCU(&mav_uas)->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+		UAS_FCU(&mav_uas)->send_message_ignore_drop(&mmsg);
 	else
-		ROS_ERROR("Drop mavlink packet: illegal payload64 size");
+		ROS_ERROR("Drop mavlink packet: convert error.");
 }
 
+#if 0
 void MavRos::plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
 	message_route_table[mmsg->msgid](mmsg, sysid, compid);
 }
@@ -245,11 +261,6 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 	}
 }
 
-void MavRos::terminate_cb() {
-	ROS_ERROR("FCU connection closed, mavros will be terminated.");
-	ros::requestShutdown();
-}
-
 void MavRos::startup_px4_usb_quirk(void) {
 	/* sample code from QGC */
 	const uint8_t init[] = {0x0d, 0x0d, 0x0d, 0};
@@ -260,6 +271,7 @@ void MavRos::startup_px4_usb_quirk(void) {
 	UAS_FCU(&mav_uas)->send_bytes(nsh, sizeof(nsh) - 1);
 	UAS_FCU(&mav_uas)->send_bytes(init, 4);	/* NOTE in original init[3] */
 }
+#endif
 
 void MavRos::log_connect_change(bool connected) {
 	auto ap = mav_uas.str_autopilot(mav_uas.get_autopilot());

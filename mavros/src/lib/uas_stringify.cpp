@@ -15,10 +15,10 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <mavros/mavros_uas.h>
-#include <mavros/utils.h>
 #include <mavros/px4_custom_mode.h>
 
 using namespace mavros;
+using mavros::utils::enum_value;
 
 
 /* -*- mode stringify functions -*- */
@@ -29,7 +29,7 @@ typedef std::unordered_map<uint32_t, const std::string> cmode_map;
  *
  * ArduPlane/defines.h
  */
-static const cmode_map arduplane_cmode_map = {
+static const cmode_map arduplane_cmode_map{
 	{ 0, "MANUAL" },
 	{ 1, "CIRCLE" },
 	{ 2, "STABILIZE" },
@@ -55,7 +55,7 @@ static const cmode_map arduplane_cmode_map = {
  *
  * ArduCopter/defines.h
  */
-static const cmode_map arducopter_cmode_map = {
+static const cmode_map arducopter_cmode_map{{
 	{ 0, "STABILIZE" },
 	{ 1, "ACRO" },
 	{ 2, "ALT_HOLD" },
@@ -73,13 +73,13 @@ static const cmode_map arducopter_cmode_map = {
 	{ 15, "AUTOTUNE" },
 	{ 16, "POSHOLD" },
 	{ 17, "BRAKE" }
-};
+}};
 
 /** APM:Rover custom mode -> string
  *
  * APMrover2/defines.h
  */
-static const cmode_map apmrover2_cmode_map = {
+static const cmode_map apmrover2_cmode_map{
 	{ 0, "MANUAL" },
 	{ 2, "LEARNING" },
 	{ 3, "STEERING" },
@@ -91,7 +91,7 @@ static const cmode_map apmrover2_cmode_map = {
 };
 
 //! PX4 custom mode -> string
-static const cmode_map px4_cmode_map = {
+static const cmode_map px4_cmode_map{
 	{ px4::define_mode(px4::custom_mode::MAIN_MODE_MANUAL),           "MANUAL" },
 	{ px4::define_mode(px4::custom_mode::MAIN_MODE_ACRO),             "ACRO" },
 	{ px4::define_mode(px4::custom_mode::MAIN_MODE_ALTCTL),           "ALTCTL" },
@@ -109,15 +109,11 @@ static const cmode_map px4_cmode_map = {
 };
 
 static inline std::string str_base_mode(int base_mode) {
-	std::ostringstream mode;
-	mode << "MODE(0x" << std::hex << std::uppercase << base_mode << ")";
-	return mode.str();
+	return utils::format("MODE(0x%2X)", base_mode);
 }
 
 static std::string str_custom_mode(uint32_t custom_mode) {
-	std::ostringstream mode;
-	mode << "CMODE(" << custom_mode << ")";
-	return mode.str();
+	return utils::format("CMODE(%u)", custom_mode);
 }
 
 static std::string str_mode_cmap(const cmode_map &cmap, uint32_t custom_mode) {
@@ -142,35 +138,35 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int) {
 	return str_mode_cmap(px4_cmode_map, custom_mode.data);
 }
 
-static inline bool is_apm_copter(enum MAV_TYPE &type) {
-	return type == MAV_TYPE_QUADROTOR ||
-	       type == MAV_TYPE_HEXAROTOR ||
-	       type == MAV_TYPE_OCTOROTOR ||
-	       type == MAV_TYPE_TRICOPTER ||
-	       type == MAV_TYPE_COAXIAL;
+static inline bool is_apm_copter(UAS::MAV_TYPE type) {
+	return type == UAS::MAV_TYPE::QUADROTOR ||
+	       type == UAS::MAV_TYPE::HEXAROTOR ||
+	       type == UAS::MAV_TYPE::OCTOROTOR ||
+	       type == UAS::MAV_TYPE::TRICOPTER ||
+	       type == UAS::MAV_TYPE::COAXIAL;
 }
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode) {
-	if (!(base_mode && MAV_MODE_FLAG_CUSTOM_MODE_ENABLED))
+	if (!(base_mode && enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED)))
 		return str_base_mode(base_mode);
 
 	auto type = get_type();
 	auto ap = get_autopilot();
-	if (MAV_AUTOPILOT_ARDUPILOTMEGA == ap) {
+	if (MAV_AUTOPILOT::ARDUPILOTMEGA == ap) {
 		if (is_apm_copter(type))
 			return str_mode_cmap(arducopter_cmode_map, custom_mode);
-		else if (type == MAV_TYPE_FIXED_WING)
+		else if (type == MAV_TYPE::FIXED_WING)
 			return str_mode_cmap(arduplane_cmode_map, custom_mode);
-		else if (type == MAV_TYPE_GROUND_ROVER)
+		else if (type == MAV_TYPE::GROUND_ROVER)
 			return str_mode_cmap(apmrover2_cmode_map, custom_mode);
-		else if (type == MAV_TYPE_SUBMARINE)
+		else if (type == MAV_TYPE::SUBMARINE)
 			return str_mode_cmap(arducopter_cmode_map, custom_mode);
 		else {
-			ROS_WARN_THROTTLE_NAMED(30, "uas", "MODE: Unknown APM based FCU! Type: %d", type);
+			ROS_WARN_THROTTLE_NAMED(30, "uas", "MODE: Unknown APM based FCU! Type: %d", enum_value(type));
 			return str_custom_mode(custom_mode);
 		}
 	}
-	else if (MAV_AUTOPILOT_PX4 == ap)
+	else if (MAV_AUTOPILOT::PX4 == ap)
 		return str_mode_px4(custom_mode);
 	else
 		/* TODO: other autopilot */
@@ -217,17 +213,17 @@ bool UAS::cmode_from_str(std::string cmode_str, uint32_t &custom_mode) {
 
 	auto type = get_type();
 	auto ap = get_autopilot();
-	if (MAV_AUTOPILOT_ARDUPILOTMEGA == ap) {
+	if (MAV_AUTOPILOT::ARDUPILOTMEGA == ap) {
 		if (is_apm_copter(type))
 			return cmode_find_cmap(arducopter_cmode_map, cmode_str, custom_mode);
-		else if (type == MAV_TYPE_FIXED_WING)
+		else if (type == MAV_TYPE::FIXED_WING)
 			return cmode_find_cmap(arduplane_cmode_map, cmode_str, custom_mode);
-		else if (type == MAV_TYPE_GROUND_ROVER)
+		else if (type == MAV_TYPE::GROUND_ROVER)
 			return cmode_find_cmap(apmrover2_cmode_map, cmode_str, custom_mode);
-		else if (type == MAV_TYPE_SUBMARINE)
+		else if (type == MAV_TYPE::SUBMARINE)
 			return cmode_find_cmap(arducopter_cmode_map, cmode_str, custom_mode);
 	}
-	else if (MAV_AUTOPILOT_PX4 == ap)
+	else if (MAV_AUTOPILOT::PX4 == ap)
 		return cmode_find_cmap(px4_cmode_map, cmode_str, custom_mode);
 
 	ROS_ERROR_NAMED("uas", "MODE: Unsupported FCU");
@@ -258,7 +254,7 @@ static const std::array<const std::string, 18> autopilot_strings = {
 	/* 17 */ "ASLUAV"
 };
 
-std::string UAS::str_autopilot(enum MAV_AUTOPILOT ap)
+std::string UAS::str_autopilot(MAV_AUTOPILOT ap)
 {
 	size_t idx = size_t(ap);
 	if (idx >= autopilot_strings.size())
@@ -299,7 +295,7 @@ static const std::array<const std::string, 28> type_strings = {
 	/* 27 */ "ADS-B"
 };
 
-std::string UAS::str_type(enum MAV_TYPE type)
+std::string UAS::str_type(MAV_TYPE type)
 {
 	size_t idx = size_t(type);
 	if (idx >= type_strings.size())
@@ -319,7 +315,7 @@ static const std::array<const std::string, 8> state_strings = {
 	/*  7 */ "Poweroff"
 };
 
-std::string UAS::str_system_status(enum MAV_STATE st)
+std::string UAS::str_system_status(MAV_STATE st)
 {
 	size_t idx = size_t(st);
 	if (idx >= state_strings.size())
