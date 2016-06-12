@@ -53,7 +53,7 @@
 	<class name="ftp" type="mavros::std_plugins::FTPPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to files on FCU via MAVLink-FTP.</description>
 	</class>
-	<class name="sys_time" type="mavros::std_plugins::SystemTimePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="sys_time" type="mavros::std_plugins::SystemTimePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Synchronise clocks with FCU.</description>
 	</class>
 	<class name="actuator_control" type="mavros::std_plugins::ActuatorControlPlugin" base_class_type="mavros::plugin::PluginBase">
