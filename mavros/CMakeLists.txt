@@ -93,7 +93,7 @@ add_library(mavros_plugins
   src/plugins/dummy.cpp
   #src/plugins/sys_status.cpp
   #src/plugins/sys_time.cpp
-  #src/plugins/imu_pub.cpp
+  src/plugins/imu_pub.cpp
   #src/plugins/param.cpp
   #src/plugins/waypoint.cpp
   #src/plugins/rc_io.cpp
