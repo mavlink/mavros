@@ -44,7 +44,7 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&AltitudePlugin::handle_altitude),
+			make_handler(&AltitudePlugin::handle_altitude),
 		};
 	}
 

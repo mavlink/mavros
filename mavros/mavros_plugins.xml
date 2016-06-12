@@ -17,7 +17,7 @@
 	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish RC IO state.</description>
 	</class>
-	<class name="command" type="mavros::std_plugins::CommandPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="command" type="mavros::std_plugins::CommandPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send commands to FCU.</description>
 	</class>
 	<class name="local_position" type="mavros::std_plugins::LocalPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
