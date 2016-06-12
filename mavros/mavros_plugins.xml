@@ -20,7 +20,7 @@
 	<class name="command" type="mavros::std_plugins::CommandPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send commands to FCU.</description>
 	</class>
-	<class name="local_position" type="mavros::std_plugins::LocalPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="local_position" type="mavros::std_plugins::LocalPositionPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish FCU local position.</description>
 	</class>
 	<class name="global_position" type="mavros::std_plugins::GlobalPositionPlugin" base_class_type="mavros::plugin::PluginBase">
