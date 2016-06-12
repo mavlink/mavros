@@ -26,7 +26,7 @@
 	<class name="global_position" type="mavros::std_plugins::GlobalPositionPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish FCU fused global position and raw GPS fix.</description>
 	</class>
-	<class name="setpoint_position" type="mavros::std_plugins::SetpointPositionPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="setpoint_position" type="mavros::std_plugins::SetpointPositionPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU external position setpoint.</description>
 	</class>
 	<class name="safety_area" type="mavros::std_plugins::SafetyAreaPlugin" base_class_type="mavros::plugin::PluginBase">

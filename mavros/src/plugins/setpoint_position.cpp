@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -29,21 +29,19 @@ namespace std_plugins {
  * Send setpoint positions to FCU controller.
  */
 class SetpointPositionPlugin : public plugin::PluginBase,
-	private SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
-	private TF2ListenerMixin<SetpointPositionPlugin> {
+	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
+	private plugin::TF2ListenerMixin<SetpointPositionPlugin> {
 public:
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
-		uas(nullptr),
 		tf_rate(10.0)
-	{ };
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		bool tf_listen;
-
 		PluginBase::initialize(uas_);
-;
+
+		bool tf_listen;
 
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
@@ -52,8 +50,8 @@ public:
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		if (tf_listen) {
-			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform " << tf_frame_id
-					<< " -> " << tf_child_frame_id);
+			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform "
+					<< tf_frame_id << " -> " << tf_child_frame_id);
 			tf2_start("PositionSpTF", &SetpointPositionPlugin::transform_cb);
 		}
 		else {
@@ -61,7 +59,8 @@ public:
 		}
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
@@ -69,7 +68,6 @@ private:
 	friend class SetPositionTargetLocalNEDMixin;
 	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
-	UAS *uas;
 
 	ros::Subscriber setpoint_sub;
 
@@ -85,6 +83,8 @@ private:
 	 * @warning Send only XYZ, Yaw. ENU frame.
 	 */
 	void send_position_target(const ros::Time &stamp, const Eigen::Affine3d &tr) {
+		using mavlink::common::MAV_FRAME;
+
 		/* Documentation start from bit 1 instead 0;
 		 * Ignore velocity and accel vectors, yaw rate.
 		 *
@@ -95,15 +95,15 @@ private:
 
 		auto p = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto q = UAS::transform_orientation_enu_ned(
-				UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+					UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				MAV_FRAME_LOCAL_NED,
-				ignore_all_except_xyz_y,
-				p.x(), p.y(), p.z(),
-				0.0, 0.0, 0.0,
-				0.0, 0.0, 0.0,
-				UAS::quaternion_get_yaw(q), 0.0);
+					utils::enum_value(MAV_FRAME::LOCAL_NED),
+					ignore_all_except_xyz_y,
+					p,
+					Eigen::Vector3d::Zero(),
+					Eigen::Vector3d::Zero(),
+					UAS::quaternion_get_yaw(q), 0.0);
 	}
 
 	/* -*- callbacks -*- */

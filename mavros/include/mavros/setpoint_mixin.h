@@ -16,40 +16,54 @@
 
 #pragma once
 
+#include <functional>
 #include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 
 #include <geometry_msgs/TransformStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace plugin {
 /**
  * @brief This mixin adds set_position_target_local_ned()
- *
- * @note derived class should provide UAS pointer in uas member.
  */
 template <class D>
 class SetPositionTargetLocalNEDMixin {
 public:
 	void set_position_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
-			float x, float y, float z,
-			float vx, float vy, float vz,
-			float afx, float afy, float afz,
-			float yaw, float yaw_rate) {
-		UAS *_uas = static_cast<D *>(this)->uas;
-#if 0
-		mavlink_message_t msg;
-		mavlink_msg_set_position_target_local_ned_pack_chan(UAS_PACK_CHAN(_uas), &msg,
-				time_boot_ms,	// why it not usec timestamp?
-				UAS_PACK_TGT(_uas),
-				coordinate_frame,
-				type_mask,
-				x, y, z,
-				vx, vy, vz,
-				afx, afy, afz,
-				yaw, yaw_rate);
-		UAS_FCU(_uas)->send_message(&msg);
-#endif
+			Eigen::Vector3d p,
+			Eigen::Vector3d v,
+			Eigen::Vector3d af,
+			float yaw, float yaw_rate)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
+
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+
+		// [[[cog:
+		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
+		//     for a in ('x', 'y', 'z'):
+		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+		// ]]]
+		sp.x = p.x();
+		sp.y = p.y();
+		sp.z = p.z();
+		sp.vx = v.x();
+		sp.vy = v.y();
+		sp.vz = v.z();
+		sp.afx = af.x();
+		sp.afy = af.y();
+		sp.afz = af.z();
+		// [[[end]]] (checksum: f72768674b3c51e74aa1b4dd6d79b573)
+
+		sp.yaw = yaw;
+		sp.yaw_rate = yaw_rate;
+
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
 };
 
@@ -64,7 +78,6 @@ class TF2ListenerMixin {
 public:
 	std::thread tf_thread;
 	std::string tf_thd_name;
-	boost::function<void (const geometry_msgs::TransformStamped &)> tf_transform_cb;
 
 	/**
 	 * @brief start tf listener
@@ -72,35 +85,35 @@ public:
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
-	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &) ) {
+	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &) )
+	{
 		tf_thd_name = _thd_name;
-		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1);
+		auto tf_transform_cb = std::bind(cbp, static_cast<D *>(this), std::placeholders::_1);
 
-		std::thread t(boost::bind(&TF2ListenerMixin::tf_listener, this));
-		mavutils::set_thread_name(t, tf_thd_name);
-		tf_thread.swap(t);
-	}
+		tf_thread = std::thread([this, tf_transform_cb]() {
+			mavconn::utils::set_this_thread_name(tf_thd_name.c_str());
 
-	void tf_listener(void) {
-		mavros::UAS *_uas = static_cast<D *>(this)->uas;
-		std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
-		std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
+			mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
+			std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
 
-		ros::Rate rate(static_cast<D *>(this)->tf_rate);
-		while (ros::ok()) {
-			// Wait up to 3s for transform
-			if (_uas->tf2_buffer.canTransform(_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0))) {
-				try {
-					auto transform = _uas->tf2_buffer.lookupTransform(
-							_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
-					tf_transform_cb(transform);
+			ros::Rate rate(static_cast<D *>(this)->tf_rate);
+			while (ros::ok()) {
+				// Wait up to 3s for transform
+				if (m_uas_->tf2_buffer.canTransform(_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0))) {
+					try {
+						auto transform = m_uas_->tf2_buffer.lookupTransform(
+								_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
+						tf_transform_cb(transform);
+					}
+					catch (tf2::LookupException &ex) {
+						ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
+					}
 				}
-				catch (tf2::LookupException &ex) {
-					ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
-				}
+				rate.sleep();
 			}
-			rate.sleep();
-		}
+		});
 	}
 };
-};	// namespace mavplugin
+}	// namespace plugin
+}	// namespace mavros
