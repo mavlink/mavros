@@ -30,18 +30,16 @@ namespace std_plugins {
 class SafetyAreaPlugin : public plugin::PluginBase {
 public:
 	SafetyAreaPlugin() : PluginBase(),
-		safety_nh("~safety_area"),
-		uas(nullptr)
-	{ };
+		safety_nh("~safety_area")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
+		PluginBase::initialize(uas_);
+
 		bool manual_def = false;
 		double p1x, p1y, p1z,
 			p2x, p2y, p2z;
-
-		PluginBase::initialize(uas_);
-;
 
 		if (safety_nh.getParam("p1/x", p1x) &&
 				safety_nh.getParam("p1/y", p1y) &&
@@ -64,38 +62,22 @@ public:
 
 		if (manual_def)
 			send_safety_set_allowed_area(
-					p1x, p1y, p1z,
-					p2x, p2y, p2z);
+					Eigen::Vector3d(p1x, p1y, p1z),
+					Eigen::Vector3d(p2x, p2y, p2z));
 
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
 	}
 
 	Subscriptions get_subscriptions() {
 		return { /* Rx disabled */ };
-		
+
 		/** @todo Publish SAFETY_ALLOWED_AREA message */
 	}
 
 private:
 	ros::NodeHandle safety_nh;
-	UAS *uas;
 
 	ros::Subscriber safetyarea_sub;
-
-	/* -*- low-level send -*- */
-
-	void safety_set_allowed_area(
-			uint8_t coordinate_frame,
-			float p1x, float p1y, float p1z,
-			float p2x, float p2y, float p2z) {
-		mavlink_message_t msg;
-		mavlink_msg_safety_set_allowed_area_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas),
-				coordinate_frame,
-				p1x, p1y, p1z,
-				p2x, p2y, p2z);
-		UAS_FCU(uas)->send_message(&msg);
-	}
 
 	/* -*- mid-level helpers -*- */
 
@@ -105,19 +87,34 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_safety_set_allowed_area(float p1x, float p1y, float p1z,
-			float p2x, float p2y, float p2z) {
-		ROS_INFO_NAMED("safetyarea", "SA: Set safty area: P1(%f %f %f) P2(%f %f %f)",
-				p1x, p1y, p1z,
-				p2x, p2y, p2z);
+	void send_safety_set_allowed_area(Eigen::Vector3d p1, Eigen::Vector3d p2)
+	{
+		ROS_INFO_STREAM_NAMED("safetyarea", "SA: Set safty area: P1 " << p1 << " P2 " << p2);
 
-		auto p1 = UAS::transform_frame_enu_ned(Eigen::Vector3d(p1x, p1y, p1z));
-		auto p2 = UAS::transform_frame_enu_ned(Eigen::Vector3d(p2x, p2y, p2z));
+		p1 = UAS::transform_frame_enu_ned(p1);
+		p2 = UAS::transform_frame_enu_ned(p2);
 
-		safety_set_allowed_area(
-				MAV_FRAME_LOCAL_NED, // TODO: use enum from lib
-				p1.x(), p1.y(), p1.z(),
-				p2.x(), p2.y(), p2.z());
+		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s;
+		s.target_system = m_uas->get_tgt_system();
+		s.target_component = m_uas->get_tgt_component();
+
+		// TODO: use enum from lib
+		s.frame = utils::enum_value(mavlink::common::MAV_FRAME::LOCAL_NED);
+
+		// [[[cog:
+		// for p in range(1, 3):
+		//     for v in ('x', 'y', 'z'):
+		//         cog.outl("s.p%d%s = p%d.%s();" % (p, v, p, v))
+		// ]]]
+		s.p1x = p1.x();
+		s.p1y = p1.y();
+		s.p1z = p1.z();
+		s.p2x = p2.x();
+		s.p2y = p2.y();
+		s.p2z = p2.z();
+		// [[[end]]] (checksum: c996a362f338fcc6b714c8be583c3be0)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(s);
 	}
 
 	/* -*- callbacks -*- */
@@ -128,13 +125,18 @@ private:
 			return;
 		}
 
-		send_safety_set_allowed_area(
-				req->polygon.points[0].x,
-				req->polygon.points[0].y,
-				req->polygon.points[0].z,
-				req->polygon.points[1].x,
-				req->polygon.points[1].y,
-				req->polygon.points[1].z);
+		// eigen_conversions do not have convertor for Point32
+		// [[[cog:
+		// for p in range(2):
+		//     cog.outl("Eigen::Vector3d p%d(%s);" % (p + 1, ', '.join([
+		//         'req->polygon.points[%d].%s' % (p, v) for v in ('x', 'y', 'z')
+		//         ])))
+		// ]]]
+		Eigen::Vector3d p1(req->polygon.points[0].x, req->polygon.points[0].y, req->polygon.points[0].z);
+		Eigen::Vector3d p2(req->polygon.points[1].x, req->polygon.points[1].y, req->polygon.points[1].z);
+		// [[[end]]] (checksum: c3681d584e02f7d91d6b3b48f87b1771)
+
+		send_safety_set_allowed_area(p1, p2);
 	}
 };
 }	// namespace std_plugins
