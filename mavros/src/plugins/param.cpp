@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -368,7 +368,7 @@ public:
 		shedule_timer.stop();
 		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
 		timeout_timer.stop();
-		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
+		m_uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
 	Subscriptions get_subscriptions() {
@@ -380,7 +380,7 @@ public:
 private:
 	std::recursive_mutex mutex;
 	ros::NodeHandle param_nh;
-	UAS *uas;
+	
 
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
@@ -416,14 +416,14 @@ private:
 	std::condition_variable list_receiving;
 
 	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
-		if (uas->is_ardupilotmega())
+		if (m_uas->is_ardupilotmega())
 			return Parameter::from_param_value_apm_quirk(msg);
 		else
 			return Parameter::from_param_value(msg);
 	}
 
 	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
-		if (uas->is_ardupilotmega())
+		if (m_uas->is_ardupilotmega())
 			return Parameter::to_param_union_apm_quirk(p);
 		else
 			return Parameter::to_param_union(p);

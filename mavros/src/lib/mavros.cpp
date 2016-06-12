@@ -274,9 +274,9 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 			std::string log_msgname;
 
 			if (is_mavlink_message_t(type_hash_))
-				log_msgname = utils::format("MSG-ID (%u)", msgid);
+				log_msgname = utils::format("MSG-ID (%u) <%zu>", msgid, type_hash_);
 			else
-				log_msgname = utils::format("%s (%u)", msgname, msgid);
+				log_msgname = utils::format("%s (%u) <%zu>", msgname, msgid, type_hash_);
 
 			ROS_DEBUG_STREAM("Route " << log_msgname << " to " << pl_name);
 
@@ -284,6 +284,7 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 			if (it == plugin_subscriptions.end()) {
 				// new entry
 
+				ROS_DEBUG_STREAM(log_msgname << " - new element");
 				plugin_subscriptions[msgid] = PluginBase::Subscriptions{{info}};
 			}
 			else {
@@ -301,8 +302,10 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 					}
 				}
 
-				if (append_allowed)
+				if (append_allowed) {
+					ROS_DEBUG_STREAM(log_msgname << " - emplace");
 					it->second.emplace_back(info);
+				}
 				else
 					ROS_ERROR_STREAM(log_msgname << " handler dropped because this ID are used for another message type");
 			}

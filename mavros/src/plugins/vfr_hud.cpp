@@ -43,7 +43,8 @@ public:
 		wind_pub = nh.advertise<geometry_msgs::TwistStamped>("wind_estimation", 10);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return {
 			make_handler(&VfrHudPlugin::handle_vfr_hud),
 			make_handler(&VfrHudPlugin::handle_wind),

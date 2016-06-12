@@ -241,7 +241,7 @@ public:
 	}
 
 private:
-	UAS *uas;
+	
 	ros::NodeHandle ftp_nh;
 	ros::ServiceServer list_srv;
 	ros::ServiceServer open_srv;
