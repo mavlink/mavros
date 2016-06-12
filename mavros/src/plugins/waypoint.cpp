@@ -25,7 +25,8 @@
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 class WaypointItem {
 public:
 	uint16_t seq;
@@ -134,9 +135,9 @@ public:
 /**
  * @brief Mission manupulation plugin
  */
-class WaypointPlugin : public MavRosPlugin {
+class WaypointPlugin : public plugin::PluginBase {
 public:
-	WaypointPlugin() :
+	WaypointPlugin() : PluginBase(),
 		wp_nh("~mission"),
 		uas(nullptr),
 		wp_state(WP_IDLE),
@@ -156,7 +157,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 		wp_state = WP_IDLE;
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, false);
@@ -174,7 +176,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_REQUEST, &WaypointPlugin::handle_mission_request),
@@ -786,7 +788,8 @@ private:
 		return true;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::WaypointPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::WaypointPlugin, mavros::plugin::PluginBase)
 

@@ -20,7 +20,8 @@
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Duration.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * Time syncronization status publisher
  *
@@ -126,9 +127,9 @@ private:
 /**
  * @brief System time plugin
  */
-class SystemTimePlugin : public MavRosPlugin {
+class SystemTimePlugin : public plugin::PluginBase {
 public:
-	SystemTimePlugin() :
+	SystemTimePlugin() : PluginBase(),
 		nh("~"),
 		uas(nullptr),
 		dt_diag("Time Sync", 10),
@@ -144,7 +145,8 @@ public:
 		ros::Duration conn_system_time;
 		ros::Duration conn_timesync;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		if (nh.getParam("conn/system_time_rate", conn_system_time_d) && conn_system_time_d != 0.0) {
 			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
@@ -194,7 +196,7 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
@@ -304,6 +306,7 @@ private:
 		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SystemTimePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SystemTimePlugin, mavros::plugin::PluginBase)

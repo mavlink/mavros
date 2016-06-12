@@ -29,7 +29,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 
 
 /**
@@ -39,9 +40,9 @@ namespace mavplugin {
  * publishing local position to TF and PoseWithCovarianceStamped.
  *
  */
-class GlobalPositionPlugin : public MavRosPlugin {
+class GlobalPositionPlugin : public plugin::PluginBase {
 public:
-	GlobalPositionPlugin() :
+	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		uas(nullptr),
 		tf_send(false),
@@ -50,7 +51,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		// general params
 		gp_nh.param<std::string>("frame_id", frame_id, "map");
@@ -73,7 +75,7 @@ public:
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 				MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GlobalPositionPlugin::handle_gps_raw_int),
 				// MAVLINK_MSG_ID_GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
@@ -312,6 +314,7 @@ private:
 			stat.add("EPV (m)", "Unknown");
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::GlobalPositionPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::GlobalPositionPlugin, mavros::plugin::PluginBase)

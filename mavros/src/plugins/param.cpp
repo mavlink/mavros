@@ -25,7 +25,8 @@
 #include <mavros_msgs/ParamPull.h>
 #include <mavros_msgs/ParamPush.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Parameter storage
  *
@@ -339,9 +340,9 @@ public:
 /**
  * @brief Parameter manipulation plugin
  */
-class ParamPlugin : public MavRosPlugin {
+class ParamPlugin : public plugin::PluginBase {
 public:
-	ParamPlugin() :
+	ParamPlugin() : PluginBase(),
 		param_nh("~param"),
 		uas(nullptr),
 		param_count(-1),
@@ -355,7 +356,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
 		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
@@ -369,7 +371,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
 		};
@@ -906,7 +908,8 @@ private:
 		return true;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::ParamPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::ParamPlugin, mavros::plugin::PluginBase)
 

@@ -28,7 +28,7 @@ namespace std_plugins {
  */
 class DummyPlugin : public plugin::PluginBase {
 public:
-	DummyPlugin() :
+	DummyPlugin() : PluginBase(),
 		nh("~")
 	{ }
 

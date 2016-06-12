@@ -23,17 +23,18 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint RAW plugin
  *
  * Send position setpoints and publish current state (return loop).
  * User can decide what set of filed needed for operation via IGNORE bits.
  */
-class SetpointRawPlugin : public MavRosPlugin,
+class SetpointRawPlugin : public plugin::PluginBase,
 	private SetPositionTargetLocalNEDMixin<SetpointRawPlugin> {
 public:
-	SetpointRawPlugin() :
+	SetpointRawPlugin() : PluginBase(),
 		sp_nh("~setpoint_raw"),
 		uas(nullptr)
 	{ };
@@ -42,7 +43,8 @@ public:
 	{
 		bool tf_listen;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
@@ -52,7 +54,7 @@ public:
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, &SetpointRawPlugin::handle_position_target_local_ned),
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT, &SetpointRawPlugin::handle_position_target_global_int),
@@ -257,6 +259,7 @@ private:
 				req->thrust);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointRawPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointRawPlugin, mavros::plugin::PluginBase)

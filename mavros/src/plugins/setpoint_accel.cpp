@@ -23,16 +23,17 @@
 
 #include <geometry_msgs/Vector3Stamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint acceleration/force plugin
  *
  * Send setpoint accelerations/forces to FCU controller.
  */
-class SetpointAccelerationPlugin : public MavRosPlugin,
+class SetpointAccelerationPlugin : public plugin::PluginBase,
 	private SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin> {
 public:
-	SetpointAccelerationPlugin() :
+	SetpointAccelerationPlugin() : PluginBase(),
 		sp_nh("~setpoint_accel"),
 		uas(nullptr),
 		send_force(false)
@@ -40,14 +41,15 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		sp_nh.param("send_force", send_force, false);
 
 		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
@@ -96,6 +98,7 @@ private:
 		send_setpoint_acceleration(req->header.stamp, accel_enu);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointAccelerationPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAccelerationPlugin, mavros::plugin::PluginBase)

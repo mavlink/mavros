@@ -24,7 +24,8 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * Heartbeat status publisher
  *
@@ -335,10 +336,10 @@ private:
  *
  * Required by all plugins.
  */
-class SystemStatusPlugin : public MavRosPlugin
+class SystemStatusPlugin : public plugin::PluginBase
 {
 public:
-	SystemStatusPlugin() :
+	SystemStatusPlugin() : PluginBase(),
 		nh("~"),
 		uas(nullptr),
 		hb_diag("Heartbeat", 10),
@@ -352,7 +353,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		ros::Duration conn_heartbeat;
 
@@ -414,7 +416,7 @@ public:
 		publish_disconnection();
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &SystemStatusPlugin::handle_sys_status),
@@ -806,7 +808,8 @@ private:
 		return true;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SystemStatusPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SystemStatusPlugin, mavros::plugin::PluginBase)
 

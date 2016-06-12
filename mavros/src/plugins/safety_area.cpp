@@ -20,15 +20,16 @@
 
 #include <geometry_msgs/PolygonStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Safety allopwed area plugin
  *
  * Send safety area to FCU controller.
  */
-class SafetyAreaPlugin : public MavRosPlugin {
+class SafetyAreaPlugin : public plugin::PluginBase {
 public:
-	SafetyAreaPlugin() :
+	SafetyAreaPlugin() : PluginBase(),
 		safety_nh("~safety_area"),
 		uas(nullptr)
 	{ };
@@ -39,7 +40,8 @@ public:
 		double p1x, p1y, p1z,
 			p2x, p2y, p2z;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		if (safety_nh.getParam("p1/x", p1x) &&
 				safety_nh.getParam("p1/y", p1y) &&
@@ -68,7 +70,7 @@ public:
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 		
 		/** @todo Publish SAFETY_ALLOWED_AREA message */
@@ -135,6 +137,7 @@ private:
 				req->polygon.points[1].z);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SafetyAreaPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SafetyAreaPlugin, mavros::plugin::PluginBase)

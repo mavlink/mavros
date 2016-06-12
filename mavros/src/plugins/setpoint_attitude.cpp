@@ -24,16 +24,17 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Float64.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint attitude plugin
  *
  * Send setpoint attitude/orientation/thrust to FCU controller.
  */
-class SetpointAttitudePlugin : public MavRosPlugin,
+class SetpointAttitudePlugin : public plugin::PluginBase,
 	private TF2ListenerMixin<SetpointAttitudePlugin> {
 public:
-	SetpointAttitudePlugin() :
+	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
 		uas(nullptr),
 		tf_rate(10.0),
@@ -44,7 +45,8 @@ public:
 	{
 		bool tf_listen;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		// main params
 		sp_nh.param("reverse_throttle", reverse_throttle, false);
@@ -68,7 +70,7 @@ public:
 		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
@@ -213,6 +215,7 @@ private:
 		send_attitude_throttle(throttle_normalized);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointAttitudePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAttitudePlugin, mavros::plugin::PluginBase)

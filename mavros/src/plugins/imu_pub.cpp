@@ -25,7 +25,8 @@
 #include <sensor_msgs/FluidPressure.h>
 #include <geometry_msgs/Vector3.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /* Note: this coefficents before been inside plugin class,
  * but after #320 something broken and in resulting plugins.so
  * there no symbols for that constants.
@@ -51,9 +52,9 @@ static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 /**
  * @brief IMU data publication plugin
  */
-class IMUPubPlugin : public MavRosPlugin {
+class IMUPubPlugin : public plugin::PluginBase {
 public:
-	IMUPubPlugin() :
+	IMUPubPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		uas(nullptr),
 		has_hr_imu(false),
@@ -65,7 +66,8 @@ public:
 	{
 		double linear_stdev, angular_stdev, orientation_stdev, mag_stdev;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		// we rotate the data from the aircraft-frame to the base_link frame.
 		// Additionally we report the orientation of the vehicle to describe the
@@ -93,7 +95,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&IMUPubPlugin::connection_cb, this, _1));
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_QUATERNION, &IMUPubPlugin::handle_attitude_quaternion),
@@ -380,7 +382,8 @@ private:
 		has_att_quat = false;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::IMUPubPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::IMUPubPlugin, mavros::plugin::PluginBase)
 

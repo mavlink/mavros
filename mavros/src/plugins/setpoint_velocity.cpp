@@ -22,29 +22,31 @@
 
 #include <geometry_msgs/TwistStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint velocity plugin
  *
  * Send setpoint velocities to FCU controller.
  */
-class SetpointVelocityPlugin : public MavRosPlugin,
+class SetpointVelocityPlugin : public plugin::PluginBase,
 	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
-	SetpointVelocityPlugin() :
+	SetpointVelocityPlugin() : PluginBase(),
 		sp_nh("~setpoint_velocity"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		//cmd_vel usually is the topic used for velocity control in many controllers / planners
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
@@ -91,6 +93,7 @@ private:
 				req->twist.angular.z);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointVelocityPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointVelocityPlugin, mavros::plugin::PluginBase)

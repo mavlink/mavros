@@ -21,13 +21,14 @@
 #include <mavros_msgs/RCOut.h>
 #include <mavros_msgs/OverrideRCIn.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief RC IO plugin
  */
-class RCIOPlugin : public MavRosPlugin {
+class RCIOPlugin : public plugin::PluginBase {
 public:
-	RCIOPlugin() :
+	RCIOPlugin() : PluginBase(),
 		rc_nh("~rc"),
 		uas(nullptr),
 		raw_rc_in(0),
@@ -37,7 +38,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		rc_in_pub = rc_nh.advertise<mavros_msgs::RCIn>("in", 10);
 		rc_out_pub = rc_nh.advertise<mavros_msgs::RCOut>("out", 10);
@@ -46,7 +48,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS, &RCIOPlugin::handle_rc_channels),
@@ -219,7 +221,8 @@ private:
 		rc_channels_override(req->channels);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::RCIOPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::RCIOPlugin, mavros::plugin::PluginBase)
 

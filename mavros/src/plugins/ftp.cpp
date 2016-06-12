@@ -37,7 +37,8 @@
 // enable debugging messages
 //#define FTP_LL_DEBUG
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief FTP Request message abstraction class
  *
@@ -195,9 +196,9 @@ private:
 /**
  * @brief FTP plugin.
  */
-class FTPPlugin : public MavRosPlugin {
+class FTPPlugin : public plugin::PluginBase {
 public:
-	FTPPlugin() :
+	FTPPlugin() : PluginBase(),
 		ftp_nh("~ftp"),
 		uas(nullptr),
 		op_state(OP_IDLE),
@@ -216,7 +217,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		list_srv = ftp_nh.advertiseService("list", &FTPPlugin::list_cb, this);
 		open_srv = ftp_nh.advertiseService("open", &FTPPlugin::open_cb, this);
@@ -232,7 +234,7 @@ public:
 		checksum_srv = ftp_nh.advertiseService("checksum", &FTPPlugin::checksum_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, &FTPPlugin::handle_file_transfer_protocol),
 		};
@@ -1031,7 +1033,8 @@ private:
 		return true;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::FTPPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::FTPPlugin, mavros::plugin::PluginBase)
 

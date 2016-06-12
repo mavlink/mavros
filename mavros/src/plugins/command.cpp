@@ -26,7 +26,8 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandTriggerControl.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 class CommandTransaction {
 public:
 	std::mutex cond_mutex;
@@ -46,9 +47,9 @@ public:
  *
  * Send any command via COMMAND_LONG
  */
-class CommandPlugin : public MavRosPlugin {
+class CommandPlugin : public plugin::PluginBase {
 public:
-	CommandPlugin() :
+	CommandPlugin() : PluginBase(),
 		uas(nullptr),
 		cmd_nh("~cmd"),
 		use_comp_id_system_control(false),
@@ -57,7 +58,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
 
@@ -70,7 +72,7 @@ public:
 		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)
 		};
@@ -343,7 +345,8 @@ private:
 				res.success, res.result);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::CommandPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::CommandPlugin, mavros::plugin::PluginBase)
 

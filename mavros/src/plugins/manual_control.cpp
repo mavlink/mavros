@@ -19,26 +19,28 @@
 
 #include <mavros_msgs/ManualControl.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Manual Control plugin
  */
-class ManualControlPlugin : public MavRosPlugin {
+class ManualControlPlugin : public plugin::PluginBase {
 public:
-	ManualControlPlugin() :
+	ManualControlPlugin() : PluginBase(),
 		manual_control_nh("~manual_control"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		control_pub = manual_control_nh.advertise<mavros_msgs::ManualControl>("control", 10);
 		//uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MANUAL_CONTROL, &ManualControlPlugin::handle_manual_control),
 		};
@@ -68,7 +70,8 @@ private:
 		control_pub.publish(manual_control_msg);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::ManualControlPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::ManualControlPlugin, mavros::plugin::PluginBase)
 

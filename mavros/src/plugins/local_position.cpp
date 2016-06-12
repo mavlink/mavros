@@ -26,15 +26,16 @@
 
 #include <nav_msgs/Odometry.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Local position plugin.
  * Publish local position to TF, PositionStamped, TwistStamped
  * and Odometry
  */
-class LocalPositionPlugin : public MavRosPlugin {
+class LocalPositionPlugin : public plugin::PluginBase {
 public:
-	LocalPositionPlugin() :
+	LocalPositionPlugin() : PluginBase(),
 		lp_nh("~local_position"),
 		uas(nullptr),
 		tf_send(false)
@@ -42,7 +43,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		// header frame_id.
 		// default to map (world-fixed,ENU as per REP-105).
@@ -62,7 +64,7 @@ public:
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
 		};
@@ -157,8 +159,9 @@ private:
 		}
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::LocalPositionPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::LocalPositionPlugin, mavros::plugin::PluginBase)
 
 

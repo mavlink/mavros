@@ -19,13 +19,14 @@
 
 #include <mavros_msgs/Altitude.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Altitude plugin.
  */
-class AltitudePlugin : public MavRosPlugin {
+class AltitudePlugin : public plugin::PluginBase {
 public:
-    AltitudePlugin() :
+    AltitudePlugin() : PluginBase(),
         nh("~"),
         uas(nullptr)
     { }
@@ -35,12 +36,13 @@ public:
      */
     void initialize(UAS &uas_)
     {
-        uas = &uas_;
+        PluginBase::initialize(uas_);
+;
         nh.param<std::string>("frame_id", frame_id, "map");
         altitude_pub = nh.advertise<mavros_msgs::Altitude>("altitude", 10);
     }
 
-    const message_map get_rx_handlers() {
+    Subscriptions get_subsctiptions() {
         return {
                    MESSAGE_HANDLER(MAVLINK_MSG_ID_ALTITUDE, &AltitudePlugin::handle_altitude),
         };
@@ -71,7 +73,9 @@ private:
     }
 
 };
-};  // namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::AltitudePlugin, mavplugin::MavRosPlugin)
+
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::AltitudePlugin, mavros::plugin::PluginBase)
 

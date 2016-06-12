@@ -26,7 +26,7 @@ namespace std_plugins {
  */
 class TDRRadioPlugin : public plugin::PluginBase {
 public:
-	TDRRadioPlugin() :
+	TDRRadioPlugin() : PluginBase(),
 		nh("~"),
 		has_radio_status(false),
 		diag_added(false),

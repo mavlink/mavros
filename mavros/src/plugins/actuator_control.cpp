@@ -28,7 +28,7 @@ namespace std_plugins {
  */
 class ActuatorControlPlugin : public plugin::PluginBase {
 public:
-	ActuatorControlPlugin() :
+	ActuatorControlPlugin() : PluginBase(),
 		nh("~")
 	{ }
 

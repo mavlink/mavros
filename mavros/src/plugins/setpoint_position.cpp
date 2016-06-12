@@ -21,17 +21,18 @@
 
 #include <geometry_msgs/PoseStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint position plugin
  *
  * Send setpoint positions to FCU controller.
  */
-class SetpointPositionPlugin : public MavRosPlugin,
+class SetpointPositionPlugin : public plugin::PluginBase,
 	private SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
 	private TF2ListenerMixin<SetpointPositionPlugin> {
 public:
-	SetpointPositionPlugin() :
+	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
 		uas(nullptr),
 		tf_rate(10.0)
@@ -41,7 +42,8 @@ public:
 	{
 		bool tf_listen;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+;
 
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
@@ -59,7 +61,7 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
@@ -123,6 +125,7 @@ private:
 		send_position_target(req->header.stamp, tr);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointPositionPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointPositionPlugin, mavros::plugin::PluginBase)

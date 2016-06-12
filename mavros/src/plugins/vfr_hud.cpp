@@ -21,13 +21,14 @@
 #include <mavros_msgs/VFR_HUD.h>
 #include <geometry_msgs/TwistStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief VFR HUD plugin.
  */
-class VfrHudPlugin : public MavRosPlugin {
+class VfrHudPlugin : public plugin::PluginBase {
 public:
-	VfrHudPlugin() :
+	VfrHudPlugin() : PluginBase(),
 		nh("~")
 	{ }
 
@@ -43,7 +44,7 @@ public:
 #endif
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VFR_HUD, &VfrHudPlugin::handle_vfr_hud),
 #ifdef MAVLINK_MSG_ID_WIND
@@ -96,7 +97,8 @@ private:
 	}
 #endif
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VfrHudPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::VfrHudPlugin, mavros::plugin::PluginBase)
 
