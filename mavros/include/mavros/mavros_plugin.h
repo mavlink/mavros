@@ -85,7 +85,7 @@ protected:
 	 * @param[in] fn  pointer to member function (handler)
 	 */
 	template<class _C>
-	constexpr HandlerInfo make_handler(const mavlink::msgid_t id, void (_C::*fn)(const mavlink::mavlink_message_t *msg, const mavconn::Framing framing)) {
+	HandlerInfo make_handler(const mavlink::msgid_t id, void (_C::*fn)(const mavlink::mavlink_message_t *msg, const mavconn::Framing framing)) {
 		auto bfn = std::bind(fn, static_cast<_C*>(this), std::placeholders::_1, std::placeholders::_2);
 		const auto type_hash_ = typeid(mavlink::mavlink_message_t).hash_code();
 
@@ -98,7 +98,7 @@ protected:
 	 * @param[in] fn  pointer to member function (handler)
 	 */
 	template<class _C, class _T>
-	constexpr HandlerInfo make_handler(void (_C::*fn)(const mavlink::mavlink_message_t*, _T&)) {
+	HandlerInfo make_handler(void (_C::*fn)(const mavlink::mavlink_message_t*, _T&)) {
 		auto bfn = std::bind(fn, static_cast<_C*>(this), std::placeholders::_1, std::placeholders::_2);
 		const auto id = _T::MSG_ID;
 		const auto name = _T::NAME;
