@@ -41,6 +41,8 @@ public:
 		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
 
 		sp.time_boot_ms = time_boot_ms;
+		sp.target_system = m_uas_->get_tgt_system();
+		sp.target_component = m_uas_->get_tgt_component();
 		sp.coordinate_frame = coordinate_frame;
 		sp.type_mask = type_mask;
 
@@ -62,6 +64,90 @@ public:
 
 		sp.yaw = yaw;
 		sp.yaw_rate = yaw_rate;
+
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+
+#if 0
+/**
+ * @brief This mixin adds set_position_target_local_ned()
+ */
+template <class D>
+class SetPositionTargetGlobalIntMixin {
+public:
+	void set_position_target_global_int(uint32_t time_boot_ms, uint8_t coordinate_frame,
+			uint16_t type_mask,
+			Eigen::Vector3d p,
+			Eigen::Vector3d v,
+			Eigen::Vector3d af,
+			float yaw, float yaw_rate)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
+
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+
+		// [[[cog:
+		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
+		//     for a in ('x', 'y', 'z'):
+		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+		// ]]]
+		sp.x = p.x();
+		sp.y = p.y();
+		sp.z = p.z();
+		sp.vx = v.x();
+		sp.vy = v.y();
+		sp.vz = v.z();
+		sp.afx = af.x();
+		sp.afy = af.y();
+		sp.afz = af.z();
+		// [[[end]]] (checksum: f72768674b3c51e74aa1b4dd6d79b573)
+
+		sp.yaw = yaw;
+		sp.yaw_rate = yaw_rate;
+
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+#endif
+
+/**
+ * @brief This mixin adds set_attitude_target()
+ */
+template <class D>
+class SetAttitudeTargetMixin {
+public:
+	//! Message sepecification: @p http://mavlink.org/messages/common#SET_ATTITIDE_TARGET
+	void set_attitude_target(uint32_t time_boot_ms,
+			uint8_t type_mask,
+			Eigen::Quaterniond orientation,
+			Eigen::Vector3d body_rate,
+			float thrust)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::common::msg::SET_ATTITUDE_TARGET sp;
+
+		sp.time_boot_ms = time_boot_ms;
+		sp.target_system = m_uas_->get_tgt_system();
+		sp.target_component = m_uas_->get_tgt_component();
+		sp.type_mask = type_mask;
+
+		// XXX fix me later!
+		mavros::UAS::quaternion_to_mavlink(orientation, sp.q.data());
+
+		// [[[cog:
+		// for f, v in (('roll', 'x'), ('pitch', 'y'), ('yaw', 'z')):
+		//     cog.outl("sp.body_%s_rate = body_rate.%s();" % (f, v))
+		// ]]]
+		sp.body_roll_rate = body_rate.x();
+		sp.body_pitch_rate = body_rate.y();
+		sp.body_yaw_rate = body_rate.z();
+		// [[[end]]] (checksum: 32a4e3801e3624a55e735eb27f53f1f1)
+
+		sp.thrust = thrust;
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
