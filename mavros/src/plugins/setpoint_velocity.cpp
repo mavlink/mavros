@@ -30,30 +30,28 @@ namespace std_plugins {
  * Send setpoint velocities to FCU controller.
  */
 class SetpointVelocityPlugin : public plugin::PluginBase,
-	private SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
+	private plugin::SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin> {
 public:
 	SetpointVelocityPlugin() : PluginBase(),
-		sp_nh("~setpoint_velocity"),
-		uas(nullptr)
-	{ };
+		sp_nh("~setpoint_velocity")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-;
 
 		//cmd_vel usually is the topic used for velocity control in many controllers / planners
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
 	ros::NodeHandle sp_nh;
-	UAS *uas;
 
 	ros::Subscriber vel_sub;
 
@@ -64,7 +62,10 @@ private:
 	 *
 	 * @warning Send only VX VY VZ. ENU frame.
 	 */
-	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &vel_enu, double yaw_rate) {
+	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &vel_enu, double yaw_rate)
+	{
+		using mavlink::common::MAV_FRAME;
+
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
@@ -75,11 +76,11 @@ private:
 		auto yr = UAS::transform_frame_baselink_aircraft(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				MAV_FRAME_LOCAL_NED,
+				utils::enum_value(MAV_FRAME::LOCAL_NED),
 				ignore_all_except_v_xyz_yr,
-				0.0, 0.0, 0.0,
-				vel.x(), vel.y(), vel.z(),
-				0.0, 0.0, 0.0,
+				Eigen::Vector3d::Zero(),
+				vel,
+				Eigen::Vector3d::Zero(),
 				0.0, yr.z());
 	}
 

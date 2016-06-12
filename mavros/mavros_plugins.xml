@@ -35,7 +35,7 @@
 	<class name="3dr_radio" type="mavros::std_plugins::TDRRadioPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish 3DR Radio modem status.</description>
 	</class>
-	<class name="setpoint_velocity" type="mavros::std_plugins::SetpointVelocityPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="setpoint_velocity" type="mavros::std_plugins::SetpointVelocityPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU external velocity setpoint.</description>
 	</class>
 	<class name="setpoint_accel" type="mavros::std_plugins::SetpointAccelerationPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
