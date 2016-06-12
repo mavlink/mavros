@@ -14,7 +14,7 @@
 	<class name="waypoint" type="mavros::std_plugins::WaypointPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to FCU mission.</description>
 	</class>
-	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish RC IO state.</description>
 	</class>
 	<class name="command" type="mavros::std_plugins::CommandPlugin" base_class_type="mavros::plugin::PluginBase">
@@ -59,7 +59,7 @@
 	<class name="actuator_control" type="mavros::std_plugins::ActuatorControlPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send direct controls values to the actuators</description>
 	</class>
-	<class name="manual_control" type="mavros::std_plugins::ManualControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="manual_control" type="mavros::std_plugins::ManualControlPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish manual control values</description>
 	</class>
 	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="mavros::plugin::PluginBase">

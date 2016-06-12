@@ -96,7 +96,7 @@ add_library(mavros_plugins
   src/plugins/imu_pub.cpp
   #src/plugins/param.cpp
   #src/plugins/waypoint.cpp
-  #src/plugins/rc_io.cpp
+  src/plugins/rc_io.cpp
   src/plugins/command.cpp
   src/plugins/local_position.cpp
   src/plugins/global_position.cpp
@@ -110,7 +110,7 @@ add_library(mavros_plugins
   #src/plugins/vfr_hud.cpp
   #src/plugins/ftp.cpp
   src/plugins/actuator_control.cpp
-  #src/plugins/manual_control.cpp
+  src/plugins/manual_control.cpp
   src/plugins/altitude.cpp
 )
 add_dependencies(mavros_plugins
