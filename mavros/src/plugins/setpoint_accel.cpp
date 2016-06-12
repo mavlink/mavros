@@ -49,7 +49,7 @@ public:
 		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return { /* Rx disabled */ };
 	}
 

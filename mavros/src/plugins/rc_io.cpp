@@ -48,7 +48,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS_RAW, &RCIOPlugin::handle_rc_channels_raw),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RC_CHANNELS, &RCIOPlugin::handle_rc_channels),
@@ -71,7 +71,7 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	void handle_rc_channels_raw(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_rc_channels_raw(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_rc_channels_raw_t port;
 		mavlink_msg_rc_channels_raw_decode(msg, &port);
 		lock_guard lock(mutex);
@@ -105,7 +105,7 @@ private:
 		rc_in_pub.publish(rcin_msg);
 	}
 
-	void handle_rc_channels(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_rc_channels(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_rc_channels_t channels;
 		mavlink_msg_rc_channels_decode(msg, &channels);
 		lock_guard lock(mutex);
@@ -154,7 +154,7 @@ private:
 		rc_in_pub.publish(rcin_msg);
 	}
 
-	void handle_servo_output_raw(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_servo_output_raw(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_servo_output_raw_t port;
 		mavlink_msg_servo_output_raw_decode(msg, &port);
 		lock_guard lock(mutex);

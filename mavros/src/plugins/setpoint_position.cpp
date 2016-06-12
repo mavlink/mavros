@@ -61,7 +61,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return { /* Rx disabled */ };
 	}
 

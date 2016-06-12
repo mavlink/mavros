@@ -95,7 +95,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&IMUPubPlugin::connection_cb, this, _1));
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE, &IMUPubPlugin::handle_attitude),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_ATTITUDE_QUATERNION, &IMUPubPlugin::handle_attitude_quaternion),
@@ -203,7 +203,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_attitude(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_attitude(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_att_quat)
 			return;
 
@@ -226,7 +226,7 @@ private:
 	}
 
 	// almost the same as handle_attitude(), but for ATTITUDE_QUATERNION
-	void handle_attitude_quaternion(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_attitude_quaternion(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_attitude_quaternion_t att_q;
 		mavlink_msg_attitude_quaternion_decode(msg, &att_q);
 
@@ -248,7 +248,7 @@ private:
 		publish_imu_data(att_q.time_boot_ms, enu_baselink_orientation, gyro);
 	}
 
-	void handle_highres_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_highres_imu(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_highres_imu_t imu_hr;
 		mavlink_msg_highres_imu_decode(msg, &imu_hr);
 
@@ -295,7 +295,7 @@ private:
 		}
 	}
 
-	void handle_raw_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_raw_imu(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
@@ -329,7 +329,7 @@ private:
 		publish_mag(header, mag_field);
 	}
 
-	void handle_scaled_imu(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_scaled_imu(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu)
 			return;
 
@@ -356,7 +356,7 @@ private:
 		publish_mag(header, mag_field);
 	}
 
-	void handle_scaled_pressure(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_scaled_pressure(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (has_hr_imu)
 			return;
 

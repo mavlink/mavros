@@ -196,7 +196,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
@@ -217,7 +217,7 @@ private:
 	int64_t time_offset_ns;
 	double offset_avg_alpha;
 
-	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_system_time(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_system_time_t mtime;
 		mavlink_msg_system_time_decode(msg, &mtime);
 
@@ -242,7 +242,7 @@ private:
 		}
 	}
 
-	void handle_timesync(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_timesync(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_timesync_t tsync;
 		mavlink_msg_timesync_decode(msg, &tsync);
 

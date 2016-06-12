@@ -416,7 +416,7 @@ public:
 		publish_disconnection();
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HEARTBEAT, &SystemStatusPlugin::handle_heartbeat),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYS_STATUS, &SystemStatusPlugin::handle_sys_status),
@@ -565,7 +565,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_heartbeat(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_heartbeat(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		if (!uas->is_my_target(sysid)) {
 			ROS_DEBUG_NAMED("sys", "HEARTBEAT from [%d, %d] dropped.", sysid, compid);
 			return;
@@ -592,7 +592,7 @@ private:
 		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
 	}
 
-	void handle_extended_sys_state(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_extended_sys_state(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_extended_sys_state_t state;
 		mavlink_msg_extended_sys_state_decode(msg, &state);
 
@@ -604,7 +604,7 @@ private:
 		extended_state_pub.publish(state_msg);
 	}
 
-	void handle_sys_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_sys_status(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_sys_status_t stat;
 		mavlink_msg_sys_status_decode(msg, &stat);
 
@@ -623,7 +623,7 @@ private:
 		batt_pub.publish(batt_msg);
 	}
 
-	void handle_statustext(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_statustext(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_statustext_t textm;
 		mavlink_msg_statustext_decode(msg, &textm);
 
@@ -634,7 +634,7 @@ private:
 	}
 
 #ifdef MAVLINK_MSG_ID_MEMINFO
-	void handle_meminfo(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_meminfo(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_meminfo_t mem;
 		mavlink_msg_meminfo_decode(msg, &mem);
 		mem_diag.set(mem.freemem, mem.brkval);
@@ -642,14 +642,14 @@ private:
 #endif
 
 #ifdef MAVLINK_MSG_ID_HWSTATUS
-	void handle_hwstatus(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_hwstatus(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_hwstatus_t hwst;
 		mavlink_msg_hwstatus_decode(msg, &hwst);
 		hwst_diag.set(hwst.Vcc, hwst.I2Cerr);
 	}
 #endif
 
-	void handle_autopilot_version(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_autopilot_version(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_autopilot_version_t apv;
 		mavlink_msg_autopilot_version_decode(msg, &apv);
 

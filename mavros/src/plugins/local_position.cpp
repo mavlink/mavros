@@ -64,7 +64,7 @@ public:
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
 		};
@@ -84,7 +84,7 @@ private:
 	bool tf_send;
 	bool tf_send_fcu;	//!< report NED->aircraft in tf tree
 
-	void handle_local_position_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_local_position_ned(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_local_position_ned_t pos_ned;
 		mavlink_msg_local_position_ned_decode(msg, &pos_ned);
 

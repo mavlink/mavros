@@ -75,7 +75,7 @@ public:
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 				MESSAGE_HANDLER(MAVLINK_MSG_ID_GPS_RAW_INT, &GlobalPositionPlugin::handle_gps_raw_int),
 				// MAVLINK_MSG_ID_GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
@@ -116,7 +116,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_gps_raw_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_gps_raw_int(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_gps_raw_int_t raw_gps;
 		mavlink_msg_gps_raw_int_decode(msg, &raw_gps);
 
@@ -175,7 +175,7 @@ private:
 
 	/** @todo Handler for GLOBAL_POSITION_INT_COV */
 
-	void handle_global_position_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_global_position_int(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_global_position_int_t gpos;
 		mavlink_msg_global_position_int_decode(msg, &gpos);
 

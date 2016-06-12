@@ -70,7 +70,7 @@ public:
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return { /* Rx disabled */ };
 		
 		/** @todo Publish SAFETY_ALLOWED_AREA message */

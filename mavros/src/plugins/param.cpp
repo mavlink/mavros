@@ -371,7 +371,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
 		};
@@ -431,7 +431,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_param_value(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_param_value(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_param_value_t pmsg;
 		mavlink_msg_param_value_decode(msg, &pmsg);
 

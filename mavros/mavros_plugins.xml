@@ -62,7 +62,7 @@
 	<class name="manual_control" type="mavros::std_plugins::ManualControlPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Publish manual control values</description>
 	</class>
-	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish altitude values</description>
 	</class>
 </library>

@@ -72,7 +72,7 @@ public:
 		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_COMMAND_ACK, &CommandPlugin::handle_command_ack)
 		};
@@ -100,7 +100,7 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_command_ack(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_command_ack(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_command_ack_t ack;
 		mavlink_msg_command_ack_decode(msg, &ack);
 

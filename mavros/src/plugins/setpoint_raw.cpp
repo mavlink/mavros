@@ -54,7 +54,7 @@ public:
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, &SetpointRawPlugin::handle_position_target_local_ned),
 			MESSAGE_HANDLER(MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT, &SetpointRawPlugin::handle_position_target_global_int),
@@ -71,7 +71,7 @@ private:
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 
 	/* -*- message handlers -*- */
-	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_position_target_local_ned_t tgt;
 		mavlink_msg_position_target_local_ned_decode(msg, &tgt);
 
@@ -96,7 +96,7 @@ private:
 		target_local_pub.publish(target);
 	}
 
-	void handle_position_target_global_int(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_position_target_global_int(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_position_target_global_int_t tgt;
 		mavlink_msg_position_target_global_int_decode(msg, &tgt);
 
@@ -122,7 +122,7 @@ private:
 		target_global_pub.publish(target);
 	}
 
-	void handle_attitude_target(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_attitude_target(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_attitude_target_t tgt;
 		mavlink_msg_attitude_target_decode(msg, &tgt);
 

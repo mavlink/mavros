@@ -40,7 +40,7 @@ public:
 		//uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
 	};
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MANUAL_CONTROL, &ManualControlPlugin::handle_manual_control),
 		};
@@ -54,7 +54,7 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	void handle_manual_control(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_manual_control(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_manual_control_t manual_control;
 		mavlink_msg_manual_control_decode(msg, &manual_control);
 

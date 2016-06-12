@@ -176,7 +176,7 @@ public:
 		uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
 	};
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_ITEM, &WaypointPlugin::handle_mission_item),
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MISSION_REQUEST, &WaypointPlugin::handle_mission_request),
@@ -239,7 +239,7 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	void handle_mission_item(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_item(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_item_t mit;
 		mavlink_msg_mission_item_decode(msg, &mit);
 		WaypointItem wpi = WaypointItem::from_mission_item(mit);
@@ -285,7 +285,7 @@ private:
 		}
 	}
 
-	void handle_mission_request(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_request(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_request_t mreq;
 		mavlink_msg_mission_request_decode(msg, &mreq);
 		lock_guard lock(mutex);
@@ -310,7 +310,7 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state %d", wp_state);
 	}
 
-	void handle_mission_current(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_current(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_current_t mcur;
 		mavlink_msg_mission_current_decode(msg, &mcur);
 		unique_lock lock(mutex);
@@ -337,7 +337,7 @@ private:
 		}
 	}
 
-	void handle_mission_count(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_count(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_count_t mcnt;
 		mavlink_msg_mission_count_decode(msg, &mcnt);
 		unique_lock lock(mutex);
@@ -374,7 +374,7 @@ private:
 		}
 	}
 
-	void handle_mission_item_reached(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_item_reached(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_item_reached_t mitr;
 		mavlink_msg_mission_item_reached_decode(msg, &mitr);
 
@@ -382,7 +382,7 @@ private:
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
 	}
 
-	void handle_mission_ack(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_mission_ack(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_mission_ack_t mack;
 		mavlink_msg_mission_ack_decode(msg, &mack);
 		unique_lock lock(mutex);

@@ -44,7 +44,7 @@ public:
 #endif
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VFR_HUD, &VfrHudPlugin::handle_vfr_hud),
 #ifdef MAVLINK_MSG_ID_WIND
@@ -59,7 +59,7 @@ private:
 	ros::Publisher vfr_pub;
 	ros::Publisher wind_pub;
 
-	void handle_vfr_hud(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_vfr_hud(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_vfr_hud_t vfr_hud;
 		mavlink_msg_vfr_hud_decode(msg, &vfr_hud);
 
@@ -79,7 +79,7 @@ private:
 	/**
 	 * Handle APM specific wind direction estimation message
 	 */
-	void handle_wind(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_wind(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_wind_t wind;
 		mavlink_msg_wind_decode(msg, &wind);
 

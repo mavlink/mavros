@@ -143,7 +143,7 @@ public:
 	/**
 	 * @brief Decode and check target system
 	 */
-	bool decode(UAS *uas, const mavlink_message_t *msg) {
+	bool decode(UAS *uas, const mavlink::mavlink_message_t *msg) {
 		mavlink_msg_file_transfer_protocol_decode(msg, &message);
 
 #ifdef FTP_LL_DEBUG
@@ -234,7 +234,7 @@ public:
 		checksum_srv = ftp_nh.advertiseService("checksum", &FTPPlugin::checksum_cb, this);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions() {
 		return {
 			       MESSAGE_HANDLER(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, &FTPPlugin::handle_file_transfer_protocol),
 		};
@@ -316,7 +316,7 @@ private:
 
 	/* -*- message handler -*- */
 
-	void handle_file_transfer_protocol(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_file_transfer_protocol(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		FTPRequest req;
 		if (!req.decode(uas, msg)) {
 			ROS_DEBUG_NAMED("ftp", "FTP: Wrong System Id, MY %u, TGT %u",
