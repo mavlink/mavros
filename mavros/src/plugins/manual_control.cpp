@@ -27,37 +27,31 @@ namespace std_plugins {
 class ManualControlPlugin : public plugin::PluginBase {
 public:
 	ManualControlPlugin() : PluginBase(),
-		manual_control_nh("~manual_control"),
-		uas(nullptr)
-	{ };
+		manual_control_nh("~manual_control")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-;
 
 		control_pub = manual_control_nh.advertise<mavros_msgs::ManualControl>("control", 10);
-		//uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
-	};
+	}
 
 	Subscriptions get_subscriptions() {
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_MANUAL_CONTROL, &ManualControlPlugin::handle_manual_control),
+			make_handler(&ManualControlPlugin::handle_manual_control),
 		};
 	}
 
 private:
 	ros::NodeHandle manual_control_nh;
-	UAS *uas;
 
 	ros::Publisher control_pub;
 
 	/* -*- rx handlers -*- */
 
-	void handle_manual_control(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_manual_control_t manual_control;
-		mavlink_msg_manual_control_decode(msg, &manual_control);
-
+	void handle_manual_control(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MANUAL_CONTROL &manual_control)
+	{
 		auto manual_control_msg = boost::make_shared<mavros_msgs::ManualControl>();
 
 		manual_control_msg->header.stamp = ros::Time::now();

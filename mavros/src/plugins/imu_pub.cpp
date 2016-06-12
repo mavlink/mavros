@@ -56,7 +56,6 @@ class IMUPubPlugin : public plugin::PluginBase {
 public:
 	IMUPubPlugin() : PluginBase(),
 		imu_nh("~imu"),
-		uas(nullptr),
 		has_hr_imu(false),
 		has_scaled_imu(false),
 		has_att_quat(false)
@@ -107,7 +106,6 @@ public:
 
 private:
 	ros::NodeHandle imu_nh;
-	UAS *uas;
 	std::string frame_id;
 
 	ros::Publisher imu_pub;
@@ -146,7 +144,7 @@ private:
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// fill
-		imu_msg->header = uas->synchronized_header(frame_id, time_boot_ms);
+		imu_msg->header = m_uas->synchronized_header(frame_id, time_boot_ms);
 
 		tf::quaternionEigenToMsg(orientation, imu_msg->orientation);
 		tf::vectorEigenToMsg(gyro, imu_msg->angular_velocity);
@@ -159,7 +157,7 @@ private:
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 		// publish
-		uas->update_attitude_imu(imu_msg);
+		m_uas->update_attitude_imu(imu_msg);
 		imu_pub.publish(imu_msg);
 	}
 
@@ -249,7 +247,7 @@ private:
 		ROS_INFO_COND_NAMED(!has_hr_imu, "imu", "IMU: High resolution IMU detected!");
 		has_hr_imu = true;
 
-		auto header = uas->synchronized_header(frame_id, imu_hr.time_usec);
+		auto header = m_uas->synchronized_header(frame_id, imu_hr.time_usec);
 		// TODO make more paranoic check of HIGHRES_IMU.fields_updated
 
 		// accelerometer + gyroscope data available
@@ -295,7 +293,7 @@ private:
 			return;
 
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
-		auto header = uas->synchronized_header(frame_id, imu_raw.time_usec);
+		auto header = m_uas->synchronized_header(frame_id, imu_raw.time_usec);
 
 		//! @note APM send SCALED_IMU data as RAW_IMU
 		auto gyro = UAS::transform_frame_aircraft_baselink<Eigen::Vector3d>(
@@ -330,7 +328,7 @@ private:
 		has_scaled_imu = true;
 
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
-		auto header = uas->synchronized_header(frame_id, imu_raw.time_boot_ms);
+		auto header = m_uas->synchronized_header(frame_id, imu_raw.time_boot_ms);
 
 		auto gyro = UAS::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 				Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
@@ -350,7 +348,7 @@ private:
 		if (has_hr_imu)
 			return;
 
-		auto header = uas->synchronized_header(frame_id, press.time_boot_ms);
+		auto header = m_uas->synchronized_header(frame_id, press.time_boot_ms);
 
 		auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 		temp_msg->header = header;

@@ -37,7 +37,6 @@ class LocalPositionPlugin : public plugin::PluginBase {
 public:
 	LocalPositionPlugin() : PluginBase(),
 		lp_nh("~local_position"),
-		uas(nullptr),
 		tf_send(false)
 	{ }
 
@@ -71,7 +70,6 @@ public:
 
 private:
 	ros::NodeHandle lp_nh;
-	UAS *uas;
 
 	ros::Publisher local_position;
 	ros::Publisher local_velocity;
