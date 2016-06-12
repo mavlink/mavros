@@ -38,7 +38,7 @@
 	<class name="setpoint_velocity" type="mavros::std_plugins::SetpointVelocityPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU external velocity setpoint.</description>
 	</class>
-	<class name="setpoint_accel" type="mavros::std_plugins::SetpointAccelerationPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="setpoint_accel" type="mavros::std_plugins::SetpointAccelerationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU external acceleration/force setpoint.</description>
 	</class>
 	<class name="setpoint_attitude" type="mavros::std_plugins::SetpointAttitudePlugin" base_class_type="XXX__mavros::plugin::PluginBase">
