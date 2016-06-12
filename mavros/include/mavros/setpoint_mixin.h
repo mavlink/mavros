@@ -30,6 +30,7 @@ namespace plugin {
 template <class D>
 class SetPositionTargetLocalNEDMixin {
 public:
+	//! Message specification: @p http://mavlink.org/messages/common#SET_POSITION_TARGET_LOCAL_NED
 	void set_position_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
 			Eigen::Vector3d p,
@@ -40,17 +41,21 @@ public:
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
 
-		sp.time_boot_ms = time_boot_ms;
 		sp.target_system = m_uas_->get_tgt_system();
 		sp.target_component = m_uas_->get_tgt_component();
-		sp.coordinate_frame = coordinate_frame;
-		sp.type_mask = type_mask;
 
 		// [[[cog:
+		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
+		//     cog.outl("sp.%s = %s;" % (f, f))
 		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
 		//     for a in ('x', 'y', 'z'):
 		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
 		// ]]]
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+		sp.yaw = yaw;
+		sp.yaw_rate = yaw_rate;
 		sp.x = p.x();
 		sp.y = p.y();
 		sp.z = p.z();
@@ -60,59 +65,58 @@ public:
 		sp.afx = af.x();
 		sp.afy = af.y();
 		sp.afz = af.z();
-		// [[[end]]] (checksum: f72768674b3c51e74aa1b4dd6d79b573)
-
-		sp.yaw = yaw;
-		sp.yaw_rate = yaw_rate;
+		// [[[end]]] (checksum: 6a9b9dacbcf85c5d428d754c20afe110)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
 };
 
-#if 0
 /**
- * @brief This mixin adds set_position_target_local_ned()
+ * @brief This mixin adds set_position_target_global_int()
  */
 template <class D>
 class SetPositionTargetGlobalIntMixin {
 public:
+	//! Message specification: @p http://mavlink.org/messages/common#SET_POSITION_TARGET_GLOBAL_INT
 	void set_position_target_global_int(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
-			Eigen::Vector3d p,
+			int32_t lat_int, int32_t lon_int, float alt,
 			Eigen::Vector3d v,
 			Eigen::Vector3d af,
 			float yaw, float yaw_rate)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
+		mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp;
 
-		sp.time_boot_ms = time_boot_ms;
-		sp.coordinate_frame = coordinate_frame;
-		sp.type_mask = type_mask;
+		sp.target_system = m_uas_->get_tgt_system();
+		sp.target_component = m_uas_->get_tgt_component();
 
 		// [[[cog:
-		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
+		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'lat_int', 'lon_int', 'alt', 'yaw', 'yaw_rate'):
+		//     cog.outl("sp.%s = %s;" % (f, f))
+		// for fp, vp in (('v', 'v'), ('af', 'af')):
 		//     for a in ('x', 'y', 'z'):
 		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
 		// ]]]
-		sp.x = p.x();
-		sp.y = p.y();
-		sp.z = p.z();
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+		sp.lat_int = lat_int;
+		sp.lon_int = lon_int;
+		sp.alt = alt;
+		sp.yaw = yaw;
+		sp.yaw_rate = yaw_rate;
 		sp.vx = v.x();
 		sp.vy = v.y();
 		sp.vz = v.z();
 		sp.afx = af.x();
 		sp.afy = af.y();
 		sp.afz = af.z();
-		// [[[end]]] (checksum: f72768674b3c51e74aa1b4dd6d79b573)
-
-		sp.yaw = yaw;
-		sp.yaw_rate = yaw_rate;
+		// [[[end]]] (checksum: 30c9629ad309d488df1f63b683dac6a4)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
 };
-#endif
 
 /**
  * @brief This mixin adds set_attitude_target()
@@ -130,24 +134,25 @@ public:
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::common::msg::SET_ATTITUDE_TARGET sp;
 
-		sp.time_boot_ms = time_boot_ms;
 		sp.target_system = m_uas_->get_tgt_system();
 		sp.target_component = m_uas_->get_tgt_component();
-		sp.type_mask = type_mask;
 
 		// XXX fix me later!
 		mavros::UAS::quaternion_to_mavlink(orientation, sp.q.data());
 
 		// [[[cog:
+		// for f in ('time_boot_ms', 'type_mask', 'thrust'):
+		//     cog.outl("sp.%s = %s;" % (f, f))
 		// for f, v in (('roll', 'x'), ('pitch', 'y'), ('yaw', 'z')):
 		//     cog.outl("sp.body_%s_rate = body_rate.%s();" % (f, v))
 		// ]]]
+		sp.time_boot_ms = time_boot_ms;
+		sp.type_mask = type_mask;
+		sp.thrust = thrust;
 		sp.body_roll_rate = body_rate.x();
 		sp.body_pitch_rate = body_rate.y();
 		sp.body_yaw_rate = body_rate.z();
-		// [[[end]]] (checksum: 32a4e3801e3624a55e735eb27f53f1f1)
-
-		sp.thrust = thrust;
+		// [[[end]]] (checksum: aa941484927bb7a7d39a2c31d08fcfc1)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
@@ -177,7 +182,7 @@ public:
 		auto tf_transform_cb = std::bind(cbp, static_cast<D *>(this), std::placeholders::_1);
 
 		tf_thread = std::thread([this, tf_transform_cb]() {
-			mavconn::utils::set_this_thread_name(tf_thd_name.c_str());
+			mavconn::utils::set_this_thread_name("%s", tf_thd_name.c_str());
 
 			mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
