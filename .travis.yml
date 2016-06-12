@@ -54,7 +54,7 @@ before_script:
 script:
   - cd ~/catkin_ws
   - catkin config --install
-  - catkin build --verbose --summary
+  - catkin build --summary
   - source devel/setup.bash
   - catkin run_tests -p1 --summary
   #- catkin_test_results --all ~/catkin_ws/build
