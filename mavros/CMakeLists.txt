@@ -91,7 +91,7 @@ add_dependencies(mavros mavros_msgs_generate_messages_cpp)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
-  #src/plugins/sys_status.cpp
+  src/plugins/sys_status.cpp
   #src/plugins/sys_time.cpp
   src/plugins/imu_pub.cpp
   #src/plugins/param.cpp

@@ -2,7 +2,7 @@
 	<!--<class name="dummy" type="mavros::std_plugins::DummyPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Dummy test plugin.</description>
 	</class>-->
-	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish system status.</description>
 	</class>
 	<class name="imu_pub" type="mavros::std_plugins::IMUPubPlugin" base_class_type="mavros::plugin::PluginBase">
