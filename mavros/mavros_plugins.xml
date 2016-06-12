@@ -11,7 +11,7 @@
 	<class name="param" type="mavros::std_plugins::ParamPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
 		<description>Access to FCU parameters.</description>
 	</class>
-	<class name="waypoint" type="mavros::std_plugins::WaypointPlugin" base_class_type="XXX__mavros::plugin::PluginBase">
+	<class name="waypoint" type="mavros::std_plugins::WaypointPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Access to FCU mission.</description>
 	</class>
 	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="mavros::plugin::PluginBase">
