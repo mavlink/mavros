@@ -30,7 +30,7 @@ using mavlink::mavlink_message_t;
 
 
 #define PFX	"mavconn: serial"
-#define PFXd	PFX "%p: "
+#define PFXd	PFX "%zu: "
 
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
@@ -42,7 +42,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	serial_dev(io_service)
 {
-	logInform(PFXd "device: %s @ %d bps", this, device.c_str(), baudrate);
+	logInform(PFXd "device: %s @ %d bps", conn_id, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
@@ -63,7 +63,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	io_thread = std::thread([this] () {
-				utils::set_this_thread_name("mserial%p", this);
+				utils::set_this_thread_name("mserial%zu", conn_id);
 				io_service.run();
 			});
 }
@@ -95,7 +95,7 @@ void MAVConnSerial::close()
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -115,7 +115,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 void MAVConnSerial::send_message(const mavlink::Message &message)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -185,7 +185,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error) {
-					logError(PFXd "write: %s", this, error.message().c_str());
+					logError(PFXd "write: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}

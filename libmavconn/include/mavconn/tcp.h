@@ -77,7 +77,7 @@ private:
 	/**
 	 * This special function called by TCP server when connection accepted.
 	 */
-	void client_connected(void *server_channel);
+	void client_connected(size_t server_channel);
 
 	void do_recv();
 	void do_send(bool check_tx_state);

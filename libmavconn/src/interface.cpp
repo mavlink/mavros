@@ -34,6 +34,7 @@ using mavlink::mavlink_status_t;
 // static members
 std::once_flag MAVConnInterface::init_flag;
 std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries {};
+std::atomic<size_t> MAVConnInterface::conn_id_counter;
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
@@ -47,6 +48,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	last_rx_total_bytes(0),
 	last_iostat(steady_clock::now())
 {
+	conn_id = conn_id_counter.fetch_add(1);
 	std::call_once(init_flag, init_msg_entry);
 }
 
@@ -131,8 +133,8 @@ void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg, Framing
 
 	const char *proto_version_str = (msg.magic == MAVLINK_STX) ? "v2.0" : "v1.0";
 
-	logDebug("%s%p: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
-			pfx, this,
+	logDebug("%s%zu: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+			pfx, conn_id,
 			proto_version_str,
 			framing_str,
 			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
@@ -142,15 +144,15 @@ void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg)
 {
 	const char *proto_version_str = (msg->magic == MAVLINK_STX) ? "v2.0" : "v1.0";
 
-	logDebug("%s%p: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
-			pfx, this,
+	logDebug("%s%zu: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+			pfx, conn_id,
 			proto_version_str,
 			msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq);
 }
 
 void MAVConnInterface::log_send_obj(const char *pfx, const mavlink::Message &msg)
 {
-	logDebug("%s%p: send: %s", pfx, this, msg.to_yaml().c_str());
+	logDebug("%s%zu: send: %s", pfx, conn_id, msg.to_yaml().c_str());
 }
 
 void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t *msg)
@@ -159,8 +161,8 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t
 		send_message(msg);
 	}
 	catch (std::length_error &e) {
-		logError(PFX "%p: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
-				this,
+		logError(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
+				conn_id,
 				msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq,
 				e.what());
 	}
@@ -172,8 +174,8 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
 		send_message(msg);
 	}
 	catch (std::length_error &e) {
-		logError(PFX "%p: DROPPED Message %s: %s",
-				this,
+		logError(PFX "%zu: DROPPED Message %s: %s",
+				conn_id,
 				msg.get_name().c_str(),
 				e.what());
 	}

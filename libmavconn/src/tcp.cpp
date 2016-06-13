@@ -31,10 +31,10 @@ using mavlink::mavlink_message_t;
 using mavlink::mavlink_status_t;
 
 #define PFX	"mavconn: tcp"
-#define PFXd	PFX "%p: "
+#define PFXd	PFX "%zu: "
 
 
-static bool resolve_address_tcp(io_service &io, void *chan, std::string host, unsigned short port, tcp::endpoint &ep)
+static bool resolve_address_tcp(io_service &io, size_t chan, std::string host, unsigned short port, tcp::endpoint &ep)
 {
 	bool result = false;
 	tcp::resolver resolver(io);
@@ -70,10 +70,10 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
 {
-	if (!resolve_address_tcp(io_service, this, server_host, server_port, server_ep))
+	if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, server_ep))
 		throw DeviceError("tcp: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Server address: %s", this, to_string_ss(server_ep).c_str());
+	logInform(PFXd "Server address: %s", conn_id, to_string_ss(server_ep).c_str());
 
 	try {
 		socket.open(tcp::v4());
@@ -88,7 +88,7 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	io_thread = std::thread([this] () {
-				utils::set_this_thread_name("mtcp%p", this);
+				utils::set_this_thread_name("mtcp%zu", conn_id);
 				io_service.run();
 			});
 }
@@ -104,10 +104,10 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	// waiting when server call client_connected()
 }
 
-void MAVConnTCPClient::client_connected(void *server_channel)
+void MAVConnTCPClient::client_connected(size_t server_channel)
 {
-	logInform(PFXd "Got client, id: %p, address: %s",
-			server_channel, this, to_string_ss(server_ep).c_str());
+	logInform(PFXd "Got client, id: %zu, address: %s",
+			server_channel, conn_id, to_string_ss(server_ep).c_str());
 
 	// start recv
 	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_recv, this));
@@ -141,7 +141,7 @@ void MAVConnTCPClient::close()
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -161,7 +161,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -181,7 +181,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 void MAVConnTCPClient::send_message(const mavlink::Message &message)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -204,7 +204,7 @@ void MAVConnTCPClient::do_recv()
 			buffer(rx_buf, sizeof(rx_buf)),
 			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", this, error.message().c_str());
+					logError(PFXd "receive: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}
@@ -231,7 +231,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error) {
-					logError(PFXd "send: %s", this, error.message().c_str());
+					logError(PFXd "send: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}
@@ -265,10 +265,10 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	acceptor(io_service)
 {
-	if (!resolve_address_tcp(io_service, this, server_host, server_port, bind_ep))
+	if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Bind address: %s", this, to_string_ss(bind_ep).c_str());
+	logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
 
 	try {
 		acceptor.open(tcp::v4());
@@ -285,7 +285,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	io_thread = std::thread([this] () {
-				utils::set_this_thread_name("mtcps%p", this);
+				utils::set_this_thread_name("mtcps%zu", conn_id);
 				io_service.run();
 			});
 }
@@ -302,7 +302,7 @@ void MAVConnTCPServer::close()
 		return;
 
 	logInform(PFXd "Terminating server. "
-			"All connections will be closed.", this);
+			"All connections will be closed.", conn_id);
 
 	io_service.stop();
 	acceptor.close();
@@ -322,16 +322,17 @@ mavlink_status_t MAVConnTCPServer::get_status()
 	for (auto &instp : client_list) {
 		auto inst_status = instp->get_status();
 
-#define ADD_STATUS(_field)	\
-	status._field += inst_status._field
+		// [[[cog:
+		// for f in ('packet_rx_success_count', 'packet_rx_drop_count', 'buffer_overrun', 'parse_error'):
+		//     cog.outl("status.%s = inst_status.%s;" % (f, f))
+		// ]]]
+		status.packet_rx_success_count = inst_status.packet_rx_success_count;
+		status.packet_rx_drop_count = inst_status.packet_rx_drop_count;
+		status.buffer_overrun = inst_status.buffer_overrun;
+		status.parse_error = inst_status.parse_error;
+		// [[[end]]] (checksum: 9932a49fc25995455af4bc7acf77c094)
 
-		ADD_STATUS(packet_rx_success_count);
-		ADD_STATUS(packet_rx_drop_count);
-		ADD_STATUS(buffer_overrun);
-		ADD_STATUS(parse_error);
 		/* seq counters always 0 for this connection type */
-
-#undef ADD_STATUS
 	};
 
 	return status;
@@ -345,15 +346,16 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 	for (auto &instp : client_list) {
 		auto inst_iostat = instp->get_iostat();
 
-#define ADD_IOSTAT(_field)	\
-	iostat._field += inst_iostat._field
-
-		ADD_IOSTAT(tx_total_bytes);
-		ADD_IOSTAT(rx_total_bytes);
-		ADD_IOSTAT(tx_speed);
-		ADD_IOSTAT(rx_speed);
-
-#undef ADD_IOSTAT
+		// [[[cog:
+		// for p in ('tx', 'rx'):
+		//     for f in ('total_bytes', 'speed'):
+		//         cog.outl("iostat.{p}_{f:11s} = inst_iostat.{p}_{f};".format(**locals()))
+		// ]]]
+		iostat.tx_total_bytes = inst_iostat.tx_total_bytes;
+		iostat.tx_speed       = inst_iostat.tx_speed;
+		iostat.rx_total_bytes = inst_iostat.rx_total_bytes;
+		iostat.rx_speed       = inst_iostat.rx_speed;
+		// [[[end]]] (checksum: 5e57d8d4b1e413d2dd3c4fc2613ea606)
 	};
 
 	return iostat;
@@ -391,7 +393,7 @@ void MAVConnTCPServer::do_accept()
 			acceptor_client->server_ep,
 			[this, acceptor_client] (error_code error) {
 				if (error) {
-					logError(PFXd "accept: %s", this, error.message().c_str());
+					logError(PFXd "accept: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}
@@ -399,7 +401,7 @@ void MAVConnTCPServer::do_accept()
 				lock_guard lock(mutex);
 
 				std::weak_ptr<MAVConnTCPClient> weak_client = acceptor_client;
-				acceptor_client->client_connected(this);
+				acceptor_client->client_connected(conn_id);
 				acceptor_client->message_received_cb = std::bind(&MAVConnTCPServer::recv_message, this, std::placeholders::_1, std::placeholders::_2);
 				acceptor_client->port_closed_cb = [weak_client, this] () { client_closed(weak_client); };
 
@@ -413,7 +415,7 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 	if (auto instp = weak_instp.lock()) {
 		bool locked = mutex.try_lock();
 		logInform(PFXd "Client connection closed, id: %p, address: %s",
-				this, instp.get(), to_string_ss(instp->server_ep).c_str());
+				conn_id, instp.get(), to_string_ss(instp->server_ep).c_str());
 
 		client_list.remove(instp);
 

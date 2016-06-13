@@ -30,10 +30,10 @@ using utils::to_string_ss;
 using mavlink::mavlink_message_t;
 
 #define PFX	"mavconn: udp"
-#define PFXd	PFX "%p: "
+#define PFXd	PFX "%zu: "
 
 
-static bool resolve_address_udp(io_service &io, void *chan, std::string host, unsigned short port, udp::endpoint &ep)
+static bool resolve_address_udp(io_service &io, size_t chan, std::string host, unsigned short port, udp::endpoint &ep)
 {
 	bool result = false;
 	udp::resolver resolver(io);
@@ -69,18 +69,18 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
 {
-	if (!resolve_address_udp(io_service, this, bind_host, bind_port, bind_ep))
+	if (!resolve_address_udp(io_service, conn_id, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Bind address: %s", this, to_string_ss(bind_ep).c_str());
+	logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
-		remote_exists = resolve_address_udp(io_service, this, remote_host, remote_port, remote_ep);
+		remote_exists = resolve_address_udp(io_service, conn_id, remote_host, remote_port, remote_ep);
 
 		if (remote_exists)
-			logInform(PFXd "Remote address: %s", this, to_string_ss(remote_ep).c_str());
+			logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
 		else
-			logWarn(PFXd "Remote address resolve failed.", this);
+			logWarn(PFXd "Remote address resolve failed.", conn_id);
 	}
 
 	try {
@@ -96,7 +96,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	// run io_service for async io
 	io_thread = std::thread([this] () {
-				utils::set_this_thread_name("mudp%p", this);
+				utils::set_this_thread_name("mudp%zu", conn_id);
 				io_service.run();
 			});
 }
@@ -129,12 +129,12 @@ void MAVConnUDP::close()
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", this);
+		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -154,12 +154,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", this);
+		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -179,12 +179,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 void MAVConnUDP::send_message(const mavlink::Message &message)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", this);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", this);
+		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -208,13 +208,13 @@ void MAVConnUDP::do_recvfrom()
 			remote_ep,
 			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", this, error.message().c_str());
+					logError(PFXd "receive: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}
 
 				if (remote_ep != last_remote_ep) {
-					logInform(PFXd "Remote address: %s", this, to_string_ss(remote_ep).c_str());
+					logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
 					remote_exists = true;
 					last_remote_ep = remote_ep;
 				}
@@ -242,11 +242,11 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error == boost::asio::error::network_unreachable) {
-					logWarn(PFXd "sendto: %s, retrying", this, error.message().c_str());
+					logWarn(PFXd "sendto: %s, retrying", conn_id, error.message().c_str());
 					// do not return, try to resend
 				}
 				else if (error) {
-					logError(PFXd "sendto: %s", this, error.message().c_str());
+					logError(PFXd "sendto: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}

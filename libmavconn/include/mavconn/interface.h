@@ -211,6 +211,9 @@ protected:
 	//! This map merge all dialect mavlink_msg_entry_t structs. Needed for packet parser.
 	static std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> message_entries;
 
+	//! Channel number used for logging.
+	size_t conn_id;
+
 	inline mavlink::mavlink_status_t *get_status_p() {
 		return &m_status;
 	}
@@ -241,6 +244,9 @@ private:
 	std::recursive_mutex iostat_mutex;
 	size_t last_tx_total_bytes, last_rx_total_bytes;
 	std::chrono::time_point<steady_clock> last_iostat;
+
+	//! monotonic counter (increment only)
+	static std::atomic<size_t> conn_id_counter;
 
 	//! init_msg_entry() once flag
 	static std::once_flag init_flag;
