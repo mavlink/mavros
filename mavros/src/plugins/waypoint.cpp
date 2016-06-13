@@ -39,7 +39,7 @@ public:
 	double y_long;
 	double z_alt;
 
-	mavros_msgs::Waypoint&& to_msg()
+	mavros_msgs::Waypoint to_msg()
 	{
 		mavros_msgs::Waypoint ret;
 
@@ -73,10 +73,10 @@ public:
 		ret.z_alt = z_alt;
 		// [[[end]]] (checksum: 371710cb8984352c8cc1b93eb8b04a2b)
 
-		return std::move(ret);
+		return ret;
 	}
 
-	static WaypointItem&& from_msg(mavros_msgs::Waypoint &wp, uint16_t seq)
+	static WaypointItem from_msg(mavros_msgs::Waypoint &wp, uint16_t seq)
 	{
 		WaypointItem ret;
 
@@ -102,7 +102,7 @@ public:
 		ret.y = ret.y_long;
 		ret.z = ret.z_alt;
 
-		return std::move(ret);
+		return ret;
 	}
 
 	std::string to_string()
