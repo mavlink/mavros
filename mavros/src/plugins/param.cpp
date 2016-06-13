@@ -175,8 +175,11 @@ public:
 	}
 
 	//! Make PARAM_SET message. Set target ids manually!
-	PARAM_SET to_param_set() const
+	PARAM_SET to_param_set()
 	{
+		// Note: XmlRpcValue doe not have const cast operators.
+		//       This method can't be const.
+
 		mavlink::mavlink_param_union_t uv;
 		PARAM_SET ret{};
 
@@ -194,17 +197,23 @@ public:
 		// for a, b, c in xmlrpc_types:
 		//     uvb = 'float' if 'real32' == b else b
 		//     cog.outl("case XmlRpcValue::%s:" % a)
-		//     #cog.outl("\tuv.param_%s = dynamic_cast<%s>(param_value);" % (uvb, c))
-		//     #cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
+		//     cog.outl("\tuv.param_%s = static_cast<%s>(param_value);" % (uvb, c))
+		//     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
 		//     cog.outl("\tbreak;")
 		// ]]]
 		case XmlRpcValue::TypeBoolean:
+			uv.param_uint8 = static_cast<bool>(param_value);
+			ret.param_type = enum_value(MT::UINT8);
 			break;
 		case XmlRpcValue::TypeInt:
+			uv.param_int32 = static_cast<int32_t>(param_value);
+			ret.param_type = enum_value(MT::INT32);
 			break;
 		case XmlRpcValue::TypeDouble:
+			uv.param_float = static_cast<double>(param_value);
+			ret.param_type = enum_value(MT::REAL32);
 			break;
-		// [[[end]]] (checksum: b1e240724ac2d187794b46947e6f9c57)
+		// [[[end]]] (checksum: c414a3950fba234cbbe694a2576ae022)
 
 		default:
 			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
@@ -215,7 +224,7 @@ public:
 	}
 
 	//! Make PARAM_SET message. Set target ids manually!
-	PARAM_SET to_param_set_apm_qurk() const
+	PARAM_SET to_param_set_apm_qurk()
 	{
 		PARAM_SET ret{};
 
@@ -226,17 +235,23 @@ public:
 		// [[[cog:
 		// for a, b, c in xmlrpc_types:
 		//     cog.outl("case XmlRpcValue::%s:" % a)
-		//     #cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
-		//     #cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
+		//     cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
+		//     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
 		//     cog.outl("\tbreak;")
 		// ]]]
 		case XmlRpcValue::TypeBoolean:
+			ret.param_value = static_cast<bool &>(param_value);
+			ret.param_type = enum_value(MT::UINT8);
 			break;
 		case XmlRpcValue::TypeInt:
+			ret.param_value = static_cast<int32_t &>(param_value);
+			ret.param_type = enum_value(MT::INT32);
 			break;
 		case XmlRpcValue::TypeDouble:
+			ret.param_value = static_cast<double &>(param_value);
+			ret.param_type = enum_value(MT::REAL32);
 			break;
-		// [[[end]]] (checksum: b1e240724ac2d187794b46947e6f9c57)
+		// [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
 
 		default:
 			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
@@ -248,26 +263,28 @@ public:
 	/**
 	 * For get/set services
 	 */
-	int64_t to_integer() const
+	int64_t to_integer()
 	{
 		switch (param_value.getType()) {
 		// [[[cog:
 		// for a, b, c in xmlrpc_types:
 		//    if 'int' not in b:
 		//       continue
-		//    #cog.outl("case XmlRpcValue::%s:\treturn static_cast<%s>(param_value);" % (a, c))
+		//    cog.outl("case XmlRpcValue::%s:\treturn static_cast<%s>(param_value);" % (a, c))
 		// ]]]
-		// [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+		case XmlRpcValue::TypeBoolean:	return static_cast<bool>(param_value);
+		case XmlRpcValue::TypeInt:	return static_cast<int32_t>(param_value);
+		// [[[end]]] (checksum: ce23a3bc04354d8cfcb82341beb83709)
 
 		default:
 			return 0;
 		}
 	}
 
-	double to_real() const
+	double to_real()
 	{
 		if (param_value.getType() == XmlRpcValue::TypeDouble)
-			return 0;//static_cast<double>(param_value);
+			return static_cast<double>(param_value);
 		else
 			return 0.0;
 	}
@@ -543,9 +560,6 @@ private:
 		})();
 
 		msg_set_target(ps);
-
-		// XXX debug
-		ROS_INFO_STREAM_NAMED("param", "PR: " << ps.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(ps);
 	}
