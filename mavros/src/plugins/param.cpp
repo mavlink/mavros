@@ -177,7 +177,7 @@ public:
 	//! Make PARAM_SET message. Set target ids manually!
 	PARAM_SET to_param_set()
 	{
-		// Note: XmlRpcValue doe not have const cast operators.
+		// Note: XmlRpcValue does not have const cast operators.
 		//       This method can't be const.
 
 		mavlink::mavlink_param_union_t uv;

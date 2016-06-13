@@ -108,7 +108,7 @@ add_library(mavros_plugins
   src/plugins/setpoint_attitude.cpp
   src/plugins/setpoint_raw.cpp
   src/plugins/vfr_hud.cpp
-  #src/plugins/ftp.cpp
+  src/plugins/ftp.cpp
   src/plugins/actuator_control.cpp
   src/plugins/manual_control.cpp
   src/plugins/altitude.cpp
