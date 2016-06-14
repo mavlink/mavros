@@ -15,7 +15,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/ExtendedState.h>
@@ -108,10 +107,10 @@ public:
 
 		stat.addf("Heartbeats since startup", "%d", count_);
 		stat.addf("Frequency (Hz)", "%f", freq);
-		stat.add("Vehicle type", mavros::UAS::str_type(type));
-		stat.add("Autopilot type", mavros::UAS::str_autopilot(autopilot));
+		stat.add("Vehicle type", utils::to_string(type));
+		stat.add("Autopilot type", utils::to_string(autopilot));
 		stat.add("Mode", mode);
-		stat.add("System status", mavros::UAS::str_system_status(system_status));
+		stat.add("System status", utils::to_string(system_status));
 	}
 
 private:
@@ -244,7 +243,6 @@ public:
 		stat.addf("Errors count #2", "%d", last_st.errors_count2);
 		stat.addf("Errors count #3", "%d", last_st.errors_count3);
 		stat.addf("Errors count #4", "%d", last_st.errors_count4);
-
 	}
 
 private:
@@ -279,7 +277,8 @@ public:
 		remaining = rem;
 	}
 
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
 		std::lock_guard<std::mutex> lock(mutex);
 
 		if (voltage < 0)
@@ -313,14 +312,15 @@ public:
 		diagnostic_updater::DiagnosticTask(name),
 		freemem(-1),
 		brkval(0)
-	{};
+	{ }
 
 	void set(uint16_t f, uint16_t b) {
 		freemem = f;
 		brkval = b;
 	}
 
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
 		ssize_t freemem_ = freemem;
 		uint16_t brkval_ = brkval;
 
@@ -352,7 +352,7 @@ public:
 		vcc(-1.0),
 		i2cerr(0),
 		i2cerr_last(0)
-	{};
+	{ }
 
 	void set(uint16_t v, uint8_t e) {
 		std::lock_guard<std::mutex> lock(mutex);
@@ -360,7 +360,8 @@ public:
 		i2cerr = e;
 	}
 
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
 		std::lock_guard<std::mutex> lock(mutex);
 
 		if (vcc < 0)
@@ -769,7 +770,8 @@ private:
 		}
 	}
 
-	void connection_cb(bool connected) {
+	void connection_cb(bool connected)
+	{
 		// if connection changes, start delayed version request
 		version_retries = RETRIES_COUNT;
 		if (connected)
@@ -847,5 +849,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SystemStatusPlugin, mavros::plugin::PluginBase)
-

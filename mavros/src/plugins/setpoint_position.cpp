@@ -16,7 +16,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -93,9 +92,9 @@ private:
 		 */
 		const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
-		auto p = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto q = UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+		auto p = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 					utils::enum_value(MAV_FRAME::LOCAL_NED),
@@ -103,7 +102,7 @@ private:
 					p,
 					Eigen::Vector3d::Zero(),
 					Eigen::Vector3d::Zero(),
-					UAS::quaternion_get_yaw(q), 0.0);
+					ftf::quaternion_get_yaw(q), 0.0);
 	}
 
 	/* -*- callbacks -*- */
@@ -128,4 +127,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointPositionPlugin, mavros::plugin::PluginBase)

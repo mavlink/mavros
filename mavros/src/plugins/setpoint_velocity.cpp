@@ -17,7 +17,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
@@ -72,8 +71,8 @@ private:
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
 
-		auto vel = UAS::transform_frame_enu_ned(vel_enu);
-		auto yr = UAS::transform_frame_baselink_aircraft(Eigen::Vector3d(0.0, 0.0, yaw_rate));
+		auto vel = ftf::transform_frame_enu_ned(vel_enu);
+		auto yr = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				utils::enum_value(MAV_FRAME::LOCAL_NED),
@@ -97,4 +96,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointVelocityPlugin, mavros::plugin::PluginBase)

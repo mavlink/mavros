@@ -16,7 +16,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <geometry_msgs/PolygonStamped.h>
 
@@ -68,7 +67,8 @@ public:
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 
 		/** @todo Publish SAFETY_ALLOWED_AREA message */
@@ -91,12 +91,11 @@ private:
 	{
 		ROS_INFO_STREAM_NAMED("safetyarea", "SA: Set safty area: P1 " << p1 << " P2 " << p2);
 
-		p1 = UAS::transform_frame_enu_ned(p1);
-		p2 = UAS::transform_frame_enu_ned(p2);
+		p1 = ftf::transform_frame_enu_ned(p1);
+		p2 = ftf::transform_frame_enu_ned(p2);
 
 		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s;
-		s.target_system = m_uas->get_tgt_system();
-		s.target_component = m_uas->get_tgt_component();
+		m_uas->msg_set_target(s);
 
 		// TODO: use enum from lib
 		s.frame = utils::enum_value(mavlink::common::MAV_FRAME::LOCAL_NED);
@@ -119,7 +118,8 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void safetyarea_cb(const geometry_msgs::PolygonStamped::ConstPtr &req) {
+	void safetyarea_cb(const geometry_msgs::PolygonStamped::ConstPtr &req)
+	{
 		if (req->polygon.points.size() != 2) {
 			ROS_ERROR_NAMED("safetyarea", "SA: Polygon should contain only two points");
 			return;
@@ -142,4 +142,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SafetyAreaPlugin, mavros::plugin::PluginBase)

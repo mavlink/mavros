@@ -17,7 +17,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -95,13 +94,14 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr) {
+	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr)
+	{
 		/* Thrust + RPY, also bits numbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_q = (1 << 6) | (7 << 0);
 
-		auto q = UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))
 					);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
@@ -116,12 +116,13 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel) {
+	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel)
+	{
 		/* Q + Thrust, also bits noumbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
 
-		auto av = UAS::transform_frame_baselink_aircraft(ang_vel);
+		auto av = ftf::transform_frame_baselink_aircraft(ang_vel);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,
@@ -133,7 +134,8 @@ private:
 	/**
 	 * @brief Send throttle to FCU attitude controller
 	 */
-	void send_attitude_throttle(const float throttle) {
+	void send_attitude_throttle(const float throttle)
+	{
 		// Q + RPY
 		const uint8_t ignore_all_except_throttle = (1 << 7) | (7 << 0);
 
@@ -167,7 +169,8 @@ private:
 		send_attitude_ang_velocity(req->header.stamp, ang_vel);
 	}
 
-	inline bool is_normalized(float throttle, const float min, const float max) {
+	inline bool is_normalized(float throttle, const float min, const float max)
+	{
 		if (throttle < min) {
 			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) < Min(%f)", throttle, min);
 			return false;
@@ -180,7 +183,8 @@ private:
 		return true;
 	}
 
-	void throttle_cb(const std_msgs::Float64::ConstPtr &req) {
+	void throttle_cb(const std_msgs::Float64::ConstPtr &req)
+	{
 		float throttle_normalized = req->data;
 
 		/**
@@ -197,4 +201,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAttitudePlugin, mavros::plugin::PluginBase)

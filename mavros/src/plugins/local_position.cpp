@@ -17,7 +17,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -84,8 +83,8 @@ private:
 	void handle_local_position_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED &pos_ned)
 	{
 		//--------------- Transform FCU position and Velocity Data ---------------//
-		auto enu_position = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
-		auto enu_velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
+		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
+		auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
 
 		//--------------- Get Odom Information ---------------//
 		// Note this orientation describes baselink->ENU transform
@@ -93,7 +92,7 @@ private:
 		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity();
 		Eigen::Quaterniond enu_orientation;
 		tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
-		auto baselink_linear = UAS::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
+		auto baselink_linear = ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
 
 		//--------------- Generate Message Pointers ---------------//
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
@@ -144,11 +143,11 @@ private:
 			//Don't just report the data from the mavlink message,
 			//actually perform rotations to see if anything is
 			//wrong.
-			auto ned_position = UAS::transform_frame_enu_ned(enu_position);
+			auto ned_position = ftf::transform_frame_enu_ned(enu_position);
 			tf::vectorEigenToMsg(ned_position, ned_aircraft_tf.transform.translation);
 
-			auto ned_orientation = UAS::transform_orientation_enu_ned(
-						UAS::transform_orientation_baselink_aircraft(enu_orientation));
+			auto ned_orientation = ftf::transform_orientation_enu_ned(
+						ftf::transform_orientation_baselink_aircraft(enu_orientation));
 			tf::quaternionEigenToMsg(ned_orientation,ned_aircraft_tf.transform.rotation);
 			m_uas->tf2_broadcaster.sendTransform(ned_aircraft_tf);
 		}
@@ -157,6 +156,7 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::LocalPositionPlugin, mavros::plugin::PluginBase)
 
 

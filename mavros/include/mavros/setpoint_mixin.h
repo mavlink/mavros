@@ -41,8 +41,7 @@ public:
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
 
-		sp.target_system = m_uas_->get_tgt_system();
-		sp.target_component = m_uas_->get_tgt_component();
+		m_uas_->msg_set_target(sp);
 
 		// [[[cog:
 		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
@@ -88,8 +87,7 @@ public:
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp;
 
-		sp.target_system = m_uas_->get_tgt_system();
-		sp.target_component = m_uas_->get_tgt_component();
+		m_uas_->msg_set_target(sp);
 
 		// [[[cog:
 		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'lat_int', 'lon_int', 'alt', 'yaw', 'yaw_rate'):
@@ -134,11 +132,8 @@ public:
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::common::msg::SET_ATTITUDE_TARGET sp;
 
-		sp.target_system = m_uas_->get_tgt_system();
-		sp.target_component = m_uas_->get_tgt_component();
-
-		// XXX fix me later!
-		mavros::UAS::quaternion_to_mavlink(orientation, sp.q.data());
+		m_uas_->msg_set_target(sp);
+		mavros::ftf::quaternion_to_mavlink(orientation, sp.q);
 
 		// [[[cog:
 		// for f in ('time_boot_ms', 'type_mask', 'thrust'):

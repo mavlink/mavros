@@ -19,7 +19,6 @@
 #include <angles/angles.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/gps_conversions.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <std_msgs/Float64.h>
@@ -73,7 +72,8 @@ public:
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return {
 				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
@@ -222,7 +222,7 @@ private:
 				odom->twist.twist.linear);
 
 		// Velocity covariance unknown
-		UAS::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
+		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
 
@@ -241,8 +241,8 @@ private:
 		odom->pose.pose.orientation = m_uas->get_attitude_orientation();
 
 		// Use ENU covariance to build XYZRPY covariance
-		UAS::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
-		UAS::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
+		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
+		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out <<
 			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
 			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
@@ -278,7 +278,8 @@ private:
 	}
 
 	/* -*- diagnostics -*- */
-	void gps_diag_run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
+	void gps_diag_run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
 		int fix_type, satellites_visible;
 		float eph, epv;
 
@@ -310,4 +311,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::GlobalPositionPlugin, mavros::plugin::PluginBase)

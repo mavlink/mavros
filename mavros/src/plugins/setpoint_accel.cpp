@@ -19,7 +19,6 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <geometry_msgs/Vector3Stamped.h>
 
@@ -47,7 +46,8 @@ public:
 		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
@@ -78,7 +78,7 @@ private:
 		if (send_force)
 			ignore_all_except_a_xyz |= (1 << 9);
 
-		auto accel = UAS::transform_frame_enu_ned(accel_enu);
+		auto accel = ftf::transform_frame_enu_ned(accel_enu);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 				utils::enum_value(MAV_FRAME::LOCAL_NED),
@@ -101,4 +101,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAccelerationPlugin, mavros::plugin::PluginBase)

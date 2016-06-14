@@ -16,7 +16,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <mavros_msgs/AttitudeTarget.h>
@@ -76,11 +75,11 @@ private:
 	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_LOCAL_NED &tgt)
 	{
 		// Transform desired position,velocities,and accels from ENU to NED frame
-		auto position = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.x, tgt.y, tgt.z));
-		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
-		auto af = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
-		float yaw = UAS::transform_frame_yaw_ned_enu(tgt.yaw);
-		float yaw_rate = UAS::transform_frame_yaw_ned_enu(tgt.yaw_rate);
+		auto position = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.x, tgt.y, tgt.z));
+		auto velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
+		auto af = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
+		float yaw = ftf::transform_frame_yaw_ned_enu(tgt.yaw);
+		float yaw_rate = ftf::transform_frame_yaw_ned_enu(tgt.yaw_rate);
 
 		auto target = boost::make_shared<mavros_msgs::PositionTarget>();
 
@@ -99,10 +98,10 @@ private:
 	void handle_position_target_global_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_GLOBAL_INT &tgt)
 	{
 		// Transform desired velocities from ENU to NED frame
-		auto velocity = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
-		auto af = UAS::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
-		float yaw = UAS::transform_frame_yaw_ned_enu(tgt.yaw);
-		float yaw_rate = UAS::transform_frame_yaw_ned_enu(tgt.yaw_rate);
+		auto velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
+		auto af = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
+		float yaw = ftf::transform_frame_yaw_ned_enu(tgt.yaw);
+		float yaw_rate = ftf::transform_frame_yaw_ned_enu(tgt.yaw_rate);
 
 		auto target = boost::make_shared<mavros_msgs::GlobalPositionTarget>();
 
@@ -124,11 +123,11 @@ private:
 	{
 		// Transform orientation from baselink -> ENU
 		// to aircraft -> NED
-		auto orientation = UAS::transform_orientation_ned_enu(
-						   UAS::transform_orientation_baselink_aircraft(
+		auto orientation = ftf::transform_orientation_ned_enu(
+						   ftf::transform_orientation_baselink_aircraft(
 							   Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3])));
 
-		auto body_rate = UAS::transform_frame_baselink_aircraft(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
+		auto body_rate = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
 
 		auto target = boost::make_shared<mavros_msgs::AttitudeTarget>();
 
@@ -143,7 +142,8 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void local_cb(const mavros_msgs::PositionTarget::ConstPtr &req) {
+	void local_cb(const mavros_msgs::PositionTarget::ConstPtr &req)
+	{
 		Eigen::Vector3d position, velocity, af;
 		float yaw, yaw_rate;
 
@@ -152,11 +152,11 @@ private:
 		tf::vectorMsgToEigen(req->acceleration_or_force, af);
 
 		// Transform frame ENU->NED
-		position = UAS::transform_frame_enu_ned(position);
-		velocity = UAS::transform_frame_enu_ned(velocity);
-		af = UAS::transform_frame_enu_ned(af);
-		yaw = UAS::transform_frame_yaw_enu_ned(req->yaw);
-		yaw_rate = UAS::transform_frame_yaw_enu_ned(req->yaw_rate);
+		position = ftf::transform_frame_enu_ned(position);
+		velocity = ftf::transform_frame_enu_ned(velocity);
+		af = ftf::transform_frame_enu_ned(af);
+		yaw = ftf::transform_frame_yaw_enu_ned(req->yaw);
+		yaw_rate = ftf::transform_frame_yaw_enu_ned(req->yaw_rate);
 
 		set_position_target_local_ned(
 				req->header.stamp.toNSec() / 1000000,
@@ -168,7 +168,8 @@ private:
 				yaw, yaw_rate);
 	}
 
-	void global_cb(const mavros_msgs::GlobalPositionTarget::ConstPtr &req) {
+	void global_cb(const mavros_msgs::GlobalPositionTarget::ConstPtr &req)
+	{
 		Eigen::Vector3d velocity, af;
 		float yaw, yaw_rate;
 
@@ -176,10 +177,10 @@ private:
 		tf::vectorMsgToEigen(req->acceleration_or_force, af);
 
 		// Transform frame ENU->NED
-		velocity = UAS::transform_frame_enu_ned(velocity);
-		af = UAS::transform_frame_enu_ned(af);
-		yaw = UAS::transform_frame_yaw_enu_ned(req->yaw);
-		yaw_rate = UAS::transform_frame_yaw_enu_ned(req->yaw_rate);
+		velocity = ftf::transform_frame_enu_ned(velocity);
+		af = ftf::transform_frame_enu_ned(af);
+		yaw = ftf::transform_frame_yaw_enu_ned(req->yaw);
+		yaw_rate = ftf::transform_frame_yaw_enu_ned(req->yaw_rate);
 
 		set_position_target_global_int(
 				req->header.stamp.toNSec() / 1000000,
@@ -193,7 +194,8 @@ private:
 				yaw, yaw_rate);
 	}
 
-	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req) {
+	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
+	{
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d baselink_angular_rate;
 
@@ -201,10 +203,10 @@ private:
 
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
-		auto ned_desired_orientation = UAS::transform_orientation_enu_ned(
-			UAS::transform_orientation_baselink_aircraft(desired_orientation));
+		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
+			ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
-		auto body_rate = UAS::transform_frame_baselink_aircraft(baselink_angular_rate);
+		auto body_rate = ftf::transform_frame_baselink_aircraft(baselink_angular_rate);
 
 		tf::vectorMsgToEigen(req->body_rate, body_rate);
 
@@ -219,4 +221,5 @@ private:
 }	// namespace std_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointRawPlugin, mavros::plugin::PluginBase)
