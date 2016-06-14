@@ -33,20 +33,18 @@ namespace extra_plugins{
  *
  */
 class VisionPoseEstimatePlugin : public plugin::PluginBase,
-	private TF2ListenerMixin<VisionPoseEstimatePlugin> {
+	private plugin::TF2ListenerMixin<VisionPoseEstimatePlugin> {
 public:
 	VisionPoseEstimatePlugin() : PluginBase(),
 		sp_nh("~vision_pose"),
-		uas(nullptr),
 		tf_rate(10.0)
-	{ };
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		bool tf_listen;
-
 		PluginBase::initialize(uas_);
 
+		bool tf_listen;
 
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
@@ -65,14 +63,14 @@ public:
 		}
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
-	UAS *uas;
 
 	ros::Subscriber vision_sub;
 	ros::Subscriber vision_cov_sub;
@@ -85,18 +83,28 @@ private:
 	/* -*- low-level send -*- */
 
 	void vision_position_estimate(uint64_t usec,
-			float x, float y, float z,
-			float roll, float pitch, float yaw) {
-		mavlink_message_t msg;
-		mavlink_msg_vision_position_estimate_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
-				usec,
-				x,
-				y,
-				z,
-				roll,
-				pitch,
-				yaw);
-		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
+			Eigen::Vector3d &position,
+			Eigen::Vector3d &rpy)
+	{
+		mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
+
+		vp.usec = usec;
+
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("vp.%s = position.%s();" % (f, f))
+		// for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
+		//     cog.outl("vp.%s = rpy.%s();" % (b, a))
+		// ]]]
+		vp.x = position.x();
+		vp.y = position.y();
+		vp.z = position.z();
+		vp.roll = rpy.x();
+		vp.pitch = rpy.y();
+		vp.yaw = rpy.z();
+		// [[[end]]] (checksum: 2048daf411780847e77f08fe5a0b9dd3)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(vp);
 	}
 
 	/* -*- mid-level helpers -*- */
@@ -104,7 +112,8 @@ private:
 	/**
 	 * @brief Send vision estimate transform to FCU position controller
 	 */
-	void send_vision_estimate(const ros::Time &stamp, const Eigen::Affine3d &tr) {
+	void send_vision_estimate(const ros::Time &stamp, const Eigen::Affine3d &tr)
+	{
 		/**
 		 * @warning Issue #60.
 		 * This now affects pose callbacks too.
@@ -119,30 +128,31 @@ private:
 		auto rpy = UAS::quaternion_to_rpy(
 				UAS::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
 
-		vision_position_estimate(stamp.toNSec() / 1000,
-				position.x(), position.y(), position.z(),
-				rpy.x(), rpy.y(), rpy.z());
+		vision_position_estimate(stamp.toNSec() / 1000, position, rpy);
 	}
 
 	/* -*- callbacks -*- */
 
 	/* common TF listener moved to mixin */
 
-	void transform_cb(const geometry_msgs::TransformStamped &transform) {
+	void transform_cb(const geometry_msgs::TransformStamped &transform)
+	{
 		Eigen::Affine3d tr;
 		tf::transformMsgToEigen(transform.transform, tr);
 
 		send_vision_estimate(transform.header.stamp, tr);
 	}
 
-	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req) {
+	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
+	{
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(req->pose, tr);
 
 		send_vision_estimate(req->header.stamp, tr);
 	}
 
-	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req) {
+	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req)
+	{
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(req->pose.pose, tr);
 
