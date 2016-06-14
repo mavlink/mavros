@@ -66,13 +66,13 @@ include_directories(
 )
 
 add_library(mavros_extras
-  src/plugins/distance_sensor.cpp
-  src/plugins/px4flow.cpp
-  src/plugins/mocap_pose_estimate.cpp
-  src/plugins/vision_pose_estimate.cpp
-  src/plugins/vision_speed_estimate.cpp
-  src/plugins/vibration.cpp
-  src/plugins/cam_imu_sync.cpp
+  #src/plugins/distance_sensor.cpp
+  #src/plugins/px4flow.cpp
+  #src/plugins/mocap_pose_estimate.cpp
+  #src/plugins/vision_pose_estimate.cpp
+  #src/plugins/vision_speed_estimate.cpp
+  #src/plugins/vibration.cpp
+  #src/plugins/cam_imu_sync.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
