@@ -255,6 +255,15 @@ public:
 	/* -*- utils -*- */
 
 	/**
+	 * Helper template to set target id's of message.
+	 */
+	template<typename _T>
+	inline void msg_set_target(_T &msg) {
+		msg.target_system = get_tgt_system();
+		msg.target_component = get_tgt_component();
+	}
+
+	/**
 	 * @brief Check that sys/comp id's is my target
 	 */
 	inline bool is_my_target(uint8_t sysid, uint8_t compid) {
@@ -307,27 +316,6 @@ public:
 	 * @return true if success
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
-
-	// XXX: move out static stringify {
-
-	/**
-	 * @brief Represent MAV_AUTOPILOT as string
-	 */
-	static std::string str_autopilot(MAV_AUTOPILOT ap);
-
-	/**
-	 * @brief Represent MAV_TYPE as string
-	 */
-	static std::string str_type(MAV_TYPE type);
-
-	/**
-	 * @brief Represent MAV_STATE as string
-	 */
-	static std::string str_system_status(MAV_STATE st);
-
-	// XXX }
-
-	/* -*- frame conversion utilities -*- */
 
 private:
 	std::recursive_mutex mutex;

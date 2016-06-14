@@ -61,7 +61,7 @@ static const OrientationPair make_orientation(const std::string &name,
 //
 //     return vec
 //
-// cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations = {{" % len(enum))
+// cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations{{" % len(enum))
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
 //     vec = parse_rpy(e.description)
@@ -70,7 +70,7 @@ static const OrientationPair make_orientation(const std::string &name,
 //
 // cog.outl("}};")
 // ]]]
-static const std::array<const OrientationPair, 39> sensor_orientations = {{
+static const std::array<const OrientationPair, 39> sensor_orientations{{
 /*  0 */ make_orientation("NONE",                         0.0,   0.0,   0.0),
 /*  1 */ make_orientation("YAW_45",                       0.0,   0.0,  45.0),
 /*  2 */ make_orientation("YAW_90",                       0.0,   0.0,  90.0),
@@ -111,7 +111,7 @@ static const std::array<const OrientationPair, 39> sensor_orientations = {{
 /* 37 */ make_orientation("ROLL_90_YAW_270",             90.0,   0.0, 270.0),
 /* 38 */ make_orientation("ROLL_315_PITCH_315_YAW_315", 315.0, 315.0, 315.0),
 }};
-// [[[end]]] (checksum: dde1ac88bb8d400a18d888cc0f3d8b7e)
+// [[[end]]] (checksum: aa58ff53a1c7ba31228319345c1145e3)
 
 
 std::string to_string(MAV_SENSOR_ORIENTATION orientation)

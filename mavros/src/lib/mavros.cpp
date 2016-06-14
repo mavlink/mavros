@@ -334,7 +334,7 @@ void MavRos::startup_px4_usb_quirk()
 
 void MavRos::log_connect_change(bool connected)
 {
-	auto ap = mav_uas.str_autopilot(mav_uas.get_autopilot());
+	auto ap = utils::to_string(mav_uas.get_autopilot());
 
 	/* note: sys_status plugin required */
 	if (connected)

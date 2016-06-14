@@ -50,6 +50,10 @@ std::string to_string_enum(std::underlying_type<_T> e)
  */
 std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 
+std::string to_string(mavlink::common::MAV_AUTOPILOT e);
+std::string to_string(mavlink::common::MAV_TYPE e);
+std::string to_string(mavlink::common::MAV_STATE e);
+
 
 /**
  * @brief Function to match the received orientation received by MAVLink msg
