@@ -16,7 +16,6 @@
 #include <unordered_map>
 #include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <sensor_msgs/Range.h>
@@ -216,8 +215,8 @@ private:
 			ROS_ERROR_NAMED("distance_sensor",
 					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
 					sensor->topic_name.c_str(),
-					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation)).c_str(),
-					UAS::str_sensor_orientation(static_cast<MAV_SENSOR_ORIENTATION>(sensor->orientation)).c_str());
+					utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
+					utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
@@ -245,7 +244,7 @@ private:
 
 		if (sensor->send_tf) {
 			/* variables init */
-			auto q = UAS::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
+			auto q = utils::sensor_orientation_matching(static_cast<MAV_SENSOR_ORIENTATION>(dist_sen.orientation));
 
 			geometry_msgs::TransformStamped transform;
 
@@ -321,7 +320,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		p->orientation = -1;	// not set
 	else
 		// lookup for numeric value
-		p->orientation = UAS::orientation_from_str(orientation_str);
+		p->orientation = utils::sensor_orientation_from_str(orientation_str);
 
 
 	if (!p->is_subscriber) {
@@ -381,4 +380,5 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 }	// namespace extra_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::DistanceSensorPlugin, mavros::plugin::PluginBase)

@@ -16,7 +16,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
@@ -96,7 +95,7 @@ private:
 		Eigen::Vector3d vel_;
 		tf::vectorMsgToEigen(vel_enu, vel_);
 		//Transform from ENU to NED frame
-		auto vel = UAS::transform_frame_enu_ned(vel_);
+		auto vel = ftf::transform_frame_enu_ned(vel_);
 
 		vision_speed_estimate(stamp.toNSec() / 1000, vel);
 	}
@@ -114,4 +113,5 @@ private:
 }	// namespace extra_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionSpeedEstimatePlugin, mavros::plugin::PluginBase)

@@ -17,7 +17,6 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -124,9 +123,9 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto rpy = UAS::quaternion_to_rpy(
-				UAS::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
+		auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		auto rpy = ftf::quaternion_to_rpy(
+				ftf::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
 
 		vision_position_estimate(stamp.toNSec() / 1000, position, rpy);
 	}
@@ -162,4 +161,5 @@ private:
 }	// namespace extra_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionPoseEstimatePlugin, mavros::plugin::PluginBase)

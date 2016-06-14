@@ -16,7 +16,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -81,7 +80,7 @@ private:
 		mavlink::common::msg::ATT_POS_MOCAP pos;
 
 		pos.time_usec = usec;
-		UAS::quaternion_to_mavlink(q, pos.q.data());	// XXX!
+		ftf::quaternion_to_mavlink(q, pos.q);
 		pos.x = v.x();
 		pos.y = v.y();
 		pos.z = v.z();
@@ -95,10 +94,10 @@ private:
 		Eigen::Quaterniond q_enu;
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
-		auto q = UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(q_enu));
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(q_enu));
 
-		auto position = UAS::transform_frame_enu_ned(
+		auto position = ftf::transform_frame_enu_ned(
 				Eigen::Vector3d(
 					pose->pose.position.x,
 					pose->pose.position.y,
@@ -115,10 +114,10 @@ private:
 		Eigen::Quaterniond q_enu;
 
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
-		auto q = UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(q_enu));
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(q_enu));
 
-		auto position = UAS::transform_frame_enu_ned(
+		auto position = ftf::transform_frame_enu_ned(
 				Eigen::Vector3d(
 					trans->transform.translation.x,
 					trans->transform.translation.y,
@@ -132,4 +131,5 @@ private:
 }	// namespace extra_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::MocapPoseEstimatePlugin, mavros::plugin::PluginBase)

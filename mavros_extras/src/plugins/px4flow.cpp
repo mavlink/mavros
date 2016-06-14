@@ -17,7 +17,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <mavros_msgs/OpticalFlowRad.h>
 #include <sensor_msgs/Temperature.h>
@@ -85,12 +84,12 @@ private:
 		 * The optical flow camera is essentially an angular sensor, so conversion is like
 		 * gyroscope. (aircraft -> baselink)
 		 */
-		auto int_xy = UAS::transform_frame_aircraft_baselink(
+		auto int_xy = ftf::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
 					flow_rad.integrated_x,
 					flow_rad.integrated_y,
 					0.0));
-		auto int_gyro = UAS::transform_frame_aircraft_baselink(
+		auto int_gyro = ftf::transform_frame_aircraft_baselink(
 				Eigen::Vector3d(
 					flow_rad.integrated_xgyro,
 					flow_rad.integrated_ygyro,
@@ -148,4 +147,5 @@ private:
 }	// namespace extra_plugins
 }	// namespace mavros
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::PX4FlowPlugin, mavros::plugin::PluginBase)

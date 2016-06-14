@@ -37,15 +37,6 @@ constexpr typename std::underlying_type<_T>::type enum_value(_T e)
 }
 
 /**
- * Helper to call to_string() for enum _T
- */
-template<typename _T>
-std::string to_string_enum(std::underlying_type<_T> e)
-{
-	return to_string(static_cast<_T>(e));
-}
-
-/**
  * @brief Retrieve alias of the orientation received by MAVLink msg.
  */
 std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
@@ -54,6 +45,14 @@ std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
 
+/**
+ * Helper to call to_string() for enum _T
+ */
+template<typename _T>
+std::string to_string_enum(int e)
+{
+	return to_string(static_cast<_T>(e));
+}
 
 /**
  * @brief Function to match the received orientation received by MAVLink msg
