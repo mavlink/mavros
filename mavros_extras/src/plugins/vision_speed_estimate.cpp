@@ -22,7 +22,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief Vision speed estimate plugin
  *
@@ -30,9 +31,9 @@ namespace mavplugin {
  * to FCU position and attitude estimators.
  *
  */
-class VisionSpeedEstimatePlugin : public MavRosPlugin {
+class VisionSpeedEstimatePlugin : public plugin::PluginBase {
 public:
-	VisionSpeedEstimatePlugin() :
+	VisionSpeedEstimatePlugin() : PluginBase(),
 		sp_nh("~vision_speed"),
 		uas(nullptr)
 	{ };
@@ -40,7 +41,8 @@ public:
 	void initialize(UAS &uas_)
 	{
 		bool listen_twist;
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+
 
 		sp_nh.param("listen_twist", listen_twist, false);
 
@@ -50,13 +52,13 @@ public:
 			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vel_speed_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle sp_nh;
-	UAS *uas;
+	
 
 	ros::Subscriber vision_vel_sub;
 
@@ -65,10 +67,10 @@ private:
 	void vision_speed_estimate(uint64_t usec,
 			float x, float y, float z) {
 		mavlink_message_t msg;
-		mavlink_msg_vision_speed_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_vision_speed_estimate_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
 				usec,
 				x, y, z);
-		UAS_FCU(uas)->send_message(&msg);
+		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
 	}
 
 	/**
@@ -101,6 +103,7 @@ private:
 		send_vision_speed(req->vector, req->header.stamp);
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionSpeedEstimatePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionSpeedEstimatePlugin, mavros::plugin::PluginBase)

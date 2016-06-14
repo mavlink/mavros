@@ -23,16 +23,17 @@
 #include <geometry_msgs/TransformStamped.h>
 
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief MocapPoseEstimate plugin
  *
  * Sends motion capture data to FCU.
  */
-class MocapPoseEstimatePlugin : public MavRosPlugin
+class MocapPoseEstimatePlugin : public plugin::PluginBase
 {
 public:
-	MocapPoseEstimatePlugin() :
+	MocapPoseEstimatePlugin() : PluginBase(),
 		mp_nh("~mocap"),
 		uas(nullptr)
 	{ };
@@ -42,7 +43,8 @@ public:
 		bool use_tf;
 		bool use_pose;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+
 
 		/** @note For VICON ROS package, subscribe to TransformStamped topic */
 		mp_nh.param("use_tf", use_tf, false);
@@ -61,13 +63,13 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle mp_nh;
-	UAS *uas;
+	
 
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
@@ -79,13 +81,13 @@ private:
 			float x, float y, float z)
 	{
 		mavlink_message_t msg;
-		mavlink_msg_att_pos_mocap_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_att_pos_mocap_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
 				usec,
 				q,
 				x,
 				y,
 				z);
-		UAS_FCU(uas)->send_message(&msg);
+		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */
@@ -138,6 +140,7 @@ private:
 				position.z());
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::MocapPoseEstimatePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::MocapPoseEstimatePlugin, mavros::plugin::PluginBase)

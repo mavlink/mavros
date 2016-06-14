@@ -21,7 +21,8 @@
 
 #include <sensor_msgs/Range.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 class DistanceSensorPlugin;
 
 /**
@@ -103,16 +104,17 @@ private:
  * This plugin allows publishing distance sensor data, which is connected to
  * an offboard/companion computer through USB/Serial, to the FCU or vice-versa.
  */
-class DistanceSensorPlugin : public MavRosPlugin {
+class DistanceSensorPlugin : public plugin::PluginBase {
 public:
-	DistanceSensorPlugin() :
+	DistanceSensorPlugin() : PluginBase(),
 		dist_nh("~distance_sensor"),
 		uas(nullptr)
 	{ };
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+
 
 		XmlRpc::XmlRpcValue map_dict;
 		if (!dist_nh.getParam("", map_dict)) {
@@ -133,9 +135,9 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_DISTANCE_SENSOR, &DistanceSensorPlugin::handle_distance_sensor)
+			       make_handler(&DistanceSensorPlugin::handle_distance_sensor)
 		};
 	}
 
@@ -143,7 +145,7 @@ private:
 	friend class DistanceSensorItem;
 
 	ros::NodeHandle dist_nh;
-	UAS *uas;
+	
 
 	std::unordered_map<uint8_t, DistanceSensorItem::Ptr> sensor_map;
 
@@ -155,7 +157,7 @@ private:
 			uint8_t type, uint8_t id,
 			uint8_t orientation, uint8_t covariance) {
 		mavlink_message_t msg;
-		mavlink_msg_distance_sensor_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_distance_sensor_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
 				time_boot_ms,
 				min_distance,
 				max_distance,
@@ -164,7 +166,7 @@ private:
 				id,
 				orientation,
 				covariance);
-		UAS_FCU(uas)->send_message(&msg);
+		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */
@@ -172,7 +174,7 @@ private:
 	/**
 	 * Receive distance sensor data from FCU.
 	 */
-	void handle_distance_sensor(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_distance_sensor(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_distance_sensor_t dist_sen;
 		mavlink_msg_distance_sensor_decode(msg, &dist_sen);
 
@@ -357,4 +359,4 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 }
 }; // namespace mavplugin
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::DistanceSensorPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::DistanceSensorPlugin, mavros::plugin::PluginBase)

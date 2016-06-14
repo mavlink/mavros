@@ -23,7 +23,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief Vision pose estimate plugin
  *
@@ -31,10 +32,10 @@ namespace mavplugin {
  * to FCU position and attitude estimators.
  *
  */
-class VisionPoseEstimatePlugin : public MavRosPlugin,
+class VisionPoseEstimatePlugin : public plugin::PluginBase,
 	private TF2ListenerMixin<VisionPoseEstimatePlugin> {
 public:
-	VisionPoseEstimatePlugin() :
+	VisionPoseEstimatePlugin() : PluginBase(),
 		sp_nh("~vision_pose"),
 		uas(nullptr),
 		tf_rate(10.0)
@@ -44,7 +45,8 @@ public:
 	{
 		bool tf_listen;
 
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+
 
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
@@ -63,7 +65,7 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return { /* Rx disabled */ };
 	}
 
@@ -86,7 +88,7 @@ private:
 			float x, float y, float z,
 			float roll, float pitch, float yaw) {
 		mavlink_message_t msg;
-		mavlink_msg_vision_position_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
+		mavlink_msg_vision_position_estimate_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
 				usec,
 				x,
 				y,
@@ -94,7 +96,7 @@ private:
 				roll,
 				pitch,
 				yaw);
-		UAS_FCU(uas)->send_message(&msg);
+		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
 	}
 
 	/* -*- mid-level helpers -*- */
@@ -147,6 +149,7 @@ private:
 		send_vision_estimate(req->header.stamp, tr);
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionPoseEstimatePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionPoseEstimatePlugin, mavros::plugin::PluginBase)

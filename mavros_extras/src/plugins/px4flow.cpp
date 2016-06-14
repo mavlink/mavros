@@ -22,15 +22,16 @@
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/Range.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief PX4 Optical Flow plugin
  *
  * This plugin can publish data from PX4Flow camera to ROS
  */
-class PX4FlowPlugin : public MavRosPlugin {
+class PX4FlowPlugin : public plugin::PluginBase {
 public:
-	PX4FlowPlugin() :
+	PX4FlowPlugin() : PluginBase(),
 		flow_nh("~px4flow"),
 		uas(nullptr),
 		ranger_fov(0.0),
@@ -40,7 +41,8 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
+
 
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
@@ -54,9 +56,9 @@ public:
 		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subsctiptions() {
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_OPTICAL_FLOW_RAD, &PX4FlowPlugin::handle_optical_flow_rad)
+			       make_handler(&PX4FlowPlugin::handle_optical_flow_rad)
 		};
 	}
 
@@ -74,7 +76,7 @@ private:
 	ros::Publisher range_pub;
 	ros::Publisher temp_pub;
 
-	void handle_optical_flow_rad(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_optical_flow_rad(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
 		mavlink_optical_flow_rad_t flow_rad;
 		mavlink_msg_optical_flow_rad_decode(msg, &flow_rad);
 
@@ -146,6 +148,7 @@ private:
 		range_pub.publish(range_msg);
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::PX4FlowPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::PX4FlowPlugin, mavros::plugin::PluginBase)
