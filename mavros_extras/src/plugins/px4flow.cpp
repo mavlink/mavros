@@ -9,6 +9,7 @@
  */
 /*
  * Copyright 2014 M.H.Kabir.
+ * Copyright 2016 Vladimir Ermakov
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -33,16 +34,14 @@ class PX4FlowPlugin : public plugin::PluginBase {
 public:
 	PX4FlowPlugin() : PluginBase(),
 		flow_nh("~px4flow"),
-		uas(nullptr),
 		ranger_fov(0.0),
 		ranger_min_range(0.3),
 		ranger_max_range(5.0)
-	{ };
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-
 
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
@@ -56,7 +55,8 @@ public:
 		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return {
 			       make_handler(&PX4FlowPlugin::handle_optical_flow_rad)
 		};
@@ -64,7 +64,6 @@ public:
 
 private:
 	ros::NodeHandle flow_nh;
-	UAS *uas;
 
 	std::string frame_id;
 
@@ -76,11 +75,9 @@ private:
 	ros::Publisher range_pub;
 	ros::Publisher temp_pub;
 
-	void handle_optical_flow_rad(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_optical_flow_rad_t flow_rad;
-		mavlink_msg_optical_flow_rad_decode(msg, &flow_rad);
-
-		auto header = uas->synchronized_header(frame_id, flow_rad.time_usec);
+	void handle_optical_flow_rad(const mavlink::mavlink_message_t *msg, mavlink::common::msg::OPTICAL_FLOW_RAD &flow_rad)
+	{
+		auto header = m_uas->synchronized_header(frame_id, flow_rad.time_usec);
 
 		/**
 		 * Raw message with axes mapped to ROS conventions and temp in degrees celsius.
