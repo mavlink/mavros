@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov, Tony Baltovski.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, Tony Baltovski.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -34,17 +34,15 @@ class MocapPoseEstimatePlugin : public plugin::PluginBase
 {
 public:
 	MocapPoseEstimatePlugin() : PluginBase(),
-		mp_nh("~mocap"),
-		uas(nullptr)
-	{ };
+		mp_nh("~mocap")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		bool use_tf;
-		bool use_pose;
-
 		PluginBase::initialize(uas_);
 
+		bool use_tf;
+		bool use_pose;
 
 		/** @note For VICON ROS package, subscribe to TransformStamped topic */
 		mp_nh.param("use_tf", use_tf, false);
@@ -63,13 +61,13 @@ public:
 		}
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle mp_nh;
-	
 
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
@@ -77,30 +75,28 @@ private:
 	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
-			float q[4],
-			float x, float y, float z)
+			Eigen::Quaterniond &q,
+			Eigen::Vector3d &v)
 	{
-		mavlink_message_t msg;
-		mavlink_msg_att_pos_mocap_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
-				usec,
-				q,
-				x,
-				y,
-				z);
-		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
+		mavlink::common::msg::ATT_POS_MOCAP pos;
+
+		pos.time_usec = usec;
+		UAS::quaternion_to_mavlink(q, pos.q.data());	// XXX!
+		pos.x = v.x();
+		pos.y = v.y();
+		pos.z = v.z();
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(pos);
 	}
 
 	/* -*- mid-level helpers -*- */
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 	{
 		Eigen::Quaterniond q_enu;
-		float q[4];
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
-		UAS::quaternion_to_mavlink(
-				UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(q_enu)),
-				q);
+		auto q = UAS::transform_orientation_enu_ned(
+					UAS::transform_orientation_baselink_aircraft(q_enu));
 
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
@@ -110,22 +106,17 @@ private:
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
-				position.x(),
-				position.y(),
-				position.z());
+				position);
 	}
 
 	/* -*- callbacks -*- */
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		Eigen::Quaterniond q_enu;
-		float q[4];
 
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
-		UAS::quaternion_to_mavlink(
-				UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(q_enu)),
-				q);
+		auto q = UAS::transform_orientation_enu_ned(
+					UAS::transform_orientation_baselink_aircraft(q_enu));
 
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
@@ -135,9 +126,7 @@ private:
 
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
 				q,
-				position.x(),
-				position.y(),
-				position.z());
+				position);
 	}
 };
 }	// namespace extra_plugins
