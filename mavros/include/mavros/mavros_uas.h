@@ -72,7 +72,6 @@ public:
 	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
 	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
 	using MAV_STATE = mavlink::common::MAV_STATE;
-	using MAV_SENSOR_ORIENTATION = mavlink::common::MAV_SENSOR_ORIENTATION;
 
 	UAS();
 	~UAS() {};
@@ -325,22 +324,6 @@ public:
 	 * @brief Represent MAV_STATE as string
 	 */
 	static std::string str_system_status(MAV_STATE st);
-
-	/**
-	 * @brief Function to match the received orientation received by MAVLink msg
-	 *        and the rotation of the sensor relative to the FCU.
-	 */
-	static Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
-
-	/**
-	 * @brief Retrieve alias of the orientation received by MAVLink msg.
-	 */
-	static std::string str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation);
-
-	/**
-	 * @brief Retrieve sensor orientation number from alias name.
-	 */
-	static int orientation_from_str(const std::string &sensor_orientation);
 
 	// XXX }
 

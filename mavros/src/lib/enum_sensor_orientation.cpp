@@ -1,6 +1,6 @@
 /**
  * @brief Sensor orientation helper function
- * @file uas_sensor_orientation.cpp
+ * @file enum_sensor_orientation.cpp
  * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup nodelib
@@ -13,15 +13,18 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
-#include <array>
-#include <mavros/mavros_uas.h>
 
-#define DEG_TO_RAD (M_PI / 180.0f)
+#include <mavros/utils.h>
+#include <mavros/frame_tf.h>
+#include <ros/console.h>
 
-using namespace mavros;
+namespace mavros {
+namespace utils {
+
+using mavlink::common::MAV_SENSOR_ORIENTATION;
 
 // internal type: name - rotation
-typedef std::pair<const std::string, const Eigen::Quaterniond> OrientationPair;
+using OrientationPair = std::pair<const std::string, const Eigen::Quaterniond>;
 
 // internal data initializer
 static const OrientationPair make_orientation(const std::string &name,
@@ -29,10 +32,12 @@ static const OrientationPair make_orientation(const std::string &name,
 	const double pitch,
 	const double yaw)
 {
-	const Eigen::Quaterniond rot = UAS::quaternion_from_rpy(Eigen::Vector3d(roll, pitch, yaw) * DEG_TO_RAD);
+	constexpr auto DEG_TO_RAD = (M_PI / 180.0);
+	const Eigen::Quaterniond rot = ftf::quaternion_from_rpy(Eigen::Vector3d(roll, pitch, yaw) * DEG_TO_RAD);
 	return std::make_pair(name, rot);
 }
 
+// XXX generate it!
 static const std::array<const OrientationPair, 39> sensor_orientations = {{
 /*  0 */ make_orientation("NONE",                         0.0,   0.0,   0.0),
 /*  1 */ make_orientation("YAW_45",                       0.0,   0.0,  45.0),
@@ -75,9 +80,9 @@ static const std::array<const OrientationPair, 39> sensor_orientations = {{
 /* 38 */ make_orientation("ROLL_315_PITCH_315_YAW_315", 315.0, 315.0, 315.0)
 }};
 
-std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
+std::string to_string(MAV_SENSOR_ORIENTATION orientation)
 {
-	const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
+	const auto idx = enum_value(orientation);
 	if (idx >= sensor_orientations.size()) {
 		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %d", idx);
 		return std::to_string(idx);
@@ -86,7 +91,7 @@ std::string UAS::str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation)
 	return sensor_orientations[idx].first;
 }
 
-Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
+Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
 	//const size_t idx(orientation);
 	const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
@@ -98,8 +103,10 @@ Eigen::Quaterniond UAS::sensor_orientation_matching(MAV_SENSOR_ORIENTATION orien
 	return sensor_orientations[idx].second;
 }
 
-int UAS::orientation_from_str(const std::string &sensor_orientation)
+int sensor_orientation_from_str(const std::string &sensor_orientation)
 {
+	// XXX bsearch
+
 	// 1. try to find by name
 	for (size_t idx = 0; idx < sensor_orientations.size(); idx++) {
 		if (sensor_orientations[idx].first == sensor_orientation)
@@ -125,3 +132,6 @@ int UAS::orientation_from_str(const std::string &sensor_orientation)
 
 	return -1;
 }
+
+}	// namespace utils
+}	// namespace mavros
