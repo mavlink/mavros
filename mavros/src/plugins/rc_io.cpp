@@ -116,7 +116,7 @@ private:
 
 		if (channels.chancount > MAX_CHANCNT) {
 			ROS_WARN_THROTTLE_NAMED(60, "rc",
-						"FCU receives %u RC channels, but RC_CHANNELS can store %u",
+						"FCU receives %u RC channels, but RC_CHANNELS can store %zu",
 						channels.chancount, MAX_CHANCNT);
 
 			channels.chancount = MAX_CHANCNT;
