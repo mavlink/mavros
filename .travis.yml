@@ -46,7 +46,7 @@ install:
   - ln -s $CI_SOURCE_PATH .
   # Install dependencies using rosdep
   - cd ~/catkin_ws
-  - rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+  - rosdep install -q -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 
 before_script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
@@ -54,9 +54,9 @@ before_script:
 script:
   - cd ~/catkin_ws
   - catkin config --install
-  - catkin build --summary
+  - catkin build --no-status --summary
   - source devel/setup.bash
-  - catkin run_tests -p1 --summary
+  - catkin run_tests --no-status -p1 -i --summary
   #- catkin_test_results --all ~/catkin_ws/build
 
 after_failure:
