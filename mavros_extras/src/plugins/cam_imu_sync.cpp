@@ -24,26 +24,25 @@ namespace extra_plugins{
 /**
  * @brief Camera IMU synchronisation plugin
  *
- * This plugin publishes a timestamp for when a external camera system was 
+ * This plugin publishes a timestamp for when a external camera system was
  * triggered by the FCU. Sequence ID from the message and the image sequence from
  * camera can be corellated to get the exact shutter trigger time.
  */
 class CamIMUSyncPlugin : public plugin::PluginBase {
 public:
 	CamIMUSyncPlugin() : PluginBase(),
-		cam_imu_sync_nh("~cam_imu_sync"),
-		uas(nullptr)
-	{ };
+		cam_imu_sync_nh("~cam_imu_sync")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-
 		cam_imu_pub = cam_imu_sync_nh.advertise<mavros_msgs::CamIMUStamp>("cam_imu_stamp", 10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return {
 			       make_handler(&CamIMUSyncPlugin::handle_cam_trig)
 		};
@@ -51,17 +50,14 @@ public:
 
 private:
 	ros::NodeHandle cam_imu_sync_nh;
-	
 
 	ros::Publisher cam_imu_pub;
 
-	void handle_cam_trig(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_camera_trigger_t ctrig;
-		mavlink_msg_camera_trigger_decode(msg, &ctrig);
-
+	void handle_cam_trig(const mavlink::mavlink_message_t *msg, mavlink::common::msg::CAMERA_TRIGGER &ctrig)
+	{
 		auto sync_msg = boost::make_shared<mavros_msgs::CamIMUStamp>();
 
-		sync_msg->frame_stamp = uas->synchronise_stamp(ctrig.time_usec);
+		sync_msg->frame_stamp = m_uas->synchronise_stamp(ctrig.time_usec);
 		sync_msg->frame_seq_id = ctrig.seq;
 
 		cam_imu_pub.publish(sync_msg);
