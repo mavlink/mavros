@@ -34,15 +34,14 @@ namespace extra_plugins{
 class VisionSpeedEstimatePlugin : public plugin::PluginBase {
 public:
 	VisionSpeedEstimatePlugin() : PluginBase(),
-		sp_nh("~vision_speed"),
-		uas(nullptr)
-	{ };
+		sp_nh("~vision_speed")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		bool listen_twist;
 		PluginBase::initialize(uas_);
 
+		bool listen_twist;
 
 		sp_nh.param("listen_twist", listen_twist, false);
 
@@ -52,25 +51,34 @@ public:
 			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vel_speed_cb, this);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle sp_nh;
-	
 
 	ros::Subscriber vision_vel_sub;
 
 	/* -*- low-level send -*- */
 
-	void vision_speed_estimate(uint64_t usec,
-			float x, float y, float z) {
-		mavlink_message_t msg;
-		mavlink_msg_vision_speed_estimate_pack_chan(UAS_PACK_CHAN(m_uas), &msg,
-				usec,
-				x, y, z);
-		UAS_FCU(m_uas)->send_message_ignore_drop(&msg);
+	void vision_speed_estimate(uint64_t usec, Eigen::Vector3d &v)
+	{
+		mavlink::common::msg::VISION_SPEED_ESTIMATE vs{};
+
+		vs.usec = usec;
+
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("vs.%s = v.%s();" % (f, f))
+		// ]]]
+		vs.x = v.x();
+		vs.y = v.y();
+		vs.z = v.z();
+		// [[[end]]] (checksum: aee3cc9a73a2e736b7bc6c83ea93abdb)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(vs);
 	}
 
 	/**
@@ -83,14 +91,14 @@ private:
 	/**
 	 * @brief Send vision speed estimate to FCU velocity controller
 	 */
-	void send_vision_speed(const geometry_msgs::Vector3 &vel_enu, const ros::Time &stamp) {
+	void send_vision_speed(const geometry_msgs::Vector3 &vel_enu, const ros::Time &stamp)
+	{
 		Eigen::Vector3d vel_;
 		tf::vectorMsgToEigen(vel_enu, vel_);
 		//Transform from ENU to NED frame
 		auto vel = UAS::transform_frame_enu_ned(vel_);
 
-		vision_speed_estimate(stamp.toNSec() / 1000,
-				vel.x(), vel.y(), vel.z());
+		vision_speed_estimate(stamp.toNSec() / 1000, vel);
 	}
 
 	/* -*- callbacks -*- */

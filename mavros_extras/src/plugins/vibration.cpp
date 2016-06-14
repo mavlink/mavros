@@ -29,21 +29,20 @@ namespace extra_plugins{
 class VibrationPlugin : public plugin::PluginBase {
 public:
 	VibrationPlugin() : PluginBase(),
-		vibe_nh("~vibration"),
-		uas(nullptr)
-	{ };
+		vibe_nh("~vibration")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-
 
 		vibe_nh.param<std::string>("frame_id", frame_id, "vibration");
 
 		vibration_pub = vibe_nh.advertise<mavros_msgs::Vibration>("raw/vibration", 10);
 	}
 
-	Subscriptions get_subsctiptions() {
+	Subscriptions get_subscriptions()
+	{
 		return {
 			       make_handler(&VibrationPlugin::handle_vibration)
 		};
@@ -51,19 +50,16 @@ public:
 
 private:
 	ros::NodeHandle vibe_nh;
-	
 
 	std::string frame_id;
 
 	ros::Publisher vibration_pub;
 
-	void handle_vibration(const mavlink::mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_vibration_t vibration;
-		mavlink_msg_vibration_decode(msg, &vibration);
-
+	void handle_vibration(const mavlink::mavlink_message_t *msg, mavlink::common::msg::VIBRATION &vibration)
+	{
 		auto vibe_msg = boost::make_shared<mavros_msgs::Vibration>();
 
-		vibe_msg->header = uas->synchronized_header(frame_id, vibration.time_usec);
+		vibe_msg->header = m_uas->synchronized_header(frame_id, vibration.time_usec);
 
 		// TODO no transform_frame?
 		vibe_msg->vibration.x = vibration.vibration_x;
