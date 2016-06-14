@@ -552,7 +552,8 @@ private:
 	{
 		ROS_DEBUG_STREAM_NAMED("param", "PR:m: set param " << param.to_string());
 
-		auto ps = ([this, &param]() -> auto {
+		// GCC 4.8 can't type out lambda return
+		auto ps = ([this, &param]() -> mavlink::common::msg::PARAM_SET {
 			if (m_uas->is_ardupilotmega())
 				return param.to_param_set_apm_qurk();
 			else
