@@ -77,8 +77,8 @@ add_library(mavros
   src/lib/uas_stringify.cpp
   src/lib/uas_timesync.cpp
   src/lib/uas_sensor_orientation.cpp
-  src/lib/uas_frame_conversions.cpp
-  src/lib/uas_quaternion_utils.cpp
+  src/lib/ftf_frame_conversions.cpp
+  src/lib/ftf_quaternion_utils.cpp
   src/lib/mavros.cpp
   src/lib/mavlink_diag.cpp
   src/lib/rosconsole_bridge.cpp
