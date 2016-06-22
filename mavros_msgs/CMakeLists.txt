@@ -17,6 +17,7 @@ add_message_files(
   ExtendedState.msg
   FileEntry.msg
   GlobalPositionTarget.msg
+  HilControls.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg

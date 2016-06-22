@@ -112,6 +112,7 @@ add_library(mavros_plugins
   src/plugins/actuator_control.cpp
   src/plugins/manual_control.cpp
   src/plugins/altitude.cpp
+  src/plugins/hil_controls.cpp
 )
 add_dependencies(mavros_plugins
   mavros
