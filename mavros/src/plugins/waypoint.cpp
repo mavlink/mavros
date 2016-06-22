@@ -612,6 +612,8 @@ private:
 
 	void mission_item(WaypointItem &wp)
 	{
+		m_uas->msg_set_target(wp);
+
 		// WaypointItem may be sent as MISSION_ITEM
 		UAS_FCU(m_uas)->send_message_ignore_drop(wp);
 	}
