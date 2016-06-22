@@ -47,6 +47,7 @@ private:
 	ros::Publisher mavlink_pub;
 	ros::Subscriber mavlink_sub;
 
+	diagnostic_updater::Updater gcs_diag_updater;
 	MavlinkDiag fcu_link_diag;
 	MavlinkDiag gcs_link_diag;
 

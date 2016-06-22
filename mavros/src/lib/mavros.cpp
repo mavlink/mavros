@@ -78,7 +78,8 @@ MavRos::MavRos() :
 			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
 
 			gcs_link_diag.set_mavconn(gcs_link);
-			UAS_DIAG(&mav_uas).add(gcs_link_diag);
+			gcs_diag_updater.setHardwareID(gcs_url);
+			gcs_diag_updater.add(gcs_link_diag);
 		}
 		catch (mavconn::DeviceError &ex) {
 			ROS_FATAL("GCS: %s", ex.what());
@@ -160,6 +161,9 @@ void MavRos::spin()
 			ros::Duration(0.5),
 			[&](const ros::TimerEvent &) {
 				UAS_DIAG(&mav_uas).update();
+
+				if (gcs_link)
+					gcs_diag_updater.update();
 			});
 	diag_timer.start();
 
