@@ -52,6 +52,12 @@ enum class Framing : uint8_t {
 	bad_signature = mavlink::MAVLINK_FRAMING_BAD_SIGNATURE,
 };
 
+//! MAVLink protocol version
+enum class Protocol : uint8_t {
+	V10 = 1,	//!< MAVLink v1.0
+	V20 = 2		//!< MAVLink v2.0
+};
+
 /**
  * @brief Common exception for communication error
  */
@@ -179,6 +185,12 @@ public:
 	}
 
 	/**
+	 * Set protocol used for encoding mavlink::Mavlink messages.
+	 */
+	void set_protocol_version(Protocol pver);
+	Protocol get_protocol_version();
+
+	/**
 	 * @brief Construct connection from URL
 	 *
 	 * Supported URL schemas:
@@ -199,6 +211,7 @@ public:
 			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
 	static std::vector<std::string> get_known_dialects();
+
 protected:
 	uint8_t sys_id;		//!< Connection System Id
 	uint8_t comp_id;	//!< Connection Component Id

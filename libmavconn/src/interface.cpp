@@ -181,6 +181,22 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
 	}
 }
 
+void MAVConnInterface::set_protocol_version(Protocol pver)
+{
+	if (pver == Protocol::V10)
+		m_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+	else
+		m_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+}
+
+Protocol MAVConnInterface::get_protocol_version()
+{
+	if (m_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)
+		return Protocol::V10;
+	else
+		return Protocol::V20;
+}
+
 /**
  * Parse host:port pairs
  */
