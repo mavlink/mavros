@@ -172,8 +172,6 @@ public:
 		       make_handler(&WaypointPlugin::handle_mission_count),
 		       make_handler(&WaypointPlugin::handle_mission_item_reached),
 		       make_handler(&WaypointPlugin::handle_mission_ack),
-		       // XXX remove after debugging!
-		       //HandlerInfo{0, "AAA", typeid(mavlink::common::msg::MISSION_ITEM).hash_code(), [](auto a, auto b){ } },
 		};
 	}
 

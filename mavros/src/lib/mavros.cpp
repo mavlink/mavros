@@ -310,7 +310,7 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 			else {
 				// existing: check handler message type
 
-				bool append_allowed = !is_mavlink_message_t(type_hash_);
+				bool append_allowed = is_mavlink_message_t(type_hash_);
 				if (!append_allowed) {
 					append_allowed = true;
 					for (auto &e : it->second) {
