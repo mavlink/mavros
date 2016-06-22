@@ -35,6 +35,7 @@ MavRos::MavRos() :
 	plugin_subscriptions{}
 {
 	std::string fcu_url, gcs_url;
+	std::string fcu_protocol;
 	int system_id, component_id;
 	int tgt_system_id, tgt_component_id;
 	bool px4_usb_quirk;
@@ -45,6 +46,7 @@ MavRos::MavRos() :
 
 	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
+	nh.param<std::string>("fcu_protocol", fcu_protocol, "v1.0");
 	nh.param("system_id", system_id, 1);
 	nh.param<int>("component_id", component_id, mavconn::MAV_COMP_ID_UDP_BRIDGE);
 	nh.param("target_system_id", tgt_system_id, 1);
@@ -70,6 +72,20 @@ MavRos::MavRos() :
 		ROS_FATAL("FCU: %s", ex.what());
 		ros::shutdown();
 		return;
+	}
+
+	if (fcu_protocol == "v1.0") {
+		fcu_link->set_protocol_version(mavconn::Protocol::V10);
+	}
+	else if (fcu_protocol == "v2.0") {
+		fcu_link->set_protocol_version(mavconn::Protocol::V20);
+	}
+	//else if (fcu_protocol == "auto") {	// XXX TODO
+	//	fcu_link->set_protocol_version(mavconn::Protocol::V20);
+	//}
+	else {
+		ROS_WARN("Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v1.0.", fcu_protocol.c_str());
+		fcu_link->set_protocol_version(mavconn::Protocol::V10);
 	}
 
 	if (gcs_url != "") {
