@@ -610,13 +610,6 @@ private:
 
 	/* -*- low-level send functions -*- */
 
-	template<class _T>
-	void msg_set_target(_T &m)
-	{
-		m.target_system = m_uas->get_tgt_system();
-		m.target_component = m_uas->get_tgt_component();
-	}
-
 	void mission_item(WaypointItem &wp)
 	{
 		// WaypointItem may be sent as MISSION_ITEM
@@ -628,7 +621,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: request #%u", seq);
 
 		mavlink::common::msg::MISSION_REQUEST mrq{};
-		msg_set_target(mrq);
+		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mrq);
@@ -639,7 +632,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: set current #%u", seq);
 
 		mavlink::common::msg::MISSION_SET_CURRENT msc{};
-		msg_set_target(msc);
+		m_uas->msg_set_target(msc);
 		msc.seq = seq;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(msc);
@@ -650,7 +643,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: request list");
 
 		mavlink::common::msg::MISSION_REQUEST_LIST mrl{};
-		msg_set_target(mrl);
+		m_uas->msg_set_target(mrl);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mrl);
 	}
@@ -660,7 +653,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: count %u", cnt);
 
 		mavlink::common::msg::MISSION_COUNT mcnt{};
-		msg_set_target(mcnt);
+		m_uas->msg_set_target(mcnt);
 		mcnt.count = cnt;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mcnt);
@@ -671,7 +664,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: clear all");
 
 		mavlink::common::msg::MISSION_CLEAR_ALL mclr{};
-		msg_set_target(mclr);
+		m_uas->msg_set_target(mclr);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mclr);
 	}
@@ -680,7 +673,7 @@ private:
 		ROS_DEBUG_NAMED("wp", "WP:m: ACK %u", enum_value(type));
 
 		mavlink::common::msg::MISSION_ACK mack{};
-		msg_set_target(mack);
+		m_uas->msg_set_target(mack);
 		mack.type = enum_value(type);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mack);

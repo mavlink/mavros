@@ -512,19 +512,12 @@ private:
 
 	/* -*- low-level send function -*- */
 
-	template<class _T>
-	void msg_set_target(_T &m)
-	{
-		m.target_system = m_uas->get_tgt_system();
-		m.target_component = m_uas->get_tgt_component();
-	}
-
 	void param_request_list()
 	{
 		ROS_DEBUG_NAMED("param", "PR:m: request list");
 
 		mavlink::common::msg::PARAM_REQUEST_LIST rql{};
-		msg_set_target(rql);
+		m_uas->msg_set_target(rql);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rql);
 	}
@@ -536,14 +529,12 @@ private:
 		ROS_DEBUG_NAMED("param", "PR:m: request '%s', idx %d", id.c_str(), index);
 
 		mavlink::common::msg::PARAM_REQUEST_READ rqr{};
-		msg_set_target(rqr);
+		m_uas->msg_set_target(rqr);
 		rqr.param_index = index;
 
 		if (index != -1) {
 			std::copy(id.begin(), id.end(), rqr.param_id.begin());
 		}
-		//else
-		//	rqr.param_id[0] = '\0';	// force NULL termination
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rqr);
 	}
@@ -560,7 +551,7 @@ private:
 				return param.to_param_set();
 		})();
 
-		msg_set_target(ps);
+		m_uas->msg_set_target(ps);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(ps);
 	}
