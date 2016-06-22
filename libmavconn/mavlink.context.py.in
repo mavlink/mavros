@@ -9,7 +9,8 @@ _COMMON = 'common'
 _APM = 'ardupilotmega'
 
 for dialect in IGNORE_DIALECTS:
-    MAVLINK_V20_DIALECTS.remove(dialect)
+    if dialect in MAVLINK_V20_DIALECTS:
+        MAVLINK_V20_DIALECTS.remove(dialect)
 
 if _COMMON not in MAVLINK_V20_DIALECTS:
     raise ValueError("common dialect not listed!")
