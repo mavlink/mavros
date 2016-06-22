@@ -1,7 +1,8 @@
 # HilControls.msg
 #
 # ROS representation of MAVLink HIL_CONTROLS
-# See mavlink documentation
+# See mavlink message documentation here:
+# https://pixhawk.ethz.ch/mavlink/
 
 std_msgs/Header header
 float32 roll_ailerons
