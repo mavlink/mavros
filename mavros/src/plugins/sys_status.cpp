@@ -673,8 +673,7 @@ private:
 
 	void handle_statustext(const mavlink::mavlink_message_t *msg, mavlink::common::msg::STATUSTEXT &textm)
 	{
-		std::string text(textm.text.data(),
-				strnlen(textm.text.data(), textm.text.size()));
+		auto text = mavlink::to_string(textm.text);
 
 		process_statustext_normal(textm.severity, text);
 	}

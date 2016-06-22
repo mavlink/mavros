@@ -422,7 +422,7 @@ private:
 	{
 		lock_guard lock(mutex);
 
-		std::string param_id(pmsg.param_id.data(), strnlen(pmsg.param_id.data(), pmsg.param_id.size()));
+		auto param_id = mavlink::to_string(pmsg.param_id);
 
 		// search
 		auto param_it = parameters.find(param_id);
