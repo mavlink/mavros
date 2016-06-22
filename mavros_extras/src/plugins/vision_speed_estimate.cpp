@@ -16,13 +16,13 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief Vision speed estimate plugin
  *
@@ -30,17 +30,17 @@ namespace mavplugin {
  * to FCU position and attitude estimators.
  *
  */
-class VisionSpeedEstimatePlugin : public MavRosPlugin {
+class VisionSpeedEstimatePlugin : public plugin::PluginBase {
 public:
-	VisionSpeedEstimatePlugin() :
-		sp_nh("~vision_speed"),
-		uas(nullptr)
-	{ };
+	VisionSpeedEstimatePlugin() : PluginBase(),
+		sp_nh("~vision_speed")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
+		PluginBase::initialize(uas_);
+
 		bool listen_twist;
-		uas = &uas_;
 
 		sp_nh.param("listen_twist", listen_twist, false);
 
@@ -50,25 +50,34 @@ public:
 			vision_vel_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vel_speed_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle sp_nh;
-	UAS *uas;
 
 	ros::Subscriber vision_vel_sub;
 
 	/* -*- low-level send -*- */
 
-	void vision_speed_estimate(uint64_t usec,
-			float x, float y, float z) {
-		mavlink_message_t msg;
-		mavlink_msg_vision_speed_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				usec,
-				x, y, z);
-		UAS_FCU(uas)->send_message(&msg);
+	void vision_speed_estimate(uint64_t usec, Eigen::Vector3d &v)
+	{
+		mavlink::common::msg::VISION_SPEED_ESTIMATE vs{};
+
+		vs.usec = usec;
+
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("vs.%s = v.%s();" % (f, f))
+		// ]]]
+		vs.x = v.x();
+		vs.y = v.y();
+		vs.z = v.z();
+		// [[[end]]] (checksum: aee3cc9a73a2e736b7bc6c83ea93abdb)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(vs);
 	}
 
 	/**
@@ -81,14 +90,14 @@ private:
 	/**
 	 * @brief Send vision speed estimate to FCU velocity controller
 	 */
-	void send_vision_speed(const geometry_msgs::Vector3 &vel_enu, const ros::Time &stamp) {
+	void send_vision_speed(const geometry_msgs::Vector3 &vel_enu, const ros::Time &stamp)
+	{
 		Eigen::Vector3d vel_;
 		tf::vectorMsgToEigen(vel_enu, vel_);
 		//Transform from ENU to NED frame
-		auto vel = UAS::transform_frame_enu_ned(vel_);
+		auto vel = ftf::transform_frame_enu_ned(vel_);
 
-		vision_speed_estimate(stamp.toNSec() / 1000,
-				vel.x(), vel.y(), vel.z());
+		vision_speed_estimate(stamp.toNSec() / 1000, vel);
 	}
 
 	/* -*- callbacks -*- */
@@ -101,6 +110,8 @@ private:
 		send_vision_speed(req->vector, req->header.stamp);
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VisionSpeedEstimatePlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionSpeedEstimatePlugin, mavros::plugin::PluginBase)

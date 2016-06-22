@@ -138,6 +138,8 @@ rosinstall_generator --upstream-development mavros | tee /tmp/mavros.rosinstall
 # 3. latest released mavlink package
 # you may run from this line to update ros-*-mavlink package
 rosinstall_generator mavlink | tee -a /tmp/mavros.rosinstall
+# alternative: to build master on Indigo or Jade:
+rosinstall_generator --rosdistro kinetic --upstream mavlink | tee -a /tmp/mavros.rosinstall
 
 # 4. workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
@@ -148,15 +150,19 @@ rosdep install --from-paths src --ignore-src --rosdistro jade -y
 catkin build
 ```
 
-*Build error*. if you has error with missing `mavlink_*_t` or `MAVLINK_MSG_ID_*` then you need fresh mavlink package.
+*Build error*. if you has error with missing `mavlink*` then you need fresh mavlink package.
 You may update from [ros-shadow-fixed][shadow] (binary installation) or redo script from step 3.
 
-*Important*. The current implementation of mavlink does not allow to select dialect in run-time,
-so mavros package (and all plugin packages) have compile-time option `MAVLINK_DIALECT`, default is 'aurdupilotmega'.
+*Note*. Since MAVLink 2.0 merged all dialects supported by same binary.
+Unfortunately overlap of v1.0 message ID's not fully handled, fisrt loaded message forbid futher changes.
+Load order always:
 
-If you want change dialect change workspace config:
+1. common
+2. ardupilotmega
+3. alphabetical ordered list
+4. ...
 
-    catkin config --cmake-args -DMAVLINK_DIALECT=common
+*Note*: `MAVLINK_DIALECT` not used anymore.
 
 
 Contributing

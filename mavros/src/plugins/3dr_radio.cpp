@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -19,15 +19,15 @@
 
 #include <mavros_msgs/RadioStatus.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief 3DR Radio plugin.
  */
-class TDRRadioPlugin : public MavRosPlugin {
+class TDRRadioPlugin : public plugin::PluginBase {
 public:
-	TDRRadioPlugin() :
+	TDRRadioPlugin() : PluginBase(),
 		nh("~"),
-		uas(nullptr),
 		has_radio_status(false),
 		diag_added(false),
 		low_rssi(0)
@@ -35,27 +35,26 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
 
 		nh.param("tdr_radio/low_rssi", low_rssi, 40);
 
 		status_pub = nh.advertise<mavros_msgs::RadioStatus>("radio_status", 10);
 
-		uas->sig_connection_changed.connect(boost::bind(&TDRRadioPlugin::connection_cb, this, _1));
+		// XXX!!!
+		m_uas->sig_connection_changed.connect(boost::bind(&TDRRadioPlugin::connection_cb, this, _1));
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO_STATUS, &TDRRadioPlugin::handle_radio_status),
-#ifdef MAVLINK_MSG_ID_RADIO
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_RADIO, &TDRRadioPlugin::handle_radio),
-#endif
+			make_handler(&TDRRadioPlugin::handle_radio_status),
+			make_handler(&TDRRadioPlugin::handle_radio),
 		};
 	}
 
 private:
 	ros::NodeHandle nh;
-	UAS *uas;
 
 	bool has_radio_status;
 	bool diag_added;
@@ -63,33 +62,30 @@ private:
 
 	ros::Publisher status_pub;
 
-	std::recursive_mutex diag_mutex;
+	std::mutex diag_mutex;
 	mavros_msgs::RadioStatus::Ptr last_status;
 
 	/* -*- message handlers -*- */
 
-	void handle_radio_status(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_radio_status_t rst;
-		mavlink_msg_radio_status_decode(msg, &rst);
+	void handle_radio_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RADIO_STATUS &rst)
+	{
 		has_radio_status = true;
-		handle_message(rst, sysid, compid);
+		handle_message(msg, rst);
 	}
 
-#ifdef MAVLINK_MSG_ID_RADIO
-	void handle_radio(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+	void handle_radio(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::RADIO &rst)
+	{
 		if (has_radio_status)
 			return;
 
 		// actually the same data, but from earlier modems
-		mavlink_radio_t rst;
-		mavlink_msg_radio_decode(msg, &rst);
-		handle_message(rst, sysid, compid);
+		handle_message(msg, rst);
 	}
-#endif
 
 	template<typename msgT>
-	void handle_message(msgT &rst, uint8_t sysid, uint8_t compid) {
-		if (sysid != '3' || compid != 'D')
+	void handle_message(const mavlink::mavlink_message_t *mmsg, msgT &rst)
+	{
+		if (mmsg->sysid != '3' || mmsg->compid != 'D')
 			ROS_WARN_THROTTLE_NAMED(30, "radio", "RADIO_STATUS not from 3DR modem?");
 
 		auto msg = boost::make_shared<mavros_msgs::RadioStatus>();
@@ -112,13 +108,13 @@ private:
 
 		// add diag at first event
 		if (!diag_added) {
-			UAS_DIAG(uas).add("3DR Radio", this, &TDRRadioPlugin::diag_run);
+			UAS_DIAG(m_uas).add("3DR Radio", this, &TDRRadioPlugin::diag_run);
 			diag_added = true;
 		}
 
 		// store last status for diag
 		{
-			lock_guard lock(diag_mutex);
+			std::lock_guard<std::mutex> lock(diag_mutex);
 			last_status = msg;
 		}
 
@@ -126,8 +122,9 @@ private:
 	}
 
 
-	void diag_run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		lock_guard lock(diag_mutex);
+	void diag_run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
+		std::lock_guard<std::mutex> lock(diag_mutex);
 
 		if (!last_status) {
 			stat.summary(2, "No data");
@@ -152,12 +149,13 @@ private:
 	}
 
 	void connection_cb(bool connected) {
-		UAS_DIAG(uas).removeByName("3DR Radio");
+		UAS_DIAG(m_uas).removeByName("3DR Radio");
 		diag_added = false;
 	}
 
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::TDRRadioPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::TDRRadioPlugin, mavros::plugin::PluginBase)
 

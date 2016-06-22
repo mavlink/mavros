@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -26,24 +26,28 @@ using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::serial_port_base;
 using boost::asio::buffer;
-typedef std::lock_guard<std::recursive_mutex> lock_guard;
+using mavlink::mavlink_message_t;
 
-#define PFXd	"mavconn: serial%d: "
+
+#define PFX	"mavconn: serial"
+#define PFXd	PFX "%zu: "
 
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		std::string device, unsigned baudrate) :
 	MAVConnInterface(system_id, component_id),
 	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	io_service(),
 	serial_dev(io_service)
 {
-	logInform(PFXd "device: %s @ %d bps", channel, device.c_str(), baudrate);
+	logInform(PFXd "device: %s @ %d bps", conn_id, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
 
-		// Sent baudrate, and 8N1 mode
+		// Set baudrate and 8N1 mode
 		serial_dev.set_option(serial_port_base::baud_rate(baudrate));
 		serial_dev.set_option(serial_port_base::character_size(8));
 		serial_dev.set_option(serial_port_base::parity(serial_port_base::parity::none));
@@ -55,19 +59,22 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	}
 
 	// give some work to io_service before start
-	io_service.post(boost::bind(&MAVConnSerial::do_read, this));
+	io_service.post(std::bind(&MAVConnSerial::do_read, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnSerial%d", channel);
-	io_thread.swap(t);
+	io_thread = std::thread([this] () {
+				utils::set_this_thread_name("mserial%zu", conn_id);
+				io_service.run();
+			});
 }
 
-MAVConnSerial::~MAVConnSerial() {
+MAVConnSerial::~MAVConnSerial()
+{
 	close();
 }
 
-void MAVConnSerial::close() {
+void MAVConnSerial::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
@@ -76,83 +83,89 @@ void MAVConnSerial::close() {
 	serial_dev.close();
 
 	// clear tx queue
-	for (auto &p : tx_q)
-		delete p;
 	tx_q.clear();
 
 	if (io_thread.joinable())
 		io_thread.join();
 
-	/* emit */ port_closed();
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
-	MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_bytes: TX queue overflow");
+
+		tx_q.emplace_back(bytes, length);
 	}
-	io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
+	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
 }
 
-void MAVConnSerial::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnSerial::send_message(const mavlink_message_t *message)
 {
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", channel);
+		logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
-	logDebug(PFXd "send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-			channel, message->msgid, message->len, sysid, compid, message->seq);
+	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message);
 	}
-	io_service.post(boost::bind(&MAVConnSerial::do_write, this, true));
+	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
+}
+
+void MAVConnSerial::send_message(const mavlink::Message &message)
+{
+	if (!is_open()) {
+		logError(PFXd "send: channel closed!", conn_id);
+		return;
+	}
+
+	log_send_obj(PFX, message);
+
+	{
+		lock_guard lock(mutex);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
+	}
+	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
 }
 
 void MAVConnSerial::do_read(void)
 {
 	serial_dev.async_read_some(
 			buffer(rx_buf, sizeof(rx_buf)),
-			boost::bind(&MAVConnSerial::async_read_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
-}
+			[this] (error_code error, size_t bytes_transferred) {
+				if (error) {
+					logError(PFXd "receive: %s", this, error.message().c_str());
+					close();
+					return;
+				}
 
-void MAVConnSerial::async_read_end(error_code error, size_t bytes_transferred)
-{
-	mavlink_message_t message;
-	mavlink_status_t status;
-
-	if (error) {
-		logError(PFXd "receive: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	iostat_rx_add(bytes_transferred);
-	for (size_t i = 0; i < bytes_transferred; i++) {
-		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			logDebug(PFXd "recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d Seq: %d",
-					channel, message.msgid, message.len, message.sysid, message.compid, message.seq);
-
-			/* emit */ message_received(&message, message.sysid, message.compid);
-		}
-	}
-
-	do_read();
+				parse_buffer(PFX, rx_buf, sizeof(rx_buf), bytes_transferred);
+				do_read();
+			});
 }
 
 void MAVConnSerial::do_write(bool check_tx_state)
@@ -165,41 +178,35 @@ void MAVConnSerial::do_write(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
-	MsgBuffer *buf = tx_q.front();
+	auto &buf_ref = tx_q.front();
 	serial_dev.async_write_some(
-			buffer(buf->dpos(), buf->nbytes()),
-			boost::bind(&MAVConnSerial::async_write_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
+			buffer(buf_ref.dpos(), buf_ref.nbytes()),
+			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+				assert(bytes_transferred <= buf_ref.len);
+
+				if (error) {
+					logError(PFXd "write: %s", conn_id, error.message().c_str());
+					close();
+					return;
+				}
+
+				iostat_tx_add(bytes_transferred);
+				lock_guard lock(mutex);
+
+				if (tx_q.empty()) {
+					tx_in_progress = false;
+					return;
+				}
+
+				buf_ref.pos += bytes_transferred;
+				if (buf_ref.nbytes() == 0) {
+					tx_q.pop_front();
+				}
+
+				if (!tx_q.empty())
+					do_write(false);
+				else
+					tx_in_progress = false;
+			});
 }
-
-void MAVConnSerial::async_write_end(error_code error, size_t bytes_transferred)
-{
-	if (error) {
-		logError(PFXd "write: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	iostat_tx_add(bytes_transferred);
-	lock_guard lock(mutex);
-	if (tx_q.empty()) {
-		tx_in_progress = false;
-		return;
-	}
-
-	MsgBuffer *buf = tx_q.front();
-	buf->pos += bytes_transferred;
-	if (buf->nbytes() == 0) {
-		tx_q.pop_front();
-		delete buf;
-	}
-
-	if (!tx_q.empty())
-		do_write(false);
-	else
-		tx_in_progress = false;
-}
-
-}; // namespace mavconn
+}	// namespace mavconn

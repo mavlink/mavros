@@ -8,7 +8,7 @@
  *  @brief Some useful utils
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -17,33 +17,54 @@
 
 #pragma once
 
+#include <Eigen/Geometry>
 #include <mavconn/thread_utils.h>
 #include <mavros_msgs/mavlink_convert.h>
+#include <mavconn/mavlink_dialect.h>
 
-// redeclare message at deprecated location
 namespace mavros {
-typedef mavros_msgs::Mavlink Mavlink __attribute__((deprecated));
-typedef mavros_msgs::MavlinkPtr MavlinkPtr __attribute__((deprecated));
-};	// namespace mavros
+namespace utils {
 
-namespace mavutils {
-/**
- * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
- * @deprecated Please use mavros_msgs::mavlink::convert() instead.
- */
-inline bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg) __attribute__((deprecated));
-bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg)
-{
-	return mavros_msgs::mavlink::convert(*rmsg, mmsg);
-};
+using mavconn::utils::format;
 
 /**
- * @brief Copy mavlink_message_t to mavros/Mavlink.msg
- * @deprecated Please use mavros_msgs::mavlink::convert() instead.
+ * Helper to get enum value from strongly typed enum (enum class).
  */
-inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg) __attribute__((deprecated));
-void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg)
+template<typename _T>
+constexpr typename std::underlying_type<_T>::type enum_value(_T e)
 {
-	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
-};
-};	// namespace mavutils
+	return static_cast<typename std::underlying_type<_T>::type>(e);
+}
+
+/**
+ * @brief Retrieve alias of the orientation received by MAVLink msg.
+ */
+std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
+
+std::string to_string(mavlink::common::MAV_AUTOPILOT e);
+std::string to_string(mavlink::common::MAV_TYPE e);
+std::string to_string(mavlink::common::MAV_STATE e);
+
+/**
+ * Helper to call to_string() for enum _T
+ */
+template<typename _T>
+std::string to_string_enum(int e)
+{
+	return to_string(static_cast<_T>(e));
+}
+
+/**
+ * @brief Function to match the received orientation received by MAVLink msg
+ *        and the rotation of the sensor relative to the FCU.
+ */
+Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIENTATION orientation);
+
+/**
+ * @brief Retrieve sensor orientation number from alias name.
+ */
+int sensor_orientation_from_str(const std::string &sensor_orientation);
+
+
+}	// namespace utils
+}	// namespace mavros

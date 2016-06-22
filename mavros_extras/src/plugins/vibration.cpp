@@ -15,53 +15,50 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <mavros_msgs/Vibration.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace extra_plugins{
 /**
  * @brief Vibration plugin
  *
  * This plugin is intended to publish MAV vibration levels and accelerometer clipping from FCU.
  */
-class VibrationPlugin : public MavRosPlugin {
+class VibrationPlugin : public plugin::PluginBase {
 public:
-	VibrationPlugin() :
-		vibe_nh("~vibration"),
-		uas(nullptr)
-	{ };
+	VibrationPlugin() : PluginBase(),
+		vibe_nh("~vibration")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
 
 		vibe_nh.param<std::string>("frame_id", frame_id, "vibration");
 
 		vibration_pub = vibe_nh.advertise<mavros_msgs::Vibration>("raw/vibration", 10);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VIBRATION, &VibrationPlugin::handle_vibration)
+			       make_handler(&VibrationPlugin::handle_vibration)
 		};
 	}
 
 private:
 	ros::NodeHandle vibe_nh;
-	UAS *uas;
 
 	std::string frame_id;
 
 	ros::Publisher vibration_pub;
 
-	void handle_vibration(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_vibration_t vibration;
-		mavlink_msg_vibration_decode(msg, &vibration);
-
+	void handle_vibration(const mavlink::mavlink_message_t *msg, mavlink::common::msg::VIBRATION &vibration)
+	{
 		auto vibe_msg = boost::make_shared<mavros_msgs::Vibration>();
 
-		vibe_msg->header = uas->synchronized_header(frame_id, vibration.time_usec);
+		vibe_msg->header = m_uas->synchronized_header(frame_id, vibration.time_usec);
 
 		// TODO no transform_frame?
 		vibe_msg->vibration.x = vibration.vibration_x;
@@ -74,6 +71,8 @@ private:
 		vibration_pub.publish(vibe_msg);
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::VibrationPlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VibrationPlugin, mavros::plugin::PluginBase)

@@ -19,61 +19,51 @@
 
 #include <mavros_msgs/ActuatorControl.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief ActuatorControl plugin
  *
  * Sends actuator controls to FCU controller.
  */
-class ActuatorControlPlugin : public MavRosPlugin {
+class ActuatorControlPlugin : public plugin::PluginBase {
 public:
-	ActuatorControlPlugin() :
-		nh("~"),
-		uas(nullptr)
-	{ };
+	ActuatorControlPlugin() : PluginBase(),
+		nh("~")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
 
 		actuator_control_sub = nh.subscribe("actuator_control", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
 	ros::NodeHandle nh;
-	UAS *uas;
 	ros::Subscriber actuator_control_sub;
-
-	/* -*- low-level send -*- */
-
-	//! message definiton here: @p http://mavlink.org/messages/common#SET_ACTUATOR_CONTROL_TARGET
-	void set_actuator_control_target(const uint64_t time_usec,
-			const uint8_t group_mix,
-			const float controls[8])
-	{
-		mavlink_message_t msg;
-
-		mavlink_msg_set_actuator_control_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_usec,
-				group_mix,
-				UAS_PACK_TGT(uas),
-				controls);
-		UAS_FCU(uas)->send_message(&msg);
-	}
 
 	/* -*- callbacks -*- */
 
 	void actuator_control_cb(const mavros_msgs::ActuatorControl::ConstPtr &req) {
 		//! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
-		set_actuator_control_target(ros::Time::now().toNSec() / 1000,
-				req->group_mix,
-				req->controls.data());
+		//! message definiton here: @p http://mavlink.org/messages/common#SET_ACTUATOR_CONTROL_TARGET
+		mavlink::common::msg::SET_ACTUATOR_CONTROL_TARGET act{};
+		act.time_usec = ros::Time::now().toNSec() / 1000;
+		act.group_mlx = req->group_mix;
+		act.target_system = m_uas->get_tgt_system();
+		act.target_component = m_uas->get_tgt_component();
+		std::copy(req->controls.begin(), req->controls.end(), act.controls.begin());	// std::array = boost::array
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(act);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::ActuatorControlPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::ActuatorControlPlugin, mavros::plugin::PluginBase)

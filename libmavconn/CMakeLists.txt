@@ -15,6 +15,8 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(EnableCXX11)
 include(MavrosMavlink)
 
+list(APPEND IGNORE_DIALECTS "autoquad") #-> enum values out of int limit
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -49,6 +51,16 @@ target_link_libraries(mavconn
   ${console_bridge_LIBRARIES}
 )
 
+# Use catkin-supplied em_expand macros to generate source files
+em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h)
+
+em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp)
 
 #############
 ## Install ##

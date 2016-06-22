@@ -17,34 +17,34 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Float64.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Setpoint attitude plugin
  *
  * Send setpoint attitude/orientation/thrust to FCU controller.
  */
-class SetpointAttitudePlugin : public MavRosPlugin,
-	private TF2ListenerMixin<SetpointAttitudePlugin> {
+class SetpointAttitudePlugin : public plugin::PluginBase,
+	private plugin::SetAttitudeTargetMixin<SetpointAttitudePlugin>,
+	private plugin::TF2ListenerMixin<SetpointAttitudePlugin> {
 public:
-	SetpointAttitudePlugin() :
+	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
-		uas(nullptr),
 		tf_rate(10.0),
 		reverse_throttle(false)
-	{ };
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		bool tf_listen;
+		PluginBase::initialize(uas_);
 
-		uas = &uas_;
+		bool tf_listen;
 
 		// main params
 		sp_nh.param("reverse_throttle", reverse_throttle, false);
@@ -68,14 +68,15 @@ public:
 		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this);
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return { /* Rx disabled */ };
 	}
 
 private:
+	friend class SetAttitudeTargetMixin;
 	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
-	UAS *uas;
 
 	ros::Subscriber twist_sub;
 	ros::Subscriber pose_sub;
@@ -86,24 +87,6 @@ private:
 	double tf_rate;
 	bool reverse_throttle;
 
-	/* -*- low-level send -*- */
-
-	void set_attitude_target(uint32_t time_boot_ms,
-			uint8_t type_mask,
-			float q[4],
-			float roll_rate, float pitch_rate, float yaw_rate,
-			float thrust) {
-		mavlink_message_t msg;
-		mavlink_msg_set_attitude_target_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_boot_ms,
-				UAS_PACK_TGT(uas),
-				type_mask,
-				q,
-				roll_rate, pitch_rate, yaw_rate,
-				thrust);
-		UAS_FCU(uas)->send_message(&msg);
-	}
-
 	/* -*- mid-level helpers -*- */
 
 	/**
@@ -111,20 +94,20 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr) {
+	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr)
+	{
 		/* Thrust + RPY, also bits numbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_q = (1 << 6) | (7 << 0);
-		float q[4];
 
-		UAS::quaternion_to_mavlink(
-				UAS::transform_orientation_enu_ned(
-					UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))),q);
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))
+					);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_q,
 				q,
-				0.0, 0.0, 0.0,
+				Eigen::Vector3d::Zero(),
 				0.0);
 	}
 
@@ -133,33 +116,33 @@ private:
 	 *
 	 * @note ENU frame.
 	 */
-	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel) {
+	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel)
+	{
 		/* Q + Thrust, also bits noumbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
-		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
-		auto av = UAS::transform_frame_baselink_aircraft(ang_vel);
+		auto av = ftf::transform_frame_baselink_aircraft(ang_vel);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 				ignore_all_except_rpy,
-				q,
-				av.x(), av.y(), av.z(),
+				Eigen::Quaterniond::Identity(),
+				av,
 				0.0);
 	}
 
 	/**
 	 * @brief Send throttle to FCU attitude controller
 	 */
-	void send_attitude_throttle(const float throttle) {
+	void send_attitude_throttle(const float throttle)
+	{
 		// Q + RPY
 		const uint8_t ignore_all_except_throttle = (1 << 7) | (7 << 0);
-		float q[4] = { 1.0, 0.0, 0.0, 0.0 };
 
 		set_attitude_target(ros::Time::now().toNSec() / 1000000,
 				ignore_all_except_throttle,
-				q,
-				0.0, 0.0, 0.0,
+				Eigen::Quaterniond::Identity(),
+				Eigen::Vector3d::Zero(),
 				throttle);
 	}
 
@@ -186,7 +169,8 @@ private:
 		send_attitude_ang_velocity(req->header.stamp, ang_vel);
 	}
 
-	inline bool is_normalized(float throttle, const float min, const float max) {
+	inline bool is_normalized(float throttle, const float min, const float max)
+	{
 		if (throttle < min) {
 			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) < Min(%f)", throttle, min);
 			return false;
@@ -199,7 +183,8 @@ private:
 		return true;
 	}
 
-	void throttle_cb(const std_msgs::Float64::ConstPtr &req) {
+	void throttle_cb(const std_msgs::Float64::ConstPtr &req)
+	{
 		float throttle_normalized = req->data;
 
 		/**
@@ -213,6 +198,8 @@ private:
 		send_attitude_throttle(throttle_normalized);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SetpointAttitudePlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAttitudePlugin, mavros::plugin::PluginBase)

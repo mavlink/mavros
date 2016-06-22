@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov, M.H.Kabir.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, M.H.Kabir.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -20,7 +20,8 @@
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Duration.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * Time syncronization status publisher
  *
@@ -45,8 +46,10 @@ public:
 		clear();
 	}
 
-	void clear() {
-		lock_guard lock(mutex);
+	void clear()
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+
 		ros::Time curtime = ros::Time::now();
 		count_ = 0;
 		dt_sum = 0;
@@ -60,8 +63,10 @@ public:
 		hist_indx_ = 0;
 	}
 
-	void tick(int64_t dt, uint64_t timestamp_ns, int64_t time_offset_ns) {
-		lock_guard lock(mutex);
+	void tick(int64_t dt, uint64_t timestamp_ns, int64_t time_offset_ns)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+
 		count_++;
 		last_dt = dt;
 		dt_sum += dt;
@@ -69,13 +74,16 @@ public:
 		offset = time_offset_ns;
 	}
 
-	void set_timestamp(uint64_t timestamp_ns) {
-		lock_guard lock(mutex);
+	void set_timestamp(uint64_t timestamp_ns)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
 		last_ts = timestamp_ns;
 	}
 
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) {
-		lock_guard lock(mutex);
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+
 		ros::Time curtime = ros::Time::now();
 		int curseq = count_;
 		int events = curseq - seq_nums_[hist_indx_];
@@ -111,7 +119,7 @@ private:
 	std::vector<ros::Time> times_;
 	std::vector<int> seq_nums_;
 	int hist_indx_;
-	std::recursive_mutex mutex;
+	std::mutex mutex;
 	const size_t window_size_;
 	const double min_freq_;
 	const double max_freq_;
@@ -126,44 +134,31 @@ private:
 /**
  * @brief System time plugin
  */
-class SystemTimePlugin : public MavRosPlugin {
+class SystemTimePlugin : public plugin::PluginBase {
 public:
-	SystemTimePlugin() :
+	SystemTimePlugin() : PluginBase(),
 		nh("~"),
-		uas(nullptr),
 		dt_diag("Time Sync", 10),
 		time_offset_ns(0),
 		offset_avg_alpha(0)
-	{ };
+	{ }
 
 	void initialize(UAS &uas_)
 	{
+		PluginBase::initialize(uas_);
+
 		double conn_system_time_d;
 		double conn_timesync_d;
 
 		ros::Duration conn_system_time;
 		ros::Duration conn_timesync;
 
-		uas = &uas_;
-
 		if (nh.getParam("conn/system_time_rate", conn_system_time_d) && conn_system_time_d != 0.0) {
 			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
-		}
-		else if (nh.getParam("conn/system_time", conn_system_time_d)) {
-			// XXX deprecated parameter
-			ROS_WARN_NAMED("time", "TM: parameter `~conn/system_time` deprecated, "
-				"please use `~conn/system_time_rate` instead!");
-			conn_system_time = ros::Duration(conn_system_time_d);
 		}
 
 		if (nh.getParam("conn/timesync_rate", conn_timesync_d) && conn_timesync_d != 0.0) {
 			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
-		}
-		else if (nh.getParam("conn/timesync", conn_timesync_d)) {
-			// XXX deprecated parameter
-			ROS_WARN_NAMED("time", "TM: parameter `~conn/timesync` deprecated, "
-				"please use `~conn/timesync_rate` instead!");
-			conn_timesync = ros::Duration(conn_timesync_d);
 		}
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
@@ -186,7 +181,7 @@ public:
 		// timer for sending timesync messages
 		if (!conn_timesync.isZero()) {
 			// enable timesync diag only if that feature enabled
-			UAS_DIAG(uas).add(dt_diag);
+			UAS_DIAG(m_uas).add(dt_diag);
 
 			timesync_timer = nh.createTimer(conn_timesync,
 					&SystemTimePlugin::timesync_cb, this);
@@ -194,16 +189,16 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_SYSTEM_TIME, &SystemTimePlugin::handle_system_time),
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_TIMESYNC, &SystemTimePlugin::handle_timesync),
+			       make_handler(&SystemTimePlugin::handle_system_time),
+			       make_handler(&SystemTimePlugin::handle_timesync),
 		};
 	}
 
 private:
 	ros::NodeHandle nh;
-	UAS *uas;
 	ros::Publisher time_ref_pub;
 
 	ros::Timer sys_time_timer;
@@ -215,10 +210,8 @@ private:
 	int64_t time_offset_ns;
 	double offset_avg_alpha;
 
-	void handle_system_time(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_system_time_t mtime;
-		mavlink_msg_system_time_decode(msg, &mtime);
-
+	void handle_system_time(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYSTEM_TIME &mtime)
+	{
 		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
 		const bool fcu_time_valid = mtime.time_unix_usec > 1234567890ULL * 1000000;
 
@@ -240,10 +233,8 @@ private:
 		}
 	}
 
-	void handle_timesync(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_timesync_t tsync;
-		mavlink_msg_timesync_decode(msg, &tsync);
-
+	void handle_timesync(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TIMESYNC &tsync)
+	{
 		uint64_t now_ns = ros::Time::now().toNSec();
 
 		if (tsync.tc1 == 0) {
@@ -256,7 +247,7 @@ private:
 
 			if (std::abs(dt) > 10000000) {		// 10 millisecond skew
 				time_offset_ns = offset_ns;	// hard-set it.
-				uas->set_time_offset(time_offset_ns);
+				m_uas->set_time_offset(time_offset_ns);
 
 				dt_diag.clear();
 				dt_diag.set_timestamp(tsync.tc1);
@@ -268,42 +259,42 @@ private:
 				average_offset(offset_ns);
 				dt_diag.tick(dt, tsync.tc1, time_offset_ns);
 
-				uas->set_time_offset(time_offset_ns);
+				m_uas->set_time_offset(time_offset_ns);
 			}
 		}
 	}
 
-	void sys_time_cb(const ros::TimerEvent &event) {
+	void sys_time_cb(const ros::TimerEvent &event)
+	{
 		// For filesystem only
-		mavlink_message_t msg;
-
 		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;	// nano -> micro
 
-		mavlink_msg_system_time_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				time_unix_usec,
-				0
-				);
-		UAS_FCU(uas)->send_message(&msg);
+		mavlink::common::msg::SYSTEM_TIME mtime{};
+		mtime.time_unix_usec = time_unix_usec;
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(mtime);
 	}
 
-	void timesync_cb(const ros::TimerEvent &event) {
-		send_timesync_msg( 0, ros::Time::now().toNSec());
+	void timesync_cb(const ros::TimerEvent &event)
+	{
+		send_timesync_msg(0, ros::Time::now().toNSec());
 	}
 
-	void send_timesync_msg(uint64_t tc1, uint64_t ts1) {
-		mavlink_message_t msg;
+	void send_timesync_msg(uint64_t tc1, uint64_t ts1)
+	{
+		mavlink::common::msg::TIMESYNC tsync{};
+		tsync.tc1 = tc1;
+		tsync.ts1 = ts1;
 
-		mavlink_msg_timesync_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				tc1,
-				ts1
-				);
-		UAS_FCU(uas)->send_message(&msg);
+		UAS_FCU(m_uas)->send_message_ignore_drop(tsync);
 	}
 
-	inline void average_offset(int64_t offset_ns) {
+	inline void average_offset(int64_t offset_ns)
+	{
 		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::SystemTimePlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SystemTimePlugin, mavros::plugin::PluginBase)

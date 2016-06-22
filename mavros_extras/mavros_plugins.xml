@@ -1,26 +1,23 @@
 <library path="lib/libmavros_extras">
-	<class name="distance_sensor" type="mavplugin::DistanceSensorPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="distance_sensor" type="mavros::extra_plugins::DistanceSensorPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
 	</class>
-	<class name="px4flow" type="mavplugin::PX4FlowPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
 	</class>
-	<class name="image_pub" type="mavplugin::ImagePubPlugin" base_class_type="mavplugin::MavRosPlugin">
-		<description>Publish images from PX4Flow module.</description>
-	</class>
-	<class name="mocap_pose_estimate" type="mavplugin::MocapPoseEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send motion capture pose estimate to FCU.</description>
 	</class>
-	<class name="vision_pose_estimate" type="mavplugin::VisionPoseEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="vision_pose_estimate" type="mavros::extra_plugins::VisionPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision pose estimate to FCU.</description>
 	</class>
-	<class name="vision_speed_estimate" type="mavplugin::VisionSpeedEstimatePlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>
 	</class>
-	<class name="vibration" type="mavplugin::VibrationPlugin" base_class_type="mavplugin::MavRosPlugin">
+	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>
-        <class name="cam_imu_sync" type="mavplugin::CamIMUSyncPlugin" base_class_type="mavplugin::MavRosPlugin">
+        <class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish camera trigger data for synchronisation of IMU and camera frames</description>
 	</class>
 </library>

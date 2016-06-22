@@ -1,56 +1,66 @@
-# thanks to jsk-ros-pkg
+# Based on https://github.com/felixduvallet/ros-travis-integration
+#
 # vim:set ts=2 sw=2 et:
-language: cpp
+dist: trusty
+sudo: required
+language: generic
 compiler:
   - gcc
-  #- clang
+cache:
+  - apt
+
 env:
   global:
-    - ROS_DISTRO=hydro # wait until travis will update to 14.04
+    #- ROS_DISTRO=jade
+    - ROS_CI_DESKTOP="$(lsb_release -cs)"
+    - CI_SOURCE_PATH=$(pwd)
+    - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
+    - ROS_PARALLEL_JOBS='-j8 -l6'
+
   matrix:
-    - MAVLINK_DIALECT=common
-    - MAVLINK_DIALECT=ardupilotmega
-    - MAVLINK_DIALECT=paparazzi
+    - ROS_DISTRO=indigo
+    - ROS_DISTRO=jade
 
 before_install:
-  - export CI_SOURCE_PATH=$(pwd)
-  - export REPOSITORY_NAME=${PWD##*/}
-  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  #- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros-shadow-fixed/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
+  #- sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall python-catkin-tools
-  # Setup rosdep
+  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
+  - source /opt/ros/$ROS_DISTRO/setup.bash
+  # Prepare rosdep
   - sudo rosdep init
   - rosdep update
 
 install:
-  # Create workspace
-  - mkdir -p ~/ros/ws_$REPOSITORY_NAME
-  - cd ~/ros/ws_$REPOSITORY_NAME
+  # Create catkin workspace
+  - mkdir -p ~/catkin_ws
+  - cd ~/catkin_ws
   - catkin config --init --mkdirs
+  # Pull source depends
   - cd src
-  # Clone mavlink dependency
-  - git clone https://github.com/mavlink/mavlink-gbp-release.git mavlink -b release/jade/mavlink
+  - wstool init
+  - if [[ -f $ROSINSTALL_FILE ]]; then wstool merge $ROSINSTALL_FILE; fi
+  - wstool up
   # Link the repo we are testing to the new workspace
   - ln -s $CI_SOURCE_PATH .
-  # Install dependencies for source repos
-  - rosdep install -r -n --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+  # Install dependencies using rosdep
+  - cd ~/catkin_ws
+  - rosdep install -q -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 
 before_script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
-  - rospack profile
 
 script:
-  - cd ~/ros/ws_$REPOSITORY_NAME
-  - catkin config --install --cmake-args -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin build -j4 --verbose --summary
-  - catkin run_tests -p1 -j4 --summary
-  #- catkin_test_results --all ~/ros/ws_$REPOSITORY_NAME/build
+  - cd ~/catkin_ws
+  - catkin config --install
+  - catkin build --no-status --summary
+  - source devel/setup.bash
+  - catkin run_tests --no-status -p1 -i --summary
+  #- catkin_test_results --all ~/catkin_ws/build
 
 after_failure:
-  - find ~/ros/ws_$REPOSITORY_NAME/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
+  - find ~/catkin_ws/build -path '*/test_results/*' -type f -exec echo "==== {} ====" \; -exec cat {} \;
 
 notifications:
   webhooks:
