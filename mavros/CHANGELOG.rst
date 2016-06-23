@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.17.4 (2016-06-23)
+-------------------
 * Ran uncrustify on hil_controls plugin
 * Utilizing synchronise_stamp and adding reference to MAVLINK msg documentation
 * Added a plugin that publishes HIL_CONTROLS as ROS messages
