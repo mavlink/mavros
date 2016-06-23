@@ -284,7 +284,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 
 static MAVConnInterface::Ptr url_parse_udp(
 		std::string hosts, std::string query,
-		uint8_t system_id, uint8_t component_id)
+		uint8_t system_id, uint8_t component_id, bool is_udpb)
 {
 	std::string bind_pair, remote_pair;
 	std::string bind_host, remote_host;
@@ -303,6 +303,9 @@ static MAVConnInterface::Ptr url_parse_udp(
 	url_parse_host(bind_pair, bind_host, bind_port, "0.0.0.0", MAVConnUDP::DEFAULT_BIND_PORT);
 	url_parse_host(remote_pair, remote_host, remote_port, MAVConnUDP::DEFAULT_REMOTE_HOST, MAVConnUDP::DEFAULT_REMOTE_PORT);
 	url_parse_query(query, system_id, component_id);
+
+	if (is_udpb)
+		remote_host = MAVConnUDP::BROADCAST_REMOTE_HOST;
 
 	return std::make_shared<MAVConnUDP>(system_id, component_id,
 			bind_host, bind_port,
@@ -386,7 +389,9 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			path.c_str(), query.c_str());
 
 	if (proto == "udp")
-		return url_parse_udp(host, query, system_id, component_id);
+		return url_parse_udp(host, query, system_id, component_id, false);
+	else if (proto == "udp-b")
+		return url_parse_udp(host, query, system_id, component_id, true);
 	else if (proto == "tcp")
 		return url_parse_tcp_client(host, query, system_id, component_id);
 	else if (proto == "tcp-l")

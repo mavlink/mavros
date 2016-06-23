@@ -27,6 +27,7 @@ using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
 using utils::to_string_ss;
+using utils::operator""_KiB;
 using mavlink::mavlink_message_t;
 
 #define PFX	"mavconn: udp"
@@ -69,13 +70,20 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	io_work(new io_service::work(io_service)),
 	socket(io_service)
 {
+	using udps = boost::asio::ip::udp::socket;
+
 	if (!resolve_address_udp(io_service, conn_id, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
 	logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
-		remote_exists = resolve_address_udp(io_service, conn_id, remote_host, remote_port, remote_ep);
+		if (remote_host != BROADCAST_REMOTE_HOST)
+			remote_exists = resolve_address_udp(io_service, conn_id, remote_host, remote_port, remote_ep);
+		else {
+			remote_exists = true;
+			remote_ep = udp::endpoint(boost::asio::ip::address_v4::broadcast(), remote_port);
+		}
 
 		if (remote_exists)
 			logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
@@ -86,6 +94,14 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	try {
 		socket.open(udp::v4());
 		socket.bind(bind_ep);
+
+		// set buffer opt. size from QGC
+		socket.set_option(udps::reuse_address(true));
+		socket.set_option(udps::send_buffer_size(256_KiB));
+		socket.set_option(udps::receive_buffer_size(512_KiB));
+
+		if (remote_host == BROADCAST_REMOTE_HOST)
+			socket.set_option(udps::broadcast(true));
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("udp", err);

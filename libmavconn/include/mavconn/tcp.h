@@ -50,13 +50,13 @@ public:
 			boost::asio::io_service &server_io);
 	~MAVConnTCPClient();
 
-	void close();
+	void close() override;
 
-	void send_message(const mavlink::mavlink_message_t *message);
-	void send_message(const mavlink::Message &message);
-	void send_bytes(const uint8_t *bytes, size_t length);
+	void send_message(const mavlink::mavlink_message_t *message) override;
+	void send_message(const mavlink::Message &message) override;
+	void send_bytes(const uint8_t *bytes, size_t length) override;
 
-	inline bool is_open() {
+	inline bool is_open() override {
 		return socket.is_open();
 	}
 
@@ -101,15 +101,15 @@ public:
 			std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT);
 	~MAVConnTCPServer();
 
-	void close();
+	void close() override;
 
-	void send_message(const mavlink::mavlink_message_t *message);
-	void send_message(const mavlink::Message &message);
-	void send_bytes(const uint8_t *bytes, size_t length);
+	void send_message(const mavlink::mavlink_message_t *message) override;
+	void send_message(const mavlink::Message &message) override;
+	void send_bytes(const uint8_t *bytes, size_t length) override;
 
-	mavlink::mavlink_status_t get_status();
-	IOStat get_iostat();
-	inline bool is_open() {
+	mavlink::mavlink_status_t get_status() override;
+	IOStat get_iostat() override;
+	inline bool is_open() override {
 		return acceptor.is_open();
 	}
 

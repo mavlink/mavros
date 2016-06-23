@@ -34,6 +34,8 @@ public:
 	static constexpr auto DEFAULT_BIND_PORT = 14555;
 	static constexpr auto DEFAULT_REMOTE_HOST = "";
 	static constexpr auto DEFAULT_REMOTE_PORT = 14550;
+	//! Marker for boardcast mode. Not valid domain name.
+	static constexpr auto BROADCAST_REMOTE_HOST = "***i want broadcast***";
 
 	/**
 	 * @param[id] bind_host    bind host
@@ -46,13 +48,13 @@ public:
 			std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
 	~MAVConnUDP();
 
-	void close();
+	void close() override;
 
-	void send_message(const mavlink::mavlink_message_t *message);
-	void send_message(const mavlink::Message &message);
-	void send_bytes(const uint8_t *bytes, size_t length);
+	void send_message(const mavlink::mavlink_message_t *message) override;
+	void send_message(const mavlink::Message &message) override;
+	void send_bytes(const uint8_t *bytes, size_t length) override;
 
-	inline bool is_open() {
+	inline bool is_open() override {
 		return socket.is_open();
 	}
 

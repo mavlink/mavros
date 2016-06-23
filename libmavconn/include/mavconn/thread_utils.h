@@ -69,5 +69,10 @@ inline const std::string to_string_ss(T &obj)
 	ss << obj;
 	return ss.str();
 }
+
+constexpr size_t operator""_KiB (unsigned long long sz)
+{
+	return sz * 1024;
+}
 }	// namespace utils
 }	// namespace mavconn

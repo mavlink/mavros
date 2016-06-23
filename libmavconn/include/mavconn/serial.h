@@ -41,13 +41,13 @@ public:
 			std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE);
 	~MAVConnSerial();
 
-	void close();
+	void close() override;
 
-	void send_message(const mavlink::mavlink_message_t *message);
-	void send_message(const mavlink::Message &message);
-	void send_bytes(const uint8_t *bytes, size_t length);
+	void send_message(const mavlink::mavlink_message_t *message) override;
+	void send_message(const mavlink::Message &message) override;
+	void send_bytes(const uint8_t *bytes, size_t length) override;
 
-	inline bool is_open() {
+	inline bool is_open() override {
 		return serial_dev.is_open();
 	};
 
