@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.0 (2016-06-23)
+-------------------
 * libmavconn: Fix _KiB literal
 * readme `#544 <https://github.com/mavlink/mavros/issues/544>`_: add udp-b://@ URL
 * libmavconn fix `#544 <https://github.com/mavlink/mavros/issues/544>`_: New URL for UDP Broadcast (for GCS discovery)
