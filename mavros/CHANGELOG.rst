@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Ran uncrustify on hil_controls plugin
+* Utilizing synchronise_stamp and adding reference to MAVLINK msg documentation
+* Added a plugin that publishes HIL_CONTROLS as ROS messages
+* Revert "readme: update CI, no more MAVLINK_DIALECT"
+  This reverts commit 1510deb2c5db12441cf9e44175fdb8a8889a8af6.
+* readme: update CI, no more MAVLINK_DIALECT
+* Contributors: Pavel, Vladimir Ermakov
+
 0.17.3 (2016-05-20)
 -------------------
 * libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: support build with mavlink 2.0 capable mavgen

@@ -2,6 +2,11 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Test_mavros : fix compilation on gcc6.1
+* Contributors: khancyr
+
 0.17.3 (2016-05-20)
 -------------------
 * test `#546 <https://github.com/mavlink/mavros/issues/546>`_: Added check of control_toolbox version (1.14.0)
