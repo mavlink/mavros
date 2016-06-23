@@ -18,10 +18,17 @@
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/ExtendedState.h>
-#include <mavros_msgs/BatteryStatus.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
+
+#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
+#include <sensor_msgs/BatteryState.h>
+using BatteryMsg = sensor_msgs::BatteryState;
+#else
+#include <mavros_msgs/BatteryStatus.h>
+using BatteryMsg = mavros_msgs::BatteryStatus;
+#endif
 
 namespace mavros {
 namespace std_plugins {
@@ -456,7 +463,7 @@ public:
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
-		batt_pub = nh.advertise<mavros_msgs::BatteryStatus>("battery", 10);
+		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
 
@@ -560,7 +567,7 @@ private:
 		char prefix[16];
 		std::snprintf(prefix, sizeof(prefix), "VER: %d.%d", sysid, compid);
 
-		ROS_INFO_NAMED("sys", "%s: Capabilities 0x%016llx", prefix, (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "%s: Capabilities         0x%016llx", prefix, (long long int)apv.capabilities);
 		ROS_INFO_NAMED("sys", "%s: Flight software:     %08x (%s)",
 				prefix,
 				apv.flight_sw_version,
@@ -574,8 +581,8 @@ private:
 				apv.os_sw_version,
 				custom_version_to_hex_string(apv.os_custom_version).c_str());
 		ROS_INFO_NAMED("sys", "%s: Board hardware:      %08x", prefix, apv.board_version);
-		ROS_INFO_NAMED("sys", "%s: VID/PID: %04x:%04x", prefix, apv.vendor_id, apv.product_id);
-		ROS_INFO_NAMED("sys", "%s: UID: %016llx", prefix, (long long int)apv.uid);
+		ROS_INFO_NAMED("sys", "%s: VID/PID:             %04x:%04x", prefix, apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "%s: UID:                 %016llx", prefix, (long long int)apv.uid);
 	}
 
 	void process_autopilot_version_apm_quirk(mavlink::common::msg::AUTOPILOT_VERSION &apv, uint8_t sysid, uint8_t compid)
@@ -585,7 +592,7 @@ private:
 
 		// Note based on current APM's impl.
 		// APM uses custom version array[8] as a string
-		ROS_INFO_NAMED("sys", "%s: Capabilities 0x%016llx", prefix, (long long int)apv.capabilities);
+		ROS_INFO_NAMED("sys", "%s: Capabilities         0x%016llx", prefix, (long long int)apv.capabilities);
 		ROS_INFO_NAMED("sys", "%s: Flight software:     %08x (%*s)",
 				prefix,
 				apv.flight_sw_version,
@@ -599,8 +606,8 @@ private:
 				apv.os_sw_version,
 				8, apv.os_custom_version.data());
 		ROS_INFO_NAMED("sys", "%s: Board hardware:      %08x", prefix, apv.board_version);
-		ROS_INFO_NAMED("sys", "%s: VID/PID: %04x:%04x", prefix, apv.vendor_id, apv.product_id);
-		ROS_INFO_NAMED("sys", "%s: UID: %016llx", prefix, (long long int)apv.uid);
+		ROS_INFO_NAMED("sys", "%s: VID/PID:             %04x:%04x", prefix, apv.vendor_id, apv.product_id);
+		ROS_INFO_NAMED("sys", "%s: UID:                 %016llx", prefix, (long long int)apv.uid);
 	}
 
 	void publish_disconnection() {
@@ -659,12 +666,30 @@ private:
 		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
 		float rem = stat.battery_remaining / 100.0f;	// or -1
 
-		// TODO: use sensor_msgs battery report
-		auto batt_msg = boost::make_shared<mavros_msgs::BatteryStatus>();
+		auto batt_msg = boost::make_shared<BatteryMsg>();
 		batt_msg->header.stamp = ros::Time::now();
+
+#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
+		// TODO(vooon): handle extended battery status message.
+		//              Now most of fields is unknown.
+		batt_msg->voltage = volt;
+		batt_msg->current = curr;
+		batt_msg->charge = NAN;
+		batt_msg->capacity = NAN;
+		batt_msg->design_capacity = NAN;
+		batt_msg->percentage = rem;
+		batt_msg->power_supply_status = BatteryMsg::POWER_SUPPLY_STATUS_DISCHARGING;
+		batt_msg->power_supply_health = BatteryMsg::POWER_SUPPLY_HEALTH_UNKNOWN;
+		batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+		batt_msg->present = true;
+		batt_msg->cell_voltage.clear();	// not necessary. Cell count and Voltage unknown.
+		batt_msg->location = "";
+		batt_msg->serial_number = "";
+#else	// mavros_msgs::BatteryStatus
 		batt_msg->voltage = volt;
 		batt_msg->current = curr;
 		batt_msg->remaining = rem;
+#endif
 
 		sys_diag.set(stat);
 		batt_diag.set(volt, curr, rem);

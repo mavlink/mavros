@@ -38,6 +38,15 @@ endif()
 include(EnableCXX11)
 include(MavrosMavlink)
 
+# detect if sensor_msgs has BatteryState.msg
+# http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
+list(FIND sensor_msgs_MESSAGE_FILES "msg/BatteryState.msg" BATTERY_STATE_MSG_IDX)
+if(${BATTERY_STATE_MSG_IDX} GREATER -1)
+  add_definitions(
+    -DHAVE_SENSOR_MSGS_BATTERYSTATE_MSG
+  )
+endif()
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
