@@ -410,7 +410,9 @@ public:
 		sys_diag("System"),
 		batt_diag("Battery"),
 		version_retries(RETRIES_COUNT),
-		disable_diag(false)
+		disable_diag(false),
+		has_battery_status(false),
+		battery_voltage(0.0)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -480,6 +482,7 @@ public:
 			make_handler(&SystemStatusPlugin::handle_hwstatus),
 			make_handler(&SystemStatusPlugin::handle_autopilot_version),
 			make_handler(&SystemStatusPlugin::handle_extended_sys_state),
+			make_handler(&SystemStatusPlugin::handle_battery_status),
 		};
 	}
 
@@ -504,6 +507,8 @@ private:
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
+	bool has_battery_status;
+	float battery_voltage;
 
 	/* -*- mid-level helpers -*- */
 
@@ -666,14 +671,19 @@ private:
 		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
 		float rem = stat.battery_remaining / 100.0f;	// or -1
 
+		battery_voltage = volt;
+		sys_diag.set(stat);
+		batt_diag.set(volt, curr, rem);
+
+		if (has_battery_status)
+			return;
+
 		auto batt_msg = boost::make_shared<BatteryMsg>();
 		batt_msg->header.stamp = ros::Time::now();
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
-		// TODO(vooon): handle extended battery status message.
-		//              Now most of fields is unknown.
 		batt_msg->voltage = volt;
-		batt_msg->current = curr;
+		batt_msg->current = -curr;
 		batt_msg->charge = NAN;
 		batt_msg->capacity = NAN;
 		batt_msg->design_capacity = NAN;
@@ -691,8 +701,6 @@ private:
 		batt_msg->remaining = rem;
 #endif
 
-		sys_diag.set(stat);
-		batt_diag.set(volt, curr, rem);
 		batt_pub.publish(batt_msg);
 	}
 
@@ -726,6 +734,77 @@ private:
 			process_autopilot_version_apm_quirk(apv, msg->sysid, msg->compid);
 		else
 			process_autopilot_version_normal(apv, msg->sysid, msg->compid);
+	}
+
+	void handle_battery_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::BATTERY_STATUS &bs)
+	{
+		// PX4.
+#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
+		using BT = mavlink::common::MAV_BATTERY_TYPE;
+
+		has_battery_status = true;
+
+		auto batt_msg = boost::make_shared<BatteryMsg>();
+		batt_msg->header.stamp = ros::Time::now();
+
+		batt_msg->voltage = battery_voltage;
+		batt_msg->current = -(bs.current_battery / 100.0f);	// 10 mA
+		batt_msg->charge = NAN;
+		batt_msg->capacity = NAN;
+		batt_msg->design_capacity = NAN;
+		batt_msg->percentage = bs.battery_remaining / 100.0f;
+		batt_msg->power_supply_status = BatteryMsg::POWER_SUPPLY_STATUS_DISCHARGING;
+		batt_msg->power_supply_health = BatteryMsg::POWER_SUPPLY_HEALTH_UNKNOWN;
+
+		switch (bs.type) {
+		// [[[cog:
+		// for f in (
+		//     'LIPO',
+		//     'LIFE',
+		//     'LION',
+		//     'NIMH',
+		//     'UNKNOWN'):
+		//     cog.outl("case enum_value(BT::%s):" % f)
+		//     if f == 'UNKNOWN':
+		//         cog.outl("default:")
+		//     cog.outl("\tbatt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_%s;" % f)
+		//     cog.outl("\tbreak;")
+		// ]]]
+		case enum_value(BT::LIPO):
+			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_LIPO;
+			break;
+		case enum_value(BT::LIFE):
+			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_LIFE;
+			break;
+		case enum_value(BT::LION):
+			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_LION;
+			break;
+		case enum_value(BT::NIMH):
+			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_NIMH;
+			break;
+		case enum_value(BT::UNKNOWN):
+		default:
+			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+			break;
+		// [[[end]]] (checksum: 2bf14a81b3027f14ba1dd9b4c086a41d)
+		}
+
+		batt_msg->present = true;
+
+		batt_msg->cell_voltage.clear();
+		batt_msg->cell_voltage.reserve(bs.voltages.size());
+		for (auto v : bs.voltages) {
+			if (v == UINT16_MAX)
+				break;
+
+			batt_msg->cell_voltage.push_back(v / 1000.0f);	// 1 mV
+		}
+
+		batt_msg->location = utils::format("id%u", bs.id);
+		batt_msg->serial_number = "";
+
+		batt_pub.publish(batt_msg);
+#endif
 	}
 
 	/* -*- timer callbacks -*- */
@@ -796,6 +875,8 @@ private:
 
 	void connection_cb(bool connected)
 	{
+		has_battery_status = false;
+
 		// if connection changes, start delayed version request
 		version_retries = RETRIES_COUNT;
 		if (connected)
