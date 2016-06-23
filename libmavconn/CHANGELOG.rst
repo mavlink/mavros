@@ -2,6 +2,45 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: Fix _KiB literal
+* readme `#544 <https://github.com/mavlink/mavros/issues/544>`_: add udp-b://@ URL
+* libmavconn fix `#544 <https://github.com/mavlink/mavros/issues/544>`_: New URL for UDP Broadcast (for GCS discovery)
+  Broadcast v4 address used until GCS respond.
+  udp-b://[bind_host][:bind_port]@[:remote_port]
+* libmavconn: fix context.py.in
+* libmavconn: Add protocol version selection helpers
+* libmavconn: Use monotonic id for logging. Looks better than this ptr.
+* node: Update plugin loading and message routing
+* node: Rename plugib base class - API incompatible to old class
+* labmavconn: remove set_thread_name(), add utils::format()
+* libmavconn: APM dialect should be second
+* libmavconn fix `#522 <https://github.com/mavlink/mavros/issues/522>`_: place generated files in source tree.
+* libmavconn: Use EmPy to generate dialect-enabling files
+* libmavconn: update copyright year
+* libmavconn: update unit test
+* libmavconn: Replace sig-slot with simple std::function() callbacks
+* libmavconn: Limit send_message() queue maximum size.
+* libmavconn:udp: try to make STL container handle allocations
+* libmavconn: Use std::call_once() for init
+* libmavconn: Leak in send_message() when it called from self IO thread (such as message_received event)
+* libmavconn: update unit test
+* libmavconn: support C++ serialization. Warn: RX leaks somewhere.
+* libmavconn: Use MAVLink2 C++11
+* labmavconn: trying to merge all dialects
+* libmavconn: std::thread are invalidated before set_thread_name() called. Result is SIGSEGV
+* labmavconn: finding sigsegv
+* libmavconn: uncrustify
+* libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: remove boost::signals2 (TCP)
+* libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: remove boost::signals2 (UDP)
+* libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: remove boost.signals2 (serial)
+* libmavconn: uncrustify all
+* mavconn: Import Simple Signal library (with some minor modifications).
+  Source file can be found here:
+  https://testbit.eu/cpp11-signal-system-performance/
+* Contributors: Vladimir Ermakov
+
 0.17.3 (2016-05-20)
 -------------------
 * libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: support build with mavlink 2.0 capable mavgen

@@ -2,6 +2,78 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib `#439 <https://github.com/mavlink/mavros/issues/439>`_: MAV_CMD to_string is not required.
+* plugin:sys_status `#458 <https://github.com/mavlink/mavros/issues/458>`_: Hanlde BATTERY_STATUS (PX4)
+* plugin:sys_status fix `#458 <https://github.com/mavlink/mavros/issues/458>`_: Use sensor_msgs/BatteryState message.
+  Minimal data, for all other need to handle BATTERY_STATUS.
+* plugin:command fix `#561 <https://github.com/mavlink/mavros/issues/561>`_: PX4 now sends COMMAND_ACK.
+  And like APM do not check confirmation field. :)
+* readme `#544 <https://github.com/mavlink/mavros/issues/544>`_: add udp-b://@ URL
+* plugin:hil_controls: Update plugin API
+* Merge branch 'feature/hil_controls_plugin' of https://github.com/pvechersky/mavros into pvechersky-feature/hil_controls_plugin
+  * 'feature/hil_controls_plugin' of https://github.com/pvechersky/mavros:
+  Adding anchor to the HIL_CONTROLS message reference link
+  Ran uncrustify on hil_controls plugin
+  Utilizing synchronise_stamp and adding reference to MAVLINK msg documentation
+  Added a plugin that publishes HIL_CONTROLS as ROS messages
+* node: fix subscription message type checks
+* plugin: use mavlink::to_string() for std::array<char, N>
+* readme: update CI, no more MAVLINK_DIALECT
+* plugin:waypoint: Fix target id's on MISSION_ITEM
+* node: Add ~fcu_protocol parameter
+* Ran uncrustify on hil_controls plugin
+* Utilizing synchronise_stamp and adding reference to MAVLINK msg documentation
+* node: set gcs_url on internal GCS bridge diag hardware Id
+* plugins: Use UAS::msg_set_target()
+* Added a plugin that publishes HIL_CONTROLS as ROS messages
+* lib: PX4 add AUTO.FOLLOW_TARGET
+* mavros: Update tests
+* extras: Update UAS
+* UAS: Update plugins for FTF module
+* UAS: move enum stringify functions
+* lib: Generate MAV_SENSOR_ORIENTATION
+* UAS: move MAV_SENSOR_ORIENTATION out
+* UAS: Move transformation utilities to ftf module
+* plugin:rc_io: Fix log printf-format warning
+* make GCC 4.8 happy. (travis)
+* gcs_bridge: done
+* param:ftp: Update API
+* plugin:param: Works. Tested on APM
+* plugin:param: Update, almost work
+* plugin:waypoint: Fix Item - ROS binding
+* Message type mismatch code do not work
+* plugin:waypoint: Update API
+* plugin:sys_time: Update API
+* plugin:sys_status: Update API
+* plugin:setpoint_raw: Update API
+* plugin:setpoint_attitude: Update API
+* plugin:setpoint_accel: Update API
+* plugin:setpoint_velocity: Update API
+* plugin:setpoint_position: Update API
+* plugin:vfr_hud: Update API
+* plugin:safety_area: Update API
+* plugin:rc_io: Update API
+* plugin:manual_control: Update API, fix uas init
+* plugin:local_position: Update API
+* plugin:imu_pub: Update API
+* plugin:global_position: Update API
+* mavros: make_handle() this shouldn't be const
+* plugin:common: Update API
+* plugin:altitude: uncrustify
+* plugins: Rutine sed + fix misprint
+* plugin:altitude: Update API
+* plugins: Automatic replacement of routine API changes (sed)
+* plugin:actuator_control: Update API
+* plugin:3dr_radio: Update API
+* node: Update plugin loading and message routing
+* node: type_info -> SIGSEGV
+* node: prepare new plugin loading
+* node: Rename plugib base class - API incompatible to old class
+* labmavconn: finding sigsegv
+* Contributors: Pavel, Vladimir Ermakov
+
 0.17.3 (2016-05-20)
 -------------------
 * libmavconn `#543 <https://github.com/mavlink/mavros/issues/543>`_: support build with mavlink 2.0 capable mavgen
