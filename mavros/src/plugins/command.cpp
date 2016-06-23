@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -152,10 +152,10 @@ private:
 			}
 
 		/**
-		 * @note APM always send COMMAND_ACK, while PX4 never.
+		 * @note APM & PX4 master always send COMMAND_ACK. Old PX4 never.
 		 * Don't expect any ACK in broadcast mode.
 		 */
-		bool is_ack_required = (confirmation != 0 || m_uas->is_ardupilotmega()) && !m_uas->is_px4();
+		bool is_ack_required = confirmation != 0 || m_uas->is_ardupilotmega() || m_uas->is_px4();
 		if (is_ack_required && !broadcast)
 			ack_waiting_list.push_back(new CommandTransaction(command));
 
