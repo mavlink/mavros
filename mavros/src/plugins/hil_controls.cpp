@@ -15,51 +15,54 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <mavros_msgs/HilControls.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
 /**
  * @brief Hil Control plugin
  */
-class HilControlsPlugin : public MavRosPlugin {
+class HilControlsPlugin : public plugin::PluginBase {
 public:
-	HilControlsPlugin() :
-		hil_controls_nh("~hil_controls"),
-		uas(nullptr)
-	{ };
+	HilControlsPlugin() : PluginBase(),
+		hil_controls_nh("~hil_controls")
+	{ }
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
 
 		hil_controls_pub = hil_controls_nh.advertise<mavros_msgs::HilControls>("hil_controls", 10);
-	};
+	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_HIL_CONTROLS, &HilControlsPlugin::handle_hil_controls),
+			       make_handler(&HilControlsPlugin::handle_hil_controls),
 		};
 	}
 
 private:
 	ros::NodeHandle hil_controls_nh;
-	UAS *uas;
 
 	ros::Publisher hil_controls_pub;
 
 	/* -*- rx handlers -*- */
 
-	void handle_hil_controls(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_hil_controls_t hil_controls;
-		mavlink_msg_hil_controls_decode(msg, &hil_controls);
-
+	void handle_hil_controls(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HIL_CONTROLS &hil_controls)
+	{
 		auto hil_controls_msg = boost::make_shared<mavros_msgs::HilControls>();
 
-		hil_controls_msg->header.stamp = uas->synchronise_stamp(hil_controls.time_usec);
+		hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);
+		// [[[cog:
+		// for f in (
+		//     'roll_ailerons', 'pitch_elevator', 'yaw_rudder', 'throttle',
+		//     'aux1', 'aux2', 'aux3', 'aux4', 'mode', 'nav_mode'):
+		//     cog.outl("hil_controls_msg->%s = hil_controls.%s;" % (f, f))
+		// ]]]
 		hil_controls_msg->roll_ailerons = hil_controls.roll_ailerons;
-		hil_controls_msg->pitch_elevator = hil_controls.roll_ailerons;
+		hil_controls_msg->pitch_elevator = hil_controls.pitch_elevator;
 		hil_controls_msg->yaw_rudder = hil_controls.yaw_rudder;
 		hil_controls_msg->throttle = hil_controls.throttle;
 		hil_controls_msg->aux1 = hil_controls.aux1;
@@ -68,11 +71,14 @@ private:
 		hil_controls_msg->aux4 = hil_controls.aux4;
 		hil_controls_msg->mode = hil_controls.mode;
 		hil_controls_msg->nav_mode = hil_controls.nav_mode;
+		// [[[end]]] (checksum: a2c87ee8f36e7a32b08be5e0fe665b5a)
 
 		hil_controls_pub.publish(hil_controls_msg);
 	}
 };
-};	// namespace mavplugin
+}	// namespace std_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::HilControlsPlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::HilControlsPlugin, mavros::plugin::PluginBase)
 
