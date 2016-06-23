@@ -16,7 +16,8 @@ Supported schemas:
 
   - Serial: `/path/to/serial/device[:baudrate]`
   - Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
-  - UDP: `udp://[bind_host[:port]]@[remote_host[:port]][/?ids=sysid,compid]`
+  - UDP: `udp://[bind_host][:port]@[remote_host][:port][/?ids=sysid,compid]`
+  - UDP broadcast: `udp-b://[bind_host][:port]@[:port][/?ids=sysid,compid]`
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
   - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
 
