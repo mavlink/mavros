@@ -5,8 +5,6 @@ project(mavros_extras)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  image_transport
-  cv_bridge
   mavros
   roscpp
   mavros_msgs
@@ -52,7 +50,7 @@ include(MavrosMavlink)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-  CATKIN_DEPENDS image_transport mavros mavros_msgs roscpp sensor_msgs geometry_msgs
+  CATKIN_DEPENDS mavros mavros_msgs roscpp sensor_msgs geometry_msgs
   DEPENDS Boost
 )
 
