@@ -27,7 +27,7 @@ using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
 using utils::to_string_ss;
-using utils::operator""_KiB;
+using utils::operator"" _KiB;
 using mavlink::mavlink_message_t;
 
 #define PFX	"mavconn: udp"
