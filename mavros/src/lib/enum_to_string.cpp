@@ -22,7 +22,6 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
-using mavlink::common::MAV_CMD;	// TODO
 
 
 // [[[cog:

@@ -107,13 +107,12 @@ public:
 
 	std::string to_string()
 	{
-		// todo: Frame and MAV_CMD
+		//return to_yaml();
 
-		return to_yaml();
-
-		return utils::format("#%u %u %u %3s p: %f %f %f %f x: %f y: %f z: %f",
-				seq, frame, command,
-				(current) ? "CUR" : "",
+		return utils::format("#%u%1s F:%u C:%3u p: %f %f %f %f x: %f y: %f z: %f",
+				seq,
+				(current) ? "*" : "",
+				frame, command,
 				param1, param2, param3, param4,
 				x_lat, y_long, z_alt);
 	}
