@@ -2,6 +2,9 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.18.0 (2016-06-23)
 -------------------
 * libmavconn: Fix _KiB literal

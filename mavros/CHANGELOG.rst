@@ -2,6 +2,13 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: Fix base mode flag check
+* plugins: Move pluginlib macros.h to tail
+* plugin:param fix `#559 <https://github.com/mavlink/mavros/issues/559>`_: Ignore PX4 _HASH_CHECK param
+* Contributors: Vladimir Ermakov
+
 0.18.0 (2016-06-23)
 -------------------
 * lib `#439 <https://github.com/mavlink/mavros/issues/439>`_: MAV_CMD to_string is not required.
