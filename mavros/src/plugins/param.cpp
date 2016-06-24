@@ -718,6 +718,19 @@ private:
 		return is_not_timeout;
 	}
 
+	//! Set ROS param only if name is good
+	bool rosparam_set_allowed(const Parameter &p)
+	{
+		if (m_uas->is_px4() && p.param_id == "_HASH_CHECK") {
+			auto v = p.param_value;	// const XmlRpcValue can't cast
+			ROS_INFO_NAMED("param", "PR: PX4 parameter _HASH_CHECK ignored: 0x%8x", static_cast<int32_t>(v));
+			return false;
+		}
+
+		param_nh.setParam(p.param_id, p.param_value);
+		return true;
+	}
+
 	/* -*- ROS callbacks -*- */
 
 	/**
@@ -761,7 +774,7 @@ private:
 
 		for (auto &p : parameters) {
 			lock.unlock();
-			param_nh.setParam(p.second.param_id, p.second.param_value);
+			rosparam_set_allowed(p.second);
 			lock.lock();
 		}
 
@@ -849,7 +862,7 @@ private:
 			res.value.real = param_it->second.to_real();
 
 			lock.unlock();
-			param_nh.setParam(param_it->second.param_id, param_it->second.param_value);
+			rosparam_set_allowed(param_it->second);
 		}
 		else {
 			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to set: " << req.param_id);
