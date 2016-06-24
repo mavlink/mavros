@@ -152,7 +152,7 @@ static inline bool is_apm_copter(UAS::MAV_TYPE type)
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
 {
-	if (!(base_mode && enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED)))
+	if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED)))
 		return str_base_mode(base_mode);
 
 	auto type = get_type();
