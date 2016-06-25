@@ -531,26 +531,26 @@ private:
 		//     ):
 		//     for v in l1:
 		//         cog.outl("case enum_value(MAV_SEVERITY::%s):" % v)
-		//     cog.outl("\tROS_%s_STREAM_NAMED(\"fcu\", \"FCU \" << text);" % l2)
+		//     cog.outl("\tROS_%s_STREAM_NAMED(\"fcu\", \"FCU: \" << text);" % l2)
 		//     cog.outl("\tbreak;")
 		// ]]]
 		case enum_value(MAV_SEVERITY::EMERGENCY):
 		case enum_value(MAV_SEVERITY::ALERT):
 		case enum_value(MAV_SEVERITY::CRITICAL):
 		case enum_value(MAV_SEVERITY::ERROR):
-			ROS_ERROR_STREAM_NAMED("fcu", "FCU " << text);
+			ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 		case enum_value(MAV_SEVERITY::WARNING):
 		case enum_value(MAV_SEVERITY::NOTICE):
-			ROS_WARN_STREAM_NAMED("fcu", "FCU " << text);
+			ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 		case enum_value(MAV_SEVERITY::INFO):
-			ROS_INFO_STREAM_NAMED("fcu", "FCU " << text);
+			ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
 		case enum_value(MAV_SEVERITY::DEBUG):
-			ROS_DEBUG_STREAM_NAMED("fcu", "FCU " << text);
+			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
-		// [[[end]]] (checksum: 0cad2cec3a15e2df2a3f13f96b60f4d1)
+		// [[[end]]] (checksum: 315aa363b5ecb4dda66cc8e1e3d3aa48)
 		default:
 			ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" << +severity << "): " << text);
 			break;
