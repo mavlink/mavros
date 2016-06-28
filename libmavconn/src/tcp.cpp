@@ -128,9 +128,6 @@ void MAVConnTCPClient::close()
 	io_service.stop();
 	socket.close();
 
-	// clear tx queue
-	tx_q.clear();
-
 	if (io_thread.joinable())
 		io_thread.join();
 

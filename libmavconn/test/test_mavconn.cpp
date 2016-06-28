@@ -209,13 +209,13 @@ TEST(URL, open_url_udp)
 		});
 
 	EXPECT_NO_THROW({
-			udp = MAVConnInterface::open_url("udp://localhost:45004@");
+			udp = MAVConnInterface::open_url("udp://localhost:45006@");
 			udp_p = dynamic_cast<MAVConnUDP*>(udp.get());
 			EXPECT_NE(udp_p, nullptr);
 		});
 
 	EXPECT_THROW({
-			udp = MAVConnInterface::open_url("udp://localhost:45004");
+			udp = MAVConnInterface::open_url("udp://localhost:45008");
 		}, DeviceError);
 }
 
