@@ -158,7 +158,7 @@ void MAVConnSerial::do_read(void)
 			buffer(rx_buf, sizeof(rx_buf)),
 			[this] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", this, error.message().c_str());
+					logError(PFXd "receive: %s", conn_id, error.message().c_str());
 					close();
 					return;
 				}
