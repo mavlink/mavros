@@ -63,29 +63,27 @@ public:
 
 TEST_F(UDP, bind_error)
 {
-	std::unique_ptr<MAVConnInterface> conns[2];
+	MAVConnInterface::Ptr conns[2];
 
-	conns[0].reset(new MAVConnUDP(42, 200, "localhost", 45000));
-	ASSERT_THROW(conns[1].reset(new MAVConnUDP(42, 200, "localhost", 45000)), DeviceError);
+	conns[0] = std::make_shared<MAVConnUDP>(42, 200, "localhost", 45000);
+	ASSERT_THROW(conns[1] = std::make_shared<MAVConnUDP>(42, 200, "localhost", 45000), DeviceError);
 }
 
 TEST_F(UDP, send_message)
 {
-	// Issue #72
-	std::unique_ptr<MAVConnInterface> echo;
-	std::unique_ptr<MAVConnInterface> client;
+	MAVConnInterface::Ptr echo, client;
 
 	message_id = std::numeric_limits<msgid_t>::max();
 	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
-	echo.reset(new MAVConnUDP(42, 200, "0.0.0.0", 45002));
+	echo = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45002);
 	echo->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo->send_message(msg);
 	};
 
 	// create client
-	client.reset(new MAVConnUDP(44, 200, "0.0.0.0", 45003, "localhost", 45002));
+	client = std::make_shared<MAVConnUDP>(44, 200, "0.0.0.0", 45003, "localhost", 45002);
 	client->message_received_cb = std::bind(&UDP::recv_message, this, std::placeholders::_1, std::placeholders::_2);
 
 	// wait echo
@@ -99,35 +97,33 @@ class TCP : public UDP {};
 
 TEST_F(TCP, bind_error)
 {
-	std::unique_ptr<MAVConnInterface> conns[2];
+	MAVConnInterface::Ptr conns[2];
 
-	conns[0].reset(new MAVConnTCPServer(42, 200, "localhost", 57600));
-	ASSERT_THROW(conns[1].reset(new MAVConnTCPServer(42, 200, "localhost", 57600)), DeviceError);
+	conns[0] = std::make_shared<MAVConnTCPServer>(42, 200, "localhost", 57600);
+	ASSERT_THROW(conns[1] = std::make_shared<MAVConnTCPServer>(42, 200, "localhost", 57600), DeviceError);
 }
 
 TEST_F(TCP, connect_error)
 {
-	std::unique_ptr<MAVConnInterface> client;
-	ASSERT_THROW(client.reset(new MAVConnTCPClient(42, 200, "localhost", 57666)), DeviceError);
+	MAVConnInterface::Ptr client;
+	ASSERT_THROW(client = std::make_shared<MAVConnTCPClient>(42, 200, "localhost", 57666), DeviceError);
 }
 
 TEST_F(TCP, send_message)
 {
-	// Issue #72
-	std::unique_ptr<MAVConnInterface> echo_server;
-	std::unique_ptr<MAVConnInterface> client;
+	MAVConnInterface::Ptr echo_server, client;
 
 	message_id = std::numeric_limits<msgid_t>::max();
 	auto msgid = mavlink::common::msg::HEARTBEAT::MSG_ID;
 
 	// create echo server
-	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57602));
+	echo_server = std::make_shared<MAVConnTCPServer>(42, 200, "0.0.0.0", 57602);
 	echo_server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo_server->send_message(msg);
 	};
 
 	// create client
-	client.reset(new MAVConnTCPClient(44, 200, "localhost", 57602));
+	client = std::make_shared<MAVConnTCPClient>(44, 200, "localhost", 57602);
 	client->message_received_cb = std::bind(&TCP::recv_message, this, std::placeholders::_1, std::placeholders::_2);
 
 	// wait echo
@@ -139,32 +135,32 @@ TEST_F(TCP, send_message)
 
 TEST_F(TCP, client_reconnect)
 {
-	std::unique_ptr<MAVConnInterface> echo_server;
-	std::unique_ptr<MAVConnInterface> client1, client2;
+	MAVConnInterface::Ptr echo_server;
+	MAVConnInterface::Ptr client1, client2;
 
 	// create echo server
-	echo_server.reset(new MAVConnTCPServer(42, 200, "0.0.0.0", 57604));
+	echo_server = std::make_shared<MAVConnTCPServer>(42, 200, "0.0.0.0", 57604);
 	echo_server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
 		echo_server->send_message(msg);
 	};
 
 	EXPECT_NO_THROW({
-			client1.reset(new MAVConnTCPClient(44, 200, "localhost", 57604));
+			client1 = std::make_shared<MAVConnTCPClient>(44, 200, "localhost", 57604);
 		});
 
 	EXPECT_NO_THROW({
-			client2.reset(new MAVConnTCPClient(45, 200, "localhost", 57604));
+			client2 = std::make_shared<MAVConnTCPClient>(45, 200, "localhost", 57604);
 		});
 
 	EXPECT_NO_THROW({
-			client1.reset(new MAVConnTCPClient(46, 200, "localhost", 57604));
+			client1 = std::make_shared<MAVConnTCPClient>(46, 200, "localhost", 57604);
 		});
 }
 
 TEST(SERIAL, open_error)
 {
-	std::unique_ptr<MAVConnInterface> serial;
-	ASSERT_THROW(serial.reset(new MAVConnSerial(42, 200, "/some/magic/not/exist/path", 57600)), DeviceError);
+	MAVConnInterface::Ptr serial;
+	ASSERT_THROW(serial = std::make_shared<MAVConnSerial>(42, 200, "/some/magic/not/exist/path", 57600), DeviceError);
 }
 
 #if 0

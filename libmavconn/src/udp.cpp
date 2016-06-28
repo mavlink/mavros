@@ -107,6 +107,8 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 		throw DeviceError("udp", err);
 	}
 
+	// NOTE: shared_from_this() should not be used in constructors
+
 	// give some work to io_service before start
 	io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
@@ -159,7 +161,7 @@ void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 
 		tx_q.emplace_back(bytes, length);
 	}
-	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t *message)
@@ -186,7 +188,7 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 
 		tx_q.emplace_back(message);
 	}
-	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
 void MAVConnUDP::send_message(const mavlink::Message &message)
@@ -211,29 +213,30 @@ void MAVConnUDP::send_message(const mavlink::Message &message)
 
 		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
-	io_service.post(std::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
 void MAVConnUDP::do_recvfrom()
 {
+	auto sthis = shared_from_this();
 	socket.async_receive_from(
-			buffer(rx_buf, sizeof(rx_buf)),
+			buffer(rx_buf),
 			remote_ep,
-			[this] (error_code error, size_t bytes_transferred) {
+			[sthis] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", conn_id, error.message().c_str());
-					close();
+					logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
 					return;
 				}
 
-				if (remote_ep != last_remote_ep) {
-					logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
-					remote_exists = true;
-					last_remote_ep = remote_ep;
+				if (sthis->remote_ep != sthis->last_remote_ep) {
+					logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
+					sthis->remote_exists = true;
+					sthis->last_remote_ep = sthis->remote_ep;
 				}
 
-				parse_buffer(PFX, rx_buf, sizeof(rx_buf), bytes_transferred);
-				do_recvfrom();
+				sthis->parse_buffer(PFX, sthis->rx_buf.data(), sthis->rx_buf.size(), bytes_transferred);
+				sthis->do_recvfrom();
 			});
 }
 
@@ -247,40 +250,41 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
+	auto sthis = shared_from_this();
 	auto &buf_ref = tx_q.front();
 	socket.async_send_to(
 			buffer(buf_ref.dpos(), buf_ref.nbytes()),
 			remote_ep,
-			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+			[sthis, &buf_ref] (error_code error, size_t bytes_transferred) {
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error == boost::asio::error::network_unreachable) {
-					logWarn(PFXd "sendto: %s, retrying", conn_id, error.message().c_str());
+					logWarn(PFXd "sendto: %s, retrying", sthis->conn_id, error.message().c_str());
 					// do not return, try to resend
 				}
 				else if (error) {
-					logError(PFXd "sendto: %s", conn_id, error.message().c_str());
-					close();
+					logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
 					return;
 				}
 
-				iostat_tx_add(bytes_transferred);
-				lock_guard lock(mutex);
+				sthis->iostat_tx_add(bytes_transferred);
+				lock_guard lock(sthis->mutex);
 
-				if (tx_q.empty()) {
-					tx_in_progress = false;
+				if (sthis->tx_q.empty()) {
+					sthis->tx_in_progress = false;
 					return;
 				}
 
 				buf_ref.pos += bytes_transferred;
 				if (buf_ref.nbytes() == 0) {
-					tx_q.pop_front();
+					sthis->tx_q.pop_front();
 				}
 
-				if (!tx_q.empty())
-					do_sendto(false);
+				if (!sthis->tx_q.empty())
+					sthis->do_sendto(false);
 				else
-					tx_in_progress = false;
+					sthis->tx_in_progress = false;
 			});
 }
 }	// namespace mavconn
