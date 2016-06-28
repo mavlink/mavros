@@ -324,16 +324,16 @@ mavlink_status_t MAVConnTCPServer::get_status()
 
 		// [[[cog:
 		// for f in ('packet_rx_success_count', 'packet_rx_drop_count', 'buffer_overrun', 'parse_error'):
-		//     cog.outl("status.%s = inst_status.%s;" % (f, f))
+		//     cog.outl("status.{f:23s} += inst_status.{f};".format(**locals()))
 		// ]]]
-		status.packet_rx_success_count = inst_status.packet_rx_success_count;
-		status.packet_rx_drop_count = inst_status.packet_rx_drop_count;
-		status.buffer_overrun = inst_status.buffer_overrun;
-		status.parse_error = inst_status.parse_error;
-		// [[[end]]] (checksum: 9932a49fc25995455af4bc7acf77c094)
+		status.packet_rx_success_count += inst_status.packet_rx_success_count;
+		status.packet_rx_drop_count    += inst_status.packet_rx_drop_count;
+		status.buffer_overrun          += inst_status.buffer_overrun;
+		status.parse_error             += inst_status.parse_error;
+		// [[[end]]] (checksum: a6186246ed026f1cf2b4ffc7407e893b)
 
 		/* seq counters always 0 for this connection type */
-	};
+	}
 
 	return status;
 }
@@ -349,14 +349,14 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 		// [[[cog:
 		// for p in ('tx', 'rx'):
 		//     for f in ('total_bytes', 'speed'):
-		//         cog.outl("iostat.{p}_{f:11s} = inst_iostat.{p}_{f};".format(**locals()))
+		//         cog.outl("iostat.{p}_{f:11s} += inst_iostat.{p}_{f};".format(**locals()))
 		// ]]]
-		iostat.tx_total_bytes = inst_iostat.tx_total_bytes;
-		iostat.tx_speed       = inst_iostat.tx_speed;
-		iostat.rx_total_bytes = inst_iostat.rx_total_bytes;
-		iostat.rx_speed       = inst_iostat.rx_speed;
-		// [[[end]]] (checksum: 5e57d8d4b1e413d2dd3c4fc2613ea606)
-	};
+		iostat.tx_total_bytes += inst_iostat.tx_total_bytes;
+		iostat.tx_speed       += inst_iostat.tx_speed;
+		iostat.rx_total_bytes += inst_iostat.rx_total_bytes;
+		iostat.rx_speed       += inst_iostat.rx_speed;
+		// [[[end]]] (checksum: fb4fe06794471d9b068ce0c129ee7673)
+	}
 
 	return iostat;
 }
