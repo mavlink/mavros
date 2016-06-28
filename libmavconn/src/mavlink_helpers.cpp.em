@@ -30,20 +30,20 @@ using mavconn::MAVConnInterface;
 
 void MAVConnInterface::init_msg_entry()
 {
-	CONSOLE_BRIDGE_logDebug("mavconn: Initialize message_entries map");
+	logDebug("mavconn: Initialize message_entries map");
 
 	auto load = [&](const char *dialect, const mavlink::mavlink_msg_entry_t & e) {
 		auto it = message_entries.find(e.msgid);
 		if (it != message_entries.end()) {
 			if (memcmp(&e, it->second, sizeof(e)) != 0) {
-				CONSOLE_BRIDGE_logWarn("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
+				logWarn("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
 			}
 			else {
-				CONSOLE_BRIDGE_logDebug("mavconn: init: message from %s, MSG-ID %d in table.", dialect, e.msgid);
+				logDebug("mavconn: init: message from %s, MSG-ID %d in table.", dialect, e.msgid);
 			}
 		}
 		else {
-			CONSOLE_BRIDGE_logDebug("mavconn: init: add message entry for %s, MSG-ID %d", dialect, e.msgid);
+			logDebug("mavconn: init: add message entry for %s, MSG-ID %d", dialect, e.msgid);
 			message_entries[e.msgid] = &e;
 		}
 	};
