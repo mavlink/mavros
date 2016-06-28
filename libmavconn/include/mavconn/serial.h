@@ -26,7 +26,8 @@ namespace mavconn {
 /**
  * @brief Serial interface
  */
-class MAVConnSerial : public MAVConnInterface {
+class MAVConnSerial : public MAVConnInterface,
+	public std::enable_shared_from_this<MAVConnSerial> {
 public:
 	static constexpr auto DEFAULT_DEVICE = "/dev/ttyACM0";
 	static constexpr auto DEFAULT_BAUDRATE = 57600;
@@ -49,7 +50,7 @@ public:
 
 	inline bool is_open() override {
 		return serial_dev.is_open();
-	};
+	}
 
 private:
 	boost::asio::io_service io_service;
@@ -58,7 +59,7 @@ private:
 
 	std::atomic<bool> tx_in_progress;
 	std::deque<MsgBuffer> tx_q;
-	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
+	std::array<uint8_t, MsgBuffer::MAX_SIZE> rx_buf;
 	std::recursive_mutex mutex;
 
 	void do_read();

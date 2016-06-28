@@ -34,7 +34,7 @@ using mavlink::mavlink_status_t;
 // static members
 std::once_flag MAVConnInterface::init_flag;
 std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries {};
-std::atomic<size_t> MAVConnInterface::conn_id_counter;
+std::atomic<size_t> MAVConnInterface::conn_id_counter {0};
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :

@@ -58,6 +58,8 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		throw DeviceError("serial", err);
 	}
 
+	// NOTE: shared_from_this() should not be used in constructors
+
 	// give some work to io_service before start
 	io_service.post(std::bind(&MAVConnSerial::do_read, this));
 
@@ -104,7 +106,7 @@ void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 
 		tx_q.emplace_back(bytes, length);
 	}
-	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
+	io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t *message)
@@ -126,7 +128,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 
 		tx_q.emplace_back(message);
 	}
-	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
+	io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
 }
 
 void MAVConnSerial::send_message(const mavlink::Message &message)
@@ -146,22 +148,23 @@ void MAVConnSerial::send_message(const mavlink::Message &message)
 
 		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
 	}
-	io_service.post(std::bind(&MAVConnSerial::do_write, this, true));
+	io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
 }
 
 void MAVConnSerial::do_read(void)
 {
+	auto sthis = shared_from_this();
 	serial_dev.async_read_some(
-			buffer(rx_buf, sizeof(rx_buf)),
-			[this] (error_code error, size_t bytes_transferred) {
+			buffer(rx_buf),
+			[sthis] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", conn_id, error.message().c_str());
-					close();
+					logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
 					return;
 				}
 
-				parse_buffer(PFX, rx_buf, sizeof(rx_buf), bytes_transferred);
-				do_read();
+				sthis->parse_buffer(PFX, sthis->rx_buf.data(), sthis->rx_buf.size(), bytes_transferred);
+				sthis->do_read();
 			});
 }
 
@@ -175,35 +178,36 @@ void MAVConnSerial::do_write(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
+	auto sthis = shared_from_this();
 	auto &buf_ref = tx_q.front();
 	serial_dev.async_write_some(
 			buffer(buf_ref.dpos(), buf_ref.nbytes()),
-			[this, &buf_ref] (error_code error, size_t bytes_transferred) {
+			[sthis, &buf_ref] (error_code error, size_t bytes_transferred) {
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error) {
-					logError(PFXd "write: %s", conn_id, error.message().c_str());
-					close();
+					logError(PFXd "write: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
 					return;
 				}
 
-				iostat_tx_add(bytes_transferred);
-				lock_guard lock(mutex);
+				sthis->iostat_tx_add(bytes_transferred);
+				lock_guard lock(sthis->mutex);
 
-				if (tx_q.empty()) {
-					tx_in_progress = false;
+				if (sthis->tx_q.empty()) {
+					sthis->tx_in_progress = false;
 					return;
 				}
 
 				buf_ref.pos += bytes_transferred;
 				if (buf_ref.nbytes() == 0) {
-					tx_q.pop_front();
+					sthis->tx_q.pop_front();
 				}
 
-				if (!tx_q.empty())
-					do_write(false);
+				if (!sthis->tx_q.empty())
+					sthis->do_write(false);
 				else
-					tx_in_progress = false;
+					sthis->tx_in_progress = false;
 			});
 }
 }	// namespace mavconn
