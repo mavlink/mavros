@@ -46,11 +46,11 @@ static bool resolve_address_udp(io_service &io, size_t chan, std::string host, u
 				ep = q_ep;
 				ep.port(port);
 				result = true;
-				logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
+				CONSOLE_BRIDGE_logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
 			});
 
 	if (ec) {
-		logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());
+		CONSOLE_BRIDGE_logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());
 		result = false;
 	}
 
@@ -75,7 +75,7 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	if (!resolve_address_udp(io_service, conn_id, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
+	CONSOLE_BRIDGE_logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
 		if (remote_host != BROADCAST_REMOTE_HOST)
@@ -86,9 +86,9 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 		}
 
 		if (remote_exists)
-			logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
+			CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
 		else
-			logWarn(PFXd "Remote address resolve failed.", conn_id);
+			CONSOLE_BRIDGE_logWarn(PFXd "Remote address resolve failed.", conn_id);
 	}
 
 	try {
@@ -144,12 +144,12 @@ void MAVConnUDP::close()
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -169,12 +169,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -194,12 +194,12 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 void MAVConnUDP::send_message(const mavlink::Message &message)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
@@ -224,13 +224,13 @@ void MAVConnUDP::do_recvfrom()
 			remote_ep,
 			[sthis] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
+					CONSOLE_BRIDGE_logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
 					sthis->close();
 					return;
 				}
 
 				if (sthis->remote_ep != sthis->last_remote_ep) {
-					logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
+					CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
 					sthis->remote_exists = true;
 					sthis->last_remote_ep = sthis->remote_ep;
 				}
@@ -259,11 +259,11 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error == boost::asio::error::network_unreachable) {
-					logWarn(PFXd "sendto: %s, retrying", sthis->conn_id, error.message().c_str());
+					CONSOLE_BRIDGE_logWarn(PFXd "sendto: %s, retrying", sthis->conn_id, error.message().c_str());
 					// do not return, try to resend
 				}
 				else if (error) {
-					logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
+					CONSOLE_BRIDGE_logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
 					sthis->close();
 					return;
 				}

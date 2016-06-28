@@ -133,7 +133,7 @@ void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg, Framing
 
 	const char *proto_version_str = (msg.magic == MAVLINK_STX) ? "v2.0" : "v1.0";
 
-	logDebug("%s%zu: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+	CONSOLE_BRIDGE_logDebug("%s%zu: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
 			pfx, conn_id,
 			proto_version_str,
 			framing_str,
@@ -144,7 +144,7 @@ void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg)
 {
 	const char *proto_version_str = (msg->magic == MAVLINK_STX) ? "v2.0" : "v1.0";
 
-	logDebug("%s%zu: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+	CONSOLE_BRIDGE_logDebug("%s%zu: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
 			pfx, conn_id,
 			proto_version_str,
 			msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq);
@@ -152,7 +152,7 @@ void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg)
 
 void MAVConnInterface::log_send_obj(const char *pfx, const mavlink::Message &msg)
 {
-	logDebug("%s%zu: send: %s", pfx, conn_id, msg.to_yaml().c_str());
+	CONSOLE_BRIDGE_logDebug("%s%zu: send: %s", pfx, conn_id, msg.to_yaml().c_str());
 }
 
 void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t *msg)
@@ -161,7 +161,7 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t
 		send_message(msg);
 	}
 	catch (std::length_error &e) {
-		logError(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
+		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
 				conn_id,
 				msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq,
 				e.what());
@@ -174,7 +174,7 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
 		send_message(msg);
 	}
 	catch (std::length_error &e) {
-		logError(PFX "%zu: DROPPED Message %s: %s",
+		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message %s: %s",
 				conn_id,
 				msg.get_name().c_str(),
 				e.what());
@@ -247,14 +247,14 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	auto ids_it = std::search(query.begin(), query.end(),
 			ids_end.begin(), ids_end.end());
 	if (ids_it == query.end()) {
-		logWarn(PFX "URL: unknown query arguments");
+		CONSOLE_BRIDGE_logWarn(PFX "URL: unknown query arguments");
 		return;
 	}
 
 	std::advance(ids_it, ids_end.length());
 	auto comma_it = std::find(ids_it, query.end(), ',');
 	if (comma_it == query.end()) {
-		logError(PFX "URL: no comma in ids= query");
+		CONSOLE_BRIDGE_logError(PFX "URL: no comma in ids= query");
 		return;
 	}
 
@@ -264,7 +264,7 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	sysid = std::stoi(sys);
 	compid = std::stoi(comp);
 
-	logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
+	CONSOLE_BRIDGE_logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
 }
 
 static MAVConnInterface::Ptr url_parse_serial(
@@ -292,7 +292,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 	auto sep_it = std::find(hosts.begin(), hosts.end(), '@');
 	if (sep_it == hosts.end()) {
-		logError(PFX "UDP URL should contain @!");
+		CONSOLE_BRIDGE_logError(PFX "UDP URL should contain @!");
 		throw DeviceError("url", "UDP separator not found");
 	}
 
@@ -360,7 +360,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			proto_end.begin(), proto_end.end());
 	if (proto_it == url.end()) {
 		// looks like file path
-		logDebug(PFX "URL: %s: looks like file path", url.c_str());
+		CONSOLE_BRIDGE_logDebug(PFX "URL: %s: looks like file path", url.c_str());
 		return url_parse_serial(url, "", system_id, component_id);
 	}
 
@@ -384,7 +384,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		++query_it;
 	query.assign(query_it, url.end());
 
-	logDebug(PFX "URL: %s: proto: %s, host: %s, path: %s, query: %s",
+	CONSOLE_BRIDGE_logDebug(PFX "URL: %s: proto: %s, host: %s, path: %s, query: %s",
 			url.c_str(), proto.c_str(), host.c_str(),
 			path.c_str(), query.c_str());
 
