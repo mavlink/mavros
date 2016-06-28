@@ -31,7 +31,8 @@ namespace mavconn {
  *
  * @note IPv4 only
  */
-class MAVConnTCPClient : public MAVConnInterface {
+class MAVConnTCPClient : public MAVConnInterface,
+	public std::enable_shared_from_this<MAVConnTCPClient> {
 public:
 	static constexpr auto DEFAULT_SERVER_HOST = "localhost";
 	static constexpr auto DEFAULT_SERVER_PORT = 5760;
@@ -71,7 +72,7 @@ private:
 
 	std::atomic<bool> tx_in_progress;
 	std::deque<MsgBuffer> tx_q;
-	uint8_t rx_buf[MsgBuffer::MAX_SIZE];
+	std::array<uint8_t, MsgBuffer::MAX_SIZE> rx_buf;
 	std::recursive_mutex mutex;
 
 	/**
@@ -88,7 +89,8 @@ private:
  *
  * @note IPv4 only
  */
-class MAVConnTCPServer : public MAVConnInterface {
+class MAVConnTCPServer : public MAVConnInterface,
+	public std::enable_shared_from_this<MAVConnTCPServer> {
 public:
 	static constexpr auto DEFAULT_BIND_HOST = "localhost";
 	static constexpr auto DEFAULT_BIND_PORT = 5760;
