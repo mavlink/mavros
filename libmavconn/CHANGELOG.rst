@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.2 (2016-06-30)
+-------------------
 * Revert "libmavconn: Update console_bridge macroses."
   This reverts commit 73fd7f755ed919bc3c170574f514ba6525cd31a2.
   It breaks Travis builds for Indigo and Jade.

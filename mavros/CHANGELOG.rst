@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.2 (2016-06-30)
+-------------------
 * plugin:sys_status: Fix STATUSTEXT log prefix
 * Contributors: Vladimir Ermakov
 
