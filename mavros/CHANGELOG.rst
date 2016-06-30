@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin:sys_status: Fix STATUSTEXT log prefix
+* Contributors: Vladimir Ermakov
+
 0.18.1 (2016-06-24)
 -------------------
 * lib: Fix base mode flag check

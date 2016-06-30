@@ -2,6 +2,21 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Revert "libmavconn: Update console_bridge macroses."
+  This reverts commit 73fd7f755ed919bc3c170574f514ba6525cd31a2.
+  It breaks Travis builds for Indigo and Jade.
+* libmavconn: Update console_bridge macroses.
+  https://github.com/ros/console_bridge/issues/18
+* libmavconn: tcp: enable_shared_from_this
+* libmavconn: udp: enable_shared_from_this
+* libmavconn: serial: enable_shared_from_this
+* libmavconn: std::deque automatically free buffers
+* libmavconn fix `#567 <https://github.com/mavlink/mavros/issues/567>`_: Fix tcp server stat calculation
+* libmavconn: Fix debug log conn_id
+* Contributors: Vladimir Ermakov
+
 0.18.1 (2016-06-24)
 -------------------
 
