@@ -80,15 +80,37 @@ def convert_to_rosmsg(mavmsg, stamp=None):
     else:
         header = Header(stamp=rospy.get_rostime())
 
-    return Mavlink(
-        header=header,
-        framing_status=Mavlink.FRAMING_OK,
-        magic=Mavlink.MAVLINK_V10,
-        len=len(mavmsg.get_payload()),
-        seq=mavmsg.get_seq(),
-        sysid=mavmsg.get_srcSystem(),
-        compid=mavmsg.get_srcComponent(),
-        msgid=mavmsg.get_msgId(),
-        checksum=mavmsg.get_crc(),
-        payload64=convert_to_payload64(mavmsg.get_payload())
-    )
+    if mavutil.mavlink20():
+        # XXX Need some api to retreive signature block.
+        if mavmsg.get_signed():
+            rospy.logerr("Signed message can't be converted to rosmsg.")
+
+        hdr = mavmsg.get_header()
+        return Mavlink(
+            header=header,
+            framing_status=Mavlink.FRAMING_OK,
+            magic=Mavlink.MAVLINK_V20,
+            len=hdr.mlen,
+            incompat_flags=hdr.incompat_flags,
+            compat_flags=hdr.compat_flags,
+            sysid=hdr.srcSystem,
+            compid=hdr.srcComponent,
+            msgid=hdr.msgId,
+            checksum=mavmsg.get_crc(),
+            payload64=convert_to_payload64(mavmsg.get_payload()),
+            signature=None, # FIXME #569
+        )
+
+    else:
+        return Mavlink(
+            header=header,
+            framing_status=Mavlink.FRAMING_OK,
+            magic=Mavlink.MAVLINK_V10,
+            len=len(mavmsg.get_payload()),
+            seq=mavmsg.get_seq(),
+            sysid=mavmsg.get_srcSystem(),
+            compid=mavmsg.get_srcComponent(),
+            msgid=mavmsg.get_msgId(),
+            checksum=mavmsg.get_crc(),
+            payload64=convert_to_payload64(mavmsg.get_payload())
+        )
