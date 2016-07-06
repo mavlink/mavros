@@ -123,7 +123,7 @@ Just use `apt-get` for installation:
 Use `wstool` utility for retriving sources and [`catkin` tool][catkin] for build.
 
 ```sh
-sudo apt-get install python-catkin-tools python-rosinstall-generator
+sudo apt-get install python-catkin-tools python-rosinstall-generator -y
 
 # 1. unneded if you already has workspace
 mkdir -p ~/catkin_ws/src
