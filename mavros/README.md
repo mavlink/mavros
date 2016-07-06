@@ -133,23 +133,23 @@ cd ~/catkin_ws
 catkin init
 wstool init src
 
-# 2. get source (upstream - released)
+# 2. OPTION A: get source (upstream - released)
 rosinstall_generator --upstream mavros | tee /tmp/mavros.rosinstall
 # alternative: latest source
 rosinstall_generator --upstream-development mavros | tee /tmp/mavros.rosinstall
 
-# 3. latest released mavlink package
+# 2. OPTION B: latest released mavlink package
 # you may run from this line to update ros-*-mavlink package
 rosinstall_generator mavlink | tee -a /tmp/mavros.rosinstall
 # alternative: to build master on Indigo or Jade:
-rosinstall_generator --rosdistro kinetic --upstream mavlink | tee -a /tmp/mavros.rosinstall
+# rosinstall_generator --rosdistro kinetic --upstream mavlink | tee -a /tmp/mavros.rosinstall
 
-# 4. workspace & deps
+# 3. workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
 wstool update -t src
 rosdep install --from-paths src --ignore-src --rosdistro kinetic -y
 
-# 5. finally - build
+# 4. finally - build
 catkin build
 ```
 
