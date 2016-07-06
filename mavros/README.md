@@ -122,6 +122,8 @@ Just use `apt-get` for installation:
 
 Use `wstool` utility for retriving sources and [`catkin` tool][catkin] for build.
 
+NOTE: The source installation instructions are for the ROS Kinetic release.
+
 ```sh
 sudo apt-get install python-catkin-tools python-rosinstall-generator -y
 
@@ -145,7 +147,7 @@ rosinstall_generator --rosdistro kinetic --upstream mavlink | tee -a /tmp/mavros
 # 4. workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
 wstool update -t src
-rosdep install --from-paths src --ignore-src --rosdistro jade -y
+rosdep install --from-paths src --ignore-src --rosdistro kinetic -y
 
 # 5. finally - build
 catkin build
