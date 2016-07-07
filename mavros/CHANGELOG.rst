@@ -2,6 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin:param: Use mavlink::set_string() helper
+* Update README.md
+* Update README.md
+  Fix very confusing instructions mixing steps.
+* Update README.md
+* Update README.md
+* python `#569 <https://github.com/mavlink/mavros/issues/569>`_: convert_to_rosmsg() support for 2.0. NO SIGNING.
+* python `#569 <https://github.com/mavlink/mavros/issues/569>`_: Update mavlink.convert_to_bytes()
+* Contributors: Lorenz Meier, Vladimir Ermakov
+
 0.18.2 (2016-06-30)
 -------------------
 * plugin:sys_status: Fix STATUSTEXT log prefix
