@@ -182,8 +182,7 @@ public:
 		mavlink::mavlink_param_union_t uv;
 		PARAM_SET ret{};
 
-		//set.param_id.fill(0); - or {} enough?
-		std::copy(param_id.begin(), param_id.end(), ret.param_id.begin());
+		mavlink::set_string(ret.param_id, param_id);
 
 		switch (param_value.getType()) {
 		// [[[cog:
@@ -227,8 +226,7 @@ public:
 	{
 		PARAM_SET ret{};
 
-		//set.param_id.fill(0);
-		std::copy(param_id.begin(), param_id.end(), ret.param_id.begin());
+		mavlink::set_string(ret.param_id, param_id);
 
 		switch (param_value.getType()) {
 		// [[[cog:
@@ -532,7 +530,7 @@ private:
 		rqr.param_index = index;
 
 		if (index != -1) {
-			std::copy(id.begin(), id.end(), rqr.param_id.begin());
+			mavlink::set_string(rqr.param_id, id);
 		}
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rqr);
