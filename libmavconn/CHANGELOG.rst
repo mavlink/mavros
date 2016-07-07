@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.3 (2016-07-07)
+-------------------
 * libmavconn: Enable autoquad dialect. It fixed in mavlink 2016.7.7
 * Contributors: Vladimir Ermakov
 

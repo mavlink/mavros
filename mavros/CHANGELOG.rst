@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.3 (2016-07-07)
+-------------------
 * plugin:param: Use mavlink::set_string() helper
 * Update README.md
 * Update README.md
