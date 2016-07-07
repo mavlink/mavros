@@ -15,7 +15,9 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(EnableCXX11)
 include(MavrosMavlink)
 
-list(APPEND IGNORE_DIALECTS "autoquad") #-> enum values out of int limit
+# Fixed in mavlink 2016.7.7
+#-> enum values out of int range
+#list(APPEND IGNORE_DIALECTS "autoquad")
 
 ###################################
 ## catkin specific configuration ##
