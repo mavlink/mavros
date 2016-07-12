@@ -27,6 +27,7 @@
   <depend>libconsole-bridge-dev</depend>
 
   <test_depend>gtest</test_depend>
+  <test_depend>rosunit</test_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml" />
