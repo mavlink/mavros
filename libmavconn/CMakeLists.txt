@@ -25,8 +25,8 @@ include(MavrosMavlink)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavconn
-  DEPENDS Boost mavlink console_bridge
-  CFG_EXTRAS libmavconn-extras.cmake
+  DEPENDS Boost console_bridge mavlink
+  CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
 )
 
 ###########
@@ -42,11 +42,11 @@ include_directories(
 
 ## Declare a cpp library
 add_library(mavconn
-  src/mavlink_helpers.cpp
   src/interface.cpp
+  src/mavlink_helpers.cpp
   src/serial.cpp
-  src/udp.cpp
   src/tcp.cpp
+  src/udp.cpp
 )
 target_link_libraries(mavconn
   ${Boost_LIBRARIES}
@@ -95,8 +95,8 @@ install(DIRECTORY cmake/Modules
 
 if(CATKIN_ENABLE_TESTING)
 
-catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-target_link_libraries(mavconn-test mavconn)
+  catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
+  target_link_libraries(mavconn-test mavconn)
 
 endif()
 

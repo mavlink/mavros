@@ -5,21 +5,21 @@ project(mavros)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  angles
   diagnostic_msgs
   diagnostic_updater
-  pluginlib
-  roscpp
+  eigen_conversions
   geometry_msgs
-  sensor_msgs
+  libmavconn
+  mavros_msgs
   nav_msgs
+  pluginlib
+  rosconsole_bridge
+  roscpp
+  sensor_msgs
   std_msgs
   std_srvs
   tf2_ros
-  angles
-  libmavconn
-  rosconsole_bridge
-  eigen_conversions
-  mavros_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -64,8 +64,8 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs nav_msgs std_msgs tf2_ros geometry_msgs libmavconn message_runtime eigen_conversions mavros_msgs
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater eigen_conversions geometry_msgs libmavconn mavros_msgs message_runtime nav_msgs pluginlib roscpp sensor_msgs std_msgs tf2_ros
   DEPENDS Boost Eigen
 )
 
@@ -81,67 +81,67 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_library(mavros
+add_library(${PROJECT_NAME}
+  src/lib/enum_sensor_orientation.cpp
+  src/lib/enum_to_string.cpp
+  src/lib/ftf_frame_conversions.cpp
+  src/lib/ftf_quaternion_utils.cpp
+  src/lib/mavlink_diag.cpp
+  src/lib/${PROJECT_NAME}.cpp
+  src/lib/rosconsole_bridge.cpp
   src/lib/uas_data.cpp
   src/lib/uas_stringify.cpp
   src/lib/uas_timesync.cpp
-  src/lib/enum_to_string.cpp
-  src/lib/enum_sensor_orientation.cpp
-  src/lib/ftf_frame_conversions.cpp
-  src/lib/ftf_quaternion_utils.cpp
-  src/lib/mavros.cpp
-  src/lib/mavlink_diag.cpp
-  src/lib/rosconsole_bridge.cpp
 )
-target_link_libraries(mavros
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
-add_dependencies(mavros mavros_msgs_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME} mavros_msgs_generate_messages_cpp)
 
-add_library(mavros_plugins
-  src/plugins/dummy.cpp
-  src/plugins/sys_status.cpp
-  src/plugins/sys_time.cpp
-  src/plugins/imu_pub.cpp
-  src/plugins/param.cpp
-  src/plugins/waypoint.cpp
-  src/plugins/rc_io.cpp
-  src/plugins/command.cpp
-  src/plugins/local_position.cpp
-  src/plugins/global_position.cpp
-  src/plugins/setpoint_position.cpp
-  src/plugins/safety_area.cpp
+add_library(${PROJECT_NAME}_plugins
   src/plugins/3dr_radio.cpp
-  src/plugins/setpoint_velocity.cpp
+  src/plugins/actuator_control.cpp
+  src/plugins/altitude.cpp
+  src/plugins/command.cpp
+  src/plugins/dummy.cpp
+  src/plugins/ftp.cpp
+  src/plugins/global_position.cpp
+  src/plugins/hil_controls.cpp
+  src/plugins/imu_pub.cpp
+  src/plugins/local_position.cpp
+  src/plugins/manual_control.cpp
+  src/plugins/param.cpp
+  src/plugins/rc_io.cpp
+  src/plugins/safety_area.cpp
   src/plugins/setpoint_accel.cpp
   src/plugins/setpoint_attitude.cpp
+  src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
+  src/plugins/setpoint_velocity.cpp
+  src/plugins/sys_status.cpp
+  src/plugins/sys_time.cpp
   src/plugins/vfr_hud.cpp
-  src/plugins/ftp.cpp
-  src/plugins/actuator_control.cpp
-  src/plugins/manual_control.cpp
-  src/plugins/altitude.cpp
-  src/plugins/hil_controls.cpp
+  src/plugins/waypoint.cpp
 )
-add_dependencies(mavros_plugins
-  mavros
+add_dependencies(${PROJECT_NAME}_plugins
+  ${PROJECT_NAME}
 )
-target_link_libraries(mavros_plugins
-  mavros
+target_link_libraries(${PROJECT_NAME}_plugins
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 ## Declare a cpp executable
-add_executable(mavros_node
-  src/mavros_node.cpp
+add_executable(${PROJECT_NAME}_node
+  src/${PROJECT_NAME}_node.cpp
 )
-add_dependencies(mavros_node
-  mavros
+add_dependencies(${PROJECT_NAME}_node
+  ${PROJECT_NAME}
 )
-target_link_libraries(mavros_node
-  mavros
+target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -150,7 +150,7 @@ add_executable(gcs_bridge
   src/gcs_bridge.cpp
 )
 target_link_libraries(gcs_bridge
-  mavros
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -171,7 +171,7 @@ catkin_install_python(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros mavros_plugins mavros_node gcs_bridge
+install(TARGETS gcs_bridge ${PROJECT_NAME} ${PROJECT_NAME}_node ${PROJECT_NAME}_plugins
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -185,7 +185,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
-  mavros_plugins.xml
+  ${PROJECT_NAME}_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -199,14 +199,14 @@ install(DIRECTORY launch/
 
 if(CATKIN_ENABLE_TESTING)
 
-catkin_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
-target_link_libraries(libmavros-frame-conversions-test mavros)
+  catkin_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
+  target_link_libraries(libmavros-frame-conversions-test ${PROJECT_NAME})
 
-catkin_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
-target_link_libraries(libmavros-sensor-orientation-test mavros)
+  catkin_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
+  target_link_libraries(libmavros-sensor-orientation-test ${PROJECT_NAME})
 
-catkin_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
-target_link_libraries(libmavros-quaternion-utils-test mavros)
+  catkin_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
+  target_link_libraries(libmavros-quaternion-utils-test ${PROJECT_NAME})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

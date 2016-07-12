@@ -52,6 +52,7 @@
   <depend>std_srvs</depend>
 
   <test_depend>gtest</test_depend>
+  <test_depend>rosunit</test_depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
