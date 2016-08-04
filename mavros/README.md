@@ -134,10 +134,8 @@ catkin init
 wstool init src
 
 # 2. Install MAVLink
-# you may run from this line to update ros-*-mavlink package
-rosinstall_generator mavlink | tee -a /tmp/mavros.rosinstall
-# alternative: to build master on Indigo or Jade:
-# rosinstall_generator --rosdistro kinetic --upstream mavlink | tee -a /tmp/mavros.rosinstall
+# we use the Kinetic reference for all ROS distros as its not distro-specific and up to date
+rosinstall_generator --rosdistro kinetic --upstream mavlink > /tmp/mavros.rosinstall
 
 # 3. Install MAVROS: get source (upstream - released)
 rosinstall_generator --upstream mavros | tee /tmp/mavros.rosinstall
