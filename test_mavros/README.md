@@ -8,7 +8,7 @@ PX4 ROS SITL
 ------------
 Follow the instructions presented on [PX4 ROS SITL Setup][px4-sitl-wiki].
 
-To test the simulation environment all you have to do is launch the propper ROS launch file. Right now, the current available one is `iris_empty_world_offboard_ctl.launch`, which allows to test the offboard control routines of the Firmware, together with the MAVROS API.
+To test the simulation environment all you have to do is launch the proper ROS launch file. Right now, the current available one is `iris_empty_world_offboard_ctl.launch`, which allows to test the offboard control routines of the Firmware, together with the MAVROS API.
 
 ### Available tests
 

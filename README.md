@@ -6,11 +6,12 @@ MAVROS
 MAVLink extendable communication node for ROS.
 
 - Since 2014-08-11 this repository contains several packages.
-- Since 2014-11-02 hydro support splited from master to hydro-devel branch.
+- Since 2014-11-02 hydro support separated from master to hydro-devel branch.
 - Since 2015-03-04 all packages also dual licensed under terms of BSD license.
 - Since 2015-08-10 all messages moved to mavros\_msgs package
 - Since 2016-02-05 (v0.17) frame conversion changed again
 - Since 2016-06-22 (pre v0.18) Indigo and Jade separated from master to indigo-devel branch.
+- Since 2016-06-23 (0.18.0) support MAVLink 2.0 without signing.
 
 
 mavros package

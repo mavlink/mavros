@@ -4,22 +4,17 @@ mavros extras
 Some extra plugins and nodes for [mavros][mr].
 
 
+servo\_state\_publisher
+-----------------------
+
+Convert `mavros_msgs/RCOut` to `sensor_msgs/JointState` messages.
+It is required to bind URDF model and real servos.
+
+
 px4flow
 -------
 
 Plugin for mavros. Publish `OPTICAL_FLOW_RAD` data.
-
-
-image\_pub
-----------
-
-Plugin for mavros, publish images from mavlink device.
-
-
-gcs\_image\_bridge
-------------------
-
-Variation of `gcs_bridge` that additionally sends image stream to GCS.
 
 
 mocap\_pose\_estimate

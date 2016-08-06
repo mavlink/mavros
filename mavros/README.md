@@ -12,7 +12,6 @@ Features
 
   - Communication with autopilot via serial port, UDP or TCP (e.g. [PX4 Pro][px4] or [ArduPilot][apm])
   - Internal proxy for Ground Control Station (serial, UDP, TCP)
-  - [mavlink\_ros][mlros] compatible ROS topics (Mavlink.msg)
   - Plugin system for ROS-MAVLink translation
   - Parameter manipulation tool
   - Waypoint manipulation tool
@@ -23,13 +22,11 @@ Features
 Limitations
 -----------
 
-Only for linux. Depends on [Boost library][boost] >= 1.46 (hydro on 12.04).
-Catkin build system required (tested with ROS Hydro Medusa, Indigo Igloo and Jade Turtle).
+Only for Linux. Depends on [Boost library][boost], GCC 4.8+ (C++11 support).
+Catkin build system required.
 
 This package are dependent on [ros-\*-mavlink][mlwiki] build from [mavlink-gbp-release][mlgbp].
-Since 2014-06-19 it exists in Hydro and Indigo package index (so you can install via rosdep).
-Since 2015-02-25 exists for Jade too.
-
+It exists in ROS package index and usually updates each month.
 
 Connection URL
 --------------
@@ -40,7 +37,7 @@ Supported schemas:
 
   - Serial: `/path/to/serial/device[:baudrate]`
   - Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
-  - UDP: `udp://[bind_host][:port]@[remote_host][:port][/?ids=sysid,compid]`
+  - UDP: `udp://[bind_host][:port]@[remote_host[:port]][/?ids=sysid,compid]`
   - UDP boroadcast: `udp-b://[bind_host][:port]@[:port][/?ids=sysid,compid]`
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
   - TCP server: `tcp-l://[bind_host][:port][/?ids=sysid,compid]`
@@ -58,11 +55,11 @@ Coordinate frames
 -----------------
 
 MAVROS does translate Aerospace NED frames, used in FCUs to ROS ENU frames and vice-versa.
-For translate airframe related data we simply apply rotation 180° abount ROLL (X) axis.
+For translate airframe related data we simply apply rotation 180° about ROLL (X) axis.
 For local we apply 180° about ROLL (X) and 90° about YAW (Z) axes.
-Plase read documents from issue #473 for additional information.
+Please read documents from issue #473 for additional information.
 
-All the conversions are handled in `src/lib/uas_frame_conversions.cpp` and `src/lib/uas_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
+All the conversions are handled in `src/lib/ftf_frame_conversions.cpp` and `src/lib/ftf_quaternion_utils.cpp` and tested in `test/test_frame_conversions.cpp` and `test/test_quaternion_utils.cpp` respectively.
 
 Related issues: [#49 (outdated)][iss49], [#216 (outdated)][iss216], [#317 (outdated)][iss317], [#319 (outdated)][iss319], [#321 (outdated)][iss321], [#473][iss473].
 Documents: [Frame Conversions][iss473rfc], [Mavlink coordinate frames][iss473table].
@@ -102,25 +99,26 @@ Launch files are provided for use with common FCUs, in particular [Pixhawk](pixh
 
 Examples:
 
-    roslaunch mavros px4.launch 
+    roslaunch mavros px4.launch
     roslaunch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
 
 
 Installation
 ------------
 
-### Binary installation (debian)
+### Binary installation (deb)
 
-Since v0.5 that programs available in precompiled debian packages for x86 and amd64 (x86\_64).
-Also v0.9+ exists in ARMv7 repo for Ubuntu armhf.
+ROS repository has binary packages for Ubuntu x86, amd64 (x86\_64) and armhf (ARMv7).
+Kinetic also support Debian Jessie amd64 and arm64 (ARMv8).
+
 Just use `apt-get` for installation:
 
-    sudo apt-get install ros-jade-mavros ros-jade-mavros-extras
+    sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
 
 
 ### Source installation
 
-Use `wstool` utility for retriving sources and [`catkin` tool][catkin] for build.
+Use `wstool` utility for retrieving sources and [`catkin` tool][catkin] for build.
 
 NOTE: The source installation instructions are for the ROS Kinetic release.
 
@@ -134,28 +132,32 @@ catkin init
 wstool init src
 
 # 2. Install MAVLink
-# we use the Kinetic reference for all ROS distros as its not distro-specific and up to date
-rosinstall_generator --rosdistro kinetic --upstream mavlink > /tmp/mavros.rosinstall
+#    we use the Kinetic reference for all ROS distros as its not distro-specific and up to date
+rosinstall_generator --rosdistro kinetic --upstream mavlink | tee /tmp/mavros.rosinstall
 
 # 3. Install MAVROS: get source (upstream - released)
-rosinstall_generator --upstream mavros | tee /tmp/mavros.rosinstall
+rosinstall_generator --upstream mavros | tee -a /tmp/mavros.rosinstall
 # alternative: latest source
-# rosinstall_generator --upstream-development mavros | tee /tmp/mavros.rosinstall
+# rosinstall_generator --upstream-development mavros | tee -a /tmp/mavros.rosinstall
 
 # 4. Create workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
-wstool update -t src
-rosdep install --from-paths src --ignore-src --rosdistro kinetic -y
+wstool update -t src -j4
+rosdep install --from-paths src --ignore-src -y
 
-# 4. Build source
+# 5. Build source
 catkin build
+
+# 6. Make sure that you use setup.bash or setup.zsh from workspace.
+#    Else rosrun can't find nodes from this workspace.
+source devel/setup.bash
 ```
 
 *Build error*. if you has error with missing `mavlink*` then you need fresh mavlink package.
-You may update from [ros-shadow-fixed][shadow] (binary installation) or redo script from step 3.
+You may update from [ros-shadow-fixed][shadow] (binary installation) or redo script steps 2 & 4.
 
-*Note*. Since MAVLink 2.0 merged all dialects supported by same binary.
-Unfortunately overlap of v1.0 message ID's not fully handled, fisrt loaded message forbid futher changes.
+*Note*. Since MAVLink 2.0 merged (0.18) all dialects supported by same binary.
+Unfortunately overlap of v1.0 message ID's not fully handled, first loaded message forbid further changes.
 Load order always:
 
 1. common
@@ -175,7 +177,7 @@ Contributing
 3. Create a remote connection to your repo (`git remote add <remote_repo> git@github.com:<YourGitUser>/mavros.git`);
 4. Create a feature/dev branch (`git checkout -b <feature_branch>`);
 5. Add the changes;
-6. Apply the changes by commiting (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
+6. Apply the changes by committing (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
 7. Check code style `uncrustify -c ${ROS_WORKSPACE}/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>`;
 8. Fix small code style errors and typos;
 9. Commit with description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commit are better than mix of style and bug fix);

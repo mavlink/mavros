@@ -30,7 +30,7 @@ Dependencies
 Same as for mavros:
 
   - Linux host
-  - Boost >= 1.46 (used Boost.ASIO and Boost.Signals2)
+  - Boost >= 1.46 (used Boost.ASIO)
   - console-bridge library
   - compiller with C++11 support
 
