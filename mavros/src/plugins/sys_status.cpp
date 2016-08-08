@@ -175,8 +175,7 @@ public:
 		// ename = 'MAV_SYS_STATUS_SENSOR'
 		// ename_pfx2 = 'MAV_SYS_STATUS_'
 		//
-		// enum = common.enums[ename].items()
-		// enum.sort()
+		// enum = sorted(common.enums[ename].items())
 		// enum.pop() # -> remove ENUM_END
 		//
 		// for k, e in enum:
@@ -241,7 +240,9 @@ public:
 			stat.add("Terrain subsystem health", (last_st.onboard_control_sensors_health & enum_value(STS::TERRAIN)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::REVERSE_MOTOR))
 			stat.add("Motors are reversed", (last_st.onboard_control_sensors_health & enum_value(STS::REVERSE_MOTOR)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 1327e1b189940b04ab7193b2352cd596)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::LOGGING))
+			stat.add("Logging", (last_st.onboard_control_sensors_health & enum_value(STS::LOGGING)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: ff583cfb8c621a8f7ac2f20aaf2e0ba9)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
