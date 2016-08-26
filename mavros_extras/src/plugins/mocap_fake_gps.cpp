@@ -98,12 +98,10 @@ private:
 		const double lon_zurich = 8.5500 * M_PI / 180;  // rad
 		const float earth_radius = 6371000;  // m
 
-
-  	Eigen::Quaterniond q_enu;
+		Eigen::Quaterniond q_enu;
 
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
-		auto q = ftf::transform_orientation_enu_ned(
-														ftf::transform_orientation_baselink_aircraft(q_enu));
+		auto q = ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu));
 
 		auto position = ftf::transform_frame_enu_ned(
 		Eigen::Vector3d(
@@ -111,8 +109,8 @@ private:
 		trans->transform.translation.y,
 		trans->transform.translation.z));
 
-  	double north = position.x();
-  	double east = position.y();
+		double north = position.x();
+		double east = position.y();
 		double n_rad = north / earth_radius;
 		double e_rad = east / earth_radius;
 		double z = -position.z(); //[m]
