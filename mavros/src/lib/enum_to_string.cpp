@@ -26,11 +26,9 @@ using mavlink::common::MAV_STATE;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
-// ename = 'MAV_AUTOPILOT'
 //
 // def get_enum(ename):
-//     enum = common.enums[ename].items()
-//     enum.sort()
+//     enum = sorted(common.enums[ename].items())
 //     enum.pop() # remove ENUM_END
 //     return enum
 //
@@ -41,49 +39,69 @@ using mavlink::common::MAV_STATE;
 //
 //     return s.strip()
 //
+// def make_whitespace(l, v):
+//     d = l - len(v)
+//     return ' ' * d if d > 0 else ' '
+//
 // def array_outl(name, enum):
 //     cog.outl("//! %s values" % name)
 //     cog.outl("static const std::array<const std::string, %s> %s_strings{{" % (len(enum), name.lower()))
 //
+// def to_string_outl(ename):
+//     array = ename.lower() + '_strings'
+//     cog.outl("std::string to_string({ename} e)".format(**locals()))
+//     cog.outl("{")
+//     cog.outl("	size_t idx = enum_value(e);")
+//     cog.outl("	if (idx >= {array}.size())".format(**locals()))
+//     cog.outl("		return std::to_string(idx);")
+//     cog.outl()
+//     cog.outl("	return {array}[idx];".format(**locals()))
+//     cog.outl("}")
+//
+// ename = 'MAV_AUTOPILOT'
 // enum = get_enum(ename)
+//
 // array_outl(ename, enum)
 // for k, e in enum:
 //     value = split_by(',-/.', e.description)
-//     cog.outl("""/* {k:>2} */ "{value}",""".format(**locals()))
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
 //
 // cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
 // ]]]
 //! MAV_AUTOPILOT values
 static const std::array<const std::string, 18> mav_autopilot_strings{{
-/*  0 */ "Generic autopilot",
-/*  1 */ "Reserved for future use",
-/*  2 */ "SLUGS autopilot",
-/*  3 */ "ArduPilotMega / ArduCopter",
-/*  4 */ "OpenPilot",
-/*  5 */ "Generic autopilot only supporting simple waypoints",
-/*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands",
-/*  7 */ "Generic autopilot supporting the full mission command set",
-/*  8 */ "No valid autopilot",
-/*  9 */ "PPZ UAV",
-/* 10 */ "UAV Dev Board",
-/* 11 */ "FlexiPilot",
-/* 12 */ "PX4 Autopilot",
-/* 13 */ "SMACCMPilot",
-/* 14 */ "AutoQuad",
-/* 15 */ "Armazila",
-/* 16 */ "Aerob",
-/* 17 */ "ASLUAV autopilot",
+/*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
+/*  1 */ "Reserved for future use",       // Reserved for future use.
+/*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
+/*  3 */ "ArduPilotMega / ArduCopter",    // ArduPilotMega / ArduCopter, http://diydrones.com
+/*  4 */ "OpenPilot",                     // OpenPilot, http://openpilot.org
+/*  5 */ "Generic autopilot only supporting simple waypoints", // Generic autopilot only supporting simple waypoints
+/*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands", // Generic autopilot supporting waypoints and other simple navigation commands
+/*  7 */ "Generic autopilot supporting the full mission command set", // Generic autopilot supporting the full mission command set
+/*  8 */ "No valid autopilot",            // No valid autopilot, e.g. a GCS or other MAVLink component
+/*  9 */ "PPZ UAV",                       // PPZ UAV - http://nongnu.org/paparazzi
+/* 10 */ "UAV Dev Board",                 // UAV Dev Board
+/* 11 */ "FlexiPilot",                    // FlexiPilot
+/* 12 */ "PX4 Autopilot",                 // PX4 Autopilot - http://pixhawk.ethz.ch/px4/
+/* 13 */ "SMACCMPilot",                   // SMACCMPilot - http://smaccmpilot.org
+/* 14 */ "AutoQuad",                      // AutoQuad -- http://autoquad.org
+/* 15 */ "Armazila",                      // Armazila -- http://armazila.com
+/* 16 */ "Aerob",                         // Aerob -- http://aerob.ru
+/* 17 */ "ASLUAV autopilot",              // ASLUAV autopilot -- http://www.asl.ethz.ch
 }};
-// [[[end]]] (checksum: f81240054dda4883ce7ef1ea7509d079)
 
-std::string to_string(MAV_AUTOPILOT ap)
+std::string to_string(MAV_AUTOPILOT e)
 {
-	size_t idx = enum_value(ap);
+	size_t idx = enum_value(e);
 	if (idx >= mav_autopilot_strings.size())
 		return std::to_string(idx);
 
 	return mav_autopilot_strings[idx];
 }
+// [[[end]]] (checksum: c0f450ce84a31ce0f86d439c007cf805)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -92,51 +110,54 @@ std::string to_string(MAV_AUTOPILOT ap)
 // array_outl(ename, enum)
 // for k, e in enum:
 //     value = split_by(',-/.', e.description)
-//     cog.outl("""/* {k:>2} */ "{value}",""".format(**locals()))
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
 //
 // cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
 static const std::array<const std::string, 28> mav_type_strings{{
-/*  0 */ "Generic micro air vehicle",
-/*  1 */ "Fixed wing aircraft",
-/*  2 */ "Quadrotor",
-/*  3 */ "Coaxial helicopter",
-/*  4 */ "Normal helicopter with tail rotor",
-/*  5 */ "Ground installation",
-/*  6 */ "Operator control unit",
-/*  7 */ "Airship",
-/*  8 */ "Free balloon",
-/*  9 */ "Rocket",
-/* 10 */ "Ground rover",
-/* 11 */ "Surface vessel",
-/* 12 */ "Submarine",
-/* 13 */ "Hexarotor",
-/* 14 */ "Octorotor",
-/* 15 */ "Octorotor",
-/* 16 */ "Flapping wing",
-/* 17 */ "Flapping wing",
-/* 18 */ "Onboard companion controller",
-/* 19 */ "Two",
-/* 20 */ "Quad",
-/* 21 */ "Tiltrotor VTOL",
-/* 22 */ "VTOL reserved 2",
-/* 23 */ "VTOL reserved 3",
-/* 24 */ "VTOL reserved 4",
-/* 25 */ "VTOL reserved 5",
-/* 26 */ "Onboard gimbal",
-/* 27 */ "Onboard ADSB peripheral",
+/*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
+/*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
+/*  2 */ "Quadrotor",                     // Quadrotor
+/*  3 */ "Coaxial helicopter",            // Coaxial helicopter
+/*  4 */ "Normal helicopter with tail rotor", // Normal helicopter with tail rotor.
+/*  5 */ "Ground installation",           // Ground installation
+/*  6 */ "Operator control unit",         // Operator control unit / ground control station
+/*  7 */ "Airship",                       // Airship, controlled
+/*  8 */ "Free balloon",                  // Free balloon, uncontrolled
+/*  9 */ "Rocket",                        // Rocket
+/* 10 */ "Ground rover",                  // Ground rover
+/* 11 */ "Surface vessel",                // Surface vessel, boat, ship
+/* 12 */ "Submarine",                     // Submarine
+/* 13 */ "Hexarotor",                     // Hexarotor
+/* 14 */ "Octorotor",                     // Octorotor
+/* 15 */ "Octorotor",                     // Octorotor
+/* 16 */ "Flapping wing",                 // Flapping wing
+/* 17 */ "Flapping wing",                 // Flapping wing
+/* 18 */ "Onboard companion controller",  // Onboard companion controller
+/* 19 */ "Two",                           // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
+/* 20 */ "Quad",                          // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
+/* 21 */ "Tiltrotor VTOL",                // Tiltrotor VTOL
+/* 22 */ "VTOL reserved 2",               // VTOL reserved 2
+/* 23 */ "VTOL reserved 3",               // VTOL reserved 3
+/* 24 */ "VTOL reserved 4",               // VTOL reserved 4
+/* 25 */ "VTOL reserved 5",               // VTOL reserved 5
+/* 26 */ "Onboard gimbal",                // Onboard gimbal
+/* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
 }};
-// [[[end]]] (checksum: 1b8a0a4bdffb6b1d10fce6e854a19acd)
 
-std::string to_string(MAV_TYPE type)
+std::string to_string(MAV_TYPE e)
 {
-	size_t idx = enum_value(type);
+	size_t idx = enum_value(e);
 	if (idx >= mav_type_strings.size())
 		return std::to_string(idx);
 
 	return mav_type_strings[idx];
 }
+// [[[end]]] (checksum: 946dcebbb0b591f0648dfbccc73630e0)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -145,31 +166,34 @@ std::string to_string(MAV_TYPE type)
 // array_outl(ename, enum)
 // for k, e in enum:
 //     value = e.name[10:].title()
-//     cog.outl("""/* {k:>2} */ "{value}",""".format(**locals()))
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
 //
 // cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
 // ]]]
 //! MAV_STATE values
 static const std::array<const std::string, 8> mav_state_strings{{
-/*  0 */ "Uninit",
-/*  1 */ "Boot",
-/*  2 */ "Calibrating",
-/*  3 */ "Standby",
-/*  4 */ "Active",
-/*  5 */ "Critical",
-/*  6 */ "Emergency",
-/*  7 */ "Poweroff",
+/*  0 */ "Uninit",                        // Uninitialized system, state is unknown.
+/*  1 */ "Boot",                          // System is booting up.
+/*  2 */ "Calibrating",                   // System is calibrating and not flight-ready.
+/*  3 */ "Standby",                       // System is grounded and on standby. It can be launched any time.
+/*  4 */ "Active",                        // System is active and might be already airborne. Motors are engaged.
+/*  5 */ "Critical",                      // System is in a non-normal flight mode. It can however still navigate.
+/*  6 */ "Emergency",                     // System is in a non-normal flight mode. It lost control over parts or over the whole airframe. It is in mayday and going down.
+/*  7 */ "Poweroff",                      // System just initialized its power-down sequence, will shut down now.
 }};
-// [[[end]]] (checksum: 263270d5d28ab2a8b5866e6a111934ef)
 
-std::string to_string(MAV_STATE st)
+std::string to_string(MAV_STATE e)
 {
-	size_t idx = enum_value(st);
+	size_t idx = enum_value(e);
 	if (idx >= mav_state_strings.size())
 		return std::to_string(idx);
 
 	return mav_state_strings[idx];
 }
+// [[[end]]] (checksum: 47dea7c5bd6ab53dbc75a6c51b35d312)
 
 }	// namespace utils
 }	// namespace mavros
