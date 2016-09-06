@@ -65,7 +65,10 @@
 	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish altitude values</description>
 	</class>
-        <class name="hil_controls" type="mavros::std_plugins::HilControlsPlugin" base_class_type="mavros::plugin::PluginBase">
+	<class name="hil_controls" type="mavros::std_plugins::HilControlsPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish HIL controls values (deprecated message)</description>
+	</class>
+	<class name="hil_actuator_controls" type="mavros::std_plugins::HilActuatorControlsPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish HIL controls values</description>
 	</class>
 </library>
