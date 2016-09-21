@@ -39,7 +39,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 		last_pos_time = ros::Time(0.0);
-		gps_period = 0.2;	// 5hz
+		gps_period = ros::Duration(0.2);	// 5hz
 		mocap_tf_d_sub = mp_nh.subscribe("fix", 1, &MocapFakeGPSPlugin::mocap_tf_d_cb, this);
 	}
 
@@ -54,43 +54,17 @@ private:
 	ros::Subscriber mocap_tf_d_sub;
 	ros::Subscriber mocap_tf_params_sub;
 
-	double old_z;
-	double old_t;
-	double old_n;
-	double old_e;
-	double gps_eph;
-	double gps_epv;
+	double old_stamp;
+	double old_north;
+	double old_east;
+	double old_down;
 	ros::Time last_pos_time;
-	double gps_period;
-
-	/* -*- low-level send -*- */
-	void gps_pose_send(uint64_t time_usec, int32_t lat, int32_t lon, int32_t alt,
-				uint16_t vel, int16_t vn, int16_t ve, int16_t vd, uint16_t cog,
-				uint16_t eph = 2, uint16_t epv = 2,
-				uint8_t fix_type = 3, uint8_t satellites_visible = 5)
-	{
-		mavlink::common::msg::HIL_GPS pos;
-		pos.time_usec = time_usec;
-		pos.lat = lat;
-		pos.lon = lon;
-		pos.alt = alt;
-		pos.vel = vel;
-		pos.vn = vn;
-		pos.ve = ve;
-		pos.vd = vd;
-		pos.cog = cog;
-		pos.eph = eph;
-		pos.epv = epv;
-		pos.fix_type = fix_type;
-		pos.satellites_visible = satellites_visible;
-		UAS_FCU(m_uas)->send_message_ignore_drop(pos);
-	}
+	ros::Duration gps_period;
 
 	void mocap_tf_d_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
 		// Throttle incoming messages to 5hz
-		if ((ros::Time::now() - last_pos_time).toSec() < gps_period)
-		{
+		if ((ros::Time::now() - last_pos_time) < gps_period) {
 			return;
 		}
 		last_pos_time = ros::Time::now();
@@ -109,69 +83,70 @@ private:
 						trans->transform.translation.y,
 						trans->transform.translation.z));
 
-		double north = position.x();
-		double east = position.y();
+		double north = position.x();	//[m]
+		double east = position.y();	//[m]
+		double down = position.z();	//[m]
 		double n_rad = north / earth_radius;
 		double e_rad = east / earth_radius;
-		double z = -position.z();	//[m]
 		double c = sqrt(n_rad * n_rad + e_rad * e_rad);
 		double sin_c = sin(c);
 		double cos_c = cos(c);
 		double lat_rad;
 		double lon_rad;
-		if (c != 0.0)
-		{
+		if (c != 0.0) {
 			lat_rad = asin(cos_c * sin(lat_zurich) + (n_rad * sin_c * cos(lat_zurich)) / c);
 			lon_rad = (lon_zurich + atan2(e_rad * sin_c, c * cos(lat_zurich) * cos_c - n_rad * sin(lat_zurich) * sin_c));
 		}
-		else
-		{
+		else {
 			lat_rad = lat_zurich;
 			lon_rad = lon_zurich;
 		}
 
-		double dn = north - old_n;	//[m]
-		double de = east - old_e;	//[m]
-		double dz = z - old_z;		//[m]
-		double dt = trans->header.stamp.toSec() - old_t;	//[s]
+		double dn = north - old_north;	//[m]
+		double de = east - old_east;	//[m]
+		double dd = down - old_down;	//[m]
+		double dt = trans->header.stamp.toSec() - old_stamp;	//[s]
 
 		//store old values
-		old_n = north;
-		old_e = east;
-		old_z = z;
-		old_t = trans->header.stamp.toSec();
+		old_north = north;
+		old_east = east;
+		old_down = down;
+		old_stamp = trans->header.stamp.toSec();
 
 		//calculate velocities
 		double vn = 100 * dn / dt;	//[cm/s]
 		double ve = 100 * de / dt;	//[cm/s]
-		double vd = -100 * dz / dt;	//[cm/s]
+		double vd = 100 * dd / dt;	//[cm/s]
 
 		//calculate course over ground
-		double _cog_rad;
-
-		if (vn == 0 && ve == 0)
-		{
-			_cog_rad = 0;
+		double cog_rad;
+		if (vn == 0 && ve == 0) {
+			cog_rad = 0;
 		}
-		else if (vn >= 0 && ve < 0)
-		{
-			_cog_rad = M_PI * 5 / 2 - atan2(vn,ve);
+		else if (vn >= 0 && ve < 0) {
+			cog_rad = M_PI * 5 / 2 - atan2(vn,ve);
 		}
-		else
-		{
-			_cog_rad = M_PI / 2 - atan2(vn,ve);
+		else {
+			cog_rad = M_PI / 2 - atan2(vn,ve);
 		}
+		double cog_deg = cog_rad * 180 / M_PI;
 
-		double _cog_deg = _cog_rad * 180 / M_PI;
-		int32_t lat = (lat_rad * 180 / M_PI) * 10000000;// [degrees * 1E7]
-		int32_t lon = (lon_rad * 180 / M_PI) * 10000000;// [degrees * 1E7]
-		int32_t alt = (408 + z) * 1000;			// [m * 1000] AMSL
-		uint16_t vel = sqrt(vn * vn + ve * ve);		// [cm/s]
-		uint16_t cog = _cog_deg * 100;			// [degrees * 100]
-
-		gps_pose_send(trans->header.stamp.toNSec() / 1000,
-					lat, lon, alt,
-					vel, vn, ve, vd, cog);
+		// Fill in and send message
+		mavlink::common::msg::HIL_GPS pos;
+		pos.time_usec = trans->header.stamp.toNSec() / 1000;
+		pos.lat = (lat_rad * 180 / M_PI) * 10000000;	// [degrees * 1E7]
+		pos.lon = (lon_rad * 180 / M_PI) * 10000000;	// [degrees * 1E7]
+		pos.alt = (408 - down) * 1000;			// [m * 1000] AMSL
+		pos.vel = sqrt(vn * vn + ve * ve);		// [cm/s]
+		pos.vn = vn;					// [cm/s]
+		pos.ve = ve;					// [cm/s]
+		pos.vd = vd;					// [cm/s]
+		pos.cog = cog_deg * 100;			// [degrees * 100]
+		pos.eph = 2;
+		pos.epv = 2;
+		pos.fix_type = 3;
+		pos.satellites_visible = 5;
+		UAS_FCU(m_uas)->send_message_ignore_drop(pos);
 	}
 };
 }	// namespace extra_plugins
