@@ -132,7 +132,7 @@ catkin init
 wstool init src
 
 # 2. Install MAVLink
-#    we use the Kinetic reference for all ROS distros as its not distro-specific and up to date
+#    we use the Kinetic reference for all ROS distros as it's not distro-specific and up to date
 rosinstall_generator --rosdistro kinetic --upstream mavlink | tee /tmp/mavros.rosinstall
 
 # 3. Install MAVROS: get source (upstream - released)
