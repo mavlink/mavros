@@ -5,18 +5,10 @@
 # https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
 
 std_msgs/Header header
-float32[4] attitude_quaternion
-float32 rollspeed
-float32 pitchspeed
-float32 yawspeed
-int32 lat
-int32 lon
-int32 alt
-int16 vx
-int16 vy
-int16 vz
+float32[4] quaternion_wxyz
+float32[3] angularspeed # has rollspeed, pitchspeed, yawspeed (rad/s)
+int32[3] GPS # has lat *1E7, lon *1E7, alt *1000(millimeters)
+int16[3] groundspeed # has vx, vy, vz (cm/s)
 uint16 ind_airspeed
 uint16 true_airspeed
-int16 xacc
-int16 yacc
-int16 zacc
+int16[3] acceleration # has xacc, yacc, zacc in milli g
