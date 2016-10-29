@@ -35,7 +35,7 @@ public:
 			Eigen::Vector3d gyro,
 			Eigen::Vector3d mag,
             Eigen::Vector3d pressure,
-            float temperature
+            float temperature,
 			uint32_t fields_updated)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
@@ -62,6 +62,58 @@ public:
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sensor);
 	}
+};
+
+/**
+ * @brief This mixin adds set_hil_state_quaternion()
+ */
+template <class D>
+class SetHilSensorMixin {
+public:
+    //! Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
+    void set_hil_state_quaternion(uint64_t time_boot_us,
+                        Eigen::Vector4d quat,
+                        Eigen::Vector3d angularspeed,
+                        Eigen::Vector3d GPS,
+                        Eigen::Vector3d groundspeed,
+                        uint16_t ind_airspeed,
+                        uint16_t true_airspeed,
+                        Eigen::Vector3d acceleration)
+    {
+        mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+        mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
+        
+        // there is no target sys in this mavlink message!
+        //m_uas_->msg_set_target(sensor);
+        
+        state_quat.time_usec= time_boot_us;
+        
+        state_quat.attitude_quaternion[0]=quat(0);
+        state_quat.attitude_quaternion[1]=quat(1);
+        state_quat.attitude_quaternion[2]=quat(2);
+        state_quat.attitude_quaternion[3]=quat(3);
+        
+        state_quat.rollspeed=angularspeed.x();
+        state_quat.pitchspeed=angularspeed.y();
+        state_quat.yawspeed=angularspeed.z();
+        
+        state_quat.lat=GPS.x();
+        state_quat.lon=GPS.y();
+        state_quat.alt=GPS.z();
+        
+        state_quat.vx=groundspeed.x();
+        state_quat.vy=groundspeed.y();
+        state_quat.vz=groundspeed.z();
+        
+        state_quat.ind_airspeed=ind_airspeed;
+        state_quat.true_airspeed=true_airspeed;
+        
+        state_quat.xacc=acceleration.x();
+        state_quat.yacc=acceleration.y();
+        state_quat.zacc=acceleration.z();
+        
+        UAS_FCU(m_uas_)->send_message_ignore_drop(state_quat);
+    }
 };
 
 }	// namespace plugin

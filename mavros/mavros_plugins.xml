@@ -72,7 +72,10 @@
 		<description>Publish HIL controls values</description>
 	</class>
     <class name="hil_sensor" type="mavros::std_plugins::HilSensorPlugin" base_class_type="mavros::plugin::PluginBase">
-        <description>Publish HIL Sensor values in NED</description>
+        <description>Send HIL Sensor values in NED to FCU</description>
+    </class>
+    <class name="hil_state_quaternion" type="mavros::std_plugins::HilStateQuaternionPlugin" base_class_type="mavros::plugin::PluginBase">
+        <description>Send HIL_STATE_QUATERNION to FCU</description>
     </class>
 </library>
 
