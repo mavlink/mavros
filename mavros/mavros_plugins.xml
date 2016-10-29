@@ -71,5 +71,8 @@
 	<class name="hil_actuator_controls" type="mavros::std_plugins::HilActuatorControlsPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish HIL controls values</description>
 	</class>
+    <class name="hil_sensor" type="mavros::std_plugins::HilSensorPlugin" base_class_type="mavros::plugin::PluginBase">
+        <description>Publish HIL Sensor values in NED</description>
+    </class>
 </library>
 
