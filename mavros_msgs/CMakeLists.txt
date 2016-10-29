@@ -19,6 +19,8 @@ add_message_files(
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
+  HilSensor.msg
+  HilStateQuaternion.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
