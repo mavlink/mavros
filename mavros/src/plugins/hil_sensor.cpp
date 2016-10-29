@@ -31,7 +31,7 @@ class HilSensorPlugin : public plugin::PluginBase,
     private plugin::SetHilSensorMixin<HilSensorPlugin> {
 public:
 	HilSensorPlugin() : PluginBase(),
-		sp_nh("~hil_sensor"),
+		sensor_nh("~hil_sensor"),
 
 	{ }
 

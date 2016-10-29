@@ -68,7 +68,7 @@ public:
  * @brief This mixin adds set_hil_state_quaternion()
  */
 template <class D>
-class SetHilSensorMixin {
+class SetHilStateQuaternionMixin {
 public:
     //! Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
     void set_hil_state_quaternion(uint64_t time_boot_us,
