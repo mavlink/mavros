@@ -17,5 +17,5 @@ float32 zmag
 float32 abs_pressure
 float32 diff_pressure
 float32 pressure_alt
-flat32 temperature
+float32 temperature
 uint32 fields_updated
