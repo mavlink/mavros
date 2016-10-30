@@ -85,7 +85,7 @@ private:
 
 		void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
             
-            send_hil_sensor(req->header.stamp,
+            send_hil_state_quaternion(req->header.stamp,
                             req->quat_wxyz[0], req->quat_wxyz[1], req->quat_wxyz[2], req->quat_wxyz[3],
                             req->rollspeed,req->pitchspeed, req->yawspeed,
                             req->lat, req->lon, req->alt,
