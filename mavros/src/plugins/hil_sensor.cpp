@@ -63,18 +63,19 @@ private:
 	 *
 	 * @warning
 	 */
-	void send_hil_sensor(const ros::Time &stamp, Eigen::Vector3d &acc,
-                         Eigen::Vector3d &gyro,
-                         Eigen::Vector3d &mag,
-                         Eigen::Vector3d &pressure,
+	void send_hil_sensor(const ros::Time &stamp,
+                         float xacc, float yacc, float zacc,
+                         float xgyro, float ygyro, float zgyro,
+                         float xmag, float ymag, float zmag,
+                         float abs_pressure, float diff_pressure, float pressure_alt,
                          float temperature,
                          uint32_t fields_updated) {
 
 		set_hil_sensor(stamp.toNSec() / 1000,
-					acc,
-					gyro,
-					mag,
-					pressure,
+					xacc, yacc, zacc,
+					xgyro, ygyro, zgyro,
+					xmag, ymag, zmag,
+					abs_pressure, diff_pressure, pressure_alt,
 					temperature,
 					fields_updated);
 	}
@@ -83,21 +84,12 @@ private:
         
 
 		void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
-            Eigen::Vector3d acc;
-            Eigen::Vector3d gyro;
-            Eigen::Vector3d mag;
-            Eigen::Vector3d pressure;
-            
-            tf::vectorMsgToEigen(req->acc, acc);
-            tf::vectorMsgToEigen(req->gyro, gyro);
-            tf::vectorMsgToEigen(req->mag, mag);
-            tf::vectorMsgToEigen(req->pressure, pressure);
             
             send_hil_sensor(req->header.stamp,
-                            acc,
-                            gyro,
-                            mag,
-                            pressure,
+                            req->xacc, req->yacc, req->zacc,
+                            req->xgyro, req->ygyro, req->zgyro,
+                            req->xmag, req->ymag, req->zmag,
+                            req->abs_pressure, req->diff_pressure, req->pressure_alt,
                             req->temperature,
                             req->fields_updated);
         }

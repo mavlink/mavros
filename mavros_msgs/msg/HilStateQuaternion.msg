@@ -5,7 +5,7 @@
 # https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
 
 std_msgs/Header header
-float32[4] quaternion_wxyz
+float32[4] quat_wxyz
 float32 rollspeed
 float32 pitchspeed
 float32 yawspeed

@@ -63,50 +63,36 @@ private:
 	 *
 	 */
 	void send_hil_state_quaternion(const ros::Time &stamp,
-                                   Eigen::Vector4d &quat,
-                                   Eigen::Vector3d &angularspeed,
-                                   Eigen::Vector3d &GPS,
-                                   Eigen::Vector3d &groundspeed,
-                                   uint16_t ind_airspeed,
-                                   uint16_t true_airspeed,
-                                   Eigen::Vector3d acceleration) {
+                                   float qw, float qx, float qy, float qz,
+                                   float rollspeed, float pitchspeed, float yawspeed,
+                                   int32_t lat, int32_t lon, int32_t alt,
+                                   int16_t vx, int16_t vy, int16_t vz,
+                                   uint16_t ind_airspeed, uint16_t true_airspeed,
+                                   int16_t xacc, int16_t yacc, int16_t zacc) {
 
 		set_hil_state_quaternion(stamp.toNSec() / 1000,
-					quat,
-					angularspeed,
-					GPS,
-					groundspeed,
+					qw, qx, qy, qz,
+					rollspeed, pitchspeed, yawspeed,
+					lat, lon, alt,
+					vx, vy, vz,
 					ind_airspeed,
 					true_airspeed,
-                    acceleration);
+                    xacc, yacc, zacc);
 	}
 
 	/* -*- callbacks -*- */
         
 
 		void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
-            Eigen::Vector4d quat;
-            Eigen::Vector3d angularspeed;
-            Eigen::Vector3d GPS;
-            Eigen::Vector3d groundspeed;
-            uint16_t ind_airspeed;
-            uint16_t true_airspeed;
-            Eigen::Vector3d acceleration;
-            
-            tf::vectorMsgToEigen(req->quaternion_wxyz, quat);
-            tf::vectorMsgToEigen(req->angularspeed, angularspeed);
-            tf::vectorMsgToEigen(req->GPS, GPS);
-            tf::vectorMsgToEigen(req->groundspeed, groundspeed);
-            tf::vectorMsgToEigen(req->acceleration, acceleration);
             
             send_hil_sensor(req->header.stamp,
-                            quat,
-                            angularspeed,
-                            GPS,
-                            groundspeed,
+                            req->quat_wxyz[0], req->quat_wxyz[1], req->quat_wxyz[2], req->quat_wxyz[3],
+                            req->rollspeed,req->pitchspeed, req->yawspeed,
+                            req->lat, req->lon, req->alt,
+                            req->vx, req->vy, req->vz,
                             req->ind_airspeed,
                             req->true_airspeed,
-                            acceleration);
+                            req->xacc, req->yacc, req->zacc);
         }
 };
 }	// namespace std_plugins
