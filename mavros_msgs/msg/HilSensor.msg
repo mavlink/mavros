@@ -5,9 +5,17 @@
 # https://pixhawk.ethz.ch/mavlink/#HIL_SENSOR
 
 std_msgs/Header header
-float32[3] acc # has xacc, yacc, zacc
-float32[3] gyro # has xgyro, ygyro, zgyro
-float32[3] mag # has xmag, ymag, zmag
-float32[3] pressure # has abs_pressure, diff_presuure, pressure_alt
-float32 temperature
+float32 xacc
+float32 yacc
+float32 zacc
+float32 xgyro
+float32 ygyro
+float32 zgyro
+float32 xmag
+float32 ymag
+float32 zmag
+float32 abs_pressure
+float32 diff_pressure
+float32 pressure_alt
+flat32 temperature
 uint32 fields_updated

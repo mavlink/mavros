@@ -31,7 +31,7 @@ class HilStateQuaternionPlugin : public plugin::PluginBase,
     private plugin::SetHilStateQuaternionMixin<HilStateQuaternionPlugin> {
 public:
 	HilStateQuaternionPlugin() : PluginBase(),
-		state_quat_nh("~hil_state_quaternion"),
+		state_quat_nh("~hil_state_quaternion")
 
 	{ }
 
