@@ -2,6 +2,11 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update README for all packages
+* Contributors: Vladimir Ermakov
+
 0.18.3 (2016-07-07)
 -------------------
 

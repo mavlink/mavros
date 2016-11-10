@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Code clean-up
+* code style fix
+* markup changes
+* Fake gps plugin
+* Update README for all packages
+* Contributors: Vilhjalmur, Vladimir Ermakov, vilhjalmur89
+
 0.18.3 (2016-07-07)
 -------------------
 
