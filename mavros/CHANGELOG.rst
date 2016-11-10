@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.4 (2016-11-11)
+-------------------
 * lib: Add ArduSub modes
 * readme: Fix mavlink rosinstall_generator call
 * mavros: README.md: its -> it's
