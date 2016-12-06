@@ -49,7 +49,7 @@ public:
 	}
 
 private:
-	friend class SetHilSensorMixin;
+	friend class SetHilGPSMixin;
         
 	ros::NodeHandle gps_nh;
 
