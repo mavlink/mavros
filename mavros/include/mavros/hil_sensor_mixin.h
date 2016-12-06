@@ -146,7 +146,7 @@ public:
 	gps.ve			=ve;
 	gps.vd			=vd;
 	gps.cog			=cog;
-	gps.satellites_visible	=satellites_visible
+	gps.satellites_visible	=satellites_visible;
         UAS_FCU(m_uas_)->send_message_ignore_drop(gps);
     }
 };
