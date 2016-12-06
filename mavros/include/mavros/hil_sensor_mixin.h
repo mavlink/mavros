@@ -115,5 +115,41 @@ public:
     }
 };
 
+/**
+ * @brief This mixin adds set_hil_gps()
+ */
+template <class D>
+class SetHilGPSMixin {
+public:
+    //! Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_GPS
+    void set_hil_gps(uint64_t time_boot_us, uint8_t fix_type,
+			int32_t lat, int32_t lon, int32_t alt,
+			uint16_t eph, uint16_t epv, uint16_t vel, 
+			int16_t vn, int16_t ve, int16_t vd,
+			uint16_t cog,
+			uint8_t satellites_visible)
+    {
+        mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+        mavlink::common::msg::HIL_GPS gps;
+        
+        // there is no target sys in this mavlink message!
+        
+        gps.time_usec		= time_boot_us;
+	gps.fix_type		=fix_type;
+	gps.lat			=lat;
+	gps.lon			=lon;
+	gps.alt			=alt;
+	gps.eph			=eph;
+	gps.epv			=epv;
+	gps.vel			=vel;
+	gps.vn			=vn;
+	gps.ve			=ve;
+	gps.vd			=vd;
+	gps.cog			=cog;
+	gps.satellites_visible	=satellites_visible
+        UAS_FCU(m_uas_)->send_message_ignore_drop(gps);
+    }
+};
+
 }	// namespace plugin
 }	// namespace mavros
