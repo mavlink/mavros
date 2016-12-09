@@ -48,7 +48,8 @@ static const cmode_map arduplane_cmode_map{{
 	{ 17, "QSTABILIZE" },	// QuadPlane
 	{ 18, "QHOVER" },
 	{ 19, "QLOITER" },
-	{ 20, "QLAND" }
+	{ 20, "QLAND" },
+	{ 21, "QRTL" }
 }};
 
 /** APM:Copter custom mode -> string
@@ -72,7 +73,10 @@ static const cmode_map arducopter_cmode_map{{
 	{ 14, "FLIP" },
 	{ 15, "AUTOTUNE" },
 	{ 16, "POSHOLD" },
-	{ 17, "BRAKE" }
+	{ 17, "BRAKE" },
+	{ 18, "THROW" },
+	{ 19, "AVOID_ADSB" },
+	{ 20, "GUIDED_NOGPS" }
 }};
 
 /** APM:Rover custom mode -> string
