@@ -37,6 +37,7 @@ add_message_files(
   Vibration.msg
   Waypoint.msg
   WaypointList.msg
+  ActuatorControlTarget.msg
 )
 
 add_service_files(
