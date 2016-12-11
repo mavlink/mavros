@@ -57,7 +57,7 @@ private:
 		actuator_control_target_msg->header.stamp = m_uas->synchronise_stamp(actuator_control_target.time_usec);
 
 		actuator_control_target_msg->group_mlx = actuator_control_target.group_mlx;
-		for(i=0; i<8; i++){
+		for(int i=0; i<8; i++){
 			actuator_control_target_msg->controls[i]=actuator_control_target.controls[i];
 		}
 
