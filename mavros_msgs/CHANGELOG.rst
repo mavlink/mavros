@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.18.4 (2016-11-11)
 -------------------
 * msgs: Fix `#609 <https://github.com/mavlink/mavros/issues/609>`_

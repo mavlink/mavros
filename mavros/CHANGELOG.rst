@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: update ArduPilot modes
+* Contributors: Randy Mackay
+
 0.18.4 (2016-11-11)
 -------------------
 * lib: Add ArduSub modes
