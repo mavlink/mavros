@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.5 (2016-12-12)
+-------------------
 * lib: update ArduPilot modes
 * Contributors: Randy Mackay
 
