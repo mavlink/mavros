@@ -623,6 +623,7 @@ private:
 		state_msg->armed = false;
 		state_msg->guided = false;
 		state_msg->mode = "";
+		state_msg->status = enum_value(MAV_STATE::UNINIT);
 
 		state_pub.publish(state_msg);
 	}
@@ -651,6 +652,7 @@ private:
 		state_msg->armed = hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED);
 		state_msg->guided = hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED);
 		state_msg->mode = m_uas->str_mode_v10(hb.base_mode, hb.custom_mode);
+		state_msg->status = hb.system_status;
 
 		state_pub.publish(state_msg);
 		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
