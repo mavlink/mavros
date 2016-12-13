@@ -8,3 +8,4 @@ bool connected
 bool armed
 bool guided
 string mode
+uint8 status
