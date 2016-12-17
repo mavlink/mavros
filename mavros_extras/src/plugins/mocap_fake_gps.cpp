@@ -145,7 +145,7 @@ private:
 		pos.eph = 2;
 		pos.epv = 2;
 		pos.fix_type = 3;
-		pos.satellites_visible = 5;
+		pos.satellites_visible = 10;
 		UAS_FCU(m_uas)->send_message_ignore_drop(pos);
 	}
 };
