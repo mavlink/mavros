@@ -33,7 +33,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 		last_time = ros::Time(0.0);
-		control_period = ros::Duration(0.025);	// 40hz
+		control_period = ros::Duration(0.1);	// 40hz
 
 		hil_controls_pub = hil_controls_nh.advertise<mavros_msgs::HilControls>("hil_controls", 10);
 	}
