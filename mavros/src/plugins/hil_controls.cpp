@@ -32,6 +32,8 @@ public:
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
+		last_time = ros::Time(0.0);
+		control_period = ros::Duration(0.025);	// 40hz
 
 		hil_controls_pub = hil_controls_nh.advertise<mavros_msgs::HilControls>("hil_controls", 10);
 	}
@@ -47,11 +49,19 @@ private:
 	ros::NodeHandle hil_controls_nh;
 
 	ros::Publisher hil_controls_pub;
+	ros::Time last_time;
+	ros::Duration control_period;
 
 	/* -*- rx handlers -*- */
 
 	void handle_hil_controls(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HIL_CONTROLS &hil_controls)
 	{
+		// Throttle incoming messages to 40hz
+		if ((ros::Time::now() - last_time) < control_period) {
+			return;
+		}
+		last_time = ros::Time::now();
+
 		auto hil_controls_msg = boost::make_shared<mavros_msgs::HilControls>();
 
 		hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);

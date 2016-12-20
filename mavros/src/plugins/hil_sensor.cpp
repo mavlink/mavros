@@ -38,7 +38,8 @@ public:
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-
+		last_time = ros::Time(0.0);
+		sensor_period = ros::Duration(0.025);	// 40hz
 
 		hilSensor_sub = sensor_nh.subscribe("imu_ned", 10, &HilSensorPlugin::sensor_cb, this);
 	}
@@ -54,6 +55,8 @@ private:
 	ros::NodeHandle sensor_nh;
 
 	ros::Subscriber hilSensor_sub;
+	ros::Time last_time;
+	ros::Duration sensor_period;
 
 
 	/* -*- mid-level helpers -*- */
@@ -83,15 +86,20 @@ private:
 	/* -*- callbacks -*- */
         
 
-		void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
+	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
+		// Throttle incoming messages to 40hz
+		if ((ros::Time::now() - last_time) < sensor_period) {
+			return;
+		}
+		last_time = ros::Time::now();
             
-            send_hil_sensor(req->header.stamp,
-                            req->xacc, req->yacc, req->zacc,
-                            req->xgyro, req->ygyro, req->zgyro,
-                            req->xmag, req->ymag, req->zmag,
-                            req->abs_pressure, req->diff_pressure, req->pressure_alt,
-                            req->temperature,
-                            req->fields_updated);
+		send_hil_sensor(req->header.stamp,
+			    req->xacc, req->yacc, req->zacc,
+			    req->xgyro, req->ygyro, req->zgyro,
+			    req->xmag, req->ymag, req->zmag,
+			    req->abs_pressure, req->diff_pressure, req->pressure_alt,
+			    req->temperature,
+			    req->fields_updated);
         }
 };
 }	// namespace std_plugins
