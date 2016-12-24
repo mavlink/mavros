@@ -118,6 +118,20 @@ protected:
 			}
 		};
 	}
+
+	/**
+	 * Common callback called on connection change
+	 */
+	virtual void connection_cb(bool connected) {
+		ROS_BREAK();
+	}
+
+	/**
+	 * Shortcut for connection_cb() registration
+	 */
+	inline void enable_connection_cb() {
+		m_uas->add_connection_change_handler(std::bind(&PluginBase::connection_cb, this, std::placeholders::_1));
+	}
 };
 }	// namespace plugin
 }	// namespace mavros

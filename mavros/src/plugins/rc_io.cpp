@@ -42,8 +42,7 @@ public:
 		rc_out_pub = rc_nh.advertise<mavros_msgs::RCOut>("out", 10);
 		override_sub = rc_nh.subscribe("override", 10, &RCIOPlugin::override_cb, this);
 
-		// XXX!
-		m_uas->sig_connection_changed.connect(boost::bind(&RCIOPlugin::connection_cb, this, _1));
+		enable_connection_cb();
 	};
 
 	Subscriptions get_subscriptions() {
@@ -195,7 +194,7 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void connection_cb(bool connected)
+	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
 		raw_rc_in.clear();

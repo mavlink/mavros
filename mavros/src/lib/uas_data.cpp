@@ -52,10 +52,18 @@ void UAS::update_connection_status(bool conn_)
 {
 	if (conn_ != connected) {
 		connected = conn_;
-		sig_connection_changed(connected);
+
+		// call all change cb's
+		for (auto &cb : connection_cb_vec)
+			cb(conn_);
 	}
 }
 
+void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
+{
+	lock_guard lock(mutex);
+	connection_cb_vec.push_back(cb);
+}
 
 /* -*- autopilot version -*- */
 

@@ -461,9 +461,6 @@ public:
 				&SystemStatusPlugin::autopilot_version_cb, this);
 		autopilot_version_timer.stop();
 
-		//XXX! subscribe to connection event
-		m_uas->sig_connection_changed.connect(boost::bind(&SystemStatusPlugin::connection_cb, this, _1));
-
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
@@ -472,6 +469,7 @@ public:
 
 		// init state topic
 		publish_disconnection();
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions() {
@@ -876,7 +874,7 @@ private:
 		}
 	}
 
-	void connection_cb(bool connected)
+	void connection_cb(bool connected) override
 	{
 		has_battery_status = false;
 

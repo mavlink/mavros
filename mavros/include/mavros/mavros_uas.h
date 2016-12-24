@@ -30,9 +30,6 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
 
-// XXX decide what to do with UAS signals
-#include <boost/signals2.hpp>
-
 namespace mavros {
 /**
  * @brief helper accessor to FCU link interface
@@ -64,6 +61,7 @@ namespace mavros {
  */
 class UAS {
 public:
+	using ConnectionCb = std::function<void(bool)>;
 	using lock_guard = std::lock_guard<std::recursive_mutex>;
 	using unique_lock = std::unique_lock<std::recursive_mutex>;
 
@@ -87,15 +85,6 @@ public:
 	diagnostic_updater::Updater diag_updater;
 
 	/**
-	 * @brief This signal emit when status was changed
-	 *
-	 * @param bool connection status
-	 *
-	 * XXX will be removed
-	 */
-	boost::signals2::signal<void(bool)> sig_connection_changed;
-
-	/**
 	 * @brief Return connection status
 	 */
 	inline bool is_connected() {
@@ -113,6 +102,11 @@ public:
 	 * Update autopilot connection status (every HEARTBEAT/conn_timeout)
 	 */
 	void update_connection_status(bool conn_);
+
+	/**
+	 * @brief Add connection change handler callback
+	 */
+	void add_connection_change_handler(ConnectionCb cb);
 
 	/**
 	 * @brief Returns vehicle type
@@ -328,6 +322,7 @@ private:
 	uint8_t target_component;
 
 	std::atomic<bool> connected;
+	std::vector<ConnectionCb> connection_cb_vec;
 
 	sensor_msgs::Imu::Ptr imu_data;
 
