@@ -7,3 +7,4 @@ plugin_whitelist:
 - param
 - image_pub
 - px4flow
+- mocap_fake_gps
