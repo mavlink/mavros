@@ -6,6 +6,6 @@ plugin_blacklist:
 - vibration
 - distance_sensor
 
-plugin_whitelist:
-- 'sys_*'
-- mocap_fake_gps
+plugin_whitelist: []
+# 'sys_*'
+
