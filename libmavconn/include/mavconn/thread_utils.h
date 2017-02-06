@@ -47,7 +47,7 @@ inline bool set_thread_name(std::thread &thd, const char *name, ...)
 #ifdef __APPLE__
 	return pthread_setname_np(new_name) == 0;
 #elif
-  return pthread_setname_np(pth, new_name) == 0;
+	return pthread_setname_np(pth, new_name) == 0;
 #endif
 }
 
