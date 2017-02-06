@@ -44,7 +44,11 @@ inline bool set_thread_name(std::thread &thd, const char *name, ...)
 	char new_name[256];
 	vsnprintf(new_name, sizeof(new_name), name, arg_list);
 	va_end(arg_list);
-	return pthread_setname_np(pth, new_name) == 0;
+#ifdef __APPLE__
+	return pthread_setname_np(new_name) == 0;
+#elif
+  return pthread_setname_np(pth, new_name) == 0;
+#endif
 }
 
 /**
