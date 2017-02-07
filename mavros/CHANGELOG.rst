@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.6 (2017-02-07)
+-------------------
 * lib `#626 <https://github.com/mavlink/mavros/issues/626>`_: Porting of PR `#650 <https://github.com/mavlink/mavros/issues/650>`_ - Fix OSX pthread set name.
 * uas fix `#639 <https://github.com/mavlink/mavros/issues/639>`_: Remove Boost::signals2 from UAS
 * Plugins: system_status change status field to system_status

@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.6 (2017-02-07)
+-------------------
 * Plugins: system_status change status field to system_status
   Add comment to State.msg for system_status enum
 * Plugins: add system_status to state message
