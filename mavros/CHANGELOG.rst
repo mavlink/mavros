@@ -2,6 +2,15 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Pthread fix for OSX (`#650 <https://github.com/mavlink/mavros/issues/650>`_)
+  * fix pthread and missing defines for osx
+  * adapted their style using tabs
+  * fix elif to else
+* Fixing a typo in HIL_CONTROLS plugin
+* Contributors: Fadri Furrer, Pavel
+
 0.17.4 (2016-06-23)
 -------------------
 * Ran uncrustify on hil_controls plugin

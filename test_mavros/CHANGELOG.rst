@@ -2,6 +2,9 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.17.4 (2016-06-23)
 -------------------
 * Test_mavros : fix compilation on gcc6.1
