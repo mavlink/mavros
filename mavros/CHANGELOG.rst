@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.17.5 (2017-02-07)
+-------------------
 * Pthread fix for OSX (`#650 <https://github.com/mavlink/mavros/issues/650>`_)
   * fix pthread and missing defines for osx
   * adapted their style using tabs
