@@ -2,6 +2,15 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib `#626 <https://github.com/mavlink/mavros/issues/626>`_: Porting of PR `#650 <https://github.com/mavlink/mavros/issues/650>`_ - Fix OSX pthread set name.
+* uas fix `#639 <https://github.com/mavlink/mavros/issues/639>`_: Remove Boost::signals2 from UAS
+* Plugins: system_status change status field to system_status
+  Add comment to State.msg for system_status enum
+* Plugins: add system_status to state message
+* Contributors: Fadri Furrer, Pierre Kancir, Vladimir Ermakov
+
 0.18.5 (2016-12-12)
 -------------------
 * lib: update ArduPilot modes
