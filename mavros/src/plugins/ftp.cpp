@@ -37,6 +37,13 @@
 // enable debugging messages
 //#define FTP_LL_DEBUG
 
+#ifdef __APPLE__
+#define EBADE 50   /* Invalid exchange */
+#define EBADFD 81  /* File descriptor in bad state */
+#define EBADRQC 54 /* Invalid request code */
+#define EBADSLT 55 /* Invalid slot */
+#endif
+
 namespace mavplugin {
 /**
  * @brief FTP Request message abstraction class
@@ -1034,4 +1041,3 @@ private:
 };	// namespace mavplugin
 
 PLUGINLIB_EXPORT_CLASS(mavplugin::FTPPlugin, mavplugin::MavRosPlugin)
-
