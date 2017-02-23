@@ -125,7 +125,8 @@ private:
 
 		auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto rpy = ftf::quaternion_to_rpy(
-				ftf::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
+				ftf::transform_orientation_enu_ned(
+				ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))));
 
 		vision_position_estimate(stamp.toNSec() / 1000, position, rpy);
 	}
