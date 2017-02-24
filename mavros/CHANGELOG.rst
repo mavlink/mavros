@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* readme: Add serial-hwfc:// proto
+* trigger interface : rename to cycle_time to be consistent with PX4
+* Contributors: Kabir Mohammed, Vladimir Ermakov
+
 0.18.6 (2017-02-07)
 -------------------
 * lib `#626 <https://github.com/mavlink/mavros/issues/626>`_: Porting of PR `#650 <https://github.com/mavlink/mavros/issues/650>`_ - Fix OSX pthread set name.

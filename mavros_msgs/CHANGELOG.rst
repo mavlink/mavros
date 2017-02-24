@@ -2,6 +2,11 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* trigger interface : rename to cycle_time to be consistent with PX4
+* Contributors: Kabir Mohammed
+
 0.18.6 (2017-02-07)
 -------------------
 * Plugins: system_status change status field to system_status
