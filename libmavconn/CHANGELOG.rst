@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.7 (2017-02-24)
+-------------------
 * readme: Add serial-hwfc:// proto
 * libmavconn `#649 <https://github.com/mavlink/mavros/issues/649>`_: Add serial-hwfc:// proto (serial + hardware flow control)
   Note: not all platforms support setting

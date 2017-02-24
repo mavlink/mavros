@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.7 (2017-02-24)
+-------------------
 * readme: Add serial-hwfc:// proto
 * trigger interface : rename to cycle_time to be consistent with PX4
 * Contributors: Kabir Mohammed, Vladimir Ermakov
