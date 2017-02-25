@@ -207,12 +207,27 @@ public:
 
 	/* -*- time sync -*- */
 
+	enum class timesync_mode : uint8_t {
+		NONE,
+		MAVLINK,
+		ONBOARD,
+		PASSTHROUGH
+	};
+
 	inline void set_time_offset(uint64_t offset_ns) {
 		time_offset = offset_ns;
 	}
 
 	inline uint64_t get_time_offset(void) {
 		return time_offset;
+	}
+
+	inline void set_timesync_mode(timesync_mode mode) {
+		tsync_mode = mode;
+	}
+
+	inline timesync_mode get_timesync_mode(void) {
+		return tsync_mode;
 	}
 
 	/* -*- autopilot version -*- */
@@ -333,6 +348,7 @@ private:
 	int gps_satellites_visible;
 
 	std::atomic<uint64_t> time_offset;
+	std::atomic<timesync_mode> tsync_mode;
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
