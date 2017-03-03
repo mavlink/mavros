@@ -9,7 +9,6 @@ plugin_blacklist:
 - 'mocap_*'
 - px4flow
 - 'vision_*'
-- distance_sensor
 - vibration
 - altitude
 
