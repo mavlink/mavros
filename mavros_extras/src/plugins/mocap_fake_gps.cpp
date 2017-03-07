@@ -40,7 +40,7 @@ public:
 		PluginBase::initialize(uas_);
 		last_pos_time = ros::Time(0.0);
 		gps_period = ros::Duration(0.2);	// 5hz
-		mocap_tf_d_sub = mp_nh.subscribe("fix", 1, &MocapFakeGPSPlugin::mocap_tf_d_cb, this);
+		mocap_tf_d_sub = mp_nh.subscribe("/vicon/voliro/voliro_drop", 1, &MocapFakeGPSPlugin::mocap_tf_d_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
