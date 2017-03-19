@@ -16,6 +16,7 @@
 
 #include <array>
 #include <mavros/utils.h>
+#include <ros/console.h>
 
 namespace mavros {
 namespace utils {
@@ -202,7 +203,7 @@ std::string to_string(MAV_STATE e)
 
 
 // [[[cog:
-// ename = "UAS::timesync_mode"
+// ename = "timesync_mode"
 // ent = [ "NONE", "MAVLINK", "ONBOARD", "PASSTHROUGH", ]
 //
 // array_outl(ename, ent)
@@ -213,7 +214,7 @@ std::string to_string(MAV_STATE e)
 // cog.outl()
 // to_string_outl(ename)
 // ]]]
-//! UAS::timesync_mode values
+//! timesync_mode values
 static const std::array<const std::string, 4> timesync_mode_strings{{
 /*  0 */ "NONE",
 /*  1 */ "MAVLINK",
@@ -221,7 +222,7 @@ static const std::array<const std::string, 4> timesync_mode_strings{{
 /*  3 */ "PASSTHROUGH",
 }};
 
-std::string to_string(UAS::timesync_mode e)
+std::string to_string(timesync_mode e)
 {
 	size_t idx = enum_value(e);
 	if (idx >= timesync_mode_strings.size())
@@ -229,19 +230,19 @@ std::string to_string(UAS::timesync_mode e)
 
 	return timesync_mode_strings[idx];
 }
-// [[[end]]] (checksum: 6f2fe3980f8dfaab01fe158f72923698)
+// [[[end]]] (checksum: 2796eaa4f9361c2d7ca87f63e0401d4d)
 
-UAS::timesync_mode timesync_mode_from_str(const std::string &mode)
+timesync_mode timesync_mode_from_str(const std::string &mode)
 {
 	for (size_t idx = 0; idx < timesync_mode_strings.size(); idx++) {
 		if (timesync_mode_strings[idx] == mode) {
-			std::underlying_type<UAS::timesync_mode>::type rv = idx;
-			return static_cast<UAS::timesync_mode>(rv);
+			std::underlying_type<timesync_mode>::type rv = idx;
+			return static_cast<timesync_mode>(rv);
 		}
 	}
 
 	ROS_ERROR_STREAM_NAMED("uas", "TM: Unknown mode: " << mode);
-	return UAS::timesync_mode::NONE;
+	return timesync_mode::NONE;
 }
 
 }	// namespace utils

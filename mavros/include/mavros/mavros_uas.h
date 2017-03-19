@@ -70,16 +70,7 @@ public:
 	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
 	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
 	using MAV_STATE = mavlink::common::MAV_STATE;
-
-	/**
-	 * Possible modes of timesync operation
-	 */
-	enum class timesync_mode {
-		NONE = 0,	//!< Disabled
-		MAVLINK,	//!< Via TIMESYNC message
-		ONBOARD,
-		PASSTHROUGH,
-	};
+	using timesync_mode = utils::timesync_mode;
 
 	UAS();
 	~UAS() {};
