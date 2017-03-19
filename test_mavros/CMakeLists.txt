@@ -57,7 +57,7 @@ catkin_package(
   #INCLUDE_DIRS include
   #LIBRARIES sitl_test
   CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions control_toolbox
-  DEPENDS Boost Eigen
+  DEPENDS Boost
 )
 
 ###########
@@ -67,7 +67,7 @@ catkin_package(
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
