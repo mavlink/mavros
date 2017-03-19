@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -70,6 +70,16 @@ public:
 	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
 	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
 	using MAV_STATE = mavlink::common::MAV_STATE;
+
+	/**
+	 * Possible modes of timesync operation
+	 */
+	enum class timesync_mode {
+		NONE = 0,	//!< Disabled
+		MAVLINK,	//!< Via TIMESYNC message
+		ONBOARD,
+		PASSTHROUGH,
+	};
 
 	UAS();
 	~UAS() {};
@@ -207,13 +217,6 @@ public:
 
 	/* -*- time sync -*- */
 
-	enum class timesync_mode : uint8_t {
-		NONE,
-		MAVLINK,
-		ONBOARD,
-		PASSTHROUGH
-	};
-
 	inline void set_time_offset(uint64_t offset_ns) {
 		time_offset = offset_ns;
 	}
@@ -348,7 +351,7 @@ private:
 	int gps_satellites_visible;
 
 	std::atomic<uint64_t> time_offset;
-	std::atomic<timesync_mode> tsync_mode;
+	timesync_mode tsync_mode;
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
