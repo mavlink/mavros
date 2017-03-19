@@ -36,6 +36,18 @@ namespace utils {
 using mavconn::utils::format;
 
 /**
+ * Possible modes of timesync operation
+ *
+ * Used by UAS class, but it can't be defined inside because enum is used in utils.
+ */
+enum class timesync_mode {
+	NONE = 0,	//!< Disabled
+	MAVLINK,	//!< Via TIMESYNC message
+	ONBOARD,
+	PASSTHROUGH,
+};
+
+/**
  * Helper to get enum value from strongly typed enum (enum class).
  */
 template<typename _T>
@@ -52,7 +64,7 @@ std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
-std::string to_string(UAS::timesync_mode e);
+std::string to_string(timesync_mode e);
 
 /**
  * Helper to call to_string() for enum _T
@@ -77,7 +89,7 @@ int sensor_orientation_from_str(const std::string &sensor_orientation);
 /**
  * @brief Retreive timesync mode from name
  */
-UAS::timesync_mode timesync_mode_from_str(const std::string &mode);
+timesync_mode timesync_mode_from_str(const std::string &mode);
 
 }	// namespace utils
 }	// namespace mavros

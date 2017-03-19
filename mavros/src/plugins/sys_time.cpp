@@ -163,8 +163,8 @@ public:
 			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
 		}
 
-		nh.param("time/timesync_mode", ts_mode_str, "MAVLINK");
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
+		nh.param<std::string>("time/timesync_mode", ts_mode_str, "MAVLINK");
 		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
 		/*
 		 * alpha for exponential moving average. The closer alpha is to 1.0,
@@ -174,7 +174,7 @@ public:
 
 		// Set timesync mode
 		auto ts_mode = utils::timesync_mode_from_str(ts_mode_str);
-		m_uas->set_timesync_mode(tm_mode);
+		m_uas->set_timesync_mode(ts_mode);
 		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
