@@ -52,6 +52,7 @@ std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
+std::string to_string(UAS::timesync_mode e);
 
 /**
  * Helper to call to_string() for enum _T
@@ -73,6 +74,10 @@ Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIEN
  */
 int sensor_orientation_from_str(const std::string &sensor_orientation);
 
+/**
+ * @brief Retreive timesync mode from name
+ */
+UAS::timesync_mode timesync_mode_from_str(const std::string &mode);
 
 }	// namespace utils
 }	// namespace mavros

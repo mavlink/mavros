@@ -4,7 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2017 Vladimir Ermakov, M.H.Kabir.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -23,7 +23,7 @@ using namespace mavros;
 
 /* -*- time syncronise functions -*- */
 
-static inline ros::Time ros_time_from_ns(uint64_t &stamp_ns) {
+static inline ros::Time ros_time_from_ns(const uint64_t stamp_ns) {
 	return ros::Time(
 		stamp_ns / 1000000000UL,		// t_sec
 		stamp_ns % 1000000000UL);		// t_nsec

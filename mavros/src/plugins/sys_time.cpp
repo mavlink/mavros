@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov, M.H.Kabir.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov, M.H.Kabir.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -142,12 +142,15 @@ public:
 		offset_avg_alpha(0)
 	{ }
 
+	using TSM = UAS::timesync_mode;
+
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
 		double conn_system_time_d;
 		double conn_timesync_d;
+		std::string ts_mode_str;
 
 		ros::Duration conn_system_time;
 		ros::Duration conn_timesync;
@@ -160,7 +163,7 @@ public:
 			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
 		}
 
-		// nh.param("time/timesync_mode", m_uas->get_timesync_mode(), timesync_mode::TIMESYNC_MODE_MAVLINK);
+		nh.param("time/timesync_mode", ts_mode_str, "MAVLINK");
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
 		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
 		/*
@@ -168,6 +171,11 @@ public:
 		 * the faster the moving average updates in response to new offset samples (more jitter)
 		 * We need a significant amount of smoothing , more so for lower message rates like 1Hz
 		 */
+
+		// Set timesync mode
+		auto ts_mode = utils::timesync_mode_from_str(ts_mode_str);
+		m_uas->set_timesync_mode(tm_mode);
+		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
@@ -179,9 +187,7 @@ public:
 		}
 
 		// timer for sending timesync messages
-		if (!conn_timesync.isZero() &&
-					!(m_uas->get_timesync_mode() == UAS::timesync_mode::NONE ||
-						m_uas->get_timesync_mode() == UAS::timesync_mode::PASSTHROUGH)) {
+		if (!conn_timesync.isZero() && !(ts_mode == TSM::NONE || ts_mode == TSM::PASSTHROUGH)) {
 			// enable timesync diag only if that feature enabled
 			UAS_DIAG(m_uas).add(dt_diag);
 
@@ -262,10 +268,10 @@ private:
 
 	void timesync_cb(const ros::TimerEvent &event)
 	{
-
-		if (m_uas->get_timesync_mode() == UAS::timesync_mode::MAVLINK) {
+		auto ts_mode = m_uas->get_timesync_mode();
+		if (ts_mode == TSM::MAVLINK) {
 			send_timesync_msg(0, ros::Time::now().toNSec());
-		} else if (m_uas->get_timesync_mode() == UAS::timesync_mode::ONBOARD) {
+		} else if (ts_mode == TSM::ONBOARD) {
 			// Calculate offset between CLOCK_REALTIME (ros::WallTime) and CLOCK_MONOTONIC
 			uint64_t realtime_now_ns = ros::Time::now().toNSec();
 			uint64_t monotonic_now_ns = get_monotonic_now();
