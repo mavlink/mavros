@@ -33,7 +33,7 @@ ros::Time UAS::synchronise_stamp(uint32_t time_boot_ms) {
 	// copy offset from atomic var
 	uint64_t offset_ns = time_offset;
 
-	if (offset_ns > 0) {
+	if (offset_ns > 0 || tsync_mode == timesync_mode::PASSTHROUGH) {
 		uint64_t stamp_ns = static_cast<uint64_t>(time_boot_ms) * 1000000UL + offset_ns;
 		return ros_time_from_ns(stamp_ns);
 	}
