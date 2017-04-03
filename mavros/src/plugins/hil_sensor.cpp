@@ -103,11 +103,11 @@ private:
 	/* -*- callbacks -*- */
 		void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
             send_hil_sensor(req->header.stamp,
-                            req->xacc, req->yacc, req->zacc,
-                            req->xgyro, req->ygyro, req->zgyro,
-                            req->xmag, req->ymag, req->zmag,
-                            req->abs_pressure, req->diff_pressure, req->pressure_alt,
-                            req->temperature,
+                            req->acc.x, req->acc.y, req->acc.z,
+                            req->gyro.x, req->gyro.y, req->gyro.z,
+                            req->mag.x, req->mag.y, req->mag.z,
+                            req->abs_pressure.fluid_pressure, req->diff_pressure.fluid_pressure, req->pressure_alt.fluid_pressure,
+                            req->temperature.temperature,
                             req->fields_updated);
         }
 };
