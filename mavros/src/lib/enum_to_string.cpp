@@ -16,6 +16,7 @@
 
 #include <array>
 #include <mavros/utils.h>
+#include <ros/console.h>
 
 namespace mavros {
 namespace utils {
@@ -43,12 +44,17 @@ using mavlink::common::MAV_STATE;
 //     d = l - len(v)
 //     return ' ' * d if d > 0 else ' '
 //
+// def ename_array_name(ename):
+//     l = ename.rsplit('::', 1)
+//     return (l[1] if len(l) > 1 else l[0]).lower() + '_strings'
+//
 // def array_outl(name, enum):
+//     array = ename_array_name(name)
 //     cog.outl("//! %s values" % name)
-//     cog.outl("static const std::array<const std::string, %s> %s_strings{{" % (len(enum), name.lower()))
+//     cog.outl("static const std::array<const std::string, %s> %s{{" % (len(enum), array))
 //
 // def to_string_outl(ename):
-//     array = ename.lower() + '_strings'
+//     array = ename_array_name(ename)
 //     cog.outl("std::string to_string({ename} e)".format(**locals()))
 //     cog.outl("{")
 //     cog.outl("	size_t idx = enum_value(e);")
@@ -134,9 +140,9 @@ static const std::array<const std::string, 28> mav_type_strings{{
 /* 12 */ "Submarine",                     // Submarine
 /* 13 */ "Hexarotor",                     // Hexarotor
 /* 14 */ "Octorotor",                     // Octorotor
-/* 15 */ "Octorotor",                     // Octorotor
+/* 15 */ "Tricopter",                     // Tricopter
 /* 16 */ "Flapping wing",                 // Flapping wing
-/* 17 */ "Flapping wing",                 // Flapping wing
+/* 17 */ "Kite",                          // Kite
 /* 18 */ "Onboard companion controller",  // Onboard companion controller
 /* 19 */ "Two",                           // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
 /* 20 */ "Quad",                          // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
@@ -157,7 +163,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 946dcebbb0b591f0648dfbccc73630e0)
+// [[[end]]] (checksum: ff3fd0c445310aef4a3cfb14a18178e0)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -194,6 +200,50 @@ std::string to_string(MAV_STATE e)
 	return mav_state_strings[idx];
 }
 // [[[end]]] (checksum: 47dea7c5bd6ab53dbc75a6c51b35d312)
+
+
+// [[[cog:
+// ename = "timesync_mode"
+// ent = [ "NONE", "MAVLINK", "ONBOARD", "PASSTHROUGH", ]
+//
+// array_outl(ename, ent)
+// for k, e in enumerate(ent):
+//     cog.outl("""/* {k:>2} */ "{e}",""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! timesync_mode values
+static const std::array<const std::string, 4> timesync_mode_strings{{
+/*  0 */ "NONE",
+/*  1 */ "MAVLINK",
+/*  2 */ "ONBOARD",
+/*  3 */ "PASSTHROUGH",
+}};
+
+std::string to_string(timesync_mode e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= timesync_mode_strings.size())
+		return std::to_string(idx);
+
+	return timesync_mode_strings[idx];
+}
+// [[[end]]] (checksum: 2796eaa4f9361c2d7ca87f63e0401d4d)
+
+timesync_mode timesync_mode_from_str(const std::string &mode)
+{
+	for (size_t idx = 0; idx < timesync_mode_strings.size(); idx++) {
+		if (timesync_mode_strings[idx] == mode) {
+			std::underlying_type<timesync_mode>::type rv = idx;
+			return static_cast<timesync_mode>(rv);
+		}
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "TM: Unknown mode: " << mode);
+	return timesync_mode::NONE;
+}
 
 }	// namespace utils
 }	// namespace mavros

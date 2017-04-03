@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -70,6 +70,7 @@ public:
 	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
 	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
 	using MAV_STATE = mavlink::common::MAV_STATE;
+	using timesync_mode = utils::timesync_mode;
 
 	UAS();
 	~UAS() {};
@@ -215,6 +216,14 @@ public:
 		return time_offset;
 	}
 
+	inline void set_timesync_mode(timesync_mode mode) {
+		tsync_mode = mode;
+	}
+
+	inline timesync_mode get_timesync_mode(void) {
+		return tsync_mode;
+	}
+
 	/* -*- autopilot version -*- */
 	uint64_t get_capabilities();
 	void update_capabilities(bool known, uint64_t caps = 0);
@@ -333,6 +342,7 @@ private:
 	int gps_satellites_visible;
 
 	std::atomic<uint64_t> time_offset;
+	timesync_mode tsync_mode;
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;

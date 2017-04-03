@@ -20,6 +20,7 @@ sys:
 # sys_time
 time:
   time_ref_source: "fcu"  # time_reference source
+  timesync_mode: NONE
   timesync_avg_alpha: 0.6 # timesync averaging factor
 
 # --- mavros plugins (alphabetical order) ---
@@ -110,6 +111,24 @@ mission:
   pull_after_gcs: true  # update mission if gcs updates
 
 # --- mavros extras plugins (same order) ---
+
+distance_sensor:
+  rangefinder_pub:
+    id: 0
+    frame_id: "lidar"
+    #orientation: PITCH_270 # sended by FCU
+    field_of_view: 0.0  # XXX TODO
+    send_tf: false
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+  rangefinder_sub:
+    subscriber: true
+    id: 0
+    orientation: PITCH_270  # only that orientation are supported by APM 3.4+
+
+## Currently available orientations:
+#    Check http://wiki.ros.org/mavros/Enumerations
+##
+
 
 # image_pub
 image:

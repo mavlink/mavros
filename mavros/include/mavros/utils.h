@@ -22,10 +22,30 @@
 #include <mavros_msgs/mavlink_convert.h>
 #include <mavconn/mavlink_dialect.h>
 
+// OS X compat: missing error codes
+#ifdef __APPLE__
+#define EBADE 50   /* Invalid exchange */
+#define EBADFD 81  /* File descriptor in bad state */
+#define EBADRQC 54 /* Invalid request code */
+#define EBADSLT 55 /* Invalid slot */
+#endif
+
 namespace mavros {
 namespace utils {
 
 using mavconn::utils::format;
+
+/**
+ * Possible modes of timesync operation
+ *
+ * Used by UAS class, but it can't be defined inside because enum is used in utils.
+ */
+enum class timesync_mode {
+	NONE = 0,	//!< Disabled
+	MAVLINK,	//!< Via TIMESYNC message
+	ONBOARD,
+	PASSTHROUGH,
+};
 
 /**
  * Helper to get enum value from strongly typed enum (enum class).
@@ -44,6 +64,7 @@ std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
+std::string to_string(timesync_mode e);
 
 /**
  * Helper to call to_string() for enum _T
@@ -65,6 +86,10 @@ Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIEN
  */
 int sensor_orientation_from_str(const std::string &sensor_orientation);
 
+/**
+ * @brief Retreive timesync mode from name
+ */
+timesync_mode timesync_mode_from_str(const std::string &mode);
 
 }	// namespace utils
 }	// namespace mavros

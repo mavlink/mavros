@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov, M.H.Kabir.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov, M.H.Kabir.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -142,12 +142,15 @@ public:
 		offset_avg_alpha(0)
 	{ }
 
+	using TSM = UAS::timesync_mode;
+
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
 		double conn_system_time_d;
 		double conn_timesync_d;
+		std::string ts_mode_str;
 
 		ros::Duration conn_system_time;
 		ros::Duration conn_timesync;
@@ -161,6 +164,7 @@ public:
 		}
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
+		nh.param<std::string>("time/timesync_mode", ts_mode_str, "MAVLINK");
 		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
 		/*
 		 * alpha for exponential moving average. The closer alpha is to 1.0,
@@ -168,22 +172,27 @@ public:
 		 * We need a significant amount of smoothing , more so for lower message rates like 1Hz
 		 */
 
+		// Set timesync mode
+		auto ts_mode = utils::timesync_mode_from_str(ts_mode_str);
+		m_uas->set_timesync_mode(ts_mode);
+		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
+
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
 		// timer for sending system time messages
 		if (!conn_system_time.isZero()) {
 			sys_time_timer = nh.createTimer(conn_system_time,
-					&SystemTimePlugin::sys_time_cb, this);
+						&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
 
 		// timer for sending timesync messages
-		if (!conn_timesync.isZero()) {
+		if (!conn_timesync.isZero() && !(ts_mode == TSM::NONE || ts_mode == TSM::PASSTHROUGH)) {
 			// enable timesync diag only if that feature enabled
 			UAS_DIAG(m_uas).add(dt_diag);
 
 			timesync_timer = nh.createTimer(conn_timesync,
-					&SystemTimePlugin::timesync_cb, this);
+						&SystemTimePlugin::timesync_cb, this);
 			timesync_timer.start();
 		}
 	}
@@ -218,8 +227,8 @@ private:
 			// continious publish for ntpd
 			auto time_unix = boost::make_shared<sensor_msgs::TimeReference>();
 			ros::Time time_ref(
-					mtime.time_unix_usec / 1000000,			// t_sec
-					(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
+						mtime.time_unix_usec / 1000000,		// t_sec
+						(mtime.time_unix_usec % 1000000) * 1000);	// t_nsec
 
 			time_unix->header.stamp = ros::Time::now();
 			time_unix->time_ref = time_ref;
@@ -241,25 +250,8 @@ private:
 			return;
 		}
 		else if (tsync.tc1 > 0) {
-			int64_t offset_ns = (tsync.ts1 + now_ns - tsync.tc1 * 2) / 2;
-			int64_t dt = time_offset_ns - offset_ns;
-
-			if (std::abs(dt) > 10000000) {		// 10 millisecond skew
-				time_offset_ns = offset_ns;	// hard-set it.
-				m_uas->set_time_offset(time_offset_ns);
-
-				dt_diag.clear();
-				dt_diag.set_timestamp(tsync.tc1);
-
-				ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Clock skew detected (%0.9f s). "
-						"Hard syncing clocks.", dt / 1e9);
-			}
-			else {
-				average_offset(offset_ns);
-				dt_diag.tick(dt, tsync.tc1, time_offset_ns);
-
-				m_uas->set_time_offset(time_offset_ns);
-			}
+			// observation is the offset in nanoseconds
+			add_timesync_observation((tsync.ts1 + now_ns - tsync.tc1 * 2) / 2, tsync.tc1);
 		}
 	}
 
@@ -268,7 +260,7 @@ private:
 		// For filesystem only
 		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;	// nano -> micro
 
-		mavlink::common::msg::SYSTEM_TIME mtime{};
+		mavlink::common::msg::SYSTEM_TIME mtime {};
 		mtime.time_unix_usec = time_unix_usec;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mtime);
@@ -276,21 +268,59 @@ private:
 
 	void timesync_cb(const ros::TimerEvent &event)
 	{
-		send_timesync_msg(0, ros::Time::now().toNSec());
+		auto ts_mode = m_uas->get_timesync_mode();
+		if (ts_mode == TSM::MAVLINK) {
+			send_timesync_msg(0, ros::Time::now().toNSec());
+		} else if (ts_mode == TSM::ONBOARD) {
+			// Calculate offset between CLOCK_REALTIME (ros::WallTime) and CLOCK_MONOTONIC
+			uint64_t realtime_now_ns = ros::Time::now().toNSec();
+			uint64_t monotonic_now_ns = get_monotonic_now();
+
+			add_timesync_observation(realtime_now_ns - monotonic_now_ns, realtime_now_ns);
+		}
 	}
 
 	void send_timesync_msg(uint64_t tc1, uint64_t ts1)
 	{
-		mavlink::common::msg::TIMESYNC tsync{};
+		mavlink::common::msg::TIMESYNC tsync {};
 		tsync.tc1 = tc1;
 		tsync.ts1 = ts1;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(tsync);
 	}
 
+	void add_timesync_observation(int64_t offset_ns, uint64_t observation_time)
+	{
+		int64_t dt = time_offset_ns - offset_ns;
+
+		if (std::abs(dt) > 10000000) {		// 10 millisecond skew
+			time_offset_ns = offset_ns;	// hard-set it.
+			m_uas->set_time_offset(time_offset_ns);
+
+			dt_diag.clear();
+			dt_diag.set_timestamp(observation_time);
+
+			ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Clock skew detected (%0.9f s). "
+						"Hard syncing clocks.", dt / 1e9);
+		}
+		else {
+			average_offset(offset_ns);
+			dt_diag.tick(dt, observation_time, time_offset_ns);
+			m_uas->set_time_offset(time_offset_ns);
+		}
+	}
+
 	inline void average_offset(int64_t offset_ns)
 	{
 		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
+	}
+
+	uint64_t get_monotonic_now(void)
+	{
+		struct timespec spec;
+		clock_gettime(CLOCK_MONOTONIC, &spec);
+
+		return spec.tv_sec * 1000000000ULL + spec.tv_nsec;
 	}
 };
 }	// namespace std_plugins

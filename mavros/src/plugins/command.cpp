@@ -365,7 +365,7 @@ private:
 		return send_command_long_and_wait(false,
 				enum_value(MAV_CMD::DO_TRIGGER_CONTROL), 1,
 				(req.trigger_enable)? 1.0 : 0.0,
-				req.integration_time,
+				req.cycle_time,
 				0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
