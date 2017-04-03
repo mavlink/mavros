@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/ActuatorControl.h>
+#include <mavros_msgs/ActuatorControlTarget.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -36,16 +37,35 @@ public:
 		PluginBase::initialize(uas_);
 
 		actuator_control_sub = nh.subscribe("actuator_control", 10, &ActuatorControlPlugin::actuator_control_cb, this);
+		actuator_control_target_pub = nh.advertise<mavros_msgs::ActuatorControl>("actuator_control_target", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			       make_handler(&ActuatorControlPlugin::handle_actuator_control_target),
+		};
 	}
 
 private:
 	ros::NodeHandle nh;
 	ros::Subscriber actuator_control_sub;
+	ros::Publisher actuator_control_target_pub;
+
+	/* -*- rx handlers -*- */
+
+	void handle_actuator_control_target(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ACTUATOR_CONTROL_TARGET &actuator_control_target)
+	{
+		auto actuator_control_target_msg = boost::make_shared<mavros_msgs::ActuatorControlTarget>();
+
+		actuator_control_target_msg->header.stamp = m_uas->synchronise_stamp(actuator_control_target.time_usec);
+
+		actuator_control_target_msg->group_mlx = actuator_control_target.group_mlx;
+		for(int i=0; i<8; i++){
+			actuator_control_target_msg->controls[i]=actuator_control_target.controls[i];
+		}
+		actuator_control_target_pub.publish(actuator_control_target_msg);
+	}
 
 	/* -*- callbacks -*- */
 
