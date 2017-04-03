@@ -158,8 +158,7 @@ public:
 		wp_timer.stop();
 		shedule_timer = wp_nh.createTimer(BOOTUP_TIME_DT, &WaypointPlugin::sheduled_pull_cb, this, true);
 		shedule_timer.stop();
-		//XXX!
-		m_uas->sig_connection_changed.connect(boost::bind(&WaypointPlugin::connection_cb, this, _1));
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions() {
@@ -492,7 +491,7 @@ private:
 		}
 	}
 
-	void connection_cb(bool connected)
+	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
 		if (connected)

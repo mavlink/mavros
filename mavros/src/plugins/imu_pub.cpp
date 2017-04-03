@@ -88,8 +88,8 @@ public:
 		press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("atm_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
 
-		// XXX! reset has_* flags on connection change
-		m_uas->sig_connection_changed.connect(boost::bind(&IMUPubPlugin::connection_cb, this, _1));
+		// reset has_* flags on connection change
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions() {
@@ -362,7 +362,7 @@ private:
 		press_pub.publish(atmp_msg);
 	}
 
-	void connection_cb(bool connected)
+	void connection_cb(bool connected) override
 	{
 		has_hr_imu = false;
 		has_scaled_imu = false;

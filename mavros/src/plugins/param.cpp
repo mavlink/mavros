@@ -360,8 +360,7 @@ public:
 		shedule_timer.stop();
 		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
 		timeout_timer.stop();
-		//XXX!
-		m_uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions()
@@ -555,7 +554,7 @@ private:
 
 	/* -*- mid-level functions -*- */
 
-	void connection_cb(bool connected)
+	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
 		if (connected) {

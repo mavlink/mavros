@@ -2,6 +2,25 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.18.5 (2016-12-12)
+-------------------
+* lib: update ArduPilot modes
+* Contributors: Randy Mackay
+
+0.18.4 (2016-11-11)
+-------------------
+* lib: Add ArduSub modes
+* readme: Fix mavlink rosinstall_generator call
+* mavros: README.md: its -> it's
+  Here "it's" is a short form for "it is".
+* add hil_actuator_controls mavlink message
+* lib: Make cog.py scrips compatioble with Py3
+* plugin:sys_status: Add logging health report
+* Update README for all packages
+* Update README.md
+  Fix instructions: Only the Kinetic distro actually works for MAVLink 2.0
+* Contributors: Beat Küng, Georgii Staroselskii, Lorenz Meier, Vladimir Ermakov
+
 0.18.3 (2016-07-07)
 -------------------
 * plugin:param: Use mavlink::set_string() helper

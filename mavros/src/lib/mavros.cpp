@@ -117,9 +117,8 @@ MavRos::MavRos() :
 	mav_uas.set_tgt(tgt_system_id, tgt_component_id);
 	UAS_FCU(&mav_uas) = fcu_link;
 
-	// XXX!!!
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, _1));
-	mav_uas.sig_connection_changed.connect(boost::bind(&MavRos::log_connect_change, this, _1));
+	mav_uas.add_connection_change_handler(std::bind(&MavlinkDiag::set_connection_status, &fcu_link_diag, std::placeholders::_1));
+	mav_uas.add_connection_change_handler(std::bind(&MavRos::log_connect_change, this, std::placeholders::_1));
 
 	// prepare plugin lists
 	// issue #257 2: assume that all plugins blacklisted

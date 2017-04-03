@@ -40,8 +40,7 @@ public:
 
 		status_pub = nh.advertise<mavros_msgs::RadioStatus>("radio_status", 10);
 
-		// XXX!!!
-		m_uas->sig_connection_changed.connect(boost::bind(&TDRRadioPlugin::connection_cb, this, _1));
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions()
@@ -147,7 +146,8 @@ private:
 		stat.addf("Fixed", "%u", last_status->fixed);
 	}
 
-	void connection_cb(bool connected) {
+	void connection_cb(bool connected) override
+	{
 		UAS_DIAG(m_uas).removeByName("3DR Radio");
 		diag_added = false;
 	}
