@@ -15,7 +15,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros/hil_sensor_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <mavros_msgs/HilGPS.h>
