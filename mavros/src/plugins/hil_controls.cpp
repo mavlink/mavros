@@ -75,10 +75,10 @@ private:
 		hil_controls_msg->pitch_elevator = hil_controls.pitch_elevator;
 		hil_controls_msg->yaw_rudder = hil_controls.yaw_rudder;
 		hil_controls_msg->throttle = hil_controls.throttle;
-		hil_controls_msg->aux1 = hil_controls.aux1;
-		hil_controls_msg->aux2 = hil_controls.aux2;
-		hil_controls_msg->aux3 = hil_controls.aux3;
-		hil_controls_msg->aux4 = hil_controls.aux4;
+		hil_controls_msg->aux[0] = hil_controls.aux1;
+		hil_controls_msg->aux[1] = hil_controls.aux2;
+		hil_controls_msg->aux[2] = hil_controls.aux3;
+		hil_controls_msg->aux[3] = hil_controls.aux4;
 		hil_controls_msg->mode = hil_controls.mode;
 		hil_controls_msg->nav_mode = hil_controls.nav_mode;
 		// [[[end]]] (checksum: a2c87ee8f36e7a32b08be5e0fe665b5a)
