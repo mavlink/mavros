@@ -35,6 +35,11 @@ public:
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
+<<<<<<< HEAD
+=======
+		last_time = ros::Time(0.0);
+		sensor_period = ros::Duration(0.025);	// 40hz
+>>>>>>> 2d5d64565cfcb504db61fd9bba431d0afd875584
 
 		hilSensor_sub = sensor_nh.subscribe("imu_ned", 10, &HilSensorPlugin::sensor_cb, this);
 	}
@@ -48,6 +53,8 @@ private:
 	ros::NodeHandle sensor_nh;
 
 	ros::Subscriber hilSensor_sub;
+	ros::Time last_time;
+	ros::Duration sensor_period;
 
   /* -*- low-level send -*- */
   //! Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_SENSOR
@@ -101,6 +108,7 @@ private:
 	}
 
 	/* -*- callbacks -*- */
+<<<<<<< HEAD
 		void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
             send_hil_sensor(req->header.stamp,
                             req->acc.x, req->acc.y, req->acc.z,
@@ -109,6 +117,24 @@ private:
                             req->abs_pressure.fluid_pressure, req->diff_pressure.fluid_pressure, req->pressure_alt.fluid_pressure,
                             req->temperature.temperature,
                             req->fields_updated);
+=======
+        
+
+	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
+		// Throttle incoming messages to 40hz
+		if ((ros::Time::now() - last_time) < sensor_period) {
+			return;
+		}
+		last_time = ros::Time::now();
+            
+		send_hil_sensor(req->header.stamp,
+			    req->xacc, req->yacc, req->zacc,
+			    req->xgyro, req->ygyro, req->zgyro,
+			    req->xmag, req->ymag, req->zmag,
+			    req->abs_pressure, req->diff_pressure, req->pressure_alt,
+			    req->temperature,
+			    req->fields_updated);
+>>>>>>> 2d5d64565cfcb504db61fd9bba431d0afd875584
         }
 };
 }	// namespace std_plugins

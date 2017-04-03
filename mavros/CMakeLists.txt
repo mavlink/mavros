@@ -126,6 +126,8 @@ add_library(mavros_plugins
   src/plugins/hil_actuator_controls.cpp
   src/plugins/hil_sensor.cpp
   src/plugins/hil_state_quaternion.cpp
+  src/plugins/hil_gps.cpp
+  src/plugins/actuator_control_target.cpp
 )
 add_dependencies(mavros_plugins
   mavros

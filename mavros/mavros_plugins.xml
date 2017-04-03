@@ -71,10 +71,16 @@
 	<class name="hil_actuator_controls" type="mavros::std_plugins::HilActuatorControlsPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish HIL controls values</description>
 	</class>
-  <class name="hil_sensor" type="mavros::std_plugins::HilSensorPlugin" base_class_type="mavros::plugin::PluginBase">
-    <description>Send HIL Sensor values in NED to FCU</description>
-  </class>
-  <class name="hil_state_quaternion" type="mavros::std_plugins::HilStateQuaternionPlugin" base_class_type="mavros::plugin::PluginBase">
-    <description>Send HIL_STATE_QUATERNION to FCU</description>
-  </class>
+	<class name="hil_sensor" type="mavros::std_plugins::HilSensorPlugin" base_class_type="mavros::plugin::PluginBase">
+	<description>Send HIL Sensor values in NED to FCU</description>
+	</class>
+	<class name="hil_state_quaternion" type="mavros::std_plugins::HilStateQuaternionPlugin" base_class_type="mavros::plugin::PluginBase">
+	<description>Send HIL_STATE_QUATERNION to FCU</description>
+	</class>
+	<class name="hil_gps" type="mavros::std_plugins::HilGPSPlugin" base_class_type="mavros::plugin::PluginBase">
+	<description>Send HIL_GPS to FCU</description>
+	</class>
+	<class name="actuator_control_target" type="mavros::std_plugins::ActuatorControlTargetPlugin" base_class_type="mavros::plugin::PluginBase">
+	<description>Get Actuator Control Target from FCU</description>
+	</class>
 </library>
