@@ -15,7 +15,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros/hil_sensor_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <mavros_msgs/HilSensor.h>
@@ -27,18 +26,15 @@ namespace std_plugins {
  *
  * Send HIL sensor to FCU controller.
  */
-class HilSensorPlugin : public plugin::PluginBase,
-    private plugin::SetHilSensorMixin<HilSensorPlugin> {
+class HilSensorPlugin : public plugin::PluginBase {
 public:
 	HilSensorPlugin() : PluginBase(),
 		sensor_nh("~hil_sensor")
-
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-
 
 		hilSensor_sub = sensor_nh.subscribe("imu_ned", 10, &HilSensorPlugin::sensor_cb, this);
 	}
@@ -49,19 +45,44 @@ public:
 	}
 
 private:
-	friend class SetHilSensorMixin;
-        
 	ros::NodeHandle sensor_nh;
 
 	ros::Subscriber hilSensor_sub;
 
+  /* -*- low-level send -*- */
+  //! Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_SENSOR
+	void set_hil_sensor(uint64_t time_boot_us,
+                        float xacc, float yacc, float zacc,
+                        float xgyro, float ygyro, float zgyro,
+                        float xmag, float ymag, float zmag,
+                        float abs_pressure, float diff_pressure, float pressure_alt,
+                        float temperature,
+                        uint32_t fields_updated) {
+		    mavlink::common::msg::HIL_SENSOR sensor;
+
+        sensor.time_usec=time_boot_us;
+        sensor.xacc=xacc;
+        sensor.yacc=yacc;
+        sensor.zacc=zacc;
+        sensor.xgyro=xgyro;
+        sensor.ygyro=ygyro;
+        sensor.zgyro=zgyro;
+        sensor.xmag=xmag;
+        sensor.ymag=ymag;
+        sensor.zmag=zmag;
+        sensor.abs_pressure=abs_pressure;
+        sensor.diff_pressure=diff_pressure;
+        sensor.pressure_alt=pressure_alt;
+        sensor.temperature=temperature;
+        sensor.fields_updated=fields_updated;
+
+		    UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
+	}
 
 	/* -*- mid-level helpers -*- */
-
 	/**
 	 * @brief Send hil_sensor to FCU.
 	 *
-	 * @warning
 	 */
 	void send_hil_sensor(const ros::Time &stamp,
                          float xacc, float yacc, float zacc,
@@ -70,8 +91,7 @@ private:
                          float abs_pressure, float diff_pressure, float pressure_alt,
                          float temperature,
                          uint32_t fields_updated) {
-
-		set_hil_sensor(stamp.toNSec() / 1000,
+		      set_hil_sensor(stamp.toNSec() / 1000,
 					xacc, yacc, zacc,
 					xgyro, ygyro, zgyro,
 					xmag, ymag, zmag,
@@ -81,10 +101,7 @@ private:
 	}
 
 	/* -*- callbacks -*- */
-        
-
 		void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
-            
             send_hil_sensor(req->header.stamp,
                             req->xacc, req->yacc, req->zacc,
                             req->xgyro, req->ygyro, req->zgyro,
