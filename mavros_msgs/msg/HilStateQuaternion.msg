@@ -5,18 +5,8 @@
 # https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
 
 std_msgs/Header header
-float32[4] quat_wxyz
-float32 rollspeed
-float32 pitchspeed
-float32 yawspeed
-int32 lat
-int32 lon
-int32 alt
-int16 vx
-int16 vy
-int16 vz
+sensor_msgs/Imu imu
+geometry_msgs/Vector3 linear_velocity
+sensor_msgs/NavSatFix fix
 uint16 ind_airspeed
 uint16 true_airspeed
-int16 xacc
-int16 yacc
-int16 zacc

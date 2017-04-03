@@ -117,13 +117,13 @@ private:
 		void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
 
             send_hil_state_quaternion(req->header.stamp,
-                            req->quat_wxyz[0], req->quat_wxyz[1], req->quat_wxyz[2], req->quat_wxyz[3],
-                            req->rollspeed,req->pitchspeed, req->yawspeed,
-                            req->lat, req->lon, req->alt,
-                            req->vx, req->vy, req->vz,
+                            req->imu.orientation.w, req->imu.orientation.x, req->imu.orientation.y, req->imu.orientation.z,
+                            req->imu.angular_velocity.x,req->imu.angular_velocity.y, req->imu.angular_velocity.z,
+                            req->fix.latitude, req->fix.longitude, req->fix.altitude,
+                            req->linear_velocity.x, req->linear_velocity.y, req->linear_velocity.z,
                             req->ind_airspeed,
                             req->true_airspeed,
-                            req->xacc, req->yacc, req->zacc);
+                            req->imu.linear_acceleration.x, req->imu.linear_acceleration.y, req->imu.linear_acceleration.z);
         }
 };
 }	// namespace std_plugins
