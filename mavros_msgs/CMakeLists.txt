@@ -9,6 +9,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   ActuatorControl.msg
+  ActuatorControlTarget.msg
   Altitude.msg
   AttitudeTarget.msg
   BatteryStatus.msg
@@ -21,6 +22,7 @@ add_message_files(
   HilControls.msg
   HilSensor.msg
   HilStateQuaternion.msg
+  HilGPS.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
