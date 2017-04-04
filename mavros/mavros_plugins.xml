@@ -65,19 +65,6 @@
 	<class name="altitude" type="mavros::std_plugins::AltitudePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish altitude values</description>
 	</class>
-	<class name="hil_controls" type="mavros::std_plugins::HilControlsPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish HIL controls values (deprecated message)</description>
-	</class>
-	<class name="hil_actuator_controls" type="mavros::std_plugins::HilActuatorControlsPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish HIL controls values</description>
-	</class>
-	<class name="hil_sensor" type="mavros::std_plugins::HilSensorPlugin" base_class_type="mavros::plugin::PluginBase">
-	<description>Send HIL Sensor values in NED to FCU</description>
-	</class>
-	<class name="hil_state_quaternion" type="mavros::std_plugins::HilStateQuaternionPlugin" base_class_type="mavros::plugin::PluginBase">
-	<description>Send HIL_STATE_QUATERNION to FCU</description>
-	</class>
-	<class name="hil_gps" type="mavros::std_plugins::HilGPSPlugin" base_class_type="mavros::plugin::PluginBase">
-	<description>Send HIL_GPS to FCU</description>
-	</class>
+	<class name="hil" type="mavros::std_plugins::HilPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish HIL controls, state, GPS and sensor values </description>
 </library>
