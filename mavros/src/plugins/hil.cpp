@@ -27,7 +27,7 @@
 namespace mavros {
 namespace std_plugins {
 /**
- * @brief Hil Control plugin
+ * @brief Hil plugin
  */
 class HilPlugin : public plugin::PluginBase {
 public:

@@ -66,5 +66,5 @@
 		<description>Publish altitude values</description>
 	</class>
 	<class name="hil" type="mavros::std_plugins::HilPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish HIL controls, state, GPS and sensor values </description>
+		<description>Publish and subscribe HIL controls, state, GPS and sensor values </description>
 </library>
