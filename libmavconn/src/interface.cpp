@@ -269,7 +269,7 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 
 static MAVConnInterface::Ptr url_parse_serial(
 		std::string path, std::string query,
-		uint8_t system_id, uint8_t component_id)
+		uint8_t system_id, uint8_t component_id, bool hwflow)
 {
 	std::string file_path;
 	int baudrate;
@@ -279,7 +279,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 	url_parse_query(query, system_id, component_id);
 
 	return std::make_shared<MAVConnSerial>(system_id, component_id,
-			file_path, baudrate);
+			file_path, baudrate, hwflow);
 }
 
 static MAVConnInterface::Ptr url_parse_udp(
@@ -361,7 +361,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 	if (proto_it == url.end()) {
 		// looks like file path
 		logDebug(PFX "URL: %s: looks like file path", url.c_str());
-		return url_parse_serial(url, "", system_id, component_id);
+		return url_parse_serial(url, "", system_id, component_id, false);
 	}
 
 	// copy protocol
@@ -397,7 +397,9 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 	else if (proto == "tcp-l")
 		return url_parse_tcp_server(host, query, system_id, component_id);
 	else if (proto == "serial")
-		return url_parse_serial(path, query, system_id, component_id);
+		return url_parse_serial(path, query, system_id, component_id, false);
+	else if (proto == "serial-hwfc")
+		return url_parse_serial(path, query, system_id, component_id, true);
 	else
 		throw DeviceError("url", "Unknown URL type");
 }

@@ -20,6 +20,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Twist.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -41,6 +42,7 @@ public:
 
 		//cmd_vel usually is the topic used for velocity control in many controllers / planners
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
+		vel_unstamped_sub = sp_nh.subscribe("cmd_vel_unstamped", 10, &SetpointVelocityPlugin::vel_unstamped_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -53,6 +55,7 @@ private:
 	ros::NodeHandle sp_nh;
 
 	ros::Subscriber vel_sub;
+	ros::Subscriber vel_unstamped_sub;
 
 	/* -*- mid-level helpers -*- */
 
@@ -92,6 +95,15 @@ private:
 		send_setpoint_velocity(req->header.stamp, vel_enu,
 				req->twist.angular.z);
 	}
+	
+	void vel_unstamped_cb(const geometry_msgs::Twist::ConstPtr &req) {
+		Eigen::Vector3d vel_enu;
+
+		tf::vectorMsgToEigen(req->linear, vel_enu);
+		send_setpoint_velocity(ros::Time::now(), vel_enu,
+				req->angular.z);
+	}
+
 };
 }	// namespace std_plugins
 }	// namespace mavros

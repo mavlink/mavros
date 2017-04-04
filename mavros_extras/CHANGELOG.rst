@@ -2,6 +2,14 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.18.7 (2017-02-24)
+-------------------
+* vision plugin : Add missing transform
+* Contributors: Kabir Mohammed
+
+0.18.6 (2017-02-07)
+-------------------
+
 0.18.5 (2016-12-12)
 -------------------
 

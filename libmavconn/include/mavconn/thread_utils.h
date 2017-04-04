@@ -54,9 +54,14 @@ std::string format(const std::string &fmt, Args ... args)
 template<typename ... Args>
 bool set_this_thread_name(const std::string &name, Args&& ... args)
 {
-	pthread_t pth = pthread_self();
 	auto new_name = format(name, std::forward<Args>(args)...);
+
+#ifdef __APPLE__
+	return pthread_setname_np(new_name.c_str()) == 0;
+#else
+	pthread_t pth = pthread_self();
 	return pthread_setname_np(pth, new_name.c_str()) == 0;
+#endif
 }
 
 /**

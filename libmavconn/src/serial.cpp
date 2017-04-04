@@ -24,7 +24,6 @@
 namespace mavconn {
 using boost::system::error_code;
 using boost::asio::io_service;
-using boost::asio::serial_port_base;
 using boost::asio::buffer;
 using mavlink::mavlink_message_t;
 
@@ -34,7 +33,7 @@ using mavlink::mavlink_message_t;
 
 
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
-		std::string device, unsigned baudrate) :
+		std::string device, unsigned baudrate, bool hwflow) :
 	MAVConnInterface(system_id, component_id),
 	tx_in_progress(false),
 	tx_q {},
@@ -42,17 +41,19 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 	io_service(),
 	serial_dev(io_service)
 {
+	using SPB = boost::asio::serial_port_base;
+
 	logInform(PFXd "device: %s @ %d bps", conn_id, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
 
 		// Set baudrate and 8N1 mode
-		serial_dev.set_option(serial_port_base::baud_rate(baudrate));
-		serial_dev.set_option(serial_port_base::character_size(8));
-		serial_dev.set_option(serial_port_base::parity(serial_port_base::parity::none));
-		serial_dev.set_option(serial_port_base::stop_bits(serial_port_base::stop_bits::one));
-		serial_dev.set_option(serial_port_base::flow_control(serial_port_base::flow_control::none));
+		serial_dev.set_option(SPB::baud_rate(baudrate));
+		serial_dev.set_option(SPB::character_size(8));
+		serial_dev.set_option(SPB::parity(SPB::parity::none));
+		serial_dev.set_option(SPB::stop_bits(SPB::stop_bits::one));
+		serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("serial", err);

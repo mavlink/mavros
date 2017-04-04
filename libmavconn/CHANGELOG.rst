@@ -2,6 +2,19 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.18.7 (2017-02-24)
+-------------------
+* readme: Add serial-hwfc:// proto
+* libmavconn `#649 <https://github.com/mavlink/mavros/issues/649>`_: Add serial-hwfc:// proto (serial + hardware flow control)
+  Note: not all platforms support setting
+  Boost::asio::serial_port_base::flow_control::hardware option.
+* Contributors: Vladimir Ermakov
+
+0.18.6 (2017-02-07)
+-------------------
+* lib `#626 <https://github.com/mavlink/mavros/issues/626>`_: Porting of PR `#650 <https://github.com/mavlink/mavros/issues/650>`_ - Fix OSX pthread set name.
+* Contributors: Fadri Furrer
+
 0.18.5 (2016-12-12)
 -------------------
 
