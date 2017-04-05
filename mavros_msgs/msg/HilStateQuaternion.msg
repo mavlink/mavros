@@ -7,6 +7,6 @@
 std_msgs/Header header
 sensor_msgs/Imu imu
 geometry_msgs/Vector3 linear_velocity
-sensor_msgs/NavSatFix fix
+geographic_msgs/GeoPoint geo
 uint16 ind_airspeed
 uint16 true_airspeed

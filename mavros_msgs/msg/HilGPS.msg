@@ -6,7 +6,7 @@
 
 std_msgs/Header header
 uint8 fix_type
-sensor_msgs/NavSatFix fix
+geographic_msgs/GeoPoint geo
 uint16 eph
 uint16 epv
 uint16 vel
