@@ -27,6 +27,7 @@
 #include <sensor_msgs/NavSatStatus.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geographic_msgs/GeoPointStamped.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -70,6 +71,9 @@ public:
 		gp_odom_pub = gp_nh.advertise<nav_msgs::Odometry>("local", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
+		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
+
+		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -77,7 +81,8 @@ public:
 		return {
 				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-				make_handler(&GlobalPositionPlugin::handle_global_position_int)
+				make_handler(&GlobalPositionPlugin::handle_global_position_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_global_origin)
 		};
 	}
 
@@ -90,6 +95,9 @@ private:
 	ros::Publisher gp_fix_pub;
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
+	ros::Publisher gp_global_origin_pub;
+
+	ros::Subscriber gp_set_global_origin_sub;
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
@@ -166,6 +174,20 @@ private:
 
 			raw_vel_pub.publish(vel);
 		}
+	}
+
+	void handle_gps_global_origin(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_GLOBAL_ORIGIN &glob_orig)
+	{
+		auto g_origin = boost::make_shared<geographic_msgs::GeoPointStamped>();
+		// auto header = m_uas->synchronized_header(frame_id, gpos.time_boot_ms);	#TODO: requires Mavlink msg update
+
+		g_origin->header.frame_id = frame_id;
+		g_origin->header.stamp = ros::Time::now();
+		g_origin->position.latitude = glob_orig.latitude; // @warning TODO: #529
+		g_origin->position.longitude = glob_orig.longitude;
+		g_origin->position.altitude = glob_orig.altitude;
+
+		gp_global_origin_pub.publish(g_origin);
 	}
 
 	/** @todo Handler for GLOBAL_POSITION_INT_COV */
@@ -306,6 +328,26 @@ private:
 			stat.addf("EPV (m)", "%.2f", epv);
 		else
 			stat.add("EPV (m)", "Unknown");
+	}
+
+	/* -*- callbacks -*- */
+
+	void set_gp_origin_cb(const geographic_msgs::GeoPointStamped::ConstPtr &req)
+	{
+		mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo;
+
+		gpo.target_system = m_uas->get_tgt_system();
+		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
+		// [[[cog:
+		// for f in ('latitude', 'longitude', 'altitude'):
+		//     cog.outl("gpo.%s = req->%s;" % (f, f))
+		// ]]]
+		gpo.latitude = req->position.latitude;
+		gpo.longitude = req->position.longitude;
+		gpo.altitude = req->position.altitude;
+		// [[[end]]] (checksum: 283da7efac0ea8cccd0d5e144ca29a03)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
 };
 }	// namespace std_plugins
