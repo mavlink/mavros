@@ -68,5 +68,8 @@
         <class name="hil_controls" type="mavplugin::HilControlsPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish HIL controls values</description>
 	</class>
+	<class name="home_position" type="mavplugin::HomePositionPlugin" base_class_type="mavplugin::MavRosPlugin">
+		<description>Publish MAVLink message with Home Position</description>
+	</class>
 </library>
 
