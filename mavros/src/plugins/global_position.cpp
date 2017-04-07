@@ -106,10 +106,24 @@ private:
 	double rot_cov;
 
 	template<typename MsgT>
-	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
+	inline void fill_lla_wgs84(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
 		fix->altitude = msg.alt / 1E3;		// m
+	}
+
+	template<typename MsgT>
+	inline void fill_lla_wgs84(MsgT &msg, geographic_msgs::GeoPointStamped::Ptr point) {
+		point->position.latitude = msg.latitude / 1E7;		// deg
+		point->position.longitude = msg.longitude / 1E7;		// deg
+		point->position.altitude = msg.altitude / 1E3;		// m
+	}
+
+	template<typename MsgT>
+	inline void fill_lla_amsl(MsgT &msg, const geographic_msgs::GeoPointStamped::ConstPtr point) {
+		msg.latitude = point->position.latitude * 1E7;		// deg
+		msg.longitude = point->position.longitude * 1E7;		// deg
+		msg.altitude = point->position.altitude * 1E3;		// m
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {
@@ -135,7 +149,7 @@ private:
 			fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
 		}
 
-		fill_lla(raw_gps, fix);
+		fill_lla_wgs84(raw_gps, fix);
 
 		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
 		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
@@ -183,9 +197,7 @@ private:
 
 		g_origin->header.frame_id = frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		g_origin->position.latitude = (double)glob_orig.latitude; // @warning TODO: #529
-		g_origin->position.longitude = (double)glob_orig.longitude;
-		g_origin->position.altitude = (double)glob_orig.altitude;
+		fill_lla_wgs84(glob_orig, g_origin); // @warning TODO: #529
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -204,7 +216,7 @@ private:
 		// Global position fix
 		fix->header = header;
 
-		fill_lla(gpos, fix);
+		fill_lla_wgs84(gpos, fix);
 
 		// fill GPS status fields using GPS_RAW data
 		auto raw_fix = m_uas->get_gps_fix();
@@ -338,14 +350,7 @@ private:
 
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
-		// [[[cog:
-		// for f in ('latitude', 'longitude', 'altitude'):
-		//     cog.outl("gpo.%s = req->%s;" % (f, f))
-		// ]]]
-		gpo.latitude = (int32_t)req->position.latitude;
-		gpo.longitude = (int32_t)req->position.longitude;
-		gpo.altitude = (int32_t)req->position.altitude;
-		// [[[end]]] (checksum: 283da7efac0ea8cccd0d5e144ca29a03)
+		fill_lla_amsl(gpo, req); // @warning TODO: #529
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
