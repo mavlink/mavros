@@ -44,10 +44,10 @@ public:
 		last_time_sensor = ros::Time(0.0);
 		period = ros::Duration(0.025);	// 40hz
 
-		hilStateQuaternion_sub = hil_nh.subscribe("state", 10, &HilPlugin::state_quat_cb, this);
-		hilGPS_sub = hil_nh.subscribe("gps", 10, &HilPlugin::gps_cb, this);
-		hilSensor_sub = hil_nh.subscribe("imu_ned", 10, &HilPlugin::sensor_cb, this);
-		hilOF_sub = hil_nh.subscribe("optical_flow", 10, &HilPlugin::gps_cb, this);
+		hil_state_quaternion_sub = hil_nh.subscribe("state", 10, &HilPlugin::state_quat_cb, this);
+		hil_gps_sub = hil_nh.subscribe("gps", 10, &HilPlugin::gps_cb, this);
+		hil_sensor_sub = hil_nh.subscribe("imu_ned", 10, &HilPlugin::sensor_cb, this);
+		hil_flow_sub = hil_nh.subscribe("optical_flow", 10, &HilPlugin::optical_flow_cb, this);
 
 		hil_controls_pub = hil_nh.advertise<mavros_msgs::HilControls>("controls", 10);
 		hil_actuator_controls_pub = hil_nh.advertise<mavros_msgs::HilActuatorControls>("actuator_controls", 10);
@@ -67,10 +67,10 @@ private:
 	ros::Publisher hil_controls_pub;
 	ros::Publisher hil_actuator_controls_pub;
 
-	ros::Subscriber hilStateQuaternion_sub;
-	ros::Subscriber hilGPS_sub;
-	ros::Subscriber hilSensor_sub;
-	ros::Subscriber hilOF_sub;
+	ros::Subscriber hil_state_quaternion_sub;
+	ros::Subscriber hil_gps_sub;
+	ros::Subscriber hil_sensor_sub;
+	ros::Subscriber hil_flow_sub;
 
 	ros::Time last_time_controls;
 	ros::Time last_time_sensor;
