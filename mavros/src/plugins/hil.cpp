@@ -134,9 +134,9 @@ private:
 		state_quat.rollspeed = req->imu.angular_velocity.x;
 		state_quat.pitchspeed = req->imu.angular_velocity.y;
 		state_quat.yawspeed = req->imu.angular_velocity.z;
-		state_quat.lat = req->geo.latitude;	// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
-		state_quat.lon = req->geo.longitude;	// @TODO: Convert to AMSL to be received by the FCU
-		state_quat.alt = req->geo.altitude;	// related to issue #529
+		state_quat.lat = (int32_t)req->geo.latitude;	// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
+		state_quat.lon = (int32_t)req->geo.longitude;	// @TODO: Convert to AMSL to be received by the FCU
+		state_quat.alt = (int32_t)req->geo.altitude;	// related to issue #529
 		state_quat.vx = req->linear_velocity.x;
 		state_quat.vy = req->linear_velocity.y;
 		state_quat.vz = req->linear_velocity.z;
@@ -158,9 +158,9 @@ private:
 
 		gps.time_usec = req->header.stamp.toNSec() / 1000;
 		gps.fix_type = req->fix_type;
-		gps.lat = req->geo.latitude;	// @TODO: Convert to AMSL to be received by the FCU
-		gps.lon = req->geo.longitude;	// related to issue #529
-		gps.alt = req->geo.altitude;
+		gps.lat = (int32_t)req->geo.latitude;	// @TODO: Convert to AMSL to be received by the FCU
+		gps.lon = (int32_t)req->geo.longitude;	// related to issue #529
+		gps.alt = (int32_t)req->geo.altitude;
 		gps.eph = req->eph;
 		gps.epv = req->epv;
 		gps.vel = req->vel;
