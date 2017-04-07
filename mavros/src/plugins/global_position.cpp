@@ -31,8 +31,6 @@
 
 namespace mavros {
 namespace std_plugins {
-
-
 /**
  * @brief Global position plugin.
  *
@@ -79,10 +77,10 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-				make_handler(&GlobalPositionPlugin::handle_global_position_int),
-				make_handler(&GlobalPositionPlugin::handle_gps_global_origin)
+			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
+			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin)
 		};
 	}
 
@@ -130,7 +128,7 @@ private:
 		fix->position_covariance.fill(0.0);
 		fix->position_covariance[0] = -1.0;
 		fix->position_covariance_type =
-			sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 	}
 
 	/* -*- message handlers -*- */
@@ -159,10 +157,10 @@ private:
 
 			// From nmea_navsat_driver
 			fix->position_covariance[0 + 0] = \
-				fix->position_covariance[3 + 1] = std::pow(hdop, 2);
+						fix->position_covariance[3 + 1] = std::pow(hdop, 2);
 			fix->position_covariance[6 + 2] = std::pow(2 * hdop, 2);
 			fix->position_covariance_type =
-					sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+						sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
 			fill_unknown_cov(fix);
@@ -173,7 +171,7 @@ private:
 		raw_fix_pub.publish(fix);
 
 		if (raw_gps.vel != UINT16_MAX &&
-				raw_gps.cog != UINT16_MAX) {
+					raw_gps.cog != UINT16_MAX) {
 			double speed = raw_gps.vel / 1E2;				// m/s
 			double course = angles::from_degrees(raw_gps.cog / 1E2);	// rad
 
@@ -197,7 +195,7 @@ private:
 
 		g_origin->header.frame_id = frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		fill_lla_wgs84(glob_orig, g_origin); // @warning TODO: #529
+		fill_lla_wgs84(glob_orig, g_origin);	// @warning TODO: #529
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -252,8 +250,8 @@ private:
 
 		// Velocity
 		tf::vectorEigenToMsg(
-				Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
-				odom->twist.twist.linear);
+					Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
+					odom->twist.twist.linear);
 
 		// Velocity covariance unknown
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
@@ -278,12 +276,12 @@ private:
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out <<
-			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
+		gps_cov(0, 0), gps_cov(0, 1), gps_cov(0, 2), 0.0, 0.0, 0.0,
+		gps_cov(1, 0), gps_cov(1, 1), gps_cov(1, 2), 0.0, 0.0, 0.0,
+		gps_cov(2, 0), gps_cov(2, 1), gps_cov(2, 2), 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, rot_cov, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, rot_cov, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -350,7 +348,7 @@ private:
 
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
-		fill_lla_amsl(gpo, req); // @warning TODO: #529
+		fill_lla_amsl(gpo, req);// @warning TODO: #529
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
