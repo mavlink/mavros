@@ -183,9 +183,9 @@ private:
 
 		g_origin->header.frame_id = frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		g_origin->position.latitude = glob_orig.latitude; // @warning TODO: #529
-		g_origin->position.longitude = glob_orig.longitude;
-		g_origin->position.altitude = glob_orig.altitude;
+		g_origin->position.latitude = (double)glob_orig.latitude; // @warning TODO: #529
+		g_origin->position.longitude = (double)glob_orig.longitude;
+		g_origin->position.altitude = (double)glob_orig.altitude;
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -342,9 +342,9 @@ private:
 		// for f in ('latitude', 'longitude', 'altitude'):
 		//     cog.outl("gpo.%s = req->%s;" % (f, f))
 		// ]]]
-		gpo.latitude = req->position.latitude;
-		gpo.longitude = req->position.longitude;
-		gpo.altitude = req->position.altitude;
+		gpo.latitude = (int32_t)req->position.latitude;
+		gpo.longitude = (int32_t)req->position.longitude;
+		gpo.altitude = (int32_t)req->position.altitude;
 		// [[[end]]] (checksum: 283da7efac0ea8cccd0d5e144ca29a03)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
