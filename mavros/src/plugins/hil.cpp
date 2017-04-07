@@ -23,6 +23,7 @@
 #include <mavros_msgs/HilStateQuaternion.h>
 #include <mavros_msgs/HilGPS.h>
 #include <mavros_msgs/HilSensor.h>
+#include <mavros_msgs/OpticalFlowRad.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -42,12 +43,13 @@ public:
 		last_time_sensor = ros::Time(0.0);
 		period = ros::Duration(0.025);	// 40hz
 
-		hilStateQuaternion_sub = hil_nh.subscribe("hil_state", 10, &HilPlugin::state_quat_cb, this);
-		hilGPS_sub = hil_nh.subscribe("hil_gps", 10, &HilPlugin::gps_cb, this);
+		hilStateQuaternion_sub = hil_nh.subscribe("state", 10, &HilPlugin::state_quat_cb, this);
+		hilGPS_sub = hil_nh.subscribe("gps", 10, &HilPlugin::gps_cb, this);
 		hilSensor_sub = hil_nh.subscribe("imu_ned", 10, &HilPlugin::sensor_cb, this);
+		hilOF_sub = hil_nh.subscribe("optical_flow", 10, &HilPlugin::gps_cb, this);
 
-		hil_controls_pub = hil_nh.advertise<mavros_msgs::HilControls>("hil_controls", 10);
-		hil_actuator_controls_pub = hil_nh.advertise<mavros_msgs::HilActuatorControls>("hil_actuator_controls", 10);
+		hil_controls_pub = hil_nh.advertise<mavros_msgs::HilControls>("controls", 10);
+		hil_actuator_controls_pub = hil_nh.advertise<mavros_msgs::HilActuatorControls>("actuator_controls", 10);
 	}
 
 	Subscriptions get_subscriptions()
@@ -67,6 +69,7 @@ private:
 	ros::Subscriber hilStateQuaternion_sub;
 	ros::Subscriber hilGPS_sub;
 	ros::Subscriber hilSensor_sub;
+	ros::Subscriber hilOF_sub;
 
 	ros::Time last_time_controls;
 	ros::Time last_time_sensor;
@@ -203,6 +206,42 @@ private:
 		sensor.fields_updated = req->fields_updated;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
+	}
+
+	/**
+	 * @brief Send simulated optical flow to FCU.
+	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_OPTICAL_FLOW
+	 */
+	void optical_flow_cb(const mavros_msgs::OpticalFlowRad::ConstPtr &req) {
+		mavlink::common::msg::HIL_OPTICAL_FLOW of;
+
+		auto int_xy = ftf::transform_frame_baselink_aircraft(
+				Eigen::Vector3d(
+					req->integrated_x,
+					req->integrated_y,
+					0.0));
+		auto int_gyro = ftf::transform_frame_baselink_aircraft(
+				Eigen::Vector3d(
+					req->integrated_xgyro,
+					req->integrated_ygyro,
+					req->integrated_zgyro));
+
+		of.time_usec = req->header.stamp.toNSec() / 1000;
+		of.sensor_id = 0;
+		of.integration_time_us = req->integration_time_us;
+		of.integrated_x = int_xy.x();
+		of.integrated_y = int_xy.y();
+
+		of.integrated_xgyro = int_gyro.x();
+		of.integrated_ygyro = int_gyro.y();
+		of.integrated_zgyro = int_gyro.z();
+
+		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
+		of.time_delta_distance_us = req->time_delta_distance_us;
+		of.distance = req->distance;
+		of.quality = req->quality;
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(of);
 	}
 };
 }	// namespace std_plugins
