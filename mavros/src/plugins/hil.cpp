@@ -1,15 +1,16 @@
 /**
- * @brief HilControls plugin
- * @file hil_controls.cpp
+ * @brief Hil plugin
+ * @file hil.cpp
+ * @author Mohamed Abdelkader <mohamedashraf123@gmail.com>
+ * @author Nuno Marques <n.marques21@hotmail.com>
  * @author Pavel Vechersky <pvechersky@student.ethz.ch>
  * @author Beat Küng <beat-kueng@gmx.net>
- * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2016,2017 Pavel Vechersky, Beat Küng, Nuno Marques.
+ * Copyright 2016,2017 Mohamed Abdelkader, Nuno Marques, Pavel Vechersky, Beat Küng.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
