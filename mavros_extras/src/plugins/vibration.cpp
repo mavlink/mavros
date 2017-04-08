@@ -65,8 +65,8 @@ private:
 		tf::vectorEigenToMsg(ftf::transform_frame_ned_enu(vib_enu), vibe_msg->vibration);
 
 		vibe_msg->clipping[0] = vibration.clipping_0;
-  	vibe_msg->clipping[1] = vibration.clipping_1;
-  	vibe_msg->clipping[2] = vibration.clipping_2;
+		vibe_msg->clipping[1] = vibration.clipping_1;
+		vibe_msg->clipping[2] = vibration.clipping_2;
 
 		vibration_pub.publish(vibe_msg);
 	}
