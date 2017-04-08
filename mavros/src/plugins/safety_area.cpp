@@ -100,6 +100,7 @@ private:
 		saa_msg->header.frame_id = frame_id;
 		//saa_msg->header.frame_id = utils::to_string(saa.frame);	@TODO: after #311 merged this will work
 
+		saa_msg->polygon.points.resize(2);
 		saa_msg->polygon.points[0].x = p1.x();
 		saa_msg->polygon.points[0].y = p1.y();
 		saa_msg->polygon.points[0].z = p1.z();
