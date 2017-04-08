@@ -15,6 +15,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <mavros_msgs/Vibration.h>
 
@@ -61,14 +62,11 @@ private:
 		vibe_msg->header = m_uas->synchronized_header(frame_id, vibration.time_usec);
 
 		Eigen::Vector3d vib_enu = {vibration.vibration_x, vibration.vibration_y, vibration.vibration_z};
-		vib_enu = ftf::transform_frame_ned_enu(vib_enu);
+		tf::vectorEigenToMsg(ftf::transform_frame_ned_enu(vib_enu), vibe_msg->vibration);
 
-		vibe_msg->vibration.x = vib_enu.x();
-		vibe_msg->vibration.y = vib_enu.y();
-		vibe_msg->vibration.z = vib_enu.z();
 		vibe_msg->clipping[0] = vibration.clipping_0;
-		vibe_msg->clipping[1] = vibration.clipping_1;
-		vibe_msg->clipping[2] = vibration.clipping_2;
+  	vibe_msg->clipping[1] = vibration.clipping_1;
+  	vibe_msg->clipping[2] = vibration.clipping_2;
 
 		vibration_pub.publish(vibe_msg);
 	}
