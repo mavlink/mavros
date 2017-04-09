@@ -29,6 +29,11 @@
 
 namespace mavros {
 namespace std_plugins {
+//! Tesla to Gauss coeff
+static constexpr double TESLA_TO_GAUSS = 1.0e4;
+//! Pascal to millBar coeff
+static constexpr double PASCAL_TO_MILLIBAR = 1.0e-2;
+
 /**
  * @brief Hil plugin
  */
@@ -136,10 +141,13 @@ private:
 		mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
 
 		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
-		Eigen::Quaterniond q(req->imu.orientation.w,
-					req->imu.orientation.x,
-					req->imu.orientation.y,
-					req->imu.orientation.z);
+		auto q = ftf::transform_orientation_baselink_aircraft(
+					ftf::transform_orientation_enu_ned(
+						Eigen::Quaterniond(
+							req->imu.orientation.w,
+							req->imu.orientation.x,
+							req->imu.orientation.y,
+							req->imu.orientation.z)));
 		ftf::quaternion_to_mavlink(q, state_quat.attitude_quaternion);
 		state_quat.lat = req->geo.altitude * 1E7;
 		state_quat.lon = req->geo.longitude * 1E7;
@@ -149,24 +157,39 @@ private:
 		state_quat.alt = req->geo.altitude * 1E3;
 		state_quat.ind_airspeed = req->ind_airspeed;
 		state_quat.true_airspeed = req->true_airspeed;
+		auto ang_vel = ftf::transform_frame_baselink_aircraft(
+					Eigen::Vector3d(
+						req->imu.angular_velocity.x,
+						req->imu.angular_velocity.y,
+						req->imu.angular_velocity.z));
+		auto lin_vel = ftf::transform_frame_enu_ned(
+					Eigen::Vector3d(
+						req->linear_velocity.x,
+						req->linear_velocity.y,
+						req->linear_velocity.z));
+		auto lin_acc = ftf::transform_frame_baselink_aircraft(
+					Eigen::Vector3d(
+						req->imu.linear_acceleration.x,
+						req->imu.linear_acceleration.y,
+						req->imu.linear_acceleration.z));
 		// [[[cog:
 		// for a, b in zip(('rollspeed', 'pitchspeed', 'yawspeed'), "xyz"):
-		//     cog.outl("state_quat.%s = req->imu.angular_velocity.%s;" % (a, b))
+		//     cog.outl("state_quat.%s = ang_vel.%s();" % (a, b))
 		// for f in "xyz":
-		//     cog.outl("state_quat.v%s = req->linear_velocity.%s;" % (f, f))
+		//     cog.outl("state_quat.v%s = lin_vel.%s();" % (f, f))
 		// for f in "xyz":
-		//     cog.outl("state_quat.%sacc = req->imu.linear_acceleration.%s;" % (f, f))
+		//     cog.outl("state_quat.%sacc = lin_acc.%s();" % (f, f))
 		// ]]]
-		state_quat.rollspeed = req->imu.angular_velocity.x;
-		state_quat.pitchspeed = req->imu.angular_velocity.y;
-		state_quat.yawspeed = req->imu.angular_velocity.z;
-		state_quat.vx = req->linear_velocity.x;
-		state_quat.vy = req->linear_velocity.y;
-		state_quat.vz = req->linear_velocity.z;
-		state_quat.xacc = req->imu.linear_acceleration.x;
-		state_quat.yacc = req->imu.linear_acceleration.y;
-		state_quat.zacc = req->imu.linear_acceleration.z;
-		// [[[end]]] (checksum: ba223db81bec76579c3789d482d9721f)
+		state_quat.rollspeed = ang_vel.x();
+		state_quat.pitchspeed = ang_vel.y();
+		state_quat.yawspeed = ang_vel.z();
+		state_quat.vx = lin_vel.x();
+		state_quat.vy = lin_vel.y();
+		state_quat.vz = lin_vel.z();
+		state_quat.xacc = lin_acc.x();
+		state_quat.yacc = lin_acc.y();
+		state_quat.zacc = lin_acc.z();
+		// [[[end]]] (checksum: a29598b834ac1ec32ede01595aa5b3ac)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(state_quat);
 	}
@@ -217,27 +240,41 @@ private:
 		mavlink::common::msg::HIL_SENSOR sensor;
 
 		sensor.time_usec = req->header.stamp.toNSec() / 1000;
+		auto acc = ftf::transform_frame_baselink_aircraft(
+					Eigen::Vector3d(
+						req->acc.x,
+						req->acc.y,
+						req->acc.z));
+		auto gyro = ftf::transform_frame_baselink_aircraft(
+					Eigen::Vector3d(
+						req->gyro.x,
+						req->gyro.y,
+						req->gyro.z));
+		auto mag = ftf::transform_frame_baselink_aircraft<Eigen::Vector3d>(
+					Eigen::Vector3d(
+						req->mag.x,
+						req->mag.y,
+						req->mag.z) * TESLA_TO_GAUSS);
 		// [[[cog:
 		// for a in ('acc', 'gyro', 'mag'):
 		//     for b in "xyz":
-		//         cog.outl("sensor.{b}{a} = req->{a}.{b};".format(**locals()))
-		// for f in ('abs_pressure', 'diff_pressure', 'pressure_alt'):
-		//     cog.outl("sensor.%s = req->%s.fluid_pressure;" % (f, f))
+		//         cog.outl("sensor.{b}{a} = {a}.{b}();".format(**locals()))
 		// ]]]
-		sensor.xacc = req->acc.x;
-		sensor.yacc = req->acc.y;
-		sensor.zacc = req->acc.z;
-		sensor.xgyro = req->gyro.x;
-		sensor.ygyro = req->gyro.y;
-		sensor.zgyro = req->gyro.z;
-		sensor.xmag = req->mag.x;
-		sensor.ymag = req->mag.y;
-		sensor.zmag = req->mag.z;
-		sensor.abs_pressure = req->abs_pressure.fluid_pressure;
-		sensor.diff_pressure = req->diff_pressure.fluid_pressure;
-		sensor.pressure_alt = req->pressure_alt.fluid_pressure;
-		// [[[end]]] (checksum: c0fd710f77b66232ba2b645bf2c467c6)
+		sensor.xacc = acc.x();
+		sensor.yacc = acc.y();
+		sensor.zacc = acc.z();
+		sensor.xgyro = gyro.x();
+		sensor.ygyro = gyro.y();
+		sensor.zgyro = gyro.z();
+		sensor.xmag = mag.x();
+		sensor.ymag = mag.y();
+		sensor.zmag = mag.z();
+		// [[[end]]] (checksum: e4bb03f33b73db75bc2d5f1c7595e737)
+		sensor.abs_pressure = req->abs_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
+		sensor.diff_pressure = req->diff_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
+		sensor.pressure_alt = req->fields_updated;
 		sensor.temperature = req->temperature.temperature;
+
 		sensor.fields_updated = req->fields_updated;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
@@ -250,12 +287,12 @@ private:
 	void optical_flow_cb(const mavros_msgs::OpticalFlowRad::ConstPtr &req) {
 		mavlink::common::msg::HIL_OPTICAL_FLOW of;
 
-		auto int_xy = ftf::transform_frame_baselink_aircraft(
+		auto int_xy = ftf::transform_frame_aircraft_baselink(
 					Eigen::Vector3d(
 						req->integrated_x,
 						req->integrated_y,
 						0.0));
-		auto int_gyro = ftf::transform_frame_baselink_aircraft(
+		auto int_gyro = ftf::transform_frame_aircraft_baselink(
 					Eigen::Vector3d(
 						req->integrated_xgyro,
 						req->integrated_ygyro,
