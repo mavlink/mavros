@@ -19,6 +19,9 @@ add_message_files(
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
+  HilSensor.msg
+  HilStateQuaternion.msg
+  HilGPS.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
@@ -34,6 +37,7 @@ add_message_files(
   Vibration.msg
   Waypoint.msg
   WaypointList.msg
+  ActuatorControlTarget.msg
 )
 
 add_service_files(
