@@ -46,9 +46,6 @@ public:
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-		last_time_controls = ros::Time(0.0);
-		last_time_sensor = ros::Time(0.0);
-		period = ros::Duration(0.025);	// 40hz
 
 		hil_state_quaternion_sub = hil_nh.subscribe("state", 10, &HilPlugin::state_quat_cb, this);
 		hil_gps_sub = hil_nh.subscribe("gps", 10, &HilPlugin::gps_cb, this);
@@ -82,19 +79,9 @@ private:
 	ros::Subscriber hil_flow_sub;
 	ros::Subscriber hil_rcin_sub;
 
-	ros::Time last_time_controls;
-	ros::Time last_time_sensor;
-	ros::Duration period;
-
 	/* -*- rx handlers -*- */
 
 	void handle_hil_controls(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HIL_CONTROLS &hil_controls) {
-		// Throttle incoming messages to 40hz
-		if ((ros::Time::now() - last_time_controls) < period) {
-			return;
-		}
-		last_time_controls = ros::Time::now();
-
 		auto hil_controls_msg = boost::make_shared<mavros_msgs::HilControls>();
 
 		hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);
@@ -231,12 +218,6 @@ private:
 	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_SENSOR
 	 */
 	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
-		// Throttle incoming messages to 40hz
-		if ((ros::Time::now() - last_time_sensor) < period) {
-			return;
-		}
-		last_time_sensor = ros::Time::now();
-
 		mavlink::common::msg::HIL_SENSOR sensor;
 
 		sensor.time_usec = req->header.stamp.toNSec() / 1000;
