@@ -253,7 +253,7 @@ private:
 		// [[[end]]] (checksum: e4bb03f33b73db75bc2d5f1c7595e737)
 		sensor.abs_pressure = req->abs_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
 		sensor.diff_pressure = req->diff_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
-		sensor.pressure_alt = req->fields_updated;
+		sensor.pressure_alt = req->pressure_alt;
 		sensor.temperature = req->temperature.temperature;
 
 		sensor.fields_updated = req->fields_updated;
