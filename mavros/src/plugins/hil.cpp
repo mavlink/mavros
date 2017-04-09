@@ -64,6 +64,8 @@ public:
 	}
 
 private:
+	using lock_guard = std::lock_guard<std::mutex>;
+	std::mutex mutex;
 	ros::NodeHandle hil_nh;
 
 	ros::Publisher hil_controls_pub;
@@ -90,14 +92,13 @@ private:
 
 		auto hil_controls_msg = boost::make_shared<mavros_msgs::HilControls>();
 
+		hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);
 		// [[[cog:
-		// cog.outl("hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);")
 		// for f in (
 		//     'roll_ailerons', 'pitch_elevator', 'yaw_rudder', 'throttle',
 		//     'aux1', 'aux2', 'aux3', 'aux4', 'mode', 'nav_mode'):
 		//     cog.outl("hil_controls_msg->%s = hil_controls.%s;" % (f, f))
 		// ]]]
-		hil_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_controls.time_usec);
 		hil_controls_msg->roll_ailerons = hil_controls.roll_ailerons;
 		hil_controls_msg->pitch_elevator = hil_controls.pitch_elevator;
 		hil_controls_msg->yaw_rudder = hil_controls.yaw_rudder;
@@ -108,7 +109,7 @@ private:
 		hil_controls_msg->aux4 = hil_controls.aux4;
 		hil_controls_msg->mode = hil_controls.mode;
 		hil_controls_msg->nav_mode = hil_controls.nav_mode;
-		// [[[end]]] (checksum: f840de9e5cac8b1c709b17aec345f96c)
+		// [[[end]]] (checksum: a2c87ee8f36e7a32b08be5e0fe665b5a)
 
 		hil_controls_pub.publish(hil_controls_msg);
 	}
@@ -134,46 +135,38 @@ private:
 	void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
 		mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
 
+		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
+		Eigen::Quaterniond q(req->imu.orientation.w,
+					req->imu.orientation.x,
+					req->imu.orientation.y,
+					req->imu.orientation.z);
+		ftf::quaternion_to_mavlink(q, state_quat.attitude_quaternion);
+		state_quat.lat = req->geo.altitude * 1E7;
+		state_quat.lon = req->geo.longitude * 1E7;
 		// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
 		// @TODO: Convert altitude to AMSL to be received by the FCU
 		// related to issue #529
-
+		state_quat.alt = req->geo.altitude * 1E3;
+		state_quat.ind_airspeed = req->ind_airspeed;
+		state_quat.true_airspeed = req->true_airspeed;
 		// [[[cog:
-		// cog.outl("state_quat.time_usec = req->header.stamp.toNSec() / 1000;")
-		// for a, b in zip(range(0,4), "wxyz"):
-		//     cog.outl("state_quat.attitude_quaternion[%d] = req->imu.orientation.%s;" % (a, b))
 		// for a, b in zip(('rollspeed', 'pitchspeed', 'yawspeed'), "xyz"):
 		//     cog.outl("state_quat.%s = req->imu.angular_velocity.%s;" % (a, b))
-		// cog.outl("state_quat.lat = req->geo.altitude * 1E7;")
-		// cog.outl("state_quat.lon = req->geo.longitude * 1E7;")
-		// cog.outl("state_quat.alt = req->geo.altitude * 1E3;")
 		// for f in "xyz":
 		//     cog.outl("state_quat.v%s = req->linear_velocity.%s;" % (f, f))
-		// cog.outl("state_quat.ind_airspeed = req->ind_airspeed;")
-		// cog.outl("state_quat.true_airspeed = req->true_airspeed;")
 		// for f in "xyz":
 		//     cog.outl("state_quat.%sacc = req->imu.linear_acceleration.%s;" % (f, f))
 		// ]]]
-		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
-		state_quat.attitude_quaternion[0] = req->imu.orientation.w;
-		state_quat.attitude_quaternion[1] = req->imu.orientation.x;
-		state_quat.attitude_quaternion[2] = req->imu.orientation.y;
-		state_quat.attitude_quaternion[3] = req->imu.orientation.z;
 		state_quat.rollspeed = req->imu.angular_velocity.x;
 		state_quat.pitchspeed = req->imu.angular_velocity.y;
 		state_quat.yawspeed = req->imu.angular_velocity.z;
-		state_quat.lat = req->geo.altitude * 1E7;
-		state_quat.lon = req->geo.longitude * 1E7;
-		state_quat.alt = req->geo.altitude * 1E3;
 		state_quat.vx = req->linear_velocity.x;
 		state_quat.vy = req->linear_velocity.y;
 		state_quat.vz = req->linear_velocity.z;
-		state_quat.ind_airspeed = req->ind_airspeed;
-		state_quat.true_airspeed = req->true_airspeed;
 		state_quat.xacc = req->imu.linear_acceleration.x;
 		state_quat.yacc = req->imu.linear_acceleration.y;
 		state_quat.zacc = req->imu.linear_acceleration.z;
-		// [[[end]]] (checksum: 38d31149cfe9ced65a1d4209921d7d30)
+		// [[[end]]] (checksum: ba223db81bec76579c3789d482d9721f)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(state_quat);
 	}
@@ -185,24 +178,18 @@ private:
 	void gps_cb(const mavros_msgs::HilGPS::ConstPtr &req) {
 		mavlink::common::msg::HIL_GPS gps;
 
-		// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
-		// @TODO: Convert altitude to AMSL to be received by the FCU
-		// related to issue #529
-
-		// [[[cog:
-		// cog.outl("gps.time_usec = req->header.stamp.toNSec() / 1000;")
-		// cog.outl("gps.fix_type = req->fix_type;")
-		// cog.outl("gps.lat = req->geo.latitude * 1E7;")
-		// cog.outl("gps.lon = req->geo.longitude * 1E7;")
-		// cog.outl("gps.alt = req->geo.altitude * 1E3;")
-		// for f in ('eph', 'epv', 'vel', 'vn', 've', 'vd', 'cog', 'satellites_visible'):
-		//     cog.outl("gps.%s = req->%s;" % (f, f))
-		// ]]]
 		gps.time_usec = req->header.stamp.toNSec() / 1000;
 		gps.fix_type = req->fix_type;
 		gps.lat = req->geo.latitude * 1E7;
 		gps.lon = req->geo.longitude * 1E7;
+		// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
+		// @TODO: Convert altitude to AMSL to be received by the FCU
+		// related to issue #529
 		gps.alt = req->geo.altitude * 1E3;
+		// [[[cog:
+		// for f in ('eph', 'epv', 'vel', 'vn', 've', 'vd', 'cog', 'satellites_visible'):
+		//     cog.outl("gps.%s = req->%s;" % (f, f))
+		// ]]]
 		gps.eph = req->eph;
 		gps.epv = req->epv;
 		gps.vel = req->vel;
@@ -211,7 +198,7 @@ private:
 		gps.vd = req->vd;
 		gps.cog = req->cog;
 		gps.satellites_visible = req->satellites_visible;
-		// [[[end]]] (checksum: c3f62529e11d76d5aab3fe1e6e439503)
+		// [[[end]]] (checksum: 8ed36ad860cde22e980f1d7ddcd1f6d9)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gps);
 	}
@@ -229,20 +216,14 @@ private:
 
 		mavlink::common::msg::HIL_SENSOR sensor;
 
+		sensor.time_usec = req->header.stamp.toNSec() / 1000;
 		// [[[cog:
-		// cog.outl("sensor.time_usec = req->header.stamp.toNSec() / 1000;")
-		// for f in "xyz":
-		//     cog.outl("sensor.%sacc = req->acc.%s;" % (f, f))
-		// for f in "xyz":
-		//     cog.outl("sensor.%sgyro = req->gyro.%s;" % (f, f))
-		// for f in "xyz":
-		//     cog.outl("sensor.%smag = req->mag.%s;" % (f, f))
+		// for a in ('acc', 'gyro', 'mag'):
+		//     for b in "xyz":
+		//         cog.outl("sensor.{b}{a} = req->{a}.{b};".format(**locals()))
 		// for f in ('abs_pressure', 'diff_pressure', 'pressure_alt'):
 		//     cog.outl("sensor.%s = req->%s.fluid_pressure;" % (f, f))
-		// cog.outl("sensor.temperature = req->temperature.temperature;")
-		// cog.outl("sensor.fields_updated = req->fields_updated;")
 		// ]]]
-		sensor.time_usec = req->header.stamp.toNSec() / 1000;
 		sensor.xacc = req->acc.x;
 		sensor.yacc = req->acc.y;
 		sensor.zacc = req->acc.z;
@@ -255,9 +236,9 @@ private:
 		sensor.abs_pressure = req->abs_pressure.fluid_pressure;
 		sensor.diff_pressure = req->diff_pressure.fluid_pressure;
 		sensor.pressure_alt = req->pressure_alt.fluid_pressure;
+		// [[[end]]] (checksum: c0fd710f77b66232ba2b645bf2c467c6)
 		sensor.temperature = req->temperature.temperature;
 		sensor.fields_updated = req->fields_updated;
-		// [[[end]]] (checksum: 8dccb9174c5b4d0e41eabbc41fa87c88)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
 	}
@@ -280,31 +261,27 @@ private:
 						req->integrated_ygyro,
 						req->integrated_zgyro));
 
+		of.time_usec = req->header.stamp.toNSec() / 1000;
+		of.sensor_id = 0;
+		of.integration_time_us = req->integration_time_us;
 		// [[[cog:
-		// cog.outl("of.time_usec = req->header.stamp.toNSec() / 1000;")
-		// cog.outl("of.sensor_id = 0;")
-		// cog.outl("of.integration_time_us = req->integration_time_us;")
 		// for f in "xy":
 		//     cog.outl("of.integrated_%s = int_xy.%s();" % (f, f))
 		// for f in "xyz":
 		//     cog.outl("of.integrated_%sgyro = int_gyro.%s();" % (f, f))
-		// cog.outl("of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius")
 		// for f in ('time_delta_distance_us', 'distance', 'quality '):
 		//     cog.outl("of.%s = req->%s;" % (f, f))
 		// ]]]
-		of.time_usec = req->header.stamp.toNSec() / 1000;
-		of.sensor_id = 0;
-		of.integration_time_us = req->integration_time_us;
 		of.integrated_x = int_xy.x();
 		of.integrated_y = int_xy.y();
 		of.integrated_xgyro = int_gyro.x();
 		of.integrated_ygyro = int_gyro.y();
 		of.integrated_zgyro = int_gyro.z();
-		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
 		of.time_delta_distance_us = req->time_delta_distance_us;
 		of.distance = req->distance;
 		of.quality  = req->quality;
-		// [[[end]]] (checksum: d13868990afa07976f2d7d886a16ad7e)
+		// [[[end]]] (checksum: 7c67e6b05dad4db31ccf2872ab34fa69)
+		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(of);
 	}
@@ -316,27 +293,40 @@ private:
 	void rcin_raw_cb(const mavros_msgs::RCIn::ConstPtr &req) {
 		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin;
 
-		// [[[cog:
-		// cog.outl("rcin.time_usec = req->header.stamp.toNSec() / 100000;")
-		// for a, b in zip(range(1,13), range(0,12)):
-		//     cog.outl("rcin.chan%d_raw = req->channels[%d];" % (a, b))
-		// cog.outl("rcin.rssi = req->rssi;")
-		// ]]]
+		constexpr size_t MAX_CHANCNT = 12;
+		lock_guard lock(mutex);
+		size_t channels_count = req->channels.size();
+
+		if (channels_count > MAX_CHANCNT) {
+			ROS_WARN_THROTTLE_NAMED(60, "hil_rc",
+						"FCU receives %lu RC channels, but HIL_RC_INPUTS_RAW can store %zu",
+						req->channels.size(), MAX_CHANCNT);
+
+			channels_count = MAX_CHANCNT;
+		}
+
 		rcin.time_usec = req->header.stamp.toNSec() / 100000;
-		rcin.chan1_raw = req->channels[0];
-		rcin.chan2_raw = req->channels[1];
-		rcin.chan3_raw = req->channels[2];
-		rcin.chan4_raw = req->channels[3];
-		rcin.chan5_raw = req->channels[4];
-		rcin.chan6_raw = req->channels[5];
-		rcin.chan7_raw = req->channels[6];
-		rcin.chan8_raw = req->channels[7];
-		rcin.chan9_raw = req->channels[8];
-		rcin.chan10_raw = req->channels[9];
-		rcin.chan11_raw = req->channels[10];
-		rcin.chan12_raw = req->channels[11];
-		rcin.rssi = req->rssi;
-		// [[[end]]] (checksum: 0bad8edc8a67b30536f28f5083e7ec5a)
+		// switch works as start point selector.
+		switch (channels_count) {
+		// [[[cog:
+		// for i in range(12, 0, -1):
+		//     cog.outl("case %2d: rcin.chan%d_raw \t= req->channels[%2d];" % (i, i, i-1))
+		// ]]]
+		case 12: rcin.chan12_raw	= req->channels[11];
+		case 11: rcin.chan11_raw	= req->channels[10];
+		case 10: rcin.chan10_raw	= req->channels[ 9];
+		case  9: rcin.chan9_raw		= req->channels[ 8];
+		case  8: rcin.chan8_raw		= req->channels[ 7];
+		case  7: rcin.chan7_raw		= req->channels[ 6];
+		case  6: rcin.chan6_raw		= req->channels[ 5];
+		case  5: rcin.chan5_raw		= req->channels[ 4];
+		case  4: rcin.chan4_raw		= req->channels[ 3];
+		case  3: rcin.chan3_raw		= req->channels[ 2];
+		case  2: rcin.chan2_raw		= req->channels[ 1];
+		case  1: rcin.chan1_raw		= req->channels[ 0];
+		// [[[end]]] (checksum: 02bafd8c28c3cf65a383aa60f15e5b00)
+		case  0: break;
+		}
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rcin);
 	}
