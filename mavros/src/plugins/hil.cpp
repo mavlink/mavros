@@ -66,8 +66,6 @@ public:
 	}
 
 private:
-	using lock_guard = std::lock_guard<std::mutex>;
-	std::mutex mutex;
 	ros::NodeHandle hil_nh;
 
 	ros::Publisher hil_controls_pub;
@@ -309,10 +307,9 @@ private:
 	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_RC_INPUTS_RAW
 	 */
 	void rcin_raw_cb(const mavros_msgs::RCIn::ConstPtr &req) {
-		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin;
+		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin{};
 
 		constexpr size_t MAX_CHANCNT = 12;
-		lock_guard lock(mutex);
 		size_t channels_count = req->channels.size();
 
 		if (channels_count > MAX_CHANCNT) {

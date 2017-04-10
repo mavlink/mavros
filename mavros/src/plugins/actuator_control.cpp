@@ -35,7 +35,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		actuator_control_target_pub = nh.advertise<mavros_msgs::ActuatorControl>("actuator_control", 10);
+		target_actuator_control_pub = nh.advertise<mavros_msgs::ActuatorControl>("target_actuator_control", 10);
 		actuator_control_sub = nh.subscribe("actuator_control", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 	}
 
@@ -49,8 +49,8 @@ public:
 private:
 	ros::NodeHandle nh;
 
+	ros::Publisher target_actuator_control_pub;
 	ros::Subscriber actuator_control_sub;
-	ros::Publisher actuator_control_target_pub;
 
 	/* -*- rx handlers -*- */
 
@@ -63,7 +63,7 @@ private:
 		const auto &arr = actuator_control_target.controls;
 		std::copy(arr.cbegin(), arr.cend(), actuator_control_target_msg->controls.begin());
 
-		actuator_control_target_pub.publish(actuator_control_target_msg);
+		target_actuator_control_pub.publish(actuator_control_target_msg);
 	}
 
 	/* -*- callbacks -*- */
