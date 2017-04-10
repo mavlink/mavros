@@ -2,6 +2,14 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.5 (2017-02-07)
+-------------------
+* Pthread fix for OSX (`#650 <https://github.com/mavlink/mavros/issues/650>`_)
+  * fix pthread and missing defines for osx
+  * adapted their style using tabs
+  * fix elif to else
+* Contributors: Fadri Furrer
+
 0.17.4 (2016-06-23)
 -------------------
 

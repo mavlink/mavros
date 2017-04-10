@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.5 (2017-02-07)
+-------------------
+
 0.17.4 (2016-06-23)
 -------------------
 * Adding anchor to the HIL_CONTROLS message reference link
