@@ -61,11 +61,11 @@ public:
 			tf2_start("AttitudeSpTF", &SetpointAttitudePlugin::transform_cb);
 		}
 		else {
-			twist_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointAttitudePlugin::twist_cb, this);
-			pose_sub = sp_nh.subscribe("attitude", 10, &SetpointAttitudePlugin::pose_cb, this);
+			twist_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointAttitudePlugin::twist_cb, this, ros::TransportHints().tcpNoDelay());
+			pose_sub = sp_nh.subscribe("attitude", 10, &SetpointAttitudePlugin::pose_cb, this, ros::TransportHints().tcpNoDelay());
 		}
 
-		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this);
+		throttle_sub = sp_nh.subscribe("att_throttle", 10, &SetpointAttitudePlugin::throttle_cb, this, ros::TransportHints().tcpNoDelay());
 	}
 
 	const message_map get_rx_handlers() {
