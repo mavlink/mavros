@@ -295,7 +295,7 @@ private:
 		of.integrated_zgyro = int_gyro.z();
 		of.time_delta_distance_us = req->time_delta_distance_us;
 		of.distance = req->distance;
-		of.quality  = req->quality;
+		of.quality  = req->quality ;
 		// [[[end]]] (checksum: 7c67e6b05dad4db31ccf2872ab34fa69)
 		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
 
@@ -307,41 +307,39 @@ private:
 	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_RC_INPUTS_RAW
 	 */
 	void rcin_raw_cb(const mavros_msgs::RCIn::ConstPtr &req) {
-		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin{};
+		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin {};
 
 		constexpr size_t MAX_CHANCNT = 12;
-		size_t channels_count = req->channels.size();
 
-		if (channels_count > MAX_CHANCNT) {
+		if (req->channels.size() > MAX_CHANCNT) {
 			ROS_WARN_THROTTLE_NAMED(60, "hil_rc",
 						"FCU receives %lu RC channels, but HIL_RC_INPUTS_RAW can store %zu",
 						req->channels.size(), MAX_CHANCNT);
-
-			channels_count = MAX_CHANCNT;
 		}
+
+		std::array<uint16_t, MAX_CHANCNT> channels;
+		size_t n = req->channels.size() < MAX_CHANCNT ? : MAX_CHANCNT;
+		std::copy(req->channels.begin(), req->channels.begin() + n, channels.begin());
+		std::fill(channels.begin() + n, channels.end(), UINT16_MAX);
 
 		rcin.time_usec = req->header.stamp.toNSec() / 100000;
-		// switch works as start point selector.
-		switch (channels_count) {
 		// [[[cog:
-		// for i in range(12, 0, -1):
-		//     cog.outl("case %2d: rcin.chan%d_raw \t= req->channels[%2d];" % (i, i, i-1))
+		// for i in range (1,13):
+		//     cog.outl("rcin.chan%d_raw\t= channels[%2d];" % (i, i-1))
 		// ]]]
-		case 12: rcin.chan12_raw	= req->channels[11];
-		case 11: rcin.chan11_raw	= req->channels[10];
-		case 10: rcin.chan10_raw	= req->channels[ 9];
-		case  9: rcin.chan9_raw		= req->channels[ 8];
-		case  8: rcin.chan8_raw		= req->channels[ 7];
-		case  7: rcin.chan7_raw		= req->channels[ 6];
-		case  6: rcin.chan6_raw		= req->channels[ 5];
-		case  5: rcin.chan5_raw		= req->channels[ 4];
-		case  4: rcin.chan4_raw		= req->channels[ 3];
-		case  3: rcin.chan3_raw		= req->channels[ 2];
-		case  2: rcin.chan2_raw		= req->channels[ 1];
-		case  1: rcin.chan1_raw		= req->channels[ 0];
-		// [[[end]]] (checksum: 02bafd8c28c3cf65a383aa60f15e5b00)
-		case  0: break;
-		}
+		rcin.chan1_raw	= channels[ 0];
+		rcin.chan2_raw	= channels[ 1];
+		rcin.chan3_raw	= channels[ 2];
+		rcin.chan4_raw	= channels[ 3];
+		rcin.chan5_raw	= channels[ 4];
+		rcin.chan6_raw	= channels[ 5];
+		rcin.chan7_raw	= channels[ 6];
+		rcin.chan8_raw	= channels[ 7];
+		rcin.chan9_raw	= channels[ 8];
+		rcin.chan10_raw	= channels[ 9];
+		rcin.chan11_raw	= channels[10];
+		rcin.chan12_raw	= channels[11];
+		// [[[end]]] (checksum: 8d6860789d596dc39e81b351c3a50fcd)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rcin);
 	}
