@@ -146,7 +146,6 @@ private:
 
 		// fill
 		imu_msg->header = uas->synchronized_header(frame_id, time_boot_ms);
-    imu_msg->header.stamp = ros::Time::now();
 
 		tf::quaternionEigenToMsg(orientation, imu_msg->orientation);
 		tf::vectorEigenToMsg(gyro, imu_msg->angular_velocity);
