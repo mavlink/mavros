@@ -141,8 +141,8 @@ private:
 		// @TODO: Convert altitude to AMSL to be received by the FCU
 		// related to issue #529
 		state_quat.alt = req->geo.altitude * 1E3;
-		state_quat.ind_airspeed = req->ind_airspeed;
-		state_quat.true_airspeed = req->true_airspeed;
+		state_quat.ind_airspeed = req->ind_airspeed * 1E2;
+		state_quat.true_airspeed = req->true_airspeed * 1E2;
 		auto ang_vel = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
 						req->imu.angular_velocity.x,
@@ -152,7 +152,7 @@ private:
 					Eigen::Vector3d(
 						req->linear_velocity.x,
 						req->linear_velocity.y,
-						req->linear_velocity.z));
+						req->linear_velocity.z)) * 1E2;
 		auto lin_acc = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
 						req->imu.linear_acceleration.x,
@@ -279,7 +279,7 @@ private:
 						req->integrated_zgyro));
 
 		of.time_usec = req->header.stamp.toNSec() / 1000;
-		of.sensor_id = INT8_MAX; //while we don't find a better way of handling it
+		of.sensor_id = INT8_MAX;//while we don't find a better way of handling it
 		of.integration_time_us = req->integration_time_us;
 		// [[[cog:
 		// for f in "xy":
