@@ -135,7 +135,7 @@ private:
 							req->imu.orientation.y,
 							req->imu.orientation.z)));
 		ftf::quaternion_to_mavlink(q, state_quat.attitude_quaternion);
-		state_quat.lat = req->geo.altitude * 1E7;
+		state_quat.lat = req->geo.latitude * 1E7;
 		state_quat.lon = req->geo.longitude * 1E7;
 		// @warning geographic_msgs/GeoPoint.msg uses WGS 84 reference ellipsoid
 		// @TODO: Convert altitude to AMSL to be received by the FCU
