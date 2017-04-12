@@ -17,6 +17,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <algorithm>
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/HilControls.h>
@@ -278,14 +279,14 @@ private:
 						req->integrated_zgyro));
 
 		of.time_usec = req->header.stamp.toNSec() / 1000;
-		of.sensor_id = 0;
+		of.sensor_id = INT8_MAX; //while we don't find a better way of handling it
 		of.integration_time_us = req->integration_time_us;
 		// [[[cog:
 		// for f in "xy":
 		//     cog.outl("of.integrated_%s = int_xy.%s();" % (f, f))
 		// for f in "xyz":
 		//     cog.outl("of.integrated_%sgyro = int_gyro.%s();" % (f, f))
-		// for f in ('time_delta_distance_us', 'distance', 'quality '):
+		// for f in ('time_delta_distance_us', 'distance', 'quality'):
 		//     cog.outl("of.%s = req->%s;" % (f, f))
 		// ]]]
 		of.integrated_x = int_xy.x();
@@ -295,8 +296,8 @@ private:
 		of.integrated_zgyro = int_gyro.z();
 		of.time_delta_distance_us = req->time_delta_distance_us;
 		of.distance = req->distance;
-		of.quality  = req->quality ;
-		// [[[end]]] (checksum: 7c67e6b05dad4db31ccf2872ab34fa69)
+		of.quality = req->quality;
+		// [[[end]]] (checksum: acbfae28f4f3bb8ca135423efaaa479e)
 		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(of);
@@ -311,14 +312,8 @@ private:
 
 		constexpr size_t MAX_CHANCNT = 12;
 
-		if (req->channels.size() > MAX_CHANCNT) {
-			ROS_WARN_THROTTLE_NAMED(60, "hil_rc",
-						"FCU receives %lu RC channels, but HIL_RC_INPUTS_RAW can store %zu",
-						req->channels.size(), MAX_CHANCNT);
-		}
-
 		std::array<uint16_t, MAX_CHANCNT> channels;
-		size_t n = req->channels.size() < MAX_CHANCNT ? : MAX_CHANCNT;
+		auto n = std::min(req->channels.size(), channels.size());
 		std::copy(req->channels.begin(), req->channels.begin() + n, channels.begin());
 		std::fill(channels.begin() + n, channels.end(), UINT16_MAX);
 
