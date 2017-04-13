@@ -196,7 +196,8 @@ private:
 		// related to issue #529
 		gps.alt = req->geo.altitude * 1E3;
 		// [[[cog:
-		// for f in ('eph', 'epv', 'vel', vn', 've', 'vd'):
+		// for f in (
+		//     'eph', 'epv', 'vel', 'vn', 've', 'vd'):
 		//     cog.outl("gps.%s = req->%s * 1E2;" % (f, f))
 		// ]]]
 		gps.eph = req->eph * 1E2;
@@ -205,7 +206,7 @@ private:
 		gps.vn = req->vn * 1E2;
 		gps.ve = req->ve * 1E2;
 		gps.vd = req->vd * 1E2;
-		// [[[end]]]
+		// [[[end]]] (checksum: 0bdfeef136a2bbe7d5c6598d92edfc9e)
 		gps.cog = req->cog * 1E-1; // degrees to milidegrees * 100 = 1E-3 * 1E2 = 1E-1
 		gps.satellites_visible = req->satellites_visible;
 
