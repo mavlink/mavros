@@ -148,7 +148,7 @@ private:
 						req->imu.angular_velocity.x,
 						req->imu.angular_velocity.y,
 						req->imu.angular_velocity.z));
-		auto lin_vel = ftf::transform_frame_enu_ned(
+		auto lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
 					Eigen::Vector3d(
 						req->linear_velocity.x,
 						req->linear_velocity.y,
@@ -196,18 +196,18 @@ private:
 		// related to issue #529
 		gps.alt = req->geo.altitude * 1E3;
 		// [[[cog:
-		// for f in ('eph', 'epv', 'vel', 'vn', 've', 'vd', 'cog', 'satellites_visible'):
-		//     cog.outl("gps.%s = req->%s;" % (f, f))
+		// for f in ('eph', 'epv', 'vel', vn', 've', 'vd'):
+		//     cog.outl("gps.%s = req->%s * 1E2;" % (f, f))
 		// ]]]
-		gps.eph = req->eph;
-		gps.epv = req->epv;
-		gps.vel = req->vel;
-		gps.vn = req->vn;
-		gps.ve = req->ve;
-		gps.vd = req->vd;
-		gps.cog = req->cog;
+		gps.eph = req->eph * 1E2;
+		gps.epv = req->epv * 1E2;
+		gps.vel = req->vel * 1E2;
+		gps.vn = req->vn * 1E2;
+		gps.ve = req->ve * 1E2;
+		gps.vd = req->vd * 1E2;
+		// [[[end]]]
+		gps.cog = req->cog * 1E-1; // degrees to milidegrees * 100 = 1E-3 * 1E2 = 1E-1
 		gps.satellites_visible = req->satellites_visible;
-		// [[[end]]] (checksum: 8ed36ad860cde22e980f1d7ddcd1f6d9)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gps);
 	}
