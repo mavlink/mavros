@@ -9,9 +9,8 @@ std_msgs/Header header
 geometry_msgs/Vector3 acc
 geometry_msgs/Vector3 gyro
 geometry_msgs/Vector3 mag
-sensor_msgs/FluidPressure abs_pressure
-sensor_msgs/FluidPressure diff_pressure
+float32 abs_pressure
+float32 diff_pressure
 float32 pressure_alt
-sensor_msgs/Temperature temperature
-
+float32 temperature
 uint32 fields_updated

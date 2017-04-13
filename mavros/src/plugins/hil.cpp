@@ -130,10 +130,10 @@ private:
 		auto q = ftf::transform_orientation_baselink_aircraft(
 					ftf::transform_orientation_enu_ned(
 						Eigen::Quaterniond(
-							req->imu.orientation.w,
-							req->imu.orientation.x,
-							req->imu.orientation.y,
-							req->imu.orientation.z)));
+							req->orientation.w,
+							req->orientation.x,
+							req->orientation.y,
+							req->orientation.z)));
 		ftf::quaternion_to_mavlink(q, state_quat.attitude_quaternion);
 		state_quat.lat = req->geo.latitude * 1E7;
 		state_quat.lon = req->geo.longitude * 1E7;
@@ -145,9 +145,9 @@ private:
 		state_quat.true_airspeed = req->true_airspeed * 1E2;
 		auto ang_vel = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
-						req->imu.angular_velocity.x,
-						req->imu.angular_velocity.y,
-						req->imu.angular_velocity.z));
+						req->angular_velocity.x,
+						req->angular_velocity.y,
+						req->angular_velocity.z));
 		auto lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
 					Eigen::Vector3d(
 						req->linear_velocity.x,
@@ -155,9 +155,9 @@ private:
 						req->linear_velocity.z)) * 1E2;
 		auto lin_acc = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
-						req->imu.linear_acceleration.x,
-						req->imu.linear_acceleration.y,
-						req->imu.linear_acceleration.z));
+						req->linear_acceleration.x,
+						req->linear_acceleration.y,
+						req->linear_acceleration.z));
 		// [[[cog:
 		// for a, b in zip(('rollspeed', 'pitchspeed', 'yawspeed'), "xyz"):
 		//     cog.outl("state_quat.%s = ang_vel.%s();" % (a, b))
@@ -251,10 +251,10 @@ private:
 		sensor.ymag = mag.y();
 		sensor.zmag = mag.z();
 		// [[[end]]] (checksum: e4bb03f33b73db75bc2d5f1c7595e737)
-		sensor.abs_pressure = req->abs_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
-		sensor.diff_pressure = req->diff_pressure.fluid_pressure * PASCAL_TO_MILLIBAR;
+		sensor.abs_pressure = req->abs_pressure * PASCAL_TO_MILLIBAR;
+		sensor.diff_pressure = req->diff_pressure * PASCAL_TO_MILLIBAR;
 		sensor.pressure_alt = req->pressure_alt;
-		sensor.temperature = req->temperature.temperature;
+		sensor.temperature = req->temperature;
 
 		sensor.fields_updated = req->fields_updated;
 
