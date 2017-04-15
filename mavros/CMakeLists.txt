@@ -23,9 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
 
+## Find Eigen
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
@@ -35,27 +35,43 @@ if(NOT EIGEN3_FOUND)
   set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
 endif()
 
+## Find GeographicLib
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+find_package(GeographicLib 1.40 COMPONENTS SHARED)
+if(NOT GeographicLib_FOUND)
+  include(ExternalProject)
+
+  # The configure step fails at catkin_package() if this directory doesn't exist yet
+  file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
+
+  ExternalProject_Add(
+      GeographicLib
+      GIT_REPOSITORY git://git.code.sourceforge.net/p/geographiclib/code
+      PATCH_COMMAND mkdir -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/data
+      CONFIGURE_COMMAND cd ${CMAKE_BINARY_DIR}/GeographicLib-prefix/src/GeographicLib && cmake -D CMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX} -D GEOGRAPHICLIB_LIB_TYPE=SHARED -D GEOGRAPHICLIB_DATA=${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data .
+      BUILD_COMMAND cd ${CMAKE_BINARY_DIR}/GeographicLib-prefix/src/GeographicLib && make -j1
+      INSTALL_COMMAND cd ${CMAKE_BINARY_DIR}/GeographicLib-prefix/src/GeographicLib && make install &&
+          ./tools/geographiclib-get-geoids -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data egm96-5 &&
+          ./tools/geographiclib-get-gravity -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data egm96 &&
+          ./tools/geographiclib-get-magnetic -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data emm2015
+  )
+  set(GeographicLib_INCLUDE_DIR ${CATKIN_DEVEL_PREFIX}/include)
+  set(GeographicLib_LIBRARIES ${CATKIN_DEVEL_PREFIX}/lib/libGeographic${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+else()
+  IF(NOT EXISTS /usr/local/share/GeographicLib/geoids)
+     execute_process(COMMAND sudo geographiclib-get-geoids egm96-5)
+  endif()
+  IF(NOT EXISTS /usr/local/share/GeographicLib/gravity)
+     execute_process(COMMAND sudo geographiclib-get-gravity egm96)
+  endif()
+  IF(NOT EXISTS /usr/local/share/GeographicLib/magnetic)
+     execute_process(COMMAND sudo geographiclib-get-magnetic emm2015)
+  endif()
+endif()
+
 include(EnableCXX11)
 include(MavrosMavlink)
-include(ExternalProject)
-
-# The configure step fails at catkin_package() if this directory
-# doesn't exist yet. Create it at configure time!
-file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
-
-ExternalProject_Add(
-    geographic_lib
-    GIT_REPOSITORY git://git.code.sourceforge.net/p/geographiclib/code
-    PATCH_COMMAND mkdir -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/data
-    CONFIGURE_COMMAND cd ${CMAKE_BINARY_DIR}/geographic_lib-prefix/src/geographic_lib && cmake -D CMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX} -D GEOGRAPHICLIB_LIB_TYPE=SHARED -D GEOGRAPHICLIB_DATA=${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data .
-    BUILD_COMMAND cd ${CMAKE_BINARY_DIR}/geographic_lib-prefix/src/geographic_lib && make -j1
-    INSTALL_COMMAND cd ${CMAKE_BINARY_DIR}/geographic_lib-prefix/src/geographic_lib && make install &&
-        ./tools/geographiclib-get-geoids -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data egm96-5 &&
-        ./tools/geographiclib-get-gravity -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data egm96 &&
-        ./tools/geographiclib-get-magnetic -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data emm2015
-)
-set(GEOGRAPHICLIB_INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include)
-set(GeographicLib_LIBRARIES ${CATKIN_DEVEL_PREFIX}/lib/libGeographic${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
@@ -98,7 +114,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${GEOGRAPHICLIB_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
 )
 
 add_library(mavros
@@ -149,7 +165,6 @@ add_library(mavros_plugins
 )
 add_dependencies(mavros_plugins
   mavros
-  geographic_lib
 )
 target_link_libraries(mavros_plugins
   mavros
@@ -164,7 +179,6 @@ add_executable(mavros_node
 )
 add_dependencies(mavros_node
   mavros
-  geographic_lib
 )
 target_link_libraries(mavros_node
   mavros
