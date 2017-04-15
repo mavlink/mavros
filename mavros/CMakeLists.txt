@@ -35,6 +35,9 @@ if(NOT EIGEN3_FOUND)
   set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
 endif()
 
+include(EnableCXX11)
+include(MavrosMavlink)
+
 ## Find GeographicLib
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 find_package(GeographicLib 1.40 COMPONENTS SHARED)
@@ -55,10 +58,11 @@ if(NOT GeographicLib_FOUND)
           ./tools/geographiclib-get-gravity -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data egm96 &&
           ./tools/geographiclib-get-magnetic -p ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/share/data emm2015
   )
-  set(GeographicLib_INCLUDE_DIR ${CATKIN_DEVEL_PREFIX}/include)
+  set(GeographicLib_INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include)
   set(GeographicLib_LIBRARIES ${CATKIN_DEVEL_PREFIX}/lib/libGeographic${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 else()
+
   IF(NOT EXISTS /usr/local/share/GeographicLib/geoids)
      execute_process(COMMAND sudo geographiclib-get-geoids egm96-5)
   endif()
@@ -68,10 +72,10 @@ else()
   IF(NOT EXISTS /usr/local/share/GeographicLib/magnetic)
      execute_process(COMMAND sudo geographiclib-get-magnetic emm2015)
   endif()
-endif()
+  set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
+  set(GeographicLib_LIBRARIES ${GeographicLib_LIBRARIES})
 
-include(EnableCXX11)
-include(MavrosMavlink)
+endif()
 
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
@@ -165,6 +169,7 @@ add_library(mavros_plugins
 )
 add_dependencies(mavros_plugins
   mavros
+  GeographicLib
 )
 target_link_libraries(mavros_plugins
   mavros
@@ -179,6 +184,7 @@ add_executable(mavros_node
 )
 add_dependencies(mavros_node
   mavros
+  GeographicLib
 )
 target_link_libraries(mavros_node
   mavros

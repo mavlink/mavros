@@ -18,9 +18,9 @@
 
 #include <angles/angles.h>
 #include <mavros/mavros_plugin.h>
-#include <mavros/gps_conversions.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <GeographicLib/Geoid.hpp>
+#include <GeographicLib/GeoCoords.hpp>
 
 #include <std_msgs/Float64.h>
 #include <nav_msgs/Odometry.h>
@@ -43,7 +43,8 @@ public:
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
-		rot_cov(99999.0)
+		rot_cov(99999.0),
+		egm96("egm96-5")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -96,14 +97,31 @@ private:
 	bool tf_send;
 	double rot_cov;
 
+	GeographicLib::Geoid egm96;
+
+	/*
+	 * @brief Conversion from height above geoid (AMSL)
+	 * to height above ellipsoid (WGS-84)
+	 */
+	inline double geoid_to_ellipsoid_height(sensor_msgs::NavSatFix::Ptr fix) {
+		return GeographicLib::Geoid::GEOIDTOELLIPSOID
+					* egm96(fix->latitude, fix->longitude);
+	}
+
+	/*
+	 * @brief Conversion from height above ellipsoid (WGS-84)
+	 * to height above geoid (AMSL)
+	 */
+	inline double ellipsoid_to_geoid_height(sensor_msgs::NavSatFix::Ptr fix) {
+		return GeographicLib::Geoid::ELLIPSOIDTOGEOID
+					* egm96(fix->latitude, fix->longitude);
+	}
+
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
-		GeographicLib::Geoid egm96("egm96-5");
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3 +		// conversion from height abov geoid (AMSL)
-					GeographicLib::Geoid::GEOIDTOELLIPSOID	// to height above ellipsoid (WGS-84)
-					* egm96(fix->latitude, fix->longitude);		// in meters
+		fix->altitude = msg.alt / 1E3 + geoid_to_ellipsoid_height(fix); // in meters
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {
@@ -228,17 +246,13 @@ private:
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
 
-		// Local position (UTM) calculation
-		double northing, easting;
-		std::string zone;
-
-		/** @note Adapted from gps_umd ROS package @http://wiki.ros.org/gps_umd
-		 *  Author: Ken Tossell <ken AT tossell DOT net>
+		/*
+		 * Conversion from Latitude,Longitude to UTM
 		 */
-		UTM::LLtoUTM(fix->latitude, fix->longitude, northing, easting, zone);
+		GeographicLib::GeoCoords geo(fix->latitude, fix->longitude);
 
-		odom->pose.pose.position.x = easting;
-		odom->pose.pose.position.y = northing;
+		odom->pose.pose.position.x = geo.Easting();
+		odom->pose.pose.position.y = geo.Northing();
 		odom->pose.pose.position.z = relative_alt->data;
 		odom->pose.pose.orientation = m_uas->get_attitude_orientation();
 
@@ -246,12 +260,12 @@ private:
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out <<
-		gps_cov(0, 0), gps_cov(0, 1), gps_cov(0, 2), 0.0, 0.0, 0.0,
-		gps_cov(1, 0), gps_cov(1, 1), gps_cov(1, 2), 0.0, 0.0, 0.0,
-		gps_cov(2, 0), gps_cov(2, 1), gps_cov(2, 2), 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, rot_cov, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, rot_cov, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, rot_cov;
+		gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
+		gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
+		gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
+		0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
+		0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
+		0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
 
 		// publish
 		gp_fix_pub.publish(fix);
