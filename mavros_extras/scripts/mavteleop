@@ -116,7 +116,7 @@ def load_map(m, n):
         m[k] = rospy.get_param(n + k, v)
 
 
-def get_axis(j, n):
+def get_axes(j, n):
     return j.axes[axes_map[n]] * axes_scale[n]
 
 def get_buttons(j, n):
@@ -125,9 +125,10 @@ def get_buttons(j, n):
 def rc_override_control(args):
     rospy.loginfo("MAV-Teleop: RC Override control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
+    
     for k, v in rc_channels.iteritems():
         v.load_param()
 
@@ -138,10 +139,10 @@ def rc_override_control(args):
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
-        roll = get_axis(joy, 'roll')
-        pitch = get_axis(joy, 'pitch')
-        yaw = get_axis(joy, 'yaw')
-        throttle = arduino_map(get_axis(joy, 'throttle'), -1.0, 1.0, 0.0, 1.0)
+        roll = get_axes(joy, 'roll')
+        pitch = get_axes(joy, 'pitch')
+        yaw = get_axes(joy, 'yaw')
+        throttle = arduino_map(get_axes(joy, 'throttle'), -1.0, 1.0, 0.0, 1.0)
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
@@ -169,9 +170,9 @@ def rc_override_control(args):
 def attitude_setpoint_control(args):
     rospy.loginfo("MAV-Teleop: Attitude setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     att_pub = SP.get_pub_attitude_pose(queue_size=10)
     thd_pub = SP.get_pub_attitude_throttle(queue_size=10)
@@ -185,10 +186,10 @@ def attitude_setpoint_control(args):
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPY, 0.0..1.0 T
-        roll = get_axis(joy, 'roll')
-        pitch = get_axis(joy, 'pitch')
-        yaw = get_axis(joy, 'yaw')
-        throttle = thd_normalize(get_axis(joy, 'throttle'))
+        roll = get_axes(joy, 'roll')
+        pitch = get_axes(joy, 'pitch')
+        yaw = get_axes(joy, 'yaw')
+        throttle = thd_normalize(get_axes(joy, 'throttle'))
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
@@ -213,23 +214,22 @@ def attitude_setpoint_control(args):
 def velocity_setpoint_control(args):
     rospy.loginfo("MAV-Teleop: Velocity setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     vel_pub = SP.get_pub_velocity_cmd_vel(queue_size=10)
 
     def joy_cb(joy):
         # get axes normalized to -1.0..+1.0 RPYT
-        roll = get_axis(joy, 'roll')
-        pitch = get_axis(joy, 'pitch')
-        yaw = get_axis(joy, 'yaw')
-        throttle = get_axis(joy, 'throttle')
+        roll = get_axes(joy, 'roll')
+        pitch = get_axes(joy, 'pitch')
+        yaw = get_axes(joy, 'yaw')
+        throttle = get_axes(joy, 'throttle')
 
         rospy.logdebug("RPYT: %f, %f, %f, %f", roll, pitch, yaw, throttle)
 
         # Based on QGC UAS joystickinput_settargets branch
-        # not shure that it really need inegrating, as it done in QGC.
         twist = TwistStamped(header=Header(stamp=rospy.get_rostime()))
         twist.twist.linear = Vector3(x=roll, y=pitch, z=throttle)
         twist.twist.angular = Vector3(z=yaw)
@@ -246,19 +246,19 @@ px, py, pz = 0.0, 0.0, 0.0
 def position_setpoint_control(args):
     rospy.loginfo("MAV-Teleop: Position setpoint control type.")
 
-    load_map(axes_map, '~axes_map/')
-    load_map(axes_scale, '~axes_scale/')
-    load_map(button_map, '~button_map/')
+    load_map(axes_map, '/mavros/axes_map/')
+    load_map(axes_scale, '/mavros/axes_scale/')
+    load_map(button_map, '/mavros/button_map/')
 
     pos_pub = SP.get_pub_position_local(queue_size=10)
 
     def joy_cb(joy):
         global px, py, pz
         # get axes normalized to -1.0..+1.0 RPY
-        roll = get_axis(joy, 'roll')
-        pitch = get_axis(joy, 'pitch')
-        yaw = get_axis(joy, 'yaw')
-        throttle = get_axis(joy, 'throttle')
+        roll = get_axes(joy, 'roll')
+        pitch = get_axes(joy, 'pitch')
+        yaw = get_axes(joy, 'yaw')
+        throttle = get_axes(joy, 'throttle')
 
         # TODO: need integrate by time, joy_cb() called with variable frequency
         px -= pitch
