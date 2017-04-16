@@ -70,7 +70,7 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 // 	size_t idx = enum_value(e);
 // 	if (idx >= {array}.size())
 // 		return std::to_string(idx);
-// 
+//
 // 	return {array}[idx];
 // }}""")
 //
@@ -588,6 +588,7 @@ std::string to_string(MAV_COMPONENT e)
 
 	return it->second;
 }
+// [[[end]]] (checksum: 849fca3985365a416a5a242b9af0ff7c)
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {
