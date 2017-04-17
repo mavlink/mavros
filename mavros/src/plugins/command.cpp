@@ -21,7 +21,8 @@
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandInt.h>
 #include <mavros_msgs/CommandBool.h>
-#include <mavros_msgs/CommandHome.h>
+#include <mavros_msgs/CommandSetHome.h>
+#include <mavros_msgs/CommandGetHome.h>
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandTriggerControl.h>
 
@@ -322,14 +323,24 @@ private:
 				res.success, res.result);
 	}
 
-	bool set_home_cb(mavros_msgs::CommandHome::Request &req,
-			mavros_msgs::CommandHome::Response &res)
+	bool set_home_cb(mavros_msgs::CommandSetHome::Request &req,
+			mavros_msgs::CommandSetHome::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
 				enum_value(MAV_CMD::DO_SET_HOME), 1,
 				(req.current_gps) ? 1.0 : 0.0,
 				0, 0, 0, req.latitude, req.longitude, req.altitude,
+				res.success, res.result);
+	}
+
+	bool get_home_cb(mavros_msgs::CommandGetHome::Request &req,
+			mavros_msgs::CommandGetHome::Response &res)
+	{
+		using mavlink::common::MAV_CMD;
+		return send_command_long_and_wait(false,
+				enum_value(MAV_CMD::GET_HOME_POSITION), 1,
+				0, 0, 0, 0, 0, 0, 0,
 				res.success, res.result);
 	}
 
