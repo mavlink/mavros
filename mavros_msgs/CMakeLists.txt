@@ -40,7 +40,8 @@ add_service_files(
   DIRECTORY srv
   FILES
   CommandBool.srv
-  CommandHome.srv
+  CommandSetHome.srv
+  CommandGetHome.srv
   CommandInt.srv
   CommandLong.srv
   CommandTOL.srv

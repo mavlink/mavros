@@ -1,0 +1,6 @@
+# request to get current home position
+
+# no param used
+---
+bool success
+uint8 result
