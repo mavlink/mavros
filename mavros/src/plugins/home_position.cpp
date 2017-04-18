@@ -74,11 +74,11 @@ private:
 							home_position.z)));
 
 		tr.rotate(ftf::transform_orientation_ned_enu(
-							Eigen::Quaterniond(
-								home_position.q[0],
-								home_position.q[1],
-								home_position.q[2],
-								home_position.q[3])));
+						Eigen::Quaterniond(
+							home_position.q[0],
+							home_position.q[1],
+							home_position.q[2],
+							home_position.q[3])));
 
 		tf::poseEigenToMsg(tr, hp->pose);
 
@@ -105,7 +105,7 @@ private:
 		auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 
 		auto q = ftf::transform_orientation_enu_ned(
-						Eigen::Quaterniond(tr.rotation()));
+					Eigen::Quaterniond(tr.rotation()));
 		ftf::quaternion_to_mavlink(q, hp.q);
 
 		auto approach = ftf::transform_frame_enu_ned(
