@@ -77,6 +77,14 @@ def do_set_home(args):
 
     _check_ret(args, ret)
 
+def do_get_home(args):
+    try:
+        ret = command.get_home()
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    _check_ret(args, ret)
+
 
 def do_takeoff(args):
     try:
@@ -236,6 +244,9 @@ def main():
     set_home_args.add_argument('latitude', type=float, help="Latitude")
     set_home_args.add_argument('longitude', type=float, help="Longitude")
     set_home_args.add_argument('altitude', type=float, help="Altitude")
+
+    set_home_args = subarg.add_parser('gethome', help="Request current home position")
+    set_home_args.set_defaults(func=do_get_home)
 
     takeoff_args = subarg.add_parser('takeoff', help="Request takeoff")
     takeoff_args.set_defaults(func=do_takeoff)
