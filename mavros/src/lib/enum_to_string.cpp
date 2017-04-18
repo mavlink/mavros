@@ -23,6 +23,9 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::ADSB_ALTITUDE_TYPE;
+using mavlink::common::ADSB_EMITTER_TYPE;
+using mavlink::common::ADSB_FLAGS;
 
 
 // [[[cog:
@@ -243,6 +246,185 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 
 	ROS_ERROR_STREAM_NAMED("uas", "TM: Unknown mode: " << mode);
 	return timesync_mode::NONE;
+}
+
+
+// [[[cog:
+// ename = 'ADSB_ALTITUDE_TYPE'
+// enum = get_enum(ename)
+// pfx2 = 'ADSB_ALTITUDE_TYPE_'
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     name_short =  e.name[len(pfx2):]
+//     sp = make_whitespace(30, name_short)
+//     cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! ADSB_ALTITUDE_TYPE values
+static const std::array<const std::string, 2> adsb_altitude_type_strings{{
+/*  0 */ "PRESSURE_QNH",                  // Altitude reported from a Baro source using QNH reference
+/*  1 */ "GEOMETRIC",                     // Altitude reported from a GNSS source
+}};
+
+std::string to_string(ADSB_ALTITUDE_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= adsb_altitude_type_strings.size())
+		return std::to_string(idx);
+
+	return adsb_altitude_type_strings[idx];
+}
+// [[[end]]] (checksum: dc127bf29aefa513471d13c5a0e1e6ec)
+
+uint16_t adsb_alt_type_from_str(const std::string &type)
+{
+	// 1. try to find by name
+	for (size_t idx = 0; idx < adsb_altitude_type_strings.size(); idx++) {
+		if (adsb_altitude_type_strings[idx] == type ||
+				adsb_altitude_type_strings[idx] == "ADSB_ALTITUDE_TYPE_" + type)
+			return idx;
+	}
+
+	// 2. try convert integer
+	// fallback for old configs that uses numeric type.
+	try {
+		int idx = std::stoi(type, 0, 0);
+		if (0 > idx || size_t(idx) > adsb_altitude_type_strings.size()) {
+			ROS_ERROR_NAMED("uas", "ADSB_ALTITUDE_TYPE: type index out of bound: %d", idx);
+			return -1;
+		}
+		else
+			return idx;
+	}
+	catch (std::invalid_argument &ex) {
+		// failed
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "ADSB_ALTITUDE_TYPE: wrong altitude type str: " << type);
+
+	return -1;
+}
+
+
+// [[[cog:
+// ename = 'ADSB_EMITTER_TYPE'
+// enum = get_enum(ename)
+// pfx2 = 'ADSB_EMITTER_TYPE_'
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     name_short =  e.name[len(pfx2):]
+//     cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! ADSB_EMITTER_TYPE values
+static const std::array<const std::string, 20> adsb_emitter_type_strings{{
+/*  0 */ "NO_INFO",
+/*  1 */ "LIGHT",
+/*  2 */ "SMALL",
+/*  3 */ "LARGE",
+/*  4 */ "HIGH_VORTEX_LARGE",
+/*  5 */ "HEAVY",
+/*  6 */ "HIGHLY_MANUV",
+/*  7 */ "ROTOCRAFT",
+/*  8 */ "UNASSIGNED",
+/*  9 */ "GLIDER",
+/* 10 */ "LIGHTER_AIR",
+/* 11 */ "PARACHUTE",
+/* 12 */ "ULTRA_LIGHT",
+/* 13 */ "UNASSIGNED2",
+/* 14 */ "UAV",
+/* 15 */ "SPACE",
+/* 16 */ "UNASSGINED3",
+/* 17 */ "EMERGENCY_SURFACE",
+/* 18 */ "SERVICE_SURFACE",
+/* 19 */ "POINT_OBSTACLE",
+}};
+
+std::string to_string(ADSB_EMITTER_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= adsb_emitter_type_strings.size())
+		return std::to_string(idx);
+
+	return adsb_emitter_type_strings[idx];
+}
+// [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
+
+uint16_t adsb_emitter_type_from_str(const std::string &type)
+{
+	// 1. try to find by name
+	for (size_t idx = 0; idx < adsb_emitter_type_strings.size(); idx++) {
+		if (adsb_emitter_type_strings[idx] == type ||
+				adsb_emitter_type_strings[idx] == "ADSB_EMITTER_TYPE_" + type)
+			return idx;
+	}
+
+	// 2. try convert integer
+	// fallback for old configs that uses numeric type.
+	try {
+		int idx = std::stoi(type, 0, 0);
+		if (0 > idx || size_t(idx) > adsb_emitter_type_strings.size()) {
+			ROS_ERROR_NAMED("uas", "ADSB_EMITTER_TYPE: type index out of bound: %d", idx);
+			return -1;
+		}
+		else
+			return idx;
+	}
+	catch (std::invalid_argument &ex) {
+		// failed
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "ADSB_EMITTER_TYPE: wrong emitter type str: " << type);
+
+	return -1;
+}
+
+
+// [[[cog:
+// ename = 'ADSB_FLAGS'
+// enum = get_enum(ename)
+// pfx2 = 'ADSB_FLAGS_'
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     name_short =  e.name[len(pfx2):]
+//     cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//
+// cog.outl("}};")
+// ]]]
+//! ADSB_FLAGS values
+static const std::array<const std::string, 7> adsb_flags_strings{{
+/*  1 */ "VALID_COORDS",
+/*  2 */ "VALID_ALTITUDE",
+/*  4 */ "VALID_HEADING",
+/*  8 */ "VALID_VELOCITY",
+/* 16 */ "VALID_CALLSIGN",
+/* 32 */ "VALID_SQUAWK",
+/* 64 */ "SIMULATED",
+}};
+// [[[end]]] (checksum: cb975233b4f8d9805f4aec201d79e7f8)
+
+std::string to_string(const uint16_t &bitmask)
+{
+	std::stringstream bit, out;
+	bit << bitmask;
+	std::string digits = bit.str();
+
+	for(size_t idx = 0; idx < digits.size(); idx++) {
+		if (digits[idx] == '1'){
+			out << idx << " ";
+		}
+	}
+
+	return "Flags: " + out.str();
 }
 
 }	// namespace utils
