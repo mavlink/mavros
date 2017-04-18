@@ -161,6 +161,7 @@ private:
 
 	void timeout_cb(const ros::TimerEvent &event)
 	{
+		ROS_INFO_NAMED("home_position", "HP: requesting home position");
 		call_get_home_position();
 	}
 
