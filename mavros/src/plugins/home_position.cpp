@@ -29,7 +29,7 @@ namespace std_plugins {
 class HomePositionPlugin : public plugin::PluginBase {
 public:
 	HomePositionPlugin() :
-		hp_nh("~")
+		hp_nh("~home_position")
 	{ }
 
 	void initialize(UAS &uas_)
