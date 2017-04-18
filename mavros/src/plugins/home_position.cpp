@@ -17,7 +17,10 @@
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <std_srvs/Trigger.h>
+#include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/HomePosition.h>
+
 
 namespace mavros {
 namespace std_plugins {
@@ -29,15 +32,21 @@ namespace std_plugins {
 class HomePositionPlugin : public plugin::PluginBase {
 public:
 	HomePositionPlugin() :
-		hp_nh("~home_position")
+		hp_nh("~home_position"),
+		REQUEST_POLL_TIME_DT(REQUEST_POLL_TIME_MS / 1000.0)
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		home_position_pub = hp_nh.advertise<mavros_msgs::HomePosition>("get",10);
-		home_position_sub = hp_nh.subscribe("set", 10, &HomePositionPlugin::home_position_cb, this);
+		hp_pub = hp_nh.advertise<mavros_msgs::HomePosition>("home", 2, true);
+		hp_sub = hp_nh.subscribe("set", 10, &HomePositionPlugin::home_position_cb, this);
+		update_srv = hp_nh.advertiseService("req_update", &HomePositionPlugin::req_update_cb, this);
+
+		poll_timer = hp_nh.createTimer(REQUEST_POLL_TIME_DT, &HomePositionPlugin::timeout_cb, this);
+		poll_timer.stop();
+		enable_connection_cb();
 	}
 
 	Subscriptions get_subscriptions()
@@ -50,85 +59,116 @@ public:
 private:
 	ros::NodeHandle hp_nh;
 
-	ros::Publisher home_position_pub;
-	ros::Subscriber home_position_sub;
+	ros::Publisher hp_pub;
+	ros::Subscriber hp_sub;
+	ros::ServiceServer update_srv;
 
-	void handle_home_position(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HOME_POSITION &home_position) {
-		std_msgs::Header header;
-		header.stamp = ros::Time::now();//TODO: request add time_boot_ms to msg definition
-		header.frame_id = "home_position";
+	ros::Timer poll_timer;
+
+	static constexpr int REQUEST_POLL_TIME_MS = 10000;	//! position refresh poll interval
+	const ros::Duration REQUEST_POLL_TIME_DT;
+
+	bool call_get_home_position(void)
+	{
+		using mavlink::common::MAV_CMD;
+
+		bool ret = false;
+
+		try {
+			ros::NodeHandle pnh("~");
+			auto client = pnh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+
+			mavros_msgs::CommandLong cmd{};
+
+			cmd.request.command = utils::enum_value(MAV_CMD::GET_HOME_POSITION);
+
+			ret = client.call(cmd);
+			ret = cmd.response.success;
+		}
+		catch (ros::InvalidNameException &ex) {
+			ROS_ERROR_NAMED("home_position", "HP: %s", ex.what());
+		}
+
+		return ret;
+	}
+
+	void handle_home_position(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HOME_POSITION &home_position)
+	{
+		poll_timer.stop();
 
 		auto hp = boost::make_shared<mavros_msgs::HomePosition>();
 
-		hp->header = header;
-		hp->geo.latitude = home_position.latitude / 1E7;
-		hp->geo.longitude = home_position.longitude / 1E7;
-		hp->geo.altitude = home_position.altitude / 1E3;	//TODO: add height above ellipsoid #693
+		auto pos = ftf::transform_frame_ned_enu(Eigen::Vector3d(home_position.x, home_position.y, home_position.z));
+		auto q = ftf::transform_orientation_ned_enu(ftf::mavlink_to_quaternion(home_position.q));
+		auto hp_approach_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d(home_position.approach_x, home_position.approach_y, home_position.approach_z));
 
-		Eigen::Affine3d tr;
-
-		tr.translate(ftf::transform_frame_ned_enu(
-						Eigen::Vector3d(
-							home_position.x,
-							home_position.y,
-							home_position.z)));
-
-		tr.rotate(ftf::transform_orientation_ned_enu(
-						Eigen::Quaterniond(
-							home_position.q[0],
-							home_position.q[1],
-							home_position.q[2],
-							home_position.q[3])));
-
-		tf::poseEigenToMsg(tr, hp->pose);
-
-		auto hp_approach_enu = ftf::transform_frame_ned_enu(
-					Eigen::Vector3d(
-						home_position.approach_x,
-						home_position.approach_y,
-						home_position.approach_z));
-
+		hp->header.stamp = ros::Time::now();
+		hp->latitude = home_position.latitude / 1E7;
+		hp->longitude = home_position.longitude / 1E7;
+		hp->altitude = home_position.altitude / 1E3;
+		tf::quaternionEigenToMsg(q, hp->orientation);
+		tf::pointEigenToMsg(pos, hp->position);
 		tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
 
-		home_position_pub.publish(hp);
+		hp_pub.publish(hp);
 	}
 
 	void home_position_cb(const mavros_msgs::HomePosition::ConstPtr &req)
 	{
 		mavlink::common::msg::SET_HOME_POSITION hp {};
 
-		Eigen::Affine3d tr;
-		tf::poseMsgToEigen(req->pose, tr);
+		Eigen::Vector3d pos, approach;
+		Eigen::Quaterniond q;
+
+		tf::pointMsgToEigen(req->position, pos);
+		pos = ftf::transform_frame_enu_ned(pos);
+
+		tf::quaternionMsgToEigen(req->orientation, q);
+		q = ftf::transform_orientation_enu_ned(q);
+
+		tf::vectorMsgToEigen(req->approach, approach);
+		approach = ftf::transform_frame_enu_ned(approach);
 
 		hp.target_system = m_uas->get_tgt_system();
-
-		auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-
-		auto q = ftf::transform_orientation_enu_ned(
-					Eigen::Quaterniond(tr.rotation()));
 		ftf::quaternion_to_mavlink(q, hp.q);
-
-		auto approach = ftf::transform_frame_enu_ned(
-					Eigen::Vector3d(
-						req->approach.x,
-						req->approach.y,
-						req->approach.z));
-
 		// [[[cog:
-		// for f in "xyz":
-		//     cog.outl("hp.%s = position.%s();" % (f, f))
-		// for f in "xyz":
-		//     cog.outl("hp.approach_%s = approach.%s();" % (f, f))
+		// for f, m in (('latitude', '1e7'), ('longitude', '1e7'), ('altitude', '1e3')):
+		//     cog.outl("hp.{f} = req->{f} * {m};".format(**locals()))
+		// for a, b in (('', 'pos'), ('approach_', 'approach')):
+		//     for f in "xyz":
+		//         cog.outl("hp.{a}{f} = {b}.{f}();".format(**locals()))
 		// ]]]
-		hp.x = position.x();
-		hp.y = position.y();
-		hp.z = position.z();
+		hp.latitude = req->latitude * 1e7;
+		hp.longitude = req->longitude * 1e7;
+		hp.altitude = req->altitude * 1e3;
+		hp.x = pos.x();
+		hp.y = pos.y();
+		hp.z = pos.z();
 		hp.approach_x = approach.x();
 		hp.approach_y = approach.y();
 		hp.approach_z = approach.z();
-		// [[[end]]] (checksum: 9b2576713d76ec4e48650956a985d3fe)
+		// [[[end]]] (checksum: dd356bb5b4e43d08c6fe3262ec88696e)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(hp);
+	}
+
+	bool req_update_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+	{
+		res.success = call_get_home_position();
+		return true;
+	}
+
+	void timeout_cb(const ros::TimerEvent &event)
+	{
+		call_get_home_position();
+	}
+
+	void connection_cb(bool connected) override
+	{
+		if (connected)
+			poll_timer.start();
+		else
+			poll_timer.stop();
 	}
 };
 }	// namespace std_plugins

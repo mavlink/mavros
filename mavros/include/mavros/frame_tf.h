@@ -301,5 +301,13 @@ inline void quaternion_to_mavlink(const Eigen::Quaterniond &q, std::array<float,
 	qmsg[3] = q.z();
 }
 
+/**
+ * @brief Convert Mavlink float[4] quaternion to Eigen
+ */
+inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
+{
+	return Eigen::Quaterniond(q[0], q[1], q[2], q[3]);
+}
+
 }	// namespace ftf
 }	// namespace mavros
