@@ -21,18 +21,18 @@
 #include <mavconn/thread_utils.h>
 #include <mavros_msgs/mavlink_convert.h>
 #include <mavconn/mavlink_dialect.h>
+#include <GeographicLib/Geoid.hpp>
 
 // OS X compat: missing error codes
 #ifdef __APPLE__
-#define EBADE 50   /* Invalid exchange */
-#define EBADFD 81  /* File descriptor in bad state */
-#define EBADRQC 54 /* Invalid request code */
-#define EBADSLT 55 /* Invalid slot */
+#define EBADE 50	/* Invalid exchange */
+#define EBADFD 81	/* File descriptor in bad state */
+#define EBADRQC 54	/* Invalid request code */
+#define EBADSLT 55	/* Invalid slot */
 #endif
 
 namespace mavros {
 namespace utils {
-
 using mavconn::utils::format;
 
 /**
@@ -91,5 +91,26 @@ int sensor_orientation_from_str(const std::string &sensor_orientation);
  */
 timesync_mode timesync_mode_from_str(const std::string &mode);
 
+/**
+ * @brief Conversion from height above geoid (AMSL)
+ * to height above ellipsoid (WGS-84)
+ */
+template <class T>
+inline double geoid_to_ellipsoid_height(T lla){
+	GeographicLib::Geoid egm96("egm96-5");
+	return GeographicLib::Geoid::GEOIDTOELLIPSOID
+	       * egm96(lla->latitude, lla->longitude);
+}
+
+/**
+ * @brief Conversion from height above ellipsoid (WGS-84)
+ * to height above geoid (AMSL)
+ */
+template <class T>
+inline double ellipsoid_to_geoid_height(T lla) {
+	GeographicLib::Geoid egm96("egm96-5");
+	return GeographicLib::Geoid::ELLIPSOIDTOGEOID
+	       * egm96(lla->latitude, lla->longitude);
+}
 }	// namespace utils
 }	// namespace mavros

@@ -19,7 +19,6 @@
 #include <angles/angles.h>
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/GeoCoords.hpp>
 
 #include <std_msgs/Float64.h>
@@ -43,8 +42,7 @@ public:
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
-		rot_cov(99999.0),
-		egm96("egm96-5")
+		rot_cov(99999.0)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -97,31 +95,11 @@ private:
 	bool tf_send;
 	double rot_cov;
 
-	GeographicLib::Geoid egm96;
-
-	/*
-	 * @brief Conversion from height above geoid (AMSL)
-	 * to height above ellipsoid (WGS-84)
-	 */
-	inline double geoid_to_ellipsoid_height(sensor_msgs::NavSatFix::Ptr fix) {
-		return GeographicLib::Geoid::GEOIDTOELLIPSOID
-					* egm96(fix->latitude, fix->longitude);
-	}
-
-	/*
-	 * @brief Conversion from height above ellipsoid (WGS-84)
-	 * to height above geoid (AMSL)
-	 */
-	inline double ellipsoid_to_geoid_height(sensor_msgs::NavSatFix::Ptr fix) {
-		return GeographicLib::Geoid::ELLIPSOIDTOGEOID
-					* egm96(fix->latitude, fix->longitude);
-	}
-
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3 + geoid_to_ellipsoid_height(fix); // in meters
+		fix->altitude = msg.alt / 1E3 + utils::geoid_to_ellipsoid_height(fix);	// in meters
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {

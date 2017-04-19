@@ -1,22 +1,31 @@
-# Used to find GeographicLib
-# Thanks to: Kitware, Inc. repo
+# Look for GeographicLib
+#
+# Set
+#  GEOGRAPHICLIB_FOUND = TRUE
+#  GeographicLib_INCLUDE_DIRS = /usr/local/include
+#  GeographicLib_LIBRARIES = /usr/local/lib/libGeographic.so
+#  GeographicLib_LIBRARY_DIRS = /usr/local/lib
 
-if( Geographiclib_DIR )
-  find_package( GeographicLib NO_MODULE )
-elseif( NOT GeographicLib_FOUND )
-  include(CommonFindMacros)
+find_library (GeographicLib_LIBRARIES Geographic
+  PATHS "${CMAKE_INSTALL_PREFIX}/../GeographicLib/lib")
 
-  setup_find_root_context(GeographicLib)
-  find_path( GeographicLib_INCLUDE_DIR GeographicLib/GeoCoords.hpp
-    ${GeographicLib_FIND_OPTS})
-  find_library( GeographicLib_LIBRARY
-    NAMES Geographic GeographicLib Geographic_d GeographicLib_d
-    ${GeographicLib_FIND_OPTS})
-  restore_find_root_context(GeographicLib)
+if (GeographicLib_LIBRARIES)
+  get_filename_component (GeographicLib_LIBRARY_DIRS
+    "${GeographicLib_LIBRARIES}" PATH)
+  get_filename_component (_ROOT_DIR "${GeographicLib_LIBRARY_DIRS}" PATH)
+  set (GeographicLib_INCLUDE_DIRS "${_ROOT_DIR}/include")
+  set (GeographicLib_BINARY_DIRS "${_ROOT_DIR}/bin")
+  unset (_ROOT_DIR)
+  if (NOT EXISTS "${GeographicLib_INCLUDE_DIRS}/GeographicLib/Config.h")
+    unset (GeographicLib_INCLUDE_DIRS)
+    unset (GeographicLib_LIBRARIES)
+    unset (GeographicLib_LIBRARY_DIRS)
+    unset (GeographicLib_BINARY_DIRS)
+  endif ()
+endif ()
 
-  include( FindPackageHandleStandardArgs )
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS( GeographicLib GeographicLib_INCLUDE_DIR GeographicLib_LIBRARY )
-  if( GEOGRAPHICLIB_FOUND )
-    set( GeographicLib_FOUND TRUE )
-  endif()
-endif()
+include (FindPackageHandleStandardArgs)
+find_package_handle_standard_args (GeographicLib DEFAULT_MSG
+  GeographicLib_LIBRARY_DIRS GeographicLib_LIBRARIES GeographicLib_INCLUDE_DIRS)
+mark_as_advanced (GeographicLib_LIBRARY_DIRS GeographicLib_LIBRARIES
+  GeographicLib_INCLUDE_DIRS)
