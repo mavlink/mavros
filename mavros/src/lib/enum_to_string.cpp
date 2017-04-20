@@ -280,35 +280,6 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 }
 // [[[end]]] (checksum: dc127bf29aefa513471d13c5a0e1e6ec)
 
-uint16_t adsb_alt_type_from_str(const std::string &type)
-{
-	// 1. try to find by name
-	for (size_t idx = 0; idx < adsb_altitude_type_strings.size(); idx++) {
-		if (adsb_altitude_type_strings[idx] == type ||
-				adsb_altitude_type_strings[idx] == "ADSB_ALTITUDE_TYPE_" + type)
-			return idx;
-	}
-
-	// 2. try convert integer
-	// fallback for old configs that uses numeric type.
-	try {
-		int idx = std::stoi(type, 0, 0);
-		if (0 > idx || size_t(idx) > adsb_altitude_type_strings.size()) {
-			ROS_ERROR_NAMED("uas", "ADSB_ALTITUDE_TYPE: type index out of bound: %d", idx);
-			return -1;
-		}
-		else
-			return idx;
-	}
-	catch (std::invalid_argument &ex) {
-		// failed
-	}
-
-	ROS_ERROR_STREAM_NAMED("uas", "ADSB_ALTITUDE_TYPE: wrong altitude type str: " << type);
-
-	return -1;
-}
-
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
@@ -358,35 +329,6 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 }
 // [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
 
-uint16_t adsb_emitter_type_from_str(const std::string &type)
-{
-	// 1. try to find by name
-	for (size_t idx = 0; idx < adsb_emitter_type_strings.size(); idx++) {
-		if (adsb_emitter_type_strings[idx] == type ||
-				adsb_emitter_type_strings[idx] == "ADSB_EMITTER_TYPE_" + type)
-			return idx;
-	}
-
-	// 2. try convert integer
-	// fallback for old configs that uses numeric type.
-	try {
-		int idx = std::stoi(type, 0, 0);
-		if (0 > idx || size_t(idx) > adsb_emitter_type_strings.size()) {
-			ROS_ERROR_NAMED("uas", "ADSB_EMITTER_TYPE: type index out of bound: %d", idx);
-			return -1;
-		}
-		else
-			return idx;
-	}
-	catch (std::invalid_argument &ex) {
-		// failed
-	}
-
-	ROS_ERROR_STREAM_NAMED("uas", "ADSB_EMITTER_TYPE: wrong emitter type str: " << type);
-
-	return -1;
-}
-
 
 // [[[cog:
 // ename = 'ADSB_FLAGS'
@@ -420,11 +362,10 @@ std::string to_string(const uint16_t &bitmask)
 
 	for(size_t idx = 0; idx < digits.size(); idx++) {
 		if (digits[idx] == '1'){
-			out << idx << " ";
+			out << adsb_flags_strings[idx] << " ";
 		}
 	}
-
-	return "Flags: " + out.str();
+	return out.str();
 }
 
 }	// namespace utils

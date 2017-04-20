@@ -93,15 +93,5 @@ int sensor_orientation_from_str(const std::string &sensor_orientation);
  */
 timesync_mode timesync_mode_from_str(const std::string &mode);
 
-/**
- * @brief Retreive ADSB altitude type from alias name
- */
-uint16_t alt_type_from_str(const std::string &type);
-
-/**
- * @brief Retreive ADSB emitter type from alias name
- */
-uint16_t emitter_type_from_str(const std::string &type);
-
 }	// namespace utils
 }	// namespace mavros

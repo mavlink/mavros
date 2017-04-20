@@ -2,16 +2,51 @@
 #
 # https://pixhawk.ethz.ch/mavlink/#ADSB_VEHICLE
 
+# constants for altitude type
+uint16 ADSB_ALTITUDE_TYPE_PRESSURE_QNH = 0
+uint16 ADSB_ALTITUDE_TYPE_GEOMETRIC = 1
+
+# constants for ADSB emitter type
+uint16 ADSB_EMITTER_TYPE_NO_INFO = 0
+uint16 ADSB_EMITTER_TYPE_LIGHT = 1
+uint16 ADSB_EMITTER_TYPE_SMALL = 2
+uint16 ADSB_EMITTER_TYPE_LARGE = 3
+uint16 ADSB_EMITTER_TYPE_HIGH_VORTEX_LARGE = 4
+uint16 ADSB_EMITTER_TYPE_HEAVY = 5
+uint16 ADSB_EMITTER_TYPE_HIGHLY_MANUV = 6
+uint16 ADSB_EMITTER_TYPE_ROTOCRAFT	= 7
+uint16 ADSB_EMITTER_TYPE_UNASSIGNED = 8
+uint16 ADSB_EMITTER_TYPE_GLIDER = 9
+uint16 ADSB_EMITTER_TYPE_LIGHTER_AIR = 10
+uint16 ADSB_EMITTER_TYPE_PARACHUTE = 11
+uint16 ADSB_EMITTER_TYPE_ULTRA_LIGHT = 12
+uint16 ADSB_EMITTER_TYPE_UNASSIGNED2 = 13
+uint16 ADSB_EMITTER_TYPE_UAV = 14
+uint16 ADSB_EMITTER_TYPE_SPACE = 15
+uint16 ADSB_EMITTER_TYPE_UNASSGINED3 = 16
+uint16 ADSB_EMITTER_TYPE_EMERGENCY_SURFACE = 17
+uint16 ADSB_EMITTER_TYPE_SERVICE_SURFACE = 18
+uint16 ADSB_EMITTER_TYPE_POINT_OBSTACLE = 19
+
+# constants for flags
+uint16 ADSB_FLAGS_VALID_COORDS = 1
+uint16 ADSB_FLAGS_VALID_ALTITUDE = 2
+uint16 ADSB_FLAGS_VALID_HEADING = 4
+uint16 ADSB_FLAGS_VALID_VELOCITY = 8
+uint16 ADSB_FLAGS_VALID_CALLSIGN = 16
+uint16 ADSB_FLAGS_VALID_SQUAWK = 32
+uint16 ADSB_FLAGS_SIMULATED = 64
+
 std_msgs/Header header
 
 uint32 ICAO_address
 geographic_msgs/GeoPoint lla
-string altitude_type # Type from ADSB_ALTITUDE_TYPE enum
+uint16 altitude_type # Type from ADSB_ALTITUDE_TYPE enum
 uint16 heading  # cog
 uint16 hor_velocity
 int16 ver_velocity
 string callsign  # callsign, 8+null
-string emitter_type  # Type from ADSB_EMITTER_TYPE enum
+uint16 emitter_type  # Type from ADSB_EMITTER_TYPE enum
 std_msgs/Time tslc
 uint16 data_status  # Flags from ADSB_FLAGS
 uint16 squawk

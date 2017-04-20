@@ -68,9 +68,6 @@ private:
 		auto adsb_msg = boost::make_shared<mavros_msgs::ADSBVehicle>();
 		const auto &adsb_callsign = adsb.callsign;
 
-		altitude_type = static_cast<ADSB_ALTITUDE_TYPE>(adsb.altitude_type);
-		emitter_type = static_cast<ADSB_EMITTER_TYPE>(adsb.emitter_type);
-
 		ros::Time tslc(adsb.tslc, 0);
 
 		adsb_msg->header.stamp = ros::Time::now();	//TODO: request add time_boot_ms to msg definition
@@ -79,17 +76,20 @@ private:
 		adsb_msg->lla.latitude = adsb.lat / 1E7;
 		adsb_msg->lla.longitude = adsb.lon / 1E7;
 		adsb_msg->lla.altitude = adsb.altitude;	// in meters, TODO: #693
-		adsb_msg->altitude_type = utils::to_string(altitude_type);
+		adsb_msg->altitude_type = adsb.altitude_type;
 		adsb_msg->heading = adsb.heading / 1E2 / 180.0f * M_PI - M_PI;
 		adsb_msg->hor_velocity = adsb.hor_velocity / 1E2;
 		adsb_msg->ver_velocity = adsb.ver_velocity / 1E2;	// up is positive
 		std::copy(adsb_callsign.cbegin(), adsb_callsign.cend(), adsb_msg->callsign.begin());
-		adsb_msg->emitter_type = utils::to_string(emitter_type);
+		adsb_msg->emitter_type = adsb.emitter_type;
 		adsb_msg->tslc.data = tslc;
 		adsb_msg->data_status = adsb.flags;
 		adsb_msg->squawk = adsb.squawk;
 
-		ROS_INFO_STREAM_NAMED("adsb", utils::to_string(adsb.flags));
+		// for info purposes
+		ROS_DEBUG_NAMED("adsb", "receiving data of altitude type: %s", utils::to_string(adsb.altitude_type).c_str());
+		ROS_DEBUG_NAMED("adsb", "receiving data of emitter type: %s", utils::to_string(adsb.emitter_type).c_str());
+		ROS_DEBUG_NAMED("adsb", "data status flags on receiving msg: %s", utils::to_string(adsb.flags).c_str());
 
 		adsb_pub.publish(adsb_msg);
 	}
@@ -102,17 +102,20 @@ private:
 		adsb.lat = req->lla.latitude * 1E7;
 		adsb.lon = req->lla.longitude * 1E7;
 		adsb.altitude = req->lla.altitude;	// in meters, TODO: #693
-		adsb.altitude_type = utils::alt_type_from_str(req->altitude_type);
+		adsb.altitude_type = req->altitude_type;
 		adsb.heading = req->heading * 1E2 * 180.0f / M_PI + M_PI;
 		adsb.hor_velocity = req->hor_velocity * 1E2;
 		adsb.ver_velocity = req->ver_velocity * 1E2;	// up is positive
 		mavlink::set_string(adsb.callsign, req->callsign);
-		adsb.emitter_type = utils::emitter_type_from_str(req->emitter_type);
+		adsb.emitter_type = req->emitter_type;
 		adsb.tslc = req->tslc.data.toSec();
 		adsb.flags = req->data_status;
 		adsb.squawk = req->squawk;
 
-		ROS_INFO_STREAM_NAMED("adsb", utils::to_string(req->data_status));
+		// for info purposes
+		ROS_DEBUG_NAMED("adsb", "sending data of altitude type: %s", utils::to_string(req->altitude_type).c_str());
+		ROS_DEBUG_NAMED("adsb", "sending data of emitter type: %s", utils::to_string(req->emitter_type).c_str());
+		ROS_DEBUG_NAMED("adsb", "data status flags on sending msg: %s", utils::to_string(req->data_status).c_str());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(adsb);
 	}
