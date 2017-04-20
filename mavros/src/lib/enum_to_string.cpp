@@ -25,8 +25,6 @@ using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
-using mavlink::common::ADSB_FLAGS;
-
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -354,7 +352,7 @@ static const std::array<const std::string, 7> adsb_flags_strings{{
 }};
 // [[[end]]] (checksum: cb975233b4f8d9805f4aec201d79e7f8)
 
-std::string to_string(const uint16_t &bitmask)
+std::string adsb_flags_to_string(const uint16_t &bitmask)
 {
 	std::stringstream bit, out;
 	bit << bitmask;
