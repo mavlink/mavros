@@ -61,7 +61,7 @@ private:
 		auto adsb_msg = boost::make_shared<mavros_msgs::ADSBVehicle>();
 		const auto &adsb_callsign = adsb.callsign;
 
-		ros::Time tslc(adsb.tslc, 0);
+		ros::Duration tslc(adsb.tslc);
 
 		adsb_msg->header.stamp = ros::Time::now();	//TODO: request add time_boot_ms to msg definition
 		adsb_msg->header.frame_id = frame_id;
