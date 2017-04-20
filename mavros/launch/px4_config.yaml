@@ -175,8 +175,7 @@ vision_speed:
 vibration:
   frame_id: "vibration"
 
-# adsb_vehicle
-adsb:
-  frame_id: "adsb_vehicle"
+# adsb
+# None
 
 # vim:set ts=2 sw=2 et:
