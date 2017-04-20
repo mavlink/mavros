@@ -24,15 +24,14 @@
 
 // OS X compat: missing error codes
 #ifdef __APPLE__
-#define EBADE 50   /* Invalid exchange */
-#define EBADFD 81  /* File descriptor in bad state */
-#define EBADRQC 54 /* Invalid request code */
-#define EBADSLT 55 /* Invalid slot */
+#define EBADE 50	/* Invalid exchange */
+#define EBADFD 81	/* File descriptor in bad state */
+#define EBADRQC 54	/* Invalid request code */
+#define EBADSLT 55	/* Invalid slot */
 #endif
 
 namespace mavros {
 namespace utils {
-
 using mavconn::utils::format;
 
 /**
@@ -65,6 +64,13 @@ std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
 std::string to_string(timesync_mode e);
+std::string to_string(mavlink::common::ADSB_ALTITUDE_TYPE e);
+std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
+
+/**
+ * @brief Retrieve alias of the ADSB flags
+ */
+std::string adsb_flags_to_string(const uint16_t &bitmask);
 
 /**
  * Helper to call to_string() for enum _T

@@ -22,6 +22,7 @@
   <exec_depend>message_runtime</exec_depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>geographic_msgs</depend>
   <!-- XXX needed for users of mavlink_convert.h
   <build_export_depend>libmavconn</build_export_depend>
   -->
