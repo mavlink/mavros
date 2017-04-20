@@ -84,8 +84,8 @@ private:
 					utils::to_string_enum<mavlink::common::ADSB_ALTITUDE_TYPE>(adsb.altitude_type).c_str());
 		ROS_DEBUG_NAMED("adsb", "ADSB: receiving Emitter Type: %s",
 					utils::to_string_enum<mavlink::common::ADSB_EMITTER_TYPE>(adsb.emitter_type).c_str());
-		ROS_DEBUG_NAMED("adsb", "ADSB: receiving Flags: %s",
-					utils::adsb_flags_to_string(adsb.flags).c_str());
+		ROS_DEBUG_NAMED("adsb", "ADSB: receiving Flags: %s (0x%02x)",
+					utils::adsb_flags_to_string(adsb.flags).c_str(), adsb.flags);
 
 		adsb_pub.publish(adsb_msg);
 	}
@@ -113,8 +113,8 @@ private:
 					utils::to_string_enum<mavlink::common::ADSB_ALTITUDE_TYPE>(req->altitude_type).c_str());
 		ROS_DEBUG_NAMED("adsb", "ADSB: sending Emitter Type: %s",
 					utils::to_string_enum<mavlink::common::ADSB_EMITTER_TYPE>(req->emitter_type).c_str());
-		ROS_DEBUG_NAMED("adsb", "ADSB: sending Flags %s",
-					utils::adsb_flags_to_string(req->data_status).c_str());
+		ROS_DEBUG_NAMED("adsb", "ADSB: sending Flags %s (0x%02x)",
+					utils::adsb_flags_to_string(req->data_status).c_str(), req->data_status);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(adsb);
 	}
