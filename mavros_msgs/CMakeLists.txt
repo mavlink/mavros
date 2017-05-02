@@ -17,6 +17,7 @@ add_message_files(
   CommandCode.msg
   ExtendedState.msg
   FileEntry.msg
+  Float32Stamped.msg
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
@@ -85,4 +86,3 @@ catkin_package(
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h")
-
