@@ -42,7 +42,7 @@ public:
 		sp_nh("~setpoint_attitude"),
 		tf_rate(10.0),
 		use_attitude(true),
-		reverse_throttle(false)
+		reverse_thrust(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -53,7 +53,7 @@ public:
 
 		// main params
 		sp_nh.param("use_attitude", use_attitude, true);
-		sp_nh.param("reverse_throttle", reverse_throttle, false);
+		sp_nh.param("reverse_trust", reverse_thrust, false);
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
@@ -69,13 +69,13 @@ public:
 			//TODO: implement tf2_ros::MessageFilter< M >
 		}
 		else if (use_attitude) {
-			//use message_filters to sync attitude and throttle msg coming from different topics
+			//use message_filters to sync attitude and thrust msg coming from different topics
 			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "attitude", 1);
-			message_filters::Subscriber<mavros_msgs::Float32Stamped> throttle_sub(sp_nh, "throttle", 1);
+			message_filters::Subscriber<mavros_msgs::Float32Stamped> thrust_sub(sp_nh, "thrust", 1);
 
 			// matches messages, even if they have different time stamps, by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
 			typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Float32Stamped> syncp;
-			message_filters::Synchronizer<syncp> sync(syncp(10), pose_sub, throttle_sub);
+			message_filters::Synchronizer<syncp> sync(syncp(10), pose_sub, thrust_sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
 		else {
@@ -99,14 +99,14 @@ private:
 	std::string tf_child_frame_id;
 	double tf_rate;
 	bool use_attitude;
-	bool reverse_throttle;
+	bool reverse_thrust;
 
 	/* -*- mid-level helpers -*- */
 
 	/**
 	 * @brief Send attitude setpoint and respective thrust to FCU attitude controller
 	 */
-	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr, const float throttle)
+	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr, const float thrust)
 	{
 		/* RPY, also bits numbering started from 1 in docs
 		 */
@@ -120,7 +120,7 @@ private:
 					ignore_all_except_q_and_thrust,
 					q,
 					Eigen::Vector3d::Zero(),
-					throttle);
+					thrust);
 	}
 
 	/**
@@ -150,21 +150,21 @@ private:
 		send_attitude_target(transform.header.stamp, tr, 0.0);
 	}
 
-	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Float32Stamped::ConstPtr &throttle_msg) {
+	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Float32Stamped::ConstPtr &thrust_msg) {
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(pose_msg->pose, tr);
 
-		float throttle_normalized = throttle_msg->data;
+		float thrust_normalized = thrust_msg->data;
 
 		/**
-		 * && are lazy, is_normalized() should be called only if reverse_throttle are true.
+		 * && are lazy, is_normalized() should be called only if reverse_thrust are true.
 		 */
-		if (reverse_throttle && !is_normalized(throttle_normalized, -1.0, 1.0))
+		if (reverse_thrust && !is_normalized(thrust_normalized, -1.0, 1.0))
 			return;
-		else if (!is_normalized(throttle_normalized, 0.0, 1.0))
+		else if (!is_normalized(thrust_normalized, 0.0, 1.0))
 			return;
 
-		send_attitude_target(pose_msg->header.stamp, tr, throttle_normalized);
+		send_attitude_target(pose_msg->header.stamp, tr, thrust_normalized);
 	}
 
 	void twist_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
@@ -174,14 +174,14 @@ private:
 		send_attitude_ang_velocity(req->header.stamp, ang_vel);
 	}
 
-	inline bool is_normalized(float throttle, const float min, const float max)
+	inline bool is_normalized(float thrust, const float min, const float max)
 	{
-		if (throttle < min) {
-			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) < Min(%f)", throttle, min);
+		if (thrust < min) {
+			ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) < Min(%f)", thrust, min);
 			return false;
 		}
-		else if (throttle > max) {
-			ROS_WARN_NAMED("attitude", "Not normalized throttle! Thd(%f) > Max(%f)", throttle, max);
+		else if (thrust > max) {
+			ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) > Max(%f)", thrust, max);
 			return false;
 		}
 
