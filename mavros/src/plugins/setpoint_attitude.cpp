@@ -25,7 +25,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/Float32Stamped.h>
+#include <mavros_msgs/Thrust.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -71,10 +71,10 @@ public:
 		else if (use_attitude) {
 			//use message_filters to sync attitude and thrust msg coming from different topics
 			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "attitude", 1);
-			message_filters::Subscriber<mavros_msgs::Float32Stamped> thrust_sub(sp_nh, "thrust", 1);
+			message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 1);
 
 			// matches messages, even if they have different time stamps, by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
-			typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Float32Stamped> syncp;
+			typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust> syncp;
 			message_filters::Synchronizer<syncp> sync(syncp(10), pose_sub, thrust_sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
@@ -150,11 +150,11 @@ private:
 		send_attitude_target(transform.header.stamp, tr, 0.0);
 	}
 
-	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Float32Stamped::ConstPtr &thrust_msg) {
+	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(pose_msg->pose, tr);
 
-		float thrust_normalized = thrust_msg->data;
+		float thrust_normalized = thrust_msg->thrust;
 
 		/**
 		 * && are lazy, is_normalized() should be called only if reverse_thrust are true.

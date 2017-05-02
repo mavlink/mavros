@@ -17,7 +17,6 @@ add_message_files(
   CommandCode.msg
   ExtendedState.msg
   FileEntry.msg
-  Float32Stamped.msg
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
@@ -32,6 +31,7 @@ add_message_files(
   RCOut.msg
   RadioStatus.msg
   State.msg
+  Thrust.msg
   VFR_HUD.msg
   Vibration.msg
   Waypoint.msg
