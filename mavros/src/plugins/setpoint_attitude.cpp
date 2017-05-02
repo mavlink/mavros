@@ -41,7 +41,7 @@ public:
 	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
 		tf_rate(10.0),
-		use_attitude(true),
+		use_quaternion(false),
 		reverse_thrust(false)
 	{ }
 
@@ -51,14 +51,20 @@ public:
 
 		bool tf_listen;
 
+		typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust> SyncPoseThrust;
+		typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::TwistStamped, mavros_msgs::Thrust> SyncTwistThrust;
+
 		// main params
-		sp_nh.param("use_attitude", use_attitude, true);
-		sp_nh.param("reverse_trust", reverse_thrust, false);
+		sp_nh.param("use_quaternion", use_quaternion, false);
+		sp_nh.param("reverse_thrust", reverse_thrust, false);
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
 		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
+
+		// thrust msg to sync
+		message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 1);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
@@ -66,20 +72,25 @@ public:
 						<< tf_frame_id << " -> " << tf_child_frame_id);
 			tf2_start("AttitudeSpTF", &SetpointAttitudePlugin::transform_cb);
 
-			//TODO: implement tf2_ros::MessageFilter< M >
+			//@todo implement tf2_ros::MessageFilter< M >
 		}
-		else if (use_attitude) {
-			//use message_filters to sync attitude and thrust msg coming from different topics
+		else if (use_quaternion) {
+			/**
+			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
+			 */
 			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "attitude", 1);
-			message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 1);
 
-			// matches messages, even if they have different time stamps, by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
-			typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust> syncp;
-			message_filters::Synchronizer<syncp> sync(syncp(10), pose_sub, thrust_sub);
+			/**
+			 * @brief Matches messages, even if they have different time stamps,
+			 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
+			 */
+			message_filters::Synchronizer<SyncPoseThrust> sync(SyncPoseThrust(10), pose_sub, thrust_sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
 		else {
-			twist_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointAttitudePlugin::twist_cb, this);
+			message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub(sp_nh, "cmd_vel", 1);
+			message_filters::Synchronizer<SyncTwistThrust> sync(SyncTwistThrust(10), twist_sub, thrust_sub);
+			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}
 	}
 
@@ -98,15 +109,15 @@ private:
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 	double tf_rate;
-	bool use_attitude;
+	bool use_quaternion;
 	bool reverse_thrust;
 
 	/* -*- mid-level helpers -*- */
 
 	/**
-	 * @brief Send attitude setpoint and respective thrust to FCU attitude controller
+	 * @brief Send attitude setpoint and thrust to FCU attitude controller
 	 */
-	void send_attitude_target(const ros::Time &stamp, const Eigen::Affine3d &tr, const float thrust)
+	void send_attitude_quaternion(const ros::Time &stamp, const Eigen::Affine3d &tr, const float thrust)
 	{
 		/* RPY, also bits numbering started from 1 in docs
 		 */
@@ -124,13 +135,13 @@ private:
 	}
 
 	/**
-	 * @brief Send angular velocity setpoint to FCU attitude controller
+	 * @brief Send angular velocity setpoint and thrust to FCU attitude controller
 	 */
-	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel)
+	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel, const float thrust)
 	{
-		/* Q + Thrust, also bits noumbering started from 1 in docs
+		/* Q, also bits noumbering started from 1 in docs
 		 */
-		const uint8_t ignore_all_except_rpy = (1 << 7) | (1 << 6);
+		const uint8_t ignore_all_except_rpy = (1 << 7);
 
 		auto av = ftf::transform_frame_baselink_aircraft(ang_vel);
 
@@ -138,7 +149,7 @@ private:
 					ignore_all_except_rpy,
 					Eigen::Quaterniond::Identity(),
 					av,
-					0.0);
+					thrust);
 	}
 
 	/* -*- callbacks -*- */
@@ -147,31 +158,36 @@ private:
 		Eigen::Affine3d tr;
 		tf::transformMsgToEigen(transform.transform, tr);
 
-		send_attitude_target(transform.header.stamp, tr, 0.0);
+		send_attitude_quaternion(transform.header.stamp, tr, 0.0);
 	}
 
 	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(pose_msg->pose, tr);
 
-		float thrust_normalized = thrust_msg->thrust;
-
 		/**
 		 * && are lazy, is_normalized() should be called only if reverse_thrust are true.
 		 */
+		float thrust_normalized = thrust_msg->thrust;
 		if (reverse_thrust && !is_normalized(thrust_normalized, -1.0, 1.0))
 			return;
 		else if (!is_normalized(thrust_normalized, 0.0, 1.0))
 			return;
 
-		send_attitude_target(pose_msg->header.stamp, tr, thrust_normalized);
+		send_attitude_quaternion(pose_msg->header.stamp, tr, thrust_normalized);
 	}
 
-	void twist_cb(const geometry_msgs::TwistStamped::ConstPtr &req) {
+	void attitude_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &req, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Vector3d ang_vel;
 		tf::vectorMsgToEigen(req->twist.angular, ang_vel);
 
-		send_attitude_ang_velocity(req->header.stamp, ang_vel);
+		float thrust_normalized = thrust_msg->thrust;
+		if (reverse_thrust && !is_normalized(thrust_normalized, -1.0, 1.0))
+			return;
+		else if (!is_normalized(thrust_normalized, 0.0, 1.0))
+			return;
+
+		send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_normalized);
 	}
 
 	inline bool is_normalized(float thrust, const float min, const float max)
