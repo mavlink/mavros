@@ -3,7 +3,7 @@
   <name>mavros_extras</name>
   <version>0.18.7</version>
   <description>
-    Extra nodes and plugins for <a href="http://wiki.rot.org/mavros">MAVROS</a>.
+    Extra nodes and plugins for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
