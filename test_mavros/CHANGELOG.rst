@@ -2,8 +2,8 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.19.0 (2017-05-05)
+-------------------
 * cmake: remove Eigen warning
 * Contributors: Vladimir Ermakov
 

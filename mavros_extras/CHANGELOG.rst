@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.19.0 (2017-05-05)
+-------------------
 * extras: fix package link
 * extras: Fix adsb plugin
 * extras: Add ADSB plugin

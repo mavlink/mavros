@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.19.0 (2017-05-05)
+-------------------
 * msgs: Add cog script to finish ADSBVehicle.msg
 * extras: Add ADSB plugin
 * plugin `#695 <https://github.com/mavlink/mavros/issues/695>`_: Fix plugin

@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.19.0 (2017-05-05)
+-------------------
 * launch: remove setpoint-attitude from apm blacklist
 * lib: cleanup in enum_to_string
 * extras: Add ADSB plugin
