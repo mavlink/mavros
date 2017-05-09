@@ -27,7 +27,6 @@
 
 namespace mavros {
 namespace ftf {
-
 //! Type matching rosmsg for covariance 3x3
 using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
 
@@ -53,7 +52,6 @@ enum class StaticTF {
 };
 
 namespace detail {
-
 /**
  * @brief Transform representation of attitude from 1 frame to another
  * (e.g. transfrom attitude from representing  from base_link -> NED
@@ -71,14 +69,18 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Quaterniond &q);
 
 /**
- * @brief Transform convariance expressed in one frame to another
+ * @brief Transform 3x3 convariance expressed in one frame to another
  *
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
 Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &q);
 
-// XXX TODO implement that function
-//Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q);
+/**
+ * @brief Transform 6x6 convariance expressed in one frame to another
+ *
+ * General function. Please use specialized enu-ned and ned-enu variants.
+ */
+Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q);
 
 /**
  * @brief Transform data experessed in one frame to another frame.
@@ -88,19 +90,22 @@ Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticTF transform);
 
 /**
- * @brief Transform convariance expressed in one frame to another
+ * @brief Transform 3d convariance expressed in one frame to another
  *
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
 Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF transform);
 
-// XXX TODO implement that function
-//Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF transform);
+/**
+ * @brief Transform 6d convariance expressed in one frame to another
+ *
+ * General function. Please use specialized enu-ned and ned-enu variants.
+ */
+Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF transform);
 
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
 }
-
 }	// namespace detail
 
 // -*- frame tf -*-
@@ -309,5 +314,14 @@ inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
 	return Eigen::Quaterniond(q[0], q[1], q[2], q[3]);
 }
 
+/**
+ * @brief Store Covariance matrix to MAVLink float[n] format
+ */
+template<class T, std::size_t SIZE>
+inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
+	for (size_t i = 0; i < SIZE; i++) {
+		covmsg[i] = cov[i];
+	}
+}
 }	// namespace ftf
 }	// namespace mavros
