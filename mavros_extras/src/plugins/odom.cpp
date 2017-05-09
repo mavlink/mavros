@@ -78,15 +78,24 @@ private:
 
 		lpos.time_usec = stamp;
 
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("lpos.%s = pos_ned.%s();" % (f, f))
+		// for f in "xyz":
+		//     cog.outl("lpos.v%s = lin_vel_ned.%s();" % (f, f))
+		// for f in "xyz":
+		//     cog.outl("lpos.a%s = 0.0;" % f)
+		// ]]]
 		lpos.x = pos_ned.x();
 		lpos.y = pos_ned.y();
 		lpos.z = pos_ned.z();
 		lpos.vx = lin_vel_ned.x();
 		lpos.vy = lin_vel_ned.y();
 		lpos.vz = lin_vel_ned.z();
-		lpos.ax = 0;
-		lpos.ay = 0;
-		lpos.az = 0;
+		lpos.ax = 0.0;
+		lpos.ay = 0.0;
+		lpos.az = 0.0;
+		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
 
 		// TODO: apply ftf::transform_frame(Covariance6d)
 		for (int row = 0; row < 6; row++) {
@@ -103,9 +112,14 @@ private:
 
 		att.time_usec = stamp;
 
+		// [[[cog:
+		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
+		//     cog.outl("att.%s = ang_vel_ned.%s();" % (b, a))
+		// ]]]
 		att.rollspeed = ang_vel_ned.x();
 		att.pitchspeed = ang_vel_ned.y();
 		att.yawspeed = ang_vel_ned.z();
+		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
 
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
