@@ -21,7 +21,7 @@
 #include <nav_msgs/Odometry.h>
 
 namespace mavros {
-namespace extra_plugins{
+namespace extra_plugins {
 /**
  * @brief Odometry plugin
  *
@@ -33,8 +33,7 @@ class OdometryPlugin : public plugin::PluginBase {
 public:
 	OdometryPlugin() : PluginBase(),
 		_nh("~odometry")
-	{
-	}
+	{}
 
 	void initialize(UAS &uas_)
 	{
@@ -57,52 +56,80 @@ private:
 
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
-		//ROS_INFO("odometry callback");
+		size_t i = 0;
+		Eigen::Affine3d tr;
+		Eigen::Vector3d lin_vel_enu;
+		Eigen::Vector3d ang_vel_enu;
+		tf::poseMsgToEigen(odom->pose.pose, tr);
+		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
+		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
+
+		// apply frame transforms
+		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
+		auto ang_vel_ned = ftf::transform_frame_baselink_aircraft(ang_vel_enu);
+		auto q_ned = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+
 		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
 
-		// send local position
-		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos{};
+		// send LOCAL_POSITION_NED_COV
+		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
+
 		lpos.time_usec = stamp;
-		// NED to ENU
-		// TODO check these are in the correct frame
-		lpos.x = odom->pose.pose.position.y;
-		lpos.y = odom->pose.pose.position.x;
-		lpos.z = -odom->pose.pose.position.z;
-		lpos.vx = odom->twist.twist.linear.y;
-		lpos.vy = odom->twist.twist.linear.x;
-		lpos.vz = -odom->twist.twist.linear.z;
-		lpos.ax = 0;
-		lpos.ay = 0;
-		lpos.az = 0;
-		size_t i = 0;
-		for (int row=0; row < 6; row++) {
-			for (int col=row; col < 6; col++) {
-				//ROS_INFO("row: %d, col:%d, i:%d", row, col, i);
-				lpos.covariance[i] = odom->pose.covariance[row*6 + col];
+
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("lpos.%s = pos_ned.%s();" % (f, f))
+		// for f in "xyz":
+		//     cog.outl("lpos.v%s = lin_vel_ned.%s();" % (f, f))
+		// for f in "xyz":
+		//     cog.outl("lpos.a%s = 0.0;" % f)
+		// ]]]
+		lpos.x = pos_ned.x();
+		lpos.y = pos_ned.y();
+		lpos.z = pos_ned.z();
+		lpos.vx = lin_vel_ned.x();
+		lpos.vy = lin_vel_ned.y();
+		lpos.vz = lin_vel_ned.z();
+		lpos.ax = 0.0;
+		lpos.ay = 0.0;
+		lpos.az = 0.0;
+		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
+
+		// TODO: apply ftf::transform_frame(Covariance6d)
+		for (int row = 0; row < 6; row++) {
+			for (int col = row; col < 6; col++) {
+				lpos.covariance[i] = odom->pose.covariance[row * 6 + col];
 				i += 1;
 			}
 		}
+
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
-		// send attitude
+		// send ATTITUDE_QUATERNION_COV
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att;
-		// TODO check these are in the correct frame
-		att.rollspeed =  odom->twist.twist.angular.y;
-		att.pitchspeed =  odom->twist.twist.angular.x;
-		att.yawspeed =  -odom->twist.twist.angular.z;
 
 		att.time_usec = stamp;
-		att.q[0] = odom->pose.pose.orientation.w;
-		att.q[1] = odom->pose.pose.orientation.x;
-		att.q[2] = odom->pose.pose.orientation.y;
-		att.q[3] = odom->pose.pose.orientation.z;
-		for (size_t i=0; i < 9; i++) {
+
+		// [[[cog:
+		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
+		//     cog.outl("att.%s = ang_vel_ned.%s();" % (b, a))
+		// ]]]
+		att.rollspeed = ang_vel_ned.x();
+		att.pitchspeed = ang_vel_ned.y();
+		att.yawspeed = ang_vel_ned.z();
+		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
+
+		ftf::quaternion_to_mavlink(q_ned, att.q);
+
+		// TODO: apply ftf::transform_frame(Covariance9d)
+		for (size_t i = 0; i < 9; i++) {
 			att.covariance[i] = odom->pose.covariance[i];
 		}
+
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
-
 	}
-
 };
 }	// namespace extra_plugins
 }	// namespace mavros
