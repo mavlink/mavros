@@ -49,6 +49,9 @@ public:
 		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling_)){
 			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
 		}
+    if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling_)){
+      ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
+    }
 
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
@@ -74,7 +77,7 @@ private:
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
-	double thrust_scaling_;
+	double thrust_scaling_, yaw_rate_caling_;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -287,7 +290,7 @@ private:
 
     body_rate.x() = 0;
     body_rate.y() = 0;
-		body_rate.z() = msg->yaw_rate;
+		body_rate.z() = -yaw_rate_scaling_*msg->yaw_rate;
 
 		set_attitude_target(
 				msg->header.stamp.toNSec() / 1000000,
