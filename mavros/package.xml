@@ -50,6 +50,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>mav_msgs</depend>
 
   <test_depend>gtest</test_depend>
 

@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nav_msgs
   std_msgs
+  mav_msgs
   std_srvs
   tf2_ros
   angles
