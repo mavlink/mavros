@@ -21,7 +21,6 @@
 namespace mavros {
 namespace ftf {
 namespace detail {
-
 // Static quaternion needed for rotating between ENU and NED frames
 // +PI rotation around X (North) axis follwed by +PI/2 rotation about Z (Down)
 // gives the ENU frame.  Similarly, a +PI rotation about X (East) followed by
@@ -85,21 +84,35 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
 	}
 }
 
-#if 0
 Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF transform)
 {
-	//! @todo implement me!!!
+	Covariance6d cov_out_;
+	EigenMapConstCovariance6d cov_in(cov.data());
+	EigenMapCovariance6d cov_out(cov_out_.data());
+
+	Eigen::MatrixXd Affine6dTf(6,6);
+	Eigen::Matrix3d R = Eigen::MatrixXd::Identity(3,3);
+
 	switch (transform) {
 	default: {
-		Covariance6d cov_out_;
-		EigenMapConstCovariance6d cov_in(cov.data());
-		EigenMapCovariance6d cov_out(cov_out_.data());
-		ROS_BREAK();
+	case StaticTF::NED_TO_ENU:
+	case StaticTF::ENU_TO_NED:
+		Affine6dTf << NED_ENU_AFFINE * R, Eigen::MatrixXd::Zero(3, 3),
+		Eigen::MatrixXd::Zero(3, 3), NED_ENU_AFFINE * R;
+
+		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
+		return cov_out_;
+
+	case StaticTF::AIRCRAFT_TO_BASELINK:
+	case StaticTF::BASELINK_TO_AIRCRAFT:
+		Affine6dTf << AIRCRAFT_BASELINK_AFFINE * R, Eigen::MatrixXd::Zero(3, 3),
+		Eigen::MatrixXd::Zero(3, 3), AIRCRAFT_BASELINK_AFFINE * R;
+
+		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
 		return cov_out_;
 	}
 	}
 }
-#endif
 
 Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Quaterniond &q)
 {
@@ -117,19 +130,22 @@ Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &
 	return cov_out_;
 }
 
-#if 0
 Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q)
 {
 	Covariance6d cov_out_;
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
-	//! @todo implement me!!!
-	ROS_BREAK();
+	Eigen::MatrixXd Affine6dTf(6, 6);
+	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+
+	Affine6dTf << R, Eigen::MatrixXd::Zero(3, 3),
+	Eigen::MatrixXd::Zero(3, 3), R;
+
+	cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
+
 	return cov_out_;
 }
-#endif
-
 }	// namespace detail
 }	// namespace ftf
 }	// namespace mavros
