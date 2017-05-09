@@ -132,7 +132,7 @@ private:
 		mavlink_attitude_target_t tgt;
 		mavlink_msg_attitude_target_decode(msg, &tgt);
 
-		// Transform orientation from baselink -> ENU 
+		// Transform orientation from baselink -> ENU
 		// to aircraft -> NED
 		auto orientation = UAS::transform_orientation_ned_enu(
 						   UAS::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3])));
@@ -285,6 +285,8 @@ private:
 		auto ned_desired_orientation = UAS::transform_orientation_enu_ned(
 			UAS::transform_orientation_baselink_aircraft(desired_orientation));
 
+    body_rate.x() = 0;
+    body_rate.y() = 0;
 		body_rate.z() = msg->yaw_rate;
 
 		set_attitude_target(
