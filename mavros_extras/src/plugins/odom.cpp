@@ -26,8 +26,7 @@ namespace extra_plugins {
  * @brief Odometry plugin
  *
  * Send odometry info
- * to FCU position and attitude estimators.
- *
+ * to FCU position and attitude estimators
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
@@ -39,7 +38,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		// tf params
+		// subscribers
 		_odom_sub = _nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 	}
 
@@ -56,7 +55,6 @@ private:
 
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
-		size_t i = 0;
 		Eigen::Affine3d tr;
 		Eigen::Vector3d lin_vel_enu;
 		Eigen::Vector3d ang_vel_enu;
@@ -74,10 +72,8 @@ private:
 		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
 
 		// send LOCAL_POSITION_NED_COV
-		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
-
+		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos{};
 		lpos.time_usec = stamp;
-
 		// [[[cog:
 		// for f in "xyz":
 		//     cog.outl("lpos.%s = pos_ned.%s();" % (f, f))
@@ -97,21 +93,14 @@ private:
 		lpos.az = 0.0;
 		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
 
-		// TODO: apply ftf::transform_frame(Covariance6d)
-		for (int row = 0; row < 6; row++) {
-			for (int col = row; col < 6; col++) {
-				lpos.covariance[i] = odom->pose.covariance[row * 6 + col];
-				i += 1;
-			}
-		}
+		auto cov_lin_vel = ftf::transform_frame_enu_ned(odom->pose.covariance);
+		ftf::covariance_to_mavlink(cov_lin_vel, lpos.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
 		// send ATTITUDE_QUATERNION_COV
-		mavlink::common::msg::ATTITUDE_QUATERNION_COV att;
-
+		mavlink::common::msg::ATTITUDE_QUATERNION_COV att{};
 		att.time_usec = stamp;
-
 		// [[[cog:
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
 		//     cog.outl("att.%s = ang_vel_ned.%s();" % (b, a))
@@ -123,10 +112,8 @@ private:
 
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
-		// TODO: apply ftf::transform_frame(Covariance9d)
-		for (size_t i = 0; i < 9; i++) {
-			att.covariance[i] = odom->pose.covariance[i];
-		}
+		auto cov_ang_vel = ftf::transform_frame_aircraft_baselink(odom->pose.covariance);
+		ftf::covariance_to_mavlink(cov_ang_vel, att.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
 	}
