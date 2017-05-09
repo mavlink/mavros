@@ -69,6 +69,8 @@ std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 std::string to_string(mavlink::common::MAV_AUTOPILOT e);
 std::string to_string(mavlink::common::MAV_TYPE e);
 std::string to_string(mavlink::common::MAV_STATE e);
+std::string to_string(mavlink::common::MAV_ESTIMATOR_TYPE e);
+std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 std::string to_string(mavlink::common::ADSB_ALTITUDE_TYPE e);
 std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 

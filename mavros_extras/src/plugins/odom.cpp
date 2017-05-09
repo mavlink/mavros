@@ -15,7 +15,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <nav_msgs/Odometry.h>
@@ -31,15 +30,19 @@ namespace extra_plugins {
 class OdometryPlugin : public plugin::PluginBase {
 public:
 	OdometryPlugin() : PluginBase(),
-		_nh("~odometry")
-	{}
+		odom_nh("~odometry"),
+		estimator_type(3)
+	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
+		// general params
+		odom_nh.param("estimator_type", estimator_type, 3); // defaulted to VIO type
+
 		// subscribers
-		_odom_sub = _nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
+		_odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -48,8 +51,10 @@ public:
 	}
 
 private:
-	ros::NodeHandle _nh;
+	ros::NodeHandle odom_nh;
 	ros::Subscriber _odom_sub;
+
+	int estimator_type;
 
 	/* -*- callbacks -*- */
 
@@ -73,7 +78,11 @@ private:
 
 		// send LOCAL_POSITION_NED_COV
 		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos{};
+
 		lpos.time_usec = stamp;
+		lpos.estimator_type = estimator_type;
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<mavlink::common::MAV_ESTIMATOR_TYPE>(estimator_type));
+
 		// [[[cog:
 		// for f in "xyz":
 		//     cog.outl("lpos.%s = pos_ned.%s();" % (f, f))
@@ -100,7 +109,9 @@ private:
 
 		// send ATTITUDE_QUATERNION_COV
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att{};
+
 		att.time_usec = stamp;
+
 		// [[[cog:
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
 		//     cog.outl("att.%s = ang_vel_ned.%s();" % (b, a))
