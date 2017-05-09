@@ -70,9 +70,9 @@ private:
 		// apply frame transforms
 		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
-		auto ang_vel_ned = ftf::transform_frame_baselink_aircraft(ang_vel_enu);
 		auto q_ned = ftf::transform_orientation_enu_ned(
 					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+		auto ang_vel_ned = ftf::transform_frame_aircraft_ned(ftf::transform_frame_baselink_aircraft(ang_vel_enu), q_ned);
 
 		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
 
