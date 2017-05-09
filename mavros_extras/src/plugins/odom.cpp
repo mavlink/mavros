@@ -102,8 +102,8 @@ private:
 		lpos.az = 0.0;
 		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
 
-		auto cov_lin_vel = ftf::transform_frame_enu_ned(odom->pose.covariance);
-		ftf::covariance_to_mavlink(cov_lin_vel, lpos.covariance);
+		//auto cov_lin_vel = ftf::transform_frame_enu_ned(odom->pose.covariance);
+		//ftf::covariance_to_mavlink(cov_lin_vel, lpos.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
