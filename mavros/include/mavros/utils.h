@@ -72,7 +72,6 @@ std::string to_string(mavlink::common::MAV_STATE e);
 std::string to_string(mavlink::common::MAV_ESTIMATOR_TYPE e);
 std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 std::string to_string(mavlink::common::ADSB_ALTITUDE_TYPE e);
-std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 
 /**
  * Helper to call to_string() for enum _T
