@@ -178,4 +178,8 @@ vibration:
 # adsb
 # None
 
+# odom
+odom:
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+
 # vim:set ts=2 sw=2 et:
