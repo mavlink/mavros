@@ -77,7 +77,7 @@ private:
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
-	double thrust_scaling_, yaw_rate_caling_;
+	double thrust_scaling_, yaw_rate_scaling_;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
