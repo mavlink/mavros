@@ -98,7 +98,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
 		Affine6dTf << NED_ENU_AFFINE * R, Eigen::MatrixXd::Zero(3, 3),
-									Eigen::MatrixXd::Zero(3, 3), NED_ENU_AFFINE * R;
+			      Eigen::MatrixXd::Zero(3, 3), NED_ENU_AFFINE * R;
 
 		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
 		return cov_out_;
@@ -106,7 +106,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		Affine6dTf << AIRCRAFT_BASELINK_AFFINE * R, Eigen::MatrixXd::Zero(3, 3),
-									Eigen::MatrixXd::Zero(3, 3), AIRCRAFT_BASELINK_AFFINE * R;
+			      Eigen::MatrixXd::Zero(3, 3), AIRCRAFT_BASELINK_AFFINE * R;
 
 		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
 		return cov_out_;
@@ -140,7 +140,7 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
 
 	Affine6dTf << R, Eigen::MatrixXd::Zero(3, 3),
-								Eigen::MatrixXd::Zero(3, 3), R;
+		      Eigen::MatrixXd::Zero(3, 3), R;
 
 	cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
 
