@@ -95,7 +95,6 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	Eigen::Matrix3d R_ = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
 
 	switch (transform) {
-	default: {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
 		Affine6dTf << _R, Eigen::MatrixXd::Zero(3, 3),
@@ -111,7 +110,6 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 
 		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
 		return cov_out_;
-	}
 	}
 }
 
