@@ -40,7 +40,7 @@ public:
 		PluginBase::initialize(uas_);
 
 		// general params
-		odom_nh.param("estimator_type", estimator_type, 3); // defaulted to VIO type
+		odom_nh.param("estimator_type", estimator_type, 3);	// defaulted to VIO type
 
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<MAV_ESTIMATOR_TYPE>(estimator_type));
 
@@ -80,7 +80,7 @@ private:
 		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
 
 		// send LOCAL_POSITION_NED_COV
-		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos{};
+		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
 
 		lpos.time_usec = stamp;
 		lpos.estimator_type = estimator_type;
@@ -109,7 +109,7 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
 		// send ATTITUDE_QUATERNION_COV
-		mavlink::common::msg::ATTITUDE_QUATERNION_COV att{};
+		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
 
 		att.time_usec = stamp;
 
