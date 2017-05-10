@@ -40,7 +40,7 @@ public:
 		PluginBase::initialize(uas_);
 
 		// general params
-		odom_nh.param("estimator_type", estimator_type, enum_value(MAV_ESTIMATOR_TYPE::VIO)); // defaulted to VIO type
+		odom_nh.param("estimator_type", estimator_type, 3); // defaulted to VIO type
 
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<MAV_ESTIMATOR_TYPE>(estimator_type));
 
@@ -57,7 +57,7 @@ private:
 	ros::NodeHandle odom_nh;
 	ros::Subscriber odom_sub;
 
-	MAV_ESTIMATOR_TYPE estimator_type;
+	int estimator_type;
 
 	/* -*- callbacks -*- */
 
@@ -104,8 +104,8 @@ private:
 		lpos.az = 0.0;
 		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
 
-		//auto cov_lin_vel = ftf::transform_frame_enu_ned(odom->pose.covariance);
-		//ftf::covariance_to_mavlink(cov_lin_vel, lpos.covariance);
+		//auto cov_pos_linvel = ftf::transform_frame_enu_ned(odom->pose.covariance);
+		//ftf::covariance_to_mavlink(cov_pos_linvel, lpos.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
