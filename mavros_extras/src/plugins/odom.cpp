@@ -84,14 +84,12 @@ private:
 
 		lpos.time_usec = stamp;
 		lpos.estimator_type = estimator_type;
+		const auto zero = Eigen::Vector3d::Zero();
 
 		// [[[cog:
-		// for f in "xyz":
-		//     cog.outl("lpos.%s = pos_ned.%s();" % (f, f))
-		// for f in "xyz":
-		//     cog.outl("lpos.v%s = lin_vel_ned.%s();" % (f, f))
-		// for f in "xyz":
-		//     cog.outl("lpos.a%s = 0.0;" % f)
+		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zero')):
+		//     for f in 'xyz':
+		//         cog.outl("lpos.{a}{f} = {b}.{f}();".format(**locals()))
 		// ]]]
 		lpos.x = pos_ned.x();
 		lpos.y = pos_ned.y();
@@ -99,10 +97,10 @@ private:
 		lpos.vx = lin_vel_ned.x();
 		lpos.vy = lin_vel_ned.y();
 		lpos.vz = lin_vel_ned.z();
-		lpos.ax = 0.0;
-		lpos.ay = 0.0;
-		lpos.az = 0.0;
-		// [[[end]]] (checksum: e8d5d7d2428935f24933f5321183cea9)
+		lpos.ax = zero.x();
+		lpos.ay = zero.y();
+		lpos.az = zero.z();
+		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
 
 		//auto cov_pos_linvel = ftf::transform_frame_enu_ned(odom->pose.covariance);
 		//ftf::covariance_to_mavlink(cov_pos_linvel, lpos.covariance);
