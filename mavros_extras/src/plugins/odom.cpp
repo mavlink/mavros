@@ -102,10 +102,39 @@ private:
 		lpos.az = zero.z();
 		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
 
-		auto cov_pose = ftf::transform_frame_enu_ned(odom->pose.covariance);
+		/**
+		 * The transform of the pose covariance matrix is splited into two different
+		 * transform, as position is relative to world frame and
+		 * rotation is relative to body frame
+		 */
+		Eigen::MatrixXd cov_pos(3, 3);
+		Eigen::MatrixXd cov_rot(3, 3);
+
+		auto cov_pose_ = odom->pose.covariance.data();
+
+		cov_pos <<
+			cov_pose_[0] , cov_pose_[1] , cov_pose_[2] ,
+			cov_pose_[3] , cov_pose_[4] , cov_pose_[5] ,
+			cov_pose_[6] , cov_pose_[7] , cov_pose_[8] ;
+
+		cov_rot <<
+			cov_pose_[21] , cov_pose_[22] , cov_pose_[23] ,
+			cov_pose_[25] , cov_pose_[26] , cov_pose_[27] ,
+			cov_pose_[33] , cov_pose_[34] , cov_pose_[35] ;
+
+		auto cov_pos_out = ftf::transform_frame_enu_ned(cov_pos);
+		auto cov_rot_out = ftf::transform_frame_aircraft_ned(ftf::transform_frame_aircraft_baselink(cov_rot), q_ned);
+
+		ftf::Covariance3d cov_pose;
+		ftf::EigenMapCovariance3d cov_pos_rpy(cov_pose.data());
+
+		cov_pos_rpy << cov_pos_out, Eigen::MatrixXd::Zero(3, 3),
+			      Eigen::MatrixXd::Zero(3, 3), cov_rot_out;
+
 		ftf::covariance_to_mavlink(cov_pose, lpos.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
+
 
 		// send ATTITUDE_QUATERNION_COV
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att{};
@@ -123,7 +152,35 @@ private:
 
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
-		auto cov_vel = ftf::transform_frame_aircraft_baselink(odom->twist.covariance);
+		/**
+		 * The transform to the covariance matrix is splited into two different
+		 * transform, as linear velocity is relative to world frame and
+		 * angular velocity is relative to body frame
+		 */
+		Eigen::MatrixXd cov_ang_vel(3, 3);
+		Eigen::MatrixXd cov_lin_vel(3, 3);
+
+		auto cov_twist = odom->twist.covariance.data();
+
+		cov_lin_vel <<
+			cov_twist[0] , cov_twist[1] , cov_twist[2] ,
+			cov_twist[3] , cov_twist[4] , cov_twist[5] ,
+			cov_twist[6] , cov_twist[7] , cov_twist[8] ;
+
+		cov_ang_vel <<
+			cov_twist[21] , cov_twist[22] , cov_twist[23] ,
+			cov_twist[25] , cov_twist[26] , cov_twist[27] ,
+			cov_twist[33] , cov_twist[34] , cov_twist[35] ;
+
+		auto cov_lin_vel_out = ftf::transform_frame_enu_ned(cov_lin_vel);
+		auto cov_ang_vel_out = ftf::transform_frame_aircraft_ned(ftf::transform_frame_aircraft_baselink(cov_ang_vel), q_ned);
+
+		ftf::Covariance3d cov_vel;
+		ftf::EigenMapCovariance3d cov_vel_(cov_vel.data());
+
+		cov_vel_ << cov_lin_vel_out, Eigen::MatrixXd::Zero(3, 3),
+			      Eigen::MatrixXd::Zero(3, 3), cov_ang_vel_out;
+
 		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
