@@ -102,8 +102,8 @@ private:
 		lpos.az = zero.z();
 		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
 
-		//auto cov_pos_linvel = ftf::transform_frame_enu_ned(odom->pose.covariance);
-		//ftf::covariance_to_mavlink(cov_pos_linvel, lpos.covariance);
+		auto cov_pos_linvel = ftf::transform_frame_enu_ned(odom->pose.covariance);
+		ftf::covariance_to_mavlink(cov_pos_linvel, lpos.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
@@ -123,7 +123,7 @@ private:
 
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
-		auto cov_ang_vel = ftf::transform_frame_aircraft_baselink(odom->pose.covariance);
+		auto cov_ang_vel = ftf::transform_frame_aircraft_baselink(odom->twist.covariance);
 		ftf::covariance_to_mavlink(cov_ang_vel, att.covariance);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
