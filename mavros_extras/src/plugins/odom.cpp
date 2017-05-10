@@ -21,6 +21,7 @@
 
 namespace mavros {
 namespace extra_plugins {
+using mavlink::common::MAV_ESTIMATOR_TYPE;
 /**
  * @brief Odometry plugin
  *
@@ -39,10 +40,12 @@ public:
 		PluginBase::initialize(uas_);
 
 		// general params
-		odom_nh.param("estimator_type", estimator_type, 3); // defaulted to VIO type
+		odom_nh.param("estimator_type", estimator_type, enum_value(MAV_ESTIMATOR_TYPE::VIO)); // defaulted to VIO type
+
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<MAV_ESTIMATOR_TYPE>(estimator_type));
 
 		// subscribers
-		_odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
+		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -52,9 +55,9 @@ public:
 
 private:
 	ros::NodeHandle odom_nh;
-	ros::Subscriber _odom_sub;
+	ros::Subscriber odom_sub;
 
-	int estimator_type;
+	MAV_ESTIMATOR_TYPE estimator_type;
 
 	/* -*- callbacks -*- */
 
@@ -81,7 +84,6 @@ private:
 
 		lpos.time_usec = stamp;
 		lpos.estimator_type = estimator_type;
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<mavlink::common::MAV_ESTIMATOR_TYPE>(estimator_type));
 
 		// [[[cog:
 		// for f in "xyz":
