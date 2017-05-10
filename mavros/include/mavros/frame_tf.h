@@ -319,9 +319,7 @@ inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
  */
 template<class T, std::size_t SIZE>
 inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
-	for (size_t i = 0; i < SIZE; i++) {
-		covmsg[i] = cov[i];
-	}
+	std::copy(cov.cbegin(), cov.cend(), covmsg.begin());
 }
 }	// namespace ftf
 }	// namespace mavros
