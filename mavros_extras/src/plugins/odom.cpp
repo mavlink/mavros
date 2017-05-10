@@ -126,10 +126,6 @@ private:
 		auto cov_ang_vel = ftf::transform_frame_aircraft_baselink(odom->twist.covariance);
 		ftf::covariance_to_mavlink(cov_ang_vel, att.covariance);
 
-		ROS_INFO("position cov: \n%1.20f \n%1.20f \n%1.20f \n%1.20f \n%1.20f \n%1.20f \n%1.20f",
-		cov_pos_linvel[0], cov_pos_linvel[1], cov_pos_linvel[7],  cov_pos_linvel[14],
-		cov_pos_linvel[21], cov_pos_linvel[28],  cov_pos_linvel[35]);
-
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
 	}
 };
