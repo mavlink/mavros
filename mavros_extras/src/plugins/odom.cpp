@@ -70,12 +70,22 @@ private:
 		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
 		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
 
+		Eigen::Quaterniond enu_orientation;
+		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
+
+		// body frame rotations must be aware of current attitude of the vehicle
+		auto q_ned_current = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(enu_orientation));
+
 		// apply coordinate frame transforms
 		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
 		auto q_ned = ftf::transform_orientation_enu_ned(
 					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
-		auto ang_vel_ned = ftf::transform_frame_aircraft_ned(ftf::transform_frame_baselink_aircraft(ang_vel_enu), q_ned);
+		// WRT body frame
+		auto ang_vel_ned = ftf::transform_frame_enu_ned(
+					ftf::transform_frame_baselink_aircraft(
+						ftf::transform_frame_ned_aircraft(ang_vel_enu, q_ned_current)));
 
 		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
 
@@ -128,7 +138,9 @@ private:
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
 		// WRT body frame
-		auto cov_vel = ftf::transform_frame_aircraft_ned(ftf::transform_frame_aircraft_baselink(odom->twist.covariance), q_ned);
+		auto cov_vel = ftf::transform_frame_enu_ned(
+					ftf::transform_frame_baselink_aircraft(
+						ftf::transform_frame_ned_aircraft(odom->twist.covariance, q_ned_current)));
 		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
 		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
