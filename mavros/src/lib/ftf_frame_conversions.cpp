@@ -21,19 +21,34 @@
 namespace mavros {
 namespace ftf {
 namespace detail {
-// Static quaternion needed for rotating between ENU and NED frames
-// +PI rotation around X (North) axis follwed by +PI/2 rotation about Z (Down)
-// gives the ENU frame.  Similarly, a +PI rotation about X (East) followed by
-// a +PI/2 roation about Z (Up) gives the NED frame.
+/**
+ * @brief Static quaternion needed for rotating between ENU and NED frames
+ * +PI rotation around X (North) axis follwed by +PI/2 rotation about Z (Down)
+ * gives the ENU frame.  Similarly, a +PI rotation about X (East) followed by
+ * a +PI/2 roation about Z (Up) gives the NED frame.
+ */
 static const Eigen::Quaterniond NED_ENU_Q = quaternion_from_rpy(M_PI, 0.0, M_PI_2);
 
-// Static quaternion needed for rotating between aircraft and base_link frames
-// +PI rotation around X (Forward) axis transforms from Forward, Right, Down (aircraft)
-// Fto Forward, Left, Up (base_link) frames.
+/**
+ * @brief Static quaternion needed for rotating between aircraft and base_link frames
+ * +PI rotation around X (Forward) axis transforms from Forward, Right, Down (aircraft)
+ * Fto Forward, Left, Up (base_link) frames.
+ */
 static const Eigen::Quaterniond AIRCRAFT_BASELINK_Q = quaternion_from_rpy(M_PI, 0.0, 0.0);
 
 static const Eigen::Affine3d NED_ENU_AFFINE(NED_ENU_Q);
 static const Eigen::Affine3d AIRCRAFT_BASELINK_AFFINE(AIRCRAFT_BASELINK_Q);
+
+/**
+ * @brief 3-D matrices to fill 6-D rotation matrix applied to change covariance matrices coordinate frames
+ */
+static const Eigen::Matrix3d R_NE = NED_ENU_Q.normalized().toRotationMatrix();
+static const Eigen::Matrix3d R_AB = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
+
+/**
+ * @brief 3-D matrix, filled with zeros, that reprensent top-right and bottom-left of the rotation matrix
+ */
+static const auto zerom3d = Eigen::Matrix3d::Zero();
 
 
 Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const StaticTF transform)
@@ -90,25 +105,23 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
-	Eigen::MatrixXd Affine6dTf(6,6);
-	Eigen::Matrix3d _R = NED_ENU_Q.normalized().toRotationMatrix();
-	Eigen::Matrix3d R_ = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
+	Eigen::MatrixXd affine6dTF(6,6);
 
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		Affine6dTf << _R, Eigen::MatrixXd::Zero(3, 3),
-			      Eigen::MatrixXd::Zero(3, 3), _R;
+		affine6dTF << R_NE, zerom3d,
+			      zerom3d, R_NE;
 
-		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
+		cov_out = affine6dTF * cov_in * affine6dTF.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
-		Affine6dTf << R_, Eigen::MatrixXd::Zero(3, 3),
-			      Eigen::MatrixXd::Zero(3, 3), R_;
+		affine6dTF << R_AB, zerom3d,
+			      zerom3d, R_AB;
 
-		cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
+		cov_out = affine6dTF * cov_in * affine6dTF.transpose();
 		return cov_out_;
 	}
 }
@@ -135,13 +148,13 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
-	Eigen::MatrixXd Affine6dTf(6, 6);
+	Eigen::MatrixXd affine6dTF(6, 6);
 	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
 
-	Affine6dTf << R, Eigen::MatrixXd::Zero(3, 3),
-		      Eigen::MatrixXd::Zero(3, 3), R;
+	affine6dTF << R, zerom3d,
+		      zerom3d, R;
 
-	cov_out = Affine6dTf * cov_in * Affine6dTf.transpose();
+	cov_out = affine6dTF * cov_in * affine6dTF.transpose();
 
 	return cov_out_;
 }
