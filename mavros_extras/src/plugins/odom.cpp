@@ -70,7 +70,7 @@ private:
 		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
 		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
 
-		// apply frame transforms
+		// apply coordinate frame transforms
 		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
 		auto q_ned = ftf::transform_orientation_enu_ned(
@@ -102,9 +102,12 @@ private:
 		lpos.az = zero.z();
 		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
 
-		// WRT
+		// WRT world frame
 		auto cov_pose = ftf::transform_frame_enu_ned(odom->pose.covariance);
 		ftf::covariance_to_mavlink(cov_pose, lpos.covariance);
+
+		ftf::EigenMapCovariance6d cov_pose_map(cov_pose.data());
+		ROS_DEBUG_STREAM_NAMED("odom","Odometry: pose covariance matrix: " << std::endl << cov_pose_map);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
 
@@ -124,9 +127,12 @@ private:
 
 		ftf::quaternion_to_mavlink(q_ned, att.q);
 
-		// body frame
+		// WRT body frame
 		auto cov_vel = ftf::transform_frame_aircraft_ned(ftf::transform_frame_aircraft_baselink(odom->twist.covariance), q_ned);
 		ftf::covariance_to_mavlink(cov_vel, att.covariance);
+
+		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
+		ROS_DEBUG_STREAM_NAMED("odom","Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
 	}
