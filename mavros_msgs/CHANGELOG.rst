@@ -2,6 +2,14 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2017-05-05)
+-------------------
+* msgs: Add cog script to finish ADSBVehicle.msg
+* extras: Add ADSB plugin
+* plugin `#695 <https://github.com/mavlink/mavros/issues/695>`_: Fix plugin
+* plugin: Add home_position
+* Contributors: Nuno Marques, Vladimir Ermakov
+
 0.18.7 (2017-02-24)
 -------------------
 * trigger interface : rename to cycle_time to be consistent with PX4

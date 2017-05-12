@@ -3,7 +3,6 @@ plugin_blacklist:
 - actuator_control
 - ftp
 - safety_area
-- setpoint_attitude
 # extras
 - image_pub
 - 'mocap_*'
