@@ -49,6 +49,9 @@ public:
 		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling_)){
 			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
 		}
+		if(!sp_nh.getParam("system_mass_kg", system_mass_kg_)){
+			ROS_FATAL("No system mass found, DO NOT FLY");
+		}
     if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling_)){
       ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
     }
@@ -77,7 +80,7 @@ private:
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
-	double thrust_scaling_, yaw_rate_scaling_;
+	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -276,7 +279,7 @@ private:
   	geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(
       msg->roll, msg->pitch, 0);
 
-		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_));
+		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ / system_mass_kg_));
 
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d body_rate;
