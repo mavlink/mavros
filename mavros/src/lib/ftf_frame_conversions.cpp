@@ -147,7 +147,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	case StaticTF::ENU_TO_NED:
 		affine9dTF << NED_ENU_R, ZEROM3D, ZEROM3D,
 			      ZEROM3D, NED_ENU_R, ZEROM3D,
-						ZEROM3D, ZEROM3D, NED_ENU_R;
+			      ZEROM3D, ZEROM3D, NED_ENU_R;
 
 		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
 		return cov_out_;
@@ -156,7 +156,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		affine9dTF << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
 			      ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
-						ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
+			      ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
 
 		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
 		return cov_out_;
@@ -207,7 +207,7 @@ Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &
 
 	affine9dTF << R, ZEROM3D, ZEROM3D,
 		      ZEROM3D, R, ZEROM3D,
-					ZEROM3D, ZEROM3D, R;
+		      ZEROM3D, ZEROM3D, R;
 
 	cov_out = affine9dTF * cov_in * affine9dTF.transpose();
 
