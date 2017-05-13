@@ -27,11 +27,14 @@
 
 namespace mavros {
 namespace ftf {
-//! Type matching rosmsg for covariance 3x3
+//! Type matching rosmsg for 3x3 covariance matrix
 using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
 
-//! Type matching rosmsg for covariance 6x6
+//! Type matching rosmsg for 6x6 covariance matrix
 using Covariance6d = geometry_msgs::PoseWithCovariance::_covariance_type;
+
+//! Type matching rosmsg for 9x9 covariance matrix
+using Covariance9d = std::array<double, 81>;
 
 //! Eigen::Map for Covariance3d
 using EigenMapCovariance3d = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >;
@@ -40,6 +43,11 @@ using EigenMapConstCovariance3d = Eigen::Map<const Eigen::Matrix<double, 3, 3, E
 //! Eigen::Map for Covariance6d
 using EigenMapCovariance6d = Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >;
 using EigenMapConstCovariance6d = Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >;
+
+//! Eigen::Map for Covariance9d
+using EigenMapCovariance9d = Eigen::Map<Eigen::Matrix<double, 9, 9, Eigen::RowMajor> >;
+using EigenMapConstCovariance9d = Eigen::Map<const Eigen::Matrix<double, 9, 9, Eigen::RowMajor> >;
+
 
 /**
  * @brief Orientation transform options when applying rotations to data
@@ -83,6 +91,13 @@ Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &
 Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q);
 
 /**
+ * @brief Transform 9x9 convariance expressed in one frame to another
+ *
+ * General function. Please use specialized enu-ned and ned-enu variants.
+ */
+Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &q);
+
+/**
  * @brief Transform data experessed in one frame to another frame.
  *
  * General function. Please use specialized enu-ned and ned-enu variants.
@@ -102,6 +117,13 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
 Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF transform);
+
+/**
+ * @brief Transform 9d convariance expressed in one frame to another
+ *
+ * General function. Please use specialized enu-ned and ned-enu variants.
+ */
+Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform);
 
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
@@ -320,6 +342,42 @@ inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
 template<class T, std::size_t SIZE>
 inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
 	std::copy(cov.cbegin(), cov.cend(), covmsg.begin());
+}
+
+/**
+ * @brief Store half upper right triangular of 9d Covariance matrix to MAVLink float[n] format
+ */
+template<class T, std::size_t SIZE>
+inline void covariance9d_urt_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
+	std::vector<float> aux;
+
+	for (size_t i = 0; i <= 8; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 10; i <= 17; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 20; i <= 26; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 30; i <= 35; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 40; i <= 44; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 50; i <= 53; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 60; i <= 62; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	for (size_t i = 70; i <= 71; i ++) {
+		aux.push_back(cov.data()[i]);
+	}
+	aux.push_back(cov.data()[80]);
+
+	std::copy(aux.cbegin(), aux.cend(), covmsg.begin());
 }
 }	// namespace ftf
 }	// namespace mavros
