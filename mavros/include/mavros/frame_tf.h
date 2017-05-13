@@ -350,9 +350,10 @@ inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
 template<class T, std::size_t SIZE>
 inline void covariance9d_urt_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
 	std::vector<float> aux;
-	for (size_t i=0; i < SIZE; i++) {
-		for (size_t j=i; j < SIZE; j++) {
-			aux.push_back(cov.data()[i + j * SIZE]);
+	size_t n = 9;
+	for (size_t i=0; i < n; i++) {
+		for (size_t j=i; j < n; j++) {
+			aux.push_back(cov.data()[i + j * n]);
 		}
 	}
 	std::copy(aux.cbegin(), aux.cend(), covmsg.begin());

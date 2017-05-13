@@ -107,8 +107,6 @@ private:
 		auto cov_full_tf = ftf::transform_frame_enu_ned(cov_full);
 		ftf::EigenMapCovariance9d cov_tf_map(cov_full_tf.data());
 		ROS_DEBUG_STREAM_NAMED("odom","Odometry: pose+accel covariance matrix: " << std::endl << cov_tf_map);
-		// using conv = Eigen::Map<Eigen::Matrix<float, 1, 45, Eigen::RowMajor> >;
-		// ROS_INFO_STREAM("Odometry: Cov URT: " << std::endl << conv(lpos.covariance.data()));
 
 		/**
 		 * @brief Velocity 6-D Covariance matrix
@@ -145,6 +143,9 @@ private:
 		lpos.az = zero.z();
 		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
 		ftf::covariance9d_urt_to_mavlink(cov_full_tf, lpos.covariance);
+
+		//using conv = Eigen::Map<Eigen::Matrix<float, 1, 45, Eigen::RowMajor> >;
+		//ROS_INFO_STREAM("Odometry: Cov URT: " << std::endl << conv(lpos.covariance.data()));
 
 		// send LOCAL_POSITION_NED_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
