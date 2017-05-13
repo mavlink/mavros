@@ -350,34 +350,13 @@ inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
 template<class T, std::size_t SIZE>
 inline void covariance9d_urt_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg) {
 	std::vector<float> aux;
-
-	for (size_t i = 0; i <= 8; i ++) {
-		aux.push_back(cov.data()[i]);
+	for (size_t i=0; i < SIZE; i++) {
+		for (size_t j=i; j < SIZE; j++) {
+			aux.push_back(cov.data()[i + j * SIZE]);
+		}
 	}
-	for (size_t i = 10; i <= 17; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 20; i <= 26; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 30; i <= 35; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 40; i <= 44; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 50; i <= 53; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 60; i <= 62; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	for (size_t i = 70; i <= 71; i ++) {
-		aux.push_back(cov.data()[i]);
-	}
-	aux.push_back(cov.data()[80]);
-
 	std::copy(aux.cbegin(), aux.cend(), covmsg.begin());
 }
+
 }	// namespace ftf
 }	// namespace mavros
