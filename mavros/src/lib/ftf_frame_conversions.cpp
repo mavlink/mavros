@@ -113,7 +113,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
-	Eigen::MatrixXd affine6dTF(6,6);
+	Eigen::MatrixXd affine6dTF(6, 6);
 
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
@@ -130,6 +130,35 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 			      ZEROM3D, AIRCRAFT_BASELINK_R;
 
 		cov_out = affine6dTF * cov_in * affine6dTF.transpose();
+		return cov_out_;
+	}
+}
+
+Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform)
+{
+	Covariance9d cov_out_;
+	EigenMapConstCovariance9d cov_in(cov.data());
+	EigenMapCovariance9d cov_out(cov_out_.data());
+
+	Eigen::MatrixXd affine9dTF(9, 9);
+
+	switch (transform) {
+	case StaticTF::NED_TO_ENU:
+	case StaticTF::ENU_TO_NED:
+		affine9dTF << NED_ENU_R, ZEROM3D, ZEROM3D,
+			      ZEROM3D, NED_ENU_R, ZEROM3D,
+						ZEROM3D, ZEROM3D, NED_ENU_R;
+
+		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
+		return cov_out_;
+
+	case StaticTF::AIRCRAFT_TO_BASELINK:
+	case StaticTF::BASELINK_TO_AIRCRAFT:
+		affine9dTF << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
+			      ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
+						ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
+
+		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
 		return cov_out_;
 	}
 }
@@ -166,6 +195,25 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 
 	return cov_out_;
 }
+
+Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &q)
+{
+	Covariance9d cov_out_;
+	EigenMapConstCovariance9d cov_in(cov.data());
+	EigenMapCovariance9d cov_out(cov_out_.data());
+
+	Eigen::MatrixXd affine9dTF(9, 9);
+	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+
+	affine9dTF << R, ZEROM3D, ZEROM3D,
+		      ZEROM3D, R, ZEROM3D,
+					ZEROM3D, ZEROM3D, R;
+
+	cov_out = affine9dTF * cov_in * affine9dTF.transpose();
+
+	return cov_out_;
+}
+
 }	// namespace detail
 }	// namespace ftf
 }	// namespace mavros
