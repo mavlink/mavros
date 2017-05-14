@@ -34,7 +34,7 @@ using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
 using Covariance6d = geometry_msgs::PoseWithCovariance::_covariance_type;
 
 //! Type matching rosmsg for 9x9 covariance matrix
-using Covariance9d = std::array<double, 81>;
+using Covariance9d = boost::array<double, 81>;
 
 //! Eigen::Map for Covariance3d
 using EigenMapCovariance3d = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >;
