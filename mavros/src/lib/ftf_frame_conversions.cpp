@@ -125,7 +125,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
 		R << NED_ENU_R, ZEROM3D,
-			      ZEROM3D, NED_ENU_R;
+		      ZEROM3D, NED_ENU_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -133,7 +133,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		R << AIRCRAFT_BASELINK_R, ZEROM3D,
-			      ZEROM3D, AIRCRAFT_BASELINK_R;
+		      ZEROM3D, AIRCRAFT_BASELINK_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -152,8 +152,8 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
 		R << NED_ENU_R, ZEROM3D, ZEROM3D,
-			      ZEROM3D, NED_ENU_R, ZEROM3D,
-			      ZEROM3D, ZEROM3D, NED_ENU_R;
+		      ZEROM3D, NED_ENU_R, ZEROM3D,
+		      ZEROM3D, ZEROM3D, NED_ENU_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -161,8 +161,8 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		R << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
-			      ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
-			      ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
+		      ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
+		      ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -196,7 +196,7 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
 	R << R_q, ZEROM3D,
-		      ZEROM3D, R_q;
+	      ZEROM3D, R_q;
 
 	cov_out = R * cov_in * R.transpose();
 
@@ -214,8 +214,8 @@ Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &
 	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
 	R << R_q, ZEROM3D, ZEROM3D,
-		      ZEROM3D, R_q, ZEROM3D,
-		      ZEROM3D, ZEROM3D, R_q;
+	      ZEROM3D, R_q, ZEROM3D,
+	      ZEROM3D, ZEROM3D, R_q;
 
 	cov_out = R * cov_in * R.transpose();
 
