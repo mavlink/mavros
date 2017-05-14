@@ -58,6 +58,12 @@ static const auto NED_ENU_R = NED_ENU_Q.normalized().toRotationMatrix();
 static const auto AIRCRAFT_BASELINK_R = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
 static const auto ZEROM3D = Eigen::Matrix3d::Zero();
 
+/**
+ * @brief Auxiliar matrices to Covariance transforms
+ */
+using Affine6dTF = Eigen::Matrix<double, 6, 6>;
+using Affine9dTF = Eigen::Matrix<double, 9, 9>;
+
 
 Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const StaticTF transform)
 {
@@ -110,26 +116,26 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
 Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF transform)
 {
 	Covariance6d cov_out_;
+	Affine6dTF R;
+
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
-
-	Eigen::MatrixXd affine6dTF(6, 6);
 
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		affine6dTF << NED_ENU_R, ZEROM3D,
+		R << NED_ENU_R, ZEROM3D,
 			      ZEROM3D, NED_ENU_R;
 
-		cov_out = affine6dTF * cov_in * affine6dTF.transpose();
+		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
-		affine6dTF << AIRCRAFT_BASELINK_R, ZEROM3D,
+		R << AIRCRAFT_BASELINK_R, ZEROM3D,
 			      ZEROM3D, AIRCRAFT_BASELINK_R;
 
-		cov_out = affine6dTF * cov_in * affine6dTF.transpose();
+		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 	}
 }
@@ -137,28 +143,28 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform)
 {
 	Covariance9d cov_out_;
+	Affine9dTF R;
+
 	EigenMapConstCovariance9d cov_in(cov.data());
 	EigenMapCovariance9d cov_out(cov_out_.data());
-
-	Eigen::MatrixXd affine9dTF(9, 9);
 
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		affine9dTF << NED_ENU_R, ZEROM3D, ZEROM3D,
+		R << NED_ENU_R, ZEROM3D, ZEROM3D,
 			      ZEROM3D, NED_ENU_R, ZEROM3D,
 			      ZEROM3D, ZEROM3D, NED_ENU_R;
 
-		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
+		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
-		affine9dTF << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
+		R << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
 			      ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
 			      ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
 
-		cov_out = affine9dTF * cov_in * affine9dTF.transpose();
+		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 	}
 }
@@ -182,16 +188,17 @@ Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &
 Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q)
 {
 	Covariance6d cov_out_;
+	Affine6dTF R;
+
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
-	Eigen::MatrixXd affine6dTF(6, 6);
-	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
-	affine6dTF << R, ZEROM3D,
-		      ZEROM3D, R;
+	R << R_q, ZEROM3D,
+		      ZEROM3D, R_q;
 
-	cov_out = affine6dTF * cov_in * affine6dTF.transpose();
+	cov_out = R * cov_in * R.transpose();
 
 	return cov_out_;
 }
@@ -199,17 +206,18 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &q)
 {
 	Covariance9d cov_out_;
+	Affine9dTF R;
+
 	EigenMapConstCovariance9d cov_in(cov.data());
 	EigenMapCovariance9d cov_out(cov_out_.data());
 
-	Eigen::MatrixXd affine9dTF(9, 9);
-	Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
-	affine9dTF << R, ZEROM3D, ZEROM3D,
-		      ZEROM3D, R, ZEROM3D,
-		      ZEROM3D, ZEROM3D, R;
+	R << R_q, ZEROM3D, ZEROM3D,
+		      ZEROM3D, R_q, ZEROM3D,
+		      ZEROM3D, ZEROM3D, R_q;
 
-	cov_out = affine9dTF * cov_in * affine9dTF.transpose();
+	cov_out = R * cov_in * R.transpose();
 
 	return cov_out_;
 }
