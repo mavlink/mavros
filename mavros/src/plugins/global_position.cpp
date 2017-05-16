@@ -25,6 +25,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/NavSatStatus.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geographic_msgs/GeoPointStamped.h>
@@ -70,6 +71,7 @@ public:
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
+		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
 
 		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 	}
@@ -80,7 +82,8 @@ public:
 			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
 			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
-			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin)
+			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+						 make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -94,6 +97,7 @@ private:
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
 	ros::Publisher gp_global_origin_pub;
+	ros::Publisher gp_global_offset_pub;
 
 	ros::Subscriber gp_set_global_origin_sub;
 
@@ -195,7 +199,7 @@ private:
 
 		g_origin->header.frame_id = frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		fill_lla_wgs84(glob_orig, g_origin);	// @warning TODO: #529
+		fill_lla_wgs84(glob_orig, g_origin);	// @warning TODO: #693
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -276,12 +280,12 @@ private:
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out <<
-		gps_cov(0, 0), gps_cov(0, 1), gps_cov(0, 2), 0.0, 0.0, 0.0,
-		gps_cov(1, 0), gps_cov(1, 1), gps_cov(1, 2), 0.0, 0.0, 0.0,
-		gps_cov(2, 0), gps_cov(2, 1), gps_cov(2, 2), 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, rot_cov, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, rot_cov, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, rot_cov;
+			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -304,6 +308,41 @@ private:
 			transform.transform.translation.x = odom->pose.pose.position.x;
 			transform.transform.translation.y = odom->pose.pose.position.y;
 			transform.transform.translation.z = odom->pose.pose.position.z;
+
+			m_uas->tf2_broadcaster.sendTransform(transform);
+		}
+	}
+
+	void handle_lpned_system_global_offset (const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET &offset)
+	{
+		auto global_offset = boost::make_shared<geometry_msgs::PoseStamped>();
+		global_offset->header = m_uas->synchronized_header("global_map", offset.time_boot_ms);
+
+		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(offset.x, offset.y, offset.z));
+		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
+				ftf::transform_orientation_ned_enu(
+					ftf::quaternion_from_rpy(offset.roll, offset.pitch, offset.yaw)));
+
+		tf::pointEigenToMsg(enu_position, global_offset->pose.position);
+		tf::quaternionEigenToMsg(enu_baselink_orientation, global_offset->pose.orientation);
+
+		gp_global_offset_pub.publish(global_offset);
+
+		// TF
+		if (tf_send) {
+			geometry_msgs::TransformStamped transform;
+
+			transform.header.stamp = global_offset->header.stamp;
+			transform.header.frame_id = "global_map";
+			transform.child_frame_id = tf_child_frame_id;
+
+			// setRotation()
+			transform.transform.rotation = global_offset->pose.orientation;
+
+			// setOrigin()
+			transform.transform.translation.x = global_offset->pose.position.x;
+			transform.transform.translation.y = global_offset->pose.position.y;
+			transform.transform.translation.z = global_offset->pose.position.z;
 
 			m_uas->tf2_broadcaster.sendTransform(transform);
 		}
@@ -348,7 +387,7 @@ private:
 
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
-		fill_lla_amsl(gpo, req);// @warning TODO: #529
+		fill_lla_amsl(gpo, req);// @warning TODO: #693
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
