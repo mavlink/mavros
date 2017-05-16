@@ -36,6 +36,8 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
+		safety_nh.param<std::string>("frame_id", frame_id, "safety_area");
+
 		bool manual_def = false;
 		double p1x, p1y, p1z,
 			p2x, p2y, p2z;
@@ -65,19 +67,49 @@ public:
 					Eigen::Vector3d(p2x, p2y, p2z));
 
 		safetyarea_sub = safety_nh.subscribe("set", 10, &SafetyAreaPlugin::safetyarea_cb, this);
+		safetyarea_pub = safety_nh.advertise<geometry_msgs::PolygonStamped>("get",10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
-
-		/** @todo Publish SAFETY_ALLOWED_AREA message */
+		return {
+		       make_handler(&SafetyAreaPlugin::handle_safety_allowed_area)
+		};
 	}
 
 private:
 	ros::NodeHandle safety_nh;
 
+	std::string frame_id;
+
 	ros::Subscriber safetyarea_sub;
+	ros::Publisher safetyarea_pub;
+
+	/* -*- rx handlers -*- */
+	void handle_safety_allowed_area(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SAFETY_ALLOWED_AREA &saa)
+	{
+		auto saa_msg = boost::make_shared<geometry_msgs::PolygonStamped>();
+
+		Eigen::Vector3d p1(saa.p1x, saa.p1y, saa.p1z);
+		Eigen::Vector3d p2(saa.p2x, saa.p2y, saa.p2z);
+
+		p1 = ftf::transform_frame_ned_enu(p1);
+		p2 = ftf::transform_frame_ned_enu(p2);
+
+		saa_msg->header.stamp = ros::Time::now();
+		saa_msg->header.frame_id = frame_id;
+		//saa_msg->header.frame_id = utils::to_string(saa.frame);	@TODO: after #311 merged this will work
+
+		saa_msg->polygon.points.resize(2);
+		saa_msg->polygon.points[0].x = p1.x();
+		saa_msg->polygon.points[0].y = p1.y();
+		saa_msg->polygon.points[0].z = p1.z();
+		saa_msg->polygon.points[1].x = p2.x();
+		saa_msg->polygon.points[1].y = p2.y();
+		saa_msg->polygon.points[1].z = p2.z();
+
+		safetyarea_pub.publish(saa_msg);
+	}
 
 	/* -*- mid-level helpers -*- */
 
@@ -89,7 +121,7 @@ private:
 	 */
 	void send_safety_set_allowed_area(Eigen::Vector3d p1, Eigen::Vector3d p2)
 	{
-		ROS_INFO_STREAM_NAMED("safetyarea", "SA: Set safty area: P1 " << p1 << " P2 " << p2);
+		ROS_INFO_STREAM_NAMED("safetyarea", "SA: Set safety area: P1 " << p1 << " P2 " << p2);
 
 		p1 = ftf::transform_frame_enu_ned(p1);
 		p2 = ftf::transform_frame_enu_ned(p2);
