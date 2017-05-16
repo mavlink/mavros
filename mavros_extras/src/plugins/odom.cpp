@@ -1,7 +1,7 @@
 /**
  * @brief Odometry plugin
  * @file odom.cpp
- * @author James Goppert <james.goppert8@gmail.com>
+ * @author James Goppert <james.goppert@gmail.com>
  *
  * @addtogroup plugin
  * @{
