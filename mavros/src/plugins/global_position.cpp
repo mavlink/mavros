@@ -281,13 +281,9 @@ private:
 		// Use ENU covariance to build XYZRPY covariance
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
-		pos_cov_out <<
-			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
+		pos_cov_out.setZero();
+		pos_cov_out.block<3, 3>(0, 0) << gps_cov;
+		pos_cov_out.block<3, 3>(3, 3).diagonal() << rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
