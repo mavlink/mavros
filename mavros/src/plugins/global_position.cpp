@@ -57,6 +57,7 @@ public:
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
+		gp_nh.param<std::string>("tf/global_frame_id", tf_global_frame_id, "global_map");
 		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 
 		UAS_DIAG(m_uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
@@ -103,6 +104,7 @@ private:
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
+	std::string tf_global_frame_id;	//!< global origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
 	bool tf_send;
 	double rot_cov;
@@ -195,7 +197,7 @@ private:
 	void handle_gps_global_origin(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_GLOBAL_ORIGIN &glob_orig)
 	{
 		auto g_origin = boost::make_shared<geographic_msgs::GeoPointStamped>();
-		// auto header = m_uas->synchronized_header(frame_id, gpos.time_boot_ms);	#TODO: requires Mavlink msg update
+		// auto header = m_uas->synchronized_header(frame_id, glob_orig.time_boot_ms);	#TODO: requires Mavlink msg update
 
 		g_origin->header.frame_id = frame_id;
 		g_origin->header.stamp = ros::Time::now();
@@ -313,10 +315,10 @@ private:
 		}
 	}
 
-	void handle_lpned_system_global_offset (const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET &offset)
+	void handle_lpned_system_global_offset(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET &offset)
 	{
 		auto global_offset = boost::make_shared<geometry_msgs::PoseStamped>();
-		global_offset->header = m_uas->synchronized_header("global_map", offset.time_boot_ms);
+		global_offset->header = m_uas->synchronized_header(tf_global_frame_id, offset.time_boot_ms);
 
 		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(offset.x, offset.y, offset.z));
 		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
@@ -333,8 +335,8 @@ private:
 			geometry_msgs::TransformStamped transform;
 
 			transform.header.stamp = global_offset->header.stamp;
-			transform.header.frame_id = "global_map";
-			transform.child_frame_id = tf_child_frame_id;
+			transform.header.frame_id = tf_global_frame_id;
+			transform.child_frame_id = tf_frame_id;
 
 			// setRotation()
 			transform.transform.rotation = global_offset->pose.orientation;
