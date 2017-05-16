@@ -81,13 +81,12 @@ private:
 		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
 		ftf::EigenMapConstCovariance6d cov_in(odom->pose.covariance.data());
 
-		const auto zero6x3d = Eigen::Matrix<double, 6, 3>::Zero();
-		const auto zero3x6d = Eigen::Matrix<double, 3, 6>::Zero();
 		const auto identity3d = Eigen::Matrix3d::Identity();
 
 		// 9x9 covariance matrix contruct
-		cov_full_map << cov_in, zero6x3d,
-			      zero3x6d, identity3d;
+		cov_full_map.setZero();
+		cov_full_map.block<6, 6>(0, 0) << cov_in;
+		cov_full_map.block<3, 3>(6, 6) << identity3d;
 
 		/* -*- vector transforms -*- */
 		// body frame rotations must be aware of current attitude of the vehicle

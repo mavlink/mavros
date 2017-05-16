@@ -56,7 +56,6 @@ static const Eigen::Affine3d AIRCRAFT_BASELINK_AFFINE(AIRCRAFT_BASELINK_Q);
  */
 static const auto NED_ENU_R = NED_ENU_Q.normalized().toRotationMatrix();
 static const auto AIRCRAFT_BASELINK_R = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
-static const auto ZEROM3D = Eigen::Matrix3d::Zero();
 
 /**
  * @brief Auxiliar matrices to Covariance transforms
@@ -117,6 +116,7 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 {
 	Covariance6d cov_out_;
 	Affine6dTF R;
+	R.setZero();
 
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
@@ -124,16 +124,16 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		R << NED_ENU_R, ZEROM3D,
-		     ZEROM3D, NED_ENU_R;
+		R.block<3, 3>(0, 0) << NED_ENU_R;
+		R.block<3, 3>(3, 3) << NED_ENU_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
-		R << AIRCRAFT_BASELINK_R, ZEROM3D,
-		     ZEROM3D, AIRCRAFT_BASELINK_R;
+		R.block<3, 3>(0, 0) << AIRCRAFT_BASELINK_R;
+		R.block<3, 3>(3, 3) << AIRCRAFT_BASELINK_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -144,6 +144,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 {
 	Covariance9d cov_out_;
 	Affine9dTF R;
+	R.setZero();
 
 	EigenMapConstCovariance9d cov_in(cov.data());
 	EigenMapCovariance9d cov_out(cov_out_.data());
@@ -151,18 +152,18 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		R << NED_ENU_R, ZEROM3D, ZEROM3D,
-		     ZEROM3D, NED_ENU_R, ZEROM3D,
-		     ZEROM3D, ZEROM3D, NED_ENU_R;
+		R.block<3, 3>(0, 0) << NED_ENU_R;
+		R.block<3, 3>(3, 3) << NED_ENU_R;
+		R.block<3, 3>(6, 6) << NED_ENU_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
-		R << AIRCRAFT_BASELINK_R, ZEROM3D, ZEROM3D,
-		     ZEROM3D, AIRCRAFT_BASELINK_R, ZEROM3D,
-		     ZEROM3D, ZEROM3D, AIRCRAFT_BASELINK_R;
+		R.block<3, 3>(0, 0) << AIRCRAFT_BASELINK_R;
+		R.block<3, 3>(3, 3) << AIRCRAFT_BASELINK_R;
+		R.block<3, 3>(6, 6) << AIRCRAFT_BASELINK_R;
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
@@ -189,14 +190,15 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 {
 	Covariance6d cov_out_;
 	Affine6dTF R;
+	R.setZero();
 
 	EigenMapConstCovariance6d cov_in(cov.data());
 	EigenMapCovariance6d cov_out(cov_out_.data());
 
 	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
-	R << R_q, ZEROM3D,
-	     ZEROM3D, R_q;
+	R.block<3, 3>(0, 0) << R_q;
+	R.block<3, 3>(3, 3) << R_q;
 
 	cov_out = R * cov_in * R.transpose();
 
@@ -213,9 +215,9 @@ Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &
 
 	Eigen::Matrix3d R_q = q.normalized().toRotationMatrix();
 
-	R << R_q, ZEROM3D, ZEROM3D,
-	     ZEROM3D, R_q, ZEROM3D,
-	     ZEROM3D, ZEROM3D, R_q;
+	R.block<3, 3>(0, 0) << R_q;
+	R.block<3, 3>(3, 3) << R_q;
+	R.block<3, 3>(6, 6) << R_q;
 
 	cov_out = R * cov_in * R.transpose();
 
