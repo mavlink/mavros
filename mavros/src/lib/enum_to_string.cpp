@@ -23,6 +23,7 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 
@@ -201,6 +202,40 @@ std::string to_string(MAV_STATE e)
 	return mav_state_strings[idx];
 }
 // [[[end]]] (checksum: 47dea7c5bd6ab53dbc75a6c51b35d312)
+
+// [[[cog:
+// ename = 'MAV_ESTIMATOR_TYPE'
+// enum = get_enum(ename)
+// pfx2 = 'MAV_ESTIMATOR_TYPE_'
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     name_short =  e.name[len(pfx2):].title()
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! MAV_ESTIMATOR_TYPE values
+static const std::array<const std::string, 5> mav_estimator_type_strings{{
+/*  1 */ "NAIVE",                      // This is a naive estimator without any real covariance feedback.
+/*  2 */ "VISION",                      // Computer vision based estimate. Might be up to scale.
+/*  3 */ "VIO",                      // Visual-inertial estimate.
+/*  4 */ "GPS",                      // Plain GPS estimate.
+/*  5 */ "GPS_INS",                      // Estimator integrating GPS and inertial sensing.
+}};
+
+std::string to_string(MAV_ESTIMATOR_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_estimator_type_strings.size())
+		return std::to_string(idx);
+
+	return mav_estimator_type_strings[idx];
+}
+// [[[end]]] (checksum: 35318fd363ea91031971411754273909)
 
 // [[[cog:
 // ename = "timesync_mode"
