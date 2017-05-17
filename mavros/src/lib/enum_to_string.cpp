@@ -23,6 +23,7 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 
@@ -172,7 +173,7 @@ std::string to_string(MAV_TYPE e)
 //
 // array_outl(ename, enum)
 // for k, e in enum:
-//     value = e.name[10:].title()
+//     value = e.name[len(ename) + 1:].title()
 //     sp = make_whitespace(30, value)
 //     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
 //
@@ -246,19 +247,22 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 }
 
 // [[[cog:
+// def enum_name_is_value_outl(ename):
+//     enum = get_enum(ename)
+//
+//     array_outl(ename, enum)
+//     for k, e in enum:
+//         name_short =  e.name[len(ename) + 1:]
+//         sp = make_whitespace(30, name_short)
+//         cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//
+//     cog.outl("}};")
+//     cog.outl()
+//     to_string_outl(ename)
+//
+//
 // ename = 'ADSB_ALTITUDE_TYPE'
-// enum = get_enum(ename)
-// pfx2 = 'ADSB_ALTITUDE_TYPE_'
-//
-// array_outl(ename, enum)
-// for k, e in enum:
-//     name_short =  e.name[len(pfx2):]
-//     sp = make_whitespace(30, name_short)
-//     cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
-//
-// cog.outl("}};")
-// cog.outl()
-// to_string_outl(ename)
+// enum_name_is_value_outl(ename)
 // ]]]
 //! ADSB_ALTITUDE_TYPE values
 static const std::array<const std::string, 2> adsb_altitude_type_strings{{
@@ -278,40 +282,30 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
-// enum = get_enum(ename)
-// pfx2 = 'ADSB_EMITTER_TYPE_'
-//
-// array_outl(ename, enum)
-// for k, e in enum:
-//     name_short =  e.name[len(pfx2):]
-//     cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
-//
-// cog.outl("}};")
-// cog.outl()
-// to_string_outl(ename)
+// enum_name_is_value_outl(ename)
 // ]]]
 //! ADSB_EMITTER_TYPE values
 static const std::array<const std::string, 20> adsb_emitter_type_strings{{
-/*  0 */ "NO_INFO",
-/*  1 */ "LIGHT",
-/*  2 */ "SMALL",
-/*  3 */ "LARGE",
-/*  4 */ "HIGH_VORTEX_LARGE",
-/*  5 */ "HEAVY",
-/*  6 */ "HIGHLY_MANUV",
-/*  7 */ "ROTOCRAFT",
-/*  8 */ "UNASSIGNED",
-/*  9 */ "GLIDER",
-/* 10 */ "LIGHTER_AIR",
-/* 11 */ "PARACHUTE",
-/* 12 */ "ULTRA_LIGHT",
-/* 13 */ "UNASSIGNED2",
-/* 14 */ "UAV",
-/* 15 */ "SPACE",
-/* 16 */ "UNASSGINED3",
-/* 17 */ "EMERGENCY_SURFACE",
-/* 18 */ "SERVICE_SURFACE",
-/* 19 */ "POINT_OBSTACLE",
+/*  0 */ "NO_INFO",                       // 
+/*  1 */ "LIGHT",                         // 
+/*  2 */ "SMALL",                         // 
+/*  3 */ "LARGE",                         // 
+/*  4 */ "HIGH_VORTEX_LARGE",             // 
+/*  5 */ "HEAVY",                         // 
+/*  6 */ "HIGHLY_MANUV",                  // 
+/*  7 */ "ROTOCRAFT",                     // 
+/*  8 */ "UNASSIGNED",                    // 
+/*  9 */ "GLIDER",                        // 
+/* 10 */ "LIGHTER_AIR",                   // 
+/* 11 */ "PARACHUTE",                     // 
+/* 12 */ "ULTRA_LIGHT",                   // 
+/* 13 */ "UNASSIGNED2",                   // 
+/* 14 */ "UAV",                           // 
+/* 15 */ "SPACE",                         // 
+/* 16 */ "UNASSGINED3",                   // 
+/* 17 */ "EMERGENCY_SURFACE",             // 
+/* 18 */ "SERVICE_SURFACE",               // 
+/* 19 */ "POINT_OBSTACLE",                // 
 }};
 
 std::string to_string(ADSB_EMITTER_TYPE e)
@@ -322,7 +316,30 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
 	return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
+// [[[end]]] (checksum: ef0b869c7c1937e80b3e1297eda40e2c)
+
+// [[[cog:
+// ename = 'MAV_ESTIMATOR_TYPE'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_ESTIMATOR_TYPE values
+static const std::array<const std::string, 5> mav_estimator_type_strings{{
+/*  1 */ "NAIVE",                         // This is a naive estimator without any real covariance feedback.
+/*  2 */ "VISION",                        // Computer vision based estimate. Might be up to scale.
+/*  3 */ "VIO",                           // Visual-inertial estimate.
+/*  4 */ "GPS",                           // Plain GPS estimate.
+/*  5 */ "GPS_INS",                       // Estimator integrating GPS and inertial sensing.
+}};
+
+std::string to_string(MAV_ESTIMATOR_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_estimator_type_strings.size())
+		return std::to_string(idx);
+
+	return mav_estimator_type_strings[idx];
+}
+// [[[end]]] (checksum: 47674f004bf6c515fdf999987b99e806)
 
 }	// namespace utils
 }	// namespace mavros
