@@ -22,6 +22,7 @@
 namespace mavros {
 namespace extra_plugins {
 using mavlink::common::MAV_ESTIMATOR_TYPE;
+
 /**
  * @brief Odometry plugin
  *
@@ -32,7 +33,7 @@ class OdometryPlugin : public plugin::PluginBase {
 public:
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
-		estimator_type(3)
+		estimator_type(MAV_ESTIMATOR_TYPE::VIO)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -40,9 +41,11 @@ public:
 		PluginBase::initialize(uas_);
 
 		// general params
-		odom_nh.param("estimator_type", estimator_type, 3);	// defaulted to VIO type
+		int et_i;
+		odom_nh.param<int>("estimator_type", et_i, utils::enum_value(MAV_ESTIMATOR_TYPE::VIO));
+		estimator_type = static_cast<MAV_ESTIMATOR_TYPE>(et_i);
 
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string_enum<MAV_ESTIMATOR_TYPE>(estimator_type));
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string(estimator_type));
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
@@ -57,9 +60,7 @@ private:
 	ros::NodeHandle odom_nh;
 	ros::Subscriber odom_sub;
 
-	int estimator_type;
-
-	const Eigen::Matrix3d ZEROM3D = Eigen::Matrix3d::Zero();
+	MAV_ESTIMATOR_TYPE estimator_type;
 
 	/* -*- callbacks -*- */
 
@@ -68,6 +69,7 @@ private:
 		Eigen::Affine3d tr;
 		Eigen::Vector3d lin_vel_enu;
 		Eigen::Vector3d ang_vel_enu;
+
 		tf::poseMsgToEigen(odom->pose.pose, tr);
 		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
 		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
@@ -77,16 +79,12 @@ private:
 		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
 
 		// Build 9x9 covariance matrix to be transformed and sent
-		ftf::Covariance9d cov_full;
+		ftf::Covariance9d cov_full{};	// zero initialized
 		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
-		ftf::EigenMapConstCovariance6d cov_in(odom->pose.covariance.data());
-
-		const auto identity3d = Eigen::Matrix3d::Identity();
 
 		// 9x9 covariance matrix contruct
-		cov_full_map.setZero();
-		cov_full_map.block<6, 6>(0, 0) << cov_in;
-		cov_full_map.block<3, 3>(6, 6) << identity3d;
+		cov_full_map.block<6, 6>(0, 0) = ftf::EigenMapConstCovariance6d(odom->pose.covariance.data());
+		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
 		/* -*- vector transforms -*- */
 		// body frame rotations must be aware of current attitude of the vehicle
@@ -110,13 +108,11 @@ private:
 		 * WRT world frame (half upper right triangular)
 		 */
 		auto cov_full_tf = ftf::transform_frame_enu_ned(cov_full);
-		ftf::EigenMapCovariance9d cov_tf_map(cov_full_tf.data());
-		ftf::EigenMapConstCovariance9d cov_full_tf_view(cov_full_tf.data());
 
-		auto urt_view = Eigen::Matrix<double, 9, 9, Eigen::RowMajor>(cov_full_tf_view.triangularView<Eigen::Upper>());
-
-		ROS_DEBUG_STREAM_NAMED("odom","Odometry: pose+accel covariance matrix: " << std::endl << cov_tf_map);
-		ROS_DEBUG_STREAM_NAMED("odom","Odometry: Cov URT: " << std::endl << urt_view);
+		ftf::EigenMapConstCovariance9d cov_tf_map(cov_full_tf.data());
+		auto urt_view = Eigen::Matrix<double, 9, 9>(cov_full_map.triangularView<Eigen::Upper>());
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_tf_map);
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: Cov URT: " << std::endl << urt_view);
 
 		/**
 		 * @brief Velocity 6-D Covariance matrix
@@ -125,20 +121,23 @@ private:
 		auto cov_vel = ftf::transform_frame_enu_ned(
 					ftf::transform_frame_baselink_aircraft(
 						ftf::transform_frame_ned_aircraft(odom->twist.covariance, q_ned_current)));
-		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
-		ROS_DEBUG_STREAM_NAMED("odom","Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
+
+		ftf::EigenMapConstCovariance6d cov_vel_map(cov_vel.data());
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
 
 		// get timestamp
-		uint64_t stamp = odom->header.stamp.toNSec() / 1e3;
+		uint64_t stamp_usec = odom->header.stamp.toNSec() / 1e3;
+		const auto zerov3f = Eigen::Vector3f::Zero();
 
 		/* -*- LOCAL_POSITION_NED_COV parser -*- */
 		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
 
-		lpos.time_usec = stamp;
-		lpos.estimator_type = estimator_type;
-		const auto zero = Eigen::Vector3d::Zero();
+		lpos.time_usec = stamp_usec;
+		lpos.estimator_type = utils::enum_value(estimator_type);
+		ftf::covariance9d_urt_to_mavlink(cov_full_tf, lpos.covariance);
+
 		// [[[cog:
-		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zero')):
+		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
 		//     for f in 'xyz':
 		//         cog.outl("lpos.{a}{f} = {b}.{f}();".format(**locals()))
 		// ]]]
@@ -148,11 +147,10 @@ private:
 		lpos.vx = lin_vel_ned.x();
 		lpos.vy = lin_vel_ned.y();
 		lpos.vz = lin_vel_ned.z();
-		lpos.ax = zero.x();
-		lpos.ay = zero.y();
-		lpos.az = zero.z();
-		// [[[end]]] (checksum: 9488aaf03177126873421eb108d5ac77)
-		ftf::covariance9d_urt_to_mavlink(cov_full_tf, lpos.covariance);
+		lpos.ax = zerov3f.x();
+		lpos.ay = zerov3f.y();
+		lpos.az = zerov3f.z();
+		// [[[end]]] (checksum: 4620cfc77f3e5d768d7c23da5f56ddc6)
 
 		// send LOCAL_POSITION_NED_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
@@ -160,17 +158,18 @@ private:
 		/* -*- ATTITUDE_QUATERNION_COV parser -*- */
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
 
-		att.time_usec = stamp;
+		att.time_usec = stamp_usec;
+		ftf::quaternion_to_mavlink(q_ned, att.q);
+		ftf::covariance_to_mavlink(cov_vel, att.covariance);
+
 		// [[[cog:
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-		//     cog.outl("att.%s = ang_vel_ned.%s();" % (b, a))
+		//     cog.outl("att.{b} = ang_vel_ned.{a}();".format(**locals()))
 		// ]]]
 		att.rollspeed = ang_vel_ned.x();
 		att.pitchspeed = ang_vel_ned.y();
 		att.yawspeed = ang_vel_ned.z();
 		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
-		ftf::quaternion_to_mavlink(q_ned, att.q);
-		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
 		// send ATTITUDE_QUATERNION_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);

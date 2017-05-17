@@ -60,7 +60,7 @@ static const auto AIRCRAFT_BASELINK_R = AIRCRAFT_BASELINK_Q.normalized().toRotat
 /**
  * @brief Auxiliar matrices to Covariance transforms
  */
-using Matrix6dTF = Eigen::Matrix<double, 6, 6>;
+using Affine6dTF = Eigen::Matrix<double, 6, 6>;
 using Affine9dTF = Eigen::Matrix<double, 9, 9>;
 
 

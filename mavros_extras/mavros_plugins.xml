@@ -13,6 +13,7 @@
 	</class>
 	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send odometry to FCU from another estimator.</description>
+	</class>
 	<class name="mocap_fake_gps" type="mavros::extra_plugins::MocapFakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send fake GPS from motion capture to FCU.</description>
 	</class>
