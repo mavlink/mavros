@@ -71,5 +71,7 @@
 	<class name="hil_actuator_controls" type="mavros::std_plugins::HilActuatorControlsPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish HIL controls values</description>
 	</class>
+	<class name="home_position" type="mavros::std_plugins::HomePositionPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish home position</description>
+	</class>
 </library>
-

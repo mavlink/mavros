@@ -175,4 +175,11 @@ vision_speed:
 vibration:
   frame_id: "vibration"
 
+# adsb
+# None
+
+# odom
+odometry:
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+
 # vim:set ts=2 sw=2 et:
