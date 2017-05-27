@@ -57,7 +57,7 @@ public:
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
-		gp_nh.param<std::string>("tf/global_frame_id", tf_global_frame_id, "global_map");
+		gp_nh.param<std::string>("tf/global_frame_id", tf_global_frame_id, "earth"); // The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
 		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 
 		UAS_DIAG(m_uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
@@ -71,10 +71,14 @@ public:
 		gp_odom_pub = gp_nh.advertise<nav_msgs::Odometry>("local", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
+
+		// global origin
 		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
+		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
+
+		// offset from local position to the global origin ("earth")
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
 
-		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -118,13 +122,16 @@ private:
 
 	template<typename MsgT>
 	inline void fill_lla_wgs84(MsgT &msg, geographic_msgs::GeoPointStamped::Ptr point) {
+		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
+		// see <http://www.ros.org/reps/rep-0105.html>
 		point->position.latitude = msg.latitude / 1E7;		// deg
 		point->position.longitude = msg.longitude / 1E7;		// deg
 		point->position.altitude = msg.altitude / 1E3;		// m
 	}
 
 	template<typename MsgT>
-	inline void fill_lla_amsl(MsgT &msg, const geographic_msgs::GeoPointStamped::ConstPtr point) {
+	inline void fill_lla_amsl(const geographic_msgs::GeoPointStamped::ConstPtr point, MsgT &msg) {
+		// @todo: add convertion from ECEF to AMSL
 		msg.latitude = point->position.latitude * 1E7;		// deg
 		msg.longitude = point->position.longitude * 1E7;		// deg
 		msg.altitude = point->position.altitude * 1E3;		// m
@@ -385,7 +392,7 @@ private:
 
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
-		fill_lla_amsl(gpo, req);// @warning TODO: #693
+		fill_lla_amsl(req, gpo);// @warning TODO: #693
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
