@@ -88,7 +88,7 @@ public:
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
 			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
 			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
-						 make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
+			       make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -125,7 +125,7 @@ private:
 		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
 		// see <http://www.ros.org/reps/rep-0105.html>
 		point->position.latitude = msg.latitude / 1E7;		// deg
-		point->position.longitude = msg.longitude / 1E7;		// deg
+		point->position.longitude = msg.longitude / 1E7;	// deg
 		point->position.altitude = msg.altitude / 1E3;		// m
 	}
 
@@ -133,7 +133,7 @@ private:
 	inline void fill_lla_amsl(const geographic_msgs::GeoPointStamped::ConstPtr point, MsgT &msg) {
 		// @todo: add convertion from ECEF to AMSL
 		msg.latitude = point->position.latitude * 1E7;		// deg
-		msg.longitude = point->position.longitude * 1E7;		// deg
+		msg.longitude = point->position.longitude * 1E7;	// deg
 		msg.altitude = point->position.altitude * 1E3;		// m
 	}
 
