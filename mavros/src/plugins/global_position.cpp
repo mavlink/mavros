@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014 Nuno Marques.
+ * Copyright 2014,2017 Nuno Marques.
  * Copyright 2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
