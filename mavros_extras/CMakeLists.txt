@@ -64,12 +64,14 @@ include_directories(
 )
 
 add_library(mavros_extras
+  src/plugins/adsb.cpp
   src/plugins/distance_sensor.cpp
   src/plugins/px4flow.cpp
   src/plugins/mocap_pose_estimate.cpp
   src/plugins/mocap_fake_gps.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
+  src/plugins/odom.cpp
   src/plugins/vibration.cpp
   src/plugins/cam_imu_sync.cpp
 )

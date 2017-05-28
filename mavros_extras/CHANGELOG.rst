@@ -2,6 +2,17 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2017-05-05)
+-------------------
+* extras: fix package link
+* extras: Fix adsb plugin
+* extras: Add ADSB plugin
+* Add frame transform for vibration levels (`#690 <https://github.com/mavlink/mavros/issues/690>`_)
+  * add frame transform for accel vibration levels
+  * use vectorEigenToMsg
+  * unscrustify
+* Contributors: Nuno Marques, Vladimir Ermakov
+
 0.18.7 (2017-02-24)
 -------------------
 * vision plugin : Add missing transform

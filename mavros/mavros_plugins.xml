@@ -68,4 +68,7 @@
 	<class name="hil" type="mavros::std_plugins::HilPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish and subscribe HIL controls, state, GPS and sensor values </description>
 	</class>
+	<class name="home_position" type="mavros::std_plugins::HomePositionPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish home position</description>
+	</class>
 </library>

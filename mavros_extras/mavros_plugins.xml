@@ -11,6 +11,9 @@
 	<class name="vision_pose_estimate" type="mavros::extra_plugins::VisionPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision pose estimate to FCU.</description>
 	</class>
+	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send odometry to FCU from another estimator.</description>
+	</class>
 	<class name="mocap_fake_gps" type="mavros::extra_plugins::MocapFakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send fake GPS from motion capture to FCU.</description>
 	</class>
@@ -20,7 +23,10 @@
 	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>
-        <class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
+	<class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish camera trigger data for synchronisation of IMU and camera frames</description>
+	</class>
+	<class name="adsb" type="mavros::extra_plugins::ADSBPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish/subscribe to the location and information of an ADS-B vehicle</description>
 	</class>
 </library>
