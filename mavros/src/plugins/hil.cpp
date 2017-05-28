@@ -16,9 +16,8 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
-
-#include <algorithm>
 #include <mavros/mavros_plugin.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <mavros_msgs/HilControls.h>
 #include <mavros_msgs/HilActuatorControls.h>
@@ -78,6 +77,8 @@ private:
 	ros::Subscriber hil_flow_sub;
 	ros::Subscriber hil_rcin_sub;
 
+	Eigen::Quaterniond enu_orientation;
+
 	/* -*- rx handlers -*- */
 
 	void handle_hil_controls(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HIL_CONTROLS &hil_controls) {
@@ -126,6 +127,13 @@ private:
 	void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
 		mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
 
+		// get current ENU FCU orientation
+		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
+
+		// body frame rotations must be aware of current attitude of the vehicle
+		auto q_ned_current = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(enu_orientation));
+
 		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
 		auto q = ftf::transform_orientation_baselink_aircraft(
 					ftf::transform_orientation_enu_ned(
@@ -143,16 +151,20 @@ private:
 		state_quat.alt = req->geo.altitude * 1E3;
 		state_quat.ind_airspeed = req->ind_airspeed * 1E2;
 		state_quat.true_airspeed = req->true_airspeed * 1E2;
-		auto ang_vel = ftf::transform_frame_baselink_aircraft(
-					Eigen::Vector3d(
-						req->angular_velocity.x,
-						req->angular_velocity.y,
-						req->angular_velocity.z));
+		// angular velocity - WRT body frame
+		auto ang_vel = ftf::transform_frame_enu_ned(
+					ftf::transform_frame_baselink_aircraft(
+						ftf::transform_frame_aircraft_ned(Eigen::Vector3d(
+								req->angular_velocity.x,
+								req->angular_velocity.y,
+								req->angular_velocity.z), q_ned_current)));
+		// linear velocity - WRT world frame
 		auto lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
 					Eigen::Vector3d(
 						req->linear_velocity.x,
 						req->linear_velocity.y,
 						req->linear_velocity.z)) * 1E2;
+		// linear acceleration - WRT world frame
 		auto lin_acc = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
 						req->linear_acceleration.x,
@@ -220,17 +232,27 @@ private:
 	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
 		mavlink::common::msg::HIL_SENSOR sensor;
 
+		// get current ENU FCU orientation
+		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
+
+		// body frame rotations must be aware of current attitude of the vehicle
+		auto q_ned_current = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(enu_orientation));
+
 		sensor.time_usec = req->header.stamp.toNSec() / 1000;
+		// acceleration values - WRT world frame
 		auto acc = ftf::transform_frame_baselink_aircraft(
 					Eigen::Vector3d(
 						req->acc.x,
 						req->acc.y,
 						req->acc.z));
+		// angular values - WRT body frame
 		auto gyro = ftf::transform_frame_baselink_aircraft(
-					Eigen::Vector3d(
-						req->gyro.x,
-						req->gyro.y,
-						req->gyro.z));
+					ftf::transform_frame_aircraft_ned(Eigen::Vector3d(
+							req->gyro.x,
+							req->gyro.y,
+							req->gyro.z), q_ned_current));
+		// heading values - WRT world frame
 		auto mag = ftf::transform_frame_baselink_aircraft<Eigen::Vector3d>(
 					Eigen::Vector3d(
 						req->mag.x,
