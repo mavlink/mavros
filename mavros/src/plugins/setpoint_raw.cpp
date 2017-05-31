@@ -279,9 +279,9 @@ private:
 	void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg) {
 
 		if(ignore_rpyt_messages_){
-			ROS_FATAL("recieved roll pitch yaw thrust rate message, but ignore flag is true:
-			 the most likely cause of this is a failure to specify the thrust_scaling_factor,
-			  yaw_rate_scaling_factor or system_mass_kg parameters");
+			ROS_FATAL("recieved roll pitch yaw thrust rate message, but ignore flag is true: "
+      "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
+      "yaw_rate_scaling_factor or system_mass_kg parameters");
 		}
 
 		//the masks are much more limited than the docs would suggest so we don't use them
