@@ -282,6 +282,7 @@ private:
 			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
       "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
       "yaw_rate_scaling_factor or system_mass_kg parameters");
+      return;
 		}
 
 		//the masks are much more limited than the docs would suggest so we don't use them
