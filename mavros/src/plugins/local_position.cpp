@@ -113,7 +113,22 @@ private:
 		odom->child_frame_id = tf_child_frame_id;
 		tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
 		odom->twist.twist.angular = baselink_angular_msg;
+		// reasonable defaults for covariance
 		odom->pose.pose = pose->pose;
+		for (int i=0; i< 3; i++) {
+			// linear velocity
+			odom->twist.covariance[i + 6*i] = 1e-6;
+			// angular velocity
+			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
+			// position/ attitude
+			if (i==2) {
+				odom->pose.covariance[i + 6*i] = 1;
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
+			} else {
+				odom->pose.covariance[i + 6*i] = 1e-6;
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
+			}
+		}
 
 		//--------------- Publish Data ---------------//
 		local_odom.publish(odom);
