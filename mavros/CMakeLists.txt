@@ -40,7 +40,8 @@ include(MavrosMavlink)
 
 ## Find GeographicLib
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-find_package(GeographicLib)
+find_package(GeographicLib REQUIRED COMPONENTS SHARED)
+set(GeographicLib_LIBRARIES ${GeographicLib_SHARED_LIBRARIES})
 if(NOT EXISTS /usr/local/share/GeographicLib/geoids)
    execute_process(COMMAND sudo geographiclib-get-geoids egm96-5)
 endif()
@@ -110,6 +111,7 @@ add_library(mavros
 target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 add_dependencies(mavros
   mavros_msgs_generate_messages_cpp
@@ -148,6 +150,7 @@ target_link_libraries(mavros_plugins
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 ## Declare a cpp executable
@@ -161,6 +164,7 @@ target_link_libraries(mavros_node
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 add_executable(gcs_bridge
@@ -170,6 +174,7 @@ target_link_libraries(gcs_bridge
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 #############
