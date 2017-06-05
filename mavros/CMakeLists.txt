@@ -40,7 +40,7 @@ include(MavrosMavlink)
 
 ## Find GeographicLib
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-find_package(GeographicLib 1.45 REQUIRED COMPONENTS SHARED)
+find_package(GeographicLib)
 if (GeographicLib_FOUND)
   if(NOT EXISTS /usr/local/share/GeographicLib/geoids)
      execute_process(COMMAND sudo geographiclib-get-geoids egm96-5)
