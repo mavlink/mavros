@@ -121,7 +121,7 @@ private:
 	}
 
 	template<typename MsgT>
-	inline void fill_lla_wgs84(MsgT &msg, geographic_msgs::GeoPointStamped::Ptr point) {
+	inline void fill_lla_ecef(MsgT &msg, geographic_msgs::GeoPointStamped::Ptr point) {
 		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
 		// see <http://www.ros.org/reps/rep-0105.html>
 		point->position.latitude = msg.latitude / 1E7;		// deg
@@ -206,9 +206,9 @@ private:
 		auto g_origin = boost::make_shared<geographic_msgs::GeoPointStamped>();
 		// auto header = m_uas->synchronized_header(frame_id, glob_orig.time_boot_ms);	#TODO: requires Mavlink msg update
 
-		g_origin->header.frame_id = frame_id;
+		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		fill_lla_wgs84(glob_orig, g_origin);	// @warning TODO: #693
+		fill_lla_ecef(glob_orig, g_origin);	// @warning TODO: #693
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -339,7 +339,7 @@ private:
 
 			transform.header.stamp = global_offset->header.stamp;
 			transform.header.frame_id = tf_global_frame_id;
-			transform.child_frame_id = tf_frame_id;
+			transform.child_frame_id = tf_child_frame_id;
 
 			// setRotation()
 			transform.transform.rotation = global_offset->pose.orientation;
