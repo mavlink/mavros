@@ -75,9 +75,9 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-			       make_handler(&GlobalPositionPlugin::handle_global_position_int)
+				make_handler(&GlobalPositionPlugin::handle_global_position_int)
 		};
 	}
 
