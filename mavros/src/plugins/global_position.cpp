@@ -19,7 +19,7 @@
 #include <angles/angles.h>
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <GeographicLib/GeoCoords.hpp>
+#include <GeographicLib/Geocentric.hpp>
 
 #include <std_msgs/Float64.h>
 #include <nav_msgs/Odometry.h>
@@ -42,7 +42,8 @@ public:
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
-		rot_cov(99999.0)
+		rot_cov(99999.0),
+		use_relative_alt(true)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -52,6 +53,7 @@ public:
 		// general params
 		gp_nh.param<std::string>("frame_id", frame_id, "map");
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
+		gp_nh.param("use_relative_alt", use_relative_alt, true);
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
@@ -93,7 +95,17 @@ private:
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
 	bool tf_send;
+	bool use_relative_alt;
 	double rot_cov;
+
+	/**
+	 * Conversion from geodetic coordinates (LLA) to to ECEF (Earth-Centered, Earth-Fixed)
+	 *
+	 * Note: "earth" frame is the origin, in ECEF, and the local coordinates are
+	 * in spherical coordinates, with the orientation in ENU (just like what is applied
+	 * on Gazebo)
+	 */
+	const GeographicLib::Geocentric earth = GeographicLib::Geocentric::WGS84();	//!< ECEF frame
 
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
@@ -202,48 +214,60 @@ private:
 		relative_alt->data = gpos.relative_alt / 1E3;	// in meters
 		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
 
-		/* Global position odometry
+		/**
+		 * Global position odometry:
 		 *
-		 * Assuming no transform is needed:
-		 * X: latitude m
-		 * Y: longitude m
-		 * Z: altitude m
-		 * VX: latitude vel m/s
-		 * VY: longitude vel m/s
-		 * VZ: altitude vel m/s
+		 * X: spherical coordinate X-axis (meters)
+		 * Y: spherical coordinate Y-axis (meters)
+		 * Z: spherical coordinate Z-axis (meters)
+		 * VX: latitude vel (m/s)
+		 * VY: longitude vel (m/s)
+		 * VZ: altitude vel (m/s)
+		 * Angular rates: unknown
+		 * Pose covariance: computed, with fixed diagonal
+		 * Velocity covariance: unknown
 		 */
 		odom->header = header;
 
-		// Velocity
-		tf::vectorEigenToMsg(
-					Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
+		// Linear velocity
+		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
 					odom->twist.twist.linear);
+
+		// Angular rates not provided in GLOBAL_POSITION_INT
+		tf::vectorEigenToMsg(Eigen::Vector3d(NAN, NAN, NAN), odom->twist.twist.angular);
 
 		// Velocity covariance unknown
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
 
-		/*
-		 * Conversion from Latitude,Longitude to UTM
+		/**
+		 * @todo: considering #691, we should calculate the position update regarding the global_origin (in ECEF)
+		 *        so, for example, odom->pose.pose.position.x = gps_global_origin.x - X_ECEF
 		 */
-		GeographicLib::GeoCoords geo(fix->latitude, fix->longitude);
+		earth.Forward(fix->latitude, fix->longitude, fix->altitude,
+				odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
 
-		odom->pose.pose.position.x = geo.Easting();
-		odom->pose.pose.position.y = geo.Northing();
-		odom->pose.pose.position.z = relative_alt->data;
+		/**
+		 * by default, we are using the relative altitude instead of the geocentric
+		 * altitude, which is relative to the WGS-84 ellipsoid (for pratical purposes, it's
+		 * what makese sense)
+		 */
+		if (use_relative_alt)
+			odom->pose.pose.position.z = relative_alt->data;
+
 		odom->pose.pose.orientation = m_uas->get_attitude_orientation();
 
 		// Use ENU covariance to build XYZRPY covariance
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out <<
-		gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
-		gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
-		gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
-		0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
-		0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
-		0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
+			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
+			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
+			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
 
 		// publish
 		gp_fix_pub.publish(fix);
