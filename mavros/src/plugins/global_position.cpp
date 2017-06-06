@@ -84,11 +84,11 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
-			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
-			       make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
+				make_handler(&GlobalPositionPlugin::handle_global_position_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+				make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -114,27 +114,10 @@ private:
 	double rot_cov;
 
 	template<typename MsgT>
-	inline void fill_lla_wgs84(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
+	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
 		fix->altitude = msg.alt / 1E3;		// m
-	}
-
-	template<typename MsgT>
-	inline void fill_lla_ecef(MsgT &msg, geographic_msgs::GeoPointStamped::Ptr point) {
-		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
-		// see <http://www.ros.org/reps/rep-0105.html>
-		point->position.latitude = msg.latitude / 1E7;		// deg
-		point->position.longitude = msg.longitude / 1E7;	// deg
-		point->position.altitude = msg.altitude / 1E3;		// m
-	}
-
-	template<typename MsgT>
-	inline void fill_lla_amsl(const geographic_msgs::GeoPointStamped::ConstPtr point, MsgT &msg) {
-		// @todo: add convertion from ECEF to AMSL
-		msg.latitude = point->position.latitude * 1E7;		// deg
-		msg.longitude = point->position.longitude * 1E7;	// deg
-		msg.altitude = point->position.altitude * 1E3;		// m
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {
@@ -160,7 +143,7 @@ private:
 			fix->status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
 		}
 
-		fill_lla_wgs84(raw_gps, fix);
+		fill_lla(raw_gps, fix);
 
 		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
 		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
@@ -208,7 +191,12 @@ private:
 
 		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
-		fill_lla_ecef(glob_orig, g_origin);	// @warning TODO: #693
+
+		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
+		// see <http://www.ros.org/reps/rep-0105.html>
+		g_origin->position.latitude = glob_orig.latitude / 1E7;		// deg
+		g_origin->position.longitude = glob_orig.longitude / 1E7;	// deg
+		g_origin->position.altitude = glob_orig.altitude / 1E3;		// m
 
 		gp_global_origin_pub.publish(g_origin);
 	}
@@ -227,7 +215,7 @@ private:
 		// Global position fix
 		fix->header = header;
 
-		fill_lla_wgs84(gpos, fix);
+		fill_lla(gpos, fix);
 
 		// fill GPS status fields using GPS_RAW data
 		auto raw_fix = m_uas->get_gps_fix();
@@ -289,8 +277,11 @@ private:
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
 		pos_cov_out.setZero();
-		pos_cov_out.block<3, 3>(0, 0) << gps_cov;
-		pos_cov_out.block<3, 3>(3, 3).diagonal() << rot_cov;
+		pos_cov_out.block<3, 3>(0, 0) = gps_cov;
+		pos_cov_out.block<3, 3>(3, 3).diagonal() <<
+					rot_cov,
+						rot_cov,
+							rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -392,7 +383,11 @@ private:
 
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
-		fill_lla_amsl(req, gpo);// @warning TODO: #693
+
+		// @todo: add convertion from ECEF to AMSL #693
+		gpo.latitude = req->position.latitude * 1E7;		// deg
+		gpo.longitude = req->position.longitude * 1E7;	// deg
+		gpo.altitude = req->position.altitude * 1E3;		// m
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
