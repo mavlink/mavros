@@ -386,7 +386,7 @@ private:
 
 		// @todo: add convertion from ECEF to AMSL #693
 		gpo.latitude = req->position.latitude * 1E7;		// deg
-		gpo.longitude = req->position.longitude * 1E7;	// deg
+		gpo.longitude = req->position.longitude * 1E7;		// deg
 		gpo.altitude = req->position.altitude * 1E3;		// m
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
