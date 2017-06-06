@@ -98,15 +98,6 @@ private:
 	bool use_relative_alt;
 	double rot_cov;
 
-	/**
-	 * Conversion from geodetic coordinates (LLA) to to ECEF (Earth-Centered, Earth-Fixed)
-	 *
-	 * Note: "earth" frame is the origin, in ECEF, and the local coordinates are
-	 * in spherical coordinates, with the orientation in ENU (just like what is applied
-	 * on Gazebo)
-	 */
-	const GeographicLib::Geocentric earth = GeographicLib::Geocentric::WGS84();	//!< ECEF frame
-
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
 		fix->latitude = msg.lat / 1E7;		// deg
@@ -240,6 +231,16 @@ private:
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
+
+		/**
+		 * Conversion from geodetic coordinates (LLA) to to ECEF (Earth-Centered, Earth-Fixed)
+		 *
+		 * Note: "earth" frame is the origin, in ECEF, and the local coordinates are
+		 * in spherical coordinates, with the orientation in ENU (just like what is applied
+		 * on Gazebo)
+		 */
+		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+				GeographicLib::Constants::WGS84_f());
 
 		/**
 		 * @todo: considering #691, we should calculate the position update regarding the global_origin (in ECEF)
