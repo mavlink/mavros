@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014 Nuno Marques.
+ * Copyright 2014,2017 Nuno Marques.
  * Copyright 2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
@@ -25,8 +25,10 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/NavSatStatus.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geographic_msgs/GeoPointStamped.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -57,6 +59,7 @@ public:
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, true);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
+		gp_nh.param<std::string>("tf/global_frame_id", tf_global_frame_id, "earth");	// The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
 		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 
 		UAS_DIAG(m_uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
@@ -70,14 +73,23 @@ public:
 		gp_odom_pub = gp_nh.advertise<nav_msgs::Odometry>("local", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
+
+		// global origin
+		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
+		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
+
+		// offset from local position to the global origin ("earth")
+		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
 		return {
-				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-				make_handler(&GlobalPositionPlugin::handle_global_position_int)
+			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
+			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+			       make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -90,9 +102,14 @@ private:
 	ros::Publisher gp_fix_pub;
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
+	ros::Publisher gp_global_origin_pub;
+	ros::Publisher gp_global_offset_pub;
+
+	ros::Subscriber gp_set_global_origin_sub;
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
+	std::string tf_global_frame_id;	//!< global origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
 	bool tf_send;
 	bool use_relative_alt;
@@ -169,6 +186,23 @@ private:
 		}
 	}
 
+	void handle_gps_global_origin(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_GLOBAL_ORIGIN &glob_orig)
+	{
+		auto g_origin = boost::make_shared<geographic_msgs::GeoPointStamped>();
+		// auto header = m_uas->synchronized_header(frame_id, glob_orig.time_boot_ms);	#TODO: requires Mavlink msg update
+
+		g_origin->header.frame_id = tf_global_frame_id;
+		g_origin->header.stamp = ros::Time::now();
+
+		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
+		// see <http://www.ros.org/reps/rep-0105.html>
+		g_origin->position.latitude = glob_orig.latitude / 1E7;		// deg
+		g_origin->position.longitude = glob_orig.longitude / 1E7;	// deg
+		g_origin->position.altitude = glob_orig.altitude / 1E3;		// m
+
+		gp_global_origin_pub.publish(g_origin);
+	}
+
 	/** @todo Handler for GLOBAL_POSITION_INT_COV */
 
 	void handle_global_position_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GLOBAL_POSITION_INT &gpos)
@@ -225,7 +259,8 @@ private:
 					odom->twist.twist.linear);
 
 		// Angular rates not provided in GLOBAL_POSITION_INT
-		tf::vectorEigenToMsg(Eigen::Vector3d(NAN, NAN, NAN), odom->twist.twist.angular);
+		tf::vectorEigenToMsg(Eigen::Vector3d(NAN, NAN, NAN),
+					odom->twist.twist.angular);
 
 		// Velocity covariance unknown
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
@@ -240,14 +275,14 @@ private:
 		 * on Gazebo)
 		 */
 		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-				GeographicLib::Constants::WGS84_f());
+					GeographicLib::Constants::WGS84_f());
 
 		/**
 		 * @todo: considering #691, we should calculate the position update regarding the global_origin (in ECEF)
 		 *        so, for example, odom->pose.pose.position.x = gps_global_origin.x - X_ECEF
 		 */
 		earth.Forward(fix->latitude, fix->longitude, fix->altitude,
-				odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
+					odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
 
 		/**
 		 * by default, we are using the relative altitude instead of the geocentric
@@ -262,13 +297,12 @@ private:
 		// Use ENU covariance to build XYZRPY covariance
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
 		ftf::EigenMapCovariance6d pos_cov_out(odom->pose.covariance.data());
-		pos_cov_out <<
-			gps_cov(0, 0) , gps_cov(0, 1) , gps_cov(0, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(1, 0) , gps_cov(1, 1) , gps_cov(1, 2) , 0.0     , 0.0     , 0.0     ,
-			gps_cov(2, 0) , gps_cov(2, 1) , gps_cov(2, 2) , 0.0     , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , rot_cov , 0.0     , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , rot_cov , 0.0     ,
-			0.0           , 0.0           , 0.0           , 0.0     , 0.0     , rot_cov ;
+		pos_cov_out.setZero();
+		pos_cov_out.block<3, 3>(0, 0) = gps_cov;
+		pos_cov_out.block<3, 3>(3, 3).diagonal() <<
+								rot_cov,
+									rot_cov,
+										rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -291,6 +325,41 @@ private:
 			transform.transform.translation.x = odom->pose.pose.position.x;
 			transform.transform.translation.y = odom->pose.pose.position.y;
 			transform.transform.translation.z = odom->pose.pose.position.z;
+
+			m_uas->tf2_broadcaster.sendTransform(transform);
+		}
+	}
+
+	void handle_lpned_system_global_offset(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET &offset)
+	{
+		auto global_offset = boost::make_shared<geometry_msgs::PoseStamped>();
+		global_offset->header = m_uas->synchronized_header(tf_global_frame_id, offset.time_boot_ms);
+
+		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(offset.x, offset.y, offset.z));
+		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
+					ftf::transform_orientation_ned_enu(
+						ftf::quaternion_from_rpy(offset.roll, offset.pitch, offset.yaw)));
+
+		tf::pointEigenToMsg(enu_position, global_offset->pose.position);
+		tf::quaternionEigenToMsg(enu_baselink_orientation, global_offset->pose.orientation);
+
+		gp_global_offset_pub.publish(global_offset);
+
+		// TF
+		if (tf_send) {
+			geometry_msgs::TransformStamped transform;
+
+			transform.header.stamp = global_offset->header.stamp;
+			transform.header.frame_id = tf_global_frame_id;
+			transform.child_frame_id = tf_frame_id;
+
+			// setRotation()
+			transform.transform.rotation = global_offset->pose.orientation;
+
+			// setOrigin()
+			transform.transform.translation.x = global_offset->pose.position.x;
+			transform.transform.translation.y = global_offset->pose.position.y;
+			transform.transform.translation.z = global_offset->pose.position.z;
 
 			m_uas->tf2_broadcaster.sendTransform(transform);
 		}
@@ -325,6 +394,23 @@ private:
 			stat.addf("EPV (m)", "%.2f", epv);
 		else
 			stat.add("EPV (m)", "Unknown");
+	}
+
+	/* -*- callbacks -*- */
+
+	void set_gp_origin_cb(const geographic_msgs::GeoPointStamped::ConstPtr &req)
+	{
+		mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo;
+
+		gpo.target_system = m_uas->get_tgt_system();
+		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
+
+		// @todo: add convertion from ECEF to AMSL #693
+		gpo.latitude = req->position.latitude * 1E7;		// deg
+		gpo.longitude = req->position.longitude * 1E7;		// deg
+		gpo.altitude = req->position.altitude * 1E3;		// m
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
 };
 }	// namespace std_plugins

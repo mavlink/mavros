@@ -50,6 +50,7 @@ global_position:
   tf:
     send: false               # send TF?
     frame_id: "local_origin"  # TF frame_id
+    global_frame_id: "earth"  # TF earth frame_id
     child_frame_id: "fcu_utm" # TF child_frame_id
 
 # imu_pub
@@ -175,5 +176,12 @@ vision_speed:
 # vibration
 vibration:
   frame_id: "vibration"
+
+# adsb
+# None
+
+# odom
+odometry:
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
 
 # vim:set ts=2 sw=2 et:

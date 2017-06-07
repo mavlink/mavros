@@ -2,6 +2,30 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2017-05-05)
+-------------------
+* launch: remove setpoint-attitude from apm blacklist
+* lib: cleanup in enum_to_string
+* extras: Add ADSB plugin
+* plugin: home_position: Log poll
+* plugin: home_position: Log report
+* plugin `#695 <https://github.com/mavlink/mavros/issues/695>`_: Fix plugin
+* plugin: Add home_position
+* Added SAFETY_ALLOWED_AREA rx handler (`#689 <https://github.com/mavlink/mavros/issues/689>`_)
+  * Added SAFETY_ALLOWED_AREA rx handler and publish PolygonStamped msg with the 2 points
+  * add resize to array to avoid sigfault
+* lib: Fix millis timesync passthrough
+* Plugin: Add unstamped Twist subscriber for setpoint_velocity
+* uas: Move timesync_mode enum to utils.h + fixes
+  That enum are used for utils too, but forward declaration of class
+  internal enum is impossible.
+* sys_time: Add timesync mode selection parameter.
+* sys_time : add multi-mode timesync
+* uas : add multi-mode timesync
+* uas : add multi-mode timesync
+* launch fix `#670 <https://github.com/mavlink/mavros/issues/670>`_: Add configuration of distance_sensor plugin for APM
+* Contributors: Kabir Mohammed, Nuno Marques, Pierre Kancir, Randy Mackay, Vladimir Ermakov
+
 0.18.7 (2017-02-24)
 -------------------
 * readme: Add serial-hwfc:// proto
