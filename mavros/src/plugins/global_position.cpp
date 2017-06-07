@@ -45,7 +45,8 @@ public:
 		gp_nh("~global_position"),
 		tf_send(false),
 		rot_cov(99999.0),
-		use_relative_alt(true)
+		use_relative_alt(true),
+		is_map_init(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -85,11 +86,11 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+			  make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-			       make_handler(&GlobalPositionPlugin::handle_global_position_int),
-			       make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
-			       make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
+			  make_handler(&GlobalPositionPlugin::handle_global_position_int),
+			  make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+			  make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -111,9 +112,14 @@ private:
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_global_frame_id;	//!< global origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
+
 	bool tf_send;
 	bool use_relative_alt;
+	bool is_map_init;
+
 	double rot_cov;
+
+	Eigen::Vector3d map_origin;	//!< origin of map frame
 
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
@@ -127,6 +133,37 @@ private:
 		fix->position_covariance[0] = -1.0;
 		fix->position_covariance_type =
 					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+	}
+
+	inline Eigen::Vector3d ecef_to_enu_transform(mavlink::common::msg::GLOBAL_POSITION_INT &gpos,
+				Eigen::Vector3d &map_point) {
+		/**
+		 * Apply transform from ECEF to ENU:
+		 *
+		 * ϕ = latitude
+		 * λ = longitude
+		 *
+		 * R = [     -sinλ       cosλ  0.0
+		 *         -cosλ*sinϕ -sinλ*sinϕ cosϕ
+		 *         cosλ*cosϕ  sinλ*cosϕ sinϕ]
+		 *
+		 * East, North, Up = R * [∂x, ∂y, ∂z]
+		 */
+		Eigen::Matrix3d R;
+		Eigen::Vector3d local_ecef;
+
+		if (!is_map_init)
+			local_ecef = map_point;
+		else
+			local_ecef = {map_origin.x() - map_point.x(),
+				      map_origin.y() - map_point.y(),
+				      map_origin.z() - map_point.z()};
+
+		R << - sin(map_point.y()), cos(map_point.y()), 0.0
+		     - cos(map_point.y()) * sin(map_point.x()), - sin(map_point.y()) * sin(map_point.x()), cos(map_point.x()),
+		     cos(map_point.y()) * cos(map_point.x()), sin(map_point.y()) * cos(map_point.x()), sin(map_point.x());
+
+		return R * local_ecef;
 	}
 
 	/* -*- message handlers -*- */
@@ -268,21 +305,33 @@ private:
 		vel_cov_out(0) = -1.0;
 
 		/**
-		 * Conversion from geodetic coordinates (LLA) to to ECEF (Earth-Centered, Earth-Fixed)
+		 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 		 *
-		 * Note: "earth" frame is the origin, in ECEF, and the local coordinates are
+		 * Note: "map_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
 		 * in spherical coordinates, with the orientation in ENU (just like what is applied
 		 * on Gazebo)
 		 */
-		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+		GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
 					GeographicLib::Constants::WGS84_f());
 
-		/**
-		 * @todo: considering #691, we should calculate the position update regarding the global_origin (in ECEF)
-		 *        so, for example, odom->pose.pose.position.x = gps_global_origin.x - X_ECEF
-		 */
-		earth.Forward(fix->latitude, fix->longitude, fix->altitude,
-					odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
+		Eigen::Vector3d map_point;
+
+		// Set map frame origin
+		if (!is_map_init) {
+			map.Forward(fix->latitude, fix->longitude, fix->altitude,
+						map_origin.x(), map_origin.y(), map_origin.z());
+
+			tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_origin), odom->pose.pose.position);
+
+			is_map_init = true;
+		}
+		// If origin is set, compute the local coordinates in ENU
+		else {
+			map.Forward(fix->latitude, fix->longitude, fix->altitude,
+						map_point.x(), map_point.y(), map_point.z());
+
+			tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_point), odom->pose.pose.position);
+		}
 
 		/**
 		 * by default, we are using the relative altitude instead of the geocentric
@@ -300,9 +349,9 @@ private:
 		pos_cov_out.setZero();
 		pos_cov_out.block<3, 3>(0, 0) = gps_cov;
 		pos_cov_out.block<3, 3>(3, 3).diagonal() <<
+							rot_cov,
 								rot_cov,
-									rot_cov,
-										rot_cov;
+									rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -405,10 +454,21 @@ private:
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
 
-		// @todo: add convertion from ECEF to AMSL #693
-		gpo.latitude = req->position.latitude * 1E7;		// deg
-		gpo.longitude = req->position.longitude * 1E7;		// deg
-		gpo.altitude = req->position.altitude * 1E3;		// m
+		/**
+		 * Conversion from geocentric coordinates in ECEF (Earth-Centered, Earth-Fixed) to geodetic coordinates (LLA)
+		 * Note: "earth" frame, in ECEF, of the global origin
+		 */
+		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+					GeographicLib::Constants::WGS84_f());
+
+		Eigen::Vector3d global_position;
+
+		earth.Reverse(req->position.latitude, req->position.longitude, req->position.altitude,
+					global_position.x(), global_position.y(), global_position.z());
+
+		gpo.latitude = global_position.x() * 1E7;
+		gpo.longitude = global_position.y() * 1E7;
+		gpo.altitude = global_position.z() * 1E3;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
