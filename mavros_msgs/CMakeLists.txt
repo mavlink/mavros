@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros_msgs)
 
-find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs geographic_msgs message_generation std_msgs)
 
 include_directories(include)
 
@@ -85,4 +85,3 @@ catkin_package(
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h")
-
