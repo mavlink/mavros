@@ -30,6 +30,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geographic_msgs/GeoPointStamped.h>
 
+#include <mavros_msgs/HomePosition.h>
+
 namespace mavros {
 namespace std_plugins {
 /**
@@ -79,6 +81,9 @@ public:
 		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
 		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 
+		// home position subscriber to set "map" origin
+		hp_sub = gp_nh.subscribe("home", 10, &GlobalPositionPlugin::home_position_cb, this);
+
 		// offset from local position to the global origin ("earth")
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
 	}
@@ -86,11 +91,11 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			  make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
 				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-			  make_handler(&GlobalPositionPlugin::handle_global_position_int),
-			  make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
-			  make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
+				make_handler(&GlobalPositionPlugin::handle_global_position_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+				make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -107,6 +112,7 @@ private:
 	ros::Publisher gp_global_offset_pub;
 
 	ros::Subscriber gp_set_global_origin_sub;
+	ros::Subscriber hp_sub;
 
 	std::string frame_id;		//!< frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
@@ -163,7 +169,7 @@ private:
 				      map_origin.y() - map_point.y(),
 				      map_origin.z() - map_point.z()};
 
-		R << - sin(map_point.y()), cos(map_point.y()), 0.0
+		R << - sin(map_point.y()), cos(map_point.y()), 0.0,
 		     - cos(map_point.y()) * sin(map_point.x()), - sin(map_point.y()) * sin(map_point.x()), cos(map_point.x()),
 		     cos(map_point.y()) * cos(map_point.x()), sin(map_point.y()) * cos(map_point.x()), sin(map_point.x());
 
@@ -324,7 +330,13 @@ private:
 
 		Eigen::Vector3d map_point;
 
-		// Set map frame origin
+		/**
+		 * Checks if the "map" origin is set.
+		 * - If not, and the home position is also not received, it sets the current local ecef as the origin;
+		 * - If the home position is received, it sets the "map" origin;
+		 * - If the "map" origin is set, then it applies the rotations to the offset between the origin
+		 * and the current local geocentric coordinates.
+		 */
 		if (!is_map_init) {
 			map.Forward(fix->latitude, fix->longitude, fix->altitude,
 						map_origin.x(), map_origin.y(), map_origin.z());
@@ -454,6 +466,15 @@ private:
 	}
 
 	/* -*- callbacks -*- */
+
+	void home_position_cb(const mavros_msgs::HomePosition::ConstPtr &req)
+	{
+		map_origin.x() = req->latitude;
+		map_origin.y() = req->longitude;
+		map_origin.z() = req->altitude;
+
+		is_map_init = true;
+	}
 
 	void set_gp_origin_cb(const geographic_msgs::GeoPointStamped::ConstPtr &req)
 	{

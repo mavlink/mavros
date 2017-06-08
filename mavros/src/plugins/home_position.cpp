@@ -110,7 +110,7 @@ private:
 		tf::pointEigenToMsg(pos, hp->position);
 		tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
 
-		ROS_INFO_NAMED("home_position", "HP: Home lat %f, long %f, alt %f", hp->latitude, hp->longitude, hp->altitude);
+		ROS_DEBUG_NAMED("home_position", "HP: Home lat %f, long %f, alt %f", hp->latitude, hp->longitude, hp->altitude);
 		hp_pub.publish(hp);
 	}
 
