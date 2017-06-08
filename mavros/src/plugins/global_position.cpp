@@ -258,7 +258,7 @@ private:
 			gp_global_origin_pub.publish(g_origin);
 		}
 		catch (const std::exception& e) {
-	    ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 	  }
 	}
 
@@ -364,7 +364,7 @@ private:
 			}
 		}
 		catch (const std::exception& e) {
-	    ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 	  }
 
 		/**

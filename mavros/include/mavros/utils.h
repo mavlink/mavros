@@ -112,7 +112,7 @@ inline double geoid_to_ellipsoid_height(T lla){
 		       * egm96(lla->latitude, lla->longitude);
  	}
 	catch (const std::exception& e) {
-    ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
+		ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
 		return 1;
   }
 }
@@ -129,7 +129,7 @@ inline double ellipsoid_to_geoid_height(T lla) {
 		       * egm96(lla->latitude, lla->longitude);
 	}
  	catch (const std::exception& e) {
-    ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
+		ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
  		return 1;
   }
 }
