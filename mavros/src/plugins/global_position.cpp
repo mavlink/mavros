@@ -153,9 +153,9 @@ private:
 		 * by an angle of π - ϕ followed by a counter-clockwise over the same axis by
 		 * an angle of π - λ
 		 *
-		 * R = [     -sinλ       cosλ  0.0
-		 *         -cosλ*sinϕ -sinλ*sinϕ cosϕ
-		 *         cosλ*cosϕ  sinλ*cosϕ sinϕ]
+		 * R = [-sinλ       cosλ        0.0
+		 *      -cosλ*sinϕ  -sinλ*sinϕ  cosϕ
+		 *      cosλ*cosϕ   sinλ*cosϕ   sinϕ]
 		 *
 		 * East, North, Up = R * [∂x, ∂y, ∂z]
 		 */
@@ -172,7 +172,7 @@ private:
 		else
 			local_ecef = map_origin - map_point;
 
-		R << - sin_lon,	    cos_lon, 		      0.0,
+		R << - sin_lon,	    	   cos_lon,		 0.0,
 		     - cos_lon * sin_lat,  - sin_lon * sin_lat,  cos_lat,
 		     cos_lon * cos_lat,    sin_lon * cos_lat,    sin_lat;
 
