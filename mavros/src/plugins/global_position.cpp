@@ -231,11 +231,15 @@ private:
 		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
 
-		// @todo: so to respect REP 105, we should convert from AMSL to ECEF using GeographicLib::GeoCoords (pending #693)
-		// see <http://www.ros.org/reps/rep-0105.html>
-		g_origin->position.latitude = glob_orig.latitude / 1E7;		// deg
-		g_origin->position.longitude = glob_orig.longitude / 1E7;	// deg
-		g_origin->position.altitude = glob_orig.altitude / 1E3;		// m
+		/**
+		 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+		 * Note: "earth" frame, in ECEF, of the global origin
+		 */
+		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+					GeographicLib::Constants::WGS84_f());
+
+		earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
+					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
 		gp_global_origin_pub.publish(g_origin);
 	}
