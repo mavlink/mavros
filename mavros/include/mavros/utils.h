@@ -23,6 +23,8 @@
 #include <mavconn/mavlink_dialect.h>
 #include <GeographicLib/Geoid.hpp>
 
+#include <ros/console.h>
+
 // OS X compat: missing error codes
 #ifdef __APPLE__
 #define EBADE 50	/* Invalid exchange */
@@ -104,9 +106,15 @@ timesync_mode timesync_mode_from_str(const std::string &mode);
  */
 template <class T>
 inline double geoid_to_ellipsoid_height(T lla){
-	GeographicLib::Geoid egm96("egm96-5");
-	return GeographicLib::Geoid::GEOIDTOELLIPSOID
-	       * egm96(lla->latitude, lla->longitude);
+	try {
+		GeographicLib::Geoid egm96("egm96-5");
+		return GeographicLib::Geoid::GEOIDTOELLIPSOID
+		       * egm96(lla->latitude, lla->longitude);
+ 	}
+	catch (const std::exception& e) {
+    ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
+		return 1;
+  }
 }
 
 /**
@@ -115,9 +123,15 @@ inline double geoid_to_ellipsoid_height(T lla){
  */
 template <class T>
 inline double ellipsoid_to_geoid_height(T lla) {
-	GeographicLib::Geoid egm96("egm96-5");
-	return GeographicLib::Geoid::ELLIPSOIDTOGEOID
-	       * egm96(lla->latitude, lla->longitude);
+	try {
+		GeographicLib::Geoid egm96("egm96-5");
+		return GeographicLib::Geoid::ELLIPSOIDTOGEOID
+		       * egm96(lla->latitude, lla->longitude);
+	}
+ 	catch (const std::exception& e) {
+    ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
+ 		return 1;
+  }
 }
 }	// namespace utils
 }	// namespace mavros

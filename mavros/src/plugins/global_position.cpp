@@ -244,17 +244,22 @@ private:
 		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
 
-		/**
-		 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
-		 * Note: "earth" frame, in ECEF, of the global origin
-		 */
-		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
+		try {
+			/**
+			 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 * Note: "earth" frame, in ECEF, of the global origin
+			 */
+			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+						GeographicLib::Constants::WGS84_f());
 
-		earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
-					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
+			earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
+						g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
-		gp_global_origin_pub.publish(g_origin);
+			gp_global_origin_pub.publish(g_origin);
+		}
+		catch (const std::exception& e) {
+	    ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+	  }
 	}
 
 	/** @todo Handler for GLOBAL_POSITION_INT_COV */
@@ -321,40 +326,46 @@ private:
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
 
-		/**
-		 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
-		 *
-		 * Note: "map_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
-		 * in spherical coordinates, with the orientation in ENU (just like what is applied
-		 * on Gazebo)
-		 */
-		GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
-
+		// ECEF point in "map" frame
 		Eigen::Vector3d map_point;
 
-		/**
-		 * Checks if the "map" origin is set.
-		 * - If not, and the home position is also not received, it sets the current local ecef as the origin;
-		 * - If the home position is received, it sets the "map" origin;
-		 * - If the "map" origin is set, then it applies the rotations to the offset between the origin
-		 * and the current local geocentric coordinates.
-		 */
-		if (!is_map_init) {
-			map.Forward(fix->latitude, fix->longitude, fix->altitude,
-						map_origin.x(), map_origin.y(), map_origin.z());
+		try {
+			/**
+			 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 *
+			 * Note: "map_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
+			 * in spherical coordinates, with the orientation in ENU (just like what is applied
+			 * on Gazebo)
+			 */
+			GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
+						GeographicLib::Constants::WGS84_f());
 
-			tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_origin), odom->pose.pose.position);
+			/**
+			 * Checks if the "map" origin is set.
+			 * - If not, and the home position is also not received, it sets the current local ecef as the origin;
+			 * - If the home position is received, it sets the "map" origin;
+			 * - If the "map" origin is set, then it applies the rotations to the offset between the origin
+			 * and the current local geocentric coordinates.
+			 */
+			if (!is_map_init) {
+				map.Forward(fix->latitude, fix->longitude, fix->altitude,
+							map_origin.x(), map_origin.y(), map_origin.z());
 
-			is_map_init = true;
+				tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_origin), odom->pose.pose.position);
+
+				is_map_init = true;
+			}
+			// If origin is set, compute the local coordinates in ENU
+			else {
+				map.Forward(fix->latitude, fix->longitude, fix->altitude,
+							map_point.x(), map_point.y(), map_point.z());
+
+				tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_point), odom->pose.pose.position);
+			}
 		}
-		// If origin is set, compute the local coordinates in ENU
-		else {
-			map.Forward(fix->latitude, fix->longitude, fix->altitude,
-						map_point.x(), map_point.y(), map_point.z());
-
-			tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_point), odom->pose.pose.position);
-		}
+		catch (const std::exception& e) {
+	    ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+	  }
 
 		/**
 		 * by default, we are using the relative altitude instead of the geocentric
@@ -483,26 +494,31 @@ private:
 	{
 		mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo;
 
+		Eigen::Vector3d global_position;
+
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
 
-		/**
-		 * Conversion from geocentric coordinates in ECEF (Earth-Centered, Earth-Fixed) to geodetic coordinates (LLA)
-		 * Note: "earth" frame, in ECEF, of the global origin
-		 */
-		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
+		try {
+			/**
+			 * Conversion from geocentric coordinates in ECEF (Earth-Centered, Earth-Fixed) to geodetic coordinates (LLA)
+			 * Note: "earth" frame, in ECEF, of the global origin
+			 */
+			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
+						GeographicLib::Constants::WGS84_f());
 
-		Eigen::Vector3d global_position;
+			earth.Reverse(req->position.latitude, req->position.longitude, req->position.altitude,
+						global_position.x(), global_position.y(), global_position.z());
 
-		earth.Reverse(req->position.latitude, req->position.longitude, req->position.altitude,
-					global_position.x(), global_position.y(), global_position.z());
+			gpo.latitude = global_position.x() * 1E7;
+			gpo.longitude = global_position.y() * 1E7;
+			gpo.altitude = global_position.z() * 1E3;
 
-		gpo.latitude = global_position.x() * 1E7;
-		gpo.longitude = global_position.y() * 1E7;
-		gpo.altitude = global_position.z() * 1E3;
-
-		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
+			UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
+		}
+		catch (const std::exception& e) {
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+		}
 	}
 };
 }	// namespace std_plugins
