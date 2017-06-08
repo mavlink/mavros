@@ -143,6 +143,10 @@ private:
 		 * ϕ = latitude
 		 * λ = longitude
 		 *
+		 * The rotation is composed by a counter-clockwise rotation over the Z-axis
+		 * by an angle of π - ϕ followed by a counter-clockwise over the same axis by
+		 * an angle of π - λ
+		 *
 		 * R = [     -sinλ       cosλ  0.0
 		 *         -cosλ*sinϕ -sinλ*sinϕ cosϕ
 		 *         cosλ*cosϕ  sinλ*cosϕ sinϕ]
