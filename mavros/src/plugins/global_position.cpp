@@ -162,16 +162,19 @@ private:
 		Eigen::Matrix3d R;
 		Eigen::Vector3d local_ecef;
 
+		double sin_lat = sin(map_point.x());
+		double sin_lon = sin(map_point.y());
+		double cos_lat = cos(map_point.x());
+		double cos_lon = cos(map_point.y());
+
 		if (!is_map_init)
 			local_ecef = map_point;
 		else
-			local_ecef = {map_origin.x() - map_point.x(),
-				      map_origin.y() - map_point.y(),
-				      map_origin.z() - map_point.z()};
+			local_ecef = map_origin - map_point;
 
-		R << - sin(map_point.y()), cos(map_point.y()), 0.0,
-		     - cos(map_point.y()) * sin(map_point.x()), - sin(map_point.y()) * sin(map_point.x()), cos(map_point.x()),
-		     cos(map_point.y()) * cos(map_point.x()), sin(map_point.y()) * cos(map_point.x()), sin(map_point.x());
+		R << - sin_lon,	    cos_lon, 		      0.0,
+		     - cos_lon * sin_lat,  - sin_lon * sin_lat,  cos_lat,
+		     cos_lon * cos_lat,    sin_lon * cos_lat,    sin_lat;
 
 		return R * local_ecef;
 	}
