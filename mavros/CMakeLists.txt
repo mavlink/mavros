@@ -42,17 +42,6 @@ include(MavrosMavlink)
 ## Find GeographicLib
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 find_package(GeographicLib)
-if (GeographicLib_FOUND)
-  if(NOT EXISTS /usr/local/share/GeographicLib/geoids)
-     execute_process(COMMAND sudo geographiclib-get-geoids egm96-5)
-  endif()
-  if(NOT EXISTS /usr/local/share/GeographicLib/gravity)
-     execute_process(COMMAND sudo geographiclib-get-gravity egm96)
-  endif()
-  if(NOT EXISTS /usr/local/share/GeographicLib/magnetic)
-     execute_process(COMMAND sudo geographiclib-get-magnetic emm2015)
-  endif()
-endif ()
 
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
