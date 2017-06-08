@@ -10,7 +10,7 @@ else
 fi
 
 # Check if the geoid model dataset is already installed. If not, installs it
-if [ ! -d "/usr/local/share/GeographicLib/geoids" ]; then
+if [ ! -d "/usr/local/share/GeographicLib/geoids" ] && [ ! -d "/usr/share/GeographicLib/geoids" ]; then
   echo "\tGeoid Model dataset not installed. Installing..."
   sudo geographiclib-get-geoids egm96-5
 else
@@ -18,7 +18,7 @@ else
 fi
 
 # Check if the gravity model dataset is already installed. If not, installs it
-if [ ! -d "/usr/local/share/GeographicLib/gravity" ]; then
+if [ ! -d "/usr/local/share/GeographicLib/gravity" ] && [ ! -d "/usr/share/GeographicLib/gravity" ]; then
   echo "\tGravity Model dataset not installed. Installing..."
   sudo geographiclib-get-gravity egm96
 else
@@ -26,7 +26,7 @@ else
 fi
 
 # Check if the magnetic model dataset is already installed. If not, installs it
-if [ ! -d "/usr/local/share/GeographicLib/magnetic" ]; then
+if [ ! -d "/usr/local/share/GeographicLib/magnetic" ] && [ ! -d "/usr/share/GeographicLib/magnetic" ]; then
   echo "\tMagnetic Model dataset not installed. Installing..."
   sudo geographiclib-get-magnetic emm2015
 else
