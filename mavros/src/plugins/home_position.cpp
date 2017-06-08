@@ -105,7 +105,7 @@ private:
 		hp->header.stamp = ros::Time::now();
 		hp->geo.latitude = home_position.latitude / 1E7;		// deg
 		hp->geo.longitude = home_position.longitude / 1E7;		// deg
-		hp->geo.altitude = home_position.altitude / 1E3;	// in meters
+		hp->geo.altitude = home_position.altitude / 1E3 + utils::geoid_to_ellipsoid_height(&hp->geo);	// in meters
 		tf::quaternionEigenToMsg(q, hp->orientation);
 		tf::pointEigenToMsg(pos, hp->position);
 		tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
@@ -133,7 +133,7 @@ private:
 		hp.target_system = m_uas->get_tgt_system();
 		ftf::quaternion_to_mavlink(q, hp.q);
 
-		hp.altitude = req->geo.altitude * 1e3;
+		hp.altitude = req->geo.altitude * 1e3 + utils::ellipsoid_to_geoid_height(&req->geo);
 		// [[[cog:
 		// for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
 		//     cog.outl("hp.{f} = req->{f} * {m};".format(**locals()))
