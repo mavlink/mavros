@@ -70,7 +70,7 @@ MAVROS also allows conversion of geodetic and geocentric coordinates through [Ge
 given that:
   - `geographic_msgs` require that the LLA fields to be filled in WGS-84 datum, meaning
   that the altitude should be the height above the WGS-84 ellipsoid. For that, a conversion from
-  the height above the geoid (AMSL with the emm2015 geoid model) to height above the WGS-84,
+  the height above the geoid (AMSL with the egm96 geoid model) to height above the WGS-84,
   and vice-versa, is available and used in the `global_position` plugin;
   - According to ROS REP 105, the `earth` frame should be propagated in ECEF (Earth-Centered,
   Earth-Fixed) local coordinates. For that, the functionalities of GeographicLib are used in
@@ -137,6 +137,12 @@ Since **GeographicLib requires certain datasets** (mainly the geoid dataset) so 
 certain calculations. These need to be installed manually by the user using `geographiclib-tools`,
 which can be installed by `apt-get` in Debian systems. For a quicker procedure, just **run
 the available script in the "tools" folder, `install_geographiclib_datasets.sh`**.
+
+:bangbang:**The geoid dataset is mandatory to allow the conversion between heights in order to
+respect ROS msg API!**:bangbang:
+
+:heavy_exclamation_mark:Run `mavros/tools/install_geographiclib_datasets.sh` to install all datasets or
+`sudo geographiclib-get-geoids egm96-5` to install the geoid dataset only.:heavy_exclamation_mark:
 
 
 ### Binary installation (deb)
