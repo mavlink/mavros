@@ -76,11 +76,11 @@ add_service_files(
 #   Action2.action
 # )
 
-generate_messages(DEPENDENCIES geometry_msgs std_msgs)
+generate_messages(DEPENDENCIES geometry_msgs geographic_msgs std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS geometry_msgs message_runtime std_msgs)
+  CATKIN_DEPENDS geometry_msgs geographic_msgs message_runtime std_msgs)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

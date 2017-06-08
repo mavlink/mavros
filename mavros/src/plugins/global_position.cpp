@@ -125,7 +125,8 @@ private:
 
 	double rot_cov;
 
-	Eigen::Vector3d map_origin;	//!< origin of map frame
+	Eigen::Vector3d map_origin {};	//!< origin of map frame
+	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame
 
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
@@ -160,23 +161,17 @@ private:
 		 * East, North, Up = R * [∂x, ∂y, ∂z]
 		 */
 		Eigen::Matrix3d R;
-		Eigen::Vector3d local_ecef;
 
 		double sin_lat = sin(map_point.x());
 		double sin_lon = sin(map_point.y());
 		double cos_lat = cos(map_point.x());
 		double cos_lon = cos(map_point.y());
 
-		if (!is_map_init)
-			local_ecef = map_point;
-		else
-			local_ecef = map_origin - map_point;
-
 		R << - sin_lon,	    	   cos_lon,		 0.0,
 		     - cos_lon * sin_lat,  - sin_lon * sin_lat,  cos_lat,
 		     cos_lon * cos_lat,    sin_lon * cos_lat,    sin_lat;
 
-		return R * local_ecef;
+		return R * map_point;
 	}
 
 	/* -*- message handlers -*- */
@@ -351,8 +346,7 @@ private:
 				map.Forward(fix->latitude, fix->longitude, fix->altitude,
 							map_origin.x(), map_origin.y(), map_origin.z());
 
-				tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_origin), odom->pose.pose.position);
-
+				local_ecef = map_origin;
 				is_map_init = true;
 			}
 			// If origin is set, compute the local coordinates in ENU
@@ -360,12 +354,14 @@ private:
 				map.Forward(fix->latitude, fix->longitude, fix->altitude,
 							map_point.x(), map_point.y(), map_point.z());
 
-				tf::pointEigenToMsg(ecef_to_enu_transform(gpos, map_point), odom->pose.pose.position);
+				local_ecef = map_origin - map_point;
 			}
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 	  }
+
+		tf::pointEigenToMsg(ecef_to_enu_transform(gpos, local_ecef), odom->pose.pose.position);
 
 		/**
 		 * by default, we are using the relative altitude instead of the geocentric
@@ -483,9 +479,9 @@ private:
 
 	void home_position_cb(const mavros_msgs::HomePosition::ConstPtr &req)
 	{
-		map_origin.x() = req->latitude;
-		map_origin.y() = req->longitude;
-		map_origin.z() = req->altitude;
+		map_origin.x() = req->geo.latitude;
+		map_origin.y() = req->geo.longitude;
+		map_origin.z() = req->geo.altitude;
 
 		is_map_init = true;
 	}

@@ -3,7 +3,7 @@
 
 std_msgs/Header header
 
-geographic_msgs/GeoPoint geo; # geodetic coordinates in WGS-84 datum
+geographic_msgs/GeoPoint geo # geodetic coordinates in WGS-84 datum
 
 geometry_msgs/Point position	# local position
 geometry_msgs/Quaternion orientation	# XXX: verify field name (q[4])
