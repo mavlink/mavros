@@ -33,7 +33,8 @@ class HomePositionPlugin : public plugin::PluginBase {
 public:
 	HomePositionPlugin() :
 		hp_nh("~home_position"),
-		REQUEST_POLL_TIME_DT(REQUEST_POLL_TIME_MS / 1000.0)
+		REQUEST_POLL_TIME_DT(REQUEST_POLL_TIME_MS / 1000.0),
+		egm96("egm96-5", "", true, true)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -47,6 +48,17 @@ public:
 		poll_timer = hp_nh.createTimer(REQUEST_POLL_TIME_DT, &HomePositionPlugin::timeout_cb, this);
 		poll_timer.stop();
 		enable_connection_cb();
+
+		// initialize Geoid model dataset
+		try {
+			egm96 : "egm96-5",	// using egm96 geoid with 5' grid (minimal set)
+				"",		// default directory is DefaultGeoidPath() (/usr/local/share/GeographicLib/geoids)
+				true,		// using cubic interpolation method
+				true;		// thread safe object
+		}
+		catch (const std::exception& e) {
+			ROS_INFO_STREAM("HP: Caught exception: " << e.what() << std::endl);
+	  }
 	}
 
 	Subscriptions get_subscriptions()
@@ -67,6 +79,8 @@ private:
 
 	static constexpr int REQUEST_POLL_TIME_MS = 10000;	//! position refresh poll interval
 	const ros::Duration REQUEST_POLL_TIME_DT;
+
+	GeographicLib::Geoid egm96;
 
 	bool call_get_home_position(void)
 	{
@@ -105,7 +119,7 @@ private:
 		hp->header.stamp = ros::Time::now();
 		hp->geo.latitude = home_position.latitude / 1E7;		// deg
 		hp->geo.longitude = home_position.longitude / 1E7;		// deg
-		hp->geo.altitude = home_position.altitude / 1E3 + utils::geoid_to_ellipsoid_height(&hp->geo);	// in meters
+		hp->geo.altitude = home_position.altitude / 1E3 + utils::geoid_to_ellipsoid_height(&hp->geo, egm96);	// in meters
 		tf::quaternionEigenToMsg(q, hp->orientation);
 		tf::pointEigenToMsg(pos, hp->position);
 		tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
@@ -133,7 +147,7 @@ private:
 		hp.target_system = m_uas->get_tgt_system();
 		ftf::quaternion_to_mavlink(q, hp.q);
 
-		hp.altitude = req->geo.altitude * 1e3 + utils::ellipsoid_to_geoid_height(&req->geo);
+		hp.altitude = req->geo.altitude * 1e3 + utils::ellipsoid_to_geoid_height(&req->geo, egm96);
 		// [[[cog:
 		// for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
 		//     cog.outl("hp.{f} = req->{f} * {m};".format(**locals()))

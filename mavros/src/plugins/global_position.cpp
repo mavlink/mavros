@@ -48,7 +48,8 @@ public:
 		tf_send(false),
 		rot_cov(99999.0),
 		use_relative_alt(true),
-		is_map_init(false)
+		is_map_init(false),
+		egm96("egm96-5", "", true, true)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -86,6 +87,17 @@ public:
 
 		// offset from local position to the global origin ("earth")
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
+
+		// initialize Geoid model dataset
+		try {
+			egm96 : "egm96-5",	// using egm96 geoid with 5' grid (minimal set)
+				"",		// default directory is DefaultGeoidPath() (/usr/local/share/GeographicLib/geoids)
+				true,		// using cubic interpolation method
+				true;		// thread safe object
+		}
+		catch (const std::exception& e) {
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+	  }
 	}
 
 	Subscriptions get_subscriptions()
@@ -128,11 +140,13 @@ private:
 	Eigen::Vector3d map_origin {};	//!< origin of map frame
 	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame
 
+	GeographicLib::Geoid egm96;	//!< geoid model dataset
+
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3 + utils::geoid_to_ellipsoid_height(fix);	// in meters
+		fix->altitude = msg.alt / 1E3 + utils::geoid_to_ellipsoid_height(fix, egm96);	// in meters
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {
@@ -495,26 +509,11 @@ private:
 		gpo.target_system = m_uas->get_tgt_system();
 		// gpo.time_boot_ms = stamp.toNSec() / 1000;	#TODO: requires Mavlink msg update
 
-		try {
-			/**
-			 * Conversion from geocentric coordinates in ECEF (Earth-Centered, Earth-Fixed) to geodetic coordinates (LLA)
-			 * Note: "earth" frame, in ECEF, of the global origin
-			 */
-			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-						GeographicLib::Constants::WGS84_f());
+		gpo.latitude = req->position.latitude * 1E7;
+		gpo.longitude = req->position.longitude * 1E7;
+		gpo.altitude = req->position.altitude * 1E3 + utils::ellipsoid_to_geoid_height(&req->position, egm96);
 
-			earth.Reverse(req->position.latitude, req->position.longitude, req->position.altitude,
-						global_position.x(), global_position.y(), global_position.z());
-
-			gpo.latitude = global_position.x() * 1E7;
-			gpo.longitude = global_position.y() * 1E7;
-			gpo.altitude = global_position.z() * 1E3;
-
-			UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
-		}
-		catch (const std::exception& e) {
-			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
-		}
+		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
 };
 }	// namespace std_plugins

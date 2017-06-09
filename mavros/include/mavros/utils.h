@@ -105,9 +105,8 @@ timesync_mode timesync_mode_from_str(const std::string &mode);
  * to height above ellipsoid (WGS-84)
  */
 template <class T>
-inline double geoid_to_ellipsoid_height(T lla){
+inline double geoid_to_ellipsoid_height(T lla, GeographicLib::Geoid &egm96){
 	try {
-		GeographicLib::Geoid egm96("egm96-5");
 		return GeographicLib::Geoid::GEOIDTOELLIPSOID
 		       * egm96(lla->latitude, lla->longitude);
  	}
@@ -122,9 +121,8 @@ inline double geoid_to_ellipsoid_height(T lla){
  * to height above geoid (AMSL)
  */
 template <class T>
-inline double ellipsoid_to_geoid_height(T lla) {
+inline double ellipsoid_to_geoid_height(T lla, GeographicLib::Geoid &egm96) {
 	try {
-		GeographicLib::Geoid egm96("egm96-5");
 		return GeographicLib::Geoid::ELLIPSOIDTOGEOID
 		       * egm96(lla->latitude, lla->longitude);
 	}
