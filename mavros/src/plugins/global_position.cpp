@@ -159,7 +159,7 @@ private:
 	inline Eigen::Vector3d ecef_to_enu_transform(mavlink::common::msg::GLOBAL_POSITION_INT &gpos,
 				Eigen::Vector3d &map_point) {
 		/**
-		 * Apply transform from ECEF to ENU:
+		 * @brief Apply transform from ECEF to ENU:
 		 *
 		 * ϕ = latitude
 		 * λ = longitude
@@ -255,7 +255,7 @@ private:
 
 		try {
 			/**
-			 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 			 * Note: "earth" frame, in ECEF, of the global origin
 			 */
 			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
@@ -308,7 +308,7 @@ private:
 		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
 
 		/**
-		 * Global position odometry:
+		 * @brief Global position odometry:
 		 *
 		 * X: spherical coordinate X-axis (meters)
 		 * Y: spherical coordinate Y-axis (meters)
@@ -340,7 +340,7 @@ private:
 
 		try {
 			/**
-			 * Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 			 *
 			 * Note: "map_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
 			 * in spherical coordinates, with the orientation in ENU (just like what is applied
@@ -350,7 +350,7 @@ private:
 						GeographicLib::Constants::WGS84_f());
 
 			/**
-			 * Checks if the "map" origin is set.
+			 * @brief Checks if the "map" origin is set.
 			 * - If not, and the home position is also not received, it sets the current local ecef as the origin;
 			 * - If the home position is received, it sets the "map" origin;
 			 * - If the "map" origin is set, then it applies the rotations to the offset between the origin
@@ -378,9 +378,8 @@ private:
 		tf::pointEigenToMsg(ecef_to_enu_transform(gpos, local_ecef), odom->pose.pose.position);
 
 		/**
-		 * by default, we are using the relative altitude instead of the geocentric
-		 * altitude, which is relative to the WGS-84 ellipsoid (for pratical purposes, it's
-		 * what makese sense)
+		 * @brief By default, we are using the relative altitude instead of the geocentric
+		 * altitude, which is relative to the WGS-84 ellipsoid
 		 */
 		if (use_relative_alt)
 			odom->pose.pose.position.z = relative_alt->data;
