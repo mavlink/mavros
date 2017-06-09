@@ -68,14 +68,14 @@ Documents: [Frame Conversions][iss473rfc], [Mavlink coordinate frames][iss473tab
 
 MAVROS also allows conversion of geodetic and geocentric coordinates through [GeographicLib][geolib]
 given that:
-  - `geographic_msgs` require that the LLA fields to be filled in WGS-84 datum, meaning
-  that the altitude should be the height above the WGS-84 ellipsoid. For that, a conversion from
-  the height above the geoid (AMSL with the egm96 geoid model) to height above the WGS-84,
-  and vice-versa, is available and used in the `global_position` plugin;
+  - `geographic_msgs` and `NatSatFix.msg` require the LLA fields to be filled in WGS-84 datum,
+  meaning that the altitude should be the height above the WGS-84 ellipsoid. For that, a conversion
+  from the height above the geoid (AMSL, considering the egm96 geoid model) to height above the
+  WGS-84 ellipsoid, and vice-versa, is available and used in several plugins;
   - According to ROS REP 105, the `earth` frame should be propagated in ECEF (Earth-Centered,
   Earth-Fixed) local coordinates. For that, the functionalities of GeographicLib are used in
-  order to allow conversion from geodetic coordinates to geocentric coordinates and vice-versa;
-  - The computation from GPS coordinates to local geocentric coordinates require the definition
+  order to allow conversion from geodetic coordinates to geocentric coordinates;
+  - The translation from GPS coordinates to local geocentric coordinates require the definition
   of a local origin on the `map` frame, in ECEF, and calculate the offset to it in ENU. All
   the conversions are supported by GeographicLib classes and methods and implemented in the
   `global_position` plugin.
@@ -124,17 +124,17 @@ Installation
 
 ### Required tools
 
-Most of the ROS dependencies are supported and installed by rosdep, including external
+Most of the ROS dependencies are supported and installed by `rosdep`, including external
 libraries as Eigen and Boost.
 
 [GeographicLib][geolib] can be installed by `apt-get` and it is already included on the
 rosdep of MAVROS package. It is also possible to compile it and install it from src but
-be advised to have the proper install directories the same as the onesof the `apt-get`
+be advised to have the proper install directories the same as the ones of the `apt-get`
 install, in order to make sure that the `FindGeographicLib.cmake` finds the required
 shared libraries (`libGeographic.so`).
 
 Since **GeographicLib requires certain datasets** (mainly the geoid dataset) so to fulfill
-certain calculations. These need to be installed manually by the user using `geographiclib-tools`,
+certain calculations, these need to be installed manually by the user using `geographiclib-tools`,
 which can be installed by `apt-get` in Debian systems. For a quicker procedure, just **run
 the available script in the "tools" folder, `install_geographiclib_datasets.sh`**.
 
