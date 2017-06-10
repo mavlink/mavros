@@ -122,7 +122,7 @@ Examples:
 Installation
 ------------
 
-### Required tools
+### Required dependencies
 
 Most of the ROS dependencies are supported and installed by `rosdep`, including external
 libraries as Eigen and Boost.
@@ -137,6 +137,11 @@ Since **GeographicLib requires certain datasets** (mainly the geoid dataset) so 
 certain calculations, these need to be installed manually by the user using `geographiclib-tools`,
 which can be installed by `apt-get` in Debian systems. For a quicker procedure, just **run
 the available script in the "tools" folder, `install_geographiclib_datasets.sh`**.
+
+Note that if you are using an older MAVROS release source install and want to update to a new one, remember to
+run `rosdep update` before running `rosdep install --from-paths ${ROS_WORKSPACE} --ignore-src --rosdistro=${ROSDISTRO}`,
+with `ROS_WORKSPACE` your src folder of catkin workspace. This will allow updating the `rosdep` list
+and install the required dependencies when issuing `rosdep install`.
 
 :bangbang:**The geoid dataset is mandatory to allow the conversion between heights in order to
 respect ROS msg API!**:bangbang:
