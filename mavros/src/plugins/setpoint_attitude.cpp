@@ -111,6 +111,32 @@ private:
 	double tf_rate;
 	bool use_quaternion;
 	bool reverse_thrust;
+	float normalized_thrust;
+
+	/**
+	 * @brief function to verify if the thrust values are normalized;
+	 * considers also the reversed trust values
+	 */
+	inline bool is_normalized(float thrust){
+		if (reverse_thrust) {
+			if (thrust < -1.0) {
+				ROS_WARN_NAMED("attitude", "Not normalized reversed thrust! Thd(%f) < Min(%f)", thrust, -1.0);
+				return false;
+			}
+		}
+		else {
+			if (thrust < 0.0) {
+				ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) < Min(%f)", thrust, 0.0);
+				return false;
+			}
+		}
+
+		if (thrust > 1.0) {
+			ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) > Max(%f)", thrust, 1.0);
+			return false;
+		}
+		return true;
+	}
 
 	/* -*- mid-level helpers -*- */
 
@@ -165,44 +191,18 @@ private:
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(pose_msg->pose, tr);
 
-		/**
-		 * && are lazy, is_normalized() should be called only if reverse_thrust are true.
-		 */
-		float thrust_normalized = thrust_msg->thrust;
-		if (reverse_thrust && !is_normalized(thrust_normalized, -1.0, 1.0))
-			return;
-		else if (!is_normalized(thrust_normalized, 0.0, 1.0))
-			return;
-
-		send_attitude_quaternion(pose_msg->header.stamp, tr, thrust_normalized);
+		if (is_normalized(thrust_msg->thrust))
+			send_attitude_quaternion(pose_msg->header.stamp, tr, thrust_msg->thrust);
 	}
 
 	void attitude_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &req, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Vector3d ang_vel;
 		tf::vectorMsgToEigen(req->twist.angular, ang_vel);
 
-		float thrust_normalized = thrust_msg->thrust;
-		if (reverse_thrust && !is_normalized(thrust_normalized, -1.0, 1.0))
-			return;
-		else if (!is_normalized(thrust_normalized, 0.0, 1.0))
-			return;
-
-		send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_normalized);
+		if (is_normalized(thrust_msg->thrust))
+			send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
 	}
 
-	inline bool is_normalized(float thrust, const float min, const float max)
-	{
-		if (thrust < min) {
-			ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) < Min(%f)", thrust, min);
-			return false;
-		}
-		else if (thrust > max) {
-			ROS_WARN_NAMED("attitude", "Not normalized thrust! Thd(%f) > Max(%f)", thrust, max);
-			return false;
-		}
-
-		return true;
-	}
 };
 }	// namespace std_plugins
 }	// namespace mavros
