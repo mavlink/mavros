@@ -63,16 +63,15 @@ public:
 		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
 		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
-		// thrust msg to sync
-		message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 1);
+		// thrust msg subscriber to sync
+		thrust_sub.subscribe(sp_nh, "thrust", 10);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
 						"Listen to desired attitude transform "
 						<< tf_frame_id << " -> " << tf_child_frame_id);
-			tf2_start("AttitudeSpTF", &SetpointAttitudePlugin::transform_cb);
 
-			//@todo implement tf2_ros::MessageFilter< M >
+			tf2_sync_start("AttitudeSpTFSync", &SetpointAttitudePlugin::transform_cb);
 		}
 		else if (use_quaternion) {
 			/**
@@ -104,17 +103,18 @@ private:
 	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber twist_sub;
-
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
+
+	message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub;
+
 	double tf_rate;
 	bool use_quaternion;
 	bool reverse_thrust;
 	float normalized_thrust;
 
 	/**
-	 * @brief function to verify if the thrust values are normalized;
+	 * @brief Function to verify if the thrust values are normalized;
 	 * considers also the reversed trust values
 	 */
 	inline bool is_normalized(float thrust){
@@ -145,7 +145,8 @@ private:
 	 */
 	void send_attitude_quaternion(const ros::Time &stamp, const Eigen::Affine3d &tr, const float thrust)
 	{
-		/* RPY, also bits numbering started from 1 in docs
+		/**
+		 * @note RPY, also bits numbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_q_and_thrust = (7 << 0);
 
@@ -165,7 +166,8 @@ private:
 	 */
 	void send_attitude_ang_velocity(const ros::Time &stamp, const Eigen::Vector3d &ang_vel, const float thrust)
 	{
-		/* Q, also bits noumbering started from 1 in docs
+		/**
+		 * @note Q, also bits noumbering started from 1 in docs
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7);
 
@@ -180,11 +182,11 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void transform_cb(const geometry_msgs::TransformStamped &transform) {	//TODO: Replace this function with a sync one
+	void transform_cb(const geometry_msgs::TransformStamped &transform, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Affine3d tr;
 		tf::transformMsgToEigen(transform.transform, tr);
 
-		send_attitude_quaternion(transform.header.stamp, tr, 0.0);
+		send_attitude_quaternion(transform.header.stamp, tr, thrust_msg->thrust);
 	}
 
 	void attitude_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose_msg, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
