@@ -21,7 +21,6 @@
 #include <mavros/mavros_plugin.h>
 
 #include <geometry_msgs/TransformStamped.h>
-#include <mavros_msgs/Thrust.h>
 
 #include "tf2_ros/message_filter.h"
 #include <message_filters/subscriber.h>
@@ -127,7 +126,7 @@ public:
 template <class D>
 class SetAttitudeTargetMixin {
 public:
-	//! Message sepecification: @p http://mavlink.org/messages/common#SET_ATTITIDE_TARGET
+	//! Message sepecification: @p http://mavlink.org/messages/common#SET_ATTITUDE_TARGET
 	void set_attitude_target(uint32_t time_boot_ms,
 			uint8_t type_mask,
 			Eigen::Quaterniond orientation,
@@ -164,7 +163,6 @@ public:
  * It requires tf_frame_id, tf_child_frame_id strings
  * tf_rate double and uas object pointer
  */
-template <class D>
 class TF2ListenerMixin {
 public:
 	std::thread tf_thread_1;
@@ -178,6 +176,7 @@ public:
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
+	template <class D>
 	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &) )
 	{
 		tf_thd_name_1 = _thd_name;
@@ -209,12 +208,13 @@ public:
 	}
 
 	/**
-	 * @brief start tf listener syncronized with mavros_msgs::Thrust publisher topic
+	 * @brief start tf listener syncronized with another topic
 	 *
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
-	void tf2_sync_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &, const mavros_msgs::Thrust::ConstPtr &))
+	template <class D, class T>
+	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &, const typename T::ConstPtr &))
 	{
 		tf_thd_name_2 = _thd_name;
 
@@ -225,7 +225,8 @@ public:
 			ros::NodeHandle &_sp_nh = static_cast<D *>(this)->sp_nh;
 			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
 			std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
-			message_filters::Subscriber<mavros_msgs::Thrust> &_thrust_sub = static_cast<D *>(this)->thrust_sub;
+
+			message_filters::Subscriber<T> _topic_sub;
 
 			ros::Rate rate(static_cast<D *>(this)->tf_rate);
 			while (ros::ok()) {
@@ -235,7 +236,7 @@ public:
 						auto transform = m_uas_->tf2_buffer.lookupTransform(
 								_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
 
-						tf2_ros::MessageFilter<mavros_msgs::Thrust> tf2_filter(_thrust_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
+						tf2_ros::MessageFilter<T> tf2_filter(_topic_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
 						tf2_filter.registerCallback(boost::bind(cbp, static_cast<D *>(this), transform, _1));
 					}
 					catch (tf2::LookupException &ex) {

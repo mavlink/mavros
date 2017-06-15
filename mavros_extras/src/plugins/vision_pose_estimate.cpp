@@ -32,7 +32,7 @@ namespace extra_plugins{
  *
  */
 class VisionPoseEstimatePlugin : public plugin::PluginBase,
-	private plugin::TF2ListenerMixin<VisionPoseEstimatePlugin> {
+	private plugin::TF2ListenerMixin {
 public:
 	VisionPoseEstimatePlugin() : PluginBase(),
 		sp_nh("~vision_pose"),
@@ -54,7 +54,7 @@ public:
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("vision_pose", "Listen to vision transform " << tf_frame_id
 						<< " -> " << tf_child_frame_id);
-			tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
+			tf2_start<VisionPoseEstimatePlugin>("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
 		}
 		else {
 			vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cb, this);

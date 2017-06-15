@@ -36,7 +36,7 @@ namespace std_plugins {
  */
 class SetpointAttitudePlugin : public plugin::PluginBase,
 	private plugin::SetAttitudeTargetMixin<SetpointAttitudePlugin>,
-	private plugin::TF2ListenerMixin<SetpointAttitudePlugin> {
+	private plugin::TF2ListenerMixin {
 public:
 	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
@@ -64,14 +64,14 @@ public:
 		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		// thrust msg subscriber to sync
-		thrust_sub.subscribe(sp_nh, "thrust", 10);
+		message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 10);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
 						"Listen to desired attitude transform "
 						<< tf_frame_id << " -> " << tf_child_frame_id);
 
-			tf2_sync_start("AttitudeSpTFSync", &SetpointAttitudePlugin::transform_cb);
+			tf2_start<SetpointAttitudePlugin, mavros_msgs::Thrust>("AttitudeSpTFSync", &SetpointAttitudePlugin::transform_cb);
 		}
 		else if (use_quaternion) {
 			/**
@@ -105,8 +105,6 @@ private:
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
-
-	message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub;
 
 	double tf_rate;
 	bool use_quaternion;

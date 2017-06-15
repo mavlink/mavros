@@ -29,7 +29,7 @@ namespace std_plugins {
  */
 class SetpointPositionPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
-	private plugin::TF2ListenerMixin<SetpointPositionPlugin> {
+	private plugin::TF2ListenerMixin {
 public:
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
@@ -51,7 +51,7 @@ public:
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform "
 					<< tf_frame_id << " -> " << tf_child_frame_id);
-			tf2_start("PositionSpTF", &SetpointPositionPlugin::transform_cb);
+			tf2_start<SetpointPositionPlugin>("PositionSpTF", &SetpointPositionPlugin::transform_cb);
 		}
 		else {
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
