@@ -21,7 +21,6 @@
 #include <mavconn/thread_utils.h>
 #include <mavros_msgs/mavlink_convert.h>
 #include <mavconn/mavlink_dialect.h>
-#include <GeographicLib/Geoid.hpp>
 
 #include <ros/console.h>
 
@@ -100,36 +99,5 @@ int sensor_orientation_from_str(const std::string &sensor_orientation);
  */
 timesync_mode timesync_mode_from_str(const std::string &mode);
 
-/**
- * @brief Conversion from height above geoid (AMSL)
- * to height above ellipsoid (WGS-84)
- */
-template <class T>
-inline double geoid_to_ellipsoid_height(T lla, GeographicLib::Geoid &egm96){
-	try {
-		return GeographicLib::Geoid::GEOIDTOELLIPSOID
-		       * egm96(lla->latitude, lla->longitude);
- 	}
-	catch (const std::exception& e) {
-		ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
-		return 1;
-  }
-}
-
-/**
- * @brief Conversion from height above ellipsoid (WGS-84)
- * to height above geoid (AMSL)
- */
-template <class T>
-inline double ellipsoid_to_geoid_height(T lla, GeographicLib::Geoid &egm96) {
-	try {
-		return GeographicLib::Geoid::ELLIPSOIDTOGEOID
-		       * egm96(lla->latitude, lla->longitude);
-	}
- 	catch (const std::exception& e) {
-		ROS_INFO_STREAM("utils: geo conversion: Caught exception: " << e.what() << std::endl);
- 		return 1;
-  }
-}
 }	// namespace utils
 }	// namespace mavros

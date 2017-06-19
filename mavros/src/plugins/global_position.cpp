@@ -48,8 +48,7 @@ public:
 		tf_send(false),
 		rot_cov(99999.0),
 		use_relative_alt(true),
-		is_map_init(false),
-		egm96("egm96-5", "", true, true)
+		is_map_init(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -83,21 +82,11 @@ public:
 		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 
 		// home position subscriber to set "map" origin
+		// TODO use UAS
 		hp_sub = gp_nh.subscribe("home", 10, &GlobalPositionPlugin::home_position_cb, this);
 
 		// offset from local position to the global origin ("earth")
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
-
-		// initialize Geoid model dataset
-		try {
-			egm96 : "egm96-5",	// using egm96 geoid with 5' grid (minimal set)
-				"",		// default directory is DefaultGeoidPath() (/usr/local/share/GeographicLib/geoids)
-				true,		// using cubic interpolation method
-				true;		// thread safe object
-		}
-		catch (const std::exception& e) {
-			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
-	  }
 	}
 
 	Subscriptions get_subscriptions()
@@ -140,24 +129,24 @@ private:
 	Eigen::Vector3d map_origin {};	//!< origin of map frame
 	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame
 
-	GeographicLib::Geoid egm96;	//!< geoid model dataset
-
 	template<typename MsgT>
-	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix) {
+	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix)
+	{
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3 + utils::geoid_to_ellipsoid_height(fix, egm96);	// in meters
+		fix->altitude = msg.alt / 1E3 + m_uas->geoid_to_ellipsoid_height(fix);	// in meters
 	}
 
-	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix) {
+	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix)
+	{
 		fix->position_covariance.fill(0.0);
 		fix->position_covariance[0] = -1.0;
-		fix->position_covariance_type =
-					sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+		fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 	}
 
 	inline Eigen::Vector3d ecef_to_enu_transform(mavlink::common::msg::GLOBAL_POSITION_INT &gpos,
-				Eigen::Vector3d &map_point) {
+				Eigen::Vector3d &map_point)
+	{
 		/**
 		 * @brief Apply transform from ECEF to ENU:
 		 *
@@ -168,22 +157,22 @@ private:
 		 * by an angle of π - ϕ followed by a counter-clockwise over the same axis by
 		 * an angle of π - λ
 		 *
-		 * R = [-sinλ       cosλ        0.0
-		 *      -cosλ*sinϕ  -sinλ*sinϕ  cosϕ
-		 *      cosλ*cosϕ   sinλ*cosϕ   sinϕ]
+		 * R = [-sinλ        cosλ        0.0
+		 *      -cosλ*sinϕ  -sinλ*sinϕ   cosϕ
+		 *       cosλ*cosϕ   sinλ*cosϕ   sinϕ]
 		 *
 		 * East, North, Up = R * [∂x, ∂y, ∂z]
 		 */
 		Eigen::Matrix3d R;
 
-		double sin_lat = sin(map_point.x());
-		double sin_lon = sin(map_point.y());
-		double cos_lat = cos(map_point.x());
-		double cos_lon = cos(map_point.y());
+		const double sin_lat = std::sin(map_point.x());
+		const double sin_lon = std::sin(map_point.y());
+		const double cos_lat = std::cos(map_point.x());
+		const double cos_lon = std::cos(map_point.y());
 
-		R << - sin_lon,	    	   cos_lon,		 0.0,
-		     - cos_lon * sin_lat,  - sin_lon * sin_lat,  cos_lat,
-		     cos_lon * cos_lat,    sin_lon * cos_lat,    sin_lat;
+		R << -sin_lon,            cos_lon,           0.0,
+		     -cos_lon * sin_lat, -sin_lon * sin_lat, cos_lat,
+		      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
 
 		return R * map_point;
 	}
@@ -213,11 +202,9 @@ private:
 			const double hdop = eph;
 
 			// From nmea_navsat_driver
-			fix->position_covariance[0 + 0] = \
-						fix->position_covariance[3 + 1] = std::pow(hdop, 2);
+			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(hdop, 2);
 			fix->position_covariance[6 + 2] = std::pow(2 * hdop, 2);
-			fix->position_covariance_type =
-						sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
 			fill_unknown_cov(fix);
@@ -259,16 +246,16 @@ private:
 			 * Note: "earth" frame, in ECEF, of the global origin
 			 */
 			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-						GeographicLib::Constants::WGS84_f());
+					GeographicLib::Constants::WGS84_f());
 
 			earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
-						g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
+					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
 			gp_global_origin_pub.publish(g_origin);
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
-	  }
+		}
 	}
 
 	/** @todo Handler for GLOBAL_POSITION_INT_COV */
@@ -373,7 +360,7 @@ private:
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
-	  }
+		}
 
 		tf::pointEigenToMsg(ecef_to_enu_transform(gpos, local_ecef), odom->pose.pose.position);
 
@@ -510,7 +497,7 @@ private:
 
 		gpo.latitude = req->position.latitude * 1E7;
 		gpo.longitude = req->position.longitude * 1E7;
-		gpo.altitude = req->position.altitude * 1E3 + utils::ellipsoid_to_geoid_height(&req->position, egm96);
+		gpo.altitude = req->position.altitude * 1E3 + m_uas->ellipsoid_to_geoid_height(&req->position);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
