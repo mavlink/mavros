@@ -24,9 +24,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
 
+## Find Eigen
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
@@ -38,6 +38,10 @@ endif()
 
 include(EnableCXX11)
 include(MavrosMavlink)
+
+## Find GeographicLib
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+find_package(GeographicLib)
 
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
@@ -67,7 +71,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavros
   CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs nav_msgs geographic_msgs std_msgs tf2_ros geometry_msgs libmavconn message_runtime eigen_conversions mavros_msgs
-  DEPENDS Boost EIGEN3
+  DEPENDS Boost EIGEN3 GeographicLib
 )
 
 ###########
@@ -80,6 +84,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
 )
 
 add_library(mavros
@@ -97,8 +102,11 @@ add_library(mavros
 target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
-add_dependencies(mavros mavros_msgs_generate_messages_cpp)
+add_dependencies(mavros
+  mavros_msgs_generate_messages_cpp
+)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
@@ -134,6 +142,7 @@ target_link_libraries(mavros_plugins
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 ## Declare a cpp executable
@@ -147,6 +156,7 @@ target_link_libraries(mavros_node
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 add_executable(gcs_bridge
@@ -156,6 +166,7 @@ target_link_libraries(gcs_bridge
   mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 #############
