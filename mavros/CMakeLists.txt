@@ -36,12 +36,11 @@ if(NOT EIGEN3_FOUND)
   set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
 endif()
 
+## Find GeographicLib
+find_package(GeographicLib)
+
 include(EnableCXX11)
 include(MavrosMavlink)
-
-## Find GeographicLib
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-find_package(GeographicLib)
 
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
@@ -104,9 +103,6 @@ target_link_libraries(mavros
   ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
 )
-add_dependencies(mavros
-  mavros_msgs_generate_messages_cpp
-)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
@@ -141,8 +137,6 @@ add_dependencies(mavros_plugins
 target_link_libraries(mavros_plugins
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${GeographicLib_LIBRARIES}
 )
 
 ## Declare a cpp executable
@@ -155,8 +149,6 @@ add_dependencies(mavros_node
 target_link_libraries(mavros_node
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${GeographicLib_LIBRARIES}
 )
 
 add_executable(gcs_bridge
@@ -165,8 +157,6 @@ add_executable(gcs_bridge
 target_link_libraries(gcs_bridge
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${GeographicLib_LIBRARIES}
 )
 
 #############
