@@ -163,6 +163,7 @@ public:
  * It requires tf_frame_id, tf_child_frame_id strings
  * tf_rate double and uas object pointer
  */
+template <class D>
 class TF2ListenerMixin {
 public:
 	std::thread tf_thread_1;
@@ -176,7 +177,6 @@ public:
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
-	template <class D>
 	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &) )
 	{
 		tf_thd_name_1 = _thd_name;
@@ -213,7 +213,7 @@ public:
 	 * @param _thd_name  listener thread name
 	 * @param cbp        plugin callback function
 	 */
-	template <class D, class T>
+	template <class T>
 	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &, const typename T::ConstPtr &))
 	{
 		tf_thd_name_2 = _thd_name;

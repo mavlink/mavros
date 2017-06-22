@@ -36,7 +36,7 @@ namespace std_plugins {
  */
 class SetpointAttitudePlugin : public plugin::PluginBase,
 	private plugin::SetAttitudeTargetMixin<SetpointAttitudePlugin>,
-	private plugin::TF2ListenerMixin {
+	private plugin::TF2ListenerMixin<SetpointAttitudePlugin> {
 public:
 	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
@@ -71,7 +71,7 @@ public:
 						"Listen to desired attitude transform "
 						<< tf_frame_id << " -> " << tf_child_frame_id);
 
-			tf2_start<SetpointAttitudePlugin, mavros_msgs::Thrust>("AttitudeSpTFSync", &SetpointAttitudePlugin::transform_cb);
+			tf2_start<mavros_msgs::Thrust>("AttitudeSpTFSync", &SetpointAttitudePlugin::transform_cb);
 		}
 		else if (use_quaternion) {
 			/**
