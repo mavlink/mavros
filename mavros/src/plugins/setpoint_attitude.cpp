@@ -44,7 +44,7 @@ class SetpointAttitudePlugin : public plugin::PluginBase,
 public:
 	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
-		tf_rate(10.0),
+		tf_rate(50.0),
 		use_quaternion(false),
 		reverse_thrust(false),
 		tf_listen(false)
@@ -60,8 +60,8 @@ public:
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
-		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
-		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "target_attitude");
+		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		// thrust msg subscriber to sync
 		sub.subscribe(sp_nh, "thrust", 10);
@@ -77,7 +77,7 @@ public:
 			/**
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
-			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "attitude", 1);
+			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "target_attitude", 1);
 
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
@@ -108,9 +108,11 @@ private:
 
 	message_filters::Subscriber<mavros_msgs::Thrust> sub;
 
-	double tf_rate;
 	bool tf_listen;
+	double tf_rate;
+
 	bool use_quaternion;
+
 	bool reverse_thrust;
 	float normalized_thrust;
 
