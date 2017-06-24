@@ -29,6 +29,10 @@
 
 namespace mavros {
 namespace std_plugins {
+
+using SyncPoseThrust = message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust>;
+using SyncTwistThrust = message_filters::sync_policies::ApproximateTime<geometry_msgs::TwistStamped, mavros_msgs::Thrust>;
+
 /**
  * @brief Setpoint attitude plugin
  *
@@ -42,17 +46,13 @@ public:
 		sp_nh("~setpoint_attitude"),
 		tf_rate(10.0),
 		use_quaternion(false),
-		reverse_thrust(false)
+		reverse_thrust(false),
+		tf_listen(false)
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-
-		bool tf_listen;
-
-		typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust> SyncPoseThrust;
-		typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::TwistStamped, mavros_msgs::Thrust> SyncTwistThrust;
 
 		// main params
 		sp_nh.param("use_quaternion", use_quaternion, false);
@@ -64,7 +64,7 @@ public:
 		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		// thrust msg subscriber to sync
-		message_filters::Subscriber<mavros_msgs::Thrust> thrust_sub(sp_nh, "thrust", 10);
+		sub.subscribe(sp_nh, "thrust", 10);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
@@ -83,12 +83,12 @@ public:
 			 * @brief Matches messages, even if they have different time stamps,
 			 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
 			 */
-			message_filters::Synchronizer<SyncPoseThrust> sync(SyncPoseThrust(10), pose_sub, thrust_sub);
+			message_filters::Synchronizer<SyncPoseThrust> sync(SyncPoseThrust(10), pose_sub, sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
 		else {
 			message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub(sp_nh, "cmd_vel", 1);
-			message_filters::Synchronizer<SyncTwistThrust> sync(SyncTwistThrust(10), twist_sub, thrust_sub);
+			message_filters::Synchronizer<SyncTwistThrust> sync(SyncTwistThrust(10), twist_sub, sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}
 	}
@@ -106,7 +106,10 @@ private:
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 
+	message_filters::Subscriber<mavros_msgs::Thrust> sub;
+
 	double tf_rate;
+	bool tf_listen;
 	bool use_quaternion;
 	bool reverse_thrust;
 	float normalized_thrust;

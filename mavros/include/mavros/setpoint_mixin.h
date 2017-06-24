@@ -166,10 +166,8 @@ public:
 template <class D>
 class TF2ListenerMixin {
 public:
-	std::thread tf_thread_1;
-	std::thread tf_thread_2;
-	std::string tf_thd_name_1;
-	std::string tf_thd_name_2;
+	std::thread tf_thread;
+	std::string tf_thd_name;
 
 	/**
 	 * @brief start tf listener
@@ -179,11 +177,11 @@ public:
 	 */
 	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &) )
 	{
-		tf_thd_name_1 = _thd_name;
+		tf_thd_name = _thd_name;
 		auto tf_transform_cb = std::bind(cbp, static_cast<D *>(this), std::placeholders::_1);
 
-		tf_thread_1 = std::thread([this, tf_transform_cb]() {
-			mavconn::utils::set_this_thread_name("%s", tf_thd_name_1.c_str());
+		tf_thread = std::thread([this, tf_transform_cb]() {
+			mavconn::utils::set_this_thread_name("%s", tf_thd_name.c_str());
 
 			mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
@@ -199,7 +197,7 @@ public:
 						tf_transform_cb(transform);
 					}
 					catch (tf2::LookupException &ex) {
-						ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name_1.c_str(), ex.what());
+						ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
 					}
 				}
 				rate.sleep();
@@ -216,17 +214,18 @@ public:
 	template <class T>
 	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &, const typename T::ConstPtr &))
 	{
-		tf_thd_name_2 = _thd_name;
+		tf_thd_name = _thd_name;
 
-		tf_thread_2 = std::thread([this, cbp]() {
-			mavconn::utils::set_this_thread_name("%s", tf_thd_name_2.c_str());
+		tf_thread = std::thread([this, cbp]() {
+			mavconn::utils::set_this_thread_name("%s", tf_thd_name.c_str());
 
 			mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 			ros::NodeHandle &_sp_nh = static_cast<D *>(this)->sp_nh;
 			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
 			std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
 
-			message_filters::Subscriber<T> _topic_sub;
+			message_filters::Subscriber<T> &_topic_sub = static_cast<D *>(this)->sub;
+			tf2_ros::MessageFilter<T> tf2_filter(_topic_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
 
 			ros::Rate rate(static_cast<D *>(this)->tf_rate);
 			while (ros::ok()) {
@@ -236,11 +235,10 @@ public:
 						auto transform = m_uas_->tf2_buffer.lookupTransform(
 								_frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
 
-						tf2_ros::MessageFilter<T> tf2_filter(_topic_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
 						tf2_filter.registerCallback(boost::bind(cbp, static_cast<D *>(this), transform, _1));
 					}
 					catch (tf2::LookupException &ex) {
-						ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name_2.c_str(), ex.what());
+						ROS_ERROR_NAMED("tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
 					}
 				}
 				rate.sleep();
