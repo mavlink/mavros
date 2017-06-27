@@ -68,7 +68,7 @@ public:
 		int ft_i;
 		fp_nh.param<int>("fix_type", ft_i, utils::enum_value(GPS_FIX_TYPE::NO_GPS));
 		fix_type = static_cast<GPS_FIX_TYPE>(ft_i);
-		fp_nh.param("gps_period", _gps_period, 0.2);	// GPS data rate of 5hz
+		fp_nh.param("gps_period", _gps_period, 0.2);		// GPS data rate of 5hz
 		gps_period = ros::Duration(_gps_period);
 		fp_nh.param("eph", eph, 2.0);
 		fp_nh.param("epv", epv, 2.0);
@@ -84,8 +84,8 @@ public:
 
 		try {
 			// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
-			earth:GeographicLib::Constants::WGS84_a(),
-						GeographicLib::Constants::WGS84_f();
+			earth: GeographicLib::Constants::WGS84_a(),
+			GeographicLib::Constants::WGS84_f();
 			/**
 			 * @brief Conversion of the origin from geodetic coordinates (LLA)
 			 * to ECEF (Earth-Centered, Earth-Fixed)
@@ -98,10 +98,10 @@ public:
 		}
 
 		// source set params
-		fp_nh.param("use_mocap", use_mocap, true);	// listen to MoCap source
+		fp_nh.param("use_mocap", use_mocap, true);		// listen to MoCap source
 		fp_nh.param("mocap_transform", mocap_transform, true);	// listen to MoCap source (TransformStamped if true; PoseStamped if false)
-		fp_nh.param("tf/listen", tf_listen, false);	// listen to TF source
-		fp_nh.param("use_vision", use_vision, false);	// listen to Vision source
+		fp_nh.param("tf/listen", tf_listen, false);		// listen to TF source
+		fp_nh.param("use_vision", use_vision, false);		// listen to Vision source
 
 		// tf params
 		fp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
@@ -119,9 +119,9 @@ public:
 		else if (use_vision) {	// Vision data in PoseStamped msg
 			vision_pose_sub = fp_nh.subscribe("vision", 10, &FakeGPSPlugin::vision_cb, this);
 		}
-		else if (tf_listen){	// Pose aquired from TF Listener
+		else if (tf_listen) {	// Pose aquired from TF Listener
 			ROS_INFO_STREAM_NAMED("fake_gps", "Listen to transform " << tf_frame_id
-						<< " -> " << tf_child_frame_id);
+										 << " -> " << tf_child_frame_id);
 			tf2_start("FakeGPSVisionTF", &FakeGPSPlugin::transform_cb);
 		}
 		else {
@@ -145,10 +145,10 @@ private:
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber vision_pose_sub;
 
-	bool use_mocap;							//!< set use of mocap data (PoseStamped msg)
-	bool use_vision;						//!< set use of vision data
-	bool mocap_transform;				//!< set use of mocap data (TransformStamped msg)
-	bool tf_listen;							//!< set use of TF Listener data
+	bool use_mocap;			//!< set use of mocap data (PoseStamped msg)
+	bool use_vision;		//!< set use of vision data
+	bool mocap_transform;		//!< set use of mocap data (TransformStamped msg)
+	bool tf_listen;			//!< set use of TF Listener data
 
 	double eph, epv;
 	int satellites_visible;
@@ -162,10 +162,10 @@ private:
 	ros::Time last_pos_time;
 	ros::Duration gps_period;
 
-	Eigen::Vector3d map_origin;		//!< geodetic origin [lla]
+	Eigen::Vector3d map_origin;	//!< geodetic origin [lla]
 	Eigen::Vector3d ecef_origin;	//!< geocentric origin [m]
-	Eigen::Vector3d old_ecef;			//!< previous geocentric position [m]
-	double old_stamp;							//!< previous stamp [s]
+	Eigen::Vector3d old_ecef;	//!< previous geocentric position [m]
+	double old_stamp;		//!< previous stamp [s]
 
 	inline Eigen::Vector3d enu_to_ecef_transform(const Eigen::Affine3d &map_point)
 	{
@@ -193,8 +193,8 @@ private:
 		const double cos_y = std::cos(map_point.translation().z());
 
 		R << -sin_y, -cos_y * sin_x, cos_y * cos_x,
-				  cos_x, -sin_y * sin_x, sin_y * cos_x,
-					0.0,    cos_x,         sin_x;
+		cos_x, -sin_y * sin_x, sin_y * cos_x,
+		0.0,    cos_x,         sin_x;
 
 		return R * map_point.translation();
 	}
@@ -216,7 +216,7 @@ private:
 		 * if use_hil_gps flag is set (param MAV_USEHILGPS = 1).
 		 * @todo: add GPS_INPUT msg as an alternative, as Ardupilot already supports it
 		 */
-		mavlink::common::msg::HIL_GPS fix{};
+		mavlink::common::msg::HIL_GPS fix {};
 
 		Eigen::Vector3d geodetic;
 		Eigen::Vector3d current_ecef(ecef_origin.x() + ecef_offset.x(),
@@ -231,7 +231,7 @@ private:
 			ROS_INFO_STREAM("FGPS: Caught exception: " << e.what() << std::endl);
 		}
 
-		Eigen::Vector3d vel = (old_ecef - current_ecef) / (stamp.toSec() - old_stamp) * 1e2;	// [cm/s]
+		Eigen::Vector3d vel = ((old_ecef - current_ecef) / (stamp.toSec() - old_stamp)) * 1e2;// [cm/s]
 
 		// compute course over ground
 		double cog;
@@ -247,17 +247,17 @@ private:
 
 		// Fill in and send message
 		fix.time_usec = stamp.toNSec() / 1000;	// [useconds]
-		fix.lat = geodetic.x() * 1e7;	// [degrees * 1e7]
-		fix.lon = geodetic.y() * 1e7;	// [degrees * 1e7]
+		fix.lat = geodetic.x() * 1e7;		// [degrees * 1e7]
+		fix.lon = geodetic.y() * 1e7;		// [degrees * 1e7]
 		fix.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *
-				(*m_uas->egm96_5)(geodetic.x(), geodetic.y())) * 1e3; // [meters * 1e3]
-		fix.vel = sqrt(vel.x() * vel.x() + vel.y() * vel.y());		// [cm/s]
+					(*m_uas->egm96_5)(geodetic.x(), geodetic.y())) * 1e3;	// [meters * 1e3]
+		fix.vel = sqrt(vel.x() * vel.x() + vel.y() * vel.y());				// [cm/s]
 		fix.vn = vel.x();			// [cm/s]
 		fix.ve = vel.y();			// [cm/s]
 		fix.vd = vel.z();			// [cm/s]
-		fix.cog = cog * 1e2;	// [degrees * 1e2]
-		fix.eph = eph * 1e2;	// [cm]
-		fix.epv = epv * 1e2;	// [cm]
+		fix.cog = cog * 1e2;			// [degrees * 1e2]
+		fix.eph = eph * 1e2;			// [cm]
+		fix.epv = epv * 1e2;			// [cm]
 		fix.fix_type = utils::enum_value(fix_type);;
 		fix.satellites_visible = satellites_visible;
 
