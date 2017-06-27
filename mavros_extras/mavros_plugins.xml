@@ -14,8 +14,8 @@
 	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send odometry to FCU from another estimator.</description>
 	</class>
-	<class name="mocap_fake_gps" type="mavros::extra_plugins::MocapFakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send fake GPS from motion capture to FCU.</description>
+	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
 	</class>
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>

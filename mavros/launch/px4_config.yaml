@@ -154,6 +154,28 @@ mocap:
   use_tf: false   # ~mocap/tf
   use_pose: true  # ~mocap/pose
 
+# fake_gps
+fake_gps:
+  # select data source
+  use_mocap: true         # ~mocap/pose
+  mocap_transform: true   # ~mocap/tf instead of pose
+  use_vision: false       # ~vision (pose)
+  # origin (default: Zürich)
+  geo_origin:
+    lat: 47.3667          # latitude [degrees]
+    lon: 8.5500           # longitude [degrees]
+    alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
+  eph: 2.0
+  epv: 2.0
+  satellites_visible: 5   # virtual number of visible satellites
+  fix_type: 3             # type of GPS fix (default: 3D)
+  tf:
+    send: false           # send TF?
+    frame_id: "map"       # TF frame_id
+    child_frame_id: "fix" # TF child_frame_id
+    rate_limit: 10.0      # TF rate
+
+
 # px4flow
 px4flow:
   frame_id: "px4flow"

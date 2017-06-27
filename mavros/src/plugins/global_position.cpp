@@ -144,8 +144,7 @@ private:
 		fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 	}
 
-	inline Eigen::Vector3d ecef_to_enu_transform(mavlink::common::msg::GLOBAL_POSITION_INT &gpos,
-				Eigen::Vector3d &map_point)
+	inline Eigen::Vector3d ecef_to_enu_transform(Eigen::Vector3d &map_point)
 	{
 		/**
 		 * @brief Apply transform from ECEF to ENU:
@@ -362,7 +361,7 @@ private:
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 		}
 
-		tf::pointEigenToMsg(ecef_to_enu_transform(gpos, local_ecef), odom->pose.pose.position);
+		tf::pointEigenToMsg(ecef_to_enu_transform(local_ecef), odom->pose.pose.position);
 
 		/**
 		 * @brief By default, we are using the relative altitude instead of the geocentric
