@@ -42,7 +42,7 @@ class FakeGPSPlugin : public plugin::PluginBase,
 public:
 	FakeGPSPlugin() : PluginBase(),
 		fp_nh("~fake_gps"),
-		gps_period(0.2),
+		gps_rate(5.0),
 		use_mocap(true),
 		map_origin(0.0, 0.0, 0.0),
 		mocap_transform(true),
@@ -59,17 +59,15 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		double _gps_period;
+		double _gps_rate;
 		double origin_lat, origin_lon, origin_alt;
-
-		last_pos_time = ros::Time(0.0);
 
 		// general params
 		int ft_i;
 		fp_nh.param<int>("fix_type", ft_i, utils::enum_value(GPS_FIX_TYPE::NO_GPS));
 		fix_type = static_cast<GPS_FIX_TYPE>(ft_i);
-		fp_nh.param("gps_period", _gps_period, 0.2);		// GPS data rate of 5hz
-		gps_period = ros::Duration(_gps_period);
+		fp_nh.param("gps_rate", _gps_rate, 5.0);		// GPS data rate of 5hz
+		gps_rate: _gps_rate;
 		fp_nh.param("eph", eph, 2.0);
 		fp_nh.param("epv", epv, 2.0);
 		fp_nh.param<int>("satellites_visible", satellites_visible, 5);
@@ -84,8 +82,8 @@ public:
 
 		try {
 			// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
-			earth: GeographicLib::Constants::WGS84_a(),
-			GeographicLib::Constants::WGS84_f();
+			earth:	GeographicLib::Constants::WGS84_a(),
+				GeographicLib::Constants::WGS84_f();
 			/**
 			 * @brief Conversion of the origin from geodetic coordinates (LLA)
 			 * to ECEF (Earth-Centered, Earth-Fixed)
@@ -138,6 +136,8 @@ private:
 	friend class TF2ListenerMixin;
 	ros::NodeHandle fp_nh;
 
+	ros::Rate gps_rate;
+
 	// Constructor for a ellipsoid
 	GeographicLib::Geocentric earth;
 
@@ -158,9 +158,6 @@ private:
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 	ros::Time last_transform_stamp;
-
-	ros::Time last_pos_time;
-	ros::Duration gps_period;
 
 	Eigen::Vector3d map_origin;	//!< geodetic origin [lla]
 	Eigen::Vector3d ecef_origin;	//!< geocentric origin [m]
@@ -205,12 +202,6 @@ private:
 	 * @brief Send fake GPS coordinates through HIL_GPS Mavlink msg
 	 */
 	void send_fake_gps(const ros::Time &stamp, const Eigen::Vector3d &ecef_offset) {
-		// Throttle incoming messages to 5hz
-		if ((ros::Time::now() - last_pos_time) < gps_period) {
-			return;
-		}
-		last_pos_time = ros::Time::now();
-
 		/**
 		 * @note: HIL_GPS messages are accepted on PX4 Firmware out of HIL mode,
 		 * if use_hil_gps flag is set (param MAV_USEHILGPS = 1).
@@ -266,6 +257,9 @@ private:
 		old_ecef = current_ecef;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(fix);
+
+		// Throttle incoming messages to 5hz
+		gps_rate.sleep();
 	}
 
 	/* -*- callbacks -*- */
