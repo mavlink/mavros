@@ -212,11 +212,11 @@ public:
 	 * @param cbp        plugin callback function
 	 */
 	template <class T>
-	void tf2_start(const char *_thd_name, void (D::*cbp)(const geometry_msgs::TransformStamped &, const typename T::ConstPtr &))
+	void tf2_start(const char *_thd_name, message_filters::Subscriber<T> &topic_sub, void (D::*cbp)(const geometry_msgs::TransformStamped &, const typename T::ConstPtr &))
 	{
 		tf_thd_name = _thd_name;
 
-		tf_thread = std::thread([this, cbp]() {
+		tf_thread = std::thread([this, cbp, &topic_sub]() {
 			mavconn::utils::set_this_thread_name("%s", tf_thd_name.c_str());
 
 			mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
@@ -224,8 +224,7 @@ public:
 			std::string &_frame_id = static_cast<D *>(this)->tf_frame_id;
 			std::string &_child_frame_id = static_cast<D *>(this)->tf_child_frame_id;
 
-			message_filters::Subscriber<T> &_topic_sub = static_cast<D *>(this)->sub;
-			tf2_ros::MessageFilter<T> tf2_filter(_topic_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
+			tf2_ros::MessageFilter<T> tf2_filter(topic_sub, m_uas_->tf2_buffer, _frame_id, 10, _sp_nh);
 
 			ros::Rate rate(static_cast<D *>(this)->tf_rate);
 			while (ros::ok()) {
