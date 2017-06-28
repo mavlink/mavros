@@ -45,7 +45,7 @@ def enable_offboard():
     except rospy.ServiceException as ex:
         fault(ex)
 
-    if not ret.success:
+    if not ret.mode_sent:
         print("Request failed. Check mavros logs")
     else:
         print("OFFBOARD mode are set.")
