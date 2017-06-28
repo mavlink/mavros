@@ -144,39 +144,6 @@ private:
 		fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 	}
 
-	inline Eigen::Vector3d ecef_to_enu_transform(mavlink::common::msg::GLOBAL_POSITION_INT &gpos,
-				Eigen::Vector3d &map_point)
-	{
-		/**
-		 * @brief Apply transform from ECEF to ENU:
-		 *
-		 * ϕ = latitude
-		 * λ = longitude
-		 *
-		 * The rotation is composed by a counter-clockwise rotation over the Z-axis
-		 * by an angle of π - ϕ followed by a counter-clockwise over the same axis by
-		 * an angle of π - λ
-		 *
-		 * R = [-sinλ        cosλ        0.0
-		 *      -cosλ*sinϕ  -sinλ*sinϕ   cosϕ
-		 *       cosλ*cosϕ   sinλ*cosϕ   sinϕ]
-		 *
-		 * East, North, Up = R * [∂x, ∂y, ∂z]
-		 */
-		Eigen::Matrix3d R;
-
-		const double sin_lat = std::sin(map_point.x());
-		const double sin_lon = std::sin(map_point.y());
-		const double cos_lat = std::cos(map_point.x());
-		const double cos_lon = std::cos(map_point.y());
-
-		R << -sin_lon,            cos_lon,           0.0,
-		     -cos_lon * sin_lat, -sin_lon * sin_lat, cos_lat,
-		      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
-
-		return R * map_point;
-	}
-
 	/* -*- message handlers -*- */
 
 	void handle_gps_raw_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_RAW_INT &raw_gps)
@@ -362,7 +329,7 @@ private:
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 		}
 
-		tf::pointEigenToMsg(ecef_to_enu_transform(gpos, local_ecef), odom->pose.pose.position);
+		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(local_ecef), odom->pose.pose.position);
 
 		/**
 		 * @brief By default, we are using the relative altitude instead of the geocentric

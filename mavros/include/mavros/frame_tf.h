@@ -54,10 +54,12 @@ using EigenMapConstCovariance9d = Eigen::Map<const Eigen::Matrix<double, 9, 9, E
  * @brief Orientation transform options when applying rotations to data
  */
 enum class StaticTF {
-	NED_TO_ENU,		//!< will change orinetation from being expressed WRT NED frame to WRT ENU frame
+	NED_TO_ENU,		//!< will change orientation from being expressed WRT NED frame to WRT ENU frame
 	ENU_TO_NED,		//!< change from expressed WRT ENU frame to WRT NED frame
 	AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
-	BASELINK_TO_AIRCRAFT	//!< change from expressed WRT baselnk to WRT aircraft
+	BASELINK_TO_AIRCRAFT,	//!< change from expressed WRT baselnk to WRT aircraft
+	ECEF_TO_ENU,		//!< change from expressed WRT ECEF frame to WRT ENU frame
+	ENU_TO_ECEF		//!< change from expressed WRT ENU frame to WRT ECEF frame
 };
 
 namespace detail {
@@ -72,7 +74,7 @@ namespace detail {
 Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const StaticTF transform);
 
 /**
- * @brief Transform data experessed in one frame to another frame.
+ * @brief Transform data expressed in one frame to another frame.
  *
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
@@ -100,9 +102,9 @@ Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &
 Covariance9d transform_frame(const Covariance9d &cov, const Eigen::Quaterniond &q);
 
 /**
- * @brief Transform data experessed in one frame to another frame.
+ * @brief Transform data expressed in one frame to another frame.
  *
- * General function. Please use specialized enu-ned and ned-enu variants.
+ * General function. Please use specialized variants.
  */
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticTF transform);
 
@@ -204,6 +206,24 @@ inline T transform_frame_aircraft_baselink(const T &in) {
 template<class T>
 inline T transform_frame_baselink_aircraft(const T &in) {
 	return detail::transform_static_frame(in, StaticTF::BASELINK_TO_AIRCRAFT);
+}
+
+/**
+ * @brief Transform data expressed in ECEF frame to ENU frame.
+ *
+ */
+template<class T>
+inline T transform_frame_ecef_enu(const T &in) {
+	return detail::transform_static_frame(in, StaticTF::ECEF_TO_ENU);
+}
+
+/**
+ * @brief Transform data expressed in ENU frame to ECEF frame.
+ *
+ */
+template<class T>
+inline T transform_frame_enu_ecef(const T &in) {
+	return detail::transform_static_frame(in, StaticTF::ENU_TO_ECEF);
 }
 
 /**
