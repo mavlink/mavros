@@ -86,19 +86,20 @@ setpoint_accel:
 
 # setpoint_attitude
 setpoint_attitude:
-  reverse_throttle: false   # allow reversed throttle
+  reverse_thrust: false     # allow reversed thrust
+  use_quaternion: false     # enable PoseStamped topic subscriber
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "attitude"
-    rate_limit: 10.0
+    frame_id: "map"
+    child_frame_id: "target_attitude"
+    rate_limit: 50.0
 
 # setpoint_position
 setpoint_position:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "setpoint"
+    frame_id: "map"
+    child_frame_id: "target_position"
     rate_limit: 50.0
 
 # setpoint_velocity
@@ -174,8 +175,8 @@ px4flow:
 vision_pose:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "vision"
+    frame_id: "map"
+    child_frame_id: "vision_estimate"
     rate_limit: 10.0
 
 # vision_speed_estimate
@@ -185,5 +186,8 @@ vision_speed:
 # vibration
 vibration:
   frame_id: "vibration"
+
+# adsb
+# None
 
 # vim:set ts=2 sw=2 et:
