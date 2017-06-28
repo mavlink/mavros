@@ -62,6 +62,8 @@ public:
 		double _gps_rate;
 		double origin_lat, origin_lon, origin_alt;
 
+		last_pos_time = ros::Time(0.0);
+
 		// general params
 		int ft_i;
 		fp_nh.param<int>("fix_type", ft_i, utils::enum_value(GPS_FIX_TYPE::NO_GPS));
@@ -137,6 +139,7 @@ private:
 	ros::NodeHandle fp_nh;
 
 	ros::Rate gps_rate;
+	ros::Time last_pos_time;
 
 	// Constructor for a ellipsoid
 	GeographicLib::Geocentric earth;
@@ -170,6 +173,12 @@ private:
 	 * @brief Send fake GPS coordinates through HIL_GPS Mavlink msg
 	 */
 	void send_fake_gps(const ros::Time &stamp, const Eigen::Vector3d &ecef_offset) {
+		// Throttle incoming messages to 5hz
+		if ((ros::Time::now() - last_pos_time) < ros::Duration(gps_rate)) {
+			return;
+		}
+		last_pos_time = ros::Time::now();
+
 		/**
 		 * @note: HIL_GPS messages are accepted on PX4 Firmware out of HIL mode,
 		 * if use_hil_gps flag is set (param MAV_USEHILGPS = 1).
@@ -225,9 +234,6 @@ private:
 		old_ecef = current_ecef;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(fix);
-
-		// Throttle incoming messages to 5hz
-		gps_rate.sleep();
 	}
 
 	/* -*- callbacks -*- */
