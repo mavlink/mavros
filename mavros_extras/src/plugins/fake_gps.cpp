@@ -164,38 +164,6 @@ private:
 	Eigen::Vector3d old_ecef;	//!< previous geocentric position [m]
 	double old_stamp;		//!< previous stamp [s]
 
-	inline Eigen::Vector3d enu_to_ecef_transform(const Eigen::Affine3d &map_point)
-	{
-		/**
-		 * @brief Apply transform from ENU to ECEF:
-		 *
-		 * ϕ = x
-		 * λ = y
-		 *
-		 * The rotation is composed by a clockwise rotation over the east-axis
-		 * by an angle of π - ϕ followed by a clockwise over the Z-axis by
-		 * an angle of π + λ
-		 *
-		 * R = [-sinλ       -cosλ*sinϕ   cosλ*cosϕ
-		 *       cosϕ       -sinλ*sinϕ   sinλ*cosϕ
-		 *       0.0         cosϕ        sinϕ     ]
-		 *
-		 * x, y, z = R * [∂x, ∂y, ∂z]
-		 */
-		Eigen::Matrix3d R;
-
-		const double sin_x = std::sin(map_point.translation().x());
-		const double sin_y = std::sin(map_point.translation().y());
-		const double cos_x = std::cos(map_point.translation().x());
-		const double cos_y = std::cos(map_point.translation().z());
-
-		R << -sin_y, -cos_y * sin_x, cos_y * cos_x,
-		cos_x, -sin_y * sin_x, sin_y * cos_x,
-		0.0,    cos_x,         sin_x;
-
-		return R * map_point.translation();
-	}
-
 	/* -*- mid-level helpers and low-level send -*- */
 
 	/**
@@ -268,7 +236,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::transformMsgToEigen(trans->transform, pos_enu);
 
-		send_fake_gps(trans->header.stamp, enu_to_ecef_transform(pos_enu));
+		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
 	}
 
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -276,7 +244,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, enu_to_ecef_transform(pos_enu));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
 	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -284,7 +252,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, enu_to_ecef_transform(pos_enu));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
 	}
 
 	void transform_cb(const geometry_msgs::TransformStamped &trans)
@@ -293,7 +261,7 @@ private:
 
 		tf::transformMsgToEigen(trans.transform, pos_enu);
 
-		send_fake_gps(trans.header.stamp, enu_to_ecef_transform(pos_enu));
+		send_fake_gps(trans.header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
 	}
 };
 }	// namespace extra_plugins
