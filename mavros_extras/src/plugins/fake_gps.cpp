@@ -209,8 +209,8 @@ private:
 		fix.lat = geodetic.x() * 1e7;		// [degrees * 1e7]
 		fix.lon = geodetic.y() * 1e7;		// [degrees * 1e7]
 		fix.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *
-					(*m_uas->egm96_5)(geodetic.x(), geodetic.y())) * 1e3;	// [meters * 1e3]
-		fix.vel = sqrt(vel.x() * vel.x() + vel.y() * vel.y());				// [cm/s]
+			  (*m_uas->egm96_5)(geodetic.x(), geodetic.y())) * 1e3;	// [meters * 1e3]
+		fix.vel = vel.block<2, 1>(0, 0).norm();	// [cm/s]
 		fix.vn = vel.x();			// [cm/s]
 		fix.ve = vel.y();			// [cm/s]
 		fix.vd = vel.z();			// [cm/s]
