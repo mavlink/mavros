@@ -106,6 +106,7 @@ private:
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 
+	/** @note Thrust subscriber (generalized to sub to be used by TF2ListenerMixin)*/
 	message_filters::Subscriber<mavros_msgs::Thrust> sub;
 
 	bool tf_listen;
