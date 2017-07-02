@@ -227,18 +227,21 @@ private:
 		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
-		if (dist_sen.type == enum_value(MAV_DISTANCE_SENSOR::LASER)) {
-			range->radiation_type = sensor_msgs::Range::INFRARED;
-		}
-		else if (dist_sen.type == enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND)) {
-			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
-		}
-		else {
-			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
-					sensor->topic_name.c_str(), dist_sen.type);
-			return;
-		}
+        switch (dist_sen.type) {
+            case enum_value(MAV_DISTANCE_SENSOR::LASER):
+            case enum_value(MAV_DISTANCE_SENSOR::RADAR):
+            case enum_value(MAV_DISTANCE_SENSOR::UNKNOWN):
+                range->radiation_type = sensor_msgs::Range::INFRARED;
+                break;
+            case enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND):
+                range->radiation_type = sensor_msgs::Range::ULTRASOUND;
+                break;
+            default :
+                ROS_ERROR_NAMED("distance_sensor",
+                                "DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
+                                sensor->topic_name.c_str(), dist_sen.type);
+                return;
+        }
 
 		range->range = dist_sen.current_distance * 1E-2;	// in meters
 
