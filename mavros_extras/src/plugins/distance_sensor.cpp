@@ -205,7 +205,7 @@ private:
 
 		auto sensor = it->second;
 		if (sensor->is_subscriber) {
-			ROS_ERROR_NAMED("distance_sensor",
+			ROS_ERROR_ONCE_NAMED("distance_sensor",
 					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
 					sensor->topic_name.c_str(), sensor->sensor_id);
 			return;
