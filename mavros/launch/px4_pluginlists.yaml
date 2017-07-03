@@ -3,15 +3,11 @@ plugin_blacklist:
 - safety_area
 # extras
 - image_pub
-- landing_target
 - vibration
 - distance_sensor
 - rangefinder
 - wheel_odometry
 
-plugin_whitelist: []
-# 'sys_*'
 
 plugin_whitelist: []
 #- 'sys_*'
->>>>>>> landing_target: adapted to latest master code
