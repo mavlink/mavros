@@ -124,7 +124,7 @@ distance_sensor:
     sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
   rangefinder_sub:
     subscriber: true
-    id: 0
+    id: 1
     orientation: PITCH_270  # only that orientation are supported by APM 3.4+
 
 ## Currently available orientations:
