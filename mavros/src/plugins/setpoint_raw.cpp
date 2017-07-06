@@ -46,11 +46,18 @@ public:
 
 		uas = &uas_;
 
+		ignore_rpyt_messages_ = false;
 		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling_)){
 			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+		if(!sp_nh.getParam("system_mass_kg", system_mass_kg_)){
+			ROS_FATAL("No system mass found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
 		}
     if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling_)){
       ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
+      ignore_rpyt_messages_ = true;
     }
 
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
@@ -77,7 +84,8 @@ private:
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
-	double thrust_scaling_, yaw_rate_scaling_;
+	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
+	bool ignore_rpyt_messages_;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
@@ -270,13 +278,20 @@ private:
 
 	void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg) {
 
+		if(ignore_rpyt_messages_){
+			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
+      "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
+      "yaw_rate_scaling_factor or system_mass_kg parameters");
+      return;
+		}
+
 		//the masks are much more limited than the docs would suggest so we don't use them
   	uint8_t type_mask = 0;
 
   	geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(
       msg->roll, msg->pitch, 0);
 
-		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_));
+		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ / system_mass_kg_));
 
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d body_rate;
