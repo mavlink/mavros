@@ -181,7 +181,7 @@ private:
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7);
 
-		auto av = ftf::transform_frame_baselink_aircraft(ang_vel);
+		auto av = ftf::transform_frame_ned_enu(ang_vel);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 					ignore_all_except_rpy,

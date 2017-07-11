@@ -140,9 +140,6 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
  */
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
 
-inline double transform_frame_yaw(double yaw) {
-	return -yaw;
-}
 }	// namespace detail
 
 // -*- frame tf -*-
@@ -295,21 +292,6 @@ template<class T>
 inline T transform_frame_baselink_enu(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
-
-/**
- * @brief Transform heading from ROS to FCU frame.
- */
-inline double transform_frame_yaw_enu_ned(double yaw) {
-	return detail::transform_frame_yaw(yaw);
-}
-
-/**
- * @brief Transform heading from FCU to ROS frame.
- */
-inline double transform_frame_yaw_ned_enu(double yaw) {
-	return detail::transform_frame_yaw(yaw);
-}
-
 
 // -*- utils -*-
 
