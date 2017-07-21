@@ -117,16 +117,16 @@ private:
 		odom->pose.pose = pose->pose;
 		for (int i=0; i< 3; i++) {
 			// linear velocity
-			odom->twist.covariance[i + 6*i] = 1e-4;
+			odom->twist.covariance[i + 6*i] = 1e-6;
 			// angular velocity
-			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1e-4;
+			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
 			// position/ attitude
 			if (i==2) {
-				odom->pose.covariance[i + 6*i] = 1e-4;
-				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-4;
+				odom->pose.covariance[i + 6*i] = 1;
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
 			} else {
-				odom->pose.covariance[i + 6*i] = 1e-4;
-				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-4;
+				odom->pose.covariance[i + 6*i] = 1e-6;
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
 			}
 		}
 
