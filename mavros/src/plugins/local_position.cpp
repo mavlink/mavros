@@ -117,15 +117,19 @@ private:
 		odom->pose.pose = pose->pose;
 		for (int i=0; i< 3; i++) {
 			// linear velocity
-			odom->twist.covariance[i + 6*i] = 0.0001;
+			odom->twist.covariance[i + 6*i] = 1;
 			// angular velocity
-			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 0.0001;
+			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1;
 			// position/ attitude
 			if (i==2) {
+				// z
 				odom->pose.covariance[i + 6*i] = 1000;
+				// yaw
 				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1000;
 			} else {
+				// x, y
 				odom->pose.covariance[i + 6*i] = 1000;
+				// roll, pitch
 				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1000;
 			}
 		}
