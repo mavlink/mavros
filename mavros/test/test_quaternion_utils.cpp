@@ -71,16 +71,16 @@ TEST(UAS, quaternion_to_rpy__123)
 TEST(UAS, quaternion_to_rpy__full_yaw_range)
 {
 	// This test should work in the range: yaw in [-pi,pi], pitch in [-pi/2,+pi/2] and roll in [-pi,+pi].
-  double Yi = -M_PI + epsilon; // yaw_init
-	double Ye = +M_PI - epsilon; // yaw_end
+	double Yi = -M_PI + epsilon;	// yaw_init
+	double Ye = +M_PI - epsilon;	// yaw_end
 
 	int N = 10;
-	double step = (Ye - Yi)/(N-1);
+	double step = (Ye - Yi) / (N - 1);
 	double r, p, y;
-	r = +M_PI/3.;
-	p = -M_PI/3.;
-	for (int i=0; i<N; i++) {
-	  r = r * -1.;
+	r = +M_PI / 3.;
+	p = -M_PI / 3.;
+	for (int i = 0; i < N; i++) {
+		r = r * -1.;
 		p = p * -1.;
 		y = Yi + step * i;
 
