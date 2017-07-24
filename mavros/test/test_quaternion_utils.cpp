@@ -53,13 +53,44 @@ TEST(UAS, quaternion_from_rpy__paranoic_check)
 
 TEST(UAS, quaternion_to_rpy__123)
 {
+	// This test should work in the range: yaw in [-pi,pi], pitch in [-pi/2,+pi/2] and roll in [-pi,+pi].
+	double r, p, y;
+	r =  1.;
+	p = -1.;
+	y =  M_PI - epsilon;
+
 	// this test only works on positive rpy: 0..pi
-	auto q = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
+	auto q = UAS::quaternion_from_rpy(r, p, y);
 	auto rpy = UAS::quaternion_to_rpy(q);
 
-	EXPECT_NEAR(1.0, rpy.x(), epsilon);
-	EXPECT_NEAR(2.0, rpy.y(), epsilon);
-	EXPECT_NEAR(3.0, rpy.z(), epsilon);
+	EXPECT_NEAR(r, rpy.x(), epsilon);
+	EXPECT_NEAR(p, rpy.y(), epsilon);
+	EXPECT_NEAR(y, rpy.z(), epsilon);
+}
+
+TEST(UAS, quaternion_to_rpy__full_yaw_range)
+{
+	// This test should work in the range: yaw in [-pi,pi], pitch in [-pi/2,+pi/2] and roll in [-pi,+pi].
+  double Yi = -M_PI + epsilon; // yaw_init
+	double Ye = +M_PI - epsilon; // yaw_end
+
+	int N = 10;
+	double step = (Ye - Yi)/(N-1);
+	double r, p, y;
+	r = +M_PI/3.;
+	p = -M_PI/3.;
+	for (int i=0; i<N; i++) {
+	  r = r * -1.;
+		p = p * -1.;
+		y = Yi + step * i;
+
+		auto q = UAS::quaternion_from_rpy(r,p,y);
+		auto rpy = UAS::quaternion_to_rpy(q);
+
+		EXPECT_NEAR(r, rpy.x(), epsilon);
+		EXPECT_NEAR(p, rpy.y(), epsilon);
+		EXPECT_NEAR(y, rpy.z(), epsilon);
+	}
 }
 
 TEST(UAS, quaternion_to_rpy__pm_pi)
@@ -68,13 +99,15 @@ TEST(UAS, quaternion_to_rpy__pm_pi)
 
 	// in degrees
 	const ssize_t min = -180;
-	const ssize_t max = 180;
-	const ssize_t step = 15;
+	const ssize_t max =  180;
+	const ssize_t min_P = -90 + epsilon;
+	const ssize_t max_P = +90;
+	const ssize_t step = 15 - epsilon;
 
 	const auto test_orientation = UAS::quaternion_from_rpy(1.0, 2.0, 3.0);
 
 	for (ssize_t roll = min; roll <= max; roll += step) {
-		for (ssize_t pitch = min; pitch <= max; pitch += step) {
+		for (ssize_t pitch = min_P; pitch <= max_P; pitch += step) {
 			for (ssize_t yaw = min; yaw <= max; yaw += step) {
 
 				Eigen::Vector3d expected_deg(roll, pitch, yaw);
