@@ -74,6 +74,7 @@ add_library(mavros_extras
   src/plugins/odom.cpp
   src/plugins/vibration.cpp
   src/plugins/cam_imu_sync.cpp
+  src/plugins/rangefinder.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
