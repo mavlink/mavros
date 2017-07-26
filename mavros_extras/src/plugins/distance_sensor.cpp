@@ -21,7 +21,7 @@
 #include <sensor_msgs/Range.h>
 
 namespace mavros {
-namespace extra_plugins{
+namespace extra_plugins {
 using utils::enum_value;
 class DistanceSensorPlugin;
 
@@ -153,11 +153,11 @@ private:
 
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
-			uint32_t min_distance,
-			uint32_t max_distance,
-			uint32_t current_distance,
-			uint8_t type, uint8_t id,
-			uint8_t orientation, uint8_t covariance)
+				uint32_t min_distance,
+				uint32_t max_distance,
+				uint32_t current_distance,
+				uint8_t type, uint8_t id,
+				uint8_t orientation, uint8_t covariance)
 	{
 		mavlink::common::msg::DISTANCE_SENSOR ds;
 
@@ -198,8 +198,8 @@ private:
 		auto it = sensor_map.find(dist_sen.id);
 		if (it == sensor_map.end()) {
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
-					dist_sen.id, dist_sen.type, dist_sen.orientation);
+						"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
+						dist_sen.id, dist_sen.type, dist_sen.orientation);
 			return;
 		}
 
@@ -208,35 +208,39 @@ private:
 			ROS_ERROR_ONCE_NAMED("distance_sensor",
 					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
 					sensor->topic_name.c_str(), sensor->sensor_id);
+
 			return;
 		}
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
-					sensor->topic_name.c_str(),
-					utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
-					utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
+						"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
+						sensor->topic_name.c_str(),
+						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
+						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
 
 		range->header = m_uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
-		range->min_range = dist_sen.min_distance * 1E-2; // in meters
+		range->min_range = dist_sen.min_distance * 1E-2;// in meters
 		range->max_range = dist_sen.max_distance * 1E-2;
 		range->field_of_view = sensor->field_of_view;
 
-		if (dist_sen.type == enum_value(MAV_DISTANCE_SENSOR::LASER)) {
+		switch (dist_sen.type) {
+		case enum_value(MAV_DISTANCE_SENSOR::LASER):
+		case enum_value(MAV_DISTANCE_SENSOR::RADAR):
+		case enum_value(MAV_DISTANCE_SENSOR::UNKNOWN):
 			range->radiation_type = sensor_msgs::Range::INFRARED;
-		}
-		else if (dist_sen.type == enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND)) {
+			break;
+		case enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND):
 			range->radiation_type = sensor_msgs::Range::ULTRASOUND;
-		}
-		else {
+			break;
+		default:
 			ROS_ERROR_NAMED("distance_sensor",
-					"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
-					sensor->topic_name.c_str(), dist_sen.type);
+						"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
+						sensor->topic_name.c_str(), dist_sen.type);
 			return;
 		}
 
@@ -283,14 +287,14 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 		type = enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND);
 
 	owner->distance_sensor(
-			msg->header.stamp.toNSec() / 1000000,
-			msg->min_range / 1E-2,
-			msg->max_range / 1E-2,
-			msg->range / 1E-2,
-			type,
-			sensor_id,
-			orientation,
-			covariance_);
+				msg->header.stamp.toNSec() / 1000000,
+				msg->min_range / 1E-2,
+				msg->max_range / 1E-2,
+				msg->range / 1E-2,
+				type,
+				sensor_id,
+				orientation,
+				covariance_);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
@@ -339,7 +343,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// unset allowed, setted wrong - not
 		if (p->orientation == -1 && !orientation_str.empty()) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!",
-					topic_name.c_str(), orientation_str.c_str());
+						topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
@@ -350,7 +354,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 			pnh.param("sensor_position/y", p->position.y(), 0.0);
 			pnh.param("sensor_position/z", p->position.z(), 0.0);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
-					p->position.x(), p->position.y(), p->position.z());
+						p->position.x(), p->position.y(), p->position.z());
 		}
 	}
 	else {
