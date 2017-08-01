@@ -27,6 +27,8 @@
 #include <mavros/utils.h>
 #include <mavros/frame_tf.h>
 
+#include <GeographicLib/Geoid.hpp>
+
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
 
@@ -199,6 +201,40 @@ public:
 	//! Retunrs last GPS RAW message
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
+	/* -*- GograpticLib utils -*- */
+
+	/**
+	 * @brief Geoid dataset used to convert between AMSL and WGS-84
+	 *
+	 * That class loads egm96_5 dataset to RAM, it is about 24 MiB.
+	 */
+	std::shared_ptr<GeographicLib::Geoid> egm96_5;
+
+	/**
+	 * @brief Conversion from height above geoid (AMSL)
+	 * to height above ellipsoid (WGS-84)
+	 */
+	template <class T>
+	inline double geoid_to_ellipsoid_height(T lla)
+	{
+		if (egm96_5)
+			return GeographicLib::Geoid::GEOIDTOELLIPSOID * (*egm96_5)(lla->latitude, lla->longitude);
+		else
+			return 0.0;
+	}
+
+	/**
+	 * @brief Conversion from height above ellipsoid (WGS-84)
+	 * to height above geoid (AMSL)
+	 */
+	template <class T>
+	inline double ellipsoid_to_geoid_height(T lla)
+	{
+		if (egm96_5)
+			return GeographicLib::Geoid::ELLIPSOIDTOGEOID * (*egm96_5)(lla->latitude, lla->longitude);
+		else
+			return 0.0;
+	}
 
 	/* -*- transform -*- */
 

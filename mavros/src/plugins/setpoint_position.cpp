@@ -33,19 +33,18 @@ class SetpointPositionPlugin : public plugin::PluginBase,
 public:
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
-		tf_rate(10.0)
+		tf_rate(50.0),
+		tf_listen(false)
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		bool tf_listen;
-
 		// tf params
 		sp_nh.param("tf/listen", tf_listen, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
-		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "aircraft");
+		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "target_position");
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		if (tf_listen) {
@@ -72,6 +71,8 @@ private:
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
+
+	bool tf_listen;
 	double tf_rate;
 
 	/* -*- mid-level helpers -*- */

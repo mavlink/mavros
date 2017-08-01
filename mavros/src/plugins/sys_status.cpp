@@ -928,7 +928,7 @@ private:
 
 		if (req.custom_mode != "") {
 			if (!m_uas->cmode_from_str(req.custom_mode, custom_mode)) {
-				res.success = false;
+				res.mode_sent = false;
 				return true;
 			}
 
@@ -948,7 +948,7 @@ private:
 		sm.custom_mode = custom_mode;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sm);
-		res.success = true;
+		res.mode_sent = true;
 		return true;
 	}
 };

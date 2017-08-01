@@ -103,14 +103,14 @@ private:
 		auto hp_approach_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d(home_position.approach_x, home_position.approach_y, home_position.approach_z));
 
 		hp->header.stamp = ros::Time::now();
-		hp->latitude = home_position.latitude / 1E7;
-		hp->longitude = home_position.longitude / 1E7;
-		hp->altitude = home_position.altitude / 1E3;
+		hp->geo.latitude = home_position.latitude / 1E7;		// deg
+		hp->geo.longitude = home_position.longitude / 1E7;		// deg
+		hp->geo.altitude = home_position.altitude / 1E3 + m_uas->geoid_to_ellipsoid_height(&hp->geo);	// in meters
 		tf::quaternionEigenToMsg(q, hp->orientation);
 		tf::pointEigenToMsg(pos, hp->position);
 		tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
 
-		ROS_INFO_NAMED("home_position", "HP: Home lat %f, long %f, alt %f", hp->latitude, hp->longitude, hp->altitude);
+		ROS_DEBUG_NAMED("home_position", "HP: Home lat %f, long %f, alt %f", hp->geo.latitude, hp->geo.longitude, hp->geo.altitude);
 		hp_pub.publish(hp);
 	}
 
@@ -132,23 +132,24 @@ private:
 
 		hp.target_system = m_uas->get_tgt_system();
 		ftf::quaternion_to_mavlink(q, hp.q);
+
+		hp.altitude = req->geo.altitude * 1e3 + m_uas->ellipsoid_to_geoid_height(&req->geo);
 		// [[[cog:
-		// for f, m in (('latitude', '1e7'), ('longitude', '1e7'), ('altitude', '1e3')):
+		// for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
 		//     cog.outl("hp.{f} = req->{f} * {m};".format(**locals()))
 		// for a, b in (('', 'pos'), ('approach_', 'approach')):
 		//     for f in "xyz":
 		//         cog.outl("hp.{a}{f} = {b}.{f}();".format(**locals()))
 		// ]]]
-		hp.latitude = req->latitude * 1e7;
-		hp.longitude = req->longitude * 1e7;
-		hp.altitude = req->altitude * 1e3;
+		hp.latitude = req->geo.latitude * 1e7;
+		hp.longitude = req->geo.longitude * 1e7;
 		hp.x = pos.x();
 		hp.y = pos.y();
 		hp.z = pos.z();
 		hp.approach_x = approach.x();
 		hp.approach_y = approach.y();
 		hp.approach_z = approach.z();
-		// [[[end]]] (checksum: dd356bb5b4e43d08c6fe3262ec88696e)
+		// [[[end]]] (checksum: c3c143d4c5ed3e63770ccceeb5c0a77a)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(hp);
 	}

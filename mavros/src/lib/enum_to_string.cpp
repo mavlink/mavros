@@ -26,6 +26,7 @@ using mavlink::common::MAV_STATE;
 using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
+using mavlink::common::GPS_FIX_TYPE;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -286,26 +287,26 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 // ]]]
 //! ADSB_EMITTER_TYPE values
 static const std::array<const std::string, 20> adsb_emitter_type_strings{{
-/*  0 */ "NO_INFO",                       // 
-/*  1 */ "LIGHT",                         // 
-/*  2 */ "SMALL",                         // 
-/*  3 */ "LARGE",                         // 
-/*  4 */ "HIGH_VORTEX_LARGE",             // 
-/*  5 */ "HEAVY",                         // 
-/*  6 */ "HIGHLY_MANUV",                  // 
-/*  7 */ "ROTOCRAFT",                     // 
-/*  8 */ "UNASSIGNED",                    // 
-/*  9 */ "GLIDER",                        // 
-/* 10 */ "LIGHTER_AIR",                   // 
-/* 11 */ "PARACHUTE",                     // 
-/* 12 */ "ULTRA_LIGHT",                   // 
-/* 13 */ "UNASSIGNED2",                   // 
-/* 14 */ "UAV",                           // 
-/* 15 */ "SPACE",                         // 
-/* 16 */ "UNASSGINED3",                   // 
-/* 17 */ "EMERGENCY_SURFACE",             // 
-/* 18 */ "SERVICE_SURFACE",               // 
-/* 19 */ "POINT_OBSTACLE",                // 
+/*  0 */ "NO_INFO",                       //
+/*  1 */ "LIGHT",                         //
+/*  2 */ "SMALL",                         //
+/*  3 */ "LARGE",                         //
+/*  4 */ "HIGH_VORTEX_LARGE",             //
+/*  5 */ "HEAVY",                         //
+/*  6 */ "HIGHLY_MANUV",                  //
+/*  7 */ "ROTOCRAFT",                     //
+/*  8 */ "UNASSIGNED",                    //
+/*  9 */ "GLIDER",                        //
+/* 10 */ "LIGHTER_AIR",                   //
+/* 11 */ "PARACHUTE",                     //
+/* 12 */ "ULTRA_LIGHT",                   //
+/* 13 */ "UNASSIGNED2",                   //
+/* 14 */ "UAV",                           //
+/* 15 */ "SPACE",                         //
+/* 16 */ "UNASSGINED3",                   //
+/* 17 */ "EMERGENCY_SURFACE",             //
+/* 18 */ "SERVICE_SURFACE",               //
+/* 19 */ "POINT_OBSTACLE",                //
 }};
 
 std::string to_string(ADSB_EMITTER_TYPE e)
@@ -340,6 +341,32 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 	return mav_estimator_type_strings[idx];
 }
 // [[[end]]] (checksum: 47674f004bf6c515fdf999987b99e806)
+
+// [[[cog:
+// ename = 'GPS_FIX_TYPE'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! GPS_FIX_TYPE values
+static const std::array<const std::string, 8> gps_fix_type_strings{{
+/*  0 */ "NO_GPS",                        // No GPS connected
+/*  1 */ "NO_FIX",                        // No position information, GPS is connected
+/*  2 */ "2D_FIX",                        // 2D position
+/*  3 */ "3D_FIX",                        // 3D position
+/*  4 */ "DGPS",                          // DGPS/SBAS aided 3D position
+/*  5 */ "RTK_FLOAT",                     // RTK float, 3D position
+/*  6 */ "RTK_FIXED",                     // RTK Fixed, 3D position
+/*  7 */ "STATIC",                        // Static fixed, typically used for base stations
+}};
+
+std::string to_string(GPS_FIX_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= gps_fix_type_strings.size())
+		return std::to_string(idx);
+
+	return gps_fix_type_strings[idx];
+}
+// [[[end]]] (checksum: 984346c7986a0742d45d9c1a5ca322ed)
 
 }	// namespace utils
 }	// namespace mavros

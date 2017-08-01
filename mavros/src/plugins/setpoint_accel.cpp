@@ -81,12 +81,12 @@ private:
 		auto accel = ftf::transform_frame_enu_ned(accel_enu);
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				utils::enum_value(MAV_FRAME::LOCAL_NED),
-				ignore_all_except_a_xyz,
-				Eigen::Vector3d::Zero(),
-				Eigen::Vector3d::Zero(),
-				accel,
-				0.0, 0.0);
+					utils::enum_value(MAV_FRAME::LOCAL_NED),
+					ignore_all_except_a_xyz,
+					Eigen::Vector3d::Zero(),
+					Eigen::Vector3d::Zero(),
+					accel,
+					0.0, 0.0);
 	}
 
 	/* -*- callbacks -*- */

@@ -2,6 +2,9 @@
 	<class name="distance_sensor" type="mavros::extra_plugins::DistanceSensorPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
 	</class>
+	<class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
+	</class>
 	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
 	</class>
@@ -14,8 +17,8 @@
 	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send odometry to FCU from another estimator.</description>
 	</class>
-	<class name="mocap_fake_gps" type="mavros::extra_plugins::MocapFakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send fake GPS from motion capture to FCU.</description>
+	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
 	</class>
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>

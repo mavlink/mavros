@@ -46,9 +46,11 @@ cmd:
 global_position:
   frame_id: "fcu"           # pose and fix frame_id
   rot_covariance: 99999.0   # covariance for attitude?
+  use_relative_alt: true    # use relative altitude for local coordinates
   tf:
     send: false               # send TF?
     frame_id: "local_origin"  # TF frame_id
+    global_frame_id: "earth"  # TF earth frame_id
     child_frame_id: "fcu_utm" # TF child_frame_id
 
 # imu_pub
@@ -86,19 +88,20 @@ setpoint_accel:
 
 # setpoint_attitude
 setpoint_attitude:
-  reverse_throttle: false   # allow reversed throttle
+  reverse_thrust: false     # allow reversed thrust
+  use_quaternion: false     # enable PoseStamped topic subscriber
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "attitude"
-    rate_limit: 10.0
+    frame_id: "map"
+    child_frame_id: "target_attitude"
+    rate_limit: 50.0
 
 # setpoint_position
 setpoint_position:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "setpoint"
+    frame_id: "map"
+    child_frame_id: "target_position"
     rate_limit: 50.0
 
 # setpoint_velocity
@@ -152,6 +155,29 @@ mocap:
   use_tf: false   # ~mocap/tf
   use_pose: true  # ~mocap/pose
 
+# fake_gps
+fake_gps:
+  # select data source
+  use_mocap: true         # ~mocap/pose
+  mocap_transform: true   # ~mocap/tf instead of pose
+  use_vision: false       # ~vision (pose)
+  # origin (default: Zürich)
+  geo_origin:
+    lat: 47.3667          # latitude [degrees]
+    lon: 8.5500           # longitude [degrees]
+    alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
+  eph: 2.0
+  epv: 2.0
+  satellites_visible: 5   # virtual number of visible satellites
+  fix_type: 3             # type of GPS fix (default: 3D)
+  tf:
+    send: false           # send TF?
+    frame_id: "map"       # TF frame_id
+    child_frame_id: "fix" # TF child_frame_id
+    rate_limit: 10.0      # TF rate
+  gps_rate: 5.0           # GPS data publishing rate
+
+
 # px4flow
 px4flow:
   frame_id: "px4flow"
@@ -163,8 +189,8 @@ px4flow:
 vision_pose:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "vision"
+    frame_id: "map"
+    child_frame_id: "vision_estimate"
     rate_limit: 10.0
 
 # vision_speed_estimate

@@ -82,6 +82,13 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticTF transform)
 {
+	Eigen::Matrix3d R;
+
+	const double sin_lat = std::sin(vec.x());
+	const double sin_lon = std::sin(vec.y());
+	const double cos_lat = std::cos(vec.x());
+	const double cos_lon = std::cos(vec.y());
+
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
@@ -90,6 +97,44 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticT
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		return AIRCRAFT_BASELINK_AFFINE * vec;
+
+	case StaticTF::ECEF_TO_ENU:
+		/**
+		 * @brief Apply transform from ECEF to ENU:
+		 * ϕ = latitude
+		 * λ = longitude
+		 * The rotation is composed by a counter-clockwise rotation over the Z-axis
+		 * by an angle of π - ϕ followed by a counter-clockwise over the same axis by
+		 * an angle of π - λ
+		 * R = [-sinλ         cosλ         0.0
+		 *      -cosλ*sinϕ   -sinλ*sinϕ    cosϕ
+		 *       cosλ*cosϕ    sinλ*cosϕ    sinϕ   ]
+		 * East, North, Up = R * [∂x, ∂y, ∂z]
+		 */
+		R << -sin_lon,            cos_lon,           0.0,
+		     -cos_lon * sin_lat, -sin_lon * sin_lat, cos_lat,
+		      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
+
+		return R * vec;
+
+	case StaticTF::ENU_TO_ECEF:
+		/**
+		 * @brief Apply transform from ENU to ECEF:
+		 * ϕ = x
+		 * λ = y
+		 * The rotation is composed by a clockwise rotation over the east-axis
+		 * by an angle of π - ϕ followed by a clockwise over the Z-axis by
+		 * an angle of π + λ
+		 * R = [-sinλ       -cosλ*sinϕ   cosλ*cosϕ
+		 *       cosϕ       -sinλ*sinϕ   sinλ*cosϕ
+		 *       0.0         cosϕ        sinϕ     ]
+		 * x, y, z = R * [∂x, ∂y, ∂z]
+		 */
+		R << -sin_lon, -cos_lon * sin_lat, cos_lon * cos_lat,
+		      cos_lat, -sin_lon * sin_lat, sin_lon * cos_lat,
+		      0.0,      cos_lat,	   sin_lat;
+
+		return R * vec;
 	}
 }
 

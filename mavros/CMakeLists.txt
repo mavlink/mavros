@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   nav_msgs
+  geographic_msgs
   std_msgs
   std_srvs
   tf2_ros
@@ -23,9 +24,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system)
 
+## Find Eigen
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
@@ -34,6 +35,9 @@ if(NOT EIGEN3_FOUND)
   set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
   set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
 endif()
+
+## Find GeographicLib
+find_package(GeographicLib)
 
 include(EnableCXX11)
 include(MavrosMavlink)
@@ -65,8 +69,8 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs nav_msgs std_msgs tf2_ros geometry_msgs libmavconn message_runtime eigen_conversions mavros_msgs
-  DEPENDS Boost EIGEN3
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater pluginlib roscpp sensor_msgs nav_msgs geographic_msgs std_msgs tf2_ros geometry_msgs libmavconn message_runtime eigen_conversions mavros_msgs
+  DEPENDS Boost EIGEN3 GeographicLib
 )
 
 ###########
@@ -79,6 +83,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
 )
 
 add_library(mavros
@@ -96,8 +101,8 @@ add_library(mavros
 target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
-add_dependencies(mavros mavros_msgs_generate_messages_cpp)
 
 add_library(mavros_plugins
   src/plugins/dummy.cpp
@@ -132,7 +137,6 @@ add_dependencies(mavros_plugins
 target_link_libraries(mavros_plugins
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 ## Declare a cpp executable
@@ -145,7 +149,6 @@ add_dependencies(mavros_node
 target_link_libraries(mavros_node
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 add_executable(gcs_bridge
@@ -154,7 +157,6 @@ add_executable(gcs_bridge
 target_link_libraries(gcs_bridge
   mavros
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 #############

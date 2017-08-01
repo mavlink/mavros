@@ -25,6 +25,10 @@
   <build_export_depend>eigen</build_export_depend>
   <build_depend>mavlink</build_depend>
   <build_export_depend>mavlink</build_export_depend>
+  <build_depend>geographiclib</build_depend>
+  <build_export_depend>geographiclib</build_export_depend>
+  <build_depend>geographiclib-tools</build_depend>
+  <build_export_depend>geographiclib-tools</build_export_depend>
   <!-- pymavlink dependency
   <exec_depend>mavlink</exec_depend>
   -->
@@ -48,6 +52,7 @@
   <depend>mavros_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>geographic_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
 
