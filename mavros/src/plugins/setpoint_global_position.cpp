@@ -38,7 +38,7 @@ class SetpointGlobalPositionPlugin : public plugin::PluginBase,
 public:
 	SetpointGlobalPositionPlugin() : PluginBase(),
 		// NOTE not private handle, because we need to access gps topic, which is not under this node. Is it OK?
-		sp_nh("")
+		sp_nh("~")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -160,7 +160,7 @@ private:
 		/* initialize target local position.  in ENU*/
 		Eigen::Vector3d target_pos(local_pose_msg.pose.position.x,
 									local_pose_msg.pose.position.y,
-									local_pose_msg.pose.position.z);
+									req->altitude);
 		/* Calculate target position in local ENU, by adding the deltas */
 		target_pos = target_pos + delta_pos;
 
@@ -179,6 +179,7 @@ private:
 						Eigen::Vector3d::Zero(),
 						Eigen::Vector3d::Zero(),
 						yaw, 0.0);
+
 		}
 
 	}/* end of setpoint_cb */
