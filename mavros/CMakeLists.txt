@@ -130,6 +130,7 @@ add_library(mavros_plugins
   src/plugins/hil_controls.cpp
   src/plugins/hil_actuator_controls.cpp
   src/plugins/home_position.cpp
+  src/plugins/setpoint_global_position.cpp
 )
 add_dependencies(mavros_plugins
   mavros
