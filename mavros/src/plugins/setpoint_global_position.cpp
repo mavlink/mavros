@@ -22,9 +22,9 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
 
-static constexpr double M_DEG_TO_RAD = 0.01745329251994;
-static constexpr double CONSTANTS_RADIUS_OF_EARTH = 6371000.0;
-static constexpr double DBL_EPSILON = 2.2204460492503131E-16;
+#define M_DEG_TO_RAD 0.01745329251994
+#define CONSTANTS_RADIUS_OF_EARTH 6371000.0
+//#define DBL_EPSILON 2.2204460492503131E-16
 
 namespace mavros {
 namespace std_plugins {
@@ -34,11 +34,11 @@ namespace std_plugins {
  * Send global setpoint positions to FCU controller.
  */
 class SetpointGlobalPositionPlugin : public plugin::PluginBase,
-	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>{
+	private plugin::SetPositionTargetLocalNEDMixin<SetpointGlobalPositionPlugin>{
 public:
 	SetpointGlobalPositionPlugin() : PluginBase(),
 		// NOTE not private handle, because we need to access gps topic, which is not under this node. Is it OK?
-		sp_nh(""),
+		sp_nh("")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -48,7 +48,7 @@ public:
 		/* subscriber for current gps state, mavros/global_position/global. */
 		gps_sub = sp_nh.subscribe("global_position/global", 10, &SetpointGlobalPositionPlugin::gps_cb, this);
 		/* Subscribe for current local pose. */
-		local_sub = sp_nh.subscriber("local_position/pose", 10, &SetpointGlobalPositionPlugin::local_cb, this) ;
+		local_sub = sp_nh.subscribe("local_position/pose", 10, &SetpointGlobalPositionPlugin::local_cb, this) ;
 		/* Subscriber for target gps state */
 		setpoint_sub = sp_nh.subscribe("setpoint_global_position/global", 10, &SetpointGlobalPositionPlugin::setpoint_cb, this);
 
@@ -64,6 +64,8 @@ private:
 	ros::NodeHandle sp_nh;
 
 	ros::Subscriber setpoint_sub;
+	ros::Subscriber gps_sub;
+	ros::Subscriber local_sub;
 
 	/* resulting change in x/y in NED frame. Set by lla2ned() function. */
 	double dx, dy;
@@ -132,9 +134,9 @@ private:
 	}
 
 	void local_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
-		local_pose_msg.pose.position.x = msg.pose.position.x;
-		local_pose_msg.pose.position.y = msg.pose.position.y;
-		local_pose_msg.pose.position.z = msg.pose.position.z;
+		local_pose_msg.pose.position.x = msg->pose.position.x;
+		local_pose_msg.pose.position.y = msg->pose.position.y;
+		local_pose_msg.pose.position.z = msg->pose.position.z;
 	}
 
 	/**
@@ -163,7 +165,7 @@ private:
 		target_pos = target_pos + delta_pos;
 
 		/* convert to NED to prepare for sending */
-		auto target_pos = ftf::transform_frame_enu_ned(target_pos);
+		target_pos = ftf::transform_frame_enu_ned(target_pos);
 		yaw = ftf::transform_frame_yaw_enu_ned(req->yaw);
 
 		/* Only send if current gps is updated, to avoid divergence */
