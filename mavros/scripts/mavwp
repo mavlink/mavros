@@ -131,6 +131,23 @@ def do_load(args):
             _load_call(wps)
 
 
+def do_load_partial(args):
+    wps = []
+    wps_file = get_wp_file_io(args)
+    with args.file:
+        wps = [w for w in wps_file.read(args.file)]
+
+    try:
+        ret = M.push_partial(waypoints=wps[args.start:args.end+1], start_index=args.start)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    print_if(args.verbose, "Waypoints transfered.")
+
+
 def do_dump(args):
     done_evt = threading.Event()
     def _write_file(topic):
@@ -186,6 +203,12 @@ def main():
     load_args.set_defaults(func=do_load)
     load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
     load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
+
+    load_partial_args = subarg.add_parser('load_partial', help="partially load waypoints from file")
+    load_partial_args.set_defaults(func=do_load_partial)
+    load_partial_args.add_argument('start', type=int, help="waypoint start id")
+    load_partial_args.add_argument('end', type=int, help="waypoint end id")
+    load_partial_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
 
     pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
