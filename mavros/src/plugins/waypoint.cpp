@@ -195,6 +195,7 @@ private:
 		RXLIST,
 		RXWP,
 		TXLIST,
+		TXPARTIAL,
 		TXWP,
 		CLEAR,
 		SET_CUR
@@ -202,7 +203,8 @@ private:
 	WP wp_state;
 
 	size_t wp_count;
-	size_t wp_first_id;
+	size_t wp_start_id;
+	size_t wp_end_id;
 	size_t wp_cur_id;
 	size_t wp_cur_active;
 	size_t wp_set_active;
@@ -281,7 +283,7 @@ private:
 	{
 		lock_guard lock(mutex);
 
-		if ((wp_state == WP::TXLIST && mreq.seq == wp_first_id) || (wp_state == WP::TXWP)) {
+		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
 						mreq.seq, wp_cur_id);
@@ -373,7 +375,7 @@ private:
 	{
 		unique_lock lock(mutex);
 
-		if ((wp_state == WP::TXLIST || wp_state == WP::TXWP)
+		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
 				&& (wp_cur_id == send_waypoints.size() - 1)
 				&& (mack.type == enum_value(MRES::ACCEPTED))) {
 			go_idle();
@@ -385,7 +387,7 @@ private:
 			publish_waypoints();
 			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
-		else if (wp_state == WP::TXLIST || wp_state == WP::TXWP) {
+		else if (wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP) {
 			go_idle();
 			/* use this flag for failure report */
 			is_timedout = true;
@@ -467,6 +469,9 @@ private:
 				break;
 			case WP::TXLIST:
 				mission_count(wp_count);
+				break;
+			case WP::TXPARTIAL:
+				mission_write_partial_list(wp_start_id, wp_end_id);
 				break;
 			case WP::TXWP:
 				send_waypoint(wp_cur_id);
@@ -571,7 +576,6 @@ private:
 	bool wait_fetch_all()
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
-
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
 		       == std::cv_status::no_timeout
 		       && !is_timedout;
@@ -612,7 +616,6 @@ private:
 	void mission_item(WaypointItem &wp)
 	{
 		m_uas->msg_set_target(wp);
-
 		// WaypointItem may be sent as MISSION_ITEM
 		UAS_FCU(m_uas)->send_message_ignore_drop(wp);
 	}
@@ -736,7 +739,6 @@ private:
 		}
 
 		wp_count = send_waypoints.size();
-		wp_first_id = 0;
 		wp_cur_id = 0;
 		restart_timeout_timer();
 
@@ -759,16 +761,19 @@ private:
 			// Wrong initial state, other operation in progress?
 			return false;
 
-		wp_state = WP::TXLIST;
+		if (req.waypoints.size() == 0)
+			return false;
 
-		uint16_t end_index = req.start_index+req.waypoints.size()-1;
+		wp_state = WP::TXPARTIAL;
+
+		wp_end_id = req.start_index+req.waypoints.size();
 
 		send_waypoints.clear();
-		send_waypoints.reserve(end_index+1);
+		send_waypoints.reserve(wp_end_id);
 
 		uint16_t seq = 0;
+		mavros_msgs::Waypoint wp;
 		for (; seq < req.start_index; seq++) {
-			mavros_msgs::Waypoint wp;
 			send_waypoints.push_back(WaypointItem::from_msg(wp, seq));
 		}
 		for (auto &it : req.waypoints) {
@@ -776,12 +781,12 @@ private:
 		}
 
 		wp_count = req.waypoints.size();
-		wp_first_id = req.start_index;
+		wp_start_id = req.start_index;
 		wp_cur_id = req.start_index;
 		restart_timeout_timer();
 
 		lock.unlock();
-		mission_write_partial_list(req.start_index, end_index);
+		mission_write_partial_list(wp_start_id, wp_end_id);
 		res.success = wait_push_all();
 		lock.lock();
 
