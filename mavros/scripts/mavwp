@@ -137,8 +137,11 @@ def do_load_partial(args):
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
+    if args.start == args.end:
+        args.end += 1
+
     try:
-        ret = M.push_partial(waypoints=wps[args.start:args.end+1], start_index=args.start)
+        ret = M.push_partial(waypoints=wps[args.start:args.end], start_index=args.start)
     except rospy.ServiceException as ex:
         fault(ex)
 
