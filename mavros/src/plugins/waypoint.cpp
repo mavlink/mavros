@@ -23,6 +23,7 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
+#include <mavros_msgs/WaypointPushPartial.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -151,6 +152,7 @@ public:
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
+		push_partial_srv = wp_nh.advertiseService("push_partial", &WaypointPlugin::push_partial_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
 
@@ -182,6 +184,7 @@ private:
 	ros::Publisher wp_list_pub;
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
+	ros::ServiceServer push_partial_srv;
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
 
@@ -199,6 +202,7 @@ private:
 	WP wp_state;
 
 	size_t wp_count;
+	size_t wp_first_id;
 	size_t wp_cur_id;
 	size_t wp_cur_active;
 	size_t wp_set_active;
@@ -277,7 +281,7 @@ private:
 	{
 		lock_guard lock(mutex);
 
-		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXWP)) {
+		if ((wp_state == WP::TXLIST && mreq.seq == wp_first_id) || (wp_state == WP::TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
 						mreq.seq, wp_cur_id);
@@ -656,6 +660,18 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(mcnt);
 	}
 
+	void mission_write_partial_list(uint16_t start_index, uint16_t end_index)
+	{
+		ROS_DEBUG_NAMED("wp", "WP:m: write partial list %u - %u", start_index, end_index);
+
+		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl{};
+		mwpl.start_index = start_index;
+		mwpl.end_index = end_index;
+
+		m_uas->msg_set_target(mwpl);
+		UAS_FCU(m_uas)->send_message_ignore_drop(mwpl);
+	}
+
 	void mission_clear_all()
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: clear all");
@@ -720,6 +736,7 @@ private:
 		}
 
 		wp_count = send_waypoints.size();
+		wp_first_id = 0;
 		wp_cur_id = 0;
 		restart_timeout_timer();
 
@@ -729,6 +746,45 @@ private:
 		lock.lock();
 
 		res.wp_transfered = wp_cur_id + 1;
+		go_idle();	// same as in pull_cb
+		return true;
+	}
+
+	bool push_partial_cb(mavros_msgs::WaypointPushPartial::Request &req,
+			mavros_msgs::WaypointPushPartial::Response &res)
+	{
+		unique_lock lock(mutex);
+
+		if (wp_state != WP::IDLE)
+			// Wrong initial state, other operation in progress?
+			return false;
+
+		wp_state = WP::TXLIST;
+
+		uint16_t end_index = req.start_index+req.waypoints.size()-1;
+
+		send_waypoints.clear();
+		send_waypoints.reserve(end_index+1);
+
+		uint16_t seq = 0;
+		for (; seq < req.start_index; seq++) {
+			mavros_msgs::Waypoint wp;
+			send_waypoints.push_back(WaypointItem::from_msg(wp, seq));
+		}
+		for (auto &it : req.waypoints) {
+			send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+		}
+
+		wp_count = req.waypoints.size();
+		wp_first_id = req.start_index;
+		wp_cur_id = req.start_index;
+		restart_timeout_timer();
+
+		lock.unlock();
+		mission_write_partial_list(req.start_index, end_index);
+		res.success = wait_push_all();
+		lock.lock();
+
 		go_idle();	// same as in pull_cb
 		return true;
 	}
