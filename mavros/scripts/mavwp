@@ -148,7 +148,7 @@ def do_load_partial(args):
     if not ret.success:
         fault("Request failed. Check mavros logs")
 
-    print_if(args.verbose, "Waypoints transfered.")
+    print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
 
 
 def do_dump(args):
