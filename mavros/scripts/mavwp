@@ -137,11 +137,11 @@ def do_load_partial(args):
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
-    if args.start == args.end:
-        args.end += 1
+    if args.start_index == args.end_index:
+        args.end_index += 1
 
     try:
-        ret = M.push_partial(waypoints=wps[args.start:args.end], start_index=args.start)
+        ret = M.push_partial(waypoints=wps[args.start_index:args.end_index], start_index=args.start_index)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -209,9 +209,9 @@ def main():
 
     load_partial_args = subarg.add_parser('load_partial', help="partially load waypoints from file")
     load_partial_args.set_defaults(func=do_load_partial)
-    load_partial_args.add_argument('start', type=int, help="waypoint start id")
-    load_partial_args.add_argument('end', type=int, help="waypoint end id")
     load_partial_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
+    load_partial_args.add_argument('start_index', type=int, help="waypoint start index")
+    load_partial_args.add_argument('end_index', type=int, help="waypoint end index")
 
     pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
