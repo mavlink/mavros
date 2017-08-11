@@ -790,6 +790,7 @@ private:
 		res.success = wait_push_all();
 		lock.lock();
 
+		res.wp_transfered = wp_cur_id - wp_start_id + 1;
 		go_idle();	// same as in pull_cb
 		return true;
 	}
