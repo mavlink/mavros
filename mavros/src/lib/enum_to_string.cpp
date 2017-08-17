@@ -32,6 +32,7 @@ using mavlink::common::GPS_FIX_TYPE;
 using mavlink::common::MAV_MISSION_RESULT;
 using mavlink::common::MAV_FRAME;
 using mavlink::common::MAV_DISTANCE_SENSOR;
+using mavlink::common::LANDING_TARGET_TYPE;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -314,7 +315,7 @@ std::string to_string(timesync_mode e)
 
 	return timesync_mode_strings[idx];
 }
-// [[[end]]] (checksum: 2796eaa4f9361c2d7ca87f63e0401d4d)
+// [[[end]]]
 
 timesync_mode timesync_mode_from_str(const std::string &mode)
 {
@@ -347,7 +348,7 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
 	return adsb_altitude_type_strings[idx];
 }
-// [[[end]]] (checksum: dc127bf29aefa513471d13c5a0e1e6ec)
+// [[[end]]]
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
@@ -408,7 +409,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
 	return mav_estimator_type_strings[idx];
 }
-// [[[end]]] (checksum: 47674f004bf6c515fdf999987b99e806)
+// [[[end]]]
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
@@ -637,6 +638,50 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 	return mav_distance_sensor_strings[idx];
 }
 // [[[end]]] (checksum: 3f792ad01cdb3f2315a8907f578ab5b3)
+
+// [[[cog:
+// ename = 'LANDING_TARGET_TYPE'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! LANDING_TARGET_TYPE values
+static const std::array<const std::string, 8> landing_target_type_strings{{
+/*  0 */ "LIGHT_BEACON",                  // Landing target signaled by light beacon (ex: IR-LOCK)
+/*  1 */ "RADIO_BEACON",                  // Landing target signaled by radio beacon (ex: ILS, NDB)
+/*  2 */ "VISION_FIDUCIAL",               // Landing target represented by a fiducial marker (ex: ARTag)
+/*  3 */ "VISION_OTHER",                  // Landing target represented by a pre-defined visual shape/feature (ex: X-marker, H-marker, square)
+}};
+
+std::string to_string(LANDING_TARGET_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= landing_target_type_strings.size())
+		return std::to_string(idx);
+
+	return landing_target_type_strings[idx];
+}
+// [[[end]]]
+
+int landing_target_type_from_str(const std::string &landing_target_type)
+{
+	for (size_t idx = 0; idx < landing_target_type_strings.size(); idx++) {
+		if (landing_target_type_strings[idx] == landing_target_type)
+			return idx;
+	}
+	try {
+		int idx = std::stoi(landing_target_type, 0, 0);
+		if (0 > idx || size_t(idx) > landing_target_type.size()) {
+			ROS_ERROR_NAMED("uas", "LANDING_TARGET_TYPE: index out of bound: %d", idx);
+			return -1;
+		}
+		else
+			return idx;
+	}
+	catch (std::invalid_argument &ex) {
+		// failed
+	}
+	ROS_ERROR_STREAM_NAMED("uas", "LANDING_TARGET_TYPE: wrong string: " << landing_target_type);
+	return -1;
+}
 
 }	// namespace utils
 }	// namespace mavros

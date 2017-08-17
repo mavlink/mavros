@@ -77,7 +77,7 @@ std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 std::string to_string(mavlink::common::MAV_MISSION_RESULT e);
 std::string to_string(mavlink::common::MAV_FRAME e);
 std::string to_string(mavlink::common::MAV_DISTANCE_SENSOR e);
-
+std::string to_string(mavlink::common::LANDING_TARGET_TYPE e);
 /**
  * Helper to call to_string() for enum _T
  */
@@ -99,7 +99,7 @@ Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIEN
 int sensor_orientation_from_str(const std::string &sensor_orientation);
 
 /**
- * @brief Retreive timesync mode from name
+ * @brief Retrieve timesync mode from name
  */
 timesync_mode timesync_mode_from_str(const std::string &mode);
 
@@ -112,6 +112,11 @@ mavlink::common::MAV_FRAME mav_frame_from_str(const std::string &mav_frame);
  * @brief Retreive MAV_TYPE from name
  */
 mavlink::common::MAV_TYPE mav_type_from_str(const std::string &mav_type);
+
+/**
+ * @brief Retrieve landing target type from alias name
+ */
+mavlink::common::LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type);
 
 }	// namespace utils
 }	// namespace mavros
