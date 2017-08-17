@@ -26,6 +26,7 @@ add_message_files(
   HilSensor.msg
   HilStateQuaternion.msg
   HomePosition.msg
+  LandingTarget.msg
   LogData.msg
   LogEntry.msg
   ManualControl.msg
