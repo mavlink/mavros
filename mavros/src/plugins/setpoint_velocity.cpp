@@ -95,7 +95,7 @@ private:
 		send_setpoint_velocity(req->header.stamp, vel_enu,
 				req->twist.angular.z);
 	}
-	
+
 	void vel_unstamped_cb(const geometry_msgs::Twist::ConstPtr &req) {
 		Eigen::Vector3d vel_enu;
 

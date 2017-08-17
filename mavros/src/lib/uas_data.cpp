@@ -38,7 +38,17 @@ UAS::UAS() :
 	tsync_mode(UAS::timesync_mode::NONE),
 	fcu_caps_known(false),
 	fcu_capabilities(0)
-{}
+{
+	try {
+		// Using smakkest dataset with 5' grid,
+		// From default location,
+		// Use cubic interpolation, Thread safe
+		egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
+	}
+	catch (const std::exception &e) {
+		ROS_ERROR_STREAM("UAS: GeographicLib exception: " << e.what());
+	}
+}
 
 /* -*- heartbeat handlers -*- */
 

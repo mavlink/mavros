@@ -47,7 +47,7 @@ def do_mode(args):
     except rospy.ServiceException as ex:
         fault(ex)
 
-    if not ret.success:
+    if not ret.mode_sent:
         fault("Request failed. Check mavros logs")
 
     if not done_evt.wait(5):
