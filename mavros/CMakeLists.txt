@@ -44,7 +44,7 @@ find_path(GEOGRAPHICLIB_GEOID_PATH NAMES geoids PATH_SUFFIXES share/GeographicLi
 find_path(GEOGRAPHICLIB_GRAVITY_PATH_ share/GeographicLib/gravity)
 find_path(GEOGRAPHICLIB_MAGNETIC_PATH_ share/GeographicLib/magnetic)
 if(NOT GEOGRAPHICLIB_GEOID_PATH)
-  message(FATAL_ERROR "No geoid model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
+  message(WARNING "No geoid model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
 else()
   message(STATUS "Geoid model datasets found in: " ${GEOGRAPHICLIB_GEOID_PATH}/geoid)
   set(GEOGRAPHICLIB_GEOID_PATH ${GEOGRAPHICLIB_GEOID_PATH}/geoid)
