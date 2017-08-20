@@ -35,12 +35,8 @@ before_install:
   - sudo apt-get update -qq
   - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
     python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
-  # Install Python 3
-  - sudo -H apt-get install -qq -y --allow-unauthenticated python3.5 python3.5-dev libpython3.5 libpython3.5-dev libpython3.5-stdlib
-    python3-pip python3-setuptools
   # Install Python future module
   - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
-  - sudo -H pip3 install -I future -t /usr/lib/python3.5/dist-packages
   # Update PYTHONPATH
   - export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   # Source environment
