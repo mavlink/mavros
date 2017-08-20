@@ -32,7 +32,6 @@ before_install:
     python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
   # Install Python future module
   - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
-  - sudo -H pip install -I future -t /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages
   # Update PYTHONPATH
   - export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   # Source environment
