@@ -55,6 +55,11 @@ install:
   # Install dependencies using rosdep
   - cd ~/catkin_ws
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -q -y
+  # Install GeographicLib datasets
+  - unset PYTHONPATH
+  - geographiclib-get-geoids egm96-5
+  - geographiclib-get-gravity egm96
+  - geographiclib-get-magnetic emm2015
 
 before_script:
   # Source environment
