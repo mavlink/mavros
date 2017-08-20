@@ -28,7 +28,7 @@ before_install:
   # Update python 2.7 version
   - sudo apt-get update -qq
   - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
-    python-pip python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
+    python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
   # Install Python future module
   - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
   - sudo -H pip install -I future -t /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages
@@ -62,8 +62,7 @@ before_script:
 
 script:
   - cd ~/catkin_ws
-  - echo ${PYTHONPATH}
-  - catkin config --install
+  - catkin config --install -DSETUPTOOLS_DEB_LAYOUT=OFF -DSETUPTOOLS_ARG_EXTRA=""
   - catkin build --no-status --summary
   - source devel/setup.bash
   - catkin run_tests --no-status -p1 -i --summary
