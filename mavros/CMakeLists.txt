@@ -40,14 +40,14 @@ endif()
 find_package(GeographicLib)
 
 ## Check if the datasets are installed
-find_path(GEOGRAPHICLIB_GEOID_PATH egm96-5.pgm egm96_5.pgm) # be more restrictive on the geoid model
+find_path(GEOGRAPHICLIB_GEOID_PATH NAMES geoids/egm96-5.pgm PATH_SUFFIXES share/GeographicLib share/geographiclib) # be more restrictive on the geoid model
 find_path(GEOGRAPHICLIB_GRAVITY_PATH_ share/GeographicLib/gravity)
 find_path(GEOGRAPHICLIB_MAGNETIC_PATH_ share/GeographicLib/magnetic)
 if(NOT GEOGRAPHICLIB_GEOID_PATH)
-  message(WARNING "No geoid model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
+  message(FATAL_ERROR "No geoid model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
 else()
-  message(STATUS "Geoid model datasets found in: " ${GEOGRAPHICLIB_GEOID_PATH})
-  set(GEOGRAPHICLIB_GEOID_PATH ${GEOGRAPHICLIB_GEOID_PATH})
+  message(STATUS "Geoid model datasets found in: " ${GEOGRAPHICLIB_GEOID_PATH}/geoid)
+  set(GEOGRAPHICLIB_GEOID_PATH ${GEOGRAPHICLIB_GEOID_PATH}/geoid)
 endif()
 if(NOT GEOGRAPHICLIB_GRAVITY_PATH_)
   message(WARNING "No gravity field model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")

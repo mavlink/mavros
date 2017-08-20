@@ -65,7 +65,8 @@ install:
   - cd ~/catkin_ws
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -q -y
   # Install GeographicLib datasets (for Ubuntu Trusty - can only download geoid model)
-  - SHARE_DIR=/usr/share/GeographicLib bash -c 'sudo -H geographiclib-datasets-download egm96_5'
+  - sudo -H mkdir -p /usr/share/geographiclib
+  - sudo -H geographiclib-datasets-download egm96_5
 
 before_script:
   # Source environment
