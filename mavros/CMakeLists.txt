@@ -40,7 +40,7 @@ endif()
 find_package(GeographicLib)
 
 ## Check if the datasets are installed
-find_path(GEOGRAPHICLIB_GEOID_PATH NAMES geoids/egm96-5.pgm PATH_SUFFIXES share/GeographicLib share/geographiclib) # be more restrictive on the geoid model
+find_path(GEOGRAPHICLIB_GEOID_PATH NAMES geoids PATH_SUFFIXES share/GeographicLib share/geographiclib)
 find_path(GEOGRAPHICLIB_GRAVITY_PATH_ share/GeographicLib/gravity)
 find_path(GEOGRAPHICLIB_MAGNETIC_PATH_ share/GeographicLib/magnetic)
 if(NOT GEOGRAPHICLIB_GEOID_PATH)
