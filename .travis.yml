@@ -26,12 +26,14 @@ before_install:
   #- sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   # Update python 2.7 version
-  - sudo apt-add-repository ppa:fkrull/deadsnakes-python2.7 -y
   - sudo apt-get update -qq
   - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
-    python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
+    python-pip python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
   # Install Python future module
   - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
+  - sudo -H pip install -I future -t /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages
+  # Update PYTHONPATH
+  - export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   # Source environment
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep
@@ -54,6 +56,8 @@ install:
   - cd ~/catkin_ws
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -q -y
   # Install GeographicLib datasets
+  - sudo -H pip install virtualenv --upgrade
+  - virtualenv -p python3 env
   - geographiclib-get-geoids egm96-5
   - geographiclib-get-gravity egm96
   - geographiclib-get-magnetic emm2015
@@ -64,7 +68,8 @@ before_script:
 
 script:
   - cd ~/catkin_ws
-  - catkin config --install -DSETUPTOOLS_DEB_LAYOUT=OFF -DSETUPTOOLS_ARG_EXTRA=""
+  - echo ${PYTHONPATH}
+  - catkin config --install
   - catkin build --no-status --summary
   - source devel/setup.bash
   - catkin run_tests --no-status -p1 -i --summary
