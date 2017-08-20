@@ -39,6 +39,27 @@ endif()
 ## Find GeographicLib
 find_package(GeographicLib)
 
+## Check if the datasets are installed
+find_path(GEOGRAPHICLIB_GEOID_PATH share/GeographicLib/geoids)
+find_path(GEOGRAPHICLIB_GRAVITY_PATH share/GeographicLib/gravity)
+find_path(GEOGRAPHICLIB_MAGNETIC_PATH share/GeographicLib/magnetic)
+if(NOT GEOGRAPHICLIB_GEOID_PATH)
+  message(FATAL_ERROR "No geoid model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
+else()
+  message(STATUS "Geoid model datasets found in: " ${GEOGRAPHICLIB_GEOID_PATH}/share/GeographicLib/geoids)
+endif()
+if(NOT GEOGRAPHICLIB_GRAVITY_PATH)
+  message(WARNING "No gravity field model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
+else()
+  message(STATUS "Gravity Field model datasets found in: " ${GEOGRAPHICLIB_GRAVITY_PATH}/share/GeographicLib/gravity)
+endif()
+if(NOT GEOGRAPHICLIB_MAGNETIC_PATH)
+  message(WARNING "No magnetic field model datasets found. Please execute the script install_geographiclib_dataset.sh in /mavros/scripts")
+else()
+  message(STATUS "Magnetic Field model datasets found in: " ${GEOGRAPHICLIB_MAGNETIC_PATH}/share/GeographicLib/magnetic)
+endif()
+
+
 include(EnableCXX11)
 include(MavrosMavlink)
 
