@@ -5,7 +5,7 @@
 set -x
 
 if [ $UID -ne 0 ]; then
-	echo "That script require root privilegies!" 1>&2
+	echo "This script require root privilegies!" 1>&2
 	exit 1
 fi
 
@@ -34,6 +34,10 @@ else
     VER=$(uname -r)
 fi
 
+VER_UTOPIC=14.10
+VER_WHEEZZY=7
+VER_FC22=22
+
 # Install datasets
 run_get() {
 	local dir="$1"
@@ -49,9 +53,18 @@ run_get() {
 
 if [ $OS = Ubuntu ]; then
 	apt install -y geographiclib-tools;
-	VER_TRUSTY=14.04
 
-	if test $(version $VER) -gt $(version $VER_TRUSTY) ; then # check if Ubuntu version is greater than 14.04
+	if test $(version $VER) -gt $(version $VER_UTOPIC) ; then # check if Ubuntu version is greater than 14.10
+		run_get geoids geoids egm96-5
+		run_get gravity gravity egm96
+		run_get magnetic magnetic emm2015
+	else
+		geographiclib-datasets-download egm96_5
+	fi
+elif [ $OS = Debian ]; then
+	apt install -y geographiclib-tools;
+
+	if test $(version $VER) -gt $(version $VER_WHEEZZY) ; then # check if Debian version is greater than 7
 		run_get geoids geoids egm96-5
 		run_get gravity gravity egm96
 		run_get magnetic magnetic emm2015
@@ -59,9 +72,15 @@ if [ $OS = Ubuntu ]; then
 		geographiclib-datasets-download egm96_5
 	fi
 elif [ $OS = Fedora ]; then
-	yum install -y GeographicLib
+	if test $(version $VER) -gt $(version $VER_FC22) ; then # check if Fedora version is greater than 22
+		yum install -y GeographicLib
 
-	run_get geoids geoids egm96-5
-	run_get gravity gravity egm96
-	run_get magnetic magnetic emm2015
+		run_get geoids geoids egm96-5
+		run_get gravity gravity egm96
+		run_get magnetic magnetic emm2015
+	else
+		echo "Fedora version not supported!" 1>&2
+	fi
+else
+	echo "OS not supported! Check GeographicLib page for supported OS and lib versions." 1>&2
 fi

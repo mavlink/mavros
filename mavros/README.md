@@ -136,18 +136,19 @@ shared libraries (`libGeographic.so`).
 Since **GeographicLib requires certain datasets** (mainly the geoid dataset) so to fulfill
 certain calculations, these need to be installed manually by the user using `geographiclib-tools`,
 which can be installed by `apt-get` in Debian systems. For a quicker procedure, just **run
-the available script in the "tools" folder, `install_geographiclib_datasets.sh`**.
+the available script in the "mavros/scripts" folder, `install_geographiclib_datasets.sh`**.
 
 Note that if you are using an older MAVROS release source install and want to update to a new one, remember to
 run `rosdep update` before running `rosdep install --from-paths ${ROS_WORKSPACE} --ignore-src --rosdistro=${ROSDISTRO}`,
 with `ROS_WORKSPACE` your src folder of catkin workspace. This will allow updating the `rosdep` list
 and install the required dependencies when issuing `rosdep install`.
 
-:bangbang:**The geoid dataset is mandatory to allow the conversion between heights in order to
-respect ROS msg API!**:bangbang:
+:bangbang: **The geoid dataset is mandatory to allow the conversion between heights in order to
+respect ROS msg API. Not having the dataset available will shutdown the `mavros_node`** :bangbang:
 
-:heavy_exclamation_mark:Run `mavros/tools/install_geographiclib_datasets.sh` to install all datasets or
-`sudo geographiclib-get-geoids egm96-5` to install the geoid dataset only.:heavy_exclamation_mark:
+:heavy_exclamation_mark:Run `install_geographiclib_datasets.sh` to install all datasets or
+`geographiclib-datasets-download egm96_5` (*Debian 7*, *Ubuntu 14.04*, *14.10*), `geographiclib-get-geoids egm96-5`
+(*Debian 8*, *Fedora 22*, *Ubuntu 15.04* or later) to install the geoid dataset only:heavy_exclamation_mark:
 
 
 ### Binary installation (deb)
@@ -158,6 +159,11 @@ Kinetic also support Debian Jessie amd64 and arm64 (ARMv8).
 Just use `apt-get` for installation:
 
     sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+
+Then install GeographicLib datasets by running the `install_geographiclib_datasets.sh` script:
+
+    wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
+    ./install_geographiclib_datasets.sh
 
 
 ### Source installation
@@ -189,10 +195,13 @@ wstool merge -t src /tmp/mavros.rosinstall
 wstool update -t src -j4
 rosdep install --from-paths src --ignore-src -y
 
-# 5. Build source
+# 5. Install GeographicLib datasets:
+./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
+
+# 6. Build source
 catkin build
 
-# 6. Make sure that you use setup.bash or setup.zsh from workspace.
+# 7. Make sure that you use setup.bash or setup.zsh from workspace.
 #    Else rosrun can't find nodes from this workspace.
 source devel/setup.bash
 ```
