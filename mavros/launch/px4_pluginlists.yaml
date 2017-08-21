@@ -1,7 +1,7 @@
 plugin_blacklist:
-# common
+- common
 - safety_area
-# extras
+- extras
 - image_pub
 - vibration
 - distance_sensor
