@@ -47,7 +47,7 @@ UAS::UAS() :
 	fcu_capabilities(0)
 {
 	try {
-		// Using smllest dataset with 5' grid,
+		// Using smallest dataset with 5' grid,
 		// From default location,
 		// Use cubic interpolation, Thread safe
 		egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
