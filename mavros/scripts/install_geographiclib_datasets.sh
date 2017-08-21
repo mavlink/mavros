@@ -4,7 +4,7 @@
 
 set -x
 
-if [ $UID -ne 0 ]; then
+if [[ $UID != 0 ]]; then
 	echo "This script require root privilegies!" 1>&2
 	exit 1
 fi
@@ -59,7 +59,7 @@ if [ $OS = Ubuntu ]; then
 		run_get gravity gravity egm96
 		run_get magnetic magnetic emm2015
 	else
-		geographiclib-datasets-download egm96_5
+		geographiclib-datasets-download egm96_5;
 	fi
 elif [ $OS = Debian ]; then
 	apt install -y geographiclib-tools;
@@ -69,11 +69,11 @@ elif [ $OS = Debian ]; then
 		run_get gravity gravity egm96
 		run_get magnetic magnetic emm2015
 	else
-		geographiclib-datasets-download egm96_5
+		geographiclib-datasets-download egm96_5;
 	fi
 elif [ $OS = Fedora ]; then
 	if test $(version $VER) -gt $(version $VER_FC22) ; then # check if Fedora version is greater than 22
-		yum install -y GeographicLib
+		yum install -y GeographicLib;
 
 		run_get geoids geoids egm96-5
 		run_get gravity gravity egm96
