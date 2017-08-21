@@ -17,10 +17,17 @@
 #include <mavros/mavros_uas.h>
 #include <mavros/utils.h>
 #include <mavros/px4_custom_mode.h>
+#include <signal.h>
 
 using namespace mavros;
 using utils::enum_value;
 
+/**
+ * @brief Launch SIGINT and shutdown node
+ */
+inline void term(int sig) {
+	ros::shutdown();
+}
 
 UAS::UAS() :
 	tf2_listener(tf2_buffer, true),
@@ -40,13 +47,15 @@ UAS::UAS() :
 	fcu_capabilities(0)
 {
 	try {
-		// Using smakkest dataset with 5' grid,
+		// Using smllest dataset with 5' grid,
 		// From default location,
 		// Use cubic interpolation, Thread safe
 		egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
 	}
 	catch (const std::exception &e) {
+		// catch exception and shutdown node
 		ROS_ERROR_STREAM("UAS: GeographicLib exception: " << e.what());
+		signal(SIGINT, term);
 	}
 }
 
@@ -175,4 +184,3 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 	lock_guard lock(mutex);
 	return gps_fix;
 }
-
