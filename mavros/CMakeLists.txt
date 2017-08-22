@@ -39,6 +39,9 @@ endif()
 ## Find GeographicLib
 find_package(GeographicLib)
 
+## Check if the datasets are installed
+include(CheckGeographicLibDatasets)
+
 include(EnableCXX11)
 include(MavrosMavlink)
 

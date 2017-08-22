@@ -7,6 +7,11 @@ language: generic
 compiler:
   - gcc
 cache:
+  directories:
+    - $HOME/.cache/pip
+  before_cache:
+    - rm -f $HOME/.cache/pip/log/debug.log
+cache:
   - apt
 
 env:
@@ -26,7 +31,7 @@ before_install:
   #- sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   # Update python 2.7 version
-  - sudo apt-add-repository ppa:fkrull/deadsnakes-python2.7 -y
+  - sudo apt-add-repository ppa:deadsnakes/ppa -y
   - sudo apt-get update -qq
   - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
     python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
@@ -55,6 +60,9 @@ install:
   # Install dependencies using rosdep
   - cd ~/catkin_ws
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -q -y
+  # Install GeographicLib datasets (for Ubuntu Trusty - can only download geoid model)
+  - sudo -H mkdir -p /usr/share/geographiclib
+  - sudo -H geographiclib-datasets-download egm96_5
 
 before_script:
   # Source environment

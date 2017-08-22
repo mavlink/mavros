@@ -5,12 +5,11 @@
 set -x
 
 if [[ $UID != 0 ]]; then
-	echo "That script require root privilegies!" 1>&2
+	echo "This script require root privilegies!" 1>&2
 	exit 1
 fi
 
-apt install -y geographiclib-tools;
-
+# Install datasets
 run_get() {
 	local dir="$1"
 	local tool="$2"
@@ -23,6 +22,13 @@ run_get() {
 	geographiclib-get-$tool $model
 }
 
-run_get geoids geoids egm96-5
-run_get gravity gravity egm96
-run_get magnetic magnetic emm2015
+# check which command script is available
+if which /usr/sbin/geographiclib-get-geoids; then
+	run_get geoids geoids egm96-5
+	run_get gravity gravity egm96
+	run_get magnetic magnetic emm2015
+elif which geographiclib-datasets-download; then # only allows install the goid model dataset
+	geographiclib-datasets-download egm96_5;
+else
+	echo "OS not supported! Check GeographicLib page for supported OS and lib versions." 1>&2
+fi
