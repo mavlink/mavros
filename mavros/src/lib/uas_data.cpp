@@ -17,7 +17,6 @@
 #include <mavros/mavros_uas.h>
 #include <mavros/utils.h>
 #include <mavros/px4_custom_mode.h>
-#include <signal.h>
 
 using namespace mavros;
 using utils::enum_value;
