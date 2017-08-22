@@ -22,13 +22,6 @@
 using namespace mavros;
 using utils::enum_value;
 
-/**
- * @brief Launch SIGINT and shutdown node
- */
-inline void term(int sig) {
-	ros::shutdown();
-}
-
 UAS::UAS() :
 	tf2_listener(tf2_buffer, true),
 	type(enum_value(MAV_TYPE::GENERIC)),
@@ -54,8 +47,9 @@ UAS::UAS() :
 	}
 	catch (const std::exception &e) {
 		// catch exception and shutdown node
-		ROS_ERROR_STREAM("UAS: GeographicLib exception: " << e.what());
-		signal(SIGINT, term);
+		ROS_FATAL_STREAM("UAS: GeographicLib exception: " << e.what() <<
+			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
+		ros::shutdown();
 	}
 }
 
@@ -155,8 +149,8 @@ geometry_msgs::Vector3 UAS::get_attitude_angular_velocity()
 /* -*- GPS data -*- */
 
 void UAS::update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
-		float eph, float epv,
-		int fix_type, int satellites_visible)
+	float eph, float epv,
+	int fix_type, int satellites_visible)
 {
 	lock_guard lock(mutex);
 
