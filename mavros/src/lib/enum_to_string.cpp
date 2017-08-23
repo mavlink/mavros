@@ -315,7 +315,7 @@ std::string to_string(timesync_mode e)
 
 	return timesync_mode_strings[idx];
 }
-// [[[end]]]
+// [[[end]]] (checksum: 2796eaa4f9361c2d7ca87f63e0401d4d)
 
 timesync_mode timesync_mode_from_str(const std::string &mode)
 {
@@ -348,7 +348,7 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
 	return adsb_altitude_type_strings[idx];
 }
-// [[[end]]]
+// [[[end]]] (checksum: dc127bf29aefa513471d13c5a0e1e6ec)
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
@@ -409,7 +409,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
 	return mav_estimator_type_strings[idx];
 }
-// [[[end]]]
+// [[[end]]] (checksum: 47674f004bf6c515fdf999987b99e806)
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
@@ -644,7 +644,7 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! LANDING_TARGET_TYPE values
-static const std::array<const std::string, 8> landing_target_type_strings{{
+static const std::array<const std::string, 4> landing_target_type_strings{{
 /*  0 */ "LIGHT_BEACON",                  // Landing target signaled by light beacon (ex: IR-LOCK)
 /*  1 */ "RADIO_BEACON",                  // Landing target signaled by radio beacon (ex: ILS, NDB)
 /*  2 */ "VISION_FIDUCIAL",               // Landing target represented by a fiducial marker (ex: ARTag)
@@ -659,9 +659,9 @@ std::string to_string(LANDING_TARGET_TYPE e)
 
 	return landing_target_type_strings[idx];
 }
-// [[[end]]]
+// [[[end]]] (checksum: a42789c10cbebd5bc253abca2a07289b)
 
-int landing_target_type_from_str(const std::string &landing_target_type)
+LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type)
 {
 	for (size_t idx = 0; idx < landing_target_type_strings.size(); idx++) {
 		if (landing_target_type_strings[idx] == landing_target_type)
