@@ -2,6 +2,34 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Extras: Distance sensors add RADAR and UNKNOWN type
+* Extras: distance sensor don't spam when message are bounce back from FCU
+* Extras: add ardupilot rangefinder plugin
+* [WIP] Plugins: setpoint_attitude: add sync between thrust and attitude (`#700 <https://github.com/mavlink/mavros/issues/700>`_)
+  * plugins: setpoint_attitude: add sync between throttle and attitude topics to be sent together
+  * plugins: typo correction: replace throttle with thrust
+  * plugins: msgs: setpoint_attitude: replaces Float32Stamped for Thrust msg
+  * plugins: setpoint_attitude: add sync between twist and thrust (RPY+Thrust)
+  * setpoint_attitude: update the logic of thrust normalization verification
+  * setpoint_attitude: implement sync between tf listener and thrust subscriber
+  * TF sync listener: generalize topic type that can be syncronized with TF2
+  * TF2ListenerMixin: keep class template, use template for tf sync method only
+  * TF2ListenerMixin: fix and improve sync tf2_start method
+  * general update to yaml config files and parameters
+  * setpoint_attitude: add note on Thrust sub name
+  * setpoint_attitude: TF sync: pass subscriber pointer instead of binding it
+* extras: fake_gps: use another method to throttle incoming msgs
+* extras: fake_gps: compute vector2d.norm()
+* frame tf: move ENU<->ECEF transforms to ftf_frame_conversions.cpp
+* extras: fake_gps: use rate instead of period
+* extras: fake_gps: style fix
+* extras: mocap_fake_gps->fake_gps: generalize plugin and use GeographicLib possibilites
+* extras: odom: Minor fixes
+* extras: Add odom plugin
+* Contributors: James Goppert, Nuno Marques, TSC21, Vladimir Ermakov, khancyr
+
 0.19.0 (2017-05-05)
 -------------------
 * extras: fix package link

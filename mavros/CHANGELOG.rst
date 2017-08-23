@@ -2,6 +2,164 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update generated code in plugins
+* update generated code
+* geolib: datasets: warn when not installed; update install script; launch SIGINT when not installed (`#778 <https://github.com/mavlink/mavros/issues/778>`_)
+  * geolib: make dataset install mandatory
+  * travis_ci: install python3; use geographiclib-datasets-download
+  * CMakeLists.txt: set datasets path
+  * travis_ci: create a path for the geoid dataset
+  * travis_ci: remove python3 install
+  * CMakeLists.txt: remove restriction regarding the geoid model
+  * CMakeLists.txt: only launch a warning if the geoid dataset is not installed
+  * CMakeLists.txt: simplify dataset path search and presentation
+  * scripts: install_geographiclib_datasets becomes version aware
+  * uas_data: dataset init: shutdown node if exception caught
+  * README: update GeographicLib info; geolib install script: check for more OS versions
+  * uas_data: small typo fix
+  * install_geolib_datasets: some fix
+  * CMakeLists.txt: be more clear on geoid dataset fault
+  * CMakeLists: push check geolib datasets to a cmake module
+  * travis_ci: update ppa repository
+  * uas_data: shutdown node and increase log level instead
+  * install_geographiclib_datasets: simplify script to only check download script version available
+  * uas_data: remove signal.h import
+* HIL Plugin
+  * add HilSensor.msg, HilStateQuaternion.msg, and add them in CMakeLists.txt
+  * Add hil_sensor.cpp plugin to send HIL_SENSOR mavlink message to FCU.
+  * fix HilSensor.msg. Make it more compact.
+  * Fix HilStateQuaternion.msg. Make it more compact.
+  * Add hil_state_quaternion plugin
+  * fix files: some variable names were wrong+some syntax problems
+  * fix syntax error in plugin .cpp files, make msg files match corresponding mavlink definitions
+  * fix plugin source files
+  * fix syntax
+  * fix function name. It was wrong.
+  * add HIL_GPS plugin
+  * add HilGPS.msg to CMakeList
+  * fix missing semicolon
+  * fix call of class name
+  * Add ACTUATOR_CONTROL_TARGET MAVLink message
+  * fix code
+  * increase number of fake satellites
+  * control sensor and control rates
+  * change control rate
+  * change control rate
+  * fix fake gps rate
+  * fix
+  * fix plugin_list
+  * fix
+  * remove unnecessary hil_sensor_mixin
+  * update HilSensor.msg and usage
+  * update HilStateQuaterion.msg and usage
+  * redo some changes; update HilGPS.msg and usage
+  * update hil_controls msg - use array of floats for aux channels
+  * merge actuator_control with actuator_control_target
+  * remove hil_sensor_mixin.h
+  * update actuator_control logic
+  * merge all plugins into a single one
+  * delete the remaining plugin files
+  * update description
+  * redo some changes; reduce LOC
+  * fix type cast on gps coord
+  * add HIL_OPTICAL_FLOW send based on OpticalFlowRad sub
+  * update authors list
+  * update subscribers names
+  * refactor gps coord convention
+  * add HIL_RC_INPUTS_RAW sender; cog protec msg structure and content
+  * apply correct rc_in translation; redo cog
+  * apply proper rotations and frame transforms
+  * remote throttle
+  * fix typo and msg api
+  * small changes
+  * refactor rcin_raw_cb
+  * new refactor to rcin_raw_cb arrays
+  * update velocity to meters
+  * readjust all the units so to match mavlink msg def
+  * update cog
+  * correct cog conversion
+  * refefine msg definitions to remove overhead
+  * hil: apply frame transform to body frame
+* apm_config.yaml: change prevent collision in distance_sensor id
+* Extras: add ardupilot rangefinder plugin
+* msgs fix `#625 <https://github.com/mavlink/mavros/issues/625>`_: Rename SetMode.Response.success to mode_sent
+* [WIP] Plugins: setpoint_attitude: add sync between thrust and attitude (`#700 <https://github.com/mavlink/mavros/issues/700>`_)
+  * plugins: setpoint_attitude: add sync between throttle and attitude topics to be sent together
+  * plugins: typo correction: replace throttle with thrust
+  * plugins: msgs: setpoint_attitude: replaces Float32Stamped for Thrust msg
+  * plugins: setpoint_attitude: add sync between twist and thrust (RPY+Thrust)
+  * setpoint_attitude: update the logic of thrust normalization verification
+  * setpoint_attitude: implement sync between tf listener and thrust subscriber
+  * TF sync listener: generalize topic type that can be syncronized with TF2
+  * TF2ListenerMixin: keep class template, use template for tf sync method only
+  * TF2ListenerMixin: fix and improve sync tf2_start method
+  * general update to yaml config files and parameters
+  * setpoint_attitude: add note on Thrust sub name
+  * setpoint_attitude: TF sync: pass subscriber pointer instead of binding it
+* apm_config: add mavros_extras/fake_gps plugin param config
+* px4_config: add gps_rate param
+* frame tf: move ENU<->ECEF transforms to ftf_frame_conversions.cpp
+* extras: mocap_fake_gps->fake_gps: generalize plugin and use GeographicLib possibilites
+* UAS: Share egm96_5 geoid via UAS class
+* Move FindGeographicLib.cmake to libmavconn, that simplify installation, simplify datasets instattator
+* Use GeographicLib tools to guarantee ROS msg def and enhance features (`#693 <https://github.com/mavlink/mavros/issues/693>`_)
+  * first commit
+  * Check for GeographicLib first without having to install it from the beginning each compile time
+  * add necessary cmake files
+  * remove gps_conversions.h and use GeographicLib to obtain the UTM coordinates
+  * move conversion functions to utils.h
+  * geographic conversions: update CMakeLists and package.xml
+  * geographic conversions: force download of the datasets
+  * geographic conversions: remove unneeded cmake module
+  * dependencies: use SHARED libs of geographiclib
+  * dependencies: correct FindGeographicLib.cmake so it can work for common Debian platforms
+  * CMakeList: do not be so restrict about GeographicLib dependency
+  * global position: odometry-use ECEF instead of UTM; update other fields
+  * global position: make travis happy
+  * global position: fix ident
+  * global_position: apply correct frames and frame transforms given each coordinate frame
+  * global_position: convert rcvd global origin to ECEF
+  * global_position: be more explicit about the ecef-enu transform
+  * global position: use home position as origin of map frame
+  * global position: minor refactoring
+  * global position: shield code with exception catch
+  * fix identation
+  * move dataset install to script; update README with new functionalities
+  * update README with warning
+  * global_position: fix identation
+  * update HomePosition to be consistent with the conversions in global_position to ensure the correct transformation of height
+  * home|global_position: fix compile errors, logic and dependencies
+  * home position: add height conversion
+  * travis: update to get datasets
+  * install geo dataset: update to verify alternative dataset folders
+  * travis: remove dataset install to allow clean build
+  * hp and gp: initialize geoid dataset once and make it thread safe
+  * README: update description relative to GeographicLib; fix typos
+  * global position: improve doxygen references
+  * README: update with some tips on rosdep install
+* [WIP] Set framework to define offset between global origin and current local position (`#691 <https://github.com/mavlink/mavros/issues/691>`_)
+  * add handlers for GPS_GLOBAL_ORIGIN and SET_GPS_GLOBAL_ORIGIN
+  * fix cast of encoding types
+  * refactor gps coord conversions
+  * uncrustify
+  * global_position: add LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET handler
+  * global_position: add trasform sender for offset
+  * global_origin: refactor covariance matrix
+  * global_position: update copyright
+  * global_position: add initial support to REP 105
+  * px4_config: global_position: update frame description
+  * global_position: correct identation
+  * global position: be consistent with frame and methods names (ecef!=wgs84, frame_id!=global_frame_id)
+  * global_position: updates to code structure
+  * global_position: fix identation
+* lib: frame_tf: Style fix
+* extras: odom: Minor fixes
+* extras: Add odom plugin
+* lib: frame_tf: Add support for 6d and 9d covariance matrices
+* Contributors: James Goppert, Nuno Marques, TSC21, Vladimir Ermakov, khancyr
+
 0.19.0 (2017-05-05)
 -------------------
 * launch: remove setpoint-attitude from apm blacklist
