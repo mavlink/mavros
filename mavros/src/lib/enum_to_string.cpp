@@ -81,7 +81,7 @@ using mavlink::common::GPS_FIX_TYPE;
 // to_string_outl(ename)
 // ]]]
 //! MAV_AUTOPILOT values
-static const std::array<const std::string, 18> mav_autopilot_strings{{
+static const std::array<const std::string, 19> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
@@ -100,6 +100,7 @@ static const std::array<const std::string, 18> mav_autopilot_strings{{
 /* 15 */ "Armazila",                      // Armazila -- http://armazila.com
 /* 16 */ "Aerob",                         // Aerob -- http://aerob.ru
 /* 17 */ "ASLUAV autopilot",              // ASLUAV autopilot -- http://www.asl.ethz.ch
+/* 18 */ "SmartAP Autopilot",             // SmartAP Autopilot - http://sky-drones.com
 }};
 
 std::string to_string(MAV_AUTOPILOT e)
@@ -110,7 +111,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: c0f450ce84a31ce0f86d439c007cf805)
+// [[[end]]] (checksum: 5b451ba6ab334d133765faaa33a18c6a)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -127,7 +128,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 28> mav_type_strings{{
+static const std::array<const std::string, 29> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -156,6 +157,7 @@ static const std::array<const std::string, 28> mav_type_strings{{
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
 /* 26 */ "Onboard gimbal",                // Onboard gimbal
 /* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
+/* 28 */ "Dodecarotor",                   // Dodecarotor
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -166,7 +168,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: ff3fd0c445310aef4a3cfb14a18178e0)
+// [[[end]]] (checksum: f601204a93c9d0253a5c02ad77e60662)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -255,7 +257,10 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 //     for k, e in enum:
 //         name_short =  e.name[len(ename) + 1:]
 //         sp = make_whitespace(30, name_short)
-//         cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         if e.description:
+//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         else:
+//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
 //
 //     cog.outl("}};")
 //     cog.outl()
@@ -287,26 +292,26 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 // ]]]
 //! ADSB_EMITTER_TYPE values
 static const std::array<const std::string, 20> adsb_emitter_type_strings{{
-/*  0 */ "NO_INFO",                       //
-/*  1 */ "LIGHT",                         //
-/*  2 */ "SMALL",                         //
-/*  3 */ "LARGE",                         //
-/*  4 */ "HIGH_VORTEX_LARGE",             //
-/*  5 */ "HEAVY",                         //
-/*  6 */ "HIGHLY_MANUV",                  //
-/*  7 */ "ROTOCRAFT",                     //
-/*  8 */ "UNASSIGNED",                    //
-/*  9 */ "GLIDER",                        //
-/* 10 */ "LIGHTER_AIR",                   //
-/* 11 */ "PARACHUTE",                     //
-/* 12 */ "ULTRA_LIGHT",                   //
-/* 13 */ "UNASSIGNED2",                   //
-/* 14 */ "UAV",                           //
-/* 15 */ "SPACE",                         //
-/* 16 */ "UNASSGINED3",                   //
-/* 17 */ "EMERGENCY_SURFACE",             //
-/* 18 */ "SERVICE_SURFACE",               //
-/* 19 */ "POINT_OBSTACLE",                //
+/*  0 */ "NO_INFO",
+/*  1 */ "LIGHT",
+/*  2 */ "SMALL",
+/*  3 */ "LARGE",
+/*  4 */ "HIGH_VORTEX_LARGE",
+/*  5 */ "HEAVY",
+/*  6 */ "HIGHLY_MANUV",
+/*  7 */ "ROTOCRAFT",
+/*  8 */ "UNASSIGNED",
+/*  9 */ "GLIDER",
+/* 10 */ "LIGHTER_AIR",
+/* 11 */ "PARACHUTE",
+/* 12 */ "ULTRA_LIGHT",
+/* 13 */ "UNASSIGNED2",
+/* 14 */ "UAV",
+/* 15 */ "SPACE",
+/* 16 */ "UNASSGINED3",
+/* 17 */ "EMERGENCY_SURFACE",
+/* 18 */ "SERVICE_SURFACE",
+/* 19 */ "POINT_OBSTACLE",
 }};
 
 std::string to_string(ADSB_EMITTER_TYPE e)
@@ -317,7 +322,7 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
 	return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: ef0b869c7c1937e80b3e1297eda40e2c)
+// [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
 
 // [[[cog:
 // ename = 'MAV_ESTIMATOR_TYPE'
