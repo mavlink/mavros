@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.20.0 (2017-08-23)
+-------------------
 * HIL Plugin
   * add HilSensor.msg, HilStateQuaternion.msg, and add them in CMakeLists.txt
   * Add hil_sensor.cpp plugin to send HIL_SENSOR mavlink message to FCU.

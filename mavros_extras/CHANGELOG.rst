@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.20.0 (2017-08-23)
+-------------------
 * Extras: Distance sensors add RADAR and UNKNOWN type
 * Extras: distance sensor don't spam when message are bounce back from FCU
 * Extras: add ardupilot rangefinder plugin
