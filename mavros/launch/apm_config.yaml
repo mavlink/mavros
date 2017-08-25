@@ -44,12 +44,12 @@ cmd:
 
 # global_position
 global_position:
-  frame_id: "fcu"           # pose and fix frame_id
+  frame_id: "map"           # pose and fix frame_id
   rot_covariance: 99999.0   # covariance for attitude?
   use_relative_alt: true    # use relative altitude for local coordinates
   tf:
     send: false               # send TF?
-    frame_id: "local_origin"  # TF frame_id
+    frame_id: "map"  # TF frame_id
     child_frame_id: "fcu_utm" # TF child_frame_id
 
 # imu_pub
@@ -63,10 +63,10 @@ imu:
 
 # local_position
 local_position:
-  frame_id: "fcu"
+  frame_id: "map"
   tf:
     send: false
-    frame_id: "local_origin"
+    frame_id: "map"
     child_frame_id: "fcu"
 
 # param
