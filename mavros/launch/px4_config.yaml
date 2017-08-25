@@ -51,7 +51,7 @@ global_position:
     send: false               # send TF?
     frame_id: "map"  # TF frame_id
     global_frame_id: "earth"  # TF earth frame_id
-    child_frame_id: "fcu_utm" # TF child_frame_id
+    child_frame_id: "fcu" # TF child_frame_id
 
 # imu_pub
 imu:
