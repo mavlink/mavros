@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.20.1 (2017-08-28)
+-------------------
 * lib: Fix compilation with mavlink 2017.8.26
 * Contributors: Vladimir Ermakov
 
