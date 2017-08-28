@@ -19,7 +19,7 @@ sys:
 
 # sys_time
 time:
-  time_ref_source: "base_link"  # time_reference source
+  time_ref_source: "fcu"  # time_reference source
   timesync_mode: NONE
   timesync_avg_alpha: 0.6 # timesync averaging factor
 
@@ -50,6 +50,7 @@ global_position:
   tf:
     send: false               # send TF?
     frame_id: "map"  # TF frame_id
+    global_frame_id: "earth"  # TF earth frame_id
     child_frame_id: "base_link" # TF child_frame_id
 
 # imu_pub
