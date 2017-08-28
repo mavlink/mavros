@@ -48,13 +48,13 @@ public:
 		lp_nh.param<std::string>("frame_id", frame_id, "map");
 		// Important tf subsection
 		// Report the transform from world to base_link here.
-		lp_nh.param("tf/send", tf_send, true);
+		lp_nh.param("tf/send", tf_send, false);
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 		// Debug tf info
 		// broadcast the following transform: (can be expanded to more if desired)
 		// NED -> aircraft
-		lp_nh.param("tf/send_fcu",tf_send_fcu,false);
+		lp_nh.param("tf/send_fcu", tf_send_fcu, false);
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
 		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);

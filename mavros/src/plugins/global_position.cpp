@@ -60,7 +60,7 @@ public:
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
 		gp_nh.param("use_relative_alt", use_relative_alt, true);
 		// tf subsection
-		gp_nh.param("tf/send", tf_send, true);
+		gp_nh.param("tf/send", tf_send, false);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		gp_nh.param<std::string>("tf/global_frame_id", tf_global_frame_id, "earth");	// The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
 		gp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");

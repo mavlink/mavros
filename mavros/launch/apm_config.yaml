@@ -69,6 +69,7 @@ local_position:
     send: false
     frame_id: "map"
     child_frame_id: "base_link"
+    send_fcu: false
 
 # param
 # None, used for FCU params
