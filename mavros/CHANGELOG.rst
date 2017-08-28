@@ -2,6 +2,9 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.20.0 (2017-08-23)
 -------------------
 * update generated code in plugins

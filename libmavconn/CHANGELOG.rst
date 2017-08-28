@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: Fix compilation with mavlink 2017.8.26
+* Contributors: Vladimir Ermakov
+
 0.20.0 (2017-08-23)
 -------------------
 * geolib: datasets: warn when not installed; update install script; launch SIGINT when not installed (`#778 <https://github.com/mavlink/mavros/issues/778>`_)
