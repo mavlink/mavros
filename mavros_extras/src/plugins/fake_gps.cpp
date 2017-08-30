@@ -77,7 +77,7 @@ public:
 		// default origin/starting point: Zürich geodetic coordinates
 		fp_nh.param("geo_origin/lat", origin_lat, 47.3667);	// [degrees]
 		fp_nh.param("geo_origin/lon", origin_lon, 8.5500);	// [degrees]
-		fp_nh.param("geo_origin/alt", origin_alt, 6371000.0);	// [meters - height over the WGS-84 ellipsoid]
+		fp_nh.param("geo_origin/alt", origin_alt, 408.0);	// [meters - height over the WGS-84 ellipsoid]
 
 		// init map origin with geodetic coordinates
 		map_origin = {origin_lat, origin_lon, origin_alt};
@@ -106,7 +106,7 @@ public:
 		// tf params
 		fp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		fp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fix");
-		fp_nh.param("tf/rate_limit", tf_rate, 50.0);
+		fp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		if (use_mocap) {
 			if (mocap_transform) {	// MoCap data in TransformStamped msg
