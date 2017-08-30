@@ -200,7 +200,7 @@ vision_speed:
 
 # vibration
 vibration:
-  frame_id: "vibration"
+  frame_id: "base_link"
 
 # adsb
 # None
@@ -209,13 +209,4 @@ vibration:
 odometry:
   estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
 
-copter_visualization:
-  fixed_frame_id: "map"
-  child_frame_id: "base_link"
-  marker_scale: 1.0
-  num_rotors: 4
-  arm_len: 0.22
-  body_width: 0.15
-  body_height: 0.10
-  max_track_size: 1000
 # vim:set ts=2 sw=2 et:
