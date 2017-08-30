@@ -44,13 +44,13 @@ public:
 
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
-        /**
-         * @note Default rangefinder is Maxbotix HRLV-EZ4 
-         * This is a narrow beam (60cm wide at 5 meters,
-         * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
-         * at 1 meter
-         */
-        flow_nh.param("ranger_fov", ranger_fov, 0.119428926);
+		/**
+		 * @note Default rangefinder is Maxbotix HRLV-EZ4 
+		 * This is a narrow beam (60cm wide at 5 meters,
+		 * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
+		 * at 1 meter
+		 */
+		flow_nh.param("ranger_fov", ranger_fov, 0.119428926);
 
 		flow_nh.param("ranger_min_range", ranger_min_range, 0.3);
 		flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
@@ -63,7 +63,7 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&PX4FlowPlugin::handle_optical_flow_rad)
+			make_handler(&PX4FlowPlugin::handle_optical_flow_rad)
 		};
 	}
 
