@@ -387,6 +387,12 @@ private:
 			publish_waypoints();
 			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
+		else if (wp_state == WP::TXWP && mack.type == enum_value(MRES::INVALID_SEQUENCE)){
+			// Mission Ack: INVALID_SEQUENCE received during TXWP
+			// This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
+			// This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
+			ROS_DEBUG_NAMED("wp", "WP: Received INVALID_SEQUENCE ack");
+		}
 		else if (wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP) {
 			go_idle();
 			/* use this flag for failure report */
