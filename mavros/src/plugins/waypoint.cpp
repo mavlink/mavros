@@ -110,11 +110,11 @@ public:
 		//return to_yaml();
 
 		return utils::format("#%u%1s F:%u C:%3u p: %f %f %f %f x: %f y: %f z: %f",
-				seq,
-				(current) ? "*" : "",
-				frame, command,
-				param1, param2, param3, param4,
-				x_lat, y_long, z_alt);
+					seq,
+					(current) ? "*" : "",
+					frame, command,
+					param1, param2, param3, param4,
+					x_lat, y_long, z_alt);
 	}
 };
 
@@ -165,12 +165,12 @@ public:
 
 	Subscriptions get_subscriptions() {
 		return {
-		       make_handler(&WaypointPlugin::handle_mission_item),
-		       make_handler(&WaypointPlugin::handle_mission_request),
-		       make_handler(&WaypointPlugin::handle_mission_current),
-		       make_handler(&WaypointPlugin::handle_mission_count),
-		       make_handler(&WaypointPlugin::handle_mission_item_reached),
-		       make_handler(&WaypointPlugin::handle_mission_ack),
+			       make_handler(&WaypointPlugin::handle_mission_item),
+			       make_handler(&WaypointPlugin::handle_mission_request),
+			       make_handler(&WaypointPlugin::handle_mission_current),
+			       make_handler(&WaypointPlugin::handle_mission_count),
+			       make_handler(&WaypointPlugin::handle_mission_item_reached),
+			       make_handler(&WaypointPlugin::handle_mission_ack),
 		};
 	}
 
@@ -253,7 +253,7 @@ private:
 		if (wp_state == WP::RXWP) {
 			if (wpi.seq != wp_cur_id) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping item (%d != %zu)",
-						wpi.seq, wp_cur_id);
+							wpi.seq, wp_cur_id);
 				return;
 			}
 
@@ -286,7 +286,7 @@ private:
 		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
-						mreq.seq, wp_cur_id);
+							mreq.seq, wp_cur_id);
 				return;
 			}
 
@@ -376,8 +376,8 @@ private:
 		unique_lock lock(mutex);
 
 		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
-				&& (wp_cur_id == send_waypoints.size() - 1)
-				&& (mack.type == enum_value(MRES::ACCEPTED))) {
+					&& (wp_cur_id == send_waypoints.size() - 1)
+					&& (mack.type == enum_value(MRES::ACCEPTED))) {
 			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
@@ -387,7 +387,7 @@ private:
 			publish_waypoints();
 			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
-		else if (wp_state == WP::TXWP && mack.type == enum_value(MRES::INVALID_SEQUENCE)){
+		else if (wp_state == WP::TXWP && mack.type == enum_value(MRES::INVALID_SEQUENCE)) {
 			// Mission Ack: INVALID_SEQUENCE received during TXWP
 			// This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
 			// This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
@@ -630,7 +630,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: request #%u", seq);
 
-		mavlink::common::msg::MISSION_REQUEST mrq{};
+		mavlink::common::msg::MISSION_REQUEST mrq {};
 		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
@@ -641,7 +641,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: set current #%u", seq);
 
-		mavlink::common::msg::MISSION_SET_CURRENT msc{};
+		mavlink::common::msg::MISSION_SET_CURRENT msc {};
 		m_uas->msg_set_target(msc);
 		msc.seq = seq;
 
@@ -652,7 +652,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: request list");
 
-		mavlink::common::msg::MISSION_REQUEST_LIST mrl{};
+		mavlink::common::msg::MISSION_REQUEST_LIST mrl {};
 		m_uas->msg_set_target(mrl);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mrl);
@@ -662,7 +662,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: count %u", cnt);
 
-		mavlink::common::msg::MISSION_COUNT mcnt{};
+		mavlink::common::msg::MISSION_COUNT mcnt {};
 		m_uas->msg_set_target(mcnt);
 		mcnt.count = cnt;
 
@@ -673,7 +673,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: write partial list %u - %u", start_index, end_index);
 
-		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl{};
+		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
 		mwpl.start_index = start_index;
 		mwpl.end_index = end_index;
 
@@ -685,7 +685,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: clear all");
 
-		mavlink::common::msg::MISSION_CLEAR_ALL mclr{};
+		mavlink::common::msg::MISSION_CLEAR_ALL mclr {};
 		m_uas->msg_set_target(mclr);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mclr);
@@ -694,7 +694,7 @@ private:
 	void mission_ack(MRES type) {
 		ROS_DEBUG_NAMED("wp", "WP:m: ACK %u", enum_value(type));
 
-		mavlink::common::msg::MISSION_ACK mack{};
+		mavlink::common::msg::MISSION_ACK mack {};
 		m_uas->msg_set_target(mack);
 		mack.type = enum_value(type);
 
@@ -704,7 +704,7 @@ private:
 	/* -*- ROS callbacks -*- */
 
 	bool pull_cb(mavros_msgs::WaypointPull::Request &req,
-			mavros_msgs::WaypointPull::Response &res)
+				mavros_msgs::WaypointPull::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -727,7 +727,7 @@ private:
 	}
 
 	bool push_cb(mavros_msgs::WaypointPush::Request &req,
-			mavros_msgs::WaypointPush::Response &res)
+				mavros_msgs::WaypointPush::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -759,7 +759,7 @@ private:
 	}
 
 	bool push_partial_cb(mavros_msgs::WaypointPushPartial::Request &req,
-			mavros_msgs::WaypointPushPartial::Response &res)
+				mavros_msgs::WaypointPushPartial::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -772,7 +772,7 @@ private:
 
 		wp_state = WP::TXPARTIAL;
 
-		wp_end_id = req.start_index+req.waypoints.size();
+		wp_end_id = req.start_index + req.waypoints.size();
 
 		send_waypoints.clear();
 		send_waypoints.reserve(wp_end_id);
@@ -802,7 +802,7 @@ private:
 	}
 
 	bool clear_cb(mavros_msgs::WaypointClear::Request &req,
-			mavros_msgs::WaypointClear::Response &res)
+				mavros_msgs::WaypointClear::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -822,7 +822,7 @@ private:
 	}
 
 	bool set_cur_cb(mavros_msgs::WaypointSetCurrent::Request &req,
-			mavros_msgs::WaypointSetCurrent::Response &res)
+				mavros_msgs::WaypointSetCurrent::Response &res)
 	{
 		unique_lock lock(mutex);
 
