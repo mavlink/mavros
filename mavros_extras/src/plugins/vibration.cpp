@@ -36,7 +36,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		vibe_nh.param<std::string>("frame_id", frame_id, "vibration");
+		vibe_nh.param<std::string>("frame_id", frame_id, "base_link");
 
 		vibration_pub = vibe_nh.advertise<mavros_msgs::Vibration>("raw/vibration", 10);
 	}
