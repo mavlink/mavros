@@ -49,7 +49,7 @@ public:
 		sp_nh.param("tf/listen", tf_listen, false);
 		sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "vision_estimate");
-		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
+		sp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("vision_pose", "Listen to vision transform " << tf_frame_id
