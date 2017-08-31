@@ -25,7 +25,6 @@ except ImportError:
     no_prettytable = True
 
 
-
 def get_wp_file_io(args):
     return M.QGroundControlWP()
 
@@ -96,9 +95,9 @@ def do_load(args):
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
-    def _load_call(waypoint_list):
+    def _load_call(start, waypoint_list):
         try:
-            ret = M.push(waypoints=waypoint_list)
+            ret = M.push(start_index=start, waypoints=waypoint_list)
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -118,37 +117,28 @@ def do_load(args):
 
         done_evt.set()
 
-    if not args.preserve_home:
-        _load_call(wps)
-    else:
-        # Note: _load_call() emit publish on this topic, so callback only changes
-        # waypoint 0, and signal done event.
-        sub = M.subscribe_waypoints(_fix_wp0)
-        if not done_evt.wait(30.0):
-            fault("Something went wrong. Topic timed out.")
+    if args.start_index > 0:
+        # Push partial
+        if args.start_index == args.end_index:
+            args.end_index += 1
+
+        if args.end_index == 0:
+            _load_call(args.start_index, wps[args.start_index:])
         else:
-            sub.unregister()
-            _load_call(wps)
-
-
-def do_load_partial(args):
-    wps = []
-    wps_file = get_wp_file_io(args)
-    with args.file:
-        wps = [w for w in wps_file.read(args.file)]
-
-    if args.start_index == args.end_index:
-        args.end_index += 1
-
-    try:
-        ret = M.push_partial(waypoints=wps[args.start_index:args.end_index], start_index=args.start_index)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
+            _load_call(args.start_index, wps[args.start_index:args.end_index])
+    else:
+        # Full push
+        if not args.preserve_home:
+            _load_call(0, wps)
+        else:
+            # Note: _load_call() emit publish on this topic, so callback only changes
+            # waypoint 0, and signal done event.
+            sub = M.subscribe_waypoints(_fix_wp0)
+            if not done_evt.wait(30.0):
+                fault("Something went wrong. Topic timed out.")
+            else:
+                sub.unregister()
+                _load_call(0, wps)
 
 
 def do_dump(args):
@@ -205,13 +195,9 @@ def main():
     load_args = subarg.add_parser('load', help="load waypoints from file")
     load_args.set_defaults(func=do_load)
     load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
+    load_args.add_argument('-s', '--start-index', type=int, default=0, help="waypoint start index for partial updating")
+    load_args.add_argument('-e', '--end-index', type=int, default=0, help="waypoint end index for partial updating")
     load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
-
-    load_partial_args = subarg.add_parser('load_partial', help="partially load waypoints from file")
-    load_partial_args.set_defaults(func=do_load_partial)
-    load_partial_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
-    load_partial_args.add_argument('start_index', type=int, help="waypoint start index")
-    load_partial_args.add_argument('end_index', type=int, help="waypoint end index")
 
     pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)

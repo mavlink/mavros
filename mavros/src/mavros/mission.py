@@ -14,8 +14,8 @@ import rospy
 import mavros
 
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
-from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointPushPartial, \
-    WaypointClear, WaypointSetCurrent
+from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
+        WaypointSetCurrent
 
 
 FRAMES = {
@@ -123,7 +123,6 @@ class QGroundControlWP(WaypointFile):
 
 pull = None
 push = None
-push_partial = None
 clear = None
 set_current = None
 
@@ -133,14 +132,13 @@ def subscribe_waypoints(cb, **kvargs):
 
 
 def _setup_services():
-    global pull, push, push_partial, clear, set_current
+    global pull, push, clear, set_current
 
     def _get_proxy(name, type):
         return rospy.ServiceProxy(mavros.get_topic('mission', name), type)
 
     pull = _get_proxy('pull', WaypointPull)
     push = _get_proxy('push', WaypointPush)
-    push_partial = _get_proxy('push_partial', WaypointPushPartial)
     clear = _get_proxy('clear', WaypointClear)
     set_current = _get_proxy('set_current', WaypointSetCurrent)
 
