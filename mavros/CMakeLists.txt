@@ -45,6 +45,12 @@ include(CheckGeographicLibDatasets)
 include(EnableCXX11)
 include(MavrosMavlink)
 
+## Fix link to atomic library in armhf and mips arch
+set(TARGET_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "armhf" OR ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "mips")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+endif()
+
 # detect if sensor_msgs has BatteryState.msg
 # http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
 list(FIND sensor_msgs_MESSAGE_FILES "msg/BatteryState.msg" BATTERY_STATE_MSG_IDX)
