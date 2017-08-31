@@ -1,9 +1,0 @@
-# Send a waypoint to device
-# Takes waypoint and sequence number
-# Returns success
-
-mavros_msgs/Waypoint[] waypoints
-uint16 start_index
----
-bool success
-uint32 wp_transfered
