@@ -732,59 +732,59 @@ private:
 			// Wrong initial state, other operation in progress?
 			return false;
 
-                if(req.start_index)
-                {
-                    //Partial Waypoint update
-                    wp_state = WP::TXPARTIAL;
+		if (req.start_index)
+		{
+			//Partial Waypoint update
+			wp_state = WP::TXPARTIAL;
 
-                    wp_end_id = req.start_index + req.waypoints.size();
+			wp_end_id = req.start_index + req.waypoints.size();
 
-                    send_waypoints.clear();
-                    send_waypoints.reserve(wp_end_id);
+			send_waypoints.clear();
+			send_waypoints.reserve(wp_end_id);
 
-                    uint16_t seq = 0;
-                    mavros_msgs::Waypoint wp;
-                    for (; seq < req.start_index; seq++) {
-                            send_waypoints.push_back(WaypointItem::from_msg(wp, seq));
-                    }
-                    for (auto &it : req.waypoints) {
-                            send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
-                    }
+			uint16_t seq = 0;
+			mavros_msgs::Waypoint wp;
+			for (; seq < req.start_index; seq++) {
+				send_waypoints.push_back(WaypointItem::from_msg(wp, seq));
+			}
+			for (auto &it : req.waypoints) {
+				send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+			}
 
-                    wp_count = req.waypoints.size();
-                    wp_start_id = req.start_index;
-                    wp_cur_id = req.start_index;
-                    restart_timeout_timer();
+			wp_count = req.waypoints.size();
+			wp_start_id = req.start_index;
+			wp_cur_id = req.start_index;
+			restart_timeout_timer();
 
-                    lock.unlock();
-                    mission_write_partial_list(wp_start_id, wp_end_id);
-                    res.success = wait_push_all();
-                    lock.lock();
+			lock.unlock();
+			mission_write_partial_list(wp_start_id, wp_end_id);
+			res.success = wait_push_all();
+			lock.lock();
 
-                    res.wp_transfered = wp_cur_id - wp_start_id + 1;
-                }
-                else{
-                    //Full waypoint update
-                    wp_state = WP::TXLIST;
+			res.wp_transfered = wp_cur_id - wp_start_id + 1;
+		}
+		else {
+			//Full waypoint update
+			wp_state = WP::TXLIST;
 
-                    send_waypoints.clear();
-                    send_waypoints.reserve(req.waypoints.size());
-                    uint16_t seq = 0;
-                    for (auto &it : req.waypoints) {
-                            send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
-                    }
+			send_waypoints.clear();
+			send_waypoints.reserve(req.waypoints.size());
+			uint16_t seq = 0;
+			for (auto &it : req.waypoints) {
+				send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+			}
 
-                    wp_count = send_waypoints.size();
-                    wp_cur_id = 0;
-                    restart_timeout_timer();
+			wp_count = send_waypoints.size();
+			wp_cur_id = 0;
+			restart_timeout_timer();
 
-                    lock.unlock();
-                    mission_count(wp_count);
-                    res.success = wait_push_all();
-                    lock.lock();
+			lock.unlock();
+			mission_count(wp_count);
+			res.success = wait_push_all();
+			lock.lock();
 
-                    res.wp_transfered = wp_cur_id + 1;
-                }
+			res.wp_transfered = wp_cur_id + 1;
+		}
 
 		go_idle();	// same as in pull_cb
 		return true;
