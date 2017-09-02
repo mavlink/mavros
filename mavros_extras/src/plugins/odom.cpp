@@ -74,10 +74,6 @@ private:
 		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
 		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
 
-		// get current ENU FCU orientation
-		Eigen::Quaterniond enu_orientation;
-		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
-
 		// Build 9x9 covariance matrix to be transformed and sent
 		ftf::Covariance9d cov_full{};	// zero initialized
 		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
@@ -87,9 +83,10 @@ private:
 		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
 		/* -*- vector transforms -*- */
-		// body frame rotations must be aware of current attitude of the vehicle
-		auto q_ned_current = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(enu_orientation));
+
+		// get NED orientation
+		Eigen::Quaterniond att_ned;
+		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation_ned(), att_ned);
 
 		// apply coordinate frame transforms
 		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
@@ -100,7 +97,7 @@ private:
 		// angular velocity - WRT body frame
 		auto ang_vel_ned = ftf::transform_frame_enu_ned(
 					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_ned_aircraft(ang_vel_enu, q_ned_current)));
+						ftf::transform_frame_aircraft_ned(ang_vel_enu, att_ned)));
 
 		/* -*- covariance transforms -*- */
 		/**
@@ -120,7 +117,7 @@ private:
 		 */
 		auto cov_vel = ftf::transform_frame_enu_ned(
 					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_ned_aircraft(odom->twist.covariance, q_ned_current)));
+						ftf::transform_frame_ned_aircraft(odom->twist.covariance, att_ned)));
 
 		ftf::EigenMapConstCovariance6d cov_vel_map(cov_vel.data());
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);

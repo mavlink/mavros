@@ -5,7 +5,7 @@
 	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish system status.</description>
 	</class>
-	<class name="imu_pub" type="mavros::std_plugins::IMUPubPlugin" base_class_type="mavros::plugin::PluginBase">
+	<class name="imu" type="mavros::std_plugins::IMUPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish IMU data.</description>
 	</class>
 	<class name="param" type="mavros::std_plugins::ParamPlugin" base_class_type="mavros::plugin::PluginBase">

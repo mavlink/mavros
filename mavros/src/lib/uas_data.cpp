@@ -106,23 +106,35 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 
 /* -*- IMU data -*- */
 
-void UAS::update_attitude_imu(sensor_msgs::Imu::Ptr &imu)
+void UAS::update_attitude_imu_enu(sensor_msgs::Imu::Ptr &imu)
 {
 	lock_guard lock(mutex);
-	imu_data = imu;
+	imu_enu_data = imu;
 }
 
-sensor_msgs::Imu::Ptr UAS::get_attitude_imu()
+void UAS::update_attitude_imu_ned(sensor_msgs::Imu::Ptr &imu)
 {
 	lock_guard lock(mutex);
-	return imu_data;
+	imu_ned_data = imu;
 }
 
-geometry_msgs::Quaternion UAS::get_attitude_orientation()
+sensor_msgs::Imu::Ptr UAS::get_attitude_imu_enu()
 {
 	lock_guard lock(mutex);
-	if (imu_data)
-		return imu_data->orientation;
+	return imu_enu_data;
+}
+
+sensor_msgs::Imu::Ptr UAS::get_attitude_imu_ned()
+{
+	lock_guard lock(mutex);
+	return imu_ned_data;
+}
+
+geometry_msgs::Quaternion UAS::get_attitude_orientation_enu()
+{
+	lock_guard lock(mutex);
+	if (imu_enu_data)
+		return imu_enu_data->orientation;
 	else {
 		// fallback - return identity
 		geometry_msgs::Quaternion q;
@@ -131,11 +143,37 @@ geometry_msgs::Quaternion UAS::get_attitude_orientation()
 	}
 }
 
-geometry_msgs::Vector3 UAS::get_attitude_angular_velocity()
+geometry_msgs::Quaternion UAS::get_attitude_orientation_ned()
 {
 	lock_guard lock(mutex);
-	if (imu_data)
-		return imu_data->angular_velocity;
+	if (imu_ned_data)
+		return imu_ned_data->orientation;
+	else {
+		// fallback - return identity
+		geometry_msgs::Quaternion q;
+		q.w = 1.0; q.x = q.y = q.z = 0.0;
+		return q;
+	}
+}
+
+geometry_msgs::Vector3 UAS::get_attitude_angular_velocity_enu()
+{
+	lock_guard lock(mutex);
+	if (imu_enu_data)
+		return imu_enu_data->angular_velocity;
+	else {
+		// fallback
+		geometry_msgs::Vector3 v;
+		v.x = v.y = v.z = 0.0;
+		return v;
+	}
+}
+
+geometry_msgs::Vector3 UAS::get_attitude_angular_velocity_ned()
+{
+	lock_guard lock(mutex);
+	if (imu_ned_data)
+		return imu_ned_data->angular_velocity;
 	else {
 		// fallback
 		geometry_msgs::Vector3 v;
