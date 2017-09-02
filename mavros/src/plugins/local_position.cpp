@@ -88,8 +88,8 @@ private:
 
 		//--------------- Get Odom Information ---------------//
 		// Note this orientation describes baselink->ENU transform
-		auto enu_orientation_msg = m_uas->get_attitude_orientation();
-		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity();
+		auto enu_orientation_msg = m_uas->get_attitude_orientation_enu();
+		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity_enu();
 		Eigen::Quaterniond enu_orientation;
 		tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
 		auto baselink_linear = ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
@@ -158,5 +158,3 @@ private:
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::LocalPositionPlugin, mavros::plugin::PluginBase)
-
-

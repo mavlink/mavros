@@ -169,23 +169,49 @@ public:
 
 	/* -*- IMU data -*- */
 
-	//! Store IMU data
-	void update_attitude_imu(sensor_msgs::Imu::Ptr &imu);
+	/**
+	 * @brief Store IMU data [ENU]
+	 */
+	void update_attitude_imu_enu(sensor_msgs::Imu::Ptr &imu);
 
-	//! Get IMU data
-	sensor_msgs::Imu::Ptr get_attitude_imu();
+	/**
+	 * @brief Store IMU data [NED]
+	 */
+	void update_attitude_imu_ned(sensor_msgs::Imu::Ptr &imu);
+
+	/**
+	 * @brief Get IMU data [ENU]
+	 */
+	sensor_msgs::Imu::Ptr get_attitude_imu_enu();
+
+	/**
+	 * @brief Get IMU data [NED]
+	 */
+	sensor_msgs::Imu::Ptr get_attitude_imu_ned();
 
 	/**
 	 * @brief Get Attitude orientation quaternion
 	 * @return orientation quaternion [ENU]
 	 */
-	geometry_msgs::Quaternion get_attitude_orientation();
+	geometry_msgs::Quaternion get_attitude_orientation_enu();
+
+	/**
+	 * @brief Get Attitude orientation quaternion
+	 * @return orientation quaternion [NED]
+	 */
+	geometry_msgs::Quaternion get_attitude_orientation_ned();
 
 	/**
 	 * @brief Get angular velocity from IMU data
-	 * @return vector3
+	 * @return vector3 [ENU]
 	 */
-	geometry_msgs::Vector3 get_attitude_angular_velocity();
+	geometry_msgs::Vector3 get_attitude_angular_velocity_enu();
+
+	/**
+	 * @brief Get angular velocity from IMU data
+	 * @return vector3 [NED]
+	 */
+	geometry_msgs::Vector3 get_attitude_angular_velocity_ned();
 
 
 	/* -*- GPS data -*- */
@@ -369,7 +395,8 @@ private:
 	std::atomic<bool> connected;
 	std::vector<ConnectionCb> connection_cb_vec;
 
-	sensor_msgs::Imu::Ptr imu_data;
+	sensor_msgs::Imu::Ptr imu_enu_data;
+	sensor_msgs::Imu::Ptr imu_ned_data;
 
 	sensor_msgs::NavSatFix::Ptr gps_fix;
 	float gps_eph;

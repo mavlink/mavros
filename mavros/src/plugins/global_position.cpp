@@ -338,7 +338,7 @@ private:
 		if (use_relative_alt)
 			odom->pose.pose.position.z = relative_alt->data;
 
-		odom->pose.pose.orientation = m_uas->get_attitude_orientation();
+		odom->pose.pose.orientation = m_uas->get_attitude_orientation_enu();
 
 		// Use ENU covariance to build XYZRPY covariance
 		ftf::EigenMapConstCovariance3d gps_cov(fix->position_covariance.data());
