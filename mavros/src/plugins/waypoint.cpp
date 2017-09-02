@@ -288,7 +288,8 @@ private:
 			}
 
 			restart_timeout_timer();
-			if (mreq.seq < send_waypoints.size()) {
+			if (mreq.seq < wp_end_id) {
+				ROS_DEBUG_NAMED("wp", "WP: FCU requested waypoint %d", mreq.seq);
 				wp_state = WP::TXWP;
 				wp_cur_id = mreq.seq;
 				send_waypoint(wp_cur_id);
@@ -373,7 +374,7 @@ private:
 		unique_lock lock(mutex);
 
 		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
-					&& (wp_cur_id == send_waypoints.size() - 1)
+					&& (wp_cur_id == wp_end_id - 1)
 					&& (mack.type == enum_value(MRES::ACCEPTED))) {
 			go_idle();
 			waypoints = send_waypoints;
@@ -737,22 +738,17 @@ private:
 			//Partial Waypoint update
 			wp_state = WP::TXPARTIAL;
 
-			wp_end_id = req.start_index + req.waypoints.size();
+			send_waypoints = waypoints;
 
-			send_waypoints.clear();
-			send_waypoints.reserve(wp_end_id);
-
-			uint16_t seq = 0;
-			mavros_msgs::Waypoint wp;
-			for (; seq < req.start_index; seq++) {
-				send_waypoints.push_back(WaypointItem::from_msg(wp, seq));
-			}
+			uint16_t seq = req.start_index;
 			for (auto &it : req.waypoints) {
-				send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+				send_waypoints[seq] = WaypointItem::from_msg(it, seq);
+				seq++;
 			}
 
 			wp_count = req.waypoints.size();
 			wp_start_id = req.start_index;
+			wp_end_id = req.start_index + wp_count;
 			wp_cur_id = req.start_index;
 			restart_timeout_timer();
 
@@ -775,6 +771,7 @@ private:
 			}
 
 			wp_count = send_waypoints.size();
+			wp_end_id = wp_count;
 			wp_cur_id = 0;
 			restart_timeout_timer();
 
