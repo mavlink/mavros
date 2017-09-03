@@ -291,7 +291,7 @@ private:
   	geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(
       msg->roll, msg->pitch, 0);
 
-		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ / system_mass_kg_));
+		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ * system_mass_kg_));
 
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d body_rate;
