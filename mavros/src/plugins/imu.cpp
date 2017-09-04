@@ -120,9 +120,9 @@ private:
 
 	/**
 	 * @brief Setup 3x3 covariance matrix
-	 * @param[in,out] cov	Covariance matrix
-	 * @param[in] stdev	Standard deviation
-	 * @remarks		Diagonal computed from the stdev
+	 * @param cov		Covariance matrix
+	 * @param stdev		Standard deviation
+	 * @remarks			Diagonal computed from the stdev
 	 */
 	void setup_covariance(ftf::Covariance3d &cov, double stdev)
 	{
@@ -140,11 +140,11 @@ private:
 
 	/**
 	 * @brief Fill and publish IMU data message.
-	 * @param[in] time_boot_ms		Message timestamp (not syncronized)
-	 * @param[in,out] orientation_enu	Orientation in the base_link ENU frame
-	 * @param[in,out] orientation_ned	Orientation in the aircraft NED frame
-	 * @param[in,out] gyro_enu		Angular velocity/rate in the base_link ENU frame
-	 * @param[in,out] gyro_ned		Angular velocity/rate in the aircraft NED frame
+	 * @param time_boot_ms		Message timestamp (not syncronized)
+	 * @param orientation_enu	Orientation in the base_link ENU frame
+	 * @param orientation_ned	Orientation in the aircraft NED frame
+	 * @param gyro_enu			Angular velocity/rate in the base_link ENU frame
+	 * @param gyro_ned			Angular velocity/rate in the aircraft NED frame
 	 */
 	void publish_imu_data(uint32_t time_boot_ms, Eigen::Quaterniond &orientation_enu,
 				Eigen::Quaterniond &orientation_ned, Eigen::Vector3d &gyro_enu, Eigen::Vector3d &gyro_ned)
@@ -202,10 +202,10 @@ private:
 
 	/**
 	 * @brief fill and publish IMU data_raw message; store linear acceleration for IMU data
-	 * @param[in] header		Message frame_id and timestamp
-	 * @param[in,out] gyro		Orientation in the base_link ENU frame
-	 * @param[in,out] accel_enu	Linear acceleration in the base_link ENU frame
-	 * @param[in,out] accel_ned	Linear acceleration in the aircraft NED frame
+	 * @param header		Message frame_id and timestamp
+	 * @param gyro			Orientation in the base_link ENU frame
+	 * @param accel_enu		Linear acceleration in the base_link ENU frame
+	 * @param accel_ned		Linear acceleration in the aircraft NED frame
 	 */
 	void publish_imu_data_raw(std_msgs::Header &header, Eigen::Vector3d &gyro,
 				Eigen::Vector3d &accel_enu, Eigen::Vector3d &accel_ned)
@@ -232,8 +232,8 @@ private:
 
 	/**
 	 * @brief Publish magnetic field data
-	 * @param[in] header		Message frame_id and timestamp
-	 * @param[in,out] mag_field	Magnetic field in the base_link ENU frame
+	 * @param header		Message frame_id and timestamp
+	 * @param mag_field		Magnetic field in the base_link ENU frame
 	 */
 	void publish_mag(std_msgs::Header &header, Eigen::Vector3d &mag_field)
 	{
@@ -254,8 +254,8 @@ private:
 	/**
 	 * @brief Handle ATTITUDE MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE
-	 * @param[in] msg	Received Mavlink msg
-	 * @param[in,out] att	ATTITUDE msg
+	 * @param msg	Received Mavlink msg
+	 * @param att	ATTITUDE msg
 	 */
 	void handle_attitude(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ATTITUDE &att)
 	{
@@ -299,8 +299,8 @@ private:
 	/**
 	 * @brief Handle ATTITUDE_QUATERNION MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE_QUATERNION
-	 * @param[in] msg	Received Mavlink msg
-	 * @param[in,out] att_q	ATTITUDE_QUATERNION msg
+	 * @param msg		Received Mavlink msg
+	 * @param att_q		ATTITUDE_QUATERNION msg
 	 */
 	void handle_attitude_quaternion(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ATTITUDE_QUATERNION &att_q)
 	{
@@ -341,8 +341,8 @@ private:
 	/**
 	 * @brief Handle HIGHRES_IMU MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#HIGHRES_IMU
-	 * @param[in] msg		Received Mavlink msg
-	 * @param[in,out] imu_hr	HIGHRES_IMU msg
+	 * @param msg		Received Mavlink msg
+	 * @param imu_hr	HIGHRES_IMU msg
 	 */
 	void handle_highres_imu(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HIGHRES_IMU &imu_hr)
 	{
@@ -412,8 +412,8 @@ private:
 	/**
 	 * @brief Handle RAW_IMU MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#RAW_IMU
-	 * @param[in] msg		Received Mavlink msg
-	 * @param[in,out] imu_raw	RAW_IMU msg
+	 * @param msg		Received Mavlink msg
+	 * @param imu_raw	RAW_IMU msg
 	 */
 	void handle_raw_imu(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RAW_IMU &imu_raw)
 	{
@@ -458,8 +458,8 @@ private:
 	/**
 	 * @brief Handle SCALED_IMU MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#SCALED_IMU
-	 * @param[in] msg		Received Mavlink msg
-	 * @param[in,out] imu_raw	SCALED_IMU msg
+	 * @param msg		Received Mavlink msg
+	 * @param imu_raw	SCALED_IMU msg
 	 */
 	void handle_scaled_imu(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SCALED_IMU &imu_raw)
 	{
@@ -491,8 +491,8 @@ private:
 	/**
 	 * @brief Handle SCALED_PRESSURE MAVlink message.
 	 * Message specification: http://mavlink.org/messages/common/#SCALED_PRESSURE
-	 * @param[in] msg	Received Mavlink msg
-	 * @param[in,out] press	SCALED_PRESSURE msg
+	 * @param msg		Received Mavlink msg
+	 * @param press		SCALED_PRESSURE msg
 	 */
 	void handle_scaled_pressure(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SCALED_PRESSURE &press)
 	{
@@ -514,7 +514,7 @@ private:
 
 	/**
 	 * @brief Checks for connection and overrides variable values
-	 * @param[in] connected		Is connected?
+	 * @param connected		Is connected?
 	 */
 	void connection_cb(bool connected) override
 	{
