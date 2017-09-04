@@ -71,7 +71,7 @@ public:
 		double linear_stdev, angular_stdev, orientation_stdev, mag_stdev;
 
 		/**
-		 * A rotation from the aircraft-frame to the base_link frame is applied.
+		 * @warning A rotation from the aircraft-frame to the base_link frame is applied.
 		 * Additionally, it is reported the orientation of the vehicle to describe the
 		 * transformation from the ENU frame to the base_link frame (ENU <-> base_link).
 		 * THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft).
@@ -94,9 +94,7 @@ public:
 		press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("atm_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
 
-		/**
-		 * Reset has_* flags on connection change
-		 */
+		// Reset has_* flags on connection change
 		enable_connection_cb();
 	}
 
@@ -164,40 +162,52 @@ private:
 		auto imu_ned_msg = boost::make_shared<sensor_msgs::Imu>();
 		auto imu_enu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-		/** Fill message header
-		 */
+		// Fill message header
 		imu_enu_msg->header = m_uas->synchronized_header(frame_id, time_boot_ms);
 		imu_ned_msg->header = m_uas->synchronized_header("aircraft", time_boot_ms);
 
+		// Convert from Eigen::Quaternond to geometry_msgs::Quaternion
 		tf::quaternionEigenToMsg(orientation_enu, imu_enu_msg->orientation);
 		tf::quaternionEigenToMsg(orientation_ned, imu_ned_msg->orientation);
+
+		// Convert from Eigen::Vector3d to geometry_msgs::Vector3
 		tf::vectorEigenToMsg(gyro_enu, imu_enu_msg->angular_velocity);
 		tf::vectorEigenToMsg(gyro_ned, imu_ned_msg->angular_velocity);
 
-		/** Vector from HIGHRES_IMU or RAW_IMU
-		 */
+		// Eigen::Vector3d from HIGHRES_IMU or RAW_IMU, to geometry_msgs::Vector3
 		tf::vectorEigenToMsg(linear_accel_vec_enu, imu_enu_msg->linear_acceleration);
 		tf::vectorEigenToMsg(linear_accel_vec_ned, imu_ned_msg->linear_acceleration);
 
+		// Pass ENU msg covariances
 		imu_enu_msg->orientation_covariance = orientation_cov;
 		imu_enu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_enu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
+		// Pass NED msg covariances
 		imu_ned_msg->orientation_covariance = orientation_cov;
 		imu_ned_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_ned_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
 		/** Store attitude in base_link ENU
+		 *  @snippet src/plugins/imu.cpp store_enu
 		 */
+		// [store_enu]
 		m_uas->update_attitude_imu_enu(imu_enu_msg);
+		// [store_enu]
 
 		/** Store attitude in aircraft NED
+		 *  @snippet src/plugins/imu.cpp store_ned
 		 */
+		// [store_enu]
 		m_uas->update_attitude_imu_ned(imu_ned_msg);
+		// [store_ned]
 
 		/** Publish only base_link ENU message
+		 *  @snippet src/plugins/imu.cpp pub_enu
 		 */
+		// [pub_enu]
 		imu_pub.publish(imu_enu_msg);
+		// [pub_enu]
 	}
 
 	/**
@@ -212,15 +222,13 @@ private:
 	{
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
-		/** Fill message header
-		 */
+		// Fill message header
 		imu_msg->header = header;
 
 		tf::vectorEigenToMsg(gyro, imu_msg->angular_velocity);
 		tf::vectorEigenToMsg(accel_enu, imu_msg->linear_acceleration);
 
-		/** Save readings
-		 */
+		// Save readings
 		linear_accel_vec_enu = accel_enu;
 		linear_accel_vec_ned = accel_ned;
 
@@ -228,8 +236,7 @@ private:
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
-		/** Publish message [ENU frame]
-		 */
+		// Publish message [ENU frame]
 		imu_raw_pub.publish(imu_msg);
 	}
 
@@ -242,15 +249,13 @@ private:
 	{
 		auto magn_msg = boost::make_shared<sensor_msgs::MagneticField>();
 
-		/** Fill message header
-		 */
+		// Fill message header
 		magn_msg->header = header;
 
 		tf::vectorEigenToMsg(mag_field, magn_msg->magnetic_field);
 		magn_msg->magnetic_field_covariance = magnetic_cov;
 
-		/** Publish message [ENU frame]
-		 */
+		// Publish message [ENU frame]
 		magn_pub.publish(magn_msg);
 	}
 
@@ -267,25 +272,36 @@ private:
 		if (has_att_quat)
 			return;
 
-		/** Orientation on the NED-aicraft frame
+		/** Orientation on the NED-aicraft frame:
+		 *  @snippet src/plugins/imu.cpp ned_aircraft_orient1
 		 */
+		// [ned_aircraft_orient1]
 		auto ned_aircraft_orientation = ftf::quaternion_from_rpy(att.roll, att.pitch, att.yaw);
+		// [ned_aircraft_orient1]
 
-		/** Angular velocity on the NED-aicraft frame
+		/** Angular velocity on the NED-aicraft frame:
+		 *  @snippet src/plugins/imu.cpp ned_ang_vel1
 		 */
+		// [ned_ang_vel1]
 		auto gyro_ned = Eigen::Vector3d(att.rollspeed, att.pitchspeed, att.yawspeed);
+		// [ned_ang_vel1]
 
-		/** Here we have rpy describing the rotation: aircraft->NED.
-		 *  We need to change this to aircraft->base_link.
-		 *  And finally change it to base_link->ENU.
+		/** The RPY describes the rotation: aircraft->NED.
+		 *  It is required to change this to aircraft->base_link:
+		 *  @snippet src/plugins/imu.cpp ned->baselink->enu
 		 */
+		// [ned->baselink->enu]
 		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
 					ftf::transform_orientation_ned_enu(ned_aircraft_orientation));
+		// [ned->baselink->enu]
 
-		/** Here we have the angular velocity expressed in the aircraft frame.
-		 *  We need to apply the static rotation to get it into the base_link frame.
+		/** The angular velocity expressed in the aircraft frame.
+		 *  It is required to apply the static rotation to get it into the base_link frame:
+		 *  @snippet src/plugins/imu.cpp rotate_gyro
 		 */
+		// [rotate_gyro]
 		auto gyro_enu = ftf::transform_frame_aircraft_baselink(gyro_ned);
+		// [rotate_gyro]
 
 		publish_imu_data(att.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_enu, gyro_ned);
 	}
@@ -301,24 +317,31 @@ private:
 		ROS_INFO_COND_NAMED(!has_att_quat, "imu", "IMU: Attitude quaternion IMU detected!");
 		has_att_quat = true;
 
-		/** Orientation on the NED-aicraft frame
+		/** Orientation on the NED-aicraft frame:
+		 *  @snippet src/plugins/imu.cpp ned_aircraft_orient2
 		 */
+		// [ned_aircraft_orient2]
 		auto ned_aircraft_orientation = Eigen::Quaterniond(att_q.q1, att_q.q2, att_q.q3, att_q.q4);
+		// [ned_aircraft_orient2]
 
-		/** Angular velocity on the NED-aicraft frame
+		/** Angular velocity on the NED-aicraft frame:
+		 *  @snippet src/plugins/imu.cpp ned_ang_vel2
 		 */
+		// [ned_ang_vel2]
 		auto gyro_ned = Eigen::Vector3d(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
+		// [ned_ang_vel2]
 
 		/** MAVLink quaternion exactly matches Eigen convention.
-		 *  Here we have rpy describing the rotation: aircraft->NED.
-		 *  We need to change this to aircraft->base_link.
-		 *  And finally change it to base_link->ENU.
+		 *  The RPY describes the rotation: aircraft->NED.
+		 *  It is required to change this to aircraft->base_link:
+		 *  @snippet src/plugins/imu.cpp ned->baselink->enu
 		 */
 		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
 					ftf::transform_orientation_ned_enu(ned_aircraft_orientation));
 
-		/** Here we have the angular velocity expressed in the aircraft frame.
-		 *  We need to apply the static rotation to get it into the base_link frame.
+		/** The angular velocity expressed in the aircraft frame.
+		 *  It is required to apply the static rotation to get it into the base_link frame:
+		 *  @snippet src/plugins/imu.cpp rotate_gyro
 		 */
 		auto gyro_enu = ftf::transform_frame_aircraft_baselink(gyro_ned);
 
@@ -341,8 +364,10 @@ private:
 		 */
 
 		/** Check if accelerometer + gyroscope data are available.
-		 *  Data is expressed in aircraft frame it is required to rotate to the base_link frame
+		 *  Data is expressed in aircraft frame it is required to rotate to the base_link frame:
+		 *  @snippet src/plugins/imu.cpp accel_available
 		 */
+		// [accel_available]
 		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
 			auto gyro = ftf::transform_frame_aircraft_baselink(Eigen::Vector3d(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro));
 
@@ -351,18 +376,24 @@ private:
 
 			publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
 		}
+		// [accel_available]
 
-		/** Check if magnetometer data is available
+		/** Check if magnetometer data is available:
+		 *  @snippet src/plugins/imu.cpp mag_available
 		 */
+		// [mag_available]
 		if (imu_hr.fields_updated & (7 << 6)) {
 			auto mag_field = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 						Eigen::Vector3d(imu_hr.xmag, imu_hr.ymag, imu_hr.zmag) * GAUSS_TO_TESLA);
 
 			publish_mag(header, mag_field);
 		}
+		// [mag_available]
 
-		/** Check if pressure sensor data is available
+		/** Check if pressure sensor data is available:
+		 *  @snippet src/plugins/imu.cpp pressure_available
 		 */
+		// [pressure_available]
 		if (imu_hr.fields_updated & (1 << 9)) {
 			auto atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
@@ -371,9 +402,12 @@ private:
 
 			press_pub.publish(atmp_msg);
 		}
+		// [pressure_available]
 
-		/** Check if temperature data is available
+		/** Check if temperature data is available:
+		 *  @snippet src/plugins/imu.cpp temperature_available
 		 */
+		// [temperature_available]
 		if (imu_hr.fields_updated & (1 << 12)) {
 			auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 
@@ -382,6 +416,7 @@ private:
 
 			temp_pub.publish(temp_msg);
 		}
+		// [temperature_available]
 	}
 
 	/**
@@ -419,10 +454,13 @@ private:
 			linear_accel_vec_ned.setZero();
 		}
 
-		/** Magnetic field data
+		/** Magnetic field data:
+		 *  @snippet src/plugins/imu.cpp mag_field
 		 */
+		// [mag_field]
 		auto mag_field = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 					Eigen::Vector3d(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag) * MILLIT_TO_TESLA);
+		// [mag_field]
 
 		publish_mag(header, mag_field);
 	}
@@ -451,7 +489,8 @@ private:
 
 		publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
 
-		/** Magnetic field data
+		/** Magnetic field data:
+		 *  @snippet src/plugins/imu.cpp mag_field
 		 */
 		auto mag_field = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 					Eigen::Vector3d(imu_raw.xmag, imu_raw.ymag, imu_raw.zmag) * MILLIT_TO_TESLA);
