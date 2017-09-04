@@ -512,10 +512,7 @@ private:
 		press_pub.publish(atmp_msg);
 	}
 
-	/**
-	 * @brief Checks for connection and overrides variable values
-	 * @param connected	Is connected?
-	 */
+	// Checks for connection and overrides variable values
 	void connection_cb(bool connected) override
 	{
 		has_hr_imu = false;
