@@ -26,35 +26,21 @@
 
 namespace mavros {
 namespace std_plugins {
-/**
- * Gauss to Tesla coeff
- */
+//! Gauss to Tesla coeff
 static constexpr double GAUSS_TO_TESLA = 1.0e-4;
-/**
- * millTesla to Tesla coeff
- */
+//! millTesla to Tesla coeff
 static constexpr double MILLIT_TO_TESLA = 1000.0;
-/**
- * millRad/Sec to Rad/Sec coeff
- */
+//! millRad/Sec to Rad/Sec coeff
 static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
-/**
- * millG to m/s**2 coeff
- */
+//! millG to m/s**2 coeff
 static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
-/**
- * millBar to Pascal coeff
- */
+//! millBar to Pascal coeff
 static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
-/**
- * Radians to degrees
- */
+//! Radians to degrees
 static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 
 
-/**
- * @brief IMU and attitude data publication plugin
- */
+//! @brief IMU and attitude data publication plugin
 class IMUPlugin : public plugin::PluginBase {
 public:
 	IMUPlugin() : PluginBase(),
