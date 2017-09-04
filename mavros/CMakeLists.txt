@@ -102,6 +102,7 @@ add_library(mavros
   src/lib/rosconsole_bridge.cpp
 )
 target_link_libraries(mavros
+  atomic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
