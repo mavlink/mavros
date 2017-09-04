@@ -122,7 +122,7 @@ private:
 	 * @brief Setup 3x3 covariance matrix
 	 * @param cov		Covariance matrix
 	 * @param stdev		Standard deviation
-	 * @remarks			Diagonal computed from the stdev
+	 * @remarks		Diagonal computed from the stdev
 	 */
 	void setup_covariance(ftf::Covariance3d &cov, double stdev)
 	{
@@ -130,11 +130,11 @@ private:
 
 		c.setZero();
 		if (stdev) {
-		    double sr = stdev * stdev;
-		    c.diagonal() << sr, sr, sr;
+			double sr = stdev * stdev;
+			c.diagonal() << sr, sr, sr;
 		}
 		else {
-		   c(0,0) = -1.0;
+			c(0,0) = -1.0;
 		}
 	}
 
@@ -143,8 +143,8 @@ private:
 	 * @param time_boot_ms		Message timestamp (not syncronized)
 	 * @param orientation_enu	Orientation in the base_link ENU frame
 	 * @param orientation_ned	Orientation in the aircraft NED frame
-	 * @param gyro_enu			Angular velocity/rate in the base_link ENU frame
-	 * @param gyro_ned			Angular velocity/rate in the aircraft NED frame
+	 * @param gyro_enu		Angular velocity/rate in the base_link ENU frame
+	 * @param gyro_ned		Angular velocity/rate in the aircraft NED frame
 	 */
 	void publish_imu_data(uint32_t time_boot_ms, Eigen::Quaterniond &orientation_enu,
 				Eigen::Quaterniond &orientation_ned, Eigen::Vector3d &gyro_enu, Eigen::Vector3d &gyro_ned)
@@ -201,11 +201,11 @@ private:
 	}
 
 	/**
-	 * @brief fill and publish IMU data_raw message; store linear acceleration for IMU data
-	 * @param header		Message frame_id and timestamp
-	 * @param gyro			Orientation in the base_link ENU frame
-	 * @param accel_enu		Linear acceleration in the base_link ENU frame
-	 * @param accel_ned		Linear acceleration in the aircraft NED frame
+	 * @brief Fill and publish IMU data_raw message; store linear acceleration for IMU data
+	 * @param header	Message frame_id and timestamp
+	 * @param gyro		Orientation in the base_link ENU frame
+	 * @param accel_enu	Linear acceleration in the base_link ENU frame
+	 * @param accel_ned	Linear acceleration in the aircraft NED frame
 	 */
 	void publish_imu_data_raw(std_msgs::Header &header, Eigen::Vector3d &gyro,
 				Eigen::Vector3d &accel_enu, Eigen::Vector3d &accel_ned)
@@ -232,8 +232,8 @@ private:
 
 	/**
 	 * @brief Publish magnetic field data
-	 * @param header		Message frame_id and timestamp
-	 * @param mag_field		Magnetic field in the base_link ENU frame
+	 * @param header	Message frame_id and timestamp
+	 * @param mag_field	Magnetic field in the base_link ENU frame
 	 */
 	void publish_mag(std_msgs::Header &header, Eigen::Vector3d &mag_field)
 	{
@@ -514,7 +514,7 @@ private:
 
 	/**
 	 * @brief Checks for connection and overrides variable values
-	 * @param connected		Is connected?
+	 * @param connected	Is connected?
 	 */
 	void connection_cb(bool connected) override
 	{
