@@ -121,16 +121,20 @@ private:
 	/**
 	 * @brief Setup 3x3 covariance matrix
 	 * @param[in,out] cov	Covariance matrix
-	 * @param[in,out] stdev	Standard deviation
+	 * @param[in] stdev	Standard deviation
 	 * @remarks	Diagonal computed from the stdev
 	 */
 	void setup_covariance(ftf::Covariance3d &cov, double stdev)
 	{
-		std::fill(cov.begin(), cov.end(), 0.0);
-		if (stdev == 0.0)
-			cov[0] = -1.0;
+		ftf::EigenMapCovariance3d c(cov.data());
+
+		c.setZero();
+		if (stdev) {
+		    double sr = stdev * stdev;
+		    c.diagonal() << sr, sr, sr;
+		}
 		else {
-			cov[0 + 0] = cov[3 + 1] = cov[6 + 2] = std::pow(stdev, 2);
+		   c(0,0) = -1.0;
 		}
 	}
 
