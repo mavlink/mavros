@@ -147,6 +147,7 @@ public:
 		wp_state = WP::IDLE;
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
+                wp_nh.param("enable_partial_push",enable_partial_push,false);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
@@ -215,6 +216,8 @@ private:
 	ros::Timer wp_timer;
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
+    bool enable_partial_push;
+
 	bool reshedule_pull;
 
 	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
@@ -736,6 +739,14 @@ private:
 		if (req.start_index)
 		{
 			//Partial Waypoint update
+
+            if(!enable_partial_push)
+            {
+                ROS_WARN_NAMED("wp","Partial Push not enabled. (Only supported on APM)");
+                res.success = false;
+                res.wp_transfered = 0;
+                return true;
+            }
 			wp_state = WP::TXPARTIAL;
 
 			send_waypoints = waypoints;

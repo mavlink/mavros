@@ -113,6 +113,7 @@ setpoint_position:
 # waypoint
 mission:
   pull_after_gcs: true  # update mission if gcs updates
+  enable_partial_push: true # partial push supported on APM
 
 # --- mavros extras plugins (same order) ---
 
