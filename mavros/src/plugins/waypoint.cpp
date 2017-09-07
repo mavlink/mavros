@@ -680,8 +680,8 @@ private:
 		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
 		mwpl.start_index = start_index;
 		mwpl.end_index = end_index;
-
 		m_uas->msg_set_target(mwpl);
+
 		UAS_FCU(m_uas)->send_message_ignore_drop(mwpl);
 	}
 
@@ -739,20 +739,17 @@ private:
 			// Wrong initial state, other operation in progress?
 			return false;
 
-		if (req.start_index)
-		{
+		if (req.start_index) {
 			//Partial Waypoint update
 
-			if (!enable_partial_push)
-			{
+			if (!enable_partial_push) {
 				ROS_WARN_NAMED("wp","WP: Partial Push not enabled. (Only supported on APM)");
 				res.success = false;
 				res.wp_transfered = 0;
 				return true;
 			}
 
-			if (waypoints.size() < req.start_index + req.waypoints.size())
-			{
+			if (waypoints.size() < req.start_index + req.waypoints.size()) {
 				ROS_WARN_NAMED("wp","WP: Partial push out of range rejected.");
 				res.success = false;
 				res.wp_transfered = 0;
