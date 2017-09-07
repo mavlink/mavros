@@ -232,7 +232,12 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	// WaypointItem is MISSION_ITEM child
+	/**
+	 * @brief handle MISSION_ITEM mavlink msg
+	 * handles and stores mission items when pulling waypoints
+	 * @param msg       Received Mavlink msg
+	 * @param wpi       WaypointItem from msg
+	 */
 	void handle_mission_item(const mavlink::mavlink_message_t *msg, WaypointItem &wpi)
 	{
 		unique_lock lock(mutex);
@@ -278,6 +283,12 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_REQUEST mavlink msg
+	 * handles and acts on misison request from FCU
+	 * @param msg       Received Mavlink msg
+	 * @param mreq       MISSION_REQUEST from msg
+	 */
 	void handle_mission_request(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_REQUEST &mreq)
 	{
 		lock_guard lock(mutex);
@@ -303,6 +314,12 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state %d", enum_value(wp_state));
 	}
 
+	/**
+	 * @brief handle MISSION_CURRENT mavlink msg
+	 * This confirms a SET_CUR action
+	 * @param msg       Received Mavlink msg
+	 * @param mcur       MISSION_CURRENT from msg
+	 */
 	void handle_mission_current(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_CURRENT &mcur)
 	{
 		unique_lock lock(mutex);
@@ -329,6 +346,13 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_COUNT mavlink msg
+	 * Handles a mission count from FCU in a Waypoint Pull
+	 * Triggers a pull GCS seems to be requesting mission
+	 * @param msg       Received Mavlink msg
+	 * @param mcnt       MISSION_COUNT from msg
+	 */
 	void handle_mission_count(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_COUNT &mcnt)
 	{
 		unique_lock lock(mutex);
@@ -365,12 +389,23 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_ITEM_REACHED mavlink msg
+	 * @param msg       Received Mavlink msg
+	 * @param mitr       MISSION_ITEM_REACHED from msg
+	 */
 	void handle_mission_item_reached(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ITEM_REACHED &mitr)
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
 	}
 
+	/**
+	 * @brief handle MISSION_ACK mavlink msg
+	 * Handles a MISSION_ACK which marks the end of a push, or a failure
+	 * @param msg       Received Mavlink msg
+	 * @param mack       MISSION_ACK from msg
+	 */
 	void handle_mission_ack(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ACK &mack)
 	{
 		unique_lock lock(mutex);
