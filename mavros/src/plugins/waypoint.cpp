@@ -148,10 +148,6 @@ public:
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
-		if (!wp_nh.getParam("enable_partial_push",enable_partial_push)) {
-			enable_partial_push = m_uas->is_ardupilotmega();
-		}
-
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
@@ -513,10 +509,16 @@ private:
 	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
-		if (connected)
+		if (connected) {
 			shedule_pull(BOOTUP_TIME_DT);
-		else
+
+			if (!wp_nh.getParam("enable_partial_push",enable_partial_push)) {
+				enable_partial_push = m_uas->is_ardupilotmega();
+			}
+		}
+		else {
 			shedule_timer.stop();
+		}
 	}
 
 	void sheduled_pull_cb(const ros::TimerEvent &event)
