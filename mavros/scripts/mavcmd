@@ -194,9 +194,9 @@ def do_trigger_control(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")
+    parser = argparse.ArgumentParser(description="Command line tool for sending commands to MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
@@ -223,9 +223,9 @@ def main():
     int_args.add_argument('param2', type=float, help="param2")
     int_args.add_argument('param3', type=float, help="param3")
     int_args.add_argument('param4', type=float, help="param4")
-    int_args.add_argument('x', type=int, help="latitude in deg*1E7 or X*1E4 m")
-    int_args.add_argument('y', type=int, help="longitude in deg*1E7 or Y*1E4 m")
-    int_args.add_argument('z', type=float, help="altitude in m, depending on frame")
+    int_args.add_argument('x', type=int, help="Latitude in deg*1E7 or X*1E4 m")
+    int_args.add_argument('y', type=int, help="Longitude in deg*1E7 or Y*1E4 m")
+    int_args.add_argument('z', type=float, help="Altitude in m, depending on frame")
 
     # Note: arming service provided by mavsafety
 
@@ -240,7 +240,7 @@ def main():
     takeoff_args = subarg.add_parser('takeoff', help="Request takeoff")
     takeoff_args.set_defaults(func=do_takeoff)
     takeoff_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_args.add_argument('yaw', type=float, help="Desired Yaw")
     takeoff_args.add_argument('latitude', type=float, help="Latitude")
     takeoff_args.add_argument('longitude', type=float, help="Longitude")
     takeoff_args.add_argument('altitude', type=float, help="Altitude")
@@ -254,23 +254,23 @@ def main():
 
     takeoff_cur_args = subarg.add_parser('takeoffcur', help="Request takeoff from current GPS coordinates")
     takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
-    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
     takeoff_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_cur_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     takeoff_cur_args.add_argument('altitude', type=float, help="Altitude")
 
     land_cur_args = subarg.add_parser('landcur', help="Request land on current GPS coordinates")
     land_cur_args.set_defaults(func=do_land_cur_gps)
-    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
 
-    trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera trigerring system (PX4)")
+    trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera triggering system (PX4)")
     trigger_ctrl_args.set_defaults(func=do_trigger_control)
     trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
-    trigger_en_group.add_argument('-e', '--enable', dest='trigger_enable', action='store_true', default=True, help="enable camera trigger (default)")
-    trigger_en_group.add_argument('-d', '--disable', dest='trigger_enable', action='store_false', help="disable camera trigger")
-    trigger_ctrl_args.add_argument('-i', '--integration-time', default=0.0, type=float, required=False, help="set/update shutter integration time for camera")
+    trigger_en_group.add_argument('-e', '--enable', dest='trigger_enable', action='store_true', default=True, help="Enable camera trigger (default)")
+    trigger_en_group.add_argument('-d', '--disable', dest='trigger_enable', action='store_false', help="Disable camera trigger")
+    trigger_ctrl_args.add_argument('-i', '--integration-time', default=0.0, type=float, required=False, help="Set/update shutter integration time for camera")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

@@ -92,13 +92,10 @@ def do_local_selector(args):
         do_local_accel(args)
 
 
-# TODO: other stuff
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for control the device by setpoints.")
+    parser = argparse.ArgumentParser(description="Command line tool for controlling the device by setpoints.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-V', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-V', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     local_args = subarg.add_parser('local', help="Send local setpoint")

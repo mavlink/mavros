@@ -65,9 +65,9 @@ def do_safetyarea(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for manipulating safty on MAVLink device.")
+    parser = argparse.ArgumentParser(description="Command line tool for manipulating safety on MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     arm_args = subarg.add_parser('arm', help="Arm motors")
