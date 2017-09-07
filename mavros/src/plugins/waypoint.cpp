@@ -147,7 +147,10 @@ public:
 		wp_state = WP::IDLE;
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
-		wp_nh.param("enable_partial_push",enable_partial_push,false);
+
+		if (!wp_nh.getParam("enable_partial_push",enable_partial_push)) {
+			enable_partial_push = m_uas->is_ardupilotmega();
+		}
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
