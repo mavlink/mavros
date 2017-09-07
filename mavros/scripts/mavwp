@@ -179,36 +179,36 @@ def do_set_current(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for manipulating mission on MAVLink device.")
+    parser = argparse.ArgumentParser(description="Command line tool for manipulating missions on MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     if not no_prettytable:
         show_args = subarg.add_parser('show', help="Show waypoints")
-        show_args.add_argument('-f', '--follow', action='store_true', help="watch and show new data")
-        show_args.add_argument('-p', '--pull', action='store_true', help="pull waypoints from FCU before show")
+        show_args.add_argument('-f', '--follow', action='store_true', help="Watch and show new data")
+        show_args.add_argument('-p', '--pull', action='store_true', help="Pull waypoints from FCU before show")
         show_args.set_defaults(func=do_show)
 
-    load_args = subarg.add_parser('load', help="load waypoints from file")
+    load_args = subarg.add_parser('load', help="Load waypoints from file")
     load_args.set_defaults(func=do_load)
     load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
-    load_args.add_argument('-s', '--start-index', type=int, default=0, help="waypoint start index for partial updating (APM only)")
-    load_args.add_argument('-e', '--end-index', type=int, default=0, help="waypoint end index for partial updating (APM only, default: last element in waypoint list)")
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
+    load_args.add_argument('-s', '--start-index', type=int, default=0, help="Waypoint start index for partial updating (APM only)")
+    load_args.add_argument('-e', '--end-index', type=int, default=0, help="Waypoint end index for partial updating (APM only, default: last element in waypoint list)")
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file (QGC/MP format)")
 
-    pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
+    pull_args = subarg.add_parser('pull', help="Pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
-    dump_args = subarg.add_parser('dump', help="dump waypoints to file")
+    dump_args = subarg.add_parser('dump', help="Dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file (QGC format)")
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file (QGC format)")
 
-    clear_args = subarg.add_parser('clear', help="clear waypoints on device")
+    clear_args = subarg.add_parser('clear', help="Clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
 
-    setcur_args = subarg.add_parser('setcur', help="set current waypoints on device")
-    setcur_args.add_argument('seq', type=int, help="waypoint seq id")
+    setcur_args = subarg.add_parser('setcur', help="Set current waypoints on device")
+    setcur_args.add_argument('seq', type=int, help="Waypoint seq id")
     setcur_args.set_defaults(func=do_set_current)
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
