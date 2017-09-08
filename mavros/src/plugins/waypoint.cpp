@@ -235,8 +235,8 @@ private:
 	/**
 	 * @brief handle MISSION_ITEM mavlink msg
 	 * handles and stores mission items when pulling waypoints
-	 * @param msg       Received Mavlink msg
-	 * @param wpi       WaypointItem from msg
+	 * @param msg		Received Mavlink msg
+	 * @param wpi		WaypointItem from msg
 	 */
 	void handle_mission_item(const mavlink::mavlink_message_t *msg, WaypointItem &wpi)
 	{
@@ -286,8 +286,8 @@ private:
 	/**
 	 * @brief handle MISSION_REQUEST mavlink msg
 	 * handles and acts on misison request from FCU
-	 * @param msg       Received Mavlink msg
-	 * @param mreq       MISSION_REQUEST from msg
+	 * @param msg		Received Mavlink msg
+	 * @param mreq		MISSION_REQUEST from msg
 	 */
 	void handle_mission_request(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_REQUEST &mreq)
 	{
@@ -317,8 +317,8 @@ private:
 	/**
 	 * @brief handle MISSION_CURRENT mavlink msg
 	 * This confirms a SET_CUR action
-	 * @param msg       Received Mavlink msg
-	 * @param mcur       MISSION_CURRENT from msg
+	 * @param msg		Received Mavlink msg
+	 * @param mcur		MISSION_CURRENT from msg
 	 */
 	void handle_mission_current(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_CURRENT &mcur)
 	{
@@ -350,8 +350,8 @@ private:
 	 * @brief handle MISSION_COUNT mavlink msg
 	 * Handles a mission count from FCU in a Waypoint Pull
 	 * Triggers a pull GCS seems to be requesting mission
-	 * @param msg       Received Mavlink msg
-	 * @param mcnt       MISSION_COUNT from msg
+	 * @param msg		Received Mavlink msg
+	 * @param mcnt		MISSION_COUNT from msg
 	 */
 	void handle_mission_count(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_COUNT &mcnt)
 	{
@@ -391,8 +391,8 @@ private:
 
 	/**
 	 * @brief handle MISSION_ITEM_REACHED mavlink msg
-	 * @param msg       Received Mavlink msg
-	 * @param mitr       MISSION_ITEM_REACHED from msg
+	 * @param msg		Received Mavlink msg
+	 * @param mitr		MISSION_ITEM_REACHED from msg
 	 */
 	void handle_mission_item_reached(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ITEM_REACHED &mitr)
 	{
@@ -403,8 +403,8 @@ private:
 	/**
 	 * @brief handle MISSION_ACK mavlink msg
 	 * Handles a MISSION_ACK which marks the end of a push, or a failure
-	 * @param msg       Received Mavlink msg
-	 * @param mack       MISSION_ACK from msg
+	 * @param msg		Received Mavlink msg
+	 * @param mack		MISSION_ACK from msg
 	 */
 	void handle_mission_ack(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ACK &mack)
 	{
@@ -494,6 +494,10 @@ private:
 
 	/* -*- mid-level helpers -*- */
 
+	/**
+	 * @brief Act on a timeout
+	 * Resend the message that may have been lost
+	 */
 	void timeout_cb(const ros::TimerEvent &event)
 	{
 		unique_lock lock(mutex);
@@ -541,6 +545,7 @@ private:
 		}
 	}
 
+	// @brief Act on first heartbeat from FCU
 	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
@@ -556,6 +561,7 @@ private:
 		}
 	}
 
+	// @brief Callback for scheduled waypoint pull
 	void sheduled_pull_cb(const ros::TimerEvent &event)
 	{
 		lock_guard lock(mutex);
@@ -573,6 +579,7 @@ private:
 		mission_request_list();
 	}
 
+	// @brief Send ACK back to FCU after pull
 	void request_mission_done(void)
 	{
 		/* possibly not needed if count == 0 (QGC impl) */
@@ -610,6 +617,7 @@ private:
 		shedule_timer.start();
 	}
 
+	// @brief send a single waypoint to FCU
 	void send_waypoint(size_t seq)
 	{
 		if (seq < send_waypoints.size()) {
@@ -620,6 +628,8 @@ private:
 		}
 	}
 
+	// @brief wait until a waypoint pull is complete
+	// Pull happens asyncronously, this function blocks until it is done
 	bool wait_fetch_all()
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
@@ -628,6 +638,8 @@ private:
 		       && !is_timedout;
 	}
 
+	// @brief wait until a waypoint push is complete
+	// Push happens asyncronously, this function blocks until it is done
 	bool wait_push_all()
 	{
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
@@ -637,12 +649,14 @@ private:
 		       && !is_timedout;
 	}
 
+	// @brief set the FCU current waypoint
 	void set_current_waypoint(size_t seq)
 	{
 		for (auto &it : waypoints)
 			it.current = (it.seq == seq) ? true : false;
 	}
 
+	// @brief publish the updated waypoint list after operation
 	void publish_waypoints()
 	{
 		auto wpl = boost::make_shared<mavros_msgs::WaypointList>();
