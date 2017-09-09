@@ -545,7 +545,7 @@ private:
 		}
 	}
 
-	// @brief Act on first heartbeat from FCU
+	// Act on first heartbeat from FCU
 	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
@@ -561,7 +561,7 @@ private:
 		}
 	}
 
-	// @brief Callback for scheduled waypoint pull
+	//! @brief Callback for scheduled waypoint pull
 	void sheduled_pull_cb(const ros::TimerEvent &event)
 	{
 		lock_guard lock(mutex);
@@ -579,7 +579,7 @@ private:
 		mission_request_list();
 	}
 
-	// @brief Send ACK back to FCU after pull
+	//! @brief Send ACK back to FCU after pull
 	void request_mission_done(void)
 	{
 		/* possibly not needed if count == 0 (QGC impl) */
@@ -617,7 +617,7 @@ private:
 		shedule_timer.start();
 	}
 
-	// @brief send a single waypoint to FCU
+	//! @brief send a single waypoint to FCU
 	void send_waypoint(size_t seq)
 	{
 		if (seq < send_waypoints.size()) {
@@ -628,8 +628,10 @@ private:
 		}
 	}
 
-	// @brief wait until a waypoint pull is complete
-	// Pull happens asyncronously, this function blocks until it is done
+	/**
+	 * @brief wait until a waypoint pull is complete.
+	 * Pull happens asyncronously, this function blocks until it is done.
+	 */
 	bool wait_fetch_all()
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
@@ -638,8 +640,10 @@ private:
 		       && !is_timedout;
 	}
 
-	// @brief wait until a waypoint push is complete
-	// Push happens asyncronously, this function blocks until it is done
+	/**
+	 * @brief wait until a waypoint push is complete.
+	 * Push happens asyncronously, this function blocks until it is done.
+	 */
 	bool wait_push_all()
 	{
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
@@ -649,14 +653,14 @@ private:
 		       && !is_timedout;
 	}
 
-	// @brief set the FCU current waypoint
+	//! @brief set the FCU current waypoint
 	void set_current_waypoint(size_t seq)
 	{
 		for (auto &it : waypoints)
 			it.current = (it.seq == seq) ? true : false;
 	}
 
-	// @brief publish the updated waypoint list after operation
+	//! @brief publish the updated waypoint list after operation
 	void publish_waypoints()
 	{
 		auto wpl = boost::make_shared<mavros_msgs::WaypointList>();
