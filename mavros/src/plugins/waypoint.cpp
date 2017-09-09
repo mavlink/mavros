@@ -552,7 +552,10 @@ private:
 		if (connected) {
 			shedule_pull(BOOTUP_TIME_DT);
 
-			if (!wp_nh.getParam("enable_partial_push",enable_partial_push)) {
+			if (wp_nh.hasParam("enable_partial_push")) {
+				wp_nh.getParam("enable_partial_push", enable_partial_push);
+			}
+			else {
 				enable_partial_push = m_uas->is_ardupilotmega();
 			}
 		}
