@@ -669,12 +669,12 @@ private:
 		auto wpl = boost::make_shared<mavros_msgs::WaypointList>();
 		unique_lock lock(mutex);
 
+		wpl->current_seq = wp_cur_active;
 		wpl->waypoints.clear();
 		wpl->waypoints.reserve(waypoints.size());
 		for (auto &it : waypoints) {
 			wpl->waypoints.push_back(it.to_msg());
 		}
-		wpl->seq = wp_cur_active;
 
 		lock.unlock();
 		wp_list_pub.publish(wpl);
