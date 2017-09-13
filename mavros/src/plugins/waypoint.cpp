@@ -674,6 +674,7 @@ private:
 		for (auto &it : waypoints) {
 			wpl->waypoints.push_back(it.to_msg());
 		}
+		wpl->seq = wp_cur_active;
 
 		lock.unlock();
 		wp_list_pub.publish(wpl);
