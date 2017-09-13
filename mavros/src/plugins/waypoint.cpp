@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -80,7 +80,12 @@ public:
 		WaypointItem ret;
 
 		// [[[cog:
-		// for a, b in waypoint_item_msg:
+		// waypoint_coords = [
+		//     ('x_lat', 'x'),
+		//     ('y_long', 'y'),
+		//     ('z_alt', 'z'),
+		// ]
+		// for a, b in waypoint_item_msg + waypoint_coords:
 		//     cog.outl("ret.%s = wp.%s;" % (b, a))
 		// ]]]
 		ret.frame = wp.frame;
@@ -94,12 +99,12 @@ public:
 		ret.x_lat = wp.x_lat;
 		ret.y_long = wp.y_long;
 		ret.z_alt = wp.z_alt;
-		// [[[end]]] (checksum: 14cc0f2fc12a4f95f6ea200e41005e3b)
+		ret.x = wp.x_lat;
+		ret.y = wp.y_long;
+		ret.z = wp.z_alt;
+		// [[[end]]] (checksum: e277c889ab7a67085562bbd014283a78)
 
 		ret.seq = seq;
-		ret.x = ret.x_lat;
-		ret.y = ret.y_long;
-		ret.z = ret.z_alt;
 
 		return ret;
 	}
@@ -109,11 +114,11 @@ public:
 		//return to_yaml();
 
 		return utils::format("#%u%1s F:%u C:%3u p: %f %f %f %f x: %f y: %f z: %f",
-					seq,
-					(current) ? "*" : "",
-					frame, command,
-					param1, param2, param3, param4,
-					x_lat, y_long, z_alt);
+			seq,
+			(current) ? "*" : "",
+			frame, command,
+			param1, param2, param3, param4,
+			x_lat, y_long, z_alt);
 	}
 };
 
@@ -133,6 +138,7 @@ public:
 		wp_set_active(0),
 		is_timedout(false),
 		do_pull_after_gcs(false),
+		enable_partial_push(false),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -244,8 +250,7 @@ private:
 
 		// WaypointItem has wider fields for Lat/Long/Alt, set it
 		// [[[cog:
-		// waypoint_mission_item = (('x_lat', 'x'), ('y_long', 'y'), ('z_alt', 'z'))
-		// for a, b in waypoint_mission_item:
+		// for a, b in waypoint_coords:
 		//     cog.outl("wpi.%s = wpi.%s;" % (a, b))
 		// ]]]
 		wpi.x_lat = wpi.x;
@@ -257,7 +262,7 @@ private:
 		if (wp_state == WP::RXWP) {
 			if (wpi.seq != wp_cur_id) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping item (%d != %zu)",
-							wpi.seq, wp_cur_id);
+					wpi.seq, wp_cur_id);
 				return;
 			}
 
@@ -296,7 +301,7 @@ private:
 		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
-							mreq.seq, wp_cur_id);
+					mreq.seq, wp_cur_id);
 				return;
 			}
 
@@ -413,8 +418,8 @@ private:
 		auto ack_type = static_cast<MRES>(mack.type);
 
 		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
-					&& (wp_cur_id == wp_end_id - 1)
-					&& (ack_type == MRES::ACCEPTED)) {
+			&& (wp_cur_id == wp_end_id - 1)
+			&& (ack_type == MRES::ACCEPTED)) {
 			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
@@ -734,7 +739,7 @@ private:
 	/* -*- ROS callbacks -*- */
 
 	bool pull_cb(mavros_msgs::WaypointPull::Request &req,
-				mavros_msgs::WaypointPull::Response &res)
+		mavros_msgs::WaypointPull::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -757,7 +762,7 @@ private:
 	}
 
 	bool push_cb(mavros_msgs::WaypointPush::Request &req,
-				mavros_msgs::WaypointPush::Response &res)
+		mavros_msgs::WaypointPush::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -766,17 +771,17 @@ private:
 			return false;
 
 		if (req.start_index) {
-			//Partial Waypoint update
+			// Partial Waypoint update
 
 			if (!enable_partial_push) {
-				ROS_WARN_NAMED("wp","WP: Partial Push not enabled. (Only supported on APM)");
+				ROS_WARN_NAMED("wp", "WP: Partial Push not enabled. (Only supported on APM)");
 				res.success = false;
 				res.wp_transfered = 0;
 				return true;
 			}
 
 			if (waypoints.size() < req.start_index + req.waypoints.size()) {
-				ROS_WARN_NAMED("wp","WP: Partial push out of range rejected.");
+				ROS_WARN_NAMED("wp", "WP: Partial push out of range rejected.");
 				res.success = false;
 				res.wp_transfered = 0;
 				return true;
@@ -805,7 +810,7 @@ private:
 			res.wp_transfered = wp_cur_id - wp_start_id + 1;
 		}
 		else {
-			//Full waypoint update
+			// Full waypoint update
 			wp_state = WP::TXLIST;
 
 			send_waypoints.clear();
@@ -833,7 +838,7 @@ private:
 	}
 
 	bool clear_cb(mavros_msgs::WaypointClear::Request &req,
-				mavros_msgs::WaypointClear::Response &res)
+		mavros_msgs::WaypointClear::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -853,7 +858,7 @@ private:
 	}
 
 	bool set_cur_cb(mavros_msgs::WaypointSetCurrent::Request &req,
-				mavros_msgs::WaypointSetCurrent::Response &res)
+		mavros_msgs::WaypointSetCurrent::Response &res)
 	{
 		unique_lock lock(mutex);
 
