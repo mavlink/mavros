@@ -27,6 +27,7 @@ using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 using mavlink::common::GPS_FIX_TYPE;
+using mavlink::common::MAV_MISSION_RESULT;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -372,6 +373,49 @@ std::string to_string(GPS_FIX_TYPE e)
 	return gps_fix_type_strings[idx];
 }
 // [[[end]]] (checksum: 984346c7986a0742d45d9c1a5ca322ed)
+
+// [[[cog:
+// ename = 'MAV_MISSION_RESULT'
+// enum = get_enum(ename)
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     value = e.description
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! MAV_MISSION_RESULT values
+static const std::array<const std::string, 15> mav_mission_result_strings{{
+/*  0 */ "mission accepted OK",           // mission accepted OK
+/*  1 */ "generic error / not accepting mission commands at all right now", // generic error / not accepting mission commands at all right now
+/*  2 */ "coordinate frame is not supported", // coordinate frame is not supported
+/*  3 */ "command is not supported",      // command is not supported
+/*  4 */ "mission item exceeds storage space", // mission item exceeds storage space
+/*  5 */ "one of the parameters has an invalid value", // one of the parameters has an invalid value
+/*  6 */ "param1 has an invalid value",   // param1 has an invalid value
+/*  7 */ "param2 has an invalid value",   // param2 has an invalid value
+/*  8 */ "param3 has an invalid value",   // param3 has an invalid value
+/*  9 */ "param4 has an invalid value",   // param4 has an invalid value
+/* 10 */ "x/param5 has an invalid value", // x/param5 has an invalid value
+/* 11 */ "y/param6 has an invalid value", // y/param6 has an invalid value
+/* 12 */ "param7 has an invalid value",   // param7 has an invalid value
+/* 13 */ "received waypoint out of sequence", // received waypoint out of sequence
+/* 14 */ "not accepting any mission commands from this communication partner", // not accepting any mission commands from this communication partner
+}};
+
+std::string to_string(MAV_MISSION_RESULT e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_mission_result_strings.size())
+		return std::to_string(idx);
+
+	return mav_mission_result_strings[idx];
+}
+// [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
 
 }	// namespace utils
 }	// namespace mavros

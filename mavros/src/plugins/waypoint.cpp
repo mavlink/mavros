@@ -410,9 +410,11 @@ private:
 	{
 		unique_lock lock(mutex);
 
+		auto ack_type = static_cast<MRES>(mack.type);
+
 		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
 					&& (wp_cur_id == wp_end_id - 1)
-					&& (mack.type == enum_value(MRES::ACCEPTED))) {
+					&& (ack_type == MRES::ACCEPTED)) {
 			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
@@ -422,7 +424,7 @@ private:
 			publish_waypoints();
 			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
-		else if (wp_state == WP::TXWP && mack.type == enum_value(MRES::INVALID_SEQUENCE)) {
+		else if (wp_state == WP::TXWP && ack_type == MRES::INVALID_SEQUENCE) {
 			// Mission Ack: INVALID_SEQUENCE received during TXWP
 			// This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
 			// This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
@@ -435,49 +437,14 @@ private:
 			lock.unlock();
 			list_sending.notify_all();
 
-			switch (mack.type) {
-			// XXX add to_string for enum
-			// [[[cog:
-			// mission_ack_log = (
-			//     ('ERROR', "general error"),
-			//     ('UNSUPPORTED_FRAME', "unsupported frame"),
-			//     ('UNSUPPORTED', "command unsupported"),
-			//     ('NO_SPACE', "no space left on mission storage"),
-			//     ('DENIED', "denied"),
-			// )
-			// for k, v in mission_ack_log:
-			//     cog.outl("case enum_value(MRES::%s):" % k)
-			//     cog.outl("""\tROS_ERROR_NAMED("wp", "WP: upload failed: %s");""" % v)
-			//     cog.outl("\tbreak;")
-			// ]]]
-			case enum_value(MRES::ERROR):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: general error");
-				break;
-			case enum_value(MRES::UNSUPPORTED_FRAME):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: unsupported frame");
-				break;
-			case enum_value(MRES::UNSUPPORTED):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: command unsupported");
-				break;
-			case enum_value(MRES::NO_SPACE):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: no space left on mission storage");
-				break;
-			case enum_value(MRES::DENIED):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: denied");
-				break;
-			// [[[end]]] (checksum: b85e3c2b5705b79375cefa3ff3fa108b)
-
-			default:
-				ROS_ERROR_NAMED("wp", "WP: upload failed: error #%d", mack.type);
-				break;
-			}
+			ROS_ERROR_STREAM_NAMED("wp", "WP: upload failed: " << utils::to_string(ack_type));
 		}
 		else if (wp_state == WP::CLEAR) {
 			go_idle();
-			if (mack.type != enum_value(MRES::ACCEPTED)) {
+			if (ack_type != MRES::ACCEPTED) {
 				is_timedout = true;
 				lock.unlock();
-				ROS_ERROR_NAMED("wp", "WP: clear failed: error #%d", mack.type);
+				ROS_ERROR_STREAM_NAMED("wp", "WP: clear failed: " << utils::to_string(ack_type));
 			}
 			else {
 				waypoints.clear();
