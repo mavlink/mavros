@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.0 (2017-09-14)
+-------------------
 * plugin waypoint: Uncrustify, update init list
 * lib: Add to_sting for MAV_MISSION_RESULT
 * plugin waypoint: Rename current seq in wp list message

@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.0 (2017-09-14)
+-------------------
 * IMU and attitude: general clean-up
 * Using tabs as the file does
 * Updating comments for PX4Flow
