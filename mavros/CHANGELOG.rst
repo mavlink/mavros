@@ -2,6 +2,79 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin waypoint: Uncrustify, update init list
+* lib: Add to_sting for MAV_MISSION_RESULT
+* plugin waypoint: Rename current seq in wp list message
+* waypoint: Publish current waypoint seq
+* waypoint partial: Check parameter first with hasParam
+* waypoint partial: Documentation updates
+* waypoint: Document mid level helpers and fix indenting on rx handlers
+* waypoint: Document rx handlers
+* waypoint partial: Move FCU detection to connection_cb
+* waypoint partial: recommended changes to mavwp
+* waypoint partial: code style cleanup
+* waypoint partial: enable only on apm but allow override with parameter
+* waypoint partial: Handle case when partial push is out of range with local list and uncrustify
+* waypoint partial: enable only on apm through yaml
+* waypoint partial: stopped partial push from clearing parts of local waypoint copy
+* waypoint partial: uncrustify
+* waypoint partial: extend mavwp cli tool to do partial updating in push
+* waypoint partial: extended push in waypoint plugin to implement push partial
+* waypoint: uncrustify
+* waypoint: handle invalid_sequence mission_ack to prevent TXWP failure
+* Partial waypoint: added wp_transfered to push partial service response
+* Partial waypoint: renamed mavwp partial load arguments for consistency
+* Partial waypoint: fixed end index and added partial tx state
+* Partial Waypoint: handle service call in waypoint plugin
+* Partial waypoint: added partial updating to mavwp
+* imu_plugin: remove documentation of override func
+* imu plugin: uncrustify
+* imu plugin: don't be so explicit about in/out params
+* imu plugin: fix indentation
+* imu plugin: update setup_covariance method to use Eigen capabilities
+* imu plugin: use simpler format for one line comments
+* imu plugin: add code snippets to Doxygen documentation
+* IMU and attitude: general clean-up
+* CMake: explicitly link the atomic library (`#797 <https://github.com/mavlink/mavros/issues/797>`_)
+  For arm & mips architecture, the linker must explicitly be asked to
+  link the atomic library (with `-latomic`).
+  Otherwise, the linking fails with:
+  ```
+  | devel/lib/libmavros.so: undefined reference to `__atomic_load_8'
+  | devel/lib/libmavros.so: undefined reference to `__atomic_store_8'
+  | collect2: error: ld returned 1 exit status
+  ```
+  Linking `atomic` unconditionally as library is strictly needed only
+  for arm & mips, but it seems not to imply any further differences
+  with other architectures. Hence, this commit simply adds `atomic`
+  unconditionally for a uniform handling of all machine architectures.
+  This is an alternative solution to the proposed solution in `#790 <https://github.com/mavlink/mavros/issues/790>`_.
+  The issue was discovered cross-compiling mavros in meta-ros, the
+  OpenEmbedded layer for ROS. Some further pointers are available at:
+  https://github.com/bmwcarit/meta-ros/issues/525
+  Signed-off-by: Lukas Bulwahn <lukas.bulwahn@gmail.com>
+* setpoint_attitude: privatize message_filters subscribers
+* Updating comments for PX4Flow
+* Removing copter_visualization from the yaml files.
+  Adding odometry to apm_config
+  Changing frame_id to base_link for vibration
+* Update the apm_config and px4flow_config files
+* Update configuration from mavros_extras
+* Updating default settings from px4.yaml
+* * global_position/tf/send default to false
+  * imu, checked
+  * local_position/tf/send default to false
+  * local_position/tf/send_fcu default to false
+  * mission/pull_after_gcs default to true
+* Update time reference to fcu
+  Adding global_frame_id: 'earth' to apm_config
+* fcu to base_link
+* Changing fcu_utm to fcu
+* Solving default frame consistency in config files
+* Contributors: Alexis Paques, James Mare, James Stewart, Lukas Bulwahn, TSC21, Vladimir Ermakov
+
 0.20.1 (2017-08-28)
 -------------------
 

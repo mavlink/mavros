@@ -2,6 +2,18 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* IMU and attitude: general clean-up
+* Using tabs as the file does
+* Updating comments for PX4Flow
+* Removing copter_visualization from the yaml files.
+  Adding odometry to apm_config
+  Changing frame_id to base_link for vibration
+* Update the apm_config and px4flow_config files
+* Update configuration from mavros_extras
+* Contributors: Alexis Paques, TSC21
+
 0.20.1 (2017-08-28)
 -------------------
 

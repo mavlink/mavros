@@ -2,6 +2,16 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin waypoint: Rename current seq in wp list message
+* waypoint: Publish current waypoint seq
+* waypoint partial: code style cleanup
+* waypoint partial: extend existing service
+* Partial waypoint: added wp_transfered to push partial service response
+* Partial waypoint: added partial updating to mavwp
+* Contributors: James Mare, James Stewart, Vladimir Ermakov
+
 0.20.1 (2017-08-28)
 -------------------
 
