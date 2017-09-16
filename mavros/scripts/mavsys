@@ -20,8 +20,10 @@ from mavros_msgs.srv import SetMode, StreamRate, StreamRateRequest
 
 
 def do_mode(args):
-    # setting to MAV_MODE_FLAG_CUSTOM_MODE_ENABLED is mandatory
-    # so to change to a custom mode/submode
+    # Setting to MAV_MODE_FLAG_CUSTOM_MODE_ENABLED is mandatory, so to change to
+    # a custom mode/submode.
+    # NOTE: In order to change to AUTO.MISSION on PX4 Pro, you need to disable
+    # datalink failsafe, which can be done by setting NAV_DLL_ACT to 0.
     base_mode = 1 # 1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED
     custom_mode = ''
 
