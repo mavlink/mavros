@@ -92,9 +92,8 @@ def main():
 
     mode_args = subarg.add_parser('mode', help="Set mode")
     mode_args.set_defaults(func=do_mode)
-    mode_group = mode_args.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument('-b', '--base-mode', type=int, help="Base mode code")
-    mode_group.add_argument('-c', '--custom-mode', type=str, help="Custom mode string (same as in ~/state topic)")
+    mode_args.add_argument('-b', '--base-mode', type=int, help="Base mode code")
+    mode_args.add_argument('-c', '--custom-mode', type=str, help="Custom mode string (same as in ~/state topic)")
 
     rate_args = subarg.add_parser('rate', help="Set stream rate")
     rate_args.set_defaults(func=do_rate)
