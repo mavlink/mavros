@@ -2,21 +2,34 @@
 #
 # Known custom modes listed here:
 # http://wiki.ros.org/mavros/CustomModes
+# TODO: add alternative to this src call with COMMAND_LONG to DO_SET_MODE
+# as SET_MODE msg is deprecated
 
 # basic modes from MAV_MODE
-uint8 MAV_MODE_PREFLIGHT		= 0
-uint8 MAV_MODE_STABILIZE_DISARMED	= 80
-uint8 MAV_MODE_STABILIZE_ARMED		= 208
-uint8 MAV_MODE_MANUAL_DISARMED		= 64
-uint8 MAV_MODE_MANUAL_ARMED		= 192
-uint8 MAV_MODE_GUIDED_DISARMED		= 88
-uint8 MAV_MODE_GUIDED_ARMED		= 216
-uint8 MAV_MODE_AUTO_DISARMED		= 92
-uint8 MAV_MODE_AUTO_ARMED		= 220
-uint8 MAV_MODE_TEST_DISARMED		= 66
-uint8 MAV_MODE_TEST_ARMED		= 194
+uint8 MAV_MODE_PREFLIGHT			= 0
+uint8 MAV_MODE_STABILIZE_DISARMED		= 80
+uint8 MAV_MODE_STABILIZE_ARMED			= 208
+uint8 MAV_MODE_MANUAL_DISARMED			= 64
+uint8 MAV_MODE_MANUAL_ARMED			= 192
+uint8 MAV_MODE_GUIDED_DISARMED			= 88
+uint8 MAV_MODE_GUIDED_ARMED			= 216
+uint8 MAV_MODE_AUTO_DISARMED			= 92
+uint8 MAV_MODE_AUTO_ARMED			= 220
+uint8 MAV_MODE_TEST_DISARMED			= 66
+uint8 MAV_MODE_TEST_ARMED			= 194
 
-uint8 base_mode		# filled by MAV_MODE enum value or 0 if custom_mode != ''
+# MAV_MODE_FLAG that encode the MAV mode
+uint8 MAV_MODE_FLAG_SAFETY_ARMED		= 128
+uint8 MAV_MODE_FLAG_MANUAL_INPUT_ENABLED	= 64
+uint8 MAV_MODE_FLAG_HIL_ENABLED		= 32
+uint8 MAV_MODE_FLAG_STABILIZE_ENABLED		= 16
+uint8 MAV_MODE_FLAG_GUIDED_ENABLED		= 8
+uint8 MAV_MODE_FLAG_AUTO_ENABLED		= 4
+uint8 MAV_MODE_FLAG_TEST_ENABLED		= 2
+uint8 MAV_MODE_FLAG_CUSTOM_MODE_ENABLED	= 1
+
+
+uint8 base_mode	# filled by MAV_MODE enum value or = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED if custom_mode != ''
 string custom_mode	# string mode representation or integer
 ---
 bool mode_sent		# Mode known/parsed correctly and SET_MODE are sent
