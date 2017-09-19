@@ -22,6 +22,7 @@
 #include <atomic>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 #include <mavros/utils.h>
@@ -267,6 +268,7 @@ public:
 	tf2_ros::Buffer tf2_buffer;
 	tf2_ros::TransformListener tf2_listener;
 	tf2_ros::TransformBroadcaster tf2_broadcaster;
+	tf2_ros::StaticTransformBroadcaster tf2_static_broadcaster;
 
 	/* -*- time sync -*- */
 

@@ -43,6 +43,7 @@
   <depend>rosconsole_bridge</depend>
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
 
