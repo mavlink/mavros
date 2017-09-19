@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   tf2_ros
+  tf2_eigen
   angles
   libmavconn
   rosconsole_bridge

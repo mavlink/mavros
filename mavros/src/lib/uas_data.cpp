@@ -50,6 +50,22 @@ UAS::UAS() :
 			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
 		ros::shutdown();
 	}
+
+	// send static transform from local_origin (ENU) to local_origin_ned (NED)
+	geometry_msgs::TransformStamped static_transformStamped;
+	static_transformStamped.header.stamp = ros::Time::now();
+	static_transformStamped.header.frame_id = "local_origin";
+	static_transformStamped.child_frame_id = "local_origin_ned";
+	static_transformStamped.transform.translation.x = 0;
+	static_transformStamped.transform.translation.y = 0;
+	static_transformStamped.transform.translation.z = 0;
+	tf2::Quaternion quat;
+	quat.setRPY(M_PI, 0, M_PI_2);
+	static_transformStamped.transform.rotation.x = quat.x();
+	static_transformStamped.transform.rotation.y = quat.y();
+	static_transformStamped.transform.rotation.z = quat.z();
+	static_transformStamped.transform.rotation.w = quat.w();
+	tf2_static_broadcaster.sendTransform(static_transformStamped);
 }
 
 /* -*- heartbeat handlers -*- */
