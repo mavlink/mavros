@@ -130,11 +130,7 @@ private:
 		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
 		auto q = ftf::transform_orientation_baselink_aircraft(
 					ftf::transform_orientation_enu_ned(
-						Eigen::Quaterniond(
-							req->orientation.w,
-							req->orientation.x,
-							req->orientation.y,
-							req->orientation.z)));
+						ftf::to_eigen(req->orientation)));
 		ftf::quaternion_to_mavlink(q, state_quat.attitude_quaternion);
 		state_quat.lat = req->geo.latitude * 1E7;
 		state_quat.lon = req->geo.longitude * 1E7;
@@ -146,22 +142,14 @@ private:
 		state_quat.true_airspeed = req->true_airspeed * 1E2;
 		// WRT world frame
 		auto ang_vel = ftf::transform_frame_enu_ned(
-					ftf::transform_frame_baselink_aircraft(
-						Eigen::Vector3d(
-							req->angular_velocity.x,
-							req->angular_velocity.y,
-							req->angular_velocity.z)));
+				ftf::transform_frame_baselink_aircraft(
+					ftf::to_eigen(req->angular_velocity)));
 		auto lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
-					Eigen::Vector3d(
-						req->linear_velocity.x,
-						req->linear_velocity.y,
-						req->linear_velocity.z)) * 1E2;
+				ftf::to_eigen(req->linear_velocity)) * 1E2;
 		// linear acceleration - WRT world frame
 		auto lin_acc = ftf::transform_frame_baselink_aircraft(
-					Eigen::Vector3d(
-						req->linear_acceleration.x,
-						req->linear_acceleration.y,
-						req->linear_acceleration.z));
+				ftf::to_eigen(req->linear_acceleration));
+
 		// [[[cog:
 		// for a, b in zip(('rollspeed', 'pitchspeed', 'yawspeed'), "xyz"):
 		//     cog.outl("state_quat.%s = ang_vel.%s();" % (a, b))
@@ -227,24 +215,22 @@ private:
 		sensor.time_usec = req->header.stamp.toNSec() / 1000;
 		// WRT world frame
 		auto acc = ftf::transform_frame_baselink_aircraft(
-					Eigen::Vector3d(
-						req->acc.x,
-						req->acc.y,
-						req->acc.z));
+				ftf::to_eigen(req->acc));
 		auto gyro = ftf::transform_frame_baselink_aircraft(
-					Eigen::Vector3d(
-						req->gyro.x,
-						req->gyro.y,
-						req->gyro.z));
+				ftf::to_eigen(req->gyro));
 		auto mag = ftf::transform_frame_baselink_aircraft<Eigen::Vector3d>(
-					Eigen::Vector3d(
-						req->mag.x,
-						req->mag.y,
-						req->mag.z) * TESLA_TO_GAUSS);
+				ftf::to_eigen(req->mag) * TESLA_TO_GAUSS);
+
 		// [[[cog:
 		// for a in ('acc', 'gyro', 'mag'):
 		//     for b in "xyz":
 		//         cog.outl("sensor.{b}{a} = {a}.{b}();".format(**locals()))
+		// for f in (('abs_pressure', 'PASCAL_TO_MILLIBAR'),
+		//           ('diff_pressure', 'PASCAL_TO_MILLIBAR'),
+		//           'pressure_alt', 'temperature', 'fields_updated'):
+		//           f1 = f if isinstance(f, str) else f[0]
+		//           f2 = f if isinstance(f, str) else '{f[0]} * {f[1]}'.format(f=f)
+		//           cog.outl("sensor.{f1} = req->{f2};".format(**locals()))
 		// ]]]
 		sensor.xacc = acc.x();
 		sensor.yacc = acc.y();
@@ -255,13 +241,12 @@ private:
 		sensor.xmag = mag.x();
 		sensor.ymag = mag.y();
 		sensor.zmag = mag.z();
-		// [[[end]]] (checksum: e4bb03f33b73db75bc2d5f1c7595e737)
 		sensor.abs_pressure = req->abs_pressure * PASCAL_TO_MILLIBAR;
 		sensor.diff_pressure = req->diff_pressure * PASCAL_TO_MILLIBAR;
 		sensor.pressure_alt = req->pressure_alt;
 		sensor.temperature = req->temperature;
-
 		sensor.fields_updated = req->fields_updated;
+		// [[[end]]] (checksum: 316bef821ad6fc33d9726a1c8e8c5404)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
 	}
@@ -325,7 +310,7 @@ private:
 
 		rcin.time_usec = req->header.stamp.toNSec() / 100000;
 		// [[[cog:
-		// for i in range (1,13):
+		// for i in range(1,13):
 		//     cog.outl("rcin.chan%d_raw\t= channels[%2d];" % (i, i-1))
 		// ]]]
 		rcin.chan1_raw	= channels[ 0];
