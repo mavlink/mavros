@@ -90,9 +90,7 @@ def main():
     mode_group = mode_args.add_mutually_exclusive_group(required=True)
     mode_group.add_argument('-b', '--base-mode', type=int, help="Base mode code")
     mode_group.add_argument('-c', '--custom-mode', type=str, help="Custom mode string (same as in ~/state topic)\
-        \n\nNOTE: For the following AUTO submodes, on PX4 Pro:\
-        \n1. AUTO.MISSION\t\tdisable datalink failsafe, which can be done by setting 'NAV_DLL_ACT' paramter to 0.\
-        \n2. AUTO.LOITER\t\tdisable RC failsafe, which can be done by setting 'NAV_RCL_ACT' parameter to 0.")
+        \n\nNOTE: For PX4 Pro AUTO.LOITER, disable RC failsafe, which can be done by setting 'NAV_RCL_ACT' parameter to 0.")
 
     rate_args = subarg.add_parser('rate', help="Set stream rate")
     rate_args.set_defaults(func=do_rate)
