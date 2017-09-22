@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.1 (2017-09-22)
+-------------------
 * mavsys: mode: add solutions for setting AUTO.MISSION and AUTO.LOITER modes (`#814 <https://github.com/mavlink/mavros/issues/814>`_)
   * mavsys: add notes on how to change mode to AUTO.MISSION on PX4 Pro
   * enum_to_string: update enums
