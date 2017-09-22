@@ -16,6 +16,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <nav_msgs/Odometry.h>
 
@@ -66,88 +67,92 @@ private:
 
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
-		Eigen::Affine3d tr;
-		Eigen::Vector3d lin_vel_enu;
-		Eigen::Vector3d ang_vel_enu;
+		// lookup transforms
+		Eigen::Affine3d tf_child2ned;
+		Eigen::Affine3d tf_parent2ned;
+		try {
+			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+				odom->child_frame_id, "local_origin_ned", ros::Time(0)));
+			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+				odom->header.frame_id, "local_origin_ned", ros::Time(0)));
+		} catch (tf2::TransformException &ex) {
+			ROS_WARN("%s",ex.what());
+			ros::Duration(1.0).sleep();
+			return;
+		}
 
-		tf::poseMsgToEigen(odom->pose.pose, tr);
-		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
-		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
+		// unpack data into Eigen
+		Eigen::Vector3d pos_parent(
+			odom->pose.pose.position.x,
+			odom->pose.pose.position.y,
+			odom->pose.pose.position.z);
 
-		// Build 9x9 covariance matrix to be transformed and sent
-		ftf::Covariance9d cov_full{};	// zero initialized
-		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
+		Eigen::Vector3d lin_vel_child(
+			odom->twist.twist.linear.x,
+			odom->twist.twist.linear.y,
+			odom->twist.twist.linear.z);
 
-		// 9x9 covariance matrix contruct
-		cov_full_map.block<6, 6>(0, 0) = ftf::EigenMapConstCovariance6d(odom->pose.covariance.data());
-		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
+		Eigen::Vector3d ang_vel_child(
+			odom->twist.twist.angular.x,
+			odom->twist.twist.angular.y,
+			odom->twist.twist.angular.z);
 
-		/* -*- vector transforms -*- */
+		Eigen::Quaterniond q_parent2child(
+			odom->pose.pose.orientation.w,
+			odom->pose.pose.orientation.x,
+			odom->pose.pose.orientation.y,
+			odom->pose.pose.orientation.z);
 
-		// get NED orientation
-		Eigen::Quaterniond att_ned;
-		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation_ned(), att_ned);
+		Eigen::Vector3d lin_vel_NED;
+		Eigen::Vector3d ang_vel_ned;
+		Eigen::Vector3d pos_NED;
+		Eigen::Quaterniond q_parent2ned;
 
-		// apply coordinate frame transforms
-		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
-		auto q_ned = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+		Eigen::Matrix<double, 6, 6> pose_cov_parent;
+		Eigen::Matrix<double, 9, 9> pose_cov_ned;
+		Eigen::Matrix<double, 6, 6> twist_cov_child;
+		Eigen::Matrix<double, 3, 3> att_cov_ned;
 
-		// angular velocity - WRT body frame
-		auto ang_vel_ned = ftf::transform_frame_enu_ned(
-					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_aircraft_ned(ang_vel_enu, att_ned)));
+		for (int i=0; i<6; i++) for (int j=0; j<6; j++) {
+			pose_cov_parent(i, j) = odom->pose.covariance[i*6 + j];
+			twist_cov_child(i, j) = odom->pose.covariance[i*6 + j];
+		}
 
-		/* -*- covariance transforms -*- */
-		/**
-		 * @brief Pose+Accel 9-D Covariance matrix
-		 * WRT world frame (half upper right triangular)
-		 */
-		auto cov_full_tf = ftf::transform_frame_enu_ned(cov_full);
+		// apply transforms
+		lin_vel_NED = tf_child2ned.linear()*lin_vel_child;
+		ang_vel_ned = tf_child2ned.linear()*ang_vel_child;
+		pos_NED = tf_parent2ned.linear()*pos_parent;
+		q_parent2ned = tf_parent2ned.linear()*q_parent2child;
 
-		ftf::EigenMapConstCovariance9d cov_tf_map(cov_full_tf.data());
-		auto urt_view = Eigen::Matrix<double, 9, 9>(cov_full_map.triangularView<Eigen::Upper>());
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_tf_map);
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: Cov URT: " << std::endl << urt_view);
-
-		/**
-		 * @brief Velocity 6-D Covariance matrix
-		 * WRT world frame (half upper right triangular)
-		 */
-		auto cov_vel = ftf::transform_frame_enu_ned(
-					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_ned_aircraft(odom->twist.covariance, att_ned)));
-
-		ftf::EigenMapConstCovariance6d cov_vel_map(cov_vel.data());
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
+		// constrauct 9x6 matrix to rotate pose from parent to NED
+		// note it is 9x6 since the lpos matrix has accel states
+		// while ROS odometry message doesn't
+		Eigen::Matrix<double, 9, 6> RPose;
+		RPose.block<3, 3>(0, 0) = tf_parent2ned.linear();
+		RPose.block<3, 3>(3, 3) = tf_parent2ned.linear();
 
 		// get timestamp
 		uint64_t stamp_usec = odom->header.stamp.toNSec() / 1e3;
-		const auto zerov3f = Eigen::Vector3f::Zero();
 
 		/* -*- LOCAL_POSITION_NED_COV parser -*- */
 		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
 
 		lpos.time_usec = stamp_usec;
+		pose_cov_ned = RPose*pose_cov_parent*RPose.transpose();
 		lpos.estimator_type = utils::enum_value(estimator_type);
-		ftf::covariance9d_urt_to_mavlink(cov_full_tf, lpos.covariance);
+		for (int i=0; i<6; i++) for (int j=0; j<6; j++) {
+			lpos.covariance[i*6 + j] = pose_cov_ned(i, j);
+		}
 
-		// [[[cog:
-		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
-		//     for f in 'xyz':
-		//         cog.outl("lpos.{a}{f} = {b}.{f}();".format(**locals()))
-		// ]]]
-		lpos.x = pos_ned.x();
-		lpos.y = pos_ned.y();
-		lpos.z = pos_ned.z();
-		lpos.vx = lin_vel_ned.x();
-		lpos.vy = lin_vel_ned.y();
-		lpos.vz = lin_vel_ned.z();
-		lpos.ax = zerov3f.x();
-		lpos.ay = zerov3f.y();
-		lpos.az = zerov3f.z();
-		// [[[end]]] (checksum: 4620cfc77f3e5d768d7c23da5f56ddc6)
+		lpos.x = pos_NED.x();
+		lpos.y = pos_NED.y();
+		lpos.z = pos_NED.z();
+		lpos.vx = lin_vel_NED.x();
+		lpos.vy = lin_vel_NED.y();
+		lpos.vz = lin_vel_NED.z();
+		lpos.ax = 0;
+		lpos.ay = 0;
+		lpos.az = 0;
 
 		// send LOCAL_POSITION_NED_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
@@ -156,17 +161,15 @@ private:
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
 
 		att.time_usec = stamp_usec;
-		ftf::quaternion_to_mavlink(q_ned, att.q);
-		ftf::covariance_to_mavlink(cov_vel, att.covariance);
+		ftf::quaternion_to_mavlink(q_parent2ned, att.q);
+		att_cov_ned = tf_child2ned.linear()*twist_cov_child.block<3, 3>(0, 0)*tf_child2ned.linear().transpose();
+		for (int i=0; i<3; i++) for (int j=0; j<3; j++) {
+			att.covariance[i*3 + j] = att_cov_ned(i, j);
+		}
 
-		// [[[cog:
-		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-		//     cog.outl("att.{b} = ang_vel_ned.{a}();".format(**locals()))
-		// ]]]
 		att.rollspeed = ang_vel_ned.x();
 		att.pitchspeed = ang_vel_ned.y();
 		att.yawspeed = ang_vel_ned.z();
-		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
 
 		// send ATTITUDE_QUATERNION_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
