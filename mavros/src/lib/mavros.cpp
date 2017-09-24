@@ -361,4 +361,3 @@ void MavRos::log_connect_change(bool connected)
 	else
 		ROS_WARN("CON: Lost connection, HEARTBEAT timed out.");
 }
-

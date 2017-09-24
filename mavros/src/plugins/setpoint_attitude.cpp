@@ -64,7 +64,7 @@ public:
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		// thrust msg subscriber to sync
-		th_sub: sp_nh, "thrust", 1;
+		th_sub.subscribe(sp_nh, "thrust", 1);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
@@ -77,7 +77,7 @@ public:
 			/**
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
-			pose_sub: sp_nh, "target_attitude", 1;
+			pose_sub.subscribe(sp_nh, "target_attitude", 1);
 
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
@@ -87,7 +87,7 @@ public:
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
 		else {
-			twist_sub: sp_nh, "cmd_vel", 1;
+			twist_sub.subscribe(sp_nh, "cmd_vel", 1);
 			message_filters::Synchronizer<SyncTwistThrust> sync(SyncTwistThrust(10), twist_sub, th_sub);
 			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}

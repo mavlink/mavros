@@ -129,7 +129,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 29> mav_type_strings{{
+static const std::array<const std::string, 28> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -158,7 +158,6 @@ static const std::array<const std::string, 29> mav_type_strings{{
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
 /* 26 */ "Onboard gimbal",                // Onboard gimbal
 /* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
-/* 28 */ "Dodecarotor",                   // Dodecarotor
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -169,7 +168,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: f601204a93c9d0253a5c02ad77e60662)
+// [[[end]]] (checksum: ff3fd0c445310aef4a3cfb14a18178e0)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -186,7 +185,7 @@ std::string to_string(MAV_TYPE e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_STATE values
-static const std::array<const std::string, 8> mav_state_strings{{
+static const std::array<const std::string, 9> mav_state_strings{{
 /*  0 */ "Uninit",                        // Uninitialized system, state is unknown.
 /*  1 */ "Boot",                          // System is booting up.
 /*  2 */ "Calibrating",                   // System is calibrating and not flight-ready.
@@ -195,6 +194,7 @@ static const std::array<const std::string, 8> mav_state_strings{{
 /*  5 */ "Critical",                      // System is in a non-normal flight mode. It can however still navigate.
 /*  6 */ "Emergency",                     // System is in a non-normal flight mode. It lost control over parts or over the whole airframe. It is in mayday and going down.
 /*  7 */ "Poweroff",                      // System just initialized its power-down sequence, will shut down now.
+/*  8 */ "Flight_Termination",            // System is terminating itself.
 }};
 
 std::string to_string(MAV_STATE e)
@@ -205,7 +205,7 @@ std::string to_string(MAV_STATE e)
 
 	return mav_state_strings[idx];
 }
-// [[[end]]] (checksum: 47dea7c5bd6ab53dbc75a6c51b35d312)
+// [[[end]]] (checksum: 8af1e6916d0229c193aab7d3dc2c97e9)
 
 // [[[cog:
 // ename = "timesync_mode"
@@ -353,7 +353,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! GPS_FIX_TYPE values
-static const std::array<const std::string, 8> gps_fix_type_strings{{
+static const std::array<const std::string, 9> gps_fix_type_strings{{
 /*  0 */ "NO_GPS",                        // No GPS connected
 /*  1 */ "NO_FIX",                        // No position information, GPS is connected
 /*  2 */ "2D_FIX",                        // 2D position
@@ -362,6 +362,7 @@ static const std::array<const std::string, 8> gps_fix_type_strings{{
 /*  5 */ "RTK_FLOAT",                     // RTK float, 3D position
 /*  6 */ "RTK_FIXED",                     // RTK Fixed, 3D position
 /*  7 */ "STATIC",                        // Static fixed, typically used for base stations
+/*  8 */ "PPP",                           // PPP, 3D position.
 }};
 
 std::string to_string(GPS_FIX_TYPE e)
@@ -372,7 +373,7 @@ std::string to_string(GPS_FIX_TYPE e)
 
 	return gps_fix_type_strings[idx];
 }
-// [[[end]]] (checksum: 984346c7986a0742d45d9c1a5ca322ed)
+// [[[end]]] (checksum: 7569b73b2d68ed1412bf0c36afeb131c)
 
 // [[[cog:
 // ename = 'MAV_MISSION_RESULT'

@@ -823,7 +823,7 @@ private:
 
 		mavlink::common::msg::HEARTBEAT hb {};
 
-		hb.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER);
+		hb.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER); //! @todo patch PX4 so it can also handle this type as datalink
 		hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
 		hb.base_mode = enum_value(MAV_MODE::MANUAL_ARMED);
 		hb.custom_mode = 0;

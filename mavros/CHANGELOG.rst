@@ -2,6 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.1 (2017-09-22)
+-------------------
+* mavsys: mode: add solutions for setting AUTO.MISSION and AUTO.LOITER modes (`#814 <https://github.com/mavlink/mavros/issues/814>`_)
+  * mavsys: add notes on how to change mode to AUTO.MISSION on PX4 Pro
+  * enum_to_string: update enums
+  * mavsys: mode: move AUTO submodes info to argparser
+  * sys_status: leave note that MAV_TYPE_ONBOARD_CONTROLLER will be supported on PX4
+  * mavsys: mode: add note on changing to AUTO.LOITER
+* Solve the subscriber initialization
+* lib frame_tf: Add to_eigen() helper
+* Contributors: Alexis Paques, Nuno Marques, Vladimir Ermakov
+
 0.21.0 (2017-09-14)
 -------------------
 * plugin waypoint: Uncrustify, update init list

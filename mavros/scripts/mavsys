@@ -18,7 +18,6 @@ from mavros.utils import *
 from mavros_msgs.msg import State
 from mavros_msgs.srv import SetMode, StreamRate, StreamRateRequest
 
-
 def do_mode(args):
     base_mode = 0
     custom_mode = ''
@@ -86,11 +85,12 @@ def main():
     parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
-    mode_args = subarg.add_parser('mode', help="Set mode")
+    mode_args = subarg.add_parser('mode', help="Set mode", formatter_class=argparse.RawTextHelpFormatter)
     mode_args.set_defaults(func=do_mode)
     mode_group = mode_args.add_mutually_exclusive_group(required=True)
     mode_group.add_argument('-b', '--base-mode', type=int, help="Base mode code")
-    mode_group.add_argument('-c', '--custom-mode', type=str, help="Custom mode string (same as in ~/state topic)")
+    mode_group.add_argument('-c', '--custom-mode', type=str, help="Custom mode string (same as in ~/state topic)\
+        \n\nNOTE: For PX4 Pro AUTO.LOITER, disable RC failsafe, which can be done by setting 'NAV_RCL_ACT' parameter to 0.")
 
     rate_args = subarg.add_parser('rate', help="Set stream rate")
     rate_args.set_defaults(func=do_rate)
