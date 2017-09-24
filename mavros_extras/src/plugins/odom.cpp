@@ -82,10 +82,10 @@ private:
 		try {
 			// transform lookup WRT world frame
 			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, "local_origin" + desired_frame, ros::Time(0)));
+							odom->child_frame_id, "local_origin_" + desired_frame, ros::Time(0)));
 			// transform lookup WRT body frame
 			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->header.frame_id, "local_origin" + desired_frame, ros::Time(0)));
+							odom->header.frame_id, "local_origin_" + desired_frame, ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
 			ROS_WARN("odom: %s",ex.what());
 			ros::Duration(1.0).sleep();
