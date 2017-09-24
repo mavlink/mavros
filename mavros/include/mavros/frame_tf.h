@@ -24,6 +24,9 @@
 
 // for Covariance types
 #include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 
 namespace mavros {
@@ -381,6 +384,31 @@ inline void covariance9d_urt_to_mavlink(const Covariance9d &cov, std::array<floa
 		for (size_t y = x; y < m.rows(); y++)
 			*out++ = m(y, x);
 }
+
+// [[[cog:
+// def make_to_eigen(te, tr, fields):
+//     cog.outl("""//! @brief Helper to convert common ROS geometry_msgs::{tr} to Eigen::{te}""".format(**locals()))
+//     cog.outl("""inline Eigen::{te} to_eigen(const geometry_msgs::{tr} r) {{""".format(**locals()))
+//     cog.outl("""\treturn Eigen::{te}({fl});""".format(te=te, fl=", ".join(["r." + f for f in fields])))
+//     cog.outl("""}""")
+//
+// make_to_eigen("Vector3d", "Point", "xyz")
+// make_to_eigen("Vector3d", "Vector3", "xyz")
+// make_to_eigen("Quaterniond", "Quaternion", "wxyz")
+// ]]]
+//! @brief Helper to convert common ROS geometry_msgs::Point to Eigen::Vector3d
+inline Eigen::Vector3d to_eigen(const geometry_msgs::Point r) {
+	return Eigen::Vector3d(r.x, r.y, r.z);
+}
+//! @brief Helper to convert common ROS geometry_msgs::Vector3 to Eigen::Vector3d
+inline Eigen::Vector3d to_eigen(const geometry_msgs::Vector3 r) {
+	return Eigen::Vector3d(r.x, r.y, r.z);
+}
+//! @brief Helper to convert common ROS geometry_msgs::Quaternion to Eigen::Quaterniond
+inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
+	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
+}
+// [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
 
 }	// namespace ftf
 }	// namespace mavros

@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.1 (2017-09-22)
+-------------------
+
 0.21.0 (2017-09-14)
 -------------------
 * plugin waypoint: Rename current seq in wp list message
