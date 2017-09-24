@@ -2,12 +2,13 @@
  * @brief Odometry plugin
  * @file odom.cpp
  * @author James Goppert <james.goppert@gmail.com>
+ * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2017 James Goppert
+ * Copyright 2017 James Goppert, Nuno Marques
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -27,8 +28,7 @@ using mavlink::common::MAV_ESTIMATOR_TYPE;
 /**
  * @brief Odometry plugin
  *
- * Send odometry info
- * to FCU position and attitude estimators
+ * Send odometry info to FCU position and attitude estimators
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
@@ -48,6 +48,9 @@ public:
 
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string(estimator_type));
 
+		// frame tf params
+		odom_nh.param<std::string>("frame_tf/desired_frame", desired_frame, "ned");
+
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 	}
@@ -63,96 +66,103 @@ private:
 
 	MAV_ESTIMATOR_TYPE estimator_type;
 
+	//! child if for tf
+	std::string desired_frame;
+
 	/* -*- callbacks -*- */
 
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
-		// lookup transforms
+		/** Lookup transforms
+		 *  @todo Implement in a more general fashion in the API IOT apply frame transforms
+		 *  This should also run in parallel on a thread
+		 */
 		Eigen::Affine3d tf_child2ned;
 		Eigen::Affine3d tf_parent2ned;
 		try {
+			// transform lookup WRT world frame
 			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-				odom->child_frame_id, "local_origin_ned", ros::Time(0)));
+							odom->child_frame_id, "local_origin" + desired_frame, ros::Time(0)));
+			// transform lookup WRT body frame
 			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-				odom->header.frame_id, "local_origin_ned", ros::Time(0)));
+							odom->header.frame_id, "local_origin" + desired_frame, ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
-			ROS_WARN("%s",ex.what());
+			ROS_WARN("odom: %s",ex.what());
 			ros::Duration(1.0).sleep();
 			return;
 		}
 
-		// unpack data into Eigen
-		Eigen::Vector3d pos_parent(
-			odom->pose.pose.position.x,
-			odom->pose.pose.position.y,
-			odom->pose.pose.position.z);
+		/** Build 9x9 covariance matrix to be transformed and sent
+		 */
+		ftf::Covariance9d cov_full {};	// zero initialized
+		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
 
-		Eigen::Vector3d lin_vel_child(
-			odom->twist.twist.linear.x,
-			odom->twist.twist.linear.y,
-			odom->twist.twist.linear.z);
+		cov_full_map.block<6, 6>(0, 0) = ftf::EigenMapConstCovariance6d(odom->pose.covariance.data());
+		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
-		Eigen::Vector3d ang_vel_child(
-			odom->twist.twist.angular.x,
-			odom->twist.twist.angular.y,
-			odom->twist.twist.angular.z);
+		/** Build 6x6 covariance matrix to be transformed and sent
+		 */
+		ftf::Covariance6d cov_vel {};	// zero initialized
+		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
 
-		Eigen::Quaterniond q_parent2child(
-			odom->pose.pose.orientation.w,
-			odom->pose.pose.orientation.x,
-			odom->pose.pose.orientation.y,
-			odom->pose.pose.orientation.z);
+		/** Apply linear transforms
+		 */
+		Eigen::Vector3d pos_ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.position));
+		Eigen::Vector3d lin_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.linear));
+		Eigen::Vector3d ang_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.angular));
+		Eigen::Quaterniond q_parent2ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.orientation));
 
-		Eigen::Vector3d lin_vel_NED;
-		Eigen::Vector3d ang_vel_ned;
-		Eigen::Vector3d pos_NED;
-		Eigen::Quaterniond q_parent2ned;
+		/** Apply covariance transforms */
+		/** Pose+Accel 9-D Covariance matrix
+		 *  WRT world frame (half upper right triangular)
+		 */
+		Eigen::Matrix<double, 9, 9> r_9d;
+		r_9d.block<3, 3>(0, 0) = r_9d.block<3, 3>(3, 3) = tf_parent2ned.linear();
+		r_9d.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
-		Eigen::Matrix<double, 6, 6> pose_cov_parent;
-		Eigen::Matrix<double, 9, 9> pose_cov_ned;
-		Eigen::Matrix<double, 6, 6> twist_cov_child;
-		Eigen::Matrix<double, 3, 3> att_cov_ned;
+		cov_full_map = r_9d * cov_full_map * r_9d.transpose();
 
-		for (int i=0; i<6; i++) for (int j=0; j<6; j++) {
-			pose_cov_parent(i, j) = odom->pose.covariance[i*6 + j];
-			twist_cov_child(i, j) = odom->pose.covariance[i*6 + j];
-		}
+		auto urt_view = Eigen::Matrix<double, 9, 9>(cov_full_map.triangularView<Eigen::Upper>());
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_full_map);
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: Cov URT: " << std::endl << urt_view);
 
-		// apply transforms
-		lin_vel_NED = tf_child2ned.linear()*lin_vel_child;
-		ang_vel_ned = tf_child2ned.linear()*ang_vel_child;
-		pos_NED = tf_parent2ned.linear()*pos_parent;
-		q_parent2ned = tf_parent2ned.linear()*q_parent2child;
+		/** Velocity 6-D Covariance matrix
+		 *  WRT body frame
+		 */
+		Eigen::Matrix<double, 6, 6> r_vel;
+		r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2ned.linear();
 
-		// constrauct 9x6 matrix to rotate pose from parent to NED
-		// note it is 9x6 since the lpos matrix has accel states
-		// while ROS odometry message doesn't
-		Eigen::Matrix<double, 9, 6> RPose;
-		RPose.block<3, 3>(0, 0) = tf_parent2ned.linear();
-		RPose.block<3, 3>(3, 3) = tf_parent2ned.linear();
+		cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
+
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
 
 		// get timestamp
 		uint64_t stamp_usec = odom->header.stamp.toNSec() / 1e3;
+
+		const auto zerov3f = Eigen::Vector3f::Zero();
 
 		/* -*- LOCAL_POSITION_NED_COV parser -*- */
 		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
 
 		lpos.time_usec = stamp_usec;
-		pose_cov_ned = RPose*pose_cov_parent*RPose.transpose();
 		lpos.estimator_type = utils::enum_value(estimator_type);
-		for (int i=0; i<6; i++) for (int j=0; j<6; j++) {
-			lpos.covariance[i*6 + j] = pose_cov_ned(i, j);
-		}
+		ftf::covariance9d_urt_to_mavlink(cov_full, lpos.covariance);
 
-		lpos.x = pos_NED.x();
-		lpos.y = pos_NED.y();
-		lpos.z = pos_NED.z();
-		lpos.vx = lin_vel_NED.x();
-		lpos.vy = lin_vel_NED.y();
-		lpos.vz = lin_vel_NED.z();
-		lpos.ax = 0;
-		lpos.ay = 0;
-		lpos.az = 0;
+		// [[[cog:
+		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
+		//     for f in 'xyz':
+		//         cog.outl("lpos.{a}{f} = {b}.{f}();".format(**locals()))
+		// ]]]
+		lpos.x = pos_ned.x();
+		lpos.y = pos_ned.y();
+		lpos.z = pos_ned.z();
+		lpos.vx = lin_vel_ned.x();
+		lpos.vy = lin_vel_ned.y();
+		lpos.vz = lin_vel_ned.z();
+		lpos.ax = zerov3f.x();
+		lpos.ay = zerov3f.y();
+		lpos.az = zerov3f.z();
+		// [[[end]]] (checksum: 4620cfc77f3e5d768d7c23da5f56ddc6)
 
 		// send LOCAL_POSITION_NED_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
@@ -162,14 +172,16 @@ private:
 
 		att.time_usec = stamp_usec;
 		ftf::quaternion_to_mavlink(q_parent2ned, att.q);
-		att_cov_ned = tf_child2ned.linear()*twist_cov_child.block<3, 3>(0, 0)*tf_child2ned.linear().transpose();
-		for (int i=0; i<3; i++) for (int j=0; j<3; j++) {
-			att.covariance[i*3 + j] = att_cov_ned(i, j);
-		}
+		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
+		// [[[cog:
+		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
+		//     cog.outl("att.{b} = ang_vel_ned.{a}();".format(**locals()))
+		// ]]]
 		att.rollspeed = ang_vel_ned.x();
 		att.pitchspeed = ang_vel_ned.y();
 		att.yawspeed = ang_vel_ned.z();
+		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
 
 		// send ATTITUDE_QUATERNION_COV
 		UAS_FCU(m_uas)->send_message_ignore_drop(att);
