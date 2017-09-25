@@ -274,11 +274,11 @@ public:
 	/**
 	 * @brief Publishes static transform.
 	 *
-	 * @param[in] frame_id    parent frame for transform
-	 * @param[in] child_id    child frame for transform
-	 * @param[in] tr    transform
+	 * @param frame_id    parent frame for transform
+	 * @param child_id    child frame for transform
+	 * @param tr          transform
 	 */
-	inline void publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr);
+	void publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr);
 
 	/* -*- time sync -*- */
 

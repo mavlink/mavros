@@ -222,7 +222,7 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 /* -*- transform -*- */
 
 //! Publishes static transform
-inline void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)
+void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)
 {
 	geometry_msgs::TransformStamped static_transformStamped;
 
