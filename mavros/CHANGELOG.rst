@@ -2,6 +2,15 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin: setpoint_attitude: Finish Andres fix
+* fix: attitude callback trigger
+* lib uas: remove inline on not inlined method
+* odom: general fixes and code tighting
+* Use tf2 for odom plugin and set reasoable defaults for local pos cov.
+* Contributors: Andres Rengifo, James Goppert, TSC21, Vladimir Ermakov
+
 0.21.1 (2017-09-22)
 -------------------
 * mavsys: mode: add solutions for setting AUTO.MISSION and AUTO.LOITER modes (`#814 <https://github.com/mavlink/mavros/issues/814>`_)

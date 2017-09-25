@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* odom: fix typo
+* odom: general fixes and code tighting
+* Use tf2 for odom plugin and set reasoable defaults for local pos cov.
+* Contributors: James Goppert, TSC21
+
 0.21.1 (2017-09-22)
 -------------------
 
