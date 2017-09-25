@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.2 (2017-09-25)
+-------------------
 * plugin: setpoint_attitude: Finish Andres fix
 * fix: attitude callback trigger
 * lib uas: remove inline on not inlined method
