@@ -1,0 +1,7 @@
+# Send waypoint reached to host
+#
+# Returns success status
+
+uint16 wp_seq
+---
+bool success

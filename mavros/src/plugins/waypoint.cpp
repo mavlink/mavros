@@ -23,7 +23,7 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
-
+#include <mavros_msgs/WaypointReached.h>
 namespace mavros {
 namespace std_plugins {
 using utils::enum_value;
@@ -139,6 +139,8 @@ public:
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
+		do_trig_after_reached(false),
+		trig_srv_name(""),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -153,6 +155,11 @@ public:
 		wp_state = WP::IDLE;
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
+
+		wp_nh.param("trig_after_reached", do_trig_after_reached, false);
+		wp_nh.param("trig_srv_name", trig_srv_name, trig_srv_name);
+	
+		trig_client = wp_nh.serviceClient<mavros_msgs::WaypointReached>(trig_srv_name);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
@@ -191,6 +198,8 @@ private:
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
 
+	ros::ServiceClient trig_client;
+
 	std::vector<WaypointItem> waypoints;
 	std::vector<WaypointItem> send_waypoints;
 	enum class WP {
@@ -222,11 +231,14 @@ private:
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
 	bool enable_partial_push;
+	bool do_trig_after_reached;
+
+	std::string trig_srv_name;
 
 	bool reshedule_pull;
 
 	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
-	static constexpr int LIST_TIMEOUT_MS = 30000;	//! Timeout for pull/push operations
+	static constexpr int LIST_TIMEOUT_MS = 60000;	//! Timeout for pull/push operations
 	static constexpr int WP_TIMEOUT_MS = 1000;
 	static constexpr int RESHEDULE_MS = 5000;
 	static constexpr int RETRIES_COUNT = 3;
@@ -403,6 +415,18 @@ private:
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
+		if (do_trig_after_reached)
+		{
+		  mavros_msgs::WaypointReached myTrig;
+		  myTrig.request.wp_seq = mitr.seq;
+		  if (trig_client.call(myTrig))
+		  {
+			if (!myTrig.response.success)
+			  ROS_WARN_NAMED("wp", "WP : could not trig #%d", mitr.seq);
+		  }
+		  else
+			ROS_WARN_NAMED("wp", "WP : can't call trigger service #%d", mitr.seq);
+		}
 	}
 
 	/**

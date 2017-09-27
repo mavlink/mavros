@@ -71,6 +71,7 @@ add_service_files(
   WaypointPull.srv
   WaypointPush.srv
   WaypointSetCurrent.srv
+  WaypointReached.srv
 )
 
 # add_action_files(
