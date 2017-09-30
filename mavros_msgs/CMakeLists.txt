@@ -15,6 +15,7 @@ add_message_files(
   BatteryStatus.msg
   CamIMUStamp.msg
   CommandCode.msg
+  DebugValue.msg
   ExtendedState.msg
   FileEntry.msg
   GlobalPositionTarget.msg
