@@ -140,7 +140,6 @@ public:
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
 		do_trig_after_reached(false),
-		trig_srv_name(""),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -157,9 +156,8 @@ public:
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
 		wp_nh.param("trig_after_reached", do_trig_after_reached, false);
-		wp_nh.param("trig_srv_name", trig_srv_name, trig_srv_name);
 	
-		trig_client = wp_nh.serviceClient<mavros_msgs::WaypointReached>(trig_srv_name);
+		trig_client = wp_nh.serviceClient<mavros_msgs::WaypointReached>("reached");
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
@@ -415,17 +413,15 @@ private:
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
-		if (do_trig_after_reached)
-		{
+		if (do_trig_after_reached) {
 		  mavros_msgs::WaypointReached myTrig;
 		  myTrig.request.wp_seq = mitr.seq;
-		  if (trig_client.call(myTrig))
-		  {
+		  if (trig_client.call(myTrig)) {
 			if (!myTrig.response.success)
-			  ROS_WARN_NAMED("wp", "WP : could not trig #%d", mitr.seq);
+			  ROS_WARN_NAMED("wp", "WP : reached service call unsuccessful");
 		  }
 		  else
-			ROS_WARN_NAMED("wp", "WP : can't call trigger service #%d", mitr.seq);
+			ROS_ERROR_NAMED("wp", "WP : unable to call reached service");
 		}
 	}
 
