@@ -24,6 +24,8 @@
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
 #include <mavros_msgs/WaypointReached.h>
+
+
 namespace mavros {
 namespace std_plugins {
 using utils::enum_value;
@@ -155,7 +157,7 @@ public:
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
-		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached",10,true);
+		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached", 10, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
