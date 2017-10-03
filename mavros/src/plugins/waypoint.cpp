@@ -23,7 +23,7 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
-#include <mavros_msgs/WaypointReached.h>
+#include <std_msgs/UInt16.h>
 namespace mavros {
 namespace std_plugins {
 using utils::enum_value;
@@ -157,7 +157,7 @@ public:
 
 		wp_nh.param("trig_after_reached", do_signal_reached, false);
 	
-		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached",1,true);
+		wp_reached_pub = wp_nh.advertise<std_msgs::UInt16>("reached",1,true);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
@@ -414,8 +414,8 @@ private:
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
 		if (do_trig_after_reached) {
-		  auto wpr = boost::make_shared<mavros_msgs::WaypointReached>();
-		  wpr->wp_seq = mitr.seq;
+		  auto wpr = boost::make_shared<std_msgs::UInt16>();
+		  wpr->data = mitr.seq;
 		  wp_reached_pub.publish(wpr);
 		}
 	}
