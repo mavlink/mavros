@@ -155,9 +155,9 @@ public:
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
-		wp_nh.param("trig_after_reached", do_trig_after_reached, false);
+		wp_nh.param("trig_after_reached", do_signal_reached, false);
 	
-		trig_client = wp_nh.serviceClient<mavros_msgs::WaypointReached>("reached");
+		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached",1,true);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
@@ -191,12 +191,12 @@ private:
 	ros::NodeHandle wp_nh;
 
 	ros::Publisher wp_list_pub;
+	ros::Publisher wp_reached_pub;
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
 
-	ros::ServiceClient trig_client;
 
 	std::vector<WaypointItem> waypoints;
 	std::vector<WaypointItem> send_waypoints;
@@ -414,14 +414,9 @@ private:
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
 		if (do_trig_after_reached) {
-		  mavros_msgs::WaypointReached myTrig;
-		  myTrig.request.wp_seq = mitr.seq;
-		  if (trig_client.call(myTrig)) {
-			if (!myTrig.response.success)
-			  ROS_WARN_NAMED("wp", "WP : reached service call unsuccessful");
-		  }
-		  else
-			ROS_ERROR_NAMED("wp", "WP : unable to call reached service");
+		  auto wpr = boost::make_shared<mavros_msgs::WaypointReached>();
+		  wpr->wp_seq = mitr.seq;
+		  wp_reached_pub.publish(wpr);
 		}
 	}
 
