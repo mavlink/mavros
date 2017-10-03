@@ -139,7 +139,7 @@ public:
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
-		do_trig_after_reached(false),
+		do_signal_reached(false),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -229,7 +229,7 @@ private:
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
 	bool enable_partial_push;
-	bool do_trig_after_reached;
+	bool do_signal_reached;
 
 	std::string trig_srv_name;
 
@@ -413,7 +413,7 @@ private:
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
-		if (do_trig_after_reached) {
+		if (do_signal_reached) {
 		  auto wpr = boost::make_shared<std_msgs::UInt16>();
 		  wpr->data = mitr.seq;
 		  wp_reached_pub.publish(wpr);
