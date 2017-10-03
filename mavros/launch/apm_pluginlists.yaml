@@ -5,7 +5,7 @@ plugin_blacklist:
 - safety_area
 # extras
 - altitude
-- debug
+- debug_value
 - image_pub
 - mocap_pose_estimate
 - px4flow

@@ -119,10 +119,10 @@ mission:
 # adsb
 # None
 
-# debug
+# debug_value
 # None
 
-# distance_sensor (PX4 only)
+# distance_sensor
 ## Currently available orientations:
 #    Check http://wiki.ros.org/mavros/Enumerations
 ##

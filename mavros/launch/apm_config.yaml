@@ -116,6 +116,16 @@ mission:
 
 # --- mavros extras plugins (same order) ---
 
+# adsb
+# None
+
+# debug_value
+# None
+
+# distance_sensor
+## Currently available orientations:
+#    Check http://wiki.ros.org/mavros/Enumerations
+##
 distance_sensor:
   rangefinder_pub:
     id: 0
@@ -129,20 +139,9 @@ distance_sensor:
     id: 1
     orientation: PITCH_270  # only that orientation are supported by APM 3.4+
 
-## Currently available orientations:
-#    Check http://wiki.ros.org/mavros/Enumerations
-##
-
-
 # image_pub
 image:
   frame_id: "px4flow"
-
-# mocap_pose_estimate
-mocap:
-  # select mocap source
-  use_tf: false   # ~mocap/tf
-  use_pose: true  # ~mocap/pose
 
 # fake_gps
 fake_gps:
@@ -160,11 +159,24 @@ fake_gps:
   satellites_visible: 5   # virtual number of visible satellites
   fix_type: 3             # type of GPS fix (default: 3D)
   tf:
+    listen: false
     send: false           # send TF?
     frame_id: "map"       # TF frame_id
     child_frame_id: "fix" # TF child_frame_id
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
+
+# mocap_pose_estimate
+mocap:
+  # select mocap source
+  use_tf: false   # ~mocap/tf
+  use_pose: true  # ~mocap/pose
+
+# odom
+odometry:
+  frame_tf:
+    desired_frame: "ned"
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
 
 # px4flow
 px4flow:
@@ -188,13 +200,5 @@ vision_speed:
 # vibration
 vibration:
   frame_id: "base_link"
-
-# adsb
-# None
-
-odometry:
-  frame_tf:
-    desired_frame: "ned"
-  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
 
 # vim:set ts=2 sw=2 et:
