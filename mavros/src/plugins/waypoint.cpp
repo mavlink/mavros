@@ -23,7 +23,7 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
-#include <std_msgs/UInt16.h>
+#include <mavros_msgs/WaypointReached.h>
 namespace mavros {
 namespace std_plugins {
 using utils::enum_value;
@@ -139,7 +139,6 @@ public:
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
-		do_signal_reached(false),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -155,11 +154,8 @@ public:
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
-		wp_nh.param("trig_after_reached", do_signal_reached, false);
-	
-		wp_reached_pub = wp_nh.advertise<std_msgs::UInt16>("reached",1,true);
-
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
+		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached",10,true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
@@ -229,14 +225,11 @@ private:
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
 	bool enable_partial_push;
-	bool do_signal_reached;
-
-	std::string trig_srv_name;
 
 	bool reshedule_pull;
 
 	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
-	static constexpr int LIST_TIMEOUT_MS = 60000;	//! Timeout for pull/push operations
+	static constexpr int LIST_TIMEOUT_MS = 30000;	//! Timeout for pull/push operations
 	static constexpr int WP_TIMEOUT_MS = 1000;
 	static constexpr int RESHEDULE_MS = 5000;
 	static constexpr int RETRIES_COUNT = 3;
@@ -413,11 +406,13 @@ private:
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
-		if (do_signal_reached) {
-		  auto wpr = boost::make_shared<std_msgs::UInt16>();
-		  wpr->data = mitr.seq;
-		  wp_reached_pub.publish(wpr);
-		}
+
+		auto wpr = boost::make_shared<mavros_msgs::WaypointReached>();
+
+		wpr->header.stamp = ros::Time::now();
+		wpr->wp_seq = mitr.seq;
+
+		wp_reached_pub.publish(wpr);
 	}
 
 	/**
