@@ -36,9 +36,6 @@ public:
 
 		// publishers
 		debug_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug", 10);
-		/** @todo create a pub config based on the naming of the debug msgs,
-		 * using a map_dict as in distance_sensor plugin
-		 */
 		debug_vector_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug_vector", 10);
 		named_value_float_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_float", 10);
 		named_value_int_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_int", 10);
@@ -230,7 +227,7 @@ private:
 		// [[[end]]] (checksum: b7ce125baba6e8918f6b866a9d5aa77c)
 
 		debug_logger(value.get_name(), *dv_msg);
-		named_value_float_pub.publish(dv_msg);
+		named_value_int_pub.publish(dv_msg);
 	}
 
 	/* -*- callbacks -*- */
