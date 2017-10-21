@@ -15,7 +15,7 @@ run_get() {
 	local tool="$2"
 	local model="$3"
 
-	if [[ -d "/usr/share/GeographicLib/$dir" or -d "/usr/local/share/GeographicLib/$dir" ]]; then
+	if [[ -d "/usr/share/GeographicLib/$dir" || -d "/usr/local/share/GeographicLib/$dir" ]]; then
 		return
 	fi
 
