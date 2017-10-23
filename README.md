@@ -64,9 +64,8 @@ We'd like to keep the project bugtracker as free as possible, so please contact 
 CI Statuses
 -----------
 
-  - ROS Indigo:  [![Build Status](http://build.ros.org/buildStatus/icon?job=Idev__mavros__ubuntu_trusty_amd64)](http://build.ros.org/job/Idev__mavros__ubuntu_trusty_amd64/)
-  - ROS Jade:    [![Build Status](http://build.ros.org/buildStatus/icon?job=Jdev__mavros__ubuntu_trusty_amd64)](http://build.ros.org/job/Jdev__mavros__ubuntu_trusty_amd64/)
   - ROS Kinetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdev__mavros__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdev__mavros__ubuntu_xenial_amd64/)
+  - ROS Lunar: [![Build Status](http://build.ros.org/buildStatus/icon?job=Ldev__mavros__ubuntu_xenial_amd64)](http://build.ros.org/job/Ldev__mavros__ubuntu_xenial_amd64/)
   - Travis master on Indigo & Jade: [![travis status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
 
 
