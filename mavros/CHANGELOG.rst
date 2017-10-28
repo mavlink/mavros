@@ -2,6 +2,33 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update geographiclib script to work with zsh
+* scripts: fix typos and improve help messages consistency
+  commad -> command
+  safty -> safety
+  Start help messages with a capital letter.
+* uncrustify
+* plugin waypoints: Use stamped message
+* plugin waypoint: Add MISSION_ITEM_REACHED publisher
+  * Changes to be committed:
+  modified:   mavros/src/plugins/waypoint.cpp
+  modified:   mavros_msgs/CMakeLists.txt
+  new file:   mavros_msgs/srv/WaypointReached.srv
+  * change reached service name to classic topic
+  * Changed reached service to topic
+  * removed unused file
+  * Removed WaypointReached service
+  * Change reached message type to std_msgs::UInt16
+  * Delete WaypointReached.srv
+  * Restore WaypointPush.srv
+  * Fix tipo
+  * Update waypoint.cpp
+* launch: sync APM and PX4 configs
+* add debug plugin
+* Contributors: Jonas Vautherin, Patrick José Pereira, TSC21, Vladimir Ermakov, gui2dev
+
 0.21.2 (2017-09-25)
 -------------------
 * plugin: setpoint_attitude: Finish Andres fix
