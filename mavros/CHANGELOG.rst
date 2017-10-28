@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.3 (2017-10-28)
+-------------------
 * Update geographiclib script to work with zsh
 * scripts: fix typos and improve help messages consistency
   commad -> command

@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.3 (2017-10-28)
+-------------------
 * mavteleop: Move from iteritems to items for python3 support
   Items work with python3 and python2.7
   Signed-off-by: Patrick José Pereira <patrickelectric@gmail.com>
