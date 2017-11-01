@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.4 (2017-11-01)
+-------------------
 * lib ftf: update dox, uncrustify
 * ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)
   * ENU<->ECEF transforms fix.

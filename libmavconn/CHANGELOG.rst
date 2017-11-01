@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.4 (2017-11-01)
+-------------------
 * cmake: do not warn about datasets, only abuse CI where that messages threated as a problem.
 * Contributors: Vladimir Ermakov
 
