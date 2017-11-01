@@ -64,48 +64,6 @@ using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using Matrix9d = Eigen::Matrix<double, 9, 9>;
 
 
-Eigen::Matrix3d ecef_enu_rotation(const Eigen::Vector3d &map_origin)
-{
-	Eigen::Matrix3d R;
-
-	//! Degrees to radians
-	static constexpr double DEG_TO_RAD = (M_PI / 180.0);
-
-	// Don't forget to convert from degrees to radians
-	const double sin_lat = std::sin(map_origin[0] * DEG_TO_RAD);
-	const double sin_lon = std::sin(map_origin[1] * DEG_TO_RAD);
-	const double cos_lat = std::cos(map_origin[0] * DEG_TO_RAD);
-	const double cos_lon = std::cos(map_origin[1] * DEG_TO_RAD);
-
-	/**
-	 * @brief Apply transform from ECEF to ENU:
-	 * http://www.navipedia.net/index.php/Transformations_between_ECEF_and_ENU_coordinates
-	 * ϕ = latitude
-	 * λ = longitude
-	 * The rotation is composed by a counter-clockwise rotation over the Z-axis
-	 * by an angle of 90 + λ followed by a counter-clockwise rotation over the east-axis by
-	 * an angle of 90 - ϕ.
-	 * R = [-sinλ         cosλ         0.0
-	 *      -cosλ*sinϕ   -sinλ*sinϕ    cosϕ
-	 *       cosλ*cosϕ    sinλ*cosϕ    sinϕ   ]
-	 * [East, North, Up] = R * [∂x, ∂y, ∂z]
-	 * where both [East, North, Up] and [∂x, ∂y, ∂z] are local coordinates relative to map origin.
-	 */
-	R << -sin_lon,            cos_lon,           0.0,
-			 -cos_lon * sin_lat, -sin_lon * sin_lat, cos_lat,
-				cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
-
-	return R;
-}
-
-Eigen::Matrix3d enu_ecef_rotation(const Eigen::Vector3d &map_origin)
-{
-	Eigen::Matrix3d R = ecef_enu_rotation(map_origin);
-	// It's just an inverse rotation from ECEF to ENU, which means transpose.
-	R.transposeInPlace();
-	return R;
-}
-
 Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const StaticTF transform)
 {
 	// Transform the attitude representation from frame to frame.
@@ -124,13 +82,6 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticTF transform)
 {
-	Eigen::Matrix3d R;
-
-	const double sin_lat = std::sin(vec.x());
-	const double sin_lon = std::sin(vec.y());
-	const double cos_lat = std::cos(vec.x());
-	const double cos_lon = std::cos(vec.y());
-
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
@@ -217,9 +168,45 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	}
 }
 
-Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Matrix3d &R)
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform)
 {
-	return R * vec;
+	//! Degrees to radians
+	static constexpr double DEG_TO_RAD = (M_PI / 180.0);
+
+	// Don't forget to convert from degrees to radians
+	const double sin_lat = std::sin(map_origin.x() * DEG_TO_RAD);
+	const double sin_lon = std::sin(map_origin.y() * DEG_TO_RAD);
+	const double cos_lat = std::cos(map_origin.x() * DEG_TO_RAD);
+	const double cos_lon = std::cos(map_origin.y() * DEG_TO_RAD);
+
+	/**
+	 * @brief Compute transform from ECEF to ENU:
+	 * http://www.navipedia.net/index.php/Transformations_between_ECEF_and_ENU_coordinates
+	 * ϕ = latitude
+	 * λ = longitude
+	 * The rotation is composed by a counter-clockwise rotation over the Z-axis
+	 * by an angle of 90 + λ followed by a counter-clockwise rotation over the east-axis by
+	 * an angle of 90 - ϕ.
+	 * R = [-sinλ         cosλ         0.0
+	 *      -cosλ*sinϕ   -sinλ*sinϕ    cosϕ
+	 *       cosλ*cosϕ    sinλ*cosϕ    sinϕ   ]
+	 * [East, North, Up] = R * [∂x, ∂y, ∂z]
+	 * where both [East, North, Up] and [∂x, ∂y, ∂z] are local coordinates relative to map origin.
+	 */
+	Eigen::Matrix3d R;
+	R << -sin_lon,            cos_lon,           0.0,
+	     -cos_lon * sin_lat, -sin_lon * sin_lat, cos_lat,
+	      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
+
+	switch (transform) {
+	case StaticTF::ECEF_TO_ENU:
+		return R * vec;
+
+	case StaticTF::ENU_TO_ECEF:
+		// ENU to ECEF rotation is just an inverse rotation from ECEF to ENU, which means transpose.
+		R.transposeInPlace();
+		return R * vec;
+	}
 }
 
 Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Quaterniond &q)

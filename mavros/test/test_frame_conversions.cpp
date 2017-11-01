@@ -63,7 +63,59 @@ TEST(FRAME_TF, transform_static_frame__ned_to_enu_123)
 	Eigen::Vector3d input(1, 2, 3);
 	Eigen::Vector3d expected(2, 1, -3);
 
-	auto out = ftf::detail::transform_static_frame(input, ftf::StaticTF::ENU_TO_NED);
+	auto out = ftf::detail::transform_static_frame(input, ftf::StaticTF::NED_TO_ENU);
+
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
+}
+
+TEST(FRAME_TF, transform_static_frame__ecef_to_enu_123_00)
+{
+	Eigen::Vector3d input(1, 2, 3);
+	Eigen::Vector3d map_origin(0, 0, 0);
+	Eigen::Vector3d expected(2, 3, 1);
+
+	auto out = ftf::detail::transform_static_frame(input, map_origin, ftf::StaticTF::ECEF_TO_ENU);
+
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
+}
+
+TEST(FRAME_TF, transform_static_frame__enu_to_ecef_123_00)
+{
+	Eigen::Vector3d input(1, 2, 3);
+	Eigen::Vector3d map_origin(0, 0, 0);
+	Eigen::Vector3d expected(3, 1, 2);
+
+	auto out = ftf::detail::transform_static_frame(input, map_origin, ftf::StaticTF::ENU_TO_ECEF);
+
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
+}
+
+TEST(FRAME_TF, transform_static_frame__ecef_to_enu_123_4030)
+{
+	Eigen::Vector3d input(1, 2, 3);
+	Eigen::Vector3d map_origin(40, 30, 0);
+	Eigen::Vector3d expected(1.23205080756887, 1.09867532044397, 3.35782122034753);
+
+	auto out = ftf::detail::transform_static_frame(input, map_origin, ftf::StaticTF::ECEF_TO_ENU);
+
+	EXPECT_NEAR(expected.x(), out.x(), epsilon);
+	EXPECT_NEAR(expected.y(), out.y(), epsilon);
+	EXPECT_NEAR(expected.z(), out.z(), epsilon);
+}
+
+TEST(FRAME_TF, transform_static_frame__enu_to_ecef_123_4030)
+{
+	Eigen::Vector3d input(1, 2, 3);
+	Eigen::Vector3d map_origin(40, 30, 0);
+	Eigen::Vector3d expected(0.3769010460539777, 1.37230445877637, 3.46045171529757);
+
+	auto out = ftf::detail::transform_static_frame(input, map_origin, ftf::StaticTF::ENU_TO_ECEF);
 
 	EXPECT_NEAR(expected.x(), out.x(), epsilon);
 	EXPECT_NEAR(expected.y(), out.y(), epsilon);

@@ -127,7 +127,7 @@ private:
 	double rot_cov;
 
 	Eigen::Vector3d map_origin {};	//!< geodetic origin of map frame [lla]
-	Eigen::Vector3d ecef_origin;	//!< geocentric origin of map frame [m]
+	Eigen::Vector3d ecef_origin {};	//!< geocentric origin of map frame [m]
 	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame [m]
 
 	template<typename MsgT>
@@ -332,7 +332,7 @@ private:
 		// Compute the local coordinates in ECEF
 		local_ecef = map_point - ecef_origin;
 		// Compute the local coordinates in ENU
-		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(map_origin, local_ecef), odom->pose.pose.position);
+		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(local_ecef, map_origin), odom->pose.pose.position);
 
 		/**
 		 * @brief By default, we are using the relative altitude instead of the geocentric
@@ -453,15 +453,20 @@ private:
 		map_origin.y() = req->geo.longitude;
 		map_origin.z() = req->geo.altitude;
 
-		/**
-		 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
-		 */
-		GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
+		try {
+			/**
+			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 */
+			GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
+						GeographicLib::Constants::WGS84_f());
 
-		// map_origin to ECEF
-		map.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
-					ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+			// map_origin to ECEF
+			map.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
+						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+		}
+		catch (const std::exception& e) {
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+		}
 
 		is_map_init = true;
 	}

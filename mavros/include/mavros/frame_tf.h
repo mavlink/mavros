@@ -60,24 +60,12 @@ enum class StaticTF {
 	NED_TO_ENU,		//!< will change orientation from being expressed WRT NED frame to WRT ENU frame
 	ENU_TO_NED,		//!< change from expressed WRT ENU frame to WRT NED frame
 	AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
-	BASELINK_TO_AIRCRAFT	//!< change from expressed WRT baselnk to WRT aircraft
+	BASELINK_TO_AIRCRAFT,	//!< change from expressed WRT baselnk to WRT aircraft
+	ECEF_TO_ENU,		//!< change from expressed WRT ECEF frame to WRT ENU frame
+	ENU_TO_ECEF		//!< change from expressed WRT ENU frame to WRT ECEF frame
 };
 
 namespace detail {
-
-/**
- * @brief Returns rotation matrix from ECEF frame to ENU.
- *
- * map_origin - geodetic origin [lla],
- */
-Eigen::Matrix3d ecef_enu_rotation(const Eigen::Vector3d &map_origin);
-
-/**
- * @brief Returns rotation matrix from ENU frame to ECEF.
- *
- * map_origin - geodetic origin [lla],
- */
-Eigen::Matrix3d enu_ecef_rotation(const Eigen::Vector3d &map_origin);
 
 /**
  * @brief Transform representation of attitude from 1 frame to another
@@ -87,13 +75,6 @@ Eigen::Matrix3d enu_ecef_rotation(const Eigen::Vector3d &map_origin);
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
 Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const StaticTF transform);
-
-/**
- * @brief Transform data expressed in one frame to another frame.
- *
- * General function. Please use specialized enu-ned and ned-enu variants.
- */
-Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Matrix3d &R);
 
 /**
  * @brief Transform data expressed in one frame to another frame.
@@ -150,6 +131,14 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
  * General function. Please use specialized enu-ned and ned-enu variants.
  */
 Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform);
+
+/**
+ * @brief Transform data expressed in one frame to another frame
+ * with additional map origin parameter.
+ *
+ * General function. Please use specialized variants.
+ */
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
 
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
@@ -233,27 +222,25 @@ inline T transform_frame_baselink_aircraft(const T &in) {
 /**
  * @brief Transform data expressed in ECEF frame to ENU frame.
  *
- * map_origin - geodetic origin [lla],
  * in - local ECEF coordinates [m],
+ * map_origin - geodetic origin [lla],
  * returns local ENU coordinates [m].
  */
 template<class T>
-inline T transform_frame_ecef_enu(const T &map_origin, const T &in) {
-	Eigen::Matrix3d R = detail::ecef_enu_rotation(map_origin);
-	return detail::transform_frame(in, R);
+inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ECEF_TO_ENU);
 }
 
 /**
  * @brief Transform data expressed in ENU frame to ECEF frame.
  *
- * map_origin - geodetic origin [lla],
  * in - local ENU coordinates [m].
+ * map_origin - geodetic origin [lla],
  * returns local ECEF coordinates [m].
  */
 template<class T>
-inline T transform_frame_enu_ecef(const T &map_origin, const T &in) {
-	Eigen::Matrix3d R = detail::enu_ecef_rotation(map_origin);
-	return detail::transform_frame(in, R);
+inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ENU_TO_ECEF);
 }
 
 /**
