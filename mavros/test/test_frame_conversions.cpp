@@ -63,7 +63,7 @@ TEST(FRAME_TF, transform_static_frame__ned_to_enu_123)
 	Eigen::Vector3d input(1, 2, 3);
 	Eigen::Vector3d expected(2, 1, -3);
 
-	auto out = ftf::detail::transform_static_frame(input, ftf::StaticTF::ENU_TO_NED);
+	auto out = ftf::detail::transform_static_frame(input, ftf::StaticTF::NED_TO_ENU);
 
 	EXPECT_NEAR(expected.x(), out.x(), epsilon);
 	EXPECT_NEAR(expected.y(), out.y(), epsilon);
