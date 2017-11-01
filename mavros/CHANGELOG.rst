@@ -2,6 +2,15 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib ftf: update dox, uncrustify
+* ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)
+  * ENU<->ECEF transforms fix.
+  * Changes after review. Unit tests added.
+* test: fix copy-paste error in frame_tf
+* Contributors: Vladimir Ermakov, pavloblindnology
+
 0.21.3 (2017-10-28)
 -------------------
 * Update geographiclib script to work with zsh

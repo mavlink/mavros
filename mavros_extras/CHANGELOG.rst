@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)
+  * ENU<->ECEF transforms fix.
+  * Changes after review. Unit tests added.
+* Contributors: pavloblindnology
+
 0.21.3 (2017-10-28)
 -------------------
 * mavteleop: Move from iteritems to items for python3 support
