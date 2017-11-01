@@ -222,9 +222,9 @@ inline T transform_frame_baselink_aircraft(const T &in) {
 /**
  * @brief Transform data expressed in ECEF frame to ENU frame.
  *
- * in - local ECEF coordinates [m],
- * map_origin - geodetic origin [lla],
- * returns local ENU coordinates [m].
+ * @param in          local ECEF coordinates [m]
+ * @param map_origin  geodetic origin [lla]
+ * @returns local ENU coordinates [m].
  */
 template<class T>
 inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
@@ -234,9 +234,9 @@ inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
 /**
  * @brief Transform data expressed in ENU frame to ECEF frame.
  *
- * in - local ENU coordinates [m].
- * map_origin - geodetic origin [lla],
- * returns local ECEF coordinates [m].
+ * @param in          local ENU coordinates [m]
+ * @param map_origin  geodetic origin [lla]
+ * @returns local ECEF coordinates [m].
  */
 template<class T>
 inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
@@ -248,7 +248,7 @@ inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
  * Assumes quaternion represents rotation from aircraft frame to NED frame.
  */
 template<class T>
-inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_aircraft_ned(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -257,7 +257,7 @@ inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from NED to aircraft frame.
  */
 template<class T>
-inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_ned_aircraft(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -266,7 +266,7 @@ inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from aircraft frame to ENU frame.
  */
 template<class T>
-inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_aircraft_enu(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -275,7 +275,7 @@ inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from ENU to aircraft frame.
  */
 template<class T>
-inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_enu_aircraft(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -284,7 +284,7 @@ inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from ENU to base_link frame.
  */
 template<class T>
-inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_enu_baselink(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -293,7 +293,7 @@ inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from basel_link to ENU frame.
  */
 template<class T>
-inline T transform_frame_baselink_enu(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_baselink_enu(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
