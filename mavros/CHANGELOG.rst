@@ -36,7 +36,7 @@ Forthcoming
   * Update waypoint.cpp
 * launch: sync APM and PX4 configs
 * add debug plugin
-* Contributors: Jonas Vautherin, Patrick José Pereira, TSC21, Vladimir Ermakov, gui2dev
+* Contributors: Jonas Vautherin, Patrick Jose Pereira, TSC21, Vladimir Ermakov, gui2dev
 
 0.21.2 (2017-09-25)
 -------------------
@@ -349,7 +349,7 @@ Forthcoming
 * Update README for all packages
 * Update README.md
   Fix instructions: Only the Kinetic distro actually works for MAVLink 2.0
-* Contributors: Beat Küng, Georgii Staroselskii, Lorenz Meier, Vladimir Ermakov
+* Contributors: Beat Kung, Georgii Staroselskii, Lorenz Meier, Vladimir Ermakov
 
 0.18.3 (2016-07-07)
 -------------------
