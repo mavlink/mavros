@@ -126,8 +126,9 @@ private:
 
 	double rot_cov;
 
-	Eigen::Vector3d map_origin {};	//!< origin of map frame
-	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame
+	Eigen::Vector3d map_origin {};	//!< geodetic origin of map frame [lla]
+	Eigen::Vector3d ecef_origin {};	//!< geocentric origin of map frame [m]
+	Eigen::Vector3d local_ecef {};	//!< local ECEF coordinates on map frame [m]
 
 	template<typename MsgT>
 	inline void fill_lla(MsgT &msg, sensor_msgs::NavSatFix::Ptr fix)
@@ -289,14 +290,14 @@ private:
 		vel_cov_out.fill(0.0);
 		vel_cov_out(0) = -1.0;
 
-		// ECEF point in "map" frame
+		// Current fix in ECEF
 		Eigen::Vector3d map_point;
 
 		try {
 			/**
 			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 			 *
-			 * Note: "map_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
+			 * Note: "ecef_origin" is the origin of "map" frame, in ECEF, and the local coordinates are
 			 * in spherical coordinates, with the orientation in ENU (just like what is applied
 			 * on Gazebo)
 			 */
@@ -305,31 +306,33 @@ private:
 
 			/**
 			 * @brief Checks if the "map" origin is set.
-			 * - If not, and the home position is also not received, it sets the current local ecef as the origin;
+			 * - If not, and the home position is also not received, it sets the current fix as the origin;
 			 * - If the home position is received, it sets the "map" origin;
 			 * - If the "map" origin is set, then it applies the rotations to the offset between the origin
 			 * and the current local geocentric coordinates.
 			 */
+			// Current fix to ECEF
+			map.Forward(fix->latitude, fix->longitude, fix->altitude,
+						map_point.x(), map_point.y(), map_point.z());
+
+			// Set the current fix as the "map" origin if it's not set
 			if (!is_map_init) {
-				map.Forward(fix->latitude, fix->longitude, fix->altitude,
-							map_origin.x(), map_origin.y(), map_origin.z());
+				map_origin.x() = fix->latitude;
+				map_origin.y() = fix->longitude;
+				map_origin.z() = fix->altitude;
 
-				local_ecef = map_origin;
+				ecef_origin = map_point; // Local position is zero
 				is_map_init = true;
-			}
-			// If origin is set, compute the local coordinates in ENU
-			else {
-				map.Forward(fix->latitude, fix->longitude, fix->altitude,
-							map_point.x(), map_point.y(), map_point.z());
-
-				local_ecef = map_origin - map_point;
 			}
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
 		}
 
-		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(local_ecef), odom->pose.pose.position);
+		// Compute the local coordinates in ECEF
+		local_ecef = map_point - ecef_origin;
+		// Compute the local coordinates in ENU
+		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(local_ecef, map_origin), odom->pose.pose.position);
 
 		/**
 		 * @brief By default, we are using the relative altitude instead of the geocentric
@@ -449,6 +452,21 @@ private:
 		map_origin.x() = req->geo.latitude;
 		map_origin.y() = req->geo.longitude;
 		map_origin.z() = req->geo.altitude;
+
+		try {
+			/**
+			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
+			 */
+			GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
+						GeographicLib::Constants::WGS84_f());
+
+			// map_origin to ECEF
+			map.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
+						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+		}
+		catch (const std::exception& e) {
+			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
+		}
 
 		is_map_init = true;
 	}

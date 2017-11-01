@@ -132,6 +132,14 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
  */
 Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform);
 
+/**
+ * @brief Transform data expressed in one frame to another frame
+ * with additional map origin parameter.
+ *
+ * General function. Please use specialized variants.
+ */
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
+
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
 }
@@ -214,19 +222,25 @@ inline T transform_frame_baselink_aircraft(const T &in) {
 /**
  * @brief Transform data expressed in ECEF frame to ENU frame.
  *
+ * in - local ECEF coordinates [m],
+ * map_origin - geodetic origin [lla],
+ * returns local ENU coordinates [m].
  */
 template<class T>
-inline T transform_frame_ecef_enu(const T &in) {
-	return detail::transform_static_frame(in, StaticTF::ECEF_TO_ENU);
+inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ECEF_TO_ENU);
 }
 
 /**
  * @brief Transform data expressed in ENU frame to ECEF frame.
  *
+ * in - local ENU coordinates [m].
+ * map_origin - geodetic origin [lla],
+ * returns local ECEF coordinates [m].
  */
 template<class T>
-inline T transform_frame_enu_ecef(const T &in) {
-	return detail::transform_static_frame(in, StaticTF::ENU_TO_ECEF);
+inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ENU_TO_ECEF);
 }
 
 /**

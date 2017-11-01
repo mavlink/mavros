@@ -242,7 +242,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::transformMsgToEigen(trans->transform, pos_enu);
 
-		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -250,7 +250,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -258,7 +258,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void transform_cb(const geometry_msgs::TransformStamped &trans)
@@ -267,7 +267,7 @@ private:
 
 		tf::transformMsgToEigen(trans.transform, pos_enu);
 
-		send_fake_gps(trans.header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(trans.header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 };
 }	// namespace extra_plugins
