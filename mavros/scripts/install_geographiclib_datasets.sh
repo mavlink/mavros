@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Script to install the model datasets required
 # to GeographicLib apply certain conversions
 
