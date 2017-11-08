@@ -189,6 +189,8 @@ rosinstall_generator --rosdistro kinetic mavlink | tee /tmp/mavros.rosinstall
 rosinstall_generator --upstream mavros | tee -a /tmp/mavros.rosinstall
 # alternative: latest source
 # rosinstall_generator --upstream-development mavros | tee -a /tmp/mavros.rosinstall
+# For fetching all the dependencies into your catkin_ws, just add '--deps' to the above scripts
+# ex: rosinstall_generator --upstream mavros --deps | tee -a /tmp/mavros.rosinstall
 
 # 4. Create workspace & deps
 wstool merge -t src /tmp/mavros.rosinstall
