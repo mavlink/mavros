@@ -57,6 +57,7 @@ public:
 
 		// general params
 		gp_nh.param<std::string>("frame_id", frame_id, "map");
+		gp_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
 		gp_nh.param("use_relative_alt", use_relative_alt, true);
 		// tf subsection
@@ -115,7 +116,8 @@ private:
 	ros::Subscriber gp_set_global_origin_sub;
 	ros::Subscriber hp_sub;
 
-	std::string frame_id;		//!< frame for topic headers
+	std::string frame_id;       //!< origin frame for topic headers
+	std::string child_frame_id; //!< body-fixed frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_global_frame_id;	//!< global origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
@@ -151,7 +153,7 @@ private:
 	{
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 
-		fix->header = m_uas->synchronized_header(frame_id, raw_gps.time_usec);
+		fix->header = m_uas->synchronized_header(child_frame_id, raw_gps.time_usec);
 
 		fix->status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
 		if (raw_gps.fix_type > 2)
@@ -189,8 +191,8 @@ private:
 
 			auto vel = boost::make_shared<geometry_msgs::TwistStamped>();
 
-			vel->header.frame_id = frame_id;
 			vel->header.stamp = fix->header.stamp;
+			vel->header.frame_id = child_frame_id;
 
 			// From nmea_navsat_driver
 			vel->twist.linear.x = speed * std::sin(course);
@@ -235,7 +237,7 @@ private:
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
 		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
-		auto header = m_uas->synchronized_header(frame_id, gpos.time_boot_ms);
+		auto header = m_uas->synchronized_header(child_frame_id, gpos.time_boot_ms);
 
 		// Global position fix
 		fix->header = header;
@@ -275,7 +277,9 @@ private:
 		 * Pose covariance: computed, with fixed diagonal
 		 * Velocity covariance: unknown
 		 */
-		odom->header = header;
+		odom->header.stamp = header.stamp;
+		odom->header.frame_id = frame_id;
+		odom->child_frame_id = child_frame_id;
 
 		// Linear velocity
 		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
