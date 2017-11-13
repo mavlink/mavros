@@ -192,7 +192,7 @@ private:
 			auto vel = boost::make_shared<geometry_msgs::TwistStamped>();
 
 			vel->header.stamp = fix->header.stamp;
-			vel->header.frame_id = child_frame_id;
+			vel->header.frame_id = frame_id;
 
 			// From nmea_navsat_driver
 			vel->twist.linear.x = speed * std::sin(course);
