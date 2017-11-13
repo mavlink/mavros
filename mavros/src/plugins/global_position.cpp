@@ -281,10 +281,6 @@ private:
 		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
 					odom->twist.twist.linear);
 
-		// Angular rates not provided in GLOBAL_POSITION_INT
-		tf::vectorEigenToMsg(Eigen::Vector3d(NAN, NAN, NAN),
-					odom->twist.twist.angular);
-
 		// Velocity covariance unknown
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
 		vel_cov_out.fill(0.0);
