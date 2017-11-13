@@ -90,7 +90,7 @@ public:
 			 * @brief Conversion of the origin from geodetic coordinates (LLA)
 			 * to ECEF (Earth-Centered, Earth-Fixed)
 			 */
-			earth.Forward(map_origin.x(), map_origin.x(), map_origin.x(),
+			earth.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
 						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
 		}
 		catch (const std::exception& e) {
