@@ -44,7 +44,8 @@ cmd:
 
 # global_position
 global_position:
-  frame_id: "map"           # pose and fix frame_id
+  frame_id: "map"             # origin frame
+  child_frame_id: "base_link" # body-fixed frame
   rot_covariance: 99999.0   # covariance for attitude?
   use_relative_alt: true    # use relative altitude for local coordinates
   tf:

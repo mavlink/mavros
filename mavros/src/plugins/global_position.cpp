@@ -116,8 +116,8 @@ private:
 	ros::Subscriber gp_set_global_origin_sub;
 	ros::Subscriber hp_sub;
 
-	std::string frame_id;       //!< origin frame for topic headers
-	std::string child_frame_id; //!< body-fixed frame for topic headers
+	std::string frame_id;				//!< origin frame for topic headers
+	std::string child_frame_id;	//!< body-fixed frame for topic headers
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_global_frame_id;	//!< global origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF and Pose
