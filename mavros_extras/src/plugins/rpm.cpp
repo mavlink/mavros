@@ -52,6 +52,12 @@ private:
 
 	ros::Publisher rpm_pub;
 
+	/**
+	 * @brief Handle RPM MAVlink (Ardupilot) message.
+	 * Message specification: http://mavlink.org/messages/ardupilotmega#RPM
+	 * @param msg	Received Mavlink msg
+	 * @param rpm	RPM msg
+	 */
 	void handle_rpm(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::RPM &rpm) {
 
 		rpms.resize(2);

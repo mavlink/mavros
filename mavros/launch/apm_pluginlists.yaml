@@ -9,6 +9,7 @@ plugin_blacklist:
 - image_pub
 - mocap_pose_estimate
 - px4flow
+- rpm
 - vibration
 - 'vision_*'
 
