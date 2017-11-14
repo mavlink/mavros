@@ -26,6 +26,9 @@
 	<class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
 	</class>
+	<class name="rpm" type="mavros::extra_plugins::RPMPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish RPM message data from FCU sensors in companion computer. (Ardupilot only).</description>
+	</class>
 	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>

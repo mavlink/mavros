@@ -73,6 +73,7 @@ add_library(mavros_extras
   src/plugins/odom.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
+  src/plugins/rpm.cpp
   src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp

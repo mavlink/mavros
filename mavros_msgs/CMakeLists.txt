@@ -34,6 +34,7 @@ add_message_files(
   RCIn.msg
   RCOut.msg
   RadioStatus.msg
+  RPM.msg
   State.msg
   Thrust.msg
   VFR_HUD.msg
