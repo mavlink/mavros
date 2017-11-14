@@ -48,14 +48,20 @@ public:
 private:
 	ros::NodeHandle nh;
 
+	std::vector<float> rpms;
+
 	ros::Publisher rpm_pub;
 
 	void handle_rpm(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::RPM &rpm) {
+
+		rpms.resize(2);
+		rpms[0] = rpm.rpm1;
+		rpms[1] = rpm.rpm2;
+
 		auto rpm_msg = boost::make_shared<mavros_msgs::RPM>();
 		rpm_msg->header.stamp = ros::Time::now();
 		rpm_msg->header.frame_id = "";
-		rpm_msg->rpm.push_back(rpm.rpm1);
-		rpm_msg->rpm.push_back(rpm.rpm2);
+		rpm_msg->rpm = rpms;
 
 		rpm_pub.publish(rpm_msg);
 	}
