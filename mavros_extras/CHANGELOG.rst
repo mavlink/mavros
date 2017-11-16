@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras fix `#858 <https://github.com/mavlink/mavros/issues/858>`_: fix vector copy-paste error
+* Contributors: Vladimir Ermakov
+
 0.21.4 (2017-11-01)
 -------------------
 * ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)

@@ -2,6 +2,17 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Yet another formatting.
+* px4_config.yaml updated. Minor formatting update.
+* global_position/raw/gps_vel should still be in earth fixed frame.
+* GPS fix's frame_id changed to body-fixed.
+* global_position/local angular twist changed from NANs to zeroes to be able to show in RViz.
+* readme: source install: add note on fetching all the deps
+* geolib_dataset: script: fix interpreter
+* Contributors: Pavlo Kolomiiets, TSC21
+
 0.21.4 (2017-11-01)
 -------------------
 * lib ftf: update dox, uncrustify
