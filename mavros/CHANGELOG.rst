@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.21.5 (2017-11-16)
+-------------------
 * Yet another formatting.
 * px4_config.yaml updated. Minor formatting update.
 * global_position/raw/gps_vel should still be in earth fixed frame.
