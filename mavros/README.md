@@ -226,7 +226,7 @@ Load order always:
 Troubleshooting
 ------------
 
-# Error: serial0: receive: End of file
+### Error: serial0: receive: End of file
 
 The full error description can be found on [issue #856](https://github.com/mavlink/mavros/issues/856). Follow these steps:
 1. disconnect flight controller USB
