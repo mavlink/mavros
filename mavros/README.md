@@ -223,6 +223,20 @@ Load order always:
 *Note*: `MAVLINK_DIALECT` not used anymore.
 
 
+Troubleshooting
+------------
+
+# Error: serial0: receive: End of file
+
+The full error description can be found on [issue #856](https://github.com/mavlink/mavros/issues/856). Follow these steps:
+1. disconnect flight controller USB
+2. disable USB driver with `sudo modprobe -r usbhid cdc_acm`
+3. re-enable the driver with `sudo modprobe usbhid cdc_acm`
+4. reconnect flight controller USB
+5. try again running mavros launch file for your flight controller
+
+
+
 Contributing
 ------------
 
