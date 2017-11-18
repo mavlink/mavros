@@ -228,7 +228,7 @@ Troubleshooting
 
 ### Error: serial0: receive: End of file
 
-The full error description can be found on [issue #856](https://github.com/mavlink/mavros/issues/856). Follow these steps:
+The full error description can be found on [issue #856][iss856](https://github.com/mavlink/mavros/issues/856). Follow these steps:
 1. disconnect flight controller USB
 2. disable USB driver with `sudo modprobe -r usbhid cdc_acm`
 3. re-enable the driver with `sudo modprobe usbhid cdc_acm`
@@ -291,6 +291,7 @@ Links
 [iss319]: https://github.com/mavlink/mavros/issues/319
 [iss321]: https://github.com/mavlink/mavros/issues/321
 [iss473]: https://github.com/mavlink/mavros/issues/473
+[iss856]: https://github.com/mavlink/mavros/issues/856
 [wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
