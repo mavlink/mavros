@@ -15,7 +15,8 @@ run_get() {
 	local tool="$2"
 	local model="$3"
 
-	if [[ -d "/usr/share/GeographicLib/$dir" || -d "/usr/local/share/GeographicLib/$dir" ]]; then
+	files=$(shopt -s nullglob dotglob; echo /usr/share/GeographicLib/$dir/$model* /usr/local/share/GeographicLib/$dir/$model*)
+	if (( ${#files} )); then
 		return
 	fi
 
