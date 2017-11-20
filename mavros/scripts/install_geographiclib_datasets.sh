@@ -3,7 +3,7 @@
 # to GeographicLib apply certain conversions
 
 if [[ $UID != 0 ]]; then
-	echo "This script require root privilegies!" 1>&2
+	echo "This script require root privileges!" 1>&2
 	exit 1
 fi
 
