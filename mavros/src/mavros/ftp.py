@@ -53,6 +53,9 @@ class FTPFile(object):
     def __del__(self):
         self.close()
 
+    def __exit__(self):
+        self.close()
+
     def open(self, path, mode):
         """
         Supported modes:
