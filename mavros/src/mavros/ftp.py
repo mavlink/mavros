@@ -76,6 +76,7 @@ class FTPFile(object):
         try:
             ret = open_(file_path=path, mode=m)
         except rospy.ServiceException as ex:
+            reset_server()
             raise IOError(str(ex))
 
         _check_raise_errno(ret)
