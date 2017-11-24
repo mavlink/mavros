@@ -208,3 +208,19 @@ vibration:
   frame_id: "base_link"
 
 # vim:set ts=2 sw=2 et:
+
+# wheel_odometry
+wheel_odometry:
+  count: 2           # number of wheels to compute odometry
+  use_rpm: false     # use wheel's RPM instead of cumulative distance to compute odometry
+  wheel0: {x: 0.0, y: -0.15, radius: 0.05} # x-, y-offset (m,NED) and radius (m)
+  wheel1: {x: 0.0, y:  0.15, radius: 0.05} # x-, y-offset (m,NED) and radius (m)
+  diagnostics: true  # publish wheel's RPM and cumulative distance (~/wheel_odometry/rpm, ~/wheel_odometry/distances)
+  twist: false                # send geometry_msgs/TwistWithCovarianceStamped instead of nav_msgs/Odometry
+  frame_id: "map"             # origin frame
+  child_frame_id: "base_link" # body-fixed frame
+  vel_error: 0.1              # wheel velocity measurement error 1-std (m/s)
+  tf:
+    send: true
+    frame_id: "map"
+    child_frame_id: "base_link"
