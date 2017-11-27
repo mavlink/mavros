@@ -15,7 +15,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros_msgs/Float32ArrayStamped.h>
+#include <mavros_msgs/WheelOdomStamped.h>
 
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
@@ -132,8 +132,8 @@ public:
 
 		// Advertise RPM-s and distance-s
 		if (diagnostics) {
-			rpm_pub = wo_nh.advertise<mavros_msgs::Float32ArrayStamped>("rpm", 10);
-			dist_pub = wo_nh.advertise<mavros_msgs::Float32ArrayStamped>("distance", 10);
+			rpm_pub = wo_nh.advertise<mavros_msgs::WheelOdomStamped>("rpm", 10);
+			dist_pub = wo_nh.advertise<mavros_msgs::WheelOdomStamped>("distance", 10);
 		}
 
 		// Advertize topics
@@ -463,7 +463,7 @@ private:
 
 		// Publish RPM-s
 		if (diagnostics) {
-			auto rpm_msg = boost::make_shared<mavros_msgs::Float32ArrayStamped>();
+			auto rpm_msg = boost::make_shared<mavros_msgs::WheelOdomStamped>();
 
 			rpm_msg->header.stamp = timestamp;
 			rpm_msg->header.frame_id = "";
@@ -500,7 +500,7 @@ private:
 
 		// Publish distances
 		if (diagnostics) {
-			auto wheel_dist_msg = boost::make_shared<mavros_msgs::Float32ArrayStamped>();
+			auto wheel_dist_msg = boost::make_shared<mavros_msgs::WheelOdomStamped>();
 
 			wheel_dist_msg->header.stamp = timestamp;
 			wheel_dist_msg->header.frame_id = "";
