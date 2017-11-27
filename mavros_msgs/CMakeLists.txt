@@ -19,7 +19,6 @@ add_message_files(
   DebugValue.msg
   ExtendedState.msg
   FileEntry.msg
-  Float32ArrayStamped.msg
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
@@ -51,6 +50,7 @@ add_message_files(
   Waypoint.msg
   WaypointList.msg
   WaypointReached.msg
+  WheelOdomStamped.msg
 )
 
 add_service_files(
