@@ -73,30 +73,29 @@ private:
 	 */
 	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &vel_enu, double yaw_rate)
 	{
-
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
-        auto vel = [&] {
-            if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
-                return ftf::transform_frame_baselink_aircraft(vel_enu);
-            } else {
-                return ftf::transform_frame_enu_ned(vel_enu);
-            }
-        }();
+		auto vel = [&] {
+			if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+				return ftf::transform_frame_baselink_aircraft(vel_enu);
+			} else {
+				return ftf::transform_frame_enu_ned(vel_enu);
+			}
+		} ();
 
 
 		auto yr = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				mav_frame,
-				ignore_all_except_v_xyz_yr,
-				Eigen::Vector3d::Zero(),
-				vel,
-				Eigen::Vector3d::Zero(),
-				0.0, yr.z());
+					mav_frame,
+					ignore_all_except_v_xyz_yr,
+					Eigen::Vector3d::Zero(),
+					vel,
+					Eigen::Vector3d::Zero(),
+					0.0, yr.z());
 	}
 
 	/* -*- callbacks -*- */
@@ -106,7 +105,7 @@ private:
 
 		tf::vectorMsgToEigen(req->twist.linear, vel_enu);
 		send_setpoint_velocity(req->header.stamp, vel_enu,
-				req->twist.angular.z);
+					req->twist.angular.z);
 	}
 
 	void vel_unstamped_cb(const geometry_msgs::Twist::ConstPtr &req) {
@@ -114,7 +113,7 @@ private:
 
 		tf::vectorMsgToEigen(req->linear, vel_enu);
 		send_setpoint_velocity(ros::Time::now(), vel_enu,
-				req->angular.z);
+					req->angular.z);
 	}
 
 	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
