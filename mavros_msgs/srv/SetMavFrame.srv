@@ -1,0 +1,19 @@
+# Set MAV_FRAME for setpoints
+
+# Frames from MAV_FRAME
+uint8 GLOBAL = 0
+uint8 LOCAL_NED = 1
+uint8 MISSION = 2
+uint8 GLOBAL_RELATIVE_ALT = 3
+uint8 LOCAL_ENU = 4
+uint8 GLOBAL_INT = 5
+uint8 GLOBAL_RELATIVE_ALT_INT = 6
+uint8 LOCAL_OFFSET_NED = 7
+uint8 BODY_NED = 8
+uint8 BODY_OFFSET_NED = 9
+uint8 GLOBAL_TERRAIN_ALT = 10
+uint8 GLOBAL_TERRAIN_ALT_INT = 11
+
+uint8 mav_frame
+---
+bool success

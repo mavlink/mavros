@@ -22,8 +22,11 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Twist.h>
 
+#include <mavros_msgs/SetMavFrame.h>
+
 namespace mavros {
 namespace std_plugins {
+using mavlink::common::MAV_FRAME;
 /**
  * @brief Setpoint velocity plugin
  *
@@ -43,6 +46,7 @@ public:
 		//cmd_vel usually is the topic used for velocity control in many controllers / planners
 		vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
 		vel_unstamped_sub = sp_nh.subscribe("cmd_vel_unstamped", 10, &SetpointVelocityPlugin::vel_unstamped_cb, this);
+		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointVelocityPlugin::set_mav_frame_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -56,6 +60,9 @@ private:
 
 	ros::Subscriber vel_sub;
 	ros::Subscriber vel_unstamped_sub;
+	ros::ServiceServer mav_frame_srv;
+
+	uint8_t mav_frame = utils::enum_value(MAV_FRAME::LOCAL_NED);
 
 	/* -*- mid-level helpers -*- */
 
@@ -66,19 +73,25 @@ private:
 	 */
 	void send_setpoint_velocity(const ros::Time &stamp, Eigen::Vector3d &vel_enu, double yaw_rate)
 	{
-		using mavlink::common::MAV_FRAME;
 
 		/**
 		 * Documentation start from bit 1 instead 0;
 		 * Ignore position and accel vectors, yaw.
 		 */
 		uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
+        auto vel = [&] {
+            if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+                return ftf::transform_frame_baselink_aircraft(vel_enu);
+            } else {
+                return ftf::transform_frame_enu_ned(vel_enu);
+            }
+        }();
 
-		auto vel = ftf::transform_frame_enu_ned(vel_enu);
+
 		auto yr = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(0.0, 0.0, yaw_rate));
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-				utils::enum_value(MAV_FRAME::LOCAL_NED),
+				mav_frame,
 				ignore_all_except_v_xyz_yr,
 				Eigen::Vector3d::Zero(),
 				vel,
@@ -104,6 +117,12 @@ private:
 				req->angular.z);
 	}
 
+	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
+	{
+		mav_frame = utils::enum_value(static_cast<MAV_FRAME>(req.mav_frame));
+		res.success = true;
+		return true;
+	}
 };
 }	// namespace std_plugins
 }	// namespace mavros
