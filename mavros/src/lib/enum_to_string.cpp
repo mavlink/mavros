@@ -28,6 +28,7 @@ using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 using mavlink::common::GPS_FIX_TYPE;
 using mavlink::common::MAV_MISSION_RESULT;
+using mavlink::common::MAV_FRAME;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -417,6 +418,49 @@ std::string to_string(MAV_MISSION_RESULT e)
 	return mav_mission_result_strings[idx];
 }
 // [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
+
+// [[[cog:
+// ename = 'MAV_FRAME'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_FRAME values
+static const std::array<const std::string, 12> mav_frame_strings{{
+/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL)
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-up (x: north, y: east, z: down).
+/*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-down (x: east, y: north, z: up)
+/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL)
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
+/*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
+/*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+}};
+
+std::string to_string(MAV_FRAME e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_frame_strings.size())
+		return std::to_string(idx);
+
+	return mav_frame_strings[idx];
+}
+// [[[end]]] (checksum: ffbf4a7aacdc4b5229293f3791f63379)
+
+MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
+{
+	for (size_t idx = 0; idx < mav_frame_strings.size(); idx++) {
+		if (mav_frame_strings[idx] == mav_frame) {
+			std::underlying_type<MAV_FRAME>::type rv = idx;
+			return static_cast<MAV_FRAME>(rv);
+		}
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
+	return MAV_FRAME::LOCAL_NED;
+}
 
 }	// namespace utils
 }	// namespace mavros
