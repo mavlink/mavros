@@ -59,7 +59,7 @@ private:
 	{
 		mavlink::common::msg::OBSTACLE_DISTANCE obstacle {};
 
-		constexpr size_t MAX_DISTCNT = 12;
+		constexpr size_t MAX_DISTCNT = 72;
 
 		auto n = std::min(req->ranges.size(), MAX_DISTCNT);
 
