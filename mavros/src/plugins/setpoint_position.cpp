@@ -61,6 +61,7 @@ public:
 		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointPositionPlugin::set_mav_frame_cb, this);
 
 		// mav_frame
+		std::string mav_frame_str;
 		if (!sp_nh.getParam("mav_frame", mav_frame_str)) {
 			mav_frame = MAV_FRAME::LOCAL_NED;
 		} else {
@@ -87,7 +88,6 @@ private:
 	bool tf_listen;
 	double tf_rate;
 
-	std::string mav_frame_str;
 	MAV_FRAME mav_frame;
 
 	/* -*- mid-level helpers -*- */
@@ -156,7 +156,7 @@ private:
 	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
 	{
 		mav_frame = static_cast<MAV_FRAME>(req.mav_frame);
-		mav_frame_str = utils::to_string(mav_frame);
+		const std::string mav_frame_str = utils::to_string(mav_frame);
 		sp_nh.setParam("mav_frame", mav_frame_str);
 		res.success = true;
 		return true;
