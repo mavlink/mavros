@@ -14,8 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-//#include <mavros/mavros_plugin.h>
-#include <mavros/frame_tf.h>
+#include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 
@@ -63,13 +62,13 @@ public:
 		}
 		else {
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
+                        /* Subscriber for goal gps */
+                        setpointg_sub = sp_nh.subscribe("global", 10, &SetpointPositionPlugin::setpointg_cb, this);
+
                         /* subscriber for current gps state, mavros/global_position/global. */
                         gps_sub = spg_nh.subscribe("global_position/global", 10, &SetpointPositionPlugin::gps_cb, this);
                         /* Subscribe for current local ENU pose. */
                         local_sub = spg_nh.subscribe("local_position/pose", 10, &SetpointPositionPlugin::local_cb, this) ;
-                        /* Subscriber for goal gps */
-                        setpoint_sub = sp_nh.subscribe("setpoint_global_position/global", 10, &SetpointPositionPlugin::setpointg_cb, this);
-
 		}
 		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointPositionPlugin::set_mav_frame_cb, this);
 
