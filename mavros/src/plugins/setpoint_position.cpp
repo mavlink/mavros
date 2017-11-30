@@ -24,7 +24,7 @@
 #include <mavros_msgs/GlobalPositionTarget.h>
 
 #include <GeographicLib/Geocentric.hpp>
-#include <GeographicLib/Geoid.hpp>
+//#include <GeographicLib/Geoid.hpp>
 
 namespace mavros {
 namespace std_plugins {
@@ -112,10 +112,6 @@ private:
 	double tf_rate;
 
 	MAV_FRAME mav_frame;
-
-        // Constructor for an ellipsoid
-        GeographicLib::Geocentric earth;
-
 	/* -*- mid-level helpers -*- */
 
 	/**
@@ -150,7 +146,6 @@ private:
 							ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 			}
 		} ();
-
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
 					utils::enum_value(mav_frame),
 					ignore_all_except_xyz_y,
@@ -189,6 +184,9 @@ private:
               * 3- converts ECEF offset to ENU offset given current gps LLA
               * 4- adds ENU offset to current local ENU to that will be sent to FCU
               */
+
+            GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f());
+
             Eigen::Vector3d goal_gps(req->latitude, req->longitude, req->altitude);
 
             /* current gps -> curent ECEF */
@@ -204,6 +202,7 @@ private:
             /* get ENU offset from ECEF offset */
             Eigen::Vector3d ecef_offset = goal_ecef - current_ecef;
             Eigen::Vector3d enu_offset = ftf::transform_frame_ecef_enu(ecef_offset, current_gps);
+
             /* prepare yaw angle */
             Eigen::Affine3d sp; /* holds position setpoint */
             Eigen::Quaterniond q; /* holds desired yaw */
