@@ -222,6 +222,9 @@ private:
                 /* send setpoint */
                 send_position_target(req->header.stamp, sp);
             }
+            else {
+                ROS_WARN_TROTTLE_NAMED("spgp", 10, "SPG: sp not sent.");
+            }
 
 
         }
