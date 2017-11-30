@@ -286,4 +286,4 @@ Links
 [iss473rfc]: https://docs.google.com/document/d/1bDhaozrUu9F915T58WGzZeOM-McyU20dwxX-NRum1KA/edit
 [iss473table]: https://docs.google.com/spreadsheets/d/1LnsWTblU92J5_SMinTvBvHJWx6sqvzFa8SKbn8TXlnU/edit#gid=0
 [geolib]: https://geographiclib.sourceforge.io/
-[contr]: https://github.com/mavlink/mavros/blob/master/.github/CONTRIBUTING.md
+[contr]: https://github.com/mavlink/mavros/blob/master/CONTRIBUTING.md
