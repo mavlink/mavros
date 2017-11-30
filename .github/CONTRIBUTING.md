@@ -37,6 +37,10 @@ and invoke cog like this:
 
 Your file will be updated by cog.
 
+    ./mavros/tools/cogall.sh
+
+This script will regenerate all files with generators.
+
 
 [cog]: https://nedbatchelder.com/code/cog/
 [ets]: https://github.com/mavlink/mavros/blob/master/mavros/src/lib/enum_to_string.cpp
