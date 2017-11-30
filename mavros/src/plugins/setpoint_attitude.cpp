@@ -30,8 +30,10 @@
 namespace mavros {
 namespace std_plugins {
 
-using SyncPoseThrust = message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust>;
-using SyncTwistThrust = message_filters::sync_policies::ApproximateTime<geometry_msgs::TwistStamped, mavros_msgs::Thrust>;
+using SyncPoseThrustPolicy = message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, mavros_msgs::Thrust>;
+using SyncTwistThrustPolicy = message_filters::sync_policies::ApproximateTime<geometry_msgs::TwistStamped, mavros_msgs::Thrust>;
+using SyncPoseThrust = message_filters::Synchronizer<SyncPoseThrustPolicy>;
+using SyncTwistThrust = message_filters::Synchronizer<SyncTwistThrustPolicy>;
 
 /**
  * @brief Setpoint attitude plugin
@@ -64,7 +66,7 @@ public:
 		sp_nh.param("tf/rate_limit", tf_rate, 50.0);
 
 		// thrust msg subscriber to sync
-		message_filters::Subscriber<mavros_msgs::Thrust> th_sub(sp_nh, "thrust", 10);
+		th_sub.subscribe(sp_nh, "thrust", 1);
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("attitude",
@@ -77,19 +79,19 @@ public:
 			/**
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
-			message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(sp_nh, "target_attitude", 1);
+			pose_sub.subscribe(sp_nh, "target_attitude", 1);
 
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
 			 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
 			 */
-			message_filters::Synchronizer<SyncPoseThrust> sync(SyncPoseThrust(10), pose_sub, th_sub);
-			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
+			sync_pose.reset(new SyncPoseThrust(SyncPoseThrustPolicy(10), pose_sub, th_sub));
+			sync_pose->registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_pose_cb, this, _1, _2));
 		}
 		else {
-			message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub(sp_nh, "cmd_vel", 1);
-			message_filters::Synchronizer<SyncTwistThrust> sync(SyncTwistThrust(10), twist_sub, th_sub);
-			sync.registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
+			twist_sub.subscribe(sp_nh, "cmd_vel", 1);
+			sync_twist.reset(new SyncTwistThrust(SyncTwistThrustPolicy(10), twist_sub, th_sub));
+			sync_twist->registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}
 	}
 
@@ -102,6 +104,13 @@ private:
 	friend class SetAttitudeTargetMixin;
 	friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
+
+	message_filters::Subscriber<mavros_msgs::Thrust> th_sub;
+	message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
+	message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub;
+
+	std::unique_ptr<SyncPoseThrust> sync_pose;
+	std::unique_ptr<SyncTwistThrust> sync_twist;
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;

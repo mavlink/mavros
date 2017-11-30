@@ -2,12 +2,13 @@
  * @brief Odometry plugin
  * @file odom.cpp
  * @author James Goppert <james.goppert@gmail.com>
+ * @author Nuno Marques <n.marques21@hotmail.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2017 James Goppert
+ * Copyright 2017 James Goppert, Nuno Marques
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -16,6 +17,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <nav_msgs/Odometry.h>
 
@@ -26,8 +28,7 @@ using mavlink::common::MAV_ESTIMATOR_TYPE;
 /**
  * @brief Odometry plugin
  *
- * Send odometry info
- * to FCU position and attitude estimators
+ * Send odometry info to FCU position and attitude estimators
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
@@ -47,6 +48,9 @@ public:
 
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string(estimator_type));
 
+		// frame tf params
+		odom_nh.param<std::string>("frame_tf/desired_frame", desired_frame, "ned");
+
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 	}
@@ -62,71 +66,79 @@ private:
 
 	MAV_ESTIMATOR_TYPE estimator_type;
 
+	//! child if for tf
+	std::string desired_frame;
+
 	/* -*- callbacks -*- */
 
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
-		Eigen::Affine3d tr;
-		Eigen::Vector3d lin_vel_enu;
-		Eigen::Vector3d ang_vel_enu;
+		/** Lookup transforms
+		 *  @todo Implement in a more general fashion in the API IOT apply frame transforms
+		 *  This should also run in parallel on a thread
+		 */
+		Eigen::Affine3d tf_child2ned;
+		Eigen::Affine3d tf_parent2ned;
+		try {
+			// transform lookup WRT world frame
+			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->child_frame_id, "local_origin_" + desired_frame, ros::Time(0)));
+			// transform lookup WRT body frame
+			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->header.frame_id, "local_origin_" + desired_frame, ros::Time(0)));
+		} catch (tf2::TransformException &ex) {
+			ROS_WARN("odom: %s",ex.what());
+			ros::Duration(1.0).sleep();
+			return;
+		}
 
-		tf::poseMsgToEigen(odom->pose.pose, tr);
-		tf::vectorMsgToEigen(odom->twist.twist.linear, lin_vel_enu);
-		tf::vectorMsgToEigen(odom->twist.twist.angular, ang_vel_enu);
-
-		// get current ENU FCU orientation
-		Eigen::Quaterniond enu_orientation;
-		tf::quaternionMsgToEigen(m_uas->get_attitude_orientation(), enu_orientation);
-
-		// Build 9x9 covariance matrix to be transformed and sent
-		ftf::Covariance9d cov_full{};	// zero initialized
+		/** Build 9x9 covariance matrix to be transformed and sent
+		 */
+		ftf::Covariance9d cov_full {};	// zero initialized
 		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
 
-		// 9x9 covariance matrix contruct
 		cov_full_map.block<6, 6>(0, 0) = ftf::EigenMapConstCovariance6d(odom->pose.covariance.data());
 		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
-		/* -*- vector transforms -*- */
-		// body frame rotations must be aware of current attitude of the vehicle
-		auto q_ned_current = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(enu_orientation));
-
-		// apply coordinate frame transforms
-		auto pos_ned = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto lin_vel_ned = ftf::transform_frame_enu_ned(lin_vel_enu);
-		auto q_ned = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
-
-		// angular velocity - WRT body frame
-		auto ang_vel_ned = ftf::transform_frame_enu_ned(
-					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_ned_aircraft(ang_vel_enu, q_ned_current)));
-
-		/* -*- covariance transforms -*- */
-		/**
-		 * @brief Pose+Accel 9-D Covariance matrix
-		 * WRT world frame (half upper right triangular)
+		/** Build 6x6 covariance matrix to be transformed and sent
 		 */
-		auto cov_full_tf = ftf::transform_frame_enu_ned(cov_full);
+		ftf::Covariance6d cov_vel {};	// zero initialized
+		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
 
-		ftf::EigenMapConstCovariance9d cov_tf_map(cov_full_tf.data());
+		/** Apply linear transforms
+		 */
+		Eigen::Vector3d pos_ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.position));
+		Eigen::Vector3d lin_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.linear));
+		Eigen::Vector3d ang_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.angular));
+		Eigen::Quaterniond q_parent2ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.orientation));
+
+		/** Apply covariance transforms */
+		/** Pose+Accel 9-D Covariance matrix
+		 *  WRT world frame (half upper right triangular)
+		 */
+		Eigen::Matrix<double, 9, 9> r_9d;
+		r_9d.block<3, 3>(0, 0) = r_9d.block<3, 3>(3, 3) = tf_parent2ned.linear();
+		r_9d.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
+
+		cov_full_map = r_9d * cov_full_map * r_9d.transpose();
+
 		auto urt_view = Eigen::Matrix<double, 9, 9>(cov_full_map.triangularView<Eigen::Upper>());
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_tf_map);
+		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_full_map);
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: Cov URT: " << std::endl << urt_view);
 
-		/**
-		 * @brief Velocity 6-D Covariance matrix
-		 * WRT world frame (half upper right triangular)
+		/** Velocity 6-D Covariance matrix
+		 *  WRT body frame
 		 */
-		auto cov_vel = ftf::transform_frame_enu_ned(
-					ftf::transform_frame_baselink_aircraft(
-						ftf::transform_frame_ned_aircraft(odom->twist.covariance, q_ned_current)));
+		Eigen::Matrix<double, 6, 6> r_vel;
+		r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2ned.linear();
 
-		ftf::EigenMapConstCovariance6d cov_vel_map(cov_vel.data());
+		cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
+
 		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
 
 		// get timestamp
 		uint64_t stamp_usec = odom->header.stamp.toNSec() / 1e3;
+
 		const auto zerov3f = Eigen::Vector3f::Zero();
 
 		/* -*- LOCAL_POSITION_NED_COV parser -*- */
@@ -134,7 +146,7 @@ private:
 
 		lpos.time_usec = stamp_usec;
 		lpos.estimator_type = utils::enum_value(estimator_type);
-		ftf::covariance9d_urt_to_mavlink(cov_full_tf, lpos.covariance);
+		ftf::covariance9d_urt_to_mavlink(cov_full, lpos.covariance);
 
 		// [[[cog:
 		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
@@ -159,7 +171,7 @@ private:
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
 
 		att.time_usec = stamp_usec;
-		ftf::quaternion_to_mavlink(q_ned, att.q);
+		ftf::quaternion_to_mavlink(q_parent2ned, att.q);
 		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
 		// [[[cog:

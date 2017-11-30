@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mavros</name>
-  <version>0.19.0</version>
+  <version>0.21.5</version>
   <description>
     MAVROS -- MAVLink extendable communication node for ROS
     with proxy for Ground Control Station.
@@ -43,6 +43,7 @@
   <depend>rosconsole_bridge</depend>
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
 

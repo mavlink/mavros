@@ -20,8 +20,11 @@
 
 #include <geometry_msgs/PoseStamped.h>
 
+#include <mavros_msgs/SetMavFrame.h>
+
 namespace mavros {
 namespace std_plugins {
+using mavlink::common::MAV_FRAME;
 /**
  * @brief Setpoint position plugin
  *
@@ -49,11 +52,20 @@ public:
 
 		if (tf_listen) {
 			ROS_INFO_STREAM_NAMED("setpoint", "Listen to position setpoint transform "
-					<< tf_frame_id << " -> " << tf_child_frame_id);
+						<< tf_frame_id << " -> " << tf_child_frame_id);
 			tf2_start("PositionSpTF", &SetpointPositionPlugin::transform_cb);
 		}
 		else {
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
+		}
+		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointPositionPlugin::set_mav_frame_cb, this);
+
+		// mav_frame
+		std::string mav_frame_str;
+		if (!sp_nh.getParam("mav_frame", mav_frame_str)) {
+			mav_frame = MAV_FRAME::LOCAL_NED;
+		} else {
+			mav_frame = utils::mav_frame_from_str(mav_frame_str);
 		}
 	}
 
@@ -68,12 +80,15 @@ private:
 	ros::NodeHandle sp_nh;
 
 	ros::Subscriber setpoint_sub;
+	ros::ServiceServer mav_frame_srv;
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 
 	bool tf_listen;
 	double tf_rate;
+
+	MAV_FRAME mav_frame;
 
 	/* -*- mid-level helpers -*- */
 
@@ -93,12 +108,25 @@ private:
 		 */
 		const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
 
-		auto p = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto q = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+		auto p = [&] () {
+			if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+				return ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tr.translation()));
+			} else {
+				return ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+			}
+		} ();
+
+		auto q = [&] () {
+			if (mav_frame == MAV_FRAME::BODY_NED || mav_frame == MAV_FRAME::BODY_OFFSET_NED) {
+				return ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()));
+			} else {
+				return ftf::transform_orientation_enu_ned(
+							ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+			}
+		} ();
 
 		set_position_target_local_ned(stamp.toNSec() / 1000000,
-					utils::enum_value(MAV_FRAME::LOCAL_NED),
+					utils::enum_value(mav_frame),
 					ignore_all_except_xyz_y,
 					p,
 					Eigen::Vector3d::Zero(),
@@ -123,6 +151,15 @@ private:
 		tf::poseMsgToEigen(req->pose, tr);
 
 		send_position_target(req->header.stamp, tr);
+	}
+
+	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
+	{
+		mav_frame = static_cast<MAV_FRAME>(req.mav_frame);
+		const std::string mav_frame_str = utils::to_string(mav_frame);
+		sp_nh.setParam("mav_frame", mav_frame_str);
+		res.success = true;
+		return true;
 	}
 };
 }	// namespace std_plugins

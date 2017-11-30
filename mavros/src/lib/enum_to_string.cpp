@@ -27,6 +27,8 @@ using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 using mavlink::common::GPS_FIX_TYPE;
+using mavlink::common::MAV_MISSION_RESULT;
+using mavlink::common::MAV_FRAME;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -81,7 +83,7 @@ using mavlink::common::GPS_FIX_TYPE;
 // to_string_outl(ename)
 // ]]]
 //! MAV_AUTOPILOT values
-static const std::array<const std::string, 18> mav_autopilot_strings{{
+static const std::array<const std::string, 19> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
@@ -100,6 +102,7 @@ static const std::array<const std::string, 18> mav_autopilot_strings{{
 /* 15 */ "Armazila",                      // Armazila -- http://armazila.com
 /* 16 */ "Aerob",                         // Aerob -- http://aerob.ru
 /* 17 */ "ASLUAV autopilot",              // ASLUAV autopilot -- http://www.asl.ethz.ch
+/* 18 */ "SmartAP Autopilot",             // SmartAP Autopilot - http://sky-drones.com
 }};
 
 std::string to_string(MAV_AUTOPILOT e)
@@ -110,7 +113,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: c0f450ce84a31ce0f86d439c007cf805)
+// [[[end]]] (checksum: 5b451ba6ab334d133765faaa33a18c6a)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -183,7 +186,7 @@ std::string to_string(MAV_TYPE e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_STATE values
-static const std::array<const std::string, 8> mav_state_strings{{
+static const std::array<const std::string, 9> mav_state_strings{{
 /*  0 */ "Uninit",                        // Uninitialized system, state is unknown.
 /*  1 */ "Boot",                          // System is booting up.
 /*  2 */ "Calibrating",                   // System is calibrating and not flight-ready.
@@ -192,6 +195,7 @@ static const std::array<const std::string, 8> mav_state_strings{{
 /*  5 */ "Critical",                      // System is in a non-normal flight mode. It can however still navigate.
 /*  6 */ "Emergency",                     // System is in a non-normal flight mode. It lost control over parts or over the whole airframe. It is in mayday and going down.
 /*  7 */ "Poweroff",                      // System just initialized its power-down sequence, will shut down now.
+/*  8 */ "Flight_Termination",            // System is terminating itself.
 }};
 
 std::string to_string(MAV_STATE e)
@@ -202,7 +206,7 @@ std::string to_string(MAV_STATE e)
 
 	return mav_state_strings[idx];
 }
-// [[[end]]] (checksum: 47dea7c5bd6ab53dbc75a6c51b35d312)
+// [[[end]]] (checksum: 8af1e6916d0229c193aab7d3dc2c97e9)
 
 // [[[cog:
 // ename = "timesync_mode"
@@ -255,7 +259,10 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 //     for k, e in enum:
 //         name_short =  e.name[len(ename) + 1:]
 //         sp = make_whitespace(30, name_short)
-//         cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         if e.description:
+//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         else:
+//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
 //
 //     cog.outl("}};")
 //     cog.outl()
@@ -287,26 +294,26 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 // ]]]
 //! ADSB_EMITTER_TYPE values
 static const std::array<const std::string, 20> adsb_emitter_type_strings{{
-/*  0 */ "NO_INFO",                       //
-/*  1 */ "LIGHT",                         //
-/*  2 */ "SMALL",                         //
-/*  3 */ "LARGE",                         //
-/*  4 */ "HIGH_VORTEX_LARGE",             //
-/*  5 */ "HEAVY",                         //
-/*  6 */ "HIGHLY_MANUV",                  //
-/*  7 */ "ROTOCRAFT",                     //
-/*  8 */ "UNASSIGNED",                    //
-/*  9 */ "GLIDER",                        //
-/* 10 */ "LIGHTER_AIR",                   //
-/* 11 */ "PARACHUTE",                     //
-/* 12 */ "ULTRA_LIGHT",                   //
-/* 13 */ "UNASSIGNED2",                   //
-/* 14 */ "UAV",                           //
-/* 15 */ "SPACE",                         //
-/* 16 */ "UNASSGINED3",                   //
-/* 17 */ "EMERGENCY_SURFACE",             //
-/* 18 */ "SERVICE_SURFACE",               //
-/* 19 */ "POINT_OBSTACLE",                //
+/*  0 */ "NO_INFO",
+/*  1 */ "LIGHT",
+/*  2 */ "SMALL",
+/*  3 */ "LARGE",
+/*  4 */ "HIGH_VORTEX_LARGE",
+/*  5 */ "HEAVY",
+/*  6 */ "HIGHLY_MANUV",
+/*  7 */ "ROTOCRAFT",
+/*  8 */ "UNASSIGNED",
+/*  9 */ "GLIDER",
+/* 10 */ "LIGHTER_AIR",
+/* 11 */ "PARACHUTE",
+/* 12 */ "ULTRA_LIGHT",
+/* 13 */ "UNASSIGNED2",
+/* 14 */ "UAV",
+/* 15 */ "SPACE",
+/* 16 */ "UNASSGINED3",
+/* 17 */ "EMERGENCY_SURFACE",
+/* 18 */ "SERVICE_SURFACE",
+/* 19 */ "POINT_OBSTACLE",
 }};
 
 std::string to_string(ADSB_EMITTER_TYPE e)
@@ -317,7 +324,7 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
 	return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: ef0b869c7c1937e80b3e1297eda40e2c)
+// [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
 
 // [[[cog:
 // ename = 'MAV_ESTIMATOR_TYPE'
@@ -347,7 +354,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! GPS_FIX_TYPE values
-static const std::array<const std::string, 8> gps_fix_type_strings{{
+static const std::array<const std::string, 9> gps_fix_type_strings{{
 /*  0 */ "NO_GPS",                        // No GPS connected
 /*  1 */ "NO_FIX",                        // No position information, GPS is connected
 /*  2 */ "2D_FIX",                        // 2D position
@@ -356,6 +363,7 @@ static const std::array<const std::string, 8> gps_fix_type_strings{{
 /*  5 */ "RTK_FLOAT",                     // RTK float, 3D position
 /*  6 */ "RTK_FIXED",                     // RTK Fixed, 3D position
 /*  7 */ "STATIC",                        // Static fixed, typically used for base stations
+/*  8 */ "PPP",                           // PPP, 3D position.
 }};
 
 std::string to_string(GPS_FIX_TYPE e)
@@ -366,7 +374,93 @@ std::string to_string(GPS_FIX_TYPE e)
 
 	return gps_fix_type_strings[idx];
 }
-// [[[end]]] (checksum: 984346c7986a0742d45d9c1a5ca322ed)
+// [[[end]]] (checksum: 7569b73b2d68ed1412bf0c36afeb131c)
+
+// [[[cog:
+// ename = 'MAV_MISSION_RESULT'
+// enum = get_enum(ename)
+//
+// array_outl(ename, enum)
+// for k, e in enum:
+//     value = e.description
+//     sp = make_whitespace(30, value)
+//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//
+// cog.outl("}};")
+// cog.outl()
+// to_string_outl(ename)
+// ]]]
+//! MAV_MISSION_RESULT values
+static const std::array<const std::string, 15> mav_mission_result_strings{{
+/*  0 */ "mission accepted OK",           // mission accepted OK
+/*  1 */ "generic error / not accepting mission commands at all right now", // generic error / not accepting mission commands at all right now
+/*  2 */ "coordinate frame is not supported", // coordinate frame is not supported
+/*  3 */ "command is not supported",      // command is not supported
+/*  4 */ "mission item exceeds storage space", // mission item exceeds storage space
+/*  5 */ "one of the parameters has an invalid value", // one of the parameters has an invalid value
+/*  6 */ "param1 has an invalid value",   // param1 has an invalid value
+/*  7 */ "param2 has an invalid value",   // param2 has an invalid value
+/*  8 */ "param3 has an invalid value",   // param3 has an invalid value
+/*  9 */ "param4 has an invalid value",   // param4 has an invalid value
+/* 10 */ "x/param5 has an invalid value", // x/param5 has an invalid value
+/* 11 */ "y/param6 has an invalid value", // y/param6 has an invalid value
+/* 12 */ "param7 has an invalid value",   // param7 has an invalid value
+/* 13 */ "received waypoint out of sequence", // received waypoint out of sequence
+/* 14 */ "not accepting any mission commands from this communication partner", // not accepting any mission commands from this communication partner
+}};
+
+std::string to_string(MAV_MISSION_RESULT e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_mission_result_strings.size())
+		return std::to_string(idx);
+
+	return mav_mission_result_strings[idx];
+}
+// [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
+
+// [[[cog:
+// ename = 'MAV_FRAME'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_FRAME values
+static const std::array<const std::string, 12> mav_frame_strings{{
+/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL)
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-up (x: north, y: east, z: down).
+/*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-down (x: east, y: north, z: up)
+/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL)
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
+/*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
+/*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+}};
+
+std::string to_string(MAV_FRAME e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_frame_strings.size())
+		return std::to_string(idx);
+
+	return mav_frame_strings[idx];
+}
+// [[[end]]] (checksum: ffbf4a7aacdc4b5229293f3791f63379)
+
+MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
+{
+	for (size_t idx = 0; idx < mav_frame_strings.size(); idx++) {
+		if (mav_frame_strings[idx] == mav_frame) {
+			std::underlying_type<MAV_FRAME>::type rv = idx;
+			return static_cast<MAV_FRAME>(rv);
+		}
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
+	return MAV_FRAME::LOCAL_NED;
+}
 
 }	// namespace utils
 }	// namespace mavros

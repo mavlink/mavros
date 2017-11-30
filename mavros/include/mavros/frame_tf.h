@@ -24,6 +24,9 @@
 
 // for Covariance types
 #include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 
 namespace mavros {
@@ -129,6 +132,14 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
  */
 Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF transform);
 
+/**
+ * @brief Transform data expressed in one frame to another frame
+ * with additional map origin parameter.
+ *
+ * General function. Please use specialized variants.
+ */
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
+
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
 }
@@ -211,19 +222,25 @@ inline T transform_frame_baselink_aircraft(const T &in) {
 /**
  * @brief Transform data expressed in ECEF frame to ENU frame.
  *
+ * @param in          local ECEF coordinates [m]
+ * @param map_origin  geodetic origin [lla]
+ * @returns local ENU coordinates [m].
  */
 template<class T>
-inline T transform_frame_ecef_enu(const T &in) {
-	return detail::transform_static_frame(in, StaticTF::ECEF_TO_ENU);
+inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ECEF_TO_ENU);
 }
 
 /**
  * @brief Transform data expressed in ENU frame to ECEF frame.
  *
+ * @param in          local ENU coordinates [m]
+ * @param map_origin  geodetic origin [lla]
+ * @returns local ECEF coordinates [m].
  */
 template<class T>
-inline T transform_frame_enu_ecef(const T &in) {
-	return detail::transform_static_frame(in, StaticTF::ENU_TO_ECEF);
+inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
+	return detail::transform_static_frame(in, map_origin, StaticTF::ENU_TO_ECEF);
 }
 
 /**
@@ -231,7 +248,7 @@ inline T transform_frame_enu_ecef(const T &in) {
  * Assumes quaternion represents rotation from aircraft frame to NED frame.
  */
 template<class T>
-inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_aircraft_ned(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -240,7 +257,7 @@ inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from NED to aircraft frame.
  */
 template<class T>
-inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_ned_aircraft(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -249,7 +266,7 @@ inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from aircraft frame to ENU frame.
  */
 template<class T>
-inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_aircraft_enu(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -258,7 +275,7 @@ inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from ENU to aircraft frame.
  */
 template<class T>
-inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_enu_aircraft(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -267,7 +284,7 @@ inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from ENU to base_link frame.
  */
 template<class T>
-inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_enu_baselink(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -276,7 +293,7 @@ inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
  * Assumes quaternion represents rotation from basel_link to ENU frame.
  */
 template<class T>
-inline T transform_frame_baselink_enu(const T &in,const Eigen::Quaterniond &q) {
+inline T transform_frame_baselink_enu(const T &in, const Eigen::Quaterniond &q) {
 	return detail::transform_frame(in, q);
 }
 
@@ -381,6 +398,31 @@ inline void covariance9d_urt_to_mavlink(const Covariance9d &cov, std::array<floa
 		for (size_t y = x; y < m.rows(); y++)
 			*out++ = m(y, x);
 }
+
+// [[[cog:
+// def make_to_eigen(te, tr, fields):
+//     cog.outl("""//! @brief Helper to convert common ROS geometry_msgs::{tr} to Eigen::{te}""".format(**locals()))
+//     cog.outl("""inline Eigen::{te} to_eigen(const geometry_msgs::{tr} r) {{""".format(**locals()))
+//     cog.outl("""\treturn Eigen::{te}({fl});""".format(te=te, fl=", ".join(["r." + f for f in fields])))
+//     cog.outl("""}""")
+//
+// make_to_eigen("Vector3d", "Point", "xyz")
+// make_to_eigen("Vector3d", "Vector3", "xyz")
+// make_to_eigen("Quaterniond", "Quaternion", "wxyz")
+// ]]]
+//! @brief Helper to convert common ROS geometry_msgs::Point to Eigen::Vector3d
+inline Eigen::Vector3d to_eigen(const geometry_msgs::Point r) {
+	return Eigen::Vector3d(r.x, r.y, r.z);
+}
+//! @brief Helper to convert common ROS geometry_msgs::Vector3 to Eigen::Vector3d
+inline Eigen::Vector3d to_eigen(const geometry_msgs::Vector3 r) {
+	return Eigen::Vector3d(r.x, r.y, r.z);
+}
+//! @brief Helper to convert common ROS geometry_msgs::Quaternion to Eigen::Quaterniond
+inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
+	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
+}
+// [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
 
 }	// namespace ftf
 }	// namespace mavros

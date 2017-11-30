@@ -4,12 +4,13 @@ plugin_blacklist:
 - ftp
 - safety_area
 # extras
+- altitude
+- debug_value
 - image_pub
 - mocap_pose_estimate
 - px4flow
-- 'vision_*'
 - vibration
-- altitude
+- 'vision_*'
 
 plugin_whitelist: []
 #- 'sys_*'

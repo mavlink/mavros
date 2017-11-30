@@ -2,6 +2,56 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.5 (2017-11-16)
+-------------------
+
+0.21.4 (2017-11-01)
+-------------------
+* cmake: do not warn about datasets, only abuse CI where that messages threated as a problem.
+* Contributors: Vladimir Ermakov
+
+0.21.3 (2017-10-28)
+-------------------
+
+0.21.2 (2017-09-25)
+-------------------
+
+0.21.1 (2017-09-22)
+-------------------
+
+0.21.0 (2017-09-14)
+-------------------
+
+0.20.1 (2017-08-28)
+-------------------
+* lib: Fix compilation with mavlink 2017.8.26
+* Contributors: Vladimir Ermakov
+
+0.20.0 (2017-08-23)
+-------------------
+* geolib: datasets: warn when not installed; update install script; launch SIGINT when not installed (`#778 <https://github.com/mavlink/mavros/issues/778>`_)
+  * geolib: make dataset install mandatory
+  * travis_ci: install python3; use geographiclib-datasets-download
+  * CMakeLists.txt: set datasets path
+  * travis_ci: create a path for the geoid dataset
+  * travis_ci: remove python3 install
+  * CMakeLists.txt: remove restriction regarding the geoid model
+  * CMakeLists.txt: only launch a warning if the geoid dataset is not installed
+  * CMakeLists.txt: simplify dataset path search and presentation
+  * scripts: install_geographiclib_datasets becomes version aware
+  * uas_data: dataset init: shutdown node if exception caught
+  * README: update GeographicLib info; geolib install script: check for more OS versions
+  * uas_data: small typo fix
+  * install_geolib_datasets: some fix
+  * CMakeLists.txt: be more clear on geoid dataset fault
+  * CMakeLists: push check geolib datasets to a cmake module
+  * travis_ci: update ppa repository
+  * uas_data: shutdown node and increase log level instead
+  * install_geographiclib_datasets: simplify script to only check download script version available
+  * uas_data: remove signal.h import
+* Move FindGeographicLib.cmake to libmavconn, that simplify installation, simplify datasets instattator
+* Contributors: Nuno Marques, Vladimir Ermakov
+
 0.19.0 (2017-05-05)
 -------------------
 

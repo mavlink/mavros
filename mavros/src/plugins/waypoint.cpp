@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -23,6 +23,8 @@
 #include <mavros_msgs/WaypointClear.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointPush.h>
+#include <mavros_msgs/WaypointReached.h>
+
 
 namespace mavros {
 namespace std_plugins {
@@ -80,7 +82,12 @@ public:
 		WaypointItem ret;
 
 		// [[[cog:
-		// for a, b in waypoint_item_msg:
+		// waypoint_coords = [
+		//     ('x_lat', 'x'),
+		//     ('y_long', 'y'),
+		//     ('z_alt', 'z'),
+		// ]
+		// for a, b in waypoint_item_msg + waypoint_coords:
 		//     cog.outl("ret.%s = wp.%s;" % (b, a))
 		// ]]]
 		ret.frame = wp.frame;
@@ -94,12 +101,12 @@ public:
 		ret.x_lat = wp.x_lat;
 		ret.y_long = wp.y_long;
 		ret.z_alt = wp.z_alt;
-		// [[[end]]] (checksum: 14cc0f2fc12a4f95f6ea200e41005e3b)
+		ret.x = wp.x_lat;
+		ret.y = wp.y_long;
+		ret.z = wp.z_alt;
+		// [[[end]]] (checksum: e277c889ab7a67085562bbd014283a78)
 
 		ret.seq = seq;
-		ret.x = ret.x_lat;
-		ret.y = ret.y_long;
-		ret.z = ret.z_alt;
 
 		return ret;
 	}
@@ -109,11 +116,11 @@ public:
 		//return to_yaml();
 
 		return utils::format("#%u%1s F:%u C:%3u p: %f %f %f %f x: %f y: %f z: %f",
-				seq,
-				(current) ? "*" : "",
-				frame, command,
-				param1, param2, param3, param4,
-				x_lat, y_long, z_alt);
+			seq,
+			(current) ? "*" : "",
+			frame, command,
+			param1, param2, param3, param4,
+			x_lat, y_long, z_alt);
 	}
 };
 
@@ -133,6 +140,7 @@ public:
 		wp_set_active(0),
 		is_timedout(false),
 		do_pull_after_gcs(false),
+		enable_partial_push(false),
 		reshedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
@@ -146,9 +154,10 @@ public:
 
 		wp_state = WP::IDLE;
 
-		wp_nh.param("pull_after_gcs", do_pull_after_gcs, false);
+		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
+		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached", 10, true);
 		pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
 		push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
@@ -163,12 +172,12 @@ public:
 
 	Subscriptions get_subscriptions() {
 		return {
-		       make_handler(&WaypointPlugin::handle_mission_item),
-		       make_handler(&WaypointPlugin::handle_mission_request),
-		       make_handler(&WaypointPlugin::handle_mission_current),
-		       make_handler(&WaypointPlugin::handle_mission_count),
-		       make_handler(&WaypointPlugin::handle_mission_item_reached),
-		       make_handler(&WaypointPlugin::handle_mission_ack),
+			       make_handler(&WaypointPlugin::handle_mission_item),
+			       make_handler(&WaypointPlugin::handle_mission_request),
+			       make_handler(&WaypointPlugin::handle_mission_current),
+			       make_handler(&WaypointPlugin::handle_mission_count),
+			       make_handler(&WaypointPlugin::handle_mission_item_reached),
+			       make_handler(&WaypointPlugin::handle_mission_ack),
 		};
 	}
 
@@ -180,10 +189,12 @@ private:
 	ros::NodeHandle wp_nh;
 
 	ros::Publisher wp_list_pub;
+	ros::Publisher wp_reached_pub;
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
 	ros::ServiceServer clear_srv;
 	ros::ServiceServer set_cur_srv;
+
 
 	std::vector<WaypointItem> waypoints;
 	std::vector<WaypointItem> send_waypoints;
@@ -192,6 +203,7 @@ private:
 		RXLIST,
 		RXWP,
 		TXLIST,
+		TXPARTIAL,
 		TXWP,
 		CLEAR,
 		SET_CUR
@@ -199,6 +211,8 @@ private:
 	WP wp_state;
 
 	size_t wp_count;
+	size_t wp_start_id;
+	size_t wp_end_id;
 	size_t wp_cur_id;
 	size_t wp_cur_active;
 	size_t wp_set_active;
@@ -212,6 +226,8 @@ private:
 	ros::Timer wp_timer;
 	ros::Timer shedule_timer;
 	bool do_pull_after_gcs;
+	bool enable_partial_push;
+
 	bool reshedule_pull;
 
 	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
@@ -227,15 +243,19 @@ private:
 
 	/* -*- rx handlers -*- */
 
-	// WaypointItem is MISSION_ITEM child
+	/**
+	 * @brief handle MISSION_ITEM mavlink msg
+	 * handles and stores mission items when pulling waypoints
+	 * @param msg		Received Mavlink msg
+	 * @param wpi		WaypointItem from msg
+	 */
 	void handle_mission_item(const mavlink::mavlink_message_t *msg, WaypointItem &wpi)
 	{
 		unique_lock lock(mutex);
 
 		// WaypointItem has wider fields for Lat/Long/Alt, set it
 		// [[[cog:
-		// waypoint_mission_item = (('x_lat', 'x'), ('y_long', 'y'), ('z_alt', 'z'))
-		// for a, b in waypoint_mission_item:
+		// for a, b in waypoint_coords:
 		//     cog.outl("wpi.%s = wpi.%s;" % (a, b))
 		// ]]]
 		wpi.x_lat = wpi.x;
@@ -247,7 +267,7 @@ private:
 		if (wp_state == WP::RXWP) {
 			if (wpi.seq != wp_cur_id) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping item (%d != %zu)",
-						wpi.seq, wp_cur_id);
+					wpi.seq, wp_cur_id);
 				return;
 			}
 
@@ -273,19 +293,26 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_REQUEST mavlink msg
+	 * handles and acts on misison request from FCU
+	 * @param msg		Received Mavlink msg
+	 * @param mreq		MISSION_REQUEST from msg
+	 */
 	void handle_mission_request(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_REQUEST &mreq)
 	{
 		lock_guard lock(mutex);
 
-		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXWP)) {
+		if ((wp_state == WP::TXLIST && mreq.seq == 0) || (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP)) {
 			if (mreq.seq != wp_cur_id && mreq.seq != wp_cur_id + 1) {
 				ROS_WARN_NAMED("wp", "WP: Seq mismatch, dropping request (%d != %zu)",
-						mreq.seq, wp_cur_id);
+					mreq.seq, wp_cur_id);
 				return;
 			}
 
 			restart_timeout_timer();
-			if (mreq.seq < send_waypoints.size()) {
+			if (mreq.seq < wp_end_id) {
+				ROS_DEBUG_NAMED("wp", "WP: FCU requested waypoint %d", mreq.seq);
 				wp_state = WP::TXWP;
 				wp_cur_id = mreq.seq;
 				send_waypoint(wp_cur_id);
@@ -297,6 +324,12 @@ private:
 			ROS_DEBUG_NAMED("wp", "WP: rejecting request, wrong state %d", enum_value(wp_state));
 	}
 
+	/**
+	 * @brief handle MISSION_CURRENT mavlink msg
+	 * This confirms a SET_CUR action
+	 * @param msg		Received Mavlink msg
+	 * @param mcur		MISSION_CURRENT from msg
+	 */
 	void handle_mission_current(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_CURRENT &mcur)
 	{
 		unique_lock lock(mutex);
@@ -323,6 +356,13 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_COUNT mavlink msg
+	 * Handles a mission count from FCU in a Waypoint Pull
+	 * Triggers a pull GCS seems to be requesting mission
+	 * @param msg		Received Mavlink msg
+	 * @param mcnt		MISSION_COUNT from msg
+	 */
 	void handle_mission_count(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_COUNT &mcnt)
 	{
 		unique_lock lock(mutex);
@@ -359,19 +399,39 @@ private:
 		}
 	}
 
+	/**
+	 * @brief handle MISSION_ITEM_REACHED mavlink msg
+	 * @param msg		Received Mavlink msg
+	 * @param mitr		MISSION_ITEM_REACHED from msg
+	 */
 	void handle_mission_item_reached(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ITEM_REACHED &mitr)
 	{
 		/* in QGC used as informational message */
 		ROS_INFO_NAMED("wp", "WP: reached #%d", mitr.seq);
+
+		auto wpr = boost::make_shared<mavros_msgs::WaypointReached>();
+
+		wpr->header.stamp = ros::Time::now();
+		wpr->wp_seq = mitr.seq;
+
+		wp_reached_pub.publish(wpr);
 	}
 
+	/**
+	 * @brief handle MISSION_ACK mavlink msg
+	 * Handles a MISSION_ACK which marks the end of a push, or a failure
+	 * @param msg		Received Mavlink msg
+	 * @param mack		MISSION_ACK from msg
+	 */
 	void handle_mission_ack(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ACK &mack)
 	{
 		unique_lock lock(mutex);
 
-		if ((wp_state == WP::TXLIST || wp_state == WP::TXWP)
-				&& (wp_cur_id == send_waypoints.size() - 1)
-				&& (mack.type == enum_value(MRES::ACCEPTED))) {
+		auto ack_type = static_cast<MRES>(mack.type);
+
+		if ((wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP)
+			&& (wp_cur_id == wp_end_id - 1)
+			&& (ack_type == MRES::ACCEPTED)) {
 			go_idle();
 			waypoints = send_waypoints;
 			send_waypoints.clear();
@@ -381,56 +441,27 @@ private:
 			publish_waypoints();
 			ROS_INFO_NAMED("wp", "WP: mission sended");
 		}
-		else if (wp_state == WP::TXLIST || wp_state == WP::TXWP) {
+		else if (wp_state == WP::TXWP && ack_type == MRES::INVALID_SEQUENCE) {
+			// Mission Ack: INVALID_SEQUENCE received during TXWP
+			// This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
+			// This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
+			ROS_DEBUG_NAMED("wp", "WP: Received INVALID_SEQUENCE ack");
+		}
+		else if (wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP) {
 			go_idle();
 			/* use this flag for failure report */
 			is_timedout = true;
 			lock.unlock();
 			list_sending.notify_all();
 
-			switch (mack.type) {
-			// XXX add to_string for enum
-			// [[[cog:
-			// mission_ack_log = (
-			//     ('ERROR', "general error"),
-			//     ('UNSUPPORTED_FRAME', "unsupported frame"),
-			//     ('UNSUPPORTED', "command unsupported"),
-			//     ('NO_SPACE', "no space left on mission storage"),
-			//     ('DENIED', "denied"),
-			// )
-			// for k, v in mission_ack_log:
-			//     cog.outl("case enum_value(MRES::%s):" % k)
-			//     cog.outl("""\tROS_ERROR_NAMED("wp", "WP: upload failed: %s");""" % v)
-			//     cog.outl("\tbreak;")
-			// ]]]
-			case enum_value(MRES::ERROR):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: general error");
-				break;
-			case enum_value(MRES::UNSUPPORTED_FRAME):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: unsupported frame");
-				break;
-			case enum_value(MRES::UNSUPPORTED):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: command unsupported");
-				break;
-			case enum_value(MRES::NO_SPACE):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: no space left on mission storage");
-				break;
-			case enum_value(MRES::DENIED):
-				ROS_ERROR_NAMED("wp", "WP: upload failed: denied");
-				break;
-			// [[[end]]] (checksum: b85e3c2b5705b79375cefa3ff3fa108b)
-
-			default:
-				ROS_ERROR_NAMED("wp", "WP: upload failed: error #%d", mack.type);
-				break;
-			}
+			ROS_ERROR_STREAM_NAMED("wp", "WP: upload failed: " << utils::to_string(ack_type));
 		}
 		else if (wp_state == WP::CLEAR) {
 			go_idle();
-			if (mack.type != enum_value(MRES::ACCEPTED)) {
+			if (ack_type != MRES::ACCEPTED) {
 				is_timedout = true;
 				lock.unlock();
-				ROS_ERROR_NAMED("wp", "WP: clear failed: error #%d", mack.type);
+				ROS_ERROR_STREAM_NAMED("wp", "WP: clear failed: " << utils::to_string(ack_type));
 			}
 			else {
 				waypoints.clear();
@@ -447,6 +478,10 @@ private:
 
 	/* -*- mid-level helpers -*- */
 
+	/**
+	 * @brief Act on a timeout
+	 * Resend the message that may have been lost
+	 */
 	void timeout_cb(const ros::TimerEvent &event)
 	{
 		unique_lock lock(mutex);
@@ -463,6 +498,9 @@ private:
 				break;
 			case WP::TXLIST:
 				mission_count(wp_count);
+				break;
+			case WP::TXPARTIAL:
+				mission_write_partial_list(wp_start_id, wp_end_id);
 				break;
 			case WP::TXWP:
 				send_waypoint(wp_cur_id);
@@ -491,15 +529,26 @@ private:
 		}
 	}
 
+	// Act on first heartbeat from FCU
 	void connection_cb(bool connected) override
 	{
 		lock_guard lock(mutex);
-		if (connected)
+		if (connected) {
 			shedule_pull(BOOTUP_TIME_DT);
-		else
+
+			if (wp_nh.hasParam("enable_partial_push")) {
+				wp_nh.getParam("enable_partial_push", enable_partial_push);
+			}
+			else {
+				enable_partial_push = m_uas->is_ardupilotmega();
+			}
+		}
+		else {
 			shedule_timer.stop();
+		}
 	}
 
+	//! @brief Callback for scheduled waypoint pull
 	void sheduled_pull_cb(const ros::TimerEvent &event)
 	{
 		lock_guard lock(mutex);
@@ -517,6 +566,7 @@ private:
 		mission_request_list();
 	}
 
+	//! @brief Send ACK back to FCU after pull
 	void request_mission_done(void)
 	{
 		/* possibly not needed if count == 0 (QGC impl) */
@@ -554,6 +604,7 @@ private:
 		shedule_timer.start();
 	}
 
+	//! @brief send a single waypoint to FCU
 	void send_waypoint(size_t seq)
 	{
 		if (seq < send_waypoints.size()) {
@@ -564,15 +615,22 @@ private:
 		}
 	}
 
+	/**
+	 * @brief wait until a waypoint pull is complete.
+	 * Pull happens asyncronously, this function blocks until it is done.
+	 */
 	bool wait_fetch_all()
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
-
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
 		       == std::cv_status::no_timeout
 		       && !is_timedout;
 	}
 
+	/**
+	 * @brief wait until a waypoint push is complete.
+	 * Push happens asyncronously, this function blocks until it is done.
+	 */
 	bool wait_push_all()
 	{
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
@@ -582,17 +640,20 @@ private:
 		       && !is_timedout;
 	}
 
+	//! @brief set the FCU current waypoint
 	void set_current_waypoint(size_t seq)
 	{
 		for (auto &it : waypoints)
 			it.current = (it.seq == seq) ? true : false;
 	}
 
+	//! @brief publish the updated waypoint list after operation
 	void publish_waypoints()
 	{
 		auto wpl = boost::make_shared<mavros_msgs::WaypointList>();
 		unique_lock lock(mutex);
 
+		wpl->current_seq = wp_cur_active;
 		wpl->waypoints.clear();
 		wpl->waypoints.reserve(waypoints.size());
 		for (auto &it : waypoints) {
@@ -608,7 +669,6 @@ private:
 	void mission_item(WaypointItem &wp)
 	{
 		m_uas->msg_set_target(wp);
-
 		// WaypointItem may be sent as MISSION_ITEM
 		UAS_FCU(m_uas)->send_message_ignore_drop(wp);
 	}
@@ -617,7 +677,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: request #%u", seq);
 
-		mavlink::common::msg::MISSION_REQUEST mrq{};
+		mavlink::common::msg::MISSION_REQUEST mrq {};
 		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
@@ -628,7 +688,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: set current #%u", seq);
 
-		mavlink::common::msg::MISSION_SET_CURRENT msc{};
+		mavlink::common::msg::MISSION_SET_CURRENT msc {};
 		m_uas->msg_set_target(msc);
 		msc.seq = seq;
 
@@ -639,7 +699,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: request list");
 
-		mavlink::common::msg::MISSION_REQUEST_LIST mrl{};
+		mavlink::common::msg::MISSION_REQUEST_LIST mrl {};
 		m_uas->msg_set_target(mrl);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mrl);
@@ -649,18 +709,30 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: count %u", cnt);
 
-		mavlink::common::msg::MISSION_COUNT mcnt{};
+		mavlink::common::msg::MISSION_COUNT mcnt {};
 		m_uas->msg_set_target(mcnt);
 		mcnt.count = cnt;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mcnt);
 	}
 
+	void mission_write_partial_list(uint16_t start_index, uint16_t end_index)
+	{
+		ROS_DEBUG_NAMED("wp", "WP:m: write partial list %u - %u", start_index, end_index);
+
+		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
+		mwpl.start_index = start_index;
+		mwpl.end_index = end_index;
+		m_uas->msg_set_target(mwpl);
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(mwpl);
+	}
+
 	void mission_clear_all()
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: clear all");
 
-		mavlink::common::msg::MISSION_CLEAR_ALL mclr{};
+		mavlink::common::msg::MISSION_CLEAR_ALL mclr {};
 		m_uas->msg_set_target(mclr);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mclr);
@@ -669,7 +741,7 @@ private:
 	void mission_ack(MRES type) {
 		ROS_DEBUG_NAMED("wp", "WP:m: ACK %u", enum_value(type));
 
-		mavlink::common::msg::MISSION_ACK mack{};
+		mavlink::common::msg::MISSION_ACK mack {};
 		m_uas->msg_set_target(mack);
 		mack.type = enum_value(type);
 
@@ -679,7 +751,7 @@ private:
 	/* -*- ROS callbacks -*- */
 
 	bool pull_cb(mavros_msgs::WaypointPull::Request &req,
-			mavros_msgs::WaypointPull::Response &res)
+		mavros_msgs::WaypointPull::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -702,7 +774,7 @@ private:
 	}
 
 	bool push_cb(mavros_msgs::WaypointPush::Request &req,
-			mavros_msgs::WaypointPush::Response &res)
+		mavros_msgs::WaypointPush::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -710,31 +782,75 @@ private:
 			// Wrong initial state, other operation in progress?
 			return false;
 
-		wp_state = WP::TXLIST;
+		if (req.start_index) {
+			// Partial Waypoint update
 
-		send_waypoints.clear();
-		send_waypoints.reserve(req.waypoints.size());
-		uint16_t seq = 0;
-		for (auto &it : req.waypoints) {
-			send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+			if (!enable_partial_push) {
+				ROS_WARN_NAMED("wp", "WP: Partial Push not enabled. (Only supported on APM)");
+				res.success = false;
+				res.wp_transfered = 0;
+				return true;
+			}
+
+			if (waypoints.size() < req.start_index + req.waypoints.size()) {
+				ROS_WARN_NAMED("wp", "WP: Partial push out of range rejected.");
+				res.success = false;
+				res.wp_transfered = 0;
+				return true;
+			}
+
+			wp_state = WP::TXPARTIAL;
+			send_waypoints = waypoints;
+
+			uint16_t seq = req.start_index;
+			for (auto &it : req.waypoints) {
+				send_waypoints[seq] = WaypointItem::from_msg(it, seq);
+				seq++;
+			}
+
+			wp_count = req.waypoints.size();
+			wp_start_id = req.start_index;
+			wp_end_id = req.start_index + wp_count;
+			wp_cur_id = req.start_index;
+			restart_timeout_timer();
+
+			lock.unlock();
+			mission_write_partial_list(wp_start_id, wp_end_id);
+			res.success = wait_push_all();
+			lock.lock();
+
+			res.wp_transfered = wp_cur_id - wp_start_id + 1;
+		}
+		else {
+			// Full waypoint update
+			wp_state = WP::TXLIST;
+
+			send_waypoints.clear();
+			send_waypoints.reserve(req.waypoints.size());
+			uint16_t seq = 0;
+			for (auto &it : req.waypoints) {
+				send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+			}
+
+			wp_count = send_waypoints.size();
+			wp_end_id = wp_count;
+			wp_cur_id = 0;
+			restart_timeout_timer();
+
+			lock.unlock();
+			mission_count(wp_count);
+			res.success = wait_push_all();
+			lock.lock();
+
+			res.wp_transfered = wp_cur_id + 1;
 		}
 
-		wp_count = send_waypoints.size();
-		wp_cur_id = 0;
-		restart_timeout_timer();
-
-		lock.unlock();
-		mission_count(wp_count);
-		res.success = wait_push_all();
-		lock.lock();
-
-		res.wp_transfered = wp_cur_id + 1;
 		go_idle();	// same as in pull_cb
 		return true;
 	}
 
 	bool clear_cb(mavros_msgs::WaypointClear::Request &req,
-			mavros_msgs::WaypointClear::Response &res)
+		mavros_msgs::WaypointClear::Response &res)
 	{
 		unique_lock lock(mutex);
 
@@ -754,7 +870,7 @@ private:
 	}
 
 	bool set_cur_cb(mavros_msgs::WaypointSetCurrent::Request &req,
-			mavros_msgs::WaypointSetCurrent::Response &res)
+		mavros_msgs::WaypointSetCurrent::Response &res)
 	{
 		unique_lock lock(mutex);
 

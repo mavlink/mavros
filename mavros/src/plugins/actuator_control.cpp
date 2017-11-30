@@ -35,17 +35,36 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
+		target_actuator_control_pub = nh.advertise<mavros_msgs::ActuatorControl>("target_actuator_control", 10);
 		actuator_control_sub = nh.subscribe("actuator_control", 10, &ActuatorControlPlugin::actuator_control_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			       make_handler(&ActuatorControlPlugin::handle_actuator_control_target),
+		};
 	}
 
 private:
 	ros::NodeHandle nh;
+
+	ros::Publisher target_actuator_control_pub;
 	ros::Subscriber actuator_control_sub;
+
+	/* -*- rx handlers -*- */
+
+	void handle_actuator_control_target(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ACTUATOR_CONTROL_TARGET &actuator_control_target)
+	{
+		auto actuator_control_target_msg = boost::make_shared<mavros_msgs::ActuatorControl>();
+		actuator_control_target_msg->header.stamp = m_uas->synchronise_stamp(actuator_control_target.time_usec);
+
+		actuator_control_target_msg->group_mix = actuator_control_target.group_mlx;
+		const auto &arr = actuator_control_target.controls;
+		std::copy(arr.cbegin(), arr.cend(), actuator_control_target_msg->controls.begin());
+
+		target_actuator_control_pub.publish(actuator_control_target_msg);
+	}
 
 	/* -*- callbacks -*- */
 
@@ -53,7 +72,8 @@ private:
 		//! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
 		//! message definiton here: @p http://mavlink.org/messages/common#SET_ACTUATOR_CONTROL_TARGET
 		mavlink::common::msg::SET_ACTUATOR_CONTROL_TARGET act{};
-		act.time_usec = ros::Time::now().toNSec() / 1000;
+
+		act.time_usec = req->header.stamp.toNSec() / 1000;
 		act.group_mlx = req->group_mix;
 		act.target_system = m_uas->get_tgt_system();
 		act.target_component = m_uas->get_tgt_component();

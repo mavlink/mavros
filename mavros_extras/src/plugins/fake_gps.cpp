@@ -77,7 +77,7 @@ public:
 		// default origin/starting point: Zürich geodetic coordinates
 		fp_nh.param("geo_origin/lat", origin_lat, 47.3667);	// [degrees]
 		fp_nh.param("geo_origin/lon", origin_lon, 8.5500);	// [degrees]
-		fp_nh.param("geo_origin/alt", origin_alt, 6371000.0);	// [meters - height over the WGS-84 ellipsoid]
+		fp_nh.param("geo_origin/alt", origin_alt, 408.0);	// [meters - height over the WGS-84 ellipsoid]
 
 		// init map origin with geodetic coordinates
 		map_origin = {origin_lat, origin_lon, origin_alt};
@@ -90,7 +90,7 @@ public:
 			 * @brief Conversion of the origin from geodetic coordinates (LLA)
 			 * to ECEF (Earth-Centered, Earth-Fixed)
 			 */
-			earth.Forward(map_origin.x(), map_origin.x(), map_origin.x(),
+			earth.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
 						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
 		}
 		catch (const std::exception& e) {
@@ -106,7 +106,7 @@ public:
 		// tf params
 		fp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		fp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fix");
-		fp_nh.param("tf/rate_limit", tf_rate, 50.0);
+		fp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
 		if (use_mocap) {
 			if (mocap_transform) {	// MoCap data in TransformStamped msg
@@ -242,7 +242,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::transformMsgToEigen(trans->transform, pos_enu);
 
-		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -250,7 +250,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
@@ -258,7 +258,7 @@ private:
 		Eigen::Affine3d pos_enu;
 		tf::poseMsgToEigen(req->pose, pos_enu);
 
-		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void transform_cb(const geometry_msgs::TransformStamped &trans)
@@ -267,7 +267,7 @@ private:
 
 		tf::transformMsgToEigen(trans.transform, pos_enu);
 
-		send_fake_gps(trans.header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation())));
+		send_fake_gps(trans.header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 };
 }	// namespace extra_plugins

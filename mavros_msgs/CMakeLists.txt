@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros_msgs)
 
-find_package(catkin REQUIRED COMPONENTS geometry_msgs geographic_msgs message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs sensor_msgs geographic_msgs message_generation std_msgs)
 
 include_directories(include)
 
@@ -15,11 +15,15 @@ add_message_files(
   BatteryStatus.msg
   CamIMUStamp.msg
   CommandCode.msg
+  DebugValue.msg
   ExtendedState.msg
   FileEntry.msg
   GlobalPositionTarget.msg
   HilActuatorControls.msg
   HilControls.msg
+  HilGPS.msg
+  HilSensor.msg
+  HilStateQuaternion.msg
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
@@ -36,6 +40,7 @@ add_message_files(
   Vibration.msg
   Waypoint.msg
   WaypointList.msg
+  WaypointReached.msg
 )
 
 add_service_files(
@@ -62,6 +67,7 @@ add_service_files(
   ParamPull.srv
   ParamPush.srv
   ParamSet.srv
+  SetMavFrame.srv
   SetMode.srv
   StreamRate.srv
   WaypointClear.srv
@@ -77,11 +83,11 @@ add_service_files(
 #   Action2.action
 # )
 
-generate_messages(DEPENDENCIES geometry_msgs geographic_msgs std_msgs)
+generate_messages(DEPENDENCIES geometry_msgs sensor_msgs geographic_msgs std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS geometry_msgs geographic_msgs message_runtime std_msgs)
+  CATKIN_DEPENDS geometry_msgs sensor_msgs geographic_msgs message_runtime std_msgs)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

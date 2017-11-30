@@ -7,6 +7,11 @@ language: generic
 compiler:
   - gcc
 cache:
+  directories:
+    - $HOME/.cache/pip
+  before_cache:
+    - rm -f $HOME/.cache/pip/log/debug.log
+cache:
   - apt
 
 env:
@@ -25,8 +30,16 @@ before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   #- sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  # Update python 2.7 version
+  - sudo apt-add-repository ppa:deadsnakes/ppa -y
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
+  - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
+    python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
+  # Install Python future module
+  - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
+  # Update PYTHONPATH
+  - export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
+  # Source environment
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep
   - sudo rosdep init
@@ -46,14 +59,18 @@ install:
   - ln -s $CI_SOURCE_PATH .
   # Install dependencies using rosdep
   - cd ~/catkin_ws
-  - rosdep install -q -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+  - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -q -y
+  # Install GeographicLib datasets (for Ubuntu Trusty - can only download geoid model)
+  - sudo -H mkdir -p /usr/share/geographiclib
+  - sudo -H geographiclib-datasets-download egm96_5
 
 before_script:
+  # Source environment
   - source /opt/ros/$ROS_DISTRO/setup.bash
 
 script:
   - cd ~/catkin_ws
-  - catkin config --install
+  - catkin config --install -DSETUPTOOLS_DEB_LAYOUT=OFF -DSETUPTOOLS_ARG_EXTRA=""
   - catkin build --no-status --summary
   - source devel/setup.bash
   - catkin run_tests --no-status -p1 -i --summary

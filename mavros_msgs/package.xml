@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mavros_msgs</name>
-  <version>0.19.0</version>
+  <version>0.21.5</version>
   <description>
     mavros_msgs defines messages for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>
@@ -22,6 +22,7 @@
   <exec_depend>message_runtime</exec_depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>geographic_msgs</depend>
   <!-- XXX needed for users of mavlink_convert.h
   <build_export_depend>libmavconn</build_export_depend>

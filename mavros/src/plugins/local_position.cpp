@@ -48,13 +48,13 @@ public:
 		lp_nh.param<std::string>("frame_id", frame_id, "map");
 		// Important tf subsection
 		// Report the transform from world to base_link here.
-		lp_nh.param("tf/send", tf_send, true);
+		lp_nh.param("tf/send", tf_send, false);
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
 		// Debug tf info
 		// broadcast the following transform: (can be expanded to more if desired)
 		// NED -> aircraft
-		lp_nh.param("tf/send_fcu",tf_send_fcu,false);
+		lp_nh.param("tf/send_fcu", tf_send_fcu, false);
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
 		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
@@ -88,8 +88,8 @@ private:
 
 		//--------------- Get Odom Information ---------------//
 		// Note this orientation describes baselink->ENU transform
-		auto enu_orientation_msg = m_uas->get_attitude_orientation();
-		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity();
+		auto enu_orientation_msg = m_uas->get_attitude_orientation_enu();
+		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity_enu();
 		Eigen::Quaterniond enu_orientation;
 		tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
 		auto baselink_linear = ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
@@ -113,7 +113,26 @@ private:
 		odom->child_frame_id = tf_child_frame_id;
 		tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
 		odom->twist.twist.angular = baselink_angular_msg;
+		// reasonable defaults for covariance
 		odom->pose.pose = pose->pose;
+		for (int i=0; i< 3; i++) {
+			// linear velocity
+			odom->twist.covariance[i + 6*i] = 1e-4;
+			// angular velocity
+			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1e-4;
+			// position/ attitude
+			if (i==2) {
+				// z
+				odom->pose.covariance[i + 6*i] = 1e-6;
+				// yaw
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
+			} else {
+				// x, y
+				odom->pose.covariance[i + 6*i] = 1e-6;
+				// roll, pitch
+				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
+			}
+		}
 
 		//--------------- Publish Data ---------------//
 		local_odom.publish(odom);
@@ -158,5 +177,3 @@ private:
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::LocalPositionPlugin, mavros::plugin::PluginBase)
-
-

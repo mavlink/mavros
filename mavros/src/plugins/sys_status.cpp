@@ -242,7 +242,9 @@ public:
 			stat.add("Motors are reversed", (last_st.onboard_control_sensors_health & enum_value(STS::REVERSE_MOTOR)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::LOGGING))
 			stat.add("Logging", (last_st.onboard_control_sensors_health & enum_value(STS::LOGGING)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: ff583cfb8c621a8f7ac2f20aaf2e0ba9)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::BATTERY))
+			stat.add("Battery", (last_st.onboard_control_sensors_health & enum_value(STS::BATTERY)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: 423cc585db6f8869fb5f0358d381a0d0)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -426,8 +428,8 @@ public:
 		double conn_heartbeat_d;
 		double min_voltage;
 
-		nh.param("conn/timeout", conn_timeout_d, 30.0);
-		nh.param("sys/min_voltage", min_voltage, 6.0);
+		nh.param("conn/timeout", conn_timeout_d, 10.0);
+		nh.param("sys/min_voltage", min_voltage, 10.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// rate parameter
@@ -821,7 +823,7 @@ private:
 
 		mavlink::common::msg::HEARTBEAT hb {};
 
-		hb.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER);
+		hb.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER); //! @todo patch PX4 so it can also handle this type as datalink
 		hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
 		hb.base_mode = enum_value(MAV_MODE::MANUAL_ARMED);
 		hb.custom_mode = 0;

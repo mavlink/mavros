@@ -1,35 +1,38 @@
 <library path="lib/libmavros_extras">
+	<class name="adsb" type="mavros::extra_plugins::ADSBPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish/subscribe to the location and information of an ADS-B vehicle.</description>
+	</class>
+	<class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish camera trigger data for synchronisation of IMU and camera frames.</description>
+	</class>
+	<class name="debug_value" type="mavros::extra_plugins::DebugValuePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Subs/Pubs debug msgs from and to the FCU.</description>
+	</class>
 	<class name="distance_sensor" type="mavros::extra_plugins::DistanceSensorPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
-	</class>
-	<class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
-	</class>
-	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
-	</class>
-	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send motion capture pose estimate to FCU.</description>
-	</class>
-	<class name="vision_pose_estimate" type="mavros::extra_plugins::VisionPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send vision pose estimate to FCU.</description>
-	</class>
-	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send odometry to FCU from another estimator.</description>
 	</class>
 	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
 	</class>
-	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send vision speed estimate to FCU.</description>
+	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send motion capture pose estimate to FCU.</description>
+	</class>
+	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send odometry to FCU from another estimator.</description>
+	</class>
+	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
+	</class>
+	<class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
 	</class>
 	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>
-	<class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish camera trigger data for synchronisation of IMU and camera frames</description>
+	<class name="vision_pose_estimate" type="mavros::extra_plugins::VisionPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send vision pose estimate to FCU.</description>
 	</class>
-	<class name="adsb" type="mavros::extra_plugins::ADSBPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Publish/subscribe to the location and information of an ADS-B vehicle</description>
+	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send vision speed estimate to FCU.</description>
 	</class>
 </library>

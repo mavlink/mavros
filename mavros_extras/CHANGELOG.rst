@@ -2,6 +2,84 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.5 (2017-11-16)
+-------------------
+* extras fix `#858 <https://github.com/mavlink/mavros/issues/858>`_: fix vector copy-paste error
+* Contributors: Vladimir Ermakov
+
+0.21.4 (2017-11-01)
+-------------------
+* ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)
+  * ENU<->ECEF transforms fix.
+  * Changes after review. Unit tests added.
+* Contributors: pavloblindnology
+
+0.21.3 (2017-10-28)
+-------------------
+* mavteleop: Move from iteritems to items for python3 support
+  Items work with python3 and python2.7
+  Signed-off-by: Patrick Jose Pereira <patrickelectric@gmail.com>
+* extras: Configurable base frame id on distance_sensor
+  Fix `#835 <https://github.com/mavlink/mavros/issues/835>`_
+* debug_msgs: fix typo
+* debug_msgs: fix typo
+* extras: Use cog to reduce common msg filler code
+* add debug plugin
+* Contributors: Nuno Marques, Patrick Jose Pereira, TSC21, Vladimir Ermakov
+
+0.21.2 (2017-09-25)
+-------------------
+* odom: fix typo
+* odom: general fixes and code tighting
+* Use tf2 for odom plugin and set reasoable defaults for local pos cov.
+* Contributors: James Goppert, TSC21
+
+0.21.1 (2017-09-22)
+-------------------
+
+0.21.0 (2017-09-14)
+-------------------
+* IMU and attitude: general clean-up
+* Using tabs as the file does
+* Updating comments for PX4Flow
+* Removing copter_visualization from the yaml files.
+  Adding odometry to apm_config
+  Changing frame_id to base_link for vibration
+* Update the apm_config and px4flow_config files
+* Update configuration from mavros_extras
+* Contributors: Alexis Paques, TSC21
+
+0.20.1 (2017-08-28)
+-------------------
+
+0.20.0 (2017-08-23)
+-------------------
+* Extras: Distance sensors add RADAR and UNKNOWN type
+* Extras: distance sensor don't spam when message are bounce back from FCU
+* Extras: add ardupilot rangefinder plugin
+* [WIP] Plugins: setpoint_attitude: add sync between thrust and attitude (`#700 <https://github.com/mavlink/mavros/issues/700>`_)
+  * plugins: setpoint_attitude: add sync between throttle and attitude topics to be sent together
+  * plugins: typo correction: replace throttle with thrust
+  * plugins: msgs: setpoint_attitude: replaces Float32Stamped for Thrust msg
+  * plugins: setpoint_attitude: add sync between twist and thrust (RPY+Thrust)
+  * setpoint_attitude: update the logic of thrust normalization verification
+  * setpoint_attitude: implement sync between tf listener and thrust subscriber
+  * TF sync listener: generalize topic type that can be syncronized with TF2
+  * TF2ListenerMixin: keep class template, use template for tf sync method only
+  * TF2ListenerMixin: fix and improve sync tf2_start method
+  * general update to yaml config files and parameters
+  * setpoint_attitude: add note on Thrust sub name
+  * setpoint_attitude: TF sync: pass subscriber pointer instead of binding it
+* extras: fake_gps: use another method to throttle incoming msgs
+* extras: fake_gps: compute vector2d.norm()
+* frame tf: move ENU<->ECEF transforms to ftf_frame_conversions.cpp
+* extras: fake_gps: use rate instead of period
+* extras: fake_gps: style fix
+* extras: mocap_fake_gps->fake_gps: generalize plugin and use GeographicLib possibilites
+* extras: odom: Minor fixes
+* extras: Add odom plugin
+* Contributors: James Goppert, Nuno Marques, TSC21, Vladimir Ermakov, khancyr
+
 0.19.0 (2017-05-05)
 -------------------
 * extras: fix package link

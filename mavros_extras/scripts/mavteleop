@@ -55,7 +55,7 @@ class RCMode(object):
     def load_param(ns='~rc_modes/'):
         yaml = rospy.get_param(ns)
         return [ RCMode( name, data['joy_flags'], data['rc_channel'], data['rc_value'] ) 
-            for name,data in yaml.iteritems() ]
+            for name,data in yaml.items() ]
         
     def is_toggled(self,joy):
         for btn,flag in self.joy_flags:
@@ -112,7 +112,7 @@ def arm(args, state):
 
 
 def load_map(m, n):
-    for k, v in m.iteritems():
+    for k, v in m.items():
         m[k] = rospy.get_param(n + k, v)
 
 
@@ -128,7 +128,7 @@ def rc_override_control(args):
     load_map(axes_map, '~axes_map/')
     load_map(axes_scale, '~axes_scale/')
     load_map(button_map, '~button_map/')
-    for k, v in rc_channels.iteritems():
+    for k, v in rc_channels.items():
         v.load_param()
 
     rc_modes = RCMode.load_param()

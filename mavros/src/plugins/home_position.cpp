@@ -136,7 +136,7 @@ private:
 		hp.altitude = req->geo.altitude * 1e3 + m_uas->ellipsoid_to_geoid_height(&req->geo);
 		// [[[cog:
 		// for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
-		//     cog.outl("hp.{f} = req->{f} * {m};".format(**locals()))
+		//     cog.outl("hp.{f} = req->geo.{f} * {m};".format(**locals()))
 		// for a, b in (('', 'pos'), ('approach_', 'approach')):
 		//     for f in "xyz":
 		//         cog.outl("hp.{a}{f} = {b}.{f}();".format(**locals()))
@@ -149,7 +149,7 @@ private:
 		hp.approach_x = approach.x();
 		hp.approach_y = approach.y();
 		hp.approach_z = approach.z();
-		// [[[end]]] (checksum: c3c143d4c5ed3e63770ccceeb5c0a77a)
+		// [[[end]]] (checksum: 9c40c5b3ac06b3b82016b4f07a8e12b2)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(hp);
 	}

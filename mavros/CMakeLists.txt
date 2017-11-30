@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   tf2_ros
+  tf2_eigen
   angles
   libmavconn
   rosconsole_bridge
@@ -38,6 +39,9 @@ endif()
 
 ## Find GeographicLib
 find_package(GeographicLib)
+
+## Check if the datasets are installed
+include(CheckGeographicLibDatasets)
 
 include(EnableCXX11)
 include(MavrosMavlink)
@@ -99,6 +103,7 @@ add_library(mavros
   src/lib/rosconsole_bridge.cpp
 )
 target_link_libraries(mavros
+  atomic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
@@ -108,7 +113,7 @@ add_library(mavros_plugins
   src/plugins/dummy.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
-  src/plugins/imu_pub.cpp
+  src/plugins/imu.cpp
   src/plugins/param.cpp
   src/plugins/waypoint.cpp
   src/plugins/rc_io.cpp
@@ -127,8 +132,7 @@ add_library(mavros_plugins
   src/plugins/actuator_control.cpp
   src/plugins/manual_control.cpp
   src/plugins/altitude.cpp
-  src/plugins/hil_controls.cpp
-  src/plugins/hil_actuator_controls.cpp
+  src/plugins/hil.cpp
   src/plugins/home_position.cpp
   src/plugins/setpoint_global_position.cpp
 )
