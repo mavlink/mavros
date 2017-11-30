@@ -29,9 +29,6 @@
 	<class name="setpoint_position" type="mavros::std_plugins::SetpointPositionPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU external position setpoint.</description>
 	</class>
-	<class name="setpoint_global_position" type="mavros::std_plugins::SetpointGlobalPositionPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send to FCU external global position setpoint.</description>
-	</class>
 	<class name="safety_area" type="mavros::std_plugins::SafetyAreaPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send to FCU safety allowed area.</description>
 	</class>
