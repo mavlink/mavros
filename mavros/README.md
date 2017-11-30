@@ -255,6 +255,17 @@ Contributing
  - with `catkin tools`, issue `catkin run_tests`;
 11. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
+NOTE: cog.py can be use to generate/update enum from mavlink.
+To install it :
+
+    pip install --user cogapp
+
+Then fill the behaviour you when between the [[[cog:]]] [[[end]]] balise (take example on existing files)
+and invoke cog like this :
+
+    cog.py -cr your_file.h/cpp
+
+Your file will be updated by cog.
 
 Glossary
 --------
