@@ -223,7 +223,7 @@ private:
                 send_position_target(req->header.stamp, sp);
             }
             else {
-                ROS_WARN_TROTTLE_NAMED("spgp", 10, "SPG: sp not sent.");
+                ROS_WARN_THROTTLE_NAMED(10,"spgp", "SPG: sp not sent.");
             }
 
 
