@@ -20,12 +20,19 @@
 
 namespace mavros {
 namespace extra_plugins {
+//! Max number of sensor measurement values on distances array
+static constexpr size_t MAX_DISTCNT = 72;
+//! Radians to degrees
+static constexpr double RAD_TO_DEG = 180.0 / M_PI;
+//! Mavlink MAV_DISTANCE_SENSOR enumeration
 using mavlink::common::MAV_DISTANCE_SENSOR;
+
 /**
  * @brief Obstacle distance plugin
  *
  * Publishes obstacle distance array to the FCU, in order to assist in an obstacle
  * avoidance flight.
+ * @see obstacle_cb()
  */
 class ObstacleDistancePlugin : public plugin::PluginBase {
 public:
@@ -47,30 +54,30 @@ public:
 
 private:
 	ros::NodeHandle obstacle_nh;
-
 	ros::Subscriber obstacle_sub;
 
 	/**
 	 * @brief Send obstacle distance array to the FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#OBSTACLE_DISTANCE
+	 *
+	 * Message specification: http://mavlink.org/messages/common#OBSTACLE_DISTANCE
 	 * @param req	received ObstacleDistance msg
 	 */
 	void obstacle_cb(const sensor_msgs::LaserScan::ConstPtr &req)
 	{
 		mavlink::common::msg::OBSTACLE_DISTANCE obstacle {};
 
-		constexpr size_t MAX_DISTCNT = 72;
-
 		auto n = std::min(req->ranges.size(), MAX_DISTCNT);
 
-		obstacle.time_usec = req->header.stamp.toNSec() / 1000;	// [milisecs]
-		obstacle.estimator_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);	// @todo: typo correction required on the Mavlink definition (should be sensor_type)
-		std::copy(req->ranges.begin(), req->ranges.begin() + n, obstacle.distances.begin());
-		std::fill(obstacle.distances.begin() + n, obstacle.distances.end(), UINT8_MAX);	// check https://github.com/mavlink/mavlink/pull/807#issuecomment-347885080
-		obstacle.increment = req->angle_increment;		// [rads]
+		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [milisecs]
+		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);			//!< defaults is laser type (depth sensor, Lidar)
+		std::copy(req->ranges.begin(), req->ranges.begin() + n, obstacle.distances.begin())	//!< [centimeters]
+		std::fill(obstacle.distances.begin() + n, obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
+		obstacle.increment = req->angle_increment * RAD_TO_DEG;					//!< [degrees]
+		obstacle.min_distance = req->range_min / 1e2;						//!< [centimeters]
+		obstacle.max_distance = req->range_max / 1e2;						//!< [centimeters]
 
-		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.estimator_type)
-										     << " distances: [" << obstacle.distance << "] "
+		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
+										     << " distances: [" << obstacle.distance << "]"
 										     << " increment: " << obstacle.increment);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
