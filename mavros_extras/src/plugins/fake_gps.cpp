@@ -52,7 +52,9 @@ public:
 		eph(2.0),
 		epv(2.0),
 		satellites_visible(5),
-		fix_type(GPS_FIX_TYPE::NO_GPS)
+		fix_type(GPS_FIX_TYPE::NO_GPS),
+		// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
+		earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f())
 	{ }
 
 	void initialize(UAS &uas_)
@@ -83,9 +85,6 @@ public:
 		map_origin = {origin_lat, origin_lon, origin_alt};
 
 		try {
-			// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
-			earth:	GeographicLib::Constants::WGS84_a(),
-				GeographicLib::Constants::WGS84_f();
 			/**
 			 * @brief Conversion of the origin from geodetic coordinates (LLA)
 			 * to ECEF (Earth-Centered, Earth-Fixed)
