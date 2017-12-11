@@ -78,11 +78,15 @@ private:
 		 *  This should also run in parallel on a thread
 		 */
 		Eigen::Affine3d tf_child2ned;
+		Eigen::Affine3d tf_child2fcu_frd;
 		Eigen::Affine3d tf_parent2ned;
 		try {
 			// transform lookup WRT world frame
 			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
 							odom->child_frame_id, "local_origin_" + desired_frame, ros::Time(0)));
+			tf_child2fcu_frd = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->child_frame_id, "fcu_frd", ros::Time(0)));
+
 			// transform lookup WRT body frame
 			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
 							odom->header.frame_id, "local_origin_" + desired_frame, ros::Time(0)));
@@ -109,8 +113,10 @@ private:
 		 */
 		Eigen::Vector3d pos_ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.position));
 		Eigen::Vector3d lin_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.linear));
-		Eigen::Vector3d ang_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.angular));
-		Eigen::Quaterniond q_parent2ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.orientation));
+		Eigen::Vector3d ang_vel_fcu_frd(tf_child2fcu_frd.linear() * ftf::to_eigen(odom->twist.twist.angular));
+		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
+		Eigen::Affine3d tf_ned2fcu_frd = tf_parent2ned * q_parent2child * tf_child2fcu_frd.inverse();
+		Eigen::Quaterniond q_ned2fcu_frd(tf_ned2fcu_frd.linear());
 
 		/** Apply covariance transforms */
 		/** Pose+Accel 9-D Covariance matrix
@@ -171,16 +177,16 @@ private:
 		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
 
 		att.time_usec = stamp_usec;
-		ftf::quaternion_to_mavlink(q_parent2ned, att.q);
+		ftf::quaternion_to_mavlink(q_ned2fcu_frd, att.q);
 		ftf::covariance_to_mavlink(cov_vel, att.covariance);
 
 		// [[[cog:
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-		//     cog.outl("att.{b} = ang_vel_ned.{a}();".format(**locals()))
+		//     cog.outl("att.{b} = ang_vel_fcu_frd.{a}();".format(**locals()))
 		// ]]]
-		att.rollspeed = ang_vel_ned.x();
-		att.pitchspeed = ang_vel_ned.y();
-		att.yawspeed = ang_vel_ned.z();
+		att.rollspeed = ang_vel_fcu_frd.x();
+		att.pitchspeed = ang_vel_fcu_frd.y();
+		att.yawspeed = ang_vel_fcu_frd.z();
 		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
 
 		// send ATTITUDE_QUATERNION_COV
