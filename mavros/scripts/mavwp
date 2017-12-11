@@ -180,7 +180,7 @@ def do_set_current(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Command line tool for manipulating missions on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 

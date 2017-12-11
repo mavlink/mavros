@@ -94,7 +94,7 @@ def do_local_selector(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Command line tool for controlling the device by setpoints.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-V', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 

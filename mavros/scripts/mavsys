@@ -80,7 +80,7 @@ def do_rate(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Change mode and rate on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
