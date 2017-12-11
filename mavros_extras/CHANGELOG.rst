@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* scripts: Use non global mavros-ns allow to work __ns parameter
+* move member variable earth initialization
+* Contributors: Shingo Matsuura, Vladimir Ermakov
+
 0.21.5 (2017-11-16)
 -------------------
 * extras fix `#858 <https://github.com/mavlink/mavros/issues/858>`_: fix vector copy-paste error

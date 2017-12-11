@@ -2,6 +2,43 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* scripts: Use non global mavros-ns allow to work __ns parameter
+* update script to support cycle_time on cmd trigger_control
+* plugin: Fix setpoint_position code style
+* Global position setpoint plugin (`#764 <https://github.com/mavlink/mavros/issues/764>`_)
+  * fix fake gps rate
+  * fix
+  * fix plugin_list
+  * fix
+  * add global position setpoint plugin
+  * add plugin to CMakeList
+  * fix bugs
+  * add altitude
+  * move GPS setpoints to setpoint_position plugin
+  * fix gps setpoint subscriber name
+  * move  GeographicLib::Geocentric earth inside callback
+  * add warning msg if timestamp is not updates
+  * Fix ROS_WARN
+* doc: move contributing.md to root
+* tools: add cogall.sh
+* split contribuion guide to GH file
+* Readme: add help for cog (`#876 <https://github.com/mavlink/mavros/issues/876>`_)
+* Setpoints: remove mav_frame string for local variable
+* Setpoints: add params for initial frame
+* Setpoint_velocity: uncrustify
+* Setpoint_position: uncrustify
+* Setpoints: add service to specify frame
+* Fix typo `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Improve output of script, replace which with more reliable hash `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Ensure dataset files exist, not just directories `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Remove previous duplicated link
+* Fixed issue link.
+* Fixed section header. Ready for troubleshooting PR.
+* Pushing troubleshooting section for Mavros.
+* Contributors: Mohamed Abdelkader Zahana, Pierre Kancir, Vladimir Ermakov, andresR8, fnoop, khancyr, pedro-roque
+
 0.21.5 (2017-11-16)
 -------------------
 * Yet another formatting.
