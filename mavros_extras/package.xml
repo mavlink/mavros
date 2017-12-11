@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mavros_extras</name>
-  <version>0.21.5</version>
+  <version>0.22.0</version>
   <description>
     Extra nodes and plugins for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>

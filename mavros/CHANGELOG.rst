@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2017-12-11)
+-------------------
 * scripts: Use non global mavros-ns allow to work __ns parameter
 * update script to support cycle_time on cmd trigger_control
 * plugin: Fix setpoint_position code style

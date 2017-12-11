@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2017-12-11)
+-------------------
 * scripts: Use non global mavros-ns allow to work __ns parameter
 * move member variable earth initialization
 * Contributors: Shingo Matsuura, Vladimir Ermakov
