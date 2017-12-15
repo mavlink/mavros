@@ -34,6 +34,8 @@ static constexpr double MILLIT_TO_TESLA = 1000.0;
 static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
 //! millG to m/s**2 coeff
 static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
+//! millm/s**2 to m/s**2 coeff
+static constexpr double MILLIMS2_TO_MS2 = 1.0e-3;
 //! millBar to Pascal coeff
 static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 //! Radians to degrees
@@ -46,6 +48,7 @@ public:
 	IMUPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		has_hr_imu(false),
+		has_raw_imu(false),
 		has_scaled_imu(false),
 		has_att_quat(false)
 	{ }
@@ -106,6 +109,7 @@ private:
 	ros::Publisher press_pub;
 
 	bool has_hr_imu;
+	bool has_raw_imu;
 	bool has_scaled_imu;
 	bool has_att_quat;
 	Eigen::Vector3d linear_accel_vec_enu;
@@ -417,6 +421,9 @@ private:
 	 */
 	void handle_raw_imu(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RAW_IMU &imu_raw)
 	{
+		ROS_INFO_COND_NAMED(!has_raw_imu, "imu", "IMU: Raw IMU message used.");
+		has_raw_imu = true;
+
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
@@ -433,6 +440,9 @@ private:
 		if (m_uas->is_ardupilotmega()) {
 			accel_ned *= MILLIG_TO_MS2;
 			accel_enu *= MILLIG_TO_MS2;
+		} else if (m_uas->is_px4()) {
+			accel_ned *= MILLIMS2_TO_MS2;
+			accel_enu *= MILLIMS2_TO_MS2;
 		}
 
 		publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
