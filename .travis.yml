@@ -3,6 +3,7 @@
 # vim:set ts=2 sw=2 et:
 dist: trusty
 sudo: required
+group: deprecated-2017Q4
 language: generic
 compiler:
   - gcc
