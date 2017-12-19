@@ -276,9 +276,9 @@ private:
 		/** Angular velocity on the NED-aicraft frame:
 		 *  @snippet src/plugins/imu.cpp ned_ang_vel1
 		 */
-		// [ned_ang_vel1]
+		// [frd_ang_vel1]
 		auto gyro_frd = Eigen::Vector3d(att.rollspeed, att.pitchspeed, att.yawspeed);
-		// [ned_ang_vel1]
+		// [frd_ang_vel1]
 
 		/** The RPY describes the rotation: aircraft->NED.
 		 *  It is required to change this to aircraft->base_link:
@@ -321,9 +321,9 @@ private:
 		/** Angular velocity on the NED-aicraft frame:
 		 *  @snippet src/plugins/imu.cpp ned_ang_vel2
 		 */
-		// [ned_ang_vel2]
+		// [frd_ang_vel2]
 		auto gyro_frd = Eigen::Vector3d(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
-		// [ned_ang_vel2]
+		// [frd_ang_vel2]
 
 		/** MAVLink quaternion exactly matches Eigen convention.
 		 *  The RPY describes the rotation: aircraft->NED.
