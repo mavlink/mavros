@@ -34,7 +34,7 @@ before_install:
   # Update python 2.7 version
   - sudo apt-add-repository ppa:deadsnakes/ppa -y
   - sudo apt-get update -qq
-  - sudo -H apt-get install -qq -y --allow-unauthenticated python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
+  - sudo -H apt-get install -qq -y --allow-unauthenticated libgeographiclib-dev python2.7-dev libpython2.7-dev libpython2.7 python2.7 libpython2.7-stdlib
     python-pip python-setuptools python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin python-catkin-tools
   # Install Python future module
   - sudo -H pip install -I future -t /usr/lib/python2.7/dist-packages
