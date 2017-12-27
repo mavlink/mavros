@@ -70,14 +70,14 @@ private:
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [milisecs]
 		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);			//!< defaults is laser type (depth sensor, Lidar)
-		std::copy(req->ranges.begin(), req->ranges.begin() + n, obstacle.distances.begin())	//!< [centimeters]
+		std::copy(req->ranges.begin(), req->ranges.begin() + n, obstacle.distances.begin());	//!< [centimeters]
 		std::fill(obstacle.distances.begin() + n, obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
 		obstacle.increment = req->angle_increment * RAD_TO_DEG;					//!< [degrees]
 		obstacle.min_distance = req->range_min / 1e2;						//!< [centimeters]
 		obstacle.max_distance = req->range_max / 1e2;						//!< [centimeters]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
-										     << " distances: [" << obstacle.distance << "]"
+										     << " distances: " << std::string(obstacle.distances.begin(), obstacle.distances.end())
 										     << " increment: " << obstacle.increment);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
