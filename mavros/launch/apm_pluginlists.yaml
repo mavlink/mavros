@@ -5,6 +5,7 @@ plugin_blacklist:
 - safety_area
 # extras
 - altitude
+- command_ack
 - debug_value
 - image_pub
 - mocap_pose_estimate
