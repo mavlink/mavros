@@ -29,6 +29,7 @@ using mavlink::common::ADSB_EMITTER_TYPE;
 using mavlink::common::GPS_FIX_TYPE;
 using mavlink::common::MAV_MISSION_RESULT;
 using mavlink::common::MAV_FRAME;
+using mavlink::common::MAV_DISTANCE_SENSOR;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -462,6 +463,29 @@ MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
 	return MAV_FRAME::LOCAL_NED;
 }
+
+// [[[cog:
+// ename = 'MAV_DISTANCE_SENSOR'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_DISTANCE_SENSOR values
+static const std::array<const std::string, 5> mav_distance_sensor_strings{{
+/*  0 */ "LASER",                         // Laser rangefinder, e.g. LightWare SF02/F or PulsedLight units
+/*  1 */ "ULTRASOUND",                    // Ultrasound rangefinder, e.g. MaxBotix units
+/*  2 */ "INFRARED",                      // Infrared rangefinder, e.g. Sharp units
+/*  3 */ "RADAR",                         // Radar type, e.g. uLanding units
+/*  4 */ "UNKNOWN",                       // Broken or unknown type, e.g. analog units
+}};
+
+std::string to_string(MAV_DISTANCE_SENSOR e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_distance_sensor_strings.size())
+		return std::to_string(idx);
+
+	return mav_distance_sensor_strings[idx];
+}
+// [[[end]]] (checksum: 3f792ad01cdb3f2315a8907f578ab5b3)
 
 }	// namespace utils
 }	// namespace mavros
