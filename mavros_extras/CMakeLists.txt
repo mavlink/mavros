@@ -66,6 +66,7 @@ include_directories(
 add_library(mavros_extras
   src/plugins/adsb.cpp
   src/plugins/cam_imu_sync.cpp
+  src/plugins/command_ack.cpp
   src/plugins/debug_value.cpp
   src/plugins/distance_sensor.cpp
   src/plugins/fake_gps.cpp

@@ -14,6 +14,7 @@ add_message_files(
   AttitudeTarget.msg
   BatteryStatus.msg
   CamIMUStamp.msg
+  CommandAck.msg
   CommandCode.msg
   DebugValue.msg
   ExtendedState.msg
