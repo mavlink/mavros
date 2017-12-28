@@ -168,6 +168,8 @@ fake_gps:
     child_frame_id: "fix" # TF child_frame_id
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
+  vision:
+    topic: "vision"       # topic of vision pose
 
 # mocap_pose_estimate
 mocap:

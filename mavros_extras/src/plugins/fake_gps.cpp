@@ -107,6 +107,9 @@ public:
 		fp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "fix");
 		fp_nh.param("tf/rate_limit", tf_rate, 10.0);
 
+		// vision params		
+		fp_nh.param<std::string>("vision/topic", vision_topic, "vision");
+
 		if (use_mocap) {
 			if (mocap_transform) {	// MoCap data in TransformStamped msg
 				mocap_tf_sub = fp_nh.subscribe("mocap/tf", 10, &FakeGPSPlugin::mocap_tf_cb, this);
@@ -116,7 +119,7 @@ public:
 			}
 		}
 		else if (use_vision) {	// Vision data in PoseStamped msg
-			vision_pose_sub = fp_nh.subscribe("vision", 10, &FakeGPSPlugin::vision_cb, this);
+			vision_pose_sub = fp_nh.subscribe(vision_topic, 10, &FakeGPSPlugin::vision_cb, this);
 		}
 		else if (tf_listen) {	// Pose aquired from TF Listener
 			ROS_INFO_STREAM_NAMED("fake_gps", "Listen to transform " << tf_frame_id
@@ -160,6 +163,8 @@ private:
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
 	ros::Time last_transform_stamp;
+
+	std::string vision_topic;
 
 	Eigen::Vector3d map_origin;	//!< geodetic origin [lla]
 	Eigen::Vector3d ecef_origin;	//!< geocentric origin [m]
