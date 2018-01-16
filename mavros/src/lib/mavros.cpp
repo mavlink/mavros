@@ -46,7 +46,7 @@ MavRos::MavRos() :
 
 	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
-	nh.param<std::string>("fcu_protocol", fcu_protocol, "v1.0");
+	nh.param<std::string>("fcu_protocol", fcu_protocol, "v2.0");
 	nh.param("system_id", system_id, 1);
 	nh.param<int>("component_id", component_id, mavconn::MAV_COMP_ID_UDP_BRIDGE);
 	nh.param("target_system_id", tgt_system_id, 1);
