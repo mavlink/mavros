@@ -9,12 +9,14 @@
 	<arg name="pluginlists_yaml" />
 	<arg name="config_yaml" />
 	<arg name="log_output" default="screen" />
+	<arg name="fcu_protocol" default="v2.0" />
 
 	<node pkg="mavros" type="mavros_node" name="mavros" required="true" clear_params="true" output="$(arg log_output)">
 		<param name="fcu_url" value="$(arg fcu_url)" />
 		<param name="gcs_url" value="$(arg gcs_url)" />
 		<param name="target_system_id" value="$(arg tgt_system)" />
 		<param name="target_component_id" value="$(arg tgt_component)" />
+		<param name="fcu_protocol" value="$(arg fcu_protocol)" />
 
 		<!-- load blacklist, config -->
 		<rosparam command="load" file="$(arg pluginlists_yaml)" />
