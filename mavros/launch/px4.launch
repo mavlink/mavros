@@ -7,6 +7,7 @@
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />
 	<arg name="log_output" default="screen" />
+	<arg name="fcu_protocol" default="v2.0" />
 
 	<include file="$(find mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
@@ -17,5 +18,6 @@
 		<arg name="tgt_system" value="$(arg tgt_system)" />
 		<arg name="tgt_component" value="$(arg tgt_component)" />
 		<arg name="log_output" value="$(arg log_output)" />
+		<arg name="fcu_protocol" value="$(arg fcu_protocol)" />
 	</include>
 </launch>
