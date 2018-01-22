@@ -3,6 +3,7 @@ plugin_blacklist:
 - actuator_control
 - ftp
 - safety_area
+- hil
 # extras
 - altitude
 - debug_value
