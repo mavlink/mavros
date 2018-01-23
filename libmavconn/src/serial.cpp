@@ -82,11 +82,15 @@ void MAVConnSerial::close()
 	if (!is_open())
 		return;
 
-	io_service.stop();
+	serial_dev.cancel();
 	serial_dev.close();
+
+	io_service.stop();
 
 	if (io_thread.joinable())
 		io_thread.join();
+
+	io_service.reset();
 
 	if (port_closed_cb)
 		port_closed_cb();

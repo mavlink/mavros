@@ -136,12 +136,16 @@ void MAVConnUDP::close()
 	if (!is_open())
 		return;
 
+	socket.cancel();
+	socket.close();
+
 	io_work.reset();
 	io_service.stop();
-	socket.close();
 
 	if (io_thread.joinable())
 		io_thread.join();
+
+	io_service.reset();
 
 	if (port_closed_cb)
 		port_closed_cb();
