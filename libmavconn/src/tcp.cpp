@@ -131,13 +131,17 @@ void MAVConnTCPClient::close()
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
+	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send);
+	socket.cancel();
+	socket.close();
 
 	io_work.reset();
 	io_service.stop();
-	socket.close();
 
 	if (io_thread.joinable())
 		io_thread.join();
+
+	io_service.reset();
 
 	if (port_closed_cb)
 		port_closed_cb();
