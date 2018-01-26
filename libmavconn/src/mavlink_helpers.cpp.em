@@ -36,7 +36,7 @@ void MAVConnInterface::init_msg_entry()
 		auto it = message_entries.find(e.msgid);
 		if (it != message_entries.end()) {
 			if (memcmp(&e, it->second, sizeof(e)) != 0) {
-				logWarn("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
+				logDebug("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
 			}
 			else {
 				logDebug("mavconn: init: message from %s, MSG-ID %d in table.", dialect, e.msgid);
