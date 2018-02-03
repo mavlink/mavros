@@ -2,6 +2,25 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* launch fix `#935 <https://github.com/mavlink/mavros/issues/935>`_: use orientation convention from message descr
+  https://mavlink.io/en/messages/common.html#DISTANCE_SENSOR
+* Blacklist HIL for APM since it is not relevent
+* add MAV_DISTANCE_SENSOR enum to_string
+* px4: add fcu_protocol argument to choose mavlink v1.0 or v2.0 to start
+  mavros in node.launch
+* node: add fcu_protocol parameter to be able to choose mavlink v1.0 or v2.0
+  when starting mavros node
+* mavros: default fcu_protocol parameter to mavlink v2.0
+* manual_control: `send` topic for sending MANUAL_CONTROL message to FCU
+* imu plugin: fix doxygen comments
+* imu plugin: change sufixes to match the body coordinate frame
+* Fix vision odom.
+* IMU plugin: add raw IMU conversion for PX4
+* mention rotation convention and fix NED to ENU description
+* Contributors: ChristophTobler, James Goppert, James Mare, Martina, Oleg Kalachev, TSC21, Vladimir Ermakov
+
 0.22.0 (2017-12-11)
 -------------------
 * scripts: Use non global mavros-ns allow to work __ns parameter

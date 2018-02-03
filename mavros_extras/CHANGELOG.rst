@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add MAV_DISTANCE_SENSOR enum to_string
+* extras: plugins: obstacle_distance: update to new msg definition and crystalize
+* extras: obstacle_distance: increase number of array elements
+* extras: plugins: add obstacle_distance plugin
+* Fix vision odom.
+* Contributors: James Goppert, TSC21
+
 0.22.0 (2017-12-11)
 -------------------
 * scripts: Use non global mavros-ns allow to work __ns parameter
