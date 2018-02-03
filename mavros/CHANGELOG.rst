@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.0 (2018-02-03)
+-------------------
 * launch fix `#935 <https://github.com/mavlink/mavros/issues/935>`_: use orientation convention from message descr
   https://mavlink.io/en/messages/common.html#DISTANCE_SENSOR
 * Blacklist HIL for APM since it is not relevent

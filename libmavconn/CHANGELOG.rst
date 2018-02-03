@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.0 (2018-02-03)
+-------------------
 * libmavconn: warn->debug table entry message
 * Contributors: Anthony Lamping
 

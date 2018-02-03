@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.0 (2018-02-03)
+-------------------
 * add MAV_DISTANCE_SENSOR enum to_string
 * extras: plugins: obstacle_distance: update to new msg definition and crystalize
 * extras: obstacle_distance: increase number of array elements
