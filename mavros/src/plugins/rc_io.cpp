@@ -95,7 +95,7 @@ private:
 			}
 
 			//force switches to be in extreme positions
-			for(size_t i = 4; i < 6; ++i){
+			for(size_t i = 4; i < 7; ++i){
 				//1 is active so we are a bit conservative here
 				if(inputs[i] < 0.5){
 					inputs[i] = -1.0;
