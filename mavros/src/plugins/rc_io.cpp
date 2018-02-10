@@ -94,6 +94,16 @@ private:
 				inputs.back() = std::min(std::max(inputs.back(),-1.0),1.0);
 			}
 
+			//force switches to be in extreme positions
+			for(size_t i = 4; i < 6; ++i){
+				//1 is active so we are a bit conservative here
+				if(inputs[i] < 0.5){
+					inputs[i] = -1.0;
+				}else{
+					inputs[i] = 1.0;
+				}
+			}
+
 			//weird ordering and inversions to match asctec interface
 			rcin_msg.axes.push_back(inputs[2]);
 			rcin_msg.axes.push_back(-inputs[1]);
@@ -133,7 +143,7 @@ private:
 #undef SET_RC_IN
 
 		send_rc_data(uas->synchronise_stamp(port.time_boot_ms), port.rssi);
-		
+
 	}
 
 	void handle_rc_channels(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
