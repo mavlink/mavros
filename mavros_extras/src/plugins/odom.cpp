@@ -123,6 +123,7 @@ private:
 		 *  WRT world frame (half upper right triangular)
 		 */
 		Eigen::Matrix<double, 9, 9> r_9d;
+		r_9d.setZero(); // initialize with zeros
 		r_9d.block<3, 3>(0, 0) = r_9d.block<3, 3>(3, 3) = tf_parent2ned.linear();
 		r_9d.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
 
