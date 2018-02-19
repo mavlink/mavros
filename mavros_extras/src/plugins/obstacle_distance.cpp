@@ -20,8 +20,6 @@
 
 namespace mavros {
 namespace extra_plugins {
-//! Max number of sensor measurement values on distances array
-static constexpr size_t MAX_DISTCNT = 72;
 //! Radians to degrees
 static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 //! Mavlink MAV_DISTANCE_SENSOR enumeration
@@ -66,19 +64,20 @@ private:
 	{
 		mavlink::common::msg::OBSTACLE_DISTANCE obstacle {};
 
-		auto n = std::min(req->ranges.size(), MAX_DISTCNT);
+		auto n = std::min(req->ranges.size(), obstacle.distances.size());
+		auto cm_ranges = Eigen::Map<const Eigen::VectorXf>(req->ranges.data(), n) * 1e2;
+		Eigen::Map<Eigen::Matrix<uint16_t, Eigen::Dynamic, 1> > map_distances(obstacle.distances.data(), n);
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [milisecs]
 		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);			//!< defaults is laser type (depth sensor, Lidar)
-		std::copy(req->ranges.begin(), req->ranges.begin() + n, obstacle.distances.begin());	//!< [centimeters]
+		map_distances = cm_ranges.cast<uint16_t>();						//!< [centimeters]
 		std::fill(obstacle.distances.begin() + n, obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
 		obstacle.increment = req->angle_increment * RAD_TO_DEG;					//!< [degrees]
-		obstacle.min_distance = req->range_min / 1e2;						//!< [centimeters]
-		obstacle.max_distance = req->range_max / 1e2;						//!< [centimeters]
+		obstacle.min_distance = req->range_min * 1e2;						//!< [centimeters]
+		obstacle.max_distance = req->range_max * 1e2;						//!< [centimeters]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
-										     << " distances: " << std::string(obstacle.distances.begin(), obstacle.distances.end())
-										     << " increment: " << obstacle.increment);
+				<< std::endl << obstacle.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
 	}
