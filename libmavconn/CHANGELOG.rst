@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.1 (2018-02-27)
+-------------------
 * compile also with boost >= 1.66.0
   In boost 1.66.0, which includes boost-asio 1.12.0, the asio
   interfaces have been changed to follow the "C++ Extensions for

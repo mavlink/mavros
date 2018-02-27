@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.1 (2018-02-27)
+-------------------
 * odom plugin: initialize matrix with zeros
 * extras fix `#950 <https://github.com/mavlink/mavros/issues/950>`_: fix unit conversions
 * Contributors: ChristophTobler, Vladimir Ermakov
