@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: Update to_string
+* plugin fix `#957 <https://github.com/mavlink/mavros/issues/957>`_: set MISSION_ITEM::mission_type
+* Contributors: Vladimir Ermakov
+
 0.23.0 (2018-02-03)
 -------------------
 * launch fix `#935 <https://github.com/mavlink/mavros/issues/935>`_: use orientation convention from message descr

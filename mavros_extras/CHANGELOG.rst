@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* odom plugin: initialize matrix with zeros
+* extras fix `#950 <https://github.com/mavlink/mavros/issues/950>`_: fix unit conversions
+* Contributors: ChristophTobler, Vladimir Ermakov
+
 0.23.0 (2018-02-03)
 -------------------
 * add MAV_DISTANCE_SENSOR enum to_string
