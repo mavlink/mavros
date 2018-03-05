@@ -2,6 +2,41 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.1 (2018-02-27)
+-------------------
+* compile also with boost >= 1.66.0
+  In boost 1.66.0, which includes boost-asio 1.12.0, the asio
+  interfaces have been changed to follow the "C++ Extensions for
+  Networking" Technical Specification [1]. As a consequence,
+  resolvers now produce ranges rather than iterators.
+  In boost < 1.66.0, resolver.resolve returns an iterator that must
+  be passed to `std::for_each`. As this iterator in boost < 1.66.0
+  does not provide begin() and end() member functions, it cannot be
+  simply turned into a proper range.
+  For boost >= 1.66.0, resolver.resolve returns a range, which
+  can be just iterated through with `for (auto v : _)` syntax.
+  As it is not possible to have one way to iterate through the result
+  independent of the boost version, a preprocessing directive selects
+  the proper synactic iteration construction depending on the provided
+  boost-asio library version [2].
+  This way, this commit is backwards compatible with boost < 1.66.0
+  and compiles properly with boost >= 1.66.0.
+  The issue was identified in a build with the cross-compilation tool
+  chain provided in the meta-ros OpenEmbedded layer [3].
+  [1] http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/net_ts.html
+  [2] https://github.com/boostorg/asio/commit/0c9cbdfbf217146c096265b5eb56089e8cebe608
+  [3] http://github.com/bmwcarit/meta-ros
+  Signed-off-by: Lukas Bulwahn <lukas.bulwahn@gmail.com>
+* Contributors: Lukas Bulwahn
+
+0.23.0 (2018-02-03)
+-------------------
+* libmavconn: warn->debug table entry message
+* Contributors: Anthony Lamping
+
+0.22.0 (2017-12-11)
+-------------------
+
 0.21.5 (2017-11-16)
 -------------------
 

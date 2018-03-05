@@ -23,9 +23,8 @@ namespace ftf {
 namespace detail {
 /**
  * @brief Static quaternion needed for rotating between ENU and NED frames
- * +PI rotation around X (North) axis follwed by +PI/2 rotation about Z (Down)
- * gives the ENU frame.  Similarly, a +PI rotation about X (East) followed by
- * a +PI/2 roation about Z (Up) gives the NED frame.
+ * NED to ENU: +PI/2 rotation about Z (Down) followed by a +PI rotation around X (old North/new East)
+ * ENU to NED: +PI/2 rotation about Z (Up) followed by a +PI rotation about X (old East/new North)
  */
 static const auto NED_ENU_Q = quaternion_from_rpy(M_PI, 0.0, M_PI_2);
 

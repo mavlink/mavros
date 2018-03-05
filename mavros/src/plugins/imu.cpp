@@ -34,6 +34,8 @@ static constexpr double MILLIT_TO_TESLA = 1000.0;
 static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
 //! millG to m/s**2 coeff
 static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
+//! millm/s**2 to m/s**2 coeff
+static constexpr double MILLIMS2_TO_MS2 = 1.0e-3;
 //! millBar to Pascal coeff
 static constexpr double MILLIBAR_TO_PASCAL = 1.0e2;
 //! Radians to degrees
@@ -46,6 +48,7 @@ public:
 	IMUPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		has_hr_imu(false),
+		has_raw_imu(false),
 		has_scaled_imu(false),
 		has_att_quat(false)
 	{ }
@@ -106,10 +109,11 @@ private:
 	ros::Publisher press_pub;
 
 	bool has_hr_imu;
+	bool has_raw_imu;
 	bool has_scaled_imu;
 	bool has_att_quat;
-	Eigen::Vector3d linear_accel_vec_enu;
-	Eigen::Vector3d linear_accel_vec_ned;
+	Eigen::Vector3d linear_accel_vec_flu;
+	Eigen::Vector3d linear_accel_vec_frd;
 	ftf::Covariance3d linear_acceleration_cov;
 	ftf::Covariance3d angular_velocity_cov;
 	ftf::Covariance3d orientation_cov;
@@ -140,14 +144,14 @@ private:
 
 	/**
 	 * @brief Fill and publish IMU data message.
-	 * @param time_boot_ms		Message timestamp (not syncronized)
-	 * @param orientation_enu	Orientation in the base_link ENU frame
-	 * @param orientation_ned	Orientation in the aircraft NED frame
-	 * @param gyro_enu		Angular velocity/rate in the base_link ENU frame
-	 * @param gyro_ned		Angular velocity/rate in the aircraft NED frame
+	 * @param time_boot_ms     Message timestamp (not syncronized)
+	 * @param orientation_enu  Orientation in the base_link ENU frame
+	 * @param orientation_ned  Orientation in the aircraft NED frame
+	 * @param gyro_flu         Angular velocity/rate in the base_link Forward-Left-Up frame
+	 * @param gyro_frd         Angular velocity/rate in the aircraft Forward-Right-Down frame
 	 */
 	void publish_imu_data(uint32_t time_boot_ms, Eigen::Quaterniond &orientation_enu,
-				Eigen::Quaterniond &orientation_ned, Eigen::Vector3d &gyro_enu, Eigen::Vector3d &gyro_ned)
+				Eigen::Quaterniond &orientation_ned, Eigen::Vector3d &gyro_flu, Eigen::Vector3d &gyro_frd)
 	{
 		auto imu_ned_msg = boost::make_shared<sensor_msgs::Imu>();
 		auto imu_enu_msg = boost::make_shared<sensor_msgs::Imu>();
@@ -161,12 +165,12 @@ private:
 		tf::quaternionEigenToMsg(orientation_ned, imu_ned_msg->orientation);
 
 		// Convert from Eigen::Vector3d to geometry_msgs::Vector3
-		tf::vectorEigenToMsg(gyro_enu, imu_enu_msg->angular_velocity);
-		tf::vectorEigenToMsg(gyro_ned, imu_ned_msg->angular_velocity);
+		tf::vectorEigenToMsg(gyro_flu, imu_enu_msg->angular_velocity);
+		tf::vectorEigenToMsg(gyro_frd, imu_ned_msg->angular_velocity);
 
 		// Eigen::Vector3d from HIGHRES_IMU or RAW_IMU, to geometry_msgs::Vector3
-		tf::vectorEigenToMsg(linear_accel_vec_enu, imu_enu_msg->linear_acceleration);
-		tf::vectorEigenToMsg(linear_accel_vec_ned, imu_ned_msg->linear_acceleration);
+		tf::vectorEigenToMsg(linear_accel_vec_flu, imu_enu_msg->linear_acceleration);
+		tf::vectorEigenToMsg(linear_accel_vec_frd, imu_ned_msg->linear_acceleration);
 
 		// Pass ENU msg covariances
 		imu_enu_msg->orientation_covariance = orientation_cov;
@@ -202,25 +206,25 @@ private:
 
 	/**
 	 * @brief Fill and publish IMU data_raw message; store linear acceleration for IMU data
-	 * @param header	Message frame_id and timestamp
-	 * @param gyro		Orientation in the base_link ENU frame
-	 * @param accel_enu	Linear acceleration in the base_link ENU frame
-	 * @param accel_ned	Linear acceleration in the aircraft NED frame
+	 * @param header      Message frame_id and timestamp
+	 * @param gyro_flu    Orientation in the base_link Forward-Left-Up frame
+	 * @param accel_flu   Linear acceleration in the base_link Forward-Left-Up frame
+	 * @param accel_frd   Linear acceleration in the aircraft Forward-Right-Down frame
 	 */
-	void publish_imu_data_raw(std_msgs::Header &header, Eigen::Vector3d &gyro,
-				Eigen::Vector3d &accel_enu, Eigen::Vector3d &accel_ned)
+	void publish_imu_data_raw(std_msgs::Header &header, Eigen::Vector3d &gyro_flu,
+				Eigen::Vector3d &accel_flu, Eigen::Vector3d &accel_frd)
 	{
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 
 		// Fill message header
 		imu_msg->header = header;
 
-		tf::vectorEigenToMsg(gyro, imu_msg->angular_velocity);
-		tf::vectorEigenToMsg(accel_enu, imu_msg->linear_acceleration);
+		tf::vectorEigenToMsg(gyro_flu, imu_msg->angular_velocity);
+		tf::vectorEigenToMsg(accel_flu, imu_msg->linear_acceleration);
 
 		// Save readings
-		linear_accel_vec_enu = accel_enu;
-		linear_accel_vec_ned = accel_ned;
+		linear_accel_vec_flu = accel_flu;
+		linear_accel_vec_frd = accel_frd;
 
 		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
@@ -272,9 +276,9 @@ private:
 		/** Angular velocity on the NED-aicraft frame:
 		 *  @snippet src/plugins/imu.cpp ned_ang_vel1
 		 */
-		// [ned_ang_vel1]
-		auto gyro_ned = Eigen::Vector3d(att.rollspeed, att.pitchspeed, att.yawspeed);
-		// [ned_ang_vel1]
+		// [frd_ang_vel1]
+		auto gyro_frd = Eigen::Vector3d(att.rollspeed, att.pitchspeed, att.yawspeed);
+		// [frd_ang_vel1]
 
 		/** The RPY describes the rotation: aircraft->NED.
 		 *  It is required to change this to aircraft->base_link:
@@ -290,10 +294,10 @@ private:
 		 *  @snippet src/plugins/imu.cpp rotate_gyro
 		 */
 		// [rotate_gyro]
-		auto gyro_enu = ftf::transform_frame_aircraft_baselink(gyro_ned);
+		auto gyro_flu = ftf::transform_frame_aircraft_baselink(gyro_frd);
 		// [rotate_gyro]
 
-		publish_imu_data(att.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_enu, gyro_ned);
+		publish_imu_data(att.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_flu, gyro_frd);
 	}
 
 	/**
@@ -317,9 +321,9 @@ private:
 		/** Angular velocity on the NED-aicraft frame:
 		 *  @snippet src/plugins/imu.cpp ned_ang_vel2
 		 */
-		// [ned_ang_vel2]
-		auto gyro_ned = Eigen::Vector3d(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
-		// [ned_ang_vel2]
+		// [frd_ang_vel2]
+		auto gyro_frd = Eigen::Vector3d(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
+		// [frd_ang_vel2]
 
 		/** MAVLink quaternion exactly matches Eigen convention.
 		 *  The RPY describes the rotation: aircraft->NED.
@@ -333,9 +337,9 @@ private:
 		 *  It is required to apply the static rotation to get it into the base_link frame:
 		 *  @snippet src/plugins/imu.cpp rotate_gyro
 		 */
-		auto gyro_enu = ftf::transform_frame_aircraft_baselink(gyro_ned);
+		auto gyro_flu = ftf::transform_frame_aircraft_baselink(gyro_frd);
 
-		publish_imu_data(att_q.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_enu, gyro_ned);
+		publish_imu_data(att_q.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_flu, gyro_frd);
 	}
 
 	/**
@@ -359,12 +363,12 @@ private:
 		 */
 		// [accel_available]
 		if (imu_hr.fields_updated & ((7 << 3) | (7 << 0))) {
-			auto gyro = ftf::transform_frame_aircraft_baselink(Eigen::Vector3d(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro));
+			auto gyro_flu = ftf::transform_frame_aircraft_baselink(Eigen::Vector3d(imu_hr.xgyro, imu_hr.ygyro, imu_hr.zgyro));
 
-			auto accel_ned = Eigen::Vector3d(imu_hr.xacc, imu_hr.yacc, imu_hr.zacc);
-			auto accel_enu = ftf::transform_frame_aircraft_baselink(accel_ned);
+			auto accel_frd = Eigen::Vector3d(imu_hr.xacc, imu_hr.yacc, imu_hr.zacc);
+			auto accel_flu = ftf::transform_frame_aircraft_baselink(accel_frd);
 
-			publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
+			publish_imu_data_raw(header, gyro_flu, accel_flu, accel_frd);
 		}
 		// [accel_available]
 
@@ -417,6 +421,9 @@ private:
 	 */
 	void handle_raw_imu(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RAW_IMU &imu_raw)
 	{
+		ROS_INFO_COND_NAMED(!has_raw_imu, "imu", "IMU: Raw IMU message used.");
+		has_raw_imu = true;
+
 		if (has_hr_imu || has_scaled_imu)
 			return;
 
@@ -425,23 +432,26 @@ private:
 
 		/** @note APM send SCALED_IMU data as RAW_IMU
 		 */
-		auto gyro = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
+		auto gyro_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 					Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
-		auto accel_ned = Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
-		auto accel_enu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(accel_ned);
+		auto accel_frd = Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
+		auto accel_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(accel_frd);
 
 		if (m_uas->is_ardupilotmega()) {
-			accel_ned *= MILLIG_TO_MS2;
-			accel_enu *= MILLIG_TO_MS2;
+			accel_frd *= MILLIG_TO_MS2;
+			accel_flu *= MILLIG_TO_MS2;
+		} else if (m_uas->is_px4()) {
+			accel_frd *= MILLIMS2_TO_MS2;
+			accel_flu *= MILLIMS2_TO_MS2;
 		}
 
-		publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
+		publish_imu_data_raw(header, gyro_flu, accel_flu, accel_frd);
 
 		if (!m_uas->is_ardupilotmega()) {
 			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: linear acceleration on RAW_IMU known on APM only.");
 			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: ~imu/data_raw stores unscaled raw acceleration report.");
-			linear_accel_vec_enu.setZero();
-			linear_accel_vec_ned.setZero();
+			linear_accel_vec_flu.setZero();
+			linear_accel_vec_frd.setZero();
 		}
 
 		/** Magnetic field data:
@@ -472,12 +482,12 @@ private:
 		auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
 		auto header = m_uas->synchronized_header(frame_id, imu_raw.time_boot_ms);
 
-		auto gyro = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
+		auto gyro_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
 					Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
-		auto accel_ned = Eigen::Vector3d(Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc) * MILLIG_TO_MS2);
-		auto accel_enu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(accel_ned);
+		auto accel_frd = Eigen::Vector3d(Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc) * MILLIG_TO_MS2);
+		auto accel_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(accel_frd);
 
-		publish_imu_data_raw(header, gyro, accel_enu, accel_ned);
+		publish_imu_data_raw(header, gyro_flu, accel_flu, accel_frd);
 
 		/** Magnetic field data:
 		 *  @snippet src/plugins/imu.cpp mag_field

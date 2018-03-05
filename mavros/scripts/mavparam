@@ -10,6 +10,7 @@
 import argparse
 
 import rospy
+import mavros
 from mavros.utils import *
 from mavros.param import *
 
@@ -64,7 +65,7 @@ def do_set(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Command line tool for getting and setting parameters from MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 

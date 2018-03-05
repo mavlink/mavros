@@ -243,21 +243,7 @@ The full error description can be found on [issue #856][iss856]. Follow these st
 
 Contributing
 ------------
-
-1. Fork the repo:
-![fork](http://s24.postimg.org/pfvt9sdv9/Fork_mavros.png)
-2. Clone the repo (`git clone https://github.com/mavlink/mavros.git`);
-3. Create a remote connection to your repo (`git remote add <remote_repo> git@github.com:<YourGitUser>/mavros.git`);
-4. Create a feature/dev branch (`git checkout -b <feature_branch>`);
-5. Add the changes;
-6. Apply the changes by committing (`git commit -m "<message>"` or `git commit -a` and then write message; if adding new files: `git add <path/to/file.ext>`);
-7. Check code style `uncrustify -c ${ROS_WORKSPACE}/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>`;
-8. Fix small code style errors and typos;
-9. Commit with description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commit are better than mix of style and bug fix);
-10. Run tests:
- - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
- - with `catkin tools`, issue `catkin run_tests`;
-11. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
+See [CONTRIBUTING.md][contr].
 
 
 Glossary
@@ -304,3 +290,4 @@ Links
 [iss473rfc]: https://docs.google.com/document/d/1bDhaozrUu9F915T58WGzZeOM-McyU20dwxX-NRum1KA/edit
 [iss473table]: https://docs.google.com/spreadsheets/d/1LnsWTblU92J5_SMinTvBvHJWx6sqvzFa8SKbn8TXlnU/edit#gid=0
 [geolib]: https://geographiclib.sourceforge.io/
+[contr]: https://github.com/mavlink/mavros/blob/master/CONTRIBUTING.md

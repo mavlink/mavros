@@ -34,6 +34,7 @@ public:
 		PluginBase::initialize(uas_);
 
 		control_pub = manual_control_nh.advertise<mavros_msgs::ManualControl>("control", 10);
+		send_sub = manual_control_nh.subscribe("send", 1, &ManualControlPlugin::send_cb, this);
 	}
 
 	Subscriptions get_subscriptions() {
@@ -46,6 +47,7 @@ private:
 	ros::NodeHandle manual_control_nh;
 
 	ros::Publisher control_pub;
+	ros::Subscriber send_sub;
 
 	/* -*- rx handlers -*- */
 
@@ -61,6 +63,22 @@ private:
 		manual_control_msg->buttons = manual_control.buttons;
 
 		control_pub.publish(manual_control_msg);
+	}
+
+	/* -*- callbacks -*- */
+
+	void send_cb(const mavros_msgs::ManualControl::ConstPtr req)
+	{
+		mavlink::common::msg::MANUAL_CONTROL msg;
+		msg.target = m_uas->get_tgt_system();
+
+		msg.x = req->x;
+		msg.y = req->y;
+		msg.z = req->z;
+		msg.r = req->r;
+		msg.buttons = req->buttons;
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
 	}
 };
 }	// namespace std_plugins
