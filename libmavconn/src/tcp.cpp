@@ -41,13 +41,19 @@ static bool resolve_address_tcp(io_service &io, size_t chan, std::string host, u
 	error_code ec;
 
 	tcp::resolver::query query(host, "");
-	std::for_each(resolver.resolve(query, ec), tcp::resolver::iterator(),
-			[&](const tcp::endpoint & q_ep) {
-				ep = q_ep;
-				ep.port(port);
-				result = true;
-				logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
-			});
+
+	auto fn = [&](const tcp::endpoint & q_ep) {
+		ep = q_ep;
+		ep.port(port);
+		result = true;
+		logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
+	};
+
+#if BOOST_ASIO_VERSION >= 101200
+	for (auto q_ep : resolver.resolve(query, ec)) fn(q_ep);
+#else
+	std::for_each(resolver.resolve(query, ec), tcp::resolver::iterator(), fn);
+#endif
 
 	if (ec) {
 		logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());

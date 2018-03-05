@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017,2018 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -79,7 +79,7 @@ public:
 
 	static WaypointItem from_msg(mavros_msgs::Waypoint &wp, uint16_t seq)
 	{
-		WaypointItem ret;
+		WaypointItem ret{};
 
 		// [[[cog:
 		// waypoint_coords = [
@@ -107,6 +107,7 @@ public:
 		// [[[end]]] (checksum: e277c889ab7a67085562bbd014283a78)
 
 		ret.seq = seq;
+		ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
 
 		return ret;
 	}

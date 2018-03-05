@@ -2,6 +2,19 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.1 (2018-02-27)
+-------------------
+
+0.23.0 (2018-02-03)
+-------------------
+
+0.22.0 (2017-12-11)
+-------------------
+* SetMavFrame.srv: add FRAME\_ prefix
+* Add cog for SetMavFrame.srv
+* Setpoints: add service to specify frame
+* Contributors: Pierre Kancir, khancyr
+
 0.21.5 (2017-11-16)
 -------------------
 

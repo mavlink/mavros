@@ -186,7 +186,7 @@ def do_land_cur_gps(args):
 def do_trigger_control(args):
     try:
         ret = command.trigger_control(trigger_enable=args.trigger_enable,
-                                      integration_time=args.integration_time)
+                                      cycle_time=args.cycle_time)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -195,7 +195,7 @@ def do_trigger_control(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Command line tool for sending commands to MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
@@ -270,7 +270,7 @@ def main():
     trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
     trigger_en_group.add_argument('-e', '--enable', dest='trigger_enable', action='store_true', default=True, help="Enable camera trigger (default)")
     trigger_en_group.add_argument('-d', '--disable', dest='trigger_enable', action='store_false', help="Disable camera trigger")
-    trigger_ctrl_args.add_argument('-i', '--integration-time', default=0.0, type=float, required=False, help="Set/update shutter integration time for camera")
+    trigger_ctrl_args.add_argument('-c', '--cycle_time', default=0.0, type=float, required=False, help="Camera trigger cycle time. Zero to use current onboard value")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

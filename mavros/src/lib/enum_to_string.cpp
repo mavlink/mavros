@@ -28,6 +28,8 @@ using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
 using mavlink::common::GPS_FIX_TYPE;
 using mavlink::common::MAV_MISSION_RESULT;
+using mavlink::common::MAV_FRAME;
+using mavlink::common::MAV_DISTANCE_SENSOR;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -129,7 +131,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 28> mav_type_strings{{
+static const std::array<const std::string, 30> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -158,6 +160,8 @@ static const std::array<const std::string, 28> mav_type_strings{{
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
 /* 26 */ "Onboard gimbal",                // Onboard gimbal
 /* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
+/* 28 */ "Steerable",                     // Steerable, nonrigid airfoil
+/* 29 */ "Dodecarotor",                   // Dodecarotor
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -168,7 +172,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: ff3fd0c445310aef4a3cfb14a18178e0)
+// [[[end]]] (checksum: 3955611cab161e8b54cc33f1ea67c946)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -417,6 +421,72 @@ std::string to_string(MAV_MISSION_RESULT e)
 	return mav_mission_result_strings[idx];
 }
 // [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
+
+// [[[cog:
+// ename = 'MAV_FRAME'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_FRAME values
+static const std::array<const std::string, 12> mav_frame_strings{{
+/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL)
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-up (x: north, y: east, z: down).
+/*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-down (x: east, y: north, z: up)
+/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL)
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
+/*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
+/*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+}};
+
+std::string to_string(MAV_FRAME e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_frame_strings.size())
+		return std::to_string(idx);
+
+	return mav_frame_strings[idx];
+}
+// [[[end]]] (checksum: ffbf4a7aacdc4b5229293f3791f63379)
+
+MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
+{
+	for (size_t idx = 0; idx < mav_frame_strings.size(); idx++) {
+		if (mav_frame_strings[idx] == mav_frame) {
+			std::underlying_type<MAV_FRAME>::type rv = idx;
+			return static_cast<MAV_FRAME>(rv);
+		}
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
+	return MAV_FRAME::LOCAL_NED;
+}
+
+// [[[cog:
+// ename = 'MAV_DISTANCE_SENSOR'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_DISTANCE_SENSOR values
+static const std::array<const std::string, 5> mav_distance_sensor_strings{{
+/*  0 */ "LASER",                         // Laser rangefinder, e.g. LightWare SF02/F or PulsedLight units
+/*  1 */ "ULTRASOUND",                    // Ultrasound rangefinder, e.g. MaxBotix units
+/*  2 */ "INFRARED",                      // Infrared rangefinder, e.g. Sharp units
+/*  3 */ "RADAR",                         // Radar type, e.g. uLanding units
+/*  4 */ "UNKNOWN",                       // Broken or unknown type, e.g. analog units
+}};
+
+std::string to_string(MAV_DISTANCE_SENSOR e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_distance_sensor_strings.size())
+		return std::to_string(idx);
+
+	return mav_distance_sensor_strings[idx];
+}
+// [[[end]]] (checksum: 3f792ad01cdb3f2315a8907f578ab5b3)
 
 }	// namespace utils
 }	// namespace mavros

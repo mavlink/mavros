@@ -20,6 +20,7 @@ namespace ftf {
 
 /*
  * Note: order of axis are match tf2::LinearMath (bullet).
+ * YPR rotation convention -> YAW first, Pitch second, Roll third
  * Compatibility checked by unittests.
  */
 

@@ -2,6 +2,27 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.1 (2018-02-27)
+-------------------
+* odom plugin: initialize matrix with zeros
+* extras fix `#950 <https://github.com/mavlink/mavros/issues/950>`_: fix unit conversions
+* Contributors: ChristophTobler, Vladimir Ermakov
+
+0.23.0 (2018-02-03)
+-------------------
+* add MAV_DISTANCE_SENSOR enum to_string
+* extras: plugins: obstacle_distance: update to new msg definition and crystalize
+* extras: obstacle_distance: increase number of array elements
+* extras: plugins: add obstacle_distance plugin
+* Fix vision odom.
+* Contributors: James Goppert, TSC21
+
+0.22.0 (2017-12-11)
+-------------------
+* scripts: Use non global mavros-ns allow to work __ns parameter
+* move member variable earth initialization
+* Contributors: Shingo Matsuura, Vladimir Ermakov
+
 0.21.5 (2017-11-16)
 -------------------
 * extras fix `#858 <https://github.com/mavlink/mavros/issues/858>`_: fix vector copy-paste error

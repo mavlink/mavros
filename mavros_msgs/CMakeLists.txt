@@ -67,6 +67,7 @@ add_service_files(
   ParamPull.srv
   ParamPush.srv
   ParamSet.srv
+  SetMavFrame.srv
   SetMode.srv
   StreamRate.srv
   WaypointClear.srv

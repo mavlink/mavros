@@ -2,6 +2,68 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.1 (2018-02-27)
+-------------------
+* lib: Update to_string
+* plugin fix `#957 <https://github.com/mavlink/mavros/issues/957>`_: set MISSION_ITEM::mission_type
+* Contributors: Vladimir Ermakov
+
+0.23.0 (2018-02-03)
+-------------------
+* launch fix `#935 <https://github.com/mavlink/mavros/issues/935>`_: use orientation convention from message descr
+  https://mavlink.io/en/messages/common.html#DISTANCE_SENSOR
+* Blacklist HIL for APM since it is not relevent
+* add MAV_DISTANCE_SENSOR enum to_string
+* px4: add fcu_protocol argument to choose mavlink v1.0 or v2.0 to start
+  mavros in node.launch
+* node: add fcu_protocol parameter to be able to choose mavlink v1.0 or v2.0
+  when starting mavros node
+* mavros: default fcu_protocol parameter to mavlink v2.0
+* manual_control: `send` topic for sending MANUAL_CONTROL message to FCU
+* imu plugin: fix doxygen comments
+* imu plugin: change sufixes to match the body coordinate frame
+* Fix vision odom.
+* IMU plugin: add raw IMU conversion for PX4
+* mention rotation convention and fix NED to ENU description
+* Contributors: ChristophTobler, James Goppert, James Mare, Martina, Oleg Kalachev, TSC21, Vladimir Ermakov
+
+0.22.0 (2017-12-11)
+-------------------
+* scripts: Use non global mavros-ns allow to work __ns parameter
+* update script to support cycle_time on cmd trigger_control
+* plugin: Fix setpoint_position code style
+* Global position setpoint plugin (`#764 <https://github.com/mavlink/mavros/issues/764>`_)
+  * fix fake gps rate
+  * fix
+  * fix plugin_list
+  * fix
+  * add global position setpoint plugin
+  * add plugin to CMakeList
+  * fix bugs
+  * add altitude
+  * move GPS setpoints to setpoint_position plugin
+  * fix gps setpoint subscriber name
+  * move  GeographicLib::Geocentric earth inside callback
+  * add warning msg if timestamp is not updates
+  * Fix ROS_WARN
+* doc: move contributing.md to root
+* tools: add cogall.sh
+* split contribuion guide to GH file
+* Readme: add help for cog (`#876 <https://github.com/mavlink/mavros/issues/876>`_)
+* Setpoints: remove mav_frame string for local variable
+* Setpoints: add params for initial frame
+* Setpoint_velocity: uncrustify
+* Setpoint_position: uncrustify
+* Setpoints: add service to specify frame
+* Fix typo `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Improve output of script, replace which with more reliable hash `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Ensure dataset files exist, not just directories `#867 <https://github.com/mavlink/mavros/issues/867>`_
+* Remove previous duplicated link
+* Fixed issue link.
+* Fixed section header. Ready for troubleshooting PR.
+* Pushing troubleshooting section for Mavros.
+* Contributors: Mohamed Abdelkader Zahana, Pierre Kancir, Vladimir Ermakov, andresR8, fnoop, khancyr, pedro-roque
+
 0.21.5 (2017-11-16)
 -------------------
 * Yet another formatting.
