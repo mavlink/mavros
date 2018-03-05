@@ -226,6 +226,10 @@ Load order always:
 Troubleshooting
 ------------
 
+### Roll Pitch Yawrate Thrust: no effect?
+
+By default, the setpoint_raw parameters are zero (under px4_config.yaml). If you wish to use this type of setpoint, change the parameters accordingly.
+
 ### Error: serial0: receive: End of file
 
 The full error description can be found on [issue #856][iss856]. Follow these steps:

@@ -105,6 +105,12 @@ setpoint_position:
     child_frame_id: "target_position"
     rate_limit: 50.0
 
+# setpoint_raw
+setpoint_raw:
+  thrust_scaling_factor: 0.0
+  system_mass_kg: 0.0
+  yaw_rate_scaling_factor: 0.0
+
 # setpoint_velocity
 # None
 
