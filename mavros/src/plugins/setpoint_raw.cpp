@@ -17,7 +17,6 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <mav_msgs/RollPitchYawrateThrust.h>
 #include <tf/transform_datatypes.h>
 
 #include <mavros_msgs/AttitudeTarget.h>

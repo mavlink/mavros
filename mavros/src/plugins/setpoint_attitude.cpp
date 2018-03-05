@@ -50,10 +50,9 @@ public:
 		tf_rate(50.0),
 		use_quaternion(false),
 		reverse_thrust(false),
-		tf_listen(false)
-	{ 
-		ignore_rpyt_messages_ = false;
-	}
+		tf_listen(false),
+		ignore_rpyt_messages_(false)
+	{ }
 
 	void initialize(UAS &uas_)
 	{
@@ -238,11 +237,8 @@ private:
 			send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
 	}
 
-
-
 	void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg)
 	{
-	
 		if(ignore_rpyt_messages_){
 			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
 	 	        "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
@@ -255,7 +251,7 @@ private:
 
 		geometry_msgs::Quaternion orientation = 
 			tf::createQuaternionMsgFromRollPitchYaw( msg->roll, msg->pitch, 0);
-		// Transforms from thrust acceleration tp a thrust force (scaling adjusts to the UAV
+		// Transforms from thrust acceleration to a thrust force (scaling adjusts to the UAV
 		// propeller thrust, can be calculated from UAV calibration
 		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling * system_mass_kg));
 		Eigen::Quaterniond desired_orientation;
@@ -269,7 +265,7 @@ private:
 		
 		body_rate.x() = 0;
 		body_rate.y() = 0;
-		body_rate.z() = yaw_rate_scaling*ftf::detail::transform_frame_yaw(msg->yaw_rate);
+		body_rate.z() = yaw_rate_scaling * ftf::detail::transform_frame_yaw(msg->yaw_rate);
 	
 		set_attitude_target(
 			msg->header.stamp.toNSec() / 1000000,
@@ -277,9 +273,7 @@ private:
 			ned_desired_orientation,
 			body_rate,
 			thrust);
-			
 	}
-
 };
 }	// namespace std_plugins
 }	// namespace mavros
