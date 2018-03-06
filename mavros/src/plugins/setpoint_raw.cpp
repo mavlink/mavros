@@ -218,7 +218,6 @@ private:
 				body_rate,
 				req->thrust);
 	}
-
 };
 }	// namespace std_plugins
 }	// namespace mavros

@@ -96,21 +96,6 @@ public:
 		}
 
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointAttitudePlugin::rpyt_cb, this);
-		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling)){
-			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
-			ignore_rpyt_messages_ = true;
-		}
-		
-		if(!sp_nh.getParam("system_mass_kg", system_mass_kg)){
-			ROS_FATAL("No system mass found, DO NOT FLY");
-			ignore_rpyt_messages_ = true;
-		}
-		
-		if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling)){
-		        ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
-			ignore_rpyt_messages_ = true;
-		}
-
 	}
 
 	Subscriptions get_subscriptions()
@@ -143,7 +128,7 @@ private:
 	bool reverse_thrust;
 	float normalized_thrust;
 
-	double thrust_scaling, system_mass_kg, yaw_rate_scaling;
+	double thrust_scaling;
 	bool ignore_rpyt_messages_;
 
 	/**
@@ -237,36 +222,46 @@ private:
 			send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
 	}
 
-	void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg)
+	/**
+	 * @brief Setpoint for Roll, Pitch, Yawrate and Thrust (RPYT).
+	 * Message specification: http://docs.ros.org/indigo/api/mav_msgs/html/msg/RollPitchYawrateThrust.html
+	 * Thrust is set in Newtons and scaled by 1/MAX_THRUST_N (MAX_THRUST_N is UAV dependent).
+	 * @param msg		Received RPYT setpoint
+	 */
+	void rpyt_cb(const mav_msgs::RollPitchYawrateThrust::ConstPtr msg)
 	{
+
+		// Set Thrust scaling in px4_config.yaml, setpoint_attitude block.
+		if(!sp_nh.getParam("thrust_scaling", thrust_scaling)){
+			ignore_rpyt_messages_ = true;
+		}
+		
 		if(ignore_rpyt_messages_){
 			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
-	 	        "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
-			"yaw_rate_scaling_factor or system_mass_kg parameters");
+	 	        "the most likely cause of this is a failure to specify the thrust_scaling parameters "
+	 	        "on px4/apm_config.yaml .");
 		     	return;
 		}
 
-		// Set mask to ignore everything but thrust and attitude setpoint
-		uint8_t ignore_all_except_q_and_thrust = (7 << 0);
+		if(thrust_scaling == 0.0){
+			ROS_WARN("thrust_scaling parameter is set to zero.");
+		}
 
-		geometry_msgs::Quaternion orientation = 
-			tf::createQuaternionMsgFromRollPitchYaw( msg->roll, msg->pitch, 0);
+		// Set mask to ignore everything but thrust and attitude setpoint
+		uint8_t ignore_all_except_q_and_thrust = 0; //(7 << 0);
+
 		// Transforms from thrust acceleration to a thrust force (scaling adjusts to the UAV
 		// propeller thrust, can be calculated from UAV calibration
-		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling * system_mass_kg));
-		Eigen::Quaterniond desired_orientation;
-		Eigen::Vector3d body_rate;
-		tf::quaternionMsgToEigen(orientation, desired_orientation);
+		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling));
+		auto desired_orientation = ftf::quaternion_from_rpy(msg->roll, msg->pitch, 0.0);
 		
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
 				ftf::transform_orientation_baselink_aircraft(desired_orientation));
 		
-		body_rate.x() = 0;
-		body_rate.y() = 0;
-		body_rate.z() = yaw_rate_scaling * ftf::detail::transform_frame_yaw(msg->yaw_rate);
-	
+		auto body_rate = Eigen::Vector3d(0.0, 0.0, ftf::detail::transform_frame_yaw(msg->yaw_rate));
+
 		set_attitude_target(
 			msg->header.stamp.toNSec() / 1000000,
 			ignore_all_except_q_and_thrust,

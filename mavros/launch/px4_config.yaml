@@ -91,6 +91,7 @@ setpoint_accel:
 setpoint_attitude:
   reverse_thrust: false     # allow reversed thrust
   use_quaternion: false     # enable PoseStamped topic subscriber
+  thrust_scaling: 0.0       # used in roll_pitch_yawrate_thrust callback
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
     frame_id: "map"
@@ -105,12 +106,6 @@ setpoint_position:
     child_frame_id: "target_position"
     rate_limit: 50.0
   mav_frame: LOCAL_NED
-
-# setpoint_raw
-setpoint_raw:
-  thrust_scaling_factor: 0.0
-  system_mass_kg: 0.0
-  yaw_rate_scaling_factor: 0.0
 
 # setpoint_velocity
 setpoint_velocity:
