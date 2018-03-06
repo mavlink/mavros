@@ -18,6 +18,7 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <tf/transform_datatypes.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -26,7 +27,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/Thrust.h>
-
+#include <mav_msgs/RollPitchYawrateThrust.h>
 namespace mavros {
 namespace std_plugins {
 
@@ -49,7 +50,8 @@ public:
 		tf_rate(50.0),
 		use_quaternion(false),
 		reverse_thrust(false),
-		tf_listen(false)
+		tf_listen(false),
+		ignore_rpyt_messages_(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -80,7 +82,6 @@ public:
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
 			pose_sub.subscribe(sp_nh, "target_attitude", 1);
-
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
 			 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
@@ -93,6 +94,23 @@ public:
 			sync_twist.reset(new SyncTwistThrust(SyncTwistThrustPolicy(10), twist_sub, th_sub));
 			sync_twist->registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}
+
+		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointAttitudePlugin::rpyt_cb, this);
+		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling)){
+			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+		
+		if(!sp_nh.getParam("system_mass_kg", system_mass_kg)){
+			ROS_FATAL("No system mass found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+		
+		if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling)){
+		        ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+
 	}
 
 	Subscriptions get_subscriptions()
@@ -108,7 +126,9 @@ private:
 	message_filters::Subscriber<mavros_msgs::Thrust> th_sub;
 	message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
 	message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub;
-
+	
+	ros::Subscriber rpyt_sub;
+	
 	std::unique_ptr<SyncPoseThrust> sync_pose;
 	std::unique_ptr<SyncTwistThrust> sync_twist;
 
@@ -122,6 +142,9 @@ private:
 
 	bool reverse_thrust;
 	float normalized_thrust;
+
+	double thrust_scaling, system_mass_kg, yaw_rate_scaling;
+	bool ignore_rpyt_messages_;
 
 	/**
 	 * @brief Function to verify if the thrust values are normalized;
@@ -191,7 +214,6 @@ private:
 	}
 
 	/* -*- callbacks -*- */
-
 	void transform_cb(const geometry_msgs::TransformStamped &transform, const mavros_msgs::Thrust::ConstPtr &thrust_msg) {
 		Eigen::Affine3d tr;
 		tf::transformMsgToEigen(transform.transform, tr);
@@ -215,6 +237,43 @@ private:
 			send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
 	}
 
+	void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg)
+	{
+		if(ignore_rpyt_messages_){
+			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
+	 	        "the most likely cause of this is a failure to specify the thrust_scaling_factor,	"
+			"yaw_rate_scaling_factor or system_mass_kg parameters");
+		     	return;
+		}
+
+		// Set mask to ignore everything but thrust and attitude setpoint
+		uint8_t ignore_all_except_q_and_thrust = (7 << 0);
+
+		geometry_msgs::Quaternion orientation = 
+			tf::createQuaternionMsgFromRollPitchYaw( msg->roll, msg->pitch, 0);
+		// Transforms from thrust acceleration to a thrust force (scaling adjusts to the UAV
+		// propeller thrust, can be calculated from UAV calibration
+		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling * system_mass_kg));
+		Eigen::Quaterniond desired_orientation;
+		Eigen::Vector3d body_rate;
+		tf::quaternionMsgToEigen(orientation, desired_orientation);
+		
+		// Transform desired orientation to represent aircraft->NED,
+		// MAVROS operates on orientation of base_link->ENU
+		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
+				ftf::transform_orientation_baselink_aircraft(desired_orientation));
+		
+		body_rate.x() = 0;
+		body_rate.y() = 0;
+		body_rate.z() = yaw_rate_scaling * ftf::detail::transform_frame_yaw(msg->yaw_rate);
+	
+		set_attitude_target(
+			msg->header.stamp.toNSec() / 1000000,
+			ignore_all_except_q_and_thrust,
+			ned_desired_orientation,
+			body_rate,
+			thrust);
+	}
 };
 }	// namespace std_plugins
 }	// namespace mavros

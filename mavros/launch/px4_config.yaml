@@ -106,6 +106,12 @@ setpoint_position:
     rate_limit: 50.0
   mav_frame: LOCAL_NED
 
+# setpoint_raw
+setpoint_raw:
+  thrust_scaling_factor: 0.0
+  system_mass_kg: 0.0
+  yaw_rate_scaling_factor: 0.0
+
 # setpoint_velocity
 setpoint_velocity:
   mav_frame: LOCAL_NED
