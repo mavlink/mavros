@@ -54,6 +54,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		serial_dev.set_option(SPB::parity(SPB::parity::none));
 		serial_dev.set_option(SPB::stop_bits(SPB::stop_bits::one));
 		serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+
 #ifdef __linux__
 		// Set serial port to "raw" mode. Prevent the EOF exit
 		int fd = serial_dev.native_handle();
