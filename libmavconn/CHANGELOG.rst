@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavconn: small style fix
+* Libmavconn : Set the serial port on Raw mode to prevent EOF error
+* Libmavconn: ensure the ports are cleanly closed before end connexions.
+* Contributors: Pierre Kancir, Vladimir Ermakov
+
 0.23.1 (2018-02-27)
 -------------------
 * compile also with boost >= 1.66.0
