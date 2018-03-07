@@ -38,7 +38,7 @@ if(NOT EIGEN3_FOUND)
 endif()
 
 ## Find GeographicLib
-find_package(GeographicLib)
+find_package(GeographicLib REQUIRED)
 
 ## Check if the datasets are installed
 include(CheckGeographicLibDatasets)
