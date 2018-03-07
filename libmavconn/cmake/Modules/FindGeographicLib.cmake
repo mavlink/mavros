@@ -15,4 +15,4 @@ find_package_handle_standard_args (GeographicLib DEFAULT_MSG
   GeographicLib_LIBRARIES GeographicLib_INCLUDE_DIRS)
 mark_as_advanced (GeographicLib_LIBRARIES GeographicLib_INCLUDE_DIRS)
 
-message(WARNING "GL: F:${GeographicLib_FOUND} L:${GeographicLib_LIBRARIES} I:${GeographicLib_INCLUDE_DIRS}")
+#message(WARNING "GL: F:${GeographicLib_FOUND} L:${GeographicLib_LIBRARIES} I:${GeographicLib_INCLUDE_DIRS}")
