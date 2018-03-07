@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.2 (2018-03-07)
+-------------------
 * launch: add optional respawn_mavros arg
 * Contributors: Anthony Lamping
 
