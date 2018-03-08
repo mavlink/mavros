@@ -70,6 +70,7 @@ add_library(mavros_extras
   src/plugins/distance_sensor.cpp
   src/plugins/fake_gps.cpp
   src/plugins/mocap_pose_estimate.cpp
+  src/plugins/obstacle_avoidance.cpp
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
   src/plugins/px4flow.cpp
