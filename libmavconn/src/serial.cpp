@@ -21,6 +21,8 @@
 #include <mavconn/thread_utils.h>
 #include <mavconn/serial.h>
 
+#include <boost/version.hpp>
+
 namespace mavconn {
 using boost::system::error_code;
 using boost::asio::io_service;
@@ -53,15 +55,35 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		serial_dev.set_option(SPB::character_size(8));
 		serial_dev.set_option(SPB::parity(SPB::parity::none));
 		serial_dev.set_option(SPB::stop_bits(SPB::stop_bits::one));
-		serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+		// Flow control setting in older versions of Boost is broken, use workaround (below) for now.
+		if (BOOST_VERSION >= 106600) {
+			serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+		}
 
 #ifdef __linux__
-		// Set serial port to "raw" mode. Prevent the EOF exit
-		int fd = serial_dev.native_handle();
-		termios tio;
-		tcgetattr(fd, &tio);
-		cfmakeraw(&tio);
-		tcsetattr(fd, TCSANOW, &tio);
+		if (BOOST_VERSION < 106600) {
+			// Workaround to set some options for the port manually. This is done in
+			// Boost, but until v1.66.0 there was a bug which doesn't enable relevant
+			// code. Fixed by commit: https://github.com/boostorg/asio/commit/619cea4356
+			int fd = serial_dev.native_handle();
+			termios tio;
+			tcgetattr(fd, &tio);
+
+			// Set hardware flow control settings
+			if (hwflow) {
+				tio.c_iflag &= ~(IXOFF | IXON);
+				tio.c_cflag |= CRTSCTS;
+			} else {
+				tio.c_iflag &= ~(IXOFF | IXON);
+				tio.c_cflag &= ~CRTSCTS;
+			}
+
+			// Set serial port to "raw" mode to prevent EOF exit.
+			cfmakeraw(&tio);
+
+			// Commit settings
+			tcsetattr(fd, TCSANOW, &tio);
+		}
 #endif
 	}
 	catch (boost::system::system_error &err) {
