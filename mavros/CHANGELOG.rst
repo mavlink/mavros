@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.23.3 (2018-03-09)
+-------------------
 * lib: simplify geolib cmake module, try to fix CI
 * Contributors: Vladimir Ermakov
 
