@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016,2018 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -20,8 +20,6 @@
 
 #include <mavconn/thread_utils.h>
 #include <mavconn/serial.h>
-
-#include <boost/version.hpp>
 
 namespace mavconn {
 using boost::system::error_code;
@@ -55,35 +53,32 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		serial_dev.set_option(SPB::character_size(8));
 		serial_dev.set_option(SPB::parity(SPB::parity::none));
 		serial_dev.set_option(SPB::stop_bits(SPB::stop_bits::one));
-		// Flow control setting in older versions of Boost is broken, use workaround (below) for now.
-		if (BOOST_VERSION >= 106600) {
-			serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+
+#if BOOST_ASIO_VERSION >= 101200 || !defined(__linux__)
+		// Flow control setting in older versions of Boost.ASIO is broken, use workaround (below) for now.
+		serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+#elif BOOST_ASIO_VERSION < 101200 && defined(__linux__)
+		// Workaround to set some options for the port manually. This is done in
+		// Boost.ASIO, but until v1.12.0 (Boost 1.66) there was a bug which doesn't enable relevant
+		// code. Fixed by commit: https://github.com/boostorg/asio/commit/619cea4356
+		int fd = serial_dev.native_handle();
+		termios tio;
+		tcgetattr(fd, &tio);
+
+		// Set hardware flow control settings
+		if (hwflow) {
+			tio.c_iflag &= ~(IXOFF | IXON);
+			tio.c_cflag |= CRTSCTS;
+		} else {
+			tio.c_iflag &= ~(IXOFF | IXON);
+			tio.c_cflag &= ~CRTSCTS;
 		}
 
-#ifdef __linux__
-		if (BOOST_VERSION < 106600) {
-			// Workaround to set some options for the port manually. This is done in
-			// Boost, but until v1.66.0 there was a bug which doesn't enable relevant
-			// code. Fixed by commit: https://github.com/boostorg/asio/commit/619cea4356
-			int fd = serial_dev.native_handle();
-			termios tio;
-			tcgetattr(fd, &tio);
+		// Set serial port to "raw" mode to prevent EOF exit.
+		cfmakeraw(&tio);
 
-			// Set hardware flow control settings
-			if (hwflow) {
-				tio.c_iflag &= ~(IXOFF | IXON);
-				tio.c_cflag |= CRTSCTS;
-			} else {
-				tio.c_iflag &= ~(IXOFF | IXON);
-				tio.c_cflag &= ~CRTSCTS;
-			}
-
-			// Set serial port to "raw" mode to prevent EOF exit.
-			cfmakeraw(&tio);
-
-			// Commit settings
-			tcsetattr(fd, TCSANOW, &tio);
-		}
+		// Commit settings
+		tcsetattr(fd, TCSANOW, &tio);
 #endif
 	}
 	catch (boost::system::system_error &err) {
