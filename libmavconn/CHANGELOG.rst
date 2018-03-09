@@ -2,6 +2,15 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: better preprocessor conditions for serial workaround
+* libmavconn : fix hardware flow control setting for Boost < v1.66
+  This commit fixes handling of hardware flow control. Due to bugs in Boost, set_option() would not work for flow control settings. This is fixed in Boost v1.66. Relevant Boost commit : https://github.com/boostorg/asio/commit/619cea4356
+* lib cmake: disable debug message
+* lib: simplify geolib cmake module, try to fix CI
+* Contributors: Mohammed Kabir, Vladimir Ermakov
+
 0.23.2 (2018-03-07)
 -------------------
 * mavconn: small style fix

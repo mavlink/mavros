@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: simplify geolib cmake module, try to fix CI
+* Contributors: Vladimir Ermakov
+
 0.23.2 (2018-03-07)
 -------------------
 * launch: add optional respawn_mavros arg
