@@ -22,6 +22,10 @@
 #include <mavconn/interface.h>
 #include <mavconn/msgbuffer.h>
 
+#if defined(__linux__)
+#include <linux/serial.h>
+#endif
+
 namespace mavconn {
 /**
  * @brief Serial interface
