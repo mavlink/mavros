@@ -47,6 +47,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 
 	try {
 		serial_dev.open(device);
+		int fd = serial_dev.native_handle();
 
 		// Set baudrate and 8N1 mode
 		serial_dev.set_option(SPB::baud_rate(baudrate));
@@ -61,7 +62,6 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		// Workaround to set some options for the port manually. This is done in
 		// Boost.ASIO, but until v1.12.0 (Boost 1.66) there was a bug which doesn't enable relevant
 		// code. Fixed by commit: https://github.com/boostorg/asio/commit/619cea4356
-		int fd = serial_dev.native_handle();
 		termios tio;
 		tcgetattr(fd, &tio);
 
@@ -80,6 +80,15 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		// Commit settings
 		tcsetattr(fd, TCSANOW, &tio);
 #endif
+
+#if defined(__linux__)
+		// Enable low latency mode on Linux
+		struct serial_struct ser_info;
+		ioctl(fd, TIOCGSERIAL, &ser_info);
+		ser_info.flags |= ASYNC_LOW_LATENCY;
+		ioctl(fd, TIOCSSERIAL, &ser_info);
+#endif
+
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("serial", err);
