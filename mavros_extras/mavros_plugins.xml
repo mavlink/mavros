@@ -17,6 +17,9 @@
 	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send motion capture pose estimate to FCU.</description>
 	</class>
+	<class name="obstacle_avoidance" type="mavros::extra_plugins::ObstacleAvoidancePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Receive planned path from the FCU and send back collision free path to the FCU.</description>
+	</class>
 	<class name="obstacle_distance" type="mavros::extra_plugins::ObstacleDistancePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send obstacle distance report to the FCU.</description>
 	</class>
