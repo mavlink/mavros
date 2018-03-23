@@ -409,7 +409,7 @@ private:
 
 		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK List SZ(%u) OFF(%u)", hdr->size, hdr->offset);
 		if (hdr->offset != list_offset) {
-			ROS_ERROR_NAMED("ftp", "FTP: Wring list offset, req %u, ret %u",
+			ROS_ERROR_NAMED("ftp", "FTP: Wrong list offset, req %u, ret %u",
 					list_offset, hdr->offset);
 			go_idle(true, EBADE);
 			return;
