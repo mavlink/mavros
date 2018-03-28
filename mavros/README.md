@@ -227,14 +227,7 @@ Troubleshooting
 ------------
 
 ### Error: serial0: receive: End of file
-
-The full error description can be found on [issue #856][iss856]. Follow these steps:
-1. disconnect flight controller USB
-2. disable USB driver with `sudo modprobe -r usbhid cdc_acm`
-3. re-enable the driver with `sudo modprobe usbhid cdc_acm`
-4. reconnect flight controller USB
-5. try again running mavros launch file for your flight controller
-
+This issue should have been solve in mavros v0.23.2, it was found to be a Boost.ASIO error and should be fix in release > v1.12.0 ( >Boost 1.66).
 
 
 Contributing
