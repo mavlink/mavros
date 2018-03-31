@@ -377,7 +377,7 @@ inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
 }
 
 /**
- * @brief Store Covariance matrix to MAVLink float[n] format
+ * @brief Convert covariance matrix to MAVLink float[n] format
  */
 template<class T, std::size_t SIZE>
 inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
@@ -386,12 +386,12 @@ inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
 }
 
 /**
- * @brief Store half upper right triangular of 9d Covariance matrix to MAVLink float[n] format
+ * @brief Convert half upper right triangular of a covariance matrix to MAVLink float[n] format
  */
-inline void covariance9d_urt_to_mavlink(const Covariance9d &cov, std::array<float, 45> &covmsg)
+template<class T, std::size_t SIZE>
+inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, SIZE> &covmsg)
 {
-	EigenMapConstCovariance9d m(cov.data());
-
+	auto m = covmap;
 	auto out = covmsg.begin();
 
 	for (size_t x = 0; x < m.cols(); x++)

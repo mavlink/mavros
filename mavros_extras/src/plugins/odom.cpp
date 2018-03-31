@@ -153,7 +153,7 @@ private:
 
 		lpos.time_usec = stamp_usec;
 		lpos.estimator_type = utils::enum_value(estimator_type);
-		ftf::covariance9d_urt_to_mavlink(cov_full, lpos.covariance);
+		ftf::covariance_urt_to_mavlink(cov_full_map, lpos.covariance);
 
 		// [[[cog:
 		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
