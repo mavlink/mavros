@@ -10,6 +10,7 @@
  */
 /*
  * Copyright 2016,2017 Vladimir Ermakov.
+ * Copyright 2017,2018 Nuno Marques.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -21,6 +22,7 @@
 #include <array>
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
+#include <ros/assert.h>
 
 // for Covariance types
 #include <sensor_msgs/Imu.h>
@@ -31,7 +33,6 @@
 
 namespace mavros {
 namespace ftf {
-
 //! Type matching rosmsg for 3x3 covariance matrix
 using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
 
@@ -66,7 +67,6 @@ enum class StaticTF {
 };
 
 namespace detail {
-
 /**
  * @brief Transform representation of attitude from 1 frame to another
  * (e.g. transfrom attitude from representing  from base_link -> NED
@@ -143,7 +143,6 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::
 inline double transform_frame_yaw(double yaw) {
 	return -yaw;
 }
-
 }	// namespace detail
 
 // -*- frame tf -*-
@@ -386,12 +385,17 @@ inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
 }
 
 /**
- * @brief Convert half upper right triangular of a covariance matrix to MAVLink float[n] format
+ * @brief Convert upper right triangular of a covariance matrix to MAVLink float[n] format
  */
-template<class T, std::size_t SIZE>
-inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, SIZE> &covmsg)
+template<class T, std::size_t ARR_SIZE>
+inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZE> &covmsg)
 {
 	auto m = covmap;
+	std::size_t COV_SIZE = m.rows() * (m.rows() + 1) / 2;
+	ROS_ASSERT_MSG(COV_SIZE == ARR_SIZE,
+				"frame_tf: covariance matrix URT size (%lu) is different from Mavlink msg covariance field size (%lu)",
+				COV_SIZE, ARR_SIZE);
+
 	auto out = covmsg.begin();
 
 	for (size_t x = 0; x < m.cols(); x++)
@@ -423,6 +427,5 @@ inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
 	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
 // [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
-
 }	// namespace ftf
 }	// namespace mavros
