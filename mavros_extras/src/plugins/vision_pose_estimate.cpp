@@ -80,38 +80,10 @@ private:
 	ros::Time last_transform_stamp;
 
 	/* -*- low-level send -*- */
-
-	void vision_position_estimate(uint64_t usec,
-			Eigen::Vector3d &position,
-			Eigen::Vector3d &rpy)
-	{
-		mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
-
-		vp.usec = usec;
-
-		// [[[cog:
-		// for f in "xyz":
-		//     cog.outl("vp.%s = position.%s();" % (f, f))
-		// for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
-		//     cog.outl("vp.%s = rpy.%s();" % (b, a))
-		// ]]]
-		vp.x = position.x();
-		vp.y = position.y();
-		vp.z = position.z();
-		vp.roll = rpy.x();
-		vp.pitch = rpy.y();
-		vp.yaw = rpy.z();
-		// [[[end]]] (checksum: 2048daf411780847e77f08fe5a0b9dd3)
-
-		UAS_FCU(m_uas)->send_message_ignore_drop(vp);
-	}
-
-	/* -*- mid-level helpers -*- */
-
 	/**
 	 * @brief Send vision estimate transform to FCU position controller
 	 */
-	void send_vision_estimate(const ros::Time &stamp, const Eigen::Affine3d &tr)
+	void send_vision_estimate(const ros::Time &stamp, const Eigen::Affine3d &tr, const geometry_msgs::PoseWithCovariance::_covariance_type &cov)
 	{
 		/**
 		 * @warning Issue #60.
@@ -128,7 +100,34 @@ private:
 				ftf::transform_orientation_enu_ned(
 				ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))));
 
-		vision_position_estimate(stamp.toNSec() / 1000, position, rpy);
+		auto cov_ned = ftf::transform_frame_enu_ned(cov);
+		ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
+
+		auto urt_view = Eigen::Matrix<double, 6, 6>(cov_map.triangularView<Eigen::Upper>());
+		ROS_DEBUG_STREAM_NAMED("vision_pose", "Vision: Covariance URT: " << std::endl << urt_view);
+
+		mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
+
+		vp.usec = stamp.toNSec() / 1000;
+		// [[[cog:
+		// for f in "xyz":
+		//     cog.outl("vp.%s = position.%s();" % (f, f))
+		// for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
+		//     cog.outl("vp.%s = rpy.%s();" % (b, a))
+		// ]]]
+		vp.x = position.x();
+		vp.y = position.y();
+		vp.z = position.z();
+		vp.roll = rpy.x();
+		vp.pitch = rpy.y();
+		vp.yaw = rpy.z();
+		// [[[end]]] (checksum: 2048daf411780847e77f08fe5a0b9dd3)
+
+		// just the URT of the 6x6 Pose Covariance Matrix, given
+		// that the matrix is symmetric
+		ftf::covariance_urt_to_mavlink(cov_map, vp.covariance);
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(vp);
 	}
 
 	/* -*- callbacks -*- */
@@ -139,16 +138,18 @@ private:
 	{
 		Eigen::Affine3d tr;
 		tf::transformMsgToEigen(transform.transform, tr);
+		ftf::Covariance6d cov {};	// zero initialized
 
-		send_vision_estimate(transform.header.stamp, tr);
+		send_vision_estimate(transform.header.stamp, tr, cov);
 	}
 
 	void vision_cb(const geometry_msgs::PoseStamped::ConstPtr &req)
 	{
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(req->pose, tr);
+		ftf::Covariance6d cov {};	// zero initialized
 
-		send_vision_estimate(req->header.stamp, tr);
+		send_vision_estimate(req->header.stamp, tr, cov);
 	}
 
 	void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req)
@@ -156,7 +157,7 @@ private:
 		Eigen::Affine3d tr;
 		tf::poseMsgToEigen(req->pose.pose, tr);
 
-		send_vision_estimate(req->header.stamp, tr);
+		send_vision_estimate(req->header.stamp, tr, req->pose.covariance);
 	}
 };
 }	// namespace extra_plugins
