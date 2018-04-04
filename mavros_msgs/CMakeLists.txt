@@ -27,7 +27,6 @@ add_message_files(
   HomePosition.msg
   ManualControl.msg
   Mavlink.msg
-  ObstacleAvoidance.msg
   OpticalFlowRad.msg
   OverrideRCIn.msg
   ParamValue.msg
@@ -38,6 +37,7 @@ add_message_files(
   State.msg
   StatusText.msg
   Thrust.msg
+  Trajectory.msg
   VFR_HUD.msg
   Vibration.msg
   Waypoint.msg
