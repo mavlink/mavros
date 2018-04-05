@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.24.0 (2018-04-05)
+-------------------
 * frame_tf: add assertion over size of covariance matrix URT
 * extras: update vision_pose_estimate plugin so it can send the covariance matrix also
 * plugins fix `#990 <https://github.com/mavlink/mavros/issues/990>`_: Explicitly cast boolean values. Else someone can shoot in his foot.

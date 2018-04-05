@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.24.0 (2018-04-05)
+-------------------
 * libmavconn: make serial.cpp more portable
 * libmavconn : enable low-latency mode on Linux
   Some common USB-UART convertors like the FTDI accumulates individual bytes from the serial link

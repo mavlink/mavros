@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.24.0 (2018-04-05)
+-------------------
 * Add ability to send STATUSTEXT messages
 * Contributors: Anass Al
 
