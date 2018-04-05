@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: update vision_pose_estimate plugin so it can send the covariance matrix also
+* px4flow: sending OPTICAL_FLOW_RAD messages
+* Contributors: Oleg Kalachev, TSC21
+
 0.23.3 (2018-03-09)
 -------------------
 

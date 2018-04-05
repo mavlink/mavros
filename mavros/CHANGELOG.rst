@@ -2,6 +2,17 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* frame_tf: add assertion over size of covariance matrix URT
+* extras: update vision_pose_estimate plugin so it can send the covariance matrix also
+* plugins fix `#990 <https://github.com/mavlink/mavros/issues/990>`_: Explicitly cast boolean values. Else someone can shoot in his foot.
+* Update Readme for serial0: receive: End of file
+* launch : remove vision_pose_estimate from blacklist on ardupilot
+* plugin: ftp: fix typo
+* Add ability to send STATUSTEXT messages
+* Contributors: Anass Al, Andrei Korigodski, Pierre Kancir, TSC21, Vladimir Ermakov
+
 0.23.3 (2018-03-09)
 -------------------
 * lib: simplify geolib cmake module, try to fix CI

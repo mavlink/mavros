@@ -2,6 +2,18 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: make serial.cpp more portable
+* libmavconn : enable low-latency mode on Linux
+  Some common USB-UART convertors like the FTDI accumulates individual bytes from the serial link
+  in order to send them in a single USB packet (Nagling). This commit sets the ASYNC_LOW_LATENCY flag,
+  which the FTDI kernel driver interprets as a request to drop the Nagling timer to 1ms (i.e send all
+  accumulated bytes after 1ms.)
+  This reduces average link RTT to under 5ms at 921600 baud, and enables the use of mavros in
+  systems where low latency is required to get good performance for e.g estimation and controls.
+* Contributors: Mohammed Kabir, Vladimir Ermakov
+
 0.23.3 (2018-03-09)
 -------------------
 * libmavconn: better preprocessor conditions for serial workaround
