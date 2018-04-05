@@ -188,9 +188,13 @@ mocap:
 
 # odom
 odometry:
+  # available: vision or mocap
+  frame_source: "vision"
   frame_tf:
-    desired_frame: "ned"
-  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+    # available: frd or flu
+    body_frame_orientation: "frd"
+    # available: ned or enu
+    local_frame_orientation: "ned"
 
 # px4flow
 px4flow:
