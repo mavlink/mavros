@@ -654,8 +654,8 @@ private:
 		auto state_msg = boost::make_shared<mavros_msgs::State>();
 		state_msg->header.stamp = ros::Time::now();
 		state_msg->connected = true;
-		state_msg->armed = hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED);
-		state_msg->guided = hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED);
+		state_msg->armed = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED));
+		state_msg->guided = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED));
 		state_msg->mode = m_uas->str_mode_v10(hb.base_mode, hb.custom_mode);
 		state_msg->system_status = hb.system_status;
 
