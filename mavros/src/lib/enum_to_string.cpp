@@ -84,7 +84,7 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 // to_string_outl(ename)
 // ]]]
 //! MAV_AUTOPILOT values
-static const std::array<const std::string, 19> mav_autopilot_strings{{
+static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
@@ -104,6 +104,7 @@ static const std::array<const std::string, 19> mav_autopilot_strings{{
 /* 16 */ "Aerob",                         // Aerob -- http://aerob.ru
 /* 17 */ "ASLUAV autopilot",              // ASLUAV autopilot -- http://www.asl.ethz.ch
 /* 18 */ "SmartAP Autopilot",             // SmartAP Autopilot - http://sky-drones.com
+/* 19 */ "AirRails",                      // AirRails - http://uaventure.com
 }};
 
 std::string to_string(MAV_AUTOPILOT e)
@@ -114,7 +115,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 5b451ba6ab334d133765faaa33a18c6a)
+// [[[end]]] (checksum: 26c102bc107fa3ef8ea73ef16513c42f)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -131,7 +132,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 30> mav_type_strings{{
+static const std::array<const std::string, 32> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -162,6 +163,8 @@ static const std::array<const std::string, 30> mav_type_strings{{
 /* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
 /* 28 */ "Steerable",                     // Steerable, nonrigid airfoil
 /* 29 */ "Dodecarotor",                   // Dodecarotor
+/* 30 */ "Camera",                        // Camera
+/* 31 */ "Charging station",              // Charging station
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -172,7 +175,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 3955611cab161e8b54cc33f1ea67c946)
+// [[[end]]] (checksum: 86046c644e2e72e5c3e052555c497d00)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -427,19 +430,27 @@ std::string to_string(MAV_MISSION_RESULT e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! MAV_FRAME values
-static const std::array<const std::string, 12> mav_frame_strings{{
-/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL)
-/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-up (x: north, y: east, z: down).
+static const std::array<const std::string, 20> mav_frame_strings{{
+/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
 /*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
-/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-down (x: east, y: north, z: up)
-/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL)
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: east, y: north, z: up).
+/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
 /*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
 /*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
 /*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
 /* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
 /* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: forward, y: right, z: down).
+/* 13 */ "BODY_FLU",                      // Body fixed frame of reference, Z-up (x: forward, y: left, z: up).
+/* 14 */ "MOCAP_NED",                     // Odometry local coordinate frame of data given by a motion capture system, Z-down (x: north, y: east, z: down).
+/* 15 */ "MOCAP_ENU",                     // Odometry local coordinate frame of data given by a motion capture system, Z-up (x: east, y: north, z: up).
+/* 16 */ "VISION_NED",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-down (x: north, y: east, z: down).
+/* 17 */ "VISION_ENU",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: east, y: north, z: up).
+/* 18 */ "ESTIM_NED",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: north, y: east, z: down).
+/* 19 */ "ESTIM_ENU",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: east, y: noth, z: up).
 }};
 
 std::string to_string(MAV_FRAME e)
@@ -450,7 +461,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: ffbf4a7aacdc4b5229293f3791f63379)
+// [[[end]]] (checksum: 51190f7ce3474a7189c11eb3e63b9322)
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {
