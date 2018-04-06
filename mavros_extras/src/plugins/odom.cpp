@@ -110,8 +110,7 @@ private:
 							odom->header.frame_id, "local_origin_" + local_frame_orientation,
 							ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
-			ROS_WARN("odom: %s",ex.what());
-			ros::Duration(1.0).sleep();
+			ROS_ERROR_THROTTLE_NAMED(1, "odom", "%s", ex.what());
 			return;
 		}
 
