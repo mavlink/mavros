@@ -36,21 +36,17 @@ class OdometryPlugin : public plugin::PluginBase {
 public:
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
-		frame_source("vision"),
-		body_frame_orientation("frd"),
-		local_frame_orientation("ned")
+		local_frame("vision_ned"),
+		body_frame_orientation("frd")
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		// general params
-		odom_nh.param<std::string>("frame_source", frame_source, "vision");
-
 		// frame tf params
+		odom_nh.param<std::string>("frame_tf/local_frame", local_frame, "vision_ned");
 		odom_nh.param<std::string>("frame_tf/body_frame_orientation", body_frame_orientation, "frd");
-		odom_nh.param<std::string>("frame_tf/local_frame_orientation", local_frame_orientation, "ned");
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
@@ -65,11 +61,23 @@ private:
 	ros::NodeHandle odom_nh;
 	ros::Subscriber odom_sub;
 
-	MAV_FRAME frame;			//!< MAV_FRAME enum
-
-	std::string frame_source;		//!< source of the estimated odometry
+	std::string local_frame;		//!< orientation and source of the local frame (pose)
 	std::string body_frame_orientation;	//!< orientation of the body frame (velocity)
-	std::string local_frame_orientation;	//!< orientation of the local frame (pose)
+
+	//! Map for local frame
+	std::unordered_map<std::string, MAV_FRAME> lf_map{
+ 		{ "vision_enu", MAV_FRAME::VISION_ENU },
+		{ "vision_ned", MAV_FRAME::VISION_NED },
+		{ "mocap_enu", MAV_FRAME::MOCAP_ENU },
+		{ "mocap_ned", MAV_FRAME::MOCAP_NED }
+	};
+
+	//! Map for body frame
+	std::unordered_map<std::string, MAV_FRAME> bf_map{
+		{ "ned", MAV_FRAME::BODY_NED },
+		{ "frd", MAV_FRAME::BODY_FRD },
+		{ "flu", MAV_FRAME::BODY_FLU }
+	};
 
 	/**
 	 * @brief Sends odometry data msgs to the FCU.
@@ -86,16 +94,21 @@ private:
 		Eigen::Affine3d tf_child2local;
 		Eigen::Affine3d tf_child2body;
 		Eigen::Affine3d tf_parent2local;
+
+		auto local_frame_orientation = local_frame.substr(local_frame.length() - 3);
 		try {
 			// transform lookup WRT local frame
 			tf_child2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, "local_origin_" + local_frame_orientation, ros::Time(0)));
+							odom->child_frame_id, "local_origin_" + local_frame_orientation,
+							ros::Time(0)));
 			tf_child2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, "fcu_" + body_frame_orientation, ros::Time(0)));
+							odom->child_frame_id, "fcu_" + body_frame_orientation,
+							ros::Time(0)));
 
 			// transform lookup WRT body frame
 			tf_parent2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->header.frame_id, "local_origin_" + local_frame_orientation, ros::Time(0)));
+							odom->header.frame_id, "local_origin_" + local_frame_orientation,
+							ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
 			ROS_WARN("odom: %s",ex.what());
 			ros::Duration(1.0).sleep();
@@ -138,7 +151,7 @@ private:
 		 *  WRT body frame
 		 */
 		Eigen::Matrix<double, 6, 6> r_vel;
-		r_vel.setZero();// initialize with zeros
+		r_vel.setZero();	// initialize with zeros
 		r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2local.linear();
 
 		// apply the transform
@@ -151,43 +164,26 @@ private:
 
 		msg.time_usec = odom->header.stamp.toNSec() / 1e3;
 
-		/** Handle frame_id naming - considering the ROS msg frame_id
+		/** Determine frame_id naming - considering the ROS msg frame_id
 		 * as "odom" by default
 		 */
-		if (local_frame_orientation == "ned") {
-			if (frame_source == "vision")
-				msg.frame_id = utils::enum_value(MAV_FRAME::VISION_NED);
-			else if (frame_source == "mocap")
-				msg.frame_id = utils::enum_value(MAV_FRAME::MOCAP_NED);
-			else {
-				ROS_ERROR_NAMED("odom", "Odometry: invalid frame source \"%s\"", frame_source.c_str());
-				return;
-			}
-		}
-		else if (local_frame_orientation == "enu") {
-			if (frame_source == "vision")
-				msg.frame_id = utils::enum_value(MAV_FRAME::VISION_ENU);
-			else if (frame_source == "mocap")
-				msg.frame_id = utils::enum_value(MAV_FRAME::MOCAP_ENU);
-			else {
-				ROS_ERROR_NAMED("odom", "Odometry: invalid frame source \"%s\"", frame_source.c_str());
-				return;
-			}
-		}
-		else {
-			ROS_ERROR_NAMED("odom", "Odometry: invalid local frame orientation \"%s\"", local_frame_orientation.c_str());
+		auto local_frame_it = lf_map.find(local_frame);
+		if (local_frame_it == lf_map.end()) {
+			ROS_ERROR_NAMED("odom", "Odometry: invalid local frame \"%s\"", local_frame.c_str());
 			return;
 		}
-		/** Handle child_frame_id naming
+		else
+			msg.frame_id = utils::enum_value(local_frame_it->second);
+
+		/** Determine child_frame_id naming
 		 */
-		if (body_frame_orientation == "frd")
-			msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FRD);
-		else if (body_frame_orientation == "flu")
-			msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FLU);
-		else {
+		auto body_frame_it = bf_map.find(body_frame_orientation);
+		if (body_frame_it == bf_map.end()) {
 			ROS_ERROR_NAMED("odom", "Odometry: invalid body frame orientation \"%s\"", body_frame_orientation.c_str());
 			return;
 		}
+		else
+			msg.child_frame_id = utils::enum_value(body_frame_it->second);
 
 		// [[[cog:
 		// for a, b in (('', 'pos_local'), ('v', 'lin_vel_local')):
