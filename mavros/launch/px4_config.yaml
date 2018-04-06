@@ -188,13 +188,12 @@ mocap:
 
 # odom
 odometry:
-  # available: vision or mocap
-  frame_source: "vision"
   frame_tf:
-    # available: frd or flu
+    # available: check MAV_FRAME odometry local frames in
+    # http://mavlink.org/messages/common
+    local_frame: "vision_ned"
+    # available: ned, frd or flu (though only the tf to frd is supported)
     body_frame_orientation: "frd"
-    # available: ned or enu
-    local_frame_orientation: "ned"
 
 # px4flow
 px4flow:
