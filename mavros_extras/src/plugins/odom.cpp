@@ -25,7 +25,6 @@
 namespace mavros {
 namespace extra_plugins {
 using mavlink::common::MAV_FRAME;
-
 /**
  * @brief Odometry plugin
  *
@@ -50,6 +49,43 @@ public:
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
+
+		//! Map from param string to local MAV_FRAME
+		const std::unordered_map<std::string, MAV_FRAME> lf_map{
+			{ "vision_enu", MAV_FRAME::VISION_ENU },
+			{ "vision_ned", MAV_FRAME::VISION_NED },
+			{ "mocap_enu", MAV_FRAME::MOCAP_ENU },
+			{ "mocap_ned", MAV_FRAME::MOCAP_NED }
+		};
+
+		//! Map from param string to body MAV_FRAME
+		const std::unordered_map<std::string, MAV_FRAME> bf_map{
+			{ "ned", MAV_FRAME::BODY_NED },
+			{ "frd", MAV_FRAME::BODY_FRD },
+			{ "flu", MAV_FRAME::BODY_FLU }
+		};
+
+		auto local_frame_it = lf_map.find(local_frame);
+		auto body_frame_it = bf_map.find(body_frame_orientation);
+
+		/** Determine frame_id naming - considering the ROS msg frame_id
+		 * as "odom" by default
+		 */
+		if (local_frame_it == lf_map.end()) {
+			ROS_ERROR_NAMED("odom", "Odometry: invalid local frame \"%s\"", local_frame.c_str());
+			return;
+		}
+		else
+			lf_id = utils::enum_value(local_frame_it->second);
+
+		/** Determine child_frame_id naming
+		 */
+		if (body_frame_it == bf_map.end()) {
+			ROS_ERROR_NAMED("odom", "Odometry: invalid body frame orientation \"%s\"", body_frame_orientation.c_str());
+			return;
+		}
+		else
+			bf_id = utils::enum_value(local_frame_it->second);
 	}
 
 	Subscriptions get_subscriptions()
@@ -64,20 +100,8 @@ private:
 	std::string local_frame;		//!< orientation and source of the local frame (pose)
 	std::string body_frame_orientation;	//!< orientation of the body frame (velocity)
 
-	//! Map for local frame
-	std::unordered_map<std::string, MAV_FRAME> lf_map{
- 		{ "vision_enu", MAV_FRAME::VISION_ENU },
-		{ "vision_ned", MAV_FRAME::VISION_NED },
-		{ "mocap_enu", MAV_FRAME::MOCAP_ENU },
-		{ "mocap_ned", MAV_FRAME::MOCAP_NED }
-	};
-
-	//! Map for body frame
-	std::unordered_map<std::string, MAV_FRAME> bf_map{
-		{ "ned", MAV_FRAME::BODY_NED },
-		{ "frd", MAV_FRAME::BODY_FRD },
-		{ "flu", MAV_FRAME::BODY_FLU }
-	};
+	MAV_FRAME lf_id;			//!< local frame (pose) ID
+	MAV_FRAME bf_id;			//!< body frame (pose) ID
 
 	/**
 	 * @brief Sends odometry data msgs to the FCU.
@@ -162,27 +186,8 @@ private:
 		mavlink::common::msg::ODOMETRY msg {};
 
 		msg.time_usec = odom->header.stamp.toNSec() / 1e3;
-
-		/** Determine frame_id naming - considering the ROS msg frame_id
-		 * as "odom" by default
-		 */
-		auto local_frame_it = lf_map.find(local_frame);
-		if (local_frame_it == lf_map.end()) {
-			ROS_ERROR_NAMED("odom", "Odometry: invalid local frame \"%s\"", local_frame.c_str());
-			return;
-		}
-		else
-			msg.frame_id = utils::enum_value(local_frame_it->second);
-
-		/** Determine child_frame_id naming
-		 */
-		auto body_frame_it = bf_map.find(body_frame_orientation);
-		if (body_frame_it == bf_map.end()) {
-			ROS_ERROR_NAMED("odom", "Odometry: invalid body frame orientation \"%s\"", body_frame_orientation.c_str());
-			return;
-		}
-		else
-			msg.child_frame_id = utils::enum_value(body_frame_it->second);
+		msg.frame_id = utils::enum_value(lf_id);
+		msg.child_frame_id = utils::enum_value(bf_id);
 
 		// [[[cog:
 		// for a, b in (('', 'pos_local'), ('v', 'lin_vel_local')):
