@@ -198,7 +198,8 @@ vision_pose:
 
 # vision_speed_estimate
 vision_speed:
-  listen_twist: false
+  listen_twist: true    # enable listen to twist topic, else listen to vec3d topic
+  twist_cov: true       # enable listen to twist with covariance topic
 
 # vibration
 vibration:
