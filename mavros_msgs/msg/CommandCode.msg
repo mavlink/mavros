@@ -1,6 +1,6 @@
 # MAV_CMD command codes.
 # Actual meaning and params you may find in MAVLink documentation
-# http://mavlink.org/messages/common
+# https://mavlink.io/en/messages/common.html#MAV_CMD
 
 # [[[cog:
 # from pymavlink.dialects.v20 import common
