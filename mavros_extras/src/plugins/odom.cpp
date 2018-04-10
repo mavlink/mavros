@@ -51,7 +51,7 @@ public:
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
 
 		//! Map from param string to local MAV_FRAME
-		const std::unordered_map<std::string, MAV_FRAME> lf_map{
+		const std::unordered_map<std::string, MAV_FRAME> lf_map {
 			{ "vision_enu", MAV_FRAME::VISION_ENU },
 			{ "vision_ned", MAV_FRAME::VISION_NED },
 			{ "mocap_enu", MAV_FRAME::MOCAP_ENU },
@@ -59,7 +59,7 @@ public:
 		};
 
 		//! Map from param string to body MAV_FRAME
-		const std::unordered_map<std::string, MAV_FRAME> bf_map{
+		const std::unordered_map<std::string, MAV_FRAME> bf_map {
 			{ "ned", MAV_FRAME::BODY_NED },
 			{ "frd", MAV_FRAME::BODY_FRD },
 			{ "flu", MAV_FRAME::BODY_FLU }
@@ -106,7 +106,7 @@ private:
 	/**
 	 * @brief Sends odometry data msgs to the FCU.
 	 *
-	 * Message specification: http://mavlink.org/messages/common#ODOMETRY
+	 * Message specification: https://mavlink.io/en/messages/common.html#ODOMETRY
 	 * @param req	received Odometry msg
 	 */
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
