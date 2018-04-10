@@ -17,7 +17,6 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <eigen_conversions/eigen_msg.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <nav_msgs/Odometry.h>
