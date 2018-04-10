@@ -76,7 +76,7 @@ public:
 			return;
 		}
 		else
-			lf_id = utils::enum_value(local_frame_it->second);
+			lf_id = local_frame_it->second;
 
 		/** Determine child_frame_id naming
 		 */
@@ -85,7 +85,7 @@ public:
 			return;
 		}
 		else
-			bf_id = utils::enum_value(local_frame_it->second);
+			bf_id = local_frame_it->second;
 	}
 
 	Subscriptions get_subscriptions()
