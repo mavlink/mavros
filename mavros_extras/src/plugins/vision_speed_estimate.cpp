@@ -45,11 +45,12 @@ public:
 		sp_nh.param("listen_twist", listen_twist, true);
 		sp_nh.param("twist_cov", twist_cov, true);
 
-		if (listen_twist)
+		if (listen_twist) {
 			if (twist_cov)
 				vision_twist_cov_sub = sp_nh.subscribe("speed_twist_cov", 10, &VisionSpeedEstimatePlugin::twist_cov_cb, this);
 			else
 				vision_twist_sub = sp_nh.subscribe("speed_twist", 10, &VisionSpeedEstimatePlugin::twist_cb, this);
+		}
 		else
 			vision_vector_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vector_cb, this);
 	}
