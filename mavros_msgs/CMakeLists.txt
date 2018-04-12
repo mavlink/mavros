@@ -1,110 +1,104 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mavros_msgs)
 
-find_package(catkin REQUIRED COMPONENTS geographic_msgs geometry_msgs message_generation sensor_msgs std_msgs)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # we dont use add_compile_options with pedantic in message packages
+  # because the Python C extensions dont comply with it
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+endif()
+find_package(ament_cmake REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(geographic_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
-include_directories(include)
+# include_directories(include)
 
-add_message_files(
-  DIRECTORY msg
-  FILES
-  ADSBVehicle.msg
-  ActuatorControl.msg
-  Altitude.msg
-  AttitudeTarget.msg
-  BatteryStatus.msg
-  CamIMUStamp.msg
-  CommandCode.msg
-  CompanionProcessStatus.msg
-  DebugValue.msg
-  ExtendedState.msg
-  FileEntry.msg
-  GlobalPositionTarget.msg
-  HilActuatorControls.msg
-  HilControls.msg
-  HilGPS.msg
-  HilSensor.msg
-  HilStateQuaternion.msg
-  HomePosition.msg
-  LogData.msg
-  LogEntry.msg
-  ManualControl.msg
-  Mavlink.msg
-  OpticalFlowRad.msg
-  OverrideRCIn.msg
-  Param.msg
-  ParamValue.msg
-  PositionTarget.msg
-  RCIn.msg
-  RCOut.msg
-  RTCM.msg
-  RadioStatus.msg
-  State.msg
-  StatusText.msg
-  Thrust.msg
-  TimesyncStatus.msg
-  Trajectory.msg
-  VFR_HUD.msg
-  VehicleInfo.msg
-  Vibration.msg
-  Waypoint.msg
-  WaypointList.msg
-  WaypointReached.msg
-  WheelOdomStamped.msg
+set(msg_files
+  "msg/ADSBVehicle.msg"
+  "msg/ActuatorControl.msg"
+  "msg/Altitude.msg"
+  "msg/AttitudeTarget.msg"
+  "msg/BatteryStatus.msg"
+  "msg/CamIMUStamp.msg"
+  "msg/CommandCode.msg"
+  "msg/DebugValue.msg"
+  "msg/ExtendedState.msg"
+  "msg/FileEntry.msg"
+  "msg/GlobalPositionTarget.msg"
+  "msg/HilActuatorControls.msg"
+  "msg/HilControls.msg"
+  "msg/HilGPS.msg"
+  "msg/HilSensor.msg"
+  "msg/HilStateQuaternion.msg"
+  "msg/HomePosition.msg"
+  "msg/ManualControl.msg"
+  "msg/Mavlink.msg"
+  "msg/OpticalFlowRad.msg"
+  "msg/OverrideRCIn.msg"
+  "msg/ParamValue.msg"
+  "msg/PositionTarget.msg"
+  "msg/RCIn.msg"
+  "msg/RCOut.msg"
+  "msg/RadioStatus.msg"
+  "msg/State.msg"
+  "msg/StatusText.msg"
+  "msg/Thrust.msg"
+  # "msg/VFR_HUD.msg"
+  "msg/Vibration.msg"
+  "msg/Waypoint.msg"
+  "msg/WaypointList.msg"
+  "msg/WaypointReached.msg"
 )
 
-add_service_files(
-  DIRECTORY srv
-  FILES
-  CommandBool.srv
-  CommandHome.srv
-  CommandInt.srv
-  CommandLong.srv
-  CommandTOL.srv
-  CommandTriggerControl.srv
-  CommandTriggerInterval.srv
-  FileChecksum.srv
-  FileClose.srv
-  FileList.srv
-  FileMakeDir.srv
-  FileOpen.srv
-  FileRead.srv
-  FileRemove.srv
-  FileRemoveDir.srv
-  FileRename.srv
-  FileTruncate.srv
-  FileWrite.srv
-  LogRequestData.srv
-  LogRequestEnd.srv
-  LogRequestList.srv
-  MessageInterval.srv
-  ParamGet.srv
-  ParamPull.srv
-  ParamPush.srv
-  ParamSet.srv
-  SetMavFrame.srv
-  SetMode.srv
-  StreamRate.srv
-  VehicleInfoGet.srv
-  WaypointClear.srv
-  WaypointPull.srv
-  WaypointPush.srv
-  WaypointSetCurrent.srv
+set(srv_files
+  "srv/CommandBool.srv"
+  "srv/CommandHome.srv"
+  "srv/CommandInt.srv"
+  "srv/CommandLong.srv"
+  "srv/CommandTOL.srv"
+  "srv/CommandTriggerControl.srv"
+  "srv/FileChecksum.srv"
+  "srv/FileClose.srv"
+  "srv/FileList.srv"
+  "srv/FileMakeDir.srv"
+  "srv/FileOpen.srv"
+  "srv/FileRead.srv"
+  "srv/FileRemove.srv"
+  "srv/FileRemoveDir.srv"
+  "srv/FileRename.srv"
+  "srv/FileTruncate.srv"
+  "srv/FileWrite.srv"
+  "srv/ParamGet.srv"
+  "srv/ParamPull.srv"
+  "srv/ParamPush.srv"
+  "srv/ParamSet.srv"
+  "srv/SetMavFrame.srv"
+  "srv/SetMode.srv"
+  "srv/StreamRate.srv"
+  "srv/WaypointClear.srv"
+  "srv/WaypointPull.srv"
+  "srv/WaypointPush.srv"
+  "srv/WaypointSetCurrent.srv"
 )
 
-# add_action_files(
-#   DIRECTORY action
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
+  DEPENDENCIES
+  builtin_interfaces
+  geographic_msgs
+  geometry_msgs
+  sensor_msgs
+  std_msgs
+)
 
-generate_messages(DEPENDENCIES geographic_msgs geometry_msgs sensor_msgs std_msgs)
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS geographic_msgs geometry_msgs message_runtime sensor_msgs std_msgs)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h")
+ament_package()
