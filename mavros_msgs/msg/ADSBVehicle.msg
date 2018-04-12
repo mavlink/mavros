@@ -57,7 +57,7 @@ uint16 FLAG_SIMULATED = 64
 
 std_msgs/Header header
 
-uint32 ICAO_address
+uint32 icao_address
 string callsign
 
 float64 latitude
@@ -71,6 +71,6 @@ float32 ver_velocity	# m/s
 uint8 altitude_type	# Type from ADSB_ALTITUDE_TYPE enum
 uint8 emitter_type	# Type from ADSB_EMITTER_TYPE enum
 
-duration tslc		# Duration from last communication, seconds [0..255]
+builtin_interfaces/Duration tslc		# Duration from last communication, seconds [0..255]
 uint16 flags		# ADSB_FLAGS bit field
 uint16 squawk		# Squawk code
