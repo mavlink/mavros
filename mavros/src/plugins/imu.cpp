@@ -387,7 +387,7 @@ private:
 		// [mag_available]
 
 		/** Check if static pressure sensor data is available:
-		 *  @snippet src/plugins/imu.cpp pressure_available
+		 *  @snippet src/plugins/imu.cpp static_pressure_available
 		 */
 		// [static_pressure_available]
 		if (imu_hr.fields_updated & (1 << 9)) {
@@ -401,7 +401,7 @@ private:
 		// [static_pressure_available]
 
 		/** Check if differential pressure sensor data is available:
-		 *  @snippet src/plugins/imu.cpp pressure_available
+		 *  @snippet src/plugins/imu.cpp differential_pressure_available
 		 */
 		// [differential_pressure_available]
 		if (imu_hr.fields_updated & (1 << 10)) {
