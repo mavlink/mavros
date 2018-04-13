@@ -394,7 +394,7 @@ private:
 			auto static_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			static_pressure_msg->header = header;
-			static_pressure_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
+			static_pressure_msg->fluid_pressure = imu_hr.abs_pressure;
 
 			static_press_pub.publish(static_pressure_msg);
 		}
@@ -408,7 +408,7 @@ private:
 			auto differential_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
 			differential_pressure_msg->header = header;
-			differential_pressure_msg->fluid_pressure = imu_hr.diff_pressure * MILLIBAR_TO_PASCAL;
+			differential_pressure_msg->fluid_pressure = imu_hr.diff_pressure;
 
 			diff_press_pub.publish(differential_pressure_msg);
 		}
