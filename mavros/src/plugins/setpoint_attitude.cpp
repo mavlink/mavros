@@ -79,7 +79,7 @@ public:
 			/**
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
-			pose_sub.subscribe(sp_nh, "target_attitude", 1);
+			pose_sub.subscribe(sp_nh, "attitude", 1);
 
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
