@@ -1,7 +1,7 @@
 /**
  * @brief Trajectory plugin
  * @file trajectory.cpp
- * @author Martina Rivizzigno <martina@rivizzigno.com>
+ * @author Martina Rivizzigno <martina@rivizzigno.it>
  *
  * @addtogroup plugin
  * @{
