@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros_msgs/Trajectory.h>
 #include <mavros_msgs/PositionTarget.h>
+#include <nav_msgs/Path.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -40,7 +41,7 @@ public:
 		PluginBase::initialize(uas_);
 
 		trajectory_generated_sub = trajectory_nh.subscribe("generated", 10, &TrajectoryPlugin::trajectory_cb, this);
-
+		path_sub = trajectory_nh.subscribe("path", 10, &TrajectoryPlugin::path_cb, this);
 		trajectory_desired_pub = trajectory_nh.advertise<mavros_msgs::Trajectory>("desired", 10);
 	}
 
@@ -55,6 +56,7 @@ private:
 	ros::NodeHandle trajectory_nh;
 
 	ros::Subscriber trajectory_generated_sub;
+	ros::Subscriber path_sub;
 
 	ros::Publisher trajectory_desired_pub;
 
@@ -221,13 +223,187 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
 	}
 
+	/**
+	 * @brief Send corrected path to the FCU.
+	 *
+	 * Message specification: http://mavlink.org/messages/common#TRAJECTORY
+	 * @param req	received nav_msgs Path msg
+	 */
+	void path_cb(const nav_msgs::Path::ConstPtr &req)
+	{
+		mavlink::common::msg::TRAJECTORY trajectory {};
+		trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
+		trajectory.type = utils::enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS);
+		Eigen::Quaterniond q_enu;
+		Eigen::Vector3d position_wp, orientation_wp;
 
+		// [[[cog:
+		//for p in "12345":
+		//    cog.outl("if (req->poses.size() >= {p}) {{ \n".format(**locals()))
+		//    cog.outl("position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[{p} - 1].pose.position));".format(**locals()))
+		//    cog.outl("tf::quaternionMsgToEigen(req->poses[{p} - 1].pose.orientation, q_enu);".format(**locals()))
+		//    cog.outl("orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));".format(**locals()))
+		//    for index, axis in zip ("012", "xyz"):
+		//        cog.outl("trajectory.point_{p}[{index}] = position_wp.{axis}();".format(**locals()))
+		//    for index in "345":
+		//        cog.outl("trajectory.point_{p}[{index}] = NAN;".format(**locals()))
+		//    for index in "678":
+		//        cog.outl("trajectory.point_{p}[{index}] = NAN;".format(**locals()))
+		//    cog.outl("trajectory.point_{p}[9] = orientation_wp(2);".format(**locals()))
+		//    cog.outl("trajectory.point_{p}[10] = NAN;".format(**locals()))
+		//    cog.outl("} else {")
+		//    cog.outl("for (int i = 0; i < 11; i++) {{ \n".format(**locals()))
+		//    cog.outl("trajectory.point_{p}[i] = NAN;".format(**locals()))
+		//    cog.outl("}")
+		//    cog.outl("} \n")
+		// ]]]
+		if (req->poses.size() >= 1) {
+			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[1 - 1].pose.position));
+			tf::quaternionMsgToEigen(req->poses[1 - 1].pose.orientation, q_enu);
+			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			trajectory.point_1[0] = position_wp.x();
+			trajectory.point_1[1] = position_wp.y();
+			trajectory.point_1[2] = position_wp.z();
+			trajectory.point_1[3] = NAN;
+			trajectory.point_1[4] = NAN;
+			trajectory.point_1[5] = NAN;
+			trajectory.point_1[6] = NAN;
+			trajectory.point_1[7] = NAN;
+			trajectory.point_1[8] = NAN;
+			trajectory.point_1[9] = orientation_wp(2);
+			trajectory.point_1[10] = NAN;
+		} else {
+			for (int i = 0; i < 11; i++) {
+				trajectory.point_1[i] = NAN;
+			}
+		}
+
+		if (req->poses.size() >= 2) {
+			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[2 - 1].pose.position));
+			tf::quaternionMsgToEigen(req->poses[2 - 1].pose.orientation, q_enu);
+			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			trajectory.point_2[0] = position_wp.x();
+			trajectory.point_2[1] = position_wp.y();
+			trajectory.point_2[2] = position_wp.z();
+			trajectory.point_2[3] = NAN;
+			trajectory.point_2[4] = NAN;
+			trajectory.point_2[5] = NAN;
+			trajectory.point_2[6] = NAN;
+			trajectory.point_2[7] = NAN;
+			trajectory.point_2[8] = NAN;
+			trajectory.point_2[9] = orientation_wp(2);
+			trajectory.point_2[10] = NAN;
+		} else {
+			for (int i = 0; i < 11; i++) {
+				trajectory.point_2[i] = NAN;
+			}
+		}
+
+		if (req->poses.size() >= 3) {
+			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[3 - 1].pose.position));
+			tf::quaternionMsgToEigen(req->poses[3 - 1].pose.orientation, q_enu);
+			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			trajectory.point_3[0] = position_wp.x();
+			trajectory.point_3[1] = position_wp.y();
+			trajectory.point_3[2] = position_wp.z();
+			trajectory.point_3[3] = NAN;
+			trajectory.point_3[4] = NAN;
+			trajectory.point_3[5] = NAN;
+			trajectory.point_3[6] = NAN;
+			trajectory.point_3[7] = NAN;
+			trajectory.point_3[8] = NAN;
+			trajectory.point_3[9] = orientation_wp(2);
+			trajectory.point_3[10] = NAN;
+		} else {
+			for (int i = 0; i < 11; i++) {
+				trajectory.point_3[i] = NAN;
+			}
+		}
+
+		if (req->poses.size() >= 4) {
+			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[4 - 1].pose.position));
+			tf::quaternionMsgToEigen(req->poses[4 - 1].pose.orientation, q_enu);
+			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			trajectory.point_4[0] = position_wp.x();
+			trajectory.point_4[1] = position_wp.y();
+			trajectory.point_4[2] = position_wp.z();
+			trajectory.point_4[3] = NAN;
+			trajectory.point_4[4] = NAN;
+			trajectory.point_4[5] = NAN;
+			trajectory.point_4[6] = NAN;
+			trajectory.point_4[7] = NAN;
+			trajectory.point_4[8] = NAN;
+			trajectory.point_4[9] = orientation_wp(2);
+			trajectory.point_4[10] = NAN;
+		} else {
+			for (int i = 0; i < 11; i++) {
+				trajectory.point_4[i] = NAN;
+			}
+		}
+
+		if (req->poses.size() >= 5) {
+			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[5 - 1].pose.position));
+			tf::quaternionMsgToEigen(req->poses[5 - 1].pose.orientation, q_enu);
+			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			trajectory.point_5[0] = position_wp.x();
+			trajectory.point_5[1] = position_wp.y();
+			trajectory.point_5[2] = position_wp.z();
+			trajectory.point_5[3] = NAN;
+			trajectory.point_5[4] = NAN;
+			trajectory.point_5[5] = NAN;
+			trajectory.point_5[6] = NAN;
+			trajectory.point_5[7] = NAN;
+			trajectory.point_5[8] = NAN;
+			trajectory.point_5[9] = orientation_wp(2);
+			trajectory.point_5[10] = NAN;
+		} else {
+			for (int i = 0; i < 11; i++) {
+				trajectory.point_5[i] = NAN;
+			}
+		}
+
+		// [[[end]]] (checksum: 048ad8447e67c6a0da985f4cf083f898)
+
+
+		// check that either x and y are finite or z to set the position waypoint as valid
+		if ((std::isfinite(trajectory.point_1[0]) && std::isfinite(trajectory.point_1[1])) || std::isfinite(trajectory.point_1[2])) {
+			trajectory.point_valid[0] = true;
+		} else {
+			trajectory.point_valid[0] = false;
+		}
+
+		if ((std::isfinite(trajectory.point_2[0]) && std::isfinite(trajectory.point_2[1])) || std::isfinite(trajectory.point_2[2])) {
+			trajectory.point_valid[1] = true;
+		} else {
+			trajectory.point_valid[1] = false;
+		}
+
+		if ((std::isfinite(trajectory.point_3[0]) && std::isfinite(trajectory.point_3[1])) || std::isfinite(trajectory.point_3[2])) {
+			trajectory.point_valid[2] = true;
+		} else {
+			trajectory.point_valid[2] = false;
+		}
+
+		if ((std::isfinite(trajectory.point_4[0]) && std::isfinite(trajectory.point_4[1])) || std::isfinite(trajectory.point_4[2])) {
+			trajectory.point_valid[3] = true;
+		} else {
+			trajectory.point_valid[3] = false;
+		}
+
+		if ((std::isfinite(trajectory.point_5[0]) && std::isfinite(trajectory.point_5[1])) || std::isfinite(trajectory.point_5[2])) {
+			trajectory.point_valid[4] = true;
+		} else {
+			trajectory.point_valid[4] = false;
+		}
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+	}
 
 	void handle_trajectory(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TRAJECTORY &trajectory)
 	{
 		auto trajectory_desired = boost::make_shared<mavros_msgs::Trajectory>();
 		trajectory_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
-		trajectory_desired->type = trajectory.type;	//!< trajectory type (waypoints, bezier)
+		trajectory_desired->type = trajectory.type;						//!< trajectory type (waypoints, bezier)
 
 
 		/* Transformation from NED to ENU */
@@ -263,7 +439,7 @@ private:
 		auto enu_acceleration_point_5 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_5[6], trajectory.point_5[7], trajectory.point_5[8]));
 		double yaw_enu_point_5 = wrap_pi((M_PI / 2.0f) - trajectory.point_5[9]);
 
-		// [[[end]]] (checksum: 7ea71bce399a8c7cc159a4989eb2a8c4)
+		// [[[end]]] (checksum: 3bb56b71031b4afa78bba32bccd9d8ba)
 
 		// [[[cog:
 		// for p in "12345":
@@ -334,7 +510,7 @@ private:
 		trajectory_desired->point_5.yaw = yaw_enu_point_5;
 		trajectory_desired->point_5.yaw_rate = trajectory.point_5[10];
 
-		// [[[end]]] (checksum: afadac2d81a28d6d85e5d87a5be344bf)
+		// [[[end]]] (checksum: be73e52bb4f907380581209ef29ac0eb)
 
 		std::copy(trajectory.point_valid.begin(), trajectory.point_valid.end(), trajectory_desired->point_valid.begin());
 
@@ -358,8 +534,8 @@ private:
 		return a;
 	}
 };
-}	// namespace extra_plugins
-}	// namespace mavros
+}					// namespace extra_plugins
+}				// namespace mavros
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::TrajectoryPlugin, mavros::plugin::PluginBase)
