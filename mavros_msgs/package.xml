@@ -35,5 +35,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <ros1_bridge mapping_rules="mavros_msgs_mapping_rule.yaml" />
   </export>
 </package>
