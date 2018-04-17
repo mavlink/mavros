@@ -388,9 +388,10 @@ private:
 	 * @brief Process wheel measurement.
 	 * @param measurement	measurement
 	 * @param rpm		whether measurement contains RPM-s or cumulative wheel distances
-	 * @param time		measurement's ROS time stamp
+	 * @param time		measurement's internal time stamp (for accurate dt computations)
+	 * @param time_pub	measurement's time stamp for publish
 	 */
-	void process_measurement(std::vector<double> measurement, bool rpm, ros::Time time)
+	void process_measurement(std::vector<double> measurement, bool rpm, ros::Time time, ros::Time time_pub)
 	{
 		// Initial measurement
 		if (time_prev == ros::Time(0)) {
@@ -437,7 +438,7 @@ private:
 			update_odometry(distance, dt);
 
 			// Publish odometry
-			publish_odometry(time);
+			publish_odometry(time_pub);
 		}
 
 		// Time step
@@ -473,7 +474,7 @@ private:
 		// Process measurement
 		if (odom_mode == OM::RPM) {
 			std::vector<double> measurement{rpm.rpm1, rpm.rpm2};
-			process_measurement(measurement, true, timestamp);
+			process_measurement(measurement, true, timestamp, timestamp);
 		}
 	}
 
@@ -490,7 +491,9 @@ private:
 			return;
 
 		// Get ROS timestamp of the message
-		ros::Time timestamp =  m_uas->synchronise_stamp(wheel_dist.time_usec);
+		ros::Time timestamp = m_uas->synchronise_stamp(wheel_dist.time_usec);
+		// Get internal timestamp of the message
+		ros::Time timestamp_int = ros::Time(wheel_dist.time_usec / 1000000UL,  1000UL * (wheel_dist.time_usec % 1000000UL));
 
 		// Publish distances
 		if (raw_send) {
@@ -507,7 +510,7 @@ private:
 		if (odom_mode == OM::DIST) {
 			std::vector<double> measurement(wheel_dist.count);
 			std::copy_n(wheel_dist.distance.begin(), wheel_dist.count, measurement.begin());
-			process_measurement(measurement, false, timestamp);
+			process_measurement(measurement, false, timestamp_int, timestamp);
 		}
 	}
 };
