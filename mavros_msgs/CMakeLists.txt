@@ -50,7 +50,7 @@ set(msg_files
   "msg/State.msg"
   "msg/StatusText.msg"
   "msg/Thrust.msg"
-  # "msg/VFR_HUD.msg"
+  "msg/VfrHud.msg"
   "msg/Vibration.msg"
   "msg/Waypoint.msg"
   "msg/WaypointList.msg"
@@ -101,4 +101,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 ament_export_dependencies(rosidl_default_runtime)
 
+install(
+  FILES mavros_msgs_mapping_rule.yaml
+  DESTINATION share/${PROJECT_NAME}
+)
 ament_package()
