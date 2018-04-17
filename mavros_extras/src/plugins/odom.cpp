@@ -97,9 +97,9 @@ private:
 	ros::NodeHandle odom_nh;
 	ros::Subscriber odom_sub;
 
-	std::string local_frame;		//!< orientation and source of the local frame (pose)
-	std::string body_frame_orientation;	//!< orientation of the body frame (velocity)
-	std::string local_frame_orientation;
+	std::string local_frame;		//!< orientation and source of the local frame
+	std::string local_frame_orientation;	//!< orientation of the local fram
+	std::string body_frame_orientation;	//!< orientation of the body frame
 
 	MAV_FRAME lf_id;			//!< local frame (pose) ID
 	MAV_FRAME bf_id;			//!< body frame (pose) ID
@@ -116,70 +116,92 @@ private:
 		 *  @todo Implement in a more general fashion in the API IOT apply frame transforms
 		 *  This should also run in parallel on a thread
 		 */
-		Eigen::Affine3d tf_child2local;
-		Eigen::Affine3d tf_child2body;
 		Eigen::Affine3d tf_parent2local;
+		Eigen::Affine3d tf_child2local;
+		Eigen::Affine3d tf_parent2body;
+		Eigen::Affine3d tf_child2body;
 
 		try {
 			// transform lookup WRT local frame
+			tf_parent2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->header.frame_id, local_frame_orientation,
+							ros::Time(0)));
 			tf_child2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
 							odom->child_frame_id, local_frame_orientation,
 							ros::Time(0)));
-			tf_child2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, body_frame_orientation,
-							ros::Time(0)));
 
 			// transform lookup WRT body frame
-			tf_parent2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->header.frame_id, local_frame_orientation,
+			tf_parent2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->header.frame_id, body_frame_orientation,
+							ros::Time(0)));
+			tf_child2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->child_frame_id, body_frame_orientation,
 							ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
 			ROS_ERROR_THROTTLE_NAMED(1, "odom", "ODOM: Ex: %s", ex.what());
 			return;
 		}
 
-		/** Build 6x6 pose covariance matrix to be transformed and sent
-		 */
+		//! Build 6x6 pose covariance matrix to be transformed and sent
 		ftf::Covariance6d cov_pose {};	// zero initialized
 		ftf::EigenMapCovariance6d cov_pose_map(cov_pose.data());
 
-		/** Build 6x6 velocity covariance matrix to be transformed and sent
-		 */
+		//! Build 6x6 velocity covariance matrix to be transformed and sent
 		ftf::Covariance6d cov_vel {};	// zero initialized
 		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
 
-		/** Apply linear transforms
+		/** Apply transforms:
+		 * According to nav_msgs/Odometry.
 		 */
-		Eigen::Vector3d pos_local(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
-		Eigen::Vector3d lin_vel_local(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.linear));
-		Eigen::Vector3d ang_vel_body(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.angular));
-		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
-		Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
-		Eigen::Quaterniond q_local2body(tf_local2body.linear());
+		Eigen::Vector3d position {};		//!< Position vector. WRT frame_id
+		Eigen::Quaterniond orientation {};	//!< Attitude quaternion. WRT frame_id
+		Eigen::Vector3d lin_vel {};		//!< Linear velocity vector. WRT child_frame_id
+		Eigen::Vector3d ang_vel {};		//!< Angular velocity vector. WRT child_frame_id
+		Eigen::Matrix<double, 6, 6> r_pose {};	//!< Pose 6-D Covariance matrix. WRT frame_id
+		Eigen::Matrix<double, 6, 6> r_vel {};	//!< Velocity 6-D Covariance matrix. WRT child_frame_id
+		r_pose.setZero();			// make sure to initialize with zeros
+		r_vel.setZero();			// make sure to initialize with zeros
+
+		/**
+		 * Position and orientation are in the same frame as frame_id.
+		 * If frame_id is a local frame of reference (as "world" or "odom"),
+		 * then the pose is WRT to a local frame. Else, should be WRT
+		 * a body frame.
+		 */
+		if (odom->header.frame_id == "world" || odom->header.frame_id == "odom") {
+			position = Eigen::Vector3d(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
+			orientation = Eigen::Quaterniond(tf_parent2local.linear());
+			r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
+		}
+		else {
+			Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
+			Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
+
+			position = Eigen::Vector3d(tf_parent2body.linear() * ftf::to_eigen(odom->pose.pose.position));
+			orientation = Eigen::Quaterniond(tf_local2body.linear());
+			r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2body.linear();
+		}
+
+		/**
+		 * Linear and angular velocities are in the same frame as child_frame_id.
+		 * Same logic here applies as above.
+		 */
+		if (odom->child_frame_id == "world" || odom->child_frame_id == "odom") {
+			lin_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.linear));
+			ang_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.angular));
+			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2local.linear();
+		}
+		else {
+			lin_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.linear));
+			ang_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.angular));
+			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2body.linear();
+		}
 
 		/** Apply covariance transforms */
-		/** Pose 6-D Covariance matrix
-		 *  WRT local frame
-		 */
-		Eigen::Matrix<double, 6, 6> r_pose {};
-		r_pose.setZero();	// initialize with zeros
-		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
-
-		// apply the transform
 		cov_pose_map = r_pose * cov_pose_map * r_pose.transpose();
+		cov_vel_map  = r_vel  * cov_vel_map  * r_vel.transpose();
 
 		ROS_DEBUG_STREAM_NAMED("odom", "ODOM: pose covariance matrix:" << std::endl << cov_pose_map);
-
-		/** Velocity 6-D Covariance matrix
-		 *  WRT body frame
-		 */
-		Eigen::Matrix<double, 6, 6> r_vel;
-		r_vel.setZero();	// initialize with zeros
-		r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2local.linear();
-
-		// apply the transform
-		cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
-
 		ROS_DEBUG_STREAM_NAMED("odom", "ODOM: velocity covariance matrix:" << std::endl << cov_vel_map);
 
 		/* -*- ODOMETRY msg parser -*- */
@@ -190,24 +212,24 @@ private:
 		msg.child_frame_id = utils::enum_value(bf_id);
 
 		// [[[cog:
-		// for a, b in (('', 'pos_local'), ('v', 'lin_vel_local')):
+		// for a, b in (('', 'position'), ('v', 'lin_vel')):
 		//     for f in 'xyz':
 		//         cog.outl("msg.{a}{f} = {b}.{f}();".format(**locals()))
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-		//     cog.outl("msg.{b} = ang_vel_body.{a}();".format(**locals()))
+		//     cog.outl("msg.{b} = ang_vel.{a}();".format(**locals()))
 		// ]]]
-		msg.x = pos_local.x();
-		msg.y = pos_local.y();
-		msg.z = pos_local.z();
-		msg.vx = lin_vel_local.x();
-		msg.vy = lin_vel_local.y();
-		msg.vz = lin_vel_local.z();
-		msg.rollspeed = ang_vel_body.x();
-		msg.pitchspeed = ang_vel_body.y();
-		msg.yawspeed = ang_vel_body.z();
-		// [[[end]]] (checksum: 1264d181e6501ddddb85f89df16f31de)
+		msg.x = position.x();
+		msg.y = position.y();
+		msg.z = position.z();
+		msg.vx = lin_vel.x();
+		msg.vy = lin_vel.y();
+		msg.vz = lin_vel.z();
+		msg.rollspeed = ang_vel.x();
+		msg.pitchspeed = ang_vel.y();
+		msg.yawspeed = ang_vel.z();
+		// [[[end]]] (checksum: ead24a1a6a14496c9de6c1951ccfbbd7)
 
-		ftf::quaternion_to_mavlink(q_local2body, msg.q);
+		ftf::quaternion_to_mavlink(orientation, msg.q);
 		ftf::covariance_urt_to_mavlink(cov_pose_map, msg.pose_covariance);
 		ftf::covariance_urt_to_mavlink(cov_vel_map, msg.twist_covariance);
 
