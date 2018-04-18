@@ -162,25 +162,24 @@ private:
 		r_pose.setZero();			// make sure to initialize with zeros
 		r_vel.setZero();			// make sure to initialize with zeros
 
+		mavlink::common::msg::ODOMETRY msg {};
+
 		/**
 		 * Position and orientation are in the same frame as frame_id.
-		 * If frame_id is a local frame of reference (as "world" or "odom"),
-		 * then the pose is WRT to a local frame. Else, should be WRT
-		 * a body frame.
+		 * For a matter of simplicity, and given the existent MAV_FRAME
+		 * enum values, the default frame_id will be a local frame of
+		 * reference, so the pose is WRT a local frame.
 		 */
-		if (odom->header.frame_id == "world" || odom->header.frame_id == "odom") {
-			position = Eigen::Vector3d(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
-			orientation = Eigen::Quaterniond(tf_parent2local.linear());
-			r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
-		}
-		else {
-			Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
-			Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
+		position = Eigen::Vector3d(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
 
-			position = Eigen::Vector3d(tf_parent2body.linear() * ftf::to_eigen(odom->pose.pose.position));
-			orientation = Eigen::Quaterniond(tf_local2body.linear());
-			r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2body.linear();
-		}
+		// Orientation represented by a quaternion rotation from the local frame to XYZ body frame
+		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
+		Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
+		orientation = Eigen::Quaterniond(tf_local2body.linear());
+
+		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
+
+		msg.frame_id = utils::enum_value(lf_id);
 
 		/**
 		 * Linear and angular velocities are in the same frame as child_frame_id.
@@ -190,11 +189,17 @@ private:
 			lin_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.linear));
 			ang_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.angular));
 			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2local.linear();
+
+			// the child_frame_id would be the same reference frame as frame_id
+			msg.child_frame_id = msg.frame_id;
 		}
 		else {
 			lin_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.linear));
 			ang_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.angular));
 			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2body.linear();
+
+			// the child_frame_id would be the WRT a body frame reference
+			msg.child_frame_id = utils::enum_value(bf_id);
 		}
 
 		/** Apply covariance transforms */
@@ -205,11 +210,7 @@ private:
 		ROS_DEBUG_STREAM_NAMED("odom", "ODOM: velocity covariance matrix:" << std::endl << cov_vel_map);
 
 		/* -*- ODOMETRY msg parser -*- */
-		mavlink::common::msg::ODOMETRY msg {};
-
 		msg.time_usec = odom->header.stamp.toNSec() / 1e3;
-		msg.frame_id = utils::enum_value(lf_id);
-		msg.child_frame_id = utils::enum_value(bf_id);
 
 		// [[[cog:
 		// for a, b in (('', 'position'), ('v', 'lin_vel')):
