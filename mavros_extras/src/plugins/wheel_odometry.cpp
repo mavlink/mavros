@@ -44,7 +44,7 @@ public:
 		yaw_initialized(false),
 		rpose(Eigen::Vector3d::Zero()),
 		rtwist(Eigen::Vector3d::Zero()),
-		rpose_cov(Eigen::Vector3d::Zero()),
+		rpose_cov(Eigen::Matrix3d::Zero()),
 		rtwist_cov(Eigen::Vector3d::Zero())
 	{ }
 
@@ -198,7 +198,7 @@ private:
 	/// @brief Robot origin 2D-state (SI units)
 	Eigen::Vector3d rpose;		//!< pose (x, y, yaw)
 	Eigen::Vector3d rtwist;		//!< twist (vx, vy, vyaw)
-	Eigen::Vector3d rpose_cov;	//!< pose error 1-var (x_cov, y_cov, yaw_cov)
+	Eigen::Matrix3d rpose_cov;	//!< pose error 1-var
 	Eigen::Vector3d rtwist_cov;	//!< twist error 1-var (vx_cov, vy_cov, vyaw_cov)
 
 	/**
@@ -269,8 +269,10 @@ private:
 			odom->pose.pose.position.z = 0.0;
 			odom->pose.pose.orientation = quat;
 			ftf::EigenMapCovariance6d pose_cov_map(odom->pose.covariance.data());
-			pose_cov_map.block<3, 3>(0, 0).diagonal() << rpose_cov(0), rpose_cov(1), -1.0;
-			pose_cov_map.block<3, 3>(3, 3).diagonal() << -1.0, -1.0, rpose_cov(2);
+			pose_cov_map.block<2, 2>(0, 0) << rpose_cov.block<2, 2>(0, 0);
+			pose_cov_map.block<2, 1>(0, 5) << rpose_cov.block<2, 1>(0, 2);
+			pose_cov_map.block<1, 2>(5, 0) << rpose_cov.block<1, 2>(2, 0);
+			pose_cov_map.block<1, 1>(5, 5) << rpose_cov.block<1, 1>(2, 2);
 			// twist
 			odom->twist = twist_cov;
 			// publish
@@ -301,6 +303,12 @@ private:
 	 * The wheels are assumed to be parallel to the robot's x-direction (forward) and with the same x-offset.
 	 * No slip is assumed (Instantaneous Center of Curvature (ICC) along the axis connecting the wheels).
 	 * All computations are performed for ROS frame conventions.
+	 * The approach is the extended and more accurate version of standard one described in the book
+	 * https://github.com/correll/Introduction-to-Autonomous-Robots
+	 * and at the page (with some typos fixed)
+	 * http://correll.cs.colorado.edu/?p=1307
+	 * The extension is that exact pose update is used instead of approximate,
+	 * and that the robot's origin can be specified anywhere instead of the middle-point between the wheels.
 	 * @param distance	distance traveled by each wheel since last odometry update
 	 * @param dt		time elapse since last odometry update (s)
 	 */
@@ -317,39 +325,53 @@ private:
 		// Distance traveled by the projection of origin onto the axis connecting the wheels (Op)
 		double L = (y1 * distance[0] - y0 * distance[1]) * dy_inv;
 
-		// Robot origin twist
-		rtwist(0) = L * dt_inv; // vx
-		rtwist(1) = a * theta * dt_inv; // vy
-		rtwist(2) = theta * dt_inv; // vyaw
+		// Instantenous pose update in local (robot) coordinate system (vel*dt)
+		Eigen::Vector3d v(L, a*theta, theta);
+		// Instantenous local twist
+		rtwist = v * dt_inv;
 
-		// Compute displacement in robot origin frame
+		// Compute local pose update (approximate).
+		// In the book a=0 and |y0|=|y1|, additionally.
+		// dx = L*cos(theta/2) - a*theta*sin(theta/2)
+		// dy = L*sin(theta/2) + a*theta*cos(theta/2)
+		// Compute local pose update (exact)
 		// dx = a*(cos(theta)-1) + R*sin(theta)
 		// dy = a*sin(theta) - R*(cos(theta)-1)
 		// where R - rotation radius of Op around ICC (R = L/theta).
 		double cos_theta = std::cos(theta);
 		double sin_theta = std::sin(theta);
-		double sin_theta_by_theta; // sin(theta)/theta
-		double cos_theta_1_by_theta; // (cos(theta)-1)/theta
+		double p; // sin(theta)/theta
+		double q; // (1-cos(theta))/theta
+		if (std::abs(theta) > 1.e-5) {
+			p = sin_theta / theta;
+			q = (1.0 - cos_theta) / theta;
+		}
 		// Limits for theta -> 0
-		if (std::abs(theta) < 1.e-5) {
-			sin_theta_by_theta = 1.0;
-			cos_theta_1_by_theta = 0.0;
-		}
 		else {
-			double theta_inv = 1.0 / theta;
-			sin_theta_by_theta = sin_theta * theta_inv;
-			cos_theta_1_by_theta = (cos_theta-1.0) * theta_inv;
+			p = 1.0;
+			q = 0.0;
 		}
-		double dx = a * (cos_theta-1.0) + L*sin_theta_by_theta;
-		double dy = a * sin_theta - L*cos_theta_1_by_theta;
 
-		// Pose in world frame
-		double cosy = std::cos(rpose(2));
-		double siny = std::sin(rpose(2));
-		rpose(0) += dx*cosy - dy*siny; // x
-		rpose(1) += dx*siny + dy*cosy; // y
-		rpose(2) += theta; // yaw
+		// Local pose update matrix
+		Eigen::Matrix3d M;
+		M << p, -q,  0,
+			 q,  p,  0,
+			 0,  0,  1;
 
+		// Local pose update
+		Eigen::Vector3d dpose = M * v;
+
+		// Rotation by yaw
+		double cy = std::cos(rpose(2));
+		double sy = std::sin(rpose(2));
+		Eigen::Matrix3d R;
+		R << cy, -sy,  0,
+			 sy,  cy,  0,
+			  0,   0,  1;
+
+		// World pose
+		rpose += R * dpose;
+		rpose(2) = fmod(rpose(2), 2.0*M_PI); // Clamp to (-2*PI, 2*PI)
 
 		// Twist errors (constant in time)
 		if (rtwist_cov(0) == 0.0) {
@@ -357,12 +379,60 @@ private:
 			rtwist_cov(1) = vel_cov * a*a * 2.0 * dy_inv*dy_inv + 0.001; // vy_cov (add extra error, otherwise vy_cov= 0 if a=0)
 			rtwist_cov(2) = vel_cov * 2.0 * dy_inv*dy_inv; // vyaw_cov
 		}
+
 		// Pose errors (accumulated in time).
-		// Simple approximation is used not respecting kinematic equations.
-		// TODO: accurate odometry error propagation.
-		rpose_cov(0) = rpose_cov(0) + rtwist_cov(0) * dt*dt; // x_cov
-		rpose_cov(1) = rpose_cov(0); // y_cov
-		rpose_cov(2) = rpose_cov(2) + rtwist_cov(2) * dt*dt; // yaw_cov
+		// Exact formulations respecting kinematic equations.
+		// dR/dYaw
+		Eigen::Matrix3d R_yaw;
+		R_yaw << -sy, -cy,  0,
+				  cy, -sy,  0,
+				   0,   0,  0;
+		// dYaw/dPose
+		Eigen::Vector3d yaw_pose(0, 0, 1);
+		// Jacobian by previous pose
+		Eigen::Matrix3d J_pose = Eigen::Matrix3d::Identity() + R_yaw * dpose * yaw_pose.transpose();
+
+		// dL,dTheta / dL0,dL1
+		double L_L0 = y1 * dy_inv;
+		double L_L1 = -y0 * dy_inv;
+		double theta_L0 = -dy_inv;
+		double theta_L1 = dy_inv;
+		// dv/dMeasurement
+		Eigen::Matrix<double, 3, 2> v_meas;
+		v_meas <<       L_L0,       L_L1,
+				  a*theta_L0, a*theta_L1,
+					theta_L0,   theta_L1;
+		// dTheta/dMeasurement
+		Eigen::Vector2d theta_meas(theta_L0, theta_L1);
+		// dM/dTheta
+		double px; // dP/dTheta
+		double qx; // dQ/dTheta
+		if (std::abs(theta) > 1.e-5) {
+		  px = (theta*cos_theta - sin_theta) / (theta*theta);
+		  qx = (theta*sin_theta - (1-cos_theta)) / (theta*theta);
+		}
+		// Limits for theta -> 0
+		else {
+		  px = 0;
+		  qx = 0.5;
+		}
+		// dM/dTheta
+		Eigen::Matrix3d M_theta;
+		M_theta << px, -qx,  0,
+				   qx,  px,  0,
+					0,   0,  0;
+		// Jacobian by measurement
+		Eigen::Matrix<double, 3, 2> J_meas = R * (M * v_meas + M_theta * v * theta_meas.transpose());
+
+		// Measurement cov
+		double L0_cov = vel_cov * dt*dt;
+		double L1_cov = vel_cov * dt*dt;
+		Eigen::Matrix2d meas_cov;
+		meas_cov << L0_cov,     0,
+						 0, L1_cov;
+
+		// Update pose cov
+		rpose_cov = J_pose * rpose_cov * J_pose.transpose() + J_meas * meas_cov * J_meas.transpose();
 	}
 
 	/**
