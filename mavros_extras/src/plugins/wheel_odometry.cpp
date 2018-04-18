@@ -354,7 +354,7 @@ private:
 		// Twist errors (constant in time)
 		if (rtwist_cov(0) == 0.0) {
 			rtwist_cov(0) = vel_cov * (y0*y0 + y1*y1) * dy_inv*dy_inv; // vx_cov
-			rtwist_cov(1) = vel_cov * a*a * std::sqrt(2.0) * dy_inv*dy_inv + 0.001; // vy_cov (add extra error, otherwise vy_cov= 0 if a=0)
+			rtwist_cov(1) = vel_cov * a*a * 2.0 * dy_inv*dy_inv + 0.001; // vy_cov (add extra error, otherwise vy_cov= 0 if a=0)
 			rtwist_cov(2) = vel_cov * 2.0 * dy_inv*dy_inv; // vyaw_cov
 		}
 		// Pose errors (accumulated in time).
