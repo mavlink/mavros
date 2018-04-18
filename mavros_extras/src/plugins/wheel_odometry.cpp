@@ -315,7 +315,7 @@ private:
 		// Rotation angle
 		double theta = (distance[1] - distance[0]) * dy_inv;
 		// Distance traveled by the projection of origin onto the axis connecting the wheels (Op)
-		double L = (y1 * distance[1] - y0 * distance[0]) * dy_inv;
+		double L = (y1 * distance[0] - y0 * distance[1]) * dy_inv;
 
 		// Robot origin twist
 		rtwist(0) = L * dt_inv; // vx
