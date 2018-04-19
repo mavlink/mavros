@@ -25,6 +25,7 @@
 namespace mavros {
 namespace extra_plugins {
 using mavlink::common::MAV_FRAME;
+using Matrix6d = Eigen::Matrix<double, 6, 6>;
 
 /**
  * @brief Odometry plugin
@@ -157,10 +158,8 @@ private:
 		Eigen::Quaterniond orientation {};	//!< Attitude quaternion. WRT frame_id
 		Eigen::Vector3d lin_vel {};		//!< Linear velocity vector. WRT child_frame_id
 		Eigen::Vector3d ang_vel {};		//!< Angular velocity vector. WRT child_frame_id
-		Eigen::Matrix<double, 6, 6> r_pose {};	//!< Pose 6-D Covariance matrix. WRT frame_id
-		Eigen::Matrix<double, 6, 6> r_vel {};	//!< Velocity 6-D Covariance matrix. WRT child_frame_id
-		r_pose.setZero();			// make sure to initialize with zeros
-		r_vel.setZero();			// make sure to initialize with zeros
+		Matrix6d r_pose = Matrix6d::Zero();	//!< Zero initialized pose 6-D Covariance matrix. WRT frame_id
+		Matrix6d r_vel = Matrix6d::Zero();	//!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
 
 		mavlink::common::msg::ODOMETRY msg {};
 
