@@ -184,21 +184,21 @@ private:
 		 * Linear and angular velocities are in the same frame as child_frame_id.
 		 * Same logic here applies as above.
 		 */
-		if (odom->child_frame_id == "world" || odom->child_frame_id == "odom") {
-			lin_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.linear));
-			ang_vel = Eigen::Vector3d(tf_child2local.linear() * ftf::to_eigen(odom->twist.twist.angular));
-			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2local.linear();
+		auto set_tf = [&](auto affineTf, auto frame_id) {
+			lin_vel = Eigen::Vector3d(affineTf.linear() * ftf::to_eigen(odom->twist.twist.linear));
+			ang_vel = Eigen::Vector3d(affineTf.linear() * ftf::to_eigen(odom->twist.twist.angular));
+			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = affineTf.linear();
 
+			msg.child_frame_id = frame_id;
+		};
+
+		if (odom->child_frame_id == "world" || odom->child_frame_id == "odom") {
 			// the child_frame_id would be the same reference frame as frame_id
-			msg.child_frame_id = msg.frame_id;
+			set_tf(tf_child2local, msg.frame_id);
 		}
 		else {
-			lin_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.linear));
-			ang_vel = Eigen::Vector3d(tf_child2body.linear() * ftf::to_eigen(odom->twist.twist.angular));
-			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2body.linear();
-
 			// the child_frame_id would be the WRT a body frame reference
-			msg.child_frame_id = utils::enum_value(bf_id);
+			set_tf(tf_child2body, utils::enum_value(bf_id));
 		}
 
 		/** Apply covariance transforms */
