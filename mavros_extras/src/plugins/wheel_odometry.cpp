@@ -242,8 +242,8 @@ private:
 		// covariance
 		ftf::EigenMapCovariance6d twist_cov_map(twist_cov.covariance.data());
 		twist_cov_map.setZero();
-		twist_cov_map.block<3, 3>(0, 0).diagonal() << rtwist_cov(0), rtwist_cov(1), -1.0;
-		twist_cov_map.block<3, 3>(3, 3).diagonal() << -1.0, -1.0, rtwist_cov(2);
+		twist_cov_map.block<2, 2>(0, 0).diagonal() << rtwist_cov(0), rtwist_cov(1);
+		twist_cov_map.block<1, 1>(5, 5).diagonal() << rtwist_cov(2);
 
 		// Publish twist
 		if (twist_send) {
@@ -408,13 +408,13 @@ private:
 		double px; // dP/dTheta
 		double qx; // dQ/dTheta
 		if (std::abs(theta) > 1.e-5) {
-		  px = (theta*cos_theta - sin_theta) / (theta*theta);
-		  qx = (theta*sin_theta - (1-cos_theta)) / (theta*theta);
+			px = (theta*cos_theta - sin_theta) / (theta*theta);
+			qx = (theta*sin_theta - (1-cos_theta)) / (theta*theta);
 		}
 		// Limits for theta -> 0
 		else {
-		  px = 0;
-		  qx = 0.5;
+			px = 0;
+			qx = 0.5;
 		}
 		// dM/dTheta
 		Eigen::Matrix3d M_theta;
