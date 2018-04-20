@@ -79,7 +79,8 @@ public:
 
 		imu_pub = imu_nh.advertise<sensor_msgs::Imu>("data", 10);
 		magn_pub = imu_nh.advertise<sensor_msgs::MagneticField>("mag", 10);
-		temp_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
+		temp_imu_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature_imu", 10);
+		temp_baro_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature_baro", 10);
 		static_press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("static_pressure", 10);
 		diff_press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("diff_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
@@ -106,7 +107,8 @@ private:
 	ros::Publisher imu_pub;
 	ros::Publisher imu_raw_pub;
 	ros::Publisher magn_pub;
-	ros::Publisher temp_pub;
+	ros::Publisher temp_imu_pub;
+	ros::Publisher temp_baro_pub;
 	ros::Publisher static_press_pub;
 	ros::Publisher diff_press_pub;
 
@@ -424,7 +426,7 @@ private:
 			temp_msg->header = header;
 			temp_msg->temperature = imu_hr.temperature;
 
-			temp_pub.publish(temp_msg);
+			temp_imu_pub.publish(temp_msg);
 		}
 		// [temperature_available]
 	}
@@ -530,7 +532,7 @@ private:
 		auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 		temp_msg->header = header;
 		temp_msg->temperature = press.temperature / 100.0;
-		temp_pub.publish(temp_msg);
+		temp_baro_pub.publish(temp_msg);
 
 		auto static_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 		static_pressure_msg->header = header;
