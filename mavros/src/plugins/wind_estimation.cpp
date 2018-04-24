@@ -45,8 +45,8 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			make_handler(&WindEstimationPlugin::handle_apm_wind),
-			make_handler(&WindEstimationPlugin::handle_px4_wind),
+			       make_handler(&WindEstimationPlugin::handle_apm_wind),
+			       make_handler(&WindEstimationPlugin::handle_px4_wind),
 		};
 	}
 
@@ -61,14 +61,14 @@ private:
 	void handle_apm_wind(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::WIND &wind)
 	{
 		const double speed = wind.speed;
-		const double course = -angles::from_degrees(wind.direction); // direction "from" -> direction "to"
+		const double course = -angles::from_degrees(wind.direction);	// direction "from" -> direction "to"
 
 		auto twist_cov = boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
 		twist_cov->header.stamp = ros::Time::now();
 		// TODO: check math's
-		twist_cov->twist.twist.linear.x = speed * std::sin(course); // E
-		twist_cov->twist.twist.linear.y = speed * std::cos(course); // N
-		twist_cov->twist.twist.linear.z = -wind.speed_z; // D -> U
+		twist_cov->twist.twist.linear.x = speed * std::sin(course);	// E
+		twist_cov->twist.twist.linear.y = speed * std::cos(course);	// N
+		twist_cov->twist.twist.linear.z = -wind.speed_z;// D -> U
 
 		// covariance matrix unknown in APM msg
 		ftf::EigenMapCovariance6d cov_map(twist_cov->twist.covariance.data());
@@ -92,7 +92,7 @@ private:
 		// fill available covariance elements
 		ftf::EigenMapCovariance6d cov_map(twist_cov->twist.covariance.data());
 		cov_map.setZero();
-		cov_map(0, 0) = wind.var_horiz; // NOTE: this is a summed covariance for both x and y horizontal wind components
+		cov_map(0, 0) = wind.var_horiz;	// NOTE: this is a summed covariance for both x and y horizontal wind components
 		cov_map(2, 2) = wind.var_vert;
 
 		wind_pub.publish(twist_cov);
