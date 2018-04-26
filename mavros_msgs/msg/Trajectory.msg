@@ -14,3 +14,5 @@ mavros_msgs/PositionTarget point_4
 mavros_msgs/PositionTarget point_5
 
 uint8[5] point_valid # States if respective point is valid.
+
+float32[5] time_horizon # if type MAV_TRAJECTORY_REPRESENTATION_BEZIER, it represents the time horizon for each point, otherwise set to NaN
