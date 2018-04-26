@@ -561,7 +561,15 @@ private:
 			return a;
 		}
 
-		return fmod(a + M_PI, 2.0f * M_PI) - M_PI;
+		while (a >= M_PI) {
+			a -= (M_PI * 2.0f);
+		}
+
+		while (a < -M_PI) {
+			a += (M_PI * 2.0f);
+		}
+
+		return a;
 	}
 };
 }					// namespace extra_plugins
