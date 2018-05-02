@@ -172,9 +172,9 @@ private:
 			const double hdop = eph;
 
 			// From nmea_navsat_driver
-			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(hdop, 2);
-			fix->position_covariance[6 + 2] = std::pow(2 * hdop, 2);
-			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
+			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(raw_gps.h_acc/1e3, 2);
+			fix->position_covariance[6 + 2] = std::pow(raw_gps.v_acc/1e3, 2);
+			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 		}
 		else {
 			fill_unknown_cov(fix);
