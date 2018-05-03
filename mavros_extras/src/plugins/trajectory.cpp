@@ -19,6 +19,9 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <nav_msgs/Path.h>
 
+//! Point array LENGTH
+static constexpr int POINT_LEN = 11;
+
 namespace mavros {
 namespace extra_plugins {
 //! Mavlink MAV_TRAJECTORY_REPRESENTATION enumeration
@@ -60,7 +63,6 @@ private:
 
 	ros::Publisher trajectory_desired_pub;
 
-
 	/**
 	 * @brief Send corrected path to the FCU.
 	 *
@@ -73,174 +75,145 @@ private:
 		trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
 		trajectory.type = req->type;	//!< trajectory type (waypoints, bezier)
 
-		/* Transformation from ENU to NED */
+		auto fill_points_position = [] (std::array<float, POINT_LEN> &point, geometry_msgs::Point position) {
+			// [[[cog:
+			//     cog.outl("auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));")
+			//     for index, axis in zip ("012", "xyz"):
+			//         cog.outl("point[{index}] = position_ned.{axis}();".format(**locals()))
+			// ]]]
+			auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
+			point[0] = position_ned.x();
+			point[1] = position_ned.y();
+			point[2] = position_ned.z();
+			// [[[end]]] (checksum: 6b564ac3664cbc831bc9d5d912c976c0)
+		};
+
+		auto fill_points_velocity = [] (std::array<float, POINT_LEN> &point, geometry_msgs::Vector3 velocity) {
+			// [[[cog:
+			//     cog.outl("auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));")
+			//     for index, axis in zip ("345", "xyz"):
+			//         cog.outl("point[{index}] = velocity_ned.{axis}();".format(**locals()))
+			// ]]]
+			auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
+			point[3] = velocity_ned.x();
+			point[4] = velocity_ned.y();
+			point[5] = velocity_ned.z();
+			// [[[end]]] (checksum: 0d3c1f396f81c3e3b11981b185ff1cbf)
+		};
+
+		auto fill_points_acceleration = [] (std::array<float, POINT_LEN> &point, geometry_msgs::Vector3 acceleration) {
+			// [[[cog:
+			//     cog.outl("auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));")
+			//     for index, axis in zip ("678", "xyz"):
+			//         cog.outl("point[{index}] = acceleration_ned.{axis}();".format(**locals()))
+			// ]]]
+			auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
+			point[6] = acceleration_ned.x();
+			point[7] = acceleration_ned.y();
+			point[8] = acceleration_ned.z();
+			// [[[end]]] (checksum: 5ae0bb0aeb947ccb16b734ae67953c2e)
+		};
+
+		auto fill_points_yaw_wp = [this](std::array<float, POINT_LEN> &point, float yaw) {
+			point[9] = wrap_pi(-yaw + (M_PI / 2.0f));
+		};
+
+		auto fill_points_yaw_bezier = [this](std::array<float, POINT_LEN> &point, float yaw) {
+			point[4] = wrap_pi(-yaw + (M_PI / 2.0f));
+		};
+
+		auto fill_points_yaw_speed = [] (std::array<float, POINT_LEN> &point, float yaw_speed) {
+			point[10] = yaw_speed;
+		};
+
+		auto fill_points_time_horizon = [] (std::array<float, POINT_LEN> &point, float time_horizon) {
+			point[3] = time_horizon;
+		};
+
+		auto fill_points_unused_bezier = [] (std::array<float, POINT_LEN> &point) {
+			std::fill(point.begin() + 5, point.end(), NAN);
+		};
+
 		// [[[cog:
 		// for p in "12345":
-		//     cog.outl("auto position_point_{p} = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_{p}.position));".format(**locals()))
-		//     for index, axis in zip ("012", "xyz"):
-		//         cog.outl("trajectory.point_{p}[{index}] = position_point_{p}.{axis}();".format(**locals()))
+		//     cog.outl("fill_points_position(trajectory.point_{p}, req->point_{p}.position);".format(**locals()))
 		// ]]]
-		auto position_point_1 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_1.position));
-		trajectory.point_1[0] = position_point_1.x();
-		trajectory.point_1[1] = position_point_1.y();
-		trajectory.point_1[2] = position_point_1.z();
-		auto position_point_2 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_2.position));
-		trajectory.point_2[0] = position_point_2.x();
-		trajectory.point_2[1] = position_point_2.y();
-		trajectory.point_2[2] = position_point_2.z();
-		auto position_point_3 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_3.position));
-		trajectory.point_3[0] = position_point_3.x();
-		trajectory.point_3[1] = position_point_3.y();
-		trajectory.point_3[2] = position_point_3.z();
-		auto position_point_4 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_4.position));
-		trajectory.point_4[0] = position_point_4.x();
-		trajectory.point_4[1] = position_point_4.y();
-		trajectory.point_4[2] = position_point_4.z();
-		auto position_point_5 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_5.position));
-		trajectory.point_5[0] = position_point_5.x();
-		trajectory.point_5[1] = position_point_5.y();
-		trajectory.point_5[2] = position_point_5.z();
-		// [[[end]]] (checksum: 426c18b59c8fa9b5842fd88741c6df2e)
+		fill_points_position(trajectory.point_1, req->point_1.position);
+		fill_points_position(trajectory.point_2, req->point_2.position);
+		fill_points_position(trajectory.point_3, req->point_3.position);
+		fill_points_position(trajectory.point_4, req->point_4.position);
+		fill_points_position(trajectory.point_5, req->point_5.position);
+		// [[[end]]] (checksum: e1d89be8f56a63e27215e311cbadf019)
 
 		if (req->type == utils::enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS)) {
-			/* Transformation from ENU to NED */
-			//[[[cog:
-			//for p in "12345":
-			//     cog.outl("auto velocity_point_{p} = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_{p}.velocity));".format(**locals()))
-			//     for index, axis in zip ("345", "xyz"):
-			//         cog.outl("trajectory.point_{p}[{index}] = velocity_point_{p}.{axis}();".format(**locals()))
-			//     cog.outl("auto acceleration_point_{p} = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_{p}.acceleration_or_force));".format(**locals()))
-			//     for index, axis in zip ("678", "xyz"):
-			//         cog.outl("trajectory.point_{p}[{index}] = acceleration_point_{p}.{axis}();".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[9] = wrap_pi(-req->point_{p}.yaw + (M_PI / 2.0f));".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[10] = req->point_{p}.yaw_rate; \n".format(**locals()))
+			// [[[cog:
+			// for p in "12345":
+			//     cog.outl("fill_points_velocity(trajectory.point_{p},  req->point_{p}.velocity);".format(**locals()))
+			//     cog.outl("fill_points_acceleration(trajectory.point_{p}, req->point_{p}.acceleration_or_force);".format(**locals()))
+			//     cog.outl("fill_points_yaw_wp(trajectory.point_{p}, req->point_{p}.yaw);".format(**locals()))
+			//     cog.outl("fill_points_yaw_speed(trajectory.point_{p}, req->point_{p}.yaw_rate);\n".format(**locals()))
 			// ]]]
-			auto velocity_point_1 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_1.velocity));
-			trajectory.point_1[3] = velocity_point_1.x();
-			trajectory.point_1[4] = velocity_point_1.y();
-			trajectory.point_1[5] = velocity_point_1.z();
-			auto acceleration_point_1 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_1.acceleration_or_force));
-			trajectory.point_1[6] = acceleration_point_1.x();
-			trajectory.point_1[7] = acceleration_point_1.y();
-			trajectory.point_1[8] = acceleration_point_1.z();
-			trajectory.point_1[9] = wrap_pi(-req->point_1.yaw + (M_PI / 2.0f));
-			trajectory.point_1[10] = req->point_1.yaw_rate;
+			fill_points_velocity(trajectory.point_1,  req->point_1.velocity);
+			fill_points_acceleration(trajectory.point_1, req->point_1.acceleration_or_force);
+			fill_points_yaw_wp(trajectory.point_1, req->point_1.yaw);
+			fill_points_yaw_speed(trajectory.point_1, req->point_1.yaw_rate);
 
-			auto velocity_point_2 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_2.velocity));
-			trajectory.point_2[3] = velocity_point_2.x();
-			trajectory.point_2[4] = velocity_point_2.y();
-			trajectory.point_2[5] = velocity_point_2.z();
-			auto acceleration_point_2 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_2.acceleration_or_force));
-			trajectory.point_2[6] = acceleration_point_2.x();
-			trajectory.point_2[7] = acceleration_point_2.y();
-			trajectory.point_2[8] = acceleration_point_2.z();
-			trajectory.point_2[9] = wrap_pi(-req->point_2.yaw + (M_PI / 2.0f));
-			trajectory.point_2[10] = req->point_2.yaw_rate;
+			fill_points_velocity(trajectory.point_2,  req->point_2.velocity);
+			fill_points_acceleration(trajectory.point_2, req->point_2.acceleration_or_force);
+			fill_points_yaw_wp(trajectory.point_2, req->point_2.yaw);
+			fill_points_yaw_speed(trajectory.point_2, req->point_2.yaw_rate);
 
-			auto velocity_point_3 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_3.velocity));
-			trajectory.point_3[3] = velocity_point_3.x();
-			trajectory.point_3[4] = velocity_point_3.y();
-			trajectory.point_3[5] = velocity_point_3.z();
-			auto acceleration_point_3 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_3.acceleration_or_force));
-			trajectory.point_3[6] = acceleration_point_3.x();
-			trajectory.point_3[7] = acceleration_point_3.y();
-			trajectory.point_3[8] = acceleration_point_3.z();
-			trajectory.point_3[9] = wrap_pi(-req->point_3.yaw + (M_PI / 2.0f));
-			trajectory.point_3[10] = req->point_3.yaw_rate;
+			fill_points_velocity(trajectory.point_3,  req->point_3.velocity);
+			fill_points_acceleration(trajectory.point_3, req->point_3.acceleration_or_force);
+			fill_points_yaw_wp(trajectory.point_3, req->point_3.yaw);
+			fill_points_yaw_speed(trajectory.point_3, req->point_3.yaw_rate);
 
-			auto velocity_point_4 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_4.velocity));
-			trajectory.point_4[3] = velocity_point_4.x();
-			trajectory.point_4[4] = velocity_point_4.y();
-			trajectory.point_4[5] = velocity_point_4.z();
-			auto acceleration_point_4 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_4.acceleration_or_force));
-			trajectory.point_4[6] = acceleration_point_4.x();
-			trajectory.point_4[7] = acceleration_point_4.y();
-			trajectory.point_4[8] = acceleration_point_4.z();
-			trajectory.point_4[9] = wrap_pi(-req->point_4.yaw + (M_PI / 2.0f));
-			trajectory.point_4[10] = req->point_4.yaw_rate;
+			fill_points_velocity(trajectory.point_4,  req->point_4.velocity);
+			fill_points_acceleration(trajectory.point_4, req->point_4.acceleration_or_force);
+			fill_points_yaw_wp(trajectory.point_4, req->point_4.yaw);
+			fill_points_yaw_speed(trajectory.point_4, req->point_4.yaw_rate);
 
-			auto velocity_point_5 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_5.velocity));
-			trajectory.point_5[3] = velocity_point_5.x();
-			trajectory.point_5[4] = velocity_point_5.y();
-			trajectory.point_5[5] = velocity_point_5.z();
-			auto acceleration_point_5 = ftf::transform_frame_enu_ned(ftf::to_eigen(req->point_5.acceleration_or_force));
-			trajectory.point_5[6] = acceleration_point_5.x();
-			trajectory.point_5[7] = acceleration_point_5.y();
-			trajectory.point_5[8] = acceleration_point_5.z();
-			trajectory.point_5[9] = wrap_pi(-req->point_5.yaw + (M_PI / 2.0f));
-			trajectory.point_5[10] = req->point_5.yaw_rate;
+			fill_points_velocity(trajectory.point_5,  req->point_5.velocity);
+			fill_points_acceleration(trajectory.point_5, req->point_5.acceleration_or_force);
+			fill_points_yaw_wp(trajectory.point_5, req->point_5.yaw);
+			fill_points_yaw_speed(trajectory.point_5, req->point_5.yaw_rate);
 
-			// [[[end]]] (checksum: de8ef970a43d4b07fb7581c856c95980)
+			// [[[end]]] (checksum: 8672611837052dffae6215e32ec14678)
 		} else {
-			//[[[cog:
-			//for p, index in zip("12345", "01234"):
-			//     cog.outl("trajectory.point_{p}[3] = req->time_horizon[{index}];".format(**locals()))
+			// [[[cog:
+			// for p in "12345":
+			//     cog.outl("fill_points_time_horizon(trajectory.point_{p}, req->time_horizon[{p} - 1]);".format(**locals()))
+			//     cog.outl("fill_points_yaw_bezier(trajectory.point_{p}, req->point_{p}.yaw);".format(**locals()))
+			//     cog.outl("fill_points_unused_bezier(trajectory.point_{p});\n".format(**locals()))
 			// ]]]
-			trajectory.point_1[3] = req->time_horizon[0];
-			trajectory.point_2[3] = req->time_horizon[1];
-			trajectory.point_3[3] = req->time_horizon[2];
-			trajectory.point_4[3] = req->time_horizon[3];
-			trajectory.point_5[3] = req->time_horizon[4];
-			// [[[end]]] (checksum: 380f20e816c51b6aa569cade870c5ec7)
+			fill_points_time_horizon(trajectory.point_1, req->time_horizon[1 - 1]);
+			fill_points_yaw_bezier(trajectory.point_1, req->point_1.yaw);
+			fill_points_unused_bezier(trajectory.point_1);
 
+			fill_points_time_horizon(trajectory.point_2, req->time_horizon[2 - 1]);
+			fill_points_yaw_bezier(trajectory.point_2, req->point_2.yaw);
+			fill_points_unused_bezier(trajectory.point_2);
 
-			//[[[cog:
-			//for p in "12345":
-			//     cog.outl("trajectory.point_{p}[4] = wrap_pi(-req->point_{p}.yaw + (M_PI / 2.0f));".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[5] = NAN;".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[6] = NAN;".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[7] = NAN;".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[8] = NAN;".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[9] = NAN;".format(**locals()))
-			//     cog.outl("trajectory.point_{p}[10] = NAN;\n".format(**locals()))
-			// ]]]
-			trajectory.point_1[4] = wrap_pi(-req->point_1.yaw + (M_PI / 2.0f));
-			trajectory.point_1[5] = NAN;
-			trajectory.point_1[6] = NAN;
-			trajectory.point_1[7] = NAN;
-			trajectory.point_1[8] = NAN;
-			trajectory.point_1[9] = NAN;
-			trajectory.point_1[10] = NAN;
+			fill_points_time_horizon(trajectory.point_3, req->time_horizon[3 - 1]);
+			fill_points_yaw_bezier(trajectory.point_3, req->point_3.yaw);
+			fill_points_unused_bezier(trajectory.point_3);
 
-			trajectory.point_2[4] = wrap_pi(-req->point_2.yaw + (M_PI / 2.0f));
-			trajectory.point_2[5] = NAN;
-			trajectory.point_2[6] = NAN;
-			trajectory.point_2[7] = NAN;
-			trajectory.point_2[8] = NAN;
-			trajectory.point_2[9] = NAN;
-			trajectory.point_2[10] = NAN;
+			fill_points_time_horizon(trajectory.point_4, req->time_horizon[4 - 1]);
+			fill_points_yaw_bezier(trajectory.point_4, req->point_4.yaw);
+			fill_points_unused_bezier(trajectory.point_4);
 
-			trajectory.point_3[4] = wrap_pi(-req->point_3.yaw + (M_PI / 2.0f));
-			trajectory.point_3[5] = NAN;
-			trajectory.point_3[6] = NAN;
-			trajectory.point_3[7] = NAN;
-			trajectory.point_3[8] = NAN;
-			trajectory.point_3[9] = NAN;
-			trajectory.point_3[10] = NAN;
+			fill_points_time_horizon(trajectory.point_5, req->time_horizon[5 - 1]);
+			fill_points_yaw_bezier(trajectory.point_5, req->point_5.yaw);
+			fill_points_unused_bezier(trajectory.point_5);
 
-			trajectory.point_4[4] = wrap_pi(-req->point_4.yaw + (M_PI / 2.0f));
-			trajectory.point_4[5] = NAN;
-			trajectory.point_4[6] = NAN;
-			trajectory.point_4[7] = NAN;
-			trajectory.point_4[8] = NAN;
-			trajectory.point_4[9] = NAN;
-			trajectory.point_4[10] = NAN;
-
-			trajectory.point_5[4] = wrap_pi(-req->point_5.yaw + (M_PI / 2.0f));
-			trajectory.point_5[5] = NAN;
-			trajectory.point_5[6] = NAN;
-			trajectory.point_5[7] = NAN;
-			trajectory.point_5[8] = NAN;
-			trajectory.point_5[9] = NAN;
-			trajectory.point_5[10] = NAN;
-
-			// [[[end]]] (checksum: 3600e6ccf073b587b78614d36647e1f3)
+			// [[[end]]] (checksum: 03494272b7395e6a3dc6ca8d10597f39)
 		}
 
 		std::copy(req->point_valid.begin(), req->point_valid.end(), trajectory.point_valid.begin());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
 	}
+
 
 	/**
 	 * @brief Send corrected path to the FCU.
@@ -255,133 +228,88 @@ private:
 		trajectory.type = utils::enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS);
 		Eigen::Quaterniond q_enu;
 		Eigen::Vector3d position_wp, orientation_wp;
+		int conter = 0;
+
+		auto fill_points_position = [] (std::array<float, POINT_LEN> &point, geometry_msgs::Point position) {
+			// [[[cog:
+			//     cog.outl("auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));")
+			//     for index, axis in zip ("012", "xyz"):
+			//         cog.outl("point[{index}] = position_ned.{axis}();".format(**locals()))
+			// ]]]
+			auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
+			point[0] = position_ned.x();
+			point[1] = position_ned.y();
+			point[2] = position_ned.z();
+			// [[[end]]] (checksum: 6b564ac3664cbc831bc9d5d912c976c0)
+		};
+
+		auto fill_points_yaw = [this](std::array<float, POINT_LEN> &point, geometry_msgs::Quaternion orientation) {
+			Eigen::Quaterniond q_enu;
+			tf::quaternionMsgToEigen(orientation, q_enu);
+			auto orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
+			point[9] = wrap_pi(-orientation_wp(2) + (M_PI / 2.0f));
+		};
+
+		auto fill_points_unused_fields = [] (std::array<float, POINT_LEN> &point) {
+			std::fill(point.begin() + 3, point.begin() + 8, NAN);
+			point[10] = NAN;
+		};
+
+		auto fill_points_unused = [] (std::array<float, POINT_LEN> &point) {
+			std::fill(point.begin(), point.end(), NAN);
+		};
 
 		// [[[cog:
-		//for p in "12345":
+		// for p in "12345":
 		//    cog.outl("if (req->poses.size() >= {p}) {{ \n".format(**locals()))
-		//    cog.outl("position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[{p} - 1].pose.position));".format(**locals()))
-		//    cog.outl("tf::quaternionMsgToEigen(req->poses[{p} - 1].pose.orientation, q_enu);".format(**locals()))
-		//    cog.outl("orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));".format(**locals()))
-		//    for index, axis in zip ("012", "xyz"):
-		//        cog.outl("trajectory.point_{p}[{index}] = position_wp.{axis}();".format(**locals()))
-		//    for index in "345":
-		//        cog.outl("trajectory.point_{p}[{index}] = NAN;".format(**locals()))
-		//    for index in "678":
-		//        cog.outl("trajectory.point_{p}[{index}] = NAN;".format(**locals()))
-		//    cog.outl("trajectory.point_{p}[9] = orientation_wp(2);".format(**locals()))
-		//    cog.outl("trajectory.point_{p}[10] = NAN;".format(**locals()))
+		//    cog.outl("fill_points_position(trajectory.point_{p}, req->poses[{p} - 1].pose.position);".format(**locals()))
+		//    cog.outl("fill_points_yaw(trajectory.point_{p}, req->poses[{p} - 1].pose.orientation);".format(**locals()))
+		//    cog.outl("fill_points_unused_fields(trajectory.point_{p});".format(**locals()))
 		//    cog.outl("} else {")
-		//    cog.outl("for (int i = 0; i < 11; i++) {{ \n".format(**locals()))
-		//    cog.outl("trajectory.point_{p}[i] = NAN;".format(**locals()))
-		//    cog.outl("}")
+		//    cog.outl("fill_points_unused(trajectory.point_{p});".format(**locals()))
 		//    cog.outl("} \n")
 		// ]]]
 		if (req->poses.size() >= 1) {
-			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[1 - 1].pose.position));
-			tf::quaternionMsgToEigen(req->poses[1 - 1].pose.orientation, q_enu);
-			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
-			trajectory.point_1[0] = position_wp.x();
-			trajectory.point_1[1] = position_wp.y();
-			trajectory.point_1[2] = position_wp.z();
-			trajectory.point_1[3] = NAN;
-			trajectory.point_1[4] = NAN;
-			trajectory.point_1[5] = NAN;
-			trajectory.point_1[6] = NAN;
-			trajectory.point_1[7] = NAN;
-			trajectory.point_1[8] = NAN;
-			trajectory.point_1[9] = orientation_wp(2);
-			trajectory.point_1[10] = NAN;
+			fill_points_position(trajectory.point_1, req->poses[1 - 1].pose.position);
+			fill_points_yaw(trajectory.point_1, req->poses[1 - 1].pose.orientation);
+			fill_points_unused_fields(trajectory.point_1);
 		} else {
-			for (int i = 0; i < 11; i++) {
-				trajectory.point_1[i] = NAN;
-			}
+			fill_points_unused(trajectory.point_1);
 		}
 
 		if (req->poses.size() >= 2) {
-			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[2 - 1].pose.position));
-			tf::quaternionMsgToEigen(req->poses[2 - 1].pose.orientation, q_enu);
-			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
-			trajectory.point_2[0] = position_wp.x();
-			trajectory.point_2[1] = position_wp.y();
-			trajectory.point_2[2] = position_wp.z();
-			trajectory.point_2[3] = NAN;
-			trajectory.point_2[4] = NAN;
-			trajectory.point_2[5] = NAN;
-			trajectory.point_2[6] = NAN;
-			trajectory.point_2[7] = NAN;
-			trajectory.point_2[8] = NAN;
-			trajectory.point_2[9] = orientation_wp(2);
-			trajectory.point_2[10] = NAN;
+			fill_points_position(trajectory.point_2, req->poses[2 - 1].pose.position);
+			fill_points_yaw(trajectory.point_2, req->poses[2 - 1].pose.orientation);
+			fill_points_unused_fields(trajectory.point_2);
 		} else {
-			for (int i = 0; i < 11; i++) {
-				trajectory.point_2[i] = NAN;
-			}
+			fill_points_unused(trajectory.point_2);
 		}
 
 		if (req->poses.size() >= 3) {
-			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[3 - 1].pose.position));
-			tf::quaternionMsgToEigen(req->poses[3 - 1].pose.orientation, q_enu);
-			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
-			trajectory.point_3[0] = position_wp.x();
-			trajectory.point_3[1] = position_wp.y();
-			trajectory.point_3[2] = position_wp.z();
-			trajectory.point_3[3] = NAN;
-			trajectory.point_3[4] = NAN;
-			trajectory.point_3[5] = NAN;
-			trajectory.point_3[6] = NAN;
-			trajectory.point_3[7] = NAN;
-			trajectory.point_3[8] = NAN;
-			trajectory.point_3[9] = orientation_wp(2);
-			trajectory.point_3[10] = NAN;
+			fill_points_position(trajectory.point_3, req->poses[3 - 1].pose.position);
+			fill_points_yaw(trajectory.point_3, req->poses[3 - 1].pose.orientation);
+			fill_points_unused_fields(trajectory.point_3);
 		} else {
-			for (int i = 0; i < 11; i++) {
-				trajectory.point_3[i] = NAN;
-			}
+			fill_points_unused(trajectory.point_3);
 		}
 
 		if (req->poses.size() >= 4) {
-			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[4 - 1].pose.position));
-			tf::quaternionMsgToEigen(req->poses[4 - 1].pose.orientation, q_enu);
-			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
-			trajectory.point_4[0] = position_wp.x();
-			trajectory.point_4[1] = position_wp.y();
-			trajectory.point_4[2] = position_wp.z();
-			trajectory.point_4[3] = NAN;
-			trajectory.point_4[4] = NAN;
-			trajectory.point_4[5] = NAN;
-			trajectory.point_4[6] = NAN;
-			trajectory.point_4[7] = NAN;
-			trajectory.point_4[8] = NAN;
-			trajectory.point_4[9] = orientation_wp(2);
-			trajectory.point_4[10] = NAN;
+			fill_points_position(trajectory.point_4, req->poses[4 - 1].pose.position);
+			fill_points_yaw(trajectory.point_4, req->poses[4 - 1].pose.orientation);
+			fill_points_unused_fields(trajectory.point_4);
 		} else {
-			for (int i = 0; i < 11; i++) {
-				trajectory.point_4[i] = NAN;
-			}
+			fill_points_unused(trajectory.point_4);
 		}
 
 		if (req->poses.size() >= 5) {
-			position_wp = ftf::transform_frame_enu_ned(ftf::to_eigen(req->poses[5 - 1].pose.position));
-			tf::quaternionMsgToEigen(req->poses[5 - 1].pose.orientation, q_enu);
-			orientation_wp = ftf::quaternion_to_rpy(ftf::transform_orientation_enu_ned(ftf::transform_orientation_baselink_aircraft(q_enu)));
-			trajectory.point_5[0] = position_wp.x();
-			trajectory.point_5[1] = position_wp.y();
-			trajectory.point_5[2] = position_wp.z();
-			trajectory.point_5[3] = NAN;
-			trajectory.point_5[4] = NAN;
-			trajectory.point_5[5] = NAN;
-			trajectory.point_5[6] = NAN;
-			trajectory.point_5[7] = NAN;
-			trajectory.point_5[8] = NAN;
-			trajectory.point_5[9] = orientation_wp(2);
-			trajectory.point_5[10] = NAN;
+			fill_points_position(trajectory.point_5, req->poses[5 - 1].pose.position);
+			fill_points_yaw(trajectory.point_5, req->poses[5 - 1].pose.orientation);
+			fill_points_unused_fields(trajectory.point_5);
 		} else {
-			for (int i = 0; i < 11; i++) {
-				trajectory.point_5[i] = NAN;
-			}
+			fill_points_unused(trajectory.point_5);
 		}
 
-		// [[[end]]] (checksum: 048ad8447e67c6a0da985f4cf083f898)
+		// [[[end]]] (checksum: 2f3c59967b0cd4b9167720a16adc1471)
 
 
 		// check that either x and y are finite or z to set the position waypoint as valid
@@ -424,149 +352,148 @@ private:
 		trajectory_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
 		trajectory_desired->type = trajectory.type;						//!< trajectory type (waypoints, bezier)
 
+		auto fill_points_position = [] (geometry_msgs::Point position, std::array<float, POINT_LEN> &point) {
+			// [[[cog:
+			//     cog.outl("auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[0], point[1], point[2]));".format(**locals()))
+			//     for axis in "xyz":
+			//         cog.outl("position.{axis} = enu_position.{axis}();".format(**locals()))
+			// ]]]
+			auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[0], point[1], point[2]));
+			position.x = enu_position.x();
+			position.y = enu_position.y();
+			position.z = enu_position.z();
+			// [[[end]]] (checksum: d6bf1867ed4da4c937e609d9b59fb009)
+		};
 
-		/* Transformation from NED to ENU */
+		auto fill_points_velocity = [] (geometry_msgs::Vector3 velocity, std::array<float, POINT_LEN> &point) {
+			// [[[cog:
+			//     cog.outl("auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[3], point[4], point[5]));".format(**locals()))
+			//     for axis in "xyz":
+			//         cog.outl("velocity.{axis} = enu_velocity.{axis}();".format(**locals()))
+			// ]]]
+			auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[3], point[4], point[5]));
+			velocity.x = enu_velocity.x();
+			velocity.y = enu_velocity.y();
+			velocity.z = enu_velocity.z();
+			// [[[end]]] (checksum: 6f1a403f651e53e0edd7f440231b9875)
+		};
+
+		auto fill_points_acceleration = [] (geometry_msgs::Vector3 acceleration, std::array<float, POINT_LEN> &point) {
+			// [[[cog:
+			//     cog.outl("auto enu_acceleration = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[6], point[7], point[8]));".format(**locals()))
+			//     for axis in "xyz":
+			//         cog.outl("acceleration.{axis} = enu_acceleration.{axis}();".format(**locals()))
+			// ]]]
+			auto enu_acceleration = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[6], point[7], point[8]));
+			acceleration.x = enu_acceleration.x();
+			acceleration.y = enu_acceleration.y();
+			acceleration.z = enu_acceleration.z();
+			// [[[end]]] (checksum: 0365bcb69209af709be922d638b7e473)
+		};
+
+		auto fill_points_yaw = [this](float &yaw_output, float yaw_input) {
+			yaw_output = wrap_pi((M_PI / 2.0f) - yaw_input);
+		};
+
+		auto fill_points_yaw_speed = [] (float yaw_speed, std::array<float, POINT_LEN> &point) {
+			yaw_speed = point[10];
+		};
+
+		auto fill_points_time_horizon = [] (float time_horizon, std::array<float, POINT_LEN> &point){
+			time_horizon = point[3];
+		};
+
+		auto fill_points_unused_bezier = [] (mavros_msgs::PositionTarget & trajectory){
+			// [[[cog:
+			// for p in ['velocity', 'acceleration_or_force']:
+			//     for i in "xyz":
+			//         cog.outl("trajectory.{p}.{i} = NAN;".format(**locals()))
+			// cog.outl("trajectory.yaw_rate = NAN;")
+			// ]]]
+			trajectory.velocity.x = NAN;
+			trajectory.velocity.y = NAN;
+			trajectory.velocity.z = NAN;
+			trajectory.acceleration_or_force.x = NAN;
+			trajectory.acceleration_or_force.y = NAN;
+			trajectory.acceleration_or_force.z = NAN;
+			trajectory.yaw_rate = NAN;
+			// [[[end]]] (checksum: 05917efa61b49a05c0180979cb02e28e)
+		};
+
 		// [[[cog:
 		// for p in "12345":
-		//     cog.outl("auto enu_position_point_{p} = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_{p}[0], trajectory.point_{p}[1], trajectory.point_{p}[2]));".format(**locals()))
-		//     for axis in "xyz":
-		//         cog.outl("trajectory_desired->point_{p}.position.{axis} = enu_position_point_{p}.{axis}();".format(**locals()))
-		//     cog.outl(" \n ")
+		//     cog.outl("fill_points_position(trajectory_desired->point_{p}.position, trajectory.point_{p});".format(**locals()))
 		// ]]]
-		auto enu_position_point_1 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_1[0], trajectory.point_1[1], trajectory.point_1[2]));
-		trajectory_desired->point_1.position.x = enu_position_point_1.x();
-		trajectory_desired->point_1.position.y = enu_position_point_1.y();
-		trajectory_desired->point_1.position.z = enu_position_point_1.z();
+		fill_points_position(trajectory_desired->point_1.position, trajectory.point_1);
+		fill_points_position(trajectory_desired->point_2.position, trajectory.point_2);
+		fill_points_position(trajectory_desired->point_3.position, trajectory.point_3);
+		fill_points_position(trajectory_desired->point_4.position, trajectory.point_4);
+		fill_points_position(trajectory_desired->point_5.position, trajectory.point_5);
+		// [[[end]]] (checksum: 4de7872559e8d3003eecf5058df195a8)
 
-
-		auto enu_position_point_2 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_2[0], trajectory.point_2[1], trajectory.point_2[2]));
-		trajectory_desired->point_2.position.x = enu_position_point_2.x();
-		trajectory_desired->point_2.position.y = enu_position_point_2.y();
-		trajectory_desired->point_2.position.z = enu_position_point_2.z();
-
-
-		auto enu_position_point_3 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_3[0], trajectory.point_3[1], trajectory.point_3[2]));
-		trajectory_desired->point_3.position.x = enu_position_point_3.x();
-		trajectory_desired->point_3.position.y = enu_position_point_3.y();
-		trajectory_desired->point_3.position.z = enu_position_point_3.z();
-
-
-		auto enu_position_point_4 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_4[0], trajectory.point_4[1], trajectory.point_4[2]));
-		trajectory_desired->point_4.position.x = enu_position_point_4.x();
-		trajectory_desired->point_4.position.y = enu_position_point_4.y();
-		trajectory_desired->point_4.position.z = enu_position_point_4.z();
-
-
-		auto enu_position_point_5 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_5[0], trajectory.point_5[1], trajectory.point_5[2]));
-		trajectory_desired->point_5.position.x = enu_position_point_5.x();
-		trajectory_desired->point_5.position.y = enu_position_point_5.y();
-		trajectory_desired->point_5.position.z = enu_position_point_5.z();
-
-
-		// [[[end]]] (checksum: 83cad24ef129adadc536608b7a6bdfbb)
 
 		if (trajectory.type == utils::enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS)) {
 			// [[[cog:
-			// for p, index in zip("12345", "012345"):
-			//     cog.outl("auto enu_velocity_point_{p} = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_{p}[3], trajectory.point_{p}[4], trajectory.point_{p}[5]));".format(**locals()))
-			//     for axis in "xyz":
-			//         cog.outl("trajectory_desired->point_{p}.velocity.{axis} = enu_velocity_point_{p}.{axis}();".format(**locals()))
-			//     cog.outl("auto enu_acceleration_point_{p} = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_{p}[6], trajectory.point_{p}[7], trajectory.point_{p}[8]));".format(**locals()))
-			//     for axis in "xyz":
-			//         cog.outl("trajectory_desired->point_{p}.acceleration_or_force.{axis} = enu_acceleration_point_{p}.{axis}();".format(**locals()))
-			//     cog.outl("trajectory_desired->point_{p}.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_{p}[9]);".format(**locals()))
-			//     cog.outl("trajectory_desired->point_{p}.yaw_rate = trajectory.point_{p}[10];".format(**locals()))
-			//     cog.outl("trajectory_desired->time_horizon[{index}] = NAN;\n".format(**locals()))
+			// for p in "12345":
+			//    cog.outl("fill_points_velocity(trajectory_desired->point_{p}.velocity, trajectory.point_{p});".format(**locals()))
+			//    cog.outl("fill_points_acceleration(trajectory_desired->point_{p}.acceleration_or_force, trajectory.point_{p});".format(**locals()))
+			//    cog.outl("fill_points_yaw(trajectory_desired->point_{p}.yaw, trajectory.point_{p}[9]);".format(**locals()))
+			//    cog.outl("fill_points_yaw_speed(trajectory_desired->point_{p}.yaw_rate, trajectory.point_{p});\n".format(**locals()))
 			// ]]]
-			auto enu_velocity_point_1 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_1[3], trajectory.point_1[4], trajectory.point_1[5]));
-			trajectory_desired->point_1.velocity.x = enu_velocity_point_1.x();
-			trajectory_desired->point_1.velocity.y = enu_velocity_point_1.y();
-			trajectory_desired->point_1.velocity.z = enu_velocity_point_1.z();
-			auto enu_acceleration_point_1 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_1[6], trajectory.point_1[7], trajectory.point_1[8]));
-			trajectory_desired->point_1.acceleration_or_force.x = enu_acceleration_point_1.x();
-			trajectory_desired->point_1.acceleration_or_force.y = enu_acceleration_point_1.y();
-			trajectory_desired->point_1.acceleration_or_force.z = enu_acceleration_point_1.z();
-			trajectory_desired->point_1.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_1[9]);
-			trajectory_desired->point_1.yaw_rate = trajectory.point_1[10];
-			trajectory_desired->time_horizon[0] = NAN;
+			fill_points_velocity(trajectory_desired->point_1.velocity, trajectory.point_1);
+			fill_points_acceleration(trajectory_desired->point_1.acceleration_or_force, trajectory.point_1);
+			fill_points_yaw(trajectory_desired->point_1.yaw, trajectory.point_1[9]);
+			fill_points_yaw_speed(trajectory_desired->point_1.yaw_rate, trajectory.point_1);
 
-			auto enu_velocity_point_2 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_2[3], trajectory.point_2[4], trajectory.point_2[5]));
-			trajectory_desired->point_2.velocity.x = enu_velocity_point_2.x();
-			trajectory_desired->point_2.velocity.y = enu_velocity_point_2.y();
-			trajectory_desired->point_2.velocity.z = enu_velocity_point_2.z();
-			auto enu_acceleration_point_2 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_2[6], trajectory.point_2[7], trajectory.point_2[8]));
-			trajectory_desired->point_2.acceleration_or_force.x = enu_acceleration_point_2.x();
-			trajectory_desired->point_2.acceleration_or_force.y = enu_acceleration_point_2.y();
-			trajectory_desired->point_2.acceleration_or_force.z = enu_acceleration_point_2.z();
-			trajectory_desired->point_2.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_2[9]);
-			trajectory_desired->point_2.yaw_rate = trajectory.point_2[10];
-			trajectory_desired->time_horizon[1] = NAN;
+			fill_points_velocity(trajectory_desired->point_2.velocity, trajectory.point_2);
+			fill_points_acceleration(trajectory_desired->point_2.acceleration_or_force, trajectory.point_2);
+			fill_points_yaw(trajectory_desired->point_2.yaw, trajectory.point_2[9]);
+			fill_points_yaw_speed(trajectory_desired->point_2.yaw_rate, trajectory.point_2);
 
-			auto enu_velocity_point_3 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_3[3], trajectory.point_3[4], trajectory.point_3[5]));
-			trajectory_desired->point_3.velocity.x = enu_velocity_point_3.x();
-			trajectory_desired->point_3.velocity.y = enu_velocity_point_3.y();
-			trajectory_desired->point_3.velocity.z = enu_velocity_point_3.z();
-			auto enu_acceleration_point_3 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_3[6], trajectory.point_3[7], trajectory.point_3[8]));
-			trajectory_desired->point_3.acceleration_or_force.x = enu_acceleration_point_3.x();
-			trajectory_desired->point_3.acceleration_or_force.y = enu_acceleration_point_3.y();
-			trajectory_desired->point_3.acceleration_or_force.z = enu_acceleration_point_3.z();
-			trajectory_desired->point_3.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_3[9]);
-			trajectory_desired->point_3.yaw_rate = trajectory.point_3[10];
-			trajectory_desired->time_horizon[2] = NAN;
+			fill_points_velocity(trajectory_desired->point_3.velocity, trajectory.point_3);
+			fill_points_acceleration(trajectory_desired->point_3.acceleration_or_force, trajectory.point_3);
+			fill_points_yaw(trajectory_desired->point_3.yaw, trajectory.point_3[9]);
+			fill_points_yaw_speed(trajectory_desired->point_3.yaw_rate, trajectory.point_3);
 
-			auto enu_velocity_point_4 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_4[3], trajectory.point_4[4], trajectory.point_4[5]));
-			trajectory_desired->point_4.velocity.x = enu_velocity_point_4.x();
-			trajectory_desired->point_4.velocity.y = enu_velocity_point_4.y();
-			trajectory_desired->point_4.velocity.z = enu_velocity_point_4.z();
-			auto enu_acceleration_point_4 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_4[6], trajectory.point_4[7], trajectory.point_4[8]));
-			trajectory_desired->point_4.acceleration_or_force.x = enu_acceleration_point_4.x();
-			trajectory_desired->point_4.acceleration_or_force.y = enu_acceleration_point_4.y();
-			trajectory_desired->point_4.acceleration_or_force.z = enu_acceleration_point_4.z();
-			trajectory_desired->point_4.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_4[9]);
-			trajectory_desired->point_4.yaw_rate = trajectory.point_4[10];
-			trajectory_desired->time_horizon[3] = NAN;
+			fill_points_velocity(trajectory_desired->point_4.velocity, trajectory.point_4);
+			fill_points_acceleration(trajectory_desired->point_4.acceleration_or_force, trajectory.point_4);
+			fill_points_yaw(trajectory_desired->point_4.yaw, trajectory.point_4[9]);
+			fill_points_yaw_speed(trajectory_desired->point_4.yaw_rate, trajectory.point_4);
 
-			auto enu_velocity_point_5 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_5[3], trajectory.point_5[4], trajectory.point_5[5]));
-			trajectory_desired->point_5.velocity.x = enu_velocity_point_5.x();
-			trajectory_desired->point_5.velocity.y = enu_velocity_point_5.y();
-			trajectory_desired->point_5.velocity.z = enu_velocity_point_5.z();
-			auto enu_acceleration_point_5 = ftf::transform_frame_ned_enu(Eigen::Vector3d(trajectory.point_5[6], trajectory.point_5[7], trajectory.point_5[8]));
-			trajectory_desired->point_5.acceleration_or_force.x = enu_acceleration_point_5.x();
-			trajectory_desired->point_5.acceleration_or_force.y = enu_acceleration_point_5.y();
-			trajectory_desired->point_5.acceleration_or_force.z = enu_acceleration_point_5.z();
-			trajectory_desired->point_5.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_5[9]);
-			trajectory_desired->point_5.yaw_rate = trajectory.point_5[10];
-			trajectory_desired->time_horizon[4] = NAN;
+			fill_points_velocity(trajectory_desired->point_5.velocity, trajectory.point_5);
+			fill_points_acceleration(trajectory_desired->point_5.acceleration_or_force, trajectory.point_5);
+			fill_points_yaw(trajectory_desired->point_5.yaw, trajectory.point_5[9]);
+			fill_points_yaw_speed(trajectory_desired->point_5.yaw_rate, trajectory.point_5);
 
-			// [[[end]]] (checksum: 4a256421fdf65dbd1d72a2fac2d82953)
+			// [[[end]]] (checksum: 645e437fe59172fc58c1efa58af7432f)
 		} else {
 			// [[[cog:
-			// for p, index in zip("12345", "01234"):
-			//     cog.outl("trajectory_desired->time_horizon[{index}] = trajectory.point_{p}[3];".format(**locals()))
-			//     cog.outl("trajectory_desired->point_{p}.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_{p}[4]);".format(**locals()))
-			//     cog.outl("trajectory_desired->point_{p}.yaw_rate = trajectory.point_{p}[5]; \n".format(**locals()))
+			// for p in "12345":
+			//     cog.outl("fill_points_time_horizon(trajectory_desired->time_horizon[{p} - 1], trajectory.point_{p});".format(**locals()))
+			//     cog.outl("fill_points_yaw(trajectory_desired->point_{p}.yaw, trajectory.point_{p}[4]);".format(**locals()))
+			//     cog.outl("fill_points_unused_bezier(trajectory_desired->point_{p});\n".format(**locals()))
 			// ]]]
-			trajectory_desired->time_horizon[0] = trajectory.point_1[3];
-			trajectory_desired->point_1.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_1[4]);
-			trajectory_desired->point_1.yaw_rate = trajectory.point_1[5];
+			fill_points_time_horizon(trajectory_desired->time_horizon[1 - 1], trajectory.point_1);
+			fill_points_yaw(trajectory_desired->point_1.yaw, trajectory.point_1[4]);
+			fill_points_unused_bezier(trajectory_desired->point_1);
 
-			trajectory_desired->time_horizon[1] = trajectory.point_2[3];
-			trajectory_desired->point_2.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_2[4]);
-			trajectory_desired->point_2.yaw_rate = trajectory.point_2[5];
+			fill_points_time_horizon(trajectory_desired->time_horizon[2 - 1], trajectory.point_2);
+			fill_points_yaw(trajectory_desired->point_2.yaw, trajectory.point_2[4]);
+			fill_points_unused_bezier(trajectory_desired->point_2);
 
-			trajectory_desired->time_horizon[2] = trajectory.point_3[3];
-			trajectory_desired->point_3.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_3[4]);
-			trajectory_desired->point_3.yaw_rate = trajectory.point_3[5];
+			fill_points_time_horizon(trajectory_desired->time_horizon[3 - 1], trajectory.point_3);
+			fill_points_yaw(trajectory_desired->point_3.yaw, trajectory.point_3[4]);
+			fill_points_unused_bezier(trajectory_desired->point_3);
 
-			trajectory_desired->time_horizon[3] = trajectory.point_4[3];
-			trajectory_desired->point_4.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_4[4]);
-			trajectory_desired->point_4.yaw_rate = trajectory.point_4[5];
+			fill_points_time_horizon(trajectory_desired->time_horizon[4 - 1], trajectory.point_4);
+			fill_points_yaw(trajectory_desired->point_4.yaw, trajectory.point_4[4]);
+			fill_points_unused_bezier(trajectory_desired->point_4);
 
-			trajectory_desired->time_horizon[4] = trajectory.point_5[3];
-			trajectory_desired->point_5.yaw = wrap_pi((M_PI / 2.0f) - trajectory.point_5[4]);
-			trajectory_desired->point_5.yaw_rate = trajectory.point_5[5];
+			fill_points_time_horizon(trajectory_desired->time_horizon[5 - 1], trajectory.point_5);
+			fill_points_yaw(trajectory_desired->point_5.yaw, trajectory.point_5[4]);
+			fill_points_unused_bezier(trajectory_desired->point_5);
 
-			// [[[end]]] (checksum: 34c23da29034188ede98def1fd8bd8b9)
+			// [[[end]]] (checksum: 7d946bde5b2e3e1dd663562f7a541d52)
 		}
 
 		std::copy(trajectory.point_valid.begin(), trajectory.point_valid.end(), trajectory_desired->point_valid.begin());
