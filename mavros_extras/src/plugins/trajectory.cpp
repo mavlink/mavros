@@ -159,6 +159,76 @@ private:
 		point.fill(NAN);
 	}
 
+	// [[[cog:
+	// def outl_fill_msg_enu_vector(vec_name, vec_type, point_xyz):
+	//     paxes = ', '.join('point[%s]' % index for index in point_xyz)
+	//
+	//     cog.outl(
+	//         """void fill_msg_{vec_name}(geometry_msgs::{vec_type} &{vec_name}, const MavPoints &point)\n"""
+	//         """{{\n"""
+	//         """\tauto {vec_name}_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d({paxes}));\n"""
+	//         .format(**locals())
+	//     )
+	//
+	//     for axis in "xyz":
+	//         cog.outl("\t{vec_name}.{axis} = {vec_name}_enu.{axis}();".format(**locals()))
+	//
+	//     cog.outl("}\n")
+	//
+	//
+	// outl_fill_msg_enu_vector('position', 'Point', range(0, 3))
+	// outl_fill_msg_enu_vector('velocity', 'Vector3', range(3, 6))
+	// outl_fill_msg_enu_vector('acceleration', 'Vector3', range(6, 9))
+	// ]]]
+	void fill_msg_position(geometry_msgs::Point &position, const MavPoints &point)
+	{
+		auto position_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[0], point[1], point[2]));
+
+		position.x = position_enu.x();
+		position.y = position_enu.y();
+		position.z = position_enu.z();
+	}
+
+	void fill_msg_velocity(geometry_msgs::Vector3 &velocity, const MavPoints &point)
+	{
+		auto velocity_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[3], point[4], point[5]));
+
+		velocity.x = velocity_enu.x();
+		velocity.y = velocity_enu.y();
+		velocity.z = velocity_enu.z();
+	}
+
+	void fill_msg_acceleration(geometry_msgs::Vector3 &acceleration, const MavPoints &point)
+	{
+		auto acceleration_enu = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[6], point[7], point[8]));
+
+		acceleration.x = acceleration_enu.x();
+		acceleration.y = acceleration_enu.y();
+		acceleration.z = acceleration_enu.z();
+	}
+
+	// [[[end]]] (checksum: db51bf161773b227f24f716dbbc51148)
+
+	void fill_msg_unused_bezier(RosPoints &point)
+	{
+		point.yaw_rate = NAN;
+
+		// [[[cog:
+		// for p in ('velocity', 'acceleration_or_force', ):
+		//     for i in "xyz":
+		//         cog.outl("point.{p}.{i} = NAN;".format(**locals()))
+		// ]]]
+		point.velocity.x = NAN;
+		point.velocity.y = NAN;
+		point.velocity.z = NAN;
+		point.acceleration_or_force.x = NAN;
+		point.acceleration_or_force.y = NAN;
+		point.acceleration_or_force.z = NAN;
+		// [[[end]]] (checksum: 9a1c840a592e2d44ca758d891734ca21)
+	}
+
+	// -*- callbacks -*-
+
 	/**
 	 * @brief Send corrected path to the FCU.
 	 *
@@ -272,157 +342,49 @@ private:
 
 	void handle_trajectory(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TRAJECTORY &trajectory)
 	{
-		auto trajectory_desired = boost::make_shared<mavros_msgs::Trajectory>();
-		trajectory_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
-		trajectory_desired->type = trajectory.type;						//!< trajectory type (waypoints, bezier)
+		auto tr_desired = boost::make_shared<mavros_msgs::Trajectory>();
 
-		auto fill_points_position = [] (geometry_msgs::Point position, std::array<float, POINT_LEN> &point) {
-			// [[[cog:
-			//     cog.outl("auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[0], point[1], point[2]));".format(**locals()))
-			//     for axis in "xyz":
-			//         cog.outl("position.{axis} = enu_position.{axis}();".format(**locals()))
-			// ]]]
-			auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[0], point[1], point[2]));
-			position.x = enu_position.x();
-			position.y = enu_position.y();
-			position.z = enu_position.z();
-			// [[[end]]] (checksum: d6bf1867ed4da4c937e609d9b59fb009)
+		auto fill_msg_point = [&](RosPoints &p, const MavPoints &mp, const size_t i) {
+			fill_msg_position(p.position, mp);
+
+			switch (trajectory.type) {
+			case enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS):
+				fill_msg_velocity(p.velocity, mp);
+				fill_msg_acceleration(p.acceleration_or_force, mp);
+				p.yaw = wrap_pi((M_PI / 2.0f) - mp[9]);
+				p.yaw_rate = mp[10];
+				break;
+
+			case enum_value(MAV_TRAJECTORY_REPRESENTATION::BEZIER):
+				p.yaw = mp[4];
+				tr_desired->time_horizon[i] = mp[3];
+				fill_msg_unused_bezier(p);
+				break;
+
+			default:
+				ROS_BREAK();
+			}
 		};
 
-		auto fill_points_velocity = [] (geometry_msgs::Vector3 velocity, std::array<float, POINT_LEN> &point) {
-			// [[[cog:
-			//     cog.outl("auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[3], point[4], point[5]));".format(**locals()))
-			//     for axis in "xyz":
-			//         cog.outl("velocity.{axis} = enu_velocity.{axis}();".format(**locals()))
-			// ]]]
-			auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[3], point[4], point[5]));
-			velocity.x = enu_velocity.x();
-			velocity.y = enu_velocity.y();
-			velocity.z = enu_velocity.z();
-			// [[[end]]] (checksum: 6f1a403f651e53e0edd7f440231b9875)
-		};
-
-		auto fill_points_acceleration = [] (geometry_msgs::Vector3 acceleration, std::array<float, POINT_LEN> &point) {
-			// [[[cog:
-			//     cog.outl("auto enu_acceleration = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[6], point[7], point[8]));".format(**locals()))
-			//     for axis in "xyz":
-			//         cog.outl("acceleration.{axis} = enu_acceleration.{axis}();".format(**locals()))
-			// ]]]
-			auto enu_acceleration = ftf::transform_frame_ned_enu(Eigen::Vector3d(point[6], point[7], point[8]));
-			acceleration.x = enu_acceleration.x();
-			acceleration.y = enu_acceleration.y();
-			acceleration.z = enu_acceleration.z();
-			// [[[end]]] (checksum: 0365bcb69209af709be922d638b7e473)
-		};
-
-		auto fill_points_yaw = [this](float &yaw_output, float yaw_input) {
-			yaw_output = wrap_pi((M_PI / 2.0f) - yaw_input);
-		};
-
-		auto fill_points_yaw_speed = [] (float yaw_speed, std::array<float, POINT_LEN> &point) {
-			yaw_speed = point[10];
-		};
-
-		auto fill_points_time_horizon = [] (float time_horizon, std::array<float, POINT_LEN> &point){
-			time_horizon = point[3];
-		};
-
-		auto fill_points_unused_bezier = [] (mavros_msgs::PositionTarget & trajectory){
-			// [[[cog:
-			// for p in ['velocity', 'acceleration_or_force']:
-			//     for i in "xyz":
-			//         cog.outl("trajectory.{p}.{i} = NAN;".format(**locals()))
-			// cog.outl("trajectory.yaw_rate = NAN;")
-			// ]]]
-			trajectory.velocity.x = NAN;
-			trajectory.velocity.y = NAN;
-			trajectory.velocity.z = NAN;
-			trajectory.acceleration_or_force.x = NAN;
-			trajectory.acceleration_or_force.y = NAN;
-			trajectory.acceleration_or_force.z = NAN;
-			trajectory.yaw_rate = NAN;
-			// [[[end]]] (checksum: 05917efa61b49a05c0180979cb02e28e)
-		};
+		tr_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
+		tr_desired->type = trajectory.type;	//!< trajectory type (waypoints, bezier)
+		std::copy(trajectory.point_valid.begin(), trajectory.point_valid.end(), tr_desired->point_valid.begin());
 
 		// [[[cog:
-		// for p in "12345":
-		//     cog.outl("fill_points_position(trajectory_desired->point_{p}.position, trajectory.point_{p});".format(**locals()))
+		// for i in range(5):
+		//     cog.outl(
+		//         "fill_msg_point(tr_desired->point_{i1}, trajectory.point_{i1}, {i0});"
+		//         .format(i0=i, i1=i + 1, )
+		//     )
 		// ]]]
-		fill_points_position(trajectory_desired->point_1.position, trajectory.point_1);
-		fill_points_position(trajectory_desired->point_2.position, trajectory.point_2);
-		fill_points_position(trajectory_desired->point_3.position, trajectory.point_3);
-		fill_points_position(trajectory_desired->point_4.position, trajectory.point_4);
-		fill_points_position(trajectory_desired->point_5.position, trajectory.point_5);
-		// [[[end]]] (checksum: 4de7872559e8d3003eecf5058df195a8)
+		fill_msg_point(tr_desired->point_1, trajectory.point_1, 0);
+		fill_msg_point(tr_desired->point_2, trajectory.point_2, 1);
+		fill_msg_point(tr_desired->point_3, trajectory.point_3, 2);
+		fill_msg_point(tr_desired->point_4, trajectory.point_4, 3);
+		fill_msg_point(tr_desired->point_5, trajectory.point_5, 4);
+		// [[[end]]] (checksum: 3f1e46c82879c6445f1c58716dec46f9)
 
-
-		if (trajectory.type == utils::enum_value(MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS)) {
-			// [[[cog:
-			// for p in "12345":
-			//    cog.outl("fill_points_velocity(trajectory_desired->point_{p}.velocity, trajectory.point_{p});".format(**locals()))
-			//    cog.outl("fill_points_acceleration(trajectory_desired->point_{p}.acceleration_or_force, trajectory.point_{p});".format(**locals()))
-			//    cog.outl("fill_points_yaw(trajectory_desired->point_{p}.yaw, trajectory.point_{p}[9]);".format(**locals()))
-			//    cog.outl("fill_points_yaw_speed(trajectory_desired->point_{p}.yaw_rate, trajectory.point_{p});\n".format(**locals()))
-			// ]]]
-			fill_points_velocity(trajectory_desired->point_1.velocity, trajectory.point_1);
-			fill_points_acceleration(trajectory_desired->point_1.acceleration_or_force, trajectory.point_1);
-			fill_points_yaw(trajectory_desired->point_1.yaw, trajectory.point_1[9]);
-			fill_points_yaw_speed(trajectory_desired->point_1.yaw_rate, trajectory.point_1);
-
-			fill_points_velocity(trajectory_desired->point_2.velocity, trajectory.point_2);
-			fill_points_acceleration(trajectory_desired->point_2.acceleration_or_force, trajectory.point_2);
-			fill_points_yaw(trajectory_desired->point_2.yaw, trajectory.point_2[9]);
-			fill_points_yaw_speed(trajectory_desired->point_2.yaw_rate, trajectory.point_2);
-
-			fill_points_velocity(trajectory_desired->point_3.velocity, trajectory.point_3);
-			fill_points_acceleration(trajectory_desired->point_3.acceleration_or_force, trajectory.point_3);
-			fill_points_yaw(trajectory_desired->point_3.yaw, trajectory.point_3[9]);
-			fill_points_yaw_speed(trajectory_desired->point_3.yaw_rate, trajectory.point_3);
-
-			fill_points_velocity(trajectory_desired->point_4.velocity, trajectory.point_4);
-			fill_points_acceleration(trajectory_desired->point_4.acceleration_or_force, trajectory.point_4);
-			fill_points_yaw(trajectory_desired->point_4.yaw, trajectory.point_4[9]);
-			fill_points_yaw_speed(trajectory_desired->point_4.yaw_rate, trajectory.point_4);
-
-			fill_points_velocity(trajectory_desired->point_5.velocity, trajectory.point_5);
-			fill_points_acceleration(trajectory_desired->point_5.acceleration_or_force, trajectory.point_5);
-			fill_points_yaw(trajectory_desired->point_5.yaw, trajectory.point_5[9]);
-			fill_points_yaw_speed(trajectory_desired->point_5.yaw_rate, trajectory.point_5);
-
-			// [[[end]]] (checksum: 645e437fe59172fc58c1efa58af7432f)
-		} else {
-			// [[[cog:
-			// for p in "12345":
-			//     cog.outl("fill_points_time_horizon(trajectory_desired->time_horizon[{p} - 1], trajectory.point_{p});".format(**locals()))
-			//     cog.outl("fill_points_yaw(trajectory_desired->point_{p}.yaw, trajectory.point_{p}[4]);".format(**locals()))
-			//     cog.outl("fill_points_unused_bezier(trajectory_desired->point_{p});\n".format(**locals()))
-			// ]]]
-			fill_points_time_horizon(trajectory_desired->time_horizon[1 - 1], trajectory.point_1);
-			fill_points_yaw(trajectory_desired->point_1.yaw, trajectory.point_1[4]);
-			fill_points_unused_bezier(trajectory_desired->point_1);
-
-			fill_points_time_horizon(trajectory_desired->time_horizon[2 - 1], trajectory.point_2);
-			fill_points_yaw(trajectory_desired->point_2.yaw, trajectory.point_2[4]);
-			fill_points_unused_bezier(trajectory_desired->point_2);
-
-			fill_points_time_horizon(trajectory_desired->time_horizon[3 - 1], trajectory.point_3);
-			fill_points_yaw(trajectory_desired->point_3.yaw, trajectory.point_3[4]);
-			fill_points_unused_bezier(trajectory_desired->point_3);
-
-			fill_points_time_horizon(trajectory_desired->time_horizon[4 - 1], trajectory.point_4);
-			fill_points_yaw(trajectory_desired->point_4.yaw, trajectory.point_4[4]);
-			fill_points_unused_bezier(trajectory_desired->point_4);
-
-			fill_points_time_horizon(trajectory_desired->time_horizon[5 - 1], trajectory.point_5);
-			fill_points_yaw(trajectory_desired->point_5.yaw, trajectory.point_5[4]);
-			fill_points_unused_bezier(trajectory_desired->point_5);
-
-			// [[[end]]] (checksum: 7d946bde5b2e3e1dd663562f7a541d52)
-		}
-
-		std::copy(trajectory.point_valid.begin(), trajectory.point_valid.end(), trajectory_desired->point_valid.begin());
-
-		trajectory_desired_pub.publish(trajectory_desired);
+		trajectory_desired_pub.publish(tr_desired);
 	}
 
 	float wrap_pi(float a)
@@ -434,8 +396,9 @@ private:
 		return fmod(a + M_PI, 2.0f * M_PI) - M_PI;
 	}
 };
-}					// namespace extra_plugins
-}				// namespace mavros
+
+}	// namespace extra_plugins
+}	// namespace mavros
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::TrajectoryPlugin, mavros::plugin::PluginBase)
