@@ -2,6 +2,12 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: console-bridge uses macroses...
+* lib: fixing console-bridge now prefixed
+* Contributors: Vladimir Ermakov
+
 0.24.0 (2018-04-05)
 -------------------
 * libmavconn: make serial.cpp more portable
