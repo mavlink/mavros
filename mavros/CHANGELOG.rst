@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.25.0 (2018-05-11)
+-------------------
 * wind plugin: uncrustify
 * use eigen and tf conversions (fix conventions), sync timestamp, fix typos
 * add wind estimation plugin

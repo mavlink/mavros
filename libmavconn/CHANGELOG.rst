@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.25.0 (2018-05-11)
+-------------------
 * lib: console-bridge uses macroses...
 * lib: fixing console-bridge now prefixed
 * Contributors: Vladimir Ermakov

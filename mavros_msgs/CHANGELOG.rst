@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.25.0 (2018-05-11)
+-------------------
 * trajectory: add time_horizon field
 * change message name from ObstacleAvoidance to Trajectory since it is
   general enough to support any type of trajectory
