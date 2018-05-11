@@ -31,6 +31,16 @@ namespace mavconn {
 using mavlink::mavlink_message_t;
 using mavlink::mavlink_status_t;
 
+// [[[cog:
+// import mavros_cog; mavros_cog.outl_using_console_bridge()
+// ]]]
+using logDebug = CONSOLE_BRIDGE_logDebug;
+using logInform = CONSOLE_BRIDGE_logInform;
+using logWarn = CONSOLE_BRIDGE_logWarn;
+using logError = CONSOLE_BRIDGE_logError;
+using logFatal = CONSOLE_BRIDGE_logFatal;
+// [[[end]]] (checksum: 9434570e283a11ebd23634876d896ed5)
+
 // static members
 std::once_flag MAVConnInterface::init_flag;
 std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries {};

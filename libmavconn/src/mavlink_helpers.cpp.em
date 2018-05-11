@@ -26,6 +26,16 @@
 // AUTOMATIC GENERATED FILE!
 // from src/mavlink_helpers.cpp.em
 
+// [[[cog:
+// import mavros_cog; mavros_cog.outl_using_console_bridge()
+// ]]]
+using logDebug = CONSOLE_BRIDGE_logDebug;
+using logInform = CONSOLE_BRIDGE_logInform;
+using logWarn = CONSOLE_BRIDGE_logWarn;
+using logError = CONSOLE_BRIDGE_logError;
+using logFatal = CONSOLE_BRIDGE_logFatal;
+// [[[end]]] (checksum: 9434570e283a11ebd23634876d896ed5)
+
 using mavconn::MAVConnInterface;
 
 void MAVConnInterface::init_msg_entry()
