@@ -26,34 +26,24 @@
 // AUTOMATIC GENERATED FILE!
 // from src/mavlink_helpers.cpp.em
 
-// [[[cog:
-// import mavros_cog; mavros_cog.outl_using_console_bridge()
-// ]]]
-using logDebug = CONSOLE_BRIDGE_logDebug;
-using logInform = CONSOLE_BRIDGE_logInform;
-using logWarn = CONSOLE_BRIDGE_logWarn;
-using logError = CONSOLE_BRIDGE_logError;
-using logFatal = CONSOLE_BRIDGE_logFatal;
-// [[[end]]] (checksum: 9434570e283a11ebd23634876d896ed5)
-
 using mavconn::MAVConnInterface;
 
 void MAVConnInterface::init_msg_entry()
 {
-	logDebug("mavconn: Initialize message_entries map");
+	CONSOLE_BRIDGE_logDebug("mavconn: Initialize message_entries map");
 
 	auto load = [&](const char *dialect, const mavlink::mavlink_msg_entry_t & e) {
 		auto it = message_entries.find(e.msgid);
 		if (it != message_entries.end()) {
 			if (memcmp(&e, it->second, sizeof(e)) != 0) {
-				logDebug("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
+				CONSOLE_BRIDGE_logDebug("mavconn: init: message from %s, MSG-ID %d ignored! Table has different entry.", dialect, e.msgid);
 			}
 			else {
-				logDebug("mavconn: init: message from %s, MSG-ID %d in table.", dialect, e.msgid);
+				CONSOLE_BRIDGE_logDebug("mavconn: init: message from %s, MSG-ID %d in table.", dialect, e.msgid);
 			}
 		}
 		else {
-			logDebug("mavconn: init: add message entry for %s, MSG-ID %d", dialect, e.msgid);
+			CONSOLE_BRIDGE_logDebug("mavconn: init: add message entry for %s, MSG-ID %d", dialect, e.msgid);
 			message_entries[e.msgid] = &e;
 		}
 	};
