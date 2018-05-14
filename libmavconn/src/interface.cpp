@@ -17,8 +17,8 @@
 
 #include <set>
 #include <cassert>
-#include <console_bridge/console.h>
 
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/interface.h>
 #include <mavconn/msgbuffer.h>
 #include <mavconn/serial.h>

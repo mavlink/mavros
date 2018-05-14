@@ -16,8 +16,8 @@
  */
 
 #include <cassert>
-#include <console_bridge/console.h>
 
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/thread_utils.h>
 #include <mavconn/tcp.h>
 

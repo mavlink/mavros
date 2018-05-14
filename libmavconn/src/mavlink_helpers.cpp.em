@@ -20,7 +20,7 @@
 @# EmPy template of dialect helpers source file
 @#
 
-#include <console_bridge/console.h>
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/interface.h>
 
 // AUTOMATIC GENERATED FILE!
