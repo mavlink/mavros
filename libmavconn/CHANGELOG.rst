@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.25.1 (2018-05-14)
+-------------------
 * lib `#1026 <https://github.com/mavlink/mavros/issues/1026>`_: fix logInform compat
 * lib `#1026 <https://github.com/mavlink/mavros/issues/1026>`_: add compat header for older console-bridge
 * Contributors: Vladimir Ermakov
