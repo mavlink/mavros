@@ -2,6 +2,9 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.25.0 (2018-05-11)
 -------------------
 * extras: Refactor Trajectory handle cb

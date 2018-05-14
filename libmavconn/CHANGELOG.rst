@@ -2,6 +2,12 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib `#1026 <https://github.com/mavlink/mavros/issues/1026>`_: fix logInform compat
+* lib `#1026 <https://github.com/mavlink/mavros/issues/1026>`_: add compat header for older console-bridge
+* Contributors: Vladimir Ermakov
+
 0.25.0 (2018-05-11)
 -------------------
 * lib: console-bridge uses macroses...

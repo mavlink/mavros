@@ -2,6 +2,9 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.25.0 (2018-05-11)
 -------------------
 * wind plugin: uncrustify
