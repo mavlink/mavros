@@ -24,6 +24,9 @@
 //     fn = 'CONSOLE_BRIDGE_log{f}'.format(f=func.title())
 //     fu = func.upper()
 //
+//     if func == 'inform':	# NOTE: special case
+//         fu = 'INFO'
+//
 //     outl = lambda s: cog.outl(s.format(fn=fn, fu=fu))
 //
 //     if idx != 0:
@@ -41,7 +44,7 @@
 
 #ifndef CONSOLE_BRIDGE_logInform
 #define CONSOLE_BRIDGE_logInform(fmt, ...) \
-	console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_INFORM, fmt, ##__VA_ARGS__)
+	console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_INFO, fmt, ##__VA_ARGS__)
 #endif // CONSOLE_BRIDGE_logInform
 
 #ifndef CONSOLE_BRIDGE_logWarn
@@ -53,4 +56,4 @@
 #define CONSOLE_BRIDGE_logError(fmt, ...) \
 	console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, ##__VA_ARGS__)
 #endif // CONSOLE_BRIDGE_logError
-// [[[end]]] (checksum: 8b4ac6448c6c1308af7a4381b7f086e4)
+// [[[end]]] (checksum: c8dda3189b05a621b7244bf375275345)
