@@ -21,21 +21,19 @@
 
 // [[[cog:
 // for idx, func in enumerate(('debug', 'inform', 'warn', 'error')):
-//     fn = 'CONSOLE_BRIDGE_log{f}'.format(f=func.title())
+//     fn = f'CONSOLE_BRIDGE_log{func.title()}'
 //     fu = func.upper()
 //
 //     if func == 'inform':	# NOTE: special case
 //         fu = 'INFO'
 //
-//     outl = lambda s: cog.outl(s.format(fn=fn, fu=fu))
-//
 //     if idx != 0:
-//         outl('')
+//         cog.outl()
 //
-//     outl('#ifndef {fn}')
-//     outl('#define {fn}(fmt, ...) \\')
-//     outl('\tconsole_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_{fu}, fmt, ##__VA_ARGS__)')
-//     outl('#endif // {fn}')
+//     cog.outl(f'#ifndef {fn}')
+//     cog.outl(f'#define {fn}(fmt, ...) \\')
+//     cog.outl(f'\tconsole_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_{fu}, fmt, ##__VA_ARGS__)')
+//     cog.outl(f'#endif // {fn}')
 // ]]]
 #ifndef CONSOLE_BRIDGE_logDebug
 #define CONSOLE_BRIDGE_logDebug(fmt, ...) \
