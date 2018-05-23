@@ -37,7 +37,8 @@ class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin> {
 public:
 	SetpointRawPlugin() : PluginBase(),
-		sp_nh("~setpoint_raw")
+		sp_nh("~setpoint_raw"),
+		ignore_thrust_message_(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -197,26 +198,41 @@ private:
 
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
 	{
-		Eigen::Quaterniond desired_orientation;
-		Eigen::Vector3d baselink_angular_rate;
-
+		double thrust;
+		// Set Thrust scaling in px4_config.yaml, setpoint_attitude block.
+		if(!sp_nh.getParam("thrust_scaling", thrust_scaling) && req->thrust != 0.0){
+			ignore_thrust_message_ = true;
+		}
+		
+		if(ignore_thrust_message_){
+			ROS_FATAL("Recieved thrust, but ignore_thrust_message_ is true: "
+	 	        "the most likely cause of this is a failure to specify the thrust_scaling parameters "
+	 	        "on px4/apm_config.yaml. Thrust will be set to 0.");
+		    thrust = 0.0;
+		    return;
+		}else{
+			if(thrust_scaling == 0.0){
+				ROS_WARN("thrust_scaling parameter is set to zero.");
+			}
+			thrust = std::min(1.0, std::max(0.0, req->thrust * thrust_scaling));
+		}
+		
+		// Take care of attitude setpoint
 		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
 
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
-			ftf::transform_orientation_baselink_aircraft(desired_orientation));
-
-		auto body_rate = ftf::transform_frame_baselink_aircraft(baselink_angular_rate);
+			ftf::transform_orientation_baselink_aircraft(desired_orientation))
 
 		tf::vectorMsgToEigen(req->body_rate, body_rate);
 
 		set_attitude_target(
-				req->header.stamp.toNSec() / 1000000,
-				req->type_mask,
-				ned_desired_orientation,
-				body_rate,
-				req->thrust);
+			msg->header.stamp.toNSec() / 1000000,
+			req->type_mask,
+			ned_desired_orientation,
+			body_rate,
+			thrust);
 	}
 };
 }	// namespace std_plugins
