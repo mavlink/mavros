@@ -73,6 +73,9 @@ private:
 	ros::Subscriber local_sub, global_sub, attitude_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 
+	double thrust_scaling;
+	bool ignore_thrust_message_;
+
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_LOCAL_NED &tgt)
 	{
@@ -198,6 +201,8 @@ private:
 
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
 	{
+		Eigen::Quaterniond desired_orientation;
+		Eigen::Vector3d body_rate;
 		double thrust;
 		// Set Thrust scaling in px4_config.yaml, setpoint_attitude block.
 		if(!sp_nh.getParam("thrust_scaling", thrust_scaling) && req->thrust != 0.0){
@@ -223,12 +228,12 @@ private:
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
-			ftf::transform_orientation_baselink_aircraft(desired_orientation))
+			ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
-		tf::vectorMsgToEigen(req->body_rate, body_rate);
+		tf::vectorMsgToEigen(req->body_rate, body_rate);	
 
 		set_attitude_target(
-			msg->header.stamp.toNSec() / 1000000,
+			req->header.stamp.toNSec() / 1000000,
 			req->type_mask,
 			ned_desired_orientation,
 			body_rate,
