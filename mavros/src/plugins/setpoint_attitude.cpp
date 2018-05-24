@@ -27,7 +27,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/Thrust.h>
-#include <mav_msgs/RollPitchYawrateThrust.h>
 namespace mavros {
 namespace std_plugins {
 
@@ -50,8 +49,7 @@ public:
 		tf_rate(50.0),
 		use_quaternion(false),
 		reverse_thrust(false),
-		tf_listen(false),
-		ignore_rpyt_messages_(false)
+		tf_listen(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -95,7 +93,6 @@ public:
 			sync_twist->registerCallback(boost::bind(&SetpointAttitudePlugin::attitude_twist_cb, this, _1, _2));
 		}
 
-		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointAttitudePlugin::rpyt_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -112,8 +109,6 @@ private:
 	message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
 	message_filters::Subscriber<geometry_msgs::TwistStamped> twist_sub;
 	
-	ros::Subscriber rpyt_sub;
-	
 	std::unique_ptr<SyncPoseThrust> sync_pose;
 	std::unique_ptr<SyncTwistThrust> sync_twist;
 
@@ -127,9 +122,6 @@ private:
 
 	bool reverse_thrust;
 	float normalized_thrust;
-
-	double thrust_scaling;
-	bool ignore_rpyt_messages_;
 
 	/**
 	 * @brief Function to verify if the thrust values are normalized;
@@ -222,53 +214,6 @@ private:
 			send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
 	}
 
-	/**
-	 * @brief Setpoint for Roll, Pitch, Yawrate and Thrust (RPYT).
-	 * Message specification: http://docs.ros.org/indigo/api/mav_msgs/html/msg/RollPitchYawrateThrust.html
-	 * Thrust is set in Newtons and scaled by 1/MAX_THRUST_N (MAX_THRUST_N is UAV dependent).
-	 * @param msg		Received RPYT setpoint
-	 */
-	void rpyt_cb(const mav_msgs::RollPitchYawrateThrust::ConstPtr msg)
-	{
-
-		// Set Thrust scaling in px4_config.yaml, setpoint_attitude block.
-		if(!sp_nh.getParam("thrust_scaling", thrust_scaling)){
-			ignore_rpyt_messages_ = true;
-		}
-		
-		if(ignore_rpyt_messages_){
-			ROS_FATAL("Recieved roll_pitch_yaw_thrust_rate message, but ignore_rpyt_messages_ is true: "
-	 	        "the most likely cause of this is a failure to specify the thrust_scaling parameters "
-	 	        "on px4/apm_config.yaml .");
-		     	return;
-		}
-
-		if(thrust_scaling == 0.0){
-			ROS_WARN("thrust_scaling parameter is set to zero.");
-		}
-
-		// Set mask to ignore everything but thrust and attitude setpoint
-		uint8_t ignore_all_except_q_and_thrust = 0; //(7 << 0);
-
-		// Transforms from thrust acceleration to a thrust force (scaling adjusts to the UAV
-		// propeller thrust, can be calculated from UAV calibration
-		double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling));
-		auto desired_orientation = ftf::quaternion_from_rpy(msg->roll, msg->pitch, 0.0);
-		
-		// Transform desired orientation to represent aircraft->NED,
-		// MAVROS operates on orientation of base_link->ENU
-		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
-				ftf::transform_orientation_baselink_aircraft(desired_orientation));
-		
-		auto body_rate = Eigen::Vector3d(0.0, 0.0, ftf::detail::transform_frame_yaw(msg->yaw_rate));
-
-		set_attitude_target(
-			msg->header.stamp.toNSec() / 1000000,
-			ignore_all_except_q_and_thrust,
-			ned_desired_orientation,
-			body_rate,
-			thrust);
-	}
 };
 }	// namespace std_plugins
 }	// namespace mavros
