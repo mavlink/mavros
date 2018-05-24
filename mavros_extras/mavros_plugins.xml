@@ -29,6 +29,9 @@
 	<class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
 	</class>
+	<class name="trajectory" type="mavros::extra_plugins::TrajectoryPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Receive planned path from the FCU and send back corrected path (collision free, smoothed) to the FCU.</description>
+	</class>
 	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>

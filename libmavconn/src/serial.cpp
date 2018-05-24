@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016,2018 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -16,12 +16,17 @@
  */
 
 #include <cassert>
-#include <console_bridge/console.h>
 
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/thread_utils.h>
 #include <mavconn/serial.h>
 
+#if defined(__linux__)
+#include <linux/serial.h>
+#endif
+
 namespace mavconn {
+
 using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::buffer;
@@ -43,7 +48,7 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 {
 	using SPB = boost::asio::serial_port_base;
 
-	logInform(PFXd "device: %s @ %d bps", conn_id, device.c_str(), baudrate);
+	CONSOLE_BRIDGE_logInform(PFXd "device: %s @ %d bps", conn_id, device.c_str(), baudrate);
 
 	try {
 		serial_dev.open(device);
@@ -53,7 +58,50 @@ MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		serial_dev.set_option(SPB::character_size(8));
 		serial_dev.set_option(SPB::parity(SPB::parity::none));
 		serial_dev.set_option(SPB::stop_bits(SPB::stop_bits::one));
+
+#if BOOST_ASIO_VERSION >= 101200 || !defined(__linux__)
+		// Flow control setting in older versions of Boost.ASIO is broken, use workaround (below) for now.
 		serial_dev.set_option(SPB::flow_control( (hwflow) ? SPB::flow_control::hardware : SPB::flow_control::none));
+#elif BOOST_ASIO_VERSION < 101200 && defined(__linux__)
+		// Workaround to set some options for the port manually. This is done in
+		// Boost.ASIO, but until v1.12.0 (Boost 1.66) there was a bug which doesn't enable relevant
+		// code. Fixed by commit: https://github.com/boostorg/asio/commit/619cea4356
+		{
+			int fd = serial_dev.native_handle();
+
+			termios tio;
+			tcgetattr(fd, &tio);
+
+			// Set hardware flow control settings
+			if (hwflow) {
+				tio.c_iflag &= ~(IXOFF | IXON);
+				tio.c_cflag |= CRTSCTS;
+			} else {
+				tio.c_iflag &= ~(IXOFF | IXON);
+				tio.c_cflag &= ~CRTSCTS;
+			}
+
+			// Set serial port to "raw" mode to prevent EOF exit.
+			cfmakeraw(&tio);
+
+			// Commit settings
+			tcsetattr(fd, TCSANOW, &tio);
+		}
+#endif
+
+#if defined(__linux__)
+		// Enable low latency mode on Linux
+		{
+			int fd = serial_dev.native_handle();
+
+			struct serial_struct ser_info;
+			ioctl(fd, TIOCGSERIAL, &ser_info);
+
+			ser_info.flags |= ASYNC_LOW_LATENCY;
+
+			ioctl(fd, TIOCSSERIAL, &ser_info);
+		}
+#endif
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("serial", err);
@@ -82,11 +130,15 @@ void MAVConnSerial::close()
 	if (!is_open())
 		return;
 
-	io_service.stop();
+	serial_dev.cancel();
 	serial_dev.close();
+
+	io_service.stop();
 
 	if (io_thread.joinable())
 		io_thread.join();
+
+	io_service.reset();
 
 	if (port_closed_cb)
 		port_closed_cb();
@@ -95,7 +147,7 @@ void MAVConnSerial::close()
 void MAVConnSerial::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -115,7 +167,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -135,7 +187,7 @@ void MAVConnSerial::send_message(const mavlink_message_t *message)
 void MAVConnSerial::send_message(const mavlink::Message &message)
 {
 	if (!is_open()) {
-		logError(PFXd "send: channel closed!", conn_id);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
@@ -159,7 +211,7 @@ void MAVConnSerial::do_read(void)
 			buffer(rx_buf),
 			[sthis] (error_code error, size_t bytes_transferred) {
 				if (error) {
-					logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
+					CONSOLE_BRIDGE_logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
 					sthis->close();
 					return;
 				}
@@ -187,7 +239,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
 				assert(bytes_transferred <= buf_ref.len);
 
 				if (error) {
-					logError(PFXd "write: %s", sthis->conn_id, error.message().c_str());
+					CONSOLE_BRIDGE_logError(PFXd "write: %s", sthis->conn_id, error.message().c_str());
 					sthis->close();
 					return;
 				}

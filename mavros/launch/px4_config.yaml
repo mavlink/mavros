@@ -193,8 +193,11 @@ mocap:
 # odom
 odometry:
   frame_tf:
-    desired_frame: "ned"
-  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+    # available: check MAV_FRAME odometry local frames in
+    # http://mavlink.org/messages/common
+    local_frame: "vision_ned"
+    # available: ned, frd or flu (though only the tf to frd is supported)
+    body_frame_orientation: "frd"
 
 # px4flow
 px4flow:
@@ -213,7 +216,8 @@ vision_pose:
 
 # vision_speed_estimate
 vision_speed:
-  listen_twist: false
+  listen_twist: true    # enable listen to twist topic, else listen to vec3d topic
+  twist_cov: true       # enable listen to twist with covariance topic
 
 # vibration
 vibration:

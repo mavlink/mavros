@@ -2,6 +2,58 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.1 (2018-05-14)
+-------------------
+
+0.25.0 (2018-05-11)
+-------------------
+* extras: Refactor Trajectory handle cb
+* extras: Refactor Trajectory subscription callbacks
+* trajectory: use lambda functions
+* trajectory: add time_horizon for trajectory type Bezier
+* trajectory: add time_horizon field
+* trajectory: fix wrap_pi to have constant time execution
+* trajectory: fix email
+* trajectory: when receiving mavlink trajectory msg distinguish between types
+  to fill correctly the mavros message
+* trajectory: add path callback to support nav_msgs Path
+* trajectory: update trajectory_call back so that it distinguish between
+  trajectory types in copy the values
+* rename ObstacleAvoidance plugin to Trajectory
+* obstacle_avoidance: use cog to fill mavlink and ros messages
+* obstacle_avoidance: uncrustify
+* mavros_plugins: add obstacle avoidance plugin
+* add obstacle_avoidance plugin
+* CMakeLists: add obstacle_avoidance plugin
+* extras: odom: explicitly set the lambda expression arg types
+* extras: odom: use lambda expression to set the transform for twist
+* extras: odom: change the way the rotation matrices are init
+* extras: odom: set the frame_id to local frame only
+* extras: odom: respect the Odometry msg frame spec
+* extras: redo odom param processing
+* extras: odom: remove unnecessary eigen_conversions/eigen_msg.h include
+* extras: odom: fix underlying_type assignment
+* extras: odom: update msg spec link
+* extras: odom: move frame parsing to init()
+* extras: odom: change tf exception handler
+* extras: odom: improve way frame naming is handled
+* extras: update odom plugin to send ODOMETRY msgs
+* extras: smal style fix in vision pose est
+* extras: add covariance parsing to vision_speed_estimate (`#996 <https://github.com/mavlink/mavros/issues/996>`_)
+* Contributors: Martina, Nuno Marques, TSC21, Vladimir Ermakov
+
+0.24.0 (2018-04-05)
+-------------------
+* extras: update vision_pose_estimate plugin so it can send the covariance matrix also
+* px4flow: sending OPTICAL_FLOW_RAD messages
+* Contributors: Oleg Kalachev, TSC21
+
+0.23.3 (2018-03-09)
+-------------------
+
+0.23.2 (2018-03-07)
+-------------------
+
 0.23.1 (2018-02-27)
 -------------------
 * odom plugin: initialize matrix with zeros

@@ -79,8 +79,10 @@ public:
 
 		imu_pub = imu_nh.advertise<sensor_msgs::Imu>("data", 10);
 		magn_pub = imu_nh.advertise<sensor_msgs::MagneticField>("mag", 10);
-		temp_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
-		press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("atm_pressure", 10);
+		temp_imu_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature_imu", 10);
+		temp_baro_pub = imu_nh.advertise<sensor_msgs::Temperature>("temperature_baro", 10);
+		static_press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("static_pressure", 10);
+		diff_press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("diff_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
 
 		// Reset has_* flags on connection change
@@ -105,8 +107,10 @@ private:
 	ros::Publisher imu_pub;
 	ros::Publisher imu_raw_pub;
 	ros::Publisher magn_pub;
-	ros::Publisher temp_pub;
-	ros::Publisher press_pub;
+	ros::Publisher temp_imu_pub;
+	ros::Publisher temp_baro_pub;
+	ros::Publisher static_press_pub;
+	ros::Publisher diff_press_pub;
 
 	bool has_hr_imu;
 	bool has_raw_imu;
@@ -384,19 +388,33 @@ private:
 		}
 		// [mag_available]
 
-		/** Check if pressure sensor data is available:
-		 *  @snippet src/plugins/imu.cpp pressure_available
+		/** Check if static pressure sensor data is available:
+		 *  @snippet src/plugins/imu.cpp static_pressure_available
 		 */
-		// [pressure_available]
+		// [static_pressure_available]
 		if (imu_hr.fields_updated & (1 << 9)) {
-			auto atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+			auto static_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
 
-			atmp_msg->header = header;
-			atmp_msg->fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
+			static_pressure_msg->header = header;
+			static_pressure_msg->fluid_pressure = imu_hr.abs_pressure;
 
-			press_pub.publish(atmp_msg);
+			static_press_pub.publish(static_pressure_msg);
 		}
-		// [pressure_available]
+		// [static_pressure_available]
+
+		/** Check if differential pressure sensor data is available:
+		 *  @snippet src/plugins/imu.cpp differential_pressure_available
+		 */
+		// [differential_pressure_available]
+		if (imu_hr.fields_updated & (1 << 10)) {
+			auto differential_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+
+			differential_pressure_msg->header = header;
+			differential_pressure_msg->fluid_pressure = imu_hr.diff_pressure;
+
+			diff_press_pub.publish(differential_pressure_msg);
+		}
+		// [differential_pressure_available]
 
 		/** Check if temperature data is available:
 		 *  @snippet src/plugins/imu.cpp temperature_available
@@ -408,7 +426,7 @@ private:
 			temp_msg->header = header;
 			temp_msg->temperature = imu_hr.temperature;
 
-			temp_pub.publish(temp_msg);
+			temp_imu_pub.publish(temp_msg);
 		}
 		// [temperature_available]
 	}
@@ -514,12 +532,17 @@ private:
 		auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
 		temp_msg->header = header;
 		temp_msg->temperature = press.temperature / 100.0;
-		temp_pub.publish(temp_msg);
+		temp_baro_pub.publish(temp_msg);
 
-		auto atmp_msg = boost::make_shared<sensor_msgs::FluidPressure>();
-		atmp_msg->header = header;
-		atmp_msg->fluid_pressure = press.press_abs * 100.0;
-		press_pub.publish(atmp_msg);
+		auto static_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+		static_pressure_msg->header = header;
+		static_pressure_msg->fluid_pressure = press.press_abs * 100.0;
+		static_press_pub.publish(static_pressure_msg);
+
+		auto differential_pressure_msg = boost::make_shared<sensor_msgs::FluidPressure>();
+		differential_pressure_msg->header = header;
+		differential_pressure_msg->fluid_pressure = press.press_diff * 100.0;
+		diff_press_pub.publish(differential_pressure_msg);
 	}
 
 	// Checks for connection and overrides variable values

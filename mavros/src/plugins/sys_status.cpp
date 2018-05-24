@@ -21,6 +21,7 @@
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
+#include <mavros_msgs/StatusText.h>
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
 #include <sensor_msgs/BatteryState.h>
@@ -466,6 +467,8 @@ public:
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
+		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
+		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
 
@@ -502,6 +505,8 @@ private:
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
 	ros::Publisher batt_pub;
+	ros::Publisher statustext_pub;
+	ros::Subscriber statustext_sub;
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
 
@@ -649,8 +654,8 @@ private:
 		auto state_msg = boost::make_shared<mavros_msgs::State>();
 		state_msg->header.stamp = ros::Time::now();
 		state_msg->connected = true;
-		state_msg->armed = hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED);
-		state_msg->guided = hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED);
+		state_msg->armed = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED));
+		state_msg->guided = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED));
 		state_msg->mode = m_uas->str_mode_v10(hb.base_mode, hb.custom_mode);
 		state_msg->system_status = hb.system_status;
 
@@ -710,8 +715,13 @@ private:
 	void handle_statustext(const mavlink::mavlink_message_t *msg, mavlink::common::msg::STATUSTEXT &textm)
 	{
 		auto text = mavlink::to_string(textm.text);
-
 		process_statustext_normal(textm.severity, text);
+
+		auto st_msg = boost::make_shared<mavros_msgs::StatusText>();
+		st_msg->header.stamp = ros::Time::now();
+		st_msg->severity = textm.severity;
+		st_msg->text = text;
+		statustext_pub.publish(st_msg);
 	}
 
 	void handle_meminfo(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::MEMINFO &mem)
@@ -901,6 +911,20 @@ private:
 			// publish connection change
 			publish_disconnection();
 		}
+	}
+
+	/* -*- subscription callbacks -*- */
+
+	void statustext_cb(const mavros_msgs::StatusText::ConstPtr &req) {
+		mavlink::common::msg::STATUSTEXT statustext {};
+		statustext.severity = req->severity;
+
+		// Limit the length of the string by null-terminating at the 50-th character
+		ROS_WARN_COND_NAMED(req->text.length() >= statustext.text.size(), "sys",
+				"Status text too long: truncating...");
+		mavlink::set_string_z(statustext.text, req->text);
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(statustext);
 	}
 
 	/* -*- ros callbacks -*- */

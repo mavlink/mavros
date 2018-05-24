@@ -10,6 +10,7 @@
  */
 /*
  * Copyright 2016,2017 Vladimir Ermakov.
+ * Copyright 2017,2018 Nuno Marques.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -21,6 +22,7 @@
 #include <array>
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
+#include <ros/assert.h>
 
 // for Covariance types
 #include <sensor_msgs/Imu.h>
@@ -31,7 +33,6 @@
 
 namespace mavros {
 namespace ftf {
-
 //! Type matching rosmsg for 3x3 covariance matrix
 using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
 
@@ -66,7 +67,6 @@ enum class StaticTF {
 };
 
 namespace detail {
-
 /**
  * @brief Transform representation of attitude from 1 frame to another
  * (e.g. transfrom attitude from representing  from base_link -> NED
@@ -139,10 +139,6 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
  * General function. Please use specialized variants.
  */
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
-
-inline double transform_frame_yaw(double yaw) {
-	return -yaw;
-}
 
 }	// namespace detail
 
@@ -297,21 +293,6 @@ inline T transform_frame_baselink_enu(const T &in, const Eigen::Quaterniond &q) 
 	return detail::transform_frame(in, q);
 }
 
-/**
- * @brief Transform heading from ROS to FCU frame.
- */
-inline double transform_frame_yaw_enu_ned(double yaw) {
-	return detail::transform_frame_yaw(yaw);
-}
-
-/**
- * @brief Transform heading from FCU to ROS frame.
- */
-inline double transform_frame_yaw_ned_enu(double yaw) {
-	return detail::transform_frame_yaw(yaw);
-}
-
-
 // -*- utils -*-
 
 
@@ -377,7 +358,7 @@ inline Eigen::Quaterniond mavlink_to_quaternion(const std::array<float, 4> &q)
 }
 
 /**
- * @brief Store Covariance matrix to MAVLink float[n] format
+ * @brief Convert covariance matrix to MAVLink float[n] format
  */
 template<class T, std::size_t SIZE>
 inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
@@ -386,11 +367,16 @@ inline void covariance_to_mavlink(const T &cov, std::array<float, SIZE> &covmsg)
 }
 
 /**
- * @brief Store half upper right triangular of 9d Covariance matrix to MAVLink float[n] format
+ * @brief Convert upper right triangular of a covariance matrix to MAVLink float[n] format
  */
-inline void covariance9d_urt_to_mavlink(const Covariance9d &cov, std::array<float, 45> &covmsg)
+template<class T, std::size_t ARR_SIZE>
+inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZE> &covmsg)
 {
-	EigenMapConstCovariance9d m(cov.data());
+	auto m = covmap;
+	std::size_t COV_SIZE = m.rows() * (m.rows() + 1) / 2;
+	ROS_ASSERT_MSG(COV_SIZE == ARR_SIZE,
+				"frame_tf: covariance matrix URT size (%lu) is different from Mavlink msg covariance field size (%lu)",
+				COV_SIZE, ARR_SIZE);
 
 	auto out = covmsg.begin();
 
@@ -423,6 +409,5 @@ inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
 	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
 // [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
-
 }	// namespace ftf
 }	// namespace mavros

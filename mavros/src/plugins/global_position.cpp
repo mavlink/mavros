@@ -282,7 +282,7 @@ private:
 		odom->child_frame_id = child_frame_id;
 
 		// Linear velocity
-		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz) / 1E2,
+		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vy, gpos.vx, gpos.vz) / 1E2,
 					odom->twist.twist.linear);
 
 		// Velocity covariance unknown
