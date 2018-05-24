@@ -231,9 +231,9 @@ private:
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
 			ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
-		// Pass-through the body-rate
-		tf::vectorMsgToEigen(req->body_rate, body_rate);	
-
+		// transform body-rate
+		tf::vectorMsgToEigen(ftf::transform_frame_baselink_aircraft(req->body_rate), body_rate);	
+		
 		set_attitude_target(
 			req->header.stamp.toNSec() / 1000000,
 			req->type_mask,
