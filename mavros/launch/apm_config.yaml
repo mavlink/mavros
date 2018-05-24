@@ -47,6 +47,7 @@ global_position:
   frame_id: "map"             # origin frame
   child_frame_id: "base_link" # body-fixed frame
   rot_covariance: 99999.0   # covariance for attitude?
+  gps_uere: 1.0             # User Equivalent Range Error (UERE) of GPS sensor (m)
   use_relative_alt: true    # use relative altitude for local coordinates
   tf:
     send: false               # send TF?
