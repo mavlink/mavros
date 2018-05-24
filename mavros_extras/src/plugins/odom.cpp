@@ -8,7 +8,8 @@
  * @{
  */
 /*
- * Copyright 2017 James Goppert, Nuno Marques
+ * Copyright 2017 James Goppert
+ * Copyright 2017,2018 Nuno Marques
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -16,43 +17,76 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <eigen_conversions/eigen_msg.h>
 #include <tf2_eigen/tf2_eigen.h>
+#include <boost/algorithm/string.hpp>
 
 #include <nav_msgs/Odometry.h>
 
 namespace mavros {
 namespace extra_plugins {
-using mavlink::common::MAV_ESTIMATOR_TYPE;
+using mavlink::common::MAV_FRAME;
+using Matrix6d = Eigen::Matrix<double, 6, 6>;
 
 /**
  * @brief Odometry plugin
  *
- * Send odometry info to FCU position and attitude estimators
+ * Sends odometry data to the FCU position and attitude estimators.
+ * @see odom_cb()
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
-		estimator_type(MAV_ESTIMATOR_TYPE::VIO)
+		local_frame("vision_ned"),
+		body_frame_orientation("frd")
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		// general params
-		int et_i;
-		odom_nh.param<int>("estimator_type", et_i, utils::enum_value(MAV_ESTIMATOR_TYPE::VIO));
-		estimator_type = static_cast<MAV_ESTIMATOR_TYPE>(et_i);
-
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: estimator type: " << utils::to_string(estimator_type));
-
 		// frame tf params
-		odom_nh.param<std::string>("frame_tf/desired_frame", desired_frame, "ned");
+		odom_nh.param<std::string>("frame_tf/local_frame", local_frame, "vision_ned");
+		odom_nh.param<std::string>("frame_tf/body_frame_orientation", body_frame_orientation, "frd");
+
+		boost::algorithm::to_lower(local_frame);
+		boost::algorithm::to_lower(body_frame_orientation);
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("odom", 10, &OdometryPlugin::odom_cb, this);
+
+		//! Map from param string to local MAV_FRAME
+		const std::unordered_map<std::string, MAV_FRAME> lf_map {
+			{ "vision_enu", MAV_FRAME::VISION_ENU },
+			{ "vision_ned", MAV_FRAME::VISION_NED },
+			{ "mocap_enu", MAV_FRAME::MOCAP_ENU },
+			{ "mocap_ned", MAV_FRAME::MOCAP_NED }
+		};
+
+		//! Map from param string to body MAV_FRAME
+		const std::unordered_map<std::string, MAV_FRAME> bf_map {
+			{ "ned", MAV_FRAME::BODY_NED },
+			{ "frd", MAV_FRAME::BODY_FRD },
+			{ "flu", MAV_FRAME::BODY_FLU }
+		};
+		// Determine frame_id naming - considering the ROS msg frame_id
+		// as "odom" by default
+		auto lf_it = lf_map.find(local_frame);
+		if (lf_it != lf_map.end()) {
+			lf_id = lf_it->second;
+			local_frame_orientation = "local_origin_" + local_frame.substr(local_frame.length() - 3);
+		}
+		else
+			ROS_FATAL_NAMED("odom", "ODOM: invalid local frame \"%s\"", local_frame.c_str());
+
+		// Determine child_frame_id naming
+		auto bf_it = bf_map.find(body_frame_orientation);
+		if (bf_it == bf_map.end()) {
+			bf_id = bf_it->second;
+			body_frame_orientation = "fcu_" + body_frame_orientation;
+		}
+		else
+			ROS_FATAL_NAMED("odom", "ODOM: invalid body frame orientation \"%s\"", body_frame_orientation.c_str());
 	}
 
 	Subscriptions get_subscriptions()
@@ -64,134 +98,143 @@ private:
 	ros::NodeHandle odom_nh;
 	ros::Subscriber odom_sub;
 
-	MAV_ESTIMATOR_TYPE estimator_type;
+	std::string local_frame;		//!< orientation and source of the local frame
+	std::string local_frame_orientation;	//!< orientation of the local fram
+	std::string body_frame_orientation;	//!< orientation of the body frame
 
-	//! child if for tf
-	std::string desired_frame;
+	MAV_FRAME lf_id;			//!< local frame (pose) ID
+	MAV_FRAME bf_id;			//!< body frame (pose) ID
 
-	/* -*- callbacks -*- */
-
+	/**
+	 * @brief Sends odometry data msgs to the FCU.
+	 *
+	 * Message specification: https://mavlink.io/en/messages/common.html#ODOMETRY
+	 * @param req	received Odometry msg
+	 */
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
 	{
 		/** Lookup transforms
 		 *  @todo Implement in a more general fashion in the API IOT apply frame transforms
 		 *  This should also run in parallel on a thread
 		 */
-		Eigen::Affine3d tf_child2ned;
-		Eigen::Affine3d tf_child2fcu_frd;
-		Eigen::Affine3d tf_parent2ned;
+		Eigen::Affine3d tf_parent2local;
+		Eigen::Affine3d tf_child2local;
+		Eigen::Affine3d tf_parent2body;
+		Eigen::Affine3d tf_child2body;
+
 		try {
-			// transform lookup WRT world frame
-			tf_child2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, "local_origin_" + desired_frame, ros::Time(0)));
-			tf_child2fcu_frd = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->child_frame_id, "fcu_frd", ros::Time(0)));
+			// transform lookup WRT local frame
+			tf_parent2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->header.frame_id, local_frame_orientation,
+							ros::Time(0)));
+			tf_child2local = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->child_frame_id, local_frame_orientation,
+							ros::Time(0)));
 
 			// transform lookup WRT body frame
-			tf_parent2ned = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							odom->header.frame_id, "local_origin_" + desired_frame, ros::Time(0)));
+			tf_parent2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->header.frame_id, body_frame_orientation,
+							ros::Time(0)));
+			tf_child2body = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+							odom->child_frame_id, body_frame_orientation,
+							ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
-			ROS_WARN("odom: %s",ex.what());
-			ros::Duration(1.0).sleep();
+			ROS_ERROR_THROTTLE_NAMED(1, "odom", "ODOM: Ex: %s", ex.what());
 			return;
 		}
 
-		/** Build 9x9 covariance matrix to be transformed and sent
-		 */
-		ftf::Covariance9d cov_full {};	// zero initialized
-		ftf::EigenMapCovariance9d cov_full_map(cov_full.data());
+		//! Build 6x6 pose covariance matrix to be transformed and sent
+		ftf::Covariance6d cov_pose {};	// zero initialized
+		ftf::EigenMapCovariance6d cov_pose_map(cov_pose.data());
 
-		cov_full_map.block<6, 6>(0, 0) = ftf::EigenMapConstCovariance6d(odom->pose.covariance.data());
-		cov_full_map.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
-
-		/** Build 6x6 covariance matrix to be transformed and sent
-		 */
+		//! Build 6x6 velocity covariance matrix to be transformed and sent
 		ftf::Covariance6d cov_vel {};	// zero initialized
 		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
 
-		/** Apply linear transforms
+		/** Apply transforms:
+		 * According to nav_msgs/Odometry.
 		 */
-		Eigen::Vector3d pos_ned(tf_parent2ned.linear() * ftf::to_eigen(odom->pose.pose.position));
-		Eigen::Vector3d lin_vel_ned(tf_child2ned.linear() * ftf::to_eigen(odom->twist.twist.linear));
-		Eigen::Vector3d ang_vel_fcu_frd(tf_child2fcu_frd.linear() * ftf::to_eigen(odom->twist.twist.angular));
+		Eigen::Vector3d position {};		//!< Position vector. WRT frame_id
+		Eigen::Quaterniond orientation {};	//!< Attitude quaternion. WRT frame_id
+		Eigen::Vector3d lin_vel {};		//!< Linear velocity vector. WRT child_frame_id
+		Eigen::Vector3d ang_vel {};		//!< Angular velocity vector. WRT child_frame_id
+		Matrix6d r_pose = Matrix6d::Zero();	//!< Zero initialized pose 6-D Covariance matrix. WRT frame_id
+		Matrix6d r_vel = Matrix6d::Zero();	//!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
+
+		mavlink::common::msg::ODOMETRY msg {};
+
+		/**
+		 * Position and orientation are in the same frame as frame_id.
+		 * For a matter of simplicity, and given the existent MAV_FRAME
+		 * enum values, the default frame_id will be a local frame of
+		 * reference, so the pose is WRT a local frame.
+		 */
+		position = Eigen::Vector3d(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
+
+		// Orientation represented by a quaternion rotation from the local frame to XYZ body frame
 		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
-		Eigen::Affine3d tf_ned2fcu_frd = tf_parent2ned * q_parent2child * tf_child2fcu_frd.inverse();
-		Eigen::Quaterniond q_ned2fcu_frd(tf_ned2fcu_frd.linear());
+		Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
+		orientation = Eigen::Quaterniond(tf_local2body.linear());
+
+		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
+
+		msg.frame_id = utils::enum_value(lf_id);
+
+		/**
+		 * Linear and angular velocities are in the same frame as child_frame_id.
+		 * Same logic here applies as above.
+		 */
+		auto set_tf = [&](Eigen::Affine3d affineTf, MAV_FRAME frame_id) {
+			lin_vel = Eigen::Vector3d(affineTf.linear() * ftf::to_eigen(odom->twist.twist.linear));
+			ang_vel = Eigen::Vector3d(affineTf.linear() * ftf::to_eigen(odom->twist.twist.angular));
+			r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = affineTf.linear();
+
+			msg.child_frame_id = utils::enum_value(frame_id);
+		};
+
+		if (odom->child_frame_id == "world" || odom->child_frame_id == "odom") {
+			// the child_frame_id would be the same reference frame as frame_id
+			set_tf(tf_child2local, lf_id);
+		}
+		else {
+			// the child_frame_id would be the WRT a body frame reference
+			set_tf(tf_child2body, bf_id);
+		}
 
 		/** Apply covariance transforms */
-		/** Pose+Accel 9-D Covariance matrix
-		 *  WRT world frame (half upper right triangular)
-		 */
-		Eigen::Matrix<double, 9, 9> r_9d;
-		r_9d.setZero(); // initialize with zeros
-		r_9d.block<3, 3>(0, 0) = r_9d.block<3, 3>(3, 3) = tf_parent2ned.linear();
-		r_9d.block<3, 3>(6, 6) = Eigen::Matrix3d::Identity();
+		cov_pose_map = r_pose * cov_pose_map * r_pose.transpose();
+		cov_vel_map  = r_vel  * cov_vel_map  * r_vel.transpose();
 
-		cov_full_map = r_9d * cov_full_map * r_9d.transpose();
+		ROS_DEBUG_STREAM_NAMED("odom", "ODOM: pose covariance matrix:" << std::endl << cov_pose_map);
+		ROS_DEBUG_STREAM_NAMED("odom", "ODOM: velocity covariance matrix:" << std::endl << cov_vel_map);
 
-		auto urt_view = Eigen::Matrix<double, 9, 9>(cov_full_map.triangularView<Eigen::Upper>());
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: pose+accel covariance matrix: " << std::endl << cov_full_map);
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: Cov URT: " << std::endl << urt_view);
-
-		/** Velocity 6-D Covariance matrix
-		 *  WRT body frame
-		 */
-		Eigen::Matrix<double, 6, 6> r_vel;
-		r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2ned.linear();
-
-		cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
-
-		ROS_DEBUG_STREAM_NAMED("odom", "Odometry: velocity covariance matrix: " << std::endl << cov_vel_map);
-
-		// get timestamp
-		uint64_t stamp_usec = odom->header.stamp.toNSec() / 1e3;
-
-		const auto zerov3f = Eigen::Vector3f::Zero();
-
-		/* -*- LOCAL_POSITION_NED_COV parser -*- */
-		mavlink::common::msg::LOCAL_POSITION_NED_COV lpos {};
-
-		lpos.time_usec = stamp_usec;
-		lpos.estimator_type = utils::enum_value(estimator_type);
-		ftf::covariance9d_urt_to_mavlink(cov_full, lpos.covariance);
+		/* -*- ODOMETRY msg parser -*- */
+		msg.time_usec = odom->header.stamp.toNSec() / 1e3;
 
 		// [[[cog:
-		// for a, b in (('', 'pos_ned'), ('v', 'lin_vel_ned'), ('a', 'zerov3f')):
+		// for a, b in (('', 'position'), ('v', 'lin_vel')):
 		//     for f in 'xyz':
-		//         cog.outl("lpos.{a}{f} = {b}.{f}();".format(**locals()))
-		// ]]]
-		lpos.x = pos_ned.x();
-		lpos.y = pos_ned.y();
-		lpos.z = pos_ned.z();
-		lpos.vx = lin_vel_ned.x();
-		lpos.vy = lin_vel_ned.y();
-		lpos.vz = lin_vel_ned.z();
-		lpos.ax = zerov3f.x();
-		lpos.ay = zerov3f.y();
-		lpos.az = zerov3f.z();
-		// [[[end]]] (checksum: 4620cfc77f3e5d768d7c23da5f56ddc6)
-
-		// send LOCAL_POSITION_NED_COV
-		UAS_FCU(m_uas)->send_message_ignore_drop(lpos);
-
-		/* -*- ATTITUDE_QUATERNION_COV parser -*- */
-		mavlink::common::msg::ATTITUDE_QUATERNION_COV att {};
-
-		att.time_usec = stamp_usec;
-		ftf::quaternion_to_mavlink(q_ned2fcu_frd, att.q);
-		ftf::covariance_to_mavlink(cov_vel, att.covariance);
-
-		// [[[cog:
+		//         cog.outl("msg.{a}{f} = {b}.{f}();".format(**locals()))
 		// for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-		//     cog.outl("att.{b} = ang_vel_fcu_frd.{a}();".format(**locals()))
+		//     cog.outl("msg.{b} = ang_vel.{a}();".format(**locals()))
 		// ]]]
-		att.rollspeed = ang_vel_fcu_frd.x();
-		att.pitchspeed = ang_vel_fcu_frd.y();
-		att.yawspeed = ang_vel_fcu_frd.z();
-		// [[[end]]] (checksum: e100d5c18a64c243df616f342f712ca1)
+		msg.x = position.x();
+		msg.y = position.y();
+		msg.z = position.z();
+		msg.vx = lin_vel.x();
+		msg.vy = lin_vel.y();
+		msg.vz = lin_vel.z();
+		msg.rollspeed = ang_vel.x();
+		msg.pitchspeed = ang_vel.y();
+		msg.yawspeed = ang_vel.z();
+		// [[[end]]] (checksum: ead24a1a6a14496c9de6c1951ccfbbd7)
 
-		// send ATTITUDE_QUATERNION_COV
-		UAS_FCU(m_uas)->send_message_ignore_drop(att);
+		ftf::quaternion_to_mavlink(orientation, msg.q);
+		ftf::covariance_urt_to_mavlink(cov_pose_map, msg.pose_covariance);
+		ftf::covariance_urt_to_mavlink(cov_vel_map, msg.twist_covariance);
+
+		// send ODOMETRY msg
+		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
 	}
 };
 }	// namespace extra_plugins

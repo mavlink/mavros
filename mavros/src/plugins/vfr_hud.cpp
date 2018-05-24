@@ -18,7 +18,6 @@
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/VFR_HUD.h>
-#include <geometry_msgs/TwistStamped.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -39,14 +38,12 @@ public:
 		PluginBase::initialize(uas_);
 
 		vfr_pub = nh.advertise<mavros_msgs::VFR_HUD>("vfr_hud", 10);
-		wind_pub = nh.advertise<geometry_msgs::TwistStamped>("wind_estimation", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
 		return {
 			make_handler(&VfrHudPlugin::handle_vfr_hud),
-			make_handler(&VfrHudPlugin::handle_wind),
 		};
 	}
 
@@ -54,7 +51,6 @@ private:
 	ros::NodeHandle nh;
 
 	ros::Publisher vfr_pub;
-	ros::Publisher wind_pub;
 
 	void handle_vfr_hud(const mavlink::mavlink_message_t *msg, mavlink::common::msg::VFR_HUD &vfr_hud)
 	{
@@ -68,24 +64,6 @@ private:
 		vmsg->climb = vfr_hud.climb;
 
 		vfr_pub.publish(vmsg);
-	}
-
-	/**
-	 * Handle APM specific wind direction estimation message
-	 */
-	void handle_wind(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::WIND &wind)
-	{
-		const double speed = wind.speed;
-		const double course = angles::from_degrees(wind.direction);
-
-		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
-		twist->header.stamp = ros::Time::now();
-		// TODO: check math's
-		twist->twist.linear.x = speed * std::sin(course);
-		twist->twist.linear.y = speed * std::cos(course);
-		twist->twist.linear.z = wind.speed_z;
-
-		wind_pub.publish(twist);
 	}
 };
 }	// namespace std_plugins

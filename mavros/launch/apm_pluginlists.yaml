@@ -11,7 +11,7 @@ plugin_blacklist:
 - mocap_pose_estimate
 - px4flow
 - vibration
-- 'vision_*'
+- vision_speed_estimate
 
 plugin_whitelist: []
 #- 'sys_*'

@@ -79,7 +79,8 @@ public:
 			/**
 			 * @brief Use message_filters to sync attitude and thrust msg coming from different topics
 			 */
-			pose_sub.subscribe(sp_nh, "target_attitude", 1);
+			pose_sub.subscribe(sp_nh, "attitude", 1);
+
 			/**
 			 * @brief Matches messages, even if they have different time stamps,
 			 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
@@ -181,7 +182,7 @@ private:
 		 */
 		const uint8_t ignore_all_except_rpy = (1 << 7);
 
-		auto av = ftf::transform_frame_baselink_aircraft(ang_vel);
+		auto av = ftf::transform_frame_ned_enu(ang_vel);
 
 		set_attitude_target(stamp.toNSec() / 1000000,
 					ignore_all_except_rpy,

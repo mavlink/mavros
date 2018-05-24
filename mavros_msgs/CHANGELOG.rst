@@ -2,6 +2,31 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.1 (2018-05-14)
+-------------------
+
+0.25.0 (2018-05-11)
+-------------------
+* trajectory: add time_horizon field
+* change message name from ObstacleAvoidance to Trajectory since it is
+  general enough to support any type of trajectory
+* CMakeLists: add ObstacleAvoidance message
+* add ObstacleAvoidance message
+* msgs: Update message doc link
+* CommandCode: update list of available commands on MAV_CMD enum (`#995 <https://github.com/mavlink/mavros/issues/995>`_)
+* Contributors: Martina, Nuno Marques, Vladimir Ermakov
+
+0.24.0 (2018-04-05)
+-------------------
+* Add ability to send STATUSTEXT messages
+* Contributors: Anass Al
+
+0.23.3 (2018-03-09)
+-------------------
+
+0.23.2 (2018-03-07)
+-------------------
+
 0.23.1 (2018-02-27)
 -------------------
 

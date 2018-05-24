@@ -2,6 +2,52 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.1 (2018-05-14)
+-------------------
+
+0.25.0 (2018-05-11)
+-------------------
+* wind plugin: uncrustify
+* use eigen and tf conversions (fix conventions), sync timestamp, fix typos
+* add wind estimation plugin
+* launch: fix style and keep apm.launch consistent with px4.launch
+* Updated apm.launch to forward new fcu_protocol parameter
+* glob pos plugin: correct gps velocity convention (NEU->ENU)
+* Split temperature publisher.
+* setpoint_raw: correct yaw transform; remove yaw transform methods
+* extras: odom: improve way frame naming is handled
+* extras: update odom plugin to send ODOMETRY msgs
+* lib: enum_to_string: update enums
+* setpoint_attitude: rename topic from target_attitude to attitude
+* imu plugin: fix pressure units
+* imu plugin: publish differential pressure (`#1001 <https://github.com/mavlink/mavros/issues/1001>`_)
+  * imu plugin: publish differential pressure
+  * imu plugin: fix doxygen snippets
+* lib: add PX4 mode AUTO.PRECLAND
+* extras: add covariance parsing to vision_speed_estimate (`#996 <https://github.com/mavlink/mavros/issues/996>`_)
+* Contributors: Anthony Lamping, Nuno Marques, Oleg Kalachev, Sondre Engebråten, TSC21, Thomas Stastny, Timo Hinzmann, Vladimir Ermakov
+
+0.24.0 (2018-04-05)
+-------------------
+* frame_tf: add assertion over size of covariance matrix URT
+* extras: update vision_pose_estimate plugin so it can send the covariance matrix also
+* plugins fix `#990 <https://github.com/mavlink/mavros/issues/990>`_: Explicitly cast boolean values. Else someone can shoot in his foot.
+* Update Readme for serial0: receive: End of file
+* launch : remove vision_pose_estimate from blacklist on ardupilot
+* plugin: ftp: fix typo
+* Add ability to send STATUSTEXT messages
+* Contributors: Anass Al, Andrei Korigodski, Pierre Kancir, TSC21, Vladimir Ermakov
+
+0.23.3 (2018-03-09)
+-------------------
+* lib: simplify geolib cmake module, try to fix CI
+* Contributors: Vladimir Ermakov
+
+0.23.2 (2018-03-07)
+-------------------
+* launch: add optional respawn_mavros arg
+* Contributors: Anthony Lamping
+
 0.23.1 (2018-02-27)
 -------------------
 * lib: Update to_string

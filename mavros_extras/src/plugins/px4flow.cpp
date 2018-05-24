@@ -45,7 +45,7 @@ public:
 		flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
 
 		/**
-		 * @note Default rangefinder is Maxbotix HRLV-EZ4 
+		 * @note Default rangefinder is Maxbotix HRLV-EZ4
 		 * This is a narrow beam (60cm wide at 5 meters,
 		 * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
 		 * at 1 meter
@@ -58,6 +58,8 @@ public:
 		flow_rad_pub = flow_nh.advertise<mavros_msgs::OpticalFlowRad>("raw/optical_flow_rad", 10);
 		range_pub = flow_nh.advertise<sensor_msgs::Range>("ground_distance", 10);
 		temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
+
+		flow_rad_sub = flow_nh.subscribe("raw/send", 1, &PX4FlowPlugin::send_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -79,6 +81,7 @@ private:
 	ros::Publisher flow_rad_pub;
 	ros::Publisher range_pub;
 	ros::Publisher temp_pub;
+	ros::Subscriber flow_rad_sub;
 
 	void handle_optical_flow_rad(const mavlink::mavlink_message_t *msg, mavlink::common::msg::OPTICAL_FLOW_RAD &flow_rad)
 	{
@@ -148,6 +151,37 @@ private:
 		range_msg->range = flow_rad.distance;
 
 		range_pub.publish(range_msg);
+	}
+
+	void send_cb(const mavros_msgs::OpticalFlowRad::ConstPtr msg)
+	{
+		mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg;
+
+		auto int_xy = ftf::transform_frame_baselink_aircraft(
+			Eigen::Vector3d(
+					msg->integrated_x,
+					msg->integrated_y,
+					0.0));
+		auto int_gyro = ftf::transform_frame_baselink_aircraft(
+				Eigen::Vector3d(
+					msg->integrated_xgyro,
+					msg->integrated_ygyro,
+					msg->integrated_zgyro));
+
+		flow_rad_msg.time_usec = msg->header.stamp.toNSec() / 1000;
+		flow_rad_msg.sensor_id = 0;
+		flow_rad_msg.integration_time_us = msg->integration_time_us;
+		flow_rad_msg.integrated_x = int_xy.x();
+		flow_rad_msg.integrated_y = int_xy.y();
+		flow_rad_msg.integrated_xgyro = int_gyro.x();
+		flow_rad_msg.integrated_ygyro = int_gyro.y();
+		flow_rad_msg.integrated_zgyro = int_gyro.z();
+		flow_rad_msg.temperature = msg->temperature * 100.0f; // temperature in centi-degrees Celsius
+		flow_rad_msg.quality = msg->quality;
+		flow_rad_msg.time_delta_distance_us = msg->time_delta_distance_us;
+		flow_rad_msg.distance = msg->distance;
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(flow_rad_msg);
 	}
 };
 }	// namespace extra_plugins

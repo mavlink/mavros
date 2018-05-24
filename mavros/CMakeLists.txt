@@ -38,7 +38,7 @@ if(NOT EIGEN3_FOUND)
 endif()
 
 ## Find GeographicLib
-find_package(GeographicLib)
+find_package(GeographicLib REQUIRED)
 
 ## Check if the datasets are installed
 include(CheckGeographicLibDatasets)
@@ -134,6 +134,7 @@ add_library(mavros_plugins
   src/plugins/altitude.cpp
   src/plugins/hil.cpp
   src/plugins/home_position.cpp
+  src/plugins/wind_estimation.cpp
 )
 add_dependencies(mavros_plugins
   mavros
