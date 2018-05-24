@@ -232,8 +232,9 @@ private:
 			ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
 		// transform body-rate
-		tf::vectorMsgToEigen(ftf::transform_frame_baselink_aircraft(req->body_rate), body_rate);	
-		
+		tf::vectorMsgToEigen(req->body_rate, body_rate);	
+		body_rate = ftf::transform_frame_baselink_aircraft(body_rate);
+
 		set_attitude_target(
 			req->header.stamp.toNSec() / 1000000,
 			req->type_mask,
