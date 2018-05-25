@@ -59,6 +59,7 @@ public:
 		gp_nh.param<std::string>("frame_id", frame_id, "map");
 		gp_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
+		gp_nh.param("gps_uere", gps_uere, 1.0);
 		gp_nh.param("use_relative_alt", use_relative_alt, true);
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, false);
@@ -127,6 +128,7 @@ private:
 	bool is_map_init;
 
 	double rot_cov;
+	double gps_uere;
 
 	Eigen::Vector3d map_origin {};	//!< geodetic origin of map frame [lla]
 	Eigen::Vector3d ecef_origin {};	//!< geocentric origin of map frame [m]
@@ -168,12 +170,17 @@ private:
 		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
 		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
 
-		if (!std::isnan(eph)) {
-			const double hdop = eph;
+		ftf::EigenMapCovariance3d gps_cov(fix->position_covariance.data());
 
-			// From nmea_navsat_driver
-			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(hdop, 2);
-			fix->position_covariance[6 + 2] = std::pow(2 * hdop, 2);
+		// With mavlink v2.0 use accuracies reported by sensor
+		if (msg->magic == MAVLINK_STX &&
+				raw_gps.h_acc > 0 && raw_gps.v_acc > 0) {
+			gps_cov.diagonal() << std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.v_acc / 1E3, 2);
+			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+		}
+		// With mavlink v1.0 approximate accuracies by DOP
+		else if (!std::isnan(eph) && !std::isnan(epv)) {
+			gps_cov.diagonal() << std::pow(eph * gps_uere, 2), std::pow(eph * gps_uere, 2), std::pow(epv * gps_uere, 2);
 			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
