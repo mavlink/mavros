@@ -170,17 +170,17 @@ private:
 		float eph = (raw_gps.eph != UINT16_MAX) ? raw_gps.eph / 1E2F : NAN;
 		float epv = (raw_gps.epv != UINT16_MAX) ? raw_gps.epv / 1E2F : NAN;
 
-		// With FCU protocol v2.0 use accuracies reported by sensor
-		if (UAS_FCU(m_uas)->get_protocol_version() == mavconn::Protocol::V20 &&
+		ftf::EigenMapCovariance3d gps_cov(fix->position_covariance.data());
+
+		// With mavlink v2.0 use accuracies reported by sensor
+		if (msg->magic == MAVLINK_STX &&
 				raw_gps.h_acc > 0 && raw_gps.v_acc > 0) {
-			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(raw_gps.h_acc / 1E3, 2);
-			fix->position_covariance[6 + 2] = std::pow(raw_gps.v_acc / 1E3, 2);
+			gps_cov.diagonal() << std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.v_acc / 1E3, 2);
 			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 		}
-		// With FCU protocol v1.0 approximate accuracies by DOP
+		// With mavlink v1.0 approximate accuracies by DOP
 		else if (!std::isnan(eph) && !std::isnan(epv)) {
-			fix->position_covariance[0 + 0] = fix->position_covariance[3 + 1] = std::pow(eph * gps_uere, 2);
-			fix->position_covariance[6 + 2] = std::pow(epv * gps_uere, 2);
+			gps_cov.diagonal() << std::pow(eph * gps_uere, 2), std::pow(eph * gps_uere, 2), std::pow(epv * gps_uere, 2);
 			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
 		}
 		else {
