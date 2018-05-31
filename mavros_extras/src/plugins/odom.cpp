@@ -81,7 +81,7 @@ public:
 
 		// Determine child_frame_id naming
 		auto bf_it = bf_map.find(body_frame_orientation);
-		if (bf_it == bf_map.end()) {
+		if (bf_it != bf_map.end()) {
 			bf_id = bf_it->second;
 			body_frame_orientation = "fcu_" + body_frame_orientation;
 		}
