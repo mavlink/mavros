@@ -18,6 +18,7 @@
 
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Duration.h>
+#include <mavros_msgs/TimesyncStatus.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -37,9 +38,9 @@ public:
 		tolerance_(0.1),
 		times_(win_size),
 		seq_nums_(win_size),
-		last_dt(0),
-		dt_sum(0),
-		last_ts(0),
+		last_rtt(0),
+		rtt_sum(0),
+		last_remote_ts(0),
 		offset(0)
 	{
 		clear();
@@ -51,7 +52,7 @@ public:
 
 		ros::Time curtime = ros::Time::now();
 		count_ = 0;
-		dt_sum = 0;
+		rtt_sum = 0;
 
 		for (int i = 0; i < window_size_; i++)
 		{
@@ -62,21 +63,21 @@ public:
 		hist_indx_ = 0;
 	}
 
-	void tick(int64_t dt, uint64_t timestamp_ns, int64_t time_offset_ns)
+	void tick(int64_t rtt_ns, uint64_t remote_timestamp_ns, int64_t time_offset_ns)
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 
 		count_++;
-		last_dt = dt;
-		dt_sum += dt;
-		last_ts = timestamp_ns;
+		last_rtt = rtt_ns;
+		rtt_sum += rtt_ns;
+		last_remote_ts = remote_timestamp_ns;
 		offset = time_offset_ns;
 	}
 
-	void set_timestamp(uint64_t timestamp_ns)
+	void set_timestamp(uint64_t remote_timestamp_ns)
 	{
 		std::lock_guard<std::mutex> lock(mutex);
-		last_ts = timestamp_ns;
+		last_remote_ts = remote_timestamp_ns;
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
@@ -107,10 +108,10 @@ public:
 
 		stat.addf("Timesyncs since startup", "%d", count_);
 		stat.addf("Frequency (Hz)", "%f", freq);
-		stat.addf("Last dt (ms)", "%0.6f", last_dt / 1e6);
-		stat.addf("Mean dt (ms)", "%0.6f", (count_) ? dt_sum / count_ / 1e6 : 0.0);
-		stat.addf("Last system time (s)", "%0.9f", last_ts / 1e9);
-		stat.addf("Time offset (s)", "%0.9f", offset / 1e9);
+		stat.addf("Last RTT (ms)", "%0.6f", last_rtt / 1e6);
+		stat.addf("Mean RTT (ms)", "%0.6f", (count_) ? rtt_sum / count_ / 1e6 : 0.0);
+		stat.addf("Last remote time (s)", "%0.9f", last_remote_ts / 1e9);
+		stat.addf("Estimated time offset (s)", "%0.9f", offset / 1e9);
 	}
 
 private:
@@ -123,9 +124,9 @@ private:
 	const double min_freq_;
 	const double max_freq_;
 	const double tolerance_;
-	int64_t last_dt;
-	int64_t dt_sum;
-	uint64_t last_ts;
+	int64_t last_rtt;
+	int64_t rtt_sum;
+	uint64_t last_remote_ts;
 	int64_t offset;
 };
 
@@ -138,8 +139,13 @@ public:
 	SystemTimePlugin() : PluginBase(),
 		nh("~"),
 		dt_diag("Time Sync", 10),
-		time_offset_ns(0),
-		offset_avg_alpha(0)
+		time_offset(0.0),
+		time_skew(0.0),
+		sequence(0),
+		filter_alpha(0),
+		filter_beta(0),
+		high_rtt_count(0),
+		high_deviation_count(0)
 	{ }
 
 	using TSM = UAS::timesync_mode;
@@ -165,12 +171,45 @@ public:
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
 		nh.param<std::string>("time/timesync_mode", ts_mode_str, "MAVLINK");
-		nh.param("time/timesync_avg_alpha", offset_avg_alpha, 0.6);
-		/*
-		 * alpha for exponential moving average. The closer alpha is to 1.0,
-		 * the faster the moving average updates in response to new offset samples (more jitter)
-		 * We need a significant amount of smoothing , more so for lower message rates like 1Hz
-		 */
+
+		// Filter gains
+		//
+		// Alpha : Used to smooth the overall clock offset estimate. Smaller values will lead
+		// to a smoother estimate, but track time drift more slowly, introducing a bias
+		// in the estimate. Larger values will cause low-amplitude oscillations.
+		//
+		// Beta : Used to smooth the clock skew estimate. Smaller values will lead to a
+		// tighter estimation of the skew (derivative), but will negatively affect how fast the
+		// filter reacts to clock skewing (e.g cause by temperature changes to the oscillator).
+		// Larger values will cause large-amplitude oscillations.
+		nh.param("time/timesync_alpha_initial", filter_alpha_initial, 0.05f);
+		nh.param("time/timesync_beta_initial", filter_beta_initial, 0.05f);
+		nh.param("time/timesync_alpha_final", filter_alpha_final, 0.003f);
+		nh.param("time/timesync_beta_final", filter_beta_final, 0.003f);
+		filter_alpha = filter_alpha_initial;
+		filter_beta = filter_beta_initial;
+
+		// Filter gain scheduling
+		//
+		// The filter interpolates between the initial and final gains while the number of
+		// exhanged timesync packets is less than convergence_window. A lower value will
+		// allow the timesync to converge faster, but with potentially less accurate initial
+		// offset and skew estimates.
+		nh.param("time/convergence_window", convergence_window, 500);
+
+		// Outlier rejection and filter reset
+		//
+		// Samples with round-trip time higher than max_rtt_sample are not used to update the filter.
+		// More than max_consecutive_high_rtt number of such events in a row will throw a warning
+		// but not reset the filter.
+		// Samples whose calculated clock offset is more than max_deviation_sample off from the current
+		// estimate are not used to update the filter. More than max_consecutive_high_deviation number
+		// of such events in a row will reset the filter. This usually happens only due to a time jump
+		// on the remote system.
+		nh.param("time/max_rtt_sample", max_rtt_sample, 10);				// in ms
+		nh.param("time/max_deviation_sample", max_deviation_sample, 100);	// in ms
+		nh.param("time/max_consecutive_high_rtt", max_cons_high_rtt, 5);
+		nh.param("time/max_consecutive_high_deviation", max_cons_high_deviation, 5);
 
 		// Set timesync mode
 		auto ts_mode = utils::timesync_mode_from_str(ts_mode_str);
@@ -178,6 +217,8 @@ public:
 		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
+
+		timesync_status_pub = nh.advertise<mavros_msgs::TimesyncStatus>("timesync_status", 10);
 
 		// timer for sending system time messages
 		if (!conn_system_time.isZero()) {
@@ -208,6 +249,7 @@ public:
 private:
 	ros::NodeHandle nh;
 	ros::Publisher time_ref_pub;
+	ros::Publisher timesync_status_pub;
 
 	ros::Timer sys_time_timer;
 	ros::Timer timesync_timer;
@@ -215,8 +257,30 @@ private:
 	TimeSyncStatus dt_diag;
 
 	std::string time_ref_source;
-	int64_t time_offset_ns;
-	double offset_avg_alpha;
+
+	// Estimated statistics
+	double time_offset;
+	double time_skew;
+
+	// Filter parameters
+	uint32_t sequence;
+	double filter_alpha;
+	double filter_beta;
+
+	// Filter settings
+	float filter_alpha_initial;
+	float filter_beta_initial;
+	float filter_alpha_final;
+	float filter_beta_final;
+	int convergence_window;
+
+	// Outlier rejection
+	int max_rtt_sample;
+	int max_deviation_sample;
+	int max_cons_high_rtt;
+	int max_cons_high_deviation;
+	int high_rtt_count;
+	int high_deviation_count;
 
 	void handle_system_time(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYSTEM_TIME &mtime)
 	{
@@ -250,8 +314,9 @@ private:
 			return;
 		}
 		else if (tsync.tc1 > 0) {
-			// observation is the offset in nanoseconds
-			add_timesync_observation((tsync.ts1 + now_ns - tsync.tc1 * 2) / 2, tsync.tc1);
+			// Time offset between this system and the remote system is calculated assuming RTT for
+			// the timesync packet is roughly equal both ways.
+			add_timesync_observation((tsync.ts1 + now_ns - tsync.tc1 * 2) / 2, tsync.ts1, tsync.tc1);
 		}
 	}
 
@@ -276,7 +341,7 @@ private:
 			uint64_t realtime_now_ns = ros::Time::now().toNSec();
 			uint64_t monotonic_now_ns = get_monotonic_now();
 
-			add_timesync_observation(realtime_now_ns - monotonic_now_ns, realtime_now_ns);
+			add_timesync_observation(realtime_now_ns - monotonic_now_ns, realtime_now_ns, monotonic_now_ns);
 		}
 	}
 
@@ -289,30 +354,124 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(tsync);
 	}
 
-	void add_timesync_observation(int64_t offset_ns, uint64_t observation_time)
+	void add_timesync_observation(int64_t offset_ns, uint64_t local_time_ns, uint64_t remote_time_ns)
 	{
-		int64_t dt = time_offset_ns - offset_ns;
+		uint64_t now_ns = ros::Time::now().toNSec();
 
-		if (std::abs(dt) > 10000000) {		// 10 millisecond skew
-			time_offset_ns = offset_ns;	// hard-set it.
-			m_uas->set_time_offset(time_offset_ns);
+		// Calculate the round trip time (RTT) it took the timesync packet to bounce back to us from remote system
+		uint64_t rtt_ns = now_ns - local_time_ns;
 
-			dt_diag.clear();
-			dt_diag.set_timestamp(observation_time);
+		// Calculate the difference of this sample from the current estimate
+		uint64_t deviation = llabs(int64_t(time_offset) - offset_ns);
 
-			ROS_WARN_THROTTLE_NAMED(10, "time", "TM: Clock skew detected (%0.9f s). "
-						"Hard syncing clocks.", dt / 1e9);
+		if (rtt_ns < max_rtt_sample * 1000000ULL) {	// Only use samples with low RTT
+			if (sync_converged() && (deviation > max_deviation_sample * 1000000ULL)) {
+				// Increment the counter if we have a good estimate and are getting samples far from the estimate
+				high_deviation_count++;
+
+				// We reset the filter if we received consecutive samples which violate our present estimate.
+				// This is most likely due to a time jump on the offboard system.
+				if (high_deviation_count > max_cons_high_deviation) {
+					ROS_ERROR_NAMED("time", "TM : Time jump detected. Resetting time synchroniser.");
+
+					// Reset the filter
+					reset_filter();
+
+					// Reset diagnostics
+					dt_diag.clear();
+					dt_diag.set_timestamp(remote_time_ns);
+				}
+			} else {
+				// Filter gain scheduling
+				if (!sync_converged()) {
+					// Interpolate with a sigmoid function
+					float progress = float(sequence) / convergence_window;
+					float p = 1.0f - expf(0.5f * (1.0f - 1.0f / (1.0f - progress)));
+					filter_alpha = p * filter_alpha_final + (1.0f - p) * filter_alpha_initial;
+					filter_beta = p * filter_beta_final + (1.0f - p) * filter_beta_initial;
+				} else {
+					filter_alpha = filter_alpha_final;
+					filter_beta = filter_beta_final;
+				}
+
+				// Perform filter update
+				add_sample(offset_ns);
+
+				// Save time offset for other components to use
+				m_uas->set_time_offset(sync_converged() ? time_offset : 0);
+
+				// Increment sequence counter after filter update
+				sequence++;
+
+				// Reset high deviation count after filter update
+				high_deviation_count = 0;
+
+				// Reset high RTT count after filter update
+				high_rtt_count = 0;
+			}
+		} else {
+			// Increment counter if round trip time is too high for accurate timesync
+			high_rtt_count++;
+
+			if (high_rtt_count > max_cons_high_rtt) {
+				// Issue a warning to the user if the RTT is constantly high
+				ROS_WARN_NAMED("time", "TM : RTT too high for timesync: %0.2f ms.", rtt_ns / 1000000.0);
+
+				// Reset counter
+				high_rtt_count = 0;
+			}
 		}
-		else {
-			average_offset(offset_ns);
-			dt_diag.tick(dt, observation_time, time_offset_ns);
-			m_uas->set_time_offset(time_offset_ns);
+
+		// Publish timesync status
+		auto timesync_status = boost::make_shared<mavros_msgs::TimesyncStatus>();
+
+		timesync_status->header.stamp = ros::Time::now();
+		timesync_status->remote_timestamp_ns = remote_time_ns;
+		timesync_status->observed_offset_ns = offset_ns;
+		timesync_status->estimated_offset_ns = time_offset;
+		timesync_status->round_trip_time_ms = float(rtt_ns / 1000000.0);
+
+		timesync_status_pub.publish(timesync_status);
+
+		// Update diagnostics
+		dt_diag.tick(rtt_ns, remote_time_ns, time_offset);
+	}
+
+	void add_sample(int64_t offset_ns)
+	{
+		/* Online exponential smoothing filter. The derivative of the estimate is also
+		 * estimated in order to produce an estimate without steady state lag:
+		 * https://en.wikipedia.org/wiki/Exponential_smoothing#Double_exponential_smoothing
+		 */
+
+		double time_offset_prev = time_offset;
+
+		if (sequence == 0) {			// First offset sample
+			time_offset = offset_ns;
+		} else {
+			// Update the clock offset estimate
+			time_offset = filter_alpha * offset_ns + (1.0 - filter_alpha) * (time_offset + time_skew);
+
+			// Update the clock skew estimate
+			time_skew = filter_beta * (time_offset - time_offset_prev) + (1.0 - filter_beta) * time_skew;
 		}
 	}
 
-	inline void average_offset(int64_t offset_ns)
+	void reset_filter()
 	{
-		time_offset_ns = (offset_avg_alpha * offset_ns) + (1.0 - offset_avg_alpha) * time_offset_ns;
+		// Do a full reset of all statistics and parameters
+		sequence = 0;
+		time_offset = 0.0;
+		time_skew = 0.0;
+		filter_alpha = filter_alpha_initial;
+		filter_beta = filter_beta_initial;
+		high_deviation_count = 0;
+		high_rtt_count = 0;
+	}
+
+	inline bool sync_converged()
+	{
+		return sequence >= convergence_window;
 	}
 
 	uint64_t get_monotonic_now(void)
