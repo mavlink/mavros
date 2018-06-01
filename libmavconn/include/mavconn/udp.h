@@ -35,8 +35,9 @@ public:
 	static constexpr auto DEFAULT_BIND_PORT = 14555;
 	static constexpr auto DEFAULT_REMOTE_HOST = "";
 	static constexpr auto DEFAULT_REMOTE_PORT = 14550;
-	//! Marker for boardcast mode. Not valid domain name.
+	//! Markers for broadcast modes. Not valid domain names.
 	static constexpr auto BROADCAST_REMOTE_HOST = "***i want broadcast***";
+	static constexpr auto PERMANENT_BROADCAST_REMOTE_HOST = "***permanent broadcast***";
 
 	/**
 	 * @param[id] bind_host    bind host
@@ -63,10 +64,12 @@ private:
 	boost::asio::io_service io_service;
 	std::unique_ptr<boost::asio::io_service::work> io_work;
 	std::thread io_thread;
+	bool permanent_broadcast;
 
 	std::atomic<bool> remote_exists;
 	boost::asio::ip::udp::socket socket;
 	boost::asio::ip::udp::endpoint remote_ep;
+	boost::asio::ip::udp::endpoint recv_ep;
 	boost::asio::ip::udp::endpoint last_remote_ep;
 	boost::asio::ip::udp::endpoint bind_ep;
 
