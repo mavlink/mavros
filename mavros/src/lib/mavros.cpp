@@ -18,6 +18,7 @@
 
 // MAVLINK_VERSION string
 #include <mavlink/config.h>
+#include <mavconn/mavlink_dialect.h>
 
 using namespace mavros;
 using mavconn::MAVConnInterface;
@@ -32,6 +33,7 @@ MavRos::MavRos() :
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
 	plugin_loader("mavros", "mavros::plugin::PluginBase"),
+	last_message_received_from_gcs(0),
 	plugin_subscriptions{}
 {
 	std::string fcu_url, gcs_url;
@@ -46,6 +48,8 @@ MavRos::MavRos() :
 
 	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
+	nh.param<bool>("gcs_quiet_mode", gcs_quiet_mode, false);
+
 	nh.param<std::string>("fcu_protocol", fcu_protocol, "v2.0");
 	nh.param("system_id", system_id, 1);
 	nh.param<int>("component_id", component_id, mavconn::MAV_COMP_ID_UDP_BRIDGE);
@@ -135,8 +139,14 @@ MavRos::MavRos() :
 		mavlink_pub_cb(msg, framing);
 		plugin_route_cb(msg, framing);
 
-		if (gcs_link)
+		if (gcs_link) {
+			if (this->gcs_quiet_mode && msg->msgid != mavlink::common::msg::HEARTBEAT::MSG_ID &&
+				(ros::Time::now() - this->last_message_received_from_gcs > ros::Duration(20))) {
+				return;
+			}
+
 			gcs_link->send_message_ignore_drop(msg);
+		}
 	};
 
 	fcu_link->port_closed_cb = []() {
@@ -147,6 +157,7 @@ MavRos::MavRos() :
 	if (gcs_link) {
 		// setup GCS link bridge
 		gcs_link->message_received_cb = [this, fcu_link](const mavlink_message_t *msg, const Framing framing) {
+			this->last_message_received_from_gcs = ros::Time::now();
 			fcu_link->send_message_ignore_drop(msg);
 		};
 
