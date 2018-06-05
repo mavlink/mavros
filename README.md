@@ -14,6 +14,7 @@ MAVLink extendable communication node for ROS.
 - Since 2016-06-23 (0.18.0) support MAVLink 2.0 without signing.
 - Since 2017-08-23 (0.20.0) [GeographicLib][geolib] and it's datasets are required. Used to convert AMSL (FCU) and WGS84 (ROS) altitudes.
 - Since 2018-05-11 (0.25.0) support building master for Indigo and Jande stopped. Mainly because update of console-bridge package. 
+- Since 2018-05-14 (0.25.1) support for Indigo returned. We use compatibility layer for console-bridge.
 
 
 mavros package
