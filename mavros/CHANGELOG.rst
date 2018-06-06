@@ -2,6 +2,19 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: add tunable timeout to gcs_quiet_mode
+* udp bridge: pass only HEARTBEATs when GCS is offline
+* sys_time : add advanced timesync algorithm
+* libmavconn: add scheme for permanent UDP broadcasting
+* GPS accuracy wo approximations (`#1034 <https://github.com/mavlink/mavros/issues/1034>`_)
+  * GPS horizontal and vertical accuracy are based now on h_acc, v_acc of GPS_RAW_INT.
+  * GPS horizontal and vertical accuracy are based now on h_acc, v_acc of GPS_RAW_INT if on mavlink v2.0,
+  or on DOP values otherwise.
+  * GPS accuracy update.
+* Contributors: Mohammed Kabir, Oleg Kalachev, Pavlo Kolomiiets, Vladimir Ermakov
+
 0.25.1 (2018-05-14)
 -------------------
 
