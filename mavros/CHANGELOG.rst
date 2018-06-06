@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.0 (2018-06-06)
+-------------------
 * lib: add tunable timeout to gcs_quiet_mode
 * udp bridge: pass only HEARTBEATs when GCS is offline
 * sys_time : add advanced timesync algorithm
