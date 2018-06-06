@@ -41,6 +41,7 @@ MavRos::MavRos() :
 	int system_id, component_id;
 	int tgt_system_id, tgt_component_id;
 	bool px4_usb_quirk;
+	double conn_timeout_d;
 	ros::V_string plugin_blacklist{}, plugin_whitelist{};
 	MAVConnInterface::Ptr fcu_link;
 
@@ -49,6 +50,7 @@ MavRos::MavRos() :
 	nh.param<std::string>("fcu_url", fcu_url, "serial:///dev/ttyACM0");
 	nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 	nh.param<bool>("gcs_quiet_mode", gcs_quiet_mode, false);
+	nh.param("conn/timeout", conn_timeout_d, 30.0);
 
 	nh.param<std::string>("fcu_protocol", fcu_protocol, "v2.0");
 	nh.param("system_id", system_id, 1);
@@ -58,6 +60,8 @@ MavRos::MavRos() :
 	nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
 	nh.getParam("plugin_blacklist", plugin_blacklist);
 	nh.getParam("plugin_whitelist", plugin_whitelist);
+
+	conn_timeout = ros::Duration(conn_timeout_d);
 
 	// Now we use FCU URL as a hardware Id
 	UAS_DIAG(&mav_uas).setHardwareID(fcu_url);
@@ -141,7 +145,7 @@ MavRos::MavRos() :
 
 		if (gcs_link) {
 			if (this->gcs_quiet_mode && msg->msgid != mavlink::common::msg::HEARTBEAT::MSG_ID &&
-				(ros::Time::now() - this->last_message_received_from_gcs > ros::Duration(20))) {
+				(ros::Time::now() - this->last_message_received_from_gcs > this->conn_timeout)) {
 				return;
 			}
 

@@ -45,6 +45,7 @@ private:
 	mavconn::MAVConnInterface::Ptr gcs_link;
 	bool gcs_quiet_mode;
 	ros::Time last_message_received_from_gcs;
+	ros::Duration conn_timeout;
 
 	ros::Publisher mavlink_pub;
 	ros::Subscriber mavlink_sub;
