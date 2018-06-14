@@ -37,6 +37,15 @@
 #include <stdexcept>
 #include <mavconn/mavlink_dialect.h>
 
+#ifdef DEFINE_LOGGING_MACROS
+
+#define logError(fmt, ...)  CONSOLE_BRIDGE_logError(fmt, ##__VA_ARGS__) 
+#define logWarn(fmt, ...)   CONSOLE_BRIDGE_logWarn(fmt, ##__VA_ARGS__)
+#define logInform(fmt, ...) CONSOLE_BRIDGE_logInform(fmt, ##__VA_ARGS__)
+#define logDebug(fmt, ...)  CONSOLE_BRIDGE_logDebug(fmt, ##__VA_ARGS__)
+
+#endif
+
 namespace mavconn {
 namespace sig2 = boost::signals2;
 

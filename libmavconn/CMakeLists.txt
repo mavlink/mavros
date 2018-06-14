@@ -8,6 +8,10 @@ find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(console_bridge REQUIRED)
+if(console_bridge_VERSION GREATER 0.3.0)
+  add_definitions(-DDEFINE_LOGGING_MACROS)
+endif ()
+
 find_package(Boost REQUIRED COMPONENTS system)
 
 # add package modules path, not needed in dependend packages
