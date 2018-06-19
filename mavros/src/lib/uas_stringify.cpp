@@ -196,6 +196,8 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
 			return str_mode_cmap(arduplane_cmode_map, custom_mode);
 		else if (type == MAV_TYPE::GROUND_ROVER)
 			return str_mode_cmap(apmrover2_cmode_map, custom_mode);
+		else if (type == MAV_TYPE::SURFACE_BOAT)
+			return str_mode_cmap(apmrover2_cmode_map, custom_mode);		// NOTE: #1051 for now (19.06.2018) boat is same as rover
 		else if (type == MAV_TYPE::SUBMARINE)
 			return str_mode_cmap(ardusub_cmode_map, custom_mode);
 		else {
