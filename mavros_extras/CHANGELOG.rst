@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* trajectory: update plugin to match mavlink change from trajectory msg to
+  trajectory_representation_waypoints
+* Contributors: Martina
+
 0.26.0 (2018-06-06)
 -------------------
 * odom: fix mapping for body frame
