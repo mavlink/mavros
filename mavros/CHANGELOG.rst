@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.1 (2018-07-19)
+-------------------
 * setpoint_velocity: fix yaw rate setpoint rotation
 * lib fix `#1051 <https://github.com/mavlink/mavros/issues/1051>`_: Add APM BOAT modes support.
   Currently SURFACE_BOAT uses same code as Rover2,

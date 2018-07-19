@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.1 (2018-07-19)
+-------------------
 * trajectory: update plugin to match mavlink change from trajectory msg to
   trajectory_representation_waypoints
 * Contributors: Martina
