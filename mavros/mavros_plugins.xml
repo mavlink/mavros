@@ -74,4 +74,7 @@
 	<class name="wind_estimation" type="mavros::std_plugins::WindEstimationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish wind estimates</description>
 	</class>
+	<class name="rtk" type="mavros::std_plugins::RTK" base_class_type="mavros::plugin::PluginBase">
+		<description>Sends the RTCM messages to the FCU for the RTK Fix</description>
+	</class>
 </library>
