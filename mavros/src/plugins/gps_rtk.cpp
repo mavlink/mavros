@@ -1,6 +1,6 @@
 /**
- * @brief RTK plugin 
- * @file rtk.cpp
+ * @brief GPS RTK plugin 
+ * @file gps_rtk.cpp
  * @author Alexis Paques <alexis.paques@gmail.com>
  *
  * @addtogroup plugin
@@ -20,8 +20,9 @@
 
 namespace mavros {
 namespace std_plugins {
+
 /**
- * @brief RTK plugin
+ * @brief GPS RTK plugin
  *
  * Publish the RTCM messages from ROS to the Pixhawk
  */
