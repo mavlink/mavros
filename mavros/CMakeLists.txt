@@ -135,6 +135,7 @@ add_library(mavros_plugins
   src/plugins/hil.cpp
   src/plugins/home_position.cpp
   src/plugins/wind_estimation.cpp
+  src/plugins/rtk.cpp
 )
 add_dependencies(mavros_plugins
   mavros
