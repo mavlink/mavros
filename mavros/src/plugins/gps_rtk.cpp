@@ -1,5 +1,5 @@
 /**
- * @brief GPS RTK plugin 
+ * @brief GPS RTK plugin
  * @file gps_rtk.cpp
  * @author Alexis Paques <alexis.paques@gmail.com>
  *
@@ -20,7 +20,6 @@
 
 namespace mavros {
 namespace std_plugins {
-
 /**
  * @brief GPS RTK plugin
  *
@@ -49,10 +48,10 @@ private:
 
 	void rtk_cb(const mavros_msgs::RTCM::ConstPtr &msg)
 	{
-		const int maxMessageLength = 180; // Should be replaced by MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN
+		const int maxMessageLength = 180;	// Should be replaced by MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN
 		int seq = msg->header.seq;
 
-		if(msg->data.size() > 4*maxMessageLength) {
+		if (msg->data.size() > 4 * maxMessageLength) {
 			ROS_FATAL("gps_rtk: RTCM message received is bigger than the maximal possible size");
 			return;
 		}
@@ -69,16 +68,15 @@ private:
 			while (start < msg->data.size()) {
 				mavlink::common::msg::GPS_RTCM_DATA rtcm_data;
 				int length = std::min((int)msg->data.size() - start, maxMessageLength);
-				rtcm_data.flags = 1;                      // LSB set indicates message is fragmented
-				rtcm_data.flags |= fragmentId++ << 1;     // Next 2 bits are fragment id
-				rtcm_data.flags |= (seq & 0x1F) << 3;     // Next 5 bits are sequence id
+				rtcm_data.flags = 1;				// LSB set indicates message is fragmented
+				rtcm_data.flags |= fragmentId++ << 1;		// Next 2 bits are fragment id
+				rtcm_data.flags |= (seq & 0x1F) << 3;		// Next 5 bits are sequence id
 				rtcm_data.len = length;
 				memcpy(&rtcm_data.data, &msg->data + start, length);
 				UAS_FCU(m_uas)->send_message(rtcm_data);
 				start += length;
 			}
 		}
-
 	}
 };
 }	// namespace std_plugins
