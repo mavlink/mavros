@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2018 Nuno Marques.
+ * Copyright 2018 Alexis Paques.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
