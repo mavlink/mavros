@@ -51,7 +51,7 @@ private:
 		// const int max_frag_len = mavlink::common::msg::GPS_RTCM_DATA::data::size
 		// ‘mavlink::common::msg::GPS_RTCM_DATA::data’ is not a class, namespace, or enumeration
 		mavlink::common::msg::GPS_RTCM_DATA rtcm_data;
-		const int max_frag_len = rtcm_data.data.size();
+		const size_t max_frag_len = rtcm_data.data.size();
 
 		uint8_t seq_u5 = uint8_t(msg->header.seq & 0x1F) << 3;
 
@@ -71,17 +71,15 @@ private:
 			UAS_FCU(m_uas)->send_message(rtcm_data);
 		} else {
 			for (uint8_t fragment_id = 0; fragment_id < 4 && data_it < end_it; fragment_id++) {
-				mavlink::common::msg::GPS_RTCM_DATA rtcm_data_frag;	// Can we send rtcm_data 4 times with different data safely?
+				uint8_t len = std::min(std::distance(data_it, end_it), max_frag_len);
+				rtcm_data.flags = 1;				// LSB set indicates message is fragmented
+				rtcm_data.flags |= fragment_id++ << 1;		// Next 2 bits are fragment id
+				rtcm_data.flags |= seq_u5;		// Next 5 bits are sequence id
+				rtcm_data.len = len;
 
-				uint8_t len = std::min((int)std::distance(data_it, end_it), max_frag_len);
-				rtcm_data_frag.flags = 1;				// LSB set indicates message is fragmented
-				rtcm_data_frag.flags |= fragment_id++ << 1;		// Next 2 bits are fragment id
-				rtcm_data_frag.flags |= seq_u5;		// Next 5 bits are sequence id
-				rtcm_data_frag.len = len;
-
-				std::copy(data_it, data_it + len, rtcm_data_frag.data.begin());
-				std::fill(rtcm_data_frag.data.begin() + len, rtcm_data_frag.data.end(), 0);
-				UAS_FCU(m_uas)->send_message(rtcm_data_frag);
+				std::copy(data_it, data_it + len, rtcm_data.data.begin());
+				std::fill(rtcm_data.data.begin() + len, rtcm_data.data.end(), 0);
+				UAS_FCU(m_uas)->send_message(rtcm_data);
 				std::advance(data_it, len);
 			}
 		}
