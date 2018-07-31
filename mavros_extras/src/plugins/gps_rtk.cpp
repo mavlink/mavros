@@ -34,7 +34,7 @@ public:
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
-		gps_rtk_sub = gps_rtk_nh.subscribe("send_rtcm", 10, &GpsRtkPlugin::rtk_cb, this);
+		gps_rtk_sub = gps_rtk_nh.subscribe("send_rtcm", 10, &GpsRtkPlugin::rtcm_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -46,10 +46,14 @@ private:
 	ros::NodeHandle gps_rtk_nh;
 	ros::Subscriber gps_rtk_sub;
 
-	void rtk_cb(const mavros_msgs::RTCM::ConstPtr &msg)
+	/**
+	 * @brief Handle mavros_msgs::RTCM message
+	 * It converts the message to the MAVLink GPS_RTCM_DATA message for GPS injection.
+	 * Message specification: http://mavlink.org/messages/common/#GPS_RTCM_DATA
+	 * @param msg		Received ROS msg
+	 */
+	void rtcm_cb(const mavros_msgs::RTCM::ConstPtr &msg)
 	{
-		// const int max_frag_len = mavlink::common::msg::GPS_RTCM_DATA::data::size
-		// ‘mavlink::common::msg::GPS_RTCM_DATA::data’ is not a class, namespace, or enumeration
 		mavlink::common::msg::GPS_RTCM_DATA rtcm_data;
 		const size_t max_frag_len = rtcm_data.data.size();
 
@@ -71,7 +75,7 @@ private:
 			UAS_FCU(m_uas)->send_message(rtcm_data);
 		} else {
 			for (uint8_t fragment_id = 0; fragment_id < 4 && data_it < end_it; fragment_id++) {
-				uint8_t len = std::min((size_t)std::distance(data_it, end_it), max_frag_len);
+				uint8_t len = std::min((size_t) std::distance(data_it, end_it), max_frag_len);
 				rtcm_data.flags = 1;				// LSB set indicates message is fragmented
 				rtcm_data.flags |= fragment_id++ << 1;		// Next 2 bits are fragment id
 				rtcm_data.flags |= seq_u5;		// Next 5 bits are sequence id
