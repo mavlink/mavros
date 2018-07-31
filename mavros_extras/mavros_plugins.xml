@@ -14,6 +14,9 @@
 	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
 	</class>
+	<class name="gps_rtk" type="mavros::extra_plugins::GpsRtkPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Sends the RTCM messages to the FCU for the RTK Fix.</description>
+	</class>
 	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send motion capture pose estimate to FCU.</description>
 	</class>
@@ -40,8 +43,5 @@
 	</class>
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>
-	</class>
-	<class name="gps_rtk" type="mavros::extra_plugins::GpsRtkPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Sends the RTCM messages to the FCU for the RTK Fix.</description>
 	</class>
 </library>
