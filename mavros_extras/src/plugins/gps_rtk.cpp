@@ -19,7 +19,7 @@
 #include <algorithm>
 
 namespace mavros {
-namespace std_plugins {
+namespace extra_plugins {
 /**
  * @brief GPS RTK plugin
  *
@@ -89,8 +89,8 @@ private:
 		}
 	}
 };
-}	// namespace std_plugins
+}	// namespace extra_plugins
 }	// namespace mavros
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::GpsRtkPlugin, mavros::plugin::PluginBase)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::GpsRtkPlugin, mavros::plugin::PluginBase)
