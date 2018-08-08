@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.2 (2018-08-08)
+-------------------
 * Moving gps_rtk to mavros_extras
 * Update copyright name
 * Updating the gps_rtk plugin to fit mavros guidelines:

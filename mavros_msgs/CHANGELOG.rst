@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.2 (2018-08-08)
+-------------------
 * Updating the gps_rtk plugin to fit mavros guidelines:
   - Updating max_frag_len to allow changes in size in MAVLink seamlessly
   - Using std::copy instead of memset

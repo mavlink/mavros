@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.2 (2018-08-08)
+-------------------
 * Fix namespace (std->extras)
 * Changing the callback name to rtcm_cb
   Adding doxygen documentation
