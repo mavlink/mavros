@@ -2,6 +2,20 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updating the gps_rtk plugin to fit mavros guidelines:
+  - Updating max_frag_len to allow changes in size in MAVLink seamlessly
+  - Using std::copy instead of memset
+  - Zero fill with std::fill
+  - Preapply the sequence flags
+  - Use of std iterators
+  - Add the maximal data size in the mavros_msgs
+* Renaming the GPS RTK module, Adding fragmentation, Changing the RTCM message
+* RTK Plugin; to forward RTCM messages
+  Signed-off-by: Alexis Paques <alexis.paques@gmail.com>
+* Contributors: Alexis Paques
+
 0.26.1 (2018-07-19)
 -------------------
 

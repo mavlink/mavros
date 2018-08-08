@@ -2,6 +2,19 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix namespace (std->extras)
+* Changing the callback name to rtcm_cb
+  Adding doxygen documentation
+* Sort the plugins by alphabetical order
+* Put back the casting
+* Using size_t instead of int
+  Using the same rtcm_data message
+  Remove int casting
+* Moving gps_rtk to mavros_extras
+* Contributors: Alexis Paques
+
 0.26.1 (2018-07-19)
 -------------------
 * trajectory: update plugin to match mavlink change from trajectory msg to
