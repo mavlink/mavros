@@ -1,0 +1,9 @@
+# Reply to LogRequestData, - a chunk of a log
+#
+#  :id: - log id
+#  :offset: - offset into the log
+#  :data: - chunk of data (if zero-sized, then there are no more chunks)
+
+uint16 id
+uint16 offset
+uint8[] data
