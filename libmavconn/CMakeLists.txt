@@ -96,7 +96,7 @@ install(DIRECTORY cmake/Modules
 if(CATKIN_ENABLE_TESTING)
 
 catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-target_link_libraries(mavconn-test mavconn)
+target_link_libraries(mavconn-test mavconn pthread)
 
 endif()
 
