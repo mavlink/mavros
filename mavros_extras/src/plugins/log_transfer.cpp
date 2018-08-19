@@ -42,26 +42,28 @@ private:
 
 	void handle_log_entry(const mavlink::mavlink_message_t*, mavlink::common::msg::LOG_ENTRY& le)
 	{
-		mavros_msgs::LogEntry msg;
-		msg.id = le.id;
-		msg.num_logs = le.num_logs;
-		msg.last_log_num = le.last_log_num;
-		msg.time_utc = ros::Time(le.time_utc);
-		msg.size = le.size;
+		auto msg = boost::make_shared<mavros_msgs::LogEntry>();
+		msg->header.stamp = ros::Time::now();
+		msg->id = le.id;
+		msg->num_logs = le.num_logs;
+		msg->last_log_num = le.last_log_num;
+		msg->time_utc = ros::Time(le.time_utc);
+		msg->size = le.size;
 		log_entry_pub.publish(msg);
 	}
 
 	void handle_log_data(const mavlink::mavlink_message_t*, mavlink::common::msg::LOG_DATA& ld)
 	{
-		mavros_msgs::LogData msg;
-		msg.id = ld.id;
-		msg.offset = ld.ofs;
+		auto msg = boost::make_shared<mavros_msgs::LogData>();
+		msg->header.stamp = ros::Time::now();
+		msg->id = ld.id;
+		msg->offset = ld.ofs;
 
-		decltype(ld.data) ::size_type count(ld.count);
+		auto count = ld.count;
 		if (count > ld.data.max_size()) {
 			count = ld.data.max_size();
 		}
-		msg.data.insert(msg.data.cbegin(), ld.data.cbegin(), ld.data.cbegin() + count);
+		msg->data.insert(msg->data.cbegin(), ld.data.cbegin(), ld.data.cbegin() + count);
 		log_data_pub.publish(msg);
 	}
 
@@ -69,8 +71,7 @@ private:
 				mavros_msgs::LogRequestList::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_LIST msg;
-		msg.target_system = m_uas->get_tgt_system();
-		msg.target_component = m_uas->get_tgt_component();
+		m_uas->msg_set_target(msg);
 		msg.start = req.start;
 		msg.end = req.end;
 
@@ -87,8 +88,7 @@ private:
 				mavros_msgs::LogRequestData::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_DATA msg;
-		msg.target_system = m_uas->get_tgt_system();
-		msg.target_component = m_uas->get_tgt_component();
+		m_uas->msg_set_target(msg);
 		msg.id = req.id;
 		msg.ofs = req.offset;
 		msg.count = req.count;
@@ -106,9 +106,7 @@ private:
 				mavros_msgs::LogRequestEnd::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_END msg;
-		msg.target_system = m_uas->get_tgt_system();
-		msg.target_component = m_uas->get_tgt_component();
-
+		m_uas->msg_set_target(msg);
 		res.success = true;
 		try {
 			UAS_FCU(m_uas)->send_message(msg);
