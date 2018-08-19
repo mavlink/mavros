@@ -4,6 +4,8 @@
 #  :offset: - offset into the log
 #  :data: - chunk of data (if zero-sized, then there are no more chunks)
 
+std_msgs/Header header
+
 uint16 id
 uint16 offset
 uint8[] data
