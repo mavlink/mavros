@@ -217,18 +217,18 @@ private:
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
 	{
 		Eigen::Quaterniond desired_orientation;
-		Eigen::Vector3d baselink_angular_rate;
+		Eigen::Vector3d desired_angular_rate;
 
 		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
+
+		tf::vectorMsgToEigen(req->body_rate, desired_angular_rate);
 
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
 					ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
-		auto body_rate = ftf::transform_frame_baselink_aircraft(baselink_angular_rate);
-
-		tf::vectorMsgToEigen(req->body_rate, body_rate);
+		auto body_rate = ftf::transform_frame_ned_enu(ftf::transform_frame_baselink_aircraft(desired_angular_rate));
 
 		set_attitude_target(
 					req->header.stamp.toNSec() / 1000000,
