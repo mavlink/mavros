@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.3 (2018-08-21)
+-------------------
 * test: Fix sensor orientation. RPY 315 was removed in recent mavlink.
   https://github.com/mavlink/mavlink/commit/3d94bccfedc5fc7f2ffad247adecff0c2dc03501
 * lib: update generated entries
