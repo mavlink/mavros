@@ -132,7 +132,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 32> mav_type_strings{{
+static const std::array<const std::string, 33> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -165,6 +165,7 @@ static const std::array<const std::string, 32> mav_type_strings{{
 /* 29 */ "Dodecarotor",                   // Dodecarotor
 /* 30 */ "Camera",                        // Camera
 /* 31 */ "Charging station",              // Charging station
+/* 32 */ "Onboard FLARM collision avoidance system", // Onboard FLARM collision avoidance system
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -175,7 +176,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 86046c644e2e72e5c3e052555c497d00)
+// [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
 
 // [[[cog:
 // ename = 'MAV_STATE'
