@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixup! b43279058a3029c67ea75b1ecb86442c9dc991d4
+* mavros_extras/log_transfer: Log transfer plugin
+* Contributors: mlvov
+
 0.26.2 (2018-08-08)
 -------------------
 * Fix namespace (std->extras)

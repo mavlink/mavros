@@ -2,6 +2,12 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Prevent MAVConnTCPClient::do_recv and MAVConnTCPServer::do_accept from running after destruction has begun
+* libmavconn/CMakeLists.txt: link mavconn-test against pthread
+* Contributors: mlvov
+
 0.26.2 (2018-08-08)
 -------------------
 

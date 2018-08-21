@@ -2,6 +2,12 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixup! 5a4344a2dcedc157f93b620cebd2e0b273ec24be
+* mavros_msgs: Add msg and srv files related to log transfer
+* Contributors: mlvov
+
 0.26.2 (2018-08-08)
 -------------------
 * Updating the gps_rtk plugin to fit mavros guidelines:
