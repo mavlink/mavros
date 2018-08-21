@@ -70,6 +70,7 @@ static bool resolve_address_tcp(io_service &io, size_t chan, std::string host, u
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		std::string server_host, unsigned short server_port) :
 	MAVConnInterface(system_id, component_id),
+	is_destroying(false),
 	tx_in_progress(false),
 	tx_q {},
 	rx_buf {},
@@ -124,6 +125,7 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
 
 MAVConnTCPClient::~MAVConnTCPClient()
 {
+	is_destroying = true;
 	close();
 }
 
@@ -211,6 +213,9 @@ void MAVConnTCPClient::send_message(const mavlink::Message &message)
 
 void MAVConnTCPClient::do_recv()
 {
+	if (is_destroying) {
+		return;
+	}
 	auto sthis = shared_from_this();
 	socket.async_receive(
 			buffer(rx_buf),
@@ -276,7 +281,8 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 		std::string server_host, unsigned short server_port) :
 	MAVConnInterface(system_id, component_id),
 	io_service(),
-	acceptor(io_service)
+	acceptor(io_service),
+	is_destroying(false)
 {
 	if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, bind_ep))
 		throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
@@ -305,6 +311,7 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 
 MAVConnTCPServer::~MAVConnTCPServer()
 {
+	is_destroying = true;
 	close();
 }
 
@@ -400,6 +407,9 @@ void MAVConnTCPServer::send_message(const mavlink::Message &message)
 
 void MAVConnTCPServer::do_accept()
 {
+	if (is_destroying) {
+		return;
+	}
 	auto sthis = shared_from_this();
 	auto acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
 	acceptor.async_accept(
