@@ -93,9 +93,9 @@ TEST(UTILS, sensor_orientation_from_str__roll_180_yaw_90)
 	EXPECT_EQ(enum_value(SO::ROTATION_ROLL_180_YAW_90), utils::sensor_orientation_from_str("ROLL_180_YAW_90"));
 }
 
-TEST(UTILS, sensor_orientation_from_str__last_element_rpy_315)
+TEST(UTILS, sensor_orientation_from_str__last_element_roll_90_yaw_270)
 {
-	EXPECT_EQ(enum_value(SO::ROTATION_ROLL_315_PITCH_315_YAW_315), utils::sensor_orientation_from_str("ROLL_315_PITCH_315_YAW_315"));
+	EXPECT_EQ(enum_value(SO::ROTATION_ROLL_90_YAW_270), utils::sensor_orientation_from_str("ROLL_90_YAW_270"));
 }
 
 int main(int argc, char **argv)
