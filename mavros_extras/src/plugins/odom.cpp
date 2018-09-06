@@ -144,11 +144,11 @@ private:
 		}
 
 		//! Build 6x6 pose covariance matrix to be transformed and sent
-		ftf::Covariance6d cov_pose {};	// zero initialized
+		ftf::Covariance6d cov_pose = odom->pose.covariance;
 		ftf::EigenMapCovariance6d cov_pose_map(cov_pose.data());
 
 		//! Build 6x6 velocity covariance matrix to be transformed and sent
-		ftf::Covariance6d cov_vel {};	// zero initialized
+		ftf::Covariance6d cov_vel = odom->twist.covariance;
 		ftf::EigenMapCovariance6d cov_vel_map(cov_vel.data());
 
 		/** Apply transforms:
