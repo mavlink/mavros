@@ -8,7 +8,6 @@ plugin_blacklist:
 - altitude
 - debug_value
 - image_pub
-- mocap_pose_estimate
 - px4flow
 - vibration
 - vision_speed_estimate
