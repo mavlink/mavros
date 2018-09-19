@@ -27,6 +27,7 @@ namespace std_plugins {
  */
 class RCIOPlugin : public plugin::PluginBase {
 public:
+
 	RCIOPlugin() : PluginBase(),
 		rc_nh("~rc"),
 		raw_rc_in(0),
@@ -95,12 +96,49 @@ private:
 		raw_rc_in[offset + 7] = port.chan8_raw;
 		// [[[end]]] (checksum: fcb14b1ddfff9ce7dd02f5bd03825cff)
 
-		auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
+		send_rc_data(m_uas->synchronise_stamp(port.time_boot_ms), port.rssi);
+	}
 
-		rcin_msg->header.stamp = m_uas->synchronise_stamp(port.time_boot_ms);
-		rcin_msg->rssi = port.rssi;
-		rcin_msg->channels = raw_rc_in;
+	void send_rc_data(const ros::Time& stamp, const int rssi){
 
+		constexpr double kStickMax = 2000;
+		constexpr double kStickMin = 1000;
+
+		sensor_msgs::Joy rcin_msg;
+ 		rcin_msg.header.stamp = stamp;
+		//if rssi > 0, rc is on and so we set first button
+		rcin_msg.buttons.push_back(rssi > 0);
+ 		if(raw_rc_in.size() < 6){
+			ROS_FATAL("RC has too few control inputs and cannot be used, DO NOT FLY");
+		}
+		else{
+ 			std::vector<double> inputs;
+			for(const uint16_t& raw_rc_channel : raw_rc_in){
+			//convert to range -1 to 1
+				inputs.push_back((static_cast<double>(raw_rc_channel) - kStickMin) / (kStickMax - kStickMin));
+				inputs.back() = 2*inputs.back() - 1;
+				//ensure it is really in range
+				inputs.back() = std::min(std::max(inputs.back(),-1.0),1.0);
+			}
+ 			//force switches to be in extreme positions
+			for(size_t i = 4; i < 7; ++i){
+				//1 is active so we are a bit conservative here
+				if(inputs[i] < 0.5){
+					inputs[i] = -1.0;
+				}else{
+					inputs[i] = 1.0;
+				}
+			}
+ 			//weird ordering and inversions to match asctec interface
+			rcin_msg.axes.push_back(inputs[2]);
+			rcin_msg.axes.push_back(-inputs[1]);
+			rcin_msg.axes.push_back(inputs[0]);
+			rcin_msg.axes.push_back(-inputs[3]);
+			rcin_msg.axes.push_back(inputs[4]);
+			rcin_msg.axes.push_back(inputs[6]);
+			rcin_msg.axes.push_back(inputs[5]);
+ 			rc_in_pub.publish(rcin_msg);
+		}
 	}
 
 	void handle_rc_channels(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RC_CHANNELS &channels)
@@ -149,13 +187,7 @@ private:
 		case  0: break;
 		}
 
-		auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
-
-		rcin_msg->header.stamp = m_uas->synchronise_stamp(channels.time_boot_ms);
-		rcin_msg->rssi = channels.rssi;
-		rcin_msg->channels = raw_rc_in;
-
-		rc_in_pub.publish(rcin_msg);
+		send_rc_data(m_uas->synchronise_stamp(channels.time_boot_ms), channels.rssi);
 	}
 
 	void handle_servo_output_raw(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SERVO_OUTPUT_RAW &port)

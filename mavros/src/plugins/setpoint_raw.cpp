@@ -17,6 +17,8 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <mav_msgs/RollPitchYawrateThrust.h>
+#include <tf/transform_datatypes.h>
 
 #include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/PositionTarget.h>
@@ -45,9 +47,24 @@ public:
 
 		bool tf_listen;
 
+		ignore_rpyt_messages_ = false;
+		if(!sp_nh.getParam("thrust_scaling_factor", thrust_scaling_)){
+			ROS_FATAL("No thrust scaling factor found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+		if(!sp_nh.getParam("system_mass_kg", system_mass_kg_)){
+			ROS_FATAL("No system mass found, DO NOT FLY");
+			ignore_rpyt_messages_ = true;
+		}
+	    if(!sp_nh.getParam("yaw_rate_scaling_factor", yaw_rate_scaling_)){
+	      ROS_FATAL("No yaw rate scaling factor found, DO NOT FLY");
+	      ignore_rpyt_messages_ = true;
+	    }
+
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
 		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
+		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
@@ -68,8 +85,10 @@ private:
 	friend class SetAttitudeTargetMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
+	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
+	bool ignore_rpyt_messages_;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_LOCAL_NED &tgt)
@@ -237,6 +256,36 @@ private:
 					body_rate,
 					req->thrust);
 	}
+
+    void rpyt_cb(const mav_msgs::RollPitchYawrateThrustConstPtr msg) {
+      if (ignore_rpyt_messages_) {
+        ROS_FATAL(
+            "Recieved roll_pitch_yaw_thrust_rate message, but "
+            "ignore_rpyt_messages_ is true: the most likely cause of this "
+            "is a failure to specify the thrust_scaling_factor, "
+            "yaw_rate_scaling_factor or system_mass_kg parameters");
+        return;
+      }
+      // the masks are much more limited than the docs would suggest so we don't use them
+      uint8_t type_mask = 0;
+      geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(msg->roll, msg->pitch, 0);
+      double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ * system_mass_kg_));
+      
+      Eigen::Quaterniond desired_orientation;
+      Eigen::Vector3d body_rate;
+      tf::quaternionMsgToEigen(orientation, desired_orientation);
+      
+      // Transform desired orientation to represent aircraft->NED,
+      // MAVROS operates on orientation of base_link->ENU
+      auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
+          ftf::transform_orientation_baselink_aircraft(
+              desired_orientation));
+      body_rate.x() = 0;
+      body_rate.y() = 0;
+      body_rate.z() = -yaw_rate_scaling_ * msg->yaw_rate;
+      set_attitude_target(msg->header.stamp.toNSec() / 1000000, type_mask,
+                          ned_desired_orientation, body_rate, thrust);
+    }
 };
 }	// namespace std_plugins
 }	// namespace mavros
