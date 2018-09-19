@@ -2,11 +2,242 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.17.5 (2017-02-07)
+0.26.3 (2018-08-21)
+-------------------
+* fixup! b43279058a3029c67ea75b1ecb86442c9dc991d4
+* mavros_extras/log_transfer: Log transfer plugin
+* Contributors: mlvov
+
+0.26.2 (2018-08-08)
+-------------------
+* Fix namespace (std->extras)
+* Changing the callback name to rtcm_cb
+  Adding doxygen documentation
+* Sort the plugins by alphabetical order
+* Put back the casting
+* Using size_t instead of int
+  Using the same rtcm_data message
+  Remove int casting
+* Moving gps_rtk to mavros_extras
+* Contributors: Alexis Paques
+
+0.26.1 (2018-07-19)
+-------------------
+* trajectory: update plugin to match mavlink change from trajectory msg to
+  trajectory_representation_waypoints
+* Contributors: Martina
+
+0.26.0 (2018-06-06)
+-------------------
+* odom: fix mapping for body frame
+* Contributors: TSC21
+
+0.25.1 (2018-05-14)
 -------------------
 
-0.17.4 (2016-06-23)
+0.25.0 (2018-05-11)
 -------------------
+* extras: Refactor Trajectory handle cb
+* extras: Refactor Trajectory subscription callbacks
+* trajectory: use lambda functions
+* trajectory: add time_horizon for trajectory type Bezier
+* trajectory: add time_horizon field
+* trajectory: fix wrap_pi to have constant time execution
+* trajectory: fix email
+* trajectory: when receiving mavlink trajectory msg distinguish between types
+  to fill correctly the mavros message
+* trajectory: add path callback to support nav_msgs Path
+* trajectory: update trajectory_call back so that it distinguish between
+  trajectory types in copy the values
+* rename ObstacleAvoidance plugin to Trajectory
+* obstacle_avoidance: use cog to fill mavlink and ros messages
+* obstacle_avoidance: uncrustify
+* mavros_plugins: add obstacle avoidance plugin
+* add obstacle_avoidance plugin
+* CMakeLists: add obstacle_avoidance plugin
+* extras: odom: explicitly set the lambda expression arg types
+* extras: odom: use lambda expression to set the transform for twist
+* extras: odom: change the way the rotation matrices are init
+* extras: odom: set the frame_id to local frame only
+* extras: odom: respect the Odometry msg frame spec
+* extras: redo odom param processing
+* extras: odom: remove unnecessary eigen_conversions/eigen_msg.h include
+* extras: odom: fix underlying_type assignment
+* extras: odom: update msg spec link
+* extras: odom: move frame parsing to init()
+* extras: odom: change tf exception handler
+* extras: odom: improve way frame naming is handled
+* extras: update odom plugin to send ODOMETRY msgs
+* extras: smal style fix in vision pose est
+* extras: add covariance parsing to vision_speed_estimate (`#996 <https://github.com/mavlink/mavros/issues/996>`_)
+* Contributors: Martina, Nuno Marques, TSC21, Vladimir Ermakov
+
+0.24.0 (2018-04-05)
+-------------------
+* extras: update vision_pose_estimate plugin so it can send the covariance matrix also
+* px4flow: sending OPTICAL_FLOW_RAD messages
+* Contributors: Oleg Kalachev, TSC21
+
+0.23.3 (2018-03-09)
+-------------------
+
+0.23.2 (2018-03-07)
+-------------------
+
+0.23.1 (2018-02-27)
+-------------------
+* odom plugin: initialize matrix with zeros
+* extras fix `#950 <https://github.com/mavlink/mavros/issues/950>`_: fix unit conversions
+* Contributors: ChristophTobler, Vladimir Ermakov
+
+0.23.0 (2018-02-03)
+-------------------
+* add MAV_DISTANCE_SENSOR enum to_string
+* extras: plugins: obstacle_distance: update to new msg definition and crystalize
+* extras: obstacle_distance: increase number of array elements
+* extras: plugins: add obstacle_distance plugin
+* Fix vision odom.
+* Contributors: James Goppert, TSC21
+
+0.22.0 (2017-12-11)
+-------------------
+* scripts: Use non global mavros-ns allow to work __ns parameter
+* move member variable earth initialization
+* Contributors: Shingo Matsuura, Vladimir Ermakov
+
+0.21.5 (2017-11-16)
+-------------------
+* extras fix `#858 <https://github.com/mavlink/mavros/issues/858>`_: fix vector copy-paste error
+* Contributors: Vladimir Ermakov
+
+0.21.4 (2017-11-01)
+-------------------
+* ENU<->ECEF transforms fix. (`#847 <https://github.com/mavlink/mavros/issues/847>`_)
+  * ENU<->ECEF transforms fix.
+  * Changes after review. Unit tests added.
+* Contributors: pavloblindnology
+
+0.21.3 (2017-10-28)
+-------------------
+* mavteleop: Move from iteritems to items for python3 support
+  Items work with python3 and python2.7
+  Signed-off-by: Patrick Jose Pereira <patrickelectric@gmail.com>
+* extras: Configurable base frame id on distance_sensor
+  Fix `#835 <https://github.com/mavlink/mavros/issues/835>`_
+* debug_msgs: fix typo
+* debug_msgs: fix typo
+* extras: Use cog to reduce common msg filler code
+* add debug plugin
+* Contributors: Nuno Marques, Patrick Jose Pereira, TSC21, Vladimir Ermakov
+
+0.21.2 (2017-09-25)
+-------------------
+* odom: fix typo
+* odom: general fixes and code tighting
+* Use tf2 for odom plugin and set reasoable defaults for local pos cov.
+* Contributors: James Goppert, TSC21
+
+0.21.1 (2017-09-22)
+-------------------
+
+0.21.0 (2017-09-14)
+-------------------
+* IMU and attitude: general clean-up
+* Using tabs as the file does
+* Updating comments for PX4Flow
+* Removing copter_visualization from the yaml files.
+  Adding odometry to apm_config
+  Changing frame_id to base_link for vibration
+* Update the apm_config and px4flow_config files
+* Update configuration from mavros_extras
+* Contributors: Alexis Paques, TSC21
+
+0.20.1 (2017-08-28)
+-------------------
+
+0.20.0 (2017-08-23)
+-------------------
+* Extras: Distance sensors add RADAR and UNKNOWN type
+* Extras: distance sensor don't spam when message are bounce back from FCU
+* Extras: add ardupilot rangefinder plugin
+* [WIP] Plugins: setpoint_attitude: add sync between thrust and attitude (`#700 <https://github.com/mavlink/mavros/issues/700>`_)
+  * plugins: setpoint_attitude: add sync between throttle and attitude topics to be sent together
+  * plugins: typo correction: replace throttle with thrust
+  * plugins: msgs: setpoint_attitude: replaces Float32Stamped for Thrust msg
+  * plugins: setpoint_attitude: add sync between twist and thrust (RPY+Thrust)
+  * setpoint_attitude: update the logic of thrust normalization verification
+  * setpoint_attitude: implement sync between tf listener and thrust subscriber
+  * TF sync listener: generalize topic type that can be syncronized with TF2
+  * TF2ListenerMixin: keep class template, use template for tf sync method only
+  * TF2ListenerMixin: fix and improve sync tf2_start method
+  * general update to yaml config files and parameters
+  * setpoint_attitude: add note on Thrust sub name
+  * setpoint_attitude: TF sync: pass subscriber pointer instead of binding it
+* extras: fake_gps: use another method to throttle incoming msgs
+* extras: fake_gps: compute vector2d.norm()
+* frame tf: move ENU<->ECEF transforms to ftf_frame_conversions.cpp
+* extras: fake_gps: use rate instead of period
+* extras: fake_gps: style fix
+* extras: mocap_fake_gps->fake_gps: generalize plugin and use GeographicLib possibilites
+* extras: odom: Minor fixes
+* extras: Add odom plugin
+* Contributors: James Goppert, Nuno Marques, TSC21, Vladimir Ermakov, khancyr
+
+0.19.0 (2017-05-05)
+-------------------
+* extras: fix package link
+* extras: Fix adsb plugin
+* extras: Add ADSB plugin
+* Add frame transform for vibration levels (`#690 <https://github.com/mavlink/mavros/issues/690>`_)
+  * add frame transform for accel vibration levels
+  * use vectorEigenToMsg
+  * unscrustify
+* Contributors: Nuno Marques, Vladimir Ermakov
+
+0.18.7 (2017-02-24)
+-------------------
+* vision plugin : Add missing transform
+* Contributors: Kabir Mohammed
+
+0.18.6 (2017-02-07)
+-------------------
+
+0.18.5 (2016-12-12)
+-------------------
+
+0.18.4 (2016-11-11)
+-------------------
+* Code clean-up
+* code style fix
+* markup changes
+* Fake gps plugin
+* Update README for all packages
+* Contributors: Vilhjalmur, Vladimir Ermakov, vilhjalmur89
+
+0.18.3 (2016-07-07)
+-------------------
+
+0.18.2 (2016-06-30)
+-------------------
+
+0.18.1 (2016-06-24)
+-------------------
+
+0.18.0 (2016-06-23)
+-------------------
+* extras `#560 <https://github.com/mavlink/mavros/issues/560>`_: remove cv_bridge and image_transport deps
+* extras: Update UAS
+* extras:vision_speed_estimate: Update API
+* extras:vision_pose_estimate: Update API
+* extras:px4flow: Update API
+* extras:mocap_pose_estimate: Update API
+* extras:distance_sensor: Update API
+* extras:cam_imu_sync: Update API
+* extras: Automatic update by sed
+* extras: prepare to update
+* extras `#560 <https://github.com/mavlink/mavros/issues/560>`_: Remove image streaming over mavlink support.
+  Use external RTP streamer, e.g. https://github.com/ProjectArtemis/gst_video_server
+* Contributors: Vladimir Ermakov
 
 0.17.3 (2016-05-20)
 -------------------

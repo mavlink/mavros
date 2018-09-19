@@ -8,7 +8,7 @@ __all__ = (
     'DEFAULT_NAMESPACE'
 )
 
-DEFAULT_NAMESPACE = '/mavros'
+DEFAULT_NAMESPACE = 'mavros'
 
 # global namespace storage
 _mavros_ns = None

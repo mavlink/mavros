@@ -18,37 +18,40 @@ from std_msgs.msg import Header
 def convert_to_bytes(msg):
     """
     Re-builds the MAVLink byte stream from mavros_msgs/Mavlink messages.
+
+    Support both v1.0 and v2.0.
     """
     payload_octets = len(msg.payload64)
-    msg_len = 6 + msg.len  # header + payload length
     if payload_octets < msg.len / 8:
         raise ValueError("Specified payload length is bigger than actual payload64")
 
-    msgdata = bytearray(
-        struct.pack(
-            '<BBBBBB%dQ' % payload_octets,
-            254, msg.len, msg.seq, msg.sysid, msg.compid, msg.msgid,
-            *msg.payload64))
+    if msg.magic == Mavlink.MAVLINK_V10:
+        msg_len = 6 + msg.len  # header + payload length
+        msgdata = bytearray(
+            struct.pack(
+                '<BBBBBB%dQ' % payload_octets,
+                msg.magic, msg.len, msg.seq, msg.sysid, msg.compid, msg.msgid,
+                *msg.payload64))
+    else: # MAVLINK_V20
+        msg_len = 10 + msg.len  # header + payload length
+        msgdata = bytearray(
+            struct.pack(
+                '<BBBBBBBBBB%dQ' % payload_octets,
+                msg.magic, msg.len, msg.incompat_flags, msg.compat_flags, msg.seq,
+                msg.sysid, msg.compid,
+                msg.msgid & 0xff, (msg.msgid >> 8) & 0xff, (msg.msgid >> 16) & 0xff,
+                *msg.payload64))
 
     if payload_octets != msg.len / 8:
         # message is shorter than payload octets
         msgdata = msgdata[:msg_len]
 
-    if hasattr(mag, 'checksum'):
-        # since #286 Mavlink.msg save original checksum, so recalculation not needed.
-        crc16 = msg.checksum
-    else:
-        # from MAVLink.decode()
-        message_type = mavutil.mavlink.mavlink_map[msg.msgid]
-        crc_extra = message_type.crc_extra
-
-        # calculate crc16
-        crcbuf = msgdata[1:]
-        crcbuf.append(crc_extra)
-        crc16 = x25crc(crcbuf).crc
-
     # finalize
-    msgdata += struct.pack('<H', crc16)
+    msgdata += struct.pack('<H', msg.checksum)
+
+    if msg.magic == Mavlink.MAVLINK_V20:
+        msgdata += bytearray(msg.signature)
+
     return msgdata
 
 
@@ -69,20 +72,45 @@ def convert_to_payload64(payload_bytes):
 def convert_to_rosmsg(mavmsg, stamp=None):
     """
     Convert pymavlink message to Mavlink.msg
+
+    Currently supports MAVLink v1.0 only.
     """
     if stamp is not None:
         header = Header(stamp=stamp)
     else:
         header = Header(stamp=rospy.get_rostime())
 
-    return Mavlink(
-        header=header,
-        is_valid=True,
-        len=len(mavmsg.get_payload()),
-        seq=mavmsg.get_seq(),
-        sysid=mavmsg.get_srcSystem(),
-        compid=mavmsg.get_srcComponent(),
-        msgid=mavmsg.get_msgId(),
-        checksum=mavmsg.get_crc(),
-        payload64=convert_to_payload64(mavmsg.get_payload())
-    )
+    if mavutil.mavlink20():
+        # XXX Need some api to retreive signature block.
+        if mavmsg.get_signed():
+            rospy.logerr("Signed message can't be converted to rosmsg.")
+
+        hdr = mavmsg.get_header()
+        return Mavlink(
+            header=header,
+            framing_status=Mavlink.FRAMING_OK,
+            magic=Mavlink.MAVLINK_V20,
+            len=hdr.mlen,
+            incompat_flags=hdr.incompat_flags,
+            compat_flags=hdr.compat_flags,
+            sysid=hdr.srcSystem,
+            compid=hdr.srcComponent,
+            msgid=hdr.msgId,
+            checksum=mavmsg.get_crc(),
+            payload64=convert_to_payload64(mavmsg.get_payload()),
+            signature=None, # FIXME #569
+        )
+
+    else:
+        return Mavlink(
+            header=header,
+            framing_status=Mavlink.FRAMING_OK,
+            magic=Mavlink.MAVLINK_V10,
+            len=len(mavmsg.get_payload()),
+            seq=mavmsg.get_seq(),
+            sysid=mavmsg.get_srcSystem(),
+            compid=mavmsg.get_srcComponent(),
+            msgid=mavmsg.get_msgId(),
+            checksum=mavmsg.get_crc(),
+            payload64=convert_to_payload64(mavmsg.get_payload())
+        )

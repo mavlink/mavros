@@ -5,8 +5,6 @@ project(mavros_extras)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  image_transport
-  cv_bridge
   mavros
   roscpp
   mavros_msgs
@@ -52,7 +50,7 @@ include(MavrosMavlink)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-  CATKIN_DEPENDS image_transport mavros mavros_msgs roscpp sensor_msgs geometry_msgs
+  CATKIN_DEPENDS mavros mavros_msgs roscpp sensor_msgs geometry_msgs
   DEPENDS Boost
 )
 
@@ -66,14 +64,22 @@ include_directories(
 )
 
 add_library(mavros_extras
+  src/plugins/adsb.cpp
+  src/plugins/cam_imu_sync.cpp
+  src/plugins/debug_value.cpp
   src/plugins/distance_sensor.cpp
-  src/plugins/px4flow.cpp
-  src/plugins/image_pub.cpp
+  src/plugins/fake_gps.cpp
+  src/plugins/gps_rtk.cpp
+  src/plugins/log_transfer.cpp
   src/plugins/mocap_pose_estimate.cpp
+  src/plugins/obstacle_distance.cpp
+  src/plugins/odom.cpp
+  src/plugins/px4flow.cpp
+  src/plugins/rangefinder.cpp
+  src/plugins/trajectory.cpp
+  src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
-  src/plugins/vibration.cpp
-  src/plugins/cam_imu_sync.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
@@ -81,14 +87,6 @@ target_link_libraries(mavros_extras
 )
 
 ## Declare a cpp executable
-add_executable(gcs_image_bridge
-  src/gcs_image_bridge.cpp
-)
-target_link_libraries(gcs_image_bridge
-  ${mavros_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
-
 add_executable(copter_visualization
   src/copter_visualization.cpp
 )
@@ -119,7 +117,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras gcs_image_bridge copter_visualization servo_state_publisher
+install(TARGETS mavros_extras copter_visualization servo_state_publisher
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

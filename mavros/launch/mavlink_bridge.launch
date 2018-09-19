@@ -7,5 +7,5 @@
 		<node pkg="mavros" type="gcs_bridge" name="mavlink_bridge">
 			<param name="gcs_url" value="$(arg mavlink_bridge_url)" />
 		</node>
-	</group>	
+	</group>
 </launch>

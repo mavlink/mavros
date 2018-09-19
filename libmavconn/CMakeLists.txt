@@ -19,6 +19,10 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(EnableCXX11)
 include(MavrosMavlink)
 
+# Fixed in mavlink 2016.7.7
+#-> enum values out of int range
+#list(APPEND IGNORE_DIALECTS "autoquad")
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -53,6 +57,16 @@ target_link_libraries(mavconn
   ${console_bridge_LIBRARIES}
 )
 
+# Use catkin-supplied em_expand macros to generate source files
+em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h)
+
+em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp)
 
 #############
 ## Install ##
@@ -86,7 +100,7 @@ install(DIRECTORY cmake/Modules
 if(CATKIN_ENABLE_TESTING)
 
 catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-target_link_libraries(mavconn-test mavconn)
+target_link_libraries(mavconn-test mavconn pthread)
 
 endif()
 

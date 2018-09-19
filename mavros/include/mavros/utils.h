@@ -8,7 +8,7 @@
  *  @brief Some useful utils
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -17,33 +17,95 @@
 
 #pragma once
 
+#include <Eigen/Geometry>
 #include <mavconn/thread_utils.h>
 #include <mavros_msgs/mavlink_convert.h>
+#include <mavconn/mavlink_dialect.h>
 
-// redeclare message at deprecated location
+#include <ros/console.h>
+
+// OS X compat: missing error codes
+#ifdef __APPLE__
+#define EBADE 50	/* Invalid exchange */
+#define EBADFD 81	/* File descriptor in bad state */
+#define EBADRQC 54	/* Invalid request code */
+#define EBADSLT 55	/* Invalid slot */
+#endif
+
 namespace mavros {
-typedef mavros_msgs::Mavlink Mavlink __attribute__((deprecated));
-typedef mavros_msgs::MavlinkPtr MavlinkPtr __attribute__((deprecated));
-};	// namespace mavros
+namespace utils {
+using mavconn::utils::format;
 
-namespace mavutils {
 /**
- * @brief Copy mavros/Mavlink.msg message data to mavlink_message_t
- * @deprecated Please use mavros_msgs::mavlink::convert() instead.
+ * Possible modes of timesync operation
+ *
+ * Used by UAS class, but it can't be defined inside because enum is used in utils.
  */
-inline bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg) __attribute__((deprecated));
-bool copy_ros_to_mavlink(const mavros_msgs::Mavlink::ConstPtr &rmsg, mavlink_message_t &mmsg)
-{
-	return mavros_msgs::mavlink::convert(*rmsg, mmsg);
+enum class timesync_mode {
+	NONE = 0,	//!< Disabled
+	MAVLINK,	//!< Via TIMESYNC message
+	ONBOARD,
+	PASSTHROUGH,
 };
 
 /**
- * @brief Copy mavlink_message_t to mavros/Mavlink.msg
- * @deprecated Please use mavros_msgs::mavlink::convert() instead.
+ * Helper to get enum value from strongly typed enum (enum class).
  */
-inline void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg) __attribute__((deprecated));
-void copy_mavlink_to_ros(const mavlink_message_t *mmsg, mavros_msgs::MavlinkPtr &rmsg)
+template<typename _T>
+constexpr typename std::underlying_type<_T>::type enum_value(_T e)
 {
-	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
-};
-};	// namespace mavutils
+	return static_cast<typename std::underlying_type<_T>::type>(e);
+}
+
+/**
+ * Get string repr for timesync_mode
+ */
+std::string to_string(timesync_mode e);
+
+/**
+ * @brief Retrieve alias of the orientation received by MAVLink msg.
+ */
+std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
+
+std::string to_string(mavlink::common::MAV_AUTOPILOT e);
+std::string to_string(mavlink::common::MAV_TYPE e);
+std::string to_string(mavlink::common::MAV_STATE e);
+std::string to_string(mavlink::common::MAV_ESTIMATOR_TYPE e);
+std::string to_string(mavlink::common::ADSB_ALTITUDE_TYPE e);
+std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
+std::string to_string(mavlink::common::MAV_MISSION_RESULT e);
+std::string to_string(mavlink::common::MAV_FRAME e);
+std::string to_string(mavlink::common::MAV_DISTANCE_SENSOR e);
+
+/**
+ * Helper to call to_string() for enum _T
+ */
+template<typename _T>
+std::string to_string_enum(int e)
+{
+	return to_string(static_cast<_T>(e));
+}
+
+/**
+ * @brief Function to match the received orientation received by MAVLink msg
+ *        and the rotation of the sensor relative to the FCU.
+ */
+Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIENTATION orientation);
+
+/**
+ * @brief Retrieve sensor orientation number from alias name.
+ */
+int sensor_orientation_from_str(const std::string &sensor_orientation);
+
+/**
+ * @brief Retreive timesync mode from name
+ */
+timesync_mode timesync_mode_from_str(const std::string &mode);
+
+/**
+ * @brief Retreive MAV_FRAME from name
+ */
+mavlink::common::MAV_FRAME mav_frame_from_str(const std::string &mav_frame);
+
+}	// namespace utils
+}	// namespace mavros

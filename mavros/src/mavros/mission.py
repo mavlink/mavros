@@ -15,7 +15,7 @@ import mavros
 
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
 from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
-    WaypointSetCurrent
+        WaypointSetCurrent
 
 
 FRAMES = {

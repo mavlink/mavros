@@ -9,7 +9,7 @@
  */
 /*
  * libmavconn
- * Copyright 2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -19,46 +19,50 @@
 #pragma once
 
 #include <thread>
+#include <string>
 #include <cstdio>
 #include <sstream>
-#include <cstdarg>
 #include <pthread.h>
 
-namespace mavutils {
+namespace mavconn {
+namespace utils {
 
 /**
- * @brief Set std::thread name with printf-like mode
- * @param[in] thd std::thread
+ * @brief Make printf-formatted std::string
+ *
+ */
+template<typename ... Args>
+std::string format(const std::string &fmt, Args ... args)
+{
+	// C++11 specify that string store elements continously
+	std::string ret;
+
+	auto sz = std::snprintf(nullptr, 0, fmt.c_str(), args...);
+	ret.reserve(sz + 1); ret.resize(sz);	// to be sure there have room for \0
+	std::snprintf(&ret.front(), ret.capacity() + 1, fmt.c_str(), args...);
+	return ret;
+}
+
+/**
+ * @brief Set name to current thread, printf-like
  * @param[in] name name for thread
  * @return true if success
  *
  * @note Only for Linux target
  * @todo add for other posix system
  */
-inline bool set_thread_name(std::thread &thd, const char *name, ...)
+template<typename ... Args>
+bool set_this_thread_name(const std::string &name, Args&& ... args)
 {
-	pthread_t pth = thd.native_handle();
-	va_list arg_list;
-	va_start(arg_list, name);
+	auto new_name = format(name, std::forward<Args>(args)...);
 
-	char new_name[256];
-	vsnprintf(new_name, sizeof(new_name), name, arg_list);
-	va_end(arg_list);
 #ifdef __APPLE__
-	return pthread_setname_np(new_name) == 0;
+	return pthread_setname_np(new_name.c_str()) == 0;
 #else
-	return pthread_setname_np(pth, new_name) == 0;
+	pthread_t pth = pthread_self();
+	return pthread_setname_np(pth, new_name.c_str()) == 0;
 #endif
 }
-
-/**
- * @brief Set thread name (std::string variation)
- */
-template <typename Thread>
-inline bool set_thread_name(Thread &thd, std::string &name)
-{
-	return set_thread_name(thd, name.c_str());
-};
 
 /**
  * @brief Convert to string objects with operator <<
@@ -71,4 +75,9 @@ inline const std::string to_string_ss(T &obj)
 	return ss.str();
 }
 
-}; // namespace mavutils
+constexpr size_t operator"" _KiB (unsigned long long sz)
+{
+	return sz * 1024;
+}
+}	// namespace utils
+}	// namespace mavconn

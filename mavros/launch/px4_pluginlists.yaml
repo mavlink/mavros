@@ -5,6 +5,8 @@ plugin_blacklist:
 - image_pub
 - vibration
 - distance_sensor
+- rangefinder
 
 plugin_whitelist: []
-#- 'sys_*'
+# 'sys_*'
+

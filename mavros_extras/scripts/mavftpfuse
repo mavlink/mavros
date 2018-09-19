@@ -182,7 +182,7 @@ class MavFtp(RosLoggingMixIn, Operations):
 
 def main():
     parser = argparse.ArgumentParser(description="FUSE for MAVLink-FTP mavros plugin")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     parser.add_argument('-d', '--debug', action='store_true', help="libfuse debug")
     parser.add_argument('path', type=str, help="mount point")

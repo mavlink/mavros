@@ -4,7 +4,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2016 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -26,22 +26,24 @@ ros::Subscriber mavlink_sub;
 MAVConnInterface::Ptr gcs_link;
 
 
-void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid) {
+void mavlink_pub_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing)
+{
 	auto rmsg = boost::make_shared<mavros_msgs::Mavlink>();
 
 	rmsg->header.stamp = ros::Time::now();
-	mavros_msgs::mavlink::convert(*mmsg, *rmsg);
+	mavros_msgs::mavlink::convert(*mmsg, *rmsg, mavros::utils::enum_value(framing));
 	mavlink_pub.publish(rmsg);
-};
+}
 
-void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg) {
-	mavlink_message_t mmsg;
+void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg)
+{
+	mavlink::mavlink_message_t mmsg;
 
 	if (mavros_msgs::mavlink::convert(*rmsg, mmsg))
-		gcs_link->send_message(&mmsg, rmsg->sysid, rmsg->compid);
+		gcs_link->send_message(&mmsg);	// !!! queue exception -> fall of gcs_bridge. intentional.
 	else
-		ROS_ERROR("Packet drop: illegal payload64 size");
-};
+		ROS_ERROR("Packet drop: convert error.");
+}
 
 int main(int argc, char *argv[])
 {
@@ -65,7 +67,7 @@ int main(int argc, char *argv[])
 	}
 
 	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
-	gcs_link->message_received.connect(mavlink_pub_cb);
+	gcs_link->message_received_cb = mavlink_pub_cb;
 
 	// prefer UDPROS, but allow TCPROS too
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
@@ -87,4 +89,3 @@ int main(int argc, char *argv[])
 	ros::spin();
 	return 0;
 }
-
