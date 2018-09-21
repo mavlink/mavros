@@ -71,7 +71,9 @@ union custom_mode {
 		SUB_MODE_AUTO_MISSION,
 		SUB_MODE_AUTO_RTL,
 		SUB_MODE_AUTO_LAND,
-		SUB_MODE_AUTO_RTGS
+		SUB_MODE_AUTO_RTGS,
+		SUB_MODE_AUTO_FOLLOW_TARGET,
+		SUB_MODE_AUTO_PRECLAND
 	};
 
 	struct {
@@ -83,16 +85,16 @@ union custom_mode {
 	float data_float;
 
 	custom_mode() : data(0)
-	{ };
+	{ }
 
 	explicit custom_mode(uint32_t val) : data(val)
-	{ };
+	{ }
 
 	constexpr custom_mode(uint8_t mm, uint8_t sm) :
 		reserved(0),
 		main_mode(mm),
 		sub_mode(sm)
-	{ };
+	{ }
 };
 
 /**

@@ -20,6 +20,7 @@ sys:
 # sys_time
 time:
   time_ref_source: "fcu"  # time_reference source
+  timesync_mode: NONE
   timesync_avg_alpha: 0.6 # timesync averaging factor
 
 # --- mavros plugins (alphabetical order) ---
@@ -43,16 +44,20 @@ cmd:
 
 # global_position
 global_position:
-  frame_id: "fcu"           # pose and fix frame_id
+  frame_id: "map"             # origin frame
+  child_frame_id: "base_link" # body-fixed frame
   rot_covariance: 99999.0   # covariance for attitude?
+  gps_uere: 1.0             # User Equivalent Range Error (UERE) of GPS sensor (m)
+  use_relative_alt: true    # use relative altitude for local coordinates
   tf:
     send: false               # send TF?
-    frame_id: "local_origin"  # TF frame_id
-    child_frame_id: "fcu_utm" # TF child_frame_id
+    frame_id: "map"  # TF frame_id
+    global_frame_id: "earth"  # TF earth frame_id
+    child_frame_id: "base_link" # TF child_frame_id
 
 # imu_pub
 imu:
-  frame_id: "fcu"
+  frame_id: "base_link"
   # need find actual values
   linear_acceleration_stdev: 0.0003
   angular_velocity_stdev: !degrees 0.02
@@ -61,11 +66,12 @@ imu:
 
 # local_position
 local_position:
-  frame_id: "fcu"
+  frame_id: "map"
   tf:
     send: false
-    frame_id: "local_origin"
-    child_frame_id: "fcu"
+    frame_id: "map"
+    child_frame_id: "base_link"
+    send_fcu: false
 
 # param
 # None, used for FCU params
@@ -84,23 +90,26 @@ setpoint_accel:
 
 # setpoint_attitude
 setpoint_attitude:
-  reverse_throttle: false   # allow reversed throttle
+  reverse_thrust: false     # allow reversed thrust
+  use_quaternion: false     # enable PoseStamped topic subscriber
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "attitude"
-    rate_limit: 10.0
+    frame_id: "map"
+    child_frame_id: "target_attitude"
+    rate_limit: 50.0
 
 # setpoint_position
 setpoint_position:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "setpoint"
+    frame_id: "map"
+    child_frame_id: "target_position"
     rate_limit: 50.0
+  mav_frame: LOCAL_NED
 
 # setpoint_velocity
-# None
+setpoint_velocity:
+  mav_frame: LOCAL_NED
 
 # vfr_hud
 # None
@@ -111,9 +120,55 @@ mission:
 
 # --- mavros extras plugins (same order) ---
 
+# adsb
+# None
+
+# debug_value
+# None
+
+# distance_sensor
+## Currently available orientations:
+#    Check http://wiki.ros.org/mavros/Enumerations
+##
+distance_sensor:
+  rangefinder_pub:
+    id: 0
+    frame_id: "lidar"
+    #orientation: PITCH_270 # sended by FCU
+    field_of_view: 0.0  # XXX TODO
+    send_tf: false
+    sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+  rangefinder_sub:
+    subscriber: true
+    id: 1
+    orientation: PITCH_270  # only that orientation are supported by APM 3.4+
+
 # image_pub
 image:
   frame_id: "px4flow"
+
+# fake_gps
+fake_gps:
+  # select data source
+  use_mocap: true         # ~mocap/pose
+  mocap_transform: true   # ~mocap/tf instead of pose
+  use_vision: false       # ~vision (pose)
+  # origin (default: Zürich)
+  geo_origin:
+    lat: 47.3667          # latitude [degrees]
+    lon: 8.5500           # longitude [degrees]
+    alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
+  eph: 2.0
+  epv: 2.0
+  satellites_visible: 5   # virtual number of visible satellites
+  fix_type: 3             # type of GPS fix (default: 3D)
+  tf:
+    listen: false
+    send: false           # send TF?
+    frame_id: "map"       # TF frame_id
+    child_frame_id: "fix" # TF child_frame_id
+    rate_limit: 10.0      # TF rate
+  gps_rate: 5.0           # GPS data publishing rate
 
 # mocap_pose_estimate
 mocap:
@@ -121,10 +176,16 @@ mocap:
   use_tf: false   # ~mocap/tf
   use_pose: true  # ~mocap/pose
 
+# odom
+odometry:
+  frame_tf:
+    desired_frame: "ned"
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+
 # px4flow
 px4flow:
   frame_id: "px4flow"
-  ranger_fov: !degrees 0.0  # XXX TODO
+  ranger_fov: !degrees 6.8  # 6.8 degreens at 5 meters, 31 degrees at 1 meter
   ranger_min_range: 0.3     # meters
   ranger_max_range: 5.0     # meters
 
@@ -132,16 +193,17 @@ px4flow:
 vision_pose:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "local_origin"
-    child_frame_id: "vision"
+    frame_id: "map"
+    child_frame_id: "vision_estimate"
     rate_limit: 10.0
 
 # vision_speed_estimate
 vision_speed:
-  listen_twist: false
+  listen_twist: true    # enable listen to twist topic, else listen to vec3d topic
+  twist_cov: true       # enable listen to twist with covariance topic
 
 # vibration
 vibration:
-  frame_id: "vibration"
+  frame_id: "base_link"
 
 # vim:set ts=2 sw=2 et:

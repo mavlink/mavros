@@ -17,56 +17,121 @@
 
 #pragma once
 
-#include <map>
+#include <tuple>
+#include <vector>
+#include <functional>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
 #include <mavros/mavros_uas.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace plugin {
+
 using mavros::UAS;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 typedef std::unique_lock<std::recursive_mutex> unique_lock;
 
 /**
- * @brief Helper macros to define message handler map item
- */
-#define MESSAGE_HANDLER(_message_id, _class_method_ptr)	\
-	{ _message_id, boost::bind(_class_method_ptr, this, _1, _2, _3) }
-
-/**
  * @brief MAVROS Plugin base class
  */
-class MavRosPlugin
+class PluginBase
 {
 private:
-	MavRosPlugin(const MavRosPlugin&) = delete;
+	PluginBase(const PluginBase&) = delete;
 
 public:
-	typedef boost::function<void (const mavlink_message_t *msg, uint8_t sysid, uint8_t compid)> message_handler;
-	typedef std::map<uint8_t, message_handler> message_map;
-	// pluginlib return boost::shared_ptr
-	typedef boost::shared_ptr<MavRosPlugin> Ptr;
-	typedef boost::shared_ptr<MavRosPlugin const> ConstPtr;
+	//! generic message handler callback
+	using HandlerCb = mavconn::MAVConnInterface::ReceivedCb;
+	//! Tuple: MSG ID, MSG NAME, message type into hash_code, message handler callback
+	using HandlerInfo = std::tuple<mavlink::msgid_t, const char*, size_t, HandlerCb>;
+	//! Subscriptions vector
+	using Subscriptions = std::vector<HandlerInfo>;
 
-	virtual ~MavRosPlugin() {};
+	// pluginlib return boost::shared_ptr
+	using Ptr = boost::shared_ptr<PluginBase>;
+	using ConstPtr = boost::shared_ptr<PluginBase const>;
+
+	virtual ~PluginBase() {};
 
 	/**
 	 * @brief Plugin initializer
 	 *
-	 * @param[in] uas           UAS instance (handles FCU connection and some statuses)
+	 * @param[in] uas  @p UAS instance
 	 */
-	virtual void initialize(UAS &uas) = 0;
+	virtual void initialize(UAS &uas) {
+		m_uas = &uas;
+	}
 
 	/**
-	 * @brief Return map with message rx handlers
+	 * @brief Return vector of MAVLink message subscriptions (handlers)
 	 */
-	virtual const message_map get_rx_handlers() = 0;
+	virtual Subscriptions get_subscriptions() = 0;
 
 protected:
 	/**
 	 * @brief Plugin constructor
 	 * Should not do anything before initialize()
 	 */
-	MavRosPlugin() {};
+	PluginBase() : m_uas(nullptr) {};
+
+	UAS *m_uas;
+
+	// TODO: filtered handlers
+
+	/**
+	 * Make subscription to raw message.
+	 *
+	 * @param[in] id  message id
+	 * @param[in] fn  pointer to member function (handler)
+	 */
+	template<class _C>
+	HandlerInfo make_handler(const mavlink::msgid_t id, void (_C::*fn)(const mavlink::mavlink_message_t *msg, const mavconn::Framing framing)) {
+		auto bfn = std::bind(fn, static_cast<_C*>(this), std::placeholders::_1, std::placeholders::_2);
+		const auto type_hash_ = typeid(mavlink::mavlink_message_t).hash_code();
+
+		return HandlerInfo{ id, nullptr, type_hash_, bfn };
+	}
+
+	/**
+	 * Make subscription to message with automatic decoding.
+	 *
+	 * @param[in] fn  pointer to member function (handler)
+	 */
+	template<class _C, class _T>
+	HandlerInfo make_handler(void (_C::*fn)(const mavlink::mavlink_message_t*, _T&)) {
+		auto bfn = std::bind(fn, static_cast<_C*>(this), std::placeholders::_1, std::placeholders::_2);
+		const auto id = _T::MSG_ID;
+		const auto name = _T::NAME;
+		const auto type_hash_ = typeid(_T).hash_code();
+
+		return HandlerInfo{
+			id, name, type_hash_,
+			[bfn](const mavlink::mavlink_message_t *msg, const mavconn::Framing framing) {
+				if (framing != mavconn::Framing::ok)
+					return;
+
+				mavlink::MsgMap map(msg);
+				_T obj;
+				obj.deserialize(map);
+
+				bfn(msg, obj);
+			}
+		};
+	}
+
+	/**
+	 * Common callback called on connection change
+	 */
+	virtual void connection_cb(bool connected) {
+		ROS_BREAK();
+	}
+
+	/**
+	 * Shortcut for connection_cb() registration
+	 */
+	inline void enable_connection_cb() {
+		m_uas->add_connection_change_handler(std::bind(&PluginBase::connection_cb, this, std::placeholders::_1));
+	}
 };
-};	// namespace mavplugin
+}	// namespace plugin
+}	// namespace mavros

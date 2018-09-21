@@ -25,7 +25,7 @@ image:
 
 px4flow:
   frame_id: "px4flow"
-  ranger_fov: !degrees 0.0  # XXX TODO
+  ranger_fov: !degrees 6.8  # 6.8 degreens at 5 meters, 31 degrees at 1 meter
   ranger_min_range: 0.3     # meters
   ranger_max_range: 5.0     # meters
 

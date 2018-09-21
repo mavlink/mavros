@@ -206,11 +206,11 @@ int main(int argc, char *argv[])
 	int num_rotors;
 	double arm_len, body_width, body_height;
 
-	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "local_origin");
-	priv_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
+	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "map");
+	priv_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
 
 	priv_nh.param("marker_scale", marker_scale, 1.0);
-	priv_nh.param("num_rotors", num_rotors, 6);
+	priv_nh.param("num_rotors", num_rotors, 4);
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
 	priv_nh.param("body_height", body_height, 0.10 );

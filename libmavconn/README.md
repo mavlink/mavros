@@ -16,7 +16,10 @@ Supported schemas:
 
   - Serial: `/path/to/serial/device[:baudrate]`
   - Serial: `serial:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
-  - UDP: `udp://[bind_host[:port]]@[remote_host[:port]][/?ids=sysid,compid]`
+  - Serial with hardware flow control: `serial-hwfc:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
+  - UDP: `udp://[bind_host][:port]@[remote_host][:port][/?ids=sysid,compid]`
+  - UDP broadcast until GCS discovery: `udp-b://[bind_host][:port]@[:port][/?ids=sysid,compid]`
+  - UDP broadcast (permanent): `udp-pb://[bind_host][:port]@[:port][/?ids=sysid,compid]
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
   - TCP server: `tcp-l://[bind_port][:port][/?ids=sysid,compid]`
 
@@ -29,7 +32,7 @@ Dependencies
 Same as for mavros:
 
   - Linux host
-  - Boost >= 1.46 (used Boost.ASIO and Boost.Signals2)
+  - Boost >= 1.46 (used Boost.ASIO)
   - console-bridge library
   - compiller with C++11 support
 

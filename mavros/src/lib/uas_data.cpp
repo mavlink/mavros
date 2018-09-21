@@ -19,11 +19,12 @@
 #include <mavros/px4_custom_mode.h>
 
 using namespace mavros;
+using utils::enum_value;
 
 UAS::UAS() :
 	tf2_listener(tf2_buffer, true),
-	type(MAV_TYPE_GENERIC),
-	autopilot(MAV_AUTOPILOT_GENERIC),
+	type(enum_value(MAV_TYPE::GENERIC)),
+	autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
 	base_mode(0),
 	target_system(1),
 	target_component(1),
@@ -33,13 +34,27 @@ UAS::UAS() :
 	gps_fix_type(0),
 	gps_satellites_visible(0),
 	time_offset(0),
+	tsync_mode(UAS::timesync_mode::NONE),
 	fcu_caps_known(false),
 	fcu_capabilities(0)
-{}
+{
+	try {
+		// Using smallest dataset with 5' grid,
+		// From default location,
+		// Use cubic interpolation, Thread safe
+		egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
+	}
+	catch (const std::exception &e) {
+		// catch exception and shutdown node
+		ROS_FATAL_STREAM("UAS: GeographicLib exception: " << e.what() <<
+			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
+		ros::shutdown();
+	}
 
-void UAS::stop(void)
-{}
-
+	// send static transform from "local_origin" (ENU) to "local_origin_ned" (NED)
+	publish_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)));
+	publish_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)));
+}
 
 /* -*- heartbeat handlers -*- */
 
@@ -54,14 +69,22 @@ void UAS::update_connection_status(bool conn_)
 {
 	if (conn_ != connected) {
 		connected = conn_;
-		sig_connection_changed(connected);
+
+		// call all change cb's
+		for (auto &cb : connection_cb_vec)
+			cb(conn_);
 	}
 }
 
+void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
+{
+	lock_guard lock(mutex);
+	connection_cb_vec.push_back(cb);
+}
 
 /* -*- autopilot version -*- */
 
-static uint64_t get_default_caps(uint8_t ap_type)
+static uint64_t get_default_caps(UAS::MAV_AUTOPILOT ap_type)
 {
 	// TODO: return default caps mask for known FCU's
 	return 0;
@@ -87,23 +110,35 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 
 /* -*- IMU data -*- */
 
-void UAS::update_attitude_imu(sensor_msgs::Imu::Ptr &imu)
+void UAS::update_attitude_imu_enu(sensor_msgs::Imu::Ptr &imu)
 {
 	lock_guard lock(mutex);
-	imu_data = imu;
+	imu_enu_data = imu;
 }
 
-sensor_msgs::Imu::Ptr UAS::get_attitude_imu()
+void UAS::update_attitude_imu_ned(sensor_msgs::Imu::Ptr &imu)
 {
 	lock_guard lock(mutex);
-	return imu_data;
+	imu_ned_data = imu;
 }
 
-geometry_msgs::Quaternion UAS::get_attitude_orientation()
+sensor_msgs::Imu::Ptr UAS::get_attitude_imu_enu()
 {
 	lock_guard lock(mutex);
-	if (imu_data)
-		return imu_data->orientation;
+	return imu_enu_data;
+}
+
+sensor_msgs::Imu::Ptr UAS::get_attitude_imu_ned()
+{
+	lock_guard lock(mutex);
+	return imu_ned_data;
+}
+
+geometry_msgs::Quaternion UAS::get_attitude_orientation_enu()
+{
+	lock_guard lock(mutex);
+	if (imu_enu_data)
+		return imu_enu_data->orientation;
 	else {
 		// fallback - return identity
 		geometry_msgs::Quaternion q;
@@ -112,11 +147,37 @@ geometry_msgs::Quaternion UAS::get_attitude_orientation()
 	}
 }
 
-geometry_msgs::Vector3 UAS::get_attitude_angular_velocity()
+geometry_msgs::Quaternion UAS::get_attitude_orientation_ned()
 {
 	lock_guard lock(mutex);
-	if (imu_data)
-		return imu_data->angular_velocity;
+	if (imu_ned_data)
+		return imu_ned_data->orientation;
+	else {
+		// fallback - return identity
+		geometry_msgs::Quaternion q;
+		q.w = 1.0; q.x = q.y = q.z = 0.0;
+		return q;
+	}
+}
+
+geometry_msgs::Vector3 UAS::get_attitude_angular_velocity_enu()
+{
+	lock_guard lock(mutex);
+	if (imu_enu_data)
+		return imu_enu_data->angular_velocity;
+	else {
+		// fallback
+		geometry_msgs::Vector3 v;
+		v.x = v.y = v.z = 0.0;
+		return v;
+	}
+}
+
+geometry_msgs::Vector3 UAS::get_attitude_angular_velocity_ned()
+{
+	lock_guard lock(mutex);
+	if (imu_ned_data)
+		return imu_ned_data->angular_velocity;
 	else {
 		// fallback
 		geometry_msgs::Vector3 v;
@@ -129,8 +190,8 @@ geometry_msgs::Vector3 UAS::get_attitude_angular_velocity()
 /* -*- GPS data -*- */
 
 void UAS::update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
-		float eph, float epv,
-		int fix_type, int satellites_visible)
+	float eph, float epv,
+	int fix_type, int satellites_visible)
 {
 	lock_guard lock(mutex);
 
@@ -159,3 +220,17 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 	return gps_fix;
 }
 
+/* -*- transform -*- */
+
+//! Publishes static transform
+void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)
+{
+	geometry_msgs::TransformStamped static_transformStamped;
+
+	static_transformStamped.header.stamp = ros::Time::now();
+	static_transformStamped.header.frame_id = frame_id;
+	static_transformStamped.child_frame_id = child_id;
+	tf::transformEigenToMsg(tr, static_transformStamped.transform);
+
+	tf2_static_broadcaster.sendTransform(static_transformStamped);
+}

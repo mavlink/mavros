@@ -19,4 +19,4 @@ uint8 MAV_MODE_TEST_ARMED		= 194
 uint8 base_mode		# filled by MAV_MODE enum value or 0 if custom_mode != ''
 string custom_mode	# string mode representation or integer
 ---
-bool success
+bool mode_sent		# Mode known/parsed correctly and SET_MODE are sent

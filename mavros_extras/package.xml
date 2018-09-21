@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mavros_extras</name>
-  <version>0.17.5</version>
+  <version>0.26.3</version>
   <description>
-    Extra nodes and plugins for <a href="http://wiki.rot.org/mavros">MAVROS</a>.
+    Extra nodes and plugins for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
@@ -19,8 +19,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>cmake_modules</build_depend>
-  <depend>image_transport</depend>
-  <depend>cv_bridge</depend>
   <depend>mavros</depend>
   <depend>roscpp</depend>
   <depend>geometry_msgs</depend>

@@ -1,0 +1,4 @@
+# Stop log transfer and resume normal logging
+
+---
+bool success

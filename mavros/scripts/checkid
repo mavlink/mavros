@@ -18,6 +18,7 @@ import argparse
 
 import os
 import rospy
+import mavros
 from mavros.utils import *
 from mavros_msgs.msg import Mavlink
 
@@ -93,7 +94,7 @@ def main():
     # NOTE: in this particular script we do not need any plugin topic (which uses mavros private namespace)
     # And will use mavlink topics from global namespace (default "/"). You may define at run _ns:=NS
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
     #parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
     parser.add_argument('-f', '--follow', action='store_true', help="do not exit after first report (report each 15 sec).")
 

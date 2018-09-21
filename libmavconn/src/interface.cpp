@@ -8,7 +8,7 @@
  */
 /*
  * libmavconn
- * Copyright 2013,2014,2015 Vladimir Ermakov, All rights reserved.
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -17,8 +17,8 @@
 
 #include <set>
 #include <cassert>
-#include <console_bridge/console.h>
 
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/interface.h>
 #include <mavconn/msgbuffer.h>
 #include <mavconn/serial.h>
@@ -26,86 +26,35 @@
 #include <mavconn/tcp.h>
 
 namespace mavconn {
-
 #define PFX	"mavconn: "
 
-#if MAVLINK_CRC_EXTRA
-const uint8_t MAVConnInterface::mavlink_crcs[] = MAVLINK_MESSAGE_CRCS;
-#endif
-std::set<int> MAVConnInterface::allocated_channels;
-std::recursive_mutex MAVConnInterface::channel_mutex;
+using mavlink::mavlink_message_t;
+using mavlink::mavlink_status_t;
+
+// static members
+std::once_flag MAVConnInterface::init_flag;
+std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> MAVConnInterface::message_entries {};
+std::atomic<size_t> MAVConnInterface::conn_id_counter {0};
 
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
 	comp_id(component_id),
+	m_status {},
+	m_buffer {},
 	tx_total_bytes(0),
 	rx_total_bytes(0),
 	last_tx_total_bytes(0),
 	last_rx_total_bytes(0),
 	last_iostat(steady_clock::now())
 {
-	channel = new_channel();
-	assert(channel >= 0);
-}
-
-int MAVConnInterface::new_channel() {
-	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	int chan = 0;
-
-	for (chan = 0; chan < MAVLINK_COMM_NUM_BUFFERS; chan++) {
-		if (allocated_channels.count(chan) == 0) {
-			logDebug(PFX "Allocate new channel: %d", chan);
-			allocated_channels.insert(chan);
-			return chan;
-		}
-	}
-
-	logError(PFX "channel overrun");
-	return -1;
-}
-
-void MAVConnInterface::delete_channel(int chan) {
-	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	logDebug(PFX "Freeing channel: %d", chan);
-	allocated_channels.erase(allocated_channels.find(chan));
-}
-
-int MAVConnInterface::channes_available() {
-	std::lock_guard<std::recursive_mutex> lock(channel_mutex);
-	return MAVLINK_COMM_NUM_BUFFERS - allocated_channels.size();
-}
-
-MsgBuffer *MAVConnInterface::new_msgbuffer(const mavlink_message_t *message,
-		uint8_t sysid, uint8_t compid)
-{
-	/* if sysid/compid pair not match we need explicit finalize
-	 * else just copy to buffer */
-	if (message->sysid != sysid || message->compid != compid) {
-		mavlink_message_t msg = *message;
-
-#ifdef MAVLINK2_COMPAT
-		// for mavlink 1.0 len == min_len
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len, message->len,
-				mavlink_crcs[msg.msgid]);
-#else
-# if MAVLINK_CRC_EXTRA
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len,
-				mavlink_crcs[msg.msgid]);
-# else
-		mavlink_finalize_message_chan(&msg, sysid, compid, channel, message->len);
-# endif
-#endif
-
-		return new MsgBuffer(&msg);
-	}
-	else
-		return new MsgBuffer(message);
+	conn_id = conn_id_counter.fetch_add(1);
+	std::call_once(init_flag, init_msg_entry);
 }
 
 mavlink_status_t MAVConnInterface::get_status()
 {
-	return *mavlink_get_channel_status(channel);
+	return m_status;
 }
 
 MAVConnInterface::IOStat MAVConnInterface::get_iostat()
@@ -141,6 +90,111 @@ void MAVConnInterface::iostat_tx_add(size_t bytes)
 void MAVConnInterface::iostat_rx_add(size_t bytes)
 {
 	rx_total_bytes += bytes;
+}
+
+void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received)
+{
+	mavlink::mavlink_status_t status;
+	mavlink::mavlink_message_t message;
+
+	assert(bufsize >= bytes_received);
+
+	iostat_rx_add(bytes_received);
+	for (; bytes_received > 0; bytes_received--) {
+		auto c = *buf++;
+
+		// based on mavlink_parse_char()
+		auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_status, c, &message, &status));
+		if (msg_received == Framing::bad_crc || msg_received == Framing::bad_signature) {
+			mavlink::_mav_parse_error(&m_status);
+			m_status.msg_received = mavlink::MAVLINK_FRAMING_INCOMPLETE;
+			m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_IDLE;
+			if (c == MAVLINK_STX) {
+				m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_GOT_STX;
+				m_buffer.len = 0;
+				mavlink::mavlink_start_checksum(&m_buffer);
+			}
+		}
+
+		if (msg_received != Framing::incomplete) {
+			log_recv(pfx, message, msg_received);
+
+			if (message_received_cb)
+				message_received_cb(&message, msg_received);
+		}
+	}
+}
+
+void MAVConnInterface::log_recv(const char *pfx, mavlink_message_t &msg, Framing framing)
+{
+	const char *framing_str = (framing == Framing::ok) ? "OK" :
+			(framing == Framing::bad_crc) ? "!CRC" :
+			(framing == Framing::bad_signature) ? "!SIG" : "ERR";
+
+	const char *proto_version_str = (msg.magic == MAVLINK_STX) ? "v2.0" : "v1.0";
+
+	CONSOLE_BRIDGE_logDebug("%s%zu: recv: %s %4s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+			pfx, conn_id,
+			proto_version_str,
+			framing_str,
+			msg.msgid, msg.len, msg.sysid, msg.compid, msg.seq);
+}
+
+void MAVConnInterface::log_send(const char *pfx, const mavlink_message_t *msg)
+{
+	const char *proto_version_str = (msg->magic == MAVLINK_STX) ? "v2.0" : "v1.0";
+
+	CONSOLE_BRIDGE_logDebug("%s%zu: send: %s Message-Id: %u [%u bytes] IDs: %u.%u Seq: %u",
+			pfx, conn_id,
+			proto_version_str,
+			msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq);
+}
+
+void MAVConnInterface::log_send_obj(const char *pfx, const mavlink::Message &msg)
+{
+	CONSOLE_BRIDGE_logDebug("%s%zu: send: %s", pfx, conn_id, msg.to_yaml().c_str());
+}
+
+void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t *msg)
+{
+	try {
+		send_message(msg);
+	}
+	catch (std::length_error &e) {
+		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
+				conn_id,
+				msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq,
+				e.what());
+	}
+}
+
+void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
+{
+	try {
+		send_message(msg);
+	}
+	catch (std::length_error &e) {
+		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message %s: %s",
+				conn_id,
+				msg.get_name().c_str(),
+				e.what());
+	}
+}
+
+void MAVConnInterface::set_protocol_version(Protocol pver)
+{
+	if (pver == Protocol::V10)
+		m_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+	else
+		m_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+}
+
+Protocol MAVConnInterface::get_protocol_version()
+{
+	if (m_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)
+		return Protocol::V10;
+	else
+		return Protocol::V20;
 }
 
 /**
@@ -193,14 +247,14 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	auto ids_it = std::search(query.begin(), query.end(),
 			ids_end.begin(), ids_end.end());
 	if (ids_it == query.end()) {
-		logWarn(PFX "URL: unknown query arguments");
+		CONSOLE_BRIDGE_logWarn(PFX "URL: unknown query arguments");
 		return;
 	}
 
 	std::advance(ids_it, ids_end.length());
 	auto comma_it = std::find(ids_it, query.end(), ',');
 	if (comma_it == query.end()) {
-		logError(PFX "URL: no comma in ids= query");
+		CONSOLE_BRIDGE_logError(PFX "URL: no comma in ids= query");
 		return;
 	}
 
@@ -210,27 +264,27 @@ static void url_parse_query(std::string query, uint8_t &sysid, uint8_t &compid)
 	sysid = std::stoi(sys);
 	compid = std::stoi(comp);
 
-	logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
+	CONSOLE_BRIDGE_logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
 }
 
 static MAVConnInterface::Ptr url_parse_serial(
 		std::string path, std::string query,
-		uint8_t system_id, uint8_t component_id)
+		uint8_t system_id, uint8_t component_id, bool hwflow)
 {
 	std::string file_path;
 	int baudrate;
 
 	// /dev/ttyACM0:57600
-	url_parse_host(path, file_path, baudrate, "/dev/ttyACM0", 57600);
+	url_parse_host(path, file_path, baudrate, MAVConnSerial::DEFAULT_DEVICE, MAVConnSerial::DEFAULT_BAUDRATE);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnSerial>(system_id, component_id,
-			file_path, baudrate);
+	return std::make_shared<MAVConnSerial>(system_id, component_id,
+			file_path, baudrate, hwflow);
 }
 
 static MAVConnInterface::Ptr url_parse_udp(
 		std::string hosts, std::string query,
-		uint8_t system_id, uint8_t component_id)
+		uint8_t system_id, uint8_t component_id, bool is_udpb, bool permanent_broadcast)
 {
 	std::string bind_pair, remote_pair;
 	std::string bind_host, remote_host;
@@ -238,7 +292,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 	auto sep_it = std::find(hosts.begin(), hosts.end(), '@');
 	if (sep_it == hosts.end()) {
-		logError(PFX "UDP URL should contain @!");
+		CONSOLE_BRIDGE_logError(PFX "UDP URL should contain @!");
 		throw DeviceError("url", "UDP separator not found");
 	}
 
@@ -246,11 +300,14 @@ static MAVConnInterface::Ptr url_parse_udp(
 	remote_pair.assign(sep_it + 1, hosts.end());
 
 	// udp://0.0.0.0:14555@:14550
-	url_parse_host(bind_pair, bind_host, bind_port, "0.0.0.0", 14555);
-	url_parse_host(remote_pair, remote_host, remote_port, "", 14550);
+	url_parse_host(bind_pair, bind_host, bind_port, "0.0.0.0", MAVConnUDP::DEFAULT_BIND_PORT);
+	url_parse_host(remote_pair, remote_host, remote_port, MAVConnUDP::DEFAULT_REMOTE_HOST, MAVConnUDP::DEFAULT_REMOTE_PORT);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnUDP>(system_id, component_id,
+	if (is_udpb)
+		remote_host = permanent_broadcast ? MAVConnUDP::PERMANENT_BROADCAST_REMOTE_HOST : MAVConnUDP::BROADCAST_REMOTE_HOST;
+
+	return std::make_shared<MAVConnUDP>(system_id, component_id,
 			bind_host, bind_port,
 			remote_host, remote_port);
 }
@@ -266,7 +323,7 @@ static MAVConnInterface::Ptr url_parse_tcp_client(
 	url_parse_host(host, server_host, server_port, "localhost", 5760);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnTCPClient>(system_id, component_id,
+	return std::make_shared<MAVConnTCPClient>(system_id, component_id,
 			server_host, server_port);
 }
 
@@ -281,13 +338,13 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 	url_parse_host(host, bind_host, bind_port, "0.0.0.0", 5760);
 	url_parse_query(query, system_id, component_id);
 
-	return boost::make_shared<MAVConnTCPServer>(system_id, component_id,
+	return std::make_shared<MAVConnTCPServer>(system_id, component_id,
 			bind_host, bind_port);
 }
 
 MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
-		uint8_t system_id, uint8_t component_id) {
-
+		uint8_t system_id, uint8_t component_id)
+{
 	/* Based on code found here:
 	 * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
 	 */
@@ -303,8 +360,8 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 			proto_end.begin(), proto_end.end());
 	if (proto_it == url.end()) {
 		// looks like file path
-		logDebug(PFX "URL: %s: looks like file path", url.c_str());
-		return url_parse_serial(url, "", system_id, component_id);
+		CONSOLE_BRIDGE_logDebug(PFX "URL: %s: looks like file path", url.c_str());
+		return url_parse_serial(url, "", system_id, component_id, false);
 	}
 
 	// copy protocol
@@ -327,20 +384,25 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(std::string url,
 		++query_it;
 	query.assign(query_it, url.end());
 
-	logDebug(PFX "URL: %s: proto: %s, host: %s, path: %s, query: %s",
+	CONSOLE_BRIDGE_logDebug(PFX "URL: %s: proto: %s, host: %s, path: %s, query: %s",
 			url.c_str(), proto.c_str(), host.c_str(),
 			path.c_str(), query.c_str());
 
 	if (proto == "udp")
-		return url_parse_udp(host, query, system_id, component_id);
+		return url_parse_udp(host, query, system_id, component_id, false, false);
+	else if (proto == "udp-b")
+		return url_parse_udp(host, query, system_id, component_id, true, false);
+	else if (proto == "udp-pb")
+		return url_parse_udp(host, query, system_id, component_id, true, true);
 	else if (proto == "tcp")
 		return url_parse_tcp_client(host, query, system_id, component_id);
 	else if (proto == "tcp-l")
 		return url_parse_tcp_server(host, query, system_id, component_id);
 	else if (proto == "serial")
-		return url_parse_serial(path, query, system_id, component_id);
+		return url_parse_serial(path, query, system_id, component_id, false);
+	else if (proto == "serial-hwfc")
+		return url_parse_serial(path, query, system_id, component_id, true);
 	else
 		throw DeviceError("url", "Unknown URL type");
 }
-
-}; // namespace mavconn
+}	// namespace mavconn

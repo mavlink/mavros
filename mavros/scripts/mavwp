@@ -25,7 +25,6 @@ except ImportError:
     no_prettytable = True
 
 
-
 def get_wp_file_io(args):
     return M.QGroundControlWP()
 
@@ -96,9 +95,9 @@ def do_load(args):
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
-    def _load_call(waypoint_list):
+    def _load_call(start, waypoint_list):
         try:
-            ret = M.push(waypoints=waypoint_list)
+            ret = M.push(start_index=start, waypoints=waypoint_list)
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -118,17 +117,26 @@ def do_load(args):
 
         done_evt.set()
 
-    if not args.preserve_home:
-        _load_call(wps)
+    if args.start_index > 0:
+        # Push partial
+        if args.start_index == args.end_index:
+            args.end_index += 1
+
+        end_index = args.end_index or len(wps)
+        _load_call(args.start_index, wps[args.start_index:end_index])
     else:
-        # Note: _load_call() emit publish on this topic, so callback only changes
-        # waypoint 0, and signal done event.
-        sub = M.subscribe_waypoints(_fix_wp0)
-        if not done_evt.wait(30.0):
-            fault("Something went wrong. Topic timed out.")
+        # Full push
+        if not args.preserve_home:
+            _load_call(0, wps)
         else:
-            sub.unregister()
-            _load_call(wps)
+            # Note: _load_call() emit publish on this topic, so callback only changes
+            # waypoint 0, and signal done event.
+            sub = M.subscribe_waypoints(_fix_wp0)
+            if not done_evt.wait(30.0):
+                fault("Something went wrong. Topic timed out.")
+            else:
+                sub.unregister()
+                _load_call(0, wps)
 
 
 def do_dump(args):
@@ -171,34 +179,36 @@ def do_set_current(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for manipulating mission on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(description="Command line tool for manipulating missions on MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     if not no_prettytable:
         show_args = subarg.add_parser('show', help="Show waypoints")
-        show_args.add_argument('-f', '--follow', action='store_true', help="watch and show new data")
-        show_args.add_argument('-p', '--pull', action='store_true', help="pull waypoints from FCU before show")
+        show_args.add_argument('-f', '--follow', action='store_true', help="Watch and show new data")
+        show_args.add_argument('-p', '--pull', action='store_true', help="Pull waypoints from FCU before show")
         show_args.set_defaults(func=do_show)
 
-    load_args = subarg.add_parser('load', help="load waypoints from file")
+    load_args = subarg.add_parser('load', help="Load waypoints from file")
     load_args.set_defaults(func=do_load)
     load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
+    load_args.add_argument('-s', '--start-index', type=int, default=0, help="Waypoint start index for partial updating (APM only)")
+    load_args.add_argument('-e', '--end-index', type=int, default=0, help="Waypoint end index for partial updating (APM only, default: last element in waypoint list)")
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file (QGC/MP format)")
 
-    pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
+    pull_args = subarg.add_parser('pull', help="Pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
-    dump_args = subarg.add_parser('dump', help="dump waypoints to file")
+    dump_args = subarg.add_parser('dump', help="Dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file (QGC format)")
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file (QGC format)")
 
-    clear_args = subarg.add_parser('clear', help="clear waypoints on device")
+    clear_args = subarg.add_parser('clear', help="Clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
 
-    setcur_args = subarg.add_parser('setcur', help="set current waypoints on device")
-    setcur_args.add_argument('seq', type=int, help="waypoint seq id")
+    setcur_args = subarg.add_parser('setcur', help="Set current waypoints on device")
+    setcur_args.add_argument('seq', type=int, help="Waypoint seq id")
     setcur_args.set_defaults(func=do_set_current)
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])

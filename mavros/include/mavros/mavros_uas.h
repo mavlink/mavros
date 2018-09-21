@@ -8,7 +8,7 @@
  * @{
  */
 /*
- * Copyright 2014,2015 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2017 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -20,12 +20,16 @@
 #include <array>
 #include <mutex>
 #include <atomic>
-#include <Eigen/Eigen>
-#include <Eigen/Geometry>
+#include <eigen_conversions/eigen_msg.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <mavconn/interface.h>
+#include <mavros/utils.h>
+#include <mavros/frame_tf.h>
+
+#include <GeographicLib/Geoid.hpp>
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -43,24 +47,6 @@ namespace mavros {
 #define UAS_DIAG(uasobjptr)				\
 	((uasobjptr)->diag_updater)
 
-/**
- * @brief helper for mavlink_msg_*_pack_chan()
- *
- * Filler for first arguments of *_pack_chan functions.
- */
-#define UAS_PACK_CHAN(uasobjptr)			\
-	UAS_FCU(uasobjptr)->get_system_id(),		\
-	UAS_FCU(uasobjptr)->get_component_id(),		\
-	UAS_FCU(uasobjptr)->get_channel()
-
-/**
- * @brief helper for pack messages with target fields
- *
- * Filler for target_system, target_component fields.
- */
-#define UAS_PACK_TGT(uasobjptr)				\
-	(uasobjptr)->get_tgt_system(),			\
-	(uasobjptr)->get_tgt_component()
 
 /**
  * @brief UAS for plugins
@@ -79,28 +65,19 @@ namespace mavros {
  */
 class UAS {
 public:
-	typedef std::lock_guard<std::recursive_mutex> lock_guard;
-	typedef std::unique_lock<std::recursive_mutex> unique_lock;
+	using ConnectionCb = std::function<void(bool)>;
+	using lock_guard = std::lock_guard<std::recursive_mutex>;
+	using unique_lock = std::unique_lock<std::recursive_mutex>;
 
-	//! Type matching rosmsg for covariance 3x3
-	typedef boost::array<double, 9> Covariance3d;
-	//! Type matching rosmsg for covarince 6x6
-	typedef boost::array<double, 36> Covariance6d;
-
-	//! Eigen::Map for Covariance3d
-	typedef Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapCovariance3d;
-	typedef Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > EigenMapConstCovariance3d;
-	//! Eigen::Map for Covariance6d
-	typedef Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapCovariance6d;
-	typedef Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor> > EigenMapConstCovariance6d;
+	// common enums used by UAS
+	using MAV_TYPE = mavlink::common::MAV_TYPE;
+	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
+	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
+	using MAV_STATE = mavlink::common::MAV_STATE;
+	using timesync_mode = utils::timesync_mode;
 
 	UAS();
 	~UAS() {};
-
-	/**
-	 * Stop UAS
-	 */
-	void stop(void);
 
 	/**
 	 * @brief MAVLink FCU device conection
@@ -111,13 +88,6 @@ public:
 	 * @brief Mavros diagnostic updater
 	 */
 	diagnostic_updater::Updater diag_updater;
-
-	/**
-	 * @brief This signal emit when status was changed
-	 *
-	 * @param bool connection status
-	 */
-	boost::signals2::signal<void(bool)> sig_connection_changed;
 
 	/**
 	 * @brief Return connection status
@@ -139,19 +109,24 @@ public:
 	void update_connection_status(bool conn_);
 
 	/**
+	 * @brief Add connection change handler callback
+	 */
+	void add_connection_change_handler(ConnectionCb cb);
+
+	/**
 	 * @brief Returns vehicle type
 	 */
-	inline enum MAV_TYPE get_type() {
-		uint8_t type_ = type;
-		return static_cast<enum MAV_TYPE>(type_);
+	inline MAV_TYPE get_type() {
+		std::underlying_type<MAV_TYPE>::type type_ = type;
+		return static_cast<MAV_TYPE>(type_);
 	}
 
 	/**
 	 * @brief Returns autopilot type
 	 */
-	inline enum MAV_AUTOPILOT get_autopilot() {
-		uint8_t autopilot_ = autopilot;
-		return static_cast<enum MAV_AUTOPILOT>(autopilot_);
+	inline MAV_AUTOPILOT get_autopilot() {
+		std::underlying_type<MAV_AUTOPILOT>::type autopilot_ = autopilot;
+		return static_cast<MAV_AUTOPILOT>(autopilot_);
 	}
 
 	/**
@@ -161,7 +136,7 @@ public:
 	 */
 	inline bool get_armed() {
 		uint8_t base_mode_ = base_mode;
-		return base_mode_ & MAV_MODE_FLAG_SAFETY_ARMED;
+		return base_mode_ & utils::enum_value(MAV_MODE_FLAG::SAFETY_ARMED);
 	}
 
 	/**
@@ -169,7 +144,7 @@ public:
 	 */
 	inline bool get_hil_state() {
 		uint8_t base_mode_ = base_mode;
-		return base_mode_ & MAV_MODE_FLAG_HIL_ENABLED;
+		return base_mode_ & utils::enum_value(MAV_MODE_FLAG::HIL_ENABLED);
 	}
 
 	/* -*- FCU target id pair -*- */
@@ -196,23 +171,49 @@ public:
 
 	/* -*- IMU data -*- */
 
-	//! Store IMU data
-	void update_attitude_imu(sensor_msgs::Imu::Ptr &imu);
+	/**
+	 * @brief Store IMU data [ENU]
+	 */
+	void update_attitude_imu_enu(sensor_msgs::Imu::Ptr &imu);
 
-	//! Get IMU data
-	sensor_msgs::Imu::Ptr get_attitude_imu();
+	/**
+	 * @brief Store IMU data [NED]
+	 */
+	void update_attitude_imu_ned(sensor_msgs::Imu::Ptr &imu);
+
+	/**
+	 * @brief Get IMU data [ENU]
+	 */
+	sensor_msgs::Imu::Ptr get_attitude_imu_enu();
+
+	/**
+	 * @brief Get IMU data [NED]
+	 */
+	sensor_msgs::Imu::Ptr get_attitude_imu_ned();
 
 	/**
 	 * @brief Get Attitude orientation quaternion
 	 * @return orientation quaternion [ENU]
 	 */
-	geometry_msgs::Quaternion get_attitude_orientation();
+	geometry_msgs::Quaternion get_attitude_orientation_enu();
+
+	/**
+	 * @brief Get Attitude orientation quaternion
+	 * @return orientation quaternion [NED]
+	 */
+	geometry_msgs::Quaternion get_attitude_orientation_ned();
 
 	/**
 	 * @brief Get angular velocity from IMU data
-	 * @return vector3
+	 * @return vector3 [ENU]
 	 */
-	geometry_msgs::Vector3 get_attitude_angular_velocity();
+	geometry_msgs::Vector3 get_attitude_angular_velocity_enu();
+
+	/**
+	 * @brief Get angular velocity from IMU data
+	 * @return vector3 [NED]
+	 */
+	geometry_msgs::Vector3 get_attitude_angular_velocity_ned();
 
 
 	/* -*- GPS data -*- */
@@ -228,12 +229,56 @@ public:
 	//! Retunrs last GPS RAW message
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
+	/* -*- GograpticLib utils -*- */
+
+	/**
+	 * @brief Geoid dataset used to convert between AMSL and WGS-84
+	 *
+	 * That class loads egm96_5 dataset to RAM, it is about 24 MiB.
+	 */
+	std::shared_ptr<GeographicLib::Geoid> egm96_5;
+
+	/**
+	 * @brief Conversion from height above geoid (AMSL)
+	 * to height above ellipsoid (WGS-84)
+	 */
+	template <class T>
+	inline double geoid_to_ellipsoid_height(T lla)
+	{
+		if (egm96_5)
+			return GeographicLib::Geoid::GEOIDTOELLIPSOID * (*egm96_5)(lla->latitude, lla->longitude);
+		else
+			return 0.0;
+	}
+
+	/**
+	 * @brief Conversion from height above ellipsoid (WGS-84)
+	 * to height above geoid (AMSL)
+	 */
+	template <class T>
+	inline double ellipsoid_to_geoid_height(T lla)
+	{
+		if (egm96_5)
+			return GeographicLib::Geoid::ELLIPSOIDTOGEOID * (*egm96_5)(lla->latitude, lla->longitude);
+		else
+			return 0.0;
+	}
 
 	/* -*- transform -*- */
 
 	tf2_ros::Buffer tf2_buffer;
 	tf2_ros::TransformListener tf2_listener;
 	tf2_ros::TransformBroadcaster tf2_broadcaster;
+	tf2_ros::StaticTransformBroadcaster tf2_static_broadcaster;
+
+	/**
+	 * @brief Publishes static transform.
+	 *
+	 * @param frame_id    parent frame for transform
+	 * @param child_id    child frame for transform
+	 * @param tr          transform
+	 */
+	void publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr);
 
 	/* -*- time sync -*- */
 
@@ -243,6 +288,14 @@ public:
 
 	inline uint64_t get_time_offset(void) {
 		return time_offset;
+	}
+
+	inline void set_timesync_mode(timesync_mode mode) {
+		tsync_mode = mode;
+	}
+
+	inline timesync_mode get_timesync_mode(void) {
+		return tsync_mode;
 	}
 
 	/* -*- autopilot version -*- */
@@ -279,6 +332,15 @@ public:
 	/* -*- utils -*- */
 
 	/**
+	 * Helper template to set target id's of message.
+	 */
+	template<typename _T>
+	inline void msg_set_target(_T &msg) {
+		msg.target_system = get_tgt_system();
+		msg.target_component = get_tgt_component();
+	}
+
+	/**
 	 * @brief Check that sys/comp id's is my target
 	 */
 	inline bool is_my_target(uint8_t sysid, uint8_t compid) {
@@ -296,14 +358,14 @@ public:
 	 * @brief Check that FCU is APM
 	 */
 	inline bool is_ardupilotmega() {
-		return MAV_AUTOPILOT_ARDUPILOTMEGA == get_autopilot();
+		return MAV_AUTOPILOT::ARDUPILOTMEGA == get_autopilot();
 	}
 
 	/**
 	 * @brief Check that FCU is PX4
 	 */
 	inline bool is_px4() {
-		return MAV_AUTOPILOT_PX4 == get_autopilot();
+		return MAV_AUTOPILOT::PX4 == get_autopilot();
 	}
 
 	/**
@@ -332,283 +394,6 @@ public:
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
-	/**
-	 * @brief Represent MAV_AUTOPILOT as string
-	 */
-	static std::string str_autopilot(enum MAV_AUTOPILOT ap);
-
-	/**
-	 * @brief Represent MAV_TYPE as string
-	 */
-	static std::string str_type(enum MAV_TYPE type);
-
-	/**
-	 * @brief Represent MAV_STATE as string
-	 */
-	static std::string str_system_status(enum MAV_STATE st);
-
-	/**
-	 * @brief Function to match the received orientation received by MAVLink msg
-	 *        and the rotation of the sensor relative to the FCU.
-	 */
-	static Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation);
-
-	/**
-	 * @brief Retrieve alias of the orientation received by MAVLink msg.
-	 */
-	static std::string str_sensor_orientation(MAV_SENSOR_ORIENTATION orientation);
-
-	/**
-	 * @brief Retrieve sensor orientation number from alias name.
-	 */
-	static int orientation_from_str(const std::string &sensor_orientation);
-
-	/* -*- frame conversion utilities -*- */
-
-	/**
-	 * @brief Convert euler angles to quaternion.
-	 */
-	static Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &rpy);
-
-	/**
-	 * @brief Convert euler angles to quaternion.
-	 *
-	 * @return quaternion, same as @a tf::quaternionFromRPY() but in Eigen format.
-	 */
-	static inline Eigen::Quaterniond quaternion_from_rpy(const double roll, const double pitch, const double yaw) {
-		return quaternion_from_rpy(Eigen::Vector3d(roll, pitch, yaw));
-	}
-
-	/**
-	 * @brief Convert quaternion to euler angles
-	 *
-	 * Reverse operation to @a quaternion_from_rpy()
-	 */
-	static Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond &q);
-
-	/**
-	 * @brief Convert quaternion to euler angles
-	 */
-	static inline void quaternion_to_rpy(const Eigen::Quaterniond &q, double &roll, double &pitch, double &yaw) {
-		const auto rpy = quaternion_to_rpy(q);
-		roll = rpy.x();
-		pitch = rpy.y();
-		yaw = rpy.z();
-	}
-
-	/**
-	 * @brief Get Yaw angle from quaternion
-	 *
-	 * Replacement function for @a tf::getYaw()
-	 */
-	static double quaternion_get_yaw(const Eigen::Quaterniond &q);
-
-	/**
-	 * @brief Store Quaternion to MAVLink float[4] format
-	 *
-	 * MAVLink uses wxyz order, wile Eigen::Quaterniond uses xyzw internal order,
-	 * so it can't be stored to array using Eigen::Map.
-	 */
-	static inline void quaternion_to_mavlink(const Eigen::Quaterniond &q, float qmsg[4]) {
-		qmsg[0] = q.w();
-		qmsg[1] = q.x();
-		qmsg[2] = q.y();
-		qmsg[3] = q.z();
-	}
-
-	/**
-	 * @brief Orientation transform options when applying rotations to data
-	 */
-	enum class STATIC_TRANSFORM : uint8_t {
-		NED_TO_ENU,	//!< will change orinetation from being expressed WRT NED frame to WRT ENU frame
-		ENU_TO_NED,	//!< change from expressed WRT ENU frame to WRT NED frame
-		AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
-		BASELINK_TO_AIRCRAFT	//!< change from expressed WRT baselnk to WRT aircraft
-	};
-
-	/**
-	 * @brief Transform representation of attitude from 1 frame to another
-	 * (e.g. transfrom attitude from representing  from base_link -> NED
-	 *               to representing base_link -> ENU)
-	 *
-	 * General function. Please use specialized enu-ned and ned-enu variants.
-	 */
-	static Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const STATIC_TRANSFORM transform);
-
-	/**
-	 * @brief Transform data experessed in one frame to another frame.
-	 *
-	 * General function. Please use specialized enu-ned and ned-enu variants.
-	 */
-	static Eigen::Vector3d transform_frame(const Eigen::Vector3d &vec, const Eigen::Quaterniond &q);
-
-	/**
-	 * @brief Transform convariance expressed in one frame to another
-	 *
-	 * General function. Please use specialized enu-ned and ned-enu variants.
-	 */
-	static Covariance3d transform_frame(const Covariance3d &cov, const Eigen::Quaterniond &q);
-
-	// XXX TODO implement that function
-	static Covariance6d transform_frame(const Covariance6d &cov, const Eigen::Quaterniond &q);
-
-	/**
-	 * @brief Transform data experessed in one frame to another frame.
-	 *
-	 * General function. Please use specialized enu-ned and ned-enu variants.
-	 */
-	static Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const STATIC_TRANSFORM transform);
-
-	/**
-	 * @brief Transform convariance expressed in one frame to another
-	 *
-	 * General function. Please use specialized enu-ned and ned-enu variants.
-	 */
-	static Covariance3d transform_static_frame(const Covariance3d &cov, const STATIC_TRANSFORM transform);
-
-	// XXX TODO implement that function
-	static Covariance6d transform_static_frame(const Covariance6d &cov, const STATIC_TRANSFORM transform);
-
-	/**
-	 * @brief Transform from attitude represented WRT NED frame to attitude
-	 *		  represented WRT ENU frame
-	 */
-	template<class T>
-	static inline T transform_orientation_ned_enu(const T &in) {
-		return transform_orientation(in, STATIC_TRANSFORM::NED_TO_ENU);
-	}
-
-	/**
-	 * @brief Transform from attitude represented WRT ENU frame to
-	 *		  attitude represented WRT NED frame
-	 */
-	template<class T>
-	static inline T transform_orientation_enu_ned(const T &in) {
-		return transform_orientation(in, STATIC_TRANSFORM::ENU_TO_NED);
-	}
-
-	/**
-	 * @brief Transform from attitude represented WRT aircraft frame to
-	 *		  attitude represented WRT base_link frame
-	 */
-	template<class T>
-	static inline T transform_orientation_aircraft_baselink(const T &in) {
-		return transform_orientation(in, STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
-	}
-
-	/**
-	 * @brief Transform from attitude represented WRT baselink frame to
-	 *		  attitude represented WRT body frame
-	 */
-	template<class T>
-	static inline T transform_orientation_baselink_aircraft(const T &in) {
-		return transform_orientation(in, STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
-	}
-
-	/**
-	 * @brief Transform data expressed in NED to ENU frame.
-	 *
-	 */
-	template<class T>
-	static inline T transform_frame_ned_enu(const T &in) {
-		return transform_static_frame(in, STATIC_TRANSFORM::NED_TO_ENU);
-	}
-
-	/**
-	 * @brief Transform data expressed in ENU to NED frame.
-	 *
-	 */
-	template<class T>
-	static inline T transform_frame_enu_ned(const T &in) {
-		return transform_static_frame(in, STATIC_TRANSFORM::ENU_TO_NED);
-	}
-
-	/**
-	 * @brief Transform data expressed in Aircraft frame to Baselink frame.
-	 *
-	 */
-	template<class T>
-	static inline T transform_frame_aircraft_baselink(const T &in) {
-		return transform_static_frame(in, STATIC_TRANSFORM::AIRCRAFT_TO_BASELINK);
-	}
-
-	/**
-	 * @brief Transform data expressed in Baselink frame to Aircraft frame.
-	 *
-	 */
-	template<class T>
-	static inline T transform_frame_baselink_aircraft(const T &in) {
-		return transform_static_frame(in, STATIC_TRANSFORM::BASELINK_TO_AIRCRAFT);
-	}
-
-	/**
-	 * @brief Transform data expressed in aircraft frame to NED frame.
-	 * Assumes quaternion represents rotation from aircraft frame to NED frame.
-	 */
-	template<class T>
-	static inline T transform_frame_aircraft_ned(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform data expressed in NED to aircraft frame.
-	 * Assumes quaternion represents rotation from NED to aircraft frame.
-	 */
-	template<class T>
-	static inline T transform_frame_ned_aircraft(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform data expressed in aircraft frame to ENU frame.
-	 * Assumes quaternion represents rotation from aircraft frame to ENU frame.
-	 */
-	template<class T>
-	static inline T transform_frame_aircraft_enu(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform data expressed in ENU to aircraft frame.
-	 * Assumes quaternion represents rotation from ENU to aircraft frame.
-	 */
-	template<class T>
-	static inline T transform_frame_enu_aircraft(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform data expressed in ENU to base_link frame.
-	 * Assumes quaternion represents rotation from ENU to base_link frame.
-	 */
-	template<class T>
-	static inline T transform_frame_enu_baselink(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform data expressed in baselink to ENU frame.
-	 * Assumes quaternion represents rotation from basel_link to ENU frame.
-	 */
-	template<class T>
-	static inline T transform_frame_baselink_enu(const T &in,const Eigen::Quaterniond &q) {
-		return transform_frame(in, q);
-	}
-
-	/**
-	 * @brief Transform heading from ROS to FCU frame.
-	 */
-	static inline double transform_frame_yaw_enu_ned(double yaw) {
-		return transform_frame_yaw(yaw);
-	}
-
-	/**
-	 * @brief Transform heading from FCU to ROS frame.
-	 */
-	static inline double transform_frame_yaw_ned_enu(double yaw) {
-		return transform_frame_yaw(yaw);
-	}
-
 private:
 	std::recursive_mutex mutex;
 
@@ -620,8 +405,10 @@ private:
 	uint8_t target_component;
 
 	std::atomic<bool> connected;
+	std::vector<ConnectionCb> connection_cb_vec;
 
-	sensor_msgs::Imu::Ptr imu_data;
+	sensor_msgs::Imu::Ptr imu_enu_data;
+	sensor_msgs::Imu::Ptr imu_ned_data;
 
 	sensor_msgs::NavSatFix::Ptr gps_fix;
 	float gps_eph;
@@ -630,12 +417,9 @@ private:
 	int gps_satellites_visible;
 
 	std::atomic<uint64_t> time_offset;
+	timesync_mode tsync_mode;
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
-
-	static inline double transform_frame_yaw(double yaw) {
-		return -yaw;
-	}
 };
-};	// namespace mavros
+}	// namespace mavros
