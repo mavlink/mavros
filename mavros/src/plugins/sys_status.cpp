@@ -418,7 +418,8 @@ public:
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
 		has_battery_status(false),
-		battery_voltage(0.0)
+		battery_voltage(0.0),
+		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -430,14 +431,21 @@ public:
 		double conn_timeout_d;
 		double conn_heartbeat_d;
 		double min_voltage;
+		std::string conn_heartbeat_mav_type_str;
+		
 
 		nh.param("conn/timeout", conn_timeout_d, 10.0);
 		nh.param("sys/min_voltage", min_voltage, 10.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
-		// rate parameter
+		// heartbeat rate parameter
 		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d) && conn_heartbeat_d != 0.0) {
 			conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
+		}
+
+		// heartbeat mav type parameter
+		if (nh.getParam("conn/heartbeat_mav_type", conn_heartbeat_mav_type_str) && !conn_heartbeat_mav_type_str.empty()) {
+			conn_heartbeat_mav_type = utils::mav_type_from_str(conn_heartbeat_mav_type_str);
 		}
 
 		// heartbeat diag always enabled
@@ -512,6 +520,8 @@ private:
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
 
+	MAV_TYPE conn_heartbeat_mav_type;
+	
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
@@ -835,7 +845,7 @@ private:
 
 		mavlink::common::msg::HEARTBEAT hb {};
 
-		hb.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER); //! @todo patch PX4 so it can also handle this type as datalink
+		hb.type = enum_value(conn_heartbeat_mav_type); //! @todo patch PX4 so it can also handle this type as datalink
 		hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
 		hb.base_mode = enum_value(MAV_MODE::MANUAL_ARMED);
 		hb.custom_mode = 0;

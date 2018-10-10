@@ -152,8 +152,8 @@ static const std::array<const std::string, 33> mav_type_strings{{
 /* 16 */ "Flapping wing",                 // Flapping wing
 /* 17 */ "Kite",                          // Kite
 /* 18 */ "Onboard companion controller",  // Onboard companion controller
-/* 19 */ "Two",                           // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
-/* 20 */ "Quad",                          // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
+/* 19 */ "Two rotor VTOL",                // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
+/* 20 */ "Quad rotor VTOL",               // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
 /* 21 */ "Tiltrotor VTOL",                // Tiltrotor VTOL
 /* 22 */ "VTOL reserved 2",               // VTOL reserved 2
 /* 23 */ "VTOL reserved 3",               // VTOL reserved 3
@@ -176,6 +176,20 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
+
+MAV_TYPE mav_type_from_str(const std::string &mav_type)
+{
+	for (size_t idx = 0; idx < mav_type_strings.size(); idx++) {
+		if (mav_type_strings[idx] == mav_type) {
+			std::underlying_type<MAV_TYPE>::type rv = idx;
+			return static_cast<MAV_TYPE>(rv);
+		}
+	}
+
+	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown MAV_TYPE: " << mav_type);
+	return MAV_TYPE::GENERIC;
+}
+
 // [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
 
 // [[[cog:
