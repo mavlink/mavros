@@ -59,12 +59,15 @@ public:
 		else {
 			vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cb, this);
 			vision_cov_sub = sp_nh.subscribe("pose_cov", 10, &VisionPoseEstimatePlugin::vision_cov_cb, this);
+			vision_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("recv", 10);
 		}
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			make_handler(&VisionPoseEstimatePlugin::handle_vision_position_estimate)
+		};
 	}
 
 private:
@@ -73,6 +76,7 @@ private:
 
 	ros::Subscriber vision_sub;
 	ros::Subscriber vision_cov_sub;
+	ros::Publisher vision_pub;
 
 	std::string tf_frame_id;
 	std::string tf_child_frame_id;
@@ -158,6 +162,27 @@ private:
 		tf::poseMsgToEigen(req->pose.pose, tr);
 
 		send_vision_estimate(req->header.stamp, tr, req->pose.covariance);
+	}
+
+	void handle_vision_position_estimate(const mavlink::mavlink_message_t *msg, mavlink::common::msg::VISION_POSITION_ESTIMATE &vpe)
+	{
+		//--------------- Transform FCU position and Attitude Data ---------------//
+		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(vpe.x, vpe.y, vpe.z));
+		auto ned_aircraft_orientation = ftf::quaternion_from_rpy(vpe.roll, vpe.pitch, vpe.yaw);
+		// Note this orientation describes ENU->baselink transform
+		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
+					ftf::transform_orientation_ned_enu(ned_aircraft_orientation));
+
+		//--------------- Generate Message Pointers ---------------//
+		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		pose->header = m_uas->synchronized_header(tf_frame_id, static_cast<uint32_t>(vpe.usec / 1e3)); // timestamp (ms) since system boot
+
+		// Convert from Eigen::Vector3d to geometry_msgs::Point
+		tf::pointEigenToMsg(enu_position, pose->pose.position);
+		// Convert from Eigen::Quaterniond to geometry_msgs::Quaternion
+		tf::quaternionEigenToMsg(enu_baselink_orientation, pose->pose.orientation);
+
+		vision_pub.publish(pose);
 	}
 };
 }	// namespace extra_plugins
