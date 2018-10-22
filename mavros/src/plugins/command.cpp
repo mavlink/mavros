@@ -24,6 +24,7 @@
 #include <mavros_msgs/CommandHome.h>
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandTriggerControl.h>
+#include <mavros_msgs/CommandTriggerInterval.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -70,7 +71,8 @@ public:
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
 		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
-		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
+		trigger_control_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
+		trigger_interval_srv = cmd_nh.advertiseService("trigger_interval", &CommandPlugin::trigger_interval_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -90,7 +92,8 @@ private:
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
 	ros::ServiceServer land_srv;
-	ros::ServiceServer trigger_srv;
+	ros::ServiceServer trigger_control_srv;
+	ros::ServiceServer trigger_interval_srv;
 
 	bool use_comp_id_system_control;
 
@@ -358,14 +361,29 @@ private:
 				res.success, res.result);
 	}
 
-        bool trigger_control_cb(mavros_msgs::CommandTriggerControl::Request &req,
+    bool trigger_control_cb(mavros_msgs::CommandTriggerControl::Request &req,
 			mavros_msgs::CommandTriggerControl::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
 				enum_value(MAV_CMD::DO_TRIGGER_CONTROL), 1,
 				(req.trigger_enable)? 1.0 : 0.0,
+				(req.sequence_reset)? 1.0 : 0.0,
+				(req.trigger_pause)? 1.0: 0.0,
+				0, 0, 0, 0,
+				res.success, res.result);
+	}
+
+	bool trigger_interval_cb(mavros_msgs::CommandTriggerInterval::Request &req,
+			mavros_msgs::CommandTriggerInterval::Response &res)
+	{
+		using mavlink::common::MAV_CMD;
+		
+		// trigger interval can only be set when triggering is disabled
+		return send_command_long_and_wait(false,
+				enum_value(MAV_CMD::DO_SET_CAM_TRIGG_INTERVAL), 1,
 				req.cycle_time,
+				req.integration_time, 
 				0, 0, 0, 0, 0,
 				res.success, res.result);
 	}

@@ -20,7 +20,7 @@ __all__ = (
 import rospy
 import mavros
 
-from mavros_msgs.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL, CommandTriggerControl
+from mavros_msgs.srv import CommandLong, CommandInt, CommandBool, CommandHome, CommandTOL, CommandTriggerControl, CommandTriggerInterval
 
 
 def _get_proxy(service, type):
@@ -45,6 +45,7 @@ def _setup_services():
     takeoff = _get_proxy('takeoff', CommandTOL)
     land = _get_proxy('land', CommandTOL)
     trigger_control = _get_proxy('trigger_control', CommandTriggerControl)
+    trigger_interval = _get_proxy('trigger_interval', CommandTriggerInterval)
 
 
 # register updater
