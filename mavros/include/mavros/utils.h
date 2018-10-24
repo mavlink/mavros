@@ -76,6 +76,7 @@ std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
 std::string to_string(mavlink::common::MAV_MISSION_RESULT e);
 std::string to_string(mavlink::common::MAV_FRAME e);
 std::string to_string(mavlink::common::MAV_DISTANCE_SENSOR e);
+std::string to_string(mavlink::common::OBS_AVOID_STATUS e);
 
 /**
  * Helper to call to_string() for enum _T
