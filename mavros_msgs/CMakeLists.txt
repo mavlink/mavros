@@ -12,10 +12,10 @@ add_message_files(
   ActuatorControl.msg
   Altitude.msg
   AttitudeTarget.msg
-  AvoidanceStatus.msg
   BatteryStatus.msg
   CamIMUStamp.msg
   CommandCode.msg
+  CompanionStatus.msg
   DebugValue.msg
   ExtendedState.msg
   FileEntry.msg

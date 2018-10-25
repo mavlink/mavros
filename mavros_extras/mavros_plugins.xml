@@ -47,7 +47,7 @@
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>
 	</class>
-	<class name="avoidance_status" type="mavros::extra_plugins::AvoidanceStatusPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send avoidance algorithm status report to the FCU.</description>
+	<class name="companion_status" type="mavros::extra_plugins::CompanionStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send companion status report to the FCU.</description>
 	</class>
 </library>
