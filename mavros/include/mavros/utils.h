@@ -77,7 +77,7 @@ std::string to_string(mavlink::common::MAV_MISSION_RESULT e);
 std::string to_string(mavlink::common::MAV_FRAME e);
 std::string to_string(mavlink::common::MAV_DISTANCE_SENSOR e);
 std::string to_string(mavlink::common::COMPANION_STATE e);
-std::string to_string(mavlink::common::COMPANION_SOURCE e);
+std::string to_string(mavlink::common::COMPANION_TYPE e);
 
 /**
  * Helper to call to_string() for enum _T

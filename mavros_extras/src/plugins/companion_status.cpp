@@ -23,7 +23,7 @@ namespace extra_plugins {
 
 //! Mavlink enumerations
 using mavlink::common::COMPANION_STATE;
-using mavlink::common::COMPANION_SOURCE;
+using mavlink::common::COMPANION_TYPE;
 
 /**
  * @brief Obstacle companion status plugin
@@ -63,13 +63,14 @@ private:
 	{
 		mavlink::common::msg::COMPANION_STATUS status_msg {};
 
-		status_msg.time_usec = req->header.stamp.toNSec() / 1000;			//!< [milisecs]
+		status_msg.time_usec = req->header.stamp.toNSec() / 1000;       //!< [milisecs]
 		status_msg.state = req->state;									//!< status in [0,4] see Mavlink COMPANION_STATE enumeration
-		status_msg.source = req->source;								//!< source in [0,2] see Mavlink COMPANION_SOURCE enumeration
-
+		status_msg.type = req->type;								    //!< source type in [0,2] see Mavlink COMPANION_SOURCE enumeration
+		status_msg.pid = req->pid;								        //!< source process ID
 
 		ROS_DEBUG_STREAM_NAMED("companion_status", "Companion status: " << utils::to_string_enum<COMPANION_STATE>(status_msg.state)
-				<< " source: "<< utils::to_string_enum<COMPANION_SOURCE>(status_msg.source) << std::endl << status_msg.to_yaml());
+				<< " type: "<< utils::to_string_enum<COMPANION_TYPE>(status_msg.type)<< " pid: "
+				<< status_msg.pid << std::endl << status_msg.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(status_msg);
 	}
