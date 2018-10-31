@@ -42,7 +42,7 @@ public:
 	HilPlugin() : PluginBase(),
 		hil_nh("~hil")
 	{ }
-
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
