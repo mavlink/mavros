@@ -45,6 +45,8 @@ static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 //! @brief IMU and attitude data publication plugin
 class IMUPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	IMUPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		has_hr_imu(false),
