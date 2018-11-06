@@ -146,7 +146,7 @@ private:
 		for (auto it = ack_waiting_list.cbegin();
 				it != ack_waiting_list.cend(); it++)
 			if ((*it)->expected_command == command) {
-				ROS_WARN_THROTTLE_NAMED(10, "cmd", "CMD: Command %u alredy in progress", command);
+				ROS_WARN_THROTTLE_NAMED(10, "cmd", "CMD: Command %u already in progress", command);
 				return false;
 			}
 
