@@ -15,7 +15,7 @@ add_message_files(
   BatteryStatus.msg
   CamIMUStamp.msg
   CommandCode.msg
-  CompanionStatus.msg
+  CompanionProcessStatus.msg
   DebugValue.msg
   ExtendedState.msg
   FileEntry.msg
