@@ -65,7 +65,7 @@ include_directories(
 
 add_library(mavros_extras
   src/plugins/adsb.cpp
-  src/plugins/companion_status.cpp
+  src/plugins/companion_process_status.cpp
   src/plugins/cam_imu_sync.cpp
   src/plugins/debug_value.cpp
   src/plugins/distance_sensor.cpp

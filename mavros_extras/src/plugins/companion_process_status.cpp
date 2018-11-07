@@ -1,0 +1,82 @@
+/**
+ * @brief Companion Status plugin
+ * @file companion_status.cpp
+ * @author Tanja Baumann <tanja@auterion.com>
+ *
+ * @addtogroup plugin
+ * @{
+ */
+/*
+ * Copyright 2018 Tanja Baumann.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.mdA
+ */
+
+#include <mavros/mavros_plugin.h>
+
+#include <mavros_msgs/CompanionProcessStatus.h>
+
+namespace mavros {
+namespace extra_plugins {
+
+//! Mavlink enumerations
+using mavlink::common::COMPANION_PROCESS_STATE;
+using mavlink::common::COMPANION_PROCESS_TYPE;
+
+/**
+ * @brief Obstacle companion process status plugin
+ *
+ * Publishes the status of components running on the companion computer
+ * @see status_cb()
+ */
+class CompanionProcessStatusPlugin : public plugin::PluginBase {
+public:
+	CompanionProcessStatusPlugin() : PluginBase(),
+	status_nh("~companion_process")
+	{ }
+
+	void initialize(UAS &uas_)
+	{
+		PluginBase::initialize(uas_);
+
+		status_sub = status_nh.subscribe("status", 10, &CompanionProcessStatusPlugin::status_cb, this);
+	}
+
+	Subscriptions get_subscriptions()
+	{
+		return { /* Rx disabled */ };
+	}
+
+private:
+	ros::NodeHandle status_nh;
+	ros::Subscriber status_sub;
+
+	/**
+	 * @brief Send companion process status to FCU
+	 *
+	 * Message specification: http://mavlink.org/messages/common#COMPANION_PROCESS_STATUS
+	 * @param req	received CompanionProcessStatus msg
+	 */
+	void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr &req)
+	{
+		mavlink::common::msg::COMPANION_PROCESS_STATUS status_msg {};
+
+		status_msg.time_usec = req->header.stamp.toNSec() / 1000;       //!< [milisecs]
+		status_msg.state = req->state;									//!< status in [0,4] see Mavlink COMPANION_PROCESS_STATE enumeration
+		status_msg.type = req->type;								    //!< source type in [0,2] see Mavlink COMPANION_PROCESS_SOURCE enumeration
+		status_msg.pid = req->pid;								        //!< source process ID
+
+		ROS_DEBUG_STREAM_NAMED("companion_process_status", "Companion process status: " << utils::to_string_enum<COMPANION_PROCESS_STATE>(status_msg.state)
+				<< " type: "<< utils::to_string_enum<COMPANION_PROCESS_TYPE>(status_msg.type)<< " pid: "
+				<< status_msg.pid << std::endl << status_msg.to_yaml());
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(status_msg);
+	}
+};
+}	// namespace extra_plugins
+}	// namespace mavros
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::CompanionProcessStatusPlugin, mavros::plugin::PluginBase)
