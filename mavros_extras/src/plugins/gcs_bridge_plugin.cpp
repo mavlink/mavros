@@ -1,13 +1,13 @@
 /**
  * @brief GCSBridge plugin
  * @file gcs_bridge_plugin.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @author Amy Wagoner <arwagoner@gmail.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2014,2016 Vladimir Ermakov.
+ * Copyright 2018 Amy Wagoner.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.

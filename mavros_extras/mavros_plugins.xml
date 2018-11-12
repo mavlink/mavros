@@ -49,5 +49,5 @@
 	</class>
     <class name="gcs_bridge_plugin" type="mavros::extra_plugins::GCSBridgePlugin" base_class_type="mavros::plugin::PluginBase" output="screen">
         <description> Establishes a connection between FCU, companion computer, and GCS. </description>
-	</class>
+    </class>
 </library>

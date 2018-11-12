@@ -101,15 +101,15 @@ MavRos::MavRos() :
 		try {
 			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
 
-			gcs_link_diag.set_mavconn(gcs_link);
-			gcs_diag_updater.setHardwareID(gcs_url);
-			gcs_diag_updater.add(gcs_link_diag);
+            gcs_link_diag.set_mavconn(gcs_link);
+            gcs_diag_updater.setHardwareID(gcs_url);
+            gcs_diag_updater.add(gcs_link_diag);
             UAS_GCS(&mav_uas) = gcs_link;
 		}
 		catch (mavconn::DeviceError &ex) {
-			ROS_FATAL("GCS: %s", ex.what());
-			ros::shutdown();
-			return;
+            ROS_FATAL("GCS: %s", ex.what());
+            ros::shutdown();
+            return;
 		}
 	}
 	else
