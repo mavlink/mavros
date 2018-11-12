@@ -96,24 +96,24 @@ MavRos::MavRos() :
 		fcu_link->set_protocol_version(mavconn::Protocol::V10);
 	}
 
-	if (gcs_url != "") {
-		ROS_INFO_STREAM("GCS URL: " << gcs_url);
-		try {
-			gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
+    if (gcs_url != "") {
+        ROS_INFO_STREAM("GCS URL: " << gcs_url);
+        try {
+            gcs_link = MAVConnInterface::open_url(gcs_url, system_id, component_id);
 
             gcs_link_diag.set_mavconn(gcs_link);
             gcs_diag_updater.setHardwareID(gcs_url);
             gcs_diag_updater.add(gcs_link_diag);
             UAS_GCS(&mav_uas) = gcs_link;
-		}
-		catch (mavconn::DeviceError &ex) {
+        }
+        catch (mavconn::DeviceError &ex) {
             ROS_FATAL("GCS: %s", ex.what());
             ros::shutdown();
             return;
-		}
-	}
-	else
-		ROS_INFO("GCS bridge disabled");
+        }
+    }
+    else
+        ROS_INFO("GCS bridge disabled");
 
 	// ROS mavlink bridge
 	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("from", 100);
