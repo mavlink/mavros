@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.27.0 (2018-11-12)
+-------------------
 * bind should be called after reuse_address is set
 * Contributors: Shahar Kosti
 
