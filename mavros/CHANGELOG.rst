@@ -2,6 +2,17 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: a typing error "alredy" to "already"
+* plugins `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
+* plugins: fix style
+* with this fix ,it will avoid eigen error on 32 bits system
+* Add service to send mavlink TRIGG_INTERVAL commands
+  Adapt trigger_control service to current mavlink cmd spec. Add a new service to change trigger interval and integration time
+* launch: fix `#1080 <https://github.com/mavlink/mavros/issues/1080>`_: APM now support mocap messages
+* Contributors: Gaogeolone, Moritz Zimmermann, Vladimir Ermakov, rapsealk
+
 0.26.3 (2018-08-21)
 -------------------
 * test: Fix sensor orientation. RPY 315 was removed in recent mavlink.

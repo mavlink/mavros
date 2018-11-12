@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
+* Fix odom message to use covariance from msg
+* Contributors: Dion Gonano, Vladimir Ermakov
+
 0.26.3 (2018-08-21)
 -------------------
 * fixup! b43279058a3029c67ea75b1ecb86442c9dc991d4
