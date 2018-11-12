@@ -104,6 +104,7 @@ MavRos::MavRos() :
 			gcs_link_diag.set_mavconn(gcs_link);
 			gcs_diag_updater.setHardwareID(gcs_url);
 			gcs_diag_updater.add(gcs_link_diag);
+            UAS_GCS(&mav_uas) = gcs_link;
 		}
 		catch (mavconn::DeviceError &ex) {
 			ROS_FATAL("GCS: %s", ex.what());

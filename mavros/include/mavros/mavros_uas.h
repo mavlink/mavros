@@ -40,6 +40,12 @@ namespace mavros {
  */
 #define UAS_FCU(uasobjptr)				\
 	((uasobjptr)->fcu_link)
+    
+/**
+ * @brief helper accessor to GCS link interface
+ */
+#define UAS_GCS(uasobjptr)				\
+	((uasobjptr)->gcs_link)
 
 /**
  * @brief helper accessor to diagnostic updater
@@ -83,6 +89,11 @@ public:
 	 * @brief MAVLink FCU device conection
 	 */
 	mavconn::MAVConnInterface::Ptr fcu_link;
+    
+    /**
+	 * @brief MAVLink gcs device conection
+	 */
+	mavconn::MAVConnInterface::Ptr gcs_link;
 
 	/**
 	 * @brief Mavros diagnostic updater
