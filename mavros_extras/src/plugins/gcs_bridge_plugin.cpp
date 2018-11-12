@@ -26,7 +26,7 @@ namespace extra_plugins{
  */
 class GCSBridgePlugin : public plugin::PluginBase {
 public:
-	GCSBridgePlugin() : PluginBase(),
+    GCSBridgePlugin() : PluginBase(),
     mavlink_nh("mavlink")
 	{ }
 
@@ -38,15 +38,15 @@ public:
         mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
 	}
 
-	Subscriptions get_subscriptions()
-	{
-		return { /* Rx disabled */ };
-	}
+    Subscriptions get_subscriptions()
+    {
+        return { /* Rx disabled */ };
+    }
 
 private:
-	ros::NodeHandle mavlink_nh;
+    ros::NodeHandle mavlink_nh;
 
-	ros::Subscriber mavlink_sub;
+    ros::Subscriber mavlink_sub;
     ros::Publisher mavlink_pub;
         
     void mavlink_pub_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing)
