@@ -30,13 +30,13 @@ public:
     mavlink_nh("mavlink")
 	{ }
 
-	void initialize(UAS &uas_)
-	{
-		PluginBase::initialize(uas_);
+    void initialize(UAS &uas_)
+    {
+        PluginBase::initialize(uas_);
                 
         mavlink_sub = mavlink_nh.subscribe("from", 10, &GCSBridgePlugin::mavlink_sub_cb,this);
         mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
-	}
+    }
 
     Subscriptions get_subscriptions()
     {
