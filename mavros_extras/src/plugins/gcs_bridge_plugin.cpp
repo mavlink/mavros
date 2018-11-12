@@ -27,7 +27,7 @@ namespace extra_plugins{
 class GCSBridgePlugin : public plugin::PluginBase {
 public:
 	GCSBridgePlugin() : PluginBase(),
-		mavlink_nh("mavlink")
+    mavlink_nh("mavlink")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -47,7 +47,7 @@ private:
 	ros::NodeHandle mavlink_nh;
 
 	ros::Subscriber mavlink_sub;
-        ros::Publisher mavlink_pub;
+    ros::Publisher mavlink_pub;
         
     void mavlink_pub_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing)
     {
