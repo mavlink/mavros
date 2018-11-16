@@ -144,7 +144,22 @@ public:
 	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
 	 * @param[in] &message  not changed
 	 */
-	virtual void send_message(const mavlink::Message &message) = 0;
+	virtual void send_message(const mavlink::Message &message) {
+		send_message(message, this->comp_id);
+	}
+
+	/**
+	 * @brief Send message (child of mavlink::Message)
+	 *
+	 * Does serialization inside.
+	 * System ID = from this object.
+	 * Component ID passed by argument.
+	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+	 * @param[in] &message  not changed
+	 * @param[in] src_compid  sets the component ID of the message source
+	 */
+	virtual void send_message(const mavlink::Message &message, const uint8_t src_compid) = 0;
 
 	/**
 	 * @brief Send raw bytes (for some quirks)
@@ -159,8 +174,20 @@ public:
 
 	/**
 	 * @brief Send message and ignore possible drop due to Tx queue limit
+	 *
+	 * System and Component ID = from this object.
 	 */
-	void send_message_ignore_drop(const mavlink::Message &message);
+	void send_message_ignore_drop(const mavlink::Message &message) {
+		send_message_ignore_drop(message, this->comp_id);
+	}
+
+	/**
+	 * @brief Send message and ignore possible drop due to Tx queue limit
+	 *
+	 * System ID = from this object.
+	 * Component ID passed by argument.
+	 */
+	void send_message_ignore_drop(const mavlink::Message &message, const uint8_t src_compid);
 
 	//! Message receive callback
 	ReceivedCb message_received_cb;

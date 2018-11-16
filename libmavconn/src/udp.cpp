@@ -208,7 +208,7 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
-void MAVConnUDP::send_message(const mavlink::Message &message)
+void MAVConnUDP::send_message(const mavlink::Message &message, const uint8_t source_compid)
 {
 	if (!is_open()) {
 		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
@@ -228,7 +228,7 @@ void MAVConnUDP::send_message(const mavlink::Message &message)
 		if (tx_q.size() >= MAX_TXQ_SIZE)
 			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
 
-		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
+		tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
