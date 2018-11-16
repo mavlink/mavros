@@ -10,6 +10,7 @@ uint8 PX4_MIX_PAYLOAD = 2
 uint8 PX4_MIX_MANUAL_PASSTHROUGH = 3
 #uint8 PX4_MIX_FC_MC_VIRT = 4
 #uint8 PX4_MIX_FC_FW_VIRT = 5
+uint8 PX4_DIRECT_MOTOR_CONTROL = 99
 
 std_msgs/Header header
 uint8 group_mix
