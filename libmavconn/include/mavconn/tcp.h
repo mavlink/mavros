@@ -54,7 +54,7 @@ public:
 	void close() override;
 
 	void send_message(const mavlink::mavlink_message_t *message) override;
-	void send_message(const mavlink::Message &message) override;
+	void send_message(const mavlink::Message &message, const uint8_t source_compid) override;
 	void send_bytes(const uint8_t *bytes, size_t length) override;
 
 	inline bool is_open() override {
@@ -108,7 +108,7 @@ public:
 	void close() override;
 
 	void send_message(const mavlink::mavlink_message_t *message) override;
-	void send_message(const mavlink::Message &message) override;
+	void send_message(const mavlink::Message &message, const uint8_t source_compid) override;
 	void send_bytes(const uint8_t *bytes, size_t length) override;
 
 	mavlink::mavlink_status_t get_status() override;
@@ -137,4 +137,3 @@ private:
 	void recv_message(const mavlink::mavlink_message_t *message, const Framing framing);
 };
 }	// namespace mavconn
-

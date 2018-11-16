@@ -168,10 +168,10 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t
 	}
 }
 
-void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
+void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg, uint8_t source_compid)
 {
 	try {
-		send_message(msg);
+		send_message(msg, source_compid);
 	}
 	catch (std::length_error &e) {
 		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message %s: %s",
