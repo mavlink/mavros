@@ -9,8 +9,8 @@ startup_px4_usb_quirk: false
 conn:
   heartbeat_rate: 1.0    # send hertbeat rate in Hertz
   timeout: 10.0          # hertbeat timeout in seconds
-  timesync_rate: 0.0     # TIMESYNC rate in Hertz (feature disabled if 0.0)
-  system_time_rate: 0.0  # send system time to FCU rate in Hertz (disabled if 0.0)
+  timesync_rate: 10.0    # TIMESYNC rate in Hertz (feature disabled if 0.0)
+  system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # sys_status
 sys:
@@ -20,7 +20,7 @@ sys:
 # sys_time
 time:
   time_ref_source: "fcu"  # time_reference source
-  timesync_mode: NONE
+  timesync_mode: MAVLINK
   timesync_avg_alpha: 0.6 # timesync averaging factor
 
 # --- mavros plugins (alphabetical order) ---
