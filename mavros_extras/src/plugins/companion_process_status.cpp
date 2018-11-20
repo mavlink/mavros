@@ -22,8 +22,9 @@ namespace mavros {
 namespace extra_plugins {
 
 //! Mavlink enumerations
-using mavlink::common::COMPANION_PROCESS_STATE;
-using mavlink::common::COMPANION_PROCESS_TYPE;
+using mavlink::common::MAV_TYPE;
+using mavlink::common::MAV_STATE;
+using utils::enum_value;
 
 /**
  * @brief Obstacle companion process status plugin
@@ -66,16 +67,15 @@ private:
 	{
 		mavlink::common::msg::HEARTBEAT heartbeat {};
 
-		heartbeat.type = 12;					//enum="MAV_TYPE" Type of the MAV (quadrotor, helicopter, etc.) missuse filed for submarine
-		heartbeat.autopilot = 12;				//enum="MAV_AUTOPILOT" Autopilot type PX4
-		heartbeat.base_mode	= 2;				// enum="MAV_MODE_FLAG" set to MAV_MODE_FLAG_TEST_ENABLED
-		heartbeat.custom_mode = 0;				//A bitfield for use for autopilot-specific flags
+		heartbeat.type = enum_value(mavlink::common::MAV_TYPE::ONBOARD_CONTROLLER);
+		heartbeat.autopilot = enum_value(mavlink::common::MAV_AUTOPILOT::PX4);
+		heartbeat.base_mode	= enum_value(mavlink::common::MAV_MODE_FLAG::TEST_ENABLED);
 		heartbeat.system_status = req->state;	//enum="MAV_STATE" System status flag
 
-		ROS_DEBUG_STREAM_NAMED("companion_process_status", "Companion process status: " << utils::to_string_enum<COMPANION_PROCESS_STATE>(heartbeat.system_status)
+		ROS_DEBUG_STREAM_NAMED("companion_process_status", "Companion process status: " << utils::to_string_enum<MAV_STATE>(heartbeat.system_status)
 				<< std::endl << heartbeat.to_yaml());
 
-		UAS_FCU(m_uas)->send_message_ignore_drop(heartbeat);
+		UAS_FCU(m_uas)->send_message_ignore_drop(heartbeat, req->component);
 	}
 };
 }	// namespace extra_plugins
