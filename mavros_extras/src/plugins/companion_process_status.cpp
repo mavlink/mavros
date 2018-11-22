@@ -24,6 +24,7 @@ namespace extra_plugins {
 //! Mavlink enumerations
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::MAV_COMPONENT;
 using utils::enum_value;
 
 /**
@@ -55,9 +56,9 @@ private:
 	ros::Subscriber status_sub;
 
 	/**
-	 * @brief Send companion process status to FCU
+	 * @brief Send companion process status to FCU over a heartbeat message
 	 *
-	 * Message specification: http://mavlink.org/messages/common#COMPANION_PROCESS_STATUS
+	 * Message specification: http://mavlink.org/messages/common#HEARTBEAT
 	 * @param req	received CompanionProcessStatus msg
 	 */
 
@@ -69,11 +70,12 @@ private:
 
 		heartbeat.type = enum_value(mavlink::common::MAV_TYPE::ONBOARD_CONTROLLER);
 		heartbeat.autopilot = enum_value(mavlink::common::MAV_AUTOPILOT::PX4);
-		heartbeat.base_mode	= enum_value(mavlink::common::MAV_MODE_FLAG::TEST_ENABLED);
+		heartbeat.base_mode	= enum_value(mavlink::common::MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
 		heartbeat.system_status = req->state;	//enum="MAV_STATE" System status flag
 
-		ROS_DEBUG_STREAM_NAMED("companion_process_status", "Companion process status: " << utils::to_string_enum<MAV_STATE>(heartbeat.system_status)
-				<< std::endl << heartbeat.to_yaml());
+		ROS_DEBUG_STREAM_NAMED("companion_process_status", "companion process component id: " <<
+						utils::to_string_enum<MAV_COMPONENT>(req->component) << " companion process status: " <<
+						utils::to_string_enum<MAV_STATE>(heartbeat.system_status) << std::endl << heartbeat.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(heartbeat, req->component);
 	}

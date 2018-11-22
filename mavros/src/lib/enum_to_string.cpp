@@ -23,6 +23,7 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::MAV_COMPONENT;
 using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
