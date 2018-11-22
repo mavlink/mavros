@@ -61,9 +61,6 @@ private:
 	 * Message specification: http://mavlink.org/messages/common#HEARTBEAT
 	 * @param req	received CompanionProcessStatus msg
 	 */
-
-
-
 	void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr &req)
 	{
 		mavlink::common::msg::HEARTBEAT heartbeat {};
