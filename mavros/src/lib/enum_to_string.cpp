@@ -466,12 +466,13 @@ std::string to_string(MAV_FRAME e)
 // [[[end]]] (checksum: 51190f7ce3474a7189c11eb3e63b9322)
 
 // [[[cog:
-// ename = 'MAV_COMP_ID'
-// enum = get_enum('MAV_COMPONENT')
+// ename = 'MAV_COMPONENT'
+// suffix = 'MAV_COMP_ID'
+// enum = get_enum(ename)
 //
-// array_outl(ename, enum)
+// array_outl(suffix, enum)
 // for k, e in enum:
-//     name_short =  e.name[len(ename) + 1:]
+//     name_short =  e.name[len(suffix) + 1:]
 //     sp = make_whitespace(30, name_short)
 //     if e.description:
 //         cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
@@ -480,7 +481,15 @@ std::string to_string(MAV_FRAME e)
 //
 // cog.outl("}};")
 // cog.outl()
-// to_string_outl(ename)
+// array = ename_array_name(suffix)
+// cog.outl("std::string to_string({ename} e)".format(**locals()))
+// cog.outl("{")
+// cog.outl("	size_t idx = enum_value(e);")
+// cog.outl("	if (idx >= {array}.size())".format(**locals()))
+// cog.outl("		return std::to_string(idx);")
+// cog.outl()
+// cog.outl("	return {array}[idx];".format(**locals()))
+// cog.outl("}")
 // ]]]
 //! MAV_COMP_ID values
 static const std::array<const std::string, 40> mav_comp_id_strings{{
@@ -526,7 +535,7 @@ static const std::array<const std::string, 40> mav_comp_id_strings{{
 /* 250 */ "SYSTEM_CONTROL",
 }};
 
-std::string to_string(MAV_COMP_ID e)
+std::string to_string(MAV_COMPONENT e)
 {
 	size_t idx = enum_value(e);
 	if (idx >= mav_comp_id_strings.size())
@@ -534,7 +543,7 @@ std::string to_string(MAV_COMP_ID e)
 
 	return mav_comp_id_strings[idx];
 }
-// [[[end]]] (checksum: 41ee4434abb11c28c191907c771d56fc)
+// [[[end]]] (checksum: f8c7d2f9f27973787d4460efff4c9373)
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {
