@@ -11,7 +11,6 @@ import csv
 import time
 import rospy
 import mavros
-import functools
 
 from mavros_msgs.msg import ParamValue
 from mavros_msgs.srv import ParamPull, ParamPush, ParamGet, ParamSet
