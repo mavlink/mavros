@@ -108,5 +108,10 @@ timesync_mode timesync_mode_from_str(const std::string &mode);
  */
 mavlink::common::MAV_FRAME mav_frame_from_str(const std::string &mav_frame);
 
+/**
+ * @brief Retreive MAV_TYPE from name
+ */
+mavlink::common::MAV_TYPE mav_type_from_str(const std::string &mav_type);
+
 }	// namespace utils
 }	// namespace mavros
