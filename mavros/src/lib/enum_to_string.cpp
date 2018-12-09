@@ -71,6 +71,22 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 //     cog.outl("	return {array}[idx];".format(**locals()))
 //     cog.outl("}")
 //
+// def enum_name_is_value_outl(ename):
+//     enum = get_enum(ename)
+//
+//     array_outl(ename, enum)
+//     for k, e in enum:
+//         name_short =  e.name[len(ename) + 1:]
+//         sp = make_whitespace(30, name_short)
+//         if e.description:
+//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         else:
+//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//
+//     cog.outl("}};")
+//     cog.outl()
+//     to_string_outl(ename)
+//
 // ename = 'MAV_AUTOPILOT'
 // enum = get_enum(ename)
 //
@@ -180,6 +196,93 @@ std::string to_string(MAV_TYPE e)
 // [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
 
 // [[[cog:
+// 
+// def ename_array_name_bis(ename):
+//     l = ename.rsplit('::', 1)
+//     return (l[1] if len(l) > 1 else l[0]).lower() + '_names'
+//
+// def array_bis_outl(name, enum):
+//     array = ename_array_name_bis(name)
+//     cog.outl("//! %s values" % name)
+//     cog.outl("static const std::array<const std::string, %s> %s{{" % (len(enum), array))
+//
+// def to_name_outl(ename):
+//     array = ename_array_name_bis(ename)
+//     cog.outl("std::string to_name({ename} e)".format(**locals()))
+//     cog.outl("{")
+//     cog.outl("	size_t idx = enum_value(e);")
+//     cog.outl("	if (idx >= {array}.size())".format(**locals()))
+//     cog.outl("		return std::to_string(idx);")
+//     cog.outl()
+//     cog.outl("	return {array}[idx];".format(**locals()))
+//     cog.outl("}")
+//
+// def enum_name_is_value_bis_outl(ename):
+//     enum = get_enum(ename)
+//
+//     array_bis_outl(ename, enum)
+//     for k, e in enum:
+//         name_short =  e.name[len(ename) + 1:]
+//         sp = make_whitespace(30, name_short)
+//         if e.description:
+//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         else:
+//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//
+//     cog.outl("}};")
+//     cog.outl()
+//     to_name_outl(ename)
+//
+// ename = 'MAV_TYPE'
+// enum_name_is_value_bis_outl(ename)
+// ]]]
+static const std::array<const std::string, 33> mav_type_names{{
+/*  0 */ "GENERIC",                       // Generic micro air vehicle.
+/*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
+/*  2 */ "QUADROTOR",                     // Quadrotor
+/*  3 */ "COAXIAL",                       // Coaxial helicopter
+/*  4 */ "HELICOPTER",                    // Normal helicopter with tail rotor.
+/*  5 */ "ANTENNA_TRACKER",               // Ground installation
+/*  6 */ "GCS",                           // Operator control unit / ground control station
+/*  7 */ "AIRSHIP",                       // Airship, controlled
+/*  8 */ "FREE_BALLOON",                  // Free balloon, uncontrolled
+/*  9 */ "ROCKET",                        // Rocket
+/* 10 */ "GROUND_ROVER",                  // Ground rover
+/* 11 */ "SURFACE_BOAT",                  // Surface vessel, boat, ship
+/* 12 */ "SUBMARINE",                     // Submarine
+/* 13 */ "HEXAROTOR",                     // Hexarotor
+/* 14 */ "OCTOROTOR",                     // Octorotor
+/* 15 */ "TRICOPTER",                     // Tricopter
+/* 16 */ "FLAPPING_WING",                 // Flapping wing
+/* 17 */ "KITE",                          // Kite
+/* 18 */ "ONBOARD_CONTROLLER",            // Onboard companion controller
+/* 19 */ "VTOL_DUOROTOR",                 // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
+/* 20 */ "VTOL_QUADROTOR",                // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
+/* 21 */ "VTOL_TILTROTOR",                // Tiltrotor VTOL
+/* 22 */ "VTOL_RESERVED2",                // VTOL reserved 2
+/* 23 */ "VTOL_RESERVED3",                // VTOL reserved 3
+/* 24 */ "VTOL_RESERVED4",                // VTOL reserved 4
+/* 25 */ "VTOL_RESERVED5",                // VTOL reserved 5
+/* 26 */ "GIMBAL",                        // Onboard gimbal
+/* 27 */ "ADSB",                          // Onboard ADSB peripheral
+/* 28 */ "PARAFOIL",                      // Steerable, nonrigid airfoil
+/* 29 */ "DODECAROTOR",                   // Dodecarotor
+/* 30 */ "CAMERA",                        // Camera
+/* 31 */ "CHARGING_STATION",              // Charging station
+/* 32 */ "FLARM",                         // Onboard FLARM collision avoidance system
+}};
+
+std::string to_name(MAV_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_type_names.size())
+		return std::to_string(idx);
+
+	return mav_type_names[idx];
+}
+// [[[end]]]
+
+// [[[cog:
 // ename = 'MAV_STATE'
 // enum = get_enum(ename)
 //
@@ -260,23 +363,6 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 }
 
 // [[[cog:
-// def enum_name_is_value_outl(ename):
-//     enum = get_enum(ename)
-//
-//     array_outl(ename, enum)
-//     for k, e in enum:
-//         name_short =  e.name[len(ename) + 1:]
-//         sp = make_whitespace(30, name_short)
-//         if e.description:
-//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
-//         else:
-//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
-//
-//     cog.outl("}};")
-//     cog.outl()
-//     to_string_outl(ename)
-//
-//
 // ename = 'ADSB_ALTITUDE_TYPE'
 // enum_name_is_value_outl(ename)
 // ]]]
@@ -556,6 +642,18 @@ MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 
 	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
 	return MAV_FRAME::LOCAL_NED;
+}
+
+MAV_TYPE mav_type_from_str(const std::string &mav_type)
+{
+	for (size_t idx = 0; idx < mav_type_names.size(); idx++) {
+		if (mav_type_names[idx] == mav_type) {
+			std::underlying_type<MAV_TYPE>::type rv = idx;
+			return static_cast<MAV_TYPE>(rv);
+		}
+	}
+	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown MAV_TYPE: " << mav_type);
+	return MAV_TYPE::GENERIC;
 }
 
 // [[[cog:
