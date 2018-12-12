@@ -403,6 +403,7 @@ private:
 		IDLE,
 		RXLIST,
 		RXPARAM,
+		RXPARAM_TIMEDOUT,
 		TXPARAM
 	};
 	PR param_state;
@@ -462,7 +463,7 @@ private:
 			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
 
-		if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			// we received first param. setup list timeout
 			if (param_state == PR::RXLIST) {
 				param_count = pmsg.param_count;
@@ -502,6 +503,9 @@ private:
 						missed);
 				go_idle();
 				list_receiving.notify_all();
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				uint16_t first_miss_idx = parameters_missing_idx.front();
+				param_request_read("", first_miss_idx);
 			}
 		}
 	}
@@ -610,6 +614,7 @@ private:
 				return;
 			}
 
+			param_state = PR::RXPARAM_TIMEDOUT;
 			uint16_t first_miss_idx = parameters_missing_idx.front();
 			if (param_rx_retries > 0) {
 				param_rx_retries--;
@@ -756,7 +761,7 @@ private:
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
-		else if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
+		else if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
@@ -833,7 +838,7 @@ private:
 	{
 		unique_lock lock(mutex);
 
-		if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			ROS_ERROR_NAMED("param", "PR: receiving not complete");
 			return false;
 		}
