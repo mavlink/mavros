@@ -163,9 +163,18 @@ private:
 	{
 		lock_guard lock(mutex);
 
-		size_t offset = port.port * 8;
-		if (raw_rc_out.size() < offset + 8)
-			raw_rc_out.resize(offset + 8);
+		uint8_t num_channels;
+
+		// If using Mavlink protocol v2, number of available servo channels is 16;
+		// otherwise, 8
+		if (msg->magic == MAVLINK_STX)
+			num_channels = 16;
+		else
+			num_channels = 8;
+
+		size_t offset = port.port * num_channels;
+		if (raw_rc_out.size() < offset + num_channels)
+			raw_rc_out.resize(offset + num_channels);
 
 		// [[[cog:
 		// for i in range(1, 9):
@@ -180,6 +189,21 @@ private:
 		raw_rc_out[offset + 6] = port.servo7_raw;
 		raw_rc_out[offset + 7] = port.servo8_raw;
 		// [[[end]]] (checksum: 946d524fe9fbaa3e52fbdf8a905fbf0f)
+		if (msg->magic == MAVLINK_STX) {
+			// [[[cog:
+			// for i in range(9, 17):
+			//     cog.outl("raw_rc_out[offset + %d] = port.servo%d_raw;" % (i - 1, i))
+			// ]]]
+			raw_rc_out[offset + 8] = port.servo9_raw;
+			raw_rc_out[offset + 9] = port.servo10_raw;
+			raw_rc_out[offset + 10] = port.servo11_raw;
+			raw_rc_out[offset + 11] = port.servo12_raw;
+			raw_rc_out[offset + 12] = port.servo13_raw;
+			raw_rc_out[offset + 13] = port.servo14_raw;
+			raw_rc_out[offset + 14] = port.servo15_raw;
+			raw_rc_out[offset + 15] = port.servo16_raw;
+			// [[[end]]] (checksum: 60a386cba6faa126ee7dfe1b22f50398)
+		}
 
 		auto rcout_msg = boost::make_shared<mavros_msgs::RCOut>();
 
