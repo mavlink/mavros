@@ -385,6 +385,27 @@ inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZ
 			*out++ = m(y, x);
 }
 
+/**
+ * @brief Convert MAVLink float[n] format (upper right triangular of a covariance matrix)
+ * to Eigen::MatrixXd<n,n> full covariance matrix
+ */
+template<class T, std::size_t ARR_SIZE>
+inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &covmsg, T &covmat)
+{
+	std::size_t COV_SIZE = covmat.rows() * (covmat.rows() + 1) / 2;
+	ROS_ASSERT_MSG(COV_SIZE == ARR_SIZE,
+				"frame_tf: covariance matrix URT size (%lu) is different from Mavlink msg covariance field size (%lu)",
+				COV_SIZE, ARR_SIZE);
+
+	auto in = covmsg.begin();
+
+	for (size_t x = 0; x < covmat.cols(); x++)
+		for (size_t y = x; y < covmat.rows(); y++)
+			covmat(y, x) = static_cast<double>(*in++);
+
+	//TODO: make the matrix symmetric
+}
+
 // [[[cog:
 // def make_to_eigen(te, tr, fields):
 //     cog.outl("""//! @brief Helper to convert common ROS geometry_msgs::{tr} to Eigen::{te}""".format(**locals()))
