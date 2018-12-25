@@ -380,9 +380,10 @@ inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZ
 
 	auto out = covmsg.begin();
 
-	for (size_t x = 0; x < m.cols(); x++)
+	for (size_t x = 0; x < m.cols(); x++) {
 		for (size_t y = x; y < m.rows(); y++)
 			*out++ = m(y, x);
+	}
 }
 
 /**
@@ -399,11 +400,12 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
 
 	auto in = covmsg.begin();
 
-	for (size_t x = 0; x < covmat.cols(); x++)
-		for (size_t y = x; y < covmat.rows(); y++)
-			covmat(y, x) = static_cast<double>(*in++);
-
-	//TODO: make the matrix symmetric
+	for (size_t x = 0; x < covmat.cols(); x++) {
+		for (size_t y = x; y < covmat.rows(); y++) {
+			covmat(x, y) = static_cast<double>(*in++);
+			covmat(y, x) = covmat(x, y);
+		}
+	}
 }
 
 // [[[cog:
