@@ -1,0 +1,5 @@
+# Request the Vehicle Info
+---
+bool success
+mavros_msgs/VehicleInfo vehicle
+

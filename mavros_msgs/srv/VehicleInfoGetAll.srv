@@ -1,0 +1,6 @@
+# Request All Vehicles Info
+
+---
+bool success
+mavros_msgs/VehicleInfo[] vehicles
+

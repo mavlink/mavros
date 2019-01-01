@@ -43,6 +43,7 @@ add_message_files(
   Thrust.msg
   Trajectory.msg
   TimesyncStatus.msg
+  VehicleInfo.msg
   VFR_HUD.msg
   Vibration.msg
   Waypoint.msg
@@ -81,6 +82,9 @@ add_service_files(
   SetMavFrame.srv
   SetMode.srv
   StreamRate.srv
+  VehicleInfoGet.srv
+  VehicleInfoGetAll.srv
+  VehicleInfoGetById.srv
   WaypointClear.srv
   WaypointPull.srv
   WaypointPush.srv

@@ -38,6 +38,9 @@
 	<class name="trajectory" type="mavros::extra_plugins::TrajectoryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Receive planned path from the FCU and send back corrected path (collision free, smoothed) to the FCU.</description>
 	</class>
+	<class name="vehicle_info" type="mavros::extra_plugins::VehicleInfoPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Allows requesting standard vehicle information</description>
+	</class>
 	<class name="vibration" type="mavros::extra_plugins::VibrationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VIBRATION message data from FCU.</description>
 	</class>

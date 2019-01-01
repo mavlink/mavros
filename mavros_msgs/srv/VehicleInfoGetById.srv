@@ -1,0 +1,8 @@
+# Request a specific Vehicle Info by sysid/compid
+
+uint8_t sysid
+uint8_t compid
+---
+bool success
+mavros_msgs/VehicleInfo vehicle
+
