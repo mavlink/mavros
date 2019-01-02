@@ -22,6 +22,9 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/StatusText.h>
+#include <mavros_msgs/VehicleInfo.h>
+#include <mavros_msgs/VehicleInfoGet.h>
+
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
 #include <sensor_msgs/BatteryState.h>
@@ -471,6 +474,7 @@ public:
 		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
+		vehicle_info_get_srv = nh.advertiseService("vehicle_info_get", &SystemStatusPlugin::vehicle_info_get_cb, this);
 
 		// init state topic
 		publish_disconnection();
@@ -509,6 +513,7 @@ private:
 	ros::Subscriber statustext_sub;
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
+	ros::ServiceServer vehicle_info_get_srv;
 
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
@@ -516,7 +521,15 @@ private:
 	bool has_battery_status;
 	float battery_voltage;
 
+	std::unordered_map<uint16_t,mavros_msgs::VehicleInfo> vehicles;	
+
 	/* -*- mid-level helpers -*- */
+	
+	//Get vehicle key for the unordered map containing all vehicles
+	inline uint16_t get_vehicle_key(uint8_t sysid,uint8_t compid) {
+		uint16_t key = sysid << 8 | compid;
+		return key;
+	}
 
 	/**
 	 * Sent STATUSTEXT message to rosout
@@ -639,6 +652,35 @@ private:
 	{
 		using mavlink::common::MAV_MODE_FLAG;
 
+		//Store generic info of all heartbeats seen
+		uint16_t key = get_vehicle_key(msg->sysid,msg->compid);
+		auto it = vehicles.find(key);
+		
+		if (it == vehicles.end()) {
+			//Vehicle not found, create a new one
+			mavros_msgs::VehicleInfo new_vehicle;
+			new_vehicle.sysid = msg->sysid;
+			new_vehicle.compid = msg->compid;
+			auto res = vehicles.emplace(key, new_vehicle); //gives a pair <iterator,bool>
+			it = res.first;
+		}
+
+		ROS_ASSERT(it != vehicles.end());
+
+		//Existing vehicle found, update data
+		it->second.autopilot = hb.autopilot;
+		it->second.type = hb.type;
+		it->second.system_status = hb.system_status;
+		it->second.base_mode = hb.base_mode;
+		it->second.custom_mode = hb.custom_mode;
+		it->second.mode = m_uas->str_mode_v10(hb.base_mode, hb.custom_mode);				
+		if (!(hb.base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
+			it->second.mode_id = hb.base_mode;
+		} else {
+			it->second.mode_id = hb.custom_mode;
+		}
+		
+		//Continue from here only if vehicle is my target
 		if (!m_uas->is_my_target(msg->sysid)) {
 			ROS_DEBUG_NAMED("sys", "HEARTBEAT from [%d, %d] dropped.", msg->sysid, msg->compid);
 			return;
@@ -747,6 +789,31 @@ private:
 			process_autopilot_version_apm_quirk(apv, msg->sysid, msg->compid);
 		else
 			process_autopilot_version_normal(apv, msg->sysid, msg->compid);
+
+		//Store generic info of all autopilot seen
+		uint16_t key = get_vehicle_key(msg->sysid,msg->compid);
+		auto it = vehicles.find(key);
+		
+		if (it == vehicles.end()) {
+			//Vehicle not found, create a new one
+			mavros_msgs::VehicleInfo new_vehicle;
+			new_vehicle.sysid = msg->sysid;
+			new_vehicle.compid = msg->compid;
+			auto res = vehicles.emplace(key, new_vehicle); //gives a pair <iterator,bool>
+			it = res.first;
+		}
+
+		ROS_ASSERT(it != vehicles.end());
+
+		//Existing vehicle found, update data
+		it->second.capabilities = apv.capabilities;
+		it->second.flight_sw_version = apv.flight_sw_version;
+		it->second.middleware_sw_version = apv.middleware_sw_version;
+		it->second.os_sw_version = apv.os_sw_version;
+		it->second.board_version = apv.board_version;
+		it->second.vendor_id = apv.vendor_id;
+		it->second.product_id = apv.product_id;
+		it->second.uid = apv.uid;
 	}
 
 	void handle_battery_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::BATTERY_STATUS &bs)
@@ -976,6 +1043,49 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(sm);
 		res.mode_sent = true;
 		return true;
+	}
+
+	bool vehicle_info_get_cb(mavros_msgs::VehicleInfoGet::Request &req,
+			mavros_msgs::VehicleInfoGet::Response &res)
+	{
+
+		if(req.get_all){
+			//Send all vehicles
+			for (auto &got : vehicles) {
+				res.vehicles.emplace_back(got.second);
+			}
+			//ROS_INFO_NAMED("sys", "Number of vehicles : %u", (uint8_t)vehicles.size());
+
+			res.success = true;
+			return res.success;
+		}
+
+		uint8_t req_sysid = 0;
+		uint8_t req_compid = 0;
+
+		if(req.sysid == 0 && req.compid == 0){
+			//use target
+			req_sysid = m_uas->get_tgt_system();
+			req_compid = m_uas->get_tgt_component();
+		} else {
+			req_sysid = req.sysid;
+			req_compid = req.compid;
+		}
+
+		uint16_t key = get_vehicle_key(req_sysid,req_compid);
+		auto it = vehicles.find(key);
+		
+		if (it == vehicles.end()) {
+			//Vehicle not found
+			res.success = false;
+			return res.success;
+		}
+
+		ROS_ASSERT(it != vehicles.end());
+
+		res.vehicles.emplace_back(it->second);
+		res.success = true;
+		return res.success;
 	}
 };
 }	// namespace std_plugins
