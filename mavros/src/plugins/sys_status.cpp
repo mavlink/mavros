@@ -546,7 +546,7 @@ private:
 
 	// Find or create vehicle info
 	inline M_VehicleInfo::iterator find_or_create_vehicle_info(uint8_t sysid, uint8_t compid) {
-		key = get_vehicle_key(sysid, compid);
+		auto key = get_vehicle_key(sysid, compid);
 		M_VehicleInfo::iterator ret = vehicles.find(key);
 
 		if (ret == vehicles.end()) {
