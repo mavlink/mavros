@@ -236,6 +236,7 @@ std::string to_string(MAV_TYPE e)
 // ename = 'MAV_TYPE'
 // enum_name_is_value_bis_outl(ename)
 // ]]]
+//! MAV_TYPE values
 static const std::array<const std::string, 33> mav_type_names{{
 /*  0 */ "GENERIC",                       // Generic micro air vehicle.
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
@@ -280,7 +281,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]]
+// [[[end]]] (checksum: ef412b11a1d1d703f7e2a2244693543f)
 
 // [[[cog:
 // ename = 'MAV_STATE'
