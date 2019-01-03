@@ -190,8 +190,9 @@ public:
 		//     if sts[0].isdigit():
 		//         sts = 'SENSOR_' + sts
 		//
-		//     cog.outl("if (last_st.onboard_control_sensors_enabled & enum_value(STS::%s))" % sts)
-		//     cog.outl("\tstat.add(\"%s\", (last_st.onboard_control_sensors_health & enum_value(STS::%s)) ? \"Ok\" : \"Fail\");" % (desc, sts))
+		//     cog.outl(f"""\
+		//     if (last_st.onboard_control_sensors_enabled & enum_value(STS::{sts}))
+		//     \tstat.add("{desc.strip()}", (last_st.onboard_control_sensors_health & enum_value(STS::{sts})) ? "Ok" : "Fail");""")
 		// ]]]
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_GYRO))
 			stat.add("3D gyro", (last_st.onboard_control_sensors_health & enum_value(STS::SENSOR_3D_GYRO)) ? "Ok" : "Fail");
@@ -247,7 +248,9 @@ public:
 			stat.add("Battery", (last_st.onboard_control_sensors_health & enum_value(STS::BATTERY)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PROXIMITY))
 			stat.add("Proximity", (last_st.onboard_control_sensors_health & enum_value(STS::PROXIMITY)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 9fc17aa4800635112524ab7e9c2cdcab)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SATCOM))
+			stat.add("Satellite Communication", (last_st.onboard_control_sensors_health & enum_value(STS::SATCOM)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: 890cfdc6d3b776c38a59b39f80ec7351)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
