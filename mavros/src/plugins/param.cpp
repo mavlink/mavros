@@ -22,6 +22,7 @@
 #include <mavros_msgs/ParamGet.h>
 #include <mavros_msgs/ParamPull.h>
 #include <mavros_msgs/ParamPush.h>
+#include <mavros_msgs/Param.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -356,6 +357,8 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
+		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 10);
+
 		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
 		shedule_timer.stop();
 		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
@@ -381,6 +384,8 @@ private:
 	ros::ServiceServer push_srv;
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
+
+	ros::Publisher param_value_pub;
 
 	ros::Timer shedule_timer;			//!< for startup shedule fetch
 	ros::Timer timeout_timer;			//!< for timeout resend
@@ -419,6 +424,13 @@ private:
 		lock_guard lock(mutex);
 
 		auto param_id = mavlink::to_string(pmsg.param_id);
+
+		mavros_msgs::Param param_msg;
+		param_msg.param_id =  param_id;
+        param_msg.param_type = pmsg.param_type;
+        param_msg.param_count = pmsg.param_count;
+		param_msg.param_index = pmsg.param_index;
+	 	param_value_pub.publish(param_msg)
 
 		// search
 		auto param_it = parameters.find(param_id);

@@ -32,6 +32,7 @@ add_message_files(
   Mavlink.msg
   OpticalFlowRad.msg
   OverrideRCIn.msg
+  Param.msg
   ParamValue.msg
   PositionTarget.msg
   RCIn.msg
