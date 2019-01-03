@@ -581,9 +581,9 @@ private:
 		// should be little-endian
 		uint64_t b;
 		memcpy(&b, array.data(), sizeof(uint64_t));
-		b = le16toh(b);
+		b = le64toh(b);
 
-		return utils::format("%016X", b);
+		return utils::format("%016llx", b);
 	}
 
 	void process_autopilot_version_normal(mavlink::common::msg::AUTOPILOT_VERSION &apv, uint8_t sysid, uint8_t compid)
