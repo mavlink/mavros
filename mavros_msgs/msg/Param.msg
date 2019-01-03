@@ -1,7 +1,9 @@
 # Parameter msg.
 
+std_msgs/Header header
+
 string param_id
 mavros_msgs/ParamValue value
-uint8 param_type
-uint16 param_count
+
 uint16 param_index
+uint16 param_count

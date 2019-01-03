@@ -293,6 +293,22 @@ public:
 		return utils::format("%s (%u/%u): %s", param_id.c_str(), param_index, param_count, param_value.toXml().c_str());
 	}
 
+	mavros_msgs::Param to_msg()
+	{
+		mavros_msgs::Param msg;
+
+		// XXX(vooon): find better solution
+		msg.header.stamp = ros::Time::now();
+
+		msg.param_id = param_id;
+		msg.value.integer = to_integer();
+		msg.value.real = to_real();
+		msg.param_index = param_index;
+		msg.param_count = param_count;
+
+		return msg;
+	}
+
 	/**
 	 * Exclude this parameters from ~param/push
 	 */
@@ -357,7 +373,7 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
-		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 10);
+		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
 
 		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
 		shedule_timer.stop();
@@ -425,13 +441,6 @@ private:
 
 		auto param_id = mavlink::to_string(pmsg.param_id);
 
-		mavros_msgs::Param param_msg;
-		param_msg.param_id =  param_id;
-        param_msg.param_type = pmsg.param_type;
-        param_msg.param_count = pmsg.param_count;
-		param_msg.param_index = pmsg.param_index;
-	 	param_value_pub.publish(param_msg)
-
 		// search
 		auto param_it = parameters.find(param_id);
 		if (param_it != parameters.end()) {
@@ -448,6 +457,8 @@ private:
 			if (set_it != set_parameters.end()) {
 				set_it->second->ack.notify_all();
 			}
+
+			param_value_pub.publish(p.to_msg());
 
 			ROS_WARN_STREAM_COND_NAMED(
 					((p.param_index != pmsg.param_index &&
@@ -471,8 +482,11 @@ private:
 
 			parameters[param_id] = p;
 
+			param_value_pub.publish(p.to_msg());
+
 			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
+
 
 		if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
 			// we received first param. setup list timeout
