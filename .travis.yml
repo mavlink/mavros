@@ -14,7 +14,7 @@ env:
   global:
     - CCACHE_DIR=$HOME/.ccache
   matrix:
-    - ROS_DISTRO="indigo" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall'
+    #- ROS_DISTRO="indigo" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall' # too old, many errors relate to C++11
     - ROS_DISTRO="kinetic"
     - ROS_DISTRO="lunar"
     - ROS_DISTRO="melodic"
