@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: add the possibility to set the source component ID through the send_message method
+* Contributors: TSC21
+
 0.27.0 (2018-11-12)
 -------------------
 * bind should be called after reuse_address is set
