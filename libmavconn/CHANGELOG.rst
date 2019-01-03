@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.28.0 (2019-01-03)
+-------------------
 * libmavconn: add the possibility to set the source component ID through the send_message method
 * Contributors: TSC21
 

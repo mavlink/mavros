@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.28.0 (2019-01-03)
+-------------------
 * odom: add ODOMETRY handler and publisher
 * remove newlines after doxygen
 * style clean up
