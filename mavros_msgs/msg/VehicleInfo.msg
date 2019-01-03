@@ -1,6 +1,6 @@
 # Vehicle Info msg
 
-Header header
+std_msgs/Header header
 
 uint8 HAVE_INFO_HEARTBEAT = 1
 uint8 HAVE_INFO_AUTOPILOT_VERSION = 2
