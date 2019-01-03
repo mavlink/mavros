@@ -2,20 +2,18 @@
 #
 # vim:set ts=2 sw=2 et:
 
-sudo: required
-dist: trusty
 language: generic
-compiler:
-  - gcc
+services:
+  - docker
 
 env:
   matrix:
-    - USE_DEB=true  ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
-    - USE_DEB=true  ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - ROS_DISTRO="kinetic" BUILDER="catkin"
+    - ROS_DISTRO="kinetic"
 install:
-  - git clone https://github.com/ros-industrial/industrial_ci.git .industrial_ci
+  - git clone --depth=1 https://github.com/ros-industrial/industrial_ci.git .industrial_ci
 script:
-  - source .industrial_ci/travis.sh
+  - .industrial_ci/travis.sh
 
 notifications:
   webhooks:
