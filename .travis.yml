@@ -8,10 +8,11 @@ services:
 
 env:
   matrix:
-    - ROS_DISTRO="indigo"
+    - ROS_DISTRO="indigo" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall'
     - ROS_DISTRO="kinetic"
     - ROS_DISTRO="lunar"
     - ROS_DISTRO="melodic"
+    - ROS_DISTRO="kinetic" NOT_TEST_BUILD=true
     - ROS_DISTRO="kinetic" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall'
 
 install:
