@@ -6,7 +6,13 @@ language: generic
 services:
   - docker
 
+cache:
+  directories:
+    - $HOME/.ccache
+
 env:
+  global:
+    - CCACHE_DIR=$HOME/.ccache
   matrix:
     - ROS_DISTRO="indigo" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall'
     - ROS_DISTRO="kinetic"
