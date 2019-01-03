@@ -15,6 +15,7 @@
  */
 
 #include <array>
+#include <unordered_map>
 #include <mavros/utils.h>
 #include <ros/console.h>
 
@@ -51,50 +52,52 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 //     d = l - len(v)
 //     return ' ' * d if d > 0 else ' '
 //
-// def ename_array_name(ename):
+// def ename_array_name(ename, suffix=None):
 //     l = ename.rsplit('::', 1)
-//     return (l[1] if len(l) > 1 else l[0]).lower() + '_strings'
+//     return (l[1] if len(l) > 1 else l[0]).lower() + (suffix or '_strings')
 //
-// def array_outl(name, enum):
-//     array = ename_array_name(name)
-//     cog.outl("//! %s values" % name)
-//     cog.outl("static const std::array<const std::string, %s> %s{{" % (len(enum), array))
+// def array_outl(name, enum, suffix=None):
+//     array = ename_array_name(name, suffix)
+//     cog.outl(f"""\
+// //! {name} values
+// static const std::array<const std::string, {len(enum)}> {array}{{{{""")
 //
-// def to_string_outl(ename):
-//     array = ename_array_name(ename)
-//     cog.outl("std::string to_string({ename} e)".format(**locals()))
-//     cog.outl("{")
-//     cog.outl("	size_t idx = enum_value(e);")
-//     cog.outl("	if (idx >= {array}.size())".format(**locals()))
-//     cog.outl("		return std::to_string(idx);")
-//     cog.outl()
-//     cog.outl("	return {array}[idx];".format(**locals()))
-//     cog.outl("}")
+// def to_string_outl(ename, funcname='to_string', suffix=None):
+//     array = ename_array_name(ename, suffix)
+//     cog.outl(f"""\
+// std::string {funcname}({ename} e)
+// {{
+// 	size_t idx = enum_value(e);
+// 	if (idx >= {array}.size())
+// 		return std::to_string(idx);
+// 
+// 	return {array}[idx];
+// }}""")
 //
-// def enum_name_is_value_outl(ename):
+// def enum_name_is_value_outl(ename, suffix=None, funcname='to_string'):
 //     enum = get_enum(ename)
 //
-//     array_outl(ename, enum)
+//     array_outl(ename, enum, suffix)
 //     for k, e in enum:
 //         name_short =  e.name[len(ename) + 1:]
 //         sp = make_whitespace(30, name_short)
 //         if e.description:
-//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//             cog.outl(f"""/* {k:>2} */ "{name_short}",{sp}// {e.description}""")
 //         else:
-//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//             cog.outl(f"""/* {k:>2} */ "{name_short}",""")
 //
 //     cog.outl("}};")
 //     cog.outl()
-//     to_string_outl(ename)
+//     to_string_outl(ename, funcname, suffix)
 //
 // ename = 'MAV_AUTOPILOT'
 // enum = get_enum(ename)
 //
 // array_outl(ename, enum)
 // for k, e in enum:
-//     value = split_by(',-/.', e.description)
+//     value = split_by('-,/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -105,7 +108,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
-/*  3 */ "ArduPilot - Plane/Copter/Rover/Sub/Tracker", // ArduPilot - Plane/Copter/Rover/Sub/Tracker, http://ardupilot.org
+/*  3 */ "ArduPilot",                     // ArduPilot - Plane/Copter/Rover/Sub/Tracker, http://ardupilot.org
 /*  4 */ "OpenPilot",                     // OpenPilot, http://openpilot.org
 /*  5 */ "Generic autopilot only supporting simple waypoints", // Generic autopilot only supporting simple waypoints
 /*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands", // Generic autopilot supporting waypoints and other simple navigation commands
@@ -132,7 +135,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 39d62c86f3e9ac96ef0d2cd0d6048f48)
+// [[[end]]] (checksum: 4b5a1e0cd8f9d21b956818e7efa3bc2e)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -142,7 +145,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // for k, e in enum:
 //     value = split_by(',-/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -196,45 +199,8 @@ std::string to_string(MAV_TYPE e)
 // [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
 
 // [[[cog:
-// 
-// def ename_array_name_bis(ename):
-//     l = ename.rsplit('::', 1)
-//     return (l[1] if len(l) > 1 else l[0]).lower() + '_names'
-//
-// def array_bis_outl(name, enum):
-//     array = ename_array_name_bis(name)
-//     cog.outl("//! %s values" % name)
-//     cog.outl("static const std::array<const std::string, %s> %s{{" % (len(enum), array))
-//
-// def to_name_outl(ename):
-//     array = ename_array_name_bis(ename)
-//     cog.outl("std::string to_name({ename} e)".format(**locals()))
-//     cog.outl("{")
-//     cog.outl("	size_t idx = enum_value(e);")
-//     cog.outl("	if (idx >= {array}.size())".format(**locals()))
-//     cog.outl("		return std::to_string(idx);")
-//     cog.outl()
-//     cog.outl("	return {array}[idx];".format(**locals()))
-//     cog.outl("}")
-//
-// def enum_name_is_value_bis_outl(ename):
-//     enum = get_enum(ename)
-//
-//     array_bis_outl(ename, enum)
-//     for k, e in enum:
-//         name_short =  e.name[len(ename) + 1:]
-//         sp = make_whitespace(30, name_short)
-//         if e.description:
-//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
-//         else:
-//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
-//
-//     cog.outl("}};")
-//     cog.outl()
-//     to_name_outl(ename)
-//
 // ename = 'MAV_TYPE'
-// enum_name_is_value_bis_outl(ename)
+// enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
 static const std::array<const std::string, 33> mav_type_names{{
@@ -557,80 +523,71 @@ std::string to_string(MAV_FRAME e)
 // suffix = 'MAV_COMP_ID'
 // enum = get_enum(ename)
 //
-// array_outl(suffix, enum)
+// cog.outl(f"static const std::unordered_map<size_t, const std::string> {suffix.lower()}_strings{{{{")
 // for k, e in enum:
 //     name_short =  e.name[len(suffix) + 1:]
 //     sp = make_whitespace(30, name_short)
 //     if e.description:
-//         cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
+//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},{sp}// {e.description}""")
 //     else:
-//         cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
+//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},""")
 //
 // cog.outl("}};")
-// cog.outl()
-// array = ename_array_name(suffix)
-// cog.outl("std::string to_string({ename} e)".format(**locals()))
-// cog.outl("{")
-// cog.outl("	size_t idx = enum_value(e);")
-// cog.outl("	if (idx >= {array}.size())".format(**locals()))
-// cog.outl("		return std::to_string(idx);")
-// cog.outl()
-// cog.outl("	return {array}[idx];".format(**locals()))
-// cog.outl("}")
 // ]]]
-//! MAV_COMP_ID values
-static const std::array<const std::string, 40> mav_comp_id_strings{{
-/*  0 */ "ALL",
-/*  1 */ "AUTOPILOT1",
-/* 100 */ "CAMERA",
-/* 101 */ "CAMERA2",
-/* 102 */ "CAMERA3",
-/* 103 */ "CAMERA4",
-/* 104 */ "CAMERA5",
-/* 105 */ "CAMERA6",
-/* 140 */ "SERVO1",
-/* 141 */ "SERVO2",
-/* 142 */ "SERVO3",
-/* 143 */ "SERVO4",
-/* 144 */ "SERVO5",
-/* 145 */ "SERVO6",
-/* 146 */ "SERVO7",
-/* 147 */ "SERVO8",
-/* 148 */ "SERVO9",
-/* 149 */ "SERVO10",
-/* 150 */ "SERVO11",
-/* 151 */ "SERVO12",
-/* 152 */ "SERVO13",
-/* 153 */ "SERVO14",
-/* 154 */ "GIMBAL",
-/* 155 */ "LOG",
-/* 156 */ "ADSB",
-/* 157 */ "OSD",                           // On Screen Display (OSD) devices for video links
-/* 158 */ "PERIPHERAL",                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter sub-protocol
-/* 159 */ "QX1_GIMBAL",
-/* 160 */ "FLARM",
-/* 180 */ "MAPPER",
-/* 190 */ "MISSIONPLANNER",
-/* 195 */ "PATHPLANNER",
-/* 200 */ "IMU",
-/* 201 */ "IMU_2",
-/* 202 */ "IMU_3",
-/* 220 */ "GPS",
-/* 221 */ "GPS2",
-/* 240 */ "UDP_BRIDGE",
-/* 241 */ "UART_BRIDGE",
-/* 250 */ "SYSTEM_CONTROL",
+static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
+{   0, "ALL" },
+{   1, "AUTOPILOT1" },
+{ 100, "CAMERA" },
+{ 101, "CAMERA2" },
+{ 102, "CAMERA3" },
+{ 103, "CAMERA4" },
+{ 104, "CAMERA5" },
+{ 105, "CAMERA6" },
+{ 140, "SERVO1" },
+{ 141, "SERVO2" },
+{ 142, "SERVO3" },
+{ 143, "SERVO4" },
+{ 144, "SERVO5" },
+{ 145, "SERVO6" },
+{ 146, "SERVO7" },
+{ 147, "SERVO8" },
+{ 148, "SERVO9" },
+{ 149, "SERVO10" },
+{ 150, "SERVO11" },
+{ 151, "SERVO12" },
+{ 152, "SERVO13" },
+{ 153, "SERVO14" },
+{ 154, "GIMBAL" },
+{ 155, "LOG" },
+{ 156, "ADSB" },
+{ 157, "OSD" },                           // On Screen Display (OSD) devices for video links
+{ 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter sub-protocol
+{ 159, "QX1_GIMBAL" },
+{ 160, "FLARM" },
+{ 180, "MAPPER" },
+{ 190, "MISSIONPLANNER" },
+{ 195, "PATHPLANNER" },
+{ 200, "IMU" },
+{ 201, "IMU_2" },
+{ 202, "IMU_3" },
+{ 220, "GPS" },
+{ 221, "GPS2" },
+{ 240, "UDP_BRIDGE" },
+{ 241, "UART_BRIDGE" },
+{ 250, "SYSTEM_CONTROL" },
 }};
+// [[[end]]] (checksum: 9769958883e98b63a634629710a11131)
 
 std::string to_string(MAV_COMPONENT e)
 {
 	size_t idx = enum_value(e);
-	if (idx >= mav_comp_id_strings.size())
+	auto it = mav_comp_id_strings.find(idx);
+
+	if (it == mav_comp_id_strings.end())
 		return std::to_string(idx);
 
-	return mav_comp_id_strings[idx];
+	return it->second;
 }
-// [[[end]]] (checksum: f8c7d2f9f27973787d4460efff4c9373)
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {
