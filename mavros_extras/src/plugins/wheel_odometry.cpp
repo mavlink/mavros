@@ -26,9 +26,9 @@
 namespace mavros {
 namespace extra_plugins {
 /**
- * @brief Ardupilot wheel odometry plugin.
+ * @brief Wheel odometry plugin.
  *
- * This plugin allows computing and publishing wheel odometry coming from Ardupilot FCU wheel encoders.
+ * This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
  * Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).
  *
  */
@@ -519,8 +519,8 @@ private:
 	/* -*- message handlers -*- */
 
 	/**
-	 * @brief Handle RPM MAVlink (Ardupilot) message.
-	 * Message specification: http://mavlink.org/messages/ardupilotmega#RPM
+	 * @brief Handle Ardupilot RPM MAVlink message.
+	 * Message specification: http://mavlink.io/en/messages/ardupilotmega.html#RPM
 	 * @param msg	Received Mavlink msg
 	 * @param rpm	RPM msg
 	 */
@@ -549,12 +549,12 @@ private:
 	}
 
 	/**
-	 * @brief Handle WHEEL_DISTANCE MAVlink (Ardupilot) message.
-	 * Message specification: http://mavlink.org/messages/ardupilotmega#WHEEL_DISTANCE
+	 * @brief Handle WHEEL_DISTANCE MAVlink message.
+	 * Message specification: https://mavlink.io/en/messages/common.html#WHEEL_DISTANCE
 	 * @param msg	Received Mavlink msg
 	 * @param dist	WHEEL_DISTANCE msg
 	 */
-	void handle_wheel_distance(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::WHEEL_DISTANCE &wheel_dist)
+	void handle_wheel_distance(const mavlink::mavlink_message_t *msg, mavlink::common::msg::WHEEL_DISTANCE &wheel_dist)
 	{
 		// Check for bad wheels count
 		if (wheel_dist.count == 0)

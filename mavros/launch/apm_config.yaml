@@ -207,8 +207,6 @@ vision_speed:
 vibration:
   frame_id: "base_link"
 
-# vim:set ts=2 sw=2 et:
-
 # wheel_odometry
 wheel_odometry:
   count: 2           # number of wheels to compute odometry
@@ -224,3 +222,5 @@ wheel_odometry:
     send: true
     frame_id: "map"
     child_frame_id: "base_link"
+
+# vim:set ts=2 sw=2 et:
