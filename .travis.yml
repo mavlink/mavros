@@ -12,7 +12,8 @@ cache:
 
 env:
   global:
-    - CCACHE_DIR=$HOME/.ccache CI=true
+    - CCACHE_DIR=$HOME/.ccache
+    - DOCKER_RUN_OPTS="-e CI=true"
   matrix:
     #- ROS_DISTRO="indigo" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall' # too old, many errors relate to C++11
     - ROS_DISTRO="kinetic"
