@@ -24,6 +24,7 @@
 #include <mavros_msgs/StatusText.h>
 #include <mavros_msgs/VehicleInfo.h>
 #include <mavros_msgs/VehicleInfoGet.h>
+#include <mavros_msgs/MessageInterval.h>
 
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
@@ -487,6 +488,7 @@ public:
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
 		vehicle_info_get_srv = nh.advertiseService("vehicle_info_get", &SystemStatusPlugin::vehicle_info_get_cb, this);
+		message_interval_srv = nh.advertiseService("set_message_interval", &SystemStatusPlugin::set_message_interval_cb, this);
 
 		// init state topic
 		publish_disconnection();
@@ -526,6 +528,7 @@ private:
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
 	ros::ServiceServer vehicle_info_get_srv;
+	ros::ServiceServer message_interval_srv;
 
 	MAV_TYPE conn_heartbeat_mav_type;
 	static constexpr int RETRIES_COUNT = 6;
@@ -1100,6 +1103,45 @@ private:
 		res.success = true;
 		return res.success;
 	}
+
+    bool set_message_interval_cb(mavros_msgs::MessageInterval::Request &req,
+            mavros_msgs::MessageInterval::Response &res)
+    {
+        using mavlink::common::MAV_CMD;
+
+        try {
+            auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+
+            // calculate interval
+            float interval_us;
+            if (req.message_rate < 0) {
+                interval_us = -1.0f;
+            } else if (req.message_rate == 0) {
+                interval_us = 0.0f;
+            } else {
+                interval_us = 1000000.0f / req.message_rate;
+            }
+
+            mavros_msgs::CommandLong cmd{};
+
+            cmd.request.broadcast = false;
+            cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
+            cmd.request.confirmation = false;
+            cmd.request.param1 = req.message_id;
+            cmd.request.param2 = interval_us;
+
+            ROS_DEBUG_NAMED("sys", "SetMessageInterval: Request msgid %u at %f hz",
+                    req.message_id, req.message_rate);
+            res.success = client.call(cmd);
+        }
+        catch (ros::InvalidNameException &ex) {
+            ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
+        }
+
+        ROS_ERROR_COND_NAMED(!res.success, "sys", "SetMessageInterval: command plugin service call failed!");
+
+        return res.success;
+    }
 };
 }	// namespace std_plugins
 }	// namespace mavros
