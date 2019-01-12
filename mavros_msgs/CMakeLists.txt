@@ -76,6 +76,7 @@ add_service_files(
   LogRequestData.srv
   LogRequestEnd.srv
   LogRequestList.srv
+  MessageInterval.srv
   ParamGet.srv
   ParamPull.srv
   ParamPush.srv
