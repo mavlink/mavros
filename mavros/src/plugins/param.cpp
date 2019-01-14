@@ -604,7 +604,7 @@ private:
 			restart_timeout_timer();
 			param_request_list();
 		}
-		else if (param_state == PR::RXPARAM) {
+		else if (param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			if (parameters_missing_idx.empty()) {
 				ROS_WARN_NAMED("param", "PR: missing list is clear, but we in RXPARAM state, "
 						"maybe last rerequest fails. Params missed: %zd",
