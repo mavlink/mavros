@@ -489,8 +489,14 @@ private:
 			parameters_missing_idx.remove(pmsg.param_index);
 
 			// in receiving mode we use param_rx_retries for LIST and PARAM
-			if (it_is_first_requested)
+			if (it_is_first_requested) {
+				ROS_DEBUG_NAMED("param", "PR: got a value of a requested param idx=%u, "
+						"resetting retries count", pmsg.param_index);
 				param_rx_retries = RETRIES_COUNT;
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				ROS_INFO_NAMED("param", "PR: got an unsolicited param value idx=%u, "
+						"not resetting retries count %zu", pmsg.param_index, param_rx_retries);
+			}
 
 			restart_timeout_timer();
 
@@ -505,6 +511,7 @@ private:
 				list_receiving.notify_all();
 			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
 				uint16_t first_miss_idx = parameters_missing_idx.front();
+				ROS_DEBUG_NAMED("param", "PR: requesting next timed out parameter idx=%u", first_miss_idx);
 				param_request_read("", first_miss_idx);
 			}
 		}
