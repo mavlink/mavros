@@ -19,8 +19,11 @@
 #include <mavros/mavros_plugin.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <geometry_msgs/AccelWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <nav_msgs/Odometry.h>
@@ -51,19 +54,19 @@ public:
 		lp_nh.param("tf/send", tf_send, false);
 		lp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
 		lp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
-		// Debug tf info
-		// broadcast the following transform: (can be expanded to more if desired)
-		// NED -> aircraft
-		lp_nh.param("tf/send_fcu", tf_send_fcu, false);
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
+		local_position_cov = lp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose_cov", 10);
 		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
+		local_velocity_cov = lp_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity_cov", 10);
+		local_accel = lp_nh.advertise<geometry_msgs::AccelWithCovarianceStamped>("accel", 10);
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
 	Subscriptions get_subscriptions() {
 		return {
-		       make_handler(&LocalPositionPlugin::handle_local_position_ned)
+		       make_handler(&LocalPositionPlugin::handle_local_position_ned),
+		       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
 		};
 	}
 
@@ -71,17 +74,38 @@ private:
 	ros::NodeHandle lp_nh;
 
 	ros::Publisher local_position;
+	ros::Publisher local_position_cov;
 	ros::Publisher local_velocity;
+	ros::Publisher local_velocity_cov;
+	ros::Publisher local_accel;
 	ros::Publisher local_odom;
 
 	std::string frame_id;		//!< frame for Pose
 	std::string tf_frame_id;	//!< origin for TF
 	std::string tf_child_frame_id;	//!< frame for TF
 	bool tf_send;
-	bool tf_send_fcu;	//!< report NED->aircraft in tf tree
+	bool has_local_position_ned;
+	bool has_local_position_ned_cov;
+
+	void publish_tf(boost::shared_ptr<nav_msgs::Odometry> &odom)
+	{
+		if (tf_send) {
+			geometry_msgs::TransformStamped transform;
+			transform.header.stamp = odom->header.stamp;
+			transform.header.frame_id = tf_frame_id;
+			transform.child_frame_id = tf_child_frame_id;
+			transform.transform.translation.x = odom->pose.pose.position.x;
+			transform.transform.translation.y = odom->pose.pose.position.y;
+			transform.transform.translation.z = odom->pose.pose.position.z;
+			transform.transform.rotation = odom->pose.pose.orientation;
+			m_uas->tf2_broadcaster.sendTransform(transform);
+		}
+	}
 
 	void handle_local_position_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED &pos_ned)
 	{
+		has_local_position_ned = true;
+
 		//--------------- Transform FCU position and Velocity Data ---------------//
 		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
 		auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
@@ -94,82 +118,111 @@ private:
 		tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
 		auto baselink_linear = ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
 
-		//--------------- Generate Message Pointers ---------------//
-		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
-		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
 		auto odom = boost::make_shared<nav_msgs::Odometry>();
-
-		pose->header = m_uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
-		twist->header = pose->header;
-
-		tf::pointEigenToMsg(enu_position, pose->pose.position);
-		pose->pose.orientation = enu_orientation_msg;
-
-		tf::vectorEigenToMsg(enu_velocity, twist->twist.linear);
-		twist->twist.angular = baselink_angular_msg;
-
-		odom->header.stamp = pose->header.stamp;
-		odom->header.frame_id = tf_frame_id;
+		odom->header = m_uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
 		odom->child_frame_id = tf_child_frame_id;
+
+		tf::pointEigenToMsg(enu_position, odom->pose.pose.position);
+		odom->pose.pose.orientation = enu_orientation_msg;
 		tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
 		odom->twist.twist.angular = baselink_angular_msg;
-		// reasonable defaults for covariance
-		odom->pose.pose = pose->pose;
-		for (int i=0; i< 3; i++) {
-			// linear velocity
-			odom->twist.covariance[i + 6*i] = 1e-4;
-			// angular velocity
-			odom->twist.covariance[(i + 3) + 6*(i + 3)] = 1e-4;
-			// position/ attitude
-			if (i==2) {
-				// z
-				odom->pose.covariance[i + 6*i] = 1e-6;
-				// yaw
-				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
-			} else {
-				// x, y
-				odom->pose.covariance[i + 6*i] = 1e-6;
-				// roll, pitch
-				odom->pose.covariance[(i + 3) + 6*(i + 3)] = 1e-6;
-			}
+
+		// publish odom if we don't have LOCAL_POSITION_NED_COV
+		if (!has_local_position_ned_cov) {
+			local_odom.publish(odom);
 		}
 
-		//--------------- Publish Data ---------------//
-		local_odom.publish(odom);
+		// publish pose always
+		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		pose->header = odom->header;
+		pose->pose = odom->pose.pose;
 		local_position.publish(pose);
+
+		// publish velocity always
+		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
+		twist->header.stamp = odom->header.stamp;
+		twist->header.frame_id = odom->child_frame_id;
+		twist->twist = odom->twist.twist;
 		local_velocity.publish(twist);
 
-		if (tf_send) {
-			geometry_msgs::TransformStamped transform;
+		publish_tf(odom);
+	}
 
-			transform.header.stamp = pose->header.stamp;
-			transform.header.frame_id = tf_frame_id;
-			transform.child_frame_id = tf_child_frame_id;
+	void handle_local_position_ned_cov(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED_COV &pos_ned)
+	{
+		has_local_position_ned_cov = true;
 
-			transform.transform.rotation = enu_orientation_msg;
-			tf::vectorEigenToMsg(enu_position, transform.transform.translation);
+		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.x, pos_ned.y, pos_ned.z));
+		auto enu_velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
 
-			m_uas->tf2_broadcaster.sendTransform(transform);
+		auto enu_orientation_msg = m_uas->get_attitude_orientation_enu();
+		auto baselink_angular_msg = m_uas->get_attitude_angular_velocity_enu();
+		Eigen::Quaterniond enu_orientation;
+		tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
+		auto baselink_linear = ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
+
+		auto odom = boost::make_shared<nav_msgs::Odometry>();
+		odom->header = m_uas->synchronized_header(frame_id, pos_ned.time_usec);
+		odom->child_frame_id = tf_child_frame_id;
+
+		tf::pointEigenToMsg(enu_position, odom->pose.pose.position);
+		odom->pose.pose.orientation = enu_orientation_msg;
+		tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
+		odom->twist.twist.angular = baselink_angular_msg;
+
+		odom->pose.covariance[0] = pos_ned.covariance[0]; // x
+		odom->pose.covariance[7] = pos_ned.covariance[9]; // y
+		odom->pose.covariance[14] = pos_ned.covariance[17]; // z
+
+		odom->twist.covariance[0] = pos_ned.covariance[24]; // vx
+		odom->twist.covariance[7] = pos_ned.covariance[30]; // vy
+		odom->twist.covariance[14] = pos_ned.covariance[35]; // vz
+		// TODO: orientation + angular velocity covariances from ATTITUDE_QUATERION_COV
+
+		// publish odom always
+		local_odom.publish(odom);
+
+		// publish pose_cov always
+		auto pose_cov = boost::make_shared<geometry_msgs::PoseWithCovarianceStamped>();
+		pose_cov->header = odom->header;
+		pose_cov->pose = odom->pose;
+		local_position_cov.publish(pose_cov);
+
+		// publish velocity_cov always
+		auto twist_cov = boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
+		twist_cov->header.stamp = odom->header.stamp;
+		twist_cov->header.frame_id = odom->child_frame_id;
+		twist_cov->twist = odom->twist;
+		local_velocity_cov.publish(twist_cov);
+
+		// publish pose, velocity, tf if we don't have LOCAL_POSITION_NED
+		if (!has_local_position_ned) {
+			auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+			pose->header = odom->header;
+			pose->pose = odom->pose.pose;
+			local_position.publish(pose);
+
+			auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
+			twist->header.stamp = odom->header.stamp;
+			twist->header.frame_id = odom->child_frame_id;
+			twist->twist = odom->twist.twist;
+			local_velocity.publish(twist);
+
+			publish_tf(odom);
 		}
-		if (tf_send_fcu) {
-			//--------------- Report NED->aircraft transform ---------------//
-			geometry_msgs::TransformStamped ned_aircraft_tf;
 
-			ned_aircraft_tf.header.stamp = pose->header.stamp;
-			ned_aircraft_tf.header.frame_id = "NED";
-			ned_aircraft_tf.child_frame_id = "aircraft";
+		// publish accelerations
+		auto accel = boost::make_shared<geometry_msgs::AccelWithCovarianceStamped>();
+		accel->header = odom->header;
 
-			//Don't just report the data from the mavlink message,
-			//actually perform rotations to see if anything is
-			//wrong.
-			auto ned_position = ftf::transform_frame_enu_ned(enu_position);
-			tf::vectorEigenToMsg(ned_position, ned_aircraft_tf.transform.translation);
+		auto enu_accel = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.ax, pos_ned.ay, pos_ned.az));
+		tf::vectorEigenToMsg(enu_accel, accel->accel.accel.linear);
 
-			auto ned_orientation = ftf::transform_orientation_enu_ned(
-						ftf::transform_orientation_baselink_aircraft(enu_orientation));
-			tf::quaternionEigenToMsg(ned_orientation,ned_aircraft_tf.transform.rotation);
-			m_uas->tf2_broadcaster.sendTransform(ned_aircraft_tf);
-		}
+		accel->accel.covariance[0] = pos_ned.covariance[39]; // ax
+		accel->accel.covariance[7] = pos_ned.covariance[42]; // ay
+		accel->accel.covariance[14] = pos_ned.covariance[44]; // az
+
+		local_accel.publish(accel);
 	}
 };
 }	// namespace std_plugins

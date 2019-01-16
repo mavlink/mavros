@@ -22,6 +22,7 @@
 #include <mavros_msgs/ParamGet.h>
 #include <mavros_msgs/ParamPull.h>
 #include <mavros_msgs/ParamPush.h>
+#include <mavros_msgs/Param.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -292,6 +293,22 @@ public:
 		return utils::format("%s (%u/%u): %s", param_id.c_str(), param_index, param_count, param_value.toXml().c_str());
 	}
 
+	mavros_msgs::Param to_msg()
+	{
+		mavros_msgs::Param msg;
+
+		// XXX(vooon): find better solution
+		msg.header.stamp = ros::Time::now();
+
+		msg.param_id = param_id;
+		msg.value.integer = to_integer();
+		msg.value.real = to_real();
+		msg.param_index = param_index;
+		msg.param_count = param_count;
+
+		return msg;
+	}
+
 	/**
 	 * Exclude this parameters from ~param/push
 	 */
@@ -356,6 +373,8 @@ public:
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
+		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
+
 		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
 		shedule_timer.stop();
 		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
@@ -381,6 +400,8 @@ private:
 	ros::ServiceServer push_srv;
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
+
+	ros::Publisher param_value_pub;
 
 	ros::Timer shedule_timer;			//!< for startup shedule fetch
 	ros::Timer timeout_timer;			//!< for timeout resend
@@ -438,6 +459,8 @@ private:
 				set_it->second->ack.notify_all();
 			}
 
+			param_value_pub.publish(p.to_msg());
+
 			ROS_WARN_STREAM_COND_NAMED(
 					((p.param_index != pmsg.param_index &&
 					  pmsg.param_index != UINT16_MAX) ||
@@ -460,10 +483,13 @@ private:
 
 			parameters[param_id] = p;
 
+			param_value_pub.publish(p.to_msg());
+
 			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
 
 		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
+
 			// we received first param. setup list timeout
 			if (param_state == PR::RXLIST) {
 				param_count = pmsg.param_count;

@@ -2,6 +2,24 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.28.0 (2019-01-03)
+-------------------
+* plugin:param: publish new param value
+* Merge pull request `#1148 <https://github.com/mavlink/mavros/issues/1148>`_ from Kiwa21/pr-param-value
+  param plugin : add msg and publisher to catch latest param value
+* msgs: update Header
+* sys_state: Small cleanup of `#1150 <https://github.com/mavlink/mavros/issues/1150>`_
+* VehicleInfo : add srv into sys_status plugin to request basic info from vehicle
+* mavros_msgs/msg/LogData.msg: Define "offset" field to be of type uint32
+* param plugin : add msg and publisher to catch latest param value
+* style clean up
+* Use component_id to determine message sender
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* Add message for avoidance status
+* Contributors: Gregoire Linard, Vladimir Ermakov, baumanta, mlvov
+
 0.27.0 (2018-11-12)
 -------------------
 * Add service to send mavlink TRIGG_INTERVAL commands

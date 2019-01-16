@@ -35,6 +35,7 @@ catkin_package(
 
 include_directories(
   include
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
@@ -42,7 +43,7 @@ include_directories(
 
 ## Declare a cpp library
 add_library(mavconn
-  src/mavlink_helpers.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp
   src/interface.cpp
   src/serial.cpp
   src/udp.cpp
@@ -57,12 +58,22 @@ target_link_libraries(mavconn
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h)
 
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp)
+
+if(DEFINED ENV{CI})
+  message(STATUS "CI environment detected. Assume that it is on RO fs")
+else()
+  message(STATUS "Copy mavlink_dialect.h to source tree")
+  file(
+    COPY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
+    )
+endif()
 
 #############
 ## Install ##
@@ -80,6 +91,11 @@ install(TARGETS mavconn
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/mavconn/
+  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/
   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
   FILES_MATCHING PATTERN "*.h"
 )

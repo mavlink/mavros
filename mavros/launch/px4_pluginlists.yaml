@@ -6,6 +6,7 @@ plugin_blacklist:
 - vibration
 - distance_sensor
 - rangefinder
+- wheel_odometry
 
 plugin_whitelist: []
 # 'sys_*'

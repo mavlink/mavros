@@ -54,6 +54,8 @@ UAS::UAS() :
 	// send static transform from "local_origin" (ENU) to "local_origin_ned" (NED)
 	publish_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)));
 	publish_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)));
+	// for being able to apply the transforms at the data coming from the FCU, the opposite transform is also required
+	publish_static_transform("fcu_frd", "fcu", Eigen::Affine3d(ftf::quaternion_from_rpy(-M_PI, 0, 0)));
 }
 
 /* -*- heartbeat handlers -*- */

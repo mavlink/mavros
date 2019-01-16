@@ -2,6 +2,19 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.28.0 (2019-01-03)
+-------------------
+* odom: add ODOMETRY handler and publisher
+* remove newlines after doxygen
+* style clean up
+* Use component_id to determine message sender
+* send out companion status as heartbeat
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* add plugin to receive avoidance status message
+* Contributors: TSC21, baumanta
+
 0.27.0 (2018-11-12)
 -------------------
 * extras `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
