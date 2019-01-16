@@ -424,6 +424,7 @@ private:
 		IDLE,
 		RXLIST,
 		RXPARAM,
+		RXPARAM_TIMEDOUT,
 		TXPARAM
 	};
 	PR param_state;
@@ -487,8 +488,8 @@ private:
 			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
 
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 
-		if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
 			// we received first param. setup list timeout
 			if (param_state == PR::RXLIST) {
 				param_count = pmsg.param_count;
@@ -514,8 +515,14 @@ private:
 			parameters_missing_idx.remove(pmsg.param_index);
 
 			// in receiving mode we use param_rx_retries for LIST and PARAM
-			if (it_is_first_requested)
+			if (it_is_first_requested) {
+				ROS_DEBUG_NAMED("param", "PR: got a value of a requested param idx=%u, "
+						"resetting retries count", pmsg.param_index);
 				param_rx_retries = RETRIES_COUNT;
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				ROS_INFO_NAMED("param", "PR: got an unsolicited param value idx=%u, "
+						"not resetting retries count %zu", pmsg.param_index, param_rx_retries);
+			}
 
 			restart_timeout_timer();
 
@@ -528,6 +535,10 @@ private:
 						missed);
 				go_idle();
 				list_receiving.notify_all();
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				uint16_t first_miss_idx = parameters_missing_idx.front();
+				ROS_DEBUG_NAMED("param", "PR: requesting next timed out parameter idx=%u", first_miss_idx);
+				param_request_read("", first_miss_idx);
 			}
 		}
 	}
@@ -626,7 +637,7 @@ private:
 			restart_timeout_timer();
 			param_request_list();
 		}
-		else if (param_state == PR::RXPARAM) {
+		else if (param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			if (parameters_missing_idx.empty()) {
 				ROS_WARN_NAMED("param", "PR: missing list is clear, but we in RXPARAM state, "
 						"maybe last rerequest fails. Params missed: %zd",
@@ -636,6 +647,7 @@ private:
 				return;
 			}
 
+			param_state = PR::RXPARAM_TIMEDOUT;
 			uint16_t first_miss_idx = parameters_missing_idx.front();
 			if (param_rx_retries > 0) {
 				param_rx_retries--;
@@ -782,7 +794,7 @@ private:
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
-		else if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
+		else if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
@@ -859,7 +871,7 @@ private:
 	{
 		unique_lock lock(mutex);
 
-		if (param_state == PR::RXLIST || param_state == PR::RXPARAM) {
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			ROS_ERROR_NAMED("param", "PR: receiving not complete");
 			return false;
 		}
