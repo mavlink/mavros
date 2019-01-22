@@ -47,6 +47,7 @@ add_message_files(
   Waypoint.msg
   WaypointList.msg
   WaypointReached.msg
+  WrenchTarget.msg
 )
 
 add_service_files(

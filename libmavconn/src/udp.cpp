@@ -246,7 +246,7 @@ void MAVConnUDP::do_recvfrom()
 				}
 
 				if (!sthis->permanent_broadcast && sthis->remote_ep != sthis->last_remote_ep) {
-					CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
+					//CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
 					sthis->remote_exists = true;
 					sthis->last_remote_ep = sthis->remote_ep;
 				}

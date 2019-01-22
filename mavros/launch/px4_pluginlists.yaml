@@ -6,6 +6,7 @@ plugin_blacklist:
 - vibration
 - distance_sensor
 - rangefinder
+- home_position
 
 plugin_whitelist: []
 # 'sys_*'
