@@ -158,6 +158,30 @@ public:
 };
 
 /**
+ * @brief This mixin adds set_wrench_target()
+ */
+template <class D>
+class SetWrenchTargetMixin {
+public:
+	//! Message sepecification:
+	void set_wrench_target(Eigen::Vector3d linear_acceleration,
+			Eigen::Vector3d angular_acceleration)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::voliro::msg::SET_WRENCH_TARGET_BODY_NED sp;
+
+		sp.acc_x = linear_acceleration.x();
+		sp.acc_y = linear_acceleration.y();
+		sp.acc_z = linear_acceleration.z();
+		sp.acc_roll = angular_acceleration.x();
+		sp.acc_pitch = angular_acceleration.y();
+		sp.acc_yaw = angular_acceleration.z();
+
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+
+/**
  * @brief This mixin adds TF2 listener thread to plugin
  *
  * It requires tf_frame_id, tf_child_frame_id strings

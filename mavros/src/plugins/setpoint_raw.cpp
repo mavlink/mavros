@@ -23,6 +23,7 @@
 #include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
+#include <mavros_msgs/WrenchTarget.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -35,7 +36,8 @@ namespace std_plugins {
 class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointRawPlugin>,
 	private plugin::SetPositionTargetGlobalIntMixin<SetpointRawPlugin>,
-	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin> {
+	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin>,
+	private plugin::SetWrenchTargetMixin<SetpointRawPlugin> {
 public:
 	SetpointRawPlugin() : PluginBase(),
 		sp_nh("~setpoint_raw")
@@ -65,6 +67,7 @@ public:
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
 		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
+		wrench_sub = sp_nh.subscribe("wrench", 10, &SetpointRawPlugin::wrench_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
@@ -83,9 +86,10 @@ private:
 	friend class SetPositionTargetLocalNEDMixin;
 	friend class SetPositionTargetGlobalIntMixin;
 	friend class SetAttitudeTargetMixin;
+	friend class SetWrenchTargetMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 	bool ignore_rpyt_messages_;
@@ -286,6 +290,20 @@ private:
       set_attitude_target(msg->header.stamp.toNSec() / 1000000, type_mask,
                           ned_desired_orientation, body_rate, thrust);
     }
+
+    void wrench_cb(const mavros_msgs::WrenchTarget::ConstPtr &req)
+	{
+		Eigen::Vector3d a_lin, a_ang;
+
+		tf::vectorMsgToEigen(req->linear_acceleration, a_lin);
+		tf::vectorMsgToEigen(req->angular_acceleration, a_ang);
+
+		// Transform frame ENU->NED
+		a_lin = ftf::transform_frame_enu_ned(a_lin);
+		a_ang = ftf::transform_frame_enu_ned(a_ang);
+		
+		set_wrench_target(a_lin, a_ang);
+	}
 };
 }	// namespace std_plugins
 }	// namespace mavros
