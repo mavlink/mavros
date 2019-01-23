@@ -57,16 +57,17 @@ public:
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
 		local_position_cov = lp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose_cov", 10);
-		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
-		local_velocity_cov = lp_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity_cov", 10);
+		local_velocity_local = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity_local", 10);
+		local_velocity_body = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity_body", 10);
+		local_velocity_cov = lp_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity_body_cov", 10);
 		local_accel = lp_nh.advertise<geometry_msgs::AccelWithCovarianceStamped>("accel", 10);
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
 	Subscriptions get_subscriptions() {
 		return {
-		       make_handler(&LocalPositionPlugin::handle_local_position_ned),
-		       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
+			       make_handler(&LocalPositionPlugin::handle_local_position_ned),
+			       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
 		};
 	}
 
@@ -75,7 +76,8 @@ private:
 
 	ros::Publisher local_position;
 	ros::Publisher local_position_cov;
-	ros::Publisher local_velocity;
+	ros::Publisher local_velocity_local;
+	ros::Publisher local_velocity_body;
 	ros::Publisher local_velocity_cov;
 	ros::Publisher local_accel;
 	ros::Publisher local_odom;
@@ -139,12 +141,24 @@ private:
 		local_position.publish(pose);
 
 		// publish velocity always
-		auto twist = boost::make_shared<geometry_msgs::TwistStamped>();
-		twist->header.stamp = odom->header.stamp;
-		twist->header.frame_id = odom->child_frame_id;
-		twist->twist = odom->twist.twist;
-		local_velocity.publish(twist);
+		// velocity in the body frame
+		auto twist_body = boost::make_shared<geometry_msgs::TwistStamped>();
+		twist_body->header.stamp = odom->header.stamp;
+		twist_body->header.frame_id = tf_child_frame_id;
+		twist_body->twist.linear = odom->twist.twist.linear;
+		twist_body->twist.angular = baselink_angular_msg;
+		local_velocity_body.publish(twist_body);
 
+		// velocity in the local frame
+		auto twist_local = boost::make_shared<geometry_msgs::TwistStamped>();
+		twist_local->header.stamp = twist_body->header.stamp;
+		twist_local->header.frame_id = tf_child_frame_id;
+		tf::vectorEigenToMsg(enu_velocity, twist_local->twist.linear);
+		tf::vectorEigenToMsg(ftf::transform_frame_baselink_enu(ftf::to_eigen(baselink_angular_msg), enu_orientation),
+						twist_body->twist.angular);
+		local_velocity_local.publish(twist_local);
+
+		// publish tf
 		publish_tf(odom);
 	}
 
@@ -170,13 +184,13 @@ private:
 		tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
 		odom->twist.twist.angular = baselink_angular_msg;
 
-		odom->pose.covariance[0] = pos_ned.covariance[0]; // x
-		odom->pose.covariance[7] = pos_ned.covariance[9]; // y
-		odom->pose.covariance[14] = pos_ned.covariance[17]; // z
+		odom->pose.covariance[0] = pos_ned.covariance[0];	// x
+		odom->pose.covariance[7] = pos_ned.covariance[9];	// y
+		odom->pose.covariance[14] = pos_ned.covariance[17];	// z
 
-		odom->twist.covariance[0] = pos_ned.covariance[24]; // vx
-		odom->twist.covariance[7] = pos_ned.covariance[30]; // vy
-		odom->twist.covariance[14] = pos_ned.covariance[35]; // vz
+		odom->twist.covariance[0] = pos_ned.covariance[24];	// vx
+		odom->twist.covariance[7] = pos_ned.covariance[30];	// vy
+		odom->twist.covariance[14] = pos_ned.covariance[35];	// vz
 		// TODO: orientation + angular velocity covariances from ATTITUDE_QUATERION_COV
 
 		// publish odom always
@@ -206,8 +220,9 @@ private:
 			twist->header.stamp = odom->header.stamp;
 			twist->header.frame_id = odom->child_frame_id;
 			twist->twist = odom->twist.twist;
-			local_velocity.publish(twist);
+			local_velocity_body.publish(twist);
 
+			// publish tf
 			publish_tf(odom);
 		}
 
@@ -218,9 +233,9 @@ private:
 		auto enu_accel = ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.ax, pos_ned.ay, pos_ned.az));
 		tf::vectorEigenToMsg(enu_accel, accel->accel.accel.linear);
 
-		accel->accel.covariance[0] = pos_ned.covariance[39]; // ax
-		accel->accel.covariance[7] = pos_ned.covariance[42]; // ay
-		accel->accel.covariance[14] = pos_ned.covariance[44]; // az
+		accel->accel.covariance[0] = pos_ned.covariance[39];	// ax
+		accel->accel.covariance[7] = pos_ned.covariance[42];	// ay
+		accel->accel.covariance[14] = pos_ned.covariance[44];	// az
 
 		local_accel.publish(accel);
 	}
