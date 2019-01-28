@@ -182,6 +182,24 @@ public:
 };
 
 /**
+ * @brief This mixin adds set_tilt_angle_target()
+ */
+template <class D>
+class SetTiltAngleTargetMixin {
+public:
+	//! Message sepecification:
+	void set_tilt_angle_target(float *alpha)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::voliro::msg::SET_ROTOR_TILT_TARGET sp;
+		for (int i=0 ; i<6 ; i++) {
+			sp.alpha[i] = alpha[i];
+		}
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+
+/**
  * @brief This mixin adds TF2 listener thread to plugin
  *
  * It requires tf_frame_id, tf_child_frame_id strings

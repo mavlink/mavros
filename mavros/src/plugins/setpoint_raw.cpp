@@ -24,6 +24,7 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
 #include <mavros_msgs/WrenchTarget.h>
+#include <mavros_msgs/TiltAngleTarget.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -37,7 +38,8 @@ class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointRawPlugin>,
 	private plugin::SetPositionTargetGlobalIntMixin<SetpointRawPlugin>,
 	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin>,
-	private plugin::SetWrenchTargetMixin<SetpointRawPlugin> {
+	private plugin::SetWrenchTargetMixin<SetpointRawPlugin>,
+	private plugin::SetTiltAngleTargetMixin<SetpointRawPlugin> {
 public:
 	SetpointRawPlugin() : PluginBase(),
 		sp_nh("~setpoint_raw")
@@ -87,6 +89,7 @@ private:
 	friend class SetPositionTargetGlobalIntMixin;
 	friend class SetAttitudeTargetMixin;
 	friend class SetWrenchTargetMixin;
+	friend class SetTiltAngleTargetMixin;
 	ros::NodeHandle sp_nh;
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub;
@@ -303,6 +306,14 @@ private:
 		a_ang = ftf::transform_frame_enu_ned(a_ang);
 		
 		set_wrench_target(a_lin, a_ang);
+	}
+    void tilt_angle_cb(const mavros_msgs::TiltAngleTarget::ConstPtr &req)
+	{
+		float alpha[6];
+		for (int i=0;i<6;i++) {
+			alpha[i] = req->alpha[i];
+		}
+		set_tilt_angle_target(alpha);
 	}
 };
 }	// namespace std_plugins
