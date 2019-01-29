@@ -23,7 +23,7 @@ namespace extra_plugins {
 /**
  * @brief GPS RTK plugin
  *
- * Publish the RTCM messages from ROS to the Pixhawk
+ * Publish the RTCM messages from ROS to the FCU
  */
 class GpsRtkPlugin : public plugin::PluginBase {
 public:
@@ -46,10 +46,11 @@ private:
 	ros::NodeHandle gps_rtk_nh;
 	ros::Subscriber gps_rtk_sub;
 
+	/* -*- callbacks -*- */
 	/**
 	 * @brief Handle mavros_msgs::RTCM message
 	 * It converts the message to the MAVLink GPS_RTCM_DATA message for GPS injection.
-	 * Message specification: http://mavlink.org/messages/common/#GPS_RTCM_DATA
+	 * Message specification: https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA
 	 * @param msg		Received ROS msg
 	 */
 	void rtcm_cb(const mavros_msgs::RTCM::ConstPtr &msg)
