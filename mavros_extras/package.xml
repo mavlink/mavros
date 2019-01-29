@@ -28,6 +28,7 @@
   <depend>visualization_msgs</depend>
   <depend>urdf</depend>
   <depend>tf</depend>
+  <depend>tf2_eigen</depend>
 
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
