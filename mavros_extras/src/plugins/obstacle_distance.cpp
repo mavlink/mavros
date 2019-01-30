@@ -88,9 +88,9 @@ private:
 		}
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [microsecs]
-		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);			//!< defaults is laser type (depth sensor, Lidar)
-		obstacle.min_distance = req->range_min * 1e2;						//!< [centimeters]
-		obstacle.max_distance = req->range_max * 1e2;						//!< [centimeters]
+		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);	//!< defaults is laser type (depth sensor, Lidar)
+		obstacle.min_distance = req->range_min * 1e2;							//!< [centimeters]
+		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
 				<< std::endl << obstacle.to_yaml());
