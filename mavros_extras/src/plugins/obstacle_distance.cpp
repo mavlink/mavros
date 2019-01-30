@@ -66,19 +66,18 @@ private:
 
 		if (req->ranges.size() <= obstacle.distances.size()) {
 			// all distances from sensor will fit in obstacle distance message
-			auto n = std::min(req->ranges.size(), obstacle.distances.size());
-			Eigen::Map<Eigen::Matrix<uint16_t, Eigen::Dynamic, 1> > map_distances(obstacle.distances.data(), n);
-			auto cm_ranges = Eigen::Map<const Eigen::VectorXf>(req->ranges.data(), n) * 1e2;
+			Eigen::Map<Eigen::Matrix<uint16_t, Eigen::Dynamic, 1> > map_distances(obstacle.distances.data(), req->ranges.size());
+			auto cm_ranges = Eigen::Map<const Eigen::VectorXf>(req->ranges.data(), req->ranges.size()) * 1e2;
 			map_distances = cm_ranges.cast<uint16_t>();							//!< [centimeters]
-			std::fill(obstacle.distances.begin() + n, obstacle.distances.end(), UINT16_MAX);    //!< fill the rest of the array values as "Unknown"
+			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);    //!< fill the rest of the array values as "Unknown"
 			obstacle.increment = req->angle_increment * RAD_TO_DEG;				//!< [degrees]
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
-			int scale_factor = ceil(req->ranges.size() / obstacle.distances.size());
-			for (int i = 0; i < obstacle.distances.size(); i++) {
+			size_t scale_factor = ceil(double(req->ranges.size()) / obstacle.distances.size());
+			for (size_t i = 0; i < obstacle.distances.size(); i++) {
 				obstacle.distances[i] = UINT16_MAX;
-				for (int j = 0; j < scale_factor; j++) {
-					int req_index = i * scale_factor + j;
+				for (size_t j = 0; j < scale_factor; j++) {
+					size_t req_index = i * scale_factor + j;
 					if (req_index < req->ranges.size()) {
 						uint16_t dist_cm = req->ranges[req_index] * 1e2;
 						obstacle.distances[i] = std::min(obstacle.distances[i], dist_cm);
