@@ -262,7 +262,7 @@ Links
 [apm]: http://ardupilot.com/
 [mlros]: https://github.com/mavlink/mavlink_ros
 [boost]: http://www.boost.org/
-[ml]: http://mavlink.org/mavlink/start
+[ml]: https://mavlink.io/en/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
 [iss49]: https://github.com/mavlink/mavros/issues/49
