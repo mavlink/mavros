@@ -11,7 +11,7 @@
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.mdA
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <mavros/mavros_plugin.h>
@@ -58,7 +58,7 @@ private:
 	/**
 	 * @brief Send companion process status to FCU over a heartbeat message
 	 *
-	 * Message specification: http://mavlink.org/messages/common#HEARTBEAT
+	 * Message specification: https://mavlink.io/en/messages/common.html#HEARTBEAT
 	 * @param req	received CompanionProcessStatus msg
 	 */
 	void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr &req)

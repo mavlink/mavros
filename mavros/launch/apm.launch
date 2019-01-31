@@ -1,6 +1,6 @@
 <launch>
 	<!-- vim: set ft=xml noet : -->
-	<!-- example launch script for ArduPilotMega based FCU's -->
+	<!-- example launch script for ArduPilot based FCU's -->
 
 	<arg name="fcu_url" default="/dev/ttyACM0:57600" />
 	<arg name="gcs_url" default="" />

@@ -1,10 +1,10 @@
 # Msg for Debug MAVLink API
 #
 # Supported types:
-# DEBUG			http://mavlink.org/messages/common#DEBUG
-# DEBUG_VECTOR			http://mavlink.org/messages/common#DEBUG_VECT
-# NAMED_VALUE_FLOAT		http://mavlink.org/messages/common#NAMED_VALUE_FLOAT
-# NAMED_VALUE_INT		http://mavlink.org/messages/common#NAMED_VALUE_INT
+# DEBUG			https://mavlink.io/en/messages/common.html#DEBUG
+# DEBUG_VECTOR			https://mavlink.io/en/messages/common.html#DEBUG_VECT
+# NAMED_VALUE_FLOAT		https://mavlink.io/en/messages/common.html#NAMED_VALUE_FLOAT
+# NAMED_VALUE_INT		https://mavlink.io/en/messages/common.html#NAMED_VALUE_INT
 # @TODO: add support for DEBUG_ARRAY (https://github.com/mavlink/mavlink/pull/734)
 
 std_msgs/Header header

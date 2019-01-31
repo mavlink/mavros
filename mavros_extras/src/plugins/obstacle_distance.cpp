@@ -57,7 +57,7 @@ private:
 	/**
 	 * @brief Send obstacle distance array to the FCU.
 	 *
-	 * Message specification: http://mavlink.org/messages/common#OBSTACLE_DISTANCE
+	 * Message specification: https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE
 	 * @param req	received ObstacleDistance msg
 	 */
 	void obstacle_cb(const sensor_msgs::LaserScan::ConstPtr &req)

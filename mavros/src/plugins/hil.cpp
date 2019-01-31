@@ -124,7 +124,7 @@ private:
 
 	/**
 	 * @brief Send hil_state_quaternion to FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_STATE_QUATERNION
+	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_STATE_QUATERNION
 	 */
 	void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
 		mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
@@ -176,7 +176,7 @@ private:
 
 	/**
 	 * @brief Send hil_gps to FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_GPS
+	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_GPS
 	 */
 	void gps_cb(const mavros_msgs::HilGPS::ConstPtr &req) {
 		mavlink::common::msg::HIL_GPS gps;
@@ -209,7 +209,7 @@ private:
 
 	/**
 	 * @brief Send hil_sensor to FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_SENSOR
+	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_SENSOR
 	 */
 	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
 		mavlink::common::msg::HIL_SENSOR sensor;
@@ -255,7 +255,7 @@ private:
 
 	/**
 	 * @brief Send simulated optical flow to FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_OPTICAL_FLOW
+	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_OPTICAL_FLOW
 	 */
 	void optical_flow_cb(const mavros_msgs::OpticalFlowRad::ConstPtr &req) {
 		mavlink::common::msg::HIL_OPTICAL_FLOW of;
@@ -298,7 +298,7 @@ private:
 
 	/**
 	 * @brief Send simulated received RAW values of the RC channels to the FCU.
-	 * Message specification: @p https://pixhawk.ethz.ch/mavlink/#HIL_RC_INPUTS_RAW
+	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_RC_INPUTS_RAW
 	 */
 	void rcin_raw_cb(const mavros_msgs::RCIn::ConstPtr &req) {
 		mavlink::common::msg::HIL_RC_INPUTS_RAW rcin {};

@@ -203,7 +203,7 @@ odometry:
   out:
     frame_tf:
       # available: check MAV_FRAME odometry local frames in
-      # http://mavlink.org/messages/common
+      # https://mavlink.io/en/messages/common.html
       local_frame: "vision_ned"
       # available: ned, frd or flu (though only the tf to frd is supported)
       body_frame_orientation: "frd"
