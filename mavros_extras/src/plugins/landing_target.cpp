@@ -35,11 +35,11 @@ using mavlink::common::LANDING_TARGET_TYPE;
  * This plugin is intended to publish the location of a landing area captured from a downward facing camera
  * to the FCU and/or receive landing target tracking data coming from the FCU.
  */
-class LandingTargetPlugin : public MavRosPlugin,
-	private TF2ListenerMixin<LandingTargetPlugin> {
+class LandingTargetPlugin : public plugin::PluginBase,
+	private plugin::TF2ListenerMixin<LandingTargetPlugin> {
 public:
 	LandingTargetPlugin() :
-		sp_nh("~landing_target"),
+		nh("~landing_target"),
 		uas(nullptr),
 		tf_rate(10.0),
 		send_tf(true),
@@ -64,18 +64,10 @@ public:
 		nh.param<std::string>("frame_id", frame_id, "landing_target_1");
 		nh.param("listen_lt", listen_lt, false);	// subscribe to raw LadingTarget msg?
 		nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
-		frame = utils::mav_frame_from_str(mav_frame);	// MAV_FRAME index based on given frame name
-		if (frame == -1) {
-			ROS_ERROR_NAMED("landing_target", "LT: invalid MAV_FRAME %s. Please check valid frame names!", mav_frame.c_str());
-			return;
-		}
+		frame = utils::mav_frame_from_str(mav_frame);	// MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
 
 		nh.param<std::string>("land_target_type", land_target_type, "VISION_FIDUCIAL");
-		type = utils::landing_target_type_from_str(land_target_type);	// LANDING_TARGET_TYPE index based on given type name
-		if (type == -1) {
-			ROS_ERROR_NAMED("landing_target", "LT: invalid LANDING_TARGET_TYPE %s. Please check valid type names!", land_target_type.c_str());
-			return;
-		}
+		type = utils::landing_target_type_from_str(land_target_type);	// LANDING_TARGET_TYPE index based on given type name (If unknown, defaults to LIGHT_BEACON)
 
 		// target size
 		nh.param("target_size/x", target_size_x, 1.0);	// [meters]
@@ -114,15 +106,16 @@ public:
 		}
 	}
 
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			       make_handler(&LandingTargetPlugin::handle_landing_target),
+			       make_handler(&LandingTargetPlugin::handle_landing_target)
 		};
 	}
 
 private:
 	friend class TF2ListenerMixin;
-	ros::NodeHandle sp_nh;
+	ros::NodeHandle nh;
 	UAS *uas;
 
 	bool send_tf;
@@ -146,10 +139,10 @@ private:
 	double focal_length;
 	int image_width, image_height;
 
-	int frame;
+	MAV_FRAME frame;
 	std::string mav_frame;
 
-	int type;
+	LANDING_TARGET_TYPE type;
 	std::string land_target_type;
 
 	/* -*- low-level send -*- */
@@ -294,13 +287,13 @@ private:
 
 		landing_target(stamp.toNSec() / 1000,
 					id,
-					frame,	// by default, in LOCAL_NED
+					utils::enum_value(frame),	// by default, in LOCAL_NED
 					angle,
 					distance,
 					size_rad,
 					pos,
 					q,
-					type,
+					utils::enum_value(type),
 					1);	// position is valid from the first received msg
 	}
 
@@ -401,6 +394,7 @@ private:
 					1);		// position is valid from the first received msg
 	}
 };
-};	// namespace mavplugin
+}	// namespace extra_plugins
+}	// namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::LandingTargetPlugin, mavplugin::MavRosPlugin)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::LandingTargetPlugin, mavros::plugin::PluginBase)

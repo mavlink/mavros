@@ -38,6 +38,7 @@ ros::Subscriber lt_marker_sub;
 ros::Publisher track_marker_pub;
 ros::Publisher vehicle_marker_pub;
 ros::Publisher lt_marker_pub;
+ros::Publisher wp_marker_pub;
 
 // landing target marker size
 geometry_msgs::Vector3 lt_size;
@@ -112,7 +113,7 @@ static void publish_wp_marker(const geometry_msgs::PoseStamped::ConstPtr &wp)
  */
 static void publish_lt_marker(const geometry_msgs::PoseStamped::ConstPtr &target)
 {
-	static int marker_id = 2; // TODO: generate new marker for each target
+	static int marker_id = 2;	// TODO: generate new marker for each target
 
 	auto marker = boost::make_shared<visualization_msgs::Marker>();
 
@@ -247,7 +248,12 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 static void local_position_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
 	publish_track_marker(pose);
-	publish_vehicle_marker();
+	if (vehicle_marker) vehicle_marker_pub.publish(vehicle_marker);
+}
+
+void setpoint_local_pos_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &wp)
+{
+	publish_wp_marker(wp);
 }
 
 static void landing_target_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &target)
@@ -269,11 +275,11 @@ int main(int argc, char *argv[])
 	int num_rotors;
 	double arm_len, body_width, body_height;
 
-	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "map");
-	priv_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
+	priv_nh.param<std::string>("fixed_frame_id", fixed_frame_id, "local_origin");
+	priv_nh.param<std::string>("child_frame_id", child_frame_id, "fcu");
 
 	priv_nh.param("marker_scale", marker_scale, 1.0);
-	priv_nh.param("num_rotors", num_rotors, 4);
+	priv_nh.param("num_rotors", num_rotors, 6);
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
 	priv_nh.param("body_height", body_height, 0.10 );
@@ -282,11 +288,12 @@ int main(int argc, char *argv[])
 	create_vehicle_markers( num_rotors, arm_len, body_width, body_height );
 
 	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
-	vehicle_marker_pub = nh.advertise<visualization_msgs::Marker>("vehicle_marker", 10);
+	vehicle_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("vehicle_marker", 10);
+	wp_marker_pub = nh.advertise<visualization_msgs::Marker>("wp_markers", 10);
 	lt_marker_pub = nh.advertise<visualization_msgs::Marker>("landing_target", 10);
 
-	local_position_sub = nh.subscribe("local_position", 10, local_position_sub_cb);
-	landing_target_sub = nh.subscribe("landing_target", 10, landing_target_sub_cb);
+	auto pos_sub = nh.subscribe("local_position", 10, local_position_sub_cb);
+	auto wp_sub = nh.subscribe("local_setpoint", 10, setpoint_local_pos_sub_cb);
 	lt_marker_sub = nh.subscribe("lt_marker", 10, lt_marker_sub_cb);
 
 	ros::spin();
