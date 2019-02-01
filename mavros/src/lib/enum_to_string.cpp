@@ -664,23 +664,13 @@ std::string to_string(LANDING_TARGET_TYPE e)
 LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type)
 {
 	for (size_t idx = 0; idx < landing_target_type_strings.size(); idx++) {
-		if (landing_target_type_strings[idx] == landing_target_type)
-			return idx;
-	}
-	try {
-		int idx = std::stoi(landing_target_type, 0, 0);
-		if (0 > idx || size_t(idx) > landing_target_type.size()) {
-			ROS_ERROR_NAMED("uas", "LANDING_TARGET_TYPE: index out of bound: %d", idx);
-			return -1;
+		if (landing_target_type_strings[idx] == landing_target_type) {
+			std::underlying_type<LANDING_TARGET_TYPE>::type rv = idx;
+			return static_cast<LANDING_TARGET_TYPE>(rv);
 		}
-		else
-			return idx;
 	}
-	catch (std::invalid_argument &ex) {
-		// failed
-	}
-	ROS_ERROR_STREAM_NAMED("uas", "LANDING_TARGET_TYPE: wrong string: " << landing_target_type);
-	return -1;
+	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown LANDING_TARGET_TYPE: " << landing_target_type << ". Defaulting to LIGHT_BEACON");
+	return LANDING_TARGET_TYPE::LIGHT_BEACON;
 }
 
 }	// namespace utils
