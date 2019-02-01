@@ -108,13 +108,6 @@ target_link_libraries(servo_state_publisher
   ${catkin_LIBRARIES}
 )
 
-add_executable(visualization
-  src/visualization.cpp
-)
-target_link_libraries(visualization
-  ${catkin_LIBRARIES}
-)
-
 #############
 ## Install ##
 #############
