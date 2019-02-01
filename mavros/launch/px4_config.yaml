@@ -163,14 +163,6 @@ distance_sensor:
 image:
   frame_id: "px4flow"
 
-# landing_target
-landing_target:
-  send_tf: true
-  listen_tf: false
-  frame_id: "landing_target"
-  child_frame_id: "camera_center"
-  tf_rate_limit: 10.0
-
 # fake_gps
 fake_gps:
   # select data source
@@ -264,21 +256,5 @@ wheel_odometry:
     send: true
     frame_id: "map"
     child_frame_id: "base_link"
-
-# landing_target
-landing_target:
-  tf:
-    send: true
-    listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "landing_target"
-    child_frame_id: "camera_center"
-    rate: 10.0
-  frame_id: "landing_target"
-  target_size: {xy:  0.2, z:  0.2}
-  mav_frame: "LOCAL_NED"
-
-  ## Currently available frames of reference:
-  #    Check http://wiki.ros.org/mavros/Enumerations
-  ##
 
 # vim:set ts=2 sw=2 et:
