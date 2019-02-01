@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2015.2017 Nuno Marques.
+ * Copyright 2015,2017,2019 Nuno Marques.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -40,7 +40,6 @@ class LandingTargetPlugin : public plugin::PluginBase,
 public:
 	LandingTargetPlugin() :
 		nh("~landing_target"),
-		uas(nullptr),
 		tf_rate(10.0),
 		send_tf(true),
 		listen_tf(false),
@@ -58,7 +57,7 @@ public:
 
 	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
+		PluginBase::initialize(uas_);
 
 		// general params
 		nh.param<std::string>("frame_id", frame_id, "landing_target_1");
@@ -116,7 +115,6 @@ public:
 private:
 	friend class TF2ListenerMixin;
 	ros::NodeHandle nh;
-	UAS *uas;
 
 	bool send_tf;
 	bool listen_tf;
@@ -320,7 +318,7 @@ private:
 					utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
-		pose->header = uas->synchronized_header(frame_id, land_target.time_usec);
+		pose->header = m_uas->synchronized_header(frame_id, land_target.time_usec);
 
 		tf::pointEigenToMsg(position, pose->pose.position);
 		tf::quaternionEigenToMsg(orientation, pose->pose.orientation);
@@ -337,7 +335,7 @@ private:
 			transform.transform.rotation = pose->pose.orientation;
 			tf::vectorEigenToMsg(position, transform.transform.translation);
 
-			uas->tf2_broadcaster.sendTransform(transform);
+			m_uas->tf2_broadcaster.sendTransform(transform);
 		}
 
 		auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
