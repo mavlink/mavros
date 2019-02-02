@@ -2,6 +2,14 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into param-timeout
+* libmavconn: Fix building without installation. Detect CI environment
+* ci:test: temporary disable failed udp bind test
+* mavconn:pkg: Move generated files to build tree
+* Contributors: Vladimir Ermakov
+
 0.28.0 (2019-01-03)
 -------------------
 * libmavconn: add the possibility to set the source component ID through the send_message method

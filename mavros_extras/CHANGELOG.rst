@@ -2,6 +2,30 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* obstacle_distance: align comments
+* obstacle_distance: fixup items after peer review
+  changes include using size_t instead of int for loop variables
+  scale_factor calculation ensures argument are floating point
+  remove unnecessary n variable
+* obstacle_distance: combine sensor distances to fit within outgoing message
+* gps_rtk: documentation fixes
+* Fix broken documentation URLs
+* added tf2_eigen to dependencies, so that building with catkin tools does not fail anymore
+* Merge branch 'master' into param-timeout
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_extras: mavros_plugins.xml fix after bad merge.
+* mavros_extras: Wheel odometry plugin, twist covariance matrix non-used diagonal elements zeroed.
+* mavros_extras: Wheel odometry plugin, odometry error propagation added respecting kinematics.
+* mavros_extras: Wheel odometry plugin travelled distance fixed.
+* mavros_extras: Wheel odometry plugin y-speed covariance fixed.
+* mavros_extras: Wheel odometry plugin updated to compute accurate speeds from distances using internal timesteps.
+* mavros_extras: Wheel odometry plugin fixes after CR.
+* mavros_msgs: Float32ArrayStamped replaced by WheelOdomStamped.
+* mavros_extras: Wheel odometry plugin added.
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jan Heitmann, Pavlo Kolomiiets, Randy Mackay, Vladimir Ermakov
+
 0.28.0 (2019-01-03)
 -------------------
 * odom: add ODOMETRY handler and publisher

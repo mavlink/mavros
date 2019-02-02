@@ -2,6 +2,27 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix broken documentation URLs
+* px4_config: set the thrust_scaling to one by default
+* local_position: add an aditional topic for velocity on the local frame
+* Merge pull request `#1136 <https://github.com/mavlink/mavros/issues/1136>`_ from angri/param-timeout
+  Request timed up parameters as soon as possible
+* Merge branch 'master' into param-timeout
+* plugin:param added logging regarding rerequests
+* plugin:param fixed second and consequent timeouts in requesting list
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_extras: Wheel odometry plugin fixes after CR.
+* mavros_extras: Wheel odometry plugin added.
+* mavsys: add do_message_interval
+* sys_status: add set_message_interval service
+* lib: fix MAV_COMPONENT to_string
+* lib: update sensor orientations
+* plugin:param rerequest timed out parameters asap
+  Avoid vaiting for the next timeout
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Pavlo Kolomiiets, Randy Mackay, TSC21, Vladimir Ermakov, angri
+
 0.28.0 (2019-01-03)
 -------------------
 * plugin:param: publish new param value
