@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.0 (2019-02-02)
+-------------------
 * obstacle_distance: align comments
 * obstacle_distance: fixup items after peer review
   changes include using size_t instead of int for loop variables

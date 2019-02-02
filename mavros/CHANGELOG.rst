@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.0 (2019-02-02)
+-------------------
 * Fix broken documentation URLs
 * px4_config: set the thrust_scaling to one by default
 * local_position: add an aditional topic for velocity on the local frame

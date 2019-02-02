@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.0 (2019-02-02)
+-------------------
 * Fix broken documentation URLs
 * Merge branch 'master' into param-timeout
 * mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.

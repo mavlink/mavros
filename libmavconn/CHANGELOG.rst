@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.0 (2019-02-02)
+-------------------
 * Merge branch 'master' into param-timeout
 * libmavconn: Fix building without installation. Detect CI environment
 * ci:test: temporary disable failed udp bind test
