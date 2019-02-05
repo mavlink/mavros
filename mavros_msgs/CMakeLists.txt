@@ -49,6 +49,7 @@ add_message_files(
   WaypointReached.msg
   WrenchTarget.msg
   TiltAngleTarget.msg
+  AttitudeThrustTarget.msg
 )
 
 add_service_files(

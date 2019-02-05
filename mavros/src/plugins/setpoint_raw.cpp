@@ -25,6 +25,7 @@
 #include <mavros_msgs/GlobalPositionTarget.h>
 #include <mavros_msgs/WrenchTarget.h>
 #include <mavros_msgs/TiltAngleTarget.h>
+#include <mavros_msgs/AttitudeThrustTarget.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -39,7 +40,8 @@ class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetGlobalIntMixin<SetpointRawPlugin>,
 	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin>,
 	private plugin::SetWrenchTargetMixin<SetpointRawPlugin>,
-	private plugin::SetTiltAngleTargetMixin<SetpointRawPlugin> {
+	private plugin::SetTiltAngleTargetMixin<SetpointRawPlugin>,
+	private plugin::SetAttitudeThrustTargetMixin<SetpointRawPlugin> {
 public:
 	SetpointRawPlugin() : PluginBase(),
 		sp_nh("~setpoint_raw")
@@ -90,6 +92,7 @@ private:
 	friend class SetAttitudeTargetMixin;
 	friend class SetWrenchTargetMixin;
 	friend class SetTiltAngleTargetMixin;
+	friend class SetAttitudeThrustTargetMixin;
 	ros::NodeHandle sp_nh;
 
 	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub;
@@ -314,6 +317,25 @@ private:
 			alpha[i] = req->alpha[i];
 		}
 		set_tilt_angle_target(alpha);
+	}
+    void attitude_thrust_target_cb(const mavros_msgs::AttitudeThrustTarget::ConstPtr &req)
+	{
+		Eigen::Vector3d a_lin, a_ang;
+
+		tf::vectorMsgToEigen(req->linear_acceleration, a_lin);
+		tf::vectorMsgToEigen(req->angular_acceleration, a_ang);
+
+		Eigen::Quaterniond desired_orientation;
+		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
+
+		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(desired_orientation));
+
+		// Transform frame ENU->NED
+		a_lin = ftf::transform_frame_enu_ned(a_lin);
+		a_ang = ftf::transform_frame_enu_ned(a_ang);
+		
+		set_attitude_thrust_target(a_lin, a_ang, ned_desired_orientation);
 	}
 };
 }	// namespace std_plugins
