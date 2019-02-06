@@ -72,6 +72,7 @@ public:
 		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
 		wrench_sub = sp_nh.subscribe("wrench", 10, &SetpointRawPlugin::wrench_cb, this);
+		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 10, &SetpointRawPlugin::attitude_thrust_target_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
@@ -95,7 +96,7 @@ private:
 	friend class SetAttitudeThrustTargetMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, attitude_thrust_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 	bool ignore_rpyt_messages_;
