@@ -22,6 +22,7 @@
 	</class>
 	<class name="landing_target" type="mavplugin::LandingTargetPlugin" base_class_type="mavplugin::MavRosPlugin">
 		<description>Publish/subscribe to data stream with location of a landing area captured from a downward facing camera.</description>
+	</class>
 	<class name="log_transfer" type="mavros::extra_plugins::LogTransferPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Expose firmware functionality, that is related to log transfer</description>
 	</class>
