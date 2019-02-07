@@ -102,6 +102,9 @@ add_library(mavros
   src/lib/mavlink_diag.cpp
   src/lib/rosconsole_bridge.cpp
 )
+add_dependencies(mavros
+  mavros_msgs_generate_messages_cpp
+)
 target_link_libraries(mavros
   atomic
   ${catkin_LIBRARIES}
