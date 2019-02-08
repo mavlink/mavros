@@ -98,10 +98,10 @@ public:
 			tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
 		}
 		else if (listen_lt) {	// Subscribe to LandingTarget msg
-			land_target_sub = nh.subscribe("landing_target", 10, &LandingTargetPlugin::landtarget_cb, this);
+			land_target_sub = nh.subscribe("raw", 10, &LandingTargetPlugin::landtarget_cb, this);
 		}
 		else {			// Subscribe to PoseStamped msg
-			pose_sub = nh.subscribe("landing_target", 10, &LandingTargetPlugin::pose_cb, this);
+			pose_sub = nh.subscribe("pose", 10, &LandingTargetPlugin::pose_cb, this);
 		}
 	}
 
