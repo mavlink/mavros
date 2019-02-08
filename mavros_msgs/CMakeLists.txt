@@ -50,6 +50,7 @@ add_message_files(
   WrenchTarget.msg
   TiltAngleTarget.msg
   AttitudeThrustTarget.msg
+  AllocationMatrix.msg
 )
 
 add_service_files(

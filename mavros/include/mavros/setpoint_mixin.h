@@ -224,6 +224,24 @@ public:
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
 };
+
+/**
+ * @brief This mixin adds set_allocation_matrix()
+ */
+template <class D>
+class SetAllocationMatrixMixin {
+public:
+	//! Message sepecification:
+	void set_allocation_matrix(Eigen::VectorXd allocation_matrix)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::voliro::msg::SET_ALLOCATION_MATRIX sp;
+		for (int i=0;i<36;i++) {
+			sp.allocation_matrix[i] = allocation_matrix(i);
+		}
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
 /**
  * @brief This mixin adds TF2 listener thread to plugin
  *

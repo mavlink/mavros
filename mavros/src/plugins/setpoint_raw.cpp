@@ -26,6 +26,7 @@
 #include <mavros_msgs/WrenchTarget.h>
 #include <mavros_msgs/TiltAngleTarget.h>
 #include <mavros_msgs/AttitudeThrustTarget.h>
+#include <mavros_msgs/AllocationMatrix.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -41,7 +42,8 @@ class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin>,
 	private plugin::SetWrenchTargetMixin<SetpointRawPlugin>,
 	private plugin::SetTiltAngleTargetMixin<SetpointRawPlugin>,
-	private plugin::SetAttitudeThrustTargetMixin<SetpointRawPlugin> {
+	private plugin::SetAttitudeThrustTargetMixin<SetpointRawPlugin>,
+	private plugin::SetAllocationMatrixMixin<SetpointRawPlugin> {
 public:
 	SetpointRawPlugin() : PluginBase(),
 		sp_nh("~setpoint_raw")
@@ -73,6 +75,7 @@ public:
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
 		wrench_sub = sp_nh.subscribe("wrench", 10, &SetpointRawPlugin::wrench_cb, this);
 		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 10, &SetpointRawPlugin::attitude_thrust_target_cb, this);
+		allocation_matrix_sub = sp_nh.subscribe("allocation_matrix", 10, &SetpointRawPlugin::allocation_matrix_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
@@ -94,9 +97,10 @@ private:
 	friend class SetWrenchTargetMixin;
 	friend class SetTiltAngleTargetMixin;
 	friend class SetAttitudeThrustTargetMixin;
+	friend class SetAllocationMatrixMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, attitude_thrust_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, attitude_thrust_sub, allocation_matrix_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 	bool ignore_rpyt_messages_;
@@ -337,6 +341,14 @@ private:
 		a_ang = ftf::transform_frame_enu_ned(a_ang);
 		
 		set_attitude_thrust_target(a_lin, a_ang, ned_desired_orientation);
+	}
+    void allocation_matrix_cb(const mavros_msgs::AllocationMatrix::ConstPtr &req)
+	{
+		Eigen::VectorXd alloc_matrix(36);
+		for (int i=0;i<36;i++) {
+			alloc_matrix(i) = req->allocation_matrix[i];
+		}
+		set_allocation_matrix(alloc_matrix);
 	}
 };
 }	// namespace std_plugins
