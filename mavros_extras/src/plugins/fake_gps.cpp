@@ -73,7 +73,7 @@ public:
 		fp_nh.param<int>("fix_type", ft_i, utils::enum_value(GPS_FIX_TYPE::NO_GPS));
 		fix_type = static_cast<GPS_FIX_TYPE>(ft_i);
 		fp_nh.param("gps_rate", _gps_rate, 5.0);		// GPS data rate of 5hz
-		gps_rate: _gps_rate;
+		gps_rate : _gps_rate;
 		fp_nh.param("eph", eph, 2.0);
 		fp_nh.param("epv", epv, 2.0);
 		fp_nh.param<int>("satellites_visible", satellites_visible, 5);
@@ -92,7 +92,7 @@ public:
 			 * to ECEF (Earth-Centered, Earth-Fixed)
 			 */
 			earth.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
-						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+				ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("FGPS: Caught exception: " << e.what() << std::endl);
@@ -189,12 +189,12 @@ private:
 
 		Eigen::Vector3d geodetic;
 		Eigen::Vector3d current_ecef(ecef_origin.x() + ecef_offset.x(),
-					ecef_origin.y() + ecef_offset.y(),
-					ecef_origin.z() + ecef_offset.z());
+			ecef_origin.y() + ecef_offset.y(),
+			ecef_origin.z() + ecef_offset.z());
 
 		try {
 			earth.Reverse(current_ecef.x(), current_ecef.y(), current_ecef.z(),
-						geodetic.x(), geodetic.y(), geodetic.z());
+				geodetic.x(), geodetic.y(), geodetic.z());
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("FGPS: Caught exception: " << e.what() << std::endl);
