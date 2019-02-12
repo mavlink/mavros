@@ -345,10 +345,14 @@ private:
     void allocation_matrix_cb(const mavros_msgs::AllocationMatrix::ConstPtr &req)
 	{
 		Eigen::VectorXd alloc_matrix(36);
+		Eigen::VectorXd tilt_angles(6);
 		for (int i=0;i<36;i++) {
 			alloc_matrix(i) = req->allocation_matrix[i];
 		}
-		set_allocation_matrix(alloc_matrix);
+		for (int i=0;i<6;i++) {
+			tilt_angles(i) = req->tilt_angles[i];
+		}
+		set_allocation_matrix(alloc_matrix, tilt_angles);
 	}
 };
 }	// namespace std_plugins

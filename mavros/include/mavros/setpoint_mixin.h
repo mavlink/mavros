@@ -232,12 +232,16 @@ template <class D>
 class SetAllocationMatrixMixin {
 public:
 	//! Message sepecification:
-	void set_allocation_matrix(Eigen::VectorXd allocation_matrix)
+	void set_allocation_matrix(Eigen::VectorXd allocation_matrix,
+								Eigen::VectorXd tilt_angles)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::voliro::msg::SET_ALLOCATION_MATRIX sp;
 		for (int i=0;i<36;i++) {
 			sp.allocation_matrix[i] = allocation_matrix(i);
+		}
+		for (int i=0;i<6;i++) {
+			sp.tilt_angles[i] = tilt_angles(i);
 		}
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
