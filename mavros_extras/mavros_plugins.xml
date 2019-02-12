@@ -27,6 +27,9 @@
   <class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
     <description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
   </class>
+  <class name="gps_input" type="mavros::extra_plugins::GpsInputPlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Send GPS_INPUT messages to the FCU.</description>
+  </class>
   <class name="gps_status" type="mavros::extra_plugins::GpsStatusPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Publish GPS_RAW and GPS_RTK messages from FCU.</description>
   </class>
