@@ -232,7 +232,7 @@ private:
 
 		//! Build 6x6 velocity covariance matrix to be transformed and sent
 		Matrix6d cov_vel = Matrix6d::Zero();
-		ftf::mavlink_urt_to_covariance_matrix(odom_msg.twist_covariance, cov_vel);
+		ftf::mavlink_urt_to_covariance_matrix(odom_msg.velocity_covariance, cov_vel);
 
 		Eigen::Vector3d position {};		//!< Position vector. WRT frame_id
 		Eigen::Quaterniond orientation {};	//!< Attitude quaternion. WRT frame_id
@@ -408,7 +408,7 @@ private:
 
 		ftf::quaternion_to_mavlink(orientation, msg.q);
 		ftf::covariance_urt_to_mavlink(cov_pose_map, msg.pose_covariance);
-		ftf::covariance_urt_to_mavlink(cov_vel_map, msg.twist_covariance);
+		ftf::covariance_urt_to_mavlink(cov_vel_map, msg.velocity_covariance);
 
 		// send ODOMETRY msg
 		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
