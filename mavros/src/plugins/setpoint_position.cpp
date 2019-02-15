@@ -19,9 +19,11 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geographic_msgs/GeoPointStamped.h>
 
 #include <mavros_msgs/SetMavFrame.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
+#include <mavros_msgs/PositionTarget.h>
 
 #include <GeographicLib/Geocentric.hpp>
 //#include <GeographicLib/Geoid.hpp>
@@ -32,7 +34,7 @@ using mavlink::common::MAV_FRAME;
 /**
  * @brief Setpoint position plugin
  *
- * Send setpoint positions to FCU controller.
+ * Send and receive setpoint positions from FCU controller.
  */
 class SetpointPositionPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
@@ -44,7 +46,8 @@ public:
 		sp_nh("~setpoint_position"),
 		spg_nh("~"),
 		tf_rate(50.0),
-		tf_listen(false)
+		tf_listen(false),
+		is_map_init(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -71,6 +74,9 @@ public:
 			gps_sub = spg_nh.subscribe("global_position/global", 10, &SetpointPositionPlugin::gps_cb, this);
 			// Subscribe for current local ENU pose.
 			local_sub = spg_nh.subscribe("local_position/pose", 10, &SetpointPositionPlugin::local_cb, this);
+
+			// subscriber for global origin (aka map origin)
+			gp_origin_sub = spg_nh.subscribe("global_position/gp_origin", 10, &SetpointPositionPlugin::gp_origin_cb, this);
 		}
 		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointPositionPlugin::set_mav_frame_cb, this);
 
@@ -81,11 +87,16 @@ public:
 		} else {
 			mav_frame = utils::mav_frame_from_str(mav_frame_str);
 		}
+
+		// publish targets received from FCU
+		setpointg_pub = sp_nh.advertise<geometry_msgs::PoseStamped>("cmd_pos", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			make_handler(&SetpointPositionPlugin::handle_set_position_target_global_int),
+		};
 	}
 
 private:
@@ -98,12 +109,16 @@ private:
 	ros::Subscriber setpointg_sub;	//!< GPS setpoint
 	ros::Subscriber gps_sub;	//!< current GPS
 	ros::Subscriber local_sub;	//!< current local ENU
+	ros::Subscriber gp_origin_sub;  //!< global origin LLA
 	ros::ServiceServer mav_frame_srv;
+	ros::Publisher setpointg_pub;   //!< global position target from FCU
 
 	/* Stores current gps state. */
 	//sensor_msgs::NavSatFix current_gps_msg;
 	Eigen::Vector3d current_gps;		//!< geodetic coordinates LLA
 	Eigen::Vector3d current_local_pos;	//!< Current local position in ENU
+	Eigen::Vector3d map_origin {};	//!< oigin of map frame [lla]
+	Eigen::Vector3d ecef_origin {};	//!< geocentric origin [m]
 	uint32_t old_gps_stamp = 0;		//!< old time gps time stamp in [ms], to check if new gps msg is received
 
 	std::string tf_frame_id;
@@ -111,6 +126,7 @@ private:
 
 	bool tf_listen;
 	double tf_rate;
+	bool is_map_init;
 
 	MAV_FRAME mav_frame;
 
@@ -250,6 +266,27 @@ private:
 		current_local_pos = ftf::to_eigen(msg->pose.position);
 	}
 
+	/**
+	 * global origin in LLA
+	 */
+	void gp_origin_cb(const geographic_msgs::GeoPointStamped::ConstPtr &msg)
+	{
+		ecef_origin = {msg->position.latitude, msg->position.longitude, msg->position.altitude};
+		/**
+		 * @brief Conversion from ECEF (Earth-Centered, Earth-Fixed) to geodetic coordinates (LLA)
+		*/
+		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f());
+		try {
+			earth.Reverse(ecef_origin.x(), ecef_origin.y(), ecef_origin.z(),
+				map_origin.x(), map_origin.y(), map_origin.z());
+		}
+		catch (const std::exception& e) {
+			ROS_WARN_STREAM("setpoint: Caught exception: " << e.what() << std::endl);
+			return;
+		}
+		is_map_init = true;
+	}
+
 	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
 	{
 		mav_frame = static_cast<MAV_FRAME>(req.mav_frame);
@@ -258,6 +295,52 @@ private:
 		res.success = true;
 		return true;
 	}
+
+	/* -*- rx handler -*- */
+
+	/**
+	 * @brief handle SET_POSITION_TARGET_GLOBAL_INT mavlink msg
+	 * handles and publishes position target received from FCU
+	 */
+	void handle_set_position_target_global_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT &position_target)
+	{
+		/* check if type_mask field ignores position*/
+		if (position_target.type_mask & (mavros_msgs::GlobalPositionTarget::IGNORE_LATITUDE | mavros_msgs::GlobalPositionTarget::IGNORE_LONGITUDE) > 0) {
+			ROS_WARN_NAMED("setpoint", "lat and/or lon ignored");
+			return;
+		}
+
+		/* check origin has been set */
+		if (!is_map_init) {
+			ROS_WARN_NAMED("setpoint", "SetPositionTargetGlobal failed because no origin");
+		}
+
+		/* convert lat/lon target to ECEF */
+		Eigen::Vector3d pos_target_ecef {};  //!< local ECEF coordinates on map frame [m]
+		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f());
+		try {
+			earth.Forward(position_target.lat_int / 1E7, position_target.lon_int / 1E7, position_target.alt / 1E3,
+				pos_target_ecef.x(), pos_target_ecef.y(), pos_target_ecef.z());
+		}
+		catch (const std::exception& e) {
+			ROS_WARN_STREAM("setpoint: Caught exception: " << e.what() << std::endl);
+			return;
+		}
+
+		/* create position target PoseStamped message */
+		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		pose->header = m_uas->synchronized_header("map", position_target.time_boot_ms);
+		pose->pose.orientation.w = 1;   // unit quaternion with no rotation
+
+		/* convert ECEF target to ENU */
+		const Eigen::Vector3d local_ecef = pos_target_ecef - ecef_origin;
+		tf::pointEigenToMsg(ftf::transform_frame_ecef_enu(local_ecef, map_origin), pose->pose.position);
+		pose->pose.position.z = 0;  // force z-axis to zero
+
+		/* publish target */
+		setpointg_pub.publish(pose);
+	}
+
 };
 }	// namespace std_plugins
 }	// namespace mavros
