@@ -22,6 +22,8 @@ add_message_files(
   ExtendedState.msg
   FileEntry.msg
   GlobalPositionTarget.msg
+  GPSRAW.msg
+  GPSRTK.msg
   HilActuatorControls.msg
   HilControls.msg
   HilGPS.msg
