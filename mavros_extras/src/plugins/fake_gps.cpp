@@ -25,6 +25,7 @@
 #include <GeographicLib/Geoid.hpp>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 namespace mavros {
@@ -51,6 +52,7 @@ public:
 		use_mocap(true),
 		map_origin(0.0, 0.0, 0.0),
 		mocap_transform(true),
+		mocap_withcovariance(false),
 		use_vision(false),
 		use_hil_gps(true),
 		gps_id(0),
@@ -107,6 +109,8 @@ public:
 		// source set params
 		fp_nh.param("use_mocap", use_mocap, true);		// listen to MoCap source
 		fp_nh.param("mocap_transform", mocap_transform, true);	// listen to MoCap source (TransformStamped if true; PoseStamped if false)
+		fp_nh.param("mocap_withcovariance", mocap_withcovariance, false);	// ~mocap/pose uses PoseWithCovarianceStamped Message
+
 		fp_nh.param("tf/listen", tf_listen, false);		// listen to TF source
 		fp_nh.param("use_vision", use_vision, false);		// listen to Vision source
 		fp_nh.param("use_hil_gps", use_hil_gps, true);		// send HIL_GPS MAVLink messages if true,
@@ -120,6 +124,9 @@ public:
 		if (use_mocap) {
 			if (mocap_transform) {	// MoCap data in TransformStamped msg
 				mocap_tf_sub = fp_nh.subscribe("mocap/tf", 10, &FakeGPSPlugin::mocap_tf_cb, this);
+			}
+			else if (mocap_withcovariance) {// MoCap data in PoseWithCovarianceStamped msg
+				mocap_pose_cov_sub = fp_nh.subscribe("mocap/pose_cov", 10, &FakeGPSPlugin::mocap_pose_cov_cb, this);
 			}
 			else {	// MoCap data in PoseStamped msg
 				mocap_pose_sub = fp_nh.subscribe("mocap/pose", 10, &FakeGPSPlugin::mocap_pose_cb, this);
@@ -154,6 +161,7 @@ private:
 	GeographicLib::Geocentric earth;
 
 	ros::Subscriber mocap_tf_sub;
+	ros::Subscriber mocap_pose_cov_sub;
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber vision_pose_sub;
 
@@ -161,6 +169,7 @@ private:
 	bool use_vision;		//!< set use of vision data
 	bool use_hil_gps;		//!< set use of use_hil_gps MAVLink messages
 	bool mocap_transform;		//!< set use of mocap data (TransformStamped msg)
+	bool mocap_withcovariance;	//!< ~mocap/pose uses PoseWithCovarianceStamped Message
 	bool tf_listen;			//!< set use of TF Listener data
 
 	double eph, epv;
@@ -297,6 +306,16 @@ private:
 		tf::transformMsgToEigen(trans->transform, pos_enu);
 
 		send_fake_gps(trans->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
+	}
+
+	void mocap_pose_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &req)
+	{
+		Eigen::Affine3d pos_enu;
+		tf::poseMsgToEigen(req->pose.pose, pos_enu);
+		horiz_accuracy = (req->pose.covariance[0] + req->pose.covariance[7]) / 2.0f;
+		vert_accuracy = req->pose.covariance[14];
+
+		send_fake_gps(req->header.stamp, ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
 	}
 
 	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &req)

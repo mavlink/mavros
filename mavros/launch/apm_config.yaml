@@ -158,7 +158,8 @@ image:
 fake_gps:
   # select data source
   use_mocap: true         # ~mocap/pose
-  mocap_transform: true   # ~mocap/tf instead of pose
+  mocap_transform: false  # ~mocap/tf instead of pose
+  mocap_withcovariance: false  # ~mocap/pose uses PoseWithCovarianceStamped Message
   use_vision: false       # ~vision (pose)
   use_hil_gps: true
   gps_id: 4
