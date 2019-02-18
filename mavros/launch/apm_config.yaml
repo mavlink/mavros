@@ -170,7 +170,10 @@ fake_gps:
     alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
   eph: 2.0
   epv: 2.0
-  satellites_visible: 5   # virtual number of visible satellites
+  horiz_accuracy: 0.5
+  vert_accuracy: 0.5
+  speed_accuracy: 0.0
+  satellites_visible: 6   # virtual number of visible satellites
   fix_type: 3             # type of GPS fix (default: 3D)
   tf:
     listen: false
