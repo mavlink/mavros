@@ -60,6 +60,8 @@ public:
 		tf_rate(10.0),
 		eph(2.0),
 		epv(2.0),
+		horiz_accuracy(0.0f),
+		vert_accuracy(0.0f),
 		satellites_visible(5),
 		fix_type(GPS_FIX_TYPE::NO_GPS),
 		// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
@@ -84,6 +86,8 @@ public:
 		gps_rate : _gps_rate;
 		fp_nh.param("eph", eph, 2.0);
 		fp_nh.param("epv", epv, 2.0);
+		fp_nh.param<float>("horiz_accuracy", horiz_accuracy, 0.0f);
+		fp_nh.param<float>("vert_accuracy", vert_accuracy, 0.0f);
 		fp_nh.param<int>("satellites_visible", satellites_visible, 5);
 
 		// default origin/starting point: Zürich geodetic coordinates
@@ -173,6 +177,8 @@ private:
 	bool tf_listen;			//!< set use of TF Listener data
 
 	double eph, epv;
+	float horiz_accuracy;
+	float vert_accuracy;
 	int gps_id;
 	int satellites_visible;
 	GPS_FIX_TYPE fix_type;
@@ -280,9 +286,9 @@ private:
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_VERT);
 			gps_input.time_week_ms = 0;		// [ms] TODO
 			gps_input.time_week = 0;		// TODO
-			gps_input.speed_accuracy = 0.1f;	// [m/s] TODO
-			gps_input.horiz_accuracy = 0.1f;	// [m] TODO
-			gps_input.vert_accuracy = 0.1f;		// [m] TODO
+			gps_input.speed_accuracy = 0.0f;	// [m/s] TODO how can this be calculated ???
+			gps_input.horiz_accuracy = horiz_accuracy;	// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
+			gps_input.vert_accuracy = vert_accuracy;// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
 			gps_input.lat = geodetic.x() * 1e7;	// [degrees * 1e7]
 			gps_input.lon = geodetic.y() * 1e7;	// [degrees * 1e7]
 			gps_input.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *
