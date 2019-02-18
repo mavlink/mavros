@@ -67,20 +67,21 @@ private:
 	std::vector<float> data;	//!< array allocation for measurements
 	size_t data_index;		//!< array index
 
-	static constexpr size_t ACC_SIZE = 50;
+	static constexpr int DEFAULT_WINDOW_SIZE = 50;
+	int variance_window_size; //!< window size for variance calculations
 
 	/**
 	 * Calculate measurements variance to send to the FCU.
 	 */
 	float calculate_variance(float range) {
-		if (data.size() < ACC_SIZE) {
+		if (data.size() < variance_window_size) {
 			// limits the size of the array to 50 elements
-			data.reserve(ACC_SIZE);
+			data.reserve(variance_window_size);
 			data.push_back(range);
 		}
 		else {
 			data[data_index] = range;	// it starts rewriting the values from 1st element
-			if (++data_index > ACC_SIZE - 1)
+			if (++data_index > variance_window_size - 1)
 				data_index = 0;		// restarts the index when achieves the last element
 		}
 
@@ -279,6 +280,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t covariance_ = 0;
 
 	if (covariance > 0) covariance_ = covariance;
+	else if (variance_window_size <= 0) covariance_ = 0;
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
 
 	/** @todo Propose changing covarince from uint8_t to float */
@@ -329,6 +331,9 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 	else
 		// lookup for numeric value
 		p->orientation = utils::sensor_orientation_from_str(orientation_str);
+
+	// Variance window
+	pnh.param("variance_window_size", p->variance_window_size, DEFAULT_WINDOW_SIZE);
 
 
 	if (!p->is_subscriber) {
