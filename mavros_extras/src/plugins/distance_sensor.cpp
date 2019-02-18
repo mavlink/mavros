@@ -280,7 +280,7 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	uint8_t covariance_ = 0;
 
 	if (covariance > 0) covariance_ = covariance;
-	else if (variance_window_size <= 0) covariance_ = 0;
+	else if (variance_window_size <= 0) covariance_ = 255; // Assume unknown variance
 	else covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);	// in cm
 
 	/** @todo Propose changing covarince from uint8_t to float */
