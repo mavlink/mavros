@@ -62,6 +62,7 @@ public:
 		epv(2.0),
 		horiz_accuracy(0.0f),
 		vert_accuracy(0.0f),
+		speed_accuracy(0.0f),
 		satellites_visible(5),
 		fix_type(GPS_FIX_TYPE::NO_GPS),
 		// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
@@ -88,6 +89,7 @@ public:
 		fp_nh.param("epv", epv, 2.0);
 		fp_nh.param<float>("horiz_accuracy", horiz_accuracy, 0.0f);
 		fp_nh.param<float>("vert_accuracy", vert_accuracy, 0.0f);
+		fp_nh.param<float>("speed_accuracy", speed_accuracy, 0.0f);
 		fp_nh.param<int>("satellites_visible", satellites_visible, 5);
 
 		// default origin/starting point: Zürich geodetic coordinates
@@ -179,6 +181,7 @@ private:
 	double eph, epv;
 	float horiz_accuracy;
 	float vert_accuracy;
+	float speed_accuracy;
 	int gps_id;
 	int satellites_visible;
 	GPS_FIX_TYPE fix_type;
@@ -275,7 +278,9 @@ private:
 			// Fill in and send message
 			gps_input.time_usec = stamp.toNSec() / 1000;	// [useconds]
 			gps_input.gps_id = gps_id;		//
-			gps_input.ignore_flags = utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_SPEED_ACCURACY);
+			gps_input.ignore_flags = 0;
+			if (speed_accuracy == 0.0f)
+				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_SPEED_ACCURACY);
 			if (eph == 0.0f)
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_HDOP);
 			if (epv == 0.0f)
@@ -286,7 +291,7 @@ private:
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_VERT);
 			gps_input.time_week_ms = 0;		// [ms] TODO
 			gps_input.time_week = 0;		// TODO
-			gps_input.speed_accuracy = 0.0f;	// [m/s] TODO how can this be calculated ???
+			gps_input.speed_accuracy = speed_accuracy;	// [m/s] TODO how can this be dynamicaly calculated ???
 			gps_input.horiz_accuracy = horiz_accuracy;	// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
 			gps_input.vert_accuracy = vert_accuracy;// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
 			gps_input.lat = geodetic.x() * 1e7;	// [degrees * 1e7]
