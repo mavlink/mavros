@@ -143,6 +143,7 @@ distance_sensor:
     field_of_view: 0.0  # XXX TODO
     send_tf: false
     sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+    variance_window_size: 50 # Default window size for variance calculations
   rangefinder_sub:
     subscriber: true
     id: 1
