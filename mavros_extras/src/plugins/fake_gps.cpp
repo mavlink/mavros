@@ -28,6 +28,12 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
+// the number of GPS leap seconds
+#define GPS_LEAPSECONDS_MILLIS 18000ULL
+
+#define MSEC_PER_WEEK (7ULL * 86400ULL * 1000ULL)
+#define UNIX_OFFSET_MSEC (17000ULL * 86400ULL + 52ULL * 10ULL * MSEC_PER_WEEK - GPS_LEAPSECONDS_MILLIS)
+
 namespace mavros {
 namespace extra_plugins {
 using mavlink::common::GPS_FIX_TYPE;
@@ -289,8 +295,9 @@ private:
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_HORIZ);
 			if (fabs(vel.z()) <= 0.01f)
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_VERT);
-			gps_input.time_week_ms = 0;		// [ms] TODO
-			gps_input.time_week = 0;		// TODO
+			int64_t tdiff = (gps_input.time_usec / 1000) - UNIX_OFFSET_MSEC;
+			gps_input.time_week = tdiff / MSEC_PER_WEEK;
+			gps_input.time_week_ms = tdiff - (gps_input.time_week * MSEC_PER_WEEK);
 			gps_input.speed_accuracy = speed_accuracy;	// [m/s] TODO how can this be dynamicaly calculated ???
 			gps_input.horiz_accuracy = horiz_accuracy;	// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
 			gps_input.vert_accuracy = vert_accuracy;// [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
