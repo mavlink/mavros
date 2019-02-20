@@ -26,6 +26,7 @@
   <depend>mavlink</depend>
   <depend>libconsole-bridge-dev</depend>
 
+  <test_depend>rosunit</test_depend>
   <test_depend>gtest</test_depend>
 
   <export>

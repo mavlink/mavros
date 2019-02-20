@@ -25,7 +25,7 @@ include(MavrosMavlink)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavconn
-  DEPENDS Boost mavlink console_bridge
+  DEPENDS Boost console_bridge mavlink
   CFG_EXTRAS libmavconn-extras.cmake
 )
 
@@ -46,8 +46,8 @@ add_library(mavconn
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp
   src/interface.cpp
   src/serial.cpp
-  src/udp.cpp
   src/tcp.cpp
+  src/udp.cpp
 )
 target_link_libraries(mavconn
   ${Boost_LIBRARIES}
@@ -110,10 +110,8 @@ install(DIRECTORY cmake/Modules
 #############
 
 if(CATKIN_ENABLE_TESTING)
-
-catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-target_link_libraries(mavconn-test mavconn pthread)
-
+  catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
+  target_link_libraries(mavconn-test mavconn pthread)
 endif()
 
 # vim: ts=2 sw=2 et:
