@@ -40,7 +40,7 @@ set(msg_files
   "msg/HilStateQuaternion.msg"
   "msg/HomePosition.msg"
   "msg/LogData.msg"
-  "msg/LogEntry.msg"
+  # "msg/LogEntry.msg"
   "msg/ManualControl.msg"
   "msg/Mavlink.msg"
   "msg/OpticalFlowRad.msg"
@@ -67,7 +67,6 @@ set(msg_files
 )
 
 set(srv_files
-  "srv/CommandBool.srv"
   "srv/CommandBool.srv"
   "srv/CommandHome.srv"
   "srv/CommandInt.srv"
