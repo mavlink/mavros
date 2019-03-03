@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.1 (2019-03-03)
+-------------------
 * All: catkin lint files
 * Contributors: Pierre Kancir
 

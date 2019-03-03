@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.1 (2019-03-03)
+-------------------
 * All: catkin lint files
 * Update apm_config.yaml
   Setting thrust_scaling in the setpoint_raw message (in my case, to use /mavros/setpoint_raw/attitude)

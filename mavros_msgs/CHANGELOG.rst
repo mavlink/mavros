@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.1 (2019-03-03)
+-------------------
 * All: catkin lint files
 * mavros_msgs: Fix line endings for OpticalFlowRad message
 * Contributors: Pierre Kancir, sfalexrog
