@@ -2,6 +2,17 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* All: catkin lint files
+* Update apm_config.yaml
+  Setting thrust_scaling in the setpoint_raw message (in my case, to use /mavros/setpoint_raw/attitude)
+  Without it, when using Gazebo, get the following problem
+  "Recieved thrust, but ignore_thrust is true: the most likely cause of this is a failure to specify the thrust_scaling parameters on px4/apm_config.yaml. Actuation will be ignored." from the function void attitude_cb in setpoint_raw.cpp (http://docs.ros.org/kinetic/api/mavros/html/setpoint__raw_8cpp_source.html)
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* Issue `#1174 <https://github.com/mavlink/mavros/issues/1174>`_ Added dependency for mavros_msgs and mavros
+* Contributors: Adam Watkins, KiloNovemberDelta, Pierre Kancir, Vladimir Ermakov
+
 0.29.0 (2019-02-02)
 -------------------
 * Fix broken documentation URLs

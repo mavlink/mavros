@@ -2,6 +2,11 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* All: catkin lint files
+* Contributors: Pierre Kancir
+
 0.29.0 (2019-02-02)
 -------------------
 * Merge branch 'master' into param-timeout

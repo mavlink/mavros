@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* All: catkin lint files
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* mavros_extras: Convert source files to Unix line endings
+* Contributors: Pierre Kancir, Vladimir Ermakov, sfalexrog
+
 0.29.0 (2019-02-02)
 -------------------
 * obstacle_distance: align comments
