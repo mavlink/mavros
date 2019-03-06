@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.29.2 (2019-03-06)
+-------------------
 * extras: odom: update velocity covariance fields from 'twist' to 'velocity_covariance'
 * Contributors: TSC21
 
