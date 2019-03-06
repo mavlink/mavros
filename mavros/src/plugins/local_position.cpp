@@ -57,7 +57,7 @@ public:
 
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
 		local_position_cov = lp_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose_cov", 10);
-		local_velocity_local = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity_local", 10);
+		local_velocity_local = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
 		local_velocity_body = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity_body", 10);
 		local_velocity_cov = lp_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity_body_cov", 10);
 		local_accel = lp_nh.advertise<geometry_msgs::AccelWithCovarianceStamped>("accel", 10);
