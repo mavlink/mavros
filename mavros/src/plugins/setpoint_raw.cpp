@@ -325,10 +325,11 @@ private:
 	}
     void attitude_thrust_target_cb(const mavros_msgs::AttitudeThrustTarget::ConstPtr &req)
 	{
-		Eigen::Vector3d a_lin, a_ang;
+		Eigen::Vector3d a_lin, a_ang, rates_sp;
 
 		tf::vectorMsgToEigen(req->linear_acceleration, a_lin);
 		tf::vectorMsgToEigen(req->angular_acceleration, a_ang);
+		tf::vectorMsgToEigen(req->rates_sp, rates_sp);
 
 		Eigen::Quaterniond desired_orientation;
 		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
@@ -339,8 +340,9 @@ private:
 		// Transform frame ENU->NED
 		a_lin = ftf::transform_frame_enu_ned(a_lin);
 		a_ang = ftf::transform_frame_enu_ned(a_ang);
+		rates_sp = ftf::transform_frame_enu_ned(rates_sp);
 		
-		set_attitude_thrust_target(a_lin, a_ang, ned_desired_orientation);
+		set_attitude_thrust_target(a_lin, a_ang, ned_desired_orientation, rates_sp);
 	}
     void allocation_matrix_cb(const mavros_msgs::AllocationMatrix::ConstPtr &req)
 	{

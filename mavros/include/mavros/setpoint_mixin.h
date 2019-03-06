@@ -207,7 +207,8 @@ class SetAttitudeThrustTargetMixin {
 public:
 	//! Message sepecification:
 	void set_attitude_thrust_target(Eigen::Vector3d linear_acceleration,
-			Eigen::Vector3d angular_acceleration, Eigen::Quaterniond q)
+			Eigen::Vector3d angular_acceleration, Eigen::Quaterniond q,
+			Eigen::Vector3d rates_sp)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::voliro::msg::SET_ATTITUDE_THRUST_VECTOR_TARGET_NED sp;
@@ -221,6 +222,9 @@ public:
  		sp.q_x = q.x();
  		sp.q_y = q.y();
  		sp.q_z = q.z();
+ 		sp.p = rates_sp.x();
+ 		sp.q = rates_sp.y();
+ 		sp.r = rates_sp.z();
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
 };
