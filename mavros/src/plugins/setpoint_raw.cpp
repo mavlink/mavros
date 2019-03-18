@@ -64,7 +64,8 @@ public:
 		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
 		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
 		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
-		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
+		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 1, &SetpointRawPlugin::rpyt_cb,
+		 														this, ros::TransportHints().tcpNoDelay());
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
@@ -270,11 +271,11 @@ private:
       uint8_t type_mask = 0;
       geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(msg->roll, msg->pitch, 0);
       double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ * system_mass_kg_));
-      
+
       Eigen::Quaterniond desired_orientation;
       Eigen::Vector3d body_rate;
       tf::quaternionMsgToEigen(orientation, desired_orientation);
-      
+
       // Transform desired orientation to represent aircraft->NED,
       // MAVROS operates on orientation of base_link->ENU
       auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
