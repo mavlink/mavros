@@ -99,8 +99,8 @@ setpoint_attitude:
     child_frame_id: "target_attitude"
     rate_limit: 50.0
     
- # setpoint_raw
- setpoint_raw:
+# setpoint_raw
+setpoint_raw:
   thrust_scaling: 1.0       # specify thrust scaling (normalized, 0 to 1) for thrust (like PX4)
 
 # setpoint_position
