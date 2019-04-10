@@ -142,11 +142,11 @@ public:
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
-		reshedule_pull(false),
+		reschedule_pull(false),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
 		WP_TIMEOUT_DT(WP_TIMEOUT_MS / 1000.0),
-		RESHEDULE_DT(RESHEDULE_MS / 1000.0)
+		RESCHEDULE_DT(RESCHEDULE_MS / 1000.0)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -166,8 +166,8 @@ public:
 
 		wp_timer = wp_nh.createTimer(WP_TIMEOUT_DT, &WaypointPlugin::timeout_cb, this, true);
 		wp_timer.stop();
-		shedule_timer = wp_nh.createTimer(BOOTUP_TIME_DT, &WaypointPlugin::sheduled_pull_cb, this, true);
-		shedule_timer.stop();
+		schedule_timer = wp_nh.createTimer(BOOTUP_TIME_DT, &WaypointPlugin::scheduled_pull_cb, this, true);
+		schedule_timer.stop();
 		enable_connection_cb();
 	}
 
@@ -225,22 +225,22 @@ private:
 	std::condition_variable list_sending;
 
 	ros::Timer wp_timer;
-	ros::Timer shedule_timer;
+	ros::Timer schedule_timer;
 	bool do_pull_after_gcs;
 	bool enable_partial_push;
 
-	bool reshedule_pull;
+	bool reschedule_pull;
 
 	static constexpr int BOOTUP_TIME_MS = 15000;	//! system startup delay before start pull
 	static constexpr int LIST_TIMEOUT_MS = 30000;	//! Timeout for pull/push operations
 	static constexpr int WP_TIMEOUT_MS = 1000;
-	static constexpr int RESHEDULE_MS = 5000;
+	static constexpr int RESCHEDULE_MS = 5000;
 	static constexpr int RETRIES_COUNT = 3;
 
 	const ros::Duration BOOTUP_TIME_DT;
 	const ros::Duration LIST_TIMEOUT_DT;
 	const ros::Duration WP_TIMEOUT_DT;
-	const ros::Duration RESHEDULE_DT;
+	const ros::Duration RESCHEDULE_DT;
 
 	/* -*- rx handlers -*- */
 
@@ -287,9 +287,9 @@ private:
 		}
 		else {
 			ROS_DEBUG_NAMED("wp", "WP: rejecting item, wrong state %d", enum_value(wp_state));
-			if (do_pull_after_gcs && reshedule_pull) {
-				ROS_DEBUG_NAMED("wp", "WP: reshedule pull");
-				shedule_pull(WP_TIMEOUT_DT);
+			if (do_pull_after_gcs && reschedule_pull) {
+				ROS_DEBUG_NAMED("wp", "WP: reschedule pull");
+				schedule_pull(WP_TIMEOUT_DT);
 			}
 		}
 	}
@@ -391,11 +391,11 @@ private:
 		}
 		else {
 			ROS_INFO_NAMED("wp", "WP: seems GCS requesting mission");
-			/* shedule pull after GCS done */
+			/* schedule pull after GCS done */
 			if (do_pull_after_gcs) {
-				ROS_INFO_NAMED("wp", "WP: sheduling pull after GCS is done");
-				reshedule_pull = true;
-				shedule_pull(RESHEDULE_DT);
+				ROS_INFO_NAMED("wp", "WP: scheduling pull after GCS is done");
+				reschedule_pull = true;
+				schedule_pull(RESCHEDULE_DT);
 			}
 		}
 	}
@@ -535,7 +535,7 @@ private:
 	{
 		lock_guard lock(mutex);
 		if (connected) {
-			shedule_pull(BOOTUP_TIME_DT);
+			schedule_pull(BOOTUP_TIME_DT);
 
 			if (wp_nh.hasParam("enable_partial_push")) {
 				wp_nh.getParam("enable_partial_push", enable_partial_push);
@@ -545,22 +545,22 @@ private:
 			}
 		}
 		else {
-			shedule_timer.stop();
+			schedule_timer.stop();
 		}
 	}
 
 	//! @brief Callback for scheduled waypoint pull
-	void sheduled_pull_cb(const ros::TimerEvent &event)
+	void scheduled_pull_cb(const ros::TimerEvent &event)
 	{
 		lock_guard lock(mutex);
 		if (wp_state != WP::IDLE) {
 			/* try later */
-			ROS_DEBUG_NAMED("wp", "WP: busy, reshedule pull");
-			shedule_pull(RESHEDULE_DT);
+			ROS_DEBUG_NAMED("wp", "WP: busy, reschedule pull");
+			schedule_pull(RESCHEDULE_DT);
 			return;
 		}
 
-		ROS_DEBUG_NAMED("wp", "WP: start sheduled pull");
+		ROS_DEBUG_NAMED("wp", "WP: start scheduled pull");
 		wp_state = WP::RXLIST;
 		wp_count = 0;
 		restart_timeout_timer();
@@ -580,7 +580,7 @@ private:
 
 	void go_idle(void)
 	{
-		reshedule_pull = false;
+		reschedule_pull = false;
 		wp_state = WP::IDLE;
 		wp_timer.stop();
 	}
@@ -598,11 +598,11 @@ private:
 		wp_timer.start();
 	}
 
-	void shedule_pull(const ros::Duration &dt)
+	void schedule_pull(const ros::Duration &dt)
 	{
-		shedule_timer.stop();
-		shedule_timer.setPeriod(dt);
-		shedule_timer.start();
+		schedule_timer.stop();
+		schedule_timer.setPeriod(dt);
+		schedule_timer.start();
 	}
 
 	//! @brief send a single waypoint to FCU
