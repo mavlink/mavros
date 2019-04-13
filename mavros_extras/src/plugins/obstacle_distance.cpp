@@ -79,8 +79,10 @@ private:
 				for (size_t j = 0; j < scale_factor; j++) {
 					size_t req_index = i * scale_factor + j;
 					if (req_index < req->ranges.size()) {
-						uint16_t dist_cm = req->ranges[req_index] * 1e2;
-						obstacle.distances[i] = std::min(obstacle.distances[i], dist_cm);
+						const float dist_m = req->ranges[req_index];
+						if (!std::isnan(dist_m)) {
+							obstacle.distances[i] = std::min(obstacle.distances[i], (uint16_t)(dist_m * 1e2));
+						}
 					}
 				}
 			}
