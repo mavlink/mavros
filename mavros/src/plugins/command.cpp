@@ -129,9 +129,12 @@ private:
 
 	bool wait_ack_for(CommandTransaction &tr) {
 		unique_lock lock(tr.cond_mutex);
-
-		return tr.ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec()))
-		       == std::cv_status::no_timeout;
+		if (tr.ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec())) == std::cv_status::timeout) {
+			ROS_WARN_NAMED("cmd", "CMD: Command %u -- wait ack timeout", tr.expected_command);
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**
@@ -181,9 +184,6 @@ private:
 			bool is_not_timeout = wait_ack_for(*ack_it);
 			lock.lock();
 
-			if (!is_not_timeout) {
-				ROS_WARN_NAMED("cmd", "CMD: Command %u -- wait ack timeout", command);
-			}
 			success = is_not_timeout && ack_it->result == enum_value(MAV_RESULT::ACCEPTED);
 			result = ack_it->result;
 
