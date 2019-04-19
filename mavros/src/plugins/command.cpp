@@ -42,6 +42,7 @@ public:
 	explicit CommandTransaction(uint16_t command) :
 		ack(),
 		expected_command(command),
+		// Default result if wait ack timeout
 		result(enum_value(mavlink::common::MAV_RESULT::FAILED))
 	{ }
 };
@@ -180,6 +181,9 @@ private:
 			bool is_not_timeout = wait_ack_for(*ack_it);
 			lock.lock();
 
+			if (!is_not_timeout) {
+				ROS_WARN_NAMED("cmd", "CMD: Command %u -- wait ack timeout", command);
+			}
 			success = is_not_timeout && ack_it->result == enum_value(MAV_RESULT::ACCEPTED);
 			result = ack_it->result;
 
