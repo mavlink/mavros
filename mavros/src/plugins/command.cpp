@@ -42,6 +42,7 @@ public:
 	explicit CommandTransaction(uint16_t command) :
 		ack(),
 		expected_command(command),
+		// Default result if wait ack timeout
 		result(enum_value(mavlink::common::MAV_RESULT::FAILED))
 	{ }
 };
@@ -128,9 +129,12 @@ private:
 
 	bool wait_ack_for(CommandTransaction &tr) {
 		unique_lock lock(tr.cond_mutex);
-
-		return tr.ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec()))
-		       == std::cv_status::no_timeout;
+		if (tr.ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec())) == std::cv_status::timeout) {
+			ROS_WARN_NAMED("cmd", "CMD: Command %u -- wait ack timeout", tr.expected_command);
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**
