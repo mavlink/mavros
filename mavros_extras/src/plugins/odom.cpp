@@ -36,6 +36,8 @@ using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW 	// XXX(vooon): added to try to fix #1223. Not sure that it is needed because class do not have Eigen:: fields.
+
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
 		body_frame_orientation_in_desired("flu"),

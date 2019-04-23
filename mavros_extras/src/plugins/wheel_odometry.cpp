@@ -34,6 +34,8 @@ namespace extra_plugins {
  */
 class WheelOdometryPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	WheelOdometryPlugin() : PluginBase(),
 		wo_nh("~wheel_odometry"),
 		count(0),
