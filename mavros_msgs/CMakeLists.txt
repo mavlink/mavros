@@ -49,6 +49,7 @@ add_message_files(
   WaypointReached.msg
   WrenchTarget.msg
   TiltAngleTarget.msg
+  TiltrotorActuatorCommands.msg
   AttitudeThrustTarget.msg
   AllocationMatrix.msg
 )

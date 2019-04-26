@@ -25,6 +25,7 @@
 #include <mavros_msgs/GlobalPositionTarget.h>
 #include <mavros_msgs/WrenchTarget.h>
 #include <mavros_msgs/TiltAngleTarget.h>
+#include <mavros_msgs/TiltrotorActuatorCommands.h>
 #include <mavros_msgs/AttitudeThrustTarget.h>
 #include <mavros_msgs/AllocationMatrix.h>
 
@@ -42,6 +43,7 @@ class SetpointRawPlugin : public plugin::PluginBase,
 	private plugin::SetAttitudeTargetMixin<SetpointRawPlugin>,
 	private plugin::SetWrenchTargetMixin<SetpointRawPlugin>,
 	private plugin::SetTiltAngleTargetMixin<SetpointRawPlugin>,
+	private plugin::SetTiltrotorActuatorCommandsMixin<SetpointRawPlugin>,
 	private plugin::SetAttitudeThrustTargetMixin<SetpointRawPlugin>,
 	private plugin::SetAllocationMatrixMixin<SetpointRawPlugin> {
 public:
@@ -75,6 +77,7 @@ public:
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
 		wrench_sub = sp_nh.subscribe("wrench", 10, &SetpointRawPlugin::wrench_cb, this);
 		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 10, &SetpointRawPlugin::attitude_thrust_target_cb, this);
+		tiltrotor_actuator_commands_sub = sp_nh.subscribe("tiltrotor_actuator_commands", 10, &SetpointRawPlugin::tiltrotor_actuator_commands_cb, this);
 		allocation_matrix_sub = sp_nh.subscribe("allocation_matrix", 10, &SetpointRawPlugin::allocation_matrix_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
@@ -96,11 +99,12 @@ private:
 	friend class SetAttitudeTargetMixin;
 	friend class SetWrenchTargetMixin;
 	friend class SetTiltAngleTargetMixin;
+	friend class SetTiltrotorActuatorCommandsMixin;
 	friend class SetAttitudeThrustTargetMixin;
 	friend class SetAllocationMatrixMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, attitude_thrust_sub, allocation_matrix_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, tiltrotor_actuator_commands_sub, attitude_thrust_sub, allocation_matrix_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 	bool ignore_rpyt_messages_;
@@ -322,6 +326,14 @@ private:
 			alpha[i] = req->alpha[i];
 		}
 		set_tilt_angle_target(alpha);
+	}
+    void tiltrotor_actuator_commands_cb(const mavros_msgs::TiltrotorActuatorCommands::ConstPtr &req)
+	{
+		float u[18];
+		for (int i=0;i<18;i++) {
+			u[i] = req->u[i];
+		}
+		set_tiltrotor_actuator_commands(u);
 	}
     void attitude_thrust_target_cb(const mavros_msgs::AttitudeThrustTarget::ConstPtr &req)
 	{

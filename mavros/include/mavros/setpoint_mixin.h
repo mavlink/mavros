@@ -200,6 +200,24 @@ public:
 };
 
 /**
+ * @brief This mixin adds set_tiltrotor_actuator_commands()
+ */
+template <class D>
+class SetTiltrotorActuatorCommandsMixin {
+public:
+	//! Message sepecification:
+	void set_tiltrotor_actuator_commands(float *u)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::voliro::msg::SET_TILTROTOR_ACTUATOR_COMMANDS sp;
+		for (int i=0 ; i<18 ; i++) {
+			sp.u[i] = u[i];
+		}
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+
+/**
  * @brief This mixin adds set_attitude_thrust_target()
  */
 template <class D>
