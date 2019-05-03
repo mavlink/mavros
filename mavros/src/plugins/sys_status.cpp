@@ -711,7 +711,7 @@ private:
 		}
 
 		// Continue from here only if vehicle is my target
-		if (!m_uas->is_my_target(msg->sysid)) {
+		if (!m_uas->is_my_target(msg->sysid, msg->compid)) {
 			ROS_DEBUG_NAMED("sys", "HEARTBEAT from [%d, %d] dropped.", msg->sysid, msg->compid);
 			return;
 		}
