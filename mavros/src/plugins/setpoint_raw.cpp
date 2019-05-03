@@ -330,8 +330,11 @@ private:
     void tiltrotor_actuator_commands_cb(const mavros_msgs::TiltrotorActuatorCommands::ConstPtr &req)
 	{
 		float u[18];
-		for (int i=0;i<18;i++) {
-			u[i] = req->u[i];
+		for (int i=0;i<6;i++) {
+			u[i] = req->u_tiltangles[i];
+		}
+		for (int i=6;i<18;i++) {
+			u[i] = req->u_rotors[i-6];
 		}
 		set_tiltrotor_actuator_commands(u);
 	}
