@@ -84,7 +84,7 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticT
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		return NED_ENU_AFFINE * vec;
+		return Eigen::Vector3d(vec.y(), vec.x(), -vec.z());
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
