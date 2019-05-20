@@ -2,6 +2,35 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Filter heartbeats by component id as well
+  This addresses `#1107 <https://github.com/mavlink/mavros/issues/1107>`_ and `#1227 <https://github.com/mavlink/mavros/issues/1227>`_, by filtering incoming heartbeats
+  by component ids before publishing the state.
+* mavros/src/plugins/command.cpp: log if command's wait ack timeout (`#1222 <https://github.com/mavlink/mavros/issues/1222>`_)
+  * mavros/src/plugins/command.cpp: log if command's wait ack timeout
+  * mavros/src/plugins/command.cpp: log timeout in wait_ack_for
+* local_position fix `#1220 <https://github.com/mavlink/mavros/issues/1220>`_: initialize flags
+* plugin waypoint: fix spelling
+* Fix leading space before setpoint_raw
+  This causes an error when running `roslaunch`:
+  ```
+  error loading <rosparam> tag:
+  file /opt/ros/kinetic/share/mavros/launch/apm_config.yaml contains invalid YAML:
+  while parsing a block mapping
+  in "<string>", line 4, column 1:
+  startup_px4_usb_quirk: false
+  ^
+  expected <block end>, but found '<block mapping start>'
+  in "<string>", line 103, column 2:
+  setpoint_raw:
+  ^
+  XML is <rosparam command="load" file="$(arg config_yaml)"/>
+  The traceback for the exception was written to the log file
+  ```
+* global_position.cpp: spell in comment
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Josh Veitch-Michaelis, Nico van Duijn, Sergey Zobov, Vladimir Ermakov
+
 0.29.2 (2019-03-06)
 -------------------
 
