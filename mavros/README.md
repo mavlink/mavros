@@ -176,7 +176,7 @@ NOTE: The source installation instructions are for the ROS Kinetic release.
 ```sh
 sudo apt-get install python-catkin-tools python-rosinstall-generator -y
 
-# 1. Create the workspace: unneded if you already has workspace
+# 1. Create the workspace: unneeded if you already has workspace
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws
 catkin init
