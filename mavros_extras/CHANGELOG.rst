@@ -2,6 +2,69 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.30.0 (2019-05-20)
+-------------------
+* Fixed an issue when the laser scan topic contains NaN values they where being sent as 0 distances. (`#1218 <https://github.com/mavlink/mavros/issues/1218>`_)
+* extras `#1223 <https://github.com/mavlink/mavros/issues/1223>`_: Add eigen aligned allocators to plugin classes.
+* gps_rtk: fix multi segment messages
+* Update the readme
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jaime Machuca, Vladimir Ermakov
+
+0.29.2 (2019-03-06)
+-------------------
+* extras: odom: update velocity covariance fields from 'twist' to 'velocity_covariance'
+* Contributors: TSC21
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* mavros_extras: Convert source files to Unix line endings
+* Contributors: Pierre Kancir, Vladimir Ermakov, sfalexrog
+
+0.29.0 (2019-02-02)
+-------------------
+* obstacle_distance: align comments
+* obstacle_distance: fixup items after peer review
+  changes include using size_t instead of int for loop variables
+  scale_factor calculation ensures argument are floating point
+  remove unnecessary n variable
+* obstacle_distance: combine sensor distances to fit within outgoing message
+* gps_rtk: documentation fixes
+* Fix broken documentation URLs
+* added tf2_eigen to dependencies, so that building with catkin tools does not fail anymore
+* Merge branch 'master' into param-timeout
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_extras: mavros_plugins.xml fix after bad merge.
+* mavros_extras: Wheel odometry plugin, twist covariance matrix non-used diagonal elements zeroed.
+* mavros_extras: Wheel odometry plugin, odometry error propagation added respecting kinematics.
+* mavros_extras: Wheel odometry plugin travelled distance fixed.
+* mavros_extras: Wheel odometry plugin y-speed covariance fixed.
+* mavros_extras: Wheel odometry plugin updated to compute accurate speeds from distances using internal timesteps.
+* mavros_extras: Wheel odometry plugin fixes after CR.
+* mavros_msgs: Float32ArrayStamped replaced by WheelOdomStamped.
+* mavros_extras: Wheel odometry plugin added.
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jan Heitmann, Pavlo Kolomiiets, Randy Mackay, Vladimir Ermakov
+
+0.28.0 (2019-01-03)
+-------------------
+* odom: add ODOMETRY handler and publisher
+* remove newlines after doxygen
+* style clean up
+* Use component_id to determine message sender
+* send out companion status as heartbeat
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* add plugin to receive avoidance status message
+* Contributors: TSC21, baumanta
+
+0.27.0 (2018-11-12)
+-------------------
+* extras `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
+* Fix odom message to use covariance from msg
+* Contributors: Dion Gonano, Vladimir Ermakov
+
 0.26.3 (2018-08-21)
 -------------------
 * fixup! b43279058a3029c67ea75b1ecb86442c9dc991d4

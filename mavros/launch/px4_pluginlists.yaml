@@ -7,6 +7,7 @@ plugin_blacklist:
 - distance_sensor
 - rangefinder
 - home_position
+- wheel_odometry
 
 plugin_whitelist: []
 # 'sys_*'

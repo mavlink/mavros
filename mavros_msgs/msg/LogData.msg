@@ -7,5 +7,5 @@
 std_msgs/Header header
 
 uint16 id
-uint16 offset
+uint32 offset
 uint8[] data

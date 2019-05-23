@@ -101,12 +101,13 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 
 	try {
 		socket.open(udp::v4());
-		socket.bind(bind_ep);
 
 		// set buffer opt. size from QGC
 		socket.set_option(udps::reuse_address(true));
 		socket.set_option(udps::send_buffer_size(256_KiB));
 		socket.set_option(udps::receive_buffer_size(512_KiB));
+
+		socket.bind(bind_ep);
 
 		if (remote_host == BROADCAST_REMOTE_HOST) {
 			socket.set_option(udps::broadcast(true));
@@ -207,7 +208,7 @@ void MAVConnUDP::send_message(const mavlink_message_t *message)
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
-void MAVConnUDP::send_message(const mavlink::Message &message)
+void MAVConnUDP::send_message(const mavlink::Message &message, const uint8_t source_compid)
 {
 	if (!is_open()) {
 		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
@@ -227,7 +228,7 @@ void MAVConnUDP::send_message(const mavlink::Message &message)
 		if (tx_q.size() >= MAX_TXQ_SIZE)
 			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
 
-		tx_q.emplace_back(message, get_status_p(), sys_id, comp_id);
+		tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
 	}
 	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }

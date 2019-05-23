@@ -194,7 +194,7 @@ private:
 	/**
 	 * @brief Send corrected path to the FCU.
 	 *
-	 * Message specification: http://mavlink.org/messages/common#TRAJECTORY
+	 * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
 	 * @param req	received Trajectory msg
 	 */
 	void trajectory_cb(const mavros_msgs::Trajectory::ConstPtr &req)
@@ -243,7 +243,7 @@ private:
 	/**
 	 * @brief Send corrected path to the FCU.
 	 *
-	 * Message specification: http://mavlink.org/messages/common#TRAJECTORY
+	 * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
 	 * @param req	received nav_msgs Path msg
 	 */
 	void path_cb(const nav_msgs::Path::ConstPtr &req)

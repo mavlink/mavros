@@ -38,6 +38,8 @@ class SetpointPositionPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
 	private plugin::TF2ListenerMixin<SetpointPositionPlugin> {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
 		spg_nh("~"),

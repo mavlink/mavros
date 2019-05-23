@@ -34,7 +34,7 @@ namespace plugin {
 template <class D>
 class SetPositionTargetLocalNEDMixin {
 public:
-	//! Message specification: @p http://mavlink.org/messages/common#SET_POSITION_TARGET_LOCAL_NED
+	//! Message specification: @p https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED
 	void set_position_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
 			Eigen::Vector3d p,
@@ -80,7 +80,7 @@ public:
 template <class D>
 class SetPositionTargetGlobalIntMixin {
 public:
-	//! Message specification: @p http://mavlink.org/messages/common#SET_POSITION_TARGET_GLOBAL_INT
+	//! Message specification: @p https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_GLOBAL_INT
 	void set_position_target_global_int(uint32_t time_boot_ms, uint8_t coordinate_frame,
 			uint16_t type_mask,
 			int32_t lat_int, int32_t lon_int, float alt,
@@ -126,7 +126,7 @@ public:
 template <class D>
 class SetAttitudeTargetMixin {
 public:
-	//! Message sepecification: @p http://mavlink.org/messages/common#SET_ATTITUDE_TARGET
+	//! Message sepecification: @p https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET
 	void set_attitude_target(uint32_t time_boot_ms,
 			uint8_t type_mask,
 			Eigen::Quaterniond orientation,
