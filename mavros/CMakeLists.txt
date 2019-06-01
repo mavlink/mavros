@@ -133,6 +133,7 @@ add_library(mavros_plugins
   src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
   src/plugins/setpoint_velocity.cpp
+  src/plugins/setpoint_trajectory.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
   src/plugins/vfr_hud.cpp
