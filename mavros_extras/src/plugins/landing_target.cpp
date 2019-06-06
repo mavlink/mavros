@@ -89,8 +89,8 @@ public:
 		nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "camera_center");
 		nh.param("tf/rate_limit", tf_rate, 50.0);
 
-		land_target_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
-		lt_marker_pub = nh.advertise<geometry_msgs::Vector3>("lt_marker", 10);
+		land_target_pub = nh.advertise<geometry_msgs::PoseStamped>("pose_in", 10);
+		lt_marker_pub = nh.advertise<geometry_msgs::Vector3Stamped>("lt_marker", 10);
 
 		if (listen_tf) {	// Listen to transform
 			ROS_INFO_STREAM_NAMED("landing_target", "Listen to landing_target transform " << tf_frame_id
