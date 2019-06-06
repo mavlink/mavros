@@ -1,6 +1,6 @@
 /**
- * @brief Copter visualization
- * @file copter_visualization.cpp
+ * @brief Visualization
+ * @file visualization.cpp
  * @author M.H.Kabir <mhkabir98@gmail.com>
  */
 /*
