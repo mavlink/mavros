@@ -1,5 +1,5 @@
 # MAVLink message: LANDING_TARGET
-# http://mavlink.org/messages/common#LANDING_TARGET
+# https://mavlink.io/en/messages/common.html
 
 std_msgs/Header header
 
