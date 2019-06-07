@@ -2,6 +2,42 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* landing_target: fix landing target pose input topic naming
+* fix naming for file
+* mavros_plugins: fix landing_target plugin init
+* landing_target: change topic subscription naming
+* extras: mavros_plugins.xml: fix malform on XML file
+* landing_target: use m_uas
+* visualization: set the frame and child frame id back to map and base_link
+* general fixup to update the landing_target codebase
+* extras: landing target: improve usability and flexibility
+* ident correction
+* landing_target: use Eigen::Quaterniond::Identity()
+* visualization: small correction on cb
+* landing_target: ident correct
+* landing_target: ident correction
+* renamed copter_visualization to just visualization
+* landing_target: target orientation: assess it is not possible
+* copter_visualization: add target_size and landing_target subscriber in copter_visualization node, so to publish a marker of the target
+* uas_stringify: changed UAS::idx_frame() to UAS::frame_from_str()
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: small correction on math
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: corrected pkt parser order
+* landing_target: added stringify usage on code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: removed PoseWithCovarianceStamped include
+* landing_target: remove the need of local_position subscription
+* landing_target: fixed local_position subscriber topic name
+* landing_target: updated notation and applied correct math to conversions
+* landing_target: first commit
+* Contributors: TSC21
+
 0.30.0 (2019-05-20)
 -------------------
 * Fixed an issue when the laser scan topic contains NaN values they where being sent as 0 distances. (`#1218 <https://github.com/mavlink/mavros/issues/1218>`_)

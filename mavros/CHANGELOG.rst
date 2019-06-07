@@ -2,6 +2,32 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* readme: fix udp-pb formatting
+* launch config: landing_target: fix and improve parameter list
+* remove duplicated landing_target parameters
+* enum_to_string: simplify landing_target_type_from_str
+* enum_to_string: update enumerations and checksum
+* extras: landing target: improve usability and flexibility
+* remove landing_target from blacklist
+* update to use pymavlink generator
+* px4_config: landing_target: minor correction
+* mav_frame: add frames of reference to wiki page; reference them on config
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: first commit
+* Switch to double-reflections instead of axes-reassignments
+* specialize transform_frame_ned_enu and transform_frame_enu_ned for type
+  Vector3d such that input vectors containing a NAN can be correctly transformed
+* Update README.md
+  update misspelling
+* Contributors: Julian Kent, Martina Rivizzigno, Shingo Matsuura, TSC21, Vladimir Ermakov
+
 0.30.0 (2019-05-20)
 -------------------
 * Filter heartbeats by component id as well
