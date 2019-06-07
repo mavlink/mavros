@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2019-06-07)
+-------------------
 * readme: fix udp-pb formatting
 * launch config: landing_target: fix and improve parameter list
 * remove duplicated landing_target parameters

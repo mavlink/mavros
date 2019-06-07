@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2019-06-07)
+-------------------
 * mavros_msgs: LandingTarget: update msg description link
 * extras: landing target: improve usability and flexibility
 * Contributors: TSC21

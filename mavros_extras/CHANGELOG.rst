@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2019-06-07)
+-------------------
 * landing_target: fix landing target pose input topic naming
 * fix naming for file
 * mavros_plugins: fix landing_target plugin init
