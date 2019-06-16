@@ -16,7 +16,7 @@
 
 #include <mavros/mavros_plugin.h>
 
-#include <mavros_msgs/CompanionProcessStatus.h>
+#include <mavros_msgs/MountControl.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -37,14 +37,14 @@ using utils::enum_value;
 class MountControlPlugin : public plugin::PluginBase {
 public:
 	MountControlPlugin() : PluginBase(),
-	status_nh("~mount_control")
+	mount_nh("~mount_control")
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		status_sub = status_nh.subscribe("command", 10, &MountControlPlugin::status_cb, this);
+		command_sub = mount_nh.subscribe("command", 10, &MountControlPlugin::command_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -53,8 +53,8 @@ public:
 	}
 
 private:
-	ros::NodeHandle status_nh;
-	ros::Subscriber status_sub;
+	ros::NodeHandle mount_nh;
+	ros::Subscriber command_sub;
 
 	/**
 	 * @brief Send mount control commands to vehicle
@@ -62,7 +62,7 @@ private:
 	 * Message specification: https://mavlink.io/en/messages/common.html#DO_MOUNT_CONTROL
 	 * @param req	received MountControl msg
 	 */
-	void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr &req)
+	void command_cb(const mavros_msgs::MountControl::ConstPtr &req)
 	{
 	}
 };
