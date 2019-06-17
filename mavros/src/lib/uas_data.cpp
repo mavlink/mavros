@@ -47,7 +47,7 @@ UAS::UAS() :
 	catch (const std::exception &e) {
 		// catch exception and shutdown node
 		ROS_FATAL_STREAM("UAS: GeographicLib exception: " << e.what() <<
-			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
+				" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
 		ros::shutdown();
 	}
 
