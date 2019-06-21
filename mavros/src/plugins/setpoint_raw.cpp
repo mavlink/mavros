@@ -71,13 +71,13 @@ public:
 	      ignore_rpyt_messages_ = true;
 	    }
 
-		local_sub = sp_nh.subscribe("local", 10, &SetpointRawPlugin::local_cb, this);
-		global_sub = sp_nh.subscribe("global", 10, &SetpointRawPlugin::global_cb, this);
-		attitude_sub = sp_nh.subscribe("attitude", 10, &SetpointRawPlugin::attitude_cb, this);
-		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 10, &SetpointRawPlugin::rpyt_cb, this);
-		wrench_sub = sp_nh.subscribe("wrench", 10, &SetpointRawPlugin::wrench_cb, this);
-		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 10, &SetpointRawPlugin::attitude_thrust_target_cb, this);
-		tiltrotor_actuator_commands_sub = sp_nh.subscribe("tiltrotor_actuator_commands", 10, &SetpointRawPlugin::tiltrotor_actuator_commands_cb, this);
+		local_sub = sp_nh.subscribe("local", 1, &SetpointRawPlugin::local_cb, this, ros::TransportHints().tcpNoDelay());
+		global_sub = sp_nh.subscribe("global", 1, &SetpointRawPlugin::global_cb, this, ros::TransportHints().tcpNoDelay());
+		attitude_sub = sp_nh.subscribe("attitude", 1, &SetpointRawPlugin::attitude_cb, this, ros::TransportHints().tcpNoDelay());
+		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 1, &SetpointRawPlugin::rpyt_cb, this, ros::TransportHints().tcpNoDelay());
+		wrench_sub = sp_nh.subscribe("wrench", 1, &SetpointRawPlugin::wrench_cb, this, ros::TransportHints().tcpNoDelay());
+		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 1, &SetpointRawPlugin::attitude_thrust_target_cb, this, ros::TransportHints().tcpNoDelay());
+		tiltrotor_actuator_commands_sub = sp_nh.subscribe("tiltrotor_actuator_commands", 1, &SetpointRawPlugin::tiltrotor_actuator_commands_cb, this, ros::TransportHints().tcpNoDelay());
 		allocation_matrix_sub = sp_nh.subscribe("allocation_matrix", 10, &SetpointRawPlugin::allocation_matrix_cb, this);
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
@@ -289,11 +289,11 @@ private:
       uint8_t type_mask = 0;
       geometry_msgs::Quaternion orientation = tf::createQuaternionMsgFromRollPitchYaw(msg->roll, msg->pitch, 0);
       double thrust = std::min(1.0, std::max(0.0, msg->thrust.z * thrust_scaling_ * system_mass_kg_));
-      
+
       Eigen::Quaterniond desired_orientation;
       Eigen::Vector3d body_rate;
       tf::quaternionMsgToEigen(orientation, desired_orientation);
-      
+
       // Transform desired orientation to represent aircraft->NED,
       // MAVROS operates on orientation of base_link->ENU
       auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
@@ -316,7 +316,7 @@ private:
 		// Transform frame ENU->NED
 		a_lin = ftf::transform_frame_enu_ned(a_lin);
 		a_ang = ftf::transform_frame_enu_ned(a_ang);
-		
+
 		set_wrench_target(a_lin, a_ang);
 	}
     void tilt_angle_cb(const mavros_msgs::TiltAngleTarget::ConstPtr &req)
@@ -356,7 +356,7 @@ private:
 		a_lin = ftf::transform_frame_enu_ned(a_lin);
 		a_ang = ftf::transform_frame_enu_ned(a_ang);
 		rates_sp = ftf::transform_frame_enu_ned(rates_sp);
-		
+
 		set_attitude_thrust_target(a_lin, a_ang, ned_desired_orientation, rates_sp);
 	}
     void allocation_matrix_cb(const mavros_msgs::AllocationMatrix::ConstPtr &req)
