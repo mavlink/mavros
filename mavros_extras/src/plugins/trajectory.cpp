@@ -218,6 +218,7 @@ private:
 			fill_points_acceleration(t.acc_x, t.acc_y, t.acc_z, rp.acceleration_or_force, i);
 			fill_points_yaw_wp(t.pos_yaw, rp.yaw, i);
 			fill_points_yaw_speed(t.vel_yaw, rp.yaw_rate, i);
+			t.command[i] = UINT16_MAX;
 		};
 
 		trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
@@ -254,6 +255,7 @@ private:
 		trajectory.valid_points = std::min(NUM_POINTS, req->poses.size());
 
 		auto fill_point = [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t, const size_t i) {
+			t.command[i] = UINT16_MAX;
 			if (req->poses.size() < i + 1) {
 				fill_points_all_unused(t, i);
 			}
@@ -291,6 +293,7 @@ private:
 			fill_msg_acceleration(p.acceleration_or_force, t, i);
 			p.yaw = wrap_pi((M_PI / 2.0f) - t.pos_yaw[i]);
 			p.yaw_rate = t.vel_yaw[i];
+			tr_desired->command[i] = t.command[i];
 		};
 
 		tr_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
