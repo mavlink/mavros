@@ -165,13 +165,13 @@ public:
 
 		if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled)
 				!= last_st.onboard_control_sensors_enabled)
-			stat.summary(2, "Sensor helth");
+			stat.summary(2, "Sensor health");
 		else
 			stat.summary(0, "Normal");
 
 		stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
 		stat.addf("Sensor enabled", "0x%08X", last_st.onboard_control_sensors_enabled);
-		stat.addf("Sensor helth", "0x%08X", last_st.onboard_control_sensors_health);
+		stat.addf("Sensor health", "0x%08X", last_st.onboard_control_sensors_health);
 
 		using STS = mavlink::common::MAV_SYS_STATUS_SENSOR;
 
