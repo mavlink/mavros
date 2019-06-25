@@ -42,35 +42,38 @@ static const OrientationPair make_orientation(const std::string &name,
 // ename = 'MAV_SENSOR_ORIENTATION'
 // pfx2 = 'MAV_SENSOR_ROTATION_'
 //
-// enum = common.enums[ename].items()
-// enum.sort()
+// enum = sorted(common.enums[ename].items())
 // enum.pop() # remove ENUM_END
 //
-// class Vector3(object):
-//     pass
+// class Vector3:
+//     Roll, Pitch, Yaw = 0.0, 0.0, 0.0
 //
 // def parse_rpy(desc):
-//     pairs = [
-//         (f.strip(), float(v))
-//         for f, v in [v.split(":") for v in desc.split(',')]
-//     ]
-//
 //     vec = Vector3()
-//     for f, v in pairs:
-//        setattr(vec, f, v)
 //
-//     return vec
+//     try:
+//         pairs = [
+//             (f.strip(), float(v))
+//             for f, v in [v.split(":") for v in desc.split(',')]
+//         ]
+//
+//         for f, v in pairs:
+//            setattr(vec, f, v)
+//     except Exception as ex:
+//         print(f"Parse Error: {ex}, desc: {desc}")
+//     finally:
+//         return vec
 //
 // cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations{{" % len(enum))
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
 //     vec = parse_rpy(e.description)
 //     whitespace = ' ' * (27 - len(name_short))
-//     cog.outl("""/* {k:>2} */ make_orientation("{name_short}",{whitespace}{vec.Roll:>5}, {vec.Pitch:>5}, {vec.Yaw:>5}),""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ make_orientation("{name_short}",{whitespace}{vec.Roll:>5}, {vec.Pitch:>5}, {vec.Yaw:>5}),""")
 //
 // cog.outl("}};")
 // ]]]
-static const std::array<const OrientationPair, 39> sensor_orientations{{
+static const std::array<const OrientationPair, 42> sensor_orientations{{
 /*  0 */ make_orientation("NONE",                         0.0,   0.0,   0.0),
 /*  1 */ make_orientation("YAW_45",                       0.0,   0.0,  45.0),
 /*  2 */ make_orientation("YAW_90",                       0.0,   0.0,  90.0),
@@ -109,9 +112,12 @@ static const std::array<const OrientationPair, 39> sensor_orientations{{
 /* 35 */ make_orientation("ROLL_270_PITCH_270",         270.0, 270.0,   0.0),
 /* 36 */ make_orientation("ROLL_90_PITCH_180_YAW_90",    90.0, 180.0,  90.0),
 /* 37 */ make_orientation("ROLL_90_YAW_270",             90.0,   0.0, 270.0),
-/* 38 */ make_orientation("ROLL_315_PITCH_315_YAW_315", 315.0, 315.0, 315.0),
+/* 38 */ make_orientation("ROLL_90_PITCH_68_YAW_293",    90.0,  68.0, 293.0),
+/* 39 */ make_orientation("PITCH_315",                    0.0, 315.0,   0.0),
+/* 40 */ make_orientation("ROLL_90_PITCH_315",           90.0, 315.0,   0.0),
+/* 100 */ make_orientation("CUSTOM",                       0.0,   0.0,   0.0),
 }};
-// [[[end]]] (checksum: aa58ff53a1c7ba31228319345c1145e3)
+// [[[end]]] (checksum: 8da0773dfd7a53b866aa7cad6c9ee3d0)
 
 
 std::string to_string(MAV_SENSOR_ORIENTATION orientation)

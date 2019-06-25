@@ -16,7 +16,7 @@ import rospy
 import mavros
 from mavros.utils import *
 from mavros_msgs.msg import State
-from mavros_msgs.srv import SetMode, StreamRate, StreamRateRequest
+from mavros_msgs.srv import SetMode, StreamRate, StreamRateRequest, MessageInterval
 
 def do_mode(args):
     base_mode = 0
@@ -78,6 +78,24 @@ def do_rate(args):
 
 
 
+def do_message_interval(args):
+
+    if args.id is None:
+        fault("id not specified")
+        return
+
+    if args.rate is None:
+        fault("rate not specified")
+        return
+
+    try:
+        set_message_interval = rospy.ServiceProxy(mavros.get_topic('set_message_interval'), MessageInterval)
+        set_message_interval(message_id=args.id, message_rate=args.rate)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Change mode and rate on MAVLink device.")
     parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
@@ -104,6 +122,11 @@ def main():
     rate_args.add_argument('--extra2', type=int, metavar='rate', help="Extra 2 stream")
     rate_args.add_argument('--extra3', type=int, metavar='rate', help="Extra 3 stream")
     rate_args.add_argument('--stream-id', type=int, nargs=2, metavar=('id', 'rate'), help="any stream")
+
+    message_interval_args = subarg.add_parser('message_interval', help="Set message interval")
+    message_interval_args.set_defaults(func=do_message_interval)
+    message_interval_args.add_argument('--id', type=int, metavar='id', help="message id")
+    message_interval_args.add_argument('--rate', type=float, metavar='rate', help="message rate")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

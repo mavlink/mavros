@@ -40,6 +40,8 @@ using mavlink::common::GPS_FIX_TYPE;
 class FakeGPSPlugin : public plugin::PluginBase,
 	private plugin::TF2ListenerMixin<FakeGPSPlugin> {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	FakeGPSPlugin() : PluginBase(),
 		fp_nh("~fake_gps"),
 		gps_rate(5.0),
