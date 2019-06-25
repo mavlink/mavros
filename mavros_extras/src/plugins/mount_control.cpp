@@ -64,10 +64,8 @@ private:
 	{
 		mavlink::common::msg::COMMAND_LONG cmd {};
 
-		const uint8_t tgt_sys_id = m_uas->get_tgt_system();
-		const uint8_t tgt_comp_id = m_uas->get_tgt_component();
-		cmd.target_system = tgt_sys_id;
-		cmd.target_component = tgt_comp_id;
+		cmd.target_system = m_uas->get_tgt_system();
+		cmd.target_component = m_uas->get_tgt_component();
 		cmd.command = enum_value(MAV_CMD::DO_MOUNT_CONTROL);
 		cmd.param1 = req->pitch;
 		cmd.param2 = req->roll;
