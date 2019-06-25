@@ -107,7 +107,7 @@ private:
 
 	/**
 	 * @brief Handle DEBUG message.
-	 * Message specification: http://mavlink.org/messages/common/#DEBUG
+	 * Message specification: https://mavlink.io/en/messages/common.html#DEBUG
 	 * @param msg	Received Mavlink msg
 	 * @param debug	DEBUG msg
 	 */
@@ -147,7 +147,7 @@ private:
 
 	/**
 	 * @brief Handle DEBUG_VECT message.
-	 * Message specification: http://mavlink.org/messages/common/#DEBUG_VECT
+	 * Message specification: https://mavlink.io/en/messages/common.html#DEBUG_VECT
 	 * @param msg	Received Mavlink msg
 	 * @param debug	DEBUG_VECT msg
 	 */
@@ -183,7 +183,7 @@ private:
 
 	/**
 	 * @brief Handle NAMED_VALUE_FLOAT message.
-	 * Message specification: http://mavlink.org/messages/common/#NAMED_VALUE_FLOAT
+	 * Message specification: https://mavlink.io/en/messages/common.html#NAMED_VALUE_FLOAT
 	 * @param msg	Received Mavlink msg
 	 * @param value	NAMED_VALUE_FLOAT msg
 	 */
@@ -208,7 +208,7 @@ private:
 
 	/**
 	 * @brief Handle NAMED_VALUE_INT message.
-	 * Message specification: http://mavlink.org/messages/common/#NAMED_VALUE_INT
+	 * Message specification: https://mavlink.io/en/messages/common.html#NAMED_VALUE_INT
 	 * @param msg	Received Mavlink msg
 	 * @param value	NAMED_VALUE_INT msg
 	 */

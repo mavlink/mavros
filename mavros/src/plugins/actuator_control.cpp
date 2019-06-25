@@ -70,7 +70,7 @@ private:
 
 	void actuator_control_cb(const mavros_msgs::ActuatorControl::ConstPtr &req) {
 		//! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
-		//! message definiton here: @p http://mavlink.org/messages/common#SET_ACTUATOR_CONTROL_TARGET
+		//! message definiton here: @p https://mavlink.io/en/messages/common.html#SET_ACTUATOR_CONTROL_TARGET
 		mavlink::common::msg::SET_ACTUATOR_CONTROL_TARGET act{};
 
 		act.time_usec = req->header.stamp.toNSec() / 1000;

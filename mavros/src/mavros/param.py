@@ -164,8 +164,8 @@ def param_get_all(force_pull=False):
     params = rospy.get_param(mavros.get_topic('param'))
 
     return (ret.param_received,
-            sorted((Parameter(k, v) for k, v in params.iteritems()),
-                   cmp=lambda x, y: cmp(x.param_id, y.param_id))
+            sorted((Parameter(k, v) for k, v in params.items()),
+                   key=lambda p: p.param_id)
             )
 
 

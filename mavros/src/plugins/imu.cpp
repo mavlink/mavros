@@ -45,6 +45,8 @@ static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 //! @brief IMU and attitude data publication plugin
 class IMUPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	IMUPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		has_hr_imu(false),
@@ -261,7 +263,7 @@ private:
 
 	/**
 	 * @brief Handle ATTITUDE MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE
+	 * Message specification: https://mavlink.io/en/messages/common.html#ATTITUDE
 	 * @param msg	Received Mavlink msg
 	 * @param att	ATTITUDE msg
 	 */
@@ -306,7 +308,7 @@ private:
 
 	/**
 	 * @brief Handle ATTITUDE_QUATERNION MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE_QUATERNION
+	 * Message specification: https://mavlink.io/en/messages/common.html/#ATTITUDE_QUATERNION
 	 * @param msg		Received Mavlink msg
 	 * @param att_q		ATTITUDE_QUATERNION msg
 	 */
@@ -348,7 +350,7 @@ private:
 
 	/**
 	 * @brief Handle HIGHRES_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#HIGHRES_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#HIGHRES_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_hr	HIGHRES_IMU msg
 	 */
@@ -433,7 +435,7 @@ private:
 
 	/**
 	 * @brief Handle RAW_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#RAW_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#RAW_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_raw	RAW_IMU msg
 	 */
@@ -485,7 +487,7 @@ private:
 
 	/**
 	 * @brief Handle SCALED_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#SCALED_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#SCALED_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_raw	SCALED_IMU msg
 	 */
@@ -518,7 +520,7 @@ private:
 
 	/**
 	 * @brief Handle SCALED_PRESSURE MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#SCALED_PRESSURE
+	 * Message specification: https://mavlink.io/en/messages/common.html/#SCALED_PRESSURE
 	 * @param msg		Received Mavlink msg
 	 * @param press		SCALED_PRESSURE msg
 	 */

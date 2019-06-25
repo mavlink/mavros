@@ -2,7 +2,7 @@
 #
 # ROS representation of MAVLink HIL_GPS
 # See mavlink message documentation here:
-# https://pixhawk.ethz.ch/mavlink/#HIL_GPS
+# https://mavlink.io/en/messages/common.html#HIL_GPS
 
 std_msgs/Header header
 uint8 fix_type

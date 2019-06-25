@@ -11,6 +11,7 @@ plugin_blacklist:
 - px4flow
 - vibration
 - vision_speed_estimate
+- wheel_odometry
 
 plugin_whitelist: []
 #- 'sys_*'

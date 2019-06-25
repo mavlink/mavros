@@ -41,7 +41,7 @@ Supported schemas:
   - Serial with hardware flow control: `serial-hwfc:///path/to/serial/device[:baudrate][?ids=sysid,compid]`
   - UDP: `udp://[bind_host][:port]@[remote_host[:port]][/?ids=sysid,compid]`
   - UDP broadcast until GCS discovery: `udp-b://[bind_host][:port]@[:port][/?ids=sysid,compid]`
-  - UDP broadcast (permanent): `udp-pb://[bind_host][:port]@[:port][/?ids=sysid,compid]
+  - UDP broadcast (permanent): `udp-pb://[bind_host][:port]@[:port][/?ids=sysid,compid]`
   - TCP client: `tcp://[server_host][:port][/?ids=sysid,compid]`
   - TCP server: `tcp-l://[bind_host][:port][/?ids=sysid,compid]`
 
@@ -176,7 +176,7 @@ NOTE: The source installation instructions are for the ROS Kinetic release.
 ```sh
 sudo apt-get install python-catkin-tools python-rosinstall-generator -y
 
-# 1. Create the workspace: unneded if you already has workspace
+# 1. Create the workspace: unneeded if you already has workspace
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws
 catkin init
@@ -262,7 +262,7 @@ Links
 [apm]: http://ardupilot.com/
 [mlros]: https://github.com/mavlink/mavlink_ros
 [boost]: http://www.boost.org/
-[ml]: http://mavlink.org/mavlink/start
+[ml]: https://mavlink.io/en/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
 [iss35]: https://github.com/mavlink/mavros/issues/35
 [iss49]: https://github.com/mavlink/mavros/issues/49

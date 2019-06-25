@@ -56,9 +56,9 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&SetpointRawPlugin::handle_position_target_local_ned),
-			       make_handler(&SetpointRawPlugin::handle_position_target_global_int),
-			       make_handler(&SetpointRawPlugin::handle_attitude_target),
+				make_handler(&SetpointRawPlugin::handle_position_target_local_ned),
+				make_handler(&SetpointRawPlugin::handle_position_target_global_int),
+				make_handler(&SetpointRawPlugin::handle_attitude_target),
 		};
 	}
 
@@ -216,26 +216,47 @@ private:
 
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
 	{
+		double thrust_scaling;
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d baselink_angular_rate;
+		Eigen::Vector3d body_rate;
+		double thrust;
 
-		tf::quaternionMsgToEigen(req->orientation, desired_orientation);
+		// Set Thrust scaling in px4_config.yaml, setpoint_raw block.
+		// ignore thrust is false by default, unless no thrust scalling is set or thrust is zero
+		auto ignore_thrust = req->thrust != 0.0 && !sp_nh.getParam("thrust_scaling", thrust_scaling);
+
+		if (ignore_thrust) {
+			// I believe it's safer without sending zero thrust, but actually ignoring the actuation.
+			ROS_FATAL_THROTTLE_NAMED(5, "setpoint_raw", "Recieved thrust, but ignore_thrust is true: "
+				"the most likely cause of this is a failure to specify the thrust_scaling parameters "
+				"on px4/apm_config.yaml. Actuation will be ignored.");
+			return;
+		} else {
+			if (thrust_scaling == 0.0) {
+				ROS_WARN_THROTTLE_NAMED(5, "setpoint_raw", "thrust_scaling parameter is set to zero.");
+			}
+			thrust = std::min(1.0, std::max(0.0, req->thrust * thrust_scaling));
+		}
+
+		// Take care of attitude setpoint
+		desired_orientation = ftf::to_eigen(req->orientation);
 
 		// Transform desired orientation to represent aircraft->NED,
 		// MAVROS operates on orientation of base_link->ENU
 		auto ned_desired_orientation = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(desired_orientation));
+			ftf::transform_orientation_baselink_aircraft(desired_orientation));
 
-		auto body_rate = ftf::transform_frame_baselink_aircraft(baselink_angular_rate);
-
-		tf::vectorMsgToEigen(req->body_rate, body_rate);
+		body_rate = ftf::transform_frame_baselink_aircraft(
+			ftf::to_eigen(req->body_rate));
 
 		set_attitude_target(
 					req->header.stamp.toNSec() / 1000000,
 					req->type_mask,
 					ned_desired_orientation,
 					body_rate,
-					req->thrust);
+					thrust);
+
 	}
 };
 }	// namespace std_plugins

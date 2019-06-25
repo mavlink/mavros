@@ -50,4 +50,4 @@ def get_topic(*args):
     """
     Create topic name for mavros node
     """
-    return '/'.join((get_namespace(), ) + args)
+    return '/'+'/'.join((get_namespace(), ) + args)

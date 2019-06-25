@@ -37,12 +37,14 @@ namespace std_plugins {
 /**
  * @brief Global position plugin.
  *
- * Publishes global position. Convertion from GPS LLA to ECEF allows
+ * Publishes global position. Conversion from GPS LLA to ECEF allows
  * publishing local position to TF and PoseWithCovarianceStamped.
  *
  */
 class GlobalPositionPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
