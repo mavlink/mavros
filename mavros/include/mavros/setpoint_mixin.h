@@ -214,7 +214,7 @@ public:
 			sp.u_tiltangles[i] = u[i];
 		}
 		for (int i=0 ; i<12 ; i++) {
-			sp.u_rotors[i] = u[i+6];
+			sp.u_rotors[i] = static_cast<int>(u[i+6]);
 		}
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
