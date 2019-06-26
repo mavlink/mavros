@@ -30,7 +30,7 @@ using utils::enum_value;
  * @brief Mount Control plugin
  *
  * Publishes Mission commands to control the camera or antenna mount.
- * @see status_cb()
+ * @see command_cb()
  */
 class MountControlPlugin : public plugin::PluginBase {
 public:
