@@ -60,7 +60,7 @@ imu:
   frame_id: "base_link"
   # need find actual values
   linear_acceleration_stdev: 0.0003
-  angular_velocity_stdev: !degrees 0.02
+  angular_velocity_stdev: 0.0003490659 // 0.02 degrees
   orientation_stdev: 1.0
   magnetic_stdev: 0.0
 
@@ -230,7 +230,7 @@ odometry:
 # px4flow
 px4flow:
   frame_id: "px4flow"
-  ranger_fov: !degrees 6.8  # 6.8 degreens at 5 meters, 31 degrees at 1 meter
+  ranger_fov: 0.118682      # 6.8 degrees at 5 meters, 31 degrees at 1 meter
   ranger_min_range: 0.3     # meters
   ranger_max_range: 5.0     # meters
 
