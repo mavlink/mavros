@@ -36,7 +36,7 @@ using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
  */
 class OdometryPlugin : public plugin::PluginBase {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW 	// XXX(vooon): added to try to fix #1223. Not sure that it is needed because class do not have Eigen:: fields.
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW		// XXX(vooon): added to try to fix #1223. Not sure that it is needed because class do not have Eigen:: fields.
 
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
@@ -313,6 +313,7 @@ private:
 		 * Required affine rotations to apply transforms
 		 */
 		Eigen::Affine3d tf_parent2local;
+		Eigen::Affine3d tf_parent2local_inverse;
 		Eigen::Affine3d tf_child2local;
 		Eigen::Affine3d tf_parent2body;
 		Eigen::Affine3d tf_child2body;
@@ -346,16 +347,19 @@ private:
 		 * Position and orientation are in the same frame as frame_id.
 		 * For a matter of simplicity, and given the existent MAV_FRAME
 		 * enum values, the default frame_id will be a local frame of
-		 * reference, so the pose is WRT a local frame.
+		 * reference, so the pose is WRT a local frame. The variables tf_a2b
+		 * are named with respect to transforming one frame into another, not
+		 * transforming data from one frame to another, so we invert the transform
+		 * prior to transforming position data from the parent frame to the local frame
 		 */
-		position = Eigen::Vector3d(tf_parent2local.linear() * ftf::to_eigen(odom->pose.pose.position));
+		tf_parent2local_inverse = tf_parent2local.inverse();
+		position = Eigen::Vector3d(tf_parent2local_inverse * ftf::to_eigen(odom->pose.pose.position));
+		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local_inverse.linear();
 
 		// Orientation represented by a quaternion rotation from the local frame to XYZ body frame
 		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
-		Eigen::Affine3d tf_local2body = tf_parent2local * q_parent2child * tf_child2body.inverse();
+		Eigen::Affine3d tf_local2body = tf_child2body * q_parent2child * tf_parent2local_inverse;
 		orientation = Eigen::Quaterniond(tf_local2body.linear());
-
-		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2local.linear();
 
 		msg.frame_id = utils::enum_value(lf_id);
 
@@ -373,11 +377,11 @@ private:
 
 		if (odom->child_frame_id == "world" || odom->child_frame_id == "odom") {
 			// the child_frame_id would be the same reference frame as frame_id
-			set_tf(tf_child2local, lf_id);
+			set_tf(tf_child2local.inverse(), lf_id);
 		}
 		else {
 			// the child_frame_id would be the WRT a body frame reference
-			set_tf(tf_child2body, bf_id);
+			set_tf(tf_child2body.inverse(), bf_id);
 		}
 
 		/** Apply covariance transforms */
