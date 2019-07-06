@@ -2,6 +2,9 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.31.0 (2019-06-07)
 -------------------
 * readme: fix udp-pb formatting

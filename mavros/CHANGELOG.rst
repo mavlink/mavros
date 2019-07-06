@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* use direclty radians in yaml files
+* A simple typo error has fixed. (`#1260 <https://github.com/mavlink/mavros/issues/1260>`_)
+  * fix: a typing error "alredy" to "already"
+  * Fix: typo error (helth -> health)
+* Contributors: Martina Rivizzigno, 강정석
+
 0.31.0 (2019-06-07)
 -------------------
 * readme: fix udp-pb formatting

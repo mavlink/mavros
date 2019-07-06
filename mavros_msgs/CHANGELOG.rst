@@ -2,6 +2,13 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add mav_cmd associated with each point in trajectory plugin
+* Use MountControl Msg
+* Define new MountControl.msg
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
 0.31.0 (2019-06-07)
 -------------------
 * mavros_msgs: LandingTarget: update msg description link

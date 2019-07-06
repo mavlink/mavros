@@ -2,6 +2,17 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* use direclty radians in yaml files
+* add mav_cmd associated with each point in trajectory plugin
+* Fix typo
+* Address comments
+* Send messages from callback
+* Use MountControl Msg
+* Add mount control class template
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
 0.31.0 (2019-06-07)
 -------------------
 * landing_target: fix landing target pose input topic naming
