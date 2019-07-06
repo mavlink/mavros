@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.32.0 (2019-07-06)
+-------------------
 * use direclty radians in yaml files
 * A simple typo error has fixed. (`#1260 <https://github.com/mavlink/mavros/issues/1260>`_)
   * fix: a typing error "alredy" to "already"
