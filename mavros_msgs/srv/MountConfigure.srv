@@ -1,0 +1,22 @@
+# MAVLink message: DO_MOUNT_CONTROL
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOUNT_CONFIGURE
+
+std_msgs/Header header
+
+uint8 mode # See enum MAV_MOUNT_MODE.
+uint8 MAV_MOUNT_MODE_RETRACT = 0
+uint8 MAV_MOUNT_MODE_NEUTRAL = 1
+uint8 MAV_MOUNT_MODE_MAVLINK_TARGETING = 2
+uint8 MAV_MOUNT_MODE_RC_TARGETING = 3
+uint8 MAV_MOUNT_MODE_GPS_POINT = 4
+
+bool stabilize_roll # stabilize roll? (1 = yes, 0 = no)
+bool stabilize_pitch # stabilize pitch? (1 = yes, 0 = no)
+bool stabilize_yaw # stabilize yaw? (1 = yes, 0 = no)
+uint8 roll_input # roll input (0 = angle body frame, 1 = angular rate, 2 = angle absolute frame)
+uint8 pitch_input # pitch input (0 = angle body frame, 1 = angular rate, 2 = angle absolute frame)
+uint8 yaw_input # yaw input (0 = angle body frame, 1 = angular rate, 2 = angle absolute frame)
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
