@@ -80,6 +80,7 @@ add_service_files(
   LogRequestData.srv
   LogRequestEnd.srv
   LogRequestList.srv
+  MountConfigure.srv
   MessageInterval.srv
   ParamGet.srv
   ParamPull.srv
