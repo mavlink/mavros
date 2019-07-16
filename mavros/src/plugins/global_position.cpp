@@ -325,7 +325,7 @@ private:
 						map_point.x(), map_point.y(), map_point.z());
 
 			// Set the current fix as the "map" origin if it's not set
-			if (!is_map_init && fix->status.status == 0) {
+			if (!is_map_init && fix->status.status >= sensor_msgs::NavSatStatus::STATUS_FIX) {
 				map_origin.x() = fix->latitude;
 				map_origin.y() = fix->longitude;
 				map_origin.z() = fix->altitude;
