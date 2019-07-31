@@ -255,7 +255,7 @@ protected:
 	size_t conn_id;
 
 	inline mavlink::mavlink_status_t *get_status_p() {
-		return &m_status;
+		return &m_parse_status;
 	}
 
 	inline mavlink::mavlink_message_t *get_buffer_p() {
@@ -277,8 +277,9 @@ protected:
 private:
 	friend const mavlink::mavlink_msg_entry_t* mavlink::mavlink_get_msg_entry(uint32_t msgid);
 
-	mavlink::mavlink_status_t m_status;
+	mavlink::mavlink_status_t m_parse_status;
 	mavlink::mavlink_message_t m_buffer;
+	mavlink::mavlink_status_t m_mavlink_status;
 
 	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
 	std::recursive_mutex iostat_mutex;
