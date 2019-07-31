@@ -16,6 +16,7 @@ add_message_files(
   CamIMUStamp.msg
   CommandCode.msg
   CompanionProcessStatus.msg
+  ComponentStatus.msg
   DebugValue.msg
   ExtendedState.msg
   FileEntry.msg
