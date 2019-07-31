@@ -75,7 +75,7 @@ private:
 		status.network_receive_rate = req->network_receive_rate;
 		status.time_boot_ms = req->time_boot_ms;
 
-		UAS_FCU(m_uas)->send_message_ignore_drop(status);
+		UAS_FCU(m_uas)->send_message_ignore_drop(status, req->component);
 	}
 };
 }	// namespace extra_plugins

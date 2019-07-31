@@ -2,6 +2,8 @@
 
 std_msgs/Header header
 
+uint8 component               # See enum MAV_COMPONENT
+
 uint8 cpu_usage               # percentage
 int8 temperature              # deg celsius
 uint32 ram_free               # MB
