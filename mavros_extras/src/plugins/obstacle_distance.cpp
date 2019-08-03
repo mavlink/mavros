@@ -22,6 +22,8 @@ namespace mavros {
 namespace extra_plugins {
 //! Radians to degrees
 static constexpr double RAD_TO_DEG = 180.0 / M_PI;
+//! Degrees tp radians
+static constexpr double DEG_TO_RAD = M_PI / 180.0;
 //! Mavlink MAV_DISTANCE_SENSOR enumeration
 using mavlink::common::MAV_DISTANCE_SENSOR;
 
@@ -42,17 +44,25 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
+		obstacle_nh.param<std::string>("frame_id", frame_id, "base_link");
+
 		obstacle_sub = obstacle_nh.subscribe("send", 10, &ObstacleDistancePlugin::obstacle_cb, this);
+		obstacle_pub = obstacle_nh.advertise<sensor_msgs::LaserScan>("receive", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			       make_handler(&ObstacleDistancePlugin::handle_obstacle_distance)
+		};
 	}
 
 private:
 	ros::NodeHandle obstacle_nh;
 	ros::Subscriber obstacle_sub;
+	ros::Publisher obstacle_pub;
+
+	std::string frame_id;
 
 	/**
 	 * @brief Send obstacle distance array to the FCU.
@@ -98,6 +108,39 @@ private:
 				<< std::endl << obstacle.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
+	}
+
+	void handle_obstacle_distance(const mavlink::mavlink_message_t *msg, mavlink::common::msg::OBSTACLE_DISTANCE &obstacle)
+	{
+		using mavlink::common::MAV_SENSOR_ORIENTATION;
+		using mavlink::common::MAV_DISTANCE_SENSOR;
+
+		auto laser_scan = boost::make_shared<sensor_msgs::LaserScan>();
+		// Not enough information for these
+		laser_scan->time_increment = 0.0;
+		laser_scan->scan_time = 0.0;
+		laser_scan->intensities = std::vector<float>();
+
+		laser_scan->header = m_uas->synchronized_header(frame_id, obstacle.time_usec);
+
+		laser_scan->range_min = obstacle.min_distance * 1E-2;	// Convert cm -> meters
+		laser_scan->range_max = obstacle.max_distance * 1E-2;
+
+		if (obstacle.increment_f > 0.0) {
+			laser_scan->angle_increment = obstacle.increment_f * DEG_TO_RAD;
+		} else {
+			laser_scan->angle_increment = obstacle.increment * DEG_TO_RAD;
+		}
+
+		// Transform FRD to ENU (90 degrees left, then flip axes)
+		laser_scan->angle_min = (int(obstacle.angle_offset+270) % 360) * -DEG_TO_RAD;
+		laser_scan->angle_max = laser_scan->angle_min + laser_scan->angle_increment * obstacle.distances.size();
+		laser_scan->ranges.reserve(obstacle.distances.size());
+		for (auto dist = obstacle.distances.rbegin(); dist != obstacle.distances.rend(); dist++) {
+    		laser_scan->ranges.push_back((*dist == UINT16_MAX) ? INFINITY : *dist * 1E-2);
+		}
+
+		obstacle_pub.publish(laser_scan);
 	}
 };
 }	// namespace extra_plugins
