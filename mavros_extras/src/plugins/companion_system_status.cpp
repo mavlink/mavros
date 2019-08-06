@@ -1,6 +1,6 @@
 /**
- * @brief Component Status plugin
- * @file component_status.cpp
+ * @brief Companion System Status plugin
+ * @file companion_system_status.cpp
  * @author Tanja Baumann <tanja@auterion.com>
  *
  * @addtogroup plugin
@@ -16,34 +16,28 @@
 
 #include <mavros/mavros_plugin.h>
 
-#include <mavros_msgs/ComponentStatus.h>
+#include <mavros_msgs/CompanionSystemStatus.h>
 
 namespace mavros {
 namespace extra_plugins {
 
-//! Mavlink enumerations
-using mavlink::common::MAV_TYPE;
-using mavlink::common::MAV_STATE;
-using mavlink::common::MAV_COMPONENT;
-using utils::enum_value;
-
 /**
- * @brief Component status plugin
+ * @brief Companion system status plugin
  *
- * Publishes the status of components
+ * Publishes the status of the companion computer
  * @see status_cb()
  */
-class ComponentStatusPlugin : public plugin::PluginBase {
+class CompanionSystemStatusPlugin : public plugin::PluginBase {
 public:
-	ComponentStatusPlugin() : PluginBase(),
-	status_nh("~component")
+	CompanionSystemStatusPlugin() : PluginBase(),
+	status_nh("~companion_system")
 	{ }
 
 	void initialize(UAS &uas_)
 	{
 		PluginBase::initialize(uas_);
 
-		status_sub = status_nh.subscribe("status", 10, &ComponentStatusPlugin::status_cb, this);
+		status_sub = status_nh.subscribe("status", 10, &CompanionSystemStatusPlugin::status_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -56,24 +50,25 @@ private:
 	ros::Subscriber status_sub;
 
 	/**
-	 * @brief Send component status to FCU and groundstation
+	 * @brief Send companion system status to FCU and groundstation
 	 *
-	 * Message specification: https://mavlink.io/en/messages/common.html#COMPONENT_STATUS
-	 * @param req	received ComponentStatus msg
+	 * Message specification: https://mavlink.io/en/messages/common.html#COMPANION_SYSTEM_STATUS
+	 * @param req	received CompanionSystemStatus msg
 	 */
-	void status_cb(const mavros_msgs::ComponentStatus::ConstPtr &req)
+	void status_cb(const mavros_msgs::CompanionSystemStatus::ConstPtr &req)
 	{
-		mavlink::common::msg::COMPONENT_STATUS status {};
+		mavlink::common::msg::COMPANION_SYSTEM_STATUS status {};
 
 		status.cpu_usage = req->cpu_usage;
 		status.temperature = req->temperature;
-		status.ram_free = req->ram_free;
+		status.ram_usage = req->ram_usage;
 		status.ram_total = req->ram_total;
 		status.storage_free = req->storage_free;
 		status.storage_total = req->storage_total;
 		status.network_send_rate = req->network_send_rate;
 		status.network_receive_rate = req->network_receive_rate;
-		status.time_boot_ms = req->time_boot_ms;
+		status.time_usec = req->time_usec;
+		status.uptime = req->uptime;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(status, req->component);
 	}
@@ -82,4 +77,4 @@ private:
 }	// namespace mavros
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::ComponentStatusPlugin, mavros::plugin::PluginBase)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::CompanionSystemStatusPlugin, mavros::plugin::PluginBase)
