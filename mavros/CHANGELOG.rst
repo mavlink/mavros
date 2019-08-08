@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.32.1 (2019-08-08)
+-------------------
 * uncrustify
 * Removed tf loop
 * made small edit to handle augmented gps fix
