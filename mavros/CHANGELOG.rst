@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* uncrustify
+* Removed tf loop
+* made small edit to handle augmented gps fix
+* added a check for gps fix before setting origin for global_position/local odometry topic
+* Contributors: Eric, Lucas Hill
+
 0.32.0 (2019-07-06)
 -------------------
 * use direclty radians in yaml files
