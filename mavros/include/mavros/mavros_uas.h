@@ -272,6 +272,16 @@ public:
 	tf2_ros::StaticTransformBroadcaster tf2_static_broadcaster;
 
 	/**
+	 * @brief Stack static transform.
+	 *
+	 * @param frame_id    parent frame for transform
+	 * @param child_id    child frame for transform
+	 * @param tr          transform
+	 * @param vector      vector of transforms
+	 */
+	void stack_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr, std::vector<geometry_msgs::TransformStamped>& vector);
+
+	/**
 	 * @brief Publishes static transform.
 	 *
 	 * @param frame_id    parent frame for transform

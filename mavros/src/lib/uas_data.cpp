@@ -51,9 +51,16 @@ UAS::UAS() :
 		ros::shutdown();
 	}
 
+	std::vector<geometry_msgs::TransformStamped> transformVector;
+
 	// send static transform from "local_origin" (ENU) to "local_origin_ned" (NED)
-	publish_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)));
-	publish_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)));
+	stack_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transformVector);
+	stack_static_transform("vision_enu", "vision_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transformVector);
+	stack_static_transform("mocap_enu", "mocap_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transformVector);
+	stack_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),transformVector);
+
+	tf2_static_broadcaster.sendTransform(transformVector);
+	ROS_WARN_STREAM("Publish static");
 }
 
 /* -*- heartbeat handlers -*- */
@@ -221,6 +228,19 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 }
 
 /* -*- transform -*- */
+
+//! Publishes static transform
+void UAS::stack_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr, std::vector<geometry_msgs::TransformStamped>& vector)
+{
+	geometry_msgs::TransformStamped static_transformStamped;
+
+	static_transformStamped.header.stamp = ros::Time::now();
+	static_transformStamped.header.frame_id = frame_id;
+	static_transformStamped.child_frame_id = child_id;
+	tf::transformEigenToMsg(tr, static_transformStamped.transform);
+
+	vector.push_back(static_transformStamped);
+}
 
 //! Publishes static transform
 void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)

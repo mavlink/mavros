@@ -44,20 +44,20 @@ cmd:
 
 # global_position
 global_position:
-  frame_id: "map"             # origin frame
-  child_frame_id: "base_link" # body-fixed frame
+  frame_id: "local_origin"             # origin frame
+  child_frame_id: "fcu_utm" # body-fixed frame
   rot_covariance: 99999.0   # covariance for attitude?
   gps_uere: 1.0             # User Equivalent Range Error (UERE) of GPS sensor (m)
   use_relative_alt: true    # use relative altitude for local coordinates
   tf:
-    send: false               # send TF?
-    frame_id: "map"  # TF frame_id
+    send: true               # send TF?
+    frame_id: "local_origin"  # TF frame_id
     global_frame_id: "earth"  # TF earth frame_id
-    child_frame_id: "base_link" # TF child_frame_id
+    child_frame_id: "fcu_utm" # TF child_frame_id
 
 # imu_pub
 imu:
-  frame_id: "base_link"
+  frame_id: "fcu"
   # need find actual values
   linear_acceleration_stdev: 0.0003
   angular_velocity_stdev: 0.0003490659 // 0.02 degrees
@@ -66,11 +66,11 @@ imu:
 
 # local_position
 local_position:
-  frame_id: "map"
+  frame_id: "local_origin"
   tf:
-    send: false
-    frame_id: "map"
-    child_frame_id: "base_link"
+    send: true
+    frame_id: "local_origin"
+    child_frame_id: "fcu"
     send_fcu: false
 
 # param
@@ -94,7 +94,7 @@ setpoint_attitude:
   use_quaternion: false     # enable PoseStamped topic subscriber
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "map"
+    frame_id: "local_origin"
     child_frame_id: "target_attitude"
     rate_limit: 50.0
 
@@ -107,7 +107,7 @@ setpoint_raw:
 setpoint_position:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "map"
+    frame_id: "local_origin"
     child_frame_id: "target_position"
     rate_limit: 50.0
   mav_frame: LOCAL_NED
@@ -181,7 +181,7 @@ fake_gps:
   tf:
     listen: false
     send: false           # send TF?
-    frame_id: "map"       # TF frame_id
+    frame_id: "local_origin"       # TF frame_id
     child_frame_id: "fix" # TF child_frame_id
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
@@ -214,18 +214,12 @@ mocap:
 # odom
 odometry:
   in:
-    frame_id: "odom"
-    child_frame_id: "base_link"
-    frame_tf:
-      local_frame: "local_origin_ned"
-      body_frame_orientation: "flu"
+    fcu_odom_parent_id_des: "local_origin"    # frame in which pose is expressed 
+    fcu_odom_child_id_des: "fcu"              # frame in which twist is expressed
   out:
-    frame_tf:
-      # available: check MAV_FRAME odometry local frames in
-      # https://mavlink.io/en/messages/common.html
-      local_frame: "vision_ned"
-      # available: ned, frd or flu (though only the tf to frd is supported)
-      body_frame_orientation: "frd"
+    ext_odom_parent_id: "camera_odom_frame"   #  frame_id of your odometry msg
+    ext_odom_child_id: "camera_pose_frame"    #  child_frame_id of your odometry msg
+
 
 # px4flow
 px4flow:
@@ -238,7 +232,7 @@ px4flow:
 vision_pose:
   tf:
     listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "map"
+    frame_id: "local_origin"
     child_frame_id: "vision_estimate"
     rate_limit: 10.0
 
@@ -249,7 +243,7 @@ vision_speed:
 
 # vibration
 vibration:
-  frame_id: "base_link"
+  frame_id: "fcu"
 
 # wheel_odometry
 wheel_odometry:
@@ -259,12 +253,12 @@ wheel_odometry:
   wheel1: {x: 0.0, y:  0.15, radius: 0.05} # x-, y-offset (m,NED) and radius (m)
   send_raw: true              # send wheel's RPM and cumulative distance (~/wheel_odometry/rpm, ~/wheel_odometry/distance)
   send_twist: false           # send geometry_msgs/TwistWithCovarianceStamped instead of nav_msgs/Odometry
-  frame_id: "map"             # origin frame
-  child_frame_id: "base_link" # body-fixed frame
+  frame_id: "local_origin"             # origin frame
+  child_frame_id: "fcu" # body-fixed frame
   vel_error: 0.1              # wheel velocity measurement error 1-std (m/s)
   tf:
     send: true
-    frame_id: "map"
-    child_frame_id: "base_link"
+    frame_id: "local_origin"
+    child_frame_id: "fcu"
 
 # vim:set ts=2 sw=2 et:
