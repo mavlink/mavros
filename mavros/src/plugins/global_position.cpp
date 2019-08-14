@@ -22,6 +22,7 @@
 #include <GeographicLib/Geocentric.hpp>
 
 #include <std_msgs/Float64.h>
+#include <std_msgs/UInt32.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/NavSatStatus.h>
@@ -74,6 +75,7 @@ public:
 		// gps data
 		raw_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("raw/fix", 10);
 		raw_vel_pub = gp_nh.advertise<geometry_msgs::TwistStamped>("raw/gps_vel", 10);
+		raw_sat_pub = gp_nh.advertise<std_msgs::UInt32>("raw/satellites", 10);
 
 		// fused global position
 		gp_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
@@ -109,6 +111,7 @@ private:
 
 	ros::Publisher raw_fix_pub;
 	ros::Publisher raw_vel_pub;
+	ros::Publisher raw_sat_pub;
 	ros::Publisher gp_odom_pub;
 	ros::Publisher gp_fix_pub;
 	ros::Publisher gp_hdg_pub;
@@ -156,6 +159,9 @@ private:
 	void handle_gps_raw_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_RAW_INT &raw_gps)
 	{
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
+		auto sat_cnt = boost::make_shared<std_msgs::UInt32>();
+		sat_cnt->data = raw_gps.satellites_visible;
+		raw_sat_pub.publish(sat_cnt);
 
 		fix->header = m_uas->synchronized_header(child_frame_id, raw_gps.time_usec);
 
