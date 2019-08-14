@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/MountControl.h>
+#include <geometry_msgs/Quaternion.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -43,16 +44,35 @@ public:
 		PluginBase::initialize(uas_);
 
 		command_sub = mount_nh.subscribe("command", 10, &MountControlPlugin::command_cb, this);
+		mount_orientation_pub = mount_nh.advertise<geometry_msgs::Quaternion>("orientation", 10);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return { /* Rx disabled */ };
+		return {
+			make_handler(&MountControlPlugin::handle_mount_orientation)
+		};
 	}
 
 private:
 	ros::NodeHandle mount_nh;
 	ros::Subscriber command_sub;
+	ros::Publisher mount_orientation_pub;
+
+	/**
+	 * @brief Publish the mount orientation
+	 *
+	 * Message specification: https://mavlink.io/en/messages/common.html#MOUNT_ORIENTATION
+	 * @param msg   the mavlink message
+	 * @param mo	received MountOrientation msg
+	 */
+	void handle_mount_orientation(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MOUNT_ORIENTATION &mo)
+	{
+		auto q = ftf::quaternion_from_rpy(Eigen::Vector3d(mo.roll, mo.pitch, mo.yaw) * M_PI / 180.0);
+		geometry_msgs::Quaternion quaternion_msg;
+		tf::quaternionEigenToMsg(q, quaternion_msg);
+		mount_orientation_pub.publish(quaternion_msg);
+	}
 
 	/**
 	 * @brief Send mount control commands to vehicle
