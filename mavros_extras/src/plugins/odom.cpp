@@ -61,6 +61,8 @@ public:
 
 		// publishers
 		odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
+		odom_mav_pub = odom_nh.advertise<nav_msgs::Odometry>("out_to_mavlink", 10);
+
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("out", 10, &OdometryPlugin::odom_cb, this);
@@ -135,6 +137,7 @@ private:
 	ros::NodeHandle odom_nh;			//!< node handler
 	ros::Publisher odom_pub;			//!< nav_msgs/Odometry publisher
 	ros::Subscriber odom_sub;			//!< nav_msgs/Odometry subscriber
+	ros::Publisher odom_mav_pub;			//!< nav_msgs/Odometry publisher
 
 	std::string fcu_odom_parent_id_des;			//!< desorientation of the child frame (input data)
 	std::string fcu_odom_child_id_des;			//!< orientation of the body frame (input data)
@@ -150,13 +153,13 @@ private:
 	 * @param[in] &frameB The child frame of the transformation you want to get
 	 * @param[in,out] &tf_A2B The affine transform from the frameA to frameB
 	 */
-	void transform_lookup(const std::string &frameA, const std::string &frameB,
-		 Eigen::Affine3d &tf_A2B)
+	void transform_lookup(const std::string &target, const std::string &source,
+		 Eigen::Affine3d &tf_source2target)
 	{
 		try {
 			// transform lookup WRT local frame
-			tf_A2B = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-				frameA, frameB,
+			tf_source2target = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
+				target, source,
 				ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
 			ROS_ERROR_THROTTLE_NAMED(1, "odom", "ODOM: Ex: %s", ex.what());
@@ -180,8 +183,8 @@ private:
 		Eigen::Affine3d tf_parent2parentDes;
 		Eigen::Affine3d tf_child2childDes;
 
-		transform_lookup("local_origin_ned", fcu_odom_parent_id_des, tf_parent2parentDes);
-		transform_lookup("fcu_frd", fcu_odom_child_id_des, tf_child2childDes);
+		transform_lookup( fcu_odom_parent_id_des, "local_origin_ned", tf_parent2parentDes );
+		transform_lookup( fcu_odom_child_id_des,  "fcu_frd",          tf_child2childDes );
 
 		//! Build 6x6 pose covariance matrix to be transformed and sent
 		Matrix6d cov_pose = Matrix6d::Zero();
@@ -262,8 +265,8 @@ private:
 		Eigen::Affine3d tf_parent2parentDes;
 		Eigen::Affine3d tf_child2childDes;
 
-		transform_lookup(ext_odom_parent_id, "vision_ned", tf_parent2parentDes);
-		transform_lookup(ext_odom_child_id, "fcu_frd" , tf_child2childDes);
+		transform_lookup( "vision_ned", ext_odom_parent_id, tf_parent2parentDes );
+		transform_lookup( "fcu_frd",    ext_odom_child_id,  tf_child2childDes );
 
 		//! Build 6x6 pose covariance matrix to be transformed and sent
 		ftf::Covariance6d cov_pose = odom->pose.covariance;
@@ -346,6 +349,17 @@ private:
 
 		// send ODOMETRY msg
 		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
+
+		nav_msgs::Odometry debug_odom;
+		debug_odom.header = odom->header;
+		debug_odom.header.frame_id = "vision_ned";
+		debug_odom.child_frame_id = "fcu_frd";
+		tf::pointEigenToMsg(position,debug_odom.pose.pose.position);
+		tf::quaternionEigenToMsg(orientation,debug_odom.pose.pose.orientation);
+		tf::vectorEigenToMsg(lin_vel,debug_odom.twist.twist.linear);
+		tf::vectorEigenToMsg(ang_vel,debug_odom.twist.twist.angular);
+
+		odom_mav_pub.publish(debug_odom);
 	}
 };
 }	// namespace extra_plugins
