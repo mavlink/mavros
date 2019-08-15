@@ -159,9 +159,6 @@ private:
 	void handle_gps_raw_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_RAW_INT &raw_gps)
 	{
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
-		auto sat_cnt = boost::make_shared<std_msgs::UInt32>();
-		sat_cnt->data = raw_gps.satellites_visible;
-		raw_sat_pub.publish(sat_cnt);
 
 		fix->header = m_uas->synchronized_header(child_frame_id, raw_gps.time_usec);
 
@@ -215,6 +212,11 @@ private:
 
 			raw_vel_pub.publish(vel);
 		}
+
+		// publish satellite count
+		auto sat_cnt = boost::make_shared<std_msgs::UInt32>();
+		sat_cnt->data = raw_gps.satellites_visible;
+		raw_sat_pub.publish(sat_cnt);
 	}
 
 	void handle_gps_global_origin(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_GLOBAL_ORIGIN &glob_orig)
