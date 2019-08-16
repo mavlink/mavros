@@ -237,10 +237,10 @@ private:
 			 * Note: "earth" frame, in ECEF, of the global origin
 			 */
 			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
+				GeographicLib::Constants::WGS84_f());
 
 			earth.Forward(g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude,
-					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
+				g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
 			gp_global_origin_pub.publish(g_origin);
 		}
