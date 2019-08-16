@@ -227,6 +227,10 @@ private:
 		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
 
+		g_origin->position.latitude = glob_orig.latitude / 1E7;
+		g_origin->position.longitude = glob_orig.longitude / 1E7;
+		g_origin->position.altitude = glob_orig.altitude / 1E3 + m_uas->geoid_to_ellipsoid_height(&g_origin->position);	// convert height amsl to height above the ellipsoid
+
 		try {
 			/**
 			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
@@ -235,7 +239,7 @@ private:
 			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
 					GeographicLib::Constants::WGS84_f());
 
-			earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
+			earth.Forward(g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude,
 					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
 			gp_global_origin_pub.publish(g_origin);
