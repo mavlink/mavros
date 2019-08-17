@@ -61,8 +61,6 @@ public:
 
 		// publishers
 		odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
-		odom_mav_pub = odom_nh.advertise<nav_msgs::Odometry>("out_to_mavlink", 10);
-
 
 		// subscribers
 		odom_sub = odom_nh.subscribe("out", 10, &OdometryPlugin::odom_cb, this);
@@ -137,7 +135,6 @@ private:
 	ros::NodeHandle odom_nh;			//!< node handler
 	ros::Publisher odom_pub;			//!< nav_msgs/Odometry publisher
 	ros::Subscriber odom_sub;			//!< nav_msgs/Odometry subscriber
-	ros::Publisher odom_mav_pub;			//!< nav_msgs/Odometry publisher
 
 	std::string fcu_odom_parent_id_des;			//!< desorientation of the child frame (input data)
 	std::string fcu_odom_child_id_des;			//!< orientation of the body frame (input data)
@@ -215,9 +212,9 @@ private:
 		/**
 		 * Orientation parsing
 		 */
-		Eigen::Quaterniond q_parent2child(ftf::mavlink_to_quaternion(odom_msg.q));
-		Eigen::Affine3d tf_parentDes2childDes = tf_parent2parentDes * q_parent2child * tf_child2childDes.inverse();
-		orientation = Eigen::Quaterniond(tf_parentDes2childDes.linear());
+		Eigen::Quaterniond q_child2parent(ftf::mavlink_to_quaternion(odom_msg.q));
+		Eigen::Affine3d tf_childDes2parentDes = tf_parent2parentDes * q_child2parent * tf_child2childDes.inverse();
+		orientation = Eigen::Quaterniond(tf_childDes2parentDes.linear());
 		tf::quaternionEigenToMsg(orientation, odom->pose.pose.orientation);
 
 		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2parentDes.linear();
@@ -297,9 +294,9 @@ private:
 		position = Eigen::Vector3d(tf_parent2parentDes.linear() * ftf::to_eigen(odom->pose.pose.position));
 
 		// Orientation represented by a quaternion rotation from the local frame to XYZ body frame
-		Eigen::Quaterniond q_parent2child(ftf::to_eigen(odom->pose.pose.orientation));
-		Eigen::Affine3d tf_parentDes2childDes = tf_parent2parentDes * q_parent2child * tf_child2childDes.inverse();
-		orientation = Eigen::Quaterniond(tf_parentDes2childDes.linear());
+		Eigen::Quaterniond q_child2parent(ftf::to_eigen(odom->pose.pose.orientation));
+		Eigen::Affine3d tf_childDes2parentDes = tf_parent2parentDes * q_child2parent * tf_child2childDes.inverse();
+		orientation = Eigen::Quaterniond(tf_childDes2parentDes.linear());
 
 		r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2parentDes.linear();
 
@@ -350,16 +347,6 @@ private:
 		// send ODOMETRY msg
 		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
 
-		nav_msgs::Odometry debug_odom;
-		debug_odom.header = odom->header;
-		debug_odom.header.frame_id = "vision_ned";
-		debug_odom.child_frame_id = "fcu_frd";
-		tf::pointEigenToMsg(position,debug_odom.pose.pose.position);
-		tf::quaternionEigenToMsg(orientation,debug_odom.pose.pose.orientation);
-		tf::vectorEigenToMsg(lin_vel,debug_odom.twist.twist.linear);
-		tf::vectorEigenToMsg(ang_vel,debug_odom.twist.twist.angular);
-
-		odom_mav_pub.publish(debug_odom);
 	}
 };
 }	// namespace extra_plugins
