@@ -66,10 +66,14 @@ private:
 
 		if (req->ranges.size() <= obstacle.distances.size()) {
 			// all distances from sensor will fit in obstacle distance message
-			Eigen::Map<Eigen::Matrix<uint16_t, Eigen::Dynamic, 1> > map_distances(obstacle.distances.data(), req->ranges.size());
-			auto cm_ranges = Eigen::Map<const Eigen::VectorXf>(req->ranges.data(), req->ranges.size()) * 1e2;
-			map_distances = cm_ranges.cast<uint16_t>();							//!< [centimeters]
-			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);    //!< fill the rest of the array values as "Unknown"
+			for (int i = 0; i < req->ranges.size(); i++) {
+				if (std::isnan(req->ranges[i]) || req->ranges[i] >= (UINT16_MAX / 1e2)) {
+					obstacle.distances[i] = UINT16_MAX;
+				} else {
+					obstacle.distances[i] = req->ranges[i] * 1e2;		//!< [centimeters]
+				}
+			}
+			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
 			obstacle.increment = req->angle_increment * RAD_TO_DEG;				//!< [degrees]
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
@@ -81,12 +85,12 @@ private:
 					if (req_index < req->ranges.size()) {
 						const float dist_m = req->ranges[req_index];
 						if (!std::isnan(dist_m)) {
-							obstacle.distances[i] = std::min(obstacle.distances[i], (uint16_t)(dist_m * 1e2));
+							obstacle.distances[i] = std::min(obstacle.distances[i], (uint16_t)(std::min(dist_m * 1e2, (double)UINT16_MAX)));
 						}
 					}
 				}
 			}
-			obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);   //!< [degrees]
+			obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);	//!< [degrees]
 		}
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [microsecs]
@@ -95,7 +99,7 @@ private:
 		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
-				<< std::endl << obstacle.to_yaml());
+										     << std::endl << obstacle.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
 	}
