@@ -76,6 +76,7 @@ public:
 		attitude_sub = sp_nh.subscribe("attitude", 1, &SetpointRawPlugin::attitude_cb, this, ros::TransportHints().tcpNoDelay());
 		rpyt_sub = sp_nh.subscribe("roll_pitch_yawrate_thrust", 1, &SetpointRawPlugin::rpyt_cb, this, ros::TransportHints().tcpNoDelay());
 		wrench_sub = sp_nh.subscribe("wrench", 1, &SetpointRawPlugin::wrench_cb, this, ros::TransportHints().tcpNoDelay());
+		tilt_angle_sp_sub = sp_nh.subscribe("tilt_angle_sp", 1, &SetpointRawPlugin::tilt_angle_cb, this, ros::TransportHints().tcpNoDelay());
 		attitude_thrust_sub = sp_nh.subscribe("attitude_thrust", 1, &SetpointRawPlugin::attitude_thrust_target_cb, this, ros::TransportHints().tcpNoDelay());
 		tiltrotor_actuator_commands_sub = sp_nh.subscribe("tiltrotor_actuator_commands", 1, &SetpointRawPlugin::tiltrotor_actuator_commands_cb, this, ros::TransportHints().tcpNoDelay());
 		allocation_matrix_sub = sp_nh.subscribe("allocation_matrix", 10, &SetpointRawPlugin::allocation_matrix_cb, this);
@@ -104,7 +105,7 @@ private:
 	friend class SetAllocationMatrixMixin;
 	ros::NodeHandle sp_nh;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, tiltrotor_actuator_commands_sub, attitude_thrust_sub, allocation_matrix_sub;
+	ros::Subscriber local_sub, global_sub, attitude_sub, rpyt_sub, wrench_sub, tilt_angle_sp_sub, tiltrotor_actuator_commands_sub, attitude_thrust_sub, allocation_matrix_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 	double thrust_scaling_, system_mass_kg_, yaw_rate_scaling_;
 	bool ignore_rpyt_messages_;

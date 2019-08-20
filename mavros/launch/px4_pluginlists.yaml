@@ -8,6 +8,13 @@ plugin_blacklist:
 - rangefinder
 - home_position
 - wheel_odometry
+- obstacle_distance
+- log_transfer
+- fake_gps
+- px4flow
+- wind_estimation
+- vision_speed_estimate
+- trajectory
 
 plugin_whitelist: []
 # 'sys_*'
