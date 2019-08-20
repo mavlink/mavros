@@ -67,10 +67,11 @@ private:
 		if (req->ranges.size() <= obstacle.distances.size()) {
 			// all distances from sensor will fit in obstacle distance message
 			for (int i = 0; i < req->ranges.size(); i++) {
-				if (std::isnan(req->ranges[i]) || req->ranges[i] >= (UINT16_MAX / 1e2)) {
+				float distance_cm = req->ranges[i] * 1e2;
+				if (std::isnan(distance_cm) || distance_cm >= UINT16_MAX || distance_cm < 0) {
 					obstacle.distances[i] = UINT16_MAX;
 				} else {
-					obstacle.distances[i] = req->ranges[i] * 1e2;		//!< [centimeters]
+					obstacle.distances[i] = static_cast<uint16_t>(distance_cm);
 				}
 			}
 			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
@@ -83,9 +84,9 @@ private:
 				for (size_t j = 0; j < scale_factor; j++) {
 					size_t req_index = i * scale_factor + j;
 					if (req_index < req->ranges.size()) {
-						const float dist_m = req->ranges[req_index];
-						if (!std::isnan(dist_m)) {
-							obstacle.distances[i] = std::min(obstacle.distances[i], (uint16_t)(std::min(dist_m * 1e2, (double)UINT16_MAX)));
+						float distance_cm = req->ranges[req_index] * 1e2;
+						if (!std::isnan(distance_cm) && distance_cm < UINT16_MAX && distance_cm > 0) {
+							obstacle.distances[i] = std::min(obstacle.distances[i], static_cast<uint16_t>(distance_cm));
 						}
 					}
 				}
