@@ -20,7 +20,6 @@
 
 namespace mavros {
 namespace extra_plugins {
-
 /**
  * @brief Onboard Computer Status plugin
  *
@@ -30,7 +29,7 @@ namespace extra_plugins {
 class OnboardComputerStatusPlugin : public plugin::PluginBase {
 public:
 	OnboardComputerStatusPlugin() : PluginBase(),
-	status_nh("~onboard_computer")
+		status_nh("~onboard_computer")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -59,57 +58,52 @@ private:
 	{
 		mavlink::common::msg::ONBOARD_COMPUTER_STATUS status {};
 
+		// [[[cog:
+		// for f in ('time_usec',
+		//     'uptime',
+		//     'type',
+		//     'temperature_board',
+		//     'ram_usage',
+		//     'ram_total'):
+		//     cog.outl("status.%s = req->%s;" % (f, f))
+		//
+		// for f in ('cpu_cores',
+		//     'cpu_combined',
+		//     'gpu_cores',
+		//     'gpu_combined',
+		//     'temperature_core',
+		//     'fan_speed',
+		//     'storage_type',
+		//     'storage_usage',
+		//     'storage_total',
+		//     'link_type',
+		//     'link_tx_rate',
+		//     'link_rx_rate',
+		//     'link_tx_max',
+		//     'link_rx_max'):
+		//     cog.outl("std::copy(req->%s.cbegin(), req->%s.cend(), status.%s.begin());" % (f, f, f))
+		// ]]]
 		status.time_usec = req->time_usec;
 		status.uptime = req->uptime;
 		status.type = req->type;
-
-		const auto &cpu_cores = req->cpu_cores;
-		std::copy(cpu_cores.cbegin(), cpu_cores.cend(), status.cpu_cores.begin());
-
-		const auto &cpu_combined = req->cpu_combined;
-		std::copy(cpu_combined.cbegin(), cpu_combined.cend(), status.cpu_combined.begin());
-
-		const auto &gpu_cores = req->gpu_cores;
-		std::copy(gpu_cores.cbegin(), gpu_cores.cend(), status.gpu_cores.begin());
-
-		const auto &gpu_combined = req->gpu_combined;
-		std::copy(gpu_combined.cbegin(), gpu_combined.cend(), status.gpu_combined.begin());
-
 		status.temperature_board = req->temperature_board;
-
-		const auto &temperature_core = req->temperature_core;
-		std::copy(temperature_core.cbegin(), temperature_core.cend(), status.temperature_core.begin());
-
-		const auto &fan_speed = req->fan_speed;
-		std::copy(fan_speed.cbegin(), fan_speed.cend(), status.fan_speed.begin());
-
 		status.ram_usage = req->ram_usage;
 		status.ram_total = req->ram_total;
-
-		const auto &storage_type = req->storage_type;
-		std::copy(storage_type.cbegin(), storage_type.cend(), status.storage_type.begin());
-
-		const auto &storage_usage = req->storage_usage;
-		std::copy(storage_usage.cbegin(), storage_usage.cend(), status.storage_usage.begin());
-
-		const auto &storage_total = req->storage_total;
-		std::copy(storage_total.cbegin(), storage_total.cend(), status.storage_total.begin());
-
-		const auto &link_type = req->link_type;
-		std::copy(link_type.cbegin(), link_type.cend(), status.link_type.begin());
-
-		const auto &link_tx_rate = req->link_tx_rate;
-		std::copy(link_tx_rate.cbegin(), link_tx_rate.cend(), status.link_tx_rate.begin());
-
-		const auto &link_rx_rate = req->link_rx_rate;
-		std::copy(link_rx_rate.cbegin(), link_rx_rate.cend(), status.link_rx_rate.begin());
-
-		const auto &link_tx_max = req->link_tx_max;
-		std::copy(link_tx_max.cbegin(), link_tx_max.cend(), status.link_tx_max.begin());
-
-		const auto &link_rx_max = req->link_rx_max;
-		std::copy(link_rx_max.cbegin(), link_rx_max.cend(), status.link_rx_max.begin());
-
+		std::copy(req->cpu_cores.cbegin(), req->cpu_cores.cend(), status.cpu_cores.begin());
+		std::copy(req->cpu_combined.cbegin(), req->cpu_combined.cend(), status.cpu_combined.begin());
+		std::copy(req->gpu_cores.cbegin(), req->gpu_cores.cend(), status.gpu_cores.begin());
+		std::copy(req->gpu_combined.cbegin(), req->gpu_combined.cend(), status.gpu_combined.begin());
+		std::copy(req->temperature_core.cbegin(), req->temperature_core.cend(), status.temperature_core.begin());
+		std::copy(req->fan_speed.cbegin(), req->fan_speed.cend(), status.fan_speed.begin());
+		std::copy(req->storage_type.cbegin(), req->storage_type.cend(), status.storage_type.begin());
+		std::copy(req->storage_usage.cbegin(), req->storage_usage.cend(), status.storage_usage.begin());
+		std::copy(req->storage_total.cbegin(), req->storage_total.cend(), status.storage_total.begin());
+		std::copy(req->link_type.cbegin(), req->link_type.cend(), status.link_type.begin());
+		std::copy(req->link_tx_rate.cbegin(), req->link_tx_rate.cend(), status.link_tx_rate.begin());
+		std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
+		std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
+		std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
+		// [[[end]]] (checksum: 0a249494d6d78b7ce0b75e3ffb74ef88)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(status, req->component);
 	}
