@@ -57,10 +57,9 @@ private:
 	void status_cb(const mavros_msgs::OnboardComputerStatus::ConstPtr &req)
 	{
 		mavlink::common::msg::ONBOARD_COMPUTER_STATUS status {};
-
+		status.time_usec = req->header.stamp.toNSec() / 1000;					//!< [microsecs]
 		// [[[cog:
-		// for f in ('time_usec',
-		//     'uptime',
+		// for f in ('uptime',
 		//     'type',
 		//     'temperature_board',
 		//     'ram_usage',
@@ -83,7 +82,6 @@ private:
 		//     'link_rx_max'):
 		//     cog.outl("std::copy(req->%s.cbegin(), req->%s.cend(), status.%s.begin());" % (f, f, f))
 		// ]]]
-		status.time_usec = req->time_usec;
 		status.uptime = req->uptime;
 		status.type = req->type;
 		status.temperature_board = req->temperature_board;
@@ -103,7 +101,9 @@ private:
 		std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
 		std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
 		std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
-		// [[[end]]] (checksum: 0a249494d6d78b7ce0b75e3ffb74ef88)
+		// [[[end]]] (checksum: 98538293a5932dfb5952d4badd311b39)
+
+		std::cout << "timestamp: " << status.time_usec << "\n";
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(status, req->component);
 	}

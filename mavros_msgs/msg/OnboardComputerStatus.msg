@@ -4,7 +4,6 @@ std_msgs/Header header
 
 uint8 component               # See enum MAV_COMPONENT
 
-uint64 time_usec            # [us] Timestamp (UNIX Epoch time or time since system boot)
 uint32 uptime               # [ms] Time since system boot
 uint8 type                  # Type of the onboard computer: 0: Mission computer primary, 1: Mission computer backup 1, 2: Mission computer backup 2, 3: Compute node, 4-5: Compute spares, 6-9: Payload computers.
 uint8[8] cpu_cores          # CPU usage on the component in percent (100 - idle). A value of UINT8_MAX implies the field is unused.
