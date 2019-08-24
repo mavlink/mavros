@@ -68,7 +68,7 @@ private:
 	ros::Subscriber local_sub, global_sub, attitude_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
 
-	trajectory_msgs::MultiDOFJointTrajectory trajectory_target_msg;
+	trajectory_msgs::MultiDOFJointTrajectory::ConstPtr trajectory_target_msg;
 
 	static constexpr int TRAJ_SAMPLING_MS = 100;
 
@@ -76,54 +76,57 @@ private:
 
 	/* -*- callbacks -*- */
 
-	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory& msg)
+	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req)
 	{
-		trajectory_target_msg = msg;
+		trajectory_target_msg = req;
 		refstart_time = ros::Time::now();
 	}
 
 	void reference_cb(const ros::TimerEvent &event)
 	{
+		if(trajectory_target_msg) {
+			ros::Duration curr_time_from_start;
+			curr_time_from_start = ros::Time::now() - refstart_time;
+		
+			for(size_t i = 0; i < trajectory_target_msg->points.size(); i++){
 
-		ros::Duration curr_time_from_start;
-		curr_time_from_start = ros::Time::now() - refstart_time;
-	
-		for(size_t i = 0; i < trajectory_target_msg.points.size(); i++){
+				Eigen::Vector3d position, velocity, af;
+				Eigen::Quaterniond attitude;
+				float yaw, yaw_rate;
+				trajectory_msgs::MultiDOFJointTrajectoryPoint pt = trajectory_target_msg->points[i];
+				uint16_t type_mask;
 
-			Eigen::Vector3d position, velocity, af;
-			Eigen::Quaterniond attitude;
-			float yaw, yaw_rate;
-			trajectory_msgs::MultiDOFJointTrajectoryPoint pt = trajectory_target_msg.points[i];
-			uint16_t type_mask;
-			if(pt.time_from_start.toSec() >= curr_time_from_start.toSec() ) { //TODO: Better logic to handle this case?
-				if(!pt.transforms.empty()){
-				position << pt.transforms[0].translation.x, pt.transforms[0].translation.y, pt.transforms[0].translation.z;
-				attitude = Eigen::Quaterniond(pt.transforms[0].rotation.w, pt.transforms[0].rotation.x, pt.transforms[0].rotation.y, pt.transforms[0].rotation.z);
-				} else {
-					type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_PX || mavros_msgs::PositionTarget::IGNORE_PY || mavros_msgs::PositionTarget::IGNORE_PZ;
+				if(pt.time_from_start.toSec() >= curr_time_from_start.toSec() ) { //TODO: Better logic to handle this case?
+					if(!pt.transforms.empty()){
+					position << pt.transforms[0].translation.x, pt.transforms[0].translation.y, pt.transforms[0].translation.z;
+					attitude = Eigen::Quaterniond(pt.transforms[0].rotation.w, pt.transforms[0].rotation.x, pt.transforms[0].rotation.y, pt.transforms[0].rotation.z);
+					} else {
+						type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_PX || mavros_msgs::PositionTarget::IGNORE_PY || mavros_msgs::PositionTarget::IGNORE_PZ;
+					}
+
+					if(!pt.velocities.empty()) velocity << pt.velocities[0].linear.x, pt.velocities[0].linear.y, pt.velocities[0].linear.z;
+					else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
+					
+					if(!pt.accelerations.empty()) af << pt.accelerations[0].linear.x, pt.accelerations[0].linear.y, pt.accelerations[0].linear.z;
+					else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
+
+					// Transform frame ENU->NED
+					position = ftf::transform_frame_enu_ned(position);
+					velocity = ftf::transform_frame_enu_ned(velocity);
+					af = ftf::transform_frame_enu_ned(af);
+					yaw = ftf::quaternion_get_yaw(attitude);
+
+					set_position_target_local_ned(
+								trajectory_target_msg->header.stamp.toNSec() / 1000000,
+								1,
+								0,
+								position,
+								velocity,
+								af,
+								yaw, 0);
+					if(i == trajectory_target_msg->points.size()-1)  trajectory_target_msg.reset(); //End of trajectory
+					break;
 				}
-
-				if(!pt.velocities.empty()) velocity << pt.velocities[0].linear.x, pt.velocities[0].linear.y, pt.velocities[0].linear.z;
-				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
-				
-				if(!pt.accelerations.empty()) af << pt.accelerations[0].linear.x, pt.accelerations[0].linear.y, pt.accelerations[0].linear.z;
-				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
-
-				// Transform frame ENU->NED
-				position = ftf::transform_frame_enu_ned(position);
-				velocity = ftf::transform_frame_enu_ned(velocity);
-				af = ftf::transform_frame_enu_ned(af);
-				yaw = ftf::quaternion_get_yaw(attitude);
-
-				set_position_target_local_ned(
-							trajectory_target_msg.header.stamp.toNSec() / 1000000,
-							1,
-							0,
-							position,
-							velocity,
-							af,
-							yaw, 0);
-				break;
 			}
 		}
 	}
