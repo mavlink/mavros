@@ -18,6 +18,7 @@
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 
+#include <nav_msgs/Path.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
@@ -42,10 +43,10 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		bool tf_listen;
+		sp_nh.param<std::string>("frame_id", frame_id, "map");
 
 		local_sub = sp_nh.subscribe("local", 10, &SetpointTrajectoryPlugin::local_cb, this);
-		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_trajectory", 10);
+		desired_pub = sp_nh.advertise<nav_msgs::Path>("desired", 10);
 
 		sp_timer = sp_nh.createTimer(ros::Duration(0.01), &SetpointTrajectoryPlugin::reference_cb, this);
 	}
@@ -62,17 +63,39 @@ private:
 	ros::NodeHandle sp_nh;
 
 	ros::Timer sp_timer;
-
 	ros::Time refstart_time;
 
-	ros::Subscriber local_sub, global_sub, attitude_sub;
-	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
+	ros::Subscriber local_sub;
+	ros::Publisher desired_pub;
 
 	trajectory_msgs::MultiDOFJointTrajectory::ConstPtr trajectory_target_msg;
+
+	std::string frame_id;
 
 	static constexpr int TRAJ_SAMPLING_MS = 100;
 
 	const ros::Duration TRAJ_SAMPLING_DT;
+
+	void publish_path(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req){
+		nav_msgs::Path msg;
+
+		msg.header.stamp = ros::Time::now();
+		msg.header.frame_id = frame_id;
+		for(size_t i = 0; i < req->points.size(); i++){
+			geometry_msgs::PoseStamped pose_msg;
+			if(!req->points[i].transforms.empty()){
+				pose_msg.pose.position.x = req->points[i].transforms[0].translation.x;
+				pose_msg.pose.position.y = req->points[i].transforms[0].translation.y;
+				pose_msg.pose.position.z = req->points[i].transforms[0].translation.z;
+				pose_msg.pose.orientation.w = req->points[i].transforms[0].rotation.w;
+				pose_msg.pose.orientation.x = req->points[i].transforms[0].rotation.x;
+				pose_msg.pose.orientation.y = req->points[i].transforms[0].rotation.y;
+				pose_msg.pose.orientation.z = req->points[i].transforms[0].rotation.z;
+				msg.poses.emplace_back(pose_msg);
+			}
+		}
+		desired_pub.publish(msg);
+	}
 
 	/* -*- callbacks -*- */
 
@@ -80,6 +103,7 @@ private:
 	{
 		trajectory_target_msg = req;
 		refstart_time = ros::Time::now();
+		publish_path(req);
 	}
 
 	void reference_cb(const ros::TimerEvent &event)
