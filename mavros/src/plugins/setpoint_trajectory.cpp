@@ -52,9 +52,7 @@ public:
 
 	Subscriptions get_subscriptions()
 	{
-		return {
-				make_handler(&SetpointTrajectoryPlugin::handle_position_target_local_ned),
-		};
+		return { /* Rx disabled */ };
 	}
 
 private:
@@ -76,43 +74,11 @@ private:
 
 	const ros::Duration TRAJ_SAMPLING_DT;
 
-	/* -*- message handlers -*- */
-	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_LOCAL_NED &tgt)
-	{
-		// Transform desired position,velocities,and accels from ENU to NED frame
-		auto position = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.x, tgt.y, tgt.z));
-		auto velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
-		auto af = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
-		float yaw = ftf::quaternion_get_yaw(
-					ftf::transform_orientation_aircraft_baselink(
-						ftf::transform_orientation_ned_enu(
-							ftf::quaternion_from_rpy(0.0, 0.0, tgt.yaw))));
-		Eigen::Vector3d ang_vel_ned(0.0, 0.0, tgt.yaw_rate);
-		auto ang_vel_enu = ftf::transform_frame_ned_enu(ang_vel_ned);
-		float yaw_rate = ang_vel_enu.z();
-
-		auto target = boost::make_shared<mavros_msgs::PositionTarget>();
-
-		target->header.stamp = m_uas->synchronise_stamp(tgt.time_boot_ms);
-		target->coordinate_frame = tgt.coordinate_frame;
-		target->type_mask = tgt.type_mask;
-		tf::pointEigenToMsg(position, target->position);
-		tf::vectorEigenToMsg(velocity, target->velocity);
-		tf::vectorEigenToMsg(af, target->acceleration_or_force);
-		target->yaw = yaw;
-		target->yaw_rate = yaw_rate;
-
-		target_local_pub.publish(target);
-	}
-
 	/* -*- callbacks -*- */
 
 	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory& msg)
 	{
 		trajectory_target_msg = msg;
-
-		//Start trajectory from when trajectory message was received
-		//TODO: Should this be the time that is stamped in the trajectory?
 		refstart_time = ros::Time::now();
 	}
 
