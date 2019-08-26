@@ -80,14 +80,12 @@ private:
 		for (const auto &p : req->points) {
 			if (p.transforms.empty())
 				continue;
+	
 			geometry_msgs::PoseStamped pose_msg;
 			pose_msg.pose.position.x = p.transforms[0].translation.x;
 			pose_msg.pose.position.y = p.transforms[0].translation.y;
 			pose_msg.pose.position.z = p.transforms[0].translation.z;
-			pose_msg.pose.orientation.w = p.transforms[0].rotation.w;
-			pose_msg.pose.orientation.x = p.transforms[0].rotation.x;
-			pose_msg.pose.orientation.y = p.transforms[0].rotation.y;
-			pose_msg.pose.orientation.z = p.transforms[0].rotation.z;
+			pose_msg.pose.orientation = p.transforms[0].rotation;
 			msg.poses.emplace_back(pose_msg);
 		}
 		desired_pub.publish(msg);
@@ -109,13 +107,10 @@ private:
 
 		ros::Duration curr_time_from_start;
 		curr_time_from_start = ros::Time::now() - refstart_time;
-	
-		for(size_t i = 0; i < trajectory_target_msg->points.size(); i++){
-
+		for(auto &pt : trajectory_target_msg->points) {
 			Eigen::Vector3d position, velocity, af;
 			Eigen::Quaterniond attitude;
 			float yaw, yaw_rate;
-			trajectory_msgs::MultiDOFJointTrajectoryPoint pt = trajectory_target_msg->points[i];
 			uint16_t type_mask;
 
 			if(pt.time_from_start.toSec() >= curr_time_from_start.toSec() ) { //TODO: Better logic to handle this case?
@@ -126,10 +121,10 @@ private:
 					type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_PX || mavros_msgs::PositionTarget::IGNORE_PY || mavros_msgs::PositionTarget::IGNORE_PZ;
 				}
 
-				if(!pt.velocities.empty()) velocity << pt.velocities[0].linear.x, pt.velocities[0].linear.y, pt.velocities[0].linear.z;
+				if(!pt.velocities.empty()) velocity = ftf::to_eigen(pt.velocities[0].linear);
 				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
 				
-				if(!pt.accelerations.empty()) af << pt.accelerations[0].linear.x, pt.accelerations[0].linear.y, pt.accelerations[0].linear.z;
+				if(!pt.accelerations.empty()) af = ftf::to_eigen(pt.accelerations[0].linear);
 				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
 
 				// Transform frame ENU->NED
@@ -146,10 +141,10 @@ private:
 							velocity,
 							af,
 							yaw, 0);
-				if(i == trajectory_target_msg->points.size()-1)  trajectory_target_msg.reset(); //End of trajectory
-				break;
+				return;
 			}
 		}
+		trajectory_target_msg.reset(); //End of trajectory
 	}
 };
 }	// namespace std_plugins
