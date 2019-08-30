@@ -192,11 +192,11 @@ private:
 		imu_ned_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_ned_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
-		if(!received_linear_accel) {
+		if (!received_linear_accel) {
 			// Set element 0 of covariance matrix to -1 if no data received as per sensor_msgs/Imu defintion
 			imu_enu_msg->linear_acceleration_covariance[0] = -1;
 			imu_ned_msg->linear_acceleration_covariance[0] = -1;
-			}
+		}
 
 		/** Store attitude in base_link ENU
 		 *  @snippet src/plugins/imu.cpp store_enu
