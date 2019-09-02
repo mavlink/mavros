@@ -52,7 +52,10 @@ public:
 		has_hr_imu(false),
 		has_raw_imu(false),
 		has_scaled_imu(false),
-		has_att_quat(false)
+		has_att_quat(false),
+		received_linear_accel(false),
+		linear_accel_vec_flu(Eigen::Vector3d::Zero()),
+		linear_accel_vec_frd(Eigen::Vector3d::Zero())
 	{ }
 
 	void initialize(UAS &uas_)
@@ -118,6 +121,7 @@ private:
 	bool has_raw_imu;
 	bool has_scaled_imu;
 	bool has_att_quat;
+	bool received_linear_accel;
 	Eigen::Vector3d linear_accel_vec_flu;
 	Eigen::Vector3d linear_accel_vec_frd;
 	ftf::Covariance3d linear_acceleration_cov;
@@ -188,6 +192,12 @@ private:
 		imu_ned_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_ned_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
+		if (!received_linear_accel) {
+			// Set element 0 of covariance matrix to -1 if no data received as per sensor_msgs/Imu defintion
+			imu_enu_msg->linear_acceleration_covariance[0] = -1;
+			imu_ned_msg->linear_acceleration_covariance[0] = -1;
+		}
+
 		/** Store attitude in base_link ENU
 		 *  @snippet src/plugins/imu.cpp store_enu
 		 */
@@ -231,6 +241,7 @@ private:
 		// Save readings
 		linear_accel_vec_flu = accel_flu;
 		linear_accel_vec_frd = accel_frd;
+		received_linear_accel = true;
 
 		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
