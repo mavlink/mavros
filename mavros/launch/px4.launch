@@ -11,6 +11,8 @@
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
 
+	<node pkg="tf" type="static_transform_publisher" name="map_to_local" args="0.0 0.0 0.0 0.0 0.0 0.0  /map /local_origin  100" />
+
 	<include file="$(find mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
 		<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
