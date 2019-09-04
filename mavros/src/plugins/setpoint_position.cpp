@@ -36,6 +36,7 @@ using mavlink::common::MAV_FRAME;
  */
 class SetpointPositionPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
+	private plugin::SetPositionTargetGlobalIntMixin<SetpointPositionPlugin>,
 	private plugin::TF2ListenerMixin<SetpointPositionPlugin> {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -66,7 +67,8 @@ public:
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
 			// Subscriber for goal gps
 			setpointg_sub = sp_nh.subscribe("global", 10, &SetpointPositionPlugin::setpointg_cb, this);
-
+			// Subscriber for goal gps but will convert it to local coordinates
+			setpointg2l_sub = sp_nh.subscribe("global_to_local", 10, &SetpointPositionPlugin::setpointg2l_cb, this);
 			// subscriber for current gps state, mavros/global_position/global.
 			gps_sub = spg_nh.subscribe("global_position/global", 10, &SetpointPositionPlugin::gps_cb, this);
 			// Subscribe for current local ENU pose.
@@ -96,6 +98,7 @@ private:
 	ros::NodeHandle spg_nh;		//!< to get local position and gps coord which are not under sp_h()
 	ros::Subscriber setpoint_sub;
 	ros::Subscriber setpointg_sub;	//!< GPS setpoint
+	ros::Subscriber setpointg2l_sub;	//!< GPS setpoint
 	ros::Subscriber gps_sub;	//!< current GPS
 	ros::Subscriber local_sub;	//!< current local ENU
 	ros::ServiceServer mav_frame_srv;
@@ -181,9 +184,43 @@ private:
 	}
 
 	/**
-	 * Gets gps setpoint, converts it to local ENU, and sends it to FCU
+	 * Gets setpoint position setpoint and send SET_POSITION_TARGET_GLOBAL_INT
 	 */
 	void setpointg_cb(const mavros_msgs::GlobalPositionTarget::ConstPtr &req)
+	{
+		Eigen::Vector3d velocity, af;
+		float yaw, yaw_rate;
+
+		tf::vectorMsgToEigen(req->velocity, velocity);
+		tf::vectorMsgToEigen(req->acceleration_or_force, af);
+
+		// Transform frame ENU->NED
+		velocity = ftf::transform_frame_enu_ned(velocity);
+		af = ftf::transform_frame_enu_ned(af);
+		yaw = ftf::quaternion_get_yaw(
+					ftf::transform_orientation_aircraft_baselink(
+						ftf::transform_orientation_ned_enu(
+							ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
+		Eigen::Vector3d ang_vel_enu(0.0, 0.0, req->yaw_rate);
+		auto ang_vel_ned = ftf::transform_frame_ned_enu(ang_vel_enu);
+		yaw_rate = ang_vel_ned.z();
+
+		set_position_target_global_int(
+					req->header.stamp.toNSec() / 1000000,
+					req->coordinate_frame,
+					req->type_mask,
+					req->latitude * 1e7,
+					req->longitude * 1e7,
+					req->altitude,
+					velocity,
+					af,
+					yaw, yaw_rate);
+	}
+
+	/**
+	 * Gets gps setpoint, converts it to local ENU, and sends it to FCU
+	 */
+	void setpointg2l_cb(const mavros_msgs::GlobalPositionTarget::ConstPtr &req)
 	{
 		/**
 		 * The idea is to convert the change in LLA(goal_gps-current_gps) to change in ENU
