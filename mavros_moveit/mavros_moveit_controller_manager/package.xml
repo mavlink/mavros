@@ -1,0 +1,30 @@
+<package format="2">
+  <name>mavros_moveit_controller_manager</name>
+  <version>1.0.1</version>
+  <description>A controller manager plugin for using mavros quadrotor with MoveIt.</description>
+
+  <author email="saifullah3396@gmail.com">Saifullah</author>
+  <maintainer email="saifullah3396@gmail.com">Saifullah</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://moveit.ros.org</url>
+  <url type="bugtracker">https://github.com/ros-planning/moveit/issues</url>
+  <url type="repository">https://github.com/ros-planning/moveit</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>moveit_core</depend>
+  <depend>roscpp</depend>
+  <depend version_gte="1.11.2">pluginlib</depend>
+  <depend>control_msgs</depend>
+  <depend>actionlib</depend>
+  <depend>mavros_moveit_actions</depend>
+
+  <exec_depend>moveit_simple_controller_manager</exec_depend>
+
+  <export>
+    <moveit_core plugin="${prefix}/plugin_description.xml"/>
+  </export>
+
+</package>

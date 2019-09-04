@@ -1,0 +1,4 @@
+controller_list:
+  - name: fake_mavros_uav_controller
+    joints:
+      - virtual_joint

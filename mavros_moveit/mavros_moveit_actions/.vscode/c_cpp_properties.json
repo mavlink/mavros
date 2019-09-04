@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/sai/ros-ws/ncai-ws/devel/include/**",
+                "/home/sai/ros-ws/openai-ws/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/libmavconn/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/mavros/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/mavros_moveit/mavros_moveit_controller_manager/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/mavros_msgs/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/mavros_offboard/include/**",
+                "/home/sai/ros-ws/ncai-ws/src/mavros/test_mavros/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

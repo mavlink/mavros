@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mavros_moveit_actions</name>
+  <version>0.0.0</version>
+  <description>The mavros_moveit_actions package</description>
+  <maintainer email="saifullah3396@gmail.com">Saifullah</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>actionlib_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>mavros_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <exec_depend>message_generation</exec_depend>
+  <export>
+  </export>
+</package>

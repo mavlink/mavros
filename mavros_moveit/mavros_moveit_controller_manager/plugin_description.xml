@@ -1,0 +1,9 @@
+<library path="lib/libmavros_moveit_controller_manager">
+  <class name="mavros_moveit_controller_manager/MavrosMoveItControllerManager"
+         type="mavros_moveit_controller_manager::MavrosMoveItControllerManager"
+         base_class_type="moveit_controller_manager::MoveItControllerManager">
+    <description>
+    </description>
+  </class>
+
+</library>

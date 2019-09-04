@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: rotors_description
+    relative_path: urdf/iris.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/iris.srdf
+  CONFIG:
+    author_name: Saifullah
+    author_email: saifullah3396@gmail.com
+    generated_timestamp: 1567493344
