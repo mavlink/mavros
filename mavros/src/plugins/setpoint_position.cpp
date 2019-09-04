@@ -92,6 +92,7 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
+	friend class SetPositionTargetGlobalIntMixin;
 	friend class TF2ListenerMixin;
 
 	ros::NodeHandle sp_nh;
