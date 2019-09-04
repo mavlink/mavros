@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="gui" default="true" />
+  <arg name="debug" default="false" />
+  <arg name="rvizconfig" default="$(find mavros)/rviz/iris.rviz" />
+  <arg name="namespace" default="mavros" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find rotors_description)/urdf/iris.xacro'" />
+  <param name="use_gui" value="$(arg gui)"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <!-- Start the moveit move group -->
+  <include file="$(find mavros_moveit_config)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution" value="false"/>
+    <arg name="info" value="false"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <!-- Start the moveit action controller -->
+  <node name="follow_multi_dof_joint_trajectory_action_server" pkg="mavros_moveit_actions" type="follow_multi_dof_joint_trajectory_action_server" output="screen"/>
+
+  <!-- Start RVIZ Visualisation -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>
