@@ -1,5 +1,5 @@
 controller_list:
-  - name: follow_multi_dof_joint_trajectory_action_server
+  - name: FollowMultiDofJointTrajectoryAction
     type: FollowMultiDofJointTrajectory
     action_ns: ""
     default: true
