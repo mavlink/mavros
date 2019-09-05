@@ -43,6 +43,7 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <ros/ros.h>
+#include <tf/tf.h>
 #include <string>
 
 class FollowMultiDofJointTrajectoryAction
@@ -81,9 +82,6 @@ public:
 
         // check for FCU connection
         if (current_state_.connected) {
-            if (current_state_.mode != "OFFBOARD") {
-            }
-
             // trajectory execution started
             executing = true;
 
@@ -98,17 +96,6 @@ public:
                 rate_.sleep();
             }
 
-            if (current_state_.mode != "OFFBOARD") {
-                mavros_msgs::SetMode offb_set_mode;
-                offb_set_mode.request.custom_mode = "OFFBOARD";
-                if (set_mode_client_.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
-                    ROS_INFO("Mode OFFBOARD enabled.");
-                } else {
-                    ROS_WARN("Mode OFFBOARD could not be enabled. Cannot execute moveit trajectory.");
-                    return;
-                }
-            }
-
             if (!current_state_.armed) {
                 mavros_msgs::CommandBool arm_cmd;
                 arm_cmd.request.value = true;
@@ -120,8 +107,19 @@ public:
                 }
             }
 
+            if (current_state_.mode != "OFFBOARD") {
+                mavros_msgs::SetMode offb_set_mode;
+                offb_set_mode.request.custom_mode = "OFFBOARD";
+                if (set_mode_client_.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
+                    ROS_INFO("Mode OFFBOARD enabled.");
+                } else {
+                    ROS_WARN("Mode OFFBOARD could not be enabled. Cannot execute moveit trajectory.");
+                    return;
+                }
+            }
+
             auto trajectory = goal->trajectory;
-            ROS_INFO("%s: Executing trajectory...", action_name_.c_str());
+            geometry_msgs::PoseStamped cmd_pose;
             for (const auto& p : trajectory.points) {
                 if(action_server_.isPreemptRequested() || !ros::ok()){
                     ROS_INFO("Preempt requested");
@@ -129,21 +127,41 @@ public:
                     break;
                 }
                 geometry_msgs::Transform trans = p.transforms[0];
-                geometry_msgs::PoseStamped cmd_pose;
                 cmd_pose.pose.position.x = trans.translation.x;
                 cmd_pose.pose.position.y = trans.translation.y;
                 cmd_pose.pose.position.z = trans.translation.z;
                 cmd_pose.pose.orientation = trans.rotation;
                 feedback_.current_pose = cmd_pose;
-                ROS_INFO_STREAM("Publishing pose:" << cmd_pose.pose.position);
                 local_pose_pub_.publish(cmd_pose);
                 action_server_.publishFeedback(feedback_);
+                ros::spinOnce();
+                rate_.sleep();
+            }
+
+            tf::Pose tf_target;
+            tf::poseMsgToTF(cmd_pose.pose, tf_target);
+            while (!targetReached(tf_target))
+            {
+                local_pose_pub_.publish(cmd_pose);
+                action_server_.publishFeedback(feedback_);
+                feedback_.current_pose = cmd_pose;
                 ros::spinOnce();
                 rate_.sleep();
             }
         } else {
             ROS_WARN("Mavros not connected to FCU.");
             success = false;
+        }
+
+        // Set mode to loiter since keeping it in offboard requires sending commands
+        // continuously
+        mavros_msgs::SetMode loiter_set_mode;
+        loiter_set_mode.request.custom_mode = "AUTO.LOITER";
+        if (set_mode_client_.call(loiter_set_mode) && loiter_set_mode.response.mode_sent) {
+            ROS_INFO("Mode AUTO.LOITER enabled.");
+        } else {
+            ROS_WARN("Mode AUTO.LOITER could not be enabled.");
+            return;
         }
 
         if(success)
@@ -153,6 +171,23 @@ public:
           action_server_.setSucceeded(result_);
         }
         executing = false;
+    }
+
+    bool targetReached(const tf::Pose& target) {
+        tf::Pose tf_curr;
+        tf::poseMsgToTF(current_pose_.pose, tf_curr);
+        auto diff_t = tf_curr.inverseTimes(target);
+        if (fabsf(diff_t.getOrigin().x()) <= target_pos_tol && 
+            fabsf(diff_t.getOrigin().y()) <= target_pos_tol &&
+            fabsf(diff_t.getOrigin().z()) <= target_pos_tol &&
+            fabsf(diff_t.getRotation().x()) <= target_orientation_tol &&
+            fabsf(diff_t.getRotation().y()) <= target_orientation_tol &&
+            fabsf(diff_t.getRotation().z()) <= target_orientation_tol &&
+            fabsf(diff_t.getRotation().w()) - 1.0 <= target_orientation_tol)
+        {
+            return true;
+        }
+        return false;
     }
 
     void stateCb(const mavros_msgs::State::ConstPtr& msg) {
@@ -181,12 +216,15 @@ private:
     ros::ServiceClient set_mode_client_; // mavros service for setting mode. Position commands are only available in mode OFFBOARD.
 
     bool executing = {false}; // whether the action server is currently in execution
+    
+    const float target_pos_tol = {1e-1};
+    const float target_orientation_tol = {5e-2};
 };
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "follow_multi_dof_joint_trajectory_action_server");
-  FollowMultiDofJointTrajectoryAction action("follow_multi_dof_joint_trajectory_action_server");
+  ros::init(argc, argv, "FollowMultiDofJointTrajectoryActionServer");
+  FollowMultiDofJointTrajectoryAction action("FollowMultiDofJointTrajectoryAction");
   action.idle();
   return 0;
 }
