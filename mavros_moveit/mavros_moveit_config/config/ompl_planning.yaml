@@ -121,7 +121,7 @@ planner_configs:
     dense_delta_fraction: 0.001  # delta fraction for interface detection. default: 0.001
     max_failures: 5000  # maximum consecutive failure limit. default: 5000
 mavros_uav:
-  default_planner_config: RRTstar
+  default_planner_config: RRTConnect
   planner_configs:
     - SBL
     - EST
