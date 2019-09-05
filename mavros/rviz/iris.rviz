@@ -172,7 +172,7 @@ Visualization Manager:
         Size:
           X: 50
           Y: 50
-          Z: 20
+          Z: 30
       Name: MotionPlanning
       Planned Path:
         Color Enabled: false
