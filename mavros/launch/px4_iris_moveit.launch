@@ -1,0 +1,19 @@
+<launch>
+    <arg name="world_path" default="$(find px4)/Tools/sitl_gazebo/worlds/uneven.world" />
+    <arg name="gui" default="false"/>
+    <arg name="ns" default="/"/>
+    <arg name="model" default="iris"/>
+    <arg name="fcu_protocol" default="v2.0" />
+    <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+    <arg name="gcs_url" default="" />   <!-- GCS link is provided by SITL -->
+    <arg name="tgt_system" default="1" />
+    <arg name="tgt_component" default="1" />
+    <arg name="vehicle" default="iris"/>
+
+    <!-- Launch PX4 SITL -->
+    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="world" value="$(arg world_path)" />
+        <arg name="vehicle" value="$(arg vehicle)"/>
+    </include>-->
+</launch>

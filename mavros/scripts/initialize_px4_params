@@ -1,0 +1,13 @@
+#!/bin/bash
+# Disable the RC failsafe 
+rosservice call --wait /mavros/param/set "param_id: 'NAV_RCL_ACT'
+value:
+  integer: 0
+  real: 0.0" 
+
+# Disable the datalink failsafe 
+rosservice call --wait /mavros/param/set "param_id: 'NAV_DLL_ACT'
+value:
+  integer: 0
+  real: 0.0" 
+#exec "$@"
