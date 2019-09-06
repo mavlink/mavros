@@ -63,4 +63,7 @@
         <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)"/>
 				<arg name="config_yaml" value="$(arg config_yaml)"/>
     </include>
+
+    <!-- Launch RVIZ and Moveit -->
+    <include file="$(find mavros)/launch/mavros_moveit.launch"/>
 </launch>
