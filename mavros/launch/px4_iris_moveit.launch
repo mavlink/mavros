@@ -1,23 +1,66 @@
 <launch>
-    <arg name="world_path" default="$(find px4)/Tools/sitl_gazebo/worlds/uneven.world" />
-    <arg name="gui" default="true"/>
-    <arg name="ns" default="/"/>
-    <arg name="model" default="iris"/>
-    <arg name="fcu_protocol" default="v2.0" />
+    <!-- Taken from MAVROS posix SITL environment launch script -->
+    <!-- launches MAVROS, PX4 SITL, Gazebo environment, and spawns vehicle -->
+    <!-- vehicle pose -->
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0"/>
+    <!-- vehicle model and world -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+    <arg name="world" default="$(find px4)/Tools/sitl_gazebo/worlds/uneven.world" />
+    <arg name="sdf" default="$(find px4)/Tools/sitl_gazebo/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+
+    <!-- gazebo configs -->
+    <arg name="gui" default="false"/>
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+    <arg name="respawn_gazebo" default="false"/>
+    <!-- MAVROS configs -->
     <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+    <arg name="respawn_mavros" default="false"/>
+    <!-- PX4 configs -->
+    <arg name="interactive" default="true"/>
+    <!-- PX4 SITL and Gazebo -->
+    <include file="$(find px4)/launch/posix_sitl.launch">
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+        <arg name="R" value="$(arg R)"/>
+        <arg name="P" value="$(arg P)"/>
+        <arg name="Y" value="$(arg Y)"/>
+        <arg name="world" value="$(arg world)"/>
+        <arg name="vehicle" value="$(arg vehicle)"/>
+        <arg name="sdf" value="$(arg sdf)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="interactive" value="$(arg interactive)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="respawn_gazebo" value="$(arg respawn_gazebo)"/>
+    </include>
+
+		<arg name="ns" default="/"/>
+    <arg name="fcu_protocol" default="v2.0" />
     <arg name="gcs_url" default="" />   <!-- GCS link is provided by SITL -->
     <arg name="tgt_system" default="1" />
     <arg name="tgt_component" default="1" />
-    <arg name="vehicle" default="iris"/>
     <arg name="pluginlists_yaml" default="$(find mavros)/launch/px4_moveit_pluginlists.yaml" />
 		<arg name="config_yaml" default="$(find mavros)/launch/px4_moveit_config.yaml" />
 
-    <node pkg="tf" type="static_transform_publisher" name="map_to_local" args="0.0 0.0 0.0 0.0 0.0 0.0  /map /local_origin  100" />
+		<node pkg="tf" type="static_transform_publisher" name="map_to_local" args="0.0 0.0 0.0 0.0 0.0 0.0  /map /local_origin  100" />
 
-    <!-- Launch PX4 SITL -->
-    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
-        <arg name="gui" value="$(arg gui)"/>
-        <arg name="world" value="$(arg world_path)" />
-        <arg name="vehicle" value="$(arg vehicle)"/>
+    <!-- MAVROS -->
+    <include file="$(find mavros)/launch/px4.launch">
+        <!-- GCS link is provided by SITL -->
+        <arg name="gcs_url" value=""/>
+        <arg name="fcu_url" value="$(arg fcu_url)"/>
+        <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+        <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)"/>
+				<arg name="config_yaml" value="$(arg config_yaml)"/>
     </include>
 </launch>
