@@ -2,3 +2,8 @@
     local-name: mavlink
     uri: https://github.com/mavlink/mavlink-gbp-release.git
     version: release/kinetic/mavlink
+    
+- git:
+    local-name: moveit
+    uri: https://github.com/ros-planning/moveit
+    version: release/melodic/mavlink
