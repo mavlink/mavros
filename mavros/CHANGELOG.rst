@@ -2,6 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* uncrustify
+* Add boolean to check if IMU data has been received
+  Follow sensor_msgs/Imu convention when data not present
+* Uncrustify the GPS_GLOBAL_ORIGIN handler in global_position
+* Fix global origin conversion to ecef (was using amsl where hae was required)
+  Summary: Fix global origin conversion to ecef (was using amsl where hae was required)
+* moved code to end of function
+* added amount of satellites to global_position/raw/
+* Contributors: David Jablonski, Nick Steele, Rob Clarke, Robert Clarke
+
 0.32.1 (2019-08-08)
 -------------------
 * uncrustify

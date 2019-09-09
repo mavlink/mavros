@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* clean up
+* fix obstacle distance plugin
+* Contributors: baumanta
+
 0.32.1 (2019-08-08)
 -------------------
 
