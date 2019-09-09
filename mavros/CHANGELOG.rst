@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.32.2 (2019-09-09)
+-------------------
 * uncrustify
 * Add boolean to check if IMU data has been received
   Follow sensor_msgs/Imu convention when data not present
