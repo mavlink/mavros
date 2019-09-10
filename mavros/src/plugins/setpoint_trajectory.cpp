@@ -116,22 +116,24 @@ private:
 			if(pt.time_from_start.toSec() >= curr_time_from_start.toSec() ) { //TODO: Better logic to handle this case?
 				if(!pt.transforms.empty()){
 					position = ftf::to_eigen(pt.transforms[0].translation);
-					attitude = Eigen::Quaterniond(pt.transforms[0].rotation.w, pt.transforms[0].rotation.x, pt.transforms[0].rotation.y, pt.transforms[0].rotation.z);
+					tf::quaternionMsgToEigen(pt.transforms[0].rotation, attitude);
 				} else {
-					type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_PX || mavros_msgs::PositionTarget::IGNORE_PY || mavros_msgs::PositionTarget::IGNORE_PZ;
+					type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE);
 				}
 
 				if(!pt.velocities.empty()) velocity = ftf::to_eigen(pt.velocities[0].linear);
-				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
+				else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE);
 				
 				if(!pt.accelerations.empty()) af = ftf::to_eigen(pt.accelerations[0].linear);
-				else type_mask = type_mask || mavros_msgs::PositionTarget::IGNORE_VX || mavros_msgs::PositionTarget::IGNORE_VY || mavros_msgs::PositionTarget::IGNORE_VZ;
+				else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AZ_IGNORE);
 
 				// Transform frame ENU->NED
 				position = ftf::transform_frame_enu_ned(position);
 				velocity = ftf::transform_frame_enu_ned(velocity);
 				af = ftf::transform_frame_enu_ned(af);
-				yaw = ftf::quaternion_get_yaw(attitude);
+				Eigen::Quaterniond q = ftf::transform_orientation_enu_ned(
+						ftf::transform_orientation_baselink_aircraft(attitude));
+				yaw = ftf::quaternion_get_yaw(q);
 
 				set_position_target_local_ned(
 							trajectory_target_msg->header.stamp.toNSec() / 1000000,
