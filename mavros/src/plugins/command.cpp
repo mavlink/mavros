@@ -56,8 +56,7 @@ class CommandPlugin : public plugin::PluginBase {
 public:
 	CommandPlugin() : PluginBase(),
 		cmd_nh("~cmd"),
-		use_comp_id_system_control(false),
-		ACK_TIMEOUT_DT(ACK_TIMEOUT_MS / 1000.0)
+		use_comp_id_system_control(false)
 	{ }
 
 	void initialize(UAS &uas_)
@@ -65,6 +64,9 @@ public:
 		PluginBase::initialize(uas_);
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
+    int command_ack_timeout_ms;
+		cmd_nh.param("command_ack_timeout", command_ack_timeout_ms, ACK_TIMEOUT_MS_DEFAULT);
+    command_ack_timeout_dt = ros::Duration(command_ack_timeout_ms / 1000);
 
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
@@ -101,9 +103,8 @@ private:
 	bool use_comp_id_system_control;
 
 	L_CommandTransaction ack_waiting_list;
-	static constexpr int ACK_TIMEOUT_MS = 5000;
-
-	const ros::Duration ACK_TIMEOUT_DT;
+	static constexpr int ACK_TIMEOUT_MS_DEFAULT = 5000;
+  ros::Duration command_ack_timeout_dt;
 
 	/* -*- message handlers -*- */
 
@@ -129,7 +130,7 @@ private:
 
 	bool wait_ack_for(CommandTransaction &tr) {
 		unique_lock lock(tr.cond_mutex);
-		if (tr.ack.wait_for(lock, std::chrono::nanoseconds(ACK_TIMEOUT_DT.toNSec())) == std::cv_status::timeout) {
+		if (tr.ack.wait_for(lock, std::chrono::nanoseconds(command_ack_timeout_dt.toNSec())) == std::cv_status::timeout) {
 			ROS_WARN_NAMED("cmd", "CMD: Command %u -- wait ack timeout", tr.expected_command);
 			return false;
 		} else {
