@@ -64,9 +64,9 @@ public:
 		PluginBase::initialize(uas_);
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
-    int command_ack_timeout_ms;
+		int command_ack_timeout_ms;
 		cmd_nh.param("command_ack_timeout", command_ack_timeout_ms, ACK_TIMEOUT_MS_DEFAULT);
-    command_ack_timeout_dt = ros::Duration(command_ack_timeout_ms / 1000);
+		command_ack_timeout_dt = ros::Duration(command_ack_timeout_ms / 1000);
 
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
@@ -81,7 +81,7 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			make_handler(&CommandPlugin::handle_command_ack)
+			       make_handler(&CommandPlugin::handle_command_ack)
 		};
 	}
 
@@ -104,7 +104,7 @@ private:
 
 	L_CommandTransaction ack_waiting_list;
 	static constexpr int ACK_TIMEOUT_MS_DEFAULT = 5000;
-  ros::Duration command_ack_timeout_dt;
+	ros::Duration command_ack_timeout_dt;
 
 	/* -*- message handlers -*- */
 
@@ -123,7 +123,7 @@ private:
 		}
 
 		ROS_WARN_THROTTLE_NAMED(10, "cmd", "CMD: Unexpected command %u, result %u",
-				ack.command, ack.result);
+			ack.command, ack.result);
 	}
 
 	/* -*- mid-level functions -*- */
@@ -144,12 +144,12 @@ private:
 	 * NOTE: success is bool in messages, but has unsigned char type in C++
 	 */
 	bool send_command_long_and_wait(bool broadcast,
-			uint16_t command, uint8_t confirmation,
-			float param1, float param2,
-			float param3, float param4,
-			float param5, float param6,
-			float param7,
-			unsigned char &success, uint8_t &result)
+		uint16_t command, uint8_t confirmation,
+		float param1, float param2,
+		float param3, float param4,
+		float param5, float param6,
+		float param7,
+		unsigned char &success, uint8_t &result)
 	{
 		using mavlink::common::MAV_RESULT;
 
@@ -174,11 +174,11 @@ private:
 			ack_it = ack_waiting_list.emplace(ack_waiting_list.end(), command);
 
 		command_long(broadcast,
-				command, confirmation,
-				param1, param2,
-				param3, param4,
-				param5, param6,
-				param7);
+			command, confirmation,
+			param1, param2,
+			param3, param4,
+			param5, param6,
+			param7);
 
 		if (is_ack_required) {
 			lock.unlock();
@@ -202,22 +202,22 @@ private:
 	 * Common function for COMMAND_INT service callbacks.
 	 */
 	bool send_command_int(bool broadcast,
-			uint8_t frame, uint16_t command,
-			uint8_t current, uint8_t autocontinue,
-			float param1, float param2,
-			float param3, float param4,
-			int32_t x, int32_t y,
-			float z,
-			unsigned char &success)
+		uint8_t frame, uint16_t command,
+		uint8_t current, uint8_t autocontinue,
+		float param1, float param2,
+		float param3, float param4,
+		int32_t x, int32_t y,
+		float z,
+		unsigned char &success)
 	{
 		/* Note: seems that COMMAND_INT don't produce COMMAND_ACK
 		 * so wait don't needed.
 		 */
 		command_int(broadcast,
-				frame, command, current, autocontinue,
-				param1, param2,
-				param3, param4,
-				x, y, z);
+			frame, command, current, autocontinue,
+			param1, param2,
+			param3, param4,
+			x, y, z);
 
 		success = true;
 		return true;
@@ -233,18 +233,18 @@ private:
 		const uint8_t tgt_sys_id = (broadcast) ? 0 : m_uas->get_tgt_system();
 		const uint8_t tgt_comp_id = (broadcast) ? 0 :
 			(use_comp_id_system_control) ?
-				enum_value(MAV_COMPONENT::COMP_ID_SYSTEM_CONTROL) : m_uas->get_tgt_component();
+			enum_value(MAV_COMPONENT::COMP_ID_SYSTEM_CONTROL) : m_uas->get_tgt_component();
 
 		cmd.target_system = tgt_sys_id;
 		cmd.target_component = tgt_comp_id;
 	}
 
 	void command_long(bool broadcast,
-			uint16_t command, uint8_t confirmation,
-			float param1, float param2,
-			float param3, float param4,
-			float param5, float param6,
-			float param7)
+		uint16_t command, uint8_t confirmation,
+		float param1, float param2,
+		float param3, float param4,
+		float param5, float param6,
+		float param7)
 	{
 		const uint8_t confirmation_fixed = (broadcast) ? 0 : confirmation;
 
@@ -265,12 +265,12 @@ private:
 	}
 
 	void command_int(bool broadcast,
-			uint8_t frame, uint16_t command,
-			uint8_t current, uint8_t autocontinue,
-			float param1, float param2,
-			float param3, float param4,
-			int32_t x, int32_t y,
-			float z)
+		uint8_t frame, uint16_t command,
+		uint8_t current, uint8_t autocontinue,
+		float param1, float param2,
+		float param3, float param4,
+		int32_t x, int32_t y,
+		float z)
 	{
 		mavlink::common::msg::COMMAND_INT cmd {};
 		set_target(cmd, broadcast);
@@ -293,101 +293,101 @@ private:
 	/* -*- callbacks -*- */
 
 	bool command_long_cb(mavros_msgs::CommandLong::Request &req,
-			mavros_msgs::CommandLong::Response &res)
+		mavros_msgs::CommandLong::Response &res)
 	{
 		return send_command_long_and_wait(req.broadcast,
-				req.command, req.confirmation,
-				req.param1, req.param2,
-				req.param3, req.param4,
-				req.param5, req.param6,
-				req.param7,
-				res.success, res.result);
+			req.command, req.confirmation,
+			req.param1, req.param2,
+			req.param3, req.param4,
+			req.param5, req.param6,
+			req.param7,
+			res.success, res.result);
 	}
 
 	bool command_int_cb(mavros_msgs::CommandInt::Request &req,
-			mavros_msgs::CommandInt::Response &res)
+		mavros_msgs::CommandInt::Response &res)
 	{
 		return send_command_int(req.broadcast,
-				req.frame, req.command,
-				req.current, req.autocontinue,
-				req.param1, req.param2,
-				req.param3, req.param4,
-				req.x, req.y, req.z,
-				res.success);
+			req.frame, req.command,
+			req.current, req.autocontinue,
+			req.param1, req.param2,
+			req.param3, req.param4,
+			req.x, req.y, req.z,
+			res.success);
 	}
 
 	bool arming_cb(mavros_msgs::CommandBool::Request &req,
-			mavros_msgs::CommandBool::Response &res)
+		mavros_msgs::CommandBool::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::COMPONENT_ARM_DISARM), 1,
-				(req.value) ? 1.0 : 0.0,
-				0, 0, 0, 0, 0, 0,
-				res.success, res.result);
+			enum_value(MAV_CMD::COMPONENT_ARM_DISARM), 1,
+			(req.value) ? 1.0 : 0.0,
+			0, 0, 0, 0, 0, 0,
+			res.success, res.result);
 	}
 
 	bool set_home_cb(mavros_msgs::CommandHome::Request &req,
-			mavros_msgs::CommandHome::Response &res)
+		mavros_msgs::CommandHome::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::DO_SET_HOME), 1,
-				(req.current_gps) ? 1.0 : 0.0,
-				0, 0, 0, req.latitude, req.longitude, req.altitude,
-				res.success, res.result);
+			enum_value(MAV_CMD::DO_SET_HOME), 1,
+			(req.current_gps) ? 1.0 : 0.0,
+			0, 0, 0, req.latitude, req.longitude, req.altitude,
+			res.success, res.result);
 	}
 
 	bool takeoff_cb(mavros_msgs::CommandTOL::Request &req,
-			mavros_msgs::CommandTOL::Response &res)
+		mavros_msgs::CommandTOL::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::NAV_TAKEOFF), 1,
-				req.min_pitch,
-				0, 0,
-				req.yaw,
-				req.latitude, req.longitude, req.altitude,
-				res.success, res.result);
+			enum_value(MAV_CMD::NAV_TAKEOFF), 1,
+			req.min_pitch,
+			0, 0,
+			req.yaw,
+			req.latitude, req.longitude, req.altitude,
+			res.success, res.result);
 	}
 
 	bool land_cb(mavros_msgs::CommandTOL::Request &req,
-			mavros_msgs::CommandTOL::Response &res)
+		mavros_msgs::CommandTOL::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::NAV_LAND), 1,
-				0, 0, 0,
-				req.yaw,
-				req.latitude, req.longitude, req.altitude,
-				res.success, res.result);
+			enum_value(MAV_CMD::NAV_LAND), 1,
+			0, 0, 0,
+			req.yaw,
+			req.latitude, req.longitude, req.altitude,
+			res.success, res.result);
 	}
 
 	bool trigger_control_cb(mavros_msgs::CommandTriggerControl::Request &req,
-			mavros_msgs::CommandTriggerControl::Response &res)
+		mavros_msgs::CommandTriggerControl::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::DO_TRIGGER_CONTROL), 1,
-				(req.trigger_enable)? 1.0 : 0.0,
-				(req.sequence_reset)? 1.0 : 0.0,
-				(req.trigger_pause)? 1.0: 0.0,
-				0, 0, 0, 0,
-				res.success, res.result);
+			enum_value(MAV_CMD::DO_TRIGGER_CONTROL), 1,
+			(req.trigger_enable) ? 1.0 : 0.0,
+			(req.sequence_reset) ? 1.0 : 0.0,
+			(req.trigger_pause) ? 1.0 : 0.0,
+			0, 0, 0, 0,
+			res.success, res.result);
 	}
 
 	bool trigger_interval_cb(mavros_msgs::CommandTriggerInterval::Request &req,
-			mavros_msgs::CommandTriggerInterval::Response &res)
+		mavros_msgs::CommandTriggerInterval::Response &res)
 	{
 		using mavlink::common::MAV_CMD;
 
 		// trigger interval can only be set when triggering is disabled
 		return send_command_long_and_wait(false,
-				enum_value(MAV_CMD::DO_SET_CAM_TRIGG_INTERVAL), 1,
-				req.cycle_time,
-				req.integration_time,
-				0, 0, 0, 0, 0,
-				res.success, res.result);
+			enum_value(MAV_CMD::DO_SET_CAM_TRIGG_INTERVAL), 1,
+			req.cycle_time,
+			req.integration_time,
+			0, 0, 0, 0, 0,
+			res.success, res.result);
 	}
 };
 }	// namespace std_plugins
