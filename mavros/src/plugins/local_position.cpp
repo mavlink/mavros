@@ -68,6 +68,7 @@ public:
 
 	Subscriptions get_subscriptions() {
 		return {
+			       make_handler(&LocalPositionPlugin::handle_attitude),
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned),
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
 		};
@@ -104,6 +105,25 @@ private:
 			transform.transform.rotation = odom->pose.pose.orientation;
 			m_uas->tf2_broadcaster.sendTransform(transform);
 		}
+	}
+
+	void handle_attitude(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ATTITUDE &att)
+	{
+		auto ned_aircraft_orientation = ftf::quaternion_from_rpy(att.roll, att.pitch, att.yaw);
+		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
+					ftf::transform_orientation_ned_enu(ned_aircraft_orientation));
+
+		auto imu_ned_msg = boost::make_shared<sensor_msgs::Imu>();
+		auto imu_enu_msg = boost::make_shared<sensor_msgs::Imu>();
+
+		imu_enu_msg->header = m_uas->synchronized_header(frame_id, att.time_boot_ms);
+		imu_ned_msg->header = m_uas->synchronized_header("aircraft", att.time_boot_ms);
+
+		tf::quaternionEigenToMsg(enu_baselink_orientation, imu_enu_msg->orientation);
+		tf::quaternionEigenToMsg(ned_aircraft_orientation, imu_ned_msg->orientation);
+
+		m_uas->update_attitude_imu_enu(imu_enu_msg);
+		m_uas->update_attitude_imu_ned(imu_ned_msg);
 	}
 
 	void handle_local_position_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::LOCAL_POSITION_NED &pos_ned)
