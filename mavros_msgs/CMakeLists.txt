@@ -66,6 +66,7 @@ add_service_files(
   CommandTOL.srv
   CommandTriggerControl.srv
   CommandTriggerInterval.srv
+  CommandVtolTransition.srv
   FileChecksum.srv
   FileClose.srv
   FileList.srv
