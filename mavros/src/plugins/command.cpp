@@ -64,9 +64,9 @@ public:
 		PluginBase::initialize(uas_);
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
-		double command_ack_timeout_ms;
-		cmd_nh.param("command_ack_timeout", command_ack_timeout_ms, ACK_TIMEOUT_MS_DEFAULT);
-		command_ack_timeout_dt = ros::Duration(command_ack_timeout_ms / 1000);
+		double command_ack_timeout;
+		cmd_nh.param("command_ack_timeout", command_ack_timeout, ACK_TIMEOUT_DEFAULT);
+		command_ack_timeout_dt = ros::Duration(command_ack_timeout);
 
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
@@ -103,7 +103,7 @@ private:
 	bool use_comp_id_system_control;
 
 	L_CommandTransaction ack_waiting_list;
-	static constexpr double ACK_TIMEOUT_MS_DEFAULT = 5000.0;
+	static constexpr double ACK_TIMEOUT_DEFAULT = 5.0;
 	ros::Duration command_ack_timeout_dt;
 
 	/* -*- message handlers -*- */
