@@ -25,6 +25,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandTriggerControl.h>
 #include <mavros_msgs/CommandTriggerInterval.h>
+#include <mavros_msgs/CommandVtolTransition.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -79,6 +80,7 @@ public:
 		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
 		trigger_control_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 		trigger_interval_srv = cmd_nh.advertiseService("trigger_interval", &CommandPlugin::trigger_interval_cb, this);
+		vtol_transition_srv = cmd_nh.advertiseService("vtol_transition", &CommandPlugin::vtol_transition_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
@@ -102,6 +104,7 @@ private:
 	ros::ServiceServer land_srv;
 	ros::ServiceServer trigger_control_srv;
 	ros::ServiceServer trigger_interval_srv;
+	ros::ServiceServer vtol_transition_srv;
 
 	bool use_comp_id_system_control;
 
@@ -389,6 +392,17 @@ private:
 			req.cycle_time,
 			req.integration_time,
 			0, 0, 0, 0, 0,
+			res.success, res.result);
+	}
+
+	bool vtol_transition_cb(mavros_msgs::CommandVtolTransition::Request &req,
+			mavros_msgs::CommandVtolTransition::Response &res)
+	{
+		using mavlink::common::MAV_CMD;
+		return send_command_long_and_wait(false,
+			enum_value(MAV_CMD::DO_VTOL_TRANSITION), false,
+			req.state,
+			0, 0, 0, 0, 0, 0,
 			res.success, res.result);
 	}
 };
