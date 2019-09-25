@@ -63,11 +63,10 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
-
 		double command_ack_timeout;
 
 		cmd_nh.param("command_ack_timeout", command_ack_timeout, ACK_TIMEOUT_DEFAULT);
+		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
 
 		command_ack_timeout_dt = ros::Duration(command_ack_timeout);
 
