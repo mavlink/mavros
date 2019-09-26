@@ -37,6 +37,7 @@ using utils::enum_value;
 class MountControlPlugin : public plugin::PluginBase {
 public:
 	MountControlPlugin() : PluginBase(),
+	nh("~"),
 	mount_nh("~mount_control")
 	{ }
 
@@ -55,6 +56,7 @@ public:
 	}
 
 private:
+	ros::NodeHandle nh;
 	ros::NodeHandle mount_nh;
 	ros::Subscriber command_sub;
  	ros::ServiceServer configure_srv;
@@ -89,7 +91,7 @@ private:
         using mavlink::common::MAV_CMD;
 
         try {
-            auto client = mount_nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+            auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
 
             mavros_msgs::CommandLong cmd{};
 
