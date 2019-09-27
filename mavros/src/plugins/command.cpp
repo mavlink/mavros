@@ -28,6 +28,7 @@
 
 namespace mavros {
 namespace std_plugins {
+static constexpr double ACK_TIMEOUT_DEFAULT = 5.0;
 using utils::enum_value;
 using lock_guard = std::lock_guard<std::mutex>;
 using unique_lock = std::unique_lock<std::mutex>;
@@ -105,7 +106,6 @@ private:
 	bool use_comp_id_system_control;
 
 	L_CommandTransaction ack_waiting_list;
-	static constexpr double ACK_TIMEOUT_DEFAULT = 5.0;
 	ros::Duration command_ack_timeout_dt;
 
 	/* -*- message handlers -*- */
