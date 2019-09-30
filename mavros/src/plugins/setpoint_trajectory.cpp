@@ -21,6 +21,7 @@
 #include <nav_msgs/Path.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -33,8 +34,7 @@ class SetpointTrajectoryPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointTrajectoryPlugin> {
 public:
 	SetpointTrajectoryPlugin() : PluginBase(),
-		sp_nh("~setpoint_trajectory"),
-		TRAJ_SAMPLING_DT(TRAJ_SAMPLING_MS / 1000.0)
+		sp_nh("~setpoint_trajectory")
 	{ }
 
 	void initialize(UAS &uas_)
@@ -46,7 +46,7 @@ public:
 		local_sub = sp_nh.subscribe("local", 10, &SetpointTrajectoryPlugin::local_cb, this);
 		desired_pub = sp_nh.advertise<nav_msgs::Path>("desired", 10);
 
-		sp_timer = sp_nh.createTimer(ros::Duration(0.01), &SetpointTrajectoryPlugin::reference_cb, this);
+		sp_timer = sp_nh.createTimer(ros::Duration(0.01), &SetpointTrajectoryPlugin::reference_cb, this, true);
 	}
 
 	Subscriptions get_subscriptions()
@@ -59,18 +59,21 @@ private:
 	ros::NodeHandle sp_nh;
 
 	ros::Timer sp_timer;
-	ros::Time refstart_time;
 
 	ros::Subscriber local_sub;
 	ros::Publisher desired_pub;
 
 	trajectory_msgs::MultiDOFJointTrajectory::ConstPtr trajectory_target_msg;
+	std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint>::const_iterator setpoint_target;
+	std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint>::const_iterator next_setpoint_target;
 
 	std::string frame_id;
 
-	static constexpr int TRAJ_SAMPLING_MS = 100;
-
-	const ros::Duration TRAJ_SAMPLING_DT;
+	void reset_timer(ros::Duration duration){
+		sp_timer.stop();
+		sp_timer.setPeriod(duration);
+		sp_timer.start();		
+	}
 
 	void publish_path(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req){
 		nav_msgs::Path msg;
@@ -96,57 +99,63 @@ private:
 	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req)
 	{
 		trajectory_target_msg = req;
-		refstart_time = ros::Time::now();
+
+		// Read first duration of the setpoint and set the timer
+		setpoint_target = req->points.cbegin();
+		reset_timer(setpoint_target->time_from_start);
 		publish_path(req);
 	}
 
 	void reference_cb(const ros::TimerEvent &event)
 	{
+		using mavlink::common::POSITION_TARGET_TYPEMASK;
+
 		if(!trajectory_target_msg)
 			return;
 
-		ros::Duration curr_time_from_start;
-		curr_time_from_start = ros::Time::now() - refstart_time;
-		for(auto &pt : trajectory_target_msg->points) {
-			Eigen::Vector3d position, velocity, af;
-			Eigen::Quaterniond attitude;
-			float yaw, yaw_rate;
-			uint16_t type_mask;
-
-			if(pt.time_from_start.toSec() >= curr_time_from_start.toSec() ) { //TODO: Better logic to handle this case?
-				if(!pt.transforms.empty()){
-					position = ftf::to_eigen(pt.transforms[0].translation);
-					tf::quaternionMsgToEigen(pt.transforms[0].rotation, attitude);
-				} else {
-					type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE);
-				}
-
-				if(!pt.velocities.empty()) velocity = ftf::to_eigen(pt.velocities[0].linear);
-				else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE);
-				
-				if(!pt.accelerations.empty()) af = ftf::to_eigen(pt.accelerations[0].linear);
-				else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AZ_IGNORE);
-
-				// Transform frame ENU->NED
-				position = ftf::transform_frame_enu_ned(position);
-				velocity = ftf::transform_frame_enu_ned(velocity);
-				af = ftf::transform_frame_enu_ned(af);
-				Eigen::Quaterniond q = ftf::transform_orientation_enu_ned(
-						ftf::transform_orientation_baselink_aircraft(attitude));
-				yaw = ftf::quaternion_get_yaw(q);
-
-				set_position_target_local_ned(
-							trajectory_target_msg->header.stamp.toNSec() / 1000000,
-							1,
-							0,
-							position,
-							velocity,
-							af,
-							yaw, 0);
-				return;
-			}
+		Eigen::Vector3d position, velocity, af;
+		Eigen::Quaterniond attitude;
+		float yaw, yaw_rate;
+		uint16_t type_mask;		
+		if(!setpoint_target->transforms.empty()){
+			position = ftf::to_eigen(setpoint_target->transforms[0].translation);
+			tf::quaternionMsgToEigen(setpoint_target->transforms[0].rotation, attitude);
+		} else {
+			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE);
 		}
-		trajectory_target_msg.reset(); //End of trajectory
+
+		if(!setpoint_target->velocities.empty()) velocity = ftf::to_eigen(setpoint_target->velocities[0].linear);
+		else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE);
+		
+		if(!setpoint_target->accelerations.empty()) af = ftf::to_eigen(setpoint_target->accelerations[0].linear);
+		else type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE) | uint16_t(POSITION_TARGET_TYPEMASK::AZ_IGNORE);
+
+		// Transform frame ENU->NED
+		position = ftf::transform_frame_enu_ned(position);
+		velocity = ftf::transform_frame_enu_ned(velocity);
+		af = ftf::transform_frame_enu_ned(af);
+		Eigen::Quaterniond q = ftf::transform_orientation_enu_ned(
+				ftf::transform_orientation_baselink_aircraft(attitude));
+		yaw = ftf::quaternion_get_yaw(q);
+
+		set_position_target_local_ned(
+					trajectory_target_msg->header.stamp.toNSec() / 1000000,
+					1,
+					type_mask,
+					position,
+					velocity,
+					af,
+					yaw, 0);
+	
+		next_setpoint_target = setpoint_target + 1;
+		if (next_setpoint_target != trajectory_target_msg->points.cend()) {
+			reset_timer(setpoint_target->time_from_start);
+			setpoint_target = next_setpoint_target;
+		} else {
+			trajectory_target_msg.reset();
+		}
+
+		return;
 	}
 };
 }	// namespace std_plugins
