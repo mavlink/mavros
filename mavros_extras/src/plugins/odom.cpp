@@ -68,7 +68,7 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-			       make_handler(&OdometryPlugin::handle_odom)
+			make_handler(&OdometryPlugin::handle_odom)
 		};
 	}
 
