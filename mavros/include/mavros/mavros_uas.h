@@ -272,6 +272,16 @@ public:
 	tf2_ros::StaticTransformBroadcaster tf2_static_broadcaster;
 
 	/**
+	 * @brief Add static transform. To publish all static transforms at once, we stack them in a std::vector.
+	 *
+	 * @param frame_id    parent frame for transform
+	 * @param child_id    child frame for transform
+	 * @param tr          transform
+	 * @param vector      vector of transforms
+	 */
+	void add_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr, std::vector<geometry_msgs::TransformStamped>& vector);
+
+	/**
 	 * @brief Publishes static transform.
 	 *
 	 * @param frame_id    parent frame for transform
