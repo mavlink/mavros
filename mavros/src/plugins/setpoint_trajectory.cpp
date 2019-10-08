@@ -120,6 +120,7 @@ private:
 		if(!setpoint_target->transforms.empty()){
 			position = ftf::to_eigen(setpoint_target->transforms[0].translation);
 			tf::quaternionMsgToEigen(setpoint_target->transforms[0].rotation, attitude);
+
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) 
@@ -139,6 +140,7 @@ private:
 		
 		if(!setpoint_target->accelerations.empty()){
 			af = ftf::to_eigen(setpoint_target->accelerations[0].linear);
+
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) 
 							| uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE) 
@@ -152,7 +154,7 @@ private:
 		yaw = ftf::quaternion_get_yaw(q);
 
 		set_position_target_local_ned(
-					trajectory_target_msg->header.stamp.toNSec() / 1000000,
+					ros::Time::now().toNSec() / 1000000,
 					1,
 					type_mask,
 					ftf::transform_frame_enu_ned(position),
