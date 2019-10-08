@@ -125,21 +125,26 @@ private:
 		if(!setpoint_target->transforms.empty()){
 			position = ftf::to_eigen(setpoint_target->transforms[0].translation);
 			tf::quaternionMsgToEigen(setpoint_target->transforms[0].rotation, attitude);
+			yaw = ftf::quaternion_get_yaw(ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(attitude)));
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) 
-							| uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE);
+							| uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE)
+							| uint16_t(POSITION_TARGET_TYPEMASK::YAW_IGNORE);
 
 		}
 
 		if(!setpoint_target->velocities.empty()){
 			velocity = ftf::to_eigen(setpoint_target->velocities[0].linear);
+			yaw_rate = setpoint_target->velocities[0].angular.z;
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE) 
-							| uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE);
+							| uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE)
+							| uint16_t(POSITION_TARGET_TYPEMASK::YAW_RATE_IGNORE);
 
 		}
 		
@@ -153,11 +158,6 @@ private:
 
 		}
 
-		// Transform frame ENU->NED
-		Eigen::Quaterniond q = ftf::transform_orientation_enu_ned(
-				ftf::transform_orientation_baselink_aircraft(attitude));
-		yaw = ftf::quaternion_get_yaw(q);
-
 		set_position_target_local_ned(
 					ros::Time::now().toNSec() / 1000000,
 					1,
@@ -165,7 +165,8 @@ private:
 					ftf::transform_frame_enu_ned(position),
 					ftf::transform_frame_enu_ned(velocity),
 					ftf::transform_frame_enu_ned(af),
-					yaw, 0);
+					yaw,
+					yaw_rate);
 	
 		next_setpoint_target = setpoint_target + 1;
 		if (next_setpoint_target != trajectory_target_msg->points.cend()) {
