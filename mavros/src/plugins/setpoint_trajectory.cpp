@@ -22,6 +22,7 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
+#include <std_srvs/Trigger.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -46,6 +47,8 @@ public:
 		local_sub = sp_nh.subscribe("local", 10, &SetpointTrajectoryPlugin::local_cb, this);
 		desired_pub = sp_nh.advertise<nav_msgs::Path>("desired", 10);
 
+		trajectory_reset_srv = sp_nh.advertiseService("reset", &SetpointTrajectoryPlugin::reset_cb, this);
+
 		sp_timer = sp_nh.createTimer(ros::Duration(0.01), &SetpointTrajectoryPlugin::reference_cb, this, true);
 	}
 
@@ -62,6 +65,8 @@ private:
 
 	ros::Subscriber local_sub;
 	ros::Publisher desired_pub;
+
+	ros::ServiceServer trajectory_reset_srv;
 
 	trajectory_msgs::MultiDOFJointTrajectory::ConstPtr trajectory_target_msg;
 	std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint>::const_iterator setpoint_target;
@@ -171,6 +176,19 @@ private:
 		}
 
 		return;
+	}
+
+	bool reset_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+	{
+		if(trajectory_target_msg){
+			trajectory_target_msg.reset();
+			res.success = true;
+		} else {
+			res.success = false;
+			res.message = "Trajectory reset denied: Empty trajectory";
+		}
+
+		return true;
 	}
 };
 }	// namespace std_plugins
