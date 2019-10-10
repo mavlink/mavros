@@ -2,6 +2,20 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* CleanUp
+* Odom Plugin, enforcing ROS convetion, less options but clearer to use
+* Fix service namespace with new nodehandle
+* Add mount configure service
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: Jaeyoung-Lim, baumanta, kamilritz
+
 0.32.2 (2019-09-09)
 -------------------
 * clean up

@@ -2,6 +2,29 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add vtol transition service
+* CleanUp
+* Update frame name in px4_config to match ROS standards
+* Enable publishing multiple static tfs at once, publish standard static tfs
+* moving ACK_TIMEOUT_DEFAULT out of class
+* cog: Update all generated code
+* mavros/src/plugins/command.cpp: one more style fix
+* mavros/src/plugins/command.cpp: style fixes
+* mavros/src/plugins/command.cpp: command_ack_timeout ms -> s
+* mavros/src/plugins/command.cpp: command_ack_timeout_ms int -> double
+* mavros/src/plugins/command.cpp: uncrustify
+* mavros/src/plugins/command.cpp: parameter for command's ack timeout
+  Sometimes commands take more time than default 5 seconds. Due to a low bandwidth
+  of UART and a high rate of some mavlink streams. To eliminate this problem it's
+  better to provide the parameter to configure the command's ack timeout.
+* added manual flag to mavros/state
+* Use GeoPoseStamped messages
+* Fix build
+* Add callback for SET_POSITION_TARGET_GLBOAL_INT
+* Contributors: David Jablonski, Jaeyoung-Lim, Sergei Zobov, Vladimir Ermakov, kamilritz
+
 0.32.2 (2019-09-09)
 -------------------
 * uncrustify
