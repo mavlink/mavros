@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.0 (2019-10-10)
+-------------------
 * Add vtol transition service
 * Apply comments
 * Add mount configure service message

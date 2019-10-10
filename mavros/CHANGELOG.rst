@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.0 (2019-10-10)
+-------------------
 * Add vtol transition service
 * CleanUp
 * Update frame name in px4_config to match ROS standards

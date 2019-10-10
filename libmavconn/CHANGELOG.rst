@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.0 (2019-10-10)
+-------------------
 * libmavconn: simplify parse_buffer, and fix dropped_packets and parse_error counters
   Currently the dropped_packets & parse_error counters are always published as 0 in mavros_diag.cpp.
   This seems to be caused by using the wrong status struct.

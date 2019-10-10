@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.0 (2019-10-10)
+-------------------
 * CleanUp
 * Odom Plugin, enforcing ROS convetion, less options but clearer to use
 * Fix service namespace with new nodehandle
