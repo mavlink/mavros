@@ -15,6 +15,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
+#include <mavros/utils.h>
 
 #include <sensor_msgs/LaserScan.h>
 
@@ -42,6 +43,10 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
+		std::string mav_frame;
+		obstacle_nh.param<std::string>("mav_frame", mav_frame, "GLOBAL");
+		frame = utils::mav_frame_from_str(mav_frame);
+
 		obstacle_sub = obstacle_nh.subscribe("send", 10, &ObstacleDistancePlugin::obstacle_cb, this);
 	}
 
@@ -53,6 +58,8 @@ public:
 private:
 	ros::NodeHandle obstacle_nh;
 	ros::Subscriber obstacle_sub;
+
+	mavlink::common::MAV_FRAME frame;
 
 	/**
 	 * @brief Send obstacle distance array to the FCU.
@@ -98,6 +105,7 @@ private:
 		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);	//!< defaults is laser type (depth sensor, Lidar)
 		obstacle.min_distance = req->range_min * 1e2;							//!< [centimeters]
 		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
+		obstacle.frame = utils::enum_value(frame);
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
 										     << std::endl << obstacle.to_yaml());
