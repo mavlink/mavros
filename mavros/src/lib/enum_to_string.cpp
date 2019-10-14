@@ -180,13 +180,13 @@ static const std::array<const std::string, 33> mav_type_strings{{
 /* 23 */ "VTOL reserved 3",               // VTOL reserved 3
 /* 24 */ "VTOL reserved 4",               // VTOL reserved 4
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
-/* 26 */ "Onboard gimbal",                // Onboard gimbal
-/* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
+/* 26 */ "Gimbal (standalone)",           // Gimbal (standalone)
+/* 27 */ "ADSB system (standalone)",      // ADSB system (standalone)
 /* 28 */ "Steerable",                     // Steerable, nonrigid airfoil
 /* 29 */ "Dodecarotor",                   // Dodecarotor
-/* 30 */ "Camera",                        // Camera
+/* 30 */ "Camera (standalone)",           // Camera (standalone)
 /* 31 */ "Charging station",              // Charging station
-/* 32 */ "Onboard FLARM collision avoidance system", // Onboard FLARM collision avoidance system
+/* 32 */ "FLARM collision avoidance system (standalone)", // FLARM collision avoidance system (standalone)
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -197,7 +197,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
+// [[[end]]] (checksum: b441cfd88ee1a6fc8c8bc8f4e6df5825)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -231,13 +231,13 @@ static const std::array<const std::string, 33> mav_type_names{{
 /* 23 */ "VTOL_RESERVED3",                // VTOL reserved 3
 /* 24 */ "VTOL_RESERVED4",                // VTOL reserved 4
 /* 25 */ "VTOL_RESERVED5",                // VTOL reserved 5
-/* 26 */ "GIMBAL",                        // Onboard gimbal
-/* 27 */ "ADSB",                          // Onboard ADSB peripheral
+/* 26 */ "GIMBAL",                        // Gimbal (standalone)
+/* 27 */ "ADSB",                          // ADSB system (standalone)
 /* 28 */ "PARAFOIL",                      // Steerable, nonrigid airfoil
 /* 29 */ "DODECAROTOR",                   // Dodecarotor
-/* 30 */ "CAMERA",                        // Camera
+/* 30 */ "CAMERA",                        // Camera (standalone)
 /* 31 */ "CHARGING_STATION",              // Charging station
-/* 32 */ "FLARM",                         // Onboard FLARM collision avoidance system
+/* 32 */ "FLARM",                         // FLARM collision avoidance system (standalone)
 }};
 
 std::string to_name(MAV_TYPE e)
@@ -248,7 +248,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: ef412b11a1d1d703f7e2a2244693543f)
+// [[[end]]] (checksum: 6accf424d6136b55b15efbb86bb0c5cd)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -453,22 +453,23 @@ std::string to_string(GPS_FIX_TYPE e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_MISSION_RESULT values
-static const std::array<const std::string, 15> mav_mission_result_strings{{
+static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  0 */ "mission accepted OK",           // mission accepted OK
-/*  1 */ "generic error / not accepting mission commands at all right now", // generic error / not accepting mission commands at all right now
-/*  2 */ "coordinate frame is not supported", // coordinate frame is not supported
-/*  3 */ "command is not supported",      // command is not supported
-/*  4 */ "mission item exceeds storage space", // mission item exceeds storage space
-/*  5 */ "one of the parameters has an invalid value", // one of the parameters has an invalid value
-/*  6 */ "param1 has an invalid value",   // param1 has an invalid value
-/*  7 */ "param2 has an invalid value",   // param2 has an invalid value
-/*  8 */ "param3 has an invalid value",   // param3 has an invalid value
-/*  9 */ "param4 has an invalid value",   // param4 has an invalid value
-/* 10 */ "x/param5 has an invalid value", // x/param5 has an invalid value
-/* 11 */ "y/param6 has an invalid value", // y/param6 has an invalid value
-/* 12 */ "param7 has an invalid value",   // param7 has an invalid value
-/* 13 */ "received waypoint out of sequence", // received waypoint out of sequence
-/* 14 */ "not accepting any mission commands from this communication partner", // not accepting any mission commands from this communication partner
+/*  1 */ "Generic error / not accepting mission commands at all right now.", // Generic error / not accepting mission commands at all right now.
+/*  2 */ "Coordinate frame is not supported.", // Coordinate frame is not supported.
+/*  3 */ "Command is not supported.",     // Command is not supported.
+/*  4 */ "Mission item exceeds storage space.", // Mission item exceeds storage space.
+/*  5 */ "One of the parameters has an invalid value.", // One of the parameters has an invalid value.
+/*  6 */ "param1 has an invalid value.",  // param1 has an invalid value.
+/*  7 */ "param2 has an invalid value.",  // param2 has an invalid value.
+/*  8 */ "param3 has an invalid value.",  // param3 has an invalid value.
+/*  9 */ "param4 has an invalid value.",  // param4 has an invalid value.
+/* 10 */ "x / param5 has an invalid value.", // x / param5 has an invalid value.
+/* 11 */ "y / param6 has an invalid value.", // y / param6 has an invalid value.
+/* 12 */ "z / param7 has an invalid value.", // z / param7 has an invalid value.
+/* 13 */ "Mission item received out of sequence", // Mission item received out of sequence
+/* 14 */ "Not accepting any mission commands from this communication partner.", // Not accepting any mission commands from this communication partner.
+/* 15 */ "Current mission operation cancelled (e.g. mission upload, mission download).", // Current mission operation cancelled (e.g. mission upload, mission download).
 }};
 
 std::string to_string(MAV_MISSION_RESULT e)
@@ -479,7 +480,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
 	return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
+// [[[end]]] (checksum: d42db24957df1950d06edbf9480dde46)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -487,18 +488,18 @@ std::string to_string(MAV_MISSION_RESULT e)
 // ]]]
 //! MAV_FRAME values
 static const std::array<const std::string, 20> mav_frame_strings{{
-/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
+/*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
 /*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
-/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: east, y: north, z: up).
-/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
-/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
 /*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
 /*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
-/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
 /* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: forward, y: right, z: down).
 /* 13 */ "BODY_FLU",                      // Body fixed frame of reference, Z-up (x: forward, y: left, z: up).
 /* 14 */ "MOCAP_NED",                     // Odometry local coordinate frame of data given by a motion capture system, Z-down (x: north, y: east, z: down).
@@ -517,7 +518,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: 51190f7ce3474a7189c11eb3e63b9322)
+// [[[end]]] (checksum: a075e35372e9be53a3a0ce79e45236c1)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -536,48 +537,49 @@ std::string to_string(MAV_FRAME e)
 // cog.outl("}};")
 // ]]]
 static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
-{   0, "ALL" },
-{   1, "AUTOPILOT1" },
-{ 100, "CAMERA" },
-{ 101, "CAMERA2" },
-{ 102, "CAMERA3" },
-{ 103, "CAMERA4" },
-{ 104, "CAMERA5" },
-{ 105, "CAMERA6" },
-{ 140, "SERVO1" },
-{ 141, "SERVO2" },
-{ 142, "SERVO3" },
-{ 143, "SERVO4" },
-{ 144, "SERVO5" },
-{ 145, "SERVO6" },
-{ 146, "SERVO7" },
-{ 147, "SERVO8" },
-{ 148, "SERVO9" },
-{ 149, "SERVO10" },
-{ 150, "SERVO11" },
-{ 151, "SERVO12" },
-{ 152, "SERVO13" },
-{ 153, "SERVO14" },
-{ 154, "GIMBAL" },
-{ 155, "LOG" },
-{ 156, "ADSB" },
-{ 157, "OSD" },                           // On Screen Display (OSD) devices for video links
-{ 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter sub-protocol
-{ 159, "QX1_GIMBAL" },
-{ 160, "FLARM" },
-{ 180, "MAPPER" },
-{ 190, "MISSIONPLANNER" },
-{ 195, "PATHPLANNER" },
-{ 200, "IMU" },
-{ 201, "IMU_2" },
-{ 202, "IMU_3" },
-{ 220, "GPS" },
-{ 221, "GPS2" },
-{ 240, "UDP_BRIDGE" },
-{ 241, "UART_BRIDGE" },
-{ 250, "SYSTEM_CONTROL" },
+{   0, "ALL" },                           // Used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces.
+{   1, "AUTOPILOT1" },                    // System flight controller component ("autopilot"). Only one autopilot is expected in a particular system.
+{ 100, "CAMERA" },                        // Camera #1.
+{ 101, "CAMERA2" },                       // Camera #2.
+{ 102, "CAMERA3" },                       // Camera #3.
+{ 103, "CAMERA4" },                       // Camera #4.
+{ 104, "CAMERA5" },                       // Camera #5.
+{ 105, "CAMERA6" },                       // Camera #6.
+{ 140, "SERVO1" },                        // Servo #1.
+{ 141, "SERVO2" },                        // Servo #2.
+{ 142, "SERVO3" },                        // Servo #3.
+{ 143, "SERVO4" },                        // Servo #4.
+{ 144, "SERVO5" },                        // Servo #5.
+{ 145, "SERVO6" },                        // Servo #6.
+{ 146, "SERVO7" },                        // Servo #7.
+{ 147, "SERVO8" },                        // Servo #8.
+{ 148, "SERVO9" },                        // Servo #9.
+{ 149, "SERVO10" },                       // Servo #10.
+{ 150, "SERVO11" },                       // Servo #11.
+{ 151, "SERVO12" },                       // Servo #12.
+{ 152, "SERVO13" },                       // Servo #13.
+{ 153, "SERVO14" },                       // Servo #14.
+{ 154, "GIMBAL" },                        // Gimbal component.
+{ 155, "LOG" },                           // Logging component.
+{ 156, "ADSB" },                          // Automatic Dependent Surveillance-Broadcast (ADS-B) component.
+{ 157, "OSD" },                           // On Screen Display (OSD) devices for video links.
+{ 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter microservice.
+{ 159, "QX1_GIMBAL" },                    // Gimbal ID for QX1.
+{ 160, "FLARM" },                         // FLARM collision alert component.
+{ 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
+{ 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
+{ 196, "OBSTACLE_AVOIDANCE" },            // Component that plans a collision free path between two points.
+{ 197, "VISUAL_INERTIAL_ODOMETRY" },      // Component that provides position estimates using VIO techniques.
+{ 200, "IMU" },                           // Inertial Measurement Unit (IMU) #1.
+{ 201, "IMU_2" },                         // Inertial Measurement Unit (IMU) #2.
+{ 202, "IMU_3" },                         // Inertial Measurement Unit (IMU) #3.
+{ 220, "GPS" },                           // GPS #1.
+{ 221, "GPS2" },                          // GPS #2.
+{ 240, "UDP_BRIDGE" },                    // Component to bridge MAVLink to UDP (i.e. from a UART).
+{ 241, "UART_BRIDGE" },                   // Component to bridge to UART (i.e. from UDP).
+{ 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: 9769958883e98b63a634629710a11131)
+// [[[end]]] (checksum: 794ea890a87beb831d74eb2920000ea9)
 
 std::string to_string(MAV_COMPONENT e)
 {
@@ -589,7 +591,6 @@ std::string to_string(MAV_COMPONENT e)
 
 	return it->second;
 }
-// [[[end]]] (checksum: 849fca3985365a416a5a242b9af0ff7c)
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {

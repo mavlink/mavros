@@ -2,6 +2,23 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.0 (2019-10-10)
+-------------------
+* libmavconn: simplify parse_buffer, and fix dropped_packets and parse_error counters
+  Currently the dropped_packets & parse_error counters are always published as 0 in mavros_diag.cpp.
+  This seems to be caused by using the wrong status struct.
+  Seems like mavros was editing m_status after mavlink_frame_char_buffer. This struct
+  seems to be the parsing state, and looks like it shouldn't be modified by the caller (for example
+  status->parse_error is zeroed out in the end of mavlink_frame_char_buffer).
+  Also, the crc & signature checks done in mavros seems redundant.
+  r_mavlink_status seems to be the struct that holds the mavlink connection information, therefore I
+  changed get_status to return it instead.
+  This fixes `#1285 <https://github.com/mavlink/mavros/issues/1285>`_.
+* Contributors: Koby Aizer
+
+0.32.2 (2019-09-09)
+-------------------
+
 0.32.1 (2019-08-08)
 -------------------
 

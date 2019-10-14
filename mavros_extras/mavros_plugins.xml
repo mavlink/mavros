@@ -8,6 +8,9 @@
 	<class name="companion_process_status" type="mavros::extra_plugins::CompanionProcessStatusPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send companion process status report to the FCU.</description>
 	</class>
+	<class name="onboard_computer_status" type="mavros::extra_plugins::OnboardComputerStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send component hadware status to FCU and Groundstation.</description>
+	</class>
 	<class name="debug_value" type="mavros::extra_plugins::DebugValuePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Subs/Pubs debug msgs from and to the FCU.</description>
 	</class>
