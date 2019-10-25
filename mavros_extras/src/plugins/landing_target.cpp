@@ -197,19 +197,19 @@ private:
 	void inline cartesian_to_displacement(const Eigen::Vector3d &pos, Eigen::Vector2f &angle) {
 		float angle_rad = atan(pos.y() / pos.x()) * (M_PI / 180.0);
 
-		if ((pos.x() && pos.y()) > 0) {
+		if (pos.x() > 0 && pos.y() > 0) {
 			angle.x() = angle_rad;
 			angle.y() = -angle_rad;
 		}
-		else if ((pos.x() < 0 && pos.y()) > 0) {
+		else if (pos.x() < 0 && pos.y() > 0) {
 			angle.x() = M_PI - angle_rad;
 			angle.y() = angle_rad;
 		}
-		else if ((pos.x() && pos.y()) < 0) {
+		else if (pos.x() < 0 && pos.y() < 0) {
 			angle.x() = M_PI + angle_rad;
 			angle.y() = M_PI - angle_rad;
 		}
-		else if ((pos.x() < 0 && pos.y()) < 0) {
+		else if (pos.x() > 0 && pos.y() < 0) {
 			angle.x() = -angle_rad;
 			angle.y() = M_PI + angle_rad;
 		}
