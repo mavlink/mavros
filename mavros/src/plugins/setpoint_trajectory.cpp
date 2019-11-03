@@ -20,12 +20,15 @@
 
 #include <nav_msgs/Path.h>
 #include <mavros_msgs/PositionTarget.h>
+#include <mavros_msgs/SetMavFrame.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <std_srvs/Trigger.h>
 
 namespace mavros {
 namespace std_plugins {
+using mavlink::common::MAV_FRAME;
+
 /**
  * @brief Setpoint TRAJECTORY plugin
  *
@@ -48,8 +51,17 @@ public:
 		desired_pub = sp_nh.advertise<nav_msgs::Path>("desired", 10);
 
 		trajectory_reset_srv = sp_nh.advertiseService("reset", &SetpointTrajectoryPlugin::reset_cb, this);
-
+		mav_frame_srv = sp_nh.advertiseService("mav_frame", &SetpointTrajectoryPlugin::set_mav_frame_cb, this);
+		
 		sp_timer = sp_nh.createTimer(ros::Duration(0.01), &SetpointTrajectoryPlugin::reference_cb, this, true);
+
+		// mav_frame
+		std::string mav_frame_str;
+		if (!sp_nh.getParam("mav_frame", mav_frame_str)) {
+			mav_frame = MAV_FRAME::LOCAL_NED;
+		} else {
+			mav_frame = utils::mav_frame_from_str(mav_frame_str);
+		}
 	}
 
 	Subscriptions get_subscriptions()
@@ -67,12 +79,14 @@ private:
 	ros::Publisher desired_pub;
 
 	ros::ServiceServer trajectory_reset_srv;
+	ros::ServiceServer mav_frame_srv;
 
 	trajectory_msgs::MultiDOFJointTrajectory::ConstPtr trajectory_target_msg;
 	std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint>::const_iterator setpoint_target;
 	std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint>::const_iterator next_setpoint_target;
 
 	std::string frame_id;
+	MAV_FRAME mav_frame;
 
 	void reset_timer(ros::Duration duration){
 		sp_timer.stop();
@@ -123,10 +137,21 @@ private:
 		float yaw, yaw_rate;
 		uint16_t type_mask;		
 		if(!setpoint_target->transforms.empty()){
-			position = ftf::to_eigen(setpoint_target->transforms[0].translation);
-			tf::quaternionMsgToEigen(setpoint_target->transforms[0].rotation, attitude);
-			yaw = ftf::quaternion_get_yaw(ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(attitude)));
+			position = [&] () {
+				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].translation));
+				} else {
+					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->transforms[0].translation));
+				}
+			} ();
+			attitude = [&] () {
+				if (mav_frame == MAV_FRAME::BODY_NED || mav_frame == MAV_FRAME::BODY_OFFSET_NED) {
+					return ftf::transform_orientation_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].rotation));
+				} else {
+					return ftf::transform_orientation_enu_ned(
+						ftf::transform_orientation_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].rotation)));
+				}
+			} ();
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE)
@@ -137,7 +162,13 @@ private:
 		}
 
 		if(!setpoint_target->velocities.empty()){
-			velocity = ftf::to_eigen(setpoint_target->velocities[0].linear);
+			velocity = [&] () {
+				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->velocities[0].linear));
+				} else {
+					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->velocities[0].linear));
+				}
+			} ();
 			yaw_rate = setpoint_target->velocities[0].angular.z;
 
 		} else {
@@ -149,7 +180,13 @@ private:
 		}
 		
 		if(!setpoint_target->accelerations.empty()){
-			af = ftf::to_eigen(setpoint_target->accelerations[0].linear);
+			af = [&] () {
+				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
+					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->accelerations[0].linear));
+				} else {
+					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->accelerations[0].linear));
+				}
+			} ();
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) 
@@ -160,12 +197,12 @@ private:
 
 		set_position_target_local_ned(
 					ros::Time::now().toNSec() / 1000000,
-					1,
+					utils::enum_value(mav_frame),
 					type_mask,
-					ftf::transform_frame_enu_ned(position),
-					ftf::transform_frame_enu_ned(velocity),
-					ftf::transform_frame_enu_ned(af),
-					yaw,
+					position,
+					velocity,
+					af,
+					ftf::quaternion_get_yaw(attitude),
 					yaw_rate);
 	
 		next_setpoint_target = setpoint_target + 1;
@@ -189,6 +226,15 @@ private:
 			res.message = "Trajectory reset denied: Empty trajectory";
 		}
 
+		return true;
+	}
+
+	bool set_mav_frame_cb(mavros_msgs::SetMavFrame::Request &req, mavros_msgs::SetMavFrame::Response &res)
+	{
+		mav_frame = static_cast<MAV_FRAME>(req.mav_frame);
+		const std::string mav_frame_str = utils::to_string(mav_frame);
+		sp_nh.setParam("mav_frame", mav_frame_str);
+		res.success = true;
 		return true;
 	}
 };
