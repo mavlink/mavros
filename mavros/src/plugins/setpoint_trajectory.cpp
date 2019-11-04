@@ -87,6 +87,7 @@ private:
 
 	std::string frame_id;
 	MAV_FRAME mav_frame;
+	ftf::StaticTF transform;
 
 	void reset_timer(ros::Duration duration){
 		sp_timer.stop();
@@ -117,6 +118,12 @@ private:
 
 	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req)
 	{
+		if(static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED){
+			transform = ftf::StaticTF::BASELINK_TO_AIRCRAFT;
+		} else {
+			transform = ftf::StaticTF::ENU_TO_NED;
+		}
+
 		trajectory_target_msg = req;
 
 		// Read first duration of the setpoint and set the timer
@@ -137,21 +144,8 @@ private:
 		float yaw, yaw_rate;
 		uint16_t type_mask;		
 		if(!setpoint_target->transforms.empty()){
-			position = [&] () {
-				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
-					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].translation));
-				} else {
-					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->transforms[0].translation));
-				}
-			} ();
-			attitude = [&] () {
-				if (mav_frame == MAV_FRAME::BODY_NED || mav_frame == MAV_FRAME::BODY_OFFSET_NED) {
-					return ftf::transform_orientation_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].rotation));
-				} else {
-					return ftf::transform_orientation_enu_ned(
-						ftf::transform_orientation_baselink_aircraft(ftf::to_eigen(setpoint_target->transforms[0].rotation)));
-				}
-			} ();
+			position = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->transforms[0].translation), transform);
+			attitude = ftf::detail::transform_orientation(ftf::to_eigen(setpoint_target->transforms[0].rotation), transform);
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE)
@@ -162,13 +156,7 @@ private:
 		}
 
 		if(!setpoint_target->velocities.empty()){
-			velocity = [&] () {
-				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
-					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->velocities[0].linear));
-				} else {
-					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->velocities[0].linear));
-				}
-			} ();
+			velocity = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->velocities[0].linear), transform);
 			yaw_rate = setpoint_target->velocities[0].angular.z;
 
 		} else {
@@ -180,13 +168,7 @@ private:
 		}
 		
 		if(!setpoint_target->accelerations.empty()){
-			af = [&] () {
-				if (static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED) {
-					return ftf::transform_frame_baselink_aircraft(ftf::to_eigen(setpoint_target->accelerations[0].linear));
-				} else {
-					return ftf::transform_frame_enu_ned(ftf::to_eigen(setpoint_target->accelerations[0].linear));
-				}
-			} ();
+			af = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->accelerations[0].linear), transform);
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) 
