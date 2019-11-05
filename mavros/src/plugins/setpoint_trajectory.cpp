@@ -142,7 +142,7 @@ private:
 		Eigen::Vector3d position, velocity, af;
 		Eigen::Quaterniond attitude;
 		float yaw, yaw_rate;
-		uint16_t type_mask;		
+		uint16_t type_mask = 0;		
 		if(!setpoint_target->transforms.empty()){
 			position = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->transforms[0].translation), transform);
 			attitude = ftf::detail::transform_orientation(ftf::to_eigen(setpoint_target->transforms[0].rotation), transform);
