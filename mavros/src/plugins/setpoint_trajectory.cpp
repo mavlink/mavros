@@ -71,6 +71,9 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
+	using lock_guard = std::lock_guard<std::mutex>;
+	std::mutex mutex;
+
 	ros::NodeHandle sp_nh;
 
 	ros::Timer sp_timer;
@@ -118,6 +121,8 @@ private:
 
 	void local_cb(const trajectory_msgs::MultiDOFJointTrajectory::ConstPtr &req)
 	{
+		lock_guard lock(mutex);
+
 		if(static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED){
 			transform = ftf::StaticTF::BASELINK_TO_AIRCRAFT;
 		} else {
@@ -135,6 +140,7 @@ private:
 	void reference_cb(const ros::TimerEvent &event)
 	{
 		using mavlink::common::POSITION_TARGET_TYPEMASK;
+		lock_guard lock(mutex);
 
 		if(!trajectory_target_msg)
 			return;
