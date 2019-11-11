@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.1 (2019-11-11)
+-------------------
 * Add mutex
 * Initialize type mask
 * Handle frame with StaticTF

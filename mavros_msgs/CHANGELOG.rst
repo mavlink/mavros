@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.1 (2019-11-11)
+-------------------
 * resolved merge conflict
 * Contributors: David Jablonski
 
