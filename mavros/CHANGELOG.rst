@@ -2,6 +2,27 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add mutex
+* Initialize type mask
+* Handle frame with StaticTF
+* Handle different frames
+* Set yaw rate from message inputs
+* Add setpoint trajectory reset interface
+* Fix trajectory timestamp
+* Address comments
+* Pass reference with oneshot timers
+* Set typemasks correctly
+* Address more style comments
+* Address style comments
+* Visualize desired trajectory
+* Handle end of trajectory correctly
+* Remove message handlers
+* Add setpoint_trajectory plugin template
+* resolved merge conflict
+* Contributors: David Jablonski, Jaeyoung-Lim
+
 0.33.0 (2019-10-10)
 -------------------
 * Add vtol transition service

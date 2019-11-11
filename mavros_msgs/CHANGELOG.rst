@@ -2,6 +2,11 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* resolved merge conflict
+* Contributors: David Jablonski
+
 0.33.0 (2019-10-10)
 -------------------
 * Add vtol transition service

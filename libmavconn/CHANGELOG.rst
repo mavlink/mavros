@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* resolved merge conflict
+* Contributors: David Jablonski
+
 0.33.0 (2019-10-10)
 -------------------
 * libmavconn: simplify parse_buffer, and fix dropped_packets and parse_error counters

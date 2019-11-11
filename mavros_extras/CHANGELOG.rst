@@ -2,6 +2,31 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1297 <https://github.com/mavlink/mavros/issues/1297>`_ from dayjaby/feature/mount_orientation
+  adding mount orientation to mount_control plugin
+* landing_target: Fix cartesian to displacement bug
+  I think these four conditionals are buggy:
+  The first is    (x and y) > 0
+  and should be   (x > 0) and (y > 0)
+  (This one actually works the way it's written.)
+  The second is   (x < 0 and y) > 0
+  and should be   (x < 0) and (y > 0)
+  The third is    (x and y) < 0
+  and should be   (x < 0) and (y < 0)
+  The fourth is   (x < 0 and y) < 0
+  and should be   (x > 0) and (y < 0)
+* obstacle distance plugin: Add ROS param for mavlink frame
+  Makes it possible to specify the 'frame' field in the MAVLink
+  OBSTACLE_DISTANCE message sent by this plugin. Previously the
+  frame was not defined, which means it defaulted to MAV_FRAME_GLOBAL.
+  (See https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE)
+  The default frame is therefore still MAV_FRAME_GLOBAL.
+* resolved merge conflict
+* adding mount orientation to mount_control plugin
+* Contributors: David Jablonski, Morten Fyhn Amundsen, Vladimir Ermakov
+
 0.33.0 (2019-10-10)
 -------------------
 * CleanUp

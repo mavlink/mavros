@@ -2,6 +2,11 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* resolved merge conflict
+* Contributors: David Jablonski
+
 0.33.0 (2019-10-10)
 -------------------
 
