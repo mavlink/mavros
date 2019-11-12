@@ -168,7 +168,7 @@ public:
 			Eigen::Vector3d angular_acceleration)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::voliro::msg::SET_WRENCH_TARGET_BODY_NED sp;
+		mavlink::omav::msg::SET_WRENCH_TARGET_BODY_NED sp;
 
 		sp.acc_x = linear_acceleration.x();
 		sp.acc_y = linear_acceleration.y();
@@ -191,7 +191,7 @@ public:
 	void set_tilt_angle_target(float *alpha)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::voliro::msg::SET_ROTOR_TILT_TARGET sp;
+		mavlink::omav::msg::SET_ROTOR_TILT_TARGET sp;
 		for (int i=0 ; i<6 ; i++) {
 			sp.alpha[i] = alpha[i];
 		}
@@ -209,7 +209,7 @@ public:
 	void set_tiltrotor_actuator_commands(float *u)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::voliro::msg::SET_TILTROTOR_ACTUATOR_COMMANDS sp;
+		mavlink::omav::msg::SET_TILTROTOR_ACTUATOR_COMMANDS sp;
 		for (int i=0 ; i<6 ; i++) {
 			sp.u_tiltangles[i] = u[i];
 		}
@@ -232,7 +232,7 @@ public:
 			Eigen::Vector3d rates_sp)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::voliro::msg::SET_ATTITUDE_THRUST_VECTOR_TARGET_NED sp;
+		mavlink::omav::msg::SET_ATTITUDE_THRUST_VECTOR_TARGET_NED sp;
 		sp.acc_x = linear_acceleration.x();
 		sp.acc_y = linear_acceleration.y();
 		sp.acc_z = linear_acceleration.z();
@@ -261,7 +261,7 @@ public:
 								Eigen::VectorXd tilt_angles)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::voliro::msg::SET_ALLOCATION_MATRIX sp;
+		mavlink::omav::msg::SET_ALLOCATION_MATRIX sp;
 		for (int i=0;i<36;i++) {
 			sp.allocation_matrix[i] = allocation_matrix(i);
 		}
