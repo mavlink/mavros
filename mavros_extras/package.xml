@@ -25,6 +25,7 @@
   <depend>mavros_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>trajectory_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>urdf</depend>
   <depend>tf</depend>
