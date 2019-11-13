@@ -2,6 +2,51 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* resolved merge conflict
+* Contributors: David Jablonski
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* Apply comments
+* Add mount configure service message
+* cog: Update all generated code
+* added manual flag to mavros/state
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: David Jablonski, Jaeyoung-Lim, Vladimir Ermakov, baumanta
+
+0.32.2 (2019-09-09)
+-------------------
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+* add mav_cmd associated with each point in trajectory plugin
+* Use MountControl Msg
+* Define new MountControl.msg
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
+0.31.0 (2019-06-07)
+-------------------
+* mavros_msgs: LandingTarget: update msg description link
+* extras: landing target: improve usability and flexibility
+* Contributors: TSC21
+
 0.30.0 (2019-05-20)
 -------------------
 

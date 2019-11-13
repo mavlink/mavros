@@ -2,6 +2,112 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+* package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
+* Contributors: Vladimir Ermakov
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* Add mutex
+* Initialize type mask
+* Handle frame with StaticTF
+* Handle different frames
+* Set yaw rate from message inputs
+* Add setpoint trajectory reset interface
+* Fix trajectory timestamp
+* Address comments
+* Pass reference with oneshot timers
+* Set typemasks correctly
+* Address more style comments
+* Address style comments
+* Visualize desired trajectory
+* Handle end of trajectory correctly
+* Remove message handlers
+* Add setpoint_trajectory plugin template
+* resolved merge conflict
+* Contributors: David Jablonski, Jaeyoung-Lim
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* CleanUp
+* Update frame name in px4_config to match ROS standards
+* Enable publishing multiple static tfs at once, publish standard static tfs
+* moving ACK_TIMEOUT_DEFAULT out of class
+* cog: Update all generated code
+* mavros/src/plugins/command.cpp: one more style fix
+* mavros/src/plugins/command.cpp: style fixes
+* mavros/src/plugins/command.cpp: command_ack_timeout ms -> s
+* mavros/src/plugins/command.cpp: command_ack_timeout_ms int -> double
+* mavros/src/plugins/command.cpp: uncrustify
+* mavros/src/plugins/command.cpp: parameter for command's ack timeout
+  Sometimes commands take more time than default 5 seconds. Due to a low bandwidth
+  of UART and a high rate of some mavlink streams. To eliminate this problem it's
+  better to provide the parameter to configure the command's ack timeout.
+* added manual flag to mavros/state
+* Use GeoPoseStamped messages
+* Fix build
+* Add callback for SET_POSITION_TARGET_GLBOAL_INT
+* Contributors: David Jablonski, Jaeyoung-Lim, Sergei Zobov, Vladimir Ermakov, kamilritz
+
+0.32.2 (2019-09-09)
+-------------------
+* uncrustify
+* Add boolean to check if IMU data has been received
+  Follow sensor_msgs/Imu convention when data not present
+* Uncrustify the GPS_GLOBAL_ORIGIN handler in global_position
+* Fix global origin conversion to ecef (was using amsl where hae was required)
+  Summary: Fix global origin conversion to ecef (was using amsl where hae was required)
+* moved code to end of function
+* added amount of satellites to global_position/raw/
+* Contributors: David Jablonski, Nick Steele, Rob Clarke, Robert Clarke
+
+0.32.1 (2019-08-08)
+-------------------
+* uncrustify
+* Removed tf loop
+* made small edit to handle augmented gps fix
+* added a check for gps fix before setting origin for global_position/local odometry topic
+* Contributors: Eric, Lucas Hill
+
+0.32.0 (2019-07-06)
+-------------------
+* use direclty radians in yaml files
+* A simple typo error has fixed. (`#1260 <https://github.com/mavlink/mavros/issues/1260>`_)
+  * fix: a typing error "alredy" to "already"
+  * Fix: typo error (helth -> health)
+* Contributors: Martina Rivizzigno, 강정석
+
+0.31.0 (2019-06-07)
+-------------------
+* readme: fix udp-pb formatting
+* launch config: landing_target: fix and improve parameter list
+* remove duplicated landing_target parameters
+* enum_to_string: simplify landing_target_type_from_str
+* enum_to_string: update enumerations and checksum
+* extras: landing target: improve usability and flexibility
+* remove landing_target from blacklist
+* update to use pymavlink generator
+* px4_config: landing_target: minor correction
+* mav_frame: add frames of reference to wiki page; reference them on config
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: first commit
+* Switch to double-reflections instead of axes-reassignments
+* specialize transform_frame_ned_enu and transform_frame_enu_ned for type
+  Vector3d such that input vectors containing a NAN can be correctly transformed
+* Update README.md
+  update misspelling
+* Contributors: Julian Kent, Martina Rivizzigno, Shingo Matsuura, TSC21, Vladimir Ermakov
+
 0.30.0 (2019-05-20)
 -------------------
 * Filter heartbeats by component id as well

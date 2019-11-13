@@ -166,7 +166,7 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
 	custom_mode.reserved = 0;
 	if (custom_mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
 		ROS_WARN_COND_NAMED(custom_mode.sub_mode != 0, "uas", "PX4: Unknown sub-mode %d.%d",
-				custom_mode.main_mode, custom_mode.sub_mode);
+			custom_mode.main_mode, custom_mode.sub_mode);
 		custom_mode.sub_mode = 0;
 	}
 

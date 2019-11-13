@@ -47,6 +47,9 @@
 	<class name="setpoint_raw" type="mavros::std_plugins::SetpointRawPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Access to raw POSITION_TARGET_LOCAL_NED messages.</description>
 	</class>
+	<class name="setpoint_trajectory" type="mavros::std_plugins::SetpointTrajectoryPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send to FCU setpoints from trajectory.</description>
+	</class>
 	<class name="vfr_hud" type="mavros::std_plugins::VfrHudPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish VFR HUD data and WIND estimations.</description>
 	</class>

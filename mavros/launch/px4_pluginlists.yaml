@@ -16,6 +16,6 @@ plugin_blacklist:
 - vision_speed_estimate
 - trajectory
 
-plugin_whitelist: []
-# 'sys_*'
 
+plugin_whitelist: []
+#- 'sys_*'
