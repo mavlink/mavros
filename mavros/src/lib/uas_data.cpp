@@ -47,13 +47,17 @@ UAS::UAS() :
 	catch (const std::exception &e) {
 		// catch exception and shutdown node
 		ROS_FATAL_STREAM("UAS: GeographicLib exception: " << e.what() <<
-			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
+				" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
 		ros::shutdown();
 	}
 
-	// send static transform from "local_origin" (ENU) to "local_origin_ned" (NED)
-	publish_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)));
-	publish_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)));
+	// Publish helper TFs used for frame transformation in the odometry plugin
+	std::vector<geometry_msgs::TransformStamped> transform_vector;
+	add_static_transform("map", "map_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform("odom", "odom_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform("base_link", "base_link_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),transform_vector);
+
+	tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
 /* -*- heartbeat handlers -*- */
@@ -221,6 +225,19 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 }
 
 /* -*- transform -*- */
+
+//! Stack static transform into vector
+void UAS::add_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr, std::vector<geometry_msgs::TransformStamped>& vector)
+{
+	geometry_msgs::TransformStamped static_transform;
+
+	static_transform.header.stamp = ros::Time::now();
+	static_transform.header.frame_id = frame_id;
+	static_transform.child_frame_id = child_id;
+	tf::transformEigenToMsg(tr, static_transform.transform);
+
+	vector.emplace_back(static_transform);
+}
 
 //! Publishes static transform
 void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)

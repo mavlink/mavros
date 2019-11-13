@@ -2,6 +2,74 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* resolved merge conflict
+* Contributors: David Jablonski
+
+0.33.0 (2019-10-10)
+-------------------
+* libmavconn: simplify parse_buffer, and fix dropped_packets and parse_error counters
+  Currently the dropped_packets & parse_error counters are always published as 0 in mavros_diag.cpp.
+  This seems to be caused by using the wrong status struct.
+  Seems like mavros was editing m_status after mavlink_frame_char_buffer. This struct
+  seems to be the parsing state, and looks like it shouldn't be modified by the caller (for example
+  status->parse_error is zeroed out in the end of mavlink_frame_char_buffer).
+  Also, the crc & signature checks done in mavros seems redundant.
+  r_mavlink_status seems to be the struct that holds the mavlink connection information, therefore I
+  changed get_status to return it instead.
+  This fixes `#1285 <https://github.com/mavlink/mavros/issues/1285>`_.
+* Contributors: Koby Aizer
+
+0.32.2 (2019-09-09)
+-------------------
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+
+0.31.0 (2019-06-07)
+-------------------
+* readme: fix udp-pb formatting
+* Contributors: Vladimir Ermakov
+
+0.30.0 (2019-05-20)
+-------------------
+
+0.29.2 (2019-03-06)
+-------------------
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* Contributors: Pierre Kancir
+
+0.29.0 (2019-02-02)
+-------------------
+* Merge branch 'master' into param-timeout
+* libmavconn: Fix building without installation. Detect CI environment
+* ci:test: temporary disable failed udp bind test
+* mavconn:pkg: Move generated files to build tree
+* Contributors: Vladimir Ermakov
+
+0.28.0 (2019-01-03)
+-------------------
+* libmavconn: add the possibility to set the source component ID through the send_message method
+* Contributors: TSC21
+
+0.27.0 (2018-11-12)
+-------------------
+* bind should be called after reuse_address is set
+* Contributors: Shahar Kosti
+
 0.26.3 (2018-08-21)
 -------------------
 * Prevent MAVConnTCPClient::do_recv and MAVConnTCPServer::do_accept from running after destruction has begun

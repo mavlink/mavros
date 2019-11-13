@@ -5,15 +5,15 @@ project(test_mavros)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  angles
+  control_toolbox
+  eigen_conversions
+  geometry_msgs
   mavros
   mavros_extras
   roscpp
   std_msgs
-  geometry_msgs
   tf2_ros
-  eigen_conversions
-  control_toolbox
-  angles
 )
 
 ## System dependencies are found with CMake's conventions
@@ -56,7 +56,7 @@ endif()
 catkin_package(
   #INCLUDE_DIRS include
   #LIBRARIES sitl_test
-  CATKIN_DEPENDS mavros mavros_extras roscpp std_msgs geometry_msgs tf2_ros eigen_conversions control_toolbox
+  CATKIN_DEPENDS control_toolbox eigen_conversions geometry_msgs mavros mavros_extras roscpp std_msgs tf2_ros
   DEPENDS Boost
 )
 
@@ -73,8 +73,8 @@ include_directories(
 
 add_library(
   mavros_sitl_test
-  sitl_test/lib/sitl_test.cpp
   sitl_test/lib/pid_controller.cpp
+  sitl_test/lib/sitl_test.cpp
 )
 target_link_libraries(
   mavros_sitl_test

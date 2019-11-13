@@ -21,10 +21,9 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #include <mavros_msgs/SetMavFrame.h>
-#include <mavros_msgs/GlobalPositionTarget.h>
+#include <geographic_msgs/GeoPoseStamped.h>
 
 #include <GeographicLib/Geocentric.hpp>
-//#include <GeographicLib/Geoid.hpp>
 
 namespace mavros {
 namespace std_plugins {
@@ -36,8 +35,11 @@ using mavlink::common::MAV_FRAME;
  */
 class SetpointPositionPlugin : public plugin::PluginBase,
 	private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,
+	private plugin::SetPositionTargetGlobalIntMixin<SetpointPositionPlugin>,
 	private plugin::TF2ListenerMixin<SetpointPositionPlugin> {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
 		spg_nh("~"),
@@ -64,7 +66,8 @@ public:
 			setpoint_sub = sp_nh.subscribe("local", 10, &SetpointPositionPlugin::setpoint_cb, this);
 			// Subscriber for goal gps
 			setpointg_sub = sp_nh.subscribe("global", 10, &SetpointPositionPlugin::setpointg_cb, this);
-
+			// Subscriber for goal gps but will convert it to local coordinates
+			setpointg2l_sub = sp_nh.subscribe("global_to_local", 10, &SetpointPositionPlugin::setpointg2l_cb, this);
 			// subscriber for current gps state, mavros/global_position/global.
 			gps_sub = spg_nh.subscribe("global_position/global", 10, &SetpointPositionPlugin::gps_cb, this);
 			// Subscribe for current local ENU pose.
@@ -88,12 +91,14 @@ public:
 
 private:
 	friend class SetPositionTargetLocalNEDMixin;
+	friend class SetPositionTargetGlobalIntMixin;
 	friend class TF2ListenerMixin;
 
 	ros::NodeHandle sp_nh;
 	ros::NodeHandle spg_nh;		//!< to get local position and gps coord which are not under sp_h()
 	ros::Subscriber setpoint_sub;
-	ros::Subscriber setpointg_sub;	//!< GPS setpoint
+	ros::Subscriber setpointg_sub;	//!< Global setpoint
+	ros::Subscriber setpointg2l_sub;//!< Global setpoint converted to local setpoint
 	ros::Subscriber gps_sub;	//!< current GPS
 	ros::Subscriber local_sub;	//!< current local ENU
 	ros::ServiceServer mav_frame_srv;
@@ -179,9 +184,41 @@ private:
 	}
 
 	/**
+	 * Gets setpoint position setpoint and send SET_POSITION_TARGET_GLOBAL_INT
+	 */
+	void setpointg_cb(const geographic_msgs::GeoPoseStamped::ConstPtr &req)
+	{
+		using mavlink::common::POSITION_TARGET_TYPEMASK;
+
+		uint16_t type_mask = uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE)
+					| uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE)
+					| uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE)
+					| uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE)
+					| uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE)
+					| uint16_t(POSITION_TARGET_TYPEMASK::AZ_IGNORE);
+
+		Eigen::Quaterniond attitude;
+		tf::quaternionMsgToEigen(req->pose.orientation, attitude);
+		Eigen::Quaterniond q = ftf::transform_orientation_enu_ned(
+						ftf::transform_orientation_baselink_aircraft(attitude));
+
+		set_position_target_global_int(
+					req->header.stamp.toNSec() / 1000000,
+					uint8_t(MAV_FRAME::GLOBAL_INT),
+					type_mask,
+					req->pose.position.latitude * 1e7,
+					req->pose.position.longitude * 1e7,
+					req->pose.position.altitude,
+					Eigen::Vector3d::Zero(),
+					Eigen::Vector3d::Zero(),
+					ftf::quaternion_get_yaw(q),
+					0);
+	}
+
+	/**
 	 * Gets gps setpoint, converts it to local ENU, and sends it to FCU
 	 */
-	void setpointg_cb(const mavros_msgs::GlobalPositionTarget::ConstPtr &req)
+	void setpointg2l_cb(const geographic_msgs::GeoPoseStamped::ConstPtr &req)
 	{
 		/**
 		 * The idea is to convert the change in LLA(goal_gps-current_gps) to change in ENU
@@ -193,7 +230,7 @@ private:
 
 		GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f());
 
-		Eigen::Vector3d goal_gps(req->latitude, req->longitude, req->altitude);
+		Eigen::Vector3d goal_gps(req->pose.position.latitude, req->pose.position.longitude, req->pose.position.altitude);
 
 		// current gps -> curent ECEF
 		Eigen::Vector3d current_ecef;
@@ -213,9 +250,7 @@ private:
 		Eigen::Affine3d sp;	// holds position setpoint
 		Eigen::Quaterniond q;	// holds desired yaw
 
-		q = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())			// roll
-			* Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY())		// pitch
-			* Eigen::AngleAxisd(req->yaw, Eigen::Vector3d::UnitZ());	// yaw
+		tf::quaternionMsgToEigen(req->pose.orientation, q);
 
 		// set position setpoint
 		sp.translation() = current_local_pos + enu_offset;

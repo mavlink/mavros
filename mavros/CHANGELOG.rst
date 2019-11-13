@@ -2,6 +2,234 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+* package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
+* Contributors: Vladimir Ermakov
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* Add mutex
+* Initialize type mask
+* Handle frame with StaticTF
+* Handle different frames
+* Set yaw rate from message inputs
+* Add setpoint trajectory reset interface
+* Fix trajectory timestamp
+* Address comments
+* Pass reference with oneshot timers
+* Set typemasks correctly
+* Address more style comments
+* Address style comments
+* Visualize desired trajectory
+* Handle end of trajectory correctly
+* Remove message handlers
+* Add setpoint_trajectory plugin template
+* resolved merge conflict
+* Contributors: David Jablonski, Jaeyoung-Lim
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* CleanUp
+* Update frame name in px4_config to match ROS standards
+* Enable publishing multiple static tfs at once, publish standard static tfs
+* moving ACK_TIMEOUT_DEFAULT out of class
+* cog: Update all generated code
+* mavros/src/plugins/command.cpp: one more style fix
+* mavros/src/plugins/command.cpp: style fixes
+* mavros/src/plugins/command.cpp: command_ack_timeout ms -> s
+* mavros/src/plugins/command.cpp: command_ack_timeout_ms int -> double
+* mavros/src/plugins/command.cpp: uncrustify
+* mavros/src/plugins/command.cpp: parameter for command's ack timeout
+  Sometimes commands take more time than default 5 seconds. Due to a low bandwidth
+  of UART and a high rate of some mavlink streams. To eliminate this problem it's
+  better to provide the parameter to configure the command's ack timeout.
+* added manual flag to mavros/state
+* Use GeoPoseStamped messages
+* Fix build
+* Add callback for SET_POSITION_TARGET_GLBOAL_INT
+* Contributors: David Jablonski, Jaeyoung-Lim, Sergei Zobov, Vladimir Ermakov, kamilritz
+
+0.32.2 (2019-09-09)
+-------------------
+* uncrustify
+* Add boolean to check if IMU data has been received
+  Follow sensor_msgs/Imu convention when data not present
+* Uncrustify the GPS_GLOBAL_ORIGIN handler in global_position
+* Fix global origin conversion to ecef (was using amsl where hae was required)
+  Summary: Fix global origin conversion to ecef (was using amsl where hae was required)
+* moved code to end of function
+* added amount of satellites to global_position/raw/
+* Contributors: David Jablonski, Nick Steele, Rob Clarke, Robert Clarke
+
+0.32.1 (2019-08-08)
+-------------------
+* uncrustify
+* Removed tf loop
+* made small edit to handle augmented gps fix
+* added a check for gps fix before setting origin for global_position/local odometry topic
+* Contributors: Eric, Lucas Hill
+
+0.32.0 (2019-07-06)
+-------------------
+* use direclty radians in yaml files
+* A simple typo error has fixed. (`#1260 <https://github.com/mavlink/mavros/issues/1260>`_)
+  * fix: a typing error "alredy" to "already"
+  * Fix: typo error (helth -> health)
+* Contributors: Martina Rivizzigno, 강정석
+
+0.31.0 (2019-06-07)
+-------------------
+* readme: fix udp-pb formatting
+* launch config: landing_target: fix and improve parameter list
+* remove duplicated landing_target parameters
+* enum_to_string: simplify landing_target_type_from_str
+* enum_to_string: update enumerations and checksum
+* extras: landing target: improve usability and flexibility
+* remove landing_target from blacklist
+* update to use pymavlink generator
+* px4_config: landing_target: minor correction
+* mav_frame: add frames of reference to wiki page; reference them on config
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: first commit
+* Switch to double-reflections instead of axes-reassignments
+* specialize transform_frame_ned_enu and transform_frame_enu_ned for type
+  Vector3d such that input vectors containing a NAN can be correctly transformed
+* Update README.md
+  update misspelling
+* Contributors: Julian Kent, Martina Rivizzigno, Shingo Matsuura, TSC21, Vladimir Ermakov
+
+0.30.0 (2019-05-20)
+-------------------
+* Filter heartbeats by component id as well
+  This addresses `#1107 <https://github.com/mavlink/mavros/issues/1107>`_ and `#1227 <https://github.com/mavlink/mavros/issues/1227>`_, by filtering incoming heartbeats
+  by component ids before publishing the state.
+* mavros/src/plugins/command.cpp: log if command's wait ack timeout (`#1222 <https://github.com/mavlink/mavros/issues/1222>`_)
+  * mavros/src/plugins/command.cpp: log if command's wait ack timeout
+  * mavros/src/plugins/command.cpp: log timeout in wait_ack_for
+* local_position fix `#1220 <https://github.com/mavlink/mavros/issues/1220>`_: initialize flags
+* plugin waypoint: fix spelling
+* Fix leading space before setpoint_raw
+  This causes an error when running `roslaunch`:
+  ```
+  error loading <rosparam> tag:
+  file /opt/ros/kinetic/share/mavros/launch/apm_config.yaml contains invalid YAML:
+  while parsing a block mapping
+  in "<string>", line 4, column 1:
+  startup_px4_usb_quirk: false
+  ^
+  expected <block end>, but found '<block mapping start>'
+  in "<string>", line 103, column 2:
+  setpoint_raw:
+  ^
+  XML is <rosparam command="load" file="$(arg config_yaml)"/>
+  The traceback for the exception was written to the log file
+  ```
+* global_position.cpp: spell in comment
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Josh Veitch-Michaelis, Nico van Duijn, Sergey Zobov, Vladimir Ermakov
+
+0.29.2 (2019-03-06)
+-------------------
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* Update apm_config.yaml
+  Setting thrust_scaling in the setpoint_raw message (in my case, to use /mavros/setpoint_raw/attitude)
+  Without it, when using Gazebo, get the following problem
+  "Recieved thrust, but ignore_thrust is true: the most likely cause of this is a failure to specify the thrust_scaling parameters on px4/apm_config.yaml. Actuation will be ignored." from the function void attitude_cb in setpoint_raw.cpp (http://docs.ros.org/kinetic/api/mavros/html/setpoint__raw_8cpp_source.html)
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* Issue `#1174 <https://github.com/mavlink/mavros/issues/1174>`_ Added dependency for mavros_msgs and mavros
+* Contributors: Adam Watkins, KiloNovemberDelta, Pierre Kancir, Vladimir Ermakov
+
+0.29.0 (2019-02-02)
+-------------------
+* Fix broken documentation URLs
+* px4_config: set the thrust_scaling to one by default
+* local_position: add an aditional topic for velocity on the local frame
+* Merge pull request `#1136 <https://github.com/mavlink/mavros/issues/1136>`_ from angri/param-timeout
+  Request timed up parameters as soon as possible
+* Merge branch 'master' into param-timeout
+* plugin:param added logging regarding rerequests
+* plugin:param fixed second and consequent timeouts in requesting list
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_extras: Wheel odometry plugin fixes after CR.
+* mavros_extras: Wheel odometry plugin added.
+* mavsys: add do_message_interval
+* sys_status: add set_message_interval service
+* lib: fix MAV_COMPONENT to_string
+* lib: update sensor orientations
+* plugin:param rerequest timed out parameters asap
+  Avoid vaiting for the next timeout
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Pavlo Kolomiiets, Randy Mackay, TSC21, Vladimir Ermakov, angri
+
+0.28.0 (2019-01-03)
+-------------------
+* plugin:param: publish new param value
+* Merge pull request `#1148 <https://github.com/mavlink/mavros/issues/1148>`_ from Kiwa21/pr-param-value
+  param plugin : add msg and publisher to catch latest param value
+* sys_status: fix build
+* sys_state: Small cleanup of `#1150 <https://github.com/mavlink/mavros/issues/1150>`_
+* VehicleInfo : add srv into sys_status plugin to request basic info from vehicle
+* sys_status: Fix `#1151 <https://github.com/mavlink/mavros/issues/1151>`_ bug - incorrect hex print
+* plugins:sys_status: Update diag decoder
+* frame_tf: mavlink_urt_to_covariance_matrix: make matrix symetrical
+* uas_data: add comment on the reverse tf fcu_frd->fcu
+* odom: add ODOMETRY handler and publisher
+* Handle LOCAL_POSITION_NED_COV messages, add pose_cov, velocity_cov, accel topics
+* sys_status : add MAV_TYPE as a parameter
+* rc_io: extend handle_servo_output_raw to 16 channels
+* param plugin : add msg and publisher to catch latest param value
+* plugin:command: Update for C++11, style fix
+  Signed-off-by: Vladimir Ermakov <vooon341@gmail.com>
+* Fixed NavSatFix bug in mavcmd takeoffcur and landcur
+* Fix mavros/param.py to work in python2 and python3, `#940 <https://github.com/mavlink/mavros/issues/940>`_
+  Simplify python3 fixes, `#940 <https://github.com/mavlink/mavros/issues/940>`_
+  Remove unnecessary functools
+* Fix mavros/param.py to work in python2 and python3, `#940 <https://github.com/mavlink/mavros/issues/940>`_
+  Simplify python3 fixes, `#940 <https://github.com/mavlink/mavros/issues/940>`_
+* Fix mavros/param.py to work in python2 and python3, `#940 <https://github.com/mavlink/mavros/issues/940>`_
+* correct the to_string function
+* set value back to 30
+* add autogenerated to_string function
+* style clean up
+* Use component_id to determine message sender
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* add plugin to receive avoidance status message
+* Added RPYrT and uncrustified.
+  Pushing version without spaces.
+  Version with tabs?
+  Fixed all?
+  Finally fixed.
+  Fixed requestes by @vooon
+  Fixed a def.
+  Fixed log format.
+  Fixed time for log.
+* apm_config: enable timesync and system for ardupilot
+* Contributors: Dan Nix, Gregoire Linard, Oleg Kalachev, Randy Mackay, TSC21, Vladimir Ermakov, baumanta, fnoop, pedro-roque
+
+0.27.0 (2018-11-12)
+-------------------
+* fix: a typing error "alredy" to "already"
+* plugins `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
+* plugins: fix style
+* with this fix ,it will avoid eigen error on 32 bits system
+* Add service to send mavlink TRIGG_INTERVAL commands
+  Adapt trigger_control service to current mavlink cmd spec. Add a new service to change trigger interval and integration time
+* launch: fix `#1080 <https://github.com/mavlink/mavros/issues/1080>`_: APM now support mocap messages
+* Contributors: Gaogeolone, Moritz Zimmermann, Vladimir Ermakov, rapsealk
+
 0.26.3 (2018-08-21)
 -------------------
 * test: Fix sensor orientation. RPY 315 was removed in recent mavlink.

@@ -45,7 +45,7 @@ public:
 	void close() override;
 
 	void send_message(const mavlink::mavlink_message_t *message) override;
-	void send_message(const mavlink::Message &message) override;
+	void send_message(const mavlink::Message &message, const uint8_t source_compid) override;
 	void send_bytes(const uint8_t *bytes, size_t length) override;
 
 	inline bool is_open() override {
@@ -66,4 +66,3 @@ private:
 	void do_write(bool check_tx_state);
 };
 }	// namespace mavconn
-

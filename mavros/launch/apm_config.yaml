@@ -8,9 +8,10 @@ startup_px4_usb_quirk: false
 # sys_status & sys_time connection options
 conn:
   heartbeat_rate: 1.0    # send hertbeat rate in Hertz
+  heartbeat_mav_type: "ONBOARD_CONTROLLER"
   timeout: 10.0          # hertbeat timeout in seconds
-  timesync_rate: 0.0     # TIMESYNC rate in Hertz (feature disabled if 0.0)
-  system_time_rate: 0.0  # send system time to FCU rate in Hertz (disabled if 0.0)
+  timesync_rate: 10.0    # TIMESYNC rate in Hertz (feature disabled if 0.0)
+  system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # sys_status
 sys:
@@ -20,7 +21,7 @@ sys:
 # sys_time
 time:
   time_ref_source: "fcu"  # time_reference source
-  timesync_mode: NONE
+  timesync_mode: MAVLINK
   timesync_avg_alpha: 0.6 # timesync averaging factor
 
 # --- mavros plugins (alphabetical order) ---
@@ -60,7 +61,7 @@ imu:
   frame_id: "base_link"
   # need find actual values
   linear_acceleration_stdev: 0.0003
-  angular_velocity_stdev: !degrees 0.02
+  angular_velocity_stdev: 0.0003490659 // 0.02 degrees
   orientation_stdev: 1.0
   magnetic_stdev: 0.0
 
@@ -97,6 +98,10 @@ setpoint_attitude:
     frame_id: "map"
     child_frame_id: "target_attitude"
     rate_limit: 50.0
+
+# setpoint_raw
+setpoint_raw:
+  thrust_scaling: 1.0       # specify thrust scaling (normalized, 0 to 1) for thrust (like PX4)
 
 # setpoint_position
 setpoint_position:
@@ -170,6 +175,25 @@ fake_gps:
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
 
+# landing_target
+landing_target:
+  listen_lt: false
+  mav_frame: "LOCAL_NED"
+  land_target_type: "VISION_FIDUCIAL"
+  image:
+    width: 640            # [pixels]
+    height: 480
+  camera:
+    fov_x: 2.0071286398   # default: 115 [degrees]
+    fov_y: 2.0071286398
+  tf:
+    send: true
+    listen: false
+    frame_id: "landing_target"
+    child_frame_id: "camera_center"
+    rate_limit: 10.0
+  target_size: {x:  0.3, y:  0.3}
+
 # mocap_pose_estimate
 mocap:
   # select mocap source
@@ -180,12 +204,12 @@ mocap:
 odometry:
   frame_tf:
     desired_frame: "ned"
-  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <http://mavlink.org/messages/common>
+  estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <https://mavlink.io/en/messages/common.html>
 
 # px4flow
 px4flow:
   frame_id: "px4flow"
-  ranger_fov: !degrees 6.8  # 6.8 degreens at 5 meters, 31 degrees at 1 meter
+  ranger_fov: 0.118682      # 6.8 degrees at 5 meters, 31 degrees at 1 meter
   ranger_min_range: 0.3     # meters
   ranger_max_range: 5.0     # meters
 
@@ -205,5 +229,21 @@ vision_speed:
 # vibration
 vibration:
   frame_id: "base_link"
+
+# wheel_odometry
+wheel_odometry:
+  count: 2           # number of wheels to compute odometry
+  use_rpm: false     # use wheel's RPM instead of cumulative distance to compute odometry
+  wheel0: {x: 0.0, y: -0.15, radius: 0.05} # x-, y-offset (m,NED) and radius (m)
+  wheel1: {x: 0.0, y:  0.15, radius: 0.05} # x-, y-offset (m,NED) and radius (m)
+  send_raw: true              # send wheel's RPM and cumulative distance (~/wheel_odometry/rpm, ~/wheel_odometry/distance)
+  send_twist: false           # send geometry_msgs/TwistWithCovarianceStamped instead of nav_msgs/Odometry
+  frame_id: "map"             # origin frame
+  child_frame_id: "base_link" # body-fixed frame
+  vel_error: 0.1              # wheel velocity measurement error 1-std (m/s)
+  tf:
+    send: true
+    frame_id: "map"
+    child_frame_id: "base_link"
 
 # vim:set ts=2 sw=2 et:

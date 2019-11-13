@@ -2,6 +2,100 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* resolved merge conflict
+* Contributors: David Jablonski
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* Apply comments
+* Add mount configure service message
+* cog: Update all generated code
+* added manual flag to mavros/state
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: David Jablonski, Jaeyoung-Lim, Vladimir Ermakov, baumanta
+
+0.32.2 (2019-09-09)
+-------------------
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+* add mav_cmd associated with each point in trajectory plugin
+* Use MountControl Msg
+* Define new MountControl.msg
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
+0.31.0 (2019-06-07)
+-------------------
+* mavros_msgs: LandingTarget: update msg description link
+* extras: landing target: improve usability and flexibility
+* Contributors: TSC21
+
+0.30.0 (2019-05-20)
+-------------------
+
+0.29.2 (2019-03-06)
+-------------------
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* mavros_msgs: Fix line endings for OpticalFlowRad message
+* Contributors: Pierre Kancir, sfalexrog
+
+0.29.0 (2019-02-02)
+-------------------
+* Fix broken documentation URLs
+* Merge branch 'master' into param-timeout
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_msgs: Float32ArrayStamped replaced by WheelOdomStamped.
+* mavros_msgs: Float32ArrayStamped message added.
+  For streaming timestamped data from FCU sensors (RPM, WHEEL_DISTANCE, etc.)
+* msgs: Fix message id type, mavlink v2 uses 24 bit msg ids
+* mavros_msgs: add MessageInterval.srv to CMakeLists
+* sys_status: add set_message_interval service
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Pavlo Kolomiiets, Randy Mackay, Vladimir Ermakov
+
+0.28.0 (2019-01-03)
+-------------------
+* plugin:param: publish new param value
+* Merge pull request `#1148 <https://github.com/mavlink/mavros/issues/1148>`_ from Kiwa21/pr-param-value
+  param plugin : add msg and publisher to catch latest param value
+* msgs: update Header
+* sys_state: Small cleanup of `#1150 <https://github.com/mavlink/mavros/issues/1150>`_
+* VehicleInfo : add srv into sys_status plugin to request basic info from vehicle
+* mavros_msgs/msg/LogData.msg: Define "offset" field to be of type uint32
+* param plugin : add msg and publisher to catch latest param value
+* style clean up
+* Use component_id to determine message sender
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* Add message for avoidance status
+* Contributors: Gregoire Linard, Vladimir Ermakov, baumanta, mlvov
+
+0.27.0 (2018-11-12)
+-------------------
+* Add service to send mavlink TRIGG_INTERVAL commands
+  Adapt trigger_control service to current mavlink cmd spec. Add a new service to change trigger interval and integration time
+* Contributors: Moritz Zimmermann
+
 0.26.3 (2018-08-21)
 -------------------
 * fixup! 5a4344a2dcedc157f93b620cebd2e0b273ec24be

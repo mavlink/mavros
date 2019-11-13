@@ -40,8 +40,9 @@ std::atomic<size_t> MAVConnInterface::conn_id_counter {0};
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 	sys_id(system_id),
 	comp_id(component_id),
-	m_status {},
+	m_parse_status {},
 	m_buffer {},
+	m_mavlink_status {},
 	tx_total_bytes(0),
 	rx_total_bytes(0),
 	last_tx_total_bytes(0),
@@ -54,7 +55,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id) :
 
 mavlink_status_t MAVConnInterface::get_status()
 {
-	return m_status;
+	return m_mavlink_status;
 }
 
 MAVConnInterface::IOStat MAVConnInterface::get_iostat()
@@ -94,7 +95,6 @@ void MAVConnInterface::iostat_rx_add(size_t bytes)
 
 void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received)
 {
-	mavlink::mavlink_status_t status;
 	mavlink::mavlink_message_t message;
 
 	assert(bufsize >= bytes_received);
@@ -103,18 +103,7 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 	for (; bytes_received > 0; bytes_received--) {
 		auto c = *buf++;
 
-		// based on mavlink_parse_char()
-		auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_status, c, &message, &status));
-		if (msg_received == Framing::bad_crc || msg_received == Framing::bad_signature) {
-			mavlink::_mav_parse_error(&m_status);
-			m_status.msg_received = mavlink::MAVLINK_FRAMING_INCOMPLETE;
-			m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_IDLE;
-			if (c == MAVLINK_STX) {
-				m_status.parse_state = mavlink::MAVLINK_PARSE_STATE_GOT_STX;
-				m_buffer.len = 0;
-				mavlink::mavlink_start_checksum(&m_buffer);
-			}
-		}
+		auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_parse_status, c, &message, &m_mavlink_status));
 
 		if (msg_received != Framing::incomplete) {
 			log_recv(pfx, message, msg_received);
@@ -168,10 +157,10 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t
 	}
 }
 
-void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
+void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg, uint8_t source_compid)
 {
 	try {
-		send_message(msg);
+		send_message(msg, source_compid);
 	}
 	catch (std::length_error &e) {
 		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message %s: %s",
@@ -184,14 +173,14 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg)
 void MAVConnInterface::set_protocol_version(Protocol pver)
 {
 	if (pver == Protocol::V10)
-		m_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+		m_mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
 	else
-		m_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+		m_mavlink_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
 }
 
 Protocol MAVConnInterface::get_protocol_version()
 {
-	if (m_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)
+	if (m_mavlink_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)
 		return Protocol::V10;
 	else
 		return Protocol::V20;

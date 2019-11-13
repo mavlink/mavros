@@ -45,12 +45,17 @@ static constexpr double RAD_TO_DEG = 180.0 / M_PI;
 //! @brief IMU and attitude data publication plugin
 class IMUPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	IMUPlugin() : PluginBase(),
 		imu_nh("~imu"),
 		has_hr_imu(false),
 		has_raw_imu(false),
 		has_scaled_imu(false),
-		has_att_quat(false)
+		has_att_quat(false),
+		received_linear_accel(false),
+		linear_accel_vec_flu(Eigen::Vector3d::Zero()),
+		linear_accel_vec_frd(Eigen::Vector3d::Zero())
 	{ }
 
 	void initialize(UAS &uas_)
@@ -116,6 +121,7 @@ private:
 	bool has_raw_imu;
 	bool has_scaled_imu;
 	bool has_att_quat;
+	bool received_linear_accel;
 	Eigen::Vector3d linear_accel_vec_flu;
 	Eigen::Vector3d linear_accel_vec_frd;
 	ftf::Covariance3d linear_acceleration_cov;
@@ -186,6 +192,12 @@ private:
 		imu_ned_msg->angular_velocity_covariance = angular_velocity_cov;
 		imu_ned_msg->linear_acceleration_covariance = linear_acceleration_cov;
 
+		if (!received_linear_accel) {
+			// Set element 0 of covariance matrix to -1 if no data received as per sensor_msgs/Imu defintion
+			imu_enu_msg->linear_acceleration_covariance[0] = -1;
+			imu_ned_msg->linear_acceleration_covariance[0] = -1;
+		}
+
 		/** Store attitude in base_link ENU
 		 *  @snippet src/plugins/imu.cpp store_enu
 		 */
@@ -229,6 +241,7 @@ private:
 		// Save readings
 		linear_accel_vec_flu = accel_flu;
 		linear_accel_vec_frd = accel_frd;
+		received_linear_accel = true;
 
 		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
@@ -261,7 +274,7 @@ private:
 
 	/**
 	 * @brief Handle ATTITUDE MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE
+	 * Message specification: https://mavlink.io/en/messages/common.html#ATTITUDE
 	 * @param msg	Received Mavlink msg
 	 * @param att	ATTITUDE msg
 	 */
@@ -306,7 +319,7 @@ private:
 
 	/**
 	 * @brief Handle ATTITUDE_QUATERNION MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#ATTITUDE_QUATERNION
+	 * Message specification: https://mavlink.io/en/messages/common.html/#ATTITUDE_QUATERNION
 	 * @param msg		Received Mavlink msg
 	 * @param att_q		ATTITUDE_QUATERNION msg
 	 */
@@ -348,7 +361,7 @@ private:
 
 	/**
 	 * @brief Handle HIGHRES_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#HIGHRES_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#HIGHRES_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_hr	HIGHRES_IMU msg
 	 */
@@ -433,7 +446,7 @@ private:
 
 	/**
 	 * @brief Handle RAW_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#RAW_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#RAW_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_raw	RAW_IMU msg
 	 */
@@ -485,7 +498,7 @@ private:
 
 	/**
 	 * @brief Handle SCALED_IMU MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#SCALED_IMU
+	 * Message specification: https://mavlink.io/en/messages/common.html/#SCALED_IMU
 	 * @param msg		Received Mavlink msg
 	 * @param imu_raw	SCALED_IMU msg
 	 */
@@ -518,7 +531,7 @@ private:
 
 	/**
 	 * @brief Handle SCALED_PRESSURE MAVlink message.
-	 * Message specification: http://mavlink.org/messages/common/#SCALED_PRESSURE
+	 * Message specification: https://mavlink.io/en/messages/common.html/#SCALED_PRESSURE
 	 * @param msg		Received Mavlink msg
 	 * @param press		SCALED_PRESSURE msg
 	 */

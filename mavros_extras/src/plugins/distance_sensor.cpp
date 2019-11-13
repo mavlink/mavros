@@ -32,6 +32,8 @@ class DistanceSensorItem {
 public:
 	typedef boost::shared_ptr<DistanceSensorItem> Ptr;
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	DistanceSensorItem() :
 		is_subscriber(false),
 		send_tf(false),

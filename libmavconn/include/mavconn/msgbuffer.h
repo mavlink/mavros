@@ -92,4 +92,3 @@ struct MsgBuffer {
 	}
 };
 }	// namespace mavconn
-

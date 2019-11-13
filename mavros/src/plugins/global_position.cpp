@@ -22,6 +22,7 @@
 #include <GeographicLib/Geocentric.hpp>
 
 #include <std_msgs/Float64.h>
+#include <std_msgs/UInt32.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/NavSatStatus.h>
@@ -37,12 +38,14 @@ namespace std_plugins {
 /**
  * @brief Global position plugin.
  *
- * Publishes global position. Convertion from GPS LLA to ECEF allows
+ * Publishes global position. Conversion from GPS LLA to ECEF allows
  * publishing local position to TF and PoseWithCovarianceStamped.
  *
  */
 class GlobalPositionPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
@@ -72,6 +75,7 @@ public:
 		// gps data
 		raw_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("raw/fix", 10);
 		raw_vel_pub = gp_nh.advertise<geometry_msgs::TwistStamped>("raw/gps_vel", 10);
+		raw_sat_pub = gp_nh.advertise<std_msgs::UInt32>("raw/satellites", 10);
 
 		// fused global position
 		gp_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
@@ -107,6 +111,7 @@ private:
 
 	ros::Publisher raw_fix_pub;
 	ros::Publisher raw_vel_pub;
+	ros::Publisher raw_sat_pub;
 	ros::Publisher gp_odom_pub;
 	ros::Publisher gp_fix_pub;
 	ros::Publisher gp_hdg_pub;
@@ -207,6 +212,11 @@ private:
 
 			raw_vel_pub.publish(vel);
 		}
+
+		// publish satellite count
+		auto sat_cnt = boost::make_shared<std_msgs::UInt32>();
+		sat_cnt->data = raw_gps.satellites_visible;
+		raw_sat_pub.publish(sat_cnt);
 	}
 
 	void handle_gps_global_origin(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_GLOBAL_ORIGIN &glob_orig)
@@ -217,16 +227,20 @@ private:
 		g_origin->header.frame_id = tf_global_frame_id;
 		g_origin->header.stamp = ros::Time::now();
 
+		g_origin->position.latitude = glob_orig.latitude / 1E7;
+		g_origin->position.longitude = glob_orig.longitude / 1E7;
+		g_origin->position.altitude = glob_orig.altitude / 1E3 + m_uas->geoid_to_ellipsoid_height(&g_origin->position);	// convert height amsl to height above the ellipsoid
+
 		try {
 			/**
 			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 			 * Note: "earth" frame, in ECEF, of the global origin
 			 */
 			GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-					GeographicLib::Constants::WGS84_f());
+				GeographicLib::Constants::WGS84_f());
 
-			earth.Forward(glob_orig.latitude / 1E7, glob_orig.longitude / 1E7, glob_orig.altitude / 1E3,
-					g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
+			earth.Forward(g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude,
+				g_origin->position.latitude, g_origin->position.longitude, g_origin->position.altitude);
 
 			gp_global_origin_pub.publish(g_origin);
 		}
@@ -323,7 +337,7 @@ private:
 						map_point.x(), map_point.y(), map_point.z());
 
 			// Set the current fix as the "map" origin if it's not set
-			if (!is_map_init) {
+			if (!is_map_init && fix->status.status >= sensor_msgs::NavSatStatus::STATUS_FIX) {
 				map_origin.x() = fix->latitude;
 				map_origin.y() = fix->longitude;
 				map_origin.z() = fix->altitude;

@@ -2,6 +2,174 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.3 (2019-11-13)
+-------------------
+* package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
+* Contributors: Vladimir Ermakov
+
+0.33.2 (2019-11-13)
+-------------------
+* Add trajectory_msg as dependency
+* Contributors: Jaeyoung-Lim
+
+0.33.1 (2019-11-11)
+-------------------
+* Merge pull request `#1297 <https://github.com/mavlink/mavros/issues/1297>`_ from dayjaby/feature/mount_orientation
+  adding mount orientation to mount_control plugin
+* landing_target: Fix cartesian to displacement bug
+  I think these four conditionals are buggy:
+  The first is    (x and y) > 0
+  and should be   (x > 0) and (y > 0)
+  (This one actually works the way it's written.)
+  The second is   (x < 0 and y) > 0
+  and should be   (x < 0) and (y > 0)
+  The third is    (x and y) < 0
+  and should be   (x < 0) and (y < 0)
+  The fourth is   (x < 0 and y) < 0
+  and should be   (x > 0) and (y < 0)
+* obstacle distance plugin: Add ROS param for mavlink frame
+  Makes it possible to specify the 'frame' field in the MAVLink
+  OBSTACLE_DISTANCE message sent by this plugin. Previously the
+  frame was not defined, which means it defaulted to MAV_FRAME_GLOBAL.
+  (See https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE)
+  The default frame is therefore still MAV_FRAME_GLOBAL.
+* resolved merge conflict
+* adding mount orientation to mount_control plugin
+* Contributors: David Jablonski, Morten Fyhn Amundsen, Vladimir Ermakov
+
+0.33.0 (2019-10-10)
+-------------------
+* CleanUp
+* Odom Plugin, enforcing ROS convetion, less options but clearer to use
+* Fix service namespace with new nodehandle
+* Add mount configure service
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: Jaeyoung-Lim, baumanta, kamilritz
+
+0.32.2 (2019-09-09)
+-------------------
+* clean up
+* fix obstacle distance plugin
+* Contributors: baumanta
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+* use direclty radians in yaml files
+* add mav_cmd associated with each point in trajectory plugin
+* Fix typo
+* Address comments
+* Send messages from callback
+* Use MountControl Msg
+* Add mount control class template
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
+0.31.0 (2019-06-07)
+-------------------
+* landing_target: fix landing target pose input topic naming
+* fix naming for file
+* mavros_plugins: fix landing_target plugin init
+* landing_target: change topic subscription naming
+* extras: mavros_plugins.xml: fix malform on XML file
+* landing_target: use m_uas
+* visualization: set the frame and child frame id back to map and base_link
+* general fixup to update the landing_target codebase
+* extras: landing target: improve usability and flexibility
+* ident correction
+* landing_target: use Eigen::Quaterniond::Identity()
+* visualization: small correction on cb
+* landing_target: ident correct
+* landing_target: ident correction
+* renamed copter_visualization to just visualization
+* landing_target: target orientation: assess it is not possible
+* copter_visualization: add target_size and landing_target subscriber in copter_visualization node, so to publish a marker of the target
+* uas_stringify: changed UAS::idx_frame() to UAS::frame_from_str()
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: small correction on math
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: corrected pkt parser order
+* landing_target: added stringify usage on code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: removed PoseWithCovarianceStamped include
+* landing_target: remove the need of local_position subscription
+* landing_target: fixed local_position subscriber topic name
+* landing_target: updated notation and applied correct math to conversions
+* landing_target: first commit
+* Contributors: TSC21
+
+0.30.0 (2019-05-20)
+-------------------
+* Fixed an issue when the laser scan topic contains NaN values they where being sent as 0 distances. (`#1218 <https://github.com/mavlink/mavros/issues/1218>`_)
+* extras `#1223 <https://github.com/mavlink/mavros/issues/1223>`_: Add eigen aligned allocators to plugin classes.
+* gps_rtk: fix multi segment messages
+* Update the readme
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jaime Machuca, Vladimir Ermakov
+
+0.29.2 (2019-03-06)
+-------------------
+* extras: odom: update velocity covariance fields from 'twist' to 'velocity_covariance'
+* Contributors: TSC21
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* mavros_extras: Convert source files to Unix line endings
+* Contributors: Pierre Kancir, Vladimir Ermakov, sfalexrog
+
+0.29.0 (2019-02-02)
+-------------------
+* obstacle_distance: align comments
+* obstacle_distance: fixup items after peer review
+  changes include using size_t instead of int for loop variables
+  scale_factor calculation ensures argument are floating point
+  remove unnecessary n variable
+* obstacle_distance: combine sensor distances to fit within outgoing message
+* gps_rtk: documentation fixes
+* Fix broken documentation URLs
+* added tf2_eigen to dependencies, so that building with catkin tools does not fail anymore
+* Merge branch 'master' into param-timeout
+* mavros_extras: Wheel odometry plugin updated according to the final mavlink WHEEL_DISTANCE message.
+* mavros_extras: mavros_plugins.xml fix after bad merge.
+* mavros_extras: Wheel odometry plugin, twist covariance matrix non-used diagonal elements zeroed.
+* mavros_extras: Wheel odometry plugin, odometry error propagation added respecting kinematics.
+* mavros_extras: Wheel odometry plugin travelled distance fixed.
+* mavros_extras: Wheel odometry plugin y-speed covariance fixed.
+* mavros_extras: Wheel odometry plugin updated to compute accurate speeds from distances using internal timesteps.
+* mavros_extras: Wheel odometry plugin fixes after CR.
+* mavros_msgs: Float32ArrayStamped replaced by WheelOdomStamped.
+* mavros_extras: Wheel odometry plugin added.
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jan Heitmann, Pavlo Kolomiiets, Randy Mackay, Vladimir Ermakov
+
+0.28.0 (2019-01-03)
+-------------------
+* odom: add ODOMETRY handler and publisher
+* remove newlines after doxygen
+* style clean up
+* Use component_id to determine message sender
+* send out companion status as heartbeat
+* change message name from COMPANION_STATUS to COMPANION_PROCESS_STATUS
+* change message to include pid
+* Change from specific avoidance status message to a more generic companion status message
+* add plugin to receive avoidance status message
+* Contributors: TSC21, baumanta
+
+0.27.0 (2018-11-12)
+-------------------
+* extras `#1110 <https://github.com/mavlink/mavros/issues/1110>`_ `#1111 <https://github.com/mavlink/mavros/issues/1111>`_: add eigen aligment to plugins with eigen-typed members
+* Fix odom message to use covariance from msg
+* Contributors: Dion Gonano, Vladimir Ermakov
+
 0.26.3 (2018-08-21)
 -------------------
 * fixup! b43279058a3029c67ea75b1ecb86442c9dc991d4

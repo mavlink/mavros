@@ -1,6 +1,6 @@
 /**
- * @brief Copter visualization
- * @file copter_visualization.cpp
+ * @brief Visualization
+ * @file visualization.cpp
  * @author M.H.Kabir <mhkabir98@gmail.com>
  */
 /*
@@ -19,6 +19,7 @@
 #include <ros/console.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -28,10 +29,19 @@ static std::string child_frame_id;
 static double marker_scale;
 static int max_track_size = 100;
 
-// merker publishers
+// source subscribers
+ros::Subscriber local_position_sub;
+ros::Subscriber landing_target_sub;
+ros::Subscriber lt_marker_sub;
+
+// marker publishers
 ros::Publisher track_marker_pub;
 ros::Publisher vehicle_marker_pub;
+ros::Publisher lt_marker_pub;
 ros::Publisher wp_marker_pub;
+
+// landing target marker size
+geometry_msgs::Vector3 lt_size;
 
 boost::shared_ptr<visualization_msgs::MarkerArray> vehicle_marker;
 
@@ -97,6 +107,55 @@ static void publish_wp_marker(const geometry_msgs::PoseStamped::ConstPtr &wp)
 	wp_marker_pub.publish(marker);
 }
 
+
+/**
+ * @brief publish landing target marker
+ */
+static void publish_lt_marker(const geometry_msgs::PoseStamped::ConstPtr &target)
+{
+	static int marker_id = 2;	// TODO: generate new marker for each target
+
+	auto marker = boost::make_shared<visualization_msgs::Marker>();
+
+	marker->header = target->header;
+	marker->ns = "landing_target";
+	marker->id = marker_id;
+	marker->type = visualization_msgs::Marker::CUBE;
+	marker->action = visualization_msgs::Marker::ADD;
+
+	marker->color.a = 1.0;
+	marker->color.r = 1.0;
+	marker->color.g = 0.0;
+	marker->color.b = 0.0;
+
+	marker->scale.x = 1.0;
+	marker->scale.y = 1.0;
+	marker->scale.z = 1.0;
+
+	// origin
+	marker->pose = target->pose;
+	lt_marker_pub.publish(marker);
+
+	// cross arms
+	marker->pose.position.x = lt_size.x;
+	marker->pose.position.y = lt_size.y;
+	marker->pose.position.z = lt_size.z;
+
+	marker->id = ++marker_id;
+	marker->pose.orientation.w = 0;
+	marker->pose.orientation.x = 0;
+	marker->pose.orientation.y = 0;
+	marker->pose.orientation.w = 0;
+	lt_marker_pub.publish(marker);
+
+	marker->id = ++marker_id;
+	// 90 degrees rotation
+	marker->pose.orientation.w = 0.70711;
+	marker->pose.orientation.x = 0;
+	marker->pose.orientation.y = 0;
+	marker->pose.orientation.w = 0.70711;
+	lt_marker_pub.publish(marker);
+}
 
 /**
  * @brief publish vehicle
@@ -197,6 +256,16 @@ void setpoint_local_pos_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &wp)
 	publish_wp_marker(wp);
 }
 
+static void landing_target_sub_cb(const geometry_msgs::PoseStamped::ConstPtr &target)
+{
+	publish_lt_marker(target);
+}
+
+static void lt_marker_sub_cb(const geometry_msgs::Vector3Stamped::ConstPtr &lt_marker)
+{
+	lt_size = lt_marker->vector;
+}
+
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "copter_visualization");
@@ -210,7 +279,7 @@ int main(int argc, char *argv[])
 	priv_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
 
 	priv_nh.param("marker_scale", marker_scale, 1.0);
-	priv_nh.param("num_rotors", num_rotors, 4);
+	priv_nh.param("num_rotors", num_rotors, 6);
 	priv_nh.param("arm_len", arm_len, 0.22 );
 	priv_nh.param("body_width", body_width, 0.15 );
 	priv_nh.param("body_height", body_height, 0.10 );
@@ -221,9 +290,11 @@ int main(int argc, char *argv[])
 	track_marker_pub = nh.advertise<visualization_msgs::Marker>("track_markers", 10);
 	vehicle_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("vehicle_marker", 10);
 	wp_marker_pub = nh.advertise<visualization_msgs::Marker>("wp_markers", 10);
+	lt_marker_pub = nh.advertise<visualization_msgs::Marker>("landing_target", 10);
 
 	auto pos_sub = nh.subscribe("local_position", 10, local_position_sub_cb);
 	auto wp_sub = nh.subscribe("local_setpoint", 10, setpoint_local_pos_sub_cb);
+	lt_marker_sub = nh.subscribe("lt_marker", 10, lt_marker_sub_cb);
 
 	ros::spin();
 	return 0;

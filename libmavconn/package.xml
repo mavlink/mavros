@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>libmavconn</name>
-  <version>0.26.3</version>
+  <version>0.33.3</version>
   <description>
     MAVLink communication library.
     This library provide unified connection handling classes
@@ -26,6 +26,7 @@
   <depend>mavlink</depend>
   <depend>libconsole-bridge-dev</depend>
 
+  <test_depend>rosunit</test_depend>
   <test_depend>gtest</test_depend>
 
   <export>

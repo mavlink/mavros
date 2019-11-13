@@ -15,6 +15,7 @@
  */
 
 #include <array>
+#include <unordered_map>
 #include <mavros/utils.h>
 #include <ros/console.h>
 
@@ -23,6 +24,7 @@ namespace utils {
 using mavlink::common::MAV_AUTOPILOT;
 using mavlink::common::MAV_TYPE;
 using mavlink::common::MAV_STATE;
+using mavlink::common::MAV_COMPONENT;
 using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;
@@ -30,6 +32,7 @@ using mavlink::common::GPS_FIX_TYPE;
 using mavlink::common::MAV_MISSION_RESULT;
 using mavlink::common::MAV_FRAME;
 using mavlink::common::MAV_DISTANCE_SENSOR;
+using mavlink::common::LANDING_TARGET_TYPE;
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -50,34 +53,52 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 //     d = l - len(v)
 //     return ' ' * d if d > 0 else ' '
 //
-// def ename_array_name(ename):
+// def ename_array_name(ename, suffix=None):
 //     l = ename.rsplit('::', 1)
-//     return (l[1] if len(l) > 1 else l[0]).lower() + '_strings'
+//     return (l[1] if len(l) > 1 else l[0]).lower() + (suffix or '_strings')
 //
-// def array_outl(name, enum):
-//     array = ename_array_name(name)
-//     cog.outl("//! %s values" % name)
-//     cog.outl("static const std::array<const std::string, %s> %s{{" % (len(enum), array))
+// def array_outl(name, enum, suffix=None):
+//     array = ename_array_name(name, suffix)
+//     cog.outl(f"""\
+// //! {name} values
+// static const std::array<const std::string, {len(enum)}> {array}{{{{""")
 //
-// def to_string_outl(ename):
-//     array = ename_array_name(ename)
-//     cog.outl("std::string to_string({ename} e)".format(**locals()))
-//     cog.outl("{")
-//     cog.outl("	size_t idx = enum_value(e);")
-//     cog.outl("	if (idx >= {array}.size())".format(**locals()))
-//     cog.outl("		return std::to_string(idx);")
+// def to_string_outl(ename, funcname='to_string', suffix=None):
+//     array = ename_array_name(ename, suffix)
+//     cog.outl(f"""\
+// std::string {funcname}({ename} e)
+// {{
+// 	size_t idx = enum_value(e);
+// 	if (idx >= {array}.size())
+// 		return std::to_string(idx);
+//
+// 	return {array}[idx];
+// }}""")
+//
+// def enum_name_is_value_outl(ename, suffix=None, funcname='to_string'):
+//     enum = get_enum(ename)
+//
+//     array_outl(ename, enum, suffix)
+//     for k, e in enum:
+//         name_short =  e.name[len(ename) + 1:]
+//         sp = make_whitespace(30, name_short)
+//         if e.description:
+//             cog.outl(f"""/* {k:>2} */ "{name_short}",{sp}// {e.description}""")
+//         else:
+//             cog.outl(f"""/* {k:>2} */ "{name_short}",""")
+//
+//     cog.outl("}};")
 //     cog.outl()
-//     cog.outl("	return {array}[idx];".format(**locals()))
-//     cog.outl("}")
+//     to_string_outl(ename, funcname, suffix)
 //
 // ename = 'MAV_AUTOPILOT'
 // enum = get_enum(ename)
 //
 // array_outl(ename, enum)
 // for k, e in enum:
-//     value = split_by(',-/.', e.description)
+//     value = split_by('-,/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -88,7 +109,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
-/*  3 */ "ArduPilotMega / ArduCopter",    // ArduPilotMega / ArduCopter, http://diydrones.com
+/*  3 */ "ArduPilot",                     // ArduPilot - Plane/Copter/Rover/Sub/Tracker, http://ardupilot.org
 /*  4 */ "OpenPilot",                     // OpenPilot, http://openpilot.org
 /*  5 */ "Generic autopilot only supporting simple waypoints", // Generic autopilot only supporting simple waypoints
 /*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands", // Generic autopilot supporting waypoints and other simple navigation commands
@@ -97,7 +118,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  9 */ "PPZ UAV",                       // PPZ UAV - http://nongnu.org/paparazzi
 /* 10 */ "UAV Dev Board",                 // UAV Dev Board
 /* 11 */ "FlexiPilot",                    // FlexiPilot
-/* 12 */ "PX4 Autopilot",                 // PX4 Autopilot - http://pixhawk.ethz.ch/px4/
+/* 12 */ "PX4 Autopilot",                 // PX4 Autopilot - http://px4.io/
 /* 13 */ "SMACCMPilot",                   // SMACCMPilot - http://smaccmpilot.org
 /* 14 */ "AutoQuad",                      // AutoQuad -- http://autoquad.org
 /* 15 */ "Armazila",                      // Armazila -- http://armazila.com
@@ -115,7 +136,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 26c102bc107fa3ef8ea73ef16513c42f)
+// [[[end]]] (checksum: 4b5a1e0cd8f9d21b956818e7efa3bc2e)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -125,7 +146,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // for k, e in enum:
 //     value = split_by(',-/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -159,13 +180,13 @@ static const std::array<const std::string, 33> mav_type_strings{{
 /* 23 */ "VTOL reserved 3",               // VTOL reserved 3
 /* 24 */ "VTOL reserved 4",               // VTOL reserved 4
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
-/* 26 */ "Onboard gimbal",                // Onboard gimbal
-/* 27 */ "Onboard ADSB peripheral",       // Onboard ADSB peripheral
+/* 26 */ "Gimbal (standalone)",           // Gimbal (standalone)
+/* 27 */ "ADSB system (standalone)",      // ADSB system (standalone)
 /* 28 */ "Steerable",                     // Steerable, nonrigid airfoil
 /* 29 */ "Dodecarotor",                   // Dodecarotor
-/* 30 */ "Camera",                        // Camera
+/* 30 */ "Camera (standalone)",           // Camera (standalone)
 /* 31 */ "Charging station",              // Charging station
-/* 32 */ "Onboard FLARM collision avoidance system", // Onboard FLARM collision avoidance system
+/* 32 */ "FLARM collision avoidance system (standalone)", // FLARM collision avoidance system (standalone)
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -176,7 +197,58 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 31488f5970b0f82b3efef71e32590bb6)
+// [[[end]]] (checksum: b441cfd88ee1a6fc8c8bc8f4e6df5825)
+
+// [[[cog:
+// ename = 'MAV_TYPE'
+// enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
+// ]]]
+//! MAV_TYPE values
+static const std::array<const std::string, 33> mav_type_names{{
+/*  0 */ "GENERIC",                       // Generic micro air vehicle.
+/*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
+/*  2 */ "QUADROTOR",                     // Quadrotor
+/*  3 */ "COAXIAL",                       // Coaxial helicopter
+/*  4 */ "HELICOPTER",                    // Normal helicopter with tail rotor.
+/*  5 */ "ANTENNA_TRACKER",               // Ground installation
+/*  6 */ "GCS",                           // Operator control unit / ground control station
+/*  7 */ "AIRSHIP",                       // Airship, controlled
+/*  8 */ "FREE_BALLOON",                  // Free balloon, uncontrolled
+/*  9 */ "ROCKET",                        // Rocket
+/* 10 */ "GROUND_ROVER",                  // Ground rover
+/* 11 */ "SURFACE_BOAT",                  // Surface vessel, boat, ship
+/* 12 */ "SUBMARINE",                     // Submarine
+/* 13 */ "HEXAROTOR",                     // Hexarotor
+/* 14 */ "OCTOROTOR",                     // Octorotor
+/* 15 */ "TRICOPTER",                     // Tricopter
+/* 16 */ "FLAPPING_WING",                 // Flapping wing
+/* 17 */ "KITE",                          // Kite
+/* 18 */ "ONBOARD_CONTROLLER",            // Onboard companion controller
+/* 19 */ "VTOL_DUOROTOR",                 // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
+/* 20 */ "VTOL_QUADROTOR",                // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
+/* 21 */ "VTOL_TILTROTOR",                // Tiltrotor VTOL
+/* 22 */ "VTOL_RESERVED2",                // VTOL reserved 2
+/* 23 */ "VTOL_RESERVED3",                // VTOL reserved 3
+/* 24 */ "VTOL_RESERVED4",                // VTOL reserved 4
+/* 25 */ "VTOL_RESERVED5",                // VTOL reserved 5
+/* 26 */ "GIMBAL",                        // Gimbal (standalone)
+/* 27 */ "ADSB",                          // ADSB system (standalone)
+/* 28 */ "PARAFOIL",                      // Steerable, nonrigid airfoil
+/* 29 */ "DODECAROTOR",                   // Dodecarotor
+/* 30 */ "CAMERA",                        // Camera (standalone)
+/* 31 */ "CHARGING_STATION",              // Charging station
+/* 32 */ "FLARM",                         // FLARM collision avoidance system (standalone)
+}};
+
+std::string to_name(MAV_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= mav_type_names.size())
+		return std::to_string(idx);
+
+	return mav_type_names[idx];
+}
+// [[[end]]] (checksum: 6accf424d6136b55b15efbb86bb0c5cd)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -259,23 +331,6 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 }
 
 // [[[cog:
-// def enum_name_is_value_outl(ename):
-//     enum = get_enum(ename)
-//
-//     array_outl(ename, enum)
-//     for k, e in enum:
-//         name_short =  e.name[len(ename) + 1:]
-//         sp = make_whitespace(30, name_short)
-//         if e.description:
-//             cog.outl("""/* {k:>2} */ "{name_short}",{sp}// {e.description}""".format(**locals()))
-//         else:
-//             cog.outl("""/* {k:>2} */ "{name_short}",""".format(**locals()))
-//
-//     cog.outl("}};")
-//     cog.outl()
-//     to_string_outl(ename)
-//
-//
 // ename = 'ADSB_ALTITUDE_TYPE'
 // enum_name_is_value_outl(ename)
 // ]]]
@@ -398,22 +453,23 @@ std::string to_string(GPS_FIX_TYPE e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_MISSION_RESULT values
-static const std::array<const std::string, 15> mav_mission_result_strings{{
+static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  0 */ "mission accepted OK",           // mission accepted OK
-/*  1 */ "generic error / not accepting mission commands at all right now", // generic error / not accepting mission commands at all right now
-/*  2 */ "coordinate frame is not supported", // coordinate frame is not supported
-/*  3 */ "command is not supported",      // command is not supported
-/*  4 */ "mission item exceeds storage space", // mission item exceeds storage space
-/*  5 */ "one of the parameters has an invalid value", // one of the parameters has an invalid value
-/*  6 */ "param1 has an invalid value",   // param1 has an invalid value
-/*  7 */ "param2 has an invalid value",   // param2 has an invalid value
-/*  8 */ "param3 has an invalid value",   // param3 has an invalid value
-/*  9 */ "param4 has an invalid value",   // param4 has an invalid value
-/* 10 */ "x/param5 has an invalid value", // x/param5 has an invalid value
-/* 11 */ "y/param6 has an invalid value", // y/param6 has an invalid value
-/* 12 */ "param7 has an invalid value",   // param7 has an invalid value
-/* 13 */ "received waypoint out of sequence", // received waypoint out of sequence
-/* 14 */ "not accepting any mission commands from this communication partner", // not accepting any mission commands from this communication partner
+/*  1 */ "Generic error / not accepting mission commands at all right now.", // Generic error / not accepting mission commands at all right now.
+/*  2 */ "Coordinate frame is not supported.", // Coordinate frame is not supported.
+/*  3 */ "Command is not supported.",     // Command is not supported.
+/*  4 */ "Mission item exceeds storage space.", // Mission item exceeds storage space.
+/*  5 */ "One of the parameters has an invalid value.", // One of the parameters has an invalid value.
+/*  6 */ "param1 has an invalid value.",  // param1 has an invalid value.
+/*  7 */ "param2 has an invalid value.",  // param2 has an invalid value.
+/*  8 */ "param3 has an invalid value.",  // param3 has an invalid value.
+/*  9 */ "param4 has an invalid value.",  // param4 has an invalid value.
+/* 10 */ "x / param5 has an invalid value.", // x / param5 has an invalid value.
+/* 11 */ "y / param6 has an invalid value.", // y / param6 has an invalid value.
+/* 12 */ "z / param7 has an invalid value.", // z / param7 has an invalid value.
+/* 13 */ "Mission item received out of sequence", // Mission item received out of sequence
+/* 14 */ "Not accepting any mission commands from this communication partner.", // Not accepting any mission commands from this communication partner.
+/* 15 */ "Current mission operation cancelled (e.g. mission upload, mission download).", // Current mission operation cancelled (e.g. mission upload, mission download).
 }};
 
 std::string to_string(MAV_MISSION_RESULT e)
@@ -424,7 +480,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
 	return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: 06dac7af3755763d02332dea1ebf6a91)
+// [[[end]]] (checksum: d42db24957df1950d06edbf9480dde46)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -432,18 +488,18 @@ std::string to_string(MAV_MISSION_RESULT e)
 // ]]]
 //! MAV_FRAME values
 static const std::array<const std::string, 20> mav_frame_strings{{
-/*  0 */ "GLOBAL",                        // Global coordinate frame, WGS84 coordinate system. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
+/*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
 /*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
-/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: east, y: north, z: up).
-/*  5 */ "GLOBAL_INT",                    // Global coordinate frame, WGS84 coordinate system. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
-/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global coordinate frame, WGS84 coordinate system, relative altitude over ground with respect to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
 /*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
 /*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
-/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
 /* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: forward, y: right, z: down).
 /* 13 */ "BODY_FLU",                      // Body fixed frame of reference, Z-up (x: forward, y: left, z: up).
 /* 14 */ "MOCAP_NED",                     // Odometry local coordinate frame of data given by a motion capture system, Z-down (x: north, y: east, z: down).
@@ -462,7 +518,79 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: 51190f7ce3474a7189c11eb3e63b9322)
+// [[[end]]] (checksum: a075e35372e9be53a3a0ce79e45236c1)
+
+// [[[cog:
+// ename = 'MAV_COMPONENT'
+// suffix = 'MAV_COMP_ID'
+// enum = get_enum(ename)
+//
+// cog.outl(f"static const std::unordered_map<size_t, const std::string> {suffix.lower()}_strings{{{{")
+// for k, e in enum:
+//     name_short =  e.name[len(suffix) + 1:]
+//     sp = make_whitespace(30, name_short)
+//     if e.description:
+//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},{sp}// {e.description}""")
+//     else:
+//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},""")
+//
+// cog.outl("}};")
+// ]]]
+static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
+{   0, "ALL" },                           // Used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces.
+{   1, "AUTOPILOT1" },                    // System flight controller component ("autopilot"). Only one autopilot is expected in a particular system.
+{ 100, "CAMERA" },                        // Camera #1.
+{ 101, "CAMERA2" },                       // Camera #2.
+{ 102, "CAMERA3" },                       // Camera #3.
+{ 103, "CAMERA4" },                       // Camera #4.
+{ 104, "CAMERA5" },                       // Camera #5.
+{ 105, "CAMERA6" },                       // Camera #6.
+{ 140, "SERVO1" },                        // Servo #1.
+{ 141, "SERVO2" },                        // Servo #2.
+{ 142, "SERVO3" },                        // Servo #3.
+{ 143, "SERVO4" },                        // Servo #4.
+{ 144, "SERVO5" },                        // Servo #5.
+{ 145, "SERVO6" },                        // Servo #6.
+{ 146, "SERVO7" },                        // Servo #7.
+{ 147, "SERVO8" },                        // Servo #8.
+{ 148, "SERVO9" },                        // Servo #9.
+{ 149, "SERVO10" },                       // Servo #10.
+{ 150, "SERVO11" },                       // Servo #11.
+{ 151, "SERVO12" },                       // Servo #12.
+{ 152, "SERVO13" },                       // Servo #13.
+{ 153, "SERVO14" },                       // Servo #14.
+{ 154, "GIMBAL" },                        // Gimbal component.
+{ 155, "LOG" },                           // Logging component.
+{ 156, "ADSB" },                          // Automatic Dependent Surveillance-Broadcast (ADS-B) component.
+{ 157, "OSD" },                           // On Screen Display (OSD) devices for video links.
+{ 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter microservice.
+{ 159, "QX1_GIMBAL" },                    // Gimbal ID for QX1.
+{ 160, "FLARM" },                         // FLARM collision alert component.
+{ 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
+{ 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
+{ 196, "OBSTACLE_AVOIDANCE" },            // Component that plans a collision free path between two points.
+{ 197, "VISUAL_INERTIAL_ODOMETRY" },      // Component that provides position estimates using VIO techniques.
+{ 200, "IMU" },                           // Inertial Measurement Unit (IMU) #1.
+{ 201, "IMU_2" },                         // Inertial Measurement Unit (IMU) #2.
+{ 202, "IMU_3" },                         // Inertial Measurement Unit (IMU) #3.
+{ 220, "GPS" },                           // GPS #1.
+{ 221, "GPS2" },                          // GPS #2.
+{ 240, "UDP_BRIDGE" },                    // Component to bridge MAVLink to UDP (i.e. from a UART).
+{ 241, "UART_BRIDGE" },                   // Component to bridge to UART (i.e. from UDP).
+{ 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
+}};
+// [[[end]]] (checksum: 794ea890a87beb831d74eb2920000ea9)
+
+std::string to_string(MAV_COMPONENT e)
+{
+	size_t idx = enum_value(e);
+	auto it = mav_comp_id_strings.find(idx);
+
+	if (it == mav_comp_id_strings.end())
+		return std::to_string(idx);
+
+	return it->second;
+}
 
 MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 {
@@ -475,6 +603,18 @@ MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 
 	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
 	return MAV_FRAME::LOCAL_NED;
+}
+
+MAV_TYPE mav_type_from_str(const std::string &mav_type)
+{
+	for (size_t idx = 0; idx < mav_type_names.size(); idx++) {
+		if (mav_type_names[idx] == mav_type) {
+			std::underlying_type<MAV_TYPE>::type rv = idx;
+			return static_cast<MAV_TYPE>(rv);
+		}
+	}
+	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown MAV_TYPE: " << mav_type);
+	return MAV_TYPE::GENERIC;
 }
 
 // [[[cog:
@@ -499,6 +639,40 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 	return mav_distance_sensor_strings[idx];
 }
 // [[[end]]] (checksum: 3f792ad01cdb3f2315a8907f578ab5b3)
+
+// [[[cog:
+// ename = 'LANDING_TARGET_TYPE'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! LANDING_TARGET_TYPE values
+static const std::array<const std::string, 4> landing_target_type_strings{{
+/*  0 */ "LIGHT_BEACON",                  // Landing target signaled by light beacon (ex: IR-LOCK)
+/*  1 */ "RADIO_BEACON",                  // Landing target signaled by radio beacon (ex: ILS, NDB)
+/*  2 */ "VISION_FIDUCIAL",               // Landing target represented by a fiducial marker (ex: ARTag)
+/*  3 */ "VISION_OTHER",                  // Landing target represented by a pre-defined visual shape/feature (ex: X-marker, H-marker, square)
+}};
+
+std::string to_string(LANDING_TARGET_TYPE e)
+{
+	size_t idx = enum_value(e);
+	if (idx >= landing_target_type_strings.size())
+		return std::to_string(idx);
+
+	return landing_target_type_strings[idx];
+}
+// [[[end]]] (checksum: a42789c10cbebd5bc253abca2a07289b)
+
+LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type)
+{
+	for (size_t idx = 0; idx < landing_target_type_strings.size(); idx++) {
+		if (landing_target_type_strings[idx] == landing_target_type) {
+			std::underlying_type<LANDING_TARGET_TYPE>::type rv = idx;
+			return static_cast<LANDING_TARGET_TYPE>(rv);
+		}
+	}
+	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown LANDING_TARGET_TYPE: " << landing_target_type << ". Defaulting to LIGHT_BEACON");
+	return LANDING_TARGET_TYPE::LIGHT_BEACON;
+}
 
 }	// namespace utils
 }	// namespace mavros
