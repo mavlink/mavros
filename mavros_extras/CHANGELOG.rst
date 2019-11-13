@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.3 (2019-11-13)
+-------------------
 * package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
 * Contributors: Vladimir Ermakov
 
