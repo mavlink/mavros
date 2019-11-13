@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.2 (2019-11-13)
+-------------------
 * Add trajectory_msg as dependency
 * Contributors: Jaeyoung-Lim
 
