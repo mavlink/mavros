@@ -18,6 +18,7 @@ add_message_files(
   CompanionProcessStatus.msg
   OnboardComputerStatus.msg
   DebugValue.msg
+  EstimatorStatus.msg
   ExtendedState.msg
   FileEntry.msg
   GlobalPositionTarget.msg

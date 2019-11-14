@@ -1,0 +1,13 @@
+std_msgs/Header header
+bool stable_attitude
+bool stable_hor_velocity_est
+bool stable_ver_velocity_est
+bool stable_hor_position_est_rel
+bool stable_hor_position_est_abs
+bool stable_ver_position_est_abs
+bool stable_ver_position_est_agl
+bool const_position_mode
+bool pred_hor_position_rel
+bool pred_hor_position_abs
+bool gps_glitch
+bool accel_error
