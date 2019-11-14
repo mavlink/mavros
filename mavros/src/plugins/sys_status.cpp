@@ -917,18 +917,18 @@ private:
 		using mavlink::common::ESTIMATOR_STATUS_FLAGS;
 		mavros_msgs::EstimatorStatus status_msg;
 		status_msg.header.stamp = ros::Time::now();
-		status_msg.stable_attitude = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ATTITUDE));
-		status_msg.stable_hor_velocity_est = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_HORIZ));
-		status_msg.stable_ver_velocity_est = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_VERT));
-		status_msg.stable_hor_position_est_rel = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_REL));
-		status_msg.stable_hor_position_est_abs = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_ABS));
-		status_msg.stable_ver_position_est_abs = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_ABS));
-		status_msg.stable_ver_position_est_agl = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_AGL));
-		status_msg.const_position_mode = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::CONST_POS_MODE));
-		status_msg.pred_hor_position_rel = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_REL));
-		status_msg.pred_hor_position_abs = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_ABS));
-		status_msg.gps_glitch = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::GPS_GLITCH));
-		status_msg.accel_error = (bool)(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ACCEL_ERROR));
+		status_msg.stable_attitude = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ATTITUDE));
+		status_msg.stable_hor_velocity_est = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_HORIZ));
+		status_msg.stable_ver_velocity_est = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_VERT));
+		status_msg.stable_hor_position_est_rel = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_REL));
+		status_msg.stable_hor_position_est_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_ABS));
+		status_msg.stable_ver_position_est_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_ABS));
+		status_msg.stable_ver_position_est_agl = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_AGL));
+		status_msg.const_position_mode = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::CONST_POS_MODE));
+		status_msg.pred_hor_position_rel = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_REL));
+		status_msg.pred_hor_position_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_ABS));
+		status_msg.gps_glitch = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::GPS_GLITCH));
+		status_msg.accel_error = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ACCEL_ERROR));
 		estimator_status_pub.publish(status_msg);
 	}
 
