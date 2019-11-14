@@ -11,3 +11,4 @@ bool pred_hor_position_rel
 bool pred_hor_position_abs
 bool gps_glitch
 bool accel_error
+
