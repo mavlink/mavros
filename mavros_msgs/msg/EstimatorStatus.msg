@@ -1,3 +1,7 @@
+# Current autopilot estimator state
+#
+# https://mavlink.io/en/messages/common.html#ESTIMATOR_STATUS_FLAGS
+
 std_msgs/Header header
 bool stable_attitude
 bool stable_hor_velocity_est
