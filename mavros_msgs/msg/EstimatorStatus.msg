@@ -3,16 +3,15 @@
 # https://mavlink.io/en/messages/common.html#ESTIMATOR_STATUS_FLAGS
 
 std_msgs/Header header
-bool stable_attitude
-bool stable_hor_velocity_est
-bool stable_ver_velocity_est
-bool stable_hor_position_est_rel
-bool stable_hor_position_est_abs
-bool stable_ver_position_est_abs
-bool stable_ver_position_est_agl
-bool const_position_mode
-bool pred_hor_position_rel
-bool pred_hor_position_abs
-bool gps_glitch
-bool accel_error
-
+bool attitude_status_flag
+bool velocity_horiz_status_flag
+bool velocity_vert_status_flag
+bool pos_horiz_rel_status_flag
+bool pos_horiz_abs_status_flag
+bool pos_vert_abs_status_flag
+bool pos_vert_agl_status_flag
+bool const_pos_mode_status_flag
+bool pred_pos_horiz_rel_status_flag
+bool pred_pos_horiz_abs_status_flag
+bool gps_glitch_status_flag
+bool accel_error_status_flag
