@@ -919,19 +919,40 @@ private:
 		auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
 		est_status_msg->header.stamp = ros::Time::now();
 
-		est_status_msg->stable_attitude = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ATTITUDE));
-		est_status_msg->stable_hor_velocity_est = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_HORIZ));
-		est_status_msg->stable_ver_velocity_est = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::VELOCITY_VERT));
-		est_status_msg->stable_hor_position_est_rel = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_REL));
-		est_status_msg->stable_hor_position_est_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_HORIZ_ABS));
-		est_status_msg->stable_ver_position_est_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_ABS));
-		est_status_msg->stable_ver_position_est_agl = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::POS_VERT_AGL));
-		est_status_msg->const_position_mode = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::CONST_POS_MODE));
-		est_status_msg->pred_hor_position_rel = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_REL));
-		est_status_msg->pred_hor_position_abs = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::PRED_POS_HORIZ_ABS));
-		est_status_msg->gps_glitch = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::GPS_GLITCH));
-		est_status_msg->accel_error = !!(status.flags & utils::enum_value(mavlink::common::ESTIMATOR_STATUS_FLAGS::ACCEL_ERROR));
-
+		// [[[cog:
+		// import pymavlink.dialects.v20.common as common
+		// ename = 'ESTIMATOR_STATUS_FLAGS'
+		// ename_pfx2 = 'ESTIMATOR_'
+		//
+		// enum = sorted(common.enums[ename].items())
+		// enum.pop() # -> remove ENUM_END
+		//
+		// for k, e in enum:
+		//     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
+		//     esf = e.name
+		//
+		//     if esf.startswith(ename + '_'):
+		//         esf = esf[len(ename) + 1:]
+		//     if esf.startswith(ename_pfx2):
+		//         esf = esf[len(ename_pfx2):]
+		//     if esf[0].isdigit():
+		//         esf = 'SENSOR_' + esf
+		//     cog.outl("est_status_msg->%s_status_flag = !!(status.flags & enum_value(ESF::%s));" % (esf.lower(), esf))
+		// ]]]
+		est_status_msg->attitude_status_flag = !!(status.flags & enum_value(ESF::ATTITUDE));
+		est_status_msg->velocity_horiz_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_HORIZ));
+		est_status_msg->velocity_vert_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_VERT));
+		est_status_msg->pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_REL));
+		est_status_msg->pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_ABS));
+		est_status_msg->pos_vert_abs_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_ABS));
+		est_status_msg->pos_vert_agl_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_AGL));
+		est_status_msg->const_pos_mode_status_flag = !!(status.flags & enum_value(ESF::CONST_POS_MODE));
+		est_status_msg->pred_pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_REL));
+		est_status_msg->pred_pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
+		est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
+		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
+		// [[[end]]] (checksum: 7828381ee4002ea6b61a8f528ae4d12d)
+		
 		estimator_status_pub.publish(est_status_msg);
 	}
 
