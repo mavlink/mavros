@@ -21,6 +21,13 @@
 #include <mavconn/thread_utils.h>
 #include <mavconn/tcp.h>
 
+// Ensure the correct io_service() is called based on boost version
+#if BOOST_VERSION >= 107000
+#define GET_IO_SERVICE(s) ((boost::asio::io_context&)(s).get_executor().context())
+#else
+#define GET_IO_SERVICE(s) ((s).get_io_service())
+#endif
+
 namespace mavconn {
 
 using boost::system::error_code;
@@ -120,7 +127,7 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
 			server_channel, conn_id, to_string_ss(server_ep).c_str());
 
 	// start recv
-	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_recv, shared_from_this()));
+	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_recv, shared_from_this()));
 }
 
 MAVConnTCPClient::~MAVConnTCPClient()
@@ -166,7 +173,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 
 		tx_q.emplace_back(bytes, length);
 	}
-	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t *message)
@@ -188,7 +195,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 
 		tx_q.emplace_back(message);
 	}
-	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
 void MAVConnTCPClient::send_message(const mavlink::Message &message, const uint8_t source_compid)
@@ -208,7 +215,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message &message, const uint8
 
 		tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
 	}
-	socket.get_io_service().post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
 void MAVConnTCPClient::do_recv()
