@@ -82,7 +82,10 @@ private:
 				}
 			}
 			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
-			obstacle.increment_f = req->angle_increment * RAD_TO_DEG;				//!< [degrees]
+
+			const float increment_deg = req->angle_increment * RAD_TO_DEG;
+			obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);  //!< Round to nearest integer.
+			obstacle.increment_f = increment_deg;
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
 			size_t scale_factor = ceil(double(req->ranges.size()) / obstacle.distances.size());
