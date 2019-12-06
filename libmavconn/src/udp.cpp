@@ -304,4 +304,10 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 					sthis->tx_in_progress = false;
 			});
 }
+
+std::string MAVConnUDP::get_remote_endpoint() const
+{
+	return to_string_ss(remote_ep);
+}
+
 }	// namespace mavconn
