@@ -60,6 +60,8 @@ public:
 		return socket.is_open();
 	}
 
+	std::string get_remote_endpoint() const;
+
 private:
 	boost::asio::io_service io_service;
 	std::unique_ptr<boost::asio::io_service::work> io_work;

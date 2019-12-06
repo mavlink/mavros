@@ -20,6 +20,9 @@
 #include <mavlink/config.h>
 #include <mavconn/mavlink_dialect.h>
 
+#include <mavconn/udp.h>
+#include <std_msgs/String.h>
+
 using namespace mavros;
 using mavconn::MAVConnInterface;
 using mavconn::Framing;
@@ -196,6 +199,27 @@ void MavRos::spin()
 					gcs_diag_updater.update();
 			});
 	diag_timer.start();
+
+	auto remote_endpoint_timer = mavlink_nh.createTimer(
+		ros::Duration(1.0), [&](const ros::TimerEvent&) {
+			static auto pub = mavlink_nh.advertise<std_msgs::String>("gcs_ip", 1, true /* latch */);
+			static auto finished = false;
+
+			if (finished)
+				return;
+
+			if (const auto* p = dynamic_cast<mavconn::MAVConnUDP*>(gcs_link.get())) {
+				const auto endpoint = p->get_remote_endpoint();
+				const auto endpoint_valid = endpoint.find("255.255.255.255") == std::string::npos;
+
+				if (endpoint_valid) {
+					const auto ip = endpoint.substr(0, endpoint.find(":"));
+					pub.publish(ip);
+					finished = true;
+				}
+			}
+		});
+	remote_endpoint_timer.start();
 
 	spinner.start();
 	ros::waitForShutdown();
