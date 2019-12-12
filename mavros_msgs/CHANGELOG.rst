@@ -2,6 +2,15 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Splitted the message fields.
+* Updated esimator status msg according to the new cog based definition of estimator status.
+* Added comments to msg.
+* Added new line char at end of message.
+* Added a publisher for estimator status message received from mavlink in sys_status.
+* Contributors: saifullah3396
+
 0.33.3 (2019-11-13)
 -------------------
 

@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add macro for get_io_service() to work with boost>1.70
+* Contributors: acxz
+
 0.33.3 (2019-11-13)
 -------------------
 

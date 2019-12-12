@@ -2,6 +2,24 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* obstacle_distance: Fill both increment and increment_f fields
+* obstacle_distance: Fix wrong angle increment
+  The computation `req->angle_increment * RAD_TO_DEG` correctly computes
+  angle increment in degrees as a float, but the `increment` field of the
+  OBSTACLE_DISTANCE MAVLink message is a uint8, so the float value gets
+  truncated. So if your real increment is 10 degrees, you may a floating
+  point value of something like 9.999999, which results in the integer value
+  9 getting written to the increment field.
+  An improvement would be to round properly, with something like
+  `static_cast<uint8_t>(increment_deg_float)`,
+  but a better solution is to allow non-integer degree values for the
+  increment, which is supported by the `increment_f` field. According
+  to the MAVLink reference, increment_f is used instead of increment
+  whenever increment_f is nonzero.
+* Contributors: Morten Fyhn Amundsen
+
 0.33.3 (2019-11-13)
 -------------------
 * package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras

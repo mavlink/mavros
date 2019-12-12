@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Replaced estimator status hardcoded definition with cog.
+* Refactor.
+* Replaced bool with git add -u as already done.
+* Added a publisher for estimator status message received from mavlink in sys_status.
+* Contributors: saifullah3396
+
 0.33.3 (2019-11-13)
 -------------------
 * package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
