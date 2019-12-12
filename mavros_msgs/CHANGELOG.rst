@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.4 (2019-12-12)
+-------------------
 * Splitted the message fields.
 * Updated esimator status msg according to the new cog based definition of estimator status.
 * Added comments to msg.

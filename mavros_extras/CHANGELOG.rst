@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.4 (2019-12-12)
+-------------------
 * obstacle_distance: Fill both increment and increment_f fields
 * obstacle_distance: Fix wrong angle increment
   The computation `req->angle_increment * RAD_TO_DEG` correctly computes
