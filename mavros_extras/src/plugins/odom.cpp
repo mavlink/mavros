@@ -62,7 +62,7 @@ public:
 		odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
 
 		// subscribers
-		odom_sub = odom_nh.subscribe("out", 10, &OdometryPlugin::odom_cb, this);
+		odom_sub = odom_nh.subscribe("out", 1, &OdometryPlugin::odom_cb, this);
 	}
 
 	Subscriptions get_subscriptions()
