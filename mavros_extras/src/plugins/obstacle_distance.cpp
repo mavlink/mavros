@@ -36,7 +36,7 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 class ObstacleDistancePlugin : public plugin::PluginBase {
 public:
 	ObstacleDistancePlugin() : PluginBase(),
-		obstacle_nh("~obstacle")
+		obstacle_nh("~obstacle_distance")
 	{ }
 
 	void initialize(UAS &uas_)
