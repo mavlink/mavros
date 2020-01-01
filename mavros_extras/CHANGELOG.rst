@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Change odometry subscription queue to 1 to avoid buffering.
+* Contributors: James Goppert
+
 0.33.4 (2019-12-12)
 -------------------
 * obstacle_distance: Fill both increment and increment_f fields

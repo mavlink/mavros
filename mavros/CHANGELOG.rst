@@ -2,6 +2,9 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.33.4 (2019-12-12)
 -------------------
 * Replaced estimator status hardcoded definition with cog.
