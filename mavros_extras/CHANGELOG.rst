@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2020-01-01)
+------------------
 * Change odometry subscription queue to 1 to avoid buffering.
 * Contributors: James Goppert
 
