@@ -238,10 +238,18 @@ private:
 		tf::vectorEigenToMsg(gyro_flu, imu_msg->angular_velocity);
 		tf::vectorEigenToMsg(accel_flu, imu_msg->linear_acceleration);
 
-		// Save readings
-		linear_accel_vec_flu = accel_flu;
-		linear_accel_vec_frd = accel_frd;
-		received_linear_accel = true;
+		if (!m_uas->is_ardupilotmega()) {
+			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: linear acceleration on RAW_IMU known on APM only.");
+			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: ~imu/data_raw stores unscaled raw acceleration report.");
+			linear_accel_vec_flu.setZero();
+			linear_accel_vec_frd.setZero();
+			received_linear_accel = false;
+		} else {
+			// Save readings
+			linear_accel_vec_flu = accel_flu;
+			linear_accel_vec_frd = accel_frd;
+			received_linear_accel = true;
+		}
 
 		imu_msg->orientation_covariance = unk_orientation_cov;
 		imu_msg->angular_velocity_covariance = angular_velocity_cov;
@@ -477,13 +485,6 @@ private:
 		}
 
 		publish_imu_data_raw(header, gyro_flu, accel_flu, accel_frd);
-
-		if (!m_uas->is_ardupilotmega()) {
-			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: linear acceleration on RAW_IMU known on APM only.");
-			ROS_WARN_THROTTLE_NAMED(60, "imu", "IMU: ~imu/data_raw stores unscaled raw acceleration report.");
-			linear_accel_vec_flu.setZero();
-			linear_accel_vec_frd.setZero();
-		}
 
 		/** Magnetic field data:
 		 *  @snippet src/plugins/imu.cpp mag_field
