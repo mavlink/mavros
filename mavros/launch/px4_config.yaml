@@ -259,6 +259,6 @@ wheel_odometry:
 
 # obstacle_distance
 obstacle_distance:
-  mav_frame: "BODY_FRD"       # PX4 1.10 supports GLOBAL, LOCAL_NED, BODY_FRD
+  mav_frame: "GLOBAL"       # PX4 1.10 supports GLOBAL, LOCAL_NED, BODY_FRD
 
 # vim:set ts=2 sw=2 et:
