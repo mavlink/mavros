@@ -15,7 +15,7 @@ MAVLink extendable communication node for ROS.
 - Since 2018-05-11 (0.25.0) support building master for Indigo and Jade stopped. Mainly because update of console-bridge package.
 - Since 2018-05-14 (0.25.1) support for Indigo returned. We use compatibility layer for console-bridge.
 - Since 2019-01-03 (0.28.0) support for Indigo by master not guaranteed. Consider update to more recent distro.
-- 2020-01-01 version 1.0.0 released, please see #1369 for reasons and its purpose.
+- 2020-01-01 version 1.0.0 released, please see [#1369][iss1369] for reasons and its purpose.
 
 
 mavros package
@@ -79,3 +79,4 @@ CI Statuses
 [test]: https://github.com/mavlink/mavros/blob/master/test_mavros/README.md
 [inst]: https://github.com/mavlink/mavros/blob/master/mavros/README.md#installation
 [geolib]: https://geographiclib.sourceforge.io/
+[iss1369]: https://github.com/mavlink/mavros/issues/1369
