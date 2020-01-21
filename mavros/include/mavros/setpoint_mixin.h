@@ -164,18 +164,18 @@ template <class D>
 class SetWrenchTargetMixin {
 public:
 	//! Message sepecification:
-	void set_wrench_target(Eigen::Vector3d linear_acceleration,
-			Eigen::Vector3d angular_acceleration)
+	void set_wrench_target(Eigen::Vector3d force,
+			Eigen::Vector3d torque)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
 		mavlink::omav::msg::SET_WRENCH_TARGET_BODY_NED sp;
 
-		sp.acc_x = linear_acceleration.x();
-		sp.acc_y = linear_acceleration.y();
-		sp.acc_z = linear_acceleration.z();
-		sp.acc_roll = angular_acceleration.x();
-		sp.acc_pitch = angular_acceleration.y();
-		sp.acc_yaw = angular_acceleration.z();
+		sp.force_x = force.x();
+		sp.force_y = force.y();
+		sp.force_z = force.z();
+		sp.torque_x = torque.x();
+		sp.torque_y = torque.y();
+		sp.torque_z = torque.z();
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}

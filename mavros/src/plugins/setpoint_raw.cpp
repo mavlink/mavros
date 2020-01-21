@@ -18,12 +18,12 @@
 #include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <mav_msgs/RollPitchYawrateThrust.h>
+#include <mav_msgs/TorqueThrust.h>
 #include <tf/transform_datatypes.h>
 
 #include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
-#include <mavros_msgs/WrenchTarget.h>
 #include <mavros_msgs/TiltAngleTarget.h>
 #include <mavros_msgs/TiltrotorActuatorCommands.h>
 #include <mavros_msgs/AttitudeThrustTarget.h>
@@ -328,18 +328,17 @@ private:
                           ned_desired_orientation, body_rate, thrust);
     }
 
-    void wrench_cb(const mavros_msgs::WrenchTarget::ConstPtr &req)
+    void wrench_cb(const mav_msgs::TorqueThrustConstPtr &msg)
 	{
-		Eigen::Vector3d a_lin, a_ang;
-
-		tf::vectorMsgToEigen(req->linear_acceleration, a_lin);
-		tf::vectorMsgToEigen(req->angular_acceleration, a_ang);
+		Eigen::Vector3d force, torque;
+		tf::vectorMsgToEigen(msg->thrust, force);
+		tf::vectorMsgToEigen(msg->torque, torque);
 
 		// Transform frame ENU->NED
-		a_lin = ftf::transform_frame_enu_ned(a_lin);
-		a_ang = ftf::transform_frame_enu_ned(a_ang);
+		force = ftf::transform_frame_enu_ned(force);
+		torque = ftf::transform_frame_enu_ned(torque);
 
-		set_wrench_target(a_lin, a_ang);
+		set_wrench_target(force, torque);
 	}
     void tilt_angle_cb(const mavros_msgs::TiltAngleTarget::ConstPtr &req)
 	{
