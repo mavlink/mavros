@@ -34,7 +34,7 @@ using mavlink::common::MAV_FRAME;
 using MRES = mavlink::common::MAV_MISSION_RESULT;
 
 
-class WaypointItem : public mavlink::common::msg::MISSION_ITEM {
+/*class WaypointItem : public mavlink::common::msg::MISSION_ITEM {
 public:
 	double x_lat;
 	double y_long;
@@ -123,8 +123,182 @@ public:
 			param1, param2, param3, param4,
 			x_lat, y_long, z_alt);
 	}
-};
+};*/
 
+class WaypointItemInt : public mavlink::common::msg::MISSION_ITEM_INT {
+public:
+	int32_t x_lat;
+	int32_t y_long;
+	double z_alt;
+
+	static int encode_factor( const uint8_t &frame ){
+		// [[[cog:
+		// frame_factor_dict = {
+		// 'global': { 
+		//     'names': [
+		//     'GLOBAL',
+		//     'GLOBAL_RELATIVE_ALT',
+		//     'GLOBAL_INT',
+		//     'GLOBAL_RELATIVE_ALT_INT',
+		//     'GLOBAL_TERRAIN_ALT',
+		//     'GLOBAL_TERRAIN_ALT_INT'
+		//     ],
+		//     'factor': '10000000'
+		// },
+		// 'local': {
+		//     'names': [
+		//     'LOCAL_NED',
+		//     'LOCAL_ENU',
+		//     'LOCAL_OFFSET_NED',
+		//     'BODY_NED',
+		//     'BODY_OFFSET_NED',
+		//     'BODY_FRD',
+		//     'BODY_FLU',
+		//     'MOCAP_NED',
+		//     'MOCAP_ENU',
+		//     'VISION_NED',
+		//     'VISION_ENU',
+		//     'ESTIM_NED',
+		//     'ESTIM_ENU',
+		//     'LOCAL_FRD',
+		//     'LOCAL_FLU'
+		//     ],
+		//     'factor': '10000'
+		// },
+		// 'other': {
+		//     'names': [
+		//     'MISSION'
+		//     ],
+		//     'factor': '1'
+		// }
+		// }
+		// cog.outl("switch(frame){")
+		// for frame in frame_factor_dict:
+		//     for name in frame_factor_dict[frame]['names']:
+		//         cog.outl("case enum_value(MAV_FRAME::%s):" % (name))
+		//     cog.outl("\treturn %s;" % (frame_factor_dict[frame]['factor']))
+		// ]]]
+		switch(frame){
+		case enum_value(MAV_FRAME::GLOBAL):
+		case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
+		case enum_value(MAV_FRAME::GLOBAL_INT):
+		case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT_INT):
+		case enum_value(MAV_FRAME::GLOBAL_TERRAIN_ALT):
+		case enum_value(MAV_FRAME::GLOBAL_TERRAIN_ALT_INT):
+			return 10000000;
+		case enum_value(MAV_FRAME::LOCAL_NED):
+		case enum_value(MAV_FRAME::LOCAL_ENU):
+		case enum_value(MAV_FRAME::LOCAL_OFFSET_NED):
+		case enum_value(MAV_FRAME::BODY_NED):
+		case enum_value(MAV_FRAME::BODY_OFFSET_NED):
+		case enum_value(MAV_FRAME::BODY_FRD):
+		case enum_value(MAV_FRAME::BODY_FLU):
+		case enum_value(MAV_FRAME::MOCAP_NED):
+		case enum_value(MAV_FRAME::MOCAP_ENU):
+		case enum_value(MAV_FRAME::VISION_NED):
+		case enum_value(MAV_FRAME::VISION_ENU):
+		case enum_value(MAV_FRAME::ESTIM_NED):
+		case enum_value(MAV_FRAME::ESTIM_ENU):
+		case enum_value(MAV_FRAME::LOCAL_FRD):
+		case enum_value(MAV_FRAME::LOCAL_FLU):
+			return 10000;
+		case enum_value(MAV_FRAME::MISSION):
+			return 1;
+		// [[[end]]] (checksum: 7361f44284d37005d5f99c24f4c102fd)
+		}
+	}
+
+	mavros_msgs::Waypoint to_msg()
+	{
+		mavros_msgs::Waypoint ret;
+
+		// [[[cog:
+		// waypoint_item_msg = [(v, v) if isinstance(v, str) else v for v in (
+		//     'frame',
+		//     'command',
+		//     ('is_current', 'current'),
+		//     'autocontinue',
+		//     'param1',
+		//     'param2',
+		//     'param3',
+		//     'param4',
+		//     'x_lat',
+		//     'y_long',
+		//     'z_alt',
+		// )]
+		// for a, b in waypoint_item_msg:
+		//     if a[0] == 'x' or a[0] == 'y':
+		//         cog.outl("ret.%s = double(%s / encode_factor(frame));" % (a,b))
+		//     else:
+		//         cog.outl("ret.%s = %s;" % (a, b))
+		// ]]]
+		ret.frame = frame;
+		auto factor = encode_factor(frame);
+		ret.command = command;
+		ret.is_current = current;
+		ret.autocontinue = autocontinue;
+		ret.param1 = param1;
+		ret.param2 = param2;
+		ret.param3 = param3;
+		ret.param4 = param4;
+		ret.x_lat = double(int(x_lat) / factor);
+		ret.y_long = double(int(y_long) / factor);
+		ret.z_alt = z_alt;
+		// [[[end]]] (checksum: bd26aac6961ecbd7bf9c5432ad871fce)
+
+		return ret;
+	}
+
+	static WaypointItemInt from_msg(mavros_msgs::Waypoint &wp, uint16_t seq)
+	{
+		WaypointItemInt ret{};
+
+		// [[[cog:
+		// waypoint_coords = [
+		//     ('x_lat', 'x'),
+		//     ('y_long', 'y'),
+		//     ('z_alt', 'z'),
+		// ]
+		// for a, b in waypoint_item_msg + waypoint_coords:
+		//     if a[0] == 'x' or a[0] == 'y':
+		//         cog.outl("ret.%s = int32_t(wp.%s * encode_factor(wp.frame));" % (b,a))
+		//     else:
+		//         cog.outl("ret.%s = wp.%s;" % (b, a))
+		// ]]]
+		ret.frame = wp.frame;
+		ret.command = wp.command;
+		ret.current = wp.is_current;
+		ret.autocontinue = wp.autocontinue;
+		ret.param1 = wp.param1;
+		ret.param2 = wp.param2;
+		ret.param3 = wp.param3;
+		ret.param4 = wp.param4;
+		ret.x_lat = int32_t(wp.x_lat * encode_factor(wp.frame));
+		ret.y_long = int32_t(wp.y_long * encode_factor(wp.frame));
+		ret.z_alt = wp.z_alt;
+		ret.x = int32_t(wp.x_lat * encode_factor(wp.frame));
+		ret.y = int32_t(wp.y_long * encode_factor(wp.frame));
+		ret.z = wp.z_alt;
+		// [[[end]]] (checksum: bea69b0a5131efa77b93b6db41137407)
+
+		ret.seq = seq;
+		ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
+
+		return ret;
+	}
+
+	std::string to_string()
+	{
+		//return to_yaml();
+
+		return utils::format("#%u%1s F:%u C:%3u p: %f %f %f %f x: %f y: %f z: %f",
+			seq,
+			(current) ? "*" : "",
+			frame, command,
+			param1, param2, param3, param4,
+			x_lat, y_long, z_alt);
+	}
+};
 
 /**
  * @brief Mission manupulation plugin
@@ -173,7 +347,7 @@ public:
 
 	Subscriptions get_subscriptions() {
 		return {
-			       make_handler(&WaypointPlugin::handle_mission_item),
+			       make_handler(&WaypointPlugin::handle_mission_item_int),
 			       make_handler(&WaypointPlugin::handle_mission_request),
 			       make_handler(&WaypointPlugin::handle_mission_current),
 			       make_handler(&WaypointPlugin::handle_mission_count),
@@ -197,8 +371,8 @@ private:
 	ros::ServiceServer set_cur_srv;
 
 
-	std::vector<WaypointItem> waypoints;
-	std::vector<WaypointItem> send_waypoints;
+	std::vector<WaypointItemInt> waypoints;
+	std::vector<WaypointItemInt> send_waypoints;
 	enum class WP {
 		IDLE,
 		RXLIST,
@@ -250,7 +424,7 @@ private:
 	 * @param msg		Received Mavlink msg
 	 * @param wpi		WaypointItem from msg
 	 */
-	void handle_mission_item(const mavlink::mavlink_message_t *msg, WaypointItem &wpi)
+	void handle_mission_item_int(const mavlink::mavlink_message_t *msg, WaypointItemInt &wpi)
 	{
 		unique_lock lock(mutex);
 
@@ -667,7 +841,7 @@ private:
 
 	/* -*- low-level send functions -*- */
 
-	void mission_item(WaypointItem &wp)
+	void mission_item(WaypointItemInt &wp)
 	{
 		m_uas->msg_set_target(wp);
 		// WaypointItem may be sent as MISSION_ITEM
@@ -678,7 +852,7 @@ private:
 	{
 		ROS_DEBUG_NAMED("wp", "WP:m: request #%u", seq);
 
-		mavlink::common::msg::MISSION_REQUEST mrq {};
+		mavlink::common::msg::MISSION_REQUEST_INT mrq {};
 		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
@@ -805,7 +979,7 @@ private:
 
 			uint16_t seq = req.start_index;
 			for (auto &it : req.waypoints) {
-				send_waypoints[seq] = WaypointItem::from_msg(it, seq);
+				send_waypoints[seq] = WaypointItemInt::from_msg(it, seq);
 				seq++;
 			}
 
@@ -830,7 +1004,7 @@ private:
 			send_waypoints.reserve(req.waypoints.size());
 			uint16_t seq = 0;
 			for (auto &it : req.waypoints) {
-				send_waypoints.push_back(WaypointItem::from_msg(it, seq++));
+				send_waypoints.push_back(WaypointItemInt::from_msg(it, seq++));
 			}
 
 			wp_count = send_waypoints.size();
