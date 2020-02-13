@@ -247,6 +247,18 @@ private:
 		ovr.chan6_raw = req->channels[5];
 		ovr.chan7_raw = req->channels[6];
 		ovr.chan8_raw = req->channels[7];
+		if (m_uas->fcu_link->get_protocol_version() == mavconn::Protocol::V20) {
+			ovr.chan9_raw = req->channels[8];
+			ovr.chan10_raw = req->channels[9];
+			ovr.chan11_raw = req->channels[10];
+			ovr.chan12_raw = req->channels[11];
+			ovr.chan13_raw = req->channels[12];
+			ovr.chan14_raw = req->channels[13];
+			ovr.chan15_raw = req->channels[14];
+			ovr.chan16_raw = req->channels[15];
+			ovr.chan17_raw = req->channels[16];
+			ovr.chan18_raw = req->channels[17];
+		}
 		// [[[end]]] (checksum: bd27f3e85f5ab614ce1332ae3f4c6ebd)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(ovr);
