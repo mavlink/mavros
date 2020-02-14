@@ -213,8 +213,9 @@ void MavRos::spin()
 				const auto endpoint_valid = endpoint.find("255.255.255.255") == std::string::npos;
 
 				if (endpoint_valid) {
-					const auto ip = endpoint.substr(0, endpoint.find(":"));
-					pub.publish(ip);
+					std_msgs::String msg;
+					msg.data = endpoint.substr(0, endpoint.find(":"));
+					pub.publish(msg);
 					finished = true;
 				}
 			}
