@@ -225,7 +225,7 @@ static void create_vehicle_markers( int num_rotors, float arm_len, float body_wi
 				rotor.color.r = 1.0;
 				rotor.color.g = 0;
 				rotor.color.b = 0;
-				rotor.color.a = 1.0;
+				rotor.color.a = 0.8;
 			}
 		}
 		
