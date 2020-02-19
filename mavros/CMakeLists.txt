@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   tf2_eigen
   tf2_ros
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -73,7 +74,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater eigen_conversions geographic_msgs geometry_msgs libmavconn mavros_msgs message_runtime nav_msgs pluginlib roscpp sensor_msgs std_msgs tf2_ros
+  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater eigen_conversions geographic_msgs geometry_msgs libmavconn mavros_msgs message_runtime nav_msgs pluginlib roscpp sensor_msgs std_msgs tf2_ros trajectory_msgs
   DEPENDS Boost EIGEN3 GeographicLib
 )
 
