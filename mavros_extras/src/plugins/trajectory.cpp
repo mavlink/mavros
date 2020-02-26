@@ -133,6 +133,10 @@ private:
 		y[i] = wrap_pi(-yaw_wp + (M_PI / 2.0f));
 	}
 
+	void fill_points_delta(MavPoints &y, const double time_horizon, const size_t i) {
+		y[i] = time_horizon;
+	}
+
 	auto fill_points_unused_path(mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t, const size_t i) {
 		t.vel_x[i] = NAN;
 		t.vel_y[i] = NAN;
@@ -160,6 +164,15 @@ private:
 		t.vel_yaw[i] = NAN;
 	}
 
+	void fill_points_all_unused_bezier(mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER &t, const size_t i) {
+		t.pos_x[i] = NAN;
+		t.pos_y[i] = NAN;
+		t.pos_z[i] = NAN;
+
+		t.pos_yaw[i] = NAN;
+
+		t.delta[i] = NAN;
+	}
 
 	void fill_msg_position(geometry_msgs::Point &position, const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS &t, const size_t i)
 	{
@@ -201,43 +214,78 @@ private:
 	{
 		ROS_ASSERT(NUM_POINTS == req->point_valid.size());
 
-		mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS trajectory {};
+		if (req->type == mavros_msgs::Trajectory::MAV_TRAJECTORY_REPRESENTATION_WAYPOINTS) {
+			mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS trajectory {};
 
-		auto fill_point = [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t, const RosPoints &rp, const size_t i) {
-			const auto valid = req->point_valid[i];
+			auto fill_point_rep_waypoints = [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t, const RosPoints &rp, const size_t i) {
+				const auto valid = req->point_valid[i];
 
-			auto valid_so_far = trajectory.valid_points;
-			if (!valid) {
-				fill_points_all_unused(t, i);
-				return;
-			}
+				auto valid_so_far = trajectory.valid_points;
+				if (!valid) {
+					fill_points_all_unused(t, i);
+					return;
+				}
 
-			trajectory.valid_points = valid_so_far + 1;
-			fill_points_position(t.pos_x, t.pos_y, t.pos_z, rp.position, i);
-			fill_points_velocity(t.vel_x, t.vel_y, t.vel_z, rp.velocity, i);
-			fill_points_acceleration(t.acc_x, t.acc_y, t.acc_z, rp.acceleration_or_force, i);
-			fill_points_yaw_wp(t.pos_yaw, rp.yaw, i);
-			fill_points_yaw_speed(t.vel_yaw, rp.yaw_rate, i);
-			t.command[i] = UINT16_MAX;
-		};
+				trajectory.valid_points = valid_so_far + 1;
+				fill_points_position(t.pos_x, t.pos_y, t.pos_z, rp.position, i);
+				fill_points_velocity(t.vel_x, t.vel_y, t.vel_z, rp.velocity, i);
+				fill_points_acceleration(t.acc_x, t.acc_y, t.acc_z, rp.acceleration_or_force, i);
+				fill_points_yaw_wp(t.pos_yaw, rp.yaw, i);
+				fill_points_yaw_speed(t.vel_yaw, rp.yaw_rate, i);
+				t.command[i] = UINT16_MAX;
+			};
 
-		trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
+			// [[[cog:
+			// for i in range(5):
+			//      cog.outl(
+			//          'fill_point_rep_waypoints(trajectory, req->point_{i1}, {i0});'
+			//          .format(i0=i, i1=i+1)
+			//      )
+			// ]]]
+			fill_point_rep_waypoints(trajectory, req->point_1, 0);
+			fill_point_rep_waypoints(trajectory, req->point_2, 1);
+			fill_point_rep_waypoints(trajectory, req->point_3, 2);
+			fill_point_rep_waypoints(trajectory, req->point_4, 3);
+			fill_point_rep_waypoints(trajectory, req->point_5, 4);
+			// [[[end]]] (checksum: e993aeb535c2df6f07bf7b4f1fcf3d2e)
 
-		// [[[cog:
-		// for i in range(5):
-		//      cog.outl(
-		//          'fill_point(trajectory, req->point_{i1}, {i0});'
-		//          .format(i0=i, i1=i+1)
-		//      )
-		// ]]]
-		fill_point(trajectory, req->point_1, 0);
-		fill_point(trajectory, req->point_2, 1);
-		fill_point(trajectory, req->point_3, 2);
-		fill_point(trajectory, req->point_4, 3);
-		fill_point(trajectory, req->point_5, 4);
-		// [[[end]]] (checksum: 16d650d405469f331a17c2f5a892365d)
+			trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
+			UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+		} else {
+			mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER trajectory {};
+			auto fill_point_rep_bezier = [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER & t, const RosPoints &rp, const size_t i) {
+				const auto valid = req->point_valid[i];
 
-		UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+				auto valid_so_far = trajectory.valid_points;
+				if (!valid) {
+					fill_points_all_unused_bezier(t, i);
+					return;
+				}
+
+				trajectory.valid_points = valid_so_far + 1;
+				fill_points_position(t.pos_x, t.pos_y, t.pos_z, rp.position, i);
+				fill_points_yaw_wp(t.pos_yaw, rp.yaw, i);
+				fill_points_delta(t.delta, req->time_horizon[i], i);
+			};
+			// [[[cog:
+			// for i in range(5):
+			//      cog.outl(
+			//          'fill_point_rep_bezier(trajectory, req->point_{i1}, {i0});'
+			//          .format(i0=i, i1=i+1)
+			//      )
+			// ]]]
+			fill_point_rep_bezier(trajectory, req->point_1, 0);
+			fill_point_rep_bezier(trajectory, req->point_2, 1);
+			fill_point_rep_bezier(trajectory, req->point_3, 2);
+			fill_point_rep_bezier(trajectory, req->point_4, 3);
+			fill_point_rep_bezier(trajectory, req->point_5, 4);
+			// [[[end]]] (checksum: 3e6da5f06e0b33682c6122c40f05c1f6)
+
+			trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
+			UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+		}
+
+
 	}
 
 
