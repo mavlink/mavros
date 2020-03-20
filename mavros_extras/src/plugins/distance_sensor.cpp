@@ -163,7 +163,8 @@ private:
 				uint32_t max_distance,
 				uint32_t current_distance,
 				uint8_t type, uint8_t id,
-				uint8_t orientation, uint8_t covariance)
+				uint8_t orientation, uint8_t covariance,
+				float fov)
 	{
 		mavlink::common::msg::DISTANCE_SENSOR ds;
 
@@ -187,6 +188,9 @@ private:
 		ds.orientation = orientation;
 		ds.covariance = covariance;
 		// [[[end]]] (checksum: 6f6f9449d926ab618a3293e2091c7035)
+		ds.vertical_fov = fov;
+		ds.horizontal_fov = fov;
+		ds.quaternion = {0};
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(ds);
 	}
@@ -300,7 +304,8 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 				type,
 				sensor_id,
 				orientation,
-				covariance_);
+				covariance_,
+				msg->field_of_view);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
