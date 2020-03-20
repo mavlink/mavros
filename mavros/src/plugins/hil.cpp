@@ -113,6 +113,11 @@ private:
 
 		hil_actuator_controls_msg->header.stamp = m_uas->synchronise_stamp(hil_actuator_controls.time_usec);
 		const auto &arr = hil_actuator_controls.controls;
+		for (int i = 0; i < hil_actuator_controls.controls.size(); i++) {
+			std::cout << hil_actuator_controls.controls[i] << " ";
+		}
+		std::cout << "\n";
+
 		std::copy(arr.cbegin(), arr.cend(), hil_actuator_controls_msg->controls.begin());
 		hil_actuator_controls_msg->mode = hil_actuator_controls.mode;
 		hil_actuator_controls_msg->flags = hil_actuator_controls.flags;

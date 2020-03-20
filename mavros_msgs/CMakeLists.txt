@@ -55,6 +55,7 @@ add_message_files(
   WaypointList.msg
   WaypointReached.msg
   WheelOdomStamped.msg
+  ServoOutputRaw.msg
 )
 
 add_service_files(
