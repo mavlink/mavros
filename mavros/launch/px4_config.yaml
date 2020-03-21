@@ -156,6 +156,9 @@ distance_sensor:
     subscriber: true
     id: 2
     orientation: PITCH_270
+    horizontal_fov_ratio: 1.0 # horizontal_fov = horizontal_fov_ratio * msg.field_of_view
+    vertical_fov_ratio: 1.0 # vertical_fov = vertical_fov_ratio * msg.field_of_view
+    sensor_orientation: {roll: 0, pitch: 270, yaw: 0} # Used for orientation: CUSTOM
   laser_1_sub:
     subscriber: true
     id: 3
