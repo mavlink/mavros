@@ -42,7 +42,10 @@ public:
 		orientation(-1),
 		covariance(0),
 		owner(nullptr),
-		data_index(0)
+		data_index(0),
+		horizontal_fov_ratio(1.0),
+		vertical_fov_ratio(1.0),
+		quaternion()
 	{ }
 
 	// params
@@ -54,6 +57,9 @@ public:
 	int orientation;	//!< check orientation of sensor if != -1
 	int covariance;		//!< in centimeters, current specification
 	std::string frame_id;	//!< frame id for send
+	double horizontal_fov_ratio;		//!< horizontal fov ratio for ROS messages
+	double vertical_fov_ratio;	//!< vertical fov ratio for ROS messages
+	Eigen::Quaternionf quaternion;		//!< sensor orientation in vehicle body frame for MAV_SENSOR_ROTATION_CUSTOM
 
 	// topic handle
 	ros::Publisher pub;
@@ -164,7 +170,8 @@ private:
 				uint32_t current_distance,
 				uint8_t type, uint8_t id,
 				uint8_t orientation, uint8_t covariance,
-				float fov)
+				float horizontal_fov, float vertical_fov,
+				std::array<float, 4> quaternion)
 	{
 		mavlink::common::msg::DISTANCE_SENSOR ds = {};
 
@@ -176,7 +183,10 @@ private:
 		//     'type',
 		//     'id',
 		//     'orientation',
-		//     'covariance'):
+		//     'covariance',
+		//     'horizontal_fov',
+		//     'vertical_fov',
+		//     'quaternion'):
 		//     cog.outl("ds.%s = %s;" % (f, f))
 		// ]]]
 		ds.time_boot_ms = time_boot_ms;
@@ -187,10 +197,10 @@ private:
 		ds.id = id;
 		ds.orientation = orientation;
 		ds.covariance = covariance;
-		// [[[end]]] (checksum: 6f6f9449d926ab618a3293e2091c7035)
-		ds.vertical_fov = fov;
-		ds.horizontal_fov = fov;
-		ds.quaternion = {0};
+		ds.horizontal_fov = horizontal_fov;
+		ds.vertical_fov = vertical_fov;
+		ds.quaternion = quaternion;
+		// [[[end]]] (checksum: 23b6c8fb20bd494eafdf08d5888c9c76)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(ds);
 	}
@@ -306,7 +316,9 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 				sensor_id,
 				orientation,
 				covariance_,
-				msg->field_of_view);
+				msg->field_of_view * horizontal_fov_ratio,
+				msg->field_of_view * vertical_fov_ratio,
+				{quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z()});
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
@@ -383,6 +395,16 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 
 		// optional
 		pnh.param("covariance", p->covariance, 0);
+		pnh.param("horizontal_fov_ratio", p->horizontal_fov_ratio, 1.0);
+		pnh.param("vertical_fov_ratio", p->vertical_fov_ratio, 1.0);
+		if (p->orientation == enum_value(mavlink::common::MAV_SENSOR_ORIENTATION::ROTATION_CUSTOM)) {
+			Eigen::Vector3d rpy;
+			pnh.param("sensor_orientation/roll", rpy.x(), 0.0);
+			pnh.param("sensor_orientation/pitch", rpy.y(), 0.0);
+			pnh.param("sensor_orientation/yaw", rpy.z(), 0.0);
+			constexpr auto DEG_TO_RAD = (M_PI / 180.0);
+			p->quaternion = Eigen::Quaternionf(ftf::quaternion_from_rpy(rpy * DEG_TO_RAD));
+		}
 	}
 
 	// create topic handles
