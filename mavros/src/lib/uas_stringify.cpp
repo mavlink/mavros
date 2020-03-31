@@ -84,18 +84,18 @@ static const cmode_map arducopter_cmode_map{{
  * APMrover2/defines.h
  */
 static const cmode_map apmrover2_cmode_map{{
-    { 0, "MANUAL" },
-    { 1, "ACRO" },
-    { 3, "STEERING" },
-    { 4, "HOLD" },
-    { 5, "LOITER" },
-    { 6, "FOLLOW" },
-    { 7, "SIMPLE" },
-    { 10, "AUTO" },
-    { 11, "RTL" },
-    { 12, "SMART_RTL" },
-    { 15, "GUIDED" },
-    { 16, "INITIALISING" }
+	{ 0, "MANUAL" },
+	{ 1, "ACRO" },
+	{ 3, "STEERING" },
+	{ 4, "HOLD" },
+	{ 5, "LOITER" },
+	{ 6, "FOLLOW" },
+	{ 7, "SIMPLE" },
+	{ 10, "AUTO" },
+	{ 11, "RTL" },
+	{ 12, "SMART_RTL" },
+	{ 15, "GUIDED" },
+	{ 16, "INITIALISING" }
 }};
 
 /** ArduSub custom mode -> string
@@ -180,10 +180,10 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
 static inline bool is_apm_copter(UAS::MAV_TYPE type)
 {
 	return type == UAS::MAV_TYPE::QUADROTOR ||
-	       type == UAS::MAV_TYPE::HEXAROTOR ||
-	       type == UAS::MAV_TYPE::OCTOROTOR ||
-	       type == UAS::MAV_TYPE::TRICOPTER ||
-	       type == UAS::MAV_TYPE::COAXIAL;
+		   type == UAS::MAV_TYPE::HEXAROTOR ||
+		   type == UAS::MAV_TYPE::OCTOROTOR ||
+		   type == UAS::MAV_TYPE::TRICOPTER ||
+		   type == UAS::MAV_TYPE::COAXIAL;
 }
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
