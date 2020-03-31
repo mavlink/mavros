@@ -180,10 +180,10 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
 static inline bool is_apm_copter(UAS::MAV_TYPE type)
 {
 	return type == UAS::MAV_TYPE::QUADROTOR ||
-		   type == UAS::MAV_TYPE::HEXAROTOR ||
-		   type == UAS::MAV_TYPE::OCTOROTOR ||
-		   type == UAS::MAV_TYPE::TRICOPTER ||
-		   type == UAS::MAV_TYPE::COAXIAL;
+	       type == UAS::MAV_TYPE::HEXAROTOR ||
+	       type == UAS::MAV_TYPE::OCTOROTOR ||
+	       type == UAS::MAV_TYPE::TRICOPTER ||
+	       type == UAS::MAV_TYPE::COAXIAL;
 }
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
