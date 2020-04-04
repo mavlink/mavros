@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.0 (2020-04-04)
+------------------
 * fixed styling
 * fixed indent from using spaces
 * updates apmrover2 modes and allows for arduboat mode changes
