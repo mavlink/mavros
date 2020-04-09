@@ -157,7 +157,8 @@ private:
 		twist_local->header.frame_id = tf_child_frame_id;
 		tf::vectorEigenToMsg(enu_velocity, twist_local->twist.linear);
 		tf::vectorEigenToMsg(ftf::transform_frame_baselink_enu(ftf::to_eigen(baselink_angular_msg), enu_orientation),
-						twist_body->twist.angular);
+						twist_local->twist.angular);
+
 		local_velocity_local.publish(twist_local);
 
 		// publish tf
