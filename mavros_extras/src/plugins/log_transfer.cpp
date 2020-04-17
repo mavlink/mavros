@@ -4,6 +4,7 @@
 #include <mavros_msgs/LogRequestData.h>
 #include <mavros_msgs/LogRequestEnd.h>
 #include <mavros_msgs/LogRequestList.h>
+#include <std_srvs/Trigger.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -25,6 +26,8 @@ public:
 			&LogTransferPlugin::log_request_data_cb, this);
 		log_request_end_srv = nh.advertiseService("raw/log_request_end",
 			&LogTransferPlugin::log_request_end_cb, this);
+		log_request_erase_srv = nh.advertiseService("raw/log_request_erase",
+			&LogTransferPlugin::log_request_erase_cb, this);
 	}
 
 	Subscriptions get_subscriptions() override
@@ -38,7 +41,7 @@ public:
 private:
 	ros::NodeHandle nh;
 	ros::Publisher log_entry_pub, log_data_pub;
-	ros::ServiceServer log_request_list_srv, log_request_data_srv, log_request_end_srv;
+	ros::ServiceServer log_request_list_srv, log_request_data_srv, log_request_end_srv, log_request_erase_srv;
 
 	void handle_log_entry(const mavlink::mavlink_message_t*, mavlink::common::msg::LOG_ENTRY& le)
 	{
@@ -113,6 +116,20 @@ private:
 		} catch (std::length_error&) {
 			res.success = false;
 		}
+		return true;
+	}
+
+	bool log_request_erase_cb(std_srvs::Trigger::Request &,
+				std_srvs::Trigger::Response &res)
+	{
+		mavlink::common::msg::LOG_ERASE msg;
+		m_uas->msg_set_target(msg);
+		try {
+			UAS_FCU(m_uas)->send_message(msg);
+		} catch (std::length_error&) {
+			res.success = false;
+		}
+		res.success = true;
 		return true;
 	}
 };
