@@ -122,7 +122,9 @@ setpoint_velocity:
 # waypoint
 mission:
   pull_after_gcs: true  # update mission if gcs updates
-
+  use_mission_item_int: true # use the MISSION_ITEM_INT message instead of MISSION_ITEM
+                             # for uploading waypoints to FCU
+                             
 # --- mavros extras plugins (same order) ---
 
 # adsb
