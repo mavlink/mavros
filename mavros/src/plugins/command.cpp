@@ -339,7 +339,7 @@ private:
 		return send_command_long_and_wait(false,
 			enum_value(MAV_CMD::DO_SET_HOME), 1,
 			(req.current_gps) ? 1.0 : 0.0,
-			0, 0, 0, req.latitude, req.longitude, req.altitude,
+			0, 0, req.yaw, req.latitude, req.longitude, req.altitude,
 			res.success, res.result);
 	}
 
