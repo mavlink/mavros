@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <boost/variant.hpp>
 #include <mavros/mavros_plugin.h>
+#include <mavconn/mavlink_dialect.h>
 
 #include <mavros_msgs/WaypointList.h>
 #include <mavros_msgs/WaypointSetCurrent.h>
@@ -35,7 +36,7 @@ using mavlink::common::MAV_FRAME;
 using MRES = mavlink::common::MAV_MISSION_RESULT;
 
 
-static int waypoint_encode_factor( const uint8_t &frame ){
+static double waypoint_encode_factor( const uint8_t &frame ){
 	// [[[cog:
 	//from pymavlink.dialects.v20 import common
 	//e=common.enums['MAV_FRAME']
@@ -161,8 +162,8 @@ public:
 
 		// [[[cog:
 		// for a, b in waypoint_item_msg + waypoint_coords:
-		//     if a[0] == 'x' or a[0] == 'y':
-		//         cog.outl("ret.%s = double(%s) / double(waypoint_encode_factor(frame));" % (a,b))
+		//     if a.startswith(('x', 'y')):
+		//         cog.outl("ret.%s = %s / waypoint_encode_factor(frame);" % (a,b))
 		//     else:
 		//         cog.outl("ret.%s = %s;" % (a, b))
 		// ]]]
@@ -174,10 +175,10 @@ public:
 		ret.param2 = param2;
 		ret.param3 = param3;
 		ret.param4 = param4;
-		ret.x_lat = double(x) / double(waypoint_encode_factor(frame));
-		ret.y_long = double(y) / double(waypoint_encode_factor(frame));
+		ret.x_lat = x / waypoint_encode_factor(frame);
+		ret.y_long = y / waypoint_encode_factor(frame);
 		ret.z_alt = z;
-		// [[[end]]] (checksum: 757604153b120847803e4bc4a8bccf9b)
+		// [[[end]]] (checksum: 6b16cc34be7f6e90fd04d204908173ef)
 
 		return ret;
 	}
@@ -790,7 +791,7 @@ private:
 				wp_nh.getParam("use_mission_item_int", use_mission_item_int);
 			}
 			else {
-				use_mission_item_int = m_uas->get_capabilities() & MAV_PROTOCOL_CAPABILITY::MISSION_INT;
+				use_mission_item_int = m_uas->get_capabilities() & static_cast<uint64_t>(mavlink::common::MAV_PROTOCOL_CAPABILITY::MISSION_INT);
 				mission_item_int_support_confirmed = use_mission_item_int;
 			}
 		}
