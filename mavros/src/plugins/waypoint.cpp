@@ -37,53 +37,21 @@ using MRES = mavlink::common::MAV_MISSION_RESULT;
 
 static int waypoint_encode_factor( const uint8_t &frame ){
 	// [[[cog:
-	// frame_factor_dict = {
-	// 'global': {
-	//     'names': [
-	//     'GLOBAL',
-	//     'GLOBAL_RELATIVE_ALT',
-	//     'GLOBAL_INT',
-	//     'GLOBAL_RELATIVE_ALT_INT',
-	//     'GLOBAL_TERRAIN_ALT',
-	//     'GLOBAL_TERRAIN_ALT_INT'
-	//     ],
-	//     'factor': '10000000'
-	// },
-	// 'local': {
-	//     'names': [
-	//     'LOCAL_NED',
-	//     'LOCAL_ENU',
-	//     'LOCAL_OFFSET_NED',
-	//     'BODY_NED',
-	//     'BODY_OFFSET_NED',
-	//     'BODY_FRD',
-	//     'BODY_FLU',
-	//     'MOCAP_NED',
-	//     'MOCAP_ENU',
-	//     'VISION_NED',
-	//     'VISION_ENU',
-	//     'ESTIM_NED',
-	//     'ESTIM_ENU',
-	//     'LOCAL_FRD',
-	//     'LOCAL_FLU'
-	//     ],
-	//     'factor': '10000'
-	// },
-	// 'other': {
-	//     'names': [
-	//     'MISSION'
-	//     ],
-	//     'factor': '1'
-	// }
-	// }
-	// cog.outl("switch(frame){")
-	// for frame in frame_factor_dict:
-	//     for name in frame_factor_dict[frame]['names']:
-	//         cog.outl("case enum_value(MAV_FRAME::%s):" % (name))
-	//     cog.outl("\treturn %s;" % (frame_factor_dict[frame]['factor']))
-	// cog.outl("default:\n\treturn 1;")
+	//from pymavlink.dialects.v20 import common
+	//e=common.enums['MAV_FRAME']
+	//all_names = [ee.name[len('MAV_FRAME_'):] for ee in e.values()]
+	//all_names.pop() # remove ENUM_END
+	//global_names = [v for v in all_names if v.startswith('GLOBAL')]
+	//local_names = [v for v in all_names if v.startswith(('LOCAL', 'BODY', 'MOCAP', 'VISION', 'ESTIM'))]
+	//other_names = ['MISSION']
+	//cog.outl("switch(frame){")
+	//for names, factor in [(global_names, 10000000), (local_names, 10000), (other_names, 1)]:
+	//	for name in names:
+	//		cog.outl(f"case enum_value(MAV_FRAME::{name}):")
+	//	cog.outl(f"\treturn {factor};")
+	//cog.outl("default:\n\treturn 1;")
 	// ]]]
-	switch (frame) {
+	switch(frame){
 	case enum_value(MAV_FRAME::GLOBAL):
 	case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
 	case enum_value(MAV_FRAME::GLOBAL_INT):
@@ -111,7 +79,7 @@ static int waypoint_encode_factor( const uint8_t &frame ){
 		return 1;
 	default:
 		return 1;
-		// [[[end]]] (checksum: 42cfa52bd5bd0c6d2e11bf365522b9de)
+		// [[[end]]] (checksum: 3cfb36be230b36758b32068a36c677c6)
 	}
 }
 
@@ -822,7 +790,7 @@ private:
 				wp_nh.getParam("use_mission_item_int", use_mission_item_int);
 			}
 			else {
-				use_mission_item_int = m_uas->get_capabilities() & MAV_PROTOCOL_CAPABILITY_MISSION_INT;
+				use_mission_item_int = m_uas->get_capabilities() & MAV_PROTOCOL_CAPABILITY::MISSION_INT;
 				mission_item_int_support_confirmed = use_mission_item_int;
 			}
 		}
