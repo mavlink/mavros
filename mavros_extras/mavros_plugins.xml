@@ -54,6 +54,9 @@
   <class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
   </class>
+  <class name="rally_point" type="mavros::extra_plugins::RallyPointPlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Ardupilot specific. Request rally point and set rally points.</description>
+  </class>
   <class name="rangefinder" type="mavros::extra_plugins::RangefinderPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Publish RANGEFINDER message data from FCU sensors in companion computer.</description>
   </class>
