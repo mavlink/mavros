@@ -57,7 +57,7 @@ double waypoint_encode_factor( const uint8_t &frame ){
 	//	cog.outl(f"\treturn {factor};")
 	//cog.outl("default:\n\treturn 1;")
 	// ]]]
-	switch(frame){
+	switch (frame) {
 	case enum_value(MAV_FRAME::GLOBAL):
 	case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
 	case enum_value(MAV_FRAME::GLOBAL_INT):
@@ -84,126 +84,126 @@ double waypoint_encode_factor( const uint8_t &frame ){
 template <class ITEM>
 mavros_msgs::Waypoint mav_to_msg(const ITEM &mav_msg)
 {
-			mavros_msgs::Waypoint ret;
+	mavros_msgs::Waypoint ret;
 
-			// [[[cog:
-			// waypoint_item_msg = [(v, v) if isinstance(v, str) else v for v in (
-			//     'frame',
-			//     'command',
-			//     ('is_current', 'current'),
-			//     'autocontinue',
-			//     'param1',
-			//     'param2',
-			//     'param3',
-			//     'param4',
-			// )]
-			// waypoint_coords = [
-			//     ('x_lat', 'x'),
-			//     ('y_long', 'y'),
-			//     ('z_alt', 'z'),
-			// ]
-			// for a, b in waypoint_item_msg + waypoint_coords:
-			//     cog.outl(f"ret.{a} = mav_msg.{b};")
-			// ]]]
-			ret.frame = mav_msg.frame;
-			ret.command = mav_msg.command;
-			ret.is_current = mav_msg.current;
-			ret.autocontinue = mav_msg.autocontinue;
-			ret.param1 = mav_msg.param1;
-			ret.param2 = mav_msg.param2;
-			ret.param3 = mav_msg.param3;
-			ret.param4 = mav_msg.param4;
-			ret.x_lat = mav_msg.x;
-			ret.y_long = mav_msg.y;
-			ret.z_alt = mav_msg.z;
-			// [[[end]]] (checksum: 6dcfddb01b4d4ea828f174bd517d9967)
+	// [[[cog:
+	// waypoint_item_msg = [(v, v) if isinstance(v, str) else v for v in (
+	//     'frame',
+	//     'command',
+	//     ('is_current', 'current'),
+	//     'autocontinue',
+	//     'param1',
+	//     'param2',
+	//     'param3',
+	//     'param4',
+	// )]
+	// waypoint_coords = [
+	//     ('x_lat', 'x'),
+	//     ('y_long', 'y'),
+	//     ('z_alt', 'z'),
+	// ]
+	// for a, b in waypoint_item_msg + waypoint_coords:
+	//     cog.outl(f"ret.{a} = mav_msg.{b};")
+	// ]]]
+	ret.frame = mav_msg.frame;
+	ret.command = mav_msg.command;
+	ret.is_current = mav_msg.current;
+	ret.autocontinue = mav_msg.autocontinue;
+	ret.param1 = mav_msg.param1;
+	ret.param2 = mav_msg.param2;
+	ret.param3 = mav_msg.param3;
+	ret.param4 = mav_msg.param4;
+	ret.x_lat = mav_msg.x;
+	ret.y_long = mav_msg.y;
+	ret.z_alt = mav_msg.z;
+	// [[[end]]] (checksum: 6dcfddb01b4d4ea828f174bd517d9967)
 
-			return ret;
-		}
+	return ret;
+}
 
 template<>
 mavros_msgs::Waypoint mav_to_msg(const WP_ITEM_INT &mav_msg){
-		mavros_msgs::Waypoint ret;
+	mavros_msgs::Waypoint ret;
 
-		// [[[cog:
-		// for a, b in waypoint_item_msg + waypoint_coords:
-		//     if a.startswith(('x', 'y')):
-		//         cog.outl(f"ret.{a} = mav_msg.{b} / waypoint_encode_factor(mav_msg.frame);")
-		//     else:
-		//         cog.outl(f"ret.{a} = mav_msg.{b};")
-		// ]]]
-		ret.frame = mav_msg.frame;
-		ret.command = mav_msg.command;
-		ret.is_current = mav_msg.current;
-		ret.autocontinue = mav_msg.autocontinue;
-		ret.param1 = mav_msg.param1;
-		ret.param2 = mav_msg.param2;
-		ret.param3 = mav_msg.param3;
-		ret.param4 = mav_msg.param4;
-		ret.x_lat = mav_msg.x / waypoint_encode_factor(mav_msg.frame);
-		ret.y_long = mav_msg.y / waypoint_encode_factor(mav_msg.frame);
-		ret.z_alt = mav_msg.z;
-		// [[[end]]] (checksum: c5939776595c4007d3636cf2881f55df)
+	// [[[cog:
+	// for a, b in waypoint_item_msg + waypoint_coords:
+	//     if a.startswith(('x', 'y')):
+	//         cog.outl(f"ret.{a} = mav_msg.{b} / waypoint_encode_factor(mav_msg.frame);")
+	//     else:
+	//         cog.outl(f"ret.{a} = mav_msg.{b};")
+	// ]]]
+	ret.frame = mav_msg.frame;
+	ret.command = mav_msg.command;
+	ret.is_current = mav_msg.current;
+	ret.autocontinue = mav_msg.autocontinue;
+	ret.param1 = mav_msg.param1;
+	ret.param2 = mav_msg.param2;
+	ret.param3 = mav_msg.param3;
+	ret.param4 = mav_msg.param4;
+	ret.x_lat = mav_msg.x / waypoint_encode_factor(mav_msg.frame);
+	ret.y_long = mav_msg.y / waypoint_encode_factor(mav_msg.frame);
+	ret.z_alt = mav_msg.z;
+	// [[[end]]] (checksum: c5939776595c4007d3636cf2881f55df)
 
-		return ret;
+	return ret;
 }
 
 
 template <class ITEM>
 ITEM mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t seq){
-			ITEM ret{};
+	ITEM ret{};
 
-			// [[[cog:
-			// for a, b in waypoint_item_msg + waypoint_coords:
-			//     cog.outl(f"ret.{b} = wp.{a};")
-			// ]]]
-			ret.frame = wp.frame;
-			ret.command = wp.command;
-			ret.current = wp.is_current;
-			ret.autocontinue = wp.autocontinue;
-			ret.param1 = wp.param1;
-			ret.param2 = wp.param2;
-			ret.param3 = wp.param3;
-			ret.param4 = wp.param4;
-			ret.x = wp.x_lat;
-			ret.y = wp.y_long;
-			ret.z = wp.z_alt;
-			// [[[end]]] (checksum: 0a851ea124b02323fa5259e477db5596)
+	// [[[cog:
+	// for a, b in waypoint_item_msg + waypoint_coords:
+	//     cog.outl(f"ret.{b} = wp.{a};")
+	// ]]]
+	ret.frame = wp.frame;
+	ret.command = wp.command;
+	ret.current = wp.is_current;
+	ret.autocontinue = wp.autocontinue;
+	ret.param1 = wp.param1;
+	ret.param2 = wp.param2;
+	ret.param3 = wp.param3;
+	ret.param4 = wp.param4;
+	ret.x = wp.x_lat;
+	ret.y = wp.y_long;
+	ret.z = wp.z_alt;
+	// [[[end]]] (checksum: 0a851ea124b02323fa5259e477db5596)
 
-			ret.seq = seq;
-			ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
+	ret.seq = seq;
+	ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
 
-			return ret;
-		}
+	return ret;
+}
 
 template <>
 WP_ITEM_INT mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t seq){
-		WP_ITEM_INT ret{};
+	WP_ITEM_INT ret{};
 
-		// [[[cog:
-		// for a, b in waypoint_item_msg + waypoint_coords:
-		//     if b.startswith(('x', 'y')):
-		//         cog.outl(f"ret.{b} = int32_t(wp.{a} * waypoint_encode_factor(wp.frame));")
-		//     else:
-		//         cog.outl(f"ret.{b} = wp.{a};")
-		// ]]]
-		ret.frame = wp.frame;
-		ret.command = wp.command;
-		ret.current = wp.is_current;
-		ret.autocontinue = wp.autocontinue;
-		ret.param1 = wp.param1;
-		ret.param2 = wp.param2;
-		ret.param3 = wp.param3;
-		ret.param4 = wp.param4;
-		ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
-		ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
-		ret.z = wp.z_alt;
-		// [[[end]]] (checksum: bf26a63f03988e41aa372667edcae7d8)
+	// [[[cog:
+	// for a, b in waypoint_item_msg + waypoint_coords:
+	//     if b.startswith(('x', 'y')):
+	//         cog.outl(f"ret.{b} = int32_t(wp.{a} * waypoint_encode_factor(wp.frame));")
+	//     else:
+	//         cog.outl(f"ret.{b} = wp.{a};")
+	// ]]]
+	ret.frame = wp.frame;
+	ret.command = wp.command;
+	ret.current = wp.is_current;
+	ret.autocontinue = wp.autocontinue;
+	ret.param1 = wp.param1;
+	ret.param2 = wp.param2;
+	ret.param3 = wp.param3;
+	ret.param4 = wp.param4;
+	ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
+	ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
+	ret.z = wp.z_alt;
+	// [[[end]]] (checksum: bf26a63f03988e41aa372667edcae7d8)
 
-		ret.seq = seq;
-		ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
+	ret.seq = seq;
+	ret.mission_type = enum_value(mavlink::common::MAV_MISSION_TYPE::MISSION);
 
-		return ret;
+	return ret;
 }
 
 template <class ITEM>
@@ -828,7 +828,7 @@ private:
 	//! @brief send a single waypoint to FCU
 	template <class ITEM>
 	void send_waypoint(size_t seq){
-		if (seq < send_waypoints.size()){
+		if (seq < send_waypoints.size()) {
 			auto wp_msg = send_waypoints.at(seq);
 			auto wpi = mav_from_msg<ITEM>(wp_msg, seq);
 			mission_send(wpi);
