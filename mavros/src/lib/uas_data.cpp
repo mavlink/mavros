@@ -125,7 +125,7 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 	if(process_cb_queue){
 		fcu_capabilities = caps;
 		for (auto &cb : capabilities_cb_vec){
-			cb(static_cast<mavlink::common::MAV_PROTOCOL_CAPABILITY>(caps));
+			cb(static_cast<MAV_CAP>(caps));
 		}
 	}
 }
