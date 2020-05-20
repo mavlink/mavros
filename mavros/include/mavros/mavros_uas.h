@@ -66,6 +66,7 @@ namespace mavros {
 class UAS {
 public:
 	using ConnectionCb = std::function<void(bool)>;
+	using CapabilitiesCb = std::function<void(mavlink::common::MAV_PROTOCOL_CAPABILITY)>;
 	using lock_guard = std::lock_guard<std::recursive_mutex>;
 	using unique_lock = std::unique_lock<std::recursive_mutex>;
 
@@ -310,8 +311,19 @@ public:
 
 	/* -*- autopilot version -*- */
 	uint64_t get_capabilities();
+
+	/**
+	 * @brief Update the capabilities if they've changed every VERSION/timeout
+	 */
 	void update_capabilities(bool known, uint64_t caps = 0);
 
+	/**
+	 * @brief Adds a function to the capabilities callback queue
+	 * 
+	 * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY param
+	 */
+	void add_capabilities_change_handler(CapabilitiesCb cb);
+	
 	/**
 	 * @brief Compute FCU message time from time_boot_ms or time_usec field
 	 *
@@ -416,6 +428,7 @@ private:
 
 	std::atomic<bool> connected;
 	std::vector<ConnectionCb> connection_cb_vec;
+	std::vector<CapabilitiesCb> capabilities_cb_vec;
 
 	sensor_msgs::Imu::Ptr imu_enu_data;
 	sensor_msgs::Imu::Ptr imu_ned_data;
