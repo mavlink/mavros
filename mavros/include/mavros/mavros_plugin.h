@@ -136,7 +136,7 @@ protected:
 	/**
 	 * Common callback called only when capabilities change
 	 */
-	virtual void capabilities_cb(mavlink::common::MAV_PROTOCOL_CAPABILITY capabilities) {
+	virtual void capabilities_cb(MAV_CAP capabilities) {
 		ROS_BREAK();
 	}
 

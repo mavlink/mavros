@@ -35,7 +35,6 @@ namespace std_plugins {
 using mavlink::common::MAV_CMD;
 using mavlink::common::MAV_FRAME;
 using MRES = mavlink::common::MAV_MISSION_RESULT;
-using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
 using utils::enum_value;
 using mavlink::common::MAV_FRAME;
 using WP_ITEM = mavlink::common::msg::MISSION_ITEM;
@@ -760,7 +759,7 @@ private:
 				wp_nh.getParam("use_mission_item_int", use_mission_item_int);
 			}
 			else {
-				use_mission_item_int = m_uas->get_capabilities() & static_cast<uint64_t>(MAV_CAP::MISSION_INT);
+				use_mission_item_int = m_uas->get_capabilities() & static_cast<uint64_t>(UAS::MAV_CAP::MISSION_INT);
 				mission_item_int_support_confirmed = use_mission_item_int;
 			}
 		}

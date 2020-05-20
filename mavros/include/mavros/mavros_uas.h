@@ -65,17 +65,19 @@ namespace mavros {
  */
 class UAS {
 public:
-	using ConnectionCb = std::function<void(bool)>;
-	using CapabilitiesCb = std::function<void(mavlink::common::MAV_PROTOCOL_CAPABILITY)>;
-	using lock_guard = std::lock_guard<std::recursive_mutex>;
-	using unique_lock = std::unique_lock<std::recursive_mutex>;
-
 	// common enums used by UAS
 	using MAV_TYPE = mavlink::common::MAV_TYPE;
 	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
 	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
 	using MAV_STATE = mavlink::common::MAV_STATE;
+	using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY
 	using timesync_mode = utils::timesync_mode;
+
+	// other UAS aliases
+	using ConnectionCb = std::function<void(bool)>;
+	using CapabilitiesCb = std::function<void(MAV_CAP)>;
+	using lock_guard = std::lock_guard<std::recursive_mutex>;
+	using unique_lock = std::unique_lock<std::recursive_mutex>;
 
 	UAS();
 	~UAS() {};
@@ -320,7 +322,7 @@ public:
 	/**
 	 * @brief Adds a function to the capabilities callback queue
 	 * 
-	 * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY param
+	 * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY(MAV_CAP) param
 	 */
 	void add_capabilities_change_handler(CapabilitiesCb cb);
 	
