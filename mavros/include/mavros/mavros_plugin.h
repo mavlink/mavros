@@ -132,6 +132,20 @@ protected:
 	inline void enable_connection_cb() {
 		m_uas->add_connection_change_handler(std::bind(&PluginBase::connection_cb, this, std::placeholders::_1));
 	}
+
+	/**
+	 * Common callback called only when capabilities change
+	 */
+	virtual void capabilities_cb(mavlink::common::MAV_PROTOCOL_CAPABILITY capabilities) {
+		ROS_BREAK();
+	}
+
+	/**
+	 * Shortcut for capabilities_cb() registration
+	 */
+	void enable_capabilities_cb() {
+		m_uas->add_capabilities_change_handler(std::bind(&PluginBase::capabilities_cb, this, std::placeholders::_1));
+	}
 };
 }	// namespace plugin
 }	// namespace mavros

@@ -105,12 +105,36 @@ uint64_t UAS::get_capabilities()
 	}
 }
 
+// This function may need a mutex now
 void UAS::update_capabilities(bool known, uint64_t caps)
 {
-	fcu_caps_known = known;
-	fcu_capabilities = caps;
+	bool process_cb_queue = false;
+
+	if (known != fcu_caps_known) {
+		if(!fcu_caps_known){
+			process_cb_queue = true;
+		}
+		fcu_caps_known = known;
+	} else if (fcu_caps_known){ // Implies fcu_caps_known == known
+		if(caps != fcu_capabilities){
+			process_cb_queue = true;
+		}
+	}
+	else{} // Capabilities werent known before and arent known after update
+
+	if(process_cb_queue){
+		fcu_capabilities = caps;
+		for (auto &cb : capabilities_cb_vec){
+			cb(static_cast<mavlink::common::MAV_PROTOCOL_CAPABILITY>(caps));
+		}
+	}
 }
 
+void UAS::add_capabilities_change_handler(UAS::CapabilitiesCb cb)
+{
+	lock_guard lock(mutex);
+	capabilities_cb_vec.push_back(cb);
+}
 
 /* -*- IMU data -*- */
 
