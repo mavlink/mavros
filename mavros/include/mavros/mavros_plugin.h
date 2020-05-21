@@ -26,7 +26,6 @@
 
 namespace mavros {
 namespace plugin {
-
 using mavros::UAS;
 typedef std::lock_guard<std::recursive_mutex> lock_guard;
 typedef std::unique_lock<std::recursive_mutex> unique_lock;
@@ -98,24 +97,24 @@ protected:
 	 * @param[in] fn  pointer to member function (handler)
 	 */
 	template<class _C, class _T>
-	HandlerInfo make_handler(void (_C::*fn)(const mavlink::mavlink_message_t*, _T&)) {
+	HandlerInfo make_handler(void (_C::*fn)(const mavlink::mavlink_message_t*, _T &)) {
 		auto bfn = std::bind(fn, static_cast<_C*>(this), std::placeholders::_1, std::placeholders::_2);
 		const auto id = _T::MSG_ID;
 		const auto name = _T::NAME;
 		const auto type_hash_ = typeid(_T).hash_code();
 
 		return HandlerInfo{
-			id, name, type_hash_,
-			[bfn](const mavlink::mavlink_message_t *msg, const mavconn::Framing framing) {
-				if (framing != mavconn::Framing::ok)
-					return;
+			       id, name, type_hash_,
+			       [bfn](const mavlink::mavlink_message_t *msg, const mavconn::Framing framing) {
+				       if (framing != mavconn::Framing::ok)
+					       return;
 
-				mavlink::MsgMap map(msg);
-				_T obj;
-				obj.deserialize(map);
+				       mavlink::MsgMap map(msg);
+				       _T obj;
+				       obj.deserialize(map);
 
-				bfn(msg, obj);
-			}
+				       bfn(msg, obj);
+			       }
 		};
 	}
 

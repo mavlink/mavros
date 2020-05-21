@@ -38,15 +38,15 @@ namespace mavros {
 /**
  * @brief helper accessor to FCU link interface
  */
-#define UAS_FCU(uasobjptr)				\
+#define UAS_FCU(uasobjptr)                              \
 	((uasobjptr)->fcu_link)
 
 /**
  * @brief helper accessor to diagnostic updater
  */
-#define UAS_DIAG(uasobjptr)				\
+#define UAS_DIAG(uasobjptr)                             \
 	((uasobjptr)->diag_updater)
-	
+
 
 /**
  * @brief UAS for plugins
@@ -223,8 +223,8 @@ public:
 
 	//! Store GPS RAW data
 	void update_gps_fix_epts(sensor_msgs::NavSatFix::Ptr &fix,
-			float eph, float epv,
-			int fix_type, int satellites_visible);
+		float eph, float epv,
+		int fix_type, int satellites_visible);
 
 	//! Returns EPH, EPV, Fix type and satellites visible
 	void get_gps_epts(float &eph, float &epv, int &fix_type, int &satellites_visible);
@@ -314,27 +314,27 @@ public:
 	/* -*- autopilot version -*- */
 	uint64_t get_capabilities();
 
-	/** 
-	* @brief Function to check if the flight controller has a capability
-	* 
-	* @param capabilities can accept a multiple capability params either in enum or int from
-	*/
+	/**
+	 * @brief Function to check if the flight controller has a capability
+	 *
+	 * @param capabilities can accept a multiple capability params either in enum or int from
+	 */
 	template<typename T>
 	bool has_capability(T capability){
 		return static_cast<uint64_t>(fcu_capabilities) & static_cast<uint64_t>(capability);
 	}
 
-	/** 
-	* @brief Function to check if the flight controller has a set of capabilities
-	* 
-	* @param capabilities can accept a multiple capability params either in enum or int from
-	*/
+	/**
+	 * @brief Function to check if the flight controller has a set of capabilities
+	 *
+	 * @param capabilities can accept a multiple capability params either in enum or int from
+	 */
 
-	template<typename... Ts>
-	bool has_capabilities(Ts... capabilities){
+	template<typename ... Ts>
+	bool has_capabilities(Ts ... capabilities){
 		bool ret = true;
-		std::initializer_list<bool> capabilities_list{has_capability<Ts>(capabilities)...};
-		for(auto has_cap : capabilities_list) ret &= has_cap;
+		std::initializer_list<bool> capabilities_list{has_capability<Ts>(capabilities) ...};
+		for (auto has_cap : capabilities_list) ret &= has_cap;
 		return ret;
 	}
 
@@ -345,11 +345,11 @@ public:
 
 	/**
 	 * @brief Adds a function to the capabilities callback queue
-	 * 
+	 *
 	 * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY(MAV_CAP) param
 	 */
 	void add_capabilities_change_handler(CapabilitiesCb cb);
-	
+
 	/**
 	 * @brief Compute FCU message time from time_boot_ms or time_usec field
 	 *
