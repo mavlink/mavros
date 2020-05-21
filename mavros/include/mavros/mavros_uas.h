@@ -20,6 +20,7 @@
 #include <array>
 #include <mutex>
 #include <atomic>
+#include <type_traits>
 #include <eigen_conversions/eigen_msg.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -321,7 +322,8 @@ public:
 	 */
 	template<typename T>
 	bool has_capability(T capability){
-		return static_cast<uint64_t>(fcu_capabilities) & static_cast<uint64_t>(capability);
+		static_assert(std::is_enum<T>::value, "Only query capabilities using the UAS::MAV_CAP enum.");
+		return get_capabilities() & utils::enum_value(capability);
 	}
 
 	/**
