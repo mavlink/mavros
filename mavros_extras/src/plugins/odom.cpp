@@ -225,8 +225,7 @@ private:
 
 		mavlink::common::msg::ODOMETRY msg {};
 		msg.frame_id = utils::enum_value(MAV_FRAME::LOCAL_FRD);
-		//msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FRD);
-		msg.child_frame_id = 12;	// XXX FIXME: BODY_FRD removed: https://github.com/mavlink/mavlink/pull/1112
+		msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FRD);
 
 		/**
 		 * Position parsing from odometry's parent frame to "LOCAL_FRD" frame.
