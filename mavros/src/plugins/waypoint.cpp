@@ -764,13 +764,13 @@ private:
 	}
 
 	// Acts when capabilities of the fcu are changed
-	void capabilities_cb(UAS::MAV_CAP capabilities) override{
+	void capabilities_cb(UAS::MAV_CAP capabilities) override {
 		lock_guard lock(mutex);
-		if(m_uas->has_capability(UAS::MAV_CAP::MISSION_INT)){
+		if (m_uas->has_capability(UAS::MAV_CAP::MISSION_INT)) {
 			use_mission_item_int = true;
 			mission_item_int_support_confirmed = true;
 			ROS_INFO_NAMED("wp", "WP: Using MISSION_ITEM_INT");
-		} else{
+		} else {
 			use_mission_item_int = false;
 			mission_item_int_support_confirmed = false;
 			ROS_WARN_NAMED("wp", "WP: Falling back to MISSION_ITEM");

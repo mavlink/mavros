@@ -111,20 +111,20 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 	bool process_cb_queue = false;
 
 	if (known != fcu_caps_known) {
-		if(!fcu_caps_known){
+		if (!fcu_caps_known) {
 			process_cb_queue = true;
 		}
 		fcu_caps_known = known;
-	} else if (fcu_caps_known){ // Implies fcu_caps_known == known
-		if(caps != fcu_capabilities){
+	} else if (fcu_caps_known) {	// Implies fcu_caps_known == known
+		if (caps != fcu_capabilities) {
 			process_cb_queue = true;
 		}
 	}
-	else{} // Capabilities werent known before and arent known after update
+	else {}	// Capabilities werent known before and arent known after update
 
-	if(process_cb_queue){
+	if (process_cb_queue) {
 		fcu_capabilities = caps;
-		for (auto &cb : capabilities_cb_vec){
+		for (auto &cb : capabilities_cb_vec) {
 			cb(static_cast<MAV_CAP>(caps));
 		}
 	}
