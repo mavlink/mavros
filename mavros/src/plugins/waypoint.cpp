@@ -244,6 +244,7 @@ public:
 		wp_state = WP::IDLE;
 
 		wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
+		wp_nh.param("use_mission_item_int", use_mission_item_int, false);
 
 		wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
 		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached", 10, true);
@@ -257,6 +258,7 @@ public:
 		schedule_timer = wp_nh.createTimer(BOOTUP_TIME_DT, &WaypointPlugin::scheduled_pull_cb, this, true);
 		schedule_timer.stop();
 		enable_connection_cb();
+		enable_capabilities_cb();
 	}
 
 	Subscriptions get_subscriptions() {
@@ -755,16 +757,23 @@ private:
 			else {
 				enable_partial_push = m_uas->is_ardupilotmega();
 			}
-			if (wp_nh.hasParam("use_mission_item_int")) {
-				wp_nh.getParam("use_mission_item_int", use_mission_item_int);
-			}
-			else {
-				use_mission_item_int = m_uas->get_capabilities() & static_cast<uint64_t>(UAS::MAV_CAP::MISSION_INT);
-				mission_item_int_support_confirmed = use_mission_item_int;
-			}
 		}
 		else {
 			schedule_timer.stop();
+		}
+	}
+
+	// Acts when capabilities of the fcu are changed
+	void capabilities_cb(UAS::MAV_CAP capabilities) override{
+		lock_guard lock(mutex);
+		if(m_uas->has_capability(UAS::MAV_CAP::MISSION_INT)){
+			use_mission_item_int = true;
+			mission_item_int_support_confirmed = true;
+			ROS_INFO_NAMED("wp", "WP: Using MISSION_ITEM_INT");
+		} else{
+			use_mission_item_int = false;
+			mission_item_int_support_confirmed = false;
+			ROS_WARN_NAMED("wp", "WP: Falling back to MISSION_ITEM");
 		}
 	}
 

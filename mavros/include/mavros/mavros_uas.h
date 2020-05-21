@@ -46,7 +46,7 @@ namespace mavros {
  */
 #define UAS_DIAG(uasobjptr)				\
 	((uasobjptr)->diag_updater)
-
+	
 
 /**
  * @brief UAS for plugins
@@ -313,6 +313,30 @@ public:
 
 	/* -*- autopilot version -*- */
 	uint64_t get_capabilities();
+
+	/** 
+	* @brief Function to check if the flight controller has a capability
+	* 
+	* @param capabilities can accept a multiple capability params either in enum or int from
+	*/
+	template<typename T>
+	bool has_capability(T capability){
+		return static_cast<uint64_t>(fcu_capabilities) & static_cast<uint64_t>(capability);
+	}
+
+	/** 
+	* @brief Function to check if the flight controller has a set of capabilities
+	* 
+	* @param capabilities can accept a multiple capability params either in enum or int from
+	*/
+
+	template<typename... Ts>
+	bool has_capabilities(Ts... capabilities){
+		bool ret = true;
+		std::initializer_list<bool> capabilities_list{has_capability<Ts>(capabilities)...};
+		for(auto has_cap : capabilities_list) ret &= has_cap;
+		return ret;
+	}
 
 	/**
 	 * @brief Update the capabilities if they've changed every VERSION/timeout
