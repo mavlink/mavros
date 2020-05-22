@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.2.0 (2020-05-22)
+------------------
 * has_capability only works for enums
 * Uncrustify
 * Reworked Waypoint plugin to use capabilities_cb

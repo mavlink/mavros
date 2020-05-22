@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.2.0 (2020-05-22)
+------------------
 * Revert "extras: odom: Hardcode BODY_FRD enum_value to fix compilation"
   This reverts commit 1a898dea2202ee1af56d698bd40d40994346c5cb.
 * extras: odom: Hardcode BODY_FRD enum_value to fix compilation
