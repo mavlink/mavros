@@ -2,6 +2,11 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add yaw to CMD_DO_SET_HOME
+* Contributors: David Jablonski
+
 1.1.0 (2020-04-04)
 ------------------
 
