@@ -61,11 +61,10 @@ private:
 	void handle_apm_wind(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::WIND &wind)
 	{
 		const double speed = wind.speed;
-		const double course = -angles::from_degrees(wind.direction);	// direction "from" -> direction "to"
+		const double course = angles::from_degrees(wind.direction) + M_PI;	// direction "from" -> direction "to"
 
 		auto twist_cov = boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
 		twist_cov->header.stamp = ros::Time::now();
-		// TODO: check math's
 		twist_cov->twist.twist.linear.x = speed * std::sin(course);	// E
 		twist_cov->twist.twist.linear.y = speed * std::cos(course);	// N
 		twist_cov->twist.twist.linear.z = -wind.speed_z;// D -> U
