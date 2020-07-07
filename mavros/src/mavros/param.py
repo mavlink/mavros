@@ -40,6 +40,35 @@ class ParamFile(object):
         raise NotImplementedError
 
 
+class MavProxyParam(ParamFile):
+    """Parse MavProxy param files"""
+
+    class CSVDialect(csv.Dialect):
+        delimiter = ' '
+        doublequote = False
+        skipinitialspace = True
+        lineterminator = '\r\n'
+        quoting = csv.QUOTE_NONE
+
+    def read(self, file_):
+        to_numeric = lambda x: float(x) if '.' in x else int(x)
+
+        for data in csv.reader(file_, self.CSVDialect):
+            if data[0].startswith('#'):
+                continue # skip comments
+
+            if len(data) != 2:
+                raise ValueError("wrong field count")
+
+            yield Parameter(data[0].strip(), to_numeric(data[1]));
+
+    def write(self, file_, parameters):
+        writer = csv.writer(file_, self.CSVDialect)
+        file_.write("#NOTE: " + time.strftime("%d.%m.%Y %T") + self.CSVDialect.lineterminator)
+        for p in parameters:
+            writer.writerow((p.param_id, p.param_value))
+
+
 class MissionPlannerParam(ParamFile):
     """Parse MissionPlanner param files"""
 
