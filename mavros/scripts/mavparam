@@ -24,6 +24,10 @@ def get_param_file_io(args):
         print_if(args.verbose, "QGroundControl format")
         return QGroundControlParam(args)
 
+    elif args.mavproxy:
+        print_if(args.verbose, "MavProxy format")
+        return MavProxyParam(args)
+
     else:
         if args.file.name.endswith('.txt'):
             print_if(args.verbose, "Suggestion: QGroundControl format")
@@ -75,6 +79,7 @@ def main():
     load_format = load_args.add_mutually_exclusive_group()
     load_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
     load_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+    load_format.add_argument('-mavpx', '--mavproxy', action="store_true", help="Select MavProxy param file format")
 
     dump_args = subarg.add_parser('dump', help="Dump parameters to file")
     dump_args.set_defaults(func=do_dump)
@@ -83,6 +88,7 @@ def main():
     dump_format = dump_args.add_mutually_exclusive_group()
     dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
     dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
+    dump_format.add_argument('-mavpx', '--mavproxy', action="store_true", help="Select MavProxy param file format")
 
     get_args = subarg.add_parser('get', help="Get parameter")
     get_args.set_defaults(func=do_get)
