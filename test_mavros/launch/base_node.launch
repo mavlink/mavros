@@ -1,0 +1,45 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- Base node launch file-->
+	<arg name="args" />
+	<arg name="num_of_tests" />
+	<arg name="rate" />
+	<arg name="use_pid" />
+
+	<arg name="mode" />
+	<arg name="shape" />
+
+	<arg name="linvel_p_gain" />
+	<arg name="linvel_i_gain" />
+	<arg name="linvel_d_gain" />
+	<arg name="linvel_i_max" />
+	<arg name="linvel_i_min" />
+
+	<arg name="yawrate_p_gain" />
+	<arg name="yawrate_i_gain" />
+	<arg name="yawrate_d_gain" />
+	<arg name="yawrate_i_max" />
+	<arg name="yawrate_i_min" />
+
+	<node pkg="test_mavros" type="sitl_test_node" args="$(arg args)" name="sitl_test_offboard_ctl" required="true" clear_params="true" output="screen">
+		<param name="num_of_tests" value="$(arg num_of_tests)" />
+		<param name="rate" value="$(arg rate)" />
+		<param name="use_pid" value="$(arg use_pid)" />
+
+		<param name="mode" value="$(arg mode)" />
+		<param name="shape" value="$(arg shape)" />
+
+		<param name="linvel_p_gain" value="$(arg linvel_p_gain)" />
+		<param name="linvel_i_gain" value="$(arg linvel_i_gain)" />
+		<param name="linvel_d_gain" value="$(arg linvel_d_gain)" />
+		<param name="linvel_i_max" value="$(arg linvel_i_max)" />
+		<param name="linvel_i_min" value="$(arg linvel_i_min)" />
+
+		<param name="yawrate_p_gain" value="$(arg yawrate_p_gain)" />
+		<param name="yawrate_i_gain" value="$(arg yawrate_i_gain)" />
+		<param name="yawrate_d_gain" value="$(arg yawrate_d_gain)" />
+		<param name="yawrate_i_max" value="$(arg yawrate_i_max)" />
+		<param name="yawrate_i_min" value="$(arg yawrate_i_min)" />
+	</node>
+
+</launch>

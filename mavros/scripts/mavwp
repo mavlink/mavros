@@ -3,19 +3,9 @@
 #
 # Copyright 2014 Vladimir Ermakov.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 from __future__ import print_function
 
@@ -23,8 +13,9 @@ import argparse
 import threading
 
 import rospy
+import mavros
 from mavros.utils import *
-from mavros.mission import *
+from mavros import mission as M
 
 no_prettytable = False
 try:
@@ -34,15 +25,13 @@ except ImportError:
     no_prettytable = True
 
 
-
 def get_wp_file_io(args):
-    return QGroundControlWP()
+    return M.QGroundControlWP()
 
 
 def _pull(args):
     try:
-        pull_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/pull", WaypointPull)
-        ret = pull_cl()
+        ret = M.pull()
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -54,26 +43,13 @@ def _pull(args):
 
 
 def do_pull(args):
-    rospy.init_node("mavwp", anonymous=True)
     _pull(args)
 
 
 def do_show(args):
-    rospy.init_node("mavwp", anonymous=True)
-
     str_bool = lambda x: 'Yes' if x else 'No'
-
-    def str_frame(f):
-        if FRAMES.has_key(f):
-            return FRAMES[f] + ' ({})'.format(f)
-        else:
-            return 'UNK ({})'.format(f)
-
-    def str_command(c):
-        if NAV_CMDS.has_key(c):
-            return NAV_CMDS[c] + ' ({})'.format(c)
-        else:
-            return 'UNK ({})'.format(c)
+    str_frame = lambda f: M.FRAMES.get(f, 'UNK') + ' ({})'.format(f)
+    str_command = lambda c: M.NAV_CMDS.get(c, 'UNK') + ' ({})'.format(c)
 
     done_evt = threading.Event()
     def _show_table(topic):
@@ -106,7 +82,7 @@ def do_show(args):
         _pull(args)
 
     # Waypoints topic is latched type, and it updates after pull
-    sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _show_table)
+    sub = M.subscribe_waypoints(_show_table)
     if args.follow:
         rospy.spin()
     elif not done_evt.wait(30.0):
@@ -114,17 +90,14 @@ def do_show(args):
 
 
 def do_load(args):
-    rospy.init_node("mavwp", anonymous=True)
-
     wps = []
     wps_file = get_wp_file_io(args)
     with args.file:
         wps = [w for w in wps_file.read(args.file)]
 
-    def _load_call(waypoint_list):
+    def _load_call(start, waypoint_list):
         try:
-            push_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/push", WaypointPush)
-            ret = push_cl(waypoints=waypoint_list)
+            ret = M.push(start_index=start, waypoints=waypoint_list)
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -144,22 +117,29 @@ def do_load(args):
 
         done_evt.set()
 
-    if not args.preserve_home:
-        _load_call(wps)
+    if args.start_index > 0:
+        # Push partial
+        if args.start_index == args.end_index:
+            args.end_index += 1
+
+        end_index = args.end_index or len(wps)
+        _load_call(args.start_index, wps[args.start_index:end_index])
     else:
-        # Note: _load_call() emit publish on this topic, so callback only changes
-        # waypoint 0, and signal done event.
-        sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _fix_wp0)
-        if not done_evt.wait(30.0):
-            fault("Something went wrong. Topic timed out.")
+        # Full push
+        if not args.preserve_home:
+            _load_call(0, wps)
         else:
-            sub.unregister()
-            _load_call(wps)
+            # Note: _load_call() emit publish on this topic, so callback only changes
+            # waypoint 0, and signal done event.
+            sub = M.subscribe_waypoints(_fix_wp0)
+            if not done_evt.wait(30.0):
+                fault("Something went wrong. Topic timed out.")
+            else:
+                sub.unregister()
+                _load_call(0, wps)
 
 
 def do_dump(args):
-    rospy.init_node("mavwp", anonymous=True)
-
     done_evt = threading.Event()
     def _write_file(topic):
         wps_file = get_wp_file_io(args)
@@ -169,17 +149,14 @@ def do_dump(args):
 
     # Waypoints topic is latched type, and it updates after pull
     _pull(args)
-    sub = rospy.Subscriber(args.mavros_ns + "/mission/waypoints", WaypointList, _write_file)
+    sub = M.subscribe_waypoints(_write_file)
     if not done_evt.wait(30.0):
         fault("Something went wrong. Topic timed out.")
 
 
 def do_clear(args):
-    rospy.init_node("mavwp", anonymous=True)
-
     try:
-        clear_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/clear", WaypointClear)
-        ret = clear_cl()
+        ret = M.clear()
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -190,11 +167,8 @@ def do_clear(args):
 
 
 def do_set_current(args):
-    rospy.init_node("mavwp", anonymous=True)
-
     try:
-        setcur_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/set_current", WaypointSetCurrent)
-        ret = setcur_cl(wp_seq=args.seq)
+        ret = M.set_current(wp_seq=args.seq)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -204,77 +178,44 @@ def do_set_current(args):
         print_if(args.verbose, "Set current done.")
 
 
-def do_goto(args):
-    rospy.init_node("mavwp", anonymous=True)
-
-    wp = Waypoint(
-        frame = args.frame,
-        command = args.command,
-        param1 = args.param1,
-        param2 = args.param2,
-        param3 = args.param3,
-        param4 = args.param4,
-        x_lat = args.x_lat,
-        y_long = args.y_long,
-        z_alt = args.z_alt
-    )
-
-    try:
-        goto_cl = rospy.ServiceProxy(args.mavros_ns + "/mission/goto", WaypointGOTO)
-        ret = goto_cl(waypoint=wp)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    if not ret.success:
-        fault("Request failed. Check mavros logs")
-
-    print_if(args.verbose, "Goto done.")
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for manipulating mission on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(description="Command line tool for manipulating missions on MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     if not no_prettytable:
         show_args = subarg.add_parser('show', help="Show waypoints")
-        show_args.add_argument('-f', '--follow', action='store_true', help="watch and show new data")
-        show_args.add_argument('-p', '--pull', action='store_true', help="pull waypoints from FCU before show")
+        show_args.add_argument('-f', '--follow', action='store_true', help="Watch and show new data")
+        show_args.add_argument('-p', '--pull', action='store_true', help="Pull waypoints from FCU before show")
         show_args.set_defaults(func=do_show)
 
-    load_args = subarg.add_parser('load', help="load waypoints from file")
+    load_args = subarg.add_parser('load', help="Load waypoints from file")
     load_args.set_defaults(func=do_load)
-    load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0)")
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file (QGC/MP format)")
+    load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
+    load_args.add_argument('-s', '--start-index', type=int, default=0, help="Waypoint start index for partial updating (APM only)")
+    load_args.add_argument('-e', '--end-index', type=int, default=0, help="Waypoint end index for partial updating (APM only, default: last element in waypoint list)")
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file (QGC/MP format)")
 
-    pull_args = subarg.add_parser('pull', help="pull waypoints from FCU")
+    pull_args = subarg.add_parser('pull', help="Pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
-    dump_args = subarg.add_parser('dump', help="dump waypoints to file")
+    dump_args = subarg.add_parser('dump', help="Dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file (QGC format)")
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file (QGC format)")
 
-    clear_args = subarg.add_parser('clear', help="clear waypoints on device")
+    clear_args = subarg.add_parser('clear', help="Clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
 
-    setcur_args = subarg.add_parser('setcur', help="set current waypoints on device")
-    setcur_args.add_argument('seq', type=int, help="waypoint seq id")
+    setcur_args = subarg.add_parser('setcur', help="Set current waypoints on device")
+    setcur_args.add_argument('seq', type=int, help="Waypoint seq id")
     setcur_args.set_defaults(func=do_set_current)
 
-    goto_args = subarg.add_parser('goto', help="send goto waypoint (APM only)")
-    goto_args.add_argument('frame', type=int, help="frame code")
-    goto_args.add_argument('command', type=int, help="command code")
-    goto_args.add_argument('param1', type=float, help="param1")
-    goto_args.add_argument('param2', type=float, help="param2")
-    goto_args.add_argument('param3', type=float, help="param3")
-    goto_args.add_argument('param4', type=float, help="param4")
-    goto_args.add_argument('x_lat', type=float, help="X latitude")
-    goto_args.add_argument('y_long', type=float, help="Y longitude")
-    goto_args.add_argument('z_alt', type=float, help="Z altitude")
-    goto_args.set_defaults(func=do_goto)
-
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavwp", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
+
     args.func(args)
 
 

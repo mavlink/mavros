@@ -1,0 +1,22 @@
+# Example config for servo_state_publisher
+# vim:set ts=2 sw=2 et:
+#
+aileron: &default
+  rc_channel: 1
+  rc_min: 1000  # for APM this values can be copied from RCx_MIN/MAX/TRIM
+  rc_max: 2000
+  rc_trim: 1500
+
+elevator:
+  <<: *default
+  rc_channel: 2
+
+# error if URDF don't define that <joint>
+throttle:
+  rc_channel: 3
+
+rudder:
+  rc_channel: 4
+  rc_min: 1100
+  rc_max: 1950  # rc_trim should calculate to 1525
+  rc_rev: true  # reverse

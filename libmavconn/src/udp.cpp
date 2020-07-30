@@ -7,55 +7,57 @@
  * @{
  */
 /*
- * Copyright 2013,2014 Vladimir Ermakov.
+ * libmavconn
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <cassert>
-#include <console_bridge/console.h>
 
+#include <mavconn/console_bridge_compat.h>
 #include <mavconn/thread_utils.h>
 #include <mavconn/udp.h>
 
 namespace mavconn {
+
 using boost::system::error_code;
 using boost::asio::io_service;
 using boost::asio::ip::udp;
 using boost::asio::buffer;
-using mavutils::to_string_cs;
-typedef std::lock_guard<std::recursive_mutex> lock_guard;
+using utils::to_string_ss;
+using utils::operator"" _KiB;
+using mavlink::mavlink_message_t;
+
+#define PFX	"mavconn: udp"
+#define PFXd	PFX "%zu: "
 
 
-static bool resolve_address_udp(io_service &io, std::string host, unsigned short port, udp::endpoint &ep)
+static bool resolve_address_udp(io_service &io, size_t chan, std::string host, unsigned short port, udp::endpoint &ep)
 {
 	bool result = false;
 	udp::resolver resolver(io);
 	error_code ec;
 
 	udp::resolver::query query(host, "");
-	std::for_each(resolver.resolve(query, ec), udp::resolver::iterator(),
-		[&](const udp::endpoint &q_ep) {
-			ep = q_ep;
-			ep.port(port);
-			result = true;
-			logDebug("udp: host %s resolved as %s", host.c_str(), to_string_cs(ep));
-		});
+
+	auto fn = [&](const udp::endpoint & q_ep) {
+		ep = q_ep;
+		ep.port(port);
+		result = true;
+		CONSOLE_BRIDGE_logDebug(PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
+	};
+
+#if BOOST_ASIO_VERSION >= 101200
+	for (auto q_ep : resolver.resolve(query, ec)) fn(q_ep);
+#else
+	std::for_each(resolver.resolve(query, ec), udp::resolver::iterator(), fn);
+#endif
 
 	if (ec) {
-		logWarn("udp: resolve error: %s", ec.message().c_str());
+		CONSOLE_BRIDGE_logWarn(PFXd "resolve error: %s", chan, ec.message().c_str());
 		result = false;
 	}
 
@@ -69,148 +71,190 @@ MAVConnUDP::MAVConnUDP(uint8_t system_id, uint8_t component_id,
 	MAVConnInterface(system_id, component_id),
 	remote_exists(false),
 	tx_in_progress(false),
+	tx_q {},
+	rx_buf {},
 	io_service(),
 	io_work(new io_service::work(io_service)),
-	socket(io_service)
+	socket(io_service),
+	permanent_broadcast(false)
 {
-	if (!resolve_address_udp(io_service, bind_host, bind_port, bind_ep))
+	using udps = boost::asio::ip::udp::socket;
+
+	if (!resolve_address_udp(io_service, conn_id, bind_host, bind_port, bind_ep))
 		throw DeviceError("udp: resolve", "Bind address resolve failed");
 
-	logInform("udp%d: Bind address: %s", channel, to_string_cs(bind_ep));
+	CONSOLE_BRIDGE_logInform(PFXd "Bind address: %s", conn_id, to_string_ss(bind_ep).c_str());
 
 	if (remote_host != "") {
-		remote_exists = resolve_address_udp(io_service, remote_host, remote_port, remote_ep);
+		if (remote_host != BROADCAST_REMOTE_HOST && remote_host != PERMANENT_BROADCAST_REMOTE_HOST)
+			remote_exists = resolve_address_udp(io_service, conn_id, remote_host, remote_port, remote_ep);
+		else {
+			remote_exists = true;
+			remote_ep = udp::endpoint(boost::asio::ip::address_v4::broadcast(), remote_port);
+		}
 
 		if (remote_exists)
-			logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
+			CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", conn_id, to_string_ss(remote_ep).c_str());
 		else
-			logWarn("udp%d: Remote address resolve failed.", channel);
+			CONSOLE_BRIDGE_logWarn(PFXd "Remote address resolve failed.", conn_id);
 	}
 
 	try {
 		socket.open(udp::v4());
+
+		// set buffer opt. size from QGC
+		socket.set_option(udps::reuse_address(true));
+		socket.set_option(udps::send_buffer_size(256_KiB));
+		socket.set_option(udps::receive_buffer_size(512_KiB));
+
 		socket.bind(bind_ep);
+
+		if (remote_host == BROADCAST_REMOTE_HOST) {
+			socket.set_option(udps::broadcast(true));
+		} else if (remote_host == PERMANENT_BROADCAST_REMOTE_HOST) {
+			socket.set_option(udps::broadcast(true));
+			permanent_broadcast = true;
+		}
 	}
 	catch (boost::system::system_error &err) {
 		throw DeviceError("udp", err);
 	}
 
+	// NOTE: shared_from_this() should not be used in constructors
+
 	// give some work to io_service before start
-	io_service.post(boost::bind(&MAVConnUDP::do_recvfrom, this));
+	io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnUDP%d", channel);
-	io_thread.swap(t);
+	io_thread = std::thread([this] () {
+				utils::set_this_thread_name("mudp%zu", conn_id);
+				io_service.run();
+			});
 }
 
-MAVConnUDP::~MAVConnUDP() {
+MAVConnUDP::~MAVConnUDP()
+{
 	close();
 }
 
-void MAVConnUDP::close() {
+void MAVConnUDP::close()
+{
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
 
-	io_work.reset();
-	io_service.stop();
+	socket.cancel();
 	socket.close();
 
-	// clear tx queue
-	std::for_each(tx_q.begin(), tx_q.end(),
-			[](MsgBuffer *p) { delete p; });
-	tx_q.clear();
+	io_work.reset();
+	io_service.stop();
 
 	if (io_thread.joinable())
 		io_thread.join();
 
-	/* emit */ port_closed();
+	io_service.reset();
+
+	if (port_closed_cb)
+		port_closed_cb();
 }
 
 void MAVConnUDP::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
-		logError("udp%d:send: channel closed!", channel);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug("udp%d:send: Remote not known, message dropped.", channel);
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
-	MsgBuffer *buf = new MsgBuffer(bytes, length);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_bytes: TX queue overflow");
+
+		tx_q.emplace_back(bytes, length);
 	}
-	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
-void MAVConnUDP::send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid)
+void MAVConnUDP::send_message(const mavlink_message_t *message)
 {
 	assert(message != nullptr);
 
 	if (!is_open()) {
-		logError("udp%d:send: channel closed!", channel);
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
 		return;
 	}
 
 	if (!remote_exists) {
-		logDebug("udp%d:send: Remote not known, message dropped.", channel);
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
 		return;
 	}
 
-	logDebug("udp%d:send: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
-			channel, message->msgid, message->len, sysid, compid);
+	log_send(PFX, message);
 
-	MsgBuffer *buf = new_msgbuffer(message, sysid, compid);
 	{
 		lock_guard lock(mutex);
-		tx_q.push_back(buf);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message);
 	}
-	io_service.post(boost::bind(&MAVConnUDP::do_sendto, this, true));
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
+}
+
+void MAVConnUDP::send_message(const mavlink::Message &message, const uint8_t source_compid)
+{
+	if (!is_open()) {
+		CONSOLE_BRIDGE_logError(PFXd "send: channel closed!", conn_id);
+		return;
+	}
+
+	if (!remote_exists) {
+		CONSOLE_BRIDGE_logDebug(PFXd "send: Remote not known, message dropped.", conn_id);
+		return;
+	}
+
+	log_send_obj(PFX, message);
+
+	{
+		lock_guard lock(mutex);
+
+		if (tx_q.size() >= MAX_TXQ_SIZE)
+			throw std::length_error("MAVConnUDP::send_message: TX queue overflow");
+
+		tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
+	}
+	io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
 }
 
 void MAVConnUDP::do_recvfrom()
 {
+	auto sthis = shared_from_this();
 	socket.async_receive_from(
-			buffer(rx_buf, sizeof(rx_buf)),
-			remote_ep,
-			boost::bind(&MAVConnUDP::async_receive_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
-}
+			buffer(rx_buf),
+			permanent_broadcast ? recv_ep : remote_ep,
+			[sthis] (error_code error, size_t bytes_transferred) {
+				if (error) {
+					CONSOLE_BRIDGE_logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
+					return;
+				}
 
-void MAVConnUDP::async_receive_end(error_code error, size_t bytes_transferred)
-{
-	mavlink_message_t message;
-	mavlink_status_t status;
+				if (!sthis->permanent_broadcast && sthis->remote_ep != sthis->last_remote_ep) {
+					CONSOLE_BRIDGE_logInform(PFXd "Remote address: %s", sthis->conn_id, to_string_ss(sthis->remote_ep).c_str());
+					sthis->remote_exists = true;
+					sthis->last_remote_ep = sthis->remote_ep;
+				}
 
-	if (error) {
-		logError("udp%d:receive: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	if (remote_ep != last_remote_ep) {
-		logInform("udp%d: Remote address: %s", channel, to_string_cs(remote_ep));
-		remote_exists = true;
-		last_remote_ep = remote_ep;
-	}
-
-	for (ssize_t i = 0; i < bytes_transferred; i++) {
-		if (mavlink_parse_char(channel, rx_buf[i], &message, &status)) {
-			logDebug("udp%d:recv: Message-Id: %d [%d bytes] Sys-Id: %d Comp-Id: %d",
-					channel, message.msgid, message.len, message.sysid, message.compid);
-
-			/* emit */ message_received(&message, message.sysid, message.compid);
-		}
-	}
-
-	do_recvfrom();
+				sthis->parse_buffer(PFX, sthis->rx_buf.data(), sthis->rx_buf.size(), bytes_transferred);
+				sthis->do_recvfrom();
+			});
 }
 
 void MAVConnUDP::do_sendto(bool check_tx_state)
@@ -223,41 +267,41 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
 		return;
 
 	tx_in_progress = true;
-	MsgBuffer *buf = tx_q.front();
+	auto sthis = shared_from_this();
+	auto &buf_ref = tx_q.front();
 	socket.async_send_to(
-			buffer(buf->dpos(), buf->nbytes()),
+			buffer(buf_ref.dpos(), buf_ref.nbytes()),
 			remote_ep,
-			boost::bind(&MAVConnUDP::async_sendto_end,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred));
+			[sthis, &buf_ref] (error_code error, size_t bytes_transferred) {
+				assert(bytes_transferred <= buf_ref.len);
+
+				if (error == boost::asio::error::network_unreachable) {
+					CONSOLE_BRIDGE_logWarn(PFXd "sendto: %s, retrying", sthis->conn_id, error.message().c_str());
+					// do not return, try to resend
+				}
+				else if (error) {
+					CONSOLE_BRIDGE_logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
+					sthis->close();
+					return;
+				}
+
+				sthis->iostat_tx_add(bytes_transferred);
+				lock_guard lock(sthis->mutex);
+
+				if (sthis->tx_q.empty()) {
+					sthis->tx_in_progress = false;
+					return;
+				}
+
+				buf_ref.pos += bytes_transferred;
+				if (buf_ref.nbytes() == 0) {
+					sthis->tx_q.pop_front();
+				}
+
+				if (!sthis->tx_q.empty())
+					sthis->do_sendto(false);
+				else
+					sthis->tx_in_progress = false;
+			});
 }
-
-void MAVConnUDP::async_sendto_end(error_code error, size_t bytes_transferred)
-{
-	if (error) {
-		logError("udp%d:sendto: %s", channel, error.message().c_str());
-		close();
-		return;
-	}
-
-	lock_guard lock(mutex);
-	if (tx_q.empty()) {
-		tx_in_progress = false;
-		return;
-	}
-
-	MsgBuffer *buf = tx_q.front();
-	buf->pos += bytes_transferred;
-	if (buf->nbytes() == 0) {
-		tx_q.pop_front();
-		delete buf;
-	}
-
-	if (!tx_q.empty())
-		do_sendto(false);
-	else
-		tx_in_progress = false;
-}
-
-}; // namespace mavconn
+}	// namespace mavconn

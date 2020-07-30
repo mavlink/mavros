@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>test_mavros</name>
+  <version>1.2.0</version>
+  <description>Tests for MAVROS package</description>
+
+  <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
+  <author email="n.marques21@hotmail.com">Nuno Marques</author>
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
+  <license>BSD</license>
+  <license>GPLv3</license>
+  <license>LGPLv3</license>
+
+  <!-- <url type="website">http://wiki.ros.org/test_mavros</url> -->
+  <url type="repository">https://github.com/mavlink/mavros.git</url>
+  <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>angles</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>mavros</depend>
+  <depend>mavros_extras</depend>
+  <depend>eigen</depend>
+  <depend>eigen_conversions</depend>
+  <depend>control_toolbox</depend>
+
+  <!-- fails prerelease build
+  <exec_depend>px4</exec_depend>
+  <exec_depend>rotors_simulator</exec_depend>
+  -->
+
+  <!--<test_depend>gtest</test_depend> -->
+  <!--<test_depend>mavros</test_depend> -->
+  <!--<test_depend>mavros_extras</test_depend> -->
+
+  <export>
+  </export>
+</package>

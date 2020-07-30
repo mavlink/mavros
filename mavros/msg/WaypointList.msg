@@ -1,1 +1,0 @@
-mavros/Waypoint[] waypoints

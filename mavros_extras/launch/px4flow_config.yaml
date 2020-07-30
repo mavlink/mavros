@@ -1,17 +1,32 @@
 # Common configuration for PX4Flow module
 #
 # node:
-#startup_px4_usb_quirk: false
+startup_px4_usb_quirk: false
+
+# --- system plugins ---
+
+# sys_status & sys_time connection options
+conn:
+  heartbeat_rate: 1.0    # send hertbeat rate in Hertz
+  timeout: 10.0          # hertbeat timeout in seconds
+  timesync_rate: 0.0     # TIMESYNC rate in Hertz (feature disabled if 0.0)
+  system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # sys_status
-conn_heartbeat: 5.0 # send hertbeat every n secs
-conn_timeout: 10.0  # hertbeat timeout n secs
-conn_system_time: 2.0 # send system time every n secs
 sys:
-  min_voltage: 10.0  # diagnostics min voltage
-  disable_diag: true
+  min_voltage: 4.5   # diagnostics min voltage
+  disable_diag: true  # disable all sys_status diagnostics, except heartbeat
 
-# image_pub [extras]
-camera_frame_id: "pf4flow"
+# --- mavros extras plugins (same order) ---
+
+# image_pub
+image:
+  frame_id: "px4flow"
+
+px4flow:
+  frame_id: "px4flow"
+  ranger_fov: 0.118682      # 6.8 degree at 5 meters, 31 degrees at 1 meter
+  ranger_min_range: 0.3     # meters
+  ranger_max_range: 5.0     # meters
 
 # vim:set ts=2 sw=2 et:

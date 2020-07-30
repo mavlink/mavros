@@ -1,0 +1,11 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- mavlink bridge (ros/mavlink - udp/mavlink) launch script for PX4 based FCU's sitl -->
+	<arg name="ns" default="iris" />
+	<arg name="mavlink_bridge_url" default="udp://127.0.0.1:14553@127.0.0.1:14560" />
+	<group ns="$(arg ns)">
+		<node pkg="mavros" type="gcs_bridge" name="mavlink_bridge">
+			<param name="gcs_url" value="$(arg mavlink_bridge_url)" />
+		</node>
+	</group>
+</launch>

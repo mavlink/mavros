@@ -9,19 +9,9 @@
 /*
  * Copyright 2014 Vladimir Ermakov.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #pragma once
@@ -30,7 +20,6 @@
 #include <mavconn/interface.h>
 
 namespace mavros {
-
 class MavlinkDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
@@ -49,8 +38,7 @@ public:
 private:
 	mavconn::MAVConnInterface::WeakPtr weak_link;
 	unsigned int last_drop_count;
-	bool is_connected;
+	std::atomic<bool> is_connected;
 };
-
-}; // namespace mavros
+};	// namespace mavros
 

@@ -4,21 +4,11 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <mavros/mavlink_diag.h>
@@ -34,7 +24,8 @@ MavlinkDiag::MavlinkDiag(std::string name) :
 void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
 	if (auto link = weak_link.lock()) {
-		mavlink_status_t mav_status = link->get_status();
+		auto mav_status = link->get_status();
+		auto iostat = link->get_iostat();
 
 		stat.addf("Received packets:", "%u", mav_status.packet_rx_success_count);
 		stat.addf("Dropped packets:", "%u", mav_status.packet_rx_drop_count);
@@ -43,9 +34,14 @@ void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 		stat.addf("Rx sequence number:", "%u", mav_status.current_rx_seq);
 		stat.addf("Tx sequence number:", "%u", mav_status.current_tx_seq);
 
+		stat.addf("Rx total bytes:", "%u", iostat.rx_total_bytes);
+		stat.addf("Tx total bytes:", "%u", iostat.tx_total_bytes);
+		stat.addf("Rx speed:", "%f", iostat.rx_speed);
+		stat.addf("Tx speed:", "%f", iostat.tx_speed);
+
 		if (mav_status.packet_rx_drop_count > last_drop_count)
 			stat.summaryf(1, "%d packeges dropped since last report",
-					mav_status.packet_rx_drop_count - last_drop_count);
+				mav_status.packet_rx_drop_count - last_drop_count);
 		else if (is_connected)
 			stat.summary(0, "connected");
 		else

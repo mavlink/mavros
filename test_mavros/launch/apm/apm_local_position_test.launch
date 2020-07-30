@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- This test shows local_position flight data -->
+	<!-- vim:set ts=2 sw=2 et: -->
+	<param name="robot_description" command="xacro --inorder $(find test_mavros)/launch/apm/schematic_plane.urdf.xacro" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param name="use_tf_static" value="true" />
+  </node>
+
+  <node pkg="mavros_extras" type="servo_state_publisher" name="servo_state_publisher" output="screen">
+    <remap from="rc_out" to="/mavros/rc/out" />
+    <rosparam command="load" file="$(find mavros_extras)/launch/servo_state_publisher.yaml"></rosparam>
+  </node>
+
+  <node pkg="mavros" type="mavros_node" name="mavros" required="true" output="screen">
+    <rosparam command="load">
+    plugin_whitelist:
+      - 'sys_*'
+      - command
+      - waypoint
+      - local_position
+      - global_position
+      - rc_io
+      - imu_pub
+
+    fcu_url: udp://:15550@
+
+    local_position:
+      tf:
+        send: true
+        frame_id: "map" # need to check that
+        child_frame_id: "base_link"
+
+    global_position:
+      tf:
+        send: false
+    </rosparam>
+  </node>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find test_mavros)/launch/apm/schematic_plane.rviz" required="true" />
+</launch>

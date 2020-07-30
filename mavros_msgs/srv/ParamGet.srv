@@ -1,0 +1,6 @@
+# Request parameter from attached device
+
+string param_id
+---
+bool success
+ParamValue value

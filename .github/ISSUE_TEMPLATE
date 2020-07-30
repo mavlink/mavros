@@ -1,0 +1,43 @@
+This is only bug and feature tracker, please use it
+to report bugs or request features.
+
+----
+
+### Issue details
+
+_Please describe the problem, or desired feature_
+
+
+### MAVROS version and platform
+
+Mavros: ?0.18.4?
+ROS: ?Kinetic?
+Ubuntu: ?16.04?
+
+
+### Autopilot type and version
+
+[  ] ArduPilot
+[  ] PX4
+
+Version: ?3.7.1?
+
+
+### Node logs
+
+```
+copy output of mavros_node. Usually console where you run roslaunch
+```
+
+### Diagnostics
+
+```
+place here result of:
+rostopic echo -n1 /diagnostics
+```
+
+### Check ID
+
+```
+rosrun mavros checkid
+```

@@ -1,0 +1,69 @@
+# Example configuration for event_launcher
+# vim:set ts=2 sw=2 et:
+
+# Notify on arming change
+arming_notify:  # name of process, used only for logging
+  event: armed, disarmed  # prefer to split by comma
+  action: run run         # but space are fine too
+  shell: notify-send 'UAV Arming status' 'Has changed'  # maybe later that will provide some environment variables
+
+# you may define custom action source (std_srvs/Trigger)
+mytrigger:  # this was name of event source
+  service: ~trigger_notify
+
+trigger_notify:
+  event: mytrigger
+  action: run             # trigger generate only one event
+  shell: notify-send 'My Trigger' 'Has called'
+
+# you may use several event sources
+othertrigger:
+  service: ~trigger_stop
+
+trigger_notify2:
+  event: mytrigger, othertrigger
+  action: run, stop   # stop does nothin in this example, because notify-send don't blocks
+  shell:              # array will simplify parsing step
+    - notify-send
+    - Trigger \#2
+    - Started
+
+# rosbag example
+start_recorder:
+  service: start_recorder
+
+start_talker:
+  service: start_talker
+
+start_launch:
+  service: start_launch
+
+stop_all:
+  service: stop_all
+
+wireshark:
+  service: run_wireshark
+
+# env-variables are expanded for first element
+trigger_wireshark:
+  event: wireshark, stop_all
+  action: run, stop
+  shell:
+    - $HOME/bin/al76-wireshark.sh # will expand
+    - $PWD  # nope
+
+rosbag_armed:
+  event: [armed, disarmed, start_recorder, stop_all] # yaml array is fine too
+  action: run, stop, run, stop
+  shell: rosrun rosbag record -a -x '/mavlink/.*' --lz4 -o 'uav'
+
+rosrun_talker:
+  event: start_talker, stop_all
+  action: run, stop
+  shell: rosrun roscpp_tutorials talker
+
+roslaunch_triggered:
+  event: start_launch, stop_all
+  action: run, stop
+  logfile: /tmp/launch.log
+  shell: roslaunch roscpp_tutorials talker_listener.launch

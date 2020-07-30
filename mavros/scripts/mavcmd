@@ -1,21 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2015 Vladimir Ermakov.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 from __future__ import print_function
 
@@ -23,8 +14,9 @@ import argparse
 import threading
 
 import rospy
+import mavros
 from mavros.utils import *
-from mavros.srv import CommandLong, CommandInt, CommandHome, CommandTOL, CommandBool
+from mavros import command
 from sensor_msgs.msg import NavSatFix
 
 
@@ -36,17 +28,17 @@ def _check_ret(args, ret):
 
 
 def do_long(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        long_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command", CommandLong)
-        ret = long_cl(command=args.command, confirmation=int(args.confirmation),
-                      param1=args.param1,
-                      param2=args.param2,
-                      param3=args.param3,
-                      param4=args.param4,
-                      param5=args.param5,
-                      param6=args.param6)
+        ret = command.long(
+            broadcast=args.broadcast,
+            command=args.command, confirmation=int(args.confirmation),
+            param1=args.param1,
+            param2=args.param2,
+            param3=args.param3,
+            param4=args.param4,
+            param5=args.param5,
+            param6=args.param6,
+            param7=args.param7)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -54,11 +46,8 @@ def do_long(args):
 
 
 def do_int(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        int_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/command_int", CommandInt)
-        ret = int_cl(frame=args.frame, command=args.command,
+        ret = command.int(frame=args.frame, command=args.command,
                      current=int(args.current),
                      autocontinue=int(args.autocontinue),
                      param1=args.param1,
@@ -78,11 +67,8 @@ def do_int(args):
 
 
 def do_set_home(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        set_home_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/set_home", CommandHome)
-        ret = set_home_cl(current_gps=args.current_gps,
+        ret = command.set_home(current_gps=args.current_gps,
                           latitude=args.latitude,
                           longitude=args.longitude,
                           altitude=args.altitude)
@@ -93,11 +79,8 @@ def do_set_home(args):
 
 
 def do_takeoff(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
-        ret = takeoff_cl(min_pitch=args.min_pitch,
+        ret = command.takeoff(min_pitch=args.min_pitch,
                          yaw=args.yaw,
                          latitude=args.latitude,
                          longitude=args.longitude,
@@ -109,11 +92,8 @@ def do_takeoff(args):
 
 
 def do_land(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     try:
-        land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
-        ret = land_cl(min_pitch=0.0,
+        ret = command.land(min_pitch=0.0,
                       yaw=args.yaw,
                       latitude=args.latitude,
                       longitude=args.longitude,
@@ -125,8 +105,9 @@ def do_land(args):
 
 
 def _find_gps_topic(args, op_name):
-    global_fix = args.mavros_ns + "/global_position/global"
-    gps_fix = args.mavros_ns + "/fix"
+    # XXX: since 0.13 global position always exists. need redo that.
+    global_fix = mavros.get_topic('global_position', 'global')
+    gps_fix = mavros.get_topic('global_position', 'raw', 'fix')
 
     topics = rospy.get_published_topics()
     # need find more elegant way
@@ -145,8 +126,6 @@ def _find_gps_topic(args, op_name):
 
 
 def do_takeoff_cur_gps(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     done_evt = threading.Event()
     def fix_cb(fix):
         print("Taking-off from current coord: Lat:", fix.latitude,
@@ -155,8 +134,7 @@ def do_takeoff_cur_gps(args):
                  "Yaw:", args.yaw, "Pitch angle:", args.min_pitch)
 
         try:
-            takeoff_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/takeoff", CommandTOL)
-            ret = takeoff_cl(min_pitch=args.min_pitch,
+            ret = command.takeoff(min_pitch=args.min_pitch,
                              yaw=args.yaw,
                              latitude=fix.latitude,
                              longitude=fix.longitude,
@@ -177,8 +155,6 @@ def do_takeoff_cur_gps(args):
 
 
 def do_land_cur_gps(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
     done_evt = threading.Event()
     def fix_cb(fix):
         print("Landing on current coord: Lat:", fix.latitude,
@@ -187,8 +163,7 @@ def do_land_cur_gps(args):
                  "Yaw:", args.yaw)
 
         try:
-            land_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/land", CommandTOL)
-            ret = land_cl(min_pitch=0.0,
+            ret = command.land(min_pitch=0.0,
                           yaw=args.yaw,
                           latitude=fix.latitude,
                           longitude=fix.longitude,
@@ -208,12 +183,10 @@ def do_land_cur_gps(args):
         fault("Something went wrong. Topic timed out.")
 
 
-def do_guided_en(args):
-    rospy.init_node("mavcmd", anonymous=True)
-
+def do_trigger_control(args):
     try:
-        guided_enable_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/guided_enable", CommandBool)
-        ret = guided_enable_cl(value=args.enable)
+        ret = command.trigger_control(trigger_enable=args.trigger_enable,
+                                      cycle_time=args.cycle_time)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -221,14 +194,16 @@ def do_guided_en(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for sending commands to MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(description="Command line tool for sending commands to MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
+    parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
     long_args = subarg.add_parser('long', help="Send any command (COMMAND_LONG)")
     long_args.set_defaults(func=do_long)
     long_args.add_argument('-c', '--confirmation', action='store_true', help="Require confirmation")
+    long_args.add_argument('-b', '--broadcast', action='store_true', help="Broadcast command")
     long_args.add_argument('command', type=int, help="Command Code")
     long_args.add_argument('param1', type=float, help="param1")
     long_args.add_argument('param2', type=float, help="param2")
@@ -248,9 +223,9 @@ def main():
     int_args.add_argument('param2', type=float, help="param2")
     int_args.add_argument('param3', type=float, help="param3")
     int_args.add_argument('param4', type=float, help="param4")
-    int_args.add_argument('x', type=int, help="latitude in deg*1E7 or X*1E4 m")
-    int_args.add_argument('y', type=int, help="longitude in deg*1E7 or Y*1E4 m")
-    int_args.add_argument('z', type=float, help="altitude in m, depending on frame")
+    int_args.add_argument('x', type=int, help="Latitude in deg*1E7 or X*1E4 m")
+    int_args.add_argument('y', type=int, help="Longitude in deg*1E7 or Y*1E4 m")
+    int_args.add_argument('z', type=float, help="Altitude in m, depending on frame")
 
     # Note: arming service provided by mavsafety
 
@@ -265,7 +240,7 @@ def main():
     takeoff_args = subarg.add_parser('takeoff', help="Request takeoff")
     takeoff_args.set_defaults(func=do_takeoff)
     takeoff_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_args.add_argument('yaw', type=float, help="Desired Yaw")
     takeoff_args.add_argument('latitude', type=float, help="Latitude")
     takeoff_args.add_argument('longitude', type=float, help="Longitude")
     takeoff_args.add_argument('altitude', type=float, help="Altitude")
@@ -279,24 +254,32 @@ def main():
 
     takeoff_cur_args = subarg.add_parser('takeoffcur', help="Request takeoff from current GPS coordinates")
     takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
-    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
     takeoff_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_cur_args.add_argument('yaw', type=float, help="Desiered Yaw")
+    takeoff_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     takeoff_cur_args.add_argument('altitude', type=float, help="Altitude")
 
     land_cur_args = subarg.add_parser('landcur', help="Request land on current GPS coordinates")
     land_cur_args.set_defaults(func=do_land_cur_gps)
-    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try find GPS topic (warn: could be dangerous!)")
+    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
 
-    guided_args = subarg.add_parser('guided', help="Request enable OFFBOARD mode (PX4)")
-    guided_args.set_defaults(func=do_guided_en)
-    guided_group = guided_args.add_mutually_exclusive_group()
-    guided_group.add_argument('-e', '--enable', dest='enable', action='store_true', default=True, help="enable OFFBOARD mode (default)")
-    guided_group.add_argument('-d', '--disable', dest='enable', action='store_false', help="disable OFFBOARD mode")
+    trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera triggering system (PX4)")
+    trigger_ctrl_args.set_defaults(func=do_trigger_control)
+    trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
+    trigger_en_group.add_argument('-e', '--enable', dest='trigger_enable', action='store_true', default=True, help="Enable camera trigger (default)")
+    trigger_en_group.add_argument('-d', '--disable', dest='trigger_enable', action='store_false', help="Disable camera trigger")
+    trigger_ctrl_args.add_argument('-c', '--cycle_time', default=0.0, type=float, required=False, help="Camera trigger cycle time. Zero to use current onboard value")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavcmd", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
+
+    if args.wait:
+        wait_fcu_connection()
+
     args.func(args)
 
 

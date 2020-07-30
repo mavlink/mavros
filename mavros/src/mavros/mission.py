@@ -3,26 +3,19 @@
 #
 # Copyright 2014 Vladimir Ermakov.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import csv
 import time
 
-from mavros.msg import Waypoint, WaypointList
-from mavros.srv import WaypointPull, WaypointPush, WaypointClear, \
-    WaypointSetCurrent, WaypointGOTO
+import rospy
+import mavros
+
+from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
+from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
+        WaypointSetCurrent
 
 
 FRAMES = {
@@ -34,13 +27,13 @@ FRAMES = {
 }
 
 NAV_CMDS = {
-    Waypoint.NAV_LAND: 'LAND',
-    Waypoint.NAV_LOITER_TIME: 'LOITER-TIME',
-    Waypoint.NAV_LOITER_TURNS: 'LOITER-TURNS',
-    Waypoint.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
-    Waypoint.NAV_RETURN_TO_LAUNCH: 'RTL',
-    Waypoint.NAV_TAKEOFF: 'TAKEOFF',
-    Waypoint.NAV_WAYPOINT: 'WAYPOINT',
+    CommandCode.NAV_LAND: 'LAND',
+    CommandCode.NAV_LOITER_TIME: 'LOITER-TIME',
+    CommandCode.NAV_LOITER_TURNS: 'LOITER-TURNS',
+    CommandCode.NAV_LOITER_UNLIM: 'LOITER-UNLIM',
+    CommandCode.NAV_RETURN_TO_LAUNCH: 'RTL',
+    CommandCode.NAV_TAKEOFF: 'TAKEOFF',
+    CommandCode.NAV_WAYPOINT: 'WAYPOINT',
     # Maybe later i will add this enum to message
     112: 'COND-DELAY',
     113: 'COND-CHANGE-ALT',
@@ -125,3 +118,30 @@ class QGroundControlWP(WaypointFile):
                 w.z_alt,
                 int(w.autocontinue)
             ))
+
+
+
+pull = None
+push = None
+clear = None
+set_current = None
+
+
+def subscribe_waypoints(cb, **kvargs):
+    return rospy.Subscriber(mavros.get_topic('mission', 'waypoints'), WaypointList, cb, **kvargs)
+
+
+def _setup_services():
+    global pull, push, clear, set_current
+
+    def _get_proxy(name, type):
+        return rospy.ServiceProxy(mavros.get_topic('mission', name), type)
+
+    pull = _get_proxy('pull', WaypointPull)
+    push = _get_proxy('push', WaypointPush)
+    clear = _get_proxy('clear', WaypointClear)
+    set_current = _get_proxy('set_current', WaypointSetCurrent)
+
+
+# register updater
+mavros.register_on_namespace_update(_setup_services)

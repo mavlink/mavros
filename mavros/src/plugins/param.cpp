@@ -7,323 +7,323 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <chrono>
 #include <condition_variable>
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
-#include <boost/any.hpp>
 
-#include <mavros/ParamSet.h>
-#include <mavros/ParamGet.h>
-#include <mavros/ParamPull.h>
-#include <mavros/ParamPush.h>
+#include <mavros_msgs/ParamSet.h>
+#include <mavros_msgs/ParamGet.h>
+#include <mavros_msgs/ParamPull.h>
+#include <mavros_msgs/ParamPush.h>
+#include <mavros_msgs/Param.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace std_plugins {
+using utils::enum_value;
 
 /**
  * @brief Parameter storage
  *
  * Stores parameter value.
+ *
+ * APM uses:
+ * - int8 (primary for bools)
+ * - int16 ???
+ * - int32 for int's
+ * - real32 for float's
+ *
+ * PX4:
+ * - int32 for int's
+ * - real32 for float's
+ *
+ * So no reason to really use boost::any.
+ * But feel free to fire an issue if your AP do not like it.
  */
 class Parameter {
 public:
-	typedef boost::any param_t;
+	using MT = mavlink::common::MAV_PARAM_TYPE;
+	using PARAM_SET = mavlink::common::msg::PARAM_SET;
+	using XmlRpcValue = XmlRpc::XmlRpcValue;
 
 	std::string param_id;
-	param_t param_value;
+	XmlRpcValue param_value;
 	uint16_t param_index;
 	uint16_t param_count;
 
-	/**
-	 * Convert mavlink_param_value_t to internal format
-	 */
-	static param_t from_param_value(mavlink_param_value_t &pmsg) {
-		mavlink_param_union_t uv;
+	void set_value(mavlink::common::msg::PARAM_VALUE &pmsg)
+	{
+		mavlink::mavlink_param_union_t uv;
 		uv.param_float = pmsg.param_value;
 
-		// Fix for #170 by copying to temporary var.
-#define RETURN_TYPE(type)						\
-		{							\
-			type ## _t ret_ ## type = uv.param_ ## type;	\
-			return ret_ ## type;				\
-		}
+		// #170 - copy union value to itermediate var
+		int int_tmp;
+		float float_tmp;
 
 		switch (pmsg.param_type) {
-		case MAV_PARAM_TYPE_UINT8:
-			RETURN_TYPE(uint8);
-		case MAV_PARAM_TYPE_INT8:
-			RETURN_TYPE(int8);
-		case MAV_PARAM_TYPE_UINT16:
-			RETURN_TYPE(uint16);
-		case MAV_PARAM_TYPE_INT16:
-			RETURN_TYPE(int16);
-		case MAV_PARAM_TYPE_UINT32:
-			RETURN_TYPE(uint32);
-		case MAV_PARAM_TYPE_INT32:
-			RETURN_TYPE(int32);
-		case MAV_PARAM_TYPE_REAL32: {
-				float ret_float = uv.param_float;
-				return ret_float;
-			}
-
-#undef RETURN_TYPE
+		// [[[cog:
+		// param_types = [ (s, 'float' if s == 'real32' else s) for s in (
+		//     'int8', 'uint8',
+		//     'int16', 'uint16',
+		//     'int32', 'uint32',
+		//     'real32',
+		// )]
+		// unsupported_types = ('int64', 'uint64', 'real64')
+		//
+		// for a, b in param_types:
+		//     btype = 'int' if 'int' in b else b
+		//     cog.outl("case enum_value(MT::%s):" % a.upper())
+		//     cog.outl("\t%s_tmp = uv.param_%s;" % (btype, b))
+		//     cog.outl("\tparam_value = %s_tmp;" % btype)
+		//     cog.outl("\tbreak;")
+		// ]]]
+		case enum_value(MT::INT8):
+			int_tmp = uv.param_int8;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT8):
+			int_tmp = uv.param_uint8;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::INT16):
+			int_tmp = uv.param_int16;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT16):
+			int_tmp = uv.param_uint16;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::INT32):
+			int_tmp = uv.param_int32;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT32):
+			int_tmp = uv.param_uint32;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::REAL32):
+			float_tmp = uv.param_float;
+			param_value = float_tmp;
+			break;
+		// [[[end]]] (checksum: 5950e4ee032d4aa198b953f56909e129)
 
 		default:
-		case MAV_PARAM_TYPE_UINT64:
-		case MAV_PARAM_TYPE_INT64:
-		case MAV_PARAM_TYPE_REAL64:
-			ROS_WARN_NAMED("param", "Unsupported param '%.16s' type: %d, index: %d of %d",
-					pmsg.param_id, pmsg.param_type,
-					pmsg.param_index, pmsg.param_count);
-			return param_t();
+			ROS_WARN_NAMED("param", "PM: Unsupported param %.16s (%u/%u) type: %u",
+					pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
+			param_value = 0;
 		};
 	}
 
 	/**
-	 * Variation of @a Parameter::from_param_value with quirks for ArduPilotMega
+	 * Variation of set_value with quirks for ArduPilotMega
 	 */
-	static param_t from_param_value_apm_quirk(mavlink_param_value_t &pmsg) {
+	void set_value_apm_quirk(mavlink::common::msg::PARAM_VALUE &pmsg)
+	{
+		int32_t int_tmp;
+		float float_tmp;
+
 		switch (pmsg.param_type) {
-		case MAV_PARAM_TYPE_UINT8:
-			return (uint8_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_INT8:
-			return (int8_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_UINT16:
-			return (uint16_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_INT16:
-			return (int16_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_UINT32:
-			return (uint32_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_INT32:
-			return (int32_t) pmsg.param_value;
-		case MAV_PARAM_TYPE_REAL32:
-			return pmsg.param_value;
+		// [[[cog:
+		// for a, b in param_types:
+		//     btype = 'int' if 'int' in b else b
+		//     cog.outl("case enum_value(MT::%s):" % a.upper())
+		//     cog.outl("\t%s_tmp = pmsg.param_value;" % btype)
+		//     cog.outl("\tparam_value = %s_tmp;" % btype)
+		//     cog.outl("\tbreak;")
+		// ]]]
+		case enum_value(MT::INT8):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT8):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::INT16):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT16):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::INT32):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::UINT32):
+			int_tmp = pmsg.param_value;
+			param_value = int_tmp;
+			break;
+		case enum_value(MT::REAL32):
+			float_tmp = pmsg.param_value;
+			param_value = float_tmp;
+			break;
+		// [[[end]]] (checksum: c30ee34dd84213471690612ab49f1f73)
 
 		default:
-		case MAV_PARAM_TYPE_UINT64:
-		case MAV_PARAM_TYPE_INT64:
-		case MAV_PARAM_TYPE_REAL64:
-			ROS_WARN_NAMED("param", "Unsupported param '%.16s' type: %d, index: %d of %d",
-					pmsg.param_id, pmsg.param_type,
-					pmsg.param_index, pmsg.param_count);
-			return param_t();
-		};
+			ROS_WARN_NAMED("param", "PM: Unsupported param %.16s (%u/%u) type: %u",
+					pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
+			param_value = 0;
+		}
 	}
 
-	/**
-	 * Convert internal type to std::string (for debugging)
-	 */
-	static std::string to_string_vt(param_t p) {
-		std::ostringstream sout;
+	//! Make PARAM_SET message. Set target ids manually!
+	PARAM_SET to_param_set()
+	{
+		// Note: XmlRpcValue does not have const cast operators.
+		//       This method can't be const.
 
-		if (p.type() == typeid(uint8_t))
-			sout << (unsigned) boost::any_cast<uint8_t>(p) << " ubyte";
-		else if (p.type() == typeid(int8_t))
-			sout << (int) boost::any_cast<int8_t>(p) << " byte";
-		else if (p.type() == typeid(uint16_t))
-			sout << boost::any_cast<uint16_t>(p) << " ushort";
-		else if (p.type() == typeid(int16_t))
-			sout << boost::any_cast<int16_t>(p) << " short";
-		else if (p.type() == typeid(uint32_t))
-			sout << boost::any_cast<uint32_t>(p) << " uint";
-		else if (p.type() == typeid(int32_t))
-			sout << boost::any_cast<int32_t>(p) << " int";
-		else if (p.type() == typeid(float))
-			sout << boost::any_cast<float>(p) << " float";
-		else {
-			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
-			sout << "UNK " << p.type().name();
+		mavlink::mavlink_param_union_t uv;
+		PARAM_SET ret{};
+
+		mavlink::set_string(ret.param_id, param_id);
+
+		switch (param_value.getType()) {
+		// [[[cog:
+		// xmlrpc_types = (
+		//     ('TypeBoolean', 'uint8', 'bool'),
+		//     ('TypeInt', 'int32', 'int32_t'),
+		//     ('TypeDouble', 'real32', 'double'),
+		// )
+		//
+		// for a, b, c in xmlrpc_types:
+		//     uvb = 'float' if 'real32' == b else b
+		//     cog.outl("case XmlRpcValue::%s:" % a)
+		//     cog.outl("\tuv.param_%s = static_cast<%s>(param_value);" % (uvb, c))
+		//     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
+		//     cog.outl("\tbreak;")
+		// ]]]
+		case XmlRpcValue::TypeBoolean:
+			uv.param_uint8 = static_cast<bool>(param_value);
+			ret.param_type = enum_value(MT::UINT8);
+			break;
+		case XmlRpcValue::TypeInt:
+			uv.param_int32 = static_cast<int32_t>(param_value);
+			ret.param_type = enum_value(MT::INT32);
+			break;
+		case XmlRpcValue::TypeDouble:
+			uv.param_float = static_cast<double>(param_value);
+			ret.param_type = enum_value(MT::REAL32);
+			break;
+		// [[[end]]] (checksum: c414a3950fba234cbbe694a2576ae022)
+
+		default:
+			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
 		}
 
-		return sout.str();
-	};
+		ret.param_value = uv.param_float;
+		return ret;
+	}
 
-	/**
-	 * Convert internal type to mavlink_param_union_t
-	 */
-	static mavlink_param_union_t to_param_union(param_t p) {
-		mavlink_param_union_t ret;
+	//! Make PARAM_SET message. Set target ids manually!
+	PARAM_SET to_param_set_apm_qurk()
+	{
+		PARAM_SET ret{};
 
-		if (p.type() == typeid(uint8_t)) {
-			ret.param_uint8 = boost::any_cast<uint8_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT8;
-		}
-		else if (p.type() == typeid(int8_t)) {
-			ret.param_int8 = boost::any_cast<int8_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT8;
-		}
-		else if (p.type() == typeid(uint16_t)) {
-			ret.param_uint16 = boost::any_cast<uint16_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT16;
-		}
-		else if (p.type() == typeid(int16_t)){
-			ret.param_int16 = boost::any_cast<int16_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT16;
-		}
-		else if (p.type() == typeid(uint32_t)) {
-			ret.param_uint32 = boost::any_cast<uint32_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT32;
-		}
-		else if (p.type() == typeid(int32_t)) {
-			ret.param_int32 = boost::any_cast<int32_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT32;
-		}
-		else if (p.type() == typeid(float)) {
-			ret.param_float = boost::any_cast<float>(p);
-			ret.type = MAV_PARAM_TYPE_REAL32;
-		}
-		else {
-			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
-			ret.param_float = 0.0;
-			ret.type = 255;
+		mavlink::set_string(ret.param_id, param_id);
+
+		switch (param_value.getType()) {
+		// [[[cog:
+		// for a, b, c in xmlrpc_types:
+		//     cog.outl("case XmlRpcValue::%s:" % a)
+		//     cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
+		//     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
+		//     cog.outl("\tbreak;")
+		// ]]]
+		case XmlRpcValue::TypeBoolean:
+			ret.param_value = static_cast<bool &>(param_value);
+			ret.param_type = enum_value(MT::UINT8);
+			break;
+		case XmlRpcValue::TypeInt:
+			ret.param_value = static_cast<int32_t &>(param_value);
+			ret.param_type = enum_value(MT::INT32);
+			break;
+		case XmlRpcValue::TypeDouble:
+			ret.param_value = static_cast<double &>(param_value);
+			ret.param_type = enum_value(MT::REAL32);
+			break;
+		// [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
+
+		default:
+			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
 		}
 
 		return ret;
-	};
-
-	/**
-	 * Variation of @a Parameter::to_param_union with quirks for ArduPilotMega
-	 */
-	static mavlink_param_union_t to_param_union_apm_quirk(param_t p) {
-		mavlink_param_union_t ret;
-
-		if (p.type() == typeid(uint8_t)) {
-			ret.param_float = boost::any_cast<uint8_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT8;
-		}
-		else if (p.type() == typeid(int8_t)) {
-			ret.param_float = boost::any_cast<int8_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT8;
-		}
-		else if (p.type() == typeid(uint16_t)) {
-			ret.param_float = boost::any_cast<uint16_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT16;
-		}
-		else if (p.type() == typeid(int16_t)){
-			ret.param_float = boost::any_cast<int16_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT16;
-		}
-		else if (p.type() == typeid(uint32_t)) {
-			ret.param_float = boost::any_cast<uint32_t>(p);
-			ret.type = MAV_PARAM_TYPE_UINT32;
-		}
-		else if (p.type() == typeid(int32_t)) {
-			ret.param_float = boost::any_cast<int32_t>(p);
-			ret.type = MAV_PARAM_TYPE_INT32;
-		}
-		else if (p.type() == typeid(float)) {
-			ret.param_float = boost::any_cast<float>(p);
-			ret.type = MAV_PARAM_TYPE_REAL32;
-		}
-		else {
-			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
-			ret.param_float = 0.0;
-			ret.type = 255;
-		}
-
-		return ret;
-	};
+	}
 
 	/**
 	 * For get/set services
 	 */
-	static int64_t to_integer(param_t &p) {
-		if (p.type() == typeid(uint8_t))
-			return boost::any_cast<uint8_t>(p);
-		else if (p.type() == typeid(int8_t))
-			return boost::any_cast<int8_t>(p);
-		else if (p.type() == typeid(uint16_t))
-			return boost::any_cast<uint16_t>(p);
-		else if (p.type() == typeid(int16_t))
-			return boost::any_cast<int16_t>(p);
-		else if (p.type() == typeid(uint32_t))
-			return boost::any_cast<uint32_t>(p);
-		else if (p.type() == typeid(int32_t))
-			return boost::any_cast<int32_t>(p);
-		else
-			return 0;
-	};
-
-	static double to_real(param_t &p) {
-		if (p.type() == typeid(float))
-			return boost::any_cast<float>(p);
-		else
-			return 0.0;
-	};
-
-	/**
-	 * Convert internal value to rosparam XmlRpcValue
-	 */
-	static XmlRpc::XmlRpcValue to_xmlrpc_value(param_t &p) {
-		if (p.type() == typeid(uint8_t))
-			return (int) boost::any_cast<uint8_t>(p);
-		else if (p.type() == typeid(int8_t))
-			return (int) boost::any_cast<int8_t>(p);
-		else if (p.type() == typeid(uint16_t))
-			return (int) boost::any_cast<uint16_t>(p);
-		else if (p.type() == typeid(int16_t))
-			return (int) boost::any_cast<int16_t>(p);
-		else if (p.type() == typeid(uint32_t))
-			return (int) boost::any_cast<uint32_t>(p);
-		else if (p.type() == typeid(int32_t))
-			return (int) boost::any_cast<int32_t>(p);
-		else if (p.type() == typeid(float))
-			return (double) boost::any_cast<float>(p);
-		else {
-			ROS_FATAL_STREAM_NAMED("param", "Wrong param_t type: " << p.type().name());
-			return XmlRpc::XmlRpcValue();
-		}
-	};
-
-	/**
-	 * Convert rosparam to internal value
-	 */
-	static param_t from_xmlrpc_value(XmlRpc::XmlRpcValue &xml) {
-		switch (xml.getType()) {
-		case XmlRpc::XmlRpcValue::TypeBoolean:
-			return (uint8_t) static_cast<bool>(xml);
-		case XmlRpc::XmlRpcValue::TypeInt:
-			return static_cast<int32_t>(xml);
-		case XmlRpc::XmlRpcValue::TypeDouble:
-			return (float) static_cast<double>(xml);
+	int64_t to_integer()
+	{
+		switch (param_value.getType()) {
+		// [[[cog:
+		// for a, b, c in xmlrpc_types:
+		//    if 'int' not in b:
+		//       continue
+		//    cog.outl("case XmlRpcValue::%s:\treturn static_cast<%s>(param_value);" % (a, c))
+		// ]]]
+		case XmlRpcValue::TypeBoolean:	return static_cast<bool>(param_value);
+		case XmlRpcValue::TypeInt:	return static_cast<int32_t>(param_value);
+		// [[[end]]] (checksum: ce23a3bc04354d8cfcb82341beb83709)
 
 		default:
-			ROS_FATAL_NAMED("param", "Unsupported XmlRpcValye type: %d", xml.getType());
-			return param_t();
-		};
-	};
+			return 0;
+		}
+	}
+
+	double to_real()
+	{
+		if (param_value.getType() == XmlRpcValue::TypeDouble)
+			return static_cast<double>(param_value);
+		else
+			return 0.0;
+	}
+
+	// for debugging
+	std::string to_string() const
+	{
+		return utils::format("%s (%u/%u): %s", param_id.c_str(), param_index, param_count, param_value.toXml().c_str());
+	}
+
+	mavros_msgs::Param to_msg()
+	{
+		mavros_msgs::Param msg;
+
+		// XXX(vooon): find better solution
+		msg.header.stamp = ros::Time::now();
+
+		msg.param_id = param_id;
+		msg.value.integer = to_integer();
+		msg.value.real = to_real();
+		msg.param_index = param_index;
+		msg.param_count = param_count;
+
+		return msg;
+	}
 
 	/**
 	 * Exclude this parameters from ~param/push
 	 */
-	static bool check_exclude_param_id(std::string param_id) {
-		return	param_id == "SYSID_SW_MREV"	||
-			param_id == "SYS_NUM_RESETS"	||
-			param_id == "ARSPD_OFFSET"	||
-			param_id == "GND_ABS_PRESS"	||
-			param_id == "GND_TEMP"		||
-			param_id == "CMD_TOTAL"		||
-			param_id == "CMD_INDEX"		||
-			param_id == "LOG_LASTFILE"	||
-			param_id == "FENCE_TOTAL"	||
-			param_id == "FORMAT_VERSION";
+	static bool check_exclude_param_id(std::string param_id)
+	{
+		return param_id == "SYSID_SW_MREV"     ||
+		       param_id == "SYS_NUM_RESETS"    ||
+		       param_id == "ARSPD_OFFSET"      ||
+		       param_id == "GND_ABS_PRESS"     ||
+		       param_id == "GND_TEMP"          ||
+		       param_id == "CMD_TOTAL"         ||
+		       param_id == "CMD_INDEX"         ||
+		       param_id == "LOG_LASTFILE"      ||
+		       param_id == "FENCE_TOTAL"       ||
+		       param_id == "FORMAT_VERSION";
 	}
 };
 
@@ -337,7 +337,7 @@ public:
 		param(_p),
 		retries_remaining(_rem),
 		is_timedout(false)
-	{ };
+	{ }
 
 	Parameter param;
 	size_t retries_remaining;
@@ -350,57 +350,58 @@ public:
 /**
  * @brief Parameter manipulation plugin
  */
-class ParamPlugin : public MavRosPlugin {
+class ParamPlugin : public plugin::PluginBase {
 public:
-	ParamPlugin() :
-		uas(nullptr),
+	ParamPlugin() : PluginBase(),
+		param_nh("~param"),
 		param_count(-1),
-		param_state(PR_IDLE),
+		param_state(PR::IDLE),
 		is_timedout(false),
+		RETRIES_COUNT(_RETRIES_COUNT),
 		param_rx_retries(RETRIES_COUNT),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
 		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
-	{ };
+	{ }
 
-	void initialize(UAS &uas_,
-			ros::NodeHandle &nh,
-			diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
-		uas = &uas_;
-		param_nh = ros::NodeHandle(nh, "param");
+		PluginBase::initialize(uas_);
 
 		pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
 		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
+		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
+
 		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
 		shedule_timer.stop();
 		timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
 		timeout_timer.stop();
-		uas->sig_connection_changed.connect(boost::bind(&ParamPlugin::connection_cb, this, _1));
+		enable_connection_cb();
 	}
 
-	std::string const get_name() const {
-		return "Param";
-	}
-
-	const message_map get_rx_handlers() {
+	Subscriptions get_subscriptions()
+	{
 		return {
-			MESSAGE_HANDLER(MAVLINK_MSG_ID_PARAM_VALUE, &ParamPlugin::handle_param_value)
+			make_handler(&ParamPlugin::handle_param_value),
 		};
 	}
 
 private:
-	std::recursive_mutex mutex;
-	UAS *uas;
+	using lock_guard = std::lock_guard<std::recursive_mutex>;
+	using unique_lock = std::unique_lock<std::recursive_mutex>;
 
+	std::recursive_mutex mutex;
 	ros::NodeHandle param_nh;
+
 	ros::ServiceServer pull_srv;
 	ros::ServiceServer push_srv;
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
+
+	ros::Publisher param_value_pub;
 
 	ros::Timer shedule_timer;			//!< for startup shedule fetch
 	ros::Timer timeout_timer;			//!< for timeout resend
@@ -408,58 +409,49 @@ private:
 	static constexpr int BOOTUP_TIME_MS = 10000;	//!< APM boot time
 	static constexpr int PARAM_TIMEOUT_MS = 1000;	//!< Param wait time
 	static constexpr int LIST_TIMEOUT_MS = 30000;	//!< Receive all time
-	static constexpr int RETRIES_COUNT = 3;
+	static constexpr int _RETRIES_COUNT = 3;
 
 	const ros::Duration BOOTUP_TIME_DT;
 	const ros::Duration LIST_TIMEOUT_DT;
 	const ros::Duration PARAM_TIMEOUT_DT;
+	const int RETRIES_COUNT;
 
-	std::map<std::string, Parameter> parameters;
+	std::unordered_map<std::string, Parameter> parameters;
 	std::list<uint16_t> parameters_missing_idx;
-	std::map<std::string, ParamSetOpt*> set_parameters;
+	std::unordered_map<std::string, std::shared_ptr<ParamSetOpt>> set_parameters;
 	ssize_t param_count;
-	enum {
-		PR_IDLE,
-		PR_RXLIST,
-		PR_RXPARAM,
-		PR_TXPARAM
-	} param_state;
+	enum class PR {
+		IDLE,
+		RXLIST,
+		RXPARAM,
+		RXPARAM_TIMEDOUT,
+		TXPARAM
+	};
+	PR param_state;
 
 	size_t param_rx_retries;
 	bool is_timedout;
 	std::mutex list_cond_mutex;
 	std::condition_variable list_receiving;
 
-	inline Parameter::param_t from_param_value(mavlink_param_value_t &msg) {
-		if (uas->is_ardupilotmega())
-			return Parameter::from_param_value_apm_quirk(msg);
-		else
-			return Parameter::from_param_value(msg);
-	}
-
-	inline mavlink_param_union_t to_param_union(Parameter::param_t p) {
-		if (uas->is_ardupilotmega())
-			return Parameter::to_param_union_apm_quirk(p);
-		else
-			return Parameter::to_param_union(p);
-	}
-
 	/* -*- message handlers -*- */
 
-	void handle_param_value(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-		mavlink_param_value_t pmsg;
-		mavlink_msg_param_value_decode(msg, &pmsg);
-
-		std::string param_id(pmsg.param_id,
-				strnlen(pmsg.param_id, sizeof(pmsg.param_id)));
-
+	void handle_param_value(const mavlink::mavlink_message_t *msg, mavlink::common::msg::PARAM_VALUE &pmsg)
+	{
 		lock_guard lock(mutex);
+
+		auto param_id = mavlink::to_string(pmsg.param_id);
+
 		// search
 		auto param_it = parameters.find(param_id);
 		if (param_it != parameters.end()) {
 			// parameter exists
-			Parameter *p = &param_it->second;
-			p->param_value = from_param_value(pmsg);
+			auto &p = param_it->second;
+
+			if (m_uas->is_ardupilotmega())
+				p.set_value_apm_quirk(pmsg);
+			else
+				p.set_value(pmsg);
 
 			// check that ack required
 			auto set_it = set_parameters.find(param_id);
@@ -467,37 +459,41 @@ private:
 				set_it->second->ack.notify_all();
 			}
 
-			ROS_WARN_STREAM_COND_NAMED(((p->param_index != pmsg.param_index &&
-						    pmsg.param_index != UINT16_MAX) ||
-						p->param_count != pmsg.param_count),
+			param_value_pub.publish(p.to_msg());
+
+			ROS_WARN_STREAM_COND_NAMED(
+					((p.param_index != pmsg.param_index &&
+					  pmsg.param_index != UINT16_MAX) ||
+					 p.param_count != pmsg.param_count),
 					"param",
-					"PR: Param " << param_id << " index(" << p->param_index <<
-					"->" << pmsg.param_index << ")/count(" << p->param_count <<
-					"->" << pmsg.param_count << ") changed! FCU changed?");
-			ROS_DEBUG_STREAM_NAMED("param", "PR: Update param " << param_id <<
-					" (" << p->param_index << "/" << p->param_count <<
-					") value: " << Parameter::to_string_vt(p->param_value));
+					"PR: Param " << p.to_string() << " different index: " << pmsg.param_index << "/" << pmsg.param_count);
+			ROS_DEBUG_STREAM_NAMED("param", "PR: Update param " << p.to_string());
 		}
 		else {
 			// insert new element
-			Parameter p;
+			Parameter p{};
 			p.param_id = param_id;
 			p.param_index = pmsg.param_index;
 			p.param_count = pmsg.param_count;
-			p.param_value = from_param_value(pmsg);
+
+			if (m_uas->is_ardupilotmega())
+				p.set_value_apm_quirk(pmsg);
+			else
+				p.set_value(pmsg);
 
 			parameters[param_id] = p;
 
-			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << param_id <<
-					" (" << p.param_index << "/" << p.param_count <<
-					") value: " << Parameter::to_string_vt(p.param_value));
+			param_value_pub.publish(p.to_msg());
+
+			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
 
-		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
+
 			// we received first param. setup list timeout
-			if (param_state == PR_RXLIST) {
+			if (param_state == PR::RXLIST) {
 				param_count = pmsg.param_count;
-				param_state = PR_RXPARAM;
+				param_state = PR::RXPARAM;
 
 				parameters_missing_idx.clear();
 				if (param_count != UINT16_MAX) {
@@ -511,11 +507,23 @@ private:
 							"Param list may be truncated.");
 			}
 
+			// trying to avoid endless rerequest loop
+			// Issue #276
+			bool it_is_first_requested = parameters_missing_idx.front() == pmsg.param_index;
+
 			// remove idx for that message
 			parameters_missing_idx.remove(pmsg.param_index);
 
 			// in receiving mode we use param_rx_retries for LIST and PARAM
-			param_rx_retries = RETRIES_COUNT;
+			if (it_is_first_requested) {
+				ROS_DEBUG_NAMED("param", "PR: got a value of a requested param idx=%u, "
+						"resetting retries count", pmsg.param_index);
+				param_rx_retries = RETRIES_COUNT;
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				ROS_INFO_NAMED("param", "PR: got an unsolicited param value idx=%u, "
+						"not resetting retries count %zu", pmsg.param_index, param_rx_retries);
+			}
+
 			restart_timeout_timer();
 
 			/* index starting from 0, receivig done */
@@ -527,67 +535,64 @@ private:
 						missed);
 				go_idle();
 				list_receiving.notify_all();
+			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
+				uint16_t first_miss_idx = parameters_missing_idx.front();
+				ROS_DEBUG_NAMED("param", "PR: requesting next timed out parameter idx=%u", first_miss_idx);
+				param_request_read("", first_miss_idx);
 			}
 		}
 	}
 
 	/* -*- low-level send function -*- */
 
-	void param_request_list() {
-		mavlink_message_t msg;
-
+	void param_request_list()
+	{
 		ROS_DEBUG_NAMED("param", "PR:m: request list");
-		mavlink_msg_param_request_list_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas)
-				);
-		UAS_FCU(uas)->send_message(&msg);
+
+		mavlink::common::msg::PARAM_REQUEST_LIST rql{};
+		m_uas->msg_set_target(rql);
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(rql);
 	}
 
-	void param_request_read(std::string id, int16_t index=-1) {
+	void param_request_read(std::string id, int16_t index = -1)
+	{
 		ROS_ASSERT(index >= -1);
 
-		mavlink_message_t msg;
-		char param_id[sizeof(mavlink_param_request_read_t::param_id)];
-
 		ROS_DEBUG_NAMED("param", "PR:m: request '%s', idx %d", id.c_str(), index);
-		if (index != -1) {
-			// by specs if len < 16: place null termination
-			// else if len == 16: don't
-			strncpy(param_id, id.c_str(), sizeof(param_id));
-		}
-		else
-			param_id[0] = '\0'; // force NULL termination
 
-		mavlink_msg_param_request_read_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas),
-				param_id,
-				index
-				);
-		UAS_FCU(uas)->send_message(&msg);
+		mavlink::common::msg::PARAM_REQUEST_READ rqr{};
+		m_uas->msg_set_target(rqr);
+		rqr.param_index = index;
+
+		if (index != -1) {
+			mavlink::set_string(rqr.param_id, id);
+		}
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(rqr);
 	}
 
-	void param_set(Parameter &param) {
-		mavlink_param_union_t pu = to_param_union(param.param_value);
+	void param_set(Parameter &param)
+	{
+		ROS_DEBUG_STREAM_NAMED("param", "PR:m: set param " << param.to_string());
 
-		mavlink_message_t msg;
-		char param_id[sizeof(mavlink_param_set_t::param_id)];
-		strncpy(param_id, param.param_id.c_str(), sizeof(param_id));
+		// GCC 4.8 can't type out lambda return
+		auto ps = ([this, &param]() -> mavlink::common::msg::PARAM_SET {
+			if (m_uas->is_ardupilotmega())
+				return param.to_param_set_apm_qurk();
+			else
+				return param.to_param_set();
+		})();
 
-		ROS_DEBUG_STREAM_NAMED("param", "PR:m: set param " << param.param_id <<
-				" (" << param.param_index << "/" << param.param_count <<
-				") value: " << Parameter::to_string_vt(param.param_value));
-		mavlink_msg_param_set_pack_chan(UAS_PACK_CHAN(uas), &msg,
-				UAS_PACK_TGT(uas),
-				param_id,
-				pu.param_float,
-				pu.type
-				);
-		UAS_FCU(uas)->send_message(&msg);
+		m_uas->msg_set_target(ps);
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(ps);
 	}
 
 	/* -*- mid-level functions -*- */
 
-	void connection_cb(bool connected) {
+	void connection_cb(bool connected) override
+	{
 		lock_guard lock(mutex);
 		if (connected) {
 			shedule_pull(BOOTUP_TIME_DT);
@@ -597,22 +602,24 @@ private:
 		}
 	}
 
-	void shedule_pull(const ros::Duration &dt) {
+	void shedule_pull(const ros::Duration &dt)
+	{
 		shedule_timer.stop();
 		shedule_timer.setPeriod(dt);
 		shedule_timer.start();
 	}
 
-	void shedule_cb(const ros::TimerEvent &event) {
+	void shedule_cb(const ros::TimerEvent &event)
+	{
 		lock_guard lock(mutex);
-		if (param_state != PR_IDLE) {
+		if (param_state != PR::IDLE) {
 			// try later
 			ROS_DEBUG_NAMED("param", "PR: busy, reshedule pull");
 			shedule_pull(BOOTUP_TIME_DT);
 		}
 
 		ROS_DEBUG_NAMED("param", "PR: start sheduled pull");
-		param_state = PR_RXLIST;
+		param_state = PR::RXLIST;
 		param_rx_retries = RETRIES_COUNT;
 		parameters.clear();
 
@@ -620,16 +627,17 @@ private:
 		param_request_list();
 	}
 
-	void timeout_cb(const ros::TimerEvent &event) {
+	void timeout_cb(const ros::TimerEvent &event)
+	{
 		lock_guard lock(mutex);
-		if (param_state == PR_RXLIST && param_rx_retries > 0) {
+		if (param_state == PR::RXLIST && param_rx_retries > 0) {
 			param_rx_retries--;
 			ROS_WARN_NAMED("param", "PR: request list timeout, retries left %zu", param_rx_retries);
 
 			restart_timeout_timer();
 			param_request_list();
 		}
-		else if (param_state == PR_RXPARAM) {
+		else if (param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			if (parameters_missing_idx.empty()) {
 				ROS_WARN_NAMED("param", "PR: missing list is clear, but we in RXPARAM state, "
 						"maybe last rerequest fails. Params missed: %zd",
@@ -639,6 +647,7 @@ private:
 				return;
 			}
 
+			param_state = PR::RXPARAM_TIMEDOUT;
 			uint16_t first_miss_idx = parameters_missing_idx.front();
 			if (param_rx_retries > 0) {
 				param_rx_retries--;
@@ -661,7 +670,7 @@ private:
 				}
 			}
 		}
-		else if (param_state == PR_TXPARAM) {
+		else if (param_state == PR::TXPARAM) {
 			auto it = set_parameters.begin();
 			if (it == set_parameters.end()) {
 				ROS_DEBUG_NAMED("param", "PR: send list empty, but state TXPARAM");
@@ -689,59 +698,71 @@ private:
 		}
 	}
 
-	void restart_timeout_timer() {
+	void restart_timeout_timer()
+	{
 		is_timedout = false;
 		timeout_timer.stop();
 		timeout_timer.start();
 	}
 
-	void go_idle() {
-		param_state = PR_IDLE;
+	void go_idle()
+	{
+		param_state = PR::IDLE;
 		timeout_timer.stop();
 	}
 
-	bool wait_fetch_all() {
+	bool wait_fetch_all()
+	{
 		std::unique_lock<std::mutex> lock(list_cond_mutex);
 
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			== std::cv_status::no_timeout
-			&& !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
-	bool wait_param_set_ack_for(ParamSetOpt *opt) {
+	bool wait_param_set_ack_for(std::shared_ptr<ParamSetOpt> opt)
+	{
 		std::unique_lock<std::mutex> lock(opt->cond_mutex);
 
 		return opt->ack.wait_for(lock, std::chrono::nanoseconds(PARAM_TIMEOUT_DT.toNSec()) * (RETRIES_COUNT + 2))
-			== std::cv_status::no_timeout
-			&& !opt->is_timedout;
+		       == std::cv_status::no_timeout
+		       && !opt->is_timedout;
 	}
 
-	bool send_param_set_and_wait(Parameter &param) {
+	bool send_param_set_and_wait(Parameter &param)
+	{
 		unique_lock lock(mutex);
 
 		// add to waiting list
-		set_parameters[param.param_id] = new ParamSetOpt(param, RETRIES_COUNT);
+		auto opt = std::make_shared<ParamSetOpt>(param, RETRIES_COUNT);
+		set_parameters[param.param_id] = opt;
 
-		auto it = set_parameters.find(param.param_id);
-		if (it == set_parameters.end()) {
-			ROS_ERROR_STREAM_NAMED("param", "ParamSetOpt not found for " << param.param_id);
-			return false;
-		}
-
-		param_state = PR_TXPARAM;
+		param_state = PR::TXPARAM;
 		restart_timeout_timer();
 		param_set(param);
 
 		lock.unlock();
-		bool is_not_timeout = wait_param_set_ack_for(it->second);
+		bool is_not_timeout = wait_param_set_ack_for(opt);
 		lock.lock();
 
 		// free opt data
-		delete it->second;
-		set_parameters.erase(it);
+		set_parameters.erase(param.param_id);
 
 		go_idle();
 		return is_not_timeout;
+	}
+
+	//! Set ROS param only if name is good
+	bool rosparam_set_allowed(const Parameter &p)
+	{
+		if (m_uas->is_px4() && p.param_id == "_HASH_CHECK") {
+			auto v = p.param_value;	// const XmlRpcValue can't cast
+			ROS_INFO_NAMED("param", "PR: PX4 parameter _HASH_CHECK ignored: 0x%8x", static_cast<int32_t>(v));
+			return false;
+		}
+
+		param_nh.setParam(p.param_id, p.param_value);
+		return true;
 	}
 
 	/* -*- ROS callbacks -*- */
@@ -750,18 +771,19 @@ private:
 	 * @brief fetches all parameters from device
 	 * @service ~param/pull
 	 */
-	bool pull_cb(mavros::ParamPull::Request &req,
-			mavros::ParamPull::Response &res) {
+	bool pull_cb(mavros_msgs::ParamPull::Request &req,
+			mavros_msgs::ParamPull::Response &res)
+	{
 		unique_lock lock(mutex);
 
-		if ((param_state == PR_IDLE && parameters.empty())
+		if ((param_state == PR::IDLE && parameters.empty())
 				|| req.force_pull) {
 			if (!req.force_pull)
 				ROS_DEBUG_NAMED("param", "PR: start pull");
 			else
 				ROS_INFO_NAMED("param", "PR: start force pull");
 
-			param_state = PR_RXLIST;
+			param_state = PR::RXLIST;
 			param_rx_retries = RETRIES_COUNT;
 			parameters.clear();
 
@@ -772,7 +794,7 @@ private:
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
-		else if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
+		else if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			lock.unlock();
 			res.success = wait_fetch_all();
 		}
@@ -784,14 +806,9 @@ private:
 		lock.lock();
 		res.param_received = parameters.size();
 
-		for (auto param_it = parameters.begin();
-				param_it != parameters.end();
-				param_it++) {
-			Parameter *p = &param_it->second;
-			auto pv = Parameter::to_xmlrpc_value(p->param_value);
-
+		for (auto &p : parameters) {
 			lock.unlock();
-			param_nh.setParam(p->param_id, pv);
+			rosparam_set_allowed(p.second);
 			lock.lock();
 		}
 
@@ -802,9 +819,9 @@ private:
 	 * @brief push all parameter value to device
 	 * @service ~param/push
 	 */
-	bool push_cb(mavros::ParamPush::Request &req,
-			mavros::ParamPush::Response &res) {
-
+	bool push_cb(mavros_msgs::ParamPush::Request &req,
+			mavros_msgs::ParamPush::Response &res)
+	{
 		XmlRpc::XmlRpcValue param_dict;
 		if (!param_nh.getParam("", param_dict))
 			return true;
@@ -812,21 +829,20 @@ private:
 		ROS_ASSERT(param_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
 
 		int tx_count = 0;
-		for (auto param = param_dict.begin();
-				param != param_dict.end();
-				param++) {
-			if (Parameter::check_exclude_param_id(param->first)) {
-				ROS_DEBUG_STREAM_NAMED("param", "PR: Exclude param: " << param->first);
+		for (auto &param : param_dict) {
+			if (Parameter::check_exclude_param_id(param.first)) {
+				ROS_DEBUG_STREAM_NAMED("param", "PR: Exclude param: " << param.first);
 				continue;
 			}
 
 			unique_lock lock(mutex);
-			auto param_it = parameters.find(param->first);
+			auto param_it = parameters.find(param.first);
 			if (param_it != parameters.end()) {
-				Parameter *p = &param_it->second;
-				Parameter to_send = *p;
+				// copy current state of Parameter
+				auto to_send = param_it->second;
 
-				to_send.param_value = Parameter::from_xmlrpc_value(param->second);
+				// Update XmlRpcValue
+				to_send.param_value = param.second;
 
 				lock.unlock();
 				bool set_res = send_param_set_and_wait(to_send);
@@ -836,7 +852,7 @@ private:
 					tx_count++;
 			}
 			else {
-				ROS_WARN_STREAM_NAMED("param", "PR: Unknown rosparam: " << param->first);
+				ROS_WARN_STREAM_NAMED("param", "PR: Unknown rosparam: " << param.first);
 			}
 		}
 
@@ -850,41 +866,37 @@ private:
 	 * @brief sets parameter value
 	 * @service ~param/set
 	 */
-	bool set_cb(mavros::ParamSet::Request &req,
-			mavros::ParamSet::Response &res) {
+	bool set_cb(mavros_msgs::ParamSet::Request &req,
+			mavros_msgs::ParamSet::Response &res)
+	{
 		unique_lock lock(mutex);
 
-		if (param_state == PR_RXLIST || param_state == PR_RXPARAM) {
+		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 			ROS_ERROR_NAMED("param", "PR: receiving not complete");
 			return false;
 		}
 
 		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {
-			Parameter *p = &param_it->second;
-			Parameter to_send = *p;
+			auto to_send = param_it->second;
 
-			// according to ParamSet/Get description
-			if (req.integer > 0)
-				to_send.param_value = (uint32_t) req.integer;
-			else if (req.integer < 0)
-				to_send.param_value = (int32_t) req.integer;
-			else if (req.real != 0.0)
-				to_send.param_value = (float) req.real;
+			// according to ParamValue description
+			if (req.value.integer != 0)
+				to_send.param_value = static_cast<int>(req.value.integer);
+			else if (req.value.real != 0.0)
+				to_send.param_value = req.value.real;
 			else
-				to_send.param_value = (uint32_t) 0;
+				to_send.param_value = 0;
 
 			lock.unlock();
 			res.success = send_param_set_and_wait(to_send);
 			lock.lock();
 
-			res.integer = Parameter::to_integer(p->param_value);
-			res.real = Parameter::to_real(p->param_value);
+			res.value.integer = param_it->second.to_integer();
+			res.value.real = param_it->second.to_real();
 
-			auto pv = Parameter::to_xmlrpc_value(p->param_value);
 			lock.unlock();
-
-			param_nh.setParam(p->param_id, pv);
+			rosparam_set_allowed(param_it->second);
 		}
 		else {
 			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to set: " << req.param_id);
@@ -898,17 +910,17 @@ private:
 	 * @brief get parameter
 	 * @service ~param/get
 	 */
-	bool get_cb(mavros::ParamGet::Request &req,
-			mavros::ParamGet::Response &res) {
+	bool get_cb(mavros_msgs::ParamGet::Request &req,
+			mavros_msgs::ParamGet::Response &res)
+	{
 		lock_guard lock(mutex);
 
 		auto param_it = parameters.find(req.param_id);
 		if (param_it != parameters.end()) {
-			Parameter *p = &param_it->second;
-
 			res.success = true;
-			res.integer = Parameter::to_integer(p->param_value);
-			res.real = Parameter::to_real(p->param_value);
+
+			res.value.integer = param_it->second.to_integer();
+			res.value.real = param_it->second.to_real();
 		}
 		else {
 			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to get: " << req.param_id);
@@ -918,8 +930,8 @@ private:
 		return true;
 	}
 };
+}	// namespace std_plugins
+}	// namespace mavros
 
-}; // namespace mavplugin
-
-PLUGINLIB_EXPORT_CLASS(mavplugin::ParamPlugin, mavplugin::MavRosPlugin)
-
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::ParamPlugin, mavros::plugin::PluginBase)

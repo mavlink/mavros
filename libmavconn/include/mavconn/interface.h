@@ -11,82 +11,83 @@
  *  such as autopilots.
  */
 /*
- * Copyright 2013,2014 Vladimir Ermakov.
+ * libmavconn
+ * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #pragma once
 
-#include <boost/bind.hpp>
-#include <boost/signals2.hpp>
-#include <boost/smart_ptr.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/system/system_error.hpp>
 
-#include <set>
+#include <deque>
 #include <mutex>
+#include <vector>
+#include <atomic>
+#include <chrono>
 #include <thread>
 #include <memory>
 #include <sstream>
+#include <cassert>
+#include <stdexcept>
+#include <unordered_map>
 #include <mavconn/mavlink_dialect.h>
 
-namespace mavconn {
-namespace sig2 = boost::signals2;
 
-class MsgBuffer;
+namespace mavconn {
+using steady_clock = std::chrono::steady_clock;
+using lock_guard = std::lock_guard<std::recursive_mutex>;
+
+//! Same as @p mavlink::common::MAV_COMPONENT::COMP_ID_UDP_BRIDGE
+static constexpr auto MAV_COMP_ID_UDP_BRIDGE = 240;
+
+//! Rx packer framing status. (same as @p mavlink::mavlink_framing_t)
+enum class Framing : uint8_t {
+	incomplete = mavlink::MAVLINK_FRAMING_INCOMPLETE,
+	ok = mavlink::MAVLINK_FRAMING_OK,
+	bad_crc = mavlink::MAVLINK_FRAMING_BAD_CRC,
+	bad_signature = mavlink::MAVLINK_FRAMING_BAD_SIGNATURE,
+};
+
+//! MAVLink protocol version
+enum class Protocol : uint8_t {
+	V10 = 1,	//!< MAVLink v1.0
+	V20 = 2		//!< MAVLink v2.0
+};
 
 /**
  * @brief Common exception for communication error
  */
-class DeviceError : public std::exception {
-private:
-	std::string e_what_;
-
+class DeviceError : public std::runtime_error {
 public:
 	/**
-	 * @breif Construct error with description.
+	 * @breif Construct error.
 	 */
-	explicit DeviceError(const char *module, const char *description) {
+	template <typename T>
+	DeviceError(const char *module, T msg) :
+		std::runtime_error(make_message(module, msg))
+	{ }
+
+	template <typename T>
+	static std::string make_message(const char *module, T msg) {
 		std::ostringstream ss;
-		ss << "DeviceError:" << module << ": " << description;
-		e_what_ = ss.str();
+		ss << "DeviceError:" << module << ":" << msg_to_string(msg);
+		return ss.str();
 	}
 
-	/**
-	 * @brief Construct error from errno
-	 */
-	explicit DeviceError(const char *module, int errnum) {
-		std::ostringstream ss;
-		ss << "DeviceError:" << module << ":" << errnum << ": " << strerror(errnum);
-		e_what_ = ss.str();
+	static std::string msg_to_string(const char *description) {
+		return description;
 	}
 
-	/**
-	 * @brief Construct error from boost error exception
-	 */
-	explicit DeviceError(const char *module, boost::system::system_error &err) {
-		std::ostringstream ss;
-		ss << "DeviceError:" << module << ":" << err.what();
-		e_what_ = ss.str();
+	static std::string msg_to_string(int errnum) {
+		return ::strerror(errnum);
 	}
 
-	DeviceError(const DeviceError& other) : e_what_(other.e_what_) {}
-	virtual ~DeviceError() throw() {}
-	virtual const char *what() const throw() {
-		return e_what_.c_str();
+	static std::string msg_to_string(boost::system::system_error &err) {
+		return err.what();
 	}
 };
 
@@ -98,19 +99,24 @@ private:
 	MAVConnInterface(const MAVConnInterface&) = delete;
 
 public:
-	typedef sig2::signal<void(const mavlink_message_t *message, uint8_t system_id, uint8_t component_id)> MessageSig;
-	typedef boost::shared_ptr<MAVConnInterface> Ptr;
-	typedef boost::shared_ptr<MAVConnInterface const> ConstPtr;
-	typedef boost::weak_ptr<MAVConnInterface> WeakPtr;
+	using ReceivedCb = std::function<void (const mavlink::mavlink_message_t *message, const Framing framing)>;
+	using ClosedCb = std::function<void (void)>;
+	using Ptr = std::shared_ptr<MAVConnInterface>;
+	using ConstPtr = std::shared_ptr<MAVConnInterface const>;
+	using WeakPtr = std::weak_ptr<MAVConnInterface>;
+
+	struct IOStat {
+		size_t tx_total_bytes;	//!< total bytes transferred
+		size_t rx_total_bytes;	//!< total bytes received
+		float tx_speed;		//!< current transfer speed [B/s]
+		float rx_speed;		//!< current receive speed [B/s]
+	};
 
 	/**
 	 * @param[in] system_id     sysid for send_message
 	 * @param[in] component_id  compid for send_message
 	 */
 	MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
-	virtual ~MAVConnInterface() {
-		delete_channel(channel);
-	};
 
 	/**
 	 * @brief Close connection.
@@ -118,41 +124,98 @@ public:
 	virtual void close() = 0;
 
 	/**
-	 * @brief Send message with default link system/component id
+	 * @brief Send message (mavlink_message_t)
+	 *
+	 * Can be used to forward messages from other connection channel.
+	 *
+	 * @note Does not do finalization!
+	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+	 * @param[in] *message  not changed
 	 */
-	inline void send_message(const mavlink_message_t *message) {
-		send_message(message, sys_id, comp_id);
-	};
+	virtual void send_message(const mavlink::mavlink_message_t *message) = 0;
 
 	/**
-	 * @brief Send message
-	 * Can be used in message_received signal.
+	 * @brief Send message (child of mavlink::Message)
 	 *
-	 * @param[in] *message  not changed
-	 * @param[in] sysid     message sys id
-	 * @param[in] compid    message component id
+	 * Does serialization inside.
+	 * System and Component ID = from this object.
+	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+	 * @param[in] &message  not changed
 	 */
-	virtual void send_message(const mavlink_message_t *message, uint8_t sysid, uint8_t compid) = 0;
+	virtual void send_message(const mavlink::Message &message) {
+		send_message(message, this->comp_id);
+	}
+
+	/**
+	 * @brief Send message (child of mavlink::Message)
+	 *
+	 * Does serialization inside.
+	 * System ID = from this object.
+	 * Component ID passed by argument.
+	 *
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+	 * @param[in] &message  not changed
+	 * @param[in] src_compid  sets the component ID of the message source
+	 */
+	virtual void send_message(const mavlink::Message &message, const uint8_t src_compid) = 0;
 
 	/**
 	 * @brief Send raw bytes (for some quirks)
+	 * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
 	 */
 	virtual void send_bytes(const uint8_t *bytes, size_t length) = 0;
 
 	/**
-	 * @brief Message receive signal
+	 * @brief Send message and ignore possible drop due to Tx queue limit
 	 */
-	MessageSig message_received;
-	sig2::signal<void()> port_closed;
+	void send_message_ignore_drop(const mavlink::mavlink_message_t *message);
 
-	virtual mavlink_status_t get_status() = 0;
+	/**
+	 * @brief Send message and ignore possible drop due to Tx queue limit
+	 *
+	 * System and Component ID = from this object.
+	 */
+	void send_message_ignore_drop(const mavlink::Message &message) {
+		send_message_ignore_drop(message, this->comp_id);
+	}
+
+	/**
+	 * @brief Send message and ignore possible drop due to Tx queue limit
+	 *
+	 * System ID = from this object.
+	 * Component ID passed by argument.
+	 */
+	void send_message_ignore_drop(const mavlink::Message &message, const uint8_t src_compid);
+
+	//! Message receive callback
+	ReceivedCb message_received_cb;
+	//! Port closed notification callback
+	ClosedCb port_closed_cb;
+
+	virtual mavlink::mavlink_status_t get_status();
+	virtual IOStat get_iostat();
 	virtual bool is_open() = 0;
 
-	inline int get_channel() { return channel; };
-	inline uint8_t get_system_id() { return sys_id; };
-	inline void set_system_id(uint8_t sysid) { sys_id = sysid; };
-	inline uint8_t get_component_id() { return comp_id; };
-	inline void set_component_id(uint8_t compid) { comp_id = compid; };
+	inline uint8_t get_system_id() {
+		return sys_id;
+	}
+	inline void set_system_id(uint8_t sysid) {
+		sys_id = sysid;
+	}
+	inline uint8_t get_component_id() {
+		return comp_id;
+	}
+	inline void set_component_id(uint8_t compid) {
+		comp_id = compid;
+	}
+
+	/**
+	 * Set protocol used for encoding mavlink::Mavlink messages.
+	 */
+	void set_protocol_version(Protocol pver);
+	Protocol get_protocol_version();
 
 	/**
 	 * @brief Construct connection from URL
@@ -174,27 +237,66 @@ public:
 	static Ptr open_url(std::string url,
 			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
+	static std::vector<std::string> get_known_dialects();
+
 protected:
-	int channel;
-	uint8_t sys_id;
-	uint8_t comp_id;
+	uint8_t sys_id;		//!< Connection System Id
+	uint8_t comp_id;	//!< Connection Component Id
 
-#if MAVLINK_CRC_EXTRA
-	static const uint8_t mavlink_crcs[];
-#endif
+	//! Maximum mavlink packet size + some extra bytes for padding.
+	static constexpr size_t MAX_PACKET_SIZE = MAVLINK_MAX_PACKET_LEN + 16;
+	//! Maximum count of transmission buffers.
+	static constexpr size_t MAX_TXQ_SIZE = 1000;
 
-	static int new_channel();
-	static void delete_channel(int chan);
-	static int channes_available();
+	//! This map merge all dialect mavlink_msg_entry_t structs. Needed for packet parser.
+	static std::unordered_map<mavlink::msgid_t, const mavlink::mavlink_msg_entry_t*> message_entries;
+
+	//! Channel number used for logging.
+	size_t conn_id;
+
+	inline mavlink::mavlink_status_t *get_status_p() {
+		return &m_parse_status;
+	}
+
+	inline mavlink::mavlink_message_t *get_buffer_p() {
+		return &m_buffer;
+	}
 
 	/**
-	 * This helper function construct new MsgBuffer from message.
+	 * Parse buffer and emit massage_received.
 	 */
-	MsgBuffer *new_msgbuffer(const mavlink_message_t *message, uint8_t sysid, uint8_t compid);
+	void parse_buffer(const char *pfx, uint8_t *buf, const size_t bufsize, size_t bytes_received);
+
+	void iostat_tx_add(size_t bytes);
+	void iostat_rx_add(size_t bytes);
+
+	void log_recv(const char *pfx, mavlink::mavlink_message_t &msg, Framing framing);
+	void log_send(const char *pfx, const mavlink::mavlink_message_t *msg);
+	void log_send_obj(const char *pfx, const mavlink::Message &msg);
 
 private:
-	static std::recursive_mutex channel_mutex;
-	static std::set<int> allocated_channels;
-};
+	friend const mavlink::mavlink_msg_entry_t* mavlink::mavlink_get_msg_entry(uint32_t msgid);
 
-}; // namespace mavconn
+	mavlink::mavlink_status_t m_parse_status;
+	mavlink::mavlink_message_t m_buffer;
+	mavlink::mavlink_status_t m_mavlink_status;
+
+	std::atomic<size_t> tx_total_bytes, rx_total_bytes;
+	std::recursive_mutex iostat_mutex;
+	size_t last_tx_total_bytes, last_rx_total_bytes;
+	std::chrono::time_point<steady_clock> last_iostat;
+
+	//! monotonic counter (increment only)
+	static std::atomic<size_t> conn_id_counter;
+
+	//! init_msg_entry() once flag
+	static std::once_flag init_flag;
+
+	/**
+	 * Initialize message_entries map
+	 *
+	 * autogenerated. placed in mavlink_helpers.cpp
+	 */
+	static void init_msg_entry();
+};
+}	// namespace mavconn

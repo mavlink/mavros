@@ -1,0 +1,10 @@
+# request set new home position
+
+bool current_gps
+float32 yaw
+float32 latitude
+float32 longitude
+float32 altitude
+---
+bool success
+uint8 result

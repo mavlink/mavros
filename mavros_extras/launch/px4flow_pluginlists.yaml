@@ -1,0 +1,9 @@
+plugin_blacklist:
+- '*'
+
+plugin_whitelist:
+- 'sys_*'
+- command
+- param
+- image_pub
+- px4flow

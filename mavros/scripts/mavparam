@@ -3,23 +3,14 @@
 #
 # Copyright 2014 Vladimir Ermakov.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import argparse
 
 import rospy
+import mavros
 from mavros.utils import *
 from mavros.param import *
 
@@ -43,19 +34,15 @@ def get_param_file_io(args):
 
 
 def do_load(args):
-    rospy.init_node("mavparam", anonymous=True)
-
     param_file = get_param_file_io(args)
     with args.file:
-        param_transfered = param_set_list(param_file.read(args.file), args.mavros_ns)
+        param_transfered = param_set_list(param_file.read(args.file))
 
     print_if(args.verbose, "Parameters transfered:", param_transfered)
 
 
 def do_dump(args):
-    rospy.init_node("mavparam", anonymous=True)
-
-    param_received, param_list = param_get_all(args.force, args.mavros_ns)
+    param_received, param_list = param_get_all(args.force)
     print_if(args.verbose, "Parameters received:", param_received)
 
     param_file = get_param_file_io(args)
@@ -64,53 +51,52 @@ def do_dump(args):
 
 
 def do_get(args):
-    rospy.init_node("mavparam", anonymous=True)
-
-    print(param_get(args.param_id, args.mavros_ns))
+    print(param_get(args.param_id))
 
 
 def do_set(args):
-    rospy.init_node("mavparam", anonymous=True)
-
     if '.' in args.value:
         val = float(args.value)
     else:
         val = int(args.value)
 
-    print(param_set(args.param_id, val, args.mavros_ns))
+    print(param_set(args.param_id, val))
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for getting, setting, parameters from MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(description="Command line tool for getting and setting parameters from MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
-    load_args = subarg.add_parser('load', help="load parameters from file")
+    load_args = subarg.add_parser('load', help="Load parameters from file")
     load_args.set_defaults(func=do_load)
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="input file")
+    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file")
     load_format = load_args.add_mutually_exclusive_group()
     load_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
     load_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
 
-    dump_args = subarg.add_parser('dump', help="dump parameters to file")
+    dump_args = subarg.add_parser('dump', help="Dump parameters to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="output file")
-    dump_args.add_argument('-f', '--force', action="store_true", help="Force pull params from FCU, not cache.")
+    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file")
+    dump_args.add_argument('-f', '--force', action="store_true", help="Force pull params from FCU, not cache")
     dump_format = dump_args.add_mutually_exclusive_group()
     dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
     dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
 
-    get_args = subarg.add_parser('get', help="get parameter")
+    get_args = subarg.add_parser('get', help="Get parameter")
     get_args.set_defaults(func=do_get)
     get_args.add_argument('param_id', help="Parameter ID string")
 
-    set_args = subarg.add_parser('set', help="set parameter")
+    set_args = subarg.add_parser('set', help="Set parameter")
     set_args.set_defaults(func=do_set)
     set_args.add_argument('param_id', help="Parameter ID string")
-    set_args.add_argument('value', help="new value")
+    set_args.add_argument('value', help="New value")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavparam", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
     args.func(args)
 
 

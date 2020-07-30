@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mavros_msgs</name>
+  <version>1.2.0</version>
+  <description>
+    mavros_msgs defines messages for <a href="http://wiki.ros.org/mavros">MAVROS</a>.
+  </description>
+
+  <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+  <license>GPLv3</license>
+  <license>LGPLv3</license>
+  <license>BSD</license>
+
+  <url type="website">http://wiki.ros.org/mavros_msgs</url>
+  <url type="repository">https://github.com/mavlink/mavros.git</url>
+  <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geographic_msgs</depend>
+  <!-- XXX needed for users of mavlink_convert.h
+  <build_export_depend>libmavconn</build_export_depend>
+  -->
+
+  <export>
+    <architecture_independent/>
+  </export>
+</package>

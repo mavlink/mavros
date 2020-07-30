@@ -8,134 +8,128 @@
  * @{
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015,2016 Vladimir Ermakov, Tony Baltovski.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
 
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 
-namespace mavplugin {
-
-class MocapPoseEstimatePlugin : public MavRosPlugin
+namespace mavros {
+namespace extra_plugins{
+/**
+ * @brief MocapPoseEstimate plugin
+ *
+ * Sends motion capture data to FCU.
+ */
+class MocapPoseEstimatePlugin : public plugin::PluginBase
 {
 public:
-	MocapPoseEstimatePlugin() :
-		uas(nullptr)
-		{ };
+	MocapPoseEstimatePlugin() : PluginBase(),
+		mp_nh("~mocap")
+	{ }
 
-	void initialize(UAS &uas_,
-		ros::NodeHandle &nh,
-		diagnostic_updater::Updater &diag_updater)
+	void initialize(UAS &uas_)
 	{
+		PluginBase::initialize(uas_);
+
 		bool use_tf;
 		bool use_pose;
 
-		uas = &uas_;
-		mp_nh = ros::NodeHandle(nh, "mocap");
+		/** @note For VICON ROS package, subscribe to TransformStamped topic */
+		mp_nh.param("use_tf", use_tf, false);
 
-		mp_nh.param("use_tf", use_tf, false);  // Vicon
-		mp_nh.param("use_pose", use_pose, true);  // Optitrack
+		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
+		mp_nh.param("use_pose", use_pose, true);
 
-
-		if (use_tf && !use_pose)
-		{
+		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
-		else if (use_pose && !use_tf)
-		{
+		else if (use_pose && !use_tf) {
 			mocap_pose_sub = mp_nh.subscribe("pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);
 		}
-		else
-		{
+		else {
 			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
 	}
 
-	const std::string get_name() const
-	{
-		return "MocapPoseEstimate";
-	}
-
-	const message_map get_rx_handlers()
+	Subscriptions get_subscriptions()
 	{
 		return { /* Rx disabled */ };
 	}
 
 private:
-	UAS *uas;
-
 	ros::NodeHandle mp_nh;
+
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
 
-	// mavlink send
-
+	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
-		float x, float y, float z,
-		float roll, float pitch, float yaw)
+			Eigen::Quaterniond &q,
+			Eigen::Vector3d &v)
 	{
-		mavlink_message_t msg;
-		mavlink_msg_vicon_position_estimate_pack_chan(UAS_PACK_CHAN(uas), &msg,
-			usec,
-			x,
-			y,
-			z,
-			roll,
-			pitch,
-			yaw);
-		UAS_FCU(uas)->send_message(&msg);
+		mavlink::common::msg::ATT_POS_MOCAP pos;
+
+		pos.time_usec = usec;
+		ftf::quaternion_to_mavlink(q, pos.q);
+		pos.x = v.x();
+		pos.y = v.y();
+		pos.z = v.z();
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(pos);
 	}
 
+	/* -*- mid-level helpers -*- */
+	void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
+	{
+		Eigen::Quaterniond q_enu;
 
-	void mocap_pose_cb(const geometry_msgs::Pose::ConstPtr &pose)
-	{	
-		ros::Time stamp = ros::Time::now();
-		tf::Quaternion quat;
-		tf::quaternionMsgToTF(pose->orientation, quat);
-		double roll, pitch, yaw;
-		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-		// Convert to mavlink body frame
-		mocap_pose_send(stamp.toNSec() / 1000,
-			pose->position.x,
-			-pose->position.y,
-			-pose->position.z,
-			roll, -pitch, -yaw); 
+		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(q_enu));
+
+		auto position = ftf::transform_frame_enu_ned(
+				Eigen::Vector3d(
+					pose->pose.position.x,
+					pose->pose.position.y,
+					pose->pose.position.z));
+
+		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
+				q,
+				position);
 	}
 
+	/* -*- callbacks -*- */
 	void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
 	{
-		tf::Quaternion quat;
-		tf::quaternionMsgToTF(trans->transform.rotation, quat);
-		double roll, pitch, yaw;
-		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-		// Convert to mavlink body frame
+		Eigen::Quaterniond q_enu;
+
+		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
+		auto q = ftf::transform_orientation_enu_ned(
+					ftf::transform_orientation_baselink_aircraft(q_enu));
+
+		auto position = ftf::transform_frame_enu_ned(
+				Eigen::Vector3d(
+					trans->transform.translation.x,
+					trans->transform.translation.y,
+					trans->transform.translation.z));
+
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
-			trans->transform.translation.x,
-			-trans->transform.translation.y,
-			-trans->transform.translation.z,
-			roll, -pitch, -yaw); 
+				q,
+				position);
 	}
 };
+}	// namespace extra_plugins
+}	// namespace mavros
 
-}; // namespace mavplugin
-
-PLUGINLIB_EXPORT_CLASS(mavplugin::MocapPoseEstimatePlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::MocapPoseEstimatePlugin, mavros::plugin::PluginBase)

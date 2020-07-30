@@ -8,21 +8,11 @@
  *  @brief MAVROS node implementation
  */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2015 Vladimir Ermakov.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #pragma once
@@ -33,11 +23,9 @@
 #include <mavconn/interface.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/mavlink_diag.h>
-
-#include <mavros/Mavlink.h>
+#include <mavros/utils.h>
 
 namespace mavros {
-
 /**
  * @brief MAVROS node class
  *
@@ -46,40 +34,49 @@ namespace mavros {
 class MavRos
 {
 public:
-	explicit MavRos(const ros::NodeHandle &nh_);
+	MavRos();
 	~MavRos() {};
 
 	void spin();
 
 private:
-	ros::NodeHandle node_handle;
-	ros::NodeHandle mavlink_node_handle;
+	ros::NodeHandle mavlink_nh;
 	// fcu_link stored in mav_uas
 	mavconn::MAVConnInterface::Ptr gcs_link;
+	bool gcs_quiet_mode;
+	ros::Time last_message_received_from_gcs;
+	ros::Duration conn_timeout;
 
 	ros::Publisher mavlink_pub;
 	ros::Subscriber mavlink_sub;
 
-	diagnostic_updater::Updater diag_updater;
+	diagnostic_updater::Updater gcs_diag_updater;
 	MavlinkDiag fcu_link_diag;
 	MavlinkDiag gcs_link_diag;
 
-	pluginlib::ClassLoader<mavplugin::MavRosPlugin> plugin_loader;
-	std::vector<mavplugin::MavRosPlugin::Ptr> loaded_plugins;
-	std::vector<std::string> plugin_blacklist;
-	std::array<mavconn::MAVConnInterface::MessageSig, 256>
-		message_route_table; // link interface -> router -> plugin callback
+	pluginlib::ClassLoader<plugin::PluginBase> plugin_loader;
+	std::vector<plugin::PluginBase::Ptr> loaded_plugins;
+
+	//! FCU link -> router -> plugin handler
+	std::unordered_map<mavlink::msgid_t, plugin::PluginBase::Subscriptions> plugin_subscriptions;
+
+	//! UAS object passed to all plugins
 	UAS mav_uas;
 
-	void mavlink_pub_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
-	void mavlink_sub_cb(const Mavlink::ConstPtr &rmsg);
-	void plugin_route_cb(const mavlink_message_t *mmsg, uint8_t sysid, uint8_t compid);
-	bool check_in_blacklist(std::string &pl_name);
-	void add_plugin(std::string &pl_name);
-	void terminate_cb();
-	void startup_px4_usb_quirk(void);
+	//! fcu link -> ros
+	void mavlink_pub_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing);
+	//! ros -> fcu link
+	void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg);
+
+	//! message router
+	void plugin_route_cb(const mavlink::mavlink_message_t *mmsg, const mavconn::Framing framing);
+
+	//! load plugin
+	void add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_string &whitelist);
+
+	//! start mavlink app on USB
+	void startup_px4_usb_quirk();
 	void log_connect_change(bool connected);
 };
-
-}; // namespace mavros
+}	// namespace mavros
 

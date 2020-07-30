@@ -1,60 +1,34 @@
-# thanks to jsk-ros-pkg
-language: cpp
-compiler:
-  - gcc
-  #- clang
+# Based on https://github.com/felixduvallet/ros-travis-integration
+#
+# vim:set ts=2 sw=2 et:
+
+language: generic
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.ccache
+
 env:
   global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    #   via the "travis encrypt" command using the project repo's public key
-    - secure: "ieyA/jKHN1rVAQ8qFvXx6wdcUozFR5QBxUpQuEcItl4yv0bPnRp0xO9X/BhNFt6V85L8jEw9XNz4uHTUeAtghZZxpKCQ8de1NP49d7boyCTLQx/WsJ/bSPubAZOcnvbi9SoOTyymM94jdA1k46ndznI1ZZ713uSrPdIcg6o8Q9A="
-    #- ROS_DISTRO=hydro MAVLINK_DIALECT=ardupilotmega
-    - ROS_DISTRO=hydro MAVLINK_DIALECT=pixhawk
-before_install:
-  - export CI_SOURCE_PATH=$(pwd)
-  - export REPOSITORY_NAME=${PWD##*/}
-  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  #- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros-shadow-fixed/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros python-rosinstall
-  # MongoDB hack - I don't fully understand this but its for moveit_warehouse
-  - sudo apt-get remove -y mongodb mongodb-10gen
-  - sudo apt-get install -y mongodb-clients mongodb-server -o Dpkg::Options::="--force-confdef" # default actions
-  # Setup rosdep
-  - sudo rosdep init
-  - rosdep update
+    - CCACHE_DIR=$HOME/.ccache
+    - DOCKER_RUN_OPTS="-e CI=true"
+  matrix:
+    - ROS_DISTRO="kinetic"
+    - ROS_DISTRO="melodic"
+    - ROS_DISTRO="kinetic" NOT_TEST_BUILD=true
+    - ROS_DISTRO="kinetic" UPSTREAM_WORKSPACE=file $ROSINSTALL_FILENAME='dependencies.rosinstall'
+
 install:
-  # Create workspace
-  - mkdir -p ~/ros/ws_$REPOSITORY_NAME/src
-  - cd ~/ros/ws_$REPOSITORY_NAME/src
-  - wstool init .
-  #- wstool set $REPOSITORY_NAME --git https://github.com/vooon/mavros.git -y
-  #- wstool update -j10
-  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
-  - cd ../
-  # Install dependencies for source repos
-  - rosdep install -r -n --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-before_script: # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
-  - source /opt/ros/$ROS_DISTRO/setup.bash
-  - export CATKIN_PACKAGES="`find $CI_SOURCE_PATH -name package.xml | xargs -n 1 dirname | xargs -n 1 basename`"
-script: # All commands must exit with code 0 on success. Anything else is considered failure.
-  - cd ~/ros/ws_$REPOSITORY_NAME
-  - rospack profile
-  - catkin_make -j4 -DMAVLINK_DIALECT=$MAVLINK_DIALECT
-  - catkin_make install
-  - rm -fr devel src build; source install/setup.bash
-after_failure:
-  - if [ -e ./build/Testing/Temporary/LastTest.log ]; then cat ./build/Testing/Temporary/LastTest.log; fi
-  - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;
-  - for file in ${HOME}/.ros/log/rostest-*; do echo "=== $file ==="; cat $file; done
-addons:
-  coverity_scan:
-    project:
-      name: "mavlink/mavros"
-      description: "Build submitted via Travis CI"
-    notification_email: vooon341@gmail.com
-    build_command_prepend: "cd ~/ros/ws_$REPOSITORY_NAME/src/mavros && echo 'cmake_minimum_required(VERSION 2.8.3)' > CMakeLists.txt && echo 'add_subdirectory(mavros)' >> CMakeLists.txt && echo 'add_subdirectory(mavros_extras)' >> CMakeLists.txt && cmake ."
-    build_command: "make -j4"
-    branch_pattern: coverity_scan
+  - git clone --depth=1 https://github.com/ros-industrial/industrial_ci.git .industrial_ci
+script:
+  - .industrial_ci/travis.sh
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/b856f174ff9736ad23ec
+    on_success: change
+    on_failure: always
+    on_start: false

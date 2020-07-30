@@ -1,0 +1,95 @@
+<launch>
+    <!-- vim: set ft=xml noet : -->
+    <!-- Offboard Control launch file -->
+
+    <arg name="headless" default="false"/>
+    <arg name="gui" default="true"/>
+    <arg name="enable_logging" default="false"/>
+    <arg name="enable_ground_truth" default="true"/>
+    <arg name="ns" default="iris"/>
+    <arg name="log_file" default="$(arg ns)"/>
+
+    <!-- Gazebo simulation and vehicle model launch -->
+    <include file="$(find rotors_gazebo)/launch/iris_empty_world.launch">
+        <arg name="headless" value="$(arg headless)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="enable_logging" value="$(arg enable_logging)" />
+        <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+        <arg name="log_file" value="$(arg log_file)"/>
+    </include>
+
+    <include file="$(find px4)/launch/iris.launch">
+        <arg name="ns" value="$(arg ns)"/>
+    </include>
+
+    <!-- MAVROS launcher -->
+    <arg name="fcu_url" default="udp://localhost:14560@localhost:14565" />
+    <arg name="gcs_url" default="" />
+    <arg name="tgt_system" default="1" />
+    <arg name="tgt_component" default="1" />
+
+    <include file="$(find mavros)/launch/node.launch">
+        <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+        <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+        <arg name="fcu_url" value="$(arg fcu_url)" />
+        <arg name="gcs_url" value="$(arg gcs_url)" />
+        <arg name="tgt_system" value="$(arg tgt_system)" />
+        <arg name="tgt_component" value="$(arg tgt_component)" />
+    </include>
+
+    <!-- SITL test base node launcher -->
+    <arg name="num_of_tests" default="1" />  <!-- number of repetitions of the same test -->
+    <arg name="rate" default="10.0" />      <!-- loop rate of tests -->
+    <arg name="use_pid" default="true" />     <!-- use default PID velocity control -->
+
+    <arg name="mode" default="position" />     <!-- position ctl mode -->
+    <arg name="shape" default="square" />     <!-- square shaped path -->
+
+    <!-- if use_pid is set, PID values should be configured -->
+    <arg name="linvel_p_gain" default="0.4" />     <!-- Proportional gain for linear velocity -->
+    <arg name="linvel_i_gain" default="0.05" />     <!-- Integral gain for linear velocity -->
+    <arg name="linvel_d_gain" default="0.12" />     <!-- Derivative gain for linear velocity -->
+    <arg name="linvel_i_max" default="0.1" />     <!-- Max integral windup for linear velocity -->
+    <arg name="linvel_i_min" default="-0.1" />     <!-- Min integral windup for linear velocity -->
+
+    <arg name="yawrate_p_gain" default="0.011" />     <!-- Proportional gain for yaw rate -->
+    <arg name="yawrate_i_gain" default="0.00058" />     <!-- Integral gain for yaw rate -->
+    <arg name="yawrate_d_gain" default="0.12" />     <!-- Derivative gain for yaw rate -->
+    <arg name="yawrate_i_max" default="0.005" />     <!-- Max integral windup for yaw rate -->
+    <arg name="yawrate_i_min" default="-0.005" />     <!-- Min integral windup for yaw rate -->
+
+    <include file="$(find test_mavros)/launch/base_node.launch">
+        <arg name="num_of_tests" value="$(arg num_of_tests)"/>
+        <arg name="rate" value="$(arg rate)"/>
+        <arg name="use_pid" value="$(arg use_pid)"/>
+        <arg name="args" value="offboard_control"/>    <!-- offboard ctl test -->
+
+        <!-- Available modes:
+           - * "position"
+           - * "velocity"
+           - * "acceleration" (not supported on firmware yet)
+           -->
+        <arg name="mode" value="$(arg mode)"/>
+        <!-- Available shapes:
+           - * "square"
+           - * "circle"
+           - * "eight"
+           - * "ellipse"
+           -->
+        <arg name="shape" value="$(arg shape)"/>
+
+        <arg name="linvel_p_gain" value="$(arg linvel_p_gain)"/>
+        <arg name="linvel_i_gain" value="$(arg linvel_i_gain)"/>
+        <arg name="linvel_d_gain" value="$(arg linvel_d_gain)"/>
+        <arg name="linvel_i_max" value="$(arg linvel_i_max)"/>
+        <arg name="linvel_i_min" value="$(arg linvel_i_min)"/>
+
+        <arg name="yawrate_p_gain" value="$(arg yawrate_p_gain)"/>
+        <arg name="yawrate_i_gain" value="$(arg yawrate_i_gain)"/>
+        <arg name="yawrate_d_gain" value="$(arg yawrate_d_gain)"/>
+        <arg name="yawrate_i_max" value="$(arg yawrate_i_max)"/>
+        <arg name="yawrate_i_min" value="$(arg yawrate_i_min)"/>
+    </include>
+
+</launch>

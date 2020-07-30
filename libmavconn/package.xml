@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>libmavconn</name>
-  <version>0.9.2</version>
+  <version>1.2.0</version>
   <description>
     MAVLink communication library.
     This library provide unified connection handling classes
@@ -14,6 +14,7 @@
   <author email="vooon341@gmail.com">Vladimir Ermakov</author>
   <license>GPLv3</license>
   <license>LGPLv3</license>
+  <license>BSD</license>
 
   <url type="website">http://wiki.ros.org/mavros</url>
   <url type="repository">https://github.com/mavlink/mavros.git</url>
@@ -25,6 +26,7 @@
   <depend>mavlink</depend>
   <depend>libconsole-bridge-dev</depend>
 
+  <test_depend>rosunit</test_depend>
   <test_depend>gtest</test_depend>
 
   <export>

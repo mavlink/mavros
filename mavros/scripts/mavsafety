@@ -3,34 +3,24 @@
 #
 # Copyright 2014 Vladimir Ermakov.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 from __future__ import print_function
 
 import argparse
 
 import rospy
+import mavros
 from mavros.utils import *
 from geometry_msgs.msg import PolygonStamped, Point32
-from mavros.srv import CommandBool
+from mavros import command
 
 
 def _arm(args, state):
     try:
-        arming_cl = rospy.ServiceProxy(args.mavros_ns + "/cmd/arming", CommandBool)
-        ret = arming_cl(value=state)
+        ret = command.arming(value=state)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -42,20 +32,29 @@ def _arm(args, state):
 
 
 def do_arm(args):
-    rospy.init_node("mavsafety", anonymous=True)
     _arm(args, True)
 
 
 def do_disarm(args):
-    rospy.init_node("mavsafety", anonymous=True)
     _arm(args, False)
 
+def do_kill(args):
+    try:
+        ret = command.long(command=400, param2=21196)
+    except rospy.ServiceException as ex:
+        fault(ex)
+
+    if not ret.success:
+        fault("Request failed. Check mavros logs")
+
+    print_if(args.verbose, "Command result:", ret.result)
+    return ret
 
 _ONCE_DELAY = 3
 def do_safetyarea(args):
-    pub = rospy.Publisher(args.mavros_ns + "/safety_area/set", PolygonStamped,
+    set_topic = mavros.get_topic('safety_area', 'set')
+    pub = rospy.Publisher(set_topic, PolygonStamped,
                           queue_size=10, latch=True)
-    rospy.init_node("mavsafety", anonymous=True)
 
     poly = PolygonStamped()
     poly.header.frame_id = 'mavsafety'
@@ -66,9 +65,9 @@ def do_safetyarea(args):
     ]
 
     pub.publish(poly)
+    # XXX maybe not worked
     print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ",
-             args.mavros_ns + "/safety_area/set")
+             "Mavros not started, nobody subcsribes to ", set_topic)
 
     # stick around long enough for others to grab
     timeout_t = rospy.get_time() + _ONCE_DELAY
@@ -77,9 +76,9 @@ def do_safetyarea(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Commad line tool for manipulating safty on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default="/mavros")
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(description="Command line tool for manipulating safety on MAVLink device.")
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     subarg = parser.add_subparsers()
 
     arm_args = subarg.add_parser('arm', help="Arm motors")
@@ -87,6 +86,9 @@ def main():
 
     disarm_args = subarg.add_parser('disarm', help="Disarm motors")
     disarm_args.set_defaults(func=do_disarm)
+
+    kill_args = subarg.add_parser('kill', help="Kill motors")
+    kill_args.set_defaults(func=do_kill)
 
     safety_area_args = subarg.add_parser('safetyarea', help="Send safety area")
     safety_area_args.set_defaults(func=do_safetyarea)
@@ -96,6 +98,9 @@ def main():
                                   required=True, help="Corner 2")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("mavsafety", anonymous=True)
+    mavros.set_namespace(args.mavros_ns)
     args.func(args)
 
 

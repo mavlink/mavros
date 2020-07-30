@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- Based on mavros/node.launch -->
 	<!-- Launch script for PX4Flow -->
 
@@ -19,7 +19,7 @@
 		<remap from="/mavlink/from" to="/px4flow/mavlink_from" />
 
 		<!-- load blacklist, config -->
-		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_blacklist.yaml" />
+		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_pluginlists.yaml" />
 		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_config.yaml" />
 	</node>
 </launch>

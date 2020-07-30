@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:set ts=4 sw=4 et:
+#
+# Copyright 2015 Vladimir Ermakov.
+#
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
+
+"""
+This script listens to devices connected to mavros and checks against system & component id mismatch errors.
+"""
+
+from __future__ import print_function
+
+import argparse
+
+import os
+import rospy
+import mavros
+from mavros.utils import *
+from mavros_msgs.msg import Mavlink
+
+
+class Checker(object):
+    def __init__(self, args):
+        # dict of sets: (sysid, compid) -> set[msgid...]
+        self.message_sources = {}
+        self.messages_received = 0
+        self.reports = 0
+        self.args = args
+
+        self.sub = rospy.Subscriber("mavlink/from", Mavlink, self.mavlink_from_cb, queue_size=10)
+        self.timer = rospy.Timer(rospy.Duration(15.0), self.timer_cb, oneshot=False)
+
+    def mavlink_from_cb(self, msg):
+        ids = (msg.sysid, msg.compid)
+        if ids in self.message_sources:
+            self.message_sources[ids].add(msg.msgid)
+        else:
+            self.message_sources[ids] = set((msg.msgid, ))
+
+        self.messages_received += 1
+
+    def timer_cb(self, event):
+        if self.reports > 0:
+            print()
+
+        self.reports += 1
+
+        param_not_exist = False
+        tgt_ids = [1, 1]
+        for idx, key in enumerate((
+            '/'.join((self.args.mavros_ns, "target_system_id")),
+            '/'.join((self.args.mavros_ns, "target_component_id"))
+        )):
+            try:
+                tgt_ids[idx] = rospy.get_param(key)
+            except KeyError:
+                print("WARNING: %s not set. Used default value: %s" % (key, tgt_ids[idx]))
+                param_not_exist = True
+
+        if param_not_exist:
+            print("NOTE: Target parameters may be unset, "
+                  "but that may be result of incorrect --mavros-ns option."
+                  "Double check results!")
+
+        # TODO: add something like colorama to highlight ERROR message
+        if tuple(tgt_ids) in self.message_sources:
+            print("OK. I got messages from %d:%d." % tuple(tgt_ids))
+        else:
+            print("ERROR. I got %d addresses, but not your target %d:%d" %
+                  (len(self.message_sources),
+                   tgt_ids[0], tgt_ids[1]))
+
+        print("\n---\nReceived %d messages, from %d addresses" %
+              (self.messages_received, len(self.message_sources)))
+
+        # TODO: prettytable?
+        print("sys:comp   list of messages")
+        for address, messages in self.message_sources.iteritems():
+            print("% 3d:%-3d   %s" % (
+                address[0], address[1],
+                ", ".join(("%d" % msgid for msgid in messages))
+            ))
+
+        if not self.args.follow:
+            # timer will stop after that request
+            rospy.signal_shutdown("done")
+
+
+def main():
+    # NOTE: in this particular script we do not need any plugin topic (which uses mavros private namespace)
+    # And will use mavlink topics from global namespace (default "/"). You may define at run _ns:=NS
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    #parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser.add_argument('-f', '--follow', action='store_true', help="do not exit after first report (report each 15 sec).")
+
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+    rospy.init_node("checkid", anonymous=True)
+    checker = Checker(args)
+    rospy.spin()
+
+
+if __name__ == '__main__':
+    main()

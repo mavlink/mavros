@@ -1,5 +1,5 @@
 <launch>
-	<!-- vim: ft=xml -->
+	<!-- vim: set ft=xml noet : -->
 	<!-- mavteleop example launch script -->
 
 	<!-- <include file="$(find mavros)/launch/px4.launch" /> -->
