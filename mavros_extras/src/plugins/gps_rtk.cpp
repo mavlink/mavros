@@ -16,6 +16,7 @@
 
 #include <mavros/mavros_plugin.h>
 #include <mavros_msgs/RTCM.h>
+#include <mavros_msgs/RTKBaseline.h>
 #include <algorithm>
 
 namespace mavros {
@@ -23,7 +24,8 @@ namespace extra_plugins {
 /**
  * @brief GPS RTK plugin
  *
- * Publish the RTCM messages from ROS to the FCU
+ * 1. Publish the RTCM messages from ROS to the FCU
+ * 2. Publish RTK baseline data from the FCU to ROS
  */
 class GpsRtkPlugin : public plugin::PluginBase {
 public:
@@ -35,16 +37,22 @@ public:
 	{
 		PluginBase::initialize(uas_);
 		gps_rtk_sub = gps_rtk_nh.subscribe("send_rtcm", 10, &GpsRtkPlugin::rtcm_cb, this);
+		rtk_baseline_pub_ = gps_rtk_nh.advertise<mavros_msgs::RTKBaseline>("rtk_baseline", 1, true);
 	}
 
 	Subscriptions get_subscriptions()
 	{
-		return {};
+		return {
+		  make_handler( &GpsRtkPlugin::handle_baseline_msg )
+		};
 	}
 
 private:
 	ros::NodeHandle gps_rtk_nh;
 	ros::Subscriber gps_rtk_sub;
+	
+	ros::Publisher rtk_baseline_pub_;
+	mavros_msgs::RTKBaseline rtk_baseline_;
 
 	/* -*- callbacks -*- */
 	/**
@@ -88,6 +96,36 @@ private:
 				std::advance(data_it, len);
 			}
 		}
+	}
+	
+	/* MAvlink msg handlers */
+	/**
+	 * @brief Publish GPS_RTK message (MAvlink Common) received from FCU.
+	 * The message is already decoded by Mavlink, we only need to convert to ROS.
+	 * Details and units: https://mavlink.io/en/messages/common.html#GPS_RTK
+	*/ 
+	
+	void handle_baseline_msg( const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_RTK &rtk_bsln )
+	{
+	  /* Received a decoded packet containing mavlink's msg #127,#128 in Common.
+	     Simply convert to ROS and publish.
+	   */
+    rtk_baseline_.time_last_baseline_ms = rtk_bsln.time_last_baseline_ms;
+    rtk_baseline_.rtk_receiver_id = rtk_bsln.rtk_receiver_id;
+    rtk_baseline_.wn = rtk_bsln.wn;                                 // week num.
+    rtk_baseline_.tow = rtk_bsln.tow;                               // ms
+    rtk_baseline_.rtk_health = rtk_bsln.rtk_health;
+    rtk_baseline_.rtk_rate = rtk_bsln.rtk_rate;
+    rtk_baseline_.nsats = rtk_bsln.nsats;
+    rtk_baseline_.baseline_coords_type = rtk_bsln.baseline_coords_type; // 0: ECEF, 1: NED
+    rtk_baseline_.baseline_a_mm = rtk_bsln.baseline_a_mm;
+    rtk_baseline_.baseline_b_mm = rtk_bsln.baseline_b_mm;
+    rtk_baseline_.baseline_c_mm = rtk_bsln.baseline_c_mm;
+    rtk_baseline_.accuracy = rtk_bsln.accuracy;
+    rtk_baseline_.iar_num_hypotheses = rtk_bsln.iar_num_hypotheses;
+    
+    rtk_baseline_.header.stamp = ros::Time::now();
+    rtk_baseline_pub_.publish( rtk_baseline_ );
 	}
 };
 }	// namespace extra_plugins
