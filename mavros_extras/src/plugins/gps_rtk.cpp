@@ -43,14 +43,14 @@ public:
 	Subscriptions get_subscriptions()
 	{
 		return {
-		  make_handler( &GpsRtkPlugin::handle_baseline_msg )
+			       make_handler( &GpsRtkPlugin::handle_baseline_msg )
 		};
 	}
 
 private:
 	ros::NodeHandle gps_rtk_nh;
 	ros::Subscriber gps_rtk_sub;
-	
+
 	ros::Publisher rtk_baseline_pub_;
 	mavros_msgs::RTKBaseline rtk_baseline_;
 
@@ -97,35 +97,35 @@ private:
 			}
 		}
 	}
-	
+
 	/* MAvlink msg handlers */
 	/**
 	 * @brief Publish GPS_RTK message (MAvlink Common) received from FCU.
 	 * The message is already decoded by Mavlink, we only need to convert to ROS.
 	 * Details and units: https://mavlink.io/en/messages/common.html#GPS_RTK
-	*/ 
-	
+	 */
+
 	void handle_baseline_msg( const mavlink::mavlink_message_t *msg, mavlink::common::msg::GPS_RTK &rtk_bsln )
 	{
-	  /* Received a decoded packet containing mavlink's msg #127,#128 in Common.
-	     Simply convert to ROS and publish.
-	   */
-    rtk_baseline_.time_last_baseline_ms = rtk_bsln.time_last_baseline_ms;
-    rtk_baseline_.rtk_receiver_id = rtk_bsln.rtk_receiver_id;
-    rtk_baseline_.wn = rtk_bsln.wn;                                 // week num.
-    rtk_baseline_.tow = rtk_bsln.tow;                               // ms
-    rtk_baseline_.rtk_health = rtk_bsln.rtk_health;
-    rtk_baseline_.rtk_rate = rtk_bsln.rtk_rate;
-    rtk_baseline_.nsats = rtk_bsln.nsats;
-    rtk_baseline_.baseline_coords_type = rtk_bsln.baseline_coords_type; // 0: ECEF, 1: NED
-    rtk_baseline_.baseline_a_mm = rtk_bsln.baseline_a_mm;
-    rtk_baseline_.baseline_b_mm = rtk_bsln.baseline_b_mm;
-    rtk_baseline_.baseline_c_mm = rtk_bsln.baseline_c_mm;
-    rtk_baseline_.accuracy = rtk_bsln.accuracy;
-    rtk_baseline_.iar_num_hypotheses = rtk_bsln.iar_num_hypotheses;
-    
-    rtk_baseline_.header.stamp = ros::Time::now();
-    rtk_baseline_pub_.publish( rtk_baseline_ );
+		/* Received a decoded packet containing mavlink's msg #127,#128 in Common.
+		   Simply convert to ROS and publish.
+		 */
+		rtk_baseline_.time_last_baseline_ms = rtk_bsln.time_last_baseline_ms;
+		rtk_baseline_.rtk_receiver_id = rtk_bsln.rtk_receiver_id;
+		rtk_baseline_.wn = rtk_bsln.wn;				// week num.
+		rtk_baseline_.tow = rtk_bsln.tow;			// ms
+		rtk_baseline_.rtk_health = rtk_bsln.rtk_health;
+		rtk_baseline_.rtk_rate = rtk_bsln.rtk_rate;
+		rtk_baseline_.nsats = rtk_bsln.nsats;
+		rtk_baseline_.baseline_coords_type = rtk_bsln.baseline_coords_type;	// 0: ECEF, 1: NED
+		rtk_baseline_.baseline_a_mm = rtk_bsln.baseline_a_mm;
+		rtk_baseline_.baseline_b_mm = rtk_bsln.baseline_b_mm;
+		rtk_baseline_.baseline_c_mm = rtk_bsln.baseline_c_mm;
+		rtk_baseline_.accuracy = rtk_bsln.accuracy;
+		rtk_baseline_.iar_num_hypotheses = rtk_bsln.iar_num_hypotheses;
+
+		rtk_baseline_.header.stamp = ros::Time::now();
+		rtk_baseline_pub_.publish( rtk_baseline_ );
 	}
 };
 }	// namespace extra_plugins
