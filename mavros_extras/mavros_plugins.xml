@@ -17,6 +17,9 @@
 	<class name="distance_sensor" type="mavros::extra_plugins::DistanceSensorPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
 	</class>
+	<class name="esc_status" type="mavros::extra_plugins::ESCStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description> Publish ESC data from FCU.</description>
+	</class>
 	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
 	</class>

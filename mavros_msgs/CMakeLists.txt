@@ -18,6 +18,10 @@ add_message_files(
   CompanionProcessStatus.msg
   OnboardComputerStatus.msg
   DebugValue.msg
+  ESCInfo.msg
+  ESCInfoItem.msg
+  ESCStatus.msg
+  ESCStatusItem.msg
   EstimatorStatus.msg
   ExtendedState.msg
   FileEntry.msg
