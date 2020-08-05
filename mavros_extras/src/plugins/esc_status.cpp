@@ -91,9 +91,9 @@ private:
 			_esc_info.esc_info.resize(_max_esc_count);
 		}
 
-		for (int i = 0; i < batch_size; i++)
+		for (int i = 0; i < std::min<ssize_t>(batch_size, ssize_t(_max_esc_count) - esc_index); i++)
 		{
-			_esc_info.esc_info[esc_index + i].header =  _esc_info.header;
+			_esc_info.esc_info[esc_index + i].header = _esc_info.header;
 			_esc_info.esc_info[esc_index + i].failure_flags = esc_info.failure_flags[i];
 			_esc_info.esc_info[esc_index + i].error_count = esc_info.error_count[i];
 			_esc_info.esc_info[esc_index + i].temperature = esc_info.temperature[i];
@@ -120,7 +120,7 @@ private:
 
 		_esc_status.header.stamp = m_uas->synchronise_stamp(esc_status.time_usec);
 
-		for (int i = 0; i < batch_size; i++)
+		for (int i = 0; i < std::min<ssize_t>(batch_size, ssize_t(_max_esc_count) - esc_index); i++)
 		{
 			_esc_status.esc_status[esc_index + i].header = _esc_status.header;
 			_esc_status.esc_status[esc_index + i].rpm = esc_status.rpm[i];
