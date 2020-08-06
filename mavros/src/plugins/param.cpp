@@ -318,6 +318,12 @@ public:
 		       param_id == "SYS_NUM_RESETS"    ||
 		       param_id == "ARSPD_OFFSET"      ||
 		       param_id == "GND_ABS_PRESS"     ||
+		       param_id == "GND_ABS_PRESS2"    ||
+		       param_id == "GND_ABS_PRESS3"    ||
+		       param_id == "STAT_BOOTCNT"      ||
+		       param_id == "STAT_FLTTIME"      ||
+		       param_id == "STAT_RESET"        ||
+		       param_id == "STAT_RUNTIME"      ||
 		       param_id == "GND_TEMP"          ||
 		       param_id == "CMD_TOTAL"         ||
 		       param_id == "CMD_INDEX"         ||
