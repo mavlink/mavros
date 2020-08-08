@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2020-08-08)
+------------------
 * fake_gps.cpp: implement speed accuracy
 * fake_gps.cpp: Add mocap_withcovariance configuration parameter
 * fake_gps.cpp: add initial support for GPS_INPUT MAVLink message

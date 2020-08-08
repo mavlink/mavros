@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2020-08-08)
+------------------
 * Take into account message count for message size
 * Add esc_status plugin.
 * fake_gps.cpp: Implement GPS time data

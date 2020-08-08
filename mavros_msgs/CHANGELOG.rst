@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2020-08-08)
+------------------
 * Add esc_status plugin.
 * Add gps_status plugin to publish GPS_RAW and GPS_RTK messages from FCU.
   The timestamps for the gps_status topics take into account the mavlink time and uses the convienence function
