@@ -2,6 +2,22 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fake_gps.cpp: implement speed accuracy
+* fake_gps.cpp: Add mocap_withcovariance configuration parameter
+* fake_gps.cpp: add initial support for GPS_INPUT MAVLink message
+* apm.launch: Avoid warning:
+  Warning: You are using <arg> inside an <include> tag with the default=XY attribute - which is superfluous.
+  Use value=XY instead for less confusion.
+  Attribute name: respawn_mavros
+* Added support for MavProxy parameter file format
+* Ignore read-only parameters and statistics parameters in push operations
+* fix indentation
+* transform based on coordinate_frame
+* wind plugin: fix ArduPilot wind transformation
+* Contributors: Ben Wolsieffer, Dr.-Ing. Amilcar do Carmo Lucas, Yuan, Yuan Xu
+
 1.2.0 (2020-05-22)
 ------------------
 * has_capability only works for enums

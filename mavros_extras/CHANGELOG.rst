@@ -2,6 +2,22 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Take into account message count for message size
+* Add esc_status plugin.
+* fake_gps.cpp: Implement GPS time data
+* fake_gps.cpp: implement speed accuracy
+* fake_gps.cpp: Added horiz_accuracy and vert_accuracy parameters
+* fake_gps.cpp: Add mocap_withcovariance configuration parameter
+* fake_gps.cpp: add initial support for GPS_INPUT MAVLink message
+* fake_gps.cpp: uncrustify
+* Add gps_status plugin to publish GPS_RAW and GPS_RTK messages from FCU.
+  The timestamps for the gps_status topics take into account the mavlink time and uses the convienence function
+* uncrustify gps_rtk plugin
+* adding support for publishing rtkbaseline msgs over ROS
+* Contributors: CSCE439, Dr.-Ing. Amilcar do Carmo Lucas, Ricardo Marques
+
 1.2.0 (2020-05-22)
 ------------------
 * Revert "extras: odom: Hardcode BODY_FRD enum_value to fix compilation"
