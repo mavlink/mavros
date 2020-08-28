@@ -56,6 +56,7 @@ public:
 	XmlRpcValue param_value;
 	uint16_t param_index;
 	uint16_t param_count;
+	MT param_type;
 
 	void set_value(mavlink::common::msg::PARAM_VALUE &pmsg)
 	{
@@ -86,30 +87,37 @@ public:
 		case enum_value(MT::INT8):
 			int_tmp = uv.param_int8;
 			param_value = int_tmp;
+			param_type = MT::INT8;
 			break;
 		case enum_value(MT::UINT8):
 			int_tmp = uv.param_uint8;
 			param_value = int_tmp;
+			param_type = MT::UINT8;
 			break;
 		case enum_value(MT::INT16):
 			int_tmp = uv.param_int16;
 			param_value = int_tmp;
+			param_type = MT::INT16;
 			break;
 		case enum_value(MT::UINT16):
 			int_tmp = uv.param_uint16;
 			param_value = int_tmp;
+			param_type = MT::UINT16;
 			break;
 		case enum_value(MT::INT32):
 			int_tmp = uv.param_int32;
 			param_value = int_tmp;
+			param_type = MT::INT32;
 			break;
 		case enum_value(MT::UINT32):
 			int_tmp = uv.param_uint32;
 			param_value = int_tmp;
+			param_type = MT::UINT32;
 			break;
 		case enum_value(MT::REAL32):
 			float_tmp = uv.param_float;
 			param_value = float_tmp;
+			param_type = MT::REAL32;
 			break;
 		// [[[end]]] (checksum: 5950e4ee032d4aa198b953f56909e129)
 
@@ -890,6 +898,8 @@ private:
 			if (req.value.integer != 0)
 				to_send.param_value = static_cast<int>(req.value.integer);
 			else if (req.value.real != 0.0)
+				to_send.param_value = req.value.real;
+			else if (param_it->second.param_type == mavlink::common::MAV_PARAM_TYPE::REAL32)
 				to_send.param_value = req.value.real;
 			else
 				to_send.param_value = 0;
