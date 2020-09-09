@@ -80,6 +80,7 @@ add_library(mavros_extras
   src/plugins/mocap_pose_estimate.cpp
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
+  src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
   src/plugins/trajectory.cpp

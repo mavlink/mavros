@@ -44,6 +44,9 @@
 	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send odometry to FCU from another estimator.</description>
 	</class>
+	<class name="play_tune" type="mavros::extra_plugins::PlayTunePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send tunes for the FCU to play.</description>
+	</class>
 	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
 	</class>
