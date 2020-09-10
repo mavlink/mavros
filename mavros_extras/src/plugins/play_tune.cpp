@@ -27,8 +27,7 @@ class PlayTunePlugin : public plugin::PluginBase
     void callback(const mavros_msgs::PlayTuneV2::ConstPtr& tune)
     {
         auto msg = mavlink::common::msg::PLAY_TUNE_V2{};
-        msg.target_system = m_uas->get_tgt_system();
-        msg.target_component = m_uas->get_tgt_component();
+        m_uas->msg_set_target(msg);
 
         switch (tune->format)
         {
@@ -45,8 +44,7 @@ class PlayTunePlugin : public plugin::PluginBase
                 return;
         }
 
-        std::strncpy(msg.tune.data(), tune->tune.c_str(), sizeof(msg.tune));
-        msg.tune.back() = '\0';
+        mavlink::set_string_z(msg.tune, tune->tune);
 
         UAS_FCU(m_uas)->send_message_ignore_drop(msg);
     }
