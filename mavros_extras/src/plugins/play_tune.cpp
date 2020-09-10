@@ -29,24 +29,8 @@ private:
 	{
 		auto msg = mavlink::common::msg::PLAY_TUNE_V2{};
 		m_uas->msg_set_target(msg);
-
-		switch (tune->format)
-		{
-		case mavros_msgs::PlayTuneV2::TUNE_FORMAT_QBASIC1_1:
-			msg.format = static_cast<uint32_t>(mavlink::common::TUNE_FORMAT::QBASIC1_1);
-			break;
-
-		case mavros_msgs::PlayTuneV2::TUNE_FORMAT_MML_MODERN:
-			msg.format = static_cast<uint32_t>(mavlink::common::TUNE_FORMAT::MML_MODERN);
-			break;
-
-		default:
-			ROS_ERROR_NAMED("play_tune", "Invalid tune format: '%i'", tune->format);
-			return;
-		}
-
+		msg.format = tune->format;
 		mavlink::set_string_z(msg.tune, tune->tune);
-
 		UAS_FCU(m_uas)->send_message_ignore_drop(msg);
 	}
 };
