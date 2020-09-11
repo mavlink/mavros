@@ -2,6 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavros: use mavlink::minimal:: after incompatible changes in mavlink package
+  Incompatible change: https://github.com/mavlink/mavlink/pull/1463
+  Fix: `#1483 <https://github.com/mavlink/mavros/issues/1483>`_, https://github.com/mavlink/mavlink/issues/1474
+* fixes based on vooon's review
+* fix issue what we couldn't set real parameters to 0.0 in mavros
+* Add error message
+* Fixed compilation error: publish std_msgs::String, not std::string for gcs_ip
+* Dispatch GCS IP address
+* Contributors: Artem Batalov, Marcelino, Morten Fyhn Amundsen, Vladimir Ermakov, Øystein Skotheim
+
 1.3.0 (2020-08-08)
 ------------------
 * fake_gps.cpp: implement speed accuracy

@@ -2,6 +2,17 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavros: use mavlink::minimal:: after incompatible changes in mavlink package
+  Incompatible change: https://github.com/mavlink/mavlink/pull/1463
+  Fix: `#1483 <https://github.com/mavlink/mavros/issues/1483>`_, https://github.com/mavlink/mavlink/issues/1474
+* play_tune: Assign tune format directly
+* play_tune: Uncrustify
+* play_tune: Use msg_set_target and set_string_z
+* play_tune: Write new plugin
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
 1.3.0 (2020-08-08)
 ------------------
 * Take into account message count for message size

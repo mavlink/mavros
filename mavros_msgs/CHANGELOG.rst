@@ -2,6 +2,12 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* play_tune: Assign tune format directly
+* play_tune: Write new plugin
+* Contributors: Morten Fyhn Amundsen
+
 1.3.0 (2020-08-08)
 ------------------
 * Add esc_status plugin.

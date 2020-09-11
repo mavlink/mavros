@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Dispatch GCS IP address
+* Contributors: Morten Fyhn Amundsen
+
 1.3.0 (2020-08-08)
 ------------------
 * allow mavros to compile in CI environment
