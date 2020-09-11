@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.4.0 (2020-09-11)
+------------------
 * mavros: use mavlink::minimal:: after incompatible changes in mavlink package
   Incompatible change: https://github.com/mavlink/mavlink/pull/1463
   Fix: `#1483 <https://github.com/mavlink/mavros/issues/1483>`_, https://github.com/mavlink/mavlink/issues/1474

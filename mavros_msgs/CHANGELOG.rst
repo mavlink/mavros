@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.4.0 (2020-09-11)
+------------------
 * play_tune: Assign tune format directly
 * play_tune: Write new plugin
 * Contributors: Morten Fyhn Amundsen

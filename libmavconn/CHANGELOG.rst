@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.4.0 (2020-09-11)
+------------------
 * Dispatch GCS IP address
 * Contributors: Morten Fyhn Amundsen
 
