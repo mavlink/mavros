@@ -67,10 +67,10 @@ namespace mavros {
 class UAS {
 public:
 	// common enums used by UAS
-	using MAV_TYPE = mavlink::common::MAV_TYPE;
-	using MAV_AUTOPILOT = mavlink::common::MAV_AUTOPILOT;
-	using MAV_MODE_FLAG = mavlink::common::MAV_MODE_FLAG;
-	using MAV_STATE = mavlink::common::MAV_STATE;
+	using MAV_TYPE = mavlink::minimal::MAV_TYPE;
+	using MAV_AUTOPILOT = mavlink::minimal::MAV_AUTOPILOT;
+	using MAV_MODE_FLAG = mavlink::minimal::MAV_MODE_FLAG;
+	using MAV_STATE = mavlink::minimal::MAV_STATE;
 	using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
 	using timesync_mode = utils::timesync_mode;
 

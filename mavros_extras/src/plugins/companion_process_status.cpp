@@ -22,9 +22,11 @@ namespace mavros {
 namespace extra_plugins {
 
 //! Mavlink enumerations
-using mavlink::common::MAV_TYPE;
-using mavlink::common::MAV_STATE;
-using mavlink::common::MAV_COMPONENT;
+using mavlink::minimal::MAV_TYPE;
+using mavlink::minimal::MAV_STATE;
+using mavlink::minimal::MAV_COMPONENT;
+using mavlink::minimal::MAV_AUTOPILOT;
+using mavlink::minimal::MAV_MODE_FLAG;
 using utils::enum_value;
 
 /**
@@ -63,11 +65,11 @@ private:
 	 */
 	void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr &req)
 	{
-		mavlink::common::msg::HEARTBEAT heartbeat {};
+		mavlink::minimal::msg::HEARTBEAT heartbeat {};
 
-		heartbeat.type = enum_value(mavlink::common::MAV_TYPE::ONBOARD_CONTROLLER);
-		heartbeat.autopilot = enum_value(mavlink::common::MAV_AUTOPILOT::PX4);
-		heartbeat.base_mode	= enum_value(mavlink::common::MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
+		heartbeat.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER);
+		heartbeat.autopilot = enum_value(MAV_AUTOPILOT::PX4);
+		heartbeat.base_mode	= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
 		heartbeat.system_status = req->state;	//enum="MAV_STATE" System status flag
 
 		ROS_DEBUG_STREAM_NAMED("companion_process_status", "companion process component id: " <<

@@ -67,10 +67,10 @@ std::string to_string(timesync_mode e);
  */
 std::string to_string(mavlink::common::MAV_SENSOR_ORIENTATION e);
 
-std::string to_string(mavlink::common::MAV_AUTOPILOT e);
-std::string to_string(mavlink::common::MAV_TYPE e);
-std::string to_string(mavlink::common::MAV_STATE e);
-std::string to_string(mavlink::common::MAV_COMPONENT e);
+std::string to_string(mavlink::minimal::MAV_AUTOPILOT e);
+std::string to_string(mavlink::minimal::MAV_TYPE e);
+std::string to_string(mavlink::minimal::MAV_STATE e);
+std::string to_string(mavlink::minimal::MAV_COMPONENT e);
 std::string to_string(mavlink::common::MAV_ESTIMATOR_TYPE e);
 std::string to_string(mavlink::common::ADSB_ALTITUDE_TYPE e);
 std::string to_string(mavlink::common::ADSB_EMITTER_TYPE e);
@@ -111,7 +111,7 @@ mavlink::common::MAV_FRAME mav_frame_from_str(const std::string &mav_frame);
 /**
  * @brief Retreive MAV_TYPE from name
  */
-mavlink::common::MAV_TYPE mav_type_from_str(const std::string &mav_type);
+mavlink::minimal::MAV_TYPE mav_type_from_str(const std::string &mav_type);
 
 /**
  * @brief Retrieve landing target type from alias name

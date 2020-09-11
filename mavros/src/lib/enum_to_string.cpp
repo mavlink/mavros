@@ -21,10 +21,10 @@
 
 namespace mavros {
 namespace utils {
-using mavlink::common::MAV_AUTOPILOT;
-using mavlink::common::MAV_TYPE;
-using mavlink::common::MAV_STATE;
-using mavlink::common::MAV_COMPONENT;
+using mavlink::minimal::MAV_AUTOPILOT;
+using mavlink::minimal::MAV_TYPE;
+using mavlink::minimal::MAV_STATE;
+using mavlink::minimal::MAV_COMPONENT;
 using mavlink::common::MAV_ESTIMATOR_TYPE;
 using mavlink::common::ADSB_ALTITUDE_TYPE;
 using mavlink::common::ADSB_EMITTER_TYPE;

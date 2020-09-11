@@ -233,7 +233,7 @@ private:
 	template<typename MsgT>
 	inline void set_target(MsgT &cmd, bool broadcast)
 	{
-		using mavlink::common::MAV_COMPONENT;
+		using mavlink::minimal::MAV_COMPONENT;
 
 		const uint8_t tgt_sys_id = (broadcast) ? 0 : m_uas->get_tgt_system();
 		const uint8_t tgt_comp_id = (broadcast) ? 0 :

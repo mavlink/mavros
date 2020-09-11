@@ -147,7 +147,7 @@ MavRos::MavRos() :
 		plugin_route_cb(msg, framing);
 
 		if (gcs_link) {
-			if (this->gcs_quiet_mode && msg->msgid != mavlink::common::msg::HEARTBEAT::MSG_ID &&
+			if (this->gcs_quiet_mode && msg->msgid != mavlink::minimal::msg::HEARTBEAT::MSG_ID &&
 				(ros::Time::now() - this->last_message_received_from_gcs > this->conn_timeout)) {
 				return;
 			}
