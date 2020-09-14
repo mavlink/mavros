@@ -90,7 +90,7 @@ public:
 		fp_nh.param<int>("fix_type", ft_i, utils::enum_value(GPS_FIX_TYPE::NO_GPS));
 		fix_type = static_cast<GPS_FIX_TYPE>(ft_i);
 		fp_nh.param("gps_rate", _gps_rate, 5.0);		// GPS data rate of 5hz
-		gps_rate : _gps_rate;
+		gps_rate = _gps_rate;
 		fp_nh.param("eph", eph, 2.0);
 		fp_nh.param("epv", epv, 2.0);
 		fp_nh.param<float>("horiz_accuracy", horiz_accuracy, 0.0f);
