@@ -224,6 +224,7 @@ private:
 						sensor->topic_name.c_str(),
 						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
 						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
+			return;
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();
