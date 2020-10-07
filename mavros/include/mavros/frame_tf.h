@@ -62,6 +62,12 @@ enum class StaticTF {
 	ENU_TO_NED,		//!< change from expressed WRT ENU frame to WRT NED frame
 	AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
 	BASELINK_TO_AIRCRAFT,	//!< change from expressed WRT baselnk to WRT aircraft
+};
+
+/**
+ * @brief Orientation transform options when applying rotations to data, for ECEF.
+ */
+enum class StaticEcefTF {
 	ECEF_TO_ENU,		//!< change from expressed WRT ECEF frame to WRT ENU frame
 	ENU_TO_ECEF		//!< change from expressed WRT ENU frame to WRT ECEF frame
 };
@@ -138,7 +144,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
  *
  * General function. Please use specialized variants.
  */
-Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform);
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticEcefTF transform);
 
 }	// namespace detail
 
@@ -224,7 +230,7 @@ inline T transform_frame_baselink_aircraft(const T &in) {
  */
 template<class T>
 inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
-	return detail::transform_static_frame(in, map_origin, StaticTF::ECEF_TO_ENU);
+	return detail::transform_static_frame(in, map_origin, StaticEcefTF::ECEF_TO_ENU);
 }
 
 /**
@@ -236,7 +242,7 @@ inline T transform_frame_ecef_enu(const T &in, const T &map_origin) {
  */
 template<class T>
 inline T transform_frame_enu_ecef(const T &in, const T &map_origin) {
-	return detail::transform_static_frame(in, map_origin, StaticTF::ENU_TO_ECEF);
+	return detail::transform_static_frame(in, map_origin, StaticEcefTF::ENU_TO_ECEF);
 }
 
 /**
