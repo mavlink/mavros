@@ -54,7 +54,7 @@ public:
 		is_map_init(false)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -95,7 +95,7 @@ public:
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),

@@ -32,7 +32,7 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -40,7 +40,7 @@ public:
 		altitude_pub = nh.advertise<mavros_msgs::Altitude>("altitude", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&AltitudePlugin::handle_altitude),

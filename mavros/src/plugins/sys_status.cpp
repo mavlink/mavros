@@ -430,7 +430,7 @@ public:
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -497,7 +497,7 @@ public:
 		enable_connection_cb();
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			make_handler(&SystemStatusPlugin::handle_heartbeat),
 			make_handler(&SystemStatusPlugin::handle_sys_status),

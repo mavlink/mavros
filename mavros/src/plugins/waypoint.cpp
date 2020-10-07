@@ -237,7 +237,7 @@ public:
 		RESCHEDULE_DT(RESCHEDULE_MS / 1000.0)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -261,7 +261,7 @@ public:
 		enable_capabilities_cb();
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&WaypointPlugin::handle_mission_item),
 			       make_handler(&WaypointPlugin::handle_mission_item_int),
