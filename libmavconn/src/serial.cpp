@@ -40,11 +40,11 @@ using mavlink::mavlink_message_t;
 MAVConnSerial::MAVConnSerial(uint8_t system_id, uint8_t component_id,
 		std::string device, unsigned baudrate, bool hwflow) :
 	MAVConnInterface(system_id, component_id),
+	io_service(),
+	serial_dev(io_service),
 	tx_in_progress(false),
 	tx_q {},
-	rx_buf {},
-	io_service(),
-	serial_dev(io_service)
+	rx_buf {}
 {
 	using SPB = boost::asio::serial_port_base;
 

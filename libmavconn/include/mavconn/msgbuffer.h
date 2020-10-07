@@ -32,8 +32,8 @@ struct MsgBuffer {
 	ssize_t pos;
 
 	MsgBuffer() :
-		pos(0),
-		len(0)
+		len(0),
+		pos(0)
 	{ }
 
 	/**
@@ -71,8 +71,8 @@ struct MsgBuffer {
 	 * @param[in] nbytes should be less than MAX_SIZE
 	 */
 	MsgBuffer(const uint8_t *bytes, ssize_t nbytes) :
-		pos(0),
-		len(nbytes)
+		len(nbytes),
+		pos(0)
 	{
 		assert(0 < nbytes && nbytes < MAX_SIZE);
 		memcpy(data, bytes, nbytes);
