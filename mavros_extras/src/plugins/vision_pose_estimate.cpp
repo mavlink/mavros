@@ -39,7 +39,7 @@ public:
 		tf_rate(10.0)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -62,7 +62,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}

@@ -32,14 +32,14 @@ public:
 		status_nh("~onboard_computer")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
 		status_sub = status_nh.subscribe("status", 10, &OnboardComputerStatusPlugin::status_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}
