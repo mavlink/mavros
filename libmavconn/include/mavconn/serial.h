@@ -40,7 +40,7 @@ public:
 	 */
 	MAVConnSerial(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE, bool hwflow = false);
-	~MAVConnSerial();
+	virtual ~MAVConnSerial();
 
 	void close() override;
 

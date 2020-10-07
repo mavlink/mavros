@@ -77,13 +77,13 @@ static bool resolve_address_tcp(io_service &io, size_t chan, std::string host, u
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		std::string server_host, unsigned short server_port) :
 	MAVConnInterface(system_id, component_id),
+	io_service(),
+	io_work(new io_service::work(io_service)),
+	socket(io_service),
 	is_destroying(false),
 	tx_in_progress(false),
 	tx_q {},
-	rx_buf {},
-	io_service(),
-	io_work(new io_service::work(io_service)),
-	socket(io_service)
+	rx_buf {}
 {
 	if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, server_ep))
 		throw DeviceError("tcp: resolve", "Bind address resolve failed");
@@ -113,10 +113,10 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		boost::asio::io_service &server_io) :
 	MAVConnInterface(system_id, component_id),
+	socket(server_io),
 	tx_in_progress(false),
 	tx_q {},
-	rx_buf {},
-	socket(server_io)
+	rx_buf {}
 {
 	// waiting when server call client_connected()
 }

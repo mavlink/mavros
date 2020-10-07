@@ -49,7 +49,7 @@ public:
 	 */
 	explicit MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 			boost::asio::io_service &server_io);
-	~MAVConnTCPClient();
+	virtual ~MAVConnTCPClient();
 
 	void close() override;
 
@@ -103,7 +103,7 @@ public:
 	 */
 	MAVConnTCPServer(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT);
-	~MAVConnTCPServer();
+	virtual ~MAVConnTCPServer();
 
 	void close() override;
 
