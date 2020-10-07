@@ -44,7 +44,7 @@ public:
 		has_local_position_ned_cov(false)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -66,7 +66,7 @@ public:
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned),
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)

@@ -33,14 +33,14 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
 		vfr_pub = nh.advertise<mavros_msgs::VFR_HUD>("vfr_hud", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&VfrHudPlugin::handle_vfr_hud),

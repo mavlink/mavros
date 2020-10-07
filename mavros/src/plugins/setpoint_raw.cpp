@@ -39,7 +39,7 @@ public:
 		sp_nh("~setpoint_raw")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -53,7 +53,7 @@ public:
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 				make_handler(&SetpointRawPlugin::handle_position_target_local_ned),

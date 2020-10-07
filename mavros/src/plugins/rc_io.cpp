@@ -34,7 +34,7 @@ public:
 		has_rc_channels_msg(false)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -45,7 +45,7 @@ public:
 		enable_connection_cb();
 	};
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&RCIOPlugin::handle_rc_channels_raw),
 			       make_handler(&RCIOPlugin::handle_rc_channels),
