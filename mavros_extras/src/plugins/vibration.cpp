@@ -32,7 +32,7 @@ public:
 		vibe_nh("~vibration")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -41,7 +41,7 @@ public:
 		vibration_pub = vibe_nh.advertise<mavros_msgs::Vibration>("raw/vibration", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&VibrationPlugin::handle_vibration)

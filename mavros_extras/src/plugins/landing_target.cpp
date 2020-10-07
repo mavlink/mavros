@@ -55,7 +55,7 @@ public:
 		land_target_type("VISION_FIDUCIAL")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -105,7 +105,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&LandingTargetPlugin::handle_landing_target)

@@ -41,14 +41,14 @@ public:
 	status_nh("~companion_process")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
 		status_sub = status_nh.subscribe("status", 10, &CompanionProcessStatusPlugin::status_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}

@@ -42,7 +42,7 @@ public:
 	mount_nh("~mount_control")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -52,7 +52,7 @@ public:
 
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&MountControlPlugin::handle_mount_orientation)

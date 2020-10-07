@@ -75,7 +75,7 @@ public:
 		earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f())
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -157,7 +157,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}

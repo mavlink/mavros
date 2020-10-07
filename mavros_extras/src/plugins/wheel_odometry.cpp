@@ -50,7 +50,7 @@ public:
 		rtwist_cov(Eigen::Vector3d::Zero())
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -154,7 +154,7 @@ public:
 
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&WheelOdometryPlugin::handle_rpm),

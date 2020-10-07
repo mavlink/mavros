@@ -34,7 +34,7 @@ public:
 		adsb_nh("~adsb")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -42,7 +42,7 @@ public:
 		adsb_sub = adsb_nh.subscribe("send", 10, &ADSBPlugin::adsb_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&ADSBPlugin::handle_adsb)

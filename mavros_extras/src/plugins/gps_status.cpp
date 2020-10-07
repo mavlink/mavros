@@ -33,7 +33,7 @@ public:
 		gpsstatus_nh("~gpsstatus")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -43,7 +43,7 @@ public:
 		gps2_rtk_pub = gpsstatus_nh.advertise<mavros_msgs::GPSRTK>("gps2/rtk", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&GpsStatusPlugin::handle_gps_raw_int),

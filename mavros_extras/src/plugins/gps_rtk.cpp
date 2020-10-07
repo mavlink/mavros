@@ -33,14 +33,14 @@ public:
 		gps_rtk_nh("~gps_rtk")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 		gps_rtk_sub = gps_rtk_nh.subscribe("send_rtcm", 10, &GpsRtkPlugin::rtcm_cb, this);
 		rtk_baseline_pub_ = gps_rtk_nh.advertise<mavros_msgs::RTKBaseline>("rtk_baseline", 1, true);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler( &GpsRtkPlugin::handle_baseline_msg )

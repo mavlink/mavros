@@ -50,7 +50,7 @@ public:
 		fcu_odom_child_id_des("base_link")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -65,7 +65,7 @@ public:
 		odom_sub = odom_nh.subscribe("out", 1, &OdometryPlugin::odom_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&OdometryPlugin::handle_odom)

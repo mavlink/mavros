@@ -35,7 +35,7 @@ public:
 		nh("~")
 	{}
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -45,7 +45,7 @@ public:
 		enable_connection_cb();
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&ESCStatusPlugin::handle_esc_info),
