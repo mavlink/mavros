@@ -105,11 +105,11 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 	rmsg.msgid = mmsg.msgid;
 	rmsg.checksum = mmsg.checksum;
 	// [[[end]]] (checksum: 4f0a50d2fcd7eb8823aea3e0806cd698)
-	rmsg.payload64 = std::move(mavros_msgs::Mavlink::_payload64_type(mmsg.payload64, mmsg.payload64 + payload64_len));
+	rmsg.payload64 = mavros_msgs::Mavlink::_payload64_type(mmsg.payload64, mmsg.payload64 + payload64_len);
 
 	// copy signature block only if message is signed
 	if (mmsg.incompat_flags & MAVLINK_IFLAG_SIGNED)
-		rmsg.signature = std::move(mavros_msgs::Mavlink::_signature_type(mmsg.signature, mmsg.signature + sizeof(mmsg.signature)));
+		rmsg.signature = mavros_msgs::Mavlink::_signature_type(mmsg.signature, mmsg.signature + sizeof(mmsg.signature));
 	else
 		rmsg.signature.clear();
 
