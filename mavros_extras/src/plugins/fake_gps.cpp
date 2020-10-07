@@ -55,24 +55,24 @@ public:
 	FakeGPSPlugin() : PluginBase(),
 		fp_nh("~fake_gps"),
 		gps_rate(5.0),
+		// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
+		earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f()),
 		use_mocap(true),
-		map_origin(0.0, 0.0, 0.0),
-		mocap_transform(true),
-		mocap_withcovariance(false),
 		use_vision(false),
 		use_hil_gps(true),
-		gps_id(0),
+		mocap_transform(true),
+		mocap_withcovariance(false),
 		tf_listen(false),
-		tf_rate(10.0),
 		eph(2.0),
 		epv(2.0),
 		horiz_accuracy(0.0f),
 		vert_accuracy(0.0f),
 		speed_accuracy(0.0f),
+		gps_id(0),
 		satellites_visible(5),
 		fix_type(GPS_FIX_TYPE::NO_GPS),
-		// WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
-		earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f())
+		tf_rate(10.0),
+		map_origin(0.0, 0.0, 0.0)
 	{ }
 
 	void initialize(UAS &uas_) override

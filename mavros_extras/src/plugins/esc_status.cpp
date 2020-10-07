@@ -29,10 +29,10 @@ class ESCStatusPlugin : public plugin::PluginBase
 {
 public:
 	ESCStatusPlugin() : PluginBase(),
+		nh("~"),
 		_max_esc_count(0),
 		_max_esc_info_index(0),
-		_max_esc_status_index(0),
-		nh("~")
+		_max_esc_status_index(0)
 	{}
 
 	void initialize(UAS &uas_) override
