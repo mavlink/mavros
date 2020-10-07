@@ -17,6 +17,7 @@
  */
 
 #include <mavros/frame_tf.h>
+#include <stdexcept>
 
 namespace mavros {
 namespace ftf {
@@ -185,7 +186,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	}
 }
 
-Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform)
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticEcefTF transform)
 {
 	//! Degrees to radians
 	static constexpr double DEG_TO_RAD = (M_PI / 180.0);
@@ -216,10 +217,10 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::
 	      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
 
 	switch (transform) {
-	case StaticTF::ECEF_TO_ENU:
+	case StaticEcefTF::ECEF_TO_ENU:
 		return R * vec;
 
-	case StaticTF::ENU_TO_ECEF:
+	case StaticEcefTF::ENU_TO_ECEF:
 		// ENU to ECEF rotation is just an inverse rotation from ECEF to ENU, which means transpose.
 		R.transposeInPlace();
 		return R * vec;
