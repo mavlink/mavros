@@ -147,9 +147,9 @@ private:
 	{
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3;      // in meters
+		fix->altitude = msg.alt / 1E3;		// in meters
 		if (!use_msl_alt) {
-			m_uas->geoid_to_ellipsoid_height(fix);	// offset for ellipsoid
+			fix->altitude += m_uas->geoid_to_ellipsoid_height(fix);	// offset for ellipsoid
 		}
 	}
 
