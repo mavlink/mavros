@@ -51,6 +51,7 @@ public:
 		tf_send(false),
 		rot_cov(99999.0),
 		use_relative_alt(true),
+		use_msl_alt(false),
 		is_map_init(false)
 	{ }
 
@@ -64,6 +65,7 @@ public:
 		gp_nh.param("rot_covariance", rot_cov, 99999.0);
 		gp_nh.param("gps_uere", gps_uere, 1.0);
 		gp_nh.param("use_relative_alt", use_relative_alt, true);
+		gp_nh.param("use_msl_alt", use_msl_alt, false);
 		// tf subsection
 		gp_nh.param("tf/send", tf_send, false);
 		gp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
@@ -130,6 +132,7 @@ private:
 
 	bool tf_send;
 	bool use_relative_alt;
+	bool use_msl_alt;
 	bool is_map_init;
 
 	double rot_cov;
@@ -144,7 +147,10 @@ private:
 	{
 		fix->latitude = msg.lat / 1E7;		// deg
 		fix->longitude = msg.lon / 1E7;		// deg
-		fix->altitude = msg.alt / 1E3 + m_uas->geoid_to_ellipsoid_height(fix);	// in meters
+		fix->altitude = msg.alt / 1E3;      // in meters
+		if (!use_msl_alt) {
+			m_uas->geoid_to_ellipsoid_height(fix);	// offset for ellipsoid
+		}
 	}
 
 	inline void fill_unknown_cov(sensor_msgs::NavSatFix::Ptr fix)
