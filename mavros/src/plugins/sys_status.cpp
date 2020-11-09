@@ -836,6 +836,7 @@ private:
 		it->second.middleware_sw_version = apv.middleware_sw_version;
 		it->second.os_sw_version = apv.os_sw_version;
 		it->second.board_version = apv.board_version;
+		it->second.flight_custom_version = custom_version_to_hex_string(apv.flight_custom_version);
 		it->second.vendor_id = apv.vendor_id;
 		it->second.product_id = apv.product_id;
 		it->second.uid = apv.uid;
