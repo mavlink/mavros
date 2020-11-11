@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.0 (2020-11-11)
+------------------
 * mavros/sys_status: Fill flight_custom_version field
 * mavros: Add override specifiers
 * mavros: Move ECEF tf enums to separate enum class

@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.0 (2020-11-11)
+------------------
 * mavros_msgs/VehicleInfo: Add flight_custom_version field
   Mirroring the field in the corresponding MAVLink message.
 * mavros_msgs/State: Fix PX4 flight mode constants

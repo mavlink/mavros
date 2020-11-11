@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.0 (2020-11-11)
+------------------
 * libmavconn: Fix build warnings
 * Contributors: Morten Fyhn Amundsen
 

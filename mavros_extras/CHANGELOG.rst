@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.0 (2020-11-11)
+------------------
 * mavros_extras: Fix member initialization order
 * mavros_extras: Add override specifiers
 * mavros_extras: distance_sensor: Don't publish data when orientation configuration does not match incomming data.
