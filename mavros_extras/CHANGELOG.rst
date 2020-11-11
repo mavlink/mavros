@@ -2,6 +2,18 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavros_extras: Fix member initialization order
+* mavros_extras: Add override specifiers
+* mavros_extras: distance_sensor: Don't publish data when orientation configuration does not match incomming data.
+* fake_gps: Fix assignment typo
+  This colon should probably be an equals sign.
+  With the colon, this assignment becomes a label instead,
+  and `_gps_rate` after the colon becomes an unused
+  expression result.
+* Contributors: Kristian Klausen, Morten Fyhn Amundsen
+
 1.4.0 (2020-09-11)
 ------------------
 * mavros: use mavlink::minimal:: after incompatible changes in mavlink package

@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: Fix build warnings
+* Contributors: Morten Fyhn Amundsen
+
 1.4.0 (2020-09-11)
 ------------------
 * Dispatch GCS IP address

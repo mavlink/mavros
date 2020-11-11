@@ -2,6 +2,17 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavros_msgs/VehicleInfo: Add flight_custom_version field
+  Mirroring the field in the corresponding MAVLink message.
+* mavros_msgs/State: Fix PX4 flight mode constants
+  Turns out ROS message string literals don't need quotes,
+  so adding quotes creates strings including the quotes.
+* mavros_msgs/State: Add flight mode constants
+* mavros_msgs: Don't move temporary objects
+* Contributors: Morten Fyhn Amundsen
+
 1.4.0 (2020-09-11)
 ------------------
 * play_tune: Assign tune format directly
