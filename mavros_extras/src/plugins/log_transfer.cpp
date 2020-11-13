@@ -70,7 +70,7 @@ private:
 	bool log_request_list_cb(mavros_msgs::LogRequestList::Request &req,
 				mavros_msgs::LogRequestList::Response &res)
 	{
-		mavlink::common::msg::LOG_REQUEST_LIST msg;
+		mavlink::common::msg::LOG_REQUEST_LIST msg = {};
 		m_uas->msg_set_target(msg);
 		msg.start = req.start;
 		msg.end = req.end;
@@ -87,7 +87,7 @@ private:
 	bool log_request_data_cb(mavros_msgs::LogRequestData::Request &req,
 				mavros_msgs::LogRequestData::Response &res)
 	{
-		mavlink::common::msg::LOG_REQUEST_DATA msg;
+		mavlink::common::msg::LOG_REQUEST_DATA msg = {};
 		m_uas->msg_set_target(msg);
 		msg.id = req.id;
 		msg.ofs = req.offset;
@@ -105,7 +105,7 @@ private:
 	bool log_request_end_cb(mavros_msgs::LogRequestEnd::Request &,
 				mavros_msgs::LogRequestEnd::Response &res)
 	{
-		mavlink::common::msg::LOG_REQUEST_END msg;
+		mavlink::common::msg::LOG_REQUEST_END msg = {};
 		m_uas->msg_set_target(msg);
 		res.success = true;
 		try {

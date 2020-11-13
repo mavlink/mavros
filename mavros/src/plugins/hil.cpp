@@ -127,7 +127,7 @@ private:
 	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_STATE_QUATERNION
 	 */
 	void state_quat_cb(const mavros_msgs::HilStateQuaternion::ConstPtr &req) {
-		mavlink::common::msg::HIL_STATE_QUATERNION state_quat;
+		mavlink::common::msg::HIL_STATE_QUATERNION state_quat = {};
 
 		state_quat.time_usec = req->header.stamp.toNSec() / 1000;
 		auto q = ftf::transform_orientation_baselink_aircraft(
@@ -179,7 +179,7 @@ private:
 	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_GPS
 	 */
 	void gps_cb(const mavros_msgs::HilGPS::ConstPtr &req) {
-		mavlink::common::msg::HIL_GPS gps;
+		mavlink::common::msg::HIL_GPS gps = {};
 
 		gps.time_usec = req->header.stamp.toNSec() / 1000;
 		gps.fix_type = req->fix_type;
@@ -212,7 +212,7 @@ private:
 	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_SENSOR
 	 */
 	void sensor_cb(const mavros_msgs::HilSensor::ConstPtr &req) {
-		mavlink::common::msg::HIL_SENSOR sensor;
+		mavlink::common::msg::HIL_SENSOR sensor = {};
 
 		sensor.time_usec = req->header.stamp.toNSec() / 1000;
 		// WRT world frame
@@ -258,7 +258,7 @@ private:
 	 * Message specification: @p https://mavlink.io/en/messages/common.html#HIL_OPTICAL_FLOW
 	 */
 	void optical_flow_cb(const mavros_msgs::OpticalFlowRad::ConstPtr &req) {
-		mavlink::common::msg::HIL_OPTICAL_FLOW of;
+		mavlink::common::msg::HIL_OPTICAL_FLOW of = {};
 
 		auto int_xy = ftf::transform_frame_aircraft_baselink(
 					Eigen::Vector3d(

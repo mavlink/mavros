@@ -126,7 +126,7 @@ private:
 		p1 = ftf::transform_frame_enu_ned(p1);
 		p2 = ftf::transform_frame_enu_ned(p2);
 
-		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s;
+		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s = {};
 		m_uas->msg_set_target(s);
 
 		// TODO: use enum from lib

@@ -63,7 +63,7 @@ private:
 	 */
 	void rtcm_cb(const mavros_msgs::RTCM::ConstPtr &msg)
 	{
-		mavlink::common::msg::GPS_RTCM_DATA rtcm_data;
+		mavlink::common::msg::GPS_RTCM_DATA rtcm_data = {};
 		const size_t max_frag_len = rtcm_data.data.size();
 
 		uint8_t seq_u5 = uint8_t(msg->header.seq & 0x1F) << 3;

@@ -77,7 +77,7 @@ private:
 			Eigen::Quaterniond &q,
 			Eigen::Vector3d &v)
 	{
-		mavlink::common::msg::ATT_POS_MOCAP pos;
+		mavlink::common::msg::ATT_POS_MOCAP pos = {};
 
 		pos.time_usec = usec;
 		ftf::quaternion_to_mavlink(q, pos.q);

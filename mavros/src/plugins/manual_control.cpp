@@ -69,7 +69,7 @@ private:
 
 	void send_cb(const mavros_msgs::ManualControl::ConstPtr req)
 	{
-		mavlink::common::msg::MANUAL_CONTROL msg;
+		mavlink::common::msg::MANUAL_CONTROL msg = {};
 		msg.target = m_uas->get_tgt_system();
 
 		msg.x = req->x;

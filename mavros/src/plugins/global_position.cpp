@@ -494,7 +494,7 @@ private:
 
 	void set_gp_origin_cb(const geographic_msgs::GeoPointStamped::ConstPtr &req)
 	{
-		mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo;
+		mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo = {};
 
 		Eigen::Vector3d global_position;
 

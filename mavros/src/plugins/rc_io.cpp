@@ -231,7 +231,7 @@ private:
 		if (!m_uas->is_ardupilotmega() && !m_uas->is_px4())
 			ROS_WARN_THROTTLE_NAMED(30, "rc", "RC override not supported by this FCU!");
 
-		mavlink::common::msg::RC_CHANNELS_OVERRIDE ovr;
+		mavlink::common::msg::RC_CHANNELS_OVERRIDE ovr = {};
 		ovr.target_system = m_uas->get_tgt_system();
 		ovr.target_component = m_uas->get_tgt_component();
 
