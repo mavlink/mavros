@@ -1072,7 +1072,7 @@ private:
 	bool set_rate_cb(mavros_msgs::StreamRate::Request &req,
 			mavros_msgs::StreamRate::Response &res)
 	{
-		mavlink::common::msg::REQUEST_DATA_STREAM rq;
+		mavlink::common::msg::REQUEST_DATA_STREAM rq = {};
 
 		rq.target_system = m_uas->get_tgt_system();
 		rq.target_component = m_uas->get_tgt_component();
@@ -1108,7 +1108,7 @@ private:
 			base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
 		}
 
-		mavlink::common::msg::SET_MODE sm;
+		mavlink::common::msg::SET_MODE sm = {};
 		sm.target_system = m_uas->get_tgt_system();
 		sm.base_mode = base_mode;
 		sm.custom_mode = custom_mode;

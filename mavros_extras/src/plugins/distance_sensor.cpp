@@ -165,7 +165,7 @@ private:
 				uint8_t type, uint8_t id,
 				uint8_t orientation, uint8_t covariance)
 	{
-		mavlink::common::msg::DISTANCE_SENSOR ds;
+		mavlink::common::msg::DISTANCE_SENSOR ds = {};
 
 		// [[[cog:
 		// for f in ('time_boot_ms',

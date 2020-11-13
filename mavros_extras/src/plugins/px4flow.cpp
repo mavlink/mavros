@@ -155,7 +155,7 @@ private:
 
 	void send_cb(const mavros_msgs::OpticalFlowRad::ConstPtr msg)
 	{
-		mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg;
+		mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg = {};
 
 		auto int_xy = ftf::transform_frame_baselink_aircraft(
 			Eigen::Vector3d(

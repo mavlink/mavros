@@ -43,7 +43,7 @@ public:
 			float yaw, float yaw_rate)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp;
+		mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp = {};
 
 		m_uas_->msg_set_target(sp);
 
@@ -89,7 +89,7 @@ public:
 			float yaw, float yaw_rate)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp;
+		mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp = {};
 
 		m_uas_->msg_set_target(sp);
 
@@ -134,7 +134,7 @@ public:
 			float thrust)
 	{
 		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
-		mavlink::common::msg::SET_ATTITUDE_TARGET sp;
+		mavlink::common::msg::SET_ATTITUDE_TARGET sp = {};
 
 		m_uas_->msg_set_target(sp);
 		mavros::ftf::quaternion_to_mavlink(orientation, sp.q);
