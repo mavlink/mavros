@@ -25,6 +25,14 @@ using namespace mavconn;
 using mavlink::mavlink_message_t;
 using mavlink::msgid_t;
 
+namespace mavlink {
+	namespace common {
+		using namespace mavlink::minimal;
+		namespace msg {
+			using namespace mavlink::minimal::msg;
+			}
+	}
+}
 
 static void send_heartbeat(MAVConnInterface *ip) {
 	using mavlink::common::MAV_TYPE;
