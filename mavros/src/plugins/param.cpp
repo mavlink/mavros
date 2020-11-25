@@ -14,12 +14,14 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/ParamSet.h>
 #include <mavros_msgs/ParamGet.h>
+#include <mavros_msgs/ParamGetAll.h>
 #include <mavros_msgs/ParamPull.h>
 #include <mavros_msgs/ParamPush.h>
 #include <mavros_msgs/Param.h>
@@ -378,6 +380,7 @@ public:
 		push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
 		set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
+		get_all_srv = param_nh.advertiseService("get_all", &ParamPlugin::get_all_cb, this);
 
 		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
 
@@ -406,6 +409,7 @@ private:
 	ros::ServiceServer push_srv;
 	ros::ServiceServer set_srv;
 	ros::ServiceServer get_srv;
+	ros::ServiceServer get_all_srv;
 
 	ros::Publisher param_value_pub;
 
@@ -932,6 +936,34 @@ private:
 		}
 		else {
 			ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to get: " << req.param_id);
+			res.success = false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @brief get all parameters
+	 * @service ~param/get_all
+	 */
+	bool get_all_cb(mavros_msgs::ParamGetAll::Request &req,
+			mavros_msgs::ParamGetAll::Response& res)
+	{
+		lock_guard lock(mutex);
+
+		const auto have_all_parameters =
+			param_count != -1 && parameters.size() >= param_count;
+
+		if (have_all_parameters) {
+			res.params.clear();
+
+			std::transform(
+				parameters.begin(), parameters.end(), std::back_inserter(res.params),
+				[](const auto& p) { return p.second.to_msg(); });
+
+			res.success = true;
+		}
+		else {
 			res.success = false;
 		}
 
