@@ -223,7 +223,7 @@ public:
 	}
 
 	//! Make PARAM_SET message. Set target ids manually!
-	PARAM_SET to_param_set_apm_qurk()
+	PARAM_SET to_param_set_apm_qurk() const
 	{
 		PARAM_SET ret{};
 
@@ -233,23 +233,23 @@ public:
 		// [[[cog:
 		// for a, b, c in xmlrpc_types:
 		//     cog.outl("case XmlRpcValue::%s:" % a)
-		//     cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
+		//     cog.outl("\tret.param_value = static_cast<const %s &>(param_value);" % c)
 		//     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
 		//     cog.outl("\tbreak;")
 		// ]]]
 		case XmlRpcValue::TypeBoolean:
-			ret.param_value = static_cast<bool &>(param_value);
+			ret.param_value = static_cast<const bool &>(param_value);
 			ret.param_type = enum_value(MT::UINT8);
 			break;
 		case XmlRpcValue::TypeInt:
-			ret.param_value = static_cast<int32_t &>(param_value);
+			ret.param_value = static_cast<const int32_t &>(param_value);
 			ret.param_type = enum_value(MT::INT32);
 			break;
 		case XmlRpcValue::TypeDouble:
-			ret.param_value = static_cast<double &>(param_value);
+			ret.param_value = static_cast<const double &>(param_value);
 			ret.param_type = enum_value(MT::REAL32);
 			break;
-		// [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
+		// [[[end]]] (checksum: 5955a3cbeaa9aabc4304975215d6dd3d)
 
 		default:
 			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
@@ -261,7 +261,7 @@ public:
 	/**
 	 * For get/set services
 	 */
-	int64_t to_integer()
+	int64_t to_integer() const
 	{
 		switch (param_value.getType()) {
 		// [[[cog:
@@ -279,7 +279,7 @@ public:
 		}
 	}
 
-	double to_real()
+	double to_real() const
 	{
 		if (param_value.getType() == XmlRpcValue::TypeDouble)
 			return static_cast<double>(param_value);
@@ -293,7 +293,7 @@ public:
 		return utils::format("%s (%u/%u): %s", param_id.c_str(), param_index, param_count, param_value.toXml().c_str());
 	}
 
-	mavros_msgs::Param to_msg()
+	mavros_msgs::Param to_msg() const
 	{
 		mavros_msgs::Param msg;
 
