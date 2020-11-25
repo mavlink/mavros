@@ -93,6 +93,7 @@ add_service_files(
   MountConfigure.srv
   MessageInterval.srv
   ParamGet.srv
+  ParamGetAll.srv
   ParamPull.srv
   ParamPush.srv
   ParamSet.srv

@@ -1,0 +1,6 @@
+# Request all parameters from attached device
+# Parameters are returned unordered
+
+---
+bool success
+Param[] params
