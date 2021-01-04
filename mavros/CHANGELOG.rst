@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.1 (2021-01-04)
+------------------
 * Fix tests for renaming of ECEF cases
   Introduced in 6234af29
 * Initialise message structures

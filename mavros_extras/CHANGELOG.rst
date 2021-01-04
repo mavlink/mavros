@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.1 (2021-01-04)
+------------------
 * Initialise message structures
   Uninitialised Mavlink 2 extension fields were sent if the fields were
   not later set. Initialising the fields to zero is the default value for
