@@ -2,6 +2,18 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.5.1 (2021-01-04)
+------------------
+* Fix test for renaming of HEARTBEAT
+* Initialise message structures
+  Uninitialised Mavlink 2 extension fields were sent if the fields were
+  not later set. Initialising the fields to zero is the default value for
+  extension fields and appears to the receiver as though sender is unaware
+  of Mavlink 2.
+  Instances were found with regex below, more may exist:
+  mavlink::[^:]+::msg::[^:={]+ ?[^:={]*;
+* Contributors: Rob Clarke
+
 1.5.0 (2020-11-11)
 ------------------
 * libmavconn: Fix build warnings

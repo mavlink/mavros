@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.5.1 (2021-01-04)
+------------------
+
 1.5.0 (2020-11-11)
 ------------------
 * mavros_msgs/VehicleInfo: Add flight_custom_version field
