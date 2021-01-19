@@ -26,6 +26,7 @@
 namespace mavros {
 namespace extra_plugins {
 using mavlink::common::MAV_FRAME;
+using mavlink::common::MAV_ESTIMATOR_TYPE;
 using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
 
 /**
@@ -226,6 +227,7 @@ private:
 		mavlink::common::msg::ODOMETRY msg {};
 		msg.frame_id = utils::enum_value(MAV_FRAME::LOCAL_FRD);
 		msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FRD);
+		msg.estimator_type = utils::enum_value(MAV_ESTIMATOR_TYPE::VISION);
 
 		/**
 		 * Position parsing from odometry's parent frame to "LOCAL_FRD" frame.
