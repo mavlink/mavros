@@ -175,6 +175,8 @@ NOTE: The source installation instructions are for the ROS Kinetic release.
 
 ```sh
 sudo apt-get install python-catkin-tools python-rosinstall-generator -y
+# For Noetic use that:
+# sudo apt install python3-catkin-tools python3-rosinstall-generator python3-osrf-pycommon -y
 
 # 1. Create the workspace: unneeded if you already has workspace
 mkdir -p ~/catkin_ws/src
