@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.2 (2021-02-02)
+------------------
 * readme: add source install note for Noetic release
 * Contributors: Vladimir Ermakov
 
