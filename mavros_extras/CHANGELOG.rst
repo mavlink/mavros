@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bugfix - add estimator type in odom message
+  Add missing estimator_type field in  Odometry message.
+  Issue `#1524 <https://github.com/mavlink/mavros/issues/1524>`_
+* Contributors: Ashwin Varghese Kuruttukulam
+
 1.5.1 (2021-01-04)
 ------------------
 * Initialise message structures

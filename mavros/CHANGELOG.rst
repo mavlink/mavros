@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* readme: add source install note for Noetic release
+* Contributors: Vladimir Ermakov
+
 1.5.1 (2021-01-04)
 ------------------
 * Fix tests for renaming of ECEF cases
