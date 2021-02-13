@@ -146,7 +146,7 @@ private:
 
 		auto q = [&] () {
 				if (mav_frame == MAV_FRAME::BODY_NED || mav_frame == MAV_FRAME::BODY_OFFSET_NED) {
-					return ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()));
+					return ftf::transform_orientation_absolute_frame_aircraft_baselink(Eigen::Quaterniond(tr.rotation()));
 				} else {
 					return ftf::transform_orientation_enu_ned(
 						ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
