@@ -166,16 +166,19 @@ private:
 			position = ftf::transform_frame_baselink_aircraft(position);
 			velocity = ftf::transform_frame_baselink_aircraft(velocity);
 			af = ftf::transform_frame_baselink_aircraft(af);
+			yaw = ftf::quaternion_get_yaw(
+					ftf::transform_orientation_absolute_frame_aircraft_baselink(
+							ftf::quaternion_from_rpy(0.0, 0.0, req->yaw)));
 		} else {
 			position = ftf::transform_frame_enu_ned(position);
 			velocity = ftf::transform_frame_enu_ned(velocity);
 			af = ftf::transform_frame_enu_ned(af);
-		}
-
-		yaw = ftf::quaternion_get_yaw(
+			yaw = ftf::quaternion_get_yaw(
 					ftf::transform_orientation_aircraft_baselink(
 						ftf::transform_orientation_ned_enu(
 							ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
+		}
+
 		Eigen::Vector3d ang_vel_enu(0.0, 0.0, req->yaw_rate);
 		auto ang_vel_ned = ftf::transform_frame_ned_enu(ang_vel_enu);
 		yaw_rate = ang_vel_ned.z();
