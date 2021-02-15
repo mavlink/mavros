@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.6.0 (2021-02-15)
+------------------
 * fix inconsistency in direction of yaw when using set_position in BODY frames and fix problems with yaw in setponit_raw
 * Contributors: zhouzhiwen2000
 

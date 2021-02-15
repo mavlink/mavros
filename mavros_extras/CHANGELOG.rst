@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.6.0 (2021-02-15)
+------------------
 * Fixed a bug in mavros_extras/src/plugins/odom.cpp by switching lines 175 and 180.
   Rationale: The pose covariance matrix published to the /mavros/odometry/in topic is exclusively zeros. This is because the transformation matrix r_pose is initialised as zeros (line 140), then applied to the covariance matrix cov_pose (line 176) and then populated (line 180). Clearly the latter two steps should be the other way around, and the comments in the code appear to suggest that this was the intention, but that lines 175 and 180 were accidentally written the wrong way around. Having switched them, the pose covariance is now published to /mavros/odometry/in as expected.
   JohnG897
