@@ -13,12 +13,13 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-include_directories(include)
+# include_directories(include)
 
 set(msg_files
   "msg/ADSBVehicle.msg"
@@ -29,6 +30,10 @@ set(msg_files
   "msg/CamIMUStamp.msg"
   "msg/CommandCode.msg"
   "msg/CompanionProcessStatus.msg"
+  "msg/DebugValue.msg"
+  "msg/ExtendedState.msg"
+  "msg/FileEntry.msg"
+  "msg/GlobalPositionTarget.msg"
   "msg/OnboardComputerStatus.msg"
   "msg/DebugValue.msg"
   "msg/ESCInfo.msg"
@@ -47,6 +52,10 @@ set(msg_files
   "msg/HilSensor.msg"
   "msg/HilStateQuaternion.msg"
   "msg/HomePosition.msg"
+  "msg/LogData.msg"
+  # "msg/LogEntry.msg"
+  "msg/ManualControl.msg"
+  "msg/Mavlink.msg"
   "msg/LandingTarget.msg"
   "msg/LogData.msg"
   "msg/LogEntry.msg"
@@ -69,6 +78,7 @@ set(msg_files
   "msg/Thrust.msg"
   "msg/TimesyncStatus.msg"
   "msg/Trajectory.msg"
+  "msg/VfrHud.msg"
   "msg/VFR_HUD.msg"
   "msg/VehicleInfo.msg"
   "msg/Vibration.msg"
@@ -129,6 +139,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 )
 
 ament_export_dependencies(rosidl_default_runtime)
+
+install(
+  FILES mavros_msgs_mapping_rule.yaml
+  DESTINATION share/${PROJECT_NAME}
+)
+
+ament_package()
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
