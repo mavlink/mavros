@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>mavros_msgs</name>
   <version>1.6.0</version>
   <description>
@@ -16,10 +17,13 @@
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <depend>builtin_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
@@ -28,7 +32,10 @@
   <build_export_depend>libmavconn</build_export_depend>
   -->
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
   <export>
-    <architecture_independent/>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
