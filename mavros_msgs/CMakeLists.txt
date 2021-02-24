@@ -22,6 +22,11 @@ find_package(sensor_msgs REQUIRED)
 # include_directories(include)
 
 set(msg_files
+  # [[[cog:
+  # from pathlib import Path
+  # for f in sorted(Path('msg').glob('*.msg')):
+  #     cog.outl(f'"{f}"')
+  # ]]]
   "msg/ADSBVehicle.msg"
   "msg/ActuatorControl.msg"
   "msg/Altitude.msg"
@@ -31,11 +36,6 @@ set(msg_files
   "msg/CommandCode.msg"
   "msg/CompanionProcessStatus.msg"
   "msg/DebugValue.msg"
-  "msg/ExtendedState.msg"
-  "msg/FileEntry.msg"
-  "msg/GlobalPositionTarget.msg"
-  "msg/OnboardComputerStatus.msg"
-  "msg/DebugValue.msg"
   "msg/ESCInfo.msg"
   "msg/ESCInfoItem.msg"
   "msg/ESCStatus.msg"
@@ -43,25 +43,22 @@ set(msg_files
   "msg/EstimatorStatus.msg"
   "msg/ExtendedState.msg"
   "msg/FileEntry.msg"
-  "msg/GlobalPositionTarget.msg"
   "msg/GPSRAW.msg"
   "msg/GPSRTK.msg"
+  "msg/GlobalPositionTarget.msg"
   "msg/HilActuatorControls.msg"
   "msg/HilControls.msg"
   "msg/HilGPS.msg"
   "msg/HilSensor.msg"
   "msg/HilStateQuaternion.msg"
   "msg/HomePosition.msg"
-  "msg/LogData.msg"
-  # "msg/LogEntry.msg"
-  "msg/ManualControl.msg"
-  "msg/Mavlink.msg"
   "msg/LandingTarget.msg"
   "msg/LogData.msg"
   "msg/LogEntry.msg"
   "msg/ManualControl.msg"
   "msg/Mavlink.msg"
   "msg/MountControl.msg"
+  "msg/OnboardComputerStatus.msg"
   "msg/OpticalFlowRad.msg"
   "msg/OverrideRCIn.msg"
   "msg/Param.msg"
@@ -71,24 +68,28 @@ set(msg_files
   "msg/RCIn.msg"
   "msg/RCOut.msg"
   "msg/RTCM.msg"
-  "msg/RadioStatus.msg"
   "msg/RTKBaseline.msg"
+  "msg/RadioStatus.msg"
   "msg/State.msg"
   "msg/StatusText.msg"
   "msg/Thrust.msg"
   "msg/TimesyncStatus.msg"
   "msg/Trajectory.msg"
-  "msg/VfrHud.msg"
-  "msg/VFR_HUD.msg"
   "msg/VehicleInfo.msg"
+  "msg/VfrHud.msg"
   "msg/Vibration.msg"
   "msg/Waypoint.msg"
   "msg/WaypointList.msg"
   "msg/WaypointReached.msg"
   "msg/WheelOdomStamped.msg"
+  # [[[end]]] (checksum: 70caaa5138f6ac84b4510b1eaf78aa51)
 )
 
 set(srv_files
+  # [[[cog:
+  # for f in sorted(Path('srv').glob('*.srv')):
+  #     cog.outl(f'"{f}"')
+  # ]]]
   "srv/CommandBool.srv"
   "srv/CommandHome.srv"
   "srv/CommandInt.srv"
@@ -111,8 +112,8 @@ set(srv_files
   "srv/LogRequestData.srv"
   "srv/LogRequestEnd.srv"
   "srv/LogRequestList.srv"
-  "srv/MountConfigure.srv"
   "srv/MessageInterval.srv"
+  "srv/MountConfigure.srv"
   "srv/ParamGet.srv"
   "srv/ParamPull.srv"
   "srv/ParamPush.srv"
@@ -125,6 +126,7 @@ set(srv_files
   "srv/WaypointPull.srv"
   "srv/WaypointPush.srv"
   "srv/WaypointSetCurrent.srv"
+  # [[[end]]] (checksum: 9506ecb4b8f5aca4be29f1f4d30569f4)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -145,10 +147,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+# install(
+#   DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+# )
+
 ament_package()
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h")
-
 # vim: ts=2 sw=2 et:
