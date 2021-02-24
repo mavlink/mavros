@@ -5,20 +5,35 @@
 	<class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish camera trigger data for synchronisation of IMU and camera frames.</description>
 	</class>
+	<class name="companion_process_status" type="mavros::extra_plugins::CompanionProcessStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send companion process status report to the FCU.</description>
+	</class>
+	<class name="onboard_computer_status" type="mavros::extra_plugins::OnboardComputerStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send component hadware status to FCU and Groundstation.</description>
+	</class>
 	<class name="debug_value" type="mavros::extra_plugins::DebugValuePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Subs/Pubs debug msgs from and to the FCU.</description>
 	</class>
 	<class name="distance_sensor" type="mavros::extra_plugins::DistanceSensorPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish DISTANCE_SENSOR message data from FCU or connected sensors in companion computer.</description>
 	</class>
+	<class name="esc_status" type="mavros::extra_plugins::ESCStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description> Publish ESC data from FCU.</description>
+	</class>
 	<class name="fake_gps" type="mavros::extra_plugins::FakeGPSPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description> Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.</description>
+	</class>
+	<class name="gps_status" type="mavros::extra_plugins::GpsStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish GPS_RAW and GPS_RTK messages from FCU.</description>
 	</class>
 	<class name="gps_rtk" type="mavros::extra_plugins::GpsRtkPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Sends the RTCM messages to the FCU for the RTK Fix.</description>
 	</class>
+	<class name="landing_target" type="mavros::extra_plugins::LandingTargetPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Publish/subscribe to data stream with location of a landing area captured from a downward facing camera.</description>
+	</class>
 	<class name="log_transfer" type="mavros::extra_plugins::LogTransferPlugin" base_class_type="mavros::plugin::PluginBase">
-		 <description>Expose firmware functionality, that is related to log transfer</description>
+		<description>Expose firmware functionality, that is related to log transfer</description>
 	</class>
 	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send motion capture pose estimate to FCU.</description>
@@ -28,6 +43,9 @@
 	</class>
 	<class name="odom" type="mavros::extra_plugins::OdometryPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send odometry to FCU from another estimator.</description>
+	</class>
+	<class name="play_tune" type="mavros::extra_plugins::PlayTunePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send tunes for the FCU to play.</description>
 	</class>
 	<class name="px4flow" type="mavros::extra_plugins::PX4FlowPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish OPTICAL_FLOW message data from FCU or PX4Flow module.</description>
@@ -50,7 +68,7 @@
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>
 	</class>
-	<class name="companion_process_status" type="mavros::extra_plugins::CompanionProcessStatusPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send companion process status report to the FCU.</description>
+	<class name="mount_control" type="mavros::extra_plugins::MountControlPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Send Mission command to control a camera or a antenna mount.</description>
 	</class>
 </library>

@@ -27,7 +27,7 @@ public:
 		debug_nh("~debug_value")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -41,7 +41,7 @@ public:
 		named_value_int_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_int", 10);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&DebugValuePlugin::handle_debug),
 			       make_handler(&DebugValuePlugin::handle_debug_vector),

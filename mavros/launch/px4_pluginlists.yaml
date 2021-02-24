@@ -8,6 +8,6 @@ plugin_blacklist:
 - rangefinder
 - wheel_odometry
 
-plugin_whitelist: []
-# 'sys_*'
 
+plugin_whitelist: []
+#- 'sys_*'

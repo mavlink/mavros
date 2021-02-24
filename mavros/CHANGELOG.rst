@@ -2,6 +2,294 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2021-02-15)
+------------------
+* fix inconsistency in direction of yaw when using set_position in BODY frames and fix problems with yaw in setponit_raw
+* Contributors: zhouzhiwen2000
+
+1.5.2 (2021-02-02)
+------------------
+* readme: add source install note for Noetic release
+* Contributors: Vladimir Ermakov
+
+1.5.1 (2021-01-04)
+------------------
+* Fix tests for renaming of ECEF cases
+  Introduced in 6234af29
+* Initialise message structures
+  Uninitialised Mavlink 2 extension fields were sent if the fields were
+  not later set. Initialising the fields to zero is the default value for
+  extension fields and appears to the receiver as though sender is unaware
+  of Mavlink 2.
+  Instances were found with regex below, more may exist:
+  mavlink::[^:]+::msg::[^:={]+ ?[^:={]*;
+* Contributors: Rob Clarke
+
+1.5.0 (2020-11-11)
+------------------
+* mavros/sys_status: Fill flight_custom_version field
+* mavros: Add override specifiers
+* mavros: Move ECEF tf enums to separate enum class
+  This avoids a bunch of unhandled switch cases, and should
+  improve type safety a bit.
+* Contributors: Morten Fyhn Amundsen
+
+1.4.0 (2020-09-11)
+------------------
+* mavros: use mavlink::minimal:: after incompatible changes in mavlink package
+  Incompatible change: https://github.com/mavlink/mavlink/pull/1463
+  Fix: `#1483 <https://github.com/mavlink/mavros/issues/1483>`_, https://github.com/mavlink/mavlink/issues/1474
+* fixes based on vooon's review
+* fix issue what we couldn't set real parameters to 0.0 in mavros
+* Add error message
+* Fixed compilation error: publish std_msgs::String, not std::string for gcs_ip
+* Dispatch GCS IP address
+* Contributors: Artem Batalov, Marcelino, Morten Fyhn Amundsen, Vladimir Ermakov, Øystein Skotheim
+
+1.3.0 (2020-08-08)
+------------------
+* fake_gps.cpp: implement speed accuracy
+* fake_gps.cpp: Add mocap_withcovariance configuration parameter
+* fake_gps.cpp: add initial support for GPS_INPUT MAVLink message
+* apm.launch: Avoid warning:
+  Warning: You are using <arg> inside an <include> tag with the default=XY attribute - which is superfluous.
+  Use value=XY instead for less confusion.
+  Attribute name: respawn_mavros
+* Added support for MavProxy parameter file format
+* Ignore read-only parameters and statistics parameters in push operations
+* fix indentation
+* transform based on coordinate_frame
+* wind plugin: fix ArduPilot wind transformation
+* Contributors: Ben Wolsieffer, Dr.-Ing. Amilcar do Carmo Lucas, Yuan, Yuan Xu
+
+1.2.0 (2020-05-22)
+------------------
+* has_capability only works for enums
+* Uncrustify
+* Reworked Waypoint plugin to use capabilities_cb
+  Additionally added helper functions has_capability and has_capabilities
+  so that people can use either ints or enums to check if the UAS has a
+  capability. This might make accepting capabilities as a parameter moot
+  though.
+* Added alias for capabilities enum to UAS
+* Added alias for capabilities enum to UAS
+* Added a capabilities change cb queue
+  Plugins can now write functions that they add to the
+  capabilities_cb_vec. These functions will be called only when there is a
+  change to the capabilities themselves not whenever the known status of
+  the fcu_capabilities change.
+  These functions should have a parameter of type
+  mavlink::common::MAV_PROTOCOL_CAPABILITY which is essentially just a
+  uint64_t however being more opinionated is helpful when looking for what
+  the canonical enum names are in the mavlink project header files.
+* Uncrustify
+* Fixed Removed Uncrustify Option
+  I'm not sure why this didn't break when I ran uncrustify previously but
+  it seems that the align_number_left option was removed a while ago with
+  this merge request but I may be mistaken
+  https://github.com/uncrustify/uncrustify/pull/1393
+  I replaced it which align_number_right=true since it seems to be the
+  inverse of align_number_left=true.
+* Removed deprecated MAV_FRAME values
+* Removed use of variant in favor of templates
+  Since ROS messages are now the storage type in the node, providing to
+  and from conversion functions is sufficient and can be better expressed
+  with function templates.
+* Encode factor returns double
+* Changed encoding factor cog code
+* Uncrustify changes
+* Added new parameter to config.yamls
+* Updated waypoint plugin to support MISSION_ITEM_INT
+  These changes add a new parameter use_mission_item_int, which allows
+  users to prefer the old behavior. These changes also verify that the
+  flight controller supports _INT messages since APM only sends
+  REQUEST_ITEM messages even though it accepts _INT items back.
+  This commit is functional and tested with the APM stack only.
+  PX4 sitl jmavsim threw:
+  WP: upload failed: Command is not supported.
+  FCU: IGN MISSION_ITEM: Busy
+* Removed x_lat, y_long, z_alt from WP
+  These values seemed to be used due to the fact that double had
+  a greater resolution than float and doubles are used in the
+  ros msg. However they were only ever used for printing. Since
+  the int version of these messages has a greater resolution I
+  figure it is more useful to print the true value in the mavlink
+  message rather than the ros message value
+* Replaced MISSION_ITEM
+* add yaw to CMD_DO_SET_HOME
+* fix local angular velocity
+* Contributors: Braedon, David Jablonski, Martina Rivizzigno
+
+1.1.0 (2020-04-04)
+------------------
+* fixed styling
+* fixed indent from using spaces
+* updates apmrover2 modes and allows for arduboat mode changes
+* mavsafety kill feature for emergency stop
+* Include trajectory_msgs in CMakeLists.txt
+  This allows build to complete successfully.
+* Contributors: Anthony Goeckner, Matt Koos, aykutkabaoglu
+
+1.0.0 (2020-01-01)
+------------------
+
+0.33.4 (2019-12-12)
+-------------------
+* Replaced estimator status hardcoded definition with cog.
+* Refactor.
+* Replaced bool with git add -u as already done.
+* Added a publisher for estimator status message received from mavlink in sys_status.
+* Contributors: saifullah3396
+
+0.33.3 (2019-11-13)
+-------------------
+* package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
+* Contributors: Vladimir Ermakov
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* Add mutex
+* Initialize type mask
+* Handle frame with StaticTF
+* Handle different frames
+* Set yaw rate from message inputs
+* Add setpoint trajectory reset interface
+* Fix trajectory timestamp
+* Address comments
+* Pass reference with oneshot timers
+* Set typemasks correctly
+* Address more style comments
+* Address style comments
+* Visualize desired trajectory
+* Handle end of trajectory correctly
+* Remove message handlers
+* Add setpoint_trajectory plugin template
+* resolved merge conflict
+* Contributors: David Jablonski, Jaeyoung-Lim
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* CleanUp
+* Update frame name in px4_config to match ROS standards
+* Enable publishing multiple static tfs at once, publish standard static tfs
+* moving ACK_TIMEOUT_DEFAULT out of class
+* cog: Update all generated code
+* mavros/src/plugins/command.cpp: one more style fix
+* mavros/src/plugins/command.cpp: style fixes
+* mavros/src/plugins/command.cpp: command_ack_timeout ms -> s
+* mavros/src/plugins/command.cpp: command_ack_timeout_ms int -> double
+* mavros/src/plugins/command.cpp: uncrustify
+* mavros/src/plugins/command.cpp: parameter for command's ack timeout
+  Sometimes commands take more time than default 5 seconds. Due to a low bandwidth
+  of UART and a high rate of some mavlink streams. To eliminate this problem it's
+  better to provide the parameter to configure the command's ack timeout.
+* added manual flag to mavros/state
+* Use GeoPoseStamped messages
+* Fix build
+* Add callback for SET_POSITION_TARGET_GLBOAL_INT
+* Contributors: David Jablonski, Jaeyoung-Lim, Sergei Zobov, Vladimir Ermakov, kamilritz
+
+0.32.2 (2019-09-09)
+-------------------
+* uncrustify
+* Add boolean to check if IMU data has been received
+  Follow sensor_msgs/Imu convention when data not present
+* Uncrustify the GPS_GLOBAL_ORIGIN handler in global_position
+* Fix global origin conversion to ecef (was using amsl where hae was required)
+  Summary: Fix global origin conversion to ecef (was using amsl where hae was required)
+* moved code to end of function
+* added amount of satellites to global_position/raw/
+* Contributors: David Jablonski, Nick Steele, Rob Clarke, Robert Clarke
+
+0.32.1 (2019-08-08)
+-------------------
+* uncrustify
+* Removed tf loop
+* made small edit to handle augmented gps fix
+* added a check for gps fix before setting origin for global_position/local odometry topic
+* Contributors: Eric, Lucas Hill
+
+0.32.0 (2019-07-06)
+-------------------
+* use direclty radians in yaml files
+* A simple typo error has fixed. (`#1260 <https://github.com/mavlink/mavros/issues/1260>`_)
+  * fix: a typing error "alredy" to "already"
+  * Fix: typo error (helth -> health)
+* Contributors: Martina Rivizzigno, 강정석
+
+0.31.0 (2019-06-07)
+-------------------
+* readme: fix udp-pb formatting
+* launch config: landing_target: fix and improve parameter list
+* remove duplicated landing_target parameters
+* enum_to_string: simplify landing_target_type_from_str
+* enum_to_string: update enumerations and checksum
+* extras: landing target: improve usability and flexibility
+* remove landing_target from blacklist
+* update to use pymavlink generator
+* px4_config: landing_target: minor correction
+* mav_frame: add frames of reference to wiki page; reference them on config
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: first commit
+* Switch to double-reflections instead of axes-reassignments
+* specialize transform_frame_ned_enu and transform_frame_enu_ned for type
+  Vector3d such that input vectors containing a NAN can be correctly transformed
+* Update README.md
+  update misspelling
+* Contributors: Julian Kent, Martina Rivizzigno, Shingo Matsuura, TSC21, Vladimir Ermakov
+
+0.30.0 (2019-05-20)
+-------------------
+* Filter heartbeats by component id as well
+  This addresses `#1107 <https://github.com/mavlink/mavros/issues/1107>`_ and `#1227 <https://github.com/mavlink/mavros/issues/1227>`_, by filtering incoming heartbeats
+  by component ids before publishing the state.
+* mavros/src/plugins/command.cpp: log if command's wait ack timeout (`#1222 <https://github.com/mavlink/mavros/issues/1222>`_)
+  * mavros/src/plugins/command.cpp: log if command's wait ack timeout
+  * mavros/src/plugins/command.cpp: log timeout in wait_ack_for
+* local_position fix `#1220 <https://github.com/mavlink/mavros/issues/1220>`_: initialize flags
+* plugin waypoint: fix spelling
+* Fix leading space before setpoint_raw
+  This causes an error when running `roslaunch`:
+  ```
+  error loading <rosparam> tag:
+  file /opt/ros/kinetic/share/mavros/launch/apm_config.yaml contains invalid YAML:
+  while parsing a block mapping
+  in "<string>", line 4, column 1:
+  startup_px4_usb_quirk: false
+  ^
+  expected <block end>, but found '<block mapping start>'
+  in "<string>", line 103, column 2:
+  setpoint_raw:
+  ^
+  XML is <rosparam command="load" file="$(arg config_yaml)"/>
+  The traceback for the exception was written to the log file
+  ```
+* global_position.cpp: spell in comment
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Josh Veitch-Michaelis, Nico van Duijn, Sergey Zobov, Vladimir Ermakov
+
+0.29.2 (2019-03-06)
+-------------------
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* Update apm_config.yaml
+  Setting thrust_scaling in the setpoint_raw message (in my case, to use /mavros/setpoint_raw/attitude)
+  Without it, when using Gazebo, get the following problem
+  "Recieved thrust, but ignore_thrust is true: the most likely cause of this is a failure to specify the thrust_scaling parameters on px4/apm_config.yaml. Actuation will be ignored." from the function void attitude_cb in setpoint_raw.cpp (http://docs.ros.org/kinetic/api/mavros/html/setpoint__raw_8cpp_source.html)
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* Issue `#1174 <https://github.com/mavlink/mavros/issues/1174>`_ Added dependency for mavros_msgs and mavros
+* Contributors: Adam Watkins, KiloNovemberDelta, Pierre Kancir, Vladimir Ermakov
+
 0.29.0 (2019-02-02)
 -------------------
 * Fix broken documentation URLs

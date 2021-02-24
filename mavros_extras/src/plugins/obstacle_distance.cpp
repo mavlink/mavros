@@ -15,6 +15,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
+#include <mavros/utils.h>
 
 #include <sensor_msgs/LaserScan.h>
 
@@ -38,14 +39,18 @@ public:
 		obstacle_nh("~obstacle")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
+
+		std::string mav_frame;
+		obstacle_nh.param<std::string>("mav_frame", mav_frame, "GLOBAL");
+		frame = utils::mav_frame_from_str(mav_frame);
 
 		obstacle_sub = obstacle_nh.subscribe("send", 10, &ObstacleDistancePlugin::obstacle_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}
@@ -53,6 +58,8 @@ public:
 private:
 	ros::NodeHandle obstacle_nh;
 	ros::Subscriber obstacle_sub;
+
+	mavlink::common::MAV_FRAME frame;
 
 	/**
 	 * @brief Send obstacle distance array to the FCU.
@@ -66,11 +73,19 @@ private:
 
 		if (req->ranges.size() <= obstacle.distances.size()) {
 			// all distances from sensor will fit in obstacle distance message
-			Eigen::Map<Eigen::Matrix<uint16_t, Eigen::Dynamic, 1> > map_distances(obstacle.distances.data(), req->ranges.size());
-			auto cm_ranges = Eigen::Map<const Eigen::VectorXf>(req->ranges.data(), req->ranges.size()) * 1e2;
-			map_distances = cm_ranges.cast<uint16_t>();							//!< [centimeters]
-			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);    //!< fill the rest of the array values as "Unknown"
-			obstacle.increment = req->angle_increment * RAD_TO_DEG;				//!< [degrees]
+			for (int i = 0; i < req->ranges.size(); i++) {
+				float distance_cm = req->ranges[i] * 1e2;
+				if (std::isnan(distance_cm) || distance_cm >= UINT16_MAX || distance_cm < 0) {
+					obstacle.distances[i] = UINT16_MAX;
+				} else {
+					obstacle.distances[i] = static_cast<uint16_t>(distance_cm);
+				}
+			}
+			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
+
+			const float increment_deg = req->angle_increment * RAD_TO_DEG;
+			obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);  //!< Round to nearest integer.
+			obstacle.increment_f = increment_deg;
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
 			size_t scale_factor = ceil(double(req->ranges.size()) / obstacle.distances.size());
@@ -79,21 +94,24 @@ private:
 				for (size_t j = 0; j < scale_factor; j++) {
 					size_t req_index = i * scale_factor + j;
 					if (req_index < req->ranges.size()) {
-						uint16_t dist_cm = req->ranges[req_index] * 1e2;
-						obstacle.distances[i] = std::min(obstacle.distances[i], dist_cm);
+						float distance_cm = req->ranges[req_index] * 1e2;
+						if (!std::isnan(distance_cm) && distance_cm < UINT16_MAX && distance_cm > 0) {
+							obstacle.distances[i] = std::min(obstacle.distances[i], static_cast<uint16_t>(distance_cm));
+						}
 					}
 				}
 			}
-			obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);   //!< [degrees]
+			obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);	//!< [degrees]
 		}
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [microsecs]
 		obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);	//!< defaults is laser type (depth sensor, Lidar)
 		obstacle.min_distance = req->range_min * 1e2;							//!< [centimeters]
 		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
+		obstacle.frame = utils::enum_value(frame);
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
-				<< std::endl << obstacle.to_yaml());
+										     << std::endl << obstacle.to_yaml());
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(obstacle);
 	}

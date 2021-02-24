@@ -47,15 +47,17 @@ UAS::UAS() :
 	catch (const std::exception &e) {
 		// catch exception and shutdown node
 		ROS_FATAL_STREAM("UAS: GeographicLib exception: " << e.what() <<
-			" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
+				" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
 		ros::shutdown();
 	}
 
-	// send static transform from "local_origin" (ENU) to "local_origin_ned" (NED)
-	publish_static_transform("local_origin", "local_origin_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)));
-	publish_static_transform("fcu", "fcu_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)));
-	// for being able to apply the transforms at the data coming from the FCU, the opposite transform is also required
-	publish_static_transform("fcu_frd", "fcu", Eigen::Affine3d(ftf::quaternion_from_rpy(-M_PI, 0, 0)));
+	// Publish helper TFs used for frame transformation in the odometry plugin
+	std::vector<geometry_msgs::TransformStamped> transform_vector;
+	add_static_transform("map", "map_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform("odom", "odom_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform("base_link", "base_link_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),transform_vector);
+
+	tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
 /* -*- heartbeat handlers -*- */
@@ -103,12 +105,36 @@ uint64_t UAS::get_capabilities()
 	}
 }
 
+// This function may need a mutex now
 void UAS::update_capabilities(bool known, uint64_t caps)
 {
-	fcu_caps_known = known;
-	fcu_capabilities = caps;
+	bool process_cb_queue = false;
+
+	if (known != fcu_caps_known) {
+		if (!fcu_caps_known) {
+			process_cb_queue = true;
+		}
+		fcu_caps_known = known;
+	} else if (fcu_caps_known) {	// Implies fcu_caps_known == known
+		if (caps != fcu_capabilities) {
+			process_cb_queue = true;
+		}
+	}
+	else {}	// Capabilities werent known before and arent known after update
+
+	if (process_cb_queue) {
+		fcu_capabilities = caps;
+		for (auto &cb : capabilities_cb_vec) {
+			cb(static_cast<MAV_CAP>(caps));
+		}
+	}
 }
 
+void UAS::add_capabilities_change_handler(UAS::CapabilitiesCb cb)
+{
+	lock_guard lock(mutex);
+	capabilities_cb_vec.push_back(cb);
+}
 
 /* -*- IMU data -*- */
 
@@ -223,6 +249,19 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 }
 
 /* -*- transform -*- */
+
+//! Stack static transform into vector
+void UAS::add_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr, std::vector<geometry_msgs::TransformStamped>& vector)
+{
+	geometry_msgs::TransformStamped static_transform;
+
+	static_transform.header.stamp = ros::Time::now();
+	static_transform.header.frame_id = frame_id;
+	static_transform.child_frame_id = child_id;
+	tf::transformEigenToMsg(tr, static_transform.transform);
+
+	vector.emplace_back(static_transform);
+}
 
 //! Publishes static transform
 void UAS::publish_static_transform(const std::string &frame_id, const std::string &child_id, const Eigen::Affine3d &tr)

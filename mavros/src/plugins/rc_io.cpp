@@ -34,7 +34,7 @@ public:
 		has_rc_channels_msg(false)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -45,7 +45,7 @@ public:
 		enable_connection_cb();
 	};
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&RCIOPlugin::handle_rc_channels_raw),
 			       make_handler(&RCIOPlugin::handle_rc_channels),
@@ -231,7 +231,7 @@ private:
 		if (!m_uas->is_ardupilotmega() && !m_uas->is_px4())
 			ROS_WARN_THROTTLE_NAMED(30, "rc", "RC override not supported by this FCU!");
 
-		mavlink::common::msg::RC_CHANNELS_OVERRIDE ovr;
+		mavlink::common::msg::RC_CHANNELS_OVERRIDE ovr = {};
 		ovr.target_system = m_uas->get_tgt_system();
 		ovr.target_component = m_uas->get_tgt_component();
 

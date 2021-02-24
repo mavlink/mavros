@@ -39,10 +39,12 @@ class LocalPositionPlugin : public plugin::PluginBase {
 public:
 	LocalPositionPlugin() : PluginBase(),
 		lp_nh("~local_position"),
-		tf_send(false)
+		tf_send(false),
+		has_local_position_ned(false),
+		has_local_position_ned_cov(false)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -64,7 +66,7 @@ public:
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned),
 			       make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
@@ -155,7 +157,8 @@ private:
 		twist_local->header.frame_id = tf_child_frame_id;
 		tf::vectorEigenToMsg(enu_velocity, twist_local->twist.linear);
 		tf::vectorEigenToMsg(ftf::transform_frame_baselink_enu(ftf::to_eigen(baselink_angular_msg), enu_orientation),
-						twist_body->twist.angular);
+						twist_local->twist.angular);
+
 		local_velocity_local.publish(twist_local);
 
 		// publish tf

@@ -10,13 +10,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # because the Python C extensions dont comply with it
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
+
 find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 # include_directories(include)
 
@@ -33,6 +34,18 @@ set(msg_files
   "msg/ExtendedState.msg"
   "msg/FileEntry.msg"
   "msg/GlobalPositionTarget.msg"
+  "msg/OnboardComputerStatus.msg"
+  "msg/DebugValue.msg"
+  "msg/ESCInfo.msg"
+  "msg/ESCInfoItem.msg"
+  "msg/ESCStatus.msg"
+  "msg/ESCStatusItem.msg"
+  "msg/EstimatorStatus.msg"
+  "msg/ExtendedState.msg"
+  "msg/FileEntry.msg"
+  "msg/GlobalPositionTarget.msg"
+  "msg/GPSRAW.msg"
+  "msg/GPSRTK.msg"
   "msg/HilActuatorControls.msg"
   "msg/HilControls.msg"
   "msg/HilGPS.msg"
@@ -43,21 +56,30 @@ set(msg_files
   # "msg/LogEntry.msg"
   "msg/ManualControl.msg"
   "msg/Mavlink.msg"
+  "msg/LandingTarget.msg"
+  "msg/LogData.msg"
+  "msg/LogEntry.msg"
+  "msg/ManualControl.msg"
+  "msg/Mavlink.msg"
+  "msg/MountControl.msg"
   "msg/OpticalFlowRad.msg"
   "msg/OverrideRCIn.msg"
   "msg/Param.msg"
   "msg/ParamValue.msg"
+  "msg/PlayTuneV2.msg"
   "msg/PositionTarget.msg"
   "msg/RCIn.msg"
   "msg/RCOut.msg"
   "msg/RTCM.msg"
   "msg/RadioStatus.msg"
+  "msg/RTKBaseline.msg"
   "msg/State.msg"
   "msg/StatusText.msg"
   "msg/Thrust.msg"
   "msg/TimesyncStatus.msg"
   "msg/Trajectory.msg"
   "msg/VfrHud.msg"
+  "msg/VFR_HUD.msg"
   "msg/VehicleInfo.msg"
   "msg/Vibration.msg"
   "msg/Waypoint.msg"
@@ -74,6 +96,7 @@ set(srv_files
   "srv/CommandTOL.srv"
   "srv/CommandTriggerControl.srv"
   "srv/CommandTriggerInterval.srv"
+  "srv/CommandVtolTransition.srv"
   "srv/FileChecksum.srv"
   "srv/FileClose.srv"
   "srv/FileList.srv"
@@ -88,6 +111,7 @@ set(srv_files
   "srv/LogRequestData.srv"
   "srv/LogRequestEnd.srv"
   "srv/LogRequestList.srv"
+  "srv/MountConfigure.srv"
   "srv/MessageInterval.srv"
   "srv/ParamGet.srv"
   "srv/ParamPull.srv"
@@ -120,4 +144,11 @@ install(
   FILES mavros_msgs_mapping_rule.yaml
   DESTINATION share/${PROJECT_NAME}
 )
+
 ament_package()
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h")
+
+# vim: ts=2 sw=2 et:

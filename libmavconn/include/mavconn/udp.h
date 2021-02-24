@@ -48,7 +48,7 @@ public:
 	MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
 			std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT,
 			std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
-	~MAVConnUDP();
+	virtual ~MAVConnUDP();
 
 	void close() override;
 
@@ -59,6 +59,8 @@ public:
 	inline bool is_open() override {
 		return socket.is_open();
 	}
+
+	std::string get_remote_endpoint() const;
 
 private:
 	boost::asio::io_service io_service;

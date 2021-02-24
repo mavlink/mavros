@@ -2,6 +2,117 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2021-02-15)
+------------------
+
+1.5.2 (2021-02-02)
+------------------
+
+1.5.1 (2021-01-04)
+------------------
+
+1.5.0 (2020-11-11)
+------------------
+* mavros_msgs/VehicleInfo: Add flight_custom_version field
+  Mirroring the field in the corresponding MAVLink message.
+* mavros_msgs/State: Fix PX4 flight mode constants
+  Turns out ROS message string literals don't need quotes,
+  so adding quotes creates strings including the quotes.
+* mavros_msgs/State: Add flight mode constants
+* mavros_msgs: Don't move temporary objects
+* Contributors: Morten Fyhn Amundsen
+
+1.4.0 (2020-09-11)
+------------------
+* play_tune: Assign tune format directly
+* play_tune: Write new plugin
+* Contributors: Morten Fyhn Amundsen
+
+1.3.0 (2020-08-08)
+------------------
+* Add esc_status plugin.
+* Add gps_status plugin to publish GPS_RAW and GPS_RTK messages from FCU.
+  The timestamps for the gps_status topics take into account the mavlink time and uses the convienence function
+* adding support for publishing rtkbaseline msgs over ROS
+* Contributors: CSCE439, Dr.-Ing. Amilcar do Carmo Lucas, Ricardo Marques
+
+1.2.0 (2020-05-22)
+------------------
+* add yaw to CMD_DO_SET_HOME
+* Contributors: David Jablonski
+
+1.1.0 (2020-04-04)
+------------------
+
+1.0.0 (2020-01-01)
+------------------
+
+0.33.4 (2019-12-12)
+-------------------
+* Splitted the message fields.
+* Updated esimator status msg according to the new cog based definition of estimator status.
+* Added comments to msg.
+* Added new line char at end of message.
+* Added a publisher for estimator status message received from mavlink in sys_status.
+* Contributors: saifullah3396
+
+0.33.3 (2019-11-13)
+-------------------
+
+0.33.2 (2019-11-13)
+-------------------
+
+0.33.1 (2019-11-11)
+-------------------
+* resolved merge conflict
+* Contributors: David Jablonski
+
+0.33.0 (2019-10-10)
+-------------------
+* Add vtol transition service
+* Apply comments
+* Add mount configure service message
+* cog: Update all generated code
+* added manual flag to mavros/state
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: David Jablonski, Jaeyoung-Lim, Vladimir Ermakov, baumanta
+
+0.32.2 (2019-09-09)
+-------------------
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+* add mav_cmd associated with each point in trajectory plugin
+* Use MountControl Msg
+* Define new MountControl.msg
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
+0.31.0 (2019-06-07)
+-------------------
+* mavros_msgs: LandingTarget: update msg description link
+* extras: landing target: improve usability and flexibility
+* Contributors: TSC21
+
+0.30.0 (2019-05-20)
+-------------------
+
+0.29.2 (2019-03-06)
+-------------------
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* mavros_msgs: Fix line endings for OpticalFlowRad message
+* Contributors: Pierre Kancir, sfalexrog
+
 0.29.0 (2019-02-02)
 -------------------
 * Fix broken documentation URLs

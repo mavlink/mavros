@@ -38,7 +38,7 @@ public:
 		twist_cov(true)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -55,7 +55,7 @@ public:
 			vision_vector_sub = sp_nh.subscribe("speed_vector", 10, &VisionSpeedEstimatePlugin::vector_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return { /* Rx disabled */ };
 	}

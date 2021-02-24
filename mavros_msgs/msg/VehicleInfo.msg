@@ -25,6 +25,7 @@ uint32 flight_sw_version        # Firmware version number
 uint32 middleware_sw_version    # Middleware version number
 uint32 os_sw_version            # Operating system version number
 uint32 board_version            # HW / board version (last 8 bytes should be silicon ID, if any)
+string flight_custom_version    # Custom version field, commonly from the first 8 bytes of the git hash
 uint16 vendor_id                # ID of the board vendor
 uint16 product_id               # ID of the product
 uint64 uid                      # UID if provided by hardware

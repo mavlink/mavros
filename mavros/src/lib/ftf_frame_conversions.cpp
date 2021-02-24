@@ -17,6 +17,7 @@
  */
 
 #include <mavros/frame_tf.h>
+#include <stdexcept>
 
 namespace mavros {
 namespace ftf {
@@ -57,6 +58,14 @@ static const auto NED_ENU_R = NED_ENU_Q.normalized().toRotationMatrix();
 static const auto AIRCRAFT_BASELINK_R = AIRCRAFT_BASELINK_Q.normalized().toRotationMatrix();
 
 /**
+ * @brief Use reflections instead of rotations for NED <-> ENU transformation
+ * to avoid NaN/Inf floating point pollution across different axes
+ * since in NED <-> ENU the axes are perfectly aligned.
+ */
+static const Eigen::PermutationMatrix<3> NED_ENU_REFLECTION_XY(Eigen::Vector3i(1,0,2));
+static const Eigen::DiagonalMatrix<double,3> NED_ENU_REFLECTION_Z(1,1,-1);
+
+/**
  * @brief Auxiliar matrices to Covariance transforms
  */
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
@@ -76,15 +85,20 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		return q * AIRCRAFT_BASELINK_Q;
+
+	case StaticTF::ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK:
+	case StaticTF::ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT:
+		return AIRCRAFT_BASELINK_Q * q;	
 	}
 }
+
 
 Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticTF transform)
 {
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		return NED_ENU_AFFINE * vec;
+		return NED_ENU_REFLECTION_XY * (NED_ENU_REFLECTION_Z * vec);
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
@@ -101,7 +115,8 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		cov_out = cov_in * NED_ENU_Q;
+		cov_out = NED_ENU_REFLECTION_XY * (NED_ENU_REFLECTION_Z * cov_in * NED_ENU_REFLECTION_Z) *
+		          NED_ENU_REFLECTION_XY.transpose();
 		return cov_out_;
 
 	case StaticTF::AIRCRAFT_TO_BASELINK:
@@ -122,12 +137,16 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		R.block<3, 3>(0, 0) =
-			R.block<3, 3>(3, 3) = NED_ENU_R;
+	{
+		Eigen::PermutationMatrix<6> NED_ENU_REFLECTION_XY_6 (NED_ENU_REFLECTION_XY.indices().replicate<2,1>());
+		NED_ENU_REFLECTION_XY_6.indices().middleRows<3>(3).array() += 3;
+		Eigen::DiagonalMatrix<double,6> NED_ENU_REFLECTION_Z_6(NED_ENU_REFLECTION_Z.diagonal().replicate<2,1>());
 
-		cov_out = R * cov_in * R.transpose();
+		cov_out = NED_ENU_REFLECTION_XY_6 * (NED_ENU_REFLECTION_Z_6 * cov_in * NED_ENU_REFLECTION_Z_6) *
+		          NED_ENU_REFLECTION_XY_6.transpose();
+
 		return cov_out_;
-
+        }
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		R.block<3, 3>(0, 0) =
@@ -149,13 +168,17 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	switch (transform) {
 	case StaticTF::NED_TO_ENU:
 	case StaticTF::ENU_TO_NED:
-		R.block<3, 3>(0, 0) =
-			R.block<3, 3>(3, 3) =
-				R.block<3, 3>(6, 6) = NED_ENU_R;
+	{
+		Eigen::PermutationMatrix<9> NED_ENU_REFLECTION_XY_9 (NED_ENU_REFLECTION_XY.indices().replicate<3,1>());
+		NED_ENU_REFLECTION_XY_9.indices().middleRows<3>(3).array() += 3;
+		NED_ENU_REFLECTION_XY_9.indices().middleRows<3>(6).array() += 6;
+		Eigen::DiagonalMatrix<double,9> NED_ENU_REFLECTION_Z_9(NED_ENU_REFLECTION_Z.diagonal().replicate<3,1>());
 
-		cov_out = R * cov_in * R.transpose();
+		cov_out = NED_ENU_REFLECTION_XY_9 * (NED_ENU_REFLECTION_Z_9 * cov_in * NED_ENU_REFLECTION_Z_9) *
+		          NED_ENU_REFLECTION_XY_9.transpose();
+
 		return cov_out_;
-
+        }
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		R.block<3, 3>(0, 0) =
@@ -167,7 +190,7 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 	}
 }
 
-Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticTF transform)
+Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::Vector3d &map_origin, const StaticEcefTF transform)
 {
 	//! Degrees to radians
 	static constexpr double DEG_TO_RAD = (M_PI / 180.0);
@@ -198,10 +221,10 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::
 	      cos_lon * cos_lat,  sin_lon * cos_lat, sin_lat;
 
 	switch (transform) {
-	case StaticTF::ECEF_TO_ENU:
+	case StaticEcefTF::ECEF_TO_ENU:
 		return R * vec;
 
-	case StaticTF::ENU_TO_ECEF:
+	case StaticEcefTF::ENU_TO_ECEF:
 		// ENU to ECEF rotation is just an inverse rotation from ECEF to ENU, which means transpose.
 		R.transposeInPlace();
 		return R * vec;

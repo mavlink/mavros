@@ -34,6 +34,8 @@ namespace extra_plugins {
  */
 class WheelOdometryPlugin : public plugin::PluginBase {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	WheelOdometryPlugin() : PluginBase(),
 		wo_nh("~wheel_odometry"),
 		count(0),
@@ -48,7 +50,7 @@ public:
 		rtwist_cov(Eigen::Vector3d::Zero())
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -152,7 +154,7 @@ public:
 
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&WheelOdometryPlugin::handle_rpm),

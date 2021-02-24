@@ -212,7 +212,7 @@ public:
 		checksum_crc32(0)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -234,7 +234,7 @@ public:
 		checksum_srv = ftp_nh.advertiseService("checksum", &FTPPlugin::checksum_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&FTPPlugin::handle_file_transfer_protocol),

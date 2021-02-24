@@ -32,7 +32,7 @@ public:
 		safety_nh("~safety_area")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -70,7 +70,7 @@ public:
 		safetyarea_pub = safety_nh.advertise<geometry_msgs::PolygonStamped>("get",10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 		       make_handler(&SafetyAreaPlugin::handle_safety_allowed_area)
@@ -126,7 +126,7 @@ private:
 		p1 = ftf::transform_frame_enu_ned(p1);
 		p2 = ftf::transform_frame_enu_ned(p2);
 
-		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s;
+		mavlink::common::msg::SAFETY_SET_ALLOWED_AREA s = {};
 		m_uas->msg_set_target(s);
 
 		// TODO: use enum from lib

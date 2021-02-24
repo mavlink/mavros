@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/EstimatorStatus.h>
 #include <mavros_msgs/ExtendedState.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
@@ -37,9 +38,9 @@ using BatteryMsg = mavros_msgs::BatteryStatus;
 
 namespace mavros {
 namespace std_plugins {
-using mavlink::common::MAV_TYPE;
-using mavlink::common::MAV_AUTOPILOT;
-using mavlink::common::MAV_STATE;
+using mavlink::minimal::MAV_TYPE;
+using mavlink::minimal::MAV_AUTOPILOT;
+using mavlink::minimal::MAV_STATE;
 using utils::enum_value;
 
 /**
@@ -165,13 +166,13 @@ public:
 
 		if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled)
 				!= last_st.onboard_control_sensors_enabled)
-			stat.summary(2, "Sensor helth");
+			stat.summary(2, "Sensor health");
 		else
 			stat.summary(0, "Normal");
 
 		stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
 		stat.addf("Sensor enabled", "0x%08X", last_st.onboard_control_sensors_enabled);
-		stat.addf("Sensor helth", "0x%08X", last_st.onboard_control_sensors_health);
+		stat.addf("Sensor health", "0x%08X", last_st.onboard_control_sensors_health);
 
 		using STS = mavlink::common::MAV_SYS_STATUS_SENSOR;
 
@@ -429,7 +430,7 @@ public:
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -483,6 +484,7 @@ public:
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
+		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
 		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
 		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
@@ -495,7 +497,7 @@ public:
 		enable_connection_cb();
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			make_handler(&SystemStatusPlugin::handle_heartbeat),
 			make_handler(&SystemStatusPlugin::handle_sys_status),
@@ -505,6 +507,7 @@ public:
 			make_handler(&SystemStatusPlugin::handle_autopilot_version),
 			make_handler(&SystemStatusPlugin::handle_extended_sys_state),
 			make_handler(&SystemStatusPlugin::handle_battery_status),
+			make_handler(&SystemStatusPlugin::handle_estimator_status),
 		};
 	}
 
@@ -523,6 +526,7 @@ private:
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
 	ros::Publisher batt_pub;
+	ros::Publisher estimator_status_pub;
 	ros::Publisher statustext_pub;
 	ros::Subscriber statustext_sub;
 	ros::ServiceServer rate_srv;
@@ -684,9 +688,9 @@ private:
 
 	/* -*- message handlers -*- */
 
-	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HEARTBEAT &hb)
+	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::minimal::msg::HEARTBEAT &hb)
 	{
-		using mavlink::common::MAV_MODE_FLAG;
+		using mavlink::minimal::MAV_MODE_FLAG;
 
 		// Store generic info of all heartbeats seen
 		auto it = find_or_create_vehicle_info(msg->sysid, msg->compid);
@@ -711,7 +715,7 @@ private:
 		}
 
 		// Continue from here only if vehicle is my target
-		if (!m_uas->is_my_target(msg->sysid)) {
+		if (!m_uas->is_my_target(msg->sysid, msg->compid)) {
 			ROS_DEBUG_NAMED("sys", "HEARTBEAT from [%d, %d] dropped.", msg->sysid, msg->compid);
 			return;
 		}
@@ -728,6 +732,7 @@ private:
 		state_msg->connected = true;
 		state_msg->armed = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::SAFETY_ARMED));
 		state_msg->guided = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::GUIDED_ENABLED));
+		state_msg->manual_input = !!(hb.base_mode & enum_value(MAV_MODE_FLAG::MANUAL_INPUT_ENABLED));
 		state_msg->mode = vehicle_mode;
 		state_msg->system_status = hb.system_status;
 
@@ -831,6 +836,7 @@ private:
 		it->second.middleware_sw_version = apv.middleware_sw_version;
 		it->second.os_sw_version = apv.os_sw_version;
 		it->second.board_version = apv.board_version;
+		it->second.flight_custom_version = custom_version_to_hex_string(apv.flight_custom_version);
 		it->second.vendor_id = apv.vendor_id;
 		it->second.product_id = apv.product_id;
 		it->second.uid = apv.uid;
@@ -907,6 +913,50 @@ private:
 #endif
 	}
 
+	void handle_estimator_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ESTIMATOR_STATUS &status)
+	{
+		using ESF = mavlink::common::ESTIMATOR_STATUS_FLAGS;
+		
+		auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
+		est_status_msg->header.stamp = ros::Time::now();
+
+		// [[[cog:
+		// import pymavlink.dialects.v20.common as common
+		// ename = 'ESTIMATOR_STATUS_FLAGS'
+		// ename_pfx2 = 'ESTIMATOR_'
+		//
+		// enum = sorted(common.enums[ename].items())
+		// enum.pop() # -> remove ENUM_END
+		//
+		// for k, e in enum:
+		//     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
+		//     esf = e.name
+		//
+		//     if esf.startswith(ename + '_'):
+		//         esf = esf[len(ename) + 1:]
+		//     if esf.startswith(ename_pfx2):
+		//         esf = esf[len(ename_pfx2):]
+		//     if esf[0].isdigit():
+		//         esf = 'SENSOR_' + esf
+		//     cog.outl("est_status_msg->%s_status_flag = !!(status.flags & enum_value(ESF::%s));" % (esf.lower(), esf))
+		// ]]]
+		est_status_msg->attitude_status_flag = !!(status.flags & enum_value(ESF::ATTITUDE));
+		est_status_msg->velocity_horiz_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_HORIZ));
+		est_status_msg->velocity_vert_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_VERT));
+		est_status_msg->pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_REL));
+		est_status_msg->pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_ABS));
+		est_status_msg->pos_vert_abs_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_ABS));
+		est_status_msg->pos_vert_agl_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_AGL));
+		est_status_msg->const_pos_mode_status_flag = !!(status.flags & enum_value(ESF::CONST_POS_MODE));
+		est_status_msg->pred_pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_REL));
+		est_status_msg->pred_pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
+		est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
+		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
+		// [[[end]]] (checksum: 7828381ee4002ea6b61a8f528ae4d12d)
+
+		estimator_status_pub.publish(est_status_msg);
+	}
+
 	/* -*- timer callbacks -*- */
 
 	void timeout_cb(const ros::TimerEvent &event)
@@ -918,7 +968,7 @@ private:
 	{
 		using mavlink::common::MAV_MODE;
 
-		mavlink::common::msg::HEARTBEAT hb {};
+		mavlink::minimal::msg::HEARTBEAT hb {};
 
 		hb.type = enum_value(conn_heartbeat_mav_type); //! @todo patch PX4 so it can also handle this type as datalink
 		hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
@@ -1022,7 +1072,7 @@ private:
 	bool set_rate_cb(mavros_msgs::StreamRate::Request &req,
 			mavros_msgs::StreamRate::Response &res)
 	{
-		mavlink::common::msg::REQUEST_DATA_STREAM rq;
+		mavlink::common::msg::REQUEST_DATA_STREAM rq = {};
 
 		rq.target_system = m_uas->get_tgt_system();
 		rq.target_component = m_uas->get_tgt_component();
@@ -1037,7 +1087,7 @@ private:
 	bool set_mode_cb(mavros_msgs::SetMode::Request &req,
 			mavros_msgs::SetMode::Response &res)
 	{
-		using mavlink::common::MAV_MODE_FLAG;
+		using mavlink::minimal::MAV_MODE_FLAG;
 
 		uint8_t base_mode = req.base_mode;
 		uint32_t custom_mode = 0;
@@ -1058,7 +1108,7 @@ private:
 			base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
 		}
 
-		mavlink::common::msg::SET_MODE sm;
+		mavlink::common::msg::SET_MODE sm = {};
 		sm.target_system = m_uas->get_tgt_system();
 		sm.base_mode = base_mode;
 		sm.custom_mode = custom_mode;

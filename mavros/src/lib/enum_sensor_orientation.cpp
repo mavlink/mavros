@@ -38,6 +38,7 @@ static const OrientationPair make_orientation(const std::string &name,
 }
 
 // [[[cog:
+// import attr
 // import pymavlink.dialects.v20.common as common
 // ename = 'MAV_SENSOR_ORIENTATION'
 // pfx2 = 'MAV_SENSOR_ROTATION_'
@@ -45,29 +46,28 @@ static const OrientationPair make_orientation(const std::string &name,
 // enum = sorted(common.enums[ename].items())
 // enum.pop() # remove ENUM_END
 //
+// @attr.s(auto_attribs=True)
 // class Vector3:
-//     Roll, Pitch, Yaw = 0.0, 0.0, 0.0
+//     Roll: float = 0.0
+//     Pitch: float = 0.0
+//     Yaw: float = 0.0
 //
-// def parse_rpy(desc):
-//     vec = Vector3()
-//
-//     try:
-//         pairs = [
-//             (f.strip(), float(v))
-//             for f, v in [v.split(":") for v in desc.split(',')]
-//         ]
-//
-//         for f, v in pairs:
-//            setattr(vec, f, v)
-//     except Exception as ex:
-//         print(f"Parse Error: {ex}, desc: {desc}")
-//     finally:
-//         return vec
+//     @classmethod
+//     def parse_rpy(cls, desc):
+//         try:
+//             pairs = {
+//                 f.strip(): float(v)
+//                 for f, v in [v.split(":") for v in desc.split(',')]
+//             }
+//             return cls(**pairs)
+//         except Exception as ex:
+//             print(f"Parse Error: {ex}, desc: {desc}")
+//             return cls()
 //
 // cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations{{" % len(enum))
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
-//     vec = parse_rpy(e.description)
+//     vec = Vector3.parse_rpy(e.description)
 //     whitespace = ' ' * (27 - len(name_short))
 //     cog.outl(f"""/* {k:>2} */ make_orientation("{name_short}",{whitespace}{vec.Roll:>5}, {vec.Pitch:>5}, {vec.Yaw:>5}),""")
 //

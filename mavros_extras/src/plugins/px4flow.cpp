@@ -38,7 +38,7 @@ public:
 		ranger_max_range(5.0)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -62,7 +62,7 @@ public:
 		flow_rad_sub = flow_nh.subscribe("raw/send", 1, &PX4FlowPlugin::send_cb, this);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&PX4FlowPlugin::handle_optical_flow_rad)
@@ -155,7 +155,7 @@ private:
 
 	void send_cb(const mavros_msgs::OpticalFlowRad::ConstPtr msg)
 	{
-		mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg;
+		mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg = {};
 
 		auto int_xy = ftf::transform_frame_baselink_aircraft(
 			Eigen::Vector3d(

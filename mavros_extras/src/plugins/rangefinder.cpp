@@ -31,14 +31,14 @@ public:
 		rangefinder_nh("~rangefinder")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
 		rangefinder_pub = rangefinder_nh.advertise<sensor_msgs::Range>("rangefinder", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&RangefinderPlugin::handle_rangefinder)

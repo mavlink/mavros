@@ -32,6 +32,8 @@ class DistanceSensorItem {
 public:
 	typedef boost::shared_ptr<DistanceSensorItem> Ptr;
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	DistanceSensorItem() :
 		is_subscriber(false),
 		send_tf(false),
@@ -114,7 +116,7 @@ public:
 		dist_nh("~distance_sensor")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -139,7 +141,7 @@ public:
 		}
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&DistanceSensorPlugin::handle_distance_sensor),
@@ -163,7 +165,7 @@ private:
 				uint8_t type, uint8_t id,
 				uint8_t orientation, uint8_t covariance)
 	{
-		mavlink::common::msg::DISTANCE_SENSOR ds;
+		mavlink::common::msg::DISTANCE_SENSOR ds = {};
 
 		// [[[cog:
 		// for f in ('time_boot_ms',
@@ -222,6 +224,7 @@ private:
 						sensor->topic_name.c_str(),
 						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
 						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
+			return;
 		}
 
 		auto range = boost::make_shared<sensor_msgs::Range>();

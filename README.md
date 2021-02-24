@@ -1,7 +1,6 @@
 MAVROS
 ======
-
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 MAVLink extendable communication node for ROS.
 
@@ -16,6 +15,7 @@ MAVLink extendable communication node for ROS.
 - Since 2018-05-11 (0.25.0) support building master for Indigo and Jade stopped. Mainly because update of console-bridge package.
 - Since 2018-05-14 (0.25.1) support for Indigo returned. We use compatibility layer for console-bridge.
 - Since 2019-01-03 (0.28.0) support for Indigo by master not guaranteed. Consider update to more recent distro.
+- 2020-01-01 version 1.0.0 released, please see [#1369][iss1369] for reasons and its purpose.
 
 
 mavros package
@@ -48,29 +48,29 @@ Please see [README][test] first!
 mavros\_msgs package
 --------------------
 
-This package contains messages and services used in mavros.
+This package contains messages and services used in MAVROS.
 
 
 Support forums and chats
 ------------------------
 
-Please ask your questions not related to bugs/feauture or requests on:
+Please ask your questions not related to bugs/feature or requests on:
 
-- [px4users Google Group (Mailing List) ](https://groups.google.com/forum/#!forum/px4users)
-- [Mavros on Gitter IM](https://gitter.im/mavlink/mavros)
-- [PX4/Firmware on Gitter IM](https://gitter.im/PX4/Firmware)
-- [ArduPilot/VisionProjects on Gitter IM](https://gitter.im/ArduPilot/ardupilot/VisionProjects)
+- [MAVROS discussion in Gitter IM](https://gitter.im/mavlink/mavros)
+- [PX4 Discuss Forum](https://discuss.px4.io/)
+- [PX4 Slack](https://slack.px4.io/)
+- [Ardupilot Discuss Forum](https://discuss.ardupilot.org/)
+- [ArduPilot/VisionProjects in Gitter IM](https://gitter.im/ArduPilot/ardupilot/VisionProjects)
 
-We'd like to keep the project bugtracker as free as possible, so please contact via the above methods. You can also PM us via Gitter.
+We'd like to keep the project bug tracker as free as possible, so please contact via the above methods. You can also PM us via Gitter and the PX4 Slack.
 
 
 CI Statuses
 -----------
 
   - ROS Kinetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdev__mavros__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdev__mavros__ubuntu_xenial_amd64/)
-  - ROS Lunar: [![Build Status](http://build.ros.org/buildStatus/icon?job=Ldev__mavros__ubuntu_xenial_amd64)](http://build.ros.org/job/Ldev__mavros__ubuntu_xenial_amd64/)
   - ROS Melodic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__mavros__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__mavros__ubuntu_bionic_amd64/)
-  - Travis master: [![travis status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
+  - Travis master: [![Travis Status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
@@ -79,3 +79,4 @@ CI Statuses
 [test]: https://github.com/mavlink/mavros/blob/master/test_mavros/README.md
 [inst]: https://github.com/mavlink/mavros/blob/master/mavros/README.md#installation
 [geolib]: https://geographiclib.sourceforge.io/
+[iss1369]: https://github.com/mavlink/mavros/issues/1369

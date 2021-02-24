@@ -25,6 +25,14 @@ using namespace mavconn;
 using mavlink::mavlink_message_t;
 using mavlink::msgid_t;
 
+namespace mavlink {
+	namespace common {
+		using namespace mavlink::minimal;
+		namespace msg {
+			using namespace mavlink::minimal::msg;
+			}
+	}
+}
 
 static void send_heartbeat(MAVConnInterface *ip) {
 	using mavlink::common::MAV_TYPE;
@@ -32,7 +40,7 @@ static void send_heartbeat(MAVConnInterface *ip) {
 	using mavlink::common::MAV_MODE;
 	using mavlink::common::MAV_STATE;
 
-	mavlink::common::msg::HEARTBEAT hb;
+	mavlink::common::msg::HEARTBEAT hb = {};
 	hb.type = int(MAV_TYPE::ONBOARD_CONTROLLER);
 	hb.autopilot = int(MAV_AUTOPILOT::INVALID);
 	hb.base_mode = int(MAV_MODE::MANUAL_ARMED);

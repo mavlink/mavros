@@ -29,7 +29,7 @@ public:
 		manual_control_nh("~manual_control")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -37,7 +37,7 @@ public:
 		send_sub = manual_control_nh.subscribe("send", 1, &ManualControlPlugin::send_cb, this);
 	}
 
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			make_handler(&ManualControlPlugin::handle_manual_control),
 		};
@@ -69,7 +69,7 @@ private:
 
 	void send_cb(const mavros_msgs::ManualControl::ConstPtr req)
 	{
-		mavlink::common::msg::MANUAL_CONTROL msg;
+		mavlink::common::msg::MANUAL_CONTROL msg = {};
 		msg.target = m_uas->get_tgt_system();
 
 		msg.x = req->x;

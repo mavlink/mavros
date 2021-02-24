@@ -35,14 +35,14 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
 		wind_pub = nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("wind_estimation", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			       make_handler(&WindEstimationPlugin::handle_apm_wind),
@@ -61,11 +61,10 @@ private:
 	void handle_apm_wind(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::WIND &wind)
 	{
 		const double speed = wind.speed;
-		const double course = -angles::from_degrees(wind.direction);	// direction "from" -> direction "to"
+		const double course = angles::from_degrees(wind.direction) + M_PI;	// direction "from" -> direction "to"
 
 		auto twist_cov = boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
 		twist_cov->header.stamp = ros::Time::now();
-		// TODO: check math's
 		twist_cov->twist.twist.linear.x = speed * std::sin(course);	// E
 		twist_cov->twist.twist.linear.y = speed * std::cos(course);	// N
 		twist_cov->twist.twist.linear.z = -wind.speed_z;// D -> U

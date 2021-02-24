@@ -34,7 +34,7 @@ public:
 	/**
 	 * Plugin initializer. Constructor should not do this.
 	 */
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -49,7 +49,7 @@ public:
 	 *  - With automatic decoding and framing error filtering (see handle_heartbeat)
 	 *  - Raw message with framig status (see handle_systemtext)
 	 */
-	Subscriptions get_subscriptions() {
+	Subscriptions get_subscriptions() override {
 		return {
 			/* automatic message deduction by second argument */
 			make_handler(&DummyPlugin::handle_heartbeat),
@@ -63,7 +63,7 @@ public:
 private:
 	ros::NodeHandle nh;
 
-	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::common::msg::HEARTBEAT &hb) {
+	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::minimal::msg::HEARTBEAT &hb) {
 		ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_heartbeat: " << hb.to_yaml());
 	}
 

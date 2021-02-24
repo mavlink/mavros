@@ -65,15 +65,11 @@ em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp)
 
-if(DEFINED ENV{CI})
-  message(STATUS "CI environment detected. Assume that it is on RO fs")
-else()
-  message(STATUS "Copy mavlink_dialect.h to source tree")
-  file(
-    COPY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
-    )
-endif()
+message(STATUS "Copy mavlink_dialect.h to source tree")
+file(
+  COPY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
+  )
 
 #############
 ## Install ##

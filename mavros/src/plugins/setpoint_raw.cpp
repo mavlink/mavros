@@ -39,7 +39,7 @@ public:
 		sp_nh("~setpoint_raw")
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -53,7 +53,7 @@ public:
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 				make_handler(&SetpointRawPlugin::handle_position_target_local_ned),
@@ -162,13 +162,23 @@ private:
 		tf::vectorMsgToEigen(req->acceleration_or_force, af);
 
 		// Transform frame ENU->NED
-		position = ftf::transform_frame_enu_ned(position);
-		velocity = ftf::transform_frame_enu_ned(velocity);
-		af = ftf::transform_frame_enu_ned(af);
-		yaw = ftf::quaternion_get_yaw(
+		if (req->coordinate_frame == mavros_msgs::PositionTarget::FRAME_BODY_NED || req->coordinate_frame == mavros_msgs::PositionTarget::FRAME_BODY_OFFSET_NED) {
+			position = ftf::transform_frame_baselink_aircraft(position);
+			velocity = ftf::transform_frame_baselink_aircraft(velocity);
+			af = ftf::transform_frame_baselink_aircraft(af);
+			yaw = ftf::quaternion_get_yaw(
+					ftf::transform_orientation_absolute_frame_aircraft_baselink(
+							ftf::quaternion_from_rpy(0.0, 0.0, req->yaw)));
+		} else {
+			position = ftf::transform_frame_enu_ned(position);
+			velocity = ftf::transform_frame_enu_ned(velocity);
+			af = ftf::transform_frame_enu_ned(af);
+			yaw = ftf::quaternion_get_yaw(
 					ftf::transform_orientation_aircraft_baselink(
 						ftf::transform_orientation_ned_enu(
 							ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
+		}
+
 		Eigen::Vector3d ang_vel_enu(0.0, 0.0, req->yaw_rate);
 		auto ang_vel_ned = ftf::transform_frame_ned_enu(ang_vel_enu);
 		yaw_rate = ang_vel_ned.z();

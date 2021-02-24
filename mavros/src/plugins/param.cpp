@@ -318,6 +318,12 @@ public:
 		       param_id == "SYS_NUM_RESETS"    ||
 		       param_id == "ARSPD_OFFSET"      ||
 		       param_id == "GND_ABS_PRESS"     ||
+		       param_id == "GND_ABS_PRESS2"    ||
+		       param_id == "GND_ABS_PRESS3"    ||
+		       param_id == "STAT_BOOTCNT"      ||
+		       param_id == "STAT_FLTTIME"      ||
+		       param_id == "STAT_RESET"        ||
+		       param_id == "STAT_RUNTIME"      ||
 		       param_id == "GND_TEMP"          ||
 		       param_id == "CMD_TOTAL"         ||
 		       param_id == "CMD_INDEX"         ||
@@ -364,7 +370,7 @@ public:
 		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
 	{ }
 
-	void initialize(UAS &uas_)
+	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
@@ -382,7 +388,7 @@ public:
 		enable_connection_cb();
 	}
 
-	Subscriptions get_subscriptions()
+	Subscriptions get_subscriptions() override
 	{
 		return {
 			make_handler(&ParamPlugin::handle_param_value),
@@ -884,6 +890,8 @@ private:
 			if (req.value.integer != 0)
 				to_send.param_value = static_cast<int>(req.value.integer);
 			else if (req.value.real != 0.0)
+				to_send.param_value = req.value.real;
+			else if (param_it->second.param_value.getType() == XmlRpc::XmlRpcValue::Type::TypeDouble)
 				to_send.param_value = req.value.real;
 			else
 				to_send.param_value = 0;

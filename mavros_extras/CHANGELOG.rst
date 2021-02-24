@@ -2,6 +2,234 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2021-02-15)
+------------------
+* Fixed a bug in mavros_extras/src/plugins/odom.cpp by switching lines 175 and 180.
+  Rationale: The pose covariance matrix published to the /mavros/odometry/in topic is exclusively zeros. This is because the transformation matrix r_pose is initialised as zeros (line 140), then applied to the covariance matrix cov_pose (line 176) and then populated (line 180). Clearly the latter two steps should be the other way around, and the comments in the code appear to suggest that this was the intention, but that lines 175 and 180 were accidentally written the wrong way around. Having switched them, the pose covariance is now published to /mavros/odometry/in as expected.
+  JohnG897
+* Contributors: John Gifford
+
+1.5.2 (2021-02-02)
+------------------
+* bugfix - add estimator type in odom message
+  Add missing estimator_type field in  Odometry message.
+  Issue `#1524 <https://github.com/mavlink/mavros/issues/1524>`_
+* Contributors: Ashwin Varghese Kuruttukulam
+
+1.5.1 (2021-01-04)
+------------------
+* Initialise message structures
+  Uninitialised Mavlink 2 extension fields were sent if the fields were
+  not later set. Initialising the fields to zero is the default value for
+  extension fields and appears to the receiver as though sender is unaware
+  of Mavlink 2.
+  Instances were found with regex below, more may exist:
+  mavlink::[^:]+::msg::[^:={]+ ?[^:={]*;
+* Contributors: Rob Clarke
+
+1.5.0 (2020-11-11)
+------------------
+* mavros_extras: Fix member initialization order
+* mavros_extras: Add override specifiers
+* mavros_extras: distance_sensor: Don't publish data when orientation configuration does not match incomming data.
+* fake_gps: Fix assignment typo
+  This colon should probably be an equals sign.
+  With the colon, this assignment becomes a label instead,
+  and `_gps_rate` after the colon becomes an unused
+  expression result.
+* Contributors: Kristian Klausen, Morten Fyhn Amundsen
+
+1.4.0 (2020-09-11)
+------------------
+* mavros: use mavlink::minimal:: after incompatible changes in mavlink package
+  Incompatible change: https://github.com/mavlink/mavlink/pull/1463
+  Fix: `#1483 <https://github.com/mavlink/mavros/issues/1483>`_, https://github.com/mavlink/mavlink/issues/1474
+* play_tune: Assign tune format directly
+* play_tune: Uncrustify
+* play_tune: Use msg_set_target and set_string_z
+* play_tune: Write new plugin
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
+1.3.0 (2020-08-08)
+------------------
+* Take into account message count for message size
+* Add esc_status plugin.
+* fake_gps.cpp: Implement GPS time data
+* fake_gps.cpp: implement speed accuracy
+* fake_gps.cpp: Added horiz_accuracy and vert_accuracy parameters
+* fake_gps.cpp: Add mocap_withcovariance configuration parameter
+* fake_gps.cpp: add initial support for GPS_INPUT MAVLink message
+* fake_gps.cpp: uncrustify
+* Add gps_status plugin to publish GPS_RAW and GPS_RTK messages from FCU.
+  The timestamps for the gps_status topics take into account the mavlink time and uses the convienence function
+* uncrustify gps_rtk plugin
+* adding support for publishing rtkbaseline msgs over ROS
+* Contributors: CSCE439, Dr.-Ing. Amilcar do Carmo Lucas, Ricardo Marques
+
+1.2.0 (2020-05-22)
+------------------
+* Revert "extras: odom: Hardcode BODY_FRD enum_value to fix compilation"
+  This reverts commit 1a898dea2202ee1af56d698bd40d40994346c5cb.
+* extras: odom: Hardcode BODY_FRD enum_value to fix compilation
+  That PR broke build: https://github.com/mavlink/mavlink/pull/1112
+  TODO: find out what frame should be used
+* Contributors: Vladimir Ermakov
+
+1.1.0 (2020-04-04)
+------------------
+* Setting the same transparency for all elements
+* Visualization of the direction of the device
+* add support for bezier
+* Contributors: Alamoris, Martina Rivizzigno
+
+1.0.0 (2020-01-01)
+------------------
+* Change odometry subscription queue to 1 to avoid buffering.
+* Contributors: James Goppert
+
+0.33.4 (2019-12-12)
+-------------------
+* obstacle_distance: Fill both increment and increment_f fields
+* obstacle_distance: Fix wrong angle increment
+  The computation `req->angle_increment * RAD_TO_DEG` correctly computes
+  angle increment in degrees as a float, but the `increment` field of the
+  OBSTACLE_DISTANCE MAVLink message is a uint8, so the float value gets
+  truncated. So if your real increment is 10 degrees, you may a floating
+  point value of something like 9.999999, which results in the integer value
+  9 getting written to the increment field.
+  An improvement would be to round properly, with something like
+  `static_cast<uint8_t>(increment_deg_float)`,
+  but a better solution is to allow non-integer degree values for the
+  increment, which is supported by the `increment_f` field. According
+  to the MAVLink reference, increment_f is used instead of increment
+  whenever increment_f is nonzero.
+* Contributors: Morten Fyhn Amundsen
+
+0.33.3 (2019-11-13)
+-------------------
+* package: fix 6fa58e59 - main package depends on trajectory_msgs, not extras
+* Contributors: Vladimir Ermakov
+
+0.33.2 (2019-11-13)
+-------------------
+* Add trajectory_msg as dependency
+* Contributors: Jaeyoung-Lim
+
+0.33.1 (2019-11-11)
+-------------------
+* Merge pull request `#1297 <https://github.com/mavlink/mavros/issues/1297>`_ from dayjaby/feature/mount_orientation
+  adding mount orientation to mount_control plugin
+* landing_target: Fix cartesian to displacement bug
+  I think these four conditionals are buggy:
+  The first is    (x and y) > 0
+  and should be   (x > 0) and (y > 0)
+  (This one actually works the way it's written.)
+  The second is   (x < 0 and y) > 0
+  and should be   (x < 0) and (y > 0)
+  The third is    (x and y) < 0
+  and should be   (x < 0) and (y < 0)
+  The fourth is   (x < 0 and y) < 0
+  and should be   (x > 0) and (y < 0)
+* obstacle distance plugin: Add ROS param for mavlink frame
+  Makes it possible to specify the 'frame' field in the MAVLink
+  OBSTACLE_DISTANCE message sent by this plugin. Previously the
+  frame was not defined, which means it defaulted to MAV_FRAME_GLOBAL.
+  (See https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE)
+  The default frame is therefore still MAV_FRAME_GLOBAL.
+* resolved merge conflict
+* adding mount orientation to mount_control plugin
+* Contributors: David Jablonski, Morten Fyhn Amundsen, Vladimir Ermakov
+
+0.33.0 (2019-10-10)
+-------------------
+* CleanUp
+* Odom Plugin, enforcing ROS convetion, less options but clearer to use
+* Fix service namespace with new nodehandle
+* Add mount configure service
+* use header.stamp to fill mavlink msg field time_usec
+* use cog for copy
+* adapt message and plugin after mavlink message merge
+* rename message and adjust fields
+* add component id to mavros message to distinguish ROS msgs from different systems
+* component_status message and plugin draft
+* Contributors: Jaeyoung-Lim, baumanta, kamilritz
+
+0.32.2 (2019-09-09)
+-------------------
+* clean up
+* fix obstacle distance plugin
+* Contributors: baumanta
+
+0.32.1 (2019-08-08)
+-------------------
+
+0.32.0 (2019-07-06)
+-------------------
+* use direclty radians in yaml files
+* add mav_cmd associated with each point in trajectory plugin
+* Fix typo
+* Address comments
+* Send messages from callback
+* Use MountControl Msg
+* Add mount control class template
+* Contributors: Jaeyoung-Lim, Martina Rivizzigno
+
+0.31.0 (2019-06-07)
+-------------------
+* landing_target: fix landing target pose input topic naming
+* fix naming for file
+* mavros_plugins: fix landing_target plugin init
+* landing_target: change topic subscription naming
+* extras: mavros_plugins.xml: fix malform on XML file
+* landing_target: use m_uas
+* visualization: set the frame and child frame id back to map and base_link
+* general fixup to update the landing_target codebase
+* extras: landing target: improve usability and flexibility
+* ident correction
+* landing_target: use Eigen::Quaterniond::Identity()
+* visualization: small correction on cb
+* landing_target: ident correct
+* landing_target: ident correction
+* renamed copter_visualization to just visualization
+* landing_target: target orientation: assess it is not possible
+* copter_visualization: add target_size and landing_target subscriber in copter_visualization node, so to publish a marker of the target
+* uas_stringify: changed UAS::idx_frame() to UAS::frame_from_str()
+* landing_target: removed child_frame_id
+* landing_target: minor code tweak/restructure
+* landing_target: small correction on math
+* landing_target: uncrustify code
+* landing_target: updated to TF2 and Eigen math
+* landing_target: adapted to latest master code
+* landing_target: corrected pkt parser order
+* landing_target: added stringify usage on code
+* landing_target: added timestamp and target size fields [!Won't compile unless a new mavlink release!]
+* landing_target: removed PoseWithCovarianceStamped include
+* landing_target: remove the need of local_position subscription
+* landing_target: fixed local_position subscriber topic name
+* landing_target: updated notation and applied correct math to conversions
+* landing_target: first commit
+* Contributors: TSC21
+
+0.30.0 (2019-05-20)
+-------------------
+* Fixed an issue when the laser scan topic contains NaN values they where being sent as 0 distances. (`#1218 <https://github.com/mavlink/mavros/issues/1218>`_)
+* extras `#1223 <https://github.com/mavlink/mavros/issues/1223>`_: Add eigen aligned allocators to plugin classes.
+* gps_rtk: fix multi segment messages
+* Update the readme
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Jaime Machuca, Vladimir Ermakov
+
+0.29.2 (2019-03-06)
+-------------------
+* extras: odom: update velocity covariance fields from 'twist' to 'velocity_covariance'
+* Contributors: TSC21
+
+0.29.1 (2019-03-03)
+-------------------
+* All: catkin lint files
+* cmake: fix `#1174 <https://github.com/mavlink/mavros/issues/1174>`_: add msg deps for package format 2
+* mavros_extras: Convert source files to Unix line endings
+* Contributors: Pierre Kancir, Vladimir Ermakov, sfalexrog
+
 0.29.0 (2019-02-02)
 -------------------
 * obstacle_distance: align comments

@@ -61,7 +61,7 @@ imu:
   frame_id: "base_link"
   # need find actual values
   linear_acceleration_stdev: 0.0003
-  angular_velocity_stdev: !degrees 0.02
+  angular_velocity_stdev: 0.0003490659 // 0.02 degrees
   orientation_stdev: 1.0
   magnetic_stdev: 0.0
 
@@ -98,9 +98,9 @@ setpoint_attitude:
     frame_id: "map"
     child_frame_id: "target_attitude"
     rate_limit: 50.0
-    
- # setpoint_raw
- setpoint_raw:
+
+# setpoint_raw
+setpoint_raw:
   thrust_scaling: 1.0       # specify thrust scaling (normalized, 0 to 1) for thrust (like PX4)
 
 # setpoint_position
@@ -122,7 +122,9 @@ setpoint_velocity:
 # waypoint
 mission:
   pull_after_gcs: true  # update mission if gcs updates
-
+  use_mission_item_int: true # use the MISSION_ITEM_INT message instead of MISSION_ITEM
+                             # for uploading waypoints to FCU
+                             
 # --- mavros extras plugins (same order) ---
 
 # adsb
@@ -156,8 +158,11 @@ image:
 fake_gps:
   # select data source
   use_mocap: true         # ~mocap/pose
-  mocap_transform: true   # ~mocap/tf instead of pose
+  mocap_transform: false  # ~mocap/tf instead of pose
+  mocap_withcovariance: false  # ~mocap/pose uses PoseWithCovarianceStamped Message
   use_vision: false       # ~vision (pose)
+  use_hil_gps: true
+  gps_id: 4
   # origin (default: Zürich)
   geo_origin:
     lat: 47.3667          # latitude [degrees]
@@ -165,7 +170,10 @@ fake_gps:
     alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
   eph: 2.0
   epv: 2.0
-  satellites_visible: 5   # virtual number of visible satellites
+  horiz_accuracy: 0.5
+  vert_accuracy: 0.5
+  speed_accuracy: 0.0
+  satellites_visible: 6   # virtual number of visible satellites
   fix_type: 3             # type of GPS fix (default: 3D)
   tf:
     listen: false
@@ -174,6 +182,25 @@ fake_gps:
     child_frame_id: "fix" # TF child_frame_id
     rate_limit: 10.0      # TF rate
   gps_rate: 5.0           # GPS data publishing rate
+
+# landing_target
+landing_target:
+  listen_lt: false
+  mav_frame: "LOCAL_NED"
+  land_target_type: "VISION_FIDUCIAL"
+  image:
+    width: 640            # [pixels]
+    height: 480
+  camera:
+    fov_x: 2.0071286398   # default: 115 [degrees]
+    fov_y: 2.0071286398
+  tf:
+    send: true
+    listen: false
+    frame_id: "landing_target"
+    child_frame_id: "camera_center"
+    rate_limit: 10.0
+  target_size: {x:  0.3, y:  0.3}
 
 # mocap_pose_estimate
 mocap:
@@ -190,7 +217,7 @@ odometry:
 # px4flow
 px4flow:
   frame_id: "px4flow"
-  ranger_fov: !degrees 6.8  # 6.8 degreens at 5 meters, 31 degrees at 1 meter
+  ranger_fov: 0.118682      # 6.8 degrees at 5 meters, 31 degrees at 1 meter
   ranger_min_range: 0.3     # meters
   ranger_max_range: 5.0     # meters
 
