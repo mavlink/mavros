@@ -1,42 +1,31 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(libmavconn)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED)
 
-## System dependencies are found with CMake's conventions
-find_package(console_bridge REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # we dont use add_compile_options with pedantic in message packages
+  # because the Python C extensions dont comply with it
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+endif()
+
+find_package(ament_cmake REQUIRED)
 
 # add package modules path, not needed in dependend packages
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-include(EnableCXX11)
-include(MavrosMavlink)
 
-# Fixed in mavlink 2016.7.7
-#-> enum values out of int range
-#list(APPEND IGNORE_DIALECTS "autoquad")
-
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES mavconn
-  DEPENDS Boost console_bridge mavlink
-  CFG_EXTRAS libmavconn-extras.cmake
-)
-
-###########
-## Build ##
-###########
+## System dependencies are found with CMake's conventions
+find_package(console_bridge REQUIRED)
+find_package(Asio REQUIRED)
+find_package(mavlink REQUIRED)
 
 include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include
-  ${Boost_INCLUDE_DIRS}
+  ${Asio_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
 )
@@ -49,9 +38,8 @@ add_library(mavconn
   src/tcp.cpp
   src/udp.cpp
 )
-target_link_libraries(mavconn
-  ${Boost_LIBRARIES}
-  ${console_bridge_LIBRARIES}
+ament_target_dependencies(mavconn
+  "console_bridge"
 )
 
 # Use catkin-supplied em_expand macros to generate source files
@@ -69,45 +57,48 @@ message(STATUS "Copy mavlink_dialect.h to source tree")
 file(
   COPY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h
   DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
-  )
+)
 
-#############
-## Install ##
-#############
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executables and/or libraries for installation
 install(TARGETS mavconn
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/mavconn/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
-  FILES_MATCHING PATTERN "*.h"
+install(DIRECTORY include/
+  DESTINATION include
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
-  FILES_MATCHING PATTERN "*.h"
+#install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/
+#  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
+#  FILES_MATCHING PATTERN "*.h"
+#)
+
+install(DIRECTORY cmake
+  DESTINATION share/${PROJECT_NAME}
 )
 
-## Install cmake files (thanks to cmake_modules package)
-install(DIRECTORY cmake/Modules
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
-)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest)
+  find_package(ament_lint_auto REQUIRED)
 
-#############
-## Testing ##
-#############
+  ament_lint_auto_find_test_dependencies()
 
-if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(mavconn-test test/test_mavconn.cpp)
-  target_link_libraries(mavconn-test mavconn pthread)
+  ament_add_gtest(test_mavconn test/test_mavconn.cpp)
+  target_link_libraries(test_mavconn mavconn)
+  ament_target_dependencies(test_mavconn
+    "geometry_msgs"
+    "console_bridge"
+  )
 endif()
+
+ament_export_dependencies(console_bridge)
+ament_export_include_directories(include)
+ament_export_libraries(mavconn)
+ament_export_targets(mavconn)
+ament_package(
+  CONFIG_EXTRAS "libmavconn-extras.cmake"
+)
 
 # vim: ts=2 sw=2 et:

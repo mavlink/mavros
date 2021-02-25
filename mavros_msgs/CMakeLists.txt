@@ -147,11 +147,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-# install(
-#   DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-# )
+install(
+  DIRECTORY include/
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.h"
+)
 
 ament_package()
 # vim: ts=2 sw=2 et:
