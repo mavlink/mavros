@@ -153,5 +153,14 @@ install(
   FILES_MATCHING PATTERN "*.h"
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+
+  # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
+
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_package()
 # vim: ts=2 sw=2 et:

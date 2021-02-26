@@ -12,7 +12,7 @@
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
-  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
   <license>GPLv3</license>
   <license>LGPLv3</license>
   <license>BSD</license>
@@ -20,6 +20,8 @@
   <url type="website">http://wiki.ros.org/mavros</url>
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

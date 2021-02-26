@@ -8,7 +8,7 @@
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
-  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
   <license>GPLv3</license>
   <license>LGPLv3</license>
   <license>BSD</license>
@@ -17,11 +17,12 @@
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
 
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <!-- <depend>builtin_interfaces</depend> -->
   <depend>geographic_msgs</depend>
@@ -34,6 +35,8 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>
