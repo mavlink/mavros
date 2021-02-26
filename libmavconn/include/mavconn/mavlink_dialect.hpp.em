@@ -19,6 +19,8 @@
 @#
 
 #pragma once
+#ifndef MAVCONN__MAVLINK_DIALECT_HPP_
+#define MAVCONN__MAVLINK_DIALECT_HPP_
 
 // AUTOMATIC GENERATED FILE!
 // from include/mavconn/mavlink_dialect.hpp.em
@@ -28,3 +30,5 @@
 
 @[for dialect in MAVLINK_V20_DIALECTS]#include <mavlink/v2.0/@(dialect)/@(dialect).hpp>
 @[end for]
+
+#endif  // MAVCONN__MAVLINK_DIALECT_HPP_

@@ -15,11 +15,14 @@
  * @{
  */
 
-#include <cassert>
-
 #include <mavconn/console_bridge_compat.hpp>
 #include <mavconn/tcp.hpp>
 #include <mavconn/thread_utils.hpp>
+
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 // Ensure the correct io_service() is called based on asio version
 #if ASIO_VERSION >= 101400
@@ -43,7 +46,7 @@ using utils::to_string_ss;
 #define PFXd PFX "%zu: "
 
 static bool resolve_address_tcp(
-  io_service & io, size_t chan, std::string host, unsigned short port,
+  io_service & io, size_t chan, std::string host, uint16_t port,
   tcp::endpoint & ep)
 {
   bool result = false;
@@ -57,8 +60,7 @@ static bool resolve_address_tcp(
       ep.port(port);
       result = true;
       CONSOLE_BRIDGE_logDebug(
-        PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(
-          ep).c_str());
+        PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
     };
 
 #if ASIO_VERSION >= 101200
@@ -81,7 +83,7 @@ static bool resolve_address_tcp(
 
 MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, unsigned short server_port)
+  std::string server_host, uint16_t server_port)
 : MAVConnInterface(system_id, component_id),
   io_service(),
   io_work(new io_service::work(io_service)),
@@ -303,7 +305,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 
 MAVConnTCPServer::MAVConnTCPServer(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, unsigned short server_port)
+  std::string server_host, uint16_t server_port)
 : MAVConnInterface(system_id, component_id),
   io_service(),
   acceptor(io_service),
@@ -374,14 +376,15 @@ mavlink_status_t MAVConnTCPServer::get_status()
     auto inst_status = instp->get_status();
 
     // [[[cog:
-    // for f in ('packet_rx_success_count', 'packet_rx_drop_count', 'buffer_overrun', 'parse_error'):
-    //     cog.outl("status.{f:23s} += inst_status.{f};".format(**locals()))
+    // for f in ('packet_rx_success_count', 'packet_rx_drop_count',
+    //     'buffer_overrun', 'parse_error'):
+    //     cog.outl("status.{f} += inst_status.{f};".format(**locals()))
     // ]]]
     status.packet_rx_success_count += inst_status.packet_rx_success_count;
     status.packet_rx_drop_count += inst_status.packet_rx_drop_count;
     status.buffer_overrun += inst_status.buffer_overrun;
     status.parse_error += inst_status.parse_error;
-    // [[[end]]] (checksum: a6186246ed026f1cf2b4ffc7407e893b)
+    // [[[end]]] (checksum: cd582e46d3a563caabfefe819243b62c)
 
     /* seq counters always 0 for this connection type */
   }
@@ -400,13 +403,13 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
     // [[[cog:
     // for p in ('tx', 'rx'):
     //     for f in ('total_bytes', 'speed'):
-    //         cog.outl("iostat.{p}_{f:11s} += inst_iostat.{p}_{f};".format(**locals()))
+    //         cog.outl("iostat.{p}_{f} += inst_iostat.{p}_{f};".format(**locals()))
     // ]]]
     iostat.tx_total_bytes += inst_iostat.tx_total_bytes;
     iostat.tx_speed += inst_iostat.tx_speed;
     iostat.rx_total_bytes += inst_iostat.rx_total_bytes;
     iostat.rx_speed += inst_iostat.rx_speed;
-    // [[[end]]] (checksum: fb4fe06794471d9b068ce0c129ee7673)
+    // [[[end]]] (checksum: b86c7c86ee2b15eb702c2e1da3ca82d8)
   }
 
   return iostat;
@@ -457,8 +460,7 @@ void MAVConnTCPServer::do_accept()
 
       std::weak_ptr<MAVConnTCPClient> weak_client {acceptor_client};
       acceptor_client->client_connected(sthis->conn_id);
-      acceptor_client->message_received_cb =
-      std::bind(
+      acceptor_client->message_received_cb = std::bind(
         &MAVConnTCPServer::recv_message, sthis, std::placeholders::_1,
         std::placeholders::_2);
       acceptor_client->port_closed_cb = [weak_client, sthis]() {sthis->client_closed(weak_client);};
@@ -491,4 +493,4 @@ void MAVConnTCPServer::recv_message(const mavlink_message_t * message, const Fra
   }
 }
 
-} // namespace mavconn
+}  // namespace mavconn

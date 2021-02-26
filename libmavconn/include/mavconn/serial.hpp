@@ -16,11 +16,16 @@
  */
 
 #pragma once
+#ifndef MAVCONN__SERIAL_HPP_
+#define MAVCONN__SERIAL_HPP_
+
+#include <mavconn/interface.hpp>
+#include <mavconn/msgbuffer.hpp>
 
 #include <asio.hpp>
 #include <atomic>
-#include <mavconn/interface.hpp>
-#include <mavconn/msgbuffer.hpp>
+#include <deque>
+#include <string>
 
 namespace mavconn
 {
@@ -36,11 +41,11 @@ public:
   static constexpr auto DEFAULT_BAUDRATE = 57600;
 
   /**
-       * Open and run serial link.
-       *
-       * @param[in] device    TTY device path
-       * @param[in] baudrate  serial baudrate
-       */
+   * Open and run serial link.
+   *
+   * @param[in] device    TTY device path
+   * @param[in] baudrate  serial baudrate
+   */
   MAVConnSerial(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE, bool hwflow = false);
@@ -71,4 +76,6 @@ private:
   void do_write(bool check_tx_state);
 };
 
-} // namespace mavconn
+}  // namespace mavconn
+
+#endif  // MAVCONN__SERIAL_HPP_

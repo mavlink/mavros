@@ -16,9 +16,11 @@
  */
 
 #pragma once
+#ifndef MAVCONN__MSGBUFFER_HPP_
+#define MAVCONN__MSGBUFFER_HPP_
 
-#include <cassert>
 #include <mavconn/mavlink_dialect.hpp>
+#include <cassert>
 
 namespace mavconn
 {
@@ -42,8 +44,8 @@ struct MsgBuffer
   }
 
   /**
-       * @brief Buffer constructor from mavlink_message_t
-       */
+   * @brief Buffer constructor from mavlink_message_t
+   */
   explicit MsgBuffer(const mavlink::mavlink_message_t * msg)
   : pos(0)
   {
@@ -53,8 +55,8 @@ struct MsgBuffer
   }
 
   /**
-       * @brief Buffer constructor for mavlink::Message derived object.
-       */
+   * @brief Buffer constructor for mavlink::Message derived object.
+   */
   MsgBuffer(
     const mavlink::Message & obj, mavlink::mavlink_status_t * status, uint8_t sysid,
     uint8_t compid)
@@ -76,9 +78,9 @@ struct MsgBuffer
   }
 
   /**
-       * @brief Buffer constructor for send_bytes()
-       * @param[in] nbytes should be less than MAX_SIZE
-       */
+   * @brief Buffer constructor for send_bytes()
+   * @param[in] nbytes should be less than MAX_SIZE
+   */
   MsgBuffer(const uint8_t * bytes, ssize_t nbytes)
   : len(nbytes),
     pos(0)
@@ -104,4 +106,6 @@ struct MsgBuffer
   }
 };
 
-} // namespace mavconn
+}  // namespace mavconn
+
+#endif  // MAVCONN__MSGBUFFER_HPP_

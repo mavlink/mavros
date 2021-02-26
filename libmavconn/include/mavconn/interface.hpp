@@ -20,17 +20,21 @@
  */
 
 #pragma once
+#ifndef MAVCONN__INTERFACE_HPP_
+#define MAVCONN__INTERFACE_HPP_
+
+#include <mavconn/mavlink_dialect.hpp>
 
 #include <atomic>
 #include <cassert>
 #include <chrono>
 #include <deque>
 #include <functional>
-#include <mavconn/mavlink_dialect.hpp>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <unordered_map>
@@ -67,8 +71,8 @@ class DeviceError : public std::runtime_error
 {
 public:
   /**
-      * @breif Construct error.
-       */
+   * @breif Construct error.
+   */
   template<typename T>
   DeviceError(const char * module, T msg)
   : std::runtime_error(make_message(module, msg))
@@ -124,82 +128,82 @@ public:
   };
 
   /**
-       * @param[in] system_id     sysid for send_message
-       * @param[in] component_id  compid for send_message
-       */
-  MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+   * @param[in] system_id     sysid for send_message
+   * @param[in] component_id  compid for send_message
+   */
+  explicit MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
   /**
-       * @brief Close connection.
-       */
+   * @brief Close connection.
+   */
   virtual void close() = 0;
 
   /**
-       * @brief Send message (mavlink_message_t)
-       *
-       * Can be used to forward messages from other connection channel.
-       *
-       * @note Does not do finalization!
-       *
-       * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
-       * @param[in] *message  not changed
-       */
+   * @brief Send message (mavlink_message_t)
+   *
+   * Can be used to forward messages from other connection channel.
+   *
+   * @note Does not do finalization!
+   *
+   * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+   * @param[in] *message  not changed
+   */
   virtual void send_message(const mavlink::mavlink_message_t * message) = 0;
 
   /**
-       * @brief Send message (child of mavlink::Message)
-       *
-       * Does serialization inside.
-       * System and Component ID = from this object.
-       *
-       * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
-       * @param[in] &message  not changed
-       */
+   * @brief Send message (child of mavlink::Message)
+   *
+   * Does serialization inside.
+   * System and Component ID = from this object.
+   *
+   * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+   * @param[in] &message  not changed
+   */
   virtual void send_message(const mavlink::Message & message)
   {
     send_message(message, this->comp_id);
   }
 
   /**
-       * @brief Send message (child of mavlink::Message)
-       *
-       * Does serialization inside.
-       * System ID = from this object.
-       * Component ID passed by argument.
-       *
-       * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
-       * @param[in] &message  not changed
-       * @param[in] src_compid  sets the component ID of the message source
-       */
+   * @brief Send message (child of mavlink::Message)
+   *
+   * Does serialization inside.
+   * System ID = from this object.
+   * Component ID passed by argument.
+   *
+   * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+   * @param[in] &message  not changed
+   * @param[in] src_compid  sets the component ID of the message source
+   */
   virtual void send_message(const mavlink::Message & message, const uint8_t src_compid) = 0;
 
   /**
-       * @brief Send raw bytes (for some quirks)
-       * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
-       */
+   * @brief Send raw bytes (for some quirks)
+   * @throws std::length_error  On exceeding Tx queue limit (MAX_TXQ_SIZE)
+   */
   virtual void send_bytes(const uint8_t * bytes, size_t length) = 0;
 
   /**
-       * @brief Send message and ignore possible drop due to Tx queue limit
-       */
+   * @brief Send message and ignore possible drop due to Tx queue limit
+   */
   void send_message_ignore_drop(const mavlink::mavlink_message_t * message);
 
   /**
-       * @brief Send message and ignore possible drop due to Tx queue limit
-       *
-       * System and Component ID = from this object.
-       */
+   * @brief Send message and ignore possible drop due to Tx queue limit
+   *
+   * System and Component ID = from this object.
+   */
   void send_message_ignore_drop(const mavlink::Message & message)
   {
     send_message_ignore_drop(message, this->comp_id);
   }
 
   /**
-       * @brief Send message and ignore possible drop due to Tx queue limit
-       *
-       * System ID = from this object.
-       * Component ID passed by argument.
-       */
+   * @brief Send message and ignore possible drop due to Tx queue limit
+   *
+   * System ID = from this object.
+   * Component ID passed by argument.
+   */
   void send_message_ignore_drop(const mavlink::Message & message, const uint8_t src_compid);
 
   //! Message receive callback
@@ -229,28 +233,28 @@ public:
   }
 
   /**
-       * Set protocol used for encoding mavlink::Mavlink messages.
-       */
+   * Set protocol used for encoding mavlink::Mavlink messages.
+   */
   void set_protocol_version(Protocol pver);
   Protocol get_protocol_version();
 
   /**
-       * @brief Construct connection from URL
-       *
-       * Supported URL schemas:
-       * - serial://
-       * - udp://
-       * - tcp://
-       * - tcp-l://
-       *
-       * Please see user's documentation for details.
-       *
-       * @param[in] url           resource locator
-       * @param[in] system_id     optional system id
-       * @param[in] component_id  optional component id
-       * @return @a Ptr to constructed interface class,
-       *         or throw @a DeviceError if error occured.
-       */
+   * @brief Construct connection from URL
+   *
+   * Supported URL schemas:
+   * - serial://
+   * - udp://
+   * - tcp://
+   * - tcp-l://
+   *
+   * Please see user's documentation for details.
+   *
+   * @param[in] url           resource locator
+   * @param[in] system_id     optional system id
+   * @param[in] component_id  optional component id
+   * @return @a Ptr to constructed interface class,
+   *         or throw @a DeviceError if error occured.
+   */
   static Ptr open_url(
     std::string url,
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
@@ -283,8 +287,8 @@ protected:
   }
 
   /**
-       * Parse buffer and emit massage_received.
-       */
+   * Parse buffer and emit massage_received.
+   */
   void parse_buffer(const char * pfx, uint8_t * buf, const size_t bufsize, size_t bytes_received);
 
   void iostat_tx_add(size_t bytes);
@@ -313,11 +317,13 @@ private:
   static std::once_flag init_flag;
 
   /**
-       * Initialize message_entries map
-       *
-       * autogenerated. placed in mavlink_helpers.cpp
-       */
+   * Initialize message_entries map
+   *
+   * autogenerated. placed in mavlink_helpers.cpp
+   */
   static void init_msg_entry();
 };
 
-} // namespace mavconn
+}  // namespace mavconn
+
+#endif  // MAVCONN__INTERFACE_HPP_

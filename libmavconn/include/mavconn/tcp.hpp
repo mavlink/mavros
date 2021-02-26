@@ -16,13 +16,19 @@
  */
 
 #pragma once
+#ifndef MAVCONN__TCP_HPP_
+#define MAVCONN__TCP_HPP_
+
+#include <mavconn/interface.hpp>
+#include <mavconn/msgbuffer.hpp>
 
 #include <asio.hpp>
 #include <atomic>
 #include <cstring>
+#include <deque>
 #include <list>
-#include <mavconn/interface.hpp>
-#include <mavconn/msgbuffer.hpp>
+#include <memory>
+#include <string>
 
 namespace mavconn
 {
@@ -40,20 +46,22 @@ public:
   static constexpr auto DEFAULT_SERVER_PORT = 5760;
 
   /**
-       * Create generic TCP client (connect to the server)
-       * @param[id] server_addr    remote host
-       * @param[id] server_port    remote port
-       */
+   * Create generic TCP client (connect to the server)
+   * @param[id] server_addr    remote host
+   * @param[id] server_port    remote port
+   */
   MAVConnTCPClient(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string server_host = DEFAULT_SERVER_HOST,
-    unsigned short server_port = DEFAULT_SERVER_PORT);
+    uint16_t server_port = DEFAULT_SERVER_PORT);
+
   /**
-       * Special client variation for use in MAVConnTCPServer
-       */
+   * Special client variation for use in MAVConnTCPServer
+   */
   explicit MAVConnTCPClient(
     uint8_t system_id, uint8_t component_id,
     asio::io_service & server_io);
+
   virtual ~MAVConnTCPClient();
 
   void close() override;
@@ -84,8 +92,8 @@ private:
   std::recursive_mutex mutex;
 
   /**
-       * This special function called by TCP server when connection accepted.
-       */
+   * This special function called by TCP server when connection accepted.
+   */
   void client_connected(size_t server_channel);
 
   void do_recv();
@@ -105,12 +113,12 @@ public:
   static constexpr auto DEFAULT_BIND_PORT = 5760;
 
   /**
-       * @param[id] server_addr    bind host
-       * @param[id] server_port    bind port
-       */
+   * @param[id] server_addr    bind host
+   * @param[id] server_port    bind port
+   */
   MAVConnTCPServer(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-    std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT);
+    std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT);
   virtual ~MAVConnTCPServer();
 
   void close() override;
@@ -146,4 +154,6 @@ private:
   void recv_message(const mavlink::mavlink_message_t * message, const Framing framing);
 };
 
-} // namespace mavconn
+}  // namespace mavconn
+
+#endif  // MAVCONN__TCP_HPP_

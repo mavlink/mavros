@@ -16,11 +16,17 @@
  */
 
 #pragma once
+#ifndef MAVCONN__UDP_HPP_
+#define MAVCONN__UDP_HPP_
+
+#include <mavconn/interface.hpp>
+#include <mavconn/msgbuffer.hpp>
 
 #include <asio.hpp>
 #include <atomic>
-#include <mavconn/interface.hpp>
-#include <mavconn/msgbuffer.hpp>
+#include <deque>
+#include <memory>
+#include <string>
 
 namespace mavconn
 {
@@ -43,16 +49,17 @@ public:
   static constexpr auto PERMANENT_BROADCAST_REMOTE_HOST = "***permanent broadcast***";
 
   /**
-       * @param[id] bind_host    bind host
-       * @param[id] bind_port    bind port
-       * @param[id] remote_host  remote host (optional)
-       * @param[id] remote_port  remote port (optional)
-       */
+   * @param[id] bind_host    bind host
+   * @param[id] bind_port    bind port
+   * @param[id] remote_host  remote host (optional)
+   * @param[id] remote_port  remote port (optional)
+   */
   MAVConnUDP(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-    std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT,
+    std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT,
     std::string remote_host = DEFAULT_REMOTE_HOST,
-    unsigned short remote_port = DEFAULT_REMOTE_PORT);
+    uint16_t remote_port = DEFAULT_REMOTE_PORT);
+
   virtual ~MAVConnUDP();
 
   void close() override;
@@ -90,4 +97,6 @@ private:
   void do_sendto(bool check_tx_state);
 };
 
-} // namespace mavconn
+}  // namespace mavconn
+
+#endif  // MAVCONN__UDP_HPP_

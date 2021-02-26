@@ -17,12 +17,16 @@
  */
 
 #pragma once
+#ifndef MAVCONN__THREAD_UTILS_HPP_
+#define MAVCONN__THREAD_UTILS_HPP_
+
+#include <pthread.h>
 
 #include <cstdio>
-#include <pthread.h>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace mavconn
 {
@@ -78,10 +82,12 @@ inline const std::string to_string_ss(T & obj)
   return ss.str();
 }
 
-constexpr size_t operator"" _KiB(unsigned long long sz)
+constexpr size_t operator"" _KiB(unsigned long long sz)      // NOLINT
 {
   return sz * 1024;
 }
 
-} // namespace utils
-} // namespace mavconn
+}  // namespace utils
+}  // namespace mavconn
+
+#endif  // MAVCONN__THREAD_UTILS_HPP_

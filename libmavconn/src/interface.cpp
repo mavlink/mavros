@@ -15,15 +15,18 @@
  * @{
  */
 
-#include <cassert>
-#include <set>
-
 #include <mavconn/console_bridge_compat.hpp>
 #include <mavconn/interface.hpp>
 #include <mavconn/msgbuffer.hpp>
 #include <mavconn/serial.hpp>
 #include <mavconn/tcp.hpp>
 #include <mavconn/udp.hpp>
+
+#include <cassert>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
 
 namespace mavconn
 {
@@ -35,7 +38,8 @@ using mavlink::mavlink_status_t;
 // static members
 std::once_flag MAVConnInterface::init_flag;
 std::unordered_map<mavlink::msgid_t,
-  const mavlink::mavlink_msg_entry_t *> MAVConnInterface::message_entries {};
+  const mavlink::mavlink_msg_entry_t *>
+MAVConnInterface::message_entries {};
 std::atomic<size_t> MAVConnInterface::conn_id_counter {0};
 
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id)
@@ -106,8 +110,7 @@ void MAVConnInterface::parse_buffer(
   for (; bytes_received > 0; bytes_received--) {
     auto c = *buf++;
 
-    auto msg_received =
-      static_cast<Framing>(mavlink::mavlink_frame_char_buffer(
+    auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(
         &m_buffer, &m_parse_status, c,
         &message, &m_mavlink_status));
 
@@ -360,8 +363,8 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
   uint8_t system_id, uint8_t component_id)
 {
   /* Based on code found here:
-       * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
-       */
+   * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
+   */
 
   const std::string proto_end("://");
   std::string proto;
@@ -425,4 +428,4 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
   }
 }
 
-} // namespace mavconn
+}  // namespace mavconn

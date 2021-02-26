@@ -15,11 +15,12 @@
  * @{
  */
 
-#include <cassert>
-
 #include <mavconn/console_bridge_compat.hpp>
 #include <mavconn/thread_utils.hpp>
 #include <mavconn/udp.hpp>
+
+#include <cassert>
+#include <string>
 
 namespace mavconn
 {
@@ -50,8 +51,7 @@ static bool resolve_address_udp(
       ep.port(port);
       result = true;
       CONSOLE_BRIDGE_logDebug(
-        PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(
-          ep).c_str());
+        PFXd "host %s resolved as %s", chan, host.c_str(), to_string_ss(ep).c_str());
     };
 
 #if ASIO_VERSION >= 101200
@@ -72,8 +72,8 @@ static bool resolve_address_udp(
 
 MAVConnUDP::MAVConnUDP(
   uint8_t system_id, uint8_t component_id,
-  std::string bind_host, unsigned short bind_port,
-  std::string remote_host, unsigned short remote_port)
+  std::string bind_host, uint16_t bind_port,
+  std::string remote_host, uint16_t remote_port)
 : MAVConnInterface(system_id, component_id),
   io_service(),
   io_work(new io_service::work(io_service)),
@@ -330,4 +330,4 @@ std::string MAVConnUDP::get_remote_endpoint() const
   return to_string_ss(remote_ep);
 }
 
-} // namespace mavconn
+}  // namespace mavconn
