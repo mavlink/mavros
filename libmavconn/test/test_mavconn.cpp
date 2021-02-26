@@ -11,38 +11,40 @@
  * Test mavconn library
  */
 
+#include <mavconn/interface.hpp>
+#include <mavconn/serial.hpp>
+#include <mavconn/tcp.hpp>
+#include <mavconn/udp.hpp>
+
 // Gmock broken on Ubuntu (thrusty),
 //  its gmock 1.6 require gtest 1.7, while repository only provides 1.6
 //  this error exist one year without any updates.
 //  https://bugs.launchpad.net/ubuntu/+source/google-mock/+bug/1201279
 //
 //  I think on Debian that was fixed while ago. But i can't use it in ros buildfarm.
-//#include <gmock/gmock.h>
+// #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <condition_variable>
+#include <limits>
+#include <memory>
 
-#include <mavconn/interface.hpp>
-#include <mavconn/serial.hpp>
-#include <mavconn/tcp.hpp>
-#include <mavconn/udp.hpp>
-
-using namespace mavconn;
-using mavlink::mavlink_message_t;
-using mavlink::msgid_t;
+using namespace mavconn; // NOLINT
+using mavlink_message_t = mavlink::mavlink_message_t;
+using msgid_t = mavlink::msgid_t;
 
 namespace mavlink
 {
 namespace common
 {
-using namespace mavlink::minimal;
+using namespace mavlink::minimal;     // NOLINT
 namespace msg
 {
-using namespace mavlink::minimal::msg;
+using namespace mavlink::minimal::msg;         // NOLINT
 }
 }
-}
+}  // namespace mavlink
 
 static void send_heartbeat(MAVConnInterface * ip)
 {
@@ -52,11 +54,11 @@ static void send_heartbeat(MAVConnInterface * ip)
   using mavlink::common::MAV_TYPE;
 
   mavlink::common::msg::HEARTBEAT hb = {};
-  hb.type = int(MAV_TYPE::ONBOARD_CONTROLLER);
-  hb.autopilot = int(MAV_AUTOPILOT::INVALID);
-  hb.base_mode = int(MAV_MODE::MANUAL_ARMED);
+  hb.type = static_cast<int>(MAV_TYPE::ONBOARD_CONTROLLER);
+  hb.autopilot = static_cast<int>(MAV_AUTOPILOT::INVALID);
+  hb.base_mode = static_cast<int>(MAV_MODE::MANUAL_ARMED);
   hb.custom_mode = 0;
-  hb.system_status = int(MAV_STATE::ACTIVE);
+  hb.system_status = static_cast<int>(MAV_STATE::ACTIVE);
 
   ip->send_message(hb);
 }
@@ -73,7 +75,7 @@ public:
   {
     (void)framing;
 
-    //printf("Got message %u, len: %u, framing: %d\n", message->msgid, message->len, int(framing));
+    // printf("Got message %u, len: %u, framing: %d\n", message->msgid, message->len, int(framing));
     message_id = message->msgid;
     cond.notify_one();
   }
@@ -136,7 +138,8 @@ TEST_F(TCP, bind_error)
   ASSERT_THROW(
     conns[1] = std::make_shared<MAVConnTCPServer>(
       42, 200, "localhost",
-      57600), DeviceError);
+      57600),
+    DeviceError);
 }
 
 TEST_F(TCP, connect_error)
@@ -210,7 +213,8 @@ TEST(SERIAL, open_error)
   ASSERT_THROW(
     serial = std::make_shared<MAVConnSerial>(
       42, 200, "/some/magic/not/exist/path",
-      57600), DeviceError);
+      57600),
+    DeviceError);
 }
 
 #if 0
