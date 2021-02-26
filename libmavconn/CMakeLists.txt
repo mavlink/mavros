@@ -22,17 +22,19 @@ find_package(console_bridge REQUIRED)
 find_package(Asio REQUIRED)
 find_package(mavlink REQUIRED)
 
+include(em_expand)
+
 include_directories(
   include
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/include
   ${Asio_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-add_library(mavconn
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp
+add_library(mavconn SHARED
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/src/mavlink_helpers.cpp
   src/interface.cpp
   src/serial.cpp
   src/tcp.cpp
@@ -42,23 +44,22 @@ ament_target_dependencies(mavconn
   "console_bridge"
 )
 
-# Use catkin-supplied em_expand macros to generate source files
+# Use em_expand macros to generate source files
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.h)
 
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/mavlink.context.py
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
-  ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/src/mavlink_helpers.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/src/mavlink_helpers.cpp)
 
 message(STATUS "Copy mavlink_dialect.h to source tree")
 file(
-  COPY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/mavlink_dialect.h
+  COPY ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.h
   DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
 )
-
 
 install(TARGETS mavconn
   ARCHIVE DESTINATION lib
@@ -70,10 +71,10 @@ install(DIRECTORY include/
   DESTINATION include
 )
 
-#install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include/mavconn/
-#  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/mavconn
-#  FILES_MATCHING PATTERN "*.h"
-#)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/
+  DESTINATION include/mavconn
+  FILES_MATCHING PATTERN "*.h"
+)
 
 install(DIRECTORY cmake
   DESTINATION share/${PROJECT_NAME}
@@ -88,7 +89,6 @@ if(BUILD_TESTING)
   ament_add_gtest(test_mavconn test/test_mavconn.cpp)
   target_link_libraries(test_mavconn mavconn)
   ament_target_dependencies(test_mavconn
-    "geometry_msgs"
     "console_bridge"
   )
 endif()
@@ -96,7 +96,7 @@ endif()
 ament_export_dependencies(console_bridge)
 ament_export_include_directories(include)
 ament_export_libraries(mavconn)
-ament_export_targets(mavconn)
+#ament_export_targets(mavconn)
 ament_package(
   CONFIG_EXTRAS "libmavconn-extras.cmake"
 )
