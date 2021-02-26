@@ -19,7 +19,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 ## System dependencies are found with CMake's conventions
 find_package(console_bridge REQUIRED)
-find_package(Asio REQUIRED)
+find_package(ASIO REQUIRED)
 find_package(mavlink REQUIRED)
 
 include(em_expand)
@@ -27,7 +27,7 @@ include(em_expand)
 include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}/generated/include
-  ${Asio_INCLUDE_DIRS}
+  ${ASIO_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
   ${console_bridge_INCLUDE_DIRS}
 )
