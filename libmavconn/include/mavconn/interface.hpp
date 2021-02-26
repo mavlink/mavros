@@ -1,3 +1,11 @@
+/*
+ * libmavconn
+ * Copyright 2013,2014,2015,2016,2021 Vladimir Ermakov, All rights reserved.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MAVConn class interface
  * @file interface.h
@@ -10,19 +18,10 @@
  *  This lib provide simple interface to MAVLink enabled devices
  *  such as autopilots.
  */
-/*
- * libmavconn
- * Copyright 2013,2014,2015,2016 Vladimir Ermakov, All rights reserved.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
 
-#include <boost/system/system_error.hpp>
-
+#include <system_error>
 #include <deque>
 #include <mutex>
 #include <vector>
