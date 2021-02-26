@@ -23,11 +23,12 @@
 #include <mavconn/msgbuffer.hpp>
 
 namespace mavconn {
+
 /**
  * @brief Serial interface
  */
 class MAVConnSerial : public MAVConnInterface,
-		      public std::enable_shared_from_this<MAVConnSerial> {
+                      public std::enable_shared_from_this<MAVConnSerial> {
 public:
     static constexpr auto DEFAULT_DEVICE = "/dev/ttyACM0";
     static constexpr auto DEFAULT_BAUDRATE = 57600;
@@ -39,7 +40,7 @@ public:
 	 * @param[in] baudrate  serial baudrate
 	 */
     MAVConnSerial(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-	std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE, bool hwflow = false);
+        std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE, bool hwflow = false);
     virtual ~MAVConnSerial();
 
     void close() override;
@@ -50,13 +51,13 @@ public:
 
     inline bool is_open() override
     {
-	return serial_dev.is_open();
+        return serial_dev.is_open();
     }
 
 private:
-    boost::asio::io_service io_service;
+    asio::io_service io_service;
     std::thread io_thread;
-    boost::asio::serial_port serial_dev;
+    asio::serial_port serial_dev;
 
     std::atomic<bool> tx_in_progress;
     std::deque<MsgBuffer> tx_q;
@@ -66,4 +67,5 @@ private:
     void do_read();
     void do_write(bool check_tx_state);
 };
+
 } // namespace mavconn

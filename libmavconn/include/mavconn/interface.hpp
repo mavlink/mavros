@@ -62,35 +62,35 @@ enum class Protocol : uint8_t {
 class DeviceError : public std::runtime_error {
 public:
     /**
-	 * @breif Construct error.
-	 */
+        * @breif Construct error.
+         */
     template <typename T>
     DeviceError(const char* module, T msg)
-	: std::runtime_error(make_message(module, msg))
+        : std::runtime_error(make_message(module, msg))
     {
     }
 
     template <typename T>
     static std::string make_message(const char* module, T msg)
     {
-	std::ostringstream ss;
-	ss << "DeviceError:" << module << ":" << msg_to_string(msg);
-	return ss.str();
+        std::ostringstream ss;
+        ss << "DeviceError:" << module << ":" << msg_to_string(msg);
+        return ss.str();
     }
 
     static std::string msg_to_string(const char* description)
     {
-	return description;
+        return description;
     }
 
     static std::string msg_to_string(int errnum)
     {
-	return ::strerror(errnum);
+        return ::strerror(errnum);
     }
 
     static std::string msg_to_string(boost::system::system_error& err)
     {
-	return err.what();
+        return err.what();
     }
 };
 
@@ -109,10 +109,10 @@ public:
     using WeakPtr = std::weak_ptr<MAVConnInterface>;
 
     struct IOStat {
-	size_t tx_total_bytes; //!< total bytes transferred
-	size_t rx_total_bytes; //!< total bytes received
-	float tx_speed;	       //!< current transfer speed [B/s]
-	float rx_speed;	       //!< current receive speed [B/s]
+        size_t tx_total_bytes; //!< total bytes transferred
+        size_t rx_total_bytes; //!< total bytes received
+        float tx_speed;        //!< current transfer speed [B/s]
+        float rx_speed;        //!< current receive speed [B/s]
     };
 
     /**
@@ -149,7 +149,7 @@ public:
 	 */
     virtual void send_message(const mavlink::Message& message)
     {
-	send_message(message, this->comp_id);
+        send_message(message, this->comp_id);
     }
 
     /**
@@ -183,7 +183,7 @@ public:
 	 */
     void send_message_ignore_drop(const mavlink::Message& message)
     {
-	send_message_ignore_drop(message, this->comp_id);
+        send_message_ignore_drop(message, this->comp_id);
     }
 
     /**
@@ -205,19 +205,19 @@ public:
 
     inline uint8_t get_system_id()
     {
-	return sys_id;
+        return sys_id;
     }
     inline void set_system_id(uint8_t sysid)
     {
-	sys_id = sysid;
+        sys_id = sysid;
     }
     inline uint8_t get_component_id()
     {
-	return comp_id;
+        return comp_id;
     }
     inline void set_component_id(uint8_t compid)
     {
-	comp_id = compid;
+        comp_id = compid;
     }
 
     /**
@@ -244,7 +244,7 @@ public:
 	 *         or throw @a DeviceError if error occured.
 	 */
     static Ptr open_url(std::string url,
-	uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+        uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
     static std::vector<std::string> get_known_dialects();
 
@@ -265,12 +265,12 @@ protected:
 
     inline mavlink::mavlink_status_t* get_status_p()
     {
-	return &m_parse_status;
+        return &m_parse_status;
     }
 
     inline mavlink::mavlink_message_t* get_buffer_p()
     {
-	return &m_buffer;
+        return &m_buffer;
     }
 
     /**
@@ -310,4 +310,5 @@ private:
 	 */
     static void init_msg_entry();
 };
+
 } // namespace mavconn

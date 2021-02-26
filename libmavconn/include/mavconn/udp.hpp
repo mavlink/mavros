@@ -23,13 +23,14 @@
 #include <mavconn/msgbuffer.hpp>
 
 namespace mavconn {
+
 /**
  * @brief UDP interface
  *
  * @note IPv4 only
  */
 class MAVConnUDP : public MAVConnInterface,
-		   public std::enable_shared_from_this<MAVConnUDP> {
+                   public std::enable_shared_from_this<MAVConnUDP> {
 public:
     static constexpr auto DEFAULT_BIND_HOST = "localhost";
     static constexpr auto DEFAULT_BIND_PORT = 14555;
@@ -46,8 +47,8 @@ public:
 	 * @param[id] remote_port  remote port (optional)
 	 */
     MAVConnUDP(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-	std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT,
-	std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
+        std::string bind_host = DEFAULT_BIND_HOST, unsigned short bind_port = DEFAULT_BIND_PORT,
+        std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
     virtual ~MAVConnUDP();
 
     void close() override;
@@ -58,23 +59,23 @@ public:
 
     inline bool is_open() override
     {
-	return socket.is_open();
+        return socket.is_open();
     }
 
     std::string get_remote_endpoint() const;
 
 private:
-    boost::asio::io_service io_service;
-    std::unique_ptr<boost::asio::io_service::work> io_work;
+    asio::io_service io_service;
+    std::unique_ptr<asio::io_service::work> io_work;
     std::thread io_thread;
     bool permanent_broadcast;
 
     std::atomic<bool> remote_exists;
-    boost::asio::ip::udp::socket socket;
-    boost::asio::ip::udp::endpoint remote_ep;
-    boost::asio::ip::udp::endpoint recv_ep;
-    boost::asio::ip::udp::endpoint last_remote_ep;
-    boost::asio::ip::udp::endpoint bind_ep;
+    asio::ip::udp::socket socket;
+    asio::ip::udp::endpoint remote_ep;
+    asio::ip::udp::endpoint recv_ep;
+    asio::ip::udp::endpoint last_remote_ep;
+    asio::ip::udp::endpoint bind_ep;
 
     std::atomic<bool> tx_in_progress;
     std::deque<MsgBuffer> tx_q;
@@ -84,4 +85,5 @@ private:
     void do_recvfrom();
     void do_sendto(bool check_tx_state);
 };
+
 } // namespace mavconn
