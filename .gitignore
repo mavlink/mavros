@@ -5,5 +5,5 @@ core
 .vscode/
 
 # generated
-libmavconn/include/mavconn/mavlink_dialect.h
+libmavconn/include/mavconn/mavlink_dialect.hpp
 libmavconn/src/mavlink_helpers.cpp

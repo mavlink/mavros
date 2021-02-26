@@ -47,17 +47,17 @@ ament_target_dependencies(mavconn
 # Use em_expand macros to generate source files
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/generated/mavlink.context.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.h.em
-  ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/mavlink_dialect.hpp.em
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.hpp)
 
 em_expand(${CMAKE_CURRENT_SOURCE_DIR}/mavlink.context.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/generated/mavlink.context.py
   ${CMAKE_CURRENT_SOURCE_DIR}/src/mavlink_helpers.cpp.em
   ${CMAKE_CURRENT_BINARY_DIR}/generated/src/mavlink_helpers.cpp)
 
-message(STATUS "Copy mavlink_dialect.h to source tree")
+message(STATUS "Copy mavlink_dialect.hpp to source tree")
 file(
-  COPY ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.h
+  COPY ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/mavlink_dialect.hpp
   DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/mavconn/
 )
 
@@ -73,7 +73,7 @@ install(DIRECTORY include/
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated/include/mavconn/
   DESTINATION include/mavconn
-  FILES_MATCHING PATTERN "*.h"
+  FILES_MATCHING PATTERN "*.hpp"
 )
 
 install(DIRECTORY cmake
