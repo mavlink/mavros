@@ -25,6 +25,7 @@
 #include <cassert>
 #include <chrono>
 #include <deque>
+#include <functional>
 #include <mavconn/mavlink_dialect.hpp>
 #include <memory>
 #include <mutex>
@@ -88,7 +89,7 @@ public:
         return ::strerror(errnum);
     }
 
-    static std::string msg_to_string(boost::system::system_error& err)
+    static std::string msg_to_string(std::system_error& err)
     {
         return err.what();
     }

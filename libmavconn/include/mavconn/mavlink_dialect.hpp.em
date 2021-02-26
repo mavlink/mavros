@@ -21,7 +21,7 @@
 #pragma once
 
 // AUTOMATIC GENERATED FILE!
-// from include/mavconn/mavlink_dialect.h.em
+// from include/mavconn/mavlink_dialect.hpp.em
 
 #define MAVLINK_START_SIGN_STREAM(link_id)
 #define MAVLINK_END_SIGN_STREAM(link_id)
