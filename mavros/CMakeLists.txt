@@ -107,11 +107,15 @@ add_dependencies(mavros
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(mavros
-  atomic
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
 )
+if(NOT APPLE)
+  target_link_libraries(mavros
+    atomic
+  )
+endif()
 
 add_library(mavros_plugins
   src/plugins/3dr_radio.cpp
