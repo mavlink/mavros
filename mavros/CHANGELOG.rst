@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2021-02-15)
+------------------
+* fix inconsistency in direction of yaw when using set_position in BODY frames and fix problems with yaw in setponit_raw
+* Contributors: zhouzhiwen2000
+
+1.5.2 (2021-02-02)
+------------------
+* readme: add source install note for Noetic release
+* Contributors: Vladimir Ermakov
+
 1.5.1 (2021-01-04)
 ------------------
 * Fix tests for renaming of ECEF cases

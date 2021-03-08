@@ -85,6 +85,10 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		return q * AIRCRAFT_BASELINK_Q;
+
+	case StaticTF::ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK:
+	case StaticTF::ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT:
+		return AIRCRAFT_BASELINK_Q * q;	
 	}
 }
 

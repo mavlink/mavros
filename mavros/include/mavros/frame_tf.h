@@ -62,6 +62,8 @@ enum class StaticTF {
 	ENU_TO_NED,		//!< change from expressed WRT ENU frame to WRT NED frame
 	AIRCRAFT_TO_BASELINK,	//!< change from expressed WRT aircraft frame to WRT to baselink frame
 	BASELINK_TO_AIRCRAFT,	//!< change from expressed WRT baselnk to WRT aircraft
+	ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK,//!< change orientation from being expressed in aircraft frame to baselink frame in an absolute frame of reference.
+	ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT,//!< change orientation from being expressed in baselink frame to aircraft frame in an absolute frame of reference
 };
 
 /**
@@ -184,6 +186,26 @@ inline T transform_orientation_aircraft_baselink(const T &in) {
 template<class T>
 inline T transform_orientation_baselink_aircraft(const T &in) {
 	return detail::transform_orientation(in, StaticTF::BASELINK_TO_AIRCRAFT);
+}
+
+/**
+ * @brief Transform from attitude represented WRT aircraft frame to
+ *		  attitude represented WRT base_link frame, treating aircraft frame 
+ *		  as in an absolute frame of reference (local NED).
+ */
+template<class T>
+inline T transform_orientation_absolute_frame_aircraft_baselink(const T &in) {
+	return detail::transform_orientation(in, StaticTF::ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK);
+}
+
+/**
+ * @brief Transform from attitude represented WRT baselink frame to
+ *		  attitude represented WRT body frame, treating baselink frame 
+ *		  as in an absolute frame of reference (local NED).
+ */
+template<class T>
+inline T transform_orientation_absolute_frame_baselink_aircraft(const T &in) {
+	return detail::transform_orientation(in, StaticTF::ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT);
 }
 
 /**

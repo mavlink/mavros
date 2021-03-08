@@ -111,7 +111,7 @@ Launch Files
 
 Launch files are provided for use with common FCUs, in particular [Pixhawk](pixhawk):
 
-  * [px4.launch](launch/px4.launch) -- for use with the PX4 Pro flight stack (for VTOL, multicopters and planes)
+  * [px4.launch](launch/px4.launch) -- for use with the PX4 Autopilot (for VTOL, multicopters and planes)
   * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
 
 Examples:
@@ -175,6 +175,8 @@ NOTE: The source installation instructions are for the ROS Kinetic release.
 
 ```sh
 sudo apt-get install python-catkin-tools python-rosinstall-generator -y
+# For Noetic use that:
+# sudo apt install python3-catkin-tools python3-rosinstall-generator python3-osrf-pycommon -y
 
 # 1. Create the workspace: unneeded if you already has workspace
 mkdir -p ~/catkin_ws/src
@@ -247,12 +249,12 @@ Glossary
 Links
 -----
 
-  - [MAVLink][ml] -- communication protocol
+  - [MAVLink][ml] -- The communication protocol for Drones, used by flight controllers, ground control stations, and peripherals
   - [mavlink\_ros][mlros] -- original ROS node (few messages, no proxy)
-  - [Pixhawk][pixhawk] -- Reference hardware platform
-  - [PX4][px4] -- Reference implementation in the academic community
+  - [Pixhawk][pixhawk] -- Open Standards for drone hardware
+  - [PX4 Autopilot][px4] -- Flight Controller with support for most vehicle types and hardened/tested MAVROS support
   - [ArduPilot][apm] -- tested autopilot APM:Plane (default command set)
-  - [QGroundControl][qgc] -- tested ground control station for Android, iOS, Mac OS, Linux and Windows
+  - [QGroundControl][qgc] -- Ground Control Station for MAVLink autopilots, with tested support for Android, iOS, Mac OS, Linux, and Windows
   - [mavros\_extras][mrext] -- extra plugins & node for mavros
 
 
