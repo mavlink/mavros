@@ -23,6 +23,7 @@
 #include <array>
 #include <mavconn/interface.hpp>
 #include <mavconn/mavlink_dialect.hpp>
+#include <memory>
 //include <mavros/mavlink_diag.h>
 #include <mavros/utils.hpp>
 #include <rclcpp/macros.hpp>
@@ -46,7 +47,7 @@ namespace router {
 
     class Router;
 
-    class Endpoint {
+    class Endpoint : public std::enable_shared_from_this<Endpoint> {
     public:
         RCLCPP_SMART_PTR_DEFINITIONS(Endpoint)
 
@@ -63,6 +64,10 @@ namespace router {
             , url {}
             , remote_addrs {}
         {
+            const addr_t broadcase_addr = 0;
+
+            // Accept broadcasts by default
+            remote_addrs.emplace(broadcase_addr);
         }
 
         std::weak_ptr<Router> parent;
@@ -88,8 +93,10 @@ namespace router {
             : rclcpp::Node(node_name, rclcpp::NodeOptions().use_intra_process_comms(true))
             , endpoints {}
         {
-            add_service = this->create_service<mavros_msgs::srv::EndpointAdd>("endpoint_add", std::bind(&Router::endpoint_add, this, _1, _2));
-            del_service = this->create_service<mavros_msgs::srv::EndpointDel>("endpoint_del", std::bind(&Router::endpoint_del, this, _1, _2));
+            RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
+
+            add_service = this->create_service<mavros_msgs::srv::EndpointAdd>("~/add_endpoint", std::bind(&Router::add_endpoint, this, _1, _2));
+            del_service = this->create_service<mavros_msgs::srv::EndpointDel>("~/del_endpoint", std::bind(&Router::del_endpoint, this, _1, _2));
         }
 
         void route_message(Endpoint::SharedPtr src, const mavlink_message_t* msg, const Framing framing);
@@ -99,12 +106,16 @@ namespace router {
 
         static std::atomic<id_t> id_counter;
 
+        // map stores all routing endpoints
         std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
+
         rclcpp::Service<mavros_msgs::srv::EndpointAdd>::SharedPtr add_service;
         rclcpp::Service<mavros_msgs::srv::EndpointDel>::SharedPtr del_service;
 
-        void endpoint_add(const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request, mavros_msgs::srv::EndpointAdd::Response::SharedPtr response);
-        void endpoint_del(const mavros_msgs::srv::EndpointDel::Request::SharedPtr request, mavros_msgs::srv::EndpointDel::Response::SharedPtr response);
+        void add_endpoint(const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request, mavros_msgs::srv::EndpointAdd::Response::SharedPtr response);
+        void del_endpoint(const mavros_msgs::srv::EndpointDel::Request::SharedPtr request, mavros_msgs::srv::EndpointDel::Response::SharedPtr response);
+
+        void periodic_reconnect_endpoints();
     };
 
     class MAVConnEndpoint : public Endpoint {
@@ -112,6 +123,11 @@ namespace router {
         MAVConnEndpoint()
             : Endpoint()
         {
+        }
+
+        ~MAVConnEndpoint()
+        {
+            close();
         }
 
         mavconn::MAVConnInterface::Ptr link; // connection
@@ -130,6 +146,11 @@ namespace router {
         {
         }
 
+        ~ROSEndpoint()
+        {
+            close();
+        }
+
         rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr to; // UAS -> FCU
         rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr from;  // FCU -> UAS
 
@@ -139,10 +160,11 @@ namespace router {
 
         void send_message(const mavlink_message_t* msg, const Framing framing = Framing::ok) override;
 
+    private:
         void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
     };
 
-}; // namespace router
-}; // namespace mavros
+} // namespace router
+} // namespace mavros
 
 #endif // MAVROS_MAVROS_ROUTER_HPP_
