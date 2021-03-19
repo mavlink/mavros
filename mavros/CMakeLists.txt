@@ -1,228 +1,199 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mavros)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  angles
-  diagnostic_msgs
-  diagnostic_updater
-  eigen_conversions
-  geographic_msgs
-  geometry_msgs
-  libmavconn
-  mavros_msgs
-  nav_msgs
-  pluginlib
-  rosconsole_bridge
-  roscpp
-  sensor_msgs
-  std_msgs
-  std_srvs
-  tf2_eigen
-  tf2_ros
-  trajectory_msgs
-)
-
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
-
-## Find Eigen
-find_package(Eigen3)
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # we dont use add_compile_options with pedantic in message packages
+  # because the Python C extensions dont comply with it
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
 
-## Find GeographicLib
+find_package(ament_cmake REQUIRED)
+
+# find mavros dependencies
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(pluginlib REQUIRED)
+
+find_package(libmavconn REQUIRED)
+find_package(rosconsole_bridge REQUIRED)
+
+find_package(Eigen3 REQUIRED)
 find_package(GeographicLib REQUIRED)
 
-## Check if the datasets are installed
-include(CheckGeographicLibDatasets)
+find_package(angles REQUIRED)
+find_package(eigen_conversions REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_ros REQUIRED)
 
-include(EnableCXX11)
-include(MavrosMavlink)
+#find_package(diagnostic_msgs REQUIRED)
+#find_package(diagnostic_updater REQUIRED)
 
-# detect if sensor_msgs has BatteryState.msg
-# http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
-list(FIND sensor_msgs_MESSAGE_FILES "msg/BatteryState.msg" BATTERY_STATE_MSG_IDX)
-if(${BATTERY_STATE_MSG_IDX} GREATER -1)
-  add_definitions(
-    -DHAVE_SENSOR_MSGS_BATTERYSTATE_MSG
-  )
-endif()
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
-
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES mavros
-  CATKIN_DEPENDS diagnostic_msgs diagnostic_updater eigen_conversions geographic_msgs geometry_msgs libmavconn mavros_msgs message_runtime nav_msgs pluginlib roscpp sensor_msgs std_msgs tf2_ros trajectory_msgs
-  DEPENDS Boost EIGEN3 GeographicLib
-)
-
-###########
-## Build ##
-###########
+find_package(geographic_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(mavros_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
 )
 
-add_library(mavros
+## Check if the datasets are installed
+include(CheckGeographicLibDatasets)
+
+# detect if sensor_msgs has BatteryState.msg
+# http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
+#list(FIND sensor_msgs_MESSAGE_FILES "msg/BatteryState.msg" BATTERY_STATE_MSG_IDX)
+#if(${BATTERY_STATE_MSG_IDX} GREATER -1)
+#  add_definitions(
+#    -DHAVE_SENSOR_MSGS_BATTERYSTATE_MSG
+#    )
+#endif()
+
+add_library(mavros SHARED
   src/lib/enum_sensor_orientation.cpp
   src/lib/enum_to_string.cpp
   src/lib/ftf_frame_conversions.cpp
   src/lib/ftf_quaternion_utils.cpp
-  src/lib/mavlink_diag.cpp
-  src/lib/mavros.cpp
+#  src/lib/mavlink_diag.cpp
+#  src/lib/mavros.cpp
   src/lib/rosconsole_bridge.cpp
-  src/lib/uas_data.cpp
-  src/lib/uas_stringify.cpp
-  src/lib/uas_timesync.cpp
+#  src/lib/uas_data.cpp
+#  src/lib/uas_stringify.cpp
+#  src/lib/uas_timesync.cpp
 )
-add_dependencies(mavros
-  ${catkin_EXPORTED_TARGETS}
+ament_target_dependencies(mavros
+  rclcpp
+  rclcpp_components
+  #class_loader
+  #sensor_msgs
+  pluginlib
+  mavros_msgs
+  libmavconn
 )
-target_link_libraries(mavros
-  atomic
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${GeographicLib_LIBRARIES}
-)
+target_link_libraries(mavros ${GeographicLib_LIBRARIES})
+rclcpp_components_register_nodes(mavros_router "MavrosRouter")
+#rclcpp_components_register_nodes(mavros_vehicle "MavrosVehicle")
 
-add_library(mavros_plugins
-  src/plugins/3dr_radio.cpp
-  src/plugins/actuator_control.cpp
-  src/plugins/altitude.cpp
-  src/plugins/command.cpp
-  src/plugins/dummy.cpp
-  src/plugins/ftp.cpp
-  src/plugins/global_position.cpp
-  src/plugins/hil.cpp
-  src/plugins/home_position.cpp
-  src/plugins/imu.cpp
-  src/plugins/local_position.cpp
-  src/plugins/manual_control.cpp
-  src/plugins/param.cpp
-  src/plugins/rc_io.cpp
-  src/plugins/safety_area.cpp
-  src/plugins/setpoint_accel.cpp
-  src/plugins/setpoint_attitude.cpp
-  src/plugins/setpoint_position.cpp
-  src/plugins/setpoint_raw.cpp
-  src/plugins/setpoint_velocity.cpp
-  src/plugins/setpoint_trajectory.cpp
-  src/plugins/sys_status.cpp
-  src/plugins/sys_time.cpp
-  src/plugins/vfr_hud.cpp
-  src/plugins/waypoint.cpp
-  src/plugins/wind_estimation.cpp
-)
-add_dependencies(mavros_plugins
-  mavros
-)
-target_link_libraries(mavros_plugins
-  mavros
-  ${catkin_LIBRARIES}
-)
+#add_library(mavros_plugins
+#  src/plugins/3dr_radio.cpp
+#  src/plugins/actuator_control.cpp
+#  src/plugins/altitude.cpp
+#  src/plugins/command.cpp
+#  src/plugins/dummy.cpp
+#  src/plugins/ftp.cpp
+#  src/plugins/global_position.cpp
+#  src/plugins/hil.cpp
+#  src/plugins/home_position.cpp
+#  src/plugins/imu.cpp
+#  src/plugins/local_position.cpp
+#  src/plugins/manual_control.cpp
+#  src/plugins/param.cpp
+#  src/plugins/rc_io.cpp
+#  src/plugins/safety_area.cpp
+#  src/plugins/setpoint_accel.cpp
+#  src/plugins/setpoint_attitude.cpp
+#  src/plugins/setpoint_position.cpp
+#  src/plugins/setpoint_raw.cpp
+#  src/plugins/setpoint_velocity.cpp
+#  src/plugins/setpoint_trajectory.cpp
+#  src/plugins/sys_status.cpp
+#  src/plugins/sys_time.cpp
+#  src/plugins/vfr_hud.cpp
+#  src/plugins/waypoint.cpp
+#  src/plugins/wind_estimation.cpp
+#  )
+#add_dependencies(mavros_plugins
+#  mavros
+#  )
+#target_link_libraries(mavros_plugins
+#  mavros
+#  ${catkin_LIBRARIES}
+#  )
 
 ## Declare a cpp executable
-add_executable(mavros_node
-  src/mavros_node.cpp
-)
-add_dependencies(mavros_node
-  mavros
-)
-target_link_libraries(mavros_node
-  mavros
-  ${catkin_LIBRARIES}
-)
+#add_executable(mavros_node
+#  src/mavros_node.cpp
+#  )
+#add_dependencies(mavros_node
+#  mavros
+#  )
+#target_link_libraries(mavros_node
+#  mavros
+#  ${catkin_LIBRARIES}
+#  )
+#
+#add_executable(gcs_bridge
+#  src/gcs_bridge.cpp
+#  )
+#target_link_libraries(gcs_bridge
+#  mavros
+#  ${catkin_LIBRARIES}
+#  )
 
-add_executable(gcs_bridge
-  src/gcs_bridge.cpp
-)
-target_link_libraries(gcs_bridge
-  mavros
-  ${catkin_LIBRARIES}
-)
+#add_executable(mavros_node src/mavros_node.cpp)
+#target_link_libraries(mavros_node mavros)
 
-#############
-## Install ##
-#############
+# install(FILES
+#   mavros_plugins.xml
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-file(GLOB SCRIPTS ${PROJECT_SOURCE_DIR}/scripts/*)
-catkin_install_python(PROGRAMS
-  ${SCRIPTS}
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-## Mark executables and/or libraries for installation
-install(TARGETS gcs_bridge mavros mavros_node mavros_plugins
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS mavros #mavros_node mavros_plugins
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
+install(DIRECTORY include/
+  DESTINATION include
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-  mavros_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
 
-#############
-## Testing ##
-#############
+  # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
 
-if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
+  ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
   target_link_libraries(libmavros-frame-conversions-test mavros)
+  ament_target_dependencies(libmavros-frame-conversions-test mavros)
 
-  catkin_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
+  ament_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
   target_link_libraries(libmavros-sensor-orientation-test mavros)
+  ament_target_dependencies(libmavros-sensor-orientation-test mavros)
 
-  catkin_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
+  ament_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
   target_link_libraries(libmavros-quaternion-utils-test mavros)
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
-
+  ament_target_dependencies(libmavros-quaternion-utils-test mavros)
 endif()
+
+#ament_export_dependencies(console_bridge)
+ament_export_include_directories(include)
+ament_export_libraries(mavros)
+#ament_export_targets(mavros_node)
+ament_package()
 
 # vim: ts=2 sw=2 et:

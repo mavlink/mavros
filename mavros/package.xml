@@ -8,7 +8,7 @@
   </description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
-  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
   <license>GPLv3</license>
   <license>LGPLv3</license>
   <license>BSD</license>
@@ -17,10 +17,11 @@
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <author email="vooon341@gmail.com">Vladimir Ermakov</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- system dependencies -->
-  <depend>boost</depend>
   <build_depend>eigen</build_depend>
   <build_export_depend>eigen</build_export_depend>
   <build_depend>mavlink</build_depend>
@@ -35,17 +36,15 @@
 
   <!-- packages -->
   <build_depend>angles</build_depend>
-  <build_depend>cmake_modules</build_depend>
-  <depend>diagnostic_updater</depend>
+  <!-- <depend>diagnostic_updater</depend> -->
   <depend>eigen_conversions</depend>
   <depend>libmavconn</depend>
   <depend>pluginlib</depend>
   <depend>rosconsole_bridge</depend>
-  <depend>roscpp</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_eigen</depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>rospy</exec_depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
 
   <!-- message packages -->
   <depend>diagnostic_msgs</depend>
@@ -58,10 +57,13 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
 
-  <test_depend>rosunit</test_depend>
-  <test_depend>gtest</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
+
     <mavros plugin="${prefix}/mavros_plugins.xml" />
     <rosdoc config="rosdoc.yaml" />
     <rosindex>
