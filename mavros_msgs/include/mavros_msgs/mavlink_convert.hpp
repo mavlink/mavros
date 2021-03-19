@@ -16,7 +16,7 @@
 #define MAVROS_MSGS__MAVLINK_CONVERT_HPP_
 
 #include <mavconn/mavlink_dialect.hpp>
-#include <mavros_msgs/msg/mavlink.h>
+#include <mavros_msgs/msg/mavlink.hpp>
 
 #include <algorithm>
 

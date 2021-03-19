@@ -7,7 +7,7 @@
  * @{
  */
 /*
- * Copyright 2016 Valdimir Ermakov
+ * Copyright 2016,2021 Valdimir Ermakov
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -16,8 +16,8 @@
 
 #include <array>
 #include <unordered_map>
-#include <mavros/utils.h>
-#include <ros/console.h>
+#include <mavros/utils.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace mavros {
 namespace utils {
@@ -33,6 +33,8 @@ using mavlink::common::MAV_MISSION_RESULT;
 using mavlink::common::MAV_FRAME;
 using mavlink::common::MAV_DISTANCE_SENSOR;
 using mavlink::common::LANDING_TARGET_TYPE;
+
+static auto logger = rclcpp::get_logger("uas.enum");
 
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
@@ -109,7 +111,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
-/*  3 */ "ArduPilot",                     // ArduPilot - Plane/Copter/Rover/Sub/Tracker, http://ardupilot.org
+/*  3 */ "ArduPilot",                     // ArduPilot - Plane/Copter/Rover/Sub/Tracker, https://ardupilot.org
 /*  4 */ "OpenPilot",                     // OpenPilot, http://openpilot.org
 /*  5 */ "Generic autopilot only supporting simple waypoints", // Generic autopilot only supporting simple waypoints
 /*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands", // Generic autopilot supporting waypoints and other simple navigation commands
@@ -136,7 +138,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 4b5a1e0cd8f9d21b956818e7efa3bc2e)
+// [[[end]]] (checksum: c1feb82117da0447594aacbe5c52f97b)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -153,8 +155,8 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 33> mav_type_strings{{
-/*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle.
+static const std::array<const std::string, 34> mav_type_strings{{
+/*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
 /*  3 */ "Coaxial helicopter",            // Coaxial helicopter
@@ -180,13 +182,14 @@ static const std::array<const std::string, 33> mav_type_strings{{
 /* 23 */ "VTOL reserved 3",               // VTOL reserved 3
 /* 24 */ "VTOL reserved 4",               // VTOL reserved 4
 /* 25 */ "VTOL reserved 5",               // VTOL reserved 5
-/* 26 */ "Gimbal (standalone)",           // Gimbal (standalone)
-/* 27 */ "ADSB system (standalone)",      // ADSB system (standalone)
+/* 26 */ "Gimbal",                        // Gimbal
+/* 27 */ "ADSB system",                   // ADSB system
 /* 28 */ "Steerable",                     // Steerable, nonrigid airfoil
 /* 29 */ "Dodecarotor",                   // Dodecarotor
-/* 30 */ "Camera (standalone)",           // Camera (standalone)
+/* 30 */ "Camera",                        // Camera
 /* 31 */ "Charging station",              // Charging station
-/* 32 */ "FLARM collision avoidance system (standalone)", // FLARM collision avoidance system (standalone)
+/* 32 */ "FLARM collision avoidance system", // FLARM collision avoidance system
+/* 33 */ "Servo",                         // Servo
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -197,15 +200,15 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: b441cfd88ee1a6fc8c8bc8f4e6df5825)
+// [[[end]]] (checksum: 17ce5bbbaa9d2cab2ce27c0b2c2c78e4)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 33> mav_type_names{{
-/*  0 */ "GENERIC",                       // Generic micro air vehicle.
+static const std::array<const std::string, 34> mav_type_names{{
+/*  0 */ "GENERIC",                       // Generic micro air vehicle
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
 /*  2 */ "QUADROTOR",                     // Quadrotor
 /*  3 */ "COAXIAL",                       // Coaxial helicopter
@@ -231,13 +234,14 @@ static const std::array<const std::string, 33> mav_type_names{{
 /* 23 */ "VTOL_RESERVED3",                // VTOL reserved 3
 /* 24 */ "VTOL_RESERVED4",                // VTOL reserved 4
 /* 25 */ "VTOL_RESERVED5",                // VTOL reserved 5
-/* 26 */ "GIMBAL",                        // Gimbal (standalone)
-/* 27 */ "ADSB",                          // ADSB system (standalone)
+/* 26 */ "GIMBAL",                        // Gimbal
+/* 27 */ "ADSB",                          // ADSB system
 /* 28 */ "PARAFOIL",                      // Steerable, nonrigid airfoil
 /* 29 */ "DODECAROTOR",                   // Dodecarotor
-/* 30 */ "CAMERA",                        // Camera (standalone)
+/* 30 */ "CAMERA",                        // Camera
 /* 31 */ "CHARGING_STATION",              // Charging station
-/* 32 */ "FLARM",                         // FLARM collision avoidance system (standalone)
+/* 32 */ "FLARM",                         // FLARM collision avoidance system
+/* 33 */ "SERVO",                         // Servo
 }};
 
 std::string to_name(MAV_TYPE e)
@@ -248,7 +252,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 6accf424d6136b55b15efbb86bb0c5cd)
+// [[[end]]] (checksum: a76366f8b1f5bcd5047088837441c50d)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -326,7 +330,7 @@ timesync_mode timesync_mode_from_str(const std::string &mode)
 		}
 	}
 
-	ROS_ERROR_STREAM_NAMED("uas", "TM: Unknown mode: " << mode);
+	RCLCPP_ERROR_STREAM(logger, "TM: Unknown mode: " << mode);
 	return timesync_mode::NONE;
 }
 
@@ -393,12 +397,16 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! MAV_ESTIMATOR_TYPE values
-static const std::array<const std::string, 5> mav_estimator_type_strings{{
+static const std::array<const std::string, 9> mav_estimator_type_strings{{
+/*  0 */ "UNKNOWN",                       // Unknown type of the estimator.
 /*  1 */ "NAIVE",                         // This is a naive estimator without any real covariance feedback.
 /*  2 */ "VISION",                        // Computer vision based estimate. Might be up to scale.
 /*  3 */ "VIO",                           // Visual-inertial estimate.
 /*  4 */ "GPS",                           // Plain GPS estimate.
 /*  5 */ "GPS_INS",                       // Estimator integrating GPS and inertial sensing.
+/*  6 */ "MOCAP",                         // Estimate from external motion capturing system.
+/*  7 */ "LIDAR",                         // Estimator based on lidar sensor input.
+/*  8 */ "AUTOPILOT",                     // Estimator on autopilot.
 }};
 
 std::string to_string(MAV_ESTIMATOR_TYPE e)
@@ -409,7 +417,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
 	return mav_estimator_type_strings[idx];
 }
-// [[[end]]] (checksum: 47674f004bf6c515fdf999987b99e806)
+// [[[end]]] (checksum: 78a66e6898ff8c5dafb482dbf264a489)
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
@@ -487,7 +495,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 // enum_name_is_value_outl(ename)
 // ]]]
 //! MAV_FRAME values
-static const std::array<const std::string, 20> mav_frame_strings{{
+static const std::array<const std::string, 22> mav_frame_strings{{
 /*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
 /*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
@@ -508,6 +516,8 @@ static const std::array<const std::string, 20> mav_frame_strings{{
 /* 17 */ "VISION_ENU",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: east, y: north, z: up).
 /* 18 */ "ESTIM_NED",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: north, y: east, z: down).
 /* 19 */ "ESTIM_ENU",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: east, y: noth, z: up).
+/* 20 */ "LOCAL_FRD",                     // Forward, Right, Down coordinate frame. This is a local frame with Z-down and arbitrary F/R alignment (i.e. not aligned with NED/earth frame).
+/* 21 */ "LOCAL_FLU",                     // Forward, Left, Up coordinate frame. This is a local frame with Z-up and arbitrary F/L alignment (i.e. not aligned with ENU/earth frame).
 }};
 
 std::string to_string(MAV_FRAME e)
@@ -518,7 +528,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: a075e35372e9be53a3a0ce79e45236c1)
+// [[[end]]] (checksum: f685e2751fb50445a0a68185c3604d67)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -537,8 +547,83 @@ std::string to_string(MAV_FRAME e)
 // cog.outl("}};")
 // ]]]
 static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
-{   0, "ALL" },                           // Used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces.
+{   0, "ALL" },                           // Target id (target_component) used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces. Note: This is not a valid *source* component id for a message.
 {   1, "AUTOPILOT1" },                    // System flight controller component ("autopilot"). Only one autopilot is expected in a particular system.
+{  25, "USER1" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  26, "USER2" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  27, "USER3" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  28, "USER4" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  29, "USER5" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  30, "USER6" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  31, "USER7" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  32, "USER8" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  33, "USER9" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  34, "USER10" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  35, "USER11" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  36, "USER12" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  37, "USER13" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  38, "USER14" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  39, "USER15" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  40, "USE16" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  41, "USER17" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  42, "USER18" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  43, "USER19" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  44, "USER20" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  45, "USER21" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  46, "USER22" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  47, "USER23" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  48, "USER24" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  49, "USER25" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  50, "USER26" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  51, "USER27" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  52, "USER28" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  53, "USER29" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  54, "USER30" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  55, "USER31" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  56, "USER32" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  57, "USER33" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  58, "USER34" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  59, "USER35" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  60, "USER36" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  61, "USER37" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  62, "USER38" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  63, "USER39" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  64, "USER40" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  65, "USER41" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  66, "USER42" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  67, "USER43" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  68, "USER44" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  69, "USER45" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  70, "USER46" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  71, "USER47" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  72, "USER48" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  73, "USER49" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  74, "USER50" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  75, "USER51" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  76, "USER52" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  77, "USER53" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  78, "USER54" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  79, "USER55" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  80, "USER56" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  81, "USER57" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  82, "USER58" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  83, "USER59" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  84, "USER60" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  85, "USER61" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  86, "USER62" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  87, "USER63" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  88, "USER64" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  89, "USER65" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  90, "USER66" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  91, "USER67" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  92, "USER68" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  93, "USER69" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  94, "USER70" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  95, "USER71" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  96, "USER72" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  97, "USER73" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  98, "USER74" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  99, "USER75" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 { 100, "CAMERA" },                        // Camera #1.
 { 101, "CAMERA2" },                       // Camera #2.
 { 102, "CAMERA3" },                       // Camera #3.
@@ -559,17 +644,23 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 151, "SERVO12" },                       // Servo #12.
 { 152, "SERVO13" },                       // Servo #13.
 { 153, "SERVO14" },                       // Servo #14.
-{ 154, "GIMBAL" },                        // Gimbal component.
+{ 154, "GIMBAL" },                        // Gimbal #1.
 { 155, "LOG" },                           // Logging component.
 { 156, "ADSB" },                          // Automatic Dependent Surveillance-Broadcast (ADS-B) component.
 { 157, "OSD" },                           // On Screen Display (OSD) devices for video links.
 { 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter microservice.
 { 159, "QX1_GIMBAL" },                    // Gimbal ID for QX1.
 { 160, "FLARM" },                         // FLARM collision alert component.
+{ 171, "GIMBAL2" },                       // Gimbal #2.
+{ 172, "GIMBAL3" },                       // Gimbal #3.
+{ 173, "GIMBAL4" },                       // Gimbal #4
+{ 174, "GIMBAL5" },                       // Gimbal #5.
+{ 175, "GIMBAL6" },                       // Gimbal #6.
 { 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
 { 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
 { 196, "OBSTACLE_AVOIDANCE" },            // Component that plans a collision free path between two points.
 { 197, "VISUAL_INERTIAL_ODOMETRY" },      // Component that provides position estimates using VIO techniques.
+{ 198, "PAIRING_MANAGER" },               // Component that manages pairing of vehicle and GCS.
 { 200, "IMU" },                           // Inertial Measurement Unit (IMU) #1.
 { 201, "IMU_2" },                         // Inertial Measurement Unit (IMU) #2.
 { 202, "IMU_3" },                         // Inertial Measurement Unit (IMU) #3.
@@ -579,7 +670,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 241, "UART_BRIDGE" },                   // Component to bridge to UART (i.e. from UDP).
 { 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: 794ea890a87beb831d74eb2920000ea9)
+// [[[end]]] (checksum: a065421c2774868191bf8faebca62b11)
 
 std::string to_string(MAV_COMPONENT e)
 {
@@ -601,7 +692,7 @@ MAV_FRAME mav_frame_from_str(const std::string &mav_frame)
 		}
 	}
 
-	ROS_ERROR_STREAM_NAMED("uas", "FRAME: Unknown MAV_FRAME: " << mav_frame);
+	RCLCPP_ERROR_STREAM(logger, "FRAME: Unknown MAV_FRAME: " << mav_frame);
 	return MAV_FRAME::LOCAL_NED;
 }
 
@@ -613,7 +704,7 @@ MAV_TYPE mav_type_from_str(const std::string &mav_type)
 			return static_cast<MAV_TYPE>(rv);
 		}
 	}
-	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown MAV_TYPE: " << mav_type);
+	RCLCPP_ERROR_STREAM(logger, "TYPE: Unknown MAV_TYPE: " << mav_type);
 	return MAV_TYPE::GENERIC;
 }
 
@@ -670,7 +761,8 @@ LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_targ
 			return static_cast<LANDING_TARGET_TYPE>(rv);
 		}
 	}
-	ROS_ERROR_STREAM_NAMED("uas", "TYPE: Unknown LANDING_TARGET_TYPE: " << landing_target_type << ". Defaulting to LIGHT_BEACON");
+
+	RCLCPP_ERROR_STREAM(logger, "TYPE: Unknown LANDING_TARGET_TYPE: " << landing_target_type << ". Defaulting to LIGHT_BEACON");
 	return LANDING_TARGET_TYPE::LIGHT_BEACON;
 }
 

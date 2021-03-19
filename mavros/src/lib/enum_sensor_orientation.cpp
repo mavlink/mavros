@@ -26,7 +26,7 @@ using mavlink::common::MAV_SENSOR_ORIENTATION;
 // internal type: name - rotation
 using OrientationPair = std::pair<const std::string, const Eigen::Quaterniond>;
 
-static auto logger = rclcpp::getLogger("uas.enum");
+static auto logger = rclcpp::get_logger("uas.enum");
 
 // internal data initializer
 static const OrientationPair make_orientation(const std::string &name,

@@ -19,6 +19,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 
+find_package(mavlink REQUIRED)
 find_package(libmavconn REQUIRED)
 find_package(console_bridge REQUIRED)
 #find_package(rosconsole_bridge REQUIRED)  # XXX TODO: connect libmavconn loggers

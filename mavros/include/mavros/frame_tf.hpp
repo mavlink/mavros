@@ -403,8 +403,7 @@ inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZ
 	auto m = covmap;
 	std::size_t COV_SIZE = m.rows() * (m.rows() + 1) / 2;
 	rcpputils::assert_true(COV_SIZE == ARR_SIZE,
-				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size",
-				);
+				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size");
 
 	auto out = covmsg.begin();
 
@@ -423,8 +422,7 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
 {
 	std::size_t COV_SIZE = covmat.rows() * (covmat.rows() + 1) / 2;
 	rcpputils::assert_true(COV_SIZE == ARR_SIZE,
-				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size",
-			);
+				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size");
 
 	auto in = covmsg.begin();
 
@@ -448,15 +446,15 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
 // make_to_eigen("Quaterniond", "Quaternion", "wxyz")
 // ]]]
 //! @brief Helper to convert common ROS geometry_msgs::Point to Eigen::Vector3d
-inline Eigen::Vector3d to_eigen(const geometry_msgs::Point r) {
+inline Eigen::Vector3d to_eigen(const geometry_msgs::msg::Point r) {
 	return Eigen::Vector3d(r.x, r.y, r.z);
 }
 //! @brief Helper to convert common ROS geometry_msgs::Vector3 to Eigen::Vector3d
-inline Eigen::Vector3d to_eigen(const geometry_msgs::Vector3 r) {
+inline Eigen::Vector3d to_eigen(const geometry_msgs::msg::Vector3 r) {
 	return Eigen::Vector3d(r.x, r.y, r.z);
 }
 //! @brief Helper to convert common ROS geometry_msgs::Quaternion to Eigen::Quaterniond
-inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
+inline Eigen::Quaterniond to_eigen(const geometry_msgs::msg::Quaternion r) {
 	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
 // [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
