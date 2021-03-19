@@ -10,7 +10,7 @@
 # :magic:
 #       STX byte, used to determine protocol version v1.0 or v2.0.
 #
-# Please use mavros_msgs::mavlink::convert() from <mavros_msgs/mavlink_convert.h>
+# Please use mavros_msgs::mavlink::convert() from <mavros_msgs/mavlink_convert.hpp>
 # to convert between ROS and MAVLink message type
 
 # mavlink_framing_t enum
@@ -34,5 +34,5 @@ uint8 sysid
 uint8 compid
 uint32 msgid		# 24-bit message id
 uint16 checksum
-uint64[] payload64
-uint8[] signature	# optional signature
+uint64[<=33] payload64	# max size: (255+2+7)/8
+uint8[<=13] signature	# optional signature, max size: 13

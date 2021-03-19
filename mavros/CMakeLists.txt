@@ -81,6 +81,7 @@ add_library(mavros SHARED
 ament_target_dependencies(mavros
   rclcpp
   rclcpp_components
+  rcpputils
   #class_loader
   #sensor_msgs
   pluginlib

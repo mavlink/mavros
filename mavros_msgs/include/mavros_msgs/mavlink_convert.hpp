@@ -16,7 +16,7 @@
 #define MAVROS_MSGS__MAVLINK_CONVERT_HPP_
 
 #include <mavconn/mavlink_dialect.hpp>
-#include <mavros_msgs/Mavlink.h>
+#include <mavros_msgs/msg/mavlink.h>
 
 #include <algorithm>
 
@@ -26,6 +26,7 @@ namespace mavlink
 {
 
 using ::mavlink::mavlink_message_t;
+using mavros_msgs::msg::Mavlink;
 
 // [[[cog:
 // FIELD_NAMES = [
@@ -52,7 +53,7 @@ using ::mavlink::mavlink_message_t;
  * @param[out] mmsg	mavlink_message_t struct
  * @return true if success
  */
-inline bool convert(const mavros_msgs::Mavlink & rmsg, mavlink_message_t & mmsg)
+inline bool convert(const Mavlink & rmsg, mavlink_message_t & mmsg)
 {
   if (rmsg.payload64.size() > sizeof(mmsg.payload64) / sizeof(mmsg.payload64[0])) {
     return false;
@@ -91,8 +92,8 @@ inline bool convert(const mavros_msgs::Mavlink & rmsg, mavlink_message_t & mmsg)
  * @return true, this convertion can't fail
  */
 inline bool convert(
-  const mavlink_message_t & mmsg, mavros_msgs::Mavlink & rmsg,
-  uint8_t framing_status = mavros_msgs::Mavlink::FRAMING_OK)
+  const mavlink_message_t & mmsg, Mavlink & rmsg,
+  uint8_t framing_status = Mavlink::FRAMING_OK)
 {
   const size_t payload64_len = (mmsg.len + 7) / 8;
 
@@ -112,13 +113,13 @@ inline bool convert(
   rmsg.msgid = mmsg.msgid;
   rmsg.checksum = mmsg.checksum;
   // [[[end]]] (checksum: 64ef6c1af60c622ed427e005d8ca4f2a)
-  rmsg.payload64 = mavros_msgs::Mavlink::_payload64_type(
+  rmsg.payload64.assign(
     mmsg.payload64,
     mmsg.payload64 + payload64_len);
 
   // copy signature block only if message is signed
   if (mmsg.incompat_flags & MAVLINK_IFLAG_SIGNED) {
-    rmsg.signature = mavros_msgs::Mavlink::_signature_type(
+    rmsg.signature.assign(
       mmsg.signature,
       mmsg.signature + sizeof(mmsg.signature));
   } else {

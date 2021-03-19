@@ -14,9 +14,9 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/utils.h>
-#include <mavros/frame_tf.h>
-#include <ros/console.h>
+#include <mavros/utils.hpp>
+#include <mavros/frame_tf.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace mavros {
 namespace utils {
@@ -25,6 +25,8 @@ using mavlink::common::MAV_SENSOR_ORIENTATION;
 
 // internal type: name - rotation
 using OrientationPair = std::pair<const std::string, const Eigen::Quaterniond>;
+
+static auto logger = rclcpp::getLogger("uas.enum");
 
 // internal data initializer
 static const OrientationPair make_orientation(const std::string &name,
@@ -61,7 +63,7 @@ static const OrientationPair make_orientation(const std::string &name,
 //             }
 //             return cls(**pairs)
 //         except Exception as ex:
-//             print(f"Parse Error: {ex}, desc: {desc}")
+//             cog.msg(f"Parse Error: {ex}, desc: {desc}")
 //             return cls()
 //
 // cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations{{" % len(enum))
@@ -124,7 +126,7 @@ std::string to_string(MAV_SENSOR_ORIENTATION orientation)
 {
 	const auto idx = enum_value(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %d", idx);
+		RCLCPP_ERROR(logger, "SENSOR: wrong orientation index: %d", idx);
 		return std::to_string(idx);
 	}
 
@@ -136,7 +138,7 @@ Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientatio
 	//const size_t idx(orientation);
 	const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
 	if (idx >= sensor_orientations.size()) {
-		ROS_ERROR_NAMED("uas", "SENSOR: wrong orientation index: %d", idx);
+		RCLCPP_ERROR(logger, "SENSOR: wrong orientation index: %d", idx);
 		return Eigen::Quaterniond::Identity();
 	}
 
@@ -158,7 +160,7 @@ int sensor_orientation_from_str(const std::string &sensor_orientation)
 	try {
 		int idx = std::stoi(sensor_orientation, 0, 0);
 		if (0 > idx || size_t(idx) > sensor_orientations.size()) {
-			ROS_ERROR_NAMED("uas", "SENSOR: orientation index out of bound: %d", idx);
+			RCLCPP_ERROR(logger, "SENSOR: orientation index out of bound: %d", idx);
 			return -1;
 		}
 		else
@@ -168,7 +170,7 @@ int sensor_orientation_from_str(const std::string &sensor_orientation)
 		// failed
 	}
 
-	ROS_ERROR_STREAM_NAMED("uas", "SENSOR: wrong orientation str: " << sensor_orientation);
+	RCLCPP_ERROR_STREAM(logger, "SENSOR: wrong orientation str: " << sensor_orientation);
 
 	return -1;
 }

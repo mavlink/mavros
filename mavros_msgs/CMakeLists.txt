@@ -150,7 +150,7 @@ install(
 install(
   DIRECTORY include/
   DESTINATION include
-  FILES_MATCHING PATTERN "*.h"
+  FILES_MATCHING PATTERN "*.hpp"
 )
 
 if(BUILD_TESTING)
