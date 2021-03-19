@@ -20,6 +20,8 @@
   <author email="vooon341@gmail.com">Vladimir Ermakov</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+  <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
 
   <!-- system dependencies -->
   <build_depend>eigen</build_depend>
@@ -37,10 +39,12 @@
   <!-- packages -->
   <build_depend>angles</build_depend>
   <!-- <depend>diagnostic_updater</depend> -->
-  <depend>eigen_conversions</depend>
+  <!-- XXX <depend>eigen_conversions</depend> -->
+  <depend>eigen_stl_containers</depend>
   <depend>libmavconn</depend>
   <depend>pluginlib</depend>
-  <depend>rosconsole_bridge</depend>
+  <!-- XXX <depend>rosconsole_bridge</depend> -->
+  <depend>libconsole-bridge-dev</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_eigen</depend>
   <depend>rclcpp</depend>
@@ -56,6 +60,8 @@
   <depend>trajectory_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>

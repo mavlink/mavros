@@ -19,13 +19,14 @@ find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
 
 find_package(libmavconn REQUIRED)
-find_package(rosconsole_bridge REQUIRED)
+find_package(console_bridge REQUIRED)
+#find_package(rosconsole_bridge REQUIRED)  # XXX TODO: connect libmavconn loggers
 
 find_package(Eigen3 REQUIRED)
-find_package(GeographicLib REQUIRED)
+find_package(GEOGRAPHICLIB REQUIRED)
 
 find_package(angles REQUIRED)
-find_package(eigen_conversions REQUIRED)
+find_package(eigen_stl_containers REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_ros REQUIRED)
 
@@ -71,7 +72,7 @@ add_library(mavros SHARED
   src/lib/ftf_quaternion_utils.cpp
 #  src/lib/mavlink_diag.cpp
 #  src/lib/mavros.cpp
-  src/lib/rosconsole_bridge.cpp
+#  src/lib/rosconsole_bridge.cpp
 #  src/lib/uas_data.cpp
 #  src/lib/uas_stringify.cpp
 #  src/lib/uas_timesync.cpp
@@ -84,10 +85,11 @@ ament_target_dependencies(mavros
   pluginlib
   mavros_msgs
   libmavconn
+  console_bridge
 )
 target_link_libraries(mavros ${GeographicLib_LIBRARIES})
-rclcpp_components_register_nodes(mavros_router "MavrosRouter")
-#rclcpp_components_register_nodes(mavros_vehicle "MavrosVehicle")
+#rclcpp_components_register_nodes(mavros "MavrosRouter")
+#rclcpp_components_register_nodes(mavros "MavrosVehicle")
 
 #add_library(mavros_plugins
 #  src/plugins/3dr_radio.cpp
@@ -124,6 +126,7 @@ rclcpp_components_register_nodes(mavros_router "MavrosRouter")
 #  mavros
 #  ${catkin_LIBRARIES}
 #  )
+#pluginlib_export_plugin_description_file(mavros_plugins mavros_plugins.xml)
 
 ## Declare a cpp executable
 #add_executable(mavros_node
@@ -179,15 +182,15 @@ if(BUILD_TESTING)
 
   ament_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
   target_link_libraries(libmavros-frame-conversions-test mavros)
-  ament_target_dependencies(libmavros-frame-conversions-test mavros)
+  #ament_target_dependencies(libmavros-frame-conversions-test mavros)
 
   ament_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
   target_link_libraries(libmavros-sensor-orientation-test mavros)
-  ament_target_dependencies(libmavros-sensor-orientation-test mavros)
+  #ament_target_dependencies(libmavros-sensor-orientation-test mavros)
 
   ament_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
   target_link_libraries(libmavros-quaternion-utils-test mavros)
-  ament_target_dependencies(libmavros-quaternion-utils-test mavros)
+  #ament_target_dependencies(libmavros-quaternion-utils-test mavros)
 endif()
 
 #ament_export_dependencies(console_bridge)

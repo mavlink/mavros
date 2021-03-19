@@ -7,4 +7,4 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 #
 
-list(INSERT CMAKE_MODULE_PATH 0 "${libmavconn_cmake_module_DIR}/Modules")
+list(INSERT CMAKE_MODULE_PATH 0 "${libmavconn_DIR}/Modules")
