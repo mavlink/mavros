@@ -1,0 +1,13 @@
+#
+# Adds endpoint to router
+#
+
+uint8 TYPE_FCU = 0
+uint8 TYPE_GCS = 0
+uint8 TYPE_UAS = 0
+
+string url
+uint8 type
+---
+bool success
+uint32 id

@@ -1,0 +1,7 @@
+#
+# Removes endpoint from router
+#
+
+uint32 id
+---
+bool success

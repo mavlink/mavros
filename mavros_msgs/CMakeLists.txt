@@ -98,6 +98,8 @@ set(srv_files
   "srv/CommandTriggerControl.srv"
   "srv/CommandTriggerInterval.srv"
   "srv/CommandVtolTransition.srv"
+  "srv/EndpointAdd.srv"
+  "srv/EndpointDel.srv"
   "srv/FileChecksum.srv"
   "srv/FileClose.srv"
   "srv/FileList.srv"
@@ -126,7 +128,7 @@ set(srv_files
   "srv/WaypointPull.srv"
   "srv/WaypointPush.srv"
   "srv/WaypointSetCurrent.srv"
-  # [[[end]]] (checksum: 9506ecb4b8f5aca4be29f1f4d30569f4)
+  # [[[end]]] (checksum: 7ec31b65eec1a0cbb738eba2478bfbd7)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

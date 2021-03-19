@@ -91,7 +91,7 @@ ament_target_dependencies(mavros
   console_bridge
 )
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
-#rclcpp_components_register_nodes(mavros "MavrosRouter")
+rclcpp_components_register_nodes(mavros "mavros::router::Router")
 #rclcpp_components_register_nodes(mavros "MavrosVehicle")
 
 #add_library(mavros_plugins
@@ -131,35 +131,15 @@ target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 #  )
 #pluginlib_export_plugin_description_file(mavros_plugins mavros_plugins.xml)
 
-## Declare a cpp executable
-#add_executable(mavros_node
-#  src/mavros_node.cpp
-#  )
-#add_dependencies(mavros_node
-#  mavros
-#  )
-#target_link_libraries(mavros_node
-#  mavros
-#  ${catkin_LIBRARIES}
-#  )
-#
-#add_executable(gcs_bridge
-#  src/gcs_bridge.cpp
-#  )
-#target_link_libraries(gcs_bridge
-#  mavros
-#  ${catkin_LIBRARIES}
-#  )
-
-#add_executable(mavros_node src/mavros_node.cpp)
-#target_link_libraries(mavros_node mavros)
+add_executable(mavros_node src/mavros_node.cpp)
+target_link_libraries(mavros_node mavros)
 
 # install(FILES
 #   mavros_plugins.xml
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(TARGETS mavros #mavros_node mavros_plugins
+install(TARGETS mavros mavros_node #mavros_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
