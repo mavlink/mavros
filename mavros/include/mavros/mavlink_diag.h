@@ -20,25 +20,26 @@
 #include <mavconn/interface.h>
 
 namespace mavros {
-class MavlinkDiag : public diagnostic_updater::DiagnosticTask
-{
+  class MavlinkDiag: public diagnostic_updater::DiagnosticTask
+  {
 public:
-	explicit MavlinkDiag(std::string name);
+    explicit MavlinkDiag(std::string name);
 
-	void run(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void run(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
-	void set_mavconn(const mavconn::MAVConnInterface::Ptr &link) {
-		weak_link = link;
-	}
+    void set_mavconn(const mavconn::MAVConnInterface::Ptr & link)
+    {
+      weak_link = link;
+    }
 
-	void set_connection_status(bool connected) {
-		is_connected = connected;
-	}
+    void set_connection_status(bool connected)
+    {
+      is_connected = connected;
+    }
 
 private:
-	mavconn::MAVConnInterface::WeakPtr weak_link;
-	unsigned int last_drop_count;
-	std::atomic<bool> is_connected;
-};
-};	// namespace mavros
-
+    mavconn::MAVConnInterface::WeakPtr weak_link;
+    unsigned int last_drop_count;
+    std::atomic < bool > is_connected;
+  };
+};      // namespace mavros

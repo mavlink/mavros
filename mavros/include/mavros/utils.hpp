@@ -24,14 +24,16 @@
 
 // OS X compat: missing error codes
 #ifdef __APPLE__
-#define EBADE 50	/* Invalid exchange */
-#define EBADFD 81	/* File descriptor in bad state */
-#define EBADRQC 54	/* Invalid request code */
-#define EBADSLT 55	/* Invalid slot */
+#define EBADE 50        /* Invalid exchange */
+#define EBADFD 81       /* File descriptor in bad state */
+#define EBADRQC 54      /* Invalid request code */
+#define EBADSLT 55      /* Invalid slot */
 #endif
 
-namespace mavros {
-namespace utils {
+namespace mavros
+{
+namespace utils
+{
 using mavconn::utils::format;
 
 /**
@@ -39,11 +41,12 @@ using mavconn::utils::format;
  *
  * Used by UAS class, but it can't be defined inside because enum is used in utils.
  */
-enum class timesync_mode {
-	NONE = 0,	//!< Disabled
-	MAVLINK,	//!< Via TIMESYNC message
-	ONBOARD,
-	PASSTHROUGH,
+enum class timesync_mode
+{
+  NONE = 0,             //!< Disabled
+  MAVLINK,              //!< Via TIMESYNC message
+  ONBOARD,
+  PASSTHROUGH,
 };
 
 /**
@@ -52,7 +55,7 @@ enum class timesync_mode {
 template<typename _T>
 constexpr typename std::underlying_type<_T>::type enum_value(_T e)
 {
-	return static_cast<typename std::underlying_type<_T>::type>(e);
+  return static_cast<typename std::underlying_type<_T>::type>(e);
 }
 
 /**
@@ -82,7 +85,7 @@ std::string to_string(mavlink::common::LANDING_TARGET_TYPE e);
 template<typename _T>
 std::string to_string_enum(int e)
 {
-	return to_string(static_cast<_T>(e));
+  return to_string(static_cast<_T>(e));
 }
 
 /**
@@ -94,27 +97,28 @@ Eigen::Quaterniond sensor_orientation_matching(mavlink::common::MAV_SENSOR_ORIEN
 /**
  * @brief Retrieve sensor orientation number from alias name.
  */
-int sensor_orientation_from_str(const std::string &sensor_orientation);
+int sensor_orientation_from_str(const std::string & sensor_orientation);
 
 /**
  * @brief Retrieve timesync mode from name
  */
-timesync_mode timesync_mode_from_str(const std::string &mode);
+timesync_mode timesync_mode_from_str(const std::string & mode);
 
 /**
  * @brief Retreive MAV_FRAME from name
  */
-mavlink::common::MAV_FRAME mav_frame_from_str(const std::string &mav_frame);
+mavlink::common::MAV_FRAME mav_frame_from_str(const std::string & mav_frame);
 
 /**
  * @brief Retreive MAV_TYPE from name
  */
-mavlink::minimal::MAV_TYPE mav_type_from_str(const std::string &mav_type);
+mavlink::minimal::MAV_TYPE mav_type_from_str(const std::string & mav_type);
 
 /**
  * @brief Retrieve landing target type from alias name
  */
-mavlink::common::LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type);
+mavlink::common::LANDING_TARGET_TYPE landing_target_type_from_str(
+  const std::string & landing_target_type);
 
-}	// namespace utils
-}	// namespace mavros
+}       // namespace utils
+}       // namespace mavros
