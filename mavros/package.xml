@@ -49,6 +49,7 @@
   <depend>tf2_eigen</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>rcpputils</depend>
 
   <!-- message packages -->
   <depend>diagnostic_msgs</depend>

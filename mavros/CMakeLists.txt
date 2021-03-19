@@ -17,6 +17,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rcpputils REQUIRED)
 
 find_package(libmavconn REQUIRED)
 find_package(console_bridge REQUIRED)
@@ -50,7 +51,7 @@ include_directories(
 include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${GeographicLib_INCLUDE_DIRS}
+  ${GEOGRAPHICLIB_INCLUDE_DIRS}
 )
 
 ## Check if the datasets are installed
@@ -87,7 +88,7 @@ ament_target_dependencies(mavros
   libmavconn
   console_bridge
 )
-target_link_libraries(mavros ${GeographicLib_LIBRARIES})
+target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 #rclcpp_components_register_nodes(mavros "MavrosRouter")
 #rclcpp_components_register_nodes(mavros "MavrosVehicle")
 

@@ -1,6 +1,6 @@
 /**
  * @brief some useful utils
- * @file utils.h
+ * @file utils.hpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  *
  * @addtogroup mavutils
@@ -8,7 +8,7 @@
  *  @brief Some useful utils
  */
 /*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2014,2015,2016,2021 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -18,11 +18,9 @@
 #pragma once
 
 #include <Eigen/Geometry>
-#include <mavconn/thread_utils.h>
-#include <mavros_msgs/mavlink_convert.h>
-#include <mavconn/mavlink_dialect.h>
-
-#include <ros/console.h>
+#include <mavconn/thread_utils.hpp>
+#include <mavros_msgs/mavlink_convert.hpp>
+#include <mavconn/mavlink_dialect.hpp>
 
 // OS X compat: missing error codes
 #ifdef __APPLE__

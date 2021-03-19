@@ -1,6 +1,6 @@
 /**
  * @brief Frame transformation utilities
- * @file frame_tf.h
+ * @file frame_tf.hpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  * @author Eddy Scott <scott.edward@aurora.aero>
  * @author Nuno Marques <n.marques21@hotmail.com>
@@ -9,7 +9,7 @@
  * @{
  */
 /*
- * Copyright 2016,2017 Vladimir Ermakov.
+ * Copyright 2016,2017,2021 Vladimir Ermakov.
  * Copyright 2017,2018 Nuno Marques.
  *
  * This file is part of the mavros package and subject to the license terms
@@ -19,28 +19,28 @@
 
 #pragma once
 
+#include <rcpputils/asserts.hpp>
 #include <array>
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
-#include <ros/assert.h>
 
 // for Covariance types
-#include <sensor_msgs/Imu.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/Quaternion.h>
-#include <geometry_msgs/PoseWithCovariance.h>
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <geometry_msgs/msg/pose_with_covariance.hpp>
 
 namespace mavros {
 namespace ftf {
 //! Type matching rosmsg for 3x3 covariance matrix
-using Covariance3d = sensor_msgs::Imu::_angular_velocity_covariance_type;
+using Covariance3d = sensor_msgs::msg::Imu::_angular_velocity_covariance_type;
 
 //! Type matching rosmsg for 6x6 covariance matrix
-using Covariance6d = geometry_msgs::PoseWithCovariance::_covariance_type;
+using Covariance6d = geometry_msgs::msg::PoseWithCovariance::_covariance_type;
 
 //! Type matching rosmsg for 9x9 covariance matrix
-using Covariance9d = boost::array<double, 81>;
+using Covariance9d = std::array<double, 81>;
 
 //! Eigen::Map for Covariance3d
 using EigenMapCovariance3d = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >;
@@ -402,9 +402,9 @@ inline void covariance_urt_to_mavlink(const T &covmap, std::array<float, ARR_SIZ
 {
 	auto m = covmap;
 	std::size_t COV_SIZE = m.rows() * (m.rows() + 1) / 2;
-	ROS_ASSERT_MSG(COV_SIZE == ARR_SIZE,
-				"frame_tf: covariance matrix URT size (%lu) is different from Mavlink msg covariance field size (%lu)",
-				COV_SIZE, ARR_SIZE);
+	rcpputils::assert_true(COV_SIZE == ARR_SIZE,
+				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size",
+				);
 
 	auto out = covmsg.begin();
 
@@ -422,9 +422,9 @@ template<class T, std::size_t ARR_SIZE>
 inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &covmsg, T &covmat)
 {
 	std::size_t COV_SIZE = covmat.rows() * (covmat.rows() + 1) / 2;
-	ROS_ASSERT_MSG(COV_SIZE == ARR_SIZE,
-				"frame_tf: covariance matrix URT size (%lu) is different from Mavlink msg covariance field size (%lu)",
-				COV_SIZE, ARR_SIZE);
+	rcpputils::assert_true(COV_SIZE == ARR_SIZE,
+				"frame_tf: covariance matrix URT size is different from Mavlink msg covariance field size",
+			);
 
 	auto in = covmsg.begin();
 
