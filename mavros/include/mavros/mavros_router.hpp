@@ -139,7 +139,7 @@ namespace router {
 
         void send_message(const mavlink_message_t* msg, const Framing framing = Framing::ok) override;
 
-        void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr* rmsg);
+        void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
     };
 
 }; // namespace router

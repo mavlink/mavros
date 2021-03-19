@@ -72,6 +72,7 @@ add_library(mavros SHARED
   src/lib/enum_to_string.cpp
   src/lib/ftf_frame_conversions.cpp
   src/lib/ftf_quaternion_utils.cpp
+  src/lib/mavros_router.cpp
 #  src/lib/mavlink_diag.cpp
 #  src/lib/mavros.cpp
 #  src/lib/rosconsole_bridge.cpp
