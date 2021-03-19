@@ -7,13 +7,13 @@
  * @{
  */
 /*
- * Copyright 2015,2016 Vladimir Ermakov.
+ * Copyright 2015,2016,2021 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
-#include <mavros/frame_tf.h>
+#include <mavros/frame_tf.hpp>
 
 namespace mavros
 {

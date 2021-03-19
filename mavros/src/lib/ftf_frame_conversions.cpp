@@ -9,7 +9,7 @@
  */
 /*
  * Copyright 2015 Nuno Marques.
- * Copyright 2016 Vladimir Ermakov
+ * Copyright 2016,2021 Vladimir Ermakov
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
