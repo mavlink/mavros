@@ -59,11 +59,39 @@ void Router::del_endpoint(
   const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
   mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
 {
+  auto lg = get_logger();
 
+  RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
+
+  auto it = this->endpoints.find(request->id);
+  if (it != this->endpoints.end() ) {
+    it->second->close();
+    this->endpoint.erase(it);
+    response->success = true;
+  }
+}
+
+
+rcl_interface::msg::SetParametersResult Router::on_set_parameters_cb(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  auto lg = get_logger();
+  rcl_interface::msg::SetParametersResult result;
+
+  RCLCPP_INFO(lg, "params");
+
+  result.success = true;
+  for (const auto & parameter : parameters) {
+  }
+
+  return result;
 }
 
 void Router::periodic_reconnect_endpoints()
 {
+  auto lg = get_logger();
+
+  RCLCPP_INFO(lg, "reconnecting");
 }
 
 void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing)

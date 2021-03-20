@@ -46,6 +46,7 @@ using ::mavlink::mavlink_message_t;
 using ::mavlink::msgid_t;
 
 using namespace std::placeholders;
+using namespace std::chrono_literals;
 
 class Router;
 
@@ -120,20 +121,27 @@ class Router : public rclcpp::Node
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Router)
 
+  using StrV = std::vector<std::string>;
+
   Router(std::string node_name = "mavros_router")
   : rclcpp::Node(node_name, rclcpp::NodeOptions().use_intra_process_comms(true)),
     endpoints{}
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
-    add_service =
-      this->create_service<mavros_msgs::srv::EndpointAdd>(
+    this->add_on_parameters_set_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
+    this->declare_parameter<StrV>("fcu_urls", StrV());
+    this->declare_parameter<StrV>("gcs_urls", StrV());
+    this->declare_parameter<StrV>("fcu_urls", StrV());
+
+    add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
       std::bind(&Router::add_endpoint, this, _1, _2));
-    del_service =
-      this->create_service<mavros_msgs::srv::EndpointDel>(
+    del_service = this->create_service<mavros_msgs::srv::EndpointDel>(
       "~/del_endpoint",
       std::bind(&Router::del_endpoint, this, _1, _2));
+
+    reconnect_timer = this->create_timer(30s, std::bind(&periodic_reconnect_endpoints, this));
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -148,6 +156,7 @@ private:
 
   rclcpp::Service<mavros_msgs::srv::EndpointAdd>::SharedPtr add_service;
   rclcpp::Service<mavros_msgs::srv::EndpointDel>::SharedPtr del_service;
+  rclcpp::TimerBase::SharedPtr reconnect_timer;
 
   void add_endpoint(
     const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
@@ -157,6 +166,9 @@ private:
     mavros_msgs::srv::EndpointDel::Response::SharedPtr response);
 
   void periodic_reconnect_endpoints();
+
+  rcl_interface::msg::SetParametersResult on_set_parameters_cb(
+    const std::vector<rclcpp::Parameter> & parameters);
 };
 
 /**
