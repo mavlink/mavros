@@ -22,11 +22,79 @@ using shared_lock = std::shared_lock<std::shared_timed_mutex>;
 
 std::atomic<id_t> Router::id_counter {1000};
 
+static inline uint8_t get_msg_byte(const mavlink_message_t * msg, uint8_t offset)
+{
+  uint8_t ret;
+
+  std::memcpy(&ret, static_cast<const void *>(msg->payload64), sizeof(ret));
+
+  return ret;
+}
+
 void Router::route_message(
   Endpoint::SharedPtr src, const mavlink_message_t * msg,
   const Framing framing)
 {
   shared_lock lock(mu);
+
+  using LT = Endpoint::Type;
+
+  this->stat_msg_routed++;
+
+  // find message destination target
+  addr_t target_addr = 0;
+  auto msg_entry = ::mavlink::mavlink_get_msg_entry(msg->msgid);
+  if (msg_entry) {
+    if (msg_entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) {
+      target_addr |= get_msg_byte(msg, msg_entry->target_system_ofs) << 8;
+    }
+    if (msg_entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT) {
+      target_addr |= get_msg_byte(msg, msg_entry->target_component_ofs);
+    }
+  }
+
+  size_t sent_cnt = 0, retry_cnt = 0;
+retry:
+
+  for (auto & kv:this->endpoints) {
+    auto & dest = kv.second;
+
+    if (src == dest) {
+      continue;     // do not echo message
+    }
+    if (src->link_type == dest->link_type) {
+      continue;     // drop messages between same type FCU/GCS/UAS
+    }
+
+    bool has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
+
+    if (has_target) {
+      dest->send_message(msg, framing);
+      sent_cnt++;
+    }
+  }
+
+  // if message haven't been sent retry broadcast it
+  if (sent_cnt == 0 && retry_cnt < 2) {
+    target_addr = 0;
+    retry_cnt++;
+    goto retry;
+  }
+
+  // update stats
+  this->stat_msg_sent.fetch_add(sent_cnt);
+  if (sent_cnt == 0) {
+    this->stat_msg_dropped++;
+
+    auto lg = get_logger();
+    auto clock = get_clock();
+
+    RCLCPP_WARN_THROTTLE(
+      lg,
+      *clock, 10000, "Message dropped: msgid: %d, source: %d.%d, target: %d.%d", msg->msgid,
+      msg->sysid, msg->compid, target_addr >> 8,
+      target_addr & 0xff);
+  }
 }
 
 void Router::add_endpoint(
@@ -47,7 +115,7 @@ void Router::add_endpoint(
     ep = std::make_shared<MAVConnEndpoint>();
   }
 
-  //ep->parent = shared_from_this(); // XXX build error
+  // ep->parent = shared_from_this(); // XXX build error
   ep->parent = std::shared_ptr<Router>(this);
   ep->id = id;
   ep->link_type = static_cast<Endpoint::Type>(request->type);
@@ -176,9 +244,45 @@ rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
 
 void Router::periodic_reconnect_endpoints()
 {
+  shared_lock lock(mu);
   auto lg = get_logger();
 
   RCLCPP_INFO(lg, "reconnecting");
+
+  for (auto & kv : this->endpoints) {
+    auto & p = kv.second;
+
+    if (p->is_open()) {
+      continue;
+    }
+
+    p->open();    // XXX may trow DeviceError
+  }
+}
+
+void Router::periodic_clear_stale_remote_addrs()
+{
+  unique_lock lock(mu);
+  auto lg = get_logger();
+
+  RCLCPP_DEBUG(lg, "clear stale remotes");
+  for (auto & kv : this->endpoints) {
+    auto & p = kv.second;
+
+    // Step 1: remove any stale addrs that still there (hadn't been removed by Endpoint::recv_message())
+    for (auto addr : p->stale_addrs) {
+      if (addr != 0) {
+        p->remote_addrs.erase(addr);
+        RCLCPP_INFO(
+          lg, "link[%d] removed stale remote address %d.%d", p->id, addr >> 8,
+          addr & 0xff);
+      }
+    }
+
+    // Step 2: re-initiate stale_addrs
+    p->stale_addrs.clear();
+    p->stale_addrs.insert(p->remote_addrs.begin(), p->remote_addrs.end());
+  }
 }
 
 void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing)
@@ -189,8 +293,13 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   const addr_t sysid_addr = msg->sysid << 8;
   const addr_t sysid_compid_addr = (msg->sysid << 8) | msg->compid;
 
+  // save source addr to remote_addrs
   auto sp = this->remote_addrs.emplace(sysid_addr);
   auto scp = this->remote_addrs.emplace(sysid_compid_addr);
+
+  // and delete it from stale_addrs
+  this->stale_addrs.erase(sysid_addr);
+  this->stale_addrs.erase(sysid_compid_addr);
 
   if (auto nh = this->parent.lock()) {
     if (sp.second || scp.second) {

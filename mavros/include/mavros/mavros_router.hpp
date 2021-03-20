@@ -62,7 +62,7 @@ class Router;
 class Endpoint : public std::enable_shared_from_this<Endpoint>
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Endpoint)
+  RCLCPP_SMART_PTR_DEFINITIONS(Endpoint);
 
   enum class Type
   {
@@ -90,6 +90,7 @@ public:
   Type link_type;                      // class of the endpoint
   std::string url;                     // url to open that endpoint
   std::set<addr_t> remote_addrs;       // remotes that we heard there
+  std::set<addr_t> stale_addrs;        // temporary storage for stale remote addrs
 
   virtual bool is_open() = 0;
   virtual bool open() = 0;
@@ -120,13 +121,13 @@ public:
 class Router : public rclcpp::Node
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Router)
+  RCLCPP_SMART_PTR_DEFINITIONS(Router);
 
   using StrV = std::vector<std::string>;
 
   Router(std::string node_name = "mavros_router")
   : rclcpp::Node(node_name, rclcpp::NodeOptions().use_intra_process_comms(true)),
-    endpoints{}
+    endpoints{}, stat_msg_sent(0), stat_msg_routed(0), stat_msg_dropped(0)
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
@@ -143,8 +144,13 @@ public:
       "~/del_endpoint",
       std::bind(&Router::del_endpoint, this, _1, _2));
 
+    // try to reconnect endpoint each 30 seconds
     reconnect_timer =
       this->create_wall_timer(30s, std::bind(&Router::periodic_reconnect_endpoints, this));
+
+    // collect garbage addrs each minute
+    stale_addrs_timer =
+      this->create_wall_timer(60s, std::bind(&Router::periodic_clear_stale_remote_addrs, this));
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -159,9 +165,14 @@ private:
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
 
+  std::atomic<size_t> stat_msg_routed;  // amount of messages came to route_messages()
+  std::atomic<size_t> stat_msg_sent;    // amount of messages sent
+  std::atomic<size_t> stat_msg_dropped; // amount of messages dropped (because there are no suitable endpoint)
+
   rclcpp::Service<mavros_msgs::srv::EndpointAdd>::SharedPtr add_service;
   rclcpp::Service<mavros_msgs::srv::EndpointDel>::SharedPtr del_service;
   rclcpp::TimerBase::SharedPtr reconnect_timer;
+  rclcpp::TimerBase::SharedPtr stale_addrs_timer;
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
 
   void add_endpoint(
@@ -172,6 +183,7 @@ private:
     mavros_msgs::srv::EndpointDel::Response::SharedPtr response);
 
   void periodic_reconnect_endpoints();
+  void periodic_clear_stale_remote_addrs();
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
