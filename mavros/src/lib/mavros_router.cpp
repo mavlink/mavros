@@ -105,16 +105,12 @@ void Router::add_endpoint(
 
   id_t id = id_counter.fetch_add(1);
 
-  RCLCPP_INFO(lg, "link[%d] 1", id);
-
   Endpoint::SharedPtr ep;
   if (request->type == mavros_msgs::srv::EndpointAdd::Request::TYPE_UAS) {
     ep = std::make_shared<ROSEndpoint>();
   } else {
     ep = std::make_shared<MAVConnEndpoint>();
   }
-
-  RCLCPP_INFO(lg, "link[%d] 2: %p", id, ep);
 
   // NOTE(vooon): has type std::shared_ptr<rclcpp::Node>
   auto shared_this = shared_from_this();
@@ -123,8 +119,6 @@ void Router::add_endpoint(
   ep->id = id;
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
-
-  RCLCPP_INFO(lg, "link[%d] 3: %p", id, ep);
 
   this->endpoints[id] = ep;
 
@@ -173,7 +167,7 @@ rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
   auto lg = get_logger();
   rcl_interfaces::msg::SetParametersResult result{};
 
-  RCLCPP_INFO(lg, "params");
+  RCLCPP_DEBUG(lg, "params callback");
 
   using Type = Endpoint::Type;
 
@@ -193,7 +187,7 @@ rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
       return ret;
     };
 
-  auto update_endpoints = [&](const rclcpp::Parameter & parameter, Type type) {
+  auto update_endpoints = [&, this](const rclcpp::Parameter & parameter, Type type) {
       RCLCPP_DEBUG(lg, "Processing urls parameter: %s", parameter.get_name().c_str());
 
       auto urls = parameter.as_string_array();
