@@ -20,7 +20,7 @@ using rclcpp::QoS;
 using unique_lock = std::unique_lock<std::shared_timed_mutex>;
 using shared_lock = std::shared_lock<std::shared_timed_mutex>;
 
-std::atomic<id_t> Router::id_counter {0};
+std::atomic<id_t> Router::id_counter {1000};
 
 void Router::route_message(
   Endpoint::SharedPtr src, const mavlink_message_t * msg,
@@ -68,13 +68,29 @@ void Router::del_endpoint(
   unique_lock lock(mu);
   auto lg = get_logger();
 
-  RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
+  if (request->id != 0) {
+    RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
+    auto it = this->endpoints.find(request->id);
+    if (it != this->endpoints.end() ) {
+      it->second->close();
+      this->endpoints.erase(it);
+      response->success = true;
+    }
+    return;
+  }
 
-  auto it = this->endpoints.find(request->id);
-  if (it != this->endpoints.end() ) {
-    it->second->close();
-    this->endpoints.erase(it);
-    response->success = true;
+  RCLCPP_INFO(
+    lg, "Requested to del endpoint type: %d url: %s", request->type,
+    request->url.c_str());
+  for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
+    if (it->second->url == request->url &&
+      it->second->link_type == static_cast<Endpoint::Type>( request->type))
+    {
+      it->second->close();
+      this->endpoints.erase(it);
+      response->success = true;
+      return;
+    }
   }
 }
 
@@ -104,16 +120,55 @@ rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
       return ret;
     };
 
-  auto update_endpoints = [&](rclcpp::Parameter & parameter, Type type) {
+  auto update_endpoints = [&](const rclcpp::Parameter & parameter, Type type) {
+      RCLCPP_DEBUG(lg, "Processing urls parameter: %s", parameter.get_name().c_str());
 
       auto urls = parameter.as_string_array();
       std::set<std::string> urls_set(urls.begin(), urls.end());
       auto existing_set = get_existing_set(type);
 
+      std::set<std::string> to_add{}, to_del{};
+      std::set_difference(
+        urls_set.begin(), urls_set.end(), existing_set.begin(),
+        existing_set.end(), std::inserter(to_add, to_add.begin()));
+      std::set_difference(
+        existing_set.begin(), existing_set.end(), urls_set.begin(),
+        urls_set.end(), std::inserter(to_del, to_del.begin()));
+
+      for (auto url : to_add) {
+        auto req = std::make_shared<mavros_msgs::srv::EndpointAdd::Request>();
+        auto resp = std::make_shared<mavros_msgs::srv::EndpointAdd::Response>();
+
+        req->type = utils::enum_value(type);
+        req->url = url;
+
+        this->add_endpoint(req, resp);
+      }
+
+      for (auto url : to_del) {
+        auto req = std::make_shared<mavros_msgs::srv::EndpointDel::Request>();
+        auto resp = std::make_shared<mavros_msgs::srv::EndpointDel::Response>();
+
+        req->type = utils::enum_value(type);
+        req->url = url;
+
+        this->del_endpoint(req, resp);
+      }
     };
 
   result.successful = true;
   for (const auto & parameter : parameters) {
+    const auto name = parameter.get_name();
+    if (name == "fcu_urls") {
+      update_endpoints(parameter, Type::fcu);
+    } else if (name == "gcs_urls") {
+      update_endpoints(parameter, Type::gcs);
+    } else if (name == "uas_urls") {
+      update_endpoints(parameter, Type::uas);
+    } else {
+      result.successful = false;
+      result.reason = "unknown parameter";
+    }
   }
 
   return result;
