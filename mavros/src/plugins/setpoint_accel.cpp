@@ -22,84 +22,91 @@
 
 #include <geometry_msgs/Vector3Stamped.h>
 
-namespace mavros {
-namespace std_plugins {
+namespace mavros
+{
+namespace std_plugins
+{
 /**
  * @brief Setpoint acceleration/force plugin
  *
  * Send setpoint accelerations/forces to FCU controller.
  */
 class SetpointAccelerationPlugin : public plugin::PluginBase,
-	private plugin::SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin> {
+  private plugin::SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin>
+{
 public:
-	SetpointAccelerationPlugin() : PluginBase(),
-		sp_nh("~setpoint_accel"),
-		send_force(false)
-	{ }
+  SetpointAccelerationPlugin()
+  : PluginBase(),
+    sp_nh("~setpoint_accel"),
+    send_force(false)
+  {}
 
-	void initialize(UAS &uas_) override
-	{
-		PluginBase::initialize(uas_);
+  void initialize(UAS & uas_) override
+  {
+    PluginBase::initialize(uas_);
 
-		sp_nh.param("send_force", send_force, false);
+    sp_nh.param("send_force", send_force, false);
 
-		accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
-	}
+    accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
+  }
 
-	Subscriptions get_subscriptions() override
-	{
-		return { /* Rx disabled */ };
-	}
+  Subscriptions get_subscriptions() override
+  {
+    return { /* Rx disabled */};
+  }
 
 private:
-	friend class SetPositionTargetLocalNEDMixin;
-	ros::NodeHandle sp_nh;
+  friend class SetPositionTargetLocalNEDMixin;
+  ros::NodeHandle sp_nh;
 
-	ros::Subscriber accel_sub;
+  ros::Subscriber accel_sub;
 
-	bool send_force;
+  bool send_force;
 
-	/* -*- mid-level helpers -*- */
+  /* -*- mid-level helpers -*- */
 
-	/**
-	 * @brief Send acceleration/force to FCU acceleration controller.
-	 *
-	 * @warning Send only AFX AFY AFZ. ENU frame.
-	 */
-	void send_setpoint_acceleration(const ros::Time &stamp, Eigen::Vector3d &accel_enu)
-	{
-		using mavlink::common::MAV_FRAME;
+  /**
+   * @brief Send acceleration/force to FCU acceleration controller.
+   *
+   * @warning Send only AFX AFY AFZ. ENU frame.
+   */
+  void send_setpoint_acceleration(const ros::Time & stamp, Eigen::Vector3d & accel_enu)
+  {
+    using mavlink::common::MAV_FRAME;
 
-		/* Documentation start from bit 1 instead 0.
-		 * Ignore position and velocity vectors, yaw and yaw rate
-		 */
-		uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
+    /* Documentation start from bit 1 instead 0.
+     * Ignore position and velocity vectors, yaw and yaw rate
+     */
+    uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
 
-		if (send_force)
-			ignore_all_except_a_xyz |= (1 << 9);
+    if (send_force) {
+      ignore_all_except_a_xyz |= (1 << 9);
+    }
 
-		auto accel = ftf::transform_frame_enu_ned(accel_enu);
+    auto accel = ftf::transform_frame_enu_ned(accel_enu);
 
-		set_position_target_local_ned(stamp.toNSec() / 1000000,
-					utils::enum_value(MAV_FRAME::LOCAL_NED),
-					ignore_all_except_a_xyz,
-					Eigen::Vector3d::Zero(),
-					Eigen::Vector3d::Zero(),
-					accel,
-					0.0, 0.0);
-	}
+    set_position_target_local_ned(
+      stamp.toNSec() / 1000000,
+      utils::enum_value(MAV_FRAME::LOCAL_NED),
+      ignore_all_except_a_xyz,
+      Eigen::Vector3d::Zero(),
+      Eigen::Vector3d::Zero(),
+      accel,
+      0.0, 0.0);
+  }
 
-	/* -*- callbacks -*- */
+  /* -*- callbacks -*- */
 
-	void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr &req) {
-		Eigen::Vector3d accel_enu;
+  void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr & req)
+  {
+    Eigen::Vector3d accel_enu;
 
-		tf::vectorMsgToEigen(req->vector, accel_enu);
-		send_setpoint_acceleration(req->header.stamp, accel_enu);
-	}
+    tf::vectorMsgToEigen(req->vector, accel_enu);
+    send_setpoint_acceleration(req->header.stamp, accel_enu);
+  }
 };
-}	// namespace std_plugins
-}	// namespace mavros
+}       // namespace std_plugins
+}       // namespace mavros
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAccelerationPlugin, mavros::plugin::PluginBase)

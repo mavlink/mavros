@@ -14,13 +14,13 @@
 #include <mavros/mavros_router.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    rclcpp::init(argc, argv);
+  rclcpp::init(argc, argv);
 
-    auto router_node = std::make_shared<mavros::router::Router>();
+  auto router_node = std::make_shared<mavros::router::Router>();
 
-    rclcpp::spin(router_node);
-    rclcpp::shutdown();
-    return 0;
+  rclcpp::spin(router_node);
+  rclcpp::shutdown();
+  return 0;
 }
