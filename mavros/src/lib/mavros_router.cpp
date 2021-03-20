@@ -25,9 +25,7 @@ std::atomic<id_t> Router::id_counter {1000};
 static inline uint8_t get_msg_byte(const mavlink_message_t * msg, uint8_t offset)
 {
   uint8_t ret;
-
   std::memcpy(&ret, static_cast<const void *>(msg->payload64), sizeof(ret));
-
   return ret;
 }
 
@@ -36,9 +34,6 @@ void Router::route_message(
   const Framing framing)
 {
   shared_lock lock(mu);
-
-  using LT = Endpoint::Type;
-
   this->stat_msg_routed++;
 
   // find message destination target
@@ -104,9 +99,13 @@ void Router::add_endpoint(
   unique_lock lock(mu);
   auto lg = get_logger();
 
-  RCLCPP_INFO(lg, "Requested to add endpoint: type %d, url: %s", request->type, request->url);
+  RCLCPP_INFO(
+    lg, "Requested to add endpoint: type: %d, url: %s", request->type,
+    request->url.c_str());
 
   id_t id = id_counter.fetch_add(1);
+
+  RCLCPP_INFO(lg, "link[%d] 1", id);
 
   Endpoint::SharedPtr ep;
   if (request->type == mavros_msgs::srv::EndpointAdd::Request::TYPE_UAS) {
@@ -115,11 +114,17 @@ void Router::add_endpoint(
     ep = std::make_shared<MAVConnEndpoint>();
   }
 
-  // ep->parent = shared_from_this(); // XXX build error
-  ep->parent = std::shared_ptr<Router>(this);
+  RCLCPP_INFO(lg, "link[%d] 2: %p", id, ep);
+
+  // NOTE(vooon): has type std::shared_ptr<rclcpp::Node>
+  auto shared_this = shared_from_this();
+
+  ep->parent = std::static_pointer_cast<Router>(shared_this);
   ep->id = id;
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
+
+  RCLCPP_INFO(lg, "link[%d] 3: %p", id, ep);
 
   this->endpoints[id] = ep;
 
@@ -247,7 +252,7 @@ void Router::periodic_reconnect_endpoints()
   shared_lock lock(mu);
   auto lg = get_logger();
 
-  RCLCPP_INFO(lg, "reconnecting");
+  RCLCPP_DEBUG(lg, "start reconnecting...");
 
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
@@ -256,6 +261,7 @@ void Router::periodic_reconnect_endpoints()
       continue;
     }
 
+    RCLCPP_INFO(lg, "link[%d] trying to reconnect...", p->id);
     p->open();    // XXX may trow DeviceError
   }
 }
@@ -301,15 +307,14 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   this->stale_addrs.erase(sysid_addr);
   this->stale_addrs.erase(sysid_compid_addr);
 
-  if (auto nh = this->parent.lock()) {
-    if (sp.second || scp.second) {
-      RCLCPP_INFO(
-        nh->get_logger(), "link[%d] detected remote address %d.%d", this->id, msg->sysid,
-        msg->compid);
-    }
-
-    nh->route_message(shared_from_this(), msg, framing);
+  auto & nh = this->parent;
+  if (sp.second || scp.second) {
+    RCLCPP_INFO(
+      nh->get_logger(), "link[%d] detected remote address %d.%d", this->id, msg->sysid,
+      msg->compid);
   }
+
+  nh->route_message(shared_from_this(), msg, framing);
 }
 
 bool MAVConnEndpoint::is_open()
@@ -358,7 +363,7 @@ bool ROSEndpoint::is_open()
 
 bool ROSEndpoint::open()
 {
-  auto nh = this->parent.lock();
+  auto & nh = this->parent;
   if (!nh) {
     return false;
   }
@@ -366,11 +371,11 @@ bool ROSEndpoint::open()
   this->from =
     nh->create_publisher<mavros_msgs::msg::Mavlink>(
     utils::format(
-      "%s/%s", this->url,
+      "%s/%s", this->url.c_str(),
       "mavlink_from"), QoS(
       1000).best_effort());
   this->to = nh->create_subscription<mavros_msgs::msg::Mavlink>(
-    utils::format("%s/%s", this->url, "mavlink_to"), QoS(1000).best_effort(),
+    utils::format("%s/%s", this->url.c_str(), "mavlink_to"), QoS(1000).best_effort(),
     std::bind(&ROSEndpoint::ros_recv_message, this, _1));
 
   return true;
@@ -391,7 +396,7 @@ void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing fram
 
   if (success) {
     this->from->publish(rmsg);
-  } else if (auto nh = this->parent.lock()) {
+  } else if (auto & nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }
@@ -407,7 +412,7 @@ void ROSEndpoint::ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rm
 
   if (success) {
     recv_message(&mmsg, framing);
-  } else if (auto nh = this->parent.lock()) {
+  } else if (auto & nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }

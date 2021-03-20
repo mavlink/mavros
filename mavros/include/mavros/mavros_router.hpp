@@ -76,7 +76,8 @@ public:
     id(0),
     link_type(Type::fcu),
     url{},
-    remote_addrs{}
+    remote_addrs{},
+    stale_addrs{}
   {
     const addr_t broadcase_addr = 0;
 
@@ -84,7 +85,7 @@ public:
     remote_addrs.emplace(broadcase_addr);
   }
 
-  std::weak_ptr<Router> parent;
+  std::shared_ptr<Router> parent;
 
   uint32_t id;                         // id of the endpoint
   Type link_type;                      // class of the endpoint
@@ -135,7 +136,7 @@ public:
       this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
     this->declare_parameter<StrV>("fcu_urls", StrV());
     this->declare_parameter<StrV>("gcs_urls", StrV());
-    this->declare_parameter<StrV>("fcu_urls", StrV());
+    this->declare_parameter<StrV>("uas_urls", StrV());
 
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
