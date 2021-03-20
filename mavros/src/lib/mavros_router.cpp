@@ -17,18 +17,23 @@
 using namespace mavros::router;
 using rclcpp::QoS;
 
-static std::atomic<id_t> Router::id_counter {0};
+using unique_lock = std::unique_lock<std::shared_timed_mutex>;
+using shared_lock = std::shared_lock<std::shared_timed_mutex>;
+
+std::atomic<id_t> Router::id_counter {0};
 
 void Router::route_message(
   Endpoint::SharedPtr src, const mavlink_message_t * msg,
   const Framing framing)
 {
+  shared_lock lock(mu);
 }
 
 void Router::add_endpoint(
   const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
   mavros_msgs::srv::EndpointAdd::Response::SharedPtr response)
 {
+  unique_lock lock(mu);
   auto lg = get_logger();
 
   RCLCPP_INFO(lg, "Requested to add endpoint: type %d, url: %s", request->type, request->url);
@@ -36,29 +41,31 @@ void Router::add_endpoint(
   id_t id = id_counter.fetch_add(1);
 
   Endpoint::SharedPtr ep;
-  if (request->type == mavros_msgs::srv::EndpointAdd::TYPE_UAS) {
-    ep = ROSEndpoint::make_shared();
+  if (request->type == mavros_msgs::srv::EndpointAdd::Request::TYPE_UAS) {
+    ep = std::make_shared<ROSEndpoint>();
   } else {
-    ep = MAVConnEndpoint::make_shared();
+    ep = std::make_shared<MAVConnEndpoint>();
   }
 
-  ep.parent = shared_from_this();
-  ep.id = id;
-  ep.link_type = static_cast<Endpoint::Type>(request->type);
-  ep.url = request->url;
+  //ep->parent = shared_from_this(); // XXX build error
+  ep->parent = std::shared_ptr<Router>(this);
+  ep->id = id;
+  ep->link_type = static_cast<Endpoint::Type>(request->type);
+  ep->url = request->url;
 
   this->endpoints[id] = ep;
 
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
-  response.id = id;
-  response.success = ep.open();
+  response->id = id;
+  response->success = ep->open();
 }
 
 void Router::del_endpoint(
   const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
   mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
 {
+  unique_lock lock(mu);
   auto lg = get_logger();
 
   RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
@@ -66,21 +73,46 @@ void Router::del_endpoint(
   auto it = this->endpoints.find(request->id);
   if (it != this->endpoints.end() ) {
     it->second->close();
-    this->endpoint.erase(it);
+    this->endpoints.erase(it);
     response->success = true;
   }
 }
 
-
-rcl_interface::msg::SetParametersResult Router::on_set_parameters_cb(
+rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto lg = get_logger();
-  rcl_interface::msg::SetParametersResult result;
+  rcl_interfaces::msg::SetParametersResult result{};
 
   RCLCPP_INFO(lg, "params");
 
-  result.success = true;
+  using Type = Endpoint::Type;
+
+  auto get_existing_set = [this](Type type) -> std::set<std::string> {
+      shared_lock lock(this->mu);
+
+      std::set<std::string> ret;
+
+      for (const auto & kv : this->endpoints) {
+        if (kv.second->link_type != type) {
+          continue;
+        }
+
+        ret.emplace(kv.second->url);
+      }
+
+      return ret;
+    };
+
+  auto update_endpoints = [&](rclcpp::Parameter & parameter, Type type) {
+
+      auto urls = parameter.as_string_array();
+      std::set<std::string> urls_set(urls.begin(), urls.end());
+      auto existing_set = get_existing_set(type);
+
+    };
+
+  result.successful = true;
   for (const auto & parameter : parameters) {
   }
 
@@ -146,6 +178,8 @@ void MAVConnEndpoint::close()
 
 void MAVConnEndpoint::send_message(const mavlink_message_t * msg, const Framing framing)
 {
+  (void)framing;
+
   if (!this->link) {
     return;
   }

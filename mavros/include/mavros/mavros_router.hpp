@@ -28,6 +28,7 @@
 #include <mavros/utils.hpp>
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <shared_mutex>
 
 #include <mavros_msgs/msg/mavlink.hpp>
 #include <mavros_msgs/srv/endpoint_add.hpp>
@@ -129,7 +130,8 @@ public:
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
-    this->add_on_parameters_set_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
+    set_parameters_handle_ptr =
+      this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
     this->declare_parameter<StrV>("fcu_urls", StrV());
     this->declare_parameter<StrV>("gcs_urls", StrV());
     this->declare_parameter<StrV>("fcu_urls", StrV());
@@ -141,7 +143,8 @@ public:
       "~/del_endpoint",
       std::bind(&Router::del_endpoint, this, _1, _2));
 
-    reconnect_timer = this->create_timer(30s, std::bind(&periodic_reconnect_endpoints, this));
+    reconnect_timer =
+      this->create_wall_timer(30s, std::bind(&Router::periodic_reconnect_endpoints, this));
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -151,12 +154,15 @@ private:
 
   static std::atomic<id_t> id_counter;
 
+  std::shared_timed_mutex mu;
+
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
 
   rclcpp::Service<mavros_msgs::srv::EndpointAdd>::SharedPtr add_service;
   rclcpp::Service<mavros_msgs::srv::EndpointDel>::SharedPtr del_service;
   rclcpp::TimerBase::SharedPtr reconnect_timer;
+  rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
 
   void add_endpoint(
     const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
@@ -167,7 +173,7 @@ private:
 
   void periodic_reconnect_endpoints();
 
-  rcl_interface::msg::SetParametersResult on_set_parameters_cb(
+  rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
 };
 
