@@ -158,6 +158,7 @@ public:
 
 private:
   friend class Endpoint;
+  friend class TestRouter;
 
   static std::atomic<id_t> id_counter;
 

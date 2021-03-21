@@ -387,15 +387,19 @@ std::pair<bool, std::string> ROSEndpoint::open()
     return {false, "parent not set"};
   }
 
-  this->from =
-    nh->create_publisher<mavros_msgs::msg::Mavlink>(
-    utils::format(
-      "%s/%s", this->url.c_str(),
-      "mavlink_from"), QoS(
-      1000).best_effort());
-  this->to = nh->create_subscription<mavros_msgs::msg::Mavlink>(
-    utils::format("%s/%s", this->url.c_str(), "mavlink_to"), QoS(1000).best_effort(),
-    std::bind(&ROSEndpoint::ros_recv_message, this, _1));
+  try {
+    this->from =
+      nh->create_publisher<mavros_msgs::msg::Mavlink>(
+      utils::format(
+        "%s/%s", this->url.c_str(),
+        "mavlink_from"), QoS(
+        1000).best_effort());
+    this->to = nh->create_subscription<mavros_msgs::msg::Mavlink>(
+      utils::format("%s/%s", this->url.c_str(), "mavlink_to"), QoS(1000).best_effort(),
+      std::bind(&ROSEndpoint::ros_recv_message, this, _1));
+  } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
+    return {false, ex.what()};
+  }
 
   return {true, ""};
 }
@@ -411,9 +415,14 @@ void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing fram
   rcpputils::assert_true(msg, "msg not null");
 
   auto rmsg = mavros_msgs::msg::Mavlink();
-  auto success = mavros_msgs::mavlink::convert(*msg, rmsg, utils::enum_value(framing));
+  auto ok = mavros_msgs::mavlink::convert(*msg, rmsg, utils::enum_value(framing));
 
-  if (success) {
+  // don't fail if endpoint closed
+  if (!this->from) {
+      return;
+  }
+
+  if (ok) {
     this->from->publish(rmsg);
   } else if (auto & nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
@@ -426,10 +435,10 @@ void ROSEndpoint::ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rm
 
   mavlink::mavlink_message_t mmsg;
 
-  auto success = mavros_msgs::mavlink::convert(*rmsg, mmsg);
+  auto ok = mavros_msgs::mavlink::convert(*rmsg, mmsg);
   auto framing = static_cast<Framing>(rmsg->framing_status);
 
-  if (success) {
+  if (ok) {
     recv_message(&mmsg, framing);
   } else if (auto & nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
