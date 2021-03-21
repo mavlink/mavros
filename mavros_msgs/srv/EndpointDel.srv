@@ -14,4 +14,4 @@ string url
 uint8 type
 
 ---
-bool success
+bool successful

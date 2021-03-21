@@ -103,6 +103,13 @@ void Router::add_endpoint(
     lg, "Requested to add endpoint: type: %d, url: %s", request->type,
     request->url.c_str());
 
+  if (request->type > mavros_msgs::srv::EndpointAdd::Request::TYPE_UAS) {
+    RCLCPP_ERROR(lg, "Unknown endpoint type");
+    response->successful = false;
+    response->reason = "unknown link type";
+    return;
+  }
+
   id_t id = id_counter.fetch_add(1);
 
   Endpoint::SharedPtr ep;
@@ -121,11 +128,18 @@ void Router::add_endpoint(
   ep->url = request->url;
 
   this->endpoints[id] = ep;
-
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
+  auto result = ep->open();
+  if (result.first) {
+    RCLCPP_INFO(lg, "link[%d] opened successfully", id);
+  } else {
+    RCLCPP_ERROR(lg, "link[%d] open failed: %s", id, result.second.c_str());
+  }
+
+  response->successful = result.first;
+  response->reason = result.second;
   response->id = id;
-  response->success = ep->open();
 }
 
 void Router::del_endpoint(
@@ -141,7 +155,7 @@ void Router::del_endpoint(
     if (it != this->endpoints.end() ) {
       it->second->close();
       this->endpoints.erase(it);
-      response->success = true;
+      response->successful = true;
     }
     return;
   }
@@ -155,7 +169,7 @@ void Router::del_endpoint(
     {
       it->second->close();
       this->endpoints.erase(it);
-      response->success = true;
+      response->successful = true;
       return;
     }
   }
@@ -256,7 +270,13 @@ void Router::periodic_reconnect_endpoints()
     }
 
     RCLCPP_INFO(lg, "link[%d] trying to reconnect...", p->id);
-    p->open();    // XXX may trow DeviceError
+    auto result = p->open();
+
+    if (result.first) {
+      RCLCPP_INFO(lg, "link[%d] reconnected", p->id);
+    } else {
+      RCLCPP_ERROR(lg, "link[%d] reconnect failed: %s", p->id, result.second.c_str());
+    }
   }
 }
 
@@ -320,13 +340,18 @@ bool MAVConnEndpoint::is_open()
   return this->link->is_open();
 }
 
-bool MAVConnEndpoint::open()
+std::pair<bool, std::string> MAVConnEndpoint::open()
 {
-  auto link = mavconn::MAVConnInterface::open_url(this->url);   // XXX may trow DeviceError
-  link->message_received_cb = std::bind(&MAVConnEndpoint::recv_message, shared_from_this(), _1, _2);
+  try {
+    auto link = mavconn::MAVConnInterface::open_url(this->url);
+    link->message_received_cb =
+      std::bind(&MAVConnEndpoint::recv_message, shared_from_this(), _1, _2);
+    this->link = link;
+  } catch (mavconn::DeviceError & ex) {
+    return {false, ex.what()};
+  }
 
-  this->link = link;
-  return true;
+  return {true, ""};
 }
 
 void MAVConnEndpoint::close()
@@ -355,11 +380,11 @@ bool ROSEndpoint::is_open()
   return this->from && this->to;
 }
 
-bool ROSEndpoint::open()
+std::pair<bool, std::string> ROSEndpoint::open()
 {
   auto & nh = this->parent;
   if (!nh) {
-    return false;
+    return {false, "parent not set"};
   }
 
   this->from =
@@ -372,7 +397,7 @@ bool ROSEndpoint::open()
     utils::format("%s/%s", this->url.c_str(), "mavlink_to"), QoS(1000).best_effort(),
     std::bind(&ROSEndpoint::ros_recv_message, this, _1));
 
-  return true;
+  return {true, ""};
 }
 
 void ROSEndpoint::close()

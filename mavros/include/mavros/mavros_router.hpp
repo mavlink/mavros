@@ -94,7 +94,7 @@ public:
   std::set<addr_t> stale_addrs;        // temporary storage for stale remote addrs
 
   virtual bool is_open() = 0;
-  virtual bool open() = 0;
+  virtual std::pair<bool, std::string> open() = 0;
   virtual void close() = 0;
 
   virtual void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) = 0;
@@ -213,7 +213,7 @@ public:
   mavconn::MAVConnInterface::Ptr link;       // connection
 
   bool is_open() override;
-  bool open() override;
+  std::pair<bool, std::string> open() override;
   void close() override;
 
   void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;
@@ -244,7 +244,7 @@ public:
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr from;        // FCU -> UAS
 
   bool is_open() override;
-  bool open() override;
+  std::pair<bool, std::string> open() override;
   void close() override;
 
   void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;

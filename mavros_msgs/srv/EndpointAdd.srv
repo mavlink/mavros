@@ -6,8 +6,9 @@ uint8 TYPE_FCU = 0
 uint8 TYPE_GCS = 1
 uint8 TYPE_UAS = 2
 
-string url
-uint8 type
+string url          # mavconn URL or topic prefix for TYPE_UAS
+uint8 type          # should be set to one of the TYPE_xxx
 ---
-bool success
-uint32 id
+bool successful     # true if endpoint added and opened
+string reason       # returns error description if open fails
+uint32 id           # ID of new endpoint, should be > 0 if endpoint created
