@@ -79,10 +79,10 @@ public:
     remote_addrs{},
     stale_addrs{}
   {
-    const addr_t broadcase_addr = 0;
+    const addr_t broadcast_addr = 0;
 
     // Accept broadcasts by default
-    remote_addrs.emplace(broadcase_addr);
+    remote_addrs.emplace(broadcast_addr);
   }
 
   std::shared_ptr<Router> parent;
@@ -128,7 +128,7 @@ public:
 
   Router(std::string node_name = "mavros_router")
   : rclcpp::Node(node_name, rclcpp::NodeOptions().use_intra_process_comms(true)),
-    endpoints{}, stat_msg_sent(0), stat_msg_routed(0), stat_msg_dropped(0)
+    endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0)
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 

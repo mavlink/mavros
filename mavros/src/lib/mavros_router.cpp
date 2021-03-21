@@ -54,7 +54,7 @@ retry:
   for (auto & kv:this->endpoints) {
     auto & dest = kv.second;
 
-    if (src == dest) {
+    if (src->id == dest->id) {
       continue;     // do not echo message
     }
     if (src->link_type == dest->link_type) {
@@ -419,7 +419,7 @@ void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing fram
 
   // don't fail if endpoint closed
   if (!this->from) {
-      return;
+    return;
   }
 
   if (ok) {

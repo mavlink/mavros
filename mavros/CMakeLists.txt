@@ -157,6 +157,7 @@ install(DIRECTORY launch
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
 
   # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
@@ -175,6 +176,10 @@ if(BUILD_TESTING)
   ament_add_gtest(libmavros-quaternion-utils-test test/test_quaternion_utils.cpp)
   target_link_libraries(libmavros-quaternion-utils-test mavros)
   #ament_target_dependencies(libmavros-quaternion-utils-test mavros)
+
+  ament_add_gmock(mavros-router-test test/test_router.cpp)
+  target_link_libraries(mavros-router-test mavros)
+  ament_target_dependencies(mavros-router-test mavros_msgs)
 endif()
 
 #ament_export_dependencies(console_bridge)
