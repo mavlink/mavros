@@ -436,7 +436,7 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
   stat.addf("Remotes count", "%zu", this->remote_addrs.size());
   size_t idx = 0;
   for (auto addr : this->remote_addrs) {
-    stat.addf(utils::format("Remote [%d]", idx++), "0x%04X", addr);
+    stat.addf(utils::format("Remote [%d]", idx++), "%d.%d", addr >> 8, addr & 0xff);
   }
 
   if (mav_status.packet_rx_drop_count > stat_last_drop_count) {
@@ -530,7 +530,7 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
   stat.addf("Remotes count", "%zu", this->remote_addrs.size());
   size_t idx = 0;
   for (auto addr : this->remote_addrs) {
-    stat.addf(utils::format("Remote [%d]", idx++), "0x%04X", addr);
+    stat.addf(utils::format("Remote [%d]", idx++), "%d.%d", addr >> 8, addr & 0xff);
   }
 
   if (this->is_open()) {

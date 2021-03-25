@@ -216,7 +216,6 @@ private:
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
 
-
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
 
@@ -252,6 +251,7 @@ public:
   void send_message(
     const mavlink_message_t * msg, const Framing framing = Framing::ok,
     id_t src_id = 0) override;
+
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 };
 
@@ -286,6 +286,7 @@ public:
   void send_message(
     const mavlink_message_t * msg, const Framing framing = Framing::ok,
     id_t src_id = 0) override;
+
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
 private:
