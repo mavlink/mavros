@@ -66,15 +66,22 @@ namespace router
 class TestRouter : public ::testing::Test
 {
 public:
+  TestRouter()
+  {
+    // std::cout << "init" << std::endl;
+    rclcpp::init(0, nullptr);
+  }
+
+  ~TestRouter()
+  {
+    // NOTE(vooon): required to remove any remaining Nodes
+    // std::cout << "kill" << std::endl;
+    rclcpp::shutdown();
+  }
+
   Router::SharedPtr create_node()
   {
-    // XXX(vooon): for some reason i do not see deletion of the Node object, even if i call reset() manually
-    //             so to avoid warnings about same node name i will generate custom name.
-    auto node_name = utils::format(
-      "test_mavros_router__%s",
-      ::testing::UnitTest::GetInstance()->current_test_info()->name());
-
-    auto router = std::make_shared<Router>(node_name);
+    auto router = std::make_shared<Router>("test_mavros_router");
 
     auto make_and_add_mock_endpoint =
       [router](id_t id, const std::string & url, LT type,
@@ -100,6 +107,7 @@ public:
     make_and_add_mock_endpoint(1002, "/uas1", LT::uas, {0x0000, 0x0100, 0x01BF});
     make_and_add_mock_endpoint(1003, "/uas2", LT::uas, {0x0000, 0x0200, 0x02BF});
     make_and_add_mock_endpoint(1004, "mock://gcs1", LT::gcs, {0x0000, 0xFF00, 0xFFBE});
+    make_and_add_mock_endpoint(1005, "mock://gcs2", LT::gcs, {0x0000, 0xFF00, 0xFFBD});
 
     return router;
   }
@@ -152,8 +160,9 @@ public:
   }
 };
 
-TEST_F(TestRouter, set_parameter) {
-  auto router = std::make_shared<Router>("test_mavros_router__set_parameter");
+TEST_F(TestRouter, set_parameter)
+{
+  auto router = std::make_shared<Router>("test_mavros_router");
 
   router->set_parameters(
     std::vector<rclcpp::Parameter>{
@@ -193,16 +202,19 @@ TEST_F(TestRouter, set_parameter) {
   auto fcu2 = getep(router, 1001); \
   auto uas1 = getep(router, 1002); \
   auto uas2 = getep(router, 1003); \
-  auto gcs1 = getep(router, 1004);
+  auto gcs1 = getep(router, 1004); \
+  auto gcs2 = getep(router, 1005);
 
 #define VERIFY_EPS() \
   testing::Mock::VerifyAndClearExpectations(&(*fcu1)); \
   testing::Mock::VerifyAndClearExpectations(&(*fcu2)); \
   testing::Mock::VerifyAndClearExpectations(&(*uas1)); \
   testing::Mock::VerifyAndClearExpectations(&(*uas2)); \
-  testing::Mock::VerifyAndClearExpectations(&(*gcs1));
+  testing::Mock::VerifyAndClearExpectations(&(*gcs1)); \
+  testing::Mock::VerifyAndClearExpectations(&(*gcs2));
 
-TEST_F(TestRouter, route_fcu_broadcast) {
+TEST_F(TestRouter, route_fcu_broadcast)
+{
   auto router = this->create_node();
 
   auto hb = make_heartbeat();
@@ -216,13 +228,15 @@ TEST_F(TestRouter, route_fcu_broadcast) {
   EXPECT_CALL(*uas1, send_message(_, fr));
   EXPECT_CALL(*uas2, send_message(_, fr));
   EXPECT_CALL(*gcs1, send_message(_, fr));
+  EXPECT_CALL(*gcs2, send_message(_, fr));
 
   router->route_message(fcu1, &hbmsg, fr);
 
   VERIFY_EPS();
 }
 
-TEST_F(TestRouter, route_uas_broadcast) {
+TEST_F(TestRouter, route_uas_broadcast)
+{
   auto router = this->create_node();
 
   auto hb = make_heartbeat();
@@ -236,13 +250,15 @@ TEST_F(TestRouter, route_uas_broadcast) {
   EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
   EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
   EXPECT_CALL(*gcs1, send_message(_, fr));
+  EXPECT_CALL(*gcs2, send_message(_, fr));
 
   router->route_message(uas1, &hbmsg, fr);
 
   VERIFY_EPS();
 }
 
-TEST_F(TestRouter, route_gcs_broadcast) {
+TEST_F(TestRouter, route_gcs_broadcast)
+{
   auto router = this->create_node();
 
   auto hb = make_heartbeat();
@@ -256,14 +272,15 @@ TEST_F(TestRouter, route_gcs_broadcast) {
   EXPECT_CALL(*uas1, send_message(_, fr));
   EXPECT_CALL(*uas2, send_message(_, fr));
   EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
 
   router->route_message(gcs1, &hbmsg, fr);
 
   VERIFY_EPS();
 }
 
-TEST_F(TestRouter, route_targeted_system) {
-
+TEST_F(TestRouter, route_targeted_one_system)
+{
   using MF = mavlink::common::MAV_MODE_FLAG;
   using utils::enum_value;
 
@@ -284,13 +301,44 @@ TEST_F(TestRouter, route_targeted_system) {
   EXPECT_CALL(*uas1, send_message(_, fr)).Times(1);
   EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
   EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
 
   router->route_message(fcu1, &smmsg, fr);
 
   VERIFY_EPS();
 }
 
-TEST_F(TestRouter, route_targeted_system_component) {
+TEST_F(TestRouter, route_targeted_two_system)
+{
+  using MF = mavlink::common::MAV_MODE_FLAG;
+  using utils::enum_value;
+
+  auto router = this->create_node();
+
+  auto set_mode = mavlink::common::msg::SET_MODE();
+  set_mode.target_system = 0xFF;
+  set_mode.base_mode = enum_value(MF::SAFETY_ARMED) | enum_value(MF::TEST_ENABLED);
+  set_mode.custom_mode = 4;
+
+  auto smmsg = convert_message(set_mode, 0x01BF);
+  auto fr = Framing::ok;
+
+  DEFINE_EPS();
+
+  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(1);
+  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(1);
+
+  router->route_message(uas1, &smmsg, fr);
+
+  VERIFY_EPS();
+}
+
+TEST_F(TestRouter, route_targeted_system_component)
+{
   auto router = this->create_node();
 
   auto ping = mavlink::common::msg::PING();
@@ -309,18 +357,19 @@ TEST_F(TestRouter, route_targeted_system_component) {
   EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
   EXPECT_CALL(*uas2, send_message(_, fr)).Times(1);
   EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
 
   router->route_message(fcu1, &pmsg, fr);
 
   VERIFY_EPS();
 }
 
-} // namespace router
-} // namespace mavros
+}  // namespace router
+}  // namespace mavros
 
 int main(int argc, char ** argv)
 {
-  rclcpp::init(argc, argv);
+  // rclcpp::init(argc, argv);
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

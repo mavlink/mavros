@@ -29,6 +29,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <shared_mutex>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <Eigen/Eigen>
 
 #include <mavros_msgs/msg/mavlink.hpp>
 #include <mavros_msgs/srv/endpoint_add.hpp>
@@ -129,10 +130,12 @@ public:
 
   using StrV = std::vector<std::string>;
 
-  explicit Router(std::string node_name = "mavros_router")
+  explicit Router(const std::string & node_name = "mavros_router")
   : Router(rclcpp::NodeOptions(), node_name) {}
 
-  Router(const rclcpp::NodeOptions & options, std::string node_name = "mavros_router")
+  explicit Router(
+    const rclcpp::NodeOptions & options,
+    const std::string & node_name = "mavros_router")
   : rclcpp::Node(node_name, rclcpp::NodeOptions(options).use_intra_process_comms(true)),
     endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
     diagnostic_updater(this, 1.0)
@@ -160,7 +163,18 @@ public:
     stale_addrs_timer =
       this->create_wall_timer(60s, std::bind(&Router::periodic_clear_stale_remote_addrs, this));
 
+    diagnostic_updater.setHardwareID("none");  // NOTE: router connects several hardwares
     diagnostic_updater.add("MAVROS Router", this, &Router::diag_run);
+
+    std::stringstream ss;
+    for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
+      ss << " " << s;
+    }
+
+    RCLCPP_INFO(get_logger(), "Built-in SIMD instructions: %s", Eigen::SimdInstructionSetsInUse());
+    RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
+    RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
+    RCLCPP_INFO(get_logger(), "MAVROS Router started");
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -258,8 +272,8 @@ public:
     close();
   }
 
-  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr to;       // UAS -> FCU
-  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr from;        // FCU -> UAS
+  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr sink;       // UAS -> FCU
+  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr source;        // FCU -> UAS
 
   bool is_open() override;
   std::pair<bool, std::string> open() override;

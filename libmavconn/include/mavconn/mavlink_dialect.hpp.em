@@ -25,6 +25,16 @@
 // AUTOMATIC GENERATED FILE!
 // from include/mavconn/mavlink_dialect.hpp.em
 
+namespace mavlink {
+#ifndef MAVLINK_VERSION
+#include <mavlink/config.h>
+constexpr auto version = MAVLINK_VERSION;
+#undef MAVLINK_VERSION
+#else
+constexpr auto version = "unknown";
+#endif
+}  // namespace mavlink
+
 #define MAVLINK_START_SIGN_STREAM(link_id)
 #define MAVLINK_END_SIGN_STREAM(link_id)
 
