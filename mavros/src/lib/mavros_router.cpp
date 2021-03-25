@@ -58,6 +58,9 @@ retry:
       continue;     // drop messages between same type FCU/GCS/UAS
     }
 
+    // NOTE(vooon): current router do not allow to speak drone-to-drone.
+    //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
+
     bool has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
 
     if (has_target) {
@@ -125,6 +128,7 @@ void Router::add_endpoint(
   ep->url = request->url;
 
   this->endpoints[id] = ep;
+  this->diagnostic_updater.add(ep->diag_name(), std::bind(&Endpoint::diag_run, ep, _1));
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
   auto result = ep->open();
@@ -152,6 +156,7 @@ void Router::del_endpoint(
     if (it != this->endpoints.end() ) {
       it->second->close();
       this->endpoints.erase(it);
+      this->diagnostic_updater.removeByName(it->second->diag_name());
       response->successful = true;
     }
     return;
@@ -166,6 +171,7 @@ void Router::del_endpoint(
     {
       it->second->close();
       this->endpoints.erase(it);
+      this->diagnostic_updater.removeByName(it->second->diag_name());
       response->successful = true;
       return;
     }
@@ -302,6 +308,26 @@ void Router::periodic_clear_stale_remote_addrs()
   }
 }
 
+
+void Router::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  auto endpoints_len = [this]() -> auto {
+      shared_lock lock(this->mu);
+      return this->endpoints.size();
+    } ();
+
+  stat.addf("Endpoints:", "%zu", endpoints_len);
+  stat.addf("Messages routed:", "%zu", stat_msg_routed.load());
+  stat.addf("Messages sent:", "%zu", stat_msg_sent.load());
+  stat.addf("Messages dropped:", "%zu", stat_msg_dropped.load());
+
+  if (endpoints_len < 2) {
+    stat.summary(2, "not enough endpoints");
+  } else {
+    stat.summary(0, "ok");
+  }
+}
+
 void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing)
 {
   rcpputils::assert_true(msg, "msg not nullptr");
@@ -326,6 +352,11 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   }
 
   nh->route_message(shared_from_this(), msg, framing);
+}
+
+std::string Endpoint::diag_name()
+{
+  return utils::format("endpoint %d: %s", this->id, this->url.c_str());
 }
 
 bool MAVConnEndpoint::is_open()
@@ -370,6 +401,40 @@ void MAVConnEndpoint::send_message(const mavlink_message_t * msg, const Framing 
   }
 
   this->link->send_message_ignore_drop(msg);
+}
+
+
+void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (!this->link) {
+    stat.summary(2, "closed");
+    return;
+  }
+
+  auto mav_status = this->link->get_status();
+  auto iostat = this->link->get_iostat();
+
+  stat.addf("Received packets:", "%u", mav_status.packet_rx_success_count);
+  stat.addf("Dropped packets:", "%u", mav_status.packet_rx_drop_count);
+  stat.addf("Buffer overruns:", "%u", mav_status.buffer_overrun);
+  stat.addf("Parse errors:", "%u", mav_status.parse_error);
+  stat.addf("Rx sequence number:", "%u", mav_status.current_rx_seq);
+  stat.addf("Tx sequence number:", "%u", mav_status.current_tx_seq);
+
+  stat.addf("Rx total bytes:", "%u", iostat.rx_total_bytes);
+  stat.addf("Tx total bytes:", "%u", iostat.tx_total_bytes);
+  stat.addf("Rx speed:", "%f", iostat.rx_speed);
+  stat.addf("Tx speed:", "%f", iostat.tx_speed);
+
+  if (mav_status.packet_rx_drop_count > stat_last_drop_count) {
+    stat.summaryf(
+      1, "%d packeges dropped since last report",
+      mav_status.packet_rx_drop_count - stat_last_drop_count);
+  } else {
+    stat.summary(0, "ok");
+  }
+
+  stat_last_drop_count = mav_status.packet_rx_drop_count;
 }
 
 bool ROSEndpoint::is_open()
@@ -441,3 +506,13 @@ void ROSEndpoint::ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rm
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }
+
+void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  // TODO(vooon): make some diagnostics
+  stat.summary(0, "ok");
+}
+
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(Router)

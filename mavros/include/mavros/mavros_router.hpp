@@ -24,11 +24,11 @@
 #include <mavconn/interface.hpp>
 #include <mavconn/mavlink_dialect.hpp>
 #include <memory>
-//include <mavros/mavlink_diag.h>
 #include <mavros/utils.hpp>
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <shared_mutex>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <mavros_msgs/msg/mavlink.hpp>
 #include <mavros_msgs/srv/endpoint_add.hpp>
@@ -99,6 +99,9 @@ public:
 
   virtual void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) = 0;
   virtual void recv_message(const mavlink_message_t * msg, const Framing framing = Framing::ok);
+
+  virtual std::string diag_name();
+  virtual void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) = 0;
 };
 
 /**
@@ -126,9 +129,13 @@ public:
 
   using StrV = std::vector<std::string>;
 
-  Router(std::string node_name = "mavros_router")
-  : rclcpp::Node(node_name, rclcpp::NodeOptions().use_intra_process_comms(true)),
-    endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0)
+  explicit Router(std::string node_name = "mavros_router")
+  : Router(rclcpp::NodeOptions(), node_name) {}
+
+  Router(const rclcpp::NodeOptions & options, std::string node_name = "mavros_router")
+  : rclcpp::Node(node_name, rclcpp::NodeOptions(options).use_intra_process_comms(true)),
+    endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
+    diagnostic_updater(this, 1.0)
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
@@ -152,6 +159,8 @@ public:
     // collect garbage addrs each minute
     stale_addrs_timer =
       this->create_wall_timer(60s, std::bind(&Router::periodic_clear_stale_remote_addrs, this));
+
+    diagnostic_updater.add("MAVROS Router", this, &Router::diag_run);
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -176,6 +185,7 @@ private:
   rclcpp::TimerBase::SharedPtr reconnect_timer;
   rclcpp::TimerBase::SharedPtr stale_addrs_timer;
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
+  diagnostic_updater::Updater diagnostic_updater;
 
   void add_endpoint(
     const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
@@ -189,6 +199,9 @@ private:
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
+
+
+  void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
 
 /**
@@ -197,6 +210,8 @@ private:
  *
  * TODO(vooon): support multiple remotes on UDP,
  *              choose right TCP client instead of simple broadcast
+ *
+ * NOTE(vooon): do we still need PX4 USB quirk?
  */
 class MAVConnEndpoint : public Endpoint
 {
@@ -212,12 +227,14 @@ public:
   }
 
   mavconn::MAVConnInterface::Ptr link;       // connection
+  size_t stat_last_drop_count;
 
   bool is_open() override;
   std::pair<bool, std::string> open() override;
   void close() override;
 
   void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;
+  void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 };
 
 /**
@@ -249,6 +266,7 @@ public:
   void close() override;
 
   void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;
+  void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
 private:
   void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);

@@ -55,6 +55,7 @@ public:
   MOCK_METHOD2(
     recv_message, void(const mavlink_message_t * msg,
     const Framing framing));
+  MOCK_METHOD1(diag_run, void(diagnostic_updater::DiagnosticStatusWrapper &));
 };
 
 namespace mavros
@@ -70,7 +71,7 @@ public:
     // XXX(vooon): for some reason i do not see deletion of the Node object, even if i call reset() manually
     //             so to avoid warnings about same node name i will generate custom name.
     auto node_name = utils::format(
-      "test_mavros_router_%s",
+      "test_mavros_router__%s",
       ::testing::UnitTest::GetInstance()->current_test_info()->name());
 
     auto router = std::make_shared<Router>(node_name);

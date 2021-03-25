@@ -32,8 +32,8 @@ find_package(eigen_stl_containers REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-#find_package(diagnostic_msgs REQUIRED)
-#find_package(diagnostic_updater REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 find_package(geographic_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -90,10 +90,10 @@ ament_target_dependencies(mavros
   mavros_msgs
   libmavconn
   console_bridge
+  diagnostic_updater
 )
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 rclcpp_components_register_nodes(mavros "mavros::router::Router")
-#rclcpp_components_register_nodes(mavros "MavrosVehicle")
 
 #add_library(mavros_plugins
 #  src/plugins/3dr_radio.cpp
