@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <rclcpp/executors.hpp>
 #include <mavconn/interface.hpp>
 #include <mavros/mavros_router.hpp>
 
@@ -157,6 +158,21 @@ public:
     hb.system_status = static_cast<int>(MAV_STATE::ACTIVE);
 
     return hb;
+  }
+
+  inline size_t get_stat_msg_routed(Router::SharedPtr router)
+  {
+    return router->stat_msg_routed.load();
+  }
+
+  inline size_t get_stat_msg_sent(Router::SharedPtr router)
+  {
+    return router->stat_msg_sent.load();
+  }
+
+  inline size_t get_stat_msg_dropped(Router::SharedPtr router)
+  {
+    return router->stat_msg_dropped.load();
   }
 };
 
@@ -363,6 +379,84 @@ TEST_F(TestRouter, route_targeted_system_component)
 
   VERIFY_EPS();
 }
+
+TEST_F(TestRouter, endpoint_recv_message)
+{
+  auto router = std::make_shared<Router>("test_mavros_router");
+
+  router->set_parameters(
+    std::vector<rclcpp::Parameter>{
+        rclcpp::Parameter("uas_urls", std::vector<std::string>{"/uas1"})
+      });
+
+  auto uas1 = getep(router, 1000);
+
+  uas1->stale_addrs.emplace(0x0100);
+  uas1->stale_addrs.emplace(0x01BF);
+
+  ASSERT_NE(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x0100));
+  ASSERT_NE(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x01BF));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0000));
+  ASSERT_EQ(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0100));
+  ASSERT_EQ(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x01BF);
+  auto fr = Framing::ok;
+
+  uas1->recv_message(&hbmsg, fr);
+
+  ASSERT_EQ(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x0100));
+  ASSERT_EQ(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x01BF));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0000));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0100));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
+
+  ASSERT_EQ(1, get_stat_msg_routed(router));
+  ASSERT_EQ(0, get_stat_msg_sent(router));
+  ASSERT_EQ(1, get_stat_msg_dropped(router));
+}
+
+#if 0  // TODO
+TEST_F(TestRouter, uas_recv_message)
+{
+  auto router = this->create_node();
+
+  auto ping = mavlink::common::msg::PING();
+  ping.target_system = 0x02;
+  ping.target_component = 0x00;
+  ping.seq = 1234;
+  ping.time_usec = 123456789000000ULL;
+
+  auto pmsg = convert_message(ping, 0x0101);
+  auto fr = Framing::ok;
+
+  mavros_msgs::msg::Mavlink rmsg{};
+  mavros_msgs::mavlink::convert(pmsg, rmsg, utils::enum_value(fr));
+
+  DEFINE_EPS();
+
+  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(1);
+  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
+
+  EXPECT_CALL(*uas1, recv_message(_, fr));
+
+  rclcpp::executors::MultiThreadedExecutor exec;
+  exec.add_node(router);
+
+  auto pub = router->create_publisher<mavros_msgs::msg::Mavlink>("/uas2/mavlink_sink", 1);
+  pub->publish(rmsg);
+
+  exec.spin();
+
+  VERIFY_EPS();
+
+}
+#endif
 
 }  // namespace router
 }  // namespace mavros
