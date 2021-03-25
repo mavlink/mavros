@@ -24,9 +24,7 @@ std::atomic<id_t> Router::id_counter {1000};
 
 static inline uint8_t get_msg_byte(const mavlink_message_t * msg, uint8_t offset)
 {
-  uint8_t ret;
-  std::memcpy(&ret, static_cast<const void *>(msg->payload64), sizeof(ret));
-  return ret;
+  return _MAV_PAYLOAD(msg)[offset];
 }
 
 void Router::route_message(
@@ -50,7 +48,6 @@ void Router::route_message(
 
   size_t sent_cnt = 0, retry_cnt = 0;
 retry:
-
   for (auto & kv:this->endpoints) {
     auto & dest = kv.second;
 
