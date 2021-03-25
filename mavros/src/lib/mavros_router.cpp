@@ -515,4 +515,4 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(Router)
+RCLCPP_COMPONENTS_REGISTER_NODE(mavros::router::Router)
