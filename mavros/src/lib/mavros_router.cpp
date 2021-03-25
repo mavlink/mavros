@@ -379,6 +379,12 @@ std::pair<bool, std::string> MAVConnEndpoint::open()
     return {false, ex.what()};
   }
 
+  // not necessary because router would not serialize mavlink::Message
+  // but that is a good default
+  this->link->set_protocol_version(mavconn::Protocol::V20);
+
+  // TODO(vooon): message signing?
+
   return {true, ""};
 }
 
@@ -402,7 +408,6 @@ void MAVConnEndpoint::send_message(const mavlink_message_t * msg, const Framing 
 
   this->link->send_message_ignore_drop(msg);
 }
-
 
 void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -514,5 +519,5 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 }
 
 
-#include <rclcpp_components/register_node_macro.hpp>
+#include <rclcpp_components/register_node_macro.hpp>  // NOLINT
 RCLCPP_COMPONENTS_REGISTER_NODE(mavros::router::Router)
