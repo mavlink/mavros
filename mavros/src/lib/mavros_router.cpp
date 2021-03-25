@@ -64,7 +64,7 @@ retry:
     bool has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
 
     if (has_target) {
-      dest->send_message(msg, framing);
+      dest->send_message(msg, framing, src->id);
       sent_cnt++;
     }
   }
@@ -316,10 +316,10 @@ void Router::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
       return this->endpoints.size();
     } ();
 
-  stat.addf("Endpoints:", "%zu", endpoints_len);
-  stat.addf("Messages routed:", "%zu", stat_msg_routed.load());
-  stat.addf("Messages sent:", "%zu", stat_msg_sent.load());
-  stat.addf("Messages dropped:", "%zu", stat_msg_dropped.load());
+  stat.addf("Endpoints", "%zu", endpoints_len);
+  stat.addf("Messages routed", "%zu", stat_msg_routed.load());
+  stat.addf("Messages sent", "%zu", stat_msg_sent.load());
+  stat.addf("Messages dropped", "%zu", stat_msg_dropped.load());
 
   if (endpoints_len < 2) {
     stat.summary(2, "not enough endpoints");
@@ -398,7 +398,9 @@ void MAVConnEndpoint::close()
   this->link.reset();
 }
 
-void MAVConnEndpoint::send_message(const mavlink_message_t * msg, const Framing framing)
+void MAVConnEndpoint::send_message(
+  const mavlink_message_t * msg, const Framing framing,
+  id_t src_id)
 {
   (void)framing;
 
@@ -419,17 +421,23 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
   auto mav_status = this->link->get_status();
   auto iostat = this->link->get_iostat();
 
-  stat.addf("Received packets:", "%u", mav_status.packet_rx_success_count);
-  stat.addf("Dropped packets:", "%u", mav_status.packet_rx_drop_count);
-  stat.addf("Buffer overruns:", "%u", mav_status.buffer_overrun);
-  stat.addf("Parse errors:", "%u", mav_status.parse_error);
-  stat.addf("Rx sequence number:", "%u", mav_status.current_rx_seq);
-  stat.addf("Tx sequence number:", "%u", mav_status.current_tx_seq);
+  stat.addf("Received packets", "%u", mav_status.packet_rx_success_count);
+  stat.addf("Dropped packets", "%u", mav_status.packet_rx_drop_count);
+  stat.addf("Buffer overruns", "%u", mav_status.buffer_overrun);
+  stat.addf("Parse errors", "%u", mav_status.parse_error);
+  stat.addf("Rx sequence number", "%u", mav_status.current_rx_seq);
+  stat.addf("Tx sequence number", "%u", mav_status.current_tx_seq);
 
-  stat.addf("Rx total bytes:", "%u", iostat.rx_total_bytes);
-  stat.addf("Tx total bytes:", "%u", iostat.tx_total_bytes);
-  stat.addf("Rx speed:", "%f", iostat.rx_speed);
-  stat.addf("Tx speed:", "%f", iostat.tx_speed);
+  stat.addf("Rx total bytes", "%u", iostat.rx_total_bytes);
+  stat.addf("Tx total bytes", "%u", iostat.tx_total_bytes);
+  stat.addf("Rx speed", "%f", iostat.rx_speed);
+  stat.addf("Tx speed", "%f", iostat.tx_speed);
+
+  stat.addf("Remotes count", "%zu", this->remote_addrs.size());
+  size_t idx = 0;
+  for (auto addr : this->remote_addrs) {
+    stat.addf(utils::format("Remote [%d]", idx++), "0x%04X", addr);
+  }
 
   if (mav_status.packet_rx_drop_count > stat_last_drop_count) {
     stat.summaryf(
@@ -477,7 +485,7 @@ void ROSEndpoint::close()
   this->sink.reset();
 }
 
-void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing framing)
+void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing framing, id_t src_id)
 {
   rcpputils::assert_true(msg, "msg not null");
 
@@ -488,6 +496,9 @@ void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing fram
   if (!this->source) {
     return;
   }
+
+  rmsg.header.stamp = this->parent->now();
+  rmsg.header.frame_id = utils::format("ep:%d", src_id);
 
   if (ok) {
     this->source->publish(rmsg);
@@ -515,7 +526,18 @@ void ROSEndpoint::ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rm
 void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // TODO(vooon): make some diagnostics
-  stat.summary(0, "ok");
+
+  stat.addf("Remotes count", "%zu", this->remote_addrs.size());
+  size_t idx = 0;
+  for (auto addr : this->remote_addrs) {
+    stat.addf(utils::format("Remote [%d]", idx++), "0x%04X", addr);
+  }
+
+  if (this->is_open()) {
+    stat.summary(0, "ok");
+  } else {
+    stat.summary(2, "closed");
+  }
 }
 
 

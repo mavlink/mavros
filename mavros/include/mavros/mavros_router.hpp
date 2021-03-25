@@ -98,7 +98,9 @@ public:
   virtual std::pair<bool, std::string> open() = 0;
   virtual void close() = 0;
 
-  virtual void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) = 0;
+  virtual void send_message(
+    const mavlink_message_t * msg, const Framing framing = Framing::ok,
+    id_t src_id = 0) = 0;
   virtual void recv_message(const mavlink_message_t * msg, const Framing framing = Framing::ok);
 
   virtual std::string diag_name();
@@ -247,7 +249,9 @@ public:
   std::pair<bool, std::string> open() override;
   void close() override;
 
-  void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;
+  void send_message(
+    const mavlink_message_t * msg, const Framing framing = Framing::ok,
+    id_t src_id = 0) override;
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 };
 
@@ -279,7 +283,9 @@ public:
   std::pair<bool, std::string> open() override;
   void close() override;
 
-  void send_message(const mavlink_message_t * msg, const Framing framing = Framing::ok) override;
+  void send_message(
+    const mavlink_message_t * msg, const Framing framing = Framing::ok,
+    id_t src_id = 0) override;
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
 private:

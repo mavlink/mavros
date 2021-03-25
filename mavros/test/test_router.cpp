@@ -50,9 +50,9 @@ public:
   MOCK_METHOD0(open, std::pair<bool, std::string>());
   MOCK_METHOD0(close, void());
 
-  MOCK_METHOD2(
+  MOCK_METHOD3(
     send_message, void(const mavlink_message_t * msg,
-    const Framing framing));
+    const Framing framing, id_t src_id));
   MOCK_METHOD2(
     recv_message, void(const mavlink_message_t * msg,
     const Framing framing));
@@ -239,12 +239,12 @@ TEST_F(TestRouter, route_fcu_broadcast)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas1, send_message(_, fr));
-  EXPECT_CALL(*uas2, send_message(_, fr));
-  EXPECT_CALL(*gcs1, send_message(_, fr));
-  EXPECT_CALL(*gcs2, send_message(_, fr));
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _));
+  EXPECT_CALL(*uas2, send_message(_, fr, _));
+  EXPECT_CALL(*gcs1, send_message(_, fr, _));
+  EXPECT_CALL(*gcs2, send_message(_, fr, _));
 
   router->route_message(fcu1, &hbmsg, fr);
 
@@ -261,12 +261,12 @@ TEST_F(TestRouter, route_uas_broadcast)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr));
-  EXPECT_CALL(*fcu2, send_message(_, fr));
-  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs1, send_message(_, fr));
-  EXPECT_CALL(*gcs2, send_message(_, fr));
+  EXPECT_CALL(*fcu1, send_message(_, fr, _));
+  EXPECT_CALL(*fcu2, send_message(_, fr, _));
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _));
+  EXPECT_CALL(*gcs2, send_message(_, fr, _));
 
   router->route_message(uas1, &hbmsg, fr);
 
@@ -283,12 +283,12 @@ TEST_F(TestRouter, route_gcs_broadcast)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr));
-  EXPECT_CALL(*fcu2, send_message(_, fr));
-  EXPECT_CALL(*uas1, send_message(_, fr));
-  EXPECT_CALL(*uas2, send_message(_, fr));
-  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu1, send_message(_, fr, _));
+  EXPECT_CALL(*fcu2, send_message(_, fr, _));
+  EXPECT_CALL(*uas1, send_message(_, fr, _));
+  EXPECT_CALL(*uas2, send_message(_, fr, _));
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(0);
 
   router->route_message(gcs1, &hbmsg, fr);
 
@@ -312,12 +312,12 @@ TEST_F(TestRouter, route_targeted_one_system)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas1, send_message(_, fr)).Times(1);
-  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(0);
 
   router->route_message(fcu1, &smmsg, fr);
 
@@ -341,12 +341,12 @@ TEST_F(TestRouter, route_targeted_two_system)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(1);
-  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(1);
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(1);
 
   router->route_message(uas1, &smmsg, fr);
 
@@ -368,12 +368,12 @@ TEST_F(TestRouter, route_targeted_system_component)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas2, send_message(_, fr)).Times(1);
-  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(0);
 
   router->route_message(fcu1, &pmsg, fr);
 
@@ -436,12 +436,12 @@ TEST_F(TestRouter, uas_recv_message)
 
   DEFINE_EPS();
 
-  EXPECT_CALL(*fcu1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*fcu2, send_message(_, fr)).Times(1);
-  EXPECT_CALL(*uas1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*uas2, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs1, send_message(_, fr)).Times(0);
-  EXPECT_CALL(*gcs2, send_message(_, fr)).Times(0);
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(0);
 
   EXPECT_CALL(*uas1, recv_message(_, fr));
 
