@@ -14,8 +14,8 @@
 #include <array>
 #include <unordered_map>
 #include <stdexcept>
-#include <mavros/mavros_uas.h>
-#include <mavros/px4_custom_mode.h>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/px4_custom_mode.hpp>
 
 using namespace mavros;
 using mavros::utils::enum_value;

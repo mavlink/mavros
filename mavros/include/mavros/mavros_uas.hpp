@@ -107,7 +107,7 @@ public:
    * @brief Get angular velocity from IMU data
    * @return vector3 [NED]
    */
-  geometry_msgs::mag::Vector3 get_attitude_angular_velocity_ned();
+  geometry_msgs::msg::Vector3 get_attitude_angular_velocity_ned();
 
 
   /* -*- GPS data -*- */
@@ -209,7 +209,7 @@ public:
 
   using StrV = std::vector<std::string>;
 
-  explicit UAS(const rclcpp : NodeOptions & options_ = rclcpp::NodeOptions())
+  explicit UAS(const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions())
   : UAS("mavros", options_)
   {
   }

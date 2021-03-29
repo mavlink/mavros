@@ -73,19 +73,17 @@ add_library(mavros SHARED
   src/lib/ftf_frame_conversions.cpp
   src/lib/ftf_quaternion_utils.cpp
   src/lib/mavros_router.cpp
-#  src/lib/mavlink_diag.cpp
-#  src/lib/mavros.cpp
-#  src/lib/rosconsole_bridge.cpp
-#  src/lib/uas_data.cpp
-#  src/lib/uas_stringify.cpp
-#  src/lib/uas_timesync.cpp
+  src/lib/mavros_uas.cpp
+  src/lib/uas_data.cpp
+  src/lib/uas_stringify.cpp
+  src/lib/uas_timesync.cpp
 )
 ament_target_dependencies(mavros
   rclcpp
   rclcpp_components
   rcpputils
   #class_loader
-  #sensor_msgs
+  sensor_msgs
   pluginlib
   mavros_msgs
   libmavconn
@@ -93,7 +91,7 @@ ament_target_dependencies(mavros
   diagnostic_updater
 )
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
-rclcpp_components_register_nodes(mavros "mavros::router::Router")
+rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::UAS")
 
 #add_library(mavros_plugins
 #  src/plugins/3dr_radio.cpp

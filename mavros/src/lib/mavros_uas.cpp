@@ -27,8 +27,9 @@ using plugin::PluginFactory;
 using utils::enum_value;
 
 UAS::UAS(
+  const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(),
   const std::string & name_ = "mavros",
-  const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(), const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
+  const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
   uint8_t target_component_ = 1) :
 
 rclcpp::Node(name_, rclcpp::NodeOptions(options_).use_intra_process_comms(true)),
@@ -273,3 +274,7 @@ void UAS::log_connect_change(bool connected)
     RCLCPP_WARN(get_logger(), "CON: Lost connection, HEARTBEAT timed out.");
   }
 }
+
+
+#include <rclcpp_components/register_node_macro.hpp>  // NOLINT
+RCLCPP_COMPONENTS_REGISTER_NODE(mavros::uas::UAS)
