@@ -44,6 +44,13 @@ namespace mavros
 namespace uas
 {
 
+//! default source component
+static constexpr auto MAV_COMP_ID_ONBOARD_COMPUTER = 191;
+
+using s_unique_lock = std::unique_lock<std::shared_timed_mutex>;
+using s_shared_lock = std::shared_lock<std::shared_timed_mutex>;
+
+
 /**
  * @brief UAS Node data
  *
@@ -383,7 +390,7 @@ public:
   template<typename T>
   inline std_msgs::msg::Header synchronized_header(const std::string & frame_id, const T time_stamp)
   {
-    std_msgs::Header out;
+    std_msgs::msg::Header out;
     out.frame_id = frame_id;
     out.stamp = synchronise_stamp(time_stamp);
     return out;
@@ -510,6 +517,9 @@ public:
    */
   void send_message(const mavlink::Mavlink & msg);
 
+  //! sets protocol version
+  void set_protocol_version(mavconn::Protocol ver);
+
 private:
   friend class TestUAS;
 
@@ -531,6 +541,8 @@ private:
   //! UAS link -> router -> plugin handler
   std::unordered_map<mavlink::msgid_t, plugin::Plugin::Subscriptions> plugin_subscriptions;
 
+  std::shared_timed_mutex mu;
+
   // essential data
   std::atomic<uint8_t> type;
   std::atomic<uint8_t> autopilot;
@@ -546,7 +558,7 @@ private:
   timesync_mode tsync_mode;
 
   // UAS -> Router connection
-  mavlink::mavlink_status_t mav_status;
+  mavlink::mavlink_status_t mavlink_status;
   rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;                // FCU -> UAS
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;                     // UAS -> FCU
 
