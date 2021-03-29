@@ -209,7 +209,7 @@ public:
 
   explicit UAS(
     const std::string & name_ = "mavros",
-    const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(), const std::uas_url = "/uas1", uint8_t target_system_ = 1,
+    const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(), const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
     uint8_t target_component_ = 1);
 
   ~UAS() = default;
@@ -308,7 +308,6 @@ public:
     target_component = comp;
   }
 
-
   /* -*- transform -*- */
 
   tf2_ros::Buffer tf2_buffer;
@@ -362,52 +361,6 @@ public:
     return tsync_mode;
   }
 
-  /* -*- autopilot version -*- */
-  uint64_t get_capabilities();
-
-  /**
-   * @brief Function to check if the flight controller has a capability
-   *
-   * @param capabilities can accept a multiple capability params either in enum or int from
-   */
-  template<typename T>
-  bool has_capability(T capability)
-  {
-    static_assert(
-      std::is_enum<T>::value,
-      "Only query capabilities using the UAS::MAV_CAP enum.");
-    return get_capabilities() & utils::enum_value(capability);
-  }
-
-  /**
-   * @brief Function to check if the flight controller has a set of capabilities
-   *
-   * @param capabilities can accept a multiple capability params either in enum or int from
-   */
-
-  template<typename ... Ts>
-  bool has_capabilities(Ts ... capabilities)
-  {
-    bool ret = true;
-    std::initializer_list<bool> capabilities_list {has_capability<Ts>(capabilities) ...};
-    for (auto has_cap : capabilities_list) {
-      ret &= has_cap;
-    }
-    return ret;
-  }
-
-  /**
-   * @brief Update the capabilities if they've changed every VERSION/timeout
-   */
-  void update_capabilities(bool known, uint64_t caps = 0);
-
-  /**
-   * @brief Adds a function to the capabilities callback queue
-   *
-   * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY(MAV_CAP) param
-   */
-  void add_capabilities_change_handler(CapabilitiesCb cb);
-
   /**
    * @brief Compute FCU message time from time_boot_ms or time_usec field
    *
@@ -435,6 +388,52 @@ public:
     out.stamp = synchronise_stamp(time_stamp);
     return out;
   }
+
+  /* -*- autopilot version -*- */
+
+  uint64_t get_capabilities();
+
+  /**
+   * @brief Function to check if the flight controller has a capability
+   *
+   * @param capabilities can accept a multiple capability params either in enum or int from
+   */
+  template<typename T>
+  bool has_capability(T capability)
+  {
+    static_assert(
+      std::is_enum<T>::value,
+      "Only query capabilities using the UAS::MAV_CAP enum.");
+    return get_capabilities() & utils::enum_value(capability);
+  }
+
+  /**
+   * @brief Function to check if the flight controller has a set of capabilities
+   *
+   * @param capabilities can accept a multiple capability params either in enum or int from
+   */
+  template<typename ... Ts>
+  bool has_capabilities(Ts ... capabilities)
+  {
+    bool ret = true;
+    std::initializer_list<bool> capabilities_list {has_capability<Ts>(capabilities) ...};
+    for (auto has_cap : capabilities_list) {
+      ret &= has_cap;
+    }
+    return ret;
+  }
+
+  /**
+   * @brief Update the capabilities if they've changed every VERSION/timeout
+   */
+  void update_capabilities(bool known, uint64_t caps = 0);
+
+  /**
+   * @brief Adds a function to the capabilities callback queue
+   *
+   * @param cb A void function that takes a single mavlink::common::MAV_PROTOCOL_CAPABILITY(MAV_CAP) param
+   */
+  void add_capabilities_change_handler(CapabilitiesCb cb);
 
   /* -*- utils -*- */
 
@@ -506,7 +505,6 @@ public:
    */
   bool cmode_from_str(std::string cmode_str, uint32_t & custom_mode);
 
-
   /**
    * @brief Send message to uas
    */
@@ -570,6 +568,5 @@ private:
 };
 }      // namespace uas
 }       // namespace mavros
-
 
 #endif  // MAVROS_MAVROS_UAS_HPP_

@@ -52,29 +52,29 @@ namespace filter
 class AnyOk : public Filter
 {
   inline static bool filter(
-    UAS::SharedPtr, const mavlink::mavlink_message_t * cmsg,
+    UAS::SharedPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
     return framing == Framing::ok;
   }
 };
 
-//! OnlySystemOk filter passes only messages with Framing::ok and matching target system id
-class OnlySystemOk : public Filter
+//! OnlySystemAndOk filter passes only messages with Framing::ok and matching target system id
+class OnlySystemAndOk : public Filter
 {
   inline static bool filter(
-    UAS::SharedPtr, const mavlink::mavlink_message_t * cmsg,
+    UAS::SharedPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
     return framing == Framing::ok && uas->is_my_target(cmsg->sysid);
   }
 };
 
-//! OnlyComponentOk filter passes only messages with Framing::ok and matching target system/component ids
-class OnlyComponentOk : public Filter
+//! OnlyComponentAndOk filter passes only messages with Framing::ok and matching target system/component ids
+class OnlyComponentAndOk : public Filter
 {
   inline static bool filter(
-    UAS::SharedPtr, const mavlink::mavlink_message_t * cmsg,
+    UAS::SharedPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
     return framing == Framing::ok && uas->is_my_target(cmsg->sysid, cmsg->compid);
