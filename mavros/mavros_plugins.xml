@@ -12,7 +12,13 @@
 		<description>Access to FCU parameters.</description>
 	</class>
 	<class name="waypoint" type="mavros::std_plugins::WaypointPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Access to FCU mission.</description>
+		<description>Access to FCU mission waypoints.</description>
+	</class>
+	<class name="rallypoint" type="mavros::std_plugins::RallypointPlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Access to FCU mission rally points.</description>
+	</class>
+	<class name="geofence" type="mavros::std_plugins::GeofencePlugin" base_class_type="mavros::plugin::PluginBase">
+		<description>Access to FCU mission Geofence.</description>
 	</class>
 	<class name="rc_io" type="mavros::std_plugins::RCIOPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish RC IO state.</description>
