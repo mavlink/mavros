@@ -29,7 +29,6 @@ namespace mavros
 {
 namespace plugin
 {
-
 namespace filter
 {
 using mavros::uas::UAS;
@@ -39,7 +38,7 @@ using UASPtr = UAS::SharedPtr;
 //! AnyOk filter passes all messages with Framing::ok
 class AnyOk : public Filter
 {
-  inline bool filter(
+  inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
@@ -50,7 +49,7 @@ class AnyOk : public Filter
 //! OnlySystemAndOk filter passes only messages with Framing::ok and matching target system id
 class OnlySystemAndOk : public Filter
 {
-  inline bool filter(
+  inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
@@ -61,18 +60,17 @@ class OnlySystemAndOk : public Filter
 //! OnlyComponentAndOk filter passes only messages with Framing::ok and matching target system/component ids
 class OnlyComponentAndOk : public Filter
 {
-  inline bool filter(
+  inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) override
   {
     return framing == Framing::ok && uas->is_my_target(cmsg->sysid, cmsg->compid);
   }
 };
-}
 
-} // namespace filter
-}           // namespace plugin
-}       // namespace mavros
+}   // namespace filter
+}   // namespace plugin
+}   // namespace mavros
 
 
 #endif  // MAVROS_PLUGIN_FILTER_HPP_

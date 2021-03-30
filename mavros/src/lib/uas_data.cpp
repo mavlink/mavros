@@ -18,8 +18,7 @@
 #include <mavros/utils.hpp>
 #include <mavros/px4_custom_mode.hpp>
 
-using namespace mavros::uas;
-using utils::enum_value;
+using namespace mavros::uas;  // NOLINT
 
 static std::once_flag Data::init_flag;
 static std::shared_ptr<GeographicLib::Geoid> Data::egm96_5;

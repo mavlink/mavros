@@ -34,6 +34,7 @@ namespace mavros
 namespace uas
 {
 class UAS;
+using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
 }     // namespace uas
 
 namespace plugin
@@ -47,7 +48,7 @@ using s_shared_lock = std::shared_lock<std::shared_timed_mutex>;
 
 class Filter
 {
-  virtual bool filter(
+  virtual bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const mavconn::Framing framing) = 0;
 };
@@ -55,7 +56,7 @@ class Filter
 /**
  * @brief MAVROS Plugin base class
  */
-class Plugin : public std::enable_shared_from_this(Plugin)
+class Plugin : public std::enable_shared_from_this<Plugin>
 {
 private:
   explicit Plugin(const Plugin &) = delete;
@@ -122,12 +123,13 @@ protected:
     const auto id = _T::MSG_ID;
     const auto name = _T::NAME;
     const auto type_hash_ = typeid(_T).hash_code();
-    auto filter = _F();
+    auto uas_ = this->uas;
 
     return HandlerInfo {
       id, name, type_hash_,
-      [bfn](const mavlink::mavlink_message_t * msg, const mavconn::Framing framing) {
-        if (!filter.filter(uas, msg, framing)) {
+      [bfn, uas_](const mavlink::mavlink_message_t * msg, const mavconn::Framing framing) {
+        auto filter = _F();
+        if (!filter(uas_, msg, framing)) {
           return;
         }
 
@@ -145,38 +147,28 @@ protected:
    */
   virtual void connection_cb(bool connected)
   {
+    (void)connected;
     assert(false);
   }
 
   /**
    * Shortcut for connection_cb() registration
    */
-  inline void enable_connection_cb()
-  {
-    uas->add_connection_change_handler(
-      std::bind(
-        &Plugin::connection_cb, this,
-        std::placeholders::_1));
-  }
+  void enable_connection_cb();
 
   /**
    * Common callback called only when capabilities change
    */
   virtual void capabilities_cb(uas::MAV_CAP capabilities)
   {
+    (void)capabilities;
     assert(false);
   }
 
   /**
    * Shortcut for capabilities_cb() registration
    */
-  void enable_capabilities_cb()
-  {
-    uas->add_capabilities_change_handler(
-      std::bind(
-        &Plugin::capabilities_cb, this,
-        std::placeholders::_1));
-  }
+  void enable_capabilities_cb();
 };
 
 //! A factory class to help initialize plugin node from constructor

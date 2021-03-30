@@ -19,7 +19,6 @@
 #include <mavros/px4_custom_mode.hpp>
 
 using namespace mavros::uas;
-using utils::enum_value;
 
 /* -*- heartbeat handlers -*- */
 
@@ -52,7 +51,7 @@ void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
 
 /* -*- autopilot version -*- */
 
-static uint64_t get_default_caps(UAS::MAV_AUTOPILOT ap_type)
+static uint64_t get_default_caps(uas::MAV_AUTOPILOT ap_type)
 {
   // TODO: return default caps mask for known FCU's
   return 0;

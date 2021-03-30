@@ -26,6 +26,7 @@
 
 #include <array>
 #include <atomic>
+#include <memory>
 #include <type_traits>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <mavconn/interface.hpp>
