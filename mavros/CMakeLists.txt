@@ -24,6 +24,7 @@ find_package(libmavconn REQUIRED)
 find_package(console_bridge REQUIRED)
 #find_package(rosconsole_bridge REQUIRED)  # XXX TODO: connect libmavconn loggers
 
+find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GEOGRAPHICLIB REQUIRED)
 
@@ -90,8 +91,11 @@ ament_target_dependencies(mavros
   pluginlib
   mavros_msgs
   libmavconn
-  console_bridge
+  #console_bridge
   diagnostic_updater
+  tf2_ros
+  tf2_eigen
+  Eigen3
 )
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::UAS")
@@ -186,6 +190,8 @@ endif()
 #ament_export_dependencies(console_bridge)
 ament_export_include_directories(include)
 ament_export_libraries(mavros)
+ament_export_dependencies(eigen3_cmake_module)
+ament_export_dependencies(Eigen3)
 #ament_export_targets(mavros_node)
 ament_package()
 

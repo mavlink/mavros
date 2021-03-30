@@ -174,6 +174,7 @@ protected:
 //! A factory class to help initialize plugin node from constructor
 class PluginFactory
 {
+public:
   PluginFactory() = default;
   virtual ~PluginFactory() = default;
 
@@ -184,6 +185,7 @@ class PluginFactory
 template<typename _T>
 class PluginFactoryTemplate : PluginFactory
 {
+public:
   PluginFactoryTemplate() = default;
   virtual ~PluginFactoryTemplate() = default;
 

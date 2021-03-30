@@ -18,7 +18,8 @@
 #include <mavros/utils.hpp>
 #include <mavros/px4_custom_mode.hpp>
 
-using namespace mavros::uas;
+using namespace mavros;         // NOLINT
+using namespace mavros::uas;    // NOLINT
 
 /* -*- heartbeat handlers -*- */
 

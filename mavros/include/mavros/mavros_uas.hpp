@@ -73,6 +73,9 @@ using timesync_mode = utils::timesync_mode;
 class Data
 {
 public:
+  Data();
+  ~Data() = default;
+
   /* -*- IMU data -*- */
 
   /**
@@ -566,6 +569,9 @@ private:
   mavlink::mavlink_status_t mavlink_status;
   rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;                                            // FCU -> UAS
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;                                                 // UAS -> FCU
+
+  //! initialize connection to the Router
+  void connect_to_router();
 
   //! uas message receive handler
   void recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);

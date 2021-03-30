@@ -41,13 +41,16 @@ UAS::UAS(
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
   loaded_plugins{},
   plugin_subscriptions{},
+  tf2_buffer(get_clock(), tf2::Duration(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME)),
   tf2_listener(tf2_buffer, true),
+  tf2_broadcaster(this),
+  tf2_static_broadcaster(this),
   type(enum_value(MAV_TYPE::GENERIC)),
   autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
   base_mode(0),
   connected(false),
   time_offset(0),
-  tsync_mode(UAS::timesync_mode::NONE),
+  tsync_mode(timesync_mode::NONE),
   fcu_caps_known(false),
   fcu_capabilities(0)
 {
@@ -56,14 +59,12 @@ UAS::UAS(
 
   // XXX TODO(vooon): should i use LifecycleNode?
 
-
   this->declare_parameter("uas_url", uas_url);
   this->declare_parameter("fcu_protocol", fcu_protocol);
   this->declare_parameter("system_id", source_system);
   this->declare_parameter("component_id", source_component);
   this->declare_parameter("target_system_id", target_system);
-  this->declare_parameter("target_component_id", target_component)
-
+  this->declare_parameter("target_component_id", target_component);
   this->declare_parameter("plugin_allowlist", plugin_allowlist);
   this->declare_parameter("plugin_denylist", plugin_denylist);
 
@@ -112,6 +113,7 @@ UAS::UAS(
     add_plugin(name);
   }
 
+  connect_to_router();
 
   std::stringstream ss;
   for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
@@ -128,7 +130,7 @@ UAS::UAS(
 }
 
 
-void UAS::plugin_route_cb(const mavlink_message_t * mmsg, const Framing framing)
+void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
 {
   auto it = plugin_subscriptions.find(mmsg->msgid);
   if (it == plugin_subscriptions.end()) {
@@ -140,10 +142,10 @@ void UAS::plugin_route_cb(const mavlink_message_t * mmsg, const Framing framing)
   }
 }
 
-static bool pattern_match(std::string & pattern, std::string & pl_name)
+static bool pattern_match(const std::string & pattern, const std::string & pl_name)
 {
   int cmp = fnmatch(pattern.c_str(), pl_name.c_str(), FNM_CASEFOLD);
-  rcpputils::assert_true(cmp != FNM_NOMATCH, "fnmatch(pattern, pl_name, FNM_CASEFOLD) error");
+  rcpputils::require_true(cmp != FNM_NOMATCH, "fnmatch(pattern, pl_name, FNM_CASEFOLD) error");
 
   return cmp == 0;
 }
@@ -161,7 +163,7 @@ static bool pattern_match(std::string & pattern, std::string & pl_name)
  * @note Issue #257.
  */
 bool UAS::is_plugin_allowed(
-  std::string & pl_name)
+  const std::string & pl_name)
 {
   for (auto & bl_pattern : plugin_denylist) {
     if (pattern_match(bl_pattern, pl_name)) {
@@ -187,7 +189,7 @@ inline bool is_mavlink_message_t(const size_t rt)
 /**
  * @brief Loads plugin (if not blacklisted)
  */
-void UAS::add_plugin(std::string & pl_name)
+void UAS::add_plugin(const std::string & pl_name)
 {
   auto lg = get_logger();
 
@@ -198,7 +200,8 @@ void UAS::add_plugin(std::string & pl_name)
 
   try {
     auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
-    auto plugin = plugin_factory->create_plugin_instance(shared_from_this());
+    auto plugin =
+      plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
 
     RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " created");
 
@@ -259,16 +262,85 @@ void UAS::add_plugin(std::string & pl_name)
   }
 }
 
+void UAS::connect_to_router()
+{
+  this->sink =
+    this->create_publisher<mavros_msgs::msg::Mavlink>(
+    utils::format(
+      "%s/%s", this->uas_url.c_str(),
+      "mavlink_sink"), rclcpp::QoS(
+      1000).best_effort());
+
+  this->source = this->create_subscription<mavros_msgs::msg::Mavlink>(
+    utils::format("%s/%s", this->uas_url.c_str(), "mavlink_source"), rclcpp::QoS(
+      1000).best_effort(),
+    std::bind(&UAS::recv_message, this, std::placeholders::_1));
+}
+
+void UAS::recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg)
+{
+  mavlink::mavlink_message_t msg;
+
+  auto ok = mavros_msgs::mavlink::convert(*rmsg, msg);
+  rcpputils::assert_true(ok, "conversion error");
+
+  if (ok) {
+    plugin_route(&msg, static_cast<mavconn::Framing>(rmsg->framing_status));
+  }
+}
+
+void UAS::send_message(const mavlink::Message & obj)
+{
+  mavlink::mavlink_message_t msg;
+  mavlink::MsgMap map(msg);
+
+  auto mi = obj.get_message_info();
+
+  obj.serialize(map);
+  mavlink::mavlink_finalize_message_buffer(
+    &msg, source_system, source_component, &mavlink_status, mi.min_length, mi.length,
+    mi.crc_extra);
+
+  mavros_msgs::msg::Mavlink rmsg{};
+  auto ok = mavros_msgs::mavlink::convert(msg, rmsg);
+
+  rmsg.header.stamp = this->now();
+  rmsg.header.frame_id = this->get_name();
+
+  if (this->sink && ok) {
+    this->sink->publish(rmsg);
+  }
+}
+
+void UAS::set_protocol_version(mavconn::Protocol pver)
+{
+  if (pver == mavconn::Protocol::V10) {
+    mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+  } else {
+    mavlink_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+  }
+}
 
 void UAS::log_connect_change(bool connected)
 {
-  auto ap = utils::to_string(mav_uas.get_autopilot());
+  auto ap = utils::to_string(get_autopilot());
 
   /* note: sys_status plugin required */
   if (connected) {
     RCLCPP_INFO(get_logger(), "CON: Got HEARTBEAT, connected. FCU: %s", ap.c_str());
   } else {
     RCLCPP_WARN(get_logger(), "CON: Lost connection, HEARTBEAT timed out.");
+  }
+}
+
+void UAS::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  // TODO
+
+  if (connected) {
+    stat.summary(0, "connected");
+  } else {
+    stat.summary(2, "disconnected");
   }
 }
 

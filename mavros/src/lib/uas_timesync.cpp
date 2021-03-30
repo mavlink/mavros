@@ -11,14 +11,10 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <array>
-#include <unordered_map>
-#include <stdexcept>
 #include <mavros/mavros_uas.hpp>
-#include <mavros/utils.hpp>
-#include <mavros/px4_custom_mode.hpp>
 
-using namespace mavros;
+using namespace mavros;         // NOLINT
+using namespace mavros::uas;    // NOLINT
 
 
 /* -*- time syncronise functions -*- */

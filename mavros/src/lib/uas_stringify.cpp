@@ -17,7 +17,8 @@
 #include <mavros/mavros_uas.hpp>
 #include <mavros/px4_custom_mode.hpp>
 
-using namespace mavros;
+using namespace mavros;             // NOLINT
+using namespace mavros::uas;        // NOLINT
 using mavros::utils::enum_value;
 
 
@@ -172,8 +173,8 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
   // clear fields
   custom_mode.reserved = 0;
   if (custom_mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
-    RCLCPP_WARN_COND(
-      get_logger(),
+    RCLCPP_WARN_EXPRESSION(
+      rclcpp::get_logger("uas"),
       custom_mode.sub_mode != 0, "PX4: Unknown sub-mode %d.%d",
       custom_mode.main_mode, custom_mode.sub_mode);
     custom_mode.sub_mode = 0;
@@ -182,13 +183,13 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
   return str_mode_cmap(px4_cmode_map, custom_mode.data);
 }
 
-static inline bool is_apm_copter(UAS::MAV_TYPE type)
+static inline bool is_apm_copter(uas::MAV_TYPE type)
 {
-  return type == UAS::MAV_TYPE::QUADROTOR ||
-         type == UAS::MAV_TYPE::HEXAROTOR ||
-         type == UAS::MAV_TYPE::OCTOROTOR ||
-         type == UAS::MAV_TYPE::TRICOPTER ||
-         type == UAS::MAV_TYPE::COAXIAL;
+  return type == uas::MAV_TYPE::QUADROTOR ||
+         type == uas::MAV_TYPE::HEXAROTOR ||
+         type == uas::MAV_TYPE::OCTOROTOR ||
+         type == uas::MAV_TYPE::TRICOPTER ||
+         type == uas::MAV_TYPE::COAXIAL;
 }
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
@@ -252,8 +253,9 @@ static bool cmode_find_cmap(const cmode_map & cmap, std::string & cmode_str, uin
     os << " " << mode.second;
   }
 
-  RCLCPP_ERROR_STREAM(get_logger(), "MODE: Unknown mode: " << cmode_str);
-  RCLCPP_INFO_STREAM(get_logger(), "MODE: Known modes are:" << os.str());
+  auto lg = rclcpp::get_logger("uas");
+  RCLCPP_ERROR_STREAM(lg, "MODE: Unknown mode: " << cmode_str);
+  RCLCPP_INFO_STREAM(lg, "MODE: Known modes are:" << os.str());
 
   return false;
 }

@@ -20,8 +20,8 @@
 
 using namespace mavros::uas;  // NOLINT
 
-static std::once_flag Data::init_flag;
-static std::shared_ptr<GeographicLib::Geoid> Data::egm96_5;
+std::once_flag Data::init_flag;
+std::shared_ptr<GeographicLib::Geoid> Data::egm96_5;
 
 
 Data::Data()
@@ -56,7 +56,7 @@ Data::Data()
   // tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
-static void Data::init_geographiclib()
+void Data::init_geographiclib()
 {
   try {
     // Using smallest dataset with 5' grid,
@@ -68,19 +68,19 @@ static void Data::init_geographiclib()
       false, utils::format(
         "UAS: GeographicLib exception: %s "
         "| Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!",
-        e.what().c_str()));
+        e.what()));
   }
 }
 
 /* -*- IMU data -*- */
 
-void Data::update_attitude_imu_enu(sensor_msgs::msg::Imu & imu)
+void Data::update_attitude_imu_enu(const sensor_msgs::msg::Imu & imu)
 {
   s_unique_lock lock(mu);
   imu_enu_data = imu;
 }
 
-void Data::update_attitude_imu_ned(sensor_msgs::msg::Imu & imu)
+void Data::update_attitude_imu_ned(const sensor_msgs::msg::Imu & imu)
 {
   s_unique_lock lock(mu);
   imu_ned_data = imu;
@@ -142,7 +142,7 @@ geometry_msgs::msg::Vector3 Data::get_attitude_angular_velocity_ned()
 {
   s_shared_lock lock(mu);
   //if (imu_ned_data) {
-  return imu_ned_data->angular_velocity;
+  return imu_ned_data.angular_velocity;
   //} else {
   //  // fallback
   //  geometry_msgs::Vector3 v;
