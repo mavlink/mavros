@@ -138,7 +138,8 @@ public:
   explicit Router(
     const rclcpp::NodeOptions & options,
     const std::string & node_name = "mavros_router")
-  : rclcpp::Node(node_name, rclcpp::NodeOptions(options).use_intra_process_comms(true)),
+  : rclcpp::Node(node_name,
+      options /* rclcpp::NodeOptions(options).use_intra_process_comms(true) */),
     endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
     diagnostic_updater(this, 1.0)
   {

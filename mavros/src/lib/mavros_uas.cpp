@@ -31,7 +31,7 @@ UAS::UAS(
   const std::string & name_,
   const std::string & uas_url_, uint8_t target_system_,
   uint8_t target_component_)
-: rclcpp::Node(name_, rclcpp::NodeOptions(options_).use_intra_process_comms(true)),
+: rclcpp::Node(name_, options_ /* rclcpp::NodeOptions(options_).use_intra_process_comms(true) */),
   uas_url(uas_url_),
   source_system(1),
   source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
@@ -264,16 +264,17 @@ void UAS::add_plugin(const std::string & pl_name)
 
 void UAS::connect_to_router()
 {
+  auto qos = rclcpp::QoS(
+    1000).best_effort().durability_volatile();
+
   this->sink =
     this->create_publisher<mavros_msgs::msg::Mavlink>(
     utils::format(
       "%s/%s", this->uas_url.c_str(),
-      "mavlink_sink"), rclcpp::QoS(
-      1000).best_effort());
+      "mavlink_sink"), qos);
 
   this->source = this->create_subscription<mavros_msgs::msg::Mavlink>(
-    utils::format("%s/%s", this->uas_url.c_str(), "mavlink_source"), rclcpp::QoS(
-      1000).best_effort(),
+    utils::format("%s/%s", this->uas_url.c_str(), "mavlink_source"), qos,
     std::bind(&UAS::recv_message, this, std::placeholders::_1));
 }
 

@@ -463,14 +463,15 @@ std::pair<bool, std::string> ROSEndpoint::open()
   }
 
   try {
+    auto qos = QoS(
+      1000).best_effort().durability_volatile();
     this->source =
       nh->create_publisher<mavros_msgs::msg::Mavlink>(
       utils::format(
         "%s/%s", this->url.c_str(),
-        "mavlink_source"), QoS(
-        1000).best_effort());
+        "mavlink_source"), qos);
     this->sink = nh->create_subscription<mavros_msgs::msg::Mavlink>(
-      utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), QoS(1000).best_effort(),
+      utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), qos,
       std::bind(&ROSEndpoint::ros_recv_message, this, _1));
   } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
     return {false, ex.what()};

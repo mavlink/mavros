@@ -25,7 +25,7 @@ int main(int argc, char * argv[])
   rclcpp::executors::MultiThreadedExecutor exec;
 
   rclcpp::NodeOptions options;
-  options.use_intra_process_comms(true);
+  // options.use_intra_process_comms(true);
 
   std::string fcu_url, gcs_url, uas_url;
   int tgt_system = 1, tgt_component = 1;
