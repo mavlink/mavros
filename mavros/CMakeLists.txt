@@ -75,6 +75,8 @@ add_library(mavros SHARED
   src/lib/mavros_router.cpp
   src/lib/mavros_uas.cpp
   src/lib/uas_data.cpp
+  src/lib/uas_ap.cpp
+  src/lib/uas_tf.cpp
   src/lib/uas_stringify.cpp
   src/lib/uas_timesync.cpp
 )

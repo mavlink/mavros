@@ -27,32 +27,29 @@ using plugin::PluginFactory;
 using utils::enum_value;
 
 UAS::UAS(
-  const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(),
-  const std::string & name_ = "mavros",
-  const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
-  uint8_t target_component_ = 1) :
-
-rclcpp::Node(name_, rclcpp::NodeOptions(options_).use_intra_process_comms(true)),
-uas_url(uas_url_),
-source_system(1),
-source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
-target_system(target_system_),
-target_component(target_component_),
-diagnostic_updater(this, 1.0),
-plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
-loaded_plugins{},
-plugin_subscriptions{},
-
-
-tf2_listener(tf2_buffer, true),
-type(enum_value(MAV_TYPE::GENERIC)),
-autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
-base_mode(0),
-connected(false),
-time_offset(0),
-tsync_mode(UAS::timesync_mode::NONE),
-fcu_caps_known(false),
-fcu_capabilities(0)
+  const rclcpp::NodeOptions & options_,
+  const std::string & name_,
+  const std::string & uas_url_, uint8_t target_system_,
+  uint8_t target_component_)
+: rclcpp::Node(name_, rclcpp::NodeOptions(options_).use_intra_process_comms(true)),
+  uas_url(uas_url_),
+  source_system(1),
+  source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
+  target_system(target_system_),
+  target_component(target_component_),
+  diagnostic_updater(this, 1.0),
+  plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
+  loaded_plugins{},
+  plugin_subscriptions{},
+  tf2_listener(tf2_buffer, true),
+  type(enum_value(MAV_TYPE::GENERIC)),
+  autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
+  base_mode(0),
+  connected(false),
+  time_offset(0),
+  tsync_mode(UAS::timesync_mode::NONE),
+  fcu_caps_known(false),
+  fcu_capabilities(0)
 {
   int tgt_system, tgt_component;
   std::string fcu_protocol = "v2.0";
@@ -80,11 +77,11 @@ fcu_capabilities(0)
   this->get_parameter("plugin_allowlist", plugin_allowlist);
   this->get_parameter("plugin_denylist", plugin_denylist);
 
-// setup diag
+  // setup diag
   diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
   diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
 
-// setup uas link
+  // setup uas link
   if (fcu_protocol == "v1.0") {
     set_protocol_version(mavconn::Protocol::V10);
   } else if (fcu_protocol == "v2.0") {

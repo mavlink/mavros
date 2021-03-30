@@ -30,6 +30,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <mavconn/interface.hpp>
 #include <mavros/utils.hpp>
+#include <mavros/plugin.hpp>
 #include <mavros/frame_tf.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -49,6 +50,14 @@ static constexpr auto MAV_COMP_ID_ONBOARD_COMPUTER = 191;
 
 using s_unique_lock = std::unique_lock<std::shared_timed_mutex>;
 using s_shared_lock = std::shared_lock<std::shared_timed_mutex>;
+
+// common enums used by UAS
+using MAV_TYPE = mavlink::minimal::MAV_TYPE;
+using MAV_AUTOPILOT = mavlink::minimal::MAV_AUTOPILOT;
+using MAV_MODE_FLAG = mavlink::minimal::MAV_MODE_FLAG;
+using MAV_STATE = mavlink::minimal::MAV_STATE;
+using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
+using timesync_mode = utils::timesync_mode;
 
 
 /**
@@ -114,7 +123,7 @@ public:
 
   //! Store GPS RAW data
   void update_gps_fix_epts(
-    sensor_msgs::NavSatFix::Ptr & fix,
+    const sensor_msgs::msg::NavSatFix & fix,
     float eph, float epv,
     int fix_type, int satellites_visible);
 
@@ -131,7 +140,7 @@ public:
    *
    * That class loads egm96_5 dataset to RAM, it is about 24 MiB.
    */
-  std::shared_ptr<GeographicLib::Geoid> egm96_5;
+  static std::shared_ptr<GeographicLib::Geoid> egm96_5;
 
   /**
    * @brief Conversion from height above geoid (AMSL)
@@ -172,6 +181,12 @@ private:
   float gps_epv;
   int gps_fix_type;
   int gps_satellites_visible;
+
+  //! init_geographiclib() once flag
+  static std::once_flag init_flag;
+
+  //! Initialize egm96-5
+  static void init_geographiclib();
 };
 
 /**
@@ -195,28 +210,16 @@ class UAS : public rclcpp::Node
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(UAS);
 
-  // common enums used by UAS
-  using MAV_TYPE = mavlink::minimal::MAV_TYPE;
-  using MAV_AUTOPILOT = mavlink::minimal::MAV_AUTOPILOT;
-  using MAV_MODE_FLAG = mavlink::minimal::MAV_MODE_FLAG;
-  using MAV_STATE = mavlink::minimal::MAV_STATE;
-  using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
-  using timesync_mode = utils::timesync_mode;
-
   // other UAS aliases
   using ConnectionCb = std::function<void (bool)>;
   using CapabilitiesCb = std::function<void (MAV_CAP)>;
 
   using StrV = std::vector<std::string>;
 
-  explicit UAS(const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions())
-  : UAS("mavros", options_)
-  {
-  }
-
   explicit UAS(
+    const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(),
     const std::string & name_ = "mavros",
-    const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(), const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
+    const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
     uint8_t target_component_ = 1);
 
   ~UAS() = default;
@@ -226,6 +229,7 @@ public:
    */
   diagnostic_updater::Updater diagnostic_updater;
 
+  //! Data that can be useful to pass between plugins
   Data data;
 
   /**
@@ -298,7 +302,7 @@ public:
    */
   inline uint8_t get_tgt_system()
   {
-    return target_system;                             // not changed after configuration
+    return target_system;                                                             // not changed after configuration
   }
 
   /**
@@ -306,7 +310,7 @@ public:
    */
   inline uint8_t get_tgt_component()
   {
-    return target_component;                          // not changed after configuration
+    return target_component;                                                          // not changed after configuration
   }
 
   inline void set_tgt(uint8_t sys, uint8_t comp)
@@ -333,7 +337,7 @@ public:
   void add_static_transform(
     const std::string & frame_id, const std::string & child_id,
     const Eigen::Affine3d & tr,
-    std::vector<geometry_msgs::TransformStamped> & vector);
+    std::vector<geometry_msgs::msg::TransformStamped> & vector);
 
   /**
    * @brief Publishes static transform.
@@ -515,7 +519,7 @@ public:
   /**
    * @brief Send message to uas
    */
-  void send_message(const mavlink::Mavlink & msg);
+  void send_message(const mavlink::Message & msg);
 
   //! sets protocol version
   void set_protocol_version(mavconn::Protocol ver);
@@ -559,8 +563,8 @@ private:
 
   // UAS -> Router connection
   mavlink::mavlink_status_t mavlink_status;
-  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;                // FCU -> UAS
-  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;                     // UAS -> FCU
+  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;                                            // FCU -> UAS
+  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;                                                 // UAS -> FCU
 
   //! uas message receive handler
   void recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
@@ -578,7 +582,7 @@ private:
 
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
-}      // namespace uas
+}              // namespace uas
 }       // namespace mavros
 
 #endif  // MAVROS_MAVROS_UAS_HPP_

@@ -1,6 +1,6 @@
 /**
  * @brief MAVROS UAS manager (data part)
- * @file uas.cpp
+ * @file uas_data.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 /*
@@ -21,24 +21,20 @@
 using namespace mavros::uas;
 using utils::enum_value;
 
+static std::once_flag Data::init_flag;
+static std::shared_ptr<GeographicLib::Geoid> Data::egm96_5;
+
+
 Data::Data()
-:   gps_eph(NAN),
+:   imu_enu_data{},
+  imu_ned_data{},
+  gps_fix{},
+  gps_eph(NAN),
   gps_epv(NAN),
   gps_fix_type(0),
-  gps_satellites_visible(0),
+  gps_satellites_visible(0)
 {
-  try {
-    // Using smallest dataset with 5' grid,
-    // From default location,
-    // Use cubic interpolation, Thread safe
-    egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
-  } catch (const std::exception & e) {
-    // catch exception and shutdown node
-    // ROS_FATAL_STREAM(
-    //   "UAS: GeographicLib exception: " << e.what() <<
-    //     " | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
-    // ros::shutdown();
-  }
+  std::call_once(init_flag, init_geographiclib);
 
   // Publish helper TFs used for frame transformation in the odometry plugin
   // std::vector<geometry_msgs::TransformStamped> transform_vector;
@@ -61,83 +57,20 @@ Data::Data()
   // tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
-/* -*- heartbeat handlers -*- */
-
-void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_, uint8_t base_mode_)
+static void Data::init_geographiclib()
 {
-  type = type_;
-  autopilot = autopilot_;
-  base_mode = base_mode_;
-}
-
-void UAS::update_connection_status(bool conn_)
-{
-  if (conn_ != connected) {
-    connected = conn_;
-
-    s_shared_lock lock(mu);
-
-    // call all change cb's
-    for (auto & cb : connection_cb_vec) {
-      cb(conn_);
-    }
+  try {
+    // Using smallest dataset with 5' grid,
+    // From default location,
+    // Use cubic interpolation, Thread safe
+    egm96_5 = std::make_shared<GeographicLib::Geoid>("egm96-5", "", true, true);
+  } catch (const std::exception & e) {
+    rcpputils::require_true(
+      false, utils::format(
+        "UAS: GeographicLib exception: %s "
+        "| Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!",
+        e.what().c_str()));
   }
-}
-
-void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
-{
-  s_unique_lock lock(mu);
-  connection_cb_vec.push_back(cb);
-}
-
-/* -*- autopilot version -*- */
-
-static uint64_t get_default_caps(UAS::MAV_AUTOPILOT ap_type)
-{
-  // TODO: return default caps mask for known FCU's
-  return 0;
-}
-
-uint64_t UAS::get_capabilities()
-{
-  if (fcu_caps_known) {
-    uint64_t caps = fcu_capabilities;
-    return caps;
-  } else {
-    return get_default_caps(get_autopilot());
-  }
-}
-
-// This function may need a mutex now
-void UAS::update_capabilities(bool known, uint64_t caps)
-{
-  bool process_cb_queue = false;
-
-  if (known != fcu_caps_known) {
-    if (!fcu_caps_known) {
-      process_cb_queue = true;
-    }
-    fcu_caps_known = known;
-  } else if (fcu_caps_known) {          // Implies fcu_caps_known == known
-    if (caps != fcu_capabilities) {
-      process_cb_queue = true;
-    }
-  } else {}     // Capabilities werent known before and arent known after update
-
-  if (process_cb_queue) {
-    fcu_capabilities = caps;
-
-    s_shared_lock lock(mu);
-    for (auto & cb : capabilities_cb_vec) {
-      cb(static_cast<MAV_CAP>(caps));
-    }
-  }
-}
-
-void UAS::add_capabilities_change_handler(UAS::CapabilitiesCb cb)
-{
-  s_unique_lock lock(mu);
-  capabilities_cb_vec.push_back(cb);
 }
 
 /* -*- IMU data -*- */
@@ -160,7 +93,7 @@ sensor_msgs::msg::Imu Data::get_attitude_imu_enu()
   return imu_enu_data;
 }
 
-sensor_msgs::msg::Imu UAS::get_attitude_imu_ned()
+sensor_msgs::msg::Imu Data::get_attitude_imu_ned()
 {
   s_shared_lock lock(mu);
   return imu_ned_data;
@@ -251,37 +184,4 @@ sensor_msgs::msg::NavSatFix Data::get_gps_fix()
 {
   s_shared_lock lock(mu);
   return gps_fix;
-}
-
-/* -*- transform -*- */
-
-//! Stack static transform into vector
-void UAS::add_static_transform(
-  const std::string & frame_id, const std::string & child_id,
-  const Eigen::Affine3d & tr,
-  std::vector<geometry_msgs::msg::TransformStamped> & vector)
-{
-  // geometry_msgs::TransformStamped static_transform;
-
-  // static_transform.header.stamp = ros::Time::now();
-  // static_transform.header.frame_id = frame_id;
-  // static_transform.child_frame_id = child_id;
-  // tf::transformEigenToMsg(tr, static_transform.transform);
-
-  // vector.emplace_back(static_transform);
-}
-
-//! Publishes static transform
-void UAS::publish_static_transform(
-  const std::string & frame_id, const std::string & child_id,
-  const Eigen::Affine3d & tr)
-{
-  // geometry_msgs::TransformStamped static_transformStamped;
-
-  // static_transformStamped.header.stamp = ros::Time::now();
-  // static_transformStamped.header.frame_id = frame_id;
-  // static_transformStamped.child_frame_id = child_id;
-  // tf::transformEigenToMsg(tr, static_transformStamped.transform);
-
-  // tf2_static_broadcaster.sendTransform(static_transformStamped);
 }
