@@ -1,6 +1,6 @@
 /**
- * @brief Waypoint IO for plugins
- * @file waypoint_io.h
+ * @brief Mission base plugin
+ * @file mission_protocol_base.cpp
  * @author Vladimir Ermakov <vooon341@gmail.com>
  * @author Charlie Burge <charlieburge@yahoo.com>
  *
