@@ -52,12 +52,12 @@ public:
 
 	Subscriptions get_subscriptions() override {
 		return {
-			       make_handler(&RallypointPlugin::handle_mission_item),
-			       make_handler(&RallypointPlugin::handle_mission_item_int),
-			       make_handler(&RallypointPlugin::handle_mission_request),
-			       make_handler(&RallypointPlugin::handle_mission_request_int),
-			       make_handler(&RallypointPlugin::handle_mission_count),
-			       make_handler(&RallypointPlugin::handle_mission_ack),
+				   make_handler(&RallypointPlugin::handle_mission_item),
+				   make_handler(&RallypointPlugin::handle_mission_item_int),
+				   make_handler(&RallypointPlugin::handle_mission_request),
+				   make_handler(&RallypointPlugin::handle_mission_request_int),
+				   make_handler(&RallypointPlugin::handle_mission_count),
+				   make_handler(&RallypointPlugin::handle_mission_ack),
 		};
 	}
 

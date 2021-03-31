@@ -232,7 +232,7 @@ public:
 		PluginBase(),
 		log_ns(_name),
 		wp_state(WP::IDLE),
-        wp_type(WP_TYPE::MISSION),
+		wp_type(WP_TYPE::MISSION),
 		wp_count(0),
 		wp_retries(RETRIES_COUNT),
 		wp_cur_id(0),
@@ -258,7 +258,7 @@ public:
 	}
 
 protected:
-    using unique_lock = std::unique_lock<std::recursive_mutex>;
+	using unique_lock = std::unique_lock<std::recursive_mutex>;
 	using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 	std::string log_ns;
@@ -282,12 +282,12 @@ protected:
 	};
 	WP wp_state;
 
-    WP_TYPE wp_type;
+	WP_TYPE wp_type;
 	size_t wp_count;
 	size_t wp_start_id;
 	size_t wp_end_id;
 	size_t wp_cur_id;
-    size_t wp_cur_active;
+	size_t wp_cur_active;
 	size_t wp_set_active;
 	size_t wp_retries;
 	bool is_timedout;
@@ -318,7 +318,7 @@ protected:
 	const ros::Duration WP_TIMEOUT_DT;
 	const ros::Duration RESCHEDULE_DT;
 
-    /* -*- rx handlers -*- */
+	/* -*- rx handlers -*- */
 
 	/**
 	 * @brief handle MISSION_ITEM_INT mavlink msg
@@ -342,7 +342,7 @@ protected:
 	 * MISSION_REQUEST(_INT) sequence and the current
 	 * waypoint that should be sent.
 	 * @param seq	The seq member of a MISSION_REQUEST(_INT)
-	 * @return              True if there is a sequence mismatch
+	 * @return		True if there is a sequence mismatch
 	 */
 	bool sequence_mismatch(const uint16_t &seq);
 
@@ -362,7 +362,7 @@ protected:
 	 */
 	void handle_mission_request_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_REQUEST_INT &mreq);
 
-    /**
+	/**
 	 * @brief handle MISSION_COUNT mavlink msg
 	 * Handles a mission count from FCU in a Waypoint Pull
 	 * Triggers a pull GCS seems to be requesting mission
@@ -371,7 +371,7 @@ protected:
 	 */
 	void handle_mission_count(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_COUNT &mcnt);
 
-    /**
+	/**
 	 * @brief handle MISSION_ACK mavlink msg
 	 * Handles a MISSION_ACK which marks the end of a push, or a failure
 	 * @param msg		Received Mavlink msg
@@ -379,7 +379,7 @@ protected:
 	 */
 	void handle_mission_ack(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MISSION_ACK &mack);
 
-    /* -*- mid-level helpers -*- */
+	/* -*- mid-level helpers -*- */
 
 	/**
 	 * @brief Act on a timeout
@@ -456,27 +456,27 @@ protected:
 
 	/**
 	 * @brief wait until a waypoint pull is complete.
-	 * Pull happens asyncronously, this function blocks until it is done.
+	 * Pull happens asynchronously, this function blocks until it is done.
 	 */
 	bool wait_fetch_all()
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-		       == std::cv_status::no_timeout
-		       && !is_timedout;
+			   == std::cv_status::no_timeout
+			   && !is_timedout;
 	}
 
 	/**
 	 * @brief wait until a waypoint push is complete.
-	 * Push happens asyncronously, this function blocks until it is done.
+	 * Push happens asynchronously, this function blocks until it is done.
 	 */
 	bool wait_push_all()
 	{
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
 
 		return list_sending.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-		       == std::cv_status::no_timeout
-		       && !is_timedout;
+			   == std::cv_status::no_timeout
+			   && !is_timedout;
 	}
 
 	//! @brief set the FCU current waypoint
@@ -507,7 +507,7 @@ protected:
 		ROS_DEBUG_NAMED(log_ns, "%s:m: request #%u", log_ns.c_str(), seq);
 
 		mavlink::common::msg::MISSION_REQUEST mrq {};
-        mrq.mission_type = enum_value(wp_type);
+		mrq.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
@@ -519,7 +519,7 @@ protected:
 		ROS_DEBUG_NAMED(log_ns, "%s:m: request_int #%u", log_ns.c_str(), seq);
 
 		mavlink::common::msg::MISSION_REQUEST_INT mrq {};
-        mrq.mission_type = enum_value(wp_type);
+		mrq.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mrq);
 		mrq.seq = seq;
 
@@ -542,7 +542,7 @@ protected:
 		ROS_DEBUG_NAMED(log_ns, "%s:m: request list", log_ns.c_str());
 
 		mavlink::common::msg::MISSION_REQUEST_LIST mrl {};
-        mrl.mission_type = enum_value(wp_type);
+		mrl.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mrl);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mrl);
@@ -554,7 +554,7 @@ protected:
 
 		mavlink::common::msg::MISSION_COUNT mcnt {};
 		mcnt.mission_type = enum_value(wp_type);
-        mcnt.count = cnt;
+		mcnt.count = cnt;
 		m_uas->msg_set_target(mcnt);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mcnt);
@@ -568,7 +568,7 @@ protected:
 		mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
 		mwpl.start_index = start_index;
 		mwpl.end_index = end_index;
-        mwpl.mission_type = enum_value(wp_type);
+		mwpl.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mwpl);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mwpl);
@@ -579,7 +579,7 @@ protected:
 		ROS_DEBUG_NAMED(log_ns, "%s:m: clear all", log_ns.c_str());
 
 		mavlink::common::msg::MISSION_CLEAR_ALL mclr {};
-        mclr.mission_type = enum_value(wp_type);
+		mclr.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mclr);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mclr);
@@ -589,8 +589,8 @@ protected:
 		ROS_DEBUG_NAMED(log_ns, "%s:m: ACK %u", log_ns.c_str(), enum_value(type));
 
 		mavlink::common::msg::MISSION_ACK mack {};
-        mack.type = enum_value(type);
-        mack.mission_type = enum_value(wp_type);
+		mack.type = enum_value(type);
+		mack.mission_type = enum_value(wp_type);
 		m_uas->msg_set_target(mack);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(mack);

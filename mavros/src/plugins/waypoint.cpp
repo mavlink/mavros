@@ -60,12 +60,12 @@ public:
 
 	Subscriptions get_subscriptions() override {
 		return {
-			       make_handler(&WaypointPlugin::handle_mission_item),
-			       make_handler(&WaypointPlugin::handle_mission_item_int),
-			       make_handler(&WaypointPlugin::handle_mission_request),
-			       make_handler(&WaypointPlugin::handle_mission_request_int),
-			       make_handler(&WaypointPlugin::handle_mission_count),
-			       make_handler(&WaypointPlugin::handle_mission_ack),
+				   make_handler(&WaypointPlugin::handle_mission_item),
+				   make_handler(&WaypointPlugin::handle_mission_item_int),
+				   make_handler(&WaypointPlugin::handle_mission_request),
+				   make_handler(&WaypointPlugin::handle_mission_request_int),
+				   make_handler(&WaypointPlugin::handle_mission_count),
+				   make_handler(&WaypointPlugin::handle_mission_ack),
 				   make_handler(&WaypointPlugin::handle_mission_current),
 				   make_handler(&WaypointPlugin::handle_mission_item_reached),
 		};
