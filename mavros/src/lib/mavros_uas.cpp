@@ -173,15 +173,15 @@ bool UAS::is_plugin_allowed(
     if (pattern_match(bl_pattern, pl_name)) {
       for (auto & wl_pattern : plugin_allowlist) {
         if (pattern_match(wl_pattern, pl_name)) {
-          return false;
+          return true;
         }
       }
 
-      return true;
+      return false;
     }
   }
 
-  return false;
+  return true;
 }
 
 inline bool is_mavlink_message_t(const size_t rt)
@@ -201,7 +201,7 @@ void UAS::add_plugin(const std::string & pl_name)
 {
   auto lg = get_logger();
 
-  if (is_plugin_allowed(pl_name)) {
+  if (!is_plugin_allowed(pl_name)) {
     RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " ignored");
     return;
   }

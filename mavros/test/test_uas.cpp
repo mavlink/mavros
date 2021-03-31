@@ -160,14 +160,14 @@ TEST_F(TestUAS, is_plugin_allowed)
   EXPECT_EQ(true, is_plugin_allowed(uas, "test2"));
 
   // check denylist
-  set_lists(uas, {"test1", "prefix*", "*siffix"}, {});
+  set_lists(uas, {"test1", "prefix*", "*suffix"}, {});
   EXPECT_EQ(false, is_plugin_allowed(uas, "test1"));
   EXPECT_EQ(true, is_plugin_allowed(uas, "test2"));
   EXPECT_EQ(false, is_plugin_allowed(uas, "prefix_test"));
   EXPECT_EQ(false, is_plugin_allowed(uas, "test_suffix"));
 
   // check allowlist
-  set_lists(uas, {"*"}, {"test1", "prefix*", "*siffix"});
+  set_lists(uas, {"*"}, {"test1", "prefix*", "*suffix"});
   EXPECT_EQ(true, is_plugin_allowed(uas, "test1"));
   EXPECT_EQ(false, is_plugin_allowed(uas, "test2"));
   EXPECT_EQ(true, is_plugin_allowed(uas, "prefix_test"));
