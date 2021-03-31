@@ -542,6 +542,8 @@ private:
   StrV plugin_allowlist;
   StrV plugin_denylist;
 
+  rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
+
   // plugins
   pluginlib::ClassLoader<plugin::PluginFactory> plugin_factory_loader;
   std::vector<plugin::Plugin::SharedPtr> loaded_plugins;
@@ -582,8 +584,14 @@ private:
   //! check if plugin allowed to load
   bool is_plugin_allowed(const std::string & pl_name);
 
+  //! makes an instance of the plugin
+  virtual plugin::Plugin::SharedPtr create_plugin_instance(const std::string & pl_name);
+
   //! load plugin
   void add_plugin(const std::string & pl_name);
+
+  rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   void log_connect_change(bool connected);
 

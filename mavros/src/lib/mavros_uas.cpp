@@ -33,7 +33,7 @@ UAS::UAS(
   uint8_t target_component_)
 : rclcpp::Node(name_, options_ /* rclcpp::NodeOptions(options_).use_intra_process_comms(true) */),
   uas_url(uas_url_),
-  source_system(1),
+  source_system(target_system_),
   source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
   target_system(target_system_),
   target_component(target_component_),
@@ -59,6 +59,12 @@ UAS::UAS(
 
   // XXX TODO(vooon): should i use LifecycleNode?
 
+  set_parameters_handle_ptr =
+    this->add_on_set_parameters_callback(
+    std::bind(
+      &UAS::on_set_parameters_cb, this,
+      std::placeholders::_1));
+
   this->declare_parameter("uas_url", uas_url);
   this->declare_parameter("fcu_protocol", fcu_protocol);
   this->declare_parameter("system_id", source_system);
@@ -67,7 +73,6 @@ UAS::UAS(
   this->declare_parameter("target_component_id", target_component);
   this->declare_parameter("plugin_allowlist", plugin_allowlist);
   this->declare_parameter("plugin_denylist", plugin_denylist);
-
 
   this->get_parameter("uas_url", uas_url);
   this->get_parameter("fcu_protocol", fcu_protocol);
@@ -90,9 +95,9 @@ UAS::UAS(
   } else {
     RCLCPP_WARN(
       get_logger(),
-      "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v1.0.",
+      "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
       fcu_protocol.c_str());
-    set_protocol_version(mavconn::Protocol::V10);
+    set_protocol_version(mavconn::Protocol::V20);
   }
 
   // setup source and target
@@ -128,7 +133,6 @@ UAS::UAS(
     source_system, source_component,
     target_system, target_component);
 }
-
 
 void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
 {
@@ -186,9 +190,13 @@ inline bool is_mavlink_message_t(const size_t rt)
   return h == rt;
 }
 
-/**
- * @brief Loads plugin (if not blacklisted)
- */
+plugin::Plugin::SharedPtr UAS::create_plugin_instance(const std::string & pl_name)
+{
+  auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
+  return
+    plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
+}
+
 void UAS::add_plugin(const std::string & pl_name)
 {
   auto lg = get_logger();
@@ -199,9 +207,7 @@ void UAS::add_plugin(const std::string & pl_name)
   }
 
   try {
-    auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
-    auto plugin =
-      plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
+    auto plugin = create_plugin_instance(pl_name);
 
     RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " created");
 
@@ -260,6 +266,28 @@ void UAS::add_plugin(const std::string & pl_name)
   } catch (pluginlib::PluginlibException & ex) {
     RCLCPP_ERROR_STREAM(lg, "Plugin " << pl_name << " load exception: " << ex.what());
   }
+}
+
+rcl_interfaces::msg::SetParametersResult UAS::on_set_parameters_cb(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  auto lg = get_logger();
+  rcl_interfaces::msg::SetParametersResult result{};
+
+  RCLCPP_DEBUG(lg, "params callback");
+
+  result.successful = true;
+  for (const auto & parameter : parameters) {
+    const auto name = parameter.get_name();
+    if (true) {
+      // XXX TODO
+    } else {
+      result.successful = false;
+      result.reason = "unknown parameter";
+    }
+  }
+
+  return result;
 }
 
 void UAS::connect_to_router()
