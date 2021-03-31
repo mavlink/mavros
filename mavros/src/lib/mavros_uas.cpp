@@ -149,7 +149,9 @@ void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
 static bool pattern_match(const std::string & pattern, const std::string & pl_name)
 {
   int cmp = fnmatch(pattern.c_str(), pl_name.c_str(), FNM_CASEFOLD);
-  rcpputils::require_true(cmp == 0 || cmp == FNM_NOMATCH, "fnmatch(pattern, pl_name, FNM_CASEFOLD) error");
+  rcpputils::require_true(
+    cmp == 0 || cmp == FNM_NOMATCH,
+    "fnmatch(pattern, pl_name, FNM_CASEFOLD) error");
 
   return cmp == 0;
 }

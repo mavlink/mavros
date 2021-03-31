@@ -412,9 +412,9 @@ TEST_F(TestRouter, endpoint_recv_message)
   ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0100));
   ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
 
-  ASSERT_EQ(1, get_stat_msg_routed(router));
-  ASSERT_EQ(0, get_stat_msg_sent(router));
-  ASSERT_EQ(1, get_stat_msg_dropped(router));
+  ASSERT_EQ(size_t(1), get_stat_msg_routed(router));
+  ASSERT_EQ(size_t(0), get_stat_msg_sent(router));
+  ASSERT_EQ(size_t(1), get_stat_msg_dropped(router));
 }
 
 #if 0  // TODO

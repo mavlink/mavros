@@ -21,6 +21,7 @@
 #include <mavros/plugin_filter.hpp>
 
 using ::testing::_;
+using ::testing::Return;
 
 using namespace mavros;         // NOLINT
 using namespace mavros::uas;    // NOLINT
@@ -58,6 +59,9 @@ class MockPlugin : public plugin::Plugin
 public:
   using SharedPtr = std::shared_ptr<MockPlugin>;
 
+  MockPlugin(UAS::SharedPtr uas_)
+  : Plugin(uas_) {}
+
   MOCK_METHOD0(get_subscriptions, plugin::Plugin::Subscriptions(void));
 
   inline plugin::Plugin::SharedPtr getptr()
@@ -65,7 +69,16 @@ public:
     return std::static_pointer_cast<plugin::Plugin>(shared_from_this());
   }
 
-#if 0
+  inline Subscriptions allsubs()
+  {
+    return {
+      make_handler(mavlink::common::msg::STATUSTEXT::MSG_ID, &MockPlugin::handle_statustext_raw),
+      make_handler(&MockPlugin::handle_heartbeat_anyok),
+      make_handler(&MockPlugin::handle_heartbeat_systemandok),
+      make_handler(&MockPlugin::handle_heartbeat_componentandok)
+    };
+  }
+
   MOCK_METHOD2(handle_statustext_raw, void(const mavlink_message_t * msg, const Framing framing));
   MOCK_METHOD3(
     handle_heartbeat_anyok,
@@ -79,7 +92,6 @@ public:
     handle_heartbeat_componentandok,
     void(const mavlink_message_t * msg, mavlink::common::msg::HEARTBEAT & hb,
     filter::ComponentAndOk filter));
-#endif
 };
 
 namespace mavros
@@ -118,6 +130,16 @@ public:
   bool is_plugin_allowed(MockUAS::SharedPtr p, const std::string pl_name)
   {
     return p->is_plugin_allowed(pl_name);
+  }
+
+  void add_plugin(MockUAS::SharedPtr p, const std::string & pl_name)
+  {
+    p->add_plugin(pl_name);
+  }
+
+  void plugin_route(MockUAS::SharedPtr p, const mavlink_message_t * msg, const Framing framing)
+  {
+    p->plugin_route(msg, framing);
   }
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const uint16_t source = 0x0101)
@@ -174,14 +196,44 @@ TEST_F(TestUAS, is_plugin_allowed)
   EXPECT_EQ(true, is_plugin_allowed(uas, "test_suffix"));
 }
 
-#define VERIFY_EPS() \
-  testing::Mock::VerifyAndClearExpectations(&(*fcu1)); \
-  testing::Mock::VerifyAndClearExpectations(&(*fcu2)); \
-  testing::Mock::VerifyAndClearExpectations(&(*uas1)); \
-  testing::Mock::VerifyAndClearExpectations(&(*uas2)); \
-  testing::Mock::VerifyAndClearExpectations(&(*gcs1)); \
-  testing::Mock::VerifyAndClearExpectations(&(*gcs2));
+TEST_F(TestUAS, add_plugin__route_message__filter)
+{
+  auto uas = create_node();
+  auto plugin = std::make_shared<MockPlugin>(uas);
+  auto subs = plugin->allsubs();
 
+  // XXX(vooon): silence leak warnings: they works badly with shared_ptr
+  testing::Mock::AllowLeak(&(*uas));
+  testing::Mock::AllowLeak(&(*plugin));
+
+  mavlink::common::msg::STATUSTEXT stxt{};
+  auto m_stxt = convert_message(stxt, 0x0000);
+
+  auto hb = make_heartbeat();
+  auto m_hb11 = convert_message(hb, 0x0101);
+  auto m_hb12 = convert_message(hb, 0x0102);
+  auto m_hb21 = convert_message(hb, 0x0201);
+
+  EXPECT_CALL(*uas, create_plugin_instance(_)).WillRepeatedly(Return(plugin));
+  EXPECT_CALL(*plugin, get_subscriptions()).WillRepeatedly(Return(subs));
+
+  add_plugin(uas, "test");
+
+  EXPECT_CALL(*plugin, handle_statustext_raw).Times(2);
+  EXPECT_CALL(*plugin, handle_heartbeat_anyok).Times(3);
+  EXPECT_CALL(*plugin, handle_heartbeat_systemandok).Times(2);
+  EXPECT_CALL(*plugin, handle_heartbeat_componentandok).Times(1);
+
+  plugin_route(uas, &m_stxt, Framing::ok);
+  plugin_route(uas, &m_stxt, Framing::bad_crc);
+  plugin_route(uas, &m_hb21, Framing::ok);          // AnyOk
+  plugin_route(uas, &m_hb12, Framing::ok);          // AnyOk, SystemAndOk
+  plugin_route(uas, &m_hb11, Framing::ok);          // AnyOk, SystemAndOk, ComponentAndOk
+  plugin_route(uas, &m_hb11, Framing::bad_crc);     // none
+
+  testing::Mock::VerifyAndClearExpectations(&(*plugin));
+  testing::Mock::VerifyAndClearExpectations(&(*uas));
+}
 
 }  // namespace uas
 }  // namespace mavros

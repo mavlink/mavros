@@ -39,17 +39,21 @@ using mavconn::Framing;
 //! AnyOk filter passes all messages with Framing::ok
 class AnyOk : public Filter
 {
+public:
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const Framing framing) override
   {
+    (void)uas;
+    (void)cmsg;
     return framing == Framing::ok;
   }
 };
 
-//! OnlySystemAndOk filter passes only messages with Framing::ok and matching target system id
-class OnlySystemAndOk : public Filter
+//! SystemAndOk filter passes only messages with Framing::ok and matching target system id
+class SystemAndOk : public Filter
 {
+public:
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const Framing framing) override
@@ -58,9 +62,10 @@ class OnlySystemAndOk : public Filter
   }
 };
 
-//! OnlyComponentAndOk filter passes only messages with Framing::ok and matching target system/component ids
-class OnlyComponentAndOk : public Filter
+//! ComponentAndOk filter passes only messages with Framing::ok and matching target system/component ids
+class ComponentAndOk : public Filter
 {
+public:
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
     const Framing framing) override
