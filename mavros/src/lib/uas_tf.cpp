@@ -13,6 +13,7 @@
 
 #include <array>
 #include <mavros/mavros_uas.hpp>
+#include <tf2_eigen/tf2_eigen.h>
 
 using namespace mavros::uas;  // NOLINT
 
@@ -22,12 +23,11 @@ void UAS::add_static_transform(
   const Eigen::Affine3d & tr,
   std::vector<geometry_msgs::msg::TransformStamped> & vector)
 {
-  geometry_msgs::msg::TransformStamped static_transform{};
+  geometry_msgs::msg::TransformStamped static_transform = tf2::eigenToTransform(tr);
 
   static_transform.header.stamp = this->now();
   static_transform.header.frame_id = frame_id;
   static_transform.child_frame_id = child_id;
-  // tf::transformEigenToMsg(tr, static_transform.transform); // XXX
 
   vector.emplace_back(static_transform);
 }
@@ -36,12 +36,11 @@ void UAS::publish_static_transform(
   const std::string & frame_id, const std::string & child_id,
   const Eigen::Affine3d & tr)
 {
-  geometry_msgs::msg::TransformStamped static_transformStamped;
+  geometry_msgs::msg::TransformStamped static_transform_stamped = tf2::eigenToTransform(tr);
 
-  static_transformStamped.header.stamp = this->now();
-  static_transformStamped.header.frame_id = frame_id;
-  static_transformStamped.child_frame_id = child_id;
-  // tf::transformEigenToMsg(tr, static_transformStamped.transform); // XXX
+  static_transform_stamped.header.stamp = this->now();
+  static_transform_stamped.header.frame_id = frame_id;
+  static_transform_stamped.child_frame_id = child_id;
 
-  tf2_static_broadcaster.sendTransform(static_transformStamped);
+  tf2_static_broadcaster.sendTransform(static_transform_stamped);
 }
