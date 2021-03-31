@@ -33,6 +33,7 @@ namespace filter
 {
 using mavros::uas::UAS;
 using UASPtr = UAS::SharedPtr;
+using mavconn::Framing;
 
 
 //! AnyOk filter passes all messages with Framing::ok
@@ -40,7 +41,7 @@ class AnyOk : public Filter
 {
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
-    const mavconn::Framing framing) override
+    const Framing framing) override
   {
     return framing == Framing::ok;
   }
@@ -51,7 +52,7 @@ class OnlySystemAndOk : public Filter
 {
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
-    const mavconn::Framing framing) override
+    const Framing framing) override
   {
     return framing == Framing::ok && uas->is_my_target(cmsg->sysid);
   }
@@ -62,7 +63,7 @@ class OnlyComponentAndOk : public Filter
 {
   inline bool operator()(
     UASPtr uas, const mavlink::mavlink_message_t * cmsg,
-    const mavconn::Framing framing) override
+    const Framing framing) override
   {
     return framing == Framing::ok && uas->is_my_target(cmsg->sysid, cmsg->compid);
   }

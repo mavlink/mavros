@@ -220,6 +220,9 @@ public:
 
   using StrV = std::vector<std::string>;
 
+  explicit UAS(const std::string & name_ = "mavros")
+  : UAS(rclcpp::NodeOptions(), name_) {}
+
   explicit UAS(
     const rclcpp::NodeOptions & options_ = rclcpp::NodeOptions(),
     const std::string & name_ = "mavros",

@@ -135,15 +135,10 @@ rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::U
 #  mavros
 #  ${catkin_LIBRARIES}
 #  )
-#pluginlib_export_plugin_description_file(mavros_plugins mavros_plugins.xml)
+pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
 add_executable(mavros_node src/mavros_node.cpp)
 target_link_libraries(mavros_node mavros)
-
-# install(FILES
-#   mavros_plugins.xml
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
 
 install(TARGETS mavros mavros_node #mavros_plugins
   EXPORT export_${PROJECT_NAME}
@@ -185,6 +180,10 @@ if(BUILD_TESTING)
   ament_add_gmock(mavros-router-test test/test_router.cpp)
   target_link_libraries(mavros-router-test mavros)
   ament_target_dependencies(mavros-router-test mavros_msgs)
+
+  ament_add_gmock(mavros-uas-test test/test_uas.cpp)
+  target_link_libraries(mavros-uas-test mavros)
+  ament_target_dependencies(mavros-uas-test mavros_msgs)
 endif()
 
 #ament_export_dependencies(console_bridge)
