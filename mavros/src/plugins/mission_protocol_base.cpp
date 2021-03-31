@@ -1,10 +1,12 @@
 /**
  * @brief Waypoint IO for plugins
  * @file waypoint_io.h
+ * @author Vladimir Ermakov <vooon341@gmail.com>
  * @author Charlie Burge <charlieburge@yahoo.com>
  *
  */
 /*
+ * Copyright 2014,2015,2016,2017,2018 Vladimir Ermakov.
  * Copyright 2021 Charlie Burge.
  *
  * This file is part of the mavros package and subject to the license terms
