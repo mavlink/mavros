@@ -79,6 +79,13 @@ public:
     };
   }
 
+  inline Subscriptions rawsubs()
+  {
+    return {
+      make_handler(mavlink::common::msg::STATUSTEXT::MSG_ID, &MockPlugin::handle_statustext_raw),
+    };
+  }
+
   MOCK_METHOD2(handle_statustext_raw, void(const mavlink_message_t * msg, const Framing framing));
   MOCK_METHOD3(
     handle_heartbeat_anyok,
@@ -199,12 +206,15 @@ TEST_F(TestUAS, is_plugin_allowed)
 TEST_F(TestUAS, add_plugin__route_message__filter)
 {
   auto uas = create_node();
-  auto plugin = std::make_shared<MockPlugin>(uas);
-  auto subs = plugin->allsubs();
+  auto plugin1 = std::make_shared<MockPlugin>(uas);
+  auto subs1 = plugin1->allsubs();
+  auto plugin2 = std::make_shared<MockPlugin>(uas);
+  auto subs2 = plugin2->rawsubs();
 
   // XXX(vooon): silence leak warnings: they works badly with shared_ptr
   testing::Mock::AllowLeak(&(*uas));
-  testing::Mock::AllowLeak(&(*plugin));
+  testing::Mock::AllowLeak(&(*plugin1));
+  testing::Mock::AllowLeak(&(*plugin2));
 
   mavlink::common::msg::STATUSTEXT stxt{};
   auto m_stxt = convert_message(stxt, 0x0000);
@@ -214,15 +224,19 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   auto m_hb12 = convert_message(hb, 0x0102);
   auto m_hb21 = convert_message(hb, 0x0201);
 
-  EXPECT_CALL(*uas, create_plugin_instance(_)).WillRepeatedly(Return(plugin));
-  EXPECT_CALL(*plugin, get_subscriptions()).WillRepeatedly(Return(subs));
+  EXPECT_CALL(*uas, create_plugin_instance("test1")).WillRepeatedly(Return(plugin1));
+  EXPECT_CALL(*uas, create_plugin_instance("test2")).WillRepeatedly(Return(plugin2));
+  EXPECT_CALL(*plugin1, get_subscriptions()).WillRepeatedly(Return(subs1));
+  EXPECT_CALL(*plugin2, get_subscriptions()).WillRepeatedly(Return(subs2));
 
-  add_plugin(uas, "test");
+  add_plugin(uas, "test1");
+  add_plugin(uas, "test2");
 
-  EXPECT_CALL(*plugin, handle_statustext_raw).Times(2);
-  EXPECT_CALL(*plugin, handle_heartbeat_anyok).Times(3);
-  EXPECT_CALL(*plugin, handle_heartbeat_systemandok).Times(2);
-  EXPECT_CALL(*plugin, handle_heartbeat_componentandok).Times(1);
+  EXPECT_CALL(*plugin1, handle_statustext_raw).Times(2);
+  EXPECT_CALL(*plugin2, handle_statustext_raw).Times(2);
+  EXPECT_CALL(*plugin1, handle_heartbeat_anyok).Times(3);
+  EXPECT_CALL(*plugin1, handle_heartbeat_systemandok).Times(2);
+  EXPECT_CALL(*plugin1, handle_heartbeat_componentandok).Times(1);
 
   plugin_route(uas, &m_stxt, Framing::ok);
   plugin_route(uas, &m_stxt, Framing::bad_crc);
@@ -231,8 +245,9 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   plugin_route(uas, &m_hb11, Framing::ok);          // AnyOk, SystemAndOk, ComponentAndOk
   plugin_route(uas, &m_hb11, Framing::bad_crc);     // none
 
-  testing::Mock::VerifyAndClearExpectations(&(*plugin));
   testing::Mock::VerifyAndClearExpectations(&(*uas));
+  testing::Mock::VerifyAndClearExpectations(&(*plugin1));
+  testing::Mock::VerifyAndClearExpectations(&(*plugin2));
 }
 
 }  // namespace uas
