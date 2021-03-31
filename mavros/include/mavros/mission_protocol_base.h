@@ -32,7 +32,6 @@
 
 namespace mavros {
 namespace plugin {
-
 using mavlink::common::MAV_CMD;
 using mavlink::common::MAV_FRAME;
 using MRES = mavlink::common::MAV_MISSION_RESULT;
@@ -78,7 +77,7 @@ static double waypoint_encode_factor( const uint8_t &frame ){
 		return 1;
 	default:
 		return 1;
-	// [[[end]]] (checksum: f5a92675515a0983645adab340ab4446)
+		// [[[end]]] (checksum: f5a92675515a0983645adab340ab4446)
 	}
 }
 
@@ -462,8 +461,8 @@ protected:
 	{
 		std::unique_lock<std::mutex> lock(recv_cond_mutex);
 		return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			   == std::cv_status::no_timeout
-			   && !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
 	/**
@@ -475,8 +474,8 @@ protected:
 		std::unique_lock<std::mutex> lock(send_cond_mutex);
 
 		return list_sending.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec()))
-			   == std::cv_status::no_timeout
-			   && !is_timedout;
+		       == std::cv_status::no_timeout
+		       && !is_timedout;
 	}
 
 	//! @brief set the FCU current waypoint
