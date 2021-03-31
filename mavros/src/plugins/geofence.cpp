@@ -18,8 +18,6 @@
 
 namespace mavros {
 namespace std_plugins {
-
-
 /**
  * @brief Geofence manipulation plugin
  */
@@ -52,12 +50,12 @@ public:
 
 	Subscriptions get_subscriptions() override {
 		return {
-				   make_handler(&GeofencePlugin::handle_mission_item),
-				   make_handler(&GeofencePlugin::handle_mission_item_int),
-				   make_handler(&GeofencePlugin::handle_mission_request),
-				   make_handler(&GeofencePlugin::handle_mission_request_int),
-				   make_handler(&GeofencePlugin::handle_mission_count),
-				   make_handler(&GeofencePlugin::handle_mission_ack),
+			       make_handler(&GeofencePlugin::handle_mission_item),
+			       make_handler(&GeofencePlugin::handle_mission_item_int),
+			       make_handler(&GeofencePlugin::handle_mission_request),
+			       make_handler(&GeofencePlugin::handle_mission_request_int),
+			       make_handler(&GeofencePlugin::handle_mission_count),
+			       make_handler(&GeofencePlugin::handle_mission_ack),
 		};
 	}
 
