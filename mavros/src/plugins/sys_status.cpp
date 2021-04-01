@@ -255,7 +255,11 @@ public:
 			stat.add("Proximity", (last_st.onboard_control_sensors_health & enum_value(STS::PROXIMITY)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SATCOM))
 			stat.add("Satellite Communication", (last_st.onboard_control_sensors_health & enum_value(STS::SATCOM)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 890cfdc6d3b776c38a59b39f80ec7351)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PREARM_CHECK))
+			stat.add("pre-arm check status. Always healthy when armed", (last_st.onboard_control_sensors_health & enum_value(STS::PREARM_CHECK)) ? "Ok" : "Fail");
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::OBSTACLE_AVOIDANCE))
+			stat.add("Avoidance/collision prevention", (last_st.onboard_control_sensors_health & enum_value(STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: 612c227cf277a86b217d14aea31c83ff)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -916,7 +920,7 @@ private:
 	void handle_estimator_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ESTIMATOR_STATUS &status)
 	{
 		using ESF = mavlink::common::ESTIMATOR_STATUS_FLAGS;
-		
+
 		auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
 		est_status_msg->header.stamp = ros::Time::now();
 
@@ -952,7 +956,7 @@ private:
 		est_status_msg->pred_pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
 		est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
 		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
-		// [[[end]]] (checksum: 7828381ee4002ea6b61a8f528ae4d12d)
+		// [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
 
 		estimator_status_pub.publish(est_status_msg);
 	}
