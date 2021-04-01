@@ -44,22 +44,23 @@ using WP_ITEM_INT = mavlink::common::msg::MISSION_ITEM_INT;
 using WP_TYPE = mavlink::common::MAV_MISSION_TYPE;
 
 static double waypoint_encode_factor( const uint8_t &frame ){
-	// [[[cog:
-	//from pymavlink.dialects.v20 import common
-	//e=common.enums['MAV_FRAME']
-	//all_names = [ee.name[len('MAV_FRAME_'):] for ee in e.values()]
-	//all_names.pop() # remove ENUM_END
-	//global_names = [v for v in all_names if v.startswith('GLOBAL')]
-	//local_names = [v for v in all_names if v.startswith(('LOCAL', 'BODY', 'MOCAP', 'VISION', 'ESTIM'))]
-	//other_names = ['MISSION']
-	//cog.outl("switch(frame){")
-	//for names, factor in [(global_names, 10000000), (local_names, 10000), (other_names, 1)]:
-	//	for name in names:
-	//		cog.outl(f"case enum_value(MAV_FRAME::{name}):")
-	//	cog.outl(f"\treturn {factor};")
-	//cog.outl("default:\n\treturn 1;")
-	// ]]]
 	switch (frame) {
+	// [[[cog:
+	// from pymavlink.dialects.v20 import common
+	// e = common.enums['MAV_FRAME']
+	// all_names = [ee.name[len('MAV_FRAME_'):] for ee in e.values()]
+	// all_names.pop() # remove ENUM_END
+	// global_names = [v for v in all_names if v.startswith('GLOBAL')]
+	// local_names = [v for v in all_names if v.startswith(('LOCAL', 'BODY', 'MOCAP', 'VISION', 'ESTIM'))]
+	// other_names = ['MISSION']
+	//
+	// for names, factor in [(global_names, 10000000), (local_names, 10000), (other_names, 1)]:
+	// 	for name in names:
+	// 		cog.outl(f"case enum_value(MAV_FRAME::{name}):")
+	// 	cog.outl(f"\treturn {factor};")
+	//
+	// cog.outl("default:\n\treturn 1;")
+	// ]]]
 	case enum_value(MAV_FRAME::GLOBAL):
 	case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
 	case enum_value(MAV_FRAME::GLOBAL_INT):
@@ -72,6 +73,14 @@ static double waypoint_encode_factor( const uint8_t &frame ){
 	case enum_value(MAV_FRAME::LOCAL_OFFSET_NED):
 	case enum_value(MAV_FRAME::BODY_NED):
 	case enum_value(MAV_FRAME::BODY_OFFSET_NED):
+	case enum_value(MAV_FRAME::BODY_FRD):
+	case enum_value(MAV_FRAME::BODY_FLU):
+	case enum_value(MAV_FRAME::MOCAP_NED):
+	case enum_value(MAV_FRAME::MOCAP_ENU):
+	case enum_value(MAV_FRAME::VISION_NED):
+	case enum_value(MAV_FRAME::VISION_ENU):
+	case enum_value(MAV_FRAME::ESTIM_NED):
+	case enum_value(MAV_FRAME::ESTIM_ENU):
 	case enum_value(MAV_FRAME::LOCAL_FRD):
 	case enum_value(MAV_FRAME::LOCAL_FLU):
 		return 10000;
@@ -79,7 +88,7 @@ static double waypoint_encode_factor( const uint8_t &frame ){
 		return 1;
 	default:
 		return 1;
-		// [[[end]]] (checksum: f5a92675515a0983645adab340ab4446)
+	// [[[end]]] (checksum: f7f081c9ec9252f6a38501f044d4c273)
 	}
 }
 
@@ -118,7 +127,7 @@ mavros_msgs::Waypoint mav_to_msg(const ITEM &mav_msg)
 	ret.x_lat = mav_msg.x;
 	ret.y_long = mav_msg.y;
 	ret.z_alt = mav_msg.z;
-	// [[[end]]] (checksum: 6dcfddb01b4d4ea828f174bd517d9967)
+	// [[[end]]] (checksum: 27badd1a5facc63f38cdd7aad3be9816)
 
 	return ret;
 }
@@ -146,7 +155,7 @@ inline mavros_msgs::Waypoint mav_to_msg(const WP_ITEM_INT &mav_msg){
 	ret.x_lat = mav_msg.x / waypoint_encode_factor(mav_msg.frame);
 	ret.y_long = mav_msg.y / waypoint_encode_factor(mav_msg.frame);
 	ret.z_alt = mav_msg.z;
-	// [[[end]]] (checksum: c5939776595c4007d3636cf2881f55df)
+	// [[[end]]] (checksum: 6c82a18990af7aeeb1db9211e9b1bbf1)
 
 	return ret;
 }
@@ -171,7 +180,7 @@ ITEM mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t seq, WP_TYPE t
 	ret.x = wp.x_lat;
 	ret.y = wp.y_long;
 	ret.z = wp.z_alt;
-	// [[[end]]] (checksum: 0a851ea124b02323fa5259e477db5596)
+	// [[[end]]] (checksum: c1b08cda34f1c4dc94129bda4743aaec)
 
 	ret.seq = seq;
 
@@ -203,7 +212,7 @@ inline WP_ITEM_INT mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t 
 	ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
 	ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
 	ret.z = wp.z_alt;
-	// [[[end]]] (checksum: bf26a63f03988e41aa372667edcae7d8)
+	// [[[end]]] (checksum: 6315c451fe834dbf20a43ee112b8b5fe)
 
 	ret.seq = seq;
 
