@@ -1,13 +1,13 @@
 /**
- * @brief Waypoint plugin
- * @file waypoint.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @brief Geofence plugin
+ * @file geofence.cpp
+ * @author Charlie Burge <charlieburge@yahoo.com>
  *
  * @addtogroup plugin
  * @{
  */
 /*
- * Copyright 2014,2015,2016,2017,2018 Vladimir Ermakov.
+ * Copyright 2021 Charlie Burge.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -16,44 +16,36 @@
 
 #include <mavros/mission_protocol_base.h>
 
-#include <mavros_msgs/WaypointList.h>
-#include <mavros_msgs/WaypointSetCurrent.h>
-#include <mavros_msgs/WaypointReached.h>
-
-
 namespace mavros
 {
 namespace std_plugins
 {
 /**
- * @brief Mission manupulation plugin
+ * @brief Geofence manipulation plugin
  */
-class WaypointPlugin : public plugin::MissionBase
+class GeofencePlugin : public plugin::MissionBase
 {
 public:
-  WaypointPlugin()
-  : MissionBase("WP"),
-    wp_nh("~mission")
+  GeofencePlugin()
+  : MissionBase("GF"),
+    gf_nh("~geofence")
   {}
 
   void initialize(UAS & uas_) override
   {
     PluginBase::initialize(uas_);
-    MissionBase::initialize(&wp_nh);
+    MissionBase::initialize(&gf_nh);
 
     wp_state = WP::IDLE;
-    wp_type = plugin::WP_TYPE::MISSION;
+    wp_type = plugin::WP_TYPE::FENCE;
 
-    wp_nh.param("pull_after_gcs", do_pull_after_gcs, true);
-    wp_nh.param("use_mission_item_int", use_mission_item_int, false);
+    gf_nh.param("pull_after_gcs", do_pull_after_gcs, true);
+    gf_nh.param("use_mission_item_int", use_mission_item_int, false);
 
-    wp_list_pub = wp_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
-    pull_srv = wp_nh.advertiseService("pull", &WaypointPlugin::pull_cb, this);
-    push_srv = wp_nh.advertiseService("push", &WaypointPlugin::push_cb, this);
-    clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
-
-    wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached", 10, true);
-    set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
+    gf_list_pub = gf_nh.advertise<mavros_msgs::WaypointList>("waypoints", 2, true);
+    pull_srv = gf_nh.advertiseService("pull", &GeofencePlugin::pull_cb, this);
+    push_srv = gf_nh.advertiseService("push", &GeofencePlugin::push_cb, this);
+    clear_srv = gf_nh.advertiseService("clear", &GeofencePlugin::clear_cb, this);
 
     enable_connection_cb();
     enable_capabilities_cb();
@@ -62,82 +54,22 @@ public:
   Subscriptions get_subscriptions() override
   {
     return {
-      make_handler(&WaypointPlugin::handle_mission_item),
-      make_handler(&WaypointPlugin::handle_mission_item_int),
-      make_handler(&WaypointPlugin::handle_mission_request),
-      make_handler(&WaypointPlugin::handle_mission_request_int),
-      make_handler(&WaypointPlugin::handle_mission_count),
-      make_handler(&WaypointPlugin::handle_mission_ack),
-      make_handler(&WaypointPlugin::handle_mission_current),
-      make_handler(&WaypointPlugin::handle_mission_item_reached),
+      make_handler(&GeofencePlugin::handle_mission_item),
+      make_handler(&GeofencePlugin::handle_mission_item_int),
+      make_handler(&GeofencePlugin::handle_mission_request),
+      make_handler(&GeofencePlugin::handle_mission_request_int),
+      make_handler(&GeofencePlugin::handle_mission_count),
+      make_handler(&GeofencePlugin::handle_mission_ack),
     };
   }
 
 private:
-  ros::NodeHandle wp_nh;
+  ros::NodeHandle gf_nh;
 
-  ros::Publisher wp_list_pub;
+  ros::Publisher gf_list_pub;
   ros::ServiceServer pull_srv;
   ros::ServiceServer push_srv;
   ros::ServiceServer clear_srv;
-
-  ros::Publisher wp_reached_pub;
-  ros::ServiceServer set_cur_srv;
-
-  /* -*- rx handlers -*- */
-
-  /**
-   * @brief handle MISSION_CURRENT mavlink msg
-   * This confirms a SET_CUR action
-   * @param msg		Received Mavlink msg
-   * @param mcur		MISSION_CURRENT from msg
-   */
-  void handle_mission_current(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::MISSION_CURRENT & mcur)
-  {
-    unique_lock lock(mutex);
-
-    if (wp_state == WP::SET_CUR) {
-      /* MISSION_SET_CURRENT ACK */
-      ROS_DEBUG_NAMED(log_ns, "%s: set current #%d done", log_ns.c_str(), mcur.seq);
-      go_idle();
-      wp_cur_active = mcur.seq;
-      set_current_waypoint(wp_cur_active);
-
-      lock.unlock();
-      list_sending.notify_all();
-      publish_waypoints();
-    } else if (wp_state == WP::IDLE && wp_cur_active != mcur.seq) {
-      /* update active */
-      ROS_DEBUG_NAMED(log_ns, "%s: update current #%d", log_ns.c_str(), mcur.seq);
-      wp_cur_active = mcur.seq;
-      set_current_waypoint(wp_cur_active);
-
-      lock.unlock();
-      publish_waypoints();
-    }
-  }
-
-  /**
-   * @brief handle MISSION_ITEM_REACHED mavlink msg
-   * @param msg		Received Mavlink msg
-   * @param mitr		MISSION_ITEM_REACHED from msg
-   */
-  void handle_mission_item_reached(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::MISSION_ITEM_REACHED & mitr)
-  {
-    /* in QGC used as informational message */
-    ROS_INFO_NAMED(log_ns, "%s: reached #%d", log_ns.c_str(), mitr.seq);
-
-    auto wpr = boost::make_shared<mavros_msgs::WaypointReached>();
-
-    wpr->header.stamp = ros::Time::now();
-    wpr->wp_seq = mitr.seq;
-
-    wp_reached_pub.publish(wpr);
-  }
 
   /* -*- mid-level helpers -*- */
 
@@ -163,8 +95,8 @@ private:
     if (connected) {
       schedule_pull(BOOTUP_TIME_DT);
 
-      if (wp_nh.hasParam("enable_partial_push")) {
-        wp_nh.getParam("enable_partial_push", enable_partial_push);
+      if (gf_nh.hasParam("enable_partial_push")) {
+        gf_nh.getParam("enable_partial_push", enable_partial_push);
       } else {
         enable_partial_push = m_uas->is_ardupilotmega();
       }
@@ -187,7 +119,7 @@ private:
     }
 
     lock.unlock();
-    wp_list_pub.publish(wpl);
+    gf_list_pub.publish(wpl);
   }
 
   /* -*- ROS callbacks -*- */
@@ -314,32 +246,9 @@ private:
     go_idle();                  // same as in pull_cb
     return true;
   }
-
-  bool set_cur_cb(
-    mavros_msgs::WaypointSetCurrent::Request & req,
-    mavros_msgs::WaypointSetCurrent::Response & res)
-  {
-    unique_lock lock(mutex);
-
-    if (wp_state != WP::IDLE) {
-      return false;
-    }
-
-    wp_state = WP::SET_CUR;
-    wp_set_active = req.wp_seq;
-    restart_timeout_timer();
-
-    lock.unlock();
-    mission_set_current(wp_set_active);
-    res.success = wait_push_all();
-
-    lock.lock();
-    go_idle();                  // same as in pull_cb
-    return true;
-  }
 };
 }       // namespace std_plugins
 }       // namespace mavros
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::WaypointPlugin, mavros::plugin::PluginBase)
+PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::GeofencePlugin, mavros::plugin::PluginBase)

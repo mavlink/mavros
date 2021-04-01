@@ -360,7 +360,19 @@ public:
         "Satellite Communication",
         (last_st.onboard_control_sensors_health & enum_value(STS::SATCOM)) ? "Ok" : "Fail");
     }
-    // [[[end]]] (checksum: 890cfdc6d3b776c38a59b39f80ec7351)
+    if (last_st.onboard_control_sensors_enabled & enum_value(STS::PREARM_CHECK)) {
+      stat.add(
+        "pre-arm check status. Always healthy when armed",
+        (last_st.onboard_control_sensors_health &
+        enum_value(STS::PREARM_CHECK)) ? "Ok" : "Fail");
+    }
+    if (last_st.onboard_control_sensors_enabled & enum_value(STS::OBSTACLE_AVOIDANCE)) {
+      stat.add(
+        "Avoidance/collision prevention",
+        (last_st.onboard_control_sensors_health & enum_value(
+          STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
+    }
+    // [[[end]]] (checksum: 612c227cf277a86b217d14aea31c83ff)
 
     stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
     stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -1071,6 +1083,7 @@ private:
 
     batt_pub.publish(batt_msg);
 #endif
+      << << << < HEAD
   }
 
   void handle_estimator_status(
@@ -1274,7 +1287,304 @@ private:
        */
       base_mode |= (m_uas->get_armed()) ? enum_value(MAV_MODE_FLAG::SAFETY_ARMED) : 0;
       base_mode |= (m_uas->get_hil_state()) ? enum_value(MAV_MODE_FLAG::HIL_ENABLED) : 0;
-      base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
+      base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);== == ==
+        =
+    }
+
+    void handle_estimator_status(
+      const mavlink::mavlink_message_t * msg,
+      mavlink::common::msg::ESTIMATOR_STATUS & status)
+    {
+      using ESF = mavlink::common::ESTIMATOR_STATUS_FLAGS;
+
+      auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
+      est_status_msg->header.stamp = ros::Time::now();
+
+      // [[[cog:
+      // import pymavlink.dialects.v20.common as common
+      // ename = 'ESTIMATOR_STATUS_FLAGS'
+      // ename_pfx2 = 'ESTIMATOR_'
+      //
+      // enum = sorted(common.enums[ename].items())
+      // enum.pop() # -> remove ENUM_END
+      //
+      // for k, e in enum:
+      //     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
+      //     esf = e.name
+      //
+      //     if esf.startswith(ename + '_'):
+      //         esf = esf[len(ename) + 1:]
+      //     if esf.startswith(ename_pfx2):
+      //         esf = esf[len(ename_pfx2):]
+      //     if esf[0].isdigit():
+      //         esf = 'SENSOR_' + esf
+      //     cog.outl("est_status_msg->%s_status_flag = !!(status.flags & enum_value(ESF::%s));" % (esf.lower(), esf))
+      // ]]]
+      est_status_msg->attitude_status_flag = !!(status.flags & enum_value(ESF::ATTITUDE));
+      est_status_msg->velocity_horiz_status_flag =
+        !!(status.flags & enum_value(ESF::VELOCITY_HORIZ));
+      est_status_msg->velocity_vert_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_VERT));
+      est_status_msg->pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_REL));
+      est_status_msg->pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_ABS));
+      est_status_msg->pos_vert_abs_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_ABS));
+      est_status_msg->pos_vert_agl_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_AGL));
+      est_status_msg->const_pos_mode_status_flag =
+        !!(status.flags & enum_value(ESF::CONST_POS_MODE));
+      est_status_msg->pred_pos_horiz_rel_status_flag =
+        !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_REL));
+      est_status_msg->pred_pos_horiz_abs_status_flag =
+        !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
+      est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
+      est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
+      // [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
+
+      estimator_status_pub.publish(est_status_msg);
+    }
+
+    /* -*- timer callbacks -*- */
+
+    void timeout_cb(const ros::TimerEvent & event)
+    {
+      m_uas->update_connection_status(false);
+    }
+
+    void heartbeat_cb(const ros::TimerEvent & event)
+    {
+      using mavlink::common::MAV_MODE;
+
+      mavlink::minimal::msg::HEARTBEAT hb {};
+
+      hb.type = enum_value(conn_heartbeat_mav_type);           //! @todo patch PX4 so it can also handle this type as datalink
+      hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
+      hb.base_mode = enum_value(MAV_MODE::MANUAL_ARMED);
+      hb.custom_mode = 0;
+      hb.system_status = enum_value(MAV_STATE::ACTIVE);
+
+      UAS_FCU(m_uas)->send_message_ignore_drop(hb);
+    }
+
+    void autopilot_version_cb(const ros::TimerEvent & event)
+    {
+      using mavlink::common::MAV_CMD;
+
+      bool ret = false;
+
+      // Request from all first 3 times, then fallback to unicast
+      bool do_broadcast = version_retries > RETRIES_COUNT / 2;
+
+      try {
+        auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+
+        mavros_msgs::CommandLong cmd{};
+
+        cmd.request.broadcast = do_broadcast;
+        cmd.request.command = enum_value(MAV_CMD::REQUEST_AUTOPILOT_CAPABILITIES);
+        cmd.request.confirmation = false;
+        cmd.request.param1 = 1.0;
+
+        ROS_DEBUG_NAMED(
+          "sys", "VER: Sending %s request.",
+          (do_broadcast) ? "broadcast" : "unicast");
+        ret = client.call(cmd);
+      } catch (ros::InvalidNameException & ex) {
+        ROS_ERROR_NAMED("sys", "VER: %s", ex.what());
+      }
+
+      ROS_ERROR_COND_NAMED(!ret, "sys", "VER: command plugin service call failed!");
+
+      if (version_retries > 0) {
+        version_retries--;
+        ROS_WARN_COND_NAMED(
+          version_retries != RETRIES_COUNT - 1, "sys",
+          "VER: %s request timeout, retries left %d",
+          (do_broadcast) ? "broadcast" : "unicast",
+          version_retries);
+      } else {
+        m_uas->update_capabilities(false);
+        autopilot_version_timer.stop();
+        ROS_WARN_NAMED(
+          "sys", "VER: your FCU don't support AUTOPILOT_VERSION, "
+          "switched to default capabilities");
+      }
+    }
+
+    void connection_cb(bool connected) override
+    {
+      has_battery_status = false;
+
+      // if connection changes, start delayed version request
+      version_retries = RETRIES_COUNT;
+      if (connected) {
+        autopilot_version_timer.start();
+      } else {
+        autopilot_version_timer.stop();
+      }
+
+      // add/remove APM diag tasks
+      if (connected && disable_diag && m_uas->is_ardupilotmega()) {
+        UAS_DIAG(m_uas).add(mem_diag);
+        UAS_DIAG(m_uas).add(hwst_diag);
+      } else {
+        UAS_DIAG(m_uas).removeByName(mem_diag.getName());
+        UAS_DIAG(m_uas).removeByName(hwst_diag.getName());
+      }
+
+      if (!connected) {
+        // publish connection change
+        publish_disconnection();
+
+        // Clear known vehicles
+        vehicles.clear();
+      }
+    }
+
+    /* -*- subscription callbacks -*- */
+
+    void statustext_cb(const mavros_msgs::StatusText::ConstPtr & req)
+    {
+      mavlink::common::msg::STATUSTEXT statustext {};
+      statustext.severity = req->severity;
+
+      // Limit the length of the string by null-terminating at the 50-th character
+      ROS_WARN_COND_NAMED(
+        req->text.length() >= statustext.text.size(), "sys",
+        "Status text too long: truncating...");
+      mavlink::set_string_z(statustext.text, req->text);
+
+      UAS_FCU(m_uas)->send_message_ignore_drop(statustext);
+    }
+
+    /* -*- ros callbacks -*- */
+
+    bool set_rate_cb(
+      mavros_msgs::StreamRate::Request & req,
+      mavros_msgs::StreamRate::Response & res)
+    {
+      mavlink::common::msg::REQUEST_DATA_STREAM rq = {};
+
+      rq.target_system = m_uas->get_tgt_system();
+      rq.target_component = m_uas->get_tgt_component();
+      rq.req_stream_id = req.stream_id;
+      rq.req_message_rate = req.message_rate;
+      rq.start_stop = (req.on_off) ? 1 : 0;
+
+      UAS_FCU(m_uas)->send_message_ignore_drop(rq);
+      return true;
+    }
+
+    bool set_mode_cb(
+      mavros_msgs::SetMode::Request & req,
+      mavros_msgs::SetMode::Response & res)
+    {
+      using mavlink::minimal::MAV_MODE_FLAG;
+
+      uint8_t base_mode = req.base_mode;
+      uint32_t custom_mode = 0;
+
+      if (req.custom_mode != "") {
+        if (!m_uas->cmode_from_str(req.custom_mode, custom_mode)) {
+          res.mode_sent = false;
+          return true;
+        }
+
+        /**
+         * @note That call may trigger unexpected arming change because
+         *       base_mode arming flag state based on previous HEARTBEAT
+         *       message value.
+         */
+        base_mode |= (m_uas->get_armed()) ? enum_value(MAV_MODE_FLAG::SAFETY_ARMED) : 0;
+        base_mode |= (m_uas->get_hil_state()) ? enum_value(MAV_MODE_FLAG::HIL_ENABLED) : 0;
+        base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
+      }
+
+      mavlink::common::msg::SET_MODE sm = {};
+      sm.target_system = m_uas->get_tgt_system();
+      sm.base_mode = base_mode;
+      sm.custom_mode = custom_mode;
+
+      UAS_FCU(m_uas)->send_message_ignore_drop(sm);
+      res.mode_sent = true;
+      return true;
+    }
+
+    bool vehicle_info_get_cb(
+      mavros_msgs::VehicleInfoGet::Request & req,
+      mavros_msgs::VehicleInfoGet::Response & res)
+    {
+      if (req.get_all) {
+        // Send all vehicles
+        for (const auto & got : vehicles) {
+          res.vehicles.emplace_back(got.second);
+        }
+
+        res.success = true;
+        return res.success;
+      }
+
+      uint8_t req_sysid = req.sysid;
+      uint8_t req_compid = req.compid;
+
+      if (req.sysid == 0 && req.compid == 0) {
+        // use target
+        req_sysid = m_uas->get_tgt_system();
+        req_compid = m_uas->get_tgt_component();
+      }
+
+      uint16_t key = get_vehicle_key(req_sysid, req_compid);
+      auto it = vehicles.find(key);
+
+      if (it == vehicles.end()) {
+        // Vehicle not found
+        res.success = false;
+        return res.success;
+      }
+
+      res.vehicles.emplace_back(it->second);
+      res.success = true;
+      return res.success;
+    }
+
+    bool set_message_interval_cb(
+      mavros_msgs::MessageInterval::Request & req,
+      mavros_msgs::MessageInterval::Response & res)
+    {
+      using mavlink::common::MAV_CMD;
+
+      try {
+        auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+
+        // calculate interval
+        float interval_us;
+        if (req.message_rate < 0) {
+          interval_us = -1.0f;
+        } else if (req.message_rate == 0) {
+          interval_us = 0.0f;
+        } else {
+          interval_us = 1000000.0f / req.message_rate;
+        }
+
+        mavros_msgs::CommandLong cmd{};
+
+        cmd.request.broadcast = false;
+        cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
+        cmd.request.confirmation = false;
+        cmd.request.param1 = req.message_id;
+        cmd.request.param2 = interval_us;
+
+        ROS_DEBUG_NAMED(
+          "sys", "SetMessageInterval: Request msgid %u at %f hz",
+          req.message_id, req.message_rate);
+        res.success = client.call(cmd);
+      } catch (ros::InvalidNameException & ex) {
+        ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
+      }
+
+      ROS_ERROR_COND_NAMED(
+        !res.success, "sys",
+        "SetMessageInterval: command plugin service call failed!");
+
+      return res.success;>> >> >> >
+      master
     }
 
     mavlink::common::msg::SET_MODE sm = {};
