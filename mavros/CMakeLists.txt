@@ -59,28 +59,32 @@ include_directories(
 ## Check if the datasets are installed
 include(CheckGeographicLibDatasets)
 
-# detect if sensor_msgs has BatteryState.msg
-# http://answers.ros.org/question/223769/how-to-check-that-message-exists-with-catkin-for-conditional-compilation-sensor_msgsbatterystate/
-#list(FIND sensor_msgs_MESSAGE_FILES "msg/BatteryState.msg" BATTERY_STATE_MSG_IDX)
-#if(${BATTERY_STATE_MSG_IDX} GREATER -1)
-#  add_definitions(
-#    -DHAVE_SENSOR_MSGS_BATTERYSTATE_MSG
-#    )
-#endif()
+# [[[cog:
+# import pathlib
+#
+# def outl_glob_cpp(dir: str):
+#     for fn in sorted(pathlib.Path(dir).glob('*.cpp')):
+#         cog.outl(f"{fn}")
+# ]]]
+# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
 add_library(mavros SHARED
+  # [[[cog:
+  # outl_glob_cpp('src/lib')
+  # ]]]
   src/lib/enum_sensor_orientation.cpp
   src/lib/enum_to_string.cpp
   src/lib/ftf_frame_conversions.cpp
   src/lib/ftf_quaternion_utils.cpp
   src/lib/mavros_router.cpp
   src/lib/mavros_uas.cpp
-  src/lib/uas_data.cpp
-  src/lib/uas_ap.cpp
-  src/lib/uas_tf.cpp
-  src/lib/uas_stringify.cpp
-  src/lib/uas_timesync.cpp
   src/lib/plugin.cpp
+  src/lib/uas_ap.cpp
+  src/lib/uas_data.cpp
+  src/lib/uas_stringify.cpp
+  src/lib/uas_tf.cpp
+  src/lib/uas_timesync.cpp
+  # [[[end]]] (checksum: b3ecd6fa61c6675105deb192dbdde2fc)
 )
 ament_target_dependencies(mavros
   rclcpp
@@ -100,47 +104,53 @@ ament_target_dependencies(mavros
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::UAS")
 
-#add_library(mavros_plugins
-#  src/plugins/3dr_radio.cpp
-#  src/plugins/actuator_control.cpp
-#  src/plugins/altitude.cpp
-#  src/plugins/command.cpp
-#  src/plugins/dummy.cpp
-#  src/plugins/ftp.cpp
-#  src/plugins/global_position.cpp
-#  src/plugins/hil.cpp
-#  src/plugins/home_position.cpp
-#  src/plugins/imu.cpp
-#  src/plugins/local_position.cpp
-#  src/plugins/manual_control.cpp
-#  src/plugins/param.cpp
-#  src/plugins/rc_io.cpp
-#  src/plugins/safety_area.cpp
-#  src/plugins/setpoint_accel.cpp
-#  src/plugins/setpoint_attitude.cpp
-#  src/plugins/setpoint_position.cpp
-#  src/plugins/setpoint_raw.cpp
-#  src/plugins/setpoint_velocity.cpp
-#  src/plugins/setpoint_trajectory.cpp
-#  src/plugins/sys_status.cpp
-#  src/plugins/sys_time.cpp
-#  src/plugins/vfr_hud.cpp
-#  src/plugins/waypoint.cpp
-#  src/plugins/wind_estimation.cpp
-#  )
-#add_dependencies(mavros_plugins
-#  mavros
-#  )
-#target_link_libraries(mavros_plugins
-#  mavros
-#  ${catkin_LIBRARIES}
-#  )
+add_library(mavros_plugins SHARED
+  # [[[cog:
+  # outl_glob_cpp('src/plugins')
+  # ]]]
+  #src/plugins/3dr_radio.cpp
+  #src/plugins/actuator_control.cpp
+  #src/plugins/altitude.cpp
+  #src/plugins/command.cpp
+  src/plugins/dummy.cpp
+  #src/plugins/ftp.cpp
+  #src/plugins/geofence.cpp
+  #src/plugins/global_position.cpp
+  #src/plugins/hil.cpp
+  #src/plugins/home_position.cpp
+  #src/plugins/imu.cpp
+  #src/plugins/local_position.cpp
+  #src/plugins/manual_control.cpp
+  #src/plugins/mission_protocol_base.cpp
+  #src/plugins/param.cpp
+  #src/plugins/rallypoint.cpp
+  #src/plugins/rc_io.cpp
+  #src/plugins/safety_area.cpp
+  #src/plugins/setpoint_accel.cpp
+  #src/plugins/setpoint_attitude.cpp
+  #src/plugins/setpoint_position.cpp
+  #src/plugins/setpoint_raw.cpp
+  #src/plugins/setpoint_trajectory.cpp
+  #src/plugins/setpoint_velocity.cpp
+  #src/plugins/sys_status.cpp
+  #src/plugins/sys_time.cpp
+  #src/plugins/vfr_hud.cpp
+  #src/plugins/waypoint.cpp
+  #src/plugins/wind_estimation.cpp
+  # [[[end]]] (checksum: 89e08753cafdf9998539de473939a9ce)
+)
+add_dependencies(mavros_plugins
+  mavros
+)
+target_link_libraries(mavros_plugins
+  mavros
+)
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
 add_executable(mavros_node src/mavros_node.cpp)
 target_link_libraries(mavros_node mavros)
 
-install(TARGETS mavros mavros_node #mavros_plugins
+install(TARGETS mavros mavros_node mavros_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

@@ -31,7 +31,6 @@ set(msg_files
   "msg/ActuatorControl.msg"
   "msg/Altitude.msg"
   "msg/AttitudeTarget.msg"
-  "msg/BatteryStatus.msg"
   "msg/CamIMUStamp.msg"
   "msg/CommandCode.msg"
   "msg/CompanionProcessStatus.msg"
@@ -82,7 +81,7 @@ set(msg_files
   "msg/WaypointList.msg"
   "msg/WaypointReached.msg"
   "msg/WheelOdomStamped.msg"
-  # [[[end]]] (checksum: 70caaa5138f6ac84b4510b1eaf78aa51)
+  # [[[end]]] (checksum: 91704bf14bf170d2ca6f4861784059b1)
 )
 
 set(srv_files
