@@ -58,7 +58,7 @@ uint16 CONDITION_LAST = 159                        # NOP - This command is only 
 uint16 CONTROL_HIGH_LATENCY = 2600                 # Request to start/stop transmitting over the high latency telemetry
 
 # MAV_CMD_DO
-uint16 DO_FOLLOW = 32                              # Being following a target
+uint16 DO_FOLLOW = 32                              # Begin following a target
 uint16 DO_FOLLOW_REPOSITION = 33                   # Reposition the MAV after a follow target command has been sent
 uint16 DO_SET_MODE = 176                           # Set system mode.
 uint16 DO_JUMP = 177                               # Jump to the desired command in the mission list.  Repeat this action only the specified number of times
@@ -80,6 +80,7 @@ uint16 DO_SET_REVERSE = 194                        # Set moving direction to for
 uint16 DO_SET_ROI_LOCATION = 195                   # Sets the region of interest (ROI) to a location. This can then be used by the vehicles control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 DO_SET_ROI_WPNEXT_OFFSET = 196              # Sets the region of interest (ROI) to be toward next waypoint, with optional pitch/roll/yaw offset. This can then be used by the vehicles control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 DO_SET_ROI_NONE = 197                       # Cancels any previous ROI command returning the vehicle/sensors to default flight characteristics. This can then be used by the vehicles control system to control the vehicle attitude and the attitude of various sensors such as cameras.
+uint16 DO_SET_ROI_SYSID = 198                      # Mount tracks system with specified system ID. Determination of target vehicle position may be done with GLOBAL_POSITION_INT or any other means.
 uint16 DO_CONTROL_VIDEO = 200                      # Control onboard camera system.
 uint16 DO_SET_ROI = 201                            # Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicles control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 DO_DIGICAM_CONFIGURE = 202                  # Configure digital camera. This is a fallback message for systems that have not yet implemented PARAM_EXT_XXX messages and camera definition files (see https://mavlink.io/en/services/camera_def.html ).
@@ -104,7 +105,7 @@ uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
 
 # MAV_CMD_GET
 uint16 GET_HOME_POSITION = 410                     # Request the home position from the vehicle.
-uint16 GET_MESSAGE_INTERVAL = 510                  # Request the interval between messages for a particular MAVLink message ID
+uint16 GET_MESSAGE_INTERVAL = 510                  # Request the interval between messages for a particular MAVLink message ID. The receiver should ACK the command and then emit its response in a MESSAGE_INTERVAL message.
 
 # MAV_CMD_IMAGE
 uint16 IMAGE_START_CAPTURE = 2000                  # Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture. Use NaN for reserved values.
@@ -175,7 +176,7 @@ uint16 PREFLIGHT_REBOOT_SHUTDOWN = 246             # Request the reboot or shutd
 
 # MAV_CMD_REQUEST
 uint16 REQUEST_MESSAGE = 512                       # Request the target system(s) emit a single instance of a specified message (i.e. a "one-shot" version of MAV_CMD_SET_MESSAGE_INTERVAL).
-uint16 REQUEST_AUTOPILOT_CAPABILITIES = 520        # Request autopilot capabilities
+uint16 REQUEST_AUTOPILOT_CAPABILITIES = 520        # Request autopilot capabilities. The receiver should ACK the command and then emit its capabilities in an AUTOPILOT_VERSION message
 uint16 REQUEST_CAMERA_INFORMATION = 521            # Request camera information (CAMERA_INFORMATION).
 uint16 REQUEST_CAMERA_SETTINGS = 522               # Request camera settings (CAMERA_SETTINGS).
 uint16 REQUEST_STORAGE_INFORMATION = 525           # Request storage information (STORAGE_INFORMATION). Use the command's target_component to target a specific component's storage.
@@ -186,7 +187,7 @@ uint16 REQUEST_FLIGHT_INFORMATION = 528            # Request flight information 
 uint16 RESET_CAMERA_SETTINGS = 529                 # Reset all camera settings to Factory Default
 
 # MAV_CMD_SET
-uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM
+uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM.
 uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Use NaN for reserved values. GCS will send a MAV_CMD_REQUEST_VIDEO_STREAM_STATUS command after a mode change if the camera supports video streaming.
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
                   
@@ -206,4 +207,4 @@ uint16 UAVCAN_GET_NODE_INFO = 5200                 # Commands the vehicle to res
 uint16 VIDEO_START_CAPTURE = 2500                  # Starts video capture (recording). Use NaN for reserved values.
 uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capture (recording). Use NaN for reserved values.
 
-# [[[end]]] (checksum: 6546a8ab3dac44945e7bbfadae5b0d6f)
+# [[[end]]] (checksum: 7e9e4e30250b6e125a5c89accc262250)

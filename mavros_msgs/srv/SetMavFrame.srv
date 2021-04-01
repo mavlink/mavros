@@ -38,7 +38,9 @@ uint8 FRAME_VISION_NED = 16              # Odometry local coordinate frame of da
 uint8 FRAME_VISION_ENU = 17              # Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: east, y: north, z: up).
 uint8 FRAME_ESTIM_NED = 18               # Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: north, y: east, z: down).
 uint8 FRAME_ESTIM_ENU = 19               # Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: east, y: noth, z: up).
-# [[[end]]] (checksum: 4fd94c3c9c8cf1e62b10bc7dc66e4692)
+uint8 FRAME_LOCAL_FRD = 20               # Forward, Right, Down coordinate frame. This is a local frame with Z-down and arbitrary F/R alignment (i.e. not aligned with NED/earth frame).
+uint8 FRAME_LOCAL_FLU = 21               # Forward, Left, Up coordinate frame. This is a local frame with Z-up and arbitrary F/L alignment (i.e. not aligned with ENU/earth frame).
+# [[[end]]] (checksum: 75d6897b00540e8f109915c7093b2085)
 
 uint8 mav_frame
 ---
