@@ -42,7 +42,8 @@ using mavlink::minimal::MAV_AUTOPILOT;
 using mavlink::minimal::MAV_STATE;
 using utils::enum_value;
 
-using namespace std::placeholders; // NOLINT
+using namespace std::placeholders;      // NOLINT
+using namespace std::chrono_literals;   // NOLINT
 
 /**
  * Heartbeat status publisher
@@ -419,49 +420,6 @@ public:
     battery_voltage(0.0)
   {
 #if 0
-    ros::Duration conn_heartbeat;
-
-    double conn_timeout_d;
-    double conn_heartbeat_d;
-    double min_voltage;
-    std::string conn_heartbeat_mav_type_str;
-
-    nh.param("conn/timeout", conn_timeout_d, 10.0);
-    nh.param("sys/min_voltage", min_voltage, 10.0);
-    nh.param("sys/disable_diag", disable_diag, false);
-
-    // heartbeat rate parameter
-    if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d) && conn_heartbeat_d != 0.0) {
-      conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
-    }
-
-    // heartbeat mav type parameter
-    if (nh.getParam("conn/heartbeat_mav_type", conn_heartbeat_mav_type_str)) {
-      conn_heartbeat_mav_type = utils::mav_type_from_str(conn_heartbeat_mav_type_str);
-    }
-
-    // heartbeat diag always enabled
-    UAS_DIAG(m_uas).add(hb_diag);
-    if (!disable_diag) {
-      UAS_DIAG(m_uas).add(sys_diag);
-      UAS_DIAG(m_uas).add(batt_diag);
-
-      batt_diag.set_min_voltage(min_voltage);
-    }
-
-
-    // one-shot timeout timer
-    timeout_timer = nh.createTimer(
-      ros::Duration(conn_timeout_d),
-      &SystemStatusPlugin::timeout_cb, this, true);
-    //timeout_timer.start();
-
-    if (!conn_heartbeat.isZero()) {
-      heartbeat_timer = nh.createTimer(
-        conn_heartbeat,
-        &SystemStatusPlugin::heartbeat_cb, this);
-      //heartbeat_timer.start();
-    }
 
     // version request timer
     autopilot_version_timer = nh.createTimer(
@@ -473,11 +431,65 @@ public:
 
     enable_node_watch_parameters();
 
-    node->declare_parameter("conn_timeout", 10.0);
-    node->declare_parameter("min_voltage", 10.0);
-    node->declare_parameter("disable_diag", false);
-    node->declare_parameter("heartbeat_mav_type", utils::to_string(conn_heartbeat_mav_type));
-    node->declare_parameter("heartbeat_rate", 1.0);
+    node_declate_and_watch_parameter(
+      "conn_timeout", 10.0, [&](const rclcpp::Parameter & p) {
+        auto conn_timeout = rclcpp::Duration(p.as_double());
+
+        RCLCPP_INFO(node->get_logger(), "timeout: %d", p.as_double());
+
+        timeout_timer =
+        node->create_wall_timer(
+          conn_timeout.to_chrono<std::chrono::nanoseconds>(),
+          std::bind(&SystemStatusPlugin::timeout_cb, this));
+      });
+
+    node_declate_and_watch_parameter(
+      "min_voltage", 10.0, [&](const rclcpp::Parameter & p) {
+        auto min_voltage = p.as_double();
+
+        batt_diag.set_min_voltage(min_voltage);
+      });
+
+    node_declate_and_watch_parameter(
+      "disable_diag", false, [&](const rclcpp::Parameter & p) {
+        disable_diag = p.as_bool();
+
+        if (!disable_diag) {
+          uas->diagnostic_updater.add(sys_diag);
+          uas->diagnostic_updater.add(batt_diag);
+        } else {
+          uas->diagnostic_updater.removeByName(sys_diag.getName());
+          uas->diagnostic_updater.removeByName(batt_diag.getName());
+          uas->diagnostic_updater.removeByName(mem_diag.getName());
+          uas->diagnostic_updater.removeByName(hwst_diag.getName());
+        }
+      });
+
+    node_declate_and_watch_parameter(
+      "heartbeat_mav_type", utils::to_string(
+        conn_heartbeat_mav_type), [&](const rclcpp::Parameter & p) {
+        conn_heartbeat_mav_type = utils::mav_type_from_str(p.as_string());
+      });
+
+    node_declate_and_watch_parameter(
+      "heartbeat_rate", 1.0, [&](const rclcpp::Parameter & p) {
+        auto rate_d = p.as_double();
+
+        if (rate_d == 0) {
+          if (heartbeat_timer) {
+            heartbeat_timer->cancel();
+            heartbeat_timer.reset();
+          }
+        } else {
+          rclcpp::WallRate rate(rate_d);
+
+          heartbeat_timer =
+          node->create_wall_timer(
+            rate.period(), std::bind(
+              &SystemStatusPlugin::heartbeat_cb,
+              this));
+        }
+      });
 
     auto state_qos = rclcpp::QoS(10).transient_local();
     auto sensor_qos = rclcpp::SensorDataQoS();
@@ -508,6 +520,11 @@ public:
       std::bind(&SystemStatusPlugin::set_message_interval_cb, this, _1, _2));
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
       "~/vehicle_info_get", std::bind(&SystemStatusPlugin::vehicle_info_get_cb, this, _1, _2));
+
+    uas->diagnostic_updater.add(hb_diag);
+
+    autopilot_version_timer =
+      node->create_wall_timer(1s, std::bind(&SystemStatusPlugin::autopilot_version_cb, this));
 
     // init state topic
     publish_disconnection();

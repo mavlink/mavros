@@ -37,13 +37,16 @@ Plugin::SetParametersResult Plugin::node_on_set_parameters_cb(
 {
   SetParametersResult result;
 
+  result.successful = true;
+
   for (auto & p:parameters) {
     auto it = node_watch_parameters.find(p.get_name());
     if (it != node_watch_parameters.end()) {
-      auto ret = it->second(p);
-
-      if (!ret.successful) {
-        result = ret;
+      try {
+        it->second(p);
+      } catch (std::exception & ex) {
+        result.successful = false;
+        result.reason = ex.what();
         break;
       }
     }

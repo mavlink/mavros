@@ -94,7 +94,7 @@ protected:
   rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node
 
   using SetParametersResult = rcl_interfaces::msg::SetParametersResult;
-  using ParameterFunctorT = std::function<SetParametersResult(const rclcpp::Parameter & p)>;
+  using ParameterFunctorT = std::function<void (const rclcpp::Parameter & p)>;
 
   std::unordered_map<std::string, ParameterFunctorT> node_watch_parameters;
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr node_set_parameters_handle_ptr;
