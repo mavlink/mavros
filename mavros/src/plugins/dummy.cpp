@@ -26,6 +26,8 @@ namespace std_plugins
 
 /**
  * @brief Dummy plugin.
+ * @plugin dummy
+ * @example_plugin
  *
  * Example and "how to" for users.
  */
