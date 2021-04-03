@@ -31,3 +31,31 @@ void Plugin::enable_capabilities_cb()
       &Plugin::capabilities_cb, this,
       std::placeholders::_1));
 }
+
+Plugin::SetParametersResult Plugin::node_on_set_parameters_cb(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  SetParametersResult result;
+
+  for (auto & p:parameters) {
+    auto it = node_watch_parameters.find(p.get_name());
+    if (it != node_watch_parameters.end()) {
+      auto ret = it->second(p);
+
+      if (!ret.successful) {
+        result = ret;
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
+void Plugin::enable_node_watch_parameters()
+{
+  node_set_parameters_handle_ptr =
+    node->add_on_set_parameters_callback(
+    std::bind(
+      &Plugin::node_on_set_parameters_cb, this, std::placeholders::_1));
+}

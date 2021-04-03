@@ -72,7 +72,7 @@ public:
   using Subscriptions = std::vector<HandlerInfo>;
 
   explicit Plugin(UASPtr uas_)
-  : uas(uas_)
+  : uas(uas_), node(std::dynamic_pointer_cast<rclcpp::Node>(uas_))
   {}
 
   explicit Plugin(UASPtr uas_, const std::string & subnode)
@@ -92,6 +92,12 @@ public:
 protected:
   UASPtr uas;                       // uas back link
   rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node
+
+  using SetParametersResult = rcl_interfaces::msg::SetParametersResult;
+  using ParameterFunctorT = std::function<SetParametersResult(const rclcpp::Parameter & p)>;
+
+  std::unordered_map<std::string, ParameterFunctorT> node_watch_parameters;
+  rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr node_set_parameters_handle_ptr;
 
   /**
    * Make subscription to raw message.
@@ -176,6 +182,29 @@ protected:
    * Shortcut for capabilities_cb() registration
    */
   void enable_capabilities_cb();
+
+  /**
+   * Default implmentation of that watch would use watch_parameters
+   */
+  virtual SetParametersResult node_on_set_parameters_cb(
+    const std::vector<rclcpp::Parameter> & parameters);
+
+  /**
+   * Shourtcut to enable default parameters watch impl
+   */
+  void enable_node_watch_parameters();
+
+  /**
+   * Adds parameter to watch and declares it
+   */
+  template<typename _VT>
+  auto node_declate_and_watch_parameter(
+    const std::string name, const _VT & default_value,
+    ParameterFunctorT cb)
+  {
+    node_watch_parameters[name] = cb;
+    return node->declare_parameter(name, default_value);
+  }
 };
 
 //! A factory class to help initialize plugin node from constructor
