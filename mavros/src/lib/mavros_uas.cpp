@@ -89,6 +89,21 @@ UAS::UAS(
       this->get_parameter("plugin_allowlist", plugin_allowlist);
       this->get_parameter("plugin_denylist", plugin_denylist);
 
+      exec_spin_thd = thread_ptr(
+        new std::thread(
+          [&]() {
+            utils::set_this_thread_name("uas-exec: %d.%d", source_system, source_component);
+
+            RCLCPP_INFO(this->get_logger(), "UAS Executor started");
+            this->exec.spin();
+            RCLCPP_WARN(this->get_logger(), "UAS Executor terminated");
+          }),
+        [&](std::thread * t) {
+          this->exec.cancel();
+          t->join();
+          delete t;
+        });
+
       // setup diag
       diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
       diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
@@ -274,6 +289,12 @@ void UAS::add_plugin(const std::string & pl_name)
     }
 
     loaded_plugins.push_back(plugin);
+
+    auto pl_node = plugin->get_node();
+    if (pl_node && pl_node.get() != this) {
+      RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " added to executor");
+      exec.add_node(pl_node);
+    }
 
     RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " initialized");
   } catch (pluginlib::PluginlibException & ex) {

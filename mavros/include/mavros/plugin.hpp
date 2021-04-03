@@ -89,6 +89,16 @@ public:
    */
   virtual Subscriptions get_subscriptions() = 0;
 
+  virtual rclcpp::Node::SharedPtr get_node() const
+  {
+    return node;
+  }
+
+  virtual rclcpp::Logger get_logger() const
+  {
+    return node->get_logger();
+  }
+
 protected:
   UASPtr uas;                       // uas back link
   rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node

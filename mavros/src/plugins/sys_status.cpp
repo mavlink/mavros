@@ -419,23 +419,11 @@ public:
     has_battery_status(false),
     battery_voltage(0.0)
   {
-#if 0
-
-    // version request timer
-    autopilot_version_timer = nh.createTimer(
-      ros::Duration(1.0),
-      &SystemStatusPlugin::autopilot_version_cb, this);
-    autopilot_version_timer.stop();
-
-#endif
-
     enable_node_watch_parameters();
 
     node_declate_and_watch_parameter(
       "conn_timeout", 10.0, [&](const rclcpp::Parameter & p) {
-        auto conn_timeout = rclcpp::Duration(p.as_double());
-
-        RCLCPP_INFO(node->get_logger(), "timeout: %d", p.as_double());
+        auto conn_timeout = rclcpp::Duration::from_seconds(p.as_double());
 
         timeout_timer =
         node->create_wall_timer(
@@ -513,13 +501,13 @@ public:
 
     stream_rate_srv =
       node->create_service<mavros_msgs::srv::StreamRate>(
-      "~/set_stream_rate",
+      "set_stream_rate",
       std::bind(&SystemStatusPlugin::set_rate_cb, this, _1, _2));
     message_interval_srv = node->create_service<mavros_msgs::srv::MessageInterval>(
-      "~/set_message_interval",
+      "set_message_interval",
       std::bind(&SystemStatusPlugin::set_message_interval_cb, this, _1, _2));
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
-      "~/vehicle_info_get", std::bind(&SystemStatusPlugin::vehicle_info_get_cb, this, _1, _2));
+      "vehicle_info_get", std::bind(&SystemStatusPlugin::vehicle_info_get_cb, this, _1, _2));
 
     uas->diagnostic_updater.add(hb_diag);
 
@@ -1044,6 +1032,8 @@ private:
   {
     using mavlink::common::MAV_MODE;
 
+    RCLCPP_WARN(get_logger(), "hb_cb");   // XXX
+
     mavlink::minimal::msg::HEARTBEAT hb {};
 
     hb.type = enum_value(conn_heartbeat_mav_type);             //! @todo patch PX4 so it can also handle this type as datalink
@@ -1058,6 +1048,8 @@ private:
   void autopilot_version_cb()
   {
     using mavlink::common::MAV_CMD;
+
+    RCLCPP_WARN(get_logger(), "ap_cb");   // XXX
 #if 0
     bool ret = false;
 

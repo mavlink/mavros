@@ -35,6 +35,7 @@ namespace mavros
 namespace utils
 {
 using mavconn::utils::format;
+using mavconn::utils::set_this_thread_name;
 
 /**
  * Possible modes of timesync operation
