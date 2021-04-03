@@ -7,34 +7,30 @@
  * @{
  */
 /*
- * Copyright 2013,2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2013,2014,2015,2016,2021 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros_plugin.h>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
 
-#include <mavros_msgs/State.h>
-#include <mavros_msgs/EstimatorStatus.h>
-#include <mavros_msgs/ExtendedState.h>
-#include <mavros_msgs/StreamRate.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/CommandLong.h>
-#include <mavros_msgs/StatusText.h>
-#include <mavros_msgs/VehicleInfo.h>
-#include <mavros_msgs/VehicleInfoGet.h>
-#include <mavros_msgs/MessageInterval.h>
+#include <mavros_msgs/msg/state.hpp>
+#include <mavros_msgs/msg/estimator_status.hpp>
+#include <mavros_msgs/msg/extended_state.hpp>
+#include <mavros_msgs/srv/stream_rate.hpp>
+#include <mavros_msgs/srv/set_mode.hpp>
+#include <mavros_msgs/srv/CommandLong.hpp>
+#include <mavros_msgs/msg/status_text.hpp>
+#include <mavros_msgs/msg/vehicle_info.hpp>
+#include <mavros_msgs/srv/vehicle_info_get.hpp>
+#include <mavros_msgs/srv/message_interval.hpp>
 
 
-#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
-#include <sensor_msgs/BatteryState.h>
-using BatteryMsg = sensor_msgs::BatteryState;
-#else
-#include <mavros_msgs/BatteryStatus.h>
-using BatteryMsg = mavros_msgs::BatteryStatus;
-#endif
+#include <sensor_msgs/msg/battery_state.hpp>
+using BatteryMsg = sensor_msgs::msg::BatteryState;
 
 namespace mavros
 {
@@ -179,6 +175,13 @@ public:
 
     using STS = mavlink::common::MAV_SYS_STATUS_SENSOR;
 
+    auto check_flag = [&](const std::string &name, STS flag) {
+    if (last_st.onboard_control_sensors_enabled & enum_value(flag)) {
+      stat.add(
+        name, (last_st.onboard_control_sensors_health & enum_value(flag)) ? "Ok" : "Fail");
+    }
+    }
+
     // [[[cog:
     // import pymavlink.dialects.v20.common as common
     // ename = 'MAV_SYS_STATUS_SENSOR'
@@ -198,181 +201,39 @@ public:
     //     if sts[0].isdigit():
     //         sts = 'SENSOR_' + sts
     //
-    //     cog.outl(f"""\
-    //     if (last_st.onboard_control_sensors_enabled & enum_value(STS::{sts}))
-    //     \tstat.add("{desc.strip()}", (last_st.onboard_control_sensors_health & enum_value(STS::{sts})) ? "Ok" : "Fail");""")
+    //     cog.outl(f"""check_flag("{desc.strip()}", STS::{sts});""")
     // ]]]
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_GYRO)) {
-      stat.add(
-        "3D gyro", (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_GYRO)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_ACCEL)) {
-      stat.add(
-        "3D accelerometer",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_ACCEL)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_MAG)) {
-      stat.add(
-        "3D magnetometer",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_MAG)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::ABSOLUTE_PRESSURE)) {
-      stat.add(
-        "absolute pressure",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::ABSOLUTE_PRESSURE)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::DIFFERENTIAL_PRESSURE)) {
-      stat.add(
-        "differential pressure",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::DIFFERENTIAL_PRESSURE)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::GPS)) {
-      stat.add(
-        "GPS", (last_st.onboard_control_sensors_health & enum_value(
-          STS::GPS)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::OPTICAL_FLOW)) {
-      stat.add(
-        "optical flow",
-        (last_st.onboard_control_sensors_health &
-        enum_value(STS::OPTICAL_FLOW)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::VISION_POSITION)) {
-      stat.add(
-        "computer vision position",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::VISION_POSITION)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::LASER_POSITION)) {
-      stat.add(
-        "laser based position",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::LASER_POSITION)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::EXTERNAL_GROUND_TRUTH)) {
-      stat.add(
-        "external ground truth (Vicon or Leica)",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::EXTERNAL_GROUND_TRUTH)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::ANGULAR_RATE_CONTROL)) {
-      stat.add(
-        "3D angular rate control",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::ANGULAR_RATE_CONTROL)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::ATTITUDE_STABILIZATION)) {
-      stat.add(
-        "attitude stabilization",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::ATTITUDE_STABILIZATION)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::YAW_POSITION)) {
-      stat.add(
-        "yaw position",
-        (last_st.onboard_control_sensors_health &
-        enum_value(STS::YAW_POSITION)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::Z_ALTITUDE_CONTROL)) {
-      stat.add(
-        "z/altitude control",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::Z_ALTITUDE_CONTROL)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::XY_POSITION_CONTROL)) {
-      stat.add(
-        "x/y position control",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::XY_POSITION_CONTROL)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::MOTOR_OUTPUTS)) {
-      stat.add(
-        "motor outputs / control",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::MOTOR_OUTPUTS)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::RC_RECEIVER)) {
-      stat.add(
-        "rc receiver", (last_st.onboard_control_sensors_health & enum_value(
-          STS::RC_RECEIVER)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_GYRO2)) {
-      stat.add(
-        "2nd 3D gyro",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_GYRO2)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_ACCEL2)) {
-      stat.add(
-        "2nd 3D accelerometer",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_ACCEL2)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_MAG2)) {
-      stat.add(
-        "2nd 3D magnetometer",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::SENSOR_3D_MAG2)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::GEOFENCE)) {
-      stat.add(
-        "geofence", (last_st.onboard_control_sensors_health & enum_value(
-          STS::GEOFENCE)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::AHRS)) {
-      stat.add(
-        "AHRS subsystem health",
-        (last_st.onboard_control_sensors_health & enum_value(STS::AHRS)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::TERRAIN)) {
-      stat.add(
-        "Terrain subsystem health",
-        (last_st.onboard_control_sensors_health & enum_value(STS::TERRAIN)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::REVERSE_MOTOR)) {
-      stat.add(
-        "Motors are reversed",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::REVERSE_MOTOR)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::LOGGING)) {
-      stat.add(
-        "Logging", (last_st.onboard_control_sensors_health & enum_value(
-          STS::LOGGING)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::BATTERY)) {
-      stat.add(
-        "Battery", (last_st.onboard_control_sensors_health & enum_value(
-          STS::BATTERY)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::PROXIMITY)) {
-      stat.add(
-        "Proximity", (last_st.onboard_control_sensors_health & enum_value(
-          STS::PROXIMITY)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::SATCOM)) {
-      stat.add(
-        "Satellite Communication",
-        (last_st.onboard_control_sensors_health & enum_value(STS::SATCOM)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::PREARM_CHECK)) {
-      stat.add(
-        "pre-arm check status. Always healthy when armed",
-        (last_st.onboard_control_sensors_health &
-        enum_value(STS::PREARM_CHECK)) ? "Ok" : "Fail");
-    }
-    if (last_st.onboard_control_sensors_enabled & enum_value(STS::OBSTACLE_AVOIDANCE)) {
-      stat.add(
-        "Avoidance/collision prevention",
-        (last_st.onboard_control_sensors_health & enum_value(
-          STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
-    }
-    // [[[end]]] (checksum: 612c227cf277a86b217d14aea31c83ff)
+    check_flag("3D gyro", STS::SENSOR_3D_GYRO);
+    check_flag("3D accelerometer", STS::SENSOR_3D_ACCEL);
+    check_flag("3D magnetometer", STS::SENSOR_3D_MAG);
+    check_flag("absolute pressure", STS::ABSOLUTE_PRESSURE);
+    check_flag("differential pressure", STS::DIFFERENTIAL_PRESSURE);
+    check_flag("GPS", STS::GPS);
+    check_flag("optical flow", STS::OPTICAL_FLOW);
+    check_flag("computer vision position", STS::VISION_POSITION);
+    check_flag("laser based position", STS::LASER_POSITION);
+    check_flag("external ground truth (Vicon or Leica)", STS::EXTERNAL_GROUND_TRUTH);
+    check_flag("3D angular rate control", STS::ANGULAR_RATE_CONTROL);
+    check_flag("attitude stabilization", STS::ATTITUDE_STABILIZATION);
+    check_flag("yaw position", STS::YAW_POSITION);
+    check_flag("z/altitude control", STS::Z_ALTITUDE_CONTROL);
+    check_flag("x/y position control", STS::XY_POSITION_CONTROL);
+    check_flag("motor outputs / control", STS::MOTOR_OUTPUTS);
+    check_flag("rc receiver", STS::RC_RECEIVER);
+    check_flag("2nd 3D gyro", STS::SENSOR_3D_GYRO2);
+    check_flag("2nd 3D accelerometer", STS::SENSOR_3D_ACCEL2);
+    check_flag("2nd 3D magnetometer", STS::SENSOR_3D_MAG2);
+    check_flag("geofence", STS::GEOFENCE);
+    check_flag("AHRS subsystem health", STS::AHRS);
+    check_flag("Terrain subsystem health", STS::TERRAIN);
+    check_flag("Motors are reversed", STS::REVERSE_MOTOR);
+    check_flag("Logging", STS::LOGGING);
+    check_flag("Battery", STS::BATTERY);
+    check_flag("Proximity", STS::PROXIMITY);
+    check_flag("Satellite Communication", STS::SATCOM);
+    check_flag("pre-arm check status. Always healthy when armed", STS::PREARM_CHECK);
+    check_flag("Avoidance/collision prevention", STS::OBSTACLE_AVOIDANCE);
+    // [[[end]]] (checksum: 57caf332c0d1ef0bceec5f244a482c15)
 
     stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
     stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -533,15 +394,15 @@ private:
 
 /**
  * @brief System status plugin.
+ * @plugin sys_status
  *
  * Required by all plugins.
  */
-class SystemStatusPlugin : public plugin::PluginBase
+class SystemStatusPlugin : public plugin::Plugin
 {
 public:
-  SystemStatusPlugin()
-  : PluginBase(),
-    nh("~"),
+  SystemStatusPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "sys"),
     hb_diag("Heartbeat", 10),
     mem_diag("APM Memory"),
     hwst_diag("APM Hardware"),
@@ -552,12 +413,8 @@ public:
     has_battery_status(false),
     battery_voltage(0.0),
     conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
-
+#if 0
     ros::Duration conn_heartbeat;
 
     double conn_timeout_d;
@@ -623,6 +480,10 @@ public:
       "set_message_interval",
       &SystemStatusPlugin::set_message_interval_cb, this);
 
+#endif
+
+    state_pub=uas->create_publisher<mavros_msgs::msg::State>("state", rclcpp::QoS(10).transient_local());
+
     // init state topic
     publish_disconnection();
     enable_connection_cb();
@@ -644,27 +505,30 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
 
   HeartbeatStatus hb_diag;
   MemInfo mem_diag;
   HwStatus hwst_diag;
   SystemStatusDiag sys_diag;
   BatteryStatusDiag batt_diag;
-  ros::Timer timeout_timer;
-  ros::Timer heartbeat_timer;
-  ros::Timer autopilot_version_timer;
 
-  ros::Publisher state_pub;
-  ros::Publisher extended_state_pub;
-  ros::Publisher batt_pub;
-  ros::Publisher estimator_status_pub;
-  ros::Publisher statustext_pub;
-  ros::Subscriber statustext_sub;
-  ros::ServiceServer rate_srv;
-  ros::ServiceServer mode_srv;
-  ros::ServiceServer vehicle_info_get_srv;
-  ros::ServiceServer message_interval_srv;
+  rclcpp::TimerBase::SharedPtr timeout_timer;
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
+  rclcpp::TimerBase::SharedPtr autopilot_version_timer;
+
+  rclcpp::Publisher<mavros_msgs::msg::State>::SharedPtr state_pub;
+  rclcpp::Publisher<mavros_msgs::msg::ExtendedState>::SharedPtr extended_state_pub;
+
+  //ros::Publisher batt_pub;
+  //ros::Publisher estimator_status_pub;
+  //ros::Publisher statustext_pub;
+
+  rclcpp::Subscription<mavros_msgs::msg::StatusText>::SharedPtr statustext_sub;
+
+  //ros::ServiceServer rate_srv;
+  //ros::ServiceServer mode_srv;
+  //ros::ServiceServer vehicle_info_get_srv;
+  //ros::ServiceServer message_interval_srv;
 
   MAV_TYPE conn_heartbeat_mav_type;
   static constexpr int RETRIES_COUNT = 6;
@@ -723,27 +587,27 @@ private:
       //     (('DEBUG', ), 'DEBUG')
       //     ):
       //     for v in l1:
-      //         cog.outl("case enum_value(MAV_SEVERITY::%s):" % v)
-      //     cog.outl("\tROS_%s_STREAM_NAMED(\"fcu\", \"FCU: \" << text);" % l2)
-      //     cog.outl("\tbreak;")
+      //         cog.outl(f"case enum_value(MAV_SEVERITY::{v}):")
+      //     cog.outl(f"  RCLCPP_{l2}_STREAM(node->get_logger(), \"FCU: \" << text);")
+      //     cog.outl(f"  break;")
       // ]]]
       case enum_value(MAV_SEVERITY::EMERGENCY):
       case enum_value(MAV_SEVERITY::ALERT):
       case enum_value(MAV_SEVERITY::CRITICAL):
       case enum_value(MAV_SEVERITY::ERROR):
-        ROS_ERROR_STREAM_NAMED("fcu", "FCU: " << text);
+        RCLCPP_ERROR_STREAM(node->get_logger(), "FCU: " << text);
         break;
       case enum_value(MAV_SEVERITY::WARNING):
       case enum_value(MAV_SEVERITY::NOTICE):
-        ROS_WARN_STREAM_NAMED("fcu", "FCU: " << text);
+        RCLCPP_WARN_STREAM(node->get_logger(), "FCU: " << text);
         break;
       case enum_value(MAV_SEVERITY::INFO):
-        ROS_INFO_STREAM_NAMED("fcu", "FCU: " << text);
+        RCLCPP_INFO_STREAM(node->get_logger(), "FCU: " << text);
         break;
       case enum_value(MAV_SEVERITY::DEBUG):
-        ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
+        RCLCPP_DEBUG_STREAM(node->get_logger(), "FCU: " << text);
         break;
-      // [[[end]]] (checksum: 315aa363b5ecb4dda66cc8e1e3d3aa48)
+      // [[[end]]] (checksum: d05760afbeece46673c8f73f89b63f3d)
       default:
         ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" << +severity << "): " << text);
         break;
@@ -926,7 +790,6 @@ private:
     auto batt_msg = boost::make_shared<BatteryMsg>();
     batt_msg->header.stamp = ros::Time::now();
 
-#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
     batt_msg->voltage = volt;
     batt_msg->current = -curr;
     batt_msg->charge = NAN;
@@ -940,11 +803,6 @@ private:
     batt_msg->cell_voltage.clear();             // not necessary. Cell count and Voltage unknown.
     batt_msg->location = "";
     batt_msg->serial_number = "";
-#else   // mavros_msgs::BatteryStatus
-    batt_msg->voltage = volt;
-    batt_msg->current = curr;
-    batt_msg->remaining = rem;
-#endif
 
     batt_pub.publish(batt_msg);
   }
@@ -1016,7 +874,6 @@ private:
     mavlink::common::msg::BATTERY_STATUS & bs)
   {
     // PX4.
-#ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
     using BT = mavlink::common::MAV_BATTERY_TYPE;
 
     has_battery_status = true;
@@ -1041,11 +898,11 @@ private:
       //     'LION',
       //     'NIMH',
       //     'UNKNOWN'):
-      //     cog.outl("case enum_value(BT::%s):" % f)
+      //     cog.outl(f"case enum_value(BT::{f}):")
       //     if f == 'UNKNOWN':
       //         cog.outl("default:")
-      //     cog.outl("\tbatt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_%s;" % f)
-      //     cog.outl("\tbreak;")
+      //     cog.outl(f"  batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_{f};")
+      //     cog.outl(f"  break;")
       // ]]]
       case enum_value(BT::LIPO):
         batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_LIPO;
@@ -1063,7 +920,7 @@ private:
       default:
         batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
         break;
-        // [[[end]]] (checksum: 2bf14a81b3027f14ba1dd9b4c086a41d)
+        // [[[end]]] (checksum: a63317878234d9538c6bb378e93b8b31)
     }
 
     batt_msg->present = true;
@@ -1082,8 +939,6 @@ private:
     batt_msg->serial_number = "";
 
     batt_pub.publish(batt_msg);
-#endif
-      << << << < HEAD
   }
 
   void handle_estimator_status(
@@ -1094,6 +949,10 @@ private:
 
     auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
     est_status_msg->header.stamp = ros::Time::now();
+
+    auto check_flag = [status](ESF flag)->bool{
+return !!(status.flags & enum_value(flag));
+    };
 
     // [[[cog:
     // import pymavlink.dialects.v20.common as common
@@ -1113,23 +972,21 @@ private:
     //         esf = esf[len(ename_pfx2):]
     //     if esf[0].isdigit():
     //         esf = 'SENSOR_' + esf
-    //     cog.outl("est_status_msg->%s_status_flag = !!(status.flags & enum_value(ESF::%s));" % (esf.lower(), esf))
+    //     cog.outl(f"est_status_msg->{esf.lower()}_status_flag = check_flag(ESF::{esf});")
     // ]]]
-    est_status_msg->attitude_status_flag = !!(status.flags & enum_value(ESF::ATTITUDE));
-    est_status_msg->velocity_horiz_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_HORIZ));
-    est_status_msg->velocity_vert_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_VERT));
-    est_status_msg->pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_REL));
-    est_status_msg->pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_ABS));
-    est_status_msg->pos_vert_abs_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_ABS));
-    est_status_msg->pos_vert_agl_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_AGL));
-    est_status_msg->const_pos_mode_status_flag = !!(status.flags & enum_value(ESF::CONST_POS_MODE));
-    est_status_msg->pred_pos_horiz_rel_status_flag =
-      !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_REL));
-    est_status_msg->pred_pos_horiz_abs_status_flag =
-      !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
-    est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
-    est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
-    // [[[end]]] (checksum: 7828381ee4002ea6b61a8f528ae4d12d)
+    est_status_msg->attitude_status_flag = check_flag(ESF::ATTITUDE);
+    est_status_msg->velocity_horiz_status_flag = check_flag(ESF::VELOCITY_HORIZ);
+    est_status_msg->velocity_vert_status_flag = check_flag(ESF::VELOCITY_VERT);
+    est_status_msg->pos_horiz_rel_status_flag = check_flag(ESF::POS_HORIZ_REL);
+    est_status_msg->pos_horiz_abs_status_flag = check_flag(ESF::POS_HORIZ_ABS);
+    est_status_msg->pos_vert_abs_status_flag = check_flag(ESF::POS_VERT_ABS);
+    est_status_msg->pos_vert_agl_status_flag = check_flag(ESF::POS_VERT_AGL);
+    est_status_msg->const_pos_mode_status_flag = check_flag(ESF::CONST_POS_MODE);
+    est_status_msg->pred_pos_horiz_rel_status_flag = check_flag(ESF::PRED_POS_HORIZ_REL);
+    est_status_msg->pred_pos_horiz_abs_status_flag = check_flag(ESF::PRED_POS_HORIZ_ABS);
+    est_status_msg->gps_glitch_status_flag = check_flag(ESF::GPS_GLITCH);
+    est_status_msg->accel_error_status_flag = check_flag(ESF::ACCEL_ERROR);
+    // [[[end]]] (checksum: de8212768a56288b7276d87b083ab069)
 
     estimator_status_pub.publish(est_status_msg);
   }
@@ -1265,6 +1122,60 @@ private:
     return true;
   }
 
+    bool set_message_interval_cb(
+      mavros_msgs::MessageInterval::Request & req,
+      mavros_msgs::MessageInterval::Response & res)
+    {
+      using mavlink::common::MAV_CMD;
+
+      try {
+        auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+
+        // calculate interval
+        float interval_us;
+        if (req.message_rate < 0) {
+          interval_us = -1.0f;
+        } else if (req.message_rate == 0) {
+          interval_us = 0.0f;
+        } else {
+          interval_us = 1000000.0f / req.message_rate;
+        }
+
+        mavros_msgs::CommandLong cmd{};
+
+        cmd.request.broadcast = false;
+        cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
+        cmd.request.confirmation = false;
+        cmd.request.param1 = req.message_id;
+        cmd.request.param2 = interval_us;
+
+        ROS_DEBUG_NAMED(
+          "sys", "SetMessageInterval: Request msgid %u at %f hz",
+          req.message_id, req.message_rate);
+        res.success = client.call(cmd);
+      } catch (ros::InvalidNameException & ex) {
+        ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
+      }
+
+      ROS_ERROR_COND_NAMED(
+        !res.success, "sys",
+        "SetMessageInterval: command plugin service call failed!");
+
+      return res.success;>> >> >> >
+      master
+    }
+
+    mavlink::common::msg::SET_MODE sm = {};
+    sm.target_system = m_uas->get_tgt_system();
+    sm.base_mode = base_mode;
+    sm.custom_mode = custom_mode;
+
+    UAS_FCU(m_uas)->send_message_ignore_drop(sm);
+    res.mode_sent = true;
+    return true;
+  }
+
+
   bool set_mode_cb(
     mavros_msgs::SetMode::Request & req,
     mavros_msgs::SetMode::Response & res)
@@ -1287,58 +1198,7 @@ private:
        */
       base_mode |= (m_uas->get_armed()) ? enum_value(MAV_MODE_FLAG::SAFETY_ARMED) : 0;
       base_mode |= (m_uas->get_hil_state()) ? enum_value(MAV_MODE_FLAG::HIL_ENABLED) : 0;
-      base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);== == ==
-        =
-    }
-
-    void handle_estimator_status(
-      const mavlink::mavlink_message_t * msg,
-      mavlink::common::msg::ESTIMATOR_STATUS & status)
-    {
-      using ESF = mavlink::common::ESTIMATOR_STATUS_FLAGS;
-
-      auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
-      est_status_msg->header.stamp = ros::Time::now();
-
-      // [[[cog:
-      // import pymavlink.dialects.v20.common as common
-      // ename = 'ESTIMATOR_STATUS_FLAGS'
-      // ename_pfx2 = 'ESTIMATOR_'
-      //
-      // enum = sorted(common.enums[ename].items())
-      // enum.pop() # -> remove ENUM_END
-      //
-      // for k, e in enum:
-      //     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
-      //     esf = e.name
-      //
-      //     if esf.startswith(ename + '_'):
-      //         esf = esf[len(ename) + 1:]
-      //     if esf.startswith(ename_pfx2):
-      //         esf = esf[len(ename_pfx2):]
-      //     if esf[0].isdigit():
-      //         esf = 'SENSOR_' + esf
-      //     cog.outl("est_status_msg->%s_status_flag = !!(status.flags & enum_value(ESF::%s));" % (esf.lower(), esf))
-      // ]]]
-      est_status_msg->attitude_status_flag = !!(status.flags & enum_value(ESF::ATTITUDE));
-      est_status_msg->velocity_horiz_status_flag =
-        !!(status.flags & enum_value(ESF::VELOCITY_HORIZ));
-      est_status_msg->velocity_vert_status_flag = !!(status.flags & enum_value(ESF::VELOCITY_VERT));
-      est_status_msg->pos_horiz_rel_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_REL));
-      est_status_msg->pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::POS_HORIZ_ABS));
-      est_status_msg->pos_vert_abs_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_ABS));
-      est_status_msg->pos_vert_agl_status_flag = !!(status.flags & enum_value(ESF::POS_VERT_AGL));
-      est_status_msg->const_pos_mode_status_flag =
-        !!(status.flags & enum_value(ESF::CONST_POS_MODE));
-      est_status_msg->pred_pos_horiz_rel_status_flag =
-        !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_REL));
-      est_status_msg->pred_pos_horiz_abs_status_flag =
-        !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
-      est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
-      est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
-      // [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
-
-      estimator_status_pub.publish(est_status_msg);
+      base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
     }
 
     /* -*- timer callbacks -*- */
@@ -1437,247 +1297,9 @@ private:
         vehicles.clear();
       }
     }
-
-    /* -*- subscription callbacks -*- */
-
-    void statustext_cb(const mavros_msgs::StatusText::ConstPtr & req)
-    {
-      mavlink::common::msg::STATUSTEXT statustext {};
-      statustext.severity = req->severity;
-
-      // Limit the length of the string by null-terminating at the 50-th character
-      ROS_WARN_COND_NAMED(
-        req->text.length() >= statustext.text.size(), "sys",
-        "Status text too long: truncating...");
-      mavlink::set_string_z(statustext.text, req->text);
-
-      UAS_FCU(m_uas)->send_message_ignore_drop(statustext);
-    }
-
-    /* -*- ros callbacks -*- */
-
-    bool set_rate_cb(
-      mavros_msgs::StreamRate::Request & req,
-      mavros_msgs::StreamRate::Response & res)
-    {
-      mavlink::common::msg::REQUEST_DATA_STREAM rq = {};
-
-      rq.target_system = m_uas->get_tgt_system();
-      rq.target_component = m_uas->get_tgt_component();
-      rq.req_stream_id = req.stream_id;
-      rq.req_message_rate = req.message_rate;
-      rq.start_stop = (req.on_off) ? 1 : 0;
-
-      UAS_FCU(m_uas)->send_message_ignore_drop(rq);
-      return true;
-    }
-
-    bool set_mode_cb(
-      mavros_msgs::SetMode::Request & req,
-      mavros_msgs::SetMode::Response & res)
-    {
-      using mavlink::minimal::MAV_MODE_FLAG;
-
-      uint8_t base_mode = req.base_mode;
-      uint32_t custom_mode = 0;
-
-      if (req.custom_mode != "") {
-        if (!m_uas->cmode_from_str(req.custom_mode, custom_mode)) {
-          res.mode_sent = false;
-          return true;
-        }
-
-        /**
-         * @note That call may trigger unexpected arming change because
-         *       base_mode arming flag state based on previous HEARTBEAT
-         *       message value.
-         */
-        base_mode |= (m_uas->get_armed()) ? enum_value(MAV_MODE_FLAG::SAFETY_ARMED) : 0;
-        base_mode |= (m_uas->get_hil_state()) ? enum_value(MAV_MODE_FLAG::HIL_ENABLED) : 0;
-        base_mode |= enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
-      }
-
-      mavlink::common::msg::SET_MODE sm = {};
-      sm.target_system = m_uas->get_tgt_system();
-      sm.base_mode = base_mode;
-      sm.custom_mode = custom_mode;
-
-      UAS_FCU(m_uas)->send_message_ignore_drop(sm);
-      res.mode_sent = true;
-      return true;
-    }
-
-    bool vehicle_info_get_cb(
-      mavros_msgs::VehicleInfoGet::Request & req,
-      mavros_msgs::VehicleInfoGet::Response & res)
-    {
-      if (req.get_all) {
-        // Send all vehicles
-        for (const auto & got : vehicles) {
-          res.vehicles.emplace_back(got.second);
-        }
-
-        res.success = true;
-        return res.success;
-      }
-
-      uint8_t req_sysid = req.sysid;
-      uint8_t req_compid = req.compid;
-
-      if (req.sysid == 0 && req.compid == 0) {
-        // use target
-        req_sysid = m_uas->get_tgt_system();
-        req_compid = m_uas->get_tgt_component();
-      }
-
-      uint16_t key = get_vehicle_key(req_sysid, req_compid);
-      auto it = vehicles.find(key);
-
-      if (it == vehicles.end()) {
-        // Vehicle not found
-        res.success = false;
-        return res.success;
-      }
-
-      res.vehicles.emplace_back(it->second);
-      res.success = true;
-      return res.success;
-    }
-
-    bool set_message_interval_cb(
-      mavros_msgs::MessageInterval::Request & req,
-      mavros_msgs::MessageInterval::Response & res)
-    {
-      using mavlink::common::MAV_CMD;
-
-      try {
-        auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
-
-        // calculate interval
-        float interval_us;
-        if (req.message_rate < 0) {
-          interval_us = -1.0f;
-        } else if (req.message_rate == 0) {
-          interval_us = 0.0f;
-        } else {
-          interval_us = 1000000.0f / req.message_rate;
-        }
-
-        mavros_msgs::CommandLong cmd{};
-
-        cmd.request.broadcast = false;
-        cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
-        cmd.request.confirmation = false;
-        cmd.request.param1 = req.message_id;
-        cmd.request.param2 = interval_us;
-
-        ROS_DEBUG_NAMED(
-          "sys", "SetMessageInterval: Request msgid %u at %f hz",
-          req.message_id, req.message_rate);
-        res.success = client.call(cmd);
-      } catch (ros::InvalidNameException & ex) {
-        ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
-      }
-
-      ROS_ERROR_COND_NAMED(
-        !res.success, "sys",
-        "SetMessageInterval: command plugin service call failed!");
-
-      return res.success;>> >> >> >
-      master
-    }
-
-    mavlink::common::msg::SET_MODE sm = {};
-    sm.target_system = m_uas->get_tgt_system();
-    sm.base_mode = base_mode;
-    sm.custom_mode = custom_mode;
-
-    UAS_FCU(m_uas)->send_message_ignore_drop(sm);
-    res.mode_sent = true;
-    return true;
-  }
-
-  bool vehicle_info_get_cb(
-    mavros_msgs::VehicleInfoGet::Request & req,
-    mavros_msgs::VehicleInfoGet::Response & res)
-  {
-    if (req.get_all) {
-      // Send all vehicles
-      for (const auto & got : vehicles) {
-        res.vehicles.emplace_back(got.second);
-      }
-
-      res.success = true;
-      return res.success;
-    }
-
-    uint8_t req_sysid = req.sysid;
-    uint8_t req_compid = req.compid;
-
-    if (req.sysid == 0 && req.compid == 0) {
-      // use target
-      req_sysid = m_uas->get_tgt_system();
-      req_compid = m_uas->get_tgt_component();
-    }
-
-    uint16_t key = get_vehicle_key(req_sysid, req_compid);
-    auto it = vehicles.find(key);
-
-    if (it == vehicles.end()) {
-      // Vehicle not found
-      res.success = false;
-      return res.success;
-    }
-
-    res.vehicles.emplace_back(it->second);
-    res.success = true;
-    return res.success;
-  }
-
-  bool set_message_interval_cb(
-    mavros_msgs::MessageInterval::Request & req,
-    mavros_msgs::MessageInterval::Response & res)
-  {
-    using mavlink::common::MAV_CMD;
-
-    try {
-      auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
-
-      // calculate interval
-      float interval_us;
-      if (req.message_rate < 0) {
-        interval_us = -1.0f;
-      } else if (req.message_rate == 0) {
-        interval_us = 0.0f;
-      } else {
-        interval_us = 1000000.0f / req.message_rate;
-      }
-
-      mavros_msgs::CommandLong cmd{};
-
-      cmd.request.broadcast = false;
-      cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
-      cmd.request.confirmation = false;
-      cmd.request.param1 = req.message_id;
-      cmd.request.param2 = interval_us;
-
-      ROS_DEBUG_NAMED(
-        "sys", "SetMessageInterval: Request msgid %u at %f hz",
-        req.message_id, req.message_rate);
-      res.success = client.call(cmd);
-    } catch (ros::InvalidNameException & ex) {
-      ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
-    }
-
-    ROS_ERROR_COND_NAMED(
-      !res.success, "sys",
-      "SetMessageInterval: command plugin service call failed!");
-
-    return res.success;
-  }
 };
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SystemStatusPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::SystemStatusPlugin)

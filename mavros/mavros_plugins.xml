@@ -11,5 +11,11 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 
 Example and &quot;how to&quot; for users.</description>
 </class>-->
+  <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief System status plugin.
+@plugin sys_status
+
+Required by all plugins.</description>
+  </class>
 </library>
-<!-- [[[end]]] (checksum: bbf1d9f57f44eb29f44abe28a3a2c645) -->
+<!-- [[[end]]] (checksum: 35dc3ab809a88eee6f71ccebe9065842) -->
