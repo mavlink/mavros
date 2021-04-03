@@ -76,8 +76,7 @@ static const OrientationPair make_orientation(
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
 //     vec = Vector3.parse_rpy(e.description)
-//     whitespace = ' ' * (27 - len(name_short))
-//     cog.outl(f"""/* {k:>2} */ make_orientation("{name_short}",{whitespace}{vec.Roll:>5}, {vec.Pitch:>5}, {vec.Yaw:>5}),""")
+//     cog.outl(f"""/* {k:>2} */ make_orientation("{name_short}", {vec.Roll}, {vec.Pitch}, {vec.Yaw}),""")
 //
 // cog.outl("}};")
 // ]]]
@@ -125,7 +124,7 @@ static const std::array<const OrientationPair, 42> sensor_orientations{{
 /* 40 */ make_orientation("ROLL_90_PITCH_315", 90.0, 315.0, 0.0),
 /* 100 */ make_orientation("CUSTOM", 0.0, 0.0, 0.0),
 }};
-// [[[end]]] (checksum: 8da0773dfd7a53b866aa7cad6c9ee3d0)
+// [[[end]]] (checksum: 2ed537a9279bb6a3992df43e225bbeb7)
 
 
 std::string to_string(MAV_SENSOR_ORIENTATION orientation)

@@ -466,7 +466,7 @@ public:
       });
 
     node_declate_and_watch_parameter(
-      "heartbeat_mav_type", utils::to_string(
+      "heartbeat_mav_type", utils::enum_to_name(
         conn_heartbeat_mav_type), [&](const rclcpp::Parameter & p) {
         conn_heartbeat_mav_type = utils::mav_type_from_str(p.as_string());
       });

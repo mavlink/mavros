@@ -88,6 +88,8 @@ std::string to_string_enum(int e)
   return to_string(static_cast<_T>(e));
 }
 
+std::string enum_to_name(mavlink::minimal::MAV_TYPE e);
+
 /**
  * @brief Function to match the received orientation received by MAVLink msg
  *        and the rotation of the sensor relative to the FCU.
