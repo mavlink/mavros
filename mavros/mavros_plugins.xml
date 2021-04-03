@@ -1,7 +1,8 @@
-<library path="lib/libmavros_plugins">
-	<!--<class name="dummy" type="mavros::std_plugins::DummyPlugin" base_class_type="mavros::plugin::PluginBase">
+<library path="mavros_plugins">
+	<class name="dummy" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::DummyPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
 		<description>Dummy test plugin.</description>
-	</class>-->
+	</class>
+	<!--
 	<class name="sys_status" type="mavros::std_plugins::SystemStatusPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish system status.</description>
 	</class>
@@ -83,4 +84,5 @@
 	<class name="wind_estimation" type="mavros::std_plugins::WindEstimationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish wind estimates</description>
 	</class>
+	-->
 </library>

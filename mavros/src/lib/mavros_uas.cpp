@@ -17,8 +17,9 @@
 #include <mavros/mavros_uas.hpp>
 #include <mavros/utils.hpp>
 
-using namespace mavros;
-using namespace mavros::uas;
+using namespace mavros;                 // NOLINT
+using namespace mavros::uas;            // NOLINT
+using namespace std::chrono_literals;   // NOLINT
 using mavconn::MAVConnInterface;
 using mavconn::Framing;
 using mavlink::mavlink_message_t;
@@ -54,7 +55,6 @@ UAS::UAS(
   fcu_caps_known(false),
   fcu_capabilities(0)
 {
-  int tgt_system, tgt_component;
   std::string fcu_protocol = "v2.0";
 
   // XXX TODO(vooon): should i use LifecycleNode?
@@ -74,64 +74,74 @@ UAS::UAS(
   this->declare_parameter("plugin_allowlist", plugin_allowlist);
   this->declare_parameter("plugin_denylist", plugin_denylist);
 
-  this->get_parameter("uas_url", uas_url);
-  this->get_parameter("fcu_protocol", fcu_protocol);
-  this->get_parameter("system_id", source_system);
-  this->get_parameter("component_id", source_component);
-  this->get_parameter("target_system_id", tgt_system);
-  this->get_parameter("target_component_id", tgt_component);
-  this->get_parameter("plugin_allowlist", plugin_allowlist);
-  this->get_parameter("plugin_denylist", plugin_denylist);
+  // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
+  startup_delay_timer = this->create_wall_timer(
+    100ms, [&]() {
+      startup_delay_timer->cancel();
 
-  // setup diag
-  diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
-  diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
+      int tgt_system, tgt_component;
+      this->get_parameter("uas_url", uas_url);
+      this->get_parameter("fcu_protocol", fcu_protocol);
+      this->get_parameter("system_id", source_system);
+      this->get_parameter("component_id", source_component);
+      this->get_parameter("target_system_id", tgt_system);
+      this->get_parameter("target_component_id", tgt_component);
+      this->get_parameter("plugin_allowlist", plugin_allowlist);
+      this->get_parameter("plugin_denylist", plugin_denylist);
 
-  // setup uas link
-  if (fcu_protocol == "v1.0") {
-    set_protocol_version(mavconn::Protocol::V10);
-  } else if (fcu_protocol == "v2.0") {
-    set_protocol_version(mavconn::Protocol::V20);
-  } else {
-    RCLCPP_WARN(
-      get_logger(),
-      "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
-      fcu_protocol.c_str());
-    set_protocol_version(mavconn::Protocol::V20);
-  }
+      // setup diag
+      diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
+      diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
 
-  // setup source and target
-  set_tgt(tgt_system, tgt_component);
+      // setup uas link
+      if (fcu_protocol == "v1.0") {
+        set_protocol_version(mavconn::Protocol::V10);
+      } else if (fcu_protocol == "v2.0") {
+        set_protocol_version(mavconn::Protocol::V20);
+      } else {
+        RCLCPP_WARN(
+          get_logger(),
+          "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
+          fcu_protocol.c_str());
+        set_protocol_version(mavconn::Protocol::V20);
+      }
 
-  add_connection_change_handler(
-    std::bind(
-      &UAS::log_connect_change, this,
-      std::placeholders::_1));
+      // setup source and target
+      set_tgt(tgt_system, tgt_component);
 
-  // prepare plugin lists
-  // issue #257 2: assume that all plugins blacklisted
-  if (plugin_denylist.empty() and !plugin_allowlist.empty()) {
-    plugin_denylist.emplace_back("*");
-  }
+      add_connection_change_handler(
+        std::bind(
+          &UAS::log_connect_change, this,
+          std::placeholders::_1));
 
-  for (auto & name : plugin_factory_loader.getDeclaredClasses()) {
-    add_plugin(name);
-  }
+      // prepare plugin lists
+      // issue #257 2: assume that all plugins blacklisted
+      if (plugin_denylist.empty() and !plugin_allowlist.empty()) {
+        plugin_denylist.emplace_back("*");
+      }
 
-  connect_to_router();
+      for (auto & name : plugin_factory_loader.getDeclaredClasses()) {
+        add_plugin(name);
+      }
 
-  std::stringstream ss;
-  for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
-    ss << " " << s;
-  }
+      connect_to_router();
 
-  RCLCPP_INFO(get_logger(), "Built-in SIMD instructions: %s", Eigen::SimdInstructionSetsInUse());
-  RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
-  RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
-  RCLCPP_INFO(
-    get_logger(), "MAVROS UAS started. MY ID %u.%u, TARGET ID %u.%u",
-    source_system, source_component,
-    target_system, target_component);
+      std::stringstream ss;
+      for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
+        ss << " " << s;
+      }
+
+      RCLCPP_INFO(
+        get_logger(), "Built-in SIMD instructions: %s",
+        Eigen::SimdInstructionSetsInUse());
+      RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
+      RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
+      RCLCPP_INFO(
+        get_logger(), "MAVROS UAS via %s started. MY ID %u.%u, TARGET ID %u.%u",
+        uas_url.c_str(),
+        source_system, source_component,
+        target_system, target_component);
+    });
 }
 
 void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
@@ -195,6 +205,7 @@ inline bool is_mavlink_message_t(const size_t rt)
 plugin::Plugin::SharedPtr UAS::create_plugin_instance(const std::string & pl_name)
 {
   auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
+
   return
     plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
 }

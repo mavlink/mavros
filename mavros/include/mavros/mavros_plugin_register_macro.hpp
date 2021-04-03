@@ -21,7 +21,7 @@
 #define MAVROS_MAVROS_PLUGIN_REGISTER_MACRO_HPP_
 
 #include <class_loader/class_loader.hpp>
-#include <mavros/mavros_plugin.hpp>
+#include <mavros/plugin.hpp>
 
 /**
  * Register a plugin for mavros UAS.
@@ -30,5 +30,6 @@
   CLASS_LOADER_REGISTER_CLASS( \
     mavros::plugin::PluginFactoryTemplate<PluginClass>, \
     mavros::plugin::PluginFactory)
+
 
 #endif  // MAVROS_MAVROS_PLUGIN_REGISTER_MACRO_HPP_

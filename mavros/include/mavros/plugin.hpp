@@ -62,7 +62,7 @@ private:
   explicit Plugin(const Plugin &) = delete;
 
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Plugin);
+  RCLCPP_SMART_PTR_DEFINITIONS(Plugin)
 
   //! generic message handler callback
   using HandlerCb = mavconn::MAVConnInterface::ReceivedCb;
@@ -75,6 +75,11 @@ public:
   : uas(uas_)
   {}
 
+  explicit Plugin(UASPtr uas_, const std::string & subnode)
+  : uas(uas_),
+    node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode))
+  {}
+
   virtual ~Plugin() = default;
 
   /**
@@ -83,8 +88,8 @@ public:
   virtual Subscriptions get_subscriptions() = 0;
 
 protected:
-  UASPtr uas;                 // uas back link
-  rclcpp::Node::SharedPtr nh;                 // most of plugins uses sub-node
+  UASPtr uas;                       // uas back link
+  rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node
 
   /**
    * Make subscription to raw message.
@@ -183,7 +188,7 @@ public:
 
 //! Helper template to make plugin factories
 template<typename _T>
-class PluginFactoryTemplate : PluginFactory
+class PluginFactoryTemplate : public PluginFactory
 {
 public:
   PluginFactoryTemplate() = default;
@@ -198,7 +203,7 @@ public:
   }
 };
 
-}           // namespace plugin
-}       // namespace mavros
+}   // namespace plugin
+}   // namespace mavros
 
 #endif  // MAVROS_MAVROS_PLUGIN_HPP_

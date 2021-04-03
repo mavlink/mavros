@@ -212,7 +212,7 @@ private:
 class UAS : public rclcpp::Node
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(UAS);
+  RCLCPP_SMART_PTR_DEFINITIONS(UAS)
 
   // other UAS aliases
   using ConnectionCb = std::function<void (bool)>;
@@ -546,6 +546,7 @@ private:
   StrV plugin_denylist;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
+  rclcpp::TimerBase::SharedPtr startup_delay_timer;
 
   // plugins
   pluginlib::ClassLoader<plugin::PluginFactory> plugin_factory_loader;

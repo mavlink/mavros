@@ -63,7 +63,7 @@ class Router;
 class Endpoint : public std::enable_shared_from_this<Endpoint>
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Endpoint);
+  RCLCPP_SMART_PTR_DEFINITIONS(Endpoint)
 
   enum class Type
   {
@@ -128,7 +128,7 @@ public:
 class Router : public rclcpp::Node
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Router);
+  RCLCPP_SMART_PTR_DEFINITIONS(Router)
 
   using StrV = std::vector<std::string>;
 

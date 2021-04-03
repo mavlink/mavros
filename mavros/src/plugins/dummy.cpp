@@ -8,14 +8,16 @@
  * @{
  */
 /*
- * Copyright 2013,2016 Vladimir Ermakov.
+ * Copyright 2013,2016,2021 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros_plugin.h>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
 
 namespace mavros
 {
@@ -27,23 +29,12 @@ namespace std_plugins
  *
  * Example and "how to" for users.
  */
-class DummyPlugin : public plugin::PluginBase
+class DummyPlugin : public plugin::Plugin
 {
 public:
-  DummyPlugin()
-  : PluginBase(),
-    nh("~")
+  explicit DummyPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "dummy")
   {}
-
-  /**
-   * Plugin initializer. Constructor should not do this.
-   */
-  void initialize(UAS & uas_) override
-  {
-    PluginBase::initialize(uas_);
-
-    ROS_INFO_NAMED("dummy", "Dummy::initialize");
-  }
 
   /**
    * This function returns message subscriptions.
@@ -66,33 +57,32 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
-
   void handle_heartbeat(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::minimal::msg::HEARTBEAT & hb)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::minimal::msg::HEARTBEAT & hb, plugin::filter::AnyOk filter [[maybe_unused]])
   {
-    ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_heartbeat: " << hb.to_yaml());
+    RCLCPP_INFO_STREAM(node->get_logger(), "Dummy::handle_heartbeat: " << hb.to_yaml());
   }
 
   void handle_sys_status(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::SYS_STATUS & st)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::SYS_STATUS & st, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_sys_status: " << st.to_yaml());
+    RCLCPP_INFO_STREAM(node->get_logger(), "Dummy::handle_sys_status: " << st.to_yaml());
   }
 
   void handle_statustext(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::STATUSTEXT & st)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::STATUSTEXT & st, plugin::filter::ComponentAndOk filter [[maybe_unused]])
   {
-    ROS_INFO_STREAM_NAMED("dummy", "Dummy::handle_statustext: " << st.to_yaml());
+    RCLCPP_INFO_STREAM(node->get_logger(), "Dummy::handle_statustext: " << st.to_yaml());
   }
 
   void handle_statustext_raw(const mavlink::mavlink_message_t * msg, const mavconn::Framing f)
   {
-    ROS_INFO_NAMED(
-      "dummy", "Dummy::handle_statustext_raw(%p, %d) from %u.%u", msg, utils::enum_value(
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Dummy::handle_statustext_raw(%p, %d) from %u.%u", msg, utils::enum_value(
         f), msg->sysid, msg->compid);
   }
 };
@@ -100,5 +90,5 @@ private:
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::DummyPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::DummyPlugin)

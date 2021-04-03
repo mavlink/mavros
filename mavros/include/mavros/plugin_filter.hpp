@@ -31,6 +31,7 @@ namespace plugin
 {
 namespace filter
 {
+using mavros::plugin::Filter;
 using mavros::uas::UAS;
 using UASPtr = UAS::SharedPtr;
 using mavconn::Framing;
