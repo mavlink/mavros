@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.7.0 (2021-04-05)
+------------------
 * lib: re-generate the code
 * plugins: mission: re-generate the code
 * MissionBase: correction to file information
