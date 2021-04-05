@@ -259,7 +259,9 @@ public:
 			stat.add("pre-arm check status. Always healthy when armed", (last_st.onboard_control_sensors_health & enum_value(STS::PREARM_CHECK)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::OBSTACLE_AVOIDANCE))
 			stat.add("Avoidance/collision prevention", (last_st.onboard_control_sensors_health & enum_value(STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 612c227cf277a86b217d14aea31c83ff)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PROPULSION))
+			stat.add("propulsion (actuator, esc, motor or propellor)", (last_st.onboard_control_sensors_health & enum_value(STS::PROPULSION)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: 24471e5532db5c99f411475509d41f72)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);

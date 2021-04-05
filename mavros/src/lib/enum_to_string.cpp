@@ -153,7 +153,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 34> mav_type_strings{{
+static const std::array<const std::string, 37> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -188,6 +188,9 @@ static const std::array<const std::string, 34> mav_type_strings{{
 /* 31 */ "Charging station",              // Charging station
 /* 32 */ "FLARM collision avoidance system", // FLARM collision avoidance system
 /* 33 */ "Servo",                         // Servo
+/* 34 */ "Open Drone ID. See https:",     // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
+/* 35 */ "Decarotor",                     // Decarotor
+/* 36 */ "Battery",                       // Battery
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -198,14 +201,14 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 17ce5bbbaa9d2cab2ce27c0b2c2c78e4)
+// [[[end]]] (checksum: 8fc2dcd1c935d5d338508685d9eac918)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 34> mav_type_names{{
+static const std::array<const std::string, 37> mav_type_names{{
 /*  0 */ "GENERIC",                       // Generic micro air vehicle
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
 /*  2 */ "QUADROTOR",                     // Quadrotor
@@ -240,6 +243,9 @@ static const std::array<const std::string, 34> mav_type_names{{
 /* 31 */ "CHARGING_STATION",              // Charging station
 /* 32 */ "FLARM",                         // FLARM collision avoidance system
 /* 33 */ "SERVO",                         // Servo
+/* 34 */ "ODID",                          // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
+/* 35 */ "DECAROTOR",                     // Decarotor
+/* 36 */ "BATTERY",                       // Battery
 }};
 
 std::string to_name(MAV_TYPE e)
@@ -250,7 +256,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: a76366f8b1f5bcd5047088837441c50d)
+// [[[end]]] (checksum: 2d402cd11e54ad35405d53b7ab127e3d)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -464,7 +470,7 @@ static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  1 */ "Generic error / not accepting mission commands at all right now.", // Generic error / not accepting mission commands at all right now.
 /*  2 */ "Coordinate frame is not supported.", // Coordinate frame is not supported.
 /*  3 */ "Command is not supported.",     // Command is not supported.
-/*  4 */ "Mission item exceeds storage space.", // Mission item exceeds storage space.
+/*  4 */ "Mission items exceed storage space.", // Mission items exceed storage space.
 /*  5 */ "One of the parameters has an invalid value.", // One of the parameters has an invalid value.
 /*  6 */ "param1 has an invalid value.",  // param1 has an invalid value.
 /*  7 */ "param2 has an invalid value.",  // param2 has an invalid value.
@@ -486,7 +492,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
 	return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: d42db24957df1950d06edbf9480dde46)
+// [[[end]]] (checksum: bf3c500065b1c65a1e822c70da56d2d5)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -495,10 +501,10 @@ std::string to_string(MAV_MISSION_RESULT e)
 //! MAV_FRAME values
 static const std::array<const std::string, 22> mav_frame_strings{{
 /*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
-/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: North, y: East, z: Down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
 /*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
-/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: east, y: north, z: up).
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: East, y: North, z: Up).
 /*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
 /*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
@@ -506,14 +512,14 @@ static const std::array<const std::string, 22> mav_frame_strings{{
 /*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
 /* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
 /* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: forward, y: right, z: down).
-/* 13 */ "BODY_FLU",                      // Body fixed frame of reference, Z-up (x: forward, y: left, z: up).
-/* 14 */ "MOCAP_NED",                     // Odometry local coordinate frame of data given by a motion capture system, Z-down (x: north, y: east, z: down).
-/* 15 */ "MOCAP_ENU",                     // Odometry local coordinate frame of data given by a motion capture system, Z-up (x: east, y: north, z: up).
-/* 16 */ "VISION_NED",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-down (x: north, y: east, z: down).
-/* 17 */ "VISION_ENU",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: east, y: north, z: up).
-/* 18 */ "ESTIM_NED",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: north, y: east, z: down).
-/* 19 */ "ESTIM_ENU",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: east, y: noth, z: up).
+/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: Forward, y: Right, z: Down).
+/* 13 */ "RESERVED_13",                   // MAV_FRAME_BODY_FLU - Body fixed frame of reference, Z-up (x: Forward, y: Left, z: Up).
+/* 14 */ "RESERVED_14",                   // MAV_FRAME_MOCAP_NED - Odometry local coordinate frame of data given by a motion capture system, Z-down (x: North, y: East, z: Down).
+/* 15 */ "RESERVED_15",                   // MAV_FRAME_MOCAP_ENU - Odometry local coordinate frame of data given by a motion capture system, Z-up (x: East, y: North, z: Up).
+/* 16 */ "RESERVED_16",                   // MAV_FRAME_VISION_NED - Odometry local coordinate frame of data given by a vision estimation system, Z-down (x: North, y: East, z: Down).
+/* 17 */ "RESERVED_17",                   // MAV_FRAME_VISION_ENU - Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: East, y: North, z: Up).
+/* 18 */ "RESERVED_18",                   // MAV_FRAME_ESTIM_NED - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: North, y: East, z: Down).
+/* 19 */ "RESERVED_19",                   // MAV_FRAME_ESTIM_ENU - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: East, y: North, z: Up).
 /* 20 */ "LOCAL_FRD",                     // Forward, Right, Down coordinate frame. This is a local frame with Z-down and arbitrary F/R alignment (i.e. not aligned with NED/earth frame).
 /* 21 */ "LOCAL_FLU",                     // Forward, Left, Up coordinate frame. This is a local frame with Z-up and arbitrary F/L alignment (i.e. not aligned with ENU/earth frame).
 }};
@@ -526,7 +532,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: f685e2751fb50445a0a68185c3604d67)
+// [[[end]]] (checksum: f7783e4d7764c236021e92fc4a1c16a1)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -562,7 +568,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 {  37, "USER13" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  38, "USER14" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  39, "USER15" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
-{  40, "USE16" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  40, "USER16" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  41, "USER17" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  42, "USER18" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  43, "USER19" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
@@ -590,7 +596,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 {  65, "USER41" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  66, "USER42" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  67, "USER43" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
-{  68, "USER44" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+{  68, "TELEMETRY_RADIO" },               // Telemetry radio (e.g. SiK radio, or other component that emits RADIO_STATUS messages).
 {  69, "USER45" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  70, "USER46" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 {  71, "USER47" },                        // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
@@ -654,7 +660,10 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 173, "GIMBAL4" },                       // Gimbal #4
 { 174, "GIMBAL5" },                       // Gimbal #5.
 { 175, "GIMBAL6" },                       // Gimbal #6.
+{ 180, "BATTERY" },                       // Battery #1.
+{ 181, "BATTERY2" },                      // Battery #2.
 { 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
+{ 191, "ONBOARD_COMPUTER" },              // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
 { 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
 { 196, "OBSTACLE_AVOIDANCE" },            // Component that plans a collision free path between two points.
 { 197, "VISUAL_INERTIAL_ODOMETRY" },      // Component that provides position estimates using VIO techniques.
@@ -664,11 +673,15 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 202, "IMU_3" },                         // Inertial Measurement Unit (IMU) #3.
 { 220, "GPS" },                           // GPS #1.
 { 221, "GPS2" },                          // GPS #2.
+{ 236, "ODID_TXRX_1" },                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
+{ 237, "ODID_TXRX_2" },                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
+{ 238, "ODID_TXRX_3" },                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
 { 240, "UDP_BRIDGE" },                    // Component to bridge MAVLink to UDP (i.e. from a UART).
 { 241, "UART_BRIDGE" },                   // Component to bridge to UART (i.e. from UDP).
+{ 242, "TUNNEL_NODE" },                   // Component handling TUNNEL messages (e.g. vendor specific GUI of a component).
 { 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: a065421c2774868191bf8faebca62b11)
+// [[[end]]] (checksum: aa881c50ec1302df3d49fdc6fa6fe13a)
 
 std::string to_string(MAV_COMPONENT e)
 {
