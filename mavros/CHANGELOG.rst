@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* re-generate all pymavlink enums
+* Contributors: Vladimir Ermakov
+
 1.7.0 (2021-04-05)
 ------------------
 * lib: re-generate the code
