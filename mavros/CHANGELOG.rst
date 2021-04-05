@@ -2,6 +2,26 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: re-generate the code
+* plugins: mission: re-generate the code
+* MissionBase: correction to file information
+* MissionBase: add copyright from origional waypoint.cpp
+* uncrustify
+* whitespace
+* add rallypoint and geofence plugins to mavros plugins xml
+* add rallypoint and geofence plugins to CMakeList
+* Geofence: add geofence plugin
+* Rallypoint: add rallypoint plugin
+* Waypoint: inherit MissionBase class for mission protocol
+* MissionBase: breakout mission protocol from waypoint.cpp
+* README: Update PX4 Autopilot references
+  Much needed fixes to clarify the project is named correctly throughout the README
+  for the PX4 Autopilot, QGroundControl, and MAVLink
+* Fix https://github.com/mavlink/mavros/issues/849
+* Contributors: Charlie-Burge, Ramon Roche, Tobias Fischer, Vladimir Ermakov
+
 1.6.0 (2021-02-15)
 ------------------
 * fix inconsistency in direction of yaw when using set_position in BODY frames and fix problems with yaw in setponit_raw

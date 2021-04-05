@@ -2,6 +2,11 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* msgs: re-generate the code
+* Contributors: Vladimir Ermakov
+
 1.6.0 (2021-02-15)
 ------------------
 
