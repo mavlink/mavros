@@ -208,7 +208,7 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: b19fc361579ab1037668c7e31cc07457)
+// [[[end]]] (checksum: 2225b2c1f3e1e415ebfafe748dc0d8a9)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -264,7 +264,7 @@ std::string enum_to_name(MAV_TYPE e)
 
   return mav_type_names[idx];
 }
-// [[[end]]] (checksum: df50c492bb4cbef1cbcf23d6945cdcf7)
+// [[[end]]] (checksum: 98203eae4520462308933422fb6c0fa5)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -507,7 +507,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
   return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: 74e4e9b086e55247dab312fcc33eace9)
+// [[[end]]] (checksum: d58f714b2b068a3be44ac1f2988ed44e)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -548,7 +548,7 @@ std::string to_string(MAV_FRAME e)
 
   return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: 1edbc1b946bae08b05508893336208c0)
+// [[[end]]] (checksum: a08a81c88d8a8ae58c83a146541031fc)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -584,7 +584,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {37, "USER13"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {38, "USER14"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {39, "USER15"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
-  {40, "USE16"},                          // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+  {40, "USER16"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {41, "USER17"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {42, "USER18"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {43, "USER19"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
@@ -612,7 +612,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {65, "USER41"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {66, "USER42"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {67, "USER43"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
-  {68, "USER44"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
+  {68, "TELEMETRY_RADIO"},                // Telemetry radio (e.g. SiK radio, or other component that emits RADIO_STATUS messages).
   {69, "USER45"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {70, "USER46"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
   {71, "USER47"},                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
@@ -676,7 +676,10 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {173, "GIMBAL4"},                       // Gimbal #4
   {174, "GIMBAL5"},                       // Gimbal #5.
   {175, "GIMBAL6"},                       // Gimbal #6.
+  {180, "BATTERY"},                       // Battery #1.
+  {181, "BATTERY2"},                      // Battery #2.
   {190, "MISSIONPLANNER"},                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
+  {191, "ONBOARD_COMPUTER"},              // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
   {195, "PATHPLANNER"},                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
   {196, "OBSTACLE_AVOIDANCE"},            // Component that plans a collision free path between two points.
   {197, "VISUAL_INERTIAL_ODOMETRY"},      // Component that provides position estimates using VIO techniques.
@@ -686,11 +689,15 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {202, "IMU_3"},                         // Inertial Measurement Unit (IMU) #3.
   {220, "GPS"},                           // GPS #1.
   {221, "GPS2"},                          // GPS #2.
+  {236, "ODID_TXRX_1"},                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
+  {237, "ODID_TXRX_2"},                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
+  {238, "ODID_TXRX_3"},                   // Open Drone ID transmitter/receiver (Bluetooth/WiFi/Internet).
   {240, "UDP_BRIDGE"},                    // Component to bridge MAVLink to UDP (i.e. from a UART).
   {241, "UART_BRIDGE"},                   // Component to bridge to UART (i.e. from UDP).
+  {242, "TUNNEL_NODE"},                   // Component handling TUNNEL messages (e.g. vendor specific GUI of a component).
   {250, "SYSTEM_CONTROL"},                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: 0e9b67b8bf172339bcf2778c576110fe)
+// [[[end]]] (checksum: aad4a6e160b5719494a6ede65e5f244a)
 
 std::string to_string(MAV_COMPONENT e)
 {

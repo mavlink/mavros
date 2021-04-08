@@ -17,5 +17,9 @@ Example and &quot;how to&quot; for users.</description>
 
 Required by all plugins.</description>
   </class>
+  <class name="sys_time" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemTimePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief System time plugin
+@plugin sys_time</description>
+  </class>
 </library>
-<!-- [[[end]]] (checksum: 35dc3ab809a88eee6f71ccebe9065842) -->
+<!-- [[[end]]] (checksum: 43ac52466bcdf3ccfa48f25dddd93fc8) -->

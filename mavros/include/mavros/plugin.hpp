@@ -99,6 +99,11 @@ public:
     return node->get_logger();
   }
 
+  virtual rclcpp::Clock::SharedPtr get_clock() const
+  {
+    return node->get_clock();
+  }
+
 protected:
   UASPtr uas;                       // uas back link
   rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node
