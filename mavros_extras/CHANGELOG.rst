@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.7.1 (2021-04-05)
+------------------
+
+1.7.0 (2021-04-05)
+------------------
+
 1.6.0 (2021-02-15)
 ------------------
 * Fixed a bug in mavros_extras/src/plugins/odom.cpp by switching lines 175 and 180.

@@ -159,7 +159,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 34> mav_type_strings{{
+static const std::array<const std::string, 37> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -194,6 +194,9 @@ static const std::array<const std::string, 34> mav_type_strings{{
 /* 31 */ "Charging station",              // Charging station
 /* 32 */ "FLARM collision avoidance system", // FLARM collision avoidance system
 /* 33 */ "Servo",                         // Servo
+/* 34 */ "Open Drone ID. See https:",     // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
+/* 35 */ "Decarotor",                     // Decarotor
+/* 36 */ "Battery",                       // Battery
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -212,7 +215,7 @@ std::string to_string(MAV_TYPE e)
 // enum_name_is_value_outl(ename, funcname='enum_to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 34> mav_type_names{{
+static const std::array<const std::string, 37> mav_type_names{{
 /*  0 */ "GENERIC",                       // Generic micro air vehicle
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
 /*  2 */ "QUADROTOR",                     // Quadrotor
@@ -247,6 +250,9 @@ static const std::array<const std::string, 34> mav_type_names{{
 /* 31 */ "CHARGING_STATION",              // Charging station
 /* 32 */ "FLARM",                         // FLARM collision avoidance system
 /* 33 */ "SERVO",                         // Servo
+/* 34 */ "ODID",                          // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
+/* 35 */ "DECAROTOR",                     // Decarotor
+/* 36 */ "BATTERY",                       // Battery
 }};
 
 std::string enum_to_name(MAV_TYPE e)
@@ -478,7 +484,7 @@ static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  1 */ "Generic error / not accepting mission commands at all right now.", // Generic error / not accepting mission commands at all right now.
 /*  2 */ "Coordinate frame is not supported.", // Coordinate frame is not supported.
 /*  3 */ "Command is not supported.",     // Command is not supported.
-/*  4 */ "Mission item exceeds storage space.", // Mission item exceeds storage space.
+/*  4 */ "Mission items exceed storage space.", // Mission items exceed storage space.
 /*  5 */ "One of the parameters has an invalid value.", // One of the parameters has an invalid value.
 /*  6 */ "param1 has an invalid value.",  // param1 has an invalid value.
 /*  7 */ "param2 has an invalid value.",  // param2 has an invalid value.
@@ -510,10 +516,10 @@ std::string to_string(MAV_MISSION_RESULT e)
 //! MAV_FRAME values
 static const std::array<const std::string, 22> mav_frame_strings{{
 /*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
-/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: north, y: east, z: down).
+/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: North, y: East, z: Down).
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
 /*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
-/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: east, y: north, z: up).
+/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: East, y: North, z: Up).
 /*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
 /*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
 /*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
@@ -521,14 +527,14 @@ static const std::array<const std::string, 22> mav_frame_strings{{
 /*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
 /* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
 /* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: forward, y: right, z: down).
-/* 13 */ "BODY_FLU",                      // Body fixed frame of reference, Z-up (x: forward, y: left, z: up).
-/* 14 */ "MOCAP_NED",                     // Odometry local coordinate frame of data given by a motion capture system, Z-down (x: north, y: east, z: down).
-/* 15 */ "MOCAP_ENU",                     // Odometry local coordinate frame of data given by a motion capture system, Z-up (x: east, y: north, z: up).
-/* 16 */ "VISION_NED",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-down (x: north, y: east, z: down).
-/* 17 */ "VISION_ENU",                    // Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: east, y: north, z: up).
-/* 18 */ "ESTIM_NED",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: north, y: east, z: down).
-/* 19 */ "ESTIM_ENU",                     // Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: east, y: noth, z: up).
+/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: Forward, y: Right, z: Down).
+/* 13 */ "RESERVED_13",                   // MAV_FRAME_BODY_FLU - Body fixed frame of reference, Z-up (x: Forward, y: Left, z: Up).
+/* 14 */ "RESERVED_14",                   // MAV_FRAME_MOCAP_NED - Odometry local coordinate frame of data given by a motion capture system, Z-down (x: North, y: East, z: Down).
+/* 15 */ "RESERVED_15",                   // MAV_FRAME_MOCAP_ENU - Odometry local coordinate frame of data given by a motion capture system, Z-up (x: East, y: North, z: Up).
+/* 16 */ "RESERVED_16",                   // MAV_FRAME_VISION_NED - Odometry local coordinate frame of data given by a vision estimation system, Z-down (x: North, y: East, z: Down).
+/* 17 */ "RESERVED_17",                   // MAV_FRAME_VISION_ENU - Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: East, y: North, z: Up).
+/* 18 */ "RESERVED_18",                   // MAV_FRAME_ESTIM_NED - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: North, y: East, z: Down).
+/* 19 */ "RESERVED_19",                   // MAV_FRAME_ESTIM_ENU - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: East, y: North, z: Up).
 /* 20 */ "LOCAL_FRD",                     // Forward, Right, Down coordinate frame. This is a local frame with Z-down and arbitrary F/R alignment (i.e. not aligned with NED/earth frame).
 /* 21 */ "LOCAL_FLU",                     // Forward, Left, Up coordinate frame. This is a local frame with Z-up and arbitrary F/L alignment (i.e. not aligned with ENU/earth frame).
 }};
