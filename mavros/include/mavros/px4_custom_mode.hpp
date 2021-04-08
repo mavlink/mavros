@@ -43,6 +43,9 @@
 
 #pragma once
 
+#ifndef MAVROS__PX4_CUSTOM_MODE_HPP_
+#define MAVROS__PX4_CUSTOM_MODE_HPP_
+
 //#include <stdint.h>
 
 namespace px4
@@ -129,3 +132,6 @@ constexpr uint32_t define_mode_auto(enum custom_mode::SUB_MODE_AUTO sm)
   return define_mode(custom_mode::MAIN_MODE_AUTO, sm);
 }
 }       // namespace px4
+
+
+#endif  // MAVROS__PX4_CUSTOM_MODE_HPP_

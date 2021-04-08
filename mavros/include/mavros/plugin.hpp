@@ -1,3 +1,10 @@
+/*
+ * Copyright 2013,2014,2015,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MAVROS Plugin base
  * @file plugin.h
@@ -7,25 +14,21 @@
  * @{
  *  @brief MAVROS Plugin system
  */
-/*
- * Copyright 2013,2014,2015,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
 
-#ifndef MAVROS_PLUGIN_HPP_
-#define MAVROS_PLUGIN_HPP_
-
+#ifndef MAVROS__PLUGIN_HPP_
+#define MAVROS__PLUGIN_HPP_
 
 #include <tuple>
 #include <vector>
 #include <functional>
 #include <mutex>
 #include <shared_mutex>
+#include <memory>
+#include <string>
+#include <unordered_map>
+
 #include <mavconn/interface.hpp>
 #include <mavros/mavros_uas.hpp>
 
@@ -252,4 +255,4 @@ public:
 }   // namespace plugin
 }   // namespace mavros
 
-#endif  // MAVROS_MAVROS_PLUGIN_HPP_
+#endif  // MAVROS__PLUGIN_HPP_

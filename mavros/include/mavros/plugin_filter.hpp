@@ -1,3 +1,10 @@
+/*
+ * Copyright 2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MAVROS Plugin message filters
  * @file plugin.h
@@ -7,19 +14,11 @@
  * @{
  *  @brief MAVROS Plugin system
  */
-/*
- * Copyright 2013,2014,2015,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
 
-#ifndef MAVROS_PLUGIN_FILTER_HPP_
-#define MAVROS_PLUGIN_FILTER_HPP_
-
+#ifndef MAVROS__PLUGIN_FILTER_HPP_
+#define MAVROS__PLUGIN_FILTER_HPP_
 
 #include <mavconn/interface.hpp>
 #include <mavros/mavros_uas.hpp>
@@ -63,7 +62,8 @@ public:
   }
 };
 
-//! ComponentAndOk filter passes only messages with Framing::ok and matching target system/component ids
+//! ComponentAndOk filter passes only messages with Framing::ok and matching target
+//  system/component ids
 class ComponentAndOk : public Filter
 {
 public:
@@ -80,4 +80,4 @@ public:
 }   // namespace mavros
 
 
-#endif  // MAVROS_PLUGIN_FILTER_HPP_
+#endif  // MAVROS__PLUGIN_FILTER_HPP_
