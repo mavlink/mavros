@@ -1,3 +1,10 @@
+/*
+ * Copyright 2013,2014,2015,2016,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief System Status plugin
  * @file sys_status.cpp
@@ -6,13 +13,10 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2013,2014,2015,2016,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
+
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 #include <rcpputils/asserts.hpp>
 #include <mavros/mavros_uas.hpp>
@@ -196,7 +200,9 @@ public:
     // enum.pop() # -> remove ENUM_END
     //
     // for k, e in enum:
-    //     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
+    //     desc = (e.description.split(' ', 1)[1]
+    //         if e.description.startswith('0x')
+    //         else e.description)
     //     sts = e.name
     //
     //     if sts.startswith(ename + '_'):
@@ -261,7 +267,7 @@ private:
 class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-  BatteryStatusDiag(const std::string & name)
+  explicit BatteryStatusDiag(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     voltage(-1.0),
     current(0.0),
@@ -315,7 +321,7 @@ private:
 class MemInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
-  MemInfo(const std::string & name)
+  explicit MemInfo(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     freemem(-1),
     brkval(0)
@@ -356,7 +362,7 @@ private:
 class HwStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-  HwStatus(const std::string & name)
+  explicit HwStatus(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     vcc(-1.0),
     i2cerr(0),
