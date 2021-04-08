@@ -223,6 +223,30 @@ protected:
     node_watch_parameters[name] = cb;
     return node->declare_parameter(name, default_value);
   }
+
+  //! Helper to convert ros time to mavlink time_usec field
+  inline uint64_t get_time_usec(const builtin_interfaces::msg::Time & t)
+  {
+    return rclcpp::Time(t).nanoseconds() / 1000;
+  }
+
+  //! Helper to convert ros now time to mavlink time_usec field
+  inline uint64_t get_time_usec()
+  {
+    return get_time_usec(node->now());
+  }
+
+  //! Helper to convert ros time to mavlink time_boot_ms field
+  inline uint32_t get_time_boot_ms(const builtin_interfaces::msg::Time & t)
+  {
+    return rclcpp::Time(t).nanoseconds() / 1000000;
+  }
+
+  //! Helper to convert ros now time to mavlink time_boot_ms field
+  inline uint32_t get_time_boot_ms()
+  {
+    return get_time_boot_ms(node->now());
+  }
 };
 
 //! A factory class to help initialize plugin node from constructor

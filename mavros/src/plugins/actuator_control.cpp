@@ -83,7 +83,7 @@ private:
     //! message definiton here: @p https://mavlink.io/en/messages/common.html#SET_ACTUATOR_CONTROL_TARGET
     mavlink::common::msg::SET_ACTUATOR_CONTROL_TARGET act{};
 
-    act.time_usec = rclcpp::Time(req->header.stamp).seconds() / 1000;
+    act.time_usec = get_time_usec(req->header.stamp);
     act.group_mlx = req->group_mix;
     uas->msg_set_target(act);
     act.controls = req->controls;
