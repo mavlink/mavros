@@ -34,16 +34,15 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <mavconn/interface.hpp>
+#include <pluginlib/class_loader.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <GeographicLib/Geoid.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+
 #include <mavros/utils.hpp>
 #include <mavros/plugin.hpp>
 #include <mavros/frame_tf.hpp>
-#include <pluginlib/class_loader.hpp>
-#include <rclcpp/rclcpp.hpp>
-
-#include <GeographicLib/Geoid.hpp>
-
-#include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 namespace mavros
 {
@@ -216,7 +215,7 @@ private:
 class UAS : public rclcpp::Node
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(UAS)
+  RCLCPP_SMART_PTR_DEFINITIONS(UAS);
 
   // other UAS aliases
   using ConnectionCb = std::function<void (bool)>;
@@ -313,7 +312,7 @@ public:
    */
   inline uint8_t get_tgt_system()
   {
-    return target_system;                                                             // not changed after configuration
+    return target_system;
   }
 
   /**
@@ -321,7 +320,7 @@ public:
    */
   inline uint8_t get_tgt_component()
   {
-    return target_component;                                                          // not changed after configuration
+    return target_component;
   }
 
   inline void set_tgt(uint8_t sys, uint8_t comp)
@@ -582,8 +581,8 @@ private:
 
   // UAS -> Router connection
   mavlink::mavlink_status_t mavlink_status;
-  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;                                            // FCU -> UAS
-  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;                                                 // UAS -> FCU
+  rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;    // FCU -> UAS
+  rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;         // UAS -> FCU
 
   //! initialize connection to the Router
   void connect_to_router();

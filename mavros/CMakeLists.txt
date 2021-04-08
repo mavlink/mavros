@@ -109,7 +109,7 @@ add_library(mavros_plugins SHARED
   # outl_glob_cpp('src/plugins')
   # ]]]
   #src/plugins/3dr_radio.cpp
-  #src/plugins/actuator_control.cpp
+  src/plugins/actuator_control.cpp
   #src/plugins/altitude.cpp
   #src/plugins/command.cpp
   src/plugins/dummy.cpp
