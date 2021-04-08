@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014,2015,2016,2017,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MAVROS UAS Node
  * @file mavros_uas.hpp
@@ -7,27 +14,24 @@
  * @addtogroup nodelib
  * @{
  */
-/*
- * Copyright 2014,2015,2016,2017,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
 
-#ifndef MAVROS_MAVROS_UAS_HPP_
-#define MAVROS_MAVROS_UAS_HPP_
+#ifndef MAVROS__MAVROS_UAS_HPP_
+#define MAVROS__MAVROS_UAS_HPP_
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/static_transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>             // NOLINT
+#include <tf2_ros/transform_broadcaster.h>          // NOLINT
+#include <tf2_ros/static_transform_broadcaster.h>   // NOLINT
 
 #include <array>
 #include <atomic>
 #include <memory>
 #include <type_traits>
+#include <string>
+#include <vector>
+#include <unordered_map>
+
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <mavconn/interface.hpp>
 #include <mavros/utils.hpp>
@@ -609,4 +613,4 @@ private:
 }              // namespace uas
 }       // namespace mavros
 
-#endif  // MAVROS_MAVROS_UAS_HPP_
+#endif  // MAVROS__MAVROS_UAS_HPP_
