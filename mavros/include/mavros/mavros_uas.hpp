@@ -76,6 +76,8 @@ using timesync_mode = utils::timesync_mode;
 class Data
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   Data();
   ~Data() = default;
 
@@ -216,6 +218,7 @@ class UAS : public rclcpp::Node
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(UAS);
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // other UAS aliases
   using ConnectionCb = std::function<void (bool)>;
