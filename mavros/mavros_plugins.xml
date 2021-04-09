@@ -10,6 +10,10 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 
 Sends actuator controls to FCU controller.</description>
   </class>
+  <class name="altitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::AltitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Altitude plugin.
+@plugin altitude</description>
+  </class>
   <!--<class name="dummy" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::DummyPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
   <description>@brief Dummy plugin.
 @plugin dummy
@@ -28,4 +32,4 @@ Required by all plugins.</description>
 @plugin sys_time</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: c9e9cfddeacfaa30a05fd99b2a378121) -->
+<!-- [[[end]]] (checksum: 79013856219a3d4b73a344afb12d8e9e) -->
