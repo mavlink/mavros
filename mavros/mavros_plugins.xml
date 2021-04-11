@@ -51,5 +51,9 @@ Required by all plugins.</description>
     <description>@brief System time plugin
 @plugin sys_time</description>
   </class>
+  <class name="wind_estimation" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WindEstimationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Wind estimation plugin.
+@plugin wind_estimation</description>
+  </class>
 </library>
-<!-- [[[end]]] (checksum: ef237d1e3135f7ef44413f2430a7165d) -->
+<!-- [[[end]]] (checksum: cbf296e34f343195d37858f2ab52cc83) -->

@@ -122,8 +122,9 @@ private:
     constexpr size_t MAX_CHANCNT = 18;
     lock_guard lock(mutex);
 
-    RCLCPP_INFO_EXPRESSION(get_logger(), !has_rc_channels_msg, "RC_CHANNELS message detected!");
-    has_rc_channels_msg = true;
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), !has_rc_channels_msg.exchange(
+        true), "RC_CHANNELS message detected!");
 
     if (channels.chancount > MAX_CHANCNT) {
       RCLCPP_WARN_THROTTLE(

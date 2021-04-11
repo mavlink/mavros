@@ -128,7 +128,7 @@ add_library(mavros_plugins SHARED
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
   #src/plugins/waypoint.cpp
-  #src/plugins/wind_estimation.cpp
+  src/plugins/wind_estimation.cpp
   # [[[end]]] (checksum: e0bc1af34a7ae5b7471d95e6d23b7388)
 )
 add_dependencies(mavros_plugins
@@ -138,6 +138,7 @@ target_link_libraries(mavros_plugins
   mavros
 )
 ament_target_dependencies(mavros_plugins
+  angles
   geometry_msgs
   geographic_msgs
   mavros_msgs
