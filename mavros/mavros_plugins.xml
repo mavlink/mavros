@@ -33,6 +33,10 @@ Send any command via COMMAND_LONG</description>
 
 Publishes home position.</description>
   </class>
+  <class name="manual_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ManualControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Manual Control plugin
+@plugin manual_control</description>
+  </class>
   <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
 @plugin sys_status
@@ -44,4 +48,4 @@ Required by all plugins.</description>
 @plugin sys_time</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 9a44d0c478ebd7fd03cfed3ac9f4b29c) -->
+<!-- [[[end]]] (checksum: 4de9a1e228aed224a7f0038283c1a57a) -->

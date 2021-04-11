@@ -114,7 +114,7 @@ add_library(mavros_plugins SHARED
   src/plugins/home_position.cpp
   #src/plugins/imu.cpp
   #src/plugins/local_position.cpp
-  #src/plugins/manual_control.cpp
+  src/plugins/manual_control.cpp
   #src/plugins/mission_protocol_base.cpp
   #src/plugins/param.cpp
   #src/plugins/rallypoint.cpp

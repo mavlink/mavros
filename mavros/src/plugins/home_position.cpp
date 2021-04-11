@@ -47,7 +47,6 @@ public:
   : Plugin(uas_, "home_position")
   {
     auto state_qos = rclcpp::QoS(10).transient_local();
-    auto sensor_qos = rclcpp::SensorDataQoS();
 
     hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>("~/home", state_qos);
     hp_sub =
