@@ -33,27 +33,18 @@ Data::Data()
   gps_fix_type(0),
   gps_satellites_visible(0)
 {
+  auto & nq = imu_ned_data.orientation;
+  auto & eq = imu_enu_data.orientation;
+  auto & nv = imu_ned_data.angular_velocity;
+  auto & ev = imu_enu_data.angular_velocity;
+
+  nq.w = 1.0, nq.x = nq.y = nq.z = 0.0;
+  eq.w = 1.0, eq.x = eq.y = eq.z = 0.0;
+
+  nv.x = nv.y = nv.z = 0.0;
+  ev.x = ev.y = ev.z = 0.0;
+
   std::call_once(init_flag, init_geographiclib);
-
-  // Publish helper TFs used for frame transformation in the odometry plugin
-  // std::vector<geometry_msgs::TransformStamped> transform_vector;
-  // add_static_transform(
-  //   "map", "map_ned", Eigen::Affine3d(
-  //     ftf::quaternion_from_rpy(
-  //       M_PI, 0,
-  //       M_PI_2)),
-  //   transform_vector);
-  // add_static_transform(
-  //   "odom", "odom_ned", Eigen::Affine3d(
-  //     ftf::quaternion_from_rpy(
-  //       M_PI, 0,
-  //       M_PI_2)),
-  //   transform_vector);
-  // add_static_transform(
-  //   "base_link", "base_link_frd",
-  //   Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
-
-  // tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
 void Data::init_geographiclib()
@@ -102,53 +93,26 @@ geometry_msgs::msg::Quaternion Data::get_attitude_orientation_enu()
 {
   s_shared_lock lock(mu);
 
-  //if (imu_enu_data) {
   return imu_enu_data.orientation;
-  //} else {
-  //  // fallback - return identity
-  //  geometry_msgs::Quaternion q;
-  //  q.w = 1.0; q.x = q.y = q.z = 0.0;
-  //  return q;
-  //}
 }
 
 geometry_msgs::msg::Quaternion Data::get_attitude_orientation_ned()
 {
   s_shared_lock lock(mu);
-  //if (imu_ned_data) {
+
   return imu_ned_data.orientation;
-  //} else {
-  //  // fallback - return identity
-  //  geometry_msgs::Quaternion q;
-  //  q.w = 1.0; q.x = q.y = q.z = 0.0;
-  //  return q;
-  //}
 }
 
 geometry_msgs::msg::Vector3 Data::get_attitude_angular_velocity_enu()
 {
   s_shared_lock lock(mu);
-  //if (imu_enu_data) {
   return imu_enu_data.angular_velocity;
-  //} else {
-  //  // fallback
-  //  geometry_msgs::Vector3 v;
-  //  v.x = v.y = v.z = 0.0;
-  //  return v;
-  //}
 }
 
 geometry_msgs::msg::Vector3 Data::get_attitude_angular_velocity_ned()
 {
   s_shared_lock lock(mu);
-  //if (imu_ned_data) {
   return imu_ned_data.angular_velocity;
-  //} else {
-  //  // fallback
-  //  geometry_msgs::Vector3 v;
-  //  v.x = v.y = v.z = 0.0;
-  //  return v;
-  //}
 }
 
 /* -*- GPS data -*- */

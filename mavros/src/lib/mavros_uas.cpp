@@ -13,6 +13,9 @@
 
 #include <fnmatch.h>
 
+#include <Eigen/Eigen>
+#include <cmath>
+
 #include <rcpputils/asserts.hpp>
 #include <mavros/mavros_uas.hpp>
 #include <mavros/utils.hpp>
@@ -140,6 +143,28 @@ UAS::UAS(
       }
 
       connect_to_router();
+
+      // Publish helper TFs used for frame transformation in the odometry plugin
+      {
+        std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
+        add_static_transform(
+          "map", "map_ned", Eigen::Affine3d(
+            ftf::quaternion_from_rpy(
+              M_PI, 0,
+              M_PI_2)),
+          transform_vector);
+        add_static_transform(
+          "odom", "odom_ned", Eigen::Affine3d(
+            ftf::quaternion_from_rpy(
+              M_PI, 0,
+              M_PI_2)),
+          transform_vector);
+        add_static_transform(
+          "base_link", "base_link_frd",
+          Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
+
+        tf2_static_broadcaster.sendTransform(transform_vector);
+      }
 
       std::stringstream ss;
       for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {

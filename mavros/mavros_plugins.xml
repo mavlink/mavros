@@ -33,6 +33,13 @@ Send any command via COMMAND_LONG</description>
 
 Publishes home position.</description>
   </class>
+  <class name="local_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::LocalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Local position plugin.
+@plugin local_position
+
+Publish local position to TF, PositionStamped, TwistStamped
+and Odometry</description>
+  </class>
   <class name="manual_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ManualControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Manual Control plugin
 @plugin manual_control</description>
@@ -56,4 +63,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: cbf296e34f343195d37858f2ab52cc83) -->
+<!-- [[[end]]] (checksum: 6550cf4116cf259fc36ed6a838153862) -->
