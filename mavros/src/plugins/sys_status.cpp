@@ -1038,11 +1038,8 @@ private:
   {
     using mavlink::common::MAV_MODE;
 
-    RCLCPP_WARN(get_logger(), "hb_cb");   // XXX
-
     mavlink::minimal::msg::HEARTBEAT hb {};
-
-    hb.type = enum_value(conn_heartbeat_mav_type);             //! @todo patch PX4 so it can also handle this type as datalink
+    hb.type = enum_value(conn_heartbeat_mav_type);
     hb.autopilot = enum_value(MAV_AUTOPILOT::INVALID);
     hb.base_mode = enum_value(MAV_MODE::MANUAL_ARMED);
     hb.custom_mode = 0;
@@ -1055,48 +1052,49 @@ private:
   {
     using mavlink::common::MAV_CMD;
 
-    RCLCPP_WARN(get_logger(), "ap_cb");   // XXX
-#if 0
+    auto lg = get_logger();
     bool ret = false;
 
     // Request from all first 3 times, then fallback to unicast
     bool do_broadcast = version_retries > RETRIES_COUNT / 2;
 
     try {
-      auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
-      mavros_msgs::CommandLong cmd{};
+      auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
+      cmdrq->broadcast = do_broadcast;
+      cmdrq->command = enum_value(MAV_CMD::REQUEST_AUTOPILOT_CAPABILITIES);
+      cmdrq->confirmation = false;
+      cmdrq->param1 = 1.0;
 
-      cmd.request.broadcast = do_broadcast;
-      cmd.request.command = enum_value(MAV_CMD::REQUEST_AUTOPILOT_CAPABILITIES);
-      cmd.request.confirmation = false;
-      cmd.request.param1 = 1.0;
-
-      ROS_DEBUG_NAMED(
-        "sys", "VER: Sending %s request.",
+      RCLCPP_DEBUG(
+        lg, "VER: Sending %s request.",
         (do_broadcast) ? "broadcast" : "unicast");
-      ret = client.call(cmd);
-    } catch (ros::InvalidNameException & ex) {
-      ROS_ERROR_NAMED("sys", "VER: %s", ex.what());
+
+      auto future = client->async_send_request(cmdrq);
+      auto response = future.get();
+      ret = response->success;
+    } catch (std::exception & ex) {
+      RCLCPP_ERROR_STREAM(lg, "VER: " << ex.what());
     }
 
-    ROS_ERROR_COND_NAMED(!ret, "sys", "VER: command plugin service call failed!");
+    RCLCPP_ERROR_EXPRESSION(lg, !ret, "VER: command plugin service call failed!");
 
     if (version_retries > 0) {
       version_retries--;
-      ROS_WARN_COND_NAMED(
-        version_retries != RETRIES_COUNT - 1, "sys",
+      RCLCPP_WARN_EXPRESSION(
+        lg, version_retries != RETRIES_COUNT - 1,
         "VER: %s request timeout, retries left %d",
         (do_broadcast) ? "broadcast" : "unicast",
         version_retries);
     } else {
-      m_uas->update_capabilities(false);
-      autopilot_version_timer.stop();
-      ROS_WARN_NAMED(
-        "sys", "VER: your FCU don't support AUTOPILOT_VERSION, "
+      uas->update_capabilities(false);
+      autopilot_version_timer->cancel();
+      RCLCPP_WARN(
+        lg,
+        "VER: your FCU don't support AUTOPILOT_VERSION, "
         "switched to default capabilities");
     }
-#endif
   }
 
   void connection_cb(bool connected) override
