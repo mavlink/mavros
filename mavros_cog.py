@@ -74,6 +74,10 @@ class PluginInfo:
         else:
             return ET.Comment(et_to_str(ret))
 
+    @property
+    def sort_key(self):
+        return (not self.is_example, self.name)
+
     @classmethod
     def parse_file(cls, path: pathlib.Path) -> 'PluginInfo':
         with path.open('r') as fd:
@@ -131,16 +135,32 @@ def et_to_str(root: ET.Element) -> str:
     return '\n'.join(xml_.splitlines()[1:])  # remove <? header ?>
 
 
+def cwd() -> pathlib.Path:
+    if _cog_present:
+        return pathlib.Path(cog.inFile).parent
+    else:
+        return pathlib.Path('.')
+
+
+def outl(s: str):
+    if _cog_present:
+        cog.outl(s)
+    else:
+        print(s)
+
+
 def outl_plugins_xml(dir: str, lib_path: str):
-    plugins = sorted(load_all_plugin_infos(pathlib.Path(dir)),
-                     key=lambda p: p.name)
+    plugins = sorted(load_all_plugin_infos(cwd() / dir),
+                     key=lambda p: p.sort_key)
 
     root = ET.Element("library", path=lib_path)
     for pl in plugins:
         root.append(pl.as_xml)
 
     xml_ = et_to_str(root)
-    if _cog_present:
-        cog.outl(xml_)
-    else:
-        print(xml_)
+    outl(xml_)
+
+
+def outl_glob_files(dir: str, glob: str = "*.cpp"):
+    for f in sorted((cwd() / dir).glob(glob)):
+        outl(str(f.relative_to(cwd())))

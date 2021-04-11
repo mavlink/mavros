@@ -4,6 +4,13 @@ import mavros_cog
 mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 ]]] -->
 <library path="mavros_plugins">
+  <!--<class name="dummy" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::DummyPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <description>@brief Dummy plugin.
+@plugin dummy
+@example_plugin
+
+Example and &quot;how to&quot; for users.</description>
+</class>-->
   <class name="actuator_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ActuatorControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ActuatorControl plugin
 @plugin actuator_control
@@ -20,13 +27,12 @@ Sends actuator controls to FCU controller.</description>
 
 Send any command via COMMAND_LONG</description>
   </class>
-  <!--<class name="dummy" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::DummyPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-  <description>@brief Dummy plugin.
-@plugin dummy
-@example_plugin
+  <class name="home_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::HomePositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief home position plugin.
+@plugin home_position
 
-Example and &quot;how to&quot; for users.</description>
-</class>-->
+Publishes home position.</description>
+  </class>
   <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
 @plugin sys_status
@@ -38,4 +44,4 @@ Required by all plugins.</description>
 @plugin sys_time</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 7c4b39387df51da88b98b35a9a437325) -->
+<!-- [[[end]]] (checksum: 9a44d0c478ebd7fd03cfed3ac9f4b29c) -->

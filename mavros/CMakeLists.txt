@@ -60,17 +60,13 @@ include_directories(
 include(CheckGeographicLibDatasets)
 
 # [[[cog:
-# import pathlib
-#
-# def outl_glob_cpp(dir: str):
-#     for fn in sorted(pathlib.Path(dir).glob('*.cpp')):
-#         cog.outl(f"{fn}")
+# import mavros_cog
 # ]]]
 # [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
 add_library(mavros SHARED
   # [[[cog:
-  # outl_glob_cpp('src/lib')
+  # mavros_cog.outl_glob_files('src/lib')
   # ]]]
   src/lib/enum_sensor_orientation.cpp
   src/lib/enum_to_string.cpp
@@ -106,9 +102,8 @@ rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::U
 
 add_library(mavros_plugins SHARED
   # [[[cog:
-  # outl_glob_cpp('src/plugins')
+  # mavros_cog.outl_glob_files('src/plugins')
   # ]]]
-  #src/plugins/3dr_radio.cpp
   src/plugins/actuator_control.cpp
   src/plugins/altitude.cpp
   src/plugins/command.cpp
@@ -116,8 +111,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/ftp.cpp
   #src/plugins/geofence.cpp
   #src/plugins/global_position.cpp
-  #src/plugins/hil.cpp
-  #src/plugins/home_position.cpp
+  src/plugins/home_position.cpp
   #src/plugins/imu.cpp
   #src/plugins/local_position.cpp
   #src/plugins/manual_control.cpp
@@ -125,7 +119,6 @@ add_library(mavros_plugins SHARED
   #src/plugins/param.cpp
   #src/plugins/rallypoint.cpp
   #src/plugins/rc_io.cpp
-  #src/plugins/safety_area.cpp
   #src/plugins/setpoint_accel.cpp
   #src/plugins/setpoint_attitude.cpp
   #src/plugins/setpoint_position.cpp
@@ -134,16 +127,31 @@ add_library(mavros_plugins SHARED
   #src/plugins/setpoint_velocity.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
-  #src/plugins/vfr_hud.cpp
   #src/plugins/waypoint.cpp
   #src/plugins/wind_estimation.cpp
-  # [[[end]]] (checksum: 89e08753cafdf9998539de473939a9ce)
+  # [[[end]]] (checksum: e0bc1af34a7ae5b7471d95e6d23b7388)
 )
 add_dependencies(mavros_plugins
   mavros
 )
 target_link_libraries(mavros_plugins
   mavros
+)
+ament_target_dependencies(mavros_plugins
+  geometry_msgs
+  geographic_msgs
+  mavros_msgs
+  std_msgs
+  std_srvs
+  sensor_msgs
+  rclcpp
+  rclcpp_components
+  rcpputils
+  libmavconn
+  diagnostic_updater
+  tf2_ros
+  tf2_eigen
+  Eigen3
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 

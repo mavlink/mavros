@@ -1,3 +1,11 @@
+/*
+ * Copyright 2017 Thomas Stastny, Nuno Marques.
+ * Copyright 2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief HomePosition plugin
  * @file home_position.cpp
@@ -7,48 +15,55 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2017 Thomas Stastny, Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
-#include <mavros/mavros_plugin.h>
-#include <eigen_conversions/eigen_msg.h>
 
-#include <std_srvs/Trigger.h>
-#include <mavros_msgs/CommandLong.h>
-#include <mavros_msgs/HomePosition.h>
+#include <tf2_eigen/tf2_eigen.h>
 
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
+
+#include <std_srvs/srv/trigger.hpp>
+#include <mavros_msgs/srv/command_long.hpp>
+#include <mavros_msgs/msg/home_position.hpp>
 
 namespace mavros
 {
 namespace std_plugins
 {
+using namespace std::placeholders;      // NOLINT
+using namespace std::chrono_literals;   // NOLINT
+
 /**
  * @brief home position plugin.
+ * @plugin home_position
  *
  * Publishes home position.
  */
-class HomePositionPlugin : public plugin::PluginBase
+class HomePositionPlugin : public plugin::Plugin
 {
 public:
-  HomePositionPlugin()
-  : hp_nh("~home_position"),
-    REQUEST_POLL_TIME_DT(REQUEST_POLL_TIME_MS / 1000.0)
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit HomePositionPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "home_position")
   {
-    PluginBase::initialize(uas_);
+    auto state_qos = rclcpp::QoS(10).transient_local();
+    auto sensor_qos = rclcpp::SensorDataQoS();
 
-    hp_pub = hp_nh.advertise<mavros_msgs::HomePosition>("home", 2, true);
-    hp_sub = hp_nh.subscribe("set", 10, &HomePositionPlugin::home_position_cb, this);
-    update_srv = hp_nh.advertiseService("req_update", &HomePositionPlugin::req_update_cb, this);
+    hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>("~/home", state_qos);
+    hp_sub =
+      node->create_subscription<mavros_msgs::msg::HomePosition>(
+      "~/set", 10,
+      std::bind(&HomePositionPlugin::home_position_cb, this, _1));
+    update_srv =
+      node->create_service<std_srvs::srv::Trigger>(
+      "~/req_update",
+      std::bind(&HomePositionPlugin::req_update_cb, this, _1, _2));
 
-    poll_timer = hp_nh.createTimer(REQUEST_POLL_TIME_DT, &HomePositionPlugin::timeout_cb, this);
-    poll_timer.stop();
+
+    poll_timer =
+      node->create_wall_timer(REQUEST_POLL_TIME, std::bind(&HomePositionPlugin::timeout_cb, this));
+    poll_timer->cancel();
+
     enable_connection_cb();
   }
 
@@ -60,16 +75,13 @@ public:
   }
 
 private:
-  ros::NodeHandle hp_nh;
+  rclcpp::Publisher<mavros_msgs::msg::HomePosition>::SharedPtr hp_pub;
+  rclcpp::Subscription<mavros_msgs::msg::HomePosition>::SharedPtr hp_sub;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr update_srv;
 
-  ros::Publisher hp_pub;
-  ros::Subscriber hp_sub;
-  ros::ServiceServer update_srv;
+  rclcpp::TimerBase::SharedPtr poll_timer;
 
-  ros::Timer poll_timer;
-
-  static constexpr int REQUEST_POLL_TIME_MS = 10000;            //! position refresh poll interval
-  const ros::Duration REQUEST_POLL_TIME_DT;
+  const std::chrono::nanoseconds REQUEST_POLL_TIME = 10s;
 
   bool call_get_home_position(void)
   {
@@ -78,29 +90,29 @@ private:
     bool ret = false;
 
     try {
-      ros::NodeHandle pnh("~");
-      auto client = pnh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
-      mavros_msgs::CommandLong cmd{};
+      auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
+      cmdrq->command = utils::enum_value(MAV_CMD::GET_HOME_POSITION);
 
-      cmd.request.command = utils::enum_value(MAV_CMD::GET_HOME_POSITION);
-
-      ret = client.call(cmd);
-      ret = cmd.response.success;
-    } catch (ros::InvalidNameException & ex) {
-      ROS_ERROR_NAMED("home_position", "HP: %s", ex.what());
+      auto future = client->async_send_request(cmdrq);
+      auto response = future.get();
+      ret = response->success;
+    } catch (std::exception & ex) {
+      RCLCPP_ERROR_STREAM(get_logger(), "HP: %s" << ex.what());
     }
 
     return ret;
   }
 
   void handle_home_position(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::HOME_POSITION & home_position)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::HOME_POSITION & home_position,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    poll_timer.stop();
+    poll_timer->cancel();
 
-    auto hp = boost::make_shared<mavros_msgs::HomePosition>();
+    auto hp = mavros_msgs::msg::HomePosition();
 
     auto pos =
       ftf::transform_frame_ned_enu(
@@ -114,46 +126,48 @@ private:
         home_position.approach_x,
         home_position.approach_y, home_position.approach_z));
 
-    hp->header.stamp = ros::Time::now();
-    hp->geo.latitude = home_position.latitude / 1E7;                            // deg
-    hp->geo.longitude = home_position.longitude / 1E7;                          // deg
-    hp->geo.altitude = home_position.altitude / 1E3 + m_uas->geoid_to_ellipsoid_height(&hp->geo);               // in meters
-    tf::quaternionEigenToMsg(q, hp->orientation);
-    tf::pointEigenToMsg(pos, hp->position);
-    tf::vectorEigenToMsg(hp_approach_enu, hp->approach);
+    hp.header.stamp = uas->synchronise_stamp(home_position.time_usec);
+    hp.geo.latitude = home_position.latitude / 1E7;                            // deg
+    hp.geo.longitude = home_position.longitude / 1E7;                          // deg
+    hp.geo.altitude = home_position.altitude / 1E3 + uas->data.geoid_to_ellipsoid_height(&hp.geo);               // in meters
+    hp.orientation = tf2::toMsg(q);
+    hp.position = tf2::toMsg(pos);
+    tf2::toMsg(hp_approach_enu, hp.approach);
 
-    ROS_DEBUG_NAMED(
-      "home_position", "HP: Home lat %f, long %f, alt %f", hp->geo.latitude,
-      hp->geo.longitude, hp->geo.altitude);
-    hp_pub.publish(hp);
+    RCLCPP_DEBUG(
+      get_logger(), "HP: Home lat %f, long %f, alt %f", hp.geo.latitude,
+      hp.geo.longitude, hp.geo.altitude);
+
+    hp_pub->publish(hp);
   }
 
-  void home_position_cb(const mavros_msgs::HomePosition::ConstPtr & req)
+  void home_position_cb(const mavros_msgs::msg::HomePosition::SharedPtr req)
   {
     mavlink::common::msg::SET_HOME_POSITION hp {};
 
     Eigen::Vector3d pos, approach;
     Eigen::Quaterniond q;
 
-    tf::pointMsgToEigen(req->position, pos);
+    tf2::fromMsg(req->position, pos);
     pos = ftf::transform_frame_enu_ned(pos);
 
-    tf::quaternionMsgToEigen(req->orientation, q);
+    tf2::fromMsg(req->orientation, q);
     q = ftf::transform_orientation_enu_ned(q);
 
-    tf::vectorMsgToEigen(req->approach, approach);
+    tf2::fromMsg(req->approach, approach);
     approach = ftf::transform_frame_enu_ned(approach);
 
-    hp.target_system = m_uas->get_tgt_system();
+    hp.target_system = uas->get_tgt_system();
     ftf::quaternion_to_mavlink(q, hp.q);
 
-    hp.altitude = req->geo.altitude * 1e3 + m_uas->ellipsoid_to_geoid_height(&req->geo);
+    hp.time_usec = get_time_usec(req->header.stamp);
+    hp.altitude = req->geo.altitude * 1e3 + uas->data.ellipsoid_to_geoid_height(&req->geo);
     // [[[cog:
     // for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
-    //     cog.outl("hp.{f} = req->geo.{f} * {m};".format(**locals()))
+    //     cog.outl(f"hp.{f} = req->geo.{f} * {m};")
     // for a, b in (('', 'pos'), ('approach_', 'approach')):
     //     for f in "xyz":
-    //         cog.outl("hp.{a}{f} = {b}.{f}();".format(**locals()))
+    //         cog.outl(f"hp.{a}{f} = {b}.{f}();")
     // ]]]
     hp.latitude = req->geo.latitude * 1e7;
     hp.longitude = req->geo.longitude * 1e7;
@@ -163,34 +177,36 @@ private:
     hp.approach_x = approach.x();
     hp.approach_y = approach.y();
     hp.approach_z = approach.z();
-    // [[[end]]] (checksum: 9c40c5b3ac06b3b82016b4f07a8e12b2)
+    // [[[end]]] (checksum: 0865d5fcc1f7a15e36e177fc49dee70f)
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(hp);
+    uas->send_message(hp);
   }
 
-  bool req_update_cb(std_srvs::Trigger::Request & req, std_srvs::Trigger::Response & res)
+  void req_update_cb(
+    const std_srvs::srv::Trigger::Request::SharedPtr req [[maybe_unused]],
+    std_srvs::srv::Trigger::Response::SharedPtr res)
   {
-    res.success = call_get_home_position();
-    return true;
+    res->success = call_get_home_position();
   }
 
-  void timeout_cb(const ros::TimerEvent & event)
+  void timeout_cb()
   {
-    ROS_INFO_NAMED("home_position", "HP: requesting home position");
+    RCLCPP_INFO(get_logger(), "HP: requesting home position");
     call_get_home_position();
   }
 
   void connection_cb(bool connected) override
   {
     if (connected) {
-      poll_timer.start();
+      poll_timer->reset();
     } else {
-      poll_timer.stop();
+      poll_timer->cancel();
     }
   }
 };
+
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::HomePositionPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::HomePositionPlugin)
