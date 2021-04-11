@@ -1166,43 +1166,44 @@ private:
   {
     using mavlink::common::MAV_CMD;
 
-#if 0
+    auto lg = get_logger();
+
     try {
-      auto client = nh.serviceClient<mavros_msgs::CommandLong>("cmd/command");
+      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
       // calculate interval
       float interval_us;
-      if (req.message_rate < 0) {
+      if (req->message_rate < 0) {
         interval_us = -1.0f;
-      } else if (req.message_rate == 0) {
+      } else if (req->message_rate == 0) {
         interval_us = 0.0f;
       } else {
-        interval_us = 1000000.0f / req.message_rate;
+        interval_us = 1000000.0f / req->message_rate;
       }
 
-      mavros_msgs::CommandLong cmd{};
+      auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
+      cmdrq->broadcast = false;
+      cmdrq->command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
+      cmdrq->confirmation = false;
+      cmdrq->param1 = req->message_id;
+      cmdrq->param2 = interval_us;
 
-      cmd.request.broadcast = false;
-      cmd.request.command = enum_value(MAV_CMD::SET_MESSAGE_INTERVAL);
-      cmd.request.confirmation = false;
-      cmd.request.param1 = req.message_id;
-      cmd.request.param2 = interval_us;
+      RCLCPP_DEBUG(
+        lg,
+        "SetMessageInterval: Request msgid %u at %f hz",
+        req->message_id, req->message_rate);
 
-      ROS_DEBUG_NAMED(
-        "sys", "SetMessageInterval: Request msgid %u at %f hz",
-        req.message_id, req.message_rate);
-      res.success = client.call(cmd);
-    } catch (ros::InvalidNameException & ex) {
-      ROS_ERROR_NAMED("sys", "SetMessageInterval: %s", ex.what());
+      auto future = client->async_send_request(cmdrq);
+      auto response = future.get();
+
+      res->success = response->success;
+    } catch (std::exception & ex) {
+      RCLCPP_ERROR_STREAM(lg, "SetMessageInterval: " << ex.what());
     }
 
-    ROS_ERROR_COND_NAMED(
-      !res.success, "sys",
+    RCLCPP_ERROR_EXPRESSION(
+      lg, !res->success,
       "SetMessageInterval: command plugin service call failed!");
-
-    return res.success;
-    master
-#endif
   }
 
   void set_mode_cb(
