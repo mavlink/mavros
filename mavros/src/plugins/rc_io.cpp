@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014,2015,2016,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief RC IO plugin
  * @file rc_io.cpp
@@ -6,45 +13,41 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014,2015,2016 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
 
-#include <mavros_msgs/RCIn.h>
-#include <mavros_msgs/RCOut.h>
-#include <mavros_msgs/OverrideRCIn.h>
+#include <mavros_msgs/msg/rc_in.hpp>
+#include <mavros_msgs/msg/rc_out.hpp>
+#include <mavros_msgs/msg/override_rc_in.hpp>
 
 namespace mavros
 {
 namespace std_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief RC IO plugin
+ * @plugin rc_io
  */
-class RCIOPlugin : public plugin::PluginBase
+class RCIOPlugin : public plugin::Plugin
 {
 public:
-  RCIOPlugin()
-  : PluginBase(),
-    rc_nh("~rc"),
+  explicit RCIOPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "rc"),
     raw_rc_in(0),
     raw_rc_out(0),
     has_rc_channels_msg(false)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
-
-    rc_in_pub = rc_nh.advertise<mavros_msgs::RCIn>("in", 10);
-    rc_out_pub = rc_nh.advertise<mavros_msgs::RCOut>("out", 10);
-    override_sub = rc_nh.subscribe("override", 10, &RCIOPlugin::override_cb, this);
+    rc_in_pub = node->create_publisher<mavros_msgs::msg::RCIn>("~/in", 10);
+    rc_out_pub = node->create_publisher<mavros_msgs::msg::RCOut>("~/out", 10);
+    override_sub = node->create_subscription<mavros_msgs::msg::OverrideRCIn>(
+      "~/override", 10, std::bind(
+        &RCIOPlugin::override_cb, this,
+        _1));
 
     enable_connection_cb();
   }
@@ -61,21 +64,21 @@ public:
 private:
   using lock_guard = std::lock_guard<std::mutex>;
   std::mutex mutex;
-  ros::NodeHandle rc_nh;
 
   std::vector<uint16_t> raw_rc_in;
   std::vector<uint16_t> raw_rc_out;
   std::atomic<bool> has_rc_channels_msg;
 
-  ros::Publisher rc_in_pub;
-  ros::Publisher rc_out_pub;
-  ros::Subscriber override_sub;
+  rclcpp::Publisher<mavros_msgs::msg::RCIn>::SharedPtr rc_in_pub;
+  rclcpp::Publisher<mavros_msgs::msg::RCOut>::SharedPtr rc_out_pub;
+  rclcpp::Subscription<mavros_msgs::msg::OverrideRCIn>::SharedPtr override_sub;
 
   /* -*- rx handlers -*- */
 
   void handle_rc_channels_raw(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::RC_CHANNELS_RAW & port)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::RC_CHANNELS_RAW & port,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     /* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW */
     if (has_rc_channels_msg) {
@@ -90,9 +93,8 @@ private:
     }
 
     // [[[cog:
-    // import cog
     // for i in range(1, 9):
-    //     cog.outl("raw_rc_in[offset + %d] = port.chan%d_raw;" % (i - 1, i))
+    //     cog.outl(f"raw_rc_in[offset + {i - 1}] = port.chan{i}_raw;")
     // ]]]
     raw_rc_in[offset + 0] = port.chan1_raw;
     raw_rc_in[offset + 1] = port.chan2_raw;
@@ -102,30 +104,30 @@ private:
     raw_rc_in[offset + 5] = port.chan6_raw;
     raw_rc_in[offset + 6] = port.chan7_raw;
     raw_rc_in[offset + 7] = port.chan8_raw;
-    // [[[end]]] (checksum: fcb14b1ddfff9ce7dd02f5bd03825cff)
+    // [[[end]]] (checksum: 7ae5a061d1f05239433e9a78b4b1887a)
 
-    auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
+    auto rcin_msg = mavros_msgs::msg::RCIn();
+    rcin_msg.header.stamp = uas->synchronise_stamp(port.time_boot_ms);
+    rcin_msg.rssi = port.rssi;
+    rcin_msg.channels = raw_rc_in;
 
-    rcin_msg->header.stamp = m_uas->synchronise_stamp(port.time_boot_ms);
-    rcin_msg->rssi = port.rssi;
-    rcin_msg->channels = raw_rc_in;
-
-    rc_in_pub.publish(rcin_msg);
+    rc_in_pub->publish(rcin_msg);
   }
 
   void handle_rc_channels(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::RC_CHANNELS & channels)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::RC_CHANNELS & channels,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     constexpr size_t MAX_CHANCNT = 18;
     lock_guard lock(mutex);
 
-    ROS_INFO_COND_NAMED(!has_rc_channels_msg, "rc", "RC_CHANNELS message detected!");
+    RCLCPP_INFO_EXPRESSION(get_logger(), !has_rc_channels_msg, "RC_CHANNELS message detected!");
     has_rc_channels_msg = true;
 
     if (channels.chancount > MAX_CHANCNT) {
-      ROS_WARN_THROTTLE_NAMED(
-        60, "rc",
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 60000,
         "FCU receives %u RC channels, but RC_CHANNELS can store %zu",
         channels.chancount, MAX_CHANCNT);
 
@@ -138,42 +140,43 @@ private:
     switch (channels.chancount) {
       // [[[cog:
       // for i in range(18, 0, -1):
-      //     cog.outl("case %2d: raw_rc_in[%2d] = channels.chan%d_raw;" % (i, i - 1, i))
+      //     cog.outl(f"case {i}: raw_rc_in[{i - 1}] = channels.chan{i}_raw; [[fallthrough]];")
       // ]]]
-      case 18: raw_rc_in[17] = channels.chan18_raw;
-      case 17: raw_rc_in[16] = channels.chan17_raw;
-      case 16: raw_rc_in[15] = channels.chan16_raw;
-      case 15: raw_rc_in[14] = channels.chan15_raw;
-      case 14: raw_rc_in[13] = channels.chan14_raw;
-      case 13: raw_rc_in[12] = channels.chan13_raw;
-      case 12: raw_rc_in[11] = channels.chan12_raw;
-      case 11: raw_rc_in[10] = channels.chan11_raw;
-      case 10: raw_rc_in[9] = channels.chan10_raw;
-      case 9: raw_rc_in[8] = channels.chan9_raw;
-      case 8: raw_rc_in[7] = channels.chan8_raw;
-      case 7: raw_rc_in[6] = channels.chan7_raw;
-      case 6: raw_rc_in[5] = channels.chan6_raw;
-      case 5: raw_rc_in[4] = channels.chan5_raw;
-      case 4: raw_rc_in[3] = channels.chan4_raw;
-      case 3: raw_rc_in[2] = channels.chan3_raw;
-      case 2: raw_rc_in[1] = channels.chan2_raw;
-      case 1: raw_rc_in[0] = channels.chan1_raw;
-      // [[[end]]] (checksum: 56e9ab5407bd2c864abde230a6cf3fed)
+      case 18: raw_rc_in[17] = channels.chan18_raw; [[fallthrough]];
+      case 17: raw_rc_in[16] = channels.chan17_raw; [[fallthrough]];
+      case 16: raw_rc_in[15] = channels.chan16_raw; [[fallthrough]];
+      case 15: raw_rc_in[14] = channels.chan15_raw; [[fallthrough]];
+      case 14: raw_rc_in[13] = channels.chan14_raw; [[fallthrough]];
+      case 13: raw_rc_in[12] = channels.chan13_raw; [[fallthrough]];
+      case 12: raw_rc_in[11] = channels.chan12_raw; [[fallthrough]];
+      case 11: raw_rc_in[10] = channels.chan11_raw; [[fallthrough]];
+      case 10: raw_rc_in[9] = channels.chan10_raw; [[fallthrough]];
+      case 9: raw_rc_in[8] = channels.chan9_raw; [[fallthrough]];
+      case 8: raw_rc_in[7] = channels.chan8_raw; [[fallthrough]];
+      case 7: raw_rc_in[6] = channels.chan7_raw; [[fallthrough]];
+      case 6: raw_rc_in[5] = channels.chan6_raw; [[fallthrough]];
+      case 5: raw_rc_in[4] = channels.chan5_raw; [[fallthrough]];
+      case 4: raw_rc_in[3] = channels.chan4_raw; [[fallthrough]];
+      case 3: raw_rc_in[2] = channels.chan3_raw; [[fallthrough]];
+      case 2: raw_rc_in[1] = channels.chan2_raw; [[fallthrough]];
+      case 1: raw_rc_in[0] = channels.chan1_raw; [[fallthrough]];
+      // [[[end]]] (checksum: d88127d1dce2f6b42244d905e5686cb3)
       case 0: break;
     }
 
-    auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
+    auto rcin_msg = mavros_msgs::msg::RCIn();
 
-    rcin_msg->header.stamp = m_uas->synchronise_stamp(channels.time_boot_ms);
-    rcin_msg->rssi = channels.rssi;
-    rcin_msg->channels = raw_rc_in;
+    rcin_msg.header.stamp = uas->synchronise_stamp(channels.time_boot_ms);
+    rcin_msg.rssi = channels.rssi;
+    rcin_msg.channels = raw_rc_in;
 
-    rc_in_pub.publish(rcin_msg);
+    rc_in_pub->publish(rcin_msg);
   }
 
   void handle_servo_output_raw(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::SERVO_OUTPUT_RAW & port)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::SERVO_OUTPUT_RAW & port,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     lock_guard lock(mutex);
 
@@ -194,7 +197,7 @@ private:
 
     // [[[cog:
     // for i in range(1, 9):
-    //     cog.outl("raw_rc_out[offset + %d] = port.servo%d_raw;" % (i - 1, i))
+    //     cog.outl(f"raw_rc_out[offset + {i - 1}] = port.servo{i}_raw;")
     // ]]]
     raw_rc_out[offset + 0] = port.servo1_raw;
     raw_rc_out[offset + 1] = port.servo2_raw;
@@ -204,11 +207,11 @@ private:
     raw_rc_out[offset + 5] = port.servo6_raw;
     raw_rc_out[offset + 6] = port.servo7_raw;
     raw_rc_out[offset + 7] = port.servo8_raw;
-    // [[[end]]] (checksum: 946d524fe9fbaa3e52fbdf8a905fbf0f)
+    // [[[end]]] (checksum: 46b3fd22ff05ec22fed73852907b4f45)
     if (msg->magic == MAVLINK_STX) {
       // [[[cog:
       // for i in range(9, 17):
-      //     cog.outl("raw_rc_out[offset + %d] = port.servo%d_raw;" % (i - 1, i))
+      //     cog.outl(f"raw_rc_out[offset + {i - 1}] = port.servo{i}_raw;")
       // ]]]
       raw_rc_out[offset + 8] = port.servo9_raw;
       raw_rc_out[offset + 9] = port.servo10_raw;
@@ -218,18 +221,18 @@ private:
       raw_rc_out[offset + 13] = port.servo14_raw;
       raw_rc_out[offset + 14] = port.servo15_raw;
       raw_rc_out[offset + 15] = port.servo16_raw;
-      // [[[end]]] (checksum: 60a386cba6faa126ee7dfe1b22f50398)
+      // [[[end]]] (checksum: c008714176d3c498f792098d65557830)
     }
 
-    auto rcout_msg = boost::make_shared<mavros_msgs::RCOut>();
+    auto rcout_msg = mavros_msgs::msg::RCOut();
 
     // XXX: Why time_usec is 32 bit? We should test that.
     uint64_t time_usec = port.time_usec;
 
-    rcout_msg->header.stamp = m_uas->synchronise_stamp(time_usec);
-    rcout_msg->channels = raw_rc_out;
+    rcout_msg.header.stamp = uas->synchronise_stamp(time_usec);
+    rcout_msg.channels = raw_rc_out;
 
-    rc_out_pub.publish(rcout_msg);
+    rc_out_pub->publish(rcout_msg);
   }
 
   /* -*- callbacks -*- */
@@ -242,19 +245,20 @@ private:
     has_rc_channels_msg = false;
   }
 
-  void override_cb(const mavros_msgs::OverrideRCIn::ConstPtr req)
+  void override_cb(const mavros_msgs::msg::OverrideRCIn::SharedPtr req)
   {
-    if (!m_uas->is_ardupilotmega() && !m_uas->is_px4()) {
-      ROS_WARN_THROTTLE_NAMED(30, "rc", "RC override not supported by this FCU!");
+    if (!uas->is_ardupilotmega() && !uas->is_px4()) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(),
+        *get_clock(), 30000, "RC override not supported by this FCU!");
     }
 
     mavlink::common::msg::RC_CHANNELS_OVERRIDE ovr = {};
-    ovr.target_system = m_uas->get_tgt_system();
-    ovr.target_component = m_uas->get_tgt_component();
+    uas->msg_set_target(ovr);
 
     // [[[cog:
     // for i in range(1, 9):
-    //     cog.outl("ovr.chan%d_raw = req->channels[%d];" % (i, i - 1))
+    //     cog.outl(f"ovr.chan{i}_raw = req->channels[{i - 1}];")
     // ]]]
     ovr.chan1_raw = req->channels[0];
     ovr.chan2_raw = req->channels[1];
@@ -264,13 +268,14 @@ private:
     ovr.chan6_raw = req->channels[5];
     ovr.chan7_raw = req->channels[6];
     ovr.chan8_raw = req->channels[7];
-    // [[[end]]] (checksum: bd27f3e85f5ab614ce1332ae3f4c6ebd)
+    // [[[end]]] (checksum: 4ee99edf64c7db562df372e223f2dc5a)
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(ovr);
+    uas->send_message(ovr);
   }
 };
+
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::RCIOPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::RCIOPlugin)

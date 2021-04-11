@@ -37,6 +37,10 @@ Publishes home position.</description>
     <description>@brief Manual Control plugin
 @plugin manual_control</description>
   </class>
+  <class name="rc_io" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RCIOPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief RC IO plugin
+@plugin rc_io</description>
+  </class>
   <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
 @plugin sys_status
@@ -48,4 +52,4 @@ Required by all plugins.</description>
 @plugin sys_time</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 4de9a1e228aed224a7f0038283c1a57a) -->
+<!-- [[[end]]] (checksum: ef237d1e3135f7ef44413f2430a7165d) -->
