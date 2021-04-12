@@ -46,7 +46,7 @@ class SetpointRawPlugin : public plugin::Plugin,
 {
 public:
   explicit SetpointRawPlugin(plugin::UASPtr uas_)
-  : Plugin(uas, "setpoint_raw")
+  : Plugin(uas_, "setpoint_raw")
   {
     auto sensor_qos = rclcpp::SensorDataQoS();
 

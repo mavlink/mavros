@@ -36,19 +36,20 @@ UAS::UAS(
   const std::string & uas_url_, uint8_t target_system_,
   uint8_t target_component_)
 : rclcpp::Node(name_, options_ /* rclcpp::NodeOptions(options_).use_intra_process_comms(true) */),
-  uas_url(uas_url_),
-  source_system(target_system_),
-  source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
-  target_system(target_system_),
-  target_component(target_component_),
   diagnostic_updater(this, 1.0),
-  plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
-  loaded_plugins{},
-  plugin_subscriptions{},
+  data(),
   tf2_buffer(get_clock(), tf2::Duration(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME)),
   tf2_listener(tf2_buffer, true),
   tf2_broadcaster(this),
   tf2_static_broadcaster(this),
+  source_system(target_system_),
+  source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
+  target_system(target_system_),
+  target_component(target_component_),
+  uas_url(uas_url_),
+  plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
+  loaded_plugins{},
+  plugin_subscriptions{},
   type(enum_value(MAV_TYPE::GENERIC)),
   autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
   base_mode(0),
@@ -58,8 +59,6 @@ UAS::UAS(
   fcu_caps_known(false),
   fcu_capabilities(0)
 {
-  std::string fcu_protocol = "v2.0";
-
   // XXX TODO(vooon): should i use LifecycleNode?
 
   set_parameters_handle_ptr =
@@ -69,7 +68,7 @@ UAS::UAS(
       std::placeholders::_1));
 
   this->declare_parameter("uas_url", uas_url);
-  this->declare_parameter("fcu_protocol", fcu_protocol);
+  this->declare_parameter("fcu_protocol", "v2.0");
   this->declare_parameter("system_id", source_system);
   this->declare_parameter("component_id", source_component);
   this->declare_parameter("target_system_id", target_system);
@@ -79,9 +78,10 @@ UAS::UAS(
 
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
-    100ms, [&]() {
+    100ms, [this]() {
       startup_delay_timer->cancel();
 
+      std::string fcu_protocol;
       int tgt_system, tgt_component;
       this->get_parameter("uas_url", uas_url);
       this->get_parameter("fcu_protocol", fcu_protocol);
@@ -95,7 +95,7 @@ UAS::UAS(
       exec_spin_thd = thread_ptr(
         new std::thread(
           [&]() {
-            utils::set_this_thread_name("uas-exec: %d.%d", source_system, source_component);
+            utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
 
             RCLCPP_INFO(this->get_logger(), "UAS Executor started");
             this->exec.spin();
