@@ -40,6 +40,10 @@ publishing local position to TF and PoseWithCovarianceStamped.</description>
 
 Publishes home position.</description>
   </class>
+  <class name="imu" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::IMUPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief IMU and attitude data publication plugin
+@plugin imu</description>
+  </class>
   <class name="local_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::LocalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Local position plugin.
 @plugin local_position
@@ -70,4 +74,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 353a0a7d25469256fda4b2b00535fef3) -->
+<!-- [[[end]]] (checksum: ec9891ca0ad54c71f9870455ce517c2c) -->

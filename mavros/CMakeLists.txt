@@ -112,7 +112,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/geofence.cpp
   src/plugins/global_position.cpp
   src/plugins/home_position.cpp
-  #src/plugins/imu.cpp
+  src/plugins/imu.cpp
   src/plugins/local_position.cpp
   src/plugins/manual_control.cpp
   #src/plugins/mission_protocol_base.cpp
