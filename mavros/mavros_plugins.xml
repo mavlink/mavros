@@ -59,6 +59,13 @@ and Odometry</description>
     <description>@brief RC IO plugin
 @plugin rc_io</description>
   </class>
+  <class name="setpoint_raw" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointRawPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Setpoint RAW plugin
+@plugin setpoint_raw
+
+Send position setpoints and publish current state (return loop).
+User can decide what set of filed needed for operation via IGNORE bits.</description>
+  </class>
   <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
 @plugin sys_status
@@ -74,4 +81,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: ec9891ca0ad54c71f9870455ce517c2c) -->
+<!-- [[[end]]] (checksum: 636c2b8365944c155d484be214f92ae4) -->

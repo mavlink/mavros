@@ -16,20 +16,22 @@
 
 #pragma once
 
+#ifndef MAVROS__SETPOINT_MIXIN_HPP_
+#define MAVROS__SETPOINT_MIXIN_HPP_
+
 #include <functional>
-#include <mavros/utils.h>
-#include <mavros/mavros_plugin.h>
 
-#include <geometry_msgs/TransformStamped.h>
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
 
-#include "tf2_ros/message_filter.h"
-#include <message_filters/subscriber.h>
-
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 namespace mavros
 {
 namespace plugin
 {
+
 /**
  * @brief This mixin adds set_position_target_local_ned()
  */
@@ -46,17 +48,21 @@ public:
     Eigen::Vector3d af,
     float yaw, float yaw_rate)
   {
-    mavros::UAS * m_uas_ = static_cast<D *>(this)->m_uas;
-    mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp = {};
+    static_assert(
+      std::is_base_of<plugin::Plugin, D>::value,
+      "SetPositionTargetLocalNEDMixin should be used by mavros::plugin::Plugin child");
 
-    m_uas_->msg_set_target(sp);
+    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+
+    mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp = {};
+    uas_->msg_set_target(sp);
 
     // [[[cog:
     // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
-    //     cog.outl("sp.%s = %s;" % (f, f))
+    //     cog.outl(f"sp.{f} = {f};")
     // for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
     //     for a in ('x', 'y', 'z'):
-    //         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+    //         cog.outl(f"sp.{fp}{a} = {vp}.{a}();")
     // ]]]
     sp.time_boot_ms = time_boot_ms;
     sp.coordinate_frame = coordinate_frame;
@@ -72,9 +78,9 @@ public:
     sp.afx = af.x();
     sp.afy = af.y();
     sp.afz = af.z();
-    // [[[end]]] (checksum: 6a9b9dacbcf85c5d428d754c20afe110)
+    // [[[end]]] (checksum: f8942bb13a7463a2cbadc9b745df25d0)
 
-    UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+    uas_->send_message(sp);
   }
 };
 
@@ -94,17 +100,21 @@ public:
     Eigen::Vector3d af,
     float yaw, float yaw_rate)
   {
-    mavros::UAS * m_uas_ = static_cast<D *>(this)->m_uas;
-    mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp = {};
+    static_assert(
+      std::is_base_of<plugin::Plugin, D>::value,
+      "SetPositionTargetGlobalIntMixin should be used by mavros::plugin::Plugin child");
 
-    m_uas_->msg_set_target(sp);
+    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+
+    mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp = {};
+    uas_->msg_set_target(sp);
 
     // [[[cog:
     // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'lat_int', 'lon_int', 'alt', 'yaw', 'yaw_rate'):
-    //     cog.outl("sp.%s = %s;" % (f, f))
+    //     cog.outl(f"sp.{f} = {f};")
     // for fp, vp in (('v', 'v'), ('af', 'af')):
     //     for a in ('x', 'y', 'z'):
-    //         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+    //         cog.outl(f"sp.{fp}{a} = {vp}.{a}();")
     // ]]]
     sp.time_boot_ms = time_boot_ms;
     sp.coordinate_frame = coordinate_frame;
@@ -120,9 +130,9 @@ public:
     sp.afx = af.x();
     sp.afy = af.y();
     sp.afz = af.z();
-    // [[[end]]] (checksum: 30c9629ad309d488df1f63b683dac6a4)
+    // [[[end]]] (checksum: 82301ecd7936657d65e006cf7525e82a)
 
-    UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+    uas_->send_message(sp);
   }
 };
 
@@ -141,17 +151,22 @@ public:
     Eigen::Vector3d body_rate,
     float thrust)
   {
-    mavros::UAS * m_uas_ = static_cast<D *>(this)->m_uas;
+    static_assert(
+      std::is_base_of<plugin::Plugin, D>::value,
+      "SetAttitudeTargetMixin should be used by mavros::plugin::Plugin child");
+
+    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+
     mavlink::common::msg::SET_ATTITUDE_TARGET sp = {};
 
-    m_uas_->msg_set_target(sp);
+    uas_->msg_set_target(sp);
     mavros::ftf::quaternion_to_mavlink(orientation, sp.q);
 
     // [[[cog:
     // for f in ('time_boot_ms', 'type_mask', 'thrust'):
-    //     cog.outl("sp.%s = %s;" % (f, f))
+    //     cog.outl(f"sp.{f} = {f};")
     // for f, v in (('roll', 'x'), ('pitch', 'y'), ('yaw', 'z')):
-    //     cog.outl("sp.body_%s_rate = body_rate.%s();" % (f, v))
+    //     cog.outl(f"sp.body_{f}_rate = body_rate.{v}();")
     // ]]]
     sp.time_boot_ms = time_boot_ms;
     sp.type_mask = type_mask;
@@ -159,12 +174,13 @@ public:
     sp.body_roll_rate = body_rate.x();
     sp.body_pitch_rate = body_rate.y();
     sp.body_yaw_rate = body_rate.z();
-    // [[[end]]] (checksum: aa941484927bb7a7d39a2c31d08fcfc1)
+    // [[[end]]] (checksum: d0910b0f92d233024163ebf957a3d642)
 
-    UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+    uas_->send_message(sp);
   }
 };
 
+#if 0 // XXX TODO(vooon): port me pls
 /**
  * @brief This mixin adds TF2 listener thread to plugin
  *
@@ -262,5 +278,9 @@ public:
       });
   }
 };
+#endif
+
 }       // namespace plugin
 }       // namespace mavros
+
+#endif  // MAVROS__SETPOINT_MIXIN_HPP_

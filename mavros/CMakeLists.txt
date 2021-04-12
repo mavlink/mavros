@@ -122,7 +122,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/setpoint_accel.cpp
   #src/plugins/setpoint_attitude.cpp
   #src/plugins/setpoint_position.cpp
-  #src/plugins/setpoint_raw.cpp
+  src/plugins/setpoint_raw.cpp
   #src/plugins/setpoint_trajectory.cpp
   #src/plugins/setpoint_velocity.cpp
   src/plugins/sys_status.cpp
