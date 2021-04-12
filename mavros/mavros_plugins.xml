@@ -59,6 +59,12 @@ and Odometry</description>
     <description>@brief RC IO plugin
 @plugin rc_io</description>
   </class>
+  <class name="setpoint_accel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointAccelerationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Setpoint acceleration/force plugin
+@plugin setpoint_accel
+
+Send setpoint accelerations/forces to FCU controller.</description>
+  </class>
   <class name="setpoint_raw" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointRawPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint RAW plugin
 @plugin setpoint_raw
@@ -81,4 +87,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 636c2b8365944c155d484be214f92ae4) -->
+<!-- [[[end]]] (checksum: 83c72c45230babeab5ed29ad04b8e0e5) -->

@@ -1,3 +1,11 @@
+/*
+ * Copyright 2014 Nuno Marques.
+ * Copyright 2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief SetpointAcceleration plugin
  * @file setpoint_accel.cpp
@@ -7,47 +15,44 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014 Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/utils.h>
-#include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-#include <geometry_msgs/Vector3Stamped.h>
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
+#include <mavros/setpoint_mixin.hpp>
+
+#include <geometry_msgs/msg/vector3_stamped.hpp>
 
 namespace mavros
 {
 namespace std_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief Setpoint acceleration/force plugin
+ * @plugin setpoint_accel
  *
  * Send setpoint accelerations/forces to FCU controller.
  */
-class SetpointAccelerationPlugin : public plugin::PluginBase,
+class SetpointAccelerationPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin>
 {
 public:
-  SetpointAccelerationPlugin()
-  : PluginBase(),
-    sp_nh("~setpoint_accel"),
-    send_force(false)
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit SetpointAccelerationPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "setpoint_accel")
   {
-    PluginBase::initialize(uas_);
+    node->declare_parameter("send_force", false);
 
-    sp_nh.param("send_force", send_force, false);
+    auto sensor_qos = rclcpp::SensorDataQoS();
 
-    accel_sub = sp_nh.subscribe("accel", 10, &SetpointAccelerationPlugin::accel_cb, this);
+    accel_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(
+      "~/accel", sensor_qos, std::bind(
+        &SetpointAccelerationPlugin::accel_cb, this,
+        _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -56,12 +61,9 @@ public:
   }
 
 private:
-  friend class SetPositionTargetLocalNEDMixin;
-  ros::NodeHandle sp_nh;
+  friend class plugin::SetPositionTargetLocalNEDMixin<SetpointAccelerationPlugin>;
 
-  ros::Subscriber accel_sub;
-
-  bool send_force;
+  rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr accel_sub;
 
   /* -*- mid-level helpers -*- */
 
@@ -70,9 +72,12 @@ private:
    *
    * @warning Send only AFX AFY AFZ. ENU frame.
    */
-  void send_setpoint_acceleration(const ros::Time & stamp, Eigen::Vector3d & accel_enu)
+  void send_setpoint_acceleration(const rclcpp::Time & stamp, const Eigen::Vector3d & accel_enu)
   {
     using mavlink::common::MAV_FRAME;
+
+    bool send_force;
+    node->get_parameter("send_force", send_force);
 
     /* Documentation start from bit 1 instead 0.
      * Ignore position and velocity vectors, yaw and yaw rate
@@ -86,7 +91,7 @@ private:
     auto accel = ftf::transform_frame_enu_ned(accel_enu);
 
     set_position_target_local_ned(
-      stamp.toNSec() / 1000000,
+      get_time_boot_ms(stamp),
       utils::enum_value(MAV_FRAME::LOCAL_NED),
       ignore_all_except_a_xyz,
       Eigen::Vector3d::Zero(),
@@ -97,16 +102,17 @@ private:
 
   /* -*- callbacks -*- */
 
-  void accel_cb(const geometry_msgs::Vector3Stamped::ConstPtr & req)
+  void accel_cb(const geometry_msgs::msg::Vector3Stamped::SharedPtr req)
   {
     Eigen::Vector3d accel_enu;
 
-    tf::vectorMsgToEigen(req->vector, accel_enu);
+    tf2::fromMsg(req->vector, accel_enu);
     send_setpoint_acceleration(req->header.stamp, accel_enu);
   }
 };
+
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointAccelerationPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::SetpointAccelerationPlugin)

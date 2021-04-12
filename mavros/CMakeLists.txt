@@ -119,7 +119,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/param.cpp
   #src/plugins/rallypoint.cpp
   src/plugins/rc_io.cpp
-  #src/plugins/setpoint_accel.cpp
+  src/plugins/setpoint_accel.cpp
   #src/plugins/setpoint_attitude.cpp
   #src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
