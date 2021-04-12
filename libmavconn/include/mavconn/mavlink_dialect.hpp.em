@@ -25,7 +25,8 @@
 // AUTOMATIC GENERATED FILE!
 // from include/mavconn/mavlink_dialect.hpp.em
 
-namespace mavlink {
+namespace mavlink
+{
 #ifndef MAVLINK_VERSION
 #include <mavlink/config.h>
 constexpr auto version = MAVLINK_VERSION;
