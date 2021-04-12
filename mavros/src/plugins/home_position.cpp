@@ -128,7 +128,7 @@ private:
     hp.header.stamp = uas->synchronise_stamp(home_position.time_usec);
     hp.geo.latitude = home_position.latitude / 1E7;                            // deg
     hp.geo.longitude = home_position.longitude / 1E7;                          // deg
-    hp.geo.altitude = home_position.altitude / 1E3 + uas->data.geoid_to_ellipsoid_height(&hp.geo);               // in meters
+    hp.geo.altitude = home_position.altitude / 1E3 + uas->data.geoid_to_ellipsoid_height(hp.geo);   // in meters
     hp.orientation = tf2::toMsg(q);
     hp.position = tf2::toMsg(pos);
     tf2::toMsg(hp_approach_enu, hp.approach);
@@ -160,7 +160,7 @@ private:
     ftf::quaternion_to_mavlink(q, hp.q);
 
     hp.time_usec = get_time_usec(req->header.stamp);
-    hp.altitude = req->geo.altitude * 1e3 + uas->data.ellipsoid_to_geoid_height(&req->geo);
+    hp.altitude = req->geo.altitude * 1e3 + uas->data.ellipsoid_to_geoid_height(req->geo);
     // [[[cog:
     // for f, m in (('latitude', '1e7'), ('longitude', '1e7')):
     //     cog.outl(f"hp.{f} = req->geo.{f} * {m};")

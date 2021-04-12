@@ -44,6 +44,12 @@ Data::Data()
   nv.x = nv.y = nv.z = 0.0;
   ev.x = ev.y = ev.z = 0.0;
 
+  gps_fix.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
+  gps_fix.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+  gps_fix.position_covariance.fill(0.0);
+  gps_fix.position_covariance[0] = -1.0;
+  gps_fix.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+
   std::call_once(init_flag, init_geographiclib);
 }
 

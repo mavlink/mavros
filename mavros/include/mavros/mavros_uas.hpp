@@ -155,8 +155,8 @@ public:
    * @brief Conversion from height above geoid (AMSL)
    * to height above ellipsoid (WGS-84)
    */
-  template<class T>
-  inline double geoid_to_ellipsoid_height(T lla)
+  template<class T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+  inline double geoid_to_ellipsoid_height(const T lla)
   {
     if (egm96_5) {
       return GeographicLib::Geoid::GEOIDTOELLIPSOID * (*egm96_5)(lla->latitude, lla->longitude);
@@ -165,18 +165,30 @@ public:
     }
   }
 
+  template<class T, std::enable_if_t<std::is_class<T>::value, bool> = true>
+  inline double geoid_to_ellipsoid_height(const T & lla)
+  {
+    return geoid_to_ellipsoid_height(&lla);
+  }
+
   /**
    * @brief Conversion from height above ellipsoid (WGS-84)
    * to height above geoid (AMSL)
    */
-  template<class T>
-  inline double ellipsoid_to_geoid_height(T lla)
+  template<class T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+  inline double ellipsoid_to_geoid_height(const T lla)
   {
     if (egm96_5) {
       return GeographicLib::Geoid::ELLIPSOIDTOGEOID * (*egm96_5)(lla->latitude, lla->longitude);
     } else {
       return 0.0;
     }
+  }
+
+  template<class T, std::enable_if_t<std::is_class<T>::value, bool> = true>
+  inline double ellipsoid_to_geoid_height(const T & lla)
+  {
+    return ellipsoid_to_geoid_height(&lla);
   }
 
 private:

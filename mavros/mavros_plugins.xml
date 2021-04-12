@@ -27,6 +27,13 @@ Sends actuator controls to FCU controller.</description>
 
 Send any command via COMMAND_LONG</description>
   </class>
+  <class name="global_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GlobalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Global position plugin.
+@plugin global_position
+
+Publishes global position. Conversion from GPS LLA to ECEF allows
+publishing local position to TF and PoseWithCovarianceStamped.</description>
+  </class>
   <class name="home_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::HomePositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief home position plugin.
 @plugin home_position
@@ -63,4 +70,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 6550cf4116cf259fc36ed6a838153862) -->
+<!-- [[[end]]] (checksum: 353a0a7d25469256fda4b2b00535fef3) -->
