@@ -537,6 +537,7 @@ private:
     return spec.tv_sec * 1000000000ULL + spec.tv_nsec;
   }
 };
+
 }       // namespace std_plugins
 }       // namespace mavros
 

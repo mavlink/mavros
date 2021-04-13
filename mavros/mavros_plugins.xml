@@ -72,6 +72,12 @@ Send setpoint accelerations/forces to FCU controller.</description>
 Send position setpoints and publish current state (return loop).
 User can decide what set of filed needed for operation via IGNORE bits.</description>
   </class>
+  <class name="setpoint_velocity" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointVelocityPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Setpoint velocity plugin
+@plugin setpoint_velocity
+
+Send setpoint velocities to FCU controller.</description>
+  </class>
   <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
 @plugin sys_status
@@ -87,4 +93,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 83c72c45230babeab5ed29ad04b8e0e5) -->
+<!-- [[[end]]] (checksum: 4f18fd3b7c6a0779c485add068330c9b) -->

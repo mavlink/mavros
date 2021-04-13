@@ -1,3 +1,11 @@
+/*
+ * Copyright 2014 Nuno Marques.
+ * Copyright 2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief SetpointVelocity plugin
  * @file setpoint_velocity.cpp
@@ -7,62 +15,65 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014 Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-#include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/Twist.h>
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
+#include <mavros/setpoint_mixin.hpp>
 
-#include <mavros_msgs/SetMavFrame.h>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
 namespace mavros
 {
 namespace std_plugins
 {
+using namespace std::placeholders;      // NOLINT
 using mavlink::common::MAV_FRAME;
+
 /**
  * @brief Setpoint velocity plugin
+ * @plugin setpoint_velocity
  *
  * Send setpoint velocities to FCU controller.
  */
-class SetpointVelocityPlugin : public plugin::PluginBase,
+class SetpointVelocityPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin>
 {
 public:
-  SetpointVelocityPlugin()
-  : PluginBase(),
-    sp_nh("~setpoint_velocity")
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit SetpointVelocityPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "setpoint_velocity")
   {
-    PluginBase::initialize(uas_);
+    enable_node_watch_parameters();
 
-    //cmd_vel usually is the topic used for velocity control in many controllers / planners
-    vel_sub = sp_nh.subscribe("cmd_vel", 10, &SetpointVelocityPlugin::vel_cb, this);
-    vel_unstamped_sub = sp_nh.subscribe(
-      "cmd_vel_unstamped", 10,
-      &SetpointVelocityPlugin::vel_unstamped_cb, this);
-    mav_frame_srv = sp_nh.advertiseService(
-      "mav_frame", &SetpointVelocityPlugin::set_mav_frame_cb,
-      this);
+    node_declate_and_watch_parameter(
+      "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
+        auto mav_frame_str = p.as_string();
+        auto new_mav_frame = utils::mav_frame_from_str(mav_frame_str);
 
-    // mav_frame
-    std::string mav_frame_str;
-    if (!sp_nh.getParam("mav_frame", mav_frame_str)) {
-      mav_frame = MAV_FRAME::LOCAL_NED;
-    } else {
-      mav_frame = utils::mav_frame_from_str(mav_frame_str);
-    }
+        if (new_mav_frame == MAV_FRAME::LOCAL_NED && mav_frame_str != "LOCAL_NED") {
+          throw rclcpp::exceptions::InvalidParameterValueException(
+            utils::format(
+              "unknown MAV_FRAME: %s",
+              mav_frame_str.c_str()));
+        }
+        mav_frame = new_mav_frame;
+      });
+
+    auto sensor_qos = rclcpp::SensorDataQoS();
+
+    // cmd_vel usually is the topic used for velocity control in many controllers / planners
+    vel_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
+      "cmd_vel", sensor_qos, std::bind(
+        &SetpointVelocityPlugin::vel_cb, this,
+        _1));
+    vel_unstamped_sub = node->create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel_unstamped",
+      sensor_qos, std::bind(
+        &SetpointVelocityPlugin::vel_unstamped_cb, this, _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -71,12 +82,10 @@ public:
   }
 
 private:
-  friend class SetPositionTargetLocalNEDMixin;
-  ros::NodeHandle sp_nh;
+  friend class plugin::SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin>;
 
-  ros::Subscriber vel_sub;
-  ros::Subscriber vel_unstamped_sub;
-  ros::ServiceServer mav_frame_srv;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr vel_sub;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr vel_unstamped_sub;
 
   MAV_FRAME mav_frame;
 
@@ -87,7 +96,9 @@ private:
    *
    * @warning Send only VX VY VZ. ENU frame.
    */
-  void send_setpoint_velocity(const ros::Time & stamp, Eigen::Vector3d & vel_enu, double yaw_rate)
+  void send_setpoint_velocity(
+    const rclcpp::Time & stamp, const Eigen::Vector3d & vel_enu,
+    const double yaw_rate)
   {
     /**
      * Documentation start from bit 1 instead 0;
@@ -111,7 +122,7 @@ private:
       } ();
 
     set_position_target_local_ned(
-      stamp.toNSec() / 1000000,
+      get_time_boot_ms(stamp),
       utils::enum_value(mav_frame),
       ignore_all_except_v_xyz_yr,
       Eigen::Vector3d::Zero(),
@@ -122,39 +133,29 @@ private:
 
   /* -*- callbacks -*- */
 
-  void vel_cb(const geometry_msgs::TwistStamped::ConstPtr & req)
+  void vel_cb(const geometry_msgs::msg::TwistStamped::SharedPtr req)
   {
     Eigen::Vector3d vel_enu;
 
-    tf::vectorMsgToEigen(req->twist.linear, vel_enu);
+    tf2::fromMsg(req->twist.linear, vel_enu);
     send_setpoint_velocity(
       req->header.stamp, vel_enu,
       req->twist.angular.z);
   }
 
-  void vel_unstamped_cb(const geometry_msgs::Twist::ConstPtr & req)
+  void vel_unstamped_cb(const geometry_msgs::msg::Twist::SharedPtr req)
   {
     Eigen::Vector3d vel_enu;
 
-    tf::vectorMsgToEigen(req->linear, vel_enu);
+    tf2::fromMsg(req->linear, vel_enu);
     send_setpoint_velocity(
-      ros::Time::now(), vel_enu,
+      node->now(), vel_enu,
       req->angular.z);
   }
-
-  bool set_mav_frame_cb(
-    mavros_msgs::SetMavFrame::Request & req,
-    mavros_msgs::SetMavFrame::Response & res)
-  {
-    mav_frame = static_cast<MAV_FRAME>(req.mav_frame);
-    const std::string mav_frame_str = utils::to_string(mav_frame);
-    sp_nh.setParam("mav_frame", mav_frame_str);
-    res.success = true;
-    return true;
-  }
 };
+
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointVelocityPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::SetpointVelocityPlugin)

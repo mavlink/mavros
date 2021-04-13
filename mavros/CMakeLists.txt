@@ -124,7 +124,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
   #src/plugins/setpoint_trajectory.cpp
-  #src/plugins/setpoint_velocity.cpp
+  src/plugins/setpoint_velocity.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
   #src/plugins/waypoint.cpp

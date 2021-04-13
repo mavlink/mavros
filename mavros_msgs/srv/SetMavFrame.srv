@@ -1,5 +1,7 @@
 # Set MAV_FRAME for setpoints
 
+# XXX DEPRECATED
+
 # [[[cog:
 # from pymavlink.dialects.v20 import common
 #
