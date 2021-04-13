@@ -123,7 +123,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/setpoint_attitude.cpp
   #src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
-  #src/plugins/setpoint_trajectory.cpp
+  src/plugins/setpoint_trajectory.cpp
   src/plugins/setpoint_velocity.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
@@ -146,6 +146,7 @@ ament_target_dependencies(mavros_plugins
   std_srvs
   sensor_msgs
   nav_msgs
+  trajectory_msgs
   rclcpp
   rclcpp_components
   rcpputils

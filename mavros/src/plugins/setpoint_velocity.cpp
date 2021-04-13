@@ -67,11 +67,11 @@ public:
 
     // cmd_vel usually is the topic used for velocity control in many controllers / planners
     vel_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
-      "cmd_vel", sensor_qos, std::bind(
+      "~/cmd_vel", sensor_qos, std::bind(
         &SetpointVelocityPlugin::vel_cb, this,
         _1));
     vel_unstamped_sub = node->create_subscription<geometry_msgs::msg::Twist>(
-      "cmd_vel_unstamped",
+      "~/cmd_vel_unstamped",
       sensor_qos, std::bind(
         &SetpointVelocityPlugin::vel_unstamped_cb, this, _1));
   }
