@@ -503,7 +503,7 @@ private:
 
 		gpo.latitude = req->position.latitude * 1E7;
 		gpo.longitude = req->position.longitude * 1E7;
-		gpo.altitude = req->position.altitude * 1E3 + m_uas->ellipsoid_to_geoid_height(&req->position);
+		gpo.altitude = (req->position.altitude + m_uas->ellipsoid_to_geoid_height(&req->position)) * 1E3;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}
