@@ -35,71 +35,6 @@ namespace std_plugins
 {
 using utils::enum_value;
 
-struct ParamValue {
-  enum class ParamType {
-    Boolean,
-    Int,
-    Float,
-  };
-
-  void operator = (const double inval) {
-    value.real32 = inval;
-    type = ParamType::Int;
-  }
-
-  void operator = (const int inval) {
-    value.int32 = inval;
-    type = ParamType::Float;
-  }
-
-  void operator = (const bool inval) {
-    value.int32 = inval ? 1 : 0;
-    type = ParamType::Boolean;
-  }
-
-  ParamType getType() {
-    return type;
-  }
-
-  operator int32_t() const {
-    return value.int32;
-  }
-
-  operator float() const {
-    return value.real32;
-  }
-
-  operator bool() const {
-    return value.int32 != 0;
-  }
-
-  operator std::string() const {
-    switch (type) {
-      case ParamType::Boolean:
-        return "Bool: " + std::to_string(bool(*this));
-        break;
-      case ParamType::Int:
-        return "Int: " + std::to_string(int(*this));
-        break;
-      case ParamType::Float:
-        return "Float: " + std::to_string(float(*this));
-        break;
-      default:
-        return "Corrupt ParamValue";
-    }
-  }
-
-private:
-  
-  ParamType type;
-
-  union {
-    int32_t int32;
-    float real32;
-    } value;
-
-};
-
 /**
  * @brief Parameter storage
  *
@@ -118,178 +53,135 @@ private:
  * So no reason to really use boost::any.
  * But feel free to fire an issue if your AP do not like it.
  */
-class Parameter
+class Parameter : public rclcpp::Parameter
 {
 public:
   using MT = mavlink::common::MAV_PARAM_TYPE;
   using PARAM_SET = mavlink::common::msg::PARAM_SET;
 
-  std::string param_id;
-  ParamValue param_value;
-  uint16_t param_index;
   uint16_t param_count;
+  uint16_t param_index;
 
-  void set_value(mavlink::common::msg::PARAM_VALUE & pmsg)
+  Parameter() : rclcpp::Parameter() {}
+
+  template<typename ValueTypeT>
+  Parameter(std::string const& name, ValueTypeT value, int count, int index)
+    : rclcpp::Parameter(name,value),
+    param_count(count),
+    param_index(index)
   {
+  }
+
+  static Parameter from_mavlink(mavlink::common::msg::PARAM_VALUE & pmsg) {
     mavlink::mavlink_param_union_t uv;
     uv.param_float = pmsg.param_value;
 
-    // #170 - copy union value to itermediate var
-    int int_tmp;
-    float float_tmp;
+    auto param_name = mavlink::to_string(pmsg.param_id);
 
     switch (pmsg.param_type) {
       // [[[cog:
       // param_types = [ (s, 'float' if s == 'real32' else s) for s in (
-      //     'int8', 'uint8',
-      //     'int16', 'uint16',
-      //     'int32', 'uint32',
+      //     'int8',
+      //     'int16',
+      //     'int32',
       //     'real32',
       // )]
-      // unsupported_types = ('int64', 'uint64', 'real64')
+      // unsupported_types = ('uint8', 'uint16', 'uint32', 'int64', 'uint64', 'real64')
       //
       // for a, b in param_types:
-      //     btype = 'int' if 'int' in b else b
       //     cog.outl("case enum_value(MT::%s):" % a.upper())
-      //     cog.outl("\t%s_tmp = uv.param_%s;" % (btype, b))
-      //     cog.outl("\tparam_value = %s_tmp;" % btype)
-      //     cog.outl("\tbreak;")
+      //     cog.outl("\treturn Parameter(param_name, uv.param_%s, pmsg.param_count, pmsg.param_index);" % (b))
       // ]]]
       case enum_value(MT::INT8):
-        int_tmp = uv.param_int8;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT8):
-        int_tmp = uv.param_uint8;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, uv.param_int8, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT16):
-        int_tmp = uv.param_int16;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT16):
-        int_tmp = uv.param_uint16;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, uv.param_int16, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT32):
-        int_tmp = uv.param_int32;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT32):
-        int_tmp = uv.param_uint32;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, uv.param_int32, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::REAL32):
-        float_tmp = uv.param_float;
-        param_value = float_tmp;
-        break;
-      // [[[end]]] (checksum: 5950e4ee032d4aa198b953f56909e129)
+      	return Parameter(param_name, uv.param_float, pmsg.param_count, pmsg.param_index);
+      // [[[end]]] (checksum: 566aed8be49d83f77c0178b2608a9101)
 
       default:
         RCLCPP_WARN(
           rclcpp::get_logger("param"), "PM: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
-        param_value = 0;
+        throw std::exception();
     }
   }
 
   /**
-   * Variation of set_value with quirks for ArduPilotMega
+   * Variation of from_mavlink with quirks for ArduPilotMega
    */
-  void set_value_apm_quirk(mavlink::common::msg::PARAM_VALUE & pmsg)
+  static Parameter from_mavlink_apm_quirk(mavlink::common::msg::PARAM_VALUE & pmsg)
   {
-    int32_t int_tmp;
-    float float_tmp;
+
+    auto param_name = mavlink::to_string(pmsg.param_id);
 
     switch (pmsg.param_type) {
       // [[[cog:
       // for a, b in param_types:
       //     btype = 'int' if 'int' in b else b
       //     cog.outl("case enum_value(MT::%s):" % a.upper())
-      //     cog.outl("\t%s_tmp = pmsg.param_value;" % btype)
-      //     cog.outl("\tparam_value = %s_tmp;" % btype)
-      //     cog.outl("\tbreak;")
+      //     cog.outl("\treturn Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);")
       // ]]]
       case enum_value(MT::INT8):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT8):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT16):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT16):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT32):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
-      case enum_value(MT::UINT32):
-        int_tmp = pmsg.param_value;
-        param_value = int_tmp;
-        break;
+      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
       case enum_value(MT::REAL32):
-        float_tmp = pmsg.param_value;
-        param_value = float_tmp;
-        break;
-      // [[[end]]] (checksum: c30ee34dd84213471690612ab49f1f73)
+      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
+      // [[[end]]] (checksum: 268844794a29e8f7d5eb834653bd869f)
 
       default:
         RCLCPP_WARN(
           rclcpp::get_logger("param"), "PM: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
-        param_value = 0;
+        throw std::exception();
     }
   }
 
   //! Make PARAM_SET message. Set target ids manually!
   PARAM_SET to_param_set()
   {
-    // Note: XmlRpcValue does not have const cast operators.
-    //       This method can't be const.
-
     mavlink::mavlink_param_union_t uv;
     PARAM_SET ret{};
 
-    mavlink::set_string(ret.param_id, param_id);
+    mavlink::set_string(ret.param_id, get_name());
 
-    switch (param_value.getType()) {
+    switch (get_type()) {
       // [[[cog:
-      // xmlrpc_types = (
-      //     ('Boolean', 'uint8', 'bool'),
-      //     ('Int', 'int32', 'int32_t'),
-      //     ('Float', 'real32', 'float'),
+      // parameter_types = (
+      //     ('PARAMETER_BOOL',    'uint8', 'bool'),
+      //     ('PARAMETER_INTEGER', 'int32', 'int'),
+      //     ('PARAMETER_DOUBLE',  'real32', 'double'),
       // )
       //
-      // for a, b, c in xmlrpc_types:
+      // for a, b, c in parameter_types:
       //     uvb = 'float' if 'real32' == b else b
-      //     cog.outl("case ParamValue::ParamType::%s:" % a)
-      //     cog.outl("\tuv.param_%s = static_cast<%s>(param_value);" % (uvb, c))
+      //     cog.outl("case rclcpp::ParameterType::%s:" % a)
+      //     cog.outl("\tuv.param_%s = as_%s();" % (uvb, c))
       //     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
       //     cog.outl("\tbreak;")
       // ]]]
-      case ParamValue::ParamType::Boolean:
-        uv.param_uint8 = static_cast<bool>(param_value);
-        ret.param_type = enum_value(MT::UINT8);
-        break;
-      case ParamValue::ParamType::Int:
-        uv.param_int32 = static_cast<int32_t>(param_value);
-        ret.param_type = enum_value(MT::INT32);
-        break;
-      case ParamValue::ParamType::Float:
-        uv.param_float = static_cast<float>(param_value);
-        ret.param_type = enum_value(MT::REAL32);
-        break;
-      // [[[end]]] (checksum: c414a3950fba234cbbe694a2576ae022)
+      case rclcpp::ParameterType::PARAMETER_BOOL:
+      	uv.param_uint8 = as_bool();
+      	ret.param_type = enum_value(MT::UINT8);
+      	break;
+      case rclcpp::ParameterType::PARAMETER_INTEGER:
+      	uv.param_int32 = as_int();
+      	ret.param_type = enum_value(MT::INT32);
+      	break;
+      case rclcpp::ParameterType::PARAMETER_DOUBLE:
+      	uv.param_float = as_double();
+      	ret.param_type = enum_value(MT::REAL32);
+      	break;
+      // [[[end]]] (checksum: bbb469e1d370511ea7c129a7f32cc95f)
 
       default:
-        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
+        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported ParameterType: %u", get_type_name());
     }
 
     ret.param_value = uv.param_float;
@@ -301,65 +193,35 @@ public:
   {
     PARAM_SET ret{};
 
-    mavlink::set_string(ret.param_id, param_id);
+    mavlink::set_string(ret.param_id, get_name());
 
-    switch (param_value.getType()) {
+    switch (get_type()) {
       // [[[cog:
-      // for a, b, c in xmlrpc_types:
-      //     cog.outl("case ParamValue::ParamType::%s:" % a)
-      //     cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
+      // for a, b, c in parameter_types:
+      //     cog.outl("case rclcpp::ParameterType::%s:" % a)
+      //     cog.outl("\tret.param_value = get_value<%s>();" % c)
       //     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
       //     cog.outl("\tbreak;")
       // ]]]
-      case ParamValue::ParamType::Boolean:
-        ret.param_value = static_cast<bool>(param_value);
-        ret.param_type = enum_value(MT::UINT8);
-        break;
-      case ParamValue::ParamType::Int:
-        ret.param_value = static_cast<int32_t>(param_value);
-        ret.param_type = enum_value(MT::INT32);
-        break;
-      case ParamValue::ParamType::Float:
-        ret.param_value = static_cast<float>(param_value);
-        ret.param_type = enum_value(MT::REAL32);
-        break;
-      // [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
+      case rclcpp::ParameterType::PARAMETER_BOOL:
+      	ret.param_value = get_value<bool>();
+      	ret.param_type = enum_value(MT::UINT8);
+      	break;
+      case rclcpp::ParameterType::PARAMETER_INTEGER:
+      	ret.param_value = get_value<int>();
+      	ret.param_type = enum_value(MT::INT32);
+      	break;
+      case rclcpp::ParameterType::PARAMETER_DOUBLE:
+      	ret.param_value = get_value<double>();
+      	ret.param_type = enum_value(MT::REAL32);
+      	break;
+      // [[[end]]] (checksum: 435bbce5eec0dc41141290086563309f)
 
       default:
-        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
+        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported ParameterType: %u", get_type_name());
     }
 
     return ret;
-  }
-
-  /**
-   * For get/set services
-   */
-  int64_t to_integer()
-  {
-    switch (param_value.getType()) {
-      // [[[cog:
-      // for a, b, c in xmlrpc_types:
-      //    if 'int' not in b:
-      //       continue
-      //    cog.outl("case ParamValue::ParamType::%s:\treturn static_cast<%s>(param_value);" % (a, c))
-      // ]]]
-      case ParamValue::ParamType::Boolean:  return static_cast<bool>(param_value);
-      case ParamValue::ParamType::Int:      return static_cast<int32_t>(param_value);
-      // [[[end]]] (checksum: ce23a3bc04354d8cfcb82341beb83709)
-
-      default:
-        return 0;
-    }
-  }
-
-  double to_real()
-  {
-    if (param_value.getType() == ParamValue::ParamType::Float) {
-      return static_cast<float>(param_value);
-    } else {
-      return 0.0;
-    }
   }
 
   // for debugging
@@ -367,16 +229,16 @@ public:
   {
     return utils::format(
       "%s (%u/%u): %s",
-      param_id.c_str(), param_index, param_count, std::string(param_value));
+      get_name().c_str(), param_index, param_count, value_to_string());
   }
 
   mavros_msgs::msg::Param to_msg()
   {
     mavros_msgs::msg::Param msg;
 
-    msg.param_id = param_id;
-    msg.value.integer = to_integer();
-    msg.value.real = to_real();
+    msg.param_id = get_name();
+    msg.value.integer = as_int();
+    msg.value.real = as_double();
     msg.param_index = param_index;
     msg.param_count = param_count;
 
@@ -445,17 +307,18 @@ public:
     LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
     PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
   {
-    pull_srv = node->create_service<mavros_msgs::srv::ParamPull>("pull", std::mem_fn(&ParamPlugin::pull_cb));
-    push_srv = node->create_service<mavros_msgs::srv::ParamPush>("push", std::mem_fn(&ParamPlugin::push_cb));
-    set_srv = node->create_service<mavros_msgs::srv::ParamSet>("set", std::mem_fn(&ParamPlugin::set_cb));
-    get_srv = node->create_service<mavros_msgs::srv::ParamGet>("get", std::mem_fn(&ParamPlugin::get_cb));
+    using namespace std::placeholders;
+    pull_srv = node->create_service<mavros_msgs::srv::ParamPull>("pull", std::bind(&ParamPlugin::pull_cb, this, _1, _2));
+    push_srv = node->create_service<mavros_msgs::srv::ParamPush>("push", std::bind(&ParamPlugin::push_cb, this, _1, _2));
+    set_srv = node->create_service<mavros_msgs::srv::ParamSet>("set", std::bind(&ParamPlugin::set_cb, this, _1, _2));
+    get_srv = node->create_service<mavros_msgs::srv::ParamGet>("get", std::bind(&ParamPlugin::get_cb, this, _1, _2));
 
     auto parameters_qos = rclcpp::ParametersQoS();
     param_value_pub = node->create_publisher<mavros_msgs::msg::Param>("param_value", parameters_qos);
 
-    schedule_timer = node->create_wall_timer(BOOTUP_TIME_DT, [this](){this->schedule_cb();} );
+    schedule_timer = node->create_wall_timer(BOOTUP_TIME_DT, std::bind(&ParamPlugin::schedule_cb, this));
     schedule_timer->cancel();
-    timeout_timer = node->create_wall_timer(PARAM_TIMEOUT_DT, [this](){this->timeout_cb();} );
+    timeout_timer = node->create_wall_timer(PARAM_TIMEOUT_DT, std::bind(&ParamPlugin::timeout_cb, this));
     timeout_timer->cancel();
 
     enable_connection_cb();
@@ -527,13 +390,13 @@ private:
     auto param_it = parameters.find(param_id);
     if (param_it != parameters.end()) {
       // parameter exists
-      auto & p = param_it->second;
-
       if (uas->is_ardupilotmega()) {
-        p.set_value_apm_quirk(pmsg);
+        param_it->second = Parameter::from_mavlink_apm_quirk(pmsg);
       } else {
-        p.set_value(pmsg);
+        param_it->second = Parameter::from_mavlink(pmsg);
       }
+
+      auto & p = param_it->second;
 
       // check that ack required
       auto set_it = set_parameters.find(param_id);
@@ -555,15 +418,12 @@ private:
       RCLCPP_DEBUG_STREAM(get_logger(), "PR: Update param " << p.to_string());
     } else {
       // insert new element
-      Parameter p{};
-      p.param_id = param_id;
-      p.param_index = pmsg.param_index;
-      p.param_count = pmsg.param_count;
+      Parameter p;
 
       if (uas->is_ardupilotmega()) {
-        p.set_value_apm_quirk(pmsg);
+        p = Parameter::from_mavlink_apm_quirk(pmsg);
       } else {
-        p.set_value(pmsg);
+        p = Parameter::from_mavlink(pmsg);
       }
 
       parameters[param_id] = p;
@@ -776,14 +636,14 @@ private:
         it->second->retries_remaining--;
         RCLCPP_WARN(
           get_logger(), "PR: Resend param set for %s, retries left %zu",
-          it->second->param.param_id.c_str(),
+          it->second->param.get_name().c_str(),
           it->second->retries_remaining);
         restart_timeout_timer();
         param_set(it->second->param);
       } else {
         RCLCPP_ERROR(
           get_logger(), "PR: Param set for %s timed out.",
-          it->second->param.param_id.c_str());
+          it->second->param.get_name().c_str());
         it->second->is_timedout = true;
         it->second->ack.notify_all();
       }
@@ -809,7 +669,7 @@ private:
   {
     std::unique_lock<std::mutex> lock(list_cond_mutex);
 
-    return list_receiving.wait_for(lock, std::chrono::nanoseconds(LIST_TIMEOUT_DT.toNSec())) ==
+    return list_receiving.wait_for(lock, LIST_TIMEOUT_DT) ==
            std::cv_status::no_timeout &&
            !is_timedout;
   }
@@ -820,7 +680,7 @@ private:
 
     return opt->ack.wait_for(
       lock,
-      std::chrono::nanoseconds(PARAM_TIMEOUT_DT.toNSec()) * (RETRIES_COUNT + 2)) ==
+      PARAM_TIMEOUT_DT * (RETRIES_COUNT + 2)) ==
            std::cv_status::no_timeout &&
            !opt->is_timedout;
   }
@@ -831,7 +691,7 @@ private:
 
     // add to waiting list
     auto opt = std::make_shared<ParamSetOpt>(param, RETRIES_COUNT);
-    set_parameters[param.param_id] = opt;
+    set_parameters[param.get_name()] = opt;
 
     param_state = PR::TXPARAM;
     restart_timeout_timer();
@@ -842,7 +702,7 @@ private:
     lock.lock();
 
     // free opt data
-    set_parameters.erase(param.param_id);
+    set_parameters.erase(param.get_name());
 
     go_idle();
     return is_not_timeout;
@@ -851,15 +711,15 @@ private:
   //! Set ROS param only if name is good
   bool rosparam_set_allowed(const Parameter & p)
   {
-    if (uas->is_px4() && p.param_id == "_HASH_CHECK") {
-      auto v = p.param_value;                   // const XmlRpcValue can't cast
+    if (uas->is_px4() && p.get_name() == "_HASH_CHECK") {
+      auto v = p.as_int();
       RCLCPP_INFO(
         get_logger(), "PR: PX4 parameter _HASH_CHECK ignored: 0x%8x",
         static_cast<int32_t>(v));
       return false;
     }
 
-    node->set_parameter({p.param_id, p.param_value});
+    node->set_parameter(p);
     return true;
   }
 
@@ -873,6 +733,9 @@ private:
     mavros_msgs::srv::ParamPull::Request & req,
     mavros_msgs::srv::ParamPull::Response & res)
   {
+    /*
+    This may become a bit of a mess in ROS2
+
     unique_lock lock(mutex);
 
     if ((param_state == PR::IDLE && parameters.empty()) ||
@@ -912,6 +775,7 @@ private:
       rosparam_set_allowed(p.second);
       lock.lock();
     }
+    */
 
     return true;
   }
@@ -924,7 +788,10 @@ private:
     mavros_msgs::srv::ParamPush::Request & req,
     mavros_msgs::srv::ParamPush::Response & res)
   {
-    std::map<std::string, ParamValue> param_map;
+    /*
+    This may become a bit of a mess in ROS2
+
+    auto param_map;
     if (!node->get_parameters("", param_map)) {
       return true;
     }
@@ -959,7 +826,7 @@ private:
 
     res.success = true;
     res.param_transfered = tx_count;
-
+    */
     return true;
   }
 
@@ -982,25 +849,54 @@ private:
 
     auto param_it = parameters.find(req.param_id);
     if (param_it != parameters.end()) {
-      auto to_send = param_it->second;
+      auto current_param = param_it->second;
+      // As far as I can tell, rclcpp::Parameter is immutable
+      // So here need to create a copy with the new value
+      // Then when the PARAM_VALUE comes back, the internal map will be updated
 
       // according to ParamValue description
+      bool value_is_zero = true;
+      bool value_is_int = true;
       if (req.value.integer != 0) {
-        to_send.param_value = static_cast<int>(req.value.integer);
+        value_is_zero = false;
       } else if (req.value.real != 0.0) {
-        to_send.param_value = req.value.real;
-      } else if (param_it->second.param_value.getType() == ParamValue::ParamType::Float) {
-        to_send.param_value = req.value.real;
-      } else {
-        to_send.param_value = 0;
+        value_is_zero = false;
+        value_is_int = false;
+      }
+
+      Parameter to_send;
+
+      switch(current_param.get_type()) {
+        case rclcpp::ParameterType::PARAMETER_BOOL:
+          // If ParameterType is bool, set to !value_is_zero
+          to_send = Parameter(current_param.get_name(), !value_is_zero, current_param.param_count, current_param.param_index);
+          break;
+        case rclcpp::ParameterType::PARAMETER_INTEGER: {
+          if( !value_is_int ) {
+            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req.param_id);
+            res.success = false;
+            return true;
+          }
+          to_send = Parameter(current_param.get_name(), req.value.integer, current_param.param_count, current_param.param_index);
+          break;
+        }
+        case rclcpp::ParameterType::PARAMETER_DOUBLE: {
+          if( value_is_int ) {
+            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req.param_id);
+            res.success = false;
+            return true;
+          }
+          to_send = Parameter(current_param.get_name(), req.value.real, current_param.param_count, current_param.param_index);
+          break;
+        }
       }
 
       lock.unlock();
       res.success = send_param_set_and_wait(to_send);
       lock.lock();
 
-      res.value.integer = param_it->second.to_integer();
-      res.value.real = param_it->second.to_real();
+      res.value.integer = param_it->second.as_int();
+      res.value.real = param_it->second.as_double();
 
       lock.unlock();
       rosparam_set_allowed(param_it->second);
@@ -1026,8 +922,8 @@ private:
     if (param_it != parameters.end()) {
       res.success = true;
 
-      res.value.integer = param_it->second.to_integer();
-      res.value.real = param_it->second.to_real();
+      res.value.integer = param_it->second.as_int();
+      res.value.real = param_it->second.as_double();
     } else {
       RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to get: " << req.param_id);
       res.success = false;
