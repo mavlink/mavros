@@ -729,9 +729,9 @@ private:
    * @brief fetches all parameters from device
    * @service ~param/pull
    */
-  bool pull_cb(
-    mavros_msgs::srv::ParamPull::Request & req,
-    mavros_msgs::srv::ParamPull::Response & res)
+  void pull_cb(
+    std::shared_ptr<mavros_msgs::srv::ParamPull::Request> const req,
+    std::shared_ptr<mavros_msgs::srv::ParamPull::Response> res)
   {
     /*
     This may become a bit of a mess in ROS2
@@ -776,17 +776,15 @@ private:
       lock.lock();
     }
     */
-
-    return true;
   }
 
   /**
    * @brief push all parameter value to device
    * @service ~param/push
    */
-  bool push_cb(
-    mavros_msgs::srv::ParamPush::Request & req,
-    mavros_msgs::srv::ParamPush::Response & res)
+  void push_cb(
+    std::shared_ptr<mavros_msgs::srv::ParamPush::Request> const req,
+    std::shared_ptr<mavros_msgs::srv::ParamPush::Response> res)
   {
     /*
     This may become a bit of a mess in ROS2
@@ -827,16 +825,15 @@ private:
     res.success = true;
     res.param_transfered = tx_count;
     */
-    return true;
   }
 
   /**
    * @brief sets parameter value
    * @service ~param/set
    */
-  bool set_cb(
-    mavros_msgs::srv::ParamSet::Request & req,
-    mavros_msgs::srv::ParamSet::Response & res)
+  void set_cb(
+    std::shared_ptr<mavros_msgs::srv::ParamSet::Request> const req,
+    std::shared_ptr<mavros_msgs::srv::ParamSet::Response> res)
   {
     unique_lock lock(mutex);
 
@@ -844,22 +841,22 @@ private:
       param_state == PR::RXPARAM_TIMEDOUT)
     {
       RCLCPP_ERROR(get_logger(), "PR: receiving not complete");
-      return false;
+      throw std::exception();
     }
 
-    auto param_it = parameters.find(req.param_id);
+    auto param_it = parameters.find(req->param_id);
     if (param_it != parameters.end()) {
       auto current_param = param_it->second;
       // As far as I can tell, rclcpp::Parameter is immutable
       // So here need to create a copy with the new value
-      // Then when the PARAM_VALUE comes back, the internal map will be updated
+      // Then when the PARAM_VALUE comes back, the internal map will be updated?
 
       // according to ParamValue description
       bool value_is_zero = true;
       bool value_is_int = true;
-      if (req.value.integer != 0) {
+      if (req->value.integer != 0) {
         value_is_zero = false;
-      } else if (req.value.real != 0.0) {
+      } else if (req->value.real != 0.0) {
         value_is_zero = false;
         value_is_int = false;
       }
@@ -873,63 +870,61 @@ private:
           break;
         case rclcpp::ParameterType::PARAMETER_INTEGER: {
           if( !value_is_int ) {
-            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req.param_id);
-            res.success = false;
-            return true;
+            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req->param_id);
+            res->success = false;
+            return;
           }
-          to_send = Parameter(current_param.get_name(), req.value.integer, current_param.param_count, current_param.param_index);
+          to_send = Parameter(current_param.get_name(), req->value.integer, current_param.param_count, current_param.param_index);
           break;
         }
         case rclcpp::ParameterType::PARAMETER_DOUBLE: {
           if( value_is_int ) {
-            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req.param_id);
-            res.success = false;
-            return true;
+            RCLCPP_ERROR_STREAM(get_logger(), "PR: Incorrect parameter type for: " << req->param_id);
+            res->success = false;
+            return;
           }
-          to_send = Parameter(current_param.get_name(), req.value.real, current_param.param_count, current_param.param_index);
+          to_send = Parameter(current_param.get_name(), req->value.real, current_param.param_count, current_param.param_index);
           break;
         }
       }
 
       lock.unlock();
-      res.success = send_param_set_and_wait(to_send);
+      res->success = send_param_set_and_wait(to_send);
       lock.lock();
 
-      res.value.integer = param_it->second.as_int();
-      res.value.real = param_it->second.as_double();
+      res->value.integer = param_it->second.as_int();
+      res->value.real = param_it->second.as_double();
 
       lock.unlock();
       rosparam_set_allowed(param_it->second);
     } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to set: " << req.param_id);
-      res.success = false;
+      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to set: " << req->param_id);
+      res->success = false;
     }
 
-    return true;
   }
 
   /**
    * @brief get parameter
    * @service ~param/get
    */
-  bool get_cb(
-    mavros_msgs::srv::ParamGet::Request & req,
-    mavros_msgs::srv::ParamGet::Response & res)
+  void get_cb(
+    std::shared_ptr<mavros_msgs::srv::ParamGet::Request> const req,
+    std::shared_ptr<mavros_msgs::srv::ParamGet::Response> res)
   {
     lock_guard lock(mutex);
 
-    auto param_it = parameters.find(req.param_id);
+    auto param_it = parameters.find(req->param_id);
     if (param_it != parameters.end()) {
-      res.success = true;
+      res->success = true;
 
-      res.value.integer = param_it->second.as_int();
-      res.value.real = param_it->second.as_double();
+      res->value.integer = param_it->second.as_int();
+      res->value.real = param_it->second.as_double();
     } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to get: " << req.param_id);
-      res.success = false;
+      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to get: " << req->param_id);
+      res->success = false;
     }
 
-    return true;
   }
 };
 }       // namespace std_plugins
