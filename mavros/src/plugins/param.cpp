@@ -16,19 +16,89 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <mavros/mavros_plugin.h>
+#include <rcpputils/asserts.hpp>
+#include <mavros/mavros_uas.hpp>
+#include <mavros/plugin.hpp>
+#include <mavros/plugin_filter.hpp>
 
-#include <mavros_msgs/ParamSet.h>
-#include <mavros_msgs/ParamGet.h>
-#include <mavros_msgs/ParamPull.h>
-#include <mavros_msgs/ParamPush.h>
-#include <mavros_msgs/Param.h>
+#include <rcl_interfaces/msg/parameter_value.hpp>
+
+#include <mavros_msgs/srv/param_set.hpp>
+#include <mavros_msgs/srv/param_get.hpp>
+#include <mavros_msgs/srv/param_pull.hpp>
+#include <mavros_msgs/srv/param_push.hpp>
+#include <mavros_msgs/msg/param.hpp>
 
 namespace mavros
 {
 namespace std_plugins
 {
 using utils::enum_value;
+
+struct ParamValue {
+  enum class ParamType {
+    Boolean,
+    Int,
+    Float,
+  };
+
+  void operator = (const double inval) {
+    value.real32 = inval;
+    type = ParamType::Int;
+  }
+
+  void operator = (const int inval) {
+    value.int32 = inval;
+    type = ParamType::Float;
+  }
+
+  void operator = (const bool inval) {
+    value.int32 = inval ? 1 : 0;
+    type = ParamType::Boolean;
+  }
+
+  ParamType getType() {
+    return type;
+  }
+
+  operator int32_t() const {
+    return value.int32;
+  }
+
+  operator float() const {
+    return value.real32;
+  }
+
+  operator bool() const {
+    return value.int32 != 0;
+  }
+
+  operator std::string() const {
+    switch (type) {
+      case ParamType::Boolean:
+        return "Bool: " + std::to_string(bool(*this));
+        break;
+      case ParamType::Int:
+        return "Int: " + std::to_string(int(*this));
+        break;
+      case ParamType::Float:
+        return "Float: " + std::to_string(float(*this));
+        break;
+      default:
+        return "Corrupt ParamValue";
+    }
+  }
+
+private:
+  
+  ParamType type;
+
+  union {
+    int32_t int32;
+    float real32;
+    } value;
+
+};
 
 /**
  * @brief Parameter storage
@@ -53,10 +123,9 @@ class Parameter
 public:
   using MT = mavlink::common::MAV_PARAM_TYPE;
   using PARAM_SET = mavlink::common::msg::PARAM_SET;
-  using XmlRpcValue = XmlRpc::XmlRpcValue;
 
   std::string param_id;
-  XmlRpcValue param_value;
+  ParamValue param_value;
   uint16_t param_index;
   uint16_t param_count;
 
@@ -117,8 +186,8 @@ public:
       // [[[end]]] (checksum: 5950e4ee032d4aa198b953f56909e129)
 
       default:
-        ROS_WARN_NAMED(
-          "param", "PM: Unsupported param %.16s (%u/%u) type: %u",
+        RCLCPP_WARN(
+          rclcpp::get_logger("param"), "PM: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
         param_value = 0;
     }
@@ -172,8 +241,8 @@ public:
       // [[[end]]] (checksum: c30ee34dd84213471690612ab49f1f73)
 
       default:
-        ROS_WARN_NAMED(
-          "param", "PM: Unsupported param %.16s (%u/%u) type: %u",
+        RCLCPP_WARN(
+          rclcpp::get_logger("param"), "PM: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
         param_value = 0;
     }
@@ -193,34 +262,34 @@ public:
     switch (param_value.getType()) {
       // [[[cog:
       // xmlrpc_types = (
-      //     ('TypeBoolean', 'uint8', 'bool'),
-      //     ('TypeInt', 'int32', 'int32_t'),
-      //     ('TypeDouble', 'real32', 'double'),
+      //     ('Boolean', 'uint8', 'bool'),
+      //     ('Int', 'int32', 'int32_t'),
+      //     ('Float', 'real32', 'float'),
       // )
       //
       // for a, b, c in xmlrpc_types:
       //     uvb = 'float' if 'real32' == b else b
-      //     cog.outl("case XmlRpcValue::%s:" % a)
+      //     cog.outl("case ParamValue::ParamType::%s:" % a)
       //     cog.outl("\tuv.param_%s = static_cast<%s>(param_value);" % (uvb, c))
       //     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
       //     cog.outl("\tbreak;")
       // ]]]
-      case XmlRpcValue::TypeBoolean:
+      case ParamValue::ParamType::Boolean:
         uv.param_uint8 = static_cast<bool>(param_value);
         ret.param_type = enum_value(MT::UINT8);
         break;
-      case XmlRpcValue::TypeInt:
+      case ParamValue::ParamType::Int:
         uv.param_int32 = static_cast<int32_t>(param_value);
         ret.param_type = enum_value(MT::INT32);
         break;
-      case XmlRpcValue::TypeDouble:
-        uv.param_float = static_cast<double>(param_value);
+      case ParamValue::ParamType::Float:
+        uv.param_float = static_cast<float>(param_value);
         ret.param_type = enum_value(MT::REAL32);
         break;
       // [[[end]]] (checksum: c414a3950fba234cbbe694a2576ae022)
 
       default:
-        ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
+        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
     }
 
     ret.param_value = uv.param_float;
@@ -237,27 +306,27 @@ public:
     switch (param_value.getType()) {
       // [[[cog:
       // for a, b, c in xmlrpc_types:
-      //     cog.outl("case XmlRpcValue::%s:" % a)
+      //     cog.outl("case ParamValue::ParamType::%s:" % a)
       //     cog.outl("\tret.param_value = static_cast<%s &>(param_value);" % c)
       //     cog.outl("\tret.param_type = enum_value(MT::%s);" % b.upper())
       //     cog.outl("\tbreak;")
       // ]]]
-      case XmlRpcValue::TypeBoolean:
-        ret.param_value = static_cast<bool &>(param_value);
+      case ParamValue::ParamType::Boolean:
+        ret.param_value = static_cast<bool>(param_value);
         ret.param_type = enum_value(MT::UINT8);
         break;
-      case XmlRpcValue::TypeInt:
-        ret.param_value = static_cast<int32_t &>(param_value);
+      case ParamValue::ParamType::Int:
+        ret.param_value = static_cast<int32_t>(param_value);
         ret.param_type = enum_value(MT::INT32);
         break;
-      case XmlRpcValue::TypeDouble:
-        ret.param_value = static_cast<double &>(param_value);
+      case ParamValue::ParamType::Float:
+        ret.param_value = static_cast<float>(param_value);
         ret.param_type = enum_value(MT::REAL32);
         break;
       // [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
 
       default:
-        ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
+        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
     }
 
     return ret;
@@ -273,10 +342,10 @@ public:
       // for a, b, c in xmlrpc_types:
       //    if 'int' not in b:
       //       continue
-      //    cog.outl("case XmlRpcValue::%s:\treturn static_cast<%s>(param_value);" % (a, c))
+      //    cog.outl("case ParamValue::ParamType::%s:\treturn static_cast<%s>(param_value);" % (a, c))
       // ]]]
-      case XmlRpcValue::TypeBoolean:  return static_cast<bool>(param_value);
-      case XmlRpcValue::TypeInt:      return static_cast<int32_t>(param_value);
+      case ParamValue::ParamType::Boolean:  return static_cast<bool>(param_value);
+      case ParamValue::ParamType::Int:      return static_cast<int32_t>(param_value);
       // [[[end]]] (checksum: ce23a3bc04354d8cfcb82341beb83709)
 
       default:
@@ -286,8 +355,8 @@ public:
 
   double to_real()
   {
-    if (param_value.getType() == XmlRpcValue::TypeDouble) {
-      return static_cast<double>(param_value);
+    if (param_value.getType() == ParamValue::ParamType::Float) {
+      return static_cast<float>(param_value);
     } else {
       return 0.0;
     }
@@ -298,15 +367,12 @@ public:
   {
     return utils::format(
       "%s (%u/%u): %s",
-      param_id.c_str(), param_index, param_count, param_value.toXml().c_str());
+      param_id.c_str(), param_index, param_count, std::string(param_value));
   }
 
-  mavros_msgs::Param to_msg()
+  mavros_msgs::msg::Param to_msg()
   {
-    mavros_msgs::Param msg;
-
-    // XXX(vooon): find better solution
-    msg.header.stamp = ros::Time::now();
+    mavros_msgs::msg::Param msg;
 
     msg.param_id = param_id;
     msg.value.integer = to_integer();
@@ -365,12 +431,11 @@ public:
 /**
  * @brief Parameter manipulation plugin
  */
-class ParamPlugin : public plugin::PluginBase
+class ParamPlugin : public plugin::Plugin
 {
 public:
-  ParamPlugin()
-  : PluginBase(),
-    param_nh("~param"),
+  explicit ParamPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "param"),
     param_count(-1),
     param_state(PR::IDLE),
     is_timedout(false),
@@ -379,23 +444,20 @@ public:
     BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
     LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
     PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+    pull_srv = node->create_service<mavros_msgs::srv::ParamPull>("pull", std::mem_fn(&ParamPlugin::pull_cb));
+    push_srv = node->create_service<mavros_msgs::srv::ParamPush>("push", std::mem_fn(&ParamPlugin::push_cb));
+    set_srv = node->create_service<mavros_msgs::srv::ParamSet>("set", std::mem_fn(&ParamPlugin::set_cb));
+    get_srv = node->create_service<mavros_msgs::srv::ParamGet>("get", std::mem_fn(&ParamPlugin::get_cb));
 
-    pull_srv = param_nh.advertiseService("pull", &ParamPlugin::pull_cb, this);
-    push_srv = param_nh.advertiseService("push", &ParamPlugin::push_cb, this);
-    set_srv = param_nh.advertiseService("set", &ParamPlugin::set_cb, this);
-    get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
+    auto parameters_qos = rclcpp::ParametersQoS();
+    param_value_pub = node->create_publisher<mavros_msgs::msg::Param>("param_value", parameters_qos);
 
-    param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
+    schedule_timer = node->create_wall_timer(BOOTUP_TIME_DT, [this](){this->schedule_cb();} );
+    schedule_timer->cancel();
+    timeout_timer = node->create_wall_timer(PARAM_TIMEOUT_DT, [this](){this->timeout_cb();} );
+    timeout_timer->cancel();
 
-    shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
-    shedule_timer.stop();
-    timeout_timer = param_nh.createTimer(PARAM_TIMEOUT_DT, &ParamPlugin::timeout_cb, this, true);
-    timeout_timer.stop();
     enable_connection_cb();
   }
 
@@ -411,26 +473,25 @@ private:
   using unique_lock = std::unique_lock<std::recursive_mutex>;
 
   std::recursive_mutex mutex;
-  ros::NodeHandle param_nh;
 
-  ros::ServiceServer pull_srv;
-  ros::ServiceServer push_srv;
-  ros::ServiceServer set_srv;
-  ros::ServiceServer get_srv;
+  rclcpp::Service<mavros_msgs::srv::ParamPull>::SharedPtr pull_srv;
+  rclcpp::Service<mavros_msgs::srv::ParamPush>::SharedPtr push_srv;
+  rclcpp::Service<mavros_msgs::srv::ParamSet>::SharedPtr set_srv;
+  rclcpp::Service<mavros_msgs::srv::ParamGet>::SharedPtr get_srv;
 
-  ros::Publisher param_value_pub;
+  rclcpp::Publisher<mavros_msgs::msg::Param>::SharedPtr param_value_pub;
 
-  ros::Timer shedule_timer;                             //!< for startup shedule fetch
-  ros::Timer timeout_timer;                             //!< for timeout resend
+  rclcpp::TimerBase::SharedPtr schedule_timer;                            //!< for startup schedule fetch
+  rclcpp::TimerBase::SharedPtr timeout_timer;                             //!< for timeout resend
 
   static constexpr int BOOTUP_TIME_MS = 10000;          //!< APM boot time
   static constexpr int PARAM_TIMEOUT_MS = 1000;         //!< Param wait time
   static constexpr int LIST_TIMEOUT_MS = 30000;         //!< Receive all time
   static constexpr int _RETRIES_COUNT = 3;
 
-  const ros::Duration BOOTUP_TIME_DT;
-  const ros::Duration LIST_TIMEOUT_DT;
-  const ros::Duration PARAM_TIMEOUT_DT;
+  const std::chrono::duration<float> BOOTUP_TIME_DT;
+  const std::chrono::duration<float> LIST_TIMEOUT_DT;
+  const std::chrono::duration<float> PARAM_TIMEOUT_DT;
   const int RETRIES_COUNT;
 
   std::unordered_map<std::string, Parameter> parameters;
@@ -455,8 +516,8 @@ private:
   /* -*- message handlers -*- */
 
   void handle_param_value(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::PARAM_VALUE & pmsg)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::PARAM_VALUE & pmsg, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     lock_guard lock(mutex);
 
@@ -468,7 +529,7 @@ private:
       // parameter exists
       auto & p = param_it->second;
 
-      if (m_uas->is_ardupilotmega()) {
+      if (uas->is_ardupilotmega()) {
         p.set_value_apm_quirk(pmsg);
       } else {
         p.set_value(pmsg);
@@ -480,16 +541,18 @@ private:
         set_it->second->ack.notify_all();
       }
 
-      param_value_pub.publish(p.to_msg());
+      auto param_value_msg = p.to_msg();
+      param_value_msg.header.stamp = get_clock()->now();
+      param_value_pub->publish(param_value_msg);
 
-      ROS_WARN_STREAM_COND_NAMED(
+      RCLCPP_WARN_STREAM_EXPRESSION(
+        get_logger(),
         ((p.param_index != pmsg.param_index &&
         pmsg.param_index != UINT16_MAX) ||
         p.param_count != pmsg.param_count),
-        "param",
         "PR: Param " << p.to_string() << " different index: " << pmsg.param_index << "/" <<
           pmsg.param_count);
-      ROS_DEBUG_STREAM_NAMED("param", "PR: Update param " << p.to_string());
+      RCLCPP_DEBUG_STREAM(get_logger(), "PR: Update param " << p.to_string());
     } else {
       // insert new element
       Parameter p{};
@@ -497,7 +560,7 @@ private:
       p.param_index = pmsg.param_index;
       p.param_count = pmsg.param_count;
 
-      if (m_uas->is_ardupilotmega()) {
+      if (uas->is_ardupilotmega()) {
         p.set_value_apm_quirk(pmsg);
       } else {
         p.set_value(pmsg);
@@ -505,9 +568,11 @@ private:
 
       parameters[param_id] = p;
 
-      param_value_pub.publish(p.to_msg());
+      auto param_value_msg = p.to_msg();
+      param_value_msg.header.stamp = get_clock()->now();
+      param_value_pub->publish(param_value_msg);
 
-      ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
+      RCLCPP_DEBUG_STREAM(get_logger(), "PR: New param " << p.to_string());
     }
 
     if (param_state == PR::RXLIST || param_state == PR::RXPARAM ||
@@ -521,14 +586,14 @@ private:
 
         parameters_missing_idx.clear();
         if (param_count != UINT16_MAX) {
-          ROS_DEBUG_NAMED("param", "PR: waiting %zu parameters", param_count);
+          RCLCPP_DEBUG(get_logger(), "PR: waiting %zu parameters", param_count);
           // declare that all parameters are missing
           for (uint16_t idx = 0; idx < param_count; idx++) {
             parameters_missing_idx.push_back(idx);
           }
         } else {
-          ROS_WARN_NAMED(
-            "param", "PR: FCU does not know index for first element! "
+          RCLCPP_WARN(
+            get_logger(), "PR: FCU does not know index for first element! "
             "Param list may be truncated.");
         }
       }
@@ -542,13 +607,13 @@ private:
 
       // in receiving mode we use param_rx_retries for LIST and PARAM
       if (it_is_first_requested) {
-        ROS_DEBUG_NAMED(
-          "param", "PR: got a value of a requested param idx=%u, "
+        RCLCPP_DEBUG(
+          get_logger(), "PR: got a value of a requested param idx=%u, "
           "resetting retries count", pmsg.param_index);
         param_rx_retries = RETRIES_COUNT;
       } else if (param_state == PR::RXPARAM_TIMEDOUT) {
-        ROS_INFO_NAMED(
-          "param", "PR: got an unsolicited param value idx=%u, "
+        RCLCPP_INFO(
+          get_logger(), "PR: got an unsolicited param value idx=%u, "
           "not resetting retries count %zu", pmsg.param_index, param_rx_retries);
       }
 
@@ -557,16 +622,16 @@ private:
       /* index starting from 0, receivig done */
       if (parameters_missing_idx.empty()) {
         ssize_t missed = param_count - parameters.size();
-        ROS_INFO_COND_NAMED(missed == 0, "param", "PR: parameters list received");
-        ROS_WARN_COND_NAMED(
-          missed > 0, "param",
+        RCLCPP_INFO_EXPRESSION(get_logger(), missed == 0, "PR: parameters list received");
+        RCLCPP_WARN_EXPRESSION(
+          get_logger(), missed > 0,
           "PR: parameters list received, but %zd parametars are missed",
           missed);
         go_idle();
         list_receiving.notify_all();
       } else if (param_state == PR::RXPARAM_TIMEDOUT) {
         uint16_t first_miss_idx = parameters_missing_idx.front();
-        ROS_DEBUG_NAMED("param", "PR: requesting next timed out parameter idx=%u", first_miss_idx);
+        RCLCPP_DEBUG(get_logger(), "PR: requesting next timed out parameter idx=%u", first_miss_idx);
         param_request_read("", first_miss_idx);
       }
     }
@@ -576,47 +641,47 @@ private:
 
   void param_request_list()
   {
-    ROS_DEBUG_NAMED("param", "PR:m: request list");
+    RCLCPP_DEBUG(get_logger(), "PR:m: request list");
 
     mavlink::common::msg::PARAM_REQUEST_LIST rql{};
-    m_uas->msg_set_target(rql);
+    uas->msg_set_target(rql);
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(rql);
+    uas->send_message(rql);
   }
 
   void param_request_read(std::string id, int16_t index = -1)
   {
-    ROS_ASSERT(index >= -1);
+    assert(index >= -1);
 
-    ROS_DEBUG_NAMED("param", "PR:m: request '%s', idx %d", id.c_str(), index);
+    RCLCPP_DEBUG(get_logger(), "PR:m: request '%s', idx %d", id.c_str(), index);
 
     mavlink::common::msg::PARAM_REQUEST_READ rqr{};
-    m_uas->msg_set_target(rqr);
+    uas->msg_set_target(rqr);
     rqr.param_index = index;
 
     if (index != -1) {
       mavlink::set_string(rqr.param_id, id);
     }
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(rqr);
+    uas->send_message(rqr);
   }
 
   void param_set(Parameter & param)
   {
-    ROS_DEBUG_STREAM_NAMED("param", "PR:m: set param " << param.to_string());
+    RCLCPP_DEBUG_STREAM(get_logger(), "PR:m: set param " << param.to_string());
 
     // GCC 4.8 can't type out lambda return
     auto ps = ([this, &param]() -> mavlink::common::msg::PARAM_SET {
-        if (m_uas->is_ardupilotmega()) {
+        if (uas->is_ardupilotmega()) {
           return param.to_param_set_apm_qurk();
         } else {
           return param.to_param_set();
         }
       })();
 
-    m_uas->msg_set_target(ps);
+    uas->msg_set_target(ps);
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(ps);
+    uas->send_message(ps);
   }
 
   /* -*- mid-level functions -*- */
@@ -625,29 +690,29 @@ private:
   {
     lock_guard lock(mutex);
     if (connected) {
-      shedule_pull(BOOTUP_TIME_DT);
+      schedule_pull(BOOTUP_TIME_DT);
     } else {
-      shedule_timer.stop();
+      schedule_timer->cancel();
     }
   }
 
-  void shedule_pull(const ros::Duration & dt)
+  void schedule_pull(const std::chrono::duration<float>& dt)
   {
-    shedule_timer.stop();
-    shedule_timer.setPeriod(dt);
-    shedule_timer.start();
+    schedule_timer->cancel();
+    schedule_timer = node->create_wall_timer(dt,[this](){schedule_cb();});
+    schedule_timer->reset();
   }
 
-  void shedule_cb(const ros::TimerEvent & event)
+  void schedule_cb()
   {
     lock_guard lock(mutex);
     if (param_state != PR::IDLE) {
       // try later
-      ROS_DEBUG_NAMED("param", "PR: busy, reshedule pull");
-      shedule_pull(BOOTUP_TIME_DT);
+      RCLCPP_DEBUG(get_logger(), "PR: busy, reschedule pull");
+      schedule_pull(BOOTUP_TIME_DT);
     }
 
-    ROS_DEBUG_NAMED("param", "PR: start sheduled pull");
+    RCLCPP_DEBUG(get_logger(), "PR: start scheduled pull");
     param_state = PR::RXLIST;
     param_rx_retries = RETRIES_COUNT;
     parameters.clear();
@@ -656,19 +721,19 @@ private:
     param_request_list();
   }
 
-  void timeout_cb(const ros::TimerEvent & event)
+  void timeout_cb()
   {
     lock_guard lock(mutex);
     if (param_state == PR::RXLIST && param_rx_retries > 0) {
       param_rx_retries--;
-      ROS_WARN_NAMED("param", "PR: request list timeout, retries left %zu", param_rx_retries);
+      RCLCPP_WARN(get_logger(), "PR: request list timeout, retries left %zu", param_rx_retries);
 
       restart_timeout_timer();
       param_request_list();
     } else if (param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
       if (parameters_missing_idx.empty()) {
-        ROS_WARN_NAMED(
-          "param", "PR: missing list is clear, but we in RXPARAM state, "
+        RCLCPP_WARN(
+          get_logger(), "PR: missing list is clear, but we in RXPARAM state, "
           "maybe last rerequest fails. Params missed: %zd",
           param_count - parameters.size());
         go_idle();
@@ -680,21 +745,21 @@ private:
       uint16_t first_miss_idx = parameters_missing_idx.front();
       if (param_rx_retries > 0) {
         param_rx_retries--;
-        ROS_WARN_NAMED(
-          "param", "PR: request param #%u timeout, retries left %zu, and %zu params still missing",
+        RCLCPP_WARN(
+          get_logger(), "PR: request param #%u timeout, retries left %zu, and %zu params still missing",
           first_miss_idx, param_rx_retries, parameters_missing_idx.size());
         restart_timeout_timer();
         param_request_read("", first_miss_idx);
       } else {
-        ROS_ERROR_NAMED("param", "PR: request param #%u completely missing.", first_miss_idx);
+        RCLCPP_ERROR(get_logger(), "PR: request param #%u completely missing.", first_miss_idx);
         parameters_missing_idx.pop_front();
         restart_timeout_timer();
         if (!parameters_missing_idx.empty()) {
           param_rx_retries = RETRIES_COUNT;
           first_miss_idx = parameters_missing_idx.front();
 
-          ROS_WARN_NAMED(
-            "param", "PR: %zu params still missing, trying to request next: #%u",
+          RCLCPP_WARN(
+            get_logger(), "PR: %zu params still missing, trying to request next: #%u",
             parameters_missing_idx.size(), first_miss_idx);
           param_request_read("", first_miss_idx);
         }
@@ -702,42 +767,42 @@ private:
     } else if (param_state == PR::TXPARAM) {
       auto it = set_parameters.begin();
       if (it == set_parameters.end()) {
-        ROS_DEBUG_NAMED("param", "PR: send list empty, but state TXPARAM");
+        RCLCPP_DEBUG(get_logger(), "PR: send list empty, but state TXPARAM");
         go_idle();
         return;
       }
 
       if (it->second->retries_remaining > 0) {
         it->second->retries_remaining--;
-        ROS_WARN_NAMED(
-          "param", "PR: Resend param set for %s, retries left %zu",
+        RCLCPP_WARN(
+          get_logger(), "PR: Resend param set for %s, retries left %zu",
           it->second->param.param_id.c_str(),
           it->second->retries_remaining);
         restart_timeout_timer();
         param_set(it->second->param);
       } else {
-        ROS_ERROR_NAMED(
-          "param", "PR: Param set for %s timed out.",
+        RCLCPP_ERROR(
+          get_logger(), "PR: Param set for %s timed out.",
           it->second->param.param_id.c_str());
         it->second->is_timedout = true;
         it->second->ack.notify_all();
       }
     } else {
-      ROS_DEBUG_NAMED("param", "PR: timeout in IDLE!");
+      RCLCPP_DEBUG(get_logger(), "PR: timeout in IDLE!");
     }
   }
 
   void restart_timeout_timer()
   {
     is_timedout = false;
-    timeout_timer.stop();
-    timeout_timer.start();
+    timeout_timer->cancel();
+    timeout_timer->reset();
   }
 
   void go_idle()
   {
     param_state = PR::IDLE;
-    timeout_timer.stop();
+    timeout_timer->cancel();
   }
 
   bool wait_fetch_all()
@@ -786,15 +851,15 @@ private:
   //! Set ROS param only if name is good
   bool rosparam_set_allowed(const Parameter & p)
   {
-    if (m_uas->is_px4() && p.param_id == "_HASH_CHECK") {
+    if (uas->is_px4() && p.param_id == "_HASH_CHECK") {
       auto v = p.param_value;                   // const XmlRpcValue can't cast
-      ROS_INFO_NAMED(
-        "param", "PR: PX4 parameter _HASH_CHECK ignored: 0x%8x",
+      RCLCPP_INFO(
+        get_logger(), "PR: PX4 parameter _HASH_CHECK ignored: 0x%8x",
         static_cast<int32_t>(v));
       return false;
     }
 
-    param_nh.setParam(p.param_id, p.param_value);
+    node->set_parameter({p.param_id, p.param_value});
     return true;
   }
 
@@ -805,8 +870,8 @@ private:
    * @service ~param/pull
    */
   bool pull_cb(
-    mavros_msgs::ParamPull::Request & req,
-    mavros_msgs::ParamPull::Response & res)
+    mavros_msgs::srv::ParamPull::Request & req,
+    mavros_msgs::srv::ParamPull::Response & res)
   {
     unique_lock lock(mutex);
 
@@ -814,16 +879,16 @@ private:
       req.force_pull)
     {
       if (!req.force_pull) {
-        ROS_DEBUG_NAMED("param", "PR: start pull");
+        RCLCPP_DEBUG(get_logger(), "PR: start pull");
       } else {
-        ROS_INFO_NAMED("param", "PR: start force pull");
+        RCLCPP_INFO(get_logger(), "PR: start force pull");
       }
 
       param_state = PR::RXLIST;
       param_rx_retries = RETRIES_COUNT;
       parameters.clear();
 
-      shedule_timer.stop();
+      schedule_timer->cancel();
       restart_timeout_timer();
       param_request_list();
 
@@ -856,20 +921,18 @@ private:
    * @service ~param/push
    */
   bool push_cb(
-    mavros_msgs::ParamPush::Request & req,
-    mavros_msgs::ParamPush::Response & res)
+    mavros_msgs::srv::ParamPush::Request & req,
+    mavros_msgs::srv::ParamPush::Response & res)
   {
-    XmlRpc::XmlRpcValue param_dict;
-    if (!param_nh.getParam("", param_dict)) {
+    std::map<std::string, ParamValue> param_map;
+    if (!node->get_parameters("", param_map)) {
       return true;
     }
 
-    ROS_ASSERT(param_dict.getType() == XmlRpc::XmlRpcValue::TypeStruct);
-
     int tx_count = 0;
-    for (auto & param : param_dict) {
+    for (auto & param : param_map) {
       if (Parameter::check_exclude_param_id(param.first)) {
-        ROS_DEBUG_STREAM_NAMED("param", "PR: Exclude param: " << param.first);
+        RCLCPP_DEBUG_STREAM(get_logger(), "PR: Exclude param: " << param.first);
         continue;
       }
 
@@ -890,7 +953,7 @@ private:
           tx_count++;
         }
       } else {
-        ROS_WARN_STREAM_NAMED("param", "PR: Unknown rosparam: " << param.first);
+        RCLCPP_WARN_STREAM(get_logger(), "PR: Unknown rosparam: " << param.first);
       }
     }
 
@@ -905,15 +968,15 @@ private:
    * @service ~param/set
    */
   bool set_cb(
-    mavros_msgs::ParamSet::Request & req,
-    mavros_msgs::ParamSet::Response & res)
+    mavros_msgs::srv::ParamSet::Request & req,
+    mavros_msgs::srv::ParamSet::Response & res)
   {
     unique_lock lock(mutex);
 
     if (param_state == PR::RXLIST || param_state == PR::RXPARAM ||
       param_state == PR::RXPARAM_TIMEDOUT)
     {
-      ROS_ERROR_NAMED("param", "PR: receiving not complete");
+      RCLCPP_ERROR(get_logger(), "PR: receiving not complete");
       return false;
     }
 
@@ -926,7 +989,7 @@ private:
         to_send.param_value = static_cast<int>(req.value.integer);
       } else if (req.value.real != 0.0) {
         to_send.param_value = req.value.real;
-      } else if (param_it->second.param_value.getType() == XmlRpc::XmlRpcValue::Type::TypeDouble) {
+      } else if (param_it->second.param_value.getType() == ParamValue::ParamType::Float) {
         to_send.param_value = req.value.real;
       } else {
         to_send.param_value = 0;
@@ -942,7 +1005,7 @@ private:
       lock.unlock();
       rosparam_set_allowed(param_it->second);
     } else {
-      ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to set: " << req.param_id);
+      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to set: " << req.param_id);
       res.success = false;
     }
 
@@ -954,8 +1017,8 @@ private:
    * @service ~param/get
    */
   bool get_cb(
-    mavros_msgs::ParamGet::Request & req,
-    mavros_msgs::ParamGet::Response & res)
+    mavros_msgs::srv::ParamGet::Request & req,
+    mavros_msgs::srv::ParamGet::Response & res)
   {
     lock_guard lock(mutex);
 
@@ -966,7 +1029,7 @@ private:
       res.value.integer = param_it->second.to_integer();
       res.value.real = param_it->second.to_real();
     } else {
-      ROS_ERROR_STREAM_NAMED("param", "PR: Unknown parameter to get: " << req.param_id);
+      RCLCPP_ERROR_STREAM(get_logger(), "PR: Unknown parameter to get: " << req.param_id);
       res.success = false;
     }
 
@@ -976,5 +1039,5 @@ private:
 }       // namespace std_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::ParamPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::std_plugins::ParamPlugin)
