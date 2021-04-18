@@ -733,15 +733,12 @@ private:
     std::shared_ptr<mavros_msgs::srv::ParamPull::Request> const req,
     std::shared_ptr<mavros_msgs::srv::ParamPull::Response> res)
   {
-    /*
-    This may become a bit of a mess in ROS2
-
     unique_lock lock(mutex);
 
     if ((param_state == PR::IDLE && parameters.empty()) ||
-      req.force_pull)
+      req->force_pull)
     {
-      if (!req.force_pull) {
+      if (!req->force_pull) {
         RCLCPP_DEBUG(get_logger(), "PR: start pull");
       } else {
         RCLCPP_INFO(get_logger(), "PR: start force pull");
@@ -756,26 +753,25 @@ private:
       param_request_list();
 
       lock.unlock();
-      res.success = wait_fetch_all();
+      res->success = wait_fetch_all();
     } else if (param_state == PR::RXLIST || param_state == PR::RXPARAM ||
       param_state == PR::RXPARAM_TIMEDOUT)
     {
       lock.unlock();
-      res.success = wait_fetch_all();
+      res->success = wait_fetch_all();
     } else {
       lock.unlock();
-      res.success = true;
+      res->success = true;
     }
 
     lock.lock();
-    res.param_received = parameters.size();
+    res->param_received = parameters.size();
 
     for (auto & p : parameters) {
       lock.unlock();
       rosparam_set_allowed(p.second);
       lock.lock();
     }
-    */
   }
 
   /**
