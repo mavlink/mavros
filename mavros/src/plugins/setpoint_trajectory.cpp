@@ -73,7 +73,6 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
-
     local_sub = node->create_subscription<trajectory_msgs::msg::MultiDOFJointTrajectory>(
       "~/local",
       sensor_qos, std::bind(
