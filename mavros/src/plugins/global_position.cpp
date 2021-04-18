@@ -545,7 +545,7 @@ private:
         map_origin.x(), map_origin.y(), map_origin.z(),
         ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
     } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what() );
+      RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what());
     }
 
     is_map_init = true;
@@ -559,8 +559,8 @@ private:
     gpo.target_system = uas->get_tgt_system();
     gpo.latitude = req->position.latitude * 1E7;
     gpo.longitude = req->position.longitude * 1E7;
-    gpo.altitude = req->position.altitude * 1E3 +
-      uas->data.ellipsoid_to_geoid_height(req->position);
+    gpo.altitude = (req->position.altitude +
+      uas->data.ellipsoid_to_geoid_height(req->position)) * 1E3;
 
     uas->send_message(gpo);
   }
