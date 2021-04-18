@@ -27,6 +27,10 @@ Sends actuator controls to FCU controller.</description>
 
 Send any command via COMMAND_LONG</description>
   </class>
+  <class name="ftp" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::FTPPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief FTP plugin.
+@plugin ftp</description>
+  </class>
   <class name="global_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GlobalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Global position plugin.
 @plugin global_position
@@ -111,4 +115,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: a62a94ec921b1c87185738a89655df37) -->
+<!-- [[[end]]] (checksum: 04559279fc9a52fd0952fcb4dc0c4106) -->

@@ -109,7 +109,7 @@ add_library(mavros_plugins SHARED
   src/plugins/altitude.cpp
   src/plugins/command.cpp
   src/plugins/dummy.cpp
-  #src/plugins/ftp.cpp
+  src/plugins/ftp.cpp
   #src/plugins/geofence.cpp
   src/plugins/global_position.cpp
   src/plugins/home_position.cpp
