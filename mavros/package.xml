@@ -39,7 +39,7 @@
   <!-- packages -->
   <build_depend>angles</build_depend>
   <depend>diagnostic_updater</depend>
-  <!-- XXX <depend>eigen_conversions</depend> -->
+  <depend>message_filters</depend>
   <depend>eigen_stl_containers</depend>
   <depend>libmavconn</depend>
   <depend>pluginlib</depend>

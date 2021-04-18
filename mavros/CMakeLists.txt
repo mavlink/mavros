@@ -18,6 +18,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
+find_package(message_filters REQUIRED)
 
 find_package(mavlink REQUIRED)
 find_package(libmavconn REQUIRED)
@@ -120,7 +121,7 @@ add_library(mavros_plugins SHARED
   #src/plugins/rallypoint.cpp
   src/plugins/rc_io.cpp
   src/plugins/setpoint_accel.cpp
-  #src/plugins/setpoint_attitude.cpp
+  src/plugins/setpoint_attitude.cpp
   #src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
   src/plugins/setpoint_trajectory.cpp
@@ -154,6 +155,7 @@ ament_target_dependencies(mavros_plugins
   diagnostic_updater
   tf2_ros
   tf2_eigen
+  message_filters
   Eigen3
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
