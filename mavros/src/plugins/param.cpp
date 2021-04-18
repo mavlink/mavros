@@ -780,32 +780,55 @@ private:
    * @service ~param/push
    */
   void push_cb(
-    std::shared_ptr<mavros_msgs::srv::ParamPush::Request> const req,
+    std::shared_ptr<mavros_msgs::srv::ParamPush::Request> const req [[maybe_unused]],
     std::shared_ptr<mavros_msgs::srv::ParamPush::Response> res)
   {
-    /*
-    This may become a bit of a mess in ROS2
-
-    auto param_map;
-    if (!node->get_parameters("", param_map)) {
-      return true;
-    }
+    // Can't get a set of parameters that have a matching type
+    auto param_list = node->list_parameters({""}, 1);
 
     int tx_count = 0;
-    for (auto & param : param_map) {
-      if (Parameter::check_exclude_param_id(param.first)) {
-        RCLCPP_DEBUG_STREAM(get_logger(), "PR: Exclude param: " << param.first);
+    for (auto & param_name : param_list.names) {
+      if (Parameter::check_exclude_param_id(param_name)) {
+        RCLCPP_DEBUG_STREAM(get_logger(), "PR: Exclude param: " << param_name);
         continue;
       }
 
       unique_lock lock(mutex);
-      auto param_it = parameters.find(param.first);
+      auto param_it = parameters.find(param_name);
       if (param_it != parameters.end()) {
         // copy current state of Parameter
         auto to_send = param_it->second;
 
-        // Update XmlRpcValue
-        to_send.param_value = param.second;
+        rclcpp::Parameter rosparam_value;
+        node->get_parameter(param_name,rosparam_value);
+
+        if( rosparam_value.get_type() != to_send.get_type() ) {
+          RCLCPP_ERROR_STREAM(get_logger(),
+            "PR: Parameter type mismatch. Got: " << rosparam_value.get_type_name()
+            << " expected: " << to_send.get_type_name());
+          throw std::runtime_error(
+            "Parameter type mismatch: Got: " + rosparam_value.get_type_name()
+            + " expected: " + to_send.get_type_name());
+        }
+
+        // Update stored value
+        switch (rosparam_value.get_type()) {
+          case rclcpp::ParameterType::PARAMETER_BOOL:
+            to_send = Parameter(param_name, rosparam_value.as_bool(), to_send.param_count, to_send.param_index);
+            break;
+          case rclcpp::ParameterType::PARAMETER_INTEGER:
+            to_send = Parameter(param_name, rosparam_value.as_int(), to_send.param_count, to_send.param_index);
+            break;
+          case rclcpp::ParameterType::PARAMETER_DOUBLE:
+            to_send = Parameter(param_name, rosparam_value.as_double(), to_send.param_count, to_send.param_index);
+            break;
+          default: {
+            // Other parameter types should not be seen
+            // TODO: Potentially use BOOL_ARRAY for bitmasks
+            RCLCPP_ERROR_STREAM(get_logger(), "PR: Unsupported rosparam type: " << rosparam_value.get_type_name());
+            throw std::runtime_error("Unsupported rosparam type: " + rosparam_value.get_type_name() );
+          }
+        }
 
         lock.unlock();
         bool set_res = send_param_set_and_wait(to_send);
@@ -815,13 +838,12 @@ private:
           tx_count++;
         }
       } else {
-        RCLCPP_WARN_STREAM(get_logger(), "PR: Unknown rosparam: " << param.first);
+        RCLCPP_WARN_STREAM(get_logger(), "PR: Unknown rosparam: " << param_name);
       }
     }
 
-    res.success = true;
-    res.param_transfered = tx_count;
-    */
+    res->success = true;
+    res->param_transfered = tx_count;
   }
 
   /**
