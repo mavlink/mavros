@@ -59,6 +59,10 @@ and Odometry</description>
     <description>@brief Manual Control plugin
 @plugin manual_control</description>
   </class>
+  <class name="param" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ParamPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Parameter manipulation plugin
+@plugin param</description>
+  </class>
   <class name="rc_io" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RCIOPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief RC IO plugin
 @plugin rc_io</description>
@@ -115,4 +119,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 04559279fc9a52fd0952fcb4dc0c4106) -->
+<!-- [[[end]]] (checksum: 1012585bf9bafbe053147ea234c00b8c) -->
