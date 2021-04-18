@@ -34,6 +34,7 @@ namespace mavros
 namespace std_plugins
 {
 using utils::enum_value;
+using utils::to_string_enum;
 
 /**
  * @brief Parameter storage
@@ -106,7 +107,7 @@ public:
         RCLCPP_WARN(
           rclcpp::get_logger("param"), "PM: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
-        throw std::exception();
+        throw std::runtime_error("Unsupported parameter type: " + to_string_enum<MT>(pmsg.param_type));
     }
   }
 
@@ -881,6 +882,12 @@ private:
           }
           to_send = Parameter(current_param.get_name(), req->value.real, current_param.param_count, current_param.param_index);
           break;
+        }
+        default: {
+          // Other parameter types should not be seen
+          // TODO: Potentially use BOOL_ARRAY for bitmasks
+          RCLCPP_ERROR_STREAM(get_logger(), "PR: Unsupported parameter type: " << current_param.get_type_name());
+          throw std::runtime_error("Unsupported paramter type: " + current_param.get_type_name() );
         }
       }
 
