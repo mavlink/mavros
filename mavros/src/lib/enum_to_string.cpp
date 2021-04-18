@@ -35,6 +35,7 @@ using mavlink::common::MAV_MISSION_RESULT;
 using mavlink::common::MAV_FRAME;
 using mavlink::common::MAV_DISTANCE_SENSOR;
 using mavlink::common::LANDING_TARGET_TYPE;
+using mavlink::common::MAV_PARAM_TYPE;
 
 static auto logger = rclcpp::get_logger("uas.enum");
 
@@ -798,6 +799,35 @@ LANDING_TARGET_TYPE landing_target_type_from_str(const std::string & landing_tar
       ". Defaulting to LIGHT_BEACON");
   return LANDING_TARGET_TYPE::LIGHT_BEACON;
 }
+
+// [[[cog:
+// ename = 'MAV_PARAM_TYPE'
+// enum_name_is_value_outl(ename)
+// ]]]
+//! MAV_PARAM_TYPE values
+static const std::array<const std::string, 10> mav_param_type_strings{{
+/*  1 */ "UINT8",                         // 8-bit unsigned integer
+/*  2 */ "INT8",                          // 8-bit signed integer
+/*  3 */ "UINT16",                        // 16-bit unsigned integer
+/*  4 */ "INT16",                         // 16-bit signed integer
+/*  5 */ "UINT32",                        // 32-bit unsigned integer
+/*  6 */ "INT32",                         // 32-bit signed integer
+/*  7 */ "UINT64",                        // 64-bit unsigned integer
+/*  8 */ "INT64",                         // 64-bit signed integer
+/*  9 */ "REAL32",                        // 32-bit floating-point
+/* 10 */ "REAL64",                        // 64-bit floating-point
+}};
+
+std::string to_string(MAV_PARAM_TYPE e)
+{
+  size_t idx = enum_value(e);
+  if (idx >= mav_param_type_strings.size()) {
+    return std::to_string(idx);
+  }
+
+  return mav_param_type_strings[idx];
+}
+// [[[end]]] (checksum: c049bcbea74fffc977b50588257bfafc)
 
 }       // namespace utils
 }       // namespace mavros

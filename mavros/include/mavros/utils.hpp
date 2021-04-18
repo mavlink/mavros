@@ -80,6 +80,8 @@ std::string to_string(mavlink::common::MAV_MISSION_RESULT e);
 std::string to_string(mavlink::common::MAV_FRAME e);
 std::string to_string(mavlink::common::MAV_DISTANCE_SENSOR e);
 std::string to_string(mavlink::common::LANDING_TARGET_TYPE e);
+std::string to_string(mavlink::common::MAV_PARAM_TYPE e);
+
 /**
  * Helper to call to_string() for enum _T
  */
