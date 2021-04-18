@@ -299,14 +299,14 @@ class ParamPlugin : public plugin::Plugin
 public:
   explicit ParamPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "param"),
-    param_count(-1),
-    param_state(PR::IDLE),
-    is_timedout(false),
-    RETRIES_COUNT(_RETRIES_COUNT),
-    param_rx_retries(RETRIES_COUNT),
     BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
     LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
-    PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
+    PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0),
+    RETRIES_COUNT(_RETRIES_COUNT),
+    param_count(-1),
+    param_state(PR::IDLE),
+    param_rx_retries(RETRIES_COUNT),
+    is_timedout(false)
   {
     using namespace std::placeholders;
     pull_srv = node->create_service<mavros_msgs::srv::ParamPull>("pull", std::bind(&ParamPlugin::pull_cb, this, _1, _2));
