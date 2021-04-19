@@ -143,7 +143,7 @@ public:
 
       default:
         RCLCPP_WARN(
-          get_logger(), "PM: Unsupported param %.16s (%u/%u) type: %u",
+          get_logger(), "PR: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
         param_value = rclcpp::ParameterValue();
     }
@@ -199,7 +199,7 @@ public:
       default:
         RCLCPP_WARN(
           get_logger(),
-          "PM: Unsupported param %.16s (%u/%u) type: %u",
+          "PR: Unsupported param %.16s (%u/%u) type: %u",
           pmsg.param_id.data(), pmsg.param_index, pmsg.param_count, pmsg.param_type);
         param_value = rclcpp::ParameterValue();
     }
@@ -394,7 +394,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    auto qos = rclcpp::QoS(100);
+    auto qos = rclcpp::ParametersQoS();
 
     param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", qos);
 
