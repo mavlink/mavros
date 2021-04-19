@@ -14,6 +14,9 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <string>
+#include <utility>
+
 #include <mavros/utils.hpp>
 #include <mavros/frame_tf.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -72,11 +75,13 @@ static const OrientationPair make_orientation(
 //             cog.msg(f"Parse Error: {ex}, desc: {desc}")
 //             return cls()
 //
-// cog.outl("static const std::array<const OrientationPair, %s> sensor_orientations{{" % len(enum))
+// cog.outl(f"static const std::array<const OrientationPair, {len(enum)}> sensor_orientations{{{{")
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
 //     vec = Vector3.parse_rpy(e.description)
-//     cog.outl(f"""/* {k:>2} */ make_orientation("{name_short}", {vec.Roll}, {vec.Pitch}, {vec.Yaw}),""")
+//     cog.outl(
+//         f"""/* {k:>2} */ make_orientation"""
+//         f"""("{name_short}", {vec.Roll}, {vec.Pitch}, {vec.Yaw}),""")
 //
 // cog.outl("}};")
 // ]]]

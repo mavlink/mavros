@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014,2015,2016,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief some useful utils
  * @file utils.hpp
@@ -7,15 +14,13 @@
  * @{
  *  @brief Some useful utils
  */
-/*
- * Copyright 2014,2015,2016,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
+
+#ifndef MAVROS__UTILS_HPP_
+#define MAVROS__UTILS_HPP_
+
+#include <string>
 
 #include <Eigen/Geometry>
 #include <mavconn/thread_utils.hpp>
@@ -125,3 +130,5 @@ mavlink::common::LANDING_TARGET_TYPE landing_target_type_from_str(
 
 }       // namespace utils
 }       // namespace mavros
+
+#endif  // MAVROS__UTILS_HPP_

@@ -1,3 +1,11 @@
+/*
+ * Copyright 2014,2015,2016,2017,2018 Vladimir Ermakov.
+ * Copyright 2021 Charlie Burge.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Mission base plugin
  * @file mission_protocol_base.h
@@ -7,16 +15,13 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014,2015,2016,2017,2018 Vladimir Ermakov.
- * Copyright 2021 Charlie Burge.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
+
+#ifndef MAVROS__MISSION_PROTOCOL_BASE_HPP_
+#define MAVROS__MISSION_PROTOCOL_BASE_HPP_
+
+#error "XXX port me!"
 
 #include <chrono>
 #include <sstream>
@@ -60,9 +65,9 @@ static double waypoint_encode_factor(const uint8_t & frame)
     // for names, factor in [(global_names, 10000000), (local_names, 10000), (other_names, 1)]:
     //      for name in names:
     //              cog.outl(f"case enum_value(MAV_FRAME::{name}):")
-    //      cog.outl(f"\treturn {factor};")
+    //      cog.outl(f"  return {factor};")
     //
-    // cog.outl("default:\n\treturn 1;")
+    // cog.outl("default:\n  return 1;")
     // ]]]
     case enum_value(MAV_FRAME::GLOBAL):
     case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
@@ -77,13 +82,6 @@ static double waypoint_encode_factor(const uint8_t & frame)
     case enum_value(MAV_FRAME::BODY_NED):
     case enum_value(MAV_FRAME::BODY_OFFSET_NED):
     case enum_value(MAV_FRAME::BODY_FRD):
-    case enum_value(MAV_FRAME::BODY_FLU):
-    case enum_value(MAV_FRAME::MOCAP_NED):
-    case enum_value(MAV_FRAME::MOCAP_ENU):
-    case enum_value(MAV_FRAME::VISION_NED):
-    case enum_value(MAV_FRAME::VISION_ENU):
-    case enum_value(MAV_FRAME::ESTIM_NED):
-    case enum_value(MAV_FRAME::ESTIM_ENU):
     case enum_value(MAV_FRAME::LOCAL_FRD):
     case enum_value(MAV_FRAME::LOCAL_FLU):
       return 10000;
@@ -91,7 +89,7 @@ static double waypoint_encode_factor(const uint8_t & frame)
       return 1;
     default:
       return 1;
-      // [[[end]]] (checksum: f7f081c9ec9252f6a38501f044d4c273)
+      // [[[end]]] (checksum: 1e7f1d387a168ae02c6d21bad66fbf30)
   }
 }
 
@@ -130,7 +128,7 @@ mavros_msgs::Waypoint mav_to_msg(const ITEM & mav_msg)
   ret.x_lat = mav_msg.x;
   ret.y_long = mav_msg.y;
   ret.z_alt = mav_msg.z;
-  // [[[end]]] (checksum: 27badd1a5facc63f38cdd7aad3be9816)
+  // [[[end]]] (checksum: df83d6603aef4fa469d6db6aff4419c6)
 
   return ret;
 }
@@ -159,7 +157,7 @@ inline mavros_msgs::Waypoint mav_to_msg(const WP_ITEM_INT & mav_msg)
   ret.x_lat = mav_msg.x / waypoint_encode_factor(mav_msg.frame);
   ret.y_long = mav_msg.y / waypoint_encode_factor(mav_msg.frame);
   ret.z_alt = mav_msg.z;
-  // [[[end]]] (checksum: 6c82a18990af7aeeb1db9211e9b1bbf1)
+  // [[[end]]] (checksum: b0a3ef03ae19fac75aaf0b72dc238767)
 
   return ret;
 }
@@ -185,7 +183,7 @@ ITEM mav_from_msg(const mavros_msgs::Waypoint & wp, const uint16_t seq, WP_TYPE 
   ret.x = wp.x_lat;
   ret.y = wp.y_long;
   ret.z = wp.z_alt;
-  // [[[end]]] (checksum: c1b08cda34f1c4dc94129bda4743aaec)
+  // [[[end]]] (checksum: d121a97a1214456f845cab6f5b66e317)
 
   ret.seq = seq;
 
@@ -220,7 +218,7 @@ inline WP_ITEM_INT mav_from_msg(
   ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
   ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
   ret.z = wp.z_alt;
-  // [[[end]]] (checksum: 6315c451fe834dbf20a43ee112b8b5fe)
+  // [[[end]]] (checksum: be915294cea6806c5897a17259983877)
 
   ret.seq = seq;
 
@@ -634,5 +632,8 @@ protected:
     UAS_FCU(m_uas)->send_message_ignore_drop(mack);
   }
 };
+
 }       // namespace plugin
 }       // namespace mavros
+
+#endif  // MAVROS__MISSION_PROTOCOL_BASE_HPP_

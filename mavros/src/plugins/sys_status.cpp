@@ -244,7 +244,8 @@ public:
     check_flag("Satellite Communication", STS::SATCOM);
     check_flag("pre-arm check status. Always healthy when armed", STS::PREARM_CHECK);
     check_flag("Avoidance/collision prevention", STS::OBSTACLE_AVOIDANCE);
-    // [[[end]]] (checksum: 57caf332c0d1ef0bceec5f244a482c15)
+    check_flag("propulsion (actuator, esc, motor or propellor)", STS::PROPULSION);
+    // [[[end]]] (checksum: 435a149e38737aac78b4be94b670a6dd)
 
     stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
     stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);

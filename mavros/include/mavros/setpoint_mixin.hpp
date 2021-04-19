@@ -20,6 +20,7 @@
 #define MAVROS__SETPOINT_MIXIN_HPP_
 
 #include <functional>
+#include <string>
 
 #include <rcpputils/asserts.hpp>
 #include <mavros/mavros_uas.hpp>
@@ -110,7 +111,8 @@ public:
     uas_->msg_set_target(sp);
 
     // [[[cog:
-    // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'lat_int', 'lon_int', 'alt', 'yaw', 'yaw_rate'):
+    // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask',
+    //     'lat_int', 'lon_int', 'alt', 'yaw', 'yaw_rate'):
     //     cog.outl(f"sp.{f} = {f};")
     // for fp, vp in (('v', 'v'), ('af', 'af')):
     //     for a in ('x', 'y', 'z'):
@@ -180,7 +182,7 @@ public:
   }
 };
 
-#if 0 // XXX TODO(vooon): port me pls
+#if 0  // XXX TODO(vooon): port me pls
 /**
  * @brief This mixin adds TF2 listener thread to plugin
  *

@@ -1,3 +1,10 @@
+/*
+ * Copyright 2016,2021 Valdimir Ermakov
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief enum stringify helpers
  * @file enum_to_string.cpp
@@ -6,16 +13,10 @@
  * @addtogroup nodelib
  * @{
  */
-/*
- * Copyright 2016,2021 Valdimir Ermakov
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #include <array>
 #include <unordered_map>
+
 #include <mavros/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -55,7 +56,7 @@ static auto logger = rclcpp::get_logger("uas.enum");
 //
 // def make_whitespace(l, v):
 //     d = l - len(v)
-//     return ' ' * d if d > 0 else ' '
+//     return ' ' * d if d > 2 else '  '
 //
 // def ename_array_name(ename, suffix=None):
 //     l = ename.rsplit('::', 1)
@@ -116,9 +117,9 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
 /*  3 */ "ArduPilot",                     // ArduPilot - Plane/Copter/Rover/Sub/Tracker, https://ardupilot.org
 /*  4 */ "OpenPilot",                     // OpenPilot, http://openpilot.org
-/*  5 */ "Generic autopilot only supporting simple waypoints", // Generic autopilot only supporting simple waypoints
-/*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands", // Generic autopilot supporting waypoints and other simple navigation commands
-/*  7 */ "Generic autopilot supporting the full mission command set", // Generic autopilot supporting the full mission command set
+/*  5 */ "Generic autopilot only supporting simple waypoints",  // Generic autopilot only supporting simple waypoints
+/*  6 */ "Generic autopilot supporting waypoints and other simple navigation commands",  // Generic autopilot supporting waypoints and other simple navigation commands
+/*  7 */ "Generic autopilot supporting the full mission command set",  // Generic autopilot supporting the full mission command set
 /*  8 */ "No valid autopilot",            // No valid autopilot, e.g. a GCS or other MAVLink component
 /*  9 */ "PPZ UAV",                       // PPZ UAV - http://nongnu.org/paparazzi
 /* 10 */ "UAV Dev Board",                 // UAV Dev Board
@@ -142,7 +143,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
   return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: c551411df9c72c10cb7b7017f94aaa5b)
+// [[[end]]] (checksum: 54fd7f4c80c6db668b8ccb5af3e57853)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -164,7 +165,7 @@ static const std::array<const std::string, 37> mav_type_strings{{
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
 /*  3 */ "Coaxial helicopter",            // Coaxial helicopter
-/*  4 */ "Normal helicopter with tail rotor", // Normal helicopter with tail rotor.
+/*  4 */ "Normal helicopter with tail rotor",  // Normal helicopter with tail rotor.
 /*  5 */ "Ground installation",           // Ground installation
 /*  6 */ "Operator control unit",         // Operator control unit / ground control station
 /*  7 */ "Airship",                       // Airship, controlled
@@ -192,7 +193,7 @@ static const std::array<const std::string, 37> mav_type_strings{{
 /* 29 */ "Dodecarotor",                   // Dodecarotor
 /* 30 */ "Camera",                        // Camera
 /* 31 */ "Charging station",              // Charging station
-/* 32 */ "FLARM collision avoidance system", // FLARM collision avoidance system
+/* 32 */ "FLARM collision avoidance system",  // FLARM collision avoidance system
 /* 33 */ "Servo",                         // Servo
 /* 34 */ "Open Drone ID. See https:",     // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
 /* 35 */ "Decarotor",                     // Decarotor
@@ -208,7 +209,7 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 2225b2c1f3e1e415ebfafe748dc0d8a9)
+// [[[end]]] (checksum: 212972e4c2d0962f5d4211052b7a413e)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -481,21 +482,21 @@ std::string to_string(GPS_FIX_TYPE e)
 //! MAV_MISSION_RESULT values
 static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  0 */ "mission accepted OK",           // mission accepted OK
-/*  1 */ "Generic error / not accepting mission commands at all right now.", // Generic error / not accepting mission commands at all right now.
-/*  2 */ "Coordinate frame is not supported.", // Coordinate frame is not supported.
+/*  1 */ "Generic error / not accepting mission commands at all right now.",  // Generic error / not accepting mission commands at all right now.
+/*  2 */ "Coordinate frame is not supported.",  // Coordinate frame is not supported.
 /*  3 */ "Command is not supported.",     // Command is not supported.
-/*  4 */ "Mission items exceed storage space.", // Mission items exceed storage space.
-/*  5 */ "One of the parameters has an invalid value.", // One of the parameters has an invalid value.
+/*  4 */ "Mission items exceed storage space.",  // Mission items exceed storage space.
+/*  5 */ "One of the parameters has an invalid value.",  // One of the parameters has an invalid value.
 /*  6 */ "param1 has an invalid value.",  // param1 has an invalid value.
 /*  7 */ "param2 has an invalid value.",  // param2 has an invalid value.
 /*  8 */ "param3 has an invalid value.",  // param3 has an invalid value.
 /*  9 */ "param4 has an invalid value.",  // param4 has an invalid value.
-/* 10 */ "x / param5 has an invalid value.", // x / param5 has an invalid value.
-/* 11 */ "y / param6 has an invalid value.", // y / param6 has an invalid value.
-/* 12 */ "z / param7 has an invalid value.", // z / param7 has an invalid value.
-/* 13 */ "Mission item received out of sequence", // Mission item received out of sequence
-/* 14 */ "Not accepting any mission commands from this communication partner.", // Not accepting any mission commands from this communication partner.
-/* 15 */ "Current mission operation cancelled (e.g. mission upload, mission download).", // Current mission operation cancelled (e.g. mission upload, mission download).
+/* 10 */ "x / param5 has an invalid value.",  // x / param5 has an invalid value.
+/* 11 */ "y / param6 has an invalid value.",  // y / param6 has an invalid value.
+/* 12 */ "z / param7 has an invalid value.",  // z / param7 has an invalid value.
+/* 13 */ "Mission item received out of sequence",  // Mission item received out of sequence
+/* 14 */ "Not accepting any mission commands from this communication partner.",  // Not accepting any mission commands from this communication partner.
+/* 15 */ "Current mission operation cancelled (e.g. mission upload, mission download).",  // Current mission operation cancelled (e.g. mission upload, mission download).
 }};
 
 std::string to_string(MAV_MISSION_RESULT e)
@@ -507,7 +508,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
   return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: d58f714b2b068a3be44ac1f2988ed44e)
+// [[[end]]] (checksum: 9f0b0395b8f7ad72af4f64f2dc143f1b)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -782,7 +783,7 @@ std::string to_string(LANDING_TARGET_TYPE e)
   return landing_target_type_strings[idx];
 }
 // [[[end]]] (checksum: 0c2920ce91fc1670c7b557a8acd32992)
-//
+
 LANDING_TARGET_TYPE landing_target_type_from_str(const std::string & landing_target_type)
 {
   for (size_t idx = 0; idx < landing_target_type_strings.size(); idx++) {

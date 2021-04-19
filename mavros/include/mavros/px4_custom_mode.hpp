@@ -46,7 +46,7 @@
 #ifndef MAVROS__PX4_CUSTOM_MODE_HPP_
 #define MAVROS__PX4_CUSTOM_MODE_HPP_
 
-//#include <stdint.h>
+// #include <stdint.h>
 
 namespace px4
 {

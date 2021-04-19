@@ -1,3 +1,11 @@
+/*
+ * Copyright 2016,2017,2021 Vladimir Ermakov.
+ * Copyright 2017,2018 Nuno Marques.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Frame transformation utilities
  * @file frame_tf.hpp
@@ -7,14 +15,6 @@
  *
  * @addtogroup nodelib
  * @{
- */
-/*
- * Copyright 2016,2017,2021 Vladimir Ermakov.
- * Copyright 2017,2018 Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #pragma once
@@ -481,10 +481,12 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
 
 // [[[cog:
 // def make_to_eigen(te, tr, fields):
-//     cog.outl("""//! @brief Helper to convert common ROS geometry_msgs::{tr} to Eigen::{te}""".format(**locals()))
-//     cog.outl("""inline Eigen::{te} to_eigen(const geometry_msgs::{tr} r) {{""".format(**locals()))
-//     cog.outl("""\treturn Eigen::{te}({fl});""".format(te=te, fl=", ".join(["r." + f for f in fields])))
-//     cog.outl("""}""")
+//     fl = ", ".join(["r." + f for f in fields])
+//     cog.outl(f"""//! @brief Helper to convert common ROS geometry_msgs::{tr} to Eigen::{te}""")
+//     cog.outl(f"""inline Eigen::{te} to_eigen(const geometry_msgs::msg::{tr} r)""")
+//     cog.outl(f"""{{""")
+//     cog.outl(f"""  return Eigen::{te}({fl});""")
+//     cog.outl(f"""}}""")
 //
 // make_to_eigen("Vector3d", "Point", "xyz")
 // make_to_eigen("Vector3d", "Vector3", "xyz")
@@ -505,7 +507,7 @@ inline Eigen::Quaterniond to_eigen(const geometry_msgs::msg::Quaternion r)
 {
   return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
-// [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
+// [[[end]]] (checksum: 2f12174368db2fc32ab814cb97b1bbec)
 
 }       // namespace ftf
 }       // namespace mavros

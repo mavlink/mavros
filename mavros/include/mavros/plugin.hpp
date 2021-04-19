@@ -29,8 +29,8 @@
 #include <string>
 #include <unordered_map>
 
-#include <mavconn/interface.hpp>
-#include <mavros/mavros_uas.hpp>
+#include <mavconn/interface.hpp>    // NOLINT
+#include <mavros/mavros_uas.hpp>    // NOLINT
 
 namespace mavros
 {

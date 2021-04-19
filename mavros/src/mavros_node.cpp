@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS Node
- * @file mavros_node.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2013,2014,2015,2021 Vladimir Ermakov.
  *
@@ -10,6 +5,15 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS Node
+ * @file mavros_node.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
+
+#include <string>
+#include <memory>
+#include <vector>
 
 #include <mavros/mavros_router.hpp>
 #include <mavros/mavros_uas.hpp>

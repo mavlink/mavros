@@ -1,3 +1,10 @@
+/*
+ * Copyright 2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MavRos node implementation class
  * @file mavros_router.hpp
@@ -7,29 +14,23 @@
  * @{
  *  @brief MAVROS node implementation
  */
-/*
- * Copyright 2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
 #pragma once
 
-#ifndef MAVROS_MAVROS_ROUTER_HPP_
-#define MAVROS_MAVROS_ROUTER_HPP_
+#ifndef MAVROS__MAVROS_ROUTER_HPP_
+#define MAVROS__MAVROS_ROUTER_HPP_
 
 #include <array>
+#include <memory>
+#include <shared_mutex>
+#include <Eigen/Eigen>
+
 #include <mavconn/interface.hpp>
 #include <mavconn/mavlink_dialect.hpp>
-#include <memory>
 #include <mavros/utils.hpp>
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <shared_mutex>
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <Eigen/Eigen>
 
 #include <mavros_msgs/msg/mavlink.hpp>
 #include <mavros_msgs/srv/endpoint_add.hpp>
@@ -297,4 +298,4 @@ private:
 } // namespace router
 } // namespace mavros
 
-#endif // MAVROS_MAVROS_ROUTER_HPP_
+#endif // MAVROS__MAVROS_ROUTER_HPP_
