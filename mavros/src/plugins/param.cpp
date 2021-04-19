@@ -238,10 +238,26 @@ public:
     mavros_msgs::msg::Param msg;
 
     msg.param_id = get_name();
-    msg.value.integer = as_int();
-    msg.value.real = as_double();
     msg.param_index = param_index;
     msg.param_count = param_count;
+
+    switch(get_type()) {
+      case rclcpp::ParameterType::PARAMETER_BOOL:
+        // Not convinced BOOL needs to be handled as bool from MAVLink will end up as INTEGER
+      	msg.value.integer = as_bool() ? 1 : 0;
+      	msg.value.real = 0;
+      	break;
+      case rclcpp::ParameterType::PARAMETER_INTEGER:
+      	msg.value.integer = as_int();
+      	msg.value.real = 0;
+      	break;
+      case rclcpp::ParameterType::PARAMETER_DOUBLE:
+        msg.value.integer = 0;
+        msg.value.real = as_double();
+      	break;
+      default:
+        RCLCPP_WARN(rclcpp::get_logger("param"), "PR: Unsupported ParameterType: %u", get_type_name());
+    }
 
     return msg;
   }
