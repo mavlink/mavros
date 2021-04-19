@@ -391,7 +391,7 @@ public:
 
     auto qos = rclcpp::QoS(100);
 
-    param_value_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("param_value", qos);
+    param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", qos);
 
     pull_srv =
       node->create_service<mavros_msgs::srv::ParamPull>(
@@ -438,7 +438,7 @@ private:
   rclcpp::Service<mavros_msgs::srv::ParamSetV2>::SharedPtr set_srv;
   // rclcpp::Service<mavros_msgs::srv::ParamGet>::SharedPtr get_srv;
 
-  rclcpp::Publisher<mavros_msgs::msg::ParamEvent>::SharedPtr param_value_pub;
+  rclcpp::Publisher<mavros_msgs::msg::ParamEvent>::SharedPtr param_event_pub;
 
   rclcpp::TimerBase::SharedPtr shedule_timer;   //!< for startup shedule fetch
   rclcpp::TimerBase::SharedPtr timeout_timer;   //!< for timeout resend
@@ -488,15 +488,8 @@ private:
           p.set_value(pmsg);
         }
 
-        param_value_pub->publish(p.to_msg());
-
-        try {
-          node->declare_parameter(
-            p.param_id, p.param_value,
-            rcl_interfaces::msg::ParameterDescriptor(), true);
-        } catch (rclcpp::exceptions::ParameterAlreadyDeclaredException & ex) {
-        }
-        node->set_parameter(p.to_rcl());
+        param_event_pub->publish(p.to_msg());
+        rosparam_set_allowed(p);
 
         // check that ack required
         auto set_it = set_parameters.find(p.param_id);
@@ -834,7 +827,14 @@ private:
       return false;
     }
 
-    node->set_parameter(p.to_rcl());
+    try {
+      node->declare_parameter(
+        p.param_id, p.param_value,
+        rcl_interfaces::msg::ParameterDescriptor(), true);
+    } catch (rclcpp::exceptions::ParameterAlreadyDeclaredException & ex) {
+      node->set_parameter(p.to_rcl());
+    }
+
     return true;
   }
 
