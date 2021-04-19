@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <string>
-#include <algotithm>
+#include <algorithm>
 
 #include <mavros/mavros_uas.hpp>
 #include <mavros/px4_custom_mode.hpp>
