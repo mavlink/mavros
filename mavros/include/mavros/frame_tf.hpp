@@ -19,6 +19,9 @@
 
 #pragma once
 
+#ifndef MAVROS__FRAME_TF_HPP_
+#define MAVROS__FRAME_TF_HPP_
+
 #include <rcpputils/asserts.hpp>
 #include <array>
 #include <Eigen/Eigen>
@@ -61,12 +64,20 @@ using EigenMapConstCovariance9d = Eigen::Map<const Eigen::Matrix<double, 9, 9, E
  */
 enum class StaticTF
 {
-  NED_TO_ENU,                   //!< will change orientation from being expressed WRT NED frame to WRT ENU frame
-  ENU_TO_NED,                   //!< change from expressed WRT ENU frame to WRT NED frame
-  AIRCRAFT_TO_BASELINK,         //!< change from expressed WRT aircraft frame to WRT to baselink frame
-  BASELINK_TO_AIRCRAFT,         //!< change from expressed WRT baselnk to WRT aircraft
-  ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK,      //!< change orientation from being expressed in aircraft frame to baselink frame in an absolute frame of reference.
-  ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT,      //!< change orientation from being expressed in baselink frame to aircraft frame in an absolute frame of reference
+  //! will change orientation from being expressed WRT NED frame to WRT ENU frame
+  NED_TO_ENU,
+  //! change from expressed WRT ENU frame to WRT NED frame
+  ENU_TO_NED,
+  //! change from expressed WRT aircraft frame to WRT to baselink frame
+  AIRCRAFT_TO_BASELINK,
+  //! change from expressed WRT baselnk to WRT aircraft
+  BASELINK_TO_AIRCRAFT,
+  //! change orientation from being expressed in aircraft frame to
+  //  baselink frame in an absolute frame of reference.
+  ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK,
+  //! change orientation from being expressed in baselink frame to
+  //  aircraft frame in an absolute frame of reference
+  ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT,
 };
 
 /**
@@ -495,5 +506,8 @@ inline Eigen::Quaterniond to_eigen(const geometry_msgs::msg::Quaternion r)
   return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
 // [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
+
 }       // namespace ftf
 }       // namespace mavros
+
+#endif  // MAVROS__FRAME_TF_HPP_

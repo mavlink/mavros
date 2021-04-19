@@ -183,7 +183,7 @@ private:
 
     Eigen::Vector3d position, velocity, af;
     Eigen::Quaterniond attitude;
-    float yaw, yaw_rate;
+    float yaw_rate = 0;
     uint16_t type_mask = 0;
 
     if (!setpoint_target->transforms.empty()) {
