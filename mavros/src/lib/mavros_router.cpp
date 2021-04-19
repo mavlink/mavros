@@ -155,8 +155,8 @@ void Router::del_endpoint(
     auto it = this->endpoints.find(request->id);
     if (it != this->endpoints.end() ) {
       it->second->close();
-      this->endpoints.erase(it);
       this->diagnostic_updater.removeByName(it->second->diag_name());
+      this->endpoints.erase(it);
       response->successful = true;
     }
     return;
@@ -170,8 +170,8 @@ void Router::del_endpoint(
       it->second->link_type == static_cast<Endpoint::Type>( request->type))
     {
       it->second->close();
-      this->endpoints.erase(it);
       this->diagnostic_updater.removeByName(it->second->diag_name());
+      this->endpoints.erase(it);
       response->successful = true;
       return;
     }
