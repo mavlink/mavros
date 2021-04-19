@@ -81,7 +81,7 @@ public:
 
     switch (pmsg.param_type) {
       // [[[cog:
-      // param_types = [ (s, 'float' if s == 'real32' else s) for s in (
+      // param_types = [ (s, 'float' if s == 'real32' else s, 'float' if s == 'real32' else s + "_t") for s in (
       //     'int8',
       //     'int16',
       //     'int32',
@@ -89,7 +89,7 @@ public:
       // )]
       // unsupported_types = ('uint8', 'uint16', 'uint32', 'int64', 'uint64', 'real64')
       //
-      // for a, b in param_types:
+      // for a, b, c in param_types:
       //     cog.outl("case enum_value(MT::%s):" % a.upper())
       //     cog.outl("\treturn Parameter(param_name, uv.param_%s, pmsg.param_count, pmsg.param_index);" % (b))
       // ]]]
@@ -121,20 +121,20 @@ public:
 
     switch (pmsg.param_type) {
       // [[[cog:
-      // for a, b in param_types:
+      // for a, b, c in param_types:
       //     btype = 'int' if 'int' in b else b
       //     cog.outl("case enum_value(MT::%s):" % a.upper())
-      //     cog.outl("\treturn Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);")
+      //     cog.outl("\treturn Parameter(param_name, %s(pmsg.param_value), pmsg.param_count, pmsg.param_index);" % (c))
       // ]]]
       case enum_value(MT::INT8):
-      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
+      	return Parameter(param_name, int8_t(pmsg.param_value), pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT16):
-      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
+      	return Parameter(param_name, int16_t(pmsg.param_value), pmsg.param_count, pmsg.param_index);
       case enum_value(MT::INT32):
-      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
+      	return Parameter(param_name, int32_t(pmsg.param_value), pmsg.param_count, pmsg.param_index);
       case enum_value(MT::REAL32):
-      	return Parameter(param_name, pmsg.param_value, pmsg.param_count, pmsg.param_index);
-      // [[[end]]] (checksum: 268844794a29e8f7d5eb834653bd869f)
+      	return Parameter(param_name, float(pmsg.param_value), pmsg.param_count, pmsg.param_index);
+      // [[[end]]] (checksum: fe75aa50f8bd85d69ec42f2f2740496b)
 
       default:
         RCLCPP_WARN(
