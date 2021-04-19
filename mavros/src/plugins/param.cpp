@@ -321,22 +321,27 @@ public:
    */
   static bool check_exclude_param_id(const std::string & param_id)
   {
-    return param_id == "SYSID_SW_MREV" ||
-           param_id == "SYS_NUM_RESETS" ||
-           param_id == "ARSPD_OFFSET" ||
-           param_id == "GND_ABS_PRESS" ||
-           param_id == "GND_ABS_PRESS2" ||
-           param_id == "GND_ABS_PRESS3" ||
-           param_id == "STAT_BOOTCNT" ||
-           param_id == "STAT_FLTTIME" ||
-           param_id == "STAT_RESET" ||
-           param_id == "STAT_RUNTIME" ||
-           param_id == "GND_TEMP" ||
-           param_id == "CMD_TOTAL" ||
-           param_id == "CMD_INDEX" ||
-           param_id == "LOG_LASTFILE" ||
-           param_id == "FENCE_TOTAL" ||
-           param_id == "FORMAT_VERSION";
+    static const std::set<std::string> exclude_ids{
+      "SYSID_SW_MREV",
+      "SYS_NUM_RESETS",
+      "ARSPD_OFFSET",
+      "GND_ABS_PRESS",
+      "GND_ABS_PRESS2",
+      "GND_ABS_PRESS3",
+      "STAT_BOOTCNT",
+      "STAT_FLTTIME",
+      "STAT_RESET",
+      "STAT_RUNTIME",
+      "GND_TEMP",
+      "CMD_TOTAL",
+      "CMD_INDEX",
+      "LOG_LASTFILE",
+      "FENCE_TOTAL",
+      "FORMAT_VERSION",
+      "use_sim_time"    // ROS2 Node adds this
+    };
+
+    return exclude_ids.find(param_id) != exclude_ids.end();
   }
 
   inline rclcpp::Logger get_logger() const
