@@ -1,3 +1,10 @@
+/*
+ * Copyright 2015,2016,2021 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Eigen::Quaternion helter functions
  * @file uas_quaternion_utils.cpp
@@ -6,13 +13,7 @@
  * @addtogroup nodelib
  * @{
  */
-/*
- * Copyright 2015,2016,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
+
 #include <mavros/frame_tf.hpp>
 
 namespace mavros
@@ -54,5 +55,5 @@ double quaternion_get_yaw(const Eigen::Quaterniond & q)
   return std::atan2(2. * (q0 * q3 + q1 * q2), 1. - 2. * (q2 * q2 + q3 * q3));
 }
 
-}       // namesapace ftf
-}       // namesapace mavros
+}       // namespace ftf
+}       // namespace mavros

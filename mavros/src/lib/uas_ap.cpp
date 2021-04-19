@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS UAS autipilot info methods
- * @file uas_data.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2014,2015,2021 Vladimir Ermakov.
  *
@@ -10,10 +5,16 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS UAS autipilot info methods
+ * @file uas_data.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
 
 #include <array>
 #include <unordered_map>
 #include <stdexcept>
+
 #include <mavros/mavros_uas.hpp>
 #include <mavros/utils.hpp>
 #include <mavros/px4_custom_mode.hpp>
@@ -54,7 +55,7 @@ void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
 
 static uint64_t get_default_caps(uas::MAV_AUTOPILOT ap_type)
 {
-  // TODO: return default caps mask for known FCU's
+  // TODO(vooon): return default caps mask for known FCU's
   return 0;
 }
 

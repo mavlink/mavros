@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS Plugin methods
- * @file plugin.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2021 Vladimir Ermakov.
  *
@@ -10,6 +5,13 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS Plugin methods
+ * @file plugin.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
+
+#include <vector>
 
 #include <mavros/mavros_uas.hpp>
 #include <mavros/plugin.hpp>

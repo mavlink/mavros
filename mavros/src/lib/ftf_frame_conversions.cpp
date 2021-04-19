@@ -1,3 +1,11 @@
+/*
+ * Copyright 2015 Nuno Marques.
+ * Copyright 2016,2021 Vladimir Ermakov
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Frame conversions helper functions
  * @file uas_frame_conversions.cpp
@@ -6,14 +14,6 @@
  *
  * @addtogroup nodelib
  * @{
- */
-/*
- * Copyright 2015 Nuno Marques.
- * Copyright 2016,2021 Vladimir Ermakov
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <mavros/frame_tf.hpp>

@@ -1,8 +1,3 @@
-/**
- * @brief Mavros Router class
- * @file mavros_router.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2021 Vladimir Ermakov.
  *
@@ -10,11 +5,22 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief Mavros Router class
+ * @file mavros_router.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
+
+#include <memory>
+#include <vector>
+#include <string>
+#include <set>
+#include <utility>
 
 #include <mavros/mavros_router.hpp>
 #include <rcpputils/asserts.hpp>
 
-using namespace mavros::router;
+using namespace mavros::router;  // NOLINT
 using rclcpp::QoS;
 
 using unique_lock = std::unique_lock<std::shared_timed_mutex>;
@@ -331,7 +337,7 @@ void Router::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing)
 {
   rcpputils::assert_true(msg, "msg not nullptr");
-  //rcpputils::assert_true(this->parent, "parent not nullptr");
+  // rcpputils::assert_true(this->parent, "parent not nullptr");
 
   const addr_t sysid_addr = msg->sysid << 8;
   const addr_t sysid_compid_addr = (msg->sysid << 8) | msg->compid;

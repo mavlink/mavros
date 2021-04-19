@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS UAS manager (data part)
- * @file uas_data.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2014,2015,2021 Vladimir Ermakov.
  *
@@ -10,10 +5,17 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS UAS manager (data part)
+ * @file uas_data.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
 
 #include <array>
+#include <memory>
 #include <unordered_map>
 #include <stdexcept>
+
 #include <mavros/mavros_uas.hpp>
 #include <mavros/utils.hpp>
 #include <mavros/px4_custom_mode.hpp>

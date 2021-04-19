@@ -1,19 +1,22 @@
-/**
- * @brief MAVROS UAS manager
- * @file uas.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
- * Copyright 2014 Vladimir Ermakov.
+ * Copyright 2014,2021 Vladimir Ermakov.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS UAS manager
+ * @file uas.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
 
 #include <array>
 #include <unordered_map>
 #include <stdexcept>
+#include <string>
+#include <algotithm>
+
 #include <mavros/mavros_uas.hpp>
 #include <mavros/px4_custom_mode.hpp>
 
@@ -208,18 +211,20 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
     } else if (type == MAV_TYPE::GROUND_ROVER) {
       return str_mode_cmap(apmrover2_cmode_map, custom_mode);
     } else if (type == MAV_TYPE::SURFACE_BOAT) {
-      return str_mode_cmap(apmrover2_cmode_map, custom_mode);                           // NOTE: #1051 for now (19.06.2018) boat is same as rover
+      // NOTE(vooon): #1051 for now (19.06.2018) boat is same as rover
+      return str_mode_cmap(apmrover2_cmode_map, custom_mode);
     } else if (type == MAV_TYPE::SUBMARINE) {
       return str_mode_cmap(ardusub_cmode_map, custom_mode);
     } else {
-      //ROS_WARN_THROTTLE_NAMED(30, "uas", "MODE: Unknown APM based FCU! Type: %d", enum_value(type));
-      RCLCPP_WARN(get_logger(), "MODE: Unknown APM based FCU! Type: %d", enum_value(type));
+      RCLCPP_WARN_THROTTLE(
+        get_logger(),
+        *get_clock(), 30000, "MODE: Unknown APM based FCU! Type: %d", enum_value(type));
       return str_custom_mode(custom_mode);
     }
   } else if (MAV_AUTOPILOT::PX4 == ap) {
     return str_mode_px4(custom_mode);
   } else {
-    /* TODO: other autopilot */
+    /* TODO(vooon): other autopilot */
     return str_custom_mode(custom_mode);
   }
 }

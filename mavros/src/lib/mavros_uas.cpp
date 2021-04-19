@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS UAS Node class
- * @file mavros_uas.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2013,2014,2015,2016,2021 Vladimir Ermakov.
  *
@@ -10,11 +5,18 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS UAS Node class
+ * @file mavros_uas.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
 
 #include <fnmatch.h>
 
-#include <Eigen/Eigen>
 #include <cmath>
+#include <string>
+#include <vector>
+#include <Eigen/Eigen>
 
 #include <rcpputils/asserts.hpp>
 #include <mavros/mavros_uas.hpp>
@@ -134,7 +136,7 @@ UAS::UAS(
 
       // prepare plugin lists
       // issue #257 2: assume that all plugins blacklisted
-      if (plugin_denylist.empty() and !plugin_allowlist.empty()) {
+      if (plugin_denylist.empty() && !plugin_allowlist.empty()) {
         plugin_denylist.emplace_back("*");
       }
 
@@ -423,7 +425,7 @@ void UAS::log_connect_change(bool connected)
 
 void UAS::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // TODO
+  // TODO(vooon): add some fields
 
   if (connected) {
     stat.summary(0, "connected");
