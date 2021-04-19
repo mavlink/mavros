@@ -1,8 +1,3 @@
-/**
- * @brief MAVROS UAS TF part
- * @file uas_tf.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
- */
 /*
  * Copyright 2014,2015,2021 Vladimir Ermakov.
  *
@@ -10,8 +5,16 @@
  * in the top-level LICENSE file of the mavros repository.
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
+/**
+ * @brief MAVROS UAS TF part
+ * @file uas_tf.cpp
+ * @author Vladimir Ermakov <vooon341@gmail.com>
+ */
 
 #include <array>
+#include <string>
+#include <vector>
+
 #include <mavros/mavros_uas.hpp>
 #include <tf2_eigen/tf2_eigen.h>
 
