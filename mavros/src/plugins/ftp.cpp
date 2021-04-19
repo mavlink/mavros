@@ -38,7 +38,7 @@
 #include <mavros_msgs/srv/file_checksum.hpp>
 
 // enable debugging messages
-#define FTP_LL_DEBUG
+// #define FTP_LL_DEBUG
 
 namespace mavros
 {
