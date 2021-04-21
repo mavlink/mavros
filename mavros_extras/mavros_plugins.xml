@@ -71,4 +71,7 @@
 	<class name="mount_control" type="mavros::extra_plugins::MountControlPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send Mission command to control a camera or a antenna mount.</description>
 	</class>
+	<class name="orbit_status" type="mavros::extra_plugins::OrbitStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Publish OrbitExecutionStatus message data from FCU.</description>
+	</class>
 </library>
