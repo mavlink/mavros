@@ -14,7 +14,7 @@ Contributing
 9. Commit with description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commit are better than mix of style and bug fix);
 10. Run tests:
    - with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
-   - with `catkin tools`, issue `catkin run_tests`;
+   - with `catkin tools`, issue `catkin run_tests mavros`;
 11. If everything goes as planned, push the changes (`git push -u <remote_repo> <feature_branch>`) and issue a pull request.
 
 
