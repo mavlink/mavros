@@ -7,8 +7,8 @@ jobs:
     strategy:
       matrix:
         env:
-          - {ROS_DISTRO: melodic, ROS_REPO: testing}
-          - {ROS_DISTRO: melodic, ROS_REPO: main}
+          - {ROS_DISTRO: melodic, ROS_REPO: testing, AFTER_INSTALL_TARGET_DEPENDENCIES: &datasets_sh ./mavros/scripts/install_geographiclib_datasets.sh}
+          - {ROS_DISTRO: melodic, ROS_REPO: main, AFTER_INSTALL_TARGET_DEPENDENCIES: *datasets_sh}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
