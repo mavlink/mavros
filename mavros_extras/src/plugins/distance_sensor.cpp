@@ -150,7 +150,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&DistanceSensorPlugin::handle_distance_sensor),
+			make_handler(&DistanceSensorPlugin::handle_distance_sensor),
 		};
 	}
 
@@ -165,13 +165,13 @@ private:
 
 	/* -*- low-level send -*- */
 	void distance_sensor(uint32_t time_boot_ms,
-				uint32_t min_distance,
-				uint32_t max_distance,
-				uint32_t current_distance,
-				uint8_t type, uint8_t id,
-				uint8_t orientation, uint8_t covariance,
-				float horizontal_fov, float vertical_fov,
-				std::array<float, 4> quaternion)
+		uint32_t min_distance,
+		uint32_t max_distance,
+		uint32_t current_distance,
+		uint8_t type, uint8_t id,
+		uint8_t orientation, uint8_t covariance,
+		float horizontal_fov, float vertical_fov,
+		std::array<float, 4> quaternion)
 	{
 		mavlink::common::msg::DISTANCE_SENSOR ds = {};
 
@@ -218,26 +218,26 @@ private:
 		auto it = sensor_map.find(dist_sen.id);
 		if (it == sensor_map.end()) {
 			ROS_ERROR_NAMED("distance_sensor",
-						"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
-						dist_sen.id, dist_sen.type, dist_sen.orientation);
+				"DS: no mapping for sensor id: %d, type: %d, orientation: %d",
+				dist_sen.id, dist_sen.type, dist_sen.orientation);
 			return;
 		}
 
 		auto sensor = it->second;
 		if (sensor->is_subscriber) {
 			ROS_ERROR_ONCE_NAMED("distance_sensor",
-					"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
-					sensor->topic_name.c_str(), sensor->sensor_id);
+				"DS: %s (id %d) is subscriber, but i got sensor data for that id from FCU",
+				sensor->topic_name.c_str(), sensor->sensor_id);
 
 			return;
 		}
 
 		if (sensor->orientation >= 0 && dist_sen.orientation != sensor->orientation) {
 			ROS_ERROR_NAMED("distance_sensor",
-						"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
-						sensor->topic_name.c_str(),
-						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
-						utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
+				"DS: %s: received sensor data has different orientation (%s) than in config (%s)!",
+				sensor->topic_name.c_str(),
+				utils::to_string_enum<MAV_SENSOR_ORIENTATION>(dist_sen.orientation).c_str(),
+				utils::to_string_enum<MAV_SENSOR_ORIENTATION>(sensor->orientation).c_str());
 			return;
 		}
 
@@ -260,8 +260,8 @@ private:
 			break;
 		default:
 			ROS_ERROR_NAMED("distance_sensor",
-						"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
-						sensor->topic_name.c_str(), dist_sen.type);
+				"DS: %s: Wrong/undefined type of sensor (type: %d). Droping!...",
+				sensor->topic_name.c_str(), dist_sen.type);
 			return;
 		}
 
@@ -307,18 +307,21 @@ void DistanceSensorItem::range_cb(const sensor_msgs::Range::ConstPtr &msg)
 	else if (msg->radiation_type == sensor_msgs::Range::ULTRASOUND)
 		type = enum_value(MAV_DISTANCE_SENSOR::ULTRASOUND);
 
+	std::array<float, 4> q;
+	ftf::quaternion_to_mavlink(quaternion, q);
+
 	owner->distance_sensor(
-				msg->header.stamp.toNSec() / 1000000,
-				msg->min_range / 1E-2,
-				msg->max_range / 1E-2,
-				msg->range / 1E-2,
-				type,
-				sensor_id,
-				orientation,
-				covariance_,
-				msg->field_of_view * horizontal_fov_ratio,
-				msg->field_of_view * vertical_fov_ratio,
-				{quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z()});
+		msg->header.stamp.toNSec() / 1000000,
+		msg->min_range / 1E-2,
+		msg->max_range / 1E-2,
+		msg->range / 1E-2,
+		type,
+		sensor_id,
+		orientation,
+		covariance_,
+		msg->field_of_view * horizontal_fov_ratio,
+		msg->field_of_view * vertical_fov_ratio,
+		q);
 }
 
 DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *owner, std::string topic_name)
@@ -367,7 +370,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		// unset allowed, setted wrong - not
 		if (p->orientation == -1 && !orientation_str.empty()) {
 			ROS_ERROR_NAMED("distance_sensor", "DS: %s: defined orientation (%s) is not valid!",
-						topic_name.c_str(), orientation_str.c_str());
+				topic_name.c_str(), orientation_str.c_str());
 			p.reset(); return p;	// nullptr
 		}
 
@@ -378,7 +381,7 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 			pnh.param("sensor_position/y", p->position.y(), 0.0);
 			pnh.param("sensor_position/z", p->position.z(), 0.0);
 			ROS_DEBUG_NAMED("sensor_position", "DS: %s: Sensor position at: %f, %f, %f", topic_name.c_str(),
-						p->position.x(), p->position.y(), p->position.z());
+				p->position.x(), p->position.y(), p->position.z());
 		}
 	}
 	else {
@@ -399,9 +402,9 @@ DistanceSensorItem::Ptr DistanceSensorItem::create_item(DistanceSensorPlugin *ow
 		pnh.param("vertical_fov_ratio", p->vertical_fov_ratio, 1.0);
 		if (p->orientation == enum_value(mavlink::common::MAV_SENSOR_ORIENTATION::ROTATION_CUSTOM)) {
 			Eigen::Vector3d rpy;
-			pnh.param("sensor_orientation/roll", rpy.x(), 0.0);
-			pnh.param("sensor_orientation/pitch", rpy.y(), 0.0);
-			pnh.param("sensor_orientation/yaw", rpy.z(), 0.0);
+			pnh.param("custom_orientation/roll", rpy.x(), 0.0);
+			pnh.param("custom_orientation/pitch", rpy.y(), 0.0);
+			pnh.param("custom_orientation/yaw", rpy.z(), 0.0);
 			constexpr auto DEG_TO_RAD = (M_PI / 180.0);
 			p->quaternion = Eigen::Quaternionf(ftf::quaternion_from_rpy(rpy * DEG_TO_RAD));
 		}
