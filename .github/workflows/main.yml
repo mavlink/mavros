@@ -11,6 +11,7 @@ jobs:
           - {ROS_DISTRO: foxy, ROS_REPO: main}
     env:
       CCACHE_DIR: /github/home/.ccache
+      AFTER_INSTALL_TARGET_DEPENDENCIES: ./mavros/scripts/install_geographiclib_datasets.sh
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

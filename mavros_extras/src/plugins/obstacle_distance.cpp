@@ -109,6 +109,8 @@ private:
 		obstacle.min_distance = req->range_min * 1e2;							//!< [centimeters]
 		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
 		obstacle.frame = utils::enum_value(frame);
+		// Assume angle_increment is positive and incoming message is in a FRD/NED frame
+		obstacle.angle_offset = req->angle_min * RAD_TO_DEG;						//!< [degrees]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
 										     << std::endl << obstacle.to_yaml());

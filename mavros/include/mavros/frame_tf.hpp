@@ -411,7 +411,8 @@ double quaternion_get_yaw(const Eigen::Quaterniond & q);
  * MAVLink uses wxyz order, wile Eigen::Quaterniond uses xyzw internal order,
  * so it can't be stored to array using Eigen::Map.
  */
-inline void quaternion_to_mavlink(const Eigen::Quaterniond & q, std::array<float, 4> & qmsg)
+template <typename _Scalar, std::enable_if_t<std::is_floating_point<_Scalar>::value, bool> = true>
+inline void quaternion_to_mavlink(const Eigen::Quaternion<_Scalar> &q, std::array<float, 4> &qmsg)
 {
   qmsg[0] = q.w();
   qmsg[1] = q.x();
