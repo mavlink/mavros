@@ -275,7 +275,7 @@ class ROSEndpoint : public Endpoint
 public:
   ROSEndpoint()
   : Endpoint()
-  {  }
+  {}
 
   ~ROSEndpoint()
   {

@@ -24,13 +24,13 @@
 #include <vector>
 #include <functional>
 #include <mutex>
-#include <shared_mutex>
+#include <shared_mutex>     // NOLINT
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#include <mavconn/interface.hpp>    // NOLINT
-#include <mavros/mavros_uas.hpp>    // NOLINT
+#include "mavconn/interface.hpp"
+#include "mavros/mavros_uas.hpp"
 
 namespace mavros
 {

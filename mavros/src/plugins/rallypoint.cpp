@@ -27,9 +27,7 @@ class RallypointPlugin : public plugin::MissionBase
 {
 public:
   RallypointPlugin()
-  : MissionBase("RP"),
-    rp_nh("~rallypoint")
-  {}
+  : MissionBase("RP"), rp_nh("~rallypoint") {}
 
   void initialize(UAS & uas_) override
   {
@@ -124,9 +122,7 @@ private:
 
   /* -*- ROS callbacks -*- */
 
-  bool pull_cb(
-    mavros_msgs::WaypointPull::Request & req,
-    mavros_msgs::WaypointPull::Response & res)
+  bool pull_cb(mavros_msgs::WaypointPull::Request & req, mavros_msgs::WaypointPull::Response & res)
   {
     unique_lock lock(mutex);
 
@@ -145,13 +141,11 @@ private:
     lock.lock();
 
     res.wp_received = waypoints.size();
-    go_idle();                  // not nessessary, but prevents from blocking
+    go_idle();  // not nessessary, but prevents from blocking
     return true;
   }
 
-  bool push_cb(
-    mavros_msgs::WaypointPush::Request & req,
-    mavros_msgs::WaypointPush::Response & res)
+  bool push_cb(mavros_msgs::WaypointPush::Request & req, mavros_msgs::WaypointPush::Response & res)
   {
     unique_lock lock(mutex);
 
@@ -165,8 +159,7 @@ private:
 
       if (!enable_partial_push) {
         ROS_WARN_NAMED(
-          log_ns, "%s: Partial Push not enabled. (Only supported on APM)",
-          log_ns.c_str());
+          log_ns, "%s: Partial Push not enabled. (Only supported on APM)", log_ns.c_str());
         res.success = false;
         res.wp_transfered = 0;
         return true;
@@ -221,13 +214,12 @@ private:
       res.wp_transfered = wp_cur_id + 1;
     }
 
-    go_idle();                  // same as in pull_cb
+    go_idle();  // same as in pull_cb
     return true;
   }
 
   bool clear_cb(
-    mavros_msgs::WaypointClear::Request & req,
-    mavros_msgs::WaypointClear::Response & res)
+    mavros_msgs::WaypointClear::Request & req, mavros_msgs::WaypointClear::Response & res)
   {
     unique_lock lock(mutex);
 
@@ -243,12 +235,12 @@ private:
     res.success = wait_push_all();
 
     lock.lock();
-    go_idle();                  // same as in pull_cb
+    go_idle();  // same as in pull_cb
     return true;
   }
 };
-}       // namespace std_plugins
-}       // namespace mavros
+}  // namespace std_plugins
+}  // namespace mavros
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::RallypointPlugin, mavros::plugin::PluginBase)

@@ -143,7 +143,8 @@ private:
 
   void handle_command_ack(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::COMMAND_ACK & ack, plugin::filter::SystemAndOk filter [[maybe_unused]])
+    mavlink::common::msg::COMMAND_ACK & ack,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     lock_guard lock(mutex);
 
