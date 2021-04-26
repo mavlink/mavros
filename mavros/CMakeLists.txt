@@ -181,6 +181,20 @@ install(DIRECTORY launch
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+
+  # NOTE(vooon): explicit call to find dependencies for ament_lint
+  # ament_find_gtest()
+  # ament_find_gmock()
+
+  # NOTE(vooon): without that cppcheck fails on tests cpp files
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GMOCK_INCLUDE_DIRS}")
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GTEST_INCLUDE_DIRS}")
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${EIGEN3_INCLUDE_DIRS}")
+  # set(ament_cmake_cppcheck_LANGUAGE "c++")
+
+  # NOTE(vooon): tired to provide more and more macro
+  list(APPEND ament_cmake_cppcheck_ADDITIONAL_EXCLUDE "./test/*.cpp")
+
   find_package(ament_lint_auto REQUIRED)
 
   # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.

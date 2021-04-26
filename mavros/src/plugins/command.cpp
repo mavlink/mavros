@@ -65,8 +65,8 @@ class CommandPlugin : public plugin::Plugin
 public:
   explicit CommandPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "cmd"),
-    command_ack_timeout_dt(ACK_TIMEOUT_DEFAULT),
-    use_comp_id_system_control(false)
+    use_comp_id_system_control(false),
+    command_ack_timeout_dt(ACK_TIMEOUT_DEFAULT)
   {
     enable_node_watch_parameters();
 
