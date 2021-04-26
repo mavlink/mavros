@@ -22,19 +22,24 @@
 
 #include <array>
 #include <memory>
-#include <shared_mutex>
-#include <Eigen/Eigen>
+#include <set>
+#include <string>
+#include <shared_mutex>     // NOLINT
+#include <utility>
+#include <vector>
+#include <unordered_map>
+#include <Eigen/Eigen>      // NOLINT
 
-#include <mavconn/interface.hpp>
-#include <mavconn/mavlink_dialect.hpp>
-#include <mavros/utils.hpp>
-#include <rclcpp/macros.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include "mavconn/interface.hpp"
+#include "mavconn/mavlink_dialect.hpp"
+#include "mavros/utils.hpp"
+#include "rclcpp/macros.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "diagnostic_updater/diagnostic_updater.hpp"
 
-#include <mavros_msgs/msg/mavlink.hpp>
-#include <mavros_msgs/srv/endpoint_add.hpp>
-#include <mavros_msgs/srv/endpoint_del.hpp>
+#include "mavros_msgs/msg/mavlink.hpp"
+#include "mavros_msgs/srv/endpoint_add.hpp"
+#include "mavros_msgs/srv/endpoint_del.hpp"
 
 namespace mavros
 {
@@ -48,8 +53,8 @@ using mavconn::Framing;
 using ::mavlink::mavlink_message_t;
 using ::mavlink::msgid_t;
 
-using namespace std::placeholders;
-using namespace std::chrono_literals;
+using namespace std::placeholders;      // NOLINT
+using namespace std::chrono_literals;   // NOLINT
 
 class Router;
 
@@ -194,9 +199,9 @@ private:
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
 
-  std::atomic<size_t> stat_msg_routed;  // amount of messages came to route_messages()
-  std::atomic<size_t> stat_msg_sent;    // amount of messages sent
-  std::atomic<size_t> stat_msg_dropped; // amount of messages dropped (because there are no suitable endpoint)
+  std::atomic<size_t> stat_msg_routed;      //!< amount of messages came to route_messages()
+  std::atomic<size_t> stat_msg_sent;        //!< amount of messages sent
+  std::atomic<size_t> stat_msg_dropped;     //!< amount of messages dropped
 
   rclcpp::Service<mavros_msgs::srv::EndpointAdd>::SharedPtr add_service;
   rclcpp::Service<mavros_msgs::srv::EndpointDel>::SharedPtr del_service;
@@ -234,9 +239,9 @@ class MAVConnEndpoint : public Endpoint
 {
 public:
   MAVConnEndpoint()
-  : Endpoint()
-  {
-  }
+  : Endpoint(),
+    stat_last_drop_count(0)
+  {}
 
   ~MAVConnEndpoint()
   {
@@ -270,8 +275,7 @@ class ROSEndpoint : public Endpoint
 public:
   ROSEndpoint()
   : Endpoint()
-  {
-  }
+  {  }
 
   ~ROSEndpoint()
   {
@@ -295,7 +299,7 @@ private:
   void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
 };
 
-} // namespace router
-} // namespace mavros
+}   // namespace router
+}   // namespace mavros
 
-#endif // MAVROS__MAVROS_ROUTER_HPP_
+#endif  // MAVROS__MAVROS_ROUTER_HPP_

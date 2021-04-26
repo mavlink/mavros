@@ -21,11 +21,11 @@
 #define MAVROS__UTILS_HPP_
 
 #include <string>
+#include <Eigen/Geometry>   // NOLINT
 
-#include <Eigen/Geometry>
-#include <mavconn/thread_utils.hpp>
-#include <mavros_msgs/mavlink_convert.hpp>
-#include <mavconn/mavlink_dialect.hpp>
+#include "mavconn/thread_utils.hpp"
+#include "mavros_msgs/mavlink_convert.hpp"
+#include "mavconn/mavlink_dialect.hpp"
 
 // OS X compat: missing error codes
 #ifdef __APPLE__
