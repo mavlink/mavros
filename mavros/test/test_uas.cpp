@@ -11,14 +11,16 @@
  * Test mavros uas node
  */
 
-
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <rclcpp/executors.hpp>
-#include <mavconn/interface.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin_filter.hpp>
+#include <memory>
+#include <string>
+
+#include "rclcpp/executors.hpp"
+#include "mavconn/interface.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin_filter.hpp"
 
 using ::testing::_;
 using ::testing::Return;
@@ -48,7 +50,7 @@ class MockUAS : public UAS
 public:
   using SharedPtr = std::shared_ptr<MockUAS>;
 
-  MockUAS(const std::string name_)
+  explicit MockUAS(const std::string name_)
   : UAS(name_) {}
 
   MOCK_METHOD1(create_plugin_instance, plugin::Plugin::SharedPtr(const std::string & pl_name));
@@ -59,7 +61,7 @@ class MockPlugin : public plugin::Plugin
 public:
   using SharedPtr = std::shared_ptr<MockPlugin>;
 
-  MockPlugin(UAS::SharedPtr uas_)
+  explicit MockPlugin(UAS::SharedPtr uas_)
   : Plugin(uas_) {}
 
   MOCK_METHOD0(get_subscriptions, plugin::Plugin::Subscriptions(void));
@@ -152,7 +154,6 @@ public:
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const uint16_t source = 0x0101)
   {
-
     mavlink_message_t ret;
     mavlink::MsgMap map(ret);
     ret.sysid = source >> 8;

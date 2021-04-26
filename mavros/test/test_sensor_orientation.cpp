@@ -1,3 +1,11 @@
+// mavros
+// Copyright 2021 Vladimir Ermakov, All rights reserved.
+//
+// This file is part of the mavros package and subject to the license terms
+// in the top-level LICENSE file of the mavros repository.
+// https://github.com/mavlink/mavros/tree/master/LICENSE.md
+//
+
 /**
  * Test libmavros sensor orientation utilities
  *
@@ -11,7 +19,7 @@
 #include <mavros/frame_tf.hpp>
 #include <mavconn/mavlink_dialect.hpp>
 
-using namespace mavros;
+using namespace mavros;     // NOLINT
 using mavros::utils::enum_value;
 using SO = mavlink::common::MAV_SENSOR_ORIENTATION;
 
