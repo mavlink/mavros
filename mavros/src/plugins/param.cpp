@@ -415,8 +415,9 @@ public:
     //   "~/get",
     //   std::bind(&ParamPlugin::get_cb, this, _1, _2));
 
-    shedule_timer = node->create_wall_timer(BOOTUP_TIME, std::bind(&ParamPlugin::shedule_cb, this));
-    shedule_timer->cancel();
+    schedule_timer =
+      node->create_wall_timer(BOOTUP_TIME, std::bind(&ParamPlugin::schedule_cb, this));
+    schedule_timer->cancel();
 
     timeout_timer =
       node->create_wall_timer(PARAM_TIMEOUT, std::bind(&ParamPlugin::timeout_cb, this));
@@ -445,7 +446,7 @@ private:
 
   rclcpp::Publisher<mavros_msgs::msg::ParamEvent>::SharedPtr param_event_pub;
 
-  rclcpp::TimerBase::SharedPtr shedule_timer;   //!< for startup shedule fetch
+  rclcpp::TimerBase::SharedPtr schedule_timer;   //!< for startup schedule fetch
   rclcpp::TimerBase::SharedPtr timeout_timer;   //!< for timeout resend
 
   const std::chrono::nanoseconds BOOTUP_TIME;
@@ -656,30 +657,30 @@ private:
     lock_guard lock(mutex);
 
     if (connected) {
-      shedule_pull();
+      schedule_pull();
     } else {
-      shedule_timer->cancel();
+      schedule_timer->cancel();
       clear_all_parameters();
     }
   }
 
-  void shedule_pull()
+  void schedule_pull()
   {
-    shedule_timer->reset();
+    schedule_timer->reset();
   }
 
-  void shedule_cb()
+  void schedule_cb()
   {
     lock_guard lock(mutex);
-    shedule_timer->cancel();
+    schedule_timer->cancel();
 
     if (param_state != PR::IDLE) {
       // try later
-      RCLCPP_DEBUG(get_logger(), "PR: busy, reshedule pull");
-      shedule_pull();
+      RCLCPP_DEBUG(get_logger(), "PR: busy, reschedule pull");
+      schedule_pull();
     }
 
-    RCLCPP_DEBUG(get_logger(), "PR: start sheduled pull");
+    RCLCPP_DEBUG(get_logger(), "PR: start scheduled pull");
     param_state = PR::RXLIST;
     param_rx_retries = RETRIES_COUNT;
     clear_all_parameters();
@@ -868,7 +869,7 @@ private:
       param_rx_retries = RETRIES_COUNT;
       clear_all_parameters();
 
-      shedule_timer->cancel();
+      schedule_timer->cancel();
       restart_timeout_timer();
       param_request_list();
 

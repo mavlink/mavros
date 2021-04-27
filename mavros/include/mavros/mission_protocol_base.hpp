@@ -74,12 +74,14 @@ using Filter = plugin::filter::SystemAndOk;
 //     'param2',
 //     'param3',
 //     'param4',
+//     'mission_type',
 // )]
 // waypoint_coords = [
 //     ('x_lat', 'x'),
 //     ('y_long', 'y'),
 //     ('z_alt', 'z'),
 // ]
+//
 // ]]]
 // [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
@@ -88,8 +90,8 @@ using Filter = plugin::filter::SystemAndOk;
 class WaypointItem : public mavros_msgs::msg::Waypoint
 {
 public:
-  //! sequence number, not a part of ros message
-  uint16_t seq;
+  uint16_t seq;             //!< sequence number, not a part of ros message
+  uint8_t mission_type;     //!< MAV_MISSION_TYPE
 
   static constexpr double encode_factor(const uint8_t frame)
   {
@@ -122,18 +124,21 @@ public:
         return 1;
       default:
         return 1;
-        // [[[end]]] (checksum: 1e7f1d387a168ae02c6d21bad66fbf30)
+        // [[[end]]] (checksum: e0b5a2adcdd11598537fb5f1da9880be)
     }
   }
 
   template<class ITEM>
   explicit WaypointItem(const ITEM & mav_msg)
-  : Waypoint()
+  : Waypoint(),
     // [[[cog:
-    // for a, b in waypoint_item_msg + waypoint_coords:
-    //     cog.outl(f", {a}(mav_msg.{b})")
+    // fields = waypoint_item_msg + waypoint_coords
+    // for i, (a, b) in enumerate(fields):
+    //     needs_comma = i < len(fields) - 1
+    //     cog.outl(f"{a}(mav_msg.{b}){needs_comma and ',' or ''}")
     // ]]]
-    , frame(mav_msg.frame),
+    seq(mav_msg.seq),
+    frame(mav_msg.frame),
     command(mav_msg.command),
     is_current(mav_msg.current),
     autocontinue(mav_msg.autocontinue),
@@ -141,23 +146,27 @@ public:
     param2(mav_msg.param2),
     param3(mav_msg.param3),
     param4(mav_msg.param4),
+    mission_type(mav_msg.mission_type),
     x_lat(mav_msg.x),
     y_long(mav_msg.y),
     z_alt(mav_msg.z)
-    // [[[end]]] (checksum: 1596cd95b1f835bb12444147fdfd83e2)
+    // [[[end]]] (checksum: 6300707d0cbd122086c9a0f0039d1650)
   {}
 
   template< >
   explicit WaypointItem(const WP_ITEM_INT & mav_msg)
-  : Waypoint()
+  : Waypoint(),
     // [[[cog:
-    // for a, b in waypoint_item_msg + waypoint_coords:
+    // fields = waypoint_item_msg + waypoint_coords
+    // for i, (a, b) in enumerate(fields):
+    //     needs_comma = i < len(fields) - 1
     //     if a.startswith(('x', 'y')):
-    //         cog.outl(f", {a}(mav_msg.{b} / encode_factor(mav_msg.frame))")
+    //         cog.outl(f"{a}(mav_msg.{b} / encode_factor(mav_msg.frame)){needs_comma and ',' or ''}")
     //     else:
-    //         cog.outl(f", {a}(mav_msg.{b})")
+    //         cog.outl(f"{a}(mav_msg.{b}){needs_comma and ',' or ''}")
     // ]]]
-    , frame(mav_msg.frame),
+    seq(mav_msg.seq),
+    frame(mav_msg.frame),
     command(mav_msg.command),
     is_current(mav_msg.current),
     autocontinue(mav_msg.autocontinue),
@@ -165,14 +174,15 @@ public:
     param2(mav_msg.param2),
     param3(mav_msg.param3),
     param4(mav_msg.param4),
+    mission_type(mav_msg.mission_type),
     x_lat(mav_msg.x / encode_factor(mav_msg.frame)),
     y_long(mav_msg.y / encode_factor(mav_msg.frame)),
     z_alt(mav_msg.z)
-    // [[[end]]] (checksum: 7c467f038381eb9ef718723c223c497c)
+    // [[[end]]] (checksum: 8a4fa20a8a78c59e717837c18b226303)
   {}
 
   template<class ITEM>
-  ITEM to_msg(const uint16_t seq, const WP_TYPE type = WP_TYPE::MISSION) const
+  ITEM to_msg() const
   {
     ITEM ret {};
 
@@ -180,52 +190,50 @@ public:
     // for a, b in waypoint_item_msg + waypoint_coords:
     //     cog.outl(f"ret.{b} = {a};")
     // ]]]
-    ret.frame = wp.frame;
-    ret.command = wp.command;
-    ret.current = wp.is_current;
-    ret.autocontinue = wp.autocontinue;
-    ret.param1 = wp.param1;
-    ret.param2 = wp.param2;
-    ret.param3 = wp.param3;
-    ret.param4 = wp.param4;
-    ret.x = wp.x_lat;
-    ret.y = wp.y_long;
-    ret.z = wp.z_alt;
-    // [[[end]]] (checksum: d121a97a1214456f845cab6f5b66e317)
-
     ret.seq = seq;
-    ret.mission_type = enum_value(type);
+    ret.frame = frame;
+    ret.command = command;
+    ret.current = is_current;
+    ret.autocontinue = autocontinue;
+    ret.param1 = param1;
+    ret.param2 = param2;
+    ret.param3 = param3;
+    ret.param4 = param4;
+    ret.mission_type = mission_type;
+    ret.x = x_lat;
+    ret.y = y_long;
+    ret.z = z_alt;
+    // [[[end]]] (checksum: 4a8215aded03e3e58fc76c5da2990de7)
 
     return ret;
   }
 
   template< >
-  WP_ITEM_INT to_msg(const uint16_t seq, const WP_TYPE type = WP_TYPE::MISSION) const
+  WP_ITEM_INT to_msg() const
   {
     WP_ITEM_INT ret {};
 
     // [[[cog:
     // for a, b in waypoint_item_msg + waypoint_coords:
     //     if b.startswith(('x', 'y')):
-    //         cog.outl(f"ret.{b} = int32_t({a} * waypoint_encode_factor(frame));")
+    //         cog.outl(f"ret.{b} = int32_t({a} * encode_factor(frame));")
     //     else:
     //         cog.outl(f"ret.{b} = {a};")
     // ]]]
-    ret.frame = wp.frame;
-    ret.command = wp.command;
-    ret.current = wp.is_current;
-    ret.autocontinue = wp.autocontinue;
-    ret.param1 = wp.param1;
-    ret.param2 = wp.param2;
-    ret.param3 = wp.param3;
-    ret.param4 = wp.param4;
-    ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
-    ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
-    ret.z = wp.z_alt;
-    // [[[end]]] (checksum: be915294cea6806c5897a17259983877)
-
     ret.seq = seq;
-    ret.mission_type = enum_value(type);
+    ret.frame = frame;
+    ret.command = command;
+    ret.current = is_current;
+    ret.autocontinue = autocontinue;
+    ret.param1 = param1;
+    ret.param2 = param2;
+    ret.param3 = param3;
+    ret.param4 = param4;
+    ret.mission_type = mission_type;
+    ret.x = int32_t(x_lat * encode_factor(frame));
+    ret.y = int32_t(y_long * encode_factor(frame));
+    ret.z = z_alt;
+    // [[[end]]] (checksum: 8729bc869b420ce4272d74be8f12058a)
 
     return ret;
   }
@@ -240,7 +248,6 @@ public:
       " x: " << x_lat << " y: " << y_long << " z: " << z_alt;
     return ss.str();
   }
-
 };
 
 
@@ -268,7 +275,7 @@ public:
     BOOTUP_TIME(bootup_time_),
     LIST_TIMEOUT(30s),
     WP_TIMEOUT(1s),
-    RESCHEDULE_DT(5s)
+    RESCHEDULE_TIME(5s)
   {
     wp_timer = node->create_wall_timer(WP_TIMEOUT, std::bind(&MissionBase::timeout_cb, this, _1));
     wp_timer->cancel();
@@ -293,8 +300,8 @@ protected:
   using lock_guard = std::lock_guard<std::recursive_mutex>;
 
   std::recursive_mutex mutex;
-  std::vector<mavros_msgs::Waypoint> waypoints;
-  std::vector<mavros_msgs::Waypoint> send_waypoints;
+  std::vector<WaypointItem> waypoints;
+  std::vector<WaypointItem> send_waypoints;
 
   enum class WP
   {
@@ -351,7 +358,8 @@ protected:
    * @param msg		Received Mavlink msg
    * @param wpi		WaypointItemInt from msg
    */
-  virtual void handle_mission_item_int(const mavlink::mavlink_message_t * msg [[maybe_unused]],
+  virtual void handle_mission_item_int(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
     WP_ITEM_INT & wpi,
     Filter filter [[maybe_unused]]);
 
@@ -362,7 +370,9 @@ protected:
    * @param msg		Received Mavlink msg
    * @param wpi		WaypointItem from msg
    */
-  virtual void handle_mission_item(const mavlink::mavlink_message_t * msg, WP_ITEM & wpi,
+  virtual void handle_mission_item(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    WP_ITEM & wpi,
     Filter filter [[maybe_unused]]);
 
   /**
@@ -382,7 +392,8 @@ protected:
    */
   virtual void handle_mission_request(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::MISSION_REQUEST & mreq, Filter filter [[maybe_unused]]);
+    mavlink::common::msg::MISSION_REQUEST & mreq,
+    Filter filter [[maybe_unused]]);
 
   /**
    * @brief handle MISSION_REQUEST_INT mavlink msg
@@ -392,7 +403,8 @@ protected:
    */
   virtual void handle_mission_request_int(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::MISSION_REQUEST_INT & mreq, Filter filter [[maybe_unused]]);
+    mavlink::common::msg::MISSION_REQUEST_INT & mreq,
+    Filter filter [[maybe_unused]]);
 
   /**
    * @brief handle MISSION_COUNT mavlink msg
@@ -403,7 +415,8 @@ protected:
    */
   virtual void handle_mission_count(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::MISSION_COUNT & mcnt, Filter filter [[maybe_unused]]);
+    mavlink::common::msg::MISSION_COUNT & mcnt,
+    Filter filter [[maybe_unused]]);
 
   /**
    * @brief handle MISSION_ACK mavlink msg
@@ -413,7 +426,8 @@ protected:
    */
   virtual void handle_mission_ack(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::MISSION_ACK & mack, Filter filter [[maybe_unused]]);
+    mavlink::common::msg::MISSION_ACK & mack,
+    Filter filter [[maybe_unused]]);
 
   /* -*- mid-level helpers -*- */
 
@@ -427,6 +441,10 @@ protected:
   void scheduled_pull_cb()
   {
     lock_guard lock(mutex);
+
+    // run once
+    shedule_timer->cancel();
+
     if (wp_state != WP::IDLE) {
       /* try later */
       RCLCPP_DEBUG(get_logger(), "MP: busy, reschedule pull");
@@ -439,9 +457,6 @@ protected:
     wp_count = 0;
     restart_timeout_timer();
     mission_request_list();
-
-    // run once
-    shedule_timer->cancel();
   }
 
   //! @brief Send ACK back to FCU after pull
@@ -491,9 +506,11 @@ protected:
   {
     if (seq < send_waypoints.size()) {
       auto wp_msg = send_waypoints.at(seq);
-      auto wpi = mav_from_msg<ITEM>(wp_msg, seq, wp_type);
-      mission_send(wpi);
-      RCLCPP_DEBUG_STREAM(get_logger(), "MP: send item " << waypoint_to_string<ITEM>(wpi));
+      wp_msg.seq = seq;
+      wp_msg.mission_type = enum_value(wp_type);
+
+      mission_send(wp_msg.to_msg<ITEM>());
+      RCLCPP_DEBUG_STREAM(get_logger(), "MP: send item " << wp_msg.to_string());
     }
   }
 
@@ -537,11 +554,10 @@ protected:
   /* -*- low-level send functions -*- */
 
   template<class ITEM>
-  void mission_send(const ITEM & wp)
+  void mission_send(ITEM & wp)
   {
-    auto wpi = wp;
-    uas->msg_set_target(wpi);
-    uas->send_message(wpi);
+    uas->msg_set_target(wp);
+    uas->send_message(wp);
   }
 
   void mission_request(const uint16_t seq)
