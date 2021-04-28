@@ -118,7 +118,7 @@ add_library(mavros_plugins SHARED
   src/plugins/manual_control.cpp
   src/plugins/mission_protocol_base.cpp
   src/plugins/param.cpp
-  #src/plugins/rallypoint.cpp
+  src/plugins/rallypoint.cpp
   src/plugins/rc_io.cpp
   src/plugins/setpoint_accel.cpp
   src/plugins/setpoint_attitude.cpp

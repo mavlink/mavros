@@ -45,12 +45,17 @@ public:
       });
 
     node_declate_and_watch_parameter(
-      "use_mission_item_int", rclcpp::ParameterValue(), [&](const rclcpp::Parameter & p) {
+      "use_mission_item_int", true, [&](const rclcpp::Parameter & p) {
+        use_mission_item_int = p.as_bool();
+      });
+
+    node_declate_and_watch_parameter(
+      "enable_partial_push", rclcpp::ParameterValue(), [&](const rclcpp::Parameter & p) {
         if (p.get_type() == rclcpp::PARAMETER_NOT_SET) {
           return;
         }
 
-        use_mission_item_int = p.as_bool();
+        enable_partial_push = p.as_bool();
       });
 
     auto wp_qos = rclcpp::QoS(10).transient_local();
@@ -117,7 +122,7 @@ private:
       if (p.get_type() == rclcpp::PARAMETER_NOT_SET) {
         node->set_parameter(rclcpp::Parameter(p.get_name(), uas->is_ardupilotmega()));
       }
-    } else {
+    } else if (schedule_timer) {
       schedule_timer->cancel();
     }
   }
@@ -207,8 +212,7 @@ private:
 
       uint16_t seq = req->start_index;
       for (auto & it : req->waypoints) {
-        send_waypoints[seq] = it;
-        seq++;
+        send_waypoints[seq++] = it;
       }
 
       wp_count = req->waypoints.size();

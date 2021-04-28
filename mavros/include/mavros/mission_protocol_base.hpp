@@ -25,6 +25,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <vector>
 #include <condition_variable>
 
 #include "rcpputils/asserts.hpp"
@@ -61,7 +62,8 @@ using MFilter = plugin::filter::SystemAndOk;
 // all_names = [ee.name[len('MAV_FRAME_'):] for ee in e.values()]
 // all_names.pop() # remove ENUM_END
 // global_names = [v for v in all_names if v.startswith('GLOBAL')]
-// local_names = [v for v in all_names if v.startswith(('LOCAL', 'BODY', 'MOCAP', 'VISION', 'ESTIM'))]
+// local_names = [v for v in all_names if v.startswith(('LOCAL', 'BODY', 'MOCAP',
+//     'VISION', 'ESTIM'))]
 // other_names = ['MISSION']
 //
 // waypoint_item_msg = [(v, v) if isinstance(v, str) else v for v in (

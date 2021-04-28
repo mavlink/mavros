@@ -63,6 +63,10 @@ and Odometry</description>
     <description>@brief Parameter manipulation plugin
 @plugin param</description>
   </class>
+  <class name="rallypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RallypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Rallypoint manipulation plugin
+@plugin rallypoint</description>
+  </class>
   <class name="rc_io" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RCIOPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief RC IO plugin
 @plugin rc_io</description>
@@ -123,4 +127,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 692f375cd279468f8ffdc54c249f537d) -->
+<!-- [[[end]]] (checksum: 3860f280c9ef12cac8625049baad042f) -->
