@@ -31,6 +31,10 @@ Send any command via COMMAND_LONG</description>
     <description>@brief FTP plugin.
 @plugin ftp</description>
   </class>
+  <class name="geofence" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GeofencePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Geofence manipulation plugin
+@plugin geofence</description>
+  </class>
   <class name="global_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GlobalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Global position plugin.
 @plugin global_position
@@ -127,4 +131,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 3860f280c9ef12cac8625049baad042f) -->
+<!-- [[[end]]] (checksum: b2e809100e69b33d93e84b49480e6d48) -->
