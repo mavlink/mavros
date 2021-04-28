@@ -19,9 +19,9 @@ using namespace mavros;          // NOLINT
 using namespace mavros::plugin;  // NOLINT
 
 
-std::ostream & operator<<(std::ostream & os, const MissionItem & mi)
+std::ostream & mavros::plugin::operator<<(std::ostream & os, const MissionItem & mi)
 {
-  os << '#' << mi.seq << (mi.is_current ? '*' : ' ') << " F:" << mi.frame << " C:" <<
+  os << '#' << mi.seq << (mi.is_current ? '*' : ' ') << " F:" << +mi.frame << " C:" <<
     std::setw(3) << mi.command;
   os << std::setprecision(7) << " p: " << mi.param1 << ' ' << mi.param2 << ' ' << mi.param3 <<
     ' ' << mi.param4;

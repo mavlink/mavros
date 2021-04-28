@@ -215,13 +215,32 @@ protected:
   /**
    * Adds parameter to watch and declares it
    */
-  template<typename _VT>
+  template<typename ParameterT>
   auto node_declate_and_watch_parameter(
-    const std::string name, const _VT & default_value,
-    ParameterFunctorT cb)
+    const std::string & name, ParameterFunctorT cb,
+    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor = rcl_interfaces::msg::ParameterDescriptor(),
+    bool ignore_override = false
+  )
   {
     node_watch_parameters[name] = cb;
-    return node->declare_parameter(name, default_value);
+    // NOTE(vooon): for Foxy:
+    return node->declare_parameter(
+      name,
+      rclcpp::ParameterValue(), parameter_descriptor, ignore_override);
+    // NOTE(vooon): for master
+    // return node->declare_parameter<ParameterT>(name, parameter_descriptor, ignore_override);
+  }
+
+  template<typename ParameterT>
+  auto node_declate_and_watch_parameter(
+    const std::string & name, const ParameterT & default_value,
+    ParameterFunctorT cb,
+    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor = rcl_interfaces::msg::ParameterDescriptor(),
+    bool ignore_override = false
+  )
+  {
+    node_watch_parameters[name] = cb;
+    return node->declare_parameter(name, default_value, parameter_descriptor, ignore_override);
   }
 
   //! Helper to convert ros time to mavlink time_usec field

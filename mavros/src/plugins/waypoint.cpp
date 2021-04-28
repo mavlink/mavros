@@ -49,9 +49,11 @@ public:
         use_mission_item_int = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
-      "enable_partial_push", rclcpp::ParameterValue(), [&](const rclcpp::Parameter & p) {
-        if (p.get_type() == rclcpp::PARAMETER_NOT_SET) {
+    node_declate_and_watch_parameter<bool>(
+      "enable_partial_push", [&](const rclcpp::Parameter & p) {
+        RCLCPP_DEBUG_STREAM(get_logger(), log_prefix << ": enable_partial_push = " << p);
+
+        if (p.get_type() != rclcpp::PARAMETER_BOOL) {
           return;
         }
 
@@ -118,9 +120,14 @@ private:
     if (connected) {
       schedule_pull(BOOTUP_TIME);
 
-      auto p = node->get_parameter("enable_partial_push");
-      if (p.get_type() == rclcpp::PARAMETER_NOT_SET) {
-        node->set_parameter(rclcpp::Parameter(p.get_name(), uas->is_ardupilotmega()));
+      const auto key = "enable_partial_push";
+      rclcpp::Parameter p;
+      if (!node->get_parameter(key, p) || p.get_type() == rclcpp::PARAMETER_NOT_SET) {
+        bool new_state = uas->is_ardupilotmega();
+
+        RCLCPP_INFO_STREAM(
+          get_logger(), log_prefix << ": detected enable_partial_push: " << new_state);
+        node->set_parameter(rclcpp::Parameter(key, new_state));
       }
     } else if (schedule_timer) {
       schedule_timer->cancel();
