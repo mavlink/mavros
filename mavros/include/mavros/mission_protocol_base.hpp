@@ -65,7 +65,6 @@ using MFilter = plugin::filter::SystemAndOk;
 // other_names = ['MISSION']
 //
 // waypoint_item_msg = [(v, v) if isinstance(v, str) else v for v in (
-//     'seq',
 //     'frame',
 //     'command',
 //     ('is_current', 'current'),
@@ -74,12 +73,15 @@ using MFilter = plugin::filter::SystemAndOk;
 //     'param2',
 //     'param3',
 //     'param4',
-//     'mission_type',
 // )]
 // waypoint_coords = [
 //     ('x_lat', 'x'),
 //     ('y_long', 'y'),
 //     ('z_alt', 'z'),
+// ]
+// mission_item_msg = [
+//     ('seq', 'seq'),
+//     ('mission_type', 'mission_type'),
 // ]
 // ]]]
 // [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
@@ -98,9 +100,9 @@ public:
       // for names, factor in [(global_names, 10000000), (local_names, 10000), (other_names, 1)]:
       //      for name in names:
       //              cog.outl(f"case enum_value(MAV_FRAME::{name}):")
-      //      cog.outl(f"  return {factor};")
+      //      cog.outl(f"  return {factor:1.1f};")
       //
-      // cog.outl("default:\n  return 1;")
+      // cog.outl("default:\n  return 1.0;")
       // ]]]
       case enum_value(MAV_FRAME::GLOBAL):
       case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT):
@@ -108,7 +110,7 @@ public:
       case enum_value(MAV_FRAME::GLOBAL_RELATIVE_ALT_INT):
       case enum_value(MAV_FRAME::GLOBAL_TERRAIN_ALT):
       case enum_value(MAV_FRAME::GLOBAL_TERRAIN_ALT_INT):
-        return 10000000;
+        return 10000000.0;
       case enum_value(MAV_FRAME::LOCAL_NED):
       case enum_value(MAV_FRAME::LOCAL_ENU):
       case enum_value(MAV_FRAME::LOCAL_OFFSET_NED):
@@ -117,12 +119,12 @@ public:
       case enum_value(MAV_FRAME::BODY_FRD):
       case enum_value(MAV_FRAME::LOCAL_FRD):
       case enum_value(MAV_FRAME::LOCAL_FLU):
-        return 10000;
+        return 10000.0;
       case enum_value(MAV_FRAME::MISSION):
-        return 1;
+        return 1.0;
       default:
-        return 1;
-        // [[[end]]] (checksum: e0b5a2adcdd11598537fb5f1da9880be)
+        return 1.0;
+        // [[[end]]] (checksum: 62e411e9acae54305a129fdf57f5b732)
     }
   }
 
@@ -130,11 +132,12 @@ public:
   : mavros_msgs::msg::Waypoint()
   {
     // [[[cog:
-    // fields = waypoint_item_msg + waypoint_coords
+    // fields = mission_item_msg + waypoint_item_msg + waypoint_coords
     // for i, (a, b) in enumerate(fields):
     //     cog.outl(f"{a} = wpi.{b};")
     // ]]]
     seq = wpi.seq;
+    mission_type = wpi.mission_type;
     frame = wpi.frame;
     command = wpi.command;
     is_current = wpi.current;
@@ -143,18 +146,17 @@ public:
     param2 = wpi.param2;
     param3 = wpi.param3;
     param4 = wpi.param4;
-    mission_type = wpi.mission_type;
     x_lat = wpi.x;
     y_long = wpi.y;
     z_alt = wpi.z;
-    // [[[end]]] (checksum: 3c4cb8a516fbb14982399eef533ced1e)
+    // [[[end]]] (checksum: 64a5d4f7b3428e8e72d5ce216d51935c)
   }
 
   explicit MissionItem(const MISSION_ITEM_INT & wpi)
   : mavros_msgs::msg::Waypoint()
   {
     // [[[cog:
-    // fields = waypoint_item_msg + waypoint_coords
+    // fields = mission_item_msg + waypoint_item_msg + waypoint_coords
     // for i, (a, b) in enumerate(fields):
     //     if a.startswith(('x', 'y')):
     //         cog.outl(f"{a} = wpi.{b} / encode_factor(wpi.frame);")
@@ -162,6 +164,7 @@ public:
     //         cog.outl(f"{a} = wpi.{b};")
     // ]]]
     seq = wpi.seq;
+    mission_type = wpi.mission_type;
     frame = wpi.frame;
     command = wpi.command;
     is_current = wpi.current;
@@ -170,20 +173,49 @@ public:
     param2 = wpi.param2;
     param3 = wpi.param3;
     param4 = wpi.param4;
-    mission_type = wpi.mission_type;
     x_lat = wpi.x / encode_factor(wpi.frame);
     y_long = wpi.y / encode_factor(wpi.frame);
     z_alt = wpi.z;
-    // [[[end]]] (checksum: 1b472573a37c2cb5300c8f33eca7f91d)
+    // [[[end]]] (checksum: 2e01c028ecde023cc049aba04f6a6df5)
+  }
+
+  explicit MissionItem(const mavros_msgs::msg::Waypoint & other)
+  {
+    *this = other;
+  }
+
+  MissionItem & operator=(const mavros_msgs::msg::Waypoint & other)
+  {
+    // [[[cog:
+    // fields = waypoint_item_msg + waypoint_coords
+    // for a, b in fields:
+    //     cog.outl(f"{a} = other.{a};")
+    // ]]]
+    frame = other.frame;
+    command = other.command;
+    is_current = other.is_current;
+    autocontinue = other.autocontinue;
+    param1 = other.param1;
+    param2 = other.param2;
+    param3 = other.param3;
+    param4 = other.param4;
+    x_lat = other.x_lat;
+    y_long = other.y_long;
+    z_alt = other.z_alt;
+    // [[[end]]] (checksum: 6879b829d6e6e1e28a879dd2ca3afdac)
+
+    return *this;
   }
 
   void to_msg(MISSION_ITEM & out) const
   {
     // [[[cog:
-    // for a, b in waypoint_item_msg + waypoint_coords:
+    // fields = mission_item_msg + waypoint_item_msg + waypoint_coords
+    // for a, b in fields:
     //     cog.outl(f"out.{b} = {a};")
     // ]]]
     out.seq = seq;
+    out.mission_type = mission_type;
     out.frame = frame;
     out.command = command;
     out.current = is_current;
@@ -192,23 +224,24 @@ public:
     out.param2 = param2;
     out.param3 = param3;
     out.param4 = param4;
-    out.mission_type = mission_type;
     out.x = x_lat;
     out.y = y_long;
     out.z = z_alt;
-    // [[[end]]] (checksum: b6be400831ed1a972b132dc5a98678e7)
+    // [[[end]]] (checksum: 799ed1c97af022223371c42c8c1f09d4)
   }
 
   void to_msg(MISSION_ITEM_INT & out) const
   {
     // [[[cog:
-    // for a, b in waypoint_item_msg + waypoint_coords:
+    // fields = mission_item_msg + waypoint_item_msg + waypoint_coords
+    // for a, b in fields:
     //     if b.startswith(('x', 'y')):
     //         cog.outl(f"out.{b} = int32_t({a} * encode_factor(frame));")
     //     else:
     //         cog.outl(f"out.{b} = {a};")
     // ]]]
     out.seq = seq;
+    out.mission_type = mission_type;
     out.frame = frame;
     out.command = command;
     out.current = is_current;
@@ -217,17 +250,16 @@ public:
     out.param2 = param2;
     out.param3 = param3;
     out.param4 = param4;
-    out.mission_type = mission_type;
     out.x = int32_t(x_lat * encode_factor(frame));
     out.y = int32_t(y_long * encode_factor(frame));
     out.z = z_alt;
-    // [[[end]]] (checksum: 7b96f185f36325a86270ffa4497f4d1b)
+    // [[[end]]] (checksum: b79ee415a09746786ba2a7cec99c5ab5)
   }
 
-  friend std::ostream operator<<(std::ostream & os, const MissionItem & mi);
+  friend std::ostream & operator<<(std::ostream & os, const MissionItem & mi);
 };
 
-std::ostream operator<<(std::ostream & os, const MissionItem & mi);
+std::ostream & operator<<(std::ostream & os, const MissionItem & mi);
 
 
 /**
@@ -245,14 +277,18 @@ public:
     log_prefix(log_prefix_),
     wp_state(WP::IDLE),
     wp_count(0),
-    wp_retries(RETRIES_COUNT),
+    wp_start_id(0),
+    wp_end_id(0),
     wp_cur_id(0),
     wp_cur_active(0),
     wp_set_active(0),
+    wp_retries(RETRIES_COUNT),
     is_timedout(false),
+    reschedule_pull(false),
     do_pull_after_gcs(false),
     enable_partial_push(false),
-    reschedule_pull(false),
+    use_mission_item_int(false),
+    mission_item_int_support_confirmed(false),
     BOOTUP_TIME(bootup_time_),
     LIST_TIMEOUT(30s),
     WP_TIMEOUT(1s),
@@ -376,9 +412,9 @@ protected:
    * @param wpi     WaypointItem from msg
    */
   virtual void handle_mission_item(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     MISSION_ITEM & wpi,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_ITEM_INT mavlink msg
@@ -387,9 +423,9 @@ protected:
    * @param wpi     WaypointItemInt from msg
    */
   virtual void handle_mission_item_int(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     MISSION_ITEM_INT & wpi,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_REQUEST mavlink msg
@@ -398,9 +434,9 @@ protected:
    * @param mreq    MISSION_REQUEST from msg
    */
   virtual void handle_mission_request(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_REQUEST & mreq,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_REQUEST_INT mavlink msg
@@ -409,9 +445,9 @@ protected:
    * @param mreq    MISSION_REQUEST_INT from msg
    */
   virtual void handle_mission_request_int(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_COUNT mavlink msg
@@ -421,9 +457,9 @@ protected:
    * @param mcnt    MISSION_COUNT from msg
    */
   virtual void handle_mission_count(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_COUNT & mcnt,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_ACK mavlink msg
@@ -432,9 +468,9 @@ protected:
    * @param mack    MISSION_ACK from msg
    */
   virtual void handle_mission_ack(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_ACK & mack,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_CURRENT mavlink msg
@@ -443,9 +479,9 @@ protected:
    * @param mcur    MISSION_CURRENT from msg
    */
   virtual void handle_mission_current(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_CURRENT & mcur,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /**
    * @brief handle MISSION_ITEM_REACHED mavlink msg
@@ -453,9 +489,9 @@ protected:
    * @param mitr    MISSION_ITEM_REACHED from msg
    */
   virtual void handle_mission_item_reached(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_ITEM_REACHED & mitr,
-    MFilter filter [[maybe_unused]]);
+    MFilter filter);
 
   /* -*- mid-level helpers -*- */
 
@@ -575,10 +611,9 @@ protected:
   //! @brief set the FCU current waypoint
   void set_current_waypoint(size_t seq)
   {
-    auto i = 0;
+    size_t i = 0;
     for (auto & it : waypoints) {
-      it.is_current = (i == seq) ? true : false;
-      i++;
+      it.is_current = !!(i++ == seq);
     }
   }
 

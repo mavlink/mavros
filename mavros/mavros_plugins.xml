@@ -114,9 +114,13 @@ Required by all plugins.</description>
     <description>@brief System time plugin
 @plugin sys_time</description>
   </class>
+  <class name="waypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WaypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Mission manupulation plugin
+@plugin waypoint</description>
+  </class>
   <class name="wind_estimation" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WindEstimationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Wind estimation plugin.
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 1012585bf9bafbe053147ea234c00b8c) -->
+<!-- [[[end]]] (checksum: 692f375cd279468f8ffdc54c249f537d) -->

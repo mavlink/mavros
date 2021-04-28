@@ -128,7 +128,7 @@ add_library(mavros_plugins SHARED
   src/plugins/setpoint_velocity.cpp
   src/plugins/sys_status.cpp
   src/plugins/sys_time.cpp
-  #src/plugins/waypoint.cpp
+  src/plugins/waypoint.cpp
   src/plugins/wind_estimation.cpp
   # [[[end]]] (checksum: e0bc1af34a7ae5b7471d95e6d23b7388)
 )

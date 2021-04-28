@@ -19,27 +19,29 @@ using namespace mavros;          // NOLINT
 using namespace mavros::plugin;  // NOLINT
 
 
-std::ostream operator<<(std::ostream & os, const MissionItem & mi)
+std::ostream & operator<<(std::ostream & os, const MissionItem & mi)
 {
   os << '#' << mi.seq << (mi.is_current ? '*' : ' ') << " F:" << mi.frame << " C:" <<
     std::setw(3) << mi.command;
   os << std::setprecision(7) << " p: " << mi.param1 << ' ' << mi.param2 << ' ' << mi.param3 <<
     ' ' << mi.param4;
   os << std::setprecision(7) << " x: " << mi.x_lat << " y: " << mi.y_long << " z: " << mi.z_alt;
+  return os;
 }
 
 void MissionBase::handle_mission_item(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM & wpi,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
   if (filter_message(wpi)) {
     return;
   }
+
   // receive item only in RX state
-  else if (wp_state == WP::RXWP) {
+  if (wp_state == WP::RXWP) {
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -67,17 +69,18 @@ void MissionBase::handle_mission_item(
 }
 
 void MissionBase::handle_mission_item_int(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM_INT & wpi,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
   if (filter_message(wpi)) {
     return;
   }
+
   // receive item only in RX state
-  else if (wp_state == WP::RXWPINT) {
+  if (wp_state == WP::RXWPINT) {
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -106,9 +109,9 @@ void MissionBase::handle_mission_item_int(
 }
 
 void MissionBase::handle_mission_request(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST & mreq,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -150,9 +153,9 @@ void MissionBase::handle_mission_request(
 }
 
 void MissionBase::handle_mission_request_int(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -193,9 +196,9 @@ void MissionBase::handle_mission_request_int(
 }
 
 void MissionBase::handle_mission_count(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_COUNT & mcnt,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -240,9 +243,9 @@ void MissionBase::handle_mission_count(
 }
 
 void MissionBase::handle_mission_ack(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_ACK & mack,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -312,9 +315,9 @@ void MissionBase::handle_mission_ack(
 }
 
 void MissionBase::handle_mission_current(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_CURRENT & mcur,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -345,9 +348,9 @@ void MissionBase::handle_mission_current(
 }
 
 void MissionBase::handle_mission_item_reached(
-  const mavlink::mavlink_message_t * msg,
+  const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_ITEM_REACHED & mitr,
-  MFilter filter)
+  MFilter filter [[maybe_unused]])
 {
   // NOTE(vooon): this message do not have mission_type
   // if (filter_message(mitr)) {
