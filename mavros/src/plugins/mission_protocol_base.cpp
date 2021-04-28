@@ -13,70 +13,39 @@
  * @author Charlie Burge <charlieburge@yahoo.com>
  */
 
-#include "mavros/mission_protocol_base.h"
+#include "mavros/mission_protocol_base.hpp"
 
 using namespace mavros;          // NOLINT
 using namespace mavros::plugin;  // NOLINT
 
-void MissionBase::handle_mission_item_int(
-  const mavlink::mavlink_message_t * msg,
-  WP_ITEM_INT & wpi,
-  Filter filter)
+
+std::ostream operator<<(std::ostream & os, const MissionItem & mi)
 {
-  unique_lock lock(mutex);
-
-  // Only interested in the specific msg type
-  if (wpi.mission_type != enum_value(wp_type)) {
-    return;
-  }
-  // receive item only in RX state
-  else if (wp_state == WP::RXWPINT) {
-    if (wpi.seq != wp_cur_id) {
-      RCLCPP_WARN(get_logger(), "MP: Seq mismatch, dropping item (%d != %zu)", wpi.seq, wp_cur_id);
-      return;
-    }
-
-    auto it = waypoints.emplace(waypoints.end(), wpi);
-    RCLCPP_INFO_STREAM(get_logger(), "MP: item " << it->to_string());
-
-    if (++wp_cur_id < wp_count) {
-      restart_timeout_timer();
-      mission_request_int(wp_cur_id);
-    } else {
-      request_mission_done();
-      mission_item_int_support_confirmed = true;
-      lock.unlock();
-      publish_waypoints();
-    }
-  } else {
-    RCLCPP_DEBUG(get_logger(), "MP: rejecting item, wrong state %d", enum_value(wp_state));
-    if (do_pull_after_gcs && reschedule_pull) {
-      RCLCPP_DEBUG(get_logger(), "MP: reschedule pull");
-      schedule_pull(WP_TIMEOUT);
-    }
-  }
+  os << '#' << mi.seq << (mi.is_current ? '*' : ' ') << " F:" << mi.frame << " C:" <<
+    std::setw(3) << mi.command;
+  os << std::setprecision(7) << " p: " << mi.param1 << ' ' << mi.param2 << ' ' << mi.param3 <<
+    ' ' << mi.param4;
+  os << std::setprecision(7) << " x: " << mi.x_lat << " y: " << mi.y_long << " z: " << mi.z_alt;
 }
 
 void MissionBase::handle_mission_item(
   const mavlink::mavlink_message_t * msg,
-  WP_ITEM & wpi,
-  Filter filter)
+  MISSION_ITEM & wpi,
+  MFilter filter)
 {
   unique_lock lock(mutex);
 
-  // Only interested in the specific msg type
-  if (wpi.mission_type != enum_value(wp_type)) {
+  if (filter_message(wpi)) {
     return;
   }
   // receive item only in RX state
   else if (wp_state == WP::RXWP) {
-    if (wpi.seq != wp_cur_id) {
-      RCLCPP_WARN(get_logger(), "MP: Seq mismatch, dropping item (%d != %zu)", wpi.seq, wp_cur_id);
+    if (sequence_mismatch(wpi)) {
       return;
     }
 
     auto it = waypoints.emplace(waypoints.end(), wpi);
-    RCLCPP_INFO_STREAM(get_logger(), "MP: item " << it->to_string());
+    RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
 
     if (++wp_cur_id < wp_count) {
       restart_timeout_timer();
@@ -88,34 +57,62 @@ void MissionBase::handle_mission_item(
     }
   } else {
     RCLCPP_DEBUG(
-      get_logger(),
-      "MP: rejecting item, wrong state %d", enum_value(wp_state));
+      get_logger(), "%s: rejecting item, wrong state %d", log_prefix, enum_value(
+        wp_state));
     if (do_pull_after_gcs && reschedule_pull) {
-      RCLCPP_DEBUG(get_logger(), "MP: reschedule pull");
+      RCLCPP_DEBUG(get_logger(), "%s: reschedule pull", log_prefix);
       schedule_pull(WP_TIMEOUT);
     }
   }
 }
 
-bool MissionBase::sequence_mismatch(const uint16_t & seq)
+void MissionBase::handle_mission_item_int(
+  const mavlink::mavlink_message_t * msg,
+  MISSION_ITEM_INT & wpi,
+  MFilter filter)
 {
-  if (seq != wp_cur_id && seq != wp_cur_id + 1) {
-    RCLCPP_WARN(get_logger(), "MP: Seq mismatch, dropping request (%d != %zu)", seq, wp_cur_id);
-    return true;
-  }
+  unique_lock lock(mutex);
 
-  return false;
+  if (filter_message(wpi)) {
+    return;
+  }
+  // receive item only in RX state
+  else if (wp_state == WP::RXWPINT) {
+    if (sequence_mismatch(wpi)) {
+      return;
+    }
+
+    auto it = waypoints.emplace(waypoints.end(), wpi);
+    RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
+
+    if (++wp_cur_id < wp_count) {
+      restart_timeout_timer();
+      mission_request_int(wp_cur_id);
+    } else {
+      request_mission_done();
+      mission_item_int_support_confirmed = true;
+      lock.unlock();
+      publish_waypoints();
+    }
+  } else {
+    RCLCPP_DEBUG(
+      get_logger(), "%s: rejecting item, wrong state %d", log_prefix, enum_value(
+        wp_state));
+    if (do_pull_after_gcs && reschedule_pull) {
+      RCLCPP_DEBUG(get_logger(), "%s: reschedule pull", log_prefix);
+      schedule_pull(WP_TIMEOUT);
+    }
+  }
 }
 
 void MissionBase::handle_mission_request(
   const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_REQUEST & mreq,
-  Filter filter)
+  MFilter filter)
 {
   lock_guard lock(mutex);
 
-  // Only interested in the specific msg type
-  if (mreq.mission_type != enum_value(wp_type)) {
+  if (filter_message(mreq)) {
     return;
   }
 
@@ -124,39 +121,42 @@ void MissionBase::handle_mission_request(
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP) ||
     (wp_state == WP::TXWPINT))
   {
-    if (sequence_mismatch(mreq.seq)) {
+    if (sequence_mismatch(mreq)) {
       return;
     }
 
     restart_timeout_timer();
     if (mreq.seq < wp_end_id) {
-      RCLCPP_DEBUG(get_logger(), "MP: FCU requested MISSION_ITEM waypoint %d", mreq.seq);
+      RCLCPP_DEBUG(
+        get_logger(), "%s: FCU requested MISSION_ITEM waypoint %d", log_prefix,
+        mreq.seq);
       wp_cur_id = mreq.seq;
       if (use_mission_item_int) {
-        RCLCPP_DEBUG(get_logger(), "MP: Trying to send a MISSION_ITEM_INT instead");
+        RCLCPP_DEBUG(get_logger(), "%s: Trying to send a MISSION_ITEM_INT instead", log_prefix);
         wp_state = WP::TXWPINT;
-        send_waypoint<WP_ITEM_INT>(wp_cur_id);
+        send_waypoint<MISSION_ITEM_INT>(wp_cur_id);
       } else {
         wp_state = WP::TXWP;
-        send_waypoint<WP_ITEM>(wp_cur_id);
+        send_waypoint<MISSION_ITEM>(wp_cur_id);
       }
     } else {
-      RCLCPP_ERROR(get_logger(), "MP: FCU require seq out of range");
+      RCLCPP_ERROR(get_logger(), "%s: FCU require seq out of range", log_prefix);
     }
   } else {
-    RCLCPP_DEBUG(get_logger(), "MP: rejecting request, wrong state %d", enum_value(wp_state));
+    RCLCPP_DEBUG(
+      get_logger(), "%s: rejecting request, wrong state %d", log_prefix,
+      enum_value(wp_state));
   }
 }
 
 void MissionBase::handle_mission_request_int(
   const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-  Filter filter)
+  MFilter filter)
 {
   lock_guard lock(mutex);
 
-  // Only interested in the specific msg type
-  if (mreq.mission_type != enum_value(wp_type)) {
+  if (filter_message(mreq)) {
     return;
   }
 
@@ -164,7 +164,7 @@ void MissionBase::handle_mission_request_int(
     (wp_state == WP::TXLIST && mreq.seq == 0) ||
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWPINT))
   {
-    if (sequence_mismatch(mreq.seq)) {
+    if (sequence_mismatch(mreq)) {
       return;
     }
 
@@ -177,33 +177,35 @@ void MissionBase::handle_mission_request_int(
 
     restart_timeout_timer();
     if (mreq.seq < wp_end_id) {
-      RCLCPP_DEBUG(get_logger(), "MP: FCU reqested MISSION_ITEM_INT waypoint %d", mreq.seq);
+      RCLCPP_DEBUG(
+        get_logger(), "%s: FCU reqested MISSION_ITEM_INT waypoint %d", log_prefix, mreq.seq);
       wp_state = WP::TXWPINT;
       wp_cur_id = mreq.seq;
-      send_waypoint<WP_ITEM_INT>(wp_cur_id);
+      send_waypoint<MISSION_ITEM_INT>(wp_cur_id);
     } else {
-      RCLCPP_ERROR(get_logger(), "MP: FCU require seq out of range");
+      RCLCPP_ERROR(get_logger(), "%s: FCU require seq out of range", log_prefix);
     }
   } else {
-    RCLCPP_DEBUG(get_logger(), "MP: rejecting request, wrong state %d", enum_value(wp_state));
+    RCLCPP_DEBUG(
+      get_logger(), "%s: rejecting request, wrong state %d", log_prefix,
+      enum_value(wp_state));
   }
 }
 
 void MissionBase::handle_mission_count(
   const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_COUNT & mcnt,
-  Filter filter)
+  MFilter filter)
 {
   unique_lock lock(mutex);
 
-  // Only interested in the specific msg type
-  if (mcnt.mission_type != enum_value(wp_type)) {
+  if (filter_message(mcnt)) {
     return;
   }
 
   if (wp_state == WP::RXLIST) {
     // FCU report of MISSION_REQUEST_LIST
-    RCLCPP_DEBUG(get_logger(), "MP: count %d", mcnt.count);
+    RCLCPP_DEBUG(get_logger(), "%s: count %d", log_prefix, mcnt.count);
 
     wp_count = mcnt.count;
     wp_cur_id = 0;
@@ -227,10 +229,10 @@ void MissionBase::handle_mission_count(
       publish_waypoints();
     }
   } else {
-    RCLCPP_INFO(get_logger(), "MP: seems GCS requesting mission");
+    RCLCPP_INFO(get_logger(), "%s: seems GCS requesting mission", log_prefix);
     // schedule pull after GCS done
     if (do_pull_after_gcs) {
-      RCLCPP_INFO(get_logger(), "MP: scheduling pull after GCS is done");
+      RCLCPP_INFO(get_logger(), "%s: scheduling pull after GCS is done", log_prefix);
       reschedule_pull = true;
       schedule_pull(RESCHEDULE_TIME);
     }
@@ -240,14 +242,13 @@ void MissionBase::handle_mission_count(
 void MissionBase::handle_mission_ack(
   const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_ACK & mack,
-  Filter filter)
+  MFilter filter)
 {
   unique_lock lock(mutex);
 
   auto ack_type = static_cast<MRES>(mack.type);
 
-  // Only interested in the specific msg type
-  if (mack.mission_type != enum_value(wp_type)) {
+  if (filter_message(mack)) {
     return;
   }
 
@@ -259,20 +260,23 @@ void MissionBase::handle_mission_ack(
     go_idle();
     waypoints = send_waypoints;
     send_waypoints.clear();
+
     if (wp_state == WP::TXWPINT) {
       mission_item_int_support_confirmed = true;
     }
+
     lock.unlock();
     list_sending.notify_all();
     publish_waypoints();
-    RCLCPP_INFO(get_logger(), "MP: mission sended");
+
+    RCLCPP_INFO(get_logger(), "%s: mission sended", log_prefix);
   } else if (
     (wp_state == WP::TXWP || wp_state == WP::TXWPINT) && ack_type == MRES::INVALID_SEQUENCE)
   {
     // Mission Ack: INVALID_SEQUENCE received during TXWP
     // This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
     // This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
-    RCLCPP_DEBUG(get_logger(), "MP: Received INVALID_SEQUENCE ack");
+    RCLCPP_DEBUG(get_logger(), "%s: Received INVALID_SEQUENCE ack", log_prefix);
   } else if (
     wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP ||
     wp_state == WP::TXWPINT)
@@ -283,24 +287,76 @@ void MissionBase::handle_mission_ack(
     lock.unlock();
     list_sending.notify_all();
 
-    RCLCPP_ERROR_STREAM(get_logger(), "MP: upload failed: " << utils::to_string(ack_type));
+    RCLCPP_ERROR_STREAM(
+      get_logger(), log_prefix << ": upload failed: " << utils::to_string(
+        ack_type));
   } else if (wp_state == WP::CLEAR) {
     go_idle();
     if (ack_type != MRES::ACCEPTED) {
       is_timedout = true;
       lock.unlock();
-      RCLCPP_ERROR_STREAM(get_logger(), "MP: clear failed: " << utils::to_string(ack_type));
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        log_prefix << ": clear failed: " << utils::to_string(ack_type));
     } else {
       waypoints.clear();
       lock.unlock();
       publish_waypoints();
-      RCLCPP_INFO(get_logger(), "MP: mission cleared");
+      RCLCPP_INFO(get_logger(), "%s: mission cleared", log_prefix);
     }
 
     list_sending.notify_all();
   } else {
-    RCLCPP_DEBUG(get_logger(), "MP: not planned ACK, type: %d", mack.type);
+    RCLCPP_DEBUG(get_logger(), "%s: not planned ACK, type: %d", log_prefix, mack.type);
   }
+}
+
+void MissionBase::handle_mission_current(
+  const mavlink::mavlink_message_t * msg,
+  mavlink::common::msg::MISSION_CURRENT & mcur,
+  MFilter filter)
+{
+  unique_lock lock(mutex);
+
+  // NOTE(vooon): this message do not have mission_type
+  // if (filter_message(mcur)) {
+  //   return;
+  // }
+
+  if (wp_state == WP::SET_CUR) {
+    /* MISSION_SET_CURRENT ACK */
+    RCLCPP_DEBUG(get_logger(), "%s: set current #%d done", log_prefix, mcur.seq);
+    go_idle();
+    wp_cur_active = mcur.seq;
+    set_current_waypoint(wp_cur_active);
+
+    lock.unlock();
+    list_sending.notify_all();
+    publish_waypoints();
+  } else if (wp_state == WP::IDLE && wp_cur_active != mcur.seq) {
+    /* update active */
+    RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
+    wp_cur_active = mcur.seq;
+    set_current_waypoint(wp_cur_active);
+
+    lock.unlock();
+    publish_waypoints();
+  }
+}
+
+void MissionBase::handle_mission_item_reached(
+  const mavlink::mavlink_message_t * msg,
+  mavlink::common::msg::MISSION_ITEM_REACHED & mitr,
+  MFilter filter)
+{
+  // NOTE(vooon): this message do not have mission_type
+  // if (filter_message(mitr)) {
+  //   return;
+  // }
+
+  // in QGC used as informational message
+  RCLCPP_INFO(get_logger(), "%s: reached #%d", log_prefix, mitr.seq);
+  publish_reached(mitr.seq);
 }
 
 void MissionBase::timeout_cb()
@@ -312,7 +368,7 @@ void MissionBase::timeout_cb()
 
   if (wp_retries > 0) {
     wp_retries--;
-    RCLCPP_WARN(get_logger(), "MP: timeout, retries left %zu", wp_retries);
+    RCLCPP_WARN(get_logger(), "%s: timeout, retries left %zu", log_prefix, wp_retries);
 
     switch (wp_state) {
       case WP::RXLIST:
@@ -331,10 +387,10 @@ void MissionBase::timeout_cb()
         mission_write_partial_list(wp_start_id, wp_end_id);
         break;
       case WP::TXWP:
-        send_waypoint<WP_ITEM>(wp_cur_id);
+        send_waypoint<MISSION_ITEM>(wp_cur_id);
         break;
       case WP::TXWPINT:
-        send_waypoint<WP_ITEM_INT>(wp_cur_id);
+        send_waypoint<MISSION_ITEM_INT>(wp_cur_id);
         break;
       case WP::CLEAR:
         mission_clear_all();
@@ -350,24 +406,25 @@ void MissionBase::timeout_cb()
     restart_timeout_timer_int();
   } else {
     if (wp_state == WP::TXWPINT && use_mission_item_int && !mission_item_int_support_confirmed) {
-      RCLCPP_ERROR(get_logger(), "MP: mission_item_int timed out, falling back to mission_item.");
+      RCLCPP_ERROR(
+        get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
       use_mission_item_int = false;
 
       wp_state = WP::TXWP;
       restart_timeout_timer();
-      send_waypoint<WP_ITEM>(wp_cur_id);
+      send_waypoint<MISSION_ITEM>(wp_cur_id);
     } else if (
       wp_state == WP::RXWPINT && use_mission_item_int && !mission_item_int_support_confirmed)
     {
       RCLCPP_ERROR(
-        get_logger(), "MP: mission_item_int timed out, falling back to mission_item.");
+        get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
       use_mission_item_int = false;
 
       wp_state = WP::RXWP;
       restart_timeout_timer();
       mission_request(wp_cur_id);
     } else {
-      RCLCPP_ERROR(get_logger(), "MP: timed out.");
+      RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
       go_idle();
       is_timedout = true;
       // prevent waiting cond var timeout
@@ -376,4 +433,101 @@ void MissionBase::timeout_cb()
       list_sending.notify_all();
     }
   }
+}
+
+void MissionBase::mission_request(const uint16_t seq)
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: request #%u", log_prefix, seq);
+
+  mavlink::common::msg::MISSION_REQUEST mrq {};
+  uas->msg_set_target(mrq);
+  mrq.seq = seq;
+  mrq.mission_type = enum_value(mission_type);
+
+  uas->send_message(mrq);
+}
+
+void MissionBase::mission_request_int(const uint16_t seq)
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: request_int #%u", log_prefix, seq);
+
+  mavlink::common::msg::MISSION_REQUEST_INT mrq {};
+  uas->msg_set_target(mrq);
+  mrq.seq = seq;
+  mrq.mission_type = enum_value(mission_type);
+
+  uas->send_message(mrq);
+}
+
+void MissionBase::mission_set_current(const uint16_t seq)
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: set current #%u", log_prefix, seq);
+
+  mavlink::common::msg::MISSION_SET_CURRENT msc {};
+  uas->msg_set_target(msc);
+  msc.seq = seq;
+  // msc.mission_type = enum_value(mission_type);
+
+  uas->send_message(msc);
+}
+
+void MissionBase::mission_request_list()
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: request list", log_prefix);
+
+  mavlink::common::msg::MISSION_REQUEST_LIST mrl {};
+  uas->msg_set_target(mrl);
+  mrl.mission_type = enum_value(mission_type);
+
+  uas->send_message(mrl);
+}
+
+void MissionBase::mission_count(const uint16_t cnt)
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: count %u", log_prefix, cnt);
+
+  mavlink::common::msg::MISSION_COUNT mcnt {};
+  uas->msg_set_target(mcnt);
+  mcnt.count = cnt;
+  mcnt.mission_type = enum_value(mission_type);
+
+  uas->send_message(mcnt);
+}
+
+void MissionBase::mission_write_partial_list(const uint16_t start_index, const uint16_t end_index)
+{
+  RCLCPP_DEBUG(
+    get_logger(), "%s:m: write partial list %u - %u", log_prefix,
+    start_index, end_index);
+
+  mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
+  uas->msg_set_target(mwpl);
+  mwpl.start_index = start_index;
+  mwpl.end_index = end_index;
+  mwpl.mission_type = enum_value(mission_type);
+
+  uas->send_message(mwpl);
+}
+
+void MissionBase::mission_clear_all()
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: clear all", log_prefix);
+
+  mavlink::common::msg::MISSION_CLEAR_ALL mclr {};
+  uas->msg_set_target(mclr);
+  mclr.mission_type = enum_value(mission_type);
+
+  uas->send_message(mclr);
+}
+
+void MissionBase::mission_ack(const MRES type)
+{
+  RCLCPP_DEBUG(get_logger(), "%s:m: ACK %u", log_prefix, enum_value(type));
+
+  mavlink::common::msg::MISSION_ACK mack {};
+  uas->msg_set_target(mack);
+  mack.type = enum_value(type);
+  mack.mission_type = enum_value(mission_type);
+
+  uas->send_message(mack);
 }
