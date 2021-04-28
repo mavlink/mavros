@@ -83,6 +83,7 @@ add_library(mavros_extras
   src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
+  src/plugins/servo_output_raw.cpp
   src/plugins/trajectory.cpp
   src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp

@@ -51,6 +51,7 @@ add_message_files(
   RTCM.msg
   RadioStatus.msg
   RTKBaseline.msg
+  ServoOutputRaw.msg
   State.msg
   StatusText.msg
   Thrust.msg
