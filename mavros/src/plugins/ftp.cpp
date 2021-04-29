@@ -17,25 +17,30 @@
 #include <chrono>
 #include <cerrno>
 #include <condition_variable>
+#include <string>
+#include <vector>
+#include <map>
+#include <utility>
+#include <algorithm>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <std_srvs/srv/empty.hpp>
-#include <mavros_msgs/msg/file_entry.hpp>
-#include <mavros_msgs/srv/file_list.hpp>
-#include <mavros_msgs/srv/file_open.hpp>
-#include <mavros_msgs/srv/file_close.hpp>
-#include <mavros_msgs/srv/file_read.hpp>
-#include <mavros_msgs/srv/file_write.hpp>
-#include <mavros_msgs/srv/file_remove.hpp>
-#include <mavros_msgs/srv/file_make_dir.hpp>
-#include <mavros_msgs/srv/file_remove_dir.hpp>
-#include <mavros_msgs/srv/file_truncate.hpp>
-#include <mavros_msgs/srv/file_rename.hpp>
-#include <mavros_msgs/srv/file_checksum.hpp>
+#include "std_srvs/srv/empty.hpp"
+#include "mavros_msgs/msg/file_entry.hpp"
+#include "mavros_msgs/srv/file_list.hpp"
+#include "mavros_msgs/srv/file_open.hpp"
+#include "mavros_msgs/srv/file_close.hpp"
+#include "mavros_msgs/srv/file_read.hpp"
+#include "mavros_msgs/srv/file_write.hpp"
+#include "mavros_msgs/srv/file_remove.hpp"
+#include "mavros_msgs/srv/file_make_dir.hpp"
+#include "mavros_msgs/srv/file_remove_dir.hpp"
+#include "mavros_msgs/srv/file_truncate.hpp"
+#include "mavros_msgs/srv/file_rename.hpp"
+#include "mavros_msgs/srv/file_checksum.hpp"
 
 // enable debugging messages
 // #define FTP_LL_DEBUG
@@ -59,53 +64,53 @@ public:
   /// We pad the structure ourselves to 32 bit alignment to avoid usage of any pack pragmas.
   struct PayloadHeader
   {
-    uint16_t seqNumber;                         ///< sequence number for message
-    uint8_t session;                            ///< Session id for read and write commands
-    uint8_t opcode;                             ///< Command opcode
-    uint8_t size;                               ///< Size of data
-    uint8_t req_opcode;                         ///< Request opcode returned in kRspAck, kRspNak message
-    uint8_t padding[2];                         ///< 32 bit aligment padding
-    uint32_t offset;                            ///< Offsets for List and Read commands
-    uint8_t data[];                             ///< command data, varies by Opcode
+    uint16_t seqNumber;         ///< sequence number for message
+    uint8_t session;            ///< Session id for read and write commands
+    uint8_t opcode;             ///< Command opcode
+    uint8_t size;               ///< Size of data
+    uint8_t req_opcode;         ///< Request opcode returned in kRspAck, kRspNak message
+    uint8_t padding[2];         ///< 32 bit aligment padding
+    uint32_t offset;            ///< Offsets for List and Read commands
+    uint8_t data[];             ///< command data, varies by Opcode
   };
 
   /// @brief Command opcodes
   enum Opcode : uint8_t
   {
-    kCmdNone,                           ///< ignored, always acked
-    kCmdTerminateSession,               ///< Terminates open Read session
-    kCmdResetSessions,                  ///< Terminates all open Read sessions
-    kCmdListDirectory,                  ///< List files in <path> from <offset>
-    kCmdOpenFileRO,                     ///< Opens file at <path> for reading, returns <session>
-    kCmdReadFile,                       ///< Reads <size> bytes from <offset> in <session>
-    kCmdCreateFile,                     ///< Creates file at <path> for writing, returns <session>
-    kCmdWriteFile,                      ///< Writes <size> bytes to <offset> in <session>
-    kCmdRemoveFile,                     ///< Remove file at <path>
-    kCmdCreateDirectory,                ///< Creates directory at <path>
-    kCmdRemoveDirectory,                ///< Removes Directory at <path>, must be empty
-    kCmdOpenFileWO,                     ///< Opens file at <path> for writing, returns <session>
-    kCmdTruncateFile,                   ///< Truncate file at <path> to <offset> length
-    kCmdRename,                         ///< Rename <path1> to <path2>
-    kCmdCalcFileCRC32,                  ///< Calculate CRC32 for file at <path>
-    kCmdBurstReadFile,                  ///< Burst download session file
+    kCmdNone,                   ///< ignored, always acked
+    kCmdTerminateSession,       ///< Terminates open Read session
+    kCmdResetSessions,          ///< Terminates all open Read sessions
+    kCmdListDirectory,          ///< List files in <path> from <offset>
+    kCmdOpenFileRO,             ///< Opens file at <path> for reading, returns <session>
+    kCmdReadFile,               ///< Reads <size> bytes from <offset> in <session>
+    kCmdCreateFile,             ///< Creates file at <path> for writing, returns <session>
+    kCmdWriteFile,              ///< Writes <size> bytes to <offset> in <session>
+    kCmdRemoveFile,             ///< Remove file at <path>
+    kCmdCreateDirectory,        ///< Creates directory at <path>
+    kCmdRemoveDirectory,        ///< Removes Directory at <path>, must be empty
+    kCmdOpenFileWO,             ///< Opens file at <path> for writing, returns <session>
+    kCmdTruncateFile,           ///< Truncate file at <path> to <offset> length
+    kCmdRename,                 ///< Rename <path1> to <path2>
+    kCmdCalcFileCRC32,          ///< Calculate CRC32 for file at <path>
+    kCmdBurstReadFile,          ///< Burst download session file
 
-    kRspAck = 128,                      ///< Ack response
-    kRspNak                             ///< Nak response
+    kRspAck = 128,              ///< Ack response
+    kRspNak                     ///< Nak response
   };
 
   /// @brief Error codes returned in Nak response.
   enum ErrorCode : uint8_t
   {
     kErrNone,
-    kErrFail,                                   ///< Unknown failure
-    kErrFailErrno,                              ///< Command failed, errno sent back in PayloadHeader.data[1]
-    kErrInvalidDataSize,                        ///< PayloadHeader.size is invalid
-    kErrInvalidSession,                         ///< Session is not currently open
-    kErrNoSessionsAvailable,                    ///< All available Sessions in use
-    kErrEOF,                                    ///< Offset past end of file for List and Read commands
-    kErrUnknownCommand,                         ///< Unknown command opcode
-    kErrFailFileExists,                         ///< File exists already
-    kErrFailFileProtected                       ///< File is write protected
+    kErrFail,                   ///< Unknown failure
+    kErrFailErrno,              ///< Command failed, errno sent back in PayloadHeader.data[1]
+    kErrInvalidDataSize,        ///< PayloadHeader.size is invalid
+    kErrInvalidSession,         ///< Session is not currently open
+    kErrNoSessionsAvailable,    ///< All available Sessions in use
+    kErrEOF,                    ///< Offset past end of file for List and Read commands
+    kErrUnknownCommand,         ///< Unknown command opcode
+    kErrFailFileExists,         ///< File exists already
+    kErrFailFileProtected       ///< File is write protected
   };
 
   static const char DIRENT_FILE = 'F';
@@ -460,9 +465,9 @@ private:
     op_state = OP::IDLE;
     if (error_code == FTPRequest::kErrFailErrno) {
       r_errno = req.data()[1];
-    }
-    // translate other protocol errors to errno
-    else if (error_code == FTPRequest::kErrFail) {
+
+      /* translate other protocol errors to errno */
+    } else if (error_code == FTPRequest::kErrFail) {
       r_errno = EFAULT;
     } else if (error_code == FTPRequest::kErrInvalidDataSize) {
       r_errno = EMSGSIZE;
@@ -743,8 +748,8 @@ private:
   {
     // write chunk from write_buffer [write_it..bytes_to_copy]
     RCLCPP_DEBUG_STREAM(
-      get_logger(), "FTP:m: kCmdWriteFile: " << active_session << " off: " << write_offset << " sz: " <<
-        bytes_to_copy);
+      get_logger(), "FTP:m: kCmdWriteFile: " << active_session << " off: " << write_offset <<
+        " sz: " << bytes_to_copy);
     FTPRequest req(FTPRequest::kCmdWriteFile, active_session);
     req.header()->offset = write_offset;
     req.header()->size = bytes_to_copy;
