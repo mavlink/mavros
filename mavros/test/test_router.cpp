@@ -15,9 +15,16 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <rclcpp/executors.hpp>
-#include <mavconn/interface.hpp>
-#include <mavros/mavros_router.hpp>
+#include <memory>
+#include <string>
+#include <utility>
+#include <set>
+#include <unordered_map>
+#include <vector>
+
+#include "rclcpp/executors.hpp"
+#include "mavconn/interface.hpp"
+#include "mavros/mavros_router.hpp"
 
 using ::testing::_;
 
@@ -126,7 +133,6 @@ public:
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const addr_t source = 0x0101)
   {
-
     mavlink_message_t ret;
     mavlink::MsgMap map(ret);
     ret.sysid = source >> 8;
@@ -417,7 +423,7 @@ TEST_F(TestRouter, endpoint_recv_message)
   ASSERT_EQ(size_t(1), get_stat_msg_dropped(router));
 }
 
-#if 0  // TODO
+#if 0  // TODO(vooon):
 TEST_F(TestRouter, uas_recv_message)
 {
   auto router = this->create_node();
@@ -454,7 +460,6 @@ TEST_F(TestRouter, uas_recv_message)
   exec.spin();
 
   VERIFY_EPS();
-
 }
 #endif
 

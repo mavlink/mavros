@@ -1,3 +1,12 @@
+//
+// mavros
+// Copyright 2021 Vladimir Ermakov, All rights reserved.
+//
+// This file is part of the mavros package and subject to the license terms
+// in the top-level LICENSE file of the mavros repository.
+// https://github.com/mavlink/mavros/tree/master/LICENSE.md
+//
+
 /**
  * Test libmavros quaternion utilities
  */
@@ -10,7 +19,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-using namespace mavros;
+using namespace mavros;     // NOLINT
 
 static const double epsilon = 1e-9;
 static const double epsilon_f = 1e-6;
@@ -76,7 +85,6 @@ TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
   for (ssize_t roll = min; roll <= max; roll += step) {
     for (ssize_t pitch = min; pitch <= max; pitch += step) {
       for (ssize_t yaw = min; yaw <= max; yaw += step) {
-
         Eigen::Vector3d expected_deg(roll, pitch, yaw);
         Eigen::Vector3d expected = expected_deg * deg_to_rad;
 
@@ -94,12 +102,12 @@ TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
         auto q2 = ftf::quaternion_from_rpy(rpy);
 
         // direct assumption is failed at ranges outside 0..pi
-        //EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
-        //EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
-        //EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
+        // EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
+        // EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
+        // EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
 
         // at -pi..0 we got complimentary q2 to q
-        //EXPECT_QUATERNION(q1, q2, epsilon);
+        // EXPECT_QUATERNION(q1, q2, epsilon);
 
         // instead of direct comparision we rotate other quaternion and then compare results
         auto tq1 = q1 * test_orientation * q1.inverse();

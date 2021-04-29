@@ -1,13 +1,22 @@
+//
+// mavros
+// Copyright 2021 Vladimir Ermakov, All rights reserved.
+//
+// This file is part of the mavros package and subject to the license terms
+// in the top-level LICENSE file of the mavros repository.
+// https://github.com/mavlink/mavros/tree/master/LICENSE.md
+//
+
 /**
  * Test libmavros frame conversion utilities
  */
 
 #include <gtest/gtest.h>
 
-#include <rclcpp/rclcpp.hpp>
-#include <mavros/frame_tf.hpp>
+#include "rclcpp/rclcpp.hpp"
+#include "mavros/frame_tf.hpp"
 
-using namespace mavros;
+using namespace mavros;     // NOLINT
 
 static const double epsilon = 1e-9;
 static const double epsilon_f = 1e-6;
