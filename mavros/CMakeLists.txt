@@ -195,6 +195,10 @@ if(BUILD_TESTING)
   # NOTE(vooon): tired to provide more and more macro
   list(APPEND ament_cmake_cppcheck_ADDITIONAL_EXCLUDE "./test/*.cpp")
 
+  # NOTE(vooon): cpplint complains about generated lines too long. Nothing more.
+  # XXX(vooon): don't work for Foxy!
+  # list(APPEND ament_cmake_cpplint_ADDITIONAL_EXCLUDE "./src/lib/enum_to_string.cpp")
+
   find_package(ament_lint_auto REQUIRED)
 
   # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.

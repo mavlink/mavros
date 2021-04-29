@@ -218,7 +218,8 @@ protected:
   template<typename ParameterT>
   auto node_declate_and_watch_parameter(
     const std::string & name, ParameterFunctorT cb,
-    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor = rcl_interfaces::msg::ParameterDescriptor(),
+    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =
+    rcl_interfaces::msg::ParameterDescriptor(),
     bool ignore_override = false
   )
   {
@@ -235,7 +236,8 @@ protected:
   auto node_declate_and_watch_parameter(
     const std::string & name, const ParameterT & default_value,
     ParameterFunctorT cb,
-    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor = rcl_interfaces::msg::ParameterDescriptor(),
+    const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =
+    rcl_interfaces::msg::ParameterDescriptor(),
     bool ignore_override = false
   )
   {

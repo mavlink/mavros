@@ -17,9 +17,9 @@
 #include <string>
 #include <utility>
 
-#include <mavros/utils.hpp>
-#include <mavros/frame_tf.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include "mavros/utils.hpp"
+#include "mavros/frame_tf.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace mavros
 {
@@ -145,8 +145,7 @@ std::string to_string(MAV_SENSOR_ORIENTATION orientation)
 
 Eigen::Quaterniond sensor_orientation_matching(MAV_SENSOR_ORIENTATION orientation)
 {
-  //const size_t idx(orientation);
-  const auto idx = static_cast<std::underlying_type<MAV_SENSOR_ORIENTATION>::type>(orientation);
+  const auto idx = enum_value(orientation);
   if (idx >= sensor_orientations.size()) {
     RCLCPP_ERROR(logger, "SENSOR: wrong orientation index: %d", idx);
     return Eigen::Quaterniond::Identity();
