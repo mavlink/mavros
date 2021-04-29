@@ -16,15 +16,17 @@
 
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
-#include <mavros/setpoint_mixin.hpp>
+#include <algorithm>
 
-#include <mavros_msgs/msg/attitude_target.hpp>
-#include <mavros_msgs/msg/position_target.hpp>
-#include <mavros_msgs/msg/global_position_target.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+#include "mavros/setpoint_mixin.hpp"
+
+#include "mavros_msgs/msg/attitude_target.hpp"
+#include "mavros_msgs/msg/position_target.hpp"
+#include "mavros_msgs/msg/global_position_target.hpp"
 
 namespace mavros
 {

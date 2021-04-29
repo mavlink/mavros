@@ -19,22 +19,24 @@
 #include <angles/angles.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <GeographicLib/Geocentric.hpp>
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include <string>
+#include <GeographicLib/Geocentric.hpp>     // NOLINT
 
-#include <std_msgs/msg/float64.hpp>
-#include <std_msgs/msg/u_int32.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <sensor_msgs/msg/nav_sat_status.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <geographic_msgs/msg/geo_point_stamped.hpp>
-#include <mavros_msgs/msg/home_position.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "std_msgs/msg/float64.hpp"
+#include "std_msgs/msg/u_int32.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "sensor_msgs/msg/nav_sat_status.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "geographic_msgs/msg/geo_point_stamped.hpp"
+#include "mavros_msgs/msg/home_position.hpp"
 
 namespace mavros
 {
@@ -130,7 +132,7 @@ public:
       std::bind(&GlobalPositionPlugin::set_gp_origin_cb, this, _1));
 
     // home position subscriber to set "map" origin
-    // TODO use UAS
+    // TODO(vooon): use UAS
     hp_sub = node->create_subscription<mavros_msgs::msg::HomePosition>(
       "home_position/home",
       sensor_qos,
@@ -228,16 +230,17 @@ private:
 
     ftf::EigenMapCovariance3d gps_cov(fix.position_covariance.data());
 
-    // With mavlink v2.0 use accuracies reported by sensor
     if (msg->magic == MAVLINK_STX &&
       raw_gps.h_acc > 0 && raw_gps.v_acc > 0)
     {
+      // With mavlink v2.0 use accuracies reported by sensor
+
       gps_cov.diagonal() << std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.h_acc / 1E3, 2),
         std::pow(raw_gps.v_acc / 1E3, 2);
       fix.position_covariance_type = NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
-    }
-    // With mavlink v1.0 approximate accuracies by DOP
-    else if (!std::isnan(eph) && !std::isnan(epv)) {
+    } else if (!std::isnan(eph) && !std::isnan(epv)) {
+      // With mavlink v1.0 approximate accuracies by DOP
+
       gps_cov.diagonal() << std::pow(eph * gps_uere, 2), std::pow(eph * gps_uere, 2), std::pow(
         epv * gps_uere, 2);
       fix.position_covariance_type = NavSatFix::COVARIANCE_TYPE_APPROXIMATED;

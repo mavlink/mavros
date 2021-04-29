@@ -14,13 +14,16 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include <string>
+#include <vector>
 
-#include <sensor_msgs/msg/time_reference.hpp>
-#include <mavros_msgs/msg/timesync_status.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "sensor_msgs/msg/time_reference.hpp"
+#include "mavros_msgs/msg/timesync_status.hpp"
 
 namespace mavros
 {
@@ -414,7 +417,8 @@ private:
   {
     uint64_t now_ns = node->now().nanoseconds();
 
-    // Calculate the round trip time (RTT) it took the timesync packet to bounce back to us from remote system
+    // Calculate the round trip time (RTT) it took the timesync
+    // packet to bounce back to us from remote system
     uint64_t rtt_ns = now_ns - local_time_ns;
 
     // Calculate the difference of this sample from the current estimate
@@ -422,10 +426,12 @@ private:
 
     if (rtt_ns < max_rtt_sample * 1000000ULL) {                 // Only use samples with low RTT
       if (sync_converged() && (deviation > max_deviation_sample * 1000000ULL)) {
-        // Increment the counter if we have a good estimate and are getting samples far from the estimate
+        // Increment the counter if we have a good estimate and are
+        // getting samples far from the estimate
         high_deviation_count++;
 
-        // We reset the filter if we received consecutive samples which violate our present estimate.
+        // We reset the filter if we received consecutive samples
+        // which violate our present estimate.
         // This is most likely due to a time jump on the offboard system.
         if (high_deviation_count > max_cons_high_deviation) {
           RCLCPP_ERROR(get_logger(), "TM: Time jump detected. Resetting time synchroniser.");
@@ -441,7 +447,7 @@ private:
         // Filter gain scheduling
         if (!sync_converged()) {
           // Interpolate with a sigmoid function
-          float progress = float(sequence) / convergence_window;
+          float progress = static_cast<float>(sequence) / convergence_window;
           float p = 1.0f - expf(0.5f * (1.0f - 1.0f / (1.0f - progress)));
           filter_alpha = p * filter_alpha_final + (1.0f - p) * filter_alpha_initial;
           filter_beta = p * filter_beta_final + (1.0f - p) * filter_beta_initial;
@@ -484,7 +490,7 @@ private:
     timesync_status.remote_timestamp_ns = remote_time_ns;
     timesync_status.observed_offset_ns = offset_ns;
     timesync_status.estimated_offset_ns = time_offset;
-    timesync_status.round_trip_time_ms = float(rtt_ns / 1000000.0);
+    timesync_status.round_trip_time_ms = static_cast<float>(rtt_ns / 1000000.0);
 
     timesync_status_pub->publish(timesync_status);
 

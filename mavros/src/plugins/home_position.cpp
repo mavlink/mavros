@@ -18,14 +18,16 @@
 
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include <memory>
 
-#include <std_srvs/srv/trigger.hpp>
-#include <mavros_msgs/srv/command_long.hpp>
-#include <mavros_msgs/msg/home_position.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "std_srvs/srv/trigger.hpp"
+#include "mavros_msgs/srv/command_long.hpp"
+#include "mavros_msgs/msg/home_position.hpp"
 
 namespace mavros
 {
@@ -126,9 +128,10 @@ private:
         home_position.approach_y, home_position.approach_z));
 
     hp.header.stamp = uas->synchronise_stamp(home_position.time_usec);
-    hp.geo.latitude = home_position.latitude / 1E7;                            // deg
-    hp.geo.longitude = home_position.longitude / 1E7;                          // deg
-    hp.geo.altitude = home_position.altitude / 1E3 + uas->data.geoid_to_ellipsoid_height(hp.geo);   // in meters
+    hp.geo.latitude = home_position.latitude / 1E7;     // deg
+    hp.geo.longitude = home_position.longitude / 1E7;   // deg
+    hp.geo.altitude = home_position.altitude / 1E3 +
+      uas->data.geoid_to_ellipsoid_height(hp.geo);      // in meters
     hp.orientation = tf2::toMsg(q);
     hp.position = tf2::toMsg(pos);
     tf2::toMsg(hp_approach_enu, hp.approach);

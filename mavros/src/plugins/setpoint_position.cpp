@@ -17,14 +17,14 @@
 #include <tf2_eigen/tf2_eigen.h>
 #include <GeographicLib/Geocentric.hpp>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
-#include <mavros/setpoint_mixin.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+#include "mavros/setpoint_mixin.hpp"
 
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geographic_msgs/msg/geo_pose_stamped.hpp>
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geographic_msgs/msg/geo_pose_stamped.hpp"
 
 
 namespace mavros
@@ -101,16 +101,24 @@ private:
   friend class plugin::SetPositionTargetGlobalIntMixin<SetpointPositionPlugin>;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr setpoint_sub;
-  rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr setpointg_sub;      //!< Global setpoint
-  rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr setpointg2l_sub;    //!< Global setpoint converted to local setpoint
-  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gps_sub;                     //!< current GPS
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr local_sub;               //!< current local ENU
+  //! Global setpoint
+  rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr setpointg_sub;
+  //! Global setpoint converted to local setpoint
+  rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr setpointg2l_sub;
+  //! current GPS
+  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gps_sub;
+  //! current local ENU
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr local_sub;
 
   /* Stores current gps state. */
-  //sensor_msgs::NavSatFix current_gps_msg;
-  Eigen::Vector3d current_gps;                  //!< geodetic coordinates LLA
-  Eigen::Vector3d current_local_pos;            //!< Current local position in ENU
-  uint32_t old_gps_stamp = 0;                   //!< old time gps time stamp in [ms], to check if new gps msg is received
+  // sensor_msgs::NavSatFix current_gps_msg;
+
+  //! geodetic coordinates LLA
+  Eigen::Vector3d current_gps;
+  //! Current local position in ENU
+  Eigen::Vector3d current_local_pos;
+  //! old time gps time stamp in [ms], to check if new gps msg is received
+  uint32_t old_gps_stamp = 0;
 
   MAV_FRAME mav_frame;
 

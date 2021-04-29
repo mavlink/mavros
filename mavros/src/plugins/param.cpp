@@ -16,18 +16,24 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <string>
+#include <set>
+#include <unordered_map>
+#include <list>
+#include <memory>
+#include <vector>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-// #include <mavros_msgs/srv/param_set.hpp>
-// #include <mavros_msgs/srv/param_get.hpp>
-#include <mavros_msgs/srv/param_pull.hpp>
-// #include <mavros_msgs/srv/param_push.hpp>
-#include <mavros_msgs/srv/param_set_v2.hpp>
-#include <mavros_msgs/msg/param_event.hpp>
+// #include "mavros_msgs/srv/param_set.hpp"
+// #include "mavros_msgs/srv/param_get.hpp"
+#include "mavros_msgs/srv/param_pull.hpp"
+// #include "mavros_msgs/srv/param_push.hpp"
+#include "mavros_msgs/srv/param_set_v2.hpp"
+#include "mavros_msgs/msg/param_event.hpp"
 
 namespace mavros
 {
@@ -533,7 +539,6 @@ private:
     if (param_state == PR::RXLIST || param_state == PR::RXPARAM ||
       param_state == PR::RXPARAM_TIMEDOUT)
     {
-
       // we received first param. setup list timeout
       if (param_state == PR::RXLIST) {
         param_count = pmsg.param_count;
@@ -647,7 +652,7 @@ private:
     parameters.clear();
 
     auto list = node->list_parameters({""}, 1);
-    for (auto name :list.names) {
+    for (auto name : list.names) {
       node->undeclare_parameter(name);
     }
   }
@@ -856,6 +861,14 @@ private:
   {
     unique_lock lock(mutex);
 
+    auto is_in_progress = [&]() -> bool {
+        return
+          param_state == PR::RXLIST ||
+          param_state == PR::RXPARAM ||
+          param_state == PR::RXPARAM_TIMEDOUT
+        ;
+      };
+
     if ((param_state == PR::IDLE && parameters.empty()) ||
       req->force_pull)
     {
@@ -876,9 +889,7 @@ private:
       lock.unlock();
       res->success = wait_fetch_all();
 
-    } else if (param_state == PR::RXLIST || param_state == PR::RXPARAM ||
-      param_state == PR::RXPARAM_TIMEDOUT)
-    {
+    } else if (is_in_progress()) {
       lock.unlock();
       res->success = wait_fetch_all();
 
@@ -1045,7 +1056,7 @@ private:
         return param_it->second.param_value != p.get_parameter_value();
       };
 
-    for (auto & p:set_parameters) {
+    for (auto & p : set_parameters) {
       auto req = std::make_shared<mavros_msgs::srv::ParamSetV2::Request>();
       auto res = std::make_shared<mavros_msgs::srv::ParamSetV2::Response>();
 

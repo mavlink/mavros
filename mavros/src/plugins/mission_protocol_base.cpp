@@ -255,11 +255,39 @@ void MissionBase::handle_mission_ack(
     return;
   }
 
-  if (
-    (wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP ||
-    wp_state == WP::TXWPINT) &&
-    (wp_cur_id == wp_end_id - 1) && (ack_type == MRES::ACCEPTED))
-  {
+  auto is_tx_done = [&]() -> bool {
+      return
+        (
+        wp_state == WP::TXLIST ||
+        wp_state == WP::TXPARTIAL ||
+        wp_state == WP::TXWP ||
+        wp_state == WP::TXWPINT
+        ) &&
+        (wp_cur_id == wp_end_id - 1) &&
+        (ack_type == MRES::ACCEPTED)
+      ;
+    };
+
+  auto is_tx_seq_error = [&]() -> bool {
+      return
+        (
+        wp_state == WP::TXWP ||
+        wp_state == WP::TXWPINT
+        ) &&
+        ack_type == MRES::INVALID_SEQUENCE
+      ;
+    };
+
+  auto is_tx_failed = [&]() -> bool {
+      return
+        wp_state == WP::TXLIST ||
+        wp_state == WP::TXPARTIAL ||
+        wp_state == WP::TXWP ||
+        wp_state == WP::TXWPINT
+      ;
+    };
+
+  if (is_tx_done()) {
     go_idle();
     waypoints = send_waypoints;
     send_waypoints.clear();
@@ -273,17 +301,14 @@ void MissionBase::handle_mission_ack(
     publish_waypoints();
 
     RCLCPP_INFO(get_logger(), "%s: mission sended", log_prefix);
-  } else if (
-    (wp_state == WP::TXWP || wp_state == WP::TXWPINT) && ack_type == MRES::INVALID_SEQUENCE)
-  {
+  } else if (is_tx_seq_error()) {
     // Mission Ack: INVALID_SEQUENCE received during TXWP
-    // This happens when waypoint N was received by autopilot, but the request for waypoint N+1 failed.
-    // This causes seq mismatch, ignore and eventually the request for n+1 will get to us and seq will sync up.
+    // This happens when waypoint N was received by autopilot,
+    // but the request for waypoint N+1 failed.
+    // This causes seq mismatch, ignore and eventually the request for n+1
+    // will get to us and seq will sync up.
     RCLCPP_DEBUG(get_logger(), "%s: Received INVALID_SEQUENCE ack", log_prefix);
-  } else if (
-    wp_state == WP::TXLIST || wp_state == WP::TXPARTIAL || wp_state == WP::TXWP ||
-    wp_state == WP::TXWPINT)
-  {
+  } else if (is_tx_failed()) {
     go_idle();
     // use this flag for failure report
     is_timedout = true;
@@ -407,34 +432,35 @@ void MissionBase::timeout_cb()
     }
 
     restart_timeout_timer_int();
+    return;
+  }
+
+  auto use_int = use_mission_item_int && !mission_item_int_support_confirmed;
+
+  if (wp_state == WP::TXWPINT && use_int) {
+    RCLCPP_ERROR(
+      get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
+    use_mission_item_int = false;
+
+    wp_state = WP::TXWP;
+    restart_timeout_timer();
+    send_waypoint<MISSION_ITEM>(wp_cur_id);
+  } else if (wp_state == WP::RXWPINT && use_int) {
+    RCLCPP_ERROR(
+      get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
+    use_mission_item_int = false;
+
+    wp_state = WP::RXWP;
+    restart_timeout_timer();
+    mission_request(wp_cur_id);
   } else {
-    if (wp_state == WP::TXWPINT && use_mission_item_int && !mission_item_int_support_confirmed) {
-      RCLCPP_ERROR(
-        get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
-      use_mission_item_int = false;
-
-      wp_state = WP::TXWP;
-      restart_timeout_timer();
-      send_waypoint<MISSION_ITEM>(wp_cur_id);
-    } else if (
-      wp_state == WP::RXWPINT && use_mission_item_int && !mission_item_int_support_confirmed)
-    {
-      RCLCPP_ERROR(
-        get_logger(), "%s: mission_item_int timed out, falling back to mission_item.", log_prefix);
-      use_mission_item_int = false;
-
-      wp_state = WP::RXWP;
-      restart_timeout_timer();
-      mission_request(wp_cur_id);
-    } else {
-      RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
-      go_idle();
-      is_timedout = true;
-      // prevent waiting cond var timeout
-      lock.unlock();
-      list_receiving.notify_all();
-      list_sending.notify_all();
-    }
+    RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
+    go_idle();
+    is_timedout = true;
+    // prevent waiting cond var timeout
+    lock.unlock();
+    list_receiving.notify_all();
+    list_sending.notify_all();
   }
 }
 

@@ -17,25 +17,24 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/msg/state.hpp>
-#include <mavros_msgs/msg/estimator_status.hpp>
-#include <mavros_msgs/msg/extended_state.hpp>
-#include <mavros_msgs/srv/stream_rate.hpp>
-#include <mavros_msgs/srv/set_mode.hpp>
-#include <mavros_msgs/srv/command_long.hpp>
-#include <mavros_msgs/msg/status_text.hpp>
-#include <mavros_msgs/msg/vehicle_info.hpp>
-#include <mavros_msgs/srv/vehicle_info_get.hpp>
-#include <mavros_msgs/srv/message_interval.hpp>
-
-#include <sensor_msgs/msg/battery_state.hpp>
-using BatteryMsg = sensor_msgs::msg::BatteryState;
+#include "mavros_msgs/msg/state.hpp"
+#include "mavros_msgs/msg/estimator_status.hpp"
+#include "mavros_msgs/msg/extended_state.hpp"
+#include "mavros_msgs/srv/stream_rate.hpp"
+#include "mavros_msgs/srv/set_mode.hpp"
+#include "mavros_msgs/srv/command_long.hpp"
+#include "mavros_msgs/msg/status_text.hpp"
+#include "mavros_msgs/msg/vehicle_info.hpp"
+#include "mavros_msgs/srv/vehicle_info_get.hpp"
+#include "mavros_msgs/srv/message_interval.hpp"
+#include "sensor_msgs/msg/battery_state.hpp"
 
 namespace mavros
 {
@@ -45,6 +44,7 @@ using mavlink::minimal::MAV_TYPE;
 using mavlink::minimal::MAV_AUTOPILOT;
 using mavlink::minimal::MAV_STATE;
 using utils::enum_value;
+using BatteryMsg = sensor_msgs::msg::BatteryState;
 
 using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
@@ -155,7 +155,7 @@ private:
 class SystemStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-  SystemStatusDiag(const std::string & name)
+  explicit SystemStatusDiag(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     last_st{}
   {}
@@ -669,9 +669,9 @@ private:
     auto lg = node->get_logger();
     auto log_info = [&lg, &prefix] < typename ... Args > (const std::string & fmt, Args ... args) {
       RCLCPP_INFO(lg, fmt, prefix, args ...);
-    };
+    };  // NOLINT
 
-    log_info("%s: Capabilities         0x%016llx", (long long int)apv.capabilities);
+    log_info("%s: Capabilities         0x%016llx", apv.capabilities);
     log_info(
       "%s: Flight software:     %08x (%s)",
       apv.flight_sw_version, custom_version_to_hex_string(apv.flight_custom_version).c_str());
@@ -684,7 +684,7 @@ private:
       apv.os_sw_version, custom_version_to_hex_string(apv.os_custom_version).c_str());
     log_info("%s: Board hardware:      %08x", apv.board_version);
     log_info("%s: VID/PID:             %04x:%04x", apv.vendor_id, apv.product_id);
-    log_info("%s: UID:                 %016llx", (long long int)apv.uid);
+    log_info("%s: UID:                 %016llx", apv.uid);
   }
 
   void process_autopilot_version_apm_quirk(
@@ -697,11 +697,11 @@ private:
     auto lg = node->get_logger();
     auto log_info = [&lg, &prefix] < typename ... Args > (const std::string & fmt, Args ... args) {
       RCLCPP_INFO(lg, fmt, prefix, args ...);
-    };
+    };  // NOLINT
 
     // Note based on current APM's impl.
     // APM uses custom version array[8] as a string
-    log_info("%s: Capabilities         0x%016llx", (long long int)apv.capabilities);
+    log_info("%s: Capabilities         0x%016llx", apv.capabilities);
     log_info(
       "%s: Flight software:     %08x (%*s)",
       apv.flight_sw_version, 8, apv.flight_custom_version.data());
@@ -713,7 +713,7 @@ private:
       apv.os_sw_version, 8, apv.os_custom_version.data());
     log_info("%s: Board hardware:      %08x", apv.board_version);
     log_info("%s: VID/PID:             %04x:%04x", apv.vendor_id, apv.product_id);
-    log_info("%s: UID:                 %016llx", (long long int)apv.uid);
+    log_info("%s: UID:                 %016llx", apv.uid);
   }
 
   void publish_disconnection()
@@ -937,7 +937,9 @@ private:
       //     cog.outl(f"case enum_value(BT::{f}):")
       //     if f == 'UNKNOWN':
       //         cog.outl("default:")
-      //     cog.outl(f"  batt_msg.power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_{f};")
+      //     cog.outl(
+      //         f"  batt_msg.power_supply_technology = "
+      //         f"BatteryMsg::POWER_SUPPLY_TECHNOLOGY_{f};")
       //     cog.outl(f"  break;")
       // ]]]
       case enum_value(BT::LIPO):
@@ -1000,7 +1002,9 @@ private:
     // enum.pop() # -> remove ENUM_END
     //
     // for k, e in enum:
-    //     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
+    //     desc = e.description.split(' ', 1)[1] \
+    //         if e.description.startswith('0x') \
+    //         else e.description
     //     esf = e.name
     //
     //     if esf.startswith(ename + '_'):

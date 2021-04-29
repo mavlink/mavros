@@ -14,19 +14,21 @@
  * @{
  */
 
-#include <cmath>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include <cmath>
+#include <string>
 
-#include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/magnetic_field.hpp>
-#include <sensor_msgs/msg/temperature.hpp>
-#include <sensor_msgs/msg/fluid_pressure.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "sensor_msgs/msg/imu.hpp"
+#include "sensor_msgs/msg/magnetic_field.hpp"
+#include "sensor_msgs/msg/temperature.hpp"
+#include "sensor_msgs/msg/fluid_pressure.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
 
 namespace mavros
 {
@@ -226,7 +228,8 @@ private:
     imu_ned_msg.linear_acceleration_covariance = linear_acceleration_cov;
 
     if (!received_linear_accel) {
-      // Set element 0 of covariance matrix to -1 if no data received as per sensor_msgs/Imu defintion
+      // Set element 0 of covariance matrix to -1
+      // if no data received as per sensor_msgs/Imu defintion
       imu_enu_msg.linear_acceleration_covariance[0] = -1;
       imu_ned_msg.linear_acceleration_covariance[0] = -1;
     }

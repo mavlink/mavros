@@ -18,12 +18,12 @@
 #include <angles/angles.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
 
 namespace mavros
 {
@@ -66,7 +66,8 @@ private:
     mavlink::ardupilotmega::msg::WIND & wind, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     const double speed = wind.speed;
-    const double course = angles::from_degrees(wind.direction) + M_PI;  // direction "from" -> direction "to"
+    // direction "from" -> direction "to"
+    const double course = angles::from_degrees(wind.direction) + M_PI;
 
     auto twist_cov = geometry_msgs::msg::TwistWithCovarianceStamped();
     twist_cov.header.stamp = node->now();
@@ -99,7 +100,8 @@ private:
     // fill available covariance elements
     ftf::EigenMapCovariance6d cov_map(twist_cov.twist.covariance.data());
     cov_map.setZero();
-    cov_map(0, 0) = wind.var_horiz;     // NOTE: this is a summed covariance for both x and y horizontal wind components
+    // NOTE: this is a summed covariance for both x and y horizontal wind components
+    cov_map(0, 0) = wind.var_horiz;
     cov_map(2, 2) = wind.var_vert;
 
     wind_pub->publish(twist_cov);

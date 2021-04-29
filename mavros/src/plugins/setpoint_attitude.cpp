@@ -21,15 +21,17 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-#include <rcpputils/asserts.hpp>
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
-#include <mavros/plugin_filter.hpp>
-#include <mavros/setpoint_mixin.hpp>
+#include <memory>
 
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <mavros_msgs/msg/thrust.hpp>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+#include "mavros/setpoint_mixin.hpp"
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "mavros_msgs/msg/thrust.hpp"
 
 namespace mavros
 {
@@ -37,10 +39,10 @@ namespace std_plugins
 {
 using namespace std::placeholders;      // NOLINT
 
-using SyncPoseThrustPolicy = message_filters::sync_policies::ApproximateTime<geometry_msgs::msg::PoseStamped,
-    mavros_msgs::msg::Thrust>;
-using SyncTwistThrustPolicy = message_filters::sync_policies::ApproximateTime<geometry_msgs::msg::TwistStamped,
-    mavros_msgs::msg::Thrust>;
+using SyncPoseThrustPolicy = message_filters::sync_policies::ApproximateTime<
+  geometry_msgs::msg::PoseStamped, mavros_msgs::msg::Thrust>;
+using SyncTwistThrustPolicy = message_filters::sync_policies::ApproximateTime<
+  geometry_msgs::msg::TwistStamped, mavros_msgs::msg::Thrust>;
 using SyncPoseThrust = message_filters::Synchronizer<SyncPoseThrustPolicy>;
 using SyncTwistThrust = message_filters::Synchronizer<SyncTwistThrustPolicy>;
 
@@ -216,7 +218,6 @@ private:
       send_attitude_ang_velocity(req->header.stamp, ang_vel, thrust_msg->thrust);
     }
   }
-
 };
 
 }       // namespace std_plugins
