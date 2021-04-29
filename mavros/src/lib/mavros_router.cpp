@@ -17,8 +17,8 @@
 #include <set>
 #include <utility>
 
-#include <mavros/mavros_router.hpp>
-#include <rcpputils/asserts.hpp>
+#include "mavros/mavros_router.hpp"
+#include "rcpputils/asserts.hpp"
 
 using namespace mavros::router;  // NOLINT
 using rclcpp::QoS;
@@ -54,7 +54,7 @@ void Router::route_message(
 
   size_t sent_cnt = 0, retry_cnt = 0;
 retry:
-  for (auto & kv:this->endpoints) {
+  for (auto & kv : this->endpoints) {
     auto & dest = kv.second;
 
     if (src->id == dest->id) {
@@ -298,7 +298,8 @@ void Router::periodic_clear_stale_remote_addrs()
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
 
-    // Step 1: remove any stale addrs that still there (hadn't been removed by Endpoint::recv_message())
+    // Step 1: remove any stale addrs that still there
+    //         (hadn't been removed by Endpoint::recv_message())
     for (auto addr : p->stale_addrs) {
       if (addr != 0) {
         p->remote_addrs.erase(addr);
@@ -313,7 +314,6 @@ void Router::periodic_clear_stale_remote_addrs()
     p->stale_addrs.insert(p->remote_addrs.begin(), p->remote_addrs.end());
   }
 }
-
 
 void Router::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {

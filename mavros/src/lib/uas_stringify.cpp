@@ -17,8 +17,8 @@
 #include <string>
 #include <algorithm>
 
-#include <mavros/mavros_uas.hpp>
-#include <mavros/px4_custom_mode.hpp>
+#include "mavros/mavros_uas.hpp"
+#include "mavros/px4_custom_mode.hpp"
 
 using namespace mavros;             // NOLINT
 using namespace mavros::uas;        // NOLINT

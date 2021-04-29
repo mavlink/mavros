@@ -43,6 +43,10 @@ static auto logger = rclcpp::get_logger("uas.enum");
 // [[[cog:
 // import pymavlink.dialects.v20.common as common
 //
+// # NOTE(vooon): Foxy couldn't exclude that file from cpplint
+// #              So in order to pass lint test i have to remove
+// #              description comments.
+// EMIT_DESCRIPTION = False
 //
 // def get_enum(ename):
 //     enum = sorted(common.enums[ename].items())
@@ -89,14 +93,15 @@ static auto logger = rclcpp::get_logger("uas.enum");
 // }}""")
 //
 //
-// def enum_value_is_description_outl(ename, suffix=None, split_by_delim='-,/.', funcname='to_string'):
+// def enum_value_is_description_outl(ename, suffix=None,
+//     split_by_delim='-,/.', funcname='to_string'):
 //     enum = get_enum(ename)
 //
 //     array_outl(ename, enum, suffix)
 //     for k, e in enum:
 //         value = split_by(split_by_delim, e.description)
 //         sp = make_whitespace(30, value)
-//         if False: # e.description:
+//         if EMIT_DESCRIPTION and e.description:
 //             cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
 //         else:
 //             cog.outl(f"""/* {k:>2} */ "{value}",""")
@@ -113,7 +118,7 @@ static auto logger = rclcpp::get_logger("uas.enum");
 //     for k, e in enum:
 //         name_short =  e.name[len(ename) + 1:]
 //         sp = make_whitespace(30, name_short)
-//         if False: # e.description:
+//         if EMIT_DESCRIPTION and e.description:
 //             cog.outl(f"""/* {k:>2} */ "{name_short}",{sp}// {e.description}""")
 //         else:
 //             cog.outl(f"""/* {k:>2} */ "{name_short}",""")
@@ -544,11 +549,13 @@ std::string to_string(MAV_FRAME e)
 // suffix = 'MAV_COMP_ID'
 // enum = get_enum(ename)
 //
-// cog.outl(f"static const std::unordered_map<size_t, const std::string> {suffix.lower()}_strings{{{{")
+// cog.outl(
+//     f"static const std::unordered_map<size_t, const std::string> "
+//     f"{suffix.lower()}_strings{{{{")
 // for k, e in enum:
 //     name_short =  e.name[len(suffix) + 1:]
 //     entry = f"""{{{k}, "{name_short}"}},"""
-//     if False: # e.description:
+//     if EMIT_DESCRIPTION and e.description:
 //         cog.outl(f"""  {entry:<39} // {e.description}""")
 //     else:
 //         cog.outl(f"""  {entry}""")

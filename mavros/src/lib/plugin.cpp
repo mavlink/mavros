@@ -13,8 +13,8 @@
 
 #include <vector>
 
-#include <mavros/mavros_uas.hpp>
-#include <mavros/plugin.hpp>
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
 
 using  mavros::plugin::Plugin;
 
@@ -41,7 +41,7 @@ Plugin::SetParametersResult Plugin::node_on_set_parameters_cb(
 
   result.successful = true;
 
-  for (auto & p:parameters) {
+  for (auto & p : parameters) {
     auto it = node_watch_parameters.find(p.get_name());
     if (it != node_watch_parameters.end()) {
       try {
