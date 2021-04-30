@@ -7,17 +7,19 @@
 # from collections import OrderedDict
 # import re
 #
+#
 # def wr_enum(enum, ename, pfx='', bsz=16):
-#     cog.outl("# " + ename + "_" + pfx)
+#     cog.outl(f"# {ename}_{pfx}")
 #     for k, e in enum:
 #         # exclude also deprecated commands
-#         if 'MAV_CMD' + "_" + pfx in e.name and not re.search('deprecated', e.description, re.IGNORECASE):
-#             sn = e.name[len('MAV_CMD') + 1:]
-#             l = "uint{bsz} {sn} = {k}".format(**locals())
+#         if f"{ename}_{pfx}" in e.name and not re.search('deprecated', e.description, re.IGNORECASE):
+#             sn = e.name[len(ename) + 1:]
+#             l = f"uint{bsz} {sn} = {k}"
 #             if e.description:
-#                 l += ' ' * (50 - len(l)) + ' # ' + e.description
+#                 l += f"{' ' * (50 - len(l))} # {e.description.strip()}"
 #             cog.outl(l)
-#     cog.out('\n')
+#     cog.outl()
+#
 #
 # def decl_enum(ename):
 #     enum = sorted(common.enums[ename].items())
@@ -25,7 +27,7 @@
 #
 #     enumt = []
 #     # exception list of commands to not include
-#     exlist = ['SPATIAL', 'USER', 'WAYPOINT']
+#     exlist = [] # ['SPATIAL', 'USER', 'WAYPOINT']
 #     for k, e in enum:
 #         enumt.extend(e.name[len(ename) + 1:].split('_')[0:1])
 #
@@ -35,6 +37,7 @@
 #     for key in enumt:
 #         wr_enum(enum, ename, key)
 #
+#
 # decl_enum('MAV_CMD')
 # ]]]
 # MAV_CMD_AIRFRAME
@@ -42,7 +45,6 @@ uint16 AIRFRAME_CONFIGURATION = 2520
 
 # MAV_CMD_ARM
 uint16 ARM_AUTHORIZATION_REQUEST = 3001            # Request authorization to arm the vehicle to a external entity, the arm authorizer is responsible to request all data that is needs from the vehicle before authorize or deny the request. If approved the progress of command_ack message should be set with period of time that this authorization is valid in seconds or in case it was denied it should be set with one of the reasons in ARM_AUTH_DENIED_REASON.
-        
 
 # MAV_CMD_CAMERA
 uint16 CAMERA_TRACK_POINT = 2004                   # If the camera supports point visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_POINT is set), this command allows to initiate the tracking.
@@ -169,15 +171,10 @@ uint16 NAV_LAST = 95                               # NOP - This command is only 
 uint16 NAV_SET_YAW_SPEED = 213                     # Sets a desired vehicle turn angle and speed change.
 uint16 NAV_FENCE_RETURN_POINT = 5000               # Fence return point (there can only be one such point in a geofence definition). If rally points are supported they should be used instead.
 uint16 NAV_FENCE_POLYGON_VERTEX_INCLUSION = 5001   # Fence vertex for an inclusion polygon (the polygon must not be self-intersecting). The vehicle must stay within this area. Minimum of 3 vertices required.
-        
 uint16 NAV_FENCE_POLYGON_VERTEX_EXCLUSION = 5002   # Fence vertex for an exclusion polygon (the polygon must not be self-intersecting). The vehicle must stay outside this area. Minimum of 3 vertices required.
-        
 uint16 NAV_FENCE_CIRCLE_INCLUSION = 5003           # Circular fence area. The vehicle must stay inside this area.
-        
 uint16 NAV_FENCE_CIRCLE_EXCLUSION = 5004           # Circular fence area. The vehicle must stay outside this area.
-        
 uint16 NAV_RALLY_POINT = 5100                      # Rally point. You can have multiple rally points defined.
-        
 
 # MAV_CMD_OBLIQUE
 uint16 OBLIQUE_SURVEY = 260                        # Mission command to set a Camera Auto Mount Pivoting Oblique Survey (Replaces CAM_TRIGG_DIST for this purpose). The camera is triggered each time this distance is exceeded, then the mount moves to the next position. Params 4~6 set-up the angle limits and number of positions for oblique survey, where mount-enabled vehicles automatically roll the camera between shots to emulate an oblique camera setup (providing an increased HFOV). This command can also be used to set the shutter integration time for the camera.
@@ -224,9 +221,14 @@ uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Us
 uint16 SET_CAMERA_ZOOM = 531                       # Set camera zoom. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_CAMERA_FOCUS = 532                      # Set camera focus. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
-                  
 uint16 SET_GUIDED_SUBMODE_CIRCLE = 4001            # This command sets submode circle when vehicle is in guided mode. Vehicle flies along a circle facing the center of the circle. The user can input the velocity along the circle and change the radius. If no input is given the vehicle will hold position.
-                  
+
+# MAV_CMD_SPATIAL
+uint16 SPATIAL_USER_1 = 31005                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
+uint16 SPATIAL_USER_2 = 31006                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
+uint16 SPATIAL_USER_3 = 31007                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
+uint16 SPATIAL_USER_4 = 31008                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
+uint16 SPATIAL_USER_5 = 31009                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
 
 # MAV_CMD_START
 uint16 START_RX_PAIR = 500                         # Starts receiver pairing.
@@ -237,10 +239,24 @@ uint16 STORAGE_FORMAT = 526                        # Format a storage medium. On
 # MAV_CMD_UAVCAN
 uint16 UAVCAN_GET_NODE_INFO = 5200                 # Commands the vehicle to respond with a sequence of messages UAVCAN_NODE_INFO, one message per every UAVCAN node that is online. Note that some of the response messages can be lost, which the receiver can detect easily by checking whether every received UAVCAN_NODE_STATUS has a matching message UAVCAN_NODE_INFO received earlier; if not, this command should be sent again in order to request re-transmission of the node information messages.
 
+# MAV_CMD_USER
+uint16 USER_1 = 31010                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
+uint16 USER_2 = 31011                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
+uint16 USER_3 = 31012                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
+uint16 USER_4 = 31013                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
+uint16 USER_5 = 31014                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
+
 # MAV_CMD_VIDEO
 uint16 VIDEO_START_CAPTURE = 2500                  # Starts video capture (recording).
 uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capture (recording).
 uint16 VIDEO_START_STREAMING = 2502                # Start video streaming
 uint16 VIDEO_STOP_STREAMING = 2503                 # Stop the given video stream
 
-# [[[end]]] (checksum: d1339844f21a28ab73ddcc1ad911802f)
+# MAV_CMD_WAYPOINT
+uint16 WAYPOINT_USER_1 = 31000                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
+uint16 WAYPOINT_USER_2 = 31001                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
+uint16 WAYPOINT_USER_3 = 31002                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
+uint16 WAYPOINT_USER_4 = 31003                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
+uint16 WAYPOINT_USER_5 = 31004                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
+
+# [[[end]]] (checksum: ffe913b4d59850326ea6c94f3fc9acdd)

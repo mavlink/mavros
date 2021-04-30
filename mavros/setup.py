@@ -32,7 +32,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mavros = mavros.cmd:main',
+            'mav = mavros.cmd:main',
         ],
     },
 )
