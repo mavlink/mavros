@@ -7,12 +7,15 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
-import rospy
 import struct
+
+import rospy
+from mavros_msgs.msg import Mavlink
 from pymavlink import mavutil
 from pymavlink.generator.mavcrc import x25crc
-from mavros_msgs.msg import Mavlink
 from std_msgs.msg import Header
+
+assert False, "port me!"
 
 
 def convert_to_bytes(msg):
@@ -23,24 +26,23 @@ def convert_to_bytes(msg):
     """
     payload_octets = len(msg.payload64)
     if payload_octets < msg.len / 8:
-        raise ValueError("Specified payload length is bigger than actual payload64")
+        raise ValueError(
+            "Specified payload length is bigger than actual payload64")
 
     if msg.magic == Mavlink.MAVLINK_V10:
         msg_len = 6 + msg.len  # header + payload length
         msgdata = bytearray(
-            struct.pack(
-                '<BBBBBB%dQ' % payload_octets,
-                msg.magic, msg.len, msg.seq, msg.sysid, msg.compid, msg.msgid,
-                *msg.payload64))
-    else: # MAVLINK_V20
+            struct.pack('<BBBBBB%dQ' % payload_octets, msg.magic, msg.len,
+                        msg.seq, msg.sysid, msg.compid, msg.msgid,
+                        *msg.payload64))
+    else:  # MAVLINK_V20
         msg_len = 10 + msg.len  # header + payload length
         msgdata = bytearray(
-            struct.pack(
-                '<BBBBBBBBBB%dQ' % payload_octets,
-                msg.magic, msg.len, msg.incompat_flags, msg.compat_flags, msg.seq,
-                msg.sysid, msg.compid,
-                msg.msgid & 0xff, (msg.msgid >> 8) & 0xff, (msg.msgid >> 16) & 0xff,
-                *msg.payload64))
+            struct.pack('<BBBBBBBBBB%dQ' % payload_octets, msg.magic, msg.len,
+                        msg.incompat_flags, msg.compat_flags, msg.seq,
+                        msg.sysid, msg.compid, msg.msgid & 0xff,
+                        (msg.msgid >> 8) & 0xff, (msg.msgid >> 16) & 0xff,
+                        *msg.payload64))
 
     if payload_octets != msg.len / 8:
         # message is shorter than payload octets
@@ -98,19 +100,17 @@ def convert_to_rosmsg(mavmsg, stamp=None):
             msgid=hdr.msgId,
             checksum=mavmsg.get_crc(),
             payload64=convert_to_payload64(mavmsg.get_payload()),
-            signature=None, # FIXME #569
+            signature=None,  # FIXME #569
         )
 
     else:
-        return Mavlink(
-            header=header,
-            framing_status=Mavlink.FRAMING_OK,
-            magic=Mavlink.MAVLINK_V10,
-            len=len(mavmsg.get_payload()),
-            seq=mavmsg.get_seq(),
-            sysid=mavmsg.get_srcSystem(),
-            compid=mavmsg.get_srcComponent(),
-            msgid=mavmsg.get_msgId(),
-            checksum=mavmsg.get_crc(),
-            payload64=convert_to_payload64(mavmsg.get_payload())
-        )
+        return Mavlink(header=header,
+                       framing_status=Mavlink.FRAMING_OK,
+                       magic=Mavlink.MAVLINK_V10,
+                       len=len(mavmsg.get_payload()),
+                       seq=mavmsg.get_seq(),
+                       sysid=mavmsg.get_srcSystem(),
+                       compid=mavmsg.get_srcComponent(),
+                       msgid=mavmsg.get_msgId(),
+                       checksum=mavmsg.get_crc(),
+                       payload64=convert_to_payload64(mavmsg.get_payload()))

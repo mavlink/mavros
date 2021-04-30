@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2015 Vladimir Ermakov.
+# Copyright 2015,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
-import rospy
-import mavros
+import rclpy
 
 from std_msgs.msg import Header, Float64
 from geometry_msgs.msg import TwistStamped, PoseStamped, PoseWithCovarianceStamped, \

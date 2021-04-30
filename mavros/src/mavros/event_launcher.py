@@ -9,19 +9,22 @@
 
 from __future__ import print_function
 
-import os
-import sys
-import time
-import shlex
-import rospy
-import mavros
-import signal
 import argparse
-import threading
+import os
+import shlex
+import signal
 import subprocess
+import sys
+import threading
+import time
 
-from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
+import rospy
 from mavros_msgs.msg import State
+from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
+
+import mavros
+
+assert False, "port me!"
 
 
 class EventHandler(object):
@@ -30,7 +33,10 @@ class EventHandler(object):
     """
 
     __slots__ = [
-        'name', 'events', 'actions', 'lock',
+        'name',
+        'events',
+        'actions',
+        'lock',
     ]
 
     def __init__(self, name, events=[], actions=[]):
@@ -52,8 +58,8 @@ class EventHandler(object):
         if hasattr(self, 'action_' + action):
             getattr(self, 'action_' + action)()
         else:
-            rospy.logerr("Misconfiguration of %s, there no action '%s'",
-                         self, action)
+            rospy.logerr("Misconfiguration of %s, there no action '%s'", self,
+                         action)
 
     def spin_once(self):
         raise NotImplementedError
@@ -69,10 +75,19 @@ class ShellHandler(EventHandler):
     #   so need to find a way for such logging, but for now i don't process process output.
 
     __slots__ = [
-        'process', 'command', 'args', 'logfile',
+        'process',
+        'command',
+        'args',
+        'logfile',
     ]
 
-    def __init__(self, name, command, args=[], logfile=None, events=[], actions=[]):
+    def __init__(self,
+                 name,
+                 command,
+                 args=[],
+                 logfile=None,
+                 events=[],
+                 actions=[]):
         super(ShellHandler, self).__init__(name, events, actions)
         self.process = None
         self.command = command
@@ -82,7 +97,9 @@ class ShellHandler(EventHandler):
     def action_run(self):
         with self.lock:
             if self.process:
-                rospy.loginfo("%s: process still active, terminating before run", str(self))
+                rospy.loginfo(
+                    "%s: process still active, terminating before run",
+                    str(self))
                 self.action_stop()
 
             rospy.loginfo("%s: starting...", self)
@@ -98,8 +115,11 @@ class ShellHandler(EventHandler):
             if hasattr(child_stdout, 'write'):
                 child_stdout.write("\n--- run cut: %s ---\n" % time.ctime())
 
-            self.process = subprocess.Popen(args, stdout=child_stdout, stderr=child_stderr,
-                                            close_fds=True, preexec_fn=os.setsid)
+            self.process = subprocess.Popen(args,
+                                            stdout=child_stdout,
+                                            stderr=child_stderr,
+                                            close_fds=True,
+                                            preexec_fn=os.setsid)
 
             poll_result = self.process.poll()
             if poll_result is None or poll_result == 0:
@@ -128,7 +148,8 @@ class ShellHandler(EventHandler):
                 return retcode
 
             try:
-                rospy.loginfo("%s: sending SIGINT to pid [%s] pgid [%s]", self, pid, pgid)
+                rospy.loginfo("%s: sending SIGINT to pid [%s] pgid [%s]", self,
+                              pid, pgid)
                 os.killpg(pgid, signal.SIGINT)
 
                 retcode = poll_timeout(15.0)
@@ -138,15 +159,18 @@ class ShellHandler(EventHandler):
 
                     retcode = poll_timeout(2.0)
                     if retcode is None:
-                        rospy.logerr("%s: escalating to SIGKILL, may still be running", self)
+                        rospy.logerr(
+                            "%s: escalating to SIGKILL, may still be running",
+                            self)
                         try:
                             os.killpg(pgid, signal.SIGKILL)
                         except OSError as ex:
                             rospy.logerr("%s: %s", self, ex)
 
                 if retcode is not None:
-                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s",
-                                  self, pid, retcode)
+                    rospy.loginfo(
+                        "%s: process (pid %s) terminated, exit code: %s", self,
+                        pid, retcode)
             finally:
                 self.process = None
 
@@ -155,8 +179,9 @@ class ShellHandler(EventHandler):
             if self.process:
                 poll_result = self.process.poll()
                 if poll_result is not None:
-                    rospy.loginfo("%s: process (pid %s) terminated, exit code: %s",
-                                  self, self.process.pid, poll_result)
+                    rospy.loginfo(
+                        "%s: process (pid %s) terminated, exit code: %s", self,
+                        self.process.pid, poll_result)
                     self.process = None
 
 
@@ -207,10 +232,8 @@ class Launcher(object):
                     rospy.logwarn("%s: unknown event: %s", h.name, evt)
 
         # config loaded, we may subscribe
-        self.state_sub = rospy.Subscriber(
-            mavros.get_topic('state'),
-            State,
-            self.mavros_state_cb)
+        self.state_sub = rospy.Subscriber(mavros.get_topic('state'), State,
+                                          self.mavros_state_cb)
 
     def _load_trigger(self, name, params):
         rospy.logdebug("Loading trigger: %s", name)
@@ -218,11 +241,14 @@ class Launcher(object):
         def gen_cb(event):
             def cb(req):
                 self(event)
-                return TriggerResponse(success=True)    # try later to check success
+                return TriggerResponse(
+                    success=True)  # try later to check success
+
             return cb
 
         self.known_events.append(name)
-        self.triggers[name] = rospy.Service(params['service'], Trigger, gen_cb(name))
+        self.triggers[name] = rospy.Service(params['service'], Trigger,
+                                            gen_cb(name))
         rospy.loginfo("Trigger: %s (%s)", name, params['service'])
 
     def _load_shell(self, name, params):
@@ -244,7 +270,8 @@ class Launcher(object):
         if logfile:
             logfile = expandpath(logfile)
 
-        rospy.loginfo("Shell: %s (%s)", name, ' '.join([command] + [repr(v) for v in args]))
+        rospy.loginfo("Shell: %s (%s)", name,
+                      ' '.join([command] + [repr(v) for v in args]))
         if logfile:
             rospy.loginfo("Log: %s -> %s", name, logfile)
 
@@ -298,7 +325,10 @@ class Launcher(object):
 def main():
     parser = argparse.ArgumentParser(
         description="This node launch/terminate processes on events.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

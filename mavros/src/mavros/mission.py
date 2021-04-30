@@ -8,15 +8,15 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import csv
-import time
+import typing
+from collections import OrderedDict
 
-import rospy
-import mavros
+import rclpy
+from mavros_msgs.msg import CommandCode, Waypoint, WaypointList
+from mavros_msgs.srv import (WaypointClear, WaypointPull, WaypointPush,
+                             WaypointSetCurrent)
 
-from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
-from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
-        WaypointSetCurrent
-
+from .base import STATE_QOS, PluginModule, cached_property
 
 FRAMES = {
     Waypoint.FRAME_GLOBAL: 'GAA',
@@ -49,22 +49,41 @@ NAV_CMDS = {
 }
 
 
-class WaypointFile(object):
+class PlanFile:
     """Base class for waypoint file parsers"""
-    def read(self, file_):
+
+    mission: typing.Optional[typing.List[Waypoint]] = None
+    fence: typing.Optional[typing.List[Waypoint]] = None
+    rally: typing.Optional[typing.List[Waypoint]] = None
+
+    def load(self, file_: typing.TextIO):
         """Returns a iterable of waypoints"""
         raise NotImplementedError
 
-    def write(self, file_, waypoints):
+    def save(self, file_: typing.TextIO):
         """Writes waypoints to file"""
         raise NotImplementedError
 
 
-class QGroundControlWP(WaypointFile):
+class QGroundControlWPL(PlanFile):
     """Parse QGC waypoint file"""
 
     file_header = 'QGC WPL 120'
     known_versions = (110, 120)
+
+    fields_map = OrderedDict(
+        is_current=lambda x: bool(int(x)),
+        frame=int,
+        command=float,
+        param1=float,
+        param2=float,
+        param3=float,
+        param4=float,
+        x_lat=float,
+        y_long=float,
+        z_alt=float,
+        autocontinue=lambda x: bool(int(x)),
+    )
 
     class CSVDialect(csv.Dialect):
         delimiter = '\t'
@@ -73,75 +92,105 @@ class QGroundControlWP(WaypointFile):
         lineterminator = '\r\n'
         quoting = csv.QUOTE_NONE
 
-    def read(self, file_):
+    def _parse_wpl_file(self, file_: typing.TextIO):
         got_header = False
-        for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
-                continue; # skip comments (i think in next format version they add this)
-
+        dict_reader = csv.DictReader(file_,
+                                     self.fields_map.keys(),
+                                     restkey='_more',
+                                     restval='_less',
+                                     dialect=self.CSVDialect)
+        for data in dict_reader:
             if not got_header:
-                qgc, wpl, ver = data[0].split(' ', 3)
+                qgc, wpl, ver = data['_less'].split(' ', 3)
                 ver = int(ver)
-                if qgc == 'QGC' and wpl == 'WPL' and ver in self.known_versions:
+                if qgc == 'QGC' and wpl == 'WPL' \
+                        and ver in self.known_versions:
                     got_header = True
 
             else:
-                yield Waypoint(
-                    is_current = bool(int(data[1])),
-                    frame = int(data[2]),
-                    command = int(data[3]),
-                    param1 = float(data[4]),
-                    param2 = float(data[5]),
-                    param3 = float(data[6]),
-                    param4 = float(data[7]),
-                    x_lat = float(data[8]),
-                    y_long = float(data[9]),
-                    z_alt = float(data[10]),
-                    autocontinue = bool(int(data[11]))
-                )
+                yield Waypoint(**{
+                    self.fields_map[k](v)
+                    for k, v in data if k in self.fields_map
+                })
 
-    def write(self, file_, waypoints):
+    def load(self, file_: typing.TextIO):
+        self.mission = list(self._parse_wpl_file(file_))
+        self.fence = None
+        self.rally = None
+
+    def save(self, file_: typing.TextIO):
+        assert self.mission is not None, "empty mission"
+        assert self.fence is None, "WPL do not support geofences"
+        assert self.rally is None, "WPL do not support rallypoints"
+
         writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow((self.file_header ,))
-        for seq, w in enumerate(waypoints):
-            writer.writerow((
-                seq,
-                int(w.is_current),
-                w.frame,
-                w.command,
-                w.param1,
-                w.param2,
-                w.param3,
-                w.param4,
-                w.x_lat,
-                w.y_long,
-                w.z_alt,
-                int(w.autocontinue)
-            ))
+        writer.writerow((self.file_header, ))
+        for seq, w in enumerate(self.waypoints):
+            row = (seq, ) + (getattr(w, k) for k in self.fields_map.keys())
+            writer.writerow(row)
 
 
-
-pull = None
-push = None
-clear = None
-set_current = None
+class QGroundControlPlan(PlanFile):
+    pass  # TODO(vooon): implement me!
 
 
-def subscribe_waypoints(cb, **kvargs):
-    return rospy.Subscriber(mavros.get_topic('mission', 'waypoints'), WaypointList, cb, **kvargs)
+class MissionPluginBase(PluginModule):
+
+    _plugin_ns = 'mission'
+    _plugin_list_topic = 'waypoints'
+
+    @cached_property
+    def pull(self) -> rclpy.Client:
+        return self._node.create_client(
+            WaypointPull, self._node.get_topic(self._plugin_ns, 'pull'))
+
+    @cached_property
+    def push(self) -> rclpy.Client:
+        return self._node.create_client(
+            WaypointPush, self._node.get_topic(self._plugin_ns, 'push'))
+
+    @cached_property
+    def clear(self) -> rclpy.Client:
+        return self._node.create_client(
+            WaypointClear, self._node.get_topic(self._plugin_ns, 'clear'))
+
+    def subscribe_points(
+            self,
+            callback: rclpy.Callable,
+            qos: rclpy.QoSProfile = STATE_QOS) -> rclpy.Subscription:
+        """
+        Subscribe to points list (waypoints, fences, rallypoints)
+        """
+        return self._node.create_subscription(
+            WaypointList,
+            self._node.get_topic(self._plugin_ns, self._plugin_list_topic),
+            callback, qos)
 
 
-def _setup_services():
-    global pull, push, clear, set_current
+class WaypointPlugin(MissionPluginBase):
+    """
+    Interface to waypoint plugin
+    """
+    @cached_property
+    def set_current(self) -> rclpy.Client:
+        return self._node.create_client(
+            WaypointSetCurrent,
+            self._node.get_topic(self._plugin_ns, 'set_current'))
 
-    def _get_proxy(name, type):
-        return rospy.ServiceProxy(mavros.get_topic('mission', name), type)
 
-    pull = _get_proxy('pull', WaypointPull)
-    push = _get_proxy('push', WaypointPush)
-    clear = _get_proxy('clear', WaypointClear)
-    set_current = _get_proxy('set_current', WaypointSetCurrent)
+class GeofencePlugin(MissionPluginBase):
+    """
+    Interface to geofence plugin
+    """
+
+    _plugin_ns = 'geofence'
+    _plugin_list_topic = 'fences'
 
 
-# register updater
-mavros.register_on_namespace_update(_setup_services)
+class RallypointPlugin(MissionPluginBase):
+    """
+    Interface to rallypoint plugin
+    """
+
+    _plugin_ns = 'rallypoint'
+    _plugin_list_topic = 'rallypoints'
