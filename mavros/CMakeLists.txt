@@ -12,6 +12,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 
 # find mavros dependencies
 find_package(rclcpp REQUIRED)
@@ -163,6 +164,8 @@ pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 add_executable(mavros_node src/mavros_node.cpp)
 target_link_libraries(mavros_node mavros)
 
+ament_python_install_package(${PROJECT_NAME})
+
 install(TARGETS mavros mavros_node mavros_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
@@ -181,6 +184,7 @@ install(DIRECTORY launch
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
 
   # NOTE(vooon): explicit call to find dependencies for ament_lint
   # ament_find_gtest()
@@ -225,6 +229,11 @@ if(BUILD_TESTING)
   ament_add_gmock(mavros-uas-test test/test_uas.cpp)
   target_link_libraries(mavros-uas-test mavros)
   ament_target_dependencies(mavros-uas-test mavros_msgs)
+
+  ament_add_pytest_test(mavros_py_test test/mavros_py
+    PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}"
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
+  )
 endif()
 
 #ament_export_dependencies(console_bridge)
