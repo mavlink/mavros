@@ -156,8 +156,8 @@ class MissionPluginBase(PluginModule):
 
     def subscribe_points(
             self,
-            callback: rclpy.Callable,
-            qos: rclpy.QoSProfile = STATE_QOS) -> rclpy.Subscription:
+            callback: rclpy.node.Callable,
+            qos: rclpy.qos.QoSProfile = STATE_QOS) -> rclpy.node.Subscription:
         """
         Subscribe to points list (waypoints, fences, rallypoints)
         """
