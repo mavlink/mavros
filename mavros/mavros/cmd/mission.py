@@ -13,15 +13,17 @@ import argparse
 import threading
 
 import rospy
+
 import mavros
-from mavros.utils import *
 from mavros import mission as M
+from mavros.utils import *
 
 no_prettytable = False
 try:
     from prettytable import PrettyTable
 except ImportError:
-    print("Waring: 'show' action disabled. install python-prettytable", file=sys.stderr)
+    print("Waring: 'show' action disabled. install python-prettytable",
+          file=sys.stderr)
     no_prettytable = True
 
 
@@ -52,27 +54,16 @@ def do_show(args):
     str_command = lambda c: M.NAV_CMDS.get(c, 'UNK') + ' ({})'.format(c)
 
     done_evt = threading.Event()
+
     def _show_table(topic):
-        pt = PrettyTable(('#', 'Curr', 'Auto',
-                          'Frame', 'Command',
-                          'P1', 'P2', 'P3', 'P4',
-                          'X Lat', 'Y Long', 'Z Alt'))
+        pt = PrettyTable(('#', 'Curr', 'Auto', 'Frame', 'Command', 'P1', 'P2',
+                          'P3', 'P4', 'X Lat', 'Y Long', 'Z Alt'))
 
         for seq, w in enumerate(topic.waypoints):
-            pt.add_row((
-                seq,
-                str_bool(w.is_current),
-                str_bool(w.autocontinue),
-                str_frame(w.frame),
-                str_command(w.command),
-                w.param1,
-                w.param2,
-                w.param3,
-                w.param4,
-                w.x_lat,
-                w.y_long,
-                w.z_alt
-            ))
+            pt.add_row(
+                (seq, str_bool(w.is_current), str_bool(w.autocontinue),
+                 str_frame(w.frame), str_command(w.command), w.param1,
+                 w.param2, w.param3, w.param4, w.x_lat, w.y_long, w.z_alt))
 
         print(pt, file=sys.stdout)
         sys.stdout.flush()
@@ -107,13 +98,15 @@ def do_load(args):
         print_if(args.verbose, "Waypoints transfered:", ret.wp_transfered)
 
     done_evt = threading.Event()
+
     def _fix_wp0(topic):
         if len(topic.waypoints) > 0:
             wps[0] = topic.waypoints[0]
             print_if(args.verbose, "HOME location: latitude:", wps[0].x_lat,
                      "longitude:", wps[0].y_long, "altitude:", wps[0].z_alt)
         else:
-            print("Failed to get WP0! WP0 will be loaded from file.", file=sys.stderr)
+            print("Failed to get WP0! WP0 will be loaded from file.",
+                  file=sys.stderr)
 
         done_evt.set()
 
@@ -141,6 +134,7 @@ def do_load(args):
 
 def do_dump(args):
     done_evt = threading.Event()
+
     def _write_file(topic):
         wps_file = get_wp_file_io(args)
         with args.file:
@@ -179,35 +173,69 @@ def do_set_current(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Command line tool for manipulating missions on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
+    parser = argparse.ArgumentParser(
+        description=
+        "Command line tool for manipulating missions on MAVLink device.")
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="Verbose output")
     subarg = parser.add_subparsers()
 
     if not no_prettytable:
         show_args = subarg.add_parser('show', help="Show waypoints")
-        show_args.add_argument('-f', '--follow', action='store_true', help="Watch and show new data")
-        show_args.add_argument('-p', '--pull', action='store_true', help="Pull waypoints from FCU before show")
+        show_args.add_argument('-f',
+                               '--follow',
+                               action='store_true',
+                               help="Watch and show new data")
+        show_args.add_argument('-p',
+                               '--pull',
+                               action='store_true',
+                               help="Pull waypoints from FCU before show")
         show_args.set_defaults(func=do_show)
 
     load_args = subarg.add_parser('load', help="Load waypoints from file")
     load_args.set_defaults(func=do_load)
-    load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
-    load_args.add_argument('-s', '--start-index', type=int, default=0, help="Waypoint start index for partial updating (APM only)")
-    load_args.add_argument('-e', '--end-index', type=int, default=0, help="Waypoint end index for partial updating (APM only, default: last element in waypoint list)")
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file (QGC/MP format)")
+    load_args.add_argument('-p',
+                           '--preserve-home',
+                           action='store_true',
+                           help="Preserve home location (WP 0, APM only)")
+    load_args.add_argument(
+        '-s',
+        '--start-index',
+        type=int,
+        default=0,
+        help="Waypoint start index for partial updating (APM only)")
+    load_args.add_argument(
+        '-e',
+        '--end-index',
+        type=int,
+        default=0,
+        help=
+        "Waypoint end index for partial updating (APM only, default: last element in waypoint list)"
+    )
+    load_args.add_argument('file',
+                           type=argparse.FileType('rb'),
+                           help="Input file (QGC/MP format)")
 
     pull_args = subarg.add_parser('pull', help="Pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
     dump_args = subarg.add_parser('dump', help="Dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file (QGC format)")
+    dump_args.add_argument('file',
+                           type=argparse.FileType('wb'),
+                           help="Output file (QGC format)")
 
     clear_args = subarg.add_parser('clear', help="Clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
 
-    setcur_args = subarg.add_parser('setcur', help="Set current waypoints on device")
+    setcur_args = subarg.add_parser('setcur',
+                                    help="Set current waypoints on device")
     setcur_args.add_argument('seq', type=int, help="Waypoint seq id")
     setcur_args.set_defaults(func=do_set_current)
 

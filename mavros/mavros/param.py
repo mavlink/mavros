@@ -9,11 +9,12 @@
 
 import csv
 import time
-import rospy
-import mavros
 
+import rospy
 from mavros_msgs.msg import ParamValue
-from mavros_msgs.srv import ParamPull, ParamPush, ParamGet, ParamSet
+from mavros_msgs.srv import ParamGet, ParamPull, ParamPush, ParamSet
+
+import mavros
 
 
 class Parameter(object):
@@ -42,7 +43,6 @@ class ParamFile(object):
 
 class MavProxyParam(ParamFile):
     """Parse MavProxy param files"""
-
     class CSVDialect(csv.Dialect):
         delimiter = ' '
         doublequote = False
@@ -55,23 +55,23 @@ class MavProxyParam(ParamFile):
 
         for data in csv.reader(file_, self.CSVDialect):
             if data[0].startswith('#'):
-                continue # skip comments
+                continue  # skip comments
 
             if len(data) != 2:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[0].strip(), to_numeric(data[1]));
+            yield Parameter(data[0].strip(), to_numeric(data[1]))
 
     def write(self, file_, parameters):
         writer = csv.writer(file_, self.CSVDialect)
-        file_.write("#NOTE: " + time.strftime("%d.%m.%Y %T") + self.CSVDialect.lineterminator)
+        file_.write("#NOTE: " + time.strftime("%d.%m.%Y %T") +
+                    self.CSVDialect.lineterminator)
         for p in parameters:
             writer.writerow((p.param_id, p.param_value))
 
 
 class MissionPlannerParam(ParamFile):
     """Parse MissionPlanner param files"""
-
     class CSVDialect(csv.Dialect):
         delimiter = ','
         doublequote = False
@@ -84,23 +84,22 @@ class MissionPlannerParam(ParamFile):
 
         for data in csv.reader(file_, self.CSVDialect):
             if data[0].startswith('#'):
-                continue # skip comments
+                continue  # skip comments
 
             if len(data) != 2:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[0].strip(), to_numeric(data[1]));
+            yield Parameter(data[0].strip(), to_numeric(data[1]))
 
     def write(self, file_, parameters):
         writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow(("#NOTE: " + time.strftime("%d.%m.%Y %T") ,))
+        writer.writerow(("#NOTE: " + time.strftime("%d.%m.%Y %T"), ))
         for p in parameters:
             writer.writerow((p.param_id, p.param_value))
 
 
 class QGroundControlParam(ParamFile):
     """Parse QGC param files"""
-
     class CSVDialect(csv.Dialect):
         delimiter = '\t'
         doublequote = False
@@ -113,19 +112,19 @@ class QGroundControlParam(ParamFile):
 
         for data in csv.reader(file_, self.CSVDialect):
             if data[0].startswith('#'):
-                continue # skip comments
+                continue  # skip comments
 
             if len(data) != 5:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[2].strip(), to_numeric(data[3]));
+            yield Parameter(data[2].strip(), to_numeric(data[3]))
 
     def write(self, file_, parameters):
         def to_type(x):
             if isinstance(x, float):
-                return 9 # REAL32
+                return 9  # REAL32
             elif isinstance(x, int):
-                return 6 # INT32
+                return 6  # INT32
             else:
                 raise ValueError("unknown type: " + repr(type(x)))
 
@@ -134,10 +133,19 @@ class QGroundControlParam(ParamFile):
 
         writer = csv.writer(file_, self.CSVDialect)
         writer.writerow(("# NOTE: " + time.strftime("%d.%m.%Y %T"), ))
-        writer.writerow(("# Onboard parameters saved by mavparam for ({}, {})".format(sysid, compid), ))
-        writer.writerow(("# MAV ID" , "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
+        writer.writerow(
+            ("# Onboard parameters saved by mavparam for ({}, {})".format(
+                sysid, compid), ))
+        writer.writerow(
+            ("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
         for p in parameters:
-            writer.writerow((sysid, compid, p.param_id, p.param_value, to_type(p.param_value), )) # XXX
+            writer.writerow((
+                sysid,
+                compid,
+                p.param_id,
+                p.param_value,
+                to_type(p.param_value),
+            ))  # XXX
 
 
 def param_ret_value(ret):
@@ -194,8 +202,7 @@ def param_get_all(force_pull=False):
 
     return (ret.param_received,
             sorted((Parameter(k, v) for k, v in params.items()),
-                   key=lambda p: p.param_id)
-            )
+                   key=lambda p: p.param_id))
 
 
 def param_set_list(param_list):

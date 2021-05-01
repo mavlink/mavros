@@ -12,10 +12,11 @@ from __future__ import print_function
 import argparse
 
 import rospy
+from geometry_msgs.msg import Point32, PolygonStamped
+
 import mavros
-from mavros.utils import *
-from geometry_msgs.msg import PolygonStamped, Point32
 from mavros import command
+from mavros.utils import *
 
 
 def _arm(args, state):
@@ -38,6 +39,7 @@ def do_arm(args):
 def do_disarm(args):
     _arm(args, False)
 
+
 def do_kill(args):
     try:
         ret = command.long(command=400, param2=21196)
@@ -50,11 +52,13 @@ def do_kill(args):
     print_if(args.verbose, "Command result:", ret.result)
     return ret
 
+
 _ONCE_DELAY = 3
+
+
 def do_safetyarea(args):
     set_topic = mavros.get_topic('safety_area', 'set')
-    pub = rospy.Publisher(set_topic, PolygonStamped,
-                          queue_size=10, latch=True)
+    pub = rospy.Publisher(set_topic, PolygonStamped, queue_size=10, latch=True)
 
     poly = PolygonStamped()
     poly.header.frame_id = 'mavsafety'
@@ -76,9 +80,17 @@ def do_safetyarea(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Command line tool for manipulating safety on MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
+    parser = argparse.ArgumentParser(
+        description=
+        "Command line tool for manipulating safety on MAVLink device.")
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="Verbose output")
     subarg = parser.add_subparsers()
 
     arm_args = subarg.add_parser('arm', help="Arm motors")
@@ -92,10 +104,18 @@ def main():
 
     safety_area_args = subarg.add_parser('safetyarea', help="Send safety area")
     safety_area_args.set_defaults(func=do_safetyarea)
-    safety_area_args.add_argument('-p1', type=float, nargs=3, metavar=('x', 'y', 'z'),
-                                  required=True, help="Corner 1")
-    safety_area_args.add_argument('-p2', type=float, nargs=3, metavar=('x', 'y', 'z'),
-                                  required=True, help="Corner 2")
+    safety_area_args.add_argument('-p1',
+                                  type=float,
+                                  nargs=3,
+                                  metavar=('x', 'y', 'z'),
+                                  required=True,
+                                  help="Corner 1")
+    safety_area_args.add_argument('-p2',
+                                  type=float,
+                                  nargs=3,
+                                  metavar=('x', 'y', 'z'),
+                                  required=True,
+                                  help="Corner 2")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

@@ -140,17 +140,17 @@ class MissionPluginBase(PluginModule):
     _plugin_list_topic = 'waypoints'
 
     @cached_property
-    def pull(self) -> rclpy.Client:
+    def pull(self) -> rclpy.node.Client:
         return self._node.create_client(
             WaypointPull, self._node.get_topic(self._plugin_ns, 'pull'))
 
     @cached_property
-    def push(self) -> rclpy.Client:
+    def push(self) -> rclpy.node.Client:
         return self._node.create_client(
             WaypointPush, self._node.get_topic(self._plugin_ns, 'push'))
 
     @cached_property
-    def clear(self) -> rclpy.Client:
+    def clear(self) -> rclpy.node.Client:
         return self._node.create_client(
             WaypointClear, self._node.get_topic(self._plugin_ns, 'clear'))
 
@@ -172,7 +172,7 @@ class WaypointPlugin(MissionPluginBase):
     Interface to waypoint plugin
     """
     @cached_property
-    def set_current(self) -> rclpy.Client:
+    def set_current(self) -> rclpy.node.Client:
         return self._node.create_client(
             WaypointSetCurrent,
             self._node.get_topic(self._plugin_ns, 'set_current'))

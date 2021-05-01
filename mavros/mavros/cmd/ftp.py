@@ -11,13 +11,14 @@
 from __future__ import print_function
 
 import argparse
-
 import os
+
 import rospy
+
 import mavros
-from mavros.utils import *
-from mavros.nuttx_crc32 import *
 from mavros import ftp
+from mavros.nuttx_crc32 import *
+from mavros.utils import *
 
 no_progressbar = False
 try:
@@ -33,7 +34,7 @@ FTP_PAGE_SIZE = 239 * 18 - 1
 FTP_PWD_FILE = '/tmp/.mavftp_pwd'
 
 
-def _resolve_path(path = None):
+def _resolve_path(path=None):
     """
     Resolve FTP path using PWD file
     """
@@ -45,9 +46,9 @@ def _resolve_path(path = None):
         pwd = os.environ.get('MAVFTP_HOME', '/')
 
     if not path:
-        return os.path.normpath(pwd)    # no path - PWD location
+        return os.path.normpath(pwd)  # no path - PWD location
     elif path.startswith('/'):
-        return os.path.normpath(path)   # absolute path
+        return os.path.normpath(path)  # absolute path
     else:
         return os.path.normpath(os.path.join(pwd, path))
 
@@ -58,13 +59,20 @@ class ProgressBar:
     """
     def __init__(self, quiet, operation, maxval):
         if no_progressbar or quiet or maxval == 0:
-            print_if(maxval == 0, "Can't show progressbar for unknown file size", file=sys.stderr)
+            print_if(maxval == 0,
+                     "Can't show progressbar for unknown file size",
+                     file=sys.stderr)
             self.pbar = None
             return
 
-        self.pbar = pbar.ProgressBar(
-            widgets=[operation, pbar.Percentage(), ' ', pbar.Bar(), ' ', pbar.ETA(), ' ', pbar.FileTransferSpeed()],
-            maxval=maxval).start()
+        self.pbar = pbar.ProgressBar(widgets=[
+            operation,
+            pbar.Percentage(), ' ',
+            pbar.Bar(), ' ',
+            pbar.ETA(), ' ',
+            pbar.FileTransferSpeed()
+        ],
+                                     maxval=maxval).start()
 
     def update(self, value):
         if self.pbar:
@@ -143,7 +151,12 @@ def do_download(args):
         # if file argument is not set, use $PWD/basename
         args.file = open(os.path.basename(args.path), 'wb')
 
-    print_if(args.verbose, "Downloading from", args.path, "to", args.file.name, file=sys.stderr)
+    print_if(args.verbose,
+             "Downloading from",
+             args.path,
+             "to",
+             args.file.name,
+             file=sys.stderr)
 
     with args.file as to_fd, \
             ftp.open(args.path, 'r') as from_fd, \
@@ -161,7 +174,9 @@ def do_download(args):
         print_if(args.verbose, "Verifying...", file=sys.stderr)
         remote_crc = ftp.checksum(args.path)
         if local_crc != remote_crc:
-            fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+            fault(
+                "Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".
+                format(**locals()))
 
 
 def do_upload(args):
@@ -173,7 +188,12 @@ def do_upload(args):
     else:
         args.path = _resolve_path(os.path.basename(args.file.name))
 
-    print_if(args.verbose, "Uploading from", args.file.name, "to", args.path, file=sys.stderr)
+    print_if(args.verbose,
+             "Uploading from",
+             args.file.name,
+             "to",
+             args.path,
+             file=sys.stderr)
 
     # for stdin it is 0
     from_size = os.fstat(args.file.fileno()).st_size
@@ -194,7 +214,9 @@ def do_upload(args):
         print_if(args.verbose, "Verifying...", file=sys.stderr)
         remote_crc = ftp.checksum(args.path)
         if local_crc != remote_crc:
-            fault("Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".format(**locals()))
+            fault(
+                "Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".
+                format(**locals()))
 
 
 def do_verify(args):
@@ -205,11 +227,16 @@ def do_verify(args):
     else:
         args.path = _resolve_path(os.path.basename(args.file.name))
 
-    print_if(args.verbose, "Verifying", args.file.name, "and", args.path, file=sys.stderr)
+    print_if(args.verbose,
+             "Verifying",
+             args.file.name,
+             "and",
+             args.path,
+             file=sys.stderr)
 
     with args.file as fd:
         while True:
-            buf = fd.read(4096 * 32)   # use 128k block for CRC32 calculation
+            buf = fd.read(4096 * 32)  # use 128k block for CRC32 calculation
             if len(buf) == 0:
                 break
 
@@ -218,8 +245,10 @@ def do_verify(args):
     remote_crc = ftp.checksum(args.path)
 
     print_if(args.verbose, "CRC32 for local and remote files:")
-    print_if(args.verbose, "0x{local_crc:08x}  {args.file.name}".format(**locals()))
-    print_if(args.verbose, "0x{remote_crc:08x}  {args.path}".format(**locals()))
+    print_if(args.verbose,
+             "0x{local_crc:08x}  {args.file.name}".format(**locals()))
+    print_if(args.verbose,
+             "0x{remote_crc:08x}  {args.path}".format(**locals()))
 
     if local_crc != remote_crc:
         print("{args.file.name}: FAULT".format(**locals()))
@@ -229,9 +258,16 @@ def do_verify(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="File manipulation tool for MAVLink-FTP.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
+    parser = argparse.ArgumentParser(
+        description="File manipulation tool for MAVLink-FTP.")
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="verbose output")
     subarg = parser.add_subparsers()
 
     # argparse from python2 don't support subparser aliases
@@ -265,21 +301,41 @@ def main():
     download_args = subarg.add_parser('download', help="download file")
     download_args.set_defaults(func=do_download)
     download_args.add_argument('path', type=str, help="file to send")
-    download_args.add_argument('file', type=argparse.FileType('wb'), nargs='?', help="save path")
-    download_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
-    download_args.add_argument('--no-verify', action="store_true", help="do not perform verify step")
+    download_args.add_argument('file',
+                               type=argparse.FileType('wb'),
+                               nargs='?',
+                               help="save path")
+    download_args.add_argument('-q',
+                               '--no-progressbar',
+                               action="store_true",
+                               help="do not show progressbar")
+    download_args.add_argument('--no-verify',
+                               action="store_true",
+                               help="do not perform verify step")
 
     upload_args = subarg.add_parser('upload', help="upload file")
     upload_args.set_defaults(func=do_upload)
-    upload_args.add_argument('file', type=argparse.FileType('rb'), help="file to send")
+    upload_args.add_argument('file',
+                             type=argparse.FileType('rb'),
+                             help="file to send")
     upload_args.add_argument('path', type=str, nargs='?', help="save path")
-    upload_args.add_argument('-n', '--no-overwrite', action="store_true", help="do not overwrite existing file")
-    upload_args.add_argument('-q', '--no-progressbar', action="store_true", help="do not show progressbar")
-    upload_args.add_argument('--no-verify', action="store_true", help="do not perform verify step")
+    upload_args.add_argument('-n',
+                             '--no-overwrite',
+                             action="store_true",
+                             help="do not overwrite existing file")
+    upload_args.add_argument('-q',
+                             '--no-progressbar',
+                             action="store_true",
+                             help="do not show progressbar")
+    upload_args.add_argument('--no-verify',
+                             action="store_true",
+                             help="do not perform verify step")
 
     verify_args = subarg.add_parser('verify', help="verify files")
     verify_args.set_defaults(func=do_verify)
-    verify_args.add_argument('file', type=argparse.FileType('rb'), help="local file")
+    verify_args.add_argument('file',
+                             type=argparse.FileType('rb'),
+                             help="local file")
     verify_args.add_argument('path', type=str, nargs='?', help="remote file")
 
     reset_args = subarg.add_parser('reset', help="reset")

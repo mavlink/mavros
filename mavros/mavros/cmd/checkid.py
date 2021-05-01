@@ -7,7 +7,6 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-
 """
 This script listens to devices connected to mavros and checks against system & component id mismatch errors.
 """
@@ -15,12 +14,13 @@ This script listens to devices connected to mavros and checks against system & c
 from __future__ import print_function
 
 import argparse
-
 import os
+
 import rospy
+from mavros_msgs.msg import Mavlink
+
 import mavros
 from mavros.utils import *
-from mavros_msgs.msg import Mavlink
 
 
 class Checker(object):
@@ -31,8 +31,13 @@ class Checker(object):
         self.reports = 0
         self.args = args
 
-        self.sub = rospy.Subscriber("mavlink/from", Mavlink, self.mavlink_from_cb, queue_size=10)
-        self.timer = rospy.Timer(rospy.Duration(15.0), self.timer_cb, oneshot=False)
+        self.sub = rospy.Subscriber("mavlink/from",
+                                    Mavlink,
+                                    self.mavlink_from_cb,
+                                    queue_size=10)
+        self.timer = rospy.Timer(rospy.Duration(15.0),
+                                 self.timer_cb,
+                                 oneshot=False)
 
     def mavlink_from_cb(self, msg):
         ids = (msg.sysid, msg.compid)
@@ -51,14 +56,14 @@ class Checker(object):
 
         param_not_exist = False
         tgt_ids = [1, 1]
-        for idx, key in enumerate((
-            '/'.join((self.args.mavros_ns, "target_system_id")),
-            '/'.join((self.args.mavros_ns, "target_component_id"))
-        )):
+        for idx, key in enumerate(('/'.join(
+            (self.args.mavros_ns, "target_system_id")), '/'.join(
+                (self.args.mavros_ns, "target_component_id")))):
             try:
                 tgt_ids[idx] = rospy.get_param(key)
             except KeyError:
-                print("WARNING: %s not set. Used default value: %s" % (key, tgt_ids[idx]))
+                print("WARNING: %s not set. Used default value: %s" %
+                      (key, tgt_ids[idx]))
                 param_not_exist = True
 
         if param_not_exist:
@@ -71,8 +76,7 @@ class Checker(object):
             print("OK. I got messages from %d:%d." % tuple(tgt_ids))
         else:
             print("ERROR. I got %d addresses, but not your target %d:%d" %
-                  (len(self.message_sources),
-                   tgt_ids[0], tgt_ids[1]))
+                  (len(self.message_sources), tgt_ids[0], tgt_ids[1]))
 
         print("\n---\nReceived %d messages, from %d addresses" %
               (self.messages_received, len(self.message_sources)))
@@ -80,10 +84,8 @@ class Checker(object):
         # TODO: prettytable?
         print("sys:comp   list of messages")
         for address, messages in self.message_sources.iteritems():
-            print("% 3d:%-3d   %s" % (
-                address[0], address[1],
-                ", ".join(("%d" % msgid for msgid in messages))
-            ))
+            print("% 3d:%-3d   %s" % (address[0], address[1], ", ".join(
+                ("%d" % msgid for msgid in messages))))
 
         if not self.args.follow:
             # timer will stop after that request
@@ -94,9 +96,16 @@ def main():
     # NOTE: in this particular script we do not need any plugin topic (which uses mavros private namespace)
     # And will use mavlink topics from global namespace (default "/"). You may define at run _ns:=NS
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
     #parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
-    parser.add_argument('-f', '--follow', action='store_true', help="do not exit after first report (report each 15 sec).")
+    parser.add_argument(
+        '-f',
+        '--follow',
+        action='store_true',
+        help="do not exit after first report (report each 15 sec).")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

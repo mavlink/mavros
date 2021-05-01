@@ -14,10 +14,11 @@ import argparse
 import threading
 
 import rospy
-import mavros
-from mavros.utils import *
-from mavros import command
 from sensor_msgs.msg import NavSatFix
+
+import mavros
+from mavros import command
+from mavros.utils import *
 
 
 def _check_ret(args, ret):
@@ -29,16 +30,16 @@ def _check_ret(args, ret):
 
 def do_long(args):
     try:
-        ret = command.long(
-            broadcast=args.broadcast,
-            command=args.command, confirmation=int(args.confirmation),
-            param1=args.param1,
-            param2=args.param2,
-            param3=args.param3,
-            param4=args.param4,
-            param5=args.param5,
-            param6=args.param6,
-            param7=args.param7)
+        ret = command.long(broadcast=args.broadcast,
+                           command=args.command,
+                           confirmation=int(args.confirmation),
+                           param1=args.param1,
+                           param2=args.param2,
+                           param3=args.param3,
+                           param4=args.param4,
+                           param5=args.param5,
+                           param6=args.param6,
+                           param7=args.param7)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -47,16 +48,17 @@ def do_long(args):
 
 def do_int(args):
     try:
-        ret = command.int(frame=args.frame, command=args.command,
-                     current=int(args.current),
-                     autocontinue=int(args.autocontinue),
-                     param1=args.param1,
-                     param2=args.param2,
-                     param3=args.param3,
-                     param4=args.param4,
-                     x=args.x,
-                     y=args.y,
-                     z=args.z)
+        ret = command.int(frame=args.frame,
+                          command=args.command,
+                          current=int(args.current),
+                          autocontinue=int(args.autocontinue),
+                          param1=args.param1,
+                          param2=args.param2,
+                          param3=args.param3,
+                          param4=args.param4,
+                          x=args.x,
+                          y=args.y,
+                          z=args.z)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -69,9 +71,9 @@ def do_int(args):
 def do_set_home(args):
     try:
         ret = command.set_home(current_gps=args.current_gps,
-                          latitude=args.latitude,
-                          longitude=args.longitude,
-                          altitude=args.altitude)
+                               latitude=args.latitude,
+                               longitude=args.longitude,
+                               altitude=args.altitude)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -81,10 +83,10 @@ def do_set_home(args):
 def do_takeoff(args):
     try:
         ret = command.takeoff(min_pitch=args.min_pitch,
-                         yaw=args.yaw,
-                         latitude=args.latitude,
-                         longitude=args.longitude,
-                         altitude=args.altitude)
+                              yaw=args.yaw,
+                              latitude=args.latitude,
+                              longitude=args.longitude,
+                              altitude=args.altitude)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -94,10 +96,10 @@ def do_takeoff(args):
 def do_land(args):
     try:
         ret = command.land(min_pitch=0.0,
-                      yaw=args.yaw,
-                      latitude=args.latitude,
-                      longitude=args.longitude,
-                      altitude=args.altitude)
+                           yaw=args.yaw,
+                           latitude=args.latitude,
+                           longitude=args.longitude,
+                           altitude=args.altitude)
     except rospy.ServiceException as ex:
         fault(ex)
 
@@ -117,7 +119,10 @@ def _find_gps_topic(args, op_name):
         print_if(args.verbose, "Use GPS_RAW_INT data!")
         return gps_fix
     elif args.any_gps:
-        t = [topic for topic, type_ in topics if type_ == 'sensor_msgs/NavSatFix']
+        t = [
+            topic for topic, type_ in topics
+            if type_ == 'sensor_msgs/NavSatFix'
+        ]
         if len(t) > 0:
             print("Use", t[0], "NavSatFix topic for", op_name)
             return t[0]
@@ -127,18 +132,19 @@ def _find_gps_topic(args, op_name):
 
 def do_takeoff_cur_gps(args):
     done_evt = threading.Event()
+
     def fix_cb(fix):
-        print("Taking-off from current coord: Lat:", fix.latitude,
-              "Long:", fix.longitude)
-        print_if(args.verbose, "With desired Altitude:", args.altitude,
-                 "Yaw:", args.yaw, "Pitch angle:", args.min_pitch)
+        print("Taking-off from current coord: Lat:", fix.latitude, "Long:",
+              fix.longitude)
+        print_if(args.verbose, "With desired Altitude:", args.altitude, "Yaw:",
+                 args.yaw, "Pitch angle:", args.min_pitch)
 
         try:
             ret = command.takeoff(min_pitch=args.min_pitch,
-                             yaw=args.yaw,
-                             latitude=fix.latitude,
-                             longitude=fix.longitude,
-                             altitude=args.altitude)
+                                  yaw=args.yaw,
+                                  latitude=fix.latitude,
+                                  longitude=fix.longitude,
+                                  altitude=args.altitude)
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -156,18 +162,19 @@ def do_takeoff_cur_gps(args):
 
 def do_land_cur_gps(args):
     done_evt = threading.Event()
+
     def fix_cb(fix):
-        print("Landing on current coord: Lat:", fix.latitude,
-              "Long:", fix.longitude)
-        print_if(args.verbose, "With desired Altitude:", args.altitude,
-                 "Yaw:", args.yaw)
+        print("Landing on current coord: Lat:", fix.latitude, "Long:",
+              fix.longitude)
+        print_if(args.verbose, "With desired Altitude:", args.altitude, "Yaw:",
+                 args.yaw)
 
         try:
             ret = command.land(min_pitch=0.0,
-                          yaw=args.yaw,
-                          latitude=fix.latitude,
-                          longitude=fix.longitude,
-                          altitude=args.altitude)
+                               yaw=args.yaw,
+                               latitude=fix.latitude,
+                               longitude=fix.longitude,
+                               altitude=args.altitude)
         except rospy.ServiceException as ex:
             fault(ex)
 
@@ -194,16 +201,33 @@ def do_trigger_control(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Command line tool for sending commands to MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
-    parser.add_argument('--wait', action='store_true', help="Wait for establishing FCU connection")
+    parser = argparse.ArgumentParser(
+        description="Command line tool for sending commands to MAVLink device."
+    )
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="Verbose output")
+    parser.add_argument('--wait',
+                        action='store_true',
+                        help="Wait for establishing FCU connection")
     subarg = parser.add_subparsers()
 
-    long_args = subarg.add_parser('long', help="Send any command (COMMAND_LONG)")
+    long_args = subarg.add_parser('long',
+                                  help="Send any command (COMMAND_LONG)")
     long_args.set_defaults(func=do_long)
-    long_args.add_argument('-c', '--confirmation', action='store_true', help="Require confirmation")
-    long_args.add_argument('-b', '--broadcast', action='store_true', help="Broadcast command")
+    long_args.add_argument('-c',
+                           '--confirmation',
+                           action='store_true',
+                           help="Require confirmation")
+    long_args.add_argument('-b',
+                           '--broadcast',
+                           action='store_true',
+                           help="Broadcast command")
     long_args.add_argument('command', type=int, help="Command Code")
     long_args.add_argument('param1', type=float, help="param1")
     long_args.add_argument('param2', type=float, help="param2")
@@ -215,24 +239,42 @@ def main():
 
     int_args = subarg.add_parser('int', help="Send any command (COMMAND_INT)")
     int_args.set_defaults(func=do_int)
-    int_args.add_argument('-c', '--current', action='store_true', help="Is current?")
-    int_args.add_argument('-a', '--autocontinue', action='store_true', help="Is autocontinue?")
-    int_args.add_argument('-f', '--frame', type=int, default=3, help="Frame Code (default: %(default)s)")
+    int_args.add_argument('-c',
+                          '--current',
+                          action='store_true',
+                          help="Is current?")
+    int_args.add_argument('-a',
+                          '--autocontinue',
+                          action='store_true',
+                          help="Is autocontinue?")
+    int_args.add_argument('-f',
+                          '--frame',
+                          type=int,
+                          default=3,
+                          help="Frame Code (default: %(default)s)")
     int_args.add_argument('command', type=int, help="Command Code")
     int_args.add_argument('param1', type=float, help="param1")
     int_args.add_argument('param2', type=float, help="param2")
     int_args.add_argument('param3', type=float, help="param3")
     int_args.add_argument('param4', type=float, help="param4")
     int_args.add_argument('x', type=int, help="Latitude in deg*1E7 or X*1E4 m")
-    int_args.add_argument('y', type=int, help="Longitude in deg*1E7 or Y*1E4 m")
-    int_args.add_argument('z', type=float, help="Altitude in m, depending on frame")
+    int_args.add_argument('y',
+                          type=int,
+                          help="Longitude in deg*1E7 or Y*1E4 m")
+    int_args.add_argument('z',
+                          type=float,
+                          help="Altitude in m, depending on frame")
 
     # Note: arming service provided by mavsafety
 
-    set_home_args = subarg.add_parser('sethome', help="Request change home position")
+    set_home_args = subarg.add_parser('sethome',
+                                      help="Request change home position")
     set_home_args.set_defaults(func=do_set_home)
-    set_home_args.add_argument('-c', '--current-gps', action='store_true',
-                                 help="Use current GPS location (use 0 0 0 for location args)")
+    set_home_args.add_argument(
+        '-c',
+        '--current-gps',
+        action='store_true',
+        help="Use current GPS location (use 0 0 0 for location args)")
     set_home_args.add_argument('latitude', type=float, help="Latitude")
     set_home_args.add_argument('longitude', type=float, help="Longitude")
     set_home_args.add_argument('altitude', type=float, help="Altitude")
@@ -252,25 +294,52 @@ def main():
     land_args.add_argument('longitude', type=float, help="Longitude")
     land_args.add_argument('altitude', type=float, help="Altitude")
 
-    takeoff_cur_args = subarg.add_parser('takeoffcur', help="Request takeoff from current GPS coordinates")
+    takeoff_cur_args = subarg.add_parser(
+        'takeoffcur', help="Request takeoff from current GPS coordinates")
     takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
-    takeoff_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
+    takeoff_cur_args.add_argument(
+        '-a',
+        '--any-gps',
+        action="store_true",
+        help="Try to find GPS topic (warn: could be dangerous!)")
     takeoff_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
     takeoff_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     takeoff_cur_args.add_argument('altitude', type=float, help="Altitude")
 
-    land_cur_args = subarg.add_parser('landcur', help="Request land on current GPS coordinates")
+    land_cur_args = subarg.add_parser(
+        'landcur', help="Request land on current GPS coordinates")
     land_cur_args.set_defaults(func=do_land_cur_gps)
-    land_cur_args.add_argument('-a', '--any-gps', action="store_true", help="Try to find GPS topic (warn: could be dangerous!)")
+    land_cur_args.add_argument(
+        '-a',
+        '--any-gps',
+        action="store_true",
+        help="Try to find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
 
-    trigger_ctrl_args = subarg.add_parser('trigger_control', help="Control onboard camera triggering system (PX4)")
+    trigger_ctrl_args = subarg.add_parser(
+        'trigger_control',
+        help="Control onboard camera triggering system (PX4)")
     trigger_ctrl_args.set_defaults(func=do_trigger_control)
     trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
-    trigger_en_group.add_argument('-e', '--enable', dest='trigger_enable', action='store_true', default=True, help="Enable camera trigger (default)")
-    trigger_en_group.add_argument('-d', '--disable', dest='trigger_enable', action='store_false', help="Disable camera trigger")
-    trigger_ctrl_args.add_argument('-c', '--cycle_time', default=0.0, type=float, required=False, help="Camera trigger cycle time. Zero to use current onboard value")
+    trigger_en_group.add_argument('-e',
+                                  '--enable',
+                                  dest='trigger_enable',
+                                  action='store_true',
+                                  default=True,
+                                  help="Enable camera trigger (default)")
+    trigger_en_group.add_argument('-d',
+                                  '--disable',
+                                  dest='trigger_enable',
+                                  action='store_false',
+                                  help="Disable camera trigger")
+    trigger_ctrl_args.add_argument(
+        '-c',
+        '--cycle_time',
+        default=0.0,
+        type=float,
+        required=False,
+        help="Camera trigger cycle time. Zero to use current onboard value")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 

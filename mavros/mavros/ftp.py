@@ -7,27 +7,20 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
-__all__ = (
-    'FTPFile',
-    'open',
-    'listdir',
-    'unlink',
-    'mkdir',
-    'rmdir',
-    'rename',
-    'checksum',
-    'reset_server'
-)
+__all__ = ('FTPFile', 'open', 'listdir', 'unlink', 'mkdir', 'rmdir', 'rename',
+           'checksum', 'reset_server')
 
 import os
-import rospy
-import mavros
 
-from std_srvs.srv import Empty
+import rospy
 from mavros_msgs.msg import FileEntry
-from mavros_msgs.srv import FileOpen, FileClose, FileRead, FileList, FileOpenRequest, \
-    FileMakeDir, FileRemoveDir, FileRemove, FileWrite, FileTruncate, FileRename, \
-    FileChecksum
+from mavros_msgs.srv import (FileChecksum, FileClose, FileList, FileMakeDir,
+                             FileOpen, FileOpenRequest, FileRead, FileRemove,
+                             FileRemoveDir, FileRename, FileTruncate,
+                             FileWrite)
+from std_srvs.srv import Empty
+
+import mavros
 
 
 def _get_proxy(service, type):
@@ -35,8 +28,8 @@ def _get_proxy(service, type):
 
 
 def _check_raise_errno(ret):
-        if not ret.success:
-            raise IOError(ret.r_errno, os.strerror(ret.r_errno))
+    if not ret.success:
+        raise IOError(ret.r_errno, os.strerror(ret.r_errno))
 
 
 class FTPFile(object):
@@ -44,7 +37,6 @@ class FTPFile(object):
     FCU file object.
     Note that current PX4 firmware only support two connections simultaneously.
     """
-
     def __init__(self, name, mode):
         self.name = None
         self.mode = mode
@@ -100,7 +92,9 @@ class FTPFile(object):
 
     def read(self, size=1):
         try:
-            ret = self._read(file_path=self.name, offset=self.offset, size=size)
+            ret = self._read(file_path=self.name,
+                             offset=self.offset,
+                             size=size)
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 
@@ -111,7 +105,9 @@ class FTPFile(object):
     def write(self, bin_data):
         data_len = len(bin_data)
         try:
-            ret = self._write(file_path=self.name, offset=self.offset, data=bin_data)
+            ret = self._write(file_path=self.name,
+                              offset=self.offset,
+                              data=bin_data)
         except rospy.ServiceException as ex:
             raise IOError(str(ex))
 

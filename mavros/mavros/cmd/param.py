@@ -10,9 +10,10 @@
 import argparse
 
 import rospy
+
 import mavros
-from mavros.utils import *
 from mavros.param import *
+from mavros.utils import *
 
 
 def get_param_file_io(args):
@@ -68,27 +69,61 @@ def do_set(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Command line tool for getting and setting parameters from MAVLink device.")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
+    parser = argparse.ArgumentParser(
+        description=
+        "Command line tool for getting and setting parameters from MAVLink device."
+    )
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="Verbose output")
     subarg = parser.add_subparsers()
 
     load_args = subarg.add_parser('load', help="Load parameters from file")
     load_args.set_defaults(func=do_load)
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file")
+    load_args.add_argument('file',
+                           type=argparse.FileType('rb'),
+                           help="Input file")
     load_format = load_args.add_mutually_exclusive_group()
-    load_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
-    load_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
-    load_format.add_argument('-mavpx', '--mavproxy', action="store_true", help="Select MavProxy param file format")
+    load_format.add_argument('-mp',
+                             '--mission-planner',
+                             action="store_true",
+                             help="Select MissionPlanner param file format")
+    load_format.add_argument('-qgc',
+                             '--qgroundcontrol',
+                             action="store_true",
+                             help="Select QGroundControl param file format")
+    load_format.add_argument('-mavpx',
+                             '--mavproxy',
+                             action="store_true",
+                             help="Select MavProxy param file format")
 
     dump_args = subarg.add_parser('dump', help="Dump parameters to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file")
-    dump_args.add_argument('-f', '--force', action="store_true", help="Force pull params from FCU, not cache")
+    dump_args.add_argument('file',
+                           type=argparse.FileType('wb'),
+                           help="Output file")
+    dump_args.add_argument('-f',
+                           '--force',
+                           action="store_true",
+                           help="Force pull params from FCU, not cache")
     dump_format = dump_args.add_mutually_exclusive_group()
-    dump_format.add_argument('-mp', '--mission-planner', action="store_true", help="Select MissionPlanner param file format")
-    dump_format.add_argument('-qgc', '--qgroundcontrol', action="store_true", help="Select QGroundControl param file format")
-    dump_format.add_argument('-mavpx', '--mavproxy', action="store_true", help="Select MavProxy param file format")
+    dump_format.add_argument('-mp',
+                             '--mission-planner',
+                             action="store_true",
+                             help="Select MissionPlanner param file format")
+    dump_format.add_argument('-qgc',
+                             '--qgroundcontrol',
+                             action="store_true",
+                             help="Select QGroundControl param file format")
+    dump_format.add_argument('-mavpx',
+                             '--mavproxy',
+                             action="store_true",
+                             help="Select MavProxy param file format")
 
     get_args = subarg.add_parser('get', help="Get parameter")
     get_args.set_defaults(func=do_get)
