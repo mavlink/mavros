@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 
-from . import command, mission, system
-from .base import BaseNode, cached_property
+from . import command, mission, param, system
+from .base import BaseNode, cached_property, run_backgroud_spin  # noqa F401
 
 
 class Client(BaseNode):
@@ -16,6 +16,10 @@ class Client(BaseNode):
     @cached_property
     def command(self) -> command.CommandPlugin:
         return command.CommandPlugin(self)
+
+    @cached_property
+    def param(self) -> param.ParamPlugin:
+        return param.ParamPlugin(self)
 
     @cached_property
     def waypoint(self) -> mission.WaypointPlugin:

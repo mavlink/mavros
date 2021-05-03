@@ -1,28 +1,35 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
+import collections
 import csv
 import datetime
 import typing
 
+import rclpy
 from mavros_msgs.msg import ParamEvent
 from mavros_msgs.srv import ParamPull, ParamSetV2
-from rcl_interfaces import GetParameters, ListParameters, SetParameters
+from rcl_interfaces.msg import Parameter as ParameterMsg
+from rcl_interfaces.msg import ParameterValue, SetParametersResult
+from rcl_interfaces.srv import GetParameters, ListParameters, SetParameters
 from rclpy.parameter import Parameter
 
-from .base import PluginModule, SubscriptionCallable, cached_property
+from .base import (PluginModule, ServiceWaitTimeout, SubscriptionCallable,
+                   cached_property)
+
+TIMEOUT = 5.0
 
 
 class ParamFile:
     """Base class for param file parsers"""
 
-    parameters: typing.Optional[typing.Dict[Parameter]] = None
+    parameters: typing.Optional[typing.Dict[str, Parameter]] = None
     stamp: typing.Optional[datetime.datetime] = None
     tgt_system = 1
     tgt_component = 1
@@ -138,6 +145,35 @@ class ParamPlugin(PluginModule):
     """
     Parameter plugin client
     """
+    class ParamDict(collections.UserDict):
+
+        _pm: 'ParamPlugin' = None
+
+        def __getitem__(self, key: str) -> Parameter:
+            return self.data[key]
+
+        def __setitem__(self, key: str, value: Parameter):
+            self.data[key] = value
+            call_set_parameters(node=self._pm._node,
+                                client=self._pm.set_parameters, [value])
+
+        def __getattr__(self, key: str) -> Parameter:
+            return self.data[key]
+
+        def __setattr__(self, key: str, value: Parameter):
+            self[key] = value
+
+        def reset():
+            self.data = {}
+
+        def _event_handler(self, msg: ParamEvent):
+            self.data[msg.param_id] = parameter_from_parameter_value(
+                msg.param_id, msg.value)
+
+    timeout_sec: float = 5.0
+    _parameters = None
+    _event_sub = None
+
     @cached_property
     def list_parameters(self) -> rclpy.node.Client:
         return self.create_client(ListParameters, ('param', 'list_parameters'))
@@ -169,3 +205,134 @@ class ParamPlugin(PluginModule):
         """
         return self.create_subscription(ParamEvent, ('param', 'event'),
                                         callback, qos_profile)
+
+    def call_pull(self, *, force_pull: bool = False) -> ParamPull.Response:
+        lg = self._node.get_logger()
+
+        ready = self.pull.wait_for_service(timeout_sec=self.timeout_sec)
+        if not ready:
+            raise ServiceWaitTimeout()
+
+        req = ParamPull.Request()
+        req.force_pull = force_pull
+
+        future = self.pull.call_async(req)
+        rclpy.spin_until_future_complete(self._node, future)
+
+        resp = future.result()
+        lg.debug(f"pull result: {resp}")
+
+        return resp
+
+    @property
+    def param(self):
+        if self._parameters is not None:
+            return self._parameters
+
+        self._parameters = self.ParamDict()
+        self._parameters._pm = self
+
+        self._event_sub = self.subscribe_events(
+            self._parameters._event_handler)
+
+        self.call_pull()
+        return self._parameters
+
+
+def call_list_parameters(self,
+                         *,
+                         node: rclpy.node.Node,
+                         node_name: typing.Optional[str] = None,
+                         client: typing.Optional[rclpy.node.Client] = None,
+                         prefixes: typing.List[str] = []) -> typing.List[str]:
+    lg = node.get_logger()
+
+    if client is None:
+        assert node_name is not None
+        client = node.create_client(ListParameters,
+                                    f"{node_name}/list_parameters")
+
+    ready = client.wait_for_service(timeout_sec=TIMEOUT)
+    if not ready:
+        lg.error("wait for service time out")
+        raise ServiceWaitTimeout()
+
+    req = ListParameters.Request()
+    req.prefixes = prefixes
+
+    future = client.call_async(req)
+    rclpy.spin_until_future_complete(node, future)
+
+    resp = future.result()
+    lg.debug(f"list result: {resp}")
+
+    return resp.result.names
+
+
+def call_get_parameters(
+        self,
+        *,
+        node: rclpy.node.Node,
+        node_name: typing.Optional[str] = None,
+        client: typing.Optional[rclpy.node.Client] = None,
+        names: typing.List[str] = []) -> typing.Dict[str, ParameterValue]:
+    lg = node.get_logger()
+
+    if client is None:
+        assert node_name is not None
+        client = node.create_client(GetParameters,
+                                    f"{node_name}/get_parameters")
+
+    ready = client.wait_for_service(timeout_sec=TIMEOUT)
+    if not ready:
+        lg.error("wait for service time out")
+        raise ServiceWaitTimeout()
+
+    req = GetParameters.Request()
+    req.names = names
+
+    future = client.call_async(req)
+    rclpy.spin_until_future_complete(node, future)
+
+    resp = future.result()
+    lg.debug(f"get result: {resp}")
+
+    return dict(zip(names, resp.values))
+
+
+def call_set_parameters(
+    self,
+    *,
+    node: rclpy.node.Node,
+    node_name: typing.Optional[str] = None,
+    client: typing.Optional[rclpy.node.Client] = None,
+    parameters: typing.List[Parameter] = []
+) -> typing.Dict[str, SetParametersResult]:
+    lg = node.get_logger()
+
+    if client is None:
+        assert node_name is not None
+        client = node.create_client(SetParameters,
+                                    f"{node_name}/set_parameters")
+
+    ready = client.wait_for_service(timeout_sec=TIMEOUT)
+    if not ready:
+        lg.error("wait for service time out")
+        raise ServiceWaitTimeout()
+
+    req = SetParameters.Request()
+    req.parameters = [p.to_parameter_msg() for p in parameters]
+
+    future = client.call_async(req)
+    rclpy.spin_until_future_complete(node, future)
+
+    resp = future.result()
+    lg.debug(f"set result: {resp}")
+
+    return dict(zip((p.name for p in parameters), resp.results))
+
+
+def parameter_from_parameter_value(
+        name: str, parameter_value: ParameterValue) -> Parameter:
+    pmsg = ParameterMsg(name=name, value=parameter_value)
+    return Parameter.from_parameter_msg(pmsg)

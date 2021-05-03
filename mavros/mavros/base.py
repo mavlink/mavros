@@ -9,6 +9,7 @@
 
 import random
 import string
+import threading
 import typing
 from functools import cached_property  # noqa F401
 
@@ -32,6 +33,10 @@ ServiceCallable = rclpy.node.Callable[
     [rclpy.node.SrvTypeRequest, rclpy.node.SrvTypeResponse],
     rclpy.node.SrvTypeResponse]
 SubscriptionCallable = rclpy.node.Callable[[rclpy.node.MsgType], None]
+
+
+class ServiceWaitTimeout(RuntimeError):
+    pass
 
 
 class BaseNode(rclpy.node.Node):
@@ -108,3 +113,14 @@ class PluginModule:
         return self._node.create_service(srv_type,
                                          self._node.get_topic(*srv_name),
                                          callback, **kwargs)
+
+
+def run_backgroud_spin(node: BaseNode) -> threading.Thread:
+    def run():
+        while rclpy.ok():
+            rclpy.spin(node)
+
+    thd = threading.Thread(target=run, name='mavros_py_spinner')
+    thd.daemon()
+    thd.start()
+    return thd
