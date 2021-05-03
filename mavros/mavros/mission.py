@@ -1,7 +1,7 @@
 # -*- python -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -16,7 +16,7 @@ from mavros_msgs.msg import CommandCode, Waypoint, WaypointList
 from mavros_msgs.srv import (WaypointClear, WaypointPull, WaypointPush,
                              WaypointSetCurrent)
 
-from .base import STATE_QOS, PluginModule, cached_property
+from .base import STATE_QOS, PluginModule, cached_property, SubscriptionCallable
 
 FRAMES = {
     Waypoint.FRAME_GLOBAL: 'GAA',
@@ -34,18 +34,24 @@ NAV_CMDS = {
     CommandCode.NAV_RETURN_TO_LAUNCH: 'RTL',
     CommandCode.NAV_TAKEOFF: 'TAKEOFF',
     CommandCode.NAV_WAYPOINT: 'WAYPOINT',
-    # Maybe later i will add this enum to message
-    112: 'COND-DELAY',
-    113: 'COND-CHANGE-ALT',
-    114: 'COND-DISTANCE',
-    115: 'COND-YAW',
-    177: 'DO-JUMP',
-    178: 'DO-CHANGE-SPEED',
-    181: 'DO-SET-RELAY',
-    182: 'DO-REPEAT-RELAY',
-    183: 'DO-SET-SERVO',
-    184: 'DO-REPEAT-SERVO',
-    201: 'DO-SET-ROI',
+    CommandCode.CONDITION_DELAY: 'COND-DELAY',
+    CommandCode.CONDITION_CHANGE_ALT: 'COND-CHANGE-ALT',
+    CommandCode.CONDITION_DISTANCE: 'COND-DISTANCE',
+    CommandCode.CONDITION_YAW: 'COND-YAW',
+    CommandCode.CONDITION_GATE: 'COND-GATE',
+    CommandCode.DO_JUMP: 'DO-JUMP',
+    CommandCode.DO_CHANGE_SPEED: 'DO-CHANGE-SPEED',
+    CommandCode.DO_SET_RELAY: 'DO-SET-RELAY',
+    CommandCode.DO_REPEAT_RELAY: 'DO-REPEAT-RELAY',
+    CommandCode.DO_SET_SERVO: 'DO-SET-SERVO',
+    CommandCode.DO_REPEAT_SERVO: 'DO-REPEAT-SERVO',
+    CommandCode.DO_SET_ROI: 'DO-SET-ROI',
+    CommandCode.NAV_FENCE_RETURN_POINT: 'FENCE-RETURN',
+    CommandCode.NAV_FENCE_POLYGON_VERTEX_INCLUSION: 'FENCE-VERTEX-INC',
+    CommandCode.NAV_FENCE_POLYGON_VERTEX_EXCLUSION: 'FENCE-VERTEX-EXC',
+    CommandCode.NAV_FENCE_CIRCLE_INCLUSION: 'FENCE-CIRCLE-INC',
+    CommandCode.NAV_FENCE_CIRCLE_EXCLUSION: 'FENCE-CIRCLE-EXC',
+    CommandCode.NAV_RALLY_POINT: 'RALLY',
 }
 
 
@@ -141,30 +147,27 @@ class MissionPluginBase(PluginModule):
 
     @cached_property
     def pull(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            WaypointPull, self._node.get_topic(self._plugin_ns, 'pull'))
+        return self.create_client(WaypointPull, (self._plugin_ns, 'pull'))
 
     @cached_property
     def push(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            WaypointPush, self._node.get_topic(self._plugin_ns, 'push'))
+        return self.create_client(WaypointPush, (self._plugin_ns, 'push'))
 
     @cached_property
     def clear(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            WaypointClear, self._node.get_topic(self._plugin_ns, 'clear'))
+        return self.create_client(WaypointClear, (self._plugin_ns, 'clear'))
 
     def subscribe_points(
-            self,
-            callback: rclpy.node.Callable,
-            qos: rclpy.qos.QoSProfile = STATE_QOS) -> rclpy.node.Subscription:
+        self,
+        callback: SubscriptionCallable,
+        qos_profile: rclpy.qos.QoSProfile = STATE_QOS
+    ) -> rclpy.node.Subscription:
         """
         Subscribe to points list (waypoints, fences, rallypoints)
         """
-        return self._node.create_subscription(
-            WaypointList,
-            self._node.get_topic(self._plugin_ns, self._plugin_list_topic),
-            callback, qos)
+        return self.create_subscription(
+            WaypointList, (self._plugin_ns, self._plugin_list_topic), callback,
+            qos_profile)
 
 
 class WaypointPlugin(MissionPluginBase):
@@ -173,9 +176,8 @@ class WaypointPlugin(MissionPluginBase):
     """
     @cached_property
     def set_current(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            WaypointSetCurrent,
-            self._node.get_topic(self._plugin_ns, 'set_current'))
+        return self._node.create_client(WaypointSetCurrent,
+                                        (self._plugin_ns, 'set_current'))
 
 
 class GeofencePlugin(MissionPluginBase):

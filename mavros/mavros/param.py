@@ -8,35 +8,30 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import csv
-import time
+import datetime
+import typing
 
-import rospy
-from mavros_msgs.msg import ParamValue
-from mavros_msgs.srv import ParamGet, ParamPull, ParamPush, ParamSet
+from mavros_msgs.msg import ParamEvent
+from mavros_msgs.srv import ParamPull, ParamSetV2
+from rcl_interfaces import GetParameters, ListParameters, SetParameters
+from rclpy.parameter import Parameter
 
-import mavros
-
-
-class Parameter(object):
-    """Class representing one parameter"""
-    def __init__(self, param_id, param_value=0):
-        self.param_id = param_id
-        self.param_value = param_value
-
-    def __repr__(self):
-        return "<Parameter '{}': {}>".format(self.param_id, self.param_value)
+from .base import PluginModule, SubscriptionCallable, cached_property
 
 
-class ParamFile(object):
+class ParamFile:
     """Base class for param file parsers"""
-    def __init__(self, args):
-        pass
 
-    def read(self, file_):
+    parameters: typing.Optional[typing.Dict[Parameter]] = None
+    stamp: typing.Optional[datetime.datetime] = None
+    tgt_system = 1
+    tgt_component = 1
+
+    def load(self, file_: typing.TextIO):
         """Returns a iterable of Parameters"""
         raise NotImplementedError
 
-    def write(self, file_, parametes):
+    def save(self, file_: typing.TextIO):
         """Writes Parameters to file"""
         raise NotImplementedError
 
@@ -50,7 +45,7 @@ class MavProxyParam(ParamFile):
         lineterminator = '\r\n'
         quoting = csv.QUOTE_NONE
 
-    def read(self, file_):
+    def _parse_param_file(self, file_: typing.TextIO):
         to_numeric = lambda x: float(x) if '.' in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
@@ -60,17 +55,22 @@ class MavProxyParam(ParamFile):
             if len(data) != 2:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[0].strip(), to_numeric(data[1]))
+            yield Parameter(data[0].strip(), value=to_numeric(data[1]))
 
-    def write(self, file_, parameters):
+    def load(self, file_: typing.TextIO):
+        self.parameters = {p.name: p for p in self._parse_param_file(file_)}
+
+    def save(self, file_: typing.TextIO):
+        if self.stamp is None:
+            self.stamp = datetime.datetime.now()
+
         writer = csv.writer(file_, self.CSVDialect)
-        file_.write("#NOTE: " + time.strftime("%d.%m.%Y %T") +
-                    self.CSVDialect.lineterminator)
-        for p in parameters:
-            writer.writerow((p.param_id, p.param_value))
+        file_.writerow((f"""#NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""", ))
+        for p in self.parameters:
+            writer.writerow((p.name, p.value))
 
 
-class MissionPlannerParam(ParamFile):
+class MissionPlannerParam(MavProxyParam):
     """Parse MissionPlanner param files"""
     class CSVDialect(csv.Dialect):
         delimiter = ','
@@ -78,24 +78,6 @@ class MissionPlannerParam(ParamFile):
         skipinitialspace = True
         lineterminator = '\r\n'
         quoting = csv.QUOTE_NONE
-
-    def read(self, file_):
-        to_numeric = lambda x: float(x) if '.' in x else int(x)
-
-        for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
-                continue  # skip comments
-
-            if len(data) != 2:
-                raise ValueError("wrong field count")
-
-            yield Parameter(data[0].strip(), to_numeric(data[1]))
-
-    def write(self, file_, parameters):
-        writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow(("#NOTE: " + time.strftime("%d.%m.%Y %T"), ))
-        for p in parameters:
-            writer.writerow((p.param_id, p.param_value))
 
 
 class QGroundControlParam(ParamFile):
@@ -107,7 +89,7 @@ class QGroundControlParam(ParamFile):
         lineterminator = '\n'
         quoting = csv.QUOTE_NONE
 
-    def read(self, file_):
+    def _parse_param_file(self, file_: typing.TextIO):
         to_numeric = lambda x: float(x) if '.' in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
@@ -117,107 +99,73 @@ class QGroundControlParam(ParamFile):
             if len(data) != 5:
                 raise ValueError("wrong field count")
 
-            yield Parameter(data[2].strip(), to_numeric(data[3]))
+            yield Parameter(data[2].strip(), value=to_numeric(data[3]))
 
-    def write(self, file_, parameters):
+    def load(self, file_: typing.TextIO):
+        self.parameters = {p.name: p for p in self._parse_param_file(file_)}
+
+    def save(self, file_: typing.TextIO):
         def to_type(x):
             if isinstance(x, float):
                 return 9  # REAL32
             elif isinstance(x, int):
                 return 6  # INT32
             else:
-                raise ValueError("unknown type: " + repr(type(x)))
+                raise ValueError(f"unknown type: {type(x):r}")
 
-        sysid = rospy.get_param(mavros.get_topic('target_system_id'), 1)
-        compid = rospy.get_param(mavros.get_topic('target_component_id'), 1)
+        if self.stamp is None:
+            self.stamp = datetime.datetime.now()
 
         writer = csv.writer(file_, self.CSVDialect)
-        writer.writerow(("# NOTE: " + time.strftime("%d.%m.%Y %T"), ))
         writer.writerow(
-            ("# Onboard parameters saved by mavparam for ({}, {})".format(
-                sysid, compid), ))
+            (f"""# NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""", ))
+        writer.writerow((
+            f"# Onboard parameters saved by mavparam for ({self.tgt_system}.{self.tgt_component})",
+        ))
         writer.writerow(
             ("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
-        for p in parameters:
+        for p in self.parameters:
             writer.writerow((
-                sysid,
-                compid,
-                p.param_id,
-                p.param_value,
-                to_type(p.param_value),
-            ))  # XXX
+                self.tgt_system,
+                self.tgt_component,
+                p.name,
+                p.value,
+                to_type(p.value),
+            ))
 
 
-def param_ret_value(ret):
-    if ret.value.integer != 0:
-        return ret.value.integer
-    elif ret.value.real != 0.0:
-        return ret.value.real
-    else:
-        return 0
+class ParamPlugin(PluginModule):
+    """
+    Parameter plugin client
+    """
+    @cached_property
+    def list_parameters(self) -> rclpy.node.Client:
+        return self.create_client(ListParameters, ('param', 'list_parameters'))
 
+    @cached_property
+    def get_parameters(self) -> rclpy.node.Client:
+        return self.create_client(GetParameters, ('param', 'get_parameters'))
 
-def param_get(param_id):
-    try:
-        get = rospy.ServiceProxy(mavros.get_topic('param', 'get'), ParamGet)
-        ret = get(param_id=param_id)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    @cached_property
+    def set_parameters(self) -> rclpy.node.Client:
+        return self.create_client(SetParameters, ('param', 'set_parameters'))
 
-    if not ret.success:
-        raise IOError("Request failed.")
+    @cached_property
+    def pull(self) -> rclpy.node.Client:
+        return self.create_client(ParamPull, ('param', 'pull'))
 
-    return param_ret_value(ret)
+    @cached_property
+    def set(self) -> rclpy.node.Client:
+        return self.create_client(ParamSetV2, ('param', 'set'))
 
-
-def param_set(param_id, value):
-    if isinstance(value, float):
-        val = ParamValue(integer=0, real=value)
-    else:
-        val = ParamValue(integer=value, real=0.0)
-
-    try:
-        set = rospy.ServiceProxy(mavros.get_topic('param', 'set'), ParamSet)
-        ret = set(param_id=param_id, value=val)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
-
-    if not ret.success:
-        raise IOError("Request failed.")
-
-    return param_ret_value(ret)
-
-
-def param_get_all(force_pull=False):
-    try:
-        pull = rospy.ServiceProxy(mavros.get_topic('param', 'pull'), ParamPull)
-        ret = pull(force_pull=force_pull)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
-
-    if not ret.success:
-        raise IOError("Request failed.")
-
-    params = rospy.get_param(mavros.get_topic('param'))
-
-    return (ret.param_received,
-            sorted((Parameter(k, v) for k, v in params.items()),
-                   key=lambda p: p.param_id))
-
-
-def param_set_list(param_list):
-    # 1. load parameters to parameter server
-    for p in param_list:
-        rospy.set_param(mavros.get_topic('param', p.param_id), p.param_value)
-
-    # 2. request push all
-    try:
-        push = rospy.ServiceProxy(mavros.get_topic('param', 'push'), ParamPush)
-        ret = push()
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
-
-    if not ret.success:
-        raise IOError("Request failed.")
-
-    return ret.param_transfered
+    def subscribe_events(
+        self,
+        callback: SubscriptionCallable,
+        qos_profile: rclpy.qos.QoSProfile = rclpy.qos.QoSPresetProfiles.
+        PARAMETERS
+    ) -> rclpy.node.Subscription:
+        """
+        Subscribe to parameter events
+        """
+        return self.create_subscription(ParamEvent, ('param', 'event'),
+                                        callback, qos_profile)

@@ -21,42 +21,34 @@ class CommandPlugin(PluginModule):
     """
     @cached_property
     def long(self) -> rclpy.node.Client:
-        return self._node.create_client(CommandLong,
-                                        self._node.get_topic('cmd', 'command'))
+        return self.create_client(CommandLong, ('cmd', 'command'))
 
     @cached_property
     def int(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            CommandInt, self._node.get_topic('cmd', 'command_int'))
+        return self.create_client(CommandInt, ('cmd', 'command_int'))
 
     @cached_property
     def arming(self) -> rclpy.node.Client:
-        return self._node.create_client(CommandBool,
-                                        self._node.get_topic('cmd', 'arming'))
+        return self.create_client(CommandBool, ('cmd', 'arming'))
 
     @cached_property
     def set_home(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            CommandHome, self._node.get_topic('cmd', 'set_home'))
+        return self.create_client(CommandHome, ('cmd', 'set_home'))
 
     @cached_property
     def takeoff(self) -> rclpy.node.Client:
-        return self._node.create_client(CommandTOL,
-                                        self._node.get_topic('cmd', 'takeoff'))
+        return self.create_client(CommandTOL, ('cmd', 'takeoff'))
 
     @cached_property
     def land(self) -> rclpy.node.Client:
-        return self._node.create_client(CommandTOL,
-                                        self._node.get_topic('cmd', 'land'))
+        return self.create_client(CommandTOL, ('cmd', 'land'))
 
     @cached_property
     def trigger_control(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            CommandTriggerControl,
-            self._node.get_topic('cmd', 'trigger_control'))
+        return self.create_client(CommandTriggerControl,
+                                  ('cmd', 'trigger_control'))
 
     @cached_property
     def trigger_interval(self) -> rclpy.node.Client:
-        return self._node.create_client(
-            CommandTriggerInterval,
-            self._node.get_topic('cmd', 'trigger_interval'))
+        return self.create_client(CommandTriggerInterval,
+                                  ('cmd', 'trigger_interval'))

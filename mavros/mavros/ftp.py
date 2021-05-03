@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014,2015 Vladimir Ermakov.
+# Copyright 2014,2015,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
@@ -13,7 +13,7 @@ __all__ = ('FTPFile', 'open', 'listdir', 'unlink', 'mkdir', 'rmdir', 'rename',
 import os
 
 import rospy
-from mavros_msgs.msg import FileEntry
+from mavros_msgs.msg import FileEntry  # noqa F401
 from mavros_msgs.srv import (FileChecksum, FileClose, FileList, FileMakeDir,
                              FileOpen, FileOpenRequest, FileRead, FileRemove,
                              FileRemoveDir, FileRename, FileTruncate,

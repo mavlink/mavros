@@ -26,6 +26,13 @@ STATE_QOS = rclpy.qos.QoSProfile(
 # SENSOR_QOS used for most of sensor streams
 SENSOR_QOS = rclpy.qos.QoSPresetProfiles.SENSOR_DATA
 
+TopicType = typing.Union[typing.Tuple, str]
+QoSType = typing.Union[rclpy.qos.QoSProfile, int]
+ServiceCallable = rclpy.node.Callable[
+    [rclpy.node.SrvTypeRequest, rclpy.node.SrvTypeResponse],
+    rclpy.node.SrvTypeResponse]
+SubscriptionCallable = rclpy.node.Callable[[rclpy.node.MsgType], None]
+
 
 class BaseNode(rclpy.node.Node):
     """
@@ -61,3 +68,43 @@ class PluginModule:
 
     def __init__(self, parent_node: BaseNode):
         self._node = parent_node
+
+    def create_publisher(self, msg_type: rclpy.node.MsgType, topic: TopicType,
+                         qos_profile: QoSType, *,
+                         **kwargs) -> rclpy.node.Publisher:
+        if isinstance(topic, str):
+            topic = (topic, )
+
+        return self._node.create_publisher(msg_type,
+                                           self._node.get_topic(*topic),
+                                           qos_profile, **kwargs)
+
+    def create_subscription(self, msg_type: rclpy.node.MsgType,
+                            topic: TopicType, callback: SubscriptionCallable,
+                            qos_profile: QoSType, *,
+                            **kwargs) -> rclpy.node.Subscription:
+        if isinstance(topic, str):
+            topic = (topic, )
+
+        return self._node.create_subscription(msg_type,
+                                              self._node.get_topic(*topic),
+                                              callback, qos_profile, **kwargs)
+
+    def create_client(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
+                      *, **kwargs) -> rclpy.node.Client:
+        if isinstance(srv_name, str):
+            srv_name = (srv_name, )
+
+        return self._node.create_client(srv_type,
+                                        self._node.get_topic(*srv_name),
+                                        **kwargs)
+
+    def create_service(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
+                       callback: ServiceCallable, *,
+                       **kwargs) -> rclpy.node.Service:
+        if isinstance(srv_name, str):
+            srv_name = (srv_name, )
+
+        return self._node.create_service(srv_type,
+                                         self._node.get_topic(*srv_name),
+                                         callback, **kwargs)
