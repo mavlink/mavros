@@ -20,9 +20,7 @@ from .base import (SENSOR_QOS, STATE_QOS, PluginModule, SubscriptionCallable,
 
 
 class SystemPlugin(PluginModule):
-    """
-    System plugin
-    """
+    """System plugin."""
     def subscribe_state(self,
                         callback: SubscriptionCallable,
                         qos_profile=STATE_QOS) -> rclpy.node.Subscription:
@@ -75,9 +73,7 @@ class SystemPlugin(PluginModule):
 
     def wait_fcu_connection(self,
                             timeout: typing.Optional[float] = None) -> bool:
-        """
-        Wait until establishing FCU connection
-        """
+        """Wait until establishing FCU connection."""
 
         connected = threading.Event()
 

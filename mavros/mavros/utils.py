@@ -23,7 +23,7 @@ from .base import ServiceWaitTimeout
 TIMEOUT = 5.0
 
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def system_clock() -> rclpy.clock.Clock:
     return rclpy.clock.Clock()
 

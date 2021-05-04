@@ -56,23 +56,23 @@ NAV_CMDS = {
 
 
 class PlanFile:
-    """Base class for waypoint file parsers"""
+    """Base class for waypoint file parsers."""
 
     mission: typing.Optional[typing.List[Waypoint]] = None
     fence: typing.Optional[typing.List[Waypoint]] = None
     rally: typing.Optional[typing.List[Waypoint]] = None
 
     def load(self, file_: typing.TextIO):
-        """Returns a iterable of waypoints"""
+        """Returns a iterable of waypoints."""
         raise NotImplementedError
 
     def save(self, file_: typing.TextIO):
-        """Writes waypoints to file"""
+        """Writes waypoints to file."""
         raise NotImplementedError
 
 
 class QGroundControlWPL(PlanFile):
-    """Parse QGC waypoint file"""
+    """Parse QGC waypoint file."""
 
     file_header = 'QGC WPL 120'
     known_versions = (110, 120)
@@ -162,18 +162,14 @@ class MissionPluginBase(PluginModule):
         callback: SubscriptionCallable,
         qos_profile: rclpy.qos.QoSProfile = STATE_QOS
     ) -> rclpy.node.Subscription:
-        """
-        Subscribe to points list (waypoints, fences, rallypoints)
-        """
+        """Subscribe to points list (waypoints, fences, rallypoints)"""
         return self.create_subscription(
             WaypointList, (self._plugin_ns, self._plugin_list_topic), callback,
             qos_profile)
 
 
 class WaypointPlugin(MissionPluginBase):
-    """
-    Interface to waypoint plugin
-    """
+    """Interface to waypoint plugin."""
     @cached_property
     def set_current(self) -> rclpy.node.Client:
         return self._node.create_client(WaypointSetCurrent,
@@ -181,18 +177,14 @@ class WaypointPlugin(MissionPluginBase):
 
 
 class GeofencePlugin(MissionPluginBase):
-    """
-    Interface to geofence plugin
-    """
+    """Interface to geofence plugin."""
 
     _plugin_ns = 'geofence'
     _plugin_list_topic = 'fences'
 
 
 class RallypointPlugin(MissionPluginBase):
-    """
-    Interface to rallypoint plugin
-    """
+    """Interface to rallypoint plugin."""
 
     _plugin_ns = 'rallypoint'
     _plugin_list_topic = 'rallypoints'

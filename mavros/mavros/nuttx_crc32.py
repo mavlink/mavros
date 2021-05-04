@@ -56,9 +56,7 @@ CRC32_TAB = (
 
 
 def nuttx_crc32(b: bytes, crc32val: int = 0) -> int:
-    """
-    CRC32 algo from NuttX.
-    """
+    """CRC32 algo from NuttX."""
     for b in bytearray(b):
         crc32val = CRC32_TAB[(crc32val ^ b) & 0xff] ^ (crc32val >> 8)
 

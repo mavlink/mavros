@@ -41,7 +41,8 @@ class ServiceWaitTimeout(RuntimeError):
 
 class BaseNode(rclpy.node.Node):
     """
-    Base class for mavros client object. It's used to hide plugin parameters.
+    Base class for mavros client object.
+    It's used to hide plugin parameters.
     """
 
     _ns: str
@@ -50,6 +51,8 @@ class BaseNode(rclpy.node.Node):
                  node_name: typing.Optional[str] = None,
                  mavros_ns: str = DEFAULT_NAMESPACE):
         """
+        BaseNode constructor.
+
         :param node_name: name of the node, would be random if None
         :param mavros_ns: node name of mavros::UAS
         """
@@ -63,10 +66,22 @@ class BaseNode(rclpy.node.Node):
     def get_topic(self, *args: str) -> str:
         return '/'.join((self._ns, ) + args)
 
+    def start_spinner(self) -> threading.Thread:
+        def run():
+            while rclpy.ok():
+                rclpy.spin_once(self)
+
+        thd = threading.Thread(target=run, name=f'mavros_py_spin_{self.name}')
+        thd.daemon()
+        thd.start()
+        return thd
+
 
 class PluginModule:
     """
-    PluginModule is a base class for modules used to talk to mavros plugins
+    PluginModule is a base class for modules used to talk to mavros plugins.
+
+    Provides some helper functions.
     """
 
     _node: BaseNode
@@ -113,14 +128,3 @@ class PluginModule:
         return self._node.create_service(srv_type,
                                          self._node.get_topic(*srv_name),
                                          callback, **kwargs)
-
-
-def run_backgroud_spin(node: BaseNode) -> threading.Thread:
-    def run():
-        while rclpy.ok():
-            rclpy.spin(node)
-
-    thd = threading.Thread(target=run, name='mavros_py_spinner')
-    thd.daemon()
-    thd.start()
-    return thd

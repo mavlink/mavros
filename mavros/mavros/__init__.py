@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 
-from . import command, mission, param, system, setpoint
-from .base import BaseNode, cached_property, run_backgroud_spin  # noqa F401
+from . import command, mission, param, setpoint, system, ftp
+from .base import BaseNode, cached_property
 
 
 class Client(BaseNode):
@@ -60,3 +60,7 @@ class Client(BaseNode):
     @cached_property
     def setpoint_velocity(self) -> setpoint.SetpointVelocityPlugin:
         return setpoint.SetpointVelocityPlugin(self)
+
+    @cached_property
+    def ftp(self) -> ftp.FTPPlugin:
+        return ftp.FTPPlugin(self)

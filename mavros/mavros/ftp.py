@@ -7,24 +7,18 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
-__all__ = ('FTPFile', 'open', 'listdir', 'unlink', 'mkdir', 'rmdir', 'rename',
-           'checksum', 'reset_server')
-
 import os
+import typing
 
-import rospy
-from mavros_msgs.msg import FileEntry  # noqa F401
+import rclpy
+from mavros_msgs.msg import FileEntry
 from mavros_msgs.srv import (FileChecksum, FileClose, FileList, FileMakeDir,
                              FileOpen, FileOpenRequest, FileRead, FileRemove,
                              FileRemoveDir, FileRename, FileTruncate,
                              FileWrite)
 from std_srvs.srv import Empty
 
-import mavros
-
-
-def _get_proxy(service, type):
-    return rospy.ServiceProxy(mavros.get_topic('ftp', service), type)
+from .base import PluginModule, cached_property
 
 
 def _check_raise_errno(ret):
@@ -32,12 +26,16 @@ def _check_raise_errno(ret):
         raise IOError(ret.r_errno, os.strerror(ret.r_errno))
 
 
-class FTPFile(object):
+class FTPFile:
     """
     FCU file object.
     Note that current PX4 firmware only support two connections simultaneously.
     """
-    def __init__(self, name, mode):
+
+    _fm: 'FTPPlugin'
+
+    def __init__(self, *, fm, name, mode):
+        self._fm = fm
         self.name = None
         self.mode = mode
         self.open(name, mode)
@@ -45,8 +43,10 @@ class FTPFile(object):
     def __del__(self):
         self.close()
 
-    def open(self, path, mode):
+    def open(self, path: str, mode: str):
         """
+        Calls open.
+
         Supported modes:
             - 'w': write binary
             - 'r': read binary
@@ -61,16 +61,13 @@ class FTPFile(object):
         else:
             raise ValueError("Unknown open mode: {}".format(m))
 
-        open_ = _get_proxy('open', FileOpen)
-        try:
-            ret = open_(file_path=path, mode=m)
-        except rospy.ServiceException as ex:
-            raise IOError(str(ex))
+        req = FileOpen.Request(
+            file_path=path,
+            mode=m,
+        )
 
+        ret = self._fm.cli_open.call(req)
         _check_raise_errno(ret)
-
-        self._read = _get_proxy('read', FileRead)
-        self._write = _get_proxy('write', FileWrite)
 
         self.name = path
         self.mode = mode
@@ -81,36 +78,27 @@ class FTPFile(object):
         if self.closed:
             return
 
-        close_ = _get_proxy('close', FileClose)
-        try:
-            ret = close_(file_path=self.name)
-        except rospy.ServiceException as ex:
-            raise IOError(str(ex))
-
+        req = FileClose.Request(file_path=self.name)
+        ret = self._fm.cli_close(req)
         self.name = None
         _check_raise_errno(ret)
 
-    def read(self, size=1):
-        try:
-            ret = self._read(file_path=self.name,
-                             offset=self.offset,
-                             size=size)
-        except rospy.ServiceException as ex:
-            raise IOError(str(ex))
-
+    def read(self, size: int = 1) -> bytearray:
+        req = FileRead.Request(file_path=self.name,
+                               offset=self.offset,
+                               size=size)
+        ret = self._fm.cli_read.call(req)
         _check_raise_errno(ret)
         self.offset += len(ret.data)
         return bytearray(ret.data)
 
-    def write(self, bin_data):
+    def write(self, bin_data: typing.Union[bytes, bytearray]):
         data_len = len(bin_data)
-        try:
-            ret = self._write(file_path=self.name,
-                              offset=self.offset,
-                              data=bin_data)
-        except rospy.ServiceException as ex:
-            raise IOError(str(ex))
 
+        req = FileWrite.Request(file_path=self.name,
+                                offset=self.offset,
+                                data=bin_data)
+        ret = self._fm.cli_write.call(req)
         _check_raise_errno(ret)
         self.offset += data_len
         if self.offset > self.size:
@@ -129,13 +117,9 @@ class FTPFile(object):
         else:
             raise ValueError("Unknown whence")
 
-    def truncate(self, size=0):
-        truncate_ = _get_proxy('truncate', FileTruncate)
-        try:
-            ret = truncate_(file_path=self.name, length=size)
-        except rospy.ServiceException as ex:
-            raise IOError(str(ex))
-
+    def truncate(self, size: int = 0):
+        req = FileTruncate.Request(file_path=self.name, length=size)
+        ret = self._fm.cli_truncate.call(req)
         _check_raise_errno(ret)
 
     @property
@@ -149,82 +133,91 @@ class FTPFile(object):
         self.close()
 
 
-def open(path, mode):
-    """Open file on FCU"""
-    return FTPFile(path, mode)
+class FTPPlugin(PluginModule):
+    """FTP plugin interface"""
+    @cached_property
+    def cli_open(self) -> rclpy.node.Client:
+        return self.create_client(FileOpen, ('ftp', 'open'))
 
+    @cached_property
+    def cli_close(self) -> rclpy.node.Client:
+        return self.create_client(FileClose, ('ftp', 'close'))
 
-def listdir(path):
-    """List directory :path: contents"""
-    try:
-        list_ = _get_proxy('list', FileList)
-        ret = list_(dir_path=path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    @cached_property
+    def cli_read(self) -> rclpy.node.Client:
+        return self.create_client(FileRead, ('ftp', 'read'))
 
-    _check_raise_errno(ret)
-    return ret.list
+    @cached_property
+    def cli_write(self) -> rclpy.node.Client:
+        return self.create_client(FileWrite, ('ftp', 'write'))
 
+    @cached_property
+    def cli_truncate(self) -> rclpy.node.Client:
+        return self.create_client(FileTruncate, ('ftp', 'truncate'))
 
-def unlink(path):
-    """Remove :path: file"""
-    remove = _get_proxy('remove', FileRemove)
-    try:
-        ret = remove(file_path=path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    @cached_property
+    def cli_listdir(self) -> rclpy.node.Client:
+        return self.create_client(FileList, ('ftp', 'list'))
 
-    _check_raise_errno(ret)
+    @cached_property
+    def cli_unlink(self) -> rclpy.node.Client:
+        return self.create_client(FileRemove, ('ftp', 'remove'))
 
+    @cached_property
+    def cli_mkdir(self) -> rclpy.node.Client:
+        return self.create_client(FileMakeDir, ('ftp', 'mkdir'))
 
-def mkdir(path):
-    """Create directory :path:"""
-    mkdir_ = _get_proxy('mkdir', FileMakeDir)
-    try:
-        ret = mkdir_(dir_path=path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    @cached_property
+    def cli_rmdir(self) -> rclpy.node.Client:
+        return self.create_client(FileRemoveDir, ('ftp', 'rmdir'))
 
-    _check_raise_errno(ret)
+    @cached_property
+    def cli_rename(self) -> rclpy.node.Client:
+        return self.create_client(FileRename, ('ftp', 'rename'))
 
+    @cached_property
+    def cli_checksum(self) -> rclpy.node.Client:
+        return self.create_client(FileChecksum, ('ftp', 'checksum'))
 
-def rmdir(path):
-    """Remove directory :path:"""
-    rmdir_ = _get_proxy('rmdir', FileRemoveDir)
-    try:
-        ret = rmdir_(dir_path=path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    @cached_property
+    def cli_reset(self) -> rclpy.node.Client:
+        return self.create_client(Empty, ('ftp', 'reset'))
 
-    _check_raise_errno(ret)
+    def open(self, path: str, mode: str = 'r') -> FTPFile:
+        return FTPFile(fm=self, path=path, mode=mode)
 
+    def listdir(self, dir_path: str) -> FileEntry:
+        req = FileList.Request(dir_path=dir_path)
+        ret = self.cli_listdir.call(req)
+        _check_raise_errno(ret)
+        return ret.list
 
-def rename(old_path, new_path):
-    """Rename :old_path: to :new_path:"""
-    rename_ = _get_proxy('rename', FileRename)
-    try:
-        ret = rename_(old_path=old_path, new_path=new_path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    def unlink(self, path: str):
+        req = FileRemove.Request(file_path=path)
+        ret = self.cli_unlink.call(req)
+        _check_raise_errno(ret)
 
-    _check_raise_errno(ret)
+    def mkdir(self, path: str):
+        req = FileMakeDir.Request(dir_path=path)
+        ret = self.cli_mkdir.call(req)
+        _check_raise_errno(ret)
 
+    def rmdir(self, path: str):
+        req = FileRemoveDir.Request(dir_path=path)
+        ret = self.cli_rmdir.call(req)
+        _check_raise_errno(ret)
 
-def checksum(path):
-    """Calculate CRC32 for :path:"""
-    checksum_ = _get_proxy('checksum', FileChecksum)
-    try:
-        ret = checksum_(file_path=path)
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    def rename(self, old_path: str, new_path: str):
+        req = FileRename.Request(old_path=old_path, new_path=new_path)
+        ret = self.cli_rename.call(req)
+        _check_raise_errno(ret)
 
-    _check_raise_errno(ret)
-    return ret.crc32
+    def checksum(self, path: str) -> int:
+        req = FileChecksum.Request(file_path=path)
+        ret = self.cli_checksum.call(req)
+        _check_raise_errno(ret)
+        return ret.crc32
 
-
-def reset_server():
-    reset = _get_proxy('reset', Empty)
-    try:
-        reset()
-    except rospy.ServiceException as ex:
-        raise IOError(str(ex))
+    def reset_server(self, ):
+        req = Empty.Request()
+        self.cli_reset.call(req)

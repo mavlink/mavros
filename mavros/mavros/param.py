@@ -27,7 +27,7 @@ from .utils import (call_get_parameters, call_list_parameters,
 
 
 class ParamFile:
-    """Base class for param file parsers"""
+    """Base class for param file parsers."""
 
     parameters: typing.Optional[typing.Dict[str, Parameter]] = None
     stamp: typing.Optional[datetime.datetime] = None
@@ -35,16 +35,16 @@ class ParamFile:
     tgt_component: int = 1
 
     def load(self, file_: typing.TextIO) -> 'ParamFile':
-        """Returns a iterable of Parameters"""
+        """Loads Parameters from a file."""
         raise NotImplementedError
 
     def save(self, file_: typing.TextIO):
-        """Writes Parameters to file"""
+        """Writes Parameters to a file."""
         raise NotImplementedError
 
 
 class MavProxyParam(ParamFile):
-    """Parse MavProxy parm files"""
+    """Parse MavProxy parm files."""
     class CSVDialect(csv.Dialect):
         delimiter = ' '
         doublequote = False
@@ -83,7 +83,7 @@ class MavProxyParam(ParamFile):
 
 
 class MissionPlannerParam(MavProxyParam):
-    """Parse MissionPlanner param files"""
+    """Parse MissionPlanner param files."""
     class CSVDialect(csv.Dialect):
         delimiter = ','
         doublequote = False
@@ -94,7 +94,7 @@ class MissionPlannerParam(MavProxyParam):
 
 
 class QGroundControlParam(ParamFile):
-    """Parse QGC param files"""
+    """Parse QGC param files."""
     class CSVDialect(csv.Dialect):
         delimiter = '\t'
         doublequote = False
@@ -151,9 +151,7 @@ class QGroundControlParam(ParamFile):
 
 
 class ParamPlugin(PluginModule):
-    """
-    Parameter plugin client
-    """
+    """Parameter plugin interface."""
 
     timeout_sec: float = 5.0
     _parameters = None
@@ -161,27 +159,27 @@ class ParamPlugin(PluginModule):
 
     @cached_property
     def list_parameters(self) -> rclpy.node.Client:
-        """ListParameters service client"""
+        """ListParameters service client."""
         return self.create_client(ListParameters, ('param', 'list_parameters'))
 
     @cached_property
     def get_parameters(self) -> rclpy.node.Client:
-        """GetParameters service client"""
+        """GetParameters service client."""
         return self.create_client(GetParameters, ('param', 'get_parameters'))
 
     @cached_property
     def set_parameters(self) -> rclpy.node.Client:
-        """SetParameters service client"""
+        """SetParameters service client."""
         return self.create_client(SetParameters, ('param', 'set_parameters'))
 
     @cached_property
     def pull(self) -> rclpy.node.Client:
-        """ParamPull service client"""
+        """ParamPull service client."""
         return self.create_client(ParamPull, ('param', 'pull'))
 
     @cached_property
     def set(self) -> rclpy.node.Client:
-        """ParamSetV2 service client"""
+        """ParamSetV2 service client."""
         return self.create_client(ParamSetV2, ('param', 'set'))
 
     def subscribe_events(
@@ -190,12 +188,12 @@ class ParamPlugin(PluginModule):
         qos_profile: rclpy.qos.QoSProfile = rclpy.qos.QoSPresetProfiles.
         PARAMETERS
     ) -> rclpy.node.Subscription:
-        """Subscribe to parameter events"""
+        """Subscribe to parameter events."""
         return self.create_subscription(ParamEvent, ('param', 'event'),
                                         callback, qos_profile)
 
     def call_pull(self, *, force_pull: bool = False) -> ParamPull.Response:
-        """Do a call to ParamPull service"""
+        """Do a call to ParamPull service."""
         lg = self._node.get_logger()
 
         ready = self.pull.wait_for_service(timeout_sec=self.timeout_sec)
@@ -245,10 +243,10 @@ class ParamPlugin(PluginModule):
 class ParamDict(dict):
     """
     ParamDict class holds states of parameters
-    and allow to upload new items
+    and allow to upload new items.
     """
     class NoSet:
-        """Wrapper to mark values we do not want to send set request for"""
+        """Wrapper to mark values we do not want to send set request for."""
         value: Parameter
 
         def __init__(self, p):
