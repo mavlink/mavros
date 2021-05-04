@@ -35,16 +35,16 @@ class ParamFile:
     tgt_component: int = 1
 
     def load(self, file_: typing.TextIO) -> 'ParamFile':
-        """Loads Parameters from a file."""
+        """Load Parameters from a file."""
         raise NotImplementedError
 
     def save(self, file_: typing.TextIO):
-        """Writes Parameters to a file."""
+        """Write Parameters to a file."""
         raise NotImplementedError
 
 
 class MavProxyParam(ParamFile):
-    """Parse MavProxy parm files."""
+    """Parse MavProxy parm file."""
     class CSVDialect(csv.Dialect):
         delimiter = ' '
         doublequote = False
@@ -83,7 +83,7 @@ class MavProxyParam(ParamFile):
 
 
 class MissionPlannerParam(MavProxyParam):
-    """Parse MissionPlanner param files."""
+    """Parse MissionPlanner param file."""
     class CSVDialect(csv.Dialect):
         delimiter = ','
         doublequote = False
@@ -94,7 +94,7 @@ class MissionPlannerParam(MavProxyParam):
 
 
 class QGroundControlParam(ParamFile):
-    """Parse QGC param files."""
+    """Parse QGC param file."""
     class CSVDialect(csv.Dialect):
         delimiter = '\t'
         doublequote = False
@@ -159,27 +159,27 @@ class ParamPlugin(PluginModule):
 
     @cached_property
     def list_parameters(self) -> rclpy.node.Client:
-        """ListParameters service client."""
+        """Client for ListParameters service."""
         return self.create_client(ListParameters, ('param', 'list_parameters'))
 
     @cached_property
     def get_parameters(self) -> rclpy.node.Client:
-        """GetParameters service client."""
+        """Client for GetParameters service."""
         return self.create_client(GetParameters, ('param', 'get_parameters'))
 
     @cached_property
     def set_parameters(self) -> rclpy.node.Client:
-        """SetParameters service client."""
+        """Client for SetParameters service."""
         return self.create_client(SetParameters, ('param', 'set_parameters'))
 
     @cached_property
     def pull(self) -> rclpy.node.Client:
-        """ParamPull service client."""
+        """Client for ParamPull service."""
         return self.create_client(ParamPull, ('param', 'pull'))
 
     @cached_property
     def set(self) -> rclpy.node.Client:
-        """ParamSetV2 service client."""
+        """Client for ParamSetV2 service."""
         return self.create_client(ParamSetV2, ('param', 'set'))
 
     def subscribe_events(
@@ -213,7 +213,7 @@ class ParamPlugin(PluginModule):
 
     @property
     def values(self) -> 'ParamDict':
-        """Provides current state of parameters and allows to change them."""
+        """Provide current state of parameters and allows to change them."""
         if self._parameters is not None:
             return self._parameters
 

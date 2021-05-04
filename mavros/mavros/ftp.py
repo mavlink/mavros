@@ -13,9 +13,8 @@ import typing
 import rclpy
 from mavros_msgs.msg import FileEntry
 from mavros_msgs.srv import (FileChecksum, FileClose, FileList, FileMakeDir,
-                             FileOpen, FileOpenRequest, FileRead, FileRemove,
-                             FileRemoveDir, FileRename, FileTruncate,
-                             FileWrite)
+                             FileOpen, FileRead, FileRemove, FileRemoveDir,
+                             FileRename, FileTruncate, FileWrite)
 from std_srvs.srv import Empty
 
 from .base import PluginModule, cached_property
@@ -53,11 +52,11 @@ class FTPFile:
             - 'cw': create excl & write
         """
         if mode == 'w' or mode == 'wb':
-            m = FileOpenRequest.MODE_WRITE
+            m = FileOpen.Request.MODE_WRITE
         elif mode == 'r' or mode == 'rb':
-            m = FileOpenRequest.MODE_READ
+            m = FileOpen.Request.MODE_READ
         elif mode == 'cw':
-            m = FileOpenRequest.MODE_CREATE
+            m = FileOpen.Request.MODE_CREATE
         else:
             raise ValueError("Unknown open mode: {}".format(m))
 
@@ -186,7 +185,7 @@ class FTPPlugin(PluginModule):
     def open(self, path: str, mode: str = 'r') -> FTPFile:
         return FTPFile(fm=self, path=path, mode=mode)
 
-    def listdir(self, dir_path: str) -> FileEntry:
+    def listdir(self, dir_path: str) -> typing.List[FileEntry]:
         req = FileList.Request(dir_path=dir_path)
         ret = self.cli_listdir.call(req)
         _check_raise_errno(ret)
