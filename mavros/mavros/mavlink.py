@@ -1,24 +1,27 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2015 Vladimir Ermakov.
+# Copyright 2015,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import struct
+import typing
 
-import rospy
+import rclpy.time
 from mavros_msgs.msg import Mavlink
 from pymavlink import mavutil
-from pymavlink.generator.mavcrc import x25crc
+from pymavlink.generator.mavcrc import x25crc  # noqa F401
 from std_msgs.msg import Header
 
-assert False, "port me!"
+from .utils import system_now
+
+MAVLink_message = typing.TypeVar('MAVLink_message')
 
 
-def convert_to_bytes(msg):
+def convert_to_bytes(msg: Mavlink) -> bytearray:
     """
     Re-builds the MAVLink byte stream from mavros_msgs/Mavlink messages.
 
@@ -57,7 +60,8 @@ def convert_to_bytes(msg):
     return msgdata
 
 
-def convert_to_payload64(payload_bytes):
+def convert_to_payload64(
+        payload_bytes: typing.Union[bytes, bytearray]) -> typing.List[int]:
     """
     Convert payload bytes to Mavlink.payload64
     """
@@ -68,24 +72,27 @@ def convert_to_payload64(payload_bytes):
         payload_octets += 1
         payload_bytes += b'\0' * (8 - payload_len % 8)
 
-    return struct.unpack('<%dQ' % payload_octets, payload_bytes)
+    return struct.unpack(f'<{payload_octets}Q', payload_bytes)
 
 
-def convert_to_rosmsg(mavmsg, stamp=None):
+def convert_to_rosmsg(
+        mavmsg: MAVLink_message,
+        stamp: typing.Optional[rclpy.time.Time] = None) -> Mavlink:
     """
     Convert pymavlink message to Mavlink.msg
 
-    Currently supports MAVLink v1.0 only.
+    Currently supports both MAVLink v1.0 and v2.0,
+    but without signing.
     """
     if stamp is not None:
         header = Header(stamp=stamp)
     else:
-        header = Header(stamp=rospy.get_rostime())
+        header = Header(stamp=system_now())
 
     if mavutil.mavlink20():
         # XXX Need some api to retreive signature block.
         if mavmsg.get_signed():
-            rospy.logerr("Signed message can't be converted to rosmsg.")
+            raise ValueError("Signed message can't be converted to rosmsg.")
 
         hdr = mavmsg.get_header()
         return Mavlink(
