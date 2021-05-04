@@ -30,10 +30,10 @@ class ParamFile:
 
     parameters: typing.Optional[typing.Dict[str, Parameter]] = None
     stamp: typing.Optional[datetime.datetime] = None
-    tgt_system = 1
-    tgt_component = 1
+    tgt_system: int = 1
+    tgt_component: int = 1
 
-    def load(self, file_: typing.TextIO):
+    def load(self, file_: typing.TextIO) -> 'ParamFile':
         """Returns a iterable of Parameters"""
         raise NotImplementedError
 
@@ -43,13 +43,14 @@ class ParamFile:
 
 
 class MavProxyParam(ParamFile):
-    """Parse MavProxy param files"""
+    """Parse MavProxy parm files"""
     class CSVDialect(csv.Dialect):
         delimiter = ' '
         doublequote = False
         skipinitialspace = True
         lineterminator = '\r\n'
         quoting = csv.QUOTE_NONE
+        escapechar = ''
 
     def _parse_param_file(self, file_: typing.TextIO):
         def to_numeric(x):
@@ -64,16 +65,19 @@ class MavProxyParam(ParamFile):
 
             yield Parameter(data[0].strip(), value=to_numeric(data[1]))
 
-    def load(self, file_: typing.TextIO):
+    def load(self, file_: typing.TextIO) -> ParamFile:
         self.parameters = {p.name: p for p in self._parse_param_file(file_)}
+        return self
 
     def save(self, file_: typing.TextIO):
         if self.stamp is None:
             self.stamp = datetime.datetime.now()
 
         writer = csv.writer(file_, self.CSVDialect)
-        file_.writerow((f"""#NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""", ))
-        for p in self.parameters:
+        file_.write(
+            f"""#NOTE: {self.stamp.strftime("%d.%m.%Y %T")}{self.CSVDialect.lineterminator}"""
+        )
+        for k, p in self.parameters.items():
             writer.writerow((p.name, p.value))
 
 
@@ -85,6 +89,7 @@ class MissionPlannerParam(MavProxyParam):
         skipinitialspace = True
         lineterminator = '\r\n'
         quoting = csv.QUOTE_NONE
+        escapechar = ''
 
 
 class QGroundControlParam(ParamFile):
@@ -95,6 +100,7 @@ class QGroundControlParam(ParamFile):
         skipinitialspace = True
         lineterminator = '\n'
         quoting = csv.QUOTE_NONE
+        escapechar = ''
 
     def _parse_param_file(self, file_: typing.TextIO):
         def to_numeric(x):
@@ -109,8 +115,9 @@ class QGroundControlParam(ParamFile):
 
             yield Parameter(data[2].strip(), value=to_numeric(data[3]))
 
-    def load(self, file_: typing.TextIO):
+    def load(self, file_: typing.TextIO) -> ParamFile:
         self.parameters = {p.name: p for p in self._parse_param_file(file_)}
+        return self
 
     def save(self, file_: typing.TextIO):
         def to_type(x):
@@ -132,7 +139,7 @@ class QGroundControlParam(ParamFile):
         ))
         writer.writerow(
             ("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
-        for p in self.parameters:
+        for k, p in self.parameters.items():
             writer.writerow((
                 self.tgt_system,
                 self.tgt_component,
@@ -153,22 +160,27 @@ class ParamPlugin(PluginModule):
 
     @cached_property
     def list_parameters(self) -> rclpy.node.Client:
+        """ListParameters service client"""
         return self.create_client(ListParameters, ('param', 'list_parameters'))
 
     @cached_property
     def get_parameters(self) -> rclpy.node.Client:
+        """GetParameters service client"""
         return self.create_client(GetParameters, ('param', 'get_parameters'))
 
     @cached_property
     def set_parameters(self) -> rclpy.node.Client:
+        """SetParameters service client"""
         return self.create_client(SetParameters, ('param', 'set_parameters'))
 
     @cached_property
     def pull(self) -> rclpy.node.Client:
+        """ParamPull service client"""
         return self.create_client(ParamPull, ('param', 'pull'))
 
     @cached_property
     def set(self) -> rclpy.node.Client:
+        """ParamSetV2 service client"""
         return self.create_client(ParamSetV2, ('param', 'set'))
 
     def subscribe_events(
@@ -177,13 +189,12 @@ class ParamPlugin(PluginModule):
         qos_profile: rclpy.qos.QoSProfile = rclpy.qos.QoSPresetProfiles.
         PARAMETERS
     ) -> rclpy.node.Subscription:
-        """
-        Subscribe to parameter events
-        """
+        """Subscribe to parameter events"""
         return self.create_subscription(ParamEvent, ('param', 'event'),
                                         callback, qos_profile)
 
     def call_pull(self, *, force_pull: bool = False) -> ParamPull.Response:
+        """Do a call to ParamPull service"""
         lg = self._node.get_logger()
 
         ready = self.pull.wait_for_service(timeout_sec=self.timeout_sec)
@@ -202,22 +213,41 @@ class ParamPlugin(PluginModule):
         return resp
 
     @property
-    def param(self) -> 'ParamDict':
+    def values(self) -> 'ParamDict':
+        """Provides current state of parameters and allows to change them."""
         if self._parameters is not None:
             return self._parameters
 
-        self._parameters = ParamDict()
-        self._parameters._pm = self
+        pm = ParamDict()
+        pm._pm = self
 
-        self._event_sub = self.subscribe_events(
-            self._parameters._event_handler)
+        # 1. subscribe for parameter updates
+        self._event_sub = self.subscribe_events(pm._event_handler)
+        self._parameters = pm
 
+        # 2. pull parameters, if it isn't yet done
+        #    we'll get bunch of events
         self.call_pull()
-        return self._parameters
+
+        # 3. if to little events come, request whole list
+        if len(pm) < 10:
+            names = call_list_parameters(node=self._node,
+                                         client=self.list_parameters)
+            for k, v in call_get_parameters(node=self._node,
+                                            client=self.get_parameters,
+                                            names=names).items():
+                pm.setdefault(k, v)
+
+        return pm
 
 
 class ParamDict(dict):
+    """
+    ParamDict class holds states of parameters
+    and allow to upload new items
+    """
     class NoSet:
+        """Wrapper to mark values we do not want to send set request for"""
         value: Parameter
 
         def __init__(self, p):
@@ -232,6 +262,12 @@ class ParamDict(dict):
         return super().__getitem__(key)
 
     def __setitem__(self, key: str, value):
+        if self._set_item(key, value):
+            call_set_parameters_check_and_raise(node=self._pm._node,
+                                                client=self._pm.set_parameters,
+                                                parameters=[value])
+
+    def _set_item(self, key: str, value) -> bool:
         is_no_set = False
         if isinstance(value, ParamDict.NoSet):
             is_no_set = True
@@ -246,12 +282,12 @@ class ParamDict(dict):
         else:
             value = Parameter(name=key, value=value)
 
-        do_set = not is_no_set and self.get(key, Parameter(name=key)) != value
+        assert key == value.name
+
+        do_call_set = not is_no_set and self.get(key,
+                                                 Parameter(name=key)) != value
         super().__setitem__(key, value)
-        if do_set:
-            call_set_parameters(node=self._pm._node,
-                                client=self._pm.set_parameters,
-                                parameters=[value])
+        return do_call_set
 
     def __getattr__(self, key: str):
         try:
@@ -285,8 +321,16 @@ class ParamDict(dict):
             object.__delattr__(self, key)
 
     def update(self, *args, **kwargs):
+        keys_to_set = []
         for k, v in dict(*args, **kwargs).items():
-            self[k] = v
+            if self._set_item(k, v):
+                keys_to_set.append(k)
+
+        if keys_to_set:
+            call_set_parameters_check_and_raise(
+                node=self._pm._node,
+                client=self._pm.set_parameters,
+                parameters=[self[k] for k in keys_to_set])
 
     def setdefault(self, key: str, value=None):
         if key not in self:
@@ -385,6 +429,14 @@ def call_set_parameters(
     lg.debug(f"set result: {resp}")
 
     return dict(zip((p.name for p in parameters), resp.results))
+
+
+def call_set_parameters_check_and_raise(**kwargs):
+    results = call_set_parameters(**kwargs)
+    msg = ';'.join(f"{k}: {r.reason}" for k, r in results.items()
+                   if not r.successful)
+    if msg:
+        raise ValueError(msg)
 
 
 def parameter_from_parameter_value(
