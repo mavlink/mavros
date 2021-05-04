@@ -75,7 +75,7 @@ class PluginModule:
         self._node = parent_node
 
     def create_publisher(self, msg_type: rclpy.node.MsgType, topic: TopicType,
-                         qos_profile: QoSType, *,
+                         qos_profile: QoSType,
                          **kwargs) -> rclpy.node.Publisher:
         if isinstance(topic, str):
             topic = (topic, )
@@ -86,7 +86,7 @@ class PluginModule:
 
     def create_subscription(self, msg_type: rclpy.node.MsgType,
                             topic: TopicType, callback: SubscriptionCallable,
-                            qos_profile: QoSType, *,
+                            qos_profile: QoSType,
                             **kwargs) -> rclpy.node.Subscription:
         if isinstance(topic, str):
             topic = (topic, )
@@ -96,7 +96,7 @@ class PluginModule:
                                               callback, qos_profile, **kwargs)
 
     def create_client(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
-                      *, **kwargs) -> rclpy.node.Client:
+                      **kwargs) -> rclpy.node.Client:
         if isinstance(srv_name, str):
             srv_name = (srv_name, )
 
@@ -105,7 +105,7 @@ class PluginModule:
                                         **kwargs)
 
     def create_service(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
-                       callback: ServiceCallable, *,
+                       callback: ServiceCallable,
                        **kwargs) -> rclpy.node.Service:
         if isinstance(srv_name, str):
             srv_name = (srv_name, )

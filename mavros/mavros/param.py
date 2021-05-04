@@ -7,7 +7,6 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
-import collections
 import csv
 import datetime
 import typing
@@ -53,7 +52,8 @@ class MavProxyParam(ParamFile):
         quoting = csv.QUOTE_NONE
 
     def _parse_param_file(self, file_: typing.TextIO):
-        to_numeric = lambda x: float(x) if '.' in x else int(x)
+        def to_numeric(x):
+            return float(x) if '.' in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
             if data[0].startswith('#'):
@@ -97,7 +97,8 @@ class QGroundControlParam(ParamFile):
         quoting = csv.QUOTE_NONE
 
     def _parse_param_file(self, file_: typing.TextIO):
-        to_numeric = lambda x: float(x) if '.' in x else int(x)
+        def to_numeric(x):
+            return float(x) if '.' in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
             if data[0].startswith('#'):
@@ -145,30 +146,6 @@ class ParamPlugin(PluginModule):
     """
     Parameter plugin client
     """
-    class ParamDict(collections.UserDict):
-
-        _pm: 'ParamPlugin' = None
-
-        def __getitem__(self, key: str) -> Parameter:
-            return self.data[key]
-
-        def __setitem__(self, key: str, value: Parameter):
-            self.data[key] = value
-            call_set_parameters(node=self._pm._node,
-                                client=self._pm.set_parameters, [value])
-
-        def __getattr__(self, key: str) -> Parameter:
-            return self.data[key]
-
-        def __setattr__(self, key: str, value: Parameter):
-            self[key] = value
-
-        def reset():
-            self.data = {}
-
-        def _event_handler(self, msg: ParamEvent):
-            self.data[msg.param_id] = parameter_from_parameter_value(
-                msg.param_id, msg.value)
 
     timeout_sec: float = 5.0
     _parameters = None
@@ -225,11 +202,11 @@ class ParamPlugin(PluginModule):
         return resp
 
     @property
-    def param(self):
+    def param(self) -> 'ParamDict':
         if self._parameters is not None:
             return self._parameters
 
-        self._parameters = self.ParamDict()
+        self._parameters = ParamDict()
         self._parameters._pm = self
 
         self._event_sub = self.subscribe_events(
@@ -239,8 +216,88 @@ class ParamPlugin(PluginModule):
         return self._parameters
 
 
-def call_list_parameters(self,
-                         *,
+class ParamDict(dict):
+    class NoSet:
+        value: Parameter
+
+        def __init__(self, p):
+            self.value = p
+
+    _pm: 'ParamPlugin' = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key: str) -> Parameter:
+        return super().__getitem__(key)
+
+    def __setitem__(self, key: str, value):
+        is_no_set = False
+        if isinstance(value, ParamDict.NoSet):
+            is_no_set = True
+            value = value.value
+
+        if isinstance(value, Parameter):
+            pass
+        elif isinstance(value, ParameterValue):
+            value = parameter_from_parameter_value(key, value)
+        elif isinstance(value, ParameterMsg):
+            value = Parameter.from_parameter_msg(value)
+        else:
+            value = Parameter(name=key, value=value)
+
+        do_set = not is_no_set and self.get(key, Parameter(name=key)) != value
+        super().__setitem__(key, value)
+        if do_set:
+            call_set_parameters(node=self._pm._node,
+                                client=self._pm.set_parameters,
+                                parameters=[value])
+
+    def __getattr__(self, key: str):
+        try:
+            return object.__getattribute__(self, key)
+        except AttributeError:
+            try:
+                return self[key]
+            except KeyError:
+                raise AttributeError(key)
+
+    def __setattr__(self, key: str, value):
+        try:
+            object.__getattribute__(self, key)
+        except AttributeError:
+            try:
+                self[key] = value
+            except Exception as ex:
+                raise AttributeError(f"{key}: {ex}")
+        else:
+            object.__setattr__(self, key, value)
+
+    def __delattr__(self, key: str):
+        try:
+            object.__getattribute__(self, key)
+        except AttributeError:
+            try:
+                del self[key]
+            except KeyError:
+                raise AttributeError(key)
+        else:
+            object.__delattr__(self, key)
+
+    def update(self, *args, **kwargs):
+        for k, v in dict(*args, **kwargs).items():
+            self[k] = v
+
+    def setdefault(self, key: str, value=None):
+        if key not in self:
+            self[key] = ParamDict.NoSet(value)
+
+    def _event_handler(self, msg: ParamEvent):
+        self[msg.param_id] = parameter_from_parameter_value(
+            msg.param_id, msg.value)
+
+
+def call_list_parameters(*,
                          node: rclpy.node.Node,
                          node_name: typing.Optional[str] = None,
                          client: typing.Optional[rclpy.node.Client] = None,
@@ -270,7 +327,6 @@ def call_list_parameters(self,
 
 
 def call_get_parameters(
-        self,
         *,
         node: rclpy.node.Node,
         node_name: typing.Optional[str] = None,
@@ -301,7 +357,6 @@ def call_get_parameters(
 
 
 def call_set_parameters(
-    self,
     *,
     node: rclpy.node.Node,
     node_name: typing.Optional[str] = None,

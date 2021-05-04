@@ -10,7 +10,7 @@ class Client(BaseNode):
     Client provides some convinient methods to work with MAVROS API
     """
     @cached_property
-    def system(self) -> command.SystemPlugin:
+    def system(self) -> system.SystemPlugin:
         return system.SystemPlugin(self)
 
     @cached_property
