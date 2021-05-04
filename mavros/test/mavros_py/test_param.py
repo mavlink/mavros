@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mavros.param import (MavProxyParam, MissionPlannerParam, ParamDict,
-                          Parameter, ParamPlugin, QGroundControlParam)
+                          Parameter, QGroundControlParam)
 
 
 def test_ParamDict_get():
@@ -40,7 +40,7 @@ def test_ParamDict_set():
     tv1 = Parameter('TEST1', value=1)
     tv2 = Parameter('TEST2', value=2.0)
 
-    with patch('mavros.param.call_set_parameters',
+    with patch('mavros.utils.call_set_parameters',
                MagicMock(return_value={})) as csp:
         pm['TEST1'] = tv1
 
@@ -48,7 +48,7 @@ def test_ParamDict_set():
                                     client=pm._pm.set_parameters,
                                     parameters=[tv1])
 
-    with patch('mavros.param.call_set_parameters',
+    with patch('mavros.utils.call_set_parameters',
                MagicMock(return_value={})) as csp:
         pm.TEST2 = tv2
 
@@ -56,7 +56,7 @@ def test_ParamDict_set():
                                     client=pm._pm.set_parameters,
                                     parameters=[tv2])
 
-    with patch('mavros.param.call_set_parameters',
+    with patch('mavros.utils.call_set_parameters',
                MagicMock(return_value={})) as csp:
 
         pm.TEST_B = True
@@ -64,7 +64,7 @@ def test_ParamDict_set():
         pm.TEST_F = 4.0
 
         csp.assert_called()
-        assert pm.TEST_B.value == True
+        assert pm.TEST_B.value is True
         assert pm.TEST_I.value == 3
         assert pm.TEST_F.value == 4.0
 

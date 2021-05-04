@@ -8,63 +8,125 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import rclpy
-from geometry_msgs.msg import (Point, PoseStamped, PoseWithCovarianceStamped,
-                               Quaternion, TwistStamped, Vector3,
-                               Vector3Stamped)
-from std_msgs.msg import Float64, Header
+from geographic_msgs.msg import GeoPoseStamped
+from geometry_msgs.msg import PoseStamped, Twist, TwistStamped, Vector3Stamped
+from mavros_msgs.msg import (AttitudeTarget, GlobalPositionTarget,
+                             PositionTarget, Thrust)
+from nav_msgs.msg import Path
+from std_srvs.srv import Trigger
+from trajectory_msgs.msg import MultiDOFJointTrajectory
+
+from .base import (SENSOR_QOS, PluginModule, SubscriptionCallable,
+                   cached_property)
+
+QOS = SENSOR_QOS
 
 
-def get_pub_accel_accel(**kvargs):
-    """
-    Returns publisher for :setpoint_accel: plugin, :accel: topic
-    """
-    return rospy.Publisher(mavros.get_topic('setpoint_accel', 'accel'),
-                           Vector3Stamped, **kvargs)
+class SetpointAccelPlugin(PluginModule):
+    @cached_property
+    def pub_accel(self) -> rclpy.node.Publisher:
+        return self.create_publisher(Vector3Stamped,
+                                     ('setpoint_accel', 'accel'), QOS)
 
 
-def get_pub_attitude_cmd_vel(**kvargs):
-    """
-    Returns publisher for :setpoint_attitude: plugin, :cmd_vel: topic
-    """
-    return rospy.Publisher(mavros.get_topic('setpoint_attitude', 'cmd_vel'),
-                           PoseStamped, **kvargs)
+class SetpointAttitudePlugin(PluginModule):
+    @cached_property
+    def pub_attitude(self) -> rclpy.node.Publisher:
+        return self.create_publisher(PoseStamped,
+                                     ('setpoint_attitude', 'attitude'), QOS)
+
+    @cached_property
+    def pub_cmd_vel(self) -> rclpy.node.Publisher:
+        return self.create_publisher(TwistStamped,
+                                     ('setpoint_attitude', 'cmd_vel'), QOS)
+
+    @cached_property
+    def pub_thrust(self) -> rclpy.node.Publisher:
+        return self.create_publisher(Thrust, ('setpoint_attitude', 'thrust'),
+                                     QOS)
 
 
-def get_pub_attitude_throttle(**kvargs):
-    """
-    Returns publisher for :setpoint_attitude: plugin, :cmd_vel: topic
-    """
-    return rospy.Publisher(
-        mavros.get_topic('setpoint_attitude', 'att_throttle'), Float64,
-        **kvargs)
+class SetpointPositionPlugin(PluginModule):
+    @cached_property
+    def pub_local(self) -> rclpy.node.Publisher:
+        return self.create_publisher(PoseStamped,
+                                     ('setpoint_position', 'local'), QOS)
+
+    @cached_property
+    def pub_global(self) -> rclpy.node.Publisher:
+        return self.create_publisher(GeoPoseStamped,
+                                     ('setpoint_position', 'global'), QOS)
+
+    @cached_property
+    def pub_global_to_local(self) -> rclpy.node.Publisher:
+        return self.create_publisher(GeoPoseStamped,
+                                     ('setpoint_position', 'global_to_local'),
+                                     QOS)
 
 
-def get_pub_attitude_pose(**kvargs):
-    """
-    Returns publisher for :setpoint_attitude: plugin, :attituse: topic
-    """
-    return rospy.Publisher(mavros.get_topic('setpoint_attitude', 'attitude'),
-                           PoseStamped, **kvargs)
+class SetpointRawPlugin(PluginModule):
+    @cached_property
+    def pub_local(self) -> rclpy.node.Publisher:
+        return self.create_publisher(PositionTarget, ('setpoint_raw', 'local'),
+                                     QOS)
+
+    @cached_property
+    def pub_global(self) -> rclpy.node.Publisher:
+        return self.create_publisher(GlobalPositionTarget,
+                                     ('setpoint_raw', 'global'), QOS)
+
+    @cached_property
+    def pub_attitude(self) -> rclpy.node.Publisher:
+        return self.create_publisher(AttitudeTarget,
+                                     ('setpoint_raw', 'attitude'), QOS)
+
+    def subscribe_target_local(self,
+                               callback: SubscriptionCallable,
+                               qos_profile=QOS) -> rclpy.node.Subscription:
+        return self.create_subscription(PositionTarget,
+                                        ('setpoint_raw', 'target_local'),
+                                        callback, qos_profile)
+
+    def subscribe_target_global(self,
+                                callback: SubscriptionCallable,
+                                qos_profile=QOS) -> rclpy.node.Subscription:
+        return self.create_subscription(GlobalPositionTarget,
+                                        ('setpoint_raw', 'target_global'),
+                                        callback, qos_profile)
+
+    def subscribe_target_attitude(self,
+                                  callback: SubscriptionCallable,
+                                  qos_profile=QOS) -> rclpy.node.Subscription:
+        return self.create_subscription(AttitudeTarget,
+                                        ('setpoint_raw', 'target_attitude'),
+                                        callback, qos_profile)
 
 
-def get_pub_attitude_posecov(**kvargs):
-    """
-    Returns publisher for :setpoint_attitude: plugin, :attituse: topic (with covariance)
-    """
-    raise DeprecationWarning("PoseWithCovarianceStamped subscriber removed.")
+class SetpointTrajectoryPlugin(PluginModule):
+    @cached_property
+    def pub_local(self) -> rclpy.node.Publisher:
+        return self.create_publisher(MultiDOFJointTrajectory,
+                                     ('setpoint_trajectory', 'local'), QOS)
+
+    def subscribe_desired(self,
+                          callback: SubscriptionCallable,
+                          qos_profile=QOS) -> rclpy.node.Subscription:
+        return self.create_subscription(Path,
+                                        ('setpoint_trajectory', 'desired'),
+                                        callback, qos_profile)
+
+    @cached_property
+    def reset(self) -> rclpy.node.Client:
+        return self.create_client(Trigger, ('setpoint_trajectory', 'reset'))
 
 
-def get_pub_position_local(**kvargs):
-    """
-    Returns publisher for :setpoint_position: plugin, :local: topic
-    """
-    return rospy.Publisher(mavros.get_topic('setpoint_position', 'local'),
-                           PoseStamped, **kvargs)
+class SetpointVelocityPlugin(PluginModule):
+    @cached_property
+    def pub_cmd_vel(self) -> rclpy.node.Publisher:
+        return self.create_publisher(TwistStamped,
+                                     ('setpoint_velocity', 'cmd_vel'), QOS)
 
-
-def get_pub_velocity_cmd_vel(**kvargs):
-    """
-    Returns publisher for :setpoint_velocity: plugin, :cmd_vel: topic
-    """
-    return rospy.Publisher(mavros.get_topic('setpoint_velocity', 'cmd_vel'),
-                           TwistStamped, **kvargs)
+    @cached_property
+    def pub_cmd_vel_unstamped(self) -> rclpy.node.Publisher:
+        return self.create_publisher(
+            Twist, ('setpoint_velocity', 'cmd_vel_unstamped'), QOS)

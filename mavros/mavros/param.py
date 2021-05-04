@@ -15,14 +15,15 @@ import rclpy
 from mavros_msgs.msg import ParamEvent
 from mavros_msgs.srv import ParamPull, ParamSetV2
 from rcl_interfaces.msg import Parameter as ParameterMsg
-from rcl_interfaces.msg import ParameterValue, SetParametersResult
+from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import GetParameters, ListParameters, SetParameters
 from rclpy.parameter import Parameter
 
 from .base import (PluginModule, ServiceWaitTimeout, SubscriptionCallable,
                    cached_property)
-
-TIMEOUT = 5.0
+from .utils import (call_get_parameters, call_list_parameters,
+                    call_set_parameters_check_and_raise,
+                    parameter_from_parameter_value)
 
 
 class ParamFile:
@@ -339,107 +340,3 @@ class ParamDict(dict):
     def _event_handler(self, msg: ParamEvent):
         self[msg.param_id] = parameter_from_parameter_value(
             msg.param_id, msg.value)
-
-
-def call_list_parameters(*,
-                         node: rclpy.node.Node,
-                         node_name: typing.Optional[str] = None,
-                         client: typing.Optional[rclpy.node.Client] = None,
-                         prefixes: typing.List[str] = []) -> typing.List[str]:
-    lg = node.get_logger()
-
-    if client is None:
-        assert node_name is not None
-        client = node.create_client(ListParameters,
-                                    f"{node_name}/list_parameters")
-
-    ready = client.wait_for_service(timeout_sec=TIMEOUT)
-    if not ready:
-        lg.error("wait for service time out")
-        raise ServiceWaitTimeout()
-
-    req = ListParameters.Request()
-    req.prefixes = prefixes
-
-    future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
-    lg.debug(f"list result: {resp}")
-
-    return resp.result.names
-
-
-def call_get_parameters(
-        *,
-        node: rclpy.node.Node,
-        node_name: typing.Optional[str] = None,
-        client: typing.Optional[rclpy.node.Client] = None,
-        names: typing.List[str] = []) -> typing.Dict[str, ParameterValue]:
-    lg = node.get_logger()
-
-    if client is None:
-        assert node_name is not None
-        client = node.create_client(GetParameters,
-                                    f"{node_name}/get_parameters")
-
-    ready = client.wait_for_service(timeout_sec=TIMEOUT)
-    if not ready:
-        lg.error("wait for service time out")
-        raise ServiceWaitTimeout()
-
-    req = GetParameters.Request()
-    req.names = names
-
-    future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
-    lg.debug(f"get result: {resp}")
-
-    return dict(zip(names, resp.values))
-
-
-def call_set_parameters(
-    *,
-    node: rclpy.node.Node,
-    node_name: typing.Optional[str] = None,
-    client: typing.Optional[rclpy.node.Client] = None,
-    parameters: typing.List[Parameter] = []
-) -> typing.Dict[str, SetParametersResult]:
-    lg = node.get_logger()
-
-    if client is None:
-        assert node_name is not None
-        client = node.create_client(SetParameters,
-                                    f"{node_name}/set_parameters")
-
-    ready = client.wait_for_service(timeout_sec=TIMEOUT)
-    if not ready:
-        lg.error("wait for service time out")
-        raise ServiceWaitTimeout()
-
-    req = SetParameters.Request()
-    req.parameters = [p.to_parameter_msg() for p in parameters]
-
-    future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
-    lg.debug(f"set result: {resp}")
-
-    return dict(zip((p.name for p in parameters), resp.results))
-
-
-def call_set_parameters_check_and_raise(**kwargs):
-    results = call_set_parameters(**kwargs)
-    msg = ';'.join(f"{k}: {r.reason}" for k, r in results.items()
-                   if not r.successful)
-    if msg:
-        raise ValueError(msg)
-
-
-def parameter_from_parameter_value(
-        name: str, parameter_value: ParameterValue) -> Parameter:
-    pmsg = ParameterMsg(name=name, value=parameter_value)
-    return Parameter.from_parameter_msg(pmsg)
