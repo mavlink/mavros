@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.8.0 (2021-05-05)
+------------------
 * lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()
 * extras: distance_sensor: rename param for custom orientation, apply uncrustify
 * px4_config: Add distance_sensor parameters
