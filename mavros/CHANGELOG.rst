@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()
+* extras: distance_sensor: rename param for custom orientation, apply uncrustify
+* px4_config: Add distance_sensor parameters
+* convert whole expression to mm
+* Contributors: Alexey Rogachevskiy, Thomas, Vladimir Ermakov
+
 1.7.1 (2021-04-05)
 ------------------
 * re-generate all pymavlink enums

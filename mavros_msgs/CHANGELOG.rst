@@ -2,6 +2,9 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.7.1 (2021-04-05)
 ------------------
 * re-generate all pymavlink enums

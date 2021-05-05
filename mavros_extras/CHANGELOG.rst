@@ -2,6 +2,14 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: `#1370 <https://github.com/mavlink/mavros/issues/1370>`_: set obstacle aangle offset
+* extras: distance_sensor: rename param for custom orientation, apply uncrustify
+* distance_sensor: Add horizontal_fov_ratio, vertical_fov_ratio, sensor_orientation parameters
+* distance_sensor: Fill horizontal_fov, vertical_fov, quaternion
+* Contributors: Alexey Rogachevskiy, Vladimir Ermakov
+
 1.7.1 (2021-04-05)
 ------------------
 
