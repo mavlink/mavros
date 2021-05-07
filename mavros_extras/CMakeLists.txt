@@ -85,6 +85,7 @@ add_library(mavros_extras
   src/plugins/mount_control.cpp
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
+  src/plugins/parachute.cpp
   src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
