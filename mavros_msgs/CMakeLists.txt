@@ -12,6 +12,7 @@ add_message_files(
   ActuatorControl.msg
   Altitude.msg
   AttitudeTarget.msg
+  AutoParachute.msg
   BatteryStatus.msg
   CamIMUStamp.msg
   CameraImageCaptured.msg

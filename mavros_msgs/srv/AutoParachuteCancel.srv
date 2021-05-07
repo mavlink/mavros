@@ -1,0 +1,10 @@
+# AutoParachute cancelation service
+
+# Cancel options
+bool SINK_RATE
+bool ACCEL_FALLING
+bool CONTROL_LOSS
+bool MISSION_ITEM
+bool MANUAL
+---
+bool success
