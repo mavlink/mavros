@@ -1,128 +1,84 @@
 #!/usr/bin/env python
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
+"""
+mav safety command
+"""
 
-from __future__ import print_function
+import click
 
-import argparse
+from mavros_msgs.srv import CommandBool, CommandLong
 
-import rospy
-from geometry_msgs.msg import Point32, PolygonStamped
-
-import mavros
-from mavros import command
-from mavros.utils import *
+from . import cli, pass_client
 
 
-def _arm(args, state):
-    try:
-        ret = command.arming(value=state)
-    except rospy.ServiceException as ex:
-        fault(ex)
+@cli.group()
+@click.option("--wait",
+              type=float,
+              is_flag=False,
+              flag_value=None,
+              envvar="MAVCLI_WAIT",
+              default=False,
+              help="Wait for establishing FCU connection")
+@pass_client
+def safety(client, wait):
+    """Tool to send safety commands to MAVLink device."""
+
+    if wait is not False:
+        if client.verbose:
+            click.echo("Waiting connection to the FCU...")
+
+        client.system.wait_fcu_connection(wait)
+
+
+def _arm(ctx, client, state):
+    req = CommandBool.Request(value=state)
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_arming.call(req)
 
     if not ret.success:
-        fault("Request failed. Check mavros logs")
+        click.echo("Request failed. Check mavros logs")
+        ctx.exit(1)
 
-    print_if(args.verbose, "Command result:", ret.result)
+    client.verbose_echo(f"Command result: {ret.result}")
     return ret
 
 
-def do_arm(args):
-    _arm(args, True)
+@safety.command()
+@pass_client
+@click.pass_context
+def arm(ctx, client):
+    """Arm motors."""
+    _arm(ctx, client, True)
 
 
-def do_disarm(args):
-    _arm(args, False)
+@safety.command()
+@pass_client
+@click.pass_context
+def disarm(ctx, client):
+    """Disarm motors."""
+    _arm(ctx, client, False)
 
 
-def do_kill(args):
-    try:
-        ret = command.long(command=400, param2=21196)
-    except rospy.ServiceException as ex:
-        fault(ex)
+@safety.command()
+@pass_client
+@click.pass_context
+def kill(ctx, client):
+    """Kill motors."""
+    req = CommandLong.Request(command=400, param2=21196)
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_long.call(req)
 
     if not ret.success:
-        fault("Request failed. Check mavros logs")
+        click.echo("Request failed. Check mavros logs")
+        ctx.exit(1)
 
-    print_if(args.verbose, "Command result:", ret.result)
+    client.verbose_echo(f"Command result: {ret.result}")
     return ret
-
-
-_ONCE_DELAY = 3
-
-
-def do_safetyarea(args):
-    set_topic = mavros.get_topic('safety_area', 'set')
-    pub = rospy.Publisher(set_topic, PolygonStamped, queue_size=10, latch=True)
-
-    poly = PolygonStamped()
-    poly.header.frame_id = 'mavsafety'
-    poly.header.stamp = rospy.get_rostime()
-    poly.polygon.points = [
-        Point32(x=args.p1[0], y=args.p1[1], z=args.p1[2]),
-        Point32(x=args.p2[0], y=args.p2[1], z=args.p2[2]),
-    ]
-
-    pub.publish(poly)
-    # XXX maybe not worked
-    print_if(pub.get_num_connections() < 1,
-             "Mavros not started, nobody subcsribes to ", set_topic)
-
-    # stick around long enough for others to grab
-    timeout_t = rospy.get_time() + _ONCE_DELAY
-    while not rospy.is_shutdown() and rospy.get_time() < timeout_t:
-        rospy.sleep(0.2)
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=
-        "Command line tool for manipulating safety on MAVLink device.")
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='store_true',
-                        help="Verbose output")
-    subarg = parser.add_subparsers()
-
-    arm_args = subarg.add_parser('arm', help="Arm motors")
-    arm_args.set_defaults(func=do_arm)
-
-    disarm_args = subarg.add_parser('disarm', help="Disarm motors")
-    disarm_args.set_defaults(func=do_disarm)
-
-    kill_args = subarg.add_parser('kill', help="Kill motors")
-    kill_args.set_defaults(func=do_kill)
-
-    safety_area_args = subarg.add_parser('safetyarea', help="Send safety area")
-    safety_area_args.set_defaults(func=do_safetyarea)
-    safety_area_args.add_argument('-p1',
-                                  type=float,
-                                  nargs=3,
-                                  metavar=('x', 'y', 'z'),
-                                  required=True,
-                                  help="Corner 1")
-    safety_area_args.add_argument('-p2',
-                                  type=float,
-                                  nargs=3,
-                                  metavar=('x', 'y', 'z'),
-                                  required=True,
-                                  help="Corner 2")
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("mavsafety", anonymous=True)
-    mavros.set_namespace(args.mavros_ns)
-    args.func(args)
-
-
-if __name__ == '__main__':
-    main()

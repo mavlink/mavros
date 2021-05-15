@@ -102,4 +102,4 @@ def cli(ctx, node_name, mavros_ns, verbose):
     ctx.obj.start_spinner()
 
 
-from . import cmd  # NOQA
+from . import cmd, safety  # NOQA
