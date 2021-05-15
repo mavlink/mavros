@@ -17,6 +17,7 @@ from .base import SENSOR_QOS, PluginModule, SubscriptionCallable
 
 
 class GlobalPositionPlugin(PluginModule):
+    """Global position plugin."""
     def subscribe_raw_fix(self,
                           callback: SubscriptionCallable,
                           qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:

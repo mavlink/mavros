@@ -85,12 +85,12 @@ public:
     local_position_cov = node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "~/pose_cov", sensor_qos);
     local_velocity_local = node->create_publisher<geometry_msgs::msg::TwistStamped>(
-      "~/vehicle_local", sensor_qos);
+      "~/velocity_local", sensor_qos);
     local_velocity_body = node->create_publisher<geometry_msgs::msg::TwistStamped>(
-      "~/vehicle_body",
+      "~/velocity_body",
       sensor_qos);
     local_velocity_cov = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-      "~/vehicle_body_cov", sensor_qos);
+      "~/velocity_body_cov", sensor_qos);
     local_accel = node->create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>(
       "~/accel",
       sensor_qos);
