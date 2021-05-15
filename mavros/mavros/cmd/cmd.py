@@ -22,30 +22,7 @@ from mavros_msgs.srv import (CommandHome, CommandInt, CommandLong, CommandTOL,
                              CommandTriggerControl)
 
 from . import cli, pass_client
-
-
-def _check_ret(ctx, client, ret):
-    if not ret.success:
-        click.echo(f"Request failed. Check mavros logs. ACK: {ret.result}")
-        ctx.exit(1)
-
-    if client.verbose:
-        if hasattr(ret, 'result'):
-            click.echo(f"Command ACK: {ret.result}")
-        else:
-            click.echo("Request done.")
-
-
-def bool2int(b: bool) -> int:
-    """converts bool to 1 or 0
-
-    I had an exception "TypeError: 'bool' object is not iterable"
-    for code like int(confirmation).
-
-    Why? Who knows..."""
-    if b:
-        return 1
-    return 0
+from .utils import bool2int, check_cmd_ret
 
 
 @cli.group()
@@ -94,7 +71,7 @@ def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_long.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)
 
 
 @cmd.command()
@@ -145,7 +122,7 @@ def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_int.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)
 
 
 @cmd.command()
@@ -170,7 +147,7 @@ def set_home(ctx, client, current_gps, latitude, longitude, altitude):
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_set_home.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)
 
 
 @cmd.command()
@@ -195,7 +172,7 @@ def takeoff(ctx, client, min_pitch, yaw, current_gps, latitude, longitude,
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_takeoff.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)
 
 
 @cmd.command()
@@ -218,7 +195,7 @@ def land(ctx, client, yaw, current_gps, latitude, longitude, altitude):
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_land.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)
 
 
 @cmd.command()
@@ -248,7 +225,7 @@ def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
 
         client.verbose_echo(f"Calling: {req}")
         ret = client.command.cli_takeoff.call(req)
-        _check_ret(ctx, client, ret)
+        check_cmd_ret(ctx, client, ret)
 
         done_evt.set()
 
@@ -283,7 +260,7 @@ def land_cur(ctx, client, yaw, altitude):
 
         client.verbose_echo(f"Calling: {req}")
         ret = client.command.cli_land.call(req)
-        _check_ret(ctx, client, ret)
+        check_cmd_ret(ctx, client, ret)
 
         done_evt.set()
 
@@ -323,4 +300,4 @@ def trigger_control(ctx, client, trigger_enable, cycle_time):
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_trigger_control.call(req)
-    _check_ret(ctx, client, ret)
+    check_cmd_ret(ctx, client, ret)

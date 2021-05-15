@@ -17,6 +17,7 @@ import click
 from mavros_msgs.srv import CommandBool, CommandLong
 
 from . import cli, pass_client
+from .utils import check_cmd_ret
 
 
 @cli.group()
@@ -30,12 +31,7 @@ def _arm(ctx, client, state: bool):
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_arming.call(req)
-
-    if not ret.success:
-        click.echo("Request failed. Check mavros logs")
-        ctx.exit(1)
-
-    client.verbose_echo(f"Command result: {ret.result}")
+    check_cmd_ret(ctx, client, ret)
 
 
 @safety.command()
@@ -59,14 +55,8 @@ def disarm(ctx, client):
 @click.pass_context
 def kill(ctx, client):
     """Kill motors."""
-    req = CommandLong.Request(command=400, param2=21196)
+    req = CommandLong.Request(command=400, param2=21196.0)
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_long.call(req)
-
-    if not ret.success:
-        click.echo("Request failed. Check mavros logs")
-        ctx.exit(1)
-
-    client.verbose_echo(f"Command result: {ret.result}")
-    return ret
+    check_cmd_ret(ctx, client, ret)
