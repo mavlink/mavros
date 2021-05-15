@@ -9,17 +9,17 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """
 mav cmd command
+
+Note: arming service provided by mavsafety
 """
 
-import sys
 import threading
 
 import click
 from sensor_msgs.msg import NavSatFix
 
-from mavros_msgs.srv import (CommandBool, CommandHome, CommandInt, CommandLong,
-                             CommandTOL, CommandTriggerControl,
-                             CommandTriggerInterval)
+from mavros_msgs.srv import (CommandHome, CommandInt, CommandLong, CommandTOL,
+                             CommandTriggerControl)
 
 from . import cli, pass_client
 
@@ -234,64 +234,76 @@ def land(ctx, client, yaw, current_gps, latitude, longitude, altitude):
     _check_ret(ctx, client, ret)
 
 
-def do_takeoff_cur_gps(args):
+@cmd.command()
+@click.option("--min-pitch", type=float, required=True, help="Min pitch")
+@click.option("--yaw", type=float, required=True, help="Desired Yaw")
+@click.argument('altitude', type=float, nargs=-1)
+@pass_client
+@click.pass_context
+def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
+    """Request takeoff from current GPS coordinates"""
+
     done_evt = threading.Event()
 
-    def fix_cb(fix):
-        print("Taking-off from current coord: Lat:", fix.latitude, "Long:",
-              fix.longitude)
-        print_if(args.verbose, "With desired Altitude:", args.altitude, "Yaw:",
-                 args.yaw, "Pitch angle:", args.min_pitch)
+    def fix_cb(fix: NavSatFix):
+        click.echo(f"Taking-off from current coord: "
+                   f"Lat: {fix.latitude}, Long: {fix.longitude}")
+        client.verbose_echo(f"With desired Altitude: {altitude}, "
+                            f"Yaw: {yaw}, Pitch angle: {min_pitch}")
 
-        try:
-            ret = command.takeoff(min_pitch=args.min_pitch,
-                                  yaw=args.yaw,
-                                  latitude=fix.latitude,
-                                  longitude=fix.longitude,
-                                  altitude=args.altitude)
-        except rospy.ServiceException as ex:
-            fault(ex)
+        req = CommandTOL.Request(
+            min_pitch=min_pitch,
+            yaw=yaw,
+            latitude=fix.latitude,
+            longitude=fix.longitude,
+            altitude=altitude,
+        )
 
-        _check_ret(args, ret)
+        client.verbose_echo(f"Calling: {req}")
+        ret = client.command.cli_takeoff.call(req)
+        _check_ret(ctx, client, ret)
+
         done_evt.set()
 
-    topic = _find_gps_topic(args, "takeoff")
-    if topic is None:
-        fault("NavSatFix topic not exist")
-
-    sub = rospy.Subscriber(topic, NavSatFix, fix_cb)
+    client.global_position.subscribe_fix(fix_cb)
     if not done_evt.wait(10.0):
-        fault("Something went wrong. Topic timed out.")
+        click.echo("Something went wrong. Topic timed out.")
+        ctx.exit(1)
 
 
-def do_land_cur_gps(args):
+@cmd.command()
+@click.option("--yaw", type=float, required=True, help="Desired Yaw")
+@click.argument('altitude', type=float, nargs=-1)
+@pass_client
+@click.pass_context
+def land_cur(ctx, client, yaw, altitude):
+    """Request land on current GPS coordinates"""
+
     done_evt = threading.Event()
 
-    def fix_cb(fix):
-        print("Landing on current coord: Lat:", fix.latitude, "Long:",
-              fix.longitude)
-        print_if(args.verbose, "With desired Altitude:", args.altitude, "Yaw:",
-                 args.yaw)
+    def fix_cb(fix: NavSatFix):
+        click.echo(f"Landing on current coord: "
+                   f"Lat: {fix.latitude}, Long: {fix.longitude}")
+        client.verbose_echo(f"With desired Altitude: {altitude}, Yaw: {yaw}")
 
-        try:
-            ret = command.land(min_pitch=0.0,
-                               yaw=args.yaw,
-                               latitude=fix.latitude,
-                               longitude=fix.longitude,
-                               altitude=args.altitude)
-        except rospy.ServiceException as ex:
-            fault(ex)
+        req = CommandTOL.Request(
+            min_pitch=0.0,
+            yaw=yaw,
+            latitude=fix.latitude,
+            longitude=fix.longitude,
+            altitude=altitude,
+        )
 
-        _check_ret(args, ret)
+        client.verbose_echo(f"Calling: {req}")
+        ret = client.command.cli_land.call(req)
+        _check_ret(ctx, client, ret)
+
         done_evt.set()
 
-    topic = _find_gps_topic(args, "landing")
-    if topic is None:
-        fault("NavSatFix topic not exist")
-
-    sub = rospy.Subscriber(topic, NavSatFix, fix_cb)
+    client.global_position.subscribe_fix(fix_cb)
     if not done_evt.wait(10.0):
-        fault("Something went wrong. Topic timed out.")
+        click.echo("Something went wrong. Topic timed out.")
+        ctx.exit(1)
 
 
 @cmd.command()
@@ -325,31 +337,3 @@ def trigger_control(ctx, client, trigger_enable, cycle_time):
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_trigger_control.call(req)
     _check_ret(ctx, client, ret)
-
-
-def old_and_unused_main():
-
-    # Note: arming service provided by mavsafety
-
-    takeoff_cur_args = subarg.add_parser(
-        'takeoffcur', help="Request takeoff from current GPS coordinates")
-    takeoff_cur_args.set_defaults(func=do_takeoff_cur_gps)
-    takeoff_cur_args.add_argument(
-        '-a',
-        '--any-gps',
-        action="store_true",
-        help="Try to find GPS topic (warn: could be dangerous!)")
-    takeoff_cur_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
-    takeoff_cur_args.add_argument('altitude', type=float, help="Altitude")
-
-    land_cur_args = subarg.add_parser(
-        'landcur', help="Request land on current GPS coordinates")
-    land_cur_args.set_defaults(func=do_land_cur_gps)
-    land_cur_args.add_argument(
-        '-a',
-        '--any-gps',
-        action="store_true",
-        help="Try to find GPS topic (warn: could be dangerous!)")
-    land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
-    land_cur_args.add_argument('altitude', type=float, help="Altitude")

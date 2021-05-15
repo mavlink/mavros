@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 
-from . import command, mission, param, setpoint, system, ftp
+from . import command, ftp, global_position, mission, param, setpoint, system
 from .base import BaseNode, cached_property
 
 
@@ -64,3 +64,7 @@ class Client(BaseNode):
     @cached_property
     def ftp(self) -> ftp.FTPPlugin:
         return ftp.FTPPlugin(self)
+
+    @cached_property
+    def global_position(self) -> global_position.GlobalPositionPlugin:
+        return global_position.GlobalPositionPlugin(self)
