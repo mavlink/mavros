@@ -2,48 +2,81 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014,2015 Vladimir Ermakov.
+# Copyright 2014,2015,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
+"""
+mav cmd command
+"""
 
-from __future__ import print_function
-
-import argparse
+import sys
 import threading
 
-import rospy
+import click
 from sensor_msgs.msg import NavSatFix
 
-import mavros
-from mavros import command
-from mavros.utils import *
+from mavros_msgs.srv import (CommandBool, CommandHome, CommandInt, CommandLong,
+                             CommandTOL, CommandTriggerControl,
+                             CommandTriggerInterval)
+
+from . import cli, pass_client
 
 
-def _check_ret(args, ret):
+@cli.group()
+@click.option("--wait",
+              default=False,
+              help="Wait for establishing FCU connection")
+def cmd():
+    """
+    Tool to send commands to MAVLink device.
+    """
+
+
+def _check_ret(ctx, ret, verbose: bool = True):
     if not ret.success:
-        fault("Request failed. Check mavros logs. ACK:", ret.result)
+        click.echo(f"Request failed. Check mavros logs. ACK: {ret.result}")
+        ctx.exit(1)
 
-    print_if(args.verbose, "Command ACK:", ret.result)
+    if verbose:
+        click.echo(f"Command ACK: {ret.result}")
 
 
-def do_long(args):
-    try:
-        ret = command.long(broadcast=args.broadcast,
-                           command=args.command,
-                           confirmation=int(args.confirmation),
-                           param1=args.param1,
-                           param2=args.param2,
-                           param3=args.param3,
-                           param4=args.param4,
-                           param5=args.param5,
-                           param6=args.param6,
-                           param7=args.param7)
-    except rospy.ServiceException as ex:
-        fault(ex)
+@cmd.command()
+@click.option("-c",
+              "--confirmation",
+              default=False,
+              help="Require confirmation")
+@click.option("-b", "--broadcast", default=False, help="Broadcast command")
+@click.argument('command', type=int)
+@click.argument('param1', type=float)
+@click.argument('param2', type=float)
+@click.argument('param3', type=float)
+@click.argument('param4', type=float)
+@click.argument('param5', type=float)
+@click.argument('param6', type=float)
+@click.argument('param7', type=float)
+@pass_client
+@click.pass_context
+def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
+         param4, param5, param6, param7):
 
-    _check_ret(args, ret)
+    req = CommandLong.Request(
+        broadcast=broadcast,
+        command=command,
+        confirmation=int(confirmation),
+        param1=param1,
+        param2=param2,
+        param3=param3,
+        param4=param4,
+        param5=param5,
+        param6=param6,
+        param7=param7,
+    )
+
+    ret = client.command.long.call(req)
+    _check_ret(ctx, ret, client.verbose)
 
 
 def do_int(args):
@@ -201,41 +234,6 @@ def do_trigger_control(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Command line tool for sending commands to MAVLink device."
-    )
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='store_true',
-                        help="Verbose output")
-    parser.add_argument('--wait',
-                        action='store_true',
-                        help="Wait for establishing FCU connection")
-    subarg = parser.add_subparsers()
-
-    long_args = subarg.add_parser('long',
-                                  help="Send any command (COMMAND_LONG)")
-    long_args.set_defaults(func=do_long)
-    long_args.add_argument('-c',
-                           '--confirmation',
-                           action='store_true',
-                           help="Require confirmation")
-    long_args.add_argument('-b',
-                           '--broadcast',
-                           action='store_true',
-                           help="Broadcast command")
-    long_args.add_argument('command', type=int, help="Command Code")
-    long_args.add_argument('param1', type=float, help="param1")
-    long_args.add_argument('param2', type=float, help="param2")
-    long_args.add_argument('param3', type=float, help="param3")
-    long_args.add_argument('param4', type=float, help="param4")
-    long_args.add_argument('param5', type=float, help="param5 / x_lat")
-    long_args.add_argument('param6', type=float, help="param6 / y_long")
-    long_args.add_argument('param7', type=float, help="param7 / z_alt")
 
     int_args = subarg.add_parser('int', help="Send any command (COMMAND_INT)")
     int_args.set_defaults(func=do_int)
