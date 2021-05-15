@@ -18,9 +18,7 @@ from rcl_interfaces.msg import ParameterValue, SetParametersResult
 from rcl_interfaces.srv import GetParameters, ListParameters, SetParameters
 from rclpy.parameter import Parameter
 
-from .base import ServiceWaitTimeout
-
-TIMEOUT = 5.0
+from .base import wait_for_service
 
 
 @functools.lru_cache(maxsize=None)
@@ -30,15 +28,6 @@ def system_clock() -> rclpy.clock.Clock:
 
 def system_now() -> rclpy.time.Time:
     return system_clock().now()
-
-
-def wait_for_service(client: rclpy.node.Client,
-                     lg: typing.Optional[typing.Any]):
-    ready = client.wait_for_service(timeout_sec=TIMEOUT)
-    if not ready:
-        if lg:
-            lg.error("wait for service time out")
-        raise ServiceWaitTimeout()
 
 
 def parameter_from_parameter_value(

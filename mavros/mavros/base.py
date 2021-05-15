@@ -20,6 +20,8 @@ import rclpy.qos
 DEFAULT_NAMESPACE = 'mavros'
 DEFAULT_NODE_NAME_PREFIX = 'mavpy_'
 
+SERVICE_WAIT_TIMEOUT = 5.0
+
 # STATE_QOS used for state topics, like ~/state, ~/mission/waypoints etc.
 STATE_QOS = rclpy.qos.QoSProfile(
     depth=10, durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL)
@@ -37,6 +39,15 @@ SubscriptionCallable = rclpy.node.Callable[[rclpy.node.MsgType], None]
 
 class ServiceWaitTimeout(RuntimeError):
     pass
+
+
+def wait_for_service(client: rclpy.node.Client,
+                     lg: typing.Optional[typing.Any]):
+    ready = client.wait_for_service(timeout_sec=SERVICE_WAIT_TIMEOUT)
+    if not ready:
+        if lg:
+            lg.error("wait for service time out")
+        raise ServiceWaitTimeout()
 
 
 class BaseNode(rclpy.node.Node):
@@ -123,9 +134,11 @@ class PluginModule:
         if isinstance(srv_name, str):
             srv_name = (srv_name, )
 
-        return self._node.create_client(srv_type,
-                                        self._node.get_topic(*srv_name),
-                                        **kwargs)
+        cli = self._node.create_client(srv_type,
+                                       self._node.get_topic(*srv_name),
+                                       **kwargs)
+        wait_for_service(cli, self.get_logger())
+        return cli
 
     def create_service(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
                        callback: ServiceCallable,
