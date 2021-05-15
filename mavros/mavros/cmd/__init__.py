@@ -38,6 +38,10 @@ class CliClient:
     def __repr__(self) -> str:
         return f"<CliClient cli={self.cli!r}>"
 
+    def verbose_echo(self, *args, **kwargs):
+        if self.verbose:
+            click.echo(*args, **kwargs)
+
 
 pass_client = click.make_pass_decorator(CliClient)
 

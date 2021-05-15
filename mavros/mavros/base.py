@@ -71,8 +71,9 @@ class BaseNode(rclpy.node.Node):
             while rclpy.ok():
                 rclpy.spin_once(self)
 
-        thd = threading.Thread(target=run, name=f'mavros_py_spin_{self.name}')
-        thd.daemon()
+        thd = threading.Thread(target=run,
+                               name=f'mavros_py_spin_{self.get_name()}')
+        thd.daemon = True
         thd.start()
         return thd
 
@@ -88,6 +89,13 @@ class PluginModule:
 
     def __init__(self, parent_node: BaseNode):
         self._node = parent_node
+
+    @property
+    def node(self) -> BaseNode:
+        return self._node
+
+    def get_logger(self, *args, **kwargs):
+        return self.node.get_logger(*args, **kwargs)
 
     def create_publisher(self, msg_type: rclpy.node.MsgType, topic: TopicType,
                          qos_profile: QoSType,

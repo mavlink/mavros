@@ -18,35 +18,35 @@ from .base import PluginModule, cached_property
 class CommandPlugin(PluginModule):
     """Interface to command plugin."""
     @cached_property
-    def long(self) -> rclpy.node.Client:
+    def cli_long(self) -> rclpy.node.Client:
         return self.create_client(CommandLong, ('cmd', 'command'))
 
     @cached_property
-    def int(self) -> rclpy.node.Client:
+    def cli_int(self) -> rclpy.node.Client:
         return self.create_client(CommandInt, ('cmd', 'command_int'))
 
     @cached_property
-    def arming(self) -> rclpy.node.Client:
+    def cli_arming(self) -> rclpy.node.Client:
         return self.create_client(CommandBool, ('cmd', 'arming'))
 
     @cached_property
-    def set_home(self) -> rclpy.node.Client:
+    def cli_set_home(self) -> rclpy.node.Client:
         return self.create_client(CommandHome, ('cmd', 'set_home'))
 
     @cached_property
-    def takeoff(self) -> rclpy.node.Client:
+    def cli_takeoff(self) -> rclpy.node.Client:
         return self.create_client(CommandTOL, ('cmd', 'takeoff'))
 
     @cached_property
-    def land(self) -> rclpy.node.Client:
+    def cli_land(self) -> rclpy.node.Client:
         return self.create_client(CommandTOL, ('cmd', 'land'))
 
     @cached_property
-    def trigger_control(self) -> rclpy.node.Client:
+    def cli_trigger_control(self) -> rclpy.node.Client:
         return self.create_client(CommandTriggerControl,
                                   ('cmd', 'trigger_control'))
 
     @cached_property
-    def trigger_interval(self) -> rclpy.node.Client:
+    def cli_trigger_interval(self) -> rclpy.node.Client:
         return self.create_client(CommandTriggerInterval,
                                   ('cmd', 'trigger_interval'))

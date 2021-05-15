@@ -24,31 +24,60 @@ from mavros_msgs.srv import (CommandBool, CommandHome, CommandInt, CommandLong,
 from . import cli, pass_client
 
 
-@cli.group()
-@click.option("--wait",
-              default=False,
-              help="Wait for establishing FCU connection")
-def cmd():
-    """
-    Tool to send commands to MAVLink device.
-    """
-
-
-def _check_ret(ctx, ret, verbose: bool = True):
+def _check_ret(ctx, client, ret):
     if not ret.success:
         click.echo(f"Request failed. Check mavros logs. ACK: {ret.result}")
         ctx.exit(1)
 
-    if verbose:
-        click.echo(f"Command ACK: {ret.result}")
+    if client.verbose:
+        if hasattr(ret, 'result'):
+            click.echo(f"Command ACK: {ret.result}")
+        else:
+            click.echo("Request done.")
+
+
+def bool2int(b: bool) -> int:
+    """converts bool to 1 or 0
+
+    I had an exception "TypeError: 'bool' object is not iterable"
+    for code like int(confirmation).
+
+    Why? Who knows..."""
+    if b:
+        return 1
+    return 0
+
+
+@cli.group()
+@click.option("--wait",
+              type=float,
+              is_flag=False,
+              flag_value=None,
+              envvar="MAVCLI_WAIT",
+              default=False,
+              help="Wait for establishing FCU connection")
+@pass_client
+def cmd(client, wait):
+    """Tool to send commands to MAVLink device."""
+
+    if wait is not False:
+        if client.verbose:
+            click.echo("Waiting connection to the FCU...")
+
+        client.system.wait_fcu_connection(wait)
 
 
 @cmd.command()
 @click.option("-c",
               "--confirmation",
               default=False,
+              is_flag=True,
               help="Require confirmation")
-@click.option("-b", "--broadcast", default=False, help="Broadcast command")
+@click.option("-b",
+              "--broadcast",
+              default=False,
+              is_flag=True,
+              help="Broadcast command")
 @click.argument('command', type=int)
 @click.argument('param1', type=float)
 @click.argument('param2', type=float)
@@ -61,11 +90,12 @@ def _check_ret(ctx, ret, verbose: bool = True):
 @click.pass_context
 def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
          param4, param5, param6, param7):
+    "Send any command (COMMAND_LONG)"
 
     req = CommandLong.Request(
         broadcast=broadcast,
         command=command,
-        confirmation=int(confirmation),
+        confirmation=bool2int(confirmation),
         param1=param1,
         param2=param2,
         param3=param3,
@@ -75,92 +105,133 @@ def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
         param7=param7,
     )
 
-    ret = client.command.long.call(req)
-    _check_ret(ctx, ret, client.verbose)
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_long.call(req)
+    _check_ret(ctx, client, ret)
 
 
-def do_int(args):
-    try:
-        ret = command.int(frame=args.frame,
-                          command=args.command,
-                          current=int(args.current),
-                          autocontinue=int(args.autocontinue),
-                          param1=args.param1,
-                          param2=args.param2,
-                          param3=args.param3,
-                          param4=args.param4,
-                          x=args.x,
-                          y=args.y,
-                          z=args.z)
-    except rospy.ServiceException as ex:
-        fault(ex)
+@cmd.command()
+@click.option("-c",
+              "--current",
+              default=False,
+              is_flag=True,
+              help="Is current?")
+@click.option('-a',
+              '--autocontinue',
+              default=False,
+              is_flag=True,
+              help="Is autocontinue?")
+@click.option('-f', '--frame', type=int, default=3, help="Frame Code")
+@click.option("-b",
+              "--broadcast",
+              default=False,
+              is_flag=True,
+              help="Broadcast command")
+@click.argument('command', type=int)
+@click.argument('param1', type=float)
+@click.argument('param2', type=float)
+@click.argument('param3', type=float)
+@click.argument('param4', type=float)
+@click.argument('x', type=int)
+@click.argument('y', type=int)
+@click.argument('z', type=float)
+@pass_client
+@click.pass_context
+def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
+        param2, param3, param4, x, y, z):
+    """Send any command (COMMAND_INT)"""
 
-    if not ret.success:
-        fault("Request failed. Check mavros logs.")
+    req = CommandInt.Request(
+        broadcast=broadcast,
+        command=command,
+        frame=frame,
+        current=bool2int(current),
+        autocontinue=bool2int(autocontinue),
+        param1=param1,
+        param2=param2,
+        param3=param3,
+        param4=param4,
+        x=x,
+        y=y,
+        z=z,
+    )
 
-    print_if(args.verbose, "Request done.")
-
-
-def do_set_home(args):
-    try:
-        ret = command.set_home(current_gps=args.current_gps,
-                               latitude=args.latitude,
-                               longitude=args.longitude,
-                               altitude=args.altitude)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    _check_ret(args, ret)
-
-
-def do_takeoff(args):
-    try:
-        ret = command.takeoff(min_pitch=args.min_pitch,
-                              yaw=args.yaw,
-                              latitude=args.latitude,
-                              longitude=args.longitude,
-                              altitude=args.altitude)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    _check_ret(args, ret)
-
-
-def do_land(args):
-    try:
-        ret = command.land(min_pitch=0.0,
-                           yaw=args.yaw,
-                           latitude=args.latitude,
-                           longitude=args.longitude,
-                           altitude=args.altitude)
-    except rospy.ServiceException as ex:
-        fault(ex)
-
-    _check_ret(args, ret)
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_int.call(req)
+    _check_ret(ctx, client, ret)
 
 
-def _find_gps_topic(args, op_name):
-    # XXX: since 0.13 global position always exists. need redo that.
-    global_fix = mavros.get_topic('global_position', 'global')
-    gps_fix = mavros.get_topic('global_position', 'raw', 'fix')
+@cmd.command()
+@click.option("-c",
+              "--current-gps",
+              is_flag=True,
+              help="Use current GPS location (use 0 0 0 for location args)")
+@click.argument('latitude', type=float, nargs=-1)
+@click.argument('longitude', type=float, nargs=-1)
+@click.argument('altitude', type=float, nargs=-1)
+@pass_client
+@click.pass_context
+def set_home(ctx, client, current_gps, latitude, longitude, altitude):
+    """Request change home position"""
 
-    topics = rospy.get_published_topics()
-    # need find more elegant way
-    if len([topic for topic, type_ in topics if topic == global_fix]):
-        return global_fix
-    elif len([topic for topic, type_ in topics if topic == gps_fix]):
-        print_if(args.verbose, "Use GPS_RAW_INT data!")
-        return gps_fix
-    elif args.any_gps:
-        t = [
-            topic for topic, type_ in topics
-            if type_ == 'sensor_msgs/NavSatFix'
-        ]
-        if len(t) > 0:
-            print("Use", t[0], "NavSatFix topic for", op_name)
-            return t[0]
+    req = CommandHome.Request(
+        current_gps=current_gps,
+        latitude=latitude,
+        longitude=longitude,
+        altitude=altitude,
+    )
 
-    return None
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_set_home.call(req)
+    _check_ret(ctx, client, ret)
+
+
+@cmd.command()
+@click.option("--min-pitch", type=float, required=True, help="Min pitch")
+@click.option("--yaw", type=float, required=True, help="Desired Yaw")
+@click.argument('latitude', type=float, nargs=-1)
+@click.argument('longitude', type=float, nargs=-1)
+@click.argument('altitude', type=float, nargs=-1)
+@pass_client
+@click.pass_context
+def takeoff(ctx, client, min_pitch, yaw, current_gps, latitude, longitude,
+            altitude):
+    """Request takeoff"""
+
+    req = CommandTOL.Request(
+        min_pitch=min_pitch,
+        yaw=yaw,
+        latitude=latitude,
+        longitude=longitude,
+        altitude=altitude,
+    )
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_takeoff.call(req)
+    _check_ret(ctx, client, ret)
+
+
+@cmd.command()
+@click.option("--yaw", type=float, required=True, help="Desired Yaw")
+@click.argument('latitude', type=float, nargs=-1)
+@click.argument('longitude', type=float, nargs=-1)
+@click.argument('altitude', type=float, nargs=-1)
+@pass_client
+@click.pass_context
+def land(ctx, client, yaw, current_gps, latitude, longitude, altitude):
+    """Request land"""
+
+    req = CommandTOL.Request(
+        min_pitch=0.0,
+        yaw=yaw,
+        latitude=latitude,
+        longitude=longitude,
+        altitude=altitude,
+    )
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_land.call(req)
+    _check_ret(ctx, client, ret)
 
 
 def do_takeoff_cur_gps(args):
@@ -223,74 +294,42 @@ def do_land_cur_gps(args):
         fault("Something went wrong. Topic timed out.")
 
 
-def do_trigger_control(args):
-    try:
-        ret = command.trigger_control(trigger_enable=args.trigger_enable,
-                                      cycle_time=args.cycle_time)
-    except rospy.ServiceException as ex:
-        fault(ex)
+@cmd.command()
+@click.option("-e",
+              "--enable",
+              "trigger_enable",
+              flag_value=True,
+              default=True,
+              help="Enable camera trigger")
+@click.option("-d",
+              "--disable",
+              "trigger_enable",
+              flag_value=False,
+              help="Disable camera trigger")
+@click.option(
+    '-c',
+    '--cycle-time',
+    default=0.0,
+    type=float,
+    help="Camera trigger cycle time. Zero to use current onboard value")
+@pass_client
+@click.pass_context
+def trigger_control(ctx, client, trigger_enable, cycle_time):
+    "Control onboard camera triggering system (PX4)"
 
-    _check_ret(args, ret)
+    req = CommandTriggerControl.Request(
+        trigger_enable=trigger_enable,
+        cycle_time=cycle_time,
+    )
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_trigger_control.call(req)
+    _check_ret(ctx, client, ret)
 
 
-def main():
-
-    int_args = subarg.add_parser('int', help="Send any command (COMMAND_INT)")
-    int_args.set_defaults(func=do_int)
-    int_args.add_argument('-c',
-                          '--current',
-                          action='store_true',
-                          help="Is current?")
-    int_args.add_argument('-a',
-                          '--autocontinue',
-                          action='store_true',
-                          help="Is autocontinue?")
-    int_args.add_argument('-f',
-                          '--frame',
-                          type=int,
-                          default=3,
-                          help="Frame Code (default: %(default)s)")
-    int_args.add_argument('command', type=int, help="Command Code")
-    int_args.add_argument('param1', type=float, help="param1")
-    int_args.add_argument('param2', type=float, help="param2")
-    int_args.add_argument('param3', type=float, help="param3")
-    int_args.add_argument('param4', type=float, help="param4")
-    int_args.add_argument('x', type=int, help="Latitude in deg*1E7 or X*1E4 m")
-    int_args.add_argument('y',
-                          type=int,
-                          help="Longitude in deg*1E7 or Y*1E4 m")
-    int_args.add_argument('z',
-                          type=float,
-                          help="Altitude in m, depending on frame")
+def old_and_unused_main():
 
     # Note: arming service provided by mavsafety
-
-    set_home_args = subarg.add_parser('sethome',
-                                      help="Request change home position")
-    set_home_args.set_defaults(func=do_set_home)
-    set_home_args.add_argument(
-        '-c',
-        '--current-gps',
-        action='store_true',
-        help="Use current GPS location (use 0 0 0 for location args)")
-    set_home_args.add_argument('latitude', type=float, help="Latitude")
-    set_home_args.add_argument('longitude', type=float, help="Longitude")
-    set_home_args.add_argument('altitude', type=float, help="Altitude")
-
-    takeoff_args = subarg.add_parser('takeoff', help="Request takeoff")
-    takeoff_args.set_defaults(func=do_takeoff)
-    takeoff_args.add_argument('min_pitch', type=float, help="Min pitch")
-    takeoff_args.add_argument('yaw', type=float, help="Desired Yaw")
-    takeoff_args.add_argument('latitude', type=float, help="Latitude")
-    takeoff_args.add_argument('longitude', type=float, help="Longitude")
-    takeoff_args.add_argument('altitude', type=float, help="Altitude")
-
-    land_args = subarg.add_parser('land', help="Request land")
-    land_args.set_defaults(func=do_land)
-    land_args.add_argument('yaw', type=float, help="Desired Yaw")
-    land_args.add_argument('latitude', type=float, help="Latitude")
-    land_args.add_argument('longitude', type=float, help="Longitude")
-    land_args.add_argument('altitude', type=float, help="Altitude")
 
     takeoff_cur_args = subarg.add_parser(
         'takeoffcur', help="Request takeoff from current GPS coordinates")
@@ -314,41 +353,3 @@ def main():
         help="Try to find GPS topic (warn: could be dangerous!)")
     land_cur_args.add_argument('yaw', type=float, help="Desired Yaw")
     land_cur_args.add_argument('altitude', type=float, help="Altitude")
-
-    trigger_ctrl_args = subarg.add_parser(
-        'trigger_control',
-        help="Control onboard camera triggering system (PX4)")
-    trigger_ctrl_args.set_defaults(func=do_trigger_control)
-    trigger_en_group = trigger_ctrl_args.add_mutually_exclusive_group()
-    trigger_en_group.add_argument('-e',
-                                  '--enable',
-                                  dest='trigger_enable',
-                                  action='store_true',
-                                  default=True,
-                                  help="Enable camera trigger (default)")
-    trigger_en_group.add_argument('-d',
-                                  '--disable',
-                                  dest='trigger_enable',
-                                  action='store_false',
-                                  help="Disable camera trigger")
-    trigger_ctrl_args.add_argument(
-        '-c',
-        '--cycle_time',
-        default=0.0,
-        type=float,
-        required=False,
-        help="Camera trigger cycle time. Zero to use current onboard value")
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("mavcmd", anonymous=True)
-    mavros.set_namespace(args.mavros_ns)
-
-    if args.wait:
-        wait_fcu_connection()
-
-    args.func(args)
-
-
-if __name__ == '__main__':
-    main()

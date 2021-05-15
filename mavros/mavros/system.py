@@ -60,15 +60,15 @@ class SystemPlugin(PluginModule):
                                      SENSOR_QOS)
 
     @cached_property
-    def set_stream_rate(self) -> rclpy.node.Client:
+    def cli_set_stream_rate(self) -> rclpy.node.Client:
         return self.create_client(StreamRate, 'set_stream_rate')
 
     @cached_property
-    def set_message_interval(self) -> rclpy.node.Client:
+    def cli_set_message_interval(self) -> rclpy.node.Client:
         return self.create_client(MessageInterval, 'set_message_interval')
 
     @cached_property
-    def get_vehicle_info(self) -> rclpy.node.Client:
+    def cli_get_vehicle_info(self) -> rclpy.node.Client:
         return self.create_client(VehicleInfoGet, 'vehicle_info_get')
 
     def wait_fcu_connection(self,
