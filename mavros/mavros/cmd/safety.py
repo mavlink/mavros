@@ -7,7 +7,9 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """
-mav safety command
+mav safety command.
+
+Allow user to Arm, Disarm and Kill vehicle motors.
 """
 
 import click
@@ -18,25 +20,12 @@ from . import cli, pass_client
 
 
 @cli.group()
-@click.option("--wait",
-              type=float,
-              is_flag=False,
-              flag_value=None,
-              envvar="MAVCLI_WAIT",
-              default=False,
-              help="Wait for establishing FCU connection")
 @pass_client
-def safety(client, wait):
+def safety(client):
     """Tool to send safety commands to MAVLink device."""
 
-    if wait is not False:
-        if client.verbose:
-            click.echo("Waiting connection to the FCU...")
 
-        client.system.wait_fcu_connection(wait)
-
-
-def _arm(ctx, client, state):
+def _arm(ctx, client, state: bool):
     req = CommandBool.Request(value=state)
 
     client.verbose_echo(f"Calling: {req}")
@@ -47,7 +36,6 @@ def _arm(ctx, client, state):
         ctx.exit(1)
 
     client.verbose_echo(f"Command result: {ret.result}")
-    return ret
 
 
 @safety.command()

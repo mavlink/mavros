@@ -81,6 +81,13 @@ def print_version(ctx, param, value):
               is_flag=True,
               envvar="MAVCLI_VERBOSE",
               help="Verbose output")
+@click.option("--wait-fcu",
+              type=float,
+              is_flag=False,
+              flag_value=None,
+              envvar="MAVCLI_WAIT_FCU",
+              default=False,
+              help="Wait for establishing FCU connection")
 @click.option("--version",
               is_flag=True,
               callback=print_version,
@@ -88,7 +95,7 @@ def print_version(ctx, param, value):
               is_eager=True,
               help="Show program version and exit")
 @click.pass_context
-def cli(ctx, node_name, mavros_ns, verbose):
+def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     """
     MAVROS tools entry point
     """
@@ -100,6 +107,12 @@ def cli(ctx, node_name, mavros_ns, verbose):
                         mavros_ns=mavros_ns,
                         verbose=verbose)
     ctx.obj.start_spinner()
+
+    if wait_fcu is not False:
+        if ctx.obj.verbose:
+            click.echo("Waiting connection to the FCU...")
+
+        ctx.obj.system.wait_fcu_connection(wait_fcu)
 
 
 from . import cmd, safety  # NOQA

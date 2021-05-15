@@ -10,7 +10,7 @@
 """
 mav cmd command
 
-Note: arming service provided by mavsafety
+Note: arming service provided by mav safety
 """
 
 import threading
@@ -49,22 +49,9 @@ def bool2int(b: bool) -> int:
 
 
 @cli.group()
-@click.option("--wait",
-              type=float,
-              is_flag=False,
-              flag_value=None,
-              envvar="MAVCLI_WAIT",
-              default=False,
-              help="Wait for establishing FCU connection")
 @pass_client
-def cmd(client, wait):
+def cmd(client):
     """Tool to send commands to MAVLink device."""
-
-    if wait is not False:
-        if client.verbose:
-            click.echo("Waiting connection to the FCU...")
-
-        client.system.wait_fcu_connection(wait)
 
 
 @cmd.command()
