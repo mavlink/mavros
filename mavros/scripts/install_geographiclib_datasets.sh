@@ -21,7 +21,7 @@ run_get() {
 
 	echo "Installing GeographicLib $tool $model"
 	geographiclib-get-$tool $model >/dev/null 2>&1
-	
+
 	files=$(shopt -s nullglob dotglob; echo /usr/share/GeographicLib/$dir/$model* /usr/local/share/GeographicLib/$dir/$model*)
 	if (( ! ${#files} )); then
 		echo "Error while installing GeographicLib $tool $model"
