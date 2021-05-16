@@ -6,7 +6,7 @@ setup(
     name=package_name,
     version='1.6.0',
     packages=[package_name],
-    package_dir={'': 'src'},
+    # package_dir={'': 'src'},
     # data_files=[
     #     ('share/ament_index/resource_index/packages',
     #         ['resource/' + package_name]),
