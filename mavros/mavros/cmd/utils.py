@@ -18,10 +18,17 @@ except ImportError:
 
 
 def check_cmd_ret(ctx, client, ret):
+    # NOTE(vooon): APM returns MAV_RESULT
+
+    # https://mavlink.io/en/messages/common.html#MAV_CMD_ACK
+    # ename = 'MAV_CMD_ACK'
+    # https://mavlink.io/en/messages/common.html#MAV_RESULT
+    ename = 'MAV_RESULT'
+
     ackstr = ''
     if hasattr(ret, 'result'):
         if common_dialect is not None:
-            ack = common_dialect.enums['MAV_CMD_ACK'].get(
+            ack = common_dialect.enums[ename].get(
                 ret.result, common_dialect.EnumEntry("unknown", ""))
             ackstr = f" ACK: {ret.result} ({ack.name})"
         else:

@@ -19,7 +19,7 @@ import click
 from sensor_msgs.msg import NavSatFix
 
 from mavros_msgs.srv import (CommandHome, CommandInt, CommandLong, CommandTOL,
-                             CommandTriggerControl)
+                             CommandTriggerControl, CommandTriggerInterval)
 
 from . import cli, pass_client
 from .utils import bool2int, check_cmd_ret
@@ -130,9 +130,9 @@ def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
               "--current-gps",
               is_flag=True,
               help="Use current GPS location (use 0 0 0 for location args)")
-@click.argument('latitude', type=float, nargs=-1)
-@click.argument('longitude', type=float, nargs=-1)
-@click.argument('altitude', type=float, nargs=-1)
+@click.argument('latitude', type=float)
+@click.argument('longitude', type=float)
+@click.argument('altitude', type=float)
 @pass_client
 @click.pass_context
 def set_home(ctx, client, current_gps, latitude, longitude, altitude):
@@ -153,13 +153,12 @@ def set_home(ctx, client, current_gps, latitude, longitude, altitude):
 @cmd.command()
 @click.option("--min-pitch", type=float, required=True, help="Min pitch")
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('latitude', type=float, nargs=-1)
-@click.argument('longitude', type=float, nargs=-1)
-@click.argument('altitude', type=float, nargs=-1)
+@click.argument('latitude', type=float)
+@click.argument('longitude', type=float)
+@click.argument('altitude', type=float)
 @pass_client
 @click.pass_context
-def takeoff(ctx, client, min_pitch, yaw, current_gps, latitude, longitude,
-            altitude):
+def takeoff(ctx, client, min_pitch, yaw, latitude, longitude, altitude):
     """Request takeoff"""
 
     req = CommandTOL.Request(
@@ -177,12 +176,12 @@ def takeoff(ctx, client, min_pitch, yaw, current_gps, latitude, longitude,
 
 @cmd.command()
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('latitude', type=float, nargs=-1)
-@click.argument('longitude', type=float, nargs=-1)
-@click.argument('altitude', type=float, nargs=-1)
+@click.argument('latitude', type=float)
+@click.argument('longitude', type=float)
+@click.argument('altitude', type=float)
 @pass_client
 @click.pass_context
-def land(ctx, client, yaw, current_gps, latitude, longitude, altitude):
+def land(ctx, client, yaw, latitude, longitude, altitude):
     """Request land"""
 
     req = CommandTOL.Request(
@@ -201,7 +200,7 @@ def land(ctx, client, yaw, current_gps, latitude, longitude, altitude):
 @cmd.command()
 @click.option("--min-pitch", type=float, required=True, help="Min pitch")
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('altitude', type=float, nargs=-1)
+@click.argument('altitude', type=float)
 @pass_client
 @click.pass_context
 def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
@@ -237,7 +236,7 @@ def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
 
 @cmd.command()
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('altitude', type=float, nargs=-1)
+@click.argument('altitude', type=float)
 @pass_client
 @click.pass_context
 def land_cur(ctx, client, yaw, altitude):
@@ -282,22 +281,55 @@ def land_cur(ctx, client, yaw, altitude):
               "trigger_enable",
               flag_value=False,
               help="Disable camera trigger")
-@click.option(
-    '-c',
-    '--cycle-time',
-    default=0.0,
-    type=float,
-    help="Camera trigger cycle time. Zero to use current onboard value")
+@click.option("-r",
+              "--sequence-reset",
+              is_flag=True,
+              default=False,
+              help="Reset trigger sequence")
+@click.option("-p",
+              "--trigger-pause",
+              is_flag=True,
+              default=False,
+              help="Pause triggering")
 @pass_client
 @click.pass_context
-def trigger_control(ctx, client, trigger_enable, cycle_time):
+def trigger_control(ctx, client, trigger_enable, sequence_reset,
+                    trigger_pause):
     "Control onboard camera triggering system (PX4)"
 
     req = CommandTriggerControl.Request(
         trigger_enable=trigger_enable,
-        cycle_time=cycle_time,
+        sequence_reset=sequence_reset,
+        trigger_pause=trigger_pause,
     )
 
     client.verbose_echo(f"Calling: {req}")
     ret = client.command.cli_trigger_control.call(req)
+    check_cmd_ret(ctx, client, ret)
+
+
+@cmd.command()
+@click.option(
+    "-c",
+    "--cycle-time",
+    default=0.0,
+    type=float,
+    help="Camera trigger cycle time. Zero to use current onboard value")
+@click.option("-i",
+              "--integration-time",
+              default=0.0,
+              type=float,
+              help="Camera shutter intergration time. Zero to ignore")
+@pass_client
+@click.pass_context
+def trigger_interval(ctx, client, cycle_time, integration_time):
+    "Control onboard camera triggering system (PX4)"
+
+    req = CommandTriggerInterval.Request(
+        cycle_time=cycle_time,
+        integration_time=integration_time,
+    )
+
+    client.verbose_echo(f"Calling: {req}")
+    ret = client.command.cli_trigger_interval.call(req)
     check_cmd_ret(ctx, client, ret)

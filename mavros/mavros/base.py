@@ -27,7 +27,7 @@ STATE_QOS = rclpy.qos.QoSProfile(
     depth=10, durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL)
 
 # SENSOR_QOS used for most of sensor streams
-SENSOR_QOS = rclpy.qos.QoSPresetProfiles.SENSOR_DATA
+SENSOR_QOS = rclpy.qos.qos_profile_sensor_data
 
 TopicType = typing.Union[typing.Tuple, str]
 QoSType = typing.Union[rclpy.qos.QoSProfile, int]

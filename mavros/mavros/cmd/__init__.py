@@ -108,10 +108,8 @@ def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
                         verbose=verbose)
     ctx.obj.start_spinner()
 
-    if wait_fcu is not False:
-        if ctx.obj.verbose:
-            click.echo("Waiting connection to the FCU...")
-
+    if wait_fcu or wait_fcu is None:
+        ctx.obj.verbose_echo("Waiting connection to the FCU...")
         ctx.obj.system.wait_fcu_connection(wait_fcu)
 
 
