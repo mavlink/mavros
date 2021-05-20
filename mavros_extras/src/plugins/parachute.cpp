@@ -90,7 +90,7 @@ private:
 			
 			chute_msg->time_to_release = cmd.param2;
 			chute_msg->standby = cmd.param3;
-			chute_msg->enabled = (cmd.param4 < 0) ? true : false;
+			chute_msg->enabled = (cmd.param4 > 0) ? true : false;
 			chute_msg->released = cmd.param5;
 
 			auto_chute_pub.publish(chute_msg);
