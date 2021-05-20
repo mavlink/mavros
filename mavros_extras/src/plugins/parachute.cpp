@@ -81,11 +81,13 @@ private:
 			
 			auto chute_msg = boost::make_shared<mavros_msgs::AutoParachute>();
 
-			chute_msg->SINK_RATE = (cmd.param1 & (1U << RELEASE_REASON::SINK_RATE));
-			chute_msg->ACCEL_FALLING = (cmd.param1 & (1U << RELEASE_REASON::ACCEL_FALLING));
-			chute_msg->CONTROL_LOSS = (cmd.param1 & (1U << RELEASE_REASON::CONTROL_LOSS));
-			chute_msg->MISSION_ITEM = (cmd.param1 & (1U << RELEASE_REASON::MISSION_ITEM));
-			chute_msg->MANUAL = (cmd.param1 & (1U << RELEASE_REASON::MANUAL));
+			uint8_t _reasons = cmd.param1; 
+			chute_msg->SINK_RATE = (_reasons & (1U << RELEASE_REASON::SINK_RATE));
+			chute_msg->ACCEL_FALLING = (_reasons & (1U << RELEASE_REASON::ACCEL_FALLING));
+			chute_msg->CONTROL_LOSS = (_reasons & (1U << RELEASE_REASON::CONTROL_LOSS));
+			chute_msg->MISSION_ITEM = (_reasons & (1U << RELEASE_REASON::MISSION_ITEM));
+			chute_msg->MANUAL = (_reasons & (1U << RELEASE_REASON::MANUAL));
+			
 			chute_msg->time_to_release = cmd.param2;
 			chute_msg->standby = cmd.param3;
 			chute_msg->enabled = (cmd.param4 < 0) ? true : false;
