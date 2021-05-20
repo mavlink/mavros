@@ -86,10 +86,10 @@ private:
 			chute_msg->CONTROL_LOSS = (cmd.param1 & (1U << RELEASE_REASON::CONTROL_LOSS));
 			chute_msg->MISSION_ITEM = (cmd.param1 & (1U << RELEASE_REASON::MISSION_ITEM));
 			chute_msg->MANUAL = (cmd.param1 & (1U << RELEASE_REASON::MANUAL));
-
 			chute_msg->time_to_release = cmd.param2;
-
 			chute_msg->standby = cmd.param3;
+			chute_msg->enabled = (cmd.param4 < 0) ? true : false;
+			chute_msg->released = cmd.param5;
 
 			auto_chute_pub.publish(chute_msg);
 		};
