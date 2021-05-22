@@ -50,11 +50,10 @@ def call_list_parameters(*,
 
     wait_for_service(client, lg)
 
-    req = ListParameters.Request()
-    req.prefixes = prefixes
+    req = ListParameters.Request(prefixes=prefixes)
 
     future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
+    # rclpy.spin_until_future_complete(node, future)
 
     resp = future.result()
     lg.debug(f"list result: {resp}")
@@ -77,11 +76,10 @@ def call_get_parameters(
 
     wait_for_service(client, lg)
 
-    req = GetParameters.Request()
-    req.names = names
+    req = GetParameters.Request(names=names)
 
     future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
+    # rclpy.spin_until_future_complete(node, future)
 
     resp = future.result()
     lg.debug(f"get result: {resp}")
@@ -105,11 +103,11 @@ def call_set_parameters(
 
     wait_for_service(client, lg)
 
-    req = SetParameters.Request()
-    req.parameters = [p.to_parameter_msg() for p in parameters]
+    req = SetParameters.Request(
+        parameters=[p.to_parameter_msg() for p in parameters])
 
     future = client.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
+    # rclpy.spin_until_future_complete(node, future)
 
     resp = future.result()
     lg.debug(f"set result: {resp}")

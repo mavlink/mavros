@@ -1,45 +1,58 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2015 Vladimir Ermakov.
+# Copyright 2015,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """
-This script listens to devices connected to mavros and checks against system & component id mismatch errors.
+This script listens to devices connected to mavros and
+checks against system & component id mismatch errors.
 """
 
-from __future__ import print_function
+import threading
 
-import argparse
-import os
+import click
+import rclpy
 
-import rospy
 from mavros_msgs.msg import Mavlink
 
-import mavros
-from mavros.utils import *
+from ..utils import call_get_parameters
+from . import CliClient, cli, pass_client
 
 
-class Checker(object):
-    def __init__(self, args):
+class Checker:
+    def __init__(self, *, client: CliClient, follow: bool, watch_time: float):
         # dict of sets: (sysid, compid) -> set[msgid...]
         self.message_sources = {}
         self.messages_received = 0
         self.reports = 0
-        self.args = args
+        self.client = client
+        self.follow = follow
+        self.event = threading.Event()
 
-        self.sub = rospy.Subscriber("mavlink/from",
-                                    Mavlink,
-                                    self.mavlink_from_cb,
-                                    queue_size=10)
-        self.timer = rospy.Timer(rospy.Duration(15.0),
-                                 self.timer_cb,
-                                 oneshot=False)
+        params = call_get_parameters(
+            node=client,
+            names=['target_system_id', 'target_component_id', 'uas_url'])
 
-    def mavlink_from_cb(self, msg):
+        self.tgt_ids = (
+            params['target_system_id'].value,
+            params['target_component_id'].value,
+        )
+        uas_url = params['uas_url'].value
+        source_topic = f"{uas_url}/mavlink_source"
+
+        click.secho(
+            f"Router topic: {source_topic}, target: {'.'.join(self.tgt_ids)}",
+            fg='cyan')
+
+        self.source_sub = client.create_subscription(Mavlink, source_topic,
+                                                     1000,
+                                                     self.mavlink_source_cb)
+        self.timer = client.create_timer(watch_time, self.timer_cb)
+
+    def mavlink_source_cb(self, msg: Mavlink):
         ids = (msg.sysid, msg.compid)
         if ids in self.message_sources:
             self.message_sources[ids].add(msg.msgid)
@@ -48,71 +61,52 @@ class Checker(object):
 
         self.messages_received += 1
 
-    def timer_cb(self, event):
+    def timer_cb(self):
         if self.reports > 0:
-            print()
+            click.echo('-' * 80)
 
         self.reports += 1
+        str_tgt_ids = f"{'.'.join(self.tgt_ids)}"
 
-        param_not_exist = False
-        tgt_ids = [1, 1]
-        for idx, key in enumerate(('/'.join(
-            (self.args.mavros_ns, "target_system_id")), '/'.join(
-                (self.args.mavros_ns, "target_component_id")))):
-            try:
-                tgt_ids[idx] = rospy.get_param(key)
-            except KeyError:
-                print("WARNING: %s not set. Used default value: %s" %
-                      (key, tgt_ids[idx]))
-                param_not_exist = True
-
-        if param_not_exist:
-            print("NOTE: Target parameters may be unset, "
-                  "but that may be result of incorrect --mavros-ns option."
-                  "Double check results!")
-
-        # TODO: add something like colorama to highlight ERROR message
-        if tuple(tgt_ids) in self.message_sources:
-            print("OK. I got messages from %d:%d." % tuple(tgt_ids))
+        if self.tgt_ids in self.message_sources:
+            click.secho(f"OK. I got messages from {str_tgt_ids}.", fg='green')
         else:
-            print("ERROR. I got %d addresses, but not your target %d:%d" %
-                  (len(self.message_sources), tgt_ids[0], tgt_ids[1]))
+            click.secho(
+                f"ERROR. I got {len(self.message_sources)} addresses, but not your target {str_tgt_ids}",
+                fg='red')
 
-        print("\n---\nReceived %d messages, from %d addresses" %
-              (self.messages_received, len(self.message_sources)))
+        click.secho("---", fg='cyan')
+        click.secho(
+            f"Received {self.messages_received}, from {len(self.message_sources)} addresses",
+            fg='cyan')
+        click.secho("address   list of messages", fg='cyan')
+        for address, messages in self.message_sources.items():
 
-        # TODO: prettytable?
-        print("sys:comp   list of messages")
-        for address, messages in self.message_sources.iteritems():
-            print("% 3d:%-3d   %s" % (address[0], address[1], ", ".join(
-                ("%d" % msgid for msgid in messages))))
+            def fmt_msgid(msgid: int) -> str:
+                # TODO(vooon): try to load pymavlink
+                return f"{msgid}"
 
-        if not self.args.follow:
-            # timer will stop after that request
-            rospy.signal_shutdown("done")
+            str_ids = f"{'.'.join(address)}"
+            click.secho(
+                f"{str_ids: 6s}   {', '.join(fmt_msgid(msgid) for msgid in messages)}",
+                fg='cyan')
 
-
-def main():
-    # NOTE: in this particular script we do not need any plugin topic (which uses mavros private namespace)
-    # And will use mavlink topics from global namespace (default "/"). You may define at run _ns:=NS
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    #parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
-    parser.add_argument(
-        '-f',
-        '--follow',
-        action='store_true',
-        help="do not exit after first report (report each 15 sec).")
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("checkid", anonymous=True)
-    checker = Checker(args)
-    rospy.spin()
+        if not self.follow:
+            self.event.set()
 
 
-if __name__ == '__main__':
-    main()
+@cli
+@click.option("-f",
+              "--follow",
+              is_flag=True,
+              help="do not exit after first report.")
+@click.option("--watch-time", type=float, default=15.0, help="watch period")
+@pass_client
+def checkid(client, follow, watch_time):
+    """
+    This script listens to devices connected to mavros and
+    checks against system & component id mismatch errors.
+    """
+
+    checker = Checker(client=client, follow=follow, watch_time=watch_time)
+    checker.event.wait()
