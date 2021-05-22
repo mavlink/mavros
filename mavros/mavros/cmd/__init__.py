@@ -42,6 +42,10 @@ class CliClient:
         if self.verbose:
             click.echo(*args, **kwargs)
 
+    def verbose_secho(self, *args, **kwargs):
+        if self.verbose:
+            click.secho(*args, **kwargs)
+
 
 pass_client = click.make_pass_decorator(CliClient)
 

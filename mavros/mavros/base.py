@@ -74,6 +74,10 @@ class BaseNode(rclpy.node.Node):
         super().__init__(node_name)
         self._ns = mavros_ns
 
+    @property
+    def mavros_ns(self) -> str:
+        return self._ns
+
     def get_topic(self, *args: str) -> str:
         return '/'.join((self._ns, ) + args)
 

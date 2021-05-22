@@ -12,14 +12,19 @@ checks against system & component id mismatch errors.
 """
 
 import threading
+import typing
 
 import click
-import rclpy
+import rclpy.qos
 
 from mavros_msgs.msg import Mavlink
 
 from ..utils import call_get_parameters
 from . import CliClient, cli, pass_client
+from .utils import common_dialect
+
+ROUTER_QOS = rclpy.qos.QoSProfile(
+    depth=1, durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
 
 
 class Checker:
@@ -34,6 +39,7 @@ class Checker:
 
         params = call_get_parameters(
             node=client,
+            node_name=client.mavros_ns,
             names=['target_system_id', 'target_component_id', 'uas_url'])
 
         self.tgt_ids = (
@@ -44,15 +50,20 @@ class Checker:
         source_topic = f"{uas_url}/mavlink_source"
 
         click.secho(
-            f"Router topic: {source_topic}, target: {'.'.join(self.tgt_ids)}",
+            f"Router topic: {source_topic}, target: {self.fmt_ids(self.tgt_ids)}",
             fg='cyan')
 
         self.source_sub = client.create_subscription(Mavlink, source_topic,
-                                                     1000,
-                                                     self.mavlink_source_cb)
+                                                     self.mavlink_source_cb,
+                                                     ROUTER_QOS)
         self.timer = client.create_timer(watch_time, self.timer_cb)
 
+    def fmt_ids(self, ids: typing.Tuple[int]) -> str:
+        return f"{'.'.join(f'{v}' for v in ids)}"
+
     def mavlink_source_cb(self, msg: Mavlink):
+        self.client.verbose_secho(f"Msg: {msg}", fg='magenta')
+
         ids = (msg.sysid, msg.compid)
         if ids in self.message_sources:
             self.message_sources[ids].add(msg.msgid)
@@ -66,7 +77,7 @@ class Checker:
             click.echo('-' * 80)
 
         self.reports += 1
-        str_tgt_ids = f"{'.'.join(self.tgt_ids)}"
+        str_tgt_ids = self.fmt_ids(self.tgt_ids)
 
         if self.tgt_ids in self.message_sources:
             click.secho(f"OK. I got messages from {str_tgt_ids}.", fg='green')
@@ -83,19 +94,25 @@ class Checker:
         for address, messages in self.message_sources.items():
 
             def fmt_msgid(msgid: int) -> str:
-                # TODO(vooon): try to load pymavlink
-                return f"{msgid}"
+                if common_dialect is None:
+                    return f"{msgid}"
 
-            str_ids = f"{'.'.join(address)}"
+                msg = common_dialect.mavlink_map.get(msgid)
+                if msg is None:
+                    return f"{msgid}"
+                else:
+                    return f"{msgid} ({msg.name})"
+
+            str_ids = self.fmt_ids(address)
             click.secho(
-                f"{str_ids: 6s}   {', '.join(fmt_msgid(msgid) for msgid in messages)}",
-                fg='cyan')
+                f"{str_ids:>7s}   {', '.join(fmt_msgid(msgid) for msgid in messages)}",
+                fg='white')
 
         if not self.follow:
             self.event.set()
 
 
-@cli
+@cli.command()
 @click.option("-f",
               "--follow",
               is_flag=True,
@@ -103,10 +120,7 @@ class Checker:
 @click.option("--watch-time", type=float, default=15.0, help="watch period")
 @pass_client
 def checkid(client, follow, watch_time):
-    """
-    This script listens to devices connected to mavros and
-    checks against system & component id mismatch errors.
-    """
+    """Tool to verify target address and list messages coming to mavros UAS."""
 
     checker = Checker(client=client, follow=follow, watch_time=watch_time)
     checker.event.wait()

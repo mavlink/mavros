@@ -51,11 +51,7 @@ def call_list_parameters(*,
     wait_for_service(client, lg)
 
     req = ListParameters.Request(prefixes=prefixes)
-
-    future = client.call_async(req)
-    # rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
+    resp = client.call(req)
     lg.debug(f"list result: {resp}")
 
     return resp.result.names
@@ -66,7 +62,7 @@ def call_get_parameters(
         node: rclpy.node.Node,
         node_name: typing.Optional[str] = None,
         client: typing.Optional[rclpy.node.Client] = None,
-        names: typing.List[str] = []) -> typing.Dict[str, ParameterValue]:
+        names: typing.List[str] = []) -> typing.Dict[str, Parameter]:
     lg = node.get_logger()
 
     if client is None:
@@ -77,14 +73,13 @@ def call_get_parameters(
     wait_for_service(client, lg)
 
     req = GetParameters.Request(names=names)
-
-    future = client.call_async(req)
-    # rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
+    resp = client.call(req)
     lg.debug(f"get result: {resp}")
 
-    return dict(zip(names, resp.values))
+    return {
+        name: parameter_from_parameter_value(name, value)
+        for name, value in zip(names, resp.values)
+    }
 
 
 def call_set_parameters(
@@ -105,11 +100,7 @@ def call_set_parameters(
 
     req = SetParameters.Request(
         parameters=[p.to_parameter_msg() for p in parameters])
-
-    future = client.call_async(req)
-    # rclpy.spin_until_future_complete(node, future)
-
-    resp = future.result()
+    resp = client.call(req)
     lg.debug(f"set result: {resp}")
 
     return dict(zip((p.name for p in parameters), resp.results))
