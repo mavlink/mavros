@@ -1,206 +1,136 @@
-#!/usr/bin/env python
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
+"""
+mav sys command
+"""
 
-from __future__ import print_function
-
-import argparse
 import threading
+import typing
 
-import rospy
+import click
+
+from . import cli, pass_client
+from .utils import bool2int, fault_echo
+
+
+@cli.group()
+@pass_client
+def sys(client):
+    """Tool to change mode and rate on MAVLink device."""
+
+
 from mavros_msgs.msg import State
-from mavros_msgs.srv import (MessageInterval, SetMode, StreamRate,
-                             StreamRateRequest)
-
-import mavros
-from mavros.utils import *
+from mavros_msgs.srv import MessageInterval, SetMode, StreamRate
 
 
-def do_mode(args):
-    base_mode = 0
-    custom_mode = ''
-
-    if args.custom_mode is not None:
-        custom_mode = args.custom_mode.upper()
-    if args.base_mode is not None:
-        base_mode = args.base_mode
+@sys.command()
+@click.option('-b', '--base-mode', type=int, default=0, help='Base mode code.')
+@click.option('-c',
+              '--custom-mode',
+              type=str,
+              default='',
+              help='Custom mode string (same as in ~/state topic)')
+@pass_client
+@click.pass_context
+def mode(ctx, client, base_mode, custom_mode):
+    custom_mode = custom_mode.upper()
 
     done_evt = threading.Event()
 
-    def state_cb(state):
-        print_if(args.verbose, "Current mode:", state.mode)
+    def state_cb(state: State):
+        client.verbose_echo(f"Current mode: {state.mode}")
         if state.mode == custom_mode:
-            print("Mode changed.")
+            click.echo("Mode changed.")
             done_evt.set()
 
     if custom_mode != '' and not custom_mode.isdigit():
         # with correct custom mode we can wait until it changes
-        sub = rospy.Subscriber(mavros.get_topic('state'), State, state_cb)
+        client.system.subscribe_state(state_cb)
     else:
         done_evt.set()
 
-    try:
-        set_mode = rospy.ServiceProxy(mavros.get_topic('set_mode'), SetMode)
-        ret = set_mode(base_mode=base_mode, custom_mode=custom_mode)
-    except rospy.ServiceException as ex:
-        fault(ex)
+    req = SetMode.Request(base_mode=base_mode, custom_mode=custom_mode)
+    ret = client.system.cli_set_mode.call(req)
 
     if not ret.mode_sent:
-        fault("Request failed. Check mavros logs")
+        fault_echo(ctx, "Request failed. Check mavros logs")
 
     if not done_evt.wait(5):
-        fault("Timed out!")
+        fault_echo(ctx, "Timed out!")
 
 
-def do_rate(args):
-    set_rate = rospy.ServiceProxy(mavros.get_topic('set_stream_rate'),
-                                  StreamRate)
+def _wrap_rate_option(*options: typing.List[str]):
+    def wrap(f):
+        for option in options:
+            opt = f"--{option.lower().replace(' ', '-')}"
+            click.option(
+                opt,
+                type=int,
+                metavar='RATE',
+                help=f"{option} stream",
+            )(f)
 
-    def _test_set_rate(rate_arg, id):
+        return f
+
+    return wrap
+
+
+@sys.command()
+@_wrap_rate_option('All', 'Raw sensors', 'Ext status', 'RC channels',
+                   'Raw controller', 'Position', 'Extra1', 'Extra2', 'Extra3')
+@click.option('--stream-id',
+              type=(int, int),
+              metavar=('ID', 'RATE'),
+              help="custom stream stream")
+@pass_client
+@click.pass_context
+def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
+         raw_controller, position, extra1, extra2, extra3, stream_id):
+    """Set stream rate"""
+    def set_rate(rate_arg: typing.Optional[int], id_: int):
         if rate_arg is not None:
-            try:
-                set_rate(stream_id=id,
-                         message_rate=rate_arg,
-                         on_off=(rate_arg != 0))
-            except rospy.ServiceException as ex:
-                fault(ex)
+            return
 
-    _test_set_rate(args.all, StreamRateRequest.STREAM_ALL)
-    _test_set_rate(args.raw_sensors, StreamRateRequest.STREAM_RAW_SENSORS)
-    _test_set_rate(args.ext_status, StreamRateRequest.STREAM_EXTENDED_STATUS)
-    _test_set_rate(args.rc_channels, StreamRateRequest.STREAM_RC_CHANNELS)
-    _test_set_rate(args.raw_controller,
-                   StreamRateRequest.STREAM_RAW_CONTROLLER)
-    _test_set_rate(args.position, StreamRateRequest.STREAM_POSITION)
-    _test_set_rate(args.extra1, StreamRateRequest.STREAM_EXTRA1)
-    _test_set_rate(args.extra2, StreamRateRequest.STREAM_EXTRA2)
-    _test_set_rate(args.extra3, StreamRateRequest.STREAM_EXTRA3)
+        req = StreamRate.Request(
+            stream_id=id_,
+            message_rate=rate_arg,
+            on_off=(rate_arg != 0),
+        )
+        client.system.cli_set_stream_rate.call(req)
 
-    if args.stream_id is not None:
-        _test_set_rate(args.stream_id[1], args.stream_id[0])
+    set_rate(all, StreamRate.Request.STREAM_ALL)
+    set_rate(raw_sensors, StreamRate.Request.STREAM_RAW_SENSORS)
+    set_rate(ext_status, StreamRate.Request.STREAM_EXTENDED_STATUS)
+    set_rate(rc_channels, StreamRate.Request.STREAM_RC_CHANNELS)
+    set_rate(raw_controller, StreamRate.Request.STREAM_RAW_CONTROLLER)
+    set_rate(position, StreamRate.Request.STREAM_POSITION)
+    set_rate(extra1, StreamRate.Request.STREAM_EXTRA1)
+    set_rate(extra2, StreamRate.Request.STREAM_EXTRA2)
+    set_rate(extra3, StreamRate.Request.STREAM_EXTRA3)
 
-
-def do_message_interval(args):
-
-    if args.id is None:
-        fault("id not specified")
-        return
-
-    if args.rate is None:
-        fault("rate not specified")
-        return
-
-    try:
-        set_message_interval = rospy.ServiceProxy(
-            mavros.get_topic('set_message_interval'), MessageInterval)
-        set_message_interval(message_id=args.id, message_rate=args.rate)
-    except rospy.ServiceException as ex:
-        fault(ex)
+    if stream_id is not None:
+        set_rate(stream_id[1], stream_id[0])
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Change mode and rate on MAVLink device.")
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='store_true',
-                        help="verbose output")
-    parser.add_argument('--wait',
-                        action='store_true',
-                        help="Wait for establishing FCU connection")
-    subarg = parser.add_subparsers()
+@sys.command()
+@click.option('--id',
+              type=int,
+              metavar='MSGID',
+              required=True,
+              help='message id')
+@click.option('--rate',
+              type=float,
+              metavar='RATE',
+              required=True,
+              help='message rate')
+@pass_client
+def message_interval(client, id, rate):
+    """Set message interval"""
 
-    mode_args = subarg.add_parser(
-        'mode', help="Set mode", formatter_class=argparse.RawTextHelpFormatter)
-    mode_args.set_defaults(func=do_mode)
-    mode_group = mode_args.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument('-b',
-                            '--base-mode',
-                            type=int,
-                            help="Base mode code")
-    mode_group.add_argument(
-        '-c',
-        '--custom-mode',
-        type=str,
-        help="Custom mode string (same as in ~/state topic)\
-        \n\nNOTE: For PX4 Pro AUTO.LOITER, disable RC failsafe, which can be done by setting 'NAV_RCL_ACT' parameter to 0."
-    )
-
-    rate_args = subarg.add_parser('rate', help="Set stream rate")
-    rate_args.set_defaults(func=do_rate)
-    rate_args.add_argument('--all',
-                           type=int,
-                           metavar='rate',
-                           help="All streams")
-    rate_args.add_argument('--raw-sensors',
-                           type=int,
-                           metavar='rate',
-                           help="raw sensors stream")
-    rate_args.add_argument('--ext-status',
-                           type=int,
-                           metavar='rate',
-                           help="extended status stream")
-    rate_args.add_argument('--rc-channels',
-                           type=int,
-                           metavar='rate',
-                           help="RC channels stream")
-    rate_args.add_argument('--raw-controller',
-                           type=int,
-                           metavar='rate',
-                           help="raw conptoller stream")
-    rate_args.add_argument('--position',
-                           type=int,
-                           metavar='rate',
-                           help="position stream")
-    rate_args.add_argument('--extra1',
-                           type=int,
-                           metavar='rate',
-                           help="Extra 1 stream")
-    rate_args.add_argument('--extra2',
-                           type=int,
-                           metavar='rate',
-                           help="Extra 2 stream")
-    rate_args.add_argument('--extra3',
-                           type=int,
-                           metavar='rate',
-                           help="Extra 3 stream")
-    rate_args.add_argument('--stream-id',
-                           type=int,
-                           nargs=2,
-                           metavar=('id', 'rate'),
-                           help="any stream")
-
-    message_interval_args = subarg.add_parser('message_interval',
-                                              help="Set message interval")
-    message_interval_args.set_defaults(func=do_message_interval)
-    message_interval_args.add_argument('--id',
-                                       type=int,
-                                       metavar='id',
-                                       help="message id")
-    message_interval_args.add_argument('--rate',
-                                       type=float,
-                                       metavar='rate',
-                                       help="message rate")
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("mavsys", anonymous=True)
-    mavros.set_namespace(args.mavros_ns)
-
-    if args.wait:
-        wait_fcu_connection()
-
-    args.func(args)
-
-
-if __name__ == '__main__':
-    main()
+    req = MessageInterval.Request(message_id=id, message_rate=rate)
+    client.system.cli_set_message_interval.call(req)

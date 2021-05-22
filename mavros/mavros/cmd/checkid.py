@@ -24,7 +24,7 @@ from . import CliClient, cli, pass_client
 from .utils import common_dialect
 
 ROUTER_QOS = rclpy.qos.QoSProfile(
-    depth=1, durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+    depth=1000, durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
 
 
 class Checker:

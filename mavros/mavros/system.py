@@ -11,9 +11,11 @@ import threading
 import typing
 
 import rclpy
-from mavros_msgs.msg import EstimatorStatus, ExtendedState, State, StatusText
-from mavros_msgs.srv import MessageInterval, StreamRate, VehicleInfoGet
 from sensor_msgs.msg import BatteryState
+
+from mavros_msgs.msg import EstimatorStatus, ExtendedState, State, StatusText
+from mavros_msgs.srv import (MessageInterval, SetMode, StreamRate,
+                             VehicleInfoGet)
 
 from .base import (SENSOR_QOS, STATE_QOS, PluginModule, SubscriptionCallable,
                    cached_property)
@@ -58,6 +60,10 @@ class SystemPlugin(PluginModule):
     def pub_statustext(self, ) -> rclpy.node.Publisher:
         return self.create_publisher(StatusText, ('statustext', 'send'),
                                      SENSOR_QOS)
+
+    @cached_property
+    def cli_set_mode(self) -> rclpy.node.Client:
+        return self.create_client(SetMode, 'set_mode')
 
     @cached_property
     def cli_set_stream_rate(self) -> rclpy.node.Client:

@@ -45,9 +45,10 @@ def wait_for_service(client: rclpy.node.Client,
                      lg: typing.Optional[typing.Any]):
     ready = client.wait_for_service(timeout_sec=SERVICE_WAIT_TIMEOUT)
     if not ready:
+        topic = client.srv_name
         if lg:
-            lg.error("wait for service time out")
-        raise ServiceWaitTimeout()
+            lg.error("wait for service time out: {topic}")
+        raise ServiceWaitTimeout(topic)
 
 
 class BaseNode(rclpy.node.Node):

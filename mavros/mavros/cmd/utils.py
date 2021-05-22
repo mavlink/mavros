@@ -17,6 +17,18 @@ except ImportError:
     common_dialect = None
 
 
+def fault_echo(ctx, *args, **kwargs):
+    kwargs['err'] = True
+    click.echo(*args, **kwargs)
+    ctx.exit(1)
+
+
+def fault_secho(ctx, *args, **kwargs):
+    kwargs['err'] = True
+    click.secho(*args, **kwargs)
+    ctx.exit(1)
+
+
 def check_cmd_ret(ctx, client, ret):
     # NOTE(vooon): APM returns MAV_RESULT
 
@@ -35,8 +47,7 @@ def check_cmd_ret(ctx, client, ret):
             ackstr = f" ACK: {ret.result}"
 
     if not ret.success:
-        click.echo(f"Request failed. Check mavros logs.{ackstr}")
-        ctx.exit(1)
+        fault_echo(ctx, f"Request failed. Check mavros logs.{ackstr}")
 
     if client.verbose:
         if hasattr(ret, 'result'):
