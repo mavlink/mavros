@@ -66,12 +66,13 @@ def mode(ctx, client, base_mode, custom_mode):
 
 def _wrap_rate_option(*options: typing.List[str]):
     def wrap(f):
-        for option in options:
+        for option in options[::-1]:
             opt = f"--{option.lower().replace(' ', '-')}"
             click.option(
                 opt,
                 type=int,
                 metavar='RATE',
+                default=None,
                 help=f"{option} stream",
             )(f)
 
@@ -84,8 +85,10 @@ def _wrap_rate_option(*options: typing.List[str]):
 @_wrap_rate_option('All', 'Raw sensors', 'Ext status', 'RC channels',
                    'Raw controller', 'Position', 'Extra1', 'Extra2', 'Extra3')
 @click.option('--stream-id',
-              type=(int, int),
-              metavar=('ID', 'RATE'),
+              type=int,
+              nargs=2,
+              metavar='ID, RATE',
+              default=None,
               help="custom stream stream")
 @pass_client
 @click.pass_context
@@ -93,7 +96,7 @@ def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
          raw_controller, position, extra1, extra2, extra3, stream_id):
     """Set stream rate"""
     def set_rate(rate_arg: typing.Optional[int], id_: int):
-        if rate_arg is not None:
+        if rate_arg is None:
             return
 
         req = StreamRate.Request(
@@ -113,7 +116,7 @@ def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
     set_rate(extra2, StreamRate.Request.STREAM_EXTRA2)
     set_rate(extra3, StreamRate.Request.STREAM_EXTRA3)
 
-    if stream_id is not None:
+    if stream_id:
         set_rate(stream_id[1], stream_id[0])
 
 
