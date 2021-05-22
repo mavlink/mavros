@@ -506,6 +506,10 @@ public:
       sensor_qos,
       std::bind(&SystemStatusPlugin::statustext_cb, this, _1));
 
+    mode_srv =
+      node->create_service<mavros_msgs::srv::SetMode>(
+      "set_mode",
+      std::bind(&SystemStatusPlugin::set_mode_cb, this, _1, _2));
     stream_rate_srv =
       node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
