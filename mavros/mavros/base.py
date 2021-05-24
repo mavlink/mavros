@@ -30,6 +30,9 @@ STATE_QOS = rclpy.qos.QoSProfile(
 # SENSOR_QOS used for most of sensor streams
 SENSOR_QOS = rclpy.qos.qos_profile_sensor_data
 
+# PARAMETERS_QOS used for parameter streams
+PARAMETERS_QOS = rclpy.qos.qos_profile_parameters
+
 TopicType = typing.Union[typing.Tuple, str]
 QoSType = typing.Union[rclpy.qos.QoSProfile, int]
 ServiceCallable = rclpy.node.Callable[
@@ -107,7 +110,7 @@ class BaseNode(rclpy.node.Node):
         lg = self.get_logger()
 
         names = [f.name for f in fields(UASParams)]
-        lg.info(f"Getting UAS parameters: {', '.join(names)}")
+        lg.debug(f"Getting UAS parameters: {', '.join(names)}")
         pd = call_get_parameters(node=self,
                                  node_name=self.mavros_ns,
                                  names=names)

@@ -12,14 +12,15 @@ import datetime
 import typing
 
 import rclpy
-from mavros_msgs.msg import ParamEvent
-from mavros_msgs.srv import ParamPull, ParamSetV2
 from rcl_interfaces.msg import Parameter as ParameterMsg
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import GetParameters, ListParameters, SetParameters
 from rclpy.parameter import Parameter
 
-from .base import (PluginModule, ServiceWaitTimeout, SubscriptionCallable,
+from mavros_msgs.msg import ParamEvent
+from mavros_msgs.srv import ParamPull, ParamSetV2
+
+from .base import (PARAMETERS_QOS, PluginModule, SubscriptionCallable,
                    cached_property)
 from .utils import (call_get_parameters, call_list_parameters,
                     call_set_parameters_check_and_raise,
@@ -158,35 +159,34 @@ class ParamPlugin(PluginModule):
     _event_sub = None
 
     @cached_property
-    def list_parameters(self) -> rclpy.node.Client:
+    def cli_list_parameters(self) -> rclpy.node.Client:
         """Client for ListParameters service."""
         return self.create_client(ListParameters, ('param', 'list_parameters'))
 
     @cached_property
-    def get_parameters(self) -> rclpy.node.Client:
+    def cli_get_parameters(self) -> rclpy.node.Client:
         """Client for GetParameters service."""
         return self.create_client(GetParameters, ('param', 'get_parameters'))
 
     @cached_property
-    def set_parameters(self) -> rclpy.node.Client:
+    def cli_set_parameters(self) -> rclpy.node.Client:
         """Client for SetParameters service."""
         return self.create_client(SetParameters, ('param', 'set_parameters'))
 
     @cached_property
-    def pull(self) -> rclpy.node.Client:
+    def cli_pull(self) -> rclpy.node.Client:
         """Client for ParamPull service."""
         return self.create_client(ParamPull, ('param', 'pull'))
 
     @cached_property
-    def set(self) -> rclpy.node.Client:
+    def cli_set(self) -> rclpy.node.Client:
         """Client for ParamSetV2 service."""
         return self.create_client(ParamSetV2, ('param', 'set'))
 
     def subscribe_events(
         self,
         callback: SubscriptionCallable,
-        qos_profile: rclpy.qos.QoSProfile = rclpy.qos.QoSPresetProfiles.
-        PARAMETERS
+        qos_profile: rclpy.qos.QoSProfile = PARAMETERS_QOS
     ) -> rclpy.node.Subscription:
         """Subscribe to parameter events."""
         return self.create_subscription(ParamEvent, ('param', 'event'),
@@ -194,21 +194,11 @@ class ParamPlugin(PluginModule):
 
     def call_pull(self, *, force_pull: bool = False) -> ParamPull.Response:
         """Do a call to ParamPull service."""
-        lg = self._node.get_logger()
+        lg = self.get_logger()
 
-        ready = self.pull.wait_for_service(timeout_sec=self.timeout_sec)
-        if not ready:
-            raise ServiceWaitTimeout()
-
-        req = ParamPull.Request()
-        req.force_pull = force_pull
-
-        future = self.pull.call_async(req)
-        rclpy.spin_until_future_complete(self._node, future)
-
-        resp = future.result()
+        req = ParamPull.Request(force_pull=force_pull)
+        resp = self.cli_pull.call(req)
         lg.debug(f"pull result: {resp}")
-
         return resp
 
     @property
@@ -231,9 +221,9 @@ class ParamPlugin(PluginModule):
         # 3. if to little events come, request whole list
         if len(pm) < 10:
             names = call_list_parameters(node=self._node,
-                                         client=self.list_parameters)
+                                         client=self.cli_list_parameters)
             for k, v in call_get_parameters(node=self._node,
-                                            client=self.get_parameters,
+                                            client=self.cli_get_parameters,
                                             names=names).items():
                 pm.setdefault(k, v)
 
@@ -262,9 +252,10 @@ class ParamDict(dict):
 
     def __setitem__(self, key: str, value):
         if self._set_item(key, value):
-            call_set_parameters_check_and_raise(node=self._pm._node,
-                                                client=self._pm.set_parameters,
-                                                parameters=[value])
+            call_set_parameters_check_and_raise(
+                node=self._pm._node,
+                client=self._pm.cli_set_parameters,
+                parameters=[value])
 
     def _set_item(self, key: str, value) -> bool:
         is_no_set = False
@@ -328,7 +319,7 @@ class ParamDict(dict):
         if keys_to_set:
             call_set_parameters_check_and_raise(
                 node=self._pm._node,
-                client=self._pm.set_parameters,
+                client=self._pm.cli_set_parameters,
                 parameters=[self[k] for k in keys_to_set])
 
     def setdefault(self, key: str, value=None):

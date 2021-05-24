@@ -1,145 +1,140 @@
-#!/usr/bin/env python
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
+"""mav param command"""
 
-import argparse
+import typing
 
-import rospy
+import click
 
-import mavros
-from mavros.param import *
-from mavros.utils import *
-
-
-def get_param_file_io(args):
-    if args.mission_planner:
-        print_if(args.verbose, "MissionPlanner format")
-        return MissionPlannerParam(args)
-
-    elif args.qgroundcontrol:
-        print_if(args.verbose, "QGroundControl format")
-        return QGroundControlParam(args)
-
-    elif args.mavproxy:
-        print_if(args.verbose, "MavProxy format")
-        return MavProxyParam(args)
-
-    else:
-        if args.file.name.endswith('.txt'):
-            print_if(args.verbose, "Suggestion: QGroundControl format")
-            return QGroundControlParam(args)
-        else:
-            print_if(args.verbose, "Suggestion: MissionPlanner format")
-            return MissionPlannerParam(args)
+from ..param import (MavProxyParam, MissionPlannerParam, ParamFile,
+                     QGroundControlParam)
+from . import CliClient, cli, pass_client
+from .utils import apply_options
 
 
-def do_load(args):
-    param_file = get_param_file_io(args)
-    with args.file:
-        param_transfered = param_set_list(param_file.read(args.file))
-
-    print_if(args.verbose, "Parameters transfered:", param_transfered)
+@cli.group()
+@pass_client
+def param(client):
+    """Tool to manipulate parameters of the MAVLink device."""
 
 
-def do_dump(args):
-    param_received, param_list = param_get_all(args.force)
-    print_if(args.verbose, "Parameters received:", param_received)
-
-    param_file = get_param_file_io(args)
-    with args.file:
-        param_file.write(args.file, param_list)
-
-
-def do_get(args):
-    print(param_get(args.param_id))
-
-
-def do_set(args):
-    if '.' in args.value:
-        val = float(args.value)
-    else:
-        val = int(args.value)
-
-    print(param_set(args.param_id, val))
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=
-        "Command line tool for getting and setting parameters from MAVLink device."
+def _add_format_options(f):
+    return apply_options(
+        f,
+        click.option('-mp',
+                     '--mission-planner',
+                     'file_format',
+                     flag_value='mp',
+                     help='Select Mission Planner param file format'),
+        click.option('-qgc',
+                     '--qgroundcontrol',
+                     'file_format',
+                     flag_value='qgc',
+                     help='Select QGroundControl param file format'),
+        click.option('-mpx',
+                     '-mavpx',
+                     '--mavproxy',
+                     'file_format',
+                     flag_value='mpx',
+                     help='Select MAVProxy param file format'),
     )
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='store_true',
-                        help="Verbose output")
-    subarg = parser.add_subparsers()
-
-    load_args = subarg.add_parser('load', help="Load parameters from file")
-    load_args.set_defaults(func=do_load)
-    load_args.add_argument('file',
-                           type=argparse.FileType('rb'),
-                           help="Input file")
-    load_format = load_args.add_mutually_exclusive_group()
-    load_format.add_argument('-mp',
-                             '--mission-planner',
-                             action="store_true",
-                             help="Select MissionPlanner param file format")
-    load_format.add_argument('-qgc',
-                             '--qgroundcontrol',
-                             action="store_true",
-                             help="Select QGroundControl param file format")
-    load_format.add_argument('-mavpx',
-                             '--mavproxy',
-                             action="store_true",
-                             help="Select MavProxy param file format")
-
-    dump_args = subarg.add_parser('dump', help="Dump parameters to file")
-    dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file',
-                           type=argparse.FileType('wb'),
-                           help="Output file")
-    dump_args.add_argument('-f',
-                           '--force',
-                           action="store_true",
-                           help="Force pull params from FCU, not cache")
-    dump_format = dump_args.add_mutually_exclusive_group()
-    dump_format.add_argument('-mp',
-                             '--mission-planner',
-                             action="store_true",
-                             help="Select MissionPlanner param file format")
-    dump_format.add_argument('-qgc',
-                             '--qgroundcontrol',
-                             action="store_true",
-                             help="Select QGroundControl param file format")
-    dump_format.add_argument('-mavpx',
-                             '--mavproxy',
-                             action="store_true",
-                             help="Select MavProxy param file format")
-
-    get_args = subarg.add_parser('get', help="Get parameter")
-    get_args.set_defaults(func=do_get)
-    get_args.add_argument('param_id', help="Parameter ID string")
-
-    set_args = subarg.add_parser('set', help="Set parameter")
-    set_args.set_defaults(func=do_set)
-    set_args.add_argument('param_id', help="Parameter ID string")
-    set_args.add_argument('value', help="New value")
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("mavparam", anonymous=True)
-    mavros.set_namespace(args.mavros_ns)
-    args.func(args)
 
 
-if __name__ == '__main__':
-    main()
+def get_param_file_io(client: CliClient, file_format: typing.Optional[str],
+                      file_: typing.TextIO) -> ParamFile:
+    if file_format == 'mp':
+        client.verbose_echo("MissionPlanner format")
+        pf = MissionPlannerParam()
+
+    elif file_format == 'qgc':
+        client.verbose_echo("QGroundControl format")
+        pf = QGroundControlParam()
+
+    elif file_format == 'mpx':
+        client.verbose_echo("MavProxy format")
+        pf = MavProxyParam()
+
+    else:
+        if file_.name.endswith('.txt'):
+            client.verbose_echo("Suggestion: QGroundControl format")
+            pf = QGroundControlParam()
+        else:
+            client.verbose_echo("Suggestion: MissionPlanner format")
+            pf = MissionPlannerParam()
+
+    pf.tgt_system = client.uas_settings.target_system_id
+    pf.tgt_component = client.uas_settings.target_component_id
+
+    return pf
+
+
+@param.command()
+@_add_format_options
+@click.argument('file_', type=click.File('r'), metavar='FILE')
+@pass_client
+def load(client, file_format, file_):
+    """Load parameters from file"""
+
+    param_file = get_param_file_io(client, file_format, file_)
+    param_file.load(file_)
+
+    client.param.values.update(param_file.parameters)
+
+    client.verbose_echo(f"Prameters sent: {len(param_file.parameters)}")
+
+
+@param.command()
+@_add_format_options
+@click.option('-f',
+              '--force',
+              is_flag=True,
+              default=False,
+              help='Force pull params form FCU, update cache')
+@click.argument('file_', type=click.File('w'), metavar='FILE')
+@pass_client
+def dump(client, file_format, force, file_):
+    """Dump parameters to file"""
+
+    # NOTE(vooon): hidden migic - create ParamDict and get ref
+    values = client.param.values
+
+    if force:
+        client.param.call_pull(force=True)
+
+    client.verbose_echo(f"Parameters received: {len(values)}")
+
+    param_file = get_param_file_io(client, file_format, file_)
+    param_file.parameters = values
+    param_file.save(file_)
+
+
+@param.command()
+@click.argument('param_id', type=str)
+@pass_client
+def get(client, param_id):
+    """Print one parameter value."""
+
+    # XXX(vooon): ineffecient
+    click.echo(f"{client.param.values[param_id].value}")
+
+
+@param.command()
+@click.argument('param_id', type=str)
+@click.argument('value', type=str)
+@pass_client
+def set(client, param_id, value):
+    """Set one parameter"""
+
+    if '.' in value:
+        val = float(value)
+    else:
+        val = int(value)
+
+    # XXX(vooon): ineffecient
+    client.param.value[param_id] = val
+    click.echo(f"{client.param.values[param_id].value}")

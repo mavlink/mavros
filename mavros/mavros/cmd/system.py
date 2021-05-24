@@ -14,18 +14,17 @@ import typing
 
 import click
 
+from mavros_msgs.msg import State
+from mavros_msgs.srv import MessageInterval, SetMode, StreamRate
+
 from . import cli, pass_client
-from .utils import bool2int, fault_echo
+from .utils import fault_echo, apply_options
 
 
 @cli.group()
 @pass_client
 def sys(client):
     """Tool to change mode and rate on MAVLink device."""
-
-
-from mavros_msgs.msg import State
-from mavros_msgs.srv import MessageInterval, SetMode, StreamRate
 
 
 @sys.command()
@@ -64,25 +63,25 @@ def mode(ctx, client, base_mode, custom_mode):
         fault_echo(ctx, "Timed out!")
 
 
-def _wrap_rate_option(*options: typing.List[str]):
-    def wrap(f):
-        for option in options[::-1]:
-            opt = f"--{option.lower().replace(' ', '-')}"
-            click.option(
-                opt,
-                type=int,
-                metavar='RATE',
-                default=None,
-                help=f"{option} stream",
-            )(f)
+def _add_rate_options(*options: typing.List[str]):
+    opts = [
+        click.option(
+            f"--{option.lower().replace(' ', '-')}",
+            type=int,
+            metavar='RATE',
+            default=None,
+            help=f"{option} stream",
+        ) for option in options
+    ]
 
-        return f
+    def wrap(f):
+        return apply_options(f, *opts)
 
     return wrap
 
 
 @sys.command()
-@_wrap_rate_option('All', 'Raw sensors', 'Ext status', 'RC channels',
+@_add_rate_options('All', 'Raw sensors', 'Ext status', 'RC channels',
                    'Raw controller', 'Position', 'Extra1', 'Extra2', 'Extra3')
 @click.option('--stream-id',
               type=int,

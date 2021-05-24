@@ -9,6 +9,9 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """Utilities for cli"""
 
+import functools
+import typing
+
 import click
 
 try:
@@ -66,3 +69,9 @@ def bool2int(b: bool) -> int:
     if b:
         return 1
     return 0
+
+
+def apply_options(func: typing.Callable,
+                  *opts: typing.List[typing.Callable]) -> typing.Callable:
+    """Helper to apply several click.option to the same function"""
+    return functools.reduce(lambda x, opt: opt(x), reversed(opts), func)
