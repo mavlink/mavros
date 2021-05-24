@@ -8,15 +8,18 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 
 import csv
+import threading
 import typing
 from collections import OrderedDict
 
 import rclpy
+
 from mavros_msgs.msg import CommandCode, Waypoint, WaypointList
 from mavros_msgs.srv import (WaypointClear, WaypointPull, WaypointPush,
                              WaypointSetCurrent)
 
-from .base import STATE_QOS, PluginModule, cached_property, SubscriptionCallable
+from .base import (SERVICE_WAIT_TIMEOUT, STATE_QOS, PluginModule,
+                   ServiceWaitTimeout, SubscriptionCallable, cached_property)
 
 FRAMES = {
     Waypoint.FRAME_GLOBAL: 'GAA',
@@ -145,16 +148,19 @@ class MissionPluginBase(PluginModule):
     _plugin_ns = 'mission'
     _plugin_list_topic = 'waypoints'
 
+    _points: typing.List[Waypoint] = []
+    _points_sub = None
+
     @cached_property
-    def pull(self) -> rclpy.node.Client:
+    def cli_pull(self) -> rclpy.node.Client:
         return self.create_client(WaypointPull, (self._plugin_ns, 'pull'))
 
     @cached_property
-    def push(self) -> rclpy.node.Client:
+    def cli_push(self) -> rclpy.node.Client:
         return self.create_client(WaypointPush, (self._plugin_ns, 'push'))
 
     @cached_property
-    def clear(self) -> rclpy.node.Client:
+    def cli_clear(self) -> rclpy.node.Client:
         return self.create_client(WaypointClear, (self._plugin_ns, 'clear'))
 
     def subscribe_points(
@@ -167,11 +173,29 @@ class MissionPluginBase(PluginModule):
             WaypointList, (self._plugin_ns, self._plugin_list_topic), callback,
             qos_profile)
 
+    @property
+    def points(self) -> typing.List[Waypoint]:
+        """subscribe and return points cache"""
+        if self._points_sub is not None:
+            return self._points
+
+        done_evt = threading.Event()
+
+        def handler(ml: WaypointList):
+            self._points = ml.waypoints
+            done_evt.set()
+
+        self._points_sub = self.subscribe_points(handler)
+        if not done_evt.wait(SERVICE_WAIT_TIMEOUT):
+            raise ServiceWaitTimeout(f"timeout waiting for {self._points_sub.topic_name}")
+
+        return self._points
+
 
 class WaypointPlugin(MissionPluginBase):
     """Interface to waypoint plugin."""
     @cached_property
-    def set_current(self) -> rclpy.node.Client:
+    def cli_set_current(self) -> rclpy.node.Client:
         return self._node.create_client(WaypointSetCurrent,
                                         (self._plugin_ns, 'set_current'))
 

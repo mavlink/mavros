@@ -117,4 +117,4 @@ def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
         ctx.obj.system.wait_fcu_connection(wait_fcu)
 
 
-from . import checkid, cmd, param, safety, system  # NOQA
+from . import checkid, cmd, mission, param, safety, system  # NOQA
