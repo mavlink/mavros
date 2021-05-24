@@ -11,7 +11,8 @@ import random
 import string
 import threading
 import typing
-from functools import cached_property  # noqa F401
+from dataclasses import dataclass, field, fields
+from functools import cached_property
 
 import rclpy  # noqa F401
 import rclpy.node
@@ -51,6 +52,26 @@ def wait_for_service(client: rclpy.node.Client,
         raise ServiceWaitTimeout(topic)
 
 
+@dataclass
+class UASParams:
+    uas_url: str = ""
+    fcu_protocol: str = "v2.0"
+    system_id: int = 1
+    component_id: int = 191
+    target_system_id: int = 1
+    target_component_id: int = 1
+    plugin_allowlist: typing.List[str] = field(default_factory=list)
+    plugin_denylist: typing.List[str] = field(default_factory=list)
+
+    @property
+    def uas_ids(self) -> (int, int):
+        return (self.system_id, self.component_id)
+
+    @property
+    def target_ids(self) -> (int, int):
+        return (self.target_system_id, self.target_component_id)
+
+
 class BaseNode(rclpy.node.Node):
     """
     Base class for mavros client object.
@@ -79,13 +100,31 @@ class BaseNode(rclpy.node.Node):
     def mavros_ns(self) -> str:
         return self._ns
 
+    @cached_property
+    def uas_settings(self) -> UASParams:
+        from .utils import call_get_parameters
+
+        lg = self.get_logger()
+
+        names = [f.name for f in fields(UASParams)]
+        lg.info(f"Getting UAS parameters: {', '.join(names)}")
+        pd = call_get_parameters(node=self,
+                                 node_name=self.mavros_ns,
+                                 names=names)
+
+        return UASParams(**{k: v.value for k, v in pd.items()})
+
     def get_topic(self, *args: str) -> str:
         return '/'.join((self._ns, ) + args)
 
     def start_spinner(self) -> threading.Thread:
         def run():
+            lg = self.get_logger()
             while rclpy.ok():
-                rclpy.spin_once(self)
+                lg.debug("starting spinning client node")
+                rclpy.spin(self)
+
+            lg.debug("stopped client node spinner")
 
         thd = threading.Thread(target=run,
                                name=f'mavros_py_spin_{self.get_name()}')

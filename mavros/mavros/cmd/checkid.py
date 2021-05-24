@@ -19,7 +19,6 @@ import rclpy.qos
 
 from mavros_msgs.msg import Mavlink
 
-from ..utils import call_get_parameters
 from . import CliClient, cli, pass_client
 from .utils import common_dialect
 
@@ -37,16 +36,8 @@ class Checker:
         self.follow = follow
         self.event = threading.Event()
 
-        params = call_get_parameters(
-            node=client,
-            node_name=client.mavros_ns,
-            names=['target_system_id', 'target_component_id', 'uas_url'])
-
-        self.tgt_ids = (
-            params['target_system_id'].value,
-            params['target_component_id'].value,
-        )
-        uas_url = params['uas_url'].value
+        self.tgt_ids = client.uas_settings.target_ids
+        uas_url = client.uas_settings.uas_url
         source_topic = f"{uas_url}/mavlink_source"
 
         click.secho(
