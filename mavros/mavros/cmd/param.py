@@ -136,5 +136,5 @@ def set(client, param_id, value):
         val = int(value)
 
     # XXX(vooon): ineffecient
-    client.param.value[param_id] = val
+    client.param.values[param_id] = val
     click.echo(f"{client.param.values[param_id].value}")

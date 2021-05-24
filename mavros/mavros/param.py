@@ -251,13 +251,14 @@ class ParamDict(dict):
         return super().__getitem__(key)
 
     def __setitem__(self, key: str, value):
-        if self._set_item(key, value):
+        do_call_set, value = self._set_item(key, value)
+        if do_call_set:
             call_set_parameters_check_and_raise(
                 node=self._pm._node,
                 client=self._pm.cli_set_parameters,
                 parameters=[value])
 
-    def _set_item(self, key: str, value) -> bool:
+    def _set_item(self, key: str, value) -> (bool, Parameter):
         is_no_set = False
         if isinstance(value, ParamDict.NoSet):
             is_no_set = True
@@ -277,7 +278,7 @@ class ParamDict(dict):
         do_call_set = not is_no_set and self.get(key,
                                                  Parameter(name=key)) != value
         super().__setitem__(key, value)
-        return do_call_set
+        return do_call_set, value
 
     def __getattr__(self, key: str):
         try:
@@ -313,7 +314,8 @@ class ParamDict(dict):
     def update(self, *args, **kwargs):
         keys_to_set = []
         for k, v in dict(*args, **kwargs).items():
-            if self._set_item(k, v):
+            do_call_set, _ = self._set_item(k, v)
+            if do_call_set:
                 keys_to_set.append(k)
 
         if keys_to_set:
