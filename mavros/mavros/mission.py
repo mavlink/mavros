@@ -187,7 +187,8 @@ class MissionPluginBase(PluginModule):
 
         self._points_sub = self.subscribe_points(handler)
         if not done_evt.wait(SERVICE_WAIT_TIMEOUT):
-            raise ServiceWaitTimeout(f"timeout waiting for {self._points_sub.topic_name}")
+            raise ServiceWaitTimeout(
+                f"timeout waiting for {self._points_sub.topic_name}")
 
         return self._points
 

@@ -49,7 +49,7 @@ def _add_format_options(f):
             flag_value='wpl',
             help='Select QGroundControl WPL mission file format (old CSV)'),
         click.option('-plan',
-                     '--gcs-plan',
+                     '--qgc-plan',
                      'file_format',
                      flag_value='plan',
                      help='Select QGroundControl Plan mission file format'),
@@ -219,7 +219,7 @@ def show(ctx, client, accessor, pull_flag, follow):
               is_flag=True,
               default=False,
               help="Don't load rally points")
-@click.argument('file_', metavar='FILE')
+@click.argument('file_', metavar='FILE', type=click.File('r'))
 @pass_client
 @click.pass_context
 def load(ctx, client, file_format, preserve_home, start_index, end_index,
@@ -310,7 +310,7 @@ def load(ctx, client, file_format, preserve_home, start_index, end_index,
               is_flag=True,
               default=False,
               help="Don't dump rally points")
-@click.argument('file_', metavar='FILE')
+@click.argument('file_', metavar='FILE', type=click.File('w'))
 @pass_client
 @click.pass_context
 def dump(ctx, client, file_format, no_mission, no_fence, no_rally, file_):
