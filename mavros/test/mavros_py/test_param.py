@@ -35,7 +35,7 @@ def test_ParamDict_set():
     pm = ParamDict()
     pm._pm = MagicMock()
     pm._pm._node = MagicMock()
-    pm._pm.set_parameters = MagicMock(return_value=None)
+    pm._pm.cli_set_parameters = MagicMock(return_value=None)
 
     tv1 = Parameter('TEST1', value=1)
     tv2 = Parameter('TEST2', value=2.0)
@@ -45,7 +45,7 @@ def test_ParamDict_set():
         pm['TEST1'] = tv1
 
         csp.assert_called_once_with(node=pm._pm._node,
-                                    client=pm._pm.set_parameters,
+                                    client=pm._pm.cli_set_parameters,
                                     parameters=[tv1])
 
     with patch('mavros.utils.call_set_parameters',
@@ -53,7 +53,7 @@ def test_ParamDict_set():
         pm.TEST2 = tv2
 
         csp.assert_called_once_with(node=pm._pm._node,
-                                    client=pm._pm.set_parameters,
+                                    client=pm._pm.cli_set_parameters,
                                     parameters=[tv2])
 
     with patch('mavros.utils.call_set_parameters',
@@ -67,6 +67,14 @@ def test_ParamDict_set():
         assert pm.TEST_B.value is True
         assert pm.TEST_I.value == 3
         assert pm.TEST_F.value == 4.0
+
+    with patch('mavros.utils.call_set_parameters',
+               MagicMock(return_value={})) as csp:
+
+        pm.setdefault('TEST_D', 5)
+
+        csp.assert_not_called()
+        assert pm.TEST_D.value == 5
 
 
 def test_ParamDict_del():

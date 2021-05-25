@@ -23,7 +23,9 @@ try:
     from fuse import FUSE, FuseOSError, Operations, \
             fuse_get_context, ENOENT
 except ImportError:
-    print("Fuse wrapper module not found. Please install fusepy: pip install fusepy", file=os.stderr)
+    print(
+        "Fuse wrapper module not found. Please install fusepy: pip install fusepy",
+        file=os.stderr)
     os.exit(1)
 
 
@@ -31,7 +33,6 @@ class RosLoggingMixIn(object):
     """
     Same as fuse.LoggingMixIn but uses rospy logging
     """
-
     def __call__(self, op, path, *args):
         rospy.logdebug('-> %s %s %s', op, path, repr(args))
         ret = '[Unhandled Exception]'
@@ -61,7 +62,6 @@ class MavFtp(RosLoggingMixIn, Operations):
 
     Based on fusepy SFTP example.
     """
-
     def __init__(self):
         self._attr_cache = {}
 
@@ -82,14 +82,21 @@ class MavFtp(RosLoggingMixIn, Operations):
             dir_mode, file_mode = S_IFDIR | 0755, S_IFREG | 0644
 
         return {
-            'st_mode': file_mode if file_entry.type == ftp.FileEntry.TYPE_FILE else dir_mode,
-            'st_size': file_entry.size,
-            'st_uid': uid,
-            'st_gid': gid,
+            'st_mode':
+            file_mode
+            if file_entry.type == ftp.FileEntry.TYPE_FILE else dir_mode,
+            'st_size':
+            file_entry.size,
+            'st_uid':
+            uid,
+            'st_gid':
+            gid,
         }
 
     def _update_attr_cache(self, dir_path, fe_list):
-        rospy.logdebug("update attr cache for: %s", ', '.join((os.path.join(dir_path, fe.name) for fe in fe_list)))
+        rospy.logdebug(
+            "update attr cache for: %s", ', '.join(
+                (os.path.join(dir_path, fe.name) for fe in fe_list)))
         self.fsyncdir(dir_path)
         for fe in fe_list:
             key = os.path.join(dir_path, fe.name)
@@ -128,7 +135,8 @@ class MavFtp(RosLoggingMixIn, Operations):
     def readdir(self, path, fh):
         fe_list = ftp.listdir(path)
         self._update_attr_cache(path, fe_list)
-        return ['.', '..'] + [fe.name for fe in fe_list if fe not in ('.', '..')]
+        return ['.', '..'
+                ] + [fe.name for fe in fe_list if fe not in ('.', '..')]
 
     def fsyncdir(self, path, datasync=None, fh=None):
         for k in self._attr_cache.keys():
@@ -181,15 +189,26 @@ class MavFtp(RosLoggingMixIn, Operations):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="FUSE for MAVLink-FTP mavros plugin")
-    parser.add_argument('-n', '--mavros-ns', help="ROS node namespace", default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v', '--verbose', action='store_true', help="verbose output")
-    parser.add_argument('-d', '--debug', action='store_true', help="libfuse debug")
+    parser = argparse.ArgumentParser(
+        description="FUSE for MAVLink-FTP mavros plugin")
+    parser.add_argument('-n',
+                        '--mavros-ns',
+                        help="ROS node namespace",
+                        default=mavros.DEFAULT_NAMESPACE)
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true',
+                        help="verbose output")
+    parser.add_argument('-d',
+                        '--debug',
+                        action='store_true',
+                        help="libfuse debug")
     parser.add_argument('path', type=str, help="mount point")
 
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 
-    rospy.init_node("mavftp_fuse", log_level=rospy.DEBUG if args.verbose else None)
+    rospy.init_node("mavftp_fuse",
+                    log_level=rospy.DEBUG if args.verbose else None)
     mavros.set_namespace(args.mavros_ns)
 
     fuse = FUSE(MavFtp(), args.path, foreground=True, debug=args.debug)
@@ -197,4 +216,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

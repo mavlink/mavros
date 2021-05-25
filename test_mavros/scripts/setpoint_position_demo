@@ -57,12 +57,12 @@ class SetpointPosition:
         self.done_evt = threading.Event()
 
     def navigate(self):
-        rate = rospy.Rate(10)   # 10hz
+        rate = rospy.Rate(10)  # 10hz
 
         msg = SP.PoseStamped(
             header=SP.Header(
                 frame_id="base_footprint",  # no matter, plugin don't use TF
-                stamp=rospy.Time.now()),    # stamp should update
+                stamp=rospy.Time.now()),  # stamp should update
         )
 
         while not rospy.is_shutdown():
@@ -132,7 +132,7 @@ def setpoint_demo():
     radius = 20
 
     rospy.loginfo("Fly in a circle")
-    setpoint.set(0.0, 0.0, 10.0, 3)   # Climb to the starting height first
+    setpoint.set(0.0, 0.0, 10.0, 3)  # Climb to the starting height first
     i = 0
     while not rospy.is_shutdown():
         x = radius * cos(i * 2 * pi / sides) + offset_x
@@ -157,11 +157,11 @@ def setpoint_demo():
             break
 
     # Simulate a slow landing.
-    setpoint.set(0.0, 0.0,  8.0, 5)
-    setpoint.set(0.0, 0.0,  3.0, 5)
-    setpoint.set(0.0, 0.0,  2.0, 2)
-    setpoint.set(0.0, 0.0,  1.0, 2)
-    setpoint.set(0.0, 0.0,  0.0, 2)
+    setpoint.set(0.0, 0.0, 8.0, 5)
+    setpoint.set(0.0, 0.0, 3.0, 5)
+    setpoint.set(0.0, 0.0, 2.0, 2)
+    setpoint.set(0.0, 0.0, 1.0, 2)
+    setpoint.set(0.0, 0.0, 0.0, 2)
     setpoint.set(0.0, 0.0, -0.2, 2)
 
     rospy.loginfo("Bye!")
