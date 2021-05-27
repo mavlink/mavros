@@ -1,166 +1,217 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
-# Copyright 2014 Vladimir Ermakov.
+# Copyright 2014,2021 Vladimir Ermakov.
 #
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
+"""mav ftp command"""
 
-from __future__ import print_function
-
-import argparse
 import os
+import pathlib
+import typing
 
-import rospy
+import click
 
-import mavros
-from mavros import ftp
-from mavros.nuttx_crc32 import *
-from mavros.utils import *
+from mavros_msgs.msg import FileEntry
 
-no_progressbar = False
-try:
-    import progressbar as pbar
-except ImportError:
-    print("Prigressbar disabled. install python-progressbar", file=sys.stderr)
-    no_progressbar = True
+from ..nuttx_crc32 import nuttx_crc32
+from . import cli, pass_client
+from .utils import fault_echo
 
 # optimized transfer size for FTP message payload
 # XXX: bug in ftp.cpp cause a doubling request of last package.
 # -1 fixes that.
 FTP_PAGE_SIZE = 239 * 18 - 1
-FTP_PWD_FILE = '/tmp/.mavftp_pwd'
-
-
-def _resolve_path(path=None):
-    """
-    Resolve FTP path using PWD file
-    """
-    if os.path.exists(FTP_PWD_FILE):
-        with open(FTP_PWD_FILE, 'r') as fd:
-            pwd = fd.readline()
-    else:
-        # default home location is root directory
-        pwd = os.environ.get('MAVFTP_HOME', '/')
-
-    if not path:
-        return os.path.normpath(pwd)  # no path - PWD location
-    elif path.startswith('/'):
-        return os.path.normpath(path)  # absolute path
-    else:
-        return os.path.normpath(os.path.join(pwd, path))
+FTP_PWD_FILE = pathlib.Path('/tmp/.mavftp_pwd')
 
 
 class ProgressBar:
-    """
-    Wrapper class for hiding file transfer brogressbar construction
-    """
-    def __init__(self, quiet, operation, maxval):
-        if no_progressbar or quiet or maxval == 0:
-            print_if(maxval == 0,
-                     "Can't show progressbar for unknown file size",
-                     file=sys.stderr)
+    """Wrapper class for hiding file transfer brogressbar construction"""
+    def __init__(self, quiet: bool, label: str, maxval: int):
+        if quiet or maxval == 0:
+            if maxval == 0:
+                click.echo("Can't show progressbar for unknown file size",
+                           err=True)
             self.pbar = None
             return
 
-        self.pbar = pbar.ProgressBar(widgets=[
-            operation,
-            pbar.Percentage(), ' ',
-            pbar.Bar(), ' ',
-            pbar.ETA(), ' ',
-            pbar.FileTransferSpeed()
-        ],
-                                     maxval=maxval).start()
+        self.pbar = click.progressbar(
+            label=label,
+            length=maxval,
+            show_percent=True,
+            show_eta=True,
+        )
 
-    def update(self, value):
+    def update(self, value: int):
         if self.pbar:
             self.pbar.update(value)
 
     def __enter__(self):
         if self.pbar:
-            self.pbar.start()
+            self.pbar.__enter__()
 
         return self
 
     def __exit__(self, type, value, traceback):
         if self.pbar:
-            self.pbar.finish()
+            self.pbar.__exit__(type, value, traceback)
 
 
-def do_change_directory(args):
-    # TODO: check that path is exist
-    path = args.path or os.environ.get('MAVFTP_HOME')
-    if args.path and not path.startswith('/'):
-        path = _resolve_path(path)
+@cli.group()
+@pass_client
+def ftp(client):
+    """File manipulation tool for MAVLink-FTP."""
+
+
+def resolve_path(
+        path: typing.Union[None, str, pathlib.Path] = None) -> pathlib.Path:
+    """Resolve FTP path using PWD file"""
+    if FTP_PWD_FILE.exists():
+        with FTP_PWD_FILE.open('r') as fd:
+            pwd = fd.readline()
+    else:
+        # default home location is root directory
+        pwd = os.environ.get('MAVFTP_HOME', '/')
+
+    pwd = pathlib.Path(pwd)
+
+    if not path:
+        return pwd.resolve()  # no path - PWD location
+    elif path.startswith('/'):
+        return pathlib.Path(path).resolve()  # absolute path
+    else:
+        return (pwd / path).resolve()
+
+
+@ftp.command('cd')
+@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@pass_client
+@click.pass_context
+def change_directory(ctx, client, path):
+    """change directory"""
+
+    # TODO(vooon): check that path is exist
+    path = path or os.environ.get('MAVFTP_HOME')
     if path and not path.startswith('/'):
-        fault("Path is not absolute:", path)
+        path = resolve_path(path)
+    if path and not path.is_absolute():
+        fault_echo(ctx, f"Path is not absolute: {path}")
 
     if path:
-        with open(FTP_PWD_FILE, 'w') as fd:
-            fd.write(os.path.normpath(path))
+        with FTP_PWD_FILE.open('w') as fd:
+            fd.write(pathlib.Path(path).resolve())
     else:
-        if os.path.exists(FTP_PWD_FILE):
-            os.unlink(FTP_PWD_FILE)
+        if FTP_PWD_FILE.exists():
+            FTP_PWD_FILE.unlink()
 
 
-def do_list(args):
-    args.path = _resolve_path(args.path)
-    for ent in ftp.listdir(args.path):
-        n = ent.name
-        if ent.type == ftp.FileEntry.TYPE_DIRECTORY:
-            n += '/'
-        else:
-            n += '\t{}'.format(ent.size)
-
-        print(n)
-
-
-def do_cat(args):
-    args.no_progressbar = True
-    args.no_verify = False
-    args.file = sys.stdout
-    do_download(args)
+@ftp.command('ls')
+@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@pass_client
+@click.pass_context
+def list(ctx, client, path):
+    """list files and directories"""
+    path = resolve_path(path)
+    for ent in client.ftp.listdir(str(path)):
+        isdir = ent.type == FileEntry.TYPE_DIRECTORY
+        click.echo(f"{ent.name}{isdir and '/' or ''}\t{ent.size}")
 
 
-def do_remove(args):
-    args.path = _resolve_path(args.path)
-    ftp.unlink(args.path)
+@ftp.command()
+@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@pass_client
+@click.pass_context
+def cat(ctx, client, path):
+    """cat file from FCU"""
+
+    ctx.invoke(
+        download,
+        src=path,
+        dest=click.open_file('-', 'wb'),
+        progressbar=True,
+        verify=False,
+    )
 
 
-def do_reset(args):
-    ftp.reset_server()
+@ftp.command('rm')
+@click.argument('path',
+                type=click.Path(exists=False, file_okay=True),
+                nargs=1,
+                required=True)
+@pass_client
+@click.pass_context
+def remove(ctx, client, path):
+    """remove file"""
+    path = resolve_path(path)
+    client.ftp.unlink(str(path))
 
 
-def do_mkdir(args):
-    args.path = _resolve_path(args.path)
-    ftp.mkdir(args.path)
+@ftp.command()
+@pass_client
+def reset(client):
+    """reset ftp server"""
+    client.ftp.reset_server()
 
 
-def do_rmdir(args):
-    args.path = _resolve_path(args.path)
-    ftp.rmdir(args.path)
+@ftp.command()
+@click.argument('path',
+                type=click.Path(exists=False, dir_okay=True),
+                nargs=1,
+                required=True)
+@pass_client
+@click.pass_context
+def mkdir(ctx, client, path):
+    """create directory"""
+    path = resolve_path(path)
+    client.ftp.mkdir(str(path))
 
 
-def do_download(args):
+@ftp.command()
+@click.argument('path',
+                type=click.Path(exists=False, dir_okay=True),
+                nargs=1,
+                required=True)
+@pass_client
+@click.pass_context
+def rmdir(ctx, client, path):
+    """remove directory"""
+    path = resolve_path(path)
+    client.ftp.rmdir(str(path))
+
+
+@ftp.command()
+@click.option('/-q',
+              '--progressbar/--no-progressbar',
+              default=True,
+              help="show progress bar")
+@click.option('/-v',
+              '--verify/--no-verify',
+              default=True,
+              help="perform verify step")
+@click.argument('src',
+                type=click.Path(exists=False, file_okay=True),
+                nargs=1,
+                required=True)
+@click.argument('dest', type=click.File('wb'), required=False)
+@pass_client
+@click.pass_context
+def download(ctx, client, src, dest, progressbar, verify):
+    """download file"""
+
     local_crc = 0
-    args.path = _resolve_path(args.path)
+    src = resolve_path(src)
 
-    if not args.file:
+    if not dest:
         # if file argument is not set, use $PWD/basename
-        args.file = open(os.path.basename(args.path), 'wb')
+        dest = click.open_file(pathlib.Path(src.name).name, 'wb')
 
-    print_if(args.verbose,
-             "Downloading from",
-             args.path,
-             "to",
-             args.file.name,
-             file=sys.stderr)
+    client.verbose_echo(f"Downloading from {src} to {dest.name}", err=True)
 
-    with args.file as to_fd, \
-            ftp.open(args.path, 'r') as from_fd, \
-            ProgressBar(args.no_progressbar, "Downloading: ", from_fd.size) as bar:
+    with dest as to_fd, \
+            click.ftp.open(src, 'r') as from_fd, \
+            ProgressBar(not progressbar, "Downloading:", from_fd.size) as bar:
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
@@ -170,37 +221,51 @@ def do_download(args):
             to_fd.write(buf)
             bar.update(from_fd.tell())
 
-    if not args.no_verify:
-        print_if(args.verbose, "Verifying...", file=sys.stderr)
-        remote_crc = ftp.checksum(args.path)
+    if verify:
+        click.verbose_echo("Verifying...", err=True)
+        remote_crc = click.ftp.checksum(str(src))
         if local_crc != remote_crc:
-            fault(
-                "Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".
-                format(**locals()))
+            fault_echo(
+                f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}"
+            )
 
 
-def do_upload(args):
-    mode = 'cw' if args.no_overwrite else 'w'
+@ftp.command()
+@click.option('/-q',
+              '--progressbar/--no-progressbar',
+              default=True,
+              help="show progress bar")
+@click.option('/-v',
+              '--verify/--no-verify',
+              default=True,
+              help="perform verify step")
+@click.option('--overwrite/--no-overwrite',
+              default=True,
+              help="is it allowed to overwrite file")
+@click.argument('src', type=click.File('rb'), nargs=1, required=True)
+@click.argument('dest',
+                type=click.Path(exists=False, file_okay=True),
+                required=False)
+@pass_client
+@click.pass_context
+def upload(ctx, client, src, dest, progressbar, verify, overwrite):
+    """upload file"""
+    mode = 'cw' if not overwrite else 'w'
     local_crc = 0
 
-    if args.path:
-        args.path = _resolve_path(args.path)
+    if dest:
+        dest = resolve_path(dest)
     else:
-        args.path = _resolve_path(os.path.basename(args.file.name))
+        dest = resolve_path(pathlib.Path(src.name).name)
 
-    print_if(args.verbose,
-             "Uploading from",
-             args.file.name,
-             "to",
-             args.path,
-             file=sys.stderr)
+    client.verbose_echo(f"Uploading from {src} to {dest}", err=True)
 
     # for stdin it is 0
-    from_size = os.fstat(args.file.fileno()).st_size
+    from_size = os.fstat(src.fileno()).st_size
 
-    with args.file as from_fd, \
-            ftp.open(args.path, mode) as to_fd, \
-            ProgressBar(args.no_progressbar, "Uploading: ", from_size) as bar:
+    with src as from_fd, \
+           client.ftp.open(str(dest), mode) as to_fd, \
+            ProgressBar(not progressbar, "Uploading:", from_size) as bar:
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
@@ -210,31 +275,35 @@ def do_upload(args):
             to_fd.write(buf)
             bar.update(to_fd.tell())
 
-    if not args.no_verify:
-        print_if(args.verbose, "Verifying...", file=sys.stderr)
-        remote_crc = ftp.checksum(args.path)
+    if verify:
+        client.verbose_echo("Verifying...", err=True)
+        remote_crc = client.ftp.checksum(str(dest))
         if local_crc != remote_crc:
-            fault(
-                "Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}".
-                format(**locals()))
+            fault_echo(
+                f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}"
+            )
 
 
-def do_verify(args):
+@ftp.command()
+@click.argument('local', type=click.File('rb'), nargs=1, required=True)
+@click.argument('remote',
+                type=click.Path(exists=False, file_okay=True),
+                required=False)
+@pass_client
+@click.pass_context
+def verify(ctx, client, local, remote):
+    """verify files"""
+
     local_crc = 0
 
-    if args.path:
-        args.path = _resolve_path(args.path)
+    if remote:
+        remote = resolve_path(remote)
     else:
-        args.path = _resolve_path(os.path.basename(args.file.name))
+        remote = resolve_path(pathlib.Path(local.name).name)
 
-    print_if(args.verbose,
-             "Verifying",
-             args.file.name,
-             "and",
-             args.path,
-             file=sys.stderr)
+    client.verbose_echo(f"Verifying {local} and {remote}", err=True)
 
-    with args.file as fd:
+    with local as fd:
         while True:
             buf = fd.read(4096 * 32)  # use 128k block for CRC32 calculation
             if len(buf) == 0:
@@ -242,111 +311,13 @@ def do_verify(args):
 
             local_crc = nuttx_crc32(buf, local_crc)
 
-    remote_crc = ftp.checksum(args.path)
+    remote_crc = client.ftp.checksum(str(remote))
 
-    print_if(args.verbose, "CRC32 for local and remote files:")
-    print_if(args.verbose,
-             "0x{local_crc:08x}  {args.file.name}".format(**locals()))
-    print_if(args.verbose,
-             "0x{remote_crc:08x}  {args.path}".format(**locals()))
+    client.verbose_echo("CRC32 for local and remote files:")
+    client.verbose_echo(f"0x{local_crc:08x}  {local.name}")
+    client.verbose_echo(f"0x{remote_crc:08x}  {remote.name}")
 
     if local_crc != remote_crc:
-        print("{args.file.name}: FAULT".format(**locals()))
-        sys.exit(1)
+        fault_echo(ctx, f"{local.name}: FAULT")
     else:
-        print("{args.file.name}: OK".format(**locals()))
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="File manipulation tool for MAVLink-FTP.")
-    parser.add_argument('-n',
-                        '--mavros-ns',
-                        help="ROS node namespace",
-                        default=mavros.DEFAULT_NAMESPACE)
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='store_true',
-                        help="verbose output")
-    subarg = parser.add_subparsers()
-
-    # argparse from python2 don't support subparser aliases
-    # there exist a hack, but i don't want it now.
-
-    cd_args = subarg.add_parser('cd', help="change directory")
-    cd_args.set_defaults(func=do_change_directory)
-    cd_args.add_argument('path', type=str, nargs='?', help="directory path")
-
-    list_args = subarg.add_parser('list', help="list files and dirs")
-    list_args.set_defaults(func=do_list)
-    list_args.add_argument('path', type=str, nargs='?', help="directory path")
-
-    cat_args = subarg.add_parser('cat', help="cat file")
-    cat_args.set_defaults(func=do_cat)
-    cat_args.add_argument('path', type=str, help="file path")
-
-    remove_args = subarg.add_parser('remove', help="remove file")
-    remove_args.set_defaults(func=do_remove)
-    remove_args.add_argument('path', type=str, help="file path")
-
-    mkdir_args = subarg.add_parser('mkdir', help="create direcotory")
-    mkdir_args.set_defaults(func=do_mkdir)
-    # mkdir_args.add_argument('-p', action='store_true', help="dir path")
-    mkdir_args.add_argument('path', type=str, help="dir path")
-
-    rmdir_args = subarg.add_parser('rmdir', help="remove directory")
-    rmdir_args.set_defaults(func=do_rmdir)
-    rmdir_args.add_argument('path', type=str, help="dir path")
-
-    download_args = subarg.add_parser('download', help="download file")
-    download_args.set_defaults(func=do_download)
-    download_args.add_argument('path', type=str, help="file to send")
-    download_args.add_argument('file',
-                               type=argparse.FileType('wb'),
-                               nargs='?',
-                               help="save path")
-    download_args.add_argument('-q',
-                               '--no-progressbar',
-                               action="store_true",
-                               help="do not show progressbar")
-    download_args.add_argument('--no-verify',
-                               action="store_true",
-                               help="do not perform verify step")
-
-    upload_args = subarg.add_parser('upload', help="upload file")
-    upload_args.set_defaults(func=do_upload)
-    upload_args.add_argument('file',
-                             type=argparse.FileType('rb'),
-                             help="file to send")
-    upload_args.add_argument('path', type=str, nargs='?', help="save path")
-    upload_args.add_argument('-n',
-                             '--no-overwrite',
-                             action="store_true",
-                             help="do not overwrite existing file")
-    upload_args.add_argument('-q',
-                             '--no-progressbar',
-                             action="store_true",
-                             help="do not show progressbar")
-    upload_args.add_argument('--no-verify',
-                             action="store_true",
-                             help="do not perform verify step")
-
-    verify_args = subarg.add_parser('verify', help="verify files")
-    verify_args.set_defaults(func=do_verify)
-    verify_args.add_argument('file',
-                             type=argparse.FileType('rb'),
-                             help="local file")
-    verify_args.add_argument('path', type=str, nargs='?', help="remote file")
-
-    reset_args = subarg.add_parser('reset', help="reset")
-    reset_args.set_defaults(func=do_reset)
-
-    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-    rospy.init_node("mavftp", anonymous=True)
-    mavros.set_namespace(args.mavros_ns)
-    args.func(args)
-
-
-if __name__ == '__main__':
-    main()
+        click.echo(f"{local.name}: OK")
