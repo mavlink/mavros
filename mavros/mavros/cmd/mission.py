@@ -58,7 +58,6 @@ def _add_format_options(f):
 
 def get_wp_file_io(client: CliClient, file_format: typing.Optional[str],
                    file_: typing.TextIO) -> PlanFile:
-
     if file_format == 'wpl':
         return QGroundControlWPL()
     elif file_format == 'plan':
@@ -72,14 +71,17 @@ def get_wp_file_io(client: CliClient, file_format: typing.Optional[str],
 
 @wp.command()
 @click.option('--mission/--no-mission',
+              '-m/-M',
               'pull_mission',
               default=True,
               help='Pull mission points')
 @click.option('--fence/--no-fence',
+              '-f/-F',
               'pull_fence',
               default=True,
               help='Pull fence points')
 @click.option('--rally/--no-rally',
+              '-r/-R',
               'pull_rally',
               default=True,
               help='Pull rally points')
@@ -119,7 +121,7 @@ def pull(ctx, client, pull_mission, pull_fence, pull_rally):
 @click.option('--rally',
               'accessor',
               flag_value='rallypoint',
-              help='Shot rallypoints')
+              help='Show rallypoints')
 @click.option('-p',
               '--pull',
               'pull_flag',
@@ -208,14 +210,17 @@ def show(ctx, client, accessor, pull_flag, follow):
     help=
     'Waypoint end index for partial update (APM only, default: last element)')
 @click.option('--no-mission',
+              '-M',
               is_flag=True,
               default=False,
               help="Don't load mission points")
 @click.option('--no-fence',
+              '-F',
               is_flag=True,
               default=False,
               help="Don't load fence points")
 @click.option('--no-rally',
+              '-R',
               is_flag=True,
               default=False,
               help="Don't load rally points")
@@ -299,14 +304,17 @@ def load(ctx, client, file_format, preserve_home, start_index, end_index,
 @wp.command()
 @_add_format_options
 @click.option('--no-mission',
+              '-M',
               is_flag=True,
               default=False,
               help="Don't dump mission points")
 @click.option('--no-fence',
+              '-F',
               is_flag=True,
               default=False,
               help="Don't dump fence points")
 @click.option('--no-rally',
+              '-R',
               is_flag=True,
               default=False,
               help="Don't dump rally points")
@@ -343,14 +351,17 @@ def dump(ctx, client, file_format, no_mission, no_fence, no_rally, file_):
 
 @wp.command()
 @click.option('--mission/--no-mission',
+              '-m/-M',
               'clear_mission',
               default=True,
               help="Clear mission points")
 @click.option('--fence/--no-fence',
+              '-f/-F',
               'clear_fence',
               default=True,
               help="Clear fence points")
 @click.option('--rally/--no-rally',
+              '-r/-R',
               'clear_rally',
               default=True,
               help="Clear rally points")
@@ -363,7 +374,7 @@ def clear(ctx, client, clear_mission, clear_fence, clear_rally):
             return
 
         req = WaypointClear.Request()
-        ret = accessor.cli_pull.call(req)
+        ret = accessor.cli_clear.call(req)
 
         if not ret.success:
             fault_echo(ctx, "Request failed. Check mavros logs")
@@ -371,7 +382,7 @@ def clear(ctx, client, clear_mission, clear_fence, clear_rally):
         client.verbose_echo(
             f"{accessor.__class__.__name__.replace('Plugin', '')}(s) cleared")
 
-    clear_if(clear_mission, client.waypoints)
+    clear_if(clear_mission, client.waypoint)
     clear_if(clear_fence, client.geofence)
     clear_if(clear_rally, client.rallypoint)
 

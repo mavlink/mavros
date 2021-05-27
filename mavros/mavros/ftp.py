@@ -183,7 +183,7 @@ class FTPPlugin(PluginModule):
         return self.create_client(Empty, ('ftp', 'reset'))
 
     def open(self, path: str, mode: str = 'r') -> FTPFile:
-        return FTPFile(fm=self, path=path, mode=mode)
+        return FTPFile(fm=self, name=path, mode=mode)
 
     def listdir(self, dir_path: str) -> typing.List[FileEntry]:
         req = FileList.Request(dir_path=dir_path)

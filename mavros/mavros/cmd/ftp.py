@@ -92,16 +92,14 @@ def resolve_path(
 def change_directory(ctx, client, path):
     """change directory"""
 
-    # TODO(vooon): check that path is exist
-    path = path or os.environ.get('MAVFTP_HOME')
-    if path and not path.startswith('/'):
+    if path:
         path = resolve_path(path)
     if path and not path.is_absolute():
         fault_echo(ctx, f"Path is not absolute: {path}")
 
     if path:
         with FTP_PWD_FILE.open('w') as fd:
-            fd.write(pathlib.Path(path).resolve())
+            fd.write(str(pathlib.Path(path).resolve()))
     else:
         if FTP_PWD_FILE.exists():
             FTP_PWD_FILE.unlink()
@@ -182,12 +180,12 @@ def rmdir(ctx, client, path):
 
 
 @ftp.command()
-@click.option('/-q',
-              '--progressbar/--no-progressbar',
+@click.option('--progressbar/--no-progressbar',
+              ' /-q',
               default=True,
               help="show progress bar")
-@click.option('/-v',
-              '--verify/--no-verify',
+@click.option('--verify/--no-verify',
+              ' /-v',
               default=True,
               help="perform verify step")
 @click.argument('src',
@@ -231,15 +229,16 @@ def download(ctx, client, src, dest, progressbar, verify):
 
 
 @ftp.command()
-@click.option('/-q',
-              '--progressbar/--no-progressbar',
+@click.option('--progressbar/--no-progressbar',
+              ' /-q',
               default=True,
               help="show progress bar")
-@click.option('/-v',
-              '--verify/--no-verify',
+@click.option('--verify/--no-verify',
+              ' /-v',
               default=True,
               help="perform verify step")
 @click.option('--overwrite/--no-overwrite',
+              ' /-W',
               default=True,
               help="is it allowed to overwrite file")
 @click.argument('src', type=click.File('rb'), nargs=1, required=True)
