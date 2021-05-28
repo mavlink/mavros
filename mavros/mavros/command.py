@@ -18,6 +18,7 @@ from .base import PluginModule, cached_property
 
 class CommandPlugin(PluginModule):
     """Interface to command plugin."""
+
     @cached_property
     def cli_long(self) -> rclpy.node.Client:
         return self.create_client(CommandLong, ('cmd', 'command'))

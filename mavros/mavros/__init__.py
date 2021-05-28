@@ -14,6 +14,7 @@ class Client(BaseNode):
 
     NOTE: Client is a ROS2 Node.
     """
+
     @cached_property
     def system(self) -> system.SystemPlugin:
         return system.SystemPlugin(self)

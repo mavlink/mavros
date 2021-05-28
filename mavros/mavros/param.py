@@ -46,6 +46,7 @@ class ParamFile:
 
 class MavProxyParam(ParamFile):
     """Parse MavProxy parm file."""
+
     class CSVDialect(csv.Dialect):
         delimiter = ' '
         doublequote = False
@@ -55,6 +56,7 @@ class MavProxyParam(ParamFile):
         escapechar = ''
 
     def _parse_param_file(self, file_: typing.TextIO):
+
         def to_numeric(x):
             return float(x) if '.' in x else int(x)
 
@@ -85,6 +87,7 @@ class MavProxyParam(ParamFile):
 
 class MissionPlannerParam(MavProxyParam):
     """Parse MissionPlanner param file."""
+
     class CSVDialect(csv.Dialect):
         delimiter = ','
         doublequote = False
@@ -96,6 +99,7 @@ class MissionPlannerParam(MavProxyParam):
 
 class QGroundControlParam(ParamFile):
     """Parse QGC param file."""
+
     class CSVDialect(csv.Dialect):
         delimiter = '\t'
         doublequote = False
@@ -105,6 +109,7 @@ class QGroundControlParam(ParamFile):
         escapechar = ''
 
     def _parse_param_file(self, file_: typing.TextIO):
+
         def to_numeric(x):
             return float(x) if '.' in x else int(x)
 
@@ -122,6 +127,7 @@ class QGroundControlParam(ParamFile):
         return self
 
     def save(self, file_: typing.TextIO):
+
         def to_type(x):
             if isinstance(x, float):
                 return 9  # REAL32
@@ -235,6 +241,7 @@ class ParamDict(dict):
     ParamDict class holds states of parameters
     and allow to upload new items.
     """
+
     class NoSet:
         """Wrapper to mark values we do not want to send set request for."""
         value: Parameter

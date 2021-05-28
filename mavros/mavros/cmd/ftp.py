@@ -6,7 +6,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""mav ftp command"""
+"""mav ftp command."""
 
 import os
 import pathlib
@@ -28,7 +28,8 @@ FTP_PWD_FILE = pathlib.Path('/tmp/.mavftp_pwd')
 
 
 class ProgressBar:
-    """Wrapper class for hiding file transfer brogressbar construction"""
+    """Wrapper class for hiding file transfer brogressbar construction."""
+
     def __init__(self, quiet: bool, label: str, maxval: int):
         if quiet or maxval == 0:
             if maxval == 0:
@@ -67,7 +68,7 @@ def ftp(client):
 
 def resolve_path(
         path: typing.Union[None, str, pathlib.Path] = None) -> pathlib.Path:
-    """Resolve FTP path using PWD file"""
+    """Resolve FTP path using PWD file."""
     if FTP_PWD_FILE.exists():
         with FTP_PWD_FILE.open('r') as fd:
             pwd = fd.readline()
@@ -90,8 +91,7 @@ def resolve_path(
 @pass_client
 @click.pass_context
 def change_directory(ctx, client, path):
-    """change directory"""
-
+    """Change directory."""
     if path:
         path = resolve_path(path)
     if path and not path.is_absolute():
@@ -110,7 +110,7 @@ def change_directory(ctx, client, path):
 @pass_client
 @click.pass_context
 def list(ctx, client, path):
-    """list files and directories"""
+    """List files and directories."""
     path = resolve_path(path)
     for ent in client.ftp.listdir(str(path)):
         isdir = ent.type == FileEntry.TYPE_DIRECTORY
@@ -122,8 +122,7 @@ def list(ctx, client, path):
 @pass_client
 @click.pass_context
 def cat(ctx, client, path):
-    """cat file from FCU"""
-
+    """Cat file from FCU."""
     ctx.invoke(
         download,
         src=path,
@@ -141,7 +140,7 @@ def cat(ctx, client, path):
 @pass_client
 @click.pass_context
 def remove(ctx, client, path):
-    """remove file"""
+    """Remove file."""
     path = resolve_path(path)
     client.ftp.unlink(str(path))
 
@@ -149,7 +148,7 @@ def remove(ctx, client, path):
 @ftp.command()
 @pass_client
 def reset(client):
-    """reset ftp server"""
+    """Reset ftp server."""
     client.ftp.reset_server()
 
 
@@ -161,7 +160,7 @@ def reset(client):
 @pass_client
 @click.pass_context
 def mkdir(ctx, client, path):
-    """create directory"""
+    """Create directory."""
     path = resolve_path(path)
     client.ftp.mkdir(str(path))
 
@@ -174,7 +173,7 @@ def mkdir(ctx, client, path):
 @pass_client
 @click.pass_context
 def rmdir(ctx, client, path):
-    """remove directory"""
+    """Remove directory."""
     path = resolve_path(path)
     client.ftp.rmdir(str(path))
 
@@ -196,8 +195,7 @@ def rmdir(ctx, client, path):
 @pass_client
 @click.pass_context
 def download(ctx, client, src, dest, progressbar, verify):
-    """download file"""
-
+    """Download file."""
     local_crc = 0
     src = resolve_path(src)
 
@@ -248,7 +246,7 @@ def download(ctx, client, src, dest, progressbar, verify):
 @pass_client
 @click.pass_context
 def upload(ctx, client, src, dest, progressbar, verify, overwrite):
-    """upload file"""
+    """Upload file."""
     mode = 'cw' if not overwrite else 'w'
     local_crc = 0
 
@@ -291,8 +289,7 @@ def upload(ctx, client, src, dest, progressbar, verify, overwrite):
 @pass_client
 @click.pass_context
 def verify(ctx, client, local, remote):
-    """verify files"""
-
+    """Verify files."""
     local_crc = 0
 
     if remote:

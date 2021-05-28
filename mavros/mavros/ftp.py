@@ -135,6 +135,7 @@ class FTPFile:
 
 class FTPPlugin(PluginModule):
     """FTP plugin interface"""
+
     @cached_property
     def cli_open(self) -> rclpy.node.Client:
         return self.create_client(FileOpen, ('ftp', 'open'))

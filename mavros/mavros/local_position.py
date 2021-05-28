@@ -18,6 +18,7 @@ from .base import SENSOR_QOS, PluginModule, SubscriptionCallable
 
 class LocalPositionPlugin(PluginModule):
     """Local position plugin."""
+
     def subscribe_pose(self,
                        callback: SubscriptionCallable,
                        qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:

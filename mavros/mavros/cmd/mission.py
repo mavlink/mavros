@@ -93,6 +93,7 @@ def fmt_accessor(accessor: MissionPluginBase):
 @click.pass_context
 def pull(ctx, client, pull_mission, pull_fence, pull_rally):
     """Pull mission from FCU"""
+
     def pull_if(cond: bool, accessor: MissionPluginBase):
         if not cond:
             return
@@ -370,6 +371,7 @@ def dump(ctx, client, file_format, no_mission, no_fence, no_rally, file_):
 @click.pass_context
 def clear(ctx, client, clear_mission, clear_fence, clear_rally):
     """Clear mission from FCU"""
+
     def clear_if(cond: bool, accessor: MissionPluginBase):
         if not cond:
             return

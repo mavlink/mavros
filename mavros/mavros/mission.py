@@ -195,6 +195,7 @@ class MissionPluginBase(PluginModule):
 
 class WaypointPlugin(MissionPluginBase):
     """Interface to waypoint plugin."""
+
     @cached_property
     def cli_set_current(self) -> rclpy.node.Client:
         return self._node.create_client(WaypointSetCurrent,

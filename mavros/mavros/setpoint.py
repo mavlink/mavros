@@ -24,6 +24,7 @@ QOS = SENSOR_QOS
 
 
 class SetpointAccelPlugin(PluginModule):
+
     @cached_property
     def pub_accel(self) -> rclpy.node.Publisher:
         return self.create_publisher(Vector3Stamped,
@@ -31,6 +32,7 @@ class SetpointAccelPlugin(PluginModule):
 
 
 class SetpointAttitudePlugin(PluginModule):
+
     @cached_property
     def pub_attitude(self) -> rclpy.node.Publisher:
         return self.create_publisher(PoseStamped,
@@ -48,6 +50,7 @@ class SetpointAttitudePlugin(PluginModule):
 
 
 class SetpointPositionPlugin(PluginModule):
+
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
         return self.create_publisher(PoseStamped,
@@ -66,6 +69,7 @@ class SetpointPositionPlugin(PluginModule):
 
 
 class SetpointRawPlugin(PluginModule):
+
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
         return self.create_publisher(PositionTarget, ('setpoint_raw', 'local'),
@@ -104,6 +108,7 @@ class SetpointRawPlugin(PluginModule):
 
 
 class SetpointTrajectoryPlugin(PluginModule):
+
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
         return self.create_publisher(MultiDOFJointTrajectory,
@@ -122,6 +127,7 @@ class SetpointTrajectoryPlugin(PluginModule):
 
 
 class SetpointVelocityPlugin(PluginModule):
+
     @cached_property
     def pub_cmd_vel(self) -> rclpy.node.Publisher:
         return self.create_publisher(TwistStamped,

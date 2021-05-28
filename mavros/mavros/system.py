@@ -23,6 +23,7 @@ from .base import (SENSOR_QOS, STATE_QOS, PluginModule, SubscriptionCallable,
 
 class SystemPlugin(PluginModule):
     """System plugin."""
+
     def subscribe_state(self,
                         callback: SubscriptionCallable,
                         qos_profile=STATE_QOS) -> rclpy.node.Subscription:

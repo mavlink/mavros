@@ -92,6 +92,7 @@ def _add_rate_options(*options: typing.List[str]):
 def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
          raw_controller, position, extra1, extra2, extra3, stream_id):
     """Set stream rate"""
+
     def set_rate(rate_arg: typing.Optional[int], id_: int):
         if rate_arg is None:
             return
