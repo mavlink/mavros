@@ -5,7 +5,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""mav sys command"""
+"""mav sys command."""
 
 import threading
 import typing
@@ -35,6 +35,7 @@ def sys(client):
 @pass_client
 @click.pass_context
 def mode(ctx, client, base_mode, custom_mode):
+    """Set mode."""
     custom_mode = custom_mode.upper()
 
     done_evt = threading.Event()
@@ -91,7 +92,8 @@ def _add_rate_options(*options: typing.List[str]):
 @click.pass_context
 def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
          raw_controller, position, extra1, extra2, extra3, stream_id):
-    """Set stream rate"""
+    """Set stream rate."""
+    _ = 1  # yapf
 
     def set_rate(rate_arg: typing.Optional[int], id_: int):
         if rate_arg is None:
@@ -131,7 +133,6 @@ def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
               help='message rate')
 @pass_client
 def message_interval(client, id, rate):
-    """Set message interval"""
-
+    """Set message interval."""
     req = MessageInterval.Request(message_id=id, message_rate=rate)
     client.system.cli_set_message_interval.call(req)

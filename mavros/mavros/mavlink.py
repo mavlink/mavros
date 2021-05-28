@@ -63,7 +63,7 @@ def convert_to_bytes(msg: Mavlink) -> bytearray:
 
 def convert_to_payload64(
         payload_bytes: typing.Union[bytes, bytearray]) -> typing.List[int]:
-    """Convert payload bytes to Mavlink.payload64"""
+    """Convert payload bytes to Mavlink.payload64."""
     payload_bytes = bytearray(payload_bytes)
     payload_len = len(payload_bytes)
     payload_octets = payload_len / 8
@@ -78,7 +78,7 @@ def convert_to_rosmsg(
         mavmsg: MAVLink_message,
         stamp: typing.Optional[rclpy.time.Time] = None) -> Mavlink:
     """
-    Convert pymavlink message to Mavlink.msg
+    Convert pymavlink message to Mavlink.msg.
 
     Currently supports both MAVLink v1.0 and v2.0,
     but without signing.

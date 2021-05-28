@@ -6,7 +6,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""Utilities for cli"""
+"""Utilities for cli."""
 
 import functools
 import typing
@@ -59,12 +59,14 @@ def check_cmd_ret(ctx, client, ret):
 
 
 def bool2int(b: bool) -> int:
-    """converts bool to 1 or 0
+    """
+    Convert bool to 1 or 0.
 
     I had an exception "TypeError: 'bool' object is not iterable"
     for code like int(confirmation).
 
-    Why? Who knows..."""
+    Why? Who knows...
+    """
     if b:
         return 1
     return 0
@@ -72,5 +74,5 @@ def bool2int(b: bool) -> int:
 
 def apply_options(func: typing.Callable,
                   *opts: typing.List[typing.Callable]) -> typing.Callable:
-    """Helper to apply several click.option to the same function"""
+    """Apply several click.option to the same function."""
     return functools.reduce(lambda x, opt: opt(x), reversed(opts), func)

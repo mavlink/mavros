@@ -29,6 +29,7 @@ def _check_raise_errno(ret):
 class FTPFile:
     """
     FCU file object.
+
     Note that current PX4 firmware only support two connections simultaneously.
     """
 
@@ -45,7 +46,7 @@ class FTPFile:
 
     def open(self, path: str, mode: str):
         """
-        Calls open.
+        Call open.
 
         Supported modes:
             - 'w': write binary
@@ -134,7 +135,7 @@ class FTPFile:
 
 
 class FTPPlugin(PluginModule):
-    """FTP plugin interface"""
+    """FTP plugin interface."""
 
     @cached_property
     def cli_open(self) -> rclpy.node.Client:

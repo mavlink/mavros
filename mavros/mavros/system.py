@@ -81,7 +81,6 @@ class SystemPlugin(PluginModule):
     def wait_fcu_connection(self,
                             timeout: typing.Optional[float] = None) -> bool:
         """Wait until establishing FCU connection."""
-
         connected = threading.Event()
 
         def handler(msg: State):

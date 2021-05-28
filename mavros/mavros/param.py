@@ -238,12 +238,15 @@ class ParamPlugin(PluginModule):
 
 class ParamDict(dict):
     """
-    ParamDict class holds states of parameters
+    ParamDict wrapper.
+
+    That class holds states of parameters
     and allow to upload new items.
     """
 
     class NoSet:
         """Wrapper to mark values we do not want to send set request for."""
+
         value: Parameter
 
         def __init__(self, p):
