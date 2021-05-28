@@ -7,9 +7,9 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """
-mav cmd command
+mav cmd command.
 
-Note: arming service provided by mav safety
+Note: arming service provided by mav safety.
 """
 
 import threading
@@ -53,8 +53,7 @@ def cmd(client):
 @click.pass_context
 def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
          param4, param5, param6, param7):
-    "Send any command (COMMAND_LONG)"
-
+    """Send any command (COMMAND_LONG)."""
     req = CommandLong.Request(
         broadcast=broadcast,
         command=command,
@@ -102,8 +101,7 @@ def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
 @click.pass_context
 def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
         param2, param3, param4, x, y, z):
-    """Send any command (COMMAND_INT)"""
-
+    """Send any command (COMMAND_INT)."""
     req = CommandInt.Request(
         broadcast=broadcast,
         command=command,
@@ -135,8 +133,7 @@ def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
 @pass_client
 @click.pass_context
 def set_home(ctx, client, current_gps, latitude, longitude, altitude):
-    """Request change home position"""
-
+    """Request change home position."""
     req = CommandHome.Request(
         current_gps=current_gps,
         latitude=latitude,
@@ -158,8 +155,7 @@ def set_home(ctx, client, current_gps, latitude, longitude, altitude):
 @pass_client
 @click.pass_context
 def takeoff(ctx, client, min_pitch, yaw, latitude, longitude, altitude):
-    """Request takeoff"""
-
+    """Request takeoff."""
     req = CommandTOL.Request(
         min_pitch=min_pitch,
         yaw=yaw,
@@ -181,8 +177,7 @@ def takeoff(ctx, client, min_pitch, yaw, latitude, longitude, altitude):
 @pass_client
 @click.pass_context
 def land(ctx, client, yaw, latitude, longitude, altitude):
-    """Request land"""
-
+    """Request land."""
     req = CommandTOL.Request(
         min_pitch=0.0,
         yaw=yaw,
@@ -203,8 +198,7 @@ def land(ctx, client, yaw, latitude, longitude, altitude):
 @pass_client
 @click.pass_context
 def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
-    """Request takeoff from current GPS coordinates"""
-
+    """Request takeoff from current GPS coordinates."""
     done_evt = threading.Event()
 
     def fix_cb(fix: NavSatFix):
@@ -239,8 +233,7 @@ def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
 @pass_client
 @click.pass_context
 def land_cur(ctx, client, yaw, altitude):
-    """Request land on current GPS coordinates"""
-
+    """Request land on current GPS coordinates."""
     done_evt = threading.Event()
 
     def fix_cb(fix: NavSatFix):
@@ -294,8 +287,7 @@ def land_cur(ctx, client, yaw, altitude):
 @click.pass_context
 def trigger_control(ctx, client, trigger_enable, sequence_reset,
                     trigger_pause):
-    "Control onboard camera triggering system (PX4)"
-
+    """Control onboard camera triggering system (PX4)."""
     req = CommandTriggerControl.Request(
         trigger_enable=trigger_enable,
         sequence_reset=sequence_reset,
@@ -322,8 +314,7 @@ def trigger_control(ctx, client, trigger_enable, sequence_reset,
 @pass_client
 @click.pass_context
 def trigger_interval(ctx, client, cycle_time, integration_time):
-    "Control onboard camera triggering system (PX4)"
-
+    """Control onboard camera triggering system (PX4)."""
     req = CommandTriggerInterval.Request(
         cycle_time=cycle_time,
         integration_time=integration_time,

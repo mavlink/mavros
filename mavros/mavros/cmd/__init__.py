@@ -6,9 +6,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""
-MAVROS helper tools
-"""
+"""MAVROS helper tools."""
 
 import pathlib
 import typing
@@ -100,10 +98,7 @@ def print_version(ctx, param_, value):
               help="Show program version and exit")
 @click.pass_context
 def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
-    """
-    MAVROS tools entry point
-    """
-
+    """MAVROS tools entry point."""
     rclpy.init()
     ctx.call_on_close(rclpy.shutdown)
 

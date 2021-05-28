@@ -78,6 +78,7 @@ class UASParams:
 class BaseNode(rclpy.node.Node):
     """
     Base class for mavros client object.
+
     It's used to hide plugin parameters.
     """
 
@@ -87,7 +88,7 @@ class BaseNode(rclpy.node.Node):
                  node_name: typing.Optional[str] = None,
                  mavros_ns: str = DEFAULT_NAMESPACE):
         """
-        BaseNode constructor.
+        Constructor.
 
         :param node_name: name of the node, would be random if None
         :param mavros_ns: node name of mavros::UAS

@@ -7,6 +7,8 @@
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """
+Check ID diagnostic.
+
 This script listens to devices connected to mavros and
 checks against system & component id mismatch errors.
 """
@@ -113,6 +115,5 @@ class Checker:
 @pass_client
 def checkid(client, follow, watch_time):
     """Tool to verify target address and list messages coming to mavros UAS."""
-
     checker = Checker(client=client, follow=follow, watch_time=watch_time)
     checker.event.wait()
