@@ -5,7 +5,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""mav wp command"""
+"""mav wp command."""
 
 import threading
 import typing
@@ -32,7 +32,6 @@ except ImportError:
 @pass_client
 def wp(client):
     """Tool to manipulate missions on MAVLink device."""
-
     if no_prettytable:
         click.echo(
             "Waring: 'show' action disabled. Please install python3-prettytable",
@@ -92,7 +91,8 @@ def fmt_accessor(accessor: MissionPluginBase):
 @pass_client
 @click.pass_context
 def pull(ctx, client, pull_mission, pull_fence, pull_rally):
-    """Pull mission from FCU"""
+    """Pull mission from FCU."""
+    _ = 1  # yapf
 
     def pull_if(cond: bool, accessor: MissionPluginBase):
         if not cond:
@@ -141,14 +141,13 @@ def pull(ctx, client, pull_mission, pull_fence, pull_rally):
 @click.pass_context
 def show(ctx, client, accessor, pull_flag, follow):
     """
-    Show current points
+    Show current points.
 
     You can select type by setting flag:
       --mission - mission (default),
       --fence - geofence,
       --rally - rallypoints
     """
-
     if no_prettytable:
         fault_echo(ctx, "Show command require prettytable module!")
 
@@ -232,8 +231,7 @@ def show(ctx, client, accessor, pull_flag, follow):
 @click.pass_context
 def load(ctx, client, file_format, preserve_home, start_index, end_index,
          no_mission, no_fence, no_rally, file_):
-    """Load mission from file"""
-
+    """Load mission from file."""
     mission_file = get_wp_file_io(client, file_format, file_)
     mission_file.load(file_)
 
@@ -324,8 +322,7 @@ def load(ctx, client, file_format, preserve_home, start_index, end_index,
 @pass_client
 @click.pass_context
 def dump(ctx, client, file_format, no_mission, no_fence, no_rally, file_):
-    """Dump mission to file"""
-
+    """Dump mission to file."""
     mission_file = get_wp_file_io(client, file_format, file_)
 
     fetch_mission = not no_mission
@@ -370,7 +367,8 @@ def dump(ctx, client, file_format, no_mission, no_fence, no_rally, file_):
 @pass_client
 @click.pass_context
 def clear(ctx, client, clear_mission, clear_fence, clear_rally):
-    """Clear mission from FCU"""
+    """Clear mission from FCU."""
+    _ = 1  # yapf
 
     def clear_if(cond: bool, accessor: MissionPluginBase):
         if not cond:
@@ -394,8 +392,7 @@ def clear(ctx, client, clear_mission, clear_fence, clear_rally):
 @pass_client
 @click.pass_context
 def setcur(ctx, client, seq):
-    """Set current mission item"""
-
+    """Set current mission item."""
     req = WaypointSetCurrent.Request(wp_seq=seq)
     ret = client.waypoint.cli_set_current.call(req)
 

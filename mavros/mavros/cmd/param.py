@@ -5,7 +5,7 @@
 # This file is part of the mavros package and subject to the license terms
 # in the top-level LICENSE file of the mavros repository.
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
-"""mav param command"""
+"""mav param command."""
 
 import typing
 
@@ -78,8 +78,7 @@ def get_param_file_io(client: CliClient, file_format: typing.Optional[str],
 @click.argument('file_', type=click.File('r'), metavar='FILE')
 @pass_client
 def load(client, file_format, file_):
-    """Load parameters from file"""
-
+    """Load parameters from file."""
     param_file = get_param_file_io(client, file_format, file_)
     param_file.load(file_)
 
@@ -98,9 +97,8 @@ def load(client, file_format, file_):
 @click.argument('file_', type=click.File('w'), metavar='FILE')
 @pass_client
 def dump(client, file_format, force, file_):
-    """Dump parameters to file"""
-
-    # NOTE(vooon): hidden migic - create ParamDict and get ref
+    """Dump parameters to file."""
+    # NOTE(vooon): hidden magic - create ParamDict and get ref
     values = client.param.values
 
     if force:
@@ -118,7 +116,6 @@ def dump(client, file_format, force, file_):
 @pass_client
 def get(client, param_id):
     """Print one parameter value."""
-
     # XXX(vooon): ineffecient
     click.echo(f"{client.param.values[param_id].value}")
 
@@ -128,8 +125,7 @@ def get(client, param_id):
 @click.argument('value', type=str)
 @pass_client
 def set(client, param_id, value):
-    """Set one parameter"""
-
+    """Set one parameter."""
     if '.' in value:
         val = float(value)
     else:
