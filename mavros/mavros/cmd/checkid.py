@@ -74,7 +74,8 @@ class Checker:
             click.secho(f"OK. I got messages from {str_tgt_ids}.", fg='green')
         else:
             click.secho(
-                f"ERROR. I got {len(self.message_sources)} addresses, but not your target {str_tgt_ids}",
+                f"ERROR. I got {len(self.message_sources)} addresses, "
+                f"but not your target {str_tgt_ids}",
                 fg='red')
 
         click.secho("---", fg='cyan')

@@ -20,16 +20,17 @@
 #    - Changed topic names after re-factoring : https://github.com/mavlink/mavros/issues/233
 #    - Use mavros.setpoint module for topics
 
-import rospy
-import thread
 import threading
 import time
-import mavros
-
 from math import *
-from mavros.utils import *
-from mavros import setpoint as SP
+
+import rospy
+import thread
 from tf.transformations import quaternion_from_euler
+
+import mavros
+from mavros import setpoint as SP
+from mavros.utils import *
 
 
 class SetpointPosition:

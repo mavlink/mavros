@@ -50,13 +50,13 @@ find_package(trajectory_msgs REQUIRED)
 include_directories(
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  )
+)
 
 include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${GEOGRAPHICLIB_INCLUDE_DIRS}
-  )
+)
 
 ## Check if the datasets are installed
 include(CheckGeographicLibDatasets)
@@ -83,7 +83,7 @@ add_library(mavros SHARED
   src/lib/uas_tf.cpp
   src/lib/uas_timesync.cpp
   # [[[end]]] (checksum: b3ecd6fa61c6675105deb192dbdde2fc)
-  )
+)
 ament_target_dependencies(mavros
   rclcpp
   rclcpp_components
@@ -98,7 +98,7 @@ ament_target_dependencies(mavros
   tf2_ros
   tf2_eigen
   Eigen3
-  )
+)
 target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
 rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::UAS")
 
@@ -132,13 +132,13 @@ add_library(mavros_plugins SHARED
   src/plugins/waypoint.cpp
   src/plugins/wind_estimation.cpp
   # [[[end]]] (checksum: e0bc1af34a7ae5b7471d95e6d23b7388)
-  )
+)
 add_dependencies(mavros_plugins
   mavros
-  )
+)
 target_link_libraries(mavros_plugins
   mavros
-  )
+)
 ament_target_dependencies(mavros_plugins
   angles
   geometry_msgs
@@ -158,7 +158,7 @@ ament_target_dependencies(mavros_plugins
   tf2_eigen
   message_filters
   Eigen3
-  )
+)
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
 add_executable(mavros_node src/mavros_node.cpp)
@@ -169,26 +169,26 @@ ament_python_install_package(${PROJECT_NAME})
 # NOTE(vooon): for some reason console_scripts do not works with ament_python!
 install(PROGRAMS scripts/mav
   DESTINATION lib/${PROJECT_NAME}
-  )
+)
 
 install(TARGETS mavros mavros_node mavros_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
-  )
+)
 
 install(PROGRAMS scripts/install_geographiclib_datasets.sh
   DESTINATION lib/${PROJECT_NAME}
-  )
+)
 
 install(DIRECTORY include/
   DESTINATION include
-  )
+)
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
-  )
+)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
@@ -242,7 +242,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(mavros_py_test test/mavros_py
     PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}"
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
-    )
+  )
 endif()
 
 #ament_export_dependencies(console_bridge)

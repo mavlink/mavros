@@ -9,19 +9,18 @@
 
 from __future__ import print_function
 
+import argparse
 import os.path
 import sys
-import argparse
-
-import rospy
-import mavros
-
-from mavros import ftp
 from stat import S_IFDIR, S_IFREG
 
+import rospy
+
+import mavros
+from mavros import ftp
+
 try:
-    from fuse import FUSE, FuseOSError, Operations, \
-            fuse_get_context, ENOENT
+    from fuse import ENOENT, FUSE, FuseOSError, Operations, fuse_get_context
 except ImportError:
     print(
         "Fuse wrapper module not found. Please install fusepy: pip install fusepy",

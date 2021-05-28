@@ -69,6 +69,10 @@ def get_wp_file_io(client: CliClient, file_format: typing.Optional[str],
             return QGroundControlWPL()
 
 
+def fmt_accessor(accessor: MissionPluginBase):
+    return f"{accessor.__class__.__name__.replace('Plugin', '')}"
+
+
 @wp.command()
 @click.option('--mission/--no-mission',
               '-m/-M',
@@ -100,8 +104,7 @@ def pull(ctx, client, pull_mission, pull_fence, pull_rally):
             fault_echo(ctx, "Request failed. Check mavros logs")
 
         client.verbose_echo(
-            f"{accessor.__class__.__name__.replace('Plugin', '')}(s) received: {ret.wp_received}"
-        )
+            f"{fmt_accessor(accessor)}(s) received: {ret.wp_received}")
 
     pull_if(pull_mission, client.waypoint)
     pull_if(pull_fence, client.geofence)
@@ -202,13 +205,12 @@ def show(ctx, client, accessor, pull_flag, follow):
               type=int,
               default=0,
               help="Waypoint start index for partial update (APM only)")
-@click.option(
-    '-e',
-    '--end-index',
-    type=int,
-    default=0,
-    help=
-    'Waypoint end index for partial update (APM only, default: last element)')
+@click.option('-e',
+              '--end-index',
+              type=int,
+              default=0,
+              help='Waypoint end index for partial update '
+              '(APM only, default: last element)')
 @click.option('--no-mission',
               '-M',
               is_flag=True,
@@ -379,8 +381,7 @@ def clear(ctx, client, clear_mission, clear_fence, clear_rally):
         if not ret.success:
             fault_echo(ctx, "Request failed. Check mavros logs")
 
-        client.verbose_echo(
-            f"{accessor.__class__.__name__.replace('Plugin', '')}(s) cleared")
+        client.verbose_echo(f"{fmt_accessor(accessor)}(s) cleared")
 
     clear_if(clear_mission, client.waypoint)
     clear_if(clear_fence, client.geofence)

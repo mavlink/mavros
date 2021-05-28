@@ -10,11 +10,12 @@
 import rclpy
 from geographic_msgs.msg import GeoPoseStamped
 from geometry_msgs.msg import PoseStamped, Twist, TwistStamped, Vector3Stamped
-from mavros_msgs.msg import (AttitudeTarget, GlobalPositionTarget,
-                             PositionTarget, Thrust)
 from nav_msgs.msg import Path
 from std_srvs.srv import Trigger
 from trajectory_msgs.msg import MultiDOFJointTrajectory
+
+from mavros_msgs.msg import (AttitudeTarget, GlobalPositionTarget,
+                             PositionTarget, Thrust)
 
 from .base import (SENSOR_QOS, PluginModule, SubscriptionCallable,
                    cached_property)

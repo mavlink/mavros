@@ -9,18 +9,20 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
-import rospy
-import mavros
+import sys
 
-from tf.transformations import quaternion_from_euler
+import rospy
+from geometry_msgs.msg import (Point, PoseStamped, Quaternion, TwistStamped,
+                               Vector3)
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Header, Float64
-from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion, Point
-from mavros_msgs.msg import OverrideRCIn
+from std_msgs.msg import Float64, Header
+from tf.transformations import quaternion_from_euler
+
+import mavros
 from mavros import command
 from mavros import setpoint as SP
+from mavros_msgs.msg import OverrideRCIn
 
 
 def arduino_map(x, inmin, inmax, outmin, outmax):

@@ -50,7 +50,7 @@ class CliClient:
 pass_client = click.make_pass_decorator(CliClient)
 
 
-def print_version(ctx, param, value):
+def print_version(ctx, param_, value):
     if not value or ctx.resilient_parsing:
         return
 

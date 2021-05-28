@@ -16,7 +16,7 @@ from mavros_msgs.msg import State
 from mavros_msgs.srv import MessageInterval, SetMode, StreamRate
 
 from . import cli, pass_client
-from .utils import fault_echo, apply_options
+from .utils import apply_options, fault_echo
 
 
 @cli.group()

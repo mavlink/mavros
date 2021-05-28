@@ -263,7 +263,7 @@ def upload(ctx, client, src, dest, progressbar, verify, overwrite):
     from_size = os.fstat(src.fileno()).st_size
 
     with src as from_fd, \
-           client.ftp.open(str(dest), mode) as to_fd, \
+            client.ftp.open(str(dest), mode) as to_fd, \
             ProgressBar(not progressbar, "Uploading:", from_size) as bar:
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
