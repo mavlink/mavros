@@ -254,8 +254,7 @@ def load(ctx, client, file_format, preserve_home, start_index, end_index,
             fault_echo("Request failed. Check mavros logs")
 
         client.verbose_echo(
-            f"{accessor.__class__.__name__.replace('Plugin', '')}(s) transfered: {ret.wp_transfered}"
-        )
+            f"{fmt_accessor(accessor)}(s) transfered: {ret.wp_transfered}")
 
     done_evt = threading.Event()
 
@@ -264,8 +263,8 @@ def load(ctx, client, file_format, preserve_home, start_index, end_index,
             wp0 = topic.waypoints[0]
             mission_file.mission[0] = wp0
             client.verbose_echo(
-                f"HOME location: latitude: {wp0.x_lat}, longitude: {wp0.y_long}, altitude: {wp0.z_alt}"
-            )
+                f"HOME location: latitude: {wp0.x_lat}, "
+                f"longitude: {wp0.y_long}, altitude: {wp0.z_alt}")
         else:
             click.echo("Failed to get WP0! WP0 will be loaded from file.",
                        err=True)

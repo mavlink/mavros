@@ -7,7 +7,6 @@
 # https://github.com/mavlink/mavros/tree/master/LICENSE.md
 """mav param command"""
 
-import pathlib
 import typing
 
 import click
