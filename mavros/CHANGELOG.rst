@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2021-05-28)
+------------------
 * pylib: fixing pep257 errors
 * pylib: fixing pep257 errors
 * pylib: fixing pep257 errors

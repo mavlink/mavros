@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2021-05-28)
+------------------
 * msgs: update command codes
 * msgs: update param services
 * plugins: setpoint_velocity: port to ros2

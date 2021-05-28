@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2021-05-28)
+------------------
 * pylib: fix flake8
 * libmavconn: fix uncrustify test error
 * Merge branch 'master' into ros2
