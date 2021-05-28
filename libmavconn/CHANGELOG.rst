@@ -2,6 +2,40 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* pylib: fix flake8
+* libmavconn: fix uncrustify test error
+* Merge branch 'master' into ros2
+  * master:
+  1.7.1
+  update changelog
+  re-generate all pymavlink enums
+  1.7.0
+  update changelog
+* router: rename mavlink to/from to source/sink, i think that terms more descriptive
+* mavros: fix cmake to build libmavros
+* lib: make ament_lint_cmake happy
+* msgs: add linter
+* lib: fix all ament_cpplint errors
+* lib: make cpplint happy
+* lib: make ament_uncrustify happy, update BSD license text to one known by ament_copyright
+* lib: try to fix ament_copyright lint
+* lib: port cpp, update license headers for ament_copyright
+* lib: port to standalone asio
+* lib: remove boost usage from headers
+* lib: update code style
+* lib: rename cpp headers
+* lib: provide copy of em_expand()
+* lib: update readme
+* libmavconn: start porintg, will use plain asio, without boost
+* Merge pull request `#1186 <https://github.com/mavlink/mavros/issues/1186>`_ from PickNikRobotics/ros2
+  mavros_msgs Ros2
+* Merge branch 'ros2' into ros2
+* msgs: start porting to ROS2
+* disable all packages but messages
+* Contributors: Mikael Arguedas, Vladimir Ermakov
+
 1.7.1 (2021-04-05)
 ------------------
 

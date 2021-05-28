@@ -2,6 +2,214 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* pylib: fixing pep257 errors
+* pylib: fixing pep257 errors
+* pylib: fixing pep257 errors
+* pylib: fixing pep257 errors
+* pylib: fix flake8
+* pylib: fixing lint erorrs
+* includes: include tf2 buffer
+* pylib: fix ftp, add flags to wp
+* pylib: port mavftp
+* test: fix ParamDict test, yapf
+* pylib: fix wp load/dump file
+* pylib: port mavwp
+* pylib: fix param plugin
+* pylib: port mavparam
+* pylib: add uas settings accessor
+* pylib: fix set_mode
+* plugin: fix sys_status ~/set_mode service
+* pylib: porting mavsys
+* pylib: fix checkid
+* pylib: port checkid
+* pylib: force-create mav script entry point, why console_scripts didn't work\?
+* pylib: small fix for setup
+* pylib: fix mavcmd trigger
+* pylib: move cmd check to utils
+* pylib: move wait flag to global group
+* pylib: port mavsafety, drop safetyarea as it completely outdated
+* pylib: fix script path
+* pylib: wait for services by default
+* pylib: add local position plugin
+* pylib: port all mavcmd
+* pylib: port most of mavcmd
+* pylib: start porting mavcmd
+* pylib: fix loading
+* pylib: port ftp
+* pylib: port mavlink helpers
+* pylib: port setpoint plugin
+* pylib: remove event_lanucher, ros2 should have different way to do the same
+* pylib: test ParamFile
+* pylib: test ParamDict
+* pylib: port param
+* pylib: add system module
+* pylib: fix loading
+* pylib: apply yapf
+* tests: add simple plan file
+* msgs: update command codes
+* pylib: move to support ament_python
+* pylib: start porting
+* plugins: fix all cpplint errors
+* plugins: fix some cpplint errors
+* test: fix cpplint errors
+* lib: fix lint errors
+* lib: fixing cpplint
+* plugins: waypoint: fix parameter exception
+* plugins: geofence: port to ros2
+* plugins: rallypoint: port to ros2
+* plugins: waypoint: port to ros2
+* plugins: mission base ported to ros2
+* plugins: mission: noe step further
+* mission proto: start port
+* mavros: make cpplint happy about includes
+* tests: make cpplint happy
+* mavros: make cpplint happy
+* lib: uncrustify
+* Merge branch 'master' into ros2
+  * master:
+  ci: github uses yaml parser which do not support anchors. surprise, surprise!
+  ci: install geographiclib datasets
+  extras: `#1370 <https://github.com/mavlink/mavros/issues/1370>`_: set obstacle aangle offset
+  lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()
+  extras: distance_sensor: rename param for custom orientation, apply uncrustify
+  px4_config: Add distance_sensor parameters
+  distance_sensor: Add horizontal_fov_ratio, vertical_fov_ratio, sensor_orientation parameters
+  distance_sensor: Fill horizontal_fov, vertical_fov, quaternion
+* lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()
+* extras: distance_sensor: rename param for custom orientation, apply uncrustify
+* px4_config: Add distance_sensor parameters
+* lib: fix misprint
+* plugins: param: `#1567 <https://github.com/mavlink/mavros/issues/1567>`_: use parameters qos
+* lib: more lint...
+* lib: fix more linter warnings
+* lib: fix some linter warnings
+* lib: fix some linter warnings
+* router: fix lint error, it invalidated after erase
+* plugins: ftp: disable ll debug
+* plugins: param: add use_sim_time to excluded ids
+* plugins: param: set only allowed posparam
+* plugins: param: ported to ros2
+* plugins: ftp: port to ros2
+* plugins: setpoint_position: port to ros2
+* plugins: setpoint_attitude: port to ros2
+* Merge branch 'master' into ros2
+  * master:
+  convert whole expression to mm
+* convert whole expression to mm
+* plugins: setpoint_trajectory: port to ros2
+* plugins: setpoint_velocity: port to ros2
+* plugins: setpoint_accel: port to ros2
+* plugins: setpoint_raw: fix sefgault
+* plugins: setpoint_raw: port to ros2
+* plugins: imu: port to ros2
+* plugins: global_position: port to ros2
+* plugin: local_position: port to ros2
+* plugins: wind_estimation: port to ros2
+* plugins: rc_io: port to ros2
+* plugins: port manual_control
+* plugins: home_position: port to ros2
+* plugins: sys_status: update set_message_interval
+* plugins: sys_status: implement autopilot version request
+* plugins: port command to ros2
+* uas: add eigen aligned allocator
+* plugin: altitude: port to ros2
+* uas: add convinient helpers
+* plugins: actuator_control: port to ros2
+* uas: fix some more lint errors
+* uas: fix some lint errors
+* plugin: sys_status: fix some lint errors
+* plugins: port sys_time
+* Merge branch 'master' into ros2
+  * master:
+  1.7.1
+  update changelog
+  re-generate all pymavlink enums
+  1.7.0
+  update changelog
+* plugins: sys_status: fix connection timeout
+* lib: update cog to match ament-uncrustify
+* plugins: sys_status: fixing mav_type
+* plugins: sys_state: declare parameters
+* plugins: sys_state: ported most of things
+* plugins: sys_status: port most of the parts
+* plugins: start porting sys_status
+* plugins: generate description xml
+* plugins: port dummy
+* mavros: generate plugin list
+* Merge branch 'master' into ros2
+  * master:
+  msgs: re-generate the code
+  lib: re-generate the code
+  plugins: mission: re-generate the code
+  MissionBase: correction to file information
+  MissionBase: add copyright from origional waypoint.cpp
+  uncrustify
+  whitespace
+  add rallypoint and geofence plugins to mavros plugins xml
+  add rallypoint and geofence plugins to CMakeList
+  Geofence: add geofence plugin
+  Rallypoint: add rallypoint plugin
+  Waypoint: inherit MissionBase class for mission protocol
+  MissionBase: breakout mission protocol from waypoint.cpp
+  README: Update PX4 Autopilot references
+  Fix https://github.com/mavlink/mavros/issues/849
+* uas: test multiple handlers for same message
+* uas: implement test for plugin message router
+* uas: fix is_plugin_allowed truth table
+* uas: initial unittest
+* uas: implement tf helpers
+* uas: add parameters callback, testing helper
+* node: disable intra process messaging because it's throws errors
+* uas: it's compilling!
+* uas: still fixing build...
+* uas: split uas_data.cpp into smaller units
+* uas: fix misprints
+* uas: initial implementation porting
+* uas: style fixes in headers
+* uas: update plugin base class, add registration macro
+* uas: begin implementation
+* router: use common format for address
+* router: add source id to UAS frame_id
+* mavros_node: that binary would be similar to old mavros v1 node
+* router: fix conponent loading
+* router: add test for Endpoint::recv_message
+* router: rename mavlink to/from to source/sink, i think that terms more descriptive
+* router: add diagnostics updater
+* router: fix incorrect get_msg_byte
+* router: trying to deal with mock cleanup checks
+* router: initial import of the test
+* router: catch open erros on ROSEndpoint
+* router: catch DeviceError
+* router: remove debugging printf's
+* router: weak_ptr segfaults, replace with shared_ptr
+* router: implement routing, cleanup
+* tools: remove our custom uncrustify, would use amend-uncrustiry instead
+* mavros: ament-uncrustify all code. enen unused one
+* router: implement params handler
+* router: fix build
+* router: add handler for parameters and reconnection timer
+* router: add some code docs, ament-uncrustify
+* router: implement basic part of Endpoint
+* lib: add stub code for router
+* mavros: router decl done
+* mavros: prototyping router
+* mavros: update tests
+* lib: port most of utilities
+* mnavros: lib: apply ament_uncrustify
+* lib: port enum_to_string
+* lib: update sensor_orientation
+* mavros: add rcpputils
+* mavros: fix cmake to build libmavros
+* mavros: begin porting...
+* Merge pull request `#1186 <https://github.com/mavlink/mavros/issues/1186>`_ from PickNikRobotics/ros2
+  mavros_msgs Ros2
+* Merge branch 'ros2' into ros2
+* msgs: start porting to ROS2
+* disable all packages but messages
+* Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
+
 1.7.1 (2021-04-05)
 ------------------
 * re-generate all pymavlink enums

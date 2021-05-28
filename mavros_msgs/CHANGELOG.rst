@@ -2,6 +2,57 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* msgs: update command codes
+* msgs: update param services
+* plugins: setpoint_velocity: port to ros2
+* Merge branch 'master' into ros2
+  * master:
+  1.7.1
+  update changelog
+  re-generate all pymavlink enums
+  1.7.0
+  update changelog
+* mavros: generate plugin list
+* Merge branch 'master' into ros2
+  * master:
+  msgs: re-generate the code
+  lib: re-generate the code
+  plugins: mission: re-generate the code
+  MissionBase: correction to file information
+  MissionBase: add copyright from origional waypoint.cpp
+  uncrustify
+  whitespace
+  add rallypoint and geofence plugins to mavros plugins xml
+  add rallypoint and geofence plugins to CMakeList
+  Geofence: add geofence plugin
+  Rallypoint: add rallypoint plugin
+  Waypoint: inherit MissionBase class for mission protocol
+  MissionBase: breakout mission protocol from waypoint.cpp
+  README: Update PX4 Autopilot references
+  Fix https://github.com/mavlink/mavros/issues/849
+* router: catch DeviceError
+* router: weak_ptr segfaults, replace with shared_ptr
+* router: implement params handler
+* mavros: router decl done
+* lib: port enum_to_string
+* lib: update sensor_orientation
+* msgs: add linter
+* libmavconn: start porintg, will use plain asio, without boost
+* msgs: remove redundant dependency which result in colcon warning
+* msgs: cogify file lists
+* Merge pull request `#1186 <https://github.com/mavlink/mavros/issues/1186>`_ from PickNikRobotics/ros2
+  mavros_msgs Ros2
+* Merge branch 'ros2' into ros2
+* msgs: start porting to ROS2
+* fixing cmakelists
+* updating msg and srv list
+* reenable VfrHud once renamed to match ROS2 conventions
+  add ros1_bridge mapping rule for renamed VfrHud message
+* make mavro_msgs compile in ROS 2
+* Contributors: Mikael Arguedas, Mike Lautman, Vladimir Ermakov
+
 1.7.1 (2021-04-05)
 ------------------
 * re-generate all pymavlink enums
