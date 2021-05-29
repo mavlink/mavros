@@ -71,7 +71,6 @@ CI Statuses
 
   - ROS Melodic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__mavros__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__mavros__ubuntu_bionic_amd64/)
   - ROS Noetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Ndev__mavros__ubuntu_focal_amd64)](http://build.ros.org/job/Ndev__mavros__ubuntu_focal_amd64/)
-  - Travis master: [![Travis Status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
