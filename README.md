@@ -1,6 +1,6 @@
 MAVROS
 ======
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![CI](https://github.com/mavlink/mavros/actions/workflows/main.yml/badge.svg)](https://github.com/mavlink/mavros/actions/workflows/main.yml)
 
 MAVLink extendable communication node for ROS.
 
@@ -16,6 +16,7 @@ MAVLink extendable communication node for ROS.
 - Since 2018-05-14 (0.25.1) support for Indigo returned. We use compatibility layer for console-bridge.
 - Since 2019-01-03 (0.28.0) support for Indigo by master not guaranteed. Consider update to more recent distro.
 - 2020-01-01 version 1.0.0 released, please see [#1369][iss1369] for reasons and its purpose.
+- 2021-05-28 version 2.0.0 released, it's the first alpha release for ROS2.
 
 
 mavros package
@@ -68,8 +69,8 @@ We'd like to keep the project bug tracker as free as possible, so please contact
 CI Statuses
 -----------
 
-  - ROS Kinetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdev__mavros__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdev__mavros__ubuntu_xenial_amd64/)
   - ROS Melodic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__mavros__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__mavros__ubuntu_bionic_amd64/)
+  - ROS Noetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Ndev__mavros__ubuntu_focal_amd64)](http://build.ros.org/job/Ndev__mavros__ubuntu_focal_amd64/)
   - Travis master: [![Travis Status](https://travis-ci.org/mavlink/mavros.svg?branch=master)](https://travis-ci.org/mavlink/mavros)
 
 
