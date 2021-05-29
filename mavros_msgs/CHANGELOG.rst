@@ -53,6 +53,9 @@ Changelog for package mavros_msgs
 * make mavro_msgs compile in ROS 2
 * Contributors: Mikael Arguedas, Mike Lautman, Vladimir Ermakov
 
+1.8.0 (2021-05-05)
+------------------
+
 1.7.1 (2021-04-05)
 ------------------
 * re-generate all pymavlink enums
