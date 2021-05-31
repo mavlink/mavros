@@ -18,8 +18,8 @@
 
 #include <std_srvs/Trigger.h>
 #include <mavros_msgs/CommandLong.h>
-#include <mavros_msgs/AutoParachute.h>
-#include <mavros_msgs/AutoParachuteCancel.h>
+#include <mavros_msgs/Parachute.h>
+#include <mavros_msgs/ParachuteCancel.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -42,11 +42,11 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		auto_chute_pub = pc_nh.advertise<mavros_msgs::AutoParachute>("auto/status", 1, true);
-		auto_chute_cancel = pc_nh.advertiseService("auto/cancel", &ParachutePlugin::handle_chute_cancel, this);
+		auto_chute_pub = pc_nh.advertise<mavros_msgs::Parachute>("status", 1, true);
 
 		enable_chute = pc_nh.advertiseService("enable", &ParachutePlugin::handle_chute_enable, this);
 		disable_chute = pc_nh.advertiseService("disable", &ParachutePlugin::handle_chute_disable, this);
+		auto_chute_cancel = pc_nh.advertiseService("cancel", &ParachutePlugin::handle_chute_cancel, this);
 		deploy_chute = pc_nh.advertiseService("release", &ParachutePlugin::handle_chute_deploy, this);
 	}
 
@@ -79,7 +79,7 @@ private:
 	void handle_autochute(const mavlink::mavlink_message_t *msg, mavlink::common::msg::COMMAND_LONG &cmd){
 		if (cmd.command == enum_value(MAV_CMD::USER_1)){
 			
-			auto chute_msg = boost::make_shared<mavros_msgs::AutoParachute>();
+			auto chute_msg = boost::make_shared<mavros_msgs::Parachute>();
 
 			uint8_t _reasons = cmd.param1; 
 			chute_msg->SINK_RATE = (_reasons & (1U << RELEASE_REASON::SINK_RATE));
@@ -97,8 +97,8 @@ private:
 		};
 	};
 
-	bool handle_chute_cancel(mavros_msgs::AutoParachuteCancel::Request &req,
-			mavros_msgs::AutoParachuteCancel::Response &res)
+	bool handle_chute_cancel(mavros_msgs::ParachuteCancel::Request &req,
+			mavros_msgs::ParachuteCancel::Response &res)
 	{
 		try {
 			ros::NodeHandle pnh("~");

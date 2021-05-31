@@ -1,4 +1,4 @@
-# AutoPatachute msg
+# Patachute msg
 
 std_msgs/Header header
 
