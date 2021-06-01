@@ -1,4 +1,4 @@
-# Patachute msg
+# Parachute msg
 
 std_msgs/Header header
 

@@ -60,9 +60,9 @@ public:
 private:
 	ros::NodeHandle pc_nh;
 
-	ros::Publisher auto_chute_pub;
+	ros::Publisher chute_pub;
 
-	ros::ServiceServer auto_chute_cancel;
+	ros::ServiceServer chute_cancel;
 	ros::ServiceServer deploy_chute;
 	ros::ServiceServer enable_chute;
 	ros::ServiceServer disable_chute;
@@ -116,7 +116,7 @@ private:
 
 			cmd.request.command = enum_value(MAV_CMD::USER_1);
 			cmd.request.confirmation = 1; //get confirmation
-			cmd.request.param1 = 
+			cmd.request.param1 = reason_reset_mask;
 
 			res.success = client.call(cmd);
 			res.success = cmd.response.success;
