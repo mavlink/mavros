@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   industrial_ci:
     strategy:
+      fail-fast: false
       matrix:
         env:
           # - {ROS_DISTRO: foxy, ROS_REPO: testing}
