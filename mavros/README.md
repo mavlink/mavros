@@ -1,8 +1,8 @@
 MAVROS
 ======
 
-MAVLink extendable communication node for ROS
-with proxy for Ground Control Station (e.g. [QGroundControl][qgc]).
+MAVLink extendable communication node for ROS2.
+
 
 ROS API documentation moved to [wiki.ros.org][wiki].
 
@@ -23,8 +23,7 @@ Features
 Limitations
 -----------
 
-Only for Linux. Depends on [Boost library][boost], GCC 4.8+ (C++11 support).
-Catkin build system required.
+Only for Linux.
 
 This package are dependent on [ros-\*-mavlink][mlwiki] build from [mavlink-gbp-release][mlgbp].
 It exists in ROS package index and usually updates each month.
@@ -82,32 +81,39 @@ given that:
   `global_position` plugin.
 
 
+Composite nodes
+---------------
+
+See also: https://docs.ros.org/en/foxy/Tutorials/Composition.html
+
+### mavros::router::Router
+
+This is router node required to support connections to FCU(s), GCS(es) and UAS nodes.
+The Router allows you to add/remove endpoints on the fly without node restart.
+
+### mavros::uas::UAS
+
+This node is a plugin container which manages all protocol plugins.
+Each plugin is a subnode to this.
+
+
 Programs
 --------
 
-### mavros\_node -- main communication node
+### mavros\_node -- all-in-one container
+
+That is a preconfigured composite node contaier, which provides similar parameters as ROS1 mavros\_node.
+That container loads Router, UAS and configures them to work together (sets uas\_link, etc.).
 
 Main node. Allow disable GCS proxy by setting empty URL.
 
-Run example (autopilot connected via USB at 921600 baud, GCS running on the host with IP 172.16.254.1):
-
-    rosrun mavros mavros_node _fcu_url:=/dev/ttyACM0:921600 _gcs_url:=udp://@172.16.254.1
-
-### gcs\_bridge -- additional proxy
-
-Allows you to add a channel for GCS.
-For example if you need to connect one GCS for HIL and the second on the tablet.
-
-Example (SITL & QGroundControl):
-
-    rosrun mavros mavros_node _gcs_url:='udp://:14556@172.16.254.129:14551' &
-    rosrun mavros gcs_bridge _gcs_url:='udp://@172.16.254.129'
-
-
+    ros2 run mavros mavros_node --ros-args --params-file params.yaml
 
 
 Launch Files
 ------------
+
+**XXX TODO**! #1564
 
 Launch files are provided for use with common FCUs, in particular [Pixhawk](pixhawk):
 
@@ -157,9 +163,9 @@ respect ROS msg API. Not having the dataset available will shutdown the `mavros_
 ROS repository has binary packages for Ubuntu x86, amd64 (x86\_64) and armhf (ARMv7).
 Kinetic also support Debian Jessie amd64 and arm64 (ARMv8).
 
-Just use `apt-get` for installation:
+Just use `apt` for installation:
 
-    sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+    sudo apt install ros-foxy-mavros
 
 Then install GeographicLib datasets by running the `install_geographiclib_datasets.sh` script:
 
@@ -169,46 +175,42 @@ Then install GeographicLib datasets by running the `install_geographiclib_datase
 
 ### Source installation
 
-Use `wstool` utility for retrieving sources and [`catkin` tool][catkin] for build.
+Use `vcs` utility for retrieving sources and `colcon` tool for build.
 
-NOTE: The source installation instructions are for the ROS Kinetic release.
+NOTE: The source installation instructions are for the ROS Foxy release.
 
 ```sh
-sudo apt-get install python-catkin-tools python-rosinstall-generator -y
-# For Noetic use that:
-# sudo apt install python3-catkin-tools python3-rosinstall-generator python3-osrf-pycommon -y
+sudo apt install -y python3-vcstool python3-rosinstall-generator python3-osrf-pycommon
 
 # 1. Create the workspace: unneeded if you already has workspace
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws
-catkin init
-wstool init src
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws
 
 # 2. Install MAVLink
 #    we use the Kinetic reference for all ROS distros as it's not distro-specific and up to date
-rosinstall_generator --rosdistro kinetic mavlink | tee /tmp/mavros.rosinstall
+rosinstall_generator --format repos mavlink | tee /tmp/mavlink.repos
 
 # 3. Install MAVROS: get source (upstream - released)
-rosinstall_generator --upstream mavros | tee -a /tmp/mavros.rosinstall
+rosinstall_generator --format repos --upstream mavros | tee -a /tmp/mavros.repos
 # alternative: latest source
-# rosinstall_generator --upstream-development mavros | tee -a /tmp/mavros.rosinstall
-# For fetching all the dependencies into your catkin_ws, just add '--deps' to the above scripts
-# ex: rosinstall_generator --upstream mavros --deps | tee -a /tmp/mavros.rosinstall
+# rosinstall_generator --format repos --upstream-development mavros | tee -a /tmp/mavros.repos
+# For fetching all the dependencies into your ros2_ws, just add '--deps' to the above scripts
+# ex: rosinstall_generator --format repos --upstream mavros --deps | tee -a /tmp/mavros.repos
 
 # 4. Create workspace & deps
-wstool merge -t src /tmp/mavros.rosinstall
-wstool update -t src -j4
+vcs import src < /tmp/mavlink.repos
+vcs import src < /tmp/mavros.repos
 rosdep install --from-paths src --ignore-src -y
 
 # 5. Install GeographicLib datasets:
 ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
 
 # 6. Build source
-catkin build
+colcon build
 
 # 7. Make sure that you use setup.bash or setup.zsh from workspace.
 #    Else rosrun can't find nodes from this workspace.
-source devel/setup.bash
+source install/setup.bash
 ```
 
 *Build error*. if you has error with missing `mavlink*` then you need fresh mavlink package.
