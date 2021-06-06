@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2021-06-06)
+------------------
 * Add rcl_interfaces dependency
 * Merge branch 'master' into ros2
   * master:

@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2021-06-06)
+------------------
 * readme: update source build instruction
 * Merge branch 'master' into ros2
   * master:
