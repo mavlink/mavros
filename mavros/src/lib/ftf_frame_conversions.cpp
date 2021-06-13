@@ -92,6 +92,10 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond & q, const Sta
     case StaticTF::ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK:
     case StaticTF::ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT:
       return AIRCRAFT_BASELINK_Q * q;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
+      return q;
   }
 }
 
@@ -106,6 +110,10 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d & vec, const Static
     case StaticTF::AIRCRAFT_TO_BASELINK:
     case StaticTF::BASELINK_TO_AIRCRAFT:
       return AIRCRAFT_BASELINK_AFFINE * vec;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
+      return vec;
   }
 }
 
@@ -125,6 +133,10 @@ Covariance3d transform_static_frame(const Covariance3d & cov, const StaticTF tra
     case StaticTF::AIRCRAFT_TO_BASELINK:
     case StaticTF::BASELINK_TO_AIRCRAFT:
       cov_out = cov_in * AIRCRAFT_BASELINK_Q;
+      return cov_out_;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
       return cov_out_;
   }
 }
@@ -159,6 +171,10 @@ Covariance6d transform_static_frame(const Covariance6d & cov, const StaticTF tra
         R.block<3, 3>(3, 3) = AIRCRAFT_BASELINK_R;
 
       cov_out = R * cov_in * R.transpose();
+      return cov_out_;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
       return cov_out_;
   }
 }
@@ -195,6 +211,10 @@ Covariance9d transform_static_frame(const Covariance9d & cov, const StaticTF tra
         R.block<3, 3>(6, 6) = AIRCRAFT_BASELINK_R;
 
       cov_out = R * cov_in * R.transpose();
+      return cov_out_;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
       return cov_out_;
   }
 }
@@ -240,6 +260,10 @@ Eigen::Vector3d transform_static_frame(
       // ENU to ECEF rotation is just an inverse rotation from ECEF to ENU, which means transpose.
       R.transposeInPlace();
       return R * vec;
+
+    default:
+      rcpputils::require_true(false, "unsupported transform arg");
+      return vec;
   }
 }
 
