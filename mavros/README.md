@@ -169,7 +169,10 @@ Just use `apt` for installation:
 
 Then install GeographicLib datasets by running the `install_geographiclib_datasets.sh` script:
 
-    wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
+    ros2 run mavros install_geographiclib_datasets.sh
+
+    # Alternative:
+    wget https://raw.githubusercontent.com/mavlink/mavros/ros2/mavros/scripts/install_geographiclib_datasets.sh
     ./install_geographiclib_datasets.sh
 
 
@@ -209,7 +212,7 @@ rosdep install --from-paths src --ignore-src -y
 colcon build
 
 # 7. Make sure that you use setup.bash or setup.zsh from workspace.
-#    Else rosrun can't find nodes from this workspace.
+#    Else ros2 run can't find nodes from this workspace.
 source install/setup.bash
 ```
 
