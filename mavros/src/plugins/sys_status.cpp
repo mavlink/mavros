@@ -672,7 +672,7 @@ private:
 
     auto lg = node->get_logger();
     auto log_info = [&lg, &prefix] < typename ... Args > (const std::string & fmt, Args ... args) {
-      RCLCPP_INFO(lg, fmt, prefix, args ...);
+      RCLCPP_INFO(lg, fmt.c_str(), prefix, args ...);
     };  // NOLINT
 
     log_info("%s: Capabilities         0x%016llx", apv.capabilities);
@@ -700,7 +700,7 @@ private:
 
     auto lg = node->get_logger();
     auto log_info = [&lg, &prefix] < typename ... Args > (const std::string & fmt, Args ... args) {
-      RCLCPP_INFO(lg, fmt, prefix, args ...);
+      RCLCPP_INFO(lg, fmt.c_str(), prefix, args ...);
     };  // NOLINT
 
     // Note based on current APM's impl.
