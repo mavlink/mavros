@@ -54,11 +54,11 @@ UAS::UAS(
   type(enum_value(MAV_TYPE::GENERIC)),
   autopilot(enum_value(MAV_AUTOPILOT::GENERIC)),
   base_mode(0),
+  fcu_caps_known(false),
+  fcu_capabilities(0),
   connected(false),
   time_offset(0),
-  tsync_mode(timesync_mode::NONE),
-  fcu_caps_known(false),
-  fcu_capabilities(0)
+  tsync_mode(timesync_mode::NONE)
 {
   // XXX TODO(vooon): should i use LifecycleNode?
 

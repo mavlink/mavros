@@ -406,7 +406,7 @@ void MAVConnEndpoint::close()
 
 void MAVConnEndpoint::send_message(
   const mavlink_message_t * msg, const Framing framing,
-  id_t src_id)
+  id_t src_id [[maybe_unused]])
 {
   (void)framing;
 
