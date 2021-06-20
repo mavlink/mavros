@@ -52,7 +52,7 @@ static constexpr const char * describe_parameters = "~/describe_parameters";
 static constexpr const char * list_parameters = "~/list_parameters";
 
 static constexpr const char * events = "/parameter_events";
-}
+}  // namespace PSN
 
 /**
  * @brief Parameter storage
@@ -718,7 +718,7 @@ private:
     evt.stamp = node->now();
     evt.node = node->get_fully_qualified_name();
 
-    for (const auto & p:parameters) {
+    for (const auto & p : parameters) {
       evt.deleted_parameters.push_back(p.second.to_parameter_msg());
     }
 
@@ -1054,7 +1054,7 @@ private:
     const rcl_interfaces::srv::SetParameters::Request::SharedPtr req,
     rcl_interfaces::srv::SetParameters::Response::SharedPtr res)
   {
-    for (const auto & p:req->parameters) {
+    for (const auto & p : req->parameters) {
       rcl_interfaces::msg::SetParametersResult result;
       if (Parameter::check_exclude_param_id(p.name)) {
         RCLCPP_WARN_STREAM(get_logger(), "PR: parameter set excluded: " << p.name);
@@ -1130,7 +1130,7 @@ private:
     unique_lock lock(mutex);
 
     // NOTE(vooon): all fcu parameters are "flat", so no need to check req prefixes or depth
-    for (auto p:parameters) {
+    for (auto p : parameters) {
       res->result.names.emplace_back(p.first);
     }
   }
