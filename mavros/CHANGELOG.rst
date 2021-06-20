@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.3 (2021-06-20)
+------------------
 * param: fix Foxy build
 * Contributors: Vladimir Ermakov
 
