@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2021-06-20)
+------------------
 * mavros: fix run on Galactic
 * plugin: param: `#1579 <https://github.com/mavlink/mavros/issues/1579>`_: fix cpplint warnings
 * plugin: param: `#1579 <https://github.com/mavlink/mavros/issues/1579>`_: implement std parameter events

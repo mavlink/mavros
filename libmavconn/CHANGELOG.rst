@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2021-06-20)
+------------------
 * lib: yet another fix of cmake module
 * lib: fix lint error
 * lib: fix cmake lint error
