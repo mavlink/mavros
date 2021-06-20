@@ -344,7 +344,9 @@ public:
     msg.name = param_id;
     msg.type = param_value.get_type();
     msg.read_only = check_exclude_param_id(param_id);
+#ifndef USE_OLD_DECLARE_PARAMETER
     msg.dynamic_typing = true;
+#endif
 
     return msg;
   }

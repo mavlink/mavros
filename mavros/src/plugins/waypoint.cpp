@@ -38,7 +38,9 @@ public:
     enable_partial_push_auto(true)
   {
     rcl_interfaces::msg::ParameterDescriptor desc_pp{};
+#ifndef USE_OLD_DECLARE_PARAMETER
     desc_pp.dynamic_typing = true;
+#endif
 
     enable_node_watch_parameters();
 
