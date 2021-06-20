@@ -2,6 +2,19 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* mavros: fix run on Galactic
+* plugin: param: `#1579 <https://github.com/mavlink/mavros/issues/1579>`_: fix cpplint warnings
+* plugin: param: `#1579 <https://github.com/mavlink/mavros/issues/1579>`_: implement std parameter events
+* plugin: param: `#1579 <https://github.com/mavlink/mavros/issues/1579>`_: rewrite plugin to implement standard parameter services
+* plugin: add ability to set node options
+* lib: fix lint error
+* plugin: fix build error
+* lib: fix reorder warnings
+* lib: fix ftf compilation warnings
+* Contributors: Vladimir Ermakov
+
 2.0.1 (2021-06-06)
 ------------------
 * readme: update source build instruction

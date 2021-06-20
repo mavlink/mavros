@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: yet another fix of cmake module
+* lib: fix lint error
+* lib: fix cmake lint error
+* Contributors: Vladimir Ermakov
+
 2.0.1 (2021-06-06)
 ------------------
 * Merge branch 'master' into ros2
