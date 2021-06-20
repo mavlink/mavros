@@ -78,11 +78,13 @@ public:
   : uas(uas_), node(std::dynamic_pointer_cast<rclcpp::Node>(uas_))
   {}
 
-  explicit Plugin(UASPtr uas_, const std::string & subnode)
+  explicit Plugin(
+    UASPtr uas_, const std::string & subnode,
+    const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
   : uas(uas_),
     // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode))  // https://github.com/ros2/rclcpp/issues/731
     node(rclcpp::Node::make_shared(subnode,
-      std::dynamic_pointer_cast<rclcpp::Node>(uas_)->get_fully_qualified_name()))
+      std::dynamic_pointer_cast<rclcpp::Node>(uas_)->get_fully_qualified_name(), options))
   {}
 
   virtual ~Plugin() = default;
