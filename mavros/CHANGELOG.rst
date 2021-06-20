@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* param: fix Foxy build
+* Contributors: Vladimir Ermakov
+
 2.0.2 (2021-06-20)
 ------------------
 * mavros: fix run on Galactic
