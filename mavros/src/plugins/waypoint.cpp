@@ -34,8 +34,12 @@ class WaypointPlugin : public plugin::MissionBase
 {
 public:
   explicit WaypointPlugin(plugin::UASPtr uas_)
-  : MissionBase(uas_, "mission")
+  : MissionBase(uas_, "mission"),
+    enable_partial_push_auto(true)
   {
+    rcl_interfaces::msg::ParameterDescriptor desc_pp{};
+    desc_pp.dynamic_typing = true;
+
     enable_node_watch_parameters();
 
     // NOTE(vooon): I'm not quite sure that this option would work with mavros router
@@ -49,16 +53,25 @@ public:
         use_mission_item_int = p.as_bool();
       });
 
-    node_declate_and_watch_parameter<bool>(
-      "enable_partial_push", [&](const rclcpp::Parameter & p) {
+    node_declate_and_watch_parameter(
+      "enable_partial_push", 2, [&](const rclcpp::Parameter & p) {
         RCLCPP_DEBUG_STREAM(get_logger(), log_prefix << ": enable_partial_push = " << p);
 
-        if (p.get_type() != rclcpp::PARAMETER_BOOL) {
-          return;
+        if (p.get_type() == rclcpp::PARAMETER_INTEGER) {
+          auto v = p.as_int();
+
+          enable_partial_push_auto = v >= 2;
+          if (enable_partial_push_auto) {
+            enable_partial_push = detect_partial_push();
+          } else {
+            enable_partial_push = v != 0;
+          }
         }
 
-        enable_partial_push = p.as_bool();
-      });
+        if (p.get_type() == rclcpp::PARAMETER_BOOL) {
+          enable_partial_push = p.as_bool();
+        }
+      }, desc_pp);
 
     auto wp_qos = rclcpp::QoS(10).transient_local();
 
@@ -94,6 +107,8 @@ private:
   rclcpp::Service<mavros_msgs::srv::WaypointClear>::SharedPtr clear_srv;
   rclcpp::Service<mavros_msgs::srv::WaypointSetCurrent>::SharedPtr set_cur_srv;
 
+  bool enable_partial_push_auto;
+
   /* -*- mid-level helpers -*- */
 
   // Acts when capabilities of the fcu are changed
@@ -120,14 +135,11 @@ private:
     if (connected) {
       schedule_pull(BOOTUP_TIME);
 
-      const auto key = "enable_partial_push";
-      rclcpp::Parameter p;
-      if (!node->get_parameter(key, p) || p.get_type() == rclcpp::PARAMETER_NOT_SET) {
-        bool new_state = uas->is_ardupilotmega();
+      if (enable_partial_push_auto) {
+        enable_partial_push = detect_partial_push();
 
         RCLCPP_INFO_STREAM(
-          get_logger(), log_prefix << ": detected enable_partial_push: " << new_state);
-        node->set_parameter(rclcpp::Parameter(key, new_state));
+          get_logger(), log_prefix << ": detected enable_partial_push: " << enable_partial_push);
       }
     } else if (schedule_timer) {
       schedule_timer->cancel();
@@ -157,6 +169,11 @@ private:
     wr.wp_seq = seq;
 
     wp_reached_pub->publish(wr);
+  }
+
+  bool detect_partial_push()
+  {
+    return uas->is_ardupilotmega();
   }
 
   /* -*- ROS callbacks -*- */

@@ -226,12 +226,16 @@ protected:
   )
   {
     node_watch_parameters[name] = cb;
+
+#ifdef USE_OLD_DECLARE_PARAMETER
     // NOTE(vooon): for Foxy:
     return node->declare_parameter(
       name,
       rclcpp::ParameterValue(), parameter_descriptor, ignore_override);
-    // NOTE(vooon): for master
-    // return node->declare_parameter<ParameterT>(name, parameter_descriptor, ignore_override);
+#else
+    // NOTE(vooon): for Galactic:
+    return node->declare_parameter<ParameterT>(name, parameter_descriptor, ignore_override);
+#endif
   }
 
   template<typename ParameterT>

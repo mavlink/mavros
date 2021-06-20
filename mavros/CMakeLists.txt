@@ -61,6 +61,12 @@ include_directories(
 ## Check if the datasets are installed
 include(CheckGeographicLibDatasets)
 
+if(rclcpp_VERSION VERSION_LESS 9.0.0)
+  add_definitions(
+    -DUSE_OLD_DECLARE_PARAMETER
+  )
+endif()
+
 # [[[cog:
 # import mavros_cog
 # ]]]

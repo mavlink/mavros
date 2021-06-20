@@ -370,6 +370,7 @@ public:
       "CMD_TOTAL",
       "CMD_INDEX",
       "LOG_LASTFILE",
+      "MIS_TOTAL",
       "FENCE_TOTAL",
       "FORMAT_VERSION"
     };
@@ -983,6 +984,7 @@ private:
         res->success = false;
         return;
       }
+      lock.unlock();
     }
 
     if (Parameter::check_exclude_param_id(req->param_id) && !req->force_set) {
