@@ -59,6 +59,7 @@
   <depend>trajectory_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>visualization_msgs</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
 

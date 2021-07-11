@@ -69,14 +69,15 @@ private:
   {
     auto adsb_msg = mavros_msgs::msg::ADSBVehicle();
 
-    adsb_msg.header.stamp = node->now();                //TODO: request add time_boot_ms to msg definition
+    adsb_msg.header.stamp = node->now();    // TODO(vooon): request add time_boot_ms to msg definition
     // [[[cog:
     // def ent(ros, mav=None, scale=None, to_ros=None, to_mav=None):
     //     return (ros, mav or ros, scale, to_ros, to_mav)
     //
     // TR_TAB = (
     // ent('icao_address', 'ICAO_address'),
-    // ent('callsign', to_ros='mavlink::to_string({mm}.{mav})', to_mav='mavlink::set_string_z({mm}.{mav}, {rmp}->{ros})'),
+    // ent('callsign', to_ros='mavlink::to_string({mm}.{mav})',
+    //   to_mav='mavlink::set_string_z({mm}.{mav}, {rmp}->{ros})'),
     // ent('latitude', 'lat', '1e7'),
     // ent('longitude', 'lon', '1e7'),
     // ent('altitude', 'altitude', '1e3'),
@@ -86,7 +87,8 @@ private:
     // ent('ver_velocity', scale='1e2'),
     // ent('altitude_type'),
     // ent('emitter_type'),
-    // ent('tslc', to_ros='rclcpp::Duration({mm}.{mav}, 0)', to_mav='{mm}.{mav} = {rmp}->{ros}.sec'),
+    // ent('tslc', to_ros='rclcpp::Duration({mm}.{mav}, 0)',
+    //   to_mav='{mm}.{mav} = {rmp}->{ros}.sec'),
     // ent('flags'),
     // ent('squawk'),
     // )

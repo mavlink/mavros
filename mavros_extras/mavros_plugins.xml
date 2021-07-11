@@ -10,5 +10,9 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras_plugins')
 
 Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.</description>
   </class>
+  <class name="tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief 3DR Radio plugin.
+@plugin tdr_radio</description>
+  </class>
 </library>
-<!-- [[[end]]] (checksum: a8517c1f2c14f6b90ea15c1579e1a78c) -->
+<!-- [[[end]]] (checksum: 93bb68673099efec9f0f56961ab3343f) -->

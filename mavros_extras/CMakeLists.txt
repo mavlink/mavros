@@ -74,7 +74,7 @@ add_library(mavros_extras_plugins SHARED
   # [[[cog:
   # mavros_cog.outl_glob_files('src/plugins')
   # ]]]
-  #src/plugins/3dr_radio.cpp
+  src/plugins/3dr_radio.cpp
   src/plugins/adsb.cpp
   #src/plugins/cam_imu_sync.cpp
   #src/plugins/companion_process_status.cpp
@@ -103,9 +103,6 @@ add_library(mavros_extras_plugins SHARED
   #src/plugins/vision_speed_estimate.cpp
   #src/plugins/wheel_odometry.cpp
   # [[[end]]]
-)
-target_link_libraries(mavros_extras_plugins
-  mavros
 )
 ament_target_dependencies(mavros_extras_plugins
   angles
@@ -169,8 +166,8 @@ if(BUILD_TESTING)
 endif()
 
 #ament_export_dependencies(console_bridge)
-ament_export_include_directories(include)
-ament_export_libraries(mavros_extras_plugins)
+#ament_export_include_directories(include)
+#ament_export_libraries(mavros_extras)
 ament_export_dependencies(eigen3_cmake_module)
 ament_export_dependencies(Eigen3)
 #ament_export_targets(mavros_node)
