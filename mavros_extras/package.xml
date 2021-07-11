@@ -47,6 +47,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>rcpputils</depend>
+  <depend>urdf</depend>
 
   <!-- message packages -->
   <depend>diagnostic_msgs</depend>

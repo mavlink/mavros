@@ -1,9 +1,9 @@
 <!-- [[[cog:
 import mavros_cog
 
-mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras')
+mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras_plugins')
 ]]] -->
-<library path="mavros_extras">
+<library path="mavros_extras_plugins">
   <class name="adsb" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ADSBPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ADS-B Vehicle plugin
 @plugin adsb
@@ -11,4 +11,4 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras')
 Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: b7e886f869cb1169be79237939dcfe3c) -->
+<!-- [[[end]]] (checksum: a8517c1f2c14f6b90ea15c1579e1a78c) -->

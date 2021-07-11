@@ -70,7 +70,7 @@ endif()
 # ]]]
 # [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
-add_library(mavros_extras SHARED
+add_library(mavros_extras_plugins SHARED
   # [[[cog:
   # mavros_cog.outl_glob_files('src/plugins')
   # ]]]
@@ -104,10 +104,10 @@ add_library(mavros_extras SHARED
   #src/plugins/wheel_odometry.cpp
   # [[[end]]]
 )
-target_link_libraries(mavros_extras
+target_link_libraries(mavros_extras_plugins
   mavros
 )
-ament_target_dependencies(mavros_extras
+ament_target_dependencies(mavros_extras_plugins
   angles
   geometry_msgs
   geographic_msgs
@@ -145,7 +145,7 @@ pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 #  ${catkin_LIBRARIES}
 #)
 
-install(TARGETS mavros_extras
+install(TARGETS mavros_extras_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -159,24 +159,6 @@ install(DIRECTORY launch
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
-  find_package(ament_cmake_pytest REQUIRED)
-
-  # NOTE(vooon): explicit call to find dependencies for ament_lint
-  # ament_find_gtest()
-  # ament_find_gmock()
-
-  # NOTE(vooon): without that cppcheck fails on tests cpp files
-  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GMOCK_INCLUDE_DIRS}")
-  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GTEST_INCLUDE_DIRS}")
-  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${EIGEN3_INCLUDE_DIRS}")
-  # set(ament_cmake_cppcheck_LANGUAGE "c++")
-
-  # NOTE(vooon): tired to provide more and more macro
-  list(APPEND ament_cmake_cppcheck_ADDITIONAL_EXCLUDE "./test/*.cpp")
-
-  # NOTE(vooon): cpplint complains about generated lines too long. Nothing more.
-  # XXX(vooon): don't work for Foxy!
-  # list(APPEND ament_cmake_cpplint_ADDITIONAL_EXCLUDE "./src/lib/enum_to_string.cpp")
 
   find_package(ament_lint_auto REQUIRED)
 
@@ -188,7 +170,7 @@ endif()
 
 #ament_export_dependencies(console_bridge)
 ament_export_include_directories(include)
-ament_export_libraries(mavros_extras)
+ament_export_libraries(mavros_extras_plugins)
 ament_export_dependencies(eigen3_cmake_module)
 ament_export_dependencies(Eigen3)
 #ament_export_targets(mavros_node)
