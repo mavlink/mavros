@@ -1,167 +1,197 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mavros_extras)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  mavros
-  mavros_msgs
-  roscpp
-  sensor_msgs
-  std_msgs
-  tf
-  tf2_eigen
-  urdf
-  visualization_msgs
-)
-
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
-
-find_package(Eigen3)
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # we dont use add_compile_options with pedantic in message packages
+  # because the Python C extensions dont comply with it
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
 
-include(EnableCXX11)
-include(MavrosMavlink)
+find_package(ament_cmake REQUIRED)
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+# find mavros dependencies
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rcpputils REQUIRED)
+find_package(message_filters REQUIRED)
 
+find_package(mavlink REQUIRED)
+find_package(mavros REQUIRED)
+find_package(libmavconn REQUIRED)
 
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(GEOGRAPHICLIB REQUIRED)
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES
-  CATKIN_DEPENDS geometry_msgs mavros mavros_msgs roscpp sensor_msgs std_msgs visualization_msgs
-  DEPENDS Boost
-)
+find_package(angles REQUIRED)
+find_package(eigen_stl_containers REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(urdf REQUIRED)
 
-###########
-## Build ##
-###########
+find_package(diagnostic_msgs REQUIRED)
+find_package(diagnostic_updater REQUIRED)
+
+find_package(geographic_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(mavros_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${mavlink_INCLUDE_DIRS}
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-add_library(mavros_extras
-  src/plugins/adsb.cpp
-  src/plugins/cam_imu_sync.cpp
-  src/plugins/companion_process_status.cpp
-  src/plugins/onboard_computer_status.cpp
-  src/plugins/debug_value.cpp
-  src/plugins/distance_sensor.cpp
-  src/plugins/esc_status.cpp
-  src/plugins/fake_gps.cpp
-  src/plugins/gps_rtk.cpp
-  src/plugins/gps_status.cpp
-  src/plugins/landing_target.cpp
-  src/plugins/log_transfer.cpp
-  src/plugins/mocap_pose_estimate.cpp
-  src/plugins/obstacle_distance.cpp
-  src/plugins/odom.cpp
-  src/plugins/play_tune.cpp
-  src/plugins/px4flow.cpp
-  src/plugins/rangefinder.cpp
-  src/plugins/trajectory.cpp
-  src/plugins/vibration.cpp
-  src/plugins/vision_pose_estimate.cpp
-  src/plugins/vision_speed_estimate.cpp
-  src/plugins/wheel_odometry.cpp
-  src/plugins/mount_control.cpp
+include_directories(
+  ${mavlink_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${GEOGRAPHICLIB_INCLUDE_DIRS}
 )
-add_dependencies(mavros_extras
-  ${catkin_EXPORTED_TARGETS}
+
+if(rclcpp_VERSION VERSION_LESS 9.0.0)
+  add_definitions(
+    -DUSE_OLD_DECLARE_PARAMETER
+  )
+endif()
+
+
+# [[[cog:
+# import mavros_cog
+# ]]]
+# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+
+add_library(mavros_extras SHARED
+  # [[[cog:
+  # mavros_cog.outl_glob_files('src/plugins')
+  # ]]]
+  #src/plugins/3dr_radio.cpp
+  src/plugins/adsb.cpp
+  #src/plugins/cam_imu_sync.cpp
+  #src/plugins/companion_process_status.cpp
+  #src/plugins/debug_value.cpp
+  #src/plugins/distance_sensor.cpp
+  #src/plugins/esc_status.cpp
+  #src/plugins/fake_gps.cpp
+  #src/plugins/gps_rtk.cpp
+  #src/plugins/gps_status.cpp
+  #src/plugins/hil.cpp
+  #src/plugins/landing_target.cpp
+  #src/plugins/log_transfer.cpp
+  #src/plugins/mocap_pose_estimate.cpp
+  #src/plugins/mount_control.cpp
+  #src/plugins/obstacle_distance.cpp
+  #src/plugins/odom.cpp
+  #src/plugins/onboard_computer_status.cpp
+  #src/plugins/play_tune.cpp
+  #src/plugins/px4flow.cpp
+  #src/plugins/rangefinder.cpp
+  #src/plugins/safety_area.cpp
+  #src/plugins/trajectory.cpp
+  #src/plugins/vfr_hud.cpp
+  #src/plugins/vibration.cpp
+  #src/plugins/vision_pose_estimate.cpp
+  #src/plugins/vision_speed_estimate.cpp
+  #src/plugins/wheel_odometry.cpp
+  # [[[end]]]
 )
 target_link_libraries(mavros_extras
-  ${mavros_LIBRARIES}
-  ${catkin_LIBRARIES}
+  mavros
 )
+ament_target_dependencies(mavros_extras
+  angles
+  geometry_msgs
+  geographic_msgs
+  mavros
+  mavros_msgs
+  std_msgs
+  std_srvs
+  sensor_msgs
+  nav_msgs
+  trajectory_msgs
+  rclcpp
+  rclcpp_components
+  rcpputils
+  libmavconn
+  diagnostic_updater
+  tf2_ros
+  tf2_eigen
+  message_filters
+  Eigen3
+)
+pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
 ## Declare a cpp executable
-add_executable(visualization
-  src/visualization.cpp
-)
-target_link_libraries(visualization
-  ${catkin_LIBRARIES}
-)
+#add_executable(visualization
+#  src/visualization.cpp
+#)
+#target_link_libraries(visualization
+#  ${catkin_LIBRARIES}
+#)
 
-add_executable(servo_state_publisher
-  src/servo_state_publisher.cpp
-)
-target_link_libraries(servo_state_publisher
-  ${catkin_LIBRARIES}
-)
+#add_executable(servo_state_publisher
+#  src/servo_state_publisher.cpp
+#)
+#target_link_libraries(servo_state_publisher
+#  ${catkin_LIBRARIES}
+#)
 
-#############
-## Install ##
-#############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-file(GLOB SCRIPTS ${PROJECT_SOURCE_DIR}/scripts/*)
-install(PROGRAMS
-  ${SCRIPTS}
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS mavros_extras
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-## Mark executables and/or libraries for installation
-install(TARGETS mavros_extras visualization servo_state_publisher
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-# )
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-  mavros_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+  # NOTE(vooon): explicit call to find dependencies for ament_lint
+  # ament_find_gtest()
+  # ament_find_gmock()
 
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
+  # NOTE(vooon): without that cppcheck fails on tests cpp files
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GMOCK_INCLUDE_DIRS}")
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${GTEST_INCLUDE_DIRS}")
+  # list(APPEND ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS "${EIGEN3_INCLUDE_DIRS}")
+  # set(ament_cmake_cppcheck_LANGUAGE "c++")
 
-#############
-## Testing ##
-#############
+  # NOTE(vooon): tired to provide more and more macro
+  list(APPEND ament_cmake_cppcheck_ADDITIONAL_EXCLUDE "./test/*.cpp")
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mavros_extras.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+  # NOTE(vooon): cpplint complains about generated lines too long. Nothing more.
+  # XXX(vooon): don't work for Foxy!
+  # list(APPEND ament_cmake_cpplint_ADDITIONAL_EXCLUDE "./src/lib/enum_to_string.cpp")
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+  find_package(ament_lint_auto REQUIRED)
+
+  # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
+
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+#ament_export_dependencies(console_bridge)
+ament_export_include_directories(include)
+ament_export_libraries(mavros_extras)
+ament_export_dependencies(eigen3_cmake_module)
+ament_export_dependencies(Eigen3)
+#ament_export_targets(mavros_node)
+ament_package()
 
 # vim: ts=2 sw=2 et:
