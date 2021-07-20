@@ -3,7 +3,7 @@
 	<!-- example launch script for ArduPilot based FCU's -->
 
 	<arg name="fcu_url" default="/dev/ttyACM0:57600" />
-	<arg name="gcs_url" default="" />
+	<arg name="gcs_url" default="udp://@:14555" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />
 	<arg name="log_output" default="screen" />

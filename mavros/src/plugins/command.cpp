@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <mavros/mavros_plugin.h>
 
+#include <mavros_msgs/CommandAck.h>
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandInt.h>
 #include <mavros_msgs/CommandBool.h>
@@ -73,6 +74,7 @@ public:
 		command_ack_timeout_dt = ros::Duration(command_ack_timeout);
 
 		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
+		command_ack_srv = cmd_nh.advertiseService("command_ack", &CommandPlugin::command_ack_cb, this);
 		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
 		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
 		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
@@ -86,7 +88,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&CommandPlugin::handle_command_ack)
+				   make_handler(&CommandPlugin::handle_command_ack)
 		};
 	}
 
@@ -98,6 +100,7 @@ private:
 	ros::NodeHandle cmd_nh;
 	ros::ServiceServer command_long_srv;
 	ros::ServiceServer command_int_srv;
+	ros::ServiceServer command_ack_srv;
 	ros::ServiceServer arming_srv;
 	ros::ServiceServer set_home_srv;
 	ros::ServiceServer takeoff_srv;
@@ -228,6 +231,23 @@ private:
 		return true;
 	}
 
+	bool send_command_ack( uint16_t command, uint8_t req_result, uint8_t progress, int32_t result_param2,
+		  unsigned char &success, uint8_t &res_result)
+	{
+		using mavlink::common::MAV_RESULT;
+
+		command_ack(command,
+		req_result, progress,
+		result_param2);
+
+
+	  success = true;
+	  res_result = enum_value(MAV_RESULT::ACCEPTED);
+
+		return true;
+	}
+
+
 	/* -*- low-level send -*- */
 
 	template<typename MsgT>
@@ -295,6 +315,21 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(cmd);
 	}
 
+	void command_ack( uint16_t command, uint8_t result,
+						uint8_t progress, int32_t result_param2)
+	{
+		mavlink::common::msg::COMMAND_ACK cmd {};
+	  set_target(cmd, false);
+
+	  cmd.command = command;
+	  cmd.result = result;
+	  cmd.progress = progress;
+	  cmd.result_param2 = result_param2;
+
+	  UAS_FCU(m_uas)->send_message_ignore_drop(cmd);
+	}
+
+
 	/* -*- callbacks -*- */
 
 	bool command_long_cb(mavros_msgs::CommandLong::Request &req,
@@ -320,6 +355,15 @@ private:
 			req.x, req.y, req.z,
 			res.success);
 	}
+
+	bool command_ack_cb(mavros_msgs::CommandAck::Request &req,
+		mavros_msgs::CommandAck::Response &res)
+	{
+	return send_command_ack(req.command, req.result,
+		req.progress, req.result_param2,
+		res.success, res.result);
+	}
+
 
 	bool arming_cb(mavros_msgs::CommandBool::Request &req,
 		mavros_msgs::CommandBool::Response &res)
