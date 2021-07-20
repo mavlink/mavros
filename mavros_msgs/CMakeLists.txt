@@ -37,6 +37,7 @@ add_message_files(
   LandingTarget.msg
   LogData.msg
   LogEntry.msg
+  MagnetometerReporter.msg
   ManualControl.msg
   Mavlink.msg
   MountControl.msg
@@ -53,6 +54,7 @@ add_message_files(
   RTKBaseline.msg
   State.msg
   StatusText.msg
+  SystemStatus.msg
   Thrust.msg
   TimesyncStatus.msg
   Trajectory.msg
@@ -68,6 +70,7 @@ add_message_files(
 add_service_files(
   DIRECTORY srv
   FILES
+  CommandAck.srv
   CommandBool.srv
   CommandHome.srv
   CommandInt.srv
@@ -119,6 +122,7 @@ catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS geographic_msgs geometry_msgs message_runtime sensor_msgs std_msgs)
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(
+  DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h")

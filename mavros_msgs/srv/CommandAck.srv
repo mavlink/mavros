@@ -1,0 +1,11 @@
+# Generic COMMAND_ACK
+
+uint16 command
+uint8 result
+uint8 progress
+uint32 result_param2
+
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
