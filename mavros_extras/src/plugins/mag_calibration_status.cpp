@@ -55,6 +55,7 @@ private:
 	ros::Publisher mcs_pub;
 	ros::Publisher mcr_pub;
 	std::vector<bool> calibration_show;
+	std::vector<uint8_t> _rg_compass_cal_progress;
 	//Send progress of magnetometer calibration
 	void handle_status(const mavlink::mavlink_message_t *, mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS &mp) {
 		auto mcs = boost::make_shared<std_msgs::UInt8>();
@@ -62,13 +63,9 @@ private:
 		// How many compasses are we calibrating?
 		std::bitset<8> compass_calibrating = mp.cal_mask;
 
-//		int compassCalCount = 0;
-//		for (int i=0; i<3; i++) {
-//			if (mp.cal_mask & (1 << i)) {
-//				compassCalCount++;
-//			}
-//		}
-		std::vector<uint8_t> _rg_compass_cal_progress(3);
+		if(_rg_compass_cal_progress.size() < 3){
+			_rg_compass_cal_progress.resize(3);
+		}
 
 		if(calibration_show.size() < 3){
 			calibration_show.resize(3);
