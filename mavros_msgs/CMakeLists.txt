@@ -22,6 +22,8 @@ add_message_files(
   ESCInfoItem.msg
   ESCStatus.msg
   ESCStatusItem.msg
+  ESCTelemetry.msg
+  ESCTelemetryItem.msg
   EstimatorStatus.msg
   ExtendedState.msg
   FileEntry.msg
