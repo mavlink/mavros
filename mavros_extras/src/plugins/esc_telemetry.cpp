@@ -29,9 +29,9 @@ public:
     Subscriptions get_subscriptions() override
     {
         return {
-            make_handler(&ESCStatusPlugin::handle_esc_telemetry_1_to_4),
-            make_handler(&ESCStatusPlugin::handle_esc_telemetry_5_to_8),
-            make_handler(&ESCStatusPlugin::handle_esc_telemetry_9_to_12),
+            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_1_to_4),
+            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_5_to_8),
+            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_9_to_12),
         };
     }
 
@@ -55,7 +55,7 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            _esc_telemetry_1_to_4.esc_telemetry[i].header = _esc_telemetry.header;
+            //_esc_telemetry_1_to_4.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_1_to_4.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_1_to_4.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_1_to_4.esc_telemetry[i].current = esc_telemetry.current[i];
@@ -74,7 +74,7 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            _esc_telemetry_5_to_8.esc_telemetry[i].header = _esc_telemetry.header;
+            //_esc_telemetry_5_to_8.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_5_to_8.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_5_to_8.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_5_to_8.esc_telemetry[i].current = esc_telemetry.current[i];
@@ -93,7 +93,7 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            _esc_telemetry_9_to_12.esc_telemetry[i].header = _esc_telemetry.header;
+            //_esc_telemetry_9_to_12.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_9_to_12.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_9_to_12.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_9_to_12.esc_telemetry[i].current = esc_telemetry.current[i];
