@@ -1,6 +1,5 @@
 #include <mavros/mavros_plugin.h>
-#include <mavros_msgs/ESCInfo.h>
-#include <mavros_msgs/ESCStatus.h>
+#include <mavros_msgs/ESCTelemetryItem.h>
 #include <mavros_msgs/ESCTelemetry.h>
 
 namespace mavros
@@ -20,9 +19,16 @@ public:
     void initialize(UAS &uas_) override
     {
         PluginBase::initialize(uas_);
+
         esc_telemetry_1_to_4_pub = nh.advertise<mavros_msgs::ESCTelemetry>("esc_telemetry_1_to_4", 10);
         esc_telemetry_5_to_8_pub = nh.advertise<mavros_msgs::ESCTelemetry>("esc_telemetry_5_to_8", 10);
         esc_telemetry_9_to_12_pub = nh.advertise<mavros_msgs::ESCTelemetry>("esc_telemetry_9_to_12", 10);
+
+        //set the sizes of each of the telemetry messages
+        _esc_telemetry_1_to_4.esc_telemetry.resize(4);
+        _esc_telemetry_5_to_8.esc_telemetry.resize(4);
+        _esc_telemetry_9_to_12.esc_telemetry.resize(4);
+
         enable_connection_cb();
     }
 
@@ -30,8 +36,8 @@ public:
     {
         return {
             make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_1_to_4),
-            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_5_to_8),
-            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_9_to_12),
+            /*make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_5_to_8),
+            make_handler(&ESCTelemetryPlugin::handle_esc_telemetry_9_to_12),*/
         };
     }
 
@@ -55,7 +61,6 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            //_esc_telemetry_1_to_4.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_1_to_4.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_1_to_4.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_1_to_4.esc_telemetry[i].current = esc_telemetry.current[i];
@@ -74,7 +79,6 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            //_esc_telemetry_5_to_8.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_5_to_8.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_5_to_8.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_5_to_8.esc_telemetry[i].current = esc_telemetry.current[i];
@@ -93,7 +97,6 @@ private:
 
         for (int i = 0; i < 4; i++)
         {
-            //_esc_telemetry_9_to_12.esc_telemetry[i].header = esc_telemetry.header;
             _esc_telemetry_9_to_12.esc_telemetry[i].temperature = esc_telemetry.temperature[i];
             _esc_telemetry_9_to_12.esc_telemetry[i].voltage = esc_telemetry.voltage[i];
             _esc_telemetry_9_to_12.esc_telemetry[i].current = esc_telemetry.current[i];
@@ -105,6 +108,11 @@ private:
         esc_telemetry_9_to_12_pub.publish(_esc_telemetry_9_to_12);
 
     }
+
+    void connection_cb(bool connected) override
+	{
+        //NOOP
+	}
 
 };
 }   // namespace extra_plugins
