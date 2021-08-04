@@ -54,8 +54,8 @@ private:
 	ros::NodeHandle mcs_nh;
 	ros::Publisher mcs_pub;
 	ros::Publisher mcr_pub;
-	std::vector<bool> calibration_show;
-	std::vector<uint8_t> _rg_compass_cal_progress;
+	std::array<bool, 8> calibration_show;
+	std::array<uint8_t, 8> _rg_compass_cal_progress;
 	//Send progress of magnetometer calibration
 	void handle_status(const mavlink::mavlink_message_t *, mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS &mp) {
 		auto mcs = boost::make_shared<std_msgs::UInt8>();
@@ -63,21 +63,23 @@ private:
 		// How many compasses are we calibrating?
 		std::bitset<8> compass_calibrating = mp.cal_mask;
 
-		if (_rg_compass_cal_progress.size() < 3) {
-			_rg_compass_cal_progress.resize(3);
-		}
-
-		if (calibration_show.size() < 3) {
-			calibration_show.resize(3);
-			std::fill(calibration_show.begin(), calibration_show.end(), true);
-		}
-
-		if (mp.compass_id < 3 && compass_calibrating.count() > 0) {
+		if (compass_calibrating[mp.compass_id]) {
 			// Each compass gets a portion of the overall progress
+			if (mp.completion_pct < 95) {
+				calibration_show[mp.compass_id] = true;
+			}
 			_rg_compass_cal_progress[mp.compass_id] = mp.completion_pct;
 		}
 
-		mcs->data = static_cast<uint8_t>((_rg_compass_cal_progress[0] + _rg_compass_cal_progress[1] + _rg_compass_cal_progress[2]) / compass_calibrating.count());
+        // Prevent data over 100% after cal_mask reset bit assigned to compass_id
+		uint16_t total_percentage = 0;
+		for (size_t i = 0; i < 8 && (compass_calibrating >> i).any(); i++) {
+			if (compass_calibrating[i]) {
+				total_percentage += static_cast<uint8_t>(_rg_compass_cal_progress[i]);
+			}
+		}
+
+		mcs->data = total_percentage / compass_calibrating.count();
 
 		mcs_pub.publish(mcs);
 	}
