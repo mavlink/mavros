@@ -65,7 +65,7 @@ private:
   explicit Plugin(const Plugin &) = delete;
 
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Plugin);
+  RCLCPP_SMART_PTR_DEFINITIONS(Plugin)
 
   //! generic message handler callback
   using HandlerCb = mavconn::MAVConnInterface::ReceivedCb;

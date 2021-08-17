@@ -632,7 +632,7 @@ private:
   }
 
   // Checks for connection and overrides variable values
-  void connection_cb(bool connected) override
+  void connection_cb([[maybe_unused]] bool connected) override
   {
     has_hr_imu = false;
     has_raw_imu = false;

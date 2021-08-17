@@ -240,7 +240,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void connection_cb(bool connected) override
+  void connection_cb([[maybe_unused]] bool connected) override
   {
     lock_guard lock(mutex);
     raw_rc_in.clear();

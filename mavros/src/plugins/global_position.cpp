@@ -59,9 +59,9 @@ public:
   explicit GlobalPositionPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "global_position"),
     tf_send(false),
-    rot_cov(99999.0),
     use_relative_alt(true),
-    is_map_init(false)
+    is_map_init(false),
+    rot_cov(99999.0)
   {
     enable_node_watch_parameters();
 

@@ -426,8 +426,8 @@ public:
     RETRIES_COUNT(3),
     param_count(-1),
     param_state(PR::IDLE),
-    is_timedout(false),
-    param_rx_retries(RETRIES_COUNT)
+    param_rx_retries(RETRIES_COUNT),
+    is_timedout(false)
   {
     auto event_qos = rclcpp::ParameterEventsQoS();
     auto qos = rclcpp::ParametersQoS().get_rmw_qos_profile();

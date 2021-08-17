@@ -74,14 +74,14 @@ static auto logger = rclcpp::get_logger("uas.enum");
 //
 // def array_outl(name, enum, suffix=None):
 //     array = ename_array_name(name, suffix)
-//     cog.outl(f"""\
+//     cog.outl(f"""
 // //! {name} values
 // static const std::array<const std::string, {len(enum)}> {array}{{{{""")
 //
 //
 // def to_string_outl(ename, funcname='to_string', suffix=None):
 //     array = ename_array_name(ename, suffix)
-//     cog.outl(f"""\
+//     cog.outl(f"""
 // std::string {funcname}({ename} e)
 // {{
 //   size_t idx = enum_value(e);
@@ -124,7 +124,6 @@ static auto logger = rclcpp::get_logger("uas.enum");
 //             cog.outl(f"""/* {k:>2} */ "{name_short}",""")
 //
 //     cog.outl("}};")
-//     cog.outl()
 //     to_string_outl(ename, funcname, suffix)
 // ]]]
 // [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
@@ -133,6 +132,7 @@ static auto logger = rclcpp::get_logger("uas.enum");
 // ename = 'MAV_AUTOPILOT'
 // enum_value_is_description_outl(ename)
 // ]]]
+
 //! MAV_AUTOPILOT values
 static const std::array<const std::string, 20> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",
@@ -157,6 +157,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /* 19 */ "AirRails",
 }};
 
+
 std::string to_string(MAV_AUTOPILOT e)
 {
   size_t idx = enum_value(e);
@@ -166,14 +167,15 @@ std::string to_string(MAV_AUTOPILOT e)
 
   return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 387a860b046aee21d511e60e364688ba)
+// [[[end]]] (checksum: ca6693afe1ced57fa7eb4b5d2f895550)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_value_is_description_outl(ename)
 // ]]]
+
 //! MAV_TYPE values
-static const std::array<const std::string, 37> mav_type_strings{{
+static const std::array<const std::string, 38> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",
 /*  1 */ "Fixed wing aircraft",
 /*  2 */ "Quadrotor",
@@ -211,7 +213,9 @@ static const std::array<const std::string, 37> mav_type_strings{{
 /* 34 */ "Open Drone ID. See https:",
 /* 35 */ "Decarotor",
 /* 36 */ "Battery",
+/* 37 */ "Parachute",
 }};
+
 
 std::string to_string(MAV_TYPE e)
 {
@@ -222,14 +226,15 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 2beb0ad0074f54374b49a0654be4c2ac)
+// [[[end]]] (checksum: 376064ea1578250d182ab62a85b06a41)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_value_is_name_outl(ename, funcname='enum_to_name', suffix='_names')
 // ]]]
+
 //! MAV_TYPE values
-static const std::array<const std::string, 37> mav_type_names{{
+static const std::array<const std::string, 38> mav_type_names{{
 /*  0 */ "GENERIC",
 /*  1 */ "FIXED_WING",
 /*  2 */ "QUADROTOR",
@@ -267,6 +272,7 @@ static const std::array<const std::string, 37> mav_type_names{{
 /* 34 */ "ODID",
 /* 35 */ "DECAROTOR",
 /* 36 */ "BATTERY",
+/* 37 */ "PARACHUTE",
 }};
 
 std::string enum_to_name(MAV_TYPE e)
@@ -278,12 +284,13 @@ std::string enum_to_name(MAV_TYPE e)
 
   return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 58dbf88b346c0f2aa68917b71643b2f2)
+// [[[end]]] (checksum: 5e58c6b1f7868c26f570b97fa4389feb)
 
 // [[[cog:
 // ename = 'MAV_STATE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! MAV_STATE values
 static const std::array<const std::string, 9> mav_state_strings{{
 /*  0 */ "UNINIT",
@@ -306,7 +313,7 @@ std::string to_string(MAV_STATE e)
 
   return mav_state_strings[idx];
 }
-// [[[end]]] (checksum: 170b518da48f77c54ea2681fdff01951)
+// [[[end]]] (checksum: e953b14d18e31abb45db4fe72ebb749f)
 
 // [[[cog:
 // ename = "timesync_mode"
@@ -320,6 +327,7 @@ std::string to_string(MAV_STATE e)
 // cog.outl()
 // to_string_outl(ename)
 // ]]]
+
 //! timesync_mode values
 static const std::array<const std::string, 4> timesync_mode_strings{{
 /*  0 */ "NONE",
@@ -327,6 +335,7 @@ static const std::array<const std::string, 4> timesync_mode_strings{{
 /*  2 */ "ONBOARD",
 /*  3 */ "PASSTHROUGH",
 }};
+
 
 std::string to_string(timesync_mode e)
 {
@@ -337,7 +346,7 @@ std::string to_string(timesync_mode e)
 
   return timesync_mode_strings[idx];
 }
-// [[[end]]] (checksum: 3dfd2acb938e62ee606f93aeb7c5b086)
+// [[[end]]] (checksum: 7a286bcf12006fdeff1bd9fca8ce4176)
 
 timesync_mode timesync_mode_from_str(const std::string & mode)
 {
@@ -356,6 +365,7 @@ timesync_mode timesync_mode_from_str(const std::string & mode)
 // ename = 'ADSB_ALTITUDE_TYPE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! ADSB_ALTITUDE_TYPE values
 static const std::array<const std::string, 2> adsb_altitude_type_strings{{
 /*  0 */ "PRESSURE_QNH",
@@ -371,12 +381,13 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
   return adsb_altitude_type_strings[idx];
 }
-// [[[end]]] (checksum: 72e4ce5bc5cf2e2c351869433e644667)
+// [[[end]]] (checksum: 2e8d87a6e603b105ded642f34978fd55)
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! ADSB_EMITTER_TYPE values
 static const std::array<const std::string, 20> adsb_emitter_type_strings{{
 /*  0 */ "NO_INFO",
@@ -410,12 +421,13 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
   return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: 784076231225119b1c07a3bc8cc0e4af)
+// [[[end]]] (checksum: 342e71a579408cf35a4dbf8b42bd099a)
 
 // [[[cog:
 // ename = 'MAV_ESTIMATOR_TYPE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! MAV_ESTIMATOR_TYPE values
 static const std::array<const std::string, 9> mav_estimator_type_strings{{
 /*  0 */ "UNKNOWN",
@@ -438,12 +450,13 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
   return mav_estimator_type_strings[idx];
 }
-// [[[end]]] (checksum: 8e80791aa874e22d81ae16061d36b009)
+// [[[end]]] (checksum: 451e5fe0a2c760a5c9d4efed0f97553d)
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! GPS_FIX_TYPE values
 static const std::array<const std::string, 9> gps_fix_type_strings{{
 /*  0 */ "NO_GPS",
@@ -466,12 +479,13 @@ std::string to_string(GPS_FIX_TYPE e)
 
   return gps_fix_type_strings[idx];
 }
-// [[[end]]] (checksum: 9cdb29f44c89bf9d2c8d2ff1edf259a9)
+// [[[end]]] (checksum: 260b7022824b9717be95db4e4e28a8d5)
 
 // [[[cog:
 // ename = 'MAV_MISSION_RESULT'
 // enum_value_is_description_outl(ename, split_by_delim='')
 // ]]]
+
 //! MAV_MISSION_RESULT values
 static const std::array<const std::string, 16> mav_mission_result_strings{{
 /*  0 */ "mission accepted OK",
@@ -492,6 +506,7 @@ static const std::array<const std::string, 16> mav_mission_result_strings{{
 /* 15 */ "Current mission operation cancelled (e.g. mission upload, mission download).",
 }};
 
+
 std::string to_string(MAV_MISSION_RESULT e)
 {
   size_t idx = enum_value(e);
@@ -501,12 +516,13 @@ std::string to_string(MAV_MISSION_RESULT e)
 
   return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: dd50fe6b84e206d1451eef5de0caf7e2)
+// [[[end]]] (checksum: ddddde7cdf04ebd988f019d5b93eadbe)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! MAV_FRAME values
 static const std::array<const std::string, 22> mav_frame_strings{{
 /*  0 */ "GLOBAL",
@@ -542,7 +558,7 @@ std::string to_string(MAV_FRAME e)
 
   return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: b1c9fb7f66bf65a157962e30f6572a4e)
+// [[[end]]] (checksum: 9e2018e38b2c586263f10adba00d2ca6)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -667,6 +683,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {158, "PERIPHERAL"},
   {159, "QX1_GIMBAL"},
   {160, "FLARM"},
+  {161, "PARACHUTE"},
   {171, "GIMBAL2"},
   {172, "GIMBAL3"},
   {173, "GIMBAL4"},
@@ -676,6 +693,9 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {181, "BATTERY2"},
   {190, "MISSIONPLANNER"},
   {191, "ONBOARD_COMPUTER"},
+  {192, "ONBOARD_COMPUTER2"},
+  {193, "ONBOARD_COMPUTER3"},
+  {194, "ONBOARD_COMPUTER4"},
   {195, "PATHPLANNER"},
   {196, "OBSTACLE_AVOIDANCE"},
   {197, "VISUAL_INERTIAL_ODOMETRY"},
@@ -693,7 +713,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {242, "TUNNEL_NODE"},
   {250, "SYSTEM_CONTROL"},
 }};
-// [[[end]]] (checksum: c0c9e6b7645f3c80f00cb6a9da293722)
+// [[[end]]] (checksum: bdc7916b48d45154a0b164047b45edf7)
 
 std::string to_string(MAV_COMPONENT e)
 {
@@ -736,6 +756,7 @@ MAV_TYPE mav_type_from_str(const std::string & mav_type)
 // ename = 'MAV_DISTANCE_SENSOR'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! MAV_DISTANCE_SENSOR values
 static const std::array<const std::string, 5> mav_distance_sensor_strings{{
 /*  0 */ "LASER",
@@ -754,12 +775,13 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 
   return mav_distance_sensor_strings[idx];
 }
-// [[[end]]] (checksum: 21f7c2c585aa0140ed900032689dbfd8)
+// [[[end]]] (checksum: dda871f638e51a30d2ecd3b0d063c0de)
 
 // [[[cog:
 // ename = 'LANDING_TARGET_TYPE'
 // enum_value_is_name_outl(ename)
 // ]]]
+
 //! LANDING_TARGET_TYPE values
 static const std::array<const std::string, 4> landing_target_type_strings{{
 /*  0 */ "LIGHT_BEACON",
@@ -777,7 +799,7 @@ std::string to_string(LANDING_TARGET_TYPE e)
 
   return landing_target_type_strings[idx];
 }
-// [[[end]]] (checksum: c8f41c140ea9c3119e4c2bec3772c666)
+// [[[end]]] (checksum: f582577481c6b17014ed9925665f7634)
 
 LANDING_TARGET_TYPE landing_target_type_from_str(const std::string & landing_target_type)
 {

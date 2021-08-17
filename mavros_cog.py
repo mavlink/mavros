@@ -28,6 +28,10 @@ REGISTER_PLUGIN_RE = re.compile(
 PLUGIN_NAME_RE = re.compile(r'@plugin\ (?P<name>[a-z_]+)')
 PLUGIN_BRIEF_RE = re.compile(r'^@brief\ (?P<brief>.+)$')
 
+plugins_without_macro = {
+    "mavros/src/plugins/mission_protocol_base.cpp"
+}
+
 if _cog_present:
 
     def dbg(s):
@@ -123,7 +127,8 @@ class PluginInfo:
 def load_all_plugin_infos(dir: pathlib.Path) -> typing.Iterator[PluginInfo]:
     for fl in dir.glob('*.cpp'):
         try:
-            yield PluginInfo.parse_file(fl)
+            if str(fl) not in plugins_without_macro:
+                yield PluginInfo.parse_file(fl)
         except NoPluginRegister as ex:
             dbg(f"skipping file: {ex}")
 

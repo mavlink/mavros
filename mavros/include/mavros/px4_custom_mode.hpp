@@ -82,12 +82,12 @@ union custom_mode {
     SUB_MODE_AUTO_PRECLAND
   };
 
-  struct
+  struct mode_type
   {
     uint16_t reserved;
     uint8_t main_mode;
     uint8_t sub_mode;
-  };
+  } mode;
   uint32_t data;
   float data_float;
 
@@ -100,9 +100,7 @@ union custom_mode {
   }
 
   constexpr custom_mode(uint8_t mm, uint8_t sm)
-    : reserved(0),
-    main_mode(mm),
-    sub_mode(sm)
+    : mode{0, mm, sm}
   {
   }
 };
