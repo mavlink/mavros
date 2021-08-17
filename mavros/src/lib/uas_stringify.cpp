@@ -174,13 +174,13 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
   px4::custom_mode custom_mode(custom_mode_int);
 
   // clear fields
-  custom_mode.reserved = 0;
-  if (custom_mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
+  custom_mode.mode.reserved = 0;
+  if (custom_mode.mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
     RCLCPP_WARN_EXPRESSION(
       rclcpp::get_logger("uas"),
-      custom_mode.sub_mode != 0, "PX4: Unknown sub-mode %d.%d",
-      custom_mode.main_mode, custom_mode.sub_mode);
-    custom_mode.sub_mode = 0;
+      custom_mode.mode.sub_mode != 0, "PX4: Unknown sub-mode %d.%d",
+      custom_mode.mode.main_mode, custom_mode.mode.sub_mode);
+    custom_mode.mode.sub_mode = 0;
   }
 
   return str_mode_cmap(px4_cmode_map, custom_mode.data);

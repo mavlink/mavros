@@ -1006,9 +1006,7 @@ private:
     // enum.pop() # -> remove ENUM_END
     //
     // for k, e in enum:
-    //     desc = e.description.split(' ', 1)[1] \
-    //         if e.description.startswith('0x') \
-    //         else e.description
+    //     desc = e.description.split(' ', 1)[1] if e.description.startswith('0x') else e.description
     //     esf = e.name
     //
     //     if esf.startswith(ename + '_'):

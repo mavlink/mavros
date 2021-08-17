@@ -230,7 +230,7 @@ private:
 class UAS : public rclcpp::Node
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(UAS);
+  RCLCPP_SMART_PTR_DEFINITIONS(UAS)
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // other UAS aliases

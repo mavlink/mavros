@@ -53,7 +53,7 @@ void UAS::add_connection_change_handler(UAS::ConnectionCb cb)
 
 /* -*- autopilot version -*- */
 
-static uint64_t get_default_caps(uas::MAV_AUTOPILOT ap_type)
+static uint64_t get_default_caps([[maybe_unused]] uas::MAV_AUTOPILOT ap_type)
 {
   // TODO(vooon): return default caps mask for known FCU's
   return 0;
