@@ -14,20 +14,24 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/utils.h>
-#include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <mavros_msgs/LandingTarget.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/utils.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+#include "mavros/setpoint_mixin.hpp"
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/vector3_stamped.hpp"
+#include "mavros_msgs/msg/landing_target.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;
 using mavlink::common::MAV_FRAME;
 using mavlink::common::LANDING_TARGET_TYPE;
 
@@ -37,74 +41,143 @@ using mavlink::common::LANDING_TARGET_TYPE;
  * This plugin is intended to publish the location of a landing area captured from a downward facing camera
  * to the FCU and/or receive landing target tracking data coming from the FCU.
  */
-class LandingTargetPlugin : public plugin::PluginBase,
+class LandingTargetPlugin : public plugin::Plugin,
   private plugin::TF2ListenerMixin<LandingTargetPlugin>
 {
 public:
-  LandingTargetPlugin()
-  : nh("~landing_target"),
-    tf_rate(10.0),
-    send_tf(true),
-    listen_tf(false),
-    listen_lt(false),
-    mav_frame("LOCAL_NED"),
+  LandingTargetPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "landing_target"),
+    tf_rate(50.0),
+    tf_send(true),
+    tf_listen(false),
+    frame_id("landing_target_1"),
+    tf_frame_id("landing_target_1"),
     target_size_x(1.0),
     target_size_y(1.0),
-    image_width(640),
-    image_height(480),
     fov_x(2.0071286398),
     fov_y(2.0071286398),
     focal_length(2.8),
+    image_width(640),
+    image_height(480),
+    mav_frame("LOCAL_NED"),
     land_target_type("VISION_FIDUCIAL")
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+
+    enable_node_watch_parameters();
 
     // general params
-    nh.param<std::string>("frame_id", frame_id, "landing_target_1");
-    nh.param("listen_lt", listen_lt, false);                    // subscribe to raw LadingTarget msg?
-    nh.param<std::string>("mav_frame", mav_frame, "LOCAL_NED");
-    frame = utils::mav_frame_from_str(mav_frame);               // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
+    node_declate_and_watch_parameter(
+      "frame_id", "landing_target_1", [&](const rclcpp::Parameter & p) {
+        frame_id = p.as_string();
+      });
 
-    nh.param<std::string>("land_target_type", land_target_type, "VISION_FIDUCIAL");
-    type = utils::landing_target_type_from_str(land_target_type);               // LANDING_TARGET_TYPE index based on given type name (If unknown, defaults to LIGHT_BEACON)
+    node_declate_and_watch_parameter(
+      "listen_lt", false, [&](const rclcpp::Parameter & p) {
+        auto listen_lt = p.as_bool();
+
+        land_target_sub.reset();
+
+	if (listen_lt) {
+	  land_target_sub = node->create_subscription<mavros_msgs::msg::LandingTarget>(
+            "~/raw", 10, std::bind(
+              &LandingTargetPlugin::landtarget_cb, this,
+              _1));
+	}
+      });
+
+    node_declate_and_watch_parameter(
+      "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
+        mav_frame = p.as_string();
+        frame = utils::mav_frame_from_str(mav_frame);                 // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
+      });
+
+    node_declate_and_watch_parameter(
+      "land_target_type", "VISION_FIDUCIAL", [&](const rclcpp::Parameter & p) {
+        land_target_type = p.as_string();
+        type = utils::landing_target_type_from_str(land_target_type); // LANDING_TARGET_TYPE index based on given type name (If unknown, defaults to LIGHT_BEACON)
+      });
 
     // target size
-    nh.param("target_size/x", target_size_x, 1.0);              // [meters]
-    nh.param("target_size/y", target_size_y, 1.0);
+    node_declate_and_watch_parameter(
+      "target_size.x", 1.0, [&](const rclcpp::Parameter & p) {
+        target_size_x = p.as_double();                                // [meters]
+      });
+
+    node_declate_and_watch_parameter(
+      "target_size.y", 1.0, [&](const rclcpp::Parameter & p) {
+        target_size_y = p.as_double();
+      });
 
     // image size
-    nh.param<int>("image/width", image_width, 640);             // [pixels]
-    nh.param<int>("image/height", image_height, 480);
+    node_declate_and_watch_parameter(
+      "image.width", 640, [&](const rclcpp::Parameter & p) {
+        image_width = p.as_int();                                     // [pixels]
+      });
+
+    node_declate_and_watch_parameter(
+      "image.height", 480, [&](const rclcpp::Parameter & p) {
+        image_height = p.as_int();
+      });
 
     // camera field-of-view -> should be precised using the calibrated camera intrinsics
-    nh.param("camera/fov_x", fov_x, 2.0071286398);              // default: 115 [degrees]
-    nh.param("camera/fov_y", fov_y, 2.0071286398);
+    node_declate_and_watch_parameter(
+      "camera.fov_x", 2.0071286398, [&](const rclcpp::Parameter & p) {
+        fov_x = p.as_double();                                        // default: 115 degrees in [radians]
+      });
+
+    node_declate_and_watch_parameter(
+      "camera.fov_y", 2.0071286398, [&](const rclcpp::Parameter & p) {
+        fov_y = p.as_double();                                        // default: 115 degrees in [radians]
+      });
+
     // camera focal length
-    nh.param("camera/focal_length", focal_length, 2.8);                 //ex: OpenMV Cam M7: 2.8 [mm]
+    node_declate_and_watch_parameter(
+      "camera.focal_length", 2.8, [&](const rclcpp::Parameter & p) {
+        focal_length = p.as_double();                                 // ex: OpenMV Cam M7: 2.8 [mm]
+      });
 
     // tf subsection
-    nh.param("tf/send", send_tf, true);
-    nh.param("tf/listen", listen_tf, false);
-    nh.param<std::string>("tf/frame_id", tf_frame_id, frame_id);
-    nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "camera_center");
-    nh.param("tf/rate_limit", tf_rate, 50.0);
+    node_declate_and_watch_parameter(
+      "tf.rate_limit", 50.0, [&](const rclcpp::Parameter & p) {
+        // no dynamic update here yet. need to modify the thread in setpoint_mixin to handle new rates
+        tf_rate = p.as_double();
+      });
 
-    land_target_pub = nh.advertise<geometry_msgs::PoseStamped>("pose_in", 10);
-    lt_marker_pub = nh.advertise<geometry_msgs::Vector3Stamped>("lt_marker", 10);
+    node_declate_and_watch_parameter(
+      "tf.listen", false, [&](const rclcpp::Parameter & p) {
+        tf_listen = p.as_bool();
+	/* TODO:
+        ROS_INFO_STREAM_NAMED(
+          "landing_target", "Listen to landing_target transform " << tf_frame_id <<
+            " -> " << tf_child_frame_id);
+	*/
+        tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
+      });
 
-    if (listen_tf) {                    // Listen to transform
-      ROS_INFO_STREAM_NAMED(
-        "landing_target", "Listen to landing_target transform " << tf_frame_id <<
-          " -> " << tf_child_frame_id);
-      tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
-    } else if (listen_lt) {             // Subscribe to LandingTarget msg
-      land_target_sub = nh.subscribe("raw", 10, &LandingTargetPlugin::landtarget_cb, this);
-    } else {                            // Subscribe to PoseStamped msg
-      pose_sub = nh.subscribe("pose", 10, &LandingTargetPlugin::pose_cb, this);
-    }
+    node_declate_and_watch_parameter(
+      "tf.send", true, [&](const rclcpp::Parameter & p) {
+        tf_send = p.as_bool();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf.frame_id", frame_id, [&](const rclcpp::Parameter & p) {
+        tf_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf.child_frame_id", "camera_center", [&](const rclcpp::Parameter & p) {
+        tf_child_frame_id = p.as_string();
+      });
+
+
+    auto sensor_qos = rclcpp::SensorDataQoS();
+
+    land_target_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>("pose_in", sensor_qos);
+    lt_marker_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("lt_marker", sensor_qos);
+
+    pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+      "~/pose", 10, std::bind(
+        &LandingTargetPlugin::pose_cb, this, _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -116,23 +189,20 @@ public:
 
 private:
   friend class TF2ListenerMixin;
-  ros::NodeHandle nh;
 
-  bool send_tf;
-  bool listen_tf;
   double tf_rate;
-  ros::Time last_transform_stamp;
-
-  bool listen_lt;
+  bool tf_send;
+  bool tf_listen;
+  rclcpp::Time last_transform_stamp;
 
   std::string frame_id;
   std::string tf_frame_id;
   std::string tf_child_frame_id;
 
-  ros::Publisher land_target_pub;
-  ros::Publisher lt_marker_pub;
-  ros::Subscriber land_target_sub;
-  ros::Subscriber pose_sub;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr land_target_pub;
+  rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr lt_marker_pub;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub;
+  rclcpp::Subscription<mavros_msgs::msg::LandingTarget>::SharedPtr land_target_sub;
 
   double target_size_x, target_size_y;
   double fov_x, fov_y;
@@ -176,7 +246,7 @@ private:
 
     ftf::quaternion_to_mavlink(q, lt.q);
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(lt);
+    uas->send_message(lt);
   }
 
   /* -*- mid-level helpers -*- */
@@ -219,7 +289,7 @@ private:
   /**
    * @brief Send landing target transform to FCU
    */
-  void send_landing_target(const ros::Time & stamp, const Eigen::Affine3d & tr)
+  void send_landing_target(const rclcpp::Time & stamp, const Eigen::Affine3d & tr)
   {
     /**
      * @brief the position of the landing target WRT camera center - on the FCU,
@@ -265,15 +335,18 @@ private:
     }
 
     if (last_transform_stamp == stamp) {
-      ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "LT: Same transform as last one, dropped.");
+      //TODO: ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "LT: Same transform as last one, dropped.");
       return;
     }
     last_transform_stamp = stamp;
 
-    auto rpy = ftf::quaternion_to_rpy(q);
 
     // the last char of frame_id is considered the number of the target
     uint8_t id = static_cast<uint8_t>(frame_id.back());
+
+    // TODO:
+    /*
+    auto rpy = ftf::quaternion_to_rpy(q);
 
     ROS_DEBUG_THROTTLE_NAMED(
       10, "landing_target", "Tx landing target: "
@@ -285,9 +358,10 @@ private:
       angle.x(), angle.y(), distance, pos.x(), pos.y(), pos.z(),
       rpy.x(), rpy.y(), rpy.z(), size_rad.x(), size_rad.y(),
       utils::to_string(static_cast<LANDING_TARGET_TYPE>(type)).c_str());
+    */
 
     landing_target(
-      stamp.toNSec() / 1000,
+      stamp.nanoseconds() / 1000,
       id,
       utils::enum_value(frame),                                         // by default, in LOCAL_NED
       angle,
@@ -303,8 +377,10 @@ private:
    * @brief Receive landing target from FCU.
    */
   void handle_landing_target(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::LANDING_TARGET & land_target)
+    [[maybe_unused]] const mavlink::mavlink_message_t * msg,
+    mavlink::common::msg::LANDING_TARGET & land_target,
+    [[maybe_unused]] plugin::filter::SystemAndOk filter)
+
   {
     /** @todo these transforms should be applied according to the MAV_FRAME */
     auto position =
@@ -320,56 +396,66 @@ private:
 
     auto rpy = ftf::quaternion_to_rpy(orientation);
 
-    ROS_DEBUG_THROTTLE_NAMED(
-      10, "landing_target", "Rx landing target: "
-      "ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
-      "distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
-      "orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
-      "size: X:%1.3frad by Y:%1.3frad type: %s",
-      land_target.target_num, utils::to_string(static_cast<MAV_FRAME>(land_target.frame)).c_str(),
-      land_target.angle_x, land_target.angle_y, land_target.distance,
-      position.x(), position.y(), position.z(), rpy.x(), rpy.y(),
-      rpy.z(), land_target.size_x, land_target.size_y,
-      utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str());
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      uas->get_logger(),
+      *uas->get_clock(), 10,
+      "landing_target:\n" <<
+      "\tRx landing target:" <<
+      "\n\t\tID: " << land_target.target_num <<
+      "\n\t\tframe: " << utils::to_string(static_cast<MAV_FRAME>(land_target.frame)).c_str() <<
+      "\n\t\tangular offset: X: " << land_target.angle_x << "rad, Y: " << land_target.angle_y << "rad" <<
+      "\n\t\tdistance: " << land_target.distance << "m" <<
+      "\n\t\tposition:" <<
+      "\n\t\t\tX: " << position.x() << "m" <<
+      "\n\t\t\tY: " << position.y() << "m" <<
+      "\n\t\t\tZ: " << position.z() << "m" <<
+      "\n\t\torientation:" <<
+      "\n\t\t\troll:  " << rpy.x() << "rad" <<
+      "\n\t\t\tpitch: " << rpy.y() << "rad" <<
+      "\n\t\t\tyaw:   " << rpy.z() << "rad" <<
+      "\n\t\tsize: X: " << land_target.size_x << "rad, Y: " << land_target.size_y << "rad" <<
+      "\n\t\ttype: " << utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str() << std::endl);
 
-    auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
-    pose->header = m_uas->synchronized_header(frame_id, land_target.time_usec);
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header = uas->synchronized_header(frame_id, land_target.time_usec);
 
-    tf::pointEigenToMsg(position, pose->pose.position);
-    tf::quaternionEigenToMsg(orientation, pose->pose.orientation);
+    pose.pose.position = tf2::toMsg(position);
+    pose.pose.orientation = tf2::toMsg(orientation);
 
-    land_target_pub.publish(pose);
+    land_target_pub->publish(pose);
 
-    if (send_tf) {
-      geometry_msgs::TransformStamped transform;
+    if (tf_send) {
+      geometry_msgs::msg::TransformStamped transform;
 
-      transform.header.stamp = pose->header.stamp;
-      transform.header.frame_id = "landing_target_" + boost::lexical_cast<std::string>(
+      transform.header.stamp = pose.header.stamp;
+      transform.header.frame_id = "landing_target_" + std::to_string(
         land_target.target_num);
       transform.child_frame_id = tf_child_frame_id;
 
-      transform.transform.rotation = pose->pose.orientation;
-      tf::vectorEigenToMsg(position, transform.transform.translation);
+      transform.transform.rotation = pose.pose.orientation;
+      geometry_msgs::msg::Point translation_p = tf2::toMsg(position);
+      transform.transform.translation.x = translation_p.x;
+      transform.transform.translation.y = translation_p.y;
+      transform.transform.translation.z = translation_p.z;
 
-      m_uas->tf2_broadcaster.sendTransform(transform);
+      uas->tf2_broadcaster.sendTransform(transform);
     }
 
-    auto tg_size_msg = boost::make_shared<geometry_msgs::Vector3Stamped>();
-    Eigen::Vector3d target_size(target_size_x, target_size_y, 0.0);
+    geometry_msgs::msg::Vector3Stamped tg_size_msg;
+    tg_size_msg.vector.x = target_size_x;
+    tg_size_msg.vector.y = target_size_y;
+    tg_size_msg.vector.z = 0.0;
 
-    tf::vectorEigenToMsg(target_size, tg_size_msg->vector);
-
-    lt_marker_pub.publish(tg_size_msg);
+    lt_marker_pub->publish(tg_size_msg);
   }
 
   /* -*- callbacks -*- */
   /**
    * @brief callback for TF2 listener
    */
-  void transform_cb(const geometry_msgs::TransformStamped & transform)
+  void transform_cb(const geometry_msgs::msg::TransformStamped & transform)
   {
-    Eigen::Affine3d tr;
-    tf::transformMsgToEigen(transform.transform, tr);
+    Eigen::Affine3d tr = tf2::transformToEigen(transform.transform);
 
     send_landing_target(transform.header.stamp, tr);
   }
@@ -377,10 +463,10 @@ private:
   /**
    * @brief callback for PoseStamped msgs topic
    */
-  void pose_cb(const geometry_msgs::PoseStamped::ConstPtr & req)
+  void pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
   {
     Eigen::Affine3d tr;
-    tf::poseMsgToEigen(req->pose, tr);
+    tf2::fromMsg(req->pose, tr);
 
     send_landing_target(req->header.stamp, tr);
   }
@@ -389,10 +475,10 @@ private:
    * @brief callback for raw LandingTarget msgs topic - useful if one has the
    * data processed in another node
    */
-  void landtarget_cb(const mavros_msgs::LandingTarget::ConstPtr & req)
+  void landtarget_cb(const mavros_msgs::msg::LandingTarget::SharedPtr req)
   {
     Eigen::Affine3d tr;
-    tf::poseMsgToEigen(req->pose, tr);
+    tf2::fromMsg(req->pose, tr);
 
     /** @todo these transforms should be applied according to the MAV_FRAME */
     auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
@@ -400,7 +486,7 @@ private:
       ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
     landing_target(
-      req->header.stamp.toNSec() / 1000,
+      rclcpp::Time(req->header.stamp).nanoseconds() / 1000,
       req->target_num,
       req->frame,                                       // by default, in LOCAL_NED
       Eigen::Vector2f(req->angle[0], req->angle[1]),
@@ -415,4 +501,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::LandingTargetPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::LandingTargetPlugin)
