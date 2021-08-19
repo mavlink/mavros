@@ -146,11 +146,9 @@ public:
     node_declate_and_watch_parameter(
       "tf.listen", false, [&](const rclcpp::Parameter & p) {
         tf_listen = p.as_bool();
-	/* TODO:
-        ROS_INFO_STREAM_NAMED(
-          "landing_target", "Listen to landing_target transform " << tf_frame_id <<
+        RCLCPP_INFO_STREAM(get_logger(),
+          "LT: Listen to landing_target transform " << tf_frame_id <<
             " -> " << tf_child_frame_id);
-	*/
         tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
       });
 
@@ -335,7 +333,7 @@ private:
     }
 
     if (last_transform_stamp == stamp) {
-      //TODO: ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "LT: Same transform as last one, dropped.");
+      RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 10, "LT: Same transform as last one, dropped.");
       return;
     }
     last_transform_stamp = stamp;
@@ -343,22 +341,6 @@ private:
 
     // the last char of frame_id is considered the number of the target
     uint8_t id = static_cast<uint8_t>(frame_id.back());
-
-    // TODO:
-    /*
-    auto rpy = ftf::quaternion_to_rpy(q);
-
-    ROS_DEBUG_THROTTLE_NAMED(
-      10, "landing_target", "Tx landing target: "
-      "ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
-      "distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
-      "orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
-      "size: X:%1.3frad by Y:%1.3frad type: %s",
-      id, utils::to_string(static_cast<MAV_FRAME>(frame)).c_str(),
-      angle.x(), angle.y(), distance, pos.x(), pos.y(), pos.z(),
-      rpy.x(), rpy.y(), rpy.z(), size_rad.x(), size_rad.y(),
-      utils::to_string(static_cast<LANDING_TARGET_TYPE>(type)).c_str());
-    */
 
     landing_target(
       stamp.nanoseconds() / 1000,
@@ -397,24 +379,10 @@ private:
     auto rpy = ftf::quaternion_to_rpy(orientation);
 
     RCLCPP_DEBUG_STREAM_THROTTLE(
-      uas->get_logger(),
-      *uas->get_clock(), 10,
+      get_logger(),
+      *get_clock(), 10,
       "landing_target:\n" <<
-      "\tRx landing target:" <<
-      "\n\t\tID: " << land_target.target_num <<
-      "\n\t\tframe: " << utils::to_string(static_cast<MAV_FRAME>(land_target.frame)).c_str() <<
-      "\n\t\tangular offset: X: " << land_target.angle_x << "rad, Y: " << land_target.angle_y << "rad" <<
-      "\n\t\tdistance: " << land_target.distance << "m" <<
-      "\n\t\tposition:" <<
-      "\n\t\t\tX: " << position.x() << "m" <<
-      "\n\t\t\tY: " << position.y() << "m" <<
-      "\n\t\t\tZ: " << position.z() << "m" <<
-      "\n\t\torientation:" <<
-      "\n\t\t\troll:  " << rpy.x() << "rad" <<
-      "\n\t\t\tpitch: " << rpy.y() << "rad" <<
-      "\n\t\t\tyaw:   " << rpy.z() << "rad" <<
-      "\n\t\tsize: X: " << land_target.size_x << "rad, Y: " << land_target.size_y << "rad" <<
-      "\n\t\ttype: " << utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str() << std::endl);
+      land_target.to_yaml());
 
     geometry_msgs::msg::PoseStamped pose;
     pose.header = uas->synchronized_header(frame_id, land_target.time_usec);
