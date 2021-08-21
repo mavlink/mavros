@@ -37,6 +37,7 @@ using mavlink::common::LANDING_TARGET_TYPE;
 
 /**
  * @brief Landing Target plugin
+ * @plugin landing_target
  *
  * This plugin is intended to publish the location of a landing area captured from a downward facing camera
  * to the FCU and/or receive landing target tracking data coming from the FCU.
@@ -77,12 +78,12 @@ public:
 
         land_target_sub.reset();
 
-	if (listen_lt) {
-	  land_target_sub = node->create_subscription<mavros_msgs::msg::LandingTarget>(
+        if (listen_lt) {
+          land_target_sub = node->create_subscription<mavros_msgs::msg::LandingTarget>(
             "~/raw", 10, std::bind(
               &LandingTargetPlugin::landtarget_cb, this,
               _1));
-	}
+        }
       });
 
     node_declate_and_watch_parameter(
@@ -146,7 +147,8 @@ public:
     node_declate_and_watch_parameter(
       "tf.listen", false, [&](const rclcpp::Parameter & p) {
         tf_listen = p.as_bool();
-        RCLCPP_INFO_STREAM(get_logger(),
+        RCLCPP_INFO_STREAM(
+          get_logger(),
           "LT: Listen to landing_target transform " << tf_frame_id <<
             " -> " << tf_child_frame_id);
         tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
@@ -170,8 +172,11 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
-    land_target_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>("pose_in", sensor_qos);
-    lt_marker_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("lt_marker", sensor_qos);
+    land_target_pub =
+      node->create_publisher<geometry_msgs::msg::PoseStamped>("pose_in", sensor_qos);
+    lt_marker_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>(
+      "lt_marker",
+      sensor_qos);
 
     pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
       "~/pose", 10, std::bind(
@@ -333,7 +338,9 @@ private:
     }
 
     if (last_transform_stamp == stamp) {
-      RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 10, "LT: Same transform as last one, dropped.");
+      RCLCPP_DEBUG_THROTTLE(
+        get_logger(),
+        *get_clock(), 10, "LT: Same transform as last one, dropped.");
       return;
     }
     last_transform_stamp = stamp;
@@ -362,7 +369,6 @@ private:
     [[maybe_unused]] const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::LANDING_TARGET & land_target,
     [[maybe_unused]] plugin::filter::SystemAndOk filter)
-
   {
     /** @todo these transforms should be applied according to the MAV_FRAME */
     auto position =
@@ -382,7 +388,7 @@ private:
       get_logger(),
       *get_clock(), 10,
       "landing_target:\n" <<
-      land_target.to_yaml());
+        land_target.to_yaml());
 
     geometry_msgs::msg::PoseStamped pose;
     pose.header = uas->synchronized_header(frame_id, land_target.time_usec);
