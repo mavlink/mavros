@@ -145,16 +145,6 @@ public:
       });
 
     node_declate_and_watch_parameter(
-      "tf.listen", false, [&](const rclcpp::Parameter & p) {
-        tf_listen = p.as_bool();
-        RCLCPP_INFO_STREAM(
-          get_logger(),
-          "LT: Listen to landing_target transform " << tf_frame_id <<
-            " -> " << tf_child_frame_id);
-        tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
-      });
-
-    node_declate_and_watch_parameter(
       "tf.send", true, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
@@ -167,6 +157,20 @@ public:
     node_declate_and_watch_parameter(
       "tf.child_frame_id", "camera_center", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf.listen", false, [&](const rclcpp::Parameter & p) {
+        tf_listen = p.as_bool();
+        if (!tf_listen) {
+          return;
+        }
+
+        RCLCPP_INFO_STREAM(
+          get_logger(),
+          "LT: Listen to landing_target transform " << tf_frame_id <<
+            " -> " << tf_child_frame_id);
+        tf2_start("LandingTargetTF", &LandingTargetPlugin::transform_cb);
       });
 
 
