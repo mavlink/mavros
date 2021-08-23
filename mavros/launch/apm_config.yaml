@@ -202,6 +202,11 @@ landing_target:
     rate_limit: 10.0
   target_size: {x:  0.3, y:  0.3}
 
+# mavlink binary logfiles
+mavlink_logging:
+  start_on_init: false
+  path: ""
+
 # mocap_pose_estimate
 mocap:
   # select mocap source
