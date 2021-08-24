@@ -204,7 +204,7 @@ landing_target:
 
 # mavlink binary logfiles
 mavlink_logging:
-  start_on_init: false
+  start_on_conn: false
   path: ""
 
 # mocap_pose_estimate
