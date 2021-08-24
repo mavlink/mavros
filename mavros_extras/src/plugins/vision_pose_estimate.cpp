@@ -115,8 +115,55 @@ private:
   /**
    * @brief Send vision estimate transform to FCU position controller
    */
-  void send_vision_estimate(void)
+  void send_vision_estimate(const rclcpp::Time & stamp, const Eigen::Affine3d & tr,
+    const geometry_msgs::msg::PoseWithCovariance::_covariance_type & cov) // Check ::_covariance_type
   {
+    if (last_transform_stamp == stamp) {
+      RCLCPP_DEBUG_THROTTLE(
+        get_logger(),
+        *get_clock(), 10, "Vision: Same transform as last one, dropped.");
+      return;
+    }
+    last_transform_stamp = stamp;
+
+    auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+    auto rpy = ftf::quaternion_to_rpy(
+      ftf::transform_orientation_enu_ned(
+        ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))));
+
+    auto cov_ned = ftf::transform_frame_enu_ned(cov);
+    ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
+
+    RCLCPP_INFO_STREAM(
+          get_logger(),
+          "Listen to vision transform " << tf_frame_id <<
+            " -> " << tf_child_frame_id);
+
+
+    mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
+
+    vp.usec = stamp.nanoseconds() / 1000;
+    // [[[cog:
+    // for f in "xyz":
+    //     cog.outl("vp.%s = position.%s();" % (f, f))
+    // for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
+    //     cog.outl("vp.%s = rpy.%s();" % (b, a))
+    // ]]]
+
+    vp.x = position.x();
+    vp.y = position.y();
+    vp.z = position.z();
+    vp.roll = rpy.x();
+    vp.pitch = rpy.y();
+    vp.yaw = rpy.z();
+    // [[[end]]] (checksum: 2048daf411780847e77f08fe5a0b9dd3)
+
+
+    // just the URT of the 6x6 Pose Covariance Matrix, given
+    // that the matrix is symmetric
+    ftf::covariance_urt_to_mavlink(cov_map, vp.covariance);
+
+    uas->send_message(vp);
 
   }
 
@@ -126,17 +173,26 @@ private:
 
   void transform_cb(const geometry_msgs::msg::TransformStamped & transform)
   {
+    Eigen::Affine3d tr = tf2::transformToEigen(transform.transform);
+    ftf::Covariance6d cov {};                   // zero initialized
 
+    send_vision_estimate(transform.header.stamp, tr, cov);
   }
 
   void vision_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
   {
+    Eigen::Affine3d tr;
+    tf2::fromMsg(req->pose, tr);
+    ftf::Covariance6d cov {};                   // zero initialized
 
+    send_vision_estimate(req->header.stamp, tr, cov);
   }
 
   void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr req)
   {
-
+    Eigen::Affine3d tr;
+    tf2::fromMsg(req->pose.pose, tr);
+    send_vision_estimate(req->header.stamp, tr, req->pose.covariance);
   }
 };
 }       // namespace extra_plugins
