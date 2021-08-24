@@ -19,14 +19,14 @@ using mavlink::ardupilotmega::MAV_REMOTE_LOG_DATA_BLOCK_STATUSES;
 class LogPlugin : public plugin::PluginBase {
 
 public:
-	LogPlugin() : PluginBase(),
-		nh("~mavlink_logging"),
+    LogPlugin() : PluginBase(),
+        nh("~mavlink_logging"),
         stopped(false)
     {}
 
-	void initialize(UAS& uas) override
-	{
-		PluginBase::initialize(uas);
+    void initialize(UAS& uas) override
+    {
+        PluginBase::initialize(uas);
 
         _last_block_s = ros::Time::now().toSec();
 
@@ -34,9 +34,9 @@ public:
         nh.param<std::string>("path", path, "");
 
         start_srv = nh.advertiseService("start",
-					&LogPlugin::start_cb, this);
+                    &LogPlugin::start_cb, this);
         stop_srv = nh.advertiseService("stop",
-					&LogPlugin::stop_cb, this);
+                    &LogPlugin::stop_cb, this);
 
         rotate_log_timer = nh.createTimer(ros::Duration(1.),
                     &LogPlugin::rotate_on_disarm, this);
@@ -50,21 +50,21 @@ public:
     }
 
     Subscriptions get_subscriptions() override
-	{
-		return {
-			       make_handler(&LogPlugin::handle_data),
-		};
-	}
+    {
+        return {
+                   make_handler(&LogPlugin::handle_data),
+        };
+    }
 
 private:
     ros::NodeHandle nh;
-    
+
     ros::ServiceServer start_srv;
     ros::ServiceServer stop_srv;
 
     ros::Timer rotate_log_timer;
-	ros::Timer send_nacks_timer;
-    
+    ros::Timer send_nacks_timer;
+
     bool start_log_on_init;
     std::string path;
     bool armed;
@@ -77,45 +77,45 @@ private:
     //----- Services -----//
 
     bool start_cb(std_srvs::Trigger::Request &req,
-				std_srvs::Trigger::Response &res)
+                std_srvs::Trigger::Response &res)
     {
         if (_send_logging_start() && _open_logfile())
         {
             stopped = false;
             rotate_log_timer.start();
             send_nacks_timer.start();
-		    res.success = true;
+            res.success = true;
             ROS_INFO_NAMED("LG", "LG: Starting logging via Mavlink");
-		} else {
+        } else {
             res.success = false;
             ROS_INFO_NAMED("LG", "LG: Failed to start logging via Mavlink");
-		}
-		return true;
+        }
+        return true;
     }
 
     bool stop_cb(std_srvs::Trigger::Request &req,
-				std_srvs::Trigger::Response &res)
+                std_srvs::Trigger::Response &res)
     {
         if (_send_logging_stop() && _close_logfile())
         {
             stopped = true;
             rotate_log_timer.stop();
             send_nacks_timer.stop();
-		    res.success = true;
+            res.success = true;
             ROS_INFO_NAMED("LG", "LG: Stopping logging via Mavlink");
-		} else {
-			res.success = false;
+        } else {
+            res.success = false;
             ROS_INFO_NAMED("LG", "LG: Failed to stop logging via Mavlink");
-		}
-		return true;
+        }
+        return true;
     }
 
     //----- Callbacks -----//
 
     // Act on first heartbeat from FCU
-	void connection_cb(bool connected) override
-	{
-		if (connected && start_log_on_init && m_uas->is_ardupilotmega()) {
+    void connection_cb(bool connected) override
+    {
+        if (connected && start_log_on_init && m_uas->is_ardupilotmega()) {
             armed = m_uas->get_armed();
             _close_logfile();
             _send_logging_stop();
@@ -124,21 +124,21 @@ private:
             stopped = false;
             rotate_log_timer.start();
             send_nacks_timer.start();
-		}
-	}
+        }
+    }
 
     void handle_data(const mavlink::mavlink_message_t *msg, REMOTE_LOG_DATA_BLOCK &lmsg)
     {
         _last_block_s = ros::Time::now().toSec();
         if (stopped)
-        { // still reciving log data when requested to stop 
+        { // still reciving log data when requested to stop
             _send_logging_stop();
         } else {
             if (_log_is_open()){ // check the file is open now
                 _write_to_file(lmsg);
                 _send_ack(lmsg.seqno);
                 ROS_DEBUG_NAMED("LG", "LG: Received data: seqno: %d pckt size: %lu", lmsg.seqno, lmsg.data.size());
-            } 
+            }
             else {
               //if file cannot be open, dont send an ACK, we'll try again later
                 ROS_DEBUG_NAMED("LG", "LG: No logfile open but recv: seqno: %d", lmsg.seqno);
@@ -154,7 +154,7 @@ private:
             armed = m_uas->get_armed();
             if (!armed) {
                 ROS_INFO_NAMED("LG", "LG: Rotating logfile on disarm");
-                
+
                 double _start_s = ros::Time::now().toSec();
                 bool _stoppped_receiving = false;
                 bool _timedout = false;
@@ -223,8 +223,8 @@ private:
     bool _send_ack(uint32_t seqno)
     {  // Send ACK in response to a receieved log data block
         REMOTE_LOG_BLOCK_STATUS smsg = {};
-		m_uas->msg_set_target(smsg);
-		smsg.seqno = seqno;
+        m_uas->msg_set_target(smsg);
+        smsg.seqno = seqno;
         smsg.status = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_STATUSES::ACK);
         UAS_FCU(m_uas)->send_message_ignore_drop(smsg);
         ROS_DEBUG_NAMED("LG", "LG: Sending ACK: seqno: %d", seqno);
@@ -233,8 +233,8 @@ private:
     bool _send_nack(uint32_t seqno)
     {  // Send a NACK for missing log data blocks
         REMOTE_LOG_BLOCK_STATUS smsg = {};
-		m_uas->msg_set_target(smsg);
-		smsg.seqno = seqno;
+        m_uas->msg_set_target(smsg);
+        smsg.seqno = seqno;
         smsg.status = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_STATUSES::NACK);
         UAS_FCU(m_uas)->send_message_ignore_drop(smsg);
         ROS_DEBUG_NAMED("LG", "LG: Sending NACK: seqno: %d", seqno);
@@ -243,29 +243,29 @@ private:
     bool _send_logging_start(void)
     {  // Send command to start the logging via mavlink
         REMOTE_LOG_BLOCK_STATUS msg = {};
-		m_uas->msg_set_target(msg);
-		msg.seqno = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS::START);
+        m_uas->msg_set_target(msg);
+        msg.seqno = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS::START);
         msg.status = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_STATUSES::ACK);
         try {
-			UAS_FCU(m_uas)->send_message(msg);
+            UAS_FCU(m_uas)->send_message(msg);
             return true;
-		} catch (std::length_error&) {
-			return false;
-		} 
+        } catch (std::length_error&) {
+            return false;
+        }
     }
 
     bool _send_logging_stop(void)
     {  // Send command to stop the logging via mavlink
         REMOTE_LOG_BLOCK_STATUS msg = {};
-		m_uas->msg_set_target(msg);
-		msg.seqno = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS::STOP);
+        m_uas->msg_set_target(msg);
+        msg.seqno = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS::STOP);
         msg.status = enum_value(MAV_REMOTE_LOG_DATA_BLOCK_STATUSES::ACK);
         try {
-			UAS_FCU(m_uas)->send_message(msg);
+            UAS_FCU(m_uas)->send_message(msg);
             return true;
-		} catch (std::length_error&) {
-			return false;
-		} 
+        } catch (std::length_error&) {
+            return false;
+        }
     }
 };
 
