@@ -34,6 +34,7 @@
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <mavros_msgs/SensorStatus.h>
 
 namespace mavros {
 /**
@@ -232,6 +233,14 @@ public:
 
 	//! Retunrs last GPS RAW message
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
+
+	/* -*- Sensor status data -*- */
+
+	//! Returns last sensor status
+	mavros_msgs::SensorStatus::Ptr get_sensor_status();
+
+	//! Store sensor status
+	void update_sensor_status(mavros_msgs::SensorStatus::Ptr &stat);
 
 	/* -*- GograpticLib utils -*- */
 
@@ -466,6 +475,8 @@ private:
 	float gps_epv;
 	int gps_fix_type;
 	int gps_satellites_visible;
+
+	mavros_msgs::SensorStatus::Ptr sensor_status;
 
 	std::atomic<uint64_t> time_offset;
 	timesync_mode tsync_mode;

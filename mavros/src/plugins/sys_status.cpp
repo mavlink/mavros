@@ -19,6 +19,7 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/EstimatorStatus.h>
 #include <mavros_msgs/ExtendedState.h>
+#include <mavros_msgs/SensorStatus.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
@@ -35,6 +36,7 @@ using BatteryMsg = sensor_msgs::BatteryState;
 #include <mavros_msgs/BatteryStatus.h>
 using BatteryMsg = mavros_msgs::BatteryStatus;
 #endif
+
 
 namespace mavros {
 namespace std_plugins {
@@ -489,6 +491,7 @@ public:
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
+		sensor_status_pub = nh.advertise<mavros_msgs::SensorStatus>("sensor_status", 10, true);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
 		batt2_pub = nh.advertise<BatteryMsg>("battery2", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
@@ -533,6 +536,7 @@ private:
 
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
+	ros::Publisher sensor_status_pub;
 	ros::Publisher batt_pub;
 	ros::Publisher batt2_pub;
 	ros::Publisher estimator_status_pub;
@@ -761,12 +765,21 @@ private:
 
 	void handle_sys_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYS_STATUS &stat)
 	{
+		auto status_msg = boost::make_shared<mavros_msgs::SensorStatus>();
+		status_msg->header.stamp = ros::Time::now();
+		status_msg->sensors_present = stat.onboard_control_sensors_present;
+        status_msg->sensors_enabled = stat.onboard_control_sensors_enabled;
+        status_msg->sensors_health = stat.onboard_control_sensors_health;
+
+		sensor_status_pub.publish(status_msg);
+		m_uas->update_sensor_status(status_msg);
+		sys_diag.set(stat);
+
 		float volt = stat.voltage_battery / 1000.0f;	// mV
 		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
 		float rem = stat.battery_remaining / 100.0f;	// or -1
 
 		battery_voltage = volt;
-		sys_diag.set(stat);
 		batt_diag.set(volt, curr, rem);
 
 		if (has_battery_status)

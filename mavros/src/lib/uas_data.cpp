@@ -248,6 +248,22 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 	return gps_fix;
 }
 
+/* -*- Sensor status data -*- */
+
+//! Returns last sensor status
+mavros_msgs::SensorStatus::Ptr UAS::get_sensor_status()
+{
+	lock_guard lock(mutex);
+	return sensor_status;
+}
+
+//! Store sensor status
+void UAS::update_sensor_status(mavros_msgs::SensorStatus::Ptr &stat)
+{
+	lock_guard lock(mutex);
+	sensor_status = stat;
+}
+
 /* -*- transform -*- */
 
 //! Stack static transform into vector
