@@ -21,7 +21,11 @@ class LogPlugin : public plugin::PluginBase {
 public:
     LogPlugin() : PluginBase(),
         nh("~mavlink_logging"),
-        stopped(false)
+        start_log_on_init(false),
+        path(""),
+        stopped(true),
+        armed(false),
+        _last_block_s(0.0)
     {}
 
     void initialize(UAS& uas) override
@@ -38,7 +42,7 @@ public:
         stop_srv = nh.advertiseService("stop",
                     &LogPlugin::stop_cb, this);
 
-        rotate_log_timer = nh.createTimer(ros::Duration(1.),
+        rotate_log_timer = nh.createTimer(ros::Duration(0.1),
                     &LogPlugin::rotate_on_disarm, this);
         rotate_log_timer.stop();
 
@@ -124,6 +128,7 @@ private:
             stopped = false;
             rotate_log_timer.start();
             send_nacks_timer.start();
+            ROS_INFO_NAMED("LG", "LG: Starting logging via Mavlink (on connection)");
         }
     }
 
@@ -134,6 +139,11 @@ private:
         { // still reciving log data when requested to stop
             _send_logging_stop();
         } else {
+
+            if (lmsg.seqno == 0 && !_log_is_open()) {  //check if logfile needs to be opened
+                _open_logfile();
+            }
+
             if (_log_is_open()){ // check the file is open now
                 _write_to_file(lmsg);
                 _send_ack(lmsg.seqno);
@@ -150,41 +160,49 @@ private:
 
     void rotate_on_disarm(const ros::TimerEvent &event)
     {  //on disarm, stop the old log, and start a new one
-        if (m_uas->get_armed() != armed) {
-            armed = m_uas->get_armed();
-            if (!armed) {
-                ROS_INFO_NAMED("LG", "LG: Rotating logfile on disarm");
+        if (!stopped)
+        {
+            if (m_uas->get_armed() != armed) 
+            {
+                armed = m_uas->get_armed();
+                if (!armed) 
+                {
+                    ROS_INFO_NAMED("LG", "LG: Rotating logfile on disarm");
 
-                double _start_s = ros::Time::now().toSec();
-                bool _stoppped_receiving = false;
-                bool _timedout = false;
-                while (!_stoppped_receiving && !_timedout) {
-                    double _now_s = ros::Time::now().toSec();
-                    _stoppped_receiving = (_now_s - _last_block_s) > 3;  //wait 3s before closing file
-                    _timedout = (_now_s - _start_s) > 30;  //timeout after 30s waiting for stop
-                }
+                    double _start_s = ros::Time::now().toSec();
+                    bool _stoppped_receiving = false;
+                    bool _timedout = false;
+                    while (!_stoppped_receiving && !_timedout) {
+                        double _now_s = ros::Time::now().toSec();
+                        _stoppped_receiving = (_now_s - _last_block_s) > 3;  //wait 3s before closing file
+                        _timedout = (_now_s - _start_s) > 30;  //timeout after 30s waiting for stop
+                    }
 
-                for (int i = 0; i < 3; ++i) {  //send three times for sender gets the message
-                  // mavproxy does this, so we will copy
-                    _send_logging_stop();
-                }
+                    for (int i = 0; i < 3; ++i) {  //send three times for sender gets the message
+                    // mavproxy does this, so we will copy
+                        _send_logging_stop();
+                    }
 
-                _close_logfile(); //close the logfile
-                _open_logfile(); //open a new logfiles
-                _send_logging_start(); //start a new logfile
+                    _close_logfile(); //close the logfile
+                    _open_logfile(); //open a new logfiles
+                    _send_logging_start(); //start a new logfile
+                } 
             }
         }
     }
 
     void send_nacks_for_missing_blocks(const ros::TimerEvent &event)
-    {  //iiterate through the set of recived block, send a nack for missing ones
-        lock_guard lock(mutex);  //hold the mutex for the block_recieved set
-        if(!blocks_received.empty())
+    {  //iterate through the set of recived block, send a nack for missing ones
+        if (!stopped)
         {
-            for (uint32_t expected = 0; expected < *blocks_received.rbegin(); ++expected)
+            lock_guard lock(mutex);  //hold the mutex for the block_recieved set
+            if(!blocks_received.empty())
             {
-                if (blocks_received.find(expected) == blocks_received.end()) {
-                    _send_nack(expected);
+                for (uint32_t expected = 0; expected < *blocks_received.rbegin(); ++expected)
+                {
+                    if (blocks_received.find(expected) == blocks_received.end()) {
+                        _send_nack(expected);
+                    }
                 }
             }
         }
