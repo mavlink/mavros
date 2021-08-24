@@ -35,6 +35,8 @@ namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;
+
 /**
  * @brief Vision pose estimate plugin
  * @plugin vision_pose
@@ -49,9 +51,47 @@ class VisionPoseEstimatePlugin : public plugin::Plugin,
 public:
   VisionPoseEstimatePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "vision_pose"),
-    tf_rate(50.0)
-  {}
+    tf_rate(10.0)
+  {
+    enable_node_watch_parameters();
 
+    bool tf_listen;
+
+    // tf params
+    node_declate_and_watch_parameter(
+      "tf/listen", false, [&](const rclcpp::Parameter & p) {
+        auto tf_listen = p.as_bool();
+        if (tf_listen) {
+            RCLCPP_INFO_STREAM(
+            get_logger(),
+            "Listen to vision transform" << tf_frame_id <<
+              " -> " << tf_child_frame_id);
+            tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
+          } else{
+            vision_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+              "~/pose", 10, std::bind(
+                &VisionPoseEstimatePlugin::vision_cb, this, _1));
+            vision_cov_sub = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+              "~/pose_cov", 10, std::bind(
+                &VisionPoseEstimatePlugin::vision_cov_cb, this, _1));
+          }
+        });
+
+    node_declate_and_watch_parameter(
+      "tf/frame_id", "map", [&](const rclcpp::Parameter & p) {
+        tf_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf/child_frame_id", "vision_estimate", [&](const rclcpp::Parameter & p) {
+        tf_child_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf/rate_limit", 10.0, [&](const rclcpp::Parameter & p) {
+        tf_rate = p.as_double();
+      });
+  }
 
   Subscriptions get_subscriptions() override
   {
@@ -59,7 +99,17 @@ public:
   }
 
 private:
+  friend class TF2ListenerMixin;
+
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vision_sub;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr vision_cov_sub;
+
+  std::string tf_frame_id;
+  std::string tf_child_frame_id;
+
   double tf_rate;
+
+  rclcpp::Time last_transform_stamp;
 
   /* -*- low-level send -*- */
   /**
@@ -79,12 +129,12 @@ private:
 
   }
 
-  void vision_cb(const geometry_msgs::msg::PoseStamped::ConstPtr & req)
+  void vision_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
   {
 
   }
 
-  void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstPtr & req)
+  void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr req)
   {
 
   }
