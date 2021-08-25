@@ -61,6 +61,7 @@ add_message_files(
   Thrust.msg
   TimesyncStatus.msg
   Trajectory.msg
+  Tunnel.msg
   VFR_HUD.msg
   VehicleInfo.msg
   Vibration.msg
