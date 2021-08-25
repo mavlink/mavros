@@ -33,6 +33,9 @@ UAS::UAS() :
 	gps_epv(NAN),
 	gps_fix_type(0),
 	gps_satellites_visible(0),
+	onboard_control_sensors_present(0),
+	onboard_control_sensors_enabled(0),
+	onboard_control_sensors_health(0),
 	time_offset(0),
 	tsync_mode(UAS::timesync_mode::NONE),
 	fcu_caps_known(false),
@@ -246,22 +249,6 @@ sensor_msgs::NavSatFix::Ptr UAS::get_gps_fix()
 {
 	lock_guard lock(mutex);
 	return gps_fix;
-}
-
-/* -*- Sensor status data -*- */
-
-//! Returns last sensor status
-mavros_msgs::SensorStatus::Ptr UAS::get_sensor_status()
-{
-	lock_guard lock(mutex);
-	return sensor_status;
-}
-
-//! Store sensor status
-void UAS::update_sensor_status(mavros_msgs::SensorStatus::Ptr &stat)
-{
-	lock_guard lock(mutex);
-	sensor_status = stat;
 }
 
 /* -*- transform -*- */

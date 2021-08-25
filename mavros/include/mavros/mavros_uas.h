@@ -34,7 +34,7 @@
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <mavros_msgs/SensorStatus.h>
+
 
 namespace mavros {
 /**
@@ -234,13 +234,37 @@ public:
 	//! Retunrs last GPS RAW message
 	sensor_msgs::NavSatFix::Ptr get_gps_fix();
 
-	/* -*- Sensor status data -*- */
+	/* -*- System state data -*- */
 
-	//! Returns last sensor status
-	mavros_msgs::SensorStatus::Ptr get_sensor_status();
+	//! Return bitmap showing which onboard controllers and sensors are present
+	inline uint32_t get_onboard_control_sensors_present() {
+		return onboard_control_sensors_present;
+	}
 
-	//! Store sensor status
-	void update_sensor_status(mavros_msgs::SensorStatus::Ptr &stat);
+	//! Update bitmap showing which onboard controllers and sensors are present
+	inline void update_onboard_control_sensors_present(uint32_t &mask) {
+		onboard_control_sensors_present = mask;
+	}
+
+	//! Return bitmap showing which onboard controllers and sensors are enabled
+	inline uint32_t get_onboard_control_sensors_enabled() {
+		return onboard_control_sensors_enabled;
+	}
+
+	//! Update bitmap showing which onboard controllers and sensors are enabled
+	inline void update_onboard_control_sensors_enabled(uint32_t &mask) {
+		onboard_control_sensors_enabled = mask;
+	}
+
+	//! Return bitmap showing which onboard controllers and sensors have an error (or are operational)
+	inline uint32_t get_onboard_control_sensors_health() {
+		return onboard_control_sensors_health;
+	}
+
+	//! Update bitmap showing which onboard controllers and sensors have an error (or are operational)
+	inline void update_onboard_control_sensors_health(uint32_t &mask) {
+		onboard_control_sensors_health = mask;
+	}
 
 	/* -*- GograpticLib utils -*- */
 
@@ -476,7 +500,9 @@ private:
 	int gps_fix_type;
 	int gps_satellites_visible;
 
-	mavros_msgs::SensorStatus::Ptr sensor_status;
+	uint32_t onboard_control_sensors_present;
+	uint32_t onboard_control_sensors_enabled;
+	uint32_t onboard_control_sensors_health;
 
 	std::atomic<uint64_t> time_offset;
 	timesync_mode tsync_mode;

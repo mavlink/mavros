@@ -58,7 +58,6 @@ add_message_files(
   RTCM.msg
   RadioStatus.msg
   RTKBaseline.msg
-  SensorStatus.msg
   State.msg
   StatusText.msg
   Thrust.msg

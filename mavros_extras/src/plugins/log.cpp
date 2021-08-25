@@ -42,6 +42,10 @@ public:
         stop_srv = nh.advertiseService("stop",
                     &LogPlugin::stop_cb, this);
 
+        //check_pre_arm_timer = nh.createTimer(ros::Duration(1.),
+        //            &LogPlugin::check_for_logging_pre_arm, this);
+        //check_pre_arm_timer.stop();
+
         rotate_log_timer = nh.createTimer(ros::Duration(0.1),
                     &LogPlugin::rotate_on_disarm, this);
         rotate_log_timer.stop();
@@ -66,6 +70,7 @@ private:
     ros::ServiceServer start_srv;
     ros::ServiceServer stop_srv;
 
+    //ros::Timer check_pre_arm_timer;
     ros::Timer rotate_log_timer;
     ros::Timer send_nacks_timer;
 
@@ -83,11 +88,10 @@ private:
     bool start_cb(std_srvs::Trigger::Request &req,
                 std_srvs::Trigger::Response &res)
     {
-        if (_send_logging_start() && _open_logfile())
+        if (send_logging_start() && open_logfile())
         {
             stopped = false;
-            rotate_log_timer.start();
-            send_nacks_timer.start();
+            start_timers();
             res.success = true;
             ROS_INFO_NAMED("LG", "LG: Starting logging via Mavlink");
         } else {
@@ -100,11 +104,10 @@ private:
     bool stop_cb(std_srvs::Trigger::Request &req,
                 std_srvs::Trigger::Response &res)
     {
-        if (_send_logging_stop() && _close_logfile())
+        if (send_logging_stop() && close_logfile())
         {
             stopped = true;
-            rotate_log_timer.stop();
-            send_nacks_timer.stop();
+            stop_timers();
             res.success = true;
             ROS_INFO_NAMED("LG", "LG: Stopping logging via Mavlink");
         } else {
@@ -121,13 +124,12 @@ private:
     {
         if (connected && start_log_on_init && m_uas->is_ardupilotmega()) {
             armed = m_uas->get_armed();
-            _close_logfile();
-            _send_logging_stop();
-            _open_logfile();
-            _send_logging_start();
+            //close_logfile();
+            //send_logging_stop();
+            //open_logfile();
+            //send_logging_start();
             stopped = false;
-            rotate_log_timer.start();
-            send_nacks_timer.start();
+            start_timers();
             ROS_INFO_NAMED("LG", "LG: Starting logging via Mavlink (on connection)");
         }
     }
@@ -137,16 +139,16 @@ private:
         _last_block_s = ros::Time::now().toSec();
         if (stopped)
         { // still reciving log data when requested to stop
-            _send_logging_stop();
+            send_logging_stop();
         } else {
 
-            if (lmsg.seqno == 0 && !_log_is_open()) {  //check if logfile needs to be opened
-                _open_logfile();
+            if (lmsg.seqno == 0 && !log_is_open()) {  //check if logfile needs to be opened
+                open_logfile();
             }
 
-            if (_log_is_open()){ // check the file is open now
-                _write_to_file(lmsg);
-                _send_ack(lmsg.seqno);
+            if (log_is_open()){ // check the file is open now
+                write_to_file(lmsg);
+                send_ack(lmsg.seqno);
                 ROS_DEBUG_NAMED("LG", "LG: Received data: seqno: %d pckt size: %lu", lmsg.seqno, lmsg.data.size());
             }
             else {
@@ -158,6 +160,22 @@ private:
 
     //----- Timers -----//
 
+    /* check if need to send logging start because of pre-arm
+    void check_for_logging_pre_arm(const ros::TimerEvent &event)
+    {  //this function should only be needed after a soft-reboot
+       using STS = mavlink::common::MAV_SYS_STATUS_SENSOR;
+       if (!stopped && log_is_open())
+       {
+           if (m_uas->get_onboard_control_sensors_enabled() & enum_value(STS::LOGGING))
+           {  //check if logging is eneabled
+               if (m_uas->get_onboard_control_sensors_health() & enum_value(STS::LOGGING))
+               {  //if logging has failed, send start
+                   send_logging_start();
+               }
+           }
+       }
+    } */
+
     void rotate_on_disarm(const ros::TimerEvent &event)
     {  //on disarm, stop the old log, and start a new one
         if (!stopped)
@@ -167,25 +185,32 @@ private:
                 armed = m_uas->get_armed();
                 if (!armed) 
                 {
-                    ROS_INFO_NAMED("LG", "LG: Rotating logfile on disarm");
+                    //ROS_INFO_NAMED("LG", "LG: Rotating logfile on disarm");
 
-                    double _start_s = ros::Time::now().toSec();
+                    /* double _start_s = ros::Time::now().toSec();
                     bool _stoppped_receiving = false;
                     bool _timedout = false;
                     while (!_stoppped_receiving && !_timedout) {
                         double _now_s = ros::Time::now().toSec();
                         _stoppped_receiving = (_now_s - _last_block_s) > 3;  //wait 3s before closing file
                         _timedout = (_now_s - _start_s) > 30;  //timeout after 30s waiting for stop
-                    }
+                    } */
+
+                    ROS_INFO_NAMED("LG", "LG: Closing logfile on disarm");
 
                     for (int i = 0; i < 3; ++i) {  //send three times for sender gets the message
                     // mavproxy does this, so we will copy
-                        _send_logging_stop();
+                        send_logging_stop();
                     }
 
-                    _close_logfile(); //close the logfile
-                    _open_logfile(); //open a new logfiles
-                    _send_logging_start(); //start a new logfile
+                    close_logfile(); //close the logfile
+                    //open_logfile(); //open a new logfiles
+                    //send_logging_start(); //start a new logfile
+                } else {
+                    ROS_INFO_NAMED("LG", "LG: Opening logfile on arm");
+
+                    open_logfile();
+                    send_logging_start();
                 } 
             }
         }
@@ -201,7 +226,7 @@ private:
                 for (uint32_t expected = 0; expected < *blocks_received.rbegin(); ++expected)
                 {
                     if (blocks_received.find(expected) == blocks_received.end()) {
-                        _send_nack(expected);
+                        send_nack(expected);
                     }
                 }
             }
@@ -210,19 +235,33 @@ private:
 
     //----- Helpers -----//
 
-    bool _log_is_open(void)
+    void stop_timers(void)
+    {
+        //check_pre_arm_timer.stop();
+        rotate_log_timer.stop();
+        send_nacks_timer.stop();
+    }
+
+    void start_timers(void)
+    {
+        //check_pre_arm_timer.start();
+        rotate_log_timer.start();
+        send_nacks_timer.start(); 
+    }
+
+    bool log_is_open(void)
     {
         return log.is_open();
     }
 
-    bool _open_logfile(void)
+    bool open_logfile(void)
     {  // Open a new logfile to write to
         int now = static_cast<int>(ros::Time::now().toSec());
         log.open(path + std::to_string(now) + ".bin", std::ios::out | std::ios::binary);
         return log.is_open();
     }
 
-    bool _close_logfile(void)
+    bool close_logfile(void)
     {  // Close the logfile
         log.close();
         lock_guard lock(mutex);  //hold the mutex for the block_recieved set, released when out scope
@@ -230,7 +269,7 @@ private:
         return !log.is_open();
     }
 
-    void _write_to_file(REMOTE_LOG_DATA_BLOCK &lmsg)
+    void write_to_file(REMOTE_LOG_DATA_BLOCK &lmsg)
     {  //write the log data to the file
         log.seekp(lmsg.seqno*lmsg.data.size(), std::ios::beg);
         log.write((const char*)&lmsg.data[0], lmsg.data.size());
@@ -238,7 +277,7 @@ private:
         blocks_received.insert(lmsg.seqno);  //insert block into the recived set
     }
 
-    bool _send_ack(uint32_t seqno)
+    bool send_ack(uint32_t seqno)
     {  // Send ACK in response to a receieved log data block
         REMOTE_LOG_BLOCK_STATUS smsg = {};
         m_uas->msg_set_target(smsg);
@@ -248,7 +287,7 @@ private:
         ROS_DEBUG_NAMED("LG", "LG: Sending ACK: seqno: %d", seqno);
     }
 
-    bool _send_nack(uint32_t seqno)
+    bool send_nack(uint32_t seqno)
     {  // Send a NACK for missing log data blocks
         REMOTE_LOG_BLOCK_STATUS smsg = {};
         m_uas->msg_set_target(smsg);
@@ -258,7 +297,7 @@ private:
         ROS_DEBUG_NAMED("LG", "LG: Sending NACK: seqno: %d", seqno);
     }
 
-    bool _send_logging_start(void)
+    bool send_logging_start(void)
     {  // Send command to start the logging via mavlink
         REMOTE_LOG_BLOCK_STATUS msg = {};
         m_uas->msg_set_target(msg);
@@ -272,7 +311,7 @@ private:
         }
     }
 
-    bool _send_logging_stop(void)
+    bool send_logging_stop(void)
     {  // Send command to stop the logging via mavlink
         REMOTE_LOG_BLOCK_STATUS msg = {};
         m_uas->msg_set_target(msg);
