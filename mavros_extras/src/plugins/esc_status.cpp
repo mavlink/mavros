@@ -48,8 +48,8 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&ESCStatusPlugin::handle_esc_info),
-			       make_handler(&ESCStatusPlugin::handle_esc_status),
+			make_handler(&ESCStatusPlugin::handle_esc_info),
+			make_handler(&ESCStatusPlugin::handle_esc_status),
 		};
 	}
 

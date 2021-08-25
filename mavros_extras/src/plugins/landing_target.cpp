@@ -108,7 +108,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&LandingTargetPlugin::handle_landing_target)
+			make_handler(&LandingTargetPlugin::handle_landing_target)
 		};
 	}
 
@@ -145,15 +145,15 @@ private:
 
 	/* -*- low-level send -*- */
 	void landing_target(uint64_t time_usec,
-				uint8_t target_num,
-				uint8_t frame,
-				Eigen::Vector2f angle,
-				float distance,
-				Eigen::Vector2f size,
-				Eigen::Vector3d pos,
-				Eigen::Quaterniond q,
-				uint8_t type,
-				uint8_t position_valid)
+		uint8_t target_num,
+		uint8_t frame,
+		Eigen::Vector2f angle,
+		float distance,
+		Eigen::Vector2f size,
+		Eigen::Vector3d pos,
+		Eigen::Quaterniond q,
+		uint8_t type,
+		uint8_t position_valid)
 	{
 		mavlink::common::msg::LANDING_TARGET lt {};
 
@@ -228,7 +228,7 @@ private:
 
 		/** @brief the orientation of the landing target WRT camera frame */
 		auto q = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+			ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
 		Eigen::Vector2f angle;
 		Eigen::Vector2f size_rad;
@@ -274,25 +274,25 @@ private:
 		uint8_t id = static_cast<uint8_t>(frame_id.back());
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Tx landing target: "
-					"ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
-					"distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
-					"orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
-					"size: X:%1.3frad by Y:%1.3frad type: %s",
-					id, utils::to_string(static_cast<MAV_FRAME>(frame)).c_str(),
-					angle.x(), angle.y(), distance, pos.x(), pos.y(), pos.z(),
-					rpy.x(), rpy.y(), rpy.z(), size_rad.x(), size_rad.y(),
-					utils::to_string(static_cast<LANDING_TARGET_TYPE>(type)).c_str());
+			"ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
+			"distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
+			"orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
+			"size: X:%1.3frad by Y:%1.3frad type: %s",
+			id, utils::to_string(static_cast<MAV_FRAME>(frame)).c_str(),
+			angle.x(), angle.y(), distance, pos.x(), pos.y(), pos.z(),
+			rpy.x(), rpy.y(), rpy.z(), size_rad.x(), size_rad.y(),
+			utils::to_string(static_cast<LANDING_TARGET_TYPE>(type)).c_str());
 
 		landing_target(stamp.toNSec() / 1000,
-					id,
-					utils::enum_value(frame),	// by default, in LOCAL_NED
-					angle,
-					distance,
-					size_rad,
-					pos,
-					q,
-					utils::enum_value(type),
-					1);	// position is valid from the first received msg
+			id,
+			utils::enum_value(frame),			// by default, in LOCAL_NED
+			angle,
+			distance,
+			size_rad,
+			pos,
+			q,
+			utils::enum_value(type),
+			1);			// position is valid from the first received msg
 	}
 
 	/**
@@ -302,20 +302,20 @@ private:
 		/** @todo these transforms should be applied according to the MAV_FRAME */
 		auto position = ftf::transform_frame_ned_enu(Eigen::Vector3d(land_target.x, land_target.y, land_target.z));
 		auto orientation = ftf::transform_orientation_aircraft_baselink(
-					ftf::transform_orientation_ned_enu(
-						Eigen::Quaterniond(land_target.q[0], land_target.q[1], land_target.q[2], land_target.q[3])));
+			ftf::transform_orientation_ned_enu(
+			Eigen::Quaterniond(land_target.q[0], land_target.q[1], land_target.q[2], land_target.q[3])));
 
 		auto rpy = ftf::quaternion_to_rpy(orientation);
 
 		ROS_DEBUG_THROTTLE_NAMED(10, "landing_target", "Rx landing target: "
-					"ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
-					"distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
-					"orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
-					"size: X:%1.3frad by Y:%1.3frad type: %s",
-					land_target.target_num, utils::to_string(static_cast<MAV_FRAME>(land_target.frame)).c_str(),
-					land_target.angle_x, land_target.angle_y, land_target.distance,
-					position.x(), position.y(), position.z(), rpy.x(), rpy.y(), rpy.z(), land_target.size_x, land_target.size_y,
-					utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str());
+			"ID: %d frame: %s angular offset: X:%1.3frad, Y:%1.3frad) "
+			"distance: %1.3fm position: X:%1.3fm, Y:%1.3fm, Z:%1.3fm) "
+			"orientation: roll:%1.4frad pitch:%1.4frad yaw:%1.4frad "
+			"size: X:%1.3frad by Y:%1.3frad type: %s",
+			land_target.target_num, utils::to_string(static_cast<MAV_FRAME>(land_target.frame)).c_str(),
+			land_target.angle_x, land_target.angle_y, land_target.distance,
+			position.x(), position.y(), position.z(), rpy.x(), rpy.y(), rpy.z(), land_target.size_x, land_target.size_y,
+			utils::to_string(static_cast<LANDING_TARGET_TYPE>(land_target.type)).c_str());
 
 		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
 		pose->header = m_uas->synchronized_header(frame_id, land_target.time_usec);
@@ -378,18 +378,18 @@ private:
 		/** @todo these transforms should be applied according to the MAV_FRAME */
 		auto position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
 		auto orientation = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
+			ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
 		landing_target(	req->header.stamp.toNSec() / 1000,
-					req->target_num,
-					req->frame,	// by default, in LOCAL_NED
-					Eigen::Vector2f(req->angle[0], req->angle[1]),
-					req->distance,
-					Eigen::Vector2f(req->size[0], req->size[1]),
-					position,
-					orientation,
-					req->type,
-					1);		// position is valid from the first received msg
+			req->target_num,
+			req->frame,			// by default, in LOCAL_NED
+			Eigen::Vector2f(req->angle[0], req->angle[1]),
+			req->distance,
+			Eigen::Vector2f(req->size[0], req->size[1]),
+			position,
+			orientation,
+			req->type,
+			1);				// position is valid from the first received msg
 	}
 };
 }	// namespace extra_plugins

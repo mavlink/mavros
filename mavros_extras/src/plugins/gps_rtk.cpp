@@ -43,7 +43,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler( &GpsRtkPlugin::handle_baseline_msg )
+			make_handler( &GpsRtkPlugin::handle_baseline_msg )
 		};
 	}
 

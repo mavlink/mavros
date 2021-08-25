@@ -20,18 +20,18 @@ public:
 		log_data_pub = nh.advertise<mavros_msgs::LogData>("raw/log_data", 1000);
 
 		log_request_list_srv = nh.advertiseService("raw/log_request_list",
-					&LogTransferPlugin::log_request_list_cb, this);
+			&LogTransferPlugin::log_request_list_cb, this);
 		log_request_data_srv = nh.advertiseService("raw/log_request_data",
-					&LogTransferPlugin::log_request_data_cb, this);
+			&LogTransferPlugin::log_request_data_cb, this);
 		log_request_end_srv = nh.advertiseService("raw/log_request_end",
-					&LogTransferPlugin::log_request_end_cb, this);
+			&LogTransferPlugin::log_request_end_cb, this);
 	}
 
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&LogTransferPlugin::handle_log_entry),
-			       make_handler(&LogTransferPlugin::handle_log_data),
+			make_handler(&LogTransferPlugin::handle_log_entry),
+			make_handler(&LogTransferPlugin::handle_log_data),
 		};
 	}
 
@@ -68,7 +68,7 @@ private:
 	}
 
 	bool log_request_list_cb(mavros_msgs::LogRequestList::Request &req,
-				mavros_msgs::LogRequestList::Response &res)
+		mavros_msgs::LogRequestList::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_LIST msg = {};
 		m_uas->msg_set_target(msg);
@@ -85,7 +85,7 @@ private:
 	}
 
 	bool log_request_data_cb(mavros_msgs::LogRequestData::Request &req,
-				mavros_msgs::LogRequestData::Response &res)
+		mavros_msgs::LogRequestData::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_DATA msg = {};
 		m_uas->msg_set_target(msg);
@@ -103,7 +103,7 @@ private:
 	}
 
 	bool log_request_end_cb(mavros_msgs::LogRequestEnd::Request &,
-				mavros_msgs::LogRequestEnd::Response &res)
+		mavros_msgs::LogRequestEnd::Response &res)
 	{
 		mavlink::common::msg::LOG_REQUEST_END msg = {};
 		m_uas->msg_set_target(msg);
