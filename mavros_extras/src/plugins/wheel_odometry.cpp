@@ -58,7 +58,7 @@ public:
 		wo_nh.param("send_raw", raw_send, false);
 		// Wheels configuration
 		wo_nh.param("count", count, 2);
-		count = std::max(1, count); // bound check
+		count = std::max(1, count);	// bound check
 
 		bool use_rpm;
 		wo_nh.param("use_rpm", use_rpm, false);
@@ -72,7 +72,7 @@ public:
 		wo_nh.param<std::string>("frame_id", frame_id, "odom");
 		wo_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
 		wo_nh.param("vel_error", vel_cov, 0.1);
-		vel_cov = vel_cov*vel_cov; // std -> cov
+		vel_cov = vel_cov * vel_cov;	// std -> cov
 		// TF subsection
 		wo_nh.param("tf/send", tf_send, false);
 		wo_nh.param<std::string>("tf/frame_id", tf_frame_id, "odom");
@@ -94,9 +94,9 @@ public:
 				Eigen::Vector2d offset;
 				double radius;
 
-				wo_nh.param(name+"/x", offset[0], 0.0);
-				wo_nh.param(name+"/y", offset[1], 0.0);
-				wo_nh.param(name+"/radius", radius, 0.05);
+				wo_nh.param(name + "/x", offset[0], 0.0);
+				wo_nh.param(name + "/y", offset[1], 0.0);
+				wo_nh.param(name + "/radius", radius, 0.05);
 
 				wheel_offset.push_back(offset);
 				wheel_radius.push_back(radius);
@@ -110,7 +110,7 @@ public:
 					wheel_offset.resize(2);
 					wheel_radius.resize(2);
 					wheel_offset[1].x() = wheel_offset[0].x();
-					wheel_offset[1].y() = wheel_offset[0].y() + 1.0; // make separation non-zero to avoid div-by-zero
+					wheel_offset[1].y() = wheel_offset[0].y() + 1.0;// make separation non-zero to avoid div-by-zero
 					wheel_radius[1] = wheel_radius[0];
 				}
 
@@ -151,7 +151,6 @@ public:
 		// No-odometry warning
 		else
 			ROS_WARN_NAMED("wo", "WO: No odometry computations will be performed.");
-
 	}
 
 	Subscriptions get_subscriptions() override
@@ -176,12 +175,12 @@ private:
 		RPM,	//!< use wheel's RPM
 		DIST	//!< use wheel's cumulative distance
 	};
-	OM odom_mode; //!< odometry computation mode
+	OM odom_mode;	//!< odometry computation mode
 
 	int count;		//!< requested number of wheels to compute odometry
 	bool raw_send;		//!< send wheel's RPM and cumulative distance
-	std::vector<Eigen::Vector2d> wheel_offset; //!< wheel x,y offsets (m,NED)
-	std::vector<double> wheel_radius; //!< wheel radiuses (m)
+	std::vector<Eigen::Vector2d> wheel_offset;	//!< wheel x,y offsets (m,NED)
+	std::vector<double> wheel_radius;	//!< wheel radiuses (m)
 
 	bool twist_send;		//!< send geometry_msgs/TwistWithCovarianceStamped instead of nav_msgs/Odometry
 	bool tf_send;			//!< send TF
@@ -219,10 +218,10 @@ private:
 
 			// Rotate current pose by initial yaw
 			Eigen::Rotation2Dd rot(yaw);
-			rpose.head(2) = rot * rpose.head(2); // x,y
-			rpose(2) += yaw; // yaw
+			rpose.head(2) = rot * rpose.head(2);	// x,y
+			rpose(2) += yaw;// yaw
 
-			ROS_INFO_NAMED("wo", "WO: Initial yaw (deg): %f", yaw/M_PI*180.0);
+			ROS_INFO_NAMED("wo", "WO: Initial yaw (deg): %f", yaw / M_PI * 180.0);
 			yaw_initialized = true;
 		}
 
@@ -328,7 +327,7 @@ private:
 		double L = (y1 * distance[0] - y0 * distance[1]) * dy_inv;
 
 		// Instantenous pose update in local (robot) coordinate system (vel*dt)
-		Eigen::Vector3d v(L, a*theta, theta);
+		Eigen::Vector3d v(L, a * theta, theta);
 		// Instantenous local twist
 		rtwist = v * dt_inv;
 
@@ -342,8 +341,8 @@ private:
 		// where R - rotation radius of Op around ICC (R = L/theta).
 		double cos_theta = std::cos(theta);
 		double sin_theta = std::sin(theta);
-		double p; // sin(theta)/theta
-		double q; // (1-cos(theta))/theta
+		double p;	// sin(theta)/theta
+		double q;	// (1-cos(theta))/theta
 		if (std::abs(theta) > 1.e-5) {
 			p = sin_theta / theta;
 			q = (1.0 - cos_theta) / theta;
@@ -357,8 +356,8 @@ private:
 		// Local pose update matrix
 		Eigen::Matrix3d M;
 		M << p, -q,  0,
-			 q,  p,  0,
-			 0,  0,  1;
+			q,  p,  0,
+			0,  0,  1;
 
 		// Local pose update
 		Eigen::Vector3d dpose = M * v;
@@ -368,18 +367,18 @@ private:
 		double sy = std::sin(rpose(2));
 		Eigen::Matrix3d R;
 		R << cy, -sy,  0,
-			 sy,  cy,  0,
-			  0,   0,  1;
+			sy,  cy,  0,
+			0,   0,  1;
 
 		// World pose
 		rpose += R * dpose;
-		rpose(2) = fmod(rpose(2), 2.0*M_PI); // Clamp to (-2*PI, 2*PI)
+		rpose(2) = fmod(rpose(2), 2.0 * M_PI);	// Clamp to (-2*PI, 2*PI)
 
 		// Twist errors (constant in time)
 		if (rtwist_cov(0) == 0.0) {
-			rtwist_cov(0) = vel_cov * (y0*y0 + y1*y1) * dy_inv*dy_inv; // vx_cov
-			rtwist_cov(1) = vel_cov * a*a * 2.0 * dy_inv*dy_inv + 0.001; // vy_cov (add extra error, otherwise vy_cov= 0 if a=0)
-			rtwist_cov(2) = vel_cov * 2.0 * dy_inv*dy_inv; // vyaw_cov
+			rtwist_cov(0) = vel_cov * (y0 * y0 + y1 * y1) * dy_inv * dy_inv;// vx_cov
+			rtwist_cov(1) = vel_cov * a * a * 2.0 * dy_inv * dy_inv + 0.001;// vy_cov (add extra error, otherwise vy_cov= 0 if a=0)
+			rtwist_cov(2) = vel_cov * 2.0 * dy_inv * dy_inv;// vyaw_cov
 		}
 
 		// Pose errors (accumulated in time).
@@ -387,8 +386,8 @@ private:
 		// dR/dYaw
 		Eigen::Matrix3d R_yaw;
 		R_yaw << -sy, -cy,  0,
-				  cy, -sy,  0,
-				   0,   0,  0;
+			cy, -sy,  0,
+			0,   0,  0;
 		// dYaw/dPose
 		Eigen::Vector3d yaw_pose(0, 0, 1);
 		// Jacobian by previous pose
@@ -402,16 +401,16 @@ private:
 		// dv/dMeasurement
 		Eigen::Matrix<double, 3, 2> v_meas;
 		v_meas <<       L_L0,       L_L1,
-				  a*theta_L0, a*theta_L1,
-					theta_L0,   theta_L1;
+			a*theta_L0, a*theta_L1,
+			theta_L0,   theta_L1;
 		// dTheta/dMeasurement
 		Eigen::Vector2d theta_meas(theta_L0, theta_L1);
 		// dM/dTheta
-		double px; // dP/dTheta
-		double qx; // dQ/dTheta
+		double px;	// dP/dTheta
+		double qx;	// dQ/dTheta
 		if (std::abs(theta) > 1.e-5) {
-			px = (theta*cos_theta - sin_theta) / (theta*theta);
-			qx = (theta*sin_theta - (1-cos_theta)) / (theta*theta);
+			px = (theta * cos_theta - sin_theta) / (theta * theta);
+			qx = (theta * sin_theta - (1 - cos_theta)) / (theta * theta);
 		}
 		// Limits for theta -> 0
 		else {
@@ -421,17 +420,17 @@ private:
 		// dM/dTheta
 		Eigen::Matrix3d M_theta;
 		M_theta << px, -qx,  0,
-				   qx,  px,  0,
-					0,   0,  0;
+			qx,  px,  0,
+			0,   0,  0;
 		// Jacobian by measurement
 		Eigen::Matrix<double, 3, 2> J_meas = R * (M * v_meas + M_theta * v * theta_meas.transpose());
 
 		// Measurement cov
-		double L0_cov = vel_cov * dt*dt;
-		double L1_cov = vel_cov * dt*dt;
+		double L0_cov = vel_cov * dt * dt;
+		double L1_cov = vel_cov * dt * dt;
 		Eigen::Matrix2d meas_cov;
 		meas_cov << L0_cov,     0,
-						 0, L1_cov;
+			0, L1_cov;
 
 		// Update pose cov
 		rpose_cov = J_pose * rpose_cov * J_pose.transpose() + J_meas * meas_cov * J_meas.transpose();
@@ -469,7 +468,7 @@ private:
 		if (time_prev == ros::Time(0)) {
 			count_meas = measurement.size();
 			measurement_prev.resize(count_meas);
-			count = std::min(count, count_meas); // don't try to use more wheels than we have
+			count = std::min(count, count_meas);	// don't try to use more wheels than we have
 		}
 		// Same time stamp (messages are generated by FCU more often than the wheel state updated)
 		else if (time == time_prev) {
@@ -482,7 +481,7 @@ private:
 		}
 		// Compute odometry
 		else {
-			double dt = (time - time_prev).toSec(); // Time since previous measurement (s)
+			double dt = (time - time_prev).toSec();	// Time since previous measurement (s)
 
 			// Distance traveled by each wheel since last measurement.
 			// Reserve for at least 2 wheels.
@@ -490,8 +489,8 @@ private:
 			// Compute using RPM-s
 			if (rpm) {
 				for (int i = 0; i < count; i++) {
-					double RPM_2_SPEED = wheel_radius[i] * 2.0 * M_PI / 60.0; // RPM -> speed (m/s)
-					double rpm = 0.5 * (measurement[i] + measurement_prev[i]); // Mean RPM during last dt seconds
+					double RPM_2_SPEED = wheel_radius[i] * 2.0 * M_PI / 60.0;	// RPM -> speed (m/s)
+					double rpm = 0.5 * (measurement[i] + measurement_prev[i]);	// Mean RPM during last dt seconds
 					distance[i] = rpm * RPM_2_SPEED * dt;
 				}
 			}

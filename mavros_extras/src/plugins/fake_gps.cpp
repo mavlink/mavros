@@ -242,7 +242,7 @@ private:
 			 */
 			mavlink::common::msg::HIL_GPS hil_gps {};
 
-			vel *= 1e2; // [cm/s]
+			vel *= 1e2;	// [cm/s]
 
 			// compute course over ground
 			double cog;
