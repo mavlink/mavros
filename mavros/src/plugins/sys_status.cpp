@@ -19,7 +19,6 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/EstimatorStatus.h>
 #include <mavros_msgs/ExtendedState.h>
-#include <mavros_msgs/SensorStatus.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
@@ -764,8 +763,8 @@ private:
 	void handle_sys_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYS_STATUS &stat)
 	{
 		m_uas->update_onboard_control_sensors_present(stat.onboard_control_sensors_present);
-        m_uas->update_onboard_control_sensors_enabled(stat.onboard_control_sensors_enabled);
-        m_uas->update_onboard_control_sensors_health(stat.onboard_control_sensors_health);
+		m_uas->update_onboard_control_sensors_enabled(stat.onboard_control_sensors_enabled);
+		m_uas->update_onboard_control_sensors_health(stat.onboard_control_sensors_health);
 
 		sys_diag.set(stat);
 
