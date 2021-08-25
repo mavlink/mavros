@@ -78,8 +78,8 @@ private:
 
 			p->header.stamp = stamp;
 			p->temperature = et.temperature[i];
-			p->voltage = et.voltage[i] / 10.0f;			// centiV -> V
-			p->current = et.current[i] / 10.0f;			// centiA -> A
+			p->voltage = et.voltage[i] / 100.0f;			// centiV -> V
+			p->current = et.current[i] / 100.0f;			// centiA -> A
 			p->totalcurrent = et.totalcurrent[i] / 1000.0f;		// mAh -> Ah
 			p->rpm = et.rpm[i];
 			p->count = et.count[i];
