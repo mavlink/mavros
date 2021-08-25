@@ -35,9 +35,18 @@
 	<class name="log_transfer" type="mavros::extra_plugins::LogTransferPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Expose firmware functionality, that is related to log transfer</description>
 	</class>
+    <class name="mag_calibration_status" type="mavros::std_plugins::MagCalStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+            <description>Send calibration status to ROS.</description>
+    </class>
 	<class name="mocap_pose_estimate" type="mavros::extra_plugins::MocapPoseEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send motion capture pose estimate to FCU.</description>
 	</class>
+    <class name="mount_control" type="mavros::extra_plugins::MountControlPlugin" base_class_type="mavros::plugin::PluginBase">
+        <description>Send Mission command to control a camera or a antenna mount.</description>
+    </class>
+    <class name="mount_status" type="mavros::extra_plugins::MountStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+        <description>Publish Mount status from FCU.</description>
+    </class>
 	<class name="obstacle_distance" type="mavros::extra_plugins::ObstacleDistancePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send obstacle distance report to the FCU.</description>
 	</class>
@@ -67,11 +76,5 @@
 	</class>
 	<class name="vision_speed_estimate" type="mavros::extra_plugins::VisionSpeedEstimatePlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Send vision speed estimate to FCU.</description>
-	</class>
-	<class name="mount_control" type="mavros::extra_plugins::MountControlPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Send Mission command to control a camera or a antenna mount.</description>
-	</class>
-	<class name="mag_calibration_status" type="mavros::std_plugins::MagCalStatusPlugin" base_class_type="mavros::plugin::PluginBase">
-			<description>Send calibration status to ROS.</description>
 	</class>
 </library>

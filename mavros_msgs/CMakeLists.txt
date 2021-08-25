@@ -41,6 +41,7 @@ add_message_files(
   ManualControl.msg
   Mavlink.msg
   MountControl.msg
+  MountStatus.msg
   OpticalFlowRad.msg
   OverrideRCIn.msg
   Param.msg
