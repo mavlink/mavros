@@ -74,15 +74,15 @@ private:
 
 		_esc_telemetry.header.stamp = stamp;
 		for (size_t i = 0; i < et.temperature.size(); i++) {
-			auto p = _esc_telemetry.esc_telemetry.at(offset + i);
+			auto &p = _esc_telemetry.esc_telemetry.at(offset + i);
 
-			p->header.stamp = stamp;
-			p->temperature = et.temperature[i];
-			p->voltage = et.voltage[i] / 100.0f;			// centiV -> V
-			p->current = et.current[i] / 100.0f;			// centiA -> A
-			p->totalcurrent = et.totalcurrent[i] / 1000.0f;		// mAh -> Ah
-			p->rpm = et.rpm[i];
-			p->count = et.count[i];
+			p.header.stamp = stamp;
+			p.temperature = et.temperature[i];
+			p.voltage = et.voltage[i] / 100.0f;			// centiV -> V
+			p.current = et.current[i] / 100.0f;			// centiA -> A
+			p.totalcurrent = et.totalcurrent[i] / 1000.0f;		// mAh -> Ah
+			p.rpm = et.rpm[i];
+			p.count = et.count[i];
 		}
 
 		esc_telemetry_pub.publish(_esc_telemetry);
