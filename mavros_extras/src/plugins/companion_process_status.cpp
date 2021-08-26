@@ -1,3 +1,10 @@
+/*
+ * Copyright 2018 Tanja Baumann.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Companion Status plugin
  * @file companion_status.cpp
@@ -6,17 +13,13 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2018 Tanja Baumann.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/CompanionProcessStatus.h>
+#include "mavros_msgs/msg/companion_process_status.hpp"
 
 namespace mavros
 {
@@ -33,23 +36,22 @@ using utils::enum_value;
 
 /**
  * @brief Obstacle companion process status plugin
+ * @plugin companion_process_status
  *
  * Publishes the status of components running on the companion computer
  * @see status_cb()
  */
-class CompanionProcessStatusPlugin : public plugin::PluginBase
+class CompanionProcessStatusPlugin : public plugin::Plugin
 {
 public:
-  CompanionProcessStatusPlugin()
-  : PluginBase(),
-    status_nh("~companion_process")
-  {}
-
-  void initialize(UAS & uas_) override
+  CompanionProcessStatusPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "companion_process")
   {
-    PluginBase::initialize(uas_);
-
-    status_sub = status_nh.subscribe("status", 10, &CompanionProcessStatusPlugin::status_cb, this);
+    status_sub = node->create_subscription<mavros_msgs::msg::CompanionProcessStatus>(
+      "~/status", 10, std::bind(
+        &CompanionProcessStatusPlugin::status_cb, this,
+        std::
+        placeholders::_1));
   }
 
   Subscriptions get_subscriptions() override
@@ -67,7 +69,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#HEARTBEAT
    * @param req	received CompanionProcessStatus msg
    */
-  void status_cb(const mavros_msgs::CompanionProcessStatus::ConstPtr & req)
+  void status_cb(const mavros_msgs::msg::CompanionProcessStatus::SharedPtr req)
   {
     mavlink::minimal::msg::HEARTBEAT heartbeat {};
 
@@ -76,19 +78,17 @@ private:
     heartbeat.base_mode = enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
     heartbeat.system_status = req->state;               //enum="MAV_STATE" System status flag
 
-    ROS_DEBUG_STREAM_NAMED(
-      "companion_process_status", "companion process component id: " <<
-        utils::to_string_enum<MAV_COMPONENT>(req->component) << " companion process status: " <<
-        utils::to_string_enum<MAV_STATE>(
+    RCLCPP_DEBUG_STREAM(
+      get_logger(),
+      "companion process component id: " << utils::to_string_enum<MAV_COMPONENT>(req->component) <<
+        " companion process status: " << utils::to_string_enum<MAV_STATE>(
         heartbeat.system_status) << std::endl << heartbeat.to_yaml());
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(heartbeat, req->component);
+    uas->send_message(heartbeat, req->component);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(
-  mavros::extra_plugins::CompanionProcessStatusPlugin,
-  mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::CompanionProcessStatusPlugin)

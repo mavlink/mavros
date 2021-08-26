@@ -224,7 +224,7 @@ public:
             tf_transform_cb(transform);
           } catch (tf2::LookupException & ex) {
             RCLCPP_ERROR(
-              _uas->get_logger(), "tf2_buffer", "%s: %s", tf_thd_name.c_str(),
+              _uas->get_logger(), "%s: %s", tf_thd_name.c_str(),
               ex.what());
           }
         }

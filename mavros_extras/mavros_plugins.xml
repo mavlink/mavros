@@ -11,6 +11,13 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras_plugins')
 
 Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.</description>
   </class>
+  <class name="companion_process_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CompanionProcessStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Obstacle companion process status plugin
+@plugin companion_process_status
+
+Publishes the status of components running on the companion computer
+@see status_cb()</description>
+  </class>
   <class name="landing_target" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LandingTargetPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Landing Target plugin
 @plugin landing_target
@@ -23,4 +30,4 @@ to the FCU and/or receive landing target tracking data coming from the FCU.</des
 @plugin tdr_radio</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 6f77ca93b20723eab0d9b2a4a8a32ef1) -->
+<!-- [[[end]]] (checksum: de565f5923308cb1f8d0b8852e1b8bdd) -->
