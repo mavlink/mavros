@@ -1,3 +1,10 @@
+/*
+ * Copyright 2015 Mohammed Kabir.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Camera IMU synchronisation plugin
  * @file cam_imu_sync.cpp
@@ -6,17 +13,13 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2015 Mohammed Kabir.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/CamIMUStamp.h>
+#include "mavros_msgs/msg/cam_imu_stamp.hpp"
 
 namespace mavros
 {
@@ -24,24 +27,19 @@ namespace extra_plugins
 {
 /**
  * @brief Camera IMU synchronisation plugin
+ * @plugin cam_imu_sync
  *
  * This plugin publishes a timestamp for when a external camera system was
  * triggered by the FCU. Sequence ID from the message and the image sequence from
  * camera can be corellated to get the exact shutter trigger time.
  */
-class CamIMUSyncPlugin : public plugin::PluginBase
+class CamIMUSyncPlugin : public plugin::Plugin
 {
 public:
-  CamIMUSyncPlugin()
-  : PluginBase(),
-    cam_imu_sync_nh("~cam_imu_sync")
-  {}
-
-  void initialize(UAS & uas_) override
+  CamIMUSyncPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "cam_imu_sync")
   {
-    PluginBase::initialize(uas_);
-
-    cam_imu_pub = cam_imu_sync_nh.advertise<mavros_msgs::CamIMUStamp>("cam_imu_stamp", 10);
+    cam_imu_pub =  node->create_publisher<mavros_msgs::msg::CamIMUStamp>("~/cam_imu_stamp", 10);
   }
 
   Subscriptions get_subscriptions() override
@@ -52,24 +50,23 @@ public:
   }
 
 private:
-  ros::NodeHandle cam_imu_sync_nh;
-
-  ros::Publisher cam_imu_pub;
+  rclcpp::Publisher<mavros_msgs::msg::CamIMUStamp>::SharedPtr cam_imu_pub;
 
   void handle_cam_trig(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::CAMERA_TRIGGER & ctrig)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::CAMERA_TRIGGER & ctrig,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto sync_msg = boost::make_shared<mavros_msgs::CamIMUStamp>();
+    auto sync_msg = mavros_msgs::msg::CamIMUStamp();
 
-    sync_msg->frame_stamp = m_uas->synchronise_stamp(ctrig.time_usec);
-    sync_msg->frame_seq_id = ctrig.seq;
+    sync_msg.frame_stamp = uas->synchronise_stamp(ctrig.time_usec);
+    sync_msg.frame_seq_id = ctrig.seq;
 
-    cam_imu_pub.publish(sync_msg);
+    cam_imu_pub->publish(sync_msg);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::CamIMUSyncPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::CamIMUSyncPlugin)
