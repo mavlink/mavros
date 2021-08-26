@@ -81,12 +81,14 @@ add_library(mavros_extras_plugins SHARED
   #src/plugins/debug_value.cpp
   #src/plugins/distance_sensor.cpp
   #src/plugins/esc_status.cpp
+  #src/plugins/esc_telemetry.cpp
   #src/plugins/fake_gps.cpp
   #src/plugins/gps_rtk.cpp
   #src/plugins/gps_status.cpp
   #src/plugins/hil.cpp
   src/plugins/landing_target.cpp
   #src/plugins/log_transfer.cpp
+  #src/plugins/mag_calibration_status.cpp
   #src/plugins/mocap_pose_estimate.cpp
   #src/plugins/mount_control.cpp
   #src/plugins/obstacle_distance.cpp

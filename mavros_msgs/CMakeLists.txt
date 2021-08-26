@@ -43,6 +43,8 @@ set(msg_files
   msg/ESCInfoItem.msg
   msg/ESCStatus.msg
   msg/ESCStatusItem.msg
+  msg/ESCTelemetry.msg
+  msg/ESCTelemetryItem.msg
   msg/EstimatorStatus.msg
   msg/ExtendedState.msg
   msg/FileEntry.msg
@@ -58,6 +60,7 @@ set(msg_files
   msg/LandingTarget.msg
   msg/LogData.msg
   msg/LogEntry.msg
+  msg/MagnetometerReporter.msg
   msg/ManualControl.msg
   msg/Mavlink.msg
   msg/MountControl.msg
@@ -86,13 +89,14 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: f2efaa67b6ea895e5dc49374e3d2ac09)
+  # [[[end]]] (checksum: 3badaf239b52e3a76efa81c743e34f21)
 )
 
 set(srv_files
   # [[[cog:
   # mavros_cog.outl_glob_files('srv', '*.srv')
   # ]]]
+  srv/CommandAck.srv
   srv/CommandBool.srv
   srv/CommandHome.srv
   srv/CommandInt.srv
@@ -132,7 +136,7 @@ set(srv_files
   srv/WaypointPull.srv
   srv/WaypointPush.srv
   srv/WaypointSetCurrent.srv
-  # [[[end]]] (checksum: 21ebf12a8840f2be3b7b7654c0bd9429)
+  # [[[end]]] (checksum: a011691dec330a2a89d35288ebf05c55)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
