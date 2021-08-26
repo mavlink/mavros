@@ -92,40 +92,34 @@ private:
   // outl_fill_points_ned_vector('x', 'y', 'z', 'velocity', 'Vector3', range(3, 6))
   // outl_fill_points_ned_vector('x', 'y', 'z', 'acceleration', 'Vector3', range(6, 9))
   // ]]]
-  void fill_points_position(
-    MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Point & position, const size_t i)
+  void fill_points_position(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Point &position, const size_t i)
   {
-    auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
+  	auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
 
-    x[i] = position_ned.x();
-    y[i] = position_ned.y();
-    z[i] = position_ned.z();
+  	x[i] = position_ned.x();
+  	y[i] = position_ned.y();
+  	z[i] = position_ned.z();
   }
 
-  void fill_points_velocity(
-    MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Vector3 & velocity, const size_t i)
+  void fill_points_velocity(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Vector3 &velocity, const size_t i)
   {
-    auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
+  	auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
 
-    x[i] = velocity_ned.x();
-    y[i] = velocity_ned.y();
-    z[i] = velocity_ned.z();
+  	x[i] = velocity_ned.x();
+  	y[i] = velocity_ned.y();
+  	z[i] = velocity_ned.z();
   }
 
-  void fill_points_acceleration(
-    MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Vector3 & acceleration, const size_t i)
+  void fill_points_acceleration(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Vector3 &acceleration, const size_t i)
   {
-    auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
+  	auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
 
-    x[i] = acceleration_ned.x();
-    y[i] = acceleration_ned.y();
-    z[i] = acceleration_ned.z();
+  	x[i] = acceleration_ned.x();
+  	y[i] = acceleration_ned.y();
+  	z[i] = acceleration_ned.z();
   }
 
-  // [[[end]]] (checksum: 92ea0f7f329c90c486fdb8b738c0e7c3)
+  // [[[end]]] (checksum: a63870e80fe0648a01b0349e0be1d173)
 
 
   void fill_points_yaw_wp(MavPoints & y, const double yaw, const size_t i)
@@ -288,7 +282,7 @@ private:
       fill_point_rep_waypoints(trajectory, req->point_3, 2);
       fill_point_rep_waypoints(trajectory, req->point_4, 3);
       fill_point_rep_waypoints(trajectory, req->point_5, 4);
-      // [[[end]]] (checksum: e993aeb535c2df6f07bf7b4f1fcf3d2e)
+      // [[[end]]] (checksum: 3378a593279611a83e25efee67393195)
 
       trajectory.time_usec = req->header.stamp.toNSec() / 1000;                         //!< [milisecs]
       UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
@@ -322,7 +316,7 @@ private:
       fill_point_rep_bezier(trajectory, req->point_3, 2);
       fill_point_rep_bezier(trajectory, req->point_4, 3);
       fill_point_rep_bezier(trajectory, req->point_5, 4);
-      // [[[end]]] (checksum: 3e6da5f06e0b33682c6122c40f05c1f6)
+      // [[[end]]] (checksum: a12a34d1190be94c777077f2d297918b)
 
       trajectory.time_usec = req->header.stamp.toNSec() / 1000;                         //!< [milisecs]
       UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
@@ -369,7 +363,7 @@ private:
     fill_point(trajectory, 2);
     fill_point(trajectory, 3);
     fill_point(trajectory, 4);
-    // [[[end]]] (checksum: 267a911c65a3768f04a8230fcb235bca)
+    // [[[end]]] (checksum: a63d2682cc16897f19da141e87ab5d60)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
   }
@@ -413,7 +407,7 @@ private:
     fill_msg_point(tr_desired->point_3, trajectory, 2);
     fill_msg_point(tr_desired->point_4, trajectory, 3);
     fill_msg_point(tr_desired->point_5, trajectory, 4);
-    // [[[end]]] (checksum: b6aa0c7395a7a426c25d726b75b6efea)
+    // [[[end]]] (checksum: 86aa6236b07e79aecc0490fe0381252c)
 
     trajectory_desired_pub.publish(tr_desired);
   }

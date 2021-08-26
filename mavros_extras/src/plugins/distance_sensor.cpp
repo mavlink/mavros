@@ -210,7 +210,7 @@ private:
     ds.horizontal_fov = horizontal_fov;
     ds.vertical_fov = vertical_fov;
     ds.quaternion = quaternion;
-    // [[[end]]] (checksum: 23b6c8fb20bd494eafdf08d5888c9c76)
+    // [[[end]]] (checksum: 6c990ffff7e62d6e69237c926398db25)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(ds);
   }

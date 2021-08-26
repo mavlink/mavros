@@ -18,7 +18,7 @@ Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehi
 Publishes the status of components running on the companion computer
 @see status_cb()</description>
   </class>
-  <class name="debug_value" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DebugValue&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="debug_value" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DebugValuePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Plugin for Debug msgs from MAVLink API
 @plugin debug_value</description>
   </class>
@@ -34,4 +34,4 @@ to the FCU and/or receive landing target tracking data coming from the FCU.</des
 @plugin tdr_radio</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 80faf728e8e3b941a383827c203dc67c) -->
+<!-- [[[end]]] (checksum: 7dd0ea62426e8f53efc704e0e5db333c) -->

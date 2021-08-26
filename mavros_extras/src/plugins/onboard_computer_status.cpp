@@ -95,9 +95,7 @@ private:
     std::copy(req->cpu_combined.cbegin(), req->cpu_combined.cend(), status.cpu_combined.begin());
     std::copy(req->gpu_cores.cbegin(), req->gpu_cores.cend(), status.gpu_cores.begin());
     std::copy(req->gpu_combined.cbegin(), req->gpu_combined.cend(), status.gpu_combined.begin());
-    std::copy(
-      req->temperature_core.cbegin(),
-      req->temperature_core.cend(), status.temperature_core.begin());
+    std::copy(req->temperature_core.cbegin(), req->temperature_core.cend(), status.temperature_core.begin());
     std::copy(req->fan_speed.cbegin(), req->fan_speed.cend(), status.fan_speed.begin());
     std::copy(req->storage_type.cbegin(), req->storage_type.cend(), status.storage_type.begin());
     std::copy(req->storage_usage.cbegin(), req->storage_usage.cend(), status.storage_usage.begin());
@@ -107,7 +105,7 @@ private:
     std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
     std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
     std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
-    // [[[end]]] (checksum: 98538293a5932dfb5952d4badd311b39)
+    // [[[end]]] (checksum: b06efca90d9a1160c16350e0f0a0f060)
 
     std::cout << "timestamp: " << status.time_usec << "\n";
 

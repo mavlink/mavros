@@ -129,7 +129,7 @@ private:
     vp.roll = rpy.x();
     vp.pitch = rpy.y();
     vp.yaw = rpy.z();
-    // [[[end]]] (checksum: 2048daf411780847e77f08fe5a0b9dd3)
+    // [[[end]]] (checksum: 0aed118405958e3f35e8e7c9386e812f)
 
     // just the URT of the 6x6 Pose Covariance Matrix, given
     // that the matrix is symmetric

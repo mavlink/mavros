@@ -111,7 +111,7 @@ private:
     hil_controls_msg->aux4 = hil_controls.aux4;
     hil_controls_msg->mode = hil_controls.mode;
     hil_controls_msg->nav_mode = hil_controls.nav_mode;
-    // [[[end]]] (checksum: a2c87ee8f36e7a32b08be5e0fe665b5a)
+    // [[[end]]] (checksum: cdb47fb1db7ea04cc6446a8ecb9200d7)
 
     hil_controls_pub.publish(hil_controls_msg);
   }
@@ -182,7 +182,7 @@ private:
     state_quat.xacc = lin_acc.x();
     state_quat.yacc = lin_acc.y();
     state_quat.zacc = lin_acc.z();
-    // [[[end]]] (checksum: a29598b834ac1ec32ede01595aa5b3ac)
+    // [[[end]]] (checksum: 59683585adc102a8c5ec530d99f8664d)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(state_quat);
   }
@@ -215,7 +215,7 @@ private:
     gps.ve = req->ve * 1E2;
     gps.vd = req->vd * 1E2;
     gps.cog = req->cog * 1E2;
-    // [[[end]]] (checksum: a283bcc78f496cead2e9f893200d825d)
+    // [[[end]]] (checksum: b71b4e33be4574667105126a43507e82)
     gps.satellites_visible = req->satellites_visible;
 
     UAS_FCU(m_uas)->send_message_ignore_drop(gps);
@@ -263,7 +263,7 @@ private:
     sensor.pressure_alt = req->pressure_alt;
     sensor.temperature = req->temperature;
     sensor.fields_updated = req->fields_updated;
-    // [[[end]]] (checksum: 316bef821ad6fc33d9726a1c8e8c5404)
+    // [[[end]]] (checksum: e1f6502cf1195ffdf3018f0c4d0c9329)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
   }
@@ -306,7 +306,7 @@ private:
     of.time_delta_distance_us = req->time_delta_distance_us;
     of.distance = req->distance;
     of.quality = req->quality;
-    // [[[end]]] (checksum: acbfae28f4f3bb8ca135423efaaa479e)
+    // [[[end]]] (checksum: 4dc7f3f9b5de60b4d1685bde42c66b26)
     of.temperature = req->temperature * 100.0f;                 // in centi-degrees celsius
 
     UAS_FCU(m_uas)->send_message_ignore_drop(of);
@@ -332,19 +332,19 @@ private:
     // for i in range(1,13):
     //     cog.outl("rcin.chan%d_raw\t= channels[%2d];" % (i, i-1))
     // ]]]
-    rcin.chan1_raw = channels[0];
-    rcin.chan2_raw = channels[1];
-    rcin.chan3_raw = channels[2];
-    rcin.chan4_raw = channels[3];
-    rcin.chan5_raw = channels[4];
-    rcin.chan6_raw = channels[5];
-    rcin.chan7_raw = channels[6];
-    rcin.chan8_raw = channels[7];
-    rcin.chan9_raw = channels[8];
-    rcin.chan10_raw = channels[9];
-    rcin.chan11_raw = channels[10];
-    rcin.chan12_raw = channels[11];
-    // [[[end]]] (checksum: 8d6860789d596dc39e81b351c3a50fcd)
+    rcin.chan1_raw	= channels[ 0];
+    rcin.chan2_raw	= channels[ 1];
+    rcin.chan3_raw	= channels[ 2];
+    rcin.chan4_raw	= channels[ 3];
+    rcin.chan5_raw	= channels[ 4];
+    rcin.chan6_raw	= channels[ 5];
+    rcin.chan7_raw	= channels[ 6];
+    rcin.chan8_raw	= channels[ 7];
+    rcin.chan9_raw	= channels[ 8];
+    rcin.chan10_raw	= channels[ 9];
+    rcin.chan11_raw	= channels[10];
+    rcin.chan12_raw	= channels[11];
+    // [[[end]]] (checksum: da943faeb96e517a6848f6e578f8a452)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(rcin);
   }
