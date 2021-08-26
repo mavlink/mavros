@@ -27,7 +27,10 @@ namespace extra_plugins
 {
 using namespace std::placeholders;  // NOLINT
 
-//! @brief Plugin for Debug msgs from MAVLink API
+/**
+ * @brief Plugin for Debug msgs from MAVLink API
+ * @plugin debug_value
+ */
 class DebugValuePlugin : public plugin::Plugin
 {
 public:
@@ -101,7 +104,7 @@ private:
     RCLCPP_DEBUG_STREAM(
       get_logger(),
       type << "\t" <<
-        dv.header.stamp << "\t" <<
+        dv.header.stamp.sec << "." << dv.header.stamp.nanosec << "\t" <<
         name << "\t[" <<
         dv.index << "]\tvalue:" <<
         ss.str());
@@ -116,10 +119,9 @@ private:
    * @param debug	DEBUG msg
    */
   void handle_debug(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]], mavlink::common::msg::DEBUG & debug,
-    plugin::filter::SystemAndOk filter [[maybe_unused]]
-
-  )
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::DEBUG & debug,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // [[[cog:
     // p = "dv_msg"
@@ -129,28 +131,25 @@ private:
     //     if isinstance(index, str):
     //         index = val + "." + index
     //
-    //     _args = globals()
-    //     _args.update(locals())
-    //
-    //     cog.outl("""auto {p} = boost::make_shared<mavros_msgs::DebugValue>();""".format(**_args))
-    //     cog.outl("""{p}->header.stamp = m_uas->synchronise_stamp({val}.{time_f});""".format(**_args))
-    //     cog.outl("""{p}->type = mavros_msgs::DebugValue::{type_};""".format(**_args))
-    //     cog.outl("""{p}->index = {index};""".format(**_args))
+    //     cog.outl(f"""DV {p};""")
+    //     cog.outl(f"""{p}.header.stamp = uas->synchronise_stamp({val}.{time_f});""")
+    //     cog.outl(f"""{p}.type = DV::{type_};""")
+    //     cog.outl(f"""{p}.index = {index};""")
     //     if name:
-    //         cog.outl("""{p}->name = mavlink::to_string({val}.{name});""".format(**_args))
+    //         cog.outl(f"""{p}.name = mavlink::to_string({val}.{name});""")
     //
     // common_filler("TYPE_DEBUG", "time_boot_ms", "ind", None)
-    // cog.outl("""{p}->value_float = {val}.value;""".format(**locals()))
+    // cog.outl(f"""{p}.value_float = {val}.value;""")
     // ]]]
-    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
-    dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_boot_ms);
-    dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG;
-    dv_msg->index = debug.ind;
-    dv_msg->value_float = debug.value;
-    // [[[end]]] (checksum: 82e058cb699846b34885ce3defc6ac58)
+    DV dv_msg;
+    dv_msg.header.stamp = uas->synchronise_stamp(debug.time_boot_ms);
+    dv_msg.type = DV::TYPE_DEBUG;
+    dv_msg.index = debug.ind;
+    dv_msg.value_float = debug.value;
+    // [[[end]]] (checksum: 80717da0ef122f51bafbe0302e4adee1)
 
-    debug_logger(debug.get_name(), *dv_msg);
-    debug_pub.publish(dv_msg);
+    debug_logger(debug.get_name(), dv_msg);
+    debug_pub->publish(dv_msg);
   }
 
   /**
@@ -160,31 +159,32 @@ private:
    * @param debug	DEBUG_VECT msg
    */
   void handle_debug_vector(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::DEBUG_VECT & debug)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::DEBUG_VECT & debug,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // [[[cog:
     // common_filler("TYPE_DEBUG_VECT", "time_usec", -1, "name")
     //
     // fields = "xyz"
-    // pd = p + "->data"
-    // cog.outl("""{pd}.resize({l});""".format(l=len(fields), **locals()))
+    // pd = p + ".data"
+    // cog.outl(f"""{pd}.resize({len(fields)});""")
     // for i, f in enumerate(fields):
-    //     cog.outl("""{pd}[{i}] = {val}.{f};""".format(**locals()))
+    //     cog.outl(f"""{pd}[{i}] = {val}.{f};""")
     // ]]]
-    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
-    dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_usec);
-    dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG_VECT;
-    dv_msg->index = -1;
-    dv_msg->name = mavlink::to_string(debug.name);
-    dv_msg->data.resize(3);
-    dv_msg->data[0] = debug.x;
-    dv_msg->data[1] = debug.y;
-    dv_msg->data[2] = debug.z;
-    // [[[end]]] (checksum: 966bca4d95f06349cf065f3887c69471)
+    DV dv_msg;
+    dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
+    dv_msg.type = DV::TYPE_DEBUG_VECT;
+    dv_msg.index = -1;
+    dv_msg.name = mavlink::to_string(debug.name);
+    dv_msg.data.resize(3);
+    dv_msg.data[0] = debug.x;
+    dv_msg.data[1] = debug.y;
+    dv_msg.data[2] = debug.z;
+    // [[[end]]] (checksum: 3c4906cf2feac357834adaa6bedd4e87)
 
-    debug_logger(debug.get_name(), *dv_msg);
-    debug_vector_pub.publish(dv_msg);
+    debug_logger(debug.get_name(), dv_msg);
+    debug_vector_pub->publish(dv_msg);
   }
 
   /**
@@ -198,24 +198,25 @@ private:
    * @param value	NAMED_VALUE_FLOAT msg
    */
   void handle_named_value_float(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::NAMED_VALUE_FLOAT & value)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::NAMED_VALUE_FLOAT & value,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // [[[cog:
     // val="value"
     // common_filler("TYPE_NAMED_VALUE_FLOAT", "time_boot_ms", -1, "name")
-    // cog.outl("""{p}->value_float = {val}.value;""".format(**locals()))
+    // cog.outl(f"""{p}.value_float = {val}.value;""")
     // ]]]
-    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
-    dv_msg->header.stamp = m_uas->synchronise_stamp(value.time_boot_ms);
-    dv_msg->type = mavros_msgs::DebugValue::TYPE_NAMED_VALUE_FLOAT;
-    dv_msg->index = -1;
-    dv_msg->name = mavlink::to_string(value.name);
-    dv_msg->value_float = value.value;
-    // [[[end]]] (checksum: 8d70c469d67ab346574c99d20b91a501)
+    DV dv_msg;
+    dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
+    dv_msg.type = DV::TYPE_NAMED_VALUE_FLOAT;
+    dv_msg.index = -1;
+    dv_msg.name = mavlink::to_string(value.name);
+    dv_msg.value_float = value.value;
+    // [[[end]]] (checksum: 0b4a3bac4bf9e2b24654349cd9420f3b)
 
-    debug_logger(value.get_name(), *dv_msg);
-    named_value_float_pub.publish(dv_msg);
+    debug_logger(value.get_name(), dv_msg);
+    named_value_float_pub->publish(dv_msg);
   }
 
   /**
@@ -225,23 +226,24 @@ private:
    * @param value	NAMED_VALUE_INT msg
    */
   void handle_named_value_int(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::NAMED_VALUE_INT & value)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::NAMED_VALUE_INT & value,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // [[[cog:
     // common_filler("TYPE_NAMED_VALUE_INT", "time_boot_ms", -1, "name")
-    // cog.outl("""{p}->value_int = {val}.value;""".format(**locals()))
+    // cog.outl(f"""{p}.value_int = {val}.value;""")
     // ]]]
-    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
-    dv_msg->header.stamp = m_uas->synchronise_stamp(value.time_boot_ms);
-    dv_msg->type = mavros_msgs::DebugValue::TYPE_NAMED_VALUE_INT;
-    dv_msg->index = -1;
-    dv_msg->name = mavlink::to_string(value.name);
-    dv_msg->value_int = value.value;
-    // [[[end]]] (checksum: b7ce125baba6e8918f6b866a9d5aa77c)
+    DV dv_msg;
+    dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
+    dv_msg.type = DV::TYPE_NAMED_VALUE_INT;
+    dv_msg.index = -1;
+    dv_msg.name = mavlink::to_string(value.name);
+    dv_msg.value_int = value.value;
+    // [[[end]]] (checksum: 7906d63b5eb041cf66d5bfb4b688cbdb)
 
-    debug_logger(value.get_name(), *dv_msg);
-    named_value_int_pub.publish(dv_msg);
+    debug_logger(value.get_name(), dv_msg);
+    named_value_int_pub->publish(dv_msg);
   }
 
   /* -*- callbacks -*- */
@@ -250,61 +252,61 @@ private:
    * @brief Debug callbacks
    * @param req	pointer to mavros_msgs/Debug.msg being published
    */
-  void debug_cb(const mavros_msgs::DebugValue::ConstPtr & req)
+  void debug_cb(const mavros_msgs::msg::DebugValue::SharedPtr req)
   {
     switch (req->type) {
-      case mavros_msgs::DebugValue::TYPE_DEBUG: {
+      case DV::TYPE_DEBUG: {
           mavlink::common::msg::DEBUG debug {};
 
-          debug.time_boot_ms = req->header.stamp.toNSec() / 1000000;
+          debug.time_boot_ms = get_time_boot_ms(req->header.stamp);
           debug.ind = req->index;
           debug.value = req->value_float;
 
-          UAS_FCU(m_uas)->send_message_ignore_drop(debug);
+          uas->send_message(debug);
           break;
         }
-      case mavros_msgs::DebugValue::TYPE_DEBUG_VECT: {
+      case DV::TYPE_DEBUG_VECT: {
           mavlink::common::msg::DEBUG_VECT debug {};
 
-          debug.time_usec = req->header.stamp.toNSec() / 1000;
+          debug.time_usec = get_time_usec(req->header.stamp);
           mavlink::set_string(debug.name, req->name);
           // [[[cog:
           // for i, f in enumerate("xyz"):
-          //     cog.outl("debug.{f} = req->data[{i}];".format(**locals()))
+          //     cog.outl(f"debug.{f} = req->data[{i}];")
           // ]]]
           debug.x = req->data[0];
           debug.y = req->data[1];
           debug.z = req->data[2];
-          // [[[end]]] (checksum: f4918ce98ca3183f93f6aff20d4ab7ec)
+          // [[[end]]] (checksum: e3359b14c75adf35f430840dcf01ef18)
 
-          UAS_FCU(m_uas)->send_message_ignore_drop(debug);
+          uas->send_message(debug);
           break;
         }
-      //case mavros_msgs::DebugValue::TYPE_DEBUG_ARRAY:		{
+      //case DV::TYPE_DEBUG_ARRAY:		{
       //	return;
       //}
-      case mavros_msgs::DebugValue::TYPE_NAMED_VALUE_FLOAT: {
+      case DV::TYPE_NAMED_VALUE_FLOAT: {
           mavlink::common::msg::NAMED_VALUE_FLOAT value {};
 
-          value.time_boot_ms = req->header.stamp.toNSec() / 1000000;
+          value.time_boot_ms = get_time_boot_ms(req->header.stamp);
           mavlink::set_string(value.name, req->name);
           value.value = req->value_float;
 
-          UAS_FCU(m_uas)->send_message_ignore_drop(value);
+          uas->send_message(value);
           break;
         }
-      case mavros_msgs::DebugValue::TYPE_NAMED_VALUE_INT: {
+      case DV::TYPE_NAMED_VALUE_INT: {
           mavlink::common::msg::NAMED_VALUE_INT value {};
 
-          value.time_boot_ms = req->header.stamp.toNSec() / 1000000;
+          value.time_boot_ms = get_time_boot_ms(req->header.stamp);
           mavlink::set_string(value.name, req->name);
           value.value = req->value_int;
 
-          UAS_FCU(m_uas)->send_message_ignore_drop(value);
+          uas->send_message(value);
           break;
         }
       default:
-        ROS_ERROR_NAMED("debug", "Wrong debug type (%d). Droping!...", req->type);
+        RCLCPP_ERROR(get_logger(), "Wrong debug type (%d). Droping!...", req->type);
         return;
     }
   }
@@ -312,5 +314,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::DebugValuePlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::DebugValuePlugin)
