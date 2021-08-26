@@ -60,8 +60,7 @@ public:
   }
 
 private:
-  ros::NodeHandle status_nh;
-  ros::Subscriber status_sub;
+  rclcpp::Subscription<mavros_msgs::msg::CompanionProcessStatus>::SharedPtr status_sub;
 
   /**
    * @brief Send companion process status to FCU over a heartbeat message

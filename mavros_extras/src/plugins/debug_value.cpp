@@ -1,3 +1,10 @@
+/*
+ * Copyright 2017 Nuno Marques.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Debug messages plugin
  * @file debug_value.cpp
@@ -6,43 +13,38 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2017 Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/DebugValue.h>
+#include "mavros_msgs/msg/debug_value.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;  // NOLINT
+
 //! @brief Plugin for Debug msgs from MAVLink API
-class DebugValuePlugin : public plugin::PluginBase
+class DebugValuePlugin : public plugin::Plugin
 {
 public:
-  DebugValuePlugin()
-  : PluginBase(),
-    debug_nh("~debug_value")
-  {}
-
-  void initialize(UAS & uas_) override
+  DebugValuePlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "debug_value")
   {
-    PluginBase::initialize(uas_);
-
     // subscribers
-    debug_sub = debug_nh.subscribe("send", 10, &DebugValuePlugin::debug_cb, this);
+    debug_sub =
+      node->create_subscription<DV>(
+      "~/send", 10,
+      std::bind(&DebugValuePlugin::debug_cb, this, _1));
 
     // publishers
-    debug_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug", 10);
-    debug_vector_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug_vector", 10);
-    named_value_float_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_float", 10);
-    named_value_int_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_int", 10);
+    debug_pub = node->create_publisher<DV>("~/debug", 10);
+    debug_vector_pub = node->create_publisher<DV>("~/debug_vector", 10);
+    named_value_float_pub = node->create_publisher<DV>("~/named_value_float", 10);
+    named_value_int_pub = node->create_publisher<DV>("~/named_value_int", 10);
   }
 
   Subscriptions get_subscriptions() override
@@ -56,14 +58,14 @@ public:
   }
 
 private:
-  ros::NodeHandle debug_nh;
+  using DV = mavros_msgs::msg::DebugValue;
 
-  ros::Subscriber debug_sub;
+  rclcpp::Subscription<DV>::SharedPtr debug_sub;
 
-  ros::Publisher debug_pub;
-  ros::Publisher debug_vector_pub;
-  ros::Publisher named_value_float_pub;
-  ros::Publisher named_value_int_pub;
+  rclcpp::Publisher<DV>::SharedPtr debug_pub;
+  rclcpp::Publisher<DV>::SharedPtr debug_vector_pub;
+  rclcpp::Publisher<DV>::SharedPtr named_value_float_pub;
+  rclcpp::Publisher<DV>::SharedPtr named_value_int_pub;
 
   /* -*- helpers -*- */
 
@@ -72,10 +74,8 @@ private:
    * @param type	Type of debug message
    * @param dv	Data value
    */
-  void debug_logger(const std::string & type, const mavros_msgs::DebugValue & dv)
+  void debug_logger(const std::string & type, const DV & dv)
   {
-    using DV = mavros_msgs::DebugValue;
-
     std::string name = (dv.name == "") ? "UNK" : dv.name;
 
     std::ostringstream ss;
@@ -98,9 +98,9 @@ private:
       ss << dv.value_float;
     }
 
-
-    ROS_DEBUG_STREAM_NAMED(
-      "debug_value", type << "\t" <<
+    RCLCPP_DEBUG_STREAM(
+      get_logger(),
+      type << "\t" <<
         dv.header.stamp << "\t" <<
         name << "\t[" <<
         dv.index << "]\tvalue:" <<
@@ -115,7 +115,11 @@ private:
    * @param msg	Received Mavlink msg
    * @param debug	DEBUG msg
    */
-  void handle_debug(const mavlink::mavlink_message_t * msg, mavlink::common::msg::DEBUG & debug)
+  void handle_debug(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]], mavlink::common::msg::DEBUG & debug,
+    plugin::filter::SystemAndOk filter [[maybe_unused]]
+
+  )
   {
     // [[[cog:
     // p = "dv_msg"

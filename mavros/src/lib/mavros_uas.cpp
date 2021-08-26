@@ -378,7 +378,7 @@ void UAS::recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg)
   }
 }
 
-void UAS::send_message(const mavlink::Message & obj)
+void UAS::send_message(const mavlink::Message & obj, const uint8_t src_compid)
 {
   mavlink::mavlink_message_t msg;
   mavlink::MsgMap map(msg);
@@ -387,7 +387,7 @@ void UAS::send_message(const mavlink::Message & obj)
 
   obj.serialize(map);
   mavlink::mavlink_finalize_message_buffer(
-    &msg, source_system, source_component, &mavlink_status, mi.min_length, mi.length,
+    &msg, source_system, src_compid, &mavlink_status, mi.min_length, mi.length,
     mi.crc_extra);
 
   mavros_msgs::msg::Mavlink rmsg{};

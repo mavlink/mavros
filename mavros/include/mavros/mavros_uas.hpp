@@ -543,9 +543,17 @@ public:
   bool cmode_from_str(std::string cmode_str, uint32_t & custom_mode);
 
   /**
-   * @brief Send message to uas
+   * @brief Send message to UAS
    */
-  void send_message(const mavlink::Message & msg);
+  inline void send_message(const mavlink::Message & msg)
+  {
+    send_message(msg, source_component);
+  }
+
+  /**
+   * @brief Send message to UAS with custom component id
+   */
+  void send_message(const mavlink::Message & msg, const uint8_t src_compid);
 
   //! sets protocol version
   void set_protocol_version(mavconn::Protocol ver);
