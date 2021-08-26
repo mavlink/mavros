@@ -71,7 +71,7 @@ public:
     uint8_t req_opcode;         ///< Request opcode returned in kRspAck, kRspNak message
     uint8_t padding[2];         ///< 32 bit aligment padding
     uint32_t offset;            ///< Offsets for List and Read commands
-    uint8_t* data;              ///< command data, varies by Opcode
+    uint8_t * data;              ///< command data, varies by Opcode
   };
 
   /// @brief Command opcodes

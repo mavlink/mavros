@@ -202,31 +202,38 @@ public:
    * @param _thd_name  listener thread name
    * @param cbp        plugin callback function
    */
-  void tf2_start(const char * _thd_name, void (D::* cbp)(const geometry_msgs::msg::TransformStamped &) )
+  void tf2_start(
+    const char * _thd_name, void (D::* cbp)(
+      const geometry_msgs::msg::TransformStamped &) )
   {
     tf_thd_name = _thd_name;
     D * base = static_cast<D *>(this);
     auto tf_transform_cb = std::bind(cbp, base, std::placeholders::_1);
 
     auto timer_callback = [this, base, tf_transform_cb]() -> void {
-      plugin::UASPtr _uas = base->uas;
-      std::string & _frame_id = base->tf_frame_id;
-      std::string & _child_frame_id = base->tf_child_frame_id;
-      if (_uas->tf2_buffer.canTransform(
-        _frame_id, _child_frame_id, tf2::TimePoint(),
-        tf2::durationFromSec(3.0)))
-      {
-        try {
-          auto transform = _uas->tf2_buffer.lookupTransform(
-            _frame_id, _child_frame_id, tf2::TimePoint(), tf2::durationFromSec(3.0));
-          tf_transform_cb(transform);
-        } catch (tf2::LookupException & ex) {
-          RCLCPP_ERROR(_uas->get_logger(), "tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
+        plugin::UASPtr _uas = base->uas;
+        std::string & _frame_id = base->tf_frame_id;
+        std::string & _child_frame_id = base->tf_child_frame_id;
+        if (_uas->tf2_buffer.canTransform(
+            _frame_id, _child_frame_id, tf2::TimePoint(),
+            tf2::durationFromSec(3.0)))
+        {
+          try {
+            auto transform = _uas->tf2_buffer.lookupTransform(
+              _frame_id, _child_frame_id, tf2::TimePoint(), tf2::durationFromSec(3.0));
+            tf_transform_cb(transform);
+          } catch (tf2::LookupException & ex) {
+            RCLCPP_ERROR(
+              _uas->get_logger(), "tf2_buffer", "%s: %s", tf_thd_name.c_str(),
+              ex.what());
+          }
         }
-      }
-    };
+      };
 
-    timer_ = create_timer(base->node, base->uas->get_clock(), rclcpp::Duration::from_seconds(1.0 / base->tf_rate), timer_callback);
+    timer_ =
+      create_timer(
+      base->node, base->uas->get_clock(),
+      rclcpp::Duration::from_seconds(1.0 / base->tf_rate), timer_callback);
   }
 
 #if 0  // XXX TODO(vooon): port me pls
@@ -265,7 +272,10 @@ public:
               auto transform = m_uas_->tf2_buffer.lookupTransform(
                 _frame_id, _child_frame_id, ros::Time(0), ros::Duration(3.0));
 
-              tf2_filter.registerCallback(std::bind(cbp, static_cast<D *>(this), transform, std::placeholders::_1));
+              tf2_filter.registerCallback(
+                std::bind(
+                  cbp, static_cast<D *>(this), transform,
+                  std::placeholders::_1));
             } catch (tf2::LookupException & ex) {
               RCLCPP_ERROR("tf2_buffer", "%s: %s", tf_thd_name.c_str(), ex.what());
             }
