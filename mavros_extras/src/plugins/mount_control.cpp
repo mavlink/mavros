@@ -55,7 +55,8 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			make_handler(&MountControlPlugin::handle_mount_orientation)
+			make_handler(&MountControlPlugin::handle_mount_orientation),
+			make_handler(&MountControlPlugin::handle_mount_status)
 		};
 	}
 
