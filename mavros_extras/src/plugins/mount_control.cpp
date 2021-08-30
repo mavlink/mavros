@@ -19,6 +19,7 @@
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/MountControl.h>
 #include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <mavros_msgs/MountConfigure.h>
 
 namespace mavros {
@@ -47,13 +48,15 @@ public:
 
 		command_sub = mount_nh.subscribe("command", 10, &MountControlPlugin::command_cb, this);
 		mount_orientation_pub = mount_nh.advertise<geometry_msgs::Quaternion>("orientation", 10);
+		mount_status_pub = mount_nh.advertise<geometry_msgs::Vector3Stamped>("status", 10);
 		configure_srv = mount_nh.advertiseService("configure", &MountControlPlugin::mount_configure_cb, this);
 	}
 
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			make_handler(&MountControlPlugin::handle_mount_orientation)
+			make_handler(&MountControlPlugin::handle_mount_orientation),
+			make_handler(&MountControlPlugin::handle_mount_status)
 		};
 	}
 
@@ -62,6 +65,7 @@ private:
 	ros::NodeHandle mount_nh;
 	ros::Subscriber command_sub;
 	ros::Publisher mount_orientation_pub;
+	ros::Publisher mount_status_pub;
 	ros::ServiceServer configure_srv;
 
 	/**
@@ -74,6 +78,32 @@ private:
 	void handle_mount_orientation(const mavlink::mavlink_message_t *msg, mavlink::common::msg::MOUNT_ORIENTATION &mo)
 	{
 		auto q = ftf::quaternion_from_rpy(Eigen::Vector3d(mo.roll, mo.pitch, mo.yaw) * M_PI / 180.0);
+		geometry_msgs::Quaternion quaternion_msg;
+		tf::quaternionEigenToMsg(q, quaternion_msg);
+		mount_orientation_pub.publish(quaternion_msg);
+	}
+
+	/**
+	 * @brief Publish the mount status
+	 *
+	 * @param msg   the mavlink message
+	 * @param ms	received MountStatus msg
+	 */
+	void handle_mount_status(const mavlink::mavlink_message_t *, mavlink::ardupilotmega::msg::MOUNT_STATUS &ms)
+	{
+		geometry_msgs::Vector3Stamped publish_msg;
+
+		publish_msg.header.stamp = ros::Time::now();
+
+		publish_msg.header.frame_id = std::to_string(ms.target_component);
+
+		auto vec = Eigen::Vector3d(ms.pointing_b, ms.pointing_a, ms.pointing_c) * M_PI / 18000.0;
+		tf::vectorEigenToMsg(vec, publish_msg.vector);
+
+		mount_status_pub.publish(publish_msg);
+
+		// pointing_X is cdeg
+		auto q = ftf::quaternion_from_rpy(Eigen::Vector3d(ms.pointing_b, ms.pointing_a, ms.pointing_c) * M_PI / 18000.0);
 		geometry_msgs::Quaternion quaternion_msg;
 		tf::quaternionEigenToMsg(q, quaternion_msg);
 		mount_orientation_pub.publish(quaternion_msg);

@@ -80,6 +80,7 @@ add_library(mavros_extras
   src/plugins/log_transfer.cpp
   src/plugins/mag_calibration_status.cpp
   src/plugins/mocap_pose_estimate.cpp
+  src/plugins/mount_control.cpp
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
   src/plugins/play_tune.cpp
@@ -90,7 +91,6 @@ add_library(mavros_extras
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  src/plugins/mount_control.cpp
 )
 add_dependencies(mavros_extras
   ${catkin_EXPORTED_TARGETS}
