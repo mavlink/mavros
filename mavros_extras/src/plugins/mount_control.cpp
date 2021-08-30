@@ -102,6 +102,12 @@ private:
 		publish_msg.vector.z = ms.pointing_c;
 
 		mount_status_pub.publish(publish_msg);
+
+		// pointing_X is cdeg
+		auto q = ftf::quaternion_from_rpy(Eigen::Vector3d(ms.pointing_b, ms.pointing_a, ms.pointing_c) * M_PI / 18000.0);
+		geometry_msgs::Quaternion quaternion_msg;
+		tf::quaternionEigenToMsg(q, quaternion_msg);
+		mount_orientation_pub.publish(quaternion_msg);
 	}
 
 	/**
