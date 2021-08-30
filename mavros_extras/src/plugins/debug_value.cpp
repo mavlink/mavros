@@ -43,10 +43,10 @@ public:
 
 	Subscriptions get_subscriptions() override {
 		return {
-			       make_handler(&DebugValuePlugin::handle_debug),
-			       make_handler(&DebugValuePlugin::handle_debug_vector),
-			       make_handler(&DebugValuePlugin::handle_named_value_float),
-			       make_handler(&DebugValuePlugin::handle_named_value_int)
+			make_handler(&DebugValuePlugin::handle_debug),
+			make_handler(&DebugValuePlugin::handle_debug_vector),
+			make_handler(&DebugValuePlugin::handle_named_value_float),
+			make_handler(&DebugValuePlugin::handle_named_value_int)
 		};
 	}
 

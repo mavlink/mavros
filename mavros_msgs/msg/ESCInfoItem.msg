@@ -8,5 +8,5 @@ std_msgs/Header header
 
 uint16 failure_flags
 uint32 error_count
-uint8 temperature
+int32 temperature
 

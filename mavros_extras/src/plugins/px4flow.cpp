@@ -23,7 +23,7 @@
 #include <sensor_msgs/Range.h>
 
 namespace mavros {
-namespace extra_plugins{
+namespace extra_plugins {
 /**
  * @brief PX4 Optical Flow plugin
  *
@@ -94,15 +94,15 @@ private:
 		 * gyroscope. (aircraft -> baselink)
 		 */
 		auto int_xy = ftf::transform_frame_aircraft_baselink(
-				Eigen::Vector3d(
-					flow_rad.integrated_x,
-					flow_rad.integrated_y,
-					0.0));
+			Eigen::Vector3d(
+			flow_rad.integrated_x,
+			flow_rad.integrated_y,
+			0.0));
 		auto int_gyro = ftf::transform_frame_aircraft_baselink(
-				Eigen::Vector3d(
-					flow_rad.integrated_xgyro,
-					flow_rad.integrated_ygyro,
-					flow_rad.integrated_zgyro));
+			Eigen::Vector3d(
+			flow_rad.integrated_xgyro,
+			flow_rad.integrated_ygyro,
+			flow_rad.integrated_zgyro));
 
 		auto flow_rad_msg = boost::make_shared<mavros_msgs::OpticalFlowRad>();
 
@@ -159,14 +159,14 @@ private:
 
 		auto int_xy = ftf::transform_frame_baselink_aircraft(
 			Eigen::Vector3d(
-					msg->integrated_x,
-					msg->integrated_y,
-					0.0));
+			msg->integrated_x,
+			msg->integrated_y,
+			0.0));
 		auto int_gyro = ftf::transform_frame_baselink_aircraft(
-				Eigen::Vector3d(
-					msg->integrated_xgyro,
-					msg->integrated_ygyro,
-					msg->integrated_zgyro));
+			Eigen::Vector3d(
+			msg->integrated_xgyro,
+			msg->integrated_ygyro,
+			msg->integrated_zgyro));
 
 		flow_rad_msg.time_usec = msg->header.stamp.toNSec() / 1000;
 		flow_rad_msg.sensor_id = 0;
@@ -176,7 +176,7 @@ private:
 		flow_rad_msg.integrated_xgyro = int_gyro.x();
 		flow_rad_msg.integrated_ygyro = int_gyro.y();
 		flow_rad_msg.integrated_zgyro = int_gyro.z();
-		flow_rad_msg.temperature = msg->temperature * 100.0f; // temperature in centi-degrees Celsius
+		flow_rad_msg.temperature = msg->temperature * 100.0f;	// temperature in centi-degrees Celsius
 		flow_rad_msg.quality = msg->quality;
 		flow_rad_msg.time_delta_distance_us = msg->time_delta_distance_us;
 		flow_rad_msg.distance = msg->distance;

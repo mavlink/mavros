@@ -46,10 +46,10 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&GpsStatusPlugin::handle_gps_raw_int),
-			       make_handler(&GpsStatusPlugin::handle_gps2_raw),
-			       make_handler(&GpsStatusPlugin::handle_gps_rtk),
-			       make_handler(&GpsStatusPlugin::handle_gps2_rtk)
+			make_handler(&GpsStatusPlugin::handle_gps_raw_int),
+			make_handler(&GpsStatusPlugin::handle_gps2_raw),
+			make_handler(&GpsStatusPlugin::handle_gps_rtk),
+			make_handler(&GpsStatusPlugin::handle_gps2_rtk)
 		};
 	}
 

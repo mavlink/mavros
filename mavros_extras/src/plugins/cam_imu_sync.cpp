@@ -19,7 +19,7 @@
 #include <mavros_msgs/CamIMUStamp.h>
 
 namespace mavros {
-namespace extra_plugins{
+namespace extra_plugins {
 /**
  * @brief Camera IMU synchronisation plugin
  *
@@ -43,7 +43,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&CamIMUSyncPlugin::handle_cam_trig)
+			make_handler(&CamIMUSyncPlugin::handle_cam_trig)
 		};
 	}
 

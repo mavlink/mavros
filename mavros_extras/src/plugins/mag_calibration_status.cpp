@@ -71,7 +71,7 @@ private:
 			_rg_compass_cal_progress[mp.compass_id] = mp.completion_pct;
 		}
 
-        // Prevent data over 100% after cal_mask reset bit assigned to compass_id
+		// Prevent data over 100% after cal_mask reset bit assigned to compass_id
 		uint16_t total_percentage = 0;
 		for (size_t i = 0; i < 8 && (compass_calibrating >> i).any(); i++) {
 			if (compass_calibrating[i]) {
