@@ -132,6 +132,7 @@ add_library(mavros_plugins
   src/plugins/local_position.cpp
   src/plugins/manual_control.cpp
   src/plugins/mission_protocol_base.cpp
+  src/plugins/nav_controller_output.cpp
   src/plugins/param.cpp
   src/plugins/rallypoint.cpp
   src/plugins/rc_io.cpp
