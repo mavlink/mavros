@@ -34,6 +34,12 @@ fake\_gps
 Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.
 
 
+gps\_input
+-----------
+
+Send GPS\_INPUT messages to the FCU.
+
+
 gps\_status
 -----------
 
