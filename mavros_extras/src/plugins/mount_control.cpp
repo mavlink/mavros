@@ -1,5 +1,5 @@
 /**
- * @brief Mouny Control plugin
+ * @brief Mount Control plugin
  * @file mount_control.cpp
  * @author Jaeyoung Lim <jaeyoung@auterion.com>
  *
@@ -126,7 +126,7 @@ private:
 		cmd.param2 = req->roll;
 		cmd.param3 = req->yaw;
 		cmd.param4 = req->altitude;	//
-		cmd.param5 = req->latitude;	// lattitude in degrees * 1E7
+		cmd.param5 = req->latitude;	// latitude in degrees * 1E7
 		cmd.param6 = req->longitude;	// longitude in degrees * 1E7
 		cmd.param7 = req->mode;	// MAV_MOUNT_MODE
 
@@ -161,7 +161,7 @@ private:
 			ROS_ERROR_NAMED("mount", "MountConfigure: %s", ex.what());
 		}
 
-		ROS_ERROR_COND_NAMED(!res.success, "mount", "MountCongifure: command plugin service call failed!");
+		ROS_ERROR_COND_NAMED(!res.success, "mount", "MountConfigure: command plugin service call failed!");
 
 		return res.success;
 	}
