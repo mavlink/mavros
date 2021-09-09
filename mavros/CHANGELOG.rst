@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.0 (2021-09-09)
+------------------
 * Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
   Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
 * Changed OverrideRCIn to 18 channels

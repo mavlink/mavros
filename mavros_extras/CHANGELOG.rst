@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.0 (2021-09-09)
+------------------
 * Merge pull request `#1621 <https://github.com/mavlink/mavros/issues/1621>`_ from amilcarlucas/pr/mount-control-spelling
   Spelling corrections
 * Spelling corrections
