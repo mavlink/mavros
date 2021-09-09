@@ -2,6 +2,27 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
+* Changed OverrideRCIn to 18 channels
+* Merge pull request `#1617 <https://github.com/mavlink/mavros/issues/1617>`_ from amilcarlucas/pr/NAV_CONTROLLER_OUTPUT-plugin
+  Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge pull request `#1619 <https://github.com/mavlink/mavros/issues/1619>`_ from amilcarlucas/pr/BATTERY2-topic
+  publish BATTERY2 message as /mavros/battery2 topic
+* publish BATTERY2 message as /mavros/battery2 topic
+* Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+* Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge branch 'master' into master
+* plugins: reformat xml
+* Exclude changes to launch files.
+* Delete debug files.
+* Apply uncrustify changes.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* Contributors: André Filipe, BV-OpenSource, Karthik Desai, Vladimir Ermakov
+
 1.8.0 (2021-05-05)
 ------------------
 * lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()

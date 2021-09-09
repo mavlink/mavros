@@ -2,6 +2,30 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
+* Changed OverrideRCIn to 18 channels
+* Merge pull request `#1617 <https://github.com/mavlink/mavros/issues/1617>`_ from amilcarlucas/pr/NAV_CONTROLLER_OUTPUT-plugin
+  Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge pull request `#1618 <https://github.com/mavlink/mavros/issues/1618>`_ from amilcarlucas/pr/GPS_INPUT-plugin
+  Added GPS_INPUT plugin
+* Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+* Added NAV_CONTROLLER_OUTPUT Plugin
+* Added GPS_INPUT plugin
+* Merge branch 'master' into master
+* Update esc_status plugin with datatype change on MAVLink.
+  ESC_INFO MAVLink message was updated to have negative temperates and also at a different resolution. This commit updates those changes on this side.
+* Remove Mount_Status plugin. Add Status data to Mount_Control plugin. Remove Mount_Status message.
+* msgs: fix types for apm's esc telemetry
+* actually allocate memory for the telemetry information
+* added esc_telemetry plugin
+* Add Mount angles message for communications with ardupilotmega.
+* Remove extra message from CMakeLists.
+* Add message and service definition.
+* Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Ricardo Marques, Russell, Vladimir Ermakov
+
 1.8.0 (2021-05-05)
 ------------------
 
