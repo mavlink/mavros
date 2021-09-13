@@ -15,57 +15,82 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
-#include <eigen_conversions/eigen_msg.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/utils.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+#include "mavros/setpoint_mixin.hpp"
 
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <tf2_eigen/tf2_eigen.h>
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp" //
+#include "geometry_msgs/msg/vector3_stamped.hpp"
+#include "mavros_msgs/msg/landing_target.hpp"
+
+
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;
+
 /**
  * @brief Vision pose estimate plugin
+ * @plugin vision_pose
  *
  * Send pose estimation from various vision estimators
  * to FCU position and attitude estimators.
  *
  */
-class VisionPoseEstimatePlugin : public plugin::PluginBase,
+class VisionPoseEstimatePlugin : public plugin::Plugin,
   private plugin::TF2ListenerMixin<VisionPoseEstimatePlugin>
 {
 public:
-  VisionPoseEstimatePlugin()
-  : PluginBase(),
-    sp_nh("~vision_pose"),
+  VisionPoseEstimatePlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "vision_pose"),
     tf_rate(10.0)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+    enable_node_watch_parameters();
 
     bool tf_listen;
 
     // tf params
-    sp_nh.param("tf/listen", tf_listen, false);
-    sp_nh.param<std::string>("tf/frame_id", tf_frame_id, "map");
-    sp_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "vision_estimate");
-    sp_nh.param("tf/rate_limit", tf_rate, 10.0);
+    node_declate_and_watch_parameter(
+      "tf/listen", false, [&](const rclcpp::Parameter & p) {
+        auto tf_listen = p.as_bool();
+        if (tf_listen) {
+            RCLCPP_INFO_STREAM(
+            get_logger(),
+            "Listen to vision transform" << tf_frame_id <<
+              " -> " << tf_child_frame_id);
+            tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
+          } else{
+            vision_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+              "~/pose", 10, std::bind(
+                &VisionPoseEstimatePlugin::vision_cb, this, _1));
+            vision_cov_sub = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+              "~/pose_cov", 10, std::bind(
+                &VisionPoseEstimatePlugin::vision_cov_cb, this, _1));
+          }
+        });
 
-    if (tf_listen) {
-      ROS_INFO_STREAM_NAMED(
-        "vision_pose", "Listen to vision transform " << tf_frame_id <<
-          " -> " << tf_child_frame_id);
-      tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
-    } else {
-      vision_sub = sp_nh.subscribe("pose", 10, &VisionPoseEstimatePlugin::vision_cb, this);
-      vision_cov_sub = sp_nh.subscribe(
-        "pose_cov", 10, &VisionPoseEstimatePlugin::vision_cov_cb,
-        this);
-    }
+    node_declate_and_watch_parameter(
+      "tf/frame_id", "map", [&](const rclcpp::Parameter & p) {
+        tf_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf/child_frame_id", "vision_estimate", [&](const rclcpp::Parameter & p) {
+        tf_child_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf/rate_limit", 10.0, [&](const rclcpp::Parameter & p) {
+        tf_rate = p.as_double();
+      });
   }
 
   Subscriptions get_subscriptions() override
@@ -75,30 +100,28 @@ public:
 
 private:
   friend class TF2ListenerMixin;
-  ros::NodeHandle sp_nh;
 
-  ros::Subscriber vision_sub;
-  ros::Subscriber vision_cov_sub;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vision_sub;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr vision_cov_sub;
 
   std::string tf_frame_id;
   std::string tf_child_frame_id;
+
   double tf_rate;
-  ros::Time last_transform_stamp;
+
+  rclcpp::Time last_transform_stamp;
 
   /* -*- low-level send -*- */
   /**
    * @brief Send vision estimate transform to FCU position controller
    */
-  void send_vision_estimate(
-    const ros::Time & stamp, const Eigen::Affine3d & tr,
-    const geometry_msgs::PoseWithCovariance::_covariance_type & cov)
+  void send_vision_estimate(const rclcpp::Time & stamp, const Eigen::Affine3d & tr,
+    const geometry_msgs::msg::PoseWithCovariance::_covariance_type & cov) // Check ::_covariance_type
   {
-    /**
-     * @warning Issue #60.
-     * This now affects pose callbacks too.
-     */
     if (last_transform_stamp == stamp) {
-      ROS_DEBUG_THROTTLE_NAMED(10, "vision_pose", "Vision: Same transform as last one, dropped.");
+      RCLCPP_DEBUG_THROTTLE(
+        get_logger(),
+        *get_clock(), 10, "Vision: Same transform as last one, dropped.");
       return;
     }
     last_transform_stamp = stamp;
@@ -111,18 +134,22 @@ private:
     auto cov_ned = ftf::transform_frame_enu_ned(cov);
     ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
 
-    auto urt_view = Eigen::Matrix<double, 6, 6>(cov_map.triangularView<Eigen::Upper>());
-    ROS_DEBUG_STREAM_NAMED("vision_pose", "Vision: Covariance URT: " << std::endl << urt_view);
+    RCLCPP_INFO_STREAM(
+          get_logger(),
+          "Listen to vision transform " << tf_frame_id <<
+            " -> " << tf_child_frame_id);
+
 
     mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
 
-    vp.usec = stamp.toNSec() / 1000;
+    vp.usec = stamp.nanoseconds() / 1000;
     // [[[cog:
     // for f in "xyz":
     //     cog.outl("vp.%s = position.%s();" % (f, f))
     // for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
     //     cog.outl("vp.%s = rpy.%s();" % (b, a))
     // ]]]
+
     vp.x = position.x();
     vp.y = position.y();
     vp.z = position.z();
@@ -131,45 +158,45 @@ private:
     vp.yaw = rpy.z();
     // [[[end]]] (checksum: 0aed118405958e3f35e8e7c9386e812f)
 
+
     // just the URT of the 6x6 Pose Covariance Matrix, given
     // that the matrix is symmetric
     ftf::covariance_urt_to_mavlink(cov_map, vp.covariance);
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(vp);
+    uas->send_message(vp);
+
   }
 
   /* -*- callbacks -*- */
 
   /* common TF listener moved to mixin */
 
-  void transform_cb(const geometry_msgs::TransformStamped & transform)
+  void transform_cb(const geometry_msgs::msg::TransformStamped & transform)
   {
-    Eigen::Affine3d tr;
-    tf::transformMsgToEigen(transform.transform, tr);
+    Eigen::Affine3d tr = tf2::transformToEigen(transform.transform);
     ftf::Covariance6d cov {};                   // zero initialized
 
     send_vision_estimate(transform.header.stamp, tr, cov);
   }
 
-  void vision_cb(const geometry_msgs::PoseStamped::ConstPtr & req)
+  void vision_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
   {
     Eigen::Affine3d tr;
-    tf::poseMsgToEigen(req->pose, tr);
+    tf2::fromMsg(req->pose, tr);
     ftf::Covariance6d cov {};                   // zero initialized
 
     send_vision_estimate(req->header.stamp, tr, cov);
   }
 
-  void vision_cov_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & req)
+  void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr req)
   {
     Eigen::Affine3d tr;
-    tf::poseMsgToEigen(req->pose.pose, tr);
-
+    tf2::fromMsg(req->pose.pose, tr);
     send_vision_estimate(req->header.stamp, tr, req->pose.covariance);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionPoseEstimatePlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::VisionPoseEstimatePlugin)
