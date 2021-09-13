@@ -19,6 +19,7 @@
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Duration.h>
 #include <mavros_msgs/TimesyncStatus.h>
+#include <rosgraph_msgs/Clock.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -216,6 +217,13 @@ public:
 		m_uas->set_timesync_mode(ts_mode);
 		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
+		nh.getParam("time/publish_sim_time", publish_sim_time);
+		if (publish_sim_time) {
+			sim_time_pub = nh.advertise<rosgraph_msgs::Clock>("/clock", 10);
+			ROS_INFO_STREAM_NAMED("time", "TM: Publishing sim time");
+		} else {
+			ROS_INFO_STREAM_NAMED("time", "TM: Not publishing sim time");
+		}
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
 		timesync_status_pub = nh.advertise<mavros_msgs::TimesyncStatus>("timesync_status", 10);
@@ -248,6 +256,7 @@ public:
 
 private:
 	ros::NodeHandle nh;
+	ros::Publisher sim_time_pub;
 	ros::Publisher time_ref_pub;
 	ros::Publisher timesync_status_pub;
 
@@ -282,6 +291,8 @@ private:
 	int high_rtt_count;
 	int high_deviation_count;
 
+	bool publish_sim_time;
+
 	void handle_system_time(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYSTEM_TIME &mtime)
 	{
 		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
@@ -299,6 +310,11 @@ private:
 			time_unix->source = time_ref_source;
 
 			time_ref_pub.publish(time_unix);
+			if(publish_sim_time) {
+				auto clock = boost::make_shared<rosgraph_msgs::Clock>();
+				clock->clock = time_ref;
+				sim_time_pub.publish(clock);
+			}
 		}
 		else {
 			ROS_WARN_THROTTLE_NAMED(60, "time", "TM: Wrong FCU time.");
