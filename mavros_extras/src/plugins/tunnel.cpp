@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <mavros/mavros_plugin.h>
 #include <mavros_msgs/Tunnel.h>
+#include <stdexcept>
 
 namespace mavros
 {
@@ -30,26 +31,49 @@ class TunnelPlugin : public plugin::PluginBase
 
     void ros_callback(const mavros_msgs::Tunnel::ConstPtr& ros_tunnel)
     {
-        const auto mav_tunnel =
-            copy_tunnel<mavros_msgs::Tunnel, mavlink::common::msg::TUNNEL>(
-                *ros_tunnel);
+        try
+        {
+            const auto mav_tunnel =
+                copy_tunnel<mavros_msgs::Tunnel, mavlink::common::msg::TUNNEL>(
+                    *ros_tunnel);
 
-        UAS_FCU(m_uas)->send_message_ignore_drop(mav_tunnel);
+            UAS_FCU(m_uas)->send_message_ignore_drop(mav_tunnel);
+        }
+        catch (const std::overflow_error& e)
+        {
+            ROS_ERROR_STREAM_NAMED("tunnel", e.what());
+        }
     }
 
     void mav_callback(const mavlink::mavlink_message_t*,
                       mavlink::common::msg::TUNNEL& mav_tunnel)
     {
-        const auto ros_tunnel =
-            copy_tunnel<mavlink::common::msg::TUNNEL, mavros_msgs::Tunnel>(
-                mav_tunnel);
+        try
+        {
+            const auto ros_tunnel =
+                copy_tunnel<mavlink::common::msg::TUNNEL, mavros_msgs::Tunnel>(
+                    mav_tunnel);
 
-        pub_.publish(ros_tunnel);
+            pub_.publish(ros_tunnel);
+        }
+        catch (const std::overflow_error& e)
+        {
+            ROS_ERROR_STREAM_NAMED("tunnel", e.what());
+        }
     }
 
     template <typename From, typename To>
-    static To copy_tunnel(const From& from)
+    static To copy_tunnel(const From& from) noexcept(false)
     {
+        static constexpr auto max_payload_length =
+            sizeof(mavlink::common::msg::TUNNEL::payload) /
+            sizeof(mavlink::common::msg::TUNNEL::payload[0]);
+
+        if (from.payload_length > max_payload_length)
+        {
+            throw std::overflow_error("too long payload length");
+        }
+
         auto to = To{};
 
         to.target_system = from.target_system;
