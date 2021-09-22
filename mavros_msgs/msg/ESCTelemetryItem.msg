@@ -11,5 +11,5 @@ float32 temperature     # deg C
 float32 voltage         # V
 float32 current         # A
 float32 totalcurrent    # Ah
-int32 rpm               # -1/min
+int32 rpm               # 1/min
 uint16 count            # count of telemetry packets
