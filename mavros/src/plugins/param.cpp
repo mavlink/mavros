@@ -812,7 +812,7 @@ private:
 		lock.lock();
 		res.param_received = parameters.size();
 
-		for (auto &p : parameters) {
+		for (auto p : parameters) {
 			lock.unlock();
 			rosparam_set_allowed(p.second);
 			lock.lock();
