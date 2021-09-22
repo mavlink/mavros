@@ -40,7 +40,7 @@ void mavlink_sub_cb(const mavros_msgs::Mavlink::ConstPtr &rmsg)
 	mavlink::mavlink_message_t mmsg;
 
 	if (mavros_msgs::mavlink::convert(*rmsg, mmsg))
-		gcs_link->send_message(&mmsg);	// !!! queue exception -> fall of gcs_bridge. intentional.
+		gcs_link->send_message_ignore_drop(&mmsg);
 	else
 		ROS_ERROR("Packet drop: convert error.");
 }
