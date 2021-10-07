@@ -352,7 +352,7 @@ public:
   }
 
   /**
-   * Exclude this parameters from ~param/push
+   * Exclude these parameters from ~param/push
    */
   static bool check_exclude_param_id(const std::string & param_id)
   {
