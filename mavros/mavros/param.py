@@ -224,7 +224,7 @@ class ParamPlugin(PluginModule):
         #    we'll get bunch of events
         self.call_pull()
 
-        # 3. if to little events come, request whole list
+        # 3. if too small events come, request whole list
         if len(pm) < 10:
             names = call_list_parameters(node=self._node,
                                          client=self.cli_list_parameters)
@@ -241,7 +241,7 @@ class ParamDict(dict):
     ParamDict wrapper.
 
     That class holds states of parameters
-    and allow to upload new items.
+    and allows to upload new items.
     """
 
     class NoSet:
