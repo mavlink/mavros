@@ -254,7 +254,7 @@ private:
     bool & success)
   {
     /* Note: seems that COMMAND_INT don't produce COMMAND_ACK
-     * so wait don't needed.
+     * so wait is not needed.
      */
     command_int(
       broadcast,
