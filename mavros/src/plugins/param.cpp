@@ -70,7 +70,7 @@ static constexpr const char * events = "/parameter_events";
  * - real32 for float's
  *
  * So no reason to really use boost::any.
- * But feel free to fire an issue if your AP do not like it.
+ * But feel free to fire an issue if your AP does not like it.
  */
 class Parameter
 {
