@@ -346,7 +346,7 @@ void MissionBase::handle_mission_current(
 {
   unique_lock lock(mutex);
 
-  // NOTE(vooon): this message do not have mission_type
+  // NOTE(vooon): this message does not have mission_type
   // if (filter_message(mcur)) {
   //   return;
   // }
@@ -377,7 +377,7 @@ void MissionBase::handle_mission_item_reached(
   mavlink::common::msg::MISSION_ITEM_REACHED & mitr,
   MFilter filter [[maybe_unused]])
 {
-  // NOTE(vooon): this message do not have mission_type
+  // NOTE(vooon): this message does not have mission_type
   // if (filter_message(mitr)) {
   //   return;
   // }

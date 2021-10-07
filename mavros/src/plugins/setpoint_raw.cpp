@@ -277,7 +277,7 @@ private:
     double thrust;
 
     // Set Thrust scaling in px4_config.yaml, setpoint_raw block.
-    // ignore thrust is false by default, unless no thrust scalling is set or thrust is zero
+    // ignore thrust is false by default, unless no thrust scaling is set or thrust is zero
     auto ignore_thrust = req->thrust != 0.0 &&
       !node->get_parameter("thrust_scaling", thrust_scaling);
 

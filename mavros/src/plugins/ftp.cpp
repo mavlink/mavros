@@ -55,7 +55,7 @@ using utils::enum_value;
 /**
  * @brief FTP Request message abstraction class
  *
- * @note This class not portable, and works on little-endian machines only.
+ * @note This class is not portable, and works on little-endian machines only.
  */
 class FTPRequest : public mavlink::common::msg::FILE_TRANSFER_PROTOCOL
 {
@@ -173,8 +173,8 @@ public:
    * @brief Copy string to payload
    *
    * @param[in] s  payload string
-   * @note this function allow null termination inside string
-   *       it used to send multiple strings in one message
+   * @note this function allows null termination inside string
+   *       it is used to send multiple strings in one message
    */
   void set_data_string(const std::string & s)
   {
@@ -204,7 +204,7 @@ public:
 #endif
 
     // return uas->get_system_id() == target_system;
-    return true;  // XXX TODO(vooon): probably whole method not needed anymore
+    return true;  // XXX TODO(vooon): probably whole method is not needed anymore
   }
 
   /**
