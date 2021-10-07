@@ -213,7 +213,7 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   auto plugin2 = std::make_shared<MockPlugin>(uas);
   auto subs2 = plugin2->rawsubs();
 
-  // XXX(vooon): silence leak warnings: they works badly with shared_ptr
+  // XXX(vooon): silence leak warnings: they work badly with shared_ptr
   testing::Mock::AllowLeak(&(*uas));
   testing::Mock::AllowLeak(&(*plugin1));
   testing::Mock::AllowLeak(&(*plugin2));
