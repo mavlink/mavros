@@ -84,6 +84,8 @@ private:
 
 	void do_recv();
 	void do_send(bool check_tx_state);
+
+	void enqueue_message(const MsgBuffer &msg);
 };
 
 /**

@@ -161,6 +161,18 @@ void MAVConnTCPClient::close()
 		port_closed_cb();
 }
 
+void MAVConnTCPClient::enqueue_message(const MsgBuffer &msg)
+{
+	lock_guard lock(mutex);
+
+	if (tx_q.size() >= MAX_TXQ_SIZE) {
+		tx_q.clear();
+		CONSOLE_BRIDGE_logError(PFXd "TX queue overflow", conn_id);
+	}
+
+	tx_q.push_back(msg);
+}
+
 void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 {
 	if (!is_open()) {
@@ -168,14 +180,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t *bytes, size_t length)
 		return;
 	}
 
-	{
-		lock_guard lock(mutex);
-
-		if (tx_q.size() >= MAX_TXQ_SIZE)
-			throw std::length_error("MAVConnTCPClient::send_bytes: TX queue overflow");
-
-		tx_q.emplace_back(bytes, length);
-	}
+	enqueue_message(MsgBuffer{bytes, static_cast<ssize_t>(length)});
 	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
@@ -190,14 +195,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t *message)
 
 	log_send(PFX, message);
 
-	{
-		lock_guard lock(mutex);
-
-		if (tx_q.size() >= MAX_TXQ_SIZE)
-			throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
-
-		tx_q.emplace_back(message);
-	}
+	enqueue_message(MsgBuffer{message});
 	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
@@ -210,14 +208,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message &message, const uint8
 
 	log_send_obj(PFX, message);
 
-	{
-		lock_guard lock(mutex);
-
-		if (tx_q.size() >= MAX_TXQ_SIZE)
-			throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
-
-		tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
-	}
+	enqueue_message(MsgBuffer{message, get_status_p(), sys_id, source_compid});
 	GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
 }
 
