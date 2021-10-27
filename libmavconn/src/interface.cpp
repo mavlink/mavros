@@ -150,7 +150,7 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::mavlink_message_t
 		send_message(msg);
 	}
 	catch (std::length_error &e) {
-		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
+		CONSOLE_BRIDGE_logInform(PFX "%zu: DROPPED Message-Id %u [%u bytes] IDs: %u.%u Seq: %u: %s",
 				conn_id,
 				msg->msgid, msg->len, msg->sysid, msg->compid, msg->seq,
 				e.what());
@@ -163,7 +163,7 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg, uin
 		send_message(msg, source_compid);
 	}
 	catch (std::length_error &e) {
-		CONSOLE_BRIDGE_logError(PFX "%zu: DROPPED Message %s: %s",
+		CONSOLE_BRIDGE_logInform(PFX "%zu: DROPPED Message %s: %s",
 				conn_id,
 				msg.get_name().c_str(),
 				e.what());
