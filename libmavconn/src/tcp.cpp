@@ -154,7 +154,7 @@ void MAVConnTCPClient::close()
     return;
   }
 
-  boost::system::error_code ec;
+  std::error_code ec;
   socket.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
   if (ec) {
     CONSOLE_BRIDGE_logError(PFXd "shutdown: %s", conn_id, ec.message().c_str());
