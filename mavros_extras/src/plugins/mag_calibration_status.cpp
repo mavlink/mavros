@@ -1,3 +1,10 @@
+/*
+ * Copyright 2021 André Ferreira <andre.ferreira@beyond-vision.pt>
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief MagCalStatus plugin
  * @file MagCalStatus.cpp
@@ -8,65 +15,58 @@
  * @{
  */
 
-#include <mavros/mavros_plugin.h>
-#include <std_msgs/UInt8.h>
-#include <mavros_msgs/MagnetometerReporter.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "std_msgs/msg/uint8.hpp"
+#include "mavros_msgs/msg/magnetometer_reporter.hpp"
+
 namespace mavros
 {
-namespace std_plugins
+namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief MagCalStatus plugin.
  *
  * Example and "how to" for users.
  */
-class MagCalStatusPlugin : public plugin::PluginBase
+class MagCalStatusPlugin : public plugin::Plugin
 {
 public:
-  MagCalStatusPlugin()
-  : PluginBase(),
-    mcs_nh("~mag_calibration")
-  {}
-
-  /**
-   * Plugin initializer. Constructor should not do this.
-   */
-  void initialize(UAS & uas_)
+  explicit MagCalStatusPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "mag_calibration")
   {
-    PluginBase::initialize(uas_);
-    mcs_pub = mcs_nh.advertise<std_msgs::UInt8>("status", 2, true);
-    mcr_pub = mcs_nh.advertise<mavros_msgs::MagnetometerReporter>("report", 2, true);
+    // TODO(vooon): use QoS for "latched" topics
+    mcs_pub = node->create_publisher<std_msgs::msg::UInt8>("~/status", 2);
+    mcr_pub = node->create_publisher<mavros_msgs::msg::MagnetometerReporter>("~/report", 2);
   }
 
-  /**
-   * This function returns message subscriptions.
-   *
-   * Each subscription made by PluginBase::make_handler() template.
-   * Two variations:
-   *  - With automatic decoding and framing error filtering (see handle_heartbeat)
-   *  - Raw message with framig status (see handle_systemtext)
-   */
   Subscriptions get_subscriptions()
   {
     return {
-      /* automatic message deduction by second argument */
       make_handler(&MagCalStatusPlugin::handle_status),
       make_handler(&MagCalStatusPlugin::handle_report),
     };
   }
 
 private:
-  ros::NodeHandle mcs_nh;
-  ros::Publisher mcs_pub;
-  ros::Publisher mcr_pub;
+  rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr mcs_pub;
+  rclcpp::Publisher<mavros_msgs::msg::MagnetometerReporter>::SharedPtr mcr_pub;
+
   std::array<bool, 8> calibration_show;
   std::array<uint8_t, 8> _rg_compass_cal_progress;
-  //Send progress of magnetometer calibration
+
+  // Send progress of magnetometer calibration
   void handle_status(
-    const mavlink::mavlink_message_t *,
-    mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS & mp)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS & mp,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto mcs = boost::make_shared<std_msgs::UInt8>();
+    auto mcs = std_msgs::msg::UInt8();
 
     // How many compasses are we calibrating?
     std::bitset<8> compass_calibrating = mp.cal_mask;
@@ -87,27 +87,32 @@ private:
       }
     }
 
-    mcs->data = total_percentage / compass_calibrating.count();
+    mcs.data = total_percentage / compass_calibrating.count();
 
-    mcs_pub.publish(mcs);
+    mcs_pub->publish(mcs);
   }
 
   //Send report after calibration is done
-  void handle_report(const mavlink::mavlink_message_t *, mavlink::common::msg::MAG_CAL_REPORT & mr)
+  void handle_report(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::MAG_CAL_REPORT & mr,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     if (calibration_show[mr.compass_id]) {
-      auto mcr = boost::make_shared<mavros_msgs::MagnetometerReporter>();
-      mcr->header.stamp = ros::Time::now();
-      mcr->header.frame_id = std::to_string(mr.compass_id);
-      mcr->report = mr.cal_status;
-      mcr->confidence = mr.orientation_confidence;
-      mcr_pub.publish(mcr);
+      auto mcr = mavros_msgs::msg::MagnetometerReporter();
+
+      mcr.header.stamp = ros::Time::now();
+      mcr.header.frame_id = std::to_string(mr.compass_id);
+      mcr.report = mr.cal_status;
+      mcr.confidence = mr.orientation_confidence;
+
+      mcr_pub->publish(mcr);
       calibration_show[mr.compass_id] = false;
     }
   }
 };
-}       // namespace std_plugins
+}       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::MagCalStatusPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::MagCalStatusPlugin)
