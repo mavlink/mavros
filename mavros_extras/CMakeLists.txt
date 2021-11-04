@@ -84,7 +84,7 @@ add_library(mavros_extras_plugins SHARED
   #src/plugins/esc_telemetry.cpp
   #src/plugins/fake_gps.cpp
   #src/plugins/gps_rtk.cpp
-  #src/plugins/gps_status.cpp
+  src/plugins/gps_status.cpp
   #src/plugins/hil.cpp
   src/plugins/landing_target.cpp
   #src/plugins/log_transfer.cpp
