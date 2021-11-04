@@ -66,6 +66,29 @@ This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.</des
 This plugin is intended to publish the location of a landing area captured from a downward facing camera
 to the FCU and/or receive landing target tracking data coming from the FCU.</description>
   </class>
+  <class name="log_transfer" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LogTransferPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Log Transfer plugin
+@plugin log_transfer</description>
+  </class>
+  <class name="mag_calibration_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MagCalStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief MagCalStatus plugin.
+@plugin mag_calibration_status
+
+Example and &quot;how to&quot; for users.</description>
+  </class>
+  <class name="mocap_pose_estimate" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MocapPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief MocapPoseEstimate plugin
+@plugin mocap_pose_estimate
+
+Sends motion capture data to FCU.</description>
+  </class>
+  <class name="mount_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MountControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Mount Control plugin
+@plugin mount_control
+
+Publishes Mission commands to control the camera or antenna mount.
+@see command_cb()</description>
+  </class>
   <class name="tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief 3DR Radio plugin.
 @plugin tdr_radio</description>
@@ -78,4 +101,4 @@ Send pose estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 0bd11c5f2b0ea8fc794f41ca8bd0dd9f) -->
+<!-- [[[end]]] (checksum: d8fd2ae67443f73bb9af06e00fa53139) -->
