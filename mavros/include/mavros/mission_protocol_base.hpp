@@ -400,7 +400,7 @@ protected:
     if (m.seq != wp_cur_id && m.seq != wp_cur_id + 1) {
       RCLCPP_WARN(
         get_logger(), "%s: Seq mismatch, dropping %s (%d != %zu)", log_prefix,
-        m.get_name(), m.seq, wp_cur_id);
+        m.get_name().c_str(), m.seq, wp_cur_id);
       return true;
     }
 
