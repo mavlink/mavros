@@ -2,6 +2,50 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.10.0
+  prepare release
+* 1.10.0
+* prepare release
+* mavconn: update to use std::error_code
+* Merge branch 'master' into ros2
+  * master: (25 commits)
+  Remove reference
+  Catch std::length_error in send_message
+  Show ENOTCONN error instead of crash
+  Tunnel: Check for invalid payload length
+  Tunnel.msg: Generate enum with cog
+  mavros_extras: Create tunnel plugin
+  mavros_msgs: Add Tunnel message
+  MountControl.msg: fix copy-paste
+  sys_time.cpp: typo
+  sys_time: publish /clock for simulation times
+  1.9.0
+  update changelog
+  Spelling corrections
+  Changed OverrideRCIn to 18 channels
+  This adds functionality to erase all logs on the SD card via mavlink
+  publish BATTERY2 message as /mavros/battery2 topic
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+  Added NAV_CONTROLLER_OUTPUT Plugin
+  Added GPS_INPUT plugin
+  Update esc_status plugin with datatype change on MAVLink.
+  ...
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Show ENOTCONN error instead of crash
+  When a client suddenly drops the connection,
+  socket.shutdown() will throw an exception:
+  boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::system::system_error> >
+  what():  shutdown: Transport endpoint is not connected
+  Showing an error in this common case looks more reasonable than crashing.
+* 1.9.0
+* update changelog
+* Contributors: Val Doroshchuk, Vladimir Ermakov
+
 2.0.3 (2021-06-20)
 ------------------
 

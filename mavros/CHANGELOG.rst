@@ -2,6 +2,112 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.10.0
+  prepare release
+* 1.10.0
+* prepare release
+* extras: port esc_status plugin
+* plugins: update metadata xml
+* mavros: port mav_controller_output plugin
+* Merge branch 'master' into ros2
+  * master: (25 commits)
+  Remove reference
+  Catch std::length_error in send_message
+  Show ENOTCONN error instead of crash
+  Tunnel: Check for invalid payload length
+  Tunnel.msg: Generate enum with cog
+  mavros_extras: Create tunnel plugin
+  mavros_msgs: Add Tunnel message
+  MountControl.msg: fix copy-paste
+  sys_time.cpp: typo
+  sys_time: publish /clock for simulation times
+  1.9.0
+  update changelog
+  Spelling corrections
+  Changed OverrideRCIn to 18 channels
+  This adds functionality to erase all logs on the SD card via mavlink
+  publish BATTERY2 message as /mavros/battery2 topic
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+  Added NAV_CONTROLLER_OUTPUT Plugin
+  Added GPS_INPUT plugin
+  Update esc_status plugin with datatype change on MAVLink.
+  ...
+* Merge pull request `#1631 <https://github.com/mavlink/mavros/issues/1631>`_ from shubham-shahh/ros2
+  rectified spelling and gramatical errors
+* Update mission_protocol_base.cpp
+* Update test_uas.cpp
+* Update setpoint_raw.cpp
+* Update param.cpp
+* Update param.cpp
+* Update mission_protocol_base.cpp
+* Update ftp.cpp
+* Update command.cpp
+* Update param.py
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Merge pull request `#1627 <https://github.com/mavlink/mavros/issues/1627>`_ from marcelino-pensa/bug/ma-prevent-race-condition
+  Node dying when calling /mavros/param/pull
+* Remove reference
+* Catch std::length_error in send_message
+  Instead of crashing the process
+* Merge pull request `#1623 <https://github.com/mavlink/mavros/issues/1623>`_ from amilcarlucas/pr/more-typo-fixes
+  More typo fixes
+* sys_time.cpp: typo
+* Merge pull request `#1622 <https://github.com/mavlink/mavros/issues/1622>`_ from dayjaby/sys_time_pub_clock
+  sys_time: publish /clock for simulation times
+* sys_time: publish /clock for simulation times
+* 1.9.0
+* update changelog
+* Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
+* Changed OverrideRCIn to 18 channels
+* Merge pull request `#1617 <https://github.com/mavlink/mavros/issues/1617>`_ from amilcarlucas/pr/NAV_CONTROLLER_OUTPUT-plugin
+  Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge pull request `#1619 <https://github.com/mavlink/mavros/issues/1619>`_ from amilcarlucas/pr/BATTERY2-topic
+  publish BATTERY2 message as /mavros/battery2 topic
+* publish BATTERY2 message as /mavros/battery2 topic
+* Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+* Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge branch 'master' into master
+* plugins: fix lint error
+* extras: fix build, add UAS::send_massage(msg, compid)
+* extras: port companion_process_status
+* style: apply ament_uncrustify --reformat
+* Merge branch 'master' into ros2
+  * master:
+  extras: esc_telemetry: fix build
+  extras: fix esc_telemetry centi-volt/amp conversion
+  extras: uncrustify all plugins
+  plugins: reformat xml
+  extras: reformat plugins xml
+  extras: fix apm esc_telemetry
+  msgs: fix types for apm's esc telemetry
+  actually allocate memory for the telemetry information
+  fixed some compile errors
+  added esc_telemetry plugin
+  Reset calibration flag when re-calibrating. Prevent wrong data output.
+  Exclude changes to launch files.
+  Delete debug files.
+  Apply uncrustify changes.
+  Set progress array to global to prevent erasing data.
+  Move Compass calibration report to extras. Rewrite code based on instructions.
+  Remove extra message from CMakeLists.
+  Add message and service definition.
+  Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* plugins: reformat xml
+* mavros_extras: ported landing_target plugin to ros2
+* sanitized code
+* Exclude changes to launch files.
+* Delete debug files.
+* Apply uncrustify changes.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* Contributors: André Filipe, BV-OpenSource, David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Marcelino Almeida, Shubham Shah, Val Doroshchuk, Vladimir Ermakov
+
 2.0.3 (2021-06-20)
 ------------------
 * param: fix Foxy build

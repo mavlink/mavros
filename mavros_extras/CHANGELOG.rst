@@ -2,6 +2,121 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.10.0
+  prepare release
+* 1.10.0
+* prepare release
+* extras: remove safety_area as outdated
+* extras: port esc_telemetry
+* extras: port esc_status plugin
+* extras: porting gps_status
+* Merge branch 'master' into ros2
+  * master: (25 commits)
+  Remove reference
+  Catch std::length_error in send_message
+  Show ENOTCONN error instead of crash
+  Tunnel: Check for invalid payload length
+  Tunnel.msg: Generate enum with cog
+  mavros_extras: Create tunnel plugin
+  mavros_msgs: Add Tunnel message
+  MountControl.msg: fix copy-paste
+  sys_time.cpp: typo
+  sys_time: publish /clock for simulation times
+  1.9.0
+  update changelog
+  Spelling corrections
+  Changed OverrideRCIn to 18 channels
+  This adds functionality to erase all logs on the SD card via mavlink
+  publish BATTERY2 message as /mavros/battery2 topic
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+  Added NAV_CONTROLLER_OUTPUT Plugin
+  Added GPS_INPUT plugin
+  Update esc_status plugin with datatype change on MAVLink.
+  ...
+* Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin
+  Plugin for TUNNEL messages
+* Tunnel: Check for invalid payload length
+* mavros_extras: Create tunnel plugin
+* Merge pull request `#1605 <https://github.com/mavlink/mavros/issues/1605>`_ from Peter010103/ros2
+  mavros_extras: Ported vision_pose_estimate plugin for ROS2
+* 1.9.0
+* update changelog
+* Merge pull request `#1621 <https://github.com/mavlink/mavros/issues/1621>`_ from amilcarlucas/pr/mount-control-spelling
+  Spelling corrections
+* Spelling corrections
+* Merge pull request `#1615 <https://github.com/mavlink/mavros/issues/1615>`_ from amilcarlucas/pr/erase-logs
+  This adds functionality to erase all logs on the SD card via mavlink
+* Merge pull request `#1618 <https://github.com/mavlink/mavros/issues/1618>`_ from amilcarlucas/pr/GPS_INPUT-plugin
+  Added GPS_INPUT plugin
+* This adds functionality to erase all logs on the SD card via mavlink
+* Added GPS_INPUT plugin
+* Merge pull request `#1606 <https://github.com/mavlink/mavros/issues/1606>`_ from BV-OpenSource/master
+  Add Mount angles message for communications with ardupilotmega.
+* Merge branch 'master' into master
+* Update esc_status plugin with datatype change on MAVLink.
+  ESC_INFO MAVLink message was updated to have negative temperates and also at a different resolution. This commit updates those changes on this side.
+* Convert status data from cdeg to rad.
+* Publish quaternion information with Mount Status mavlink message.
+* Add missing subscription.
+* extras: port cam_imu_sync
+* extras: re-generate cog
+* extras: port debug_value
+* Remove Mount_Status plugin. Add Status data to Mount_Control plugin. Remove Mount_Status message.
+* extras: fix build, add UAS::send_massage(msg, compid)
+* extras: port companion_process_status
+* msgs: re-generate file lists
+* style: apply ament_uncrustify --reformat
+* Merge branch 'master' into ros2
+  * master:
+  extras: esc_telemetry: fix build
+  extras: fix esc_telemetry centi-volt/amp conversion
+  extras: uncrustify all plugins
+  plugins: reformat xml
+  extras: reformat plugins xml
+  extras: fix apm esc_telemetry
+  msgs: fix types for apm's esc telemetry
+  actually allocate memory for the telemetry information
+  fixed some compile errors
+  added esc_telemetry plugin
+  Reset calibration flag when re-calibrating. Prevent wrong data output.
+  Exclude changes to launch files.
+  Delete debug files.
+  Apply uncrustify changes.
+  Set progress array to global to prevent erasing data.
+  Move Compass calibration report to extras. Rewrite code based on instructions.
+  Remove extra message from CMakeLists.
+  Add message and service definition.
+  Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* extras: esc_telemetry: fix build
+* extras: fix esc_telemetry centi-volt/amp conversion
+* extras: uncrustify all plugins
+* extras: reformat plugins xml
+* extras: fix apm esc_telemetry
+* actually allocate memory for the telemetry information
+* fixed some compile errors
+* added esc_telemetry plugin
+* Add Mount angles message for communications with ardupilotmega.
+* Added subscriber callback function for ROS2
+* Added initialise function in vision_pose_estimate
+* Boilerplate vision_pose_estimate plugin
+* extras: landing_target: disable tf listener, it segfaults
+* extras: regenerate plugins xml, ament_uncrustify
+* mavros_extras: improve landing_target logging
+* mavros_extras: ported landing_target plugin to ros2
+* Reset calibration flag when re-calibrating. Prevent wrong data output.
+* Delete debug files.
+* Apply uncrustify changes.
+* Set progress array to global to prevent erasing data.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* extras: port 3dr radio
+* extras: add urdf package
+* extras: adsb: begin porting to ros2
+* Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Morten Fyhn Amundsen, Peter010103, Ricardo Marques, Russell, Vladimir Ermakov
+
 1.10.0 (2021-11-04)
 -------------------
 * Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin

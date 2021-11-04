@@ -2,6 +2,94 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.10.0
+  prepare release
+* 1.10.0
+* prepare release
+* Merge branch 'master' into ros2
+  * master:
+  msgs: update gpsraw to have yaw field
+* msgs: update gpsraw to have yaw field
+* Merge branch 'master' into ros2
+  * master: (25 commits)
+  Remove reference
+  Catch std::length_error in send_message
+  Show ENOTCONN error instead of crash
+  Tunnel: Check for invalid payload length
+  Tunnel.msg: Generate enum with cog
+  mavros_extras: Create tunnel plugin
+  mavros_msgs: Add Tunnel message
+  MountControl.msg: fix copy-paste
+  sys_time.cpp: typo
+  sys_time: publish /clock for simulation times
+  1.9.0
+  update changelog
+  Spelling corrections
+  Changed OverrideRCIn to 18 channels
+  This adds functionality to erase all logs on the SD card via mavlink
+  publish BATTERY2 message as /mavros/battery2 topic
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+  Added NAV_CONTROLLER_OUTPUT Plugin
+  Added GPS_INPUT plugin
+  Update esc_status plugin with datatype change on MAVLink.
+  ...
+* Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin
+  Plugin for TUNNEL messages
+* Tunnel.msg: Generate enum with cog
+* mavros_msgs: Add Tunnel message
+* Merge pull request `#1623 <https://github.com/mavlink/mavros/issues/1623>`_ from amilcarlucas/pr/more-typo-fixes
+  More typo fixes
+* MountControl.msg: fix copy-paste
+* 1.9.0
+* update changelog
+* Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
+* Changed OverrideRCIn to 18 channels
+* Merge pull request `#1617 <https://github.com/mavlink/mavros/issues/1617>`_ from amilcarlucas/pr/NAV_CONTROLLER_OUTPUT-plugin
+  Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge pull request `#1618 <https://github.com/mavlink/mavros/issues/1618>`_ from amilcarlucas/pr/GPS_INPUT-plugin
+  Added GPS_INPUT plugin
+* Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+* Added NAV_CONTROLLER_OUTPUT Plugin
+* Added GPS_INPUT plugin
+* Merge branch 'master' into master
+* Update esc_status plugin with datatype change on MAVLink.
+  ESC_INFO MAVLink message was updated to have negative temperates and also at a different resolution. This commit updates those changes on this side.
+* Remove Mount_Status plugin. Add Status data to Mount_Control plugin. Remove Mount_Status message.
+* msgs: re-generate file lists
+* Merge branch 'master' into ros2
+  * master:
+  extras: esc_telemetry: fix build
+  extras: fix esc_telemetry centi-volt/amp conversion
+  extras: uncrustify all plugins
+  plugins: reformat xml
+  extras: reformat plugins xml
+  extras: fix apm esc_telemetry
+  msgs: fix types for apm's esc telemetry
+  actually allocate memory for the telemetry information
+  fixed some compile errors
+  added esc_telemetry plugin
+  Reset calibration flag when re-calibrating. Prevent wrong data output.
+  Exclude changes to launch files.
+  Delete debug files.
+  Apply uncrustify changes.
+  Set progress array to global to prevent erasing data.
+  Move Compass calibration report to extras. Rewrite code based on instructions.
+  Remove extra message from CMakeLists.
+  Add message and service definition.
+  Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* msgs: fix types for apm's esc telemetry
+* actually allocate memory for the telemetry information
+* added esc_telemetry plugin
+* Add Mount angles message for communications with ardupilotmega.
+* Remove extra message from CMakeLists.
+* Add message and service definition.
+* Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Morten Fyhn Amundsen, Ricardo Marques, Russell, Vladimir Ermakov
+
 2.0.3 (2021-06-20)
 ------------------
 
