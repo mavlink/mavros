@@ -40,6 +40,12 @@ Publishes the status of components running on the companion computer
 
 APM specific plugin.</description>
   </class>
+  <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief GPS_INPUT GPS plugin.
+@plugin gps_input
+
+Sends &lt;a href=&quot;https://mavlink.io/en/messages/common.html#GPS_INPUT&quot;&gt;GPS_INPUT MAVLink messages&lt;/a&gt;</description>
+  </class>
   <class name="gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mavlink GPS status plugin.
 @plugin gps_status
@@ -65,4 +71,4 @@ Send pose estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: fd4fe469392570a6b77f1e5978980626) -->
+<!-- [[[end]]] (checksum: c12c29945245c8285e7eee3b6f642a6d) -->

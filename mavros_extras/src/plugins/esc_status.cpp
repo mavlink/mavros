@@ -99,7 +99,7 @@ private:
       _esc_info.esc_info[esc_index + i].header = _esc_info.header;
       _esc_info.esc_info[esc_index + i].failure_flags = esc_info.failure_flags[i];
       _esc_info.esc_info[esc_index + i].error_count = esc_info.error_count[i];
-      _esc_info.esc_info[esc_index + i].temperature = esc_info.temperature[i] * 1E2;                    //!<  [degreesC]
+      _esc_info.esc_info[esc_index + i].temperature = esc_info.temperature[i] * 1E2;  //!< [degC]
     }
 
     _max_esc_info_index = std::max(_max_esc_info_index, esc_info.index);

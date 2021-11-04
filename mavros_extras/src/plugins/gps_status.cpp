@@ -19,8 +19,8 @@
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/msg/gpsraw.hpp>
-#include <mavros_msgs/msg/gpsrtk.hpp>
+#include "mavros_msgs/msg/gpsraw.hpp"
+#include "mavros_msgs/msg/gpsrtk.hpp"
 
 namespace mavros
 {
