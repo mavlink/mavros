@@ -34,6 +34,12 @@ Publishes the status of components running on the companion computer
     <description>@brief ESC status plugin
 @plugin esc_status</description>
   </class>
+  <class name="esc_telemetry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCTelemetryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief ESC telemetry plugin
+@plugin esc_telemetry
+
+APM specific plugin.</description>
+  </class>
   <class name="gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mavlink GPS status plugin.
 @plugin gps_status
@@ -59,4 +65,4 @@ Send pose estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: f4a517d2105e4c2a53d6b726e0399bee) -->
+<!-- [[[end]]] (checksum: fd4fe469392570a6b77f1e5978980626) -->

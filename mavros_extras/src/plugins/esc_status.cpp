@@ -36,7 +36,7 @@ class ESCStatusPlugin : public plugin::Plugin
 {
 public:
   ESCStatusPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "esc"),
+  : Plugin(uas_, "esc_status"),
     _max_esc_count(0),
     _max_esc_info_index(0),
     _max_esc_status_index(0)
