@@ -69,7 +69,9 @@ private:
   {
     auto adsb_msg = mavros_msgs::msg::ADSBVehicle();
 
-    adsb_msg.header.stamp = node->now();    // TODO(vooon): request add time_boot_ms to msg definition
+    // TODO(vooon): request add time_boot_ms to msg definition
+    adsb_msg.header.stamp = node->now();
+
     // [[[cog:
     // def ent(ros, mav=None, scale=None, to_ros=None, to_mav=None):
     //     return (ros, mav or ros, scale, to_ros, to_mav)

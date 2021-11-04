@@ -50,7 +50,7 @@ public:
 class TDRRadioPlugin : public plugin::Plugin
 {
 public:
-  TDRRadioPlugin(plugin::UASPtr uas_)
+  explicit TDRRadioPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "tdr_radio"),
     has_radio_status(false),
     diag_added(false),

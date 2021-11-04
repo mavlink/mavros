@@ -34,7 +34,7 @@ using namespace std::placeholders;  // NOLINT
 class DebugValuePlugin : public plugin::Plugin
 {
 public:
-  DebugValuePlugin(plugin::UASPtr uas_)
+  explicit DebugValuePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "debug_value")
   {
     // subscribers
@@ -74,8 +74,8 @@ private:
 
   /**
    * @brief Helper function to log debug messages
-   * @param type	Type of debug message
-   * @param dv	Data value
+   * @param type    Type of debug message
+   * @param dv      Data value
    */
   void debug_logger(const std::string & type, const DV & dv)
   {
@@ -115,8 +115,8 @@ private:
   /**
    * @brief Handle DEBUG message.
    * Message specification: https://mavlink.io/en/messages/common.html#DEBUG
-   * @param msg	Received Mavlink msg
-   * @param debug	DEBUG msg
+   * @param msg     Received Mavlink msg
+   * @param debug   DEBUG msg
    */
   void handle_debug(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
@@ -155,8 +155,8 @@ private:
   /**
    * @brief Handle DEBUG_VECT message.
    * Message specification: https://mavlink.io/en/messages/common.html#DEBUG_VECT
-   * @param msg	Received Mavlink msg
-   * @param debug	DEBUG_VECT msg
+   * @param msg     Received Mavlink msg
+   * @param debug   DEBUG_VECT msg
    */
   void handle_debug_vector(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
@@ -194,8 +194,8 @@ private:
   /**
    * @brief Handle NAMED_VALUE_FLOAT message.
    * Message specification: https://mavlink.io/en/messages/common.html#NAMED_VALUE_FLOAT
-   * @param msg	Received Mavlink msg
-   * @param value	NAMED_VALUE_FLOAT msg
+   * @param msg     Received Mavlink msg
+   * @param value   NAMED_VALUE_FLOAT msg
    */
   void handle_named_value_float(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
@@ -222,8 +222,8 @@ private:
   /**
    * @brief Handle NAMED_VALUE_INT message.
    * Message specification: https://mavlink.io/en/messages/common.html#NAMED_VALUE_INT
-   * @param msg	Received Mavlink msg
-   * @param value	NAMED_VALUE_INT msg
+   * @param msg     Received Mavlink msg
+   * @param value   NAMED_VALUE_INT msg
    */
   void handle_named_value_int(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
@@ -250,7 +250,7 @@ private:
 
   /**
    * @brief Debug callbacks
-   * @param req	pointer to mavros_msgs/Debug.msg being published
+   * @param req     pointer to mavros_msgs/Debug.msg being published
    */
   void debug_cb(const mavros_msgs::msg::DebugValue::SharedPtr req)
   {
@@ -282,9 +282,9 @@ private:
           uas->send_message(debug);
           break;
         }
-      //case DV::TYPE_DEBUG_ARRAY:		{
-      //	return;
-      //}
+      // case DV::TYPE_DEBUG_ARRAY: {
+      //   return;
+      // }
       case DV::TYPE_NAMED_VALUE_FLOAT: {
           mavlink::common::msg::NAMED_VALUE_FLOAT value {};
 

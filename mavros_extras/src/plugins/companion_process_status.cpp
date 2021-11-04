@@ -44,7 +44,7 @@ using utils::enum_value;
 class CompanionProcessStatusPlugin : public plugin::Plugin
 {
 public:
-  CompanionProcessStatusPlugin(plugin::UASPtr uas_)
+  explicit CompanionProcessStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "companion_process")
   {
     status_sub = node->create_subscription<mavros_msgs::msg::CompanionProcessStatus>(
@@ -75,7 +75,7 @@ private:
     heartbeat.type = enum_value(MAV_TYPE::ONBOARD_CONTROLLER);
     heartbeat.autopilot = enum_value(MAV_AUTOPILOT::PX4);
     heartbeat.base_mode = enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
-    heartbeat.system_status = req->state;               //enum="MAV_STATE" System status flag
+    heartbeat.system_status = req->state;               // enum="MAV_STATE" System status flag
 
     RCLCPP_DEBUG_STREAM(
       get_logger(),

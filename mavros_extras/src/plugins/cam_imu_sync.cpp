@@ -36,7 +36,7 @@ namespace extra_plugins
 class CamIMUSyncPlugin : public plugin::Plugin
 {
 public:
-  CamIMUSyncPlugin(plugin::UASPtr uas_)
+  explicit CamIMUSyncPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "cam_imu_sync")
   {
     cam_imu_pub = node->create_publisher<mavros_msgs::msg::CamIMUStamp>("~/cam_imu_stamp", 10);
