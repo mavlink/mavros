@@ -144,7 +144,9 @@ private:
     gps2_raw_pub->publish(ros_msg);
   }
 
-  template<typename MMsg> mavros_msgs::msg::GPSRTK convert_rtk(MMsg mav_msg) {
+  template<typename MMsg>
+  mavros_msgs::msg::GPSRTK convert_rtk(MMsg mav_msg)
+  {
     auto ros_msg = mavros_msgs::msg::GPSRTK();
 
     std::string frame_id = "unknown";
@@ -156,7 +158,8 @@ private:
         frame_id = "map";
         break;
       default:
-            RCLCPP_ERROR(get_logger(),
+        RCLCPP_ERROR(
+          get_logger(),
           "GPS_RTK.baseline_coords_type MAVLink field has unknown \"%d\" value",
           mav_msg.baseline_coords_type);
     }

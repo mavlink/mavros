@@ -1,3 +1,10 @@
+/*
+ * Copyright 2020 Ricardo Marques <marques.ricardo17@gmail.com>.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief ESC status plugin
  * @file esc_status.cpp
@@ -6,42 +13,36 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2020 Ricardo Marques <marques.ricardo17@gmail.com>.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/ESCInfo.h>
-#include <mavros_msgs/ESCStatus.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include <mavros_msgs/msg/esc_info.hpp>
+#include <mavros_msgs/msg/esc_status.hpp>
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief ESC status plugin
+ * @plugin esc_status
  */
-class ESCStatusPlugin : public plugin::PluginBase
+class ESCStatusPlugin : public plugin::Plugin
 {
 public:
-  ESCStatusPlugin()
-  : PluginBase(),
-    nh("~"),
+  ESCStatusPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "esc"),
     _max_esc_count(0),
     _max_esc_info_index(0),
     _max_esc_status_index(0)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
-
-    esc_info_pub = nh.advertise<mavros_msgs::ESCInfo>("esc_info", 10);
-    esc_status_pub = nh.advertise<mavros_msgs::ESCStatus>("esc_status", 10);
+    esc_info_pub = node->create_publisher<mavros_msgs::msg::ESCInfo>("~/info", 10);
+    esc_status_pub = node->create_publisher<mavros_msgs::msg::ESCStatus>("~/status", 10);
 
     enable_connection_cb();
   }
@@ -56,26 +57,26 @@ public:
 
 private:
   using lock_guard = std::lock_guard<std::mutex>;
+
+  rclcpp::Publisher<mavros_msgs::msg::ESCInfo>::SharedPtr esc_info_pub;
+  rclcpp::Publisher<mavros_msgs::msg::ESCStatus>::SharedPtr esc_status_pub;
+
   std::mutex mutex;
-
-  ros::NodeHandle nh;
-
-  ros::Publisher esc_info_pub;
-  ros::Publisher esc_status_pub;
-  mavros_msgs::ESCInfo _esc_info;
-  mavros_msgs::ESCStatus _esc_status;
+  mavros_msgs::msg::ESCInfo _esc_info;
+  mavros_msgs::msg::ESCStatus _esc_status;
   uint8_t _max_esc_count;
   uint8_t _max_esc_info_index;
   uint8_t _max_esc_status_index;
   const uint8_t batch_size = 4;
 
   void handle_esc_info(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::ESC_INFO & esc_info)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::ESC_INFO & esc_info,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     lock_guard lock(mutex);
 
-    _esc_info.header.stamp = m_uas->synchronise_stamp(esc_info.time_usec);
+    _esc_info.header.stamp = uas->synchronise_stamp(esc_info.time_usec);
 
     uint8_t esc_index = esc_info.index;
 
@@ -102,13 +103,14 @@ private:
     _max_esc_info_index = std::max(_max_esc_info_index, esc_info.index);
 
     if (_max_esc_info_index == esc_info.index) {
-      esc_info_pub.publish(_esc_info);
+      esc_info_pub->publish(_esc_info);
     }
   }
 
   void handle_esc_status(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::ESC_STATUS & esc_status)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::ESC_STATUS & esc_status,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     lock_guard lock(mutex);
 
@@ -118,7 +120,7 @@ private:
       _esc_status.esc_status.resize(_max_esc_count);
     }
 
-    _esc_status.header.stamp = m_uas->synchronise_stamp(esc_status.time_usec);
+    _esc_status.header.stamp = uas->synchronise_stamp(esc_status.time_usec);
 
     for (int i = 0; i < std::min<ssize_t>(batch_size, ssize_t(_max_esc_count) - esc_index); i++) {
       _esc_status.esc_status[esc_index + i].header = _esc_status.header;
@@ -130,11 +132,11 @@ private:
     _max_esc_status_index = std::max(_max_esc_status_index, esc_status.index);
 
     if (_max_esc_status_index == esc_status.index) {
-      esc_status_pub.publish(_esc_status);
+      esc_status_pub->publish(_esc_status);
     }
   }
 
-  void connection_cb(bool connected) override
+  void connection_cb(bool connected [[maybe_unused]]) override
   {
     lock_guard lock(mutex);
 
@@ -148,5 +150,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::ESCStatusPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::ESCStatusPlugin)

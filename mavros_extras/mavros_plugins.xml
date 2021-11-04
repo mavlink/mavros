@@ -30,6 +30,16 @@ Publishes the status of components running on the companion computer
     <description>@brief Plugin for Debug msgs from MAVLink API
 @plugin debug_value</description>
   </class>
+  <class name="esc_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief ESC status plugin
+@plugin esc_status</description>
+  </class>
+  <class name="gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Mavlink GPS status plugin.
+@plugin gps_status
+
+This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.</description>
+  </class>
   <class name="landing_target" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LandingTargetPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Landing Target plugin
 @plugin landing_target
@@ -41,10 +51,12 @@ to the FCU and/or receive landing target tracking data coming from the FCU.</des
     <description>@brief 3DR Radio plugin.
 @plugin tdr_radio</description>
   </class>
-
   <class name="vision_pose" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VisionPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Vision pose estimate plugin
-@plugin vision_pose</description>
+@plugin vision_pose
+
+Send pose estimation from various vision estimators
+to FCU position and attitude estimators.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 6d4e9fbf752792020a40ac24caa744cc) -->
+<!-- [[[end]]] (checksum: f4a517d2105e4c2a53d6b726e0399bee) -->
