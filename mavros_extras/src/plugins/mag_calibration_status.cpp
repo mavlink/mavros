@@ -20,7 +20,7 @@
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
-#include "std_msgs/msg/uint8.hpp"
+#include "std_msgs/msg/u_int8.hpp"
 #include "mavros_msgs/msg/magnetometer_reporter.hpp"
 
 namespace mavros
@@ -31,6 +31,7 @@ using namespace std::placeholders;      // NOLINT
 
 /**
  * @brief MagCalStatus plugin.
+ * @plugin mag_calibration_status
  *
  * Example and "how to" for users.
  */
@@ -101,7 +102,7 @@ private:
     if (calibration_show[mr.compass_id]) {
       auto mcr = mavros_msgs::msg::MagnetometerReporter();
 
-      mcr.header.stamp = ros::Time::now();
+      mcr.header.stamp = node->now();
       mcr.header.frame_id = std::to_string(mr.compass_id);
       mcr.report = mr.cal_status;
       mcr.confidence = mr.orientation_confidence;
