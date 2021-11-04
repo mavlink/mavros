@@ -175,8 +175,10 @@ private:
     //         'req->polygon.points[%d].%s' % (p, v) for v in ('x', 'y', 'z')
     //         ])))
     // ]]]
-    Eigen::Vector3d p1(req->polygon.points[0].x, req->polygon.points[0].y, req->polygon.points[0].z);
-    Eigen::Vector3d p2(req->polygon.points[1].x, req->polygon.points[1].y, req->polygon.points[1].z);
+    Eigen::Vector3d p1(req->polygon.points[0].x, req->polygon.points[0].y,
+      req->polygon.points[0].z);
+    Eigen::Vector3d p2(req->polygon.points[1].x, req->polygon.points[1].y,
+      req->polygon.points[1].z);
     // [[[end]]] (checksum: a55d759fee71cab073c9864dd5a3d130)
 
     send_safety_set_allowed_area(p1, p2);

@@ -30,7 +30,6 @@
 #include "mavros_msgs/msg/landing_target.hpp"
 
 
-
 namespace mavros
 {
 namespace extra_plugins
@@ -62,20 +61,20 @@ public:
       "tf/listen", false, [&](const rclcpp::Parameter & p) {
         auto tf_listen = p.as_bool();
         if (tf_listen) {
-            RCLCPP_INFO_STREAM(
+          RCLCPP_INFO_STREAM(
             get_logger(),
             "Listen to vision transform" << tf_frame_id <<
               " -> " << tf_child_frame_id);
-            tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
-          } else{
-            vision_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
-              "~/pose", 10, std::bind(
-                &VisionPoseEstimatePlugin::vision_cb, this, _1));
-            vision_cov_sub = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-              "~/pose_cov", 10, std::bind(
-                &VisionPoseEstimatePlugin::vision_cov_cb, this, _1));
-          }
-        });
+          tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
+        } else {
+          vision_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "~/pose", 10, std::bind(
+              &VisionPoseEstimatePlugin::vision_cb, this, _1));
+          vision_cov_sub = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "~/pose_cov", 10, std::bind(
+              &VisionPoseEstimatePlugin::vision_cov_cb, this, _1));
+        }
+      });
 
     node_declate_and_watch_parameter(
       "tf/frame_id", "map", [&](const rclcpp::Parameter & p) {
@@ -115,7 +114,8 @@ private:
   /**
    * @brief Send vision estimate transform to FCU position controller
    */
-  void send_vision_estimate(const rclcpp::Time & stamp, const Eigen::Affine3d & tr,
+  void send_vision_estimate(
+    const rclcpp::Time & stamp, const Eigen::Affine3d & tr,
     const geometry_msgs::msg::PoseWithCovariance::_covariance_type & cov) // Check ::_covariance_type
   {
     if (last_transform_stamp == stamp) {
@@ -135,9 +135,9 @@ private:
     ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
 
     RCLCPP_INFO_STREAM(
-          get_logger(),
-          "Listen to vision transform " << tf_frame_id <<
-            " -> " << tf_child_frame_id);
+      get_logger(),
+      "Listen to vision transform " << tf_frame_id <<
+        " -> " << tf_child_frame_id);
 
 
     mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};

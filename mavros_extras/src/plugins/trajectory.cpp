@@ -92,31 +92,37 @@ private:
   // outl_fill_points_ned_vector('x', 'y', 'z', 'velocity', 'Vector3', range(3, 6))
   // outl_fill_points_ned_vector('x', 'y', 'z', 'acceleration', 'Vector3', range(6, 9))
   // ]]]
-  void fill_points_position(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Point &position, const size_t i)
+  void fill_points_position(
+    MavPoints & x, MavPoints & y, MavPoints & z,
+    const geometry_msgs::Point & position, const size_t i)
   {
-  	auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
+    auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
 
-  	x[i] = position_ned.x();
-  	y[i] = position_ned.y();
-  	z[i] = position_ned.z();
+    x[i] = position_ned.x();
+    y[i] = position_ned.y();
+    z[i] = position_ned.z();
   }
 
-  void fill_points_velocity(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Vector3 &velocity, const size_t i)
+  void fill_points_velocity(
+    MavPoints & x, MavPoints & y, MavPoints & z,
+    const geometry_msgs::Vector3 & velocity, const size_t i)
   {
-  	auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
+    auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
 
-  	x[i] = velocity_ned.x();
-  	y[i] = velocity_ned.y();
-  	z[i] = velocity_ned.z();
+    x[i] = velocity_ned.x();
+    y[i] = velocity_ned.y();
+    z[i] = velocity_ned.z();
   }
 
-  void fill_points_acceleration(MavPoints &x, MavPoints &y, MavPoints &z, const geometry_msgs::Vector3 &acceleration, const size_t i)
+  void fill_points_acceleration(
+    MavPoints & x, MavPoints & y, MavPoints & z,
+    const geometry_msgs::Vector3 & acceleration, const size_t i)
   {
-  	auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
+    auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
 
-  	x[i] = acceleration_ned.x();
-  	y[i] = acceleration_ned.y();
-  	z[i] = acceleration_ned.z();
+    x[i] = acceleration_ned.x();
+    y[i] = acceleration_ned.y();
+    z[i] = acceleration_ned.z();
   }
 
   // [[[end]]] (checksum: a63870e80fe0648a01b0349e0be1d173)

@@ -59,6 +59,9 @@ Changelog for package libmavconn
 * disable all packages but messages
 * Contributors: Mikael Arguedas, Vladimir Ermakov
 
+1.9.0 (2021-09-09)
+------------------
+
 1.8.0 (2021-05-05)
 ------------------
 

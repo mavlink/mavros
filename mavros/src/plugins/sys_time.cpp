@@ -35,7 +35,7 @@ using namespace std::chrono_literals;   // NOLINT
 /**
  * Time syncronization status publisher
  *
- * Based on diagnistic_updater::FrequencyStatus
+ * Based on diagnostic_updater::FrequencyStatus
  */
 class TimeSyncStatus : public diagnostic_updater::DiagnosticTask
 {

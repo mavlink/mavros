@@ -48,6 +48,7 @@ set(msg_files
   msg/EstimatorStatus.msg
   msg/ExtendedState.msg
   msg/FileEntry.msg
+  msg/GPSINPUT.msg
   msg/GPSRAW.msg
   msg/GPSRTK.msg
   msg/GlobalPositionTarget.msg
@@ -64,6 +65,7 @@ set(msg_files
   msg/ManualControl.msg
   msg/Mavlink.msg
   msg/MountControl.msg
+  msg/NavControllerOutput.msg
   msg/OnboardComputerStatus.msg
   msg/OpticalFlowRad.msg
   msg/OverrideRCIn.msg
@@ -82,6 +84,7 @@ set(msg_files
   msg/Thrust.msg
   msg/TimesyncStatus.msg
   msg/Trajectory.msg
+  msg/Tunnel.msg
   msg/VehicleInfo.msg
   msg/VfrHud.msg
   msg/Vibration.msg
@@ -89,7 +92,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 3badaf239b52e3a76efa81c743e34f21)
+  # [[[end]]] (checksum: 9f1b1b3622df3fbdeb66c498336aca9e)
 )
 
 set(srv_files

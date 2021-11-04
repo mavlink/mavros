@@ -10,9 +10,9 @@ uint8 MAV_MOUNT_MODE_MAVLINK_TARGETING = 2
 uint8 MAV_MOUNT_MODE_RC_TARGETING = 3
 uint8 MAV_MOUNT_MODE_GPS_POINT = 4
 
-float32 pitch # roll degrees or degrees/second depending on mount mode.
+float32 pitch # pitch degrees or degrees/second depending on mount mode.
 float32 roll # roll degrees or degrees/second depending on mount mode.
-float32 yaw # roll degrees or degrees/second depending on mount mode.
+float32 yaw # yaw degrees or degrees/second depending on mount mode.
 float32 altitude  # altitude depending on mount mode.
 float32 latitude # latitude in degrees * 1E7, set if appropriate mount mode.
 float32 longitude # longitude in degrees * 1E7, set if appropriate mount mode.

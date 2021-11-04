@@ -260,7 +260,7 @@ private:
     uas->msg_set_target(ovr);
 
     // [[[cog:
-    // for i in range(1, 9):
+    // for i in range(1, 19):
     //     cog.outl(f"ovr.chan{i}_raw = req->channels[{i - 1}];")
     // ]]]
     ovr.chan1_raw = req->channels[0];
@@ -271,7 +271,17 @@ private:
     ovr.chan6_raw = req->channels[5];
     ovr.chan7_raw = req->channels[6];
     ovr.chan8_raw = req->channels[7];
-    // [[[end]]] (checksum: 4ee99edf64c7db562df372e223f2dc5a)
+    ovr.chan9_raw = req->channels[8];
+    ovr.chan10_raw = req->channels[9];
+    ovr.chan11_raw = req->channels[10];
+    ovr.chan12_raw = req->channels[11];
+    ovr.chan13_raw = req->channels[12];
+    ovr.chan14_raw = req->channels[13];
+    ovr.chan15_raw = req->channels[14];
+    ovr.chan16_raw = req->channels[15];
+    ovr.chan17_raw = req->channels[16];
+    ovr.chan18_raw = req->channels[17];
+    // [[[end]]] (checksum: f878252945b6d1ca47c416b4f3aec145)
 
     uas->send_message(ovr);
   }

@@ -2,6 +2,42 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.9.0 (2021-09-09)
+------------------
+* Merge pull request `#1621 <https://github.com/mavlink/mavros/issues/1621>`_ from amilcarlucas/pr/mount-control-spelling
+  Spelling corrections
+* Spelling corrections
+* Merge pull request `#1615 <https://github.com/mavlink/mavros/issues/1615>`_ from amilcarlucas/pr/erase-logs
+  This adds functionality to erase all logs on the SD card via mavlink
+* Merge pull request `#1618 <https://github.com/mavlink/mavros/issues/1618>`_ from amilcarlucas/pr/GPS_INPUT-plugin
+  Added GPS_INPUT plugin
+* This adds functionality to erase all logs on the SD card via mavlink
+* Added GPS_INPUT plugin
+* Merge pull request `#1606 <https://github.com/mavlink/mavros/issues/1606>`_ from BV-OpenSource/master
+  Add Mount angles message for communications with ardupilotmega.
+* Merge branch 'master' into master
+* Update esc_status plugin with datatype change on MAVLink.
+  ESC_INFO MAVLink message was updated to have negative temperates and also at a different resolution. This commit updates those changes on this side.
+* Convert status data from cdeg to rad.
+* Publish quaternion information with Mount Status mavlink message.
+* Add missing subscription.
+* Remove Mount_Status plugin. Add Status data to Mount_Control plugin. Remove Mount_Status message.
+* extras: esc_telemetry: fix build
+* extras: fix esc_telemetry centi-volt/amp conversion
+* extras: uncrustify all plugins
+* extras: reformat plugins xml
+* extras: fix apm esc_telemetry
+* actually allocate memory for the telemetry information
+* fixed some compile errors
+* added esc_telemetry plugin
+* Add Mount angles message for communications with ardupilotmega.
+* Reset calibration flag when re-calibrating. Prevent wrong data output.
+* Delete debug files.
+* Apply uncrustify changes.
+* Set progress array to global to prevent erasing data.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Ricardo Marques, Russell, Vladimir Ermakov
+
 1.8.0 (2021-05-05)
 ------------------
 * extras: `#1370 <https://github.com/mavlink/mavros/issues/1370>`_: set obstacle aangle offset

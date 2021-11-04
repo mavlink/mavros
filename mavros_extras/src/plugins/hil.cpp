@@ -332,18 +332,18 @@ private:
     // for i in range(1,13):
     //     cog.outl("rcin.chan%d_raw\t= channels[%2d];" % (i, i-1))
     // ]]]
-    rcin.chan1_raw	= channels[ 0];
-    rcin.chan2_raw	= channels[ 1];
-    rcin.chan3_raw	= channels[ 2];
-    rcin.chan4_raw	= channels[ 3];
-    rcin.chan5_raw	= channels[ 4];
-    rcin.chan6_raw	= channels[ 5];
-    rcin.chan7_raw	= channels[ 6];
-    rcin.chan8_raw	= channels[ 7];
-    rcin.chan9_raw	= channels[ 8];
-    rcin.chan10_raw	= channels[ 9];
-    rcin.chan11_raw	= channels[10];
-    rcin.chan12_raw	= channels[11];
+    rcin.chan1_raw = channels[0];
+    rcin.chan2_raw = channels[1];
+    rcin.chan3_raw = channels[2];
+    rcin.chan4_raw = channels[3];
+    rcin.chan5_raw = channels[4];
+    rcin.chan6_raw = channels[5];
+    rcin.chan7_raw = channels[6];
+    rcin.chan8_raw = channels[7];
+    rcin.chan9_raw = channels[8];
+    rcin.chan10_raw = channels[9];
+    rcin.chan11_raw = channels[10];
+    rcin.chan12_raw = channels[11];
     // [[[end]]] (checksum: da943faeb96e517a6848f6e578f8a452)
 
     UAS_FCU(m_uas)->send_message_ignore_drop(rcin);
