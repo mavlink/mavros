@@ -90,19 +90,21 @@ public:
     node_declate_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         mav_frame = p.as_string();
-        frame = utils::mav_frame_from_str(mav_frame);                 // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
+        frame = utils::mav_frame_from_str(mav_frame);
+        // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
       });
 
     node_declate_and_watch_parameter(
       "land_target_type", "VISION_FIDUCIAL", [&](const rclcpp::Parameter & p) {
         land_target_type = p.as_string();
-        type = utils::landing_target_type_from_str(land_target_type); // LANDING_TARGET_TYPE index based on given type name (If unknown, defaults to LIGHT_BEACON)
+        type = utils::landing_target_type_from_str(land_target_type);
+        // LANDING_TARGET_TYPE index based on given type name (If unknown, defaults to LIGHT_BEACON)
       });
 
     // target size
     node_declate_and_watch_parameter(
       "target_size.x", 1.0, [&](const rclcpp::Parameter & p) {
-        target_size_x = p.as_double();                                // [meters]
+        target_size_x = p.as_double();  // [meters]
       });
 
     node_declate_and_watch_parameter(
@@ -113,7 +115,7 @@ public:
     // image size
     node_declate_and_watch_parameter(
       "image.width", 640, [&](const rclcpp::Parameter & p) {
-        image_width = p.as_int();                                     // [pixels]
+        image_width = p.as_int();       // [pixels]
       });
 
     node_declate_and_watch_parameter(
@@ -124,18 +126,18 @@ public:
     // camera field-of-view -> should be precised using the calibrated camera intrinsics
     node_declate_and_watch_parameter(
       "camera.fov_x", 2.0071286398, [&](const rclcpp::Parameter & p) {
-        fov_x = p.as_double();                                        // default: 115 degrees in [radians]
+        fov_x = p.as_double();          // default: 115 degrees in [radians]
       });
 
     node_declate_and_watch_parameter(
       "camera.fov_y", 2.0071286398, [&](const rclcpp::Parameter & p) {
-        fov_y = p.as_double();                                        // default: 115 degrees in [radians]
+        fov_y = p.as_double();          // default: 115 degrees in [radians]
       });
 
     // camera focal length
     node_declate_and_watch_parameter(
       "camera.focal_length", 2.8, [&](const rclcpp::Parameter & p) {
-        focal_length = p.as_double();                                 // ex: OpenMV Cam M7: 2.8 [mm]
+        focal_length = p.as_double();   // ex: OpenMV Cam M7: 2.8 [mm]
       });
 
     // tf subsection
@@ -357,14 +359,14 @@ private:
     landing_target(
       stamp.nanoseconds() / 1000,
       id,
-      utils::enum_value(frame),                                         // by default, in LOCAL_NED
+      utils::enum_value(frame),         // by default, in LOCAL_NED
       angle,
       distance,
       size_rad,
       pos,
       q,
       utils::enum_value(type),
-      1);                                       // position is valid from the first received msg
+      1);                               // position is valid from the first received msg
   }
 
   /**
@@ -467,14 +469,14 @@ private:
     landing_target(
       rclcpp::Time(req->header.stamp).nanoseconds() / 1000,
       req->target_num,
-      req->frame,                                       // by default, in LOCAL_NED
+      req->frame,               // by default, in LOCAL_NED
       Eigen::Vector2f(req->angle[0], req->angle[1]),
       req->distance,
       Eigen::Vector2f(req->size[0], req->size[1]),
       position,
       orientation,
       req->type,
-      1);                                               // position is valid from the first received msg
+      1);                       // position is valid from the first received msg
   }
 };
 }       // namespace extra_plugins

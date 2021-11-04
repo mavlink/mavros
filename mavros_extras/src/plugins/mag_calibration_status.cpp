@@ -93,7 +93,7 @@ private:
     mcs_pub->publish(mcs);
   }
 
-  //Send report after calibration is done
+  // Send report after calibration is done
   void handle_report(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::MAG_CAL_REPORT & mr,

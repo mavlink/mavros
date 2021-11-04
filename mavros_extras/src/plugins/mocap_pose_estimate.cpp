@@ -40,7 +40,7 @@ using namespace std::placeholders;      // NOLINT
 class MocapPoseEstimatePlugin : public plugin::Plugin
 {
 public:
-  MocapPoseEstimatePlugin(plugin::UASPtr uas_)
+  explicit MocapPoseEstimatePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "mocap")
   {
     /** @note For VICON ROS package, subscribe to TransformStamped topic */
