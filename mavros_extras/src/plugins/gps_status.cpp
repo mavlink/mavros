@@ -14,6 +14,8 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <string>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -38,7 +40,7 @@ using mavlink::common::RTK_BASELINE_COORDINATE_SYSTEM;
 class GpsStatusPlugin : public plugin::Plugin
 {
 public:
-  GpsStatusPlugin(plugin::UASPtr uas_)
+  explicit GpsStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "gpsstatus")
   {
     gps1_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~gps1/raw", 10);
@@ -102,8 +104,8 @@ private:
     ros_msg.yaw = mav_msg.yaw;
     // [[[end]]] (checksum: 5803a4026c6f569e7cc00b66156640f9)
     ros_msg.header = uas->synchronized_header("/wgs84", mav_msg.time_usec);
-    ros_msg.dgps_numch = UINT8_MAX;                    // information not available in GPS_RAW_INT mavlink message
-    ros_msg.dgps_age = UINT32_MAX;                     // information not available in GPS_RAW_INT mavlink message
+    ros_msg.dgps_numch = UINT8_MAX;     // information not available in GPS_RAW_INT mavlink message
+    ros_msg.dgps_age = UINT32_MAX;      // information not available in GPS_RAW_INT mavlink message
 
     gps1_raw_pub->publish(ros_msg);
   }

@@ -45,7 +45,7 @@ public:
 
     node_declate_and_watch_parameter(
       "gps_rate", 5.0, [&](const rclcpp::Parameter & p) {
-        auto rate = rclcpp::Rate(p.as_double());
+        rclcpp::Rate rate(p.as_double());
 
         rate_period = rate.period();
       });

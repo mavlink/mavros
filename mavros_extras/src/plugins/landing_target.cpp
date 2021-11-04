@@ -14,6 +14,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <algorithm>
 #include <tf2_eigen/tf2_eigen.h>
 
 #include "rcpputils/asserts.hpp"
