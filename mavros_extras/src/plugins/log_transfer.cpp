@@ -15,6 +15,7 @@
  */
 
 #include <atomic>
+#include <algorithm>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"

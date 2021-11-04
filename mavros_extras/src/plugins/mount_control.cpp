@@ -16,6 +16,8 @@
 
 #include <tf2_eigen/tf2_eigen.h>
 
+#include <memory>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -48,7 +50,7 @@ using utils::enum_value;
 class MountControlPlugin : public plugin::Plugin
 {
 public:
-  MountControlPlugin(plugin::UASPtr uas_)
+  explicit MountControlPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "mount_control")
   {
     command_sub = node->create_subscription<mavros_msgs::msg::MountControl>(

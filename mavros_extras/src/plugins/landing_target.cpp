@@ -14,8 +14,10 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <algorithm>
 #include <tf2_eigen/tf2_eigen.h>
+
+#include <algorithm>
+#include <string>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -64,7 +66,6 @@ public:
     mav_frame("LOCAL_NED"),
     land_target_type("VISION_FIDUCIAL")
   {
-
     enable_node_watch_parameters();
 
     // general params
@@ -143,7 +144,8 @@ public:
     // tf subsection
     node_declate_and_watch_parameter(
       "tf.rate_limit", 50.0, [&](const rclcpp::Parameter & p) {
-        // no dynamic update here yet. need to modify the thread in setpoint_mixin to handle new rates
+        // no dynamic update here yet. need to modify the thread in
+        // setpoint_mixin to handle new rates
         tf_rate = p.as_double();
       });
 
@@ -336,9 +338,9 @@ private:
        */
       size_rad = {2 * (M_PI / 180.0) * atan(target_size_x / (2 * focal_length)),
         2 * (M_PI / 180.0) * atan(target_size_y / (2 * focal_length))};
-    }
-    // else, the same values are computed considering the displacement relative to X and Y axes of the camera frame reference
-    else {
+    } else {
+      // else, the same values are computed considering the displacement
+      // relative to X and Y axes of the camera frame reference
       cartesian_to_displacement(pos, angle);
       size_rad = {2 * (M_PI / 180.0) * atan(target_size_x / (2 * distance)),
         2 * (M_PI / 180.0) * atan(target_size_y / (2 * distance))};

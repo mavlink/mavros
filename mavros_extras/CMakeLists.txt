@@ -92,7 +92,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/mag_calibration_status.cpp
   src/plugins/mocap_pose_estimate.cpp
   src/plugins/mount_control.cpp
-  #src/plugins/obstacle_distance.cpp
+  src/plugins/obstacle_distance.cpp
   #src/plugins/odom.cpp
   #src/plugins/onboard_computer_status.cpp
   #src/plugins/play_tune.cpp
