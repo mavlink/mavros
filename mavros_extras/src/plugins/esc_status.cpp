@@ -14,13 +14,15 @@
  * @{
  */
 
+#include <algorithm>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/msg/esc_info.hpp>
-#include <mavros_msgs/msg/esc_status.hpp>
+#include "mavros_msgs/msg/esc_info.hpp"
+#include "mavros_msgs/msg/esc_status.hpp"
 
 namespace mavros
 {
@@ -35,7 +37,7 @@ using namespace std::placeholders;      // NOLINT
 class ESCStatusPlugin : public plugin::Plugin
 {
 public:
-  ESCStatusPlugin(plugin::UASPtr uas_)
+  explicit ESCStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "esc_status"),
     _max_esc_count(0),
     _max_esc_info_index(0),

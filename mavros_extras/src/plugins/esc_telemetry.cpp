@@ -19,7 +19,7 @@
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/msg/esc_telemetry.hpp>
+#include "mavros_msgs/msg/esc_telemetry.hpp"
 
 namespace mavros
 {
@@ -36,7 +36,7 @@ using namespace std::placeholders;      // NOLINT
 class ESCTelemetryPlugin : public plugin::Plugin
 {
 public:
-  ESCTelemetryPlugin(plugin::UASPtr uas_)
+  explicit ESCTelemetryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "esc_telemetry")
   {
     esc_telemetry_pub = node->create_publisher<mavros_msgs::msg::ESCTelemetry>("~/telemetry", 10);
