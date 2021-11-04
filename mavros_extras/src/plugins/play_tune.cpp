@@ -1,21 +1,48 @@
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/PlayTuneV2.h>
+/*
+ * Copyright 2020 Morten Fyhn Amundsen <morten.fyhn.amundsen@gmail.com>
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
+/**
+ * @brief Onboard Computer Status plugin
+ * @file onboard_computer_status.cpp
+ * @author Morten Fyhn Amundsen <morten.fyhn.amundsen@gmail.com>
+ *
+ * @addtogroup plugin
+ * @{
+ */
+
 #include <cstring>
+
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/play_tune_v2.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
-class PlayTunePlugin : public plugin::PluginBase
+using namespace std::placeholders;      // NOLINT
+
+/**
+ * @brief Play Tune service
+ * @plugin play_tune
+ */
+class PlayTunePlugin : public plugin::Plugin
 {
 public:
-  PlayTunePlugin()
-  : PluginBase(), nh("~") {}
-
-  void initialize(UAS & uas_) override
+  PlayTunePlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "play_tune")
   {
-    PluginBase::initialize(uas_);
-    sub = nh.subscribe("play_tune", 1, &PlayTunePlugin::callback, this);
+    sub =
+      node->create_subscription<mavros_msgs::msg::PlayTuneV2>(
+      "play_tune", 1,
+      std::bind(&PlayTunePlugin::callback, this, _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -24,20 +51,21 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
-  ros::Subscriber sub;
+  rclcpp::Subscription<mavros_msgs::msg::PlayTuneV2>::SharedPtr sub;
 
-  void callback(const mavros_msgs::PlayTuneV2::ConstPtr & tune)
+  void callback(const mavros_msgs::PlayTuneV2::SharedPtr tune)
   {
     auto msg = mavlink::common::msg::PLAY_TUNE_V2{};
-    m_uas->msg_set_target(msg);
+
+    uas->msg_set_target(msg);
     msg.format = tune->format;
     mavlink::set_string_z(msg.tune, tune->tune);
-    UAS_FCU(m_uas)->send_message_ignore_drop(msg);
+
+    uas->send_message(msg);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::PlayTunePlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::PlayTunePlugin)

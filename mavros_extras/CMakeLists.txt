@@ -94,8 +94,8 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/mount_control.cpp
   src/plugins/obstacle_distance.cpp
   #src/plugins/odom.cpp
-  #src/plugins/onboard_computer_status.cpp
-  #src/plugins/play_tune.cpp
+  src/plugins/onboard_computer_status.cpp
+  src/plugins/play_tune.cpp
   #src/plugins/px4flow.cpp
   #src/plugins/rangefinder.cpp
   #src/plugins/safety_area.cpp

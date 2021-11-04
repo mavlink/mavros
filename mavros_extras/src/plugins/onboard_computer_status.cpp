@@ -1,3 +1,10 @@
+/*
+ * Copyright 2019 Tanja Baumann.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Onboard Computer Status plugin
  * @file onboard_computer_status.cpp
@@ -6,41 +13,37 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2019 Tanja Baumann.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/OnboardComputerStatus.h>
+#include "mavros_msgs/msg/onboard_computer_status.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief Onboard Computer Status plugin
+ * @plugin onboard_computer_status
  *
  * Publishes the status of the onboard computer
  * @see status_cb()
  */
-class OnboardComputerStatusPlugin : public plugin::PluginBase
+class OnboardComputerStatusPlugin : public plugin::Plugin
 {
 public:
-  OnboardComputerStatusPlugin()
-  : PluginBase(),
-    status_nh("~onboard_computer")
-  {}
-
-  void initialize(UAS & uas_) override
+  OnboardComputerStatusPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "onboard_computer")
   {
-    PluginBase::initialize(uas_);
-
-    status_sub = status_nh.subscribe("status", 10, &OnboardComputerStatusPlugin::status_cb, this);
+    status_sub = node->create_subscription<mavros_msgs::msg::OnboardComputerStatus>(
+      "~/status", 10, std::bind(
+        &OnboardComputerStatusPlugin::status_cb, this,
+        _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -49,8 +52,7 @@ public:
   }
 
 private:
-  ros::NodeHandle status_nh;
-  ros::Subscriber status_sub;
+  rclcpp::Subscription<mavros_msgs::msg::OnboardComputerStatus>::SharedPtr status_sub;
 
   /**
    * @brief Send onboard computer status to FCU and groundstation
@@ -58,10 +60,10 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
    * @param req	received OnboardComputerStatus msg
    */
-  void status_cb(const mavros_msgs::OnboardComputerStatus::ConstPtr & req)
+  void status_cb(const mavros_msgs::msg::OnboardComputerStatus::SharedPtr req)
   {
     mavlink::common::msg::ONBOARD_COMPUTER_STATUS status {};
-    status.time_usec = req->header.stamp.toNSec() / 1000;                                               //!< [microsecs]
+    status.time_usec = get_time_usec(req->header.stamp);    //!< [microsecs]
     // [[[cog:
     // for f in ('uptime',
     //     'type',
@@ -107,17 +109,13 @@ private:
     std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
     std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
     std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
-    // [[[end]]] (checksum: b06efca90d9a1160c16350e0f0a0f060)
+    // [[[end]]]
 
-    std::cout << "timestamp: " << status.time_usec << "\n";
-
-    UAS_FCU(m_uas)->send_message_ignore_drop(status, req->component);
+    uas->send_message(status, req->component);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(
-  mavros::extra_plugins::OnboardComputerStatusPlugin,
-  mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::OnboardComputerStatusPlugin)
