@@ -1,40 +1,62 @@
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/LogData.h>
-#include <mavros_msgs/LogEntry.h>
-#include <mavros_msgs/LogRequestData.h>
-#include <mavros_msgs/LogRequestEnd.h>
-#include <mavros_msgs/LogRequestList.h>
-#include <std_srvs/Trigger.h>
+/*
+ * Copyright 2018 mlvov <mlvov@cnord.ru>.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
+/**
+ * @brief Log Transfer plugin
+ * @file log_transfer.cpp
+ * @author mlvov <mlvov@cnord.ru>
+ *
+ * @addtogroup plugin
+ * @{
+ */
+
+#include <atomic>
+
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/log_data.hpp"
+#include "mavros_msgs/msg/log_entry.hpp"
+#include "mavros_msgs/srv/log_request_data.hpp"
+#include "mavros_msgs/srv/log_request_end.hpp"
+#include "mavros_msgs/srv/log_request_list.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
-class LogTransferPlugin : public plugin::PluginBase
+using namespace std::placeholders;      // NOLINT
+
+/**
+ * @brief Log Transfer plugin
+ * @plugin log_transfer
+ */
+class LogTransferPlugin : public plugin::Plugin
 {
 public:
-  LogTransferPlugin()
-  : nh("~log_transfer") {}
-
-  void initialize(UAS & uas) override
+  explicit LogTransferPlugin(plugin::UASPtr uas_)
+  : plugin::Plugin(uas_, "log_transfer")
   {
-    PluginBase::initialize(uas);
+    log_entry_pub = node->create_publisher<mavros_msgs::msg::LogEntry>("~/raw/log_entry", 1000);
+    log_data_pub = node->create_publisher<mavros_msgs::msg::LogData>("~/raw/log_data", 1000);
 
-    log_entry_pub = nh.advertise<mavros_msgs::LogEntry>("raw/log_entry", 1000);
-    log_data_pub = nh.advertise<mavros_msgs::LogData>("raw/log_data", 1000);
-
-    log_request_list_srv = nh.advertiseService(
-      "raw/log_request_list",
-      &LogTransferPlugin::log_request_list_cb, this);
-    log_request_data_srv = nh.advertiseService(
-      "raw/log_request_data",
-      &LogTransferPlugin::log_request_data_cb, this);
-    log_request_end_srv = nh.advertiseService(
-      "raw/log_request_end",
-      &LogTransferPlugin::log_request_end_cb, this);
-    log_request_erase_srv = nh.advertiseService(
-      "raw/log_request_erase",
-      &LogTransferPlugin::log_request_erase_cb, this);
+    log_request_list_srv = node->create_service<mavros_msgs::srv::LogRequestList>(
+      "~/raw/log_request_list", std::bind(&LogTransferPlugin::log_request_list_cb, this, _1, _2));
+    log_request_data_srv = node->create_service<mavros_msgs::srv::LogRequestData>(
+      "~/raw/log_request_data", std::bind(&LogTransferPlugin::log_request_data_cb, this, _1, _2));
+    log_request_end_srv = node->create_service<mavros_msgs::srv::LogRequestEnd>(
+      "~/raw/log_request_end", std::bind(&LogTransferPlugin::log_request_end_cb, this, _1, _2));
+    log_request_erase_srv = node->create_service<std_srvs::srv::Trigger>(
+      "~/raw/log_request_erase", std::bind(
+        &LogTransferPlugin::log_request_erase_cb, this, _1,
+        _2));
   }
 
   Subscriptions get_subscriptions() override
@@ -46,107 +68,111 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
-  ros::Publisher log_entry_pub, log_data_pub;
-  ros::ServiceServer log_request_list_srv, log_request_data_srv, log_request_end_srv,
-    log_request_erase_srv;
+  rclcpp::Publisher<mavros_msgs::msg::LogEntry>::SharedPtr log_entry_pub;
+  rclcpp::Publisher<mavros_msgs::msg::LogData>::SharedPtr log_data_pub;
 
-  void handle_log_entry(const mavlink::mavlink_message_t *, mavlink::common::msg::LOG_ENTRY & le)
+  rclcpp::Service<mavros_msgs::srv::LogRequestList>::SharedPtr log_request_list_srv;
+  rclcpp::Service<mavros_msgs::srv::LogRequestData>::SharedPtr log_request_data_srv;
+  rclcpp::Service<mavros_msgs::srv::LogRequestEnd>::SharedPtr log_request_end_srv;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr log_request_erase_srv;
+
+  void handle_log_entry(
+    const mavlink::mavlink_message_t * mmsg [[maybe_unused]],
+    mavlink::common::msg::LOG_ENTRY & le,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto msg = boost::make_shared<mavros_msgs::LogEntry>();
-    msg->header.stamp = ros::Time::now();
-    msg->id = le.id;
-    msg->num_logs = le.num_logs;
-    msg->last_log_num = le.last_log_num;
-    msg->time_utc = ros::Time(le.time_utc);
-    msg->size = le.size;
-    log_entry_pub.publish(msg);
+    auto msg = mavros_msgs::msg::LogEntry();
+
+    msg.header.stamp = node->now();
+    msg.id = le.id;
+    msg.num_logs = le.num_logs;
+    msg.last_log_num = le.last_log_num;
+    msg.time_utc = rclcpp::Time(le.time_utc);
+    msg.size = le.size;
+
+    log_entry_pub->publish(msg);
   }
 
-  void handle_log_data(const mavlink::mavlink_message_t *, mavlink::common::msg::LOG_DATA & ld)
+  void handle_log_data(
+    const mavlink::mavlink_message_t * mmsg [[maybe_unused]],
+    mavlink::common::msg::LOG_DATA & ld,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto msg = boost::make_shared<mavros_msgs::LogData>();
-    msg->header.stamp = ros::Time::now();
-    msg->id = ld.id;
-    msg->offset = ld.ofs;
+    auto msg = mavros_msgs::msg::LogData();
 
-    auto count = ld.count;
-    if (count > ld.data.max_size()) {
-      count = ld.data.max_size();
-    }
-    msg->data.insert(msg->data.cbegin(), ld.data.cbegin(), ld.data.cbegin() + count);
-    log_data_pub.publish(msg);
+    msg.header.stamp = node->now();
+    msg.id = ld.id;
+    msg.offset = ld.ofs;
+
+    auto count = std::min<size_t>(ld.count, ld.data.max_size());
+    msg.data.insert(msg.data.cbegin(), ld.data.cbegin(), ld.data.cbegin() + count);
+
+    log_data_pub->publish(msg);
   }
 
-  bool log_request_list_cb(
-    mavros_msgs::LogRequestList::Request & req,
-    mavros_msgs::LogRequestList::Response & res)
+  void log_request_list_cb(
+    const mavros_msgs::srv::LogRequestList::Request::SharedPtr req,
+    mavros_msgs::srv::LogRequestList::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_LIST msg = {};
-    m_uas->msg_set_target(msg);
-    msg.start = req.start;
-    msg.end = req.end;
 
-    res.success = true;
-    try {
-      UAS_FCU(m_uas)->send_message(msg);
-    } catch (std::length_error &) {
-      res.success = false;
-    }
-    return true;
+    uas->msg_set_target(msg);
+    msg.start = req->start;
+    msg.end = req->end;
+
+    uas->send_message(msg);
+
+    // NOTE(vooon): with ROS2 router it's not possible to detect drops
+    res->success = true;
   }
 
-  bool log_request_data_cb(
-    mavros_msgs::LogRequestData::Request & req,
-    mavros_msgs::LogRequestData::Response & res)
+  void log_request_data_cb(
+    mavros_msgs::srv::LogRequestData::Request::SharedPtr req,
+    mavros_msgs::srv::LogRequestData::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_DATA msg = {};
-    m_uas->msg_set_target(msg);
-    msg.id = req.id;
-    msg.ofs = req.offset;
-    msg.count = req.count;
 
-    res.success = true;
-    try {
-      UAS_FCU(m_uas)->send_message(msg);
-    } catch (std::length_error &) {
-      res.success = false;
-    }
-    return true;
+    uas->msg_set_target(msg);
+    msg.id = req->id;
+    msg.ofs = req->offset;
+    msg.count = req->count;
+
+    uas->send_message(msg);
+
+    // NOTE(vooon): with ROS2 router it's not possible to detect drops
+    res->success = true;
   }
 
-  bool log_request_end_cb(
-    mavros_msgs::LogRequestEnd::Request &,
-    mavros_msgs::LogRequestEnd::Response & res)
+  void log_request_end_cb(
+    mavros_msgs::srv::LogRequestEnd::Request::SharedPtr req [[maybe_unused]],
+    mavros_msgs::srv::LogRequestEnd::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_END msg = {};
-    m_uas->msg_set_target(msg);
-    res.success = true;
-    try {
-      UAS_FCU(m_uas)->send_message(msg);
-    } catch (std::length_error &) {
-      res.success = false;
-    }
-    return true;
+
+    uas->msg_set_target(msg);
+
+    uas->send_message(msg);
+
+    // NOTE(vooon): with ROS2 router it's not possible to detect drops
+    res->success = true;
   }
 
-  bool log_request_erase_cb(
-    std_srvs::Trigger::Request &,
-    std_srvs::Trigger::Response & res)
+  void log_request_erase_cb(
+    std_srvs::srv::Trigger::Request::SharedPtr req [[maybe_unused]],
+    std_srvs::srv::Trigger::Response::SharedPtr res)
   {
-    mavlink::common::msg::LOG_ERASE msg;
-    m_uas->msg_set_target(msg);
-    try {
-      UAS_FCU(m_uas)->send_message(msg);
-    } catch (std::length_error &) {
-      res.success = false;
-    }
-    res.success = true;
-    return true;
+    mavlink::common::msg::LOG_ERASE msg{};
+
+    uas->msg_set_target(msg);
+
+    uas->send_message(msg);
+
+    // NOTE(vooon): with ROS2 router it's not possible to detect drops
+    res->success = true;
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::LogTransferPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::LogTransferPlugin)

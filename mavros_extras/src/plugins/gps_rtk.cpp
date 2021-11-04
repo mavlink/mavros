@@ -74,12 +74,12 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA
    * @param msg		Received ROS msg
    */
-  void rtcm_cb(const mavros_msgs::msg::RTCM::SharedPtr & msg)
+  void rtcm_cb(const mavros_msgs::msg::RTCM::SharedPtr msg)
   {
     mavlink::common::msg::GPS_RTCM_DATA rtcm_data = {};
     const size_t max_frag_len = rtcm_data.data.size();
 
-    uint8_t seq_u5 = uint8_t(rtcm_seq.fetch_add() & 0x1F) << 3;
+    uint8_t seq_u5 = uint8_t(rtcm_seq.fetch_add(1) & 0x1F) << 3;
 
     if (msg->data.size() > 4 * max_frag_len) {
       RCLCPP_ERROR(

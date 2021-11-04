@@ -46,7 +46,7 @@ class LandingTargetPlugin : public plugin::Plugin,
   private plugin::TF2ListenerMixin<LandingTargetPlugin>
 {
 public:
-  LandingTargetPlugin(plugin::UASPtr uas_)
+  explicit LandingTargetPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "landing_target"),
     tf_rate(50.0),
     tf_send(true),

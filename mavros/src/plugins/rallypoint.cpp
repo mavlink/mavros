@@ -162,7 +162,7 @@ private:
 
     if (req->start_index) {
       // Partial update not supported for rallypoints
-      RCLCPP_WARN(get_logger(), "%s: Partial update for rallypoints not supported");
+      RCLCPP_WARN(get_logger(), "%s: Partial update for rallypoints not supported", log_prefix);
       res->success = false;
       return;
     }
