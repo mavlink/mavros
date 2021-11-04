@@ -46,6 +46,13 @@ APM specific plugin.</description>
 
 Sends &lt;a href=&quot;https://mavlink.io/en/messages/common.html#GPS_INPUT&quot;&gt;GPS_INPUT MAVLink messages&lt;/a&gt;</description>
   </class>
+  <class name="gps_rtk" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsRtkPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief GPS RTK plugin
+@plugin gps_rtk
+
+1. Publish the RTCM messages from ROS to the FCU
+2. Publish RTK baseline data from the FCU to ROS</description>
+  </class>
   <class name="gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mavlink GPS status plugin.
 @plugin gps_status
@@ -71,4 +78,4 @@ Send pose estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: c12c29945245c8285e7eee3b6f642a6d) -->
+<!-- [[[end]]] (checksum: 0bd11c5f2b0ea8fc794f41ca8bd0dd9f) -->
