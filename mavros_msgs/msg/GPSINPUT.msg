@@ -34,3 +34,4 @@ float32 horiz_accuracy # [m] GPS horizontal accuracy
 float32 vert_accuracy  # [m] GPS vertical accuracy
 
 uint8 satellites_visible # Number of satellites visible. If unknown, set to 255
+uint16 yaw          # [cdeg] Yaw in earth frame from north.
