@@ -29,6 +29,7 @@ using namespace std::placeholders;      // NOLINT
 
 /**
  * @brief nav controller output plugin.
+ * @plugin nav_controller_output
  *
  * Publishes nav_controller_output message https://mavlink.io/en/messages/common.html#NAV_CONTROLLER_OUTPUT
  */

@@ -64,6 +64,12 @@ and Odometry</description>
     <description>@brief Manual Control plugin
 @plugin manual_control</description>
   </class>
+  <class name="nav_controller_output" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::NavControllerOutputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief nav controller output plugin.
+@plugin nav_controller_output
+
+Publishes nav_controller_output message https://mavlink.io/en/messages/common.html#NAV_CONTROLLER_OUTPUT</description>
+  </class>
   <class name="param" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ParamPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Parameter manipulation plugin
 @plugin param</description>
@@ -132,4 +138,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: b2e809100e69b33d93e84b49480e6d48) -->
+<!-- [[[end]]] (checksum: e47485a8565112ddf4058c7a77bcc519) -->
