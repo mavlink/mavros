@@ -14,6 +14,8 @@
  * @{
  */
 
+#include <algorithm>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -43,7 +45,7 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 class ObstacleDistancePlugin : public plugin::Plugin
 {
 public:
-  ObstacleDistancePlugin(plugin::UASPtr uas_)
+  explicit ObstacleDistancePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "obstacle")
   {
     enable_node_watch_parameters();
@@ -93,14 +95,18 @@ private:
       }
       std::fill(
         obstacle.distances.begin() + req->ranges.size(),
-        obstacle.distances.end(), UINT16_MAX);      //!< fill the rest of the array values as "Unknown"
+        obstacle.distances.end(), UINT16_MAX);  //!< fill the rest of the array values as "Unknown"
 
       const float increment_deg = req->angle_increment * RAD_TO_DEG;
-      obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);  //!< Round to nearest integer.
+      //!< Round to nearest integer.
+      obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);
       obstacle.increment_f = increment_deg;
     } else {
-      // all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
-      size_t scale_factor = ceil(double(req->ranges.size()) / obstacle.distances.size());
+      // all distances from sensor will not fit so we combine adjacent distances
+      // always taking the shortest distance
+      size_t scale_factor = ceil(
+        static_cast<double>(req->ranges.size()) /
+        obstacle.distances.size());
       for (size_t i = 0; i < obstacle.distances.size(); i++) {
         obstacle.distances[i] = UINT16_MAX;
         for (size_t j = 0; j < scale_factor; j++) {
@@ -114,16 +120,17 @@ private:
           }
         }
       }
-      obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);  //!< [degrees]
+      //!< [degrees]
+      obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);
     }
 
-    obstacle.time_usec = get_time_usec(req->header.stamp);                      //!< [microsecs]
-    obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);       //!< defaults is laser type (depth sensor, Lidar)
-    obstacle.min_distance = req->range_min * 1e2;                               //!< [centimeters]
-    obstacle.max_distance = req->range_max * 1e2;                               //!< [centimeters]
+    obstacle.time_usec = get_time_usec(req->header.stamp);                  //!< [microsecs]
+    obstacle.sensor_type = utils::enum_value(MAV_DISTANCE_SENSOR::LASER);   //!< defaults is laser
+    obstacle.min_distance = req->range_min * 1e2;                           //!< [centimeters]
+    obstacle.max_distance = req->range_max * 1e2;                           //!< [centimeters]
     obstacle.frame = utils::enum_value(frame);
     // Assume angle_increment is positive and incoming message is in a FRD/NED frame
-    obstacle.angle_offset = req->angle_min * RAD_TO_DEG;                        //!< [degrees]
+    obstacle.angle_offset = req->angle_min * RAD_TO_DEG;                    //!< [degrees]
 
     RCLCPP_DEBUG_STREAM(
       get_logger(),
