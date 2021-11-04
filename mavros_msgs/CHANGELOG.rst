@@ -73,6 +73,18 @@ Changelog for package mavros_msgs
 * make mavro_msgs compile in ROS 2
 * Contributors: Mikael Arguedas, Mike Lautman, Vladimir Ermakov
 
+1.10.0 (2021-11-04)
+-------------------
+* msgs: update gpsraw to have yaw field
+* Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin
+  Plugin for TUNNEL messages
+* Tunnel.msg: Generate enum with cog
+* mavros_msgs: Add Tunnel message
+* Merge pull request `#1623 <https://github.com/mavlink/mavros/issues/1623>`_ from amilcarlucas/pr/more-typo-fixes
+  More typo fixes
+* MountControl.msg: fix copy-paste
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Morten Fyhn Amundsen, Vladimir Ermakov
+
 1.9.0 (2021-09-09)
 ------------------
 * Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions

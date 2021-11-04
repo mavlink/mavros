@@ -59,6 +59,18 @@ Changelog for package libmavconn
 * disable all packages but messages
 * Contributors: Mikael Arguedas, Vladimir Ermakov
 
+1.10.0 (2021-11-04)
+-------------------
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Show ENOTCONN error instead of crash
+  When a client suddenly drops the connection,
+  socket.shutdown() will throw an exception:
+  boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::system::system_error> >
+  what():  shutdown: Transport endpoint is not connected
+  Showing an error in this common case looks more reasonable than crashing.
+* Contributors: Val Doroshchuk, Vladimir Ermakov
+
 1.9.0 (2021-09-09)
 ------------------
 

@@ -242,6 +242,23 @@ Changelog for package mavros
 * disable all packages but messages
 * Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
 
+1.10.0 (2021-11-04)
+-------------------
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Merge pull request `#1627 <https://github.com/mavlink/mavros/issues/1627>`_ from marcelino-pensa/bug/ma-prevent-race-condition
+  Node dying when calling /mavros/param/pull
+* Remove reference
+* Catch std::length_error in send_message
+  Instead of crashing the process
+* Merge pull request `#1623 <https://github.com/mavlink/mavros/issues/1623>`_ from amilcarlucas/pr/more-typo-fixes
+  More typo fixes
+* sys_time.cpp: typo
+* Merge pull request `#1622 <https://github.com/mavlink/mavros/issues/1622>`_ from dayjaby/sys_time_pub_clock
+  sys_time: publish /clock for simulation times
+* sys_time: publish /clock for simulation times
+* Contributors: David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Marcelino Almeida, Val Doroshchuk, Vladimir Ermakov
+
 1.9.0 (2021-09-09)
 ------------------
 * Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
