@@ -54,7 +54,7 @@ class OdometryPlugin : public plugin::Plugin
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  OdometryPlugin(plugin::UASPtr uas_)
+  explicit OdometryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "odometry"),
     fcu_odom_parent_id_des("map"),
     fcu_odom_child_id_des("base_link")
