@@ -14,6 +14,10 @@
  * @{
  */
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_eigen/tf2_eigen.h>
