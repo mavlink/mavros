@@ -1,3 +1,11 @@
+/*
+ * Copyright 2017 James Goppert
+ * Copyright 2017,2018 Nuno Marques
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Odometry plugin
  * @file odom.cpp
@@ -7,32 +15,29 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2017 James Goppert
- * Copyright 2017,2018 Nuno Marques
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <boost/algorithm/string.hpp>
 
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/TransformStamped.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
 using mavlink::common::MAV_FRAME;
 using mavlink::common::MAV_ESTIMATOR_TYPE;
 using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
 
 /**
  * @brief Odometry plugin
+ * @plugin odometry
  *
  * Sends odometry data to the FCU estimator and
  * publishes odometry data that comes from FCU.
@@ -43,31 +48,36 @@ using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
  * @see odom_cb()	transforming and sending odometry to fcu
  * @see handle_odom()	receiving and transforming odometry from fcu
  */
-class OdometryPlugin : public plugin::PluginBase
+class OdometryPlugin : public plugin::Plugin
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW               // XXX(vooon): added to try to fix #1223. Not sure that it is needed because class do not have Eigen:: fields.
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  OdometryPlugin()
-  : PluginBase(),
-    odom_nh("~odometry"),
+  OdometryPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "odometry"),
     fcu_odom_parent_id_des("map"),
     fcu_odom_child_id_des("base_link")
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+    enable_node_watch_parameters();
 
     // frame params:
-    odom_nh.param<std::string>("fcu/odom_parent_id_des", fcu_odom_parent_id_des, "map");
-    odom_nh.param<std::string>("fcu/odom_child_id_des", fcu_odom_child_id_des, "base_link");
+    node_declate_and_watch_parameter(
+      "fcu.odom_parent_id_des", "map", [&](const rclcpp::Parameter & p) {
+        fcu_odom_parent_id_des = p.as_string();
+      });
+    node_declate_and_watch_parameter(
+      "fcu.odom_child_id_des", "map", [&](const rclcpp::Parameter & p) {
+        fcu_odom_child_id_des = p.as_string();
+      });
 
     // publishers
-    odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
+    odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/in", 10);
 
     // subscribers
-    odom_sub = odom_nh.subscribe("out", 1, &OdometryPlugin::odom_cb, this);
+    odom_sub =
+      node->create_subscription<nav_msgs::msg::Odometry>(
+      "out", 1,
+      std::bind(&OdometryPlugin::odom_cb, this, _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -78,12 +88,11 @@ public:
   }
 
 private:
-  ros::NodeHandle odom_nh;                              //!< node handler
-  ros::Publisher odom_pub;                              //!< nav_msgs/Odometry publisher
-  ros::Subscriber odom_sub;                             //!< nav_msgs/Odometry subscriber
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;                 //!< nav_msgs/Odometry publisher
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;             //!< nav_msgs/Odometry subscriber
 
-  std::string fcu_odom_parent_id_des;                           //!< desired orientation of the fcu odometry message's parent frame
-  std::string fcu_odom_child_id_des;                            //!< desired orientation of the fcu odometry message's child frame
+  std::string fcu_odom_parent_id_des;   //!< desired orientation of the fcu odometry message's parent frame
+  std::string fcu_odom_child_id_des;    //!< desired orientation of the fcu odometry message's child frame
 
   /**
    * @brief Lookup static transform with error handling
@@ -98,10 +107,10 @@ private:
     try {
       // transform lookup at current time.
       tf_source2target = tf2::transformToEigen(
-        m_uas->tf2_buffer.lookupTransform(
+        uas->tf2_buffer.lookupTransform(
           target, source, ros::Time(0)));
     } catch (tf2::TransformException & ex) {
-      ROS_ERROR_THROTTLE_NAMED(1, "odom", "ODOM: Ex: %s", ex.what());
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1, "ODOM: Ex: %s", ex.what());
       return;
     }
   }
@@ -121,8 +130,9 @@ private:
    * @param odom_msg	ODOMETRY msg
    */
   void handle_odom(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::ODOMETRY & odom_msg)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::ODOMETRY & odom_msg,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     /**
      * Required rotations to transform the FCU's odometry msg tto desired parent and child frame
@@ -148,10 +158,10 @@ private:
     Matrix6d r_pose = Matrix6d::Zero();                 //!< Zero initialized pose 6-D Covariance matrix. WRT frame_id
     Matrix6d r_vel = Matrix6d::Zero();                  //!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
 
-    auto odom = boost::make_shared<nav_msgs::Odometry>();
+    auto odom = nav_msgs::msg::Odometry();
 
-    odom->header = m_uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
-    odom->child_frame_id = fcu_odom_child_id_des;
+    odom.header = m_uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
+    odom.child_frame_id = fcu_odom_child_id_des;
 
     /**
      * Position parsing to desired parent
@@ -160,7 +170,7 @@ private:
       Eigen::Vector3d(
       tf_parent2parent_des.linear() *
       Eigen::Vector3d(odom_msg.x, odom_msg.y, odom_msg.z));
-    tf::pointEigenToMsg(position, odom->pose.pose.position);
+    tf2::toMsg(position, odom.pose.pose.position);
 
     /**
      * Orientation parsing. Quaternion has to be the rotation from desired child frame to desired parent frame
@@ -169,7 +179,7 @@ private:
     Eigen::Affine3d tf_childDes2parentDes = tf_parent2parent_des * q_child2parent *
       tf_child2child_des.inverse();
     orientation = Eigen::Quaterniond(tf_childDes2parentDes.linear());
-    tf::quaternionEigenToMsg(orientation, odom->pose.pose.orientation);
+    odom.pose.pose.orientation = tf2::toMsg(orientation);
 
     /**
      * Velocities parsing
@@ -183,8 +193,8 @@ private:
       Eigen::Vector3d(
       tf_child2child_des.linear() *
       Eigen::Vector3d(odom_msg.rollspeed, odom_msg.pitchspeed, odom_msg.yawspeed));
-    tf::vectorEigenToMsg(lin_vel, odom->twist.twist.linear);
-    tf::vectorEigenToMsg(ang_vel, odom->twist.twist.angular);
+    tf::toMsg(lin_vel, odom->twist.twist.linear);
+    tf::toMsg(ang_vel, odom->twist.twist.angular);
 
     /**
      * Covariances parsing
@@ -200,7 +210,7 @@ private:
     Eigen::Map<Matrix6d>(odom->twist.covariance.data(), cov_vel.rows(), cov_vel.cols()) = cov_vel;
 
     //! Publish the data
-    odom_pub.publish(odom);
+    odom_pub->publish(odom);
   }
 
   /**
@@ -213,7 +223,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#ODOMETRY
    * @param req	received Odometry msg
    */
-  void odom_cb(const nav_msgs::Odometry::ConstPtr & odom)
+  void odom_cb(const nav_msgs::Odometry::SharedPtr odom)
   {
     /**
      * Required affine rotations to apply transforms
@@ -275,22 +285,20 @@ private:
     cov_pose_map = r_pose * cov_pose_map * r_pose.transpose();
     cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
 
-    ROS_DEBUG_STREAM_NAMED(
-      "odom",
+    RCLCPP_DEBUG_STREAM(
       "ODOM: output: pose covariance matrix:" << std::endl << cov_pose_map);
-    ROS_DEBUG_STREAM_NAMED(
-      "odom",
+    RCLCPP_DEBUG_STREAM(
       "ODOM: output: velocity covariance matrix:" << std::endl << cov_vel_map);
 
     /* -*- ODOMETRY msg parser -*- */
-    msg.time_usec = odom->header.stamp.toNSec() / 1e3;
+    msg.time_usec = get_time_usec(odom->header.stamp);
 
     // [[[cog:
     // for a, b in (('', 'position'), ('v', 'lin_vel')):
     //     for f in 'xyz':
-    //         cog.outl("msg.{a}{f} = {b}.{f}();".format(**locals()))
+    //         cog.outl(f"msg.{a}{f} = {b}.{f}();")
     // for a, b in zip("xyz", ('rollspeed', 'pitchspeed', 'yawspeed')):
-    //     cog.outl("msg.{b} = ang_vel.{a}();".format(**locals()))
+    //     cog.outl(f"msg.{b} = ang_vel.{a}();")
     // ]]]
     msg.x = position.x();
     msg.y = position.y();
@@ -308,11 +316,11 @@ private:
     ftf::covariance_urt_to_mavlink(cov_vel_map, msg.velocity_covariance);
 
     // send ODOMETRY msg
-    UAS_FCU(m_uas)->send_message_ignore_drop(msg);
+    uas->send_message(msg);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::OdometryPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::OdometryPlugin)
