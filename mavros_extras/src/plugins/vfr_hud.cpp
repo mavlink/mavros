@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014,2016 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief VFR HUD plugin
  * @file vfr_hud.cpp
@@ -6,42 +13,31 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014,2016 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <angles/angles.h>
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/VFR_HUD.h>
+#include "mavros_msgs/msg/vfr_hud.hpp"
 
 namespace mavros
 {
-namespace std_plugins
+namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief VFR HUD plugin.
+ * @plugin vfr_hud
  */
-class VfrHudPlugin : public plugin::PluginBase
+class VfrHudPlugin : public plugin::Plugin
 {
 public:
-  VfrHudPlugin()
-  : PluginBase(),
-    nh("~")
-  {}
-
-  /**
-   * Plugin initializer. Constructor should not do this.
-   */
-  void initialize(UAS & uas_) override
+  explicit VfrHudPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "vfr_hud")
   {
-    PluginBase::initialize(uas_);
-
-    vfr_pub = nh.advertise<mavros_msgs::VFR_HUD>("vfr_hud", 10);
+    vfr_pub = node->create_publisher<mavros_msgs::msg::VfrHud>("vfr_hud", 10);
   }
 
   Subscriptions get_subscriptions() override
@@ -52,28 +48,28 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
-
-  ros::Publisher vfr_pub;
+  rclcpp::Publisher<mavros_msgs::msg::VfrHud>::SharedPtr vfr_pub;
 
   void handle_vfr_hud(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::VFR_HUD & vfr_hud)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::VFR_HUD & vfr_hud,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto vmsg = boost::make_shared<mavros_msgs::VFR_HUD>();
-    vmsg->header.stamp = ros::Time::now();
-    vmsg->airspeed = vfr_hud.airspeed;
-    vmsg->groundspeed = vfr_hud.groundspeed;
-    vmsg->heading = vfr_hud.heading;
-    vmsg->throttle = vfr_hud.throttle / 100.0;                  // comes in 0..100 range
-    vmsg->altitude = vfr_hud.alt;
-    vmsg->climb = vfr_hud.climb;
+    auto vmsg = mavros_msgs::msg::VfrHud();
 
-    vfr_pub.publish(vmsg);
+    vmsg.header.stamp = node->now();
+    vmsg.airspeed = vfr_hud.airspeed;
+    vmsg.groundspeed = vfr_hud.groundspeed;
+    vmsg.heading = vfr_hud.heading;
+    vmsg.throttle = vfr_hud.throttle / 100.0;   // comes in 0..100 range
+    vmsg.altitude = vfr_hud.alt;
+    vmsg.climb = vfr_hud.climb;
+
+    vfr_pub->publish(vmsg);
   }
 };
-}       // namespace std_plugins
+}       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::VfrHudPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::VfrHudPlugin)

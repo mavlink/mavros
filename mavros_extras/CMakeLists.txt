@@ -100,7 +100,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/rangefinder.cpp
   #src/plugins/safety_area.cpp
   src/plugins/trajectory.cpp
-  #src/plugins/vfr_hud.cpp
+  src/plugins/vfr_hud.cpp
   #src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp
   #src/plugins/vision_speed_estimate.cpp
