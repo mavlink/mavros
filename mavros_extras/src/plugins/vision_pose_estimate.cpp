@@ -15,6 +15,8 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <tf2_eigen/tf2_eigen.h>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/utils.hpp"
@@ -22,13 +24,10 @@
 #include "mavros/plugin_filter.hpp"
 #include "mavros/setpoint_mixin.hpp"
 
-#include <tf2_eigen/tf2_eigen.h>
-
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp" //
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/vector3_stamped.hpp"
 #include "mavros_msgs/msg/landing_target.hpp"
-
 
 namespace mavros
 {
@@ -145,11 +144,10 @@ private:
     vp.usec = stamp.nanoseconds() / 1000;
     // [[[cog:
     // for f in "xyz":
-    //     cog.outl("vp.%s = position.%s();" % (f, f))
+    //     cog.outl(f"vp.{f} = position.{f}();")
     // for a, b in zip("xyz", ('roll', 'pitch', 'yaw')):
-    //     cog.outl("vp.%s = rpy.%s();" % (b, a))
+    //     cog.outl(f"vp.{b} = rpy.{a}();")
     // ]]]
-
     vp.x = position.x();
     vp.y = position.y();
     vp.z = position.z();
@@ -157,7 +155,6 @@ private:
     vp.pitch = rpy.y();
     vp.yaw = rpy.z();
     // [[[end]]] (checksum: 0aed118405958e3f35e8e7c9386e812f)
-
 
     // just the URT of the 6x6 Pose Covariance Matrix, given
     // that the matrix is symmetric
