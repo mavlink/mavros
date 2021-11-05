@@ -1,3 +1,10 @@
+/*
+ * Copyright 2018 Martina Rivizzigno.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.mdA
+ */
 /**
  * @brief Trajectory plugin
  * @file trajectory.cpp
@@ -6,23 +13,21 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2018 Martina Rivizzigno.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.mdA
- */
 
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/Trajectory.h>
-#include <mavros_msgs/PositionTarget.h>
-#include <nav_msgs/Path.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/trajectory.hpp"
+#include "mavros_msgs/msg/position_target.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
 using utils::enum_value;
 
 //! Points count in TRAJECTORY message
@@ -31,31 +36,29 @@ static constexpr size_t NUM_POINTS = 5;
 //! Type matching mavlink::common::msg::TRAJECTORY::TRAJECTORY_REPRESENTATION_WAYPOINTS fields
 using MavPoints = std::array<float, NUM_POINTS>;
 
-using RosPoints = mavros_msgs::PositionTarget;
+using RosPoints = mavros_msgs::msg::PositionTarget;
 
 /**
  * @brief Trajectory plugin to receive planned path from the FCU and
  * send back to the FCU a corrected path (collision free, smoothed)
+ * @plugin trajectory
  *
  * @see trajectory_cb()
  */
-class TrajectoryPlugin : public plugin::PluginBase
+class TrajectoryPlugin : public plugin::Plugin
 {
 public:
-  TrajectoryPlugin()
-  : PluginBase(),
-    trajectory_nh("~trajectory")
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit TrajectoryPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "trajectory")
   {
-    PluginBase::initialize(uas_);
-
-    trajectory_generated_sub = trajectory_nh.subscribe(
-      "generated", 10,
-      &TrajectoryPlugin::trajectory_cb, this);
-    path_sub = trajectory_nh.subscribe("path", 10, &TrajectoryPlugin::path_cb, this);
-    trajectory_desired_pub = trajectory_nh.advertise<mavros_msgs::Trajectory>("desired", 10);
+    trajectory_generated_sub = node->create_subscription<mavros_msgs::msg::Trajectory>(
+      "~/generated", 10, std::bind(
+        &TrajectoryPlugin::trajectory_cb, this, _1));
+    path_sub =
+      node->create_subscription<nav_msgs::msg::Path>(
+      "~/path", 10,
+      std::bind(&TrajectoryPlugin::path_cb, this, _1));
+    trajectory_desired_pub = node->create_publisher<mavros_msgs::msg::Trajectory>("~/desired", 10);
   }
 
   Subscriptions get_subscriptions() override
@@ -66,24 +69,23 @@ public:
   }
 
 private:
-  ros::NodeHandle trajectory_nh;
+  rclcpp::Subscription<mavros_msgs::msg::Trajectory>::SharedPtr trajectory_generated_sub;
+  rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub;
 
-  ros::Subscriber trajectory_generated_sub;
-  ros::Subscriber path_sub;
-
-  ros::Publisher trajectory_desired_pub;
+  rclcpp::Publisher<mavros_msgs::msg::Trajectory>::SharedPtr trajectory_desired_pub;
 
   // [[[cog:
   // def outl_fill_points_ned_vector(x, y, z, vec_name, vec_type, point_xyz):
   //     cog.outl(
-  //         """void fill_points_{vec_name}(MavPoints &{x}, MavPoints &{y}, MavPoints &{z}, const geometry_msgs::{vec_type} &{vec_name}, const size_t i)\n"""
-  //         """{{\n"""
-  //         """\tauto {vec_name}_ned = ftf::transform_frame_enu_ned(ftf::to_eigen({vec_name}));\n"""
-  //         .format(**locals())
+  //         f"""void fill_points_{vec_name}(\n"""
+  //         f"""  MavPoints & {x}, MavPoints & {y}, MavPoints & {z},\n"""
+  //         f"""  const geometry_msgs::msg::{vec_type} & {vec_name}, const size_t i)\n"""
+  //         f"""{{\n"""
+  //         f"""  auto {vec_name}_ned = ftf::transform_frame_enu_ned(ftf::to_eigen({vec_name}));\n"""
   //     )
   //
   //     for axis in "xyz":
-  //         cog.outl("\t{axis}[i] = {vec_name}_ned.{axis}();".format(**locals()))
+  //         cog.outl(f"  {axis}[i] = {vec_name}_ned.{axis}();")
   //
   //     cog.outl("}\n")
   //
@@ -94,7 +96,7 @@ private:
   // ]]]
   void fill_points_position(
     MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Point & position, const size_t i)
+    const geometry_msgs::msg::Point & position, const size_t i)
   {
     auto position_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(position));
 
@@ -105,7 +107,7 @@ private:
 
   void fill_points_velocity(
     MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Vector3 & velocity, const size_t i)
+    const geometry_msgs::msg::Vector3 & velocity, const size_t i)
   {
     auto velocity_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(velocity));
 
@@ -116,7 +118,7 @@ private:
 
   void fill_points_acceleration(
     MavPoints & x, MavPoints & y, MavPoints & z,
-    const geometry_msgs::Vector3 & acceleration, const size_t i)
+    const geometry_msgs::msg::Vector3 & acceleration, const size_t i)
   {
     auto acceleration_ned = ftf::transform_frame_enu_ned(ftf::to_eigen(acceleration));
 
@@ -125,8 +127,7 @@ private:
     z[i] = acceleration_ned.z();
   }
 
-  // [[[end]]] (checksum: a63870e80fe0648a01b0349e0be1d173)
-
+  // [[[end]]] (checksum: a0ed1550494e431a3ba599da8503c8b6)
 
   void fill_points_yaw_wp(MavPoints & y, const double yaw, const size_t i)
   {
@@ -139,7 +140,7 @@ private:
   }
 
   void fill_points_yaw_q(
-    MavPoints & y, const geometry_msgs::Quaternion & orientation,
+    MavPoints & y, const geometry_msgs::msg::Quaternion & orientation,
     const size_t i)
   {
     auto q_wp = ftf::transform_orientation_enu_ned(
@@ -202,7 +203,7 @@ private:
   }
 
   void fill_msg_position(
-    geometry_msgs::Point & position,
+    geometry_msgs::msg::Point & position,
     const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t,
     const size_t i)
   {
@@ -215,7 +216,7 @@ private:
   }
 
   void fill_msg_velocity(
-    geometry_msgs::Vector3 & velocity,
+    geometry_msgs::msg::Vector3 & velocity,
     const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t,
     const size_t i)
   {
@@ -228,7 +229,7 @@ private:
   }
 
   void fill_msg_acceleration(
-    geometry_msgs::Vector3 & acceleration,
+    geometry_msgs::msg::Vector3 & acceleration,
     const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t,
     const size_t i)
   {
@@ -249,11 +250,11 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
    * @param req	received Trajectory msg
    */
-  void trajectory_cb(const mavros_msgs::Trajectory::ConstPtr & req)
+  void trajectory_cb(const mavros_msgs::msg::Trajectory::SharedPtr req)
   {
-    ROS_ASSERT(NUM_POINTS == req->point_valid.size());
+    rcpputils::require_true(NUM_POINTS == req->point_valid.size());
 
-    if (req->type == mavros_msgs::Trajectory::MAV_TRAJECTORY_REPRESENTATION_WAYPOINTS) {
+    if (req->type == mavros_msgs::msg::Trajectory::MAV_TRAJECTORY_REPRESENTATION_WAYPOINTS) {
       mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS trajectory {};
 
       auto fill_point_rep_waypoints =
@@ -279,8 +280,7 @@ private:
       // [[[cog:
       // for i in range(5):
       //      cog.outl(
-      //          'fill_point_rep_waypoints(trajectory, req->point_{i1}, {i0});'
-      //          .format(i0=i, i1=i+1)
+      //          f"fill_point_rep_waypoints(trajectory, req->point_{i+1}, {i});"
       //      )
       // ]]]
       fill_point_rep_waypoints(trajectory, req->point_1, 0);
@@ -290,8 +290,8 @@ private:
       fill_point_rep_waypoints(trajectory, req->point_5, 4);
       // [[[end]]] (checksum: 3378a593279611a83e25efee67393195)
 
-      trajectory.time_usec = req->header.stamp.toNSec() / 1000;                         //!< [milisecs]
-      UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+      trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
+      uas->send_message(trajectory);
     } else {
       mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER trajectory {};
       auto fill_point_rep_bezier =
@@ -310,11 +310,11 @@ private:
           fill_points_yaw_wp(t.pos_yaw, rp.yaw, i);
           fill_points_delta(t.delta, req->time_horizon[i], i);
         };
+
       // [[[cog:
       // for i in range(5):
       //      cog.outl(
-      //          'fill_point_rep_bezier(trajectory, req->point_{i1}, {i0});'
-      //          .format(i0=i, i1=i+1)
+      //          f"fill_point_rep_bezier(trajectory, req->point_{i+1}, {i});"
       //      )
       // ]]]
       fill_point_rep_bezier(trajectory, req->point_1, 0);
@@ -324,13 +324,10 @@ private:
       fill_point_rep_bezier(trajectory, req->point_5, 4);
       // [[[end]]] (checksum: a12a34d1190be94c777077f2d297918b)
 
-      trajectory.time_usec = req->header.stamp.toNSec() / 1000;                         //!< [milisecs]
-      UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+      trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
+      uas->send_message(trajectory);
     }
-
-
   }
-
 
   /**
    * @brief Send corrected path to the FCU.
@@ -338,11 +335,11 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
    * @param req	received nav_msgs Path msg
    */
-  void path_cb(const nav_msgs::Path::ConstPtr & req)
+  void path_cb(const nav_msgs::msg::Path::SharedPtr req)
   {
     mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS trajectory {};
 
-    trajectory.time_usec = req->header.stamp.toNSec() / 1000;                   //!< [milisecs]
+    trajectory.time_usec = get_time_usec(req->header.stamp);        //!< [milisecs]
     trajectory.valid_points = std::min(NUM_POINTS, req->poses.size());
 
     auto fill_point =
@@ -361,8 +358,7 @@ private:
 
     // [[[cog:
     // for i in range(5):
-    //      cog.outl(
-    //          'fill_point(trajectory, {i0});'.format(i0=i, i1=i+1))
+    //      cog.outl(f"fill_point(trajectory, {i});")
     // ]]]
     fill_point(trajectory, 0);
     fill_point(trajectory, 1);
@@ -371,14 +367,15 @@ private:
     fill_point(trajectory, 4);
     // [[[end]]] (checksum: a63d2682cc16897f19da141e87ab5d60)
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
+    uas->send_message(trajectory);
   }
 
   void handle_trajectory(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & trajectory)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & trajectory,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto tr_desired = boost::make_shared<mavros_msgs::Trajectory>();
+    auto tr_desired = mavros_msgs::msg::Trajectory();
 
     auto fill_msg_point =
       [&](RosPoints & p, const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t,
@@ -388,34 +385,31 @@ private:
         fill_msg_acceleration(p.acceleration_or_force, t, i);
         p.yaw = wrap_pi((M_PI / 2.0f) - t.pos_yaw[i]);
         p.yaw_rate = t.vel_yaw[i];
-        tr_desired->command[i] = t.command[i];
+        tr_desired.command[i] = t.command[i];
       };
 
-    tr_desired->header = m_uas->synchronized_header("local_origin", trajectory.time_usec);
+    tr_desired.header = uas->synchronized_header("local_origin", trajectory.time_usec);
 
     for (int i = 0; i < trajectory.valid_points; ++i) {
-      tr_desired->point_valid[i] = true;
+      tr_desired.point_valid[i] = true;
     }
 
     for (int i = trajectory.valid_points; i < NUM_POINTS; ++i) {
-      tr_desired->point_valid[i] = false;
+      tr_desired.point_valid[i] = false;
     }
 
     // [[[cog:
     // for i in range(5):
-    //     cog.outl(
-    //         "fill_msg_point(tr_desired->point_{i1}, trajectory, {i0});"
-    //         .format(i0=i, i1=i + 1, )
-    //     )
+    //     cog.outl(f"fill_msg_point(tr_desired.point_{i+1}, trajectory, {i});")
     // ]]]
-    fill_msg_point(tr_desired->point_1, trajectory, 0);
-    fill_msg_point(tr_desired->point_2, trajectory, 1);
-    fill_msg_point(tr_desired->point_3, trajectory, 2);
-    fill_msg_point(tr_desired->point_4, trajectory, 3);
-    fill_msg_point(tr_desired->point_5, trajectory, 4);
-    // [[[end]]] (checksum: 86aa6236b07e79aecc0490fe0381252c)
+    fill_msg_point(tr_desired.point_1, trajectory, 0);
+    fill_msg_point(tr_desired.point_2, trajectory, 1);
+    fill_msg_point(tr_desired.point_3, trajectory, 2);
+    fill_msg_point(tr_desired.point_4, trajectory, 3);
+    fill_msg_point(tr_desired.point_5, trajectory, 4);
+    // [[[end]]] (checksum: a1d59b0aa0f24a18ca76f47397bca4ae)
 
-    trajectory_desired_pub.publish(tr_desired);
+    trajectory_desired_pub->publish(tr_desired);
   }
 
   float wrap_pi(float a)
@@ -430,5 +424,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::TrajectoryPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::TrajectoryPlugin)

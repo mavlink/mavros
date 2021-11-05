@@ -36,7 +36,7 @@ using namespace std::placeholders;      // NOLINT
 class RangefinderPlugin : public plugin::Plugin
 {
 public:
-  RangefinderPlugin(plugin::UASPtr uas_)
+  explicit RangefinderPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "rangefinder")
   {
     rangefinder_pub = node->create_publisher<sensor_msgs::msg::Range>("~/rangefinder", 10);
