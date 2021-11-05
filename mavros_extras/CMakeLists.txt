@@ -104,7 +104,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
-  #src/plugins/wheel_odometry.cpp
+  src/plugins/wheel_odometry.cpp
   # [[[end]]]
 )
 ament_target_dependencies(mavros_extras_plugins

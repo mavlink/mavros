@@ -1,3 +1,10 @@
+/*
+ * Copyright 2017 Pavlo Kolomiiets.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Wheel odometry plugin
  * @file wheel_odometry.cpp
@@ -6,42 +13,40 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2017 Pavlo Kolomiiets.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/WheelOdomStamped.h>
-
-#include <geometry_msgs/TwistWithCovarianceStamped.h>
-#include <nav_msgs/Odometry.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_eigen/tf2_eigen.h>
+
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/wheel_odom_stamped.hpp"
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief Wheel odometry plugin.
+ * @plugin wheel_odomotry
  *
  * This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
  * Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).
- *
  */
-class WheelOdometryPlugin : public plugin::PluginBase
+class WheelOdometryPlugin : public plugin::Plugin
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  WheelOdometryPlugin()
-  : PluginBase(),
-    wo_nh("~wheel_odometry"),
+  explicit WheelOdometryPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "wheel_odometry"),
     count(0),
     odom_mode(OM::NONE),
     raw_send(false),
@@ -52,114 +57,148 @@ public:
     rtwist(Eigen::Vector3d::Zero()),
     rpose_cov(Eigen::Matrix3d::Zero()),
     rtwist_cov(Eigen::Vector3d::Zero())
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+    enable_node_watch_parameters();
 
     // General params
-    wo_nh.param("send_raw", raw_send, false);
-    // Wheels configuration
-    wo_nh.param("count", count, 2);
-    count = std::max(1, count);             // bound check
+    node_declate_and_watch_parameter(
+      "send_raw", false, [&](const rclcpp::Parameter & p) {
+        raw_send = p.as_bool();
 
-    bool use_rpm;
-    wo_nh.param("use_rpm", use_rpm, false);
-    if (use_rpm) {
-      odom_mode = OM::RPM;
-    } else {
-      odom_mode = OM::DIST;
-    }
+        if (raw_send) {
+          rpm_pub = node->create_publisher<mavros_msgs::msg::WheelOdomStamped>("~/rpm", 10);
+          dist_pub = node->create_publisher<mavros_msgs::msg::WheelOdomStamped>("~/distance", 10);
+        } else {
+          rpm_pub.reset();
+          dist_pub.reset();
+        }
+      });
+
+    node_declate_and_watch_parameter(
+      "count", 2, [&](const rclcpp::Parameter & p) {
+        int count_ = p.as_int();
+        count = std::max(2, count_); // bound check
+      });
+
+    node_declate_and_watch_parameter(
+      "use_rpm", false, [&](const rclcpp::Parameter & p) {
+        bool use_rpm = p.as_bool();
+        if (use_rpm) {
+          odom_mode = OM::RPM;
+        } else {
+          odom_mode = OM::DIST;
+        }
+      });
 
     // Odometry params
-    wo_nh.param("send_twist", twist_send, false);
-    wo_nh.param<std::string>("frame_id", frame_id, "odom");
-    wo_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
-    wo_nh.param("vel_error", vel_cov, 0.1);
-    vel_cov = vel_cov * vel_cov;           // std -> cov
+    node_declate_and_watch_parameter(
+      "send_twist", false, [&](const rclcpp::Parameter & p) {
+        twist_send = p.as_bool();
+      });
+
+    node_declate_and_watch_parameter(
+      "frame_id", "odom", [&](const rclcpp::Parameter & p) {
+        frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
+        frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "vel_error", 0.1, [&](const rclcpp::Parameter & p) {
+        double vel_error = p.as_double();
+        vel_cov = vel_error * vel_error;       // std -> cov
+      });
+
     // TF subsection
-    wo_nh.param("tf/send", tf_send, false);
-    wo_nh.param<std::string>("tf/frame_id", tf_frame_id, "odom");
-    wo_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
+    node_declate_and_watch_parameter(
+      "tf.frame_id", "odom", [&](const rclcpp::Parameter & p) {
+        tf_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
+        tf_child_frame_id = p.as_string();
+      });
+
+    node_declate_and_watch_parameter(
+      "tf.send", false, [&](const rclcpp::Parameter & p) {
+        tf_send = p.as_bool();
+      });
 
     // Read parameters for each wheel.
-    {
-      int iwheel = 0;
-      while (true) {
-        // Build the string in the form "wheelX", where X is the wheel number.
-        // Check if we have "wheelX" parameter.
-        // Indices starts from 0 and should increase without gaps.
-        auto name = utils::format("wheel%i", iwheel++);
+    wheel_offset.resize(count);
+    wheel_radius.resize(count);
 
-        // Check if we have "wheelX" parameter
-        if (!wo_nh.hasParam(name)) {break;}
+    for (size_t wi = 0; wi < count; wi++) {
+      // Build the string in the form "wheelX", where X is the wheel number.
+      // Check if we have "wheelX" parameter.
+      // Indices starts from 0 and should increase without gaps.
 
-        // Read
-        Eigen::Vector2d offset;
-        double radius;
+      node_declate_and_watch_parameter(
+        utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
+          wheel_offset[wi][0] = p.as_double();
+        });
+      node_declate_and_watch_parameter(
+        utils::format("wheel%i.y", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
+          wheel_offset[wi][1] = p.as_double();
+        });
+      node_declate_and_watch_parameter(
+        utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
+          wheel_radius[wi] = p.as_double();
+        });
+    }
 
-        wo_nh.param(name + "/x", offset[0], 0.0);
-        wo_nh.param(name + "/y", offset[1], 0.0);
-        wo_nh.param(name + "/radius", radius, 0.05);
-
-        wheel_offset.push_back(offset);
-        wheel_radius.push_back(radius);
+#if 0  // TODO(vooon): port this
+    // Check for all wheels specified
+    if (wheel_offset.size() >= count) {
+      // Duplicate 1st wheel if only one is available.
+      // This generalizes odometry computations for 1- and 2-wheels configurations.
+      if (wheel_radius.size() == 1) {
+        wheel_offset.resize(2);
+        wheel_radius.resize(2);
+        wheel_offset[1].x() = wheel_offset[0].x();
+        wheel_offset[1].y() = wheel_offset[0].y() + 1.0;                                 // make separation non-zero to avoid div-by-zero
+        wheel_radius[1] = wheel_radius[0];
       }
 
-      // Check for all wheels specified
-      if (wheel_offset.size() >= count) {
-        // Duplicate 1st wheel if only one is available.
-        // This generalizes odometry computations for 1- and 2-wheels configurations.
-        if (wheel_radius.size() == 1) {
-          wheel_offset.resize(2);
-          wheel_radius.resize(2);
-          wheel_offset[1].x() = wheel_offset[0].x();
-          wheel_offset[1].y() = wheel_offset[0].y() + 1.0;                               // make separation non-zero to avoid div-by-zero
-          wheel_radius[1] = wheel_radius[0];
-        }
-
-        // Check for non-zero wheel separation (first two wheels)
-        double separation = std::abs(wheel_offset[1].y() - wheel_offset[0].y());
-        if (separation < 1.e-5) {
-          odom_mode = OM::NONE;
-          ROS_WARN_NAMED(
-            "wo", "WO: Separation between the first two wheels is too small (%f).",
-            separation);
-        }
-
-        // Check for reasonable radiuses
-        for (int i = 0; i < wheel_radius.size(); i++) {
-          if (wheel_radius[i] <= 1.e-5) {
-            odom_mode = OM::NONE;
-            ROS_WARN_NAMED("wo", "WO: Wheel #%i has incorrect radius (%f).", i, wheel_radius[i]);
-          }
-        }
-      } else {
+      // Check for non-zero wheel separation (first two wheels)
+      double separation = std::abs(wheel_offset[1].y() - wheel_offset[0].y());
+      if (separation < 1.e-5) {
         odom_mode = OM::NONE;
         ROS_WARN_NAMED(
-          "wo", "WO: Not all wheels have parameters specified (%lu/%i).",
-          wheel_offset.size(), count);
+          "wo", "WO: Separation between the first two wheels is too small (%f).",
+          separation);
       }
-    }
 
-    // Advertise RPM-s and distance-s
-    if (raw_send) {
-      rpm_pub = wo_nh.advertise<mavros_msgs::WheelOdomStamped>("rpm", 10);
-      dist_pub = wo_nh.advertise<mavros_msgs::WheelOdomStamped>("distance", 10);
+      // Check for reasonable radiuses
+      for (int i = 0; i < wheel_radius.size(); i++) {
+        if (wheel_radius[i] <= 1.e-5) {
+          odom_mode = OM::NONE;
+          ROS_WARN_NAMED("wo", "WO: Wheel #%i has incorrect radius (%f).", i, wheel_radius[i]);
+        }
+      }
+    } else {
+      odom_mode = OM::NONE;
+      ROS_WARN_NAMED(
+        "wo", "WO: Not all wheels have parameters specified (%lu/%i).",
+        wheel_offset.size(), count);
     }
+#endif
 
     // Advertize topics
     if (odom_mode != OM::NONE) {
       if (twist_send) {
-        twist_pub = wo_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("velocity", 10);
+        twist_pub = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+          "~/velocity", 10);
       } else {
-        odom_pub = wo_nh.advertise<nav_msgs::Odometry>("odom", 10);
+        odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
       }
-    }
-    // No-odometry warning
-    else {
-      ROS_WARN_NAMED("wo", "WO: No odometry computations will be performed.");
+    } else {
+      // No-odometry warning
+      RCLCPP_WARN(get_logger(), "WO: No odometry computations will be performed.");
     }
 
   }
@@ -173,12 +212,10 @@ public:
   }
 
 private:
-  ros::NodeHandle wo_nh;
-
-  ros::Publisher rpm_pub;
-  ros::Publisher dist_pub;
-  ros::Publisher odom_pub;
-  ros::Publisher twist_pub;
+  rclcpp::Publisher<mavros_msgs::msg::WheelOdomStamped>::SharedPtr rpm_pub;
+  rclcpp::Publisher<mavros_msgs::msg::WheelOdomStamped>::SharedPtr dist_pub;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
 
   /// @brief Odometry computation modes
   enum class OM
@@ -203,7 +240,7 @@ private:
   double vel_cov;                       //!< wheel velocity measurement error 1-var (m/s)
 
   int count_meas;                               //!< number of wheels in measurements
-  ros::Time time_prev;                          //!< timestamp of previous measurement
+  rclcpp::Time time_prev;                       //!< timestamp of previous measurement
   std::vector<double> measurement_prev;         //!< previous measurement
 
   bool yaw_initialized;                         //!< initial yaw initialized (from IMU)
@@ -214,6 +251,19 @@ private:
   Eigen::Matrix3d rpose_cov;            //!< pose error 1-var
   Eigen::Vector3d rtwist_cov;           //!< twist error 1-var (vx_cov, vy_cov, vyaw_cov)
 
+  // XXX(vooon): attq != Eigen::Quaterniond::Identity():
+  // error: no match for ‘operator!=’ (operand types are ‘Eigen::Quaternion<double>’ and
+  // ‘Eigen::Quaternion<double>’)
+  inline bool quaterniond_eq(Eigen::Quaterniond a, Eigen::Quaterniond b)
+  {
+    // [[[cog:
+    // parts = [f"a.{f}() == b.{f}()" for f in "wxyz"]
+    // cog.outl(f"return {' && '.join(parts)};");
+    // ]]]
+    return a.w() == b.w() && a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
+    // [[[end]]] (checksum: af3c54c9f2c525c7a0c27a3151d69074)
+  }
+
   /**
    * @brief Publish odometry.
    * Odometry is computed from the very start but no pose info is published until we have initial orientation (yaw).
@@ -221,30 +271,31 @@ private:
    * Twist info doesn't depend on initial orientation so is published from the very start.
    * @param time		measurement's ROS time stamp
    */
-  void publish_odometry(ros::Time time)
+  void publish_odometry(rclcpp::Time time)
   {
     // Get initial yaw (from IMU)
     // Check that IMU was already initialized
-    if (!yaw_initialized && m_uas->get_attitude_imu_enu()) {
-      double yaw = ftf::quaternion_get_yaw(ftf::to_eigen(m_uas->get_attitude_orientation_enu()));
+    auto attq = ftf::to_eigen(uas->data.get_attitude_orientation_enu());
+    if (!yaw_initialized && !quaterniond_eq(attq, Eigen::Quaterniond::Identity())) {
+      double yaw = ftf::quaternion_get_yaw(attq);
 
       // Rotate current pose by initial yaw
       Eigen::Rotation2Dd rot(yaw);
-      rpose.head(2) = rot * rpose.head(2);                   // x,y
-      rpose(2) += yaw;                   // yaw
+      rpose.head(2) = rot * rpose.head(2);  // x,y
+      rpose(2) += yaw;                      // yaw
 
-      ROS_INFO_NAMED("wo", "WO: Initial yaw (deg): %f", yaw / M_PI * 180.0);
+      RCLCPP_INFO(get_logger(), "WO: Initial yaw (deg): %f", yaw / M_PI * 180.0);
       yaw_initialized = true;
     }
 
     // Orientation (only if we have initial yaw)
-    geometry_msgs::Quaternion quat;
+    geometry_msgs::msg::Quaternion quat;
     if (yaw_initialized) {
       quat = tf2::toMsg(ftf::quaternion_from_rpy(0.0, 0.0, rpose(2)));
     }
 
     // Twist
-    geometry_msgs::TwistWithCovariance twist_cov;
+    geometry_msgs::msg::TwistWithCovariance twist_cov;
     // linear
     twist_cov.twist.linear.x = rtwist(0);
     twist_cov.twist.linear.y = rtwist(1);
@@ -260,42 +311,41 @@ private:
     twist_cov_map.block<1, 1>(5, 5).diagonal() << rtwist_cov(2);
 
     // Publish twist
-    if (twist_send) {
-      auto twist_cov_t = boost::make_shared<geometry_msgs::TwistWithCovarianceStamped>();
+    if (twist_send && twist_pub) {
+      auto twist_cov_t = geometry_msgs::msg::TwistWithCovarianceStamped();
       // header
-      twist_cov_t->header.stamp = time;
-      twist_cov_t->header.frame_id = frame_id;
+      twist_cov_t.header.stamp = time;
+      twist_cov_t.header.frame_id = frame_id;
       // twist
-      twist_cov_t->twist = twist_cov;
+      twist_cov_t.twist = twist_cov;
       // publish
-      twist_pub.publish(twist_cov_t);
-    }
-    // Publish odometry (only if we have initial yaw)
-    else if (yaw_initialized) {
-      auto odom = boost::make_shared<nav_msgs::Odometry>();
+      twist_pub->publish(twist_cov_t);
+    } else if (yaw_initialized) {
+      // Publish odometry (only if we have initial yaw)
+      auto odom = nav_msgs::msg::Odometry();
       // header
-      odom->header.stamp = time;
-      odom->header.frame_id = frame_id;
-      odom->child_frame_id = child_frame_id;
+      odom.header.stamp = time;
+      odom.header.frame_id = frame_id;
+      odom.child_frame_id = child_frame_id;
       // pose
-      odom->pose.pose.position.x = rpose(0);
-      odom->pose.pose.position.y = rpose(1);
-      odom->pose.pose.position.z = 0.0;
-      odom->pose.pose.orientation = quat;
-      ftf::EigenMapCovariance6d pose_cov_map(odom->pose.covariance.data());
+      odom.pose.pose.position.x = rpose(0);
+      odom.pose.pose.position.y = rpose(1);
+      odom.pose.pose.position.z = 0.0;
+      odom.pose.pose.orientation = quat;
+      ftf::EigenMapCovariance6d pose_cov_map(odom.pose.covariance.data());
       pose_cov_map.block<2, 2>(0, 0) << rpose_cov.block<2, 2>(0, 0);
       pose_cov_map.block<2, 1>(0, 5) << rpose_cov.block<2, 1>(0, 2);
       pose_cov_map.block<1, 2>(5, 0) << rpose_cov.block<1, 2>(2, 0);
       pose_cov_map.block<1, 1>(5, 5) << rpose_cov.block<1, 1>(2, 2);
       // twist
-      odom->twist = twist_cov;
+      odom.twist = twist_cov;
       // publish
-      odom_pub.publish(odom);
+      odom_pub->publish(odom);
     }
 
     // Publish TF (only if we have initial yaw)
     if (tf_send && yaw_initialized) {
-      geometry_msgs::TransformStamped transform;
+      geometry_msgs::msg::TransformStamped transform;
       // header
       transform.header.stamp = time;
       transform.header.frame_id = tf_frame_id;
@@ -307,7 +357,7 @@ private:
       // rotation
       transform.transform.rotation = quat;
       // publish
-      m_uas->tf2_broadcaster.sendTransform(transform);
+      uas->tf2_broadcaster.sendTransform(transform);
     }
   }
 
@@ -475,30 +525,27 @@ private:
    * @param time_pub	measurement's time stamp for publish
    */
   void process_measurement(
-    std::vector<double> measurement, bool rpm, ros::Time time,
-    ros::Time time_pub)
+    std::vector<double> measurement, bool rpm, rclcpp::Time time,
+    rclcpp::Time time_pub)
   {
     // Initial measurement
-    if (time_prev == ros::Time(0)) {
+    if (time_prev == rclcpp::Time(0)) {
       count_meas = measurement.size();
       measurement_prev.resize(count_meas);
       count = std::min(count, count_meas);                   // don't try to use more wheels than we have
-    }
-    // Same time stamp (messages are generated by FCU more often than the wheel state updated)
-    else if (time == time_prev) {
+    } else if (time == time_prev) {
+      // Same time stamp (messages are generated by FCU more often than the wheel state updated)
       return;
-    }
-    // # of wheels differs from the initial value
-    else if (measurement.size() != count_meas) {
-      ROS_WARN_THROTTLE_NAMED(
-        10, "wo",
+    } else if (measurement.size() != count_meas) {
+      // # of wheels differs from the initial value
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 10,
         "WO: Number of wheels in measurement (%lu) differs from the initial value (%i).",
         measurement.size(), count_meas);
       return;
-    }
-    // Compute odometry
-    else {
-      double dt = (time - time_prev).toSec();                   // Time since previous measurement (s)
+    } else {
+      // Compute odometry
+      double dt = (time - time_prev).seconds();     // Time since previous measurement (s)
 
       // Distance traveled by each wheel since last measurement.
       // Reserve for at least 2 wheels.
@@ -506,13 +553,12 @@ private:
       // Compute using RPM-s
       if (rpm) {
         for (int i = 0; i < count; i++) {
-          double RPM_2_SPEED = wheel_radius[i] * 2.0 * M_PI / 60.0;                               // RPM -> speed (m/s)
-          double rpm = 0.5 * (measurement[i] + measurement_prev[i]);                               // Mean RPM during last dt seconds
+          double RPM_2_SPEED = wheel_radius[i] * 2.0 * M_PI / 60.0;     // RPM -> speed (m/s)
+          double rpm = 0.5 * (measurement[i] + measurement_prev[i]);    // Mean RPM during last dt seconds
           distance[i] = rpm * RPM_2_SPEED * dt;
         }
-      }
-      // Compute using cumulative distances
-      else {
+      } else {
+        // Compute using cumulative distances
         for (int i = 0; i < count; i++) {
           distance[i] = measurement[i] - measurement_prev[i];
         }
@@ -544,21 +590,24 @@ private:
    * @param msg	Received Mavlink msg
    * @param rpm	RPM msg
    */
-  void handle_rpm(const mavlink::mavlink_message_t * msg, mavlink::ardupilotmega::msg::RPM & rpm)
+  void handle_rpm(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::ardupilotmega::msg::RPM & rpm,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // Get ROS timestamp of the message
-    ros::Time timestamp = ros::Time::now();
+    auto timestamp = node->now();
 
     // Publish RPM-s
     if (raw_send) {
-      auto rpm_msg = boost::make_shared<mavros_msgs::WheelOdomStamped>();
+      auto rpm_msg = mavros_msgs::msg::WheelOdomStamped();
 
-      rpm_msg->header.stamp = timestamp;
-      rpm_msg->data.resize(2);
-      rpm_msg->data[0] = rpm.rpm1;
-      rpm_msg->data[1] = rpm.rpm2;
+      rpm_msg.header.stamp = timestamp;
+      rpm_msg.data.resize(2);
+      rpm_msg.data[0] = rpm.rpm1;
+      rpm_msg.data[1] = rpm.rpm2;
 
-      rpm_pub.publish(rpm_msg);
+      rpm_pub->publish(rpm_msg);
     }
 
     // Process measurement
@@ -575,8 +624,9 @@ private:
    * @param dist	WHEEL_DISTANCE msg
    */
   void handle_wheel_distance(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::WHEEL_DISTANCE & wheel_dist)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::WHEEL_DISTANCE & wheel_dist,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // Check for bad wheels count
     if (wheel_dist.count == 0) {
@@ -584,20 +634,20 @@ private:
     }
 
     // Get ROS timestamp of the message
-    ros::Time timestamp = m_uas->synchronise_stamp(wheel_dist.time_usec);
+    auto timestamp = uas->synchronise_stamp(wheel_dist.time_usec);
     // Get internal timestamp of the message
-    ros::Time timestamp_int =
-      ros::Time(wheel_dist.time_usec / 1000000UL, 1000UL * (wheel_dist.time_usec % 1000000UL));
+    rclcpp::Time timestamp_int(wheel_dist.time_usec / 1000000UL,
+      1000UL * (wheel_dist.time_usec % 1000000UL));
 
     // Publish distances
     if (raw_send) {
-      auto wheel_dist_msg = boost::make_shared<mavros_msgs::WheelOdomStamped>();
+      auto wheel_dist_msg = mavros_msgs::msg::WheelOdomStamped();
 
-      wheel_dist_msg->header.stamp = timestamp;
-      wheel_dist_msg->data.resize(wheel_dist.count);
-      std::copy_n(wheel_dist.distance.begin(), wheel_dist.count, wheel_dist_msg->data.begin());
+      wheel_dist_msg.header.stamp = timestamp;
+      wheel_dist_msg.data.resize(wheel_dist.count);
+      std::copy_n(wheel_dist.distance.begin(), wheel_dist.count, wheel_dist_msg.data.begin());
 
-      dist_pub.publish(wheel_dist_msg);
+      dist_pub->publish(wheel_dist_msg);
     }
 
     // Process measurement
@@ -611,5 +661,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::WheelOdometryPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::WheelOdometryPlugin)

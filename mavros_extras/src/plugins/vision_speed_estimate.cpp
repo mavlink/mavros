@@ -45,12 +45,12 @@ public:
   {
     vision_twist_cov_sub =
       node->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-      "~/speed_twist_cov", 10,      std::bind(&VisionSpeedEstimatePlugin::twist_cov_cb, this, _1));
+      "~/speed_twist_cov", 10, std::bind(&VisionSpeedEstimatePlugin::twist_cov_cb, this, _1));
     vision_twist_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
       "~/speed_twist", 10,
-      std::bind(        &VisionSpeedEstimatePlugin::twist_cb,        this, _1));
+      std::bind(&VisionSpeedEstimatePlugin::twist_cb, this, _1));
     vision_vector_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(
-      "~/speed_vector", 10, std::bind(        &VisionSpeedEstimatePlugin::vector_cb,        this, _1));
+      "~/speed_vector", 10, std::bind(&VisionSpeedEstimatePlugin::vector_cb, this, _1));
   }
 
   Subscriptions get_subscriptions() override
