@@ -17,6 +17,8 @@
 
 #include <tf2_eigen/tf2_eigen.h>
 
+#include <string>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/utils.hpp"

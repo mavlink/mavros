@@ -14,6 +14,8 @@
  * @{
  */
 
+#include <algorithm>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -81,7 +83,8 @@ private:
   //         f"""  MavPoints & {x}, MavPoints & {y}, MavPoints & {z},\n"""
   //         f"""  const geometry_msgs::msg::{vec_type} & {vec_name}, const size_t i)\n"""
   //         f"""{{\n"""
-  //         f"""  auto {vec_name}_ned = ftf::transform_frame_enu_ned(ftf::to_eigen({vec_name}));\n"""
+  //         f"""  auto {vec_name}_ned = ftf::transform_frame_enu_ned("""
+  //         f"""ftf::to_eigen({vec_name}));\n"""
   //     )
   //
   //     for axis in "xyz":
