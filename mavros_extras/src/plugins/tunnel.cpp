@@ -38,7 +38,7 @@ class TunnelPlugin : public plugin::Plugin
 {
 public:
   TunnelPlugin(plugin::UASPtr uas_)
-  : PluginBase(uas_, "tunnel")
+  : Plugin(uas_, "tunnel")
   {
     sub_ =
       node->create_subscription<mavros_msgs::msg::Tunnel>(
@@ -67,7 +67,7 @@ private:
 
       uas->send_message(mav_tunnel);
     } catch (std::overflow_error & ex) {
-      RCLCPP_ERROR_STREAM(get_logger(), "in error: " << ex);
+      RCLCPP_ERROR_STREAM(get_logger(), "in error: " << ex.what());
     }
   }
 
@@ -78,19 +78,19 @@ private:
   {
     try {
       const auto ros_tunnel =
-        copy_tunnel<mavlink::common::msg::TUNNEL, mavros_msgs::Tunnel>(
+        copy_tunnel<mavlink::common::msg::TUNNEL, mavros_msgs::msg::Tunnel>(
         mav_tunnel);
 
       pub_->publish(ros_tunnel);
     } catch (std::overflow_error & ex) {
-      RCLCPP_ERROR_STREAM(get_logger(), "out error: " << ex);
+      RCLCPP_ERROR_STREAM(get_logger(), "out error: " << ex.what());
     }
   }
 
   template<typename From, typename To>
   static To copy_tunnel(const From & from) noexcept(false)
   {
-    static constexpr auto max_payload_length = mavlink::common::msg::TUNNEL().payload.max_size();
+    static const auto max_payload_length = mavlink::common::msg::TUNNEL().payload.max_size();
 
     if (from.payload_length > max_payload_length) {
       throw std::overflow_error("too long payload length");
