@@ -70,6 +70,8 @@ CI Statuses
 -----------
 
   - ROS2 Foxy: [![Build Status](http://build.ros2.org/buildStatus/icon?job=Fdev__mavros__ubuntu_focal_amd64)](http://build.ros2.org/job/Fdev__mavros__ubuntu_focal_amd64/)
+  - ROS2 Galactic: [![Build Status](http://build.ros2.org/buildStatus/icon?job=Gdev__mavros__ubuntu_focal_amd64)](http://build.ros2.org/job/Gdev__mavros__ubuntu_focal_amd64/)
+  - ROS2 Rolling: [![Build Status](http://build.ros2.org/buildStatus/icon?job=Rdev__mavros__ubuntu_focal_amd64)](http://build.ros2.org/job/Rdev__mavros__ubuntu_focal_amd64/)
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
