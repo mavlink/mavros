@@ -14,13 +14,11 @@
  * @{
  */
 
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2_eigen/tf2_eigen.h>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -81,7 +79,7 @@ public:
     node_declate_and_watch_parameter(
       "count", 2, [&](const rclcpp::Parameter & p) {
         int count_ = p.as_int();
-        count = std::max(2, count_); // bound check
+        count = std::max(2, count_);    // bound check
       });
 
     node_declate_and_watch_parameter(
@@ -164,7 +162,7 @@ public:
         wheel_offset.resize(2);
         wheel_radius.resize(2);
         wheel_offset[1].x() = wheel_offset[0].x();
-        wheel_offset[1].y() = wheel_offset[0].y() + 1.0;                                 // make separation non-zero to avoid div-by-zero
+        wheel_offset[1].y() = wheel_offset[0].y() + 1.0;  // make separation non-zero to avoid div-by-zero
         wheel_radius[1] = wheel_radius[0];
       }
 
@@ -204,7 +202,6 @@ public:
       // No-odometry warning
       RCLCPP_WARN(get_logger(), "WO: No odometry computations will be performed.");
     }
-
   }
 
   Subscriptions get_subscriptions() override
@@ -235,7 +232,7 @@ private:
   std::vector<Eigen::Vector2d> wheel_offset;       //!< wheel x,y offsets (m,NED)
   std::vector<double> wheel_radius;       //!< wheel radiuses (m)
 
-  bool twist_send;                      //!< send geometry_msgs/TwistWithCovarianceStamped instead of nav_msgs/Odometry
+  bool twist_send;                      //!< send TwistWithCovarianceStamped instead of Odometry
   bool tf_send;                         //!< send TF
   std::string frame_id;                 //!< origin frame for topic headers
   std::string child_frame_id;           //!< body-fixed frame for topic headers

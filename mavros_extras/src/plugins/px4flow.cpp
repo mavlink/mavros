@@ -1,3 +1,11 @@
+/*
+ * Copyright 2014 M.H.Kabir.
+ * Copyright 2016,2021 Vladimir Ermakov
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief PX4Flow plugin
  * @file px4flow.cpp
@@ -7,46 +15,45 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014 M.H.Kabir.
- * Copyright 2016 Vladimir Ermakov
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include <string>
 
-#include <mavros_msgs/OpticalFlowRad.h>
-#include <sensor_msgs/Temperature.h>
-#include <sensor_msgs/Range.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/optical_flow_rad.hpp"
+#include "sensor_msgs/msg/temperature.hpp"
+#include "sensor_msgs/msg/range.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief PX4 Optical Flow plugin
+ * @plugin px4flow
  *
  * This plugin can publish data from PX4Flow camera to ROS
  */
-class PX4FlowPlugin : public plugin::PluginBase
+class PX4FlowPlugin : public plugin::Plugin
 {
 public:
-  PX4FlowPlugin()
-  : PluginBase(),
-    flow_nh("~px4flow"),
+  PX4FlowPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "px4flow"),
     ranger_fov(0.0),
     ranger_min_range(0.3),
     ranger_max_range(5.0)
-  {}
-
-  void initialize(UAS & uas_) override
   {
-    PluginBase::initialize(uas_);
+    enable_node_watch_parameters();
 
-    flow_nh.param<std::string>("frame_id", frame_id, "px4flow");
+    node_declate_and_watch_parameter(
+      "frame_id", "px4flow", [&](const rclcpp::Parameter & p) {
+        frame_id = p.as_string();
+      });
 
     /**
      * @note Default rangefinder is Maxbotix HRLV-EZ4
@@ -54,16 +61,30 @@ public:
      * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
      * at 1 meter
      */
-    flow_nh.param("ranger_fov", ranger_fov, 0.119428926);
+    node_declate_and_watch_parameter(
+      "ranger_fov", 0.119428926, [&](const rclcpp::Parameter & p) {
+        ranger_fov = p.as_double();
+      });
 
-    flow_nh.param("ranger_min_range", ranger_min_range, 0.3);
-    flow_nh.param("ranger_max_range", ranger_max_range, 5.0);
+    node_declate_and_watch_parameter(
+      "ranger_min_range", 0.3, [&](const rclcpp::Parameter & p) {
+        ranger_min_range = p.as_double();
+      });
 
-    flow_rad_pub = flow_nh.advertise<mavros_msgs::OpticalFlowRad>("raw/optical_flow_rad", 10);
-    range_pub = flow_nh.advertise<sensor_msgs::Range>("ground_distance", 10);
-    temp_pub = flow_nh.advertise<sensor_msgs::Temperature>("temperature", 10);
+    node_declate_and_watch_parameter(
+      "ranger_max_range", 5.0, [&](const rclcpp::Parameter & p) {
+        ranger_max_range = p.as_double();
+      });
 
-    flow_rad_sub = flow_nh.subscribe("raw/send", 1, &PX4FlowPlugin::send_cb, this);
+    flow_rad_pub = node->create_publisher<mavros_msgs::msg::OpticalFlowRad>(
+      "~/raw/optical_flow_rad", 10);
+    range_pub = node->create_publisher<sensor_msgs::msg::Range>("~/ground_distance", 10);
+    temp_pub = node->create_publisher<sensor_msgs::msg::Temperature>("~/temperature", 10);
+
+    flow_rad_sub = node->create_subscription<mavros_msgs::msg::OpticalFlowRad>(
+      "~/raw/send", 1, std::bind(
+        &PX4FlowPlugin::send_cb, this,
+        _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -74,24 +95,23 @@ public:
   }
 
 private:
-  ros::NodeHandle flow_nh;
-
   std::string frame_id;
 
   double ranger_fov;
   double ranger_min_range;
   double ranger_max_range;
 
-  ros::Publisher flow_rad_pub;
-  ros::Publisher range_pub;
-  ros::Publisher temp_pub;
-  ros::Subscriber flow_rad_sub;
+  rclcpp::Publisher<mavros_msgs::msg::OpticalFlowRad>::SharedPtr flow_rad_pub;
+  rclcpp::Publisher<sensor_msgs::msg::Range>::SharedPtr range_pub;
+  rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr temp_pub;
+  rclcpp::Subscription<mavros_msgs::msg::OpticalFlowRad>::SharedPtr flow_rad_sub;
 
   void handle_optical_flow_rad(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::OPTICAL_FLOW_RAD & flow_rad)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::OPTICAL_FLOW_RAD & flow_rad,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto header = m_uas->synchronized_header(frame_id, flow_rad.time_usec);
+    auto header = uas->synchronized_header(frame_id, flow_rad.time_usec);
 
     /**
      * Raw message with axes mapped to ROS conventions and temp in degrees celsius.
@@ -110,32 +130,32 @@ private:
         flow_rad.integrated_ygyro,
         flow_rad.integrated_zgyro));
 
-    auto flow_rad_msg = boost::make_shared<mavros_msgs::OpticalFlowRad>();
+    auto flow_rad_msg = mavros_msgs::msg::OpticalFlowRad();
 
-    flow_rad_msg->header = header;
-    flow_rad_msg->integration_time_us = flow_rad.integration_time_us;
+    flow_rad_msg.header = header;
+    flow_rad_msg.integration_time_us = flow_rad.integration_time_us;
 
-    flow_rad_msg->integrated_x = int_xy.x();
-    flow_rad_msg->integrated_y = int_xy.y();
+    flow_rad_msg.integrated_x = int_xy.x();
+    flow_rad_msg.integrated_y = int_xy.y();
 
-    flow_rad_msg->integrated_xgyro = int_gyro.x();
-    flow_rad_msg->integrated_ygyro = int_gyro.y();
-    flow_rad_msg->integrated_zgyro = int_gyro.z();
+    flow_rad_msg.integrated_xgyro = int_gyro.x();
+    flow_rad_msg.integrated_ygyro = int_gyro.y();
+    flow_rad_msg.integrated_zgyro = int_gyro.z();
 
-    flow_rad_msg->temperature = flow_rad.temperature / 100.0f;                  // in degrees celsius
-    flow_rad_msg->time_delta_distance_us = flow_rad.time_delta_distance_us;
-    flow_rad_msg->distance = flow_rad.distance;
-    flow_rad_msg->quality = flow_rad.quality;
+    flow_rad_msg.temperature = flow_rad.temperature / 100.0f;   // in degrees celsius
+    flow_rad_msg.time_delta_distance_us = flow_rad.time_delta_distance_us;
+    flow_rad_msg.distance = flow_rad.distance;
+    flow_rad_msg.quality = flow_rad.quality;
 
-    flow_rad_pub.publish(flow_rad_msg);
+    flow_rad_pub->publish(flow_rad_msg);
 
     // Temperature
-    auto temp_msg = boost::make_shared<sensor_msgs::Temperature>();
+    auto temp_msg = sensor_msgs::msg::Temperature();
 
-    temp_msg->header = header;
-    temp_msg->temperature = flow_rad_msg->temperature;
+    temp_msg.header = header;
+    temp_msg.temperature = flow_rad_msg.temperature;
 
-    temp_pub.publish(temp_msg);
+    temp_pub->publish(temp_msg);
 
     // Rangefinder
     /**
@@ -146,20 +166,20 @@ private:
      * @todo: suggest modification on MAVLink OPTICAL_FLOW_RAD msg
      * which removes sonar data fields from it
      */
-    auto range_msg = boost::make_shared<sensor_msgs::Range>();
+    auto range_msg = sensor_msgs::msg::Range();
 
-    range_msg->header = header;
+    range_msg.header = header;
 
-    range_msg->radiation_type = sensor_msgs::Range::ULTRASOUND;
-    range_msg->field_of_view = ranger_fov;
-    range_msg->min_range = ranger_min_range;
-    range_msg->max_range = ranger_max_range;
-    range_msg->range = flow_rad.distance;
+    range_msg.radiation_type = sensor_msgs::msg::Range::ULTRASOUND;
+    range_msg.field_of_view = ranger_fov;
+    range_msg.min_range = ranger_min_range;
+    range_msg.max_range = ranger_max_range;
+    range_msg.range = flow_rad.distance;
 
-    range_pub.publish(range_msg);
+    range_pub->publish(range_msg);
   }
 
-  void send_cb(const mavros_msgs::OpticalFlowRad::ConstPtr msg)
+  void send_cb(const mavros_msgs::msg::OpticalFlowRad::SharedPtr msg)
   {
     mavlink::common::msg::OPTICAL_FLOW_RAD flow_rad_msg = {};
 
@@ -174,7 +194,7 @@ private:
         msg->integrated_ygyro,
         msg->integrated_zgyro));
 
-    flow_rad_msg.time_usec = msg->header.stamp.toNSec() / 1000;
+    flow_rad_msg.time_usec = get_time_usec(msg->header.stamp);
     flow_rad_msg.sensor_id = 0;
     flow_rad_msg.integration_time_us = msg->integration_time_us;
     flow_rad_msg.integrated_x = int_xy.x();
@@ -187,11 +207,11 @@ private:
     flow_rad_msg.time_delta_distance_us = msg->time_delta_distance_us;
     flow_rad_msg.distance = msg->distance;
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(flow_rad_msg);
+    uas->send_message(flow_rad_msg);
   }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::PX4FlowPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::PX4FlowPlugin)
