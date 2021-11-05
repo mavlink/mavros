@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014, 2018 Nuno Marques.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief VisionSpeedEstimate plugin
  * @file vision_speed.cpp
@@ -7,63 +14,43 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014, 2018 Nuno Marques.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/TwistWithCovarianceStamped.h>
-
-#include <geometry_msgs/Vector3Stamped.h>
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/vector3_stamped.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
+using namespace std::placeholders;      // NOLINT
+
 /**
  * @brief Vision speed estimate plugin
+ * @plugin vision_speed
  *
  * Send velocity estimation from various vision estimators
  * to FCU position and attitude estimators.
  */
-class VisionSpeedEstimatePlugin : public plugin::PluginBase
+class VisionSpeedEstimatePlugin : public plugin::Plugin
 {
 public:
-  VisionSpeedEstimatePlugin()
-  : PluginBase(),
-    sp_nh("~vision_speed"),
-    listen_twist(true),
-    twist_cov(true)
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit VisionSpeedEstimatePlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "vision_speed")
   {
-    PluginBase::initialize(uas_);
-
-    sp_nh.param("listen_twist", listen_twist, true);
-    sp_nh.param("twist_cov", twist_cov, true);
-
-    if (listen_twist) {
-      if (twist_cov) {
-        vision_twist_cov_sub = sp_nh.subscribe(
-          "speed_twist_cov", 10,
-          &VisionSpeedEstimatePlugin::twist_cov_cb, this);
-      } else {
-        vision_twist_sub = sp_nh.subscribe(
-          "speed_twist", 10, &VisionSpeedEstimatePlugin::twist_cb,
-          this);
-      }
-    } else {
-      vision_vector_sub = sp_nh.subscribe(
-        "speed_vector", 10, &VisionSpeedEstimatePlugin::vector_cb,
-        this);
-    }
+    vision_twist_cov_sub =
+      node->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+      "~/speed_twist_cov", 10,      std::bind(&VisionSpeedEstimatePlugin::twist_cov_cb, this, _1));
+    vision_twist_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
+      "~/speed_twist", 10,
+      std::bind(        &VisionSpeedEstimatePlugin::twist_cb,        this, _1));
+    vision_vector_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(
+      "~/speed_vector", 10, std::bind(        &VisionSpeedEstimatePlugin::vector_cb,        this, _1));
   }
 
   Subscriptions get_subscriptions() override
@@ -72,14 +59,10 @@ public:
   }
 
 private:
-  ros::NodeHandle sp_nh;
-
-  bool listen_twist;                            //!< If True, listen to Twist data topics
-  bool twist_cov;                               //!< If True, listen to TwistWithCovariance data topic
-
-  ros::Subscriber vision_twist_sub;             //!< Subscriber to geometry_msgs/TwistStamped msgs
-  ros::Subscriber vision_twist_cov_sub;         //!< Subscriber to geometry_msgs/TwistWithCovarianceStamped msgs
-  ros::Subscriber vision_vector_sub;            //!< Subscriber to geometry_msgs/Vector3Stamped msgs
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr vision_twist_sub;
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+    vision_twist_cov_sub;
+  rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr vision_vector_sub;
 
   /* -*- low-level send -*- */
   /**
@@ -109,7 +92,7 @@ private:
 
     ftf::covariance_to_mavlink(cov, vs.covariance);
 
-    UAS_FCU(m_uas)->send_message_ignore_drop(vs);
+    uas->send_message(vs);
   }
 
   /* -*- mid-level helpers -*- */
@@ -121,12 +104,12 @@ private:
    * @param cov_enu	Linear velocity/speed in the ENU frame
    */
   void convert_vision_speed(
-    const ros::Time & stamp, const Eigen::Vector3d & vel_enu,
+    const rclcpp::Time & stamp, const Eigen::Vector3d & vel_enu,
     const ftf::Covariance3d & cov_enu)
   {
     // Send transformed data from local ENU to NED frame
     send_vision_speed_estimate(
-      stamp.toNSec() / 1000,
+      get_time_usec(stamp),
       ftf::transform_frame_enu_ned(vel_enu),
       ftf::transform_frame_enu_ned(cov_enu));
   }
@@ -137,7 +120,7 @@ private:
    *
    * @param req	received geometry_msgs/TwistStamped msg
    */
-  void twist_cb(const geometry_msgs::TwistStamped::ConstPtr & req)
+  void twist_cb(const geometry_msgs::msg::TwistStamped::SharedPtr req)
   {
     ftf::Covariance3d cov {};                   // zero initialized
 
@@ -149,7 +132,7 @@ private:
    *
    * @param req	received geometry_msgs/TwistWithCovarianceStamped msg
    */
-  void twist_cov_cb(const geometry_msgs::TwistWithCovarianceStamped::ConstPtr & req)
+  void twist_cov_cb(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr req)
   {
     ftf::Covariance3d cov3d {};                 // zero initialized
 
@@ -167,7 +150,7 @@ private:
    *
    * @param req	received geometry_msgs/Vector3Stamped msg
    */
-  void vector_cb(const geometry_msgs::Vector3Stamped::ConstPtr & req)
+  void vector_cb(const geometry_msgs::msg::Vector3Stamped::SharedPtr req)
   {
     ftf::Covariance3d cov {};                   // zero initialized
 
@@ -177,5 +160,5 @@ private:
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::VisionSpeedEstimatePlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::VisionSpeedEstimatePlugin)
