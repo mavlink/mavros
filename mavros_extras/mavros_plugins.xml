@@ -149,6 +149,10 @@ send back to the FCU a corrected path (collision free, smoothed)
 
 @see trajectory_cb()</description>
   </class>
+  <class name="tunnel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TunnelPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Tunnel plugin
+@plugin tunnel</description>
+  </class>
   <class name="vfr_hud" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VfrHudPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief VFR HUD plugin.
 @plugin vfr_hud</description>
@@ -181,4 +185,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 292bc38030ff7a63b67d4f96b943d7e9) -->
+<!-- [[[end]]] (checksum: 705f15796627d5706ebf831ef865e1a9) -->

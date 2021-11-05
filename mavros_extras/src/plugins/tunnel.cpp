@@ -1,69 +1,96 @@
+/*
+ * Copyright 2021 Morten Fyhn Amundsen <morten.fyhn.amundsen@gmail.com>
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
+/**
+ * @brief Tunnel plugin
+ * @file tunnel.cpp
+ * @author Morten Fyhn Amundsen <morten.fyhn.amundsen@gmail.com>
+ *
+ * @addtogroup plugin
+ * @{
+ */
+
 #include <algorithm>
-#include <mavros/mavros_plugin.h>
-#include <mavros_msgs/Tunnel.h>
 #include <stdexcept>
+
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
+
+#include "mavros_msgs/msg/tunnel.hpp"
 
 namespace mavros
 {
 namespace extra_plugins
 {
-class TunnelPlugin : public plugin::PluginBase
+using namespace std::placeholders;      // NOLINT
+
+/**
+ * @brief Tunnel plugin
+ * @plugin tunnel
+ */
+class TunnelPlugin : public plugin::Plugin
 {
 public:
-  TunnelPlugin()
-  : PluginBase(), nh_("~tunnel") {}
-
-  void initialize(UAS & uas_) override
+  TunnelPlugin(plugin::UASPtr uas_)
+  : PluginBase(uas_, "tunnel")
   {
-    PluginBase::initialize(uas_);
-    sub_ = nh_.subscribe("in", 10, &TunnelPlugin::ros_callback, this);
-    pub_ = nh_.advertise<mavros_msgs::Tunnel>("out", 10);
+    sub_ =
+      node->create_subscription<mavros_msgs::msg::Tunnel>(
+      "~/in", 10,
+      std::bind(&TunnelPlugin::ros_callback, this, _1));
+    pub_ = node->create_publisher<mavros_msgs::msg::Tunnel>("~/out", 10);
   }
 
   Subscriptions get_subscriptions() override
   {
-    return {make_handler(&TunnelPlugin::mav_callback)};
+    return {
+      make_handler(&TunnelPlugin::mav_callback),
+    };
   }
 
 private:
-  ros::NodeHandle nh_;
-  ros::Subscriber sub_;
-  ros::Publisher pub_;
+  rclcpp::Subscription<mavros_msgs::msg::Tunnel>::SharedPtr sub_;
+  rclcpp::Publisher<mavros_msgs::msg::Tunnel>::SharedPtr pub_;
 
-  void ros_callback(const mavros_msgs::Tunnel::ConstPtr & ros_tunnel)
+  void ros_callback(const mavros_msgs::msg::Tunnel::SharedPtr ros_tunnel)
   {
     try {
       const auto mav_tunnel =
-        copy_tunnel<mavros_msgs::Tunnel, mavlink::common::msg::TUNNEL>(
+        copy_tunnel<mavros_msgs::msg::Tunnel, mavlink::common::msg::TUNNEL>(
         *ros_tunnel);
 
-      UAS_FCU(m_uas)->send_message_ignore_drop(mav_tunnel);
-    } catch (const std::overflow_error & e) {
-      ROS_ERROR_STREAM_NAMED("tunnel", e.what());
+      uas->send_message(mav_tunnel);
+    } catch (std::overflow_error & ex) {
+      RCLCPP_ERROR_STREAM(get_logger(), "in error: " << ex);
     }
   }
 
   void mav_callback(
-    const mavlink::mavlink_message_t *,
-    mavlink::common::msg::TUNNEL & mav_tunnel)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::TUNNEL & mav_tunnel,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     try {
       const auto ros_tunnel =
         copy_tunnel<mavlink::common::msg::TUNNEL, mavros_msgs::Tunnel>(
         mav_tunnel);
 
-      pub_.publish(ros_tunnel);
-    } catch (const std::overflow_error & e) {
-      ROS_ERROR_STREAM_NAMED("tunnel", e.what());
+      pub_->publish(ros_tunnel);
+    } catch (std::overflow_error & ex) {
+      RCLCPP_ERROR_STREAM(get_logger(), "out error: " << ex);
     }
   }
 
   template<typename From, typename To>
   static To copy_tunnel(const From & from) noexcept(false)
   {
-    static constexpr auto max_payload_length =
-      sizeof(mavlink::common::msg::TUNNEL::payload) /
-      sizeof(mavlink::common::msg::TUNNEL::payload[0]);
+    static constexpr auto max_payload_length = mavlink::common::msg::TUNNEL().payload.max_size();
 
     if (from.payload_length > max_payload_length) {
       throw std::overflow_error("too long payload length");
@@ -86,7 +113,5 @@ private:
 }  // namespace extra_plugins
 }  // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(
-  mavros::extra_plugins::TunnelPlugin,
-  mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::TunnelPlugin)

@@ -99,7 +99,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
   src/plugins/trajectory.cpp
-  #src/plugins/tunnel.cpp
+  src/plugins/tunnel.cpp
   src/plugins/vfr_hud.cpp
   src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp
