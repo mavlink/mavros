@@ -14,6 +14,8 @@
  * @{
  */
 
+#include <algorithm>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"

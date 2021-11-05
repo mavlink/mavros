@@ -36,7 +36,7 @@ using namespace std::placeholders;      // NOLINT
 class PlayTunePlugin : public plugin::Plugin
 {
 public:
-  PlayTunePlugin(plugin::UASPtr uas_)
+  explicit PlayTunePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "play_tune")
   {
     sub =
