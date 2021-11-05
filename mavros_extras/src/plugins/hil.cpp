@@ -47,6 +47,7 @@ static constexpr double PASCAL_TO_MILLIBAR = 1.0e-2;
 
 /**
  * @brief Hil plugin
+ * @plugin hil
  */
 class HilPlugin : public plugin::Plugin
 {

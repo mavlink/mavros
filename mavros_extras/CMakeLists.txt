@@ -68,7 +68,7 @@ endif()
 # [[[cog:
 # import mavros_cog
 # ]]]
-# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+# [[[end]]]
 
 add_library(mavros_extras_plugins SHARED
   # [[[cog:
@@ -83,9 +83,9 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/esc_status.cpp
   src/plugins/esc_telemetry.cpp
   #src/plugins/fake_gps.cpp
+  src/plugins/gps_input.cpp
   src/plugins/gps_rtk.cpp
   src/plugins/gps_status.cpp
-  src/plugins/gps_input.cpp
   src/plugins/hil.cpp
   src/plugins/landing_target.cpp
   src/plugins/log_transfer.cpp
@@ -98,8 +98,8 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
-  #src/plugins/safety_area.cpp
   src/plugins/trajectory.cpp
+  #src/plugins/tunnel.cpp
   src/plugins/vfr_hud.cpp
   src/plugins/vibration.cpp
   src/plugins/vision_pose_estimate.cpp

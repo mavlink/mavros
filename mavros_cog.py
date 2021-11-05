@@ -24,7 +24,7 @@ from comment_parser import comment_parser
 
 CPP_MIME = 'text/x-c++'
 REGISTER_PLUGIN_RE = re.compile(
-    r'MAVROS_PLUGIN_REGISTER\((?P<klass>[a-zA-Z_\:]+)\)')
+    r'MAVROS_PLUGIN_REGISTER\((?P<klass>[a-zA-Z0-9_\:]+)\)')
 PLUGIN_NAME_RE = re.compile(r'@plugin\ (?P<name>[a-z_]+)')
 PLUGIN_BRIEF_RE = re.compile(r'^@brief\ (?P<brief>.+)$')
 
@@ -131,6 +131,8 @@ def load_all_plugin_infos(dir: pathlib.Path) -> typing.Iterator[PluginInfo]:
                 yield PluginInfo.parse_file(fl)
         except NoPluginRegister as ex:
             dbg(f"skipping file: {ex}")
+        except Exception as ex:
+            dbg(f"failed to load file {fl}: {ex}")
 
 
 def et_to_str(root: ET.Element) -> str:
