@@ -42,7 +42,8 @@ using Matrix6d = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>;
  * Sends odometry data to the FCU estimator and
  * publishes odometry data that comes from FCU.
  *
- * This plugin is following ROS REP 147. Pose is expressed in parent frame. (Quaternion rotates from child to parent)
+ * This plugin is following ROS REP 147. Pose is expressed in parent frame.
+ * (Quaternion rotates from child to parent)
  * The twist is expressed in the child frame.
  *
  * @see odom_cb()	transforming and sending odometry to fcu
@@ -108,7 +109,7 @@ private:
       // transform lookup at current time.
       tf_source2target = tf2::transformToEigen(
         uas->tf2_buffer.lookupTransform(
-          target, source, ros::Time(0)));
+          target, source, rclcpp::Time(0)));
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1, "ODOM: Ex: %s", ex.what());
       return;
@@ -160,7 +161,7 @@ private:
 
     auto odom = nav_msgs::msg::Odometry();
 
-    odom.header = m_uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
+    odom.header = uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
     odom.child_frame_id = fcu_odom_child_id_des;
 
     /**
@@ -170,7 +171,7 @@ private:
       Eigen::Vector3d(
       tf_parent2parent_des.linear() *
       Eigen::Vector3d(odom_msg.x, odom_msg.y, odom_msg.z));
-    tf2::toMsg(position, odom.pose.pose.position);
+    odom.pose.pose.position = tf2::toMsg(position);
 
     /**
      * Orientation parsing. Quaternion has to be the rotation from desired child frame to desired parent frame
@@ -193,8 +194,8 @@ private:
       Eigen::Vector3d(
       tf_child2child_des.linear() *
       Eigen::Vector3d(odom_msg.rollspeed, odom_msg.pitchspeed, odom_msg.yawspeed));
-    tf::toMsg(lin_vel, odom->twist.twist.linear);
-    tf::toMsg(ang_vel, odom->twist.twist.angular);
+    tf2::toMsg(lin_vel, odom.twist.twist.linear);
+    tf2::toMsg(ang_vel, odom.twist.twist.angular);
 
     /**
      * Covariances parsing
@@ -202,12 +203,12 @@ private:
     //! Transform pose covariance matrix
     r_pose.block<3, 3>(0, 0) = r_pose.block<3, 3>(3, 3) = tf_parent2parent_des.linear();
     cov_pose = r_pose * cov_pose * r_pose.transpose();
-    Eigen::Map<Matrix6d>(odom->pose.covariance.data(), cov_pose.rows(), cov_pose.cols()) = cov_pose;
+    Eigen::Map<Matrix6d>(odom.pose.covariance.data(), cov_pose.rows(), cov_pose.cols()) = cov_pose;
 
     //! Transform twist covariance matrix
     r_vel.block<3, 3>(0, 0) = r_vel.block<3, 3>(3, 3) = tf_child2child_des.linear();
     cov_vel = r_vel * cov_vel * r_vel.transpose();
-    Eigen::Map<Matrix6d>(odom->twist.covariance.data(), cov_vel.rows(), cov_vel.cols()) = cov_vel;
+    Eigen::Map<Matrix6d>(odom.twist.covariance.data(), cov_vel.rows(), cov_vel.cols()) = cov_vel;
 
     //! Publish the data
     odom_pub->publish(odom);
@@ -223,7 +224,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#ODOMETRY
    * @param req	received Odometry msg
    */
-  void odom_cb(const nav_msgs::Odometry::SharedPtr odom)
+  void odom_cb(const nav_msgs::msg::Odometry::SharedPtr odom)
   {
     /**
      * Required affine rotations to apply transforms
@@ -286,8 +287,10 @@ private:
     cov_vel_map = r_vel * cov_vel_map * r_vel.transpose();
 
     RCLCPP_DEBUG_STREAM(
+      get_logger(),
       "ODOM: output: pose covariance matrix:" << std::endl << cov_pose_map);
     RCLCPP_DEBUG_STREAM(
+      get_logger(),
       "ODOM: output: velocity covariance matrix:" << std::endl << cov_vel_map);
 
     /* -*- ODOMETRY msg parser -*- */
