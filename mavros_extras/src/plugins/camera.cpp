@@ -67,15 +67,18 @@ private:
 	 */
 	void handle_camera_image_captured(const mavlink::mavlink_message_t *msg, mavlink::common::msg::CAMERA_IMAGE_CAPTURED &mo)
 	{
-		mavros_msgs::CameraImageCaptured image_captured_msg;
-		image_captured_msg.header.stamp = ros::Time::now();
-		image_captured_msg.latitude = mo.lat;
-		image_captured_msg.longitude = mo.lon;
-		image_captured_msg.altitude = mo.alt;
-		image_captured_msg.relative_alt = mo.relative_alt;
-		image_captured_msg.file_url = std::string(std::begin(mo.file_url), std::end(mo.file_url));
+		auto ic = boost::make_shared<mavros_msgs::CameraImageCaptured>();
 
-		camera_image_captured_pub.publish(image_captured_msg);
+		ic->header.stamp = m_uas->synchronise_stamp(mo.time_boot_ms);
+		ic->geo.latitude = mo.lat/ 1E7;
+		ic->geo.longitude = mo.lon / 1E7;		// deg
+		ic->geo.altitude = mo.alt / 1E3 + m_uas->geoid_to_ellipsoid_height(&ic->geo);	// in meters
+		ic->relative_alt = mo.relative_alt;
+		auto q = ftf::mavlink_to_quaternion(mo.q);
+		tf::quaternionEigenToMsg(q, ic->orientation);
+		ic->file_url = mavlink::to_string(mo.file_url);
+
+		camera_image_captured_pub.publish(ic);
 	}
 
 };
