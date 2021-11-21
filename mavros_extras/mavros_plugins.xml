@@ -6,6 +6,9 @@
   <class name="cam_imu_sync" type="mavros::extra_plugins::CamIMUSyncPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Publish camera trigger data for synchronisation of IMU and camera frames.</description>
   </class>
+  <class name="camera" type="mavros::extra_plugins::CameraPlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Plugin for the mavlink camera protocol.</description>
+  </class>
   <class name="companion_process_status" type="mavros::extra_plugins::CompanionProcessStatusPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Send companion process status report to the FCU.</description>
   </class>
