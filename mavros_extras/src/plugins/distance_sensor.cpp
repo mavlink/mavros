@@ -45,7 +45,7 @@ public:
 		data_index(0),
 		horizontal_fov_ratio(1.0),
 		vertical_fov_ratio(1.0),
-		quaternion()
+		quaternion(0.f, 0.f, 0.f, 0.f)
 	{ }
 
 	// params
