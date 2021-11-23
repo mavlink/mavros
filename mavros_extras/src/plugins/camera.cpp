@@ -1,6 +1,6 @@
 /**
- * @brief Mouny Control plugin
- * @file mount_control.cpp
+ * @brief Camera plugin
+ * @file camera.cpp
  * @author Jaeyoung Lim <jalim@ethz.ch>
  *
  * @addtogroup plugin
@@ -73,7 +73,7 @@ private:
 		ic->geo.latitude = mo.lat/ 1E7;
 		ic->geo.longitude = mo.lon / 1E7;		// deg
 		ic->geo.altitude = mo.alt / 1E3 + m_uas->geoid_to_ellipsoid_height(&ic->geo);	// in meters
-		ic->relative_alt = mo.relative_alt;
+		ic->relative_alt = mo.relative_alt / 1E3;
 		auto q = ftf::mavlink_to_quaternion(mo.q);
 		tf::quaternionEigenToMsg(q, ic->orientation);
 		ic->file_url = mavlink::to_string(mo.file_url);
