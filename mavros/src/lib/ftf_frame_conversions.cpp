@@ -134,7 +134,7 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
 
 	default:
 		ROS_FATAL("unsupported StaticTF mode");
-		return q;
+		return cov;
 	}
 }
 
