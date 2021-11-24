@@ -440,7 +440,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		ros::Duration conn_heartbeat;
+		ros::WallDuration conn_heartbeat;
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
@@ -453,7 +453,7 @@ public:
 
 		// heartbeat rate parameter
 		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d) && conn_heartbeat_d != 0.0) {
-			conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
+			conn_heartbeat = ros::WallDuration(ros::Rate(conn_heartbeat_d));
 		}
 
 		// heartbeat mav type parameter
@@ -472,18 +472,18 @@ public:
 
 
 		// one-shot timeout timer
-		timeout_timer = nh.createTimer(ros::Duration(conn_timeout_d),
+		timeout_timer = nh.createWallTimer(ros::WallDuration(conn_timeout_d),
 				&SystemStatusPlugin::timeout_cb, this, true);
 		//timeout_timer.start();
 
 		if (!conn_heartbeat.isZero()) {
-			heartbeat_timer = nh.createTimer(conn_heartbeat,
+			heartbeat_timer = nh.createWallTimer(conn_heartbeat,
 					&SystemStatusPlugin::heartbeat_cb, this);
 			//heartbeat_timer.start();
 		}
 
 		// version request timer
-		autopilot_version_timer = nh.createTimer(ros::Duration(1.0),
+		autopilot_version_timer = nh.createWallTimer(ros::WallDuration(1.0),
 				&SystemStatusPlugin::autopilot_version_cb, this);
 		autopilot_version_timer.stop();
 
@@ -527,9 +527,9 @@ private:
 	HwStatus hwst_diag;
 	SystemStatusDiag sys_diag;
 	BatteryStatusDiag batt_diag;
-	ros::Timer timeout_timer;
-	ros::Timer heartbeat_timer;
-	ros::Timer autopilot_version_timer;
+	ros::WallTimer timeout_timer;
+	ros::WallTimer heartbeat_timer;
+	ros::WallTimer autopilot_version_timer;
 
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;

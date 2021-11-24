@@ -159,15 +159,15 @@ public:
 		double conn_timesync_d;
 		std::string ts_mode_str;
 
-		ros::Duration conn_system_time;
-		ros::Duration conn_timesync;
+		ros::WallDuration conn_system_time;
+		ros::WallDuration conn_timesync;
 
 		if (nh.getParam("conn/system_time_rate", conn_system_time_d) && conn_system_time_d != 0.0) {
-			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
+			conn_system_time = ros::WallDuration(ros::Rate(conn_system_time_d));
 		}
 
 		if (nh.getParam("conn/timesync_rate", conn_timesync_d) && conn_timesync_d != 0.0) {
-			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
+			conn_timesync = ros::WallDuration(ros::Rate(conn_timesync_d));
 		}
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
@@ -230,7 +230,7 @@ public:
 
 		// timer for sending system time messages
 		if (!conn_system_time.isZero()) {
-			sys_time_timer = nh.createTimer(conn_system_time,
+			sys_time_timer = nh.createWallTimer(conn_system_time,
 						&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
@@ -240,7 +240,7 @@ public:
 			// enable timesync diag only if that feature enabled
 			UAS_DIAG(m_uas).add(dt_diag);
 
-			timesync_timer = nh.createTimer(conn_timesync,
+			timesync_timer = nh.createWallTimer(conn_timesync,
 						&SystemTimePlugin::timesync_cb, this);
 			timesync_timer.start();
 		}
@@ -260,8 +260,8 @@ private:
 	ros::Publisher time_ref_pub;
 	ros::Publisher timesync_status_pub;
 
-	ros::Timer sys_time_timer;
-	ros::Timer timesync_timer;
+	ros::WallTimer sys_time_timer;
+	ros::WallTimer timesync_timer;
 
 	TimeSyncStatus dt_diag;
 
