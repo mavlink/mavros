@@ -185,7 +185,7 @@ private:
     }
 
     Eigen::Vector3d position, velocity, af;
-    Eigen::Quaterniond attitude;
+    Eigen::Quaterniond attitude = Eigen::Quaterniond::Identity();
     float yaw_rate = 0;
     uint16_t type_mask = 0;
 

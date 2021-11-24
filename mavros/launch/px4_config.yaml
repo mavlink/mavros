@@ -265,4 +265,8 @@ wheel_odometry:
     frame_id: "odom"
     child_frame_id: "base_link"
 
+# camera
+camera:
+  frame_id: "base_link"
+
 # vim:set ts=2 sw=2 et:

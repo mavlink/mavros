@@ -48,7 +48,7 @@ public:
     data_index(0),
     horizontal_fov_ratio(1.0),
     vertical_fov_ratio(1.0),
-    quaternion()
+    quaternion(Eigen::Quaternionf::Identity())
   {}
 
   // params
@@ -61,7 +61,7 @@ public:
   int covariance;               //!< in centimeters, current specification
   std::string frame_id;         //!< frame id for send
   double horizontal_fov_ratio;                  //!< horizontal fov ratio for ROS messages
-  double vertical_fov_ratio;            //!< vertical fov ratio for ROS messages
+  double vertical_fov_ratio;                    //!< vertical fov ratio for ROS messages
   Eigen::Quaternionf quaternion;                //!< sensor orientation in vehicle body frame for MAV_SENSOR_ROTATION_CUSTOM
 
   // topic handle

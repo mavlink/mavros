@@ -68,7 +68,7 @@ endif()
 # [[[cog:
 # import mavros_cog
 # ]]]
-# [[[end]]]
+# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
 add_library(mavros_extras_plugins SHARED
   # [[[cog:
@@ -77,6 +77,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/3dr_radio.cpp
   src/plugins/adsb.cpp
   src/plugins/cam_imu_sync.cpp
+  #src/plugins/camera.cpp
   src/plugins/companion_process_status.cpp
   src/plugins/debug_value.cpp
   #src/plugins/distance_sensor.cpp

@@ -40,6 +40,15 @@ Publishes the status of components running on the companion computer
 
 APM specific plugin.</description>
   </class>
+  <class name="fake_gps" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::FakeGPSPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Fake GPS plugin.
+@plugin fake_gps
+
+Sends fake GPS from local position estimation source data (motion capture,
+vision) to FCU - processed in HIL mode or out of it if parameter MAV_USEHILGPS
+is set on PX4 Pro Autopilot Firmware; Ardupilot Firmware already supports it
+without a flag set.</description>
+  </class>
   <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS_INPUT GPS plugin.
 @plugin gps_input
@@ -185,4 +194,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 705f15796627d5706ebf831ef865e1a9) -->
+<!-- [[[end]]] (checksum: 9c454df4f8d7012ebb1bbc7994a694da) -->
