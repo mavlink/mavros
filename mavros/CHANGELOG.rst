@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.1 (2021-11-24)
+-------------------
 * lib: fix build
 * Contributors: Vladimir Ermakov
 
