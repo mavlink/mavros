@@ -97,7 +97,7 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 
 	// NOTE(vooon): to hide that warning:
 	// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
-	uint64_t *payload64 = &mmsg.payload64[0];
+	const uint64_t *payload64 = &mmsg.payload64[0];
 
 	// [[[cog:
 	// for f in FIELD_NAMES:
