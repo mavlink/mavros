@@ -39,7 +39,14 @@ constexpr auto version = "unknown";
 #define MAVLINK_START_SIGN_STREAM(link_id)
 #define MAVLINK_END_SIGN_STREAM(link_id)
 
+// NOTE(vooon): ignore warning
+// warning: ISO C++ prohibits anonymous structs
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 @[for dialect in MAVLINK_V20_DIALECTS]#include <mavlink/v2.0/@(dialect)/@(dialect).hpp>
 @[end for]
+
+#pragma GCC diagnostic pop
 
 #endif  // MAVCONN__MAVLINK_DIALECT_HPP_
