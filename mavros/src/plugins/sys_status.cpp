@@ -981,12 +981,12 @@ private:
 
 	/* -*- timer callbacks -*- */
 
-	void timeout_cb(const ros::TimerEvent &event)
+	void timeout_cb(const ros::WallTimerEvent &event)
 	{
 		m_uas->update_connection_status(false);
 	}
 
-	void heartbeat_cb(const ros::TimerEvent &event)
+	void heartbeat_cb(const ros::WallTimerEvent &event)
 	{
 		using mavlink::common::MAV_MODE;
 
@@ -1001,7 +1001,7 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(hb);
 	}
 
-	void autopilot_version_cb(const ros::TimerEvent &event)
+	void autopilot_version_cb(const ros::WallTimerEvent &event)
 	{
 		using mavlink::common::MAV_CMD;
 

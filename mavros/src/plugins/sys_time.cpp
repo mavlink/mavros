@@ -336,7 +336,7 @@ private:
 		}
 	}
 
-	void sys_time_cb(const ros::TimerEvent &event)
+	void sys_time_cb(const ros::WallTimerEvent &event)
 	{
 		// For filesystem only
 		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;	// nano -> micro
@@ -347,7 +347,7 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(mtime);
 	}
 
-	void timesync_cb(const ros::TimerEvent &event)
+	void timesync_cb(const ros::WallTimerEvent &event)
 	{
 		auto ts_mode = m_uas->get_timesync_mode();
 		if (ts_mode == TSM::MAVLINK) {
