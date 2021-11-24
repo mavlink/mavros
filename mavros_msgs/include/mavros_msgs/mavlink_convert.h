@@ -37,6 +37,13 @@ using ::mavlink::mavlink_message_t;
 // ]]]
 // [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
+// NOTE(vooon): Ignore impossible warning as
+// memcpy() should work with unaligned pointers without any trouble.
+//
+// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 /**
  * @brief Convert mavros_msgs/Mavlink message to mavlink_message_t
  *
@@ -57,10 +64,6 @@ inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink_message_t &mmsg)
 		return false;
 	}
 
-	// NOTE(vooon): to hide that warning:
-	// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
-	uint64_t *payload64 = &mmsg.payload64[0];
-
 	// [[[cog:
 	// for f in FIELD_NAMES:
 	//     cog.outl("mmsg.%s = rmsg.%s;" % (f, f))
@@ -75,7 +78,7 @@ inline bool convert(const mavros_msgs::Mavlink &rmsg, mavlink_message_t &mmsg)
 	mmsg.msgid = rmsg.msgid;
 	mmsg.checksum = rmsg.checksum;
 	// [[[end]]] (checksum: 2ef42a7798f261bfd367bf4157b11ec0)
-	std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), payload64);
+	std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64);
 	std::copy(rmsg.signature.begin(), rmsg.signature.end(), mmsg.signature);
 
 	return true;
@@ -95,10 +98,6 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 
 	rmsg.framing_status = framing_status;
 
-	// NOTE(vooon): to hide that warning:
-	// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
-	const uint64_t *payload64 = &mmsg.payload64[0];
-
 	// [[[cog:
 	// for f in FIELD_NAMES:
 	//     cog.outl("rmsg.%s = mmsg.%s;" % (f, f))
@@ -113,7 +112,7 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 	rmsg.msgid = mmsg.msgid;
 	rmsg.checksum = mmsg.checksum;
 	// [[[end]]] (checksum: 4f0a50d2fcd7eb8823aea3e0806cd698)
-	rmsg.payload64 = mavros_msgs::Mavlink::_payload64_type(payload64, payload64 + payload64_len);
+	rmsg.payload64 = mavros_msgs::Mavlink::_payload64_type(mmsg.payload64, mmsg.payload64 + payload64_len);
 
 	// copy signature block only if message is signed
 	if (mmsg.incompat_flags & MAVLINK_IFLAG_SIGNED)
@@ -123,6 +122,8 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 
 	return true;
 }
+
+#pragma GCC diagnostic pop
 
 }	// namespace mavlink
 }	// namespace mavros_msgs
