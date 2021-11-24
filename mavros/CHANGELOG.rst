@@ -2,6 +2,11 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: fix build
+* Contributors: Vladimir Ermakov
+
 1.11.0 (2021-11-24)
 -------------------
 * lib: fix ftf warnings
