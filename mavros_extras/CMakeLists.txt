@@ -31,6 +31,8 @@ find_package(libmavconn REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GEOGRAPHICLIB REQUIRED)
+# find_package(yaml_cpp REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 find_package(angles REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -84,7 +86,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/camera.cpp
   src/plugins/companion_process_status.cpp
   src/plugins/debug_value.cpp
-  #src/plugins/distance_sensor.cpp
+  src/plugins/distance_sensor.cpp
   src/plugins/esc_status.cpp
   src/plugins/esc_telemetry.cpp
   src/plugins/fake_gps.cpp
@@ -110,7 +112,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]]
+  # [[[end]]] (checksum: 044490889b58024360d4756d2d5787f6)
 )
 ament_target_dependencies(mavros_extras_plugins
   angles

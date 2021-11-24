@@ -37,6 +37,13 @@ Publishes the status of components running on the companion computer
     <description>@brief Plugin for Debug msgs from MAVLink API
 @plugin debug_value</description>
   </class>
+  <class name="distance_sensor" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DistanceSensorPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Distance sensor plugin
+@plugin distance_sensor
+
+This plugin allows publishing distance sensor data, which is connected to
+an offboard/companion computer through USB/Serial, to the FCU or vice-versa.</description>
+  </class>
   <class name="esc_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ESC status plugin
 @plugin esc_status</description>
@@ -201,4 +208,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 7904f585bd9aa6cd5a1f185b88657ecb) -->
+<!-- [[[end]]] (checksum: a4e8b653c77e85e699c78acc4064e744) -->

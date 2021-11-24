@@ -163,7 +163,7 @@ private:
 
     if (req->start_index) {
       // Partial update not supported for geofence points
-      RCLCPP_WARN(get_logger(), "%s: Partial update for fence points not supported");
+      RCLCPP_WARN(get_logger(), "%s: Partial update for fence points not supported", log_prefix);
       res->success = false;
       return;
     }
