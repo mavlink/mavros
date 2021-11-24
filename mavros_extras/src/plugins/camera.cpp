@@ -14,6 +14,8 @@
  * @{
  */
 
+#include <tf2_eigen/tf2_eigen.h>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -75,7 +77,7 @@ private:
     ic.header.stamp = uas->synchronise_stamp(mo.time_boot_ms);
     ic.geo.latitude = mo.lat / 1E7;
     ic.geo.longitude = mo.lon / 1E7;    // deg
-    ic.geo.altitude = mo.alt / 1E3 + uas->geoid_to_ellipsoid_height(&ic->geo);  // in meters
+    ic.geo.altitude = mo.alt / 1E3 + uas->data.geoid_to_ellipsoid_height(&ic.geo);  // in meters
     ic.relative_alt = mo.relative_alt / 1E3;
     ic.orientation = tf2::toMsg(ftf::mavlink_to_quaternion(mo.q));
     ic.file_url = mavlink::to_string(mo.file_url);
