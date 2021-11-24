@@ -42,7 +42,7 @@ public:
 
 		last_pos_time = ros::Time(0.0);
 		gps_input_nh.param("gps_rate", _gps_rate, 5.0);		// GPS data rate of 5hz
-		gps_rate : _gps_rate;
+		gps_rate = _gps_rate;
 
 		gps_input_sub = gps_input_nh.subscribe("gps_input", 1, &GpsInputPlugin::send_cb, this);
 	}

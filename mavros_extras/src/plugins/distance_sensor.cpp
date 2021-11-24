@@ -41,11 +41,11 @@ public:
 		field_of_view(0),
 		orientation(-1),
 		covariance(0),
-		owner(nullptr),
-		data_index(0),
 		horizontal_fov_ratio(1.0),
 		vertical_fov_ratio(1.0),
-		quaternion(0.f, 0.f, 0.f, 0.f)
+		quaternion(0.f, 0.f, 0.f, 0.f),
+		owner(nullptr),
+		data_index(0)
 	{ }
 
 	// params
