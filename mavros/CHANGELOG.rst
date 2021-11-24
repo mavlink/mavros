@@ -2,6 +2,24 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: fix ftf warnings
+* plugin: setpoint_raw: fix misprint
+* plugin: sys: fix compillation error
+* plugin: initialize quaternions with identity
+  Eigen::Quaternion[d|f] () does not initialize with zeroes or identity.
+  So we must initialize with identity vector objects that can be left
+  unassigned.
+  Related to `#1652 <https://github.com/mavlink/mavros/issues/1652>`_
+* plugin: sys: Use wall timers for connection management
+  Fixes `#1629 <https://github.com/mavlink/mavros/issues/1629>`_
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* Contributors: Jaeyoung-Lim, Vladimir Ermakov
+
 1.10.0 (2021-11-04)
 -------------------
 * Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown

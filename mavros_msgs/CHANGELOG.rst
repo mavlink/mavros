@@ -2,6 +2,19 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* msgs: use pragmas to ignore unaligned pointer warnings
+* msgs: fix convert const
+* msgs: try to hide 'unaligned pointer' warning
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Address review comments
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* msgs: add yaw field to GPS_INPUT
+* Contributors: Jaeyoung-Lim, Vladimir Ermakov
+
 1.10.0 (2021-11-04)
 -------------------
 * msgs: update gpsraw to have yaw field

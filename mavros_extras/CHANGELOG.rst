@@ -2,6 +2,29 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: landing_target: fix misprint
+* plugin: initialize quaternions with identity
+  Eigen::Quaternion[d|f] () does not initialize with zeroes or identity.
+  So we must initialize with identity vector objects that can be left
+  unassigned.
+  Related to `#1652 <https://github.com/mavlink/mavros/issues/1652>`_
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Merge pull request `#1652 <https://github.com/mavlink/mavros/issues/1652>`_ from scoutdi/avoid-uninit-orientation
+  distance_sensor: Initialize sensor orientation quaternion to zero
+* Use meters for relative altitude
+* distance_sensor: Initialize sensor orientation quaternion to zero
+  Without this, you'll get random garbage data for the quaternion field
+  of the DISTANCE_SENSOR MAVLink messages sent to the autopilot.
+  The quaternion field should be set to zero when unused, according to the
+  MAVLink message's field description.
+* Address review comments
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* Contributors: Jaeyoung-Lim, Morten Fyhn Amundsen, Vladimir Ermakov
+
 1.10.0 (2021-11-04)
 -------------------
 * Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin
