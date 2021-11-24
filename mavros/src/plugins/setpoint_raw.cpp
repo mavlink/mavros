@@ -135,7 +135,7 @@ private:
 		// to aircraft -> NED
 		auto orientation = ftf::transform_orientation_ned_enu(
 					ftf::transform_orientation_baselink_aircraft(
-						Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3])));
+						ftf::mavlink_to_quaternion(tgt.q));
 
 		auto body_rate = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
 
