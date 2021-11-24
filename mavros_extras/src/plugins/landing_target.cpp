@@ -387,9 +387,7 @@ private:
         land_target.z));
     auto orientation = ftf::transform_orientation_aircraft_baselink(
       ftf::transform_orientation_ned_enu(
-        Eigen::Quaterniond(
-          land_target.q[0], land_target.q[1], land_target.q[2],
-          land_target.q[3])));
+        ftf::mavlink_to_quaternion(land_target.q)));
 
     auto rpy = ftf::quaternion_to_rpy(orientation);
 
