@@ -220,7 +220,7 @@ std::string waypoint_to_string(const ITEM &wp)
 {
 	std::stringstream ss;
 	ss.precision(7);
-	ss << '#' << wp.seq << (wp.current ? '*' : ' ') << " F:" << wp.frame << " C:" << std::setw(3) << wp.command;
+	ss << '#' << wp.seq << (wp.current ? '*' : ' ') << " F:" << +wp.frame << " C:" << std::setw(3) << wp.command;
 	ss << " p: " <<   wp.param1 << ' ' << wp.param2 << ' ' << wp.param3 << ' ' << wp.param4 << " x: " << wp.x << " y: " << wp.y << " z: " << wp.z;
 	return ss.str();
 }
