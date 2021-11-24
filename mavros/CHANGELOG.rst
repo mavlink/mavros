@@ -348,6 +348,11 @@ Changelog for package mavros
 * disable all packages but messages
 * Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
 
+1.11.1 (2021-11-24)
+-------------------
+* lib: fix build
+* Contributors: Vladimir Ermakov
+
 1.11.0 (2021-11-24)
 -------------------
 * lib: fix ftf warnings

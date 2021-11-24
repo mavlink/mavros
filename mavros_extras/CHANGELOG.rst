@@ -117,6 +117,9 @@ Changelog for package mavros_extras
 * extras: adsb: begin porting to ros2
 * Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Morten Fyhn Amundsen, Peter010103, Ricardo Marques, Russell, Vladimir Ermakov
 
+1.11.1 (2021-11-24)
+-------------------
+
 1.11.0 (2021-11-24)
 -------------------
 * extras: landing_target: fix misprint

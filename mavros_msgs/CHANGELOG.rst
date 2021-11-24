@@ -161,6 +161,9 @@ Changelog for package mavros_msgs
 * make mavro_msgs compile in ROS 2
 * Contributors: Mikael Arguedas, Mike Lautman, Vladimir Ermakov
 
+1.11.1 (2021-11-24)
+-------------------
+
 1.11.0 (2021-11-24)
 -------------------
 * msgs: use pragmas to ignore unaligned pointer warnings
