@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.0 (2021-11-24)
+-------------------
 * msgs: use pragmas to ignore unaligned pointer warnings
 * msgs: fix convert const
 * msgs: try to hide 'unaligned pointer' warning

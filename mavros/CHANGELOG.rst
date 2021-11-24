@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.0 (2021-11-24)
+-------------------
 * lib: fix ftf warnings
 * plugin: setpoint_raw: fix misprint
 * plugin: sys: fix compillation error
