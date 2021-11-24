@@ -19,6 +19,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <unordered_map>
+#include <shared_mutex>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"

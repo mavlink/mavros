@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(mavros)
 
-# Default to C++14
+# Default to C++20
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 20)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
@@ -13,7 +13,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcomment")
 
-# Allow GNU extensions (-std=gnu++14)
+# Allow GNU extensions (-std=gnu++20)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
