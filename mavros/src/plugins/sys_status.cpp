@@ -429,11 +429,11 @@ public:
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
 		batt_diag("Battery"),
+		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
 		has_battery_status(false),
-		battery_voltage(0.0),
-		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
+		battery_voltage(0.0)
 	{ }
 
 	void initialize(UAS &uas_) override

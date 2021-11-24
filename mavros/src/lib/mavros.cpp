@@ -33,10 +33,10 @@ using utils::enum_value;
 
 MavRos::MavRos() :
 	mavlink_nh("mavlink"),		// allow to namespace it
+	last_message_received_from_gcs(0),
 	fcu_link_diag("FCU connection"),
 	gcs_link_diag("GCS bridge"),
 	plugin_loader("mavros", "mavros::plugin::PluginBase"),
-	last_message_received_from_gcs(0),
 	plugin_subscriptions{}
 {
 	std::string fcu_url, gcs_url;

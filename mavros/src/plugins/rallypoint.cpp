@@ -31,7 +31,7 @@ public:
 	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
-		MissionBase::initialize(&rp_nh);
+		MissionBase::initialize_with_nodehandle(&rp_nh);
 
 		wp_state = WP::IDLE;
 		wp_type = plugin::WP_TYPE::RALLY;

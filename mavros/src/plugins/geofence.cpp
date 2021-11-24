@@ -31,7 +31,7 @@ public:
 	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
-		MissionBase::initialize(&gf_nh);
+		MissionBase::initialize_with_nodehandle(&gf_nh);
 
 		wp_state = WP::IDLE;
 		wp_type = plugin::WP_TYPE::FENCE;

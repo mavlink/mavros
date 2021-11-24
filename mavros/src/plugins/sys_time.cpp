@@ -33,12 +33,12 @@ class TimeSyncStatus : public diagnostic_updater::DiagnosticTask
 public:
 	TimeSyncStatus(const std::string &name, size_t win_size) :
 		diagnostic_updater::DiagnosticTask(name),
+		times_(win_size),
+		seq_nums_(win_size),
 		window_size_(win_size),
 		min_freq_(0.01),
 		max_freq_(10),
 		tolerance_(0.1),
-		times_(win_size),
-		seq_nums_(win_size),
 		last_rtt(0),
 		rtt_sum(0),
 		last_remote_ts(0),

@@ -43,8 +43,8 @@ public:
 	SetpointPositionPlugin() : PluginBase(),
 		sp_nh("~setpoint_position"),
 		spg_nh("~"),
-		tf_rate(50.0),
-		tf_listen(false)
+		tf_listen(false),
+		tf_rate(50.0)
 	{ }
 
 	void initialize(UAS &uas_) override
