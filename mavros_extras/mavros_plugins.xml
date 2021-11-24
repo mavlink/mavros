@@ -19,6 +19,13 @@ This plugin publishes a timestamp for when a external camera system was
 triggered by the FCU. Sequence ID from the message and the image sequence from
 camera can be corellated to get the exact shutter trigger time.</description>
   </class>
+  <class name="camera" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CameraPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Camera plugin plugin
+@plugin camera
+
+Plugin for interfacing on the mavlink camera protocol
+@see command_cb()</description>
+  </class>
   <class name="companion_process_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CompanionProcessStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Obstacle companion process status plugin
 @plugin companion_process_status
@@ -194,4 +201,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 9c454df4f8d7012ebb1bbc7994a694da) -->
+<!-- [[[end]]] (checksum: 7904f585bd9aa6cd5a1f185b88657ecb) -->

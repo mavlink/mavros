@@ -1,3 +1,10 @@
+/*
+ * Copyright 2021 Jaeyoung Lim.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief Camera plugin
  * @file camera.cpp
@@ -6,17 +13,13 @@
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2021 Jaeyoung Lim.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 
-#include <mavros/mavros_plugin.h>
+#include "rcpputils/asserts.hpp"
+#include "mavros/mavros_uas.hpp"
+#include "mavros/plugin.hpp"
+#include "mavros/plugin_filter.hpp"
 
-#include <mavros_msgs/CameraImageCaptured.h>
+#include "mavros_msgs/msg/camera_image_captured.hpp"
 
 namespace mavros
 {
@@ -29,25 +32,19 @@ using utils::enum_value;
 
 /**
  * @brief Camera plugin plugin
+ * @plugin camera
  *
  * Plugin for interfacing on the mavlink camera protocol
  * @see command_cb()
  */
-class CameraPlugin : public plugin::PluginBase
+class CameraPlugin : public plugin::Plugin
 {
 public:
-  CameraPlugin()
-  : PluginBase(),
-    nh("~"),
-    camera_nh("~camera")
-  {}
-
-  void initialize(UAS & uas_) override
+  explicit CameraPlugin(plugin::UASPtr uas_)
+  : Plugin(uas_, "camera")
   {
-    PluginBase::initialize(uas_);
-
-    camera_image_captured_pub = camera_nh.advertise<mavros_msgs::CameraImageCaptured>(
-      "image_captured", 10);
+    camera_image_captured_pub = node->create_publisher<mavros_msgs::msg::CameraImageCaptured>(
+      "~image_captured", 10);
 
   }
 
@@ -59,9 +56,7 @@ public:
   }
 
 private:
-  ros::NodeHandle nh;
-  ros::NodeHandle camera_nh;
-  ros::Publisher camera_image_captured_pub;
+  rclcpp::Publisher<mavros_msgs::msg::CameraImageCaptured>::SharedPtr camera_image_captured_pub;
 
   /**
    * @brief Publish camera image capture information
@@ -71,26 +66,25 @@ private:
    * @param mo	received CAMERA_IMAGE_CAPTURED msg
    */
   void handle_camera_image_captured(
-    const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::CAMERA_IMAGE_CAPTURED & mo)
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::CAMERA_IMAGE_CAPTURED & mo,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    auto ic = boost::make_shared<mavros_msgs::CameraImageCaptured>();
+    auto ic = mavros_msgs::msg::CameraImageCaptured();
 
-    ic->header.stamp = m_uas->synchronise_stamp(mo.time_boot_ms);
-    ic->geo.latitude = mo.lat / 1E7;
-    ic->geo.longitude = mo.lon / 1E7;                           // deg
-    ic->geo.altitude = mo.alt / 1E3 + m_uas->geoid_to_ellipsoid_height(&ic->geo);               // in meters
-    ic->relative_alt = mo.relative_alt / 1E3;
-    auto q = ftf::mavlink_to_quaternion(mo.q);
-    tf::quaternionEigenToMsg(q, ic->orientation);
-    ic->file_url = mavlink::to_string(mo.file_url);
+    ic.header.stamp = uas->synchronise_stamp(mo.time_boot_ms);
+    ic.geo.latitude = mo.lat / 1E7;
+    ic.geo.longitude = mo.lon / 1E7;    // deg
+    ic.geo.altitude = mo.alt / 1E3 + uas->geoid_to_ellipsoid_height(&ic->geo);  // in meters
+    ic.relative_alt = mo.relative_alt / 1E3;
+    ic.orientation = tf2::toMsg(ftf::mavlink_to_quaternion(mo.q));
+    ic.file_url = mavlink::to_string(mo.file_url);
 
-    camera_image_captured_pub.publish(ic);
+    camera_image_captured_pub->publish(ic);
   }
-
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::CameraPlugin, mavros::plugin::PluginBase)
+#include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::CameraPlugin)
