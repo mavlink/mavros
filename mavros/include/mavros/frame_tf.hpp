@@ -452,8 +452,8 @@ inline void covariance_urt_to_mavlink(const T & covmap, std::array<float, ARR_SI
 
   auto out = covmsg.begin();
 
-  for (size_t x = 0; x < m.cols(); x++) {
-    for (size_t y = x; y < m.rows(); y++) {
+  for (Eigen::Index x = 0; x < m.cols(); x++) {
+    for (Eigen::Index y = x; y < m.rows(); y++) {
       *out++ = m(y, x);
     }
   }

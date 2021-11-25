@@ -41,7 +41,7 @@ class DistanceSensorPlugin;
 /**
  * @brief Distance sensor mapping storage item
  */
-class DistanceSensorItem
+class DistanceSensorItem : public std::enable_shared_from_this<DistanceSensorItem>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -145,7 +145,6 @@ public:
       });
     node_declate_and_watch_parameter(
       "config", "", [&](const rclcpp::Parameter & p) {
-
         std::unique_lock lock(mutex);
 
         sensor_map.clear();
@@ -293,7 +292,7 @@ private:
 
     range.header = uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
-    range.min_range = dist_sen.min_distance * 1E-2;            // in meters
+    range.min_range = dist_sen.min_distance * 1E-2;     // in meters
     range.max_range = dist_sen.max_distance * 1E-2;
     range.field_of_view = sensor->field_of_view;
 
@@ -314,7 +313,7 @@ private:
         return;
     }
 
-    range.range = dist_sen.current_distance * 1E-2;                    // in meters
+    range.range = dist_sen.current_distance * 1E-2;     // in meters
 
     if (sensor->send_tf) {
       /* variables init */
@@ -370,7 +369,6 @@ DistanceSensorItem::DistanceSensorItem(
   is_subscriber = config["subscriber"].as<bool>(false);
 
   // sensor id
-  int id;
   if (auto idn = config["id"]; idn) {
     sensor_id = idn.as<int>();
   } else {
@@ -458,7 +456,7 @@ void DistanceSensorItem::range_cb(const Range::SharedPtr msg)
   if (covariance > 0) {
     covariance_ = covariance;
   } else {
-    covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);                // in cm
+    covariance_ = uint8_t(calculate_variance(msg->range) * 1E2);    // in cm
   }
 
   // current mapping, may change later

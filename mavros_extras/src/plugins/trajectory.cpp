@@ -397,7 +397,7 @@ private:
       tr_desired.point_valid[i] = true;
     }
 
-    for (int i = trajectory.valid_points; i < NUM_POINTS; ++i) {
+    for (size_t i = trajectory.valid_points; i < NUM_POINTS; ++i) {
       tr_desired.point_valid[i] = false;
     }
 

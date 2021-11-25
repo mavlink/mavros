@@ -48,12 +48,17 @@ class SetpointRawPlugin : public plugin::Plugin,
 {
 public:
   explicit SetpointRawPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "setpoint_raw")
+  : Plugin(uas_, "setpoint_raw"),
+    thrust_scaling(1.0)
   {
-    auto sensor_qos = rclcpp::SensorDataQoS();
+    enable_node_watch_parameters();
 
-    node->declare_parameter("thrust_scaling");
-    // node->declare_parameter("thrust_scaling", 1.0);
+    node_declate_and_watch_parameter(
+      "thrust_scaling", NAN, [&](const rclcpp::Parameter & p) {
+        thrust_scaling = p.as_double();
+      });
+
+    auto sensor_qos = rclcpp::SensorDataQoS();
 
     local_sub = node->create_subscription<mavros_msgs::msg::PositionTarget>(
       "~/local", sensor_qos, std::bind(
@@ -99,6 +104,8 @@ private:
   rclcpp::Publisher<mavros_msgs::msg::PositionTarget>::SharedPtr target_local_pub;
   rclcpp::Publisher<mavros_msgs::msg::GlobalPositionTarget>::SharedPtr target_global_pub;
   rclcpp::Publisher<mavros_msgs::msg::AttitudeTarget>::SharedPtr target_attitude_pub;
+
+  double thrust_scaling;
 
   /* -*- message handlers -*- */
   void handle_position_target_local_ned(
@@ -270,7 +277,6 @@ private:
 
   void attitude_cb(const mavros_msgs::msg::AttitudeTarget::SharedPtr req)
   {
-    double thrust_scaling = 1.0f;
     Eigen::Quaterniond desired_orientation;
     Eigen::Vector3d baselink_angular_rate;
     Eigen::Vector3d body_rate;
@@ -278,8 +284,7 @@ private:
 
     // Set Thrust scaling in px4_config.yaml, setpoint_raw block.
     // ignore thrust is false by default, unless no thrust scaling is set or thrust is zero
-    auto ignore_thrust = req->thrust != 0.0 &&
-      !node->get_parameter("thrust_scaling", thrust_scaling);
+    auto ignore_thrust = req->thrust != 0.0 && std::isnan(thrust_scaling);
 
     if (ignore_thrust) {
       // I believe it's safer without sending zero thrust, but actually ignoring the actuation.
@@ -294,6 +299,9 @@ private:
         RCLCPP_WARN_THROTTLE(
           get_logger(), *get_clock(), 5000,
           "thrust_scaling parameter is set to zero.");
+      }
+      if (std::isnan(thrust_scaling)) {
+        thrust_scaling = 1.0;
       }
       thrust = std::min(1.0, std::max(0.0, req->thrust * thrust_scaling));
 

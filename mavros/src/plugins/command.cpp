@@ -38,8 +38,9 @@ namespace mavros
 namespace std_plugins
 {
 using namespace std::placeholders;      // NOLINT
+using namespace std::chrono_literals;   // NOLINT
 
-static constexpr double ACK_TIMEOUT_DEFAULT = 5.0;
+static constexpr std::chrono::nanoseconds ACK_TIMEOUT_DEFAULT = 5000ms;
 using utils::enum_value;
 using lock_guard = std::lock_guard<std::mutex>;
 using unique_lock = std::unique_lock<std::mutex>;
@@ -72,7 +73,7 @@ public:
     enable_node_watch_parameters();
 
     node_declate_and_watch_parameter(
-      "command_ack_timeout", ACK_TIMEOUT_DEFAULT, [&](const rclcpp::Parameter & p) {
+      "command_ack_timeout", command_ack_timeout_dt.seconds(), [&](const rclcpp::Parameter & p) {
         command_ack_timeout_dt = rclcpp::Duration::from_seconds(p.as_double());
       });
 
