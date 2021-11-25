@@ -46,7 +46,8 @@ using mavros_msgs::msg::Mavlink;
 // NOTE(vooon): Ignore impossible warning as
 // memcpy() should work with unaligned pointers without any trouble.
 //
-// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
+// warning: taking address of packed member of ‘mavlink::__mavlink_message’
+// may result in an unaligned pointer value
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 

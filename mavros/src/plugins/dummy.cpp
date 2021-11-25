@@ -122,8 +122,8 @@ private:
   {
     RCLCPP_INFO(
       get_logger(),
-      "Dummy::handle_statustext_raw(%p, %d) from %u.%u", static_cast<const void *>(msg), utils::enum_value(
-        f), msg->sysid, msg->compid);
+      "Dummy::handle_statustext_raw(%p, %d) from %u.%u", static_cast<const void *>(msg),
+      utils::enum_value(f), msg->sysid, msg->compid);
   }
 };
 
