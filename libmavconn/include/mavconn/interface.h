@@ -119,6 +119,13 @@ public:
 	MAVConnInterface(uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
 
 	/**
+	 * @brief Establish connection, automatically called by open_url()
+	 */
+	virtual void connect(
+			const ReceivedCb &cb_handle_message,
+			const ClosedCb &cb_handle_closed_port = ClosedCb()) = 0;
+
+	/**
 	 * @brief Close connection.
 	 */
 	virtual void close() = 0;
@@ -234,8 +241,12 @@ public:
 	 * @return @a Ptr to constructed interface class,
 	 *         or throw @a DeviceError if error occured.
 	 */
-	static Ptr open_url(std::string url,
-			uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+	static Ptr open_url(
+			std::string url,
+			uint8_t system_id = 1,
+			uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
+			const ReceivedCb &cb_handle_message = ReceivedCb(),
+			const ClosedCb &cb_handle_closed_port = ClosedCb());
 
 	static std::vector<std::string> get_known_dialects();
 

@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
 	priv_nh.param<std::string>("gcs_url", gcs_url, "udp://@");
 
 	try {
-		gcs_link = MAVConnInterface::open_url(gcs_url);
+		mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
+		gcs_link = MAVConnInterface::open_url(gcs_url, 1, MAV_COMP_ID_UDP_BRIDGE, mavlink_pub_cb);
 		gcs_link_diag.set_mavconn(gcs_link);
 		gcs_link_diag.set_connection_status(true);
 	}
@@ -65,9 +66,6 @@ int main(int argc, char *argv[])
 		ROS_FATAL("GCS: %s", ex.what());
 		return 1;
 	}
-
-	mavlink_pub = mavlink_nh.advertise<mavros_msgs::Mavlink>("to", 10);
-	gcs_link->message_received_cb = mavlink_pub_cb;
 
 	// prefer UDPROS, but allow TCPROS too
 	mavlink_sub = mavlink_nh.subscribe("from", 10, mavlink_sub_cb,
