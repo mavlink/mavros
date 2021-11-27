@@ -473,8 +473,8 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
 
   auto in = covmsg.begin();
 
-  for (size_t x = 0; x < covmat.cols(); x++) {
-    for (size_t y = x; y < covmat.rows(); y++) {
+  for (Eigen::Index x = 0; x < covmat.cols(); x++) {
+    for (Eigen::Index y = x; y < covmat.rows(); y++) {
       covmat(x, y) = static_cast<double>(*in++);
       covmat(y, x) = covmat(x, y);
     }

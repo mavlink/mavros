@@ -55,8 +55,6 @@ public:
   {
     enable_node_watch_parameters();
 
-    bool tf_listen;
-
     // tf params
     node_declate_and_watch_parameter(
       "tf/listen", false, [&](const rclcpp::Parameter & p) {

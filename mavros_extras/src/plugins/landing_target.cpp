@@ -389,7 +389,7 @@ private:
       ftf::transform_orientation_ned_enu(
         ftf::mavlink_to_quaternion(land_target.q)));
 
-    auto rpy = ftf::quaternion_to_rpy(orientation);
+    // auto rpy = ftf::quaternion_to_rpy(orientation);
 
     RCLCPP_DEBUG_STREAM_THROTTLE(
       get_logger(),

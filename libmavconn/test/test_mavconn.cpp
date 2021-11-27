@@ -71,10 +71,8 @@ public:
 
   msgid_t message_id;
 
-  void recv_message(const mavlink_message_t * message, const Framing framing)
+  void recv_message(const mavlink_message_t * message, const Framing framing [[maybe_unused]])
   {
-    (void)framing;
-
     // printf("Got message %u, len: %u, framing: %d\n", message->msgid, message->len, int(framing));
     message_id = message->msgid;
     cond.notify_one();
@@ -108,7 +106,7 @@ TEST_F(UDP, send_message)
   // create echo server
   echo = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45002);
   echo->connect(
-    [&](const mavlink_message_t * msg, const Framing framing) {
+    [&](const mavlink_message_t * msg, const Framing framing [[maybe_unused]]) {
       echo->send_message(msg);
     });
 
@@ -160,7 +158,7 @@ TEST_F(TCP, send_message)
   // create echo server
   echo_server = std::make_shared<MAVConnTCPServer>(42, 200, "0.0.0.0", 57602);
   echo_server->connect(
-    [&](const mavlink_message_t * msg, const Framing framing) {
+    [&](const mavlink_message_t * msg, const Framing framing [[maybe_unused]]) {
       echo_server->send_message(msg);
     });
 
@@ -186,7 +184,7 @@ TEST_F(TCP, client_reconnect)
   // create echo server
   echo_server = std::make_shared<MAVConnTCPServer>(42, 200, "0.0.0.0", 57604);
   echo_server->connect(
-    [&](const mavlink_message_t * msg, const Framing framing) {
+    [&](const mavlink_message_t * msg, const Framing framing [[maybe_unused]]) {
       echo_server->send_message(msg);
     });
 
