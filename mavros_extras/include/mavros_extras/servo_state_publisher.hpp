@@ -17,20 +17,17 @@
 #define MAVROS__SERVO_STATE_PUBLISHER_HPP_
 
 #include <yaml-cpp/yaml.h>
+#include <urdf/model.h>
 
-#include <array>
 #include <memory>
-#include <set>
 #include <string>
-#include <utility>
-#include <vector>
-#include <unordered_map>
-#include <shared_lock>
+#include <list>
+#include <shared_mutex>
 
-#include "mavros/utils.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include "std_msgs/msg/string.hpp"
 #include "mavros_msgs/msg/rc_out.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -96,7 +93,6 @@ public:
     }
 
     if (!std::isfinite(chan)) {
-      ROS_DEBUG("SSP: not finite result in RC%zu channel normalization!", rc_channel);
       chan = 0.0;
     }
 
@@ -138,7 +134,7 @@ private:
   std::shared_mutex mutex;
   std::list<ServoDescription> servos;
 
-  void robot_description_sub(const std_msgs::msg::String::SharedPtr msg);
+  void robot_description_cb(const std_msgs::msg::String::SharedPtr msg);
   void rc_out_cb(const mavros_msgs::msg::RCOut::SharedPtr msg);
 };
 

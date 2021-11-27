@@ -11,7 +11,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
-#include "mavros/servo_state_publisher.hpp"
+#include "mavros_extras/servo_state_publisher.hpp"
 
 using namespace mavros::extras;     // NOLINT
 using namespace std::placeholders;  // NOLINT
@@ -39,13 +39,10 @@ ServoDescription::ServoDescription(urdf::Model & model, std::string joint_name_,
 
   auto joint = model.getJoint(joint_name);
   if (!joint) {
-    throw std::runtime_error(utils::format("Joint %s is not found in URDF", joint_name.c_str()));
+    throw std::runtime_error("Joint " + joint_name + " is not found in URDF");
   }
   if (!joint->limits) {
-    throw std::runtime_error(
-            utils::format(
-              "URDF for joint %s must provide <limit>",
-              joint_name.c_str()));
+    throw std::runtime_error("URDF for joint " + joint_name + " must provide <limit>");
   }
 
   joint_lower = joint->limits->lower;
@@ -67,7 +64,7 @@ ServoStatePublisher::ServoStatePublisher(
   robot_description_sub = this->create_subscription<std_msgs::msg::String>(
     "robot_description",
     description_qos, std::bind(
-      &ServoStatePublisher::robot_description_sub, this,
+      &ServoStatePublisher::robot_description_cb, this,
       _1));
 
   // Create topics
@@ -79,7 +76,7 @@ ServoStatePublisher::ServoStatePublisher(
     this->create_publisher<sensor_msgs::msg::JointState>("joint_states", sensor_qos);
 }
 
-void ServoDescriptionr::robot_description_sub(const std_msgs::msg::String::SharedPtr msg)
+void ServoStatePublisher::robot_description_cb(const std_msgs::msg::String::SharedPtr msg)
 {
   std::unique_lock lock(mutex);
 
@@ -87,7 +84,7 @@ void ServoDescriptionr::robot_description_sub(const std_msgs::msg::String::Share
 
   // 1. Load model
   urdf::Model model;
-  if (!model.initString(msg->value)) {
+  if (!model.initString(msg->data)) {
     throw std::runtime_error("Unable to initialize urdf::Model from robot description");
   }
 

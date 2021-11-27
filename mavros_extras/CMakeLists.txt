@@ -136,29 +136,41 @@ ament_target_dependencies(mavros_extras_plugins
   tf2_eigen
   message_filters
   Eigen3
+  yaml_cpp_vendor
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
-## Declare a cpp executable
-#add_executable(visualization
-#  src/visualization.cpp
-#)
-#target_link_libraries(visualization
-#  ${catkin_LIBRARIES}
-#)
+add_library(mavros_extras SHARED
+  # [[[cog:
+  # mavros_cog.outl_glob_files('src/lib')
+  # ]]]
+  src/lib/servo_state_publisher.cpp
+  # [[[end]]] (checksum: a3ce43c71c567f697861bcbcd0f25aa3)
+)
+ament_target_dependencies(mavros_extras
+  rclcpp
+  rclcpp_components
+  std_msgs
+  sensor_msgs
+  mavros_msgs
+  #console_bridge
+  yaml_cpp_vendor
+  urdf
+)
+rclcpp_components_register_nodes(mavros_extras "mavros::extras::ServoStatePublisher")
 
-#add_executable(servo_state_publisher
-#  src/servo_state_publisher.cpp
-#)
-#target_link_libraries(servo_state_publisher
-#  ${catkin_LIBRARIES}
-#)
+add_executable(servo_state_publisher src/servo_state_publisher.cpp)
+target_link_libraries(servo_state_publisher mavros_extras)
 
-install(TARGETS mavros_extras_plugins
+install(TARGETS mavros_extras mavros_extras_plugins servo_state_publisher
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY include/
+  DESTINATION include
 )
 
 install(DIRECTORY launch
@@ -178,8 +190,8 @@ if(BUILD_TESTING)
 endif()
 
 #ament_export_dependencies(console_bridge)
-#ament_export_include_directories(include)
-#ament_export_libraries(mavros_extras)
+ament_export_include_directories(include)
+ament_export_libraries(mavros_extras)
 ament_export_dependencies(eigen3_cmake_module)
 ament_export_dependencies(Eigen3)
 #ament_export_targets(mavros_node)
