@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.0 (2021-11-27)
+-------------------
 * extras: distance_sensor: revert back to zero quaternion
   Fix `#1653 <https://github.com/mavlink/mavros/issues/1653>`_
 * Contributors: Vladimir Ermakov
