@@ -22,7 +22,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <shared_mutex>
+#include <shared_mutex>     // NOLINT cpplint, that is almost 4 years since standard release!
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -67,7 +67,7 @@ private:
   std::string frame_id;         //!< frame id for send
   double horizontal_fov_ratio;      //!< horizontal fov ratio for ROS messages
   double vertical_fov_ratio;        //!< vertical fov ratio for ROS messages
-  Eigen::Quaternionf quaternion;    //!< sensor orientation in vehicle body frame for MAV_SENSOR_ROTATION_CUSTOM
+  Eigen::Quaternionf quaternion;    //!< Orientation in vehicle body frame for ROTATION_CUSTOM
 
   // topic handle
   rclcpp::Publisher<Range>::SharedPtr pub;
@@ -91,9 +91,11 @@ private:
       data.reserve(ACC_SIZE);
       data.push_back(range);
     } else {
-      data[data_index] = range;                         // it starts rewriting the values from 1st element
+      // it starts rewriting the values from 1st element
+      data[data_index] = range;
       if (++data_index > ACC_SIZE - 1) {
-        data_index = 0;                                 // restarts the index when achieves the last element
+        // restarts the index when achieves the last element
+        data_index = 0;
       }
     }
 
