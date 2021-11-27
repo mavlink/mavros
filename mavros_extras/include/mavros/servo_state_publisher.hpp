@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <shared_lock>
 
+#include "mavros/utils.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -37,7 +38,6 @@ namespace mavros
 {
 namespace extras
 {
-
 
 /**
  * ServoDescription captures configuration for one joint.
@@ -69,7 +69,7 @@ public:
     rc_rev(false)
   {}
 
-  ServoDescription(std::string joint_name_, YAML::Node config);
+  ServoDescription(urdf::Model & model, std::string joint_name_, YAML::Node config);
 
   /**
    * Normalization code taken from PX4 Firmware
@@ -114,7 +114,6 @@ public:
     return position;
   }
 };
-
 
 /**
  * ServoStatePublisher class implements servo_state_publisher node

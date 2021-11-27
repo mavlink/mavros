@@ -11,16 +11,45 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
-
 #include "mavros/servo_state_publisher.hpp"
 
 using namespace mavros::extras;     // NOLINT
 using namespace std::placeholders;  // NOLINT
 using rclcpp::QoS;
 
-
-ServoDescription::ServoDescription(std::string joint_name_, YAML::Node config)
+ServoDescription::ServoDescription(urdf::Model & model, std::string joint_name_, YAML::Node config)
+: ServoDescription(joint_name_)
 {
+  if (!config["rc_channel"]) {
+    throw std::invalid_argument("`rc_channel` field required");
+  }
+
+  rc_channel = config["rc_channel"].as<int>();
+  rc_min = config["rc_min"].as<int>(1000);
+  rc_max = config["rc_max"].as<int>(2000);
+
+  if (auto rc_trim_n = config["rc_trim"]; !rc_trim_n) {
+    rc_trim = rc_min + (rc_max - rc_min) / 2;
+  } else {
+    rc_trim = rc_trim_n.as<int>();
+  }
+
+  rc_dz = config["rc_dz"].as<int>(0);
+  rc_rev = config["rc_rev"].as<bool>(false);
+
+  auto joint = model.getJoint(joint_name);
+  if (!joint) {
+    throw std::runtime_error(utils::format("Joint %s is not found in URDF", joint_name.c_str()));
+  }
+  if (!joint->limits) {
+    throw std::runtime_error(
+            utils::format(
+              "URDF for joint %s must provide <limit>",
+              joint_name.c_str()));
+  }
+
+  joint_lower = joint->limits->lower;
+  joint_upper = joint->limits->upper;
 }
 
 ServoStatePublisher::ServoStatePublisher(
@@ -50,69 +79,54 @@ ServoStatePublisher::ServoStatePublisher(
     this->create_publisher<sensor_msgs::msg::JointState>("joint_states", sensor_qos);
 }
 
-
 void ServoDescriptionr::robot_description_sub(const std_msgs::msg::String::SharedPtr msg)
 {
   std::unique_lock lock(mutex);
 
   servos.clear();
 
+  // 1. Load model
   urdf::Model model;
-
-#if 0
-  urdf::Model model;
-  ROS_INFO("SSP: URDF robot: %s", model.getName().c_str());
-
-  for (auto & pair : param_dict) {
-    ROS_DEBUG("SSP: Loading joint: %s", pair.first.c_str());
-
-    // inefficient, but easier to program
-    ros::NodeHandle pnh(priv_nh, pair.first);
-
-    bool rc_rev;
-    int rc_channel, rc_min, rc_max, rc_trim, rc_dz;
-
-    if (!pnh.getParam("rc_channel", rc_channel)) {
-      ROS_ERROR("SSP: '%s' should provice rc_channel", pair.first.c_str());
-      continue;
-    }
-
-    pnh.param("rc_min", rc_min, 1000);
-    pnh.param("rc_max", rc_max, 2000);
-    if (!pnh.getParam("rc_trim", rc_trim)) {
-      rc_trim = rc_min + (rc_max - rc_min) / 2;
-    }
-
-    pnh.param("rc_dz", rc_dz, 0);
-    pnh.param("rc_rev", rc_rev, false);
-
-    auto joint = model.getJoint(pair.first);
-    if (!joint) {
-      ROS_ERROR("SSP: URDF: there no joint '%s'", pair.first.c_str());
-      continue;
-    }
-    if (!joint->limits) {
-      ROS_ERROR("SSP: URDF: joint '%s' should provide <limit>", pair.first.c_str());
-      continue;
-    }
-
-    double lower = joint->limits->lower;
-    double upper = joint->limits->upper;
-
-    servos.emplace_back(
-      pair.first, lower, upper, rc_channel, rc_min, rc_max, rc_trim, rc_dz,
-      rc_rev);
-    ROS_INFO("SSP: joint '%s' (RC%d) loaded", pair.first.c_str(), rc_channel);
+  if (!model.initString(msg->value)) {
+    throw std::runtime_error("Unable to initialize urdf::Model from robot description");
   }
-#endif
+
+  // 2. Load mapping config
+  YAML::Node root_node;
+  {
+    std::string configYaml; this->get_parameter("config", configYaml);
+    root_node = YAML::Load(configYaml);
+  }
+  if (!root_node.IsMap()) {
+    throw std::runtime_error("Mapping config must be a map");
+  }
+
+  // 3. Load servos
+  RCLCPP_INFO(get_logger(), "SSP: URDF robot: %s", model.getName().c_str());
+  for (auto it = root_node.begin(); it != root_node.end(); ++it) {
+    auto joint_name = it->first.as<std::string>();
+    RCLCPP_INFO_STREAM(get_logger(), "SSP: " << joint_name << ": Loading joint: " << it->second);
+
+    try {
+      auto joint = servos.emplace_back(model, joint_name, it->second);
+      RCLCPP_INFO(
+        get_logger(), "SSP: joint '%s' (RC%d) loaded",
+        joint_name.c_str(), joint.rc_channel);
+    } catch (const std::exception & ex) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "SSP: " << joint_name << ": Failed to load mapping: " << ex.what());
+    }
+  }
 }
 
 void ServoStatePublisher::rc_out_cb(const mavros_msgs::msg::RCOut::SharedPtr msg)
 {
-  if (msg->channels.empty()) {
-    return;                             // nothing to do
+  std::shared_lock lock(mutex);
 
+  if (msg->channels.empty()) {
+    return;         // nothing to do
   }
+
   auto states = sensor_msgs::msg::JointState();
   states.header.stamp = msg->header.stamp;
 
