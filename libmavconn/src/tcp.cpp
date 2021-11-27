@@ -111,7 +111,6 @@ MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
   asio::io_service & server_io)
 : MAVConnInterface(system_id, component_id),
-  MAVConnInterface(system_id, component_id),
   socket(server_io),
   is_destroying(false),
   tx_in_progress(false),
