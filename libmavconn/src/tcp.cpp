@@ -336,7 +336,6 @@ MAVConnTCPServer::MAVConnTCPServer(
   } catch (asio::system_error & err) {
     throw DeviceError("tcp-l", err);
   }
-
 }
 
 MAVConnTCPServer::~MAVConnTCPServer()
