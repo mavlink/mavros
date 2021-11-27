@@ -108,8 +108,19 @@ MAVConnSerial::MAVConnSerial(
   } catch (asio::system_error & err) {
     throw DeviceError("serial", err);
   }
+}
 
-  // NOTE: shared_from_this() should not be used in constructors
+MAVConnSerial::~MAVConnSerial()
+{
+  close();
+}
+
+void MAVConnSerial::connect(
+  const ReceivedCb & cb_handle_message,
+  const ClosedCb & cb_handle_closed_port)
+{
+  message_received_cb = cb_handle_message;
+  port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnSerial::do_read, this));
@@ -122,10 +133,6 @@ MAVConnSerial::MAVConnSerial(
     });
 }
 
-MAVConnSerial::~MAVConnSerial()
-{
-  close();
-}
 
 void MAVConnSerial::close()
 {

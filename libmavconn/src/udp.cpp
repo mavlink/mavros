@@ -126,8 +126,19 @@ MAVConnUDP::MAVConnUDP(
   } catch (asio::system_error & err) {
     throw DeviceError("udp", err);
   }
+}
 
-  // NOTE: shared_from_this() should not be used in constructors
+MAVConnUDP::~MAVConnUDP()
+{
+  close();
+}
+
+void MAVConnUDP::connect(
+  const ReceivedCb & cb_handle_message,
+  const ClosedCb & cb_handle_closed_port)
+{
+  message_received_cb = cb_handle_message;
+  port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
@@ -138,11 +149,6 @@ MAVConnUDP::MAVConnUDP(
       utils::set_this_thread_name("mudp%zu", conn_id);
       io_service.run();
     });
-}
-
-MAVConnUDP::~MAVConnUDP()
-{
-  close();
 }
 
 void MAVConnUDP::close()

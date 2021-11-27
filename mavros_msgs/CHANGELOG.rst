@@ -161,6 +161,9 @@ Changelog for package mavros_msgs
 * make mavro_msgs compile in ROS 2
 * Contributors: Mikael Arguedas, Mike Lautman, Vladimir Ermakov
 
+1.12.0 (2021-11-27)
+-------------------
+
 1.11.1 (2021-11-24)
 -------------------
 

@@ -62,6 +62,9 @@ public:
 
   virtual ~MAVConnUDP();
 
+  void connect(
+    const ReceivedCb & cb_handle_message,
+    const ClosedCb & cb_handle_closed_port = ClosedCb()) override;
   void close() override;
 
   void send_message(const mavlink::mavlink_message_t * message) override;

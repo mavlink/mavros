@@ -360,7 +360,10 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 
 MAVConnInterface::Ptr MAVConnInterface::open_url(
   std::string url,
-  uint8_t system_id, uint8_t component_id)
+  uint8_t system_id,
+  uint8_t component_id,
+  const ReceivedCb & cb_handle_message,
+  const ClosedCb & cb_handle_closed_port)
 {
   /* Based on code found here:
    * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
@@ -409,23 +412,35 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
     url.c_str(), proto.c_str(), host.c_str(),
     path.c_str(), query.c_str());
 
+  MAVConnInterface::Ptr interface_ptr;
+
   if (proto == "udp") {
-    return url_parse_udp(host, query, system_id, component_id, false, false);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, false, false);
   } else if (proto == "udp-b") {
-    return url_parse_udp(host, query, system_id, component_id, true, false);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, false);
   } else if (proto == "udp-pb") {
-    return url_parse_udp(host, query, system_id, component_id, true, true);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, true);
   } else if (proto == "tcp") {
-    return url_parse_tcp_client(host, query, system_id, component_id);
+    interface_ptr = url_parse_tcp_client(host, query, system_id, component_id);
   } else if (proto == "tcp-l") {
-    return url_parse_tcp_server(host, query, system_id, component_id);
+    interface_ptr = url_parse_tcp_server(host, query, system_id, component_id);
   } else if (proto == "serial") {
-    return url_parse_serial(path, query, system_id, component_id, false);
+    interface_ptr = url_parse_serial(path, query, system_id, component_id, false);
   } else if (proto == "serial-hwfc") {
-    return url_parse_serial(path, query, system_id, component_id, true);
+    interface_ptr = url_parse_serial(path, query, system_id, component_id, true);
   } else {
     throw DeviceError("url", "Unknown URL type");
   }
+
+  if (interface_ptr) {
+    if (not cb_handle_message) {
+      CONSOLE_BRIDGE_logWarn(
+        PFX "You did not provide message handling callback to open_url(), it is unsafe to set it later.");
+    }
+    interface_ptr->connect(cb_handle_message, cb_handle_closed_port);
+  }
+
+  return interface_ptr;
 }
 
 }  // namespace mavconn

@@ -64,6 +64,9 @@ public:
 
   virtual ~MAVConnTCPClient();
 
+  void connect(
+    const ReceivedCb & cb_handle_message,
+    const ClosedCb & cb_handle_closed_port = ClosedCb()) override;
   void close() override;
 
   void send_message(const mavlink::mavlink_message_t * message) override;
@@ -121,6 +124,9 @@ public:
     std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT);
   virtual ~MAVConnTCPServer();
 
+  void connect(
+    const ReceivedCb & cb_handle_message,
+    const ClosedCb & cb_handle_closed_port = ClosedCb()) override;
   void close() override;
 
   void send_message(const mavlink::mavlink_message_t * message) override;
@@ -151,7 +157,6 @@ private:
 
   // client slots
   void client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp);
-  void recv_message(const mavlink::mavlink_message_t * message, const Framing framing);
 };
 
 }  // namespace mavconn
