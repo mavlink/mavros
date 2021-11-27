@@ -19,6 +19,9 @@
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <unordered_map>
+#include <string>
+#include <memory>
+#include <vector>
 #include <shared_mutex>
 
 #include "rcpputils/asserts.hpp"
@@ -408,13 +411,18 @@ DistanceSensorItem::DistanceSensorItem(
     // orientation is required
     if (orientation_str.empty()) {
       throw std::invalid_argument("`orientation` field required");
-    } else if (orientation == -1) {
+    }
+
+    if (orientation == -1) {
       throw std::invalid_argument("defined orientation is not valid!");
-    } else if (orientation == enum_value(MSO::ROTATION_CUSTOM) &&
+    }
+
+    if (orientation == enum_value(MSO::ROTATION_CUSTOM) &&
       !config["custom_orientation"])
     {
       throw std::invalid_argument("`custom_orientation` required for orientation=CUSTOM");
     }
+
 
     // optional
     covariance = config["covariance"].as<int>(0);

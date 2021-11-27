@@ -42,7 +42,7 @@ using namespace std::placeholders;      // NOLINT
 class PX4FlowPlugin : public plugin::Plugin
 {
 public:
-  PX4FlowPlugin(plugin::UASPtr uas_)
+  explicit PX4FlowPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "px4flow"),
     ranger_fov(0.0),
     ranger_min_range(0.3),
@@ -202,7 +202,7 @@ private:
     flow_rad_msg.integrated_xgyro = int_gyro.x();
     flow_rad_msg.integrated_ygyro = int_gyro.y();
     flow_rad_msg.integrated_zgyro = int_gyro.z();
-    flow_rad_msg.temperature = msg->temperature * 100.0f;             // temperature in centi-degrees Celsius
+    flow_rad_msg.temperature = msg->temperature * 100.0f;   // temperature in centi-degrees Celsius
     flow_rad_msg.quality = msg->quality;
     flow_rad_msg.time_delta_distance_us = msg->time_delta_distance_us;
     flow_rad_msg.distance = msg->distance;

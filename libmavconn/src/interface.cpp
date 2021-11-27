@@ -435,7 +435,8 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
   if (interface_ptr) {
     if (!cb_handle_message) {
       CONSOLE_BRIDGE_logWarn(
-        PFX "You did not provide message handling callback to open_url(), it is unsafe to set it later.");
+        PFX "You did not provide message handling callback to open_url(), "
+        "it is unsafe to set it later.");
     }
     interface_ptr->connect(cb_handle_message, cb_handle_closed_port);
   }

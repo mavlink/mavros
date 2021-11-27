@@ -39,7 +39,7 @@ using namespace std::placeholders;      // NOLINT
 class OnboardComputerStatusPlugin : public plugin::Plugin
 {
 public:
-  OnboardComputerStatusPlugin(plugin::UASPtr uas_)
+  explicit OnboardComputerStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "onboard_computer")
   {
     status_sub = node->create_subscription<mavros_msgs::msg::OnboardComputerStatus>(

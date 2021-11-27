@@ -1,3 +1,10 @@
+/*
+ * Copyright 2014 M.H.Kabir.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
 /**
  * @brief VisionPoseEstimate plugin
  * @file vision_pose_estimate.cpp
@@ -6,13 +13,6 @@
  *
  * @addtogroup plugin
  * @{
- */
-/*
- * Copyright 2014 M.H.Kabir.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
 #include <tf2_eigen/tf2_eigen.h>
@@ -49,7 +49,7 @@ class VisionPoseEstimatePlugin : public plugin::Plugin,
   private plugin::TF2ListenerMixin<VisionPoseEstimatePlugin>
 {
 public:
-  VisionPoseEstimatePlugin(plugin::UASPtr uas_)
+  explicit VisionPoseEstimatePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "vision_pose"),
     tf_rate(10.0)
   {
@@ -115,7 +115,7 @@ private:
    */
   void send_vision_estimate(
     const rclcpp::Time & stamp, const Eigen::Affine3d & tr,
-    const geometry_msgs::msg::PoseWithCovariance::_covariance_type & cov) // Check ::_covariance_type
+    const geometry_msgs::msg::PoseWithCovariance::_covariance_type & cov)
   {
     if (last_transform_stamp == stamp) {
       RCLCPP_DEBUG_THROTTLE(
@@ -161,7 +161,6 @@ private:
     ftf::covariance_urt_to_mavlink(cov_map, vp.covariance);
 
     uas->send_message(vp);
-
   }
 
   /* -*- callbacks -*- */

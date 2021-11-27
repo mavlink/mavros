@@ -37,7 +37,7 @@ using namespace std::placeholders;      // NOLINT
 class TunnelPlugin : public plugin::Plugin
 {
 public:
-  TunnelPlugin(plugin::UASPtr uas_)
+  explicit TunnelPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "tunnel")
   {
     sub_ =

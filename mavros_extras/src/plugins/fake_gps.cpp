@@ -22,6 +22,8 @@
 #include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/Geoid.hpp>
 
+#include <string>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -62,7 +64,7 @@ class FakeGPSPlugin : public plugin::Plugin,
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  FakeGPSPlugin(plugin::UASPtr uas_)
+  explicit FakeGPSPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "fake_gps"),
     // WGS-84 ellipsoid (a - equatorial radius, f - flattening of ellipsoid)
     earth(GeographicLib::Constants::WGS84_a(), GeographicLib::Constants::WGS84_f()),
@@ -377,9 +379,9 @@ private:
       int64_t tdiff = (gps_input.time_usec / 1000) - UNIX_OFFSET_MSEC;
       gps_input.time_week = tdiff / MSEC_PER_WEEK;
       gps_input.time_week_ms = tdiff - (gps_input.time_week * MSEC_PER_WEEK);
-      gps_input.speed_accuracy = speed_accuracy;        // [m/s] TODO how can this be dynamicaly calculated ???
-      gps_input.horiz_accuracy = horiz_accuracy;        // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
-      gps_input.vert_accuracy = vert_accuracy;          // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow
+      gps_input.speed_accuracy = speed_accuracy;        // [m/s] TODO how can this be dynamicaly calculated ???   // NOLINT
+      gps_input.horiz_accuracy = horiz_accuracy;        // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow  // NOLINT
+      gps_input.vert_accuracy = vert_accuracy;          // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow  // NOLINT
       gps_input.lat = geodetic.x() * 1e7;               // [degrees * 1e7]
       gps_input.lon = geodetic.y() * 1e7;               // [degrees * 1e7]
       gps_input.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *

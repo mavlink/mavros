@@ -18,6 +18,8 @@
 
 #include <tf2_eigen/tf2_eigen.h>
 
+#include <string>
+
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -89,11 +91,13 @@ public:
   }
 
 private:
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;                 //!< nav_msgs/Odometry publisher
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;             //!< nav_msgs/Odometry subscriber
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
 
-  std::string fcu_odom_parent_id_des;   //!< desired orientation of the fcu odometry message's parent frame
-  std::string fcu_odom_child_id_des;    //!< desired orientation of the fcu odometry message's child frame
+  //!< desired orientation of the fcu odometry message's parent frame
+  std::string fcu_odom_parent_id_des;
+  //!< desired orientation of the fcu odometry message's child frame
+  std::string fcu_odom_child_id_des;
 
   /**
    * @brief Lookup static transform with error handling
@@ -152,12 +156,12 @@ private:
     Matrix6d cov_vel = Matrix6d::Zero();
     ftf::mavlink_urt_to_covariance_matrix(odom_msg.velocity_covariance, cov_vel);
 
-    Eigen::Vector3d position {};                        //!< Position vector. WRT frame_id
-    Eigen::Quaterniond orientation {};                  //!< Attitude quaternion. WRT frame_id
-    Eigen::Vector3d lin_vel {};                         //!< Linear velocity vector. WRT child_frame_id
-    Eigen::Vector3d ang_vel {};                         //!< Angular velocity vector. WRT child_frame_id
-    Matrix6d r_pose = Matrix6d::Zero();                 //!< Zero initialized pose 6-D Covariance matrix. WRT frame_id
-    Matrix6d r_vel = Matrix6d::Zero();                  //!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
+    Eigen::Vector3d position {};         //!< Position vector. WRT frame_id
+    Eigen::Quaterniond orientation {};   //!< Attitude quaternion. WRT frame_id
+    Eigen::Vector3d lin_vel {};          //!< Linear velocity vector. WRT child_frame_id
+    Eigen::Vector3d ang_vel {};          //!< Angular velocity vector. WRT child_frame_id
+    Matrix6d r_pose = Matrix6d::Zero();  //!< Pose 6-D Covariance matrix. WRT frame_id
+    Matrix6d r_vel = Matrix6d::Zero();   //!< Velocity 6-D Covariance matrix. WRT child_frame_id
 
     auto odom = nav_msgs::msg::Odometry();
 
@@ -246,12 +250,12 @@ private:
     /** Apply transforms:
      * According to nav_msgs/Odometry.
      */
-    Eigen::Vector3d position {};                        //!< Position vector. WRT frame_id
-    Eigen::Quaterniond orientation {};                  //!< Attitude quaternion. WRT frame_id
-    Eigen::Vector3d lin_vel {};                         //!< Linear velocity vector. WRT child_frame_id
-    Eigen::Vector3d ang_vel {};                         //!< Angular velocity vector. WRT child_frame_id
-    Matrix6d r_pose = Matrix6d::Zero();                 //!< Zero initialized pose 6-D Covariance matrix. WRT frame_id
-    Matrix6d r_vel = Matrix6d::Zero();                  //!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
+    Eigen::Vector3d position {};         //!< Position vector. WRT frame_id
+    Eigen::Quaterniond orientation {};   //!< Attitude quaternion. WRT frame_id
+    Eigen::Vector3d lin_vel {};          //!< Linear velocity vector. WRT child_frame_id
+    Eigen::Vector3d ang_vel {};          //!< Angular velocity vector. WRT child_frame_id
+    Matrix6d r_pose = Matrix6d::Zero();  //!< Pose 6-D Covariance. WRT frame_id
+    Matrix6d r_vel = Matrix6d::Zero();   //!< Velocity 6-D Covariance. WRT child_frame_id
 
     mavlink::common::msg::ODOMETRY msg {};
     msg.frame_id = utils::enum_value(MAV_FRAME::LOCAL_FRD);
