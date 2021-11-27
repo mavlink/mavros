@@ -11,6 +11,8 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
+#include <string>
+
 #include "mavros_extras/servo_state_publisher.hpp"
 
 using namespace mavros::extras;     // NOLINT
@@ -51,7 +53,7 @@ ServoDescription::ServoDescription(urdf::Model & model, std::string joint_name_,
 
 ServoStatePublisher::ServoStatePublisher(
   const rclcpp::NodeOptions & options,
-  const std::string & node_name = "servo_state_publisher")
+  const std::string & node_name)
 : rclcpp::Node(node_name, options)
 {
   // Declare configuration parameter
@@ -107,7 +109,7 @@ void ServoStatePublisher::robot_description_cb(const std_msgs::msg::String::Shar
     try {
       auto joint = servos.emplace_back(model, joint_name, it->second);
       RCLCPP_INFO(
-        get_logger(), "SSP: joint '%s' (RC%d) loaded",
+        get_logger(), "SSP: joint '%s' (RC%zu) loaded",
         joint_name.c_str(), joint.rc_channel);
     } catch (const std::exception & ex) {
       RCLCPP_ERROR_STREAM(
@@ -134,7 +136,6 @@ void ServoStatePublisher::rc_out_cb(const mavros_msgs::msg::RCOut::SharedPtr msg
     uint16_t pwm = msg->channels[desc.rc_channel - 1];
     if (pwm == 0 || pwm == UINT16_MAX) {
       continue;     // exclude unset channels
-
     }
     states.name.emplace_back(desc.joint_name);
     states.position.emplace_back(desc.calculate_position(pwm));

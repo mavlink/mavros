@@ -13,16 +13,17 @@
 
 #pragma once
 
-#ifndef MAVROS__SERVO_STATE_PUBLISHER_HPP_
-#define MAVROS__SERVO_STATE_PUBLISHER_HPP_
+#ifndef MAVROS_EXTRAS__SERVO_STATE_PUBLISHER_HPP_
+#define MAVROS_EXTRAS__SERVO_STATE_PUBLISHER_HPP_
 
 #include <yaml-cpp/yaml.h>
 #include <urdf/model.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <list>
-#include <shared_mutex>
+#include <shared_mutex>  // NOLINT
 
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -54,7 +55,7 @@ public:
   uint16_t rc_dz;
   bool rc_rev;
 
-  ServoDescription(std::string joint_name_ = {})
+  explicit ServoDescription(std::string joint_name_ = {})
   : joint_name(joint_name_),
     joint_lower(-M_PI / 4),
     joint_upper(M_PI / 4),
@@ -81,9 +82,9 @@ public:
     // 2) scale around mid point
     float chan;
     if (pwm > (rc_trim + rc_dz)) {
-      chan = (pwm - rc_trim - rc_dz) / (float)(rc_max - rc_trim - rc_dz);
+      chan = (pwm - rc_trim - rc_dz) / static_cast<float>(rc_max - rc_trim - rc_dz);
     } else if (pwm < (rc_trim - rc_dz)) {
-      chan = (pwm - rc_trim + rc_dz) / (float)(rc_trim - rc_min - rc_dz);
+      chan = (pwm - rc_trim + rc_dz) / static_cast<float>(rc_trim - rc_min - rc_dz);
     } else {
       chan = 0.0;
     }
@@ -141,4 +142,4 @@ private:
 }   // namespace extras
 }   // namespace mavros
 
-#endif  // MAVROS__SERVO_STATE_PUBLISHER_HPP_
+#endif  // MAVROS_EXTRAS__SERVO_STATE_PUBLISHER_HPP_

@@ -157,12 +157,9 @@ ament_target_dependencies(mavros_extras
   yaml_cpp_vendor
   urdf
 )
-rclcpp_components_register_nodes(mavros_extras "mavros::extras::ServoStatePublisher")
+rclcpp_components_register_node(mavros_extras PLUGIN "mavros::extras::ServoStatePublisher" EXECUTABLE servo_state_publisher)
 
-add_executable(servo_state_publisher src/servo_state_publisher.cpp)
-target_link_libraries(servo_state_publisher mavros_extras)
-
-install(TARGETS mavros_extras mavros_extras_plugins servo_state_publisher
+install(TARGETS mavros_extras mavros_extras_plugins
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
