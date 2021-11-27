@@ -377,10 +377,10 @@ bool MAVConnEndpoint::is_open()
 std::pair<bool, std::string> MAVConnEndpoint::open()
 {
   try {
-    auto link = mavconn::MAVConnInterface::open_url(this->url);
-    link->message_received_cb =
-      std::bind(&MAVConnEndpoint::recv_message, shared_from_this(), _1, _2);
-    this->link = link;
+    this->link = mavconn::MAVConnInterface::open_url(
+      this->url, 1, mavconn::MAV_COMP_ID_UDP_BRIDGE, std::bind(
+        &MAVConnEndpoint::recv_message,
+        shared_from_this(), _1, _2));
   } catch (mavconn::DeviceError & ex) {
     return {false, ex.what()};
   }
