@@ -148,7 +148,7 @@ public:
           wheel_offset[wi][1] = p.as_double();
         });
       node_declate_and_watch_parameter(
-        utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
+        utils::format("wheel%i.radius", wi), 0.05, [wi, this](const rclcpp::Parameter & p) {
           wheel_radius[wi] = p.as_double();
         });
     }
