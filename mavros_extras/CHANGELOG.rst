@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.5 (2021-11-28)
+------------------
 * extras: make cpplint happy
 * extras: fix most of build errors of SSP
 * extras: servo_state_publisher ported. almost...

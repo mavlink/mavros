@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.5 (2021-11-28)
+------------------
 * extras: fix some linter errors.
   Do you know how to make me mad? Just let ament_uncrustify and
   ament_cpplint require opposite requirements!

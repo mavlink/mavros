@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.5 (2021-11-28)
+------------------
 * fix some build warnings; drop old copter vis
 * router: fix `#1655 <https://github.com/mavlink/mavros/issues/1655>`_: use MAVConnInterface::connect() from `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
 * Merge branch 'master' into ros2
