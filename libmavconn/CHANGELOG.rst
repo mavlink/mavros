@@ -2,6 +2,63 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: fix some linter errors.
+  Do you know how to make me mad? Just let ament_uncrustify and
+  ament_cpplint require opposite requirements!
+* lib: fix linter errors
+* fix some build warnings; drop old copter vis
+* lib: fix merge artifact
+* Merge branch 'master' into ros2
+  * master:
+  1.12.0
+  update changelog
+  Fix multiple bugs
+  lib: fix mission frame debug print
+  extras: distance_sensor: revert back to zero quaternion
+* 1.12.0
+* update changelog
+* Merge pull request `#1658 <https://github.com/mavlink/mavros/issues/1658>`_ from asherikov/as_bugfixes
+  Fix multiple bugs
+* Fix multiple bugs
+  - fix bad_weak_ptr on connect and disconnect
+  - introduce new API to avoid thread race when assigning callbacks
+  - fix uninitialized variable in TCP client constructor which would
+  randomly block TCP server
+  This is an API breaking change: if client code creates connections using
+  make_shared<>() instead of open_url(), it is now necessary to call new
+  connect() method explicitly.
+* cmake: require C++20 to build all modules
+* lib: ignore MAVPACKED-related warnings from mavlink
+* Merge branch 'master' into ros2
+  * master:
+  1.11.1
+  update changelog
+  lib: fix build
+* 1.11.1
+* update changelog
+* Merge branch 'master' into ros2
+  * master:
+  1.11.0
+  update changelog
+  lib: fix ftf warnings
+  msgs: use pragmas to ignore unaligned pointer warnings
+  extras: landing_target: fix misprint
+  msgs: fix convert const
+  plugin: setpoint_raw: fix misprint
+  msgs: try to hide 'unaligned pointer' warning
+  plugin: sys: fix compillation error
+  plugin: initialize quaternions with identity
+  plugin: sys: Use wall timers for connection management
+  Use meters for relative altitude
+  distance_sensor: Initialize sensor orientation quaternion to zero
+  Address review comments
+  Add camera plugin for interfacing with mavlink camera protocol
+* 1.11.0
+* update changelog
+* Contributors: Alexander Sherikov, Vladimir Ermakov
+
 2.0.4 (2021-11-04)
 ------------------
 * Merge branch 'master' into ros2

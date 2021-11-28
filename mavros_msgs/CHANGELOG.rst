@@ -2,6 +2,59 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.12.0
+  update changelog
+  Fix multiple bugs
+  lib: fix mission frame debug print
+  extras: distance_sensor: revert back to zero quaternion
+* 1.12.0
+* update changelog
+* extras: fix some more lint warns
+* msgs: update conversion header
+* Merge branch 'master' into ros2
+  * master:
+  1.11.1
+  update changelog
+  lib: fix build
+* 1.11.1
+* update changelog
+* Merge branch 'master' into ros2
+  * master:
+  1.11.0
+  update changelog
+  lib: fix ftf warnings
+  msgs: use pragmas to ignore unaligned pointer warnings
+  extras: landing_target: fix misprint
+  msgs: fix convert const
+  plugin: setpoint_raw: fix misprint
+  msgs: try to hide 'unaligned pointer' warning
+  plugin: sys: fix compillation error
+  plugin: initialize quaternions with identity
+  plugin: sys: Use wall timers for connection management
+  Use meters for relative altitude
+  distance_sensor: Initialize sensor orientation quaternion to zero
+  Address review comments
+  Add camera plugin for interfacing with mavlink camera protocol
+* 1.11.0
+* update changelog
+* msgs: use pragmas to ignore unaligned pointer warnings
+* msgs: fix convert const
+* msgs: try to hide 'unaligned pointer' warning
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Address review comments
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* Merge branch 'master' into ros2
+  * master:
+  msgs: add yaw field to GPS_INPUT
+* msgs: add yaw field to GPS_INPUT
+* Contributors: Jaeyoung-Lim, Vladimir Ermakov
+
 2.0.4 (2021-11-04)
 ------------------
 * Merge branch 'master' into ros2

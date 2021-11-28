@@ -2,6 +2,114 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: make cpplint happy
+* extras: fix most of build errors of SSP
+* extras: servo_state_publisher ported. almost...
+* extras: start porting servo_state_publisher
+* extras: make cpplint happy
+* extras: fix some linter errors.
+  Do you know how to make me mad? Just let ament_uncrustify and
+  ament_cpplint require opposite requirements!
+* fix some build warnings; drop old copter vis
+* Merge branch 'master' into ros2
+  * master:
+  1.12.0
+  update changelog
+  Fix multiple bugs
+  lib: fix mission frame debug print
+  extras: distance_sensor: revert back to zero quaternion
+* 1.12.0
+* update changelog
+* extras: fix some more lint warns
+* plugin: fix some compile warnings
+* cmake: require C++20 to build all modules
+* extras: port distance_sensor plugin
+* extras: fix camera plugin
+* extras: port camera plugin
+* lib: ignore MAVPACKED-related warnings from mavlink
+* extras: distance_sensor: revert back to zero quaternion
+  Fix `#1653 <https://github.com/mavlink/mavros/issues/1653>`_
+* msgs: update conversion header
+* Merge branch 'master' into ros2
+  * master:
+  1.11.1
+  update changelog
+  lib: fix build
+* 1.11.1
+* update changelog
+* Merge branch 'master' into ros2
+  * master:
+  1.11.0
+  update changelog
+  lib: fix ftf warnings
+  msgs: use pragmas to ignore unaligned pointer warnings
+  extras: landing_target: fix misprint
+  msgs: fix convert const
+  plugin: setpoint_raw: fix misprint
+  msgs: try to hide 'unaligned pointer' warning
+  plugin: sys: fix compillation error
+  plugin: initialize quaternions with identity
+  plugin: sys: Use wall timers for connection management
+  Use meters for relative altitude
+  distance_sensor: Initialize sensor orientation quaternion to zero
+  Address review comments
+  Add camera plugin for interfacing with mavlink camera protocol
+* 1.11.0
+* update changelog
+* extras: landing_target: fix misprint
+* plugin: initialize quaternions with identity
+  Eigen::Quaternion[d|f] () does not initialize with zeroes or identity.
+  So we must initialize with identity vector objects that can be left
+  unassigned.
+  Related to `#1652 <https://github.com/mavlink/mavros/issues/1652>`_
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Merge pull request `#1652 <https://github.com/mavlink/mavros/issues/1652>`_ from scoutdi/avoid-uninit-orientation
+  distance_sensor: Initialize sensor orientation quaternion to zero
+* Use meters for relative altitude
+* distance_sensor: Initialize sensor orientation quaternion to zero
+  Without this, you'll get random garbage data for the quaternion field
+  of the DISTANCE_SENSOR MAVLink messages sent to the autopilot.
+  The quaternion field should be set to zero when unused, according to the
+  MAVLink message's field description.
+* Address review comments
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* extras: port fake_gps
+* extras: port tunnel
+* extras: update metadata
+* extras: port hil
+* extras: fix odom
+* extras: port odom
+* extras: port px4flow
+* extras: fix some linter warnings
+* extras: fix some linter warnings
+* extras: fix some linter warnings
+* extras: fix some linter warnings
+* extras: port wheel_odometry (partially)
+* extras: port vision_speed
+* extras: port vibration
+* extras: port vfr_hud
+* extras: port trajectory
+* extras: port rangefinder
+* extras: port onboard computer status, play_tune
+* extras: fix linter warnings
+* extras: port obstacle_distance
+* extras: update metadata xml
+* extras: port mount_control
+* extras: fix build for Foxy
+* extras: port mocap
+* extras: port mag cal status
+* extras: port log_transfer
+* extras: fix rtcm seq
+* extras: port gps_rtk
+* extras: port gps_input
+* extras: fixing some linter warnings
+* extras: fixing some linter warnings
+* Contributors: Jaeyoung-Lim, Morten Fyhn Amundsen, Vladimir Ermakov
+
 2.0.4 (2021-11-04)
 ------------------
 * Merge branch 'master' into ros2
