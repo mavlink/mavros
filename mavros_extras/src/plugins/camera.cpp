@@ -46,7 +46,7 @@ public:
   : Plugin(uas_, "camera")
   {
     camera_image_captured_pub = node->create_publisher<mavros_msgs::msg::CameraImageCaptured>(
-      "~image_captured", 10);
+      "~/image_captured", 10);
   }
 
   Subscriptions get_subscriptions() override

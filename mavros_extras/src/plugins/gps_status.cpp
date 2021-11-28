@@ -43,10 +43,10 @@ public:
   explicit GpsStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "gpsstatus")
   {
-    gps1_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~gps1/raw", 10);
-    gps2_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~gps2/raw", 10);
-    gps1_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~gps1/rtk", 10);
-    gps2_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~gps2/rtk", 10);
+    gps1_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~/gps1/raw", 10);
+    gps2_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~/gps2/raw", 10);
+    gps1_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~/gps1/rtk", 10);
+    gps2_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~/gps2/rtk", 10);
   }
 
   Subscriptions get_subscriptions() override
