@@ -237,10 +237,10 @@ public:
 		wp_state(WP::IDLE),
 		wp_type(WP_TYPE::MISSION),
 		wp_count(0),
-		wp_retries(RETRIES_COUNT),
 		wp_cur_id(0),
 		wp_cur_active(0),
 		wp_set_active(0),
+		wp_retries(RETRIES_COUNT),
 		is_timedout(false),
 		do_pull_after_gcs(false),
 		enable_partial_push(false),
@@ -251,7 +251,7 @@ public:
 		RESCHEDULE_DT(RESCHEDULE_MS / 1000.0)
 	{ }
 
-	virtual void initialize(ros::NodeHandle *_wp_nh)
+	virtual void initialize_with_nodehandle(ros::NodeHandle *_wp_nh)
 	{
 		wp_timer = _wp_nh->createTimer(WP_TIMEOUT_DT, &MissionBase::timeout_cb, this, true);
 		wp_timer.stop();

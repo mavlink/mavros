@@ -204,11 +204,11 @@ public:
 		is_error(false),
 		r_errno(0),
 		list_offset(0),
-		read_offset(0),
-		write_offset(0),
 		open_size(0),
 		read_size(0),
+		read_offset(0),
 		read_buffer {},
+		write_offset(0),
 		checksum_crc32(0)
 	{ }
 

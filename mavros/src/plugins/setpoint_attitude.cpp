@@ -46,10 +46,10 @@ class SetpointAttitudePlugin : public plugin::PluginBase,
 public:
 	SetpointAttitudePlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude"),
+		tf_listen(false),
 		tf_rate(50.0),
 		use_quaternion(false),
-		reverse_thrust(false),
-		tf_listen(false)
+		reverse_thrust(false)
 	{ }
 
 	void initialize(UAS &uas_) override
