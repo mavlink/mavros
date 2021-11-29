@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros_extras: Fix some warnings
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
 1.12.0 (2021-11-27)
 -------------------
 * extras: distance_sensor: revert back to zero quaternion
