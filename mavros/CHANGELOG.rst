@@ -422,6 +422,14 @@ Changelog for package mavros
 * disable all packages but messages
 * Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
 
+1.12.1 (2021-11-29)
+-------------------
+* mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros: Fix some warnings
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
 1.12.0 (2021-11-27)
 -------------------
 * Merge pull request `#1658 <https://github.com/mavlink/mavros/issues/1658>`_ from asherikov/as_bugfixes
