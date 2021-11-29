@@ -248,6 +248,14 @@ public:
 			const ReceivedCb &cb_handle_message = ReceivedCb(),
 			const ClosedCb &cb_handle_closed_port = ClosedCb());
 
+	/**
+	 * @brief version of open_url() which do not perform connect()
+	 */
+	static Ptr open_url_no_connect(
+			std::string url,
+			uint8_t system_id = 1,
+			uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+
 	static std::vector<std::string> get_known_dialects();
 
 protected:

@@ -331,12 +331,10 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 			bind_host, bind_port);
 }
 
-MAVConnInterface::Ptr MAVConnInterface::open_url(
+MAVConnInterface::Ptr MAVConnInterface::open_url_no_connect(
 		std::string url,
 		uint8_t system_id,
-		uint8_t component_id,
-		const ReceivedCb &cb_handle_message,
-		const ClosedCb &cb_handle_closed_port)
+		uint8_t component_id)
 {
 	/* Based on code found here:
 	 * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
@@ -400,15 +398,28 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
 	else
 		throw DeviceError("url", "Unknown URL type");
 
+	return interface_ptr;
+}
+
+MAVConnInterface::Ptr MAVConnInterface::open_url(
+		std::string url,
+		uint8_t system_id,
+		uint8_t component_id,
+		const ReceivedCb &cb_handle_message,
+		const ClosedCb &cb_handle_closed_port)
+{
+	auto interface_ptr = open_url_no_connect(url, system_id, component_id);
 	if (interface_ptr)
 	{
-		if (not cb_handle_message)
+		if (!cb_handle_message)
 		{
 			CONSOLE_BRIDGE_logWarn(PFX "You did not provide message handling callback to open_url(), it is unsafe to set it later.");
 		}
 		interface_ptr->connect(cb_handle_message, cb_handle_closed_port);
 	}
 
-	return (interface_ptr);
+	return interface_ptr;
+
 }
+
 }	// namespace mavconn
