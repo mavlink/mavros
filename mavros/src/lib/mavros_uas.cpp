@@ -58,7 +58,8 @@ UAS::UAS(
   fcu_capabilities(0),
   connected(false),
   time_offset(0),
-  tsync_mode(timesync_mode::NONE)
+  tsync_mode(timesync_mode::NONE),
+  mavlink_status({})
 {
   // XXX TODO(vooon): should i use LifecycleNode?
 
