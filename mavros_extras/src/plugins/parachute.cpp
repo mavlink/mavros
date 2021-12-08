@@ -161,7 +161,15 @@ private:
 			cmd.request.command = enum_value(MAV_CMD::DO_PARACHUTE);
 			cmd.request.confirmation = 1; //get confirmation
 			cmd.request.param1 = enum_value(PARACHUTE_ACTION::DISABLE);
+
+			res.success = client.call(cmd);
+			res.success = cmd.response.success;
+		}
 		catch (ros::InvalidNameException &ex) {
+			ROS_ERROR_NAMED("parachute", "PCH: %s", ex.what());
+		}
+
+		return true;
 	}
 
 	bool handle_chute_deploy(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
