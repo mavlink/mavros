@@ -42,11 +42,11 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		auto_chute_pub = pc_nh.advertise<mavros_msgs::Parachute>("status", 1, true);
+		chute_pub = pc_nh.advertise<mavros_msgs::Parachute>("status", 1, true);
 
 		enable_chute = pc_nh.advertiseService("enable", &ParachutePlugin::handle_chute_enable, this);
 		disable_chute = pc_nh.advertiseService("disable", &ParachutePlugin::handle_chute_disable, this);
-		auto_chute_cancel = pc_nh.advertiseService("cancel", &ParachutePlugin::handle_chute_cancel, this);
+		chute_cancel = pc_nh.advertiseService("cancel", &ParachutePlugin::handle_chute_cancel, this);
 		deploy_chute = pc_nh.advertiseService("release", &ParachutePlugin::handle_chute_deploy, this);
 	}
 
@@ -93,7 +93,7 @@ private:
 			chute_msg->enabled = (cmd.param4 > 0) ? true : false;
 			chute_msg->released = cmd.param5;
 
-			auto_chute_pub.publish(chute_msg);
+			chute_pub.publish(chute_msg);
 		};
 	};
 
