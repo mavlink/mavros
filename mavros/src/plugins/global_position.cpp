@@ -81,6 +81,7 @@ public:
 		gp_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("global", 10);
 		gp_odom_pub = gp_nh.advertise<nav_msgs::Odometry>("local", 10);
 		gp_rel_alt_pub = gp_nh.advertise<std_msgs::Float64>("rel_alt", 10);
+		gp_amsl_alt_pub = gp_nh.advertise<std_msgs::Float64>("amsl_alt", 10);
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 
 		// global origin
@@ -116,6 +117,7 @@ private:
 	ros::Publisher gp_fix_pub;
 	ros::Publisher gp_hdg_pub;
 	ros::Publisher gp_rel_alt_pub;
+	ros::Publisher gp_amsl_alt_pub;
 	ros::Publisher gp_global_origin_pub;
 	ros::Publisher gp_global_offset_pub;
 
@@ -256,6 +258,7 @@ private:
 		auto odom = boost::make_shared<nav_msgs::Odometry>();
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
+		auto amsl_alt = boost::make_shared<std_msgs::Float64>();
 		auto compass_heading = boost::make_shared<std_msgs::Float64>();
 
 		auto header = m_uas->synchronized_header(child_frame_id, gpos.time_boot_ms);
@@ -283,6 +286,7 @@ private:
 		}
 
 		relative_alt->data = gpos.relative_alt / 1E3;	// in meters
+		amsl_alt->data = gpos.alt / 1E3;  // in meters
 		compass_heading->data = (gpos.hdg != UINT16_MAX) ? gpos.hdg / 1E2 : NAN;	// in degrees
 
 		/**
@@ -378,6 +382,7 @@ private:
 		gp_fix_pub.publish(fix);
 		gp_odom_pub.publish(odom);
 		gp_rel_alt_pub.publish(relative_alt);
+		gp_amsl_alt_pub.publish(amsl_alt);
 		gp_hdg_pub.publish(compass_heading);
 
 		// TF
