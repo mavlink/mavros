@@ -91,6 +91,6 @@
     <description>Send calibration status to ROS.</description>
   </class>
   <class name="mavlink_logging" type="mavros::extra_plugins::LogPlugin" base_class_type="mavros::plugin::PluginBase">
-		<description>Write mavlink log data into binary file</description>
-	</class>
+    <description>Write mavlink log data into binary file</description>
+  </class>
 </library>
