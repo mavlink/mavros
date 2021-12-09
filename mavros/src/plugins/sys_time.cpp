@@ -217,7 +217,7 @@ public:
 		m_uas->set_timesync_mode(ts_mode);
 		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
-		nh.getParam("time/publish_sim_time", publish_sim_time);
+		nh.param("time/publish_sim_time", publish_sim_time, false);
 		if (publish_sim_time) {
 			sim_time_pub = nh.advertise<rosgraph_msgs::Clock>("/clock", 10);
 			ROS_INFO_STREAM_NAMED("time", "TM: Publishing sim time");
