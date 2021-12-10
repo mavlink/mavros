@@ -99,7 +99,7 @@ private:
     mavlink::common::msg::MAG_CAL_REPORT & mr,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    if (mr.comapss_id >= sizeof(calibration_show) {
+    if (mr.compass_id >= calibration_show.size() {
       return ;
     }
     
