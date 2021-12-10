@@ -50,6 +50,7 @@ public:
 		clear_srv = wp_nh.advertiseService("clear", &WaypointPlugin::clear_cb, this);
 
 		wp_reached_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("reached", 10, true);
+		wp_current_pub = wp_nh.advertise<mavros_msgs::WaypointReached>("current", 10, true);
 		set_cur_srv = wp_nh.advertiseService("set_current", &WaypointPlugin::set_cur_cb, this);
 
 		enable_connection_cb();
@@ -78,6 +79,7 @@ private:
 	ros::ServiceServer clear_srv;
 
 	ros::Publisher wp_reached_pub;
+	ros::Publisher wp_current_pub;
 	ros::ServiceServer set_cur_srv;
 
 	/* -*- rx handlers -*- */
@@ -112,6 +114,13 @@ private:
 			lock.unlock();
 			publish_waypoints();
 		}
+
+		auto wpc = boost::make_shared<mavros_msgs::WaypointReached>();
+
+		wpc->header.stamp = ros::Time::now();
+		wpc->wp_seq = mcur.seq;
+
+		wp_current_pub.publish(wpc);
 	}
 
 	/**
