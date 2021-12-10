@@ -102,7 +102,6 @@ private:
     if (mr.compass_id >= calibration_show.size()) {
       return;
     }
-    
     if (calibration_show[mr.compass_id]) {
       auto mcr = mavros_msgs::msg::MagnetometerReporter();
 
