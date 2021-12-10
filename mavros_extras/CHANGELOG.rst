@@ -2,6 +2,103 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.1 (2021-11-29)
+-------------------
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros_extras: Fix some warnings
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
+1.12.0 (2021-11-27)
+-------------------
+* extras: distance_sensor: revert back to zero quaternion
+  Fix `#1653 <https://github.com/mavlink/mavros/issues/1653>`_
+* Contributors: Vladimir Ermakov
+
+1.11.1 (2021-11-24)
+-------------------
+
+1.11.0 (2021-11-24)
+-------------------
+* extras: landing_target: fix misprint
+* plugin: initialize quaternions with identity
+  Eigen::Quaternion[d|f] () does not initialize with zeroes or identity.
+  So we must initialize with identity vector objects that can be left
+  unassigned.
+  Related to `#1652 <https://github.com/mavlink/mavros/issues/1652>`_
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Merge pull request `#1652 <https://github.com/mavlink/mavros/issues/1652>`_ from scoutdi/avoid-uninit-orientation
+  distance_sensor: Initialize sensor orientation quaternion to zero
+* Use meters for relative altitude
+* distance_sensor: Initialize sensor orientation quaternion to zero
+  Without this, you'll get random garbage data for the quaternion field
+  of the DISTANCE_SENSOR MAVLink messages sent to the autopilot.
+  The quaternion field should be set to zero when unused, according to the
+  MAVLink message's field description.
+* Address review comments
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* Contributors: Jaeyoung-Lim, Morten Fyhn Amundsen, Vladimir Ermakov
+
+1.10.0 (2021-11-04)
+-------------------
+* Merge pull request `#1625 <https://github.com/mavlink/mavros/issues/1625>`_ from scoutdi/tunnel-plugin
+  Plugin for TUNNEL messages
+* Tunnel: Check for invalid payload length
+* mavros_extras: Create tunnel plugin
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
+1.9.0 (2021-09-09)
+------------------
+* Merge pull request `#1621 <https://github.com/mavlink/mavros/issues/1621>`_ from amilcarlucas/pr/mount-control-spelling
+  Spelling corrections
+* Spelling corrections
+* Merge pull request `#1615 <https://github.com/mavlink/mavros/issues/1615>`_ from amilcarlucas/pr/erase-logs
+  This adds functionality to erase all logs on the SD card via mavlink
+* Merge pull request `#1618 <https://github.com/mavlink/mavros/issues/1618>`_ from amilcarlucas/pr/GPS_INPUT-plugin
+  Added GPS_INPUT plugin
+* This adds functionality to erase all logs on the SD card via mavlink
+* Added GPS_INPUT plugin
+* Merge pull request `#1606 <https://github.com/mavlink/mavros/issues/1606>`_ from BV-OpenSource/master
+  Add Mount angles message for communications with ardupilotmega.
+* Merge branch 'master' into master
+* Update esc_status plugin with datatype change on MAVLink.
+  ESC_INFO MAVLink message was updated to have negative temperates and also at a different resolution. This commit updates those changes on this side.
+* Convert status data from cdeg to rad.
+* Publish quaternion information with Mount Status mavlink message.
+* Add missing subscription.
+* Remove Mount_Status plugin. Add Status data to Mount_Control plugin. Remove Mount_Status message.
+* extras: esc_telemetry: fix build
+* extras: fix esc_telemetry centi-volt/amp conversion
+* extras: uncrustify all plugins
+* extras: reformat plugins xml
+* extras: fix apm esc_telemetry
+* actually allocate memory for the telemetry information
+* fixed some compile errors
+* added esc_telemetry plugin
+* Add Mount angles message for communications with ardupilotmega.
+* Reset calibration flag when re-calibrating. Prevent wrong data output.
+* Delete debug files.
+* Apply uncrustify changes.
+* Set progress array to global to prevent erasing data.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Ricardo Marques, Russell, Vladimir Ermakov
+
+1.8.0 (2021-05-05)
+------------------
+* extras: `#1370 <https://github.com/mavlink/mavros/issues/1370>`_: set obstacle aangle offset
+* extras: distance_sensor: rename param for custom orientation, apply uncrustify
+* distance_sensor: Add horizontal_fov_ratio, vertical_fov_ratio, sensor_orientation parameters
+* distance_sensor: Fill horizontal_fov, vertical_fov, quaternion
+* Contributors: Alexey Rogachevskiy, Vladimir Ermakov
+
+1.7.1 (2021-04-05)
+------------------
+
+1.7.0 (2021-04-05)
+------------------
+
 1.6.0 (2021-02-15)
 ------------------
 * Fixed a bug in mavros_extras/src/plugins/odom.cpp by switching lines 175 and 180.

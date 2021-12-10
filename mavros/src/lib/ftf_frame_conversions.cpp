@@ -88,7 +88,11 @@ Eigen::Quaterniond transform_orientation(const Eigen::Quaterniond &q, const Stat
 
 	case StaticTF::ABSOLUTE_FRAME_AIRCRAFT_TO_BASELINK:
 	case StaticTF::ABSOLUTE_FRAME_BASELINK_TO_AIRCRAFT:
-		return AIRCRAFT_BASELINK_Q * q;	
+		return AIRCRAFT_BASELINK_Q * q;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return q;
 	}
 }
 
@@ -103,6 +107,10 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const StaticT
 	case StaticTF::AIRCRAFT_TO_BASELINK:
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		return AIRCRAFT_BASELINK_AFFINE * vec;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return vec;
 	}
 }
 
@@ -123,6 +131,10 @@ Covariance3d transform_static_frame(const Covariance3d &cov, const StaticTF tran
 	case StaticTF::BASELINK_TO_AIRCRAFT:
 		cov_out = cov_in * AIRCRAFT_BASELINK_Q;
 		return cov_out_;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return cov;
 	}
 }
 
@@ -154,6 +166,10 @@ Covariance6d transform_static_frame(const Covariance6d &cov, const StaticTF tran
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return cov;
 	}
 }
 
@@ -187,6 +203,10 @@ Covariance9d transform_static_frame(const Covariance9d &cov, const StaticTF tran
 
 		cov_out = R * cov_in * R.transpose();
 		return cov_out_;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return cov;
 	}
 }
 
@@ -228,6 +248,10 @@ Eigen::Vector3d transform_static_frame(const Eigen::Vector3d &vec, const Eigen::
 		// ENU to ECEF rotation is just an inverse rotation from ECEF to ENU, which means transpose.
 		R.transposeInPlace();
 		return R * vec;
+
+	default:
+		ROS_FATAL("unsupported StaticTF mode");
+		return vec;
 	}
 }
 

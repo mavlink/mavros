@@ -360,14 +360,14 @@ class ParamPlugin : public plugin::PluginBase {
 public:
 	ParamPlugin() : PluginBase(),
 		param_nh("~param"),
-		param_count(-1),
-		param_state(PR::IDLE),
-		is_timedout(false),
-		RETRIES_COUNT(_RETRIES_COUNT),
-		param_rx_retries(RETRIES_COUNT),
 		BOOTUP_TIME_DT(BOOTUP_TIME_MS / 1000.0),
 		LIST_TIMEOUT_DT(LIST_TIMEOUT_MS / 1000.0),
-		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0)
+		PARAM_TIMEOUT_DT(PARAM_TIMEOUT_MS / 1000.0),
+		RETRIES_COUNT(_RETRIES_COUNT),
+		param_count(-1),
+		param_state(PR::IDLE),
+		param_rx_retries(RETRIES_COUNT),
+		is_timedout(false)
 	{ }
 
 	void initialize(UAS &uas_) override
@@ -812,7 +812,7 @@ private:
 		lock.lock();
 		res.param_received = parameters.size();
 
-		for (auto &p : parameters) {
+		for (auto p : parameters) {
 			lock.unlock();
 			rosparam_set_allowed(p.second);
 			lock.lock();

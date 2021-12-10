@@ -84,7 +84,7 @@ private:
 			std::fill(obstacle.distances.begin() + req->ranges.size(), obstacle.distances.end(), UINT16_MAX);	//!< fill the rest of the array values as "Unknown"
 
 			const float increment_deg = req->angle_increment * RAD_TO_DEG;
-			obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);  //!< Round to nearest integer.
+			obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);	//!< Round to nearest integer.
 			obstacle.increment_f = increment_deg;
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
@@ -109,6 +109,8 @@ private:
 		obstacle.min_distance = req->range_min * 1e2;							//!< [centimeters]
 		obstacle.max_distance = req->range_max * 1e2;							//!< [centimeters]
 		obstacle.frame = utils::enum_value(frame);
+		// Assume angle_increment is positive and incoming message is in a FRD/NED frame
+		obstacle.angle_offset = req->angle_min * RAD_TO_DEG;						//!< [degrees]
 
 		ROS_DEBUG_STREAM_NAMED("obstacle_distance", "OBSDIST: sensor type: " << utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type)
 										     << std::endl << obstacle.to_yaml());

@@ -23,7 +23,7 @@
 
 
 namespace mavros {
-namespace extra_plugins{
+namespace extra_plugins {
 /**
  * @brief MocapPoseEstimate plugin
  *
@@ -74,8 +74,8 @@ private:
 	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
-			Eigen::Quaterniond &q,
-			Eigen::Vector3d &v)
+		Eigen::Quaterniond &q,
+		Eigen::Vector3d &v)
 	{
 		mavlink::common::msg::ATT_POS_MOCAP pos = {};
 
@@ -95,17 +95,17 @@ private:
 
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
 		auto q = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(q_enu));
+			ftf::transform_orientation_baselink_aircraft(q_enu));
 
 		auto position = ftf::transform_frame_enu_ned(
-				Eigen::Vector3d(
-					pose->pose.position.x,
-					pose->pose.position.y,
-					pose->pose.position.z));
+			Eigen::Vector3d(
+			pose->pose.position.x,
+			pose->pose.position.y,
+			pose->pose.position.z));
 
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
-				q,
-				position);
+			q,
+			position);
 	}
 
 	/* -*- callbacks -*- */
@@ -115,17 +115,17 @@ private:
 
 		tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
 		auto q = ftf::transform_orientation_enu_ned(
-					ftf::transform_orientation_baselink_aircraft(q_enu));
+			ftf::transform_orientation_baselink_aircraft(q_enu));
 
 		auto position = ftf::transform_frame_enu_ned(
-				Eigen::Vector3d(
-					trans->transform.translation.x,
-					trans->transform.translation.y,
-					trans->transform.translation.z));
+			Eigen::Vector3d(
+			trans->transform.translation.x,
+			trans->transform.translation.y,
+			trans->transform.translation.z));
 
 		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
-				q,
-				position);
+			q,
+			position);
 	}
 };
 }	// namespace extra_plugins

@@ -88,12 +88,12 @@ private:
 	 * @param[in,out] &tf_source2target The affine transform from the source to target
 	 */
 	void lookup_static_transform(const std::string &target, const std::string &source,
-				Eigen::Affine3d &tf_source2target)
+		Eigen::Affine3d &tf_source2target)
 	{
 		try {
 			// transform lookup at current time.
 			tf_source2target = tf2::transformToEigen(m_uas->tf2_buffer.lookupTransform(
-							target, source, ros::Time(0)));
+				target, source, ros::Time(0)));
 		} catch (tf2::TransformException &ex) {
 			ROS_ERROR_THROTTLE_NAMED(1, "odom", "ODOM: Ex: %s", ex.what());
 			return;

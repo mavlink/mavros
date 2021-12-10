@@ -19,25 +19,26 @@
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Duration.h>
 #include <mavros_msgs/TimesyncStatus.h>
+#include <rosgraph_msgs/Clock.h>
 
 namespace mavros {
 namespace std_plugins {
 /**
  * Time syncronization status publisher
  *
- * Based on diagnistic_updater::FrequencyStatus
+ * Based on diagnostic_updater::FrequencyStatus
  */
 class TimeSyncStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
 	TimeSyncStatus(const std::string &name, size_t win_size) :
 		diagnostic_updater::DiagnosticTask(name),
+		times_(win_size),
+		seq_nums_(win_size),
 		window_size_(win_size),
 		min_freq_(0.01),
 		max_freq_(10),
 		tolerance_(0.1),
-		times_(win_size),
-		seq_nums_(win_size),
 		last_rtt(0),
 		rtt_sum(0),
 		last_remote_ts(0),
@@ -158,15 +159,15 @@ public:
 		double conn_timesync_d;
 		std::string ts_mode_str;
 
-		ros::Duration conn_system_time;
-		ros::Duration conn_timesync;
+		ros::WallDuration conn_system_time;
+		ros::WallDuration conn_timesync;
 
 		if (nh.getParam("conn/system_time_rate", conn_system_time_d) && conn_system_time_d != 0.0) {
-			conn_system_time = ros::Duration(ros::Rate(conn_system_time_d));
+			conn_system_time = ros::WallDuration(ros::Rate(conn_system_time_d));
 		}
 
 		if (nh.getParam("conn/timesync_rate", conn_timesync_d) && conn_timesync_d != 0.0) {
-			conn_timesync = ros::Duration(ros::Rate(conn_timesync_d));
+			conn_timesync = ros::WallDuration(ros::Rate(conn_timesync_d));
 		}
 
 		nh.param<std::string>("time/time_ref_source", time_ref_source, "fcu");
@@ -216,13 +217,20 @@ public:
 		m_uas->set_timesync_mode(ts_mode);
 		ROS_INFO_STREAM_NAMED("time", "TM: Timesync mode: " << utils::to_string(ts_mode));
 
+		nh.getParam("time/publish_sim_time", publish_sim_time);
+		if (publish_sim_time) {
+			sim_time_pub = nh.advertise<rosgraph_msgs::Clock>("/clock", 10);
+			ROS_INFO_STREAM_NAMED("time", "TM: Publishing sim time");
+		} else {
+			ROS_INFO_STREAM_NAMED("time", "TM: Not publishing sim time");
+		}
 		time_ref_pub = nh.advertise<sensor_msgs::TimeReference>("time_reference", 10);
 
 		timesync_status_pub = nh.advertise<mavros_msgs::TimesyncStatus>("timesync_status", 10);
 
 		// timer for sending system time messages
 		if (!conn_system_time.isZero()) {
-			sys_time_timer = nh.createTimer(conn_system_time,
+			sys_time_timer = nh.createWallTimer(conn_system_time,
 						&SystemTimePlugin::sys_time_cb, this);
 			sys_time_timer.start();
 		}
@@ -232,7 +240,7 @@ public:
 			// enable timesync diag only if that feature enabled
 			UAS_DIAG(m_uas).add(dt_diag);
 
-			timesync_timer = nh.createTimer(conn_timesync,
+			timesync_timer = nh.createWallTimer(conn_timesync,
 						&SystemTimePlugin::timesync_cb, this);
 			timesync_timer.start();
 		}
@@ -248,11 +256,12 @@ public:
 
 private:
 	ros::NodeHandle nh;
+	ros::Publisher sim_time_pub;
 	ros::Publisher time_ref_pub;
 	ros::Publisher timesync_status_pub;
 
-	ros::Timer sys_time_timer;
-	ros::Timer timesync_timer;
+	ros::WallTimer sys_time_timer;
+	ros::WallTimer timesync_timer;
 
 	TimeSyncStatus dt_diag;
 
@@ -282,6 +291,8 @@ private:
 	int high_rtt_count;
 	int high_deviation_count;
 
+	bool publish_sim_time;
+
 	void handle_system_time(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYSTEM_TIME &mtime)
 	{
 		// date -d @1234567890: Sat Feb 14 02:31:30 MSK 2009
@@ -299,6 +310,11 @@ private:
 			time_unix->source = time_ref_source;
 
 			time_ref_pub.publish(time_unix);
+			if(publish_sim_time) {
+				auto clock = boost::make_shared<rosgraph_msgs::Clock>();
+				clock->clock = time_ref;
+				sim_time_pub.publish(clock);
+			}
 		}
 		else {
 			ROS_WARN_THROTTLE_NAMED(60, "time", "TM: Wrong FCU time.");
@@ -320,7 +336,7 @@ private:
 		}
 	}
 
-	void sys_time_cb(const ros::TimerEvent &event)
+	void sys_time_cb(const ros::WallTimerEvent &event)
 	{
 		// For filesystem only
 		uint64_t time_unix_usec = ros::Time::now().toNSec() / 1000;	// nano -> micro
@@ -331,7 +347,7 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(mtime);
 	}
 
-	void timesync_cb(const ros::TimerEvent &event)
+	void timesync_cb(const ros::WallTimerEvent &event)
 	{
 		auto ts_mode = m_uas->get_timesync_mode();
 		if (ts_mode == TSM::MAVLINK) {

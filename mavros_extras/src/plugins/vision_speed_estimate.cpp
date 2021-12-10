@@ -111,8 +111,8 @@ private:
 	{
 		// Send transformed data from local ENU to NED frame
 		send_vision_speed_estimate(stamp.toNSec() / 1000,
-					ftf::transform_frame_enu_ned(vel_enu),
-					ftf::transform_frame_enu_ned(cov_enu));
+			ftf::transform_frame_enu_ned(vel_enu),
+			ftf::transform_frame_enu_ned(cov_enu));
 	}
 
 	/* -*- callbacks -*- */

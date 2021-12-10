@@ -49,9 +49,9 @@ public:
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
 		tf_send(false),
-		rot_cov(99999.0),
 		use_relative_alt(true),
-		is_map_init(false)
+		is_map_init(false),
+		rot_cov(99999.0)
 	{ }
 
 	void initialize(UAS &uas_) override
@@ -503,7 +503,7 @@ private:
 
 		gpo.latitude = req->position.latitude * 1E7;
 		gpo.longitude = req->position.longitude * 1E7;
-		gpo.altitude = req->position.altitude * 1E3 + m_uas->ellipsoid_to_geoid_height(&req->position);
+		gpo.altitude = (req->position.altitude + m_uas->ellipsoid_to_geoid_height(&req->position)) * 1E3;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gpo);
 	}

@@ -51,6 +51,13 @@ public:
 		target_local_pub = sp_nh.advertise<mavros_msgs::PositionTarget>("target_local", 10);
 		target_global_pub = sp_nh.advertise<mavros_msgs::GlobalPositionTarget>("target_global", 10);
 		target_attitude_pub = sp_nh.advertise<mavros_msgs::AttitudeTarget>("target_attitude", 10);
+
+		// Set Thrust scaling in px4_config.yaml, setpoint_raw block.
+		if (!sp_nh.getParam("thrust_scaling", thrust_scaling))
+		{
+			ROS_WARN_THROTTLE_NAMED(5, "setpoint_raw", "thrust_scaling parameter is unset. Attitude (and angular rate/thrust) setpoints will be ignored.");
+			thrust_scaling = -1.0;
+		}
 	}
 
 	Subscriptions get_subscriptions() override
@@ -70,6 +77,8 @@ private:
 
 	ros::Subscriber local_sub, global_sub, attitude_sub;
 	ros::Publisher target_local_pub, target_global_pub, target_attitude_pub;
+
+	double thrust_scaling;
 
 	/* -*- message handlers -*- */
 	void handle_position_target_local_ned(const mavlink::mavlink_message_t *msg, mavlink::common::msg::POSITION_TARGET_LOCAL_NED &tgt)
@@ -135,7 +144,7 @@ private:
 		// to aircraft -> NED
 		auto orientation = ftf::transform_orientation_ned_enu(
 					ftf::transform_orientation_baselink_aircraft(
-						Eigen::Quaterniond(tgt.q[0], tgt.q[1], tgt.q[2], tgt.q[3])));
+						ftf::mavlink_to_quaternion(tgt.q)));
 
 		auto body_rate = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tgt.body_roll_rate, tgt.body_pitch_rate, tgt.body_yaw_rate));
 
@@ -226,15 +235,13 @@ private:
 
 	void attitude_cb(const mavros_msgs::AttitudeTarget::ConstPtr &req)
 	{
-		double thrust_scaling;
 		Eigen::Quaterniond desired_orientation;
 		Eigen::Vector3d baselink_angular_rate;
 		Eigen::Vector3d body_rate;
 		double thrust;
 
-		// Set Thrust scaling in px4_config.yaml, setpoint_raw block.
-		// ignore thrust is false by default, unless no thrust scalling is set or thrust is zero
-		auto ignore_thrust = req->thrust != 0.0 && !sp_nh.getParam("thrust_scaling", thrust_scaling);
+		// ignore thrust is false by default, unless no thrust scaling is set or thrust is zero
+		auto ignore_thrust = req->thrust != 0.0 && thrust_scaling < 0.0;
 
 		if (ignore_thrust) {
 			// I believe it's safer without sending zero thrust, but actually ignoring the actuation.

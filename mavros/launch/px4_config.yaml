@@ -156,6 +156,12 @@ distance_sensor:
     subscriber: true
     id: 2
     orientation: PITCH_270
+    horizontal_fov_ratio: 1.0   # horizontal_fov = horizontal_fov_ratio * msg.field_of_view
+    vertical_fov_ratio: 1.0     # vertical_fov = vertical_fov_ratio * msg.field_of_view
+    # custom_orientation:       # Used for orientation == CUSTOM
+    #   roll: 0
+    #   pitch: 270
+    #   yaw: 0
   laser_1_sub:
     subscriber: true
     id: 3
@@ -258,5 +264,9 @@ wheel_odometry:
     send: false
     frame_id: "odom"
     child_frame_id: "base_link"
+
+# camera
+camera:
+  frame_id: "base_link"
 
 # vim:set ts=2 sw=2 et:

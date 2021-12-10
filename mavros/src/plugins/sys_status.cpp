@@ -255,7 +255,13 @@ public:
 			stat.add("Proximity", (last_st.onboard_control_sensors_health & enum_value(STS::PROXIMITY)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SATCOM))
 			stat.add("Satellite Communication", (last_st.onboard_control_sensors_health & enum_value(STS::SATCOM)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 890cfdc6d3b776c38a59b39f80ec7351)
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PREARM_CHECK))
+			stat.add("pre-arm check status. Always healthy when armed", (last_st.onboard_control_sensors_health & enum_value(STS::PREARM_CHECK)) ? "Ok" : "Fail");
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::OBSTACLE_AVOIDANCE))
+			stat.add("Avoidance/collision prevention", (last_st.onboard_control_sensors_health & enum_value(STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
+		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PROPULSION))
+			stat.add("propulsion (actuator, esc, motor or propellor)", (last_st.onboard_control_sensors_health & enum_value(STS::PROPULSION)) ? "Ok" : "Fail");
+		// [[[end]]] (checksum: 24471e5532db5c99f411475509d41f72)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -423,18 +429,18 @@ public:
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
 		batt_diag("Battery"),
+		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
 		has_battery_status(false),
-		battery_voltage(0.0),
-		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER)
+		battery_voltage(0.0)
 	{ }
 
 	void initialize(UAS &uas_) override
 	{
 		PluginBase::initialize(uas_);
 
-		ros::Duration conn_heartbeat;
+		ros::WallDuration conn_heartbeat;
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
@@ -447,7 +453,7 @@ public:
 
 		// heartbeat rate parameter
 		if (nh.getParam("conn/heartbeat_rate", conn_heartbeat_d) && conn_heartbeat_d != 0.0) {
-			conn_heartbeat = ros::Duration(ros::Rate(conn_heartbeat_d));
+			conn_heartbeat = ros::WallDuration(ros::Rate(conn_heartbeat_d));
 		}
 
 		// heartbeat mav type parameter
@@ -466,24 +472,25 @@ public:
 
 
 		// one-shot timeout timer
-		timeout_timer = nh.createTimer(ros::Duration(conn_timeout_d),
+		timeout_timer = nh.createWallTimer(ros::WallDuration(conn_timeout_d),
 				&SystemStatusPlugin::timeout_cb, this, true);
 		//timeout_timer.start();
 
 		if (!conn_heartbeat.isZero()) {
-			heartbeat_timer = nh.createTimer(conn_heartbeat,
+			heartbeat_timer = nh.createWallTimer(conn_heartbeat,
 					&SystemStatusPlugin::heartbeat_cb, this);
 			//heartbeat_timer.start();
 		}
 
 		// version request timer
-		autopilot_version_timer = nh.createTimer(ros::Duration(1.0),
+		autopilot_version_timer = nh.createWallTimer(ros::WallDuration(1.0),
 				&SystemStatusPlugin::autopilot_version_cb, this);
 		autopilot_version_timer.stop();
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
+		batt2_pub = nh.advertise<BatteryMsg>("battery2", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
 		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
 		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
@@ -508,6 +515,7 @@ public:
 			make_handler(&SystemStatusPlugin::handle_extended_sys_state),
 			make_handler(&SystemStatusPlugin::handle_battery_status),
 			make_handler(&SystemStatusPlugin::handle_estimator_status),
+			make_handler(&SystemStatusPlugin::handle_battery2),
 		};
 	}
 
@@ -519,13 +527,14 @@ private:
 	HwStatus hwst_diag;
 	SystemStatusDiag sys_diag;
 	BatteryStatusDiag batt_diag;
-	ros::Timer timeout_timer;
-	ros::Timer heartbeat_timer;
-	ros::Timer autopilot_version_timer;
+	ros::WallTimer timeout_timer;
+	ros::WallTimer heartbeat_timer;
+	ros::WallTimer autopilot_version_timer;
 
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
 	ros::Publisher batt_pub;
+	ros::Publisher batt2_pub;
 	ros::Publisher estimator_status_pub;
 	ros::Publisher statustext_pub;
 	ros::Subscriber statustext_sub;
@@ -789,6 +798,19 @@ private:
 		batt_pub.publish(batt_msg);
 	}
 
+	void handle_battery2(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::BATTERY2 &batt) {
+		float volt = batt.voltage / 1000.0f;	// mV
+		float curr = batt.current_battery / 100.0f;	// 10 mA or -1
+
+		auto batt_msg = boost::make_shared<BatteryMsg>();
+		batt_msg->header.stamp = ros::Time::now();
+
+		batt_msg->voltage = volt;
+		batt_msg->current = curr;
+
+		batt2_pub.publish(batt_msg);
+	}
+
 	void handle_statustext(const mavlink::mavlink_message_t *msg, mavlink::common::msg::STATUSTEXT &textm)
 	{
 		auto text = mavlink::to_string(textm.text);
@@ -916,7 +938,7 @@ private:
 	void handle_estimator_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ESTIMATOR_STATUS &status)
 	{
 		using ESF = mavlink::common::ESTIMATOR_STATUS_FLAGS;
-		
+
 		auto est_status_msg = boost::make_shared<mavros_msgs::EstimatorStatus>();
 		est_status_msg->header.stamp = ros::Time::now();
 
@@ -952,19 +974,19 @@ private:
 		est_status_msg->pred_pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
 		est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
 		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
-		// [[[end]]] (checksum: 7828381ee4002ea6b61a8f528ae4d12d)
+		// [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
 
 		estimator_status_pub.publish(est_status_msg);
 	}
 
 	/* -*- timer callbacks -*- */
 
-	void timeout_cb(const ros::TimerEvent &event)
+	void timeout_cb(const ros::WallTimerEvent &event)
 	{
 		m_uas->update_connection_status(false);
 	}
 
-	void heartbeat_cb(const ros::TimerEvent &event)
+	void heartbeat_cb(const ros::WallTimerEvent &event)
 	{
 		using mavlink::common::MAV_MODE;
 
@@ -979,7 +1001,7 @@ private:
 		UAS_FCU(m_uas)->send_message_ignore_drop(hb);
 	}
 
-	void autopilot_version_cb(const ros::TimerEvent &event)
+	void autopilot_version_cb(const ros::WallTimerEvent &event)
 	{
 		using mavlink::common::MAV_CMD;
 

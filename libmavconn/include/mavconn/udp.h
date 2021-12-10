@@ -50,6 +50,9 @@ public:
 			std::string remote_host = DEFAULT_REMOTE_HOST, unsigned short remote_port = DEFAULT_REMOTE_PORT);
 	virtual ~MAVConnUDP();
 
+	void connect(
+			const ReceivedCb &cb_handle_message,
+			const ClosedCb &cb_handle_closed_port = ClosedCb()) override;
 	void close() override;
 
 	void send_message(const mavlink::mavlink_message_t *message) override;

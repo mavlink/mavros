@@ -37,6 +37,13 @@ using ::mavlink::mavlink_message_t;
 // ]]]
 // [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
 
+// NOTE(vooon): Ignore impossible warning as
+// memcpy() should work with unaligned pointers without any trouble.
+//
+// warning: taking address of packed member of ‘mavlink::__mavlink_message’ may result in an unaligned pointer value
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 /**
  * @brief Convert mavros_msgs/Mavlink message to mavlink_message_t
  *
@@ -115,6 +122,8 @@ inline bool convert(const mavlink_message_t &mmsg, mavros_msgs::Mavlink &rmsg, u
 
 	return true;
 }
+
+#pragma GCC diagnostic pop
 
 }	// namespace mavlink
 }	// namespace mavros_msgs

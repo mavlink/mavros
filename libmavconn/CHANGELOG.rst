@@ -2,6 +2,55 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.1 (2021-11-29)
+-------------------
+* mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+* Contributors: Vladimir Ermakov
+
+1.12.0 (2021-11-27)
+-------------------
+* Merge pull request `#1658 <https://github.com/mavlink/mavros/issues/1658>`_ from asherikov/as_bugfixes
+  Fix multiple bugs
+* Fix multiple bugs
+  - fix bad_weak_ptr on connect and disconnect
+  - introduce new API to avoid thread race when assigning callbacks
+  - fix uninitialized variable in TCP client constructor which would
+  randomly block TCP server
+  This is an API breaking change: if client code creates connections using
+  make_shared<>() instead of open_url(), it is now necessary to call new
+  connect() method explicitly.
+* Contributors: Alexander Sherikov, Vladimir Ermakov
+
+1.11.1 (2021-11-24)
+-------------------
+
+1.11.0 (2021-11-24)
+-------------------
+
+1.10.0 (2021-11-04)
+-------------------
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Show ENOTCONN error instead of crash
+  When a client suddenly drops the connection,
+  socket.shutdown() will throw an exception:
+  boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::system::system_error> >
+  what():  shutdown: Transport endpoint is not connected
+  Showing an error in this common case looks more reasonable than crashing.
+* Contributors: Val Doroshchuk, Vladimir Ermakov
+
+1.9.0 (2021-09-09)
+------------------
+
+1.8.0 (2021-05-05)
+------------------
+
+1.7.1 (2021-04-05)
+------------------
+
+1.7.0 (2021-04-05)
+------------------
+
 1.6.0 (2021-02-15)
 ------------------
 

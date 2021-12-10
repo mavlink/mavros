@@ -45,7 +45,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&ADSBPlugin::handle_adsb)
+			make_handler(&ADSBPlugin::handle_adsb)
 		};
 	}
 
@@ -105,8 +105,8 @@ private:
 		// [[[end]]] (checksum: b9c515e7a6fe688b91f4e72e655b9154)
 
 		ROS_DEBUG_STREAM_NAMED("adsb", "ADSB: recv type: " << utils::to_string_enum<ADSB_ALTITUDE_TYPE>(adsb.altitude_type)
-				<< " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)
-				<< " flags: 0x" << std::hex << adsb.flags);
+								   << " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)
+								   << " flags: 0x" << std::hex << adsb.flags);
 
 		adsb_pub.publish(adsb_msg);
 	}
@@ -140,8 +140,8 @@ private:
 		// [[[end]]] (checksum: 8583d9ea3a3eefae10ccd7037c06b46d)
 
 		ROS_DEBUG_STREAM_NAMED("adsb", "ADSB: send type: " << utils::to_string_enum<ADSB_ALTITUDE_TYPE>(adsb.altitude_type)
-				<< " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)
-				<< " flags: 0x" << std::hex << adsb.flags);
+								   << " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)
+								   << " flags: 0x" << std::hex << adsb.flags);
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(adsb);
 	}

@@ -2,6 +2,123 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.1 (2021-11-29)
+-------------------
+* mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros: Fix some warnings
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
+1.12.0 (2021-11-27)
+-------------------
+* Merge pull request `#1658 <https://github.com/mavlink/mavros/issues/1658>`_ from asherikov/as_bugfixes
+  Fix multiple bugs
+* Fix multiple bugs
+  - fix bad_weak_ptr on connect and disconnect
+  - introduce new API to avoid thread race when assigning callbacks
+  - fix uninitialized variable in TCP client constructor which would
+  randomly block TCP server
+  This is an API breaking change: if client code creates connections using
+  make_shared<>() instead of open_url(), it is now necessary to call new
+  connect() method explicitly.
+* lib: fix mission frame debug print
+* Contributors: Alexander Sherikov, Vladimir Ermakov
+
+1.11.1 (2021-11-24)
+-------------------
+* lib: fix build
+* Contributors: Vladimir Ermakov
+
+1.11.0 (2021-11-24)
+-------------------
+* lib: fix ftf warnings
+* plugin: setpoint_raw: fix misprint
+* plugin: sys: fix compillation error
+* plugin: initialize quaternions with identity
+  Eigen::Quaternion[d|f] () does not initialize with zeroes or identity.
+  So we must initialize with identity vector objects that can be left
+  unassigned.
+  Related to `#1652 <https://github.com/mavlink/mavros/issues/1652>`_
+* plugin: sys: Use wall timers for connection management
+  Fixes `#1629 <https://github.com/mavlink/mavros/issues/1629>`_
+* Merge pull request `#1651 <https://github.com/mavlink/mavros/issues/1651>`_ from Jaeyoung-Lim/pr-image-capture-plugin
+  Add camera plugin for interfacing with mavlink camera protocol
+* Add camera plugin for interfacing with mavlink camera protocol
+  Add camera image captured message for handling camera trigger information
+* Contributors: Jaeyoung-Lim, Vladimir Ermakov
+
+1.10.0 (2021-11-04)
+-------------------
+* Merge pull request `#1626 <https://github.com/mavlink/mavros/issues/1626>`_ from valbok/crash_on_shutdown
+  Show ENOTCONN error instead of crash on socket's shutdown
+* Merge pull request `#1627 <https://github.com/mavlink/mavros/issues/1627>`_ from marcelino-pensa/bug/ma-prevent-race-condition
+  Node dying when calling /mavros/param/pull
+* Remove reference
+* Catch std::length_error in send_message
+  Instead of crashing the process
+* Merge pull request `#1623 <https://github.com/mavlink/mavros/issues/1623>`_ from amilcarlucas/pr/more-typo-fixes
+  More typo fixes
+* sys_time.cpp: typo
+* Merge pull request `#1622 <https://github.com/mavlink/mavros/issues/1622>`_ from dayjaby/sys_time_pub_clock
+  sys_time: publish /clock for simulation times
+* sys_time: publish /clock for simulation times
+* Contributors: David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Marcelino Almeida, Val Doroshchuk, Vladimir Ermakov
+
+1.9.0 (2021-09-09)
+------------------
+* Merge pull request `#1616 <https://github.com/mavlink/mavros/issues/1616>`_ from amilcarlucas/pr/RC_CHANNELS-mavlink2-extensions
+  Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels.…
+* Changed OverrideRCIn to 18 channels
+* Merge pull request `#1617 <https://github.com/mavlink/mavros/issues/1617>`_ from amilcarlucas/pr/NAV_CONTROLLER_OUTPUT-plugin
+  Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge pull request `#1619 <https://github.com/mavlink/mavros/issues/1619>`_ from amilcarlucas/pr/BATTERY2-topic
+  publish BATTERY2 message as /mavros/battery2 topic
+* publish BATTERY2 message as /mavros/battery2 topic
+* Mavlink v2.0 specs for RC_CHANNELS_OVERRIDE accepts upto 18 channels. The plugin publishes channels 9 to 18 if the FCU protocol version is 2.0
+* Added NAV_CONTROLLER_OUTPUT Plugin
+* Merge branch 'master' into master
+* plugins: reformat xml
+* Exclude changes to launch files.
+* Delete debug files.
+* Apply uncrustify changes.
+* Move Compass calibration report to extras. Rewrite code based on instructions.
+* Add compass calibration feedback status. Add service to call the 'Next' button in calibrations.
+* Contributors: André Filipe, BV-OpenSource, Karthik Desai, Vladimir Ermakov
+
+1.8.0 (2021-05-05)
+------------------
+* lib: ftf: allow both Quaterniond and Quaternionf for quaternion_to_mavlink()
+* extras: distance_sensor: rename param for custom orientation, apply uncrustify
+* px4_config: Add distance_sensor parameters
+* convert whole expression to mm
+* Contributors: Alexey Rogachevskiy, Thomas, Vladimir Ermakov
+
+1.7.1 (2021-04-05)
+------------------
+* re-generate all pymavlink enums
+* Contributors: Vladimir Ermakov
+
+1.7.0 (2021-04-05)
+------------------
+* lib: re-generate the code
+* plugins: mission: re-generate the code
+* MissionBase: correction to file information
+* MissionBase: add copyright from origional waypoint.cpp
+* uncrustify
+* whitespace
+* add rallypoint and geofence plugins to mavros plugins xml
+* add rallypoint and geofence plugins to CMakeList
+* Geofence: add geofence plugin
+* Rallypoint: add rallypoint plugin
+* Waypoint: inherit MissionBase class for mission protocol
+* MissionBase: breakout mission protocol from waypoint.cpp
+* README: Update PX4 Autopilot references
+  Much needed fixes to clarify the project is named correctly throughout the README
+  for the PX4 Autopilot, QGroundControl, and MAVLink
+* Fix https://github.com/mavlink/mavros/issues/849
+* Contributors: Charlie-Burge, Ramon Roche, Tobias Fischer, Vladimir Ermakov
+
 1.6.0 (2021-02-15)
 ------------------
 * fix inconsistency in direction of yaw when using set_position in BODY frames and fix problems with yaw in setponit_raw

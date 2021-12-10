@@ -67,18 +67,18 @@ int main(int argc, char **argv){
 	MAVConnInterface::Ptr client;
 
 	// create echo server
-	server = MAVConnInterface::open_url("udp://:45000@", 42, 200);
-	server->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
-		server->send_message_ignore_drop(msg);
-		send_sys_status(server.get());
-	};
+	server = MAVConnInterface::open_url("udp://:45000@", 42, 200,
+		[&](const mavlink_message_t * msg, const Framing framing) {
+			server->send_message_ignore_drop(msg);
+			send_sys_status(server.get());
+		});
 
 	// create client
-	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200);
-	client->message_received_cb = [&](const mavlink_message_t * msg, const Framing framing) {
-		//std::cout << "C:RECV: " << msg->msgid << std::endl;
-		ROS_INFO("RECV: MsgID: %4u St: %d", msg->msgid, int(framing));
-	};
+	client = MAVConnInterface::open_url("udp://:45001@localhost:45000", 44, 200,
+		[&](const mavlink_message_t * msg, const Framing framing) {
+			//std::cout << "C:RECV: " << msg->msgid << std::endl;
+			ROS_INFO("RECV: MsgID: %4u St: %d", msg->msgid, int(framing));
+		});
 
 	while (ros::ok()) {
 		send_heartbeat(client.get());

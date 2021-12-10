@@ -30,6 +30,7 @@ uint32 h_acc        # [mm] Position uncertainty. Positive for up.
 uint32 v_acc        # [mm] Altitude uncertainty. Positive for up.
 uint32 vel_acc      # [mm] Speed uncertainty. Positive for up.
 int32  hdg_acc      # [degE5] Heading / track uncertainty
+uint16 yaw          # [cdeg] Yaw in earth frame from north.
 
 # -*- only available with MAVLink v2.0 and GPS2_RAW messages -*-
 uint8 dgps_numch    # Number of DGPS satellites

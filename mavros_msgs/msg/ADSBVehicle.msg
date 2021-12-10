@@ -53,7 +53,10 @@ uint16 FLAG_VALID_VELOCITY = 8
 uint16 FLAG_VALID_CALLSIGN = 16
 uint16 FLAG_VALID_SQUAWK = 32
 uint16 FLAG_SIMULATED = 64
-# [[[end]]] (checksum: e35e77be43548bd572a3cb24138fc2fd)
+uint16 FLAG_VERTICAL_VELOCITY_VALID = 128
+uint16 FLAG_BARO_VALID = 256
+uint16 FLAG_SOURCE_UAT = 32768
+# [[[end]]] (checksum: a34f2a081739921b6e3e443ed0516d8d)
 
 std_msgs/Header header
 

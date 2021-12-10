@@ -97,23 +97,13 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	catch (boost::system::system_error &err) {
 		throw DeviceError("tcp", err);
 	}
-
-	// NOTE: shared_from_this() should not be used in constructors
-
-	// give some work to io_service before start
-	io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
-
-	// run io_service for async io
-	io_thread = std::thread([this] () {
-				utils::set_this_thread_name("mtcp%zu", conn_id);
-				io_service.run();
-			});
 }
 
 MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 		boost::asio::io_service &server_io) :
 	MAVConnInterface(system_id, component_id),
 	socket(server_io),
+	is_destroying(false),
 	tx_in_progress(false),
 	tx_q {},
 	rx_buf {}
@@ -136,13 +126,33 @@ MAVConnTCPClient::~MAVConnTCPClient()
 	close();
 }
 
+void MAVConnTCPClient::connect(
+		const ReceivedCb &cb_handle_message,
+		const ClosedCb &cb_handle_closed_port)
+{
+	message_received_cb = cb_handle_message;
+	port_closed_cb = cb_handle_closed_port;
+
+	// give some work to io_service before start
+	io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
+
+	// run io_service for async io
+	io_thread = std::thread([this] () {
+				utils::set_this_thread_name("mtcp%zu", conn_id);
+				io_service.run();
+			});
+}
+
 void MAVConnTCPClient::close()
 {
 	lock_guard lock(mutex);
 	if (!is_open())
 		return;
 
-	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send);
+	boost::system::error_code ec;
+	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+	if (ec)
+		CONSOLE_BRIDGE_logError(PFXd "shutdown: %s", conn_id, ec.message().c_str());
 	socket.cancel();
 	socket.close();
 
@@ -305,6 +315,20 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	catch (boost::system::system_error &err) {
 		throw DeviceError("tcp-l", err);
 	}
+}
+
+MAVConnTCPServer::~MAVConnTCPServer()
+{
+	is_destroying = true;
+	close();
+}
+
+void MAVConnTCPServer::connect(
+		const ReceivedCb &cb_handle_message,
+		const ClosedCb &cb_handle_closed_port)
+{
+	message_received_cb = cb_handle_message;
+	port_closed_cb = cb_handle_closed_port;
 
 	// give some work to io_service before start
 	io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
@@ -314,12 +338,6 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 				utils::set_this_thread_name("mtcps%zu", conn_id);
 				io_service.run();
 			});
-}
-
-MAVConnTCPServer::~MAVConnTCPServer()
-{
-	is_destroying = true;
-	close();
 }
 
 void MAVConnTCPServer::close()
@@ -429,35 +447,30 @@ void MAVConnTCPServer::do_accept()
 					return;
 				}
 
-				lock_guard lock(sthis->mutex);
+				{
+					lock_guard lock(sthis->mutex);
 
-				std::weak_ptr<MAVConnTCPClient> weak_client{acceptor_client};
-				acceptor_client->client_connected(sthis->conn_id);
-				acceptor_client->message_received_cb = std::bind(&MAVConnTCPServer::recv_message, sthis, std::placeholders::_1, std::placeholders::_2);
-				acceptor_client->port_closed_cb = [weak_client, sthis] () { sthis->client_closed(weak_client); };
+					std::weak_ptr<MAVConnTCPClient> weak_client{acceptor_client};
+					acceptor_client->message_received_cb = sthis->message_received_cb;
+					acceptor_client->port_closed_cb = [weak_client, sthis] () { sthis->client_closed(weak_client); };
+					acceptor_client->client_connected(sthis->conn_id);
 
-				sthis->client_list.push_back(acceptor_client);
-				sthis->do_accept();
+					sthis->client_list.push_back(acceptor_client);
+					sthis->do_accept();
+				}
 			});
 }
 
 void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
 {
 	if (auto instp = weak_instp.lock()) {
-		bool locked = mutex.try_lock();
 		CONSOLE_BRIDGE_logInform(PFXd "Client connection closed, id: %p, address: %s",
 				conn_id, instp.get(), to_string_ss(instp->server_ep).c_str());
 
-		client_list.remove(instp);
-
-		if (locked)
-			mutex.unlock();
+		{
+			lock_guard lock(mutex);
+			client_list.remove(instp);
+		}
 	}
-}
-
-void MAVConnTCPServer::recv_message(const mavlink_message_t *message, const Framing framing)
-{
-	if (message_received_cb)
-		message_received_cb(message, framing);
 }
 }	// namespace mavconn

@@ -44,7 +44,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&VibrationPlugin::handle_vibration)
+			make_handler(&VibrationPlugin::handle_vibration)
 		};
 	}
 

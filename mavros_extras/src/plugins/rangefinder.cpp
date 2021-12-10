@@ -41,7 +41,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			       make_handler(&RangefinderPlugin::handle_rangefinder)
+			make_handler(&RangefinderPlugin::handle_rangefinder)
 		};
 	}
 

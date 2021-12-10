@@ -146,8 +146,9 @@ private:
 			return;
 
 		Eigen::Vector3d position, velocity, af;
-		Eigen::Quaterniond attitude;
-		float yaw, yaw_rate;
+		Eigen::Quaterniond attitude = Eigen::Quaterniond::Identity();
+		float yaw = 0.f;
+		float yaw_rate = 0.f;
 		uint16_t type_mask = 0;		
 		if(!setpoint_target->transforms.empty()){
 			position = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->transforms[0].translation), transform);
@@ -155,7 +156,7 @@ private:
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::X_IGNORE)
-							| uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE) 
+							| uint16_t(POSITION_TARGET_TYPEMASK::Y_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::Z_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::YAW_IGNORE);
 
@@ -167,18 +168,18 @@ private:
 
 		} else {
 			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::VX_IGNORE)
-							| uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE) 
+							| uint16_t(POSITION_TARGET_TYPEMASK::VY_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::VZ_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::YAW_RATE_IGNORE);
 
 		}
-		
+
 		if(!setpoint_target->accelerations.empty()){
 			af = ftf::detail::transform_static_frame(ftf::to_eigen(setpoint_target->accelerations[0].linear), transform);
 
 		} else {
-			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE) 
-							| uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE) 
+			type_mask = type_mask | uint16_t(POSITION_TARGET_TYPEMASK::AX_IGNORE)
+							| uint16_t(POSITION_TARGET_TYPEMASK::AY_IGNORE)
 							| uint16_t(POSITION_TARGET_TYPEMASK::AZ_IGNORE);
 
 		}
@@ -192,7 +193,7 @@ private:
 					af,
 					ftf::quaternion_get_yaw(attitude),
 					yaw_rate);
-	
+
 		next_setpoint_target = setpoint_target + 1;
 		if (next_setpoint_target != trajectory_target_msg->points.cend()) {
 			reset_timer(setpoint_target->time_from_start);
