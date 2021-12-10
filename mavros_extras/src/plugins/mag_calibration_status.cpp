@@ -100,7 +100,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     if (mr.compass_id >= calibration_show.size()) {
-      return ;
+      return;
     }
     
     if (calibration_show[mr.compass_id]) {
