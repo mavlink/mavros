@@ -99,6 +99,9 @@ private:
     mavlink::common::msg::MAG_CAL_REPORT & mr,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    if (mr.compass_id >= calibration_show.size()) {
+      return;
+    }
     if (calibration_show[mr.compass_id]) {
       auto mcr = mavros_msgs::msg::MagnetometerReporter();
 
