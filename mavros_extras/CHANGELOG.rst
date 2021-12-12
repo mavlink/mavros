@@ -2,6 +2,11 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* Contributors: Vladimir Ermakov
+
 1.12.1 (2021-11-29)
 -------------------
 * Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings

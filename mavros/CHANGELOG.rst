@@ -2,6 +2,19 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1672 <https://github.com/mavlink/mavros/issues/1672>`_ from okalachev/patch-1
+  Set time/publish_sim_time to false by default
+* Set time/publish_sim_time to false by default
+* Merge pull request `#1669 <https://github.com/mavlink/mavros/issues/1669>`_ from Hs293Go/master
+  plugin: setpoint_raw: move getParam to initializer
+* plugin: setpoint_raw: move getParam to initializer
+  Repeatedly getting the thrust_scaling parameter in a callback that can
+  be invoked from a fast control loop may fail spuriously and trigger a
+  fatal error
+* Contributors: Oleg Kalachev, Vladimir Ermakov, hs293go
+
 1.12.1 (2021-11-29)
 -------------------
 * mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
