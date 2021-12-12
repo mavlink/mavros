@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.2 (2021-12-12)
+-------------------
 * Merge pull request `#1672 <https://github.com/mavlink/mavros/issues/1672>`_ from okalachev/patch-1
   Set time/publish_sim_time to false by default
 * Set time/publish_sim_time to false by default
