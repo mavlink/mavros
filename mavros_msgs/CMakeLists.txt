@@ -59,6 +59,7 @@ add_message_files(
   RTKBaseline.msg
   State.msg
   StatusText.msg
+  Terrain.msg
   Thrust.msg
   TimesyncStatus.msg
   Trajectory.msg

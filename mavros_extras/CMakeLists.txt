@@ -88,6 +88,7 @@ add_library(mavros_extras
   src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp
   src/plugins/rangefinder.cpp
+  src/plugins/terrain.cpp
   src/plugins/trajectory.cpp
   src/plugins/tunnel.cpp
   src/plugins/vibration.cpp
