@@ -35,7 +35,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		terrain_pub = terrain_nh.advertise<mavros_msgs::Terrain>("terrain", 10);
+		terrain_pub = terrain_nh.advertise<mavros_msgs::Terrain>("in", 10);
 	}
 
 	Subscriptions get_subscriptions() override
@@ -54,7 +54,7 @@ private:
 		auto terrain_msg = boost::make_shared<mavros_msgs::Terrain>();
 
 		terrain_msg->header.stamp = ros::Time::now();
-		terrain_msg->header.frame_id = "/terrain";
+		terrain_msg->header.frame_id = "terrain";
 
 		terrain_msg->latitude = (double) terrain.lat / 1e7;
 		terrain_msg->longitude = (double) terrain.lon / 1e7;
