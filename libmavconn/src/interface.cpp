@@ -100,10 +100,12 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 	assert(bufsize >= bytes_received);
 
 	iostat_rx_add(bytes_received);
+
+	auto msg_received = Framing::incomplete;
 	for (; bytes_received > 0; bytes_received--) {
 		auto c = *buf++;
 
-		auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_parse_status, c, &message, &m_mavlink_status));
+		msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(&m_buffer, &m_parse_status, c, &message, &m_mavlink_status));
 
 		if (msg_received != Framing::incomplete) {
 			log_recv(pfx, message, msg_received);
@@ -111,6 +113,10 @@ void MAVConnInterface::parse_buffer(const char *pfx, uint8_t *buf, const size_t 
 			if (message_received_cb)
 				message_received_cb(&message, msg_received);
 		}
+	}
+
+	if (msg_received == Framing::bad_crc || msg_received == Framing::bad_signature) {
+		m_mavlink_status.parse_error++;
 	}
 }
 
