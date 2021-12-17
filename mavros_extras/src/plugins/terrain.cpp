@@ -15,7 +15,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <mavros_msgs/Terrain.h>
+#include <mavros_msgs/TerrainReport.h>
 
 namespace mavros {
 namespace extra_plugins {
@@ -35,7 +35,7 @@ public:
 	{
 		PluginBase::initialize(uas_);
 
-		terrain_pub = terrain_nh.advertise<mavros_msgs::Terrain>("in", 10);
+		TerrainReport_pub = terrain_nh.advertise<mavros_msgs::TerrainReport>("in", 10);
 	}
 
 	Subscriptions get_subscriptions() override
@@ -48,23 +48,23 @@ public:
 private:
 	ros::NodeHandle terrain_nh;
 
-	ros::Publisher terrain_pub;
+	ros::Publisher TerrainReport_pub;
 
-	void handle_terrain_report(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TERRAIN_REPORT &terrain) {
-		auto terrain_msg = boost::make_shared<mavros_msgs::Terrain>();
+	void handle_terrain_report(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TERRAIN_REPORT &report) {
+		auto TerrainReport_msg = boost::make_shared<mavros_msgs::TerrainReport>();
 
-		terrain_msg->header.stamp = ros::Time::now();
-		terrain_msg->header.frame_id = "terrain";
+		TerrainReport_msg->header.stamp = ros::Time::now();
+		TerrainReport_msg->header.frame_id = "terrain";
 
-		terrain_msg->latitude = (double) terrain.lat / 1e7;
-		terrain_msg->longitude = (double) terrain.lon / 1e7;
-		terrain_msg->spacing = terrain.spacing;
-		terrain_msg->terrain_height = terrain.terrain_height;
-		terrain_msg->current_height = terrain.current_height;
-		terrain_msg->pending = terrain.pending;
-		terrain_msg->loaded = terrain.loaded;
+		TerrainReport_msg->latitude = (double) report.lat / 1e7;
+		TerrainReport_msg->longitude = (double) report.lon / 1e7;
+		TerrainReport_msg->spacing = report.spacing;
+		TerrainReport_msg->terrain_height = report.terrain_height;
+		TerrainReport_msg->current_height = report.current_height;
+		TerrainReport_msg->pending = report.pending;
+		TerrainReport_msg->loaded = report.loaded;
 
-		terrain_pub.publish(terrain_msg);
+		TerrainReport_pub.publish(TerrainReport_msg);
 	}
 };
 }	// namespace extra_plugins
