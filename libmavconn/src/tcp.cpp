@@ -156,18 +156,20 @@ void MAVConnTCPClient::connect(
 
 void MAVConnTCPClient::close()
 {
-  lock_guard lock(mutex);
-  if (!is_open()) {
-    return;
-  }
+  {
+    lock_guard lock(mutex);
+    if (!is_open()) {
+      return;
+    }
 
-  std::error_code ec;
-  socket.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-  if (ec) {
-    CONSOLE_BRIDGE_logError(PFXd "shutdown: %s", conn_id, ec.message().c_str());
+    std::error_code ec;
+    socket.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+    if (ec) {
+      CONSOLE_BRIDGE_logError(PFXd "shutdown: %s", conn_id, ec.message().c_str());
+    }
+    socket.cancel();
+    socket.close();
   }
-  socket.cancel();
-  socket.close();
 
   io_work.reset();
   io_service.stop();
