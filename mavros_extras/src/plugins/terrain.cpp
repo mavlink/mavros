@@ -41,7 +41,7 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			make_handler(&TerrainPlugin::handle_terrain)
+			make_handler(&TerrainPlugin::handle_terrain_report)
 		};
 	}
 
@@ -50,7 +50,7 @@ private:
 
 	ros::Publisher terrain_pub;
 
-	void handle_terrain(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TERRAIN_REPORT &terrain) {
+	void handle_terrain_report(const mavlink::mavlink_message_t *msg, mavlink::common::msg::TERRAIN_REPORT &terrain) {
 		auto terrain_msg = boost::make_shared<mavros_msgs::Terrain>();
 
 		terrain_msg->header.stamp = ros::Time::now();
