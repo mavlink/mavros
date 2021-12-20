@@ -88,6 +88,7 @@ MAVConnTCPClient::MAVConnTCPClient(
   io_service(),
   io_work(new io_service::work(io_service)),
   socket(io_service),
+  is_running(false),
   is_destroying(false),
   tx_in_progress(false),
   tx_q{},
@@ -112,6 +113,7 @@ MAVConnTCPClient::MAVConnTCPClient(
   asio::io_service & server_io)
 : MAVConnInterface(system_id, component_id),
   socket(server_io),
+  is_running(false),
   is_destroying(false),
   tx_in_progress(false),
   tx_q{},
@@ -134,6 +136,12 @@ MAVConnTCPClient::~MAVConnTCPClient()
 {
   is_destroying = true;
   close();
+  
+  // If the client is already disconnected on error (By the io_service thread)
+  // and io_service running
+  if (is_running) {
+    stop();
+  }
 }
 
 void MAVConnTCPClient::connect(
@@ -149,9 +157,27 @@ void MAVConnTCPClient::connect(
   // run io_service for async io
   io_thread = std::thread(
     [this]() {
+      is_running = true;
       utils::set_this_thread_name("mtcp%zu", conn_id);
-      io_service.run();
+      try {
+        io_service.run();
+      } catch (std::exception &ex) {
+        CONSOLE_BRIDGE_logError(PFXd "io_service execption: %s", conn_id, ex.what());
+      }
+      is_running = false;
     });
+}
+
+void MAVConnTCPClient::stop()
+{
+  io_work.reset();
+  io_service.stop();
+
+  if (io_thread.joinable()) {
+    io_thread.join();
+  }
+
+  io_service.reset();
 }
 
 void MAVConnTCPClient::close()
@@ -171,14 +197,10 @@ void MAVConnTCPClient::close()
     socket.close();
   }
 
-  io_work.reset();
-  io_service.stop();
-
-  if (io_thread.joinable()) {
-    io_thread.join();
+  // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
+  if (std::this_thread::get_id() != io_thread.get_id()) {
+    stop();
   }
-
-  io_service.reset();
 
   if (port_closed_cb) {
     port_closed_cb();
