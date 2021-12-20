@@ -136,7 +136,7 @@ MAVConnTCPClient::~MAVConnTCPClient()
 {
   is_destroying = true;
   close();
-  
+
   // If the client is already disconnected on error (By the io_service thread)
   // and io_service running
   if (is_running) {
@@ -161,7 +161,7 @@ void MAVConnTCPClient::connect(
       utils::set_this_thread_name("mtcp%zu", conn_id);
       try {
         io_service.run();
-      } catch (std::exception &ex) {
+      } catch (std::exception & ex) {
         CONSOLE_BRIDGE_logError(PFXd "io_service execption: %s", conn_id, ex.what());
       }
       is_running = false;
