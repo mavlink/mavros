@@ -83,6 +83,7 @@ private:
   asio::io_service io_service;
   std::unique_ptr<asio::io_service::work> io_work;
   std::thread io_thread;
+  std::atomic<bool> is_running;  //!< io_thread running
 
   asio::ip::tcp::socket socket;
   asio::ip::tcp::endpoint server_ep;
@@ -101,6 +102,11 @@ private:
 
   void do_recv();
   void do_send(bool check_tx_state);
+
+  /**
+   * Stop io_service.
+   */
+  void stop();
 };
 
 /**
