@@ -277,7 +277,7 @@ private:
         blocks_received.insert(lmsg.seqno);  //insert block into the recived set
     }
 
-    bool send_ack(uint32_t seqno)
+    void send_ack(uint32_t seqno)
     {  // Send ACK in response to a receieved log data block
         REMOTE_LOG_BLOCK_STATUS smsg = {};
         m_uas->msg_set_target(smsg);
@@ -287,7 +287,7 @@ private:
         ROS_DEBUG_NAMED("LG", "LG: Sending ACK: seqno: %d", seqno);
     }
 
-    bool send_nack(uint32_t seqno)
+    void send_nack(uint32_t seqno)
     {  // Send a NACK for missing log data blocks
         REMOTE_LOG_BLOCK_STATUS smsg = {};
         m_uas->msg_set_target(smsg);
