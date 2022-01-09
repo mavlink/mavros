@@ -79,7 +79,7 @@ class Checker(object):
 
         # TODO: prettytable?
         print("sys:comp   list of messages")
-        for address, messages in self.message_sources.iteritems():
+        for address, messages in self.message_sources.items():
             print("% 3d:%-3d   %s" % (
                 address[0], address[1],
                 ", ".join(("%d" % msgid for msgid in messages))

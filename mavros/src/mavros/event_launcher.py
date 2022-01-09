@@ -189,7 +189,7 @@ class Launcher(object):
             return
 
         # load configuration
-        for k, v in params.iteritems():
+        for k, v in params.items():
             # TODO: add checks for mutually exclusive options
 
             if 'service' in v:
