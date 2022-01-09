@@ -153,7 +153,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 37> mav_type_strings{{
+static const std::array<const std::string, 36> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -190,7 +190,6 @@ static const std::array<const std::string, 37> mav_type_strings{{
 /* 33 */ "Servo",                         // Servo
 /* 34 */ "Open Drone ID. See https:",     // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
 /* 35 */ "Decarotor",                     // Decarotor
-/* 36 */ "Battery",                       // Battery
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -201,14 +200,14 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 8fc2dcd1c935d5d338508685d9eac918)
+// [[[end]]] (checksum: f44b083f4b6be34f26d75692072f09bf)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 37> mav_type_names{{
+static const std::array<const std::string, 36> mav_type_names{{
 /*  0 */ "GENERIC",                       // Generic micro air vehicle
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
 /*  2 */ "QUADROTOR",                     // Quadrotor
@@ -245,7 +244,6 @@ static const std::array<const std::string, 37> mav_type_names{{
 /* 33 */ "SERVO",                         // Servo
 /* 34 */ "ODID",                          // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
 /* 35 */ "DECAROTOR",                     // Decarotor
-/* 36 */ "BATTERY",                       // Battery
 }};
 
 std::string to_name(MAV_TYPE e)
@@ -256,7 +254,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 2d402cd11e54ad35405d53b7ab127e3d)
+// [[[end]]] (checksum: 3775b5a8763b4e66287a471af939ef6c)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -539,7 +537,7 @@ std::string to_string(MAV_FRAME e)
 // suffix = 'MAV_COMP_ID'
 // enum = get_enum(ename)
 //
-// cog.outl(f"static const std::unordered_map<size_t, const std::string> {suffix.lower()}_strings{{{{")
+// cog.outl(f"static const std::unordered_map<typename std::underlying_type<{ename}>::type, const std::string> {suffix.lower()}_strings{{{{")
 // for k, e in enum:
 //     name_short =  e.name[len(suffix) + 1:]
 //     sp = make_whitespace(30, name_short)
@@ -550,7 +548,7 @@ std::string to_string(MAV_FRAME e)
 //
 // cog.outl("}};")
 // ]]]
-static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
+static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::type, const std::string> mav_comp_id_strings{{
 {   0, "ALL" },                           // Target id (target_component) used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces. Note: This is not a valid *source* component id for a message.
 {   1, "AUTOPILOT1" },                    // System flight controller component ("autopilot"). Only one autopilot is expected in a particular system.
 {  25, "USER1" },                         // Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
@@ -660,8 +658,6 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 173, "GIMBAL4" },                       // Gimbal #4
 { 174, "GIMBAL5" },                       // Gimbal #5.
 { 175, "GIMBAL6" },                       // Gimbal #6.
-{ 180, "BATTERY" },                       // Battery #1.
-{ 181, "BATTERY2" },                      // Battery #2.
 { 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
 { 191, "ONBOARD_COMPUTER" },              // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
 { 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
@@ -681,11 +677,11 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
 { 242, "TUNNEL_NODE" },                   // Component handling TUNNEL messages (e.g. vendor specific GUI of a component).
 { 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: aa881c50ec1302df3d49fdc6fa6fe13a)
+// [[[end]]] (checksum: 2dc119e3e20f7668a71e8649ba3f67b6)
 
 std::string to_string(MAV_COMPONENT e)
 {
-	size_t idx = enum_value(e);
+	auto idx = enum_value(e);
 	auto it = mav_comp_id_strings.find(idx);
 
 	if (it == mav_comp_id_strings.end())

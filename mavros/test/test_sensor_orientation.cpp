@@ -47,6 +47,14 @@ TEST(UTILS, sensor_orientation_matching__roll_180_yaw_90)
 	EXPECT_QUATERNION(expected, out);
 }
 
+TEST(UTILS, sensor_orientation_matching__custom)
+{
+	auto expected = ftf::quaternion_from_rpy(0.0, 0.0, 0.0);
+	auto out = utils::sensor_orientation_matching(SO::ROTATION_CUSTOM);
+
+	EXPECT_QUATERNION(expected, out);
+}
+
 TEST(UTILS, to_string__none)
 {
 	EXPECT_EQ("NONE", utils::to_string(SO::ROTATION_NONE));
@@ -62,6 +70,11 @@ TEST(UTILS, to_string__roll_180_yaw_90)
 	EXPECT_EQ("ROLL_180_YAW_90", utils::to_string(SO::ROTATION_ROLL_180_YAW_90));
 }
 
+TEST(UTILS, to_string__custom)
+{
+	EXPECT_EQ("CUSTOM", utils::to_string(SO::ROTATION_CUSTOM));
+}
+
 TEST(UTILS, sensor_orientation_from_str__none)
 {
 	EXPECT_EQ(enum_value(SO::ROTATION_NONE), utils::sensor_orientation_from_str("NONE"));
@@ -69,7 +82,7 @@ TEST(UTILS, sensor_orientation_from_str__none)
 
 TEST(UTILS, sensor_orientation_from_str__unknown)
 {
-	EXPECT_LT(utils::sensor_orientation_from_str("completely wrong identificator"), 0);
+	EXPECT_LT(utils::sensor_orientation_from_str("completely wrong identifier"), 0);
 }
 
 TEST(UTILS, sensor_orientation_from_str__number)
@@ -96,6 +109,11 @@ TEST(UTILS, sensor_orientation_from_str__roll_180_yaw_90)
 TEST(UTILS, sensor_orientation_from_str__last_element_roll_90_yaw_270)
 {
 	EXPECT_EQ(enum_value(SO::ROTATION_ROLL_90_YAW_270), utils::sensor_orientation_from_str("ROLL_90_YAW_270"));
+}
+
+TEST(UTILS, sensor_orientation_from_str__custom)
+{
+	EXPECT_EQ(enum_value(SO::ROTATION_CUSTOM), utils::sensor_orientation_from_str("CUSTOM"));
 }
 
 int main(int argc, char **argv)
