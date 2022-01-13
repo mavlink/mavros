@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.13.0 (2022-01-13)
+-------------------
 * Merge pull request `#1677 <https://github.com/mavlink/mavros/issues/1677>`_ from AndersonRayner/add_terrain
   Add plugin for reporting terrain height estimate from the FCU
 * Removed CamelCase for class members.  Publish to "report"
