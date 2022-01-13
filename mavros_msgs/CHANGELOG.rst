@@ -2,6 +2,20 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1690 <https://github.com/mavlink/mavros/issues/1690>`_ from mavlink/fix-enum_sensor_orientation
+  Fix enum sensor_orientation
+* re-generate all coglets
+* Merge pull request `#1680 <https://github.com/mavlink/mavros/issues/1680>`_ from AndersonRayner/new_mav_frames
+  Add extra MAV_FRAMES to waypoint message
+* Merge pull request `#1677 <https://github.com/mavlink/mavros/issues/1677>`_ from AndersonRayner/add_terrain
+  Add plugin for reporting terrain height estimate from the FCU
+* More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+* Add extra MAV_FRAMES to waypoint message as defined in https://mavlink.io/en/messages/common.html
+* Add plugin for reporting terrain height estimate from FCU
+* Contributors: Vladimir Ermakov, matt
+
 1.12.2 (2021-12-12)
 -------------------
 

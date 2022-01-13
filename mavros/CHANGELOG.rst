@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1690 <https://github.com/mavlink/mavros/issues/1690>`_ from mavlink/fix-enum_sensor_orientation
+  Fix enum sensor_orientation
+* py-lib: fix compatibility with py3 for Noetic
+* test: add checks for ROTATION_CUSTOM
+* lib: Fix rotation search for CUSTOM
+  Fix `#1688 <https://github.com/mavlink/mavros/issues/1688>`_.
+* Contributors: Vladimir Ermakov
+
 1.12.2 (2021-12-12)
 -------------------
 * Merge pull request `#1672 <https://github.com/mavlink/mavros/issues/1672>`_ from okalachev/patch-1
