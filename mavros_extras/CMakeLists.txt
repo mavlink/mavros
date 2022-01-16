@@ -115,7 +115,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]] (checksum: 044490889b58024360d4756d2d5787f6)
+  # [[[end]]] (checksum: cb9fe2c8485e38ad6be75ed375863339)
 )
 ament_target_dependencies(mavros_extras_plugins
   angles

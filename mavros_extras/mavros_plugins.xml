@@ -165,6 +165,12 @@ This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.
     <description>@brief 3DR Radio plugin.
 @plugin tdr_radio</description>
   </class>
+  <class name="terrain" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TerrainPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Terrain height plugin.
+@plugin terrain
+
+This plugin allows publishing of terrain height estimate from FCU to ROS.</description>
+  </class>
   <class name="trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Trajectory plugin to receive planned path from the FCU and
 send back to the FCU a corrected path (collision free, smoothed)
@@ -208,4 +214,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: a4e8b653c77e85e699c78acc4064e744) -->
+<!-- [[[end]]] (checksum: 00fe5ce10a167498b6caab7d805225dd) -->
