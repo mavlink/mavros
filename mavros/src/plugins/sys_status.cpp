@@ -506,19 +506,29 @@ public:
       sensor_qos,
       std::bind(&SystemStatusPlugin::statustext_cb, this, _1));
 
+    srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     mode_srv =
       node->create_service<mavros_msgs::srv::SetMode>(
       "set_mode",
-      std::bind(&SystemStatusPlugin::set_mode_cb, this, _1, _2));
+      std::bind(
+        &SystemStatusPlugin::set_mode_cb, this, _1,
+        _2), rmw_qos_profile_services_default, srv_cg);
     stream_rate_srv =
       node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
-      std::bind(&SystemStatusPlugin::set_rate_cb, this, _1, _2));
+      std::bind(
+        &SystemStatusPlugin::set_rate_cb, this, _1,
+        _2), rmw_qos_profile_services_default, srv_cg);
     message_interval_srv = node->create_service<mavros_msgs::srv::MessageInterval>(
       "set_message_interval",
-      std::bind(&SystemStatusPlugin::set_message_interval_cb, this, _1, _2));
+      std::bind(
+        &SystemStatusPlugin::set_message_interval_cb, this, _1,
+        _2), rmw_qos_profile_services_default, srv_cg);
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
-      "vehicle_info_get", std::bind(&SystemStatusPlugin::vehicle_info_get_cb, this, _1, _2));
+      "vehicle_info_get", std::bind(
+        &SystemStatusPlugin::vehicle_info_get_cb, this, _1,
+        _2), rmw_qos_profile_services_default, srv_cg);
 
     uas->diagnostic_updater.add(hb_diag);
 
@@ -564,6 +574,7 @@ private:
   rclcpp::Publisher<mavros_msgs::msg::StatusText>::SharedPtr statustext_pub;
   rclcpp::Subscription<mavros_msgs::msg::StatusText>::SharedPtr statustext_sub;
 
+  rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::Service<mavros_msgs::srv::StreamRate>::SharedPtr stream_rate_srv;
   rclcpp::Service<mavros_msgs::srv::MessageInterval>::SharedPtr message_interval_srv;
   rclcpp::Service<mavros_msgs::srv::SetMode>::SharedPtr mode_srv;
