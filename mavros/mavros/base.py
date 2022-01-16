@@ -18,14 +18,15 @@ import rclpy  # noqa F401
 import rclpy.node
 import rclpy.qos
 
-DEFAULT_NAMESPACE = 'mavros'
-DEFAULT_NODE_NAME_PREFIX = 'mavpy_'
+DEFAULT_NAMESPACE = "mavros"
+DEFAULT_NODE_NAME_PREFIX = "mavpy_"
 
 SERVICE_WAIT_TIMEOUT = 5.0
 
 # STATE_QOS used for state topics, like ~/state, ~/mission/waypoints etc.
 STATE_QOS = rclpy.qos.QoSProfile(
-    depth=10, durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL)
+    depth=10, durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL
+)
 
 # SENSOR_QOS used for most of sensor streams
 SENSOR_QOS = rclpy.qos.qos_profile_sensor_data
@@ -36,8 +37,8 @@ PARAMETERS_QOS = rclpy.qos.qos_profile_parameters
 TopicType = typing.Union[typing.Tuple, str]
 QoSType = typing.Union[rclpy.qos.QoSProfile, int]
 ServiceCallable = rclpy.node.Callable[
-    [rclpy.node.SrvTypeRequest, rclpy.node.SrvTypeResponse],
-    rclpy.node.SrvTypeResponse]
+    [rclpy.node.SrvTypeRequest, rclpy.node.SrvTypeResponse], rclpy.node.SrvTypeResponse
+]
 SubscriptionCallable = rclpy.node.Callable[[rclpy.node.MsgType], None]
 
 
@@ -45,8 +46,7 @@ class ServiceWaitTimeout(RuntimeError):
     pass
 
 
-def wait_for_service(client: rclpy.node.Client,
-                     lg: typing.Optional[typing.Any]):
+def wait_for_service(client: rclpy.node.Client, lg: typing.Optional[typing.Any]):
     ready = client.wait_for_service(timeout_sec=SERVICE_WAIT_TIMEOUT)
     if not ready:
         topic = client.srv_name
@@ -84,9 +84,9 @@ class BaseNode(rclpy.node.Node):
 
     _ns: str
 
-    def __init__(self,
-                 node_name: typing.Optional[str] = None,
-                 mavros_ns: str = DEFAULT_NAMESPACE):
+    def __init__(
+        self, node_name: typing.Optional[str] = None, mavros_ns: str = DEFAULT_NAMESPACE
+    ):
         """
         Constructor.
 
@@ -94,8 +94,9 @@ class BaseNode(rclpy.node.Node):
         :param mavros_ns: node name of mavros::UAS
         """
         if node_name is None:
-            node_name = DEFAULT_NODE_NAME_PREFIX + ''.join(
-                random.choices(string.ascii_lowercase + string.digits, k=4))
+            node_name = DEFAULT_NODE_NAME_PREFIX + "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=4)
+            )
 
         super().__init__(node_name)
         self._ns = mavros_ns
@@ -112,17 +113,14 @@ class BaseNode(rclpy.node.Node):
 
         names = [f.name for f in fields(UASParams)]
         lg.debug(f"Getting UAS parameters: {', '.join(names)}")
-        pd = call_get_parameters(node=self,
-                                 node_name=self.mavros_ns,
-                                 names=names)
+        pd = call_get_parameters(node=self, node_name=self.mavros_ns, names=names)
 
         return UASParams(**{k: v.value for k, v in pd.items()})
 
     def get_topic(self, *args: str) -> str:
-        return '/'.join((self._ns, ) + args)
+        return "/".join((self._ns,) + args)
 
     def start_spinner(self) -> threading.Thread:
-
         def run():
             lg = self.get_logger()
             while rclpy.ok():
@@ -131,8 +129,7 @@ class BaseNode(rclpy.node.Node):
 
             lg.debug("stopped client node spinner")
 
-        thd = threading.Thread(target=run,
-                               name=f'mavros_py_spin_{self.get_name()}')
+        thd = threading.Thread(target=run, name=f"mavros_py_spin_{self.get_name()}")
         thd.daemon = True
         thd.start()
         return thd
@@ -157,44 +154,57 @@ class PluginModule:
     def get_logger(self, *args, **kwargs):
         return self.node.get_logger(*args, **kwargs)
 
-    def create_publisher(self, msg_type: rclpy.node.MsgType, topic: TopicType,
-                         qos_profile: QoSType,
-                         **kwargs) -> rclpy.node.Publisher:
+    def create_publisher(
+        self,
+        msg_type: rclpy.node.MsgType,
+        topic: TopicType,
+        qos_profile: QoSType,
+        **kwargs,
+    ) -> rclpy.node.Publisher:
         if isinstance(topic, str):
-            topic = (topic, )
+            topic = (topic,)
 
-        return self._node.create_publisher(msg_type,
-                                           self._node.get_topic(*topic),
-                                           qos_profile, **kwargs)
+        return self._node.create_publisher(
+            msg_type, self._node.get_topic(*topic), qos_profile, **kwargs
+        )
 
-    def create_subscription(self, msg_type: rclpy.node.MsgType,
-                            topic: TopicType, callback: SubscriptionCallable,
-                            qos_profile: QoSType,
-                            **kwargs) -> rclpy.node.Subscription:
+    def create_subscription(
+        self,
+        msg_type: rclpy.node.MsgType,
+        topic: TopicType,
+        callback: SubscriptionCallable,
+        qos_profile: QoSType,
+        **kwargs,
+    ) -> rclpy.node.Subscription:
         if isinstance(topic, str):
-            topic = (topic, )
+            topic = (topic,)
 
-        return self._node.create_subscription(msg_type,
-                                              self._node.get_topic(*topic),
-                                              callback, qos_profile, **kwargs)
+        return self._node.create_subscription(
+            msg_type, self._node.get_topic(*topic), callback, qos_profile, **kwargs
+        )
 
-    def create_client(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
-                      **kwargs) -> rclpy.node.Client:
+    def create_client(
+        self, srv_type: rclpy.node.SrvType, srv_name: TopicType, **kwargs
+    ) -> rclpy.node.Client:
         if isinstance(srv_name, str):
-            srv_name = (srv_name, )
+            srv_name = (srv_name,)
 
-        cli = self._node.create_client(srv_type,
-                                       self._node.get_topic(*srv_name),
-                                       **kwargs)
+        cli = self._node.create_client(
+            srv_type, self._node.get_topic(*srv_name), **kwargs
+        )
         wait_for_service(cli, self.get_logger())
         return cli
 
-    def create_service(self, srv_type: rclpy.node.SrvType, srv_name: TopicType,
-                       callback: ServiceCallable,
-                       **kwargs) -> rclpy.node.Service:
+    def create_service(
+        self,
+        srv_type: rclpy.node.SrvType,
+        srv_name: TopicType,
+        callback: ServiceCallable,
+        **kwargs,
+    ) -> rclpy.node.Service:
         if isinstance(srv_name, str):
-            srv_name = (srv_name, )
+            srv_name = (srv_name,)
 
-        return self._node.create_service(srv_type,
-                                         self._node.get_topic(*srv_name),
-                                         callback, **kwargs)
+        return self._node.create_service(
+            srv_type, self._node.get_topic(*srv_name), callback, **kwargs
+        )

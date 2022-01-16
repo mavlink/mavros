@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 
-from . import (command, ftp, global_position, local_position, mission, param,
-               setpoint, system)
+from . import (
+    command,
+    ftp,
+    global_position,
+    local_position,
+    mission,
+    param,
+    setpoint,
+    system,
+)
 from .base import BaseNode, cached_property
 
 

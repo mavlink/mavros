@@ -20,13 +20,13 @@ except ImportError:
 
 
 def fault_echo(ctx, *args, **kwargs):
-    kwargs['err'] = True
+    kwargs["err"] = True
     click.echo(*args, **kwargs)
     ctx.exit(1)
 
 
 def fault_secho(ctx, *args, **kwargs):
-    kwargs['err'] = True
+    kwargs["err"] = True
     click.secho(*args, **kwargs)
     ctx.exit(1)
 
@@ -37,13 +37,14 @@ def check_cmd_ret(ctx, client, ret):
     # https://mavlink.io/en/messages/common.html#MAV_CMD_ACK
     # ename = 'MAV_CMD_ACK'
     # https://mavlink.io/en/messages/common.html#MAV_RESULT
-    ename = 'MAV_RESULT'
+    ename = "MAV_RESULT"
 
-    ackstr = ''
-    if hasattr(ret, 'result'):
+    ackstr = ""
+    if hasattr(ret, "result"):
         if common_dialect is not None:
             ack = common_dialect.enums[ename].get(
-                ret.result, common_dialect.EnumEntry("unknown", ""))
+                ret.result, common_dialect.EnumEntry("unknown", "")
+            )
             ackstr = f" ACK: {ret.result} ({ack.name})"
         else:
             ackstr = f" ACK: {ret.result}"
@@ -52,7 +53,7 @@ def check_cmd_ret(ctx, client, ret):
         fault_echo(ctx, f"Request failed. Check mavros logs.{ackstr}")
 
     if client.verbose:
-        if hasattr(ret, 'result'):
+        if hasattr(ret, "result"):
             click.echo(f"Command done.{ackstr}")
         else:
             click.echo("Request done.")
@@ -72,7 +73,8 @@ def bool2int(b: bool) -> int:
     return 0
 
 
-def apply_options(func: typing.Callable,
-                  *opts: typing.List[typing.Callable]) -> typing.Callable:
+def apply_options(
+    func: typing.Callable, *opts: typing.List[typing.Callable]
+) -> typing.Callable:
     """Apply several click.option to the same function."""
     return functools.reduce(lambda x, opt: opt(x), reversed(opts), func)

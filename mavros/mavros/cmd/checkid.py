@@ -27,7 +27,8 @@ from .utils import common_dialect
 ROUTER_QOS = rclpy.qos.QoSProfile(
     depth=1000,
     reliability=rclpy.qos.QoSReliabilityPolicy.BEST_EFFORT,
-    durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+    durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+)
 
 
 class Checker:
@@ -46,47 +47,50 @@ class Checker:
 
         click.secho(
             f"Router topic: {source_topic}, target: {self.fmt_ids(self.tgt_ids)}",
-            fg='cyan')
+            fg="cyan",
+        )
 
-        self.source_sub = client.create_subscription(Mavlink, source_topic,
-                                                     self.mavlink_source_cb,
-                                                     ROUTER_QOS)
+        self.source_sub = client.create_subscription(
+            Mavlink, source_topic, self.mavlink_source_cb, ROUTER_QOS
+        )
         self.timer = client.create_timer(watch_time, self.timer_cb)
 
     def fmt_ids(self, ids: typing.Tuple[int]) -> str:
         return f"{'.'.join(f'{v}' for v in ids)}"
 
     def mavlink_source_cb(self, msg: Mavlink):
-        self.client.verbose_secho(f"Msg: {msg}", fg='magenta')
+        self.client.verbose_secho(f"Msg: {msg}", fg="magenta")
 
         ids = (msg.sysid, msg.compid)
         if ids in self.message_sources:
             self.message_sources[ids].add(msg.msgid)
         else:
-            self.message_sources[ids] = set((msg.msgid, ))
+            self.message_sources[ids] = set((msg.msgid,))
 
         self.messages_received += 1
 
     def timer_cb(self):
         if self.reports > 0:
-            click.echo('-' * 80)
+            click.echo("-" * 80)
 
         self.reports += 1
         str_tgt_ids = self.fmt_ids(self.tgt_ids)
 
         if self.tgt_ids in self.message_sources:
-            click.secho(f"OK. I got messages from {str_tgt_ids}.", fg='green')
+            click.secho(f"OK. I got messages from {str_tgt_ids}.", fg="green")
         else:
             click.secho(
                 f"ERROR. I got {len(self.message_sources)} addresses, "
                 f"but not your target {str_tgt_ids}",
-                fg='red')
+                fg="red",
+            )
 
-        click.secho("---", fg='cyan')
+        click.secho("---", fg="cyan")
         click.secho(
             f"Received {self.messages_received}, from {len(self.message_sources)} addresses",
-            fg='cyan')
-        click.secho("address   list of messages", fg='cyan')
+            fg="cyan",
+        )
+        click.secho("address   list of messages", fg="cyan")
         for address, messages in self.message_sources.items():
 
             def fmt_msgid(msgid: int) -> str:
@@ -102,17 +106,15 @@ class Checker:
             str_ids = self.fmt_ids(address)
             click.secho(
                 f"{str_ids:>7s}   {', '.join(fmt_msgid(msgid) for msgid in messages)}",
-                fg='white')
+                fg="white",
+            )
 
         if not self.follow:
             self.event.set()
 
 
 @cli.command()
-@click.option("-f",
-              "--follow",
-              is_flag=True,
-              help="do not exit after first report.")
+@click.option("-f", "--follow", is_flag=True, help="do not exit after first report.")
 @click.option("--watch-time", type=float, default=15.0, help="watch period")
 @pass_client
 def checkid(client, follow, watch_time):

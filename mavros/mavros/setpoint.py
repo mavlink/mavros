@@ -14,126 +14,123 @@ from nav_msgs.msg import Path
 from std_srvs.srv import Trigger
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
-from mavros_msgs.msg import (AttitudeTarget, GlobalPositionTarget,
-                             PositionTarget, Thrust)
+from mavros_msgs.msg import AttitudeTarget, GlobalPositionTarget, PositionTarget, Thrust
 
-from .base import (SENSOR_QOS, PluginModule, SubscriptionCallable,
-                   cached_property)
+from .base import SENSOR_QOS, PluginModule, SubscriptionCallable, cached_property
 
 QOS = SENSOR_QOS
 
 
 class SetpointAccelPlugin(PluginModule):
-
     @cached_property
     def pub_accel(self) -> rclpy.node.Publisher:
-        return self.create_publisher(Vector3Stamped,
-                                     ('setpoint_accel', 'accel'), QOS)
+        return self.create_publisher(Vector3Stamped, ("setpoint_accel", "accel"), QOS)
 
 
 class SetpointAttitudePlugin(PluginModule):
-
     @cached_property
     def pub_attitude(self) -> rclpy.node.Publisher:
-        return self.create_publisher(PoseStamped,
-                                     ('setpoint_attitude', 'attitude'), QOS)
+        return self.create_publisher(
+            PoseStamped, ("setpoint_attitude", "attitude"), QOS
+        )
 
     @cached_property
     def pub_cmd_vel(self) -> rclpy.node.Publisher:
-        return self.create_publisher(TwistStamped,
-                                     ('setpoint_attitude', 'cmd_vel'), QOS)
+        return self.create_publisher(
+            TwistStamped, ("setpoint_attitude", "cmd_vel"), QOS
+        )
 
     @cached_property
     def pub_thrust(self) -> rclpy.node.Publisher:
-        return self.create_publisher(Thrust, ('setpoint_attitude', 'thrust'),
-                                     QOS)
+        return self.create_publisher(Thrust, ("setpoint_attitude", "thrust"), QOS)
 
 
 class SetpointPositionPlugin(PluginModule):
-
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
-        return self.create_publisher(PoseStamped,
-                                     ('setpoint_position', 'local'), QOS)
+        return self.create_publisher(PoseStamped, ("setpoint_position", "local"), QOS)
 
     @cached_property
     def pub_global(self) -> rclpy.node.Publisher:
-        return self.create_publisher(GeoPoseStamped,
-                                     ('setpoint_position', 'global'), QOS)
+        return self.create_publisher(
+            GeoPoseStamped, ("setpoint_position", "global"), QOS
+        )
 
     @cached_property
     def pub_global_to_local(self) -> rclpy.node.Publisher:
-        return self.create_publisher(GeoPoseStamped,
-                                     ('setpoint_position', 'global_to_local'),
-                                     QOS)
+        return self.create_publisher(
+            GeoPoseStamped, ("setpoint_position", "global_to_local"), QOS
+        )
 
 
 class SetpointRawPlugin(PluginModule):
-
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
-        return self.create_publisher(PositionTarget, ('setpoint_raw', 'local'),
-                                     QOS)
+        return self.create_publisher(PositionTarget, ("setpoint_raw", "local"), QOS)
 
     @cached_property
     def pub_global(self) -> rclpy.node.Publisher:
-        return self.create_publisher(GlobalPositionTarget,
-                                     ('setpoint_raw', 'global'), QOS)
+        return self.create_publisher(
+            GlobalPositionTarget, ("setpoint_raw", "global"), QOS
+        )
 
     @cached_property
     def pub_attitude(self) -> rclpy.node.Publisher:
-        return self.create_publisher(AttitudeTarget,
-                                     ('setpoint_raw', 'attitude'), QOS)
+        return self.create_publisher(AttitudeTarget, ("setpoint_raw", "attitude"), QOS)
 
-    def subscribe_target_local(self,
-                               callback: SubscriptionCallable,
-                               qos_profile=QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(PositionTarget,
-                                        ('setpoint_raw', 'target_local'),
-                                        callback, qos_profile)
+    def subscribe_target_local(
+        self, callback: SubscriptionCallable, qos_profile=QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            PositionTarget, ("setpoint_raw", "target_local"), callback, qos_profile
+        )
 
-    def subscribe_target_global(self,
-                                callback: SubscriptionCallable,
-                                qos_profile=QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(GlobalPositionTarget,
-                                        ('setpoint_raw', 'target_global'),
-                                        callback, qos_profile)
+    def subscribe_target_global(
+        self, callback: SubscriptionCallable, qos_profile=QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            GlobalPositionTarget,
+            ("setpoint_raw", "target_global"),
+            callback,
+            qos_profile,
+        )
 
-    def subscribe_target_attitude(self,
-                                  callback: SubscriptionCallable,
-                                  qos_profile=QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(AttitudeTarget,
-                                        ('setpoint_raw', 'target_attitude'),
-                                        callback, qos_profile)
+    def subscribe_target_attitude(
+        self, callback: SubscriptionCallable, qos_profile=QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            AttitudeTarget, ("setpoint_raw", "target_attitude"), callback, qos_profile
+        )
 
 
 class SetpointTrajectoryPlugin(PluginModule):
-
     @cached_property
     def pub_local(self) -> rclpy.node.Publisher:
-        return self.create_publisher(MultiDOFJointTrajectory,
-                                     ('setpoint_trajectory', 'local'), QOS)
+        return self.create_publisher(
+            MultiDOFJointTrajectory, ("setpoint_trajectory", "local"), QOS
+        )
 
-    def subscribe_desired(self,
-                          callback: SubscriptionCallable,
-                          qos_profile=QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(Path,
-                                        ('setpoint_trajectory', 'desired'),
-                                        callback, qos_profile)
+    def subscribe_desired(
+        self, callback: SubscriptionCallable, qos_profile=QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            Path, ("setpoint_trajectory", "desired"), callback, qos_profile
+        )
 
     @cached_property
     def reset(self) -> rclpy.node.Client:
-        return self.create_client(Trigger, ('setpoint_trajectory', 'reset'))
+        return self.create_client(Trigger, ("setpoint_trajectory", "reset"))
 
 
 class SetpointVelocityPlugin(PluginModule):
-
     @cached_property
     def pub_cmd_vel(self) -> rclpy.node.Publisher:
-        return self.create_publisher(TwistStamped,
-                                     ('setpoint_velocity', 'cmd_vel'), QOS)
+        return self.create_publisher(
+            TwistStamped, ("setpoint_velocity", "cmd_vel"), QOS
+        )
 
     @cached_property
     def pub_cmd_vel_unstamped(self) -> rclpy.node.Publisher:
         return self.create_publisher(
-            Twist, ('setpoint_velocity', 'cmd_vel_unstamped'), QOS)
+            Twist, ("setpoint_velocity", "cmd_vel_unstamped"), QOS
+        )

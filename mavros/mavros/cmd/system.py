@@ -26,12 +26,14 @@ def sys(client):
 
 
 @sys.command()
-@click.option('-b', '--base-mode', type=int, default=0, help='Base mode code.')
-@click.option('-c',
-              '--custom-mode',
-              type=str,
-              default='',
-              help='Custom mode string (same as in ~/state topic)')
+@click.option("-b", "--base-mode", type=int, default=0, help="Base mode code.")
+@click.option(
+    "-c",
+    "--custom-mode",
+    type=str,
+    default="",
+    help="Custom mode string (same as in ~/state topic)",
+)
 @pass_client
 @click.pass_context
 def mode(ctx, client, base_mode, custom_mode):
@@ -46,7 +48,7 @@ def mode(ctx, client, base_mode, custom_mode):
             click.echo("Mode changed.")
             done_evt.set()
 
-    if custom_mode != '' and not custom_mode.isdigit():
+    if custom_mode != "" and not custom_mode.isdigit():
         # with correct custom mode we can wait until it changes
         client.system.subscribe_state(state_cb)
     else:
@@ -67,10 +69,11 @@ def _add_rate_options(*options: typing.List[str]):
         click.option(
             f"--{option.lower().replace(' ', '-')}",
             type=int,
-            metavar='RATE',
+            metavar="RATE",
             default=None,
             help=f"{option} stream",
-        ) for option in options
+        )
+        for option in options
     ]
 
     def wrap(f):
@@ -80,18 +83,41 @@ def _add_rate_options(*options: typing.List[str]):
 
 
 @sys.command()
-@_add_rate_options('All', 'Raw sensors', 'Ext status', 'RC channels',
-                   'Raw controller', 'Position', 'Extra1', 'Extra2', 'Extra3')
-@click.option('--stream-id',
-              type=int,
-              nargs=2,
-              metavar='ID, RATE',
-              default=None,
-              help="custom stream stream")
+@_add_rate_options(
+    "All",
+    "Raw sensors",
+    "Ext status",
+    "RC channels",
+    "Raw controller",
+    "Position",
+    "Extra1",
+    "Extra2",
+    "Extra3",
+)
+@click.option(
+    "--stream-id",
+    type=int,
+    nargs=2,
+    metavar="ID, RATE",
+    default=None,
+    help="custom stream stream",
+)
 @pass_client
 @click.pass_context
-def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
-         raw_controller, position, extra1, extra2, extra3, stream_id):
+def rate(
+    ctx,
+    client,
+    all,
+    raw_sensors,
+    ext_status,
+    rc_channels,
+    raw_controller,
+    position,
+    extra1,
+    extra2,
+    extra3,
+    stream_id,
+):
     """Set stream rate."""
     _ = 1  # yapf
 
@@ -121,16 +147,8 @@ def rate(ctx, client, all, raw_sensors, ext_status, rc_channels,
 
 
 @sys.command()
-@click.option('--id',
-              type=int,
-              metavar='MSGID',
-              required=True,
-              help='message id')
-@click.option('--rate',
-              type=float,
-              metavar='RATE',
-              required=True,
-              help='message rate')
+@click.option("--id", type=int, metavar="MSGID", required=True, help="message id")
+@click.option("--rate", type=float, metavar="RATE", required=True, help="message rate")
 @pass_client
 def message_interval(client, id, rate):
     """Set message interval."""

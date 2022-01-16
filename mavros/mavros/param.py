@@ -20,11 +20,13 @@ from rclpy.parameter import Parameter
 from mavros_msgs.msg import ParamEvent
 from mavros_msgs.srv import ParamPull, ParamSetV2
 
-from .base import (PARAMETERS_QOS, PluginModule, SubscriptionCallable,
-                   cached_property)
-from .utils import (call_get_parameters, call_list_parameters,
-                    call_set_parameters_check_and_raise,
-                    parameter_from_parameter_value)
+from .base import PARAMETERS_QOS, PluginModule, SubscriptionCallable, cached_property
+from .utils import (
+    call_get_parameters,
+    call_list_parameters,
+    call_set_parameters_check_and_raise,
+    parameter_from_parameter_value,
+)
 
 
 class ParamFile:
@@ -35,7 +37,7 @@ class ParamFile:
     tgt_system: int = 1
     tgt_component: int = 1
 
-    def load(self, file_: typing.TextIO) -> 'ParamFile':
+    def load(self, file_: typing.TextIO) -> "ParamFile":
         """Load Parameters from a file."""
         raise NotImplementedError
 
@@ -48,20 +50,19 @@ class MavProxyParam(ParamFile):
     """Parse MavProxy parm file."""
 
     class CSVDialect(csv.Dialect):
-        delimiter = ' '
+        delimiter = " "
         doublequote = False
         skipinitialspace = True
-        lineterminator = '\r\n'
+        lineterminator = "\r\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ''
+        escapechar = ""
 
     def _parse_param_file(self, file_: typing.TextIO):
-
         def to_numeric(x):
-            return float(x) if '.' in x else int(x)
+            return float(x) if "." in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
+            if data[0].startswith("#"):
                 continue  # skip comments
 
             if len(data) != 2:
@@ -89,32 +90,31 @@ class MissionPlannerParam(MavProxyParam):
     """Parse MissionPlanner param file."""
 
     class CSVDialect(csv.Dialect):
-        delimiter = ','
+        delimiter = ","
         doublequote = False
         skipinitialspace = True
-        lineterminator = '\r\n'
+        lineterminator = "\r\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ''
+        escapechar = ""
 
 
 class QGroundControlParam(ParamFile):
     """Parse QGC param file."""
 
     class CSVDialect(csv.Dialect):
-        delimiter = '\t'
+        delimiter = "\t"
         doublequote = False
         skipinitialspace = True
-        lineterminator = '\n'
+        lineterminator = "\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ''
+        escapechar = ""
 
     def _parse_param_file(self, file_: typing.TextIO):
-
         def to_numeric(x):
-            return float(x) if '.' in x else int(x)
+            return float(x) if "." in x else int(x)
 
         for data in csv.reader(file_, self.CSVDialect):
-            if data[0].startswith('#'):
+            if data[0].startswith("#"):
                 continue  # skip comments
 
             if len(data) != 5:
@@ -127,7 +127,6 @@ class QGroundControlParam(ParamFile):
         return self
 
     def save(self, file_: typing.TextIO):
-
         def to_type(x):
             if isinstance(x, float):
                 return 9  # REAL32
@@ -140,21 +139,23 @@ class QGroundControlParam(ParamFile):
             self.stamp = datetime.datetime.now()
 
         writer = csv.writer(file_, self.CSVDialect)
+        writer.writerow((f"""# NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""",))
         writer.writerow(
-            (f"""# NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""", ))
-        writer.writerow((
-            f"# Onboard parameters saved by mavparam for ({self.tgt_system}.{self.tgt_component})",
-        ))
-        writer.writerow(
-            ("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
+            (
+                f"# Onboard parameters saved by mavparam for ({self.tgt_system}.{self.tgt_component})",
+            )
+        )
+        writer.writerow(("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
         for k, p in self.parameters.items():
-            writer.writerow((
-                self.tgt_system,
-                self.tgt_component,
-                p.name,
-                p.value,
-                to_type(p.value),
-            ))
+            writer.writerow(
+                (
+                    self.tgt_system,
+                    self.tgt_component,
+                    p.name,
+                    p.value,
+                    to_type(p.value),
+                )
+            )
 
 
 class ParamPlugin(PluginModule):
@@ -167,36 +168,37 @@ class ParamPlugin(PluginModule):
     @cached_property
     def cli_list_parameters(self) -> rclpy.node.Client:
         """Client for ListParameters service."""
-        return self.create_client(ListParameters, ('param', 'list_parameters'))
+        return self.create_client(ListParameters, ("param", "list_parameters"))
 
     @cached_property
     def cli_get_parameters(self) -> rclpy.node.Client:
         """Client for GetParameters service."""
-        return self.create_client(GetParameters, ('param', 'get_parameters'))
+        return self.create_client(GetParameters, ("param", "get_parameters"))
 
     @cached_property
     def cli_set_parameters(self) -> rclpy.node.Client:
         """Client for SetParameters service."""
-        return self.create_client(SetParameters, ('param', 'set_parameters'))
+        return self.create_client(SetParameters, ("param", "set_parameters"))
 
     @cached_property
     def cli_pull(self) -> rclpy.node.Client:
         """Client for ParamPull service."""
-        return self.create_client(ParamPull, ('param', 'pull'))
+        return self.create_client(ParamPull, ("param", "pull"))
 
     @cached_property
     def cli_set(self) -> rclpy.node.Client:
         """Client for ParamSetV2 service."""
-        return self.create_client(ParamSetV2, ('param', 'set'))
+        return self.create_client(ParamSetV2, ("param", "set"))
 
     def subscribe_events(
         self,
         callback: SubscriptionCallable,
-        qos_profile: rclpy.qos.QoSProfile = PARAMETERS_QOS
+        qos_profile: rclpy.qos.QoSProfile = PARAMETERS_QOS,
     ) -> rclpy.node.Subscription:
         """Subscribe to parameter events."""
-        return self.create_subscription(ParamEvent, ('param', 'event'),
-                                        callback, qos_profile)
+        return self.create_subscription(
+            ParamEvent, ("param", "event"), callback, qos_profile
+        )
 
     def call_pull(self, *, force_pull: bool = False) -> ParamPull.Response:
         """Do a call to ParamPull service."""
@@ -208,7 +210,7 @@ class ParamPlugin(PluginModule):
         return resp
 
     @property
-    def values(self) -> 'ParamDict':
+    def values(self) -> "ParamDict":
         """Provide current state of parameters and allows to change them."""
         if self._parameters is not None:
             return self._parameters
@@ -226,11 +228,12 @@ class ParamPlugin(PluginModule):
 
         # 3. if too small events come, request whole list
         if len(pm) < 10:
-            names = call_list_parameters(node=self._node,
-                                         client=self.cli_list_parameters)
-            for k, v in call_get_parameters(node=self._node,
-                                            client=self.cli_get_parameters,
-                                            names=names).items():
+            names = call_list_parameters(
+                node=self._node, client=self.cli_list_parameters
+            )
+            for k, v in call_get_parameters(
+                node=self._node, client=self.cli_get_parameters, names=names
+            ).items():
                 pm.setdefault(k, v)
 
         return pm
@@ -252,7 +255,7 @@ class ParamDict(dict):
         def __init__(self, p):
             self.value = p
 
-    _pm: 'ParamPlugin' = None
+    _pm: "ParamPlugin" = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -266,7 +269,8 @@ class ParamDict(dict):
             call_set_parameters_check_and_raise(
                 node=self._pm._node,
                 client=self._pm.cli_set_parameters,
-                parameters=[value])
+                parameters=[value],
+            )
 
     def _set_item(self, key: str, value) -> (bool, Parameter):
         is_no_set = False
@@ -285,8 +289,7 @@ class ParamDict(dict):
 
         assert key == value.name
 
-        do_call_set = not is_no_set and self.get(key,
-                                                 Parameter(name=key)) != value
+        do_call_set = not is_no_set and self.get(key, Parameter(name=key)) != value
         super().__setitem__(key, value)
         return do_call_set, value
 
@@ -332,12 +335,12 @@ class ParamDict(dict):
             call_set_parameters_check_and_raise(
                 node=self._pm._node,
                 client=self._pm.cli_set_parameters,
-                parameters=[self[k] for k in keys_to_set])
+                parameters=[self[k] for k in keys_to_set],
+            )
 
     def setdefault(self, key: str, value=None):
         if key not in self:
             self[key] = ParamDict.NoSet(value)
 
     def _event_handler(self, msg: ParamEvent):
-        self[msg.param_id] = parameter_from_parameter_value(
-            msg.param_id, msg.value)
+        self[msg.param_id] = parameter_from_parameter_value(msg.param_id, msg.value)

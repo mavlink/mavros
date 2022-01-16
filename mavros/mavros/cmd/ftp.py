@@ -24,7 +24,7 @@ from .utils import fault_echo
 # XXX: bug in ftp.cpp cause a doubling request of last package.
 # -1 fixes that.
 FTP_PAGE_SIZE = 239 * 18 - 1
-FTP_PWD_FILE = pathlib.Path('/tmp/.mavftp_pwd')
+FTP_PWD_FILE = pathlib.Path("/tmp/.mavftp_pwd")
 
 
 class ProgressBar:
@@ -33,8 +33,7 @@ class ProgressBar:
     def __init__(self, quiet: bool, label: str, maxval: int):
         if quiet or maxval == 0:
             if maxval == 0:
-                click.echo("Can't show progressbar for unknown file size",
-                           err=True)
+                click.echo("Can't show progressbar for unknown file size", err=True)
             self.pbar = None
             return
 
@@ -66,28 +65,27 @@ def ftp(client):
     """File manipulation tool for MAVLink-FTP."""
 
 
-def resolve_path(
-        path: typing.Union[None, str, pathlib.Path] = None) -> pathlib.Path:
+def resolve_path(path: typing.Union[None, str, pathlib.Path] = None) -> pathlib.Path:
     """Resolve FTP path using PWD file."""
     if FTP_PWD_FILE.exists():
-        with FTP_PWD_FILE.open('r') as fd:
+        with FTP_PWD_FILE.open("r") as fd:
             pwd = fd.readline()
     else:
         # default home location is root directory
-        pwd = os.environ.get('MAVFTP_HOME', '/')
+        pwd = os.environ.get("MAVFTP_HOME", "/")
 
     pwd = pathlib.Path(pwd)
 
     if not path:
         return pwd.resolve()  # no path - PWD location
-    elif path.startswith('/'):
+    elif path.startswith("/"):
         return pathlib.Path(path).resolve()  # absolute path
     else:
         return (pwd / path).resolve()
 
 
-@ftp.command('cd')
-@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@ftp.command("cd")
+@click.argument("path", type=click.Path(exists=False), nargs=1, required=False)
 @pass_client
 @click.pass_context
 def change_directory(ctx, client, path):
@@ -98,15 +96,15 @@ def change_directory(ctx, client, path):
         fault_echo(ctx, f"Path is not absolute: {path}")
 
     if path:
-        with FTP_PWD_FILE.open('w') as fd:
+        with FTP_PWD_FILE.open("w") as fd:
             fd.write(str(pathlib.Path(path).resolve()))
     else:
         if FTP_PWD_FILE.exists():
             FTP_PWD_FILE.unlink()
 
 
-@ftp.command('ls')
-@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@ftp.command("ls")
+@click.argument("path", type=click.Path(exists=False), nargs=1, required=False)
 @pass_client
 @click.pass_context
 def list(ctx, client, path):
@@ -118,7 +116,7 @@ def list(ctx, client, path):
 
 
 @ftp.command()
-@click.argument('path', type=click.Path(exists=False), nargs=1, required=False)
+@click.argument("path", type=click.Path(exists=False), nargs=1, required=False)
 @pass_client
 @click.pass_context
 def cat(ctx, client, path):
@@ -126,17 +124,16 @@ def cat(ctx, client, path):
     ctx.invoke(
         download,
         src=path,
-        dest=click.open_file('-', 'wb'),
+        dest=click.open_file("-", "wb"),
         progressbar=True,
         verify=False,
     )
 
 
-@ftp.command('rm')
-@click.argument('path',
-                type=click.Path(exists=False, file_okay=True),
-                nargs=1,
-                required=True)
+@ftp.command("rm")
+@click.argument(
+    "path", type=click.Path(exists=False, file_okay=True), nargs=1, required=True
+)
 @pass_client
 @click.pass_context
 def remove(ctx, client, path):
@@ -153,10 +150,9 @@ def reset(client):
 
 
 @ftp.command()
-@click.argument('path',
-                type=click.Path(exists=False, dir_okay=True),
-                nargs=1,
-                required=True)
+@click.argument(
+    "path", type=click.Path(exists=False, dir_okay=True), nargs=1, required=True
+)
 @pass_client
 @click.pass_context
 def mkdir(ctx, client, path):
@@ -166,10 +162,9 @@ def mkdir(ctx, client, path):
 
 
 @ftp.command()
-@click.argument('path',
-                type=click.Path(exists=False, dir_okay=True),
-                nargs=1,
-                required=True)
+@click.argument(
+    "path", type=click.Path(exists=False, dir_okay=True), nargs=1, required=True
+)
 @pass_client
 @click.pass_context
 def rmdir(ctx, client, path):
@@ -179,19 +174,14 @@ def rmdir(ctx, client, path):
 
 
 @ftp.command()
-@click.option('--progressbar/--no-progressbar',
-              ' /-q',
-              default=True,
-              help="show progress bar")
-@click.option('--verify/--no-verify',
-              ' /-v',
-              default=True,
-              help="perform verify step")
-@click.argument('src',
-                type=click.Path(exists=False, file_okay=True),
-                nargs=1,
-                required=True)
-@click.argument('dest', type=click.File('wb'), required=False)
+@click.option(
+    "--progressbar/--no-progressbar", " /-q", default=True, help="show progress bar"
+)
+@click.option("--verify/--no-verify", " /-v", default=True, help="perform verify step")
+@click.argument(
+    "src", type=click.Path(exists=False, file_okay=True), nargs=1, required=True
+)
+@click.argument("dest", type=click.File("wb"), required=False)
 @pass_client
 @click.pass_context
 def download(ctx, client, src, dest, progressbar, verify):
@@ -201,13 +191,13 @@ def download(ctx, client, src, dest, progressbar, verify):
 
     if not dest:
         # if file argument is not set, use $PWD/basename
-        dest = click.open_file(pathlib.Path(src.name).name, 'wb')
+        dest = click.open_file(pathlib.Path(src.name).name, "wb")
 
     client.verbose_echo(f"Downloading from {src} to {dest.name}", err=True)
 
-    with dest as to_fd, \
-            click.ftp.open(src, 'r') as from_fd, \
-            ProgressBar(not progressbar, "Downloading:", from_fd.size) as bar:
+    with dest as to_fd, click.ftp.open(src, "r") as from_fd, ProgressBar(
+        not progressbar, "Downloading:", from_fd.size
+    ) as bar:
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
@@ -221,33 +211,27 @@ def download(ctx, client, src, dest, progressbar, verify):
         click.verbose_echo("Verifying...", err=True)
         remote_crc = click.ftp.checksum(str(src))
         if local_crc != remote_crc:
-            fault_echo(
-                f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}"
-            )
+            fault_echo(f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}")
 
 
 @ftp.command()
-@click.option('--progressbar/--no-progressbar',
-              ' /-q',
-              default=True,
-              help="show progress bar")
-@click.option('--verify/--no-verify',
-              ' /-v',
-              default=True,
-              help="perform verify step")
-@click.option('--overwrite/--no-overwrite',
-              ' /-W',
-              default=True,
-              help="is it allowed to overwrite file")
-@click.argument('src', type=click.File('rb'), nargs=1, required=True)
-@click.argument('dest',
-                type=click.Path(exists=False, file_okay=True),
-                required=False)
+@click.option(
+    "--progressbar/--no-progressbar", " /-q", default=True, help="show progress bar"
+)
+@click.option("--verify/--no-verify", " /-v", default=True, help="perform verify step")
+@click.option(
+    "--overwrite/--no-overwrite",
+    " /-W",
+    default=True,
+    help="is it allowed to overwrite file",
+)
+@click.argument("src", type=click.File("rb"), nargs=1, required=True)
+@click.argument("dest", type=click.Path(exists=False, file_okay=True), required=False)
 @pass_client
 @click.pass_context
 def upload(ctx, client, src, dest, progressbar, verify, overwrite):
     """Upload file."""
-    mode = 'cw' if not overwrite else 'w'
+    mode = "cw" if not overwrite else "w"
     local_crc = 0
 
     if dest:
@@ -260,9 +244,9 @@ def upload(ctx, client, src, dest, progressbar, verify, overwrite):
     # for stdin it is 0
     from_size = os.fstat(src.fileno()).st_size
 
-    with src as from_fd, \
-            client.ftp.open(str(dest), mode) as to_fd, \
-            ProgressBar(not progressbar, "Uploading:", from_size) as bar:
+    with src as from_fd, client.ftp.open(str(dest), mode) as to_fd, ProgressBar(
+        not progressbar, "Uploading:", from_size
+    ) as bar:
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
@@ -276,16 +260,12 @@ def upload(ctx, client, src, dest, progressbar, verify, overwrite):
         client.verbose_echo("Verifying...", err=True)
         remote_crc = client.ftp.checksum(str(dest))
         if local_crc != remote_crc:
-            fault_echo(
-                f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}"
-            )
+            fault_echo(f"Verification failed: 0x{local_crc:08x} != 0x{remote_crc:08x}")
 
 
 @ftp.command()
-@click.argument('local', type=click.File('rb'), nargs=1, required=True)
-@click.argument('remote',
-                type=click.Path(exists=False, file_okay=True),
-                required=False)
+@click.argument("local", type=click.File("rb"), nargs=1, required=True)
+@click.argument("remote", type=click.Path(exists=False, file_okay=True), required=False)
 @pass_client
 @click.pass_context
 def verify(ctx, client, local, remote):

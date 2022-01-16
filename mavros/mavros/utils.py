@@ -31,22 +31,24 @@ def system_now() -> rclpy.time.Time:
 
 
 def parameter_from_parameter_value(
-        name: str, parameter_value: ParameterValue) -> Parameter:
+    name: str, parameter_value: ParameterValue
+) -> Parameter:
     pmsg = ParameterMsg(name=name, value=parameter_value)
     return Parameter.from_parameter_msg(pmsg)
 
 
-def call_list_parameters(*,
-                         node: rclpy.node.Node,
-                         node_name: typing.Optional[str] = None,
-                         client: typing.Optional[rclpy.node.Client] = None,
-                         prefixes: typing.List[str] = []) -> typing.List[str]:
+def call_list_parameters(
+    *,
+    node: rclpy.node.Node,
+    node_name: typing.Optional[str] = None,
+    client: typing.Optional[rclpy.node.Client] = None,
+    prefixes: typing.List[str] = [],
+) -> typing.List[str]:
     lg = node.get_logger()
 
     if client is None:
         assert node_name is not None
-        client = node.create_client(ListParameters,
-                                    f"{node_name}/list_parameters")
+        client = node.create_client(ListParameters, f"{node_name}/list_parameters")
 
     wait_for_service(client, lg)
 
@@ -58,17 +60,17 @@ def call_list_parameters(*,
 
 
 def call_get_parameters(
-        *,
-        node: rclpy.node.Node,
-        node_name: typing.Optional[str] = None,
-        client: typing.Optional[rclpy.node.Client] = None,
-        names: typing.List[str] = []) -> typing.Dict[str, Parameter]:
+    *,
+    node: rclpy.node.Node,
+    node_name: typing.Optional[str] = None,
+    client: typing.Optional[rclpy.node.Client] = None,
+    names: typing.List[str] = [],
+) -> typing.Dict[str, Parameter]:
     lg = node.get_logger()
 
     if client is None:
         assert node_name is not None
-        client = node.create_client(GetParameters,
-                                    f"{node_name}/get_parameters")
+        client = node.create_client(GetParameters, f"{node_name}/get_parameters")
 
     wait_for_service(client, lg)
 
@@ -87,19 +89,17 @@ def call_set_parameters(
     node: rclpy.node.Node,
     node_name: typing.Optional[str] = None,
     client: typing.Optional[rclpy.node.Client] = None,
-    parameters: typing.List[Parameter] = []
+    parameters: typing.List[Parameter] = [],
 ) -> typing.Dict[str, SetParametersResult]:
     lg = node.get_logger()
 
     if client is None:
         assert node_name is not None
-        client = node.create_client(SetParameters,
-                                    f"{node_name}/set_parameters")
+        client = node.create_client(SetParameters, f"{node_name}/set_parameters")
 
     wait_for_service(client, lg)
 
-    req = SetParameters.Request(
-        parameters=[p.to_parameter_msg() for p in parameters])
+    req = SetParameters.Request(parameters=[p.to_parameter_msg() for p in parameters])
     resp = client.call(req)
     lg.debug(f"set result: {resp}")
 
@@ -108,7 +108,6 @@ def call_set_parameters(
 
 def call_set_parameters_check_and_raise(**kwargs):
     results = call_set_parameters(**kwargs)
-    msg = ';'.join(f"{k}: {r.reason}" for k, r in results.items()
-                   if not r.successful)
+    msg = ";".join(f"{k}: {r.reason}" for k, r in results.items() if not r.successful)
     if msg:
         raise ValueError(msg)

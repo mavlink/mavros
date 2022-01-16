@@ -14,9 +14,19 @@ import rclpy
 from std_srvs.srv import Empty
 
 from mavros_msgs.msg import FileEntry
-from mavros_msgs.srv import (FileChecksum, FileClose, FileList, FileMakeDir,
-                             FileOpen, FileRead, FileRemove, FileRemoveDir,
-                             FileRename, FileTruncate, FileWrite)
+from mavros_msgs.srv import (
+    FileChecksum,
+    FileClose,
+    FileList,
+    FileMakeDir,
+    FileOpen,
+    FileRead,
+    FileRemove,
+    FileRemoveDir,
+    FileRename,
+    FileTruncate,
+    FileWrite,
+)
 
 from .base import PluginModule, cached_property
 
@@ -33,7 +43,7 @@ class FTPFile:
     Note that current PX4 firmware only support two connections simultaneously.
     """
 
-    _fm: 'FTPPlugin'
+    _fm: "FTPPlugin"
 
     def __init__(self, *, fm, name, mode):
         self._fm = fm
@@ -53,11 +63,11 @@ class FTPFile:
             - 'r': read binary
             - 'cw': create excl & write
         """
-        if mode == 'w' or mode == 'wb':
+        if mode == "w" or mode == "wb":
             m = FileOpen.Request.MODE_WRITE
-        elif mode == 'r' or mode == 'rb':
+        elif mode == "r" or mode == "rb":
             m = FileOpen.Request.MODE_READ
-        elif mode == 'cw':
+        elif mode == "cw":
             m = FileOpen.Request.MODE_CREATE
         else:
             raise ValueError("Unknown open mode: {}".format(m))
@@ -85,9 +95,7 @@ class FTPFile:
         _check_raise_errno(ret)
 
     def read(self, size: int = 1) -> bytearray:
-        req = FileRead.Request(file_path=self.name,
-                               offset=self.offset,
-                               size=size)
+        req = FileRead.Request(file_path=self.name, offset=self.offset, size=size)
         ret = self._fm.cli_read.call(req)
         _check_raise_errno(ret)
         self.offset += len(ret.data)
@@ -96,9 +104,7 @@ class FTPFile:
     def write(self, bin_data: typing.Union[bytes, bytearray]):
         data_len = len(bin_data)
 
-        req = FileWrite.Request(file_path=self.name,
-                                offset=self.offset,
-                                data=bin_data)
+        req = FileWrite.Request(file_path=self.name, offset=self.offset, data=bin_data)
         ret = self._fm.cli_write.call(req)
         _check_raise_errno(ret)
         self.offset += data_len
@@ -139,53 +145,53 @@ class FTPPlugin(PluginModule):
 
     @cached_property
     def cli_open(self) -> rclpy.node.Client:
-        return self.create_client(FileOpen, ('ftp', 'open'))
+        return self.create_client(FileOpen, ("ftp", "open"))
 
     @cached_property
     def cli_close(self) -> rclpy.node.Client:
-        return self.create_client(FileClose, ('ftp', 'close'))
+        return self.create_client(FileClose, ("ftp", "close"))
 
     @cached_property
     def cli_read(self) -> rclpy.node.Client:
-        return self.create_client(FileRead, ('ftp', 'read'))
+        return self.create_client(FileRead, ("ftp", "read"))
 
     @cached_property
     def cli_write(self) -> rclpy.node.Client:
-        return self.create_client(FileWrite, ('ftp', 'write'))
+        return self.create_client(FileWrite, ("ftp", "write"))
 
     @cached_property
     def cli_truncate(self) -> rclpy.node.Client:
-        return self.create_client(FileTruncate, ('ftp', 'truncate'))
+        return self.create_client(FileTruncate, ("ftp", "truncate"))
 
     @cached_property
     def cli_listdir(self) -> rclpy.node.Client:
-        return self.create_client(FileList, ('ftp', 'list'))
+        return self.create_client(FileList, ("ftp", "list"))
 
     @cached_property
     def cli_unlink(self) -> rclpy.node.Client:
-        return self.create_client(FileRemove, ('ftp', 'remove'))
+        return self.create_client(FileRemove, ("ftp", "remove"))
 
     @cached_property
     def cli_mkdir(self) -> rclpy.node.Client:
-        return self.create_client(FileMakeDir, ('ftp', 'mkdir'))
+        return self.create_client(FileMakeDir, ("ftp", "mkdir"))
 
     @cached_property
     def cli_rmdir(self) -> rclpy.node.Client:
-        return self.create_client(FileRemoveDir, ('ftp', 'rmdir'))
+        return self.create_client(FileRemoveDir, ("ftp", "rmdir"))
 
     @cached_property
     def cli_rename(self) -> rclpy.node.Client:
-        return self.create_client(FileRename, ('ftp', 'rename'))
+        return self.create_client(FileRename, ("ftp", "rename"))
 
     @cached_property
     def cli_checksum(self) -> rclpy.node.Client:
-        return self.create_client(FileChecksum, ('ftp', 'checksum'))
+        return self.create_client(FileChecksum, ("ftp", "checksum"))
 
     @cached_property
     def cli_reset(self) -> rclpy.node.Client:
-        return self.create_client(Empty, ('ftp', 'reset'))
+        return self.create_client(Empty, ("ftp", "reset"))
 
-    def open(self, path: str, mode: str = 'r') -> FTPFile:
+    def open(self, path: str, mode: str = "r") -> FTPFile:
         return FTPFile(fm=self, name=path, mode=mode)
 
     def listdir(self, dir_path: str) -> typing.List[FileEntry]:
@@ -220,6 +226,8 @@ class FTPPlugin(PluginModule):
         _check_raise_errno(ret)
         return ret.crc32
 
-    def reset_server(self, ):
+    def reset_server(
+        self,
+    ):
         req = Empty.Request()
         self.cli_reset.call(req)

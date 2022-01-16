@@ -19,53 +19,51 @@ from .base import SENSOR_QOS, PluginModule, SubscriptionCallable
 class GlobalPositionPlugin(PluginModule):
     """Global position plugin."""
 
-    def subscribe_raw_fix(self,
-                          callback: SubscriptionCallable,
-                          qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(NavSatFix,
-                                        ('global_position', 'raw', 'fix'),
-                                        callback, qos_profile)
+    def subscribe_raw_fix(
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            NavSatFix, ("global_position", "raw", "fix"), callback, qos_profile
+        )
 
     def subscribe_raw_gps_vel(
-            self,
-            callback: SubscriptionCallable,
-            qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(TwistStamped,
-                                        ('global_position', 'raw', 'gps_vel'),
-                                        callback, qos_profile)
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            TwistStamped, ("global_position", "raw", "gps_vel"), callback, qos_profile
+        )
 
     def subscribe_raw_salellites(
-            self,
-            callback: SubscriptionCallable,
-            qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
         return self.create_subscription(
-            UInt32, ('global_position', 'raw', 'satellites'), callback,
-            qos_profile)
+            UInt32, ("global_position", "raw", "satellites"), callback, qos_profile
+        )
 
-    def subscribe_fix(self,
-                      callback: SubscriptionCallable,
-                      qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(NavSatFix,
-                                        ('global_position', 'global'),
-                                        callback, qos_profile)
+    def subscribe_fix(
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            NavSatFix, ("global_position", "global"), callback, qos_profile
+        )
 
-    def subscribe_odom(self,
-                       callback: SubscriptionCallable,
-                       qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(Odometry, ('global_position', 'local'),
-                                        callback, qos_profile)
+    def subscribe_odom(
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            Odometry, ("global_position", "local"), callback, qos_profile
+        )
 
-    def subscribe_rel_alt(self,
-                          callback: SubscriptionCallable,
-                          qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(Float64,
-                                        ('global_position', 'rel_alt'),
-                                        callback, qos_profile)
+    def subscribe_rel_alt(
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            Float64, ("global_position", "rel_alt"), callback, qos_profile
+        )
 
     def subscribe_compass_hdg(
-            self,
-            callback: SubscriptionCallable,
-            qos_profile=SENSOR_QOS) -> rclpy.node.Subscription:
-        return self.create_subscription(Float64,
-                                        ('global_position', 'compass_hdg'),
-                                        callback, qos_profile)
+        self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
+    ) -> rclpy.node.Subscription:
+        return self.create_subscription(
+            Float64, ("global_position", "compass_hdg"), callback, qos_profile
+        )

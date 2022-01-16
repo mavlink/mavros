@@ -19,7 +19,7 @@ from mavros_msgs.msg import Mavlink
 
 from .utils import system_now
 
-MAVLink_message = typing.TypeVar('MAVLink_message')
+MAVLink_message = typing.TypeVar("MAVLink_message")
 
 
 def convert_to_bytes(msg: Mavlink) -> bytearray:
@@ -30,30 +30,47 @@ def convert_to_bytes(msg: Mavlink) -> bytearray:
     """
     payload_octets = len(msg.payload64)
     if payload_octets < msg.len / 8:
-        raise ValueError(
-            "Specified payload length is bigger than actual payload64")
+        raise ValueError("Specified payload length is bigger than actual payload64")
 
     if msg.magic == Mavlink.MAVLINK_V10:
         msg_len = 6 + msg.len  # header + payload length
         msgdata = bytearray(
-            struct.pack('<BBBBBB%dQ' % payload_octets, msg.magic, msg.len,
-                        msg.seq, msg.sysid, msg.compid, msg.msgid,
-                        *msg.payload64))
+            struct.pack(
+                "<BBBBBB%dQ" % payload_octets,
+                msg.magic,
+                msg.len,
+                msg.seq,
+                msg.sysid,
+                msg.compid,
+                msg.msgid,
+                *msg.payload64,
+            )
+        )
     else:  # MAVLINK_V20
         msg_len = 10 + msg.len  # header + payload length
         msgdata = bytearray(
-            struct.pack('<BBBBBBBBBB%dQ' % payload_octets, msg.magic, msg.len,
-                        msg.incompat_flags, msg.compat_flags, msg.seq,
-                        msg.sysid, msg.compid, msg.msgid & 0xff,
-                        (msg.msgid >> 8) & 0xff, (msg.msgid >> 16) & 0xff,
-                        *msg.payload64))
+            struct.pack(
+                "<BBBBBBBBBB%dQ" % payload_octets,
+                msg.magic,
+                msg.len,
+                msg.incompat_flags,
+                msg.compat_flags,
+                msg.seq,
+                msg.sysid,
+                msg.compid,
+                msg.msgid & 0xFF,
+                (msg.msgid >> 8) & 0xFF,
+                (msg.msgid >> 16) & 0xFF,
+                *msg.payload64,
+            )
+        )
 
     if payload_octets != msg.len / 8:
         # message is shorter than payload octets
         msgdata = msgdata[:msg_len]
 
     # finalize
-    msgdata += struct.pack('<H', msg.checksum)
+    msgdata += struct.pack("<H", msg.checksum)
 
     if msg.magic == Mavlink.MAVLINK_V20:
         msgdata += bytearray(msg.signature)
@@ -62,21 +79,22 @@ def convert_to_bytes(msg: Mavlink) -> bytearray:
 
 
 def convert_to_payload64(
-        payload_bytes: typing.Union[bytes, bytearray]) -> typing.List[int]:
+    payload_bytes: typing.Union[bytes, bytearray]
+) -> typing.List[int]:
     """Convert payload bytes to Mavlink.payload64."""
     payload_bytes = bytearray(payload_bytes)
     payload_len = len(payload_bytes)
     payload_octets = payload_len / 8
     if payload_len % 8 > 0:
         payload_octets += 1
-        payload_bytes += b'\0' * (8 - payload_len % 8)
+        payload_bytes += b"\0" * (8 - payload_len % 8)
 
-    return struct.unpack(f'<{payload_octets}Q', payload_bytes)
+    return struct.unpack(f"<{payload_octets}Q", payload_bytes)
 
 
 def convert_to_rosmsg(
-        mavmsg: MAVLink_message,
-        stamp: typing.Optional[rclpy.time.Time] = None) -> Mavlink:
+    mavmsg: MAVLink_message, stamp: typing.Optional[rclpy.time.Time] = None
+) -> Mavlink:
     """
     Convert pymavlink message to Mavlink.msg.
 
@@ -110,13 +128,15 @@ def convert_to_rosmsg(
         )
 
     else:
-        return Mavlink(header=header,
-                       framing_status=Mavlink.FRAMING_OK,
-                       magic=Mavlink.MAVLINK_V10,
-                       len=len(mavmsg.get_payload()),
-                       seq=mavmsg.get_seq(),
-                       sysid=mavmsg.get_srcSystem(),
-                       compid=mavmsg.get_srcComponent(),
-                       msgid=mavmsg.get_msgId(),
-                       checksum=mavmsg.get_crc(),
-                       payload64=convert_to_payload64(mavmsg.get_payload()))
+        return Mavlink(
+            header=header,
+            framing_status=Mavlink.FRAMING_OK,
+            magic=Mavlink.MAVLINK_V10,
+            len=len(mavmsg.get_payload()),
+            seq=mavmsg.get_seq(),
+            sysid=mavmsg.get_srcSystem(),
+            compid=mavmsg.get_srcComponent(),
+            msgid=mavmsg.get_msgId(),
+            checksum=mavmsg.get_crc(),
+            payload64=convert_to_payload64(mavmsg.get_payload()),
+        )

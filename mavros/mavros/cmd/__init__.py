@@ -19,11 +19,13 @@ from ..base import DEFAULT_NAMESPACE
 
 
 class CliClient:
-    def __init__(self,
-                 *,
-                 node_name: typing.Optional[str] = None,
-                 mavros_ns: str = DEFAULT_NAMESPACE,
-                 verbose: bool = False):
+    def __init__(
+        self,
+        *,
+        node_name: typing.Optional[str] = None,
+        mavros_ns: str = DEFAULT_NAMESPACE,
+        verbose: bool = False,
+    ):
         self.cli = Client(node_name=node_name, mavros_ns=mavros_ns)
         self.verbose = verbose
 
@@ -56,46 +58,56 @@ def print_version(ctx, param_, value):
 
     import ament_index_python as aip
 
-    share_dir = aip.get_package_share_directory('mavros')
-    package_xml = pathlib.Path(share_dir) / 'package.xml'
+    share_dir = aip.get_package_share_directory("mavros")
+    package_xml = pathlib.Path(share_dir) / "package.xml"
 
     tree = ET.parse(package_xml)
-    versions = tree.getroot().findall('version')
+    versions = tree.getroot().findall("version")
 
     click.echo(f"MAVROS Version: {versions[0].text}")
     ctx.exit()
 
 
 @click.group()
-@click.option("--node-name",
-              type=str,
-              default=None,
-              envvar="MAVCLI_NODE_NAME",
-              help="Set node name to cli's Node, default: random")
-@click.option("--mavros-ns",
-              type=str,
-              default=DEFAULT_NAMESPACE,
-              envvar="MAVCLI_MAVROS_NS",
-              help="Set namespace of mavros::UAS Node")
-@click.option("--verbose",
-              type=bool,
-              default=False,
-              is_flag=True,
-              envvar="MAVCLI_VERBOSE",
-              help="Verbose output")
-@click.option("--wait-fcu",
-              type=float,
-              is_flag=False,
-              flag_value=None,
-              envvar="MAVCLI_WAIT_FCU",
-              default=False,
-              help="Wait for establishing FCU connection")
-@click.option("--version",
-              is_flag=True,
-              callback=print_version,
-              expose_value=False,
-              is_eager=True,
-              help="Show program version and exit")
+@click.option(
+    "--node-name",
+    type=str,
+    default=None,
+    envvar="MAVCLI_NODE_NAME",
+    help="Set node name to cli's Node, default: random",
+)
+@click.option(
+    "--mavros-ns",
+    type=str,
+    default=DEFAULT_NAMESPACE,
+    envvar="MAVCLI_MAVROS_NS",
+    help="Set namespace of mavros::UAS Node",
+)
+@click.option(
+    "--verbose",
+    type=bool,
+    default=False,
+    is_flag=True,
+    envvar="MAVCLI_VERBOSE",
+    help="Verbose output",
+)
+@click.option(
+    "--wait-fcu",
+    type=float,
+    is_flag=False,
+    flag_value=None,
+    envvar="MAVCLI_WAIT_FCU",
+    default=False,
+    help="Wait for establishing FCU connection",
+)
+@click.option(
+    "--version",
+    is_flag=True,
+    callback=print_version,
+    expose_value=False,
+    is_eager=True,
+    help="Show program version and exit",
+)
 @click.pass_context
 def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     """MAVROS tools entry point."""
@@ -110,9 +122,7 @@ def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     rclpy.init()
     ctx.call_on_close(on_close)
 
-    ctx.obj = CliClient(node_name=node_name,
-                        mavros_ns=mavros_ns,
-                        verbose=verbose)
+    ctx.obj = CliClient(node_name=node_name, mavros_ns=mavros_ns, verbose=verbose)
     spinner_thd = ctx.obj.start_spinner()
 
     if wait_fcu or wait_fcu is None:

@@ -11,8 +11,7 @@ import typing
 
 import click
 
-from ..param import (MavProxyParam, MissionPlannerParam, ParamFile,
-                     QGroundControlParam)
+from ..param import MavProxyParam, MissionPlannerParam, ParamFile, QGroundControlParam
 from . import CliClient, cli, pass_client
 from .utils import apply_options
 
@@ -26,41 +25,48 @@ def param(client):
 def _add_format_options(f):
     return apply_options(
         f,
-        click.option('-mp',
-                     '--mission-planner',
-                     'file_format',
-                     flag_value='mp',
-                     help='Select Mission Planner param file format'),
-        click.option('-qgc',
-                     '--qgroundcontrol',
-                     'file_format',
-                     flag_value='qgc',
-                     help='Select QGroundControl param file format'),
-        click.option('-mpx',
-                     '-mavpx',
-                     '--mavproxy',
-                     'file_format',
-                     flag_value='mpx',
-                     help='Select MAVProxy param file format'),
+        click.option(
+            "-mp",
+            "--mission-planner",
+            "file_format",
+            flag_value="mp",
+            help="Select Mission Planner param file format",
+        ),
+        click.option(
+            "-qgc",
+            "--qgroundcontrol",
+            "file_format",
+            flag_value="qgc",
+            help="Select QGroundControl param file format",
+        ),
+        click.option(
+            "-mpx",
+            "-mavpx",
+            "--mavproxy",
+            "file_format",
+            flag_value="mpx",
+            help="Select MAVProxy param file format",
+        ),
     )
 
 
-def get_param_file_io(client: CliClient, file_format: typing.Optional[str],
-                      file_: typing.TextIO) -> ParamFile:
-    if file_format == 'mp':
+def get_param_file_io(
+    client: CliClient, file_format: typing.Optional[str], file_: typing.TextIO
+) -> ParamFile:
+    if file_format == "mp":
         client.verbose_echo("MissionPlanner format")
         pf = MissionPlannerParam()
 
-    elif file_format == 'qgc':
+    elif file_format == "qgc":
         client.verbose_echo("QGroundControl format")
         pf = QGroundControlParam()
 
-    elif file_format == 'mpx':
+    elif file_format == "mpx":
         client.verbose_echo("MavProxy format")
         pf = MavProxyParam()
 
     else:
-        if file_.name.endswith('.txt'):
+        if file_.name.endswith(".txt"):
             client.verbose_echo("Suggestion: QGroundControl format")
             pf = QGroundControlParam()
         else:
@@ -75,7 +81,7 @@ def get_param_file_io(client: CliClient, file_format: typing.Optional[str],
 
 @param.command()
 @_add_format_options
-@click.argument('file_', type=click.File('r'), metavar='FILE')
+@click.argument("file_", type=click.File("r"), metavar="FILE")
 @pass_client
 def load(client, file_format, file_):
     """Load parameters from file."""
@@ -89,12 +95,14 @@ def load(client, file_format, file_):
 
 @param.command()
 @_add_format_options
-@click.option('-f',
-              '--force',
-              is_flag=True,
-              default=False,
-              help='Force pull params form FCU, update cache')
-@click.argument('file_', type=click.File('w'), metavar='FILE')
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force pull params form FCU, update cache",
+)
+@click.argument("file_", type=click.File("w"), metavar="FILE")
 @pass_client
 def dump(client, file_format, force, file_):
     """Dump parameters to file."""
@@ -112,7 +120,7 @@ def dump(client, file_format, force, file_):
 
 
 @param.command()
-@click.argument('param_id', type=str)
+@click.argument("param_id", type=str)
 @pass_client
 def get(client, param_id):
     """Print one parameter value."""
@@ -121,12 +129,12 @@ def get(client, param_id):
 
 
 @param.command()
-@click.argument('param_id', type=str)
-@click.argument('value', type=str)
+@click.argument("param_id", type=str)
+@click.argument("value", type=str)
 @pass_client
 def set(client, param_id, value):
     """Set one parameter."""
-    if '.' in value:
+    if "." in value:
         val = float(value)
     else:
         val = int(value)

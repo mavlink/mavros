@@ -17,8 +17,14 @@ import threading
 import click
 from sensor_msgs.msg import NavSatFix
 
-from mavros_msgs.srv import (CommandHome, CommandInt, CommandLong, CommandTOL,
-                             CommandTriggerControl, CommandTriggerInterval)
+from mavros_msgs.srv import (
+    CommandHome,
+    CommandInt,
+    CommandLong,
+    CommandTOL,
+    CommandTriggerControl,
+    CommandTriggerInterval,
+)
 
 from . import cli, pass_client
 from .utils import bool2int, check_cmd_ret
@@ -31,28 +37,36 @@ def cmd(client):
 
 
 @cmd.command()
-@click.option("-c",
-              "--confirmation",
-              default=False,
-              is_flag=True,
-              help="Require confirmation")
-@click.option("-b",
-              "--broadcast",
-              default=False,
-              is_flag=True,
-              help="Broadcast command")
-@click.argument('command', type=int)
-@click.argument('param1', type=float)
-@click.argument('param2', type=float)
-@click.argument('param3', type=float)
-@click.argument('param4', type=float)
-@click.argument('param5', type=float)
-@click.argument('param6', type=float)
-@click.argument('param7', type=float)
+@click.option(
+    "-c", "--confirmation", default=False, is_flag=True, help="Require confirmation"
+)
+@click.option(
+    "-b", "--broadcast", default=False, is_flag=True, help="Broadcast command"
+)
+@click.argument("command", type=int)
+@click.argument("param1", type=float)
+@click.argument("param2", type=float)
+@click.argument("param3", type=float)
+@click.argument("param4", type=float)
+@click.argument("param5", type=float)
+@click.argument("param6", type=float)
+@click.argument("param7", type=float)
 @pass_client
 @click.pass_context
-def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
-         param4, param5, param6, param7):
+def long(
+    ctx,
+    client,
+    confirmation,
+    broadcast,
+    command,
+    param1,
+    param2,
+    param3,
+    param4,
+    param5,
+    param6,
+    param7,
+):
     """Send any command (COMMAND_LONG)."""
     req = CommandLong.Request(
         broadcast=broadcast,
@@ -73,34 +87,40 @@ def long(ctx, client, confirmation, broadcast, command, param1, param2, param3,
 
 
 @cmd.command()
-@click.option("-c",
-              "--current",
-              default=False,
-              is_flag=True,
-              help="Is current?")
-@click.option('-a',
-              '--autocontinue',
-              default=False,
-              is_flag=True,
-              help="Is autocontinue?")
-@click.option('-f', '--frame', type=int, default=3, help="Frame Code")
-@click.option("-b",
-              "--broadcast",
-              default=False,
-              is_flag=True,
-              help="Broadcast command")
-@click.argument('command', type=int)
-@click.argument('param1', type=float)
-@click.argument('param2', type=float)
-@click.argument('param3', type=float)
-@click.argument('param4', type=float)
-@click.argument('x', type=int)
-@click.argument('y', type=int)
-@click.argument('z', type=float)
+@click.option("-c", "--current", default=False, is_flag=True, help="Is current?")
+@click.option(
+    "-a", "--autocontinue", default=False, is_flag=True, help="Is autocontinue?"
+)
+@click.option("-f", "--frame", type=int, default=3, help="Frame Code")
+@click.option(
+    "-b", "--broadcast", default=False, is_flag=True, help="Broadcast command"
+)
+@click.argument("command", type=int)
+@click.argument("param1", type=float)
+@click.argument("param2", type=float)
+@click.argument("param3", type=float)
+@click.argument("param4", type=float)
+@click.argument("x", type=int)
+@click.argument("y", type=int)
+@click.argument("z", type=float)
 @pass_client
 @click.pass_context
-def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
-        param2, param3, param4, x, y, z):
+def int(
+    ctx,
+    client,
+    current,
+    autocontinue,
+    broadcast,
+    frame,
+    command,
+    param1,
+    param2,
+    param3,
+    param4,
+    x,
+    y,
+    z,
+):
     """Send any command (COMMAND_INT)."""
     req = CommandInt.Request(
         broadcast=broadcast,
@@ -123,13 +143,15 @@ def int(ctx, client, current, autocontinue, broadcast, frame, command, param1,
 
 
 @cmd.command()
-@click.option("-c",
-              "--current-gps",
-              is_flag=True,
-              help="Use current GPS location (use 0 0 0 for location args)")
-@click.argument('latitude', type=float)
-@click.argument('longitude', type=float)
-@click.argument('altitude', type=float)
+@click.option(
+    "-c",
+    "--current-gps",
+    is_flag=True,
+    help="Use current GPS location (use 0 0 0 for location args)",
+)
+@click.argument("latitude", type=float)
+@click.argument("longitude", type=float)
+@click.argument("altitude", type=float)
 @pass_client
 @click.pass_context
 def set_home(ctx, client, current_gps, latitude, longitude, altitude):
@@ -149,9 +171,9 @@ def set_home(ctx, client, current_gps, latitude, longitude, altitude):
 @cmd.command()
 @click.option("--min-pitch", type=float, required=True, help="Min pitch")
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('latitude', type=float)
-@click.argument('longitude', type=float)
-@click.argument('altitude', type=float)
+@click.argument("latitude", type=float)
+@click.argument("longitude", type=float)
+@click.argument("altitude", type=float)
 @pass_client
 @click.pass_context
 def takeoff(ctx, client, min_pitch, yaw, latitude, longitude, altitude):
@@ -171,9 +193,9 @@ def takeoff(ctx, client, min_pitch, yaw, latitude, longitude, altitude):
 
 @cmd.command()
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('latitude', type=float)
-@click.argument('longitude', type=float)
-@click.argument('altitude', type=float)
+@click.argument("latitude", type=float)
+@click.argument("longitude", type=float)
+@click.argument("altitude", type=float)
 @pass_client
 @click.pass_context
 def land(ctx, client, yaw, latitude, longitude, altitude):
@@ -194,7 +216,7 @@ def land(ctx, client, yaw, latitude, longitude, altitude):
 @cmd.command()
 @click.option("--min-pitch", type=float, required=True, help="Min pitch")
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('altitude', type=float)
+@click.argument("altitude", type=float)
 @pass_client
 @click.pass_context
 def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
@@ -202,10 +224,14 @@ def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
     done_evt = threading.Event()
 
     def fix_cb(fix: NavSatFix):
-        click.echo(f"Taking-off from current coord: "
-                   f"Lat: {fix.latitude}, Long: {fix.longitude}")
-        client.verbose_echo(f"With desired Altitude: {altitude}, "
-                            f"Yaw: {yaw}, Pitch angle: {min_pitch}")
+        click.echo(
+            f"Taking-off from current coord: "
+            f"Lat: {fix.latitude}, Long: {fix.longitude}"
+        )
+        client.verbose_echo(
+            f"With desired Altitude: {altitude}, "
+            f"Yaw: {yaw}, Pitch angle: {min_pitch}"
+        )
 
         req = CommandTOL.Request(
             min_pitch=min_pitch,
@@ -229,7 +255,7 @@ def takeoff_cur(ctx, client, min_pitch, yaw, altitude):
 
 @cmd.command()
 @click.option("--yaw", type=float, required=True, help="Desired Yaw")
-@click.argument('altitude', type=float)
+@click.argument("altitude", type=float)
 @pass_client
 @click.pass_context
 def land_cur(ctx, client, yaw, altitude):
@@ -237,8 +263,9 @@ def land_cur(ctx, client, yaw, altitude):
     done_evt = threading.Event()
 
     def fix_cb(fix: NavSatFix):
-        click.echo(f"Landing on current coord: "
-                   f"Lat: {fix.latitude}, Long: {fix.longitude}")
+        click.echo(
+            f"Landing on current coord: " f"Lat: {fix.latitude}, Long: {fix.longitude}"
+        )
         client.verbose_echo(f"With desired Altitude: {altitude}, Yaw: {yaw}")
 
         req = CommandTOL.Request(
@@ -262,31 +289,26 @@ def land_cur(ctx, client, yaw, altitude):
 
 
 @cmd.command()
-@click.option("-e",
-              "--enable",
-              "trigger_enable",
-              flag_value=True,
-              default=True,
-              help="Enable camera trigger")
-@click.option("-d",
-              "--disable",
-              "trigger_enable",
-              flag_value=False,
-              help="Disable camera trigger")
-@click.option("-r",
-              "--sequence-reset",
-              is_flag=True,
-              default=False,
-              help="Reset trigger sequence")
-@click.option("-p",
-              "--trigger-pause",
-              is_flag=True,
-              default=False,
-              help="Pause triggering")
+@click.option(
+    "-e",
+    "--enable",
+    "trigger_enable",
+    flag_value=True,
+    default=True,
+    help="Enable camera trigger",
+)
+@click.option(
+    "-d", "--disable", "trigger_enable", flag_value=False, help="Disable camera trigger"
+)
+@click.option(
+    "-r", "--sequence-reset", is_flag=True, default=False, help="Reset trigger sequence"
+)
+@click.option(
+    "-p", "--trigger-pause", is_flag=True, default=False, help="Pause triggering"
+)
 @pass_client
 @click.pass_context
-def trigger_control(ctx, client, trigger_enable, sequence_reset,
-                    trigger_pause):
+def trigger_control(ctx, client, trigger_enable, sequence_reset, trigger_pause):
     """Control onboard camera triggering system (PX4)."""
     req = CommandTriggerControl.Request(
         trigger_enable=trigger_enable,
@@ -305,12 +327,15 @@ def trigger_control(ctx, client, trigger_enable, sequence_reset,
     "--cycle-time",
     default=0.0,
     type=float,
-    help="Camera trigger cycle time. Zero to use current onboard value")
-@click.option("-i",
-              "--integration-time",
-              default=0.0,
-              type=float,
-              help="Camera shutter intergration time. Zero to ignore")
+    help="Camera trigger cycle time. Zero to use current onboard value",
+)
+@click.option(
+    "-i",
+    "--integration-time",
+    default=0.0,
+    type=float,
+    help="Camera shutter intergration time. Zero to ignore",
+)
 @pass_client
 @click.pass_context
 def trigger_interval(ctx, client, cycle_time, integration_time):
