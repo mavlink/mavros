@@ -182,9 +182,9 @@ public:
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     land_target_pub =
-      node->create_publisher<geometry_msgs::msg::PoseStamped>("pose_in", sensor_qos);
+      node->create_publisher<geometry_msgs::msg::PoseStamped>("~/pose_in", sensor_qos);
     lt_marker_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>(
-      "lt_marker",
+      "~/lt_marker",
       sensor_qos);
 
     pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
