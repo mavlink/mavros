@@ -322,7 +322,7 @@ void UAS::add_plugin(const std::string & pl_name)
 
     auto pl_node = plugin->get_node();
     if (pl_node && pl_node.get() != this) {
-      RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " added to executor");
+      RCLCPP_DEBUG_STREAM(lg, "Plugin " << pl_name << " added to executor");
       exec.add_node(pl_node);
     }
 
