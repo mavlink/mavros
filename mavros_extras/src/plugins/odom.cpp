@@ -79,7 +79,7 @@ public:
     // subscribers
     odom_sub =
       node->create_subscription<nav_msgs::msg::Odometry>(
-      "out", 1,
+      "~/out", 1,
       std::bind(&OdometryPlugin::odom_cb, this, _1));
   }
 
