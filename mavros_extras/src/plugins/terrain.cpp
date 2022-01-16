@@ -51,7 +51,7 @@ public:
   }
 
 private:
-  rclcpp::Publisher<mavros_msgs::msg::VfrHud>::SharedPtr terrain_report_pub;
+  rclcpp::Publisher<mavros_msgs::msg::TerrainReport>::SharedPtr terrain_report_pub;
 
   void handle_terrain_report(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
