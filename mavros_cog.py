@@ -8,7 +8,7 @@ Install:
 
 try:
     import cog
-except:
+except Exception:
     _cog_present = False
 else:
     _cog_present = True

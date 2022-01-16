@@ -25,11 +25,12 @@ from . import CliClient, cli, pass_client
 from .utils import common_dialect
 
 ROUTER_QOS = rclpy.qos.QoSProfile(
-    depth=1000, durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+    depth=1000,
+    reliability=rclpy.qos.QoSReliabilityPolicy.BEST_EFFORT,
+    durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
 
 
 class Checker:
-
     def __init__(self, *, client: CliClient, follow: bool, watch_time: float):
         # dict of sets: (sysid, compid) -> set[msgid...]
         self.message_sources = {}
