@@ -63,8 +63,8 @@ private:
     terrain_report_msg.header.stamp = node->now();
     terrain_report_msg.header.frame_id = "terrain";
 
-    terrain_report_msg.latitude = (double) report.lat / 1e7;
-    terrain_report_msg.longitude = (double) report.lon / 1e7;
+    terrain_report_msg.latitude = static_cast<double>(report.lat) / 1e7;
+    terrain_report_msg.longitude = static_cast<double>(report.lon) / 1e7;
     terrain_report_msg.spacing = report.spacing;
     terrain_report_msg.terrain_height = report.terrain_height;
     terrain_report_msg.current_height = report.current_height;

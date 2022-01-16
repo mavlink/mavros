@@ -18,6 +18,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <list>
+#include <memory>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"

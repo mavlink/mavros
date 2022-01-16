@@ -76,13 +76,16 @@ static const OrientationPair make_orientation(
 //             cog.msg(f"Parse Error: {ex}, desc: {desc}")
 //             return cls()
 //
+//     def __str__(self):
+//         return f"{self.Roll}, {self.Pitch}, {self.Yaw}"
+//
 // cog.outl(
 //     f"static const std::unordered_map<typename std::underlying_type<{ename}>::type,\n"
 //     f"  const OrientationPair> sensor_orientations{{{{")
 // for k, e in enum:
 //     name_short = e.name[len(pfx2):]
 //     vec = Vector3.parse_rpy(e.description)
-//     cog.outl(f"""  {{{k}, make_orientation("{name_short}", {vec.Roll}, {vec.Pitch}, {vec.Yaw})}},""")
+//     cog.outl(f"""  {{{k}, make_orientation("{name_short}", {vec})}},""")
 //
 // cog.outl("}};")
 // ]]]
