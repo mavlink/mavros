@@ -160,6 +160,12 @@ Changelog for package libmavconn
 * disable all packages but messages
 * Contributors: Mikael Arguedas, Vladimir Ermakov
 
+1.13.0 (2022-01-13)
+-------------------
+
+1.12.2 (2021-12-12)
+-------------------
+
 1.12.1 (2021-11-29)
 -------------------
 * mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_

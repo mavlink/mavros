@@ -82,6 +82,7 @@ set(msg_files
   msg/RadioStatus.msg
   msg/State.msg
   msg/StatusText.msg
+  msg/TerrainReport.msg
   msg/Thrust.msg
   msg/TimesyncStatus.msg
   msg/Trajectory.msg
@@ -93,7 +94,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 746f1b7a4a7360a5c388766c584e8567)
+  # [[[end]]] (checksum: 48b8cc77c50ae93229656aebcff6c183)
 )
 
 set(srv_files

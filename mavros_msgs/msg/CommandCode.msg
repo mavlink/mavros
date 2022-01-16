@@ -46,11 +46,6 @@ uint16 AIRFRAME_CONFIGURATION = 2520
 # MAV_CMD_ARM
 uint16 ARM_AUTHORIZATION_REQUEST = 3001            # Request authorization to arm the vehicle to a external entity, the arm authorizer is responsible to request all data that is needs from the vehicle before authorize or deny the request. If approved the progress of command_ack message should be set with period of time that this authorization is valid in seconds or in case it was denied it should be set with one of the reasons in ARM_AUTH_DENIED_REASON.
 
-# MAV_CMD_CAMERA
-uint16 CAMERA_TRACK_POINT = 2004                   # If the camera supports point visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_POINT is set), this command allows to initiate the tracking.
-uint16 CAMERA_TRACK_RECTANGLE = 2005               # If the camera supports rectangle visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE is set), this command allows to initiate the tracking.
-uint16 CAMERA_STOP_TRACKING = 2010                 # Stops ongoing tracking.
-
 # MAV_CMD_COMPONENT
 uint16 COMPONENT_ARM_DISARM = 400                  # Arms / Disarms a component
 
@@ -60,7 +55,6 @@ uint16 CONDITION_CHANGE_ALT = 113                  # Ascend/descend to target al
 uint16 CONDITION_DISTANCE = 114                    # Delay mission state machine until within desired distance of next NAV point.
 uint16 CONDITION_YAW = 115                         # Reach a certain target angle.
 uint16 CONDITION_LAST = 159                        # NOP - This command is only used to mark the upper limit of the CONDITION commands in the enumeration
-uint16 CONDITION_GATE = 4501                       # Delay mission state machine until gate has been reached.
 
 # MAV_CMD_CONTROL
 uint16 CONTROL_HIGH_LATENCY = 2600                 # Request to start/stop transmitting over the high latency telemetry
@@ -68,7 +62,6 @@ uint16 CONTROL_HIGH_LATENCY = 2600                 # Request to start/stop trans
 # MAV_CMD_DO
 uint16 DO_FOLLOW = 32                              # Begin following a target
 uint16 DO_FOLLOW_REPOSITION = 33                   # Reposition the MAV after a follow target command has been sent
-uint16 DO_ORBIT = 34                               # Start orbiting on the circumference of a circle defined by the parameters. Setting any value NaN results in using defaults.
 uint16 DO_SET_MODE = 176                           # Set system mode.
 uint16 DO_JUMP = 177                               # Jump to the desired command in the mission list.  Repeat this action only the specified number of times
 uint16 DO_CHANGE_SPEED = 178                       # Change speed and/or throttle set points.
@@ -80,17 +73,16 @@ uint16 DO_SET_SERVO = 183                          # Set a servo to a desired PW
 uint16 DO_REPEAT_SERVO = 184                       # Cycle a between its nominal setting and a desired PWM for a desired number of cycles with a desired period.
 uint16 DO_FLIGHTTERMINATION = 185                  # Terminate flight immediately
 uint16 DO_CHANGE_ALTITUDE = 186                    # Change altitude set point.
-uint16 DO_SET_ACTUATOR = 187                       # Sets actuators (e.g. servos) to a desired value. The actuator numbers are mapped to specific outputs (e.g. on any MAIN or AUX PWM or UAVCAN) using a flight-stack specific mechanism (i.e. a parameter).
 uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
 uint16 DO_RALLY_LAND = 190                         # Mission command to perform a landing from a rally point.
 uint16 DO_GO_AROUND = 191                          # Mission command to safely abort an autonomous landing.
 uint16 DO_REPOSITION = 192                         # Reposition the vehicle to a specific WGS84 global position.
 uint16 DO_PAUSE_CONTINUE = 193                     # If in a GPS controlled position mode, hold the current position or continue.
 uint16 DO_SET_REVERSE = 194                        # Set moving direction to forward or reverse.
-uint16 DO_SET_ROI_LOCATION = 195                   # Sets the region of interest (ROI) to a location. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras. This command can be sent to a gimbal manager but not to a gimbal device. A gimbal is not to react to this message.
-uint16 DO_SET_ROI_WPNEXT_OFFSET = 196              # Sets the region of interest (ROI) to be toward next waypoint, with optional pitch/roll/yaw offset. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras. This command can be sent to a gimbal manager but not to a gimbal device. A gimbal device is not to react to this message.
-uint16 DO_SET_ROI_NONE = 197                       # Cancels any previous ROI command returning the vehicle/sensors to default flight characteristics. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras. This command can be sent to a gimbal manager but not to a gimbal device. A gimbal device is not to react to this message. After this command the gimbal manager should go back to manual input if available, and otherwise assume a neutral position.
-uint16 DO_SET_ROI_SYSID = 198                      # Mount tracks system with specified system ID. Determination of target vehicle position may be done with GLOBAL_POSITION_INT or any other means. This command can be sent to a gimbal manager but not to a gimbal device. A gimbal device is not to react to this message.
+uint16 DO_SET_ROI_LOCATION = 195                   # Sets the region of interest (ROI) to a location. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
+uint16 DO_SET_ROI_WPNEXT_OFFSET = 196              # Sets the region of interest (ROI) to be toward next waypoint, with optional pitch/roll/yaw offset. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
+uint16 DO_SET_ROI_NONE = 197                       # Cancels any previous ROI command returning the vehicle/sensors to default flight characteristics. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
+uint16 DO_SET_ROI_SYSID = 198                      # Mount tracks system with specified system ID. Determination of target vehicle position may be done with GLOBAL_POSITION_INT or any other means.
 uint16 DO_CONTROL_VIDEO = 200                      # Control onboard camera system.
 uint16 DO_SET_ROI = 201                            # Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 DO_DIGICAM_CONFIGURE = 202                  # Configure digital camera. This is a fallback message for systems that have not yet implemented PARAM_EXT_XXX messages and camera definition files (see https://mavlink.io/en/services/camera_def.html ).
@@ -111,12 +103,10 @@ uint16 DO_GUIDED_LIMITS = 222                      # Set limits for external con
 uint16 DO_ENGINE_CONTROL = 223                     # Control vehicle engine. This is interpreted by the vehicles engine controller to change the target engine state. It is intended for vehicles with internal combustion engines
 uint16 DO_SET_MISSION_CURRENT = 224                # Set the mission item with sequence number seq as current item. This means that the MAV will continue to this mission item on the shortest path (not following the mission items in-between).
 uint16 DO_LAST = 240                               # NOP - This command is only used to mark the upper limit of the DO commands in the enumeration
-uint16 DO_UPGRADE = 247                            # Request a target system to start an upgrade of one (or all) of its components. For example, the command might be sent to a companion computer to cause it to upgrade a connected flight controller. The system doing the upgrade will report progress using the normal command protocol sequence for a long running operation. Command protocol information: https://mavlink.io/en/services/command.html.
 uint16 DO_JUMP_TAG = 601                           # Jump to the matching tag in the mission list. Repeat this action for the specified number of times. A mission should contain a single matching tag for each jump. If this is not the case then a jump to a missing tag should complete the mission, and a jump where there are multiple matching tags should always select the one with the lowest mission sequence number.
-uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # High level setpoint to be sent to a gimbal manager to set a gimbal attitude. It is possible to set combinations of the values below. E.g. an angle as well as a desired angular rate can be used to get to this angle at a certain angular rate, or an angular rate only will result in continuous turning. NaN is to be used to signal unset. Note: a gimbal is never to react to this command but only the gimbal manager.
-uint16 DO_GIMBAL_MANAGER_CONFIGURE = 1001          # Gimbal configuration to set which sysid/compid is in primary and secondary control.
 uint16 DO_TRIGGER_CONTROL = 2003                   # Enable or disable on-board camera triggering system.
 uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
+uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
 uint16 DO_WINCH = 42600                            # Command to operate winch.
 
 # MAV_CMD_FIXED
@@ -126,15 +116,9 @@ uint16 FIXED_MAG_CAL_YAW = 42006                   # Magnetometer calibration ba
 uint16 GET_HOME_POSITION = 410                     # Request the home position from the vehicle.
 uint16 GET_MESSAGE_INTERVAL = 510                  # Request the interval between messages for a particular MAVLink message ID. The receiver should ACK the command and then emit its response in a MESSAGE_INTERVAL message.
 
-# MAV_CMD_ILLUMINATOR
-uint16 ILLUMINATOR_ON_OFF = 405                    # Turns illuminators ON/OFF. An illuminator is a light source that is used for lighting up dark areas external to the sytstem: e.g. a torch or searchlight (as opposed to a light source for illuminating the system itself, e.g. an indicator light).
-
 # MAV_CMD_IMAGE
 uint16 IMAGE_START_CAPTURE = 2000                  # Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture. Use NaN for reserved values.
 uint16 IMAGE_STOP_CAPTURE = 2001                   # Stop image capture sequence Use NaN for reserved values.
-
-# MAV_CMD_INJECT
-uint16 INJECT_FAILURE = 420                        # Inject artificial failure for testing purposes. Note that autopilots should implement an additional protection before accepting this command such as a specific param setting.
 
 # MAV_CMD_JUMP
 uint16 JUMP_TAG = 600                              # Tagged jump target. Can be jumped to with MAV_CMD_DO_JUMP_TAG.
@@ -150,7 +134,7 @@ uint16 MISSION_START = 300                         # start running a mission
 uint16 NAV_WAYPOINT = 16                           # Navigate to waypoint.
 uint16 NAV_LOITER_UNLIM = 17                       # Loiter around this waypoint an unlimited amount of time
 uint16 NAV_LOITER_TURNS = 18                       # Loiter around this waypoint for X turns
-uint16 NAV_LOITER_TIME = 19                        # Loiter at the specified latitude, longitude and altitude for a certain amount of time. Multicopter vehicles stop at the point (within a vehicle-specific acceptance radius). Forward-only moving vehicles (e.g. fixed-wing) circle the point with the specified radius/direction. If the Heading Required parameter (2) is non-zero forward moving aircraft will only leave the loiter circle once heading towards the next waypoint.
+uint16 NAV_LOITER_TIME = 19                        # Loiter around this waypoint for X seconds
 uint16 NAV_RETURN_TO_LAUNCH = 20                   # Return to launch location
 uint16 NAV_LAND = 21                               # Land at location.
 uint16 NAV_TAKEOFF = 22                            # Takeoff from ground / hand. Vehicles that support multiple takeoff modes (e.g. VTOL quadplane) should take off using the currently configured mode.
@@ -162,7 +146,7 @@ uint16 NAV_LOITER_TO_ALT = 31                      # Begin loiter at the specifi
 uint16 NAV_ROI = 80                                # Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 NAV_PATHPLANNING = 81                       # Control autonomous path planning on the MAV.
 uint16 NAV_SPLINE_WAYPOINT = 82                    # Navigate to waypoint using a spline path.
-uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading. The command should be ignored by vehicles that dont support both VTOL and fixed-wing flight (multicopters, boats,etc.).
+uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading.
 uint16 NAV_VTOL_LAND = 85                          # Land using VTOL mode
 uint16 NAV_GUIDED_ENABLE = 92                      # hand control over to an external controller
 uint16 NAV_DELAY = 93                              # Delay the next navigation command a number of seconds or until a specified time
@@ -185,9 +169,6 @@ uint16 OVERRIDE_GOTO = 252                         # Override current mission wi
 # MAV_CMD_PANORAMA
 uint16 PANORAMA_CREATE = 2800                      # Create a panorama at the current position
 
-# MAV_CMD_PARAM
-uint16 PARAM_TRANSACTION = 900                     # Request to start or end a parameter transaction. Multiple kinds of transport layers can be used to exchange parameters in the transaction (param, param_ext and mavftp). The command response can either be a success/failure or an in progress in case the receiving side takes some time to apply the parameters.
-
 # MAV_CMD_PAYLOAD
 uint16 PAYLOAD_PREPARE_DEPLOY = 30001              # Deploy payload on a Lat / Lon / Alt position. This includes the navigation to reach the required release position and velocity.
 uint16 PAYLOAD_CONTROL_DEPLOY = 30002              # Control the payload deployment.
@@ -208,18 +189,18 @@ uint16 REQUEST_CAMERA_SETTINGS = 522               # Request camera settings (CA
 uint16 REQUEST_STORAGE_INFORMATION = 525           # Request storage information (STORAGE_INFORMATION). Use the command's target_component to target a specific component's storage.
 uint16 REQUEST_CAMERA_CAPTURE_STATUS = 527         # Request camera capture status (CAMERA_CAPTURE_STATUS)
 uint16 REQUEST_FLIGHT_INFORMATION = 528            # Request flight information (FLIGHT_INFORMATION)
-uint16 REQUEST_CAMERA_IMAGE_CAPTURE = 2002         # Re-request a CAMERA_IMAGE_CAPTURED message.
 uint16 REQUEST_VIDEO_STREAM_INFORMATION = 2504     # Request video stream information (VIDEO_STREAM_INFORMATION)
 uint16 REQUEST_VIDEO_STREAM_STATUS = 2505          # Request video stream status (VIDEO_STREAM_STATUS)
 
 # MAV_CMD_RESET
 uint16 RESET_CAMERA_SETTINGS = 529                 # Reset all camera settings to Factory Default
 
+# MAV_CMD_RUN
+uint16 RUN_PREARM_CHECKS = 401                     # Instructs system to run pre-arm checks.  This command should return MAV_RESULT_TEMPORARILY_REJECTED in the case the system is armed, otherwse MAV_RESULT_ACCEPTED.  Note that the return value from executing this command does not indicate whether the vehicle is armable or not, just whether the system has successfully run/is currently running the checks.  The result of the checks is reflected in the SYS_STATUS message.
+
 # MAV_CMD_SET
 uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM.
 uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Use NaN for reserved values. GCS will send a MAV_CMD_REQUEST_VIDEO_STREAM_STATUS command after a mode change if the camera supports video streaming.
-uint16 SET_CAMERA_ZOOM = 531                       # Set camera zoom. Camera must respond with a CAMERA_SETTINGS message (on success).
-uint16 SET_CAMERA_FOCUS = 532                      # Set camera focus. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
 uint16 SET_GUIDED_SUBMODE_CIRCLE = 4001            # This command sets submode circle when vehicle is in guided mode. Vehicle flies along a circle facing the center of the circle. The user can input the velocity along the circle and change the radius. If no input is given the vehicle will hold position.
 
@@ -259,4 +240,4 @@ uint16 WAYPOINT_USER_3 = 31002                     # User defined waypoint item.
 uint16 WAYPOINT_USER_4 = 31003                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
 uint16 WAYPOINT_USER_5 = 31004                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
 
-# [[[end]]] (checksum: ffe913b4d59850326ea6c94f3fc9acdd)
+# [[[end]]] (checksum: 26d32d1d05760f90913f8d9f0ec221ce)

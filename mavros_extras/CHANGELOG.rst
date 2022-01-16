@@ -225,6 +225,22 @@ Changelog for package mavros_extras
 * extras: adsb: begin porting to ros2
 * Contributors: Abhijith Thottumadayil Jagadeesh, André Filipe, David Jablonski, Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Morten Fyhn Amundsen, Peter010103, Ricardo Marques, Russell, Vladimir Ermakov
 
+1.13.0 (2022-01-13)
+-------------------
+* Merge pull request `#1677 <https://github.com/mavlink/mavros/issues/1677>`_ from AndersonRayner/add_terrain
+  Add plugin for reporting terrain height estimate from the FCU
+* Removed CamelCase for class members.  Publish to "report"
+* More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+* Fixed callback name to match `handle\_{MESSAGE_NAME.lower()}` convention
+* Fixed topic names to match more closely what other plugins use.  Fixed a typo.
+* Add plugin for reporting terrain height estimate from FCU
+* Contributors: Vladimir Ermakov, matt
+
+1.12.2 (2021-12-12)
+-------------------
+* extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* Contributors: Vladimir Ermakov
+
 1.12.1 (2021-11-29)
 -------------------
 * Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings

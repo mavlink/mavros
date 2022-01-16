@@ -175,7 +175,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // ]]]
 
 //! MAV_TYPE values
-static const std::array<const std::string, 38> mav_type_strings{{
+static const std::array<const std::string, 36> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",
 /*  1 */ "Fixed wing aircraft",
 /*  2 */ "Quadrotor",
@@ -212,8 +212,6 @@ static const std::array<const std::string, 38> mav_type_strings{{
 /* 33 */ "Servo",
 /* 34 */ "Open Drone ID. See https:",
 /* 35 */ "Decarotor",
-/* 36 */ "Battery",
-/* 37 */ "Parachute",
 }};
 
 
@@ -226,7 +224,7 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 376064ea1578250d182ab62a85b06a41)
+// [[[end]]] (checksum: 9fabd2cfbcc8bd349dbd7f69f2f81351)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -234,7 +232,7 @@ std::string to_string(MAV_TYPE e)
 // ]]]
 
 //! MAV_TYPE values
-static const std::array<const std::string, 38> mav_type_names{{
+static const std::array<const std::string, 36> mav_type_names{{
 /*  0 */ "GENERIC",
 /*  1 */ "FIXED_WING",
 /*  2 */ "QUADROTOR",
@@ -271,8 +269,6 @@ static const std::array<const std::string, 38> mav_type_names{{
 /* 33 */ "SERVO",
 /* 34 */ "ODID",
 /* 35 */ "DECAROTOR",
-/* 36 */ "BATTERY",
-/* 37 */ "PARACHUTE",
 }};
 
 std::string enum_to_name(MAV_TYPE e)
@@ -284,7 +280,7 @@ std::string enum_to_name(MAV_TYPE e)
 
   return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 5e58c6b1f7868c26f570b97fa4389feb)
+// [[[end]]] (checksum: ab74f38c87f80d889bca765375689bdd)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -566,8 +562,8 @@ std::string to_string(MAV_FRAME e)
 // enum = get_enum(ename)
 //
 // cog.outl(
-//     f"static const std::unordered_map<size_t, const std::string> "
-//     f"{suffix.lower()}_strings{{{{")
+//     f"static const std::unordered_map<typename std::underlying_type<{ename}>::type,\n"
+//     f"  const std::string> {suffix.lower()}_strings{{{{")
 // for k, e in enum:
 //     name_short =  e.name[len(suffix) + 1:]
 //     entry = f"""{{{k}, "{name_short}"}},"""
@@ -578,7 +574,8 @@ std::string to_string(MAV_FRAME e)
 //
 // cog.outl("}};")
 // ]]]
-static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
+static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::type,
+  const std::string> mav_comp_id_strings{{
   {0, "ALL"},
   {1, "AUTOPILOT1"},
   {25, "USER1"},
@@ -683,19 +680,13 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {158, "PERIPHERAL"},
   {159, "QX1_GIMBAL"},
   {160, "FLARM"},
-  {161, "PARACHUTE"},
   {171, "GIMBAL2"},
   {172, "GIMBAL3"},
   {173, "GIMBAL4"},
   {174, "GIMBAL5"},
   {175, "GIMBAL6"},
-  {180, "BATTERY"},
-  {181, "BATTERY2"},
   {190, "MISSIONPLANNER"},
   {191, "ONBOARD_COMPUTER"},
-  {192, "ONBOARD_COMPUTER2"},
-  {193, "ONBOARD_COMPUTER3"},
-  {194, "ONBOARD_COMPUTER4"},
   {195, "PATHPLANNER"},
   {196, "OBSTACLE_AVOIDANCE"},
   {197, "VISUAL_INERTIAL_ODOMETRY"},
@@ -713,7 +704,7 @@ static const std::unordered_map<size_t, const std::string> mav_comp_id_strings{{
   {242, "TUNNEL_NODE"},
   {250, "SYSTEM_CONTROL"},
 }};
-// [[[end]]] (checksum: bdc7916b48d45154a0b164047b45edf7)
+// [[[end]]] (checksum: 9c8184e019003b807b4d2498e6f1d81f)
 
 std::string to_string(MAV_COMPONENT e)
 {
