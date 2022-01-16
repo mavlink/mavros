@@ -80,7 +80,7 @@ UAS::UAS(
 
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
-    100ms, [this]() {
+    10ms, [this]() {
       startup_delay_timer->cancel();
 
       std::string fcu_protocol;
@@ -96,14 +96,17 @@ UAS::UAS(
 
       exec_spin_thd = thread_ptr(
         new std::thread(
-          [&]() {
+          [this, = ]() {
             utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
+            auto lg = this->get_logger();
 
-            RCLCPP_INFO(this->get_logger(), "UAS Executor started");
+            RCLCPP_INFO(
+              lg, "UAS Executor started, threads: %d",
+              this->exec.get_number_of_threads());
             this->exec.spin();
-            RCLCPP_WARN(this->get_logger(), "UAS Executor terminated");
+            RCLCPP_WARN(lg, "UAS Executor terminated");
           }),
-        [&](std::thread * t) {
+        [this](std::thread * t) {
           this->exec.cancel();
           t->join();
           delete t;
