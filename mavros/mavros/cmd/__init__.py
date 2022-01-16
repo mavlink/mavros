@@ -19,7 +19,6 @@ from ..base import DEFAULT_NAMESPACE
 
 
 class CliClient:
-
     def __init__(self,
                  *,
                  node_name: typing.Optional[str] = None,
@@ -101,8 +100,12 @@ def print_version(ctx, param_, value):
 def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     """MAVROS tools entry point."""
 
+    spinner_thd = None
+
     def on_close():
         rclpy.shutdown()
+        if spinner_thd:
+            spinner_thd.join()
 
     rclpy.init()
     ctx.call_on_close(on_close)
@@ -110,7 +113,7 @@ def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     ctx.obj = CliClient(node_name=node_name,
                         mavros_ns=mavros_ns,
                         verbose=verbose)
-    ctx.obj.start_spinner()
+    spinner_thd = ctx.obj.start_spinner()
 
     if wait_fcu or wait_fcu is None:
         ctx.obj.verbose_echo("Waiting connection to the FCU...")
