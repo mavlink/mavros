@@ -96,7 +96,7 @@ UAS::UAS(
 
       exec_spin_thd = thread_ptr(
         new std::thread(
-          [this, = ]() {
+          [this, source_system, source_component]() {
             utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
             auto lg = this->get_logger();
 
