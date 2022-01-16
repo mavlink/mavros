@@ -96,12 +96,12 @@ UAS::UAS(
 
       exec_spin_thd = thread_ptr(
         new std::thread(
-          [this, source_system, source_component]() {
+          [this]() {
             utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
             auto lg = this->get_logger();
 
             RCLCPP_INFO(
-              lg, "UAS Executor started, threads: %d",
+              lg, "UAS Executor started, threads: %zu",
               this->exec.get_number_of_threads());
             this->exec.spin();
             RCLCPP_WARN(lg, "UAS Executor terminated");
