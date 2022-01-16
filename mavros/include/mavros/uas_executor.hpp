@@ -38,7 +38,7 @@ namespace uas
 class UASExecutor : public rclcpp::executors::MultiThreadedExecutor
 {
 public:
-  UASExecutor(const rclcpp::ExecutorOptions & options = rclcpp::ExecutorOptions());
+  explicit UASExecutor(const rclcpp::ExecutorOptions & options = rclcpp::ExecutorOptions());
   ~UASExecutor() = default;
 
   void set_ids(uint8_t sysid, uint8_t compid);
@@ -57,4 +57,4 @@ private:
 }   // namespace uas
 }   // namespace mavros
 
-#endif // MAVROS__UAS_EXECUTOR_HPP_
+#endif  // MAVROS__UAS_EXECUTOR_HPP_
