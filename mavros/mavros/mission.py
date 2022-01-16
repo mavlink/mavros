@@ -41,7 +41,7 @@ NAV_CMDS = {
     CommandCode.CONDITION_CHANGE_ALT: 'COND-CHANGE-ALT',
     CommandCode.CONDITION_DISTANCE: 'COND-DISTANCE',
     CommandCode.CONDITION_YAW: 'COND-YAW',
-    CommandCode.CONDITION_GATE: 'COND-GATE',
+    # CommandCode.CONDITION_GATE: 'COND-GATE',  # XXX(vooon): gone? not present in pymavlink 2.4.19
     CommandCode.DO_JUMP: 'DO-JUMP',
     CommandCode.DO_CHANGE_SPEED: 'DO-CHANGE-SPEED',
     CommandCode.DO_SET_RELAY: 'DO-SET-RELAY',
