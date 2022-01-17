@@ -76,7 +76,7 @@ class PlanFile:
     fence: typing.Optional[typing.List[Waypoint]] = None
     rally: typing.Optional[typing.List[Waypoint]] = None
 
-    def load(self, file_: typing.TextIO):
+    def load(self, file_: typing.TextIO) -> "PlanFile":
         """Return a iterable of waypoints."""
         raise NotImplementedError
 
@@ -97,7 +97,7 @@ class QGroundControlWPL(PlanFile):
     ] = OrderedDict(
         is_current=lambda x: bool(int(x)),
         frame=int,
-        command=float,
+        command=int,
         param1=float,
         param2=float,
         param3=float,
@@ -117,43 +117,48 @@ class QGroundControlWPL(PlanFile):
 
     def _parse_wpl_file(self, file_: typing.TextIO):
         got_header = False
-        dict_reader = csv.DictReader(
+        reader = csv.reader(
             file_,
-            list(self.fields_map.keys()),
-            restkey="_more",
-            restval="_less",
-            dialect=self.CSVDialect,
+            self.CSVDialect,
         )
-        for data in dict_reader:
+        for data in reader:
+            if data[0].startswith("#"):
+                continue
+
             if not got_header:
-                qgc, wpl, ver = data["_less"].split(" ", 3)
+                qgc, wpl, ver = data[0].split(" ", 3)
                 if qgc == "QGC" and wpl == "WPL" and int(ver) in self.known_versions:
                     got_header = True
 
             else:
                 yield Waypoint(
                     **{
-                        self.fields_map[k](v)
-                        for k, v in data.items()
-                        if k in self.fields_map
+                        k: v(data[i])
+                        for i, (k, v) in enumerate(self.fields_map.items(), start=1)
                     }
                 )
 
-    def load(self, file_: typing.TextIO):
+    def load(self, file_: typing.TextIO) -> PlanFile:
         self.mission = list(self._parse_wpl_file(file_))
         self.fence = None
         self.rally = None
+        return self
 
     def save(self, file_: typing.TextIO):
         assert self.mission is not None, "empty mission"
         assert self.fence is None, "WPL do not support geofences"
         assert self.rally is None, "WPL do not support rallypoints"
 
+        def flt_bool(x):
+            if isinstance(x, bool):
+                return int(x)
+            return x
+
         writer = csv.writer(file_, self.CSVDialect)
         writer.writerow((self.file_header,))
         for seq, w in enumerate(self.mission):
             row = itertools.chain(
-                (seq,), (getattr(w, k) for k in self.fields_map.keys())
+                (seq,), (flt_bool(getattr(w, k)) for k in self.fields_map.keys())
             )
             writer.writerow(row)
 
