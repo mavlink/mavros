@@ -4,7 +4,9 @@ import pathlib
 
 import pytest
 
-from mavros.mission import QGroundControlPlan, QGroundControlWPL
+from mavros.mission import QGroundControlWPL
+
+# from mavros.mission import QGroundControlPlan
 
 
 @pytest.mark.parametrize(

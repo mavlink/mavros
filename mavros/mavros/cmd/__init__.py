@@ -111,7 +111,6 @@ def print_version(ctx, param_, value):
 @click.pass_context
 def cli(ctx, node_name, mavros_ns, verbose, wait_fcu):
     """MAVROS tools entry point."""
-
     spinner_thd = None
 
     def on_close():

@@ -142,7 +142,8 @@ class QGroundControlParam(ParamFile):
         writer.writerow((f"""# NOTE: {self.stamp.strftime("%d.%m.%Y %T")}""",))
         writer.writerow(
             (
-                f"# Onboard parameters saved by mavparam for ({self.tgt_system}.{self.tgt_component})",
+                f"# Onboard parameters saved by "
+                f"mavparam for ({self.tgt_system}.{self.tgt_component})",
             )
         )
         writer.writerow(("# MAV ID", "COMPONENT ID", "PARAM NAME", "VALUE", "(TYPE)"))
