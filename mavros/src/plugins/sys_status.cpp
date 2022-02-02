@@ -1089,8 +1089,15 @@ private:
         (do_broadcast) ? "broadcast" : "unicast");
 
       auto future = client->async_send_request(cmdrq);
-      auto response = future.get();
-      ret = response->success;
+      // NOTE(vooon): temporary hack from @Michel1968
+      // See: https://github.com/mavlink/mavros/issues/1588#issuecomment-1027699924
+      const auto future_status = future.wait_for(1s);
+      if (future_status == std::future_status::ready) {
+        auto response = future.get();
+        ret = response->success;
+      } else {
+        RCLCPP_ERROR(lg, "VER: autopilot version service timeout");
+      }
     } catch (std::exception & ex) {
       RCLCPP_ERROR_STREAM(lg, "VER: " << ex.what());
     }
@@ -1207,20 +1214,25 @@ private:
 
       RCLCPP_DEBUG(
         lg,
-        "SetMessageInterval: Request msgid %u at %f hz",
+        "SYS: Request msgid %u at %f hz",
         req->message_id, req->message_rate);
 
       auto future = client->async_send_request(cmdrq);
-      auto response = future.get();
-
-      res->success = response->success;
+      // NOTE(vooon): same hack as for VER
+      const auto future_status = future.wait_for(1s);
+      if (future_status == std::future_status::ready) {
+        auto response = future.get();
+        res->success = response->success;
+      } else {
+        RCLCPP_ERROR(lg, "SYS: set_message_interval service timeout");
+      }
     } catch (std::exception & ex) {
-      RCLCPP_ERROR_STREAM(lg, "SetMessageInterval: " << ex.what());
+      RCLCPP_ERROR_STREAM(lg, "SYS: " << ex.what());
     }
 
     RCLCPP_ERROR_EXPRESSION(
       lg, !res->success,
-      "SetMessageInterval: command plugin service call failed!");
+      "SYS: command plugin service call failed!");
   }
 
   void set_mode_cb(
