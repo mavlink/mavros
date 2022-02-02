@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2022-02-02)
+------------------
 * plugins: fix topic names to use  prefix for namespaced ones
 * plugins: fix topic names to use  prefix for namespaced ones
 * ci: fix several lint warnings

@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2022-02-02)
+------------------
 * plugin: sys_status: Add temporary hack from @Michel1968
   https://github.com/mavlink/mavros/issues/1588#issuecomment-1027699924
 * py-lib: make linters happy again
