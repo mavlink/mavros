@@ -2,6 +2,70 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* lib: fix reorder
+* Merge branch 'master' into ros2
+  * master:
+  1.13.0
+  update changelog
+  py-lib: fix compatibility with py3 for Noetic
+  re-generate all coglets
+  test: add checks for ROTATION_CUSTOM
+  lib: Fix rotation search for CUSTOM
+  Removed CamelCase for class members.  Publish to "report"
+  More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+  Fixed callback name to match `handle\_{MESSAGE_NAME.lower()}` convention
+  Add extra MAV_FRAMES to waypoint message as defined in https://mavlink.io/en/messages/common.html
+  Fixed topic names to match more closely what other plugins use.  Fixed a typo.
+  Add plugin for reporting terrain height estimate from FCU
+  1.12.2
+  update changelog
+  Set time/publish_sim_time to false by default
+  plugin: setpoint_raw: move getParam to initializer
+  extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* 1.13.0
+* update changelog
+* Merge pull request `#1682 <https://github.com/mavlink/mavros/issues/1682>`_ from SylvainPastor/fix/libmavconn/tcp/resource_deadlock
+  fix std::system_error when tcp interface loses connection
+* fix code style divergences
+* fix std::system_error when tcp interface loses connection
+  When the tcp connection is lost (remote TCP server stopped), an 'End of file' error is caught
+  by the io_thread in the do_recv() that calls the close() function.
+  In the close() function, we stop the io_service and wait for the end of the io_thread which
+  causes an std::system_error exception (cause: Resource deadlock avoided).
+  Error:   mavconn: tcp0: receive: End of file at line 250 in libmavconn/src/tcp.cpp
+  terminate called after throwing an instance of 'std::system_error'
+  what():  Resource deadlock avoided
+  Aborted (core dumped)
+  fix:
+  - close() function: stop io_service if current thread id != io_thread id
+  - ~MAVConnTCPClient(): stop io_service and io_thread if thread is running
+* Merge pull request `#1679 <https://github.com/mavlink/mavros/issues/1679>`_ from SylvainPastor/libmavconn/fix-tcp-deadlock-when-close
+  libmavconn: fix deadlock when call close()
+* fix deadlock when call close()
+  When calling the close() function (by a different thread), a lock (mutex) is taken at
+  the start of this function which closes the socket and waits the end of io_service thread.
+  Closing the socket causes the 'Operation aborted' error in do_recv() function called by
+  io_service thread which in turn calls the close() function: sthis->close().
+  This causes a 'deadlock'.
+  fix: Reduce the scope of the lock in the close() function so that it is released before
+  waiting for the thread to end.
+* 1.12.2
+* update changelog
+* lib: fix linter errors
+* Merge branch 'master' into ros2
+  * master:
+  1.12.1
+  update changelog
+  mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+  mavros_extras: Fix some warnings
+  mavros: Fix some warnings
+* 1.12.1
+* update changelog
+* mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+* Contributors: Sylvain Pastor, Vladimir Ermakov
+
 2.0.5 (2021-11-28)
 ------------------
 * extras: fix some linter errors.

@@ -2,6 +2,74 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugins: fix topic names to use  prefix for namespaced ones
+* plugins: fix topic names to use  prefix for namespaced ones
+* ci: fix several lint warnings
+* extras: terrain: fix copy-paste artifact
+* extras: port terrain plugin
+* Merge branch 'master' into ros2
+  * master:
+  1.13.0
+  update changelog
+  py-lib: fix compatibility with py3 for Noetic
+  re-generate all coglets
+  test: add checks for ROTATION_CUSTOM
+  lib: Fix rotation search for CUSTOM
+  Removed CamelCase for class members.  Publish to "report"
+  More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+  Fixed callback name to match `handle\_{MESSAGE_NAME.lower()}` convention
+  Add extra MAV_FRAMES to waypoint message as defined in https://mavlink.io/en/messages/common.html
+  Fixed topic names to match more closely what other plugins use.  Fixed a typo.
+  Add plugin for reporting terrain height estimate from FCU
+  1.12.2
+  update changelog
+  Set time/publish_sim_time to false by default
+  plugin: setpoint_raw: move getParam to initializer
+  extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* 1.13.0
+* update changelog
+* Merge pull request `#1677 <https://github.com/mavlink/mavros/issues/1677>`_ from AndersonRayner/add_terrain
+  Add plugin for reporting terrain height estimate from the FCU
+* Removed CamelCase for class members.  Publish to "report"
+* More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+* Fixed callback name to match `handle\_{MESSAGE_NAME.lower()}` convention
+* Fixed topic names to match more closely what other plugins use.  Fixed a typo.
+* Add plugin for reporting terrain height estimate from FCU
+* 1.12.2
+* update changelog
+* Merge pull request `#1675 <https://github.com/mavlink/mavros/issues/1675>`_ from BOB4Drone/ros2
+  fix bof
+* Update mag_calibration_status.cpp
+* fix code style
+  fix code style
+* Update mag_calibration_status.cpp
+* fix misprint and use size()
+  fix misprint and use size()
+* fix bof
+  fix `#1668 <https://github.com/mavlink/mavros/issues/1668>`_
+* extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* extras: trajectory: make linter happy after `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* Merge pull request `#1667 <https://github.com/mavlink/mavros/issues/1667>`_ from BOB4Drone/ros2
+  fix bof
+* fix bof
+* Merge branch 'master' into ros2
+  * master:
+  1.12.1
+  update changelog
+  mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+  mavros_extras: Fix some warnings
+  mavros: Fix some warnings
+* 1.12.1
+* update changelog
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros_extras: Fix some warnings
+* extras: fix parameter name
+* extras: fix topic names
+* Contributors: BOB4Drone, Morten Fyhn Amundsen, Vladimir Ermakov, matt
+
 2.0.5 (2021-11-28)
 ------------------
 * extras: make cpplint happy

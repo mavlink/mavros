@@ -2,6 +2,82 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin: sys_status: Add temporary hack from @Michel1968
+  https://github.com/mavlink/mavros/issues/1588#issuecomment-1027699924
+* py-lib: make linters happy again
+* py-lib: fix WPL loading
+* py-lib: reformat with black, fix WPL
+* py-lib: gracefull exiting - need to join to spinner thread
+* py-lib: debug shutdown call
+* py-lib: fix checkid
+* sys: place service servers to separate callback group
+* plugins: fix topic names to use  prefix for namespaced ones
+* py-lib: fix import
+* uas: fix linter warnings
+* uas: set executor timeout to 1s
+* uas: use custom executor derived from MultiThreadedExecutor one
+* uas: fix lambda
+* ci: fix several lint warnings
+* uas: log amount of executor threads
+* command: add request header for possible future use
+* Merge branch 'master' into ros2
+  * master:
+  1.13.0
+  update changelog
+  py-lib: fix compatibility with py3 for Noetic
+  re-generate all coglets
+  test: add checks for ROTATION_CUSTOM
+  lib: Fix rotation search for CUSTOM
+  Removed CamelCase for class members.  Publish to "report"
+  More explicitly state "TerrainReport" to allow for future extension of the plugin to support other terrain messages
+  Fixed callback name to match `handle\_{MESSAGE_NAME.lower()}` convention
+  Add extra MAV_FRAMES to waypoint message as defined in https://mavlink.io/en/messages/common.html
+  Fixed topic names to match more closely what other plugins use.  Fixed a typo.
+  Add plugin for reporting terrain height estimate from FCU
+  1.12.2
+  update changelog
+  Set time/publish_sim_time to false by default
+  plugin: setpoint_raw: move getParam to initializer
+  extras: trajectory: backport `#1667 <https://github.com/mavlink/mavros/issues/1667>`_
+* 1.13.0
+* update changelog
+* Merge pull request `#1690 <https://github.com/mavlink/mavros/issues/1690>`_ from mavlink/fix-enum_sensor_orientation
+  Fix enum sensor_orientation
+* py-lib: fix compatibility with py3 for Noetic
+* test: add checks for ROTATION_CUSTOM
+* lib: Fix rotation search for CUSTOM
+  Fix `#1688 <https://github.com/mavlink/mavros/issues/1688>`_.
+* 1.12.2
+* update changelog
+* Merge pull request `#1672 <https://github.com/mavlink/mavros/issues/1672>`_ from okalachev/patch-1
+  Set time/publish_sim_time to false by default
+* Set time/publish_sim_time to false by default
+* Merge pull request `#1669 <https://github.com/mavlink/mavros/issues/1669>`_ from Hs293Go/master
+  plugin: setpoint_raw: move getParam to initializer
+* plugin: setpoint_raw: move getParam to initializer
+  Repeatedly getting the thrust_scaling parameter in a callback that can
+  be invoked from a fast control loop may fail spuriously and trigger a
+  fatal error
+* Merge pull request `#1670 <https://github.com/mavlink/mavros/issues/1670>`_ from windelbouwman/fix-uninitialized-struct-member
+  Fix spurious bug because class field was uninitialized.
+* Fix spurious bug because class field was uninitialized.
+* Merge branch 'master' into ros2
+  * master:
+  1.12.1
+  update changelog
+  mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+  mavros_extras: Fix some warnings
+  mavros: Fix some warnings
+* 1.12.1
+* update changelog
+* mavconn: fix connection issue introduced by `#1658 <https://github.com/mavlink/mavros/issues/1658>`_
+* Merge pull request `#1660 <https://github.com/mavlink/mavros/issues/1660>`_ from scoutdi/fix-warnings
+  Fix warnings
+* mavros: Fix some warnings
+* Contributors: Morten Fyhn Amundsen, Oleg Kalachev, Vladimir Ermakov, Windel Bouwman, hs293go
+
 2.0.5 (2021-11-28)
 ------------------
 * fix some build warnings; drop old copter vis
