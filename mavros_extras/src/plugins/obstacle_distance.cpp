@@ -88,16 +88,14 @@ private:
 			obstacle.increment_f = increment_deg;
 		} else {
 			// all distances from sensor will not fit so we combine adjacent distances always taking the shortest distance
-			size_t scale_factor = ceil(double(req->ranges.size()) / obstacle.distances.size());
+			const float scale_factor = double(req->ranges.size()) / obstacle.distances.size();
 			for (size_t i = 0; i < obstacle.distances.size(); i++) {
 				obstacle.distances[i] = UINT16_MAX;
 				for (size_t j = 0; j < scale_factor; j++) {
-					size_t req_index = i * scale_factor + j;
-					if (req_index < req->ranges.size()) {
-						float distance_cm = req->ranges[req_index] * 1e2;
-						if (!std::isnan(distance_cm) && distance_cm < UINT16_MAX && distance_cm > 0) {
-							obstacle.distances[i] = std::min(obstacle.distances[i], static_cast<uint16_t>(distance_cm));
-						}
+					size_t req_index = floor(i * scale_factor + j);
+					float distance_cm = req->ranges[req_index] * 1e2;
+					if (!std::isnan(distance_cm) && distance_cm < UINT16_MAX && distance_cm > 0) {
+						obstacle.distances[i] = std::min(obstacle.distances[i], static_cast<uint16_t>(distance_cm));
 					}
 				}
 			}
