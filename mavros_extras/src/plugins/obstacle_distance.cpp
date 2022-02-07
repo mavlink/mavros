@@ -99,7 +99,10 @@ private:
 					}
 				}
 			}
-			obstacle.increment = ceil(req->angle_increment * RAD_TO_DEG * scale_factor);	//!< [degrees]
+			const float increment_deg = req->angle_increment * RAD_TO_DEG * scale_factor;
+			obstacle.increment = static_cast<uint8_t>(increment_deg + 0.5f);	//!< Round to nearest integer.
+			obstacle.increment_f = increment_deg;
+
 		}
 
 		obstacle.time_usec = req->header.stamp.toNSec() / 1000;					//!< [microsecs]
