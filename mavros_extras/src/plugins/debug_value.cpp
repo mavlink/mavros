@@ -17,6 +17,7 @@
 #include <mavros/mavros_plugin.h>
 
 #include <mavros_msgs/DebugValue.h>
+#include <algorithm>
 
 namespace mavros {
 namespace extra_plugins {
@@ -37,6 +38,7 @@ public:
 		// publishers
 		debug_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug", 10);
 		debug_vector_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug_vector", 10);
+		debug_float_array_pub = debug_nh.advertise<mavros_msgs::DebugValue>("debug_float_array", 10);
 		named_value_float_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_float", 10);
 		named_value_int_pub = debug_nh.advertise<mavros_msgs::DebugValue>("named_value_int", 10);
 	}
@@ -45,6 +47,7 @@ public:
 		return {
 			make_handler(&DebugValuePlugin::handle_debug),
 			make_handler(&DebugValuePlugin::handle_debug_vector),
+			make_handler(&DebugValuePlugin::handle_debug_float_array),
 			make_handler(&DebugValuePlugin::handle_named_value_float),
 			make_handler(&DebugValuePlugin::handle_named_value_int)
 		};
@@ -57,6 +60,7 @@ private:
 
 	ros::Publisher debug_pub;
 	ros::Publisher debug_vector_pub;
+	ros::Publisher debug_float_array_pub;
 	ros::Publisher named_value_float_pub;
 	ros::Publisher named_value_int_pub;
 
@@ -117,7 +121,7 @@ private:
 		// p = "dv_msg"
 		// val = "debug"
 		//
-		// def common_filler(type_, time_f, index, name):
+		// def common_filler(type_, time_f, index, name, disable_array_id = True):
 		//     if isinstance(index, str):
 		//         index = val + "." + index
 		//
@@ -128,6 +132,8 @@ private:
 		//     cog.outl("""{p}->header.stamp = m_uas->synchronise_stamp({val}.{time_f});""".format(**_args))
 		//     cog.outl("""{p}->type = mavros_msgs::DebugValue::{type_};""".format(**_args))
 		//     cog.outl("""{p}->index = {index};""".format(**_args))
+		//     if disable_array_id:
+		//         cog.outl("""{p}->array_id = -1;""".format(**_args))
 		//     if name:
 		//         cog.outl("""{p}->name = mavlink::to_string({val}.{name});""".format(**_args))
 		//
@@ -138,8 +144,9 @@ private:
 		dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_boot_ms);
 		dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG;
 		dv_msg->index = debug.ind;
+		dv_msg->array_id = -1;
 		dv_msg->value_float = debug.value;
-		// [[[end]]] (checksum: 82e058cb699846b34885ce3defc6ac58)
+		// [[[end]]] (checksum: 5ef05a58b0a7925a57b4602198097e30)
 
 		debug_logger(debug.get_name(), *dv_msg);
 		debug_pub.publish(dv_msg);
@@ -166,20 +173,44 @@ private:
 		dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_usec);
 		dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG_VECT;
 		dv_msg->index = -1;
+		dv_msg->array_id = -1;
 		dv_msg->name = mavlink::to_string(debug.name);
 		dv_msg->data.resize(3);
 		dv_msg->data[0] = debug.x;
 		dv_msg->data[1] = debug.y;
 		dv_msg->data[2] = debug.z;
-		// [[[end]]] (checksum: 966bca4d95f06349cf065f3887c69471)
+		// [[[end]]] (checksum: 6537917118cc4121b7477a46788c5c4d)
 
 		debug_logger(debug.get_name(), *dv_msg);
 		debug_vector_pub.publish(dv_msg);
 	}
 
 	/**
-	 * @todo: add handler for DEBUG_ARRAY (https://github.com/mavlink/mavlink/pull/734)
+	 * @brief Handle DEBUG_FLOAT_ARRAY message.
+	 * Message specification: https://mavlink.io/en/messages/common.html#DEBUG_FLOAT_ARRAY
+	 * @param msg	Received Mavlink msg
+	 * @param debug	DEBUG_FLOAT_ARRAY msg
 	 */
+	void handle_debug_float_array(const mavlink::mavlink_message_t *msg, mavlink::common::msg::DEBUG_FLOAT_ARRAY &debug)
+	{
+		// [[[cog:
+		// common_filler("TYPE_DEBUG_FLOAT_ARRAY", "time_usec", -1, "name", False)
+		//
+		// cog.outl("{p}->array_id = {val}.array_id;".format(**locals()))
+		// cog.outl("{p}->data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
+		// ]]]
+		auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
+		dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_usec);
+		dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG_FLOAT_ARRAY;
+		dv_msg->index = -1;
+		dv_msg->name = mavlink::to_string(debug.name);
+		dv_msg->array_id = debug.array_id;
+		dv_msg->data.assign(debug.data.begin(), debug.data.end());
+		// [[[end]]] (checksum: a27f0f0d80be19127fe9838a867e85b4)
+
+		debug_logger(debug.get_name(), *dv_msg);
+		debug_float_array_pub.publish(dv_msg);
+	}
 
 	/**
 	 * @brief Handle NAMED_VALUE_FLOAT message.
@@ -198,9 +229,10 @@ private:
 		dv_msg->header.stamp = m_uas->synchronise_stamp(value.time_boot_ms);
 		dv_msg->type = mavros_msgs::DebugValue::TYPE_NAMED_VALUE_FLOAT;
 		dv_msg->index = -1;
+		dv_msg->array_id = -1;
 		dv_msg->name = mavlink::to_string(value.name);
 		dv_msg->value_float = value.value;
-		// [[[end]]] (checksum: 8d70c469d67ab346574c99d20b91a501)
+		// [[[end]]] (checksum: a4661d49c58aa52f3d870859ab5aefa6)
 
 		debug_logger(value.get_name(), *dv_msg);
 		named_value_float_pub.publish(dv_msg);
@@ -222,9 +254,10 @@ private:
 		dv_msg->header.stamp = m_uas->synchronise_stamp(value.time_boot_ms);
 		dv_msg->type = mavros_msgs::DebugValue::TYPE_NAMED_VALUE_INT;
 		dv_msg->index = -1;
+		dv_msg->array_id = -1;
 		dv_msg->name = mavlink::to_string(value.name);
 		dv_msg->value_int = value.value;
-		// [[[end]]] (checksum: b7ce125baba6e8918f6b866a9d5aa77c)
+		// [[[end]]] (checksum: 875d1469f398e89e17c5e988b3cfda56)
 
 		debug_logger(value.get_name(), *dv_msg);
 		named_value_int_pub.publish(dv_msg);
@@ -266,9 +299,16 @@ private:
 			UAS_FCU(m_uas)->send_message_ignore_drop(debug);
 			break;
 		}
-		//case mavros_msgs::DebugValue::TYPE_DEBUG_ARRAY:		{
-		//	return;
-		//}
+		case mavros_msgs::DebugValue::TYPE_DEBUG_FLOAT_ARRAY: {
+			mavlink::common::msg::DEBUG_FLOAT_ARRAY debug {};
+
+			debug.time_usec = req->header.stamp.toNSec() / 1000;
+			mavlink::set_string(debug.name, req->name);
+			std::copy_n(req->data.begin(), std::min(req->data.size(), debug.data.size()), std::begin(debug.data));
+
+			UAS_FCU(m_uas)->send_message_ignore_drop(debug);
+			break;
+		}
 		case mavros_msgs::DebugValue::TYPE_NAMED_VALUE_FLOAT: {
 			mavlink::common::msg::NAMED_VALUE_FLOAT value {};
 
