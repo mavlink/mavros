@@ -445,7 +445,7 @@ public:
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
-		has_battery_status(false)
+		has_battery_status{false}
 	{ }
 
 	void initialize(UAS &uas_) override
@@ -456,11 +456,11 @@ public:
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
-		double min_voltage;
+		double min_voltage[1];
 		std::string conn_heartbeat_mav_type_str;
 
 		nh.param("conn/timeout", conn_timeout_d, 10.0);
-		nh.param("sys/min_voltage", min_voltage, 10.0);
+		nh.param("sys/min_voltage", min_voltage[0], 10.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// heartbeat rate parameter
@@ -477,9 +477,9 @@ public:
 		UAS_DIAG(m_uas).add(hb_diag);
 		if (!disable_diag) {
 			UAS_DIAG(m_uas).add(sys_diag);
-			UAS_DIAG(m_uas).add(batt_diag);
+			UAS_DIAG(m_uas).add(batt_diag); // done here because it can come from both handle_sys_status() and handle_battery_status()
 
-			batt_diag.set_min_voltage(min_voltage);
+			batt_diag.set_min_voltage(min_voltage[0]);
 		}
 
 
@@ -556,7 +556,7 @@ private:
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
-	bool has_battery_status;
+	bool has_battery_status[1];
 
 	using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::VehicleInfo>;
 	M_VehicleInfo vehicles;
@@ -957,10 +957,10 @@ private:
 				batt_diag.set(total_voltage, batt_msg->current, batt_msg->percentage);
 				batt_diag.setcell_v(batt_msg->cell_voltage);
 				// already done in initialize() so no need to do it here
-				//if (!disable_diag && !has_battery_status) {
+				//if (!disable_diag && !has_battery_status[0]) {
 				//	UAS_DIAG(m_uas).add(batt_diag);
 				//}
-				has_battery_status = true;
+				has_battery_status[0] = true;
 			break;
 		}
 
@@ -1080,7 +1080,9 @@ private:
 
 	void connection_cb(bool connected) override
 	{
-		has_battery_status = false;
+		for (auto has_bat_status: has_battery_status) {
+			has_bat_status = false;
+		}
 
 		// if connection changes, start delayed version request
 		version_retries = RETRIES_COUNT;
