@@ -442,6 +442,9 @@ public:
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
 		batt_diag("Battery"),
+		batt_diag2("Battery 2"),
+		batt_diag3("Battery 3"),
+		batt_diag4("Battery 4"),
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
@@ -456,11 +459,14 @@ public:
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
-		double min_voltage[1];
+		double min_voltage[4];
 		std::string conn_heartbeat_mav_type_str;
 
 		nh.param("conn/timeout", conn_timeout_d, 10.0);
 		nh.param("sys/min_voltage", min_voltage[0], 10.0);
+		nh.param("sys/min_voltage2", min_voltage[1], 10.0);
+		nh.param("sys/min_voltage3", min_voltage[2], 10.0);
+		nh.param("sys/min_voltage4", min_voltage[3], 10.0);
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// heartbeat rate parameter
@@ -480,6 +486,9 @@ public:
 			UAS_DIAG(m_uas).add(batt_diag); // done here because it can come from both handle_sys_status() and handle_battery_status()
 
 			batt_diag.set_min_voltage(min_voltage[0]);
+			batt_diag2.set_min_voltage(min_voltage[1]);
+			batt_diag3.set_min_voltage(min_voltage[2]);
+			batt_diag4.set_min_voltage(min_voltage[3]);
 		}
 
 
@@ -537,6 +546,9 @@ private:
 	HwStatus hwst_diag;
 	SystemStatusDiag sys_diag;
 	BatteryStatusDiag batt_diag;
+	BatteryStatusDiag batt_diag2;
+	BatteryStatusDiag batt_diag3;
+	BatteryStatusDiag batt_diag4;
 	ros::WallTimer timeout_timer;
 	ros::WallTimer heartbeat_timer;
 	ros::WallTimer autopilot_version_timer;
@@ -556,7 +568,7 @@ private:
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
-	bool has_battery_status[1];
+	bool has_battery_status[4];
 
 	using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::VehicleInfo>;
 	M_VehicleInfo vehicles;
@@ -961,6 +973,30 @@ private:
 				//	UAS_DIAG(m_uas).add(batt_diag);
 				//}
 				has_battery_status[0] = true;
+			break;
+			case 1:
+				batt_diag2.set(total_voltage, batt_msg->current, batt_msg->percentage);
+				batt_diag2.setcell_v(batt_msg->cell_voltage);
+				if (!disable_diag && !has_battery_status[1]) {
+					UAS_DIAG(m_uas).add(batt_diag2);
+				}
+				has_battery_status[1] = true;
+			break;
+			case 2:
+				batt_diag3.set(total_voltage, batt_msg->current, batt_msg->percentage);
+				batt_diag3.setcell_v(batt_msg->cell_voltage);
+				if (!disable_diag && !has_battery_status[2]) {
+					UAS_DIAG(m_uas).add(batt_diag3);
+				}
+				has_battery_status[2] = true;
+			break;
+			case 3:
+				batt_diag4.set(total_voltage, batt_msg->current, batt_msg->percentage);
+				batt_diag4.setcell_v(batt_msg->cell_voltage);
+				if (!disable_diag && !has_battery_status[3]) {
+					UAS_DIAG(m_uas).add(batt_diag4);
+				}
+				has_battery_status[3] = true;
 			break;
 		}
 
