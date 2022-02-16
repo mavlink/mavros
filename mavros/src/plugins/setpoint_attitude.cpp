@@ -64,12 +64,12 @@ public:
 
     auto qos = rclcpp::QoS(10);
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "reverse_thrust", false, [&](const rclcpp::Parameter & p) {
         reverse_thrust = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_quaternion", false, [&](const rclcpp::Parameter & p) {
         auto use_quaternion = p.as_bool();
 

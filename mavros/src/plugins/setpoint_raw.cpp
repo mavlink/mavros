@@ -53,7 +53,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "thrust_scaling", NAN, [&](const rclcpp::Parameter & p) {
         thrust_scaling = p.as_double();
       });

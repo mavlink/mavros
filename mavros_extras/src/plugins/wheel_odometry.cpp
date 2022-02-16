@@ -63,7 +63,7 @@ public:
     enable_node_watch_parameters();
 
     // General params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "send_raw", false, [&](const rclcpp::Parameter & p) {
         raw_send = p.as_bool();
 
@@ -76,13 +76,13 @@ public:
         }
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "count", 2, [&](const rclcpp::Parameter & p) {
         int count_ = p.as_int();
         count = std::max(2, count_);    // bound check
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_rpm", false, [&](const rclcpp::Parameter & p) {
         bool use_rpm = p.as_bool();
         if (use_rpm) {
@@ -93,39 +93,39 @@ public:
       });
 
     // Odometry params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "send_twist", false, [&](const rclcpp::Parameter & p) {
         twist_send = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "odom", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "vel_error", 0.1, [&](const rclcpp::Parameter & p) {
         double vel_error = p.as_double();
         vel_cov = vel_error * vel_error;       // std -> cov
       });
 
     // TF subsection
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.frame_id", "odom", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
@@ -139,15 +139,15 @@ public:
       // Check if we have "wheelX" parameter.
       // Indices starts from 0 and should increase without gaps.
 
-      node_declate_and_watch_parameter(
+      node_declare_and_watch_parameter(
         utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][0] = p.as_double();
         });
-      node_declate_and_watch_parameter(
+      node_declare_and_watch_parameter(
         utils::format("wheel%i.y", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][1] = p.as_double();
         });
-      node_declate_and_watch_parameter(
+      node_declare_and_watch_parameter(
         utils::format("wheel%i.radius", wi), 0.05, [wi, this](const rclcpp::Parameter & p) {
           wheel_radius[wi] = p.as_double();
         });

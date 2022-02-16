@@ -55,12 +55,12 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         auto mav_frame_str = p.as_string();
         auto new_mav_frame = utils::mav_frame_from_str(mav_frame_str);

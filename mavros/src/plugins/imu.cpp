@@ -79,27 +79,27 @@ public:
      * transformation from the ENU frame to the base_link frame (ENU <-> base_link).
      * THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft).
      */
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "linear_acceleration_stdev", 0.0003, [&](const rclcpp::Parameter & p) {
         auto linear_stdev = p.as_double();
         setup_covariance(linear_acceleration_cov, linear_stdev);
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "angular_velocity_stdev", 0.02 * (M_PI / 180.0), [&](const rclcpp::Parameter & p) {
         auto angular_stdev = p.as_double();
         setup_covariance(angular_velocity_cov, angular_stdev);
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "orientation_stdev", 1.0, [&](const rclcpp::Parameter & p) {
         auto orientation_stdev = p.as_double();
         setup_covariance(orientation_cov, orientation_stdev);
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "magnetic_stdev", 0.0, [&](const rclcpp::Parameter & p) {
         auto mag_stdev = p.as_double();
         setup_covariance(magnetic_cov, mag_stdev);

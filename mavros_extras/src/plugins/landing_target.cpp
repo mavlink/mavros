@@ -69,12 +69,12 @@ public:
     enable_node_watch_parameters();
 
     // general params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "landing_target_1", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "listen_lt", false, [&](const rclcpp::Parameter & p) {
         auto listen_lt = p.as_bool();
 
@@ -88,14 +88,14 @@ public:
         }
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         mav_frame = p.as_string();
         frame = utils::mav_frame_from_str(mav_frame);
         // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "land_target_type", "VISION_FIDUCIAL", [&](const rclcpp::Parameter & p) {
         land_target_type = p.as_string();
         type = utils::landing_target_type_from_str(land_target_type);
@@ -103,68 +103,68 @@ public:
       });
 
     // target size
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "target_size.x", 1.0, [&](const rclcpp::Parameter & p) {
         target_size_x = p.as_double();  // [meters]
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "target_size.y", 1.0, [&](const rclcpp::Parameter & p) {
         target_size_y = p.as_double();
       });
 
     // image size
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "image.width", 640, [&](const rclcpp::Parameter & p) {
         image_width = p.as_int();       // [pixels]
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "image.height", 480, [&](const rclcpp::Parameter & p) {
         image_height = p.as_int();
       });
 
     // camera field-of-view -> should be precised using the calibrated camera intrinsics
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "camera.fov_x", 2.0071286398, [&](const rclcpp::Parameter & p) {
         fov_x = p.as_double();          // default: 115 degrees in [radians]
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "camera.fov_y", 2.0071286398, [&](const rclcpp::Parameter & p) {
         fov_y = p.as_double();          // default: 115 degrees in [radians]
       });
 
     // camera focal length
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "camera.focal_length", 2.8, [&](const rclcpp::Parameter & p) {
         focal_length = p.as_double();   // ex: OpenMV Cam M7: 2.8 [mm]
       });
 
     // tf subsection
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.rate_limit", 50.0, [&](const rclcpp::Parameter & p) {
         // no dynamic update here yet. need to modify the thread in
         // setpoint_mixin to handle new rates
         tf_rate = p.as_double();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.send", true, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.frame_id", frame_id, [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.child_frame_id", "camera_center", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.listen", false, [&](const rclcpp::Parameter & p) {
         tf_listen = p.as_bool();
         if (!tf_listen) {

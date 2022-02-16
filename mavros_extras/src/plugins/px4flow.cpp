@@ -50,7 +50,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "px4flow", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
@@ -61,17 +61,17 @@ public:
      * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
      * at 1 meter
      */
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "ranger_fov", 0.119428926, [&](const rclcpp::Parameter & p) {
         ranger_fov = p.as_double();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "ranger_min_range", 0.3, [&](const rclcpp::Parameter & p) {
         ranger_min_range = p.as_double();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "ranger_max_range", 5.0, [&](const rclcpp::Parameter & p) {
         ranger_max_range = p.as_double();
       });

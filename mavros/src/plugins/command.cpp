@@ -73,12 +73,12 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "command_ack_timeout", command_ack_timeout_dt.seconds(), [&](const rclcpp::Parameter & p) {
         command_ack_timeout_dt = rclcpp::Duration::from_seconds(p.as_double());
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_comp_id_system_control", false, [&](const rclcpp::Parameter & p) {
         use_comp_id_system_control = p.as_bool();
       });

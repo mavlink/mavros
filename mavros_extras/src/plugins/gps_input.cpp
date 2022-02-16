@@ -43,7 +43,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "gps_rate", 5.0, [&](const rclcpp::Parameter & p) {
         rclcpp::Rate rate(p.as_double());
 

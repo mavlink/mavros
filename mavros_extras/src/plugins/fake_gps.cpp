@@ -90,55 +90,55 @@ public:
     last_pos_time = rclcpp::Time(0.0);
 
     // general params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "gps_id", 0, [&](const rclcpp::Parameter & p) {
         gps_id = p.as_int();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "fix_type", utils::enum_value(GPS_FIX_TYPE::NO_GPS), [&](const rclcpp::Parameter & p) {
         fix_type = static_cast<GPS_FIX_TYPE>( p.as_int());
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "gps_rate", 5.0, [&](const rclcpp::Parameter & p) {
         rclcpp::Rate rate(p.as_double());
 
         gps_rate_period = rate.period();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "eph", 2.0, [&](const rclcpp::Parameter & p) {
         eph = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "epv", 2.0, [&](const rclcpp::Parameter & p) {
         epv = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "horiz_accuracy", 0.0, [&](const rclcpp::Parameter & p) {
         horiz_accuracy = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "vert_accuracy", 0.0, [&](const rclcpp::Parameter & p) {
         vert_accuracy = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "speed_accuracy", 0.0, [&](const rclcpp::Parameter & p) {
         speed_accuracy = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "satellites_visible", 5, [&](const rclcpp::Parameter & p) {
         satellites_visible = p.as_int();
       });
 
     // default origin/starting point: Zürich geodetic coordinates
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "geo_origin.lat", 47.3667, [&](const rclcpp::Parameter & p) {
         map_origin.x() = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "geo_origin.lon", 8.5500, [&](const rclcpp::Parameter & p) {
         map_origin.y() = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "geo_origin.alt", 408.0, [&](const rclcpp::Parameter & p) {
         map_origin.z() = p.as_double();
       });
@@ -156,28 +156,28 @@ public:
     }
 
     // source set params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       // listen to MoCap source
       "use_mocap", true, [&](const rclcpp::Parameter & p) {
         use_mocap = p.as_bool();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       // listen to MoCap source (TransformStamped if true; PoseStamped if false)
       "mocap_transform", true, [&](const rclcpp::Parameter & p) {
         mocap_transform = p.as_bool();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       // ~mocap/pose uses PoseWithCovarianceStamped Message
       "mocap_withcovariance", false, [&](const rclcpp::Parameter & p) {
         mocap_withcovariance = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       // listen to Vision source
       "use_vision", false, [&](const rclcpp::Parameter & p) {
         use_vision = p.as_bool();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_hil_gps", false, [&](const rclcpp::Parameter & p) {
         // send HIL_GPS MAVLink messages if true,
         // send GPS_INPUT mavlink messages if false
@@ -185,19 +185,19 @@ public:
       });
 
     // tf params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.rate_limit", 10.0, [&](const rclcpp::Parameter & p) {
         tf_rate = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.listen", false, [&](const rclcpp::Parameter & p) {
         tf_listen = p.as_bool();
       });

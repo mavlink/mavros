@@ -428,7 +428,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "conn_timeout", 10.0, [&](const rclcpp::Parameter & p) {
         auto conn_timeout = rclcpp::Duration::from_seconds(p.as_double());
 
@@ -438,14 +438,14 @@ public:
           std::bind(&SystemStatusPlugin::timeout_cb, this));
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "min_voltage", 10.0, [&](const rclcpp::Parameter & p) {
         auto min_voltage = p.as_double();
 
         batt_diag.set_min_voltage(min_voltage);
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "disable_diag", false, [&](const rclcpp::Parameter & p) {
         disable_diag = p.as_bool();
 
@@ -460,13 +460,13 @@ public:
         }
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "heartbeat_mav_type", utils::enum_to_name(
         conn_heartbeat_mav_type), [&](const rclcpp::Parameter & p) {
         conn_heartbeat_mav_type = utils::mav_type_from_str(p.as_string());
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "heartbeat_rate", 1.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
 

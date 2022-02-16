@@ -59,22 +59,22 @@ public:
 
     // header frame_id.
     // default to map (world-fixed, ENU as per REP-105).
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
     // Important tf subsection
     // Report the transform from world to base_link here.
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });

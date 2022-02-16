@@ -60,7 +60,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "low_rssi", 40, [&](const rclcpp::Parameter & p) {
         low_rssi = p.as_int();
       });

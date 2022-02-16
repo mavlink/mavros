@@ -218,7 +218,7 @@ protected:
    * Adds parameter to watch and declares it
    */
   template<typename ParameterT>
-  auto node_declate_and_watch_parameter(
+  auto node_declare_and_watch_parameter(
     const std::string & name, ParameterFunctorT cb,
     const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =
     rcl_interfaces::msg::ParameterDescriptor(),
@@ -239,7 +239,7 @@ protected:
   }
 
   template<typename ParameterT>
-  auto node_declate_and_watch_parameter(
+  auto node_declare_and_watch_parameter(
     const std::string & name, const ParameterT & default_value,
     ParameterFunctorT cb,
     const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =

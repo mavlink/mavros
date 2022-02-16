@@ -37,12 +37,12 @@ public:
     enable_node_watch_parameters();
 
     // NOTE(vooon): I'm not quite sure that this option would work with mavros router
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "pull_after_gcs", true, [&](const rclcpp::Parameter & p) {
         do_pull_after_gcs = p.as_bool();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_mission_item_int", true, [&](const rclcpp::Parameter & p) {
         use_mission_item_int = p.as_bool();
       });

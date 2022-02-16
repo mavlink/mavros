@@ -45,7 +45,7 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });

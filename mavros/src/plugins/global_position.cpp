@@ -66,42 +66,42 @@ public:
     enable_node_watch_parameters();
 
     // general params
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         child_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "rot_covariance", 99999.0, [&](const rclcpp::Parameter & p) {
         rot_cov = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "gps_uere", 1.0, [&](const rclcpp::Parameter & p) {
         gps_uere = p.as_double();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "use_relative_alt", true, [&](const rclcpp::Parameter & p) {
         use_relative_alt = p.as_bool();
       });
 
     // tf subsection
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
     // The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.global_frame_id", "earth", [&](const rclcpp::Parameter & p) {
         tf_global_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });

@@ -144,11 +144,11 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "base_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         base_frame_id = p.as_string();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "config", "", [&](const rclcpp::Parameter & p) {
         std::unique_lock lock(mutex);
 

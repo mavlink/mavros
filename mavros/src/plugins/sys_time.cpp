@@ -160,19 +160,19 @@ public:
   {
     enable_node_watch_parameters();
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "time_ref_source", "fcu", [&](const rclcpp::Parameter & p) {
         time_ref_source = p.as_string();
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_mode", "MAVLINK", [&](const rclcpp::Parameter & p) {
         auto ts_mode = utils::timesync_mode_from_str(p.as_string());
         uas->set_timesync_mode(ts_mode);
         RCLCPP_INFO_STREAM(get_logger(), "TM: Timesync mode: " << utils::to_string(ts_mode));
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "system_time_rate", 0.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
 
@@ -191,7 +191,7 @@ public:
         }
       });
 
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_rate", 0.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
 
@@ -223,22 +223,22 @@ public:
     // tighter estimation of the skew (derivative), but will negatively affect how fast the
     // filter reacts to clock skewing (e.g cause by temperature changes to the oscillator).
     // Larger values will cause large-amplitude oscillations.
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_alpha_initial", 0.05, [&](const rclcpp::Parameter & p) {
         filter_alpha_initial = p.as_double();
         reset_filter();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_beta_initial", 0.05, [&](const rclcpp::Parameter & p) {
         filter_beta_initial = p.as_double();
         reset_filter();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_alpha_final", 0.003, [&](const rclcpp::Parameter & p) {
         filter_alpha_final = p.as_double();
         reset_filter();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "timesync_beta_final", 0.003, [&](const rclcpp::Parameter & p) {
         filter_beta_final = p.as_double();
         reset_filter();
@@ -250,7 +250,7 @@ public:
     // exhanged timesync packets is less than convergence_window. A lower value will
     // allow the timesync to converge faster, but with potentially less accurate initial
     // offset and skew estimates.
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "convergence_window", 500, [&](const rclcpp::Parameter & p) {
         convergence_window = p.as_int();
       });
@@ -264,19 +264,19 @@ public:
     // estimate are not used to update the filter. More than max_consecutive_high_deviation number
     // of such events in a row will reset the filter. This usually happens only due to a time jump
     // on the remote system.
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "max_rtt_sample", 10, [&](const rclcpp::Parameter & p) {
         max_rtt_sample = p.as_int();        // in ms
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "max_deviation_sample", 10, [&](const rclcpp::Parameter & p) {
         max_deviation_sample = p.as_int();  // in ms
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "max_consecutive_high_rtt", 10, [&](const rclcpp::Parameter & p) {
         max_cons_high_rtt = p.as_int();
       });
-    node_declate_and_watch_parameter(
+    node_declare_and_watch_parameter(
       "max_consecutive_high_deviation", 10, [&](const rclcpp::Parameter & p) {
         max_cons_high_deviation = p.as_int();
       });
