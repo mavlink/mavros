@@ -286,10 +286,10 @@ class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
 public:
 	BatteryStatusDiag(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
-		voltage(-1.0),
-		current(0.0),
-		remaining(0.0),
-		min_voltage(6)
+		voltage(-1.0f),
+		current(0.0f),
+		remaining(0.0f),
+		min_voltage(6.0f)
 	{ }
 
 	void set_min_voltage(float volt) {
@@ -304,11 +304,16 @@ public:
 		remaining = rem;
 	}
 
+	void setcell_v(const std::vector<float> voltages) {
+		std::lock_guard<std::mutex> lock(mutex);
+		cell_voltage = voltages;
+	}
+
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 
-		if (voltage < 0)
+		if (voltage < 0.0f)
 			stat.summary(2, "No data");
 		else if (voltage < min_voltage)
 			stat.summary(1, "Low voltage");
@@ -317,7 +322,14 @@ public:
 
 		stat.addf("Voltage", "%.2f", voltage);
 		stat.addf("Current", "%.1f", current);
-		stat.addf("Remaining", "%.1f", remaining * 100);
+		stat.addf("Remaining", "%.1f", remaining * 100.0f);
+		const int nr_cells = cell_voltage.size();
+		if (nr_cells > 1)
+		{
+			for (int i = 1; i <= nr_cells ; ++i) {
+				stat.addf(utils::format("Cell %u", i), "%.2f", cell_voltage[i-1]);
+			}
+		}
 	}
 
 private:
@@ -326,6 +338,7 @@ private:
 	float current;
 	float remaining;
 	float min_voltage;
+	std::vector<float> cell_voltage;
 };
 
 
@@ -383,7 +396,7 @@ public:
 
 	void set(uint16_t v, uint8_t e) {
 		std::lock_guard<std::mutex> lock(mutex);
-		vcc = v / 1000.0;
+		vcc = v * 0.001f;
 		i2cerr = e;
 	}
 
@@ -432,8 +445,7 @@ public:
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
-		has_battery_status(false),
-		battery_voltage(0.0)
+		has_battery_status(false)
 	{ }
 
 	void initialize(UAS &uas_) override
@@ -545,7 +557,6 @@ private:
 	int version_retries;
 	bool disable_diag;
 	bool has_battery_status;
-	float battery_voltage;
 
 	using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::VehicleInfo>;
 	M_VehicleInfo vehicles;
@@ -763,17 +774,16 @@ private:
 			return;
 		}
 
-		float volt = stat.voltage_battery / 1000.0f;	// mV
-		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
-		float rem = stat.battery_remaining / 100.0f;	// or -1
+		float volt = stat.voltage_battery * 0.001f;	// mV
+		float curr = stat.current_battery * 0.01f;	// 10 mA or -1
+		float rem = stat.battery_remaining * 0.01f;	// or -1
 
-		battery_voltage = volt;
 		sys_diag.set(stat);
-		batt_diag.set(volt, curr, rem);
 
 		if (has_battery_status)
 			return;
 
+		batt_diag.set(volt, curr, rem);
 		auto batt_msg = boost::make_shared<BatteryMsg>();
 		batt_msg->header.stamp = ros::Time::now();
 
@@ -855,21 +865,16 @@ private:
 
 	void handle_battery_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::BATTERY_STATUS &bs)
 	{
-		// PX4.
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
 		using BT = mavlink::common::MAV_BATTERY_TYPE;
-
-		has_battery_status = true;
-
 		auto batt_msg = boost::make_shared<BatteryMsg>();
 		batt_msg->header.stamp = ros::Time::now();
 
-		batt_msg->voltage = battery_voltage;
-		batt_msg->current = -(bs.current_battery / 100.0f);	// 10 mA
+		batt_msg->current = bs.current_battery==-1?NAN:-(bs.current_battery * 0.01f);	// 10 mA
 		batt_msg->charge = NAN;
 		batt_msg->capacity = NAN;
 		batt_msg->design_capacity = NAN;
-		batt_msg->percentage = bs.battery_remaining / 100.0f;
+		batt_msg->percentage = bs.battery_remaining * 0.01f;
 		batt_msg->power_supply_status = BatteryMsg::POWER_SUPPLY_STATUS_DISCHARGING;
 		batt_msg->power_supply_health = BatteryMsg::POWER_SUPPLY_HEALTH_UNKNOWN;
 
@@ -909,16 +914,55 @@ private:
 		batt_msg->present = true;
 
 		batt_msg->cell_voltage.clear();
-		batt_msg->cell_voltage.reserve(bs.voltages.size());
+		batt_msg->cell_voltage.reserve(bs.voltages.size() + bs.voltages_ext.size());
+		float cell_voltage;
+		float voltage_acc = 0.0f;
+		float total_voltage = 0.0f;
+		constexpr float coalesce_voltage = (UINT16_MAX-1) * 0.001f; // 65,534V cell voltage means that the next element in the array must be added to this one
 		for (auto v : bs.voltages) {
 			if (v == UINT16_MAX)
 				break;
 
-			batt_msg->cell_voltage.push_back(v / 1000.0f);	// 1 mV
+			if (v == UINT16_MAX-1) // cell voltage is above 65,534V
+			{
+				voltage_acc += coalesce_voltage;
+				continue;          // add to the next array element to get the correct voltage
+			}
+			cell_voltage = voltage_acc + (v * 0.001f);	// 1 mV
+			voltage_acc = 0.0f;
+			batt_msg->cell_voltage.push_back(cell_voltage);
+			total_voltage += cell_voltage;
 		}
+		for (auto v : bs.voltages_ext) {
+			if (v == UINT16_MAX || v == 0)  // this one is different from the for loop above to support mavlink2 message truncation
+				break;
+
+			if (v == UINT16_MAX-1) // cell voltage is above 65,534V
+			{
+				voltage_acc += coalesce_voltage;
+				continue;          // add to the next array element to get the correct voltage
+			}
+			cell_voltage = voltage_acc + (v * 0.001f);	// 1 mV
+			voltage_acc = 0.0f;
+			batt_msg->cell_voltage.push_back(cell_voltage);
+			total_voltage += cell_voltage;
+		}
+		batt_msg->voltage = total_voltage;
 
 		batt_msg->location = utils::format("id%u", bs.id);
 		batt_msg->serial_number = "";
+		switch(bs.id)
+		{
+			case 0:
+				batt_diag.set(total_voltage, batt_msg->current, batt_msg->percentage);
+				batt_diag.setcell_v(batt_msg->cell_voltage);
+				// already done in initialize() so no need to do it here
+				//if (!disable_diag && !has_battery_status) {
+				//	UAS_DIAG(m_uas).add(batt_diag);
+				//}
+				has_battery_status = true;
+			break;
+		}
 
 		batt_pub.publish(batt_msg);
 #endif
