@@ -490,7 +490,6 @@ public:
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
-		batt2_pub = nh.advertise<BatteryMsg>("battery2", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
 		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
 		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
@@ -515,7 +514,6 @@ public:
 			make_handler(&SystemStatusPlugin::handle_extended_sys_state),
 			make_handler(&SystemStatusPlugin::handle_battery_status),
 			make_handler(&SystemStatusPlugin::handle_estimator_status),
-			make_handler(&SystemStatusPlugin::handle_battery2),
 		};
 	}
 
@@ -534,7 +532,6 @@ private:
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
 	ros::Publisher batt_pub;
-	ros::Publisher batt2_pub;
 	ros::Publisher estimator_status_pub;
 	ros::Publisher statustext_pub;
 	ros::Subscriber statustext_sub;
@@ -796,19 +793,6 @@ private:
 #endif
 
 		batt_pub.publish(batt_msg);
-	}
-
-	void handle_battery2(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::BATTERY2 &batt) {
-		float volt = batt.voltage / 1000.0f;	// mV
-		float curr = batt.current_battery / 100.0f;	// 10 mA or -1
-
-		auto batt_msg = boost::make_shared<BatteryMsg>();
-		batt_msg->header.stamp = ros::Time::now();
-
-		batt_msg->voltage = volt;
-		batt_msg->current = curr;
-
-		batt2_pub.publish(batt_msg);
 	}
 
 	void handle_statustext(const mavlink::mavlink_message_t *msg, mavlink::common::msg::STATUSTEXT &textm)
