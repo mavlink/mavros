@@ -25,6 +25,105 @@ namespace mavros
 {
 namespace extra_plugins
 {
+// for all the dignostics parameters
+struct Limits {
+	bool diag_enabled;
+	// Temperature checks
+	float temp_min_nok;
+	float temp_min_ok;
+	float temp_max_nok;
+	float temp_max_ok;
+	// Voltage checks
+	float volt_min_nok;
+	float volt_min_ok;
+	float volt_max_nok;
+	float volt_max_ok;
+	// Current checks
+	float curr_min_nok;
+	float curr_min_ok;
+	float curr_max_nok;
+	float curr_max_ok;
+	// RPM checks
+	int rpm_min_nok;
+	int rpm_min_ok;
+	int rpm_max_nok;
+	int rpm_max_ok;
+	// Count checks, should be uint16_t but ROS only allows int parameters
+	int count_min_delta;
+
+	explicit Limits(ros::NodeHandle &pnh) {
+		if (!pnh.getParam("enabled", this->diag_enabled)) {
+			ROS_FATAL_STREAM("Could not retrieve 'enabled' parameter from parameter server");
+			this->diag_enabled = false;
+			return;
+		}
+		if (this->diag_enabled)
+		{
+			// [[[cog:
+			// fields = [
+			//   ("temp", (1.0, 0.0), (85.0, 90.0), ),
+			//   ("volt", (15.0, 14.0), (16.0, 17.0), ),
+			//   ("curr", (5.0, 4.0), (8.0, 10.0), ),
+			//   ("rpm", (3000, 2000), (9000, 12000), )
+			// ]
+			//
+			// for field, min_, max_ in fields:
+			//    for fm, lim in zip(("min", "max"), (min_, max_)):
+			//        for fn, l in zip(("ok", "nok"), lim):
+			//            cog.outl(f"""pnh.param("{field}_{fm}/{fn}", this->{field}_{fm}_{fn}, {l});""")
+			// ]]]
+			pnh.param("temp_min/ok", this->temp_min_ok, 1.0);
+			pnh.param("temp_min/nok", this->temp_min_nok, 0.0);
+			pnh.param("temp_max/ok", this->temp_max_ok, 85.0);
+			pnh.param("temp_max/nok", this->temp_max_nok, 90.0);
+			pnh.param("volt_min/ok", this->volt_min_ok, 15.0);
+			pnh.param("volt_min/nok", this->volt_min_nok, 14.0);
+			pnh.param("volt_max/ok", this->volt_max_ok, 16.0);
+			pnh.param("volt_max/nok", this->volt_max_nok, 17.0);
+			pnh.param("curr_min/ok", this->curr_min_ok, 5.0);
+			pnh.param("curr_min/nok", this->curr_min_nok, 4.0);
+			pnh.param("curr_max/ok", this->curr_max_ok, 8.0);
+			pnh.param("curr_max/nok", this->curr_max_nok, 10.0);
+			pnh.param("rpm_min/ok", this->rpm_min_ok, 3000);
+			pnh.param("rpm_min/nok", this->rpm_min_nok, 2000);
+			pnh.param("rpm_max/ok", this->rpm_max_ok, 9000);
+			pnh.param("rpm_max/nok", this->rpm_max_nok, 12000);
+			// [[[end]]] (checksum: 0eefb906602662866799a8bbf948a1e6)
+/**
+			pnh.param("temp_min/nok", this->temp_min_nok, 0.0f);
+			pnh.param("temp_min/ok", this->temp_min_ok, 1.0f);
+			pnh.param("volt_min/nok", this->volt_min_nok, 14.0f);
+			pnh.param("volt_min/ok", this->volt_min_ok, 15.0f);
+			pnh.param("curr_min/nok", this->curr_min_nok, 4.0f);
+			pnh.param("curr_min/ok", this->curr_min_ok, 5.0f);
+			pnh.param("rpm_min/nok", this->rpm_min_nok, 2000);
+			pnh.param("rpm_min/ok", this->rpm_min_ok, 3000);
+			pnh.param("temp_max/nok", this->temp_max_nok, 90.0f);
+			pnh.param("temp_max/ok", this->temp_max_ok, 85.0f);
+			pnh.param("volt_max/nok", this->volt_max_nok, 17.0f);
+			pnh.param("volt_max/ok", this->volt_max_ok, 16.0f);
+			pnh.param("curr_max/nok", this->curr_max_nok, 10.0f);
+			pnh.param("curr_max/ok", this->curr_max_ok, 8.0f);
+			pnh.param("rpm_max/nok", this->rpm_max_nok, 12000);
+			pnh.param("rpm_max/ok", this->rpm_max_ok, 9000);
+/**/
+
+			pnh.param("count/min_delta", this->count_min_delta, 10);
+		}
+	}
+};
+
+class ESCDiag //: public diagnostic_updater::DiagnosticTask
+{
+public:
+	ESCDiag(const std::string& name, const Limits& lim_):
+		//diagnostic_updater::DiagnosticTask(name),
+		lim(lim_)
+	{}
+
+	const Limits& lim;
+};
+
 /**
  * @brief ESC telemetry plugin
  *
@@ -47,27 +146,11 @@ public:
 
 		// Read the diagnostic variables
 		auto pnh = ros::NodeHandle(ros::NodeHandle("~esc_telemetry"), "diagnostics");
-		pnh.param("enabled", _diag_enabled, false);
-		if (_diag_enabled)
+
+		lim =  new Limits(pnh);
+		if (lim->diag_enabled)
 		{
 			ROS_INFO_STREAM("Diagnostics are enabled!!!");
-			pnh.param("temp_min/nok", _temp_min_nok, 0.0f);
-			pnh.param("temp_min/ok", _temp_min_ok, 1.0f);
-			pnh.param("volt_min/nok", _volt_min_nok, 14.0f);
-			pnh.param("volt_min/ok", _volt_min_ok, 15.0f);
-			pnh.param("curr_min/nok", _curr_min_nok, 4.0f);
-			pnh.param("curr_min/ok", _curr_min_ok, 5.0f);
-			pnh.param("rpm_min/nok", _rpm_min_nok, 2000);
-			pnh.param("rpm_min/ok", _rpm_min_ok, 3000);
-			pnh.param("temp_max/nok", _temp_max_nok, 90.0f);
-			pnh.param("temp_max/ok", _temp_max_ok, 85.0f);
-			pnh.param("volt_max/nok", _volt_max_nok, 17.0f);
-			pnh.param("volt_max/ok", _volt_max_ok, 16.0f);
-			pnh.param("curr_max/nok", _curr_max_nok, 10.0f);
-			pnh.param("curr_max/ok", _curr_max_ok, 8.0f);
-			pnh.param("rpm_max/nok", _rpm_max_nok, 12000);
-			pnh.param("rpm_max/ok", _rpm_max_ok, 9000);
-			pnh.param("count/min_delta", _count_min_delta, 10);
 			UAS_DIAG(m_uas).add("ESC temperature", this, &ESCTelemetryPlugin::run_temperature_diagnostics);
 			UAS_DIAG(m_uas).add("ESC voltage", this, &ESCTelemetryPlugin::run_voltage_diagnostics);
 			UAS_DIAG(m_uas).add("ESC current", this, &ESCTelemetryPlugin::run_current_diagnostics);
@@ -95,7 +178,8 @@ private:
 	mavros_msgs::ESCTelemetry _esc_telemetry;
 
 	// vars used for diagnostics
-	bool _diag_enabled;
+	Limits* lim;
+	std::vector<ESCDiag> v;
 	static const std::size_t MAV_NR_ESCS = sizeof(mavros_msgs::ESCTelemetry)/sizeof(mavros_msgs::ESCTelemetryItem);
 	bool _temp_min_errors[MAV_NR_ESCS];
 	bool _volt_min_errors[MAV_NR_ESCS];
@@ -107,28 +191,6 @@ private:
 	bool _rpm_max_errors[MAV_NR_ESCS];
 	uint16_t _msg_count[MAV_NR_ESCS];
 	uint8_t _esc_count = 0;
-	// Temperature checks
-	float _temp_min_nok;
-	float _temp_min_ok;
-	float _temp_max_nok;
-	float _temp_max_ok;
-	// Voltage checks
-	float _volt_min_nok;
-	float _volt_min_ok;
-	float _volt_max_nok;
-	float _volt_max_ok;
-	// Current checks
-	float _curr_min_nok;
-	float _curr_min_ok;
-	float _curr_max_nok;
-	float _curr_max_ok;
-	// RPM checks
-	int _rpm_min_nok;
-	int _rpm_min_ok;
-	int _rpm_max_nok;
-	int _rpm_max_ok;
-	// Count checks, should be uint16_t but ROS only allows int parameters
-	int _count_min_delta;
 	int _consecutively_detected_delta_errors;
 
 	template <typename msgT>
@@ -203,6 +265,9 @@ private:
 			_esc_count = MAV_NR_ESCS;
 		}
 		ROS_INFO("%d ESCs detected", _esc_count);
+		for (uint i = 0; i < _esc_count; ++i) {
+			v.emplace_back(utils::format("ESC%u", i), *lim);
+		}
 	}
 
 	void connection_cb(bool connected) override
@@ -216,6 +281,7 @@ private:
 		else
 		{
 			_esc_count = 0;
+			v.clear();
 		}
 	}
 
@@ -328,27 +394,27 @@ private:
 
 	void run_temperature_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::temperature, _temp_min_errors, _temp_max_errors, "temperature", "(degC)", _temp_min_ok, _temp_min_nok, _temp_max_ok, _temp_max_nok);
+		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::temperature, _temp_min_errors, _temp_max_errors, "temperature", "(degC)", lim->temp_min_ok, lim->temp_min_nok, lim->temp_max_ok, lim->temp_max_nok);
 	}
 
 	void run_voltage_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::voltage, _volt_min_errors, _volt_max_errors, "voltage", "(V)", _volt_min_ok, _volt_min_nok, _volt_max_ok, _volt_max_nok);
+		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::voltage, _volt_min_errors, _volt_max_errors, "voltage", "(V)", lim->volt_min_ok, lim->volt_min_nok, lim->volt_max_ok, lim->volt_max_nok);
 	}
 
 	void run_current_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::current, _curr_min_errors, _curr_max_errors, "current", "(A)", _curr_min_ok, _curr_min_nok, _curr_max_ok, _curr_max_nok);
+		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::current, _curr_min_errors, _curr_max_errors, "current", "(A)", lim->curr_min_ok, lim->curr_min_nok, lim->curr_max_ok, lim->curr_max_nok);
 	}
 
 	void run_rpm_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::rpm, _rpm_min_errors, _rpm_max_errors, "RPM", "(1/min)", _rpm_min_ok, _rpm_min_nok, _rpm_max_ok, _rpm_max_nok);
+		run_diagnostics(stat, &mavros_msgs::ESCTelemetryItem::rpm, _rpm_min_errors, _rpm_max_errors, "RPM", "(1/min)", lim->rpm_min_ok, lim->rpm_min_nok, lim->rpm_max_ok, lim->rpm_max_nok);
 	}
 
 	void run_count_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
-		stat.add("Min Count delta", _count_min_delta);
+		stat.add("Min Count delta", lim->count_min_delta);
 		std::string error_str;
 		bool error = false;
 		{
@@ -359,7 +425,7 @@ private:
 				stat.add("Count reported by ESC " + std::to_string(i+1), t.count);
 
 				uint16_t count_delta = t.count - _msg_count[i];
-				if (count_delta < uint16_t(_count_min_delta))
+				if (count_delta < uint16_t(lim->count_min_delta))
 				{
 					error = true;
 					error_str += (std::to_string(i+1) + " " + std::to_string(count_delta) + ", ");
