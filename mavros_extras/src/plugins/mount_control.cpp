@@ -174,11 +174,11 @@ public:
 		if (nh.getParam("sys/disable_diag", disable_diag) && !disable_diag) {
 			double debounce_s;
 			double err_threshold_deg;
-			nh.param("mount/debounce_s", debounce_s, 4.0);
-			nh.param("mount/err_threshold_deg", err_threshold_deg, 10.0);
-			UAS_DIAG(m_uas).add(mount_diag);
+			mount_nh.param("debounce_s", debounce_s, 4.0);
+			mount_nh.param("err_threshold_deg", err_threshold_deg, 10.0);
 			mount_diag.set_debounce_s(debounce_s);
 			mount_diag.set_err_threshold_deg(err_threshold_deg);
+			UAS_DIAG(m_uas).add(mount_diag);
 		}
 	}
 
