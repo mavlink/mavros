@@ -46,7 +46,7 @@ using utils::enum_value;
 /**
  * Heartbeat status publisher
  *
- * Based on diagnistic_updater::FrequencyStatus
+ * Based on diagnostic_updater::FrequencyStatus
  */
 class HeartbeatStatus : public diagnostic_updater::DiagnosticTask
 {
@@ -758,6 +758,11 @@ private:
 
 	void handle_sys_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYS_STATUS &stat)
 	{
+		using MC = mavlink::minimal::MAV_COMPONENT;
+		if (static_cast<MC>(msg->compid) == MC::COMP_ID_GIMBAL) {
+			return;
+		}
+
 		float volt = stat.voltage_battery / 1000.0f;	// mV
 		float curr = stat.current_battery / 100.0f;	// 10 mA or -1
 		float rem = stat.battery_remaining / 100.0f;	// or -1
