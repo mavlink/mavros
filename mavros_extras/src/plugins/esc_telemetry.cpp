@@ -113,15 +113,14 @@ struct Limits {
 	}
 };
 
-class ESCDiag //: public diagnostic_updater::DiagnosticTask
+class ESCDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-	ESCDiag(const std::string& name, const Limits& lim_):
-		//diagnostic_updater::DiagnosticTask(name),
-		lim(lim_)
+	ESCDiag(const std::string& name):
+		diagnostic_updater::DiagnosticTask(name)
 	{}
 
-	const Limits& lim;
+	void run(diagnostic_updater::DiagnosticStatusWrapper &stat) override {};
 };
 
 /**
@@ -266,7 +265,7 @@ private:
 		}
 		ROS_INFO("%d ESCs detected", _esc_count);
 		for (uint i = 0; i < _esc_count; ++i) {
-			v.emplace_back(utils::format("ESC%u", i), *lim);
+			v.emplace_back(utils::format("ESC%u", i));
 		}
 	}
 
