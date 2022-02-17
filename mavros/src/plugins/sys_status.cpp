@@ -1090,7 +1090,7 @@ private:
 			autopilot_version_timer.stop();
 
 		// add/remove APM diag tasks
-		if (connected && disable_diag && m_uas->is_ardupilotmega()) {
+		if (connected && !disable_diag && m_uas->is_ardupilotmega()) {
 			UAS_DIAG(m_uas).add(mem_diag);
 			UAS_DIAG(m_uas).add(hwst_diag);
 		}
