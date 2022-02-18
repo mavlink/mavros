@@ -27,6 +27,7 @@
 #include <mavros_msgs/VehicleInfo.h>
 #include <mavros_msgs/VehicleInfoGet.h>
 #include <mavros_msgs/MessageInterval.h>
+#include <mavros_msgs/SysStatus.h>
 
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
@@ -556,6 +557,7 @@ public:
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
 		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
+		sys_status_pub = nh.advertise<mavros_msgs::SysStatus>("sys_status", 10);
 		statustext_sub = nh.subscribe("statustext/send", 10, &SystemStatusPlugin::statustext_cb, this);
 		rate_srv = nh.advertiseService("set_stream_rate", &SystemStatusPlugin::set_rate_cb, this);
 		mode_srv = nh.advertiseService("set_mode", &SystemStatusPlugin::set_mode_cb, this);
@@ -598,6 +600,7 @@ private:
 	ros::Publisher batt_pub;
 	ros::Publisher estimator_status_pub;
 	ros::Publisher statustext_pub;
+	ros::Publisher sys_status_pub;
 	ros::Subscriber statustext_sub;
 	ros::ServiceServer rate_srv;
 	ros::ServiceServer mode_srv;
@@ -831,6 +834,25 @@ private:
 		float rem = stat.battery_remaining * 0.01f;	// or -1
 
 		sys_diag.set(stat);
+
+		mavros_msgs::SysStatus sys_status;
+		sys_status.header.stamp = ros::Time::now();
+		sys_status.sensors_present = stat.onboard_control_sensors_present;
+		sys_status.sensors_enabled = stat.onboard_control_sensors_enabled;
+		sys_status.sensors_health = stat.onboard_control_sensors_health;
+
+		sys_status.load = stat.load;
+		sys_status.voltage_battery = stat.voltage_battery;
+		sys_status.current_battery = stat.current_battery;
+		sys_status.battery_remaining = stat.battery_remaining;
+		sys_status.drop_rate_comm = stat.drop_rate_comm;
+		sys_status.errors_comm = stat.errors_comm;
+		sys_status.errors_count1 = stat.errors_count1;
+		sys_status.errors_count2 = stat.errors_count2;
+		sys_status.errors_count3 = stat.errors_count3;
+		sys_status.errors_count4 = stat.errors_count4;
+
+		sys_status_pub.publish(sys_status);
 
 		if (has_battery_status0)
 			return;
