@@ -295,6 +295,28 @@ public:
 		min_voltage(6.0f)
 	{ }
 
+	// Move constructor, required to dynamically create an array of instances of this class
+	// because it contains an unique mutex object
+	BatteryStatusDiag(BatteryStatusDiag&& other) noexcept :
+		diagnostic_updater::DiagnosticTask(""),
+		voltage(-1.0f),
+		current(0.0f),
+		remaining(0.0f),
+		min_voltage(6.0f)
+	{
+		*this = std::move(other);
+	}
+
+	// Move assignment operator, required to dynamically create an array of instances of this class
+	// because it contains an unique mutex object
+	BatteryStatusDiag& operator=(BatteryStatusDiag&& other) noexcept {
+		if (this != &other)
+		{
+			*this = std::move(other);
+		}
+		return *this;
+	}
+
 	void set_min_voltage(float volt) {
 		std::lock_guard<std::mutex> lock(mutex);
 		min_voltage = volt;
@@ -450,9 +472,9 @@ public:
 		has_battery_status0(false)
 	{
 		batt_diag.reserve(MAX_NR_BATTERY_STATUS);
-		batt_diag.emplace_back(std::move(BatteryStatusDiag("Battery")));
+		batt_diag.emplace_back("Battery");
 		for (int i = 2; i <= MAX_NR_BATTERY_STATUS ; ++i) {
-			batt_diag.emplace_back(std::move(BatteryStatusDiag(utils::format("Battery %u", i))));
+			batt_diag.emplace_back(utils::format("Battery %u", i));
 		}
 	}
 
