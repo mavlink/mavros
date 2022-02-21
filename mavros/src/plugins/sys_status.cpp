@@ -351,26 +351,38 @@ public:
 	MemInfo(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		freemem(-1),
-		brkval(0)
+		brkval(0),
+		last_rcd(0)
 	{ }
 
 	void set(uint16_t f, uint16_t b) {
 		freemem = f;
 		brkval = b;
+		last_rcd = ros::Time::now().toNSec();
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
+		// access atomic variables just once
 		ssize_t freemem_ = freemem;
 		uint16_t brkval_ = brkval;
+		ros::Time last_rcd_;
+		last_rcd_.fromNSec(last_rcd.load());
+		constexpr int timeout = 10.0; // seconds
 
-		if (freemem < 0)
-			stat.summary(2, "No data");
-		else if (freemem < 200)
-			stat.summary(1, "Low mem");
-		else
-			stat.summary(0, "Normal");
-
+		// summarize the results
+		if (last_rcd_.isZero()) {
+			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
+		} else if (ros::Time::now().toSec() - last_rcd_.toSec() > timeout) {
+			stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(timeout) + "s");
+		} else {
+			if (freemem < 0)
+				stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
+			else if (freemem < 200)
+				stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low mem");
+			else
+				stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+		}
 		stat.addf("Free memory (B)", "%zd", freemem_);
 		stat.addf("Heap top", "0x%04X", brkval_);
 	}
@@ -378,6 +390,7 @@ public:
 private:
 	std::atomic<ssize_t> freemem;
 	std::atomic<uint16_t> brkval;
+	std::atomic<uint64_t> last_rcd;
 };
 
 
@@ -391,30 +404,37 @@ public:
 		diagnostic_updater::DiagnosticTask(name),
 		vcc(-1.0),
 		i2cerr(0),
-		i2cerr_last(0)
+		i2cerr_last(0),
+		last_rcd(0)
 	{ }
 
 	void set(uint16_t v, uint8_t e) {
 		std::lock_guard<std::mutex> lock(mutex);
 		vcc = v * 0.001f;
 		i2cerr = e;
+		last_rcd = ros::Time::now();
 	}
 
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
 		std::lock_guard<std::mutex> lock(mutex);
-
-		if (vcc < 0)
-			stat.summary(2, "No data");
-		else if (vcc < 4.5)
-			stat.summary(1, "Low voltage");
-		else if (i2cerr != i2cerr_last) {
-			i2cerr_last = i2cerr;
-			stat.summary(1, "New I2C error");
+		constexpr int timeout = 10.0; // seconds
+		if (last_rcd.isZero()) {
+			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
+		} else if (ros::Time::now().toSec() - last_rcd.toSec() > timeout) {
+			stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(timeout) + "s");
+		} else {
+			if (vcc < 0)
+				stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
+			else if (vcc < 4.5)
+				stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low voltage");
+			else if (i2cerr != i2cerr_last) {
+				i2cerr_last = i2cerr;
+				stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "New I2C error");
+			}
+			else
+				stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
 		}
-		else
-			stat.summary(0, "Normal");
-
 		stat.addf("Core voltage", "%f", vcc);
 		stat.addf("I2C errors", "%zu", i2cerr);
 	}
@@ -424,6 +444,7 @@ private:
 	float vcc;
 	size_t i2cerr;
 	size_t i2cerr_last;
+	ros::Time last_rcd;
 };
 
 
@@ -1090,7 +1111,7 @@ private:
 			autopilot_version_timer.stop();
 
 		// add/remove APM diag tasks
-		if (connected && disable_diag && m_uas->is_ardupilotmega()) {
+		if (connected && !disable_diag && m_uas->is_ardupilotmega()) {
 			UAS_DIAG(m_uas).add(mem_diag);
 			UAS_DIAG(m_uas).add(hwst_diag);
 		}
