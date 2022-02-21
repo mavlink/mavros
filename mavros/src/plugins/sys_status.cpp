@@ -8,6 +8,7 @@
  */
 /*
  * Copyright 2013,2014,2015,2016 Vladimir Ermakov.
+ * Copyright 2022 Dr.-Ing. Amilcar do Carmo Lucas, IAV GmbH.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -42,6 +43,8 @@ using mavlink::minimal::MAV_TYPE;
 using mavlink::minimal::MAV_AUTOPILOT;
 using mavlink::minimal::MAV_STATE;
 using utils::enum_value;
+
+#define MAX_NR_BATTERY_STATUS 10
 
 /**
  * Heartbeat status publisher
@@ -284,13 +287,35 @@ private:
 class BatteryStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-	BatteryStatusDiag(const std::string &name) :
+	explicit BatteryStatusDiag(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
 		voltage(-1.0f),
 		current(0.0f),
 		remaining(0.0f),
 		min_voltage(6.0f)
 	{ }
+
+	// Move constructor, required to dynamically create an array of instances of this class
+	// because it contains an unique mutex object
+	BatteryStatusDiag(BatteryStatusDiag&& other) noexcept :
+		diagnostic_updater::DiagnosticTask(""),
+		voltage(-1.0f),
+		current(0.0f),
+		remaining(0.0f),
+		min_voltage(6.0f)
+	{
+		*this = std::move(other);
+	}
+
+	// Move assignment operator, required to dynamically create an array of instances of this class
+	// because it contains an unique mutex object
+	BatteryStatusDiag& operator=(BatteryStatusDiag&& other) noexcept {
+		if (this != &other)
+		{
+			*this = std::move(other);
+		}
+		return *this;
+	}
 
 	void set_min_voltage(float volt) {
 		std::lock_guard<std::mutex> lock(mutex);
@@ -462,12 +487,17 @@ public:
 		mem_diag("APM Memory"),
 		hwst_diag("APM Hardware"),
 		sys_diag("System"),
-		batt_diag("Battery"),
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
-		has_battery_status(false)
-	{ }
+		has_battery_status0(false)
+	{
+		batt_diag.reserve(MAX_NR_BATTERY_STATUS);
+		batt_diag.emplace_back("Battery");
+		for (int i = 2; i <= MAX_NR_BATTERY_STATUS ; ++i) {
+			batt_diag.emplace_back(utils::format("Battery %u", i));
+		}
+	}
 
 	void initialize(UAS &uas_) override
 	{
@@ -477,11 +507,11 @@ public:
 
 		double conn_timeout_d;
 		double conn_heartbeat_d;
-		double min_voltage;
+		std::vector<double> min_voltage;
 		std::string conn_heartbeat_mav_type_str;
 
 		nh.param("conn/timeout", conn_timeout_d, 10.0);
-		nh.param("sys/min_voltage", min_voltage, 10.0);
+		nh.param("sys/min_voltage", min_voltage, {10.0});
 		nh.param("sys/disable_diag", disable_diag, false);
 
 		// heartbeat rate parameter
@@ -498,9 +528,10 @@ public:
 		UAS_DIAG(m_uas).add(hb_diag);
 		if (!disable_diag) {
 			UAS_DIAG(m_uas).add(sys_diag);
-			UAS_DIAG(m_uas).add(batt_diag);
-
-			batt_diag.set_min_voltage(min_voltage);
+			for (int i = 0; i < MAX_NR_BATTERY_STATUS && i < min_voltage.size(); ++i) {
+				batt_diag[i].set_min_voltage(min_voltage[i]);
+				UAS_DIAG(m_uas).add(batt_diag[i]);
+			}
 		}
 
 
@@ -557,7 +588,7 @@ private:
 	MemInfo mem_diag;
 	HwStatus hwst_diag;
 	SystemStatusDiag sys_diag;
-	BatteryStatusDiag batt_diag;
+	std::vector<BatteryStatusDiag> batt_diag;
 	ros::WallTimer timeout_timer;
 	ros::WallTimer heartbeat_timer;
 	ros::WallTimer autopilot_version_timer;
@@ -577,7 +608,7 @@ private:
 	static constexpr int RETRIES_COUNT = 6;
 	int version_retries;
 	bool disable_diag;
-	bool has_battery_status;
+	bool has_battery_status0;
 
 	using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::VehicleInfo>;
 	M_VehicleInfo vehicles;
@@ -801,10 +832,10 @@ private:
 
 		sys_diag.set(stat);
 
-		if (has_battery_status)
+		if (has_battery_status0)
 			return;
 
-		batt_diag.set(volt, curr, rem);
+		batt_diag[0].set(volt, curr, rem);
 		auto batt_msg = boost::make_shared<BatteryMsg>();
 		batt_msg->header.stamp = ros::Time::now();
 
@@ -972,20 +1003,16 @@ private:
 
 		batt_msg->location = utils::format("id%u", bs.id);
 		batt_msg->serial_number = "";
-		switch(bs.id)
-		{
-			case 0:
-				batt_diag.set(total_voltage, batt_msg->current, batt_msg->percentage);
-				batt_diag.setcell_v(batt_msg->cell_voltage);
-				// already done in initialize() so no need to do it here
-				//if (!disable_diag && !has_battery_status) {
-				//	UAS_DIAG(m_uas).add(batt_diag);
-				//}
-				has_battery_status = true;
-			break;
+		batt_pub.publish(batt_msg);
+
+		if (bs.id == 0) {
+			has_battery_status0 = true;
 		}
 
-		batt_pub.publish(batt_msg);
+		if (!disable_diag && bs.id >= 0 && bs.id < MAX_NR_BATTERY_STATUS) {
+			batt_diag[bs.id].set(total_voltage, batt_msg->current, batt_msg->percentage);
+			batt_diag[bs.id].setcell_v(batt_msg->cell_voltage);
+		}
 #endif
 	}
 
@@ -1101,7 +1128,7 @@ private:
 
 	void connection_cb(bool connected) override
 	{
-		has_battery_status = false;
+		has_battery_status0 = false;
 
 		// if connection changes, start delayed version request
 		version_retries = RETRIES_COUNT;
