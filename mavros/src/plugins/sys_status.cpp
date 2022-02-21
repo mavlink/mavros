@@ -109,16 +109,16 @@ public:
 		hist_indx_ = (hist_indx_ + 1) % window_size_;
 
 		if (events == 0) {
-			stat.summary(2, "No events recorded.");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No events recorded.");
 		}
 		else if (freq < min_freq_ * (1 - tolerance_)) {
-			stat.summary(1, "Frequency too low.");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Frequency too low.");
 		}
 		else if (freq > max_freq_ * (1 + tolerance_)) {
-			stat.summary(1, "Frequency too high.");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Frequency too high.");
 		}
 		else {
-			stat.summary(0, "Normal");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
 		}
 
 		stat.addf("Heartbeats since startup", "%d", count_);
@@ -169,9 +169,9 @@ public:
 
 		if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled)
 				!= last_st.onboard_control_sensors_enabled)
-			stat.summary(2, "Sensor health");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Sensor health");
 		else
-			stat.summary(0, "Normal");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
 
 		stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
 		stat.addf("Sensor enabled", "0x%08X", last_st.onboard_control_sensors_enabled);
@@ -339,11 +339,11 @@ public:
 		std::lock_guard<std::mutex> lock(mutex);
 
 		if (voltage < 0.0f)
-			stat.summary(2, "No data");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
 		else if (voltage < min_voltage)
-			stat.summary(1, "Low voltage");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low voltage");
 		else
-			stat.summary(0, "Normal");
+			stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
 
 		stat.addf("Voltage", "%.2f", voltage);
 		stat.addf("Current", "%.1f", current);
