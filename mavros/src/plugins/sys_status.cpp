@@ -533,7 +533,9 @@ public:
     uas->diagnostic_updater.add(hb_diag);
 
     autopilot_version_timer =
-      node->create_wall_timer(1s, std::bind(&SystemStatusPlugin::autopilot_version_cb, this), srv_cg);
+      node->create_wall_timer(
+      1s, std::bind(&SystemStatusPlugin::autopilot_version_cb, this),
+      srv_cg);
 
     // init state topic
     publish_disconnection();
