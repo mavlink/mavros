@@ -580,6 +580,8 @@ private:
   rclcpp::Service<mavros_msgs::srv::SetMode>::SharedPtr mode_srv;
   rclcpp::Service<mavros_msgs::srv::VehicleInfoGet>::SharedPtr vehicle_info_get_srv;
 
+  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr command_client;
+
   MAV_TYPE conn_heartbeat_mav_type;
   static constexpr int RETRIES_COUNT = 6;
   int version_retries;
@@ -1076,7 +1078,7 @@ private:
     bool do_broadcast = version_retries > RETRIES_COUNT / 2;
 
     try {
-      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
+      //auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
       cmdrq->broadcast = do_broadcast;
@@ -1088,12 +1090,17 @@ private:
         lg, "VER: Sending %s request.",
         (do_broadcast) ? "broadcast" : "unicast");
 
-      auto future = client->async_send_request(cmdrq);
+      RCLCPP_ERROR_STREAM(lg, "[autopilot_version_cb] Current thread: " << std::this_thread::get_id());
+
+      auto future = command_client->async_send_request(cmdrq);
       // NOTE(vooon): temporary hack from @Michel1968
       // See: https://github.com/mavlink/mavros/issues/1588#issuecomment-1027699924
       const auto future_status = future.wait_for(1s);
       if (future_status == std::future_status::ready) {
         auto response = future.get();
+      
+      RCLCPP_ERROR_STREAM(lg, "[autopilot_version_cb] Future got. Thread: " << std::this_thread::get_id());
+      
         ret = response->success;
       } else {
         RCLCPP_ERROR(lg, "VER: autopilot version service timeout");
@@ -1193,7 +1200,7 @@ private:
     auto lg = get_logger();
 
     try {
-      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
+      //auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
       // calculate interval
       float interval_us;
@@ -1216,16 +1223,19 @@ private:
         lg,
         "SYS: Request msgid %u at %f hz",
         req->message_id, req->message_rate);
+      
+      RCLCPP_ERROR_STREAM(lg, "[set_msg_interval_cb] Sending Request. Current thread: " << std::this_thread::get_id());
 
-      auto future = client->async_send_request(cmdrq);
-      // NOTE(vooon): same hack as for VER
-      const auto future_status = future.wait_for(1s);
-      if (future_status == std::future_status::ready) {
+      auto future = command_client->async_send_request(cmdrq);
+      // // NOTE(vooon): same hack as for VER
+      // const auto future_status = future.wait_for(1s);
+      // if (future_status == std::future_status::ready) {
         auto response = future.get();
+        RCLCPP_ERROR_STREAM(lg, "[set_msg_interval_cb] Future got. Current thread: " << std::this_thread::get_id());
         res->success = response->success;
-      } else {
-        RCLCPP_ERROR(lg, "SYS: set_message_interval service timeout");
-      }
+      // } else {
+      //   RCLCPP_ERROR(lg, "SYS: set_message_interval service timeout");
+      // }
     } catch (std::exception & ex) {
       RCLCPP_ERROR_STREAM(lg, "SYS: " << ex.what());
     }
