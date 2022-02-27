@@ -530,6 +530,10 @@ public:
         &SystemStatusPlugin::vehicle_info_get_cb, this, _1,
         _2), rmw_qos_profile_services_default, srv_cg);
 
+    command_client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
+    //command_client.service_is_ready();
+    //command_client.wait_for_service();
+
     uas->diagnostic_updater.add(hb_diag);
 
     autopilot_version_timer =
