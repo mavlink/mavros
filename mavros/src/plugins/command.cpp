@@ -171,9 +171,18 @@ private:
   {
     lock_guard lock(mutex);
 
+    RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack] ACK received. Current thread: " << std::this_thread::get_id());
+    RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack] ACK Waiting list: [");
+    for ( auto & tr : ack_waiting_list ) {
+      RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack]    " << tr.expected_command);
+    }
+    RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack]     ]");
+
     for (auto & tr : ack_waiting_list) {
       if (tr.expected_command == ack.command) {
+        RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack] Found match, will set. Thread: " << std::this_thread::get_id());
         tr.promise.set_value(ack.result);
+        RCLCPP_ERROR_STREAM(get_logger(), "[handle_command_ack] Promise value set. Thread: " << std::this_thread::get_id());
         return;
       }
     }
@@ -190,6 +199,7 @@ private:
   {
     auto future = tr.promise.get_future();
 
+    RCLCPP_ERROR_STREAM(get_logger(), "[wait_ack_for] Will wait for ACK on " << tr.expected_command << ". Current thread: " << std::this_thread::get_id());
     auto wres = future.wait_for(command_ack_timeout_dt.to_chrono<std::chrono::nanoseconds>());
     if (wres != std::future_status::ready) {
       RCLCPP_WARN(get_logger(), "CMD: Command %u -- ack timeout", tr.expected_command);
@@ -250,13 +260,18 @@ private:
 
     if (is_ack_required) {
       lock.unlock();
+      RCLCPP_ERROR_STREAM(get_logger(), "[send_command_long_and_wait] Will wait for ACK. Current thread: " << std::this_thread::get_id());
       bool is_not_timeout = wait_ack_for(*ack_it, result);
+      RCLCPP_ERROR_STREAM(get_logger(), "[send_command_long_and_wait] Wait for ACK done. Current thread: " << std::this_thread::get_id());
       lock.lock();
 
       success = is_not_timeout && result == enum_value(MAV_RESULT::ACCEPTED);
 
       ack_waiting_list.erase(ack_it);
     } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "[send_command_long_and_wait] No ACK required. Current thread: " << std::this_thread::get_id());
+      lock.unlock();
+      sleep(5);
       success = true;
       result = enum_value(MAV_RESULT::ACCEPTED);
     }
@@ -327,6 +342,7 @@ private:
     cmd.param6 = param6;
     cmd.param7 = param7;
 
+    RCLCPP_ERROR_STREAM(get_logger(), "[command_long] Calling send_message. Current thread: " << std::this_thread::get_id());
     uas->send_message(cmd);
   }
 
@@ -364,6 +380,7 @@ private:
     const mavros_msgs::srv::CommandLong::Request::SharedPtr req,
     mavros_msgs::srv::CommandLong::Response::SharedPtr res)
   {
+    RCLCPP_ERROR_STREAM(get_logger(), "[command_long_cb] Entered. Current thread: " << std::this_thread::get_id());
     // TODO(vooon): rewrite to use async service server
     send_command_long_and_wait(
       req->broadcast,
@@ -373,6 +390,7 @@ private:
       req->param5, req->param6,
       req->param7,
       res->success, res->result);
+    RCLCPP_ERROR_STREAM(get_logger(), "[command_long_cb] Done! Current thread: " << std::this_thread::get_id());
   }
 
   void command_int_cb(
