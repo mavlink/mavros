@@ -47,7 +47,7 @@ public:
 
 	Subscriptions get_subscriptions() override {
 		return {
-			       make_handler(&RCIOPlugin::handle_rc_channels_raw),
+			       // make_handler(&RCIOPlugin::handle_rc_channels_raw),
 			       make_handler(&RCIOPlugin::handle_rc_channels),
 			       make_handler(&RCIOPlugin::handle_servo_output_raw),
 		};
@@ -68,9 +68,12 @@ private:
 
 	/* -*- rx handlers -*- */
 
+/*
 	void handle_rc_channels_raw(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RC_CHANNELS_RAW &port)
 	{
-		/* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW */
+		*/
+/* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW *//*
+
 		if (has_rc_channels_msg)
 			return;
 
@@ -103,6 +106,7 @@ private:
 
 		rc_in_pub.publish(rcin_msg);
 	}
+*/
 
 	void handle_rc_channels(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RC_CHANNELS &channels)
 	{
