@@ -2,6 +2,20 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1717 <https://github.com/mavlink/mavros/issues/1717>`_ from rob-clarke/fix--sys-status-callbacks
+  Maybe fix sys status callbacks
+* uncrustify
+* Cleanup for pr
+* Initialise common client
+* Add debug
+* Use common client
+  Add debug
+* plugins: Fix misprint
+  Fix `#1709 <https://github.com/mavlink/mavros/issues/1709>`_
+* Contributors: Rob Clarke, Vladimir Ermakov
+
 2.1.0 (2022-02-02)
 ------------------
 * plugin: sys_status: Add temporary hack from @Michel1968

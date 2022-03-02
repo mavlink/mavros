@@ -2,6 +2,12 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugins: Fix misprint
+  Fix `#1709 <https://github.com/mavlink/mavros/issues/1709>`_
+* Contributors: Vladimir Ermakov
+
 2.1.0 (2022-02-02)
 ------------------
 * plugins: fix topic names to use  prefix for namespaced ones
