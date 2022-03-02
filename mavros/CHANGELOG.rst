@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.1 (2022-03-02)
+------------------
 * Merge pull request `#1717 <https://github.com/mavlink/mavros/issues/1717>`_ from rob-clarke/fix--sys-status-callbacks
   Maybe fix sys status callbacks
 * uncrustify

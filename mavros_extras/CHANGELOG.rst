@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.1 (2022-03-02)
+------------------
 * plugins: Fix misprint
   Fix `#1709 <https://github.com/mavlink/mavros/issues/1709>`_
 * Contributors: Vladimir Ermakov
