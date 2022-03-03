@@ -82,6 +82,7 @@ private:
   asio::io_service io_service;
   std::unique_ptr<asio::io_service::work> io_work;
   std::thread io_thread;
+  std::atomic<bool> is_running;  //!< io_thread running
   bool permanent_broadcast;
 
   std::atomic<bool> remote_exists;
@@ -98,6 +99,11 @@ private:
 
   void do_recvfrom();
   void do_sendto(bool check_tx_state);
+
+  /**
+   * Stop io_service.
+   */
+  void stop();
 };
 
 }  // namespace mavconn
