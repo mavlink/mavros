@@ -77,6 +77,7 @@ MAVConnUDP::MAVConnUDP(
 : MAVConnInterface(system_id, component_id),
   io_service(),
   io_work(new io_service::work(io_service)),
+  is_running(false),
   permanent_broadcast(false),
   remote_exists(false),
   socket(io_service),
@@ -131,6 +132,11 @@ MAVConnUDP::MAVConnUDP(
 MAVConnUDP::~MAVConnUDP()
 {
   close();
+
+  // If the socket already closed and the io_service running
+  if (is_running) {
+    stop();
+  }
 }
 
 void MAVConnUDP::connect(
@@ -146,21 +152,19 @@ void MAVConnUDP::connect(
   // run io_service for async io
   io_thread = std::thread(
     [this]() {
+      is_running = true;
       utils::set_this_thread_name("mudp%zu", conn_id);
-      io_service.run();
+      try {
+        io_service.run();
+      } catch (std::exception & ex) {
+        CONSOLE_BRIDGE_logError(PFXd "io_service execption: %s", conn_id, ex.what());
+      }
+      is_running = false;
     });
 }
 
-void MAVConnUDP::close()
+void MAVConnUDP::stop()
 {
-  lock_guard lock(mutex);
-  if (!is_open()) {
-    return;
-  }
-
-  socket.cancel();
-  socket.close();
-
   io_work.reset();
   io_service.stop();
 
@@ -169,6 +173,24 @@ void MAVConnUDP::close()
   }
 
   io_service.reset();
+}
+
+void MAVConnUDP::close()
+{
+  {
+    lock_guard lock(mutex);
+    if (!is_open()) {
+      return;
+    }
+
+    socket.cancel();
+    socket.close();
+  }
+
+  // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
+  if (std::this_thread::get_id() != io_thread.get_id()) {
+    stop();
+  }
 
   if (port_closed_cb) {
     port_closed_cb();
