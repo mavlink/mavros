@@ -26,6 +26,7 @@
 #include <mavros_msgs/VehicleInfo.h>
 #include <mavros_msgs/VehicleInfoGet.h>
 #include <mavros_msgs/MessageInterval.h>
+#include <mavros_msgs/OnboardSensors.h>
 
 
 #ifdef HAVE_SENSOR_MSGS_BATTERYSTATE_MSG
@@ -490,6 +491,7 @@ public:
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
+		onboard_sensors_pub = nh.advertise<mavros_msgs::OnboardSensors>("onboard_sensors", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
 		batt2_pub = nh.advertise<BatteryMsg>("battery2", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
@@ -534,6 +536,7 @@ private:
 
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
+	ros::Publisher onboard_sensors_pub;
 	ros::Publisher batt_pub;
 	ros::Publisher batt2_pub;
 	ros::Publisher estimator_status_pub;
@@ -767,6 +770,13 @@ private:
 		m_uas->update_onboard_control_sensors_health(stat.onboard_control_sensors_health);
 
 		sys_diag.set(stat);
+
+		auto onboard_sensors_msg = boost::make_shared<mavros_msgs::OnboardSensors>();
+		onboard_sensors_msg->header.stamp = ros::Time::now();
+		onboard_sensors_msg->present = stat.onboard_control_sensors_present;
+		onboard_sensors_msg->enabled = stat.onboard_control_sensors_enabled;
+		onboard_sensors_msg->health = stat.onboard_control_sensors_health;
+		onboard_sensors_pub.publish(onboard_sensors_msg);
 
 		float volt = stat.voltage_battery / 1000.0f;	// mV
 		float curr = stat.current_battery / 100.0f;	// 10 mA or -1

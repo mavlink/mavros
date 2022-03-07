@@ -46,6 +46,7 @@ add_message_files(
   Mavlink.msg
   MountControl.msg
   NavControllerOutput.msg
+  OnboardSensors.msg
   OpticalFlowRad.msg
   OverrideRCIn.msg
   Parachute.msg
