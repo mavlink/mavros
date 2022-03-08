@@ -227,19 +227,12 @@ private:
 			ROS_INFO_STREAM("FGPS: Caught exception: " << e.what() << std::endl);
 		}
 
-		Eigen::Matrix<double, 3, 3> dcm_ned_ecef;
 		double lat = geodetic.x();
 		double lon = geodetic.y();
-		dcm_ned_ecef(0, 0) = -sin(lat)*cos(lon);
-		dcm_ned_ecef(0, 1) = -sin(lat)*sin(lon);
-		dcm_ned_ecef(0, 2) = cos(lat);
-		dcm_ned_ecef(1, 0) = -sin(lon);
-		dcm_ned_ecef(1, 1) = cos(lon);
-		dcm_ned_ecef(1, 2) = 0;
-		dcm_ned_ecef(2, 0) = -cos(lat)*cos(lon);
-		dcm_ned_ecef(2, 1) = -cos(lat)*sin(lon);
-		dcm_ned_ecef(2, 2) = -sin(lat);
-
+		Eigen::Matrix<double, 3, 3> dcm_ned_ecef;
+		dcm_ned_ecef << -sin(lat)*cos(lon), -sin(lat)*sin(lon), cos(lat),
+						-sin(lon),          cos(lon),           0,
+						-cos(lat)*cos(lon), -cos(lat)*sin(lon), -sin(lat);
 		Eigen::Vector3d vel_ecef = (old_ecef - current_ecef) / (stamp.toSec() - old_stamp);	// [m/s]
 		Eigen::Vector3d vel_ned = dcm_ned_ecef*vel_ecef;
 
