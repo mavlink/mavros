@@ -227,7 +227,21 @@ private:
 			ROS_INFO_STREAM("FGPS: Caught exception: " << e.what() << std::endl);
 		}
 
-		Eigen::Vector3d vel = (old_ecef - current_ecef) / (stamp.toSec() - old_stamp);	// [m/s]
+		Eigen::Matrix<double, 3, 3> dcm_ned_ecef;
+		double lat = geodetic.x();
+		double lon = geodetic.y();
+		dcm_ned_ecef(0, 0) = -sin(lat)*cos(lon);
+		dcm_ned_ecef(0, 1) = -sin(lat)*sin(lon);
+		dcm_ned_ecef(0, 2) = cos(lat);
+		dcm_ned_ecef(1, 0) = -sin(lon);
+		dcm_ned_ecef(1, 1) = cos(lon);
+		dcm_ned_ecef(1, 2) = 0;
+		dcm_ned_ecef(2, 0) = -cos(lat)*cos(lon);
+		dcm_ned_ecef(2, 1) = -cos(lat)*sin(lon);
+		dcm_ned_ecef(2, 2) = -sin(lat);
+
+		Eigen::Vector3d vel_ecef = (old_ecef - current_ecef) / (stamp.toSec() - old_stamp);	// [m/s]
+		Eigen::Vector3d vel_ned = dcm_ned_ecef*vel_ecef;
 
 		// store old values
 		old_stamp = stamp.toSec();
@@ -242,18 +256,18 @@ private:
 			 */
 			mavlink::common::msg::HIL_GPS hil_gps {};
 
-			vel *= 1e2;	// [cm/s]
+			vel_ned *= 1e2;	// [cm/s]
 
 			// compute course over ground
 			double cog;
-			if (vel.x() == 0 && vel.y() == 0) {
+			if (vel_ned.x() == 0 && vel_ned.y() == 0) {
 				cog = 0;
 			}
-			else if (vel.x() >= 0 && vel.y() < 0) {
-				cog = M_PI * 5 / 2 - atan2(vel.x(), vel.y());
+			else if (vel_ned.x() >= 0 && vel_ned.y() < 0) {
+				cog = M_PI * 5 / 2 - atan2(vel_ned.x(), vel_ned.y());
 			}
 			else {
-				cog = M_PI / 2 - atan2(vel.x(), vel.y());
+				cog = M_PI / 2 - atan2(vel_ned.x(), vel_ned.y());
 			}
 
 			// Fill in and send message
@@ -262,10 +276,10 @@ private:
 			hil_gps.lon = geodetic.y() * 1e7;	// [degrees * 1e7]
 			hil_gps.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *
 				(*m_uas->egm96_5)(geodetic.x(), geodetic.y())) * 1e3;	// [meters * 1e3]
-			hil_gps.vel = vel.block<2, 1>(0, 0).norm();	// [cm/s]
-			hil_gps.vn = vel.x();			// [cm/s]
-			hil_gps.ve = vel.y();			// [cm/s]
-			hil_gps.vd = vel.z();			// [cm/s]
+			hil_gps.vel = vel_ned.block<2, 1>(0, 0).norm();	// [cm/s]
+			hil_gps.vn = vel_ned.x();			// [cm/s]
+			hil_gps.ve = vel_ned.y();			// [cm/s]
+			hil_gps.vd = vel_ned.z();			// [cm/s]
 			hil_gps.cog = cog * 1e2;		// [degrees * 1e2]
 			hil_gps.eph = eph * 1e2;		// [cm]
 			hil_gps.epv = epv * 1e2;		// [cm]
@@ -291,9 +305,9 @@ private:
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_HDOP);
 			if (epv == 0.0f)
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VDOP);
-			if (fabs(vel.x()) <= 0.01f && fabs(vel.y()) <= 0.01f)
+			if (fabs(vel_ned.x()) <= 0.01f && fabs(vel_ned.y()) <= 0.01f)
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_HORIZ);
-			if (fabs(vel.z()) <= 0.01f)
+			if (fabs(vel_ned.z()) <= 0.01f)
 				gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_VERT);
 			int64_t tdiff = (gps_input.time_usec / 1000) - UNIX_OFFSET_MSEC;
 			gps_input.time_week = tdiff / MSEC_PER_WEEK;
@@ -305,9 +319,9 @@ private:
 			gps_input.lon = geodetic.y() * 1e7;	// [degrees * 1e7]
 			gps_input.alt = (geodetic.z() + GeographicLib::Geoid::ELLIPSOIDTOGEOID *
 				(*m_uas->egm96_5)(geodetic.x(), geodetic.y()));	// [meters]
-			gps_input.vn = vel.x();			// [m/s]
-			gps_input.ve = vel.y();			// [m/s]
-			gps_input.vd = vel.z();			// [m/s]
+			gps_input.vn = vel_ned.x();			// [m/s]
+			gps_input.ve = vel_ned.y();			// [m/s]
+			gps_input.vd = vel_ned.z();			// [m/s]
 			gps_input.hdop = eph;			// [m]
 			gps_input.vdop = epv;			// [m]
 			gps_input.fix_type = utils::enum_value(fix_type);;
