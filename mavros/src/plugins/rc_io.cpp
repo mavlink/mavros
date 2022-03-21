@@ -71,8 +71,7 @@ private:
 /*
 	void handle_rc_channels_raw(const mavlink::mavlink_message_t *msg, mavlink::common::msg::RC_CHANNELS_RAW &port)
 	{
-		*/
-/* if we receive RC_CHANNELS, drop RC_CHANNELS_RAW *//*
+		// if we receive RC_CHANNELS, drop RC_CHANNELS_RAW
 
 		if (has_rc_channels_msg)
 			return;
