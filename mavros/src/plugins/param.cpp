@@ -23,6 +23,7 @@
 #include <mavros_msgs/ParamPull.h>
 #include <mavros_msgs/ParamPush.h>
 #include <mavros_msgs/Param.h>
+#include <std_msgs/Bool.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -380,6 +381,8 @@ public:
 		get_srv = param_nh.advertiseService("get", &ParamPlugin::get_cb, this);
 
 		param_value_pub = param_nh.advertise<mavros_msgs::Param>("param_value", 100);
+		list_received_pub = param_nh.advertise<std_msgs::Bool>("list_received", 1, true);
+		clear_parameters_list();
 
 		shedule_timer = param_nh.createTimer(BOOTUP_TIME_DT, &ParamPlugin::shedule_cb, this, true);
 		shedule_timer.stop();
@@ -408,6 +411,7 @@ private:
 	ros::ServiceServer get_srv;
 
 	ros::Publisher param_value_pub;
+	ros::Publisher list_received_pub;
 
 	ros::Timer shedule_timer;			//!< for startup shedule fetch
 	ros::Timer timeout_timer;			//!< for timeout resend
@@ -539,6 +543,9 @@ private:
 				ROS_WARN_COND_NAMED(missed > 0, "param",
 						"PR: parameters list received, but %zd parametars are missed",
 						missed);
+				auto list_received_msg = boost::make_shared<std_msgs::Bool>();
+				list_received_msg->data = true;
+				list_received_pub.publish(list_received_msg);
 				go_idle();
 				list_receiving.notify_all();
 			} else if (param_state == PR::RXPARAM_TIMEDOUT) {
@@ -608,6 +615,14 @@ private:
 		}
 	}
 
+	void  clear_parameters_list()
+	{
+		parameters.clear();
+		auto list_received_msg = boost::make_shared<std_msgs::Bool>();
+		list_received_msg->data = false;
+		list_received_pub.publish(list_received_msg);
+	}
+
 	void shedule_pull(const ros::Duration &dt)
 	{
 		shedule_timer.stop();
@@ -627,7 +642,7 @@ private:
 		ROS_DEBUG_NAMED("param", "PR: start sheduled pull");
 		param_state = PR::RXLIST;
 		param_rx_retries = RETRIES_COUNT;
-		parameters.clear();
+		clear_parameters_list();
 
 		restart_timeout_timer();
 		param_request_list();
@@ -791,7 +806,7 @@ private:
 
 			param_state = PR::RXLIST;
 			param_rx_retries = RETRIES_COUNT;
-			parameters.clear();
+			clear_parameters_list();
 
 			shedule_timer.stop();
 			restart_timeout_timer();
