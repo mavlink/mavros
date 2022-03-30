@@ -14,6 +14,7 @@ add_message_files(
   AttitudeTarget.msg
   BatteryStatus.msg
   CamIMUStamp.msg
+  CellularStatus.msg
   CameraImageCaptured.msg
   CommandCode.msg
   CompanionProcessStatus.msg

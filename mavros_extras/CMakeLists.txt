@@ -68,6 +68,7 @@ add_library(mavros_extras
   src/plugins/adsb.cpp
   src/plugins/cam_imu_sync.cpp
   src/plugins/camera.cpp
+  src/plugins/cellular_status.cpp
   src/plugins/companion_process_status.cpp
   src/plugins/onboard_computer_status.cpp
   src/plugins/debug_value.cpp
