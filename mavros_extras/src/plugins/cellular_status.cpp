@@ -27,8 +27,8 @@ namespace extra_plugins {
  */
 class CellularStatusPlugin : public plugin::PluginBase {
 public:
-  CellularStatusPlugin() : PluginBase(),
-    cc_nh("~cellular_status")
+	CellularStatusPlugin() : PluginBase(),
+		cc_nh("~cellular_status")
 	{ }
 
 	/**
@@ -53,8 +53,8 @@ public:
 	}
 
 private:
-  	ros::NodeHandle cc_nh;
-  	ros::Subscriber subCellularStatus;
+	ros::NodeHandle cc_nh;
+	ros::Subscriber subCellularStatus;
 
 	/**
 	 * @brief Send Cellular Status messages to mavlink system
@@ -73,7 +73,7 @@ private:
 		cs.mcc = msg.mcc;
 		cs.mnc = msg.mnc;
 		cs.lac = msg.lac;
-		
+
 		UAS_FCU(m_uas)->send_message_ignore_drop(cs);
 	}
 };
