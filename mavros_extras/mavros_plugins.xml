@@ -9,6 +9,9 @@
   <class name="camera" type="mavros::extra_plugins::CameraPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Plugin for the mavlink camera protocol.</description>
   </class>
+  <class name="cellular_status" type="mavros::extra_plugins::CellularStatusPlugin" base_class_type="mavros::plugin::PluginBase">
+    <description>Send Cellular status via ROS.</description>
+  </class>
   <class name="companion_process_status" type="mavros::extra_plugins::CompanionProcessStatusPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Send companion process status report to the FCU.</description>
   </class>
