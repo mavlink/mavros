@@ -375,12 +375,12 @@ class MemInfo : public diagnostic_updater::DiagnosticTask
 public:
 	MemInfo(const std::string &name) :
 		diagnostic_updater::DiagnosticTask(name),
-		freemem(-1),
+		freemem(UINT32_MAX),
 		brkval(0),
 		last_rcd(0)
 	{ }
 
-	void set(uint16_t f, uint16_t b) {
+	void set(uint32_t f, uint16_t b) {
 		freemem = f;
 		brkval = b;
 		last_rcd = ros::Time::now().toNSec();
@@ -389,7 +389,7 @@ public:
 	void run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 	{
 		// access atomic variables just once
-		ssize_t freemem_ = freemem;
+		size_t freemem_ = freemem;
 		uint16_t brkval_ = brkval;
 		ros::Time last_rcd_;
 		last_rcd_.fromNSec(last_rcd.load());
@@ -401,7 +401,7 @@ public:
 		} else if (ros::Time::now().toSec() - last_rcd_.toSec() > timeout) {
 			stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(timeout) + "s");
 		} else {
-			if (freemem < 0)
+			if (freemem == UINT32_MAX)
 				stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
 			else if (freemem < 200)
 				stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low mem");
@@ -413,7 +413,7 @@ public:
 	}
 
 private:
-	std::atomic<ssize_t> freemem;
+	std::atomic<size_t> freemem;
 	std::atomic<uint16_t> brkval;
 	std::atomic<uint64_t> last_rcd;
 };
@@ -876,7 +876,7 @@ private:
 
 	void handle_meminfo(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::MEMINFO &mem)
 	{
-		mem_diag.set(mem.freemem, mem.brkval);
+		mem_diag.set(std::max(static_cast<uint32_t>(mem.freemem), mem.freemem32), mem.brkval);
 	}
 
 	void handle_hwstatus(const mavlink::mavlink_message_t *msg, mavlink::ardupilotmega::msg::HWSTATUS &hwst)
