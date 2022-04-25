@@ -133,12 +133,6 @@ private:
     auto cov_ned = ftf::transform_frame_enu_ned(cov);
     ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
 
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "Listen to vision transform " << tf_frame_id <<
-        " -> " << tf_child_frame_id);
-
-
     mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
 
     vp.usec = stamp.nanoseconds() / 1000;
