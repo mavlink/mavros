@@ -107,7 +107,7 @@ private:
 
   double tf_rate;
 
-  rclcpp::Time last_transform_stamp;
+  rclcpp::Time last_transform_stamp{0, 0, RCL_ROS_TIME};
 
   /* -*- low-level send -*- */
   /**
