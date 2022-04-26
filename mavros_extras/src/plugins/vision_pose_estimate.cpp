@@ -107,7 +107,7 @@ private:
 
   double tf_rate;
 
-  rclcpp::Time last_transform_stamp;
+  rclcpp::Time last_transform_stamp{0, 0, RCL_ROS_TIME};
 
   /* -*- low-level send -*- */
   /**
@@ -132,12 +132,6 @@ private:
 
     auto cov_ned = ftf::transform_frame_enu_ned(cov);
     ftf::EigenMapConstCovariance6d cov_map(cov_ned.data());
-
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "Listen to vision transform " << tf_frame_id <<
-        " -> " << tf_child_frame_id);
-
 
     mavlink::common::msg::VISION_POSITION_ESTIMATE vp{};
 
