@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+subscribe_raw_satellites# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
 # Copyright 2021 Vladimir Ermakov.
@@ -33,7 +33,7 @@ class GlobalPositionPlugin(PluginModule):
             TwistStamped, ("global_position", "raw", "gps_vel"), callback, qos_profile
         )
 
-    def subscribe_raw_salellites(
+    def subscribe_raw_satellites(
         self, callback: SubscriptionCallable, qos_profile=SENSOR_QOS
     ) -> rclpy.node.Subscription:
         return self.create_subscription(
