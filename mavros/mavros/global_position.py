@@ -1,4 +1,4 @@
-subscribe_raw_satellites# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 #
 # Copyright 2021 Vladimir Ermakov.
