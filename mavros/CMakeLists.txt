@@ -200,7 +200,7 @@ install(DIRECTORY include/
   DESTINATION include
 )
 
-install(DIRECTORY launch
+install(DIRECTORY launch param
   DESTINATION share/${PROJECT_NAME}
 )
 
