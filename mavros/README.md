@@ -122,8 +122,7 @@ Launch files are provided for use with common FCUs, in particular [Pixhawk](pixh
 
 Examples:
 
-    roslaunch mavros px4.launch
-    roslaunch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
+    ros2 launch mavros node.launch.py
 
 
 Installation
