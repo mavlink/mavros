@@ -115,10 +115,6 @@ Launch Files
 
 **XXX TODO**! #1564
 
-Launch files are provided for use with common FCUs, in particular [Pixhawk](pixhawk):
-
-  * [px4.launch](launch/px4.launch) -- for use with the PX4 Autopilot (for VTOL, multicopters and planes)
-  * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
 
 Examples:
 
