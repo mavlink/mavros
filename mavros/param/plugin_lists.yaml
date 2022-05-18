@@ -51,7 +51,7 @@ mavros:
 # onboard_computer_status
 # param
 # play_tune
-# px
+# px4flow
 # rallypoint
 # rangefinder
 # rc_io
