@@ -1,0 +1,78 @@
+mavros:
+  ros__parameters:
+    plugin_denylist:
+      # common
+      - "actuator_control"
+      - "ftp"
+      - "hil"
+      # extras
+      - "altitude"
+      - "debug_value"
+      - "vibration"
+      - "vision_pose"
+      - "wheel_odometry"
+    # plugin_allowlist: 
+    #   - "sys_*"
+
+
+### plugin list ###
+# actuator_control
+# adsb
+# altitude
+# cam_imu_sync
+# camera
+# command
+# companion_process_status
+# debug_value
+# distance_sensor
+# esc_status
+# esc_telemetry
+# fake_gps
+# ftp
+# geofence
+# global_position
+# gps_input
+# gps_rtk
+# gps_status
+# hil
+# home_position
+# imu
+# landing_target
+# gps_rtk
+# local_position
+# log_transfer
+# mag_calibration_status
+# manual_control
+# mocap_pose_estimate
+# mount_control
+# nav_controller_output
+# obstacle_distance
+# odometry
+# onboard_computer_status
+# param
+# play_tune
+# px
+# rallypoint
+# rangefinder
+# rc_io
+# setpoint_accel
+# setpoint_attitude
+# setpoint_position
+# setpoint_raw
+# setpoint_trajectory
+# setpoint_velocity
+# sys_status
+# sys_time
+# terrain
+# tdr_radio
+# trajectory
+# tunnel
+# vfr_hud
+# vibration
+# vision_pose
+# vision_speed
+# waypoint
+# wheel_odomotry
+# wind_estimation
+
+
