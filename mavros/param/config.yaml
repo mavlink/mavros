@@ -93,7 +93,7 @@ mavros_node:
 # param None
 # play_tune None
 
-# px:
+# px4flow:
 #   ros__parameters:
 #     frame_id: px4flow
 #     ranger_fov: 0.119428926
