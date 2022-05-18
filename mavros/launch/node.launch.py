@@ -18,13 +18,19 @@ def generate_launch_description():
 		default=os.path.join(
 			get_package_share_directory('mavros'),
 			'param',
-			"ros2_mavros_params.yaml"
+			"config.yaml"
+			))
+	plugin_config_dir = LaunchConfiguration('config_dir',
+		default=os.path.join(
+			get_package_share_directory('mavros'),
+			'param',
+			"plugin_lists.yaml"
 			))
 
 	return LaunchDescription([
         Node(
             package='mavros',
             executable='mavros_node',
-			parameters=[config_dir],
+			parameters=[config_dir,plugin_config_dir],
 			),
     ])

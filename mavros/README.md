@@ -120,6 +120,14 @@ Examples:
 
     ros2 launch mavros node.launch.py
 
+plugin_allowlist and plugin_denylist:
+    
+    1. if ~plugin_denylist and ~plugin_allowlist is empty: load all
+    2. if ~plugin_denylist is empty and ~plugin_allowlist non empty: assume ~plugin_denylist as ["*"] (all)
+    3. if ~plugin_denylist non empty: usual denylist behavior
+    4. if ~plugin_allowlist non empty: override denylist
+    5. if ~plugin_allowlist non empty and ~plugin_denylist non empty but different: only denylist behavior
+    
 
 Installation
 ------------
