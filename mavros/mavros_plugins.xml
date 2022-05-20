@@ -4,7 +4,7 @@ import mavros_cog
 
 mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 ]]] -->
-<library path="mavros_plugins">
+<library path="mavros/mavros_plugins">
   <!--<class name="dummy" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::DummyPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
   <description>@brief Dummy plugin.
 @plugin dummy
@@ -12,130 +12,130 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 
 Example and &quot;how to&quot; for users.</description>
 </class>-->
-  <class name="actuator_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ActuatorControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/actuator_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ActuatorControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ActuatorControl plugin
-@plugin actuator_control
+@plugin mavros/actuator_control
 
 Sends actuator controls to FCU controller.</description>
   </class>
-  <class name="altitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::AltitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/altitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::AltitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Altitude plugin.
-@plugin altitude</description>
+@plugin mavros/altitude</description>
   </class>
-  <class name="command" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::CommandPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/command" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::CommandPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Command plugin.
-@plugin command
+@plugin mavros/command
 
 Send any command via COMMAND_LONG</description>
   </class>
-  <class name="ftp" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::FTPPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/ftp" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::FTPPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief FTP plugin.
-@plugin ftp</description>
+@plugin mavros/ftp</description>
   </class>
-  <class name="geofence" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GeofencePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/geofence" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GeofencePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Geofence manipulation plugin
-@plugin geofence</description>
+@plugin mavros/geofence</description>
   </class>
-  <class name="global_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GlobalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/global_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::GlobalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Global position plugin.
-@plugin global_position
+@plugin mavros/global_position
 
 Publishes global position. Conversion from GPS LLA to ECEF allows
 publishing local position to TF and PoseWithCovarianceStamped.</description>
   </class>
-  <class name="home_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::HomePositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/home_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::HomePositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief home position plugin.
-@plugin home_position
+@plugin mavros/home_position
 
 Publishes home position.</description>
   </class>
-  <class name="imu" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::IMUPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/imu" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::IMUPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief IMU and attitude data publication plugin
-@plugin imu</description>
+@plugin mavros/imu</description>
   </class>
-  <class name="local_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::LocalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/local_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::LocalPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Local position plugin.
-@plugin local_position
+@plugin mavros/local_position
 
 Publish local position to TF, PositionStamped, TwistStamped
 and Odometry</description>
   </class>
-  <class name="manual_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ManualControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/manual_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ManualControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Manual Control plugin
-@plugin manual_control</description>
+@plugin mavros/manual_control</description>
   </class>
-  <class name="nav_controller_output" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::NavControllerOutputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/nav_controller_output" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::NavControllerOutputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief nav controller output plugin.
-@plugin nav_controller_output
+@plugin mavros/nav_controller_output
 
 Publishes nav_controller_output message https://mavlink.io/en/messages/common.html#NAV_CONTROLLER_OUTPUT</description>
   </class>
-  <class name="param" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ParamPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/param" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ParamPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Parameter manipulation plugin
-@plugin param</description>
+@plugin mavros/param</description>
   </class>
-  <class name="rallypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RallypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/rallypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RallypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Rallypoint manipulation plugin
-@plugin rallypoint</description>
+@plugin mavros/rallypoint</description>
   </class>
-  <class name="rc_io" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RCIOPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/rc_io" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::RCIOPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief RC IO plugin
-@plugin rc_io</description>
+@plugin mavros/rc_io</description>
   </class>
-  <class name="setpoint_accel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointAccelerationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_accel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointAccelerationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint acceleration/force plugin
-@plugin setpoint_accel
+@plugin mavros/setpoint_accel
 
 Send setpoint accelerations/forces to FCU controller.</description>
   </class>
-  <class name="setpoint_attitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointAttitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_attitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointAttitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint attitude plugin
-@plugin setpoint_attitude
+@plugin mavros/setpoint_attitude
 
 Send setpoint attitude/orientation/thrust to FCU controller.</description>
   </class>
-  <class name="setpoint_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint position plugin
-@plugin setpoint_position
+@plugin mavros/setpoint_position
 
 Send setpoint positions to FCU controller.</description>
   </class>
-  <class name="setpoint_raw" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointRawPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_raw" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointRawPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint RAW plugin
-@plugin setpoint_raw
+@plugin mavros/setpoint_raw
 
 Send position setpoints and publish current state (return loop).
 User can decide what set of filed needed for operation via IGNORE bits.</description>
   </class>
-  <class name="setpoint_trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointTrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointTrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint TRAJECTORY plugin
-@plugin setpoint_trajectory
+@plugin mavros/setpoint_trajectory
 
 Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory.</description>
   </class>
-  <class name="setpoint_velocity" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointVelocityPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/setpoint_velocity" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointVelocityPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint velocity plugin
-@plugin setpoint_velocity
+@plugin mavros/setpoint_velocity
 
 Send setpoint velocities to FCU controller.</description>
   </class>
-  <class name="sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/sys_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System status plugin.
-@plugin sys_status
+@plugin mavros/sys_status
 
 Required by all plugins.</description>
   </class>
-  <class name="sys_time" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemTimePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/sys_time" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SystemTimePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief System time plugin
-@plugin sys_time</description>
+@plugin mavros/sys_time</description>
   </class>
-  <class name="waypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WaypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/waypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WaypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mission manupulation plugin
-@plugin waypoint</description>
+@plugin mavros/waypoint</description>
   </class>
-  <class name="wind_estimation" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WindEstimationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros/wind_estimation" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WindEstimationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Wind estimation plugin.
-@plugin wind_estimation</description>
+@plugin mavros/wind_estimation</description>
   </class>
 </library>
 <!-- [[[end]]] (checksum: e47485a8565112ddf4058c7a77bcc519) -->

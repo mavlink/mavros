@@ -5,128 +5,128 @@ import mavros_cog
 mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras_plugins')
 ]]] -->
 <library path="mavros_extras_plugins">
-  <class name="adsb" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ADSBPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/adsb" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ADSBPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ADS-B Vehicle plugin
-@plugin adsb
+@plugin mavros_extras/adsb
 
 Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.</description>
   </class>
-  <class name="cam_imu_sync" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CamIMUSyncPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/cam_imu_sync" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CamIMUSyncPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Camera IMU synchronisation plugin
-@plugin cam_imu_sync
+@plugin mavros_extras/cam_imu_sync
 
 This plugin publishes a timestamp for when a external camera system was
 triggered by the FCU. Sequence ID from the message and the image sequence from
 camera can be corellated to get the exact shutter trigger time.</description>
   </class>
-  <class name="camera" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CameraPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/camera" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CameraPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Camera plugin plugin
-@plugin camera
+@plugin mavros_extras/camera
 
 Plugin for interfacing on the mavlink camera protocol
 @see command_cb()</description>
   </class>
-  <class name="companion_process_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CompanionProcessStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/companion_process_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CompanionProcessStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Obstacle companion process status plugin
-@plugin companion_process_status
+@plugin mavros_extras/companion_process_status
 
 Publishes the status of components running on the companion computer
 @see status_cb()</description>
   </class>
-  <class name="debug_value" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DebugValuePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/debug_value" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DebugValuePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Plugin for Debug msgs from MAVLink API
-@plugin debug_value</description>
+@plugin mavros_extras/debug_value</description>
   </class>
-  <class name="distance_sensor" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DistanceSensorPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/distance_sensor" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::DistanceSensorPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Distance sensor plugin
-@plugin distance_sensor
+@plugin mavros_extras/distance_sensor
 
 This plugin allows publishing distance sensor data, which is connected to
 an offboard/companion computer through USB/Serial, to the FCU or vice-versa.</description>
   </class>
-  <class name="esc_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/esc_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ESC status plugin
-@plugin esc_status</description>
+@plugin mavros_extras/esc_status</description>
   </class>
-  <class name="esc_telemetry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCTelemetryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/esc_telemetry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ESCTelemetryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ESC telemetry plugin
-@plugin esc_telemetry
+@plugin mavros_extras/esc_telemetry
 
 APM specific plugin.</description>
   </class>
-  <class name="fake_gps" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::FakeGPSPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/fake_gps" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::FakeGPSPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Fake GPS plugin.
-@plugin fake_gps
+@plugin mavros_extras/fake_gps
 
 Sends fake GPS from local position estimation source data (motion capture,
 vision) to FCU - processed in HIL mode or out of it if parameter MAV_USEHILGPS
 is set on PX4 Pro Autopilot Firmware; Ardupilot Firmware already supports it
 without a flag set.</description>
   </class>
-  <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS_INPUT GPS plugin.
-@plugin gps_input
+@plugin mavros_extras/gps_input
 
 Sends &lt;a href=&quot;https://mavlink.io/en/messages/common.html#GPS_INPUT&quot;&gt;GPS_INPUT MAVLink messages&lt;/a&gt;</description>
   </class>
-  <class name="gps_rtk" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsRtkPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/gps_rtk" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsRtkPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS RTK plugin
-@plugin gps_rtk
+@plugin mavros_extras/gps_rtk
 
 1. Publish the RTCM messages from ROS to the FCU
 2. Publish RTK baseline data from the FCU to ROS</description>
   </class>
-  <class name="gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/gps_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mavlink GPS status plugin.
-@plugin gps_status
+@plugin mavros_extras/gps_status
 
 This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.</description>
   </class>
-  <class name="hil" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::HilPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/hil" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::HilPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Hil plugin
-@plugin hil</description>
+@plugin mavros_extras/hil</description>
   </class>
-  <class name="landing_target" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LandingTargetPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/landing_target" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LandingTargetPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Landing Target plugin
-@plugin landing_target
+@plugin mavros_extras/landing_target
 
 This plugin is intended to publish the location of a landing area captured from a downward facing camera
 to the FCU and/or receive landing target tracking data coming from the FCU.</description>
   </class>
-  <class name="log_transfer" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LogTransferPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/log_transfer" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LogTransferPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Log Transfer plugin
-@plugin log_transfer</description>
+@plugin mavros_extras/log_transfer</description>
   </class>
-  <class name="mag_calibration_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MagCalStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/mag_calibration_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MagCalStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief MagCalStatus plugin.
-@plugin mag_calibration_status
+@plugin mavros_extras/mag_calibration_status
 
 Example and &quot;how to&quot; for users.</description>
   </class>
-  <class name="mocap_pose_estimate" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MocapPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/mocap_pose_estimate" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MocapPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief MocapPoseEstimate plugin
-@plugin mocap_pose_estimate
+@plugin mavros_extras/mocap_pose_estimate
 
 Sends motion capture data to FCU.</description>
   </class>
-  <class name="mount_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MountControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/mount_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MountControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Mount Control plugin
-@plugin mount_control
+@plugin mavros_extras/mount_control
 
 Publishes Mission commands to control the camera or antenna mount.
 @see command_cb()</description>
   </class>
-  <class name="obstacle_distance" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ObstacleDistancePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/obstacle_distance" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ObstacleDistancePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Obstacle distance plugin
-@plugin obstacle_distance
+@plugin mavros_extras/obstacle_distance
 
 Publishes obstacle distance array to the FCU, in order to assist in an obstacle
 avoidance flight.
 @see obstacle_cb()</description>
   </class>
-  <class name="odometry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OdometryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/odometry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OdometryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Odometry plugin
-@plugin odometry
+@plugin mavros_extras/odometry
 
 Sends odometry data to the FCU estimator and
 publishes odometry data that comes from FCU.
@@ -138,77 +138,78 @@ The twist is expressed in the child frame.
 @see odom_cb()	transforming and sending odometry to fcu
 @see handle_odom()	receiving and transforming odometry from fcu</description>
   </class>
-  <class name="onboard_computer_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OnboardComputerStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/onboard_computer_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OnboardComputerStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Onboard Computer Status plugin
-@plugin onboard_computer_status
+@plugin mavros_extras/onboard_computer_status
 
 Publishes the status of the onboard computer
 @see status_cb()</description>
   </class>
-  <class name="play_tune" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PlayTunePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/play_tune" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PlayTunePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Play Tune service
-@plugin play_tune</description>
+@plugin mavros_extras/play_tune</description>
   </class>
-  <class name="px4flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PX4FlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/px4flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PX4FlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief PX4 Optical Flow plugin
-@plugin px4flow
+@plugin mavros_extras/px4flow
 
 This plugin can publish data from PX4Flow camera to ROS</description>
   </class>
-  <class name="rangefinder" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RangefinderPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/rangefinder" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RangefinderPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Ardupilot Rangefinder plugin.
-@plugin rangefinder
+@plugin mavros_extras/rangefinder
 
 This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.</description>
   </class>
-  <class name="tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-    <description>@brief 3DR Radio plugin.
-@plugin tdr_radio</description>
-  </class>
-  <class name="terrain" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TerrainPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/terrain" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TerrainPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Terrain height plugin.
-@plugin terrain
+@plugin mavros_extras/terrain
+
+  <class name="mavros_extras/tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief 3DR Radio plugin.
+@plugin mavros_extras/tdr_radio</description>
+  </class>
 
 This plugin allows publishing of terrain height estimate from FCU to ROS.</description>
   </class>
-  <class name="trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Trajectory plugin to receive planned path from the FCU and
 send back to the FCU a corrected path (collision free, smoothed)
-@plugin trajectory
+@plugin mavros_extras/trajectory
 
 @see trajectory_cb()</description>
   </class>
-  <class name="tunnel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TunnelPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/tunnel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TunnelPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Tunnel plugin
-@plugin tunnel</description>
+@plugin mavros_extras/tunnel</description>
   </class>
-  <class name="vfr_hud" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VfrHudPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/vfr_hud" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VfrHudPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief VFR HUD plugin.
-@plugin vfr_hud</description>
+@plugin mavros_extras/vfr_hud</description>
   </class>
-  <class name="vibration" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VibrationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/vibration" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VibrationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Vibration plugin
-@plugin vibration
+@plugin mavros_extras/vibration
 
 This plugin is intended to publish MAV vibration levels and accelerometer clipping from FCU.</description>
   </class>
-  <class name="vision_pose" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VisionPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/vision_pose" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VisionPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Vision pose estimate plugin
-@plugin vision_pose
+@plugin mavros_extras/vision_pose
 
 Send pose estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
-  <class name="vision_speed" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VisionSpeedEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/vision_speed" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VisionSpeedEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Vision speed estimate plugin
-@plugin vision_speed
+@plugin mavros_extras/vision_speed
 
 Send velocity estimation from various vision estimators
 to FCU position and attitude estimators.</description>
   </class>
-  <class name="wheel_odomotry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::WheelOdometryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="mavros_extras/wheel_odomotry" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::WheelOdometryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Wheel odometry plugin.
-@plugin wheel_odomotry
+@plugin mavros_extras/wheel_odomotry
 
 This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
