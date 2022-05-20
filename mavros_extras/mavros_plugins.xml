@@ -149,7 +149,7 @@ Publishes the status of the onboard computer
     <description>@brief Play Tune service
 @plugin play_tune</description>
   </class>
-  <class name="px" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PX4FlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+  <class name="px4flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PX4FlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief PX4 Optical Flow plugin
 @plugin px4flow
 
@@ -214,4 +214,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 00fe5ce10a167498b6caab7d805225dd) -->
+<!-- [[[end]]] (checksum: a6c51e5666401d2a80d8bbb1f4bafc3e) -->

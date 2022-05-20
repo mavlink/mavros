@@ -25,7 +25,7 @@ from comment_parser import comment_parser
 CPP_MIME = 'text/x-c++'
 REGISTER_PLUGIN_RE = re.compile(
     r'MAVROS_PLUGIN_REGISTER\((?P<klass>[a-zA-Z0-9_\:]+)\)')
-PLUGIN_NAME_RE = re.compile(r'@plugin\ (?P<name>[a-z_]+)')
+PLUGIN_NAME_RE = re.compile(r'@plugin\ (?P<name>[a-z0-9_]+)')
 PLUGIN_BRIEF_RE = re.compile(r'^@brief\ (?P<brief>.+)$')
 
 plugins_without_macro = {
