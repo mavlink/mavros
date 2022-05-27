@@ -213,6 +213,9 @@ mocap:
 mount:
   debounce_s: 4.0
   err_threshold_deg: 10.0
+  negate_measured_roll: false
+  negate_measured_pitch: false
+  negate_measured_yaw: false
 
 # odom
 odometry:
