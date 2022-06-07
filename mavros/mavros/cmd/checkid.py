@@ -101,7 +101,15 @@ class Checker:
                 if msg is None:
                     return f"{msgid}"
                 else:
-                    return f"{msgid} ({msg.name})"
+                    msg_name = ""
+                    # In version 2.4.30 <TODO: replace with actual number>, the class variable name
+                    # was renamed to msgname. Since we don't know the pymavlink version we need to check
+                    # for both.
+                    if hasattr(msg, "msgname"):
+                        msg_name = msg.msgname
+                    else:
+                        msg_name = msg.name
+                    return f"{msgid} ({msg_name})"
 
             str_ids = self.fmt_ids(address)
             click.secho(
