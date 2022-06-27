@@ -38,6 +38,7 @@ namespace extra_plugins
 using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 using namespace std::placeholders;      // NOLINT
+using namespace std::chrono_literals;   // NOLINT
 
 //! Mavlink enumerations
 using mavlink::common::MAV_MOUNT_MODE;
@@ -127,7 +128,7 @@ public:
       if (fabs(yaw_err_deg) > _err_threshold_deg) {
         error_detected = true;
       }
-      if (now - _last_orientation_update > rclcpp::Duration(5, 0)) {
+      if (now - _last_orientation_update > rclcpp::Duration(5s)) {
         stale = true;
       }
       // accessing the _debounce_s variable should be done inside this mutex,
@@ -146,7 +147,9 @@ public:
     // debounce errors
     if (stale) {
       stat.summary(DiagnosticStatus::STALE, "No MOUNT_ORIENTATION received in the last 5 s");
-    } else if (_error_detected && (now - _error_started > ros::Duration(_debounce_s))) {
+    } else if (_error_detected &&
+      (now - _error_started > rclcpp::Duration(std::chrono::duration<double>(_debounce_s))))
+    {
       stat.summary(DiagnosticStatus::ERROR, "angle error too high");
     } else {
       stat.summary(DiagnosticStatus::OK, "Normal");
