@@ -46,6 +46,7 @@ using mavlink::minimal::MAV_AUTOPILOT;
 using mavlink::minimal::MAV_STATE;
 using utils::enum_value;
 using BatteryMsg = sensor_msgs::msg::BatteryState;
+using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
@@ -116,13 +117,13 @@ public:
     hist_indx_ = (hist_indx_ + 1) % window_size_;
 
     if (events == 0) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No events recorded.");
+      stat.summary(DiagnosticStatus::ERROR, "No events recorded.");
     } else if (freq < min_freq_ * (1 - tolerance_)) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Frequency too low.");
+      stat.summary(DiagnosticStatus::WARN, "Frequency too low.");
     } else if (freq > max_freq_ * (1 + tolerance_)) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Frequency too high.");
+      stat.summary(DiagnosticStatus::WARN, "Frequency too high.");
     } else {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+      stat.summary(DiagnosticStatus::OK, "Normal");
     }
 
     stat.addf("Heartbeats since startup", "%d", count_);
@@ -176,9 +177,9 @@ public:
     if ((last_st.onboard_control_sensors_health & last_st.onboard_control_sensors_enabled) !=
       last_st.onboard_control_sensors_enabled)
     {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Sensor health");
+      stat.summary(DiagnosticStatus::ERROR, "Sensor health");
     } else {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+      stat.summary(DiagnosticStatus::OK, "Normal");
     }
 
     stat.addf("Sensor present", "0x%08X", last_st.onboard_control_sensors_present);
@@ -326,11 +327,11 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
 
     if (voltage < 0.0f) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
+      stat.summary(DiagnosticStatus::ERROR, "No data");
     } else if (voltage < min_voltage) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low voltage");
+      stat.summary(DiagnosticStatus::WARN, "Low voltage");
     } else {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+      stat.summary(DiagnosticStatus::OK, "Normal");
     }
 
     stat.addf("Voltage", "%.2f", voltage);
@@ -371,7 +372,7 @@ public:
   {
     freemem = f;
     brkval = b;
-    last_rcd = ros::Time::now().toNSec();
+    last_rcd = clock.now().nanoseconds();
   }
 
   void run(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -379,24 +380,23 @@ public:
     // access atomic variables just once
     size_t freemem_ = freemem;
     uint16_t brkval_ = brkval;
-    ros::Time last_rcd_;
-    last_rcd_.fromNSec(last_rcd.load());
-    constexpr int timeout = 10.0;             // seconds
+    rclcpp::Time last_rcd_(last_rcd.load());
+    const rclcpp::Duration timeout(10s);              // seconds
 
     // summarize the results
-    if (last_rcd_.isZero()) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
-    } else if (ros::Time::now().toSec() - last_rcd_.toSec() > timeout) {
+    if (last_rcd_.nanoseconds() == 0) {
+      stat.summary(DiagnosticStatus::ERROR, "Not initialised");
+    } else if (clock.now() - last_rcd_ > timeout) {
       stat.summary(
-        diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(
-          timeout) + "s");
+        DiagnosticStatus::STALE,
+        "Not received for more than " + std::to_string(timeout.seconds()));
     } else {
       if (freemem == UINT32_MAX) {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
+        stat.summary(DiagnosticStatus::ERROR, "No data");
       } else if (freemem < 200) {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low mem");
+        stat.summary(DiagnosticStatus::WARN, "Low mem");
       } else {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+        stat.summary(DiagnosticStatus::OK, "Normal");
       }
     }
     stat.addf("Free memory (B)", "%zd", freemem_);
@@ -404,6 +404,7 @@ public:
   }
 
 private:
+  rclcpp::Clock clock;
   std::atomic<size_t> freemem;
   std::atomic<uint16_t> brkval;
   std::atomic<uint64_t> last_rcd;
@@ -429,29 +430,29 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     vcc = v * 0.001f;
     i2cerr = e;
-    last_rcd = ros::Time::now();
+    last_rcd = clock.now();
   }
 
   void run(diagnostic_updater::DiagnosticStatusWrapper & stat)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    constexpr int timeout = 10.0;             // seconds
-    if (last_rcd.isZero()) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
-    } else if (ros::Time::now().toSec() - last_rcd.toSec() > timeout) {
+    const rclcpp::Duration timeout(10s);               // seconds
+    if (last_rcd.nanoseconds() == 0) {
+      stat.summary(DiagnosticStatus::ERROR, "Not initialised");
+    } else if (clock.now() - last_rcd > timeout) {
       stat.summary(
-        diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(
-          timeout) + "s");
+        DiagnosticStatus::STALE, "Not received for more than " + std::to_string(
+          timeout.seconds()));
     } else {
       if (vcc < 0) {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "No data");
+        stat.summary(DiagnosticStatus::ERROR, "No data");
       } else if (vcc < 4.5) {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Low voltage");
+        stat.summary(DiagnosticStatus::WARN, "Low voltage");
       } else if (i2cerr != i2cerr_last) {
         i2cerr_last = i2cerr;
-        stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "New I2C error");
+        stat.summary(DiagnosticStatus::WARN, "New I2C error");
       } else {
-        stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+        stat.summary(DiagnosticStatus::OK, "Normal");
       }
     }
     stat.addf("Core voltage", "%f", vcc);
@@ -459,11 +460,12 @@ public:
   }
 
 private:
+  rclcpp::Clock clock;
   std::mutex mutex;
   float vcc;
   size_t i2cerr;
   size_t i2cerr_last;
-  ros::Time last_rcd;
+  rclcpp::Time last_rcd;
 };
 
 
@@ -482,15 +484,14 @@ public:
     mem_diag("APM Memory"),
     hwst_diag("APM Hardware"),
     sys_diag("System"),
-    batt_diag("Battery"),
     conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
     version_retries(RETRIES_COUNT),
     disable_diag(false),
-    has_battery_status0(false),
+    has_battery_status0(false)
   {
     batt_diag.reserve(MAX_NR_BATTERY_STATUS);
     batt_diag.emplace_back("Battery");
-    for (int i = 2; i <= MAX_NR_BATTERY_STATUS; ++i) {
+    for (size_t i = 2; i <= MAX_NR_BATTERY_STATUS; ++i) {
       batt_diag.emplace_back(utils::format("Battery %u", i));
     }
 
@@ -509,6 +510,9 @@ public:
     node_declare_and_watch_parameter(
       "min_voltage", std::vector<double>({10.0}), [&](const rclcpp::Parameter & p) {
         min_voltage = p.as_double_array();
+        for (size_t i = 0; i < batt_diag.size() && i < min_voltage.size(); ++i) {
+          batt_diag[i].set_min_voltage(min_voltage[i]);
+        }
       });
 
     node_declare_and_watch_parameter(
@@ -517,17 +521,17 @@ public:
 
         if (!disable_diag) {
           uas->diagnostic_updater.add(sys_diag);
-          // uas->diagnostic_updater.add(batt_diag);
-          for (int i = 0; i < MAX_NR_BATTERY_STATUS && i < min_voltage.size(); ++i) {
-            batt_diag[i].set_min_voltage(min_voltage[i]);
+          for (size_t i = 0; i < batt_diag.size() && i < min_voltage.size(); ++i) {
             uas->diagnostic_updater.add(batt_diag[i]);
           }
 
         } else {
           uas->diagnostic_updater.removeByName(sys_diag.getName());
-          // uas->diagnostic_updater.removeByName(batt_diag.getName());
           uas->diagnostic_updater.removeByName(mem_diag.getName());
           uas->diagnostic_updater.removeByName(hwst_diag.getName());
+          for (auto & d:batt_diag) {
+            uas->diagnostic_updater.removeByName(d.getName());
+          }
         }
       });
 
@@ -565,28 +569,23 @@ public:
     extended_state_pub = node->create_publisher<mavros_msgs::msg::ExtendedState>(
       "extended_state", state_qos);
     estimator_status_pub = node->create_publisher<mavros_msgs::msg::EstimatorStatus>(
-      "estimator_status", state_qos
-    );
+      "estimator_status", state_qos);
     batt_pub = node->create_publisher<BatteryMsg>("battery", sensor_qos);
 
     statustext_pub = node->create_publisher<mavros_msgs::msg::StatusText>(
-      "statustext/recv",
-      sensor_qos);
+      "statustext/recv", sensor_qos);
     statustext_sub = node->create_subscription<mavros_msgs::msg::StatusText>(
-      "statustext/send",
-      sensor_qos,
+      "statustext/send", sensor_qos,
       std::bind(&SystemStatusPlugin::statustext_cb, this, _1));
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    mode_srv =
-      node->create_service<mavros_msgs::srv::SetMode>(
+    mode_srv = node->create_service<mavros_msgs::srv::SetMode>(
       "set_mode",
       std::bind(
         &SystemStatusPlugin::set_mode_cb, this, _1,
         _2), rmw_qos_profile_services_default, srv_cg);
-    stream_rate_srv =
-      node->create_service<mavros_msgs::srv::StreamRate>(
+    stream_rate_srv = node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
       std::bind(
         &SystemStatusPlugin::set_rate_cb, this, _1,
@@ -603,8 +602,7 @@ public:
 
     uas->diagnostic_updater.add(hb_diag);
 
-    autopilot_version_timer =
-      node->create_wall_timer(
+    autopilot_version_timer = node->create_wall_timer(
       1s, std::bind(&SystemStatusPlugin::autopilot_version_cb, this),
       srv_cg);
 
@@ -659,7 +657,7 @@ private:
   bool disable_diag;
   bool has_battery_status0;
   float battery_voltage;
-
+  std::vector<double> min_voltage;
 
   using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::msg::VehicleInfo>;
   M_VehicleInfo vehicles;
@@ -893,17 +891,23 @@ private:
     mavlink::common::msg::SYS_STATUS & stat,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    using MC = mavlink::minimal::MAV_COMPONENT;
+    if (static_cast<MC>(msg->compid) == MC::COMP_ID_GIMBAL) {
+      return;
+    }
+
     float volt = stat.voltage_battery / 1000.0f;                // mV
     float curr = stat.current_battery / 100.0f;                 // 10 mA or -1
     float rem = stat.battery_remaining / 100.0f;                // or -1
 
     battery_voltage = volt;
     sys_diag.set(stat);
-    batt_diag.set(volt, curr, rem);
 
-    if (has_battery_status) {
+    if (has_battery_status0) {
       return;
     }
+
+    batt_diag[0].set(volt, curr, rem);
 
     auto batt_msg = BatteryMsg();
     batt_msg.header.stamp = node->now();
@@ -945,7 +949,7 @@ private:
     mavlink::ardupilotmega::msg::MEMINFO & mem,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    mem_diag.set(mem.freemem, mem.brkval);
+    mem_diag.set(std::max(static_cast<uint32_t>(mem.freemem), mem.freemem32), mem.brkval);
   }
 
   void handle_hwstatus(
@@ -1002,8 +1006,6 @@ private:
     // PX4.
     using BT = mavlink::common::MAV_BATTERY_TYPE;
 
-    has_battery_status = true;
-
     auto batt_msg = BatteryMsg();
     batt_msg.header.stamp = node->now();
     batt_msg.voltage = battery_voltage;
@@ -1053,19 +1055,57 @@ private:
     batt_msg.present = true;
 
     batt_msg.cell_voltage.clear();
-    batt_msg.cell_voltage.reserve(bs.voltages.size());
+    batt_msg.cell_voltage.reserve(bs.voltages.size() + bs.voltages_ext.size());
+    float cell_voltage;
+    float voltage_acc = 0.0f;
+    float total_voltage = 0.0f;
+    constexpr float coalesce_voltage = (UINT16_MAX - 1) * 0.001f;   // 65,534V cell voltage means that the next element in the array must be added to this one
     for (auto v : bs.voltages) {
       if (v == UINT16_MAX) {
         break;
       }
 
-      batt_msg.cell_voltage.push_back(v / 1000.0f);                    // 1 mV
+      if (v == UINT16_MAX - 1) {                // cell voltage is above 65,534V
+        voltage_acc += coalesce_voltage;
+        continue;                               // add to the next array element to get the correct voltage
+      }
+
+      cell_voltage = voltage_acc + (v * 0.001f);    // 1 mV
+      voltage_acc = 0.0f;
+      batt_msg.cell_voltage.push_back(cell_voltage);
+      total_voltage += cell_voltage;
     }
+    for (auto v : bs.voltages_ext) {
+      if (v == UINT16_MAX || v == 0) {          // this one is different from the for loop above to support mavlink2 message truncation
+        break;
+      }
+
+      if (v == UINT16_MAX - 1) {                // cell voltage is above 65,534V
+        voltage_acc += coalesce_voltage;
+        continue;                               // add to the next array element to get the correct voltage
+      }
+
+      cell_voltage = voltage_acc + (v * 0.001f);    // 1 mV
+      voltage_acc = 0.0f;
+      batt_msg.cell_voltage.push_back(cell_voltage);
+      total_voltage += cell_voltage;
+    }
+    batt_msg.voltage = total_voltage;
 
     batt_msg.location = utils::format("id%u", bs.id);
     batt_msg.serial_number = "";
 
     batt_pub->publish(batt_msg);
+
+
+    if (bs.id == 0) {
+      has_battery_status0 = true;
+    }
+
+    if (!disable_diag && bs.id >= 0 && bs.id < MAX_NR_BATTERY_STATUS) {
+      batt_diag[bs.id].set(total_voltage, batt_msg.current, batt_msg.percentage);
+      batt_diag[bs.id].setcell_v(batt_msg.cell_voltage);
+    }
   }
 
   void handle_estimator_status(
@@ -1197,7 +1237,7 @@ private:
 
   void connection_cb(bool connected) override
   {
-    has_battery_status = false;
+    has_battery_status0 = false;
 
     // if connection changes, start delayed version request
     version_retries = RETRIES_COUNT;

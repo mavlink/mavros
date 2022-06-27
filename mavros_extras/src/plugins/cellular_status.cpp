@@ -37,11 +37,11 @@ class CellularStatusPlugin : public plugin::Plugin
 {
 public:
   explicit CellularStatusPlugin(plugin::UASPtr uas_)
-  : PluginBase(uas_, "cellular_status")
+  : Plugin(uas_, "cellular_status")
   {
-    subCellularStatus = node->create_subscription<mavros_msgs::msg::MountControl>(
+    sub_status = node->create_subscription<mavros_msgs::msg::CellularStatus>(
       "~/status", 1, std::bind(
-        &CellularStatusPlugin::cellularStatusCb, this,
+        &CellularStatusPlugin::status_cb, this,
         _1));
   }
 
@@ -51,8 +51,7 @@ public:
   }
 
 private:
-  ros::NodeHandle cc_nh;
-  ros::Subscriber subCellularStatus;
+  rclcpp::Subscription<mavros_msgs::msg::CellularStatus>::SharedPtr sub_status;
 
   /**
    * @brief Send Cellular Status messages to mavlink system
@@ -60,7 +59,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#CELLULAR_STATUS
    * @param msg	received CellularStatus msg
    */
-  void cellularStatusCb(const mavros_msgs::msg::CellularStatus::SharedPtr msg)
+  void status_cb(const mavros_msgs::msg::CellularStatus::SharedPtr msg)
   {
     mavlink::common::msg::CELLULAR_STATUS cs{};
 

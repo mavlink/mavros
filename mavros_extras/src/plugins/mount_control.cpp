@@ -35,6 +35,8 @@ namespace mavros
 {
 namespace extra_plugins
 {
+using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+
 using namespace std::placeholders;      // NOLINT
 
 //! Mavlink enumerations
@@ -101,11 +103,9 @@ public:
     bool error_detected = false;
     bool stale = false;
 
-    if (_mode != mavros_msgs::MountControl::MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+    if (_mode != mavros_msgs::msg::MountControl::MAV_MOUNT_MODE_MAVLINK_TARGETING) {
       // Can only directly compare the MAV_CMD_DO_MOUNT_CONTROL angles with the MOUNT_ORIENTATION angles when in MAVLINK_TARGETING mode
-      stat.summary(
-        diagnostic_msgs::DiagnosticStatus::WARN,
-        "Can not diagnose in this targeting mode");
+      stat.summary(DiagnosticStatus::WARN, "Can not diagnose in this targeting mode");
       stat.addf("Mode", "%d", _mode);
       return;
     }
@@ -145,13 +145,11 @@ public:
 
     // debounce errors
     if (stale) {
-      stat.summary(
-        diagnostic_msgs::DiagnosticStatus::STALE,
-        "No MOUNT_ORIENTATION received in the last 5 s");
+      stat.summary(DiagnosticStatus::STALE, "No MOUNT_ORIENTATION received in the last 5 s");
     } else if (_error_detected && (now - _error_started > ros::Duration(_debounce_s))) {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "angle error too high");
+      stat.summary(DiagnosticStatus::ERROR, "angle error too high");
     } else {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+      stat.summary(DiagnosticStatus::OK, "Normal");
     }
 
     stat.addf("Roll err (deg)", "%.1f", roll_err_deg);
@@ -209,12 +207,12 @@ public:
       "debounce_s", 4.0, [&](const rclcpp::Parameter & p) {
         auto debounce_s = p.as_double();
         mount_diag.set_debounce_s(debounce_s);
-      })
+      });
     node_declare_and_watch_parameter(
       "err_threshold_deg", 10.0, [&](const rclcpp::Parameter & p) {
         auto err_threshold_deg = p.as_double();
         mount_diag.set_err_threshold_deg(err_threshold_deg);
-      })
+      });
     node_declare_and_watch_parameter(
       "disable_diag", false, [&](const rclcpp::Parameter & p) {
         auto disable_diag = p.as_bool();
