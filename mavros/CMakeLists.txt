@@ -161,6 +161,7 @@ ament_target_dependencies(mavros_plugins
   std_msgs
   std_srvs
   sensor_msgs
+  pluginlib
   nav_msgs
   trajectory_msgs
   rclcpp

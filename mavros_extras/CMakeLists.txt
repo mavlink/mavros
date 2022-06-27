@@ -126,6 +126,7 @@ ament_target_dependencies(mavros_extras_plugins
   std_msgs
   std_srvs
   sensor_msgs
+  pluginlib
   nav_msgs
   trajectory_msgs
   rclcpp
@@ -138,7 +139,6 @@ ament_target_dependencies(mavros_extras_plugins
   message_filters
   Eigen3
   yaml_cpp_vendor
-  pluginlib
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
