@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2022-06-27)
+------------------
 * extras: fix build
 * extras: fix build
 * Merge branch 'master' into ros2

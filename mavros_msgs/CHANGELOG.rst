@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2022-06-27)
+------------------
 * Merge branch 'master' into ros2
   * master:
   mount_control.cpp: detect MOUNT_ORIENTATION stale messages
