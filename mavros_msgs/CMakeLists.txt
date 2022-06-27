@@ -163,11 +163,20 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(
-  DIRECTORY include/
-  DESTINATION include
-  FILES_MATCHING PATTERN "*.hpp"
-)
+if(rcl_interfaces_VERSION VERSION_LESS "1.2.0")
+  install(
+    DIRECTORY include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.hpp"
+  )
+else()
+  # NOTE(vooon): Humble
+  install(
+    DIRECTORY include/
+    DESTINATION include/mavros_msgs
+    FILES_MATCHING PATTERN "*.hpp"
+  )
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
