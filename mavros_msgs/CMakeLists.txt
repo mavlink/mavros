@@ -37,6 +37,7 @@ set(msg_files
   msg/AttitudeTarget.msg
   msg/CamIMUStamp.msg
   msg/CameraImageCaptured.msg
+  msg/CellularStatus.msg
   msg/CommandCode.msg
   msg/CompanionProcessStatus.msg
   msg/DebugValue.msg
@@ -94,7 +95,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 48b8cc77c50ae93229656aebcff6c183)
+  # [[[end]]] (checksum: cf55cc727ab8f7a2823267cab0dd1bf3)
 )
 
 set(srv_files

@@ -26,6 +26,13 @@ camera can be corellated to get the exact shutter trigger time.</description>
 Plugin for interfacing on the mavlink camera protocol
 @see command_cb()</description>
   </class>
+  <class name="cellular_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CellularStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Cellular status plugin.
+@plugin cellular_status
+
+Users must publish to the topic the CellularStatus message and it
+will be relayed to the mavlink components.</description>
+  </class>
   <class name="companion_process_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CompanionProcessStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Obstacle companion process status plugin
 @plugin companion_process_status
@@ -214,4 +221,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: a6c51e5666401d2a80d8bbb1f4bafc3e) -->
+<!-- [[[end]]] (checksum: 616152f88997ac3b0173a8eef06cb7a8) -->

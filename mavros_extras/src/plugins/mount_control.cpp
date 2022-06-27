@@ -1,5 +1,6 @@
 /*
  * Copyright 2019 Jaeyoung Lim.
+ * Copyright 2021 Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -9,6 +10,7 @@
  * @brief Mount Control plugin
  * @file mount_control.cpp
  * @author Jaeyoung Lim <jaeyoung@auterion.com>
+ * @author Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
  *
  * @addtogroup plugin
  * @{
@@ -41,6 +43,140 @@ using mavlink::common::MAV_CMD;
 using utils::enum_value;
 
 /**
+ * @brief Mount diagnostic updater
+ */
+class MountStatusDiag : public diagnostic_updater::DiagnosticTask
+{
+public:
+  MountStatusDiag(const std::string & name)
+  : diagnostic_updater::DiagnosticTask(name),
+    _last_orientation_update(0, 0),
+    _debounce_s(NAN),
+    _roll_deg(NAN),
+    _pitch_deg(NAN),
+    _yaw_deg(NAN),
+    _setpoint_roll_deg(NAN),
+    _setpoint_pitch_deg(NAN),
+    _setpoint_yaw_deg(NAN),
+    _err_threshold_deg(NAN),
+    _error_detected(false),
+    _mode(255)
+  {}
+
+  void set_err_threshold_deg(float threshold_deg)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    _err_threshold_deg = threshold_deg;
+  }
+
+  void set_debounce_s(double debounce_s)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    _debounce_s = debounce_s;
+  }
+
+  void set_status(float roll_deg, float pitch_deg, float yaw_deg, rclcpp::Time timestamp)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    _roll_deg = roll_deg;
+    _pitch_deg = pitch_deg;
+    _yaw_deg = yaw_deg;
+    _last_orientation_update = timestamp;
+  }
+
+  void set_setpoint(float roll_deg, float pitch_deg, float yaw_deg, uint8_t mode)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    _setpoint_roll_deg = roll_deg;
+    _setpoint_pitch_deg = pitch_deg;
+    _setpoint_yaw_deg = yaw_deg;
+    _mode = mode;
+  }
+
+  void run(diagnostic_updater::DiagnosticStatusWrapper & stat)
+  {
+    float roll_err_deg;
+    float pitch_err_deg;
+    float yaw_err_deg;
+    bool error_detected = false;
+    bool stale = false;
+
+    if (_mode != mavros_msgs::MountControl::MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+      // Can only directly compare the MAV_CMD_DO_MOUNT_CONTROL angles with the MOUNT_ORIENTATION angles when in MAVLINK_TARGETING mode
+      stat.summary(
+        diagnostic_msgs::DiagnosticStatus::WARN,
+        "Can not diagnose in this targeting mode");
+      stat.addf("Mode", "%d", _mode);
+      return;
+    }
+
+    const rclcpp::Time now = clock.now();
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      roll_err_deg = _setpoint_roll_deg - _roll_deg;
+      pitch_err_deg = _setpoint_pitch_deg - _pitch_deg;
+      yaw_err_deg = _setpoint_yaw_deg - _yaw_deg;
+
+      // detect errors (setpoint != current angle)
+      if (fabs(roll_err_deg) > _err_threshold_deg) {
+        error_detected = true;
+      }
+      if (fabs(pitch_err_deg) > _err_threshold_deg) {
+        error_detected = true;
+      }
+      if (fabs(yaw_err_deg) > _err_threshold_deg) {
+        error_detected = true;
+      }
+      if (now - _last_orientation_update > rclcpp::Duration(5, 0)) {
+        stale = true;
+      }
+      // accessing the _debounce_s variable should be done inside this mutex,
+      // but we can treat it as an atomic variable, and save the trouble
+    }
+
+    // detect error state changes
+    if (!_error_detected && error_detected) {
+      _error_started = now;
+      _error_detected = true;
+    }
+    if (_error_detected && !error_detected) {
+      _error_detected = false;
+    }
+
+    // debounce errors
+    if (stale) {
+      stat.summary(
+        diagnostic_msgs::DiagnosticStatus::STALE,
+        "No MOUNT_ORIENTATION received in the last 5 s");
+    } else if (_error_detected && (now - _error_started > ros::Duration(_debounce_s))) {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "angle error too high");
+    } else {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Normal");
+    }
+
+    stat.addf("Roll err (deg)", "%.1f", roll_err_deg);
+    stat.addf("Pitch err (deg)", "%.1f", pitch_err_deg);
+    stat.addf("Yaw err (deg)", "%.1f", yaw_err_deg);
+  }
+
+private:
+  std::mutex mutex;
+  rclcpp::Clock clock;
+  rclcpp::Time _error_started;
+  rclcpp::Time _last_orientation_update;
+  double _debounce_s;
+  float _roll_deg;
+  float _pitch_deg;
+  float _yaw_deg;
+  float _setpoint_roll_deg;
+  float _setpoint_pitch_deg;
+  float _setpoint_yaw_deg;
+  float _err_threshold_deg;
+  bool _error_detected;
+  uint8_t _mode;
+};
+
+/**
  * @brief Mount Control plugin
  * @plugin mount_control
  *
@@ -51,8 +187,45 @@ class MountControlPlugin : public plugin::Plugin
 {
 public:
   explicit MountControlPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "mount_control")
+  : Plugin(uas_, "mount_control"),
+    mount_diag("Mount")
   {
+    enable_node_watch_parameters();
+
+    node_declare_and_watch_parameter(
+      "negate_measured_roll", false, [&](const rclcpp::Parameter & p) {
+        negate_measured_roll = p.as_bool();
+      });
+    node_declare_and_watch_parameter(
+      "negate_measured_pitch", false, [&](const rclcpp::Parameter & p) {
+        negate_measured_pitch = p.as_bool();
+      });
+    node_declare_and_watch_parameter(
+      "negate_measured_yaw", false, [&](const rclcpp::Parameter & p) {
+        negate_measured_yaw = p.as_bool();
+      });
+
+    node_declare_and_watch_parameter(
+      "debounce_s", 4.0, [&](const rclcpp::Parameter & p) {
+        auto debounce_s = p.as_double();
+        mount_diag.set_debounce_s(debounce_s);
+      })
+    node_declare_and_watch_parameter(
+      "err_threshold_deg", 10.0, [&](const rclcpp::Parameter & p) {
+        auto err_threshold_deg = p.as_double();
+        mount_diag.set_err_threshold_deg(err_threshold_deg);
+      })
+    node_declare_and_watch_parameter(
+      "disable_diag", false, [&](const rclcpp::Parameter & p) {
+        auto disable_diag = p.as_bool();
+
+        if (!disable_diag) {
+          uas->diagnostic_updater.add(mount_diag);
+        } else {
+          uas->diagnostic_updater.removeByName(mount_diag.getName());
+        }
+      });
+
     command_sub = node->create_subscription<mavros_msgs::msg::MountControl>(
       "~/command", 10, std::bind(
         &MountControlPlugin::command_cb, this,
@@ -68,6 +241,7 @@ public:
         &MountControlPlugin::mount_configure_cb,
         this, _1, _2));
   }
+
 
   Subscriptions get_subscriptions() override
   {
@@ -85,6 +259,11 @@ private:
 
   rclcpp::Service<mavros_msgs::srv::MountConfigure>::SharedPtr configure_srv;
 
+  MountStatusDiag mount_diag;
+  bool negate_measured_roll;
+  bool negate_measured_pitch;
+  bool negate_measured_yaw;
+
   /**
    * @brief Publish the mount orientation
    *
@@ -97,11 +276,25 @@ private:
     mavlink::common::msg::MOUNT_ORIENTATION & mo,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    const auto timestamp = node->now();
+    // some gimbals send negated/inverted angle measurements, correct that to obey the MAVLink frame convention
+    if (negate_measured_roll) {
+      mo.roll = -mo.roll;
+    }
+    if (negate_measured_pitch) {
+      mo.pitch = -mo.pitch;
+    }
+    if (negate_measured_yaw) {
+      mo.yaw = -mo.yaw;
+      mo.yaw_absolute = -mo.yaw_absolute;
+    }
+
     auto q = ftf::quaternion_from_rpy(Eigen::Vector3d(mo.roll, mo.pitch, mo.yaw) * M_PI / 180.0);
 
     geometry_msgs::msg::Quaternion quaternion_msg = tf2::toMsg(q);
 
     mount_orientation_pub->publish(quaternion_msg);
+    mount_diag.set_status(mo.roll, mo.pitch, mo.yaw_absolute, timestamp);
   }
 
   /**
@@ -131,7 +324,6 @@ private:
         ms.pointing_b, ms.pointing_a,
         ms.pointing_c) * M_PI / 18000.0);
     geometry_msgs::msg::Quaternion quaternion_msg = tf2::toMsg(q);
-
     mount_orientation_pub->publish(quaternion_msg);
   }
 
@@ -156,6 +348,8 @@ private:
     cmd.param7 = req->mode;             // MAV_MOUNT_MODE
 
     uas->send_message(cmd);
+
+    mount_diag.set_setpoint(req->roll * 0.01f, req->pitch * 0.01f, req->yaw * 0.01f, req->mode);
   }
 
   void mount_configure_cb(
