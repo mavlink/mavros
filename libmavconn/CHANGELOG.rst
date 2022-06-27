@@ -2,6 +2,16 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1720 <https://github.com/mavlink/mavros/issues/1720>`_ from SylvainPastor/fix/libmavconn/udp/deadlocks
+  libmavconn: fix UDP deadlocks
+* libmavconn: fix UDP deadlock
+  Same problems as for the TCP:
+  - `#1682 <https://github.com/mavlink/mavros/issues/1682>`_: fix std::system_error when tcp interface loses connection
+  - `#1679 <https://github.com/mavlink/mavros/issues/1679>`_: fix deadlock when call close()
+* Contributors: Sylvain Pastor, Vladimir Ermakov
+
 2.1.1 (2022-03-02)
 ------------------
 
