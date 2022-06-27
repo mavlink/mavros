@@ -103,8 +103,8 @@ class Checker:
                 else:
                     msg_name = ""
                     # In version 2.4.30 <TODO: replace with actual number>, the class variable name
-                    # was renamed to msgname. Since we don't know the pymavlink version we need to check
-                    # for both.
+                    # was renamed to msgname. Since we don't know the pymavlink version we need to
+                    # check for both.
                     if hasattr(msg, "msgname"):
                         msg_name = msg.msgname
                     else:
