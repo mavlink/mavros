@@ -93,4 +93,7 @@
   <class name="mag_calibration_status" type="mavros::std_plugins::MagCalStatusPlugin" base_class_type="mavros::plugin::PluginBase">
     <description>Send calibration status to ROS.</description>
   </class>
+  <class name="guided_target" type="mavros::extra_plugins::GuidedTargetPlugin" base_class_type="mavros::plugin::PluginBase">
+     <description>Send guided target.</description>
+</class>
 </library>
