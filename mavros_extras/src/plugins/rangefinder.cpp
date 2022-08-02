@@ -55,9 +55,9 @@ private:
 		rangefinder_msg->header.stamp = ros::Time::now();
 		rangefinder_msg->header.frame_id = "/rangefinder";
 		rangefinder_msg->radiation_type = sensor_msgs::Range::INFRARED;
-		rangefinder_msg->field_of_view = 0;
-		rangefinder_msg->min_range = 0;
-		rangefinder_msg->max_range = 1000;
+		rangefinder_msg->field_of_view = rangefinder.horizontal_fov;
+		rangefinder_msg->min_range = rangefinder.min_distance;
+		rangefinder_msg->max_range = rangefinder.max_distance;
 		rangefinder_msg->range = rangefinder.distance;
 
 		rangefinder_pub.publish(rangefinder_msg);
