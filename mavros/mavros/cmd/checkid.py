@@ -102,9 +102,8 @@ class Checker:
                     return f"{msgid}"
                 else:
                     msg_name = ""
-                    # In version 2.4.30 <TODO: replace with actual number>, the class variable name
-                    # was renamed to msgname. Since we don't know the pymavlink version we need to
-                    # check for both.
+                    # Since pymavlink version 2.4.32 `name` is renamed to `msgname`.
+                    # We want to stay compatible with prior versions of pymavlink.
                     if hasattr(msg, "msgname"):
                         msg_name = msg.msgname
                     else:
