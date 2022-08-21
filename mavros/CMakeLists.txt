@@ -39,6 +39,9 @@ if(NOT EIGEN3_FOUND)
 endif()
 
 ## Find GeographicLib
+# Append to CMAKE_MODULE_PATH since debian/ubuntu installs
+# FindGeographicLib.cmake in a nonstand location
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 find_package(GeographicLib REQUIRED)
 
 ## Check if the datasets are installed
