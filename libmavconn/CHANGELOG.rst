@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2022-09-24)
+------------------
 * mavros: remove custom find script, re-generate
 * Merge branch 'master' into ros2
   * master:

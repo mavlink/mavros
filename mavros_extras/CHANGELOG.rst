@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2022-09-24)
+------------------
 * extras: fix linter errors
 * extras: fix toMsg
 * extras: fix build

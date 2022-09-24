@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2022-09-24)
+------------------
 * extras: fix linter errors
 * mavros: remove custom find script, re-generate
 * Merge branch 'master' into ros2
@@ -660,10 +660,7 @@ Forthcoming
 * Merge branch 'ros2' into ros2
 * msgs: start porting to ROS2
 * disable all packages but messages
-* Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
-=======
 * Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Oleg Kalachev, Sanket Sharma, Vladimir Ermakov, acxz
->>>>>>> master
 
 1.13.0 (2022-01-13)
 -------------------
