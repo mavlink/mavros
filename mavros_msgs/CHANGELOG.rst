@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.14.0 (2022-09-24)
+-------------------
 * Merge pull request `#1742 <https://github.com/mavlink/mavros/issues/1742>`_ from amilcarlucas/correct_rpm_units
   ESCTelemetryItem.msg: correct RPM units
 * ESCTelemetryItem.msg: correct RPM units

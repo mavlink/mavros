@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.14.0 (2022-09-24)
+-------------------
 * scripts: waypoint and param files are text, not binary
   Fix `#1784 <https://github.com/mavlink/mavros/issues/1784>`_
 * Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master

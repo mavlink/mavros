@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.14.0 (2022-09-24)
+-------------------
 * Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master
   guided_target: accept position-target-global-int messages
 * plugins: add guided_target to accept offboard position targets

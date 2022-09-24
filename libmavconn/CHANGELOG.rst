@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.14.0 (2022-09-24)
+-------------------
 * libmavconn: fix MAVLink v1.0 output selection
   Fix `#1787 <https://github.com/mavlink/mavros/issues/1787>`_
 * Merge pull request `#1775 <https://github.com/mavlink/mavros/issues/1775>`_ from acxz/find-geographiclib
