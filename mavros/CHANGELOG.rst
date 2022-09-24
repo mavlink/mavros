@@ -2,6 +2,49 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: fix linter errors
+* mavros: remove custom find script, re-generate
+* Merge branch 'master' into ros2
+  * master:
+  1.14.0
+  update changelog
+  scripts: waypoint and param files are text, not binary
+  libmavconn: fix MAVLink v1.0 output selection
+  plugins: add guided_target to accept offboard position targets
+  add cmake module path for geographiclib on debian based systems
+  use already installed FindGeographicLib.cmake
+* 1.14.0
+* update changelog
+* scripts: waypoint and param files are text, not binary
+  Fix `#1784 <https://github.com/mavlink/mavros/issues/1784>`_
+* Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master
+  guided_target: accept position-target-global-int messages
+* plugins: add guided_target to accept offboard position targets
+  Update guided_target.cpp
+  Update guided_target.cpp
+  Update mavros_plugins.xml
+  Update CMakeLists.txt
+  Added offboard_position.cpp
+  Update apm_config.yaml
+  Update offboard_position.cpp
+  Update offboard_position.cpp
+  Rename offboard_position.cpp to guided_target.cpp
+  Update CMakeLists.txt
+  Update mavros_plugins.xml
+  Update apm_config.yaml
+  Update guided_target.cpp
+* Merge pull request `#1775 <https://github.com/mavlink/mavros/issues/1775>`_ from acxz/find-geographiclib
+  use already installed FindGeographicLib.cmake
+* add cmake module path for geographiclib on debian based systems
+* Merge pull request `#1771 <https://github.com/mavlink/mavros/issues/1771>`_ from alehed/fix/update_comment
+  Put correct version in comment
+* Put correct version in comment
+  Now that the change has been merged into master in pymavlink,
+  it will be in the next tagged release.
+* Contributors: Alexander Hedges, Sanket Sharma, Vladimir Ermakov, acxz
+
 2.2.0 (2022-06-27)
 ------------------
 * extras: fix build
