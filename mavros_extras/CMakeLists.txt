@@ -32,9 +32,14 @@ find_package(libmavconn REQUIRED)
 
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(GEOGRAPHICLIB REQUIRED)
 # find_package(yaml_cpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
+
+## Find GeographicLib
+# Append to CMAKE_MODULE_PATH since debian/ubuntu installs
+# FindGeographicLib.cmake in a nonstand location
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
+find_package(GeographicLib REQUIRED)
 
 find_package(angles REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -63,7 +68,7 @@ include_directories(
 include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${GEOGRAPHICLIB_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
 )
 
 if(rclcpp_VERSION VERSION_LESS 9.0.0)

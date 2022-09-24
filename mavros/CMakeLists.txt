@@ -35,7 +35,6 @@ find_package(console_bridge REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-#find_package(GEOGRAPHICLIB REQUIRED)
 ## Find GeographicLib
 # Append to CMAKE_MODULE_PATH since debian/ubuntu installs
 # FindGeographicLib.cmake in a nonstand location
@@ -67,7 +66,7 @@ include_directories(
 include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${GEOGRAPHICLIB_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
 )
 
 ## Check if the datasets are installed
@@ -118,7 +117,7 @@ ament_target_dependencies(mavros
   tf2_eigen
   Eigen3
 )
-target_link_libraries(mavros ${GEOGRAPHICLIB_LIBRARIES})
+target_link_libraries(mavros ${GeographicLib_LIBRARIES})
 rclcpp_components_register_nodes(mavros "mavros::router::Router" "mavros::uas::UAS")
 
 add_library(mavros_plugins SHARED

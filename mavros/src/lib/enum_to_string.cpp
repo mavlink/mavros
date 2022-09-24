@@ -134,7 +134,7 @@ static auto logger = rclcpp::get_logger("uas.enum");
 // ]]]
 
 //! MAV_AUTOPILOT values
-static const std::array<const std::string, 20> mav_autopilot_strings{{
+static const std::array<const std::string, 21> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",
 /*  1 */ "Reserved for future use",
 /*  2 */ "SLUGS autopilot",
@@ -155,6 +155,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /* 17 */ "ASLUAV autopilot",
 /* 18 */ "SmartAP Autopilot",
 /* 19 */ "AirRails",
+/* 20 */ "Fusion Reflex",
 }};
 
 
@@ -167,7 +168,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
   return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: ca6693afe1ced57fa7eb4b5d2f895550)
+// [[[end]]] (checksum: 68013f2988194a55231693f1d7fa9726)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -175,7 +176,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // ]]]
 
 //! MAV_TYPE values
-static const std::array<const std::string, 36> mav_type_strings{{
+static const std::array<const std::string, 43> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",
 /*  1 */ "Fixed wing aircraft",
 /*  2 */ "Quadrotor",
@@ -212,6 +213,13 @@ static const std::array<const std::string, 36> mav_type_strings{{
 /* 33 */ "Servo",
 /* 34 */ "Open Drone ID. See https:",
 /* 35 */ "Decarotor",
+/* 36 */ "Battery",
+/* 37 */ "Parachute",
+/* 38 */ "Log",
+/* 39 */ "OSD",
+/* 40 */ "IMU",
+/* 41 */ "GPS",
+/* 42 */ "Winch",
 }};
 
 
@@ -224,7 +232,7 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 9fabd2cfbcc8bd349dbd7f69f2f81351)
+// [[[end]]] (checksum: 5bcb1f5fb05dbb71467360a932e5b182)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -232,7 +240,7 @@ std::string to_string(MAV_TYPE e)
 // ]]]
 
 //! MAV_TYPE values
-static const std::array<const std::string, 36> mav_type_names{{
+static const std::array<const std::string, 43> mav_type_names{{
 /*  0 */ "GENERIC",
 /*  1 */ "FIXED_WING",
 /*  2 */ "QUADROTOR",
@@ -269,6 +277,13 @@ static const std::array<const std::string, 36> mav_type_names{{
 /* 33 */ "SERVO",
 /* 34 */ "ODID",
 /* 35 */ "DECAROTOR",
+/* 36 */ "BATTERY",
+/* 37 */ "PARACHUTE",
+/* 38 */ "LOG",
+/* 39 */ "OSD",
+/* 40 */ "IMU",
+/* 41 */ "GPS",
+/* 42 */ "WINCH",
 }};
 
 std::string enum_to_name(MAV_TYPE e)
@@ -280,7 +295,7 @@ std::string enum_to_name(MAV_TYPE e)
 
   return mav_type_names[idx];
 }
-// [[[end]]] (checksum: ab74f38c87f80d889bca765375689bdd)
+// [[[end]]] (checksum: dfc98695f046912ae73ec2bd4508e9c1)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -680,13 +695,20 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
   {158, "PERIPHERAL"},
   {159, "QX1_GIMBAL"},
   {160, "FLARM"},
+  {161, "PARACHUTE"},
   {171, "GIMBAL2"},
   {172, "GIMBAL3"},
   {173, "GIMBAL4"},
   {174, "GIMBAL5"},
   {175, "GIMBAL6"},
+  {180, "BATTERY"},
+  {181, "BATTERY2"},
+  {189, "MAVCAN"},
   {190, "MISSIONPLANNER"},
   {191, "ONBOARD_COMPUTER"},
+  {192, "ONBOARD_COMPUTER2"},
+  {193, "ONBOARD_COMPUTER3"},
+  {194, "ONBOARD_COMPUTER4"},
   {195, "PATHPLANNER"},
   {196, "OBSTACLE_AVOIDANCE"},
   {197, "VISUAL_INERTIAL_ODOMETRY"},
@@ -704,7 +726,7 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
   {242, "TUNNEL_NODE"},
   {250, "SYSTEM_CONTROL"},
 }};
-// [[[end]]] (checksum: 9c8184e019003b807b4d2498e6f1d81f)
+// [[[end]]] (checksum: 3a66ba989a8794aff36d5dbadae852d8)
 
 std::string to_string(MAV_COMPONENT e)
 {
