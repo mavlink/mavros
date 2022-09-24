@@ -220,5 +220,8 @@ to FCU position and attitude estimators.</description>
 This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
+  <class name="guided_target" type="mavros::extra_plugins::GuidedTargetPlugin" base_class_type="mavros::plugin::PluginBase">
+     <description>Send guided target.</description>
+</class>
 </library>
 <!-- [[[end]]] (checksum: 616152f88997ac3b0173a8eef06cb7a8) -->

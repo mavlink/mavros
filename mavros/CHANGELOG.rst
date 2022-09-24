@@ -36,6 +36,30 @@ Changelog for package mavros
 * Make compatible with pymavlink type annotations PR
   In that PR, the attribute name is changed to msgname due to conflicts
   with message instance variables.
+
+1.14.0 (2022-09-24)
+-------------------
+* scripts: waypoint and param files are text, not binary
+  Fix `#1784 <https://github.com/mavlink/mavros/issues/1784>`_
+* Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master
+  guided_target: accept position-target-global-int messages
+* plugins: add guided_target to accept offboard position targets
+  Update guided_target.cpp
+  Update guided_target.cpp
+  Update mavros_plugins.xml
+  Update CMakeLists.txt
+  Added offboard_position.cpp
+  Update apm_config.yaml
+  Update offboard_position.cpp
+  Update offboard_position.cpp
+  Rename offboard_position.cpp to guided_target.cpp
+  Update CMakeLists.txt
+  Update mavros_plugins.xml
+  Update apm_config.yaml
+  Update guided_target.cpp
+* Merge pull request `#1775 <https://github.com/mavlink/mavros/issues/1775>`_ from acxz/find-geographiclib
+  use already installed FindGeographicLib.cmake
+* add cmake module path for geographiclib on debian based systems
 * Merge pull request `#1744 <https://github.com/mavlink/mavros/issues/1744>`_ from amilcarlucas/pr_gimbal_diagnostics_fixes
   mount_control.cpp: detect MOUNT_ORIENTATION stale messages
 * mount_control.cpp: detect MOUNT_ORIENTATION stale messages
@@ -594,6 +618,9 @@ Changelog for package mavros
 * msgs: start porting to ROS2
 * disable all packages but messages
 * Contributors: Alexey Rogachevskiy, Mikael Arguedas, Thomas, Vladimir Ermakov
+=======
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Karthik Desai, Oleg Kalachev, Sanket Sharma, Vladimir Ermakov, acxz
+>>>>>>> master
 
 1.13.0 (2022-01-13)
 -------------------
