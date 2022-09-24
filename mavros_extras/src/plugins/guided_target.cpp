@@ -24,9 +24,7 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
-#include "mavros/setpoint_mixin.hpp"
 
-#include "mavros_msgs/msg/set_mav_frame.hpp"
 #include "mavros_msgs/msg/position_target.hpp"
 #include "mavros_msgs/msg/global_position_target.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -52,7 +50,8 @@ public:
 
   explicit GuidedTargetPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "guided_target"),
-    is_map_init(false)
+    is_map_init(false),
+    prev()
   {
     enable_node_watch_parameters();
 
@@ -94,16 +93,9 @@ private:
   string frame_id;
   bool is_map_init;
 
-  double arr[2] = {0, 0};
+  Eigen::Vector2d prev;
 
   /* -*- mid-level helpers -*- */
-
-  /**
-   * @brief Send setpoint to FCU position controller.
-   *
-   * @warning Send only XYZ, Yaw. ENU frame.
-   */
-
 
   /**
    * global origin in LLA
@@ -134,7 +126,6 @@ private:
    * @brief handle POSITION_TARGET_GLOBAL_INT mavlink msg
    * handles and publishes position target received from FCU
    */
-
   void handle_position_target_global_int(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::POSITION_TARGET_GLOBAL_INT & position_target,
@@ -178,12 +169,12 @@ private:
     pose.pose.position.z = 0.0;                 // force z-axis to zero
 
     /* publish target */
-    if (pose.pose.position.x != arr[0] | pose.pose.position.y != arr[1]) {
-      setpointg_pub.publish(pose);
+    if (pose.pose.position.x != prev.x() || pose.pose.position.y != prev.y()) {
+      setpointg_pub->publish(pose);
     }
 
-    arr[0] = pose.pose.position.x;
-    arr[1] = pose.pose.position.y;
+    prev.x() = pose.pose.position.x;
+    prev.y() = pose.pose.position.y;
   }
 };
 }       // namespace extra_plugins
