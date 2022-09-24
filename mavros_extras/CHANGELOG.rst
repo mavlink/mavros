@@ -2,6 +2,45 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master
+  guided_target: accept position-target-global-int messages
+* plugins: add guided_target to accept offboard position targets
+  Update guided_target.cpp
+  Update guided_target.cpp
+  Update mavros_plugins.xml
+  Update CMakeLists.txt
+  Added offboard_position.cpp
+  Update apm_config.yaml
+  Update offboard_position.cpp
+  Update offboard_position.cpp
+  Rename offboard_position.cpp to guided_target.cpp
+  Update CMakeLists.txt
+  Update mavros_plugins.xml
+  Update apm_config.yaml
+  Update guided_target.cpp
+* Merge pull request `#1744 <https://github.com/mavlink/mavros/issues/1744>`_ from amilcarlucas/pr_gimbal_diagnostics_fixes
+  mount_control.cpp: detect MOUNT_ORIENTATION stale messages
+* mount_control.cpp: detect MOUNT_ORIENTATION stale messages
+  correct MountConfigure response success
+  correct constructor initialization order
+  some gimbals send negated/inverted angle measurements, correct that to obey the MAVLink frame convention using run-time parameters
+* Merge pull request `#1727 <https://github.com/mavlink/mavros/issues/1727>`_ from BV-OpenSource/pr-cellular-status
+  Pr cellular status
+* uncrustify cellular_status.cpp
+* Add CellularStatus plugin and message
+* Merge pull request `#1702 <https://github.com/mavlink/mavros/issues/1702>`_ from amilcarlucas/mount_diagnostics
+  Mount control plugin: add configurable diagnostics
+* mount_control.cpp: use mount_nh for params to keep similarities with other plugins
+  set diag settings before add()
+* Mount control plugin: add configurable diagnostics
+* Merge pull request `#1700 <https://github.com/mavlink/mavros/issues/1700>`_ from oroelipas/fix-obstacle-distance
+  Fix obstacle distance
+* Bugfix: increment_f had no value asigned when input LaserScan was bigger than obstacle.distances.size()
+* Bugfix: wrong interpolation when the reduction ratio (scale_factor) is not integer.
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Rui Mendes, Sanket Sharma, Vladimir Ermakov, oroel
+
 1.13.0 (2022-01-13)
 -------------------
 * Merge pull request `#1677 <https://github.com/mavlink/mavros/issues/1677>`_ from AndersonRayner/add_terrain
