@@ -101,6 +101,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/gps_input.cpp
   src/plugins/gps_rtk.cpp
   src/plugins/gps_status.cpp
+  src/plugins/guided_target.cpp
   src/plugins/hil.cpp
   src/plugins/landing_target.cpp
   src/plugins/log_transfer.cpp
@@ -121,7 +122,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]] (checksum: f264e21952350f8783aca6e5c92ea6fb)
+  # [[[end]]] (checksum: a6dc36e6871deb96f56d61e2a1a38f37)
 )
 ament_target_dependencies(mavros_extras_plugins
   angles

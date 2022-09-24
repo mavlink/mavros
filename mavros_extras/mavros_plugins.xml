@@ -89,6 +89,12 @@ Sends &lt;a href=&quot;https://mavlink.io/en/messages/common.html#GPS_INPUT&quot
 
 This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.</description>
   </class>
+  <class name="guided_target" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GuidedTargetPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief guided target plugin
+@plugin guided_target
+
+Send and receive setpoint positions from FCU controller.</description>
+  </class>
   <class name="hil" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::HilPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Hil plugin
 @plugin hil</description>
@@ -220,8 +226,5 @@ to FCU position and attitude estimators.</description>
 This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
-  <class name="guided_target" type="mavros::extra_plugins::GuidedTargetPlugin" base_class_type="mavros::plugin::PluginBase">
-     <description>Send guided target.</description>
-</class>
 </library>
-<!-- [[[end]]] (checksum: 616152f88997ac3b0173a8eef06cb7a8) -->
+<!-- [[[end]]] (checksum: 930b2e95e313b65e21c5dbea68346c73) -->
