@@ -99,7 +99,7 @@ private:
       uas->send_message(rtcm_data);
     } else {
       for (uint8_t fragment_id = 0; fragment_id < 4 && data_it < end_it; fragment_id++) {
-        uint8_t len = std::min((size_t) std::distance(data_it, end_it), max_frag_len);
+        uint8_t len = std::min(static_cast<size_t>(std::distance(data_it, end_it)), max_frag_len);
         rtcm_data.flags = 1;                    // LSB set indicates message is fragmented
         rtcm_data.flags |= fragment_id << 1;    // Next 2 bits are fragment id
         rtcm_data.flags |= seq_u5;              // Next 5 bits are sequence id

@@ -15,10 +15,12 @@
  * @{
  */
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <utility>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -361,7 +363,7 @@ private:
 class MemInfo : public diagnostic_updater::DiagnosticTask
 {
 public:
-  MemInfo(const std::string & name)
+  explicit MemInfo(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     freemem(UINT32_MAX),
     brkval(0),
@@ -417,7 +419,7 @@ private:
 class HwStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
-  HwStatus(const std::string & name)
+  explicit HwStatus(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     vcc(-1.0),
     i2cerr(0),
@@ -529,7 +531,7 @@ public:
           uas->diagnostic_updater.removeByName(sys_diag.getName());
           uas->diagnostic_updater.removeByName(mem_diag.getName());
           uas->diagnostic_updater.removeByName(hwst_diag.getName());
-          for (auto & d:batt_diag) {
+          for (auto & d : batt_diag) {
             uas->diagnostic_updater.removeByName(d.getName());
           }
         }
@@ -1059,15 +1061,16 @@ private:
     float cell_voltage;
     float voltage_acc = 0.0f;
     float total_voltage = 0.0f;
-    constexpr float coalesce_voltage = (UINT16_MAX - 1) * 0.001f;   // 65,534V cell voltage means that the next element in the array must be added to this one
+    // 65,534V cell voltage means that the next element in the array must be added to this one
+    constexpr float coalesce_voltage = (UINT16_MAX - 1) * 0.001f;
     for (auto v : bs.voltages) {
       if (v == UINT16_MAX) {
         break;
       }
 
-      if (v == UINT16_MAX - 1) {                // cell voltage is above 65,534V
+      if (v == UINT16_MAX - 1) {    // cell voltage is above 65,534V
         voltage_acc += coalesce_voltage;
-        continue;                               // add to the next array element to get the correct voltage
+        continue;                   // add to the next array element to get the correct voltage
       }
 
       cell_voltage = voltage_acc + (v * 0.001f);    // 1 mV
@@ -1076,13 +1079,16 @@ private:
       total_voltage += cell_voltage;
     }
     for (auto v : bs.voltages_ext) {
-      if (v == UINT16_MAX || v == 0) {          // this one is different from the for loop above to support mavlink2 message truncation
+      if (v == UINT16_MAX || v == 0) {
+        // this one is different from the for loop above to support mavlink2 message truncation
         break;
       }
 
-      if (v == UINT16_MAX - 1) {                // cell voltage is above 65,534V
+      if (v == UINT16_MAX - 1) {
+        // cell voltage is above 65,534V
+        // add to the next array element to get the correct voltage
         voltage_acc += coalesce_voltage;
-        continue;                               // add to the next array element to get the correct voltage
+        continue;
       }
 
       cell_voltage = voltage_acc + (v * 0.001f);    // 1 mV

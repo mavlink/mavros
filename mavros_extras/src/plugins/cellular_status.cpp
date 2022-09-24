@@ -74,7 +74,7 @@ private:
     uas->send_message(cs);
   }
 };
-}       // namespace std_plugins
+}       // namespace extra_plugins
 }       // namespace mavros
 
 #include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT

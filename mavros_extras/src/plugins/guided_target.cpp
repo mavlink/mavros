@@ -79,16 +79,19 @@ public:
   }
 
 private:
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr setpointg_pub;          //!< global position target from FCU
-  rclcpp::Subscription<geographic_msgs::msg::GeoPointStamped>::SharedPtr gp_origin_sub; //!< global origin LLA
+  //! global position target from FCU
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr setpointg_pub;
+  //! global origin LLA
+  rclcpp::Subscription<geographic_msgs::msg::GeoPointStamped>::SharedPtr gp_origin_sub;
 
-  Eigen::Vector3d current_gps;                  //!< geodetic coordinates LLA
-  Eigen::Vector3d current_local_pos;            //!< Current local position in ENU
+  Eigen::Vector3d current_gps;          //!< geodetic coordinates LLA
+  Eigen::Vector3d current_local_pos;    //!< Current local position in ENU
 
-  Eigen::Vector3d map_origin {};                //!< oigin of map frame [lla]
-  Eigen::Vector3d ecef_origin {};               //!< geocentric origin [m]
+  Eigen::Vector3d map_origin {};        //!< oigin of map frame [lla]
+  Eigen::Vector3d ecef_origin {};       //!< geocentric origin [m]
 
-  uint32_t old_gps_stamp = 0;                   //!< old time gps time stamp in [ms], to check if new gps msg is received
+  //! old time gps time stamp in [ms], to check if new gps msg is received
+  uint32_t old_gps_stamp = 0;
 
   std::string frame_id;
   bool is_map_init;

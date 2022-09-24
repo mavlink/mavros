@@ -51,7 +51,7 @@ using utils::enum_value;
 class MountStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-  MountStatusDiag(const std::string & name)
+  explicit MountStatusDiag(const std::string & name)
   : diagnostic_updater::DiagnosticTask(name),
     _last_orientation_update(0, 0),
     _debounce_s(NAN),
@@ -105,7 +105,8 @@ public:
     bool stale = false;
 
     if (_mode != mavros_msgs::msg::MountControl::MAV_MOUNT_MODE_MAVLINK_TARGETING) {
-      // Can only directly compare the MAV_CMD_DO_MOUNT_CONTROL angles with the MOUNT_ORIENTATION angles when in MAVLINK_TARGETING mode
+      // Can only directly compare the MAV_CMD_DO_MOUNT_CONTROL angles with
+      // the MOUNT_ORIENTATION angles when in MAVLINK_TARGETING mode
       stat.summary(DiagnosticStatus::WARN, "Can not diagnose in this targeting mode");
       stat.addf("Mode", "%d", _mode);
       return;
@@ -145,15 +146,16 @@ public:
     }
 
     // debounce errors
+    // *INDENT-OFF*
     if (stale) {
       stat.summary(DiagnosticStatus::STALE, "No MOUNT_ORIENTATION received in the last 5 s");
     } else if (_error_detected &&
-      (now - _error_started > rclcpp::Duration(std::chrono::duration<double>(_debounce_s))))
-    {
+      (now - _error_started > rclcpp::Duration(std::chrono::duration<double>(_debounce_s)))) {
       stat.summary(DiagnosticStatus::ERROR, "angle error too high");
     } else {
       stat.summary(DiagnosticStatus::OK, "Normal");
     }
+    // *INDENT-ON*
 
     stat.addf("Roll err (deg)", "%.1f", roll_err_deg);
     stat.addf("Pitch err (deg)", "%.1f", pitch_err_deg);
@@ -278,7 +280,8 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     const auto timestamp = node->now();
-    // some gimbals send negated/inverted angle measurements, correct that to obey the MAVLink frame convention
+    // some gimbals send negated/inverted angle measurements,
+    // correct that to obey the MAVLink frame convention
     if (negate_measured_roll) {
       mo.roll = -mo.roll;
     }
