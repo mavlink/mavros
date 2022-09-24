@@ -195,14 +195,14 @@ def main():
     load_args.add_argument('-p', '--preserve-home', action='store_true', help="Preserve home location (WP 0, APM only)")
     load_args.add_argument('-s', '--start-index', type=int, default=0, help="Waypoint start index for partial updating (APM only)")
     load_args.add_argument('-e', '--end-index', type=int, default=0, help="Waypoint end index for partial updating (APM only, default: last element in waypoint list)")
-    load_args.add_argument('file', type=argparse.FileType('rb'), help="Input file (QGC/MP format)")
+    load_args.add_argument('file', type=argparse.FileType('r'), help="Input file (QGC/MP format)")
 
     pull_args = subarg.add_parser('pull', help="Pull waypoints from FCU")
     pull_args.set_defaults(func=do_pull)
 
     dump_args = subarg.add_parser('dump', help="Dump waypoints to file")
     dump_args.set_defaults(func=do_dump)
-    dump_args.add_argument('file', type=argparse.FileType('wb'), help="Output file (QGC format)")
+    dump_args.add_argument('file', type=argparse.FileType('w'), help="Output file (QGC format)")
 
     clear_args = subarg.add_parser('clear', help="Clear waypoints on device")
     clear_args.set_defaults(func=do_clear)
