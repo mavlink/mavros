@@ -90,7 +90,7 @@ private:
 
   uint32_t old_gps_stamp = 0;                   //!< old time gps time stamp in [ms], to check if new gps msg is received
 
-  string frame_id;
+  std::string frame_id;
   bool is_map_init;
 
   Eigen::Vector2d prev;
@@ -116,6 +116,7 @@ private:
       RCLCPP_WARN_STREAM(get_logger(), "setpoint: Caught exception: " << e.what() << std::endl);
       return;
     }
+
     is_map_init = true;
   }
 
@@ -165,7 +166,7 @@ private:
 
     /* convert ECEF target to ENU */
     const Eigen::Vector3d local_ecef = pos_target_ecef - ecef_origin;
-    tf2::toMsg(ftf::transform_frame_ecef_enu(local_ecef, map_origin), pose.pose.position);
+    pose.pose.position = tf2::toMsg(ftf::transform_frame_ecef_enu(local_ecef, map_origin));
     pose.pose.position.z = 0.0;                 // force z-axis to zero
 
     /* publish target */
