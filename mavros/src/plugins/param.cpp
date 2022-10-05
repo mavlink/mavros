@@ -497,6 +497,8 @@ private:
 
 			ROS_DEBUG_STREAM_NAMED("param", "PR: New param " << p.to_string());
 		}
+        // set rosparam on each param message
+        param_nh.setParam(parameters[param_id].param_id, parameters[param_id].param_value);
 
 		if (param_state == PR::RXLIST || param_state == PR::RXPARAM || param_state == PR::RXPARAM_TIMEDOUT) {
 
