@@ -172,10 +172,15 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message &msg, uin
 
 void MAVConnInterface::set_protocol_version(Protocol pver)
 {
-	if (pver == Protocol::V10)
+	if (pver == Protocol::V10) {
 		m_mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-	else
+		m_parse_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+	
+	}
+	else {
 		m_mavlink_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+		m_parse_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+	}
 }
 
 Protocol MAVConnInterface::get_protocol_version()
