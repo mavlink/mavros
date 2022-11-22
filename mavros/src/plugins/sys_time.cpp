@@ -55,7 +55,7 @@ public:
 		count_ = 0;
 		rtt_sum = 0;
 
-		for (int i = 0; i < window_size_; i++)
+		for (size_t i = 0; i < window_size_; i++)
 		{
 			times_[i] = curtime;
 			seq_nums_[i] = count_;
