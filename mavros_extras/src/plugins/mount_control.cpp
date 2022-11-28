@@ -166,8 +166,8 @@ class MountControlPlugin : public plugin::PluginBase {
 public:
 	MountControlPlugin() : PluginBase(),
 		nh("~"),
-		mount_diag("Mount"),
-		mount_nh("~mount_control")
+		mount_nh("~mount_control"),
+		mount_diag("Mount")
 	{ }
 
 	void initialize(UAS &uas_) override
