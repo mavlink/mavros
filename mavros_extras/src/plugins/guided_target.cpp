@@ -183,7 +183,7 @@ private:
 
 		/* publish target */
 
-		if (pose->pose.position.x != arr[0] | pose->pose.position.y != arr[1]) {
+		if (pose->pose.position.x != arr[0] || pose->pose.position.y != arr[1]) {
 			setpointg_pub.publish(pose);
 		}
 
