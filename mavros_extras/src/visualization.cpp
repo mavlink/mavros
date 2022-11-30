@@ -74,7 +74,7 @@ static void publish_track_marker(const geometry_msgs::PoseStamped::ConstPtr &pos
 		track_marker->points.push_back(pose->pose.position);
 	else track_marker->points[marker_idx] = pose->pose.position;
 
-	marker_idx = ++marker_idx % max_track_size;
+	marker_idx = (marker_idx + 1) % max_track_size;
 
 	track_marker->header = pose->header;
 	track_marker_pub.publish(track_marker);
