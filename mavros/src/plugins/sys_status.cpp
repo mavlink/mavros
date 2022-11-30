@@ -528,7 +528,7 @@ public:
 		UAS_DIAG(m_uas).add(hb_diag);
 		if (!disable_diag) {
 			UAS_DIAG(m_uas).add(sys_diag);
-			for (int i = 0; i < MAX_NR_BATTERY_STATUS && i < min_voltage.size(); ++i) {
+			for (size_t i = 0; i < MAX_NR_BATTERY_STATUS && i < min_voltage.size(); ++i) {
 				batt_diag[i].set_min_voltage(min_voltage[i]);
 				UAS_DIAG(m_uas).add(batt_diag[i]);
 			}

@@ -76,7 +76,7 @@ private:
 	}
 
 	void handle_statustext_raw(const mavlink::mavlink_message_t *msg, const mavconn::Framing f) {
-		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext_raw(%p, %d) from %u.%u", msg, utils::enum_value(f), msg->sysid, msg->compid);
+		ROS_INFO_NAMED("dummy", "Dummy::handle_statustext_raw(%p, %d) from %u.%u", (void *)msg, utils::enum_value(f), msg->sysid, msg->compid);
 	}
 };
 

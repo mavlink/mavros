@@ -485,7 +485,7 @@ protected:
 	//! @brief set the FCU current waypoint
 	void set_current_waypoint(size_t seq)
 	{
-		auto i = 0;
+		size_t i = 0;
 		for (auto &it : waypoints) {
 			it.is_current = (i == seq) ? true : false;
 			i++;
