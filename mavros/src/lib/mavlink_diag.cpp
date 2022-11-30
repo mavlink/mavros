@@ -19,7 +19,7 @@ MavlinkDiag::MavlinkDiag(std::string name) :
 	diagnostic_updater::DiagnosticTask(name),
 	last_drop_count(0),
 	is_connected(false)
-{ };
+{ }
 
 void MavlinkDiag::run(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
