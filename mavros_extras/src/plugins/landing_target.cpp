@@ -17,7 +17,7 @@
 #include <mavros/utils.h>
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseStamped.h>
