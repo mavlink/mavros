@@ -133,7 +133,7 @@ private:
     // p = "dv_msg"
     // val = "debug"
     //
-    // def common_filler(type_, time_f, index, name):
+    // def common_filler(type_, time_f, index, name, disable_array_id = True):
     //     if isinstance(index, str):
     //         index = val + "." + index
     //
@@ -141,6 +141,8 @@ private:
     //     cog.outl(f"""{p}.header.stamp = uas->synchronise_stamp({val}.{time_f});""")
     //     cog.outl(f"""{p}.type = DV::{type_};""")
     //     cog.outl(f"""{p}.index = {index};""")
+    //     if disable_array_id:
+    //         cog.outl(f"""{p}.array_id = -1;""")
     //     if name:
     //         cog.outl(f"""{p}.name = mavlink::to_string({val}.{name});""")
     //
@@ -151,8 +153,9 @@ private:
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_boot_ms);
     dv_msg.type = DV::TYPE_DEBUG;
     dv_msg.index = debug.ind;
+    dv_msg.array_id = -1;
     dv_msg.value_float = debug.value;
-    // [[[end]]] (checksum: 80717da0ef122f51bafbe0302e4adee1)
+    // [[[end]]] (checksum: ef695729241176edd2e06592ed20549b)
 
     debug_logger(debug.get_name(), dv_msg);
     debug_pub->publish(dv_msg);
@@ -182,12 +185,13 @@ private:
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
     dv_msg.type = DV::TYPE_DEBUG_VECT;
     dv_msg.index = -1;
+    dv_msg.array_id = -1;
     dv_msg.name = mavlink::to_string(debug.name);
     dv_msg.data.resize(3);
     dv_msg.data[0] = debug.x;
     dv_msg.data[1] = debug.y;
     dv_msg.data[2] = debug.z;
-    // [[[end]]] (checksum: 3c4906cf2feac357834adaa6bedd4e87)
+    // [[[end]]] (checksum: 8abb1284bdb29874a87fee9808570f05)
 
     debug_logger(debug.get_name(), dv_msg);
     debug_vector_pub->publish(dv_msg);
@@ -210,14 +214,14 @@ private:
     // cog.outl("{p}->array_id = {val}.array_id;".format(**locals()))
     // cog.outl("{p}->data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
     // ]]]
-    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
-    dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_usec);
-    dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG_FLOAT_ARRAY;
-    dv_msg->index = -1;
-    dv_msg->name = mavlink::to_string(debug.name);
+    DV dv_msg;
+    dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
+    dv_msg.type = DV::TYPE_DEBUG_FLOAT_ARRAY;
+    dv_msg.index = -1;
+    dv_msg.name = mavlink::to_string(debug.name);
     dv_msg->array_id = debug.array_id;
     dv_msg->data.assign(debug.data.begin(), debug.data.end());
-    // [[[end]]] (checksum: a27f0f0d80be19127fe9838a867e85b4)
+    // [[[end]]] (checksum: 0df6e636e3c33d1d83dc6e9bad43ef1e)
 
     debug_logger(debug.get_name(), *dv_msg);
     debug_float_array_pub.publish(dv_msg);
@@ -244,9 +248,10 @@ private:
     dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
     dv_msg.type = DV::TYPE_NAMED_VALUE_FLOAT;
     dv_msg.index = -1;
+    dv_msg.array_id = -1;
     dv_msg.name = mavlink::to_string(value.name);
     dv_msg.value_float = value.value;
-    // [[[end]]] (checksum: 0b4a3bac4bf9e2b24654349cd9420f3b)
+    // [[[end]]] (checksum: 8c243c3e607db7bf0758cd4ac3aca976)
 
     debug_logger(value.get_name(), dv_msg);
     named_value_float_pub->publish(dv_msg);
@@ -271,9 +276,10 @@ private:
     dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
     dv_msg.type = DV::TYPE_NAMED_VALUE_INT;
     dv_msg.index = -1;
+    dv_msg.array_id = -1;
     dv_msg.name = mavlink::to_string(value.name);
     dv_msg.value_int = value.value;
-    // [[[end]]] (checksum: 7906d63b5eb041cf66d5bfb4b688cbdb)
+    // [[[end]]] (checksum: 32cb48d5dad85c622997aeb6d34c255e)
 
     debug_logger(value.get_name(), dv_msg);
     named_value_int_pub->publish(dv_msg);
