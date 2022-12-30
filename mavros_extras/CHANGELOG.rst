@@ -2,6 +2,23 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1811 <https://github.com/mavlink/mavros/issues/1811>`_ from scoutdi/debug-float-array
+  Implement debug float array handler
+* Implement debug float array handler
+  Co-authored-by: Morten Fyhn Amundsen <morten.f.amundsen@scoutdi.com>
+* Merge pull request `#1807 <https://github.com/mavlink/mavros/issues/1807>`_ from scoutdi/fix-bitwise-comparison
+  mavros_extras: Fix a comparison that shouldn't be bitwise
+* Merge pull request `#1808 <https://github.com/mavlink/mavros/issues/1808>`_ from scoutdi/fix-sequence-point-warning
+  mavros_extras: Fix a sequence point warning
+* mavros_extras: Fix a sequence point warning
+* mavros_extras: Fix a comparison that shouldn't be bitwise
+* Merge pull request `#1805 <https://github.com/mavlink/mavros/issues/1805>`_ from scoutdi/fix-latlon-check
+  mavros_extras: Fix buggy check for lat/lon ignored
+* mavros_extras: Fix buggy check for lat/lon ignored
+* Contributors: Morten Fyhn Amundsen, Sverre Velten Rothmund, Vladimir Ermakov
+
 1.14.0 (2022-09-24)
 -------------------
 * Merge pull request `#1780 <https://github.com/mavlink/mavros/issues/1780>`_ from snktshrma/master
