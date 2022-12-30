@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.15.0 (2022-12-30)
+-------------------
 * Merge pull request `#1806 <https://github.com/mavlink/mavros/issues/1806>`_ from scoutdi/fix-some-warnings
   mavros: Fix some warnings
 * mavros: Fix some warnings

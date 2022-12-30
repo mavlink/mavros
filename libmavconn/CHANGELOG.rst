@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.15.0 (2022-12-30)
+-------------------
 * Merge pull request `#1794 <https://github.com/mavlink/mavros/issues/1794>`_ from rossizero/master
   libmavconn: fix MAVLink v1.0 output selection
 * libmavconn: fix MAVLink v1.0 output selection
