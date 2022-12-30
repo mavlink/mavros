@@ -2,6 +2,28 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* msgs: re-generate
+* Merge branch 'master' into ros2
+  * master:
+  1.15.0
+  update changelog
+  ci: update actions
+  Implement debug float array handler
+  mavros_extras: Fix a sequence point warning
+  mavros_extras: Fix a comparison that shouldn't be bitwise
+  mavros: Fix some warnings
+  mavros_extras: Fix buggy check for lat/lon ignored
+  libmavconn: fix MAVLink v1.0 output selection
+* 1.15.0
+* update changelog
+* Merge pull request `#1811 <https://github.com/mavlink/mavros/issues/1811>`_ from scoutdi/debug-float-array
+  Implement debug float array handler
+* Implement debug float array handler
+  Co-authored-by: Morten Fyhn Amundsen <morten.f.amundsen@scoutdi.com>
+* Contributors: Sverre Velten Rothmund, Vladimir Ermakov
+
 2.3.0 (2022-09-24)
 ------------------
 * Merge branch 'master' into ros2

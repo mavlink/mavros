@@ -2,6 +2,40 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: uncrustify
+* extras: fix build, 2
+* extras: fix build
+* extras: fix cog
+* Merge branch 'master' into ros2
+  * master:
+  1.15.0
+  update changelog
+  ci: update actions
+  Implement debug float array handler
+  mavros_extras: Fix a sequence point warning
+  mavros_extras: Fix a comparison that shouldn't be bitwise
+  mavros: Fix some warnings
+  mavros_extras: Fix buggy check for lat/lon ignored
+  libmavconn: fix MAVLink v1.0 output selection
+* 1.15.0
+* update changelog
+* Merge pull request `#1811 <https://github.com/mavlink/mavros/issues/1811>`_ from scoutdi/debug-float-array
+  Implement debug float array handler
+* Implement debug float array handler
+  Co-authored-by: Morten Fyhn Amundsen <morten.f.amundsen@scoutdi.com>
+* Merge pull request `#1807 <https://github.com/mavlink/mavros/issues/1807>`_ from scoutdi/fix-bitwise-comparison
+  mavros_extras: Fix a comparison that shouldn't be bitwise
+* Merge pull request `#1808 <https://github.com/mavlink/mavros/issues/1808>`_ from scoutdi/fix-sequence-point-warning
+  mavros_extras: Fix a sequence point warning
+* mavros_extras: Fix a sequence point warning
+* mavros_extras: Fix a comparison that shouldn't be bitwise
+* Merge pull request `#1805 <https://github.com/mavlink/mavros/issues/1805>`_ from scoutdi/fix-latlon-check
+  mavros_extras: Fix buggy check for lat/lon ignored
+* mavros_extras: Fix buggy check for lat/lon ignored
+* Contributors: Morten Fyhn Amundsen, Sverre Velten Rothmund, Vladimir Ermakov
+
 2.3.0 (2022-09-24)
 ------------------
 * extras: fix linter errors
