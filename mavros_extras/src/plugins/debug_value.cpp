@@ -223,8 +223,8 @@ private:
     dv_msg.data.assign(debug.data.begin(), debug.data.end());
     // [[[end]]] (checksum: e13bbba22bff5b74db32092d8787c6b4)
 
-    debug_logger(debug.get_name(), *dv_msg);
-    debug_float_array_pub.publish(dv_msg);
+    debug_logger(debug.get_name(), dv_msg);
+    debug_float_array_pub->publish(dv_msg);
   }
 
   /**
