@@ -296,7 +296,7 @@ protected:
 
   inline mavlink::mavlink_status_t * get_status_p()
   {
-    return &m_mavlink_status;
+    return &m_parse_status;
   }
 
   inline mavlink::mavlink_message_t * get_buffer_p()

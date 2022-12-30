@@ -187,8 +187,10 @@ void MAVConnInterface::set_protocol_version(Protocol pver)
 {
   if (pver == Protocol::V10) {
     m_mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    m_parse_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
   } else {
     m_mavlink_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+    m_parse_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
   }
 }
 

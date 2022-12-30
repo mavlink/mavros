@@ -258,6 +258,14 @@ Changelog for package libmavconn
 * disable all packages but messages
 * Contributors: Mikael Arguedas, Vladimir Ermakov
 
+1.15.0 (2022-12-30)
+-------------------
+* Merge pull request `#1794 <https://github.com/mavlink/mavros/issues/1794>`_ from rossizero/master
+  libmavconn: fix MAVLink v1.0 output selection
+* libmavconn: fix MAVLink v1.0 output selection
+  Fix `#1787 <https://github.com/mavlink/mavros/issues/1787>`_
+* Contributors: Vladimir Ermakov, rosrunne
+
 1.14.0 (2022-09-24)
 -------------------
 * libmavconn: fix MAVLink v1.0 output selection

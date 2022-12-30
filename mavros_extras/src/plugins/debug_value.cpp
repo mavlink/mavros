@@ -14,6 +14,7 @@
  * @{
  */
 
+#include <algorithm>
 #include <string>
 
 #include "rcpputils/asserts.hpp"
@@ -48,6 +49,7 @@ public:
     // publishers
     debug_pub = node->create_publisher<DV>("~/debug", 10);
     debug_vector_pub = node->create_publisher<DV>("~/debug_vector", 10);
+    debug_float_array_pub = node->create_publisher<DV>("~/debug_float_array", 10);
     named_value_float_pub = node->create_publisher<DV>("~/named_value_float", 10);
     named_value_int_pub = node->create_publisher<DV>("~/named_value_int", 10);
   }
@@ -57,6 +59,7 @@ public:
     return {
       make_handler(&DebugValuePlugin::handle_debug),
       make_handler(&DebugValuePlugin::handle_debug_vector),
+      make_handler(&DebugValuePlugin::handle_debug_float_array),
       make_handler(&DebugValuePlugin::handle_named_value_float),
       make_handler(&DebugValuePlugin::handle_named_value_int)
     };
@@ -69,6 +72,7 @@ private:
 
   rclcpp::Publisher<DV>::SharedPtr debug_pub;
   rclcpp::Publisher<DV>::SharedPtr debug_vector_pub;
+  rclcpp::Publisher<DV>::SharedPtr debug_float_array_pub;
   rclcpp::Publisher<DV>::SharedPtr named_value_float_pub;
   rclcpp::Publisher<DV>::SharedPtr named_value_int_pub;
 
@@ -190,8 +194,35 @@ private:
   }
 
   /**
-   * @todo: add handler for DEBUG_ARRAY (https://github.com/mavlink/mavlink/pull/734)
+   * @brief Handle DEBUG_FLOAT_ARRAY message.
+   * Message specification: https://mavlink.io/en/messages/common.html#DEBUG_FLOAT_ARRAY
+   * @param msg	Received Mavlink msg
+   * @param debug	DEBUG_FLOAT_ARRAY msg
    */
+  void handle_debug_float_array(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::DEBUG_FLOAT_ARRAY & debug,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
+  {
+    // [[[cog:
+    // common_filler("TYPE_DEBUG_FLOAT_ARRAY", "time_usec", -1, "name", False)
+    //
+    // cog.outl("{p}->array_id = {val}.array_id;".format(**locals()))
+    // cog.outl("{p}->data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
+    // ]]]
+    auto dv_msg = boost::make_shared<mavros_msgs::DebugValue>();
+    dv_msg->header.stamp = m_uas->synchronise_stamp(debug.time_usec);
+    dv_msg->type = mavros_msgs::DebugValue::TYPE_DEBUG_FLOAT_ARRAY;
+    dv_msg->index = -1;
+    dv_msg->name = mavlink::to_string(debug.name);
+    dv_msg->array_id = debug.array_id;
+    dv_msg->data.assign(debug.data.begin(), debug.data.end());
+    // [[[end]]] (checksum: a27f0f0d80be19127fe9838a867e85b4)
+
+    debug_logger(debug.get_name(), *dv_msg);
+    debug_float_array_pub.publish(dv_msg);
+  }
+
 
   /**
    * @brief Handle NAMED_VALUE_FLOAT message.
@@ -284,9 +315,18 @@ private:
           uas->send_message(debug);
           break;
         }
-      // case DV::TYPE_DEBUG_ARRAY: {
-      //   return;
-      // }
+      case DV::TYPE_DEBUG_FLOAT_ARRAY: {
+          mavlink::common::msg::DEBUG_FLOAT_ARRAY debug {};
+
+          debug.time_usec = get_time_usec(req->header.stamp);
+          mavlink::set_string(debug.name, req->name);
+          std::copy_n(
+            req->data.begin(), std::min(req->data.size(), debug.data.size()),
+            std::begin(debug.data));
+
+          uas->send_message(debug);
+          break;
+        }
       case DV::TYPE_NAMED_VALUE_FLOAT: {
           mavlink::common::msg::NAMED_VALUE_FLOAT value {};
 
