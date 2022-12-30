@@ -211,22 +211,21 @@ private:
     // [[[cog:
     // common_filler("TYPE_DEBUG_FLOAT_ARRAY", "time_usec", -1, "name", False)
     //
-    // cog.outl("{p}->array_id = {val}.array_id;".format(**locals()))
-    // cog.outl("{p}->data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
+    // cog.outl("{p}.array_id = {val}.array_id;".format(**locals()))
+    // cog.outl("{p}.data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
     // ]]]
     DV dv_msg;
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
     dv_msg.type = DV::TYPE_DEBUG_FLOAT_ARRAY;
     dv_msg.index = -1;
     dv_msg.name = mavlink::to_string(debug.name);
-    dv_msg->array_id = debug.array_id;
-    dv_msg->data.assign(debug.data.begin(), debug.data.end());
-    // [[[end]]] (checksum: 0df6e636e3c33d1d83dc6e9bad43ef1e)
+    dv_msg.array_id = debug.array_id;
+    dv_msg.data.assign(debug.data.begin(), debug.data.end());
+    // [[[end]]] (checksum: e13bbba22bff5b74db32092d8787c6b4)
 
     debug_logger(debug.get_name(), *dv_msg);
     debug_float_array_pub.publish(dv_msg);
   }
-
 
   /**
    * @brief Handle NAMED_VALUE_FLOAT message.
