@@ -16,8 +16,8 @@ else:
 import pathlib
 import re
 import typing
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
+import xml.etree.ElementTree as ET  # nosemgrep
+from xml.dom import minidom  # nosemgrep
 
 import attr
 from comment_parser import comment_parser

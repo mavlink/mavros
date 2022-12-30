@@ -54,7 +54,7 @@ def print_version(ctx, param_, value):
     if not value or ctx.resilient_parsing:
         return
 
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # nosemgrep
 
     import ament_index_python as aip
 
