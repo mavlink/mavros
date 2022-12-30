@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2022-12-30)
+------------------
 * msgs: re-generate
 * Merge branch 'master' into ros2
   * master:

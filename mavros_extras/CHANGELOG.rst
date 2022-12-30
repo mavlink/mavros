@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2022-12-30)
+------------------
 * extras: uncrustify
 * extras: fix build, 2
 * extras: fix build

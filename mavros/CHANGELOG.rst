@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2022-12-30)
+------------------
 * ci: ignore xml lib warn
 * Merge branch 'master' into ros2
   * master:
