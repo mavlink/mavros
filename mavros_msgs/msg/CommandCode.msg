@@ -46,6 +46,9 @@ uint16 AIRFRAME_CONFIGURATION = 2520
 # MAV_CMD_ARM
 uint16 ARM_AUTHORIZATION_REQUEST = 3001            # Request authorization to arm the vehicle to a external entity, the arm authorizer is responsible to request all data that is needs from the vehicle before authorize or deny the request. If approved the progress of command_ack message should be set with period of time that this authorization is valid in seconds or in case it was denied it should be set with one of the reasons in ARM_AUTH_DENIED_REASON.
 
+# MAV_CMD_CAN
+uint16 CAN_FORWARD = 32000                         # Request forwarding of CAN packets from the given CAN bus to this interface. CAN Frames are sent using CAN_FRAME and CANFD_FRAME messages
+
 # MAV_CMD_COMPONENT
 uint16 COMPONENT_ARM_DISARM = 400                  # Arms / Disarms a component
 
@@ -104,6 +107,7 @@ uint16 DO_ENGINE_CONTROL = 223                     # Control vehicle engine. Thi
 uint16 DO_SET_MISSION_CURRENT = 224                # Set the mission item with sequence number seq as current item. This means that the MAV will continue to this mission item on the shortest path (not following the mission items in-between).
 uint16 DO_LAST = 240                               # NOP - This command is only used to mark the upper limit of the DO commands in the enumeration
 uint16 DO_JUMP_TAG = 601                           # Jump to the matching tag in the mission list. Repeat this action for the specified number of times. A mission should contain a single matching tag for each jump. If this is not the case then a jump to a missing tag should complete the mission, and a jump where there are multiple matching tags should always select the one with the lowest mission sequence number.
+uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # High level setpoint to be sent to a gimbal manager to set a gimbal attitude. It is possible to set combinations of the values below. E.g. an angle as well as a desired angular rate can be used to get to this angle at a certain angular rate, or an angular rate only will result in continuous turning. NaN is to be used to signal unset. Note: a gimbal is never to react to this command but only the gimbal manager.
 uint16 DO_TRIGGER_CONTROL = 2003                   # Enable or disable on-board camera triggering system.
 uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
 uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
@@ -146,7 +150,7 @@ uint16 NAV_LOITER_TO_ALT = 31                      # Begin loiter at the specifi
 uint16 NAV_ROI = 80                                # Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 NAV_PATHPLANNING = 81                       # Control autonomous path planning on the MAV.
 uint16 NAV_SPLINE_WAYPOINT = 82                    # Navigate to waypoint using a spline path.
-uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading.
+uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading. The command should be ignored by vehicles that dont support both VTOL and fixed-wing flight (multicopters, boats,etc.).
 uint16 NAV_VTOL_LAND = 85                          # Land using VTOL mode
 uint16 NAV_GUIDED_ENABLE = 92                      # hand control over to an external controller
 uint16 NAV_DELAY = 93                              # Delay the next navigation command a number of seconds or until a specified time
@@ -240,4 +244,4 @@ uint16 WAYPOINT_USER_3 = 31002                     # User defined waypoint item.
 uint16 WAYPOINT_USER_4 = 31003                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
 uint16 WAYPOINT_USER_5 = 31004                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
 
-# [[[end]]] (checksum: 26d32d1d05760f90913f8d9f0ec221ce)
+# [[[end]]] (checksum: 77e70a4f67838b47c3d086432dd58cb7)
