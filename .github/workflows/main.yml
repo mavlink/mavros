@@ -15,7 +15,7 @@ jobs:
           # - {ROS_DISTRO: galactic, ROS_REPO: testing}
           - {ROS_DISTRO: galactic, ROS_REPO: main}
           - {ROS_DISTRO: humble, ROS_REPO: main}
-          # - {ROS_DISTRO: rolling, ROS_REPO: main}
+          - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
       AFTER_INSTALL_TARGET_DEPENDENCIES: ./mavros/scripts/install_geographiclib_datasets.sh
