@@ -34,6 +34,28 @@ fake\_gps
 Sends fake GPS from local position estimation source data (motion capture, vision) to FCU.
 
 
+gimbal\_control
+----
+
+Adds support for Mavlink Gimbal Protocol v2.  To publish to tf, set parameter 
+tf_send=True.  The implementation of this plugin has been tested with a 
+Freefly Astro with the mapping payload as well as with Auterion Sim.  The
+plugin was built following the specifications available at 
+https://mavlink.io/en/services/gimbal_v2.html with some adaptation to better
+suit ROS2 and support tf publishing with child frame labels specified by the 
+gimbal_device_id field of gimbal_attitude_msg.  This should enable support for
+multiple gimbal devices on the target platform publishing to different leaves
+of the tf tree.  The assumed frame for each gimbal device is base_link_frd.  
+When taking control of the gimbal with the GimbalManagerConfigure, sysid_primary 
+can be set to -2, and default gimbal_device_id is 154, though 0 can be used for all
+gimbal devices.  After taking control of the gimbal, you can set RoI's or manually
+set the gimbal's orientation using the service calls provided.  The topic publishers
+for gimbal control have not been successfully validated, though this is possibly due
+to the implimentation on the Freefly Astro or with Auterion's simulator.  Feel
+free to reach out to mark.beaty@adinkratech.com with any questions or feedback on
+this plugin!
+
+
 gps\_input
 -----------
 

@@ -1,0 +1,27 @@
+# MAVLink commands: DO_GIMBAL_MANAGER_PITCHYAW
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW
+
+
+float32 pitch # Pitch angle (positive to pitch up, relative to vehicle for FOLLOW mode, relative to world horizon for LOCK mode). (-180 to 180 deg)
+float32 yaw # Yaw angle (positive to yaw to the right, relative to vehicle for FOLLOW mode, absolute to North for LOCK mode). (-180 to 180 deg)
+float32 pitch_rate # Pitch rate (positive to pitch up). (deg/s)
+float32 yaw_rate # Yaw rate (positive to yaw to the right). (deg/s)
+
+uint32 flags # High level gimbal manager flags to use - See GIMBAL_MANAGER_FLAGS
+#GIMBAL_MANAGER_FLAGS
+uint32 GIMBAL_MANAGER_FLAGS_RETRACT = 1     # Based on GIMBAL_DEVICE_FLAGS_RETRACT
+uint32 GIMBAL_MANAGER_FLAGS_NEUTRAL = 2     # Based on GIMBAL_DEVICE_FLAGS_NEUTRAL
+uint32 GIMBAL_MANAGER_FLAGS_ROLL_LOCK = 4   # Based on GIMBAL_DEVICE_FLAGS_ROLL_LOCK
+uint32 GIMBAL_MANAGER_FLAGS_PITCH_LOCK = 8  # Based on GIMBAL_DEVICE_FLAGS_PITCH_LOCK
+uint32 GIMBAL_MANAGER_FLAGS_YAW_LOCK = 16   # Based on GIMBAL_DEVICE_FLAGS_YAW_LOCK
+
+uint8 gimbal_device_id  # Component ID of gimbal device to address 
+                        # (or 1-6 for non-MAVLink gimbal), 0 for all gimbal device
+                        # components. Send command multiple times for more than
+                        # one gimbal (but not all gimbals).  Default Mavlink gimbal 
+                        # device ids: 154, 171-175
+
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
