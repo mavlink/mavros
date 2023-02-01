@@ -1,0 +1,32 @@
+# MAVLink command: DO_GIMBAL_MANAGER_CONFIGURE
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE
+# Note: default MAV_COMP_ID_ONBOARD_COMPUTER = 191, see MAV_COMPONENT documentation
+# https://mavlink.io/en/messages/common.html#MAV_COMPONENT
+
+int16 sysid_primary      # Sysid for primary control (0: no one in control, 
+                        # -1: leave unchanged, -2: set itself in control 
+                        # (for missions where the own sysid is still unknown), 
+                        # -3: remove control if currently in control).
+int16 compid_primary     # Compid for primary control (0: no one in control, 
+                        # -1: leave unchanged, -2: set itself in control 
+                        # (for missions where the own sysid is still unknown), 
+                        # -3: remove control if currently in control).
+int16 sysid_secondary    # Sysid for secondary control (0: no one in control, 
+                        # -1: leave unchanged, -2: set itself in control 
+                        # (for missions where the own sysid is still unknown), 
+                        # -3: remove control if currently in control).
+int16 compid_secondary   # Compid for secondary control (0: no one in control, 
+                        # -1: leave unchanged, -2: set itself in control 
+                        # (for missions where the own sysid is still unknown), 
+                        # -3: remove control if currently in control).
+
+uint8 gimbal_device_id  # Component ID of gimbal device to address 
+                        # (or 1-6 for non-MAVLink gimbal), 0 for all gimbal device
+                        # components. Send command multiple times for more than
+                        # one gimbal (but not all gimbals).
+                        # Note: Default Mavlink gimbal device ids: 154, 171-175
+
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
