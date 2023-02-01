@@ -1,5 +1,5 @@
 /*
- * Copyright ###TODO###
+ * Copyright 2023 Adinkra Inc.
  *
  * This file is part of the mavros package and subject to the license terms
  * in the top-level LICENSE file of the mavros repository.
@@ -39,6 +39,7 @@
 #include "mavros_msgs/srv/gimbal_manager_configure.hpp"
 #include "mavros_msgs/srv/gimbal_manager_pitchyaw.hpp"
 #include "mavros_msgs/srv/gimbal_manager_set_roi.hpp"
+#include "mavros_msgs/srv/gimbal_manager_camera_track.hpp"
 
 namespace mavros
 {
@@ -60,7 +61,7 @@ using utils::enum_value;
  * @plugin gimbal_control
  *
  * Adds support for Mavlink Gimbal Protocol v2.
- * Also publishes gimbal pose to TF when parameter tf_send == True
+ * Also publishes gimbal pose to TF when parameter tf_send==true
  */
 class GimbalControlPlugin : public plugin::Plugin
 {
@@ -161,13 +162,18 @@ public:
       "~/manager/set_roi", std::bind(
         &GimbalControlPlugin::manager_set_roi_cb,
         this, _1, _2));
+
+    // --Not successfully validated--
+    gimbal_manager_camera_track = node->create_service<mavros_msgs::srv::GimbalManagerCameraTrack>(
+      "~/manager/camera_track", std::bind(
+        &GimbalControlPlugin::manager_camera_track,
+        this, _1, _2));
     
     // Client used by all services for sending mavros/cmd/command service calls, on a separate callback group to support nested service calls
     cmdClient = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command", rmw_qos_profile_services_default, cb_group);
     while (!cmdClient->wait_for_service(std::chrono::seconds(5))) {
         RCLCPP_ERROR(node->get_logger(), "GimbalControl: mavros/cmd/command service not available after waiting");
     }
-    RCLCPP_INFO(node->get_logger(), "GimbalControl Initialized"); //TODO: maybe delete this line
   }
 
   Subscriptions get_subscriptions() override
@@ -201,6 +207,7 @@ private:
   rclcpp::Service<mavros_msgs::srv::GimbalManagerConfigure>::SharedPtr gimbal_manager_configure_srv;
   rclcpp::Service<mavros_msgs::srv::GimbalManagerPitchyaw>::SharedPtr gimbal_manager_pitchyaw_srv;
   rclcpp::Service<mavros_msgs::srv::GimbalManagerSetRoi>::SharedPtr gimbal_manager_set_roi_srv;
+  rclcpp::Service<mavros_msgs::srv::GimbalManagerCameraTrack>::SharedPtr gimbal_manager_camera_track;
 
   // Clients
   rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmdClient;
@@ -616,6 +623,9 @@ private:
         cmdrq->command = enum_value(MAV_CMD::DO_SET_ROI_NONE);
         cmdrq->param1 = req->gimbal_device_id;
       }
+      else {
+        throw UnknownModeEnumerator;
+      }
       
       // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
       auto future = cmdClient->async_send_request(cmdrq);
@@ -629,9 +639,68 @@ private:
     RCLCPP_ERROR_EXPRESSION(
       get_logger(), !res->success, "GimbalManager - set roi: plugin service call failed!");
   }
+
+  /**
+   * @brief Set camera tracking mode and parameters
+   *
+   * Message specifications: 
+   * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_POINT
+   * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_RECTANGLE
+   * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_STOP_TRACKING
+   * @param req	- received GimbalControl msg
+   */
+  void manager_camera_track(
+    mavros_msgs::srv::GimbalManagerCameraTrack::Request::SharedPtr req,
+    mavros_msgs::srv::GimbalManagerCameraTrack::Response::SharedPtr res)
+  {
+    using mavlink::common::MAV_CMD;
+
+    try {
+      auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
+      if (req->mode == req->CAMERA_TRACK_MODE_POINT) {
+        cmdrq->command = enum_value(MAV_CMD::CAMERA_TRACK_POINT);
+        cmdrq->param1 = req->x;
+        cmdrq->param2 = req->y;
+        cmdrq->param3 = req->radius;
+      }
+      else if (req->mode == req->CAMERA_TRACK_MODE_RECTANGLE) {
+        cmdrq->command = enum_value(MAV_CMD::CAMERA_TRACK_RECTANGLE);
+        cmdrq->param1 = req->top_left_x;
+        cmdrq->param2 = req->top_left_y;
+        cmdrq->param3 = req->bottom_right_x;
+        cmdrq->param4 = req->bottom_right_y;
+      }
+      else if (req->mode == req->CAMERA_TRACK_MODE_STOP_TRACKING) {
+        cmdrq->command = enum_value(MAV_CMD::CAMERA_STOP_TRACKING);
+      }
+      else {
+        throw UnknownModeEnumerator;
+      }
+      
+      auto future = cmdClient->async_send_request(cmdrq);
+      auto response = future.get();
+      res->success = response->success;
+      res->result = response->result;
+    } catch (std::exception & ex) {
+      RCLCPP_ERROR(get_logger(), "GimbalManagerCameraTrack: %s", ex.what());
+    }
+
+    RCLCPP_ERROR_EXPRESSION(
+      get_logger(), !res->success, "GimbalManager - camera track: plugin service call failed!");
+  }
+
+  /**
+   * @brief Exception indicating the mode enumerator passed to a service call didn't match expectations
+  */
+  class UnknownModeEnumerator : private std::exception {
+    public:
+    char * what () {
+      return "Unknown Mode Enumerator";
+    }
+  }
 };
 }       // namespace extra_plugins
 }       // namespace mavros
 
 #include <mavros/mavros_plugin_register_macro.hpp>  // NOLINT
-MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::GimbalControlPlugin) //TODO
+MAVROS_PLUGIN_REGISTER(mavros::extra_plugins::GimbalControlPlugin)

@@ -132,6 +132,7 @@ set(srv_files
   srv/FileTruncate.srv
   srv/FileWrite.srv
   srv/GimbalGetInformation.srv
+  srv/GimbalManagerCameraTrack.srv
   srv/GimbalManagerConfigure.srv
   srv/GimbalManagerPitchyaw.srv
   srv/GimbalManagerSetRoi.srv
