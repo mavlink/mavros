@@ -50,6 +50,13 @@ set(msg_files
   msg/EstimatorStatus.msg
   msg/ExtendedState.msg
   msg/FileEntry.msg
+  msg/GimbalDeviceAttitudeStatus.msg
+  msg/GimbalDeviceInformation.msg
+  msg/GimbalDeviceSetAttitude.msg
+  msg/GimbalManagerInformation.msg
+  msg/GimbalManagerSetAttitude.msg
+  msg/GimbalManagerSetPitchyaw.msg
+  msg/GimbalManagerStatus.msg
   msg/GPSINPUT.msg
   msg/GPSRAW.msg
   msg/GPSRTK.msg
@@ -128,6 +135,10 @@ set(srv_files
   srv/FileRename.srv
   srv/FileTruncate.srv
   srv/FileWrite.srv
+  srv/GimbalGetInformation.srv
+  srv/GimbalManagerConfigure.srv
+  srv/GimbalManagerPitchyaw.srv
+  srv/GimbalManagerSetRoi.srv
   srv/LogRequestData.srv
   srv/LogRequestEnd.srv
   srv/LogRequestList.srv
