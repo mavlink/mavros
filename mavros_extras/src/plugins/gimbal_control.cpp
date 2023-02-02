@@ -624,7 +624,7 @@ private:
         cmdrq->param1 = req->gimbal_device_id;
       }
       else {
-        throw UnknownModeEnumerator;
+        throw UnknownModeEnumerator();
       }
       
       // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
@@ -674,7 +674,7 @@ private:
         cmdrq->command = enum_value(MAV_CMD::CAMERA_STOP_TRACKING);
       }
       else {
-        throw UnknownModeEnumerator;
+        throw UnknownModeEnumerator();
       }
       
       auto future = cmdClient->async_send_request(cmdrq);
@@ -693,11 +693,12 @@ private:
    * @brief Exception indicating the mode enumerator passed to a service call didn't match expectations
   */
   class UnknownModeEnumerator : private std::exception {
+    std::string output = "Unknown Mode Enumerator";
     public:
-    char * what () {
-      return "Unknown Mode Enumerator";
+    const char * what () {
+      return output.c_str();
     }
-  }
+  };
 };
 }       // namespace extra_plugins
 }       // namespace mavros
