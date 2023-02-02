@@ -624,7 +624,9 @@ private:
         cmdrq->param1 = req->gimbal_device_id;
       }
       else {
-        throw UnknownModeEnumerator();
+        res->success = false;
+        res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
+        return;
       }
       
       // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
@@ -674,7 +676,9 @@ private:
         cmdrq->command = enum_value(MAV_CMD::CAMERA_STOP_TRACKING);
       }
       else {
-        throw UnknownModeEnumerator();
+        res->success = false;
+        res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
+        return;
       }
       
       auto future = cmdClient->async_send_request(cmdrq);
@@ -688,17 +692,6 @@ private:
     RCLCPP_ERROR_EXPRESSION(
       get_logger(), !res->success, "GimbalManager - camera track: plugin service call failed!");
   }
-
-  /**
-   * @brief Exception indicating the mode enumerator passed to a service call didn't match expectations
-  */
-  class UnknownModeEnumerator : private std::exception {
-    std::string output = "Unknown Mode Enumerator";
-    public:
-    const char * what () {
-      return output.c_str();
-    }
-  };
 };
 }       // namespace extra_plugins
 }       // namespace mavros
