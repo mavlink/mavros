@@ -212,10 +212,9 @@ private:
   // Clients
   rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmdClient;
 
-  std::string frame_id;                 //!< origin frame for topic headers
-  std::string tf_frame_id;              //!< origin for TF
-  // std::string tf_child_frame_id;        //!< frame for TF
-  std::atomic<bool> tf_send;
+  std::string frame_id;       // origin frame for topic headers
+  std::string tf_frame_id;    // origin frame for TF
+  std::atomic<bool> tf_send;  // parameter for enabling TF publishing
 
   // Transform Publisher
   void publish_tf(mavros_msgs::msg::GimbalDeviceAttitudeStatus & gimbal_attitude_msg)
