@@ -84,7 +84,7 @@ public:
 		gp_hdg_pub = gp_nh.advertise<std_msgs::Float64>("compass_hdg", 10);
 
 		// global origin
-		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10);
+		gp_global_origin_pub = gp_nh.advertise<geographic_msgs::GeoPointStamped>("gp_origin", 10, true);
 		gp_set_global_origin_sub = gp_nh.subscribe("set_gp_origin", 10, &GlobalPositionPlugin::set_gp_origin_cb, this);
 
 		// home position subscriber to set "map" origin
