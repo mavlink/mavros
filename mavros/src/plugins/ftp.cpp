@@ -71,7 +71,6 @@ public:
     uint8_t req_opcode;         ///< Request opcode returned in kRspAck, kRspNak message
     uint8_t padding[2];         ///< 32 bit aligment padding
     uint32_t offset;            ///< Offsets for List and Read commands
-    uint8_t * data;              ///< command data, varies by Opcode
   };
 
   /// @brief Command opcodes
@@ -141,32 +140,32 @@ public:
 
   inline const uint8_t * data() const
   {
-    return header()->data;
+    return payload.data() + sizeof(PayloadHeader);
   }
 
   inline uint8_t * data()
   {
-    return header()->data;
+    return payload.data() + sizeof(PayloadHeader);
   }
 
   inline const char * data_c() const
   {
-    return reinterpret_cast<const char *>(header()->data);
+    return reinterpret_cast<const char *>(data());
   }
 
   inline char * data_c()
   {
-    return reinterpret_cast<char *>(header()->data);
+    return reinterpret_cast<char *>(data());
   }
 
   inline const uint32_t * data_u32() const
   {
-    return reinterpret_cast<const uint32_t *>(header()->data);
+    return reinterpret_cast<const uint32_t *>(data());
   }
 
   inline uint32_t * data_u32()
   {
-    return reinterpret_cast<uint32_t *>(header()->data);
+    return reinterpret_cast<uint32_t *>(data());
   }
 
   /**
