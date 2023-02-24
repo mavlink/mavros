@@ -59,11 +59,10 @@
     rot_covariance: 99999.0   # covariance for attitude?
     gps_uere: 1.0             # User Equivalent Range Error (UERE) of GPS sensor (m)
     use_relative_alt: true    # use relative altitude for local coordinates
-    tf:
-      send: false               # send TF?
-      frame_id: "map"  # TF frame_id
-      global_frame_id: "earth"  # TF earth frame_id
-      child_frame_id: "base_link" # TF child_frame_id
+    tf.send: false               # send TF?
+    tf.frame_id: "map"  # TF frame_id
+    tf.global_frame_id: "earth"  # TF earth frame_id
+    tf.child_frame_id: "base_link" # TF child_frame_id
 
 # imu_pub
 /mavros/imu:
@@ -79,23 +78,16 @@
 /mavros/local_position:
   ros__parameters:
     frame_id: "map"
-    tf:
-      send: false
-      frame_id: "map"
-      child_frame_id: "base_link"
-      send_fcu: false
+    tf.send: false
+    tf.frame_id: "map"
+    tf.child_frame_id: "base_link"
+    tf.send_fcu: false
 
 # param
 # None, used for FCU params
 
 # rc_io
 # None
-
-# safety_area
-/mavros/safety_area:
-  ros__parameters:
-    p1: {x:  1.0, y:  1.0, z:  1.0}
-    p2: {x: -1.0, y: -1.0, z: -1.0}
 
 # setpoint_accel
 /mavros/setpoint_accel:
@@ -107,11 +99,10 @@
   ros__parameters:
     reverse_thrust: false     # allow reversed thrust
     use_quaternion: false     # enable PoseStamped topic subscriber
-    tf:
-      listen: false           # enable tf listener (disable topic subscribers)
-      frame_id: "map"
-      child_frame_id: "target_attitude"
-      rate_limit: 50.0
+    tf.listen: false           # enable tf listener (disable topic subscribers)
+    tf.frame_id: "map"
+    tf.child_frame_id: "target_attitude"
+    tf.rate_limit: 50.0
 
 # setpoint_raw
 /mavros/setpoint_raw:
@@ -121,21 +112,19 @@
 # setpoint_position
 /mavros/setpoint_position:
   ros__parameters:
-    tf:
-      listen: false           # enable tf listener (disable topic subscribers)
-      frame_id: "map"
-      child_frame_id: "target_position"
-      rate_limit: 50.0
+    tf.listen: false           # enable tf listener (disable topic subscribers)
+    tf.frame_id: "map"
+    tf.child_frame_id: "target_position"
+    tf.rate_limit: 50.0
     mav_frame: LOCAL_NED
   
 # guided_target
 /mavros/guided_target:
   ros__parameters:
-    tf:
-      listen: false           # enable tf listener (disable topic subscribers)
-      frame_id: "map"
-      child_frame_id: "target_position"
-      rate_limit: 50.0
+    tf.listen: false           # enable tf listener (disable topic subscribers)
+    tf.frame_id: "map"
+    tf.child_frame_id: "target_position"
+    tf.rate_limit: 50.0
 
 # setpoint_velocity
 /mavros/setpoint_velocity:
@@ -195,10 +184,9 @@
     use_hil_gps: true
     gps_id: 4
     # origin (default: Zürich)
-    geo_origin:
-      lat: 47.3667          # latitude [degrees]
-      lon: 8.5500           # longitude [degrees]
-      alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
+    geo_origin.lat: 47.3667          # latitude [degrees]
+    geo_origin.lon: 8.5500           # longitude [degrees]
+    geo_origin.alt: 408.0            # altitude (height over the WGS-84 ellipsoid) [meters]
     eph: 2.0
     epv: 2.0
     horiz_accuracy: 0.5
@@ -206,12 +194,11 @@
     speed_accuracy: 0.0
     satellites_visible: 6   # virtual number of visible satellites
     fix_type: 3             # type of GPS fix (default: 3D)
-    tf:
-      listen: false
-      send: false           # send TF?
-      frame_id: "map"       # TF frame_id
-      child_frame_id: "fix" # TF child_frame_id
-      rate_limit: 10.0      # TF rate
+    tf.listen: false
+    tf.send: false           # send TF?
+    tf.frame_id: "map"       # TF frame_id
+    tf.child_frame_id: "fix" # TF child_frame_id
+    tf.rate_limit: 10.0      # TF rate
     gps_rate: 5.0           # GPS data publishing rate
 
 # landing_target
@@ -220,18 +207,15 @@
     listen_lt: false
     mav_frame: "LOCAL_NED"
     land_target_type: "VISION_FIDUCIAL"
-    image:
-      width: 640            # [pixels]
-      height: 480
-    camera:
-      fov_x: 2.0071286398   # default: 115 [degrees]
-      fov_y: 2.0071286398
-    tf:
-      send: true
-      listen: false
-      frame_id: "landing_target"
-      child_frame_id: "camera_center"
-      rate_limit: 10.0
+    image.width: 640            # [pixels]
+    image.height: 480
+    camera.fov_x: 2.0071286398   # default: 115 [degrees]
+    camera.fov_y: 2.0071286398
+    tf.send: true
+    tf.listen: false
+    tf.frame_id: "landing_target"
+    tf.child_frame_id: "camera_center"
+    tf.rate_limit: 10.0
     target_size: {x:  0.3, y:  0.3}
 
 # mocap_pose_estimate
@@ -253,8 +237,7 @@
 # odom
 /mavros/odometry:
   ros__parameters:
-    frame_tf:
-      desired_frame: "ned"
+    frame_tf.desired_frame: "ned"
     estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <https://mavlink.io/en/messages/common.html>
 
 # px4flow
@@ -268,11 +251,10 @@
 # vision_pose_estimate
 /mavros/vision_pose:
   ros__parameters:
-    tf:
-      listen: false           # enable tf listener (disable topic subscribers)
-      frame_id: "map"
-      child_frame_id: "vision_estimate"
-      rate_limit: 10.0
+    tf.listen: false           # enable tf listener (disable topic subscribers)
+    tf.frame_id: "map"
+    tf.child_frame_id: "vision_estimate"
+    tf.rate_limit: 10.0
 
 # vision_speed_estimate
 /mavros/vision_speed:
@@ -297,9 +279,8 @@
     frame_id: "map"             # origin frame
     child_frame_id: "base_link" # body-fixed frame
     vel_error: 0.1              # wheel velocity measurement error 1-std (m/s)
-    tf:
-      send: true
-      frame_id: "map"
-      child_frame_id: "base_link"
+    tf.send: true
+    tf.frame_id: "map"
+    tf.child_frame_id: "base_link"
 
 # vim:set ts=2 sw=2 et:
