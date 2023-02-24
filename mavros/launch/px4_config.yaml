@@ -154,34 +154,35 @@
 ##
 /mavros/distance_sensor:
   ros__parameters:
-    hrlv_ez4_pub:
-      id: 0
-      frame_id: "hrlv_ez4_sonar"
-      orientation: PITCH_270 # RPY:{0.0, 270.0, 0.0} - downward-facing
-      field_of_view: 0.0  # XXX TODO
-      send_tf: true
-      sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
-    lidarlite_pub:
-      id: 1
-      frame_id: "lidarlite_laser"
-      orientation: PITCH_270
-      field_of_view: 0.0  # XXX TODO
-      send_tf: true
-      sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
-    sonar_1_sub:
-      subscriber: true
-      id: 2
-      orientation: PITCH_270
-      horizontal_fov_ratio: 1.0   # horizontal_fov = horizontal_fov_ratio * msg.field_of_view
-      vertical_fov_ratio: 1.0     # vertical_fov = vertical_fov_ratio * msg.field_of_view
-      # custom_orientation:       # Used for orientation == CUSTOM
-      #   roll: 0
-      #   pitch: 270
-      #   yaw: 0
-    laser_1_sub:
-      subscriber: true
-      id: 3
-      orientation: PITCH_270
+    config: |
+      hrlv_ez4_pub:
+        id: 0
+        frame_id: "hrlv_ez4_sonar"
+        orientation: PITCH_270 # RPY:{0.0, 270.0, 0.0} - downward-facing
+        field_of_view: 0.0  # XXX TODO
+        send_tf: true
+        sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+      lidarlite_pub:
+        id: 1
+        frame_id: "lidarlite_laser"
+        orientation: PITCH_270
+        field_of_view: 0.0  # XXX TODO
+        send_tf: true
+        sensor_position: {x:  0.0, y:  0.0, z:  -0.1}
+      sonar_1_sub:
+        subscriber: true
+        id: 2
+        orientation: PITCH_270
+        horizontal_fov_ratio: 1.0   # horizontal_fov = horizontal_fov_ratio * msg.field_of_view
+        vertical_fov_ratio: 1.0     # vertical_fov = vertical_fov_ratio * msg.field_of_view
+        # custom_orientation:       # Used for orientation == CUSTOM
+        #   roll: 0
+        #   pitch: 270
+        #   yaw: 0
+      laser_1_sub:
+        subscriber: true
+        id: 3
+        orientation: PITCH_270
 
 # image_pub
 /mavros/image:
