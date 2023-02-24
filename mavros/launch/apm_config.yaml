@@ -237,8 +237,8 @@
 # odom
 /mavros/odometry:
   ros__parameters:
-    frame_tf.desired_frame: "ned"
-    estimator_type: 3 # check enum MAV_ESTIMATOR_TYPE in <https://mavlink.io/en/messages/common.html>
+    fcu.odom_parent_id_des: "map"    # desired parent frame rotation of the FCU's odometry
+    fcu.odom_child_id_des: "map"    # desired child frame rotation of the FCU's odometry
 
 # px4flow
 /mavros/px4flow:
