@@ -18,7 +18,6 @@
 		<param name="tgt_system" value="$(var tgt_system)" />
 		<param name="tgt_component" value="$(var tgt_component)" />
 		<param name="fcu_protocol" value="$(var fcu_protocol)" />
-		<param name="fcu_protocol" value="$(var fcu_protocol)" />
 		<!-- load blacklist, config -->
 		<param from="$(var pluginlists_yaml)" />
 		<param from="$(var config_yaml)" />
