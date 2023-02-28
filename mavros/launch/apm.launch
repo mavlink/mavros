@@ -9,11 +9,10 @@
 	<arg name="log_output" default="screen" />
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
-
+	<arg name="namespace" default="mavros"/>
 	<include file="$(find-pkg-share mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find-pkg-share mavros)/launch/apm_pluginlists.yaml" />
 		<arg name="config_yaml" value="$(find-pkg-share mavros)/launch/apm_config.yaml" />
-
 		<arg name="fcu_url" value="$(var fcu_url)" />
 		<arg name="gcs_url" value="$(var gcs_url)" />
 		<arg name="tgt_system" value="$(var tgt_system)" />
@@ -21,5 +20,6 @@
 		<arg name="log_output" value="$(var log_output)" />
 		<arg name="fcu_protocol" value="$(var fcu_protocol)" />
 		<arg name="respawn_mavros" value="$(var respawn_mavros)" />
+		<arg name="namespace" value="$(var namespace)"/>
 	</include>
 </launch>
