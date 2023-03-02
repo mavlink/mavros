@@ -14,6 +14,5 @@
       - vision_speed_estimate
       - wheel_odometry
 
-    plugin_whitelist:
-      []
-      # - 'sys_*'
+#    plugin_whitelist:
+#      - 'sys_*'
