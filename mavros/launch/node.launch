@@ -12,7 +12,7 @@
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
 
-	<node pkg="mavros" exec="mavros_node" namespace="mavros" output="$(var log_output)">
+	<node pkg="mavros" exec="mavros_node" namespace="mavros" output="screen">
 		<param name="fcu_url" value="$(var fcu_url)" />
 		<param name="gcs_url" value="$(var gcs_url)" />
 		<param name="target_system_id" value="$(var tgt_system)" />
