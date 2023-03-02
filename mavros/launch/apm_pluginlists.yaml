@@ -1,6 +1,6 @@
 /mavros:
   ros__parameters:
-    plugin_denylist:
+    plugin_blacklist:
       # common
       - actuator_control
       - ftp
@@ -14,5 +14,5 @@
       - vision_speed_estimate
       - wheel_odometry
 
-#    plugin_allowlist:
+#    plugin_whitelist:
 #      - 'sys_*'
