@@ -1,6 +1,6 @@
-/mavros:
+/mavros/**:
   ros__parameters:
-    plugin_blacklist:
+    plugin_denylist:
       # common
 
       # extras
@@ -9,6 +9,6 @@
       - distance_sensor
       - rangefinder
       - wheel_odometry
-    plugin_whitelist:
-      []
-      # - 'sys_*'
+
+    # plugin_allowlist:
+    #   - 'sys_*'
