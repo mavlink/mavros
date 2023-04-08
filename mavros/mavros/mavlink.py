@@ -84,7 +84,7 @@ def convert_to_payload64(
     """Convert payload bytes to Mavlink.payload64."""
     payload_bytes = bytearray(payload_bytes)
     payload_len = len(payload_bytes)
-    payload_octets = payload_len / 8
+    payload_octets = int(payload_len / 8)
     if payload_len % 8 > 0:
         payload_octets += 1
         payload_bytes += b"\0" * (8 - payload_len % 8)
