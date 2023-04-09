@@ -104,7 +104,7 @@ def convert_to_rosmsg(
     if stamp is not None:
         header = Header(stamp=stamp)
     else:
-        stamp=Time()
+        stamp = Time()
         stamp.sec, stamp.nanosec = system_now().seconds_nanoseconds()
         header = Header(stamp=stamp)
 
