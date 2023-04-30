@@ -14,7 +14,7 @@ import rclpy.time
 from pymavlink import mavutil
 from pymavlink.generator.mavcrc import x25crc  # noqa F401
 from std_msgs.msg import Header
-
+from builtin_interfaces.msg import Time
 from mavros_msgs.msg import Mavlink
 
 from .utils import system_now
@@ -104,7 +104,9 @@ def convert_to_rosmsg(
     if stamp is not None:
         header = Header(stamp=stamp)
     else:
-        header = Header(stamp=system_now())
+        stamp = Time()
+        stamp.sec, stamp.nanosec = system_now().seconds_nanoseconds()
+        header = Header(stamp=stamp)
 
     if mavutil.mavlink20():
         # XXX Need some api to retreive signature block.
