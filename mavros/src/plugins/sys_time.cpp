@@ -345,15 +345,27 @@ private:
     if (fcu_time_valid) {
       // continious publish for ntpd
       auto time_unix = sensor_msgs::msg::TimeReference();
-      rclcpp::Time time_ref(
-        mtime.time_unix_usec / 1000000,                 // t_sec
-        (mtime.time_unix_usec % 1000000) * 1000);       // t_nsec
+      if (time_ref_source == "epoc")
+          {
+            // time_unix_usec: us
+            rclcpp::Time time_ref(
+                mtime.time_unix_usec / 1000000,           // t_sec
+                (mtime.time_unix_usec % 1000000) * 1000); // t_nsec
+            time_unix.time_ref = time_ref;
+          }
+          else
+          {
+            // time_unix_usec: ms
+            rclcpp::Time time_ref(
+                mtime.time_boot_ms / 1000,              // t_sec
+                (mtime.time_boot_ms % 1000) * 1000000); // t_nsec
+            time_unix.time_ref = time_ref;
+          }
+          time_unix.header.stamp = node->now();
+          time_unix.header.frame_id = "";
+          time_unix.source = time_ref_source;
 
-      time_unix.header.stamp = node->now();
-      time_unix.time_ref = time_ref;
-      time_unix.source = time_ref_source;
-
-      time_ref_pub->publish(time_unix);
+          time_ref_pub->publish(time_unix);
     } else {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 60000, "TM: Wrong FCU time.");
     }
