@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.0 (2023-05-05)
+------------------
 * Merge pull request `#1852 <https://github.com/mavlink/mavros/issues/1852>`_ from robobe/fix-mavlink-header-stamp
   Fix mavlink header stamp in convert_to_rosmsg method
 * Delete test_convert_to_rosmsg.py
