@@ -2,6 +2,13 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1817 <https://github.com/mavlink/mavros/issues/1817>`_ from lucasw/pluginlib_hpp
+  use hpp instead of deprecated .h pluginlib headers
+* use hpp instead of deprecated .h pluginlib headers
+* Contributors: Lucas Walter, Vladimir Ermakov
+
 1.15.0 (2022-12-30)
 -------------------
 * Merge pull request `#1811 <https://github.com/mavlink/mavros/issues/1811>`_ from scoutdi/debug-float-array

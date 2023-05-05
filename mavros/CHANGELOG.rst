@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#1829 <https://github.com/mavlink/mavros/issues/1829>`_ from snwu1996/latched_gp_origin_pub
+  Made it such that the gp_origin topic publisher is latched.
+* made it such that the gp_origin topic published latched.
+* Merge pull request `#1817 <https://github.com/mavlink/mavros/issues/1817>`_ from lucasw/pluginlib_hpp
+  use hpp instead of deprecated .h pluginlib headers
+* use hpp instead of deprecated .h pluginlib headers
+* Contributors: Lucas Walter, Shu-Nong Wu, Vladimir Ermakov
+
 1.15.0 (2022-12-30)
 -------------------
 * Merge pull request `#1806 <https://github.com/mavlink/mavros/issues/1806>`_ from scoutdi/fix-some-warnings
