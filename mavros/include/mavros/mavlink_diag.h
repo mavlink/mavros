@@ -40,5 +40,5 @@ private:
 	unsigned int last_drop_count;
 	std::atomic<bool> is_connected;
 };
-};	// namespace mavros
+}	// namespace mavros
 

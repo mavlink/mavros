@@ -35,6 +35,7 @@ catkin_package(
 
 include_directories(
   include
+  SYSTEM
   ${CMAKE_CURRENT_BINARY_DIR}/catkin_generated/include
   ${Boost_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
