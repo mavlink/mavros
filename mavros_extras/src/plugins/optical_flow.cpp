@@ -134,15 +134,14 @@ private:
 
     flow_msg.header = header;
 
-    flow_msg.flow_x = int_flow.x();
-    flow_msg.flow_y = int_flow.y();
+    flow_msg.flow[0] = int_flow.x();
+    flow_msg.flow[1] = int_flow.y();
 
-    flow_msg.flow_comp_m_x = int_flow_comp_m_xy.x();
-    flow_msg.flow_comp_m_y = int_flow_comp_m_xy.y();
+    flow_msg.flow_comp_m[0] = int_flow_comp_m_xy.x();
+    flow_msg.flow_comp_m[1] = int_flow_comp_m_xy.y();
 
-
-    flow_msg.flow_rate_x = int_flow_rate_xy.x();
-    flow_msg.flow_rate_y = int_flow_rate_xy.y();
+    flow_msg.flow_rate[0] = int_flow_rate_xy.x();
+    flow_msg.flow_rate[1] = int_flow_rate_xy.y();
 
     flow_msg.ground_distance = flow.ground_distance;
     flow_msg.quality = flow.quality;
@@ -175,18 +174,18 @@ private:
 
     auto int_flow = ftf::transform_frame_baselink_aircraft(
       Eigen::Vector3d(
-        msg->flow_x,
-        msg->flow_y,
+        msg->flow[0],
+        msg->flow[1],
         0.0));
     auto int_flow_comp_m_xy = ftf::transform_frame_baselink_aircraft(
       Eigen::Vector3d(
-        msg->flow_comp_m_x,
-        msg->flow_comp_m_y,
+        msg->flow_comp_m[0],
+        msg->flow_comp_m[1],
         0.0));
     auto int_flow_rate_xy = ftf::transform_frame_baselink_aircraft(
       Eigen::Vector3d(
-        msg->flow_rate_x,
-        msg->flow_rate_y,
+        msg->flow_rate[0],
+        msg->flow_rate[1],
         0.0));
 
     flow_msg.time_usec = get_time_usec(msg->header.stamp);
