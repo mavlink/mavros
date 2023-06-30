@@ -168,6 +168,12 @@ Publishes the status of the onboard computer
 
 This plugin can publish data from PX4Flow camera to ROS</description>
   </class>
+  <class name="optical_flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpticalFlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Optical Flow custom plugin
+@plugin optical_flow
+
+This plugin can publish data from optical flow camera to ROS</description>
+  </class>
   <class name="rangefinder" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RangefinderPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Ardupilot Rangefinder plugin.
 @plugin rangefinder
