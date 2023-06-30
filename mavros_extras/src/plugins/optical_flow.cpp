@@ -119,11 +119,13 @@ private:
         flow.flow_x,
         flow.flow_y,
         0.0));
+
     auto int_flow_comp_m_xy = ftf::transform_frame_aircraft_baselink(
       Eigen::Vector3d(
         flow.flow_comp_m_x,
         flow.flow_comp_m_y,
         0.0));
+
     auto int_flow_rate_xy = ftf::transform_frame_aircraft_baselink(
       Eigen::Vector3d(
         flow.flow_rate_x,
@@ -134,15 +136,12 @@ private:
 
     flow_msg.header = header;
 
-    flow_msg.flow[0] = int_flow.x();
-    flow_msg.flow[1] = int_flow.y();
-
-    flow_msg.flow_comp_m[0] = int_flow_comp_m_xy.x();
-    flow_msg.flow_comp_m[1] = int_flow_comp_m_xy.y();
-
-    flow_msg.flow_rate[0] = int_flow_rate_xy.x();
-    flow_msg.flow_rate[1] = int_flow_rate_xy.y();
-
+    flow_msg.flow.x = int_flow.x();
+    flow_msg.flow.y = int_flow.y();
+    flow_msg.flow_comp_m.x = int_flow_comp_m_xy.x();
+    flow_msg.flow_comp_m.y = int_flow_comp_m_xy.y();
+    flow_msg.flow_rate.x = int_flow_rate_xy.x();
+    flow_msg.flow_rate.y = int_flow_rate_xy.y();
     flow_msg.ground_distance = flow.ground_distance;
     flow_msg.quality = flow.quality;
 
@@ -172,21 +171,12 @@ private:
   {
     mavlink::common::msg::OPTICAL_FLOW flow_msg = {};
 
-    auto int_flow = ftf::transform_frame_baselink_aircraft(
-      Eigen::Vector3d(
-        msg->flow[0],
-        msg->flow[1],
-        0.0));
-    auto int_flow_comp_m_xy = ftf::transform_frame_baselink_aircraft(
-      Eigen::Vector3d(
-        msg->flow_comp_m[0],
-        msg->flow_comp_m[1],
-        0.0));
-    auto int_flow_rate_xy = ftf::transform_frame_baselink_aircraft(
-      Eigen::Vector3d(
-        msg->flow_rate[0],
-        msg->flow_rate[1],
-        0.0));
+    auto int_flow =
+      ftf::transform_frame_baselink_aircraft(mavros::ftf::to_eigen(msg->flow));
+    auto int_flow_comp_m_xy =
+      ftf::transform_frame_baselink_aircraft(mavros::ftf::to_eigen(msg->flow_comp_m));
+    auto int_flow_rate_xy =
+      ftf::transform_frame_baselink_aircraft(mavros::ftf::to_eigen(msg->flow_rate));
 
     flow_msg.time_usec = get_time_usec(msg->header.stamp);
     flow_msg.sensor_id = 0;
