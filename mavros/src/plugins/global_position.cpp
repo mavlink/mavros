@@ -99,11 +99,11 @@ public:
 	Subscriptions get_subscriptions() override
 	{
 		return {
-			make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
-			// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-			make_handler(&GlobalPositionPlugin::handle_global_position_int),
-			make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
-			make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
+				make_handler(&GlobalPositionPlugin::handle_gps_raw_int),
+				// GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
+				make_handler(&GlobalPositionPlugin::handle_global_position_int),
+				make_handler(&GlobalPositionPlugin::handle_gps_global_origin),
+				make_handler(&GlobalPositionPlugin::handle_lpned_system_global_offset)
 		};
 	}
 
@@ -181,7 +181,7 @@ private:
 
 		// With mavlink v2.0 use accuracies reported by sensor
 		if (msg->magic == MAVLINK_STX &&
-			raw_gps.h_acc > 0 && raw_gps.v_acc > 0) {
+				raw_gps.h_acc > 0 && raw_gps.v_acc > 0) {
 			gps_cov.diagonal() << std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.h_acc / 1E3, 2), std::pow(raw_gps.v_acc / 1E3, 2);
 			fix->position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 		}
@@ -199,7 +199,7 @@ private:
 		raw_fix_pub.publish(fix);
 
 		if (raw_gps.vel != UINT16_MAX &&
-			raw_gps.cog != UINT16_MAX) {
+					raw_gps.cog != UINT16_MAX) {
 			double speed = raw_gps.vel / 1E2;				// m/s
 			double course = angles::from_degrees(raw_gps.cog / 1E2);	// rad
 
@@ -306,7 +306,7 @@ private:
 
 		// Linear velocity
 		tf::vectorEigenToMsg(Eigen::Vector3d(gpos.vy, gpos.vx, gpos.vz) / 1E2,
-			odom->twist.twist.linear);
+					odom->twist.twist.linear);
 
 		// Velocity covariance unknown
 		ftf::EigenMapCovariance6d vel_cov_out(odom->twist.covariance.data());
@@ -325,7 +325,7 @@ private:
 			 * on Gazebo)
 			 */
 			GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
-				GeographicLib::Constants::WGS84_f());
+						GeographicLib::Constants::WGS84_f());
 
 			/**
 			 * @brief Checks if the "map" origin is set.
@@ -336,7 +336,7 @@ private:
 			 */
 			// Current fix to ECEF
 			map.Forward(fix->latitude, fix->longitude, fix->altitude,
-				map_point.x(), map_point.y(), map_point.z());
+						map_point.x(), map_point.y(), map_point.z());
 
 			// Set the current fix as the "map" origin if it's not set
 			if (!is_map_init && fix->status.status >= sensor_msgs::NavSatStatus::STATUS_FIX) {
@@ -344,7 +344,7 @@ private:
 				map_origin.y() = fix->longitude;
 				map_origin.z() = fix->altitude;
 
-				ecef_origin = map_point;// Local position is zero
+				ecef_origin = map_point; // Local position is zero
 				is_map_init = true;
 			}
 		}
@@ -372,9 +372,9 @@ private:
 		pos_cov_out.setZero();
 		pos_cov_out.block<3, 3>(0, 0) = gps_cov;
 		pos_cov_out.block<3, 3>(3, 3).diagonal() <<
-			rot_cov,
-			rot_cov,
-			rot_cov;
+							rot_cov,
+								rot_cov,
+									rot_cov;
 
 		// publish
 		gp_fix_pub.publish(fix);
@@ -409,8 +409,8 @@ private:
 
 		auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(offset.x, offset.y, offset.z));
 		auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
-			ftf::transform_orientation_ned_enu(
-			ftf::quaternion_from_rpy(offset.roll, offset.pitch, offset.yaw)));
+					ftf::transform_orientation_ned_enu(
+						ftf::quaternion_from_rpy(offset.roll, offset.pitch, offset.yaw)));
 
 		tf::pointEigenToMsg(enu_position, global_offset->pose.position);
 		tf::quaternionEigenToMsg(enu_baselink_orientation, global_offset->pose.orientation);
@@ -481,11 +481,11 @@ private:
 			 * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
 			 */
 			GeographicLib::Geocentric map(GeographicLib::Constants::WGS84_a(),
-				GeographicLib::Constants::WGS84_f());
+						GeographicLib::Constants::WGS84_f());
 
 			// map_origin to ECEF
 			map.Forward(map_origin.x(), map_origin.y(), map_origin.z(),
-				ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+						ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
 		}
 		catch (const std::exception& e) {
 			ROS_INFO_STREAM("GP: Caught exception: " << e.what() << std::endl);
