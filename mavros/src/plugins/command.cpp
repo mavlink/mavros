@@ -30,6 +30,7 @@
 #include "mavros_msgs/srv/command_bool.hpp"
 #include "mavros_msgs/srv/command_home.hpp"
 #include "mavros_msgs/srv/command_tol.hpp"
+#include "mavros_msgs/srv/command_local_tol.hpp"
 #include "mavros_msgs/srv/command_trigger_control.hpp"
 #include "mavros_msgs/srv/command_trigger_interval.hpp"
 #include "mavros_msgs/srv/command_vtol_transition.hpp"
@@ -115,10 +116,21 @@ public:
       std::bind(
         &CommandPlugin::takeoff_cb, this, _1, _2,
         _3), rmw_qos_profile_services_default, srv_cg);
+    takeoff_local_srv =
+      node->create_service<mavros_msgs::srv::CommandLocalTOL>(
+      "~/takeoff_local",
+      std::bind(
+        &CommandPlugin::takeoff_local_cb, this, _1, _2,
+        _3), rmw_qos_profile_services_default, srv_cg);
     land_srv =
       node->create_service<mavros_msgs::srv::CommandTOL>(
       "~/land",
       std::bind(&CommandPlugin::land_cb, this, _1, _2, _3), rmw_qos_profile_services_default,
+      srv_cg);
+    land_local_srv = 
+      node->create_service<mavros_msgs::srv::CommandLocalTOL>(
+      "~/land_local",
+      std::bind(&CommandPlugin::land_local_cb, this, _1, _2, _3), rmw_qos_profile_services_default,
       srv_cg);
     trigger_control_srv = node->create_service<mavros_msgs::srv::CommandTriggerControl>(
       "~/trigger_control", std::bind(
@@ -152,7 +164,9 @@ private:
   rclcpp::Service<mavros_msgs::srv::CommandBool>::SharedPtr arming_srv;
   rclcpp::Service<mavros_msgs::srv::CommandHome>::SharedPtr set_home_srv;
   rclcpp::Service<mavros_msgs::srv::CommandTOL>::SharedPtr takeoff_srv;
+  rclcpp::Service<mavros_msgs::srv::CommandLocalTOL>::SharedPtr takeoff_local_srv;
   rclcpp::Service<mavros_msgs::srv::CommandTOL>::SharedPtr land_srv;
+  rclcpp::Service<mavros_msgs::srv::CommandLocalTOL>::SharedPtr land_local_srv;
   rclcpp::Service<mavros_msgs::srv::CommandTriggerControl>::SharedPtr trigger_control_srv;
   rclcpp::Service<mavros_msgs::srv::CommandTriggerInterval>::SharedPtr trigger_interval_srv;
   rclcpp::Service<mavros_msgs::srv::CommandVtolTransition>::SharedPtr vtol_transition_srv;
@@ -434,6 +448,23 @@ private:
       res->success, res->result);
   }
 
+  void takeoff_local_cb(
+    const std::shared_ptr<rmw_request_id_t> req_header [[maybe_unused]],
+    const mavros_msgs::srv::CommandLocalTOL::Request::SharedPtr req,
+    mavros_msgs::srv::CommandLocalTOL::Response::SharedPtr res)
+  {
+    using mavlink::common::MAV_CMD;
+    send_command_long_and_wait(
+      false,
+      enum_value(MAV_CMD::NAV_TAKEOFF_LOCAL), 1,
+      req->min_pitch,
+      0,
+      req->rate,
+      req->yaw,
+      req->y, req->x, req->z,
+      res->success, res->result);
+  }
+
   void land_cb(
     const std::shared_ptr<rmw_request_id_t> req_header [[maybe_unused]],
     const mavros_msgs::srv::CommandTOL::Request::SharedPtr req,
@@ -446,6 +477,23 @@ private:
       0, 0, 0,
       req->yaw,
       req->latitude, req->longitude, req->altitude,
+      res->success, res->result);
+  }
+
+  void land_local_cb(
+    const std::shared_ptr<rmw_request_id_t> req_header [[maybe_unused]],
+    const mavros_msgs::srv::CommandLocalTOL::Request::SharedPtr req,
+    mavros_msgs::srv::CommandLocalTOL::Response::SharedPtr res)
+  {
+    using mavlink::common::MAV_CMD;
+    send_command_long_and_wait(
+      false,
+      enum_value(MAV_CMD::NAV_LAND_LOCAL), 1,
+      0, //landing target number (what does it means?)
+      req->offset,
+      req->rate,
+      req->yaw,
+      req->y, req->x, req->z,
       res->success, res->result);
   }
 

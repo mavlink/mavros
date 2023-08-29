@@ -108,6 +108,7 @@ set(srv_files
   srv/CommandHome.srv
   srv/CommandInt.srv
   srv/CommandLong.srv
+  srv/CommandLocalTOL.srv
   srv/CommandTOL.srv
   srv/CommandTriggerControl.srv
   srv/CommandTriggerInterval.srv
