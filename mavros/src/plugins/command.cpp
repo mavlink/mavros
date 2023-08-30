@@ -18,7 +18,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <list>
-#include <mavros_msgs/srv/detail/command_tol_local__struct.hpp>
 #include <memory>
 
 #include "rcpputils/asserts.hpp"
