@@ -48,7 +48,7 @@ public:
 
 	GlobalPositionPlugin() : PluginBase(),
 		gp_nh("~global_position"),
-		nh(),
+		hp_nh("~home_position"),
 		tf_send(false),
 		use_relative_alt(true),
 		is_map_init(false),
@@ -90,7 +90,7 @@ public:
 
 		// home position subscriber to set "map" origin
 		// TODO use UAS
-		hp_sub = nh.subscribe("/mavros/home_position/home", 10, &GlobalPositionPlugin::home_position_cb, this);
+		hp_sub = hp_nh.subscribe("home", 10, &GlobalPositionPlugin::home_position_cb, this);
 
 		// offset from local position to the global origin ("earth")
 		gp_global_offset_pub = gp_nh.advertise<geometry_msgs::PoseStamped>("gp_lp_offset", 10);
@@ -109,7 +109,7 @@ public:
 
 private:
 	ros::NodeHandle gp_nh;
-	ros::NodeHandle nh;	//node handler outside the global_position namespace
+	ros::NodeHandle hp_nh;	//node handler in home_position namespace
 
 	ros::Publisher raw_fix_pub;
 	ros::Publisher raw_vel_pub;
