@@ -158,6 +158,12 @@ The twist is expressed in the child frame.
 Publishes the status of the onboard computer
 @see status_cb()</description>
   </class>
+  <class name="optical_flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpticalFlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Optical Flow custom plugin
+@plugin optical_flow
+
+This plugin can publish data from OpticalFlow camera to ROS</description>
+  </class>
   <class name="play_tune" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::PlayTunePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Play Tune service
 @plugin play_tune</description>
@@ -167,12 +173,6 @@ Publishes the status of the onboard computer
 @plugin px4flow
 
 This plugin can publish data from PX4Flow camera to ROS</description>
-  </class>
-  <class name="optical_flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpticalFlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-    <description>@brief Optical Flow custom plugin
-@plugin optical_flow
-
-This plugin can publish data from optical flow camera to ROS</description>
   </class>
   <class name="rangefinder" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RangefinderPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Ardupilot Rangefinder plugin.
@@ -233,4 +233,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 930b2e95e313b65e21c5dbea68346c73) -->
+<!-- [[[end]]] (checksum: 4c4e8da806a050322553237a8e17a0c6) -->
