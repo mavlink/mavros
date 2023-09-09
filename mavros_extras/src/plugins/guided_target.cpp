@@ -14,12 +14,11 @@
  * @{
  */
 
-#include <tf2_eigen/tf2_eigen.h>
-
 #include <string>
 
 #include <GeographicLib/Geocentric.hpp>
 
+#include "tf2_eigen/tf2_eigen.hpp"
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"

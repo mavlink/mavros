@@ -16,7 +16,6 @@
  */
 
 #include <yaml-cpp/yaml.h>
-#include <tf2_eigen/tf2_eigen.h>
 
 #include <unordered_map>
 #include <string>
@@ -24,6 +23,7 @@
 #include <vector>
 #include <shared_mutex>     // NOLINT cpplint, that is almost 4 years since standard release!
 
+#include "tf2_eigen/tf2_eigen.hpp"
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"

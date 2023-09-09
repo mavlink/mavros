@@ -14,11 +14,10 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
-#include <tf2_eigen/tf2_eigen.h>
-
 #include <algorithm>
 #include <string>
 
+#include "tf2_eigen/tf2_eigen.hpp"
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/utils.hpp"
