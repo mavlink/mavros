@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2023-09-09)
+------------------
 * switch to use tf2_eigen.hpp, but that drops support for EOL distros
 * ament uncrustify
 * cog: regenerate all

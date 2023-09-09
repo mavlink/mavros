@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2023-09-09)
+------------------
 * fix ament_cpplint
 * Merge branch 'master' into ros2
   * master:

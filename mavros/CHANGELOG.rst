@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2023-09-09)
+------------------
 * fix build warnings tf2_eigen.h
 * switch to use tf2_eigen.hpp, but that drops support for EOL distros
 * fix ament_cpplint

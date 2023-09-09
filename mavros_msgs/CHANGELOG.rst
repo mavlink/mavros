@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2023-09-09)
+------------------
 * msgs: move generator code
 * cog: regenerate all
 * Merge branch 'master' into ros2
