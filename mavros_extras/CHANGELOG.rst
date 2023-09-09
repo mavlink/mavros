@@ -2,6 +2,46 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* switch to use tf2_eigen.hpp, but that drops support for EOL distros
+* ament uncrustify
+* cog: regenerate all
+* Merge branch 'master' into ros2
+  * master:
+  1.17.0
+  update changelog
+  cog: regenerate all
+  Bugfix/update map origin with home position (`#1892 <https://github.com/mavlink/mavros/issues/1892>`_)
+  mavros: Remove extra ';'
+  mavros_extras: Fix some init order warnings
+  Suppress warnings from included headers
+  1.16.0
+  update changelog
+  made it such that the gp_origin topic published latched.
+  use hpp instead of deprecated .h pluginlib headers
+* 1.17.0
+* update changelog
+* Merge pull request `#1889 <https://github.com/mavlink/mavros/issues/1889>`_ from MKargus0/feature/fix_landing_target_time_conversion
+  Fixed header.stamp conversion in landing target
+* fixed style
+* fixed header.stamp conversion in landing target
+* Merge pull request `#1871 <https://github.com/mavlink/mavros/issues/1871>`_ from Vladislavert/feature/optical_flow_msg
+  Addition of New OpticalFlow.msg
+* Added geometry_msgs/Vector3 to OpticalFlow.msg
+* Added vectors to the message OpticalFlow.msg
+* Added message optical flow
+* Merge pull request `#1865 <https://github.com/mavlink/mavros/issues/1865>`_ from scoutdi/warnings
+  Fix / suppress some build warnings
+* mavros_extras: Fix some init order warnings
+* Suppress warnings from included headers
+* 1.16.0
+* update changelog
+* Merge pull request `#1817 <https://github.com/mavlink/mavros/issues/1817>`_ from lucasw/pluginlib_hpp
+  use hpp instead of deprecated .h pluginlib headers
+* use hpp instead of deprecated .h pluginlib headers
+* Contributors: Lucas Walter, Mikhail Kolodochka, Morten Fyhn Amundsen, Vladimir Ermakov, Vladislavert
+
 2.5.0 (2023-05-05)
 ------------------
 

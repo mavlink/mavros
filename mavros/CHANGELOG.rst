@@ -2,6 +2,56 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix build warnings tf2_eigen.h
+* switch to use tf2_eigen.hpp, but that drops support for EOL distros
+* fix ament_cpplint
+* reformat python code with black
+* msgs: move generator code
+* ament uncrustify
+* Merge branch 'master' into ros2
+  * master:
+  1.17.0
+  update changelog
+  cog: regenerate all
+  Bugfix/update map origin with home position (`#1892 <https://github.com/mavlink/mavros/issues/1892>`_)
+  mavros: Remove extra ';'
+  mavros_extras: Fix some init order warnings
+  Suppress warnings from included headers
+  1.16.0
+  update changelog
+  made it such that the gp_origin topic published latched.
+  use hpp instead of deprecated .h pluginlib headers
+* 1.17.0
+* update changelog
+* cog: regenerate all
+* local takeoff and land topics (`#1890 <https://github.com/mavlink/mavros/issues/1890>`_)
+  * local takeoff and land topics
+  * vector3 position type, rename to TOLLocal
+  * remove auto include line
+* Bugfix/update map origin with home position (`#1892 <https://github.com/mavlink/mavros/issues/1892>`_)
+  * Update map origin with home position
+  * Uncrustify
+  * Revert "Uncrustify"
+  This reverts commit f1387c79c7670cc241986586436e3da43842e877.
+  * Change to relative topic
+  ---------
+  Co-authored-by: Natalia Molina <molina-munoz@wingcopter.com>
+* Merge pull request `#1865 <https://github.com/mavlink/mavros/issues/1865>`_ from scoutdi/warnings
+  Fix / suppress some build warnings
+* mavros: Remove extra ';'
+* Suppress warnings from included headers
+* 1.16.0
+* update changelog
+* Merge pull request `#1829 <https://github.com/mavlink/mavros/issues/1829>`_ from snwu1996/latched_gp_origin_pub
+  Made it such that the gp_origin topic publisher is latched.
+* made it such that the gp_origin topic published latched.
+* Merge pull request `#1817 <https://github.com/mavlink/mavros/issues/1817>`_ from lucasw/pluginlib_hpp
+  use hpp instead of deprecated .h pluginlib headers
+* use hpp instead of deprecated .h pluginlib headers
+* Contributors: Ido Guzi, Lucas Walter, Morten Fyhn Amundsen, Shu-Nong Wu, Vladimir Ermakov, natmol
+
 2.5.0 (2023-05-05)
 ------------------
 * Merge pull request `#1852 <https://github.com/mavlink/mavros/issues/1852>`_ from robobe/fix-mavlink-header-stamp

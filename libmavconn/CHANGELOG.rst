@@ -2,6 +2,31 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix ament_cpplint
+* Merge branch 'master' into ros2
+  * master:
+  1.17.0
+  update changelog
+  cog: regenerate all
+  Bugfix/update map origin with home position (`#1892 <https://github.com/mavlink/mavros/issues/1892>`_)
+  mavros: Remove extra ';'
+  mavros_extras: Fix some init order warnings
+  Suppress warnings from included headers
+  1.16.0
+  update changelog
+  made it such that the gp_origin topic published latched.
+  use hpp instead of deprecated .h pluginlib headers
+* 1.17.0
+* update changelog
+* Merge pull request `#1865 <https://github.com/mavlink/mavros/issues/1865>`_ from scoutdi/warnings
+  Fix / suppress some build warnings
+* Suppress warnings from included headers
+* 1.16.0
+* update changelog
+* Contributors: Morten Fyhn Amundsen, Vladimir Ermakov
+
 2.5.0 (2023-05-05)
 ------------------
 
