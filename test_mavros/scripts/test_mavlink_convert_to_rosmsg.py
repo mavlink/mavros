@@ -35,15 +35,20 @@ from pymavlink.dialects.v20 import ardupilotmega as apm
 DRONE_NO = 1
 TOPIC_MAVLINK = f"/uas{DRONE_NO}/mavlink_sink"
 
+
 class fifo(object):
-    """ A simple buffer """
+    """A simple buffer"""
+
     def __init__(self):
         self.buf = []
+
     def write(self, data):
         self.buf += data
         return len(data)
+
     def read(self):
         return self.buf.pop(0)
+
 
 class MyNode(Node):
     def __init__(self) -> None:
@@ -62,19 +67,9 @@ class MyNode(Node):
     def set_home(self) -> None:
         target_system = 0  # broadcast to everyone
         msg = ardupilotmega.MAVLink_command_long_message(
-            target_system,
-            1,
-            ardupilotmega.MAV_CMD_DO_SET_HOME,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
+            target_system, 1, ardupilotmega.MAV_CMD_DO_SET_HOME, 0, 0, 0, 0, 0, 0, 0, 0
         )
-        
+
         msg.pack(self.__mav)
         current = Clock().now()
         sec, nanosec = current.seconds_nanoseconds()
@@ -82,6 +77,7 @@ class MyNode(Node):
         ros_msg = convert_to_rosmsg(msg, stamp=stamp)
         self.__pub_mavlink.publish(ros_msg)
         print(ros_msg)
+
 
 def main(args=None):
     rclpy.init(args=args)

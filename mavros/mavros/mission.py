@@ -168,7 +168,6 @@ class QGroundControlPlan(PlanFile):
 
 
 class MissionPluginBase(PluginModule):
-
     _plugin_ns = "mission"
     _plugin_list_topic = "waypoints"
 

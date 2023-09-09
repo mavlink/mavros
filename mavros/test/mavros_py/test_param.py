@@ -60,7 +60,6 @@ def test_ParamDict_set():
         )
 
     with patch("mavros.utils.call_set_parameters", MagicMock(return_value={})) as csp:
-
         pm.TEST_B = True
         pm.TEST_I = 3
         pm.TEST_F = 4.0
@@ -71,7 +70,6 @@ def test_ParamDict_set():
         assert pm.TEST_F.value == 4.0
 
     with patch("mavros.utils.call_set_parameters", MagicMock(return_value={})) as csp:
-
         pm.setdefault("TEST_D", 5)
 
         csp.assert_not_called()
@@ -164,7 +162,6 @@ TEST_F,1000.0\r\n\
     ],
 )
 def test_ParamFile_save(file_class, expected_output):
-
     pf = file_class()
     pf.parameters = SAVE_PARAMS
     pf.tgt_system = 2
