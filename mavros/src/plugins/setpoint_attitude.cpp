@@ -16,13 +16,13 @@
  * @{
  */
 
-#include <tf2_eigen/tf2_eigen.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include <memory>
 
+#include "tf2_eigen/tf2_eigen.hpp"
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"

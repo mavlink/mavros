@@ -88,7 +88,7 @@ class BaseNode(rclpy.node.Node):
         self, node_name: typing.Optional[str] = None, mavros_ns: str = DEFAULT_NAMESPACE
     ):
         """
-        Constructor.
+        BaseNode.
 
         :param node_name: name of the node, would be random if None
         :param mavros_ns: node name of mavros::UAS
