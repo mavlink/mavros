@@ -18,11 +18,11 @@
  * @{
  */
 
-#include <tf2_eigen/tf2_eigen.h>
+#include <string>
+
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/Geoid.hpp>
-
-#include <string>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"

@@ -127,7 +127,7 @@ public:
       "~/land",
       std::bind(&CommandPlugin::land_cb, this, _1, _2, _3), rmw_qos_profile_services_default,
       srv_cg);
-    land_local_srv = 
+    land_local_srv =
       node->create_service<mavros_msgs::srv::CommandTOLLocal>(
       "~/land_local",
       std::bind(&CommandPlugin::land_local_cb, this, _1, _2, _3), rmw_qos_profile_services_default,
