@@ -7,6 +7,9 @@
 # from collections import OrderedDict
 # import re
 #
+# def clear_desc(s):
+#     return ' '.join(v.strip() for v in s.splitlines() if v.strip())
+#
 # def wr_enum(enum, ename, pfx='', bsz=16):
 #     cog.outl("# " + ename + "_" + pfx)
 #     for k, e in enum:
@@ -15,7 +18,7 @@
 #             sn = e.name[len('MAV_CMD') + 1:]
 #             l = "uint{bsz} {sn} = {k}".format(**locals())
 #             if e.description:
-#                 l += ' ' * (50 - len(l)) + ' # ' + e.description
+#                 l += ' ' * (50 - len(l)) + ' # ' + clear_desc(e.description)
 #             cog.outl(l)
 #     cog.out('\n')
 #
@@ -42,7 +45,14 @@ uint16 AIRFRAME_CONFIGURATION = 2520
 
 # MAV_CMD_ARM
 uint16 ARM_AUTHORIZATION_REQUEST = 3001            # Request authorization to arm the vehicle to a external entity, the arm authorizer is responsible to request all data that is needs from the vehicle before authorize or deny the request. If approved the progress of command_ack message should be set with period of time that this authorization is valid in seconds or in case it was denied it should be set with one of the reasons in ARM_AUTH_DENIED_REASON.
-        
+
+# MAV_CMD_CAMERA
+uint16 CAMERA_TRACK_POINT = 2004                   # If the camera supports point visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_POINT is set), this command allows to initiate the tracking.
+uint16 CAMERA_TRACK_RECTANGLE = 2005               # If the camera supports rectangle visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE is set), this command allows to initiate the tracking.
+uint16 CAMERA_STOP_TRACKING = 2010                 # Stops ongoing tracking.
+
+# MAV_CMD_CAN
+uint16 CAN_FORWARD = 32000                         # Request forwarding of CAN packets from the given CAN bus to this interface. CAN Frames are sent using CAN_FRAME and CANFD_FRAME messages
 
 # MAV_CMD_COMPONENT
 uint16 COMPONENT_ARM_DISARM = 400                  # Arms / Disarms a component
@@ -71,7 +81,7 @@ uint16 DO_SET_SERVO = 183                          # Set a servo to a desired PW
 uint16 DO_REPEAT_SERVO = 184                       # Cycle a between its nominal setting and a desired PWM for a desired number of cycles with a desired period.
 uint16 DO_FLIGHTTERMINATION = 185                  # Terminate flight immediately
 uint16 DO_CHANGE_ALTITUDE = 186                    # Change altitude set point.
-uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
+uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude/Altitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
 uint16 DO_RALLY_LAND = 190                         # Mission command to perform a landing from a rally point.
 uint16 DO_GO_AROUND = 191                          # Mission command to safely abort an autonomous landing.
 uint16 DO_REPOSITION = 192                         # Reposition the vehicle to a specific WGS84 global position.
@@ -102,6 +112,8 @@ uint16 DO_ENGINE_CONTROL = 223                     # Control vehicle engine. Thi
 uint16 DO_SET_MISSION_CURRENT = 224                # Set the mission item with sequence number seq as current item. This means that the MAV will continue to this mission item on the shortest path (not following the mission items in-between).
 uint16 DO_LAST = 240                               # NOP - This command is only used to mark the upper limit of the DO commands in the enumeration
 uint16 DO_JUMP_TAG = 601                           # Jump to the matching tag in the mission list. Repeat this action for the specified number of times. A mission should contain a single matching tag for each jump. If this is not the case then a jump to a missing tag should complete the mission, and a jump where there are multiple matching tags should always select the one with the lowest mission sequence number.
+uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # Set gimbal manager pitch/yaw setpoints (low rate command). It is possible to set combinations of the values below. E.g. an angle as well as a desired angular rate can be used to get to this angle at a certain angular rate, or an angular rate only will result in continuous turning. NaN is to be used to signal unset. Note: only the gimbal manager will react to this command - it will be ignored by a gimbal device. Use GIMBAL_MANAGER_SET_PITCHYAW if you need to stream pitch/yaw setpoints at higher rate.
+uint16 DO_GIMBAL_MANAGER_CONFIGURE = 1001          # Gimbal configuration to set which sysid/compid is in primary and secondary control.
 uint16 DO_TRIGGER_CONTROL = 2003                   # Enable or disable on-board camera triggering system.
 uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
 uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
@@ -144,7 +156,7 @@ uint16 NAV_LOITER_TO_ALT = 31                      # Begin loiter at the specifi
 uint16 NAV_ROI = 80                                # Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
 uint16 NAV_PATHPLANNING = 81                       # Control autonomous path planning on the MAV.
 uint16 NAV_SPLINE_WAYPOINT = 82                    # Navigate to waypoint using a spline path.
-uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading.
+uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading. The command should be ignored by vehicles that dont support both VTOL and fixed-wing flight (multicopters, boats,etc.).
 uint16 NAV_VTOL_LAND = 85                          # Land using VTOL mode
 uint16 NAV_GUIDED_ENABLE = 92                      # hand control over to an external controller
 uint16 NAV_DELAY = 93                              # Delay the next navigation command a number of seconds or until a specified time
@@ -153,15 +165,10 @@ uint16 NAV_LAST = 95                               # NOP - This command is only 
 uint16 NAV_SET_YAW_SPEED = 213                     # Sets a desired vehicle turn angle and speed change.
 uint16 NAV_FENCE_RETURN_POINT = 5000               # Fence return point (there can only be one such point in a geofence definition). If rally points are supported they should be used instead.
 uint16 NAV_FENCE_POLYGON_VERTEX_INCLUSION = 5001   # Fence vertex for an inclusion polygon (the polygon must not be self-intersecting). The vehicle must stay within this area. Minimum of 3 vertices required.
-        
 uint16 NAV_FENCE_POLYGON_VERTEX_EXCLUSION = 5002   # Fence vertex for an exclusion polygon (the polygon must not be self-intersecting). The vehicle must stay outside this area. Minimum of 3 vertices required.
-        
 uint16 NAV_FENCE_CIRCLE_INCLUSION = 5003           # Circular fence area. The vehicle must stay inside this area.
-        
 uint16 NAV_FENCE_CIRCLE_EXCLUSION = 5004           # Circular fence area. The vehicle must stay outside this area.
-        
 uint16 NAV_RALLY_POINT = 5100                      # Rally point. You can have multiple rally points defined.
-        
 
 # MAV_CMD_OBLIQUE
 uint16 OBLIQUE_SURVEY = 260                        # Mission command to set a Camera Auto Mount Pivoting Oblique Survey (Replaces CAM_TRIGG_DIST for this purpose). The camera is triggered each time this distance is exceeded, then the mount moves to the next position. Params 4~6 set-up the angle limits and number of positions for oblique survey, where mount-enabled vehicles automatically roll the camera between shots to emulate an oblique camera setup (providing an increased HFOV). This command can also be used to set the shutter integration time for the camera.
@@ -204,10 +211,10 @@ uint16 RUN_PREARM_CHECKS = 401                     # Instructs system to run pre
 # MAV_CMD_SET
 uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM.
 uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Use NaN for reserved values. GCS will send a MAV_CMD_REQUEST_VIDEO_STREAM_STATUS command after a mode change if the camera supports video streaming.
+uint16 SET_CAMERA_ZOOM = 531                       # Set camera zoom. Camera must respond with a CAMERA_SETTINGS message (on success).
+uint16 SET_CAMERA_FOCUS = 532                      # Set camera focus. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
-                  
 uint16 SET_GUIDED_SUBMODE_CIRCLE = 4001            # This command sets submode circle when vehicle is in guided mode. Vehicle flies along a circle facing the center of the circle. The user can input the velocity along the circle and change the radius. If no input is given the vehicle will hold position.
-                  
 
 # MAV_CMD_START
 uint16 START_RX_PAIR = 500                         # Starts receiver pairing.
@@ -224,4 +231,4 @@ uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capt
 uint16 VIDEO_START_STREAMING = 2502                # Start video streaming
 uint16 VIDEO_STOP_STREAMING = 2503                 # Stop the given video stream
 
-# [[[end]]] (checksum: 01fa1723eb3702c301c5562fdf293bbc)
+# [[[end]]] (checksum: cb312f449893c76af4bf35424ccff882)

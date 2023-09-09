@@ -105,7 +105,7 @@ using mavlink::common::LANDING_TARGET_TYPE;
 // to_string_outl(ename)
 // ]]]
 //! MAV_AUTOPILOT values
-static const std::array<const std::string, 20> mav_autopilot_strings{{
+static const std::array<const std::string, 21> mav_autopilot_strings{{
 /*  0 */ "Generic autopilot",             // Generic autopilot, full support for everything
 /*  1 */ "Reserved for future use",       // Reserved for future use.
 /*  2 */ "SLUGS autopilot",               // SLUGS autopilot, http://slugsuav.soe.ucsc.edu
@@ -126,6 +126,7 @@ static const std::array<const std::string, 20> mav_autopilot_strings{{
 /* 17 */ "ASLUAV autopilot",              // ASLUAV autopilot -- http://www.asl.ethz.ch
 /* 18 */ "SmartAP Autopilot",             // SmartAP Autopilot - http://sky-drones.com
 /* 19 */ "AirRails",                      // AirRails - http://uaventure.com
+/* 20 */ "Fusion Reflex",                 // Fusion Reflex - https://fusion.engineering
 }};
 
 std::string to_string(MAV_AUTOPILOT e)
@@ -136,7 +137,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: c1feb82117da0447594aacbe5c52f97b)
+// [[[end]]] (checksum: 036beb51a16d3fa9cbb47ab59c767238)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -153,7 +154,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // to_string_outl(ename)
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 36> mav_type_strings{{
+static const std::array<const std::string, 43> mav_type_strings{{
 /*  0 */ "Generic micro air vehicle",     // Generic micro air vehicle
 /*  1 */ "Fixed wing aircraft",           // Fixed wing aircraft.
 /*  2 */ "Quadrotor",                     // Quadrotor
@@ -190,6 +191,13 @@ static const std::array<const std::string, 36> mav_type_strings{{
 /* 33 */ "Servo",                         // Servo
 /* 34 */ "Open Drone ID. See https:",     // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
 /* 35 */ "Decarotor",                     // Decarotor
+/* 36 */ "Battery",                       // Battery
+/* 37 */ "Parachute",                     // Parachute
+/* 38 */ "Log",                           // Log
+/* 39 */ "OSD",                           // OSD
+/* 40 */ "IMU",                           // IMU
+/* 41 */ "GPS",                           // GPS
+/* 42 */ "Winch",                         // Winch
 }};
 
 std::string to_string(MAV_TYPE e)
@@ -200,14 +208,14 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: f44b083f4b6be34f26d75692072f09bf)
+// [[[end]]] (checksum: 18825caa6c70eb36e076c1bfffa9150c)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
 // enum_name_is_value_outl(ename, funcname='to_name', suffix='_names')
 // ]]]
 //! MAV_TYPE values
-static const std::array<const std::string, 36> mav_type_names{{
+static const std::array<const std::string, 43> mav_type_names{{
 /*  0 */ "GENERIC",                       // Generic micro air vehicle
 /*  1 */ "FIXED_WING",                    // Fixed wing aircraft.
 /*  2 */ "QUADROTOR",                     // Quadrotor
@@ -244,6 +252,13 @@ static const std::array<const std::string, 36> mav_type_names{{
 /* 33 */ "SERVO",                         // Servo
 /* 34 */ "ODID",                          // Open Drone ID. See https://mavlink.io/en/services/opendroneid.html.
 /* 35 */ "DECAROTOR",                     // Decarotor
+/* 36 */ "BATTERY",                       // Battery
+/* 37 */ "PARACHUTE",                     // Parachute
+/* 38 */ "LOG",                           // Log
+/* 39 */ "OSD",                           // OSD
+/* 40 */ "IMU",                           // IMU
+/* 41 */ "GPS",                           // GPS
+/* 42 */ "WINCH",                         // Winch
 }};
 
 std::string to_name(MAV_TYPE e)
@@ -254,7 +269,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 3775b5a8763b4e66287a471af939ef6c)
+// [[[end]]] (checksum: 02033dc5baa70557f1072dde8c403251)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -499,18 +514,18 @@ std::string to_string(MAV_MISSION_RESULT e)
 //! MAV_FRAME values
 static const std::array<const std::string, 22> mav_frame_strings{{
 /*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
-/*  1 */ "LOCAL_NED",                     // Local coordinate frame, Z-down (x: North, y: East, z: Down).
+/*  1 */ "LOCAL_NED",                     // NED local tangent frame (x: North, y: East, z: Down) with origin fixed relative to earth.
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
 /*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
-/*  4 */ "LOCAL_ENU",                     // Local coordinate frame, Z-up (x: East, y: North, z: Up).
-/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1.0e-7, second value / y: longitude in degrees*1.0e-7, third value / z: positive altitude over mean sea level (MSL).
-/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude with 0 being at the altitude of the home location.
-/*  7 */ "LOCAL_OFFSET_NED",              // Offset to the current local frame. Anything expressed in this frame should be added to the current local frame position.
-/*  8 */ "BODY_NED",                      // Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right.
-/*  9 */ "BODY_OFFSET_NED",               // Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east.
+/*  4 */ "LOCAL_ENU",                     // ENU local tangent frame (x: East, y: North, z: Up) with origin fixed relative to earth.
+/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude over mean sea level (MSL).
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  7 */ "LOCAL_OFFSET_NED",              // NED local tangent frame (x: North, y: East, z: Down) with origin that travels with the vehicle.
+/*  8 */ "BODY_NED",                      // Same as MAV_FRAME_LOCAL_NED when used to represent position values. Same as MAV_FRAME_BODY_FRD when used with velocity/accelaration values.
+/*  9 */ "BODY_OFFSET_NED",               // This is the same as MAV_FRAME_BODY_FRD.
 /* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*10e-7, second value / y: longitude in degrees*10e-7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 12 */ "BODY_FRD",                      // Body fixed frame of reference, Z-down (x: Forward, y: Right, z: Down).
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
+/* 12 */ "BODY_FRD",                      // FRD local tangent frame (x: Forward, y: Right, z: Down) with origin that travels with vehicle. The forward axis is aligned to the front of the vehicle in the horizontal plane.
 /* 13 */ "RESERVED_13",                   // MAV_FRAME_BODY_FLU - Body fixed frame of reference, Z-up (x: Forward, y: Left, z: Up).
 /* 14 */ "RESERVED_14",                   // MAV_FRAME_MOCAP_NED - Odometry local coordinate frame of data given by a motion capture system, Z-down (x: North, y: East, z: Down).
 /* 15 */ "RESERVED_15",                   // MAV_FRAME_MOCAP_ENU - Odometry local coordinate frame of data given by a motion capture system, Z-up (x: East, y: North, z: Up).
@@ -518,8 +533,8 @@ static const std::array<const std::string, 22> mav_frame_strings{{
 /* 17 */ "RESERVED_17",                   // MAV_FRAME_VISION_ENU - Odometry local coordinate frame of data given by a vision estimation system, Z-up (x: East, y: North, z: Up).
 /* 18 */ "RESERVED_18",                   // MAV_FRAME_ESTIM_NED - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-down (x: North, y: East, z: Down).
 /* 19 */ "RESERVED_19",                   // MAV_FRAME_ESTIM_ENU - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: East, y: North, z: Up).
-/* 20 */ "LOCAL_FRD",                     // Forward, Right, Down coordinate frame. This is a local frame with Z-down and arbitrary F/R alignment (i.e. not aligned with NED/earth frame).
-/* 21 */ "LOCAL_FLU",                     // Forward, Left, Up coordinate frame. This is a local frame with Z-up and arbitrary F/L alignment (i.e. not aligned with ENU/earth frame).
+/* 20 */ "LOCAL_FRD",                     // FRD local tangent frame (x: Forward, y: Right, z: Down) with origin fixed relative to earth. The forward axis is aligned to the front of the vehicle in the horizontal plane.
+/* 21 */ "LOCAL_FLU",                     // FLU local tangent frame (x: Forward, y: Left, z: Up) with origin fixed relative to earth. The forward axis is aligned to the front of the vehicle in the horizontal plane.
 }};
 
 std::string to_string(MAV_FRAME e)
@@ -530,7 +545,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: f7783e4d7764c236021e92fc4a1c16a1)
+// [[[end]]] (checksum: 25c2bfb3375047a329efe0dd98ac014a)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -653,13 +668,20 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
 { 158, "PERIPHERAL" },                    // Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter microservice.
 { 159, "QX1_GIMBAL" },                    // Gimbal ID for QX1.
 { 160, "FLARM" },                         // FLARM collision alert component.
+{ 161, "PARACHUTE" },                     // Parachute component.
 { 171, "GIMBAL2" },                       // Gimbal #2.
 { 172, "GIMBAL3" },                       // Gimbal #3.
 { 173, "GIMBAL4" },                       // Gimbal #4
 { 174, "GIMBAL5" },                       // Gimbal #5.
 { 175, "GIMBAL6" },                       // Gimbal #6.
+{ 180, "BATTERY" },                       // Battery #1.
+{ 181, "BATTERY2" },                      // Battery #2.
+{ 189, "MAVCAN" },                        // CAN over MAVLink client.
 { 190, "MISSIONPLANNER" },                // Component that can generate/supply a mission flight plan (e.g. GCS or developer API).
 { 191, "ONBOARD_COMPUTER" },              // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
+{ 192, "ONBOARD_COMPUTER2" },             // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
+{ 193, "ONBOARD_COMPUTER3" },             // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
+{ 194, "ONBOARD_COMPUTER4" },             // Component that lives on the onboard computer (companion computer) and has some generic functionalities, such as settings system parameters and monitoring the status of some processes that don't directly speak mavlink and so on.
 { 195, "PATHPLANNER" },                   // Component that finds an optimal path between points based on a certain constraint (e.g. minimum snap, shortest path, cost, etc.).
 { 196, "OBSTACLE_AVOIDANCE" },            // Component that plans a collision free path between two points.
 { 197, "VISUAL_INERTIAL_ODOMETRY" },      // Component that provides position estimates using VIO techniques.
@@ -677,7 +699,7 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
 { 242, "TUNNEL_NODE" },                   // Component handling TUNNEL messages (e.g. vendor specific GUI of a component).
 { 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: 2dc119e3e20f7668a71e8649ba3f67b6)
+// [[[end]]] (checksum: 0f3c4a601107653ab0bb3bb92c415b8e)
 
 std::string to_string(MAV_COMPONENT e)
 {
