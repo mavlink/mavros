@@ -15,6 +15,7 @@ jobs:
           # - {ROS_DISTRO: galactic, ROS_REPO: testing}
           - {ROS_DISTRO: galactic, ROS_REPO: main}
           - {ROS_DISTRO: humble, ROS_REPO: main}
+          - {ROS_DISTRO: iron, ROS_REPO: main}
           - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
@@ -26,5 +27,5 @@ jobs:
         with:
           path: "${{ env.CCACHE_DIR }}"
           key: "ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}"
-      - uses: 'ros-industrial/industrial_ci@master'
+      - uses: 'ros-industrial/industrial_ci@master'  # nosemgrep
         env: ${{matrix.env}}
