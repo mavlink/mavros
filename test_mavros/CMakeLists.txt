@@ -66,6 +66,7 @@ catkin_package(
 
 include_directories(
   include
+  SYSTEM
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}

@@ -7,19 +7,20 @@
 # from collections import OrderedDict
 # import re
 #
+# def clear_desc(s):
+#     return ' '.join(v.strip() for v in s.splitlines() if v.strip())
 #
 # def wr_enum(enum, ename, pfx='', bsz=16):
-#     cog.outl(f"# {ename}_{pfx}")
+#     cog.outl("# " + ename + "_" + pfx)
 #     for k, e in enum:
 #         # exclude also deprecated commands
-#         if f"{ename}_{pfx}" in e.name and not re.search('deprecated', e.description, re.IGNORECASE):
-#             sn = e.name[len(ename) + 1:]
-#             l = f"uint{bsz} {sn} = {k}"
+#         if 'MAV_CMD' + "_" + pfx in e.name and not re.search('deprecated', e.description, re.IGNORECASE):
+#             sn = e.name[len('MAV_CMD') + 1:]
+#             l = "uint{bsz} {sn} = {k}".format(**locals())
 #             if e.description:
-#                 l += f"{' ' * (50 - len(l))} # {e.description.strip()}"
+#                 l += ' ' * (50 - len(l)) + ' # ' + clear_desc(e.description)
 #             cog.outl(l)
-#     cog.outl()
-#
+#     cog.out('\n')
 #
 # def decl_enum(ename):
 #     enum = sorted(common.enums[ename].items())
@@ -27,7 +28,7 @@
 #
 #     enumt = []
 #     # exception list of commands to not include
-#     exlist = [] # ['SPATIAL', 'USER', 'WAYPOINT']
+#     exlist = ['SPATIAL', 'USER', 'WAYPOINT']
 #     for k, e in enum:
 #         enumt.extend(e.name[len(ename) + 1:].split('_')[0:1])
 #
@@ -37,7 +38,6 @@
 #     for key in enumt:
 #         wr_enum(enum, ename, key)
 #
-#
 # decl_enum('MAV_CMD')
 # ]]]
 # MAV_CMD_AIRFRAME
@@ -45,6 +45,11 @@ uint16 AIRFRAME_CONFIGURATION = 2520
 
 # MAV_CMD_ARM
 uint16 ARM_AUTHORIZATION_REQUEST = 3001            # Request authorization to arm the vehicle to a external entity, the arm authorizer is responsible to request all data that is needs from the vehicle before authorize or deny the request. If approved the progress of command_ack message should be set with period of time that this authorization is valid in seconds or in case it was denied it should be set with one of the reasons in ARM_AUTH_DENIED_REASON.
+
+# MAV_CMD_CAMERA
+uint16 CAMERA_TRACK_POINT = 2004                   # If the camera supports point visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_POINT is set), this command allows to initiate the tracking.
+uint16 CAMERA_TRACK_RECTANGLE = 2005               # If the camera supports rectangle visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE is set), this command allows to initiate the tracking.
+uint16 CAMERA_STOP_TRACKING = 2010                 # Stops ongoing tracking.
 
 # MAV_CMD_CAN
 uint16 CAN_FORWARD = 32000                         # Request forwarding of CAN packets from the given CAN bus to this interface. CAN Frames are sent using CAN_FRAME and CANFD_FRAME messages
@@ -76,7 +81,7 @@ uint16 DO_SET_SERVO = 183                          # Set a servo to a desired PW
 uint16 DO_REPEAT_SERVO = 184                       # Cycle a between its nominal setting and a desired PWM for a desired number of cycles with a desired period.
 uint16 DO_FLIGHTTERMINATION = 185                  # Terminate flight immediately
 uint16 DO_CHANGE_ALTITUDE = 186                    # Change altitude set point.
-uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
+uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude/Altitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
 uint16 DO_RALLY_LAND = 190                         # Mission command to perform a landing from a rally point.
 uint16 DO_GO_AROUND = 191                          # Mission command to safely abort an autonomous landing.
 uint16 DO_REPOSITION = 192                         # Reposition the vehicle to a specific WGS84 global position.
@@ -107,7 +112,8 @@ uint16 DO_ENGINE_CONTROL = 223                     # Control vehicle engine. Thi
 uint16 DO_SET_MISSION_CURRENT = 224                # Set the mission item with sequence number seq as current item. This means that the MAV will continue to this mission item on the shortest path (not following the mission items in-between).
 uint16 DO_LAST = 240                               # NOP - This command is only used to mark the upper limit of the DO commands in the enumeration
 uint16 DO_JUMP_TAG = 601                           # Jump to the matching tag in the mission list. Repeat this action for the specified number of times. A mission should contain a single matching tag for each jump. If this is not the case then a jump to a missing tag should complete the mission, and a jump where there are multiple matching tags should always select the one with the lowest mission sequence number.
-uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # High level setpoint to be sent to a gimbal manager to set a gimbal attitude. It is possible to set combinations of the values below. E.g. an angle as well as a desired angular rate can be used to get to this angle at a certain angular rate, or an angular rate only will result in continuous turning. NaN is to be used to signal unset. Note: a gimbal is never to react to this command but only the gimbal manager.
+uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # Set gimbal manager pitch/yaw setpoints (low rate command). It is possible to set combinations of the values below. E.g. an angle as well as a desired angular rate can be used to get to this angle at a certain angular rate, or an angular rate only will result in continuous turning. NaN is to be used to signal unset. Note: only the gimbal manager will react to this command - it will be ignored by a gimbal device. Use GIMBAL_MANAGER_SET_PITCHYAW if you need to stream pitch/yaw setpoints at higher rate.
+uint16 DO_GIMBAL_MANAGER_CONFIGURE = 1001          # Gimbal configuration to set which sysid/compid is in primary and secondary control.
 uint16 DO_TRIGGER_CONTROL = 2003                   # Enable or disable on-board camera triggering system.
 uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
 uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
@@ -205,15 +211,10 @@ uint16 RUN_PREARM_CHECKS = 401                     # Instructs system to run pre
 # MAV_CMD_SET
 uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM.
 uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Use NaN for reserved values. GCS will send a MAV_CMD_REQUEST_VIDEO_STREAM_STATUS command after a mode change if the camera supports video streaming.
+uint16 SET_CAMERA_ZOOM = 531                       # Set camera zoom. Camera must respond with a CAMERA_SETTINGS message (on success).
+uint16 SET_CAMERA_FOCUS = 532                      # Set camera focus. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
 uint16 SET_GUIDED_SUBMODE_CIRCLE = 4001            # This command sets submode circle when vehicle is in guided mode. Vehicle flies along a circle facing the center of the circle. The user can input the velocity along the circle and change the radius. If no input is given the vehicle will hold position.
-
-# MAV_CMD_SPATIAL
-uint16 SPATIAL_USER_1 = 31005                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
-uint16 SPATIAL_USER_2 = 31006                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
-uint16 SPATIAL_USER_3 = 31007                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
-uint16 SPATIAL_USER_4 = 31008                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
-uint16 SPATIAL_USER_5 = 31009                      # User defined spatial item. Ground Station will not show the Vehicle as flying through this item. Example: ROI item.
 
 # MAV_CMD_START
 uint16 START_RX_PAIR = 500                         # Starts receiver pairing.
@@ -224,24 +225,10 @@ uint16 STORAGE_FORMAT = 526                        # Format a storage medium. On
 # MAV_CMD_UAVCAN
 uint16 UAVCAN_GET_NODE_INFO = 5200                 # Commands the vehicle to respond with a sequence of messages UAVCAN_NODE_INFO, one message per every UAVCAN node that is online. Note that some of the response messages can be lost, which the receiver can detect easily by checking whether every received UAVCAN_NODE_STATUS has a matching message UAVCAN_NODE_INFO received earlier; if not, this command should be sent again in order to request re-transmission of the node information messages.
 
-# MAV_CMD_USER
-uint16 USER_1 = 31010                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
-uint16 USER_2 = 31011                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
-uint16 USER_3 = 31012                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
-uint16 USER_4 = 31013                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
-uint16 USER_5 = 31014                              # User defined command. Ground Station will not show the Vehicle as flying through this item. Example: MAV_CMD_DO_SET_PARAMETER item.
-
 # MAV_CMD_VIDEO
 uint16 VIDEO_START_CAPTURE = 2500                  # Starts video capture (recording).
 uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capture (recording).
 uint16 VIDEO_START_STREAMING = 2502                # Start video streaming
 uint16 VIDEO_STOP_STREAMING = 2503                 # Stop the given video stream
 
-# MAV_CMD_WAYPOINT
-uint16 WAYPOINT_USER_1 = 31000                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
-uint16 WAYPOINT_USER_2 = 31001                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
-uint16 WAYPOINT_USER_3 = 31002                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
-uint16 WAYPOINT_USER_4 = 31003                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
-uint16 WAYPOINT_USER_5 = 31004                     # User defined waypoint item. Ground Station will show the Vehicle as flying through this item.
-
-# [[[end]]] (checksum: 77e70a4f67838b47c3d086432dd58cb7)
+# [[[end]]] (checksum: cb312f449893c76af4bf35424ccff882)
