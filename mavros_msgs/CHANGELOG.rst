@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.17.0 (2023-09-09)
+-------------------
 * cog: regenerate all
 * Contributors: Vladimir Ermakov
 
