@@ -15,14 +15,14 @@
  * @{
  */
 
-#include <mavconn/console_bridge_compat.hpp>
-#include <mavconn/tcp.hpp>
-#include <mavconn/thread_utils.hpp>
-
 #include <cassert>
 #include <memory>
 #include <string>
 #include <unordered_map>
+
+#include "mavconn/console_bridge_compat.hpp"
+#include "mavconn/tcp.hpp"
+#include "mavconn/thread_utils.hpp"
 
 // Ensure the correct io_service() is called based on asio version
 #if ASIO_VERSION >= 101400

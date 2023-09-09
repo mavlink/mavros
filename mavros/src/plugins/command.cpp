@@ -489,7 +489,7 @@ private:
     send_command_long_and_wait(
       false,
       enum_value(MAV_CMD::NAV_LAND_LOCAL), 1,
-      0, //landing target number (what does it means?)
+      0,  // landing target number (what does it means?)
       req->offset,
       req->rate,
       req->yaw,

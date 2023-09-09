@@ -16,8 +16,8 @@
  * @{
  */
 
-#include <mavros/frame_tf.hpp>
 #include <stdexcept>
+#include <mavros/frame_tf.hpp>
 
 namespace mavros
 {

@@ -11,11 +11,6 @@
  * Test mavconn library
  */
 
-#include <mavconn/interface.hpp>
-#include <mavconn/serial.hpp>
-#include <mavconn/tcp.hpp>
-#include <mavconn/udp.hpp>
-
 // Gmock broken on Ubuntu (thrusty),
 //  its gmock 1.6 require gtest 1.7, while repository only provides 1.6
 //  this error exist one year without any updates.
@@ -29,6 +24,11 @@
 #include <condition_variable>
 #include <limits>
 #include <memory>
+
+#include "mavconn/interface.hpp"
+#include "mavconn/serial.hpp"
+#include "mavconn/tcp.hpp"
+#include "mavconn/udp.hpp"
 
 using namespace mavconn; // NOLINT
 using mavlink_message_t = mavlink::mavlink_message_t;

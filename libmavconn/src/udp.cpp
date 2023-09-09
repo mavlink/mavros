@@ -15,12 +15,12 @@
  * @{
  */
 
-#include <mavconn/console_bridge_compat.hpp>
-#include <mavconn/thread_utils.hpp>
-#include <mavconn/udp.hpp>
-
 #include <cassert>
 #include <string>
+
+#include "mavconn/console_bridge_compat.hpp"
+#include "mavconn/thread_utils.hpp"
+#include "mavconn/udp.hpp"
 
 namespace mavconn
 {

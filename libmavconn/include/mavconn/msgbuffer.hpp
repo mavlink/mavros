@@ -19,8 +19,9 @@
 #ifndef MAVCONN__MSGBUFFER_HPP_
 #define MAVCONN__MSGBUFFER_HPP_
 
-#include <mavconn/mavlink_dialect.hpp>
 #include <cassert>
+
+#include <mavconn/mavlink_dialect.hpp>
 
 namespace mavconn
 {

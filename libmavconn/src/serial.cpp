@@ -19,12 +19,12 @@
 #include <linux/serial.h>
 #endif
 
-#include <mavconn/console_bridge_compat.hpp>
-#include <mavconn/serial.hpp>
-#include <mavconn/thread_utils.hpp>
-
 #include <cassert>
 #include <string>
+
+#include "mavconn/console_bridge_compat.hpp"
+#include "mavconn/serial.hpp"
+#include "mavconn/thread_utils.hpp"
 
 namespace mavconn
 {

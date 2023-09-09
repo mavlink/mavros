@@ -1108,7 +1108,7 @@ private:
       has_battery_status0 = true;
     }
 
-    if (!disable_diag && bs.id >= 0 && bs.id < MAX_NR_BATTERY_STATUS) {
+    if (!disable_diag && bs.id < MAX_NR_BATTERY_STATUS) {
       batt_diag[bs.id].set(total_voltage, batt_msg.current, batt_msg.percentage);
       batt_diag[bs.id].setcell_v(batt_msg.cell_voltage);
     }

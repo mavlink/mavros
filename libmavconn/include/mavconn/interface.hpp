@@ -23,8 +23,6 @@
 #ifndef MAVCONN__INTERFACE_HPP_
 #define MAVCONN__INTERFACE_HPP_
 
-#include <mavconn/mavlink_dialect.hpp>
-
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -39,6 +37,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
+#include <mavconn/mavlink_dialect.hpp>
 
 namespace mavconn
 {

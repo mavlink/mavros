@@ -19,13 +19,13 @@
 #ifndef MAVCONN__SERIAL_HPP_
 #define MAVCONN__SERIAL_HPP_
 
-#include <mavconn/interface.hpp>
-#include <mavconn/msgbuffer.hpp>
-
-#include <asio.hpp>
 #include <atomic>
 #include <deque>
 #include <string>
+
+#include <asio.hpp>
+#include <mavconn/interface.hpp>
+#include <mavconn/msgbuffer.hpp>
 
 namespace mavconn
 {

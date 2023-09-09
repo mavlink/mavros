@@ -15,18 +15,18 @@
  * @{
  */
 
-#include <mavconn/console_bridge_compat.hpp>
-#include <mavconn/interface.hpp>
-#include <mavconn/msgbuffer.hpp>
-#include <mavconn/serial.hpp>
-#include <mavconn/tcp.hpp>
-#include <mavconn/udp.hpp>
-
 #include <cassert>
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
+
+#include "mavconn/console_bridge_compat.hpp"
+#include "mavconn/interface.hpp"
+#include "mavconn/msgbuffer.hpp"
+#include "mavconn/serial.hpp"
+#include "mavconn/tcp.hpp"
+#include "mavconn/udp.hpp"
 
 namespace mavconn
 {
