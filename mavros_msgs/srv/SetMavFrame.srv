@@ -3,21 +3,8 @@
 # XXX DEPRECATED
 
 # [[[cog:
-# from pymavlink.dialects.v20 import common
-#
-# def decl_enum(ename, pfx='', bsz=8):
-#     enum = sorted(common.enums[ename].items())
-#     enum.pop() # remove ENUM_END
-#
-#     cog.outl("# " + ename)
-#     for k, e in enum:
-#         sn = e.name[len(ename) + 1:]
-#         l = "uint{bsz} {pfx}{sn} = {k}".format(**locals())
-#         if e.description:
-#             l += ' ' * (40 - len(l)) + ' # ' + e.description
-#         cog.outl(l)
-#
-# decl_enum('MAV_FRAME', 'FRAME_')
+# import mavros_cog
+# mavros_cog.idl_decl_enum('MAV_FRAME', 'FRAME_')
 # ]]]
 # MAV_FRAME
 uint8 FRAME_GLOBAL = 0                   # Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).

@@ -3,23 +3,10 @@
 # https://mavlink.io/en/messages/common.html#ADSB_VEHICLE
 
 # [[[cog:
-# from pymavlink.dialects.v20 import common
-#
-# def decl_enum(ename, pfx='', bsz=8):
-#     enum = sorted(common.enums[ename].items())
-#     enum.pop() # remove ENUM_END
-#
-#     cog.outl("# " + ename)
-#     for k, e in enum:
-#         sn = e.name[len(ename) + 1:]
-#         l = "uint{bsz} {pfx}{sn} = {k}".format(**locals())
-#         if e.description:
-#             l += ' ' * (40 - len(l)) + ' # ' + e.description
-#         cog.outl(l)
-#
-# decl_enum('ADSB_ALTITUDE_TYPE', 'ALT_')
-# decl_enum('ADSB_EMITTER_TYPE', 'EMITTER_')
-# decl_enum('ADSB_FLAGS', 'FLAG_', 16)
+# import mavros_cog
+# mavros_cog.idl_decl_enum('ADSB_ALTITUDE_TYPE', 'ALT_')
+# mavros_cog.idl_decl_enum('ADSB_EMITTER_TYPE', 'EMITTER_')
+# mavros_cog.idl_decl_enum('ADSB_FLAGS', 'FLAG_', 16)
 # ]]]
 # ADSB_ALTITUDE_TYPE
 uint8 ALT_PRESSURE_QNH = 0               # Altitude reported from a Baro source using QNH reference

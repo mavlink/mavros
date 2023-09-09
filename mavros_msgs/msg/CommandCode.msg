@@ -3,42 +3,8 @@
 # https://mavlink.io/en/messages/common.html#MAV_CMD
 
 # [[[cog:
-# from pymavlink.dialects.v20 import common
-# from collections import OrderedDict
-# import re
-#
-# def clear_desc(s):
-#     return ' '.join(v.strip() for v in s.splitlines() if v.strip())
-#
-# def wr_enum(enum, ename, pfx='', bsz=16):
-#     cog.outl("# " + ename + "_" + pfx)
-#     for k, e in enum:
-#         # exclude also deprecated commands
-#         if 'MAV_CMD' + "_" + pfx in e.name and not re.search('deprecated', e.description, re.IGNORECASE):
-#             sn = e.name[len('MAV_CMD') + 1:]
-#             l = "uint{bsz} {sn} = {k}".format(**locals())
-#             if e.description:
-#                 l += ' ' * (50 - len(l)) + ' # ' + clear_desc(e.description)
-#             cog.outl(l)
-#     cog.out('\n')
-#
-# def decl_enum(ename):
-#     enum = sorted(common.enums[ename].items())
-#     enum.pop() # remove ENUM_END
-#
-#     enumt = []
-#     # exception list of commands to not include
-#     exlist = ['SPATIAL', 'USER', 'WAYPOINT']
-#     for k, e in enum:
-#         enumt.extend(e.name[len(ename) + 1:].split('_')[0:1])
-#
-#     enumt = sorted(set(enumt))
-#     enumt = [word for word in enumt if word not in exlist]
-#
-#     for key in enumt:
-#         wr_enum(enum, ename, key)
-#
-# decl_enum('MAV_CMD')
+# import mavros_cog
+# mavros_cog.idl_decl_enum_mav_cmd()
 # ]]]
 # MAV_CMD_AIRFRAME
 uint16 AIRFRAME_CONFIGURATION = 2520

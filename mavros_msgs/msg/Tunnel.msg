@@ -9,21 +9,8 @@ uint8 payload_length
 uint8[128] payload
 
 # [[[cog:
-# from pymavlink.dialects.v20 import common
-#
-# def decl_enum(ename, pfx='', bsz=8):
-#     enum = sorted(common.enums[ename].items())
-#     enum.pop() # remove ENUM_END
-#
-#     cog.outl("# " + ename)
-#     for k, e in enum:
-#         sn = e.name[len(ename) + 1:]
-#         l = "uint{bsz} {pfx}{sn} = {k}".format(**locals())
-#         if e.description:
-#             l += ' ' * (40 - len(l)) + ' # ' + e.description
-#         cog.outl(l)
-#
-# decl_enum('MAV_TUNNEL_PAYLOAD_TYPE', 'PAYLOAD_TYPE_', 16)
+# import mavros_cog
+# mavros_cog.idl_decl_enum('MAV_TUNNEL_PAYLOAD_TYPE', 'PAYLOAD_TYPE_', 16)
 # ]]]
 # MAV_TUNNEL_PAYLOAD_TYPE
 uint16 PAYLOAD_TYPE_UNKNOWN = 0          # Encoding of payload unknown.
