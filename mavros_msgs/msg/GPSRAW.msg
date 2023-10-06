@@ -9,8 +9,8 @@ uint8 GPS_FIX_TYPE_NO_FIX     = 1    # No position information, GPS is connected
 uint8 GPS_FIX_TYPE_2D_FIX     = 2    # 2D position
 uint8 GPS_FIX_TYPE_3D_FIX     = 3    # 3D position
 uint8 GPS_FIX_TYPE_DGPS       = 4    # DGPS/SBAS aided 3D position
-uint8 GPS_FIX_TYPE_RTK_FLOATR = 5    # TK float, 3D position
-uint8 GPS_FIX_TYPE_RTK_FIXEDR = 6    # TK Fixed, 3D position
+uint8 GPS_FIX_TYPE_RTK_FLOAT  = 5    # RTK float, 3D position
+uint8 GPS_FIX_TYPE_RTK_FIXED  = 6    # RTK Fixed, 3D position
 uint8 GPS_FIX_TYPE_STATIC     = 7    # Static fixed, typically used for base stations
 uint8 GPS_FIX_TYPE_PPP        = 8    # PPP, 3D position
 uint8 fix_type      # [GPS_FIX_TYPE] GPS fix type
