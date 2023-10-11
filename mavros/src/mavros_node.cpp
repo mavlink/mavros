@@ -42,17 +42,17 @@ int main(int argc, char * argv[])
   node->declare_parameter("gcs_url", gcs_url);
   node->declare_parameter("tgt_system", tgt_system);
   node->declare_parameter("tgt_component", tgt_component);
-  node->declare_parameter("base_link_frame_id", base_link_frame_id);
-  node->declare_parameter("map_frame_id", map_frame_id);
-  node->declare_parameter("odom_frame_id", odom_frame_id);
+  node->declare_parameter("base_link_frame", base_link_frame_id);
+  node->declare_parameter("map_frame", map_frame_id);
+  node->declare_parameter("odom_frame", odom_frame_id);
 
   node->get_parameter("fcu_url", fcu_url);
   node->get_parameter("gcs_url", gcs_url);
   node->get_parameter("tgt_system", tgt_system);
   node->get_parameter("tgt_component", tgt_component);
-  node->get_parameter("base_link_frame_id", base_link_frame_id);
-  node->get_parameter("map_frame_id", map_frame_id);
-  node->get_parameter("odom_frame_id", odom_frame_id);
+  node->get_parameter("base_link_frame", base_link_frame_id);
+  node->get_parameter("map_frame", map_frame_id);
+  node->get_parameter("odom_frame", odom_frame_id);
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 

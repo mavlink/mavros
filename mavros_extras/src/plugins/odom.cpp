@@ -144,8 +144,8 @@ private:
     Eigen::Affine3d tf_parent2parent_des;
     Eigen::Affine3d tf_child2child_des;
 
-    lookup_static_transform(fcu_odom_parent_id_des, "map_ned", tf_parent2parent_des);
-    lookup_static_transform(fcu_odom_child_id_des, "base_link_frd", tf_child2child_des);
+    lookup_static_transform(fcu_odom_parent_id_des, fcu_odom_parent_id_des+"_ned", tf_parent2parent_des);
+    lookup_static_transform(fcu_odom_child_id_des, fcu_odom_child_id_des+"_frd", tf_child2child_des);
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     Matrix6d cov_pose = Matrix6d::Zero();
@@ -235,8 +235,8 @@ private:
     Eigen::Affine3d tf_parent2parent_des;
     Eigen::Affine3d tf_child2child_des;
 
-    lookup_static_transform("odom_ned", odom->header.frame_id, tf_parent2parent_des);
-    lookup_static_transform("base_link_frd", odom->child_frame_id, tf_child2child_des);
+    lookup_static_transform(odom->header.frame_id+"_ned", odom->header.frame_id, tf_parent2parent_des);
+    lookup_static_transform(odom->child_frame_id+"_frd", odom->child_frame_id, tf_child2child_des);
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     ftf::Covariance6d cov_pose = odom->pose.covariance;
