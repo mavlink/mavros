@@ -570,6 +570,10 @@ private:
 
   std::string uas_url;
 
+  std::string base_link_frame_id;
+  std::string odom_frame_id;
+  std::string map_frame_id;
+
   StrV plugin_allowlist;
   StrV plugin_denylist;
 

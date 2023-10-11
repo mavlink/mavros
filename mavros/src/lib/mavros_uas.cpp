@@ -48,6 +48,9 @@ UAS::UAS(
   target_system(target_system_),
   target_component(target_component_),
   uas_url(uas_url_),
+  base_link_frame_id("base_link"),
+  odom_frame_id("odom"),
+  map_frame_id("map"),
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
   loaded_plugins{},
   plugin_subscriptions{},
@@ -77,6 +80,9 @@ UAS::UAS(
   this->declare_parameter("target_component_id", target_component);
   this->declare_parameter("plugin_allowlist", plugin_allowlist);
   this->declare_parameter("plugin_denylist", plugin_denylist);
+  this->declare_parameter("base_link_frame_id", base_link_frame_id);
+  this->declare_parameter("odom_frame_id", odom_frame_id);
+  this->declare_parameter("map_frame_id", map_frame_id);
 
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
@@ -93,6 +99,9 @@ UAS::UAS(
       this->get_parameter("target_component_id", tgt_component);
       this->get_parameter("plugin_allowlist", plugin_allowlist);
       this->get_parameter("plugin_denylist", plugin_denylist);
+      this->get_parameter("base_link_frame_id", base_link_frame_id);
+      this->get_parameter("odom_frame_id", odom_frame_id);
+      this->get_parameter("map_frame_id", map_frame_id);
 
       exec_spin_thd = thread_ptr(
         new std::thread(
@@ -151,21 +160,24 @@ UAS::UAS(
 
       // Publish helper TFs used for frame transformation in the odometry plugin
       {
+        std::string base_link_frd = base_link_frame_id+"_frd";
+        std::string odom_ned = odom_frame_id+"_ned";
+        std::string map_ned = map_frame_id+"_ned";
         std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
         add_static_transform(
-          "map", "map_ned", Eigen::Affine3d(
+          map_frame_id, map_ned, Eigen::Affine3d(
             ftf::quaternion_from_rpy(
               M_PI, 0,
               M_PI_2)),
           transform_vector);
         add_static_transform(
-          "odom", "odom_ned", Eigen::Affine3d(
+          odom_frame_id, odom_ned, Eigen::Affine3d(
             ftf::quaternion_from_rpy(
               M_PI, 0,
               M_PI_2)),
           transform_vector);
         add_static_transform(
-          "base_link", "base_link_frd",
+          base_link_frame_id, base_link_frd,
           Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
 
         tf2_static_broadcaster.sendTransform(transform_vector);

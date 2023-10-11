@@ -32,6 +32,7 @@ int main(int argc, char * argv[])
   // options.use_intra_process_comms(true);
 
   std::string fcu_url, gcs_url, uas_url;
+  std::string base_link_frame_id, odom_frame_id, map_frame_id;
   int tgt_system = 1, tgt_component = 1;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
@@ -41,11 +42,17 @@ int main(int argc, char * argv[])
   node->declare_parameter("gcs_url", gcs_url);
   node->declare_parameter("tgt_system", tgt_system);
   node->declare_parameter("tgt_component", tgt_component);
+  node->declare_parameter("base_link_frame_id", base_link_frame_id);
+  node->declare_parameter("map_frame_id", map_frame_id);
+  node->declare_parameter("odom_frame_id", odom_frame_id);
 
   node->get_parameter("fcu_url", fcu_url);
   node->get_parameter("gcs_url", gcs_url);
   node->get_parameter("tgt_system", tgt_system);
   node->get_parameter("tgt_component", tgt_component);
+  node->get_parameter("base_link_frame_id", base_link_frame_id);
+  node->get_parameter("map_frame_id", map_frame_id);
+  node->get_parameter("odom_frame_id", odom_frame_id);
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 
@@ -77,6 +84,24 @@ int main(int argc, char * argv[])
     options, "mavros", uas_url, tgt_system,
     tgt_component);
   exec.add_node(uas_node);
+
+  {
+    std::vector<rclcpp::Parameter> uas_params{};
+
+    if (base_link_frame_id != "") {
+      uas_params.emplace_back("base_link_frame_id", base_link_frame_id);
+    }
+
+    if (odom_frame_id != "") {
+      uas_params.emplace_back("odom_frame_id", odom_frame_id);
+    }
+
+    if (map_frame_id != "") {
+      uas_params.emplace_back("map_frame_id", map_frame_id);
+    }
+    uas_node->set_parameters(uas_params);
+    
+  }
 
   exec.spin();
   rclcpp::shutdown();
