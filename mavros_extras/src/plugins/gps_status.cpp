@@ -84,6 +84,7 @@ private:
 		ros_msg->hdg_acc           = mav_msg.hdg_acc;
 		ros_msg->dgps_numch        = UINT8_MAX;	// information not available in GPS_RAW_INT mavlink message
 		ros_msg->dgps_age          = UINT32_MAX;// information not available in GPS_RAW_INT mavlink message
+		ros_msg->yaw               = mav_msg.yaw;
 
 		gps1_raw_pub.publish(ros_msg);
 	}
@@ -103,13 +104,14 @@ private:
 		ros_msg->vel               = mav_msg.vel;
 		ros_msg->cog               = mav_msg.cog;
 		ros_msg->satellites_visible = mav_msg.satellites_visible;
-		ros_msg->alt_ellipsoid     = INT32_MAX;	// information not available in GPS2_RAW mavlink message
-		ros_msg->h_acc             = UINT32_MAX;// information not available in GPS2_RAW mavlink message
-		ros_msg->v_acc             = UINT32_MAX;// information not available in GPS2_RAW mavlink message
-		ros_msg->vel_acc           = UINT32_MAX;// information not available in GPS2_RAW mavlink message
-		ros_msg->hdg_acc           = UINT32_MAX;// information not available in GPS2_RAW mavlink message
+		ros_msg->alt_ellipsoid     = mav_msg.alt_ellipsoid;
+		ros_msg->h_acc             = mav_msg.h_acc;
+		ros_msg->v_acc             = mav_msg.v_acc;
+		ros_msg->vel_acc           = mav_msg.vel_acc;
+		ros_msg->hdg_acc           = mav_msg.hdg_acc
 		ros_msg->dgps_numch        = mav_msg.dgps_numch;
 		ros_msg->dgps_age          = mav_msg.dgps_age;
+		ros_msg->yaw               = mav_msg.yaw;
 
 		gps2_raw_pub.publish(ros_msg);
 	}
