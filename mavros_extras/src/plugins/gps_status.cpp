@@ -108,7 +108,7 @@ private:
 		ros_msg->h_acc             = mav_msg.h_acc;
 		ros_msg->v_acc             = mav_msg.v_acc;
 		ros_msg->vel_acc           = mav_msg.vel_acc;
-		ros_msg->hdg_acc           = mav_msg.hdg_acc
+		ros_msg->hdg_acc           = mav_msg.hdg_acc;
 		ros_msg->dgps_numch        = mav_msg.dgps_numch;
 		ros_msg->dgps_age          = mav_msg.dgps_age;
 		ros_msg->yaw               = mav_msg.yaw;
