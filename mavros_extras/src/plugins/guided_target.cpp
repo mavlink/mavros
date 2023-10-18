@@ -84,7 +84,6 @@ private:
   rclcpp::Subscription<geographic_msgs::msg::GeoPointStamped>::SharedPtr gp_origin_sub;
 
   Eigen::Vector3d current_gps;          //!< geodetic coordinates LLA
-  Eigen::Vector3d current_local_pos;    //!< Current local position in ENU
 
   Eigen::Vector3d map_origin {};        //!< oigin of map frame [lla]
   Eigen::Vector3d ecef_origin {};       //!< geocentric origin [m]
