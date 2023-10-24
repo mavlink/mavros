@@ -36,7 +36,7 @@ using namespace std::placeholders;      // NOLINT
 
 /**
  * @brief Wheel odometry plugin.
- * @plugin wheel_odomotry
+ * @plugin wheel_odometry
  *
  * This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders.
  * Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).
