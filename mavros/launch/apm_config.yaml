@@ -1,14 +1,14 @@
 # Common configuration for APM2 autopilot
 #
 # node:
-/mavros/**:
+/mavros:
   ros__parameters:
     startup_px4_usb_quirk: false
 
 # --- system plugins ---
 
 # sys_status & sys_time connection options
-/mavros/**/conn:
+/mavros/conn:
   ros__parameters:
     heartbeat_rate: 1.0    # send heartbeat rate in Hertz
     heartbeat_mav_type: "ONBOARD_CONTROLLER"
@@ -17,14 +17,14 @@
     system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # sys_status
-/mavros/**/sys:
+/mavros/sys:
   ros__parameters:
     min_voltage: [10.0]   # diagnostics min voltage, use a vector i.e. [16.2, 16.0] for multiple batteries, up-to 10 are supported
                         # to achieve the same on a ROS launch file do: <rosparam param="sys/min_voltage">[16.2, 16.0]</rosparam>
     disable_diag: false # disable all sys_status diagnostics, except heartbeat
 
 # sys_time
-/mavros/**/time:
+/mavros/time:
   ros__parameters:
     time_ref_source: "fcu"  # time_reference source
     timesync_mode: MAVLINK
@@ -33,7 +33,7 @@
 # --- mavros plugins (alphabetical order) ---
 
 # 3dr_radio
-/mavros/**/tdr_radio:
+/mavros/tdr_radio:
   ros__parameters:
     low_rssi: 40  # raw rssi lower level for diagnostics
 
@@ -41,7 +41,7 @@
 # None
 
 # command
-/mavros/**/cmd:
+/mavros/cmd:
   ros__parameters:
     use_comp_id_system_control: false # quirk for some old FCUs
 
@@ -52,7 +52,7 @@
 # None
 
 # global_position
-/mavros/**/global_position:
+/mavros/global_position:
   ros__parameters:
     frame_id: "map"             # origin frame
     child_frame_id: "base_link" # body-fixed frame
@@ -65,7 +65,7 @@
     tf.child_frame_id: "base_link" # TF child_frame_id
 
 # imu_pub
-/mavros/**/imu:
+/mavros/imu:
   ros__parameters:
     frame_id: "base_link"
     # need find actual values
@@ -75,7 +75,7 @@
     magnetic_stdev: 0.0
 
 # local_position
-/mavros/**/local_position:
+/mavros/local_position:
   ros__parameters:
     frame_id: "map"
     tf.send: false
@@ -90,12 +90,12 @@
 # None
 
 # setpoint_accel
-/mavros/**/setpoint_accel:
+/mavros/setpoint_accel:
   ros__parameters:
     send_force: false
 
 # setpoint_attitude
-/mavros/**/setpoint_attitude:
+/mavros/setpoint_attitude:
   ros__parameters:
     reverse_thrust: false     # allow reversed thrust
     use_quaternion: false     # enable PoseStamped topic subscriber
@@ -105,12 +105,12 @@
     tf.rate_limit: 50.0
 
 # setpoint_raw
-/mavros/**/setpoint_raw:
+/mavros/setpoint_raw:
   ros__parameters:
     thrust_scaling: 1.0       # specify thrust scaling (normalized, 0 to 1) for thrust (like PX4)
 
 # setpoint_position
-/mavros/**/setpoint_position:
+/mavros/setpoint_position:
   ros__parameters:
     tf.listen: false           # enable tf listener (disable topic subscribers)
     tf.frame_id: "map"
@@ -119,7 +119,7 @@
     mav_frame: LOCAL_NED
   
 # guided_target
-/mavros/**/guided_target:
+/mavros/guided_target:
   ros__parameters:
     tf.listen: false           # enable tf listener (disable topic subscribers)
     tf.frame_id: "map"
@@ -127,7 +127,7 @@
     tf.rate_limit: 50.0
 
 # setpoint_velocity
-/mavros/**/setpoint_velocity:
+/mavros/setpoint_velocity:
   ros__parameters:
     mav_frame: LOCAL_NED
 
@@ -135,7 +135,7 @@
 # None
 
 # waypoint
-/mavros/**/mission:
+/mavros/mission:
   ros__parameters:
     pull_after_gcs: true  # update mission if gcs updates
     use_mission_item_int: true # use the MISSION_ITEM_INT message instead of MISSION_ITEM
@@ -153,7 +153,7 @@
 ## Currently available orientations:
 #    Check http://wiki.ros.org/mavros/**/Enumerations
 ##
-/mavros/**/distance_sensor:
+/mavros/distance_sensor:
   ros__parameters:
     config: |
       rangefinder_pub:
@@ -169,12 +169,12 @@
         orientation: PITCH_270  # only that orientation are supported by APM 3.4+
 
 # image_pub
-/mavros/**/image:
+/mavros/image:
   ros__parameters:
     frame_id: "px4flow"
 
 # fake_gps
-/mavros/**/fake_gps:
+/mavros/fake_gps:
   ros__parameters:
     # select data source
     use_mocap: true         # ~mocap/pose
@@ -202,7 +202,7 @@
     gps_rate: 5.0           # GPS data publishing rate
 
 # landing_target
-/mavros/**/landing_target:
+/mavros/landing_target:
   ros__parameters:
     listen_lt: false
     mav_frame: "LOCAL_NED"
@@ -219,14 +219,14 @@
     target_size: {x:  0.3, y:  0.3}
 
 # mocap_pose_estimate
-/mavros/**/mocap:
+/mavros/mocap:
   ros__parameters:
     # select mocap source
     use_tf: false   # ~mocap/tf
     use_pose: true  # ~mocap/pose
 
 # mount_control
-/mavros/**/mount:
+/mavros/mount:
   ros__parameters:
     debounce_s: 4.0
     err_threshold_deg: 10.0
@@ -235,13 +235,13 @@
     negate_measured_yaw: false
 
 # odom
-/mavros/**/odometry:
+/mavros/odometry:
   ros__parameters:
     fcu.odom_parent_id_des: "map"    # desired parent frame rotation of the FCU's odometry
     fcu.odom_child_id_des: "map"    # desired child frame rotation of the FCU's odometry
 
 # px4flow
-/mavros/**/px4flow:
+/mavros/px4flow:
   ros__parameters:
     frame_id: "px4flow"
     ranger_fov: 0.118682      # 6.8 degrees at 5 meters, 31 degrees at 1 meter
@@ -249,7 +249,7 @@
     ranger_max_range: 5.0     # meters
 
 # vision_pose_estimate
-/mavros/**/vision_pose:
+/mavros/vision_pose:
   ros__parameters:
     tf.listen: false           # enable tf listener (disable topic subscribers)
     tf.frame_id: "map"
@@ -257,18 +257,18 @@
     tf.rate_limit: 10.0
 
 # vision_speed_estimate
-/mavros/**/vision_speed:
+/mavros/vision_speed:
   ros__parameters:
     listen_twist: true    # enable listen to twist topic, else listen to vec3d topic
     twist_cov: true       # enable listen to twist with covariance topic
 
 # vibration
-/mavros/**/vibration:
+/mavros/vibration:
   ros__parameters:
     frame_id: "base_link"
 
 # wheel_odometry
-/mavros/**/wheel_odometry:
+/mavros/wheel_odometry:
   ros__parameters:
     count: 2           # number of wheels to compute odometry
     use_rpm: false     # use wheel's RPM instead of cumulative distance to compute odometry
