@@ -99,7 +99,7 @@ void MAVConnInterface::iostat_rx_add(size_t bytes)
 }
 
 void MAVConnInterface::parse_buffer(
-  const char * pfx, uint8_t * buf, const size_t bufsize,
+  const char * pfx, uint8_t * buf, const size_t bufsize [[maybe_unused]],
   size_t bytes_received)
 {
   mavlink::mavlink_message_t message;

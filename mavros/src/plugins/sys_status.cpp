@@ -586,21 +586,21 @@ public:
       "set_mode",
       std::bind(
         &SystemStatusPlugin::set_mode_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     stream_rate_srv = node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
       std::bind(
         &SystemStatusPlugin::set_rate_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     message_interval_srv = node->create_service<mavros_msgs::srv::MessageInterval>(
       "set_message_interval",
       std::bind(
         &SystemStatusPlugin::set_message_interval_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
       "vehicle_info_get", std::bind(
         &SystemStatusPlugin::vehicle_info_get_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
 
     uas->diagnostic_updater.add(hb_diag);
 
