@@ -18,10 +18,6 @@
 
 using mavros::plugin::Plugin;
 
-Plugin::Plugin(UASPtr uas)
-: uas_(uas), node(uas_)
-{}
-
 Plugin::Plugin(
   UASPtr uas, const std::string & subnode_name,
   const rclcpp::NodeOptions & options)
