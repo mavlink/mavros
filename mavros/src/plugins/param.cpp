@@ -429,8 +429,8 @@ public:
     param_rx_retries(RETRIES_COUNT),
     is_timedout(false)
   {
-    auto event_qos = rclcpp::ParameterEventsQoS();
-    auto qos = rclcpp::ParametersQoS().get_rmw_qos_profile();
+    auto const event_qos = rclcpp::ParameterEventsQoS {};
+    auto const qos = rclcpp::ParametersQoS {};
 
     param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", event_qos);
     std_event_pub = node->create_publisher<rcl_interfaces::msg::ParameterEvent>(
