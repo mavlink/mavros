@@ -23,13 +23,16 @@ Plugin::Plugin(UASPtr uas_)
 {}
 
 Plugin::Plugin(
-  UASPtr uas_, const std::string & subnode,
+  UASPtr uas_, const std::string & subnode_name,
   const rclcpp::NodeOptions & options)
-: uas(uas_),
-  // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode))  // https://github.com/ros2/rclcpp/issues/731
-  node(rclcpp::Node::make_shared(subnode,
-    uas_->get_fully_qualified_name(), options))
-{}
+: uas(uas_)
+  // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode_name))  // https://github.com/ros2/rclcpp/issues/731
+{
+  RCLCPP_INFO_STREAM(uas_->get_logger(), "Create subnode " << subnode_name
+    << ", uas_->get_fully_qualified_name() == " << uas_->get_fully_qualified_name());
+  // node = uas_->create_sub_node(subnode_name);
+  node = rclcpp::Node::make_shared(subnode_name, uas_->get_fully_qualified_name(), options);
+}
 
 void Plugin::enable_connection_cb()
 {
