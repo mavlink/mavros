@@ -408,6 +408,7 @@ private:
     FTPRequest & req,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     if (!req.decode_valid(uas)) {
       // RCLCPP_DEBUG(get_logger(), "FTP: Wrong System Id, MY %u, TGT %u",
       //   uas->get_system_id(), req.get_target_system_id());
@@ -688,6 +689,7 @@ private:
 
     op_state = OP::ACK;
     FTPRequest req(FTPRequest::kCmdResetSessions);
+    auto uas = uas_.lock();
     req.send(uas, last_send_seqnr);
   }
 
@@ -700,6 +702,7 @@ private:
     FTPRequest req(op);
     req.header()->offset = offset;
     req.set_data_string(path);
+    auto uas = uas_.lock();
     req.send(uas, last_send_seqnr);
   }
 
@@ -731,6 +734,7 @@ private:
     FTPRequest req(FTPRequest::kCmdTerminateSession, session);
     req.header()->offset = 0;
     req.header()->size = 0;
+    auto uas = uas_.lock();
     req.send(uas, last_send_seqnr);
   }
 
@@ -742,6 +746,7 @@ private:
     FTPRequest req(FTPRequest::kCmdReadFile, active_session);
     req.header()->offset = read_offset;
     req.header()->size = 0 /* FTPRequest::DATA_MAXSZ */;
+    auto uas = uas_.lock();
     req.send(uas, last_send_seqnr);
   }
 
@@ -755,6 +760,7 @@ private:
     req.header()->offset = write_offset;
     req.header()->size = bytes_to_copy;
     std::copy(write_it, write_it + bytes_to_copy, req.data());
+    auto uas = uas_.lock();
     req.send(uas, last_send_seqnr);
   }
 

@@ -551,6 +551,7 @@ private:
 
     auto update_parameter = [this, &pmsg](Parameter & p, bool is_new) {
         p.stamp = node->now();
+        auto uas = uas_.lock();
         if (uas->is_ardupilotmega()) {
           p.set_value_apm_quirk(pmsg);
         } else {
@@ -673,6 +674,7 @@ private:
     RCLCPP_DEBUG(get_logger(), "PR:m: request list");
 
     mavlink::common::msg::PARAM_REQUEST_LIST rql{};
+    auto uas = uas_.lock();
     uas->msg_set_target(rql);
 
     uas->send_message(rql);
@@ -685,6 +687,7 @@ private:
     RCLCPP_DEBUG(get_logger(), "PR:m: request '%s', idx %d", id.c_str(), index);
 
     mavlink::common::msg::PARAM_REQUEST_READ rqr{};
+    auto uas = uas_.lock();
     uas->msg_set_target(rqr);
     rqr.param_index = index;
 
@@ -701,15 +704,16 @@ private:
 
     // GCC 4.8 can't type out lambda return
     auto ps = ([this, &param]() -> mavlink::common::msg::PARAM_SET {
-        if (uas->is_ardupilotmega()) {
-          return param.to_param_set_apm_qurk();
-        } else {
-          return param.to_param_set();
-        }
-      })();
+      auto uas = uas_.lock();
+      if (uas->is_ardupilotmega()) {
+        return param.to_param_set_apm_qurk();
+      } else {
+        return param.to_param_set();
+      }
+    })();
 
+    auto uas = uas_.lock();
     uas->msg_set_target(ps);
-
     uas->send_message(ps);
   }
 

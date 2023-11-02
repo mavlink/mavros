@@ -65,6 +65,7 @@ private:
         copy_tunnel<mavros_msgs::msg::Tunnel, mavlink::common::msg::TUNNEL>(
         *ros_tunnel);
 
+      auto uas = uas_.lock();
       uas->send_message(mav_tunnel);
     } catch (std::overflow_error & ex) {
       RCLCPP_ERROR_STREAM(get_logger(), "in error: " << ex.what());

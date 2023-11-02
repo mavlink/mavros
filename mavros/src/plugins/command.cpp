@@ -248,6 +248,7 @@ private:
      * @note APM & PX4 master always send COMMAND_ACK. Old PX4 never.
      * Don't expect any ACK in broadcast mode.
      */
+    auto uas = uas_.lock();
     bool is_ack_required = (confirmation != 0 || uas->is_ardupilotmega() || uas->is_px4()) &&
       !broadcast;
     if (is_ack_required) {
@@ -308,6 +309,7 @@ private:
   inline void set_target(MsgT & cmd, bool broadcast)
   {
     using mavlink::minimal::MAV_COMPONENT;
+    auto uas = uas_.lock();
 
     const uint8_t tgt_sys_id = (broadcast) ? 0 : uas->get_tgt_system();
     const uint8_t tgt_comp_id = (broadcast) ? 0 :
@@ -341,6 +343,7 @@ private:
     cmd.param6 = param6;
     cmd.param7 = param7;
 
+    auto uas = uas_.lock();
     uas->send_message(cmd);
   }
 
@@ -368,6 +371,7 @@ private:
     cmd.y = y;
     cmd.z = z;
 
+    auto uas = uas_.lock();
     uas->send_message(cmd);
   }
 

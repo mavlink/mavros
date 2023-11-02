@@ -127,6 +127,7 @@ private:
         home_position.approach_x,
         home_position.approach_y, home_position.approach_z));
 
+    auto uas = uas_.lock();
     hp.header.stamp = uas->synchronise_stamp(home_position.time_usec);
     hp.geo.latitude = home_position.latitude / 1E7;     // deg
     hp.geo.longitude = home_position.longitude / 1E7;   // deg
@@ -159,6 +160,7 @@ private:
     tf2::fromMsg(req->approach, approach);
     approach = ftf::transform_frame_enu_ned(approach);
 
+    auto uas = uas_.lock();
     hp.target_system = uas->get_tgt_system();
     ftf::quaternion_to_mavlink(q, hp.q);
 

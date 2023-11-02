@@ -135,6 +135,7 @@ private:
         utils::to_string_enum<MAV_DISTANCE_SENSOR>(obstacle.sensor_type) <<
         std::endl << obstacle.to_yaml());
 
+    auto uas = uas_.lock();
     uas->send_message(obstacle);
   }
 };

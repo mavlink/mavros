@@ -150,6 +150,7 @@ private:
     // cog.outl(f"""{p}.value_float = {val}.value;""")
     // ]]]
     DV dv_msg;
+    auto uas = uas_.lock();
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_boot_ms);
     dv_msg.type = DV::TYPE_DEBUG;
     dv_msg.index = debug.ind;
@@ -182,6 +183,7 @@ private:
     //     cog.outl(f"""{pd}[{i}] = {val}.{f};""")
     // ]]]
     DV dv_msg;
+    auto uas = uas_.lock();
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
     dv_msg.type = DV::TYPE_DEBUG_VECT;
     dv_msg.index = -1;
@@ -215,6 +217,7 @@ private:
     // cog.outl("{p}.data.assign({val}.data.begin(), {val}.data.end());".format(**locals()))
     // ]]]
     DV dv_msg;
+    auto uas = uas_.lock();
     dv_msg.header.stamp = uas->synchronise_stamp(debug.time_usec);
     dv_msg.type = DV::TYPE_DEBUG_FLOAT_ARRAY;
     dv_msg.index = -1;
@@ -244,6 +247,7 @@ private:
     // cog.outl(f"""{p}.value_float = {val}.value;""")
     // ]]]
     DV dv_msg;
+    auto uas = uas_.lock();
     dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
     dv_msg.type = DV::TYPE_NAMED_VALUE_FLOAT;
     dv_msg.index = -1;
@@ -272,6 +276,7 @@ private:
     // cog.outl(f"""{p}.value_int = {val}.value;""")
     // ]]]
     DV dv_msg;
+    auto uas = uas_.lock();
     dv_msg.header.stamp = uas->synchronise_stamp(value.time_boot_ms);
     dv_msg.type = DV::TYPE_NAMED_VALUE_INT;
     dv_msg.index = -1;
@@ -292,6 +297,8 @@ private:
    */
   void debug_cb(const mavros_msgs::msg::DebugValue::SharedPtr req)
   {
+    auto uas = uas_.lock();
+
     switch (req->type) {
       case DV::TYPE_DEBUG: {
           mavlink::common::msg::DEBUG debug {};

@@ -54,10 +54,10 @@ public:
       std::is_base_of<plugin::Plugin, D>::value,
       "SetPositionTargetLocalNEDMixin should be used by mavros::plugin::Plugin child");
 
-    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+    auto uas = static_cast<D *>(this)->uas_.lock();
 
     mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED sp = {};
-    uas_->msg_set_target(sp);
+    uas->msg_set_target(sp);
 
     // [[[cog:
     // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
@@ -82,7 +82,7 @@ public:
     sp.afz = af.z();
     // [[[end]]] (checksum: f8942bb13a7463a2cbadc9b745df25d0)
 
-    uas_->send_message(sp);
+    uas->send_message(sp);
   }
 };
 
@@ -106,10 +106,10 @@ public:
       std::is_base_of<plugin::Plugin, D>::value,
       "SetPositionTargetGlobalIntMixin should be used by mavros::plugin::Plugin child");
 
-    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+    plugin::UASPtr uas = static_cast<D *>(this)->uas_.lock();
 
     mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT sp = {};
-    uas_->msg_set_target(sp);
+    uas->msg_set_target(sp);
 
     // [[[cog:
     // for f in ('time_boot_ms', 'coordinate_frame', 'type_mask',
@@ -135,7 +135,7 @@ public:
     sp.afz = af.z();
     // [[[end]]] (checksum: 82301ecd7936657d65e006cf7525e82a)
 
-    uas_->send_message(sp);
+    uas->send_message(sp);
   }
 };
 
@@ -158,11 +158,11 @@ public:
       std::is_base_of<plugin::Plugin, D>::value,
       "SetAttitudeTargetMixin should be used by mavros::plugin::Plugin child");
 
-    plugin::UASPtr uas_ = static_cast<D *>(this)->uas;
+    plugin::UASPtr uas = static_cast<D *>(this)->uas_.lock();
 
     mavlink::common::msg::SET_ATTITUDE_TARGET sp = {};
 
-    uas_->msg_set_target(sp);
+    uas->msg_set_target(sp);
     mavros::ftf::quaternion_to_mavlink(orientation, sp.q);
 
     // [[[cog:
@@ -179,7 +179,7 @@ public:
     sp.body_yaw_rate = body_rate.z();
     // [[[end]]] (checksum: d0910b0f92d233024163ebf957a3d642)
 
-    uas_->send_message(sp);
+    uas->send_message(sp);
   }
 };
 
@@ -211,28 +211,29 @@ public:
     auto tf_transform_cb = std::bind(cbp, base, std::placeholders::_1);
 
     auto timer_callback = [this, base, tf_transform_cb]() -> void {
-        plugin::UASPtr _uas = base->uas;
+        plugin::UASPtr uas = base->uas_.lock();
         std::string & _frame_id = base->tf_frame_id;
         std::string & _child_frame_id = base->tf_child_frame_id;
-        if (_uas->tf2_buffer.canTransform(
+        if (uas->tf2_buffer.canTransform(
             _frame_id, _child_frame_id, tf2::TimePoint(),
             tf2::durationFromSec(3.0)))
         {
           try {
-            auto transform = _uas->tf2_buffer.lookupTransform(
+            auto transform = uas->tf2_buffer.lookupTransform(
               _frame_id, _child_frame_id, tf2::TimePoint(), tf2::durationFromSec(3.0));
             tf_transform_cb(transform);
           } catch (tf2::LookupException & ex) {
             RCLCPP_ERROR(
-              _uas->get_logger(), "%s: %s", tf_thd_name.c_str(),
+              uas->get_logger(), "%s: %s", tf_thd_name.c_str(),
               ex.what());
           }
         }
       };
 
+    auto uas = base->uas_.lock();
     timer_ =
       create_timer(
-      base->node, base->uas->get_clock(),
+      base->node, uas->get_clock(),
       rclcpp::Duration::from_seconds(1.0 / base->tf_rate), timer_callback);
   }
 

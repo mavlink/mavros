@@ -56,6 +56,7 @@ private:
   void callback(const mavros_msgs::msg::PlayTuneV2::SharedPtr tune)
   {
     auto msg = mavlink::common::msg::PLAY_TUNE_V2{};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(msg);
     msg.format = tune->format;

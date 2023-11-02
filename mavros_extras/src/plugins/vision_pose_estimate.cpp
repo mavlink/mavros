@@ -153,6 +153,7 @@ private:
     // that the matrix is symmetric
     ftf::covariance_urt_to_mavlink(cov_map, vp.covariance);
 
+    auto uas = uas_.lock();
     uas->send_message(vp);
   }
 

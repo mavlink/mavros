@@ -78,6 +78,7 @@ private:
   {
     lock_guard lock(mutex);
 
+    auto uas = uas_.lock();
     _esc_info.header.stamp = uas->synchronise_stamp(esc_info.time_usec);
 
     uint8_t esc_index = esc_info.index;
@@ -122,6 +123,7 @@ private:
       _esc_status.esc_status.resize(_max_esc_count);
     }
 
+    auto uas = uas_.lock();
     _esc_status.header.stamp = uas->synchronise_stamp(esc_status.time_usec);
 
     for (int i = 0; i < std::min<ssize_t>(batch_size, ssize_t(_max_esc_count) - esc_index); i++) {

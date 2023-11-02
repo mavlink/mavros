@@ -80,6 +80,7 @@ private:
   void send_cb(const mavros_msgs::msg::ManualControl::SharedPtr req)
   {
     mavlink::common::msg::MANUAL_CONTROL msg = {};
+    auto uas = uas_.lock();
     msg.target = uas->get_tgt_system();
     msg.x = req->x;
     msg.y = req->y;

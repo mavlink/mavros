@@ -111,6 +111,7 @@ private:
     mavlink::common::msg::OPTICAL_FLOW_RAD & flow_rad,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, flow_rad.time_usec);
 
     /**
@@ -207,6 +208,7 @@ private:
     flow_rad_msg.time_delta_distance_us = msg->time_delta_distance_us;
     flow_rad_msg.distance = msg->distance;
 
+    auto uas = uas_.lock();
     uas->send_message(flow_rad_msg);
   }
 };

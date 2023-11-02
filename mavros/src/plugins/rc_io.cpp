@@ -109,6 +109,7 @@ private:
     // [[[end]]] (checksum: 7ae5a061d1f05239433e9a78b4b1887a)
 
     auto rcin_msg = mavros_msgs::msg::RCIn();
+    auto uas = uas_.lock();
     rcin_msg.header.stamp = uas->synchronise_stamp(port.time_boot_ms);
     rcin_msg.rssi = port.rssi;
     rcin_msg.channels = raw_rc_in;
@@ -168,6 +169,7 @@ private:
     }
 
     auto rcin_msg = mavros_msgs::msg::RCIn();
+    auto uas = uas_.lock();
 
     rcin_msg.header.stamp = uas->synchronise_stamp(channels.time_boot_ms);
     rcin_msg.rssi = channels.rssi;
@@ -232,6 +234,7 @@ private:
     // XXX: Why time_usec is 32 bit? We should test that.
     uint64_t time_usec = port.time_usec;
 
+    auto uas = uas_.lock();
     rcout_msg.header.stamp = uas->synchronise_stamp(time_usec);
     rcout_msg.channels = raw_rc_out;
 
@@ -250,6 +253,7 @@ private:
 
   void override_cb(const mavros_msgs::msg::OverrideRCIn::SharedPtr req)
   {
+    auto uas = uas_.lock();
     if (!uas->is_ardupilotmega() && !uas->is_px4()) {
       RCLCPP_WARN_THROTTLE(
         get_logger(),

@@ -90,6 +90,7 @@ private:
 
     auto data_it = msg->data.begin();
     auto end_it = msg->data.end();
+    auto uas = uas_.lock();
 
     if (msg->data.size() <= max_frag_len) {
       rtcm_data.len = msg->data.size();
@@ -125,6 +126,7 @@ private:
     mavlink::common::msg::GPS_RTK & rtk_bsln,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     // [[[cog:
     // import pymavlink.dialects.v20.common as common
     //

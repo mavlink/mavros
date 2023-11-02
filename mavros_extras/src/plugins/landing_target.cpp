@@ -257,6 +257,7 @@ private:
 
     ftf::quaternion_to_mavlink(q, lt.q);
 
+    auto uas = uas_.lock();
     uas->send_message(lt);
   }
 
@@ -397,6 +398,7 @@ private:
         land_target.to_yaml());
 
     geometry_msgs::msg::PoseStamped pose;
+    auto uas = uas_.lock();
     pose.header = uas->synchronized_header(frame_id, land_target.time_usec);
 
     pose.pose.position = tf2::toMsg(position);

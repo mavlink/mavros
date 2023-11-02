@@ -83,6 +83,7 @@ private:
         " companion process status: " << utils::to_string_enum<MAV_STATE>(
         heartbeat.system_status) << std::endl << heartbeat.to_yaml());
 
+    auto uas = uas_.lock();
     uas->send_message(heartbeat, req->component);
   }
 };

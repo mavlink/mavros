@@ -91,6 +91,7 @@ private:
     mavlink::common::msg::WIND_COV & wind, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     auto twist_cov = geometry_msgs::msg::TwistWithCovarianceStamped();
+    auto uas = uas_.lock();
     twist_cov.header.stamp = uas->synchronise_stamp(wind.time_usec);
 
     tf2::toMsg(

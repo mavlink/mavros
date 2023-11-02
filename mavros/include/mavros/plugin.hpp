@@ -74,10 +74,10 @@ public:
   //! Subscriptions vector
   using Subscriptions = std::vector<HandlerInfo>;
 
-  explicit Plugin(UASPtr uas_);
+  explicit Plugin(UASPtr uas);
 
   explicit Plugin(
-    UASPtr uas_, const std::string & subnode,
+    UASPtr uas, const std::string & subnode,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   virtual ~Plugin() = default;
@@ -103,7 +103,7 @@ public:
   }
 
 protected:
-  UASPtr uas;                       // uas back link
+  std::weak_ptr<UAS> uas_;                       // uas back link
   rclcpp::Node::SharedPtr node;     // most of plugins uses sub-node
 
   using SetParametersResult = rcl_interfaces::msg::SetParametersResult;
@@ -149,13 +149,14 @@ protected:
     const auto id = _T::MSG_ID;
     const auto name = _T::NAME;
     const auto type_hash_ = typeid(_T).hash_code();
-    auto uas_ = this->uas;
 
     return HandlerInfo {
       id, name, type_hash_,
-      [bfn, uas_](const mavlink::mavlink_message_t * msg, const mavconn::Framing framing) {
+      [bfn, uas = this->uas_](const mavlink::mavlink_message_t * msg, const mavconn::Framing framing) {
         auto filter = _F();
-        if (!filter(uas_, msg, framing)) {
+
+        auto uas_ptr = uas.lock();
+        if (uas_ptr && !filter(uas_ptr, msg, framing)) {
           return;
         }
 

@@ -71,6 +71,7 @@ private:
     cs.mnc = msg->mnc;
     cs.lac = msg->lac;
 
+    auto uas = uas_.lock();
     uas->send_message(cs);
   }
 };
