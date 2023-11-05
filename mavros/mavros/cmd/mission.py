@@ -287,10 +287,10 @@ def load(
             return
 
         req = WaypointPush.Request(
-            waypoints=points.waypoints,
+            waypoints=points,
             start_index=start_index,
         )
-        ret = accessor.cli_push(req)
+        ret = accessor.cli_push.call(req)
 
         if not ret.success:
             fault_echo("Request failed. Check mavros logs")
@@ -347,7 +347,7 @@ def load(
     )
     call_push(
         accessor=client.rallypoint,
-        points=mission_file.geofence,
+        points=mission_file.rally,
         start_index=0,
         no_send=no_rally,
     )
