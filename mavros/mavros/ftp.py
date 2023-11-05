@@ -90,7 +90,7 @@ class FTPFile:
             return
 
         req = FileClose.Request(file_path=self.name)
-        ret = self._fm.cli_close(req)
+        ret = self._fm.cli_close.call(req)
         self.name = None
         _check_raise_errno(ret)
 
