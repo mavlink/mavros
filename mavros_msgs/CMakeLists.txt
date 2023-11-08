@@ -83,6 +83,7 @@ set(msg_files
   msg/RTKBaseline.msg
   msg/RadioStatus.msg
   msg/State.msg
+  msg/StatusEvent.msg
   msg/StatusText.msg
   msg/TerrainReport.msg
   msg/Thrust.msg

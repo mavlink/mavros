@@ -33,6 +33,7 @@
 #include "mavros_msgs/srv/stream_rate.hpp"
 #include "mavros_msgs/srv/set_mode.hpp"
 #include "mavros_msgs/srv/command_long.hpp"
+#include "mavros_msgs/msg/status_event.hpp"
 #include "mavros_msgs/msg/status_text.hpp"
 #include "mavros_msgs/msg/vehicle_info.hpp"
 #include "mavros_msgs/srv/vehicle_info_get.hpp"
@@ -579,6 +580,8 @@ public:
     statustext_sub = node->create_subscription<mavros_msgs::msg::StatusText>(
       "statustext/send", sensor_qos,
       std::bind(&SystemStatusPlugin::statustext_cb, this, _1));
+    statusevent_pub = node->create_publisher<mavros_msgs::msg::StatusEvent>(
+      "status_event", sensor_qos);
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -619,6 +622,7 @@ public:
       make_handler(&SystemStatusPlugin::handle_heartbeat),
       make_handler(&SystemStatusPlugin::handle_sys_status),
       make_handler(&SystemStatusPlugin::handle_statustext),
+      make_handler(&SystemStatusPlugin::handle_event),
       make_handler(&SystemStatusPlugin::handle_meminfo),
       make_handler(&SystemStatusPlugin::handle_hwstatus),
       make_handler(&SystemStatusPlugin::handle_autopilot_version),
@@ -646,6 +650,7 @@ private:
 
   rclcpp::Publisher<mavros_msgs::msg::StatusText>::SharedPtr statustext_pub;
   rclcpp::Subscription<mavros_msgs::msg::StatusText>::SharedPtr statustext_sub;
+  rclcpp::Publisher<mavros_msgs::msg::StatusEvent>::SharedPtr statusevent_pub;
 
   rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::Service<mavros_msgs::srv::StreamRate>::SharedPtr stream_rate_srv;
@@ -734,6 +739,55 @@ private:
       // [[[end]]] (checksum: d05760afbeece46673c8f73f89b63f3d)
       default:
         RCLCPP_WARN_STREAM(node->get_logger(), "FCU: UNK(" << +severity << "): " << text);
+        break;
+    }
+  }
+
+  /**
+   * Sent EVENT message to rosout
+   *
+   * @param[in] severity
+   */
+  void process_event_normal(uint8_t severity, uint32_t px4_id, const std::array<uint8_t, 40>& arguments)
+  {
+    using mavlink::common::MAV_SEVERITY;
+
+    std::string arg_str = "-";
+    for (const uint8_t& arg : arguments)
+      arg_str += std::to_string(arg) + "-";
+
+    switch (severity) {
+      // [[[cog:
+      // for l1, l2 in (
+      //     (('EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR'), 'ERROR'),
+      //     (('WARNING', 'NOTICE'), 'WARN'),
+      //     (('INFO', ), 'INFO'),
+      //     (('DEBUG', ), 'DEBUG')
+      //     ):
+      //     for v in l1:
+      //         cog.outl(f"case enum_value(MAV_SEVERITY::{v}):")
+      //     cog.outl(f"  RCLCPP_{l2}_STREAM(node->get_logger(), \"FCU: EVENT \" << px4_id << \" with args \" << arg_str);")
+      //     cog.outl(f"  break;")
+      // ]]]
+      case enum_value(MAV_SEVERITY::EMERGENCY):
+      case enum_value(MAV_SEVERITY::ALERT):
+      case enum_value(MAV_SEVERITY::CRITICAL):
+      case enum_value(MAV_SEVERITY::ERROR):
+        RCLCPP_ERROR_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        break;
+      case enum_value(MAV_SEVERITY::WARNING):
+      case enum_value(MAV_SEVERITY::NOTICE):
+        RCLCPP_WARN_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        break;
+      case enum_value(MAV_SEVERITY::INFO):
+        RCLCPP_INFO_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        break;
+      case enum_value(MAV_SEVERITY::DEBUG):
+        RCLCPP_DEBUG_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        break;
+      // [[[end]]] (checksum: d05760afbeece46673c8f73f89b63f3d)
+      default:
+        RCLCPP_WARN_STREAM(node->get_logger(), "FCU: UNK(" << +severity << "): EVENT " << px4_id << " with args " << arg_str);
         break;
     }
   }
@@ -944,6 +998,26 @@ private:
     st_msg.text = text;
 
     statustext_pub->publish(st_msg);
+  }
+
+  void handle_event(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::EVENT & eventm,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
+  {
+    uint8_t severity = eventm.log_levels & 0x0F; // take only 4 LSB, see https://mavlink.io/en/messages/common.html#EVENT
+    uint32_t px4_id = eventm.id & 0x00FFFFFF; // take only 24 LSB, see PX4 "constexpr uint32_t ID(const char (&name)[N])" function
+    process_event_normal(severity, px4_id, eventm.arguments);
+
+    auto evt_msg = mavros_msgs::msg::StatusEvent();
+    evt_msg.header.stamp = node->now();
+    evt_msg.severity = severity;
+    evt_msg.px4_id = px4_id;
+    evt_msg.event_time_boot_ms = eventm.event_time_boot_ms;
+    evt_msg.arguments = eventm.arguments;
+    evt_msg.sequence = eventm.sequence;
+
+    statusevent_pub->publish(evt_msg);
   }
 
   void handle_meminfo(
