@@ -15,6 +15,5 @@ uint8 DEBUG = 7
 std_msgs/Header header
 uint8 severity
 uint32 px4_id
-uint32 event_time_boot_ms
 uint8[40] arguments
 uint16 sequence
