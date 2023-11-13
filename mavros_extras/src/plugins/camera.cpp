@@ -76,6 +76,8 @@ private:
 		ic->relative_alt = mo.relative_alt / 1E3;
 		auto q = ftf::mavlink_to_quaternion(mo.q);
 		tf::quaternionEigenToMsg(q, ic->orientation);
+		ic->image_index = mo.image_index;
+		ic->capture_result = mo.capture_result;
 		ic->file_url = mavlink::to_string(mo.file_url);
 
 		camera_image_captured_pub.publish(ic);
