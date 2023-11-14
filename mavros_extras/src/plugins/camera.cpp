@@ -78,6 +78,8 @@ private:
     ic.geo.altitude = mo.alt / 1E3 + uas->data.geoid_to_ellipsoid_height(&ic.geo);  // in meters
     ic.relative_alt = mo.relative_alt / 1E3;
     ic.orientation = tf2::toMsg(ftf::mavlink_to_quaternion(mo.q));
+    ic.image_index = mo.image_index;
+    ic.capture_result = mo.capture_result;
     ic.file_url = mavlink::to_string(mo.file_url);
 
     camera_image_captured_pub->publish(ic);
