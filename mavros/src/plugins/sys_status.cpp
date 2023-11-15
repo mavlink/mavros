@@ -1010,8 +1010,7 @@ private:
     process_event_normal(severity, px4_id, eventm.arguments);
 
     auto evt_msg = mavros_msgs::msg::StatusEvent();
-    evt_msg.header.stamp.sec = event_time_boot_ms / 1000;
-    evt_msg.header.stamp.nanosec = (event_time_boot_ms % 1000) * 1000000;
+    evt_msg.header.stamp = uas->synchronise_stamp(event_time_boot_ms);
     evt_msg.severity = severity;
     evt_msg.px4_id = px4_id;
     evt_msg.arguments = eventm.arguments;
