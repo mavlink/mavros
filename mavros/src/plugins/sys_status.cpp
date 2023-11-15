@@ -785,7 +785,7 @@ private:
       case enum_value(MAV_SEVERITY::DEBUG):
         RCLCPP_DEBUG_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
-      // [[[end]]] (checksum: d05760afbeece46673c8f73f89b63f3d)
+      // [[[end]]] (checksum: 83f5eab6a8989f95de46d2a95387304c)
       default:
         RCLCPP_WARN_STREAM(node->get_logger(), "FCU: UNK(" << +severity << "): EVENT " << px4_id << " with args " << arg_str);
         break;
