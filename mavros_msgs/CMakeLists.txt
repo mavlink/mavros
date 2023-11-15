@@ -97,7 +97,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 85146eea3330278f18b4434a23e257f0)
+  # [[[end]]] (checksum: d43b903630fd3ce3856c8484a2d1b709)
 )
 
 set(srv_files
