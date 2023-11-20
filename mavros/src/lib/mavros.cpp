@@ -325,6 +325,7 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 
 		ROS_INFO_STREAM("Plugin " << pl_name << " loaded");
 
+		plugin->initialize(mav_uas);
 		for (auto &info : plugin->get_subscriptions()) {
 			auto msgid = std::get<0>(info);
 			auto msgname = std::get<1>(info);
@@ -370,7 +371,6 @@ void MavRos::add_plugin(std::string &pl_name, ros::V_string &blacklist, ros::V_s
 			}
 		}
 
-		plugin->initialize(mav_uas);
 		loaded_plugins.push_back(plugin);
 
 		ROS_INFO_STREAM("Plugin " << pl_name << " initialized");
