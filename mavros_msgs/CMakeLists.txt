@@ -53,6 +53,7 @@ add_message_files(
   ParamValue.msg
   PlayTuneV2.msg
   PositionTarget.msg
+  RallyPoint.msg
   RCIn.msg
   RCOut.msg
   RTCM.msg
@@ -106,6 +107,8 @@ add_service_files(
   ParamPull.srv
   ParamPush.srv
   ParamSet.srv
+  RallyPointGet.srv
+  RallyPointSet.srv
   SetMavFrame.srv
   SetMode.srv
   StreamRate.srv
