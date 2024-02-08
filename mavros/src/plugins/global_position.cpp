@@ -17,7 +17,7 @@
  */
 
 #include <angles/angles.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <string>
 #include <GeographicLib/Geocentric.hpp>     // NOLINT
