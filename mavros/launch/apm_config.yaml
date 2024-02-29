@@ -7,21 +7,15 @@
 
 # --- system plugins ---
 
-# sys_status & sys_time connection options
-/mavros/**/conn:
-  ros__parameters:
-    heartbeat_rate: 1.0    # send heartbeat rate in Hertz
-    heartbeat_mav_type: "ONBOARD_CONTROLLER"
-    timeout: 10.0          # heartbeat timeout in seconds
-    timesync_rate: 10.0    # TIMESYNC rate in Hertz (feature disabled if 0.0)
-    system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
-
 # sys_status
 /mavros/**/sys:
   ros__parameters:
     min_voltage: [10.0]   # diagnostics min voltage, use a vector i.e. [16.2, 16.0] for multiple batteries, up-to 10 are supported
                         # to achieve the same on a ROS launch file do: <rosparam param="sys/min_voltage">[16.2, 16.0]</rosparam>
     disable_diag: false # disable all sys_status diagnostics, except heartbeat
+    heartbeat_rate: 1.0    # send heartbeat rate in Hertz
+    heartbeat_mav_type: "ONBOARD_CONTROLLER"
+    conn_timeout: 10.0          # heartbeat timeout in seconds
 
 # sys_time
 /mavros/**/time:
@@ -29,6 +23,8 @@
     time_ref_source: "fcu"  # time_reference source
     timesync_mode: MAVLINK
     timesync_avg_alpha: 0.6 # timesync averaging factor
+    timesync_rate: 10.0    # TIMESYNC rate in Hertz (feature disabled if 0.0)
+    system_time_rate: 1.0  # send system time to FCU rate in Hertz (disabled if 0.0)
 
 # --- mavros plugins (alphabetical order) ---
 
