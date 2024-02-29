@@ -395,11 +395,12 @@ public:
 		ros::Time last_rcd_;
 		last_rcd_.fromNSec(last_rcd.load());
 		constexpr int timeout = 10.0; // seconds
+		const ros::Duration timeout_duration = ros::Duration(timeout);
 
 		// summarize the results
 		if (last_rcd_.isZero()) {
 			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
-		} else if (ros::Time::now().toSec() - last_rcd_.toSec() > timeout) {
+		} else if (ros::Time::now() - last_rcd_ > timeout_duration) {
 			stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(timeout) + "s");
 		} else {
 			if (freemem == UINT32_MAX)
@@ -445,9 +446,10 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 		constexpr int timeout = 10.0; // seconds
+		const ros::Duration timeout_duration = ros::Duration(timeout);
 		if (last_rcd.isZero()) {
 			stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Not initialised");
-		} else if (ros::Time::now().toSec() - last_rcd.toSec() > timeout) {
+		} else if (ros::Time::now() - last_rcd > timeout_duration) {
 			stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not received for more than " + std::to_string(timeout) + "s");
 		} else {
 			if (vcc < 0)
