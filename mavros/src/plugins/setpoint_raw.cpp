@@ -125,6 +125,7 @@ private:
     float yaw_rate = ang_vel_enu.z();
 
     auto target = mavros_msgs::msg::PositionTarget();
+    auto uas = uas_.lock();
     target.header.stamp = uas->synchronise_stamp(tgt.time_boot_ms);
     target.coordinate_frame = tgt.coordinate_frame;
     target.type_mask = tgt.type_mask;
@@ -154,6 +155,7 @@ private:
     float yaw_rate = ang_vel_enu.z();
 
     auto target = mavros_msgs::msg::GlobalPositionTarget();
+    auto uas = uas_.lock();
     target.header.stamp = uas->synchronise_stamp(tgt.time_boot_ms);
     target.coordinate_frame = tgt.coordinate_frame;
     target.type_mask = tgt.type_mask;
@@ -186,6 +188,7 @@ private:
         tgt.body_pitch_rate, tgt.body_yaw_rate));
 
     auto target = mavros_msgs::msg::AttitudeTarget();
+    auto uas = uas_.lock();
     target.header.stamp = uas->synchronise_stamp(tgt.time_boot_ms);
     target.type_mask = tgt.type_mask;
     target.orientation = tf2::toMsg(orientation);

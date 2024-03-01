@@ -244,6 +244,7 @@ private:
     ds.signal_quality = signal_quality;
     // [[[end]]] (checksum: b268a118afee5e2c6cb3e1094a578fff)
 
+    auto uas = uas_.lock();
     uas->send_message(ds);
   }
 
@@ -295,6 +296,7 @@ private:
 
     auto range = Range();
 
+    auto uas = uas_.lock();
     range.header = uas->synchronized_header(sensor->frame_id, dist_sen.time_boot_ms);
 
     range.min_range = dist_sen.min_distance * 1E-2;     // in meters
@@ -333,6 +335,7 @@ private:
 
       geometry_msgs::msg::TransformStamped transform;
 
+      auto uas = uas_.lock();
       transform.header = uas->synchronized_header(base_frame_id, dist_sen.time_boot_ms);
       transform.child_frame_id = sensor->frame_id;
 

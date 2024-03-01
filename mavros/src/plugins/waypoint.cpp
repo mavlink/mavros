@@ -117,6 +117,7 @@ private:
   void capabilities_cb(uas::MAV_CAP capabilities [[maybe_unused]]) override
   {
     lock_guard lock(mutex);
+    auto uas = uas_.lock();
 
     if (uas->has_capability(uas::MAV_CAP::MISSION_INT)) {
       use_mission_item_int = true;
@@ -175,6 +176,7 @@ private:
 
   bool detect_partial_push()
   {
+    auto uas = uas_.lock();
     return uas->is_ardupilotmega();
   }
 

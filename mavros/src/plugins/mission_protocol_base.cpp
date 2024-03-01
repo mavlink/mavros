@@ -469,6 +469,7 @@ void MissionBase::mission_request(const uint16_t seq)
   RCLCPP_DEBUG(get_logger(), "%s:m: request #%u", log_prefix, seq);
 
   mavlink::common::msg::MISSION_REQUEST mrq {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mrq);
   mrq.seq = seq;
   mrq.mission_type = enum_value(mission_type);
@@ -481,6 +482,7 @@ void MissionBase::mission_request_int(const uint16_t seq)
   RCLCPP_DEBUG(get_logger(), "%s:m: request_int #%u", log_prefix, seq);
 
   mavlink::common::msg::MISSION_REQUEST_INT mrq {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mrq);
   mrq.seq = seq;
   mrq.mission_type = enum_value(mission_type);
@@ -493,6 +495,7 @@ void MissionBase::mission_set_current(const uint16_t seq)
   RCLCPP_DEBUG(get_logger(), "%s:m: set current #%u", log_prefix, seq);
 
   mavlink::common::msg::MISSION_SET_CURRENT msc {};
+  auto uas = uas_.lock();
   uas->msg_set_target(msc);
   msc.seq = seq;
   // msc.mission_type = enum_value(mission_type);
@@ -505,6 +508,7 @@ void MissionBase::mission_request_list()
   RCLCPP_DEBUG(get_logger(), "%s:m: request list", log_prefix);
 
   mavlink::common::msg::MISSION_REQUEST_LIST mrl {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mrl);
   mrl.mission_type = enum_value(mission_type);
 
@@ -516,6 +520,7 @@ void MissionBase::mission_count(const uint16_t cnt)
   RCLCPP_DEBUG(get_logger(), "%s:m: count %u", log_prefix, cnt);
 
   mavlink::common::msg::MISSION_COUNT mcnt {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mcnt);
   mcnt.count = cnt;
   mcnt.mission_type = enum_value(mission_type);
@@ -530,6 +535,7 @@ void MissionBase::mission_write_partial_list(const uint16_t start_index, const u
     start_index, end_index);
 
   mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST mwpl {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mwpl);
   mwpl.start_index = start_index;
   mwpl.end_index = end_index;
@@ -543,6 +549,7 @@ void MissionBase::mission_clear_all()
   RCLCPP_DEBUG(get_logger(), "%s:m: clear all", log_prefix);
 
   mavlink::common::msg::MISSION_CLEAR_ALL mclr {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mclr);
   mclr.mission_type = enum_value(mission_type);
 
@@ -554,6 +561,7 @@ void MissionBase::mission_ack(const MRES type)
   RCLCPP_DEBUG(get_logger(), "%s:m: ACK %u", log_prefix, enum_value(type));
 
   mavlink::common::msg::MISSION_ACK mack {};
+  auto uas = uas_.lock();
   uas->msg_set_target(mack);
   mack.type = enum_value(type);
   mack.mission_type = enum_value(mission_type);

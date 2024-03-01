@@ -67,6 +67,7 @@ private:
     mavlink::common::msg::ACTUATOR_CONTROL_TARGET & act,
     plugin::filter::ComponentAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     auto ract = mavros_msgs::msg::ActuatorControl();
     ract.header.stamp = uas->synchronise_stamp(act.time_usec);
     ract.group_mix = act.group_mlx;
@@ -82,6 +83,7 @@ private:
     //! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
     //! message definiton here: @p https://mavlink.io/en/messages/common.html#SET_ACTUATOR_CONTROL_TARGET
     mavlink::common::msg::SET_ACTUATOR_CONTROL_TARGET act{};
+    auto uas = uas_.lock();
 
     act.time_usec = get_time_usec(req->header.stamp);
     act.group_mlx = req->group_mix;

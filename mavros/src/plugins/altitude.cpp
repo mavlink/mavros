@@ -67,6 +67,7 @@ private:
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::ALTITUDE & altitude, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     auto ros_msg = mavros_msgs::msg::Altitude();
     ros_msg.header = uas->synchronized_header(frame_id, altitude.time_usec);
     ros_msg.monotonic = altitude.altitude_monotonic;

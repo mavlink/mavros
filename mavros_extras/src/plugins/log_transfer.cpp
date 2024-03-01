@@ -116,6 +116,7 @@ private:
     mavros_msgs::srv::LogRequestList::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_LIST msg = {};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(msg);
     msg.start = req->start;
@@ -132,6 +133,7 @@ private:
     mavros_msgs::srv::LogRequestData::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_DATA msg = {};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(msg);
     msg.id = req->id;
@@ -149,6 +151,7 @@ private:
     mavros_msgs::srv::LogRequestEnd::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_REQUEST_END msg = {};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(msg);
 
@@ -163,6 +166,7 @@ private:
     std_srvs::srv::Trigger::Response::SharedPtr res)
   {
     mavlink::common::msg::LOG_ERASE msg{};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(msg);
 

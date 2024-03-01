@@ -139,6 +139,7 @@ private:
 
     // add diag at first event
     if (!diag_added) {
+      auto uas = uas_.lock();
       uas->diagnostic_updater.add("3DR Radio", this, &TDRRadioPlugin::diag_run);
       diag_added = true;
     }
@@ -181,6 +182,7 @@ private:
 
   void connection_cb(bool connected [[maybe_unused]]) override
   {
+    auto uas = uas_.lock();
     uas->diagnostic_updater.removeByName("3DR Radio");
     diag_added = false;
   }

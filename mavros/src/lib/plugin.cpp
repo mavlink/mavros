@@ -16,10 +16,23 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 
-using  mavros::plugin::Plugin;
+using mavros::plugin::Plugin;
+
+Plugin::Plugin(
+  UASPtr uas, const std::string & subnode_name,
+  const rclcpp::NodeOptions & options)
+: uas_(uas)
+  // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode_name))  // https://github.com/ros2/rclcpp/issues/731
+{
+  RCLCPP_INFO_STREAM(uas->get_logger(), "Create subnode " << subnode_name
+    << ", uas_->get_fully_qualified_name() == " << uas->get_fully_qualified_name());
+  // node = uas_->create_sub_node(subnode_name);
+  node = rclcpp::Node::make_shared(subnode_name, uas->get_fully_qualified_name(), options);
+}
 
 void Plugin::enable_connection_cb()
 {
+  auto uas = uas_.lock();
   uas->add_connection_change_handler(
     std::bind(
       &Plugin::connection_cb, this,
@@ -28,6 +41,7 @@ void Plugin::enable_connection_cb()
 
 void Plugin::enable_capabilities_cb()
 {
+  auto uas = uas_.lock();
   uas->add_capabilities_change_handler(
     std::bind(
       &Plugin::capabilities_cb, this,

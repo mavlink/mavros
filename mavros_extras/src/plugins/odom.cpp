@@ -110,6 +110,7 @@ private:
   {
     try {
       // transform lookup at current time.
+      auto uas = uas_.lock();
       tf_source2target = tf2::transformToEigen(
         uas->tf2_buffer.lookupTransform(
           target, source, rclcpp::Time(0)));
@@ -163,6 +164,7 @@ private:
     Matrix6d r_vel = Matrix6d::Zero();   //!< Velocity 6-D Covariance matrix. WRT child_frame_id
 
     auto odom = nav_msgs::msg::Odometry();
+    auto uas = uas_.lock();
 
     odom.header = uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
     odom.child_frame_id = fcu_odom_child_id_des;
@@ -322,6 +324,7 @@ private:
     ftf::covariance_urt_to_mavlink(cov_vel_map, msg.velocity_covariance);
 
     // send ODOMETRY msg
+    auto uas = uas_.lock();
     uas->send_message(msg);
   }
 };

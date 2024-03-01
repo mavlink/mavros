@@ -106,6 +106,7 @@ private:
     mavlink::common::msg::OPTICAL_FLOW & flow,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, flow.time_usec);
 
     /**
@@ -189,6 +190,7 @@ private:
     flow_msg.flow_rate_x = int_flow_rate_xy.x();
     flow_msg.flow_rate_y = int_flow_rate_xy.y();
 
+    auto uas = uas_.lock();
     uas->send_message(flow_msg);
   }
 };

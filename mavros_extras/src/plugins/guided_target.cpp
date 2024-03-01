@@ -162,6 +162,7 @@ private:
 
     /* create position target PoseStamped message */
     auto pose = geometry_msgs::msg::PoseStamped();
+    auto uas = uas_.lock();
     pose.header = uas->synchronized_header(frame_id, position_target.time_boot_ms);
     pose.pose.orientation.w = 1.0;              // unit quaternion with no rotation
 

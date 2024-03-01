@@ -92,6 +92,7 @@ private:
 
     ftf::covariance_to_mavlink(cov, vs.covariance);
 
+    auto uas = uas_.lock();
     uas->send_message(vs);
   }
 

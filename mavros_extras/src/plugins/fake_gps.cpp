@@ -312,6 +312,8 @@ private:
     old_stamp = stamp.seconds();
     old_ecef = current_ecef;
 
+    auto uas = uas_.lock();
+
     if (use_hil_gps) {
       /**
        * @note: <a href="https://mavlink.io/en/messages/common.html#HIL_GPS">HIL_GPS MAVLink message</a>

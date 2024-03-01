@@ -118,6 +118,7 @@ private:
 
     gps_input.time_usec = get_time_usec(ros_msg->header.stamp);
 
+    auto uas = uas_.lock();
     uas->send_message(gps_input);
   }
 };

@@ -103,6 +103,7 @@ private:
     ros_msg.hdg_acc = mav_msg.hdg_acc;
     ros_msg.yaw = mav_msg.yaw;
     // [[[end]]] (checksum: 5803a4026c6f569e7cc00b66156640f9)
+    auto uas = uas_.lock();
     ros_msg.header = uas->synchronized_header("/wgs84", mav_msg.time_usec);
     ros_msg.dgps_numch = UINT8_MAX;     // information not available in GPS_RAW_INT mavlink message
     ros_msg.dgps_age = UINT32_MAX;      // information not available in GPS_RAW_INT mavlink message
@@ -141,6 +142,7 @@ private:
     ros_msg.vel_acc = mav_msg.vel_acc;
     ros_msg.hdg_acc = mav_msg.hdg_acc;
     // [[[end]]] (checksum: 1d71e875394bf6abb6c46e39801cdc19)
+    auto uas = uas_.lock();
     ros_msg.header = uas->synchronized_header("/wgs84", mav_msg.time_usec);
 
     gps2_raw_pub->publish(ros_msg);
@@ -166,6 +168,7 @@ private:
           mav_msg.baseline_coords_type);
     }
 
+    auto uas = uas_.lock();
     ros_msg.header = uas->synchronized_header(
       frame_id,
       mav_msg.time_last_baseline_ms * 1000);

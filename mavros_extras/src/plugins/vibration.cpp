@@ -71,6 +71,7 @@ private:
   {
     auto vibe_msg = mavros_msgs::msg::Vibration();
 
+    auto uas = uas_.lock();
     vibe_msg.header = uas->synchronized_header(frame_id, vibration.time_usec);
 
     Eigen::Vector3d vib_enu = {vibration.vibration_x, vibration.vibration_y, vibration.vibration_z};

@@ -109,6 +109,7 @@ private:
   {
     auto hil_controls_msg = mavros_msgs::msg::HilControls();
 
+    auto uas = uas_.lock();
     hil_controls_msg.header.stamp = uas->synchronise_stamp(hil_controls.time_usec);
     // [[[cog:
     // for f in (
@@ -138,6 +139,7 @@ private:
   {
     auto hil_actuator_controls_msg = mavros_msgs::msg::HilActuatorControls();
 
+    auto uas = uas_.lock();
     hil_actuator_controls_msg.header.stamp = uas->synchronise_stamp(
       hil_actuator_controls.time_usec);
     const auto & arr = hil_actuator_controls.controls;
@@ -200,6 +202,8 @@ private:
     state_quat.zacc = lin_acc.z();
     // [[[end]]] (checksum: 59683585adc102a8c5ec530d99f8664d)
 
+
+    auto uas = uas_.lock();
     uas->send_message(state_quat);
   }
 
@@ -234,6 +238,7 @@ private:
     // [[[end]]] (checksum: b71b4e33be4574667105126a43507e82)
     gps.satellites_visible = req->satellites_visible;
 
+    auto uas = uas_.lock();
     uas->send_message(gps);
   }
 
@@ -281,6 +286,7 @@ private:
     sensor.fields_updated = req->fields_updated;
     // [[[end]]] (checksum: e1f6502cf1195ffdf3018f0c4d0c9329)
 
+    auto uas = uas_.lock();
     uas->send_message(sensor);
   }
 
@@ -325,6 +331,7 @@ private:
     // [[[end]]] (checksum: 4dc7f3f9b5de60b4d1685bde42c66b26)
     of.temperature = req->temperature * 100.0f;     // in centi-degrees celsius
 
+    auto uas = uas_.lock();
     uas->send_message(of);
   }
 
@@ -362,6 +369,7 @@ private:
     rcin.chan12_raw = channels[11];
     // [[[end]]] (checksum: 342673b0690e47f16c8b89803ab00e68)
 
+    auto uas = uas_.lock();
     uas->send_message(rcin);
   }
 };

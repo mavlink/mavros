@@ -634,6 +634,7 @@ protected:
       std::is_same<MsgT, MISSION_ITEM>::value || std::is_same<MsgT,
       MISSION_ITEM_INT>::value, "wrong type");
 
+    auto uas = uas_.lock();
     uas->msg_set_target(wpi);
     uas->send_message(wpi);
   }

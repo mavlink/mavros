@@ -276,6 +276,7 @@ private:
   {
     // Get initial yaw (from IMU)
     // Check that IMU was already initialized
+    auto uas = uas_.lock();
     auto attq = ftf::to_eigen(uas->data.get_attitude_orientation_enu());
     if (!yaw_initialized && !quaterniond_eq(attq, Eigen::Quaterniond::Identity())) {
       double yaw = ftf::quaternion_get_yaw(attq);
@@ -358,6 +359,7 @@ private:
       // rotation
       transform.transform.rotation = quat;
       // publish
+      auto uas = uas_.lock();
       uas->tf2_broadcaster.sendTransform(transform);
     }
   }
@@ -639,6 +641,7 @@ private:
     }
 
     // Get ROS timestamp of the message
+    auto uas = uas_.lock();
     auto timestamp = uas->synchronise_stamp(wheel_dist.time_usec);
     // Get internal timestamp of the message
     rclcpp::Time timestamp_int(wheel_dist.time_usec / 1000000UL,

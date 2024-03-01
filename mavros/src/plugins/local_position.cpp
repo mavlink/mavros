@@ -132,6 +132,7 @@ private:
       transform.transform.translation.y = odom.pose.pose.position.y;
       transform.transform.translation.z = odom.pose.pose.position.z;
       transform.transform.rotation = odom.pose.pose.orientation;
+      auto uas = uas_.lock();
       uas->tf2_broadcaster.sendTransform(transform);
     }
   }
@@ -153,6 +154,7 @@ private:
 
     //--------------- Get Odom Information ---------------//
     // Note this orientation describes baselink->ENU transform
+    auto uas = uas_.lock();
     auto enu_orientation_msg = uas->data.get_attitude_orientation_enu();
     auto baselink_angular_msg = uas->data.get_attitude_angular_velocity_enu();
     Eigen::Quaterniond enu_orientation; tf2::fromMsg(enu_orientation_msg, enu_orientation);
@@ -217,6 +219,7 @@ private:
     auto enu_velocity =
       ftf::transform_frame_ned_enu(Eigen::Vector3d(pos_ned.vx, pos_ned.vy, pos_ned.vz));
 
+    auto uas = uas_.lock();
     auto enu_orientation_msg = uas->data.get_attitude_orientation_enu();
     auto baselink_angular_msg = uas->data.get_attitude_angular_velocity_enu();
     Eigen::Quaterniond enu_orientation; tf2::fromMsg(enu_orientation_msg, enu_orientation);

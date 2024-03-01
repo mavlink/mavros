@@ -294,6 +294,7 @@ private:
       // [[[end]]] (checksum: 3378a593279611a83e25efee67393195)
 
       trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
+      auto uas = uas_.lock();
       uas->send_message(trajectory);
     } else {
       mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER trajectory {};
@@ -328,6 +329,7 @@ private:
       // [[[end]]] (checksum: a12a34d1190be94c777077f2d297918b)
 
       trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
+      auto uas = uas_.lock();
       uas->send_message(trajectory);
     }
   }
@@ -370,6 +372,7 @@ private:
     fill_point(trajectory, 4);
     // [[[end]]] (checksum: a63d2682cc16897f19da141e87ab5d60)
 
+    auto uas = uas_.lock();
     uas->send_message(trajectory);
   }
 
@@ -391,6 +394,7 @@ private:
         tr_desired.command[i] = t.command[i];
       };
 
+    auto uas = uas_.lock();
     tr_desired.header = uas->synchronized_header("local_origin", trajectory.time_usec);
 
     if (trajectory.valid_points > tr_desired.point_valid.size()) {

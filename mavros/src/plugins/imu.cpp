@@ -198,6 +198,7 @@ private:
     uint32_t time_boot_ms, Eigen::Quaterniond & orientation_enu,
     Eigen::Quaterniond & orientation_ned, Eigen::Vector3d & gyro_flu, Eigen::Vector3d & gyro_frd)
   {
+    auto uas = uas_.lock();
     auto imu_ned_msg = sensor_msgs::msg::Imu();
     auto imu_enu_msg = sensor_msgs::msg::Imu();
 
@@ -422,6 +423,7 @@ private:
       get_logger(), !has_hr_imu.exchange(
         true), "IMU: High resolution IMU detected!");
 
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, imu_hr.time_usec);
     /** @todo Make more paranoic check of HIGHRES_IMU.fields_updated
      */
@@ -517,6 +519,7 @@ private:
     }
 
     auto imu_msg = sensor_msgs::msg::Imu();
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, imu_raw.time_usec);
 
     /** @note APM send SCALED_IMU data as RAW_IMU
@@ -577,6 +580,7 @@ private:
       get_logger(), !has_scaled_imu.exchange(
         true), "IMU: Scaled IMU message used.");
 
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, imu_raw.time_boot_ms);
 
     auto gyro_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
@@ -613,6 +617,7 @@ private:
       return;
     }
 
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(frame_id, press.time_boot_ms);
 
     auto temp_msg = sensor_msgs::msg::Temperature();

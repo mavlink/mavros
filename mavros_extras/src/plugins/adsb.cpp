@@ -161,6 +161,7 @@ private:
         " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type) <<
         " flags: 0x" << std::hex << adsb.flags);
 
+    auto uas = uas_.lock();
     uas->send_message(adsb);
   }
 };

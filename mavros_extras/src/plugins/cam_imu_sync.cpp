@@ -59,6 +59,7 @@ private:
   {
     auto sync_msg = mavros_msgs::msg::CamIMUStamp();
 
+    auto uas = uas_.lock();
     sync_msg.frame_stamp = uas->synchronise_stamp(ctrig.time_usec);
     sync_msg.frame_seq_id = ctrig.seq;
 

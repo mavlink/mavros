@@ -481,8 +481,8 @@ private:
 class SystemStatusPlugin : public plugin::Plugin
 {
 public:
-  explicit SystemStatusPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "sys"),
+  explicit SystemStatusPlugin(plugin::UASPtr uas)
+  : Plugin(uas, "sys"),
     hb_diag("Heartbeat", 10),
     mem_diag("APM Memory"),
     hwst_diag("APM Hardware"),
@@ -589,21 +589,21 @@ public:
       "set_mode",
       std::bind(
         &SystemStatusPlugin::set_mode_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     stream_rate_srv = node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
       std::bind(
         &SystemStatusPlugin::set_rate_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     message_interval_srv = node->create_service<mavros_msgs::srv::MessageInterval>(
       "set_message_interval",
       std::bind(
         &SystemStatusPlugin::set_message_interval_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
       "vehicle_info_get", std::bind(
         &SystemStatusPlugin::vehicle_info_get_cb, this, _1,
-        _2), rmw_qos_profile_services_default, srv_cg);
+        _2), rclcpp::ServicesQoS {}, srv_cg);
 
     uas->diagnostic_updater.add(hb_diag);
 
@@ -885,6 +885,7 @@ private:
     // Store generic info of all heartbeats seen
     auto it = find_or_create_vehicle_info(msg->sysid, msg->compid);
 
+    auto uas = uas_.lock();
     auto vehicle_mode = uas->str_mode_v10(hb.base_mode, hb.custom_mode);
     auto stamp = node->now();
 
@@ -1044,6 +1045,7 @@ private:
     //             so will recv versions only from target system's components
 
     // we want to store only FCU caps
+    auto uas = uas_.lock();
     if (uas->is_my_target(msg->sysid, msg->compid)) {
       autopilot_version_timer->cancel();
       uas->update_capabilities(true, apv.capabilities);
@@ -1241,6 +1243,7 @@ private:
 
   void timeout_cb()
   {
+    auto uas = uas_.lock();
     uas->update_connection_status(false);
   }
 
@@ -1255,6 +1258,7 @@ private:
     hb.custom_mode = 0;
     hb.system_status = enum_value(MAV_STATE::ACTIVE);
 
+    auto uas = uas_.lock();
     uas->send_message(hb);
   }
 
@@ -1305,6 +1309,7 @@ private:
         (do_broadcast) ? "broadcast" : "unicast",
         version_retries);
     } else {
+      auto uas = uas_.lock();
       uas->update_capabilities(false);
       autopilot_version_timer->cancel();
       RCLCPP_WARN(
@@ -1327,6 +1332,7 @@ private:
     }
 
     // add/remove APM diag tasks
+    auto uas = uas_.lock();
     if (connected && disable_diag && uas->is_ardupilotmega()) {
       uas->diagnostic_updater.add(mem_diag);
       uas->diagnostic_updater.add(hwst_diag);
@@ -1358,6 +1364,7 @@ private:
       req->text.length() >= statustext.text.size(),
       "Status text too long: truncating...");
 
+    auto uas = uas_.lock();
     uas->send_message(statustext);
   }
 
@@ -1368,6 +1375,7 @@ private:
     mavros_msgs::srv::StreamRate::Response::SharedPtr res [[maybe_unused]])
   {
     mavlink::common::msg::REQUEST_DATA_STREAM rq = {};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(rq);
     rq.req_stream_id = req->stream_id;
@@ -1437,6 +1445,7 @@ private:
     uint8_t base_mode = req->base_mode;
     uint32_t custom_mode = 0;
 
+    auto uas = uas_.lock();
     if (req->custom_mode != "") {
       if (!uas->cmode_from_str(req->custom_mode, custom_mode)) {
         res->mode_sent = false;
@@ -1482,6 +1491,7 @@ private:
 
     if (req->sysid == 0 && req->compid == 0) {
       // use target
+      auto uas = uas_.lock();
       req_sysid = uas->get_tgt_system();
       req_compid = uas->get_tgt_component();
     }

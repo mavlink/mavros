@@ -56,8 +56,8 @@ class GlobalPositionPlugin : public plugin::Plugin
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  explicit GlobalPositionPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "global_position"),
+  explicit GlobalPositionPlugin(plugin::UASPtr uas)
+  : Plugin(uas, "global_position"),
     tf_send(false),
     use_relative_alt(true),
     is_map_init(false),
@@ -189,6 +189,7 @@ private:
   template<typename MsgT>
   inline void fill_lla(const MsgT & msg, sensor_msgs::msg::NavSatFix & fix)
   {
+    auto uas = uas_.lock();
     fix.latitude = msg.lat / 1E7;       // deg
     fix.longitude = msg.lon / 1E7;      // deg
     fix.altitude = msg.alt / 1E3 + uas->data.geoid_to_ellipsoid_height(fix);   // in meters
@@ -213,6 +214,7 @@ private:
 
     auto fix = NavSatFix();
 
+    auto uas = uas_.lock();
     fix.header = uas->synchronized_header(child_frame_id, raw_gps.time_usec);
 
     fix.status.service = NavSatStatus::SERVICE_GPS;
@@ -282,6 +284,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     auto g_origin = geographic_msgs::msg::GeoPointStamped();
+    auto uas = uas_.lock();
 
     g_origin.header = uas->synchronized_header(tf_global_frame_id, glob_orig.time_usec);
     g_origin.position.latitude = glob_orig.latitude / 1E7;
@@ -319,6 +322,7 @@ private:
     auto relative_alt = std_msgs::msg::Float64();
     auto compass_heading = std_msgs::msg::Float64();
 
+    auto uas = uas_.lock();
     auto header = uas->synchronized_header(child_frame_id, gpos.time_boot_ms);
 
     // Global position fix
@@ -462,6 +466,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     auto global_offset = geometry_msgs::msg::PoseStamped();
+    auto uas = uas_.lock();
     global_offset.header = uas->synchronized_header(tf_global_frame_id, offset.time_boot_ms);
 
     auto enu_position = ftf::transform_frame_ned_enu(Eigen::Vector3d(offset.x, offset.y, offset.z));
@@ -490,6 +495,7 @@ private:
       transform.transform.translation.y = global_offset.pose.position.y;
       transform.transform.translation.z = global_offset.pose.position.z;
 
+      auto uas = uas_.lock();
       uas->tf2_broadcaster.sendTransform(transform);
     }
   }
@@ -500,6 +506,7 @@ private:
     int fix_type, satellites_visible;
     float eph, epv;
 
+    auto uas = uas_.lock();
     uas->data.get_gps_epts(eph, epv, fix_type, satellites_visible);
 
     if (satellites_visible <= 0) {
@@ -557,6 +564,7 @@ private:
   void set_gp_origin_cb(const geographic_msgs::msg::GeoPointStamped::SharedPtr req)
   {
     mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo = {};
+    auto uas = uas_.lock();
 
     gpo.time_usec = get_time_usec(req->header.stamp);
     gpo.target_system = uas->get_tgt_system();

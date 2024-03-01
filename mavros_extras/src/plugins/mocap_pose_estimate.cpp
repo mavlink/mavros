@@ -77,6 +77,7 @@ private:
     pos.y = v.y();
     pos.z = v.z();
 
+    auto uas = uas_.lock();
     uas->send_message(pos);
   }
 

@@ -188,8 +188,8 @@ private:
 class MountControlPlugin : public plugin::Plugin
 {
 public:
-  explicit MountControlPlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "mount_control"),
+  explicit MountControlPlugin(plugin::UASPtr uas)
+  : Plugin(uas, "mount_control"),
     mount_diag("Mount")
   {
     enable_node_watch_parameters();
@@ -339,6 +339,7 @@ private:
   void command_cb(const mavros_msgs::msg::MountControl::SharedPtr req)
   {
     mavlink::common::msg::COMMAND_LONG cmd {};
+    auto uas = uas_.lock();
 
     uas->msg_set_target(cmd);
     cmd.command = enum_value(MAV_CMD::DO_MOUNT_CONTROL);

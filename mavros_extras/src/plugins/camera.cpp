@@ -71,6 +71,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     auto ic = mavros_msgs::msg::CameraImageCaptured();
+    auto uas = uas_.lock();
 
     ic.header.stamp = uas->synchronise_stamp(mo.time_boot_ms);
     ic.geo.latitude = mo.lat / 1E7;

@@ -147,8 +147,8 @@ class SystemTimePlugin : public plugin::Plugin
 public:
   using TSM = uas::timesync_mode;
 
-  explicit SystemTimePlugin(plugin::UASPtr uas_)
-  : Plugin(uas_, "time"),
+  explicit SystemTimePlugin(plugin::UASPtr uas)
+  : Plugin(uas, "time"),
     dt_diag("Time Sync", 10),
     time_offset(0.0),
     time_skew(0.0),
@@ -383,11 +383,13 @@ private:
     mavlink::common::msg::SYSTEM_TIME mtime {};
     mtime.time_unix_usec = time_unix_usec;
 
+    auto uas = uas_.lock();
     uas->send_message(mtime);
   }
 
   void timesync_cb()
   {
+    auto uas = uas_.lock();
     auto ts_mode = uas->get_timesync_mode();
     if (ts_mode == TSM::NONE || ts_mode == TSM::PASSTHROUGH) {
       // NOTE(vooon): nothing to do. keep timer running for possible mode change
@@ -410,6 +412,7 @@ private:
     tsync.tc1 = tc1;
     tsync.ts1 = ts1;
 
+    auto uas = uas_.lock();
     uas->send_message(tsync);
   }
 
@@ -460,6 +463,7 @@ private:
         add_sample(offset_ns);
 
         // Save time offset for other components to use
+        auto uas = uas_.lock();
         uas->set_time_offset(sync_converged() ? time_offset : 0);
 
         // Increment sequence counter after filter update
