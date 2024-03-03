@@ -773,7 +773,7 @@ private:
       //     ):
       //     for v in l1:
       //         cog.outl(f"case enum_value(MAV_SEVERITY::{v}):")
-      //     cog.outl(f"  RCLCPP_{l2}_STREAM(node->get_logger(), \"FCU: EVENT \" << px4_id << \" with args \" << arg_str);")
+      //     cog.outl(f"  RCLCPP_{l2}_STREAM(node->get_logger(), \"FCU: EVENT \" << px4_id << \" with args \" << arg_str);")  # NOLINT
       //     cog.outl(f"  break;")
       // ]]]
       case enum_value(MAV_SEVERITY::EMERGENCY):
@@ -1037,8 +1037,10 @@ private:
     mavlink::common::msg::EVENT & eventm,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    uint8_t severity = eventm.log_levels & 0x0F; // take only 4 LSB, see https://mavlink.io/en/messages/common.html#EVENT
-    uint32_t px4_id = eventm.id & 0x00FFFFFF; // take only 24 LSB, see PX4 "constexpr uint32_t ID(const char (&name)[N])" function
+    // take only 4 LSB, see https://mavlink.io/en/messages/common.html#EVENT
+    uint8_t severity = eventm.log_levels & 0x0F;
+    // take only 24 LSB, see PX4 "constexpr uint32_t ID(const char (&name)[N])" function
+    uint32_t px4_id = eventm.id & 0x00FFFFFF;
     process_event_normal(severity, px4_id, eventm.arguments);
 
     auto evt_msg = mavros_msgs::msg::StatusEvent();
