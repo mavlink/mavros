@@ -2,6 +2,15 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [camera plugin] Fix image_index and capture_result not properly filled
+* Fix missing semi-colon
+* GPS_STATUS Plugin: Fill in available messages for ROS1 legacy
+  Filled in available fields in GPS_RAW_INT & GPS2_RAW messages
+  p.s. seems GPS2_RAW more complete than original GPS_RAW_INT
+* Contributors: Beniamino Pozzan, Seunghwan Jo
+
 1.17.0 (2023-09-09)
 -------------------
 * Merge pull request `#1865 <https://github.com/mavlink/mavros/issues/1865>`_ from scoutdi/warnings
