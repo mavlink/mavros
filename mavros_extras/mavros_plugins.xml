@@ -233,4 +233,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 4c4e8da806a050322553237a8e17a0c6) -->
+<!-- [[[end]]] (checksum: b03a63f9e6aa3dc5c0edc9f744c9d8ef) -->
