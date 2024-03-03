@@ -2,6 +2,27 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* re-generate with cogall.sh
+* Merge branch 'master' into ros2
+  * master:
+  1.18.0
+  update changelog
+  sys_status.cpp: improve timeout code
+  sys_status.cpp: Add a SYS_STATUS message publisher
+  [camera plugin] Fix image_index and capture_result not properly filled
+  Fix missing semi-colon
+  GPS_STATUS Plugin: Fill in available messages for ROS1 legacy
+* 1.18.0
+* update changelog
+* sys_status.cpp: Add a SYS_STATUS message publisher
+* cog checksum
+* remove event_time_boot_ms, fill stamp instead
+* handle events
+* Fix errata in GPSRAW.msg
+* Contributors: Dr.-Ing. Amilcar do Carmo Lucas, Seunghwan Jo, Vladimir Ermakov, victor
+
 1.18.0 (2024-03-03)
 -------------------
 * sys_status.cpp: Add a SYS_STATUS message publisher

@@ -2,6 +2,37 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.18.0
+  update changelog
+  sys_status.cpp: improve timeout code
+  sys_status.cpp: Add a SYS_STATUS message publisher
+  [camera plugin] Fix image_index and capture_result not properly filled
+  Fix missing semi-colon
+  GPS_STATUS Plugin: Fill in available messages for ROS1 legacy
+* 1.18.0
+* update changelog
+* move /conn parameters to /sys and /time
+* sys_status.cpp: improve timeout code
+  # Conflicts:
+  #	mavros/src/plugins/sys_status.cpp
+* sys_status.cpp: Add a SYS_STATUS message publisher
+* Removed warning from geometry2 header
+* Fix PR 1922 regarding EVENT message
+* use synchronise_stamp to create stamp
+* new checksum for event enum
+* remove event_time_boot_ms, fill stamp instead
+* handle events
+* fix mav service  call and wp load
+* Remove hardcoded namespace from px4_pluginlists
+* Remove hardcoded namespace from px4_config
+* Define _frd frames in odom plugin based on parent/child frame parametrs
+* Define parameters for base_link, odom, map frames
+* Contributors: Alejandro Hernández Cordero, Dr.-Ing. Amilcar do Carmo Lucas, Mattia Giurato, Mohamed Abdelkader, Vladimir Ermakov, elgarbe, sathak93, victor
+
 1.18.0 (2024-03-03)
 -------------------
 * sys_status.cpp: improve timeout code

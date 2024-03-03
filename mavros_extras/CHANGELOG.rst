@@ -2,6 +2,36 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* re-generate with cogall.sh
+* Merge branch 'master' into ros2
+  * master:
+  1.18.0
+  update changelog
+  sys_status.cpp: improve timeout code
+  sys_status.cpp: Add a SYS_STATUS message publisher
+  [camera plugin] Fix image_index and capture_result not properly filled
+  Fix missing semi-colon
+  GPS_STATUS Plugin: Fill in available messages for ROS1 legacy
+* 1.18.0
+* update changelog
+* [camera plugin] Fix image_index and capture_result not properly filled
+* [camera plugin] Fix image_index and capture_result not properly filled
+* Update mavros_plugins.xml
+* Update wheel_odometry.cpp
+  fix typo
+* Fix typo
+  fix typo in odometry frame child id
+* Removed unused variable
+* Use SensorDataQoS for gp_origin subscriber
+* Fix missing semi-colon
+* GPS_STATUS Plugin: Fill in available messages for ROS1 legacy
+  Filled in available fields in GPS_RAW_INT & GPS2_RAW messages
+  p.s. seems GPS2_RAW more complete than original GPS_RAW_INT
+* Define _frd frames in odom plugin based on parent/child frame parametrs
+* Contributors: Beniamino Pozzan, Kristoffer Bergman, Matteo Molinari, Mattia Giurato, Mohamed Abdelkader, Seunghwan Jo, Vladimir Ermakov, hpbrandal
+
 1.18.0 (2024-03-03)
 -------------------
 * [camera plugin] Fix image_index and capture_result not properly filled
