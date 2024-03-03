@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.7.0 (2024-03-03)
+------------------
 * re-generate with cogall.sh
 * Merge branch 'master' into ros2
   * master:
