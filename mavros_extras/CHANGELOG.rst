@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.18.0 (2024-03-03)
+-------------------
 * [camera plugin] Fix image_index and capture_result not properly filled
 * Fix missing semi-colon
 * GPS_STATUS Plugin: Fill in available messages for ROS1 legacy

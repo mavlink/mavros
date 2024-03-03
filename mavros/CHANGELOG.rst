@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.18.0 (2024-03-03)
+-------------------
 * sys_status.cpp: improve timeout code
 * sys_status.cpp: Add a SYS_STATUS message publisher
 * Contributors: Dr.-Ing. Amilcar do Carmo Lucas
