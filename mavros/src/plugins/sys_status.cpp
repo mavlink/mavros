@@ -28,6 +28,7 @@
 #include "mavros/plugin_filter.hpp"
 
 #include "mavros_msgs/msg/state.hpp"
+#include "mavros_msgs/msg/sys_status.hpp"
 #include "mavros_msgs/msg/estimator_status.hpp"
 #include "mavros_msgs/msg/extended_state.hpp"
 #include "mavros_msgs/srv/stream_rate.hpp"
@@ -571,6 +572,8 @@ public:
       "state", state_qos);
     extended_state_pub = node->create_publisher<mavros_msgs::msg::ExtendedState>(
       "extended_state", state_qos);
+    sys_status_pub = node->create_publisher<mavros_msgs::msg::SysStatus>(
+      "sys_status", state_qos);
     estimator_status_pub = node->create_publisher<mavros_msgs::msg::EstimatorStatus>(
       "estimator_status", state_qos);
     batt_pub = node->create_publisher<BatteryMsg>("battery", sensor_qos);
@@ -645,6 +648,7 @@ private:
 
   rclcpp::Publisher<mavros_msgs::msg::State>::SharedPtr state_pub;
   rclcpp::Publisher<mavros_msgs::msg::ExtendedState>::SharedPtr extended_state_pub;
+  rclcpp::Publisher<mavros_msgs::msg::SysStatus>::SharedPtr sys_status_pub;
   rclcpp::Publisher<mavros_msgs::msg::EstimatorStatus>::SharedPtr estimator_status_pub;
   rclcpp::Publisher<BatteryMsg>::SharedPtr batt_pub;
 
@@ -748,13 +752,16 @@ private:
    *
    * @param[in] severity
    */
-  void process_event_normal(uint8_t severity, uint32_t px4_id, const std::array<uint8_t, 40>& arguments)
+  void process_event_normal(
+    uint8_t severity, uint32_t px4_id, const std::array<uint8_t,
+    40> & arguments)
   {
     using mavlink::common::MAV_SEVERITY;
 
     std::string arg_str = "-";
-    for (const uint8_t& arg : arguments)
+    for (const uint8_t & arg : arguments) {
       arg_str += std::to_string(arg) + "-";
+    }
 
     switch (severity) {
       // [[[cog:
@@ -773,7 +780,9 @@ private:
       case enum_value(MAV_SEVERITY::ALERT):
       case enum_value(MAV_SEVERITY::CRITICAL):
       case enum_value(MAV_SEVERITY::ERROR):
-        RCLCPP_ERROR_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        RCLCPP_ERROR_STREAM(
+          node->get_logger(),
+          "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
       case enum_value(MAV_SEVERITY::WARNING):
       case enum_value(MAV_SEVERITY::NOTICE):
@@ -783,11 +792,15 @@ private:
         RCLCPP_INFO_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
       case enum_value(MAV_SEVERITY::DEBUG):
-        RCLCPP_DEBUG_STREAM(node->get_logger(), "FCU: EVENT " << px4_id << " with args " << arg_str);
+        RCLCPP_DEBUG_STREAM(
+          node->get_logger(),
+          "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
       // [[[end]]] (checksum: 83f5eab6a8989f95de46d2a95387304c)
       default:
-        RCLCPP_WARN_STREAM(node->get_logger(), "FCU: UNK(" << +severity << "): EVENT " << px4_id << " with args " << arg_str);
+        RCLCPP_WARN_STREAM(
+          node->get_logger(),
+          "FCU: UNK(" << +severity << "): EVENT " << px4_id << " with args " << arg_str);
         break;
     }
   }
@@ -958,6 +971,25 @@ private:
 
     battery_voltage = volt;
     sys_diag.set(stat);
+
+    auto sys_status = mavros_msgs::msg::SysStatus();
+    sys_status.header.stamp = node->now();
+    sys_status.sensors_present = stat.onboard_control_sensors_present;
+    sys_status.sensors_enabled = stat.onboard_control_sensors_enabled;
+    sys_status.sensors_health = stat.onboard_control_sensors_health;
+
+    sys_status.load = stat.load;
+    sys_status.voltage_battery = stat.voltage_battery;
+    sys_status.current_battery = stat.current_battery;
+    sys_status.battery_remaining = stat.battery_remaining;
+    sys_status.drop_rate_comm = stat.drop_rate_comm;
+    sys_status.errors_comm = stat.errors_comm;
+    sys_status.errors_count1 = stat.errors_count1;
+    sys_status.errors_count2 = stat.errors_count2;
+    sys_status.errors_count3 = stat.errors_count3;
+    sys_status.errors_count4 = stat.errors_count4;
+
+    sys_status_pub->publish(sys_status);
 
     if (has_battery_status0) {
       return;

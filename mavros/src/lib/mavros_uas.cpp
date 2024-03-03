@@ -160,9 +160,9 @@ UAS::UAS(
 
       // Publish helper TFs used for frame transformation in the odometry plugin
       {
-        std::string base_link_frd = base_link_frame_id+"_frd";
-        std::string odom_ned = odom_frame_id+"_ned";
-        std::string map_ned = map_frame_id+"_ned";
+        std::string base_link_frd = base_link_frame_id + "_frd";
+        std::string odom_ned = odom_frame_id + "_ned";
+        std::string map_ned = map_frame_id + "_ned";
         std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
         add_static_transform(
           map_frame_id, map_ned, Eigen::Affine3d(

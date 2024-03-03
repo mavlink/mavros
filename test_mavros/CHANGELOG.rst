@@ -2,6 +2,9 @@
 Changelog for package test_mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.18.0 (2024-03-03)
+-------------------
+
 1.17.0 (2023-09-09)
 -------------------
 * Merge pull request `#1865 <https://github.com/mavlink/mavros/issues/1865>`_ from scoutdi/warnings

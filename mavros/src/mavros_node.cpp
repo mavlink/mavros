@@ -100,7 +100,6 @@ int main(int argc, char * argv[])
       uas_params.emplace_back("map_frame_id", map_frame_id);
     }
     uas_node->set_parameters(uas_params);
-    
   }
 
   exec.spin();

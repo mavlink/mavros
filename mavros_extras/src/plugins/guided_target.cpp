@@ -67,7 +67,8 @@ public:
 
     // Subscriber for global origin (aka map origin).
     gp_origin_sub = node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
-      "global_position/gp_origin", rclcpp::SensorDataQoS(), std::bind(&GuidedTargetPlugin::gp_origin_cb, this, _1));
+      "global_position/gp_origin", rclcpp::SensorDataQoS(),
+      std::bind(&GuidedTargetPlugin::gp_origin_cb, this, _1));
   }
 
   Subscriptions get_subscriptions() override
