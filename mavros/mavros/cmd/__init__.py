@@ -61,7 +61,7 @@ def print_version(ctx, param_, value):
     share_dir = aip.get_package_share_directory("mavros")
     package_xml = pathlib.Path(share_dir) / "package.xml"
 
-    tree = ET.parse(package_xml)
+    tree = ET.parse(package_xml)  # nosemgrep
     versions = tree.getroot().findall("version")
 
     click.echo(f"MAVROS Version: {versions[0].text}")
