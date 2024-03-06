@@ -1,0 +1,28 @@
+# MAVLink commands: CAMERA_TRACK_POINT, CAMERA_TRACK_RECTANGLE, CAMERA_STOP_TRACKING
+# https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_POINT
+# https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_RECTANGLE
+# https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_STOP_TRACKING
+
+uint8 mode      # enumerator to indicate camera track mode setting - see CAMERA_TRACK_MODE
+#CAMERA_TRACK_MODE
+uint8 CAMERA_TRACK_MODE_POINT = 0           # If the camera supports point visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_POINT is set), this command allows to initiate the tracking. [CAMERA_TRACK_POINT]
+uint8 CAMERA_TRACK_MODE_RECTANGLE = 1       # If the camera supports rectangle visual tracking (CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE is set), this command allows to initiate the tracking. [CAMERA_TRACK_RECTANGLE]
+uint8 CAMERA_TRACK_MODE_STOP_TRACKING = 2   # Stops ongoing tracking. [CAMERA_STOP_TRACKING]
+
+#For CAMERA_TRACK_POINT
+float32 x       # Point to track x value (normalized 0..1, 0 is left, 1 is right).
+float32 y       # Point to track y value (normalized 0..1, 0 is top, 1 is bottom).
+float32 radius  # Point radius (normalized 0..1, 0 is image left, 1 is image right).
+
+#For CAMERA_TRACK_RECTANGLE
+float32 top_left_x      # Top left corner of rectangle x value (normalized 0..1, 0 is left, 1 is right).
+float32 top_left_y      # Top left corner of rectangle y value (normalized 0..1, 0 is top, 1 is bottom).
+float32 bottom_right_x  # Bottom right corner of rectangle x value (normalized 0..1, 0 is left, 1 is right).
+float32 bottom_right_y  # Bottom right corner of rectangle y value (normalized 0..1, 0 is top, 1 is bottom).
+
+#CAMERA_STOP_TRACKING doesn't take extra parameters
+
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result
