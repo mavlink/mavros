@@ -127,7 +127,7 @@ def convert_to_rosmsg(
             msgid=hdr.msgId,
             checksum=mavmsg.get_crc(),
             payload64=convert_to_payload64(mavmsg.get_payload()),
-            signature=[],
+            signature=[],  # FIXME #569
         )
 
     else:
