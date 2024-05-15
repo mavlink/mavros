@@ -121,12 +121,13 @@ def convert_to_rosmsg(
             len=hdr.mlen,
             incompat_flags=hdr.incompat_flags,
             compat_flags=hdr.compat_flags,
+            seq=mavmsg.get_seq(),
             sysid=hdr.srcSystem,
             compid=hdr.srcComponent,
             msgid=hdr.msgId,
             checksum=mavmsg.get_crc(),
             payload64=convert_to_payload64(mavmsg.get_payload()),
-            signature=None,  # FIXME #569
+            signature=[],
         )
 
     else:
