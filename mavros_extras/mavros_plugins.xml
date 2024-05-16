@@ -70,6 +70,12 @@ vision) to FCU - processed in HIL mode or out of it if parameter MAV_USEHILGPS
 is set on PX4 Pro Autopilot Firmware; Ardupilot Firmware already supports it
 without a flag set.</description>
   </class>
+  <class name="gimbal_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GimbalControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Gimbal Control Plugin
+@plugin gimbal_control
+
+Adds support for Mavlink Gimbal Protocol v2.</description>
+  </class>
   <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS_INPUT GPS plugin.
 @plugin gps_input
