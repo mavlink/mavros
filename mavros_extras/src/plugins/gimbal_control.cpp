@@ -257,12 +257,8 @@ private:
     gimbal_attitude_msg.target_system = mo.target_system;
     gimbal_attitude_msg.target_component = mo.target_component;
     gimbal_attitude_msg.flags = mo.flags;
-    geometry_msgs::msg::Quaternion q;
-    q.w = mo.q[0];
-    q.x = mo.q[1];
-    q.y = mo.q[2];
-    q.z = mo.q[3];
-    gimbal_attitude_msg.q = q;
+    auto q = mavros::ftf::mavlink_to_quaternion(mo.q);
+    gimbal_attitude_msg.q = tf2::toMsg(q);
     gimbal_attitude_msg.angular_velocity_x = mo.angular_velocity_x;
     gimbal_attitude_msg.angular_velocity_y = mo.angular_velocity_y;
     gimbal_attitude_msg.angular_velocity_z = mo.angular_velocity_z;
@@ -299,20 +295,6 @@ private:
   }
 
   /**
-   * @brief Helper function for converting char arrays from GimbalDeviceInformation msg to string
-   * 
-   * @param a - array of chars from GimbalDeviceInformation Mavlink msg
-   * @param size - The size of the char array
-   */
-  std::string convertToString(std::array<char, 32> a, int size) {
-    std::string s = "";
-    for (int i=0; i<size; i++) {
-      s += a[i];
-    }
-    return s;
-  }
-
-  /**
    * @brief Publish gimbal device information - Note: this message is only published on request by default (see device_get_info_cb)
    *
    * Message specification: https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_INFORMATION
@@ -326,9 +308,9 @@ private:
   {
     mavros_msgs::msg::GimbalDeviceInformation gimbal_device_information_msg;
     gimbal_device_information_msg.header = uas->synchronized_header(frame_id, di.time_boot_ms);
-    gimbal_device_information_msg.vendor_name = convertToString(di.vendor_name, sizeof(di.vendor_name));
-    gimbal_device_information_msg.model_name = convertToString(di.model_name, sizeof(di.model_name));
-    gimbal_device_information_msg.custom_name = convertToString(di.custom_name, sizeof(di.custom_name));
+    gimbal_device_information_msg.vendor_name = mavlink::to_string(di.vendor_name);
+    gimbal_device_information_msg.model_name = mavlink::to_string(di.model_name);
+    gimbal_device_information_msg.custom_name = mavlink::to_string(di.custom_name);
     gimbal_device_information_msg.firmware_version = di.firmware_version;
     gimbal_device_information_msg.hardware_version = di.hardware_version;
     gimbal_device_information_msg.uid = di.uid;
