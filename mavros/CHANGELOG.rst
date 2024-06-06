@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.19.0 (2024-06-06)
+-------------------
 * gps_global_origin: remove LLA to ECEF conversion
   gps_global_origin is being published as
   geographic_msgs::GeoPointStamped

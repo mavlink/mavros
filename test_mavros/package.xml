@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>test_mavros</name>
-  <version>1.18.0</version>
+  <version>1.19.0</version>
   <description>Tests for MAVROS package</description>
 
   <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
