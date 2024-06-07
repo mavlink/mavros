@@ -86,7 +86,7 @@ public:
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-#ifndef USE_OLD_RMW_QOS
+#ifdef USE_OLD_RMW_QOS
     auto services_qos = rmw_qos_profile_services_default;
 #else
     auto services_qos = rclcpp::ServicesQoS();
