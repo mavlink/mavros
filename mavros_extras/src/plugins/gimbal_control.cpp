@@ -180,13 +180,6 @@ public:
         &GimbalControlPlugin::manager_camera_track,
         this, _1, _2));
 
-    // Client used by all services for sending mavros/cmd/command service calls, on a separate callback group to support nested service calls
-    cmdClient = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command",
-          rmw_qos_profile_services_default, cb_group);
-    while (!cmdClient->wait_for_service(std::chrono::seconds(5))) {
-      RCLCPP_ERROR(node->get_logger(),
-            "GimbalControl: mavros/cmd/command service not available after waiting");
-    }
   }
 
   Subscriptions get_subscriptions() override
@@ -227,11 +220,40 @@ private:
   rclcpp::Service<mavros_msgs::srv::GimbalManagerCameraTrack>::SharedPtr gimbal_manager_camera_track;
 
   // Clients
-  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmdClient;
+  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmd_cli;
+  std::shared_timed_mutex mu;
 
   std::string frame_id;       // origin frame for topic headers
   std::string tf_frame_id;    // origin frame for TF
   std::atomic<bool> tf_send;  // parameter for enabling TF publishing
+
+  // Client used by all services for sending mavros/cmd/command service calls, on a separate callback group to support nested service calls
+  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr get_cmd_cli()
+  {
+    s_shared_lock lock(mu);
+
+    if (cmd_cli) {
+      return cmd_cli;
+    }
+
+#ifdef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
+    cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command", services_qos,
+          cb_group);
+    while (!cmd_cli->wait_for_service(std::chrono::seconds(5))) {
+      RCLCPP_ERROR(node->get_logger(),
+            "GimbalControl: mavros/cmd/command service not available after waiting");
+      cmd_cli.reset();
+      throw std::logic_error("client not connected")
+    }
+
+
+    return cmd_cli;
+  }
 
   // Transform Publisher
   void publish_tf(mavros_msgs::msg::GimbalDeviceAttitudeStatus & gimbal_attitude_msg)
@@ -476,7 +498,7 @@ private:
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
       cmdrq->command = enum_value(MAV_CMD::REQUEST_MESSAGE);
       cmdrq->param1 = mavlink::common::msg::GIMBAL_DEVICE_INFORMATION::MSG_ID;
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
@@ -509,7 +531,7 @@ private:
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
       cmdrq->command = enum_value(MAV_CMD::REQUEST_MESSAGE);
       cmdrq->param1 = mavlink::common::msg::GIMBAL_MANAGER_INFORMATION::MSG_ID;
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
@@ -540,7 +562,7 @@ private:
       cmdrq->param3 = req->sysid_secondary;
       cmdrq->param4 = req->compid_secondary;
       cmdrq->param7 = req->gimbal_device_id;
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
@@ -572,7 +594,7 @@ private:
       cmdrq->param4 = req->yaw_rate;
       cmdrq->param5 = req->flags;
       cmdrq->param7 = req->gimbal_device_id;
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
@@ -627,7 +649,7 @@ private:
       }
 
       // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
@@ -675,7 +697,7 @@ private:
         return;
       }
 
-      auto future = cmdClient->async_send_request(cmdrq);
+      auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
       res->result = response->result;
