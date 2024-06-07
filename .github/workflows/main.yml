@@ -16,6 +16,7 @@ jobs:
           # - {ROS_DISTRO: galactic, ROS_REPO: main}
           - {ROS_DISTRO: humble, ROS_REPO: main}
           - {ROS_DISTRO: iron, ROS_REPO: main}
+          - {ROS_DISTRO: jazzy, ROS_REPO: main}
           - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
