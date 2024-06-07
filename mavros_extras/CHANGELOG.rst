@@ -2,6 +2,32 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* gimbal_control: fix build
+* gimbal_control: fix using
+* gimbal_control: connect service on use
+* regenerate all using cogall.sh
+* reformat with jazzy's ament_uncrustify
+* Merge branch 'master' into ros2
+  * master:
+  1.19.0
+  update changelog
+  gps_global_origin: remove LLA to ECEF conversion
+* 1.19.0
+* update changelog
+* removed prefix in enums in messages and changed to use existing functions for string and quaternion convert
+* Adding example service calls
+* Code cleanup
+* Removed exception after testing behavior
+  Replaced with service call failure with MAV_RESULT_DENIED result value (2)
+* Corrected build errors and warnings
+* Final touches
+  Added functionality that was overlooked for camera tracking if supported, added copyright info, added custom exception thrown when mode enumerator is not understood
+* Added gimbal_control plugin
+  Added all functionality to support a plugin to enable compatibility with MAVLink Gimbal Protocol v2
+* Contributors: Frederik Mazur Andersen, Mark-Beaty, Vladimir Ermakov
+
 1.19.0 (2024-06-06)
 -------------------
 
