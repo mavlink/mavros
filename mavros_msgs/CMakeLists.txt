@@ -50,6 +50,9 @@ set(msg_files
   msg/EstimatorStatus.msg
   msg/ExtendedState.msg
   msg/FileEntry.msg
+  msg/GPSINPUT.msg
+  msg/GPSRAW.msg
+  msg/GPSRTK.msg
   msg/GimbalDeviceAttitudeStatus.msg
   msg/GimbalDeviceInformation.msg
   msg/GimbalDeviceSetAttitude.msg
@@ -57,9 +60,6 @@ set(msg_files
   msg/GimbalManagerSetAttitude.msg
   msg/GimbalManagerSetPitchyaw.msg
   msg/GimbalManagerStatus.msg
-  msg/GPSINPUT.msg
-  msg/GPSRAW.msg
-  msg/GPSRTK.msg
   msg/GlobalPositionTarget.msg
   msg/HilActuatorControls.msg
   msg/HilControls.msg
@@ -105,7 +105,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 8a6c06289f2a7d9149b7309c1fe63463)
+  # [[[end]]] (checksum: a8e24eb0a6da5cea6cc049fdc6b2612e)
 )
 
 set(srv_files
@@ -158,7 +158,7 @@ set(srv_files
   srv/WaypointPull.srv
   srv/WaypointPush.srv
   srv/WaypointSetCurrent.srv
-  # [[[end]]] (checksum: def9cd208ca118971750a304b784d92a)
+  # [[[end]]] (checksum: cd7701b28a3176d96ef65cb1f2157917)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

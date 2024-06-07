@@ -74,7 +74,8 @@ without a flag set.</description>
     <description>@brief Gimbal Control Plugin
 @plugin gimbal_control
 
-Adds support for Mavlink Gimbal Protocol v2.</description>
+Adds support for Mavlink Gimbal Protocol v2.
+Also publishes gimbal pose to TF when parameter tf_send==true</description>
   </class>
   <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS_INPUT GPS plugin.
@@ -239,4 +240,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: b03a63f9e6aa3dc5c0edc9f744c9d8ef) -->
+<!-- [[[end]]] (checksum: b45714611896c0f7cf634dc7aaf2cbd6) -->

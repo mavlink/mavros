@@ -99,9 +99,8 @@ private:
     std::copy(req->cpu_combined.cbegin(), req->cpu_combined.cend(), status.cpu_combined.begin());
     std::copy(req->gpu_cores.cbegin(), req->gpu_cores.cend(), status.gpu_cores.begin());
     std::copy(req->gpu_combined.cbegin(), req->gpu_combined.cend(), status.gpu_combined.begin());
-    std::copy(
-      req->temperature_core.cbegin(),
-      req->temperature_core.cend(), status.temperature_core.begin());
+    std::copy(req->temperature_core.cbegin(), req->temperature_core.cend(),
+          status.temperature_core.begin());
     std::copy(req->fan_speed.cbegin(), req->fan_speed.cend(), status.fan_speed.begin());
     std::copy(req->storage_type.cbegin(), req->storage_type.cend(), status.storage_type.begin());
     std::copy(req->storage_usage.cbegin(), req->storage_usage.cend(), status.storage_usage.begin());
