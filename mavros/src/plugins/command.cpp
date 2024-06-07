@@ -91,7 +91,7 @@ public:
       "~/command",
       std::bind(
         &CommandPlugin::command_long_cb, this, _1, _2,
-        _3), rclcpp::ServicessQoS(), srv_cg);
+        _3), rclcpp::ServicesQoS(), srv_cg);
     command_int_srv =
       node->create_service<mavros_msgs::srv::CommandInt>(
       "~/command_int",
