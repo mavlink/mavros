@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.8.0 (2024-06-07)
+------------------
 * gimbal_control: fix build
 * gimbal_control: fix using
 * gimbal_control: connect service on use

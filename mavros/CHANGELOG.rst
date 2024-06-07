@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.8.0 (2024-06-07)
+------------------
 * param: replace old rmw_qos usage
 * sys_status: replace rmw_qos too
 * command: fix humble condition
