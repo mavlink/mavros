@@ -2,6 +2,16 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.19.0 (2024-06-06)
+-------------------
+* gps_global_origin: remove LLA to ECEF conversion
+  gps_global_origin is being published as
+  geographic_msgs::GeoPointStamped
+  message, which wants LLA format
+  https://docs.ros.org/en/api/geographic_msgs/html/msg/GeoPointStamped.html
+  FIX https://github.com/mavlink/mavros/issues/1381
+* Contributors: Beniamino Pozzan
+
 2.7.0 (2024-03-03)
 ------------------
 * Merge branch 'master' into ros2

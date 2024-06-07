@@ -289,22 +289,7 @@ private:
     g_origin.position.altitude = glob_orig.altitude / 1E3 + uas->data.geoid_to_ellipsoid_height(
       g_origin.position);  // convert height amsl to height above the ellipsoid
 
-    try {
-      /**
-       * @brief Conversion from geodetic coordinates (LLA) to ECEF (Earth-Centered, Earth-Fixed)
-       * Note: "earth" frame, in ECEF, of the global origin
-       */
-      GeographicLib::Geocentric earth(GeographicLib::Constants::WGS84_a(),
-        GeographicLib::Constants::WGS84_f());
-
-      earth.Forward(
-        g_origin.position.latitude, g_origin.position.longitude, g_origin.position.altitude,
-        g_origin.position.latitude, g_origin.position.longitude, g_origin.position.altitude);
-
-      gp_global_origin_pub->publish(g_origin);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what());
-    }
+    gp_global_origin_pub->publish(g_origin);
   }
 
   /** @todo Handler for GLOBAL_POSITION_INT_COV */
