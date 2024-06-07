@@ -249,9 +249,8 @@ private:
       RCLCPP_ERROR(node->get_logger(),
             "GimbalControl: mavros/cmd/command service not available after waiting");
       cmd_cli.reset();
-      throw std::logic_error("client not connected")
+      throw std::logic_error("client not connected");
     }
-
 
     return cmd_cli;
   }
