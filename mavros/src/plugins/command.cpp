@@ -86,64 +86,70 @@ public:
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+#ifndef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
     command_long_srv =
       node->create_service<mavros_msgs::srv::CommandLong>(
       "~/command",
       std::bind(
         &CommandPlugin::command_long_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     command_int_srv =
       node->create_service<mavros_msgs::srv::CommandInt>(
       "~/command_int",
       std::bind(
         &CommandPlugin::command_int_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     arming_srv =
       node->create_service<mavros_msgs::srv::CommandBool>(
       "~/arming",
       std::bind(
         &CommandPlugin::arming_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     set_home_srv =
       node->create_service<mavros_msgs::srv::CommandHome>(
       "~/set_home",
       std::bind(
         &CommandPlugin::set_home_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     takeoff_srv =
       node->create_service<mavros_msgs::srv::CommandTOL>(
       "~/takeoff",
       std::bind(
         &CommandPlugin::takeoff_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     takeoff_local_srv =
       node->create_service<mavros_msgs::srv::CommandTOLLocal>(
       "~/takeoff_local",
       std::bind(
         &CommandPlugin::takeoff_local_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     land_srv =
       node->create_service<mavros_msgs::srv::CommandTOL>(
       "~/land",
-      std::bind(&CommandPlugin::land_cb, this, _1, _2, _3), rclcpp::ServicesQoS(),
+      std::bind(&CommandPlugin::land_cb, this, _1, _2, _3), services_qos,
       srv_cg);
     land_local_srv =
       node->create_service<mavros_msgs::srv::CommandTOLLocal>(
       "~/land_local",
-      std::bind(&CommandPlugin::land_local_cb, this, _1, _2, _3), rclcpp::ServicesQoS(),
+      std::bind(&CommandPlugin::land_local_cb, this, _1, _2, _3), services_qos,
       srv_cg);
     trigger_control_srv = node->create_service<mavros_msgs::srv::CommandTriggerControl>(
       "~/trigger_control", std::bind(
         &CommandPlugin::trigger_control_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     trigger_interval_srv = node->create_service<mavros_msgs::srv::CommandTriggerInterval>(
       "~/trigger_interval", std::bind(
         &CommandPlugin::trigger_interval_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
     vtol_transition_srv = node->create_service<mavros_msgs::srv::CommandVtolTransition>(
       "~/vtol_transition", std::bind(
         &CommandPlugin::vtol_transition_cb, this, _1, _2,
-        _3), rclcpp::ServicesQoS(), srv_cg);
+        _3), services_qos, srv_cg);
   }
 
   Subscriptions get_subscriptions() override

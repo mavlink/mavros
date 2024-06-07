@@ -78,6 +78,13 @@ if(rclcpp_VERSION VERSION_LESS 9.0.0)
   )
 endif()
 
+if(rclcpp_VERSION VERSION_LESS 17.0.0)
+  # Humble and older
+  add_definitions(
+    -DUSE_OLD_RMW_QOS
+  )
+endif()
+
 # [[[cog:
 # import mavros_cog
 # ]]]
