@@ -93,7 +93,7 @@ public:
 
     auto make_and_add_mock_endpoint =
       [router](id_t id, const std::string & url, LT type,
-        std::set<addr_t> remotes) {
+      std::set<addr_t> remotes) {
         auto ep = std::make_shared<MockEndpoint>();
 
         ep->parent = router;

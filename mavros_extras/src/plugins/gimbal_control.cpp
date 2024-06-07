@@ -108,13 +108,15 @@ public:
         _1));
 
     // --Not successfully validated--
-    set_manager_attitude_sub = node->create_subscription<mavros_msgs::msg::GimbalManagerSetAttitude>(
+    set_manager_attitude_sub =
+      node->create_subscription<mavros_msgs::msg::GimbalManagerSetAttitude>(
       "~/manager/set_attitude", 10, std::bind(
         &GimbalControlPlugin::manager_set_attitude_cb, this,
         _1));
 
     // --Not successfully validated--
-    set_manager_pitchyaw_sub = node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
+    set_manager_pitchyaw_sub =
+      node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
       "~/manager/set_pitchyaw", 10, std::bind(
         &GimbalControlPlugin::manager_set_pitchyaw_cb, this,
         _1));
@@ -132,16 +134,16 @@ public:
       10);
 
     gimbal_manager_status_pub = node->create_publisher<mavros_msgs::msg::GimbalManagerStatus>(
-      "~/manager/status", 
+      "~/manager/status",
       10);
 
     gimbal_manager_info_pub = node->create_publisher<mavros_msgs::msg::GimbalManagerInformation>(
-      "~/manager/info", 
+      "~/manager/info",
       10);
 
     // --Not successfully validated--
     gimbal_device_info_pub = node->create_publisher<mavros_msgs::msg::GimbalDeviceInformation>(
-      "~/device/info", 
+      "~/device/info",
       10);
 
 
@@ -151,7 +153,7 @@ public:
       "~/device/get_info", std::bind(
         &GimbalControlPlugin::device_get_info_cb,
         this, _1, _2));
-    
+
     gimbal_manager_info_srv = node->create_service<mavros_msgs::srv::GimbalGetInformation>(
       "~/manager/get_info", std::bind(
         &GimbalControlPlugin::manager_get_info_cb,
@@ -177,11 +179,13 @@ public:
       "~/manager/camera_track", std::bind(
         &GimbalControlPlugin::manager_camera_track,
         this, _1, _2));
-    
+
     // Client used by all services for sending mavros/cmd/command service calls, on a separate callback group to support nested service calls
-    cmdClient = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command", rmw_qos_profile_services_default, cb_group);
+    cmdClient = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command",
+          rmw_qos_profile_services_default, cb_group);
     while (!cmdClient->wait_for_service(std::chrono::seconds(5))) {
-        RCLCPP_ERROR(node->get_logger(), "GimbalControl: mavros/cmd/command service not available after waiting");
+      RCLCPP_ERROR(node->get_logger(),
+            "GimbalControl: mavros/cmd/command service not available after waiting");
     }
   }
 
@@ -200,12 +204,16 @@ private:
   rclcpp::CallbackGroup::SharedPtr cb_group;
   // Subscribers
   rclcpp::Subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>::SharedPtr set_device_attitude_sub;
-  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetAttitude>::SharedPtr set_manager_attitude_sub;
-  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>::SharedPtr set_manager_pitchyaw_sub;
-  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>::SharedPtr set_manager_manual_control_sub;
+  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetAttitude>::SharedPtr
+    set_manager_attitude_sub;
+  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>::SharedPtr
+    set_manager_pitchyaw_sub;
+  rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>::SharedPtr
+    set_manager_manual_control_sub;
 
   // Publishers
-  rclcpp::Publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>::SharedPtr gimbal_attitude_status_pub;
+  rclcpp::Publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>::SharedPtr
+    gimbal_attitude_status_pub;
   rclcpp::Publisher<mavros_msgs::msg::GimbalManagerStatus>::SharedPtr gimbal_manager_status_pub;
   rclcpp::Publisher<mavros_msgs::msg::GimbalManagerInformation>::SharedPtr gimbal_manager_info_pub;
   rclcpp::Publisher<mavros_msgs::msg::GimbalDeviceInformation>::SharedPtr gimbal_device_info_pub;
@@ -435,7 +443,8 @@ private:
    * Note that message contents is identical to that of pitchyaw, so the message type is re-used here
    * @param req	- received GimbalControl msg
    */
-  void manager_set_manual_control_cb(const mavros_msgs::msg::GimbalManagerSetPitchyaw::SharedPtr req)
+  void manager_set_manual_control_cb(
+    const mavros_msgs::msg::GimbalManagerSetPitchyaw::SharedPtr req)
   {
     mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW msg {};
     uas->msg_set_target(msg);
@@ -478,7 +487,9 @@ private:
       get_logger(), !res->success, "GimbalControl: plugin service call failed!");
   }
 
-  void device_get_info_response(rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedFuture response) {
+  void device_get_info_response(
+    rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedFuture response)
+  {
     auto result = response.get();
 
   }
@@ -575,7 +586,7 @@ private:
   /**
    * @brief Set Gimbal ROI mode and parameters
    *
-   * Message specifications: 
+   * Message specifications:
    * https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_LOCATION
    * https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET
    * https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_SYSID
@@ -596,29 +607,25 @@ private:
         cmdrq->param5 = req->latitude;
         cmdrq->param6 = req->longitude;
         cmdrq->param7 = req->altitude;
-      }
-      else if (req->mode == req->ROI_MODE_WP_NEXT_OFFSET) {
+      } else if (req->mode == req->ROI_MODE_WP_NEXT_OFFSET) {
         cmdrq->command = enum_value(MAV_CMD::DO_SET_ROI_WPNEXT_OFFSET);
         cmdrq->param1 = req->gimbal_device_id;
         cmdrq->param5 = req->pitch_offset;
         cmdrq->param6 = req->roll_offset;
         cmdrq->param7 = req->yaw_offset;
-      }
-      else if (req->mode == req->ROI_MODE_SYSID) {
+      } else if (req->mode == req->ROI_MODE_SYSID) {
         cmdrq->command = enum_value(MAV_CMD::DO_SET_ROI_SYSID);
         cmdrq->param1 = req->sysid;
         cmdrq->param2 = req->gimbal_device_id;
-      }
-      else if (req->mode == req->ROI_MODE_NONE) {
+      } else if (req->mode == req->ROI_MODE_NONE) {
         cmdrq->command = enum_value(MAV_CMD::DO_SET_ROI_NONE);
         cmdrq->param1 = req->gimbal_device_id;
-      }
-      else {
+      } else {
         res->success = false;
         res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
         return;
       }
-      
+
       // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
       auto future = cmdClient->async_send_request(cmdrq);
       auto response = future.get();
@@ -635,7 +642,7 @@ private:
   /**
    * @brief Set camera tracking mode and parameters
    *
-   * Message specifications: 
+   * Message specifications:
    * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_POINT
    * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_TRACK_RECTANGLE
    * https://mavlink.io/en/messages/common.html#MAV_CMD_CAMERA_STOP_TRACKING
@@ -654,23 +661,20 @@ private:
         cmdrq->param1 = req->x;
         cmdrq->param2 = req->y;
         cmdrq->param3 = req->radius;
-      }
-      else if (req->mode == req->CAMERA_TRACK_MODE_RECTANGLE) {
+      } else if (req->mode == req->CAMERA_TRACK_MODE_RECTANGLE) {
         cmdrq->command = enum_value(MAV_CMD::CAMERA_TRACK_RECTANGLE);
         cmdrq->param1 = req->top_left_x;
         cmdrq->param2 = req->top_left_y;
         cmdrq->param3 = req->bottom_right_x;
         cmdrq->param4 = req->bottom_right_y;
-      }
-      else if (req->mode == req->CAMERA_TRACK_MODE_STOP_TRACKING) {
+      } else if (req->mode == req->CAMERA_TRACK_MODE_STOP_TRACKING) {
         cmdrq->command = enum_value(MAV_CMD::CAMERA_STOP_TRACKING);
-      }
-      else {
+      } else {
         res->success = false;
         res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
         return;
       }
-      
+
       auto future = cmdClient->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;

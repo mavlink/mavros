@@ -262,7 +262,7 @@ private:
 
       auto fill_point_rep_waypoints =
         [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t, const RosPoints & rp,
-          const size_t i) {
+        const size_t i) {
           const auto valid = req->point_valid[i];
 
           auto valid_so_far = trajectory.valid_points;
@@ -299,7 +299,7 @@ private:
       mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER trajectory {};
       auto fill_point_rep_bezier =
         [&](mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER & t, const RosPoints & rp,
-          const size_t i) {
+        const size_t i) {
           const auto valid = req->point_valid[i];
 
           auto valid_so_far = trajectory.valid_points;
@@ -382,7 +382,7 @@ private:
 
     auto fill_msg_point =
       [&](RosPoints & p, const mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS & t,
-        const size_t i) {
+      const size_t i) {
         fill_msg_position(p.position, t, i);
         fill_msg_velocity(p.velocity, t, i);
         fill_msg_acceleration(p.acceleration_or_force, t, i);
