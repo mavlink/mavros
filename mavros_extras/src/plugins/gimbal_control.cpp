@@ -55,6 +55,7 @@ using mavlink::common::GIMBAL_DEVICE_FLAGS;
 using mavlink::common::GIMBAL_DEVICE_ERROR_FLAGS;
 using mavlink::common::MAV_CMD;
 using utils::enum_value;
+using uas::s_shared_lock;
 
 /**
  * @brief Gimbal Control Plugin
@@ -709,6 +710,7 @@ private:
       get_logger(), !res->success, "GimbalManager - camera track: plugin service call failed!");
   }
 };
+
 }       // namespace extra_plugins
 }       // namespace mavros
 
