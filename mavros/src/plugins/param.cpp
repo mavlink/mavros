@@ -430,7 +430,12 @@ public:
     is_timedout(false)
   {
     auto event_qos = rclcpp::ParameterEventsQoS();
+
+#ifdef USE_OLD_RMW_QOS
     auto qos = rclcpp::ParametersQoS().get_rmw_qos_profile();
+#else
+    auto qos = rclcpp::ParametersQoS();
+#endif
 
     param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", event_qos);
     std_event_pub = node->create_publisher<rcl_interfaces::msg::ParameterEvent>(
