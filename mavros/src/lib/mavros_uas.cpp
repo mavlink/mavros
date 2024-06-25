@@ -85,119 +85,114 @@ UAS::UAS(
   this->declare_parameter("map_frame_id", map_frame_id);
 
   // NOTE: we can add_plugin() in constructor because it does not need shared_from_this()
-  startup_delay_timer = this->create_wall_timer(
-    10ms, [this]() {
-      startup_delay_timer->cancel();
+  std::string fcu_protocol;
+  int tgt_system, tgt_component;
+  this->get_parameter("uas_url", uas_url);
+  this->get_parameter("fcu_protocol", fcu_protocol);
+  this->get_parameter("system_id", source_system);
+  this->get_parameter("component_id", source_component);
+  this->get_parameter("target_system_id", tgt_system);
+  this->get_parameter("target_component_id", tgt_component);
+  this->get_parameter("plugin_allowlist", plugin_allowlist);
+  this->get_parameter("plugin_denylist", plugin_denylist);
+  this->get_parameter("base_link_frame_id", base_link_frame_id);
+  this->get_parameter("odom_frame_id", odom_frame_id);
+  this->get_parameter("map_frame_id", map_frame_id);
 
-      std::string fcu_protocol;
-      int tgt_system, tgt_component;
-      this->get_parameter("uas_url", uas_url);
-      this->get_parameter("fcu_protocol", fcu_protocol);
-      this->get_parameter("system_id", source_system);
-      this->get_parameter("component_id", source_component);
-      this->get_parameter("target_system_id", tgt_system);
-      this->get_parameter("target_component_id", tgt_component);
-      this->get_parameter("plugin_allowlist", plugin_allowlist);
-      this->get_parameter("plugin_denylist", plugin_denylist);
-      this->get_parameter("base_link_frame_id", base_link_frame_id);
-      this->get_parameter("odom_frame_id", odom_frame_id);
-      this->get_parameter("map_frame_id", map_frame_id);
+  // setup diag
+  diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
+  diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
 
-      exec_spin_thd = thread_ptr(
-        new std::thread(
-          [this]() {
-            utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
-            auto lg = this->get_logger();
+  // setup uas link
+  if (fcu_protocol == "v1.0") {
+    set_protocol_version(mavconn::Protocol::V10);
+  } else if (fcu_protocol == "v2.0") {
+    set_protocol_version(mavconn::Protocol::V20);
+  } else {
+    RCLCPP_WARN(
+      get_logger(),
+      "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
+      fcu_protocol.c_str());
+    set_protocol_version(mavconn::Protocol::V20);
+  }
 
-            RCLCPP_INFO(
-              lg, "UAS Executor started, threads: %zu",
-              this->exec.get_number_of_threads());
-            this->exec.spin();
-            RCLCPP_WARN(lg, "UAS Executor terminated");
-          }),
-        [this](std::thread * t) {
-          this->exec.cancel();
-          t->join();
-          delete t;
-        });
+  // setup source and target
+  set_tgt(tgt_system, tgt_component);
 
-      // setup diag
-      diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
-      diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
+  add_connection_change_handler(
+    std::bind(
+      &UAS::log_connect_change, this,
+      std::placeholders::_1));
 
-      // setup uas link
-      if (fcu_protocol == "v1.0") {
-        set_protocol_version(mavconn::Protocol::V10);
-      } else if (fcu_protocol == "v2.0") {
-        set_protocol_version(mavconn::Protocol::V20);
-      } else {
-        RCLCPP_WARN(
-          get_logger(),
-          "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
-          fcu_protocol.c_str());
-        set_protocol_version(mavconn::Protocol::V20);
-      }
+  // prepare plugin lists
+  // issue #257 2: assume that all plugins blacklisted
+  if (plugin_denylist.empty() && !plugin_allowlist.empty()) {
+    plugin_denylist.emplace_back("*");
+  }
 
-      // setup source and target
-      set_tgt(tgt_system, tgt_component);
+  for (auto & name : plugin_factory_loader.getDeclaredClasses()) {
+    add_plugin(name);
+  }
 
-      add_connection_change_handler(
-        std::bind(
-          &UAS::log_connect_change, this,
-          std::placeholders::_1));
+  connect_to_router();
 
-      // prepare plugin lists
-      // issue #257 2: assume that all plugins blacklisted
-      if (plugin_denylist.empty() && !plugin_allowlist.empty()) {
-        plugin_denylist.emplace_back("*");
-      }
+  // Publish helper TFs used for frame transformation in the odometry plugin
+  {
+    std::string base_link_frd = base_link_frame_id + "_frd";
+    std::string odom_ned = odom_frame_id + "_ned";
+    std::string map_ned = map_frame_id + "_ned";
+    std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
+    add_static_transform(
+      map_frame_id, map_ned, Eigen::Affine3d(
+        ftf::quaternion_from_rpy(
+          M_PI, 0,
+          M_PI_2)),
+      transform_vector);
+    add_static_transform(
+      odom_frame_id, odom_ned, Eigen::Affine3d(
+        ftf::quaternion_from_rpy(
+          M_PI, 0,
+          M_PI_2)),
+      transform_vector);
+    add_static_transform(
+      base_link_frame_id, base_link_frd,
+      Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
 
-      for (auto & name : plugin_factory_loader.getDeclaredClasses()) {
-        add_plugin(name);
-      }
+    tf2_static_broadcaster.sendTransform(transform_vector);
+  }
 
-      connect_to_router();
+  std::stringstream ss;
+  for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
+    ss << " " << s;
+  }
 
-      // Publish helper TFs used for frame transformation in the odometry plugin
-      {
-        std::string base_link_frd = base_link_frame_id + "_frd";
-        std::string odom_ned = odom_frame_id + "_ned";
-        std::string map_ned = map_frame_id + "_ned";
-        std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
-        add_static_transform(
-          map_frame_id, map_ned, Eigen::Affine3d(
-            ftf::quaternion_from_rpy(
-              M_PI, 0,
-              M_PI_2)),
-          transform_vector);
-        add_static_transform(
-          odom_frame_id, odom_ned, Eigen::Affine3d(
-            ftf::quaternion_from_rpy(
-              M_PI, 0,
-              M_PI_2)),
-          transform_vector);
-        add_static_transform(
-          base_link_frame_id, base_link_frd,
-          Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
+  RCLCPP_INFO(
+    get_logger(), "Built-in SIMD instructions: %s",
+    Eigen::SimdInstructionSetsInUse());
+  RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
+  RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
+  RCLCPP_INFO(
+    get_logger(), "MAVROS UAS via %s started. MY ID %u.%u, TARGET ID %u.%u",
+    uas_url.c_str(),
+    source_system, source_component,
+    target_system, target_component);
 
-        tf2_static_broadcaster.sendTransform(transform_vector);
-      }
+  exec_spin_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
+        auto lg = this->get_logger();
 
-      std::stringstream ss;
-      for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
-        ss << " " << s;
-      }
-
-      RCLCPP_INFO(
-        get_logger(), "Built-in SIMD instructions: %s",
-        Eigen::SimdInstructionSetsInUse());
-      RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
-      RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
-      RCLCPP_INFO(
-        get_logger(), "MAVROS UAS via %s started. MY ID %u.%u, TARGET ID %u.%u",
-        uas_url.c_str(),
-        source_system, source_component,
-        target_system, target_component);
+        RCLCPP_INFO(
+          lg, "UAS Executor started, threads: %zu",
+          this->exec.get_number_of_threads());
+        this->exec.spin();
+        RCLCPP_WARN(lg, "UAS Executor terminated");
+      }),
+    [this](std::thread * t) {
+      this->exec.cancel();
+      t->join();
+      delete t;
     });
 }
 

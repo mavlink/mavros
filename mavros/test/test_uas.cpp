@@ -127,7 +127,6 @@ public:
   MockUAS::SharedPtr create_node()
   {
     auto uas = std::make_shared<MockUAS>("test_mavros_uas");
-    uas->startup_delay_timer->cancel();
     return uas;
   }
 
