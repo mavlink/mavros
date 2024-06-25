@@ -62,7 +62,7 @@ public:
   using SharedPtr = std::shared_ptr<MockPlugin>;
 
   explicit MockPlugin(UAS::SharedPtr uas_)
-  : Plugin(uas_) {}
+  : Plugin(uas_, "mock_plugin") {}
 
   MOCK_METHOD0(get_subscriptions, plugin::Plugin::Subscriptions(void));
 
