@@ -75,8 +75,7 @@ private:
   {
     using mavlink::common::MAV_FRAME;
 
-    bool send_force;
-    node->get_parameter("send_force", send_force);
+    bool const send_force = node->get_parameter("send_force").as_bool();
 
     /* Documentation start from bit 1 instead 0.
      * Ignore position and velocity vectors, yaw and yaw rate

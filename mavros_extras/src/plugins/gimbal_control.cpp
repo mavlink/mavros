@@ -123,14 +123,16 @@ public:
         _1));
 
     // --Not successfully validated-- also note that the message is the same as pitchyaw and will likely change
-    set_manager_manual_control_sub = node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
+    set_manager_manual_control_sub =
+      node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
       "~/manager/set_manual_control", 10, std::bind(
         &GimbalControlPlugin::manager_set_manual_control_cb, this,
         _1));
 
 
     // Publishers
-    gimbal_attitude_status_pub = node->create_publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>(
+    gimbal_attitude_status_pub =
+      node->create_publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>(
       "~/device/attitude_status",
       10);
 
@@ -243,11 +245,13 @@ private:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
-    cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command", services_qos,
-          cb_group);
+    cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>(
+      "cmd/command", services_qos,
+      cb_group);
     while (!cmd_cli->wait_for_service(std::chrono::seconds(5))) {
-      RCLCPP_ERROR(node->get_logger(),
-            "GimbalControl: mavros/cmd/command service not available after waiting");
+      RCLCPP_ERROR(
+        node->get_logger(),
+        "GimbalControl: mavros/cmd/command service not available after waiting");
       cmd_cli.reset();
       throw std::logic_error("client not connected");
     }

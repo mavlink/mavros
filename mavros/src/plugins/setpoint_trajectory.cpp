@@ -183,7 +183,8 @@ private:
       return;
     }
 
-    Eigen::Vector3d position, velocity, af;
+    Eigen::Vector3d position = Eigen::Vector3d::Zero(), velocity = Eigen::Vector3d::Zero(),
+      af = Eigen::Vector3d::Zero();
     Eigen::Quaterniond attitude = Eigen::Quaterniond::Identity();
     float yaw_rate = 0;
     uint16_t type_mask = 0;
