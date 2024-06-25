@@ -49,7 +49,6 @@
   <depend>rcpputils</depend>
   <depend>urdf</depend>
   <depend>yaml-cpp</depend>
-  <depend>yaml_cpp_vendor</depend>
 
   <!-- message packages -->
   <depend>diagnostic_msgs</depend>
