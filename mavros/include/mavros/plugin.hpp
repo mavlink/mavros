@@ -44,7 +44,7 @@ namespace plugin
 {
 
 using mavros::uas::UAS;
-using UASPtr = std::shared_ptr<UAS>;
+using UASPtr = UAS *;
 using r_unique_lock = std::unique_lock<std::recursive_mutex>;
 using s_unique_lock = std::unique_lock<std::shared_timed_mutex>;
 using s_shared_lock = std::shared_lock<std::shared_timed_mutex>;
@@ -74,18 +74,9 @@ public:
   //! Subscriptions vector
   using Subscriptions = std::vector<HandlerInfo>;
 
-  explicit Plugin(UASPtr uas_)
-  : uas(uas_), node(std::dynamic_pointer_cast<rclcpp::Node>(uas_))
-  {}
-
   explicit Plugin(
-    UASPtr uas_, const std::string & subnode,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : uas(uas_),
-    // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode))  // https://github.com/ros2/rclcpp/issues/731
-    node(rclcpp::Node::make_shared(subnode,
-      std::dynamic_pointer_cast<rclcpp::Node>(uas_)->get_fully_qualified_name(), options))
-  {}
+    UASPtr uas, const std::string & subnode_name,
+    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   virtual ~Plugin() = default;
 

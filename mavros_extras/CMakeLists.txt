@@ -32,8 +32,7 @@ find_package(libmavconn REQUIRED)
 
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(yaml_cpp REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 ## Find GeographicLib
 # Append to CMAKE_MODULE_PATH since debian/ubuntu installs
@@ -153,7 +152,9 @@ ament_target_dependencies(mavros_extras_plugins
   tf2_eigen
   message_filters
   Eigen3
-  yaml_cpp_vendor
+)
+target_link_libraries(mavros_extras_plugins
+  yaml-cpp
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
@@ -171,8 +172,10 @@ ament_target_dependencies(mavros_extras
   sensor_msgs
   mavros_msgs
   #console_bridge
-  yaml_cpp_vendor
   urdf
+)
+target_link_libraries(mavros_extras
+  yaml-cpp
 )
 rclcpp_components_register_node(mavros_extras PLUGIN "mavros::extras::ServoStatePublisher" EXECUTABLE servo_state_publisher)
 
