@@ -84,7 +84,7 @@ UAS::UAS(
   this->declare_parameter("odom_frame_id", odom_frame_id);
   this->declare_parameter("map_frame_id", map_frame_id);
 
-  // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
+  // NOTE: we can add_plugin() in constructor because it does not need shared_from_this()
   startup_delay_timer = this->create_wall_timer(
     10ms, [this]() {
       startup_delay_timer->cancel();
@@ -264,7 +264,7 @@ plugin::Plugin::SharedPtr UAS::create_plugin_instance(const std::string & pl_nam
   auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
 
   return
-    plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
+    plugin_factory->create_plugin_instance(this);
 }
 
 void UAS::add_plugin(const std::string & pl_name)

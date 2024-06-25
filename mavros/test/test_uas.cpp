@@ -61,7 +61,7 @@ class MockPlugin : public plugin::Plugin
 public:
   using SharedPtr = std::shared_ptr<MockPlugin>;
 
-  explicit MockPlugin(UAS::SharedPtr uas_)
+  explicit MockPlugin(UASPtr uas_)
   : Plugin(uas_, "mock_plugin") {}
 
   MOCK_METHOD0(get_subscriptions, plugin::Plugin::Subscriptions(void));
@@ -208,9 +208,9 @@ TEST_F(TestUAS, is_plugin_allowed)
 TEST_F(TestUAS, add_plugin__route_message__filter)
 {
   auto uas = create_node();
-  auto plugin1 = std::make_shared<MockPlugin>(uas);
+  auto plugin1 = std::make_shared<MockPlugin>(uas.get());
   auto subs1 = plugin1->allsubs();
-  auto plugin2 = std::make_shared<MockPlugin>(uas);
+  auto plugin2 = std::make_shared<MockPlugin>(uas.get());
   auto subs2 = plugin2->rawsubs();
 
   // XXX(vooon): silence leak warnings: they work badly with shared_ptr

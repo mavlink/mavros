@@ -44,7 +44,7 @@ namespace plugin
 {
 
 using mavros::uas::UAS;
-using UASPtr = std::shared_ptr<UAS>;
+using UASPtr = UAS *;
 using r_unique_lock = std::unique_lock<std::recursive_mutex>;
 using s_unique_lock = std::unique_lock<std::shared_timed_mutex>;
 using s_shared_lock = std::shared_lock<std::shared_timed_mutex>;

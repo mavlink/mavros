@@ -130,7 +130,7 @@ private:
     hp.geo.latitude = home_position.latitude / 1E7;     // deg
     hp.geo.longitude = home_position.longitude / 1E7;   // deg
     hp.geo.altitude = home_position.altitude / 1E3 +
-      uas->data.geoid_to_ellipsoid_height(hp.geo);      // in meters
+      uas->data.geoid_to_ellipsoid_height(hp.geo);    // in meters
     hp.orientation = tf2::toMsg(q);
     hp.position = tf2::toMsg(pos);
     tf2::toMsg(hp_approach_enu, hp.approach);
