@@ -11,6 +11,8 @@
 #include <mavros/mavros_plugin.h>
 #include <std_msgs/UInt8.h>
 #include <mavros_msgs/MagnetometerReporter.h>
+#include <bitset>
+
 namespace mavros {
 namespace std_plugins {
 /**
