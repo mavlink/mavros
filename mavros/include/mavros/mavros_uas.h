@@ -444,6 +444,26 @@ public:
 	 */
 	bool cmode_from_str(std::string cmode_str, uint32_t &custom_mode);
 
+	inline void set_base_link_frame_id(const std::string frame_id) {
+		base_link_frame_id = frame_id;
+	}
+	inline void set_odom_frame_id(const std::string frame_id) {
+		odom_frame_id = frame_id;
+	}
+	inline void set_map_frame_id(const std::string frame_id) {
+		map_frame_id = frame_id;
+	}
+	inline std::string get_base_link_frame_id() {
+		return base_link_frame_id;
+	}
+	inline std::string get_odom_frame_id() {
+		return odom_frame_id;
+	}
+	inline std::string get_map_frame_id() {
+		return map_frame_id;
+	}
+	void setup_static_tf();
+
 private:
 	std::recursive_mutex mutex;
 
@@ -472,5 +492,7 @@ private:
 
 	std::atomic<bool> fcu_caps_known;
 	std::atomic<uint64_t> fcu_capabilities;
+
+	std::string base_link_frame_id, odom_frame_id, map_frame_id;
 };
 }	// namespace mavros

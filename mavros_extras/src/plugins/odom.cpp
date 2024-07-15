@@ -47,7 +47,8 @@ public:
 
 	OdometryPlugin() : PluginBase(),
 		odom_nh("~odometry"),
-		fcu_odom_parent_id_des("map"),
+		fcu_map_id_des("map"),
+		fcu_odom_parent_id_des("odom"),
 		fcu_odom_child_id_des("base_link")
 	{ }
 
@@ -56,8 +57,9 @@ public:
 		PluginBase::initialize(uas_);
 
 		// frame params:
-		odom_nh.param<std::string>("fcu/odom_parent_id_des", fcu_odom_parent_id_des, "map");
-		odom_nh.param<std::string>("fcu/odom_child_id_des", fcu_odom_child_id_des, "base_link");
+		odom_nh.param<std::string>("fcu/odom_parent_id_des", fcu_map_id_des, uas_.get_map_frame_id());
+		odom_nh.param<std::string>("fcu/odom_child_id_des", fcu_odom_child_id_des, uas_.get_base_link_frame_id());
+		fcu_odom_parent_id_des = uas_.get_odom_frame_id();
 
 		// publishers
 		odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
@@ -80,6 +82,7 @@ private:
 
 	std::string fcu_odom_parent_id_des;			//!< desired orientation of the fcu odometry message's parent frame
 	std::string fcu_odom_child_id_des;			//!< desired orientation of the fcu odometry message's child frame
+	std::string fcu_map_id_des;					//!< desired orientation of the fcu map frame
 
 	/**
 	 * @brief Lookup static transform with error handling
@@ -122,8 +125,8 @@ private:
 		Eigen::Affine3d tf_parent2parent_des;
 		Eigen::Affine3d tf_child2child_des;
 
-		lookup_static_transform(fcu_odom_parent_id_des, "map_ned", tf_parent2parent_des);
-		lookup_static_transform( fcu_odom_child_id_des, "base_link_frd", tf_child2child_des);
+		lookup_static_transform(fcu_map_id_des, fcu_map_id_des+"_ned", tf_parent2parent_des);
+		lookup_static_transform( fcu_odom_child_id_des, fcu_odom_child_id_des+"_frd", tf_child2child_des);
 
 		//! Build 6x6 pose covariance matrix to be transformed and sent
 		Matrix6d cov_pose = Matrix6d::Zero();
@@ -142,7 +145,7 @@ private:
 
 		auto odom = boost::make_shared<nav_msgs::Odometry>();
 
-		odom->header = m_uas->synchronized_header(fcu_odom_parent_id_des, odom_msg.time_usec);
+		odom->header = m_uas->synchronized_header(fcu_map_id_des, odom_msg.time_usec);
 		odom->child_frame_id = fcu_odom_child_id_des;
 
 		/**
@@ -203,8 +206,8 @@ private:
 		Eigen::Affine3d tf_parent2parent_des;
 		Eigen::Affine3d tf_child2child_des;
 
-		lookup_static_transform("odom_ned", odom->header.frame_id, tf_parent2parent_des);
-		lookup_static_transform("base_link_frd", odom->child_frame_id, tf_child2child_des);
+		lookup_static_transform(fcu_odom_parent_id_des+"_ned", odom->header.frame_id, tf_parent2parent_des);
+		lookup_static_transform(fcu_odom_child_id_des+"_frd", odom->child_frame_id, tf_child2child_des);
 
 		//! Build 6x6 pose covariance matrix to be transformed and sent
 		ftf::Covariance6d cov_pose = odom->pose.covariance;

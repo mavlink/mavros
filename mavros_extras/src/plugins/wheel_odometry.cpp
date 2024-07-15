@@ -69,14 +69,14 @@ public:
 
 		// Odometry params
 		wo_nh.param("send_twist", twist_send, false);
-		wo_nh.param<std::string>("frame_id", frame_id, "odom");
-		wo_nh.param<std::string>("child_frame_id", child_frame_id, "base_link");
+		wo_nh.param<std::string>("frame_id", frame_id, uas_.get_odom_frame_id());
+		wo_nh.param<std::string>("child_frame_id", child_frame_id, uas_.get_base_link_frame_id());
 		wo_nh.param("vel_error", vel_cov, 0.1);
 		vel_cov = vel_cov * vel_cov;	// std -> cov
 		// TF subsection
 		wo_nh.param("tf/send", tf_send, false);
-		wo_nh.param<std::string>("tf/frame_id", tf_frame_id, "odom");
-		wo_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, "base_link");
+		wo_nh.param<std::string>("tf/frame_id", tf_frame_id, uas_.get_odom_frame_id());
+		wo_nh.param<std::string>("tf/child_frame_id", tf_child_frame_id, uas_.get_base_link_frame_id());
 
 		// Read parameters for each wheel.
 		{

@@ -36,7 +36,10 @@ UAS::UAS() :
 	time_offset(0),
 	tsync_mode(UAS::timesync_mode::NONE),
 	fcu_caps_known(false),
-	fcu_capabilities(0)
+	fcu_capabilities(0),
+	base_link_frame_id("base_link"),
+	odom_frame_id("odom"),
+	map_frame_id("map")
 {
 	try {
 		// Using smallest dataset with 5' grid,
@@ -50,14 +53,6 @@ UAS::UAS() :
 				" | Run install_geographiclib_dataset.sh script in order to install Geoid Model dataset!");
 		ros::shutdown();
 	}
-
-	// Publish helper TFs used for frame transformation in the odometry plugin
-	std::vector<geometry_msgs::TransformStamped> transform_vector;
-	add_static_transform("map", "map_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
-	add_static_transform("odom", "odom_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
-	add_static_transform("base_link", "base_link_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),transform_vector);
-
-	tf2_static_broadcaster.sendTransform(transform_vector);
 }
 
 /* -*- heartbeat handlers -*- */
@@ -274,4 +269,14 @@ void UAS::publish_static_transform(const std::string &frame_id, const std::strin
 	tf::transformEigenToMsg(tr, static_transformStamped.transform);
 
 	tf2_static_broadcaster.sendTransform(static_transformStamped);
+}
+
+//! Publish helper TFs used for frame transformation in the odometry plugin
+void UAS::setup_static_tf()
+{
+	std::vector<geometry_msgs::TransformStamped> transform_vector;
+	add_static_transform(map_frame_id, map_frame_id+"_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform(odom_frame_id, odom_frame_id+"_ned", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),transform_vector);
+	add_static_transform(base_link_frame_id, base_link_frame_id+"_frd", Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),transform_vector);
+	tf2_static_broadcaster.sendTransform(transform_vector);
 }

@@ -64,6 +64,19 @@ MavRos::MavRos() :
 	nh.getParam("plugin_blacklist", plugin_blacklist);
 	nh.getParam("plugin_whitelist", plugin_whitelist);
 
+	// Get frame_id
+	std::string base_link_frame_id, odom_frame_id, map_frame_id;
+	if (nh.param<std::string>("base_link_frame_id", base_link_frame_id, "base_link"))
+		ROS_INFO("Find param base_link_frame_id: %s", base_link_frame_id.c_str());
+	if (nh.param<std::string>("odom_frame_id", odom_frame_id, "odom"))
+		ROS_INFO("Find param odom_frame_id: %s", odom_frame_id.c_str());
+	if (nh.param<std::string>("map_frame_id", map_frame_id, "map"))
+		ROS_INFO("Find param map_frame_id: %s", map_frame_id.c_str());
+	mav_uas.set_base_link_frame_id(base_link_frame_id);
+	mav_uas.set_odom_frame_id(odom_frame_id);
+	mav_uas.set_map_frame_id(map_frame_id);
+	mav_uas.setup_static_tf();
+
 	conn_timeout = ros::Duration(conn_timeout_d);
 
 	// Now we use FCU URL as a hardware Id
