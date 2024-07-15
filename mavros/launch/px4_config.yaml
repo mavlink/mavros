@@ -231,8 +231,9 @@ mount:
 # odom
 odometry:
   fcu:
-    odom_parent_id_des: "map"    # desired parent frame rotation of the FCU's odometry
+    odom_parent_id_des: "odom"        # desired parent frame rotation of the FCU's odometry
     odom_child_id_des: "base_link"    # desired child frame rotation of the FCU's odometry
+    map_id_des: "map"
 
 # px4flow
 px4flow:

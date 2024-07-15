@@ -57,9 +57,9 @@ public:
 		PluginBase::initialize(uas_);
 
 		// frame params:
-		odom_nh.param<std::string>("fcu/odom_parent_id_des", fcu_map_id_des, uas_.get_map_frame_id());
+		odom_nh.param<std::string>("fcu/odom_parent_id_des", fcu_odom_parent_id_des, uas_.get_odom_frame_id());
 		odom_nh.param<std::string>("fcu/odom_child_id_des", fcu_odom_child_id_des, uas_.get_base_link_frame_id());
-		fcu_odom_parent_id_des = uas_.get_odom_frame_id();
+		odom_nh.param<std::string>("fcu/map_id_des", fcu_map_id_des, uas_.get_map_frame_id());
 
 		// publishers
 		odom_pub = odom_nh.advertise<nav_msgs::Odometry>("in", 10);
