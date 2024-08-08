@@ -16,7 +16,16 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 
-using  mavros::plugin::Plugin;
+using mavros::plugin::Plugin;
+
+Plugin::Plugin(
+  UASPtr uas_, const std::string & subnode,
+  const rclcpp::NodeOptions & options)
+: uas(uas_),
+  // node(std::dynamic_pointer_cast<rclcpp::Node>(uas_)->create_sub_node(subnode))  // https://github.com/ros2/rclcpp/issues/731
+  node(rclcpp::Node::make_shared(subnode,
+    uas_->get_fully_qualified_name(), options))
+{}
 
 void Plugin::enable_connection_cb()
 {
