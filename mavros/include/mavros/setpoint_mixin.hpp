@@ -45,9 +45,9 @@ public:
   void set_position_target_local_ned(
     uint32_t time_boot_ms, uint8_t coordinate_frame,
     uint16_t type_mask,
-    Eigen::Vector3d p,
-    Eigen::Vector3d v,
-    Eigen::Vector3d af,
+    Eigen::Vector3d const & p,
+    Eigen::Vector3d const & v,
+    Eigen::Vector3d const & af,
     float yaw, float yaw_rate)
   {
     static_assert(

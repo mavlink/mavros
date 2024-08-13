@@ -161,7 +161,8 @@ public:
   inline double geoid_to_ellipsoid_height(const T lla)
   {
     if (egm96_5) {
-      return GeographicLib::Geoid::GEOIDTOELLIPSOID * (*egm96_5)(lla->latitude, lla->longitude);
+      return static_cast<int>(GeographicLib::Geoid::GEOIDTOELLIPSOID) *
+             (*egm96_5)(lla->latitude, lla->longitude);
     } else {
       return 0.0;
     }
@@ -181,7 +182,8 @@ public:
   inline double ellipsoid_to_geoid_height(const T lla)
   {
     if (egm96_5) {
-      return GeographicLib::Geoid::ELLIPSOIDTOGEOID * (*egm96_5)(lla->latitude, lla->longitude);
+      return static_cast<int>(GeographicLib::Geoid::ELLIPSOIDTOGEOID) *
+             (*egm96_5)(lla->latitude, lla->longitude);
     } else {
       return 0.0;
     }
@@ -248,6 +250,16 @@ public:
     const std::string & name_ = "mavros",
     const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
     uint8_t target_component_ = 1);
+
+  /**
+   * @brief Prohibit @a UAS copying, because plugins hold raw pointers to @a UAS.
+   */
+  UAS(UAS const &) = delete;
+
+  /**
+   * @brief Prohibit @a UAS moving, because plugins hold raw pointers to @a UAS.
+   */
+  UAS(UAS &&) = delete;
 
   ~UAS() = default;
 
@@ -578,11 +590,7 @@ private:
   StrV plugin_denylist;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
-  rclcpp::TimerBase::SharedPtr startup_delay_timer;
 
-  // XXX(vooon): we have to use own executor because Node::create_sub_node() doesn't work for us.
-  using thread_ptr = std::unique_ptr<std::thread, std::function<void (std::thread *)>>;
-  thread_ptr exec_spin_thd;
   // rclcpp::executors::MultiThreadedExecutor exec;
   UASExecutor exec;
 
@@ -613,6 +621,11 @@ private:
   mavlink::mavlink_status_t mavlink_status;
   rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;    // FCU -> UAS
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;         // UAS -> FCU
+
+  // XXX(vooon): we have to use own executor because Node::create_sub_node() doesn't work for us.
+  // The executor thread is the last thing to initialize, and it must be the first thing to destroy.
+  using thread_ptr = std::unique_ptr<std::thread, std::function<void (std::thread *)>>;
+  thread_ptr exec_spin_thd;
 
   //! initialize connection to the Router
   void connect_to_router();
