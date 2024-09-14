@@ -32,7 +32,7 @@ find_package(libmavconn REQUIRED)
 
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(yaml_cpp REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 ## Find GeographicLib
@@ -132,6 +132,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/wheel_odometry.cpp
   # [[[end]]] (checksum: 1f8cd51fa90b89b27ee35d276b5f8c83)
 )
+target_link_libraries(mavros_extras_plugins yaml-cpp::yaml-cpp)
 ament_target_dependencies(mavros_extras_plugins
   angles
   geometry_msgs
@@ -164,6 +165,7 @@ add_library(mavros_extras SHARED
   src/lib/servo_state_publisher.cpp
   # [[[end]]] (checksum: a3ce43c71c567f697861bcbcd0f25aa3)
 )
+target_link_libraries(mavros_extras yaml-cpp::yaml-cpp)
 ament_target_dependencies(mavros_extras
   rclcpp
   rclcpp_components
