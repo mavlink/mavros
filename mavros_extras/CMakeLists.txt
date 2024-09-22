@@ -32,7 +32,6 @@ find_package(libmavconn REQUIRED)
 
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(yaml_cpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 ## Find GeographicLib
@@ -175,6 +174,13 @@ ament_target_dependencies(mavros_extras
   urdf
 )
 rclcpp_components_register_node(mavros_extras PLUGIN "mavros::extras::ServoStatePublisher" EXECUTABLE servo_state_publisher)
+
+# yaml-cpp is required for Jazzy and newer
+if (rclcpp_VERSION VERSION_GREATER_EQUAL 22.0.0)
+  find_package(yaml-cpp REQUIRED)
+  target_link_libraries(mavros_extras_plugins yaml-cpp::yaml-cpp)
+  target_link_libraries(mavros_extras yaml-cpp::yaml-cpp)
+endif()
 
 install(TARGETS mavros_extras mavros_extras_plugins
   EXPORT export_${PROJECT_NAME}
