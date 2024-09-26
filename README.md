@@ -72,7 +72,8 @@ CI Statuses
 
   - ROS2 Humble: [![Build Status](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/)
   - ROS2 Iron: [![Build Status](https://build.ros2.org/job/Idev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Idev__mavros__ubuntu_jammy_amd64/)
-  - ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_jammy_amd64/)
+  - ROS2 Jazzy: [![Build Status](https://build.ros2.org/job/Jdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/)
+  - ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/)
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
