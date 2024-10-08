@@ -12,6 +12,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "mavros/frame_tf.hpp"
@@ -154,6 +155,7 @@ TEST(FRAME_TF, transform_static_frame__quaterniond_123)
 
   EXPECT_QUATERNION(expected, out, epsilon);
 }
+#endif
 
 TEST(FRAME_TF, transform_frame__covariance3x3)
 {
@@ -163,24 +165,37 @@ TEST(FRAME_TF, transform_frame__covariance3x3)
     7.0, 8.0, 9.0
   }};
 
+  // Rotation quaternion of PI around x axis
+  const auto q = Eigen::Quaterniond(
+      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
+			Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+			Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
+  )
+
   /* Calculated as:
-   *         | 1  0  0 |
-   * input * | 0 -1  0 |
-   *         | 0  0 -1 |
+   *
+   * R * input * R.transpose()
+   *
+   * with:
+   *
+   *                            | 1  0  0 |
+   * R = q.toRotationMatrix() = | 0 -1  0 |
+   *                            | 0  0 -1 |
    */
   ftf::Covariance3d expected = {{
-    1.0, -2.0, -3.0,
-    4.0, -5.0, -6.0,
-    7.0, -8.0, -9.0
+     1.0, -2.0, -3.0,
+    -4.0,  5.0,  6.0,
+    -7.0,  8.0,  9.0
   }};
 
-  auto out = ftf::transform_frame(input, enu_sensor);
+  auto out = ftf::transform_frame(input, q);
 
   for (size_t idx = 0; idx < expected.size(); idx++) {
     SCOPED_TRACE(idx);
     EXPECT_NEAR(expected[idx], out[idx], epsilon);
   }
 }
+
 TEST(FRAME_TF, transform_frame__covariance6x6)
 {
   ftf::Covariance6d input = {{
@@ -192,24 +207,42 @@ TEST(FRAME_TF, transform_frame__covariance6x6)
     31.0, 32.0, 33.0, 34.0, 35.0, 36.0
   }};
 
+  // Rotation quaternion of PI around x axis
+  const auto q = Eigen::Quaterniond(
+      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
+			Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+			Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
+  )
+
+  /* Calculated as:
+   *
+   * R6 * input * R6.transpose()
+   *
+   * with:
+   *
+   *      | R  0 |
+   * R6 = | 0  R |
+   *
+   *                            | 1  0  0 |
+   * R = q.toRotationMatrix() = | 0 -1  0 |
+   *                            | 0  0 -1 |
+   */
   ftf::Covariance6d expected = {{
-    1.0, -2.0, -3.0, 4.0, -5.0, -6.0,
-    7.0, -8.0, -9.0, 10.0, -11.0, -12.0,
-    13.0, -14.0, -15.0, 16.0, -17.0, -18.0,
-    19.0, -20.0, -21.0, 22.0, -23.0, -24.0,
-    25.0, -26.0, -27.0, 28.0, -29.0, -30.0,
-    31.0, -32.0, -33.0, 34.0, -35.0, -36.0
+      1.0,  -2.0,  -3.0,   4.0,  -5.0,  -6.0,
+     -7.0,   8.0,   9.0, -10.0,  11.0,  12.0,
+    -13.0,  14.0,  15.0, -16.0,  17.0,  18.0,
+     19.0, -20.0, -21.0,  22.0, -23.0, -24.0,
+    -25.0,  26.0,  27.0, -28.0,  29.0,  30.0,
+    -31.0,  32.0,  33.0, -34.0,  35.0,  36.0
   }};
 
-  auto out = ftf::transform_frame(input);
+  auto out = ftf::transform_frame(input, q);
 
   for (size_t idx = 0; idx < expected.size(); idx++) {
     SCOPED_TRACE(idx);
     EXPECT_NEAR(expected[idx], out[idx], epsilon);
   }
 }
-#endif
-
 
 int main(int argc, char ** argv)
 {
