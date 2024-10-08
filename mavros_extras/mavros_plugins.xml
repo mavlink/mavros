@@ -158,6 +158,12 @@ The twist is expressed in the child frame.
 Publishes the status of the onboard computer
 @see status_cb()</description>
   </class>
+  <class name="open_drone_id" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpenDroneIDPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Open Drone ID plugin
+@plugin open_drone_id
+
+Sends Open Drone ID data to the FCU</description>
+  </class>
   <class name="optical_flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpticalFlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Optical Flow custom plugin
 @plugin optical_flow

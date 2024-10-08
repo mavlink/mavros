@@ -111,6 +111,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
   src/plugins/onboard_computer_status.cpp
+  src/plugins/open_drone_id.cpp
   src/plugins/optical_flow.cpp
   src/plugins/play_tune.cpp
   src/plugins/px4flow.cpp

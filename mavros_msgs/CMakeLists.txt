@@ -69,6 +69,11 @@ set(msg_files
   msg/MountControl.msg
   msg/NavControllerOutput.msg
   msg/OnboardComputerStatus.msg
+  msg/OpenDroneID/BasicID.msg
+  msg/OpenDroneID/OperatorID.msg
+  msg/OpenDroneID/SelfID.msg
+  msg/OpenDroneID/System.msg
+  msg/OpenDroneID/SystemUpdate.msg
   msg/OpticalFlow.msg
   msg/OpticalFlowRad.msg
   msg/OverrideRCIn.msg
