@@ -22,15 +22,16 @@ struct.error: bad char in struct format
 """
 
 import rclpy
+from builtin_interfaces.msg import Time
+from builtin_interfaces.msg import Time as HTime
+from pymavlink.dialects.v10 import ardupilotmega
+from pymavlink.dialects.v20 import ardupilotmega as apm
+from rclpy.clock import Clock
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from rclpy.clock import Clock
-from builtin_interfaces.msg import Time as HTime
-from mavros_msgs.msg import Mavlink
-from builtin_interfaces.msg import Time
-from pymavlink.dialects.v10 import ardupilotmega
+
 from mavros.mavlink import convert_to_rosmsg
-from pymavlink.dialects.v20 import ardupilotmega as apm
+from mavros_msgs.msg import Mavlink
 
 DRONE_NO = 1
 TOPIC_MAVLINK = f"/uas{DRONE_NO}/mavlink_sink"

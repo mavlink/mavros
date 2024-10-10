@@ -11,10 +11,11 @@ import struct
 import typing
 
 import rclpy.time
+from builtin_interfaces.msg import Time
 from pymavlink import mavutil
 from pymavlink.generator.mavcrc import x25crc  # noqa F401
 from std_msgs.msg import Header
-from builtin_interfaces.msg import Time
+
 from mavros_msgs.msg import Mavlink
 
 from .utils import system_now
