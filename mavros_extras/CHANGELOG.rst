@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.9.0 (2024-10-10)
+------------------
 * extras: fix cmake lint
 * extras: fix cpplint errors
 * Merge pull request `#1994 <https://github.com/mavlink/mavros/issues/1994>`_ from evan-palmer/bug-yaml-cpp-humble-build

@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.9.0 (2024-10-10)
+------------------
 * py-mavros: fix flake8 errors
 * py-mavros: reconfigure flake8
 * py: isort
