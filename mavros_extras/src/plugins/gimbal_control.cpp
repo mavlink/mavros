@@ -14,9 +14,8 @@
  * @{
  */
 
-#include <tf2_eigen/tf2_eigen.hpp>
-
 #include <memory>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -26,7 +25,6 @@
 #include "mavros_msgs/srv/command_long.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/vector3_stamped.hpp"
-
 #include "mavros_msgs/msg/gimbal_device_attitude_status.hpp"
 #include "mavros_msgs/msg/gimbal_device_set_attitude.hpp"
 #include "mavros_msgs/msg/gimbal_device_information.hpp"
@@ -34,7 +32,6 @@
 #include "mavros_msgs/msg/gimbal_manager_set_pitchyaw.hpp"
 #include "mavros_msgs/msg/gimbal_manager_status.hpp"
 #include "mavros_msgs/msg/gimbal_manager_information.hpp"
-
 #include "mavros_msgs/srv/gimbal_get_information.hpp"
 #include "mavros_msgs/srv/gimbal_manager_configure.hpp"
 #include "mavros_msgs/srv/gimbal_manager_pitchyaw.hpp"
@@ -103,7 +100,8 @@ public:
 
     // Subscribers
     // --Not successfully validated--
-    set_device_attitude_sub = node->create_subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>(
+    set_device_attitude_sub =
+      node->create_subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>(
       "~/device/set_attitude", 10, std::bind(
         &GimbalControlPlugin::device_set_attitude_cb, this,
         _1));
@@ -122,65 +120,76 @@ public:
         &GimbalControlPlugin::manager_set_pitchyaw_cb, this,
         _1));
 
-    // --Not successfully validated-- also note that the message is the same as pitchyaw and will likely change
-    set_manager_manual_control_sub = node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
+    // --Not successfully validated--
+    // also note that the message is the same as pitchyaw and will likely change
+    set_manager_manual_control_sub =
+      node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
       "~/manager/set_manual_control", 10, std::bind(
         &GimbalControlPlugin::manager_set_manual_control_cb, this,
         _1));
 
 
     // Publishers
-    gimbal_attitude_status_pub = node->create_publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>(
+    gimbal_attitude_status_pub =
+      node->create_publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>(
       "~/device/attitude_status",
       10);
 
-    gimbal_manager_status_pub = node->create_publisher<mavros_msgs::msg::GimbalManagerStatus>(
+    gimbal_manager_status_pub =
+      node->create_publisher<mavros_msgs::msg::GimbalManagerStatus>(
       "~/manager/status",
       10);
 
-    gimbal_manager_info_pub = node->create_publisher<mavros_msgs::msg::GimbalManagerInformation>(
+    gimbal_manager_info_pub =
+      node->create_publisher<mavros_msgs::msg::GimbalManagerInformation>(
       "~/manager/info",
       10);
 
     // --Not successfully validated--
-    gimbal_device_info_pub = node->create_publisher<mavros_msgs::msg::GimbalDeviceInformation>(
+    gimbal_device_info_pub =
+      node->create_publisher<mavros_msgs::msg::GimbalDeviceInformation>(
       "~/device/info",
       10);
 
 
     // Services
     // --Not successfully validated--
-    gimbal_device_info_srv = node->create_service<mavros_msgs::srv::GimbalGetInformation>(
+    gimbal_device_info_srv =
+      node->create_service<mavros_msgs::srv::GimbalGetInformation>(
       "~/device/get_info", std::bind(
         &GimbalControlPlugin::device_get_info_cb,
         this, _1, _2));
 
-    gimbal_manager_info_srv = node->create_service<mavros_msgs::srv::GimbalGetInformation>(
+    gimbal_manager_info_srv =
+      node->create_service<mavros_msgs::srv::GimbalGetInformation>(
       "~/manager/get_info", std::bind(
         &GimbalControlPlugin::manager_get_info_cb,
         this, _1, _2));
 
-    gimbal_manager_configure_srv = node->create_service<mavros_msgs::srv::GimbalManagerConfigure>(
+    gimbal_manager_configure_srv =
+      node->create_service<mavros_msgs::srv::GimbalManagerConfigure>(
       "~/manager/configure", std::bind(
         &GimbalControlPlugin::manager_configure_cb,
         this, _1, _2));
 
-    gimbal_manager_pitchyaw_srv = node->create_service<mavros_msgs::srv::GimbalManagerPitchyaw>(
+    gimbal_manager_pitchyaw_srv =
+      node->create_service<mavros_msgs::srv::GimbalManagerPitchyaw>(
       "~/manager/pitchyaw", std::bind(
         &GimbalControlPlugin::manager_pitchyaw_cb,
         this, _1, _2));
 
-    gimbal_manager_set_roi_srv = node->create_service<mavros_msgs::srv::GimbalManagerSetRoi>(
+    gimbal_manager_set_roi_srv =
+      node->create_service<mavros_msgs::srv::GimbalManagerSetRoi>(
       "~/manager/set_roi", std::bind(
         &GimbalControlPlugin::manager_set_roi_cb,
         this, _1, _2));
 
     // --Not successfully validated--
-    gimbal_manager_camera_track = node->create_service<mavros_msgs::srv::GimbalManagerCameraTrack>(
+    gimbal_manager_camera_track =
+      node->create_service<mavros_msgs::srv::GimbalManagerCameraTrack>(
       "~/manager/camera_track", std::bind(
         &GimbalControlPlugin::manager_camera_track,
         this, _1, _2));
-
   }
 
   Subscriptions get_subscriptions() override
@@ -197,7 +206,8 @@ private:
   // Callback Group
   rclcpp::CallbackGroup::SharedPtr cb_group;
   // Subscribers
-  rclcpp::Subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>::SharedPtr set_device_attitude_sub;
+  rclcpp::Subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>::SharedPtr
+    set_device_attitude_sub;
   rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetAttitude>::SharedPtr
     set_manager_attitude_sub;
   rclcpp::Subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>::SharedPtr
@@ -217,8 +227,10 @@ private:
   rclcpp::Service<mavros_msgs::srv::GimbalGetInformation>::SharedPtr gimbal_manager_info_srv;
   rclcpp::Service<mavros_msgs::srv::GimbalManagerConfigure>::SharedPtr gimbal_manager_configure_srv;
   rclcpp::Service<mavros_msgs::srv::GimbalManagerPitchyaw>::SharedPtr gimbal_manager_pitchyaw_srv;
-  rclcpp::Service<mavros_msgs::srv::GimbalManagerSetRoi>::SharedPtr gimbal_manager_set_roi_srv;
-  rclcpp::Service<mavros_msgs::srv::GimbalManagerCameraTrack>::SharedPtr gimbal_manager_camera_track;
+  rclcpp::Service<mavros_msgs::srv::GimbalManagerSetRoi>::SharedPtr
+    gimbal_manager_set_roi_srv;
+  rclcpp::Service<mavros_msgs::srv::GimbalManagerCameraTrack>::SharedPtr
+    gimbal_manager_camera_track;
 
   // Clients
   rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmd_cli;
@@ -228,7 +240,8 @@ private:
   std::string tf_frame_id;    // origin frame for TF
   std::atomic<bool> tf_send;  // parameter for enabling TF publishing
 
-  // Client used by all services for sending mavros/cmd/command service calls, on a separate callback group to support nested service calls
+  // Client used by all services for sending mavros/cmd/command service calls,
+  // on a separate callback group to support nested service calls
   rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr get_cmd_cli()
   {
     s_shared_lock lock(mu);
@@ -262,7 +275,8 @@ private:
       geometry_msgs::msg::TransformStamped transform;
       transform.header.stamp = gimbal_attitude_msg.header.stamp;
       transform.header.frame_id = tf_frame_id;
-      // TF child_frame_id with format "gimbal_<component_id>" where the component_id comes from the gimbal_attitude_msg
+      // TF child_frame_id with format "gimbal_<component_id>" where
+      // the component_id comes from the gimbal_attitude_msg
       transform.child_frame_id = "gimbal_" + std::to_string(gimbal_attitude_msg.target_component);
       transform.transform.rotation = gimbal_attitude_msg.q;
       uas->tf2_broadcaster.sendTransform(transform);
@@ -513,7 +527,6 @@ private:
     rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedFuture response)
   {
     auto result = response.get();
-
   }
 
   /**
@@ -643,12 +656,15 @@ private:
         cmdrq->command = enum_value(MAV_CMD::DO_SET_ROI_NONE);
         cmdrq->param1 = req->gimbal_device_id;
       } else {
+        // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters).
+        // Retrying same command and parameters will not work.
         res->success = false;
-        res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
+        res->result = 2;
         return;
       }
 
-      // RCLCPP_DEBUG(get_logger(), "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
+      // RCLCPP_DEBUG(get_logger(),
+      //   "GimbalManagerSetRoi for gimbal id: %u ", req->gimbal_device_id);
       auto future = get_cmd_cli()->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
@@ -692,8 +708,10 @@ private:
       } else if (req->mode == req->CAMERA_TRACK_MODE_STOP_TRACKING) {
         cmdrq->command = enum_value(MAV_CMD::CAMERA_STOP_TRACKING);
       } else {
+        // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters).
+        // Retrying same command and parameters will not work.
         res->success = false;
-        res->result = 2; // MAV_RESULT_DENIED - Command is invalid (is supported but has invalid parameters). Retrying same command and parameters will not work.
+        res->result = 2;
         return;
       }
 
