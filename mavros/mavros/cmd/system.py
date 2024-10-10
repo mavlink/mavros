@@ -11,7 +11,6 @@ import threading
 import typing
 
 import click
-
 from mavros_msgs.msg import State
 from mavros_msgs.srv import MessageInterval, SetMode, StreamRate
 
@@ -107,7 +106,7 @@ def _add_rate_options(*options: typing.List[str]):
 def rate(
     ctx,
     client,
-    all,
+    all,  # noqa A002
     raw_sensors,
     ext_status,
     rc_channels,
@@ -150,7 +149,7 @@ def rate(
 @click.option("--id", type=int, metavar="MSGID", required=True, help="message id")
 @click.option("--rate", type=float, metavar="RATE", required=True, help="message rate")
 @pass_client
-def message_interval(client, id, rate):
+def message_interval(client, id, rate):  # noqa A002
     """Set message interval."""
     req = MessageInterval.Request(message_id=id, message_rate=rate)
     client.system.cli_set_message_interval.call(req)

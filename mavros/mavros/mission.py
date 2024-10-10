@@ -14,7 +14,6 @@ import typing
 from collections import OrderedDict
 
 import rclpy
-
 from mavros_msgs.msg import CommandCode, Waypoint, WaypointList
 from mavros_msgs.srv import (
     WaypointClear,

@@ -13,7 +13,6 @@ import pathlib
 import typing
 
 import click
-
 from mavros_msgs.msg import FileEntry
 
 from ..nuttx_crc32 import nuttx_crc32
@@ -54,7 +53,7 @@ class ProgressBar:
 
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback):  # noqa A002
         if self.pbar:
             self.pbar.__exit__(type, value, traceback)
 
@@ -107,7 +106,7 @@ def change_directory(ctx, client, path):
 @click.argument("path", type=click.Path(exists=False), nargs=1, required=False)
 @pass_client
 @click.pass_context
-def list(ctx, client, path):
+def list(ctx, client, path):  # noqa A002
     """List files and directories."""
     path = resolve_path(path)
     for ent in client.ftp.listdir(str(path)):

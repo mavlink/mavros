@@ -11,10 +11,9 @@ import threading
 import typing
 
 import rclpy
-from sensor_msgs.msg import BatteryState
-
 from mavros_msgs.msg import EstimatorStatus, ExtendedState, State, StatusText
 from mavros_msgs.srv import MessageInterval, SetMode, StreamRate, VehicleInfoGet
+from sensor_msgs.msg import BatteryState
 
 from .base import (
     SENSOR_QOS,

@@ -13,7 +13,6 @@ Allow user to Arm, Disarm and Kill vehicle motors.
 """
 
 import click
-
 from mavros_msgs.srv import CommandBool, CommandLong
 
 from . import cli, pass_client

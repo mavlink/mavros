@@ -11,7 +11,6 @@ import threading
 import typing
 
 import click
-
 from mavros_msgs.msg import Waypoint, WaypointList
 from mavros_msgs.srv import (
     WaypointClear,

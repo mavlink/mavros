@@ -132,7 +132,7 @@ def get(client, param_id):
 @click.argument("param_id", type=str)
 @click.argument("value", type=str)
 @pass_client
-def set(client, param_id, value):
+def set(client, param_id, value):  # noqa A001
     """Set one parameter."""
     if "." in value:
         val = float(value)

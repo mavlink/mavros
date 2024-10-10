@@ -15,8 +15,6 @@ Note: arming service provided by mav safety.
 import threading
 
 import click
-from sensor_msgs.msg import NavSatFix
-
 from mavros_msgs.srv import (
     CommandHome,
     CommandInt,
@@ -25,6 +23,7 @@ from mavros_msgs.srv import (
     CommandTriggerControl,
     CommandTriggerInterval,
 )
+from sensor_msgs.msg import NavSatFix
 
 from . import cli, pass_client
 from .utils import bool2int, check_cmd_ret
@@ -86,7 +85,7 @@ def long(
     check_cmd_ret(ctx, client, ret)
 
 
-@cmd.command()
+@cmd.command(name="int")
 @click.option("-c", "--current", default=False, is_flag=True, help="Is current?")
 @click.option(
     "-a", "--autocontinue", default=False, is_flag=True, help="Is autocontinue?"
@@ -105,7 +104,7 @@ def long(
 @click.argument("z", type=float)
 @pass_client
 @click.pass_context
-def int(
+def int_(
     ctx,
     client,
     current,

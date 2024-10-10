@@ -14,7 +14,7 @@ import typing
 from dataclasses import dataclass, field, fields
 from functools import cached_property
 
-import rclpy  # noqa F401
+import rclpy
 import rclpy.node
 import rclpy.qos
 

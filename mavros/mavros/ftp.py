@@ -11,8 +11,6 @@ import os
 import typing
 
 import rclpy
-from std_srvs.srv import Empty
-
 from mavros_msgs.msg import FileEntry
 from mavros_msgs.srv import (
     FileChecksum,
@@ -27,6 +25,7 @@ from mavros_msgs.srv import (
     FileTruncate,
     FileWrite,
 )
+from std_srvs.srv import Empty
 
 from .base import PluginModule, cached_property
 
@@ -54,7 +53,7 @@ class FTPFile:
     def __del__(self):
         self.close()
 
-    def open(self, path: str, mode: str):
+    def open(self, path: str, mode: str):  # noqa A003
         """
         Call open.
 
@@ -191,7 +190,7 @@ class FTPPlugin(PluginModule):
     def cli_reset(self) -> rclpy.node.Client:
         return self.create_client(Empty, ("ftp", "reset"))
 
-    def open(self, path: str, mode: str = "r") -> FTPFile:
+    def open(self, path: str, mode: str = "r") -> FTPFile:  # noqa A003
         return FTPFile(fm=self, name=path, mode=mode)
 
     def listdir(self, dir_path: str) -> typing.List[FileEntry]:

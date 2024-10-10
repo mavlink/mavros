@@ -18,7 +18,6 @@ import typing
 
 import click
 import rclpy.qos
-
 from mavros_msgs.msg import Mavlink
 
 from . import CliClient, cli, pass_client
@@ -66,7 +65,7 @@ class Checker:
         if ids in self.message_sources:
             self.message_sources[ids].add(msg.msgid)
         else:
-            self.message_sources[ids] = set((msg.msgid,))
+            self.message_sources[ids] = {msg.msgid}
 
         self.messages_received += 1
 
