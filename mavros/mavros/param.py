@@ -55,7 +55,7 @@ class MavProxyParam(ParamFile):
         skipinitialspace = True
         lineterminator = "\r\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ""
+        escapechar = None
 
     def _parse_param_file(self, file_: typing.TextIO):
         def to_numeric(x):
@@ -95,7 +95,7 @@ class MissionPlannerParam(MavProxyParam):
         skipinitialspace = True
         lineterminator = "\r\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ""
+        escapechar = None
 
 
 class QGroundControlParam(ParamFile):
@@ -107,7 +107,7 @@ class QGroundControlParam(ParamFile):
         skipinitialspace = True
         lineterminator = "\n"
         quoting = csv.QUOTE_NONE
-        escapechar = ""
+        escapechar = None
 
     def _parse_param_file(self, file_: typing.TextIO):
         def to_numeric(x):
