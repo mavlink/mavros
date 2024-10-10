@@ -170,7 +170,7 @@ TEST(FRAME_TF, transform_frame__covariance3x3)
       Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
 			Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
 			Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
-  )
+  );
 
   /* Calculated as:
    *
@@ -188,7 +188,7 @@ TEST(FRAME_TF, transform_frame__covariance3x3)
     -7.0,  8.0,  9.0
   }};
 
-  auto out = ftf::transform_frame(input, q);
+  auto out = ftf::detail::transform_frame(input, q);
 
   for (size_t idx = 0; idx < expected.size(); idx++) {
     SCOPED_TRACE(idx);
@@ -212,7 +212,7 @@ TEST(FRAME_TF, transform_frame__covariance6x6)
       Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
 			Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
 			Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
-  )
+  );
 
   /* Calculated as:
    *
@@ -236,7 +236,7 @@ TEST(FRAME_TF, transform_frame__covariance6x6)
     -31.0,  32.0,  33.0, -34.0,  35.0,  36.0
   }};
 
-  auto out = ftf::transform_frame(input, q);
+  auto out = ftf::detail::transform_frame(input, q);
 
   for (size_t idx = 0; idx < expected.size(); idx++) {
     SCOPED_TRACE(idx);
