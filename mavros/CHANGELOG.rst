@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.20.0 (2024-10-10)
+-------------------
 * add param to odom plugin
 * add frame_id parameter
 * Contributors: EnderMandS
