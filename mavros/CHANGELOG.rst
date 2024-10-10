@@ -2,6 +2,12 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add param to odom plugin
+* add frame_id parameter
+* Contributors: EnderMandS
+
 1.19.0 (2024-06-06)
 -------------------
 * gps_global_origin: remove LLA to ECEF conversion
