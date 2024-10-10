@@ -37,6 +37,7 @@ class SetpointPosition:
     """
     This class sends position targets to FCU's position controller
     """
+
     def __init__(self):
         self.x = 0.0
         self.y = 0.0
@@ -94,6 +95,7 @@ class SetpointPosition:
         time.sleep(delay)
 
     def reached(self, topic):
+
         def is_near(msg, x, y):
             rospy.logdebug("Position %s: local: %d, target: %d, abs diff: %d",
                            msg, x, y, abs(x - y))

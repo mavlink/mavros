@@ -32,6 +32,7 @@ ROUTER_QOS = rclpy.qos.QoSProfile(
 
 
 class Checker:
+
     def __init__(self, *, client: CliClient, follow: bool, watch_time: float):
         # dict of sets: (sysid, compid) -> set[msgid...]
         self.message_sources = {}

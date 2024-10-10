@@ -19,6 +19,7 @@ from ..base import DEFAULT_NAMESPACE
 
 
 class CliClient:
+
     def __init__(
         self,
         *,

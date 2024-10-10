@@ -58,6 +58,7 @@ class MavProxyParam(ParamFile):
         escapechar = None
 
     def _parse_param_file(self, file_: typing.TextIO):
+
         def to_numeric(x):
             return float(x) if "." in x else int(x)
 
@@ -110,6 +111,7 @@ class QGroundControlParam(ParamFile):
         escapechar = None
 
     def _parse_param_file(self, file_: typing.TextIO):
+
         def to_numeric(x):
             return float(x) if "." in x else int(x)
 
@@ -127,6 +129,7 @@ class QGroundControlParam(ParamFile):
         return self
 
     def save(self, file_: typing.TextIO):
+
         def to_type(x):
             if isinstance(x, float):
                 return 9  # REAL32

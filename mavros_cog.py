@@ -183,6 +183,7 @@ def clear_desc(s):
 
 
 def idl_decl_enum_mav_cmd(ename="MAV_CMD"):
+
     def wr_enum(enum, ename, pfx="", bsz=16):
         cog.outl("# " + ename + "_" + pfx)
         for k, e in enum:
