@@ -2,6 +2,28 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* py-mavros: fix flake8 errors
+* py-mavros: reconfigure flake8
+* py: isort
+* py: black
+* py-mavros: reformat with black
+* py-mavros: csv escapechar of empty string unsupported since py 3.11
+* apply ament_uncrustify --reformat (jazzy)
+* Merge pull request `#2000 <https://github.com/mavlink/mavros/issues/2000>`_ from leocencetti/fix-test-errors
+  Fix  test errors in 3x3 covariance test cases
+* fix: Patch test errors
+* Merge pull request `#1998 <https://github.com/mavlink/mavros/issues/1998>`_ from leocencetti/fix-wrong-covariance-rotation
+  Fix 3x3 covariance matrix rotation/transformation
+* chore: Fix and reenable covariance rotation tests
+* fix: Correct 3x3 covariance matrix rotation
+* use GeographicLib::Geoid::ConvertHeight
+* fix -Wdeprecated-enum-float-conversion in GeographicLib
+* depcrecation errors
+* `#1965 <https://github.com/mavlink/mavros/issues/1965>`_: sync format of configs
+* Contributors: Jacob Dahl, Leonardo Cencetti, Vladimir Ermakov
+
 2.8.0 (2024-06-07)
 ------------------
 * param: replace old rmw_qos usage

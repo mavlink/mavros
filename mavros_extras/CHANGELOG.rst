@@ -2,6 +2,19 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: fix cmake lint
+* extras: fix cpplint errors
+* Merge pull request `#1994 <https://github.com/mavlink/mavros/issues/1994>`_ from evan-palmer/bug-yaml-cpp-humble-build
+  Resolve build error when linking yaml-cpp
+* Resolved error in rebase
+* Merge branch 'ros2' into bug-yaml-cpp-humble-build
+* Resolved linking error with yaml-cpp in pre-Jazzy releases
+* Resolved build yaml-cpp build error
+* Resolved build error with yaml-cpp
+* Contributors: Evan Palmer, Vladimir Ermakov
+
 2.8.0 (2024-06-07)
 ------------------
 * gimbal_control: fix build
