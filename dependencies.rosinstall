@@ -1,4 +1,4 @@
 - git:
     local-name: mavlink
-    uri: https://github.com/ros2-gpb/mavlink-gbp-release.git
+    uri: https://github.com/ros2-gbp/mavlink-gbp-release.git
     version: release/rolling/mavlink
