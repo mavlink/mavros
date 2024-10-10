@@ -132,7 +132,7 @@ Covariance3d transform_static_frame(const Covariance3d & cov, const StaticTF tra
 
     case StaticTF::AIRCRAFT_TO_BASELINK:
     case StaticTF::BASELINK_TO_AIRCRAFT:
-      cov_out = cov_in * AIRCRAFT_BASELINK_Q;
+      cov_out = AIRCRAFT_BASELINK_Q * cov_in * AIRCRAFT_BASELINK_Q.conjugate();
       return cov_out_;
 
     default:
@@ -279,7 +279,7 @@ Covariance3d transform_frame(const Covariance3d & cov, const Eigen::Quaterniond 
   EigenMapConstCovariance3d cov_in(cov.data());
   EigenMapCovariance3d cov_out(cov_out_.data());
 
-  cov_out = cov_in * q;
+  cov_out = q * cov_in * q.conjugate();
   return cov_out_;
 }
 
