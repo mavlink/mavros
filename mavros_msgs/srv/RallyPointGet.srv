@@ -1,0 +1,5 @@
+# Request a rally point msg
+
+uint8 idx
+---
+bool success
