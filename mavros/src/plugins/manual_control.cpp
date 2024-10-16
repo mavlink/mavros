@@ -72,6 +72,17 @@ private:
     manual_control_msg.r = (manual_control.r / 1000.0);
     manual_control_msg.buttons = manual_control.buttons;
 
+    manual_control_msg.buttons2 = manual_control.buttons2;
+    manual_control_msg.enabled_extensions = manual_control.enabled_extensions;
+    manual_control_msg.s = (manual_control.s / 1000.0);
+    manual_control_msg.t = (manual_control.t / 1000.0);
+    manual_control_msg.aux1 = (manual_control.aux1 / 1000.0);
+    manual_control_msg.aux2 = (manual_control.aux2 / 1000.0);
+    manual_control_msg.aux3 = (manual_control.aux3 / 1000.0);
+    manual_control_msg.aux4 = (manual_control.aux4 / 1000.0);
+    manual_control_msg.aux5 = (manual_control.aux5 / 1000.0);
+    manual_control_msg.aux6 = (manual_control.aux6 / 1000.0);
+
     control_pub->publish(manual_control_msg);
   }
 
@@ -86,6 +97,17 @@ private:
     msg.z = req->z;
     msg.r = req->r;
     msg.buttons = req->buttons;
+    
+    msg.buttons2 = req->buttons2;
+    msg.enabled_extensions = req->enabled_extensions;
+    msg.s = req->s;
+    msg.t = req->t;
+    msg.aux1 = req->aux1;
+    msg.aux2 = req->aux2;
+    msg.aux3 = req->aux3;
+    msg.aux4 = req->aux4;
+    msg.aux5 = req->aux5;
+    msg.aux6 = req->aux6;
 
     uas->send_message(msg);
   }
