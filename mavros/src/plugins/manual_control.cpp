@@ -97,7 +97,7 @@ private:
     msg.z = req->z;
     msg.r = req->r;
     msg.buttons = req->buttons;
-    
+
     msg.buttons2 = req->buttons2;
     msg.enabled_extensions = req->enabled_extensions;
     msg.s = req->s;
