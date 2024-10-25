@@ -20,6 +20,8 @@ set(CMAKE_CXX_EXTENSIONS ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
+find_package(PythonLibs REQUIRED)
+
 # find mavros dependencies
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -67,6 +69,7 @@ include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 ## Check if the datasets are installed

@@ -127,20 +127,17 @@ private:
     RCLCPP_INFO_EXPRESSION(
       get_logger(), !has_rc_channels_msg.exchange(
         true), "RC_CHANNELS message detected!");
-
+    
     if (channels.chancount > MAX_CHANCNT) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 60000,
         "FCU receives %u RC channels, but RC_CHANNELS can store %zu",
         channels.chancount, MAX_CHANCNT);
-
-      channels.chancount = MAX_CHANCNT;
     }
-
-    raw_rc_in.resize(channels.chancount);
+    raw_rc_in.resize(MAX_CHANCNT);
 
     // switch works as start point selector.
-    switch (channels.chancount) {
+    switch (MAX_CHANCNT) {
       // [[[cog:
       // for i in range(18, 0, -1):
       //     cog.outl(f"case {i}: raw_rc_in[{i - 1}] = channels.chan{i}_raw; [[fallthrough]];")
