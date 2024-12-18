@@ -482,8 +482,8 @@ private:
         break;
       }
       default: {
-        //Raise a warning if a non-zero value is provided
-        //XXX:  This is no idea given that "0" is "MAV_FRAME::GLOBAL"
+        //Raise a warning if a non-zero frame value is provided
+        //XXX:  This is no ideal given that "0" is "MAV_FRAME::GLOBAL"
         //      however this would be the "default value" for anyone
         //      using this interface without setting frame correctly 
         //
