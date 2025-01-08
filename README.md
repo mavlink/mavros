@@ -76,10 +76,10 @@ CI Statuses
   - ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/)
 
 
-[mrrm]: https://github.com/mavlink/mavros/blob/master/mavros/README.md
-[exrm]: https://github.com/mavlink/mavros/blob/master/mavros_extras/README.md
-[libmc]: https://github.com/mavlink/mavros/blob/master/libmavconn/README.md
-[test]: https://github.com/mavlink/mavros/blob/master/test_mavros/README.md
-[inst]: https://github.com/mavlink/mavros/blob/master/mavros/README.md#installation
+[mrrm]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md
+[exrm]: https://github.com/mavlink/mavros/blob/ros2/mavros_extras/README.md
+[libmc]: https://github.com/mavlink/mavros/blob/ros2/libmavconn/README.md
+[test]: https://github.com/mavlink/mavros/blob/ros2/test_mavros/README.md
+[inst]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md#installation
 [geolib]: https://geographiclib.sourceforge.io/
 [iss1369]: https://github.com/mavlink/mavros/issues/1369
