@@ -468,20 +468,20 @@ private:
     const auto data_frame = static_cast<MAV_FRAME>(req->frame);
     switch(data_frame) {
       case MAV_FRAME::LOCAL_NED: {
-        position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-        orientation = ftf::transform_orientation_enu_ned(
+          position = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+          orientation = ftf::transform_orientation_enu_ned(
           ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation()))
-        );
-        position_valid = true;
-        break;
-      }
+          );
+          position_valid = true;
+          break;
+        }
       case MAV_FRAME::BODY_FRD: {
-        position = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tr.translation()));
-        orientation = ftf::transform_orientation_baselink_aircraft(
+          position = ftf::transform_frame_baselink_aircraft(Eigen::Vector3d(tr.translation()));
+          orientation = ftf::transform_orientation_baselink_aircraft(
           Eigen::Quaterniond(tr.rotation()));
-        position_valid = true;
-        break;
-      }
+          position_valid = true;
+          break;
+        }
       default: {
         // Raise a warning if a non-zero frame value is provided
         // XXX:  This is no ideal given that "0" is "MAV_FRAME::GLOBAL"
@@ -492,12 +492,13 @@ private:
         //      in mavros_msgs::msg::LandingTarget, but this will at
         //      least allow people to use the angle interface without
         //      getting a constant error stream.
-        if(data_frame != MAV_FRAME::GLOBAL)
-          RCLCPP_WARN_STREAM(
+          if(data_frame != MAV_FRAME::GLOBAL) {
+            RCLCPP_WARN_STREAM(
             get_logger(),
             "LT: Landing target frame '" << req->frame << "' is not supported"
-          );
-      }
+            );
+          }
+        }
     }
 
     landing_target(
