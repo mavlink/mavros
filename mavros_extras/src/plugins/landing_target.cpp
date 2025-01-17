@@ -501,7 +501,6 @@ private:
         }
     }
 
-
     landing_target(
       rclcpp::Time(req->header.stamp).nanoseconds() / 1000,
       req->target_num,
