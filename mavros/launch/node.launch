@@ -12,6 +12,7 @@
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
 	<arg name="namespace" default="mavros"/>
+	<arg name="enable_router" default="true"/>
 
 	<node pkg="mavros" exec="mavros_node" namespace="$(var namespace)" output="screen">
 		<param name="fcu_url" value="$(var fcu_url)" />
@@ -19,6 +20,7 @@
 		<param name="tgt_system" value="$(var tgt_system)" />
 		<param name="tgt_component" value="$(var tgt_component)" />
 		<param name="fcu_protocol" value="$(var fcu_protocol)" />
+		<param name="enable_router" value="$(var enable_router)" />
 		<!-- load blacklist, config -->
 		<param from="$(var pluginlists_yaml)" />
 		<param from="$(var config_yaml)" />

@@ -34,6 +34,7 @@ int main(int argc, char * argv[])
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;
   int tgt_system = 1, tgt_component = 1;
+  bool enable_router = true;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
   exec.add_node(node);
@@ -45,6 +46,7 @@ int main(int argc, char * argv[])
   node->declare_parameter("base_link_frame", base_link_frame_id);
   node->declare_parameter("map_frame", map_frame_id);
   node->declare_parameter("odom_frame", odom_frame_id);
+  node->declare_parameter("enable_router", enable_router);
 
   node->get_parameter("fcu_url", fcu_url);
   node->get_parameter("gcs_url", gcs_url);
@@ -53,6 +55,7 @@ int main(int argc, char * argv[])
   node->get_parameter("base_link_frame", base_link_frame_id);
   node->get_parameter("map_frame", map_frame_id);
   node->get_parameter("odom_frame", odom_frame_id);
+  node->get_parameter("enable_router", enable_router);
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 
@@ -61,22 +64,24 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(node->get_logger(), "GCS URL: %s", gcs_url.c_str());
   RCLCPP_INFO(node->get_logger(), "UAS Prefix: %s", uas_url.c_str());
 
-  RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
-  auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
-  exec.add_node(router_node);
+  if (enable_router) {
+    RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
+    auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
+    exec.add_node(router_node);
 
-  {
-    std::vector<rclcpp::Parameter> router_params{};
+    {
+      std::vector<rclcpp::Parameter> router_params{};
 
-    if (fcu_url != "") {
-      router_params.emplace_back("fcu_urls", std::vector<std::string>{fcu_url});
+      if (fcu_url != "") {
+        router_params.emplace_back("fcu_urls", std::vector<std::string>{fcu_url});
+      }
+      if (gcs_url != "") {
+        router_params.emplace_back("gcs_urls", std::vector<std::string>{gcs_url});
+      }
+      router_params.emplace_back("uas_urls", std::vector<std::string>{uas_url});
+
+      router_node->set_parameters(router_params);
     }
-    if (gcs_url != "") {
-      router_params.emplace_back("gcs_urls", std::vector<std::string>{gcs_url});
-    }
-    router_params.emplace_back("uas_urls", std::vector<std::string>{uas_url});
-
-    router_node->set_parameters(router_params);
   }
 
   RCLCPP_INFO(node->get_logger(), "Starting mavros uas node");

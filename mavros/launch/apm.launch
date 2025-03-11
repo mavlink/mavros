@@ -10,6 +10,7 @@
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
 	<arg name="namespace" default="mavros"/>
+	<arg name="enable_router" default="true"/>
 	<include file="$(find-pkg-share mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find-pkg-share mavros)/launch/apm_pluginlists.yaml" />
 		<arg name="config_yaml" value="$(find-pkg-share mavros)/launch/apm_config.yaml" />
@@ -20,5 +21,6 @@
 		<arg name="fcu_protocol" value="$(var fcu_protocol)" />
 		<arg name="respawn_mavros" value="$(var respawn_mavros)" />
 		<arg name="namespace" value="$(var namespace)"/>
+		<arg name="enable_router" value="$(var enable_router)" />
 	</include>
 </launch>
