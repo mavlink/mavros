@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 
-  RCLCPP_INFO(node->get_logger(), "Starting mavros_node container");
+  RCLCPP_INFO(node->get_logger(), "Starting mavros_node container -- CUSTOM");
   RCLCPP_INFO(node->get_logger(), "FCU URL: %s", fcu_url.c_str());
   RCLCPP_INFO(node->get_logger(), "GCS URL: %s", gcs_url.c_str());
   RCLCPP_INFO(node->get_logger(), "UAS Prefix: %s", uas_url.c_str());

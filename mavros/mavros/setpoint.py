@@ -48,7 +48,7 @@ class SetpointAttitudePlugin(PluginModule):
 class SetpointFullPlugin(PluginModule):
 
     @cached_property
-    def pub_accel(self) -> rclpy.node.Publisher:
+    def pub_cmd_full(self) -> rclpy.node.Publisher:
         return self.create_publisher(FullSetpoint, ("setpoint_full", "cmd_full_setpoint"), QOS)
 
 class SetpointPositionPlugin(PluginModule):

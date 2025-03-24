@@ -60,36 +60,45 @@ private:
    * @brief Send a full localNED setpoint to FCU controller.
    *
    */
-  void send_setpoint_full(const rclcpp::Time & stamp, const Eigen::Vector3d & accel_enu) //TODO: Adjust params
+  void send_setpoint_full(const rclcpp::Time & stamp, const uint16_t type_mask,
+                          const Eigen::Vector3d & pos_ned,
+                          const Eigen::Vector3d & vel_ned,
+                          const Eigen::Vector3d & accel_ned,
+                          const double yaw, const double yaw_rate)
   {
     using mavlink::common::MAV_FRAME;
 
-    /* Documentation start from bit 1 instead 0.
-     * Ignore position and velocity vectors, yaw and yaw rate
-     */
-    uint16_t ignore_all_except_a_xyz = (3 << 10) | (7 << 3) | (7 << 0);
-
-    auto accel = ftf::transform_frame_enu_ned(accel_enu);
+    // auto accel = ftf::transform_frame_enu_ned(accel_enu);
 
     set_position_target_local_ned(
       get_time_boot_ms(stamp),
       utils::enum_value(MAV_FRAME::LOCAL_NED),
-      ignore_all_except_a_xyz,
-      Eigen::Vector3d::Zero(),
-      Eigen::Vector3d::Zero(),
-      accel,
-      0.0, 0.0);
+      type_mask,
+      pos_ned,
+      vel_ned,
+      accel_ned,
+      yaw, yaw_rate);
   }
 
   /* -*- callbacks -*- */
 
   void setpoint_cb(const mavros_msgs::msg::FullSetpoint::SharedPtr req)
   {
-    //TODO: Adjust params
-    // Eigen::Vector3d accel_enu;
+    Eigen::Vector3d pos_ned;
+    Eigen::Vector3d vel_ned;
+    Eigen::Vector3d accel_ned;
 
-    // tf2::fromMsg(req->vector, accel_enu);
-    // send_setpoint_acceleration(req->header.stamp, accel_enu);
+    tf2::fromMsg(req->position, pos_ned);
+    tf2::fromMsg(req->velocity, vel_ned);
+    tf2::fromMsg(req->acceleration, accel_ned);
+    send_setpoint_full(
+      req->header.stamp,
+      req->type_mask,
+      pos_ned,
+      vel_ned,
+      accel_ned,
+      req->yaw,
+      req->yaw_rate);
   }
 };
 
