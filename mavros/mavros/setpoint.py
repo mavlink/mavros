@@ -10,7 +10,7 @@
 import rclpy
 from geographic_msgs.msg import GeoPoseStamped
 from geometry_msgs.msg import PoseStamped, Twist, TwistStamped, Vector3Stamped
-from mavros_msgs.msg import AttitudeTarget, GlobalPositionTarget, PositionTarget, Thrust
+from mavros_msgs.msg import AttitudeTarget, GlobalPositionTarget, PositionTarget, Thrust, FullSetpoint
 from nav_msgs.msg import Path
 from std_srvs.srv import Trigger
 from trajectory_msgs.msg import MultiDOFJointTrajectory
@@ -45,6 +45,11 @@ class SetpointAttitudePlugin(PluginModule):
     def pub_thrust(self) -> rclpy.node.Publisher:
         return self.create_publisher(Thrust, ("setpoint_attitude", "thrust"), QOS)
 
+class SetpointFullPlugin(PluginModule):
+
+    @cached_property
+    def pub_accel(self) -> rclpy.node.Publisher:
+        return self.create_publisher(FullSetpoint, ("setpoint_full", "cmd_full_setpoint"), QOS)
 
 class SetpointPositionPlugin(PluginModule):
 

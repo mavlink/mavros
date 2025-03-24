@@ -50,6 +50,7 @@ set(msg_files
   msg/EstimatorStatus.msg
   msg/ExtendedState.msg
   msg/FileEntry.msg
+  msg/FullSetpoint.msg
   msg/GPSINPUT.msg
   msg/GPSRAW.msg
   msg/GPSRTK.msg

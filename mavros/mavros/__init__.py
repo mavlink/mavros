@@ -54,6 +54,10 @@ class Client(BaseNode):
     @cached_property
     def setpoint_attitude(self) -> setpoint.SetpointAttitudePlugin:
         return setpoint.SetpointAttitudePlugin(self)
+    
+    @cached_property
+    def setpoint_full(self) -> setpoint.SetpointFullPlugin:
+        return setpoint.SetpointFullPlugin(self)
 
     @cached_property
     def setpoint_position(self) -> setpoint.SetpointPositionPlugin:

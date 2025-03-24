@@ -149,6 +149,7 @@ add_library(mavros_plugins SHARED
   src/plugins/rc_io.cpp
   src/plugins/setpoint_accel.cpp
   src/plugins/setpoint_attitude.cpp
+  src/plugins/setpoint_full.cpp
   src/plugins/setpoint_position.cpp
   src/plugins/setpoint_raw.cpp
   src/plugins/setpoint_trajectory.cpp
