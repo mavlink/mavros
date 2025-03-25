@@ -158,7 +158,7 @@ add_library(mavros_plugins SHARED
   src/plugins/sys_time.cpp
   src/plugins/waypoint.cpp
   src/plugins/wind_estimation.cpp
-  # [[[end]]] (checksum: ccf56c1a56e9dccf8464483f7b1eab99)
+  # [[[end]]] (checksum: 5dcefddd8ce105706a7c30e952d5e996)
 )
 add_dependencies(mavros_plugins
   mavros

@@ -92,14 +92,13 @@ Send setpoint accelerations/forces to FCU controller.</description>
     <description>@brief Setpoint attitude plugin
 @plugin setpoint_attitude
 
+Send setpoint attitude/orientation/thrust to FCU controller.</description>
+  </class>
   <class name="setpoint_full" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointFullPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-    <description>@brief Setpoint full plugin
+    <description>@brief Full setpoint plugin
 @plugin setpoint_full
 
-Send full localNED setpoints to FCU controller.</description>
-  </class>
-
-Send setpoint attitude/orientation/thrust to FCU controller.</description>
+Send a full localNED setpoint to FCU controller.</description>
   </class>
   <class name="setpoint_position" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::SetpointPositionPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Setpoint position plugin
@@ -145,4 +144,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: e47485a8565112ddf4058c7a77bcc519) -->
+<!-- [[[end]]] (checksum: 3e54f3679ce4c5ba2cf8dd8d928571b1) -->
