@@ -16,10 +16,15 @@
  * @{
  */
 
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-
+#if __has_include(<message_filters/subscriber.hpp>)
+  #include <message_filters/subscriber.hpp>
+  #include <message_filters/synchronizer.hpp>
+  #include <message_filters/sync_policies/approximate_time.hpp>
+#else
+  #include <message_filters/subscriber.h>
+  #include <message_filters/synchronizer.h>
+  #include <message_filters/sync_policies/approximate_time.h>
+#endif
 #include <memory>
 
 #include "tf2_eigen/tf2_eigen.hpp"
@@ -64,6 +69,12 @@ public:
 
     auto qos = rclcpp::QoS(10);
 
+    #ifdef USE_OLD_RMW_QOS
+    auto subscriber_qos = qos.get_rmw_qos_profile();
+    #else
+    auto subscriber_qos = qos;
+    #endif
+
     node_declare_and_watch_parameter(
       "reverse_thrust", false, [&](const rclcpp::Parameter & p) {
         reverse_thrust = p.as_bool();
@@ -82,13 +93,13 @@ public:
           /**
            * @brief Use message_filters to sync attitude and thrust msg coming from different topics
            */
-          pose_sub.subscribe(node, "~/attitude", qos.get_rmw_qos_profile());
+          pose_sub.subscribe(node, "~/attitude", subscriber_qos);
 
           sync_pose = std::make_unique<SyncPoseThrust>(SyncPoseThrustPolicy(10), pose_sub, th_sub);
           sync_pose->registerCallback(&SetpointAttitudePlugin::attitude_pose_cb, this);
 
         } else {
-          twist_sub.subscribe(node, "~/cmd_vel", qos.get_rmw_qos_profile());
+          twist_sub.subscribe(node, "~/cmd_vel", subscriber_qos);
 
           sync_twist =
           std::make_unique<SyncTwistThrust>(SyncTwistThrustPolicy(10), twist_sub, th_sub);
@@ -97,7 +108,7 @@ public:
       });
 
     // thrust msg subscriber to sync
-    th_sub.subscribe(node, "~/thrust", qos.get_rmw_qos_profile());
+    th_sub.subscribe(node, "~/thrust", subscriber_qos);
   }
 
   Subscriptions get_subscriptions() override

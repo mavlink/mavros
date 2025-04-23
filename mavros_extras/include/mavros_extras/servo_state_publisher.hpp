@@ -17,7 +17,11 @@
 #define MAVROS_EXTRAS__SERVO_STATE_PUBLISHER_HPP_
 
 #include <yaml-cpp/yaml.h>
-#include <urdf/model.h>
+#if __has_include(<urdf/model.hpp>)
+  #include <urdf/model.hpp>
+#else
+  #include <urdf/model.h>
+#endif
 
 #include <algorithm>
 #include <memory>
