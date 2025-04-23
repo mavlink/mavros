@@ -69,7 +69,7 @@ public:
 
     auto qos = rclcpp::QoS(10);
 
-    #if USE_OLD_RMW_QOS
+    #ifdef DUSE_OLD_RMW_QOS_MESSAGE_FILTERS
     auto subscriber_qos = qos.get_rmw_qos_profile();
     #else
     auto subscriber_qos = qos;
