@@ -85,6 +85,13 @@ if(rclcpp_VERSION VERSION_LESS 17.0.0)
   )
 endif()
 
+if(message_filters_VERSION VERSION_LESS 5.0.0)
+  # Jazzy and older
+  add_definitions(
+    -DUSE_OLD_RMW_QOS_MESSAGE_FILTERS
+  )
+endif()
+
 # [[[cog:
 # import mavros_cog
 # ]]]
