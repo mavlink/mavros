@@ -104,14 +104,32 @@ private:
     }
     if (calibration_show[mr.compass_id]) {
       auto mcr = mavros_msgs::msg::MagnetometerReporter();
-
       mcr.header.stamp = node->now();
       mcr.header.frame_id = std::to_string(mr.compass_id);
+      
       mcr.report = mr.cal_status;
       mcr.confidence = mr.orientation_confidence;
-
-      mcr_pub->publish(mcr);
-      calibration_show[mr.compass_id] = false;
+      mcr.compass_id = mr.compass_id;
+      mcr.cal_mask = mr.cal_mask;
+      mcr.cal_status = mr.cal_status;
+      mcr.autosaved = mr.autosaved;
+      mcr.fitness = mr.fitness;
+      mcr.ofs_x = mr.ofs_x;
+      mcr.ofs_y = mr.ofs_y;
+      mcr.ofs_z = mr.ofs_z;
+      mcr.diag_x = mr.diag_x;
+      mcr.diag_y = mr.diag_y;
+      mcr.diag_z = mr.diag_z;
+      mcr.offdiag_x = mr.offdiag_x;
+      mcr.offdiag_y = mr.offdiag_y;
+      mcr.offdiag_z = mr.offdiag_z;
+      mcr.orientation_confidence = mr.orientation_confidence;
+      mcr.old_orientation = mr.old_orientation;
+      mcr.new_orientation = mr.new_orientation;
+      mcr.scale_factor = mr.scale_factor;
+	
+	  mcr_pub->publish(mcr);
+	  calibration_show[mr.compass_id] = false;
     }
   }
 };
