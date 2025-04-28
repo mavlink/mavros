@@ -106,7 +106,7 @@ private:
       auto mcr = mavros_msgs::msg::MagnetometerReporter();
       mcr.header.stamp = node->now();
       mcr.header.frame_id = std::to_string(mr.compass_id);
-      
+
       mcr.report = mr.cal_status;
       mcr.confidence = mr.orientation_confidence;
       mcr.compass_id = mr.compass_id;
@@ -127,9 +127,9 @@ private:
       mcr.old_orientation = mr.old_orientation;
       mcr.new_orientation = mr.new_orientation;
       mcr.scale_factor = mr.scale_factor;
-	
-	  mcr_pub->publish(mcr);
-	  calibration_show[mr.compass_id] = false;
+
+      mcr_pub->publish(mcr);
+      calibration_show[mr.compass_id] = false;
     }
   }
 };
