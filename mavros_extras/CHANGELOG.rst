@@ -2,6 +2,9 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.20.0 (2024-10-10)
 -------------------
 * Add missing std_srvs dependency
