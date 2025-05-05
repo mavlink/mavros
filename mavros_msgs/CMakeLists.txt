@@ -76,11 +76,11 @@ set(msg_files
   msg/MountControl.msg
   msg/NavControllerOutput.msg
   msg/OnboardComputerStatus.msg
-  msg/OpenDroneID/BasicID.msg
-  msg/OpenDroneID/OperatorID.msg
-  msg/OpenDroneID/SelfID.msg
-  msg/OpenDroneID/System.msg
-  msg/OpenDroneID/SystemUpdate.msg
+  msg/OpenDroneIDBasicID.msg
+  msg/OpenDroneIDOperatorID.msg
+  msg/OpenDroneIDSelfID.msg
+  msg/OpenDroneIDSystem.msg
+  msg/OpenDroneIDSystemUpdate.msg
   msg/OpticalFlow.msg
   msg/OpticalFlowRad.msg
   msg/OverrideRCIn.msg
@@ -110,7 +110,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: a8e24eb0a6da5cea6cc049fdc6b2612e)
+  # [[[end]]] (checksum: 6c52941c1b5d0aec5f3315d3e498c857)
 )
 
 set(srv_files
