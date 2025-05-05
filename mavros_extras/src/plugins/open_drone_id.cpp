@@ -174,8 +174,8 @@ private:
   template<size_t _N>
   void set_string_z(std::array<uint8_t, _N> & a, const std::string & s)
   {
-    uint8_t* datap = a.data();
-    strncpy(static_cast<char*>(static_cast<void*>(datap)), s.c_str(), a.size() - 1);
+    uint8_t * datap = a.data();
+    strncpy(static_cast<char *>(static_cast<void *>(datap)), s.c_str(), a.size() - 1);
     a[a.size() - 1] = '\0';
   }
 
