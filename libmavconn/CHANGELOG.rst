@@ -2,6 +2,25 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'master' into ros2
+  * master:
+  1.20.1
+  update changelog
+  1.20.0
+  update changelog
+  update mavlink dep branch
+  Add missing std_srvs dependency
+  add param to odom plugin
+  add frame_id parameter
+  Fix compile error when compiling with gcc 13
+* 1.20.1
+* update changelog
+* 1.20.0
+* update changelog
+* Contributors: Vladimir Ermakov
+
 2.9.0 (2024-10-10)
 ------------------
 

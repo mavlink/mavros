@@ -2,6 +2,48 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: fix format
+* extras: fix build of odom
+* extras: fix odid build
+* extras: re-generate all cog scripts
+* extras: fix odid messages
+* extras: fix indent
+* Adding OpenDroneID plugin and messages (`#3 <https://github.com/mavlink/mavros/issues/3>`_)
+* mavros: fix indentation
+* Merge branch 'master' into ros2
+  * master:
+  1.20.1
+  update changelog
+  1.20.0
+  update changelog
+  update mavlink dep branch
+  Add missing std_srvs dependency
+  add param to odom plugin
+  add frame_id parameter
+  Fix compile error when compiling with gcc 13
+* 1.20.1
+* update changelog
+* Fix code style: remove trailing whitespace and tabs (Rolling distribution)
+* Fix: Corrected compass calibration result report to match mavlink documentation (MAG_CAL_REPORT (192))
+* Address Warnings
+* re-run ci
+* re-run ci
+* ament_uncrustify
+* Fix cpplint errors
+* typo
+* Added support for MAV_FRAME::BODY_FRD to landing_target
+* 1.20.0
+* update changelog
+* Add missing std_srvs dependency
+* add param to odom plugin
+* add frame_id parameter
+* Fix compile error when compiling with gcc 13
+  The error is:
+  src/plugins/mag_calibration_status.cpp:64:22: error: ‘bitset’ is not a member of ‘std’
+* Contributors: EnderMandS, Gus Meyer, Kye Morton, Michael Carlstrom, Michal Sojka, Roland Arsenault, Vladimir Ermakov, denis
+
 2.9.0 (2024-10-10)
 ------------------
 * extras: fix cmake lint

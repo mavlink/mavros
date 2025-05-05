@@ -2,6 +2,32 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: re-generate all cog scripts
+* extras: fix odid messages
+* msgs: generate ODID constants from mavlink
+* msgs: fix message names for ODID
+* Adding OpenDroneID plugin and messages (`#3 <https://github.com/mavlink/mavros/issues/3>`_)
+* Merge branch 'master' into ros2
+  * master:
+  1.20.1
+  update changelog
+  1.20.0
+  update changelog
+  update mavlink dep branch
+  Add missing std_srvs dependency
+  add param to odom plugin
+  add frame_id parameter
+  Fix compile error when compiling with gcc 13
+* 1.20.1
+* update changelog
+* Fix: Corrected compass calibration result report to match mavlink documentation (MAG_CAL_REPORT (192))
+* built successfully
+* 1.20.0
+* update changelog
+* Contributors: Gus Meyer, Michael Carlstrom, Vladimir Ermakov, denis
+
 2.9.0 (2024-10-10)
 ------------------
 
