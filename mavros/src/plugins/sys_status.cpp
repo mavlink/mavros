@@ -238,7 +238,7 @@ public:
     check_flag("z/altitude control", STS::Z_ALTITUDE_CONTROL);
     check_flag("x/y position control", STS::XY_POSITION_CONTROL);
     check_flag("motor outputs / control", STS::MOTOR_OUTPUTS);
-    check_flag("rc receiver", STS::RC_RECEIVER);
+    check_flag("RC receiver", STS::RC_RECEIVER);
     check_flag("2nd 3D gyro", STS::SENSOR_3D_GYRO2);
     check_flag("2nd 3D accelerometer", STS::SENSOR_3D_ACCEL2);
     check_flag("2nd 3D magnetometer", STS::SENSOR_3D_MAG2);
@@ -253,7 +253,7 @@ public:
     check_flag("pre-arm check status. Always healthy when armed", STS::PREARM_CHECK);
     check_flag("Avoidance/collision prevention", STS::OBSTACLE_AVOIDANCE);
     check_flag("propulsion (actuator, esc, motor or propellor)", STS::PROPULSION);
-    // [[[end]]] (checksum: 435a149e38737aac78b4be94b670a6dd)
+    // [[[end]]] (checksum: 7fbf2799c5df4ad3ba0086e055b61b68)
 
     stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
     stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
