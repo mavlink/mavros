@@ -170,7 +170,9 @@ private:
     return 0;
   }
 
-  //! A variant of mavlink::set_string_z, but for uint8_t, because of broken convention on ODID messages
+  /** A variant of mavlink::set_string_z, but for uint8_t,
+   * because of broken convention on ODID messages
+   */
   template<size_t _N>
   void set_string_z(std::array<uint8_t, _N> & a, const std::string & s)
   {
@@ -178,7 +180,6 @@ private:
     strncpy(static_cast<char *>(static_cast<void *>(datap)), s.c_str(), a.size() - 1);
     a[a.size() - 1] = '\0';
   }
-
 };
 }       // namespace extra_plugins
 }       // namespace mavros

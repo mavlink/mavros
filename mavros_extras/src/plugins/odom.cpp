@@ -99,9 +99,12 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
 
-  std::string fcu_odom_parent_id_des;                           //!< desired orientation of the fcu odometry message's parent frame
-  std::string fcu_odom_child_id_des;                            //!< desired orientation of the fcu odometry message's child frame
-  std::string fcu_map_id_des;                                           //!< desired orientation of the fcu map frame
+  //!< desired orientation of the fcu odometry message's parent frame
+  std::string fcu_odom_parent_id_des;
+  //!< desired orientation of the fcu odometry message's child frame
+  std::string fcu_odom_child_id_des;
+  //!< desired orientation of the fcu map frame
+  std::string fcu_map_id_des;
 
   /**
    * @brief Lookup static transform with error handling
