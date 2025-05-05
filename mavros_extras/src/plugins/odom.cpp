@@ -57,23 +57,23 @@ public:
 
   explicit OdometryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "odometry"),
-    fcu_map_id_des("map"),
     fcu_odom_parent_id_des("map"),
-    fcu_odom_child_id_des("base_link")
+    fcu_odom_child_id_des("base_link"),
+    fcu_map_id_des("map")
   {
     enable_node_watch_parameters();
 
     // frame params:
     node_declare_and_watch_parameter(
-      "fcu.odom_parent_id_des", uas_.get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
+      "fcu.odom_parent_id_des", uas_->get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_parent_id_des = p.as_string();
       });
     node_declare_and_watch_parameter(
-      "fcu.odom_child_id_des", uas_.get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
+      "fcu.odom_child_id_des", uas_->get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_child_id_des = p.as_string();
       });
     node_declare_and_watch_parameter(
-      "fcu.map_id_des", uas_.get_map_frame_id(), [&](const rclcpp::Parameter & p) {
+      "fcu.map_id_des", uas_->get_map_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_map_id_des = p.as_string();
       });
 
