@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.0 (2025-05-05)
+-------------------
 * extras: fix format
 * extras: fix build of odom
 * extras: fix odid build

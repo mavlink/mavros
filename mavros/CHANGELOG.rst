@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.0 (2025-05-05)
+-------------------
 * extras: fix odid build
 * extras: re-generate all cog scripts
 * mavros: fix indentation
