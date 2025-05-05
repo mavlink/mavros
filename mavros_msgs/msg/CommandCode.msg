@@ -38,7 +38,7 @@ uint16 DO_FOLLOW = 32                              # Begin following a target
 uint16 DO_FOLLOW_REPOSITION = 33                   # Reposition the MAV after a follow target command has been sent
 uint16 DO_SET_MODE = 176                           # Set system mode.
 uint16 DO_JUMP = 177                               # Jump to the desired command in the mission list.  Repeat this action only the specified number of times
-uint16 DO_CHANGE_SPEED = 178                       # Change speed and/or throttle set points
+uint16 DO_CHANGE_SPEED = 178                       # Change speed and/or throttle set points. The value persists until it is overridden or there is a mode change
 uint16 DO_SET_HOME = 179                           # Changes the home location either to the current location or a specified location.
 uint16 DO_SET_PARAMETER = 180                      # Set a system parameter.  Caution!  Use of this command requires knowledge of the numeric enumeration value of the parameter.
 uint16 DO_SET_RELAY = 181                          # Set a relay to a condition.
@@ -47,10 +47,11 @@ uint16 DO_SET_SERVO = 183                          # Set a servo to a desired PW
 uint16 DO_REPEAT_SERVO = 184                       # Cycle a between its nominal setting and a desired PWM for a desired number of cycles with a desired period.
 uint16 DO_FLIGHTTERMINATION = 185                  # Terminate flight immediately
 uint16 DO_CHANGE_ALTITUDE = 186                    # Change altitude set point.
+uint16 DO_RETURN_PATH_START = 188                  # Mission item to specify the start of a failsafe/landing return-path segment (the end of the segment is the next MAV_CMD_DO_LAND_START item). A vehicle that is using missions for landing (e.g. in a return mode) will join the mission on the closest path of the return-path segment (instead of MAV_CMD_DO_LAND_START or the nearest waypoint). The main use case is to minimize the failsafe flight path in corridor missions, where the inbound/outbound paths are constrained (by geofences) to the same particular path. The MAV_CMD_NAV_RETURN_PATH_START would be placed at the start of the return path. If a failsafe occurs on the outbound path the vehicle will move to the nearest point on the return path (which is parallel for this kind of mission), effectively turning round and following the shortest path to landing. If a failsafe occurs on the inbound path the vehicle is already on the return segment and will continue to landing. The Latitude/Longitude/Altitude are optional, and may be set to 0 if not needed. If specified, the item defines the waypoint at which the return segment starts. If sent using as a command, the vehicle will perform a mission landing (using the land segment if defined) or reject the command if mission landings are not supported, or no mission landing is defined. When used as a command any position information in the command is ignored.
 uint16 DO_LAND_START = 189                         # Mission command to perform a landing. This is used as a marker in a mission to tell the autopilot where a sequence of mission items that represents a landing starts. It may also be sent via a COMMAND_LONG to trigger a landing, in which case the nearest (geographically) landing sequence in the mission will be used. The Latitude/Longitude/Altitude is optional, and may be set to 0 if not needed. If specified then it will be used to help find the closest landing sequence.
 uint16 DO_RALLY_LAND = 190                         # Mission command to perform a landing from a rally point.
 uint16 DO_GO_AROUND = 191                          # Mission command to safely abort an autonomous landing.
-uint16 DO_REPOSITION = 192                         # Reposition the vehicle to a specific WGS84 global position.
+uint16 DO_REPOSITION = 192                         # Reposition the vehicle to a specific WGS84 global position. This command is intended for guided commands (for missions use MAV_CMD_NAV_WAYPOINT instead).
 uint16 DO_PAUSE_CONTINUE = 193                     # If in a GPS controlled position mode, hold the current position or continue.
 uint16 DO_SET_REVERSE = 194                        # Set moving direction to forward or reverse.
 uint16 DO_SET_ROI_LOCATION = 195                   # Sets the region of interest (ROI) to a location. This can then be used by the vehicle's control system to control the vehicle attitude and the attitude of various sensors such as cameras.
@@ -64,7 +65,7 @@ uint16 DO_DIGICAM_CONTROL = 203                    # Control digital camera. Thi
 uint16 DO_MOUNT_CONFIGURE = 204                    # Mission command to configure a camera or antenna mount
 uint16 DO_MOUNT_CONTROL = 205                      # Mission command to control a camera or antenna mount
 uint16 DO_SET_CAM_TRIGG_DIST = 206                 # Mission command to set camera trigger distance for this flight. The camera is triggered each time this distance is exceeded. This command can also be used to set the shutter integration time for the camera.
-uint16 DO_FENCE_ENABLE = 207                       # Mission command to enable the geofence
+uint16 DO_FENCE_ENABLE = 207                       # Enable the geofence. This can be used in a mission or via the command protocol. The persistence/lifetime of the setting is undefined. Depending on flight stack implementation it may persist until superseded, or it may revert to a system default at the end of a mission. Flight stacks typically reset the setting to system defaults on reboot.
 uint16 DO_PARACHUTE = 208                          # Mission item/command to release a parachute or enable/disable auto release.
 uint16 DO_MOTOR_TEST = 209                         # Mission command to perform motor test.
 uint16 DO_INVERTED_FLIGHT = 210                    # Change to/from inverted flight.
@@ -82,6 +83,7 @@ uint16 DO_GIMBAL_MANAGER_PITCHYAW = 1000           # Set gimbal manager pitch/ya
 uint16 DO_GIMBAL_MANAGER_CONFIGURE = 1001          # Gimbal configuration to set which sysid/compid is in primary and secondary control.
 uint16 DO_TRIGGER_CONTROL = 2003                   # Enable or disable on-board camera triggering system.
 uint16 DO_VTOL_TRANSITION = 3000                   # Request VTOL transition
+uint16 DO_SET_SAFETY_SWITCH_STATE = 5300           # Change state of safety switch.
 uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
 uint16 DO_WINCH = 42600                            # Command to operate winch.
 
@@ -107,7 +109,7 @@ uint16 LOGGING_STOP = 2511                         # Request to stop streaming l
 uint16 MISSION_START = 300                         # start running a mission
 
 # MAV_CMD_NAV
-uint16 NAV_WAYPOINT = 16                           # Navigate to waypoint.
+uint16 NAV_WAYPOINT = 16                           # Navigate to waypoint. This is intended for use in missions (for guided commands outside of missions use MAV_CMD_DO_REPOSITION).
 uint16 NAV_LOITER_UNLIM = 17                       # Loiter around this waypoint an unlimited amount of time
 uint16 NAV_LOITER_TURNS = 18                       # Loiter around this waypoint for X turns
 uint16 NAV_LOITER_TIME = 19                        # Loiter around this waypoint for X seconds
@@ -179,6 +181,8 @@ uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between me
 uint16 SET_CAMERA_MODE = 530                       # Set camera running mode. Use NaN for reserved values. GCS will send a MAV_CMD_REQUEST_VIDEO_STREAM_STATUS command after a mode change if the camera supports video streaming.
 uint16 SET_CAMERA_ZOOM = 531                       # Set camera zoom. Camera must respond with a CAMERA_SETTINGS message (on success).
 uint16 SET_CAMERA_FOCUS = 532                      # Set camera focus. Camera must respond with a CAMERA_SETTINGS message (on success).
+uint16 SET_STORAGE_USAGE = 533                     # Set that a particular storage is the preferred location for saving photos, videos, and/or other media (e.g. to set that an SD card is used for storing videos). There can only be one preferred save location for each particular media type: setting a media usage flag will clear/reset that same flag if set on any other storage. If no flag is set the system should use its default storage. A target system can choose to always use default storage, in which case it should ACK the command with MAV_RESULT_UNSUPPORTED. A target system can choose to not allow a particular storage to be set as preferred storage, in which case it should ACK the command with MAV_RESULT_DENIED.
+uint16 SET_CAMERA_SOURCE = 534                     # Set camera source. Changes the camera's active sources on cameras with multiple image sensors.
 uint16 SET_GUIDED_SUBMODE_STANDARD = 4000          # This command sets the submode to standard guided when vehicle is in guided mode. The vehicle holds position and altitude and the user can input the desired velocities along all three axes.
 uint16 SET_GUIDED_SUBMODE_CIRCLE = 4001            # This command sets submode circle when vehicle is in guided mode. Vehicle flies along a circle facing the center of the circle. The user can input the velocity along the circle and change the radius. If no input is given the vehicle will hold position.
 
@@ -197,4 +201,4 @@ uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capt
 uint16 VIDEO_START_STREAMING = 2502                # Start video streaming
 uint16 VIDEO_STOP_STREAMING = 2503                 # Stop the given video stream
 
-# [[[end]]] (checksum: 73ee94ac661c9fcb61528a6668f71d94)
+# [[[end]]] (checksum: 5fb33a8d69e6d6876185678cfca286cd)
