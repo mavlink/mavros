@@ -1,4 +1,5 @@
 # Remote ID message - System
+# https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_SYSTEM
 
 # [[[cog:
 # import mavros_cog
@@ -15,6 +16,7 @@ uint8 CLASSIFICATION_TYPE_EU = 1         # The classification type for the UA fo
 # [[[end]]] (checksum: 518034079daae18afbc49769bc1a1031)
 
 std_msgs/Header header
+string id_or_mac
 uint8 operator_location_type
 uint8 classification_type
 int32 operator_latitude
@@ -26,4 +28,3 @@ float32 area_floor
 uint8 category_eu
 uint8 class_eu
 float32 operator_altitude_geo
-uint32 timestamp

@@ -1,4 +1,5 @@
 # Remote ID message - Basic ID
+# https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_BASIC_ID
 
 # [[[cog:
 # import mavros_cog
@@ -31,6 +32,7 @@ uint8 UA_TYPE_OTHER = 15                 # Other type of aircraft not listed ear
 # [[[end]]] (checksum: 5c8d15e3412f1859012762424293d945)
 
 std_msgs/Header header
+string id_or_mac
 uint8 id_type
 uint8 ua_type
 string uas_id

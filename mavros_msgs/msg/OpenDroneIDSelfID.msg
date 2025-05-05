@@ -1,4 +1,5 @@
 # Remote ID message - Self ID
+# https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_SELF_ID
 
 # [[[cog:
 # import mavros_cog
@@ -11,5 +12,6 @@ uint8 DESC_TYPE_EXTENDED_STATUS = 2      # Optional additional clarification whe
 # [[[end]]] (checksum: 08bf4b7e669d01d655893e5d543f86b1)
 
 std_msgs/Header header
+string id_or_mac
 uint8 description_type
 string description

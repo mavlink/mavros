@@ -83,46 +83,49 @@ private:
   rclcpp::Subscription<mavros_msgs::msg::SystemUpdate>::SharedPtr system_update_sub;
 
 
-  void basic_id_cb(const mavros_msgs::msg::BasicID::SharedPtr msg)
+  void basic_id_cb(const mavros_msgs::msg::OpenDroneIDBasicID::SharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_BASIC_ID basic_id{};
 
+    uas_->msg_set_target(basic_id);
+    mavlink::set_string_z(basic_id.id_or_mac, msg->id_or_mac);
     basic_id.id_type = msg->id_type;
     basic_id.ua_type = msg->ua_type;
-
-    size_t length = std::min(basic_id.uas_id.size(), msg->uas_id.size());
-    std::memcpy(basic_id.uas_id.data(), msg->uas_id.data(), length);
+    mavlink::set_string_z(basic_id.uas_id, msg->uas_id);
 
     uas->send_message(basic_id);
   }
 
-  void operator_id_cb(const mavros_msgs::msg::OperatorID::SharedPtr msg)
+  void operator_id_cb(const mavros_msgs::msg::OpenDroneIDOperatorID::SharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_OPERATOR_ID operator_id{};
 
+    uas_->msg_set_target(operator_id);
+    mavlink::set_string_z(operator_id.id_or_mac, msg->id_or_mac);
     operator_id.operator_id_type = msg->operator_id_type;
-
-    size_t length = std::min(operator_id.operator_id.size(), msg->operator_id.size());
-    std::memcpy(operator_id.operator_id.data(), msg->operator_id.data(), length);
+    mavlink::set_string_z(operator_id.operator_id, msg->operator_id);
 
     uas->send_message(operator_id);
   }
 
-  void self_id_cb(const mavros_msgs::msg::SelfID::SharedPtr msg)
+  void self_id_cb(const mavros_msgs::msg::OpenDroneIDSelfID::SharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SELF_ID self_id{};
-    self_id.description_type = msg->description_type;
 
-    size_t length = std::min(self_id.description.size(), msg->description.size());
-    std::memcpy(self_id.description.data(), msg->description.data(), length);
+    uas_->msg_set_target(self_id);
+    mavlink::set_string_z(self_id.id_or_mac, msg->id_or_mac);
+    self_id.description_type = msg->description_type;
+    mavlink::set_string_z(self_id.description, msg->description);
 
     uas->send_message(self_id);
   }
 
-  void system_cb(const mavros_msgs::msg::System::SharedPtr msg)
+  void system_cb(const mavros_msgs::msg::OpenDroneIDSystem::SharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SYSTEM system{};
 
+    uas_->msg_set_target(system);
+    mavlink::set_string_z(system.id_or_mac, msg->id_or_mac);
     system.operator_location_type = msg->operator_location_type;
     system.classification_type = msg->classification_type;
     system.operator_latitude = msg->operator_latitude;
@@ -134,21 +137,37 @@ private:
     system.category_eu = msg->category_eu;
     system.class_eu = msg->class_eu;
     system.operator_altitude_geo = msg->operator_altitude_geo;
-    system.timestamp = msg->timestamp;
+    system.timestamp = to_timestamp(msg->header);
 
     uas->send_message(system);
   }
 
-  void system_update_cb(const mavros_msgs::msg::SystemUpdate::SharedPtr msg)
+  void system_update_cb(const mavros_msgs::msg::OpenDroneIDSystemUpdate::SharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SYSTEM_UPDATE system_update{};
 
+    uas_->msg_set_target(system_update);
     system_update.operator_latitude = msg->operator_latitude;
     system_update.operator_longitude = msg->operator_longitude;
     system_update.operator_altitude_geo = msg->operator_altitude_geo;
-    system_update.timestamp = msg->timestamp;
+    system_update.timestamp = to_timestamp(msg->header);
 
     uas->send_message(system_update);
+  }
+
+  //! ODID timestamp is a 32 bit Unix Timestamp in seconds since 00:00:00 01/01/2019.
+  uint32_t to_timestamp(std_msgs::msg::Header & hrd)
+  {
+    auto s = hdr.stamp.seconds();
+
+    // 2019.01.01 00:00:00 UTC
+    const double epoch = 1546300800;
+
+    if (s > epoch) {
+      return s - epoch;
+    }
+
+    return 0;
   }
 
 };
