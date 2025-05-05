@@ -159,29 +159,7 @@ UAS::UAS(
       connect_to_router();
 
       // Publish helper TFs used for frame transformation in the odometry plugin
-      {
-        std::string base_link_frd = base_link_frame_id + "_frd";
-        std::string odom_ned = odom_frame_id + "_ned";
-        std::string map_ned = map_frame_id + "_ned";
-        std::vector<geometry_msgs::msg::TransformStamped> transform_vector;
-        add_static_transform(
-          map_frame_id, map_ned, Eigen::Affine3d(
-            ftf::quaternion_from_rpy(
-              M_PI, 0,
-              M_PI_2)),
-          transform_vector);
-        add_static_transform(
-          odom_frame_id, odom_ned, Eigen::Affine3d(
-            ftf::quaternion_from_rpy(
-              M_PI, 0,
-              M_PI_2)),
-          transform_vector);
-        add_static_transform(
-          base_link_frame_id, base_link_frd,
-          Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)), transform_vector);
-
-        tf2_static_broadcaster.sendTransform(transform_vector);
-      }
+      setup_static_tf()
 
       std::stringstream ss;
       for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {

@@ -41,6 +41,19 @@ Changelog for package mavros_extras
   Added all functionality to support a plugin to enable compatibility with MAVLink Gimbal Protocol v2
 * Contributors: Frederik Mazur Andersen, Mark-Beaty, Vladimir Ermakov
 
+1.20.1 (2025-05-05)
+-------------------
+
+1.20.0 (2024-10-10)
+-------------------
+* Add missing std_srvs dependency
+* add param to odom plugin
+* add frame_id parameter
+* Fix compile error when compiling with gcc 13
+  The error is:
+  src/plugins/mag_calibration_status.cpp:64:22: error: ‘bitset’ is not a member of ‘std’
+* Contributors: EnderMandS, Michal Sojka, Roland Arsenault
+
 1.19.0 (2024-06-06)
 -------------------
 

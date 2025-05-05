@@ -57,6 +57,7 @@ public:
 
   explicit OdometryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "odometry"),
+		fcu_map_id_des("map"),
     fcu_odom_parent_id_des("map"),
     fcu_odom_child_id_des("base_link")
   {
@@ -64,13 +65,18 @@ public:
 
     // frame params:
     node_declare_and_watch_parameter(
-      "fcu.odom_parent_id_des", "map", [&](const rclcpp::Parameter & p) {
+      "fcu.odom_parent_id_des", uas_.get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_parent_id_des = p.as_string();
       });
     node_declare_and_watch_parameter(
-      "fcu.odom_child_id_des", "base_link", [&](const rclcpp::Parameter & p) {
+      "fcu.odom_child_id_des", uas_.get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_child_id_des = p.as_string();
       });
+    node_declare_and_watch_parameter(
+      "fcu.map_id_des", uas_.get_map_frame_id(), [&](const rclcpp::Parameter & p) {
+        fcu_map_id_des = p.as_string();
+      });
+
 
     // publishers
     odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/in", 10);
@@ -93,10 +99,9 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
 
-  //!< desired orientation of the fcu odometry message's parent frame
-  std::string fcu_odom_parent_id_des;
-  //!< desired orientation of the fcu odometry message's child frame
-  std::string fcu_odom_child_id_des;
+	std::string fcu_odom_parent_id_des;			//!< desired orientation of the fcu odometry message's parent frame
+	std::string fcu_odom_child_id_des;			//!< desired orientation of the fcu odometry message's child frame
+	std::string fcu_map_id_des;					//!< desired orientation of the fcu map frame
 
   /**
    * @brief Lookup static transform with error handling
@@ -144,12 +149,12 @@ private:
     Eigen::Affine3d tf_parent2parent_des;
     Eigen::Affine3d tf_child2child_des;
 
-    lookup_static_transform(
-      fcu_odom_parent_id_des, fcu_odom_parent_id_des + "_ned",
-      tf_parent2parent_des);
-    lookup_static_transform(
-      fcu_odom_child_id_des, fcu_odom_child_id_des + "_frd",
-      tf_child2child_des);
+		lookup_static_transform(
+                fcu_map_id_des, fcu_map_id_des+"_ned",
+                tf_parent2parent_des);
+		lookup_static_transform(
+                fcu_odom_child_id_des, fcu_odom_child_id_des+"_frd",
+                tf_child2child_des);
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     Matrix6d cov_pose = Matrix6d::Zero();

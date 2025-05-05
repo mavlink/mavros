@@ -47,3 +47,18 @@ void UAS::publish_static_transform(
 
   tf2_static_broadcaster.sendTransform(static_transform_stamped);
 }
+
+void UAS::setup_static_tf()
+{
+	std::vector<geometry_msgs::TransformStamped> transform_vector;
+	add_static_transform(map_frame_id, map_frame_id+"_ned",
+            Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),
+            transform_vector);
+	add_static_transform(odom_frame_id, odom_frame_id+"_ned",
+            Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, M_PI_2)),
+            transform_vector);
+	add_static_transform(base_link_frame_id, base_link_frame_id+"_frd",
+            Eigen::Affine3d(ftf::quaternion_from_rpy(M_PI, 0, 0)),
+            transform_vector);
+	tf2_static_broadcaster.sendTransform(transform_vector);
+}

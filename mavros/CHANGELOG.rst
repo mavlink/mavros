@@ -53,6 +53,15 @@ Changelog for package mavros
   Fixed bug `#569 <https://github.com/mavlink/mavros/issues/569>`_ from mavros. Fixed another bug in the building of the ros mavlink message- the seq field was not added to the ros mavlink message.
 * Contributors: Beniamino Pozzan, Vladimir Ermakov, danielkalmanson
 
+1.20.1 (2025-05-05)
+-------------------
+
+1.20.0 (2024-10-10)
+-------------------
+* add param to odom plugin
+* add frame_id parameter
+* Contributors: EnderMandS
+
 1.19.0 (2024-06-06)
 -------------------
 * gps_global_origin: remove LLA to ECEF conversion

@@ -16,6 +16,12 @@ Changelog for package libmavconn
 * update changelog
 * Contributors: Vladimir Ermakov
 
+1.20.1 (2025-05-05)
+-------------------
+
+1.20.0 (2024-10-10)
+-------------------
+
 1.19.0 (2024-06-06)
 -------------------
 

@@ -20,6 +20,7 @@
 #include "mavros/utils.hpp"
 #include "mavros/px4_custom_mode.hpp"
 
+<<<<<<< HEAD
 using namespace mavros::uas;  // NOLINT
 
 std::once_flag Data::init_flag;

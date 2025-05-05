@@ -98,12 +98,12 @@ public:
       });
 
     node_declare_and_watch_parameter(
-      "frame_id", "odom", [&](const rclcpp::Parameter & p) {
+      "frame_id", uas_.get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
     node_declare_and_watch_parameter(
-      "child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
+      "child_frame_id", uas_.get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
@@ -115,12 +115,12 @@ public:
 
     // TF subsection
     node_declare_and_watch_parameter(
-      "tf.frame_id", "odom", [&](const rclcpp::Parameter & p) {
+      "tf.frame_id", uas_.get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
     node_declare_and_watch_parameter(
-      "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
+      "tf.child_frame_id", uas_.get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 

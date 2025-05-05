@@ -379,6 +379,28 @@ public:
     const std::string & frame_id, const std::string & child_id,
     const Eigen::Affine3d & tr);
 
+	inline void set_base_link_frame_id(const std::string frame_id) {
+		base_link_frame_id = frame_id;
+	}
+	inline void set_odom_frame_id(const std::string frame_id) {
+		odom_frame_id = frame_id;
+	}
+	inline void set_map_frame_id(const std::string frame_id) {
+		map_frame_id = frame_id;
+	}
+	inline std::string get_base_link_frame_id() {
+		return base_link_frame_id;
+	}
+	inline std::string get_odom_frame_id() {
+		return odom_frame_id;
+	}
+	inline std::string get_map_frame_id() {
+		return map_frame_id;
+	}
+
+    //! Publish helper TFs used for frame transformation in the odometry plugin
+	void setup_static_tf();
+
   /* -*- time sync -*- */
 
   inline void set_time_offset(uint64_t offset_ns)
