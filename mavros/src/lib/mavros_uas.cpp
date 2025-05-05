@@ -159,7 +159,7 @@ UAS::UAS(
       connect_to_router();
 
       // Publish helper TFs used for frame transformation in the odometry plugin
-      setup_static_tf()
+      setup_static_tf();
 
       std::stringstream ss;
       for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
