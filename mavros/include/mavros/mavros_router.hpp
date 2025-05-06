@@ -69,7 +69,7 @@ class Router;
 class Endpoint : public std::enable_shared_from_this<Endpoint>
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Endpoint)
+  RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE(Endpoint)
 
   enum class Type
   {
