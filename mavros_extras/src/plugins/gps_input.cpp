@@ -65,7 +65,7 @@ private:
   rclcpp::Subscription<mavros_msgs::msg::GPSINPUT>::SharedPtr gps_input_sub;
 
   std::chrono::nanoseconds rate_period;
-  rclcpp::Time last_pos_time;
+  rclcpp::Time last_pos_time{0, 0, RCL_ROS_TIME};
 
   /* -*- callbacks -*- */
 
