@@ -2,6 +2,22 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: display topic on service timeout error
+* Fix incorrect macro usage
+  RCLCPP_SMART_PTR_DEFINITIONS eventually is expanding to:
+  \#define __RCLCPP_MAKE_UNIQUE_DEFINITION(...) \
+  template<typename ... Args> \
+  static std::unique_ptr<__VA_ARGS_\_> \
+  make_unique(Args && ... args) \
+  { \
+  return std::unique_ptr<__VA_ARGS_\_>(new __VA_ARGS_\_(std::forward<Args>(args) ...)); \
+  }
+  which is incorrect for abstract classes like Endpoint or Plugin
+  RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE is used instead excluding make_unique functionality
+* Contributors: Emmanuel Ferdman, Mykhailo Kuznietsov
+
 2.10.0 (2025-05-05)
 -------------------
 * extras: fix odid build
