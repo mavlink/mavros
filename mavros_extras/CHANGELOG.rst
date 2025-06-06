@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.1 (2025-06-06)
+-------------------
 * Initialize last_pos_time with RCL_ROS_TIME
 * extras: fix bitset error, lost during merge conflict resolution
 * Contributors: Sergei Chashnikov, Vladimir Ermakov

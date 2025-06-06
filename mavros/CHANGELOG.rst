@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.10.1 (2025-06-06)
+-------------------
 * fix: display topic on service timeout error
 * Fix incorrect macro usage
   RCLCPP_SMART_PTR_DEFINITIONS eventually is expanding to:
