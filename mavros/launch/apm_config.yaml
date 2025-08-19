@@ -159,6 +159,36 @@ distance_sensor:
     id: 1
     orientation: PITCH_270  # only that orientation are supported by APM 3.4+
 
+esc_telemetry:
+  diagnostics:
+    enabled: true
+    temp_min:           #degC
+      nok: 1
+      ok: 2
+    volt_min:           #V
+      nok: 14
+      ok: 14.5
+    curr_min:           #A
+      nok: 4
+      ok: 5
+    rpm_min:
+      nok: 2000
+      ok: 3000
+    temp_max:           #degC
+      nok: 90
+      ok: 85
+    volt_max:           #V
+      nok: 17.2
+      ok: 16.9
+    curr_max:           #A
+      nok: 10
+      ok: 8
+    rpm_max:
+      nok: 12000
+      ok: 9000
+    count:
+      min_delta: 10
+
 # image_pub
 image:
   frame_id: "px4flow"
