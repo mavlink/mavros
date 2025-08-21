@@ -183,7 +183,7 @@ public:
     //
     // Repeat the pattern from mavros_uas of using a delay timer
     startup_delay_timer = this->create_wall_timer(
-    10ms, [this]() {
+      10ms, [this]() {
         RCLCPP_WARN(get_logger(), "In timer callback");
         startup_delay_timer->cancel();
         set_parameters_handle_ptr =
@@ -192,7 +192,7 @@ public:
         this->declare_parameter<StrV>("fcu_urls", StrV());
         this->declare_parameter<StrV>("gcs_urls", StrV());
         this->declare_parameter<StrV>("uas_urls", StrV());
-    });
+      });
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
