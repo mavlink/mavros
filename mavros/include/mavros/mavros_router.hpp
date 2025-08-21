@@ -218,7 +218,6 @@ private:
   rclcpp::TimerBase::SharedPtr stale_addrs_timer;
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
   rclcpp::TimerBase::SharedPtr startup_delay_timer;
-
   diagnostic_updater::Updater diagnostic_updater;
 
   void add_endpoint(
