@@ -183,16 +183,7 @@ public:
     //
     // Repeat the pattern from mavros_uas of using a delay timer
     startup_delay_timer = this->create_wall_timer(
-      10ms, [this]() {
-        RCLCPP_WARN(get_logger(), "In timer callback");
-        startup_delay_timer->cancel();
-        set_parameters_handle_ptr =
-        this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
-
-        this->declare_parameter<StrV>("fcu_urls", StrV());
-        this->declare_parameter<StrV>("gcs_urls", StrV());
-        this->declare_parameter<StrV>("uas_urls", StrV());
-      });
+      10ms, std::bind(&Router::initialize_parameters, this));
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -229,6 +220,18 @@ private:
 
   void periodic_reconnect_endpoints();
   void periodic_clear_stale_remote_addrs();
+
+  void initialize_parameters()
+  {
+    RCLCPP_WARN(get_logger(), "In timer callback");
+    startup_delay_timer->cancel();
+    set_parameters_handle_ptr =
+      this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
+
+    this->declare_parameter<StrV>("fcu_urls", StrV());
+    this->declare_parameter<StrV>("gcs_urls", StrV());
+    this->declare_parameter<StrV>("uas_urls", StrV());
+  }
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
