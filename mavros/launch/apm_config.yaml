@@ -73,7 +73,7 @@
 /**/local_position:
   ros__parameters:
     frame_id: "map"
-    tf.send: false
+    tf.send: true
     tf.frame_id: "map"
     tf.child_frame_id: "base_link"
     tf.send_fcu: false
@@ -93,7 +93,7 @@
 /**/setpoint_attitude:
   ros__parameters:
     reverse_thrust: false       # allow reversed thrust
-    use_quaternion: false       # enable PoseStamped topic subscriber
+    use_quaternion: true       # enable PoseStamped topic subscriber
     tf.listen: false            # enable tf listener (disable topic subscribers)
     tf.frame_id: "map"
     tf.child_frame_id: "target_attitude"
@@ -124,7 +124,7 @@
 # setpoint_velocity
 /**/setpoint_velocity:
   ros__parameters:
-    mav_frame: LOCAL_NED
+    mav_frame: BODY_NED   # But in actual, the control signal must be in FLU frame (ROS convention)
 
 # vfr_hud
 # None

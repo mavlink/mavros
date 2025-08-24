@@ -1,5 +1,7 @@
 /**:
   ros__parameters:
+    system_id: 255
+
     plugin_denylist:
       # common
       - actuator_control
@@ -13,6 +15,13 @@
       - vibration
       - vision_speed_estimate
       - wheel_odometry
+      # - global_position
 
     # plugin_allowlist:
     #   - 'sys_*'
+    #   - 'rc_io'
+    #   - 'param'
+    #   - 'manual_control'
+    #   - 'setpoint_attitude'
+    #   - 'setpoint_position'
+    #   - 'setpoint_velocity'
