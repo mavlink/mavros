@@ -19,6 +19,7 @@ float32 min_success_duration
 uint8 SUCCESS = 0
 uint8 TIMEOUT = 1
 uint8 CANCELLED = 2
+uint8 WRONG_MODE = 3
 uint8 error_code
 
 ---

@@ -1,14 +1,5 @@
-/*
- * Copyright 2014,2016,2021 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
 /**
- * @brief SetpointPosition plugin
- * @file setpoint_position.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @author Tien Luc Vu <luc001@e.ntu.edu.sg>
  *
  * @addtogroup plugin
  * @{
@@ -25,6 +16,8 @@
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 #include "mavros/setpoint_mixin.hpp"
+
+#include "mavros_msgs/msg/state.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -43,7 +36,7 @@ using MoveToPose = mavros_msgs::action::MoveToPose;
 using GoalHandleMoveToPose = rclcpp_action::ServerGoalHandle<MoveToPose>;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using TransformStamped = geometry_msgs::msg::TransformStamped;
-using mavlink::common::MAV_FRAME;
+using MavState = mavros_msgs::msg::State;
 
 /**
  * @brief Setpoint position plugin
@@ -69,11 +62,20 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
-    local_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+    local_sub = node->create_subscription<PoseStamped>(
       "local_position/pose", sensor_qos,
       [this](const PoseStamped::SharedPtr msg) {
         current_local_pose = *msg;
       });
+
+    mav_state_sub = node->create_subscription<MavState>(
+      "state", sensor_qos,
+      [this](const MavState::SharedPtr msg) {
+        is_armed = msg->armed;
+        is_guided = msg->guided;
+      });
+
+    target_pose_pub = node->create_publisher<PoseStamped>("~/set_pose/action/goal/target_pose", sensor_qos);
 
     move_to_pose_action_server = rclcpp_action::create_server<MoveToPose>(
       node, "~/set_pose",
@@ -101,9 +103,18 @@ public:
 private:
   friend class plugin::SetPositionTargetLocalNEDMixin<MoveToPoseServerPlugin>;
 
+  // Action server for move to pose
   rclcpp_action::Server<MoveToPose>::SharedPtr move_to_pose_action_server;
+  // Provide feedback
   rclcpp::Subscription<PoseStamped>::SharedPtr local_sub;
+  // Publisher so that simulation platforms which don't have ROS action can receive signal
+  rclcpp::Publisher<PoseStamped>::SharedPtr target_pose_pub;
+  // Subscriber to check on state
+  rclcpp::Subscription<MavState>::SharedPtr mav_state_sub;
+  
   PoseStamped current_local_pose;
+  bool is_armed;
+  bool is_guided;
   
   // TF2 for transform listening
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -135,15 +146,23 @@ private:
 
   void execute(const std::shared_ptr<GoalHandleMoveToPose> goal_handle)
   {
-    RCLCPP_INFO(this->get_logger(), "Executing MoveToPose goal");
-
     // Get the goal and create feedback/result messages
     const auto goal = goal_handle->get_goal();
     auto feedback = std::make_shared<MoveToPose::Feedback>();
     auto result = std::make_shared<MoveToPose::Result>();
 
+    if (is_guided && is_armed) {
+      RCLCPP_INFO(this->get_logger(), "Executing MoveToPose goal");
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Vehicle not in GUIDED mode or not ARMED. Aborting MoveToPose goal.");
+      result->error_code = 3;
+      goal_handle->abort(result);
+      return;
+    }
+
     auto parent_frame = goal->parent_frame;
     auto target_frame = goal->target_frame;
+    PoseStamped target_pose;
     Eigen::Affine3d tr;
     
     if (parent_frame != "" && target_frame != "") {
@@ -153,16 +172,12 @@ private:
         tf_buffer_->lookupTransform(parent_frame, target_frame, tf2::TimePointZero);
         
         // Convert TransformStamped to Pose
-        geometry_msgs::msg::Pose target_pose;
-        target_pose.position.x = transform_stamped.transform.translation.x;
-        target_pose.position.y = transform_stamped.transform.translation.y;
-        target_pose.position.z = transform_stamped.transform.translation.z;
-        target_pose.orientation = transform_stamped.transform.rotation;
-        
-        // Now convert Pose to Eigen::Affine3d
-        tf2::fromMsg(target_pose, tr);
-        
-        RCLCPP_INFO(this->get_logger(), "Using transform from '%s' to '%s'", 
+        target_pose.pose.position.x = transform_stamped.transform.translation.x;
+        target_pose.pose.position.y = transform_stamped.transform.translation.y;
+        target_pose.pose.position.z = transform_stamped.transform.translation.z;
+        target_pose.pose.orientation = transform_stamped.transform.rotation;
+
+        RCLCPP_INFO(this->get_logger(), "Using transform from '%s' to '%s'",
                    parent_frame.c_str(), target_frame.c_str());
       } catch (tf2::TransformException &ex) {
         RCLCPP_ERROR(this->get_logger(), "Could not transform '%s' to '%s': %s", 
@@ -172,11 +187,13 @@ private:
         return;
       }
     } else {
-      tf2::fromMsg(goal->target_pose.pose, tr);
+      target_pose = goal->target_pose;
       RCLCPP_INFO(this->get_logger(), "Using target pose from goal message");
     }
+    // Now convert Pose to Eigen::Affine3d
+    tf2::fromMsg(target_pose.pose, tr);
 
-    // Tolerance checking
+    // Tolerance-related variables
     rclcpp::Time tolerance_start_time; // Track when tolerance conditions first met
     bool tolerance_conditions_met = false;
     double min_success_duration = goal->min_success_duration;
@@ -210,7 +227,10 @@ private:
         return;
       }
 
-      // Check if the goal is reached
+      // Publish target pose in case simulation needs it
+      target_pose_pub->publish(target_pose);
+
+      // Calculate distance remaining
       double distance_remaining = (ftf::to_eigen(current_local_pose.pose.position) - Eigen::Vector3d(tr.translation())).norm();
       
       // Calculate heading difference
@@ -228,6 +248,7 @@ private:
 
       feedback->navigation_time = builtin_interfaces::msg::Duration();
       feedback->navigation_time.sec = static_cast<int32_t>(elapsed.seconds());
+      feedback->navigation_time.nanosec = static_cast<uint32_t>((elapsed.seconds() - feedback->navigation_time.sec) * 1e9);
 
       goal_handle->publish_feedback(feedback);
       RCLCPP_DEBUG(this->get_logger(), "Distance to goal: %.2f, Heading error: %.2f rad", distance_remaining, heading_error);
