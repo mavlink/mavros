@@ -92,8 +92,8 @@
 # setpoint_attitude
 /**/setpoint_attitude:
   ros__parameters:
-    reverse_thrust: false       # allow reversed thrust
-    use_quaternion: true       # enable PoseStamped topic subscriber
+    reverse_thrust: true       # allow reversed thrust
+    use_quaternion: true       # keep this true because Ardupilot does not support body attitude rate for this message (https://ardupilot.org/dev/docs/copter-commands-in-guided-mode.html#set-attitude-target)
     tf.listen: false            # enable tf listener (disable topic subscribers)
     tf.frame_id: "map"
     tf.child_frame_id: "target_attitude"
@@ -124,7 +124,7 @@
 # setpoint_velocity
 /**/setpoint_velocity:
   ros__parameters:
-    mav_frame: BODY_NED   # But in actual, the control signal must be in FLU frame (ROS convention)
+    mav_frame: BODY_NED
 
 # vfr_hud
 # None
