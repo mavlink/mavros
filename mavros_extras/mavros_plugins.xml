@@ -193,6 +193,12 @@ This plugin can publish data from PX4Flow camera to ROS</description>
 
 This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.</description>
   </class>
+  <class name="rc_twist" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RCTwistPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief RC Twist plugin.
+@plugin rc_twist
+
+This plugin allows publishing RC twist commands from ROS to Ardupilot FCU.</description>
+  </class>
   <class name="tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief 3DR Radio plugin.
 @plugin tdr_radio</description>
