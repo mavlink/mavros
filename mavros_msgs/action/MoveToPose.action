@@ -1,9 +1,17 @@
 # goal
 
+# if parent and child frame are provided, target_pose will be ignored
+string parent_frame
+string target_frame
+
 geometry_msgs/PoseStamped target_pose
 
 # set timeout to negative value for infinite duration
-uint16 timeout
+float32 timeout
+
+float32 position_tolerance
+float32 heading_tolerance
+float32 min_success_duration
 
 ---
 # result

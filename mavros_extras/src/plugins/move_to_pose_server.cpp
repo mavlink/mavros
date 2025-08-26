@@ -18,6 +18,8 @@
 #include <cmath>
 
 #include "tf2_eigen/tf2_eigen.hpp"
+#include "tf2_ros/transform_listener.hpp"
+#include "tf2_ros/buffer.hpp"
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
@@ -25,6 +27,7 @@
 #include "mavros/setpoint_mixin.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "mavros_msgs/action/move_to_pose.hpp"
@@ -39,6 +42,7 @@ using mavlink::common::MAV_FRAME;
 using MoveToPose = mavros_msgs::action::MoveToPose;
 using GoalHandleMoveToPose = rclcpp_action::ServerGoalHandle<MoveToPose>;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
+using TransformStamped = geometry_msgs::msg::TransformStamped;
 using mavlink::common::MAV_FRAME;
 
 /**
@@ -58,6 +62,10 @@ public:
   : Plugin(uas_, "move_to_pose_server")
   {
     enable_node_watch_parameters();
+
+    // Initialize TF2
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
@@ -96,6 +104,10 @@ private:
   rclcpp_action::Server<MoveToPose>::SharedPtr move_to_pose_action_server;
   rclcpp::Subscription<PoseStamped>::SharedPtr local_sub;
   PoseStamped current_local_pose;
+  
+  // TF2 for transform listening
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   /**
    * @brief Send setpoint to FCU position controller.
@@ -129,9 +141,45 @@ private:
     const auto goal = goal_handle->get_goal();
     auto feedback = std::make_shared<MoveToPose::Feedback>();
     auto result = std::make_shared<MoveToPose::Result>();
-    
+
+    auto parent_frame = goal->parent_frame;
+    auto target_frame = goal->target_frame;
     Eigen::Affine3d tr;
-    tf2::fromMsg(goal->target_pose.pose, tr);
+    
+    if (parent_frame != "" && target_frame != "") {
+      try {
+        // Look up the transform from parent_frame to target_frame
+        TransformStamped transform_stamped = 
+        tf_buffer_->lookupTransform(parent_frame, target_frame, tf2::TimePointZero);
+        
+        // Convert TransformStamped to Pose
+        geometry_msgs::msg::Pose target_pose;
+        target_pose.position.x = transform_stamped.transform.translation.x;
+        target_pose.position.y = transform_stamped.transform.translation.y;
+        target_pose.position.z = transform_stamped.transform.translation.z;
+        target_pose.orientation = transform_stamped.transform.rotation;
+        
+        // Now convert Pose to Eigen::Affine3d
+        tf2::fromMsg(target_pose, tr);
+        
+        RCLCPP_INFO(this->get_logger(), "Using transform from '%s' to '%s'", 
+                   parent_frame.c_str(), target_frame.c_str());
+      } catch (tf2::TransformException &ex) {
+        RCLCPP_ERROR(this->get_logger(), "Could not transform '%s' to '%s': %s", 
+                    parent_frame.c_str(), target_frame.c_str(), ex.what());
+        result->error_code = 3; // Transform error
+        goal_handle->abort(result);
+        return;
+      }
+    } else {
+      tf2::fromMsg(goal->target_pose.pose, tr);
+      RCLCPP_INFO(this->get_logger(), "Using target pose from goal message");
+    }
+
+    // Tolerance checking
+    rclcpp::Time tolerance_start_time; // Track when tolerance conditions first met
+    bool tolerance_conditions_met = false;
+    double min_success_duration = goal->min_success_duration;
     
     // Send the goal to AP
     auto start_time = this->get_clock()->now();
@@ -185,16 +233,37 @@ private:
       RCLCPP_DEBUG(this->get_logger(), "Distance to goal: %.2f, Heading error: %.2f rad", distance_remaining, heading_error);
 
       // Check if both position and heading are within tolerance
-      const double position_tolerance = 0.3;  // 0.3 meters
-      const double heading_tolerance = 0.1;   // 0.1 radians (~5.7 degrees)
-      
-      if (distance_remaining < position_tolerance && heading_error < heading_tolerance) {
-        result->error_code = 0;
-        goal_handle->succeed(result);
-        RCLCPP_INFO(this->get_logger(), "MoveToPose goal succeeded - position and heading reached");
-        return;
-      }
+      auto position_tolerance = goal->position_tolerance;
+      auto heading_tolerance = goal->heading_tolerance;
 
+      bool current_tolerance_met = (distance_remaining < position_tolerance && heading_error < heading_tolerance);
+      
+      if (current_tolerance_met) {
+        if (!tolerance_conditions_met) {
+          // First time meeting tolerance conditions
+          tolerance_start_time = this->get_clock()->now();
+          tolerance_conditions_met = true;
+          RCLCPP_DEBUG(this->get_logger(), "Tolerance conditions met - starting %.1f second stability check", min_success_duration);
+        } else {
+          // Check if we've been within tolerance for minimum duration
+          auto tolerance_duration = (this->get_clock()->now() - tolerance_start_time).seconds();
+          
+          RCLCPP_DEBUG(this->get_logger(), "Within tolerance for %.2f/%.1f seconds", tolerance_duration, min_success_duration);
+          
+          if (tolerance_duration >= min_success_duration) {
+            result->error_code = 0;
+            goal_handle->succeed(result);
+            RCLCPP_INFO(this->get_logger(), "MoveToPose goal succeeded - position and heading stable for %.1f seconds", min_success_duration);
+            return;
+          }
+        }
+      } else {
+        if (tolerance_conditions_met) {
+          // We were within tolerance but now we're not - reset
+          tolerance_conditions_met = false;
+          RCLCPP_DEBUG(this->get_logger(), "Tolerance conditions lost - resetting stability timer");
+        }
+      }
     }
   }
 
