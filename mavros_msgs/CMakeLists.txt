@@ -166,9 +166,14 @@ set(srv_files
   # [[[end]]] (checksum: cd7701b28a3176d96ef65cb1f2157917)
 )
 
+set(action_files
+  action/MoveToPose.action  
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
+  ${action_files}
   DEPENDENCIES
   builtin_interfaces
   rcl_interfaces

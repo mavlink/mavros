@@ -29,6 +29,7 @@
   <depend>geographic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>action_msgs</depend>
   <!-- <depend>std_msgs</depend> -->
   <!-- XXX needed for users of mavlink_convert.h
   <build_export_depend>libmavconn</build_export_depend>

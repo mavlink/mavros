@@ -45,6 +45,7 @@
   <depend>tf2_ros</depend>
   <depend>tf2_eigen</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>rclcpp_components</depend>
   <depend>rcpputils</depend>
   <depend>urdf</depend>

@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 
 # find mavros dependencies
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
@@ -114,6 +115,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/mag_calibration_status.cpp
   src/plugins/mocap_pose_estimate.cpp
   src/plugins/mount_control.cpp
+  src/plugins/move_to_pose_server.cpp
   src/plugins/obstacle_distance.cpp
   src/plugins/odom.cpp
   src/plugins/onboard_computer_status.cpp
@@ -146,6 +148,7 @@ ament_target_dependencies(mavros_extras_plugins
   nav_msgs
   trajectory_msgs
   rclcpp
+  rclcpp_action
   rclcpp_components
   rcpputils
   libmavconn
@@ -167,6 +170,7 @@ add_library(mavros_extras SHARED
 )
 ament_target_dependencies(mavros_extras
   rclcpp
+  rclcpp_action
   rclcpp_components
   std_msgs
   sensor_msgs

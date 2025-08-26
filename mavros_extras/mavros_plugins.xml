@@ -136,6 +136,12 @@ Sends motion capture data to FCU.</description>
 Publishes Mission commands to control the camera or antenna mount.
 @see command_cb()</description>
   </class>
+  <class name="move_to_pose_server" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MoveToPoseServerPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Move To Pose Server plugin
+@plugin move_to_pose_server
+
+Handles the move to pose action server.</description>
+  </class>
   <class name="obstacle_distance" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ObstacleDistancePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Obstacle distance plugin
 @plugin obstacle_distance
