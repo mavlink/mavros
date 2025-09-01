@@ -75,7 +75,7 @@ public:
         is_guided = msg->guided;
       });
 
-    target_pose_pub = node->create_publisher<PoseStamped>("~/set_pose/action/goal/target_pose", sensor_qos);
+    target_pose_pub = node->create_publisher<PoseStamped>("setpoint_position/local", rclcpp::SystemDefaultsQoS());  // Default QoS to make sure that it is received
 
     move_to_pose_action_server = rclcpp_action::create_server<MoveToPose>(
       node, "~/set_pose",
@@ -107,7 +107,7 @@ private:
   rclcpp_action::Server<MoveToPose>::SharedPtr move_to_pose_action_server;
   // Provide feedback
   rclcpp::Subscription<PoseStamped>::SharedPtr local_sub;
-  // Publisher so that simulation platforms which don't have ROS action can receive signal
+  // Publish target pose
   rclcpp::Publisher<PoseStamped>::SharedPtr target_pose_pub;
   // Subscriber to check on state
   rclcpp::Subscription<MavState>::SharedPtr mav_state_sub;
@@ -119,28 +119,6 @@ private:
   // TF2 for transform listening
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
-  /**
-   * @brief Send setpoint to FCU position controller.
-   *
-   * @warning Send only XYZ, Yaw. ENU frame.
-   */
-  void send_position_target(const Eigen::Affine3d & tr)
-  {
-    const uint16_t ignore_all_except_xyz_y = (1 << 11) | (7 << 6) | (7 << 3);
-    auto p = ftf::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-    auto q = ftf::transform_orientation_enu_ned(
-          ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
-
-    set_position_target_local_ned(
-      get_time_boot_ms(this->get_clock()->now()),
-      utils::enum_value(MAV_FRAME::LOCAL_NED),
-      ignore_all_except_xyz_y,
-      p,
-      Eigen::Vector3d::Zero(),
-      Eigen::Vector3d::Zero(),
-      ftf::quaternion_get_yaw(q), 0.0);
-  }
 
   /* -*- main function for server -*- */
 
@@ -198,9 +176,10 @@ private:
     bool tolerance_conditions_met = false;
     double min_success_duration = goal->min_success_duration;
     
-    // Send the goal to AP
+    // This is when it starts moving
+    target_pose.header.stamp = this->get_clock()->now();
+    target_pose_pub->publish(target_pose);
     auto start_time = this->get_clock()->now();
-    send_position_target(tr);
 
     // Main loop to check for abort, cancel or success
     rclcpp::Rate loop_rate(10);
@@ -211,7 +190,7 @@ private:
       // Check if there is a cancel request
       if (goal_handle->is_canceling() || !goal_handle->is_active()) {
         result->error_code = 2;
-        stop_at_current_pose();
+        target_pose_pub->publish(current_local_pose);
         goal_handle->canceled(result);
         RCLCPP_DEBUG(this->get_logger(), "MoveToPose goal canceled");
         return;
@@ -221,14 +200,11 @@ private:
       auto elapsed = this->get_clock()->now() - start_time;
       if (goal->timeout > 0.0 && elapsed.seconds() > goal->timeout) {
         result->error_code = 1;
-        stop_at_current_pose();
+        target_pose_pub->publish(current_local_pose);
         goal_handle->abort(result);
         RCLCPP_WARN(this->get_logger(), "MoveToPose goal aborted due to timeout");
         return;
       }
-
-      // Publish target pose in case simulation needs it
-      target_pose_pub->publish(target_pose);
 
       // Calculate distance remaining
       double distance_remaining = (ftf::to_eigen(current_local_pose.pose.position) - Eigen::Vector3d(tr.translation())).norm();
@@ -288,26 +264,6 @@ private:
     }
   }
 
-  void stop_at_current_pose()
-  {
-    Eigen::Affine3d current_local_pose_eigen;
-    tf2::fromMsg(current_local_pose.pose, current_local_pose_eigen);
-    send_position_target(current_local_pose_eigen);
-
-    // Ignore position and accel vectors, yaw.
-    // uint16_t ignore_all_except_v_xyz_yr = (1 << 10) | (7 << 6) | (7 << 0);
-    // auto mav_frame = MAV_FRAME::BODY_NED;
-
-    // set_position_target_local_ned(
-    //   get_time_boot_ms(this->get_clock()->now()),
-    //   utils::enum_value(mav_frame),
-    //   ignore_all_except_v_xyz_yr,
-    //   Eigen::Vector3d::Zero(),
-    //   Eigen::Vector3d::Zero(),
-    //   Eigen::Vector3d::Zero(),
-    //   0.0, 0.0
-    // );
-  }
 };
 
 }       // namespace extra_plugins
