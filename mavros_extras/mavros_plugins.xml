@@ -140,6 +140,12 @@ Publishes Mission commands to control the camera or antenna mount.
     <description>@brief Move To Pose Server plugin
 @plugin move_to_pose_server
 
+Remaps individual velocity topics to mavros /setpoint_velocity/cmd_vel_unstamped topic.</description>
+  </class>
+  <class name="remap_setpoint_velocity" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::RemapSetpointVelocityPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Remap Setpoint Velocity Plugin
+@plugin remap_setpoint_velocity
+
 Handles the move to pose action server.</description>
   </class>
   <class name="obstacle_distance" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ObstacleDistancePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
