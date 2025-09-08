@@ -2,6 +2,14 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* regenerate all
+* tools: move scripts to use with uv
+  add uncrustify helper
+* Update mode 14 from LAND to AVOID_ADSB.
+* Contributors: FAC94, Vladimir Ermakov
+
 1.20.1 (2025-05-05)
 -------------------
 

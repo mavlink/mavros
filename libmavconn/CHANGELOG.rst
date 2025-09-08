@@ -2,6 +2,11 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* regenerate all
+* Contributors: Vladimir Ermakov
+
 1.20.1 (2025-05-05)
 -------------------
 
