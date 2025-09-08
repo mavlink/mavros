@@ -12,8 +12,14 @@
  */
 
 #include <gtest/gtest.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
+
+#ifdef USE_OLD_TF2_ROS
+# include <tf2/LinearMath/Quaternion.h>
+# include <tf2/LinearMath/Matrix3x3.h>
+#else
+# include <tf2/LinearMath/Quaternion.hpp>
+# include <tf2/LinearMath/Matrix3x3.hpp>
+#endif
 
 #include <rclcpp/rclcpp.hpp>
 #include <mavros/frame_tf.hpp>
