@@ -134,7 +134,7 @@ static const std::unordered_map<typename std::underlying_type<MAV_SENSOR_ORIENTA
   {40, make_orientation("ROLL_90_PITCH_315", 90.0, 315.0, 0.0)},
   {100, make_orientation("CUSTOM", 0.0, 0.0, 0.0)},
 }};
-// [[[end]]] (checksum: ddb7b21315b0f0636d264ad2d6b3856e)
+// [[[end]]] (sum: 3beyExWw8G)
 
 std::string to_string(MAV_SENSOR_ORIENTATION orientation)
 {

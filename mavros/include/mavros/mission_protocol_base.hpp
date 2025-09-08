@@ -86,7 +86,7 @@ using MFilter = plugin::filter::SystemAndOk;
 //     ('mission_type', 'mission_type'),
 // ]
 // ]]]
-// [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+// [[[end]]] (sum: 1B2M2Y8Asg)
 
 //! Thin wrapper for Waypoint message
 class MissionItem : public mavros_msgs::msg::Waypoint
@@ -126,7 +126,7 @@ public:
         return 1.0;
       default:
         return 1.0;
-        // [[[end]]] (checksum: 62e411e9acae54305a129fdf57f5b732)
+        // [[[end]]] (sum: YuQR6ayuVD)
     }
   }
 
@@ -151,7 +151,7 @@ public:
     x_lat = wpi.x;
     y_long = wpi.y;
     z_alt = wpi.z;
-    // [[[end]]] (checksum: 64a5d4f7b3428e8e72d5ce216d51935c)
+    // [[[end]]] (sum: ZKXU97NCjo)
   }
 
   explicit MissionItem(const MISSION_ITEM_INT & wpi)
@@ -178,7 +178,7 @@ public:
     x_lat = wpi.x / encode_factor(wpi.frame);
     y_long = wpi.y / encode_factor(wpi.frame);
     z_alt = wpi.z;
-    // [[[end]]] (checksum: 2e01c028ecde023cc049aba04f6a6df5)
+    // [[[end]]] (sum: LgHAKOzeAj)
   }
 
   explicit MissionItem(const mavros_msgs::msg::Waypoint & other)
@@ -204,7 +204,7 @@ public:
     x_lat = other.x_lat;
     y_long = other.y_long;
     z_alt = other.z_alt;
-    // [[[end]]] (checksum: 6879b829d6e6e1e28a879dd2ca3afdac)
+    // [[[end]]] (sum: aHm4Kdbm4e)
 
     return *this;
   }
@@ -229,7 +229,7 @@ public:
     out.x = x_lat;
     out.y = y_long;
     out.z = z_alt;
-    // [[[end]]] (checksum: 799ed1c97af022223371c42c8c1f09d4)
+    // [[[end]]] (sum: eZ7RyXrwIi)
   }
 
   void to_msg(MISSION_ITEM_INT & out) const
@@ -255,7 +255,7 @@ public:
     out.x = int32_t(x_lat * encode_factor(frame));
     out.y = int32_t(y_long * encode_factor(frame));
     out.z = z_alt;
-    // [[[end]]] (checksum: b79ee415a09746786ba2a7cec99c5ab5)
+    // [[[end]]] (sum: t57kFaCXRn)
   }
 
   friend std::ostream & operator<<(std::ostream & os, const MissionItem & mi);

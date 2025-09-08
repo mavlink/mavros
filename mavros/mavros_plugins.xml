@@ -10,7 +10,7 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_plugins')
 @plugin dummy
 @example_plugin
 
-Example and &quot;how to&quot; for users.</description>
+Example and "how to" for users.</description>
 </class>-->
   <class name="actuator_control" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::ActuatorControlPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief ActuatorControl plugin
@@ -138,4 +138,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: e47485a8565112ddf4058c7a77bcc519) -->
+<!-- [[[end]]] (sum: bPrTF1swCC) -->

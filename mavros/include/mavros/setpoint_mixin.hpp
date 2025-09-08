@@ -80,7 +80,7 @@ public:
     sp.afx = af.x();
     sp.afy = af.y();
     sp.afz = af.z();
-    // [[[end]]] (checksum: f8942bb13a7463a2cbadc9b745df25d0)
+    // [[[end]]] (sum: +JQrsTp0Y6)
 
     uas_->send_message(sp);
   }
@@ -133,7 +133,7 @@ public:
     sp.afx = af.x();
     sp.afy = af.y();
     sp.afz = af.z();
-    // [[[end]]] (checksum: 82301ecd7936657d65e006cf7525e82a)
+    // [[[end]]] (sum: gjAezXk2ZX)
 
     uas_->send_message(sp);
   }
@@ -177,7 +177,7 @@ public:
     sp.body_roll_rate = body_rate.x();
     sp.body_pitch_rate = body_rate.y();
     sp.body_yaw_rate = body_rate.z();
-    // [[[end]]] (checksum: d0910b0f92d233024163ebf957a3d642)
+    // [[[end]]] (sum: 0JELD5LSMw)
 
     uas_->send_message(sp);
   }

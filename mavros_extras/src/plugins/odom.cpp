@@ -331,7 +331,7 @@ private:
     msg.rollspeed = ang_vel.x();
     msg.pitchspeed = ang_vel.y();
     msg.yawspeed = ang_vel.z();
-    // [[[end]]] (checksum: 47ddd5137f92fe5d094e7bfd7a5282ec)
+    // [[[end]]] (sum: R93VE3+S/l)
 
     ftf::quaternion_to_mavlink(orientation, msg.q);
     ftf::covariance_urt_to_mavlink(cov_pose_map, msg.pose_covariance);

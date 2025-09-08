@@ -66,6 +66,6 @@
     __FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, \
     ## __VA_ARGS__)
 #endif  // CONSOLE_BRIDGE_logError
-// [[[end]]] (checksum: ac76c84da411728c99a9b3995d1ffe37)
+// [[[end]]] (sum: rHbITaQRco)
 
 #endif  // MAVCONN__CONSOLE_BRIDGE_COMPAT_HPP_

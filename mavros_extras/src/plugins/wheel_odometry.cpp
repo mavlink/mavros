@@ -262,7 +262,7 @@ private:
     // cog.outl(f"return {' && '.join(parts)};");
     // ]]]
     return a.w() == b.w() && a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
-    // [[[end]]] (checksum: af3c54c9f2c525c7a0c27a3151d69074)
+    // [[[end]]] (sum: rzxUyfLFJc)
   }
 
   /**

@@ -87,6 +87,9 @@ uint16 DO_SET_SAFETY_SWITCH_STATE = 5300           # Change state of safety swit
 uint16 DO_ADSB_OUT_IDENT = 10001                   # Trigger the start of an ADSB-out IDENT. This should only be used when requested to do so by an Air Traffic Controller in controlled airspace. This starts the IDENT which is then typically held for 18 seconds by the hardware per the Mode A, C, and S transponder spec.
 uint16 DO_WINCH = 42600                            # Command to operate winch.
 
+# MAV_CMD_EXTERNAL
+uint16 EXTERNAL_POSITION_ESTIMATE = 43003          # Provide an external position estimate for use when dead-reckoning. This is meant to be used for occasional position resets that may be provided by a external system such as a remote pilot using landmarks over a video link.
+
 # MAV_CMD_FIXED
 uint16 FIXED_MAG_CAL_YAW = 42006                   # Magnetometer calibration based on provided known yaw. This allows for fast calibration using WMM field tables in the vehicle, given only the known yaw of the vehicle. If Latitude and longitude are both zero then use the current vehicle location.
 
@@ -126,7 +129,7 @@ uint16 NAV_PATHPLANNING = 81                       # Control autonomous path pla
 uint16 NAV_SPLINE_WAYPOINT = 82                    # Navigate to waypoint using a spline path.
 uint16 NAV_VTOL_TAKEOFF = 84                       # Takeoff from ground using VTOL mode, and transition to forward flight with specified heading. The command should be ignored by vehicles that dont support both VTOL and fixed-wing flight (multicopters, boats,etc.).
 uint16 NAV_VTOL_LAND = 85                          # Land using VTOL mode
-uint16 NAV_GUIDED_ENABLE = 92                      # hand control over to an external controller
+uint16 NAV_GUIDED_ENABLE = 92                      # Hand control over to an external controller
 uint16 NAV_DELAY = 93                              # Delay the next navigation command a number of seconds or until a specified time
 uint16 NAV_PAYLOAD_PLACE = 94                      # Descend and place payload. Vehicle moves to specified location, descends until it detects a hanging payload has reached the ground, and then releases the payload. If ground is not detected before the reaching the maximum descent value (param1), the command will complete without releasing the payload.
 uint16 NAV_LAST = 95                               # NOP - This command is only used to mark the upper limit of the NAV/ACTION commands in the enumeration
@@ -174,7 +177,7 @@ uint16 REQUEST_VIDEO_STREAM_STATUS = 2505          # Request video stream status
 uint16 RESET_CAMERA_SETTINGS = 529                 # Reset all camera settings to Factory Default
 
 # MAV_CMD_RUN
-uint16 RUN_PREARM_CHECKS = 401                     # Instructs system to run pre-arm checks.  This command should return MAV_RESULT_TEMPORARILY_REJECTED in the case the system is armed, otherwse MAV_RESULT_ACCEPTED.  Note that the return value from executing this command does not indicate whether the vehicle is armable or not, just whether the system has successfully run/is currently running the checks.  The result of the checks is reflected in the SYS_STATUS message.
+uint16 RUN_PREARM_CHECKS = 401                     # Instructs system to run pre-arm checks.  This command should return MAV_RESULT_TEMPORARILY_REJECTED in the case the system is armed, otherwise MAV_RESULT_ACCEPTED.  Note that the return value from executing this command does not indicate whether the vehicle is armable or not, just whether the system has successfully run/is currently running the checks.  The result of the checks is reflected in the SYS_STATUS message.
 
 # MAV_CMD_SET
 uint16 SET_MESSAGE_INTERVAL = 511                  # Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM.
@@ -201,4 +204,4 @@ uint16 VIDEO_STOP_CAPTURE = 2501                   # Stop the current video capt
 uint16 VIDEO_START_STREAMING = 2502                # Start video streaming
 uint16 VIDEO_STOP_STREAMING = 2503                 # Stop the given video stream
 
-# [[[end]]] (checksum: 5fb33a8d69e6d6876185678cfca286cd)
+# [[[end]]] (sum: YB2CSHEdt3)

@@ -146,7 +146,7 @@ private:
     rtk_baseline_.baseline_c_mm = rtk_bsln.baseline_c_mm;
     rtk_baseline_.accuracy = rtk_bsln.accuracy;
     rtk_baseline_.iar_num_hypotheses = rtk_bsln.iar_num_hypotheses;
-    // [[[end]]] (checksum: c123d29c2e0bce3becce956a29ed6152)
+    // [[[end]]] (sum: wSPSnC4Lzj)
     rtk_baseline_.header = uas->synchronized_header("", rtk_bsln.time_last_baseline_ms * 1000);
 
     rtk_baseline_pub->publish(rtk_baseline_);

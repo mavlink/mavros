@@ -95,7 +95,7 @@ endif()
 # [[[cog:
 # import mavros_cog
 # ]]]
-# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+# [[[end]]] (sum: 1B2M2Y8Asg)
 
 add_library(mavros SHARED
   # [[[cog:
@@ -114,7 +114,7 @@ add_library(mavros SHARED
   src/lib/uas_stringify.cpp
   src/lib/uas_tf.cpp
   src/lib/uas_timesync.cpp
-  # [[[end]]] (checksum: 3239d16fc87982964694f18425f297b1)
+  # [[[end]]] (sum: MjnRb8h5gp)
 )
 ament_target_dependencies(mavros
   rclcpp
@@ -164,7 +164,7 @@ add_library(mavros_plugins SHARED
   src/plugins/sys_time.cpp
   src/plugins/waypoint.cpp
   src/plugins/wind_estimation.cpp
-  # [[[end]]] (checksum: ccf56c1a56e9dccf8464483f7b1eab99)
+  # [[[end]]] (sum: zPVsGlbp3M)
 )
 add_dependencies(mavros_plugins
   mavros

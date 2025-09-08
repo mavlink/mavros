@@ -242,7 +242,7 @@ private:
     ds.vertical_fov = vertical_fov;
     ds.quaternion = quaternion;
     ds.signal_quality = signal_quality;
-    // [[[end]]] (checksum: b268a118afee5e2c6cb3e1094a578fff)
+    // [[[end]]] (sum: smihGK/uXi)
 
     uas->send_message(ds);
   }

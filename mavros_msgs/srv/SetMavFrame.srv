@@ -29,7 +29,7 @@ uint8 FRAME_RESERVED_18 = 18             # MAV_FRAME_ESTIM_NED - Odometry local 
 uint8 FRAME_RESERVED_19 = 19             # MAV_FRAME_ESTIM_ENU - Odometry local coordinate frame of data given by an estimator running onboard the vehicle, Z-up (x: East, y: North, z: Up).
 uint8 FRAME_LOCAL_FRD = 20               # FRD local tangent frame (x: Forward, y: Right, z: Down) with origin fixed relative to earth. The forward axis is aligned to the front of the vehicle in the horizontal plane.
 uint8 FRAME_LOCAL_FLU = 21               # FLU local tangent frame (x: Forward, y: Left, z: Up) with origin fixed relative to earth. The forward axis is aligned to the front of the vehicle in the horizontal plane.
-# [[[end]]] (checksum: 90ebc90d8774905ddaf66bdbdd0723c4)
+# [[[end]]] (sum: kOvJDYd0kF)
 
 uint8 mav_frame
 ---

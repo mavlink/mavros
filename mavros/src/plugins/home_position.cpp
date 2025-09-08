@@ -178,7 +178,7 @@ private:
     hp.approach_x = approach.x();
     hp.approach_y = approach.y();
     hp.approach_z = approach.z();
-    // [[[end]]] (checksum: 0865d5fcc1f7a15e36e177fc49dee70f)
+    // [[[end]]] (sum: CGXV/MH3oV)
 
     uas->send_message(hp);
   }

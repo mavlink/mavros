@@ -86,7 +86,7 @@ endif()
 # [[[cog:
 # import mavros_cog
 # ]]]
-# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+# [[[end]]] (sum: 1B2M2Y8Asg)
 
 add_library(mavros_extras_plugins SHARED
   # [[[cog:
@@ -130,7 +130,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]] (checksum: 4564d922cfa3d36bf2089dade2323259)
+  # [[[end]]] (sum: RWTZIs+j02)
 )
 ament_target_dependencies(mavros_extras_plugins
   angles
@@ -162,7 +162,7 @@ add_library(mavros_extras SHARED
   # mavros_cog.outl_glob_files('src/lib')
   # ]]]
   src/lib/servo_state_publisher.cpp
-  # [[[end]]] (checksum: a3ce43c71c567f697861bcbcd0f25aa3)
+  # [[[end]]] (sum: o85DxxxWf2)
 )
 ament_target_dependencies(mavros_extras
   rclcpp

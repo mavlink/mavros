@@ -156,7 +156,7 @@ public:
         float_tmp = uv.param_float;
         param_value = rclcpp::ParameterValue(float_tmp);
         break;
-      // [[[end]]] (checksum: 9e08cfaf40fdb8644695057e6419a913)
+      // [[[end]]] (sum: ngjPr0D9uG)
 
       default:
         RCLCPP_WARN(
@@ -211,7 +211,7 @@ public:
         float_tmp = pmsg.param_value;
         param_value = rclcpp::ParameterValue(float_tmp);
         break;
-      // [[[end]]] (checksum: 5edecd0aeee6b2730b57904bc29aaff2)
+      // [[[end]]] (sum: Xt7NCu7msn)
 
       default:
         RCLCPP_WARN(
@@ -257,7 +257,7 @@ public:
         uv.param_float = param_value.get<double>();
         ret.param_type = enum_value(MT::REAL32);
         break;
-      // [[[end]]] (checksum: 5ee0c1c37bca338a29b07048f7212d7d)
+      // [[[end]]] (sum: XuDBw3vKM4)
 
       default:
         RCLCPP_WARN_STREAM(
@@ -296,7 +296,7 @@ public:
         ret.param_value = param_value.get<double>();
         ret.param_type = enum_value(MT::REAL32);
         break;
-      // [[[end]]] (checksum: ba896d50b78e007407d92bd22aaceca8)
+      // [[[end]]] (sum: uoltULeOAH)
 
       default:
         RCLCPP_WARN_STREAM(

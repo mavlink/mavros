@@ -25,7 +25,7 @@ find_package(sensor_msgs REQUIRED)
 # [[[cog:
 # import mavros_cog
 # ]]]
-# [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+# [[[end]]] (sum: 1B2M2Y8Asg)
 
 set(msg_files
   # [[[cog:
@@ -110,7 +110,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (checksum: 6c52941c1b5d0aec5f3315d3e498c857)
+  # [[[end]]] (sum: bFKUHBtdCu)
 )
 
 set(srv_files
@@ -163,7 +163,7 @@ set(srv_files
   srv/WaypointPull.srv
   srv/WaypointPush.srv
   srv/WaypointSetCurrent.srv
-  # [[[end]]] (checksum: cd7701b28a3176d96ef65cb1f2157917)
+  # [[[end]]] (sum: zXcBsooxdt)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

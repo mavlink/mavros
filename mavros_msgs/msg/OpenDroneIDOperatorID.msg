@@ -7,7 +7,7 @@
 # ]]]
 # MAV_ODID_OPERATOR_ID_TYPE
 uint8 ID_TYPE_CAA = 0                    # CAA (Civil Aviation Authority) registered operator ID.
-# [[[end]]] (checksum: be1240b63d8b101630595dd9ae4a42d4)
+# [[[end]]] (sum: vhJAtj2LEB)
 
 std_msgs/Header header
 string id_or_mac
