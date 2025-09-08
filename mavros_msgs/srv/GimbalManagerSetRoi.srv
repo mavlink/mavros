@@ -1,0 +1,38 @@
+# MAVLink commands: DO_SET_ROI_LOCATION, DO_SET_ROI_WPNEXT_OFFSET, DO_SET_ROI_SYSID, DO_SET_ROI_NONE
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_LOCATION
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_SYSID
+# https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_ROI_NONE
+
+uint8 mode              # enumerator to indicate ROI mode setting - see ROI_MODE
+#ROI_MODE
+uint8 ROI_MODE_LOCATION = 0         # Sets the region of interest (ROI) to a location. [DO_SET_ROI_LOCATION]
+uint8 ROI_MODE_WP_NEXT_OFFSET = 1   # Sets the region of interest (ROI) to be toward next waypoint, with optional pitch/roll/yaw offset. [DO_SET_ROI_WPNEXT_OFFSET]
+uint8 ROI_MODE_SYSID = 2            # Mount tracks system with specified system ID [DO_SET_ROI_SYSID]
+uint8 ROI_MODE_NONE = 3             # Cancels any previous ROI setting and returns vehicle to defaults [DO_SET_ROI_NONE]
+
+uint8 gimbal_device_id  # Component ID of gimbal device to address 
+                        # (or 1-6 for non-MAVLink gimbal), 0 for all gimbal device
+                        # components. Send command multiple times for more than
+                        # one gimbal (but not all gimbals).  Default Mavlink gimbal 
+                        # device ids: 154, 171-175
+
+#For ROI_MODE_LOCATION
+float32 latitude
+float32 longitude
+float32 altitude        # Meters
+
+#For ROI_MODE_WP_NEXT_OFFSET
+float32 pitch_offset    # Pitch offset from next waypoint, positive pitching up
+float32 roll_offset     # Roll offset from next waypoint, positive rolling to the right
+float32 yaw_offset      # Yaw offset from next waypoint, positive yawing to the right
+
+#For ROI_MODE_SYSID
+uint8 sysid             # System ID to track (min: 1, max: 255)
+
+#ROI_MODE_NONE doesn't take extra parameters
+
+---
+bool success
+# raw result returned by COMMAND_ACK
+uint8 result

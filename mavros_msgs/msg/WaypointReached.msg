@@ -2,6 +2,6 @@
 #
 #   :wp_seq:    index number of reached waypoint
 
-Header header
+std_msgs/Header header
 
 uint16 wp_seq

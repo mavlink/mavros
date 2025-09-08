@@ -1,0 +1,10 @@
+#Common type for LOCAL Take Off and Landing
+
+float32 min_pitch		# used by takeoff
+float32 offset    		# used by land (landing position accuracy)
+float32 rate			# speed of takeoff/land in m/s
+float32 yaw			# in radians
+geometry_msgs/Vector3 position 	#(x,y,z) in meters
+---
+bool success
+uint8 result
