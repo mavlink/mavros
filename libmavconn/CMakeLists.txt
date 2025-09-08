@@ -50,8 +50,8 @@ add_library(mavconn SHARED
   src/tcp.cpp
   src/udp.cpp
 )
-ament_target_dependencies(mavconn
-  "console_bridge"
+target_link_libraries(mavconn PUBLIC
+  console_bridge::console_bridge
 )
 
 # Use em_expand macros to generate source files
@@ -100,10 +100,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(test_mavconn test/test_mavconn.cpp)
-  target_link_libraries(test_mavconn mavconn)
-  ament_target_dependencies(test_mavconn
-    "console_bridge"
+  target_link_libraries(test_mavconn
+    mavconn
+    console_bridge::console_bridge
   )
+
 endif()
 
 ament_export_dependencies(console_bridge)

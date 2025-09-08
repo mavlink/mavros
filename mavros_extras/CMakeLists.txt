@@ -68,6 +68,8 @@ include_directories(
   ${mavlink_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
+  ${libmavconn_INCLUDE_DIRS}
+  ${mavros_INCLUDE_DIRS}
 )
 
 if(rclcpp_VERSION VERSION_LESS 9.0.0)
@@ -132,28 +134,28 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/wheel_odometry.cpp
   # [[[end]]] (sum: RWTZIs+j02)
 )
-ament_target_dependencies(mavros_extras_plugins
-  angles
-  geometry_msgs
-  geographic_msgs
-  mavros
-  mavros_msgs
-  std_msgs
-  std_srvs
-  sensor_msgs
-  pluginlib
-  nav_msgs
-  trajectory_msgs
-  rclcpp
-  rclcpp_components
-  rcpputils
-  libmavconn
-  diagnostic_updater
-  tf2_ros
-  tf2_eigen
-  message_filters
-  Eigen3
-  yaml_cpp_vendor
+target_link_libraries(mavros_extras_plugins PUBLIC
+  ${geographic_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${mavros_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  ${trajectory_msgs_TARGETS}
+  angles::angles
+  diagnostic_updater::diagnostic_updater
+  geographic_msgs::validation
+  message_filters::message_filters
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rclcpp_components::component_manager
+  rcpputils::rcpputils
+  sensor_msgs::sensor_msgs_library
+  tf2_eigen::tf2_eigen
+  tf2_ros::static_transform_broadcaster_node
+  tf2_ros::tf2_ros
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
@@ -164,23 +166,23 @@ add_library(mavros_extras SHARED
   src/lib/servo_state_publisher.cpp
   # [[[end]]] (sum: o85DxxxWf2)
 )
-ament_target_dependencies(mavros_extras
-  rclcpp
-  rclcpp_components
-  std_msgs
-  sensor_msgs
-  mavros_msgs
-  #console_bridge
-  yaml_cpp_vendor
-  urdf
+target_link_libraries(mavros_extras PUBLIC
+  ${mavros_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rclcpp_components::component_manager
+  sensor_msgs::sensor_msgs_library
+  urdf::urdf
 )
 rclcpp_components_register_node(mavros_extras PLUGIN "mavros::extras::ServoStatePublisher" EXECUTABLE servo_state_publisher)
 
 # yaml-cpp is required for Jazzy and newer
 if(rclcpp_VERSION VERSION_GREATER_EQUAL 22.0.0)
   find_package(yaml-cpp REQUIRED)
-  target_link_libraries(mavros_extras_plugins yaml-cpp::yaml-cpp)
-  target_link_libraries(mavros_extras yaml-cpp::yaml-cpp)
+  target_link_libraries(mavros_extras_plugins PUBLIC yaml-cpp::yaml-cpp)
+  target_link_libraries(mavros_extras PUBLIC yaml-cpp::yaml-cpp)
 endif()
 
 install(TARGETS mavros_extras mavros_extras_plugins
