@@ -20,10 +20,17 @@
 #ifndef MAVROS__MAVROS_UAS_HPP_
 #define MAVROS__MAVROS_UAS_HPP_
 
-#include <tf2_ros/buffer.h>                         // NOLINT
-#include <tf2_ros/transform_listener.h>             // NOLINT
-#include <tf2_ros/transform_broadcaster.h>          // NOLINT
-#include <tf2_ros/static_transform_broadcaster.h>   // NOLINT
+#ifdef USE_OLD_TF2_ROS
+# include <tf2_ros/buffer.h>                         // NOLINT
+# include <tf2_ros/transform_listener.h>             // NOLINT
+# include <tf2_ros/transform_broadcaster.h>          // NOLINT
+# include <tf2_ros/static_transform_broadcaster.h>   // NOLINT
+#else
+# include <tf2_ros/buffer.hpp>                         // NOLINT
+# include <tf2_ros/transform_listener.hpp>             // NOLINT
+# include <tf2_ros/transform_broadcaster.hpp>          // NOLINT
+# include <tf2_ros/static_transform_broadcaster.hpp>   // NOLINT
+#endif
 
 #include <array>
 #include <atomic>

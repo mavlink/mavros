@@ -82,6 +82,7 @@ if(rclcpp_VERSION VERSION_LESS 17.0.0)
   # Humble and older
   add_definitions(
     -DUSE_OLD_RMW_QOS
+    -DUSE_OLD_TF2_ROS
   )
 endif()
 
