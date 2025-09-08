@@ -102,7 +102,7 @@ private:
 		adsb_msg->tslc = ros::Duration(adsb.tslc);
 		adsb_msg->flags = adsb.flags;
 		adsb_msg->squawk = adsb.squawk;
-		// [[[end]]] (checksum: b9c515e7a6fe688b91f4e72e655b9154)
+		// [[[end]]] (sum: ucUV56b+aI)
 
 		ROS_DEBUG_STREAM_NAMED("adsb", "ADSB: recv type: " << utils::to_string_enum<ADSB_ALTITUDE_TYPE>(adsb.altitude_type)
 								   << " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)
@@ -137,7 +137,7 @@ private:
 		adsb.tslc = req->tslc.sec;
 		adsb.flags = req->flags;
 		adsb.squawk = req->squawk;
-		// [[[end]]] (checksum: 8583d9ea3a3eefae10ccd7037c06b46d)
+		// [[[end]]] (sum: hYPZ6jo+76)
 
 		ROS_DEBUG_STREAM_NAMED("adsb", "ADSB: send type: " << utils::to_string_enum<ADSB_ALTITUDE_TYPE>(adsb.altitude_type)
 								   << " emitter: " << utils::to_string_enum<ADSB_EMITTER_TYPE>(adsb.emitter_type)

@@ -54,4 +54,4 @@
 #define CONSOLE_BRIDGE_logError(fmt, ...) \
 	console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, ##__VA_ARGS__)
 #endif // CONSOLE_BRIDGE_logError
-// [[[end]]] (checksum: c8dda3189b05a621b7244bf375275345)
+// [[[end]]] (sum: yN2jGJsFpi)

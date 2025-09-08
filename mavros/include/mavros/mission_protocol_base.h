@@ -81,7 +81,7 @@ static double waypoint_encode_factor( const uint8_t &frame ){
 		return 1;
 	default:
 		return 1;
-	// [[[end]]] (checksum: 152fba25e8f422b878caf990a551a6fd)
+	// [[[end]]] (sum: FS+6Jej0Ir)
 	}
 }
 
@@ -120,7 +120,7 @@ mavros_msgs::Waypoint mav_to_msg(const ITEM &mav_msg)
 	ret.x_lat = mav_msg.x;
 	ret.y_long = mav_msg.y;
 	ret.z_alt = mav_msg.z;
-	// [[[end]]] (checksum: 27badd1a5facc63f38cdd7aad3be9816)
+	// [[[end]]] (sum: J7rdGl+sxj)
 
 	return ret;
 }
@@ -148,7 +148,7 @@ inline mavros_msgs::Waypoint mav_to_msg(const WP_ITEM_INT &mav_msg){
 	ret.x_lat = mav_msg.x / waypoint_encode_factor(mav_msg.frame);
 	ret.y_long = mav_msg.y / waypoint_encode_factor(mav_msg.frame);
 	ret.z_alt = mav_msg.z;
-	// [[[end]]] (checksum: 6c82a18990af7aeeb1db9211e9b1bbf1)
+	// [[[end]]] (sum: bIKhiZCveu)
 
 	return ret;
 }
@@ -173,7 +173,7 @@ ITEM mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t seq, WP_TYPE t
 	ret.x = wp.x_lat;
 	ret.y = wp.y_long;
 	ret.z = wp.z_alt;
-	// [[[end]]] (checksum: c1b08cda34f1c4dc94129bda4743aaec)
+	// [[[end]]] (sum: wbCM2jTxxN)
 
 	ret.seq = seq;
 
@@ -205,7 +205,7 @@ inline WP_ITEM_INT mav_from_msg(const mavros_msgs::Waypoint &wp, const uint16_t 
 	ret.x = int32_t(wp.x_lat * waypoint_encode_factor(wp.frame));
 	ret.y = int32_t(wp.y_long * waypoint_encode_factor(wp.frame));
 	ret.z = wp.z_alt;
-	// [[[end]]] (checksum: 6315c451fe834dbf20a43ee112b8b5fe)
+	// [[[end]]] (sum: YxXEUf6DTb)
 
 	ret.seq = seq;
 

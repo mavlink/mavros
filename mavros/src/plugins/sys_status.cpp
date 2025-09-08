@@ -236,7 +236,7 @@ public:
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::MOTOR_OUTPUTS))
 			stat.add("motor outputs / control", (last_st.onboard_control_sensors_health & enum_value(STS::MOTOR_OUTPUTS)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::RC_RECEIVER))
-			stat.add("rc receiver", (last_st.onboard_control_sensors_health & enum_value(STS::RC_RECEIVER)) ? "Ok" : "Fail");
+			stat.add("RC receiver", (last_st.onboard_control_sensors_health & enum_value(STS::RC_RECEIVER)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_GYRO2))
 			stat.add("2nd 3D gyro", (last_st.onboard_control_sensors_health & enum_value(STS::SENSOR_3D_GYRO2)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::SENSOR_3D_ACCEL2))
@@ -265,7 +265,7 @@ public:
 			stat.add("Avoidance/collision prevention", (last_st.onboard_control_sensors_health & enum_value(STS::OBSTACLE_AVOIDANCE)) ? "Ok" : "Fail");
 		if (last_st.onboard_control_sensors_enabled & enum_value(STS::PROPULSION))
 			stat.add("propulsion (actuator, esc, motor or propellor)", (last_st.onboard_control_sensors_health & enum_value(STS::PROPULSION)) ? "Ok" : "Fail");
-		// [[[end]]] (checksum: 24471e5532db5c99f411475509d41f72)
+		// [[[end]]] (sum: 8pA8+wzE2i)
 
 		stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
 		stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -683,7 +683,7 @@ private:
 		case enum_value(MAV_SEVERITY::DEBUG):
 			ROS_DEBUG_STREAM_NAMED("fcu", "FCU: " << text);
 			break;
-		// [[[end]]] (checksum: 315aa363b5ecb4dda66cc8e1e3d3aa48)
+		// [[[end]]] (sum: MVqjY7XstN)
 		default:
 			ROS_WARN_STREAM_NAMED("fcu", "FCU: UNK(" << +severity << "): " << text);
 			break;
@@ -984,7 +984,7 @@ private:
 		default:
 			batt_msg->power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
 			break;
-		// [[[end]]] (checksum: 2bf14a81b3027f14ba1dd9b4c086a41d)
+		// [[[end]]] (sum: K/FKgbMCfx)
 		}
 
 		batt_msg->present = true;
@@ -1079,7 +1079,7 @@ private:
 		est_status_msg->pred_pos_horiz_abs_status_flag = !!(status.flags & enum_value(ESF::PRED_POS_HORIZ_ABS));
 		est_status_msg->gps_glitch_status_flag = !!(status.flags & enum_value(ESF::GPS_GLITCH));
 		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
-		// [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
+		// [[[end]]] (sum: 2lkjj01DN6)
 
 		estimator_status_pub.publish(est_status_msg);
 	}

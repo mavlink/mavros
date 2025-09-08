@@ -113,7 +113,7 @@ private:
 		z[i] = acceleration_ned.z();
 	}
 
-	// [[[end]]] (checksum: 92ea0f7f329c90c486fdb8b738c0e7c3)
+	// [[[end]]] (sum: kuoPfzKckM)
 
 
 	void fill_points_yaw_wp(MavPoints &y, const double yaw, const size_t i) {
@@ -247,7 +247,7 @@ private:
 			fill_point_rep_waypoints(trajectory, req->point_3, 2);
 			fill_point_rep_waypoints(trajectory, req->point_4, 3);
 			fill_point_rep_waypoints(trajectory, req->point_5, 4);
-			// [[[end]]] (checksum: e993aeb535c2df6f07bf7b4f1fcf3d2e)
+			// [[[end]]] (sum: 6ZOutTXC32)
 
 			trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
 			UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
@@ -279,7 +279,7 @@ private:
 			fill_point_rep_bezier(trajectory, req->point_3, 2);
 			fill_point_rep_bezier(trajectory, req->point_4, 3);
 			fill_point_rep_bezier(trajectory, req->point_5, 4);
-			// [[[end]]] (checksum: 3e6da5f06e0b33682c6122c40f05c1f6)
+			// [[[end]]] (sum: Pm2l8G4LM2)
 
 			trajectory.time_usec = req->header.stamp.toNSec() / 1000;	//!< [milisecs]
 			UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
@@ -324,7 +324,7 @@ private:
 		fill_point(trajectory, 2);
 		fill_point(trajectory, 3);
 		fill_point(trajectory, 4);
-		// [[[end]]] (checksum: 267a911c65a3768f04a8230fcb235bca)
+		// [[[end]]] (sum: JnqRHGWjdo)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(trajectory);
 	}
@@ -370,7 +370,7 @@ private:
 		fill_msg_point(tr_desired->point_3, trajectory, 2);
 		fill_msg_point(tr_desired->point_4, trajectory, 3);
 		fill_msg_point(tr_desired->point_5, trajectory, 4);
-		// [[[end]]] (checksum: b6aa0c7395a7a426c25d726b75b6efea)
+		// [[[end]]] (sum: tqoMc5WnpC)
 
 		trajectory_desired_pub.publish(tr_desired);
 	}

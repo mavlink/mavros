@@ -460,6 +460,6 @@ inline Eigen::Vector3d to_eigen(const geometry_msgs::Vector3 r) {
 inline Eigen::Quaterniond to_eigen(const geometry_msgs::Quaternion r) {
 	return Eigen::Quaterniond(r.w, r.x, r.y, r.z);
 }
-// [[[end]]] (checksum: 1b3ada1c4245d4e31dcae9768779b952)
+// [[[end]]] (sum: GzraHEJF1O)
 }	// namespace ftf
 }	// namespace mavros

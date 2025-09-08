@@ -143,7 +143,7 @@ private:
 		s.p2x = p2.x();
 		s.p2y = p2.y();
 		s.p2z = p2.z();
-		// [[[end]]] (checksum: c996a362f338fcc6b714c8be583c3be0)
+		// [[[end]]] (sum: yZajYvM4/M)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(s);
 	}
@@ -166,7 +166,7 @@ private:
 		// ]]]
 		Eigen::Vector3d p1(req->polygon.points[0].x, req->polygon.points[0].y, req->polygon.points[0].z);
 		Eigen::Vector3d p2(req->polygon.points[1].x, req->polygon.points[1].y, req->polygon.points[1].z);
-		// [[[end]]] (checksum: c3681d584e02f7d91d6b3b48f87b1771)
+		// [[[end]]] (sum: w2gdWE4C99)
 
 		send_safety_set_allowed_area(p1, p2);
 	}

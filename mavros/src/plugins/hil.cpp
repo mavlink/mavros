@@ -103,7 +103,7 @@ private:
 		hil_controls_msg->aux4 = hil_controls.aux4;
 		hil_controls_msg->mode = hil_controls.mode;
 		hil_controls_msg->nav_mode = hil_controls.nav_mode;
-		// [[[end]]] (checksum: a2c87ee8f36e7a32b08be5e0fe665b5a)
+		// [[[end]]] (sum: osh+6PNuej)
 
 		hil_controls_pub.publish(hil_controls_msg);
 	}
@@ -169,7 +169,7 @@ private:
 		state_quat.xacc = lin_acc.x();
 		state_quat.yacc = lin_acc.y();
 		state_quat.zacc = lin_acc.z();
-		// [[[end]]] (checksum: a29598b834ac1ec32ede01595aa5b3ac)
+		// [[[end]]] (sum: opWYuDSsHs)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(state_quat);
 	}
@@ -201,7 +201,7 @@ private:
 		gps.ve = req->ve * 1E2;
 		gps.vd = req->vd * 1E2;
 		gps.cog = req->cog * 1E2;
-		// [[[end]]] (checksum: a283bcc78f496cead2e9f893200d825d)
+		// [[[end]]] (sum: ooO8x49JbO)
 		gps.satellites_visible = req->satellites_visible;
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(gps);
@@ -248,7 +248,7 @@ private:
 		sensor.pressure_alt = req->pressure_alt;
 		sensor.temperature = req->temperature;
 		sensor.fields_updated = req->fields_updated;
-		// [[[end]]] (checksum: 316bef821ad6fc33d9726a1c8e8c5404)
+		// [[[end]]] (sum: MWvvghrW/D)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(sensor);
 	}
@@ -290,7 +290,7 @@ private:
 		of.time_delta_distance_us = req->time_delta_distance_us;
 		of.distance = req->distance;
 		of.quality = req->quality;
-		// [[[end]]] (checksum: acbfae28f4f3bb8ca135423efaaa479e)
+		// [[[end]]] (sum: rL+uKPTzu4)
 		of.temperature = req->temperature * 100.0f;	// in centi-degrees celsius
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(of);
@@ -327,7 +327,7 @@ private:
 		rcin.chan10_raw	= channels[ 9];
 		rcin.chan11_raw	= channels[10];
 		rcin.chan12_raw	= channels[11];
-		// [[[end]]] (checksum: 8d6860789d596dc39e81b351c3a50fcd)
+		// [[[end]]] (sum: jWhgeJ1Zbc)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(rcin);
 	}
