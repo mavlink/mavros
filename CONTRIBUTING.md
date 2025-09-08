@@ -1,4 +1,5 @@
-# Contributing
+Contributing
+============
 
 1. Fork the repo. [<img src="https://upload.wikimedia.org/wikipedia/commons/3/38/GitHub_Fork_Button.png" height="30"/>](https://github.com/mavlink/mavros/fork)
 2. Clone the repo into your workspace:
@@ -29,48 +30,53 @@
 7. Check your code style:
 
   ```bash
-  uncrustify -c ${ROS_WORKSPACE}/src/mavros/mavros/tools/uncrustify-cpp.cfg --replace --no-backup <path/to/file.ext>
+  ament_uncrustify --reformat
   ```
 
 8. Fix small code style errors and typos.
 9. Commit with a description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commits are better than a mix of style and bug fixes).
 10. Run tests:
 
-- with `catkin_make`, issue `catkin_make tests` and then `catkin_make run_tests`;
-- with `catkin tools`, issue `catkin run_tests`;
+  ```bash
+  colcon test
+  ```
 
 11. If everything goes as planned, push the changes and issue a pull request.
 
-```bash
-git push -u origin <feature_branch>
-```
+  ```bash
+  git push -u origin <feature_branch>
+  ```
 
-## cog.py generators
+
+cog.py generators
+-----------------
 
 In many places we need to copy some data from MAVLink, and in many places we have regular patterns of code (e.g. copied message fields).
 To avoid manual copy-paste work (and errors!) we use the the [cog.py][cog] code generator/preprocessor.
 
-Cog generates C++ code from code blocks written in Python that you add into your C++ code file as specially formatted comments. Since you are now using Python, you can import and make use of the [pymavlink][pml] module, which already comes with MAVlink message definitions that you can reuse.
+Cog generates C++ code from code blocks written in Python that you add into your C++ code file as specially formatted comments.
+Since you are now using Python, you can import and make use of the [pymavlink][pml] module, which already comes with MAVlink message definitions that you can reuse.
 An example you may look at is the `utils::to_string()` implementation for some enums in [lib/enum_to_string.cpp][ets].
 
-Install cog and pymavlink:
+Install cog and pymavlink you need [uv][uv]:
 
 ```bash
-pip install --user cogapp pymavlink
+uv tool install ./tools
 ```
 
 Add your generator code to your file as comments enclosed in the `[[[cog:]]]` and `[[[end]]]` tags. Then invoke cog so that it updates your file:
 
 ```bash
-cog.py -cr your_file.h/cpp
+mr-cog -cr your_file.h/cpp
 ```
 
 In addition, this script will re-generate all files with cog code:
 
 ```bash
-./mavros/tools/cogall.sh
+./tools/cogall.sh
 ```
 
 [cog]: https://nedbatchelder.com/code/cog/
-[ets]: https://github.com/mavlink/mavros/blob/master/mavros/src/lib/enum_to_string.cpp
+[ets]: https://github.com/mavlink/mavros/blob/ros2/mavros/src/lib/enum_to_string.cpp
 [pml]: https://mavlink.io/en/mavgen_python/
+[uv]: https://github.com/astral-sh/uv
