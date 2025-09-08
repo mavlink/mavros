@@ -29,7 +29,7 @@ uint8 UA_TYPE_ROCKET = 12                # Rocket.
 uint8 UA_TYPE_TETHERED_POWERED_AIRCRAFT = 13 # Tethered powered aircraft.
 uint8 UA_TYPE_GROUND_OBSTACLE = 14       # Ground Obstacle.
 uint8 UA_TYPE_OTHER = 15                 # Other type of aircraft not listed earlier.
-# [[[end]]] (checksum: 5c8d15e3412f1859012762424293d945)
+# [[[end]]] (sum: XI0V40EvGF)
 
 std_msgs/Header header
 string id_or_mac

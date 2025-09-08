@@ -116,7 +116,7 @@ private:
     adsb_msg.tslc = rclcpp::Duration(adsb.tslc, 0);
     adsb_msg.flags = adsb.flags;
     adsb_msg.squawk = adsb.squawk;
-    // [[[end]]] (checksum: ae8f818682cc2c23db50504f5af97127)
+    // [[[end]]] (sum: ro+BhoLMLC)
 
     RCLCPP_DEBUG_STREAM(
       get_logger(),
@@ -153,7 +153,7 @@ private:
     adsb.tslc = req->tslc.sec;
     adsb.flags = req->flags;
     adsb.squawk = req->squawk;
-    // [[[end]]] (checksum: e586b680a3d86ec594e5b7f4a59bbe6c)
+    // [[[end]]] (sum: 5Ya2gKPYbs)
 
     RCLCPP_DEBUG_STREAM(
       get_logger(),

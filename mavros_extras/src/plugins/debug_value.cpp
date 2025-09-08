@@ -155,7 +155,7 @@ private:
     dv_msg.index = debug.ind;
     dv_msg.array_id = -1;
     dv_msg.value_float = debug.value;
-    // [[[end]]] (checksum: ef695729241176edd2e06592ed20549b)
+    // [[[end]]] (sum: 72lXKSQRdu)
 
     debug_logger(debug.get_name(), dv_msg);
     debug_pub->publish(dv_msg);
@@ -191,7 +191,7 @@ private:
     dv_msg.data[0] = debug.x;
     dv_msg.data[1] = debug.y;
     dv_msg.data[2] = debug.z;
-    // [[[end]]] (checksum: 8abb1284bdb29874a87fee9808570f05)
+    // [[[end]]] (sum: irsShL2ymH)
 
     debug_logger(debug.get_name(), dv_msg);
     debug_vector_pub->publish(dv_msg);
@@ -221,7 +221,7 @@ private:
     dv_msg.name = mavlink::to_string(debug.name);
     dv_msg.array_id = debug.array_id;
     dv_msg.data.assign(debug.data.begin(), debug.data.end());
-    // [[[end]]] (checksum: e13bbba22bff5b74db32092d8787c6b4)
+    // [[[end]]] (sum: 4Tu7oiv/W3)
 
     debug_logger(debug.get_name(), dv_msg);
     debug_float_array_pub->publish(dv_msg);
@@ -250,7 +250,7 @@ private:
     dv_msg.array_id = -1;
     dv_msg.name = mavlink::to_string(value.name);
     dv_msg.value_float = value.value;
-    // [[[end]]] (checksum: 8c243c3e607db7bf0758cd4ac3aca976)
+    // [[[end]]] (sum: jCQ8PmB9t7)
 
     debug_logger(value.get_name(), dv_msg);
     named_value_float_pub->publish(dv_msg);
@@ -278,7 +278,7 @@ private:
     dv_msg.array_id = -1;
     dv_msg.name = mavlink::to_string(value.name);
     dv_msg.value_int = value.value;
-    // [[[end]]] (checksum: 32cb48d5dad85c622997aeb6d34c255e)
+    // [[[end]]] (sum: MstI1drYXG)
 
     debug_logger(value.get_name(), dv_msg);
     named_value_int_pub->publish(dv_msg);
@@ -315,7 +315,7 @@ private:
           debug.x = req->data[0];
           debug.y = req->data[1];
           debug.z = req->data[2];
-          // [[[end]]] (checksum: e3359b14c75adf35f430840dcf01ef18)
+          // [[[end]]] (sum: 4zWbFMda3z)
 
           uas->send_message(debug);
           break;

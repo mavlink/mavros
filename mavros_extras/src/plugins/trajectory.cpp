@@ -130,7 +130,7 @@ private:
     z[i] = acceleration_ned.z();
   }
 
-  // [[[end]]] (checksum: a0ed1550494e431a3ba599da8503c8b6)
+  // [[[end]]] (sum: oO0VUElOQx)
 
   void fill_points_yaw_wp(MavPoints & y, const double yaw, const size_t i)
   {
@@ -291,7 +291,7 @@ private:
       fill_point_rep_waypoints(trajectory, req->point_3, 2);
       fill_point_rep_waypoints(trajectory, req->point_4, 3);
       fill_point_rep_waypoints(trajectory, req->point_5, 4);
-      // [[[end]]] (checksum: 3378a593279611a83e25efee67393195)
+      // [[[end]]] (sum: M3ilkyeWEa)
 
       trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
       uas->send_message(trajectory);
@@ -325,7 +325,7 @@ private:
       fill_point_rep_bezier(trajectory, req->point_3, 2);
       fill_point_rep_bezier(trajectory, req->point_4, 3);
       fill_point_rep_bezier(trajectory, req->point_5, 4);
-      // [[[end]]] (checksum: a12a34d1190be94c777077f2d297918b)
+      // [[[end]]] (sum: oSo00RkL6U)
 
       trajectory.time_usec = get_time_usec(req->header.stamp);      //!< [milisecs]
       uas->send_message(trajectory);
@@ -368,7 +368,7 @@ private:
     fill_point(trajectory, 2);
     fill_point(trajectory, 3);
     fill_point(trajectory, 4);
-    // [[[end]]] (checksum: a63d2682cc16897f19da141e87ab5d60)
+    // [[[end]]] (sum: pj0mgswWiX)
 
     uas->send_message(trajectory);
   }
@@ -414,7 +414,7 @@ private:
     fill_msg_point(tr_desired.point_3, trajectory, 2);
     fill_msg_point(tr_desired.point_4, trajectory, 3);
     fill_msg_point(tr_desired.point_5, trajectory, 4);
-    // [[[end]]] (checksum: a1d59b0aa0f24a18ca76f47397bca4ae)
+    // [[[end]]] (sum: odWbCqDySh)
 
     trajectory_desired_pub->publish(tr_desired);
   }

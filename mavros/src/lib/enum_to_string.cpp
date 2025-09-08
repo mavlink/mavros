@@ -126,7 +126,7 @@ static auto logger = rclcpp::get_logger("uas.enum");
 //     cog.outl("}};")
 //     to_string_outl(ename, funcname, suffix)
 // ]]]
-// [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+// [[[end]]] (sum: 1B2M2Y8Asg)
 
 // [[[cog:
 // ename = 'MAV_AUTOPILOT'
@@ -168,7 +168,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
   return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 68013f2988194a55231693f1d7fa9726)
+// [[[end]]] (sum: aAE/KYgZSl)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -232,7 +232,7 @@ std::string to_string(MAV_TYPE e)
 
   return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 5bcb1f5fb05dbb71467360a932e5b182)
+// [[[end]]] (sum: W8sfX7Bdu3)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -295,7 +295,7 @@ std::string enum_to_name(MAV_TYPE e)
 
   return mav_type_names[idx];
 }
-// [[[end]]] (checksum: dfc98695f046912ae73ec2bd4508e9c1)
+// [[[end]]] (sum: 38mGlfBGkS)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -324,7 +324,7 @@ std::string to_string(MAV_STATE e)
 
   return mav_state_strings[idx];
 }
-// [[[end]]] (checksum: e953b14d18e31abb45db4fe72ebb749f)
+// [[[end]]] (sum: 6VOxTRjjGr)
 
 // [[[cog:
 // ename = "timesync_mode"
@@ -357,7 +357,7 @@ std::string to_string(timesync_mode e)
 
   return timesync_mode_strings[idx];
 }
-// [[[end]]] (checksum: 7a286bcf12006fdeff1bd9fca8ce4176)
+// [[[end]]] (sum: eihrzxIAb9)
 
 timesync_mode timesync_mode_from_str(const std::string & mode)
 {
@@ -392,7 +392,7 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
   return adsb_altitude_type_strings[idx];
 }
-// [[[end]]] (checksum: 2e8d87a6e603b105ded642f34978fd55)
+// [[[end]]] (sum: Lo2HpuYDsQ)
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
@@ -432,7 +432,7 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
   return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: 342e71a579408cf35a4dbf8b42bd099a)
+// [[[end]]] (sum: NC5xpXlAjP)
 
 // [[[cog:
 // ename = 'MAV_ESTIMATOR_TYPE'
@@ -461,7 +461,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
   return mav_estimator_type_strings[idx];
 }
-// [[[end]]] (checksum: 451e5fe0a2c760a5c9d4efed0f97553d)
+// [[[end]]] (sum: RR5f4KLHYK)
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
@@ -490,7 +490,7 @@ std::string to_string(GPS_FIX_TYPE e)
 
   return gps_fix_type_strings[idx];
 }
-// [[[end]]] (checksum: 260b7022824b9717be95db4e4e28a8d5)
+// [[[end]]] (sum: JgtwIoJLlx)
 
 // [[[cog:
 // ename = 'MAV_MISSION_RESULT'
@@ -527,7 +527,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
   return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: ddddde7cdf04ebd988f019d5b93eadbe)
+// [[[end]]] (sum: 3d3efN8E69)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -569,7 +569,7 @@ std::string to_string(MAV_FRAME e)
 
   return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: 9e2018e38b2c586263f10adba00d2ca6)
+// [[[end]]] (sum: niAY44ssWG)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -726,7 +726,7 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
   {242, "TUNNEL_NODE"},
   {250, "SYSTEM_CONTROL"},
 }};
-// [[[end]]] (checksum: 3a66ba989a8794aff36d5dbadae852d8)
+// [[[end]]] (sum: Oma6mJqHlK)
 
 std::string to_string(MAV_COMPONENT e)
 {
@@ -788,7 +788,7 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 
   return mav_distance_sensor_strings[idx];
 }
-// [[[end]]] (checksum: dda871f638e51a30d2ecd3b0d063c0de)
+// [[[end]]] (sum: 3ahx9jjlGj)
 
 // [[[cog:
 // ename = 'LANDING_TARGET_TYPE'
@@ -812,7 +812,7 @@ std::string to_string(LANDING_TARGET_TYPE e)
 
   return landing_target_type_strings[idx];
 }
-// [[[end]]] (checksum: f582577481c6b17014ed9925665f7634)
+// [[[end]]] (sum: 9YJXdIHGsX)
 
 LANDING_TARGET_TYPE landing_target_type_from_str(const std::string & landing_target_type)
 {

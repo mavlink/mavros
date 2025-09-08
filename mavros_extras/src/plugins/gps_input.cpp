@@ -114,7 +114,7 @@ private:
     gps_input.vert_accuracy = ros_msg->vert_accuracy;
     gps_input.satellites_visible = ros_msg->satellites_visible;
     gps_input.yaw = ros_msg->yaw;
-    // [[[end]]] (checksum: 303dffa9e430561ad0e254448d3f403a)
+    // [[[end]]] (sum: MD3/qeQwVh)
 
     gps_input.time_usec = get_time_usec(ros_msg->header.stamp);
 

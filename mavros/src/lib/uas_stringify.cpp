@@ -46,7 +46,7 @@ static const cmode_map arduplane_cmode_map{{
   {10, "AUTO"},
   {11, "RTL"},
   {12, "LOITER"},
-  {14, "AVOID_ADSB" },	        // renamed, prev name: LAND
+  {14, "AVOID_ADSB"},           // renamed, prev name: LAND
   {15, "GUIDED"},
   {16, "INITIALISING"},
   {17, "QSTABILIZE"},           // QuadPlane

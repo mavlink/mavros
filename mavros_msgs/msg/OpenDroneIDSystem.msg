@@ -13,7 +13,7 @@ uint8 LOCATION_TYPE_FIXED = 2            # The location of the operator is a fix
 # MAV_ODID_CLASSIFICATION_TYPE
 uint8 CLASSIFICATION_TYPE_UNDECLARED = 0 # The classification type for the UA is undeclared.
 uint8 CLASSIFICATION_TYPE_EU = 1         # The classification type for the UA follows EU (European Union) specifications.
-# [[[end]]] (checksum: 518034079daae18afbc49769bc1a1031)
+# [[[end]]] (sum: UYA0B52q4Y)
 
 std_msgs/Header header
 string id_or_mac

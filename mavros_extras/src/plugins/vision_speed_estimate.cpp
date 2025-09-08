@@ -88,7 +88,7 @@ private:
     vs.x = v.x();
     vs.y = v.y();
     vs.z = v.z();
-    // [[[end]]] (checksum: c0c3a3d4dea27c5dc44e4d4f982ff1b6)
+    // [[[end]]] (sum: wMOj1N6ifF)
 
     ftf::covariance_to_mavlink(cov, vs.covariance);
 

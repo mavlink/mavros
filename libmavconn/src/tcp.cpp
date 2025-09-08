@@ -427,7 +427,7 @@ mavlink_status_t MAVConnTCPServer::get_status()
     status.packet_rx_drop_count += inst_status.packet_rx_drop_count;
     status.buffer_overrun += inst_status.buffer_overrun;
     status.parse_error += inst_status.parse_error;
-    // [[[end]]] (checksum: cd582e46d3a563caabfefe819243b62c)
+    // [[[end]]] (sum: zVguRtOlY8)
 
     /* seq counters always 0 for this connection type */
   }
@@ -452,7 +452,7 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
     iostat.tx_speed += inst_iostat.tx_speed;
     iostat.rx_total_bytes += inst_iostat.rx_total_bytes;
     iostat.rx_speed += inst_iostat.rx_speed;
-    // [[[end]]] (checksum: b86c7c86ee2b15eb702c2e1da3ca82d8)
+    // [[[end]]] (sum: uGx8hu4rFe)
   }
 
   return iostat;

@@ -43,7 +43,7 @@ uint16 FLAG_SIMULATED = 64
 uint16 FLAG_VERTICAL_VELOCITY_VALID = 128
 uint16 FLAG_BARO_VALID = 256
 uint16 FLAG_SOURCE_UAT = 32768
-# [[[end]]] (checksum: a34f2a081739921b6e3e443ed0516d8d)
+# [[[end]]] (sum: o08qCBc5kh)
 
 std_msgs/Header header
 

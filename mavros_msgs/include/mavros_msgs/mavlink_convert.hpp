@@ -41,7 +41,7 @@ using mavros_msgs::msg::Mavlink;
 //   "checksum",
 // ]
 // ]]]
-// [[[end]]] (checksum: d41d8cd98f00b204e9800998ecf8427e)
+// [[[end]]] (sum: 1B2M2Y8Asg)
 
 // NOTE(vooon): Ignore impossible warning as
 // memcpy() should work with unaligned pointers without any trouble.
@@ -84,7 +84,7 @@ inline bool convert(const Mavlink & rmsg, mavlink_message_t & mmsg)
   mmsg.compid = rmsg.compid;
   mmsg.msgid = rmsg.msgid;
   mmsg.checksum = rmsg.checksum;
-  // [[[end]]] (checksum: 0b66f0fc1cd46db0f18a2429c56a6b8c)
+  // [[[end]]] (sum: C2bw/BzUbb)
   std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64);
   std::copy(rmsg.signature.begin(), rmsg.signature.end(), mmsg.signature);
 
@@ -120,7 +120,7 @@ inline bool convert(
   rmsg.compid = mmsg.compid;
   rmsg.msgid = mmsg.msgid;
   rmsg.checksum = mmsg.checksum;
-  // [[[end]]] (checksum: 64ef6c1af60c622ed427e005d8ca4f2a)
+  // [[[end]]] (sum: ZO9sGvYMYi)
   rmsg.payload64.assign(
     mmsg.payload64,
     mmsg.payload64 + payload64_len);

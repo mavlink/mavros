@@ -253,7 +253,7 @@ public:
     check_flag("pre-arm check status. Always healthy when armed", STS::PREARM_CHECK);
     check_flag("Avoidance/collision prevention", STS::OBSTACLE_AVOIDANCE);
     check_flag("propulsion (actuator, esc, motor or propellor)", STS::PROPULSION);
-    // [[[end]]] (checksum: 7fbf2799c5df4ad3ba0086e055b61b68)
+    // [[[end]]] (sum: f78nmcXfSt)
 
     stat.addf("CPU Load (%)", "%.1f", last_st.load / 10.0);
     stat.addf("Drop rate (%)", "%.1f", last_st.drop_rate_comm / 10.0);
@@ -746,7 +746,7 @@ private:
       case enum_value(MAV_SEVERITY::DEBUG):
         RCLCPP_DEBUG_STREAM(node->get_logger(), "FCU: " << text);
         break;
-      // [[[end]]] (checksum: d05760afbeece46673c8f73f89b63f3d)
+      // [[[end]]] (sum: 0Fdgr77s5G)
       default:
         RCLCPP_WARN_STREAM(node->get_logger(), "FCU: UNK(" << +severity << "): " << text);
         break;
@@ -800,7 +800,7 @@ private:
         RCLCPP_DEBUG_STREAM(node->get_logger(),
             "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
-      // [[[end]]] (checksum: 83f5eab6a8989f95de46d2a95387304c)
+      // [[[end]]] (sum: g/XqtqiYn5)
       default:
         RCLCPP_WARN_STREAM(
           node->get_logger(),
@@ -1162,7 +1162,7 @@ private:
       default:
         batt_msg.power_supply_technology = BatteryMsg::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
         break;
-        // [[[end]]] (checksum: 9ff6279a1b2c35e23e0b2e09e915c5ca)
+        // [[[end]]] (sum: n/YnmhssNe)
     }
 
     batt_msg.present = true;
@@ -1270,7 +1270,7 @@ private:
     est_status_msg.pred_pos_horiz_abs_status_flag = check_flag(ESF::PRED_POS_HORIZ_ABS);
     est_status_msg.gps_glitch_status_flag = check_flag(ESF::GPS_GLITCH);
     est_status_msg.accel_error_status_flag = check_flag(ESF::ACCEL_ERROR);
-    // [[[end]]] (checksum: fc30da81f9490dede61a58e82c8a2d53)
+    // [[[end]]] (sum: /DDagflJDe)
 
     estimator_status_pub->publish(est_status_msg);
   }

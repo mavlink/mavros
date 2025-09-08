@@ -81,7 +81,7 @@ Also publishes gimbal pose to TF when parameter tf_send==true</description>
     <description>@brief GPS_INPUT GPS plugin.
 @plugin gps_input
 
-Sends &lt;a href=&quot;https://mavlink.io/en/messages/common.html#GPS_INPUT&quot;&gt;GPS_INPUT MAVLink messages&lt;/a&gt;</description>
+Sends &lt;a href="https://mavlink.io/en/messages/common.html#GPS_INPUT"&gt;GPS_INPUT MAVLink messages&lt;/a&gt;</description>
   </class>
   <class name="gps_rtk" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsRtkPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief GPS RTK plugin
@@ -121,7 +121,7 @@ to the FCU and/or receive landing target tracking data coming from the FCU.</des
     <description>@brief MagCalStatus plugin.
 @plugin mag_calibration_status
 
-Example and &quot;how to&quot; for users.</description>
+Example and "how to" for users.</description>
   </class>
   <class name="mocap_pose_estimate" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::MocapPoseEstimatePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief MocapPoseEstimate plugin
@@ -246,4 +246,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (checksum: 03a498e746e958da9480aa6411d57a1f) -->
+<!-- [[[end]]] (sum: XzQHfXbCHY) -->

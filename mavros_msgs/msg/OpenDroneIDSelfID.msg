@@ -9,7 +9,7 @@
 uint8 DESC_TYPE_TEXT = 0                 # Free-form text description of the purpose of the flight.
 uint8 DESC_TYPE_EMERGENCY = 1            # Optional additional clarification when status == MAV_ODID_STATUS_EMERGENCY.
 uint8 DESC_TYPE_EXTENDED_STATUS = 2      # Optional additional clarification when status != MAV_ODID_STATUS_EMERGENCY.
-# [[[end]]] (checksum: 08bf4b7e669d01d655893e5d543f86b1)
+# [[[end]]] (sum: CL9LfmadAd)
 
 std_msgs/Header header
 string id_or_mac

@@ -110,7 +110,7 @@ private:
     std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
     std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
     std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
-    // [[[end]]] (checksum: b06efca90d9a1160c16350e0f0a0f060)
+    // [[[end]]] (sum: sG78qQ2aEW)
 
     uas->send_message(status, req->component);
   }
