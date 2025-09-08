@@ -2,6 +2,8 @@
 #
 # Returns success status and param_transfered count
 
+# XXX DEPRECATED: not used. param plugin listen to parameter changes
+
 ---
 bool success
 uint32 param_transfered
