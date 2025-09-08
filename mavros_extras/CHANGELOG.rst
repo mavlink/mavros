@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.21.0 (2025-09-08)
+-------------------
 * regenerate all
 * Contributors: Vladimir Ermakov
 

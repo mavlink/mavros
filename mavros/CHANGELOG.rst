@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.21.0 (2025-09-08)
+-------------------
 * regenerate all
 * tools: move scripts to use with uv
   add uncrustify helper
