@@ -209,6 +209,11 @@ if(BUILD_TESTING)
   # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
   list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
 
+  # Old releases has different uncrustify config, disable for < Jazzy
+  if(rclcpp_VERSION VERSION_LESS 22.0.0)
+    list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
+  endif()
+
   ament_lint_auto_find_test_dependencies()
 endif()
 
