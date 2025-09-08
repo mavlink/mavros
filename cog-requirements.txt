@@ -1,4 +1,0 @@
-attrs
-comment_parser
-cogapp
-# pymavlink

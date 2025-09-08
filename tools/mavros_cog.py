@@ -173,9 +173,12 @@ def outl_plugins_xml(dir: str, lib_path: str):
     outl(xml_)
 
 
-def outl_glob_files(dir: str, glob: str = "*.cpp"):
+def outl_glob_files(dir: str, glob: str = "*.cpp", basename_only: bool = False):
     for f in sorted((cwd() / dir).glob(glob)):
-        outl(str(f.relative_to(cwd())))
+        if not basename_only:
+            outl(str(f.relative_to(cwd())))
+        else:
+            outl(str(f.name))
 
 
 def clear_desc(s):
