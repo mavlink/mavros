@@ -101,7 +101,7 @@ private:
 		std::copy(req->link_rx_rate.cbegin(), req->link_rx_rate.cend(), status.link_rx_rate.begin());
 		std::copy(req->link_tx_max.cbegin(), req->link_tx_max.cend(), status.link_tx_max.begin());
 		std::copy(req->link_rx_max.cbegin(), req->link_rx_max.cend(), status.link_rx_max.begin());
-		// [[[end]]] (checksum: 98538293a5932dfb5952d4badd311b39)
+		// [[[end]]] (sum: mFOCk6WTLf)
 
 		std::cout << "timestamp: " << status.time_usec << "\n";
 

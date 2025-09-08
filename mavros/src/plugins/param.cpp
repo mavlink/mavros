@@ -111,7 +111,7 @@ public:
 			float_tmp = uv.param_float;
 			param_value = float_tmp;
 			break;
-		// [[[end]]] (checksum: 5950e4ee032d4aa198b953f56909e129)
+		// [[[end]]] (sum: WVDk7gMtSq)
 
 		default:
 			ROS_WARN_NAMED("param", "PM: Unsupported param %.16s (%u/%u) type: %u",
@@ -165,7 +165,7 @@ public:
 			float_tmp = pmsg.param_value;
 			param_value = float_tmp;
 			break;
-		// [[[end]]] (checksum: c30ee34dd84213471690612ab49f1f73)
+		// [[[end]]] (sum: ww7jTdhCE0)
 
 		default:
 			ROS_WARN_NAMED("param", "PM: Unsupported param %.16s (%u/%u) type: %u",
@@ -212,7 +212,7 @@ public:
 			uv.param_float = static_cast<double>(param_value);
 			ret.param_type = enum_value(MT::REAL32);
 			break;
-		// [[[end]]] (checksum: c414a3950fba234cbbe694a2576ae022)
+		// [[[end]]] (sum: xBSjlQ+6I0)
 
 		default:
 			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
@@ -249,7 +249,7 @@ public:
 			ret.param_value = static_cast<double &>(param_value);
 			ret.param_type = enum_value(MT::REAL32);
 			break;
-		// [[[end]]] (checksum: 5b10c0e1f2e916f1c31313eaa5cc83e0)
+		// [[[end]]] (sum: WxDA4fLpFv)
 
 		default:
 			ROS_WARN_NAMED("param", "PR: Unsupported XmlRpcValue type: %u", param_value.getType());
@@ -272,7 +272,7 @@ public:
 		// ]]]
 		case XmlRpcValue::TypeBoolean:	return static_cast<bool>(param_value);
 		case XmlRpcValue::TypeInt:	return static_cast<int32_t>(param_value);
-		// [[[end]]] (checksum: ce23a3bc04354d8cfcb82341beb83709)
+		// [[[end]]] (sum: ziOjvAQ1TY)
 
 		default:
 			return 0;

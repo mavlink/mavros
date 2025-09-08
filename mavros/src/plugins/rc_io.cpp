@@ -93,7 +93,7 @@ private:
 		raw_rc_in[offset + 5] = port.chan6_raw;
 		raw_rc_in[offset + 6] = port.chan7_raw;
 		raw_rc_in[offset + 7] = port.chan8_raw;
-		// [[[end]]] (checksum: fcb14b1ddfff9ce7dd02f5bd03825cff)
+		// [[[end]]] (sum: /LFLHd//nO)
 
 		auto rcin_msg = boost::make_shared<mavros_msgs::RCIn>();
 
@@ -146,7 +146,7 @@ private:
 		case  3: raw_rc_in[ 2] = channels.chan3_raw;
 		case  2: raw_rc_in[ 1] = channels.chan2_raw;
 		case  1: raw_rc_in[ 0] = channels.chan1_raw;
-		// [[[end]]] (checksum: 56e9ab5407bd2c864abde230a6cf3fed)
+		// [[[end]]] (sum: VumrVAe9LI)
 		case  0: break;
 		}
 
@@ -188,7 +188,7 @@ private:
 		raw_rc_out[offset + 5] = port.servo6_raw;
 		raw_rc_out[offset + 6] = port.servo7_raw;
 		raw_rc_out[offset + 7] = port.servo8_raw;
-		// [[[end]]] (checksum: 946d524fe9fbaa3e52fbdf8a905fbf0f)
+		// [[[end]]] (sum: lG1ST+n7qj)
 		if (msg->magic == MAVLINK_STX) {
 			// [[[cog:
 			// for i in range(9, 17):
@@ -202,7 +202,7 @@ private:
 			raw_rc_out[offset + 13] = port.servo14_raw;
 			raw_rc_out[offset + 14] = port.servo15_raw;
 			raw_rc_out[offset + 15] = port.servo16_raw;
-			// [[[end]]] (checksum: 60a386cba6faa126ee7dfe1b22f50398)
+			// [[[end]]] (sum: YKOGy6b6oS)
 		}
 
 		auto rcout_msg = boost::make_shared<mavros_msgs::RCOut>();
@@ -257,7 +257,7 @@ private:
 		ovr.chan16_raw = req->channels[15];
 		ovr.chan17_raw = req->channels[16];
 		ovr.chan18_raw = req->channels[17];
-		// [[[end]]] (checksum: 3c9f7f1ce77a49651345daab995ea70e)
+		// [[[end]]] (sum: PJ9/HOd6SW)
 		UAS_FCU(m_uas)->send_message_ignore_drop(ovr);
 	}
 };

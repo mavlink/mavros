@@ -68,7 +68,7 @@ public:
 		sp.afx = af.x();
 		sp.afy = af.y();
 		sp.afz = af.z();
-		// [[[end]]] (checksum: 6a9b9dacbcf85c5d428d754c20afe110)
+		// [[[end]]] (sum: apudrLz4XF)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
@@ -114,7 +114,7 @@ public:
 		sp.afx = af.x();
 		sp.afy = af.y();
 		sp.afz = af.z();
-		// [[[end]]] (checksum: 30c9629ad309d488df1f63b683dac6a4)
+		// [[[end]]] (sum: MMlimtMJ1I)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}
@@ -151,7 +151,7 @@ public:
 		sp.body_roll_rate = body_rate.x();
 		sp.body_pitch_rate = body_rate.y();
 		sp.body_yaw_rate = body_rate.z();
-		// [[[end]]] (checksum: aa941484927bb7a7d39a2c31d08fcfc1)
+		// [[[end]]] (sum: qpQUhJJ7t6)
 
 		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
 	}

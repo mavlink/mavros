@@ -35,6 +35,7 @@ using mavlink::common::MAV_DISTANCE_SENSOR;
 using mavlink::common::LANDING_TARGET_TYPE;
 
 // [[[cog:
+// from mavros_cog import clear_desc
 // import pymavlink.dialects.v20.common as common
 //
 // def get_enum(ename):
@@ -83,7 +84,7 @@ using mavlink::common::LANDING_TARGET_TYPE;
 //         name_short =  e.name[len(ename) + 1:]
 //         sp = make_whitespace(30, name_short)
 //         if e.description:
-//             cog.outl(f"""/* {k:>2} */ "{name_short}",{sp}// {e.description}""")
+//             cog.outl(f"""/* {k:>2} */ "{name_short}",{sp}// {clear_desc(e.description)}""")
 //         else:
 //             cog.outl(f"""/* {k:>2} */ "{name_short}",""")
 //
@@ -98,7 +99,7 @@ using mavlink::common::LANDING_TARGET_TYPE;
 // for k, e in enum:
 //     value = split_by('-,/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {clear_desc(e.description)}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -137,7 +138,7 @@ std::string to_string(MAV_AUTOPILOT e)
 
 	return mav_autopilot_strings[idx];
 }
-// [[[end]]] (checksum: 036beb51a16d3fa9cbb47ab59c767238)
+// [[[end]]] (sum: A2vrUaFtP6)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -147,7 +148,7 @@ std::string to_string(MAV_AUTOPILOT e)
 // for k, e in enum:
 //     value = split_by(',-/.', e.description)
 //     sp = make_whitespace(30, value)
-//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {e.description}""")
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {clear_desc(e.description)}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -208,7 +209,7 @@ std::string to_string(MAV_TYPE e)
 
 	return mav_type_strings[idx];
 }
-// [[[end]]] (checksum: 18825caa6c70eb36e076c1bfffa9150c)
+// [[[end]]] (sum: GIJcqmxw6z)
 
 // [[[cog:
 // ename = 'MAV_TYPE'
@@ -269,7 +270,7 @@ std::string to_name(MAV_TYPE e)
 
 	return mav_type_names[idx];
 }
-// [[[end]]] (checksum: 02033dc5baa70557f1072dde8c403251)
+// [[[end]]] (sum: AgM9xbqnBV)
 
 // [[[cog:
 // ename = 'MAV_STATE'
@@ -279,7 +280,7 @@ std::string to_name(MAV_TYPE e)
 // for k, e in enum:
 //     value = e.name[len(ename) + 1:].title()
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {clear_desc(e.description)}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -306,7 +307,7 @@ std::string to_string(MAV_STATE e)
 
 	return mav_state_strings[idx];
 }
-// [[[end]]] (checksum: 8af1e6916d0229c193aab7d3dc2c97e9)
+// [[[end]]] (sum: ivHmkW0CKc)
 
 // [[[cog:
 // ename = "timesync_mode"
@@ -336,7 +337,7 @@ std::string to_string(timesync_mode e)
 
 	return timesync_mode_strings[idx];
 }
-// [[[end]]] (checksum: 2796eaa4f9361c2d7ca87f63e0401d4d)
+// [[[end]]] (sum: J5bqpPk2HC)
 
 timesync_mode timesync_mode_from_str(const std::string &mode)
 {
@@ -369,7 +370,7 @@ std::string to_string(ADSB_ALTITUDE_TYPE e)
 
 	return adsb_altitude_type_strings[idx];
 }
-// [[[end]]] (checksum: dc127bf29aefa513471d13c5a0e1e6ec)
+// [[[end]]] (sum: 3BJ78prvpR)
 
 // [[[cog:
 // ename = 'ADSB_EMITTER_TYPE'
@@ -407,7 +408,7 @@ std::string to_string(ADSB_EMITTER_TYPE e)
 
 	return adsb_emitter_type_strings[idx];
 }
-// [[[end]]] (checksum: 713e0304603321e421131d8552d0f8e0)
+// [[[end]]] (sum: cT4DBGAzIe)
 
 // [[[cog:
 // ename = 'MAV_ESTIMATOR_TYPE'
@@ -434,7 +435,7 @@ std::string to_string(MAV_ESTIMATOR_TYPE e)
 
 	return mav_estimator_type_strings[idx];
 }
-// [[[end]]] (checksum: 78a66e6898ff8c5dafb482dbf264a489)
+// [[[end]]] (sum: eKZuaJj/jF)
 
 // [[[cog:
 // ename = 'GPS_FIX_TYPE'
@@ -461,7 +462,7 @@ std::string to_string(GPS_FIX_TYPE e)
 
 	return gps_fix_type_strings[idx];
 }
-// [[[end]]] (checksum: 7569b73b2d68ed1412bf0c36afeb131c)
+// [[[end]]] (sum: dWm3Oy1o7R)
 
 // [[[cog:
 // ename = 'MAV_MISSION_RESULT'
@@ -471,7 +472,7 @@ std::string to_string(GPS_FIX_TYPE e)
 // for k, e in enum:
 //     value = e.description
 //     sp = make_whitespace(30, value)
-//     cog.outl("""/* {k:>2} */ "{value}",{sp}// {e.description}""".format(**locals()))
+//     cog.outl(f"""/* {k:>2} */ "{value}",{sp}// {clear_desc(e.description)}""")
 //
 // cog.outl("}};")
 // cog.outl()
@@ -505,7 +506,7 @@ std::string to_string(MAV_MISSION_RESULT e)
 
 	return mav_mission_result_strings[idx];
 }
-// [[[end]]] (checksum: bf3c500065b1c65a1e822c70da56d2d5)
+// [[[end]]] (sum: vzxQAGWxxl)
 
 // [[[cog:
 // ename = 'MAV_FRAME'
@@ -513,19 +514,19 @@ std::string to_string(MAV_MISSION_RESULT e)
 // ]]]
 //! MAV_FRAME values
 static const std::array<const std::string, 22> mav_frame_strings{{
-/*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + MSL altitude. First value / x: latitude, second value / y: longitude, third value / z: positive altitude over mean sea level (MSL).
+/*  0 */ "GLOBAL",                        // Global (WGS84) coordinate frame + altitude relative to mean sea level (MSL).
 /*  1 */ "LOCAL_NED",                     // NED local tangent frame (x: North, y: East, z: Down) with origin fixed relative to earth.
 /*  2 */ "MISSION",                       // NOT a coordinate frame, indicates a mission command.
-/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position. First value / x: latitude, second value / y: longitude, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  3 */ "GLOBAL_RELATIVE_ALT",           // Global (WGS84) coordinate frame + altitude relative to the home position.
 /*  4 */ "LOCAL_ENU",                     // ENU local tangent frame (x: East, y: North, z: Up) with origin fixed relative to earth.
-/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + MSL altitude. First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude over mean sea level (MSL).
-/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position. First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude with 0 being at the altitude of the home location.
+/*  5 */ "GLOBAL_INT",                    // Global (WGS84) coordinate frame (scaled) + altitude relative to mean sea level (MSL).
+/*  6 */ "GLOBAL_RELATIVE_ALT_INT",       // Global (WGS84) coordinate frame (scaled) + altitude relative to the home position.
 /*  7 */ "LOCAL_OFFSET_NED",              // NED local tangent frame (x: North, y: East, z: Down) with origin that travels with the vehicle.
-/*  8 */ "BODY_NED",                      // Same as MAV_FRAME_LOCAL_NED when used to represent position values. Same as MAV_FRAME_BODY_FRD when used with velocity/accelaration values.
+/*  8 */ "BODY_NED",                      // Same as MAV_FRAME_LOCAL_NED when used to represent position values. Same as MAV_FRAME_BODY_FRD when used with velocity/acceleration values.
 /*  9 */ "BODY_OFFSET_NED",               // This is the same as MAV_FRAME_BODY_FRD.
-/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (at the waypoint coordinate). First value / x: latitude in degrees*1E7, second value / y: longitude in degrees*1E7, third value / z: positive altitude in meters with 0 being at ground level in terrain model.
-/* 12 */ "BODY_FRD",                      // FRD local tangent frame (x: Forward, y: Right, z: Down) with origin that travels with vehicle. The forward axis is aligned to the front of the vehicle in the horizontal plane.
+/* 10 */ "GLOBAL_TERRAIN_ALT",            // Global (WGS84) coordinate frame with AGL altitude (altitude at ground level).
+/* 11 */ "GLOBAL_TERRAIN_ALT_INT",        // Global (WGS84) coordinate frame (scaled) with AGL altitude (altitude at ground level).
+/* 12 */ "BODY_FRD",                      // FRD local frame aligned to the vehicle's attitude (x: Forward, y: Right, z: Down) with an origin that travels with vehicle.
 /* 13 */ "RESERVED_13",                   // MAV_FRAME_BODY_FLU - Body fixed frame of reference, Z-up (x: Forward, y: Left, z: Up).
 /* 14 */ "RESERVED_14",                   // MAV_FRAME_MOCAP_NED - Odometry local coordinate frame of data given by a motion capture system, Z-down (x: North, y: East, z: Down).
 /* 15 */ "RESERVED_15",                   // MAV_FRAME_MOCAP_ENU - Odometry local coordinate frame of data given by a motion capture system, Z-up (x: East, y: North, z: Up).
@@ -545,7 +546,7 @@ std::string to_string(MAV_FRAME e)
 
 	return mav_frame_strings[idx];
 }
-// [[[end]]] (checksum: 25c2bfb3375047a329efe0dd98ac014a)
+// [[[end]]] (sum: Ajl8Z78fwu)
 
 // [[[cog:
 // ename = 'MAV_COMPONENT'
@@ -557,7 +558,7 @@ std::string to_string(MAV_FRAME e)
 //     name_short =  e.name[len(suffix) + 1:]
 //     sp = make_whitespace(30, name_short)
 //     if e.description:
-//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},{sp}// {e.description}""")
+//         cog.outl(f"""{{ {k:>3}, "{name_short}" }},{sp}// {clear_desc(e.description)}""")
 //     else:
 //         cog.outl(f"""{{ {k:>3}, "{name_short}" }},""")
 //
@@ -699,7 +700,7 @@ static const std::unordered_map<typename std::underlying_type<MAV_COMPONENT>::ty
 { 242, "TUNNEL_NODE" },                   // Component handling TUNNEL messages (e.g. vendor specific GUI of a component).
 { 250, "SYSTEM_CONTROL" },                // Component for handling system messages (e.g. to ARM, takeoff, etc.).
 }};
-// [[[end]]] (checksum: 0f3c4a601107653ab0bb3bb92c415b8e)
+// [[[end]]] (sum: DzxKYBEHZT)
 
 std::string to_string(MAV_COMPONENT e)
 {
@@ -758,7 +759,7 @@ std::string to_string(MAV_DISTANCE_SENSOR e)
 
 	return mav_distance_sensor_strings[idx];
 }
-// [[[end]]] (checksum: 3f792ad01cdb3f2315a8907f578ab5b3)
+// [[[end]]] (sum: P3kq0BzbPy)
 
 // [[[cog:
 // ename = 'LANDING_TARGET_TYPE'
@@ -780,7 +781,7 @@ std::string to_string(LANDING_TARGET_TYPE e)
 
 	return landing_target_type_strings[idx];
 }
-// [[[end]]] (checksum: a42789c10cbebd5bc253abca2a07289b)
+// [[[end]]] (sum: pCeJwQy+vV)
 
 LANDING_TARGET_TYPE landing_target_type_from_str(const std::string &landing_target_type)
 {

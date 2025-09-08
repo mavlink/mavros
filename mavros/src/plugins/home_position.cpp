@@ -149,7 +149,7 @@ private:
 		hp.approach_x = approach.x();
 		hp.approach_y = approach.y();
 		hp.approach_z = approach.z();
-		// [[[end]]] (checksum: 9c40c5b3ac06b3b82016b4f07a8e12b2)
+		// [[[end]]] (sum: nEDFs6wGs7)
 
 		UAS_FCU(m_uas)->send_message_ignore_drop(hp);
 	}
