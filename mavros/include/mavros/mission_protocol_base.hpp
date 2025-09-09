@@ -48,7 +48,7 @@ using namespace std::chrono_literals;       // NOLINT
 using utils::enum_value;
 using mavlink::common::MAV_CMD;
 using mavlink::common::MAV_FRAME;
-using mavlink::common::MAV_PROTOCOL_CAPABILITY;
+using mavlink::standard::MAV_PROTOCOL_CAPABILITY;
 using mavlink::common::msg::MISSION_ITEM;
 using mavlink::common::msg::MISSION_ITEM_INT;
 using MRES = mavlink::common::MAV_MISSION_RESULT;

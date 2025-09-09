@@ -69,7 +69,7 @@ using MAV_TYPE = mavlink::minimal::MAV_TYPE;
 using MAV_AUTOPILOT = mavlink::minimal::MAV_AUTOPILOT;
 using MAV_MODE_FLAG = mavlink::minimal::MAV_MODE_FLAG;
 using MAV_STATE = mavlink::minimal::MAV_STATE;
-using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
+using MAV_CAP = mavlink::standard::MAV_PROTOCOL_CAPABILITY;
 using timesync_mode = utils::timesync_mode;
 
 
