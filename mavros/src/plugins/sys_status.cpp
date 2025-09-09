@@ -820,7 +820,7 @@ private:
   }
 
   void process_autopilot_version_normal(
-    mavlink::common::msg::AUTOPILOT_VERSION & apv,
+    mavlink::standard::msg::AUTOPILOT_VERSION & apv,
     uint8_t sysid, uint8_t compid)
   {
     char prefix[16];
@@ -848,7 +848,7 @@ private:
   }
 
   void process_autopilot_version_apm_quirk(
-    mavlink::common::msg::AUTOPILOT_VERSION & apv,
+    mavlink::standard::msg::AUTOPILOT_VERSION & apv,
     uint8_t sysid, uint8_t compid)
   {
     char prefix[16];
@@ -1075,7 +1075,7 @@ private:
 
   void handle_autopilot_version(
     const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::AUTOPILOT_VERSION & apv,
+    mavlink::standard::msg::AUTOPILOT_VERSION & apv,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     // XXX(vooon): i assume that UAS no longer interested in other systems

@@ -37,7 +37,7 @@ namespace mavros
 namespace uas
 {
 class UAS;
-using MAV_CAP = mavlink::common::MAV_PROTOCOL_CAPABILITY;
+using MAV_CAP = mavlink::standard::MAV_PROTOCOL_CAPABILITY;
 }     // namespace uas
 
 namespace plugin

@@ -3,7 +3,7 @@ project(mavros_extras)
 
 # Default to C++20
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 20)
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -82,6 +82,13 @@ if(rclcpp_VERSION VERSION_LESS 17.0.0)
   add_definitions(
     -DUSE_OLD_RMW_QOS
     -DUSE_OLD_TF2_ROS
+  )
+endif()
+
+if(message_filters_VERSION VERSION_LESS 5.0.0)
+  # Jazzy and older
+  add_definitions(
+    -DUSE_OLD_RMW_QOS_MESSAGE_FILTERS
   )
 endif()
 
