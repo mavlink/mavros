@@ -1,4 +1,3 @@
-//
 // mavros
 // Copyright 2021 Vladimir Ermakov, All rights reserved.
 //
@@ -127,7 +126,7 @@ public:
     router->startup_delay_timer->cancel();
 
     // Call this manually
-    router->initialize_parameters();
+    router->param_init_once();
 
     return router;
   }

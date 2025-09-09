@@ -151,6 +151,10 @@ public:
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
+    this->declare_parameter<StrV>("fcu_urls", StrV());
+    this->declare_parameter<StrV>("gcs_urls", StrV());
+    this->declare_parameter<StrV>("uas_urls", StrV());
+
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
       std::bind(&Router::add_endpoint, this, _1, _2));
@@ -179,11 +183,13 @@ public:
     RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
-    // This must be run _after_ the constructor has finished
-    //
-    // Repeat the pattern from mavros_uas of using a delay timer
-    startup_delay_timer = this->create_wall_timer(
-      10ms, std::bind(&Router::initialize_parameters, this));
+    // Delay parameter callback initialization because
+    // add/del endpoints calls have to use shared_from_this(),
+    // which cannot be used before we leave the constructor.
+    startup_delay_timer = this->create_wall_timer(1ms, [this]() {
+          this->startup_delay_timer->cancel();
+          this->param_init_once();
+    });
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
@@ -221,16 +227,19 @@ private:
   void periodic_reconnect_endpoints();
   void periodic_clear_stale_remote_addrs();
 
-  void initialize_parameters()
+  std::once_flag param_init_flag;
+  void param_init()
   {
-    RCLCPP_WARN(get_logger(), "In timer callback");
-    startup_delay_timer->cancel();
     set_parameters_handle_ptr =
       this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
 
-    this->declare_parameter<StrV>("fcu_urls", StrV());
-    this->declare_parameter<StrV>("gcs_urls", StrV());
-    this->declare_parameter<StrV>("uas_urls", StrV());
+    auto params = get_parameters({"fcu_urls", "gcs_urls", "fcu_urls"});
+    on_set_parameters_cb(params);
+  }
+
+  void param_init_once()
+  {
+    std::call_once(param_init_flag, std::bind(&Router::param_init, this));
   }
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(
