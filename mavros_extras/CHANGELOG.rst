@@ -2,6 +2,18 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: cmake: fix absent link to libmavros.so
+* extras: fake_gps: fix warnings on geo alt conversion
+* breaking: support mavlink 2025.9.9 move of AUTOPILOT_VERSION to standard
+* extras: no need for yaml-cpp-vendor
+* uas: fix old tf2 headers include
+* cmake: disable uncrustify for humble
+* cmake: update for kilted+, possibly break humble
+* regenerate all and uncrustify
+* Contributors: Vladimir Ermakov
+
 2.10.1 (2025-06-06)
 -------------------
 * Initialize last_pos_time with RCL_ROS_TIME

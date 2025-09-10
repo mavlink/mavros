@@ -2,6 +2,35 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* launch: load all plugins in uas1
+* test: add second UAS into the same container
+* router: fix copy-paste error in endpoint loading
+* router: fix mavros_node fault introduced by `#2053 <https://github.com/mavlink/mavros/issues/2053>`_
+  Fix `#2055 <https://github.com/mavlink/mavros/issues/2055>`_
+* breaking: support mavlink 2025.9.9 move of AUTOPILOT_VERSION to standard
+* uas: fix old tf2 headers include
+* cmake: disable uncrustify for humble
+* cmake: update for kilted+, possibly break humble
+* regenerate all and uncrustify
+* tools: move scripts to use with uv
+* Update RouterTest for Router parameters post-constructor.
+  - Added startup_delay_timer->cancel() to RouterTest::create_node()
+  - Created RouterTest::create_node_no_endpoints() for the two unit tests
+  which call Router::set_parameters() to set endpoints.
+  - Converterd Router parameter declaration from an inline functional
+  to a standalone function which can be called from
+  RouterTest::Create_node_no_endpoints(), and from the timer in the
+  constructor
+* uncrustify as noted by CI jobs
+* Remove extraneous blank line
+* unrustify code style fixes
+* Put add_on_set_parameters_callback in time-delayed function.
+  Resolves bad_weak_ptr issue when starting router as composable node
+* Update ArduPlane mode 14 from LAND to AVOID_ADSB.
+* Contributors: Aaron Marburg, FAC94, Vladimir Ermakov
+
 2.10.1 (2025-06-06)
 -------------------
 * fix: display topic on service timeout error

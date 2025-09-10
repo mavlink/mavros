@@ -2,6 +2,13 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* cmake: disable uncrustify for humble
+* cmake: update for kilted+, possibly break humble
+* regenerate all and uncrustify
+* Contributors: Vladimir Ermakov
+
 2.10.1 (2025-06-06)
 -------------------
 
