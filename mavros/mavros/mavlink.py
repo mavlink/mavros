@@ -79,7 +79,7 @@ def convert_to_bytes(msg: Mavlink) -> bytearray:
 
 
 def convert_to_payload64(
-    payload_bytes: typing.Union[bytes, bytearray]
+    payload_bytes: typing.Union[bytes, bytearray],
 ) -> typing.List[int]:
     """Convert payload bytes to Mavlink.payload64."""
     payload_bytes = bytearray(payload_bytes)
