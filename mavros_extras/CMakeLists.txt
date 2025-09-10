@@ -163,6 +163,7 @@ target_link_libraries(mavros_extras_plugins PUBLIC
   tf2_eigen::tf2_eigen
   tf2_ros::static_transform_broadcaster_node
   tf2_ros::tf2_ros
+  ${mavros_LIBRARIES}
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
@@ -182,6 +183,7 @@ target_link_libraries(mavros_extras PUBLIC
   rclcpp_components::component_manager
   sensor_msgs::sensor_msgs_library
   urdf::urdf
+  ${mavros_LIBRARIES}
 )
 rclcpp_components_register_node(mavros_extras PLUGIN "mavros::extras::ServoStatePublisher" EXECUTABLE servo_state_publisher)
 
