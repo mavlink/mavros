@@ -186,7 +186,7 @@ public:
     // Delay parameter callback initialization because
     // add/del endpoints calls have to use shared_from_this(),
     // which cannot be used before we leave the constructor.
-    startup_delay_timer = this->create_wall_timer(1ms, [this]() {
+    startup_delay_timer = this->create_wall_timer(10ms, [this]() {
           this->startup_delay_timer->cancel();
           this->param_init_once();
     });
@@ -233,7 +233,7 @@ private:
     set_parameters_handle_ptr =
       this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
 
-    auto params = get_parameters({"fcu_urls", "gcs_urls", "fcu_urls"});
+    auto params = get_parameters({"fcu_urls", "gcs_urls", "uas_urls"});
     on_set_parameters_cb(params);
   }
 
