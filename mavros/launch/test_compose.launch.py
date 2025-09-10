@@ -33,8 +33,8 @@ def generate_launch_description():
                 parameters=[
                     {"uas_url": "/uas1"},
                     {"fcu_protocol": "v2.0"},
-                    {"plugin_allowlist": ["sys_*"]},
-                    {"plugin_denylist": ["*"]},
+                    # {"plugin_allowlist": ["sys_*"]},
+                    # {"plugin_denylist": ["*"]},
                     {"system_id": 1},
                     {"target_system_id": 1},
                 ],
@@ -48,8 +48,8 @@ def generate_launch_description():
                 parameters=[
                     {"uas_url": "/uas2"},
                     {"fcu_protocol": "v2.0"},
-                    # {"plugin_allowlist": []},
-                    # {"plugin_denylist": ["*"]},
+                    {"plugin_allowlist": ["sys_*"]},
+                    {"plugin_denylist": ["*"]},
                     {"system_id": 2},
                     {"target_system_id": 2},
                 ],
