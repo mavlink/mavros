@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.11.0 (2025-09-10)
+-------------------
 * launch: load all plugins in uas1
 * test: add second UAS into the same container
 * router: fix copy-paste error in endpoint loading

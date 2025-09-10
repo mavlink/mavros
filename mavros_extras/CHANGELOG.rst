@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.11.0 (2025-09-10)
+-------------------
 * extras: cmake: fix absent link to libmavros.so
 * extras: fake_gps: fix warnings on geo alt conversion
 * breaking: support mavlink 2025.9.9 move of AUTOPILOT_VERSION to standard
