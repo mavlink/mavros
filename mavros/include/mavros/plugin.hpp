@@ -204,7 +204,7 @@ protected:
   void enable_capabilities_cb();
 
   /**
-   * Default implmentation of that watch would use watch_parameters
+   * Default implementation of that watch would use watch_parameters
    */
   virtual SetParametersResult node_on_set_parameters_cb(
     const std::vector<rclcpp::Parameter> & parameters);
