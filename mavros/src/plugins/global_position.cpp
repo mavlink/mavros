@@ -125,7 +125,7 @@ public:
 
     // global origin
     gp_global_origin_pub = node->create_publisher<geographic_msgs::msg::GeoPointStamped>(
-      "~/gp_origin", sensor_qos);
+      "~/gp_origin", rclcpp::QoS(1 /* depth */).reliable().transient_local());
     gp_set_global_origin_sub =
       node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
       "~/set_gp_origin", sensor_qos,
