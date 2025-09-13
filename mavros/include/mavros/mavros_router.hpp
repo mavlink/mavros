@@ -186,10 +186,11 @@ public:
     // Delay parameter callback initialization because
     // add/del endpoints calls have to use shared_from_this(),
     // which cannot be used before we leave the constructor.
-    startup_delay_timer = this->create_wall_timer(10ms, [this]() {
-          this->startup_delay_timer->cancel();
-          this->param_init_once();
-    });
+    startup_delay_timer = this->create_wall_timer(
+      10ms, [this]() {
+        this->startup_delay_timer->cancel();
+        this->param_init_once();
+      });
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);

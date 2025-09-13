@@ -168,8 +168,9 @@ public:
   inline double geoid_to_ellipsoid_height(const T lla)
   {
     if (egm96_5) {
-      return egm96_5->ConvertHeight(lla->latitude, lla->longitude, 0.0,
-            GeographicLib::Geoid::GEOIDTOELLIPSOID);
+      return egm96_5->ConvertHeight(
+        lla->latitude, lla->longitude, 0.0,
+        GeographicLib::Geoid::GEOIDTOELLIPSOID);
     } else {
       return 0.0;
     }
@@ -189,8 +190,9 @@ public:
   inline double ellipsoid_to_geoid_height(const T lla)
   {
     if (egm96_5) {
-      return egm96_5->ConvertHeight(lla->latitude, lla->longitude, 0.0,
-            GeographicLib::Geoid::ELLIPSOIDTOGEOID);
+      return egm96_5->ConvertHeight(
+        lla->latitude, lla->longitude, 0.0,
+        GeographicLib::Geoid::ELLIPSOIDTOGEOID);
     } else {
       return 0.0;
     }

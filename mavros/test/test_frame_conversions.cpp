@@ -167,9 +167,9 @@ TEST(FRAME_TF, transform_frame__covariance3x3)
 
   // Rotation quaternion of PI around x axis
   const auto q = Eigen::Quaterniond(
-      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
-                        Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
-                        Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
+    Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
+    Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
   );
 
   /* Calculated as:
@@ -209,9 +209,9 @@ TEST(FRAME_TF, transform_frame__covariance6x6)
 
   // Rotation quaternion of PI around x axis
   const auto q = Eigen::Quaterniond(
-      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
-                        Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
-                        Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
+    Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
+    Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX())
   );
 
   /* Calculated as:
