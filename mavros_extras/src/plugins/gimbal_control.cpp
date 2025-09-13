@@ -256,11 +256,13 @@ private:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
-    cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command", services_qos,
-          cb_group);
+    cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>(
+      "cmd/command", services_qos,
+      cb_group);
     while (!cmd_cli->wait_for_service(std::chrono::seconds(5))) {
-      RCLCPP_ERROR(node->get_logger(),
-            "GimbalControl: mavros/cmd/command service not available after waiting");
+      RCLCPP_ERROR(
+        node->get_logger(),
+        "GimbalControl: mavros/cmd/command service not available after waiting");
       cmd_cli.reset();
       throw std::logic_error("client not connected");
     }
