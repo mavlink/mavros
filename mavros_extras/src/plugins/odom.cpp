@@ -153,11 +153,11 @@ private:
     Eigen::Affine3d tf_child2child_des;
 
     lookup_static_transform(
-                fcu_map_id_des, fcu_map_id_des + "_ned",
-                tf_parent2parent_des);
+      fcu_map_id_des, fcu_map_id_des + "_ned",
+      tf_parent2parent_des);
     lookup_static_transform(
-                fcu_odom_child_id_des, fcu_odom_child_id_des + "_frd",
-                tf_child2child_des);
+      fcu_odom_child_id_des, fcu_odom_child_id_des + "_frd",
+      tf_child2child_des);
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     Matrix6d cov_pose = Matrix6d::Zero();

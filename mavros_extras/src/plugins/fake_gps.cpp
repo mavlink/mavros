@@ -337,8 +337,9 @@ private:
       hil_gps.time_usec = get_time_usec(stamp);                 // [useconds]
       hil_gps.lat = geodetic.x() * 1e7;                         // [degrees * 1e7]
       hil_gps.lon = geodetic.y() * 1e7;                         // [degrees * 1e7]
-      hil_gps.alt = uas->data.egm96_5->ConvertHeight(geodetic.x(), geodetic.y(), geodetic.z(),
-            GeographicLib::Geoid::ELLIPSOIDTOGEOID) * 1e3;      // [meters * 1e3]
+      hil_gps.alt = uas->data.egm96_5->ConvertHeight(
+        geodetic.x(), geodetic.y(), geodetic.z(),
+        GeographicLib::Geoid::ELLIPSOIDTOGEOID) * 1e3;          // [meters * 1e3]
       hil_gps.vel = vel.block<2, 1>(0, 0).norm();               // [cm/s]
       hil_gps.vn = vel.x();                                     // [cm/s]
       hil_gps.ve = vel.y();                                     // [cm/s]
@@ -384,8 +385,9 @@ private:
       gps_input.vert_accuracy = vert_accuracy;          // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow  // NOLINT
       gps_input.lat = geodetic.x() * 1e7;               // [degrees * 1e7]
       gps_input.lon = geodetic.y() * 1e7;               // [degrees * 1e7]
-      gps_input.alt = uas->data.egm96_5->ConvertHeight(geodetic.x(), geodetic.y(), geodetic.z(),
-            GeographicLib::Geoid::ELLIPSOIDTOGEOID);        // [meters]
+      gps_input.alt = uas->data.egm96_5->ConvertHeight(
+        geodetic.x(), geodetic.y(), geodetic.z(),
+        GeographicLib::Geoid::ELLIPSOIDTOGEOID);            // [meters]
       gps_input.vn = vel.x();                               // [m/s]
       gps_input.ve = vel.y();                               // [m/s]
       gps_input.vd = vel.z();                               // [m/s]
