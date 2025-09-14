@@ -100,7 +100,7 @@ union custom_mode {
   }
 
   constexpr custom_mode(uint8_t mm, uint8_t sm)
-    : mode{0, mm, sm}
+  : mode{0, mm, sm}
   {
   }
 };
