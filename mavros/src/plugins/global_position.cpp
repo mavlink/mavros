@@ -26,6 +26,7 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
+#include "mavros/qos.hpp"
 
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/u_int32.hpp"
@@ -109,6 +110,7 @@ public:
     uas->diagnostic_updater.add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
 
     auto sensor_qos = rclcpp::SensorDataQoS();
+    auto origin_qos = mavros::LatchedStateQoS();
 
     // gps data
     raw_fix_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>("~/raw/fix", sensor_qos);
@@ -125,7 +127,7 @@ public:
 
     // global origin
     gp_global_origin_pub = node->create_publisher<geographic_msgs::msg::GeoPointStamped>(
-      "~/gp_origin", rclcpp::QoS(1 /* depth */).reliable().transient_local());
+      "~/gp_origin", origin_qos);
     gp_set_global_origin_sub =
       node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
       "~/set_gp_origin", sensor_qos,
