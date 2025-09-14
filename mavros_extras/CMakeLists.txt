@@ -150,6 +150,7 @@ target_link_libraries(mavros_extras_plugins PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
   ${trajectory_msgs_TARGETS}
+  ${diagnostic_msgs_TARGETS}
   angles::angles
   diagnostic_updater::diagnostic_updater
   geographic_msgs::validation
