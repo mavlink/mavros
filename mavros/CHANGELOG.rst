@@ -2,6 +2,18 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* launch: fix python format lint
+* cmake: explicit link diagnostic_msgs
+  Fix `#2062 <https://github.com/mavlink/mavros/issues/2062>`_
+* mission: switch to latched state qos from custom ones
+* include: add common qos profile for latched state topics
+* uncrustify to kilted
+* DDS equivalent of latched topic for gp_origin topic
+* code style fix
+* Contributors: ArielSulton, Bruno Celaries, Vladimir Ermakov
+
 2.11.0 (2025-09-10)
 -------------------
 * launch: load all plugins in uas1

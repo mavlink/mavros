@@ -2,6 +2,17 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* cmake: explicit link diagnostic_msgs
+  Fix `#2062 <https://github.com/mavlink/mavros/issues/2062>`_
+* include: add common qos profile for latched state topics
+* uncrustify to kilted
+* DDS equivalent of latched topic for gp_origin topic
+* code style fix
+* fix: yaml_cpp_vendor linking in mavros_extras
+* Contributors: ArielSulton, Bruno Celaries, Vladimir Ermakov
+
 2.11.0 (2025-09-10)
 -------------------
 * extras: cmake: fix absent link to libmavros.so
