@@ -121,6 +121,7 @@ add_library(mavros SHARED
 target_link_libraries(mavros PUBLIC
   ${mavros_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
+  ${diagnostic_msgs_TARGETS}
   diagnostic_updater::diagnostic_updater
   pluginlib::pluginlib
   rclcpp::rclcpp
@@ -181,6 +182,7 @@ target_link_libraries(mavros_plugins PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
   ${trajectory_msgs_TARGETS}
+  ${diagnostic_msgs_TARGETS}
   angles::angles
   diagnostic_updater::diagnostic_updater
   geographic_msgs::validation
