@@ -32,6 +32,7 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
+#include "mavros/qos.hpp"
 
 #include "mavros_msgs/msg/waypoint_list.hpp"
 #include "mavros_msgs/srv/waypoint_clear.hpp"
