@@ -23,6 +23,7 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
+#include "mavros/qos.hpp"
 
 #include "mavros_msgs/msg/position_target.hpp"
 #include "mavros_msgs/msg/global_position_target.hpp"
@@ -67,7 +68,7 @@ public:
 
     // Subscriber for global origin (aka map origin).
     gp_origin_sub = node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
-      "global_position/gp_origin", rclcpp::QoS(1 /* depth */).reliable().transient_local(),
+      "global_position/gp_origin", mavros::LatchedStateQoS(),
       std::bind(&GuidedTargetPlugin::gp_origin_cb, this, _1));
   }
 
