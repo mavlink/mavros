@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.12.0 (2025-09-14)
+-------------------
 * launch: fix python format lint
 * cmake: explicit link diagnostic_msgs
   Fix `#2062 <https://github.com/mavlink/mavros/issues/2062>`_

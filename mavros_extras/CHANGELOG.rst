@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.12.0 (2025-09-14)
+-------------------
 * cmake: explicit link diagnostic_msgs
   Fix `#2062 <https://github.com/mavlink/mavros/issues/2062>`_
 * include: add common qos profile for latched state topics
