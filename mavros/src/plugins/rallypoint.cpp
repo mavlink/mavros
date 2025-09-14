@@ -46,7 +46,7 @@ public:
         use_mission_item_int = p.as_bool();
       });
 
-    auto rp_qos = rclcpp::QoS(10).transient_local();
+    auto rp_qos = mavros::LatchedStateQoS();
 
     rp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/rallypoints", rp_qos);
 

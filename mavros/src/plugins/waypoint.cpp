@@ -75,7 +75,7 @@ public:
         }
       }, desc_pp);
 
-    auto wp_qos = rclcpp::QoS(10).transient_local();
+    auto wp_qos = mavros::LatchedStateQoS();
 
     wp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/waypoints", wp_qos);
     wp_reached_pub = node->create_publisher<mavros_msgs::msg::WaypointReached>("~/reached", wp_qos);

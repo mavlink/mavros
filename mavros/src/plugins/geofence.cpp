@@ -47,7 +47,7 @@ public:
         use_mission_item_int = p.as_bool();
       });
 
-    auto gf_qos = rclcpp::QoS(10).transient_local();
+    auto gf_qos = mavros::LatchedStateQoS();
 
     gf_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/fences", gf_qos);
 
