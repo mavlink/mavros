@@ -5,7 +5,6 @@ from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     """Generate launch description for MAVROS composable node."""
-
     container = ComposableNodeContainer(
         name="mavros_container",
         namespace="",
