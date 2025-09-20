@@ -123,6 +123,11 @@ private:
 	{
 		lock_guard lock(mutex);
 
+		if (req->points.empty()) {
+			ROS_WARN_NAMED("setpoint_trajectory", "Empty trajectory received");
+			return;
+		}
+
 		if(static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_NED || static_cast<MAV_FRAME>(mav_frame) == MAV_FRAME::BODY_OFFSET_NED){
 			transform = ftf::StaticTF::BASELINK_TO_AIRCRAFT;
 		} else {
