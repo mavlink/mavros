@@ -1,0 +1,54 @@
+---
+site_name: MAVROS a MAVLink to ROS2 bridge
+repo_url: https://github.com/mavlink/mavros
+
+plugins:
+  - autorefs
+  - markdown-exec
+  - search
+  - material/tags
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - ./mavros/mavros
+          options:
+            show_source: false
+            show_root_toc_entry: false
+            show_symbol_type_heading: true
+            allow_inspection: true
+            extensions:
+              - griffe_typingdoc
+              - griffe_fieldz
+              - griffe_sphinx
+
+theme:
+  name: material
+  # name: readthedocs
+  features:
+    - content.code.copy
+    - content.code.annotate
+    # - content.action.edit
+    - navigation.expand
+    - navigation.sections
+    - navigation.instant
+    - navigation.indexes
+    - navigation.tracking
+    - toc.integrate
+
+markdown_extensions:
+  - mkdocs-click
+  - markdown_include.include:
+      base_path: docs
+  - admonition
+  - sane_lists
+  - attr_list
+  - def_list
+  - footnotes
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.magiclink
+  - pymdownx.tabbed
+  - toc
