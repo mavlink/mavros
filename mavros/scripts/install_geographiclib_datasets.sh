@@ -20,7 +20,7 @@ run_get() {
 	fi
 
 	echo "Installing GeographicLib $tool $model"
-	geographiclib-get-$tool $model >/dev/null 2>&1
+	geographiclib-get-$tool "$model" >/dev/null 2>&1
 
 	files=$(shopt -s nullglob dotglob; echo /usr/share/GeographicLib/$dir/$model* /usr/local/share/GeographicLib/$dir/$model*)
 	if (( ! ${#files} )); then
@@ -38,4 +38,5 @@ elif hash geographiclib-datasets-download; then # only allows install the goid m
 	geographiclib-datasets-download egm96_5;
 else
 	echo "OS not supported! Check GeographicLib page for supported OS and lib versions." 1>&2
+	exit 1
 fi
