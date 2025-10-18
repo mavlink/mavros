@@ -32,6 +32,8 @@ namespace std_plugins
 /**
  * @brief Altitude plugin.
  * @plugin altitude
+ *
+ * Publish altitude data.
  */
 class AltitudePlugin : public plugin::Plugin
 {
@@ -48,6 +50,7 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    /// ALTITUDE data
     altitude_pub = node->create_publisher<mavros_msgs::msg::Altitude>("altitude", sensor_qos);
   }
 

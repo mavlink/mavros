@@ -1,9 +1,5 @@
 """
 Module with common cog generators used several times.
-
-Install:
-
-    ln -s $PWD/mavros_cog.py $HOME/.local/lib/python3.8/site-packages/
 """
 
 try:
@@ -17,7 +13,6 @@ import pathlib
 import re
 import typing
 import xml.etree.ElementTree as ET  # nosemgrep
-from collections import OrderedDict
 from xml.dom import minidom  # nosemgrep
 
 import attr
@@ -186,7 +181,6 @@ def clear_desc(s):
 
 
 def idl_decl_enum_mav_cmd(ename="MAV_CMD"):
-
     def wr_enum(enum, ename, pfx="", bsz=16):
         cog.outl("# " + ename + "_" + pfx)
         for k, e in enum:

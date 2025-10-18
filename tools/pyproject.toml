@@ -10,7 +10,6 @@ dependencies = [
     "cogapp",
     "attrs",
     "comment-parser",
-
     # docs - `uv tool install` do not have `--group` similar to `uv sync`.
     "mkdocs",
     "mkdocs-material",
@@ -22,6 +21,8 @@ dependencies = [
     "griffe-fieldz",
     "markdown-include",
     "markdown-exec",
+    # api-gen
+    "libclang",
 ]
 
 [dependency-groups]
@@ -48,6 +49,7 @@ docs = [
 [project.scripts]
 mr-cog = "cogapp:main"
 mr-mkdocs = "mkdocs.__main__:cli"
+mr-plugin-doc-gen = "plugin_doc_gen:main"
 
 [tool.hatch.build.targets.sdist]
 include = ["*.py"]
