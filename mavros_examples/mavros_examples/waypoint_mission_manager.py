@@ -419,14 +419,14 @@ def main(args=None):
         import time
         time.sleep(2)
         
-        # Example 1: Clear existing waypoints
-        manager.get_logger().info('\n--- Example 1: Clearing Existing Waypoints ---')
+        manager.get_logger().info("=== Example 2: Basic Waypoint Mission ===")
+        manager.get_logger().info('\n--- Clearing Existing Waypoints ---')
         manager.clear_waypoints()
         
         time.sleep(1)
         
         # Example 2: Create and push a sample mission
-        manager.get_logger().info('\n--- Example 2: Creating and Pushing Sample Mission ---')
+        manager.get_logger().info('\n--- Creating and Pushing Sample Mission ---')
         sample_mission = manager.create_sample_mission()
         manager.print_waypoint_info(sample_mission)
         manager.push_waypoints(sample_mission)
@@ -434,7 +434,7 @@ def main(args=None):
         time.sleep(1)
         
         # Example 3: Pull waypoints from FCU
-        manager.get_logger().info('\n--- Example 3: Pulling Waypoints from FCU ---')
+        manager.get_logger().info('\n--- Pulling Waypoints from FCU ---')
         pulled_waypoints = manager.pull_waypoints()
         if pulled_waypoints:
             manager.print_waypoint_info(pulled_waypoints)
@@ -442,13 +442,13 @@ def main(args=None):
         time.sleep(1)
         
         # Example 4: Set a specific waypoint as current (skip to waypoint 2)
-        manager.get_logger().info('\n--- Example 4: Setting Current Waypoint ---')
+        manager.get_logger().info('\n--- Setting Current Waypoint ---')
         manager.set_current_waypoint(0)
         
         time.sleep(1)
         
         # Example 5: Set mode to AUTO
-        manager.get_logger().info('\n--- Example 5: Setting Mode to AUTO ---')
+        manager.get_logger().info('\n--- Setting Mode to AUTO ---')
         manager.set_mode('AUTO')
         
         # Keep node alive to receive callbacks

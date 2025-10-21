@@ -1,4 +1,4 @@
-# waypoint_mission_manager
+# MAVROS Example — Waypoint Mission Manager
 
 ## Overview
 The `waypoint_mission_manager.py` example demonstrates **mission management** using **MAVROS** in **ROS 2**.  
