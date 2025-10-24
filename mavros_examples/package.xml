@@ -2,16 +2,46 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>mavros_examples</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <version>0.0.1</version>
+  <description>
+    Example scripts demonstrating MAVROS usage in ROS 2
+  </description>
+
   <maintainer email="haroon300@hotmail.com">Haroon Rasheed</maintainer>
-  <license>TODO: License declaration</license>
+  <author email="haroon300@hotmail.com">Haroon Rasheed</author>
+
+
+  <license>GPLv3</license>
+  <license>LGPLv3</license>
+  <license>BSD</license>
+
+  <url type="website">http://wiki.ros.org/mavros</url>
+  <url type="repository">https://github.com/mavlink/mavros.git</url>
+  <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <!-- Build tools -->
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <exec_depend>rclpy</exec_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+  <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
+
+  <!-- Dependencies -->
+  <depend>rclpy</depend>
+  <depend>mavros</depend>
+  <depend>mavros_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>std_srvs</depend>
+
+  <!-- Test dependencies -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <!-- Export -->
   <export>
     <build_type>ament_cmake</build_type>
   </export>
 </package>
-<!-- This package was generated using the Turtle Nest ROS 2 package creator -->
+
