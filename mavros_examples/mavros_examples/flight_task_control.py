@@ -61,7 +61,7 @@ class TaskControl(Node):
             while not service.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('Waiting for service...')
 
-    def arm(self):
+    def arm(self) -> bool:
         """Arm the quadcopter."""
         req = CommandBool.Request()
         req.value = True
@@ -80,7 +80,7 @@ class TaskControl(Node):
             self.get_logger().error('Arming service call failed')
             return False
 
-    def disarm(self):
+    def disarm(self) -> bool:
         """Disarm the quadcopter."""
         req = CommandBool.Request()
         req.value = False
@@ -99,7 +99,7 @@ class TaskControl(Node):
             self.get_logger().error('Disarming service call failed')
             return False
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: str) -> bool:
         """
         Set flight mode.
 
@@ -122,11 +122,11 @@ class TaskControl(Node):
             self.get_logger().error('Set mode service call failed')
             return False
 
-    def takeoff(self, altitude):
+    def takeoff(self, altitude: float) -> bool:
         """
         Takeoff to specified altitude.
 
-        altitude: in meters
+        :param altitude: in meters
         """
         req = CommandTOL.Request()
         req.min_pitch = 0.0
@@ -149,7 +149,7 @@ class TaskControl(Node):
             self.get_logger().error('Takeoff service call failed')
             return False
 
-    def land(self):
+    def land(self) -> bool:
         """Land the quadcopter."""
         req = CommandTOL.Request()
         req.min_pitch = 0.0
@@ -172,7 +172,7 @@ class TaskControl(Node):
             self.get_logger().error('Land service call failed')
             return False
 
-    def set_home_current(self):
+    def set_home_current(self) -> bool:
         """Set home position to current location."""
         req = CommandHome.Request()
         req.current_gps = True

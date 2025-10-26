@@ -8,7 +8,6 @@
   </description>
 
   <maintainer email="haroon300@hotmail.com">Haroon Rasheed</maintainer>
-  <author email="haroon300@hotmail.com">Haroon Rasheed</author>
 
   <license>GPLv3</license>
   <license>LGPLv3</license>
@@ -17,6 +16,8 @@
   <url type="website">http://wiki.ros.org/mavros</url>
   <url type="repository">https://github.com/mavlink/mavros.git</url>
   <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <author email="haroon300@hotmail.com">Haroon Rasheed</author>
 
   <!-- Build tools -->
   <buildtool_depend>ament_cmake</buildtool_depend>
