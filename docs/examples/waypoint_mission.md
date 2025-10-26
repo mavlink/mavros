@@ -10,8 +10,10 @@ Overview
 
 The `waypoint_mission_manager.py` example demonstrates mission management using MAVROS in ROS 2. It shows how to interact with **MAVLink mission services and topics** through MAVROS to manage missions for copters, planes, and VTOLs. This example helps users understand how to upload, download, clear, and activate waypoint missions, as well as how to switch flight modes for autonomous flight operations.
 
-> **Note:**  
-> It is assumed that the copter, plane, or VTOL is already **airborne and stable** before executing mission-related operations.
+!!! note
+
+    It is assumed that the copter, plane, or VTOL is already **airborne and stable** before executing mission-related operations.
+
 
 <br>
 
@@ -19,11 +21,11 @@ Features
 --------
 
 This example provides complete control over mission management using MAVROS services and topics:
-- **Push Mission:** Upload a mission plan (set of waypoints) to the flight controller.  
-- **Pull Mission:** Retrieve the current mission from the flight controller.  
-- **Clear Mission:** Delete all waypoints from the mission list.  
-- **Set Current Waypoint:** Select which waypoint should be active.  
-- **Flight Mode Control:** Switch between modes like `AUTO`, `GUIDED`, or `STABILIZE`.  
+- **Push Mission:** Upload a mission plan (set of waypoints) to the flight controller. 
+- **Pull Mission:** Retrieve the current mission from the flight controller. 
+- **Clear Mission:** Delete all waypoints from the mission list. 
+- **Set Current Waypoint:** Select which waypoint should be active. 
+- **Flight Mode Control:** Switch between modes like `AUTO`, `GUIDED`, or `STABILIZE`. 
 - **Mission Feedback:** Monitor active waypoints and track mission progress.
 
 
@@ -251,15 +253,10 @@ Sample Mission Pattern
 
 The `create_sample_mission()` function generates a **square-shaped flight path**:
 
-| Waypoint | Description      | Command   |
-|-----------|------------------|-----------|
-| 0         | Home Position    | WAYPOINT  |
-| 1         | Takeoff to 10m   | TAKEOFF   |
-| 2         | Move North       | WAYPOINT  |
-| 3         | Move North-East  | WAYPOINT  |
-| 4         | Move South-East  | WAYPOINT  |
-| 5         | Return to Home   | WAYPOINT  |
-| 6         | Land             | LAND      |
+| WP | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+|----|---|---|---|---|---|---|---|
+| **Description** | Home | Takeoff 10 m | Move N | Move NE | Move SE | Return Home | Land |
+| **Command**     | WAYPOINT | TAKEOFF | WAYPOINT | WAYPOINT | WAYPOINT | WAYPOINT | LAND |
 
 This mission pattern works well for **SITL simulations** and **real hardware testing**.
 
