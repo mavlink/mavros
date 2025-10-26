@@ -15,8 +15,6 @@ The `waypoint_mission_manager.py` example demonstrates mission management using 
     It is assumed that the copter, plane, or VTOL is already **airborne and stable** before executing mission-related operations.
 
 
-<br>
-
 Features
 --------
 
@@ -29,7 +27,7 @@ This example provides complete control over mission management using MAVROS serv
 - **Mission Feedback:** Monitor active waypoints and track mission progress.
 
 
-<br><br>
+<br>
 
 
 MAVROS Services Used
@@ -142,7 +140,7 @@ MAVROS Services Used
 </dl>
 
 
-<br><br>
+<br>
 
 
 MAVROS Topics Used
@@ -245,7 +243,7 @@ manager.push_waypoints(sample_mission)</code></pre>
 </dl>
 
 
-<br><br>
+<br>
 
 
 Sample Mission Pattern
