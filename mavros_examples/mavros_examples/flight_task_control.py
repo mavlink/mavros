@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
-# =============================================================================
-#  File Name      : flight_task_control.py
-#  Author         : Haroon Rasheed
-#  Description    :
-# -----------------------------------------------------------------------------
-#  This script demonstrates UAV task control using MAVROS services in ROS 2.
-#  It communicates with ArduPilot through MAVROS to perform flight operations
-#  such as arming, changing flight modes, takeoff, landing, and setting home.
 #
-#  The following MAVROS services are used:
-#     • /mavros/cmd/arming      — to arm or disarm the UAV
-#     • /mavros/set_mode        — to set the flight mode (e.g., GUIDED, RTL, LAND)
-#     • /mavros/cmd/takeoff     — to initiate takeoff
-#     • /mavros/cmd/land        — to command landing
-#     • /mavros/cmd/set_home    — to set the home position for the UAV
+# Copyright 2025 Haroon Rasheed.
 #
-#  Note:
-#     It is assumed that all pre-arm checks (such as GPS lock, RC calibration,
-#     battery level, and sensor health) are passed successfully before executing
-#     this script.
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
+#
 # =============================================================================
-
+# This script demonstrates UAV task control using MAVROS services in ROS 2.
+# It communicates with ArduPilot through MAVROS to perform flight operations
+# such as arming, changing flight modes, takeoff, landing, and setting home.
+#
+# The following MAVROS services are used:
+#    • /mavros/cmd/arming      — to arm or disarm the UAV
+#    • /mavros/set_mode        — to set the flight mode (e.g., GUIDED, RTL, LAND)
+#    • /mavros/cmd/takeoff     — to initiate takeoff
+#    • /mavros/cmd/land        — to command landing
+#    • /mavros/cmd/set_home    — to set the home position for the UAV
+#
+# Note:
+#    It is assumed that all pre-arm checks (such as GPS lock, RC calibration,
+#    battery level, and sensor health) are passed successfully before executing
+#    this script.
+# =============================================================================
 
 import rclpy  # noqa: I100
 from geometry_msgs.msg import PoseStamped  # noqa: F401,I100

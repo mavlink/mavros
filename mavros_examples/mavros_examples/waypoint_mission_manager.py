@@ -1,38 +1,41 @@
 #!/usr/bin/env python3
+#
+# Copyright 2025 Haroon Rasheed.
+#
+# This file is part of the mavros package and subject to the license terms
+# in the top-level LICENSE file of the mavros repository.
+# https://github.com/mavlink/mavros/tree/master/LICENSE.md
+#
 # =============================================================================
-#  File Name      : waypoint_mission_manager.py
-#  Author         : Haroon Rasheed
-#  Description    :
-# -----------------------------------------------------------------------------
-#  This Python script demonstrates how to manage waypoint missions using MAVROS.
-#  It provides examples of how to interact with MAVLink services and topics
-#  through ROS to perform mission management tasks such as:
+# This Python script demonstrates how to manage waypoint missions using MAVROS.
+# It provides examples of how to interact with MAVLink services and topics
+# through ROS to perform mission management tasks such as:
 #
-#     • Uploading (pushing) waypoints to the flight controller.
-#     • Downloading (pulling) existing mission waypoints.
-#     • Clearing all mission waypoints from the flight controller.
-#     • Setting a specific waypoint as the current active one.
-#     • Changing flight mode to AUTO for mission execution.
+#    • Uploading (pushing) waypoints to the flight controller.
+#    • Downloading (pulling) existing mission waypoints.
+#    • Clearing all mission waypoints from the flight controller.
+#    • Setting a specific waypoint as the current active one.
+#    • Changing flight mode to AUTO for mission execution.
 #
-#  Note:
-#     - This example only demonstrates the usage of MAVROS services and messages
-#       related to waypoint missions.
-#     - It assumes that the quadcopter is already airborne and hovering at its
-#       home position before executing any mission-related operations.
+# Note:
+#    - This example only demonstrates the usage of MAVROS services and messages
+#      related to waypoint missions.
+#    - It assumes that the quadcopter is already airborne and hovering at its
+#      home position before executing any mission-related operations.
 #
-#  Covered Services (from mavros_msgs):
-#     - WaypointPush.srv
-#     - WaypointPull.srv
-#     - WaypointClear.srv
-#     - WaypointSetCurrent.srv
-#     - SetMode.srv
+# Covered Services (from mavros_msgs):
+#    - WaypointPush.srv
+#    - WaypointPull.srv
+#    - WaypointClear.srv
+#    - WaypointSetCurrent.srv
+#    - SetMode.srv
 #
-#  Related MAVROS Topics (waypoint mission related):
-#     - /mavros/mission/waypoints         : Publishes current mission waypoints.
-#     - /mavros/mission/reached           : Publishes notifications when a waypoint is reached.
+# Related MAVROS Topics (waypoint mission related):
+#    - /mavros/mission/waypoints         : Publishes current mission waypoints.
+#    - /mavros/mission/reached           : Publishes notifications when a waypoint is reached.
 #
-#  The code provides a practical foundation for autonomous waypoint mission
-#  management using MAVROS with ArduPilot-based flight controllers.
+# The code provides a practical foundation for autonomous waypoint mission
+# management using MAVROS with ArduPilot-based flight controllers.
 # =============================================================================
 
 import typing as ty
