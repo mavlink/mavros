@@ -30,6 +30,9 @@ install(PROGRAMS
 )
 
 if(BUILD_TESTING)
+  # NOTE(vooon): Does not support our custom triple-license, tiered to make it to work.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
+
   find_package(ament_cmake_pytest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
