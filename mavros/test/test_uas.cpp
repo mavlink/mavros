@@ -269,9 +269,10 @@ TEST_F(TestUAS, synchronise_stamp_negative_offset)
   // rclcpp::Time(int32_t, uint32_t) will see a negative second and throw.
 
   // This should not throw (once fixed)
-  EXPECT_NO_THROW({
-    rclcpp::Time stamp = uas->synchronise_stamp(time_usec);
-  });
+  EXPECT_NO_THROW(
+      {
+        rclcpp::Time stamp = uas->synchronise_stamp(time_usec);
+      });
 }
 
 }  // namespace uas
