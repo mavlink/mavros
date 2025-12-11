@@ -21,9 +21,7 @@ using namespace mavros::uas;    // NOLINT
 
 static inline rclcpp::Time ros_time_from_ns(const uint64_t stamp_ns)
 {
-  return rclcpp::Time(
-    stamp_ns / 1000000000UL,                            // t_sec
-    stamp_ns % 1000000000UL);                           // t_nsec
+  return rclcpp::Time(static_cast<int64_t>(stamp_ns));
 }
 
 rclcpp::Time UAS::synchronise_stamp(uint32_t time_boot_ms)
