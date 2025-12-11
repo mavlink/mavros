@@ -252,6 +252,28 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   testing::Mock::VerifyAndClearExpectations(&(*plugin2));
 }
 
+TEST_F(TestUAS, synchronise_stamp_negative_offset)
+{
+  auto uas = create_node();
+
+  // Scenario: FCU was on boot time, so offset is approx current epoch (e.g. 1.7e9 seconds)
+  int64_t offset_ns = 1700000000LL * 1000000000LL;
+  uas->set_time_offset(static_cast<uint64_t>(offset_ns));
+
+  // FCU jumps to GPS time (also approx 1.7e9 seconds)
+  // Use uint64_t version of synchronise_stamp
+  uint64_t time_usec = 1700000000ULL * 1000000ULL;
+
+  // Total time = 3.4e9 seconds.
+  // This overflows int32_t (max 2.14e9), becoming negative.
+  // rclcpp::Time(int32_t, uint32_t) will see a negative second and throw.
+
+  // This should not throw (once fixed)
+  EXPECT_NO_THROW({
+    rclcpp::Time stamp = uas->synchronise_stamp(time_usec);
+  });
+}
+
 }  // namespace uas
 }  // namespace mavros
 
