@@ -55,8 +55,10 @@ class OffboardControl(Node):
         )
 
         # Service clients
-        self.arming_client = self.create_client(CommandBool, '/mavros/cmd/arming')
-        self.set_mode_client = self.create_client(SetMode, '/mavros/set_mode')
+        self.arming_client = self.create_client(
+            CommandBool, '/mavros/cmd/arming')
+        self.set_mode_client = self.create_client(
+            SetMode, '/mavros/set_mode')
 
         # Wait for services
         self.get_logger().info('Waiting for MAVROS services...')
@@ -64,7 +66,7 @@ class OffboardControl(Node):
         self.get_logger().info('MAVROS services are ready!')
 
         # Setpoint publishing MUST be faster than 2Hz
-        self.timer = self.create_timer(1.0 / 20.0, self.timer_callback)  # 20 Hz
+        self.timer = self.create_timer(1.0 / 20.0, self.timer_callback)
 
         # Target pose
         self.pose = PoseStamped()
@@ -126,7 +128,9 @@ class OffboardControl(Node):
             return
 
         current_time = self.get_clock().now()
-        time_since_last_req = (current_time - self.last_req_time).nanoseconds / 1e9
+        time_since_last_req = (
+            (current_time - self.last_req_time).nanoseconds / 1e9
+        )
 
         # Try to enable OFFBOARD mode
         if self.current_state.mode != "OFFBOARD" and time_since_last_req > 5.0:
@@ -147,24 +151,27 @@ class OffboardControl(Node):
         # Continue publishing setpoints
         self.local_pos_pub.publish(self.pose)
 
+
 def main(args=None):
     rclpy.init(args=args)
 
     try:
         offboard_control = OffboardControl()
-        
+
         # Wait for connection
         offboard_control.get_logger().info('Waiting for FCU connection...')
         while rclpy.ok() and not offboard_control.current_state.connected:
             rclpy.spin_once(offboard_control, timeout_sec=0.1)
-        
-        offboard_control.get_logger().info('FCU connected! Starting OFFBOARD control...')
-        
+
+        offboard_control.get_logger().info(
+            'FCU connected! Starting OFFBOARD control...')
+
         # Spin the node
         rclpy.spin(offboard_control)
 
     except KeyboardInterrupt:
-        offboard_control.get_logger().info('OFFBOARD control interrupted by user')
+        offboard_control.get_logger().info(
+            'OFFBOARD control interrupted by user')
         offboard_control.get_logger().info('Landing...')
         offboard_control.land()
     except Exception as e:
