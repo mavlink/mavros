@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
   rclcpp::executors::MultiThreadedExecutor exec(rclcpp::ExecutorOptions(), 2);
 
   rclcpp::NodeOptions options;
-  // options.use_intra_process_comms(true);
+  options.use_intra_process_comms(true);
 
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;

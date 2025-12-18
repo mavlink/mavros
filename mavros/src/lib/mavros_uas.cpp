@@ -346,8 +346,7 @@ rcl_interfaces::msg::SetParametersResult UAS::on_set_parameters_cb(
 
 void UAS::connect_to_router()
 {
-  auto qos = rclcpp::QoS(
-    1000).best_effort().durability_volatile();
+  auto qos = rclcpp::SensorDataQoS();
 
   this->sink =
     this->create_publisher<mavros_msgs::msg::Mavlink>(
