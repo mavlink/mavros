@@ -40,25 +40,16 @@ class OffboardControl(Node):
         self.current_state = State()
 
         # State subscriber
-        self.state_sub = self.create_subscription(
-            State,
-            '/mavros/state',
-            self.state_cb,
-            10
-        )
+        self.state_sub = self.create_subscription(State, '/mavros/state', self.state_cb, 10)
 
         # Local position publisher
         self.local_pos_pub = self.create_publisher(
-            PoseStamped,
-            '/mavros/setpoint_position/local',
-            10
+            PoseStamped, '/mavros/setpoint_position/local', 10
         )
 
         # Service clients
-        self.arming_client = self.create_client(
-            CommandBool, '/mavros/cmd/arming')
-        self.set_mode_client = self.create_client(
-            SetMode, '/mavros/set_mode')
+        self.arming_client = self.create_client(CommandBool, '/mavros/cmd/arming')
+        self.set_mode_client = self.create_client(SetMode, '/mavros/set_mode')
 
         # Wait for services
         self.get_logger().info('Waiting for MAVROS services...')
@@ -128,15 +119,13 @@ class OffboardControl(Node):
             return
 
         current_time = self.get_clock().now()
-        time_since_last_req = (
-            (current_time - self.last_req_time).nanoseconds / 1e9
-        )
+        time_since_last_req = (current_time - self.last_req_time).nanoseconds / 1e9
 
         # Try to enable OFFBOARD mode
-        if self.current_state.mode != "OFFBOARD" and time_since_last_req > 5.0:
-            self.set_mode("OFFBOARD")
+        if self.current_state.mode != 'OFFBOARD' and time_since_last_req > 5.0:
+            self.set_mode('OFFBOARD')
             if not self.offboard_requested:
-                self.get_logger().info("OFFBOARD mode requested")
+                self.get_logger().info('OFFBOARD mode requested')
                 self.offboard_requested = True
             self.last_req_time = current_time
 
@@ -144,7 +133,7 @@ class OffboardControl(Node):
         elif not self.current_state.armed and time_since_last_req > 5.0:
             self.arm()
             if not self.arm_requested:
-                self.get_logger().info("Arming requested")
+                self.get_logger().info('Arming requested')
                 self.arm_requested = True
             self.last_req_time = current_time
 
@@ -163,15 +152,13 @@ def main(args=None):
         while rclpy.ok() and not offboard_control.current_state.connected:
             rclpy.spin_once(offboard_control, timeout_sec=0.1)
 
-        offboard_control.get_logger().info(
-            'FCU connected! Starting OFFBOARD control...')
+        offboard_control.get_logger().info('FCU connected! Starting OFFBOARD control...')
 
         # Spin the node
         rclpy.spin(offboard_control)
 
     except KeyboardInterrupt:
-        offboard_control.get_logger().info(
-            'OFFBOARD control interrupted by user')
+        offboard_control.get_logger().info('OFFBOARD control interrupted by user')
         offboard_control.get_logger().info('Landing...')
         offboard_control.land()
     except Exception as e:
