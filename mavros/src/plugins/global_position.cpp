@@ -298,7 +298,7 @@ private:
 
   void handle_global_position_int(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
-    mavlink::common::msg::GLOBAL_POSITION_INT & gpos,
+    mavlink::standard::msg::GLOBAL_POSITION_INT & gpos,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     auto odom = nav_msgs::msg::Odometry();
