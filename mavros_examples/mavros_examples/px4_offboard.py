@@ -107,7 +107,7 @@ class OffboardControl(Node):
             self.get_logger().warn('Land command timed out')
 
     def timer_callback(self):
-        """Main control loop callback."""
+        """Execute the main control loop callback."""
         # Wait for Flight Controller connection
         if not self.current_state.connected:
             return
