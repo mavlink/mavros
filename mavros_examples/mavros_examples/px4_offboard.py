@@ -23,10 +23,11 @@
 #    and must continue at this rate to maintain OFFBOARD control.
 # =============================================================================
 
-import rclpy  # noqa: I100
 from geometry_msgs.msg import PoseStamped
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBool, SetMode
+
+import rclpy
 from rclpy.node import Node
 
 
