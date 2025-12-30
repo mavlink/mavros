@@ -1,0 +1,3 @@
+mavros_msgs/RallyPoint rally
+---
+bool success
