@@ -194,7 +194,7 @@ typing-extensions==4.15.0
     #   fieldz
     #   griffe-typingdoc
     #   mypy
-urllib3==2.6.0
+urllib3==2.6.3
     # via requests
 watchdog==6.0.0
     # via mkdocs
