@@ -1,0 +1,44 @@
+# hil
+
+- File: `mavros_extras/src/plugins/hil.cpp`
+- Class: `mavros::extra_plugins::HilPlugin`
+- Namespace: `hil`
+- Brief: Hil plugin
+
+
+## Publishers
+- `~/controls` (mavros_msgs::msg::HilControls)
+- `~/actuator_controls` (mavros_msgs::msg::HilActuatorControls)
+
+
+## Subscribers
+- `~/state` (mavros_msgs::msg::HilStateQuaternion)
+- `~/gps` (mavros_msgs::msg::HilGPS)
+- `~/imu_ned` (mavros_msgs::msg::HilSensor)
+- `~/optical_flow` (mavros_msgs::msg::OpticalFlowRad)
+- `~/rc_inputs` (mavros_msgs::msg::RCIn)
+
+
+## Services
+- None
+
+
+## Clients
+- None
+
+
+## Parameters
+- None
+
+
+## MAVLink Subscriptions
+- `HIL_CONTROLS` [handler: handle_hil_controls, dialect: common, msg_id: 91, id: `mavlink::common::msg::HIL_CONTROLS::MSG_ID`]
+- `HIL_ACTUATOR_CONTROLS` [handler: handle_hil_actuator_controls, dialect: common, msg_id: 93, id: `mavlink::common::msg::HIL_ACTUATOR_CONTROLS::MSG_ID`]
+
+
+## MAVLink Publications
+- `HIL_STATE_QUATERNION` [arg: `state_quat`, dialect: common, msg_id: 115, id: `mavlink::common::msg::HIL_STATE_QUATERNION::MSG_ID`] - [[[end]]] (sum: WWg1ha3BAq)
+- `HIL_GPS` [arg: `gps`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]
+- `HIL_SENSOR` [arg: `sensor`, dialect: common, msg_id: 107, id: `mavlink::common::msg::HIL_SENSOR::MSG_ID`] - [[[end]]] (sum: 4fZQLPEZX/)
+- `HIL_OPTICAL_FLOW` [arg: `of`, dialect: common, msg_id: 114, id: `mavlink::common::msg::HIL_OPTICAL_FLOW::MSG_ID`]
+- `HIL_RC_INPUTS_RAW` [arg: `rcin`, dialect: common, msg_id: 92, id: `mavlink::common::msg::HIL_RC_INPUTS_RAW::MSG_ID`] - [[[end]]] (sum: NCZzsGkOR/)

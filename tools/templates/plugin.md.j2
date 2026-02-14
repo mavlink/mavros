@@ -1,0 +1,111 @@
+# {{ plugin.plugin }}
+
+- File: `{{ shown_path }}`
+- Class: `{{ plugin.class_name or "<unknown>" }}`
+- Namespace: `{{ plugin.namespace or "<unknown>" }}`
+{% if plugin.brief -%}
+- Brief: {{ plugin.brief }}
+{% endif %}
+
+{% if plugin.description -%}
+{{ plugin.description }}
+
+{% endif -%}
+## Publishers
+{% if plugin.publishers -%}
+{% for e in plugin.publishers -%}
+- `{{ e.name }}` ({{ e.type_name or "<unknown>" }}){% if e.description %} - {{ e.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## Subscribers
+{% if plugin.subscribers -%}
+{% for e in plugin.subscribers -%}
+- `{{ e.name }}` ({{ e.type_name or "<unknown>" }}){% if e.description %} - {{ e.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## Services
+{% if plugin.services -%}
+{% for e in plugin.services -%}
+- `{{ e.name }}` ({{ e.type_name or "<unknown>" }}){% if e.description %} - {{ e.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## Clients
+{% if plugin.clients -%}
+{% for e in plugin.clients -%}
+- `{{ e.name }}` ({{ e.type_name or "<unknown>" }}){% if e.description %} - {{ e.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## Parameters
+{% if plugin.parameters -%}
+{% for e in plugin.parameters -%}
+{%- set parts = [] -%}
+{%- if e.type_name -%}
+{%- set _ = parts.append("type: " ~ e.type_name) -%}
+{%- endif -%}
+{%- if e.default_value -%}
+{%- set _ = parts.append("default: `" ~ e.default_value ~ "`") -%}
+{%- endif -%}
+{%- set suffix = " [" ~ (parts | join(", ")) ~ "]" if parts else "" -%}
+- `{{ e.name }}`{{ suffix }}{% if e.description %} - {{ e.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## MAVLink Subscriptions
+{% if plugin.mavlink_subscriptions -%}
+{% for s in plugin.mavlink_subscriptions -%}
+{%- set parts = [] -%}
+{%- if s.handler -%}
+{%- set _ = parts.append("handler: " ~ s.handler) -%}
+{%- endif -%}
+{%- if s.dialect -%}
+{%- set _ = parts.append("dialect: " ~ s.dialect) -%}
+{%- endif -%}
+{%- if s.msg_id is not none -%}
+{%- set _ = parts.append("msg_id: " ~ s.msg_id) -%}
+{%- endif -%}
+{%- if s.msg_id_expr -%}
+{%- set _ = parts.append("id: `" ~ s.msg_id_expr ~ "`") -%}
+{%- endif -%}
+{%- set suffix = " [" ~ (parts | join(", ")) ~ "]" if parts else "" -%}
+- `{{ s.message_name or "<unknown>" }}`{{ suffix }}{% if s.description %} - {{ s.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}
+
+## MAVLink Publications
+{% if plugin.mavlink_publications -%}
+{% for s in plugin.mavlink_publications -%}
+{%- set parts = [] -%}
+{%- if s.argument -%}
+{%- set _ = parts.append("arg: `" ~ s.argument ~ "`") -%}
+{%- endif -%}
+{%- if s.dialect -%}
+{%- set _ = parts.append("dialect: " ~ s.dialect) -%}
+{%- endif -%}
+{%- if s.msg_id is not none -%}
+{%- set _ = parts.append("msg_id: " ~ s.msg_id) -%}
+{%- endif -%}
+{%- if s.msg_id_expr -%}
+{%- set _ = parts.append("id: `" ~ s.msg_id_expr ~ "`") -%}
+{%- endif -%}
+{%- set suffix = " [" ~ (parts | join(", ")) ~ "]" if parts else "" -%}
+- `{{ s.message_name or "<unknown>" }}`{{ suffix }}{% if s.description %} - {{ s.description }}{% endif %}
+{% endfor -%}
+{% else -%}
+- None
+{% endif %}

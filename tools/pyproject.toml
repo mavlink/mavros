@@ -1,6 +1,6 @@
 [project]
 name = "mavros-tools"
-version = "0.2.0"
+version = "0.2.1"
 description = "Mavros development tools"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,7 +22,8 @@ dependencies = [
     "markdown-include",
     "markdown-exec",
     # api-gen
-    "libclang",
+    "loguru",
+    "jinja2",
 ]
 
 [dependency-groups]

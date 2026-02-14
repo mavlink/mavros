@@ -1,8 +1,7 @@
-"""Extract ROS API docs from MAVROS plugin source files.
+"""Generate plugin docs by collecting data from C++ extractor output.
 
-Primary mode uses real libclang AST traversal. If AST parsing is incomplete in
-the local environment (e.g. missing ROS headers), a regex fallback can be used
-to keep early documentation generation useful.
+This wrapper intentionally does not perform Python-side AST parsing.
+Collection is delegated to the C++ extractor binary.
 """
 
 from __future__ import annotations
@@ -10,54 +9,30 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import logging
 import os
 import pathlib
-import re
 import subprocess
 import sys
+import tempfile
 import typing as ty
-from functools import cache
 
 try:
-    from clang.cindex import CompilationDatabase, Cursor, CursorKind, Index, TranslationUnit
+    from loguru import logger
 except Exception:
-    CompilationDatabase = ty.Any  # type: ignore[misc,assignment]
-    Cursor = ty.Any  # type: ignore[misc,assignment]
-    CursorKind = ty.Any  # type: ignore[misc,assignment]
-    Index = ty.Any  # type: ignore[misc,assignment]
-    TranslationUnit = ty.Any  # type: ignore[misc,assignment]
-    CLANG_AVAILABLE = False
-else:
-    CLANG_AVAILABLE = True
+    logger = None
+
+try:
+    from jinja2 import Environment, FileSystemLoader
+except Exception:
+    Environment = None  # type: ignore[assignment]
+    FileSystemLoader = None  # type: ignore[assignment]
 
 
 DEFAULT_PLUGIN_DIRS = ("mavros/src/plugins", "mavros_extras/src/plugins")
-WORKSPACE_INCLUDE_DIRS = ("mavros/include", "mavros_msgs/include", "mavros_extras/include")
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-
-REGISTER_PLUGIN_RE = re.compile(r"MAVROS_PLUGIN_REGISTER\((?P<klass>[a-zA-Z0-9_:]+)\)")
-PLUGIN_NAME_RE = re.compile(r"@plugin\s+(?P<name>[a-z0-9_]+)")
-PLUGIN_BRIEF_RE = re.compile(r"@brief\s+(?P<brief>.+)")
-PLUGIN_NS_RE = re.compile(r":\s*Plugin\s*\(\s*[^,]+,\s*\"(?P<ns>[^\"]+)\"\s*\)")
-
-PUBLISHER_CALL = "create_publisher"
-SUBSCRIPTION_CALL = "create_subscription"
-SERVICE_CALL = "create_service"
-CLIENT_CALL = "create_client"
-PARAM_WATCH_CALL = "node_declare_and_watch_parameter"
-PARAM_DECLARE_CALL = "declare_parameter"
-MF_SUBSCRIBE_CALL = "subscribe"
-
-TARGET_CALLS = {
-    PUBLISHER_CALL,
-    SUBSCRIPTION_CALL,
-    SERVICE_CALL,
-    CLIENT_CALL,
-    PARAM_WATCH_CALL,
-    PARAM_DECLARE_CALL,
-    MF_SUBSCRIBE_CALL,
-}
+DEFAULT_MARKDOWN_TEMPLATE = SCRIPT_DIR / "templates" / "plugin.md.j2"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -65,13 +40,36 @@ class ApiEntry:
     name: str
     type_name: str
     line: int
-
-    def key(self) -> tuple[str, str]:
-        return (self.name, self.type_name)
+    default_value: str = ""
+    description: str = ""
 
     @property
     def rendered_type(self) -> str:
         return self.type_name or "<unknown>"
+
+
+@dataclasses.dataclass(frozen=True)
+class MavlinkSubEntry:
+    handler: str
+    message_type: str
+    message_name: str
+    msg_id_expr: str
+    line: int
+    dialect: str = ""
+    msg_id: int | None = None
+    description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class MavlinkPubEntry:
+    argument: str
+    message_type: str
+    message_name: str
+    msg_id_expr: str
+    line: int
+    dialect: str = ""
+    msg_id: int | None = None
+    description: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -87,537 +85,190 @@ class PluginApi:
     services: list[ApiEntry]
     clients: list[ApiEntry]
     parameters: list[ApiEntry]
+    mavlink_subscriptions: list[MavlinkSubEntry]
+    mavlink_publications: list[MavlinkPubEntry]
 
 
-def _clean_doxygen_comment(block: str) -> str:
-    cleaned = []
-    for raw in block.splitlines():
-        line = raw.strip()
-        if line.startswith("*"):
-            line = line[1:].strip()
-        if not line or line.startswith("@plugin") or line.startswith("@brief"):
-            continue
-        cleaned.append(line)
-    return " ".join(cleaned).strip()
-
-
-def _extract_plugin_meta(path: pathlib.Path, text: str) -> tuple[str, str, str, str, str]:
-    blocks = re.findall(r"/\*\*(.*?)\*/", text, flags=re.DOTALL)
-    plugin_block = next((b for b in blocks if "@plugin" in b), "")
-    name_match = PLUGIN_NAME_RE.search(plugin_block)
-    brief_match = PLUGIN_BRIEF_RE.search(plugin_block)
-    klass_match = REGISTER_PLUGIN_RE.search(text)
-    ns_match = PLUGIN_NS_RE.search(text)
-
-    plugin = name_match.group("name") if name_match else path.stem
-    brief = brief_match.group("brief").strip() if brief_match else ""
-    description = _clean_doxygen_comment(plugin_block)
-    class_name = klass_match.group("klass") if klass_match else ""
-    namespace = ns_match.group("ns") if ns_match else ""
-    return plugin, class_name, namespace, brief or description, description
-
-
-def _dedup_entries(entries: list[ApiEntry]) -> list[ApiEntry]:
-    seen: set[tuple[str, str]] = set()
-    unique: list[ApiEntry] = []
-    for entry in sorted(entries, key=lambda e: (e.line, e.name, e.type_name)):
-        key = entry.key()
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(entry)
-    return unique
-
-
-def _cursor_iter(root: Cursor) -> ty.Iterator[Cursor]:
-    stack = [root]
-    while stack:
-        node = stack.pop()
-        yield node
-        try:
-            children = list(node.get_children())
-        except Exception:
-            continue
-        stack.extend(reversed(children))
-
-
-def _node_in_file(node: Cursor, path: pathlib.Path) -> bool:
-    try:
-        if node.location.file is None:
-            return False
-        return pathlib.Path(node.location.file.name).resolve() == path.resolve()
-    except Exception:
-        return False
-
-
-def _line_of(node: Cursor) -> int:
-    try:
-        return int(node.location.line)
-    except Exception:
-        return 0
-
-
-def _call_name(cursor: Cursor) -> str:
-    try:
-        if cursor.spelling:
-            return cursor.spelling
-        if cursor.displayname:
-            return cursor.displayname.split("(")[0].split("<")[0].strip()
-    except Exception:
-        pass
-
-    try:
-        tokens = [t.spelling for t in cursor.get_tokens()]
-    except Exception:
-        return ""
-
-    for idx, token in enumerate(tokens):
-        if token == "(" and idx > 0:
-            return tokens[idx - 1].split("::")[-1]
-
-    for candidate in TARGET_CALLS:
-        if candidate in tokens:
-            return candidate
-    return ""
-
-
-def _tokens(cursor: Cursor) -> list[str]:
-    try:
-        return [t.spelling for t in cursor.get_tokens()]
-    except Exception:
-        return []
-
-
-def _first_call_argument(tokens: list[str]) -> str:
-    depth = 0
-    seen_open = False
-    first_arg: list[str] = []
-
-    for tok in tokens:
-        if tok == "(":
-            depth += 1
-            seen_open = True
-            continue
-        if not seen_open:
-            continue
-        if tok == ")":
-            depth -= 1
-            if depth <= 0:
-                break
-        if depth == 1 and tok == ",":
-            break
-        if depth >= 1:
-            first_arg.append(tok)
-
-    raw = " ".join(first_arg).strip()
-    m = re.search(r'"([^"]+)"', raw)
-    return m.group(1) if m else raw
-
-
-def _extract_template_arg(call_name: str, tokens: list[str]) -> str:
-    text = " ".join(tokens)
-    m = re.search(rf"{re.escape(call_name)}\s*<\s*(?P<type>[^>]+)\s*>", text)
-    return m.group("type").strip() if m else ""
-
-
-def _find_message_filter_subscribers(
-    tu: TranslationUnit, source_path: pathlib.Path
-) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for node in _cursor_iter(tu.cursor):
-        if not _node_in_file(node, source_path):
-            continue
-        if node.kind not in (CursorKind.FIELD_DECL, CursorKind.VAR_DECL):
-            continue
-        try:
-            tname = node.type.spelling
-        except Exception:
-            continue
-        m = re.search(r"message_filters::Subscriber<\s*(?P<type>[^>]+)\s*>", tname)
-        if m and node.spelling:
-            out[node.spelling] = m.group("type").strip()
-    return out
-
-
-def _extract_ast_api(
-    tu: TranslationUnit, source_path: pathlib.Path, source_text: str
-) -> tuple[list[ApiEntry], list[ApiEntry], list[ApiEntry], list[ApiEntry], list[ApiEntry]]:
-    publishers: list[ApiEntry] = []
-    subscribers: list[ApiEntry] = []
-    services: list[ApiEntry] = []
-    clients: list[ApiEntry] = []
-    parameters: list[ApiEntry] = []
-
-    mf_subs = _find_message_filter_subscribers(tu, source_path)
-    for match in re.finditer(
-        r"message_filters::Subscriber<(?P<type>[^>]+)>\s+(?P<var>[a-zA-Z_][a-zA-Z0-9_]*)\s*;",
-        source_text,
-    ):
-        mf_subs.setdefault(match.group("var"), match.group("type").strip())
-
-    for node in _cursor_iter(tu.cursor):
-        if not _node_in_file(node, source_path):
-            continue
-        if node.kind not in (CursorKind.CALL_EXPR, CursorKind.UNEXPOSED_EXPR):
-            continue
-
-        call = _call_name(node)
-        if call not in TARGET_CALLS:
-            continue
-
-        call_tokens = _tokens(node)
-        line = _line_of(node)
-
-        if call in (PUBLISHER_CALL, SUBSCRIPTION_CALL, SERVICE_CALL, CLIENT_CALL):
-            name = _first_call_argument(call_tokens)
-            type_name = _extract_template_arg(call, call_tokens)
-            if not name:
-                continue
-            entry = ApiEntry(name=name, type_name=type_name, line=line)
-            if call == PUBLISHER_CALL:
-                publishers.append(entry)
-            elif call == SUBSCRIPTION_CALL:
-                subscribers.append(entry)
-            elif call == SERVICE_CALL:
-                services.append(entry)
-            else:
-                clients.append(entry)
-            continue
-
-        if call in (PARAM_WATCH_CALL, PARAM_DECLARE_CALL):
-            name = _first_call_argument(call_tokens)
-            if name:
-                parameters.append(ApiEntry(name=name, type_name="", line=line))
-            continue
-
-        if call == MF_SUBSCRIBE_CALL:
-            if "." not in call_tokens:
-                continue
-            try:
-                dot_idx = call_tokens.index(".")
-            except ValueError:
-                continue
-            if dot_idx < 1:
-                continue
-            var_name = call_tokens[dot_idx - 1]
-            if var_name not in mf_subs:
-                continue
-            topic = _first_call_argument(call_tokens)
-            if topic:
-                subscribers.append(
-                    ApiEntry(name=topic, type_name=mf_subs[var_name], line=line)
-                )
-
-    # Some libclang builds don't expose message_filters::Subscriber.subscribe(...)
-    # as CALL_EXPR/UNEXPOSED_EXPR nodes. Recover those from source text while
-    # still using AST-derived variable->type bindings.
-    sub_re = re.compile(
-        r"(?P<var>[a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*subscribe\s*\(\s*[^,]+,\s*(?P<topic>[^,\)]+)"
-    )
-    for match in sub_re.finditer(source_text):
-        var_name = match.group("var")
-        raw_topic = match.group("topic").strip()
-        literal = re.search(r'"([^"]+)"', raw_topic)
-        topic = literal.group(1) if literal else raw_topic
-        subscribers.append(
-            ApiEntry(
-                name=topic,
-                type_name=mf_subs.get(var_name, ""),
-                line=source_text.count("\n", 0, match.start()) + 1,
-            )
+def setup_logging(level: str = "INFO", json_logs: bool = False) -> None:
+    if logger is not None:
+        logger.remove()
+        logger.add(
+            sys.stderr,
+            level=level.upper(),
+            serialize=json_logs,
+            backtrace=False,
+            diagnose=False,
+        )
+    else:
+        logging.basicConfig(
+            level=getattr(logging, level.upper(), logging.INFO),
+            stream=sys.stderr,
+            format="%(levelname)s %(message)s",
         )
 
-    return (
-        _dedup_entries(publishers),
-        _dedup_entries(subscribers),
-        _dedup_entries(services),
-        _dedup_entries(clients),
-        _dedup_entries(parameters),
-    )
+
+def log_event(level: str, message: str, **fields: ty.Any) -> None:
+    if logger is not None:
+        logger.bind(**fields).log(level.upper(), message)
+    else:
+        suffix = f" {fields}" if fields else ""
+        logging.log(getattr(logging, level.upper(), logging.INFO), f"{message}{suffix}")
 
 
-def _extract_api_regex_fallback(text: str) -> tuple[list[ApiEntry], ...]:
-    def entries(pattern: re.Pattern[str], name_group: str, type_group: str) -> list[ApiEntry]:
-        out: list[ApiEntry] = []
-        for m in pattern.finditer(text):
-            raw = m.group(name_group).strip()
-            lit = re.search(r'"([^"]+)"', raw)
-            name = lit.group(1) if lit else raw
-            line = text.count("\n", 0, m.start()) + 1
-            out.append(ApiEntry(name=name, type_name=m.group(type_group).strip(), line=line))
-        return _dedup_entries(out)
+def detect_repo_root() -> pathlib.Path:
+    env_root = os.environ.get("MAVROS_REPO_ROOT")
+    if env_root:
+        candidate = pathlib.Path(env_root).resolve()
+        if (candidate / "mavros/src/plugins").exists():
+            return candidate
 
-    publishers = entries(
-        re.compile(
-            r"create_publisher<(?P<type>[^>]+)>\s*\(\s*(?P<name>[^,]+)\s*,",
-            flags=re.DOTALL,
-        ),
-        "name",
-        "type",
-    )
-    subscribers = entries(
-        re.compile(
-            r"create_subscription<(?P<type>[^>]+)>\s*\(\s*(?P<name>[^,]+)\s*,",
-            flags=re.DOTALL,
-        ),
-        "name",
-        "type",
-    )
-    services = entries(
-        re.compile(
-            r"create_service<(?P<type>[^>]+)>\s*\(\s*(?P<name>[^,]+)\s*,",
-            flags=re.DOTALL,
-        ),
-        "name",
-        "type",
-    )
-    clients = entries(
-        re.compile(
-            r"create_client<(?P<type>[^>]+)>\s*\(\s*(?P<name>[^,\)]+)\s*[\),]",
-            flags=re.DOTALL,
-        ),
-        "name",
-        "type",
-    )
+    for base in [pathlib.Path.cwd().resolve(), SCRIPT_DIR]:
+        for candidate in [base, *base.parents]:
+            if (candidate / "mavros/src/plugins").exists() and (
+                candidate / "mavros_extras/src/plugins"
+            ).exists():
+                return candidate
 
-    params: list[ApiEntry] = []
-    for pattern in (
-        re.compile(r'node_declare_and_watch_parameter\s*\(\s*"(?P<name>[^"]+)"'),
-        re.compile(r'node->declare_parameter(?:<[^>]+>)?\s*\(\s*"(?P<name>[^"]+)"'),
+    for explicit in (
+        pathlib.Path("/ws/src/mavros"),
+        pathlib.Path.home() / "ros2/src/mavros",
     ):
-        for m in pattern.finditer(text):
-            params.append(
-                ApiEntry(
-                    name=m.group("name"),
-                    type_name="",
-                    line=text.count("\n", 0, m.start()) + 1,
-                )
-            )
+        if (explicit / "mavros/src/plugins").exists() and (
+            explicit / "mavros_extras/src/plugins"
+        ).exists():
+            return explicit.resolve()
 
-    return (
-        _dedup_entries(publishers),
-        _dedup_entries(subscribers),
-        _dedup_entries(services),
-        _dedup_entries(clients),
-        _dedup_entries(params),
-    )
+    return REPO_ROOT
 
 
-def find_default_cpp_include_paths() -> ty.Iterable[str]:
-    env = os.environ.copy()
-    env.update({"LC_ALL": "C", "LANG": "C"})
-    proc = subprocess.run(
-        ["g++", "-x", "c++", "--std", "c++20", "-v", "-E", "/dev/null"],
-        env=env,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
-    in_list = False
-    for line in proc.stderr.splitlines():
-        line = line.strip()
-        if line == "#include <...> search starts here:":
-            in_list = True
-            continue
-        if line == "End of search list.":
-            return
-        if in_list and line:
-            yield line
-
-
-@cache
-def default_cpp_include_paths() -> tuple[str, ...]:
+def plugin_to_dict(plugin: PluginApi) -> dict[str, ty.Any]:
+    repo_root = detect_repo_root()
     try:
-        return tuple(find_default_cpp_include_paths())
-    except Exception:
-        return tuple()
+        path = plugin.path.relative_to(repo_root).as_posix()
+    except ValueError:
+        path = plugin.path.as_posix()
 
-
-def _default_clang_args(extra_clang_args: list[str]) -> list[str]:
-    args = ["-x", "c++", "-std=c++20"]
-    for inc in WORKSPACE_INCLUDE_DIRS:
-        args += ["-I", str((REPO_ROOT / inc).resolve())]
-    for inc in default_cpp_include_paths():
-        args += ["-isystem", inc]
-    args += extra_clang_args
-    return args
-
-
-def _compile_db_args(
-    compile_commands: list[CompilationDatabase], source_path: pathlib.Path
-) -> list[str] | None:
-    if not compile_commands:
-        return None
-
-    for db in compile_commands:
-        try:
-            commands = db.getCompileCommands(str(source_path))
-        except Exception:
-            continue
-        if not commands:
-            continue
-
-        argv = [a for a in commands[0].arguments]
-        # Drop compiler executable, output options, and positional source files.
-        out: list[str] = []
-        skip_next = False
-        expects_value = False
-        value_flags = {
-            "-o",
-            "--output",
-            "-I",
-            "-isystem",
-            "-include",
-            "-isysroot",
-            "--sysroot",
-            "-imacros",
-            "-iquote",
-            "-MF",
-            "-MT",
-            "-MQ",
-            "-Xclang",
-            "-stdlib",
+    def entry_to_dict(e: ApiEntry) -> dict[str, ty.Any]:
+        out: dict[str, ty.Any] = {
+            "name": e.name,
+            "type_name": e.type_name,
+            "line": e.line,
         }
-        for arg in argv[1:]:
-            if skip_next:
-                skip_next = False
-                continue
-            if expects_value:
-                out.append(arg)
-                expects_value = False
-                continue
-            if arg in ("-c",):
-                continue
-            if arg in ("-o", "--output"):
-                skip_next = True
-                continue
-            if arg in value_flags:
-                out.append(arg)
-                expects_value = True
-                continue
-            if not arg.startswith("-"):
-                # Drop positional source inputs from compile command; `idx.parse()`
-                # already receives the source path as the main TU input.
-                if re.search(r"\.(c|cc|cpp|cxx|c\+\+|m|mm)$", arg):
-                    continue
-            if pathlib.Path(arg).resolve() == source_path.resolve():
-                continue
-            # Keep plugin-specific defines/includes from build system.
-            out.append(arg)
+        if e.default_value:
+            out["default_value"] = e.default_value
+        if e.description:
+            out["description"] = e.description
         return out
 
-    return None
+    def mavlink_sub_to_dict(s: MavlinkSubEntry) -> dict[str, ty.Any]:
+        out: dict[str, ty.Any] = {
+            "handler": s.handler,
+            "message_type": s.message_type,
+            "message_name": s.message_name,
+            "msg_id_expr": s.msg_id_expr,
+            "dialect": s.dialect,
+            "line": s.line,
+        }
+        if s.msg_id is not None:
+            out["msg_id"] = s.msg_id
+        if s.description:
+            out["description"] = s.description
+        return out
+
+    def mavlink_pub_to_dict(s: MavlinkPubEntry) -> dict[str, ty.Any]:
+        out: dict[str, ty.Any] = {
+            "argument": s.argument,
+            "message_type": s.message_type,
+            "message_name": s.message_name,
+            "msg_id_expr": s.msg_id_expr,
+            "dialect": s.dialect,
+            "line": s.line,
+        }
+        if s.msg_id is not None:
+            out["msg_id"] = s.msg_id
+        if s.description:
+            out["description"] = s.description
+        return out
+
+    return {
+        "plugin": plugin.plugin,
+        "path": path,
+        "class_name": plugin.class_name,
+        "namespace": plugin.namespace,
+        "brief": plugin.brief,
+        "description": plugin.description,
+        "publishers": [entry_to_dict(e) for e in plugin.publishers],
+        "subscribers": [entry_to_dict(e) for e in plugin.subscribers],
+        "services": [entry_to_dict(e) for e in plugin.services],
+        "clients": [entry_to_dict(e) for e in plugin.clients],
+        "parameters": [entry_to_dict(e) for e in plugin.parameters],
+        "mavlink_subscriptions": [mavlink_sub_to_dict(s) for s in plugin.mavlink_subscriptions],
+        "mavlink_publications": [mavlink_pub_to_dict(s) for s in plugin.mavlink_publications],
+    }
 
 
-def _parse_translation_unit(
-    idx: Index,
-    source_path: pathlib.Path,
-    compile_commands: list[CompilationDatabase],
-    extra_clang_args: list[str],
-) -> TranslationUnit:
-    if not CLANG_AVAILABLE:
-        raise RuntimeError("clang.cindex is unavailable")
-    args = _compile_db_args(compile_commands, source_path) or _default_clang_args(
-        extra_clang_args
-    )
-    return idx.parse(
-        str(source_path),
-        args=args,
-        options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
-    )
-
-
-def parse_plugin_file(
-    idx: Index,
-    source_path: pathlib.Path,
-    compile_commands: list[CompilationDatabase],
-    extra_clang_args: list[str],
-    allow_regex_fallback: bool,
-) -> PluginApi | None:
-    text = source_path.read_text(encoding="utf-8")
-    plugin, class_name, namespace, brief, description = _extract_plugin_meta(source_path, text)
-    if not plugin:
-        return None
-
-    publishers: list[ApiEntry]
-    subscribers: list[ApiEntry]
-    services: list[ApiEntry]
-    clients: list[ApiEntry]
-    parameters: list[ApiEntry]
-
-    try:
-        tu = _parse_translation_unit(idx, source_path, compile_commands, extra_clang_args)
-        publishers, subscribers, services, clients, parameters = _extract_ast_api(
-            tu, source_path, text
-        )
-        if allow_regex_fallback and not any(
-            (publishers, subscribers, services, clients, parameters)
-        ):
-            publishers, subscribers, services, clients, parameters = _extract_api_regex_fallback(
-                text
+def plugin_from_dict(item: dict[str, ty.Any]) -> PluginApi:
+    def load_entries(entries: list[dict[str, ty.Any]]) -> list[ApiEntry]:
+        return [
+            ApiEntry(
+                name=e["name"],
+                type_name=e.get("type_name", ""),
+                line=e["line"],
+                default_value=e.get("default_value", ""),
+                description=e.get("description", ""),
             )
-    except Exception:
-        if not allow_regex_fallback:
-            raise
-        publishers, subscribers, services, clients, parameters = _extract_api_regex_fallback(text)
+            for e in entries
+        ]
+
+    def load_mavlink_entries(entries: list[dict[str, ty.Any]]) -> list[MavlinkSubEntry]:
+        return [
+            MavlinkSubEntry(
+                handler=e.get("handler", ""),
+                message_type=e.get("message_type", ""),
+                message_name=e.get("message_name", ""),
+                msg_id_expr=e.get("msg_id_expr", ""),
+                dialect=e.get("dialect", ""),
+                msg_id=e.get("msg_id"),
+                line=e.get("line", 0),
+                description=e.get("description", ""),
+            )
+            for e in entries
+        ]
+
+    def load_mavlink_pub_entries(entries: list[dict[str, ty.Any]]) -> list[MavlinkPubEntry]:
+        return [
+            MavlinkPubEntry(
+                argument=e.get("argument", ""),
+                message_type=e.get("message_type", ""),
+                message_name=e.get("message_name", ""),
+                msg_id_expr=e.get("msg_id_expr", ""),
+                line=e.get("line", 0),
+                dialect=e.get("dialect", ""),
+                msg_id=e.get("msg_id"),
+                description=e.get("description", ""),
+            )
+            for e in entries
+        ]
 
     return PluginApi(
-        plugin=plugin,
-        path=source_path,
-        class_name=class_name,
-        namespace=namespace,
-        brief=brief,
-        description=description,
-        publishers=publishers,
-        subscribers=subscribers,
-        services=services,
-        clients=clients,
-        parameters=parameters,
+        plugin=item["plugin"],
+        path=pathlib.Path(item["path"]),
+        class_name=item["class_name"],
+        namespace=item["namespace"],
+        brief=item["brief"],
+        description=item["description"],
+        publishers=load_entries(item["publishers"]),
+        subscribers=load_entries(item["subscribers"]),
+        services=load_entries(item["services"]),
+        clients=load_entries(item["clients"]),
+        parameters=load_entries(item["parameters"]),
+        mavlink_subscriptions=load_mavlink_entries(item.get("mavlink_subscriptions", [])),
+        mavlink_publications=load_mavlink_pub_entries(item.get("mavlink_publications", [])),
     )
 
 
-def load_plugins(
-    plugin_dirs: list[pathlib.Path],
-    compile_commands: list[CompilationDatabase],
-    extra_clang_args: list[str],
-    allow_regex_fallback: bool,
-    wanted_plugins: set[str] | None = None,
-) -> list[PluginApi]:
-    if CLANG_AVAILABLE:
-        idx = Index.create()
-    elif not allow_regex_fallback:
-        raise RuntimeError("clang.cindex is unavailable and fallback is disabled")
-    else:
-        idx = None
-    out: list[PluginApi] = []
-    for plugin_dir in plugin_dirs:
-        if not plugin_dir.exists():
-            continue
-        for source_path in sorted(plugin_dir.glob("*.cpp")):
-            if wanted_plugins is not None:
-                try:
-                    source_text = source_path.read_text(encoding="utf-8")
-                except Exception:
-                    source_text = ""
-                plugin_name_match = PLUGIN_NAME_RE.search(source_text)
-                plugin_name = (
-                    plugin_name_match.group("name")
-                    if plugin_name_match is not None
-                    else source_path.stem
-                )
-                if plugin_name not in wanted_plugins:
-                    continue
-            parsed = parse_plugin_file(
-                idx,
-                source_path,
-                compile_commands=compile_commands,
-                extra_clang_args=extra_clang_args,
-                allow_regex_fallback=allow_regex_fallback,
-            )
-            if parsed is not None:
-                out.append(parsed)
-    return sorted(out, key=lambda item: item.plugin)
+def render_json(plugins: list[PluginApi]) -> str:
+    return json.dumps([plugin_to_dict(p) for p in plugins], indent=2) + "\n"
 
 
 def _render_api_section(title: str, entries: list[ApiEntry]) -> list[str]:
@@ -627,12 +278,25 @@ def _render_api_section(title: str, entries: list[ApiEntry]) -> list[str]:
         lines.append("")
         return lines
     for entry in entries:
-        lines.append(f"- `{entry.name}` ({entry.rendered_type})")
+        if title == "Parameters":
+            extras = []
+            if entry.type_name:
+                extras.append(f"type: {entry.type_name}")
+            if entry.default_value:
+                extras.append(f"default: `{entry.default_value}`")
+            if entry.description:
+                extras.append(f"desc: {entry.description}")
+            suffix = f" [{', '.join(extras)}]" if extras else ""
+            lines.append(f"- `{entry.name}`{suffix}")
+        else:
+            extra = f" - {entry.description}" if entry.description else ""
+            lines.append(f"- `{entry.name}` ({entry.rendered_type}){extra}")
     lines.append("")
     return lines
 
 
 def render_markdown(plugins: list[PluginApi]) -> str:
+    repo_root = detect_repo_root()
     lines = [
         "# MAVROS Plugin API",
         "",
@@ -641,7 +305,7 @@ def render_markdown(plugins: list[PluginApi]) -> str:
     ]
     for plugin in plugins:
         try:
-            shown_path = plugin.path.relative_to(REPO_ROOT).as_posix()
+            shown_path = plugin.path.relative_to(repo_root).as_posix()
         except ValueError:
             shown_path = plugin.path.as_posix()
         lines.extend(
@@ -664,19 +328,109 @@ def render_markdown(plugins: list[PluginApi]) -> str:
         lines.extend(_render_api_section("Services", plugin.services))
         lines.extend(_render_api_section("Clients", plugin.clients))
         lines.extend(_render_api_section("Parameters", plugin.parameters))
+        lines.append("### MAVLink Subscriptions")
+        if not plugin.mavlink_subscriptions:
+            lines.append("- None")
+            lines.append("")
+        else:
+            for sub in plugin.mavlink_subscriptions:
+                msg = sub.message_name or "<unknown>"
+                extras = []
+                if sub.handler:
+                    extras.append(f"handler: {sub.handler}")
+                if sub.dialect:
+                    extras.append(f"dialect: {sub.dialect}")
+                if sub.msg_id is not None:
+                    extras.append(f"msg_id: {sub.msg_id}")
+                if sub.msg_id_expr:
+                    extras.append(f"id: `{sub.msg_id_expr}`")
+                if sub.description:
+                    extras.append(f"desc: {sub.description}")
+                suffix = f" [{', '.join(extras)}]" if extras else ""
+                lines.append(f"- `{msg}`{suffix}")
+            lines.append("")
+        lines.append("### MAVLink Publications")
+        if not plugin.mavlink_publications:
+            lines.append("- None")
+            lines.append("")
+        else:
+            for pub in plugin.mavlink_publications:
+                msg = pub.message_name or "<unknown>"
+                extras = []
+                if pub.argument:
+                    extras.append(f"arg: `{pub.argument}`")
+                if pub.dialect:
+                    extras.append(f"dialect: {pub.dialect}")
+                if pub.msg_id is not None:
+                    extras.append(f"msg_id: {pub.msg_id}")
+                if pub.msg_id_expr:
+                    extras.append(f"id: `{pub.msg_id_expr}`")
+                if pub.description:
+                    extras.append(f"desc: {pub.description}")
+                suffix = f" [{', '.join(extras)}]" if extras else ""
+                lines.append(f"- `{msg}`{suffix}")
+            lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_json(plugins: list[PluginApi]) -> str:
-    payload = []
+def render_plugin_markdown_with_template(
+    plugin: PluginApi, template_path: pathlib.Path, repo_root: pathlib.Path
+) -> str:
+    if Environment is None or FileSystemLoader is None:
+        raise RuntimeError(
+            "Jinja2 is required for templated markdown output. Install dependencies with `uv sync`."
+        )
+    env = Environment(loader=FileSystemLoader(str(template_path.parent)), autoescape=False)
+    template = env.get_template(template_path.name)
+    try:
+        shown_path = plugin.path.relative_to(repo_root).as_posix()
+    except ValueError:
+        shown_path = plugin.path.as_posix()
+    body = template.render(plugin=plugin, shown_path=shown_path)
+    return body.rstrip() + "\n"
+
+
+def write_markdown_files(
+    plugins: list[PluginApi], output_dir: pathlib.Path, template_path: pathlib.Path
+) -> list[pathlib.Path]:
+    repo_root = detect_repo_root()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    written: list[pathlib.Path] = []
     for plugin in plugins:
-        item = dataclasses.asdict(plugin)
-        try:
-            item["path"] = plugin.path.relative_to(REPO_ROOT).as_posix()
-        except ValueError:
-            item["path"] = plugin.path.as_posix()
-        payload.append(item)
-    return json.dumps(payload, indent=2) + "\n"
+        stem = pathlib.Path(plugin.path).stem or plugin.plugin
+        out_path = output_dir / f"{stem}.md"
+        body = render_plugin_markdown_with_template(plugin, template_path, repo_root)
+        out_path.write_text(body, encoding="utf-8")
+        written.append(out_path)
+    return written
+
+
+def load_plugins_via_cpp(
+    plugin_dirs: list[pathlib.Path],
+    wanted_plugins: set[str] | None,
+    jobs: int,
+    cpp_bin: pathlib.Path,
+) -> list[PluginApi]:
+    if not cpp_bin.exists():
+        raise FileNotFoundError(f"C++ extractor not found: {cpp_bin}")
+
+    with tempfile.NamedTemporaryFile(prefix="plugin-doc-cpp-", suffix=".json", delete=False) as tmp:
+        tmp_path = pathlib.Path(tmp.name)
+
+    cmd = [str(cpp_bin), "--jobs", str(max(1, jobs)), "--output", str(tmp_path)]
+    for plugin_dir in plugin_dirs:
+        cmd += ["--plugin-dir", str(plugin_dir)]
+    if wanted_plugins:
+        for plugin in sorted(wanted_plugins):
+            cmd += ["--plugin", plugin]
+
+    log_event("info", "Starting C++ collection", phase="collect_cpp", jobs=jobs, bin=str(cpp_bin))
+    subprocess.run(cmd, check=True)
+    payload = json.loads(tmp_path.read_text(encoding="utf-8"))
+    tmp_path.unlink(missing_ok=True)
+    plugins = [plugin_from_dict(item) for item in payload]
+    log_event("info", "C++ collection finished", phase="collect_cpp", plugins=len(plugins))
+    return sorted(plugins, key=lambda item: item.plugin)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -694,21 +448,23 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Only include plugin(s) by @plugin name. May be passed multiple times.",
     )
     parser.add_argument(
-        "--compile-commands",
-        action="append",
-        default=[],
-        help="Path to directory containing compile_commands.json. Repeat for multiple packages.",
+        "--jobs",
+        type=int,
+        default=1,
+        help="Number of worker processes used by C++ collector.",
     )
     parser.add_argument(
-        "--clang-arg",
-        action="append",
-        default=[],
-        help="Extra arg forwarded to clang parser. May be repeated.",
+        "--cpp-bin",
+        default="tools/build/plugin_doc_gen_cpp",
+        help="Path to C++ collector binary.",
     )
     parser.add_argument(
-        "--no-regex-fallback",
-        action="store_true",
-        help="Disable regex fallback when AST extraction yields no API entries.",
+        "--collect-output",
+        help="Write collected raw plugin data as JSON before rendering.",
+    )
+    parser.add_argument(
+        "--input-json",
+        help="Skip collection and render from pre-collected JSON file.",
     )
     parser.add_argument(
         "--format",
@@ -717,33 +473,92 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Output format.",
     )
     parser.add_argument(
+        "--template",
+        default=str(DEFAULT_MARKDOWN_TEMPLATE),
+        help="Jinja2 template used for per-plugin markdown files.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        help="Directory for per-plugin markdown output (<source_stem>.md).",
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        help="Log level (TRACE, DEBUG, INFO, WARNING, ERROR).",
+    )
+    parser.add_argument(
+        "--log-json",
+        action="store_true",
+        help="Enable structured JSON logs on stderr.",
+    )
+    parser.add_argument(
         "--output",
         help="Write output to file. Defaults to stdout.",
     )
+
+    # Accepted for compatibility with old invocations; ignored.
+    parser.add_argument("--collector", default="cpp", help=argparse.SUPPRESS)
+    parser.add_argument("--compile-commands", action="append", default=[], help=argparse.SUPPRESS)
+    parser.add_argument("--clang-arg", action="append", default=[], help=argparse.SUPPRESS)
+    parser.add_argument("--no-regex-fallback", action="store_true", help=argparse.SUPPRESS)
+
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
+    setup_logging(level=args.log_level, json_logs=args.log_json)
+    repo_root = detect_repo_root()
     plugin_dirs = (
         [pathlib.Path(p).resolve() for p in args.plugin_dir]
         if args.plugin_dir
-        else [(REPO_ROOT / p).resolve() for p in DEFAULT_PLUGIN_DIRS]
+        else [(repo_root / p).resolve() for p in DEFAULT_PLUGIN_DIRS]
     )
 
-    compile_commands: list[CompilationDatabase] = []
-    for compile_commands_dir in args.compile_commands:
-        compile_commands.append(CompilationDatabase.fromDirectory(compile_commands_dir))
+    if args.input_json:
+        payload = json.loads(pathlib.Path(args.input_json).read_text(encoding="utf-8"))
+        plugins = [plugin_from_dict(item) for item in payload]
+        log_event("info", "Loaded input JSON", phase="render", plugins=len(plugins))
+    else:
+        wanted_plugins = set(args.plugin) if args.plugin else None
+        cpp_bin = pathlib.Path(args.cpp_bin).resolve()
+        plugins = load_plugins_via_cpp(
+            plugin_dirs=plugin_dirs,
+            wanted_plugins=wanted_plugins,
+            jobs=max(1, args.jobs),
+            cpp_bin=cpp_bin,
+        )
+        if args.collect_output:
+            collect_path = pathlib.Path(args.collect_output)
+            collect_path.parent.mkdir(parents=True, exist_ok=True)
+            collect_path.write_text(render_json(plugins), encoding="utf-8")
+            log_event(
+                "info",
+                "Wrote collected JSON",
+                path=str(collect_path),
+                plugins=len(plugins),
+            )
 
-    plugins = load_plugins(
-        plugin_dirs=plugin_dirs,
-        compile_commands=compile_commands,
-        extra_clang_args=args.clang_arg,
-        allow_regex_fallback=not args.no_regex_fallback,
-        wanted_plugins=set(args.plugin) if args.plugin else None,
-    )
+    if args.format == "json":
+        body = render_json(plugins)
+        if args.output:
+            out_path = pathlib.Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(body, encoding="utf-8")
+        else:
+            sys.stdout.write(body)
+        return 0
 
-    body = render_json(plugins) if args.format == "json" else render_markdown(plugins)
+    if args.output_dir:
+        template_path = pathlib.Path(args.template).resolve()
+        if not template_path.exists():
+            raise FileNotFoundError(f"Template not found: {template_path}")
+        output_dir = pathlib.Path(args.output_dir)
+        written = write_markdown_files(plugins, output_dir=output_dir, template_path=template_path)
+        log_event("info", "Wrote markdown files", phase="render", files=len(written), path=str(output_dir))
+        return 0
+
+    body = render_markdown(plugins)
     if args.output:
         out_path = pathlib.Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
