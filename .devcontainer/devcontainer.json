@@ -1,0 +1,37 @@
+{
+  "name": "mavros (ROS 2 kilted)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "ROS_DISTRO": "kilted"
+    }
+  },
+  "workspaceFolder": "/ws/src/mavros",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ws/src/mavros,type=bind",
+  "remoteUser": "root",
+  "containerEnv": {
+    "ROS_DISTRO": "kilted"
+  },
+  "runArgs": [
+    "-p",
+    "14540:14540/udp",
+    "-p",
+    "14545:14545/udp",
+    "-p",
+    "5761:5761"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-python.python",
+        "ms-vscode.cpptools"
+      ]
+    }
+  }
+}
