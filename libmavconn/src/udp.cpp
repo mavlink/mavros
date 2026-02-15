@@ -73,10 +73,12 @@ static bool resolve_address_udp(
 MAVConnUDP::MAVConnUDP(
   uint8_t system_id, uint8_t component_id,
   std::string bind_host, uint16_t bind_port,
-  std::string remote_host, uint16_t remote_port)
+  std::string remote_host, uint16_t remote_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_service(),
-  io_work(new io_service::work(io_service)),
+  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_service(shared_io ? *shared_io : *io_context_owner),
+  io_work(shared_io ? nullptr : std::make_unique<io_service::work>(io_service)),
+  own_io_thread(shared_io == nullptr),
   is_running(false),
   permanent_broadcast(false),
   remote_exists(false),
@@ -134,7 +136,7 @@ MAVConnUDP::~MAVConnUDP()
   close();
 
   // If the socket already closed and the io_service running
-  if (is_running) {
+  if (own_io_thread && is_running) {
     stop();
   }
 }
@@ -149,22 +151,28 @@ void MAVConnUDP::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
-  // run io_service for async io
-  io_thread = std::thread(
-    [this]() {
-      is_running = true;
-      utils::set_this_thread_name("mudp%zu", conn_id);
-      try {
-        io_service.run();
-      } catch (std::exception & ex) {
-        CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
-      }
-      is_running = false;
-    });
+  if (own_io_thread) {
+    // run io_service for async io
+    io_thread = std::thread(
+      [this]() {
+        is_running = true;
+        utils::set_this_thread_name("mudp%zu", conn_id);
+        try {
+          io_service.run();
+        } catch (std::exception & ex) {
+          CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
+        }
+        is_running = false;
+      });
+  }
 }
 
 void MAVConnUDP::stop()
 {
+  if (!own_io_thread) {
+    return;
+  }
+
   io_work.reset();
   io_service.stop();
 
@@ -188,7 +196,7 @@ void MAVConnUDP::close()
   }
 
   // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
-  if (std::this_thread::get_id() != io_thread.get_id()) {
+  if (own_io_thread && std::this_thread::get_id() != io_thread.get_id()) {
     stop();
   }
 

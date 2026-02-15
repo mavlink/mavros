@@ -83,10 +83,12 @@ static bool resolve_address_tcp(
 
 MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, uint16_t server_port)
+  std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_service(),
-  io_work(new io_service::work(io_service)),
+  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_service(shared_io ? *shared_io : *io_context_owner),
+  io_work(shared_io ? nullptr : std::make_unique<io_service::work>(io_service)),
+  own_io_thread(shared_io == nullptr),
   is_running(false),
   socket(io_service),
   is_destroying(false),
@@ -112,8 +114,12 @@ MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
   asio::io_service & server_io)
 : MAVConnInterface(system_id, component_id),
+  io_context_owner(),
+  io_service(server_io),
+  io_work(nullptr),
+  own_io_thread(false),
   is_running(false),
-  socket(server_io),
+  socket(io_service),
   is_destroying(false),
   tx_in_progress(false),
   tx_q{},
@@ -139,7 +145,7 @@ MAVConnTCPClient::~MAVConnTCPClient()
 
   // If the client is already disconnected on error (By the io_service thread)
   // and io_service running
-  if (is_running) {
+  if (own_io_thread && is_running) {
     stop();
   }
 }
@@ -154,22 +160,28 @@ void MAVConnTCPClient::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
 
-  // run io_service for async io
-  io_thread = std::thread(
-    [this]() {
-      is_running = true;
-      utils::set_this_thread_name("mtcp%zu", conn_id);
-      try {
-        io_service.run();
-      } catch (std::exception & ex) {
-        CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
-      }
-      is_running = false;
-    });
+  if (own_io_thread) {
+    // run io_service for async io
+    io_thread = std::thread(
+      [this]() {
+        is_running = true;
+        utils::set_this_thread_name("mtcp%zu", conn_id);
+        try {
+          io_service.run();
+        } catch (std::exception & ex) {
+          CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
+        }
+        is_running = false;
+      });
+  }
 }
 
 void MAVConnTCPClient::stop()
 {
+  if (!own_io_thread) {
+    return;
+  }
+
   io_work.reset();
   io_service.stop();
 
@@ -198,7 +210,7 @@ void MAVConnTCPClient::close()
   }
 
   // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
-  if (std::this_thread::get_id() != io_thread.get_id()) {
+  if (own_io_thread && std::this_thread::get_id() != io_thread.get_id()) {
     stop();
   }
 
@@ -340,9 +352,12 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 
 MAVConnTCPServer::MAVConnTCPServer(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, uint16_t server_port)
+  std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_service(),
+  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_service(shared_io ? *shared_io : *io_context_owner),
+  io_work(shared_io ? nullptr : std::make_unique<io_service::work>(io_service)),
+  own_io_thread(shared_io == nullptr),
   acceptor(io_service),
   is_destroying(false)
 {
@@ -378,12 +393,14 @@ void MAVConnTCPServer::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
 
-  // run io_service for async io
-  io_thread = std::thread(
-    [this]() {
-      utils::set_this_thread_name("mtcps%zu", conn_id);
-      io_service.run();
-    });
+  if (own_io_thread) {
+    // run io_service for async io
+    io_thread = std::thread(
+      [this]() {
+        utils::set_this_thread_name("mtcps%zu", conn_id);
+        io_service.run();
+      });
+  }
 }
 
 void MAVConnTCPServer::close()
@@ -398,10 +415,13 @@ void MAVConnTCPServer::close()
     "All connections will be closed.",
     conn_id);
 
-  io_service.stop();
+  if (own_io_thread) {
+    io_work.reset();
+    io_service.stop();
+  }
   acceptor.close();
 
-  if (io_thread.joinable()) {
+  if (own_io_thread && io_thread.joinable()) {
     io_thread.join();
   }
 

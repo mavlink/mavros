@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <asio.hpp>
 #include <mavconn/mavlink_dialect.hpp>
 
 namespace mavconn
@@ -266,7 +267,8 @@ public:
     std::string url,
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     const ReceivedCb & cb_handle_message = ReceivedCb(),
-    const ClosedCb & cb_handle_closed_port = ClosedCb()
+    const ClosedCb & cb_handle_closed_port = ClosedCb(),
+    asio::io_service * shared_io = nullptr
   );
 
   /**
@@ -275,7 +277,8 @@ public:
   static Ptr open_url_no_connect(
     std::string url,
     uint8_t system_id = 1,
-    uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE);
+    uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
+    asio::io_service * shared_io = nullptr);
 
   static std::vector<std::string> get_known_dialects();
 

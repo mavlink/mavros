@@ -21,6 +21,7 @@
 
 #include <atomic>
 #include <deque>
+#include <memory>
 #include <string>
 
 #include <asio.hpp>
@@ -48,7 +49,8 @@ public:
    */
   MAVConnSerial(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-    std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE, bool hwflow = false);
+    std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE,
+    bool hwflow = false, asio::io_service * shared_io = nullptr);
   virtual ~MAVConnSerial();
 
   void connect(
@@ -66,7 +68,9 @@ public:
   }
 
 private:
-  asio::io_service io_service;
+  std::shared_ptr<asio::io_service> io_context_owner;
+  asio::io_service & io_service;
+  bool own_io_thread;
   std::thread io_thread;
   asio::serial_port serial_dev;
 

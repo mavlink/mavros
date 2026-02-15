@@ -39,9 +39,11 @@ using std::error_code;
 
 MAVConnSerial::MAVConnSerial(
   uint8_t system_id, uint8_t component_id,
-  std::string device, unsigned baudrate, bool hwflow)
+  std::string device, unsigned baudrate, bool hwflow, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_service(),
+  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_service(shared_io ? *shared_io : *io_context_owner),
+  own_io_thread(shared_io == nullptr),
   serial_dev(io_service),
   tx_in_progress(false),
   tx_q{},
@@ -125,12 +127,14 @@ void MAVConnSerial::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnSerial::do_read, this));
 
-  // run io_service for async io
-  io_thread = std::thread(
-    [this]() {
-      utils::set_this_thread_name("mserial%zu", conn_id);
-      io_service.run();
-    });
+  if (own_io_thread) {
+    // run io_service for async io
+    io_thread = std::thread(
+      [this]() {
+        utils::set_this_thread_name("mserial%zu", conn_id);
+        io_service.run();
+      });
+  }
 }
 
 
@@ -144,13 +148,15 @@ void MAVConnSerial::close()
   serial_dev.cancel();
   serial_dev.close();
 
-  io_service.stop();
+  if (own_io_thread) {
+    io_service.stop();
 
-  if (io_thread.joinable()) {
-    io_thread.join();
+    if (std::this_thread::get_id() != io_thread.get_id() && io_thread.joinable()) {
+      io_thread.join();
+    }
+
+    io_service.reset();
   }
-
-  io_service.reset();
 
   if (port_closed_cb) {
     port_closed_cb();

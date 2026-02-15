@@ -280,7 +280,7 @@ static void url_parse_query(const std::string & query, uint8_t & sysid, uint8_t 
 
 static MAVConnInterface::Ptr url_parse_serial(
   const std::string & path, const std::string & query,
-  uint8_t system_id, uint8_t component_id, bool hwflow)
+  uint8_t system_id, uint8_t component_id, bool hwflow, asio::io_service * shared_io)
 {
   std::string file_path;
   int baudrate;
@@ -293,12 +293,13 @@ static MAVConnInterface::Ptr url_parse_serial(
 
   return std::make_shared<MAVConnSerial>(
     system_id, component_id,
-    file_path, baudrate, hwflow);
+    file_path, baudrate, hwflow, shared_io);
 }
 
 static MAVConnInterface::Ptr url_parse_udp(
   const std::string & hosts, const std::string & query,
-  uint8_t system_id, uint8_t component_id, bool is_udpb, bool permanent_broadcast)
+  uint8_t system_id, uint8_t component_id, bool is_udpb, bool permanent_broadcast,
+  asio::io_service * shared_io)
 {
   std::string bind_pair, remote_pair;
   std::string bind_host, remote_host;
@@ -329,12 +330,12 @@ static MAVConnInterface::Ptr url_parse_udp(
   return std::make_shared<MAVConnUDP>(
     system_id, component_id,
     bind_host, bind_port,
-    remote_host, remote_port);
+    remote_host, remote_port, shared_io);
 }
 
 static MAVConnInterface::Ptr url_parse_tcp_client(
   const std::string & host, const std::string & query,
-  uint8_t system_id, uint8_t component_id)
+  uint8_t system_id, uint8_t component_id, asio::io_service * shared_io)
 {
   std::string server_host;
   int server_port;
@@ -345,12 +346,12 @@ static MAVConnInterface::Ptr url_parse_tcp_client(
 
   return std::make_shared<MAVConnTCPClient>(
     system_id, component_id,
-    server_host, server_port);
+    server_host, server_port, shared_io);
 }
 
 static MAVConnInterface::Ptr url_parse_tcp_server(
   const std::string & host, const std::string & query,
-  uint8_t system_id, uint8_t component_id)
+  uint8_t system_id, uint8_t component_id, asio::io_service * shared_io)
 {
   std::string bind_host;
   int bind_port;
@@ -361,13 +362,14 @@ static MAVConnInterface::Ptr url_parse_tcp_server(
 
   return std::make_shared<MAVConnTCPServer>(
     system_id, component_id,
-    bind_host, bind_port);
+    bind_host, bind_port, shared_io);
 }
 
 MAVConnInterface::Ptr MAVConnInterface::open_url_no_connect(
   std::string url,
   uint8_t system_id,
-  uint8_t component_id)
+  uint8_t component_id,
+  asio::io_service * shared_io)
 {
   /* Based on code found here:
    * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
@@ -385,7 +387,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url_no_connect(
   if (proto_it == url.end()) {
     // looks like file path
     CONSOLE_BRIDGE_logDebug(PFX "URL: %s: looks like file path", url.c_str());
-    return url_parse_serial(url, "", system_id, component_id, false);
+    return url_parse_serial(url, "", system_id, component_id, false, shared_io);
   }
 
   // copy protocol
@@ -419,19 +421,19 @@ MAVConnInterface::Ptr MAVConnInterface::open_url_no_connect(
   MAVConnInterface::Ptr interface_ptr;
 
   if (proto == "udp") {
-    interface_ptr = url_parse_udp(host, query, system_id, component_id, false, false);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, false, false, shared_io);
   } else if (proto == "udp-b") {
-    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, false);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, false, shared_io);
   } else if (proto == "udp-pb") {
-    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, true);
+    interface_ptr = url_parse_udp(host, query, system_id, component_id, true, true, shared_io);
   } else if (proto == "tcp") {
-    interface_ptr = url_parse_tcp_client(host, query, system_id, component_id);
+    interface_ptr = url_parse_tcp_client(host, query, system_id, component_id, shared_io);
   } else if (proto == "tcp-l") {
-    interface_ptr = url_parse_tcp_server(host, query, system_id, component_id);
+    interface_ptr = url_parse_tcp_server(host, query, system_id, component_id, shared_io);
   } else if (proto == "serial") {
-    interface_ptr = url_parse_serial(path, query, system_id, component_id, false);
+    interface_ptr = url_parse_serial(path, query, system_id, component_id, false, shared_io);
   } else if (proto == "serial-hwfc") {
-    interface_ptr = url_parse_serial(path, query, system_id, component_id, true);
+    interface_ptr = url_parse_serial(path, query, system_id, component_id, true, shared_io);
   } else {
     throw DeviceError("url", "Unknown URL type");
   }
@@ -444,9 +446,10 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
   uint8_t system_id,
   uint8_t component_id,
   const ReceivedCb & cb_handle_message,
-  const ClosedCb & cb_handle_closed_port)
+  const ClosedCb & cb_handle_closed_port,
+  asio::io_service * shared_io)
 {
-  auto interface_ptr = open_url_no_connect(url, system_id, component_id);
+  auto interface_ptr = open_url_no_connect(url, system_id, component_id, shared_io);
   if (interface_ptr) {
     if (!cb_handle_message) {
       CONSOLE_BRIDGE_logWarn(

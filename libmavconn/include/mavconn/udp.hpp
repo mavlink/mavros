@@ -58,7 +58,8 @@ public:
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT,
     std::string remote_host = DEFAULT_REMOTE_HOST,
-    uint16_t remote_port = DEFAULT_REMOTE_PORT);
+    uint16_t remote_port = DEFAULT_REMOTE_PORT,
+    asio::io_service * shared_io = nullptr);
 
   virtual ~MAVConnUDP();
 
@@ -79,8 +80,10 @@ public:
   std::string get_remote_endpoint() const;
 
 private:
-  asio::io_service io_service;
+  std::shared_ptr<asio::io_service> io_context_owner;
+  asio::io_service & io_service;
   std::unique_ptr<asio::io_service::work> io_work;
+  bool own_io_thread;
   std::thread io_thread;
   std::atomic<bool> is_running;  //!< io_thread running
   bool permanent_broadcast;

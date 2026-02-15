@@ -53,7 +53,8 @@ public:
   MAVConnTCPClient(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string server_host = DEFAULT_SERVER_HOST,
-    uint16_t server_port = DEFAULT_SERVER_PORT);
+    uint16_t server_port = DEFAULT_SERVER_PORT,
+    asio::io_service * shared_io = nullptr);
 
   /**
    * Special client variation for use in MAVConnTCPServer
@@ -80,8 +81,10 @@ public:
 
 private:
   friend class MAVConnTCPServer;
-  asio::io_service io_service;
+  std::shared_ptr<asio::io_service> io_context_owner;
+  asio::io_service & io_service;
   std::unique_ptr<asio::io_service::work> io_work;
+  bool own_io_thread;
   std::thread io_thread;
   std::atomic<bool> is_running;  //!< io_thread running
 
@@ -127,7 +130,8 @@ public:
    */
   MAVConnTCPServer(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-    std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT);
+    std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT,
+    asio::io_service * shared_io = nullptr);
   virtual ~MAVConnTCPServer();
 
   void connect(
@@ -147,8 +151,10 @@ public:
   }
 
 private:
-  asio::io_service io_service;
+  std::shared_ptr<asio::io_service> io_context_owner;
+  asio::io_service & io_service;
   std::unique_ptr<asio::io_service::work> io_work;
+  bool own_io_thread;
   std::thread io_thread;
 
   asio::ip::tcp::acceptor acceptor;
