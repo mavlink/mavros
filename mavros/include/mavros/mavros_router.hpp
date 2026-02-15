@@ -32,6 +32,7 @@
 #include <Eigen/Eigen>      // NOLINT
 
 #include "mavconn/interface.hpp"
+#include "mavconn/io_context_runner.hpp"
 #include "mavconn/mavlink_dialect.hpp"
 #include "mavros/utils.hpp"
 #include "rclcpp/macros.hpp"
@@ -147,6 +148,7 @@ public:
     const std::string & node_name = "mavros_router")
   : rclcpp::Node(node_name,
       options /* rclcpp::NodeOptions(options).use_intra_process_comms(true) */),
+    router_io_runner(),
     endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
     diagnostic_updater(this, 1.0)
   {
@@ -194,6 +196,8 @@ public:
     RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
+    router_io_runner.start([this]() {this->router_io_runner.io().run();});
+
     // Delay parameter callback initialization because
     // add/del endpoints calls have to use shared_from_this(),
     // which cannot be used before we leave the constructor.
@@ -204,13 +208,24 @@ public:
       });
   }
 
+  ~Router() override
+  {
+    router_io_runner.shutdown_owned();
+  }
+
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
+
+  [[nodiscard]] asio::io_context * get_shared_io()
+  {
+    return &router_io_runner.io();
+  }
 
 private:
   friend class Endpoint;
   friend class TestRouter;
 
   static std::atomic<id_t> id_counter;
+  mavconn::IoContextRunner router_io_runner;
 
   std::shared_mutex mu;
 
