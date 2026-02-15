@@ -37,7 +37,6 @@ void Router::route_message(
   Endpoint::SharedPtr src, const mavlink_message_t * msg,
   const Framing framing)
 {
-  shared_lock lock(mu);
   this->stat_msg_routed++;
 
   // find message destination target
@@ -52,39 +51,47 @@ void Router::route_message(
     }
   }
 
-  size_t sent_cnt = 0, retry_cnt = 0;
-retry:
-  for (auto & kv : this->endpoints) {
-    auto & dest = kv.second;
+  auto collect_targets = [this, &src](addr_t addr) {
+      std::vector<Endpoint::SharedPtr> targets;
+      shared_lock lock(mu);
+      targets.reserve(this->endpoints.size());
 
-    if (src->id == dest->id) {
-      continue;     // do not echo message
-    }
-    if (src->link_type == dest->link_type) {
-      continue;     // drop messages between same type FCU/GCS/UAS
-    }
+      for (const auto & kv : this->endpoints) {
+        const auto & dest = kv.second;
 
-    // NOTE(vooon): current router do not allow to speak drone-to-drone.
-    //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
+        if (src->id == dest->id) {
+          continue;     // do not echo message
+        }
+        if (src->link_type == dest->link_type) {
+          continue;     // drop messages between same type FCU/GCS/UAS
+        }
 
-    bool has_target;
-    {
-      std::shared_lock<std::shared_mutex> lock(dest->remote_addrs_mutex);
-      has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
-    }
+        // NOTE(vooon): current router do not allow to speak drone-to-drone.
+        //              if needed, perhaps better to add mavlink-router in front of
+        //              mavros-router.
+        {
+          std::shared_lock<std::shared_mutex> ep_lock(dest->remote_addrs_mutex);
+          if (dest->remote_addrs.find(addr) != dest->remote_addrs.end()) {
+            targets.emplace_back(dest);
+          }
+        }
+      }
 
-    if (has_target) {
-      dest->send_message(msg, framing, src->id);
-      sent_cnt++;
-    }
-  }
 
-  // if message haven't been sent retry broadcast it
-  if (sent_cnt == 0 && retry_cnt < 2) {
+      return targets;
+    };
+
+  auto targets = collect_targets(target_addr);
+  if (targets.empty() && target_addr != 0) {
+    // if targeted message hasn't been sent, retry as broadcast
     target_addr = 0;
-    retry_cnt++;
-    goto retry;
+    targets = collect_targets(target_addr);
   }
+
+  for (const auto & dest : targets) {
+    dest->send_message(msg, framing, src->id);
+  }
+  const auto sent_cnt = targets.size();
 
   // update stats
   this->stat_msg_sent.fetch_add(sent_cnt);
@@ -106,7 +113,6 @@ void Router::add_endpoint(
   const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
   mavros_msgs::srv::EndpointAdd::Response::SharedPtr response)
 {
-  unique_lock lock(mu);
   auto lg = get_logger();
 
   RCLCPP_INFO(
@@ -137,7 +143,10 @@ void Router::add_endpoint(
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
 
-  this->endpoints[id] = ep;
+  {
+    unique_lock lock(mu);
+    this->endpoints[id] = ep;
+  }
   this->diagnostic_updater.add(ep->diag_name(), std::bind(&Endpoint::diag_run, ep, _1));
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
@@ -157,17 +166,25 @@ void Router::del_endpoint(
   const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
   mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
 {
-  unique_lock lock(mu);
   auto lg = get_logger();
+  Endpoint::SharedPtr endpoint_to_remove;
+  std::string endpoint_diag_name;
 
   if (request->id != 0) {
     RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
-    auto it = this->endpoints.find(request->id);
-    if (it != this->endpoints.end() ) {
-      it->second->close();
-      this->diagnostic_updater.removeByName(it->second->diag_name());
-      this->endpoints.erase(it);
-      response->successful = true;
+    {
+      unique_lock lock(mu);
+      auto it = this->endpoints.find(request->id);
+      if (it != this->endpoints.end() ) {
+        endpoint_to_remove = it->second;
+        endpoint_diag_name = it->second->diag_name();
+        this->endpoints.erase(it);
+        response->successful = true;
+      }
+    }
+    if (endpoint_to_remove) {
+      endpoint_to_remove->close();
+      this->diagnostic_updater.removeByName(endpoint_diag_name);
     }
     return;
   }
@@ -175,16 +192,23 @@ void Router::del_endpoint(
   RCLCPP_INFO(
     lg, "Requested to del endpoint type: %d url: %s", request->type,
     request->url.c_str());
-  for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
-    if (it->second->url == request->url &&
-      it->second->link_type == static_cast<Endpoint::Type>( request->type))
-    {
-      it->second->close();
-      this->diagnostic_updater.removeByName(it->second->diag_name());
-      this->endpoints.erase(it);
-      response->successful = true;
-      return;
+  {
+    unique_lock lock(mu);
+    for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
+      if (it->second->url == request->url &&
+        it->second->link_type == static_cast<Endpoint::Type>(request->type))
+      {
+        endpoint_to_remove = it->second;
+        endpoint_diag_name = it->second->diag_name();
+        this->endpoints.erase(it);
+        response->successful = true;
+        break;
+      }
     }
+  }
+  if (endpoint_to_remove) {
+    endpoint_to_remove->close();
+    this->diagnostic_updater.removeByName(endpoint_diag_name);
   }
 }
 
