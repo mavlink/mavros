@@ -32,6 +32,15 @@ Guidance for coding agents in this repository.
   - `cmake --build tools/build -j$(nproc)`
 - When tests fail, report first failing target and log path; distinguish env/setup issues from regressions.
 
+## Devcontainer
+
+- Prefer devcontainer for reproducible local build/test when available.
+- Default config: `.devcontainer/devcontainer.json`
+  - Scope-limited mount to `/ws/src/mavros` (only this repository).
+- Optional full-workspace config: `.devcontainer/whole-workspace/devcontainer.json`
+  - Mounts `${localWorkspaceFolder}/../..` to `/ws`.
+  - Requires repository path `<workspace>/src/mavros`.
+
 ## Style And Compatibility
 
 - C++ style is enforced by `ament_uncrustify` (latest/current supported ROS 2 baseline).

@@ -106,6 +106,24 @@ source ./install/setup.bash
     Otherwise `ros2 run` can't find nodes.
 
 
+Devcontainer (optional)
+-----------------------
+
+You can use the provided devcontainer for a reproducible ROS 2 environment.
+
+```shell
+cd ~/ros2/src/mavros
+```
+
+Open the folder in VS Code / VSCodium and run `Dev Containers: Reopen in Container`.
+
+Available configs:
+- default: `.devcontainer/devcontainer.json` (mounts only this repository)
+- full workspace: `.devcontainer/whole-workspace/devcontainer.json` (expects repository at `<workspace>/src/mavros`)
+
+After container creation, dependencies and tools are bootstrapped automatically by `.devcontainer/post-create.sh`.
+
+
 [kinst]: https://docs.ros.org/en/kilted/Installation.html
 [asio]: https://think-async.com/Asio/
 [eigen]: https://eigen.tuxfamily.org/
