@@ -54,6 +54,8 @@ public:
    * @param[id] bind_port    bind port
    * @param[id] remote_host  remote host (optional)
    * @param[id] remote_port  remote port (optional)
+   * @param[id] shared_io    optional external io_service. If provided, caller owns
+   *                         its execution/threading lifecycle.
    */
   MAVConnUDP(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,

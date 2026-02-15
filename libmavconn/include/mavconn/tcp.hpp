@@ -50,6 +50,8 @@ public:
    * Create generic TCP client (connect to the server)
    * @param[id] server_addr    remote host
    * @param[id] server_port    remote port
+   * @param[id] shared_io      optional external io_service. If provided, caller owns
+   *                           its execution/threading lifecycle.
    */
   MAVConnTCPClient(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
@@ -124,6 +126,8 @@ public:
   /**
    * @param[id] server_addr    bind host
    * @param[id] server_port    bind port
+   * @param[id] shared_io      optional external io_service. If provided, caller owns
+   *                           its execution/threading lifecycle.
    */
   MAVConnTCPServer(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,

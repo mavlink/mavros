@@ -259,6 +259,8 @@ public:
    * @param[in] url           resource locator
    * @param[in] system_id     optional system id
    * @param[in] component_id  optional component id
+   * @param[in] shared_io     optional external io_service. If provided, caller owns
+   *                          its execution/threading lifecycle.
    * @return @a Ptr to constructed interface class,
    *         or throw @a DeviceError if error occurred.
    */
@@ -272,6 +274,9 @@ public:
 
   /**
    * @brief version of open_url() which do not perform connect()
+   *
+   * @param[in] shared_io optional external io_service. If provided, caller owns
+   *                      its execution/threading lifecycle.
    */
   [[nodiscard]] static Ptr open_url_no_connect(
     std::string url,
