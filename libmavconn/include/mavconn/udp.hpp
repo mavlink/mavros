@@ -26,6 +26,7 @@
 
 #include <asio.hpp>
 #include <mavconn/interface.hpp>
+#include <mavconn/io_context_runner.hpp>
 #include <mavconn/msgbuffer.hpp>
 
 namespace mavconn
@@ -80,12 +81,8 @@ public:
   std::string get_remote_endpoint() const;
 
 private:
-  std::shared_ptr<asio::io_service> io_context_owner;
+  IoContextRunner io_runner;
   asio::io_service & io_service;
-  std::unique_ptr<asio::io_service::work> io_work;
-  bool own_io_thread;
-  std::thread io_thread;
-  std::atomic<bool> is_running;  //!< io_thread running
   bool permanent_broadcast;
 
   std::atomic<bool> remote_exists;

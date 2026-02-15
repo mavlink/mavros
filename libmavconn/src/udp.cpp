@@ -75,11 +75,8 @@ MAVConnUDP::MAVConnUDP(
   std::string bind_host, uint16_t bind_port,
   std::string remote_host, uint16_t remote_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
-  io_service(shared_io ? *shared_io : *io_context_owner),
-  io_work(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_service)),
-  own_io_thread(shared_io == nullptr),
-  is_running(false),
+  io_runner(shared_io),
+  io_service(io_runner.io()),
   permanent_broadcast(false),
   remote_exists(false),
   socket(io_service),
@@ -136,7 +133,7 @@ MAVConnUDP::~MAVConnUDP()
   close();
 
   // If the socket already closed and the io_service running
-  if (own_io_thread && is_running) {
+  if (io_runner.owns_thread() && io_runner.is_running()) {
     stop();
   }
 }
@@ -151,36 +148,27 @@ void MAVConnUDP::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
 
-  if (own_io_thread) {
+  if (io_runner.owns_thread()) {
     // run io_service for async io
-    io_thread = std::thread(
+    io_runner.start(
       [this]() {
-        is_running = true;
         utils::set_this_thread_name("mudp%zu", conn_id);
         try {
           io_service.run();
         } catch (std::exception & ex) {
           CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
         }
-        is_running = false;
       });
   }
 }
 
 void MAVConnUDP::stop()
 {
-  if (!own_io_thread) {
+  if (!io_runner.owns_thread()) {
     return;
   }
 
-  io_work.reset();
-  io_service.stop();
-
-  if (io_thread.joinable()) {
-    io_thread.join();
-  }
-
-  io_service.reset();
+  io_runner.shutdown_owned();
 }
 
 void MAVConnUDP::close()
@@ -195,8 +183,8 @@ void MAVConnUDP::close()
     socket.close();
   }
 
-  // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
-  if (own_io_thread && std::this_thread::get_id() != io_thread.get_id()) {
+  // For owned contexts this is safe from callbacks: shutdown avoids self-join.
+  if (io_runner.owns_thread()) {
     stop();
   }
 

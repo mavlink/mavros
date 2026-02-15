@@ -86,11 +86,8 @@ MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
   std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
-  io_service(shared_io ? *shared_io : *io_context_owner),
-  io_work(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_service)),
-  own_io_thread(shared_io == nullptr),
-  is_running(false),
+  io_runner(shared_io),
+  io_service(io_runner.io()),
   socket(io_service),
   is_destroying(false),
   tx_in_progress(false),
@@ -115,11 +112,8 @@ MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
   asio::io_service & server_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(),
-  io_service(server_io),
-  io_work(nullptr),
-  own_io_thread(false),
-  is_running(false),
+  io_runner(&server_io),
+  io_service(io_runner.io()),
   socket(io_service),
   is_destroying(false),
   tx_in_progress(false),
@@ -146,7 +140,7 @@ MAVConnTCPClient::~MAVConnTCPClient()
 
   // If the client is already disconnected on error (By the io_service thread)
   // and io_service running
-  if (own_io_thread && is_running) {
+  if (io_runner.owns_thread() && io_runner.is_running()) {
     stop();
   }
 }
@@ -161,36 +155,27 @@ void MAVConnTCPClient::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
 
-  if (own_io_thread) {
+  if (io_runner.owns_thread()) {
     // run io_service for async io
-    io_thread = std::thread(
+    io_runner.start(
       [this]() {
-        is_running = true;
         utils::set_this_thread_name("mtcp%zu", conn_id);
         try {
           io_service.run();
         } catch (std::exception & ex) {
           CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
         }
-        is_running = false;
       });
   }
 }
 
 void MAVConnTCPClient::stop()
 {
-  if (!own_io_thread) {
+  if (!io_runner.owns_thread()) {
     return;
   }
 
-  io_work.reset();
-  io_service.stop();
-
-  if (io_thread.joinable()) {
-    io_thread.join();
-  }
-
-  io_service.reset();
+  io_runner.shutdown_owned();
 }
 
 void MAVConnTCPClient::close()
@@ -210,8 +195,8 @@ void MAVConnTCPClient::close()
     socket.close();
   }
 
-  // Stop io_service if the thread is not the io_thread (else exception "resource deadlock avoided")
-  if (own_io_thread && std::this_thread::get_id() != io_thread.get_id()) {
+  // For owned contexts this is safe from callbacks: shutdown avoids self-join.
+  if (io_runner.owns_thread()) {
     stop();
   }
 
@@ -362,10 +347,8 @@ MAVConnTCPServer::MAVConnTCPServer(
   uint8_t system_id, uint8_t component_id,
   std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
-  io_service(shared_io ? *shared_io : *io_context_owner),
-  io_work(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_service)),
-  own_io_thread(shared_io == nullptr),
+  io_runner(shared_io),
+  io_service(io_runner.io()),
   acceptor(io_service),
   is_destroying(false)
 {
@@ -401,9 +384,9 @@ void MAVConnTCPServer::connect(
   // give some work to io_service before start
   io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
 
-  if (own_io_thread) {
+  if (io_runner.owns_thread()) {
     // run io_service for async io
-    io_thread = std::thread(
+    io_runner.start(
       [this]() {
         utils::set_this_thread_name("mtcps%zu", conn_id);
         io_service.run();
@@ -434,13 +417,8 @@ void MAVConnTCPServer::close()
     instp->close();
   }
 
-  if (own_io_thread) {
-    io_work.reset();
-    io_service.stop();
-
-    if (std::this_thread::get_id() != io_thread.get_id() && io_thread.joinable()) {
-      io_thread.join();
-    }
+  if (io_runner.owns_thread()) {
+    io_runner.shutdown_owned();
   }
 
   if (port_closed_cb) {

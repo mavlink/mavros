@@ -26,6 +26,7 @@
 
 #include <asio.hpp>
 #include <mavconn/interface.hpp>
+#include <mavconn/io_context_runner.hpp>
 #include <mavconn/msgbuffer.hpp>
 
 namespace mavconn
@@ -68,10 +69,8 @@ public:
   }
 
 private:
-  std::shared_ptr<asio::io_service> io_context_owner;
+  IoContextRunner io_runner;
   asio::io_service & io_service;
-  bool own_io_thread;
-  std::thread io_thread;
   asio::serial_port serial_dev;
 
   std::atomic<bool> tx_in_progress;

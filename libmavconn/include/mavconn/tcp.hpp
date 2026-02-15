@@ -28,6 +28,7 @@
 
 #include <asio.hpp>
 #include <mavconn/interface.hpp>
+#include <mavconn/io_context_runner.hpp>
 #include <mavconn/msgbuffer.hpp>
 
 namespace mavconn
@@ -81,12 +82,8 @@ public:
 
 private:
   friend class MAVConnTCPServer;
-  std::shared_ptr<asio::io_service> io_context_owner;
+  IoContextRunner io_runner;
   asio::io_service & io_service;
-  std::unique_ptr<asio::io_service::work> io_work;
-  bool own_io_thread;
-  std::thread io_thread;
-  std::atomic<bool> is_running;  //!< io_thread running
 
   asio::ip::tcp::socket socket;
   asio::ip::tcp::endpoint server_ep;
@@ -151,11 +148,8 @@ public:
   }
 
 private:
-  std::shared_ptr<asio::io_service> io_context_owner;
+  IoContextRunner io_runner;
   asio::io_service & io_service;
-  std::unique_ptr<asio::io_service::work> io_work;
-  bool own_io_thread;
-  std::thread io_thread;
 
   asio::ip::tcp::acceptor acceptor;
   asio::ip::tcp::endpoint bind_ep;

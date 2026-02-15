@@ -224,6 +224,50 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
   io_thread.join();
 }
 
+TEST(IO_THREAD, udp_close_from_callback_does_not_deadlock)
+{
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool callback_finished = false;
+  bool closed_callback_called = false;
+
+  auto echo = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45032);
+  echo->connect(
+    [&](const mavlink_message_t * msg, const Framing framing [[maybe_unused]]) {
+      echo->send_message(msg);
+    });
+
+  auto client = std::make_shared<MAVConnUDP>(
+    44, 200, "0.0.0.0", 45033, "localhost", 45032);
+  client->connect(
+    [&](const mavlink_message_t * message [[maybe_unused]],
+      const Framing framing [[maybe_unused]])
+    {
+      client->close();
+      std::lock_guard<std::mutex> lock(mutex);
+      callback_finished = true;
+      cond.notify_all();
+    },
+    [&]() {
+      std::lock_guard<std::mutex> lock(mutex);
+      closed_callback_called = true;
+      cond.notify_all();
+    });
+
+  send_heartbeat(client.get());
+  send_heartbeat(client.get());
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_EQ(
+      cond.wait_for(lock, std::chrono::seconds(2), [&]() {return callback_finished;}), true);
+    EXPECT_EQ(
+      cond.wait_for(lock, std::chrono::seconds(2), [&]() {return closed_callback_called;}), true);
+  }
+
+  echo->close();
+}
+
 class TCP : public UDP
 {
 };
