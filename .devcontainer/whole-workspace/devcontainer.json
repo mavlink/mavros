@@ -11,8 +11,7 @@
   "workspaceMount": "source=${localWorkspaceFolder}/../..,target=/ws,type=bind",
   "remoteUser": "root",
   "containerEnv": {
-    "ROS_DISTRO": "kilted",
-    "PATH": "/root/.local/bin:${containerEnv:PATH}"
+    "ROS_DISTRO": "kilted"
   },
   "runArgs": [
     "-p",
