@@ -279,8 +279,7 @@
         "msg_id_expr": "mavlink::common::msg::DEBUG_VECT::MSG_ID",
         "dialect": "common",
         "line": 320,
-        "msg_id": 250,
-        "description": "[[[end]]] (sum: 4zWbFMda3z)"
+        "msg_id": 250
       },
       {
         "argument": "debug",
@@ -367,8 +366,7 @@
         "msg_id_expr": "mavlink::common::msg::DISTANCE_SENSOR::MSG_ID",
         "dialect": "common",
         "line": 247,
-        "msg_id": 132,
-        "description": "[[[end]]] (sum: smihGK/uXi)"
+        "msg_id": 132
       }
     ]
   },
@@ -1107,8 +1105,7 @@
         "msg_id_expr": "mavlink::common::msg::HIL_STATE_QUATERNION::MSG_ID",
         "dialect": "common",
         "line": 203,
-        "msg_id": 115,
-        "description": "[[[end]]] (sum: WWg1ha3BAq)"
+        "msg_id": 115
       },
       {
         "argument": "gps",
@@ -1126,8 +1123,7 @@
         "msg_id_expr": "mavlink::common::msg::HIL_SENSOR::MSG_ID",
         "dialect": "common",
         "line": 284,
-        "msg_id": 107,
-        "description": "[[[end]]] (sum: 4fZQLPEZX/)"
+        "msg_id": 107
       },
       {
         "argument": "of",
@@ -1145,8 +1141,7 @@
         "msg_id_expr": "mavlink::common::msg::HIL_RC_INPUTS_RAW::MSG_ID",
         "dialect": "common",
         "line": 365,
-        "msg_id": 92,
-        "description": "[[[end]]] (sum: NCZzsGkOR/)"
+        "msg_id": 92
       }
     ]
   },
@@ -1778,8 +1773,7 @@
         "msg_id_expr": "mavlink::common::msg::ONBOARD_COMPUTER_STATUS::MSG_ID",
         "dialect": "common",
         "line": 115,
-        "msg_id": 390,
-        "description": "[[[end]]] (sum: sG78qQ2aEW)"
+        "msg_id": 390
       }
     ]
   },
@@ -2293,8 +2287,7 @@
         "msg_id_expr": "mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS::MSG_ID",
         "dialect": "common",
         "line": 373,
-        "msg_id": 332,
-        "description": "[[[end]]] (sum: pj0mgswWiX)"
+        "msg_id": 332
       }
     ]
   },

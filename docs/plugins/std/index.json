@@ -352,7 +352,7 @@
     "plugin": "geofence",
     "path": "mavros/src/plugins/geofence.cpp",
     "class_name": "mavros::std_plugins::GeofencePlugin",
-    "namespace": "",
+    "namespace": "geofence",
     "brief": "Geofence manipulation plugin",
     "description": "",
     "publishers": [
@@ -396,8 +396,145 @@
         "default_value": "true"
       }
     ],
-    "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_subscriptions": [
+      {
+        "handler": "handle_mission_item",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 307,
+        "msg_id": 39
+      },
+      {
+        "handler": "handle_mission_item_int",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 308,
+        "msg_id": 73
+      },
+      {
+        "handler": "handle_mission_request",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 309,
+        "msg_id": 40
+      },
+      {
+        "handler": "handle_mission_request_int",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 310,
+        "msg_id": 51
+      },
+      {
+        "handler": "handle_mission_count",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 311,
+        "msg_id": 44
+      },
+      {
+        "handler": "handle_mission_ack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 312,
+        "msg_id": 47
+      }
+    ],
+    "mavlink_publications": [
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 476,
+        "msg_id": 40
+      },
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 488,
+        "msg_id": 51
+      },
+      {
+        "argument": "msc",
+        "message_type": "mavlink::common::msg::MISSION_SET_CURRENT",
+        "message_name": "MISSION_SET_CURRENT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
+        "dialect": "common",
+        "line": 500,
+        "msg_id": 41,
+        "description": "msc.mission_type = enum_value(mission_type);"
+      },
+      {
+        "argument": "mrl",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_LIST",
+        "message_name": "MISSION_REQUEST_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 511,
+        "msg_id": 43
+      },
+      {
+        "argument": "mcnt",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 523,
+        "msg_id": 44
+      },
+      {
+        "argument": "mwpl",
+        "message_type": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST",
+        "message_name": "MISSION_WRITE_PARTIAL_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 538,
+        "msg_id": 38
+      },
+      {
+        "argument": "mclr",
+        "message_type": "mavlink::common::msg::MISSION_CLEAR_ALL",
+        "message_name": "MISSION_CLEAR_ALL",
+        "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
+        "dialect": "common",
+        "line": 549,
+        "msg_id": 45
+      },
+      {
+        "argument": "mack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 561,
+        "msg_id": 47
+      },
+      {
+        "argument": "wpi",
+        "message_type": "",
+        "message_name": "",
+        "msg_id_expr": "",
+        "dialect": "",
+        "line": 639
+      }
+    ]
   },
   {
     "plugin": "global_position",
@@ -637,8 +774,7 @@
         "msg_id_expr": "mavlink::common::msg::SET_HOME_POSITION::MSG_ID",
         "dialect": "common",
         "line": 183,
-        "msg_id": 243,
-        "description": "[[[end]]] (sum: CGXV/MH3oV)"
+        "msg_id": 243
       }
     ]
   },
@@ -1065,7 +1201,7 @@
     "plugin": "rallypoint",
     "path": "mavros/src/plugins/rallypoint.cpp",
     "class_name": "mavros::std_plugins::RallypointPlugin",
-    "namespace": "",
+    "namespace": "rallypoint",
     "brief": "Rallypoint manipulation plugin",
     "description": "",
     "publishers": [
@@ -1109,8 +1245,145 @@
         "default_value": "true"
       }
     ],
-    "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_subscriptions": [
+      {
+        "handler": "handle_mission_item",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 307,
+        "msg_id": 39
+      },
+      {
+        "handler": "handle_mission_item_int",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 308,
+        "msg_id": 73
+      },
+      {
+        "handler": "handle_mission_request",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 309,
+        "msg_id": 40
+      },
+      {
+        "handler": "handle_mission_request_int",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 310,
+        "msg_id": 51
+      },
+      {
+        "handler": "handle_mission_count",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 311,
+        "msg_id": 44
+      },
+      {
+        "handler": "handle_mission_ack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 312,
+        "msg_id": 47
+      }
+    ],
+    "mavlink_publications": [
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 476,
+        "msg_id": 40
+      },
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 488,
+        "msg_id": 51
+      },
+      {
+        "argument": "msc",
+        "message_type": "mavlink::common::msg::MISSION_SET_CURRENT",
+        "message_name": "MISSION_SET_CURRENT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
+        "dialect": "common",
+        "line": 500,
+        "msg_id": 41,
+        "description": "msc.mission_type = enum_value(mission_type);"
+      },
+      {
+        "argument": "mrl",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_LIST",
+        "message_name": "MISSION_REQUEST_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 511,
+        "msg_id": 43
+      },
+      {
+        "argument": "mcnt",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 523,
+        "msg_id": 44
+      },
+      {
+        "argument": "mwpl",
+        "message_type": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST",
+        "message_name": "MISSION_WRITE_PARTIAL_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 538,
+        "msg_id": 38
+      },
+      {
+        "argument": "mclr",
+        "message_type": "mavlink::common::msg::MISSION_CLEAR_ALL",
+        "message_name": "MISSION_CLEAR_ALL",
+        "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
+        "dialect": "common",
+        "line": 549,
+        "msg_id": 45
+      },
+      {
+        "argument": "mack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 561,
+        "msg_id": 47
+      },
+      {
+        "argument": "wpi",
+        "message_type": "",
+        "message_name": "",
+        "msg_id_expr": "",
+        "dialect": "",
+        "line": 639
+      }
+    ]
   },
   {
     "plugin": "rc_io",
@@ -1178,8 +1451,7 @@
         "msg_id_expr": "mavlink::common::msg::RC_CHANNELS_OVERRIDE::MSG_ID",
         "dialect": "common",
         "line": 286,
-        "msg_id": 70,
-        "description": "[[[end]]] (sum: +HglKUW20c)"
+        "msg_id": 70
       }
     ]
   },
@@ -1209,7 +1481,35 @@
       }
     ],
     "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "setpoint_attitude",
@@ -1255,7 +1555,35 @@
       }
     ],
     "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "setpoint_position",
@@ -1303,7 +1631,35 @@
       }
     ],
     "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "setpoint_raw",
@@ -1385,7 +1741,35 @@
         "msg_id": 83
       }
     ],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "setpoint_trajectory",
@@ -1431,7 +1815,35 @@
       }
     ],
     "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "setpoint_velocity",
@@ -1465,7 +1877,35 @@
       }
     ],
     "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
+        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
+        "dialect": "common",
+        "line": 85,
+        "msg_id": 84
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
+        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
+        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
+        "dialect": "common",
+        "line": 138,
+        "msg_id": 86
+      },
+      {
+        "argument": "sp",
+        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
+        "message_name": "SET_ATTITUDE_TARGET",
+        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
+        "dialect": "common",
+        "line": 182,
+        "msg_id": 82
+      }
+    ]
   },
   {
     "plugin": "sys_status",
@@ -1860,7 +2300,7 @@
     "plugin": "waypoint",
     "path": "mavros/src/plugins/waypoint.cpp",
     "class_name": "mavros::std_plugins::WaypointPlugin",
-    "namespace": "",
+    "namespace": "mission",
     "brief": "Mission manipulation plugin",
     "description": "",
     "publishers": [
@@ -1920,8 +2360,163 @@
         "default_value": "2"
       }
     ],
-    "mavlink_subscriptions": [],
-    "mavlink_publications": []
+    "mavlink_subscriptions": [
+      {
+        "handler": "handle_mission_item",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 307,
+        "msg_id": 39
+      },
+      {
+        "handler": "handle_mission_item_int",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 308,
+        "msg_id": 73
+      },
+      {
+        "handler": "handle_mission_request",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 309,
+        "msg_id": 40
+      },
+      {
+        "handler": "handle_mission_request_int",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 310,
+        "msg_id": 51
+      },
+      {
+        "handler": "handle_mission_count",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 311,
+        "msg_id": 44
+      },
+      {
+        "handler": "handle_mission_ack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 312,
+        "msg_id": 47
+      },
+      {
+        "handler": "handle_mission_current",
+        "message_type": "mavlink::common::msg::MISSION_CURRENT",
+        "message_name": "MISSION_CURRENT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_CURRENT::MSG_ID",
+        "dialect": "common",
+        "line": 317,
+        "msg_id": 42
+      },
+      {
+        "handler": "handle_mission_item_reached",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_REACHED",
+        "message_name": "MISSION_ITEM_REACHED",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_REACHED::MSG_ID",
+        "dialect": "common",
+        "line": 318,
+        "msg_id": 46
+      }
+    ],
+    "mavlink_publications": [
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST",
+        "message_name": "MISSION_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 476,
+        "msg_id": 40
+      },
+      {
+        "argument": "mrq",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_INT",
+        "message_name": "MISSION_REQUEST_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
+        "dialect": "common",
+        "line": 488,
+        "msg_id": 51
+      },
+      {
+        "argument": "msc",
+        "message_type": "mavlink::common::msg::MISSION_SET_CURRENT",
+        "message_name": "MISSION_SET_CURRENT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
+        "dialect": "common",
+        "line": 500,
+        "msg_id": 41,
+        "description": "msc.mission_type = enum_value(mission_type);"
+      },
+      {
+        "argument": "mrl",
+        "message_type": "mavlink::common::msg::MISSION_REQUEST_LIST",
+        "message_name": "MISSION_REQUEST_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 511,
+        "msg_id": 43
+      },
+      {
+        "argument": "mcnt",
+        "message_type": "mavlink::common::msg::MISSION_COUNT",
+        "message_name": "MISSION_COUNT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
+        "dialect": "common",
+        "line": 523,
+        "msg_id": 44
+      },
+      {
+        "argument": "mwpl",
+        "message_type": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST",
+        "message_name": "MISSION_WRITE_PARTIAL_LIST",
+        "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
+        "dialect": "common",
+        "line": 538,
+        "msg_id": 38
+      },
+      {
+        "argument": "mclr",
+        "message_type": "mavlink::common::msg::MISSION_CLEAR_ALL",
+        "message_name": "MISSION_CLEAR_ALL",
+        "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
+        "dialect": "common",
+        "line": 549,
+        "msg_id": 45
+      },
+      {
+        "argument": "mack",
+        "message_type": "mavlink::common::msg::MISSION_ACK",
+        "message_name": "MISSION_ACK",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
+        "dialect": "common",
+        "line": 561,
+        "msg_id": 47
+      },
+      {
+        "argument": "wpi",
+        "message_type": "",
+        "message_name": "",
+        "msg_id_expr": "",
+        "dialect": "",
+        "line": 639
+      }
+    ]
   },
   {
     "plugin": "wind_estimation",

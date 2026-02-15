@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 #include <iostream>
 
@@ -75,7 +76,8 @@ struct Config {
 static const std::regex kRegisterPluginRe(R"(MAVROS_PLUGIN_REGISTER\(([^)]+)\))");
 static const std::regex kPluginNameRe(R"(@plugin\s+([a-z0-9_]+))");
 static const std::regex kPluginBriefRe(R"(@brief\s+([^\n\r]+))");
-static const std::regex kPluginNsRe(R"re(:\s*Plugin\s*\(\s*[^,]+,\s*"([^"]+)")re");
+static const std::regex kPluginNsRe(
+  R"re(:\s*(?:[A-Za-z_][A-Za-z0-9_:<>]*::)?(?:Plugin|MissionBase)\s*\(\s*[^,]+,\s*"([^"]+)")re");
 static const std::regex kDoxygenBlockRe(R"(/\*\*([\s\S]*?)\*/)");
 
 static const std::regex kPublisherRe(
@@ -107,11 +109,15 @@ static const std::regex kMakeHandlerTypedRe(
 static const std::regex kMakeHandlerRawRe(
   R"(make_handler\s*\(\s*([^,]+)\s*,\s*&[a-zA-Z_][a-zA-Z0-9_:]*::([a-zA-Z_][a-zA-Z0-9_]*)\s*\))");
 static const std::regex kFunctionDefRe(
-  R"(void\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([\s\S]*?)\)\s*(?:const\s*)?\{)");
+  R"(void\s+(?:[a-zA-Z_][a-zA-Z0-9_]*::)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^;{}]*)\)\s*(?:const\s*)?\{)");
 static const std::regex kMavlinkParamTypeRe(
   R"((?:const\s+)?(mavlink::[a-zA-Z0-9_]+::msg::[a-zA-Z0-9_]+)\s*&)");
 static const std::regex kAnyRefParamTypeRe(
   R"((?:const\s+)?([A-Za-z_][A-Za-z0-9_:]*)\s*&)");
+static const std::regex kUsingAliasMavlinkTypeRe(
+  R"(using\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(mavlink::[a-zA-Z0-9_]+::msg::[a-zA-Z0-9_]+)\s*;)");
+static const std::regex kUsingImportedMavlinkTypeRe(
+  R"(using\s+(mavlink::[a-zA-Z0-9_]+::msg::([A-Za-z0-9_]+))\s*;)");
 static const std::regex kClassInheritRe(
   R"(class\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))");
 static const std::regex kMsgIdExprTypeRe(
@@ -120,8 +126,12 @@ static const std::regex kMavlinkTypeRe(
   R"(mavlink::([a-zA-Z0-9_]+)::msg::([A-Za-z0-9_]+))");
 static const std::regex kHeaderMsgIdRe(
   R"(MSG_ID\s*=\s*([0-9]+))");
+static const std::regex kHeaderMsgIdDefineRe(
+  R"(MAVLINK_MSG_ID_[A-Z0-9_]+\s+([0-9]+))");
+static const std::regex kMissionBaseTypeRe(
+  R"re(MissionBase\s*\(\s*[^,]+,\s*"[^"]+"\s*,\s*plugin::MTYPE::([A-Z_]+))re");
 static const std::regex kSendMessageRe(
-  R"(uas->send_message(?:_ignore_drop)?\s*\(\s*([^,\)]+))");
+  R"(uas_?->send_message(?:_ignore_drop)?\s*\(\s*([^,\)]+))");
 static const std::regex kMavlinkVarDeclRe(
   R"((mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:[=({;]))");
 static const std::regex kAutoLambdaMavlinkDeclRe(
@@ -204,6 +214,12 @@ std::string read_file(const fs::path & path)
   std::stringstream ss;
   ss << in.rdbuf();
   return ss.str();
+}
+
+std::string read_file_if_exists(const fs::path & path)
+{
+  if (!fs::exists(path) || !fs::is_regular_file(path)) return "";
+  return read_file(path);
 }
 
 std::vector<std::string> split_lines(const std::string & text)
@@ -332,9 +348,11 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
   std::reverse(parts.begin(), parts.end());
   std::string out;
   for (const auto & p : parts) {
-    if (p.empty()) continue;
+    const std::string t = trim(p);
+    if (t.empty()) continue;
+    if (t.find("[[[end]]]") != std::string::npos) continue;
     if (!out.empty()) out += " ";
-    out += p;
+    out += t;
   }
   return trim(out);
 }
@@ -485,6 +503,14 @@ std::map<std::string, std::string> extract_handler_types(const std::string & tex
     }
   }
 
+  std::map<std::string, std::string> alias_types;
+  for (std::sregex_iterator it(text.begin(), text.end(), kUsingAliasMavlinkTypeRe), end; it != end; ++it) {
+    alias_types[(*it)[1].str()] = trim((*it)[2].str());
+  }
+  for (std::sregex_iterator it(text.begin(), text.end(), kUsingImportedMavlinkTypeRe), end; it != end; ++it) {
+    alias_types[(*it)[2].str()] = trim((*it)[1].str());
+  }
+
   std::map<std::string, std::string> out;
   for (std::sregex_iterator it(text.begin(), text.end(), kFunctionDefRe), end; it != end; ++it) {
     const std::string handler = (*it)[1].str();
@@ -494,7 +520,9 @@ std::map<std::string, std::string> extract_handler_types(const std::string & tex
       out[handler] = trim(type_m[1].str());
     } else if (std::regex_search(params, type_m, kAnyRefParamTypeRe)) {
       const std::string any_type = trim(type_m[1].str());
-      if (auto b = local_mavlink_bases.find(any_type); b != local_mavlink_bases.end()) {
+      if (auto a = alias_types.find(any_type); a != alias_types.end()) {
+        out[handler] = a->second;
+      } else if (auto b = local_mavlink_bases.find(any_type); b != local_mavlink_bases.end()) {
         out[handler] = b->second;
       }
     }
@@ -541,11 +569,16 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
       if (!dialect_ent.is_directory()) continue;
       const std::string dialect = dialect_ent.path().filename().string();
       for (const auto & ent : fs::directory_iterator(dialect_ent.path())) {
-        if (!ent.is_regular_file() || ent.path().extension() != ".hpp") continue;
+        if (!ent.is_regular_file()) continue;
+        const auto ext = ent.path().extension().string();
+        if (ext != ".hpp" && ext != ".h") continue;
         const std::string fname = ent.path().filename().string();
         const std::string prefix = "mavlink_msg_";
         if (fname.rfind(prefix, 0) != 0) continue;
-        const auto suffix_pos = fname.rfind(".hpp");
+        auto suffix_pos = fname.rfind(".hpp");
+        if (suffix_pos == std::string::npos) {
+          suffix_pos = fname.rfind(".h");
+        }
         if (suffix_pos == std::string::npos || suffix_pos <= prefix.size()) continue;
         const std::string msg_snake = fname.substr(prefix.size(), suffix_pos - prefix.size());
         std::string msg_upper = msg_snake;
@@ -555,7 +588,15 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
 
         const std::string text = read_file(ent.path());
         std::smatch m;
-        if (!std::regex_search(text, m, kHeaderMsgIdRe)) continue;
+        if (!std::regex_search(text, m, kHeaderMsgIdRe)) {
+          const std::regex msg_define_re(
+            "MAVLINK_MSG_ID_" + msg_upper + R"(\s+([0-9]+))");
+          if (!std::regex_search(text, m, msg_define_re) &&
+            !std::regex_search(text, m, kHeaderMsgIdDefineRe))
+          {
+            continue;
+          }
+        }
         const int id = std::stoi(m[1].str());
         out[dialect + "::" + msg_upper] = id;
       }
@@ -803,6 +844,69 @@ void extract_mavlink_subscriptions(
   dedup_mavlink_entries(out);
 }
 
+void extract_mavlink_from_context(
+  const fs::path & path, const std::map<std::string, int> & msgid_index,
+  std::vector<MavlinkSubEntry> * out_subs, std::vector<MavlinkPubEntry> * out_pubs)
+{
+  const std::string text = read_file_if_exists(path);
+  if (text.empty()) return;
+  const auto lines = split_lines(text);
+  if (out_subs != nullptr) {
+    extract_mavlink_subscriptions(text, lines, msgid_index, *out_subs);
+  }
+  if (out_pubs != nullptr) {
+    extract_mavlink_publications(text, lines, msgid_index, *out_pubs);
+  }
+}
+
+void apply_missionbase_subscription_fallback(
+  std::vector<MavlinkSubEntry> & subs, const std::map<std::string, int> & msgid_index)
+{
+  static const std::map<std::string, std::string> kHandlerType = {
+    {"handle_mission_item", "mavlink::common::msg::MISSION_ITEM"},
+    {"handle_mission_item_int", "mavlink::common::msg::MISSION_ITEM_INT"},
+    {"handle_mission_request", "mavlink::common::msg::MISSION_REQUEST"},
+    {"handle_mission_request_int", "mavlink::common::msg::MISSION_REQUEST_INT"},
+    {"handle_mission_count", "mavlink::common::msg::MISSION_COUNT"},
+    {"handle_mission_ack", "mavlink::common::msg::MISSION_ACK"},
+    {"handle_mission_current", "mavlink::common::msg::MISSION_CURRENT"},
+    {"handle_mission_item_reached", "mavlink::common::msg::MISSION_ITEM_REACHED"},
+  };
+
+  for (auto & e : subs) {
+    if (!e.message_type.empty()) continue;
+    const auto it = kHandlerType.find(e.handler);
+    if (it == kHandlerType.end()) continue;
+    e.message_type = it->second;
+    e.message_name = tail_name(e.message_type);
+    e.msg_id_expr = e.message_type + "::MSG_ID";
+    resolve_mavlink_meta(e, msgid_index);
+  }
+}
+
+bool uses_missionbase_context(const fs::path & path)
+{
+  static const std::unordered_set<std::string> kFiles = {
+    "waypoint.cpp",
+    "geofence.cpp",
+    "rallypoint.cpp",
+  };
+  return kFiles.find(path.filename().string()) != kFiles.end();
+}
+
+bool uses_setpoint_mixin_context(const fs::path & path)
+{
+  static const std::unordered_set<std::string> kFiles = {
+    "setpoint_accel.cpp",
+    "setpoint_attitude.cpp",
+    "setpoint_position.cpp",
+    "setpoint_raw.cpp",
+    "setpoint_trajectory.cpp",
+    "setpoint_velocity.cpp",
+  };
+  return kFiles.find(path.filename().string()) != kFiles.end();
+}
+
 PluginApi parse_plugin(
   const fs::path & path, const fs::path & repo_root, const std::map<std::string, int> & msgid_index)
 {
@@ -832,6 +936,37 @@ PluginApi parse_plugin(
   extract_parameters(text, symbols, lines, api.parameters);
   extract_mavlink_subscriptions(text, lines, msgid_index, api.mavlink_subscriptions);
   extract_mavlink_publications(text, lines, msgid_index, api.mavlink_publications);
+
+  // Pull message metadata from inherited mixins/base classes where handlers/senders are defined.
+  if (uses_missionbase_context(path)) {
+    extract_mavlink_from_context(
+      repo_root / "mavros/include/mavros/mission_protocol_base.hpp",
+      msgid_index, &api.mavlink_subscriptions, &api.mavlink_publications);
+    extract_mavlink_from_context(
+      repo_root / "mavros/src/plugins/mission_protocol_base.cpp",
+      msgid_index, nullptr, &api.mavlink_publications);
+    apply_missionbase_subscription_fallback(api.mavlink_subscriptions, msgid_index);
+
+    std::smatch mt;
+    std::string mission_type = "MISSION";
+    if (std::regex_search(text, mt, kMissionBaseTypeRe)) {
+      mission_type = mt[1].str();
+    }
+    if (mission_type != "MISSION") {
+      api.mavlink_subscriptions.erase(
+        std::remove_if(
+          api.mavlink_subscriptions.begin(), api.mavlink_subscriptions.end(),
+          [](const MavlinkSubEntry & e) {
+            return e.message_name == "MISSION_CURRENT" || e.message_name == "MISSION_ITEM_REACHED";
+          }),
+        api.mavlink_subscriptions.end());
+    }
+  }
+  if (uses_setpoint_mixin_context(path)) {
+    extract_mavlink_from_context(
+      repo_root / "mavros/include/mavros/setpoint_mixin.hpp",
+      msgid_index, nullptr, &api.mavlink_publications);
+  }
 
   std::map<std::string, std::string> mf_types;
   for (std::sregex_iterator it(text.begin(), text.end(), kMfDeclRe), end; it != end; ++it) {

@@ -1,0 +1,4 @@
+[codespell]
+skip = *.svg,*.png,*.jpg,*.jpeg,*.pdf,*.po,*CHANGELOG.rst,*index.json,*mavros_plugins.xml
+ignore-words-list = SITL,sitl,NED,EmPy,MIS,parm,te,re-used
+quiet-level = 3
