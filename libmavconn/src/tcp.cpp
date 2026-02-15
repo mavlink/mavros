@@ -413,12 +413,15 @@ void MAVConnTCPServer::connect(
 
 void MAVConnTCPServer::close()
 {
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
   {
     lock_guard lock(mutex);
     if (!is_open()) {
       return;
     }
     is_destroying = true;
+    clients.assign(client_list.begin(), client_list.end());
+    client_list.clear();
   }
 
   CONSOLE_BRIDGE_logInform(
@@ -427,6 +430,9 @@ void MAVConnTCPServer::close()
     conn_id);
 
   acceptor.close();
+  for (auto & instp : clients) {
+    instp->close();
+  }
 
   if (own_io_thread) {
     io_work.reset();
