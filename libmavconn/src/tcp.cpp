@@ -25,13 +25,6 @@
 #include "mavconn/tcp.hpp"
 #include "mavconn/thread_utils.hpp"
 
-// Ensure the correct io_service() is called based on asio version
-#if ASIO_VERSION >= 101400
-#define GET_IO_SERVICE(s) ((asio::io_context &)(s).get_executor().context())
-#else
-#define GET_IO_SERVICE(s) ((s).get_io_service())
-#endif
-
 namespace mavconn
 {
 
@@ -45,6 +38,15 @@ using utils::to_string_ss;
 
 #define PFX "mavconn: tcp"
 #define PFXd PFX "%zu: "
+
+static asio::io_service & get_socket_io_service(tcp::socket & sock)
+{
+#if ASIO_VERSION >= 101400
+  return static_cast<asio::io_context &>(sock.get_executor().context());
+#else
+  return sock.get_io_service();
+#endif
+}
 
 static bool resolve_address_tcp(
   io_service & io, size_t chan, std::string host, uint16_t port,
@@ -131,7 +133,7 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
 
   // start recv
   auto sthis = shared_from_this();
-  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_recv();});
+  get_socket_io_service(socket).post([sthis]() {sthis->do_recv();});
 }
 
 MAVConnTCPClient::~MAVConnTCPClient()
@@ -223,7 +225,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t * bytes, size_t length)
     tx_q.emplace_back(bytes, length);
   }
   auto sthis = shared_from_this();
-  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t * message)
@@ -247,7 +249,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t * message)
     tx_q.emplace_back(message);
   }
   auto sthis = shared_from_this();
-  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -269,7 +271,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
   auto sthis = shared_from_this();
-  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::do_recv()
@@ -340,7 +342,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
       }
 
       if (continue_send) {
-        GET_IO_SERVICE(sthis->socket).post([sthis]() {sthis->do_send(false);});
+        get_socket_io_service(sthis->socket).post([sthis]() {sthis->do_send(false);});
       }
     });
 }

@@ -262,7 +262,7 @@ public:
    * @return @a Ptr to constructed interface class,
    *         or throw @a DeviceError if error occurred.
    */
-  static Ptr open_url(
+  [[nodiscard]] static Ptr open_url(
     std::string url,
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     const ReceivedCb & cb_handle_message = ReceivedCb(),
@@ -273,13 +273,13 @@ public:
   /**
    * @brief version of open_url() which do not perform connect()
    */
-  static Ptr open_url_no_connect(
+  [[nodiscard]] static Ptr open_url_no_connect(
     std::string url,
     uint8_t system_id = 1,
     uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     asio::io_service * shared_io = nullptr);
 
-  static std::vector<std::string> get_known_dialects();
+  [[nodiscard]] static std::vector<std::string> get_known_dialects();
 
 protected:
   uint8_t sys_id;    //!< Connection System Id

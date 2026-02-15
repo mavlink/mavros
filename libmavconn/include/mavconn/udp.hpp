@@ -78,7 +78,7 @@ public:
     return socket.is_open();
   }
 
-  std::string get_remote_endpoint() const;
+  [[nodiscard]] std::string get_remote_endpoint() const;
 
 private:
   IoContextRunner io_runner;

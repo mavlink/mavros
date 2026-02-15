@@ -35,17 +35,17 @@ public:
     is_running_(false)
   {}
 
-  asio::io_service & io()
+  [[nodiscard]] asio::io_service & io()
   {
     return io_;
   }
 
-  bool owns_thread() const
+  [[nodiscard]] bool owns_thread() const
   {
     return owns_thread_;
   }
 
-  bool is_running() const
+  [[nodiscard]] bool is_running() const
   {
     return is_running_.load();
   }
