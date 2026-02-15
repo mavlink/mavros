@@ -9,20 +9,20 @@
 Publishes Mission commands to control the camera or antenna mount. @see command_cb()
 
 ## Publishers
-- `~/orientation` (geometry_msgs::msg::Quaternion)
-- `~/status` (geometry_msgs::msg::Vector3Stamped)
+- `~/orientation` ([geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html))
+- `~/status` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
 
 
 ## Subscribers
-- `~/command` (mavros_msgs::msg::MountControl)
+- `~/command` ([mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html))
 
 
 ## Services
-- `~/configure` (mavros_msgs::srv::MountConfigure)
+- `~/configure` ([mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html))
 
 
 ## Clients
-- `cmd/command` (mavros_msgs::srv::CommandLong)
+- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
 
 
 ## Parameters

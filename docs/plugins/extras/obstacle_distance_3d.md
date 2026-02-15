@@ -13,7 +13,7 @@ Subscribes to a mavros_msgs/ObstacleDistance3D message and sends the data to the
 
 
 ## Subscribers
-- `~/send` (mavros_msgs::msg::ObstacleDistance3D)
+- `~/send` ([mavros_msgs::msg::ObstacleDistance3D](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ObstacleDistance3D.html))
 
 
 ## Services

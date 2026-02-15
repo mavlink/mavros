@@ -7,8 +7,8 @@
 
 
 ## Publishers
-- `~/raw/log_entry` (mavros_msgs::msg::LogEntry)
-- `~/raw/log_data` (mavros_msgs::msg::LogData)
+- `~/raw/log_entry` ([mavros_msgs::msg::LogEntry](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/LogEntry.html))
+- `~/raw/log_data` ([mavros_msgs::msg::LogData](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/LogData.html))
 
 
 ## Subscribers
@@ -16,10 +16,10 @@
 
 
 ## Services
-- `~/raw/log_request_list` (mavros_msgs::srv::LogRequestList)
-- `~/raw/log_request_data` (mavros_msgs::srv::LogRequestData)
-- `~/raw/log_request_end` (mavros_msgs::srv::LogRequestEnd)
-- `~/raw/log_request_erase` (std_srvs::srv::Trigger)
+- `~/raw/log_request_list` ([mavros_msgs::srv::LogRequestList](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/LogRequestList.html))
+- `~/raw/log_request_data` ([mavros_msgs::srv::LogRequestData](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/LogRequestData.html))
+- `~/raw/log_request_end` ([mavros_msgs::srv::LogRequestEnd](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/LogRequestEnd.html))
+- `~/raw/log_request_erase` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html))
 
 
 ## Clients

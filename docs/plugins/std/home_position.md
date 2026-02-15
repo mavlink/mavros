@@ -9,19 +9,19 @@
 Publishes home position.
 
 ## Publishers
-- `~/home` (mavros_msgs::msg::HomePosition)
+- `~/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html))
 
 
 ## Subscribers
-- `~/set` (mavros_msgs::msg::HomePosition)
+- `~/set` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html))
 
 
 ## Services
-- `~/req_update` (std_srvs::srv::Trigger)
+- `~/req_update` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html))
 
 
 ## Clients
-- `cmd/command` (mavros_msgs::srv::CommandLong)
+- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
 
 
 ## Parameters

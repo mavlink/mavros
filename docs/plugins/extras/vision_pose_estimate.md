@@ -13,8 +13,8 @@ Send pose estimation from various vision estimators to FCU position and attitude
 
 
 ## Subscribers
-- `~/pose` (geometry_msgs::msg::PoseStamped)
-- `~/pose_cov` (geometry_msgs::msg::PoseWithCovarianceStamped)
+- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html))
 
 
 ## Services

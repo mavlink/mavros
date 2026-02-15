@@ -13,11 +13,11 @@ Sends Open Drone ID data to the FCU
 
 
 ## Subscribers
-- `~/basic_id` (mavros_msgs::msg::OpenDroneIDBasicID)
-- `~/operator_id` (mavros_msgs::msg::OpenDroneIDOperatorID)
-- `~/self_id` (mavros_msgs::msg::OpenDroneIDSelfID)
-- `~/system` (mavros_msgs::msg::OpenDroneIDSystem)
-- `~/system_update` (mavros_msgs::msg::OpenDroneIDSystemUpdate)
+- `~/basic_id` ([mavros_msgs::msg::OpenDroneIDBasicID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDBasicID.html))
+- `~/operator_id` ([mavros_msgs::msg::OpenDroneIDOperatorID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDOperatorID.html))
+- `~/self_id` ([mavros_msgs::msg::OpenDroneIDSelfID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSelfID.html))
+- `~/system` ([mavros_msgs::msg::OpenDroneIDSystem](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystem.html))
+- `~/system_update` ([mavros_msgs::msg::OpenDroneIDSystemUpdate](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystemUpdate.html))
 
 
 ## Services

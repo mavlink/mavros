@@ -9,7 +9,7 @@
 This plugin is intended to publish MAV vibration levels and accelerometer clipping from FCU.
 
 ## Publishers
-- `~/raw/vibration` (mavros_msgs::msg::Vibration)
+- `~/raw/vibration` ([mavros_msgs::msg::Vibration](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Vibration.html))
 
 
 ## Subscribers

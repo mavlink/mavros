@@ -13,8 +13,8 @@ Send setpoint velocities to FCU controller.
 
 
 ## Subscribers
-- `~/cmd_vel` (geometry_msgs::msg::TwistStamped) - cmd_vel usually is the topic used for velocity control in many controllers / planners
-- `~/cmd_vel_unstamped` (geometry_msgs::msg::Twist)
+- `~/cmd_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - cmd_vel usually is the topic used for velocity control in many controllers / planners
+- `~/cmd_vel_unstamped` ([geometry_msgs::msg::Twist](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Twist.html))
 
 
 ## Services

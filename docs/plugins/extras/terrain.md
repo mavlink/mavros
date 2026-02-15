@@ -9,7 +9,7 @@
 This plugin allows publishing of terrain height estimate from FCU to ROS.
 
 ## Publishers
-- `~/report` (mavros_msgs::msg::TerrainReport)
+- `~/report` ([mavros_msgs::msg::TerrainReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainReport.html))
 
 
 ## Subscribers

@@ -13,7 +13,7 @@ Publishes the status of the onboard computer @see status_cb()
 
 
 ## Subscribers
-- `~/status` (mavros_msgs::msg::OnboardComputerStatus)
+- `~/status` ([mavros_msgs::msg::OnboardComputerStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OnboardComputerStatus.html))
 
 
 ## Services

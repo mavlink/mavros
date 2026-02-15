@@ -9,7 +9,7 @@
 Plugin for interfacing on the mavlink camera protocol @see command_cb()
 
 ## Publishers
-- `~/image_captured` (mavros_msgs::msg::CameraImageCaptured)
+- `~/image_captured` ([mavros_msgs::msg::CameraImageCaptured](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CameraImageCaptured.html))
 
 
 ## Subscribers

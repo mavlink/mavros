@@ -13,9 +13,9 @@ Send velocity estimation from various vision estimators to FCU position and atti
 
 
 ## Subscribers
-- `~/speed_twist_cov` (geometry_msgs::msg::TwistWithCovarianceStamped)
-- `~/speed_twist` (geometry_msgs::msg::TwistStamped)
-- `~/speed_vector` (geometry_msgs::msg::Vector3Stamped)
+- `~/speed_twist_cov` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
+- `~/speed_twist` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
+- `~/speed_vector` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
 
 
 ## Services

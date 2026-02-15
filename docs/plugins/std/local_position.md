@@ -9,13 +9,13 @@
 Publish local position to TF, PositionStamped, TwistStamped and Odometry
 
 ## Publishers
-- `~/pose` (geometry_msgs::msg::PoseStamped)
-- `~/pose_cov` (geometry_msgs::msg::PoseWithCovarianceStamped)
-- `~/velocity_local` (geometry_msgs::msg::TwistStamped)
-- `~/velocity_body` (geometry_msgs::msg::TwistStamped)
-- `~/velocity_body_cov` (geometry_msgs::msg::TwistWithCovarianceStamped)
-- `~/accel` (geometry_msgs::msg::AccelWithCovarianceStamped)
-- `~/odom` (nav_msgs::msg::Odometry)
+- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html))
+- `~/velocity_local` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
+- `~/velocity_body` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
+- `~/velocity_body_cov` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
+- `~/accel` ([geometry_msgs::msg::AccelWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/AccelWithCovarianceStamped.html))
+- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
 
 
 ## Subscribers

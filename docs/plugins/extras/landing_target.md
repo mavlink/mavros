@@ -9,13 +9,13 @@
 This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU.
 
 ## Publishers
-- `~/pose_in` (geometry_msgs::msg::PoseStamped)
-- `~/lt_marker` (geometry_msgs::msg::Vector3Stamped)
+- `~/pose_in` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/lt_marker` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
 
 
 ## Subscribers
-- `~/raw` (mavros_msgs::msg::LandingTarget)
-- `~/pose` (geometry_msgs::msg::PoseStamped)
+- `~/raw` ([mavros_msgs::msg::LandingTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/LandingTarget.html))
+- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
 
 
 ## Services

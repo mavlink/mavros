@@ -9,11 +9,11 @@
 Sends odometry data to the FCU estimator and publishes odometry data that comes from FCU. This plugin is following ROS REP 147. Pose is expressed in parent frame. (Quaternion rotates from child to parent) The twist is expressed in the child frame. @see odom_cb()	transforming and sending odometry to fcu @see handle_odom()	receiving and transforming odometry from fcu
 
 ## Publishers
-- `~/in` (nav_msgs::msg::Odometry) - publishers
+- `~/in` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - publishers
 
 
 ## Subscribers
-- `~/out` (nav_msgs::msg::Odometry)
+- `~/out` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
 
 
 ## Services

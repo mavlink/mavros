@@ -9,30 +9,30 @@
 Adds support for Mavlink Gimbal Protocol v2. Also publishes gimbal pose to TF when parameter tf_send==true
 
 ## Publishers
-- `~/device/attitude_status` (mavros_msgs::msg::GimbalDeviceAttitudeStatus)
-- `~/manager/status` (mavros_msgs::msg::GimbalManagerStatus)
-- `~/manager/info` (mavros_msgs::msg::GimbalManagerInformation)
-- `~/device/info` (mavros_msgs::msg::GimbalDeviceInformation)
+- `~/device/attitude_status` ([mavros_msgs::msg::GimbalDeviceAttitudeStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalDeviceAttitudeStatus.html))
+- `~/manager/status` ([mavros_msgs::msg::GimbalManagerStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalManagerStatus.html))
+- `~/manager/info` ([mavros_msgs::msg::GimbalManagerInformation](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalManagerInformation.html))
+- `~/device/info` ([mavros_msgs::msg::GimbalDeviceInformation](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalDeviceInformation.html))
 
 
 ## Subscribers
-- `~/device/set_attitude` (mavros_msgs::msg::GimbalDeviceSetAttitude)
-- `~/manager/set_attitude` (mavros_msgs::msg::GimbalManagerSetAttitude)
-- `~/manager/set_pitchyaw` (mavros_msgs::msg::GimbalManagerSetPitchyaw)
-- `~/manager/set_manual_control` (mavros_msgs::msg::GimbalManagerSetPitchyaw)
+- `~/device/set_attitude` ([mavros_msgs::msg::GimbalDeviceSetAttitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalDeviceSetAttitude.html))
+- `~/manager/set_attitude` ([mavros_msgs::msg::GimbalManagerSetAttitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalManagerSetAttitude.html))
+- `~/manager/set_pitchyaw` ([mavros_msgs::msg::GimbalManagerSetPitchyaw](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalManagerSetPitchyaw.html))
+- `~/manager/set_manual_control` ([mavros_msgs::msg::GimbalManagerSetPitchyaw](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalManagerSetPitchyaw.html))
 
 
 ## Services
-- `~/device/get_info` (mavros_msgs::srv::GimbalGetInformation)
-- `~/manager/get_info` (mavros_msgs::srv::GimbalGetInformation)
-- `~/manager/configure` (mavros_msgs::srv::GimbalManagerConfigure)
-- `~/manager/pitchyaw` (mavros_msgs::srv::GimbalManagerPitchyaw)
-- `~/manager/set_roi` (mavros_msgs::srv::GimbalManagerSetRoi)
-- `~/manager/camera_track` (mavros_msgs::srv::GimbalManagerCameraTrack)
+- `~/device/get_info` ([mavros_msgs::srv::GimbalGetInformation](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalGetInformation.html))
+- `~/manager/get_info` ([mavros_msgs::srv::GimbalGetInformation](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalGetInformation.html))
+- `~/manager/configure` ([mavros_msgs::srv::GimbalManagerConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalManagerConfigure.html))
+- `~/manager/pitchyaw` ([mavros_msgs::srv::GimbalManagerPitchyaw](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalManagerPitchyaw.html))
+- `~/manager/set_roi` ([mavros_msgs::srv::GimbalManagerSetRoi](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalManagerSetRoi.html))
+- `~/manager/camera_track` ([mavros_msgs::srv::GimbalManagerCameraTrack](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalManagerCameraTrack.html))
 
 
 ## Clients
-- `cmd/command` (mavros_msgs::srv::CommandLong)
+- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
 
 
 ## Parameters

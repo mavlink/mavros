@@ -7,8 +7,8 @@
 
 
 ## Publishers
-- `~/info` (mavros_msgs::msg::ESCInfo)
-- `~/status` (mavros_msgs::msg::ESCStatus)
+- `~/info` ([mavros_msgs::msg::ESCInfo](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCInfo.html))
+- `~/status` ([mavros_msgs::msg::ESCStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCStatus.html))
 
 
 ## Subscribers

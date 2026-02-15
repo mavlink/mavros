@@ -13,7 +13,7 @@ Users must publish to the topic the CellularStatus message and it will be relaye
 
 
 ## Subscribers
-- `~/status` (mavros_msgs::msg::CellularStatus)
+- `~/status` ([mavros_msgs::msg::CellularStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CellularStatus.html))
 
 
 ## Services

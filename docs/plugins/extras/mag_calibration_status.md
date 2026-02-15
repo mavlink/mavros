@@ -9,8 +9,8 @@
 Example and "how to" for users.
 
 ## Publishers
-- `~/status` (std_msgs::msg::UInt8) - TODO(vooon): use QoS for "latched" topics
-- `~/report` (mavros_msgs::msg::MagnetometerReporter)
+- `~/status` ([std_msgs::msg::UInt8](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt8.html)) - TODO(vooon): use QoS for "latched" topics
+- `~/report` ([mavros_msgs::msg::MagnetometerReporter](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MagnetometerReporter.html))
 
 
 ## Subscribers

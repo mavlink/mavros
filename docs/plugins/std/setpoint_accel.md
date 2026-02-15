@@ -13,7 +13,7 @@ Send setpoint accelerations/forces to FCU controller.
 
 
 ## Subscribers
-- `~/accel` (geometry_msgs::msg::Vector3Stamped)
+- `~/accel` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
 
 
 ## Services

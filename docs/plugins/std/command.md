@@ -17,17 +17,17 @@ Send any command via COMMAND_LONG
 
 
 ## Services
-- `~/command` (mavros_msgs::srv::CommandLong)
-- `~/command_int` (mavros_msgs::srv::CommandInt)
-- `~/arming` (mavros_msgs::srv::CommandBool)
-- `~/set_home` (mavros_msgs::srv::CommandHome)
-- `~/takeoff` (mavros_msgs::srv::CommandTOL)
-- `~/takeoff_local` (mavros_msgs::srv::CommandTOLLocal)
-- `~/land` (mavros_msgs::srv::CommandTOL)
-- `~/land_local` (mavros_msgs::srv::CommandTOLLocal)
-- `~/trigger_control` (mavros_msgs::srv::CommandTriggerControl)
-- `~/trigger_interval` (mavros_msgs::srv::CommandTriggerInterval)
-- `~/vtol_transition` (mavros_msgs::srv::CommandVtolTransition)
+- `~/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
+- `~/command_int` ([mavros_msgs::srv::CommandInt](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandInt.html))
+- `~/arming` ([mavros_msgs::srv::CommandBool](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandBool.html))
+- `~/set_home` ([mavros_msgs::srv::CommandHome](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandHome.html))
+- `~/takeoff` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html))
+- `~/takeoff_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html))
+- `~/land` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html))
+- `~/land_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html))
+- `~/trigger_control` ([mavros_msgs::srv::CommandTriggerControl](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerControl.html))
+- `~/trigger_interval` ([mavros_msgs::srv::CommandTriggerInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerInterval.html))
+- `~/vtol_transition` ([mavros_msgs::srv::CommandVtolTransition](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandVtolTransition.html))
 
 
 ## Clients

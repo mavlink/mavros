@@ -9,7 +9,7 @@
 APM specific plugin.
 
 ## Publishers
-- `~/telemetry` (mavros_msgs::msg::ESCTelemetry)
+- `~/telemetry` ([mavros_msgs::msg::ESCTelemetry](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCTelemetry.html))
 
 
 ## Subscribers

@@ -7,8 +7,8 @@
 
 
 ## Publishers
-- `~/waypoints` (mavros_msgs::msg::WaypointList)
-- `~/reached` (mavros_msgs::msg::WaypointReached)
+- `~/waypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
+- `~/reached` ([mavros_msgs::msg::WaypointReached](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointReached.html))
 
 
 ## Subscribers
@@ -16,10 +16,10 @@
 
 
 ## Services
-- `~/pull` (mavros_msgs::srv::WaypointPull)
-- `~/push` (mavros_msgs::srv::WaypointPush)
-- `~/clear` (mavros_msgs::srv::WaypointClear)
-- `~/set_current` (mavros_msgs::srv::WaypointSetCurrent)
+- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html))
+- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html))
+- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html))
+- `~/set_current` ([mavros_msgs::srv::WaypointSetCurrent](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointSetCurrent.html))
 
 
 ## Clients

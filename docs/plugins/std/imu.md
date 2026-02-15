@@ -7,13 +7,13 @@
 
 
 ## Publishers
-- `~/data` (sensor_msgs::msg::Imu)
-- `~/data_raw` (sensor_msgs::msg::Imu)
-- `~/mag` (sensor_msgs::msg::MagneticField)
-- `~/temperature_imu` (sensor_msgs::msg::Temperature)
-- `~/temperature_baro` (sensor_msgs::msg::Temperature)
-- `~/static_pressure` (sensor_msgs::msg::FluidPressure)
-- `~/diff_pressure` (sensor_msgs::msg::FluidPressure)
+- `~/data` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html))
+- `~/data_raw` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html))
+- `~/mag` ([sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html))
+- `~/temperature_imu` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html))
+- `~/temperature_baro` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html))
+- `~/static_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html))
+- `~/diff_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html))
 
 
 ## Subscribers

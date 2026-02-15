@@ -13,7 +13,7 @@ Publishes obstacle distance array to the FCU, in order to assist in an obstacle 
 
 
 ## Subscribers
-- `~/send` (sensor_msgs::msg::LaserScan)
+- `~/send` ([sensor_msgs::msg::LaserScan](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/LaserScan.html))
 
 
 ## Services

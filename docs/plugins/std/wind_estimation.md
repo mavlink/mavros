@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `wind_estimation` (geometry_msgs::msg::TwistWithCovarianceStamped)
+- `wind_estimation` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
 
 
 ## Subscribers

@@ -9,28 +9,28 @@
 Required by all plugins.
 
 ## Publishers
-- `state` (mavros_msgs::msg::State)
-- `extended_state` (mavros_msgs::msg::ExtendedState)
-- `sys_status` (mavros_msgs::msg::SysStatus)
-- `estimator_status` (mavros_msgs::msg::EstimatorStatus)
+- `state` ([mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html))
+- `extended_state` ([mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html))
+- `sys_status` ([mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html))
+- `estimator_status` ([mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html))
 - `battery` (BatteryMsg)
-- `statustext/recv` (mavros_msgs::msg::StatusText)
-- `status_event` (mavros_msgs::msg::StatusEvent)
+- `statustext/recv` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html))
+- `status_event` ([mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html))
 
 
 ## Subscribers
-- `statustext/send` (mavros_msgs::msg::StatusText)
+- `statustext/send` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html))
 
 
 ## Services
-- `set_mode` (mavros_msgs::srv::SetMode)
-- `set_stream_rate` (mavros_msgs::srv::StreamRate)
-- `set_message_interval` (mavros_msgs::srv::MessageInterval)
-- `vehicle_info_get` (mavros_msgs::srv::VehicleInfoGet)
+- `set_mode` ([mavros_msgs::srv::SetMode](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/SetMode.html))
+- `set_stream_rate` ([mavros_msgs::srv::StreamRate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/StreamRate.html))
+- `set_message_interval` ([mavros_msgs::srv::MessageInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MessageInterval.html))
+- `vehicle_info_get` ([mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html))
 
 
 ## Clients
-- `cmd/command` (mavros_msgs::srv::CommandLong)
+- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
 
 
 ## Parameters

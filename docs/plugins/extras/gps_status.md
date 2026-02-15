@@ -9,10 +9,10 @@
 This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.
 
 ## Publishers
-- `~/gps1/raw` (mavros_msgs::msg::GPSRAW)
-- `~/gps2/raw` (mavros_msgs::msg::GPSRAW)
-- `~/gps1/rtk` (mavros_msgs::msg::GPSRTK)
-- `~/gps2/rtk` (mavros_msgs::msg::GPSRTK)
+- `~/gps1/raw` ([mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html))
+- `~/gps2/raw` ([mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html))
+- `~/gps1/rtk` ([mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html))
+- `~/gps2/rtk` ([mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html))
 
 
 ## Subscribers

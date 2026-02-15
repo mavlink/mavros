@@ -7,12 +7,12 @@
 
 
 ## Publishers
-- `~/in` (mavros_msgs::msg::RCIn)
-- `~/out` (mavros_msgs::msg::RCOut)
+- `~/in` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html))
+- `~/out` ([mavros_msgs::msg::RCOut](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCOut.html))
 
 
 ## Subscribers
-- `~/override` (mavros_msgs::msg::OverrideRCIn)
+- `~/override` ([mavros_msgs::msg::OverrideRCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OverrideRCIn.html))
 
 
 ## Services

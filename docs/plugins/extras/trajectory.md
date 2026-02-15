@@ -9,12 +9,12 @@
 send back to the FCU a corrected path (collision free, smoothed) @see trajectory_cb()
 
 ## Publishers
-- `~/desired` (mavros_msgs::msg::Trajectory)
+- `~/desired` ([mavros_msgs::msg::Trajectory](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Trajectory.html))
 
 
 ## Subscribers
-- `~/generated` (mavros_msgs::msg::Trajectory)
-- `~/path` (nav_msgs::msg::Path)
+- `~/generated` ([mavros_msgs::msg::Trajectory](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Trajectory.html))
+- `~/path` ([nav_msgs::msg::Path](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Path.html))
 
 
 ## Services

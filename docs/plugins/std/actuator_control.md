@@ -9,11 +9,11 @@
 Sends actuator controls to FCU controller.
 
 ## Publishers
-- `target_actuator_control` (mavros_msgs::msg::ActuatorControl)
+- `target_actuator_control` ([mavros_msgs::msg::ActuatorControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ActuatorControl.html))
 
 
 ## Subscribers
-- `actuator_control` (mavros_msgs::msg::ActuatorControl)
+- `actuator_control` ([mavros_msgs::msg::ActuatorControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ActuatorControl.html))
 
 
 ## Services

@@ -9,7 +9,7 @@
 This plugin publishes a timestamp for when a external camera system was triggered by the FCU. Sequence ID from the message and the image sequence from camera can be correlated to get the exact shutter trigger time.
 
 ## Publishers
-- `~/cam_imu_stamp` (mavros_msgs::msg::CamIMUStamp)
+- `~/cam_imu_stamp` ([mavros_msgs::msg::CamIMUStamp](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CamIMUStamp.html))
 
 
 ## Subscribers

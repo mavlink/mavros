@@ -7,11 +7,11 @@
 
 
 ## Publishers
-- `~/out` (mavros_msgs::msg::Tunnel)
+- `~/out` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html))
 
 
 ## Subscribers
-- `~/in` (mavros_msgs::msg::Tunnel)
+- `~/in` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html))
 
 
 ## Services

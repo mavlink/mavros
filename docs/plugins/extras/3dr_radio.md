@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `radio_status` (mavros_msgs::msg::RadioStatus)
+- `radio_status` ([mavros_msgs::msg::RadioStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RadioStatus.html))
 
 
 ## Subscribers

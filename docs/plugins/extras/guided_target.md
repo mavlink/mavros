@@ -9,11 +9,11 @@
 Send and receive setpoint positions from FCU controller.
 
 ## Publishers
-- `/move_base_simple/goal` (geometry_msgs::msg::PoseStamped) - Publish targets received from FCU
+- `/move_base_simple/goal` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Publish targets received from FCU
 
 
 ## Subscribers
-- `global_position/gp_origin` (geographic_msgs::msg::GeoPointStamped) - Subscriber for global origin (aka map origin).
+- `global_position/gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - Subscriber for global origin (aka map origin).
 
 
 ## Services

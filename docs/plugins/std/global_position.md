@@ -9,20 +9,20 @@
 Publishes global position. Conversion from GPS LLA to ECEF allows publishing local position to TF and PoseWithCovarianceStamped.
 
 ## Publishers
-- `~/raw/fix` (sensor_msgs::msg::NavSatFix) - gps data
-- `~/raw/gps_vel` (geometry_msgs::msg::TwistStamped)
-- `~/raw/satellites` (std_msgs::msg::UInt32)
-- `~/global` (sensor_msgs::msg::NavSatFix) - fused global position
-- `~/local` (nav_msgs::msg::Odometry)
-- `~/rel_alt` (std_msgs::msg::Float64)
-- `~/compass_hdg` (std_msgs::msg::Float64)
-- `~/gp_origin` (geographic_msgs::msg::GeoPointStamped) - global origin
-- `~/gp_lp_offset` (geometry_msgs::msg::PoseStamped) - offset from local position to the global origin ("earth")
+- `~/raw/fix` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - gps data
+- `~/raw/gps_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
+- `~/raw/satellites` ([std_msgs::msg::UInt32](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt32.html))
+- `~/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - fused global position
+- `~/local` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
+- `~/rel_alt` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html))
+- `~/compass_hdg` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html))
+- `~/gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - global origin
+- `~/gp_lp_offset` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - offset from local position to the global origin ("earth")
 
 
 ## Subscribers
-- `~/set_gp_origin` (geographic_msgs::msg::GeoPointStamped)
-- `home_position/home` (mavros_msgs::msg::HomePosition) - home position subscriber to set "map" origin TODO(vooon): use UAS
+- `~/set_gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html))
+- `home_position/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html)) - home position subscriber to set "map" origin TODO(vooon): use UAS
 
 
 ## Services

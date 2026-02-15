@@ -13,11 +13,11 @@ Send setpoint positions to FCU controller.
 
 
 ## Subscribers
-- `~/local` (geometry_msgs::msg::PoseStamped)
-- `~/global` (geographic_msgs::msg::GeoPoseStamped)
-- `~/global_to_local` (geographic_msgs::msg::GeoPoseStamped)
-- `global_position/global` (sensor_msgs::msg::NavSatFix)
-- `local_position/pose` (geometry_msgs::msg::PoseStamped)
+- `~/local` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/global` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html))
+- `~/global_to_local` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html))
+- `global_position/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html))
+- `local_position/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
 
 
 ## Services

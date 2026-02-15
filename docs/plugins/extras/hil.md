@@ -7,16 +7,16 @@
 
 
 ## Publishers
-- `~/controls` (mavros_msgs::msg::HilControls)
-- `~/actuator_controls` (mavros_msgs::msg::HilActuatorControls)
+- `~/controls` ([mavros_msgs::msg::HilControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilControls.html))
+- `~/actuator_controls` ([mavros_msgs::msg::HilActuatorControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilActuatorControls.html))
 
 
 ## Subscribers
-- `~/state` (mavros_msgs::msg::HilStateQuaternion)
-- `~/gps` (mavros_msgs::msg::HilGPS)
-- `~/imu_ned` (mavros_msgs::msg::HilSensor)
-- `~/optical_flow` (mavros_msgs::msg::OpticalFlowRad)
-- `~/rc_inputs` (mavros_msgs::msg::RCIn)
+- `~/state` ([mavros_msgs::msg::HilStateQuaternion](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilStateQuaternion.html))
+- `~/gps` ([mavros_msgs::msg::HilGPS](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilGPS.html))
+- `~/imu_ned` ([mavros_msgs::msg::HilSensor](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilSensor.html))
+- `~/optical_flow` ([mavros_msgs::msg::OpticalFlowRad](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlowRad.html))
+- `~/rc_inputs` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html))
 
 
 ## Services

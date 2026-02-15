@@ -11,7 +11,7 @@
 
 
 ## Subscribers
-- `play_tune` (mavros_msgs::msg::PlayTuneV2)
+- `play_tune` ([mavros_msgs::msg::PlayTuneV2](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PlayTuneV2.html))
 
 
 ## Services

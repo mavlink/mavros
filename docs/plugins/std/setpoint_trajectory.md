@@ -9,15 +9,15 @@
 Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory.
 
 ## Publishers
-- `~/desired` (nav_msgs::msg::Path)
+- `~/desired` ([nav_msgs::msg::Path](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Path.html))
 
 
 ## Subscribers
-- `~/local` (trajectory_msgs::msg::MultiDOFJointTrajectory)
+- `~/local` ([trajectory_msgs::msg::MultiDOFJointTrajectory](https://docs.ros.org/en/rolling/p/trajectory_msgs/msg/MultiDOFJointTrajectory.html))
 
 
 ## Services
-- `~/reset` (std_srvs::srv::Trigger)
+- `~/reset` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html))
 
 
 ## Clients

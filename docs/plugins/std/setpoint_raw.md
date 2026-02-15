@@ -9,15 +9,15 @@
 Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits.
 
 ## Publishers
-- `~/target_local` (mavros_msgs::msg::PositionTarget)
-- `~/target_global` (mavros_msgs::msg::GlobalPositionTarget)
-- `~/target_attitude` (mavros_msgs::msg::AttitudeTarget)
+- `~/target_local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html))
+- `~/target_global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html))
+- `~/target_attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html))
 
 
 ## Subscribers
-- `~/local` (mavros_msgs::msg::PositionTarget)
-- `~/global` (mavros_msgs::msg::GlobalPositionTarget)
-- `~/attitude` (mavros_msgs::msg::AttitudeTarget)
+- `~/local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html))
+- `~/global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html))
+- `~/attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html))
 
 
 ## Services

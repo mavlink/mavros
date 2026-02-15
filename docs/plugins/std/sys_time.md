@@ -7,8 +7,8 @@
 
 
 ## Publishers
-- `time_reference` (sensor_msgs::msg::TimeReference)
-- `timesync_status` (mavros_msgs::msg::TimesyncStatus)
+- `time_reference` ([sensor_msgs::msg::TimeReference](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/TimeReference.html))
+- `timesync_status` ([mavros_msgs::msg::TimesyncStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TimesyncStatus.html))
 
 
 ## Subscribers

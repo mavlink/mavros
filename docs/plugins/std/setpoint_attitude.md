@@ -13,9 +13,9 @@ Send setpoint attitude/orientation/thrust to FCU controller.
 
 
 ## Subscribers
-- `~/attitude` (geometry_msgs::msg::PoseStamped) - Use message_filters to sync attitude and thrust msg coming from different topics
-- `~/cmd_vel` (geometry_msgs::msg::TwistStamped)
-- `~/thrust` (mavros_msgs::msg::Thrust) - thrust msg subscriber to sync
+- `~/attitude` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Use message_filters to sync attitude and thrust msg coming from different topics
+- `~/cmd_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
+- `~/thrust` ([mavros_msgs::msg::Thrust](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Thrust.html)) - thrust msg subscriber to sync
 
 
 ## Services

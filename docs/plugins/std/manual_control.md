@@ -7,11 +7,11 @@
 
 
 ## Publishers
-- `~/control` (mavros_msgs::msg::ManualControl)
+- `~/control` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html))
 
 
 ## Subscribers
-- `~/send` (mavros_msgs::msg::ManualControl)
+- `~/send` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html))
 
 
 ## Services

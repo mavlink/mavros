@@ -9,11 +9,11 @@
 Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.
 
 ## Publishers
-- `~/vehicle` (mavros_msgs::msg::ADSBVehicle)
+- `~/vehicle` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html))
 
 
 ## Subscribers
-- `~/send` (mavros_msgs::msg::ADSBVehicle)
+- `~/send` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html))
 
 
 ## Services

@@ -13,10 +13,10 @@ Sends fake GPS from local position estimation source data (motion capture, visio
 
 
 ## Subscribers
-- `~/mocap/tf` (geometry_msgs::msg::TransformStamped)
-- `~/mocap/pose_cov` (geometry_msgs::msg::PoseWithCovarianceStamped)
-- `~/mocap/pose` (geometry_msgs::msg::PoseStamped)
-- `~/vision` (geometry_msgs::msg::PoseStamped)
+- `~/mocap/tf` ([geometry_msgs::msg::TransformStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TransformStamped.html))
+- `~/mocap/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html))
+- `~/mocap/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/vision` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
 
 
 ## Services

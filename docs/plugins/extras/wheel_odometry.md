@@ -9,10 +9,10 @@
 This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders. Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).
 
 ## Publishers
-- `~/rpm` (mavros_msgs::msg::WheelOdomStamped)
-- `~/distance` (mavros_msgs::msg::WheelOdomStamped)
-- `~/velocity` (geometry_msgs::msg::TwistWithCovarianceStamped)
-- `~/odom` (nav_msgs::msg::Odometry)
+- `~/rpm` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html))
+- `~/distance` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html))
+- `~/velocity` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
+- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
 
 
 ## Subscribers

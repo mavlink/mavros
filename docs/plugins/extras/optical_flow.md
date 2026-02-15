@@ -9,12 +9,12 @@
 This plugin can publish data from OpticalFlow camera to ROS
 
 ## Publishers
-- `~/raw/optical_flow` (mavros_msgs::msg::OpticalFlow)
-- `~/ground_distance` (sensor_msgs::msg::Range)
+- `~/raw/optical_flow` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html))
+- `~/ground_distance` ([sensor_msgs::msg::Range](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Range.html))
 
 
 ## Subscribers
-- `~/raw/send` (mavros_msgs::msg::OpticalFlow)
+- `~/raw/send` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html))
 
 
 ## Services

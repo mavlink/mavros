@@ -1,6 +1,27 @@
 {%- macro render_api_entries(entries) -%}
+{%-   macro render_ros_type(type_name) -%}
+{%-     set t = (type_name or "") | replace(" ", "") -%}
+{%-     if "::msg::" in t -%}
+{%-       set parts = t.split("::msg::", 1) -%}
+{%-       set pkg = parts[0] -%}
+{%-       set typ = parts[1].split("<", 1)[0] -%}
+[{{ type_name }}](https://docs.ros.org/en/rolling/p/{{ pkg }}/msg/{{ typ }}.html)
+{%-     elif "::srv::" in t -%}
+{%-       set parts = t.split("::srv::", 1) -%}
+{%-       set pkg = parts[0] -%}
+{%-       set typ = parts[1].split("<", 1)[0] -%}
+[{{ type_name }}](https://docs.ros.org/en/rolling/p/{{ pkg }}/srv/{{ typ }}.html)
+{%-     elif "::action::" in t -%}
+{%-       set parts = t.split("::action::", 1) -%}
+{%-       set pkg = parts[0] -%}
+{%-       set typ = parts[1].split("<", 1)[0] -%}
+[{{ type_name }}](https://docs.ros.org/en/rolling/p/{{ pkg }}/action/{{ typ }}.html)
+{%-     else -%}
+{{ type_name or "<unknown>" }}
+{%-     endif -%}
+{%-   endmacro -%}
 {%   for e in entries -%}
-- `{{ e.name }}` ({{ e.type_name or "<unknown>" }}){% if e.description %} - {{ e.description }}{% endif %}
+- `{{ e.name }}` ({{ render_ros_type(e.type_name) }}){% if e.description %} - {{ e.description }}{% endif %}
 {%   else -%}
 - None
 {%   endfor -%}

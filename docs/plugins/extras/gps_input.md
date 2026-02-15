@@ -13,7 +13,7 @@ Sends <a href="https://mavlink.io/en/messages/common.html#GPS_INPUT">GPS_INPUT M
 
 
 ## Subscribers
-- `~/gps_input` (mavros_msgs::msg::GPSINPUT)
+- `~/gps_input` ([mavros_msgs::msg::GPSINPUT](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSINPUT.html))
 
 
 ## Services

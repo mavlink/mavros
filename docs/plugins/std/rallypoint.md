@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `~/rallypoints` (mavros_msgs::msg::WaypointList)
+- `~/rallypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
 
 
 ## Subscribers
@@ -15,9 +15,9 @@
 
 
 ## Services
-- `~/pull` (mavros_msgs::srv::WaypointPull)
-- `~/push` (mavros_msgs::srv::WaypointPush)
-- `~/clear` (mavros_msgs::srv::WaypointClear)
+- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html))
+- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html))
+- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html))
 
 
 ## Clients
