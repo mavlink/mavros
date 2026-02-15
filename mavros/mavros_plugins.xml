@@ -20,7 +20,9 @@ Sends actuator controls to FCU controller.</description>
   </class>
   <class name="altitude" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::AltitudePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Altitude plugin.
-@plugin altitude</description>
+@plugin altitude
+
+Publish altitude data.</description>
   </class>
   <class name="command" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::CommandPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Command plugin.
@@ -130,7 +132,7 @@ Required by all plugins.</description>
 @plugin sys_time</description>
   </class>
   <class name="waypoint" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WaypointPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-    <description>@brief Mission manupulation plugin
+    <description>@brief Mission manipulation plugin
 @plugin waypoint</description>
   </class>
   <class name="wind_estimation" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::std_plugins::WindEstimationPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
@@ -138,4 +140,4 @@ Required by all plugins.</description>
 @plugin wind_estimation</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: bPrTF1swCC) -->
+<!-- [[[end]]] (sum: Nnd9SLlM2Y) -->
