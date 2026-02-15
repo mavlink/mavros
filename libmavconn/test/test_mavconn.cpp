@@ -159,14 +159,14 @@ TEST_F(UDP, send_message)
   // create client
   client = std::make_shared<MAVConnUDP>(44, 200, "0.0.0.0", 45003, "localhost", 45002);
   client->connect(
-    std::bind(
-      &UDP::recv_message, this, std::placeholders::_1,
-      std::placeholders::_2));
+    [this](const mavlink_message_t * msg, const Framing framing) {
+      this->recv_message(msg, framing);
+    });
 
   // wait echo
   send_heartbeat(client.get());
   send_heartbeat(client.get());
-  EXPECT_EQ(wait_one(), true);
+  EXPECT_TRUE(wait_one());
   EXPECT_EQ(message_id, msgid);
 }
 
@@ -174,7 +174,7 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
 {
   asio::io_service shared_io;
   auto io_work = std::make_unique<asio::io_service::work>(shared_io);
-  std::thread io_thread([&shared_io]() {shared_io.run();});
+  std::jthread io_thread([&shared_io]() {shared_io.run();});
 
   std::mutex mutex;
   std::condition_variable cond;
@@ -203,7 +203,7 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
   send_heartbeat(client.get());
   {
     std::unique_lock<std::mutex> lock(mutex);
-    EXPECT_EQ(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got_echo;}), true);
+    EXPECT_TRUE(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got_echo;}));
   }
 
   echo->close();
@@ -215,13 +215,12 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
   });
   {
     std::unique_lock<std::mutex> lock(mutex);
-    EXPECT_EQ(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return posted_done;}), true);
+    EXPECT_TRUE(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return posted_done;}));
   }
 
   client->close();
   io_work.reset();
   shared_io.stop();
-  io_thread.join();
 }
 
 TEST(IO_THREAD, udp_close_from_callback_does_not_deadlock)
@@ -309,14 +308,14 @@ TEST_F(TCP, send_message)
   // create client
   client = std::make_shared<MAVConnTCPClient>(44, 200, "localhost", 57602);
   client->connect(
-    std::bind(
-      &TCP::recv_message, this, std::placeholders::_1,
-      std::placeholders::_2));
+    [this](const mavlink_message_t * msg, const Framing framing) {
+      this->recv_message(msg, framing);
+    });
 
   // wait echo
   send_heartbeat(client.get());
   send_heartbeat(client.get());
-  EXPECT_EQ(wait_one(), true);
+  EXPECT_TRUE(wait_one());
   EXPECT_EQ(message_id, msgid);
 }
 

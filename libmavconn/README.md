@@ -34,7 +34,7 @@ Same as for mavros:
   - Linux host
   - Asio library ( https://think-async.com/Asio/ )
   - console-bridge library
-  - compiler with C++14 support
+  - compiler with C++20 support
 
 
 Shared io_service (optional)
@@ -50,7 +50,7 @@ run it from your own thread pool.
 
 asio::io_service shared_io;
 auto work = std::make_unique<asio::io_service::work>(shared_io);
-std::thread io_thread([&]() { shared_io.run(); });
+std::jthread io_thread([&]() { shared_io.run(); });
 
 auto conn = mavconn::MAVConnInterface::open_url(
   "udp://0.0.0.0:14555@127.0.0.1:14550",
@@ -62,7 +62,6 @@ auto conn = mavconn::MAVConnInterface::open_url(
 conn->close();
 work.reset();
 shared_io.stop();
-io_thread.join();
 ```
 
 

@@ -75,7 +75,7 @@ public:
   void send_message(const mavlink::Message & message, const uint8_t source_compid) override;
   void send_bytes(const uint8_t * bytes, size_t length) override;
 
-  inline bool is_open() override
+  [[nodiscard]] inline bool is_open() override
   {
     return socket.is_open();
   }
@@ -142,7 +142,7 @@ public:
 
   mavlink::mavlink_status_t get_status() override;
   IOStat get_iostat() override;
-  inline bool is_open() override
+  [[nodiscard]] inline bool is_open() override
   {
     return acceptor.is_open();
   }

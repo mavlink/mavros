@@ -57,7 +57,7 @@ public:
       return;
     }
 
-    io_thread_ = std::thread(
+    io_thread_ = std::jthread(
       [this, f = std::forward<Fn>(fn)]() mutable {
         is_running_ = true;
         f();
@@ -71,6 +71,7 @@ public:
       return;
     }
 
+    io_thread_.request_stop();
     io_work_.reset();
     io_.stop();
   }
@@ -116,7 +117,7 @@ private:
   std::unique_ptr<asio::io_service::work> io_work_;
   bool owns_thread_;
   std::atomic<bool> is_running_;
-  std::thread io_thread_;
+  std::jthread io_thread_;
 };
 
 }  // namespace mavconn
