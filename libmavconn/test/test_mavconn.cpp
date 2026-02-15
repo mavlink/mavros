@@ -414,6 +414,42 @@ TEST(URL, open_url_udp)
     udp = MAVConnInterface::open_url("udp://localhost:45008");
   },
     DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:0@localhost:14550");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:65536@localhost:14550");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:14550x@localhost:14550");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:14550@localhost:14550/?ids=300,1");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:14550@localhost:14550/?ids=-1,1");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    udp = MAVConnInterface::open_url("udp://localhost:14550@localhost:14550/?ids=a,1");
+  },
+    DeviceError);
 }
 
 TEST(URL, open_url_tcp)
@@ -436,6 +472,18 @@ TEST(URL, open_url_tcp)
     tcp_client_p = dynamic_cast<MAVConnTCPClient *>(tcp_client.get());
     EXPECT_NE(tcp_client_p, nullptr);
   });
+
+  EXPECT_THROW(
+  {
+    tcp_client = MAVConnInterface::open_url("tcp://localhost:0");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    tcp_client = MAVConnInterface::open_url("tcp://localhost:abc");
+  },
+    DeviceError);
 }
 
 int main(int argc, char ** argv)

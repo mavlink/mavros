@@ -16,6 +16,7 @@
  */
 
 #include <cassert>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -215,6 +216,23 @@ static void url_parse_host(
   std::string & host_out, int & port_out,
   const std::string & def_host, const int def_port)
 {
+  auto parse_int_in_range = [](const std::string & value, int min, int max, const char * field) {
+      size_t pos = 0;
+      int parsed = 0;
+      const std::string err = std::string("invalid ") + field + " value: '" + value + "'";
+      try {
+        parsed = std::stoi(value, &pos);
+      } catch (const std::exception &) {
+        throw DeviceError("url", err.c_str());
+      }
+
+      if (pos != value.size() || parsed < min || parsed > max) {
+        throw DeviceError("url", err.c_str());
+      }
+
+      return parsed;
+    };
+
   std::string port;
 
   auto sep_it = std::find(host.begin(), host.end(), ':');
@@ -239,7 +257,7 @@ static void url_parse_host(
   }
 
   port.assign(sep_it + 1, host.end());
-  port_out = std::stoi(port);
+  port_out = parse_int_in_range(port, 1, std::numeric_limits<uint16_t>::max(), "port");
 }
 
 /**
@@ -247,6 +265,23 @@ static void url_parse_host(
  */
 static void url_parse_query(const std::string & query, uint8_t & sysid, uint8_t & compid)
 {
+  auto parse_uint8_value = [](const std::string & value, const char * field) {
+      size_t pos = 0;
+      int parsed = 0;
+      const std::string err = std::string("invalid ") + field + " value: '" + value + "'";
+      try {
+        parsed = std::stoi(value, &pos);
+      } catch (const std::exception &) {
+        throw DeviceError("url", err.c_str());
+      }
+
+      if (pos != value.size() || parsed < 0 || parsed > std::numeric_limits<uint8_t>::max()) {
+        throw DeviceError("url", err.c_str());
+      }
+
+      return static_cast<uint8_t>(parsed);
+    };
+
   const std::string ids_end("ids=");
   std::string sys, comp;
 
@@ -272,8 +307,8 @@ static void url_parse_query(const std::string & query, uint8_t & sysid, uint8_t 
   sys.assign(ids_it, comma_it);
   comp.assign(comma_it + 1, query.end());
 
-  sysid = std::stoi(sys);
-  compid = std::stoi(comp);
+  sysid = parse_uint8_value(sys, "system id");
+  compid = parse_uint8_value(comp, "component id");
 
   CONSOLE_BRIDGE_logDebug(PFX "URL: found system/component id = [%u, %u]", sysid, compid);
 }
