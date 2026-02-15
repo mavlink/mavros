@@ -430,6 +430,70 @@ TEST_F(TestRouter, route_targeted_system_component)
   VERIFY_EPS();
 }
 
+TEST_F(TestRouter, route_targeted_miss_falls_back_to_broadcast)
+{
+  using MF = mavlink::common::MAV_MODE_FLAG;
+  using utils::enum_value;
+
+  auto router = this->create_node();
+
+  auto set_mode = mavlink::common::msg::SET_MODE();
+  set_mode.target_system = 0x42;  // unknown target in test topology
+  set_mode.base_mode = enum_value(MF::SAFETY_ARMED) | enum_value(MF::TEST_ENABLED);
+  set_mode.custom_mode = 7;
+
+  auto smmsg = convert_message(set_mode, 0x0101);
+  auto fr = Framing::ok;
+
+  DEFINE_EPS();
+
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(1);
+
+  router->route_message(fcu1, &smmsg, fr);
+
+  VERIFY_EPS();
+}
+
+TEST_F(TestRouter, route_drops_when_only_same_link_type_exists)
+{
+  auto router = this->create_node_no_endpoints();
+  auto & endpoints = get_endpoints(router);
+
+  auto make_ep = [router](id_t id, const std::string & url) {
+      auto ep = std::make_shared<MockEndpoint>();
+      ep->parent = router;
+      ep->id = id;
+      ep->link_type = LT::fcu;
+      ep->url = url;
+      ep->remote_addrs = {0x0000, 0x0100, 0x0101};
+      testing::Mock::AllowLeak(&(*ep));
+      return ep;
+    };
+
+  auto fcu1 = make_ep(1000, "mock://fcu1");
+  auto fcu2 = make_ep(1001, "mock://fcu2");
+  endpoints[fcu1->id] = fcu1;
+  endpoints[fcu2->id] = fcu2;
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x0101);
+  auto fr = Framing::ok;
+
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+
+  router->route_message(fcu1, &hbmsg, fr);
+
+  EXPECT_EQ(size_t(1), get_stat_msg_routed(router));
+  EXPECT_EQ(size_t(0), get_stat_msg_sent(router));
+  EXPECT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
 TEST_F(TestRouter, endpoint_recv_message)
 {
   auto router = create_node_no_endpoints();
