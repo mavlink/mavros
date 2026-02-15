@@ -544,19 +544,20 @@ void MAVConnTCPServer::do_accept()
         return;
       }
 
+      std::weak_ptr<MAVConnTCPClient> weak_client{acceptor_client};
       {
         lock_guard lock(sthis->mutex);
 
-        std::weak_ptr<MAVConnTCPClient> weak_client{acceptor_client};
         acceptor_client->message_received_cb = sthis->message_received_cb;
         acceptor_client->port_closed_cb = [weak_client, sthis]() {
-          sthis->client_closed(weak_client);
-        };
-        acceptor_client->client_connected(sthis->conn_id);
+            sthis->client_closed(weak_client);
+          };
 
         sthis->client_list.push_back(acceptor_client);
-        sthis->do_accept();
       }
+
+      acceptor_client->client_connected(sthis->conn_id);
+      sthis->do_accept();
     });
 }
 
