@@ -25,6 +25,7 @@
 #include <condition_variable>
 #include <limits>
 #include <memory>
+#include <thread>
 
 #include "mavconn/interface.hpp"
 #include "mavconn/serial.hpp"
@@ -167,6 +168,60 @@ TEST_F(UDP, send_message)
   send_heartbeat(client.get());
   EXPECT_EQ(wait_one(), true);
   EXPECT_EQ(message_id, msgid);
+}
+
+TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
+{
+  asio::io_service shared_io;
+  auto io_work = std::make_unique<asio::io_service::work>(shared_io);
+  std::thread io_thread([&shared_io]() {shared_io.run();});
+
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool got_echo = false;
+  bool posted_done = false;
+
+  auto echo = std::make_shared<MAVConnUDP>(
+    42, 200, "0.0.0.0", 45022, "", MAVConnUDP::DEFAULT_REMOTE_PORT, &shared_io);
+  echo->connect(
+    [&](const mavlink_message_t * msg, const Framing framing [[maybe_unused]]) {
+      echo->send_message(msg);
+    });
+
+  auto client = std::make_shared<MAVConnUDP>(
+    44, 200, "0.0.0.0", 45023, "localhost", 45022, &shared_io);
+  client->connect(
+    [&](const mavlink_message_t * message [[maybe_unused]],
+      const Framing framing [[maybe_unused]])
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      got_echo = true;
+      cond.notify_all();
+    });
+
+  send_heartbeat(client.get());
+  send_heartbeat(client.get());
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_EQ(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got_echo;}), true);
+  }
+
+  echo->close();
+
+  shared_io.post([&]() {
+    std::lock_guard<std::mutex> lock(mutex);
+    posted_done = true;
+    cond.notify_all();
+  });
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_EQ(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return posted_done;}), true);
+  }
+
+  client->close();
+  io_work.reset();
+  shared_io.stop();
+  io_thread.join();
 }
 
 class TCP : public UDP

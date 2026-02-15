@@ -22,6 +22,7 @@ Guidance for coding agents in this repository.
 
 ## Build And Test
 
+- Run build/test commands from workspace root (`/ws` in devcontainer), not from `/ws/src/mavros`.
 - Build (workspace root):
   - `colcon build --packages-up-to mavros mavros_extras mavros_msgs`
 - Local test runs are not required on every iteration, but are recommended for risky changes:
@@ -37,6 +38,7 @@ Guidance for coding agents in this repository.
 - Prefer devcontainer for reproducible local build/test when available.
 - Default config: `.devcontainer/devcontainer.json`
   - Scope-limited mount to `/ws/src/mavros` (only this repository).
+  - Run `colcon` from `/ws`.
 - Optional full-workspace config: `.devcontainer/whole-workspace/devcontainer.json`
   - Mounts `${localWorkspaceFolder}/../..` to `/ws`.
   - Requires repository path `<workspace>/src/mavros`.
