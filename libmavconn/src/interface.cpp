@@ -16,6 +16,7 @@
  */
 
 #include <cassert>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <set>
@@ -46,9 +47,14 @@ std::atomic<size_t> MAVConnInterface::conn_id_counter {0};
 MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id)
 : sys_id(system_id),
   comp_id(component_id),
-  m_parse_status{},
+  m_rx_parse_status{},
   m_buffer{},
-  m_mavlink_status{},
+  m_rx_status{},
+  m_tx_status{},
+  m_rx_signing{},
+  m_tx_signing{},
+  m_rx_signing_streams{},
+  signing_enabled(false),
   tx_total_bytes(0),
   rx_total_bytes(0),
   last_tx_total_bytes(0),
@@ -61,7 +67,7 @@ MAVConnInterface::MAVConnInterface(uint8_t system_id, uint8_t component_id)
 
 mavlink_status_t MAVConnInterface::get_status()
 {
-  return m_mavlink_status;
+  return m_rx_status;
 }
 
 MAVConnInterface::IOStat MAVConnInterface::get_iostat()
@@ -116,8 +122,8 @@ void MAVConnInterface::parse_buffer(
     auto c = *buf++;
 
     auto msg_received = static_cast<Framing>(mavlink::mavlink_frame_char_buffer(
-        &m_buffer, &m_parse_status, c,
-        &message, &m_mavlink_status));
+        &m_buffer, &m_rx_parse_status, c,
+        &message, &m_rx_status));
 
     if (msg_received != Framing::incomplete) {
       log_recv(pfx, message, msg_received);
@@ -191,21 +197,95 @@ void MAVConnInterface::send_message_ignore_drop(const mavlink::Message & msg, ui
 void MAVConnInterface::set_protocol_version(Protocol pver)
 {
   if (pver == Protocol::V10) {
-    m_mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-    m_parse_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    m_tx_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    m_rx_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    m_rx_parse_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
   } else {
-    m_mavlink_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
-    m_parse_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+    m_tx_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+    m_rx_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
+    m_rx_parse_status.flags &= ~(MAVLINK_STATUS_FLAG_OUT_MAVLINK1);
   }
 }
 
 Protocol MAVConnInterface::get_protocol_version()
 {
-  if (m_mavlink_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1) {
+  if (m_tx_status.flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1) {
     return Protocol::V10;
   } else {
     return Protocol::V20;
   }
+}
+
+uint64_t MAVConnInterface::default_signing_timestamp()
+{
+  constexpr auto mavlink_signing_epoch = std::chrono::sys_days {std::chrono::year(2015) /
+      std::chrono::January / 1};
+  auto now = std::chrono::system_clock::now();
+  if (now < mavlink_signing_epoch) {
+    now = mavlink_signing_epoch;
+  }
+
+  const auto delta_us = std::chrono::duration_cast<std::chrono::microseconds>(
+    now - mavlink_signing_epoch).count();
+  return static_cast<uint64_t>(delta_us / 10);
+}
+
+void MAVConnInterface::apply_signing_config(bool sign_outgoing, uint8_t link_id, uint64_t timestamp)
+{
+  m_tx_signing.flags = sign_outgoing ? MAVLINK_SIGNING_FLAG_SIGN_OUTGOING : 0;
+  m_tx_signing.link_id = link_id;
+  m_tx_signing.timestamp = timestamp;
+  m_tx_signing.last_status = mavlink::MAVLINK_SIGNING_STATUS_NONE;
+
+  m_rx_signing.flags = sign_outgoing ? MAVLINK_SIGNING_FLAG_SIGN_OUTGOING : 0;
+  m_rx_signing.link_id = link_id;
+  m_rx_signing.timestamp = timestamp;
+  m_rx_signing.last_status = mavlink::MAVLINK_SIGNING_STATUS_NONE;
+
+  m_rx_signing_streams = {};
+
+  m_tx_status.signing = &m_tx_signing;
+  m_rx_parse_status.signing = &m_rx_signing;
+  m_rx_parse_status.signing_streams = &m_rx_signing_streams;
+  m_rx_status.signing = &m_rx_signing;
+  m_rx_status.signing_streams = &m_rx_signing_streams;
+
+  signing_enabled = true;
+}
+
+void MAVConnInterface::setup_signing(
+  const std::array<uint8_t, 32> & secret_key,
+  bool sign_outgoing,
+  uint8_t link_id,
+  std::optional<uint64_t> initial_timestamp)
+{
+  std::memcpy(m_tx_signing.secret_key, secret_key.data(), secret_key.size());
+  std::memcpy(m_rx_signing.secret_key, secret_key.data(), secret_key.size());
+
+  const auto timestamp = initial_timestamp.value_or(default_signing_timestamp());
+  apply_signing_config(sign_outgoing, link_id, timestamp);
+}
+
+void MAVConnInterface::disable_signing()
+{
+  m_tx_signing = {};
+  m_rx_signing = {};
+  m_rx_signing_streams = {};
+
+  m_tx_status.signing = nullptr;
+  m_tx_status.signing_streams = nullptr;
+  m_rx_parse_status.signing = nullptr;
+  m_rx_parse_status.signing_streams = nullptr;
+  m_rx_status.signing = nullptr;
+  m_rx_status.signing_streams = nullptr;
+
+  signing_enabled = false;
+}
+
+void MAVConnInterface::set_accept_unsigned_callback(mavlink::mavlink_accept_unsigned_t cb)
+{
+  m_tx_signing.accept_unsigned_callback = cb;
+  m_rx_signing.accept_unsigned_callback = cb;
 }
 
 /**

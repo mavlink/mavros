@@ -20,6 +20,7 @@
 // #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
@@ -271,6 +272,13 @@ class TCP : public UDP
 {
 };
 
+static bool accept_unsigned_for_test(
+  const mavlink::mavlink_status_t * status [[maybe_unused]],
+  uint32_t msgid [[maybe_unused]])
+{
+  return true;
+}
+
 TEST_F(TCP, bind_error)
 {
   MAVConnInterface::Ptr conns[2];
@@ -355,6 +363,129 @@ TEST(SERIAL, open_error)
       42, 200, "/some/magic/not/exist/path",
       57600),
     DeviceError);
+}
+
+TEST(SIGNING, udp_signed_packet_is_accepted)
+{
+  std::mutex mutex;
+  std::condition_variable cond;
+  auto got = false;
+  auto framing = Framing::incomplete;
+  auto message_id = std::numeric_limits<msgid_t>::max();
+
+  const std::array<uint8_t, 32> key {0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+    0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+    0x42, 0x42, 0x42, 0x42, 0x42, 0x42};
+
+  auto receiver = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45042);
+  receiver->setup_signing(key, true, 1, 1U);
+  receiver->connect(
+    [&](const mavlink_message_t * message, const Framing msg_framing) {
+      std::lock_guard<std::mutex> lock(mutex);
+      message_id = message->msgid;
+      framing = msg_framing;
+      got = true;
+      cond.notify_all();
+    });
+
+  auto sender = std::make_shared<MAVConnUDP>(44, 200, "0.0.0.0", 45043, "localhost", 45042);
+  sender->setup_signing(key, true, 2, 1U);
+  sender->connect(MAVConnInterface::ReceivedCb());
+
+  send_heartbeat(sender.get());
+  send_heartbeat(sender.get());
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got;}));
+  }
+  EXPECT_EQ(framing, Framing::ok);
+  EXPECT_EQ(message_id, mavlink::common::msg::HEARTBEAT::MSG_ID);
+
+  sender->close();
+  receiver->close();
+}
+
+TEST(SIGNING, udp_signature_mismatch_is_reported)
+{
+  std::mutex mutex;
+  std::condition_variable cond;
+  auto got = false;
+  auto framing = Framing::incomplete;
+
+  const std::array<uint8_t, 32> sender_key {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+    0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+    0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
+  const std::array<uint8_t, 32> receiver_key {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+    0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+    0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22};
+
+  auto receiver = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45044);
+  receiver->setup_signing(receiver_key, true, 1, 1U);
+  receiver->connect(
+    [&](const mavlink_message_t * message [[maybe_unused]], const Framing msg_framing) {
+      std::lock_guard<std::mutex> lock(mutex);
+      framing = msg_framing;
+      got = true;
+      cond.notify_all();
+    });
+
+  auto sender = std::make_shared<MAVConnUDP>(44, 200, "0.0.0.0", 45045, "localhost", 45044);
+  sender->setup_signing(sender_key, true, 2, 1U);
+  sender->connect(MAVConnInterface::ReceivedCb());
+
+  send_heartbeat(sender.get());
+  send_heartbeat(sender.get());
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got;}));
+  }
+  EXPECT_EQ(framing, Framing::bad_signature);
+
+  sender->close();
+  receiver->close();
+}
+
+TEST(SIGNING, udp_accept_unsigned_callback_allows_unsigned_packets)
+{
+  std::mutex mutex;
+  std::condition_variable cond;
+  auto got = false;
+  auto framing = Framing::incomplete;
+  auto message_id = std::numeric_limits<msgid_t>::max();
+
+  const std::array<uint8_t, 32> receiver_key {0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+    0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+    0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33};
+
+  auto receiver = std::make_shared<MAVConnUDP>(42, 200, "0.0.0.0", 45046);
+  receiver->setup_signing(receiver_key, true, 1, 1U);
+  receiver->set_accept_unsigned_callback(accept_unsigned_for_test);
+  receiver->connect(
+    [&](const mavlink_message_t * message, const Framing msg_framing) {
+      std::lock_guard<std::mutex> lock(mutex);
+      message_id = message->msgid;
+      framing = msg_framing;
+      got = true;
+      cond.notify_all();
+    });
+
+  auto sender = std::make_shared<MAVConnUDP>(44, 200, "0.0.0.0", 45047, "localhost", 45046);
+  sender->connect(MAVConnInterface::ReceivedCb());
+
+  send_heartbeat(sender.get());
+  send_heartbeat(sender.get());
+
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    EXPECT_TRUE(cond.wait_for(lock, std::chrono::seconds(2), [&]() {return got;}));
+  }
+  EXPECT_EQ(framing, Framing::ok);
+  EXPECT_EQ(message_id, mavlink::common::msg::HEARTBEAT::MSG_ID);
+
+  sender->close();
+  receiver->close();
 }
 
 #if 0

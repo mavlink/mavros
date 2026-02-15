@@ -24,12 +24,14 @@
 #define MAVCONN__INTERFACE_HPP_
 
 #include <atomic>
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -246,6 +248,31 @@ public:
   [[nodiscard]] Protocol get_protocol_version();
 
   /**
+   * @brief Enable MAVLink v2 packet signing for this connection.
+   *
+   * @param[in] secret_key         32-byte signing key
+   * @param[in] sign_outgoing      enable signing for outgoing packets
+   * @param[in] link_id            link id embedded in outgoing signatures
+   * @param[in] initial_timestamp  optional initial timestamp in 10 usec units
+   *                               since 2015-01-01 00:00:00 UTC.
+   */
+  void setup_signing(
+    const std::array<uint8_t, 32> & secret_key,
+    bool sign_outgoing = true,
+    uint8_t link_id = 0,
+    std::optional<uint64_t> initial_timestamp = std::nullopt);
+
+  /**
+   * @brief Disable MAVLink v2 packet signing.
+   */
+  void disable_signing();
+
+  /**
+   * @brief Configure callback for accepting unsigned packets while signing is enabled.
+   */
+  void set_accept_unsigned_callback(mavlink::mavlink_accept_unsigned_t cb);
+
+  /**
    * @brief Construct connection from URL
    *
    * Supported URL schemas:
@@ -303,7 +330,7 @@ protected:
 
   inline mavlink::mavlink_status_t * get_status_p()
   {
-    return &m_parse_status;
+    return &m_tx_status;
   }
 
   inline mavlink::mavlink_message_t * get_buffer_p()
@@ -326,9 +353,18 @@ protected:
 private:
   friend const mavlink::mavlink_msg_entry_t * mavlink::mavlink_get_msg_entry(uint32_t msgid);
 
-  mavlink::mavlink_status_t m_parse_status;
+  static uint64_t default_signing_timestamp();
+  void apply_signing_config(bool sign_outgoing, uint8_t link_id, uint64_t timestamp);
+
+  mavlink::mavlink_status_t m_rx_parse_status;
   mavlink::mavlink_message_t m_buffer;
-  mavlink::mavlink_status_t m_mavlink_status;
+  mavlink::mavlink_status_t m_rx_status;
+  mavlink::mavlink_status_t m_tx_status;
+
+  mavlink::mavlink_signing_t m_rx_signing;
+  mavlink::mavlink_signing_t m_tx_signing;
+  mavlink::mavlink_signing_streams_t m_rx_signing_streams;
+  bool signing_enabled;
 
   std::atomic<size_t> tx_total_bytes, rx_total_bytes;
   std::mutex iostat_mutex;
