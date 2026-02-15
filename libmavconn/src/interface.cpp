@@ -65,7 +65,7 @@ mavlink_status_t MAVConnInterface::get_status()
 
 MAVConnInterface::IOStat MAVConnInterface::get_iostat()
 {
-  std::lock_guard<std::recursive_mutex> lock(iostat_mutex);
+  std::lock_guard<std::mutex> lock(iostat_mutex);
   IOStat stat;
 
   stat.tx_total_bytes = tx_total_bytes;

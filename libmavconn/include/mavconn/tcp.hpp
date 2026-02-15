@@ -96,7 +96,7 @@ private:
   std::atomic<bool> tx_in_progress;
   std::deque<MsgBuffer> tx_q;
   std::array<uint8_t, MsgBuffer::MAX_SIZE> rx_buf;
-  std::recursive_mutex mutex;
+  std::mutex mutex;
 
   /**
    * This special function called by TCP server when connection accepted.
@@ -163,7 +163,7 @@ private:
   std::atomic<bool> is_destroying;
 
   std::list<std::shared_ptr<MAVConnTCPClient>> client_list;
-  std::recursive_mutex mutex;
+  std::mutex mutex;
 
   void do_accept();
 

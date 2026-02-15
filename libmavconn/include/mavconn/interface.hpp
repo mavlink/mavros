@@ -44,7 +44,6 @@
 namespace mavconn
 {
 using steady_clock = std::chrono::steady_clock;
-using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 //! Same as @p mavlink::common::MAV_COMPONENT::COMP_ID_UDP_BRIDGE
 static constexpr auto MAV_COMP_ID_UDP_BRIDGE = 240;
@@ -327,7 +326,7 @@ private:
   mavlink::mavlink_status_t m_mavlink_status;
 
   std::atomic<size_t> tx_total_bytes, rx_total_bytes;
-  std::recursive_mutex iostat_mutex;
+  std::mutex iostat_mutex;
   size_t last_tx_total_bytes, last_rx_total_bytes;
   std::chrono::time_point<steady_clock> last_iostat;
 

@@ -140,7 +140,7 @@ void MAVConnSerial::connect(
 
 void MAVConnSerial::close()
 {
-  lock_guard lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
   if (!is_open()) {
     return;
   }
@@ -171,7 +171,7 @@ void MAVConnSerial::send_bytes(const uint8_t * bytes, size_t length)
   }
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnSerial::send_bytes: TX queue overflow");
@@ -194,7 +194,7 @@ void MAVConnSerial::send_message(const mavlink_message_t * message)
   log_send(PFX, message);
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
@@ -215,7 +215,7 @@ void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t
   log_send_obj(PFX, message);
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnSerial::send_message: TX queue overflow");
@@ -249,7 +249,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
     return;
   }
 
-  lock_guard lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
   if (tx_q.empty()) {
     return;
   }
@@ -271,7 +271,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
       sthis->iostat_tx_add(bytes_transferred);
       bool continue_send = false;
       {
-        lock_guard lock(sthis->mutex);
+        std::lock_guard<std::mutex> lock(sthis->mutex);
 
         if (sthis->tx_q.empty()) {
           sthis->tx_in_progress = false;

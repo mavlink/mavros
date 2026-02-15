@@ -196,7 +196,7 @@ void MAVConnTCPClient::stop()
 void MAVConnTCPClient::close()
 {
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     if (!is_open()) {
       return;
     }
@@ -228,7 +228,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t * bytes, size_t length)
   }
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnTCPClient::send_bytes: TX queue overflow");
@@ -251,7 +251,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t * message)
   log_send(PFX, message);
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
@@ -272,7 +272,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint
   log_send_obj(PFX, message);
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     if (tx_q.size() >= MAX_TXQ_SIZE) {
       throw std::length_error("MAVConnTCPClient::send_message: TX queue overflow");
@@ -309,7 +309,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
     return;
   }
 
-  lock_guard lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
   if (tx_q.empty()) {
     return;
   }
@@ -331,7 +331,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
       sthis->iostat_tx_add(bytes_transferred);
       bool continue_send = false;
       {
-        lock_guard lock(sthis->mutex);
+        std::lock_guard<std::mutex> lock(sthis->mutex);
 
         if (sthis->tx_q.empty()) {
           sthis->tx_in_progress = false;
@@ -415,7 +415,7 @@ void MAVConnTCPServer::close()
 {
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     if (!is_open()) {
       return;
     }
@@ -454,7 +454,7 @@ mavlink_status_t MAVConnTCPServer::get_status()
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     clients.assign(client_list.begin(), client_list.end());
   }
   for (auto & instp : clients) {
@@ -483,7 +483,7 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
 
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     clients.assign(client_list.begin(), client_list.end());
   }
   for (auto & instp : clients) {
@@ -508,7 +508,7 @@ void MAVConnTCPServer::send_bytes(const uint8_t * bytes, size_t length)
 {
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     clients.assign(client_list.begin(), client_list.end());
   }
   for (auto & instp : clients) {
@@ -520,7 +520,7 @@ void MAVConnTCPServer::send_message(const mavlink_message_t * message)
 {
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     clients.assign(client_list.begin(), client_list.end());
   }
   for (auto & instp : clients) {
@@ -532,7 +532,7 @@ void MAVConnTCPServer::send_message(const mavlink::Message & message, const uint
 {
   std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
   {
-    lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     clients.assign(client_list.begin(), client_list.end());
   }
   for (auto & instp : clients) {
@@ -559,7 +559,7 @@ void MAVConnTCPServer::do_accept()
 
       std::weak_ptr<MAVConnTCPClient> weak_client{acceptor_client};
       {
-        lock_guard lock(sthis->mutex);
+        std::lock_guard<std::mutex> lock(sthis->mutex);
 
         acceptor_client->message_received_cb = sthis->message_received_cb;
         acceptor_client->port_closed_cb = [weak_client, sthis]() {
@@ -582,7 +582,7 @@ void MAVConnTCPServer::client_closed(std::weak_ptr<MAVConnTCPClient> weak_instp)
       conn_id, instp.get(), to_string_ss(instp->server_ep).c_str());
 
     {
-      lock_guard lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       client_list.remove(instp);
     }
   }
