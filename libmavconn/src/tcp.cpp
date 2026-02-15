@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "mavconn/console_bridge_compat.hpp"
 #include "mavconn/tcp.hpp"
@@ -405,9 +406,12 @@ void MAVConnTCPServer::connect(
 
 void MAVConnTCPServer::close()
 {
-  lock_guard lock(mutex);
-  if (!is_open()) {
-    return;
+  {
+    lock_guard lock(mutex);
+    if (!is_open()) {
+      return;
+    }
+    is_destroying = true;
   }
 
   CONSOLE_BRIDGE_logInform(
@@ -415,14 +419,15 @@ void MAVConnTCPServer::close()
     "All connections will be closed.",
     conn_id);
 
+  acceptor.close();
+
   if (own_io_thread) {
     io_work.reset();
     io_service.stop();
-  }
-  acceptor.close();
 
-  if (own_io_thread && io_thread.joinable()) {
-    io_thread.join();
+    if (std::this_thread::get_id() != io_thread.get_id() && io_thread.joinable()) {
+      io_thread.join();
+    }
   }
 
   if (port_closed_cb) {
@@ -433,9 +438,13 @@ void MAVConnTCPServer::close()
 mavlink_status_t MAVConnTCPServer::get_status()
 {
   mavlink_status_t status {};
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
 
-  lock_guard lock(mutex);
-  for (auto & instp : client_list) {
+  {
+    lock_guard lock(mutex);
+    clients.assign(client_list.begin(), client_list.end());
+  }
+  for (auto & instp : clients) {
     auto inst_status = instp->get_status();
 
     // [[[cog:
@@ -458,9 +467,13 @@ mavlink_status_t MAVConnTCPServer::get_status()
 MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 {
   MAVConnInterface::IOStat iostat {};
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
 
-  lock_guard lock(mutex);
-  for (auto & instp : client_list) {
+  {
+    lock_guard lock(mutex);
+    clients.assign(client_list.begin(), client_list.end());
+  }
+  for (auto & instp : clients) {
     auto inst_iostat = instp->get_iostat();
 
     // [[[cog:
@@ -480,24 +493,36 @@ MAVConnInterface::IOStat MAVConnTCPServer::get_iostat()
 
 void MAVConnTCPServer::send_bytes(const uint8_t * bytes, size_t length)
 {
-  lock_guard lock(mutex);
-  for (auto & instp : client_list) {
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
+  {
+    lock_guard lock(mutex);
+    clients.assign(client_list.begin(), client_list.end());
+  }
+  for (auto & instp : clients) {
     instp->send_bytes(bytes, length);
   }
 }
 
 void MAVConnTCPServer::send_message(const mavlink_message_t * message)
 {
-  lock_guard lock(mutex);
-  for (auto & instp : client_list) {
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
+  {
+    lock_guard lock(mutex);
+    clients.assign(client_list.begin(), client_list.end());
+  }
+  for (auto & instp : clients) {
     instp->send_message(message);
   }
 }
 
 void MAVConnTCPServer::send_message(const mavlink::Message & message, const uint8_t source_compid)
 {
-  lock_guard lock(mutex);
-  for (auto & instp : client_list) {
+  std::vector<std::shared_ptr<MAVConnTCPClient>> clients;
+  {
+    lock_guard lock(mutex);
+    clients.assign(client_list.begin(), client_list.end());
+  }
+  for (auto & instp : clients) {
     instp->send_message(message, source_compid);
   }
 }
