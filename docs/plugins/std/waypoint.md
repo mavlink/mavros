@@ -44,6 +44,8 @@
 
 
 ## MAVLink Publications
+- `MISSION_ITEM` [arg: `wpi`, dialect: common, msg_id: 39, id: `mavlink::common::msg::MISSION_ITEM::MSG_ID`]
+- `MISSION_ITEM_INT` [arg: `wpi`, dialect: common, msg_id: 73, id: `mavlink::common::msg::MISSION_ITEM_INT::MSG_ID`]
 - `MISSION_REQUEST` [arg: `mrq`, dialect: common, msg_id: 40, id: `mavlink::common::msg::MISSION_REQUEST::MSG_ID`]
 - `MISSION_REQUEST_INT` [arg: `mrq`, dialect: common, msg_id: 51, id: `mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID`]
 - `MISSION_SET_CURRENT` [arg: `msc`, dialect: common, msg_id: 41, id: `mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID`] - msc.mission_type = enum_value(mission_type);
@@ -52,4 +54,3 @@
 - `MISSION_WRITE_PARTIAL_LIST` [arg: `mwpl`, dialect: common, msg_id: 38, id: `mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID`]
 - `MISSION_CLEAR_ALL` [arg: `mclr`, dialect: common, msg_id: 45, id: `mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID`]
 - `MISSION_ACK` [arg: `mack`, dialect: common, msg_id: 47, id: `mavlink::common::msg::MISSION_ACK::MSG_ID`]
-- `<unknown>` [arg: `wpi`]

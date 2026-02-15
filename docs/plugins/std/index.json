@@ -454,6 +454,24 @@
     ],
     "mavlink_publications": [
       {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 39
+      },
+      {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 73
+      },
+      {
         "argument": "mrq",
         "message_type": "mavlink::common::msg::MISSION_REQUEST",
         "message_name": "MISSION_REQUEST",
@@ -525,14 +543,6 @@
         "dialect": "common",
         "line": 561,
         "msg_id": 47
-      },
-      {
-        "argument": "wpi",
-        "message_type": "",
-        "message_name": "",
-        "msg_id_expr": "",
-        "dialect": "",
-        "line": 639
       }
     ]
   },
@@ -1303,6 +1313,24 @@
     ],
     "mavlink_publications": [
       {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 39
+      },
+      {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 73
+      },
+      {
         "argument": "mrq",
         "message_type": "mavlink::common::msg::MISSION_REQUEST",
         "message_name": "MISSION_REQUEST",
@@ -1374,14 +1402,6 @@
         "dialect": "common",
         "line": 561,
         "msg_id": 47
-      },
-      {
-        "argument": "wpi",
-        "message_type": "",
-        "message_name": "",
-        "msg_id_expr": "",
-        "dialect": "",
-        "line": 639
       }
     ]
   },
@@ -2355,6 +2375,24 @@
     ],
     "mavlink_publications": [
       {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM",
+        "message_name": "MISSION_ITEM",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 39
+      },
+      {
+        "argument": "wpi",
+        "message_type": "mavlink::common::msg::MISSION_ITEM_INT",
+        "message_name": "MISSION_ITEM_INT",
+        "msg_id_expr": "mavlink::common::msg::MISSION_ITEM_INT::MSG_ID",
+        "dialect": "common",
+        "line": 0,
+        "msg_id": 73
+      },
+      {
         "argument": "mrq",
         "message_type": "mavlink::common::msg::MISSION_REQUEST",
         "message_name": "MISSION_REQUEST",
@@ -2426,14 +2464,6 @@
         "dialect": "common",
         "line": 561,
         "msg_id": 47
-      },
-      {
-        "argument": "wpi",
-        "message_type": "",
-        "message_name": "",
-        "msg_id_expr": "",
-        "dialect": "",
-        "line": 639
       }
     ]
   },

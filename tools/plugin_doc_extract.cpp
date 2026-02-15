@@ -884,6 +884,40 @@ void apply_missionbase_subscription_fallback(
   }
 }
 
+void apply_missionbase_publication_fallback(
+  std::vector<MavlinkPubEntry> & pubs, const std::map<std::string, int> & msgid_index)
+{
+  bool has_unknown_wpi = false;
+  for (const auto & e : pubs) {
+    if (e.argument == "wpi" && e.message_type.empty() && e.message_name.empty()) {
+      has_unknown_wpi = true;
+      break;
+    }
+  }
+  if (!has_unknown_wpi) return;
+
+  auto add_pub = [&](const std::string & message_type, const std::string & argument) {
+    MavlinkPubEntry e;
+    e.argument = argument;
+    e.message_type = message_type;
+    e.message_name = tail_name(message_type);
+    e.msg_id_expr = message_type + "::MSG_ID";
+    resolve_mavlink_meta(e, msgid_index);
+    pubs.push_back(std::move(e));
+  };
+
+  add_pub("mavlink::common::msg::MISSION_ITEM", "wpi");
+  add_pub("mavlink::common::msg::MISSION_ITEM_INT", "wpi");
+
+  pubs.erase(
+    std::remove_if(
+      pubs.begin(), pubs.end(),
+      [](const MavlinkPubEntry & e) {
+        return e.argument == "wpi" && e.message_type.empty() && e.message_name.empty();
+      }),
+    pubs.end());
+}
+
 bool uses_missionbase_context(const fs::path & path)
 {
   static const std::unordered_set<std::string> kFiles = {
@@ -958,13 +992,20 @@ PluginApi parse_plugin(
 
   // Pull message metadata from inherited mixins/base classes where handlers/senders are defined.
   if (uses_missionbase_context(path)) {
+    std::vector<MavlinkSubEntry> mission_subs;
+    std::vector<MavlinkPubEntry> mission_pubs;
     extract_mavlink_from_context(
       repo_root / "mavros/include/mavros/mission_protocol_base.hpp",
-      msgid_index, &api.mavlink_subscriptions, &api.mavlink_publications);
+      msgid_index, &mission_subs, &mission_pubs);
     extract_mavlink_from_context(
       repo_root / "mavros/src/plugins/mission_protocol_base.cpp",
-      msgid_index, nullptr, &api.mavlink_publications);
+      msgid_index, nullptr, &mission_pubs);
+    for (auto & e : mission_subs) api.mavlink_subscriptions.push_back(std::move(e));
+    for (auto & e : mission_pubs) api.mavlink_publications.push_back(std::move(e));
+    dedup_mavlink_entries(api.mavlink_subscriptions);
+    dedup_mavlink_publications(api.mavlink_publications);
     apply_missionbase_subscription_fallback(api.mavlink_subscriptions, msgid_index);
+    apply_missionbase_publication_fallback(api.mavlink_publications, msgid_index);
 
     std::smatch mt;
     std::string mission_type = "MISSION";
