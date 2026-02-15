@@ -4,8 +4,16 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   industrial_ci:
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -28,6 +36,8 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: "${{ env.CCACHE_DIR }}"
-          key: "ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}"
+          key: "ccache-${{ runner.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt') }}"
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-
       - uses: 'ros-industrial/industrial_ci@master'  # nosemgrep
         env: ${{matrix.env}}

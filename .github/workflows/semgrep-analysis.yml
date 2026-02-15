@@ -8,13 +8,21 @@ on:
     branches: [master, ros2]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [master]
+    branches: [master, ros2]
   schedule:
     - cron: '39 7 * * 4'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   semgrep:
     name: Scan
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep

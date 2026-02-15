@@ -1,11 +1,14 @@
 version: 2
 updates:
-- package-ecosystem: gomod
-  directory: "/"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
 - package-ecosystem: "github-actions"
   directory: "/"
+  schedule:
+    interval: "weekly"
+- package-ecosystem: "uv"
+  directory: "/tools"
+  schedule:
+    interval: "weekly"
+- package-ecosystem: "pip"
+  directory: "/docs"
   schedule:
     interval: "weekly"
