@@ -1,11 +1,11 @@
 Installation
 ============
 
-ROS2 installation is out of topic for that guide,
-you should follow the [official installation instruction][kinst].
+ROS2 installation is out of scope for this guide,
+you should follow the [official installation instructions][kinst].
 
 !!! note
-    This guide tested on the ROS2 **Kilted** release.
+    This guide is tested on the ROS2 **Kilted** release.
     But it is likely that your release will have quite similar set of commands.
 
 
@@ -30,7 +30,7 @@ ROS repository has binary packages for Ubuntu amd64 and aarch64.
 Just use `apt` for installation:
 
 ```shell
-sudo apt install ros-kilted-mavros
+sudo apt install ros-${ROS_DISTRO}-mavros
 ```
 
 Then install GeographicLib datasets using helper script:
@@ -65,7 +65,7 @@ cd ~/ros2_ws
 ### Get MAVLink and MAVROS repos
 ```shell
 rosinstall_generator --format repos mavlink | tee /tmp/mavlink.repos
-rosinstall_generator --format repos --upstream mavros | tee -a /tmp/mavros.repos
+rosinstall_generator --format repos --upstream mavros | tee /tmp/mavros.repos
 ```
 
 !!! note
@@ -86,6 +86,10 @@ rosdep update
 rosdep install --from-paths src --ignore-src -y
 ```
 
+!!! note
+    If `rosdep update` fails due to permission issues in your environment, rerun it with `sudo`.
+
+
 ### Install GeographicLib datasets
 ```shell
 sudo ./src/mavros/scripts/install_geographiclib_datasets.sh
@@ -101,7 +105,12 @@ colcon build
 source ./install/setup.bash
 ```
 
-!!! node
+### Verify installation
+```shell
+ros2 pkg list | grep -E "^mavros$|^mavros_extras$|^mavros_msgs$"
+```
+
+!!! note
     Make sure that you use `setup.bash` or `setup.zsh` from workspace.
     Otherwise `ros2 run` can't find nodes.
 
@@ -112,7 +121,7 @@ Devcontainer (optional)
 You can use the provided devcontainer for a reproducible ROS 2 environment.
 
 ```shell
-cd ~/ros2/src/mavros
+cd ~/ros2_ws/src/mavros
 ```
 
 Open the folder in VS Code / VSCodium and run `Dev Containers: Reopen in Container`.
