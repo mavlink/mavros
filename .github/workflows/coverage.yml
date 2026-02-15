@@ -1,0 +1,97 @@
+---
+
+name: Coverage
+
+on:
+  push:
+    branches: [master, ros2]
+  pull_request:
+    branches: [master, ros2]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: "${{ matrix.component.name }} (ROS ${{ matrix.ros_distro }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [kilted]
+        component:
+          # Add more entries here when enabling coverage for more modules.
+          # Example:
+          # - name: mavros
+          #   packages: mavros
+          #   source_filter: ".*/mavros/.*"
+          - name: libmavconn
+            packages: libmavconn
+            source_filter: ".*/libmavconn/.*"
+
+    env:
+      ROS_DISTRO: ${{ matrix.ros_distro }}
+      COMPONENT_NAME: ${{ matrix.component.name }}
+      COMPONENT_PACKAGES: ${{ matrix.component.packages }}
+      COMPONENT_FILTER: ${{ matrix.component.source_filter }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: ${{ env.ROS_DISTRO }}
+
+      - name: Install Coverage Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gcovr
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          rosdep update
+          rosdep install --from-paths . --ignore-src --rosdistro ${ROS_DISTRO} -y
+
+      - name: Build With Coverage
+        shell: bash
+        run: |
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          colcon build --packages-up-to ${COMPONENT_PACKAGES} --cmake-args \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS=--coverage \
+            -DCMAKE_CXX_FLAGS=--coverage
+
+      - name: Run Tests
+        shell: bash
+        run: |
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          source install/setup.bash
+          colcon test --packages-select ${COMPONENT_PACKAGES}
+          colcon test-result --verbose
+
+      - name: Generate Coverage Report
+        shell: bash
+        run: |
+          mkdir -p coverage/${COMPONENT_NAME}
+          gcovr \
+            --root "${GITHUB_WORKSPACE}" \
+            --filter "${COMPONENT_FILTER}" \
+            --xml-pretty \
+            --output "coverage/${COMPONENT_NAME}/coverage.xml" \
+            --html-details "coverage/${COMPONENT_NAME}/coverage.html" \
+            --exclude-unreachable-branches \
+            "${GITHUB_WORKSPACE}/build"
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.component.name }}-${{ matrix.ros_distro }}
+          path: coverage/${{ matrix.component.name }}
+          if-no-files-found: error
