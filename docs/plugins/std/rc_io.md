@@ -34,4 +34,4 @@
 
 
 ## MAVLink Publications
-- `RC_CHANNELS_OVERRIDE` [arg: `ovr`, dialect: common, msg_id: 70, id: `mavlink::common::msg::RC_CHANNELS_OVERRIDE::MSG_ID`] - [[[end]]] (sum: +HglKUW20c)
+- `RC_CHANNELS_OVERRIDE` [arg: `ovr`, dialect: common, msg_id: 70, id: `mavlink::common::msg::RC_CHANNELS_OVERRIDE::MSG_ID`]

@@ -40,7 +40,7 @@
 
 ## MAVLink Publications
 - `DEBUG` [arg: `debug`, dialect: common, msg_id: 254, id: `mavlink::common::msg::DEBUG::MSG_ID`]
-- `DEBUG_VECT` [arg: `debug`, dialect: common, msg_id: 250, id: `mavlink::common::msg::DEBUG_VECT::MSG_ID`] - [[[end]]] (sum: 4zWbFMda3z)
+- `DEBUG_VECT` [arg: `debug`, dialect: common, msg_id: 250, id: `mavlink::common::msg::DEBUG_VECT::MSG_ID`]
 - `DEBUG_FLOAT_ARRAY` [arg: `debug`, dialect: common, msg_id: 350, id: `mavlink::common::msg::DEBUG_FLOAT_ARRAY::MSG_ID`]
 - `NAMED_VALUE_FLOAT` [arg: `value`, dialect: common, msg_id: 251, id: `mavlink::common::msg::NAMED_VALUE_FLOAT::MSG_ID`]
 - `NAMED_VALUE_INT` [arg: `value`, dialect: common, msg_id: 252, id: `mavlink::common::msg::NAMED_VALUE_INT::MSG_ID`]

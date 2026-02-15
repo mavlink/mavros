@@ -36,4 +36,4 @@ send back to the FCU a corrected path (collision free, smoothed) @see trajectory
 ## MAVLink Publications
 - `TRAJECTORY_REPRESENTATION_WAYPOINTS` [arg: `trajectory`, dialect: common, msg_id: 332, id: `mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS::MSG_ID`]
 - `TRAJECTORY_REPRESENTATION_BEZIER` [arg: `trajectory`, dialect: common, msg_id: 333, id: `mavlink::common::msg::TRAJECTORY_REPRESENTATION_BEZIER::MSG_ID`]
-- `TRAJECTORY_REPRESENTATION_WAYPOINTS` [arg: `trajectory`, dialect: common, msg_id: 332, id: `mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS::MSG_ID`] - [[[end]]] (sum: pj0mgswWiX)
+- `TRAJECTORY_REPRESENTATION_WAYPOINTS` [arg: `trajectory`, dialect: common, msg_id: 332, id: `mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS::MSG_ID`]

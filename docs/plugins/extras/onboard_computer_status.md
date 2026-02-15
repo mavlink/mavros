@@ -33,4 +33,4 @@ Publishes the status of the onboard computer @see status_cb()
 
 
 ## MAVLink Publications
-- `ONBOARD_COMPUTER_STATUS` [arg: `status`, dialect: common, msg_id: 390, id: `mavlink::common::msg::ONBOARD_COMPUTER_STATUS::MSG_ID`] - [[[end]]] (sum: sG78qQ2aEW)
+- `ONBOARD_COMPUTER_STATUS` [arg: `status`, dialect: common, msg_id: 390, id: `mavlink::common::msg::ONBOARD_COMPUTER_STATUS::MSG_ID`]

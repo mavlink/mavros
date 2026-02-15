@@ -37,4 +37,5 @@ Send setpoint positions to FCU controller.
 
 
 ## MAVLink Publications
-- None
+- `SET_POSITION_TARGET_LOCAL_NED` [arg: `sp`, dialect: common, msg_id: 84, id: `mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID`]
+- `SET_POSITION_TARGET_GLOBAL_INT` [arg: `sp`, dialect: common, msg_id: 86, id: `mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID`]

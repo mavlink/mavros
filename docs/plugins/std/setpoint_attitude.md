@@ -36,4 +36,4 @@ Send setpoint attitude/orientation/thrust to FCU controller.
 
 
 ## MAVLink Publications
-- None
+- `SET_ATTITUDE_TARGET` [arg: `sp`, dialect: common, msg_id: 82, id: `mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID`]

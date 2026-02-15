@@ -37,8 +37,8 @@
 
 
 ## MAVLink Publications
-- `HIL_STATE_QUATERNION` [arg: `state_quat`, dialect: common, msg_id: 115, id: `mavlink::common::msg::HIL_STATE_QUATERNION::MSG_ID`] - [[[end]]] (sum: WWg1ha3BAq)
+- `HIL_STATE_QUATERNION` [arg: `state_quat`, dialect: common, msg_id: 115, id: `mavlink::common::msg::HIL_STATE_QUATERNION::MSG_ID`]
 - `HIL_GPS` [arg: `gps`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]
-- `HIL_SENSOR` [arg: `sensor`, dialect: common, msg_id: 107, id: `mavlink::common::msg::HIL_SENSOR::MSG_ID`] - [[[end]]] (sum: 4fZQLPEZX/)
+- `HIL_SENSOR` [arg: `sensor`, dialect: common, msg_id: 107, id: `mavlink::common::msg::HIL_SENSOR::MSG_ID`]
 - `HIL_OPTICAL_FLOW` [arg: `of`, dialect: common, msg_id: 114, id: `mavlink::common::msg::HIL_OPTICAL_FLOW::MSG_ID`]
-- `HIL_RC_INPUTS_RAW` [arg: `rcin`, dialect: common, msg_id: 92, id: `mavlink::common::msg::HIL_RC_INPUTS_RAW::MSG_ID`] - [[[end]]] (sum: NCZzsGkOR/)
+- `HIL_RC_INPUTS_RAW` [arg: `rcin`, dialect: common, msg_id: 92, id: `mavlink::common::msg::HIL_RC_INPUTS_RAW::MSG_ID`]

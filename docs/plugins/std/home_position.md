@@ -33,4 +33,4 @@ Publishes home position.
 
 
 ## MAVLink Publications
-- `SET_HOME_POSITION` [arg: `hp`, dialect: common, msg_id: 243, id: `mavlink::common::msg::SET_HOME_POSITION::MSG_ID`] - [[[end]]] (sum: CGXV/MH3oV)
+- `SET_HOME_POSITION` [arg: `hp`, dialect: common, msg_id: 243, id: `mavlink::common::msg::SET_HOME_POSITION::MSG_ID`]

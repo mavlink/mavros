@@ -2,7 +2,7 @@
 
 - File: `mavros/src/plugins/rallypoint.cpp`
 - Class: `mavros::std_plugins::RallypointPlugin`
-- Namespace: `<unknown>`
+- Namespace: `rallypoint`
 - Brief: Rallypoint manipulation plugin
 
 
@@ -30,8 +30,21 @@
 
 
 ## MAVLink Subscriptions
-- None
+- `MISSION_ITEM` [handler: handle_mission_item, dialect: common, msg_id: 39, id: `mavlink::common::msg::MISSION_ITEM::MSG_ID`]
+- `MISSION_ITEM_INT` [handler: handle_mission_item_int, dialect: common, msg_id: 73, id: `mavlink::common::msg::MISSION_ITEM_INT::MSG_ID`]
+- `MISSION_REQUEST` [handler: handle_mission_request, dialect: common, msg_id: 40, id: `mavlink::common::msg::MISSION_REQUEST::MSG_ID`]
+- `MISSION_REQUEST_INT` [handler: handle_mission_request_int, dialect: common, msg_id: 51, id: `mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID`]
+- `MISSION_COUNT` [handler: handle_mission_count, dialect: common, msg_id: 44, id: `mavlink::common::msg::MISSION_COUNT::MSG_ID`]
+- `MISSION_ACK` [handler: handle_mission_ack, dialect: common, msg_id: 47, id: `mavlink::common::msg::MISSION_ACK::MSG_ID`]
 
 
 ## MAVLink Publications
-- None
+- `MISSION_REQUEST` [arg: `mrq`, dialect: common, msg_id: 40, id: `mavlink::common::msg::MISSION_REQUEST::MSG_ID`]
+- `MISSION_REQUEST_INT` [arg: `mrq`, dialect: common, msg_id: 51, id: `mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID`]
+- `MISSION_SET_CURRENT` [arg: `msc`, dialect: common, msg_id: 41, id: `mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID`] - msc.mission_type = enum_value(mission_type);
+- `MISSION_REQUEST_LIST` [arg: `mrl`, dialect: common, msg_id: 43, id: `mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID`]
+- `MISSION_COUNT` [arg: `mcnt`, dialect: common, msg_id: 44, id: `mavlink::common::msg::MISSION_COUNT::MSG_ID`]
+- `MISSION_WRITE_PARTIAL_LIST` [arg: `mwpl`, dialect: common, msg_id: 38, id: `mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID`]
+- `MISSION_CLEAR_ALL` [arg: `mclr`, dialect: common, msg_id: 45, id: `mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID`]
+- `MISSION_ACK` [arg: `mack`, dialect: common, msg_id: 47, id: `mavlink::common::msg::MISSION_ACK::MSG_ID`]
+- `<unknown>` [arg: `wpi`]

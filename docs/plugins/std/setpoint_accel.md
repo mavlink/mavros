@@ -33,4 +33,4 @@ Send setpoint accelerations/forces to FCU controller.
 
 
 ## MAVLink Publications
-- None
+- `SET_POSITION_TARGET_LOCAL_NED` [arg: `sp`, dialect: common, msg_id: 84, id: `mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID`]
