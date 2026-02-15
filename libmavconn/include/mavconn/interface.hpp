@@ -218,11 +218,11 @@ public:
   //! Port closed notification callback
   ClosedCb port_closed_cb;
 
-  virtual mavlink::mavlink_status_t get_status();
-  virtual IOStat get_iostat();
-  virtual bool is_open() = 0;
+  [[nodiscard]] virtual mavlink::mavlink_status_t get_status();
+  [[nodiscard]] virtual IOStat get_iostat();
+  [[nodiscard]] virtual bool is_open() = 0;
 
-  inline uint8_t get_system_id()
+  [[nodiscard]] inline uint8_t get_system_id()
   {
     return sys_id;
   }
@@ -230,7 +230,7 @@ public:
   {
     sys_id = sysid;
   }
-  inline uint8_t get_component_id()
+  [[nodiscard]] inline uint8_t get_component_id()
   {
     return comp_id;
   }
@@ -243,7 +243,7 @@ public:
    * Set protocol used for encoding mavlink::Mavlink messages.
    */
   void set_protocol_version(Protocol pver);
-  Protocol get_protocol_version();
+  [[nodiscard]] Protocol get_protocol_version();
 
   /**
    * @brief Construct connection from URL

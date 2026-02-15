@@ -146,7 +146,7 @@ void MAVConnUDP::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
-  io_service.post(std::bind(&MAVConnUDP::do_recvfrom, this));
+  io_service.post([this]() {this->do_recvfrom();});
 
   if (io_runner.owns_thread()) {
     // run io_service for async io
@@ -214,7 +214,8 @@ void MAVConnUDP::send_bytes(const uint8_t * bytes, size_t length)
 
     tx_q.emplace_back(bytes, length);
   }
-  io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_sendto(true);});
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t * message)
@@ -242,7 +243,8 @@ void MAVConnUDP::send_message(const mavlink_message_t * message)
 
     tx_q.emplace_back(message);
   }
-  io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_sendto(true);});
 }
 
 void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -268,7 +270,8 @@ void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t so
 
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
-  io_service.post(std::bind(&MAVConnUDP::do_sendto, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_sendto(true);});
 }
 
 void MAVConnUDP::do_recvfrom()
@@ -351,7 +354,7 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
       }
 
       if (continue_send) {
-        sthis->io_service.post(std::bind(&MAVConnUDP::do_sendto, sthis, false));
+        sthis->io_service.post([sthis]() {sthis->do_sendto(false);});
       }
     });
 }

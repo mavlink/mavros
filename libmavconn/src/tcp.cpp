@@ -130,7 +130,8 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
     server_channel, conn_id, to_string_ss(server_ep).c_str());
 
   // start recv
-  GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_recv, shared_from_this()));
+  auto sthis = shared_from_this();
+  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_recv();});
 }
 
 MAVConnTCPClient::~MAVConnTCPClient()
@@ -153,7 +154,7 @@ void MAVConnTCPClient::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
-  io_service.post(std::bind(&MAVConnTCPClient::do_recv, this));
+  io_service.post([this]() {this->do_recv();});
 
   if (io_runner.owns_thread()) {
     // run io_service for async io
@@ -221,7 +222,8 @@ void MAVConnTCPClient::send_bytes(const uint8_t * bytes, size_t length)
 
     tx_q.emplace_back(bytes, length);
   }
-  GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t * message)
@@ -244,7 +246,8 @@ void MAVConnTCPClient::send_message(const mavlink_message_t * message)
 
     tx_q.emplace_back(message);
   }
-  GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -265,7 +268,8 @@ void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint
 
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
-  GET_IO_SERVICE(socket).post(std::bind(&MAVConnTCPClient::do_send, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  GET_IO_SERVICE(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::do_recv()
@@ -336,7 +340,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
       }
 
       if (continue_send) {
-        GET_IO_SERVICE(sthis->socket).post(std::bind(&MAVConnTCPClient::do_send, sthis, false));
+        GET_IO_SERVICE(sthis->socket).post([sthis]() {sthis->do_send(false);});
       }
     });
 }
@@ -382,7 +386,7 @@ void MAVConnTCPServer::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
-  io_service.post(std::bind(&MAVConnTCPServer::do_accept, this));
+  io_service.post([this]() {this->do_accept();});
 
   if (io_runner.owns_thread()) {
     // run io_service for async io

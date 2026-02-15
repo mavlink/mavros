@@ -124,7 +124,7 @@ void MAVConnSerial::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_service before start
-  io_service.post(std::bind(&MAVConnSerial::do_read, this));
+  io_service.post([this]() {this->do_read();});
 
   if (io_runner.owns_thread()) {
     // run io_service for async io
@@ -172,7 +172,8 @@ void MAVConnSerial::send_bytes(const uint8_t * bytes, size_t length)
 
     tx_q.emplace_back(bytes, length);
   }
-  io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t * message)
@@ -195,7 +196,8 @@ void MAVConnSerial::send_message(const mavlink_message_t * message)
 
     tx_q.emplace_back(message);
   }
-  io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -216,7 +218,8 @@ void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t
 
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
-  io_service.post(std::bind(&MAVConnSerial::do_write, shared_from_this(), true));
+  auto sthis = shared_from_this();
+  io_service.post([sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::do_read(void)
@@ -284,7 +287,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
       }
 
       if (continue_send) {
-        sthis->io_service.post(std::bind(&MAVConnSerial::do_write, sthis, false));
+        sthis->io_service.post([sthis]() {sthis->do_write(false);});
       }
     });
 }
