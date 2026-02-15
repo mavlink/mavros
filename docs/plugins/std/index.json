@@ -1490,24 +1490,6 @@
         "dialect": "common",
         "line": 85,
         "msg_id": 84
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
-        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
-        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
-        "dialect": "common",
-        "line": 138,
-        "msg_id": 86
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
-        "message_name": "SET_ATTITUDE_TARGET",
-        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
-        "dialect": "common",
-        "line": 182,
-        "msg_id": 82
       }
     ]
   },
@@ -1556,24 +1538,6 @@
     ],
     "mavlink_subscriptions": [],
     "mavlink_publications": [
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED",
-        "message_name": "SET_POSITION_TARGET_LOCAL_NED",
-        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID",
-        "dialect": "common",
-        "line": 85,
-        "msg_id": 84
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
-        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
-        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
-        "dialect": "common",
-        "line": 138,
-        "msg_id": 86
-      },
       {
         "argument": "sp",
         "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
@@ -1649,15 +1613,6 @@
         "dialect": "common",
         "line": 138,
         "msg_id": 86
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
-        "message_name": "SET_ATTITUDE_TARGET",
-        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
-        "dialect": "common",
-        "line": 182,
-        "msg_id": 82
       }
     ]
   },
@@ -1824,24 +1779,6 @@
         "dialect": "common",
         "line": 85,
         "msg_id": 84
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
-        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
-        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
-        "dialect": "common",
-        "line": 138,
-        "msg_id": 86
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
-        "message_name": "SET_ATTITUDE_TARGET",
-        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
-        "dialect": "common",
-        "line": 182,
-        "msg_id": 82
       }
     ]
   },
@@ -1886,24 +1823,6 @@
         "dialect": "common",
         "line": 85,
         "msg_id": 84
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT",
-        "message_name": "SET_POSITION_TARGET_GLOBAL_INT",
-        "msg_id_expr": "mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID",
-        "dialect": "common",
-        "line": 138,
-        "msg_id": 86
-      },
-      {
-        "argument": "sp",
-        "message_type": "mavlink::common::msg::SET_ATTITUDE_TARGET",
-        "message_name": "SET_ATTITUDE_TARGET",
-        "msg_id_expr": "mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID",
-        "dialect": "common",
-        "line": 182,
-        "msg_id": 82
       }
     ]
   },

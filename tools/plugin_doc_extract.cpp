@@ -907,6 +907,25 @@ bool uses_setpoint_mixin_context(const fs::path & path)
   return kFiles.find(path.filename().string()) != kFiles.end();
 }
 
+std::set<std::string> detect_setpoint_mixin_messages(const std::string & text)
+{
+  std::set<std::string> out;
+  static const std::regex kSetpointMixinBaseRe(
+    R"(plugin::(SetPositionTargetLocalNEDMixin|SetPositionTargetGlobalIntMixin|SetAttitudeTargetMixin)\s*<)");
+
+  for (std::sregex_iterator it(text.begin(), text.end(), kSetpointMixinBaseRe), end; it != end; ++it) {
+    const std::string mixin = (*it)[1].str();
+    if (mixin == "SetPositionTargetLocalNEDMixin") {
+      out.insert("SET_POSITION_TARGET_LOCAL_NED");
+    } else if (mixin == "SetPositionTargetGlobalIntMixin") {
+      out.insert("SET_POSITION_TARGET_GLOBAL_INT");
+    } else if (mixin == "SetAttitudeTargetMixin") {
+      out.insert("SET_ATTITUDE_TARGET");
+    }
+  }
+  return out;
+}
+
 PluginApi parse_plugin(
   const fs::path & path, const fs::path & repo_root, const std::map<std::string, int> & msgid_index)
 {
@@ -963,9 +982,17 @@ PluginApi parse_plugin(
     }
   }
   if (uses_setpoint_mixin_context(path)) {
+    std::vector<MavlinkPubEntry> mixin_pubs;
     extract_mavlink_from_context(
       repo_root / "mavros/include/mavros/setpoint_mixin.hpp",
-      msgid_index, nullptr, &api.mavlink_publications);
+      msgid_index, nullptr, &mixin_pubs);
+    const auto allowed_msgs = detect_setpoint_mixin_messages(text);
+    for (auto & e : mixin_pubs) {
+      if (allowed_msgs.empty() || allowed_msgs.find(e.message_name) != allowed_msgs.end()) {
+        api.mavlink_publications.push_back(std::move(e));
+      }
+    }
+    dedup_mavlink_publications(api.mavlink_publications);
   }
 
   std::map<std::string, std::string> mf_types;
