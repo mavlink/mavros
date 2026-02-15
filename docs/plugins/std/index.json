@@ -1787,7 +1787,7 @@
         "type_name": "integer",
         "line": 253,
         "default_value": "500",
-        "description": "Filter gain scheduling The filter interpolates between the initial and final gains while the number of exhanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates."
+        "description": "Filter gain scheduling The filter interpolates between the initial and final gains while the number of exchanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates."
       },
       {
         "name": "max_rtt_sample",
@@ -1861,7 +1861,7 @@
     "path": "mavros/src/plugins/waypoint.cpp",
     "class_name": "mavros::std_plugins::WaypointPlugin",
     "namespace": "",
-    "brief": "Mission manupulation plugin",
+    "brief": "Mission manipulation plugin",
     "description": "",
     "publishers": [
       {
