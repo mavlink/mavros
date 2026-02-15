@@ -380,12 +380,15 @@ def render_plugin_markdown_with_template(
         raise RuntimeError(
             "Jinja2 is required for templated markdown output. Install dependencies with `uv sync`."
         )
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    # This renderer is used only for offline docs generation, not for request/response HTML.
     env = Environment(loader=FileSystemLoader(str(template_path.parent)), autoescape=False)
     template = env.get_template(template_path.name)
     try:
         shown_path = plugin.path.relative_to(repo_root).as_posix()
     except ValueError:
         shown_path = plugin.path.as_posix()
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     body = template.render(plugin=plugin, shown_path=shown_path)
     return body.rstrip() + "\n"
 
