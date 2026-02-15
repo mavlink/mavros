@@ -84,7 +84,10 @@ public:
     const uint8_t source_compid [[maybe_unused]]) override
   {}
 
-  void send_bytes(const uint8_t * bytes [[maybe_unused]], size_t length [[maybe_unused]]) override {}
+  void send_bytes(
+    const uint8_t * bytes [[maybe_unused]],
+    size_t length [[maybe_unused]]) override
+  {}
 
   bool is_open() override
   {

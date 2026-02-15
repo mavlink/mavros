@@ -85,9 +85,9 @@ MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
   std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
   io_service(shared_io ? *shared_io : *io_context_owner),
-  io_work(shared_io ? nullptr : std::make_unique<io_service::work>(io_service)),
+  io_work(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_service)),
   own_io_thread(shared_io == nullptr),
   is_running(false),
   socket(io_service),
@@ -354,9 +354,9 @@ MAVConnTCPServer::MAVConnTCPServer(
   uint8_t system_id, uint8_t component_id,
   std::string server_host, uint16_t server_port, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
   io_service(shared_io ? *shared_io : *io_context_owner),
-  io_work(shared_io ? nullptr : std::make_unique<io_service::work>(io_service)),
+  io_work(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_service)),
   own_io_thread(shared_io == nullptr),
   acceptor(io_service),
   is_destroying(false)

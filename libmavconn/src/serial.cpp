@@ -41,7 +41,7 @@ MAVConnSerial::MAVConnSerial(
   uint8_t system_id, uint8_t component_id,
   std::string device, unsigned baudrate, bool hwflow, asio::io_service * shared_io)
 : MAVConnInterface(system_id, component_id),
-  io_context_owner(shared_io ? nullptr : std::make_shared<io_service>()),
+  io_context_owner(shared_io ? nullptr : std::make_shared<asio::io_service>()),
   io_service(shared_io ? *shared_io : *io_context_owner),
   own_io_thread(shared_io == nullptr),
   serial_dev(io_service),

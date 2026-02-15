@@ -81,7 +81,7 @@ MAVConnInterface::IOStat MAVConnInterface::get_iostat()
   last_iostat = now;
 
   const float dt_s = std::chrono::duration<float>(dt).count();
-  if (dt_s > 0.0f) [[likely]] {
+  if (dt_s > 0.0f) [[likely]] {  // NOLINT(readability/braces)
     stat.tx_speed = d_tx / dt_s;
     stat.rx_speed = d_rx / dt_s;
   } else {
