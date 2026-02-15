@@ -25,14 +25,12 @@ jobs:
       matrix:
         ros_distro: [kilted]
         component:
-          # Add more entries here when enabling coverage for more modules.
-          # Example:
-          # - name: mavros
-          #   packages: mavros
-          #   source_filter: ".*/mavros/.*"
           - name: libmavconn
             packages: libmavconn
             source_filter: ".*/libmavconn/.*"
+          - name: mavros
+            packages: mavros
+            source_filter: ".*/mavros/.*"
 
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}

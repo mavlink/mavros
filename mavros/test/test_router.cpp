@@ -614,9 +614,9 @@ TEST_F(TestRouter, route_stress_multithreaded_broadcast)
 
   for (size_t i = 0; i < thread_count; i++) {
     workers.emplace_back([&]() {
-      for (size_t n = 0; n < iterations_per_thread; n++) {
-        router->route_message(src, &hbmsg, fr);
-      }
+        for (size_t n = 0; n < iterations_per_thread; n++) {
+          router->route_message(src, &hbmsg, fr);
+        }
     });
   }
 

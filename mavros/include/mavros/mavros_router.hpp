@@ -210,6 +210,8 @@ public:
 
   ~Router() override
   {
+    reconnect_timer->cancel();
+    stale_addrs_timer->cancel();
     router_io_runner.shutdown_owned();
   }
 

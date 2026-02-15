@@ -76,8 +76,6 @@ void Router::route_message(
           }
         }
       }
-
-
       return targets;
     };
 
