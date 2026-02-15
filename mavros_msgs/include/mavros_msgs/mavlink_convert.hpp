@@ -97,7 +97,7 @@ inline bool convert(const Mavlink & rmsg, mavlink_message_t & mmsg)
  * @param[in]  mmsg	mavlink_message_t struct
  * @param[out] rmsg	mavros_msgs/Mavlink message
  * @param[in]  framing_status  framing parse result (OK, BAD_CRC or BAD_SIGNATURE)
- * @return true, this convertion can't fail
+ * @return true, this conversion can't fail
  */
 inline bool convert(
   const mavlink_message_t & mmsg, Mavlink & rmsg,

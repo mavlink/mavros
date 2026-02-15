@@ -24,7 +24,7 @@ set(CMAKE_CXX_EXTENSIONS ON)
 
 find_package(ament_cmake REQUIRED)
 
-# add package modules path, not needed in dependend packages
+# add package modules path, not needed in dependent packages
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 ## System dependencies are found with CMake's conventions

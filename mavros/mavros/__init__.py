@@ -16,7 +16,7 @@ from .base import BaseNode, cached_property
 
 class Client(BaseNode):
     """
-    Client provides some convinient methods to work with MAVROS API.
+    Client provides some convenient methods to work with MAVROS API.
 
     Plugin interfaces are lazy constructed.
 

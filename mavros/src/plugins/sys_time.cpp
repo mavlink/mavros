@@ -247,7 +247,7 @@ public:
     // Filter gain scheduling
     //
     // The filter interpolates between the initial and final gains while the number of
-    // exhanged timesync packets is less than convergence_window. A lower value will
+    // exchanged timesync packets is less than convergence_window. A lower value will
     // allow the timesync to converge faster, but with potentially less accurate initial
     // offset and skew estimates.
     node_declare_and_watch_parameter(

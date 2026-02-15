@@ -260,7 +260,7 @@ public:
    * @param[in] system_id     optional system id
    * @param[in] component_id  optional component id
    * @return @a Ptr to constructed interface class,
-   *         or throw @a DeviceError if error occured.
+   *         or throw @a DeviceError if error occurred.
    */
   static Ptr open_url(
     std::string url,

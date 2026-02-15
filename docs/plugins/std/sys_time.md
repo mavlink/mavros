@@ -32,7 +32,7 @@
 - `timesync_beta_initial` [type: double, default: `0.05`]
 - `timesync_alpha_final` [type: double, default: `0.003`]
 - `timesync_beta_final` [type: double, default: `0.003`]
-- `convergence_window` [type: integer, default: `500`] - Filter gain scheduling The filter interpolates between the initial and final gains while the number of exhanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates.
+- `convergence_window` [type: integer, default: `500`] - Filter gain scheduling The filter interpolates between the initial and final gains while the number of exchanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates.
 - `max_rtt_sample` [type: integer, default: `10`] - Outlier rejection and filter reset Samples with round-trip time higher than max_rtt_sample are not used to update the filter. More than max_consecutive_high_rtt number of such events in a row will throw a warning but not reset the filter. Samples whose calculated clock offset is more than max_deviation_sample off from the current estimate are not used to update the filter. More than max_consecutive_high_deviation number of such events in a row will reset the filter. This usually happens only due to a time jump on the remote system.
 - `max_deviation_sample` [type: integer, default: `10`]
 - `max_consecutive_high_rtt` [type: integer, default: `10`]

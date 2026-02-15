@@ -34,7 +34,7 @@ Same as for mavros:
   - Linux host
   - Asio library ( https://think-async.com/Asio/ )
   - console-bridge library
-  - compiller with C++14 support
+  - compiler with C++14 support
 
 
 License

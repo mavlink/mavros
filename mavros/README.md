@@ -102,7 +102,7 @@ Programs
 
 ### mavros\_node -- all-in-one container
 
-That is a preconfigured composite node contaier, which provides similar parameters as ROS1 mavros\_node.
+That is a preconfigured composite node container, which provides similar parameters as ROS1 mavros\_node.
 That container loads Router, UAS and configures them to work together (sets uas\_link, etc.).
 
 Main node. Allow disable GCS proxy by setting empty URL.
