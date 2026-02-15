@@ -455,7 +455,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--cpp-bin",
-        default="tools/build/plugin_doc_gen_cpp",
+        default="tools/build/plugin_doc_extract",
         help="Path to C++ collector binary.",
     )
     parser.add_argument(

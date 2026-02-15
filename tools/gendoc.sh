@@ -6,7 +6,7 @@ set -euo pipefail
 #   ./src/mavros/tools/gendoc.sh index
 #   ./src/mavros/tools/gendoc.sh markdown
 # Optional env overrides:
-#   WS_ROOT=/ws MAVROS_REPO=/ws/src/mavros CPP_BIN=/ws/src/mavros/tools/build/plugin_doc_gen_cpp
+#   WS_ROOT=/ws MAVROS_REPO=/ws/src/mavros CPP_BIN=/ws/src/mavros/tools/build/plugin_doc_extract
 #   TEMPLATE=/ws/src/mavros/tools/templates/plugin.md.j2
 
 SUBCMD="${1:-all}"
@@ -28,7 +28,7 @@ if [[ -z "${MAVROS_REPO:-}" ]]; then
 fi
 
 TOOLS_DIR="${MAVROS_REPO}/tools"
-CPP_BIN="${CPP_BIN:-${TOOLS_DIR}/build/plugin_doc_gen_cpp}"
+CPP_BIN="${CPP_BIN:-${TOOLS_DIR}/build/plugin_doc_extract}"
 TEMPLATE="${TEMPLATE:-${TOOLS_DIR}/templates/plugin.md.j2}"
 
 STD_INDEX="${MAVROS_REPO}/docs/plugins/std/index.json"

@@ -13,7 +13,7 @@ Fast C++ plugin API extractor:
 # requires yaml-cpp development package in build environment
 cmake -S tools -B tools/build
 cmake --build tools/build -j
-tools/build/plugin_doc_gen_cpp --jobs 6 --output /tmp/mavros_plugin_api.json
+tools/build/plugin_doc_extract --jobs 6 --output /tmp/mavros_plugin_api.json
 ```
 
 Generate docs from workspace root (after `colcon build`):
