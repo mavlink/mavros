@@ -14,8 +14,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <cstdlib>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <set>
 #include <unordered_map>
@@ -63,6 +66,36 @@ public:
     recv_message, void(const mavlink_message_t * msg,
     const Framing framing));
   MOCK_METHOD1(diag_run, void(diagnostic_updater::DiagnosticStatusWrapper &));
+};
+
+class StressEndpoint : public Endpoint
+{
+public:
+  using SharedPtr = std::shared_ptr<StressEndpoint>;
+
+  std::atomic<size_t> send_count {0};
+
+  bool is_open() override
+  {
+    return true;
+  }
+
+  std::pair<bool, std::string> open() override
+  {
+    return {true, ""};
+  }
+
+  void close() override {}
+
+  void send_message(
+    const mavlink_message_t * msg [[maybe_unused]],
+    const Framing framing [[maybe_unused]],
+    id_t src_id [[maybe_unused]]) override
+  {
+    send_count.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat [[maybe_unused]]) override {}
 };
 
 namespace mavros
@@ -432,6 +465,73 @@ TEST_F(TestRouter, endpoint_recv_message)
   ASSERT_EQ(size_t(1), get_stat_msg_routed(router));
   ASSERT_EQ(size_t(0), get_stat_msg_sent(router));
   ASSERT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
+TEST_F(TestRouter, route_stress_multithreaded_broadcast)
+{
+  if (const char * skip = std::getenv("MAVROS_SKIP_STRESS_TESTS");
+    skip && std::string(skip) == "1")
+  {
+    GTEST_SKIP() << "skipped by MAVROS_SKIP_STRESS_TESTS=1";
+  }
+
+  auto router = create_node_no_endpoints();
+
+  auto make_ep = [router](id_t id, LT type) {
+      auto ep = std::make_shared<StressEndpoint>();
+      ep->parent = router;
+      ep->id = id;
+      ep->link_type = type;
+      ep->remote_addrs = {0x0000};
+      return ep;
+    };
+
+  auto & endpoints = get_endpoints(router);
+
+  auto src = make_ep(1000, LT::fcu);
+  auto dst1 = make_ep(1001, LT::gcs);
+  auto dst2 = make_ep(1002, LT::gcs);
+  auto dst3 = make_ep(1003, LT::uas);
+  auto dst4 = make_ep(1004, LT::uas);
+  endpoints[src->id] = src;
+  endpoints[dst1->id] = dst1;
+  endpoints[dst2->id] = dst2;
+  endpoints[dst3->id] = dst3;
+  endpoints[dst4->id] = dst4;
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x0101);
+  constexpr auto fr = Framing::ok;
+
+  constexpr size_t thread_count = 8;
+  constexpr size_t iterations_per_thread = 2000;
+  const auto expected_routed = thread_count * iterations_per_thread;
+  const auto expected_sent_per_endpoint = expected_routed;
+  const auto expected_sent_total = expected_routed * 4;
+
+  std::vector<std::thread> workers;
+  workers.reserve(thread_count);
+
+  for (size_t i = 0; i < thread_count; i++) {
+    workers.emplace_back([&]() {
+      for (size_t n = 0; n < iterations_per_thread; n++) {
+        router->route_message(src, &hbmsg, fr);
+      }
+    });
+  }
+
+  for (auto & w : workers) {
+    w.join();
+  }
+
+  EXPECT_EQ(get_stat_msg_routed(router), expected_routed);
+  EXPECT_EQ(get_stat_msg_sent(router), expected_sent_total);
+  EXPECT_EQ(get_stat_msg_dropped(router), 0U);
+
+  EXPECT_EQ(dst1->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst2->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst3->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst4->send_count.load(), expected_sent_per_endpoint);
 }
 
 #if 0  // TODO(vooon):
