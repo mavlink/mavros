@@ -224,6 +224,11 @@ public:
   {
     return router->stat_msg_dropped.load();
   }
+
+  void run_clear_stale_remote_addrs(Router::SharedPtr router)
+  {
+    router->periodic_clear_stale_remote_addrs();
+  }
 };
 
 TEST_F(TestRouter, set_parameter)
@@ -529,6 +534,37 @@ TEST_F(TestRouter, endpoint_recv_message)
   ASSERT_EQ(size_t(1), get_stat_msg_routed(router));
   ASSERT_EQ(size_t(0), get_stat_msg_sent(router));
   ASSERT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
+TEST_F(TestRouter, clear_stale_remote_addrs_keeps_active_and_reaps_stale)
+{
+  auto router = this->create_node();
+  auto uas1 = getep(router, 1002);
+
+  // baseline from fixture
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0000));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0100));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
+
+  // add one stale-only remote address
+  uas1->remote_addrs.emplace(0x1234);
+
+  // pass #1 only primes stale set from current remotes
+  run_clear_stale_remote_addrs(router);
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x1234));
+  ASSERT_NE(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x1234));
+
+  // emulate activity on one address between timer passes
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x01BF);
+  uas1->Endpoint::recv_message(&hbmsg, Framing::ok);
+  ASSERT_EQ(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x01BF));
+
+  // pass #2 removes untouched stale-only address but keeps active one
+  run_clear_stale_remote_addrs(router);
+
+  ASSERT_EQ(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x1234));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
 }
 
 TEST_F(TestRouter, route_stress_multithreaded_broadcast)
