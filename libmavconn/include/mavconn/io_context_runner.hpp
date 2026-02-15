@@ -81,9 +81,17 @@ public:
       return;
     }
 
-    if (std::this_thread::get_id() != io_thread_.get_id() && io_thread_.joinable()) {
-      io_thread_.join();
+    if (!io_thread_.joinable()) {
+      return;
     }
+
+    if (std::this_thread::get_id() == io_thread_.get_id()) {
+      // Cannot join from the same thread; detach so destructor can't terminate.
+      io_thread_.detach();
+      return;
+    }
+
+    io_thread_.join();
   }
 
   void reset_owned()
