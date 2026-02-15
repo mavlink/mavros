@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <limits>
 #include <memory>
@@ -61,6 +62,47 @@ static void send_heartbeat(MAVConnInterface * ip)
   hb.system_status = static_cast<int>(MAV_STATE::ACTIVE);
 
   ip->send_message(hb);
+}
+
+class DummyConn : public MAVConnInterface
+{
+public:
+  using MAVConnInterface::iostat_rx_add;
+  using MAVConnInterface::iostat_tx_add;
+
+  void connect(
+    const ReceivedCb & cb_handle_message [[maybe_unused]],
+    const ClosedCb & cb_handle_closed_port [[maybe_unused]] = ClosedCb()) override
+  {}
+
+  void close() override {}
+
+  void send_message(const mavlink_message_t * message [[maybe_unused]]) override {}
+
+  void send_message(
+    const mavlink::Message & message [[maybe_unused]],
+    const uint8_t source_compid [[maybe_unused]]) override
+  {}
+
+  void send_bytes(const uint8_t * bytes [[maybe_unused]], size_t length [[maybe_unused]]) override {}
+
+  bool is_open() override
+  {
+    return true;
+  }
+};
+
+TEST(IOSTAT, finite_speed_for_subsecond_polling)
+{
+  DummyConn conn;
+  conn.iostat_tx_add(64);
+  conn.iostat_rx_add(128);
+
+  const auto stat = conn.get_iostat();
+  EXPECT_EQ(stat.tx_total_bytes, 64U);
+  EXPECT_EQ(stat.rx_total_bytes, 128U);
+  EXPECT_TRUE(std::isfinite(stat.tx_speed));
+  EXPECT_TRUE(std::isfinite(stat.rx_speed));
 }
 
 class UDP : public ::testing::Test

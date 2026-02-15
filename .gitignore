@@ -8,3 +8,8 @@ core
 libmavconn/include/mavconn/mavlink_dialect.hpp
 libmavconn/src/mavlink_helpers.cpp
 tools/build/
+
+# in case you have run colcon here
+build/
+log/
+install/
