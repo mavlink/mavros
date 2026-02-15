@@ -8,9 +8,10 @@ Contributing
   git clone https://github.com/mavlink/mavros.git
   ```
 
-3. Create a remote connection to your repo:
+3. Configure remotes for upstream + your fork:
 
   ```bash
+  git remote rename origin upstream
   git remote add origin git@github.com:<YourGitUser>/mavros.git
   ```
 
@@ -21,10 +22,11 @@ Contributing
   ```
 
 5. Make your changes.
-6. Commit the changes. The `-a` option automatically adds and removes files for you.
+6. Commit the changes using the commit subject format `<component>: ...`.
 
   ```bash
-  git commit -a -m "<message>"
+  git add -A
+  git commit -m "plugin: <short description>"
   ```
 
 7. Check your code style:
@@ -34,18 +36,38 @@ Contributing
   ```
 
 8. Fix small code style errors and typos.
-9. Commit with a description like "uncrustify" or "code style fix". Please avoid changes in program logic (separate commits are better than a mix of style and bug fixes).
-10. Run tests:
+9. Keep style-only commits separate from logic changes and use the same subject format `<component>: ...`, for example: `mavros: uncrustify`, `docs: typo fixes`.
+10. Source ROS and workspace environments before build/test commands:
 
   ```bash
-  colcon test
+  source /opt/ros/<distro>/setup.bash
+  source install/setup.bash  # if workspace is already built
   ```
 
-11. If everything goes as planned, push the changes and issue a pull request.
+11. Run tests:
+
+  ```bash
+  colcon test --packages-select mavros mavros_extras mavros_msgs
+  colcon test-result --verbose
+  ```
+
+12. If everything goes as planned, push the changes and issue a pull request.
 
   ```bash
   git push -u origin <feature_branch>
   ```
+
+
+Devcontainer (optional)
+-----------------------
+
+For a reproducible development environment, see `.devcontainer/README.md`.
+
+
+Security reporting
+------------------
+
+For security issue reporting policy, see `SECURITY.md`.
 
 
 cog.py generators
