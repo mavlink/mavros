@@ -50,7 +50,7 @@ jobs:
       - name: Install Coverage Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gcovr
+          sudo apt-get install -y gcovr
 
       - name: Install Dependencies
         shell: bash
