@@ -269,22 +269,29 @@ void MAVConnSerial::do_write(bool check_tx_state)
       }
 
       sthis->iostat_tx_add(bytes_transferred);
-      lock_guard lock(sthis->mutex);
+      bool continue_send = false;
+      {
+        lock_guard lock(sthis->mutex);
 
-      if (sthis->tx_q.empty()) {
-        sthis->tx_in_progress = false;
-        return;
+        if (sthis->tx_q.empty()) {
+          sthis->tx_in_progress = false;
+          return;
+        }
+
+        buf_ref.pos += bytes_transferred;
+        if (buf_ref.nbytes() == 0) {
+          sthis->tx_q.pop_front();
+        }
+
+        if (!sthis->tx_q.empty()) {
+          continue_send = true;
+        } else {
+          sthis->tx_in_progress = false;
+        }
       }
 
-      buf_ref.pos += bytes_transferred;
-      if (buf_ref.nbytes() == 0) {
-        sthis->tx_q.pop_front();
-      }
-
-      if (!sthis->tx_q.empty()) {
-        sthis->do_write(false);
-      } else {
-        sthis->tx_in_progress = false;
+      if (continue_send) {
+        sthis->io_service.post(std::bind(&MAVConnSerial::do_write, sthis, false));
       }
     });
 }
