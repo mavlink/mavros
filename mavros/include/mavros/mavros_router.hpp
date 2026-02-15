@@ -54,7 +54,6 @@ using mavconn::Framing;
 using ::mavlink::mavlink_message_t;
 using ::mavlink::msgid_t;
 
-using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
 
 class Router;
@@ -159,18 +158,28 @@ public:
 
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
-      std::bind(&Router::add_endpoint, this, _1, _2));
+      [this](
+        const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
+        mavros_msgs::srv::EndpointAdd::Response::SharedPtr response)
+      {
+        this->add_endpoint(request, response);
+      });
     del_service = this->create_service<mavros_msgs::srv::EndpointDel>(
       "~/del_endpoint",
-      std::bind(&Router::del_endpoint, this, _1, _2));
+      [this](
+        const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
+        mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
+      {
+        this->del_endpoint(request, response);
+      });
 
     // try to reconnect endpoint each 30 seconds
     reconnect_timer =
-      this->create_wall_timer(30s, std::bind(&Router::periodic_reconnect_endpoints, this));
+      this->create_wall_timer(30s, [this]() {this->periodic_reconnect_endpoints();});
 
     // collect garbage addrs each minute
     stale_addrs_timer =
-      this->create_wall_timer(60s, std::bind(&Router::periodic_clear_stale_remote_addrs, this));
+      this->create_wall_timer(60s, [this]() {this->periodic_clear_stale_remote_addrs();});
 
     diagnostic_updater.setHardwareID("none");  // NOTE: router connects several hardwares
     diagnostic_updater.add("MAVROS Router", this, &Router::diag_run);
@@ -203,7 +212,7 @@ private:
 
   static std::atomic<id_t> id_counter;
 
-  std::shared_timed_mutex mu;
+  std::shared_mutex mu;
 
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
@@ -234,7 +243,10 @@ private:
   void param_init()
   {
     set_parameters_handle_ptr =
-      this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
+      this->add_on_set_parameters_callback(
+      [this](const std::vector<rclcpp::Parameter> & parameters) {
+        return this->on_set_parameters_cb(parameters);
+      });
 
     auto params = get_parameters({"fcu_urls", "gcs_urls", "uas_urls"});
     on_set_parameters_cb(params);
@@ -242,7 +254,7 @@ private:
 
   void param_init_once()
   {
-    std::call_once(param_init_flag, std::bind(&Router::param_init, this));
+    std::call_once(param_init_flag, &Router::param_init, this);
   }
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(

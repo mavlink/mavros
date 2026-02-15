@@ -23,8 +23,8 @@
 using namespace mavros::router;  // NOLINT
 using rclcpp::QoS;
 
-using unique_lock = std::unique_lock<std::shared_timed_mutex>;
-using shared_lock = std::shared_lock<std::shared_timed_mutex>;
+using unique_lock = std::unique_lock<std::shared_mutex>;
+using shared_lock = std::shared_lock<std::shared_mutex>;
 
 std::atomic<id_t> Router::id_counter {1000};
 
@@ -147,7 +147,11 @@ void Router::add_endpoint(
     unique_lock lock(mu);
     this->endpoints[id] = ep;
   }
-  this->diagnostic_updater.add(ep->diag_name(), std::bind(&Endpoint::diag_run, ep, _1));
+  this->diagnostic_updater.add(
+    ep->diag_name(),
+    [ep](diagnostic_updater::DiagnosticStatusWrapper & stat) {
+      ep->diag_run(stat);
+    });
   RCLCPP_INFO(lg, "Endpoint link[%d] created", id);
 
   auto result = ep->open();
@@ -412,10 +416,14 @@ bool MAVConnEndpoint::is_open()
 std::pair<bool, std::string> MAVConnEndpoint::open()
 {
   try {
+    auto weak_self = weak_from_this();
     this->link = mavconn::MAVConnInterface::open_url(
-      this->url, 1, mavconn::MAV_COMP_ID_UDP_BRIDGE, std::bind(
-        &MAVConnEndpoint::recv_message,
-        shared_from_this(), _1, _2));
+      this->url, 1, mavconn::MAV_COMP_ID_UDP_BRIDGE,
+      [weak_self](const mavlink_message_t * msg, const Framing framing) {
+        if (auto self = weak_self.lock()) {
+          self->recv_message(msg, framing);
+        }
+      });
   } catch (mavconn::DeviceError & ex) {
     return {false, ex.what()};
   }
@@ -520,7 +528,9 @@ std::pair<bool, std::string> ROSEndpoint::open()
         "mavlink_source"), qos);
     this->sink = nh->create_subscription<mavros_msgs::msg::Mavlink>(
       utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), qos,
-      std::bind(&ROSEndpoint::ros_recv_message, this, _1));
+      [this](const mavros_msgs::msg::Mavlink::SharedPtr rmsg) {
+        this->ros_recv_message(rmsg);
+      });
   } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
     return {false, ex.what()};
   }
