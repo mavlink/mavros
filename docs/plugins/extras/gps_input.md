@@ -33,4 +33,4 @@ Sends <a href="https://mavlink.io/en/messages/common.html#GPS_INPUT">GPS_INPUT M
 
 
 ## MAVLink Publications
-- `GPS_INPUT` [arg: `gps_input`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]
+- [`GPS_INPUT`](https://mavlink.io/en/messages/common.html#GPS_INPUT) [arg: `gps_input`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]

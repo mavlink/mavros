@@ -27,7 +27,7 @@
 
 
 ## MAVLink Subscriptions
-- `VFR_HUD` [handler: handle_vfr_hud, dialect: common, msg_id: 74, id: `mavlink::common::msg::VFR_HUD::MSG_ID`]
+- [`VFR_HUD`](https://mavlink.io/en/messages/common.html#VFR_HUD) [handler: handle_vfr_hud, dialect: common, msg_id: 74, id: `mavlink::common::msg::VFR_HUD::MSG_ID`]
 
 
 ## MAVLink Publications

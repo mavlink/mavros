@@ -33,7 +33,7 @@ Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to R
 
 
 ## MAVLink Subscriptions
-- `SIM_STATE` [handler: handle_sim_state, dialect: common, msg_id: 108, id: `mavlink::common::msg::SIM_STATE::MSG_ID`]
+- [`SIM_STATE`](https://mavlink.io/en/messages/common.html#SIM_STATE) [handler: handle_sim_state, dialect: common, msg_id: 108, id: `mavlink::common::msg::SIM_STATE::MSG_ID`]
 
 
 ## MAVLink Publications

@@ -34,4 +34,4 @@ Sends motion capture data to FCU.
 
 
 ## MAVLink Publications
-- `ATT_POS_MOCAP` [arg: `pos`, dialect: common, msg_id: 138, id: `mavlink::common::msg::ATT_POS_MOCAP::MSG_ID`]
+- [`ATT_POS_MOCAP`](https://mavlink.io/en/messages/common.html#ATT_POS_MOCAP) [arg: `pos`, dialect: common, msg_id: 138, id: `mavlink::common::msg::ATT_POS_MOCAP::MSG_ID`]

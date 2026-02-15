@@ -33,4 +33,4 @@ Users must publish to the topic the CellularStatus message and it will be relaye
 
 
 ## MAVLink Publications
-- `CELLULAR_STATUS` [arg: `cs`, dialect: common, msg_id: 334, id: `mavlink::common::msg::CELLULAR_STATUS::MSG_ID`]
+- [`CELLULAR_STATUS`](https://mavlink.io/en/messages/common.html#CELLULAR_STATUS) [arg: `cs`, dialect: common, msg_id: 334, id: `mavlink::common::msg::CELLULAR_STATUS::MSG_ID`]

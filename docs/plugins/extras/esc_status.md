@@ -28,8 +28,8 @@
 
 
 ## MAVLink Subscriptions
-- `ESC_INFO` [handler: handle_esc_info, dialect: common, msg_id: 290, id: `mavlink::common::msg::ESC_INFO::MSG_ID`]
-- `ESC_STATUS` [handler: handle_esc_status, dialect: common, msg_id: 291, id: `mavlink::common::msg::ESC_STATUS::MSG_ID`]
+- [`ESC_INFO`](https://mavlink.io/en/messages/common.html#ESC_INFO) [handler: handle_esc_info, dialect: common, msg_id: 290, id: `mavlink::common::msg::ESC_INFO::MSG_ID`]
+- [`ESC_STATUS`](https://mavlink.io/en/messages/common.html#ESC_STATUS) [handler: handle_esc_status, dialect: common, msg_id: 291, id: `mavlink::common::msg::ESC_STATUS::MSG_ID`]
 
 
 ## MAVLink Publications

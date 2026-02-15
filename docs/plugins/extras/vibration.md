@@ -29,7 +29,7 @@ This plugin is intended to publish MAV vibration levels and accelerometer clippi
 
 
 ## MAVLink Subscriptions
-- `VIBRATION` [handler: handle_vibration, dialect: common, msg_id: 241, id: `mavlink::common::msg::VIBRATION::MSG_ID`]
+- [`VIBRATION`](https://mavlink.io/en/messages/common.html#VIBRATION) [handler: handle_vibration, dialect: common, msg_id: 241, id: `mavlink::common::msg::VIBRATION::MSG_ID`]
 
 
 ## MAVLink Publications

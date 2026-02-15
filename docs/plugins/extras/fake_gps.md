@@ -52,5 +52,5 @@ Sends fake GPS from local position estimation source data (motion capture, visio
 
 
 ## MAVLink Publications
-- `HIL_GPS` [arg: `hil_gps`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]
-- `GPS_INPUT` [arg: `gps_input`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]
+- [`HIL_GPS`](https://mavlink.io/en/messages/common.html#HIL_GPS) [arg: `hil_gps`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]
+- [`GPS_INPUT`](https://mavlink.io/en/messages/common.html#GPS_INPUT) [arg: `gps_input`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]

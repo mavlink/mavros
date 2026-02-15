@@ -29,7 +29,7 @@ This plugin allows publishing of terrain height estimate from FCU to ROS.
 
 
 ## MAVLink Subscriptions
-- `TERRAIN_REPORT` [handler: handle_terrain_report, dialect: common, msg_id: 136, id: `mavlink::common::msg::TERRAIN_REPORT::MSG_ID`]
+- [`TERRAIN_REPORT`](https://mavlink.io/en/messages/common.html#TERRAIN_REPORT) [handler: handle_terrain_report, dialect: common, msg_id: 136, id: `mavlink::common::msg::TERRAIN_REPORT::MSG_ID`]
 
 
 ## MAVLink Publications

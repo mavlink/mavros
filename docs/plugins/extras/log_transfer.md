@@ -31,12 +31,12 @@
 
 
 ## MAVLink Subscriptions
-- `LOG_ENTRY` [handler: handle_log_entry, dialect: common, msg_id: 118, id: `mavlink::common::msg::LOG_ENTRY::MSG_ID`]
-- `LOG_DATA` [handler: handle_log_data, dialect: common, msg_id: 120, id: `mavlink::common::msg::LOG_DATA::MSG_ID`]
+- [`LOG_ENTRY`](https://mavlink.io/en/messages/common.html#LOG_ENTRY) [handler: handle_log_entry, dialect: common, msg_id: 118, id: `mavlink::common::msg::LOG_ENTRY::MSG_ID`]
+- [`LOG_DATA`](https://mavlink.io/en/messages/common.html#LOG_DATA) [handler: handle_log_data, dialect: common, msg_id: 120, id: `mavlink::common::msg::LOG_DATA::MSG_ID`]
 
 
 ## MAVLink Publications
-- `LOG_REQUEST_LIST` [arg: `msg`, dialect: common, msg_id: 117, id: `mavlink::common::msg::LOG_REQUEST_LIST::MSG_ID`]
-- `LOG_REQUEST_DATA` [arg: `msg`, dialect: common, msg_id: 119, id: `mavlink::common::msg::LOG_REQUEST_DATA::MSG_ID`]
-- `LOG_REQUEST_END` [arg: `msg`, dialect: common, msg_id: 122, id: `mavlink::common::msg::LOG_REQUEST_END::MSG_ID`]
-- `LOG_ERASE` [arg: `msg`, dialect: common, msg_id: 121, id: `mavlink::common::msg::LOG_ERASE::MSG_ID`]
+- [`LOG_REQUEST_LIST`](https://mavlink.io/en/messages/common.html#LOG_REQUEST_LIST) [arg: `msg`, dialect: common, msg_id: 117, id: `mavlink::common::msg::LOG_REQUEST_LIST::MSG_ID`]
+- [`LOG_REQUEST_DATA`](https://mavlink.io/en/messages/common.html#LOG_REQUEST_DATA) [arg: `msg`, dialect: common, msg_id: 119, id: `mavlink::common::msg::LOG_REQUEST_DATA::MSG_ID`]
+- [`LOG_REQUEST_END`](https://mavlink.io/en/messages/common.html#LOG_REQUEST_END) [arg: `msg`, dialect: common, msg_id: 122, id: `mavlink::common::msg::LOG_REQUEST_END::MSG_ID`]
+- [`LOG_ERASE`](https://mavlink.io/en/messages/common.html#LOG_ERASE) [arg: `msg`, dialect: common, msg_id: 121, id: `mavlink::common::msg::LOG_ERASE::MSG_ID`]

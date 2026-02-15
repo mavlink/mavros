@@ -40,10 +40,10 @@
 
 
 ## MAVLink Subscriptions
-- `SYSTEM_TIME` [handler: handle_system_time, dialect: common, msg_id: 2, id: `mavlink::common::msg::SYSTEM_TIME::MSG_ID`]
-- `TIMESYNC` [handler: handle_timesync, dialect: common, msg_id: 111, id: `mavlink::common::msg::TIMESYNC::MSG_ID`]
+- [`SYSTEM_TIME`](https://mavlink.io/en/messages/common.html#SYSTEM_TIME) [handler: handle_system_time, dialect: common, msg_id: 2, id: `mavlink::common::msg::SYSTEM_TIME::MSG_ID`]
+- [`TIMESYNC`](https://mavlink.io/en/messages/common.html#TIMESYNC) [handler: handle_timesync, dialect: common, msg_id: 111, id: `mavlink::common::msg::TIMESYNC::MSG_ID`]
 
 
 ## MAVLink Publications
-- `SYSTEM_TIME` [arg: `mtime`, dialect: common, msg_id: 2, id: `mavlink::common::msg::SYSTEM_TIME::MSG_ID`]
-- `TIMESYNC` [arg: `tsync`, dialect: common, msg_id: 111, id: `mavlink::common::msg::TIMESYNC::MSG_ID`]
+- [`SYSTEM_TIME`](https://mavlink.io/en/messages/common.html#SYSTEM_TIME) [arg: `mtime`, dialect: common, msg_id: 2, id: `mavlink::common::msg::SYSTEM_TIME::MSG_ID`]
+- [`TIMESYNC`](https://mavlink.io/en/messages/common.html#TIMESYNC) [arg: `tsync`, dialect: common, msg_id: 111, id: `mavlink::common::msg::TIMESYNC::MSG_ID`]

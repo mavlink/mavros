@@ -35,4 +35,4 @@ Send velocity estimation from various vision estimators to FCU position and atti
 
 
 ## MAVLink Publications
-- `VISION_SPEED_ESTIMATE` [arg: `vs`, dialect: common, msg_id: 103, id: `mavlink::common::msg::VISION_SPEED_ESTIMATE::MSG_ID`]
+- [`VISION_SPEED_ESTIMATE`](https://mavlink.io/en/messages/common.html#VISION_SPEED_ESTIMATE) [arg: `vs`, dialect: common, msg_id: 103, id: `mavlink::common::msg::VISION_SPEED_ESTIMATE::MSG_ID`]

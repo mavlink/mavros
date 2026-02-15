@@ -41,8 +41,8 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 
 
 ## MAVLink Subscriptions
-- `RPM` [handler: handle_rpm, dialect: ardupilotmega, msg_id: 226, id: `mavlink::ardupilotmega::msg::RPM::MSG_ID`]
-- `WHEEL_DISTANCE` [handler: handle_wheel_distance, dialect: common, msg_id: 9000, id: `mavlink::common::msg::WHEEL_DISTANCE::MSG_ID`]
+- [`RPM`](https://mavlink.io/en/messages/ardupilotmega.html#RPM) [handler: handle_rpm, dialect: ardupilotmega, msg_id: 226, id: `mavlink::ardupilotmega::msg::RPM::MSG_ID`]
+- [`WHEEL_DISTANCE`](https://mavlink.io/en/messages/common.html#WHEEL_DISTANCE) [handler: handle_wheel_distance, dialect: common, msg_id: 9000, id: `mavlink::common::msg::WHEEL_DISTANCE::MSG_ID`]
 
 
 ## MAVLink Publications

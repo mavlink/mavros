@@ -33,8 +33,8 @@ This plugin can publish data from OpticalFlow camera to ROS
 
 
 ## MAVLink Subscriptions
-- `OPTICAL_FLOW` [handler: handle_optical_flow, dialect: common, msg_id: 100, id: `mavlink::common::msg::OPTICAL_FLOW::MSG_ID`]
+- [`OPTICAL_FLOW`](https://mavlink.io/en/messages/common.html#OPTICAL_FLOW) [handler: handle_optical_flow, dialect: common, msg_id: 100, id: `mavlink::common::msg::OPTICAL_FLOW::MSG_ID`]
 
 
 ## MAVLink Publications
-- `OPTICAL_FLOW` [arg: `flow_msg`, dialect: common, msg_id: 100, id: `mavlink::common::msg::OPTICAL_FLOW::MSG_ID`]
+- [`OPTICAL_FLOW`](https://mavlink.io/en/messages/common.html#OPTICAL_FLOW) [arg: `flow_msg`, dialect: common, msg_id: 100, id: `mavlink::common::msg::OPTICAL_FLOW::MSG_ID`]

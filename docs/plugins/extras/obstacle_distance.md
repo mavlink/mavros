@@ -33,4 +33,4 @@ Publishes obstacle distance array to the FCU, in order to assist in an obstacle 
 
 
 ## MAVLink Publications
-- `OBSTACLE_DISTANCE` [arg: `obstacle`, dialect: common, msg_id: 330, id: `mavlink::common::msg::OBSTACLE_DISTANCE::MSG_ID`]
+- [`OBSTACLE_DISTANCE`](https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE) [arg: `obstacle`, dialect: common, msg_id: 330, id: `mavlink::common::msg::OBSTACLE_DISTANCE::MSG_ID`]

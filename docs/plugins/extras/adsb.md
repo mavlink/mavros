@@ -29,8 +29,8 @@ Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehi
 
 
 ## MAVLink Subscriptions
-- `ADSB_VEHICLE` [handler: handle_adsb, dialect: common, msg_id: 246, id: `mavlink::common::msg::ADSB_VEHICLE::MSG_ID`]
+- [`ADSB_VEHICLE`](https://mavlink.io/en/messages/common.html#ADSB_VEHICLE) [handler: handle_adsb, dialect: common, msg_id: 246, id: `mavlink::common::msg::ADSB_VEHICLE::MSG_ID`]
 
 
 ## MAVLink Publications
-- `ADSB_VEHICLE` [arg: `adsb`, dialect: common, msg_id: 246, id: `mavlink::common::msg::ADSB_VEHICLE::MSG_ID`]
+- [`ADSB_VEHICLE`](https://mavlink.io/en/messages/common.html#ADSB_VEHICLE) [arg: `adsb`, dialect: common, msg_id: 246, id: `mavlink::common::msg::ADSB_VEHICLE::MSG_ID`]

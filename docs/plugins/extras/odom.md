@@ -31,8 +31,8 @@ Sends odometry data to the FCU estimator and publishes odometry data that comes 
 
 
 ## MAVLink Subscriptions
-- `ODOMETRY` [handler: handle_odom, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`]
+- [`ODOMETRY`](https://mavlink.io/en/messages/common.html#ODOMETRY) [handler: handle_odom, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`]
 
 
 ## MAVLink Publications
-- `ODOMETRY` [arg: `msg`, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`] - send ODOMETRY msg
+- [`ODOMETRY`](https://mavlink.io/en/messages/common.html#ODOMETRY) [arg: `msg`, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`] - send ODOMETRY msg

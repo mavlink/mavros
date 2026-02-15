@@ -31,4 +31,4 @@
 
 
 ## MAVLink Publications
-- `PLAY_TUNE_V2` [arg: `msg`, dialect: common, msg_id: 400, id: `mavlink::common::msg::PLAY_TUNE_V2::MSG_ID`]
+- [`PLAY_TUNE_V2`](https://mavlink.io/en/messages/common.html#PLAY_TUNE_V2) [arg: `msg`, dialect: common, msg_id: 400, id: `mavlink::common::msg::PLAY_TUNE_V2::MSG_ID`]

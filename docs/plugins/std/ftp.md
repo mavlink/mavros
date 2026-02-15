@@ -38,8 +38,8 @@
 
 
 ## MAVLink Subscriptions
-- `FILE_TRANSFER_PROTOCOL` [handler: handle_file_transfer_protocol, dialect: common, msg_id: 110, id: `mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID`]
+- [`FILE_TRANSFER_PROTOCOL`](https://mavlink.io/en/messages/common.html#FILE_TRANSFER_PROTOCOL) [handler: handle_file_transfer_protocol, dialect: common, msg_id: 110, id: `mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID`]
 
 
 ## MAVLink Publications
-- `FILE_TRANSFER_PROTOCOL` [arg: `this`, dialect: common, msg_id: 110, id: `mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID`]
+- [`FILE_TRANSFER_PROTOCOL`](https://mavlink.io/en/messages/common.html#FILE_TRANSFER_PROTOCOL) [arg: `this`, dialect: common, msg_id: 110, id: `mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID`]

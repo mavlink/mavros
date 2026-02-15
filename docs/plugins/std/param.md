@@ -35,10 +35,10 @@
 
 
 ## MAVLink Subscriptions
-- `PARAM_VALUE` [handler: handle_param_value, dialect: common, msg_id: 22, id: `mavlink::common::msg::PARAM_VALUE::MSG_ID`]
+- [`PARAM_VALUE`](https://mavlink.io/en/messages/common.html#PARAM_VALUE) [handler: handle_param_value, dialect: common, msg_id: 22, id: `mavlink::common::msg::PARAM_VALUE::MSG_ID`]
 
 
 ## MAVLink Publications
-- `PARAM_REQUEST_LIST` [arg: `rql`, dialect: common, msg_id: 21, id: `mavlink::common::msg::PARAM_REQUEST_LIST::MSG_ID`]
-- `PARAM_REQUEST_READ` [arg: `rqr`, dialect: common, msg_id: 20, id: `mavlink::common::msg::PARAM_REQUEST_READ::MSG_ID`]
-- `PARAM_SET` [arg: `ps`, dialect: common, msg_id: 23, id: `mavlink::common::msg::PARAM_SET::MSG_ID`]
+- [`PARAM_REQUEST_LIST`](https://mavlink.io/en/messages/common.html#PARAM_REQUEST_LIST) [arg: `rql`, dialect: common, msg_id: 21, id: `mavlink::common::msg::PARAM_REQUEST_LIST::MSG_ID`]
+- [`PARAM_REQUEST_READ`](https://mavlink.io/en/messages/common.html#PARAM_REQUEST_READ) [arg: `rqr`, dialect: common, msg_id: 20, id: `mavlink::common::msg::PARAM_REQUEST_READ::MSG_ID`]
+- [`PARAM_SET`](https://mavlink.io/en/messages/common.html#PARAM_SET) [arg: `ps`, dialect: common, msg_id: 23, id: `mavlink::common::msg::PARAM_SET::MSG_ID`]

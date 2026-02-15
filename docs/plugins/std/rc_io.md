@@ -28,10 +28,10 @@
 
 
 ## MAVLink Subscriptions
-- `RC_CHANNELS_RAW` [handler: handle_rc_channels_raw, dialect: common, msg_id: 35, id: `mavlink::common::msg::RC_CHANNELS_RAW::MSG_ID`]
-- `RC_CHANNELS` [handler: handle_rc_channels, dialect: common, msg_id: 65, id: `mavlink::common::msg::RC_CHANNELS::MSG_ID`]
-- `SERVO_OUTPUT_RAW` [handler: handle_servo_output_raw, dialect: common, msg_id: 36, id: `mavlink::common::msg::SERVO_OUTPUT_RAW::MSG_ID`]
+- [`RC_CHANNELS_RAW`](https://mavlink.io/en/messages/common.html#RC_CHANNELS_RAW) [handler: handle_rc_channels_raw, dialect: common, msg_id: 35, id: `mavlink::common::msg::RC_CHANNELS_RAW::MSG_ID`]
+- [`RC_CHANNELS`](https://mavlink.io/en/messages/common.html#RC_CHANNELS) [handler: handle_rc_channels, dialect: common, msg_id: 65, id: `mavlink::common::msg::RC_CHANNELS::MSG_ID`]
+- [`SERVO_OUTPUT_RAW`](https://mavlink.io/en/messages/common.html#SERVO_OUTPUT_RAW) [handler: handle_servo_output_raw, dialect: common, msg_id: 36, id: `mavlink::common::msg::SERVO_OUTPUT_RAW::MSG_ID`]
 
 
 ## MAVLink Publications
-- `RC_CHANNELS_OVERRIDE` [arg: `ovr`, dialect: common, msg_id: 70, id: `mavlink::common::msg::RC_CHANNELS_OVERRIDE::MSG_ID`]
+- [`RC_CHANNELS_OVERRIDE`](https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE) [arg: `ovr`, dialect: common, msg_id: 70, id: `mavlink::common::msg::RC_CHANNELS_OVERRIDE::MSG_ID`]

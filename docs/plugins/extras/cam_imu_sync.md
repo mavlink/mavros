@@ -29,7 +29,7 @@ This plugin publishes a timestamp for when a external camera system was triggere
 
 
 ## MAVLink Subscriptions
-- `CAMERA_TRIGGER` [handler: handle_cam_trig, dialect: common, msg_id: 112, id: `mavlink::common::msg::CAMERA_TRIGGER::MSG_ID`]
+- [`CAMERA_TRIGGER`](https://mavlink.io/en/messages/common.html#CAMERA_TRIGGER) [handler: handle_cam_trig, dialect: common, msg_id: 112, id: `mavlink::common::msg::CAMERA_TRIGGER::MSG_ID`]
 
 
 ## MAVLink Publications

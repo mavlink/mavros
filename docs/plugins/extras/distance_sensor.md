@@ -30,8 +30,8 @@ This plugin allows publishing distance sensor data, which is connected to an off
 
 
 ## MAVLink Subscriptions
-- `DISTANCE_SENSOR` [handler: handle_distance_sensor, dialect: common, msg_id: 132, id: `mavlink::common::msg::DISTANCE_SENSOR::MSG_ID`]
+- [`DISTANCE_SENSOR`](https://mavlink.io/en/messages/common.html#DISTANCE_SENSOR) [handler: handle_distance_sensor, dialect: common, msg_id: 132, id: `mavlink::common::msg::DISTANCE_SENSOR::MSG_ID`]
 
 
 ## MAVLink Publications
-- `DISTANCE_SENSOR` [arg: `ds`, dialect: common, msg_id: 132, id: `mavlink::common::msg::DISTANCE_SENSOR::MSG_ID`]
+- [`DISTANCE_SENSOR`](https://mavlink.io/en/messages/common.html#DISTANCE_SENSOR) [arg: `ds`, dialect: common, msg_id: 132, id: `mavlink::common::msg::DISTANCE_SENSOR::MSG_ID`]

@@ -29,9 +29,9 @@
 
 
 ## MAVLink Subscriptions
-- `GPS_RTK` [handler: handle_baseline_msg, dialect: common, msg_id: 127, id: `mavlink::common::msg::GPS_RTK::MSG_ID`]
+- [`GPS_RTK`](https://mavlink.io/en/messages/common.html#GPS_RTK) [handler: handle_baseline_msg, dialect: common, msg_id: 127, id: `mavlink::common::msg::GPS_RTK::MSG_ID`]
 
 
 ## MAVLink Publications
-- `GPS_RTCM_DATA` [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]
-- `GPS_RTCM_DATA` [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]
+- [`GPS_RTCM_DATA`](https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA) [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]
+- [`GPS_RTCM_DATA`](https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA) [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]

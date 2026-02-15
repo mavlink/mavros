@@ -27,8 +27,8 @@
 
 
 ## MAVLink Subscriptions
-- `MANUAL_CONTROL` [handler: handle_manual_control, dialect: common, msg_id: 69, id: `mavlink::common::msg::MANUAL_CONTROL::MSG_ID`]
+- [`MANUAL_CONTROL`](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) [handler: handle_manual_control, dialect: common, msg_id: 69, id: `mavlink::common::msg::MANUAL_CONTROL::MSG_ID`]
 
 
 ## MAVLink Publications
-- `MANUAL_CONTROL` [arg: `msg`, dialect: common, msg_id: 69, id: `mavlink::common::msg::MANUAL_CONTROL::MSG_ID`]
+- [`MANUAL_CONTROL`](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) [arg: `msg`, dialect: common, msg_id: 69, id: `mavlink::common::msg::MANUAL_CONTROL::MSG_ID`]

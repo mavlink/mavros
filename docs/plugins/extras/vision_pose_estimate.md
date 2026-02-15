@@ -37,4 +37,4 @@ Send pose estimation from various vision estimators to FCU position and attitude
 
 
 ## MAVLink Publications
-- `VISION_POSITION_ESTIMATE` [arg: `vp`, dialect: common, msg_id: 102, id: `mavlink::common::msg::VISION_POSITION_ESTIMATE::MSG_ID`]
+- [`VISION_POSITION_ESTIMATE`](https://mavlink.io/en/messages/common.html#VISION_POSITION_ESTIMATE) [arg: `vp`, dialect: common, msg_id: 102, id: `mavlink::common::msg::VISION_POSITION_ESTIMATE::MSG_ID`]

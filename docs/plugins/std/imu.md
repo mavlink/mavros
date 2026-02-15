@@ -37,12 +37,12 @@
 
 
 ## MAVLink Subscriptions
-- `ATTITUDE` [handler: handle_attitude, dialect: common, msg_id: 30, id: `mavlink::common::msg::ATTITUDE::MSG_ID`]
-- `ATTITUDE_QUATERNION` [handler: handle_attitude_quaternion, dialect: common, msg_id: 31, id: `mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID`]
-- `HIGHRES_IMU` [handler: handle_highres_imu, dialect: common, msg_id: 105, id: `mavlink::common::msg::HIGHRES_IMU::MSG_ID`]
-- `RAW_IMU` [handler: handle_raw_imu, dialect: common, msg_id: 27, id: `mavlink::common::msg::RAW_IMU::MSG_ID`]
-- `SCALED_IMU` [handler: handle_scaled_imu, dialect: common, msg_id: 26, id: `mavlink::common::msg::SCALED_IMU::MSG_ID`]
-- `SCALED_PRESSURE` [handler: handle_scaled_pressure, dialect: common, msg_id: 29, id: `mavlink::common::msg::SCALED_PRESSURE::MSG_ID`]
+- [`ATTITUDE`](https://mavlink.io/en/messages/common.html#ATTITUDE) [handler: handle_attitude, dialect: common, msg_id: 30, id: `mavlink::common::msg::ATTITUDE::MSG_ID`]
+- [`ATTITUDE_QUATERNION`](https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION) [handler: handle_attitude_quaternion, dialect: common, msg_id: 31, id: `mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID`]
+- [`HIGHRES_IMU`](https://mavlink.io/en/messages/common.html#HIGHRES_IMU) [handler: handle_highres_imu, dialect: common, msg_id: 105, id: `mavlink::common::msg::HIGHRES_IMU::MSG_ID`]
+- [`RAW_IMU`](https://mavlink.io/en/messages/common.html#RAW_IMU) [handler: handle_raw_imu, dialect: common, msg_id: 27, id: `mavlink::common::msg::RAW_IMU::MSG_ID`]
+- [`SCALED_IMU`](https://mavlink.io/en/messages/common.html#SCALED_IMU) [handler: handle_scaled_imu, dialect: common, msg_id: 26, id: `mavlink::common::msg::SCALED_IMU::MSG_ID`]
+- [`SCALED_PRESSURE`](https://mavlink.io/en/messages/common.html#SCALED_PRESSURE) [handler: handle_scaled_pressure, dialect: common, msg_id: 29, id: `mavlink::common::msg::SCALED_PRESSURE::MSG_ID`]
 
 
 ## MAVLink Publications

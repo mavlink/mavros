@@ -29,7 +29,7 @@ This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.
 
 
 ## MAVLink Subscriptions
-- `RANGEFINDER` [handler: handle_rangefinder, dialect: ardupilotmega, msg_id: 173, id: `mavlink::ardupilotmega::msg::RANGEFINDER::MSG_ID`]
+- [`RANGEFINDER`](https://mavlink.io/en/messages/ardupilotmega.html#RANGEFINDER) [handler: handle_rangefinder, dialect: ardupilotmega, msg_id: 173, id: `mavlink::ardupilotmega::msg::RANGEFINDER::MSG_ID`]
 
 
 ## MAVLink Publications

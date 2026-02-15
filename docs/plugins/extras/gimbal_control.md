@@ -42,14 +42,14 @@ Adds support for Mavlink Gimbal Protocol v2. Also publishes gimbal pose to TF wh
 
 
 ## MAVLink Subscriptions
-- `GIMBAL_DEVICE_ATTITUDE_STATUS` [handler: handle_gimbal_attitude_status, dialect: common, msg_id: 285, id: `mavlink::common::msg::GIMBAL_DEVICE_ATTITUDE_STATUS::MSG_ID`]
-- `GIMBAL_MANAGER_STATUS` [handler: handle_manager_status, dialect: common, msg_id: 281, id: `mavlink::common::msg::GIMBAL_MANAGER_STATUS::MSG_ID`]
-- `GIMBAL_DEVICE_INFORMATION` [handler: handle_device_information, dialect: common, msg_id: 283, id: `mavlink::common::msg::GIMBAL_DEVICE_INFORMATION::MSG_ID`]
-- `GIMBAL_MANAGER_INFORMATION` [handler: handle_manager_information, dialect: common, msg_id: 280, id: `mavlink::common::msg::GIMBAL_MANAGER_INFORMATION::MSG_ID`]
+- [`GIMBAL_DEVICE_ATTITUDE_STATUS`](https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_ATTITUDE_STATUS) [handler: handle_gimbal_attitude_status, dialect: common, msg_id: 285, id: `mavlink::common::msg::GIMBAL_DEVICE_ATTITUDE_STATUS::MSG_ID`]
+- [`GIMBAL_MANAGER_STATUS`](https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_STATUS) [handler: handle_manager_status, dialect: common, msg_id: 281, id: `mavlink::common::msg::GIMBAL_MANAGER_STATUS::MSG_ID`]
+- [`GIMBAL_DEVICE_INFORMATION`](https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_INFORMATION) [handler: handle_device_information, dialect: common, msg_id: 283, id: `mavlink::common::msg::GIMBAL_DEVICE_INFORMATION::MSG_ID`]
+- [`GIMBAL_MANAGER_INFORMATION`](https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_INFORMATION) [handler: handle_manager_information, dialect: common, msg_id: 280, id: `mavlink::common::msg::GIMBAL_MANAGER_INFORMATION::MSG_ID`]
 
 
 ## MAVLink Publications
-- `GIMBAL_DEVICE_SET_ATTITUDE` [arg: `msg`, dialect: common, msg_id: 284, id: `mavlink::common::msg::GIMBAL_DEVICE_SET_ATTITUDE::MSG_ID`]
-- `GIMBAL_MANAGER_SET_ATTITUDE` [arg: `msg`, dialect: common, msg_id: 282, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_ATTITUDE::MSG_ID`]
-- `GIMBAL_MANAGER_SET_PITCHYAW` [arg: `msg`, dialect: common, msg_id: 287, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW::MSG_ID`]
-- `GIMBAL_MANAGER_SET_PITCHYAW` [arg: `msg`, dialect: common, msg_id: 287, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW::MSG_ID`]
+- [`GIMBAL_DEVICE_SET_ATTITUDE`](https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_SET_ATTITUDE) [arg: `msg`, dialect: common, msg_id: 284, id: `mavlink::common::msg::GIMBAL_DEVICE_SET_ATTITUDE::MSG_ID`]
+- [`GIMBAL_MANAGER_SET_ATTITUDE`](https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_SET_ATTITUDE) [arg: `msg`, dialect: common, msg_id: 282, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_ATTITUDE::MSG_ID`]
+- [`GIMBAL_MANAGER_SET_PITCHYAW`](https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_SET_PITCHYAW) [arg: `msg`, dialect: common, msg_id: 287, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW::MSG_ID`]
+- [`GIMBAL_MANAGER_SET_PITCHYAW`](https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_SET_PITCHYAW) [arg: `msg`, dialect: common, msg_id: 287, id: `mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW::MSG_ID`]

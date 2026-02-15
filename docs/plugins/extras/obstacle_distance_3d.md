@@ -33,4 +33,4 @@ Subscribes to a mavros_msgs/ObstacleDistance3D message and sends the data to the
 
 
 ## MAVLink Publications
-- `OBSTACLE_DISTANCE_3D` [arg: `obstacle`, dialect: ardupilotmega, msg_id: 11037, id: `mavlink::ardupilotmega::msg::OBSTACLE_DISTANCE_3D::MSG_ID`]
+- [`OBSTACLE_DISTANCE_3D`](https://mavlink.io/en/messages/ardupilotmega.html#OBSTACLE_DISTANCE_3D) [arg: `obstacle`, dialect: ardupilotmega, msg_id: 11037, id: `mavlink::ardupilotmega::msg::OBSTACLE_DISTANCE_3D::MSG_ID`]

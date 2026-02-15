@@ -34,8 +34,8 @@ This plugin can publish data from PX4Flow camera to ROS
 
 
 ## MAVLink Subscriptions
-- `OPTICAL_FLOW_RAD` [handler: handle_optical_flow_rad, dialect: common, msg_id: 106, id: `mavlink::common::msg::OPTICAL_FLOW_RAD::MSG_ID`]
+- [`OPTICAL_FLOW_RAD`](https://mavlink.io/en/messages/common.html#OPTICAL_FLOW_RAD) [handler: handle_optical_flow_rad, dialect: common, msg_id: 106, id: `mavlink::common::msg::OPTICAL_FLOW_RAD::MSG_ID`]
 
 
 ## MAVLink Publications
-- `OPTICAL_FLOW_RAD` [arg: `flow_rad_msg`, dialect: common, msg_id: 106, id: `mavlink::common::msg::OPTICAL_FLOW_RAD::MSG_ID`]
+- [`OPTICAL_FLOW_RAD`](https://mavlink.io/en/messages/common.html#OPTICAL_FLOW_RAD) [arg: `flow_rad_msg`, dialect: common, msg_id: 106, id: `mavlink::common::msg::OPTICAL_FLOW_RAD::MSG_ID`]

@@ -46,11 +46,11 @@ Publishes global position. Conversion from GPS LLA to ECEF allows publishing loc
 
 
 ## MAVLink Subscriptions
-- `GPS_RAW_INT` [handler: handle_gps_raw_int, dialect: common, msg_id: 24, id: `mavlink::common::msg::GPS_RAW_INT::MSG_ID`]
-- `GLOBAL_POSITION_INT` [handler: handle_global_position_int, dialect: standard, msg_id: 33, id: `mavlink::standard::msg::GLOBAL_POSITION_INT::MSG_ID`] - GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
-- `GPS_GLOBAL_ORIGIN` [handler: handle_gps_global_origin, dialect: common, msg_id: 49, id: `mavlink::common::msg::GPS_GLOBAL_ORIGIN::MSG_ID`]
-- `LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET` [handler: handle_lpned_system_global_offset, dialect: common, msg_id: 89, id: `mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET::MSG_ID`]
+- [`GPS_RAW_INT`](https://mavlink.io/en/messages/common.html#GPS_RAW_INT) [handler: handle_gps_raw_int, dialect: common, msg_id: 24, id: `mavlink::common::msg::GPS_RAW_INT::MSG_ID`]
+- [`GLOBAL_POSITION_INT`](https://mavlink.io/en/messages/standard.html#GLOBAL_POSITION_INT) [handler: handle_global_position_int, dialect: standard, msg_id: 33, id: `mavlink::standard::msg::GLOBAL_POSITION_INT::MSG_ID`] - GPS_STATUS: there no corresponding ROS message, and it is not supported by APM
+- [`GPS_GLOBAL_ORIGIN`](https://mavlink.io/en/messages/common.html#GPS_GLOBAL_ORIGIN) [handler: handle_gps_global_origin, dialect: common, msg_id: 49, id: `mavlink::common::msg::GPS_GLOBAL_ORIGIN::MSG_ID`]
+- [`LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET`](https://mavlink.io/en/messages/common.html#LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET) [handler: handle_lpned_system_global_offset, dialect: common, msg_id: 89, id: `mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET::MSG_ID`]
 
 
 ## MAVLink Publications
-- `SET_GPS_GLOBAL_ORIGIN` [arg: `gpo`, dialect: common, msg_id: 48, id: `mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN::MSG_ID`]
+- [`SET_GPS_GLOBAL_ORIGIN`](https://mavlink.io/en/messages/common.html#SET_GPS_GLOBAL_ORIGIN) [arg: `gpo`, dialect: common, msg_id: 48, id: `mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN::MSG_ID`]

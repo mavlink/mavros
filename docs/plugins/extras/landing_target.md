@@ -46,8 +46,8 @@ This plugin is intended to publish the location of a landing area captured from 
 
 
 ## MAVLink Subscriptions
-- `LANDING_TARGET` [handler: handle_landing_target, dialect: common, msg_id: 149, id: `mavlink::common::msg::LANDING_TARGET::MSG_ID`]
+- [`LANDING_TARGET`](https://mavlink.io/en/messages/common.html#LANDING_TARGET) [handler: handle_landing_target, dialect: common, msg_id: 149, id: `mavlink::common::msg::LANDING_TARGET::MSG_ID`]
 
 
 ## MAVLink Publications
-- `LANDING_TARGET` [arg: `lt`, dialect: common, msg_id: 149, id: `mavlink::common::msg::LANDING_TARGET::MSG_ID`]
+- [`LANDING_TARGET`](https://mavlink.io/en/messages/common.html#LANDING_TARGET) [arg: `lt`, dialect: common, msg_id: 149, id: `mavlink::common::msg::LANDING_TARGET::MSG_ID`]

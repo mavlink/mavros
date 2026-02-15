@@ -29,7 +29,7 @@ Publish altitude data.
 
 
 ## MAVLink Subscriptions
-- `ALTITUDE` [handler: handle_altitude, dialect: common, msg_id: 141, id: `mavlink::common::msg::ALTITUDE::MSG_ID`]
+- [`ALTITUDE`](https://mavlink.io/en/messages/common.html#ALTITUDE) [handler: handle_altitude, dialect: common, msg_id: 141, id: `mavlink::common::msg::ALTITUDE::MSG_ID`]
 
 
 ## MAVLink Publications

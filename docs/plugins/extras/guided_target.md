@@ -29,7 +29,7 @@ Send and receive setpoint positions from FCU controller.
 
 
 ## MAVLink Subscriptions
-- `POSITION_TARGET_GLOBAL_INT` [handler: handle_position_target_global_int, dialect: common, msg_id: 87, id: `mavlink::common::msg::POSITION_TARGET_GLOBAL_INT::MSG_ID`]
+- [`POSITION_TARGET_GLOBAL_INT`](https://mavlink.io/en/messages/common.html#POSITION_TARGET_GLOBAL_INT) [handler: handle_position_target_global_int, dialect: common, msg_id: 87, id: `mavlink::common::msg::POSITION_TARGET_GLOBAL_INT::MSG_ID`]
 
 
 ## MAVLink Publications

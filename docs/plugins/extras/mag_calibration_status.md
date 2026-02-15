@@ -30,8 +30,8 @@ Example and "how to" for users.
 
 
 ## MAVLink Subscriptions
-- `MAG_CAL_PROGRESS` [handler: handle_status, dialect: ardupilotmega, msg_id: 191, id: `mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS::MSG_ID`]
-- `MAG_CAL_REPORT` [handler: handle_report, dialect: common, msg_id: 192, id: `mavlink::common::msg::MAG_CAL_REPORT::MSG_ID`]
+- [`MAG_CAL_PROGRESS`](https://mavlink.io/en/messages/ardupilotmega.html#MAG_CAL_PROGRESS) [handler: handle_status, dialect: ardupilotmega, msg_id: 191, id: `mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS::MSG_ID`]
+- [`MAG_CAL_REPORT`](https://mavlink.io/en/messages/common.html#MAG_CAL_REPORT) [handler: handle_report, dialect: common, msg_id: 192, id: `mavlink::common::msg::MAG_CAL_REPORT::MSG_ID`]
 
 
 ## MAVLink Publications

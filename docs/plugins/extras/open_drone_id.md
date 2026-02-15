@@ -37,8 +37,8 @@ Sends Open Drone ID data to the FCU
 
 
 ## MAVLink Publications
-- `OPEN_DRONE_ID_BASIC_ID` [arg: `basic_id`, dialect: common, msg_id: 12900, id: `mavlink::common::msg::OPEN_DRONE_ID_BASIC_ID::MSG_ID`]
-- `OPEN_DRONE_ID_OPERATOR_ID` [arg: `operator_id`, dialect: common, msg_id: 12905, id: `mavlink::common::msg::OPEN_DRONE_ID_OPERATOR_ID::MSG_ID`]
-- `OPEN_DRONE_ID_SELF_ID` [arg: `self_id`, dialect: common, msg_id: 12903, id: `mavlink::common::msg::OPEN_DRONE_ID_SELF_ID::MSG_ID`]
-- `OPEN_DRONE_ID_SYSTEM` [arg: `system`, dialect: common, msg_id: 12904, id: `mavlink::common::msg::OPEN_DRONE_ID_SYSTEM::MSG_ID`]
-- `OPEN_DRONE_ID_SYSTEM_UPDATE` [arg: `system_update`, dialect: common, msg_id: 12919, id: `mavlink::common::msg::OPEN_DRONE_ID_SYSTEM_UPDATE::MSG_ID`]
+- [`OPEN_DRONE_ID_BASIC_ID`](https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_BASIC_ID) [arg: `basic_id`, dialect: common, msg_id: 12900, id: `mavlink::common::msg::OPEN_DRONE_ID_BASIC_ID::MSG_ID`]
+- [`OPEN_DRONE_ID_OPERATOR_ID`](https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_OPERATOR_ID) [arg: `operator_id`, dialect: common, msg_id: 12905, id: `mavlink::common::msg::OPEN_DRONE_ID_OPERATOR_ID::MSG_ID`]
+- [`OPEN_DRONE_ID_SELF_ID`](https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_SELF_ID) [arg: `self_id`, dialect: common, msg_id: 12903, id: `mavlink::common::msg::OPEN_DRONE_ID_SELF_ID::MSG_ID`]
+- [`OPEN_DRONE_ID_SYSTEM`](https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_SYSTEM) [arg: `system`, dialect: common, msg_id: 12904, id: `mavlink::common::msg::OPEN_DRONE_ID_SYSTEM::MSG_ID`]
+- [`OPEN_DRONE_ID_SYSTEM_UPDATE`](https://mavlink.io/en/messages/common.html#OPEN_DRONE_ID_SYSTEM_UPDATE) [arg: `system_update`, dialect: common, msg_id: 12919, id: `mavlink::common::msg::OPEN_DRONE_ID_SYSTEM_UPDATE::MSG_ID`]

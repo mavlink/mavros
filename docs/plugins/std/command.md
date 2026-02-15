@@ -40,9 +40,9 @@ Send any command via COMMAND_LONG
 
 
 ## MAVLink Subscriptions
-- `COMMAND_ACK` [handler: handle_command_ack, dialect: common, msg_id: 77, id: `mavlink::common::msg::COMMAND_ACK::MSG_ID`]
+- [`COMMAND_ACK`](https://mavlink.io/en/messages/common.html#COMMAND_ACK) [handler: handle_command_ack, dialect: common, msg_id: 77, id: `mavlink::common::msg::COMMAND_ACK::MSG_ID`]
 
 
 ## MAVLink Publications
-- `COMMAND_LONG` [arg: `cmd`, dialect: common, msg_id: 76, id: `mavlink::common::msg::COMMAND_LONG::MSG_ID`]
-- `COMMAND_INT` [arg: `cmd`, dialect: common, msg_id: 75, id: `mavlink::common::msg::COMMAND_INT::MSG_ID`]
+- [`COMMAND_LONG`](https://mavlink.io/en/messages/common.html#COMMAND_LONG) [arg: `cmd`, dialect: common, msg_id: 76, id: `mavlink::common::msg::COMMAND_LONG::MSG_ID`]
+- [`COMMAND_INT`](https://mavlink.io/en/messages/common.html#COMMAND_INT) [arg: `cmd`, dialect: common, msg_id: 75, id: `mavlink::common::msg::COMMAND_INT::MSG_ID`]

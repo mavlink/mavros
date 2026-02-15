@@ -29,7 +29,7 @@ Publishes nav_controller_output message https://mavlink.io/en/messages/common.ht
 
 
 ## MAVLink Subscriptions
-- `NAV_CONTROLLER_OUTPUT` [handler: handle_nav_controller_output, dialect: common, msg_id: 62, id: `mavlink::common::msg::NAV_CONTROLLER_OUTPUT::MSG_ID`]
+- [`NAV_CONTROLLER_OUTPUT`](https://mavlink.io/en/messages/common.html#NAV_CONTROLLER_OUTPUT) [handler: handle_nav_controller_output, dialect: common, msg_id: 62, id: `mavlink::common::msg::NAV_CONTROLLER_OUTPUT::MSG_ID`]
 
 
 ## MAVLink Publications

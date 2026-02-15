@@ -33,4 +33,4 @@ Publishes the status of components running on the companion computer @see status
 
 
 ## MAVLink Publications
-- `HEARTBEAT` [arg: `heartbeat`, dialect: minimal, msg_id: 0, id: `mavlink::minimal::msg::HEARTBEAT::MSG_ID`]
+- [`HEARTBEAT`](https://mavlink.io/en/messages/minimal.html#HEARTBEAT) [arg: `heartbeat`, dialect: minimal, msg_id: 0, id: `mavlink::minimal::msg::HEARTBEAT::MSG_ID`]
