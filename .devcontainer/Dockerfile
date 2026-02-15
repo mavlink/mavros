@@ -16,5 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
   && rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m pip install --no-cache-dir --break-system-packages uv
+
 COPY mavros/scripts/install_geographiclib_datasets.sh /tmp/install_geographiclib_datasets.sh
 RUN bash /tmp/install_geographiclib_datasets.sh && rm -f /tmp/install_geographiclib_datasets.sh
