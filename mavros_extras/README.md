@@ -51,7 +51,7 @@ can be set to -2, and default gimbal_device_id is 154, though 0 can be used for 
 gimbal devices.  After taking control of the gimbal, you can set RoI's or manually
 set the gimbal's orientation using the service calls provided.  The topic publishers
 for gimbal control have not been successfully validated, though this is possibly due
-to the implimentation on the Freefly Astro or with Auterion's simulator.  Feel
+to the implementation on the Freefly Astro or with Auterion's simulator.  Feel
 free to reach out to mark.beaty@adinkratech.com with any questions or feedback on
 this plugin!
 

@@ -33,7 +33,7 @@ using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
 
 /**
- * Time syncronization status publisher
+ * Time synchronization status publisher
  *
  * Based on diagnostic_updater::FrequencyStatus
  */
@@ -343,7 +343,7 @@ private:
     const bool fcu_time_valid = mtime.time_unix_usec > 1234567890ULL * 1000000;
 
     if (fcu_time_valid) {
-      // continious publish for ntpd
+      // continuous publish for ntpd
       auto time_unix = sensor_msgs::msg::TimeReference();
       rclcpp::Time time_ref(
         mtime.time_unix_usec / 1000000,                 // t_sec

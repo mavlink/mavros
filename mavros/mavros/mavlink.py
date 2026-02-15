@@ -109,7 +109,7 @@ def convert_to_rosmsg(
         header = Header(stamp=stamp)
 
     if mavutil.mavlink20():
-        # XXX Need some api to retreive signature block.
+        # XXX Need some api to retrieve signature block.
         if mavmsg.get_signed():
             raise ValueError("Signed message can't be converted to rosmsg.")
 

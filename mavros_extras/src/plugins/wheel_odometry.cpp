@@ -190,7 +190,7 @@ public:
     }
 #endif
 
-    // Advertize topics
+    // Advertise topics
     if (odom_mode != OM::NONE) {
       if (twist_send) {
         twist_pub = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(

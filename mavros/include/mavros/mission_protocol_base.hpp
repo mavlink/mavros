@@ -432,7 +432,7 @@ protected:
 
   /**
    * @brief handle MISSION_REQUEST mavlink msg
-   * handles and acts on misison request from FCU
+   * handles and acts on mission request from FCU
    * @param msg     Received Mavlink msg
    * @param mreq    MISSION_REQUEST from msg
    */
@@ -443,7 +443,7 @@ protected:
 
   /**
    * @brief handle MISSION_REQUEST_INT mavlink msg
-   * handles and acts on misison request from FCU
+   * handles and acts on mission request from FCU
    * @param msg     Received Mavlink msg
    * @param mreq    MISSION_REQUEST_INT from msg
    */

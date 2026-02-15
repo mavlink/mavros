@@ -333,7 +333,7 @@ def trigger_control(ctx, client, trigger_enable, sequence_reset, trigger_pause):
     "--integration-time",
     default=0.0,
     type=float,
-    help="Camera shutter intergration time. Zero to ignore",
+    help="Camera shutter integration time. Zero to ignore",
 )
 @pass_client
 @click.pass_context

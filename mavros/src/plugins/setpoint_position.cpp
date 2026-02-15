@@ -220,7 +220,7 @@ private:
     /**
      * The idea is to convert the change in LLA(goal_gps-current_gps) to change in ENU
      * 1. convert current/goal gps points to current/goal ECEF points
-     * 2. claculate offset in ECEF frame
+     * 2. calculate offset in ECEF frame
      * 3. converts ECEF offset to ENU offset given current gps LLA
      * 4. adds ENU offset to current local ENU to that will be sent to FCU
      */
@@ -231,7 +231,7 @@ private:
     Eigen::Vector3d goal_gps(req->pose.position.latitude, req->pose.position.longitude,
       req->pose.position.altitude);
 
-    // current gps -> curent ECEF
+    // current gps -> current ECEF
     Eigen::Vector3d current_ecef;
     earth.Forward(
       current_gps.x(), current_gps.y(), current_gps.z(),

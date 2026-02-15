@@ -114,7 +114,7 @@ TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
         // at -pi..0 we got complimentary q2 to q
         // EXPECT_QUATERNION(q1, q2, epsilon);
 
-        // instead of direct comparision we rotate other quaternion and then compare results
+        // instead of direct comparison we rotate other quaternion and then compare results
         auto tq1 = q1 * test_orientation * q1.inverse();
         auto tq2 = q2 * test_orientation * q2.inverse();
 
@@ -128,7 +128,7 @@ TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
 
 TEST(FRAME_TF, quaternion_get_yaw__123)
 {
-  // with pich >= pi/2 got incorrect result.
+  // with pitch >= pi/2 got incorrect result.
   // so 1, 2, 3 rad (57, 115, 172 deg) replaced with 60, 89, 172 deg
   auto q = ftf::quaternion_from_rpy(60.0 * deg_to_rad, 89.0 * deg_to_rad, 3.0);
 

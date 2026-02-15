@@ -3,7 +3,7 @@
 - File: `mavros/src/plugins/waypoint.cpp`
 - Class: `mavros::std_plugins::WaypointPlugin`
 - Namespace: `<unknown>`
-- Brief: Mission manupulation plugin
+- Brief: Mission manipulation plugin
 
 
 ## Publishers

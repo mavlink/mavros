@@ -74,7 +74,7 @@ public:
      * ros2 service call /mavros/gimbal_control/manager/configure mavros_msgs/srv/GimbalManagerConfigure "{sysid_primary: -2, compid_primary: 191, sysid_secondary: -1, compid_secondary: -1, gimbal_device_id: 0}"
      * Set pitch and yaw:
      * ros2 service call /mavros/gimbal_control/manager/pitchyaw mavros_msgs/srv/GimbalManagerPitchyaw "{pitch: -45, yaw: 90, pitch_rate: -0.2, yaw_rate: -0.2, flags: 0, gimbal_device_id: 0}"
-     * Set region of intrest for tracking:
+     * Set region of interest for tracking:
      * ros2 service call /mavros/gimbal_control/manager/set_roi mavros_msgs/srv/GimbalManagerSetRoi "{mode: 0, gimbal_device_id: 0, latitude: x, longitude: y, altitude: z}"
     */
     // Callback group for supporting nested service calls

@@ -71,7 +71,7 @@ class DeviceError : public std::runtime_error
 {
 public:
   /**
-   * @breif Construct error.
+   * @brief Construct error.
    */
   template<typename T>
   DeviceError(const char * module, T msg)

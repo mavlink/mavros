@@ -353,7 +353,7 @@ private:
           break;
         }
       default:
-        RCLCPP_ERROR(get_logger(), "Wrong debug type (%d). Droping!...", req->type);
+        RCLCPP_ERROR(get_logger(), "Wrong debug type (%d). Dropping!...", req->type);
         return;
     }
   }

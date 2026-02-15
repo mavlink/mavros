@@ -289,7 +289,7 @@ private:
       // I believe it's safer without sending zero thrust, but actually ignoring the actuation.
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 5000,
-        "Recieved thrust, but ignore_thrust is true: "
+        "Received thrust, but ignore_thrust is true: "
         "the most likely cause of this is a failure to specify the thrust_scaling parameters "
         "on px4/apm_config.yaml. Actuation will be ignored.");
       return;

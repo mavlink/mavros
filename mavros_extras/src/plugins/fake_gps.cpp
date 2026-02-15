@@ -316,7 +316,7 @@ private:
       /**
        * @note: <a href="https://mavlink.io/en/messages/common.html#HIL_GPS">HIL_GPS MAVLink message</a>
        * is supported by both Ardupilot and PX4 Firmware.
-       * But on PX4 Firmware are only acceped out of HIL mode
+       * But on PX4 Firmware are only accepted out of HIL mode
        * if use_hil_gps flag is set (param MAV_USEHILGPS = 1).
        */
       mavlink::common::msg::HIL_GPS hil_gps {};
@@ -380,9 +380,9 @@ private:
       int64_t tdiff = (gps_input.time_usec / 1000) - UNIX_OFFSET_MSEC;
       gps_input.time_week = tdiff / MSEC_PER_WEEK;
       gps_input.time_week_ms = tdiff - (gps_input.time_week * MSEC_PER_WEEK);
-      gps_input.speed_accuracy = speed_accuracy;        // [m/s] TODO how can this be dynamicaly calculated ???   // NOLINT
-      gps_input.horiz_accuracy = horiz_accuracy;        // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow  // NOLINT
-      gps_input.vert_accuracy = vert_accuracy;          // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() bellow  // NOLINT
+      gps_input.speed_accuracy = speed_accuracy;        // [m/s] TODO how can this be dynamically calculated ???   // NOLINT
+      gps_input.horiz_accuracy = horiz_accuracy;        // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() below  // NOLINT
+      gps_input.vert_accuracy = vert_accuracy;          // [m] will either use the static parameter value, or the dynamic covariance from function mocap_pose_cov_cb() below  // NOLINT
       gps_input.lat = geodetic.x() * 1e7;               // [degrees * 1e7]
       gps_input.lon = geodetic.y() * 1e7;               // [degrees * 1e7]
       gps_input.alt = uas->data.egm96_5->ConvertHeight(

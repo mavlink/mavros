@@ -340,7 +340,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_srv;
   rclcpp::Service<mavros_msgs::srv::FileChecksum>::SharedPtr checksum_srv;
 
-  //! This type used in servicies to store 'data' fileds.
+  //! This type used in services to store 'data' fields.
   typedef std::vector<uint8_t> V_FileData;
 
   enum class OP
@@ -681,7 +681,7 @@ private:
     RCLCPP_DEBUG(get_logger(), "FTP:m: kCmdResetSessions");
     if (!session_file_map.empty()) {
       RCLCPP_WARN(
-        get_logger(), "FTP: Reset closes %zu sessons",
+        get_logger(), "FTP: Reset closes %zu sessions",
         session_file_map.size());
       session_file_map.clear();
     }

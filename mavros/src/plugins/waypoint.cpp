@@ -27,7 +27,7 @@ using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
 
 /**
- * @brief Mission manupulation plugin
+ * @brief Mission manipulation plugin
  * @plugin waypoint
  */
 class WaypointPlugin : public plugin::MissionBase
@@ -201,7 +201,7 @@ private:
     lock.lock();
 
     res->wp_received = waypoints.size();
-    go_idle();  // not nessessary, but prevents from blocking
+    go_idle();  // not necessary, but prevents from blocking
   }
 
   void push_cb(

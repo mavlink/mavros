@@ -90,7 +90,7 @@ def load(client, file_format, file_):
 
     client.param.values.update(param_file.parameters)
 
-    client.verbose_echo(f"Prameters sent: {len(param_file.parameters)}")
+    client.verbose_echo(f"Parameters sent: {len(param_file.parameters)}")
 
 
 @param.command()

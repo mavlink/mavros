@@ -41,9 +41,9 @@ static const auto AIRCRAFT_BASELINK_Q = quaternion_from_rpy(M_PI, 0.0, 0.0);
 
 /**
  * @brief Static vector needed for rotating between ENU and NED frames
- * +PI rotation around X (North) axis follwed by +PI/2 rotation about Z (Down)
+ * +PI rotation around X (North) axis followed by +PI/2 rotation about Z (Down)
  * gives the ENU frame.  Similarly, a +PI rotation about X (East) followed by
- * a +PI/2 roation about Z (Up) gives the NED frame.
+ * a +PI/2 rotation about Z (Up) gives the NED frame.
  */
 static const Eigen::Affine3d NED_ENU_AFFINE(NED_ENU_Q);
 
@@ -69,7 +69,7 @@ static const Eigen::PermutationMatrix<3> NED_ENU_REFLECTION_XY(Eigen::Vector3i(1
 static const Eigen::DiagonalMatrix<double, 3> NED_ENU_REFLECTION_Z(1, 1, -1);
 
 /**
- * @brief Auxiliar matrices to Covariance transforms
+ * @brief Auxiliary matrices to Covariance transforms
  */
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using Matrix9d = Eigen::Matrix<double, 9, 9>;

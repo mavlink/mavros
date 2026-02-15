@@ -40,7 +40,7 @@ namespace utils
 template<typename ... Args>
 std::string format(const std::string & fmt, Args... args)
 {
-  // C++11 specify that string store elements continously
+  // C++11 specify that string store elements continuously
   std::string ret;
 
   auto sz = std::snprintf(nullptr, 0, fmt.c_str(), args ...);

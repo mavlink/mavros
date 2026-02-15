@@ -87,7 +87,7 @@ private:
 
   Eigen::Vector3d current_gps;          //!< geodetic coordinates LLA
 
-  Eigen::Vector3d map_origin {};        //!< oigin of map frame [lla]
+  Eigen::Vector3d map_origin {};        //!< origin of map frame [lla]
   Eigen::Vector3d ecef_origin {};       //!< geocentric origin [m]
 
   //! old time gps time stamp in [ms], to check if new gps msg is received

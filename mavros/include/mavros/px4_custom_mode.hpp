@@ -36,7 +36,7 @@
  * @file px4_custom_mode.h
  * PX4 custom flight modes
  *
- * Modifyed copy px4_custom_mode.h from PX4/Firmware
+ * Modified copy px4_custom_mode.h from PX4/Firmware
  *
  * @author Anton Babushkin <anton@px4.io>
  */

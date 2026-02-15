@@ -173,8 +173,8 @@ private:
     stat.addf("Remote RSSI", "%u", last_status->remrssi);
     stat.addf("Remote RSSI (dBm)", "%.1f", last_status->remrssi_dbm);
     stat.addf("Tx buffer (%)", "%u", last_status->txbuf);
-    stat.addf("Noice level", "%u", last_status->noise);
-    stat.addf("Remote noice level", "%u", last_status->remnoise);
+    stat.addf("Noise level", "%u", last_status->noise);
+    stat.addf("Remote noise level", "%u", last_status->remnoise);
     stat.addf("Rx errors", "%u", last_status->rxerrors);
     stat.addf("Fixed", "%u", last_status->fixed);
   }

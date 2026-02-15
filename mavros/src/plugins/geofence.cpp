@@ -147,7 +147,7 @@ private:
     lock.lock();
 
     res->wp_received = waypoints.size();
-    go_idle();  // not nessessary, but prevents from blocking
+    go_idle();  // not necessary, but prevents from blocking
   }
 
   void push_cb(

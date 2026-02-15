@@ -187,7 +187,7 @@ private:
 
   /**
    * @brief Fill and publish IMU data message.
-   * @param time_boot_ms     Message timestamp (not syncronized)
+   * @param time_boot_ms     Message timestamp (not synchronized)
    * @param orientation_enu  Orientation in the base_link ENU frame
    * @param orientation_ned  Orientation in the aircraft NED frame
    * @param gyro_flu         Angular velocity/rate in the base_link Forward-Left-Up frame
@@ -228,7 +228,7 @@ private:
 
     if (!received_linear_accel) {
       // Set element 0 of covariance matrix to -1
-      // if no data received as per sensor_msgs/Imu defintion
+      // if no data received as per sensor_msgs/Imu definition
       imu_enu_msg.linear_acceleration_covariance[0] = -1;
       imu_ned_msg.linear_acceleration_covariance[0] = -1;
     }

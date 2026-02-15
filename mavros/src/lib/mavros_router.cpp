@@ -447,7 +447,7 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
 
   if (mav_status.packet_rx_drop_count > stat_last_drop_count) {
     stat.summaryf(
-      1, "%d packeges dropped since last report",
+      1, "%d packages dropped since last report",
       mav_status.packet_rx_drop_count - stat_last_drop_count);
   } else {
     stat.summary(0, "ok");

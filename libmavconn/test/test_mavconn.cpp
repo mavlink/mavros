@@ -86,7 +86,7 @@ public:
 };
 
 #if 0
-// XXX(vooon): temparary disable that check - it don't work on Travis (with ICI)
+// XXX(vooon): temporary disable that check - it don't work on Travis (with ICI)
 TEST_F(UDP, bind_error)
 {
   MAVConnInterface::Ptr conns[2];

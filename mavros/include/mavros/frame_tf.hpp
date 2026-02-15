@@ -94,7 +94,7 @@ namespace detail
 {
 /**
  * @brief Transform representation of attitude from 1 frame to another
- * (e.g. transfrom attitude from representing  from base_link -> NED
+ * (e.g. transform attitude from representing  from base_link -> NED
  *               to representing base_link -> ENU)
  *
  * General function. Please use specialized enu-ned and ned-enu variants.
@@ -409,7 +409,7 @@ double quaternion_get_yaw(const Eigen::Quaterniond & q);
 /**
  * @brief Store Quaternion to MAVLink float[4] format
  *
- * MAVLink uses wxyz order, wile Eigen::Quaterniond uses xyzw internal order,
+ * MAVLink uses wxyz order, while Eigen::Quaterniond uses xyzw internal order,
  * so it can't be stored to array using Eigen::Map.
  */
 template<typename _Scalar, std::enable_if_t<std::is_floating_point<_Scalar>::value, bool> = true>

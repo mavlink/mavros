@@ -83,7 +83,7 @@ void UAS::update_capabilities(bool known, uint64_t caps)
     if (caps != fcu_capabilities) {
       process_cb_queue = true;
     }
-  } else {}     // Capabilities werent known before and arent known after update
+  } else {}     // Capabilities weren't known before and aren't known after update
 
   if (process_cb_queue) {
     fcu_capabilities = caps;

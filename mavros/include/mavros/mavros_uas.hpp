@@ -148,7 +148,7 @@ public:
   //! Returns EPH, EPV, Fix type and satellites visible
   void get_gps_epts(float & eph, float & epv, int & fix_type, int & satellites_visible);
 
-  //! Retunrs last GPS RAW message
+  //! Returns last GPS RAW message
   sensor_msgs::msg::NavSatFix get_gps_fix();
 
   /* -*- GograpticLib utils -*- */
@@ -237,7 +237,7 @@ private:
  * - Connection status (@a mavplugin::SystemStatusPlugin)
  * - Autopilot type (@a mavplugin::SystemStatusPlugin)
  * - Vehicle type (@a mavplugin::SystemStatusPlugin)
- * - Additional data trough mavros::uas::Data class
+ * - Additional data through mavros::uas::Data class
  */
 class UAS : public rclcpp::Node
 {
@@ -455,7 +455,7 @@ public:
    *
    * @param[in] frame_id    frame for header
    * @param[in] time_stamp  mavlink message time
-   * @return Header with syncronized stamp and frame id
+   * @return Header with synchronized stamp and frame id
    */
   template<typename T>
   inline std_msgs::msg::Header synchronized_header(const std::string & frame_id, const T time_stamp)

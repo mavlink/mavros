@@ -150,7 +150,7 @@ void Data::get_gps_epts(float & eph, float & epv, int & fix_type, int & satellit
   satellites_visible = gps_satellites_visible;
 }
 
-//! Retunrs last GPS RAW message
+//! Returns last GPS RAW message
 sensor_msgs::msg::NavSatFix Data::get_gps_fix()
 {
   s_shared_lock lock(mu);

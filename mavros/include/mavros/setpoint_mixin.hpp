@@ -146,7 +146,7 @@ template<class D>
 class SetAttitudeTargetMixin
 {
 public:
-  //! Message sepecification: @p https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET
+  //! Message specification: @p https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET
   void set_attitude_target(
     uint32_t time_boot_ms,
     uint8_t type_mask,
@@ -238,7 +238,7 @@ public:
 
 #if 0  // XXX TODO(vooon): port me pls
   /**
-   * @brief start tf listener syncronized with another topic
+   * @brief start tf listener synchronized with another topic
    *
    * @param _thd_name  listener thread name
    * @param cbp        plugin callback function

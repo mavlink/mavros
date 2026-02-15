@@ -1,5 +1,5 @@
 # This file defines mappings between ROS 1 and ROS 2 interfaces.
-# It is used with the ros1_bridge to allow for communcation between ROS 1 and ROS 2.
+# It is used with the ros1_bridge to allow for communication between ROS 1 and ROS 2.
 
 -
   ros1_package_name: 'mavros_msgs'

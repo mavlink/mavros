@@ -1,6 +1,6 @@
 # Message for SET_POSITION_TARGET_LOCAL_NED
 #
-# Some complex system requires all feautures that mavlink
+# Some complex system requires all features that mavlink
 # message provide. See issue #402.
 
 std_msgs/Header header

@@ -113,12 +113,12 @@ int sensor_orientation_from_str(const std::string & sensor_orientation);
 timesync_mode timesync_mode_from_str(const std::string & mode);
 
 /**
- * @brief Retreive MAV_FRAME from name
+ * @brief Retrieve MAV_FRAME from name
  */
 mavlink::common::MAV_FRAME mav_frame_from_str(const std::string & mav_frame);
 
 /**
- * @brief Retreive MAV_TYPE from name
+ * @brief Retrieve MAV_TYPE from name
  */
 mavlink::minimal::MAV_TYPE mav_type_from_str(const std::string & mav_type);
 

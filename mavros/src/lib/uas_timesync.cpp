@@ -17,7 +17,7 @@ using namespace mavros;         // NOLINT
 using namespace mavros::uas;    // NOLINT
 
 
-/* -*- time syncronise functions -*- */
+/* -*- time synchronise functions -*- */
 
 static inline rclcpp::Time ros_time_from_ns(const uint64_t stamp_ns)
 {

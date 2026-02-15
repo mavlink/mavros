@@ -395,7 +395,7 @@ DistanceSensorItem::DistanceSensorItem(
     frame_id = config["frame_id"].as<std::string>();
     field_of_view = config["field_of_view"].as<double>();
 
-    // unset allowed, setted wrong - not
+    // unset allowed, set wrong - not
     if (orientation == -1 && !orientation_str.empty()) {
       throw std::invalid_argument("defined orientation is not valid!");
     }

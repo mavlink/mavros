@@ -162,7 +162,7 @@ void MAVConnTCPClient::connect(
       try {
         io_service.run();
       } catch (std::exception & ex) {
-        CONSOLE_BRIDGE_logError(PFXd "io_service execption: %s", conn_id, ex.what());
+        CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
       }
       is_running = false;
     });
