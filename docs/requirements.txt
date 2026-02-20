@@ -8,7 +8,7 @@ babel==2.17.0
     # via
     #   mkdocs-material
     #   sphinx
-backrefs==5.9
+backrefs==6.2
     # via mkdocs-material
 certifi==2025.10.5
     # via requests
