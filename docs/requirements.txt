@@ -166,7 +166,7 @@ requests==2.32.5
     # via
     #   mkdocs-material
     #   sphinx
-roman-numerals-py==3.1.0
+roman-numerals-py==4.1.0
     # via sphinx
 ruff==0.14.1
 six==1.17.0
