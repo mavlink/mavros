@@ -68,7 +68,7 @@ jinja2==3.1.6
     #   sphinx
 lxml==6.0.2
     # via pymavlink
-markdown==3.9
+markdown==3.10.2
     # via
     #   markdown-include
     #   mkdocs
