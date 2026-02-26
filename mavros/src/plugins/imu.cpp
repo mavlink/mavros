@@ -464,7 +464,7 @@ private:
       auto static_pressure_msg = sensor_msgs::msg::FluidPressure();
 
       static_pressure_msg.header = header;
-      static_pressure_msg.fluid_pressure = imu_hr.abs_pressure;
+      static_pressure_msg.fluid_pressure = imu_hr.abs_pressure * MILLIBAR_TO_PASCAL;
 
       static_press_pub->publish(static_pressure_msg);
     }
@@ -478,7 +478,7 @@ private:
       auto differential_pressure_msg = sensor_msgs::msg::FluidPressure();
 
       differential_pressure_msg.header = header;
-      differential_pressure_msg.fluid_pressure = imu_hr.diff_pressure;
+      differential_pressure_msg.fluid_pressure = imu_hr.diff_pressure * MILLIBAR_TO_PASCAL;
 
       diff_press_pub->publish(differential_pressure_msg);
     }
@@ -621,12 +621,12 @@ private:
 
     auto static_pressure_msg = sensor_msgs::msg::FluidPressure();
     static_pressure_msg.header = header;
-    static_pressure_msg.fluid_pressure = press.press_abs * 100.0;
+    static_pressure_msg.fluid_pressure = press.press_abs * MILLIBAR_TO_PASCAL;
     static_press_pub->publish(static_pressure_msg);
 
     auto differential_pressure_msg = sensor_msgs::msg::FluidPressure();
     differential_pressure_msg.header = header;
-    differential_pressure_msg.fluid_pressure = press.press_diff * 100.0;
+    differential_pressure_msg.fluid_pressure = press.press_diff * MILLIBAR_TO_PASCAL;
     diff_press_pub->publish(differential_pressure_msg);
   }
 
