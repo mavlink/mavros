@@ -90,7 +90,7 @@ jobs:
             "${GITHUB_WORKSPACE}/build"
 
       - name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.component.name }}-${{ matrix.ros_distro }}
           path: coverage/${{ matrix.component.name }}
