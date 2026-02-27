@@ -32,7 +32,7 @@ comment-parser==1.2.4 ; python_full_version < '3.13'
     # via mavros-tools
 comment-parser==1.2.5 ; python_full_version >= '3.13'
     # via mavros-tools
-coverage==7.11.0
+coverage==7.13.4
     # via pytest-cov
 docutils==0.21.2
     # via sphinx
