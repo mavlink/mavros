@@ -427,14 +427,14 @@ wheels = [
 
 [[package]]
 name = "griffe-sphinx"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "griffe" },
+    { name = "griffelib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c3/de/d9fe6000fb734fc8a1747cc62c9211a9e370b701dac4fc114f377b68fb8c/griffe_sphinx-0.2.0.tar.gz", hash = "sha256:c53e94d3b6c795d46ddba3959e66d8b062176aafef29b8707ec0a09d35b68e5d", size = 26016, upload-time = "2025-11-09T00:02:29.962Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/54/94f4f78b211c76c62f09a1b7acbd675a193f2b1b4e3317b57cb09c05a4dd/griffe_sphinx-0.2.1.tar.gz", hash = "sha256:ebb939fbc6bfa4595ff963db5cd6ecd43c1c26a07f57f0243b448a1fa1cc5ad6", size = 28519, upload-time = "2026-02-21T09:38:52.972Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/4c/5d4fb1b89f3fed1c7d19bd077263b01d6c16ac7a2f20efbdfae16dfe75da/griffe_sphinx-0.2.0-py3-none-any.whl", hash = "sha256:9599f82c3795e24c00c2e844ce7bf029112a3fab26a3bdada4f10eb85493f7bf", size = 5680, upload-time = "2025-11-09T00:02:28.757Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/58/32bc4cc6e3c54a993de0b355c438557786a5e245c63be29604eba8184d88/griffe_sphinx-0.2.1-py3-none-any.whl", hash = "sha256:3fc40dcc6a2b96aa2331e64833f9f447ec2c46f4b3a7839cf4866027d14bbab5", size = 7324, upload-time = "2026-02-20T14:33:29.655Z" },
 ]
 
 [[package]]
