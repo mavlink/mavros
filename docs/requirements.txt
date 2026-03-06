@@ -56,7 +56,7 @@ griffe-typingdoc==0.2.9
     # via mavros-tools
 idna==3.11
     # via requests
-imagesize==1.4.1
+imagesize==2.0.0
     # via sphinx
 iniconfig==2.3.0
     # via pytest
