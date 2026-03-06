@@ -4,7 +4,7 @@ alabaster==1.0.0
     # via sphinx
 attrs==25.4.0
     # via mavros-tools
-babel==2.17.0
+babel==2.18.0
     # via
     #   mkdocs-material
     #   sphinx
