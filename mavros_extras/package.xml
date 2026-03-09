@@ -34,6 +34,7 @@
   <build_export_depend>geographiclib</build_export_depend>
   <build_depend>geographiclib-tools</build_depend>
   <build_export_depend>geographiclib-tools</build_export_depend>
+  <depend>libcurl4-openssl-dev</depend>
 
   <!-- packages -->
   <build_depend>angles</build_depend>

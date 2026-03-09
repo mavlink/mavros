@@ -225,6 +225,19 @@ Published topics (relative to plugin namespace):
 
 This plugin allows publishing of terrain height estimate from FCU to ROS.</description>
   </class>
+  <class name="terrain_server" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TerrainServerPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Terrain data server plugin.
+@plugin terrain_server
+
+Serves SRTM terrain altitude data to the FCU in response to
+TERRAIN_REQUEST messages.  Loads .hgt files from a configurable
+directory, with optional automatic downloading from a terrain
+server.  Drip-feeds TERRAIN_DATA responses at a configurable rate
+to avoid flooding the MAVLink link.
+
+Published topics (relative to plugin namespace):
+- ~/report  (mavros_msgs/TerrainReport): terrain elevation responses</description>
+  </class>
   <class name="trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Trajectory plugin to receive planned path from the FCU and
 send back to the FCU a corrected path (collision free, smoothed)
@@ -268,4 +281,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: v8ncmFMJh8) -->
+<!-- [[[end]]] (sum: XS+0D9cMeN) -->

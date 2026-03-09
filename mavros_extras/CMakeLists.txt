@@ -38,6 +38,7 @@ find_package(Eigen3 REQUIRED)
 # FindGeographicLib.cmake in a nonstand location
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 find_package(GeographicLib REQUIRED)
+find_package(CURL REQUIRED)
 
 find_package(angles REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -134,6 +135,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/rangefinder.cpp
   src/plugins/sim_state.cpp
   src/plugins/terrain.cpp
+  src/plugins/terrain_server.cpp
   src/plugins/trajectory.cpp
   src/plugins/tunnel.cpp
   src/plugins/vfr_hud.cpp
@@ -141,7 +143,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]] (sum: E3zv4+Yl1z)
+  # [[[end]]] (sum: WzAyzLqsp3)
 )
 target_link_libraries(mavros_extras_plugins PUBLIC
   ${geographic_msgs_TARGETS}
@@ -167,6 +169,7 @@ target_link_libraries(mavros_extras_plugins PUBLIC
   tf2_ros::static_transform_broadcaster_node
   tf2_ros::tf2_ros
   ${mavros_LIBRARIES}
+  CURL::libcurl
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
