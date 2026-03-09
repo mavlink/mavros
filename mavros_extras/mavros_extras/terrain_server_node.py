@@ -106,10 +106,8 @@ class TerrainServerNode(Node):
         self._timer = self.create_timer(period, self._on_send_tick)
 
         self.get_logger().info(
-            "Terrain server ready  path=%s  auto_download=%s  rate=%.1f Hz",
-            terrain_data_path or "(none)",
-            auto_download,
-            rate_hz,
+            f"Terrain server ready  path={terrain_data_path or '(none)'}"
+            f"  auto_download={auto_download}  rate={rate_hz:.1f} Hz"
         )
 
     # ---------------------------------------------------------------- callbacks
@@ -128,10 +126,8 @@ class TerrainServerNode(Node):
                     req.mask = msg.mask
                     req.sent_mask &= msg.mask
                     self.get_logger().debug(
-                        "Updated pending request lat=%.7f lon=%.7f mask=0x%016x",
-                        lat_deg,
-                        lon_deg,
-                        msg.mask,
+                        f"Updated pending request lat={lat_deg:.7f}"
+                        f" lon={lon_deg:.7f} mask=0x{msg.mask:016x}"
                     )
                     return
 
@@ -142,12 +138,8 @@ class TerrainServerNode(Node):
             count = self._requests_received
 
         self.get_logger().info(
-            "TERRAIN_REQUEST #%d lat=%.7f lon=%.7f spacing=%d mask=0x%016x",
-            count,
-            lat_deg,
-            lon_deg,
-            msg.grid_spacing,
-            msg.mask,
+            f"TERRAIN_REQUEST #{count} lat={lat_deg:.7f} lon={lon_deg:.7f}"
+            f" spacing={msg.grid_spacing} mask=0x{msg.mask:016x}"
         )
 
     def _on_check(
@@ -160,9 +152,7 @@ class TerrainServerNode(Node):
             response.success = False
             response.terrain_height = 0.0
             self.get_logger().debug(
-                "Check: no data at (%.7f, %.7f)",
-                request.latitude,
-                request.longitude,
+                f"Check: no data at ({request.latitude:.7f}, {request.longitude:.7f})"
             )
         else:
             response.success = True
@@ -191,10 +181,8 @@ class TerrainServerNode(Node):
             )
             if data is None:
                 self.get_logger().debug(
-                    "No elevation data for bit %d at (%.7f, %.7f)",
-                    bit,
-                    req.lat / 1e7,
-                    req.lon / 1e7,
+                    f"No elevation data for bit {bit}"
+                    f" at ({req.lat / 1e7:.7f}, {req.lon / 1e7:.7f})"
                 )
                 continue
 
@@ -212,11 +200,9 @@ class TerrainServerNode(Node):
                 self._blocks_served += 1
                 if req.remaining == 0:
                     self.get_logger().info(
-                        "Completed terrain request lat=%.7f lon=%.7f "
-                        "(%d blocks served total)",
-                        req.lat / 1e7,
-                        req.lon / 1e7,
-                        self._blocks_served,
+                        f"Completed terrain request lat={req.lat / 1e7:.7f}"
+                        f" lon={req.lon / 1e7:.7f}"
+                        f" ({self._blocks_served} blocks served total)"
                     )
 
             return
