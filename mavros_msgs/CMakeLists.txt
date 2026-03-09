@@ -99,7 +99,9 @@ set(msg_files
   msg/StatusEvent.msg
   msg/StatusText.msg
   msg/SysStatus.msg
+  msg/TerrainData.msg
   msg/TerrainReport.msg
+  msg/TerrainRequest.msg
   msg/Thrust.msg
   msg/TimesyncStatus.msg
   msg/Trajectory.msg
@@ -111,7 +113,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (sum: 4tpSf/CPJJ)
+  # [[[end]]] (sum: WNC7AFvjZ5)
 )
 
 set(srv_files
@@ -159,12 +161,13 @@ set(srv_files
   srv/SetMavFrame.srv
   srv/SetMode.srv
   srv/StreamRate.srv
+  srv/TerrainCheck.srv
   srv/VehicleInfoGet.srv
   srv/WaypointClear.srv
   srv/WaypointPull.srv
   srv/WaypointPush.srv
   srv/WaypointSetCurrent.srv
-  # [[[end]]] (sum: zXcBsooxdt)
+  # [[[end]]] (sum: gwjU4eY/S4)
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

@@ -10,6 +10,9 @@
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
 	<arg name="namespace" default="mavros"/>
+	<arg name="terrain_data_path" default="" />
+	<arg name="terrain_auto_download" default="false" />
+
 	<include file="$(find-pkg-share mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find-pkg-share mavros)/launch/apm_pluginlists.yaml" />
 		<arg name="config_yaml" value="$(find-pkg-share mavros)/launch/apm_config.yaml" />
@@ -21,4 +24,13 @@
 		<arg name="respawn_mavros" value="$(var respawn_mavros)" />
 		<arg name="namespace" value="$(var namespace)"/>
 	</include>
+
+	<node pkg="mavros_extras" exec="terrain_server_node" output="$(var log_output)">
+		<param name="terrain_data_path" value="$(var terrain_data_path)" />
+		<param name="auto_download" value="$(var terrain_auto_download)" />
+		<param name="download_host" value="terrain.ardupilot.org" />
+		<param name="srtm_source" value="SRTM3" />
+		<param name="send_rate_hz" value="5.0" />
+		<param name="max_cache_tiles" value="64" />
+	</node>
 </launch>

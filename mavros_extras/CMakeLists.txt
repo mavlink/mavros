@@ -18,6 +18,7 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 
 # find mavros dependencies
 find_package(rclcpp REQUIRED)
@@ -38,7 +39,6 @@ find_package(Eigen3 REQUIRED)
 # FindGeographicLib.cmake in a nonstand location
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 find_package(GeographicLib REQUIRED)
-find_package(CURL REQUIRED)
 
 find_package(angles REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -135,7 +135,6 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/rangefinder.cpp
   src/plugins/sim_state.cpp
   src/plugins/terrain.cpp
-  src/plugins/terrain_server.cpp
   src/plugins/trajectory.cpp
   src/plugins/tunnel.cpp
   src/plugins/vfr_hud.cpp
@@ -169,7 +168,6 @@ target_link_libraries(mavros_extras_plugins PUBLIC
   tf2_ros::static_transform_broadcaster_node
   tf2_ros::tf2_ros
   ${mavros_LIBRARIES}
-  CURL::libcurl
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
@@ -217,6 +215,14 @@ install(DIRECTORY include/
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+# Python terrain server node
+ament_python_install_package(${PROJECT_NAME})
+install(PROGRAMS
+  ${PROJECT_NAME}/terrain_server_node.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME terrain_server_node
 )
 
 if(BUILD_TESTING)

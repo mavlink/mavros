@@ -34,8 +34,6 @@
   <build_export_depend>geographiclib</build_export_depend>
   <build_depend>geographiclib-tools</build_depend>
   <build_export_depend>geographiclib-tools</build_export_depend>
-  <depend>libcurl4-openssl-dev</depend>
-
   <!-- packages -->
   <build_depend>angles</build_depend>
   <depend>diagnostic_updater</depend>
@@ -65,6 +63,7 @@
   <depend>std_srvs</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
