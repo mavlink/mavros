@@ -22,6 +22,7 @@
 
 #include <array>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <shared_mutex>     // NOLINT
@@ -97,6 +98,7 @@ public:
   uint32_t id;                         // id of the endpoint
   Type link_type;                      // class of the endpoint
   std::string url;                     // url to open that endpoint
+  std::mutex remote_addrs_mutex;       // guards remote_addrs and stale_addrs
   std::set<addr_t> remote_addrs;       // remotes that we heard there
   std::set<addr_t> stale_addrs;        // temporary storage for stale remote addrs
 

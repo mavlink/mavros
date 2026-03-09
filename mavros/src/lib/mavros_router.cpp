@@ -67,7 +67,11 @@ retry:
     // NOTE(vooon): current router do not allow to speak drone-to-drone.
     //              if it is needed perhaps better to add mavlink-router in front of mavros-router.
 
-    bool has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
+    bool has_target;
+    {
+      std::lock_guard<std::mutex> lock(dest->remote_addrs_mutex);
+      has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
+    }
 
     if (has_target) {
       dest->send_message(msg, framing, src->id);
@@ -274,6 +278,8 @@ void Router::periodic_reconnect_endpoints()
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
 
+    std::lock_guard<std::mutex> endpoint_lock(p->remote_addrs_mutex);
+
     if (p->is_open()) {
       continue;
     }
@@ -342,16 +348,22 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   const addr_t sysid_addr = msg->sysid << 8;
   const addr_t sysid_compid_addr = (msg->sysid << 8) | msg->compid;
 
-  // save source addr to remote_addrs
-  auto sp = this->remote_addrs.emplace(sysid_addr);
-  auto scp = this->remote_addrs.emplace(sysid_compid_addr);
+  bool new_sysid_addr;
+  bool new_sysid_compid_addr;
+  {
+    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
 
-  // and delete it from stale_addrs
-  this->stale_addrs.erase(sysid_addr);
-  this->stale_addrs.erase(sysid_compid_addr);
+    // save source addr to remote_addrs
+    new_sysid_addr = this->remote_addrs.emplace(sysid_addr).second;
+    new_sysid_compid_addr = this->remote_addrs.emplace(sysid_compid_addr).second;
+
+    // and delete it from stale_addrs
+    this->stale_addrs.erase(sysid_addr);
+    this->stale_addrs.erase(sysid_compid_addr);
+  }
 
   auto & nh = this->parent;
-  if (sp.second || scp.second) {
+  if (new_sysid_addr || new_sysid_compid_addr) {
     RCLCPP_INFO(
       nh->get_logger(), "link[%d] detected remote address %d.%d", this->id, msg->sysid,
       msg->compid);
@@ -439,9 +451,16 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
   stat.addf("Rx speed", "%f", iostat.rx_speed);
   stat.addf("Tx speed", "%f", iostat.tx_speed);
 
-  stat.addf("Remotes count", "%zu", this->remote_addrs.size());
+  std::set<addr_t> remote_addrs_copy;
+  {
+    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
+    remote_addrs_copy = this->remote_addrs;
+  }
+
+  stat.addf("Remotes count", "%zu", remote_addrs_copy.size());
+
   size_t idx = 0;
-  for (auto addr : this->remote_addrs) {
+  for (auto addr : remote_addrs_copy) {
     stat.addf(utils::format("Remote [%d]", idx++), "%d.%d", addr >> 8, addr & 0xff);
   }
 
@@ -534,9 +553,16 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // TODO(vooon): make some diagnostics
 
-  stat.addf("Remotes count", "%zu", this->remote_addrs.size());
+  std::set<addr_t> remote_addrs_copy;
+  {
+    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
+    remote_addrs_copy = this->remote_addrs;
+  }
+
+  stat.addf("Remotes count", "%zu", remote_addrs_copy.size());
+
   size_t idx = 0;
-  for (auto addr : this->remote_addrs) {
+  for (auto addr : remote_addrs_copy) {
     stat.addf(utils::format("Remote [%d]", idx++), "%d.%d", addr >> 8, addr & 0xff);
   }
 
