@@ -303,6 +303,7 @@ void Router::periodic_clear_stale_remote_addrs()
   RCLCPP_DEBUG(lg, "clear stale remotes");
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
+    std::lock_guard<std::mutex> endpoint_lock(p->remote_addrs_mutex);
 
     // Step 1: remove any stale addrs that still there
     //         (hadn't been removed by Endpoint::recv_message())
