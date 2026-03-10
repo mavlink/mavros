@@ -117,7 +117,9 @@ UAS::UAS(
           }),
         [this](std::thread * t) {
           this->exec.cancel();
-          t->join();
+          if (t->joinable()) {
+            t->join();
+          }
           delete t;
         });
 
