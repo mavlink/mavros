@@ -621,9 +621,9 @@ private:
 
   // XXX(vooon): we have to use own executor because Node::create_sub_node() doesn't work for us.
   using thread_ptr = std::unique_ptr<std::thread, std::function<void (std::thread *)>>;
-  thread_ptr exec_spin_thd;
   // rclcpp::executors::MultiThreadedExecutor exec;
   UASExecutor exec;
+  thread_ptr exec_spin_thd;
 
   // plugins
   pluginlib::ClassLoader<plugin::PluginFactory> plugin_factory_loader;
