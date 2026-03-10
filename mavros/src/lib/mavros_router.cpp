@@ -452,7 +452,7 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
 
   std::set<addr_t> remote_addrs_copy;
   {
-    std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
+    std::shared_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
     remote_addrs_copy = this->remote_addrs;
   }
 
@@ -554,7 +554,7 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   std::set<addr_t> remote_addrs_copy;
   {
-    std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
+    std::shared_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
     remote_addrs_copy = this->remote_addrs;
   }
 
