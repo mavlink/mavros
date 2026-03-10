@@ -69,7 +69,7 @@ retry:
 
     bool has_target;
     {
-      std::lock_guard<std::mutex> lock(dest->remote_addrs_mutex);
+      std::shared_lock<std::shared_mutex> lock(dest->remote_addrs_mutex);
       has_target = dest->remote_addrs.find(target_addr) != dest->remote_addrs.end();
     }
 
@@ -278,8 +278,6 @@ void Router::periodic_reconnect_endpoints()
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
 
-    std::lock_guard<std::mutex> endpoint_lock(p->remote_addrs_mutex);
-
     if (p->is_open()) {
       continue;
     }
@@ -303,7 +301,7 @@ void Router::periodic_clear_stale_remote_addrs()
   RCLCPP_DEBUG(lg, "clear stale remotes");
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
-    std::lock_guard<std::mutex> endpoint_lock(p->remote_addrs_mutex);
+    std::unique_lock<std::shared_mutex> endpoint_lock(p->remote_addrs_mutex);
 
     // Step 1: remove any stale addrs that still there
     //         (hadn't been removed by Endpoint::recv_message())
@@ -352,7 +350,7 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   bool new_sysid_addr;
   bool new_sysid_compid_addr;
   {
-    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
+    std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
 
     // save source addr to remote_addrs
     new_sysid_addr = this->remote_addrs.emplace(sysid_addr).second;
@@ -454,7 +452,7 @@ void MAVConnEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & sta
 
   std::set<addr_t> remote_addrs_copy;
   {
-    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
+    std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
     remote_addrs_copy = this->remote_addrs;
   }
 
@@ -556,7 +554,7 @@ void ROSEndpoint::diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   std::set<addr_t> remote_addrs_copy;
   {
-    std::lock_guard<std::mutex> lock(this->remote_addrs_mutex);
+    std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
     remote_addrs_copy = this->remote_addrs;
   }
 
