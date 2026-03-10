@@ -181,6 +181,12 @@ UAS::UAS(
     });
 }
 
+UAS::~UAS()
+{
+  // Stop the executor before plugin nodes and subscriptions begin tearing down.
+  exec_spin_thd.reset();
+}
+
 void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
 {
   auto it = plugin_subscriptions.find(mmsg->msgid);

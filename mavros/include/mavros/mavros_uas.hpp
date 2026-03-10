@@ -260,7 +260,7 @@ public:
     const std::string & uas_url_ = "/uas1", uint8_t target_system_ = 1,
     uint8_t target_component_ = 1);
 
-  ~UAS() = default;
+  ~UAS() override;
 
   /**
    * @brief Mavros diagnostic updater
