@@ -217,17 +217,19 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Python terrain server node
-ament_python_install_package(${PROJECT_NAME})
+# Python terrain server library + entry-point
+ament_python_install_package(${PROJECT_NAME}
+  SETUP_CFG setup.cfg
+)
 install(PROGRAMS
-  ${PROJECT_NAME}/terrain_server_node.py
+  scripts/terrain_tile_server
   DESTINATION lib/${PROJECT_NAME}
-  RENAME terrain_server_node
 )
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
 
   find_package(ament_lint_auto REQUIRED)
 
@@ -240,6 +242,8 @@ if(BUILD_TESTING)
   endif()
 
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_pytest_test(test_srtm test/test_srtm.py)
 endif()
 
 #ament_export_dependencies(console_bridge)

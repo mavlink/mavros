@@ -39,12 +39,12 @@ GRID_ROWS = 7
 TILE_DIM = 4
 
 _CONTINENTS = (
-    "Africa/",
-    "Australia/",
-    "Eurasia/",
-    "Islands/",
-    "North_America/",
-    "South_America/",
+    'Africa/',
+    'Australia/',
+    'Eurasia/',
+    'Islands/',
+    'North_America/',
+    'South_America/',
 )
 
 try:
@@ -56,14 +56,14 @@ except ImportError:
 class SrtmTile:
     """Single loaded SRTM .hgt tile with compact int16 storage."""
 
-    __slots__ = ("data", "side")
+    __slots__ = ('data', 'side')
 
     def __init__(self, data: array.array, side: int):
         self.data = data
         self.side = side
 
     def __repr__(self) -> str:
-        return f"SrtmTile(side={self.side})"
+        return f'SrtmTile(side={self.side})'
 
 
 class SrtmManager:
@@ -71,10 +71,10 @@ class SrtmManager:
 
     def __init__(
         self,
-        terrain_data_path: str = "",
+        terrain_data_path: str = '',
         auto_download: bool = False,
-        download_host: str = "terrain.ardupilot.org",
-        srtm_source: str = "SRTM3",
+        download_host: str = 'terrain.ardupilot.org',
+        srtm_source: str = 'SRTM3',
         max_cache_tiles: int = 64,
     ):
         self._terrain_data_path = terrain_data_path
@@ -89,11 +89,11 @@ class SrtmManager:
         self._lock = threading.Lock()
 
         if not self._terrain_data_path and self._auto_download:
-            home = os.environ.get("HOME", "/tmp")
+            home = os.environ.get('HOME', '/tmp')
             self._terrain_data_path = os.path.join(
-                home, ".cache", "mavros", "terrain", self._srtm_source
+                home, '.cache', 'mavros', 'terrain', self._srtm_source
             )
-            logger.info("Auto-download cache: %s", self._terrain_data_path)
+            logger.info('Auto-download cache: %s', self._terrain_data_path)
 
         if self._terrain_data_path:
             Path(self._terrain_data_path).mkdir(parents=True, exist_ok=True)
@@ -104,10 +104,10 @@ class SrtmManager:
         if not root.exists():
             return
         count = 0
-        for hgt in root.rglob("*.hgt"):
+        for hgt in root.rglob('*.hgt'):
             self._file_index[hgt.name] = hgt
             count += 1
-        logger.info("Indexed %d .hgt files in %s", count, self._terrain_data_path)
+        logger.info('Indexed %d .hgt files in %s', count, self._terrain_data_path)
 
     # ------------------------------------------------------------------ keys
 
@@ -119,9 +119,9 @@ class SrtmManager:
     @staticmethod
     def _tile_filename(lat: int, lon: int) -> str:
         """Standard .hgt filename for a tile (e.g. N47E011.hgt)."""
-        ns = "N" if lat >= 0 else "S"
-        ew = "E" if lon >= 0 else "W"
-        return f"{ns}{abs(lat):02d}{ew}{abs(lon):03d}.hgt"
+        ns = 'N' if lat >= 0 else 'S'
+        ew = 'E' if lon >= 0 else 'W'
+        return f'{ns}{abs(lat):02d}{ew}{abs(lon):03d}.hgt'
 
     # ------------------------------------------------------------------ load
 
@@ -148,7 +148,7 @@ class SrtmManager:
             side = SRTM3_SIDE
         else:
             logger.warning(
-                "Unexpected file size for %s: %d bytes (expected %d or %d)",
+                'Unexpected file size for %s: %d bytes (expected %d or %d)',
                 filename,
                 file_size,
                 expected_3,
@@ -158,9 +158,9 @@ class SrtmManager:
 
         raw = filepath.read_bytes()
         n = side * side
-        data = array.array("h", struct.unpack(f">{n}h", raw))
+        data = array.array('h', struct.unpack(f'>{n}h', raw))
 
-        logger.info("Loaded tile %s (%d×%d)", filename, side, side)
+        logger.info('Loaded tile %s (%d×%d)', filename, side, side)
         return SrtmTile(data, side)
 
     # ------------------------------------------------------------------ download
@@ -177,14 +177,14 @@ class SrtmManager:
         if hgt_path.exists():
             return True
 
-        zip_name = filename + ".zip"
-        base_url = f"https://{self._download_host}/{self._srtm_source}"
+        zip_name = filename + '.zip'
+        base_url = f'https://{self._download_host}/{self._srtm_source}'
 
         continents: tuple[str, ...] | list[str]
         if _lookup_continent is not None:
             known = _lookup_continent(lat, lon)
             if known is None:
-                logger.info("No SRTM coverage for %s (continent map)", filename)
+                logger.info('No SRTM coverage for %s (continent map)', filename)
                 return False
             continents = (known,)
         else:
@@ -192,40 +192,36 @@ class SrtmManager:
 
         zip_bytes: bytes | None = None
         for continent in continents:
-            url = f"{base_url}/{continent}{zip_name}"
+            url = f'{base_url}/{continent}{zip_name}'
             try:
-                logger.info("Downloading %s", url)
-                with urllib.request.urlopen(
-                    urllib.request.Request(url), timeout=60
-                ) as resp:
+                logger.info('Downloading %s', url)
+                with urllib.request.urlopen(urllib.request.Request(url), timeout=60) as resp:
                     zip_bytes = resp.read()
                 break
             except urllib.error.URLError:
                 continue
 
         if zip_bytes is None:
-            logger.warning("Tile %s not found on server", filename)
+            logger.warning('Tile %s not found on server', filename)
             return False
 
         try:
             with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
                 if filename not in zf.namelist():
-                    logger.warning(
-                        "Archive for %s does not contain the expected .hgt", filename
-                    )
+                    logger.warning('Archive for %s does not contain the expected .hgt', filename)
                     return False
                 zf.extract(filename, self._terrain_data_path)
         except zipfile.BadZipFile:
-            logger.error("Corrupt zip for %s", filename)
+            logger.error('Corrupt zip for %s', filename)
             return False
 
         if hgt_path.exists():
-            logger.info("Downloaded: %s", filename)
+            logger.info('Downloaded: %s', filename)
             with self._lock:
                 self._file_index[filename] = hgt_path
             return True
 
-        logger.warning("Extraction produced no .hgt for %s", filename)
+        logger.warning('Extraction produced no .hgt for %s', filename)
         return False
 
     # ------------------------------------------------------------------ cache
@@ -333,9 +329,7 @@ def gps_newpos(
     if abs(lat - lat1) < 1e-15:
         q = math.cos(lat1)
     else:
-        dphi = math.log(
-            math.tan(lat / 2 + math.pi / 4) / math.tan(lat1 / 2 + math.pi / 4)
-        )
+        dphi = math.log(math.tan(lat / 2 + math.pi / 4) / math.tan(lat1 / 2 + math.pi / 4))
         q = (lat - lat1) / dphi
 
     dlon = -d * math.sin(tc) / q
@@ -377,9 +371,7 @@ def compute_terrain_data_block(
     col = bit % GRID_COLS
     row = bit // GRID_COLS
 
-    tile_lat, tile_lon = gps_offset(
-        base_lat, base_lon, bit_spacing * col, bit_spacing * row
-    )
+    tile_lat, tile_lon = gps_offset(base_lat, base_lon, bit_spacing * col, bit_spacing * row)
 
     data: list[int] = []
     for i in range(TILE_DIM * TILE_DIM):

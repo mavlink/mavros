@@ -1,5 +1,9 @@
 # MAVLink TERRAIN_REQUEST
 # https://mavlink.io/en/messages/common.html#TERRAIN_REQUEST
+#
+# NOTE: lat/lon use int32 degE7 to match the MAVLink wire format exactly.
+# The terrain server must echo these values back in TERRAIN_DATA without
+# modification; converting through float64 risks rounding mismatches.
 
 std_msgs/Header header
 
