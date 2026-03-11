@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""ROS 2 terrain server node.
+"""
+ROS 2 terrain server node.
 
 Subscribes to terrain requests from the MAVROS terrain plugin,
 looks up SRTM elevation data, and publishes terrain data blocks back.

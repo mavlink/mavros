@@ -1,8 +1,8 @@
-"""SRTM tile management: download, cache, parse, and elevation lookup.
+"""
+Manage SRTM tiles: download, cache, parse, and look up elevation.
 
 Handles .hgt files from the Shuttle Radar Topography Mission dataset.
 Supports SRTM1 (1 arc-second, 3601x3601) and SRTM3 (3 arc-second, 1201x1201).
-
 
 Written by Zeke Sarosi <zeke.sarosi@gmail.com>
 Inspired by the Pymavlink implementation
@@ -113,12 +113,12 @@ class SrtmManager:
 
     @staticmethod
     def _tile_key(lat: int, lon: int) -> int:
-        """Unique integer key for a 1° tile corner."""
+        """Return a unique integer key for a 1-degree tile corner."""
         return (lat + 90) * 360 + (lon + 180)
 
     @staticmethod
     def _tile_filename(lat: int, lon: int) -> str:
-        """Standard .hgt filename for a tile (e.g. N47E011.hgt)."""
+        """Return the standard .hgt filename for a tile (e.g. N47E011.hgt)."""
         ns = 'N' if lat >= 0 else 'S'
         ew = 'E' if lon >= 0 else 'W'
         return f'{ns}{abs(lat):02d}{ew}{abs(lon):03d}.hgt'
@@ -166,9 +166,10 @@ class SrtmManager:
     # ------------------------------------------------------------------ download
 
     def _download_tile(self, lat: int, lon: int) -> bool:
-        """Download a tile zip from the ArduPilot SRTM mirror.
+        """
+        Download a tile zip from the ArduPilot SRTM mirror.
 
-        Uses the continent lookup table for a direct download when available,
+        Use the continent lookup table for a direct download when available,
         falling back to trying all continent directories sequentially.
         Only the expected .hgt file is extracted to prevent zip-slip attacks.
         """
@@ -262,7 +263,8 @@ class SrtmManager:
     # ------------------------------------------------------------------ elevation
 
     def lookup_elevation(self, lat_deg: float, lon_deg: float) -> float | None:
-        """Bilinear interpolation of elevation at a WGS-84 coordinate.
+        """
+        Interpolate elevation at a WGS-84 coordinate using bilinear weights.
 
         When one or more of the four surrounding grid cells are void,
         the available corners are averaged with renormalized bilinear weights
@@ -316,9 +318,10 @@ class SrtmManager:
 def gps_newpos(
     lat_deg: float, lon_deg: float, bearing_deg: float, distance_m: float
 ) -> tuple[float, float]:
-    """Compute a new position along a rhumb line.
+    """
+    Compute a new position along a rhumb line.
 
-    Matches MAVProxy ``mp_util.gps_newpos`` for consistency with ArduPilot.
+    Match MAVProxy ``mp_util.gps_newpos`` for consistency with ArduPilot.
     """
     if distance_m == 0.0:
         return (lat_deg, lon_deg)
@@ -362,10 +365,11 @@ def compute_terrain_data_block(
     grid_spacing: int,
     bit: int,
 ) -> list[int] | None:
-    """Compute the 16 elevation values for one 4x4 terrain block.
+    """
+    Compute the 16 elevation values for one 4x4 terrain block.
 
-    Parameters match the MAVLink TERRAIN_DATA message fields.
-    Returns a list of 16 int16 elevations (row-major within the block),
+    Parameter names match the MAVLink TERRAIN_DATA message fields.
+    Return a list of 16 int16 elevations (row-major within the block),
     or None if any sample is unavailable.
     """
     base_lat = lat_e7 / 1e7
