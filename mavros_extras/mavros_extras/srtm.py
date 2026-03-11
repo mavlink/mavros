@@ -193,9 +193,14 @@ class SrtmManager:
         zip_bytes: bytes | None = None
         for continent in continents:
             url = f'{base_url}/{continent}{zip_name}'
+            if not url.startswith(('https://', 'http://')):
+                raise ValueError(f'Refusing non-HTTP URL: {url}')
             try:
                 logger.info('Downloading %s', url)
-                with urllib.request.urlopen(urllib.request.Request(url), timeout=60) as resp:
+                # URL scheme is validated above; host is a trusted configuration parameter.
+                with urllib.request.urlopen(  # nosemgrep: dynamic-urllib-use-detected
+                    urllib.request.Request(url), timeout=60
+                ) as resp:
                     zip_bytes = resp.read()
                 break
             except urllib.error.URLError:

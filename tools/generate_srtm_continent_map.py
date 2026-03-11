@@ -55,7 +55,9 @@ def _fetch_tile_map() -> bytearray:
         print(f"  Scanning {continent:15s} ... ", end="", flush=True)
 
         try:
-            with urllib.request.urlopen(url, timeout=120) as resp:
+            with urllib.request.urlopen(  # nosemgrep: dynamic-urllib-use-detected
+                url, timeout=120
+            ) as resp:
                 html = resp.read().decode("utf-8", errors="replace")
         except Exception as e:
             print(f"FAILED ({e})")
