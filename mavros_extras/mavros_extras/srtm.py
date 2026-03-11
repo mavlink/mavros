@@ -11,17 +11,17 @@ Inspired by the Pymavlink implementation
 from __future__ import annotations
 
 import array
+from collections import OrderedDict
 import io
 import logging
 import math
 import os
+from pathlib import Path
 import struct
 import threading
 import urllib.error
 import urllib.request
 import zipfile
-from collections import OrderedDict
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

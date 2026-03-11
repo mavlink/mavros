@@ -9,22 +9,20 @@ Also provides a service for point elevation queries.
 
 from __future__ import annotations
 
-import threading
 from collections import deque
-
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile
-
-from mavros_msgs.msg import TerrainData, TerrainRequest
-from mavros_msgs.srv import TerrainCheck
+import threading
 
 from mavros_extras.srtm import (
+    compute_terrain_data_block,
     GRID_COLS,
     GRID_ROWS,
     SrtmManager,
-    compute_terrain_data_block,
 )
+from mavros_msgs.msg import TerrainData, TerrainRequest
+from mavros_msgs.srv import TerrainCheck
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile
 
 
 class _PendingRequest:

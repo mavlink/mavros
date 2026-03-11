@@ -5,27 +5,28 @@ from __future__ import annotations
 import array
 import struct
 
-import pytest
-
 from mavros_extras.srtm import (
+    compute_terrain_data_block,
+    gps_newpos,
+    gps_offset,
     GRID_COLS,
     GRID_ROWS,
     SRTM1_SIDE,
     SRTM3_SIDE,
     SRTM_VOID,
-    TILE_DIM,
     SrtmManager,
     SrtmTile,
-    compute_terrain_data_block,
-    gps_newpos,
-    gps_offset,
+    TILE_DIM,
 )
+import pytest
 
 
 # ------------------------------------------------------------------ SrtmTile
 
 
 class TestSrtmTile:
+    """Test SrtmTile data class."""
+
     def test_repr(self):
         tile = SrtmTile(array.array('h', [0]), 1201)
         assert 'SrtmTile(side=1201)' == repr(tile)
@@ -40,6 +41,8 @@ class TestSrtmTile:
 
 
 class TestTileKeyFilename:
+    """Test tile key and filename generation."""
+
     def test_key_unique(self):
         keys = {SrtmManager._tile_key(lat, lon) for lat in (-90, 0, 89) for lon in (-180, 0, 179)}
         assert len(keys) == 9
@@ -89,6 +92,8 @@ def _make_void_tile(side: int) -> bytes:
 
 
 class TestSrtmManagerLoad:
+    """Test tile loading from disk."""
+
     def test_load_srtm3_flat(self, tmp_path):
         hgt = tmp_path / 'N47E011.hgt'
         hgt.write_bytes(_make_flat_tile(SRTM3_SIDE, 800))
@@ -127,6 +132,8 @@ class TestSrtmManagerLoad:
 
 
 class TestElevationLookup:
+    """Test bilinear elevation interpolation."""
+
     def test_corner_exact(self, tmp_path):
         """Elevation at exact SW corner of the tile."""
         hgt = tmp_path / 'N00E000.hgt'
@@ -161,6 +168,8 @@ class TestElevationLookup:
 
 
 class TestLRUCache:
+    """Test LRU tile cache behavior."""
+
     def test_cache_eviction(self, tmp_path):
         for lat in range(5):
             hgt = tmp_path / f'N{lat:02d}E000.hgt'
@@ -188,6 +197,8 @@ class TestLRUCache:
 
 
 class TestGeodesic:
+    """Test rhumb-line geodesic helpers."""
+
     def test_zero_distance(self):
         lat, lon = gps_newpos(47.0, 11.0, 90.0, 0.0)
         assert lat == 47.0
@@ -226,6 +237,8 @@ class TestGeodesic:
 
 
 class TestComputeTerrainDataBlock:
+    """Test MAVLink terrain data block computation."""
+
     def test_flat_tile_block(self, tmp_path):
         hgt = tmp_path / 'N47E011.hgt'
         hgt.write_bytes(_make_flat_tile(SRTM3_SIDE, 600))
@@ -267,6 +280,8 @@ class TestComputeTerrainDataBlock:
 
 
 class TestContinentMap:
+    """Test continent lookup table."""
+
     def test_import(self):
         from mavros_extras.srtm_continent_map import lookup_continent
 
