@@ -50,7 +50,7 @@ griffe==2.0.0
     #   mkdocstrings-python
 griffe-fieldz==0.4.0
     # via mavros-tools
-griffe-sphinx==0.1.0
+griffe-sphinx==0.2.1
     # via mavros-tools
 griffe-typingdoc==0.2.9
     # via mavros-tools
