@@ -351,7 +351,7 @@ private:
     vel_cov_out(0) = -1.0;
 
     // Current fix in ECEF
-    Eigen::Vector3d map_point;
+    Eigen::Vector3d map_point {};
 
     try {
       /**
@@ -387,6 +387,10 @@ private:
       }
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what() );
+      gp_fix_pub->publish(fix);
+      gp_rel_alt_pub->publish(relative_alt);
+      gp_hdg_pub->publish(compass_heading);
+      return;
     }
 
     // Compute the local coordinates in ECEF
@@ -519,9 +523,12 @@ private:
 
   void home_position_cb(const mavros_msgs::msg::HomePosition::SharedPtr req)
   {
-    map_origin.x() = req->geo.latitude;
-    map_origin.y() = req->geo.longitude;
-    map_origin.z() = req->geo.altitude;
+    Eigen::Vector3d new_map_origin;
+    Eigen::Vector3d new_ecef_origin;
+
+    new_map_origin.x() = req->geo.latitude;
+    new_map_origin.y() = req->geo.longitude;
+    new_map_origin.z() = req->geo.altitude;
 
     try {
       /**
@@ -532,12 +539,15 @@ private:
 
       // map_origin to ECEF
       map.Forward(
-        map_origin.x(), map_origin.y(), map_origin.z(),
-        ecef_origin.x(), ecef_origin.y(), ecef_origin.z());
+        new_map_origin.x(), new_map_origin.y(), new_map_origin.z(),
+        new_ecef_origin.x(), new_ecef_origin.y(), new_ecef_origin.z());
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what());
+      return;
     }
 
+    map_origin = new_map_origin;
+    ecef_origin = new_ecef_origin;
     is_map_init = true;
   }
 
