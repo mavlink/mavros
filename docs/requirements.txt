@@ -127,7 +127,7 @@ pathspec==1.0.4
     # via
     #   mkdocs
     #   mypy
-platformdirs==4.9.2
+platformdirs==4.9.4
     # via mkdocs-get-deps
 pluggy==1.6.0
     # via
