@@ -145,7 +145,7 @@ pymdown-extensions==10.16.1
     #   markdown-exec
     #   mkdocs-material
     #   mkdocstrings
-pytest==8.4.2
+pytest==9.0.2
     # via pytest-cov
 pytest-cov==7.0.0
 python-dateutil==2.9.0.post0
