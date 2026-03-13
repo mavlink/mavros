@@ -111,19 +111,26 @@ private:
    * @param[in] &target The parent frame of the transformation you want to get
    * @param[in] &source The child frame of the transformation you want to get
    * @param[in,out] &tf_source2target The affine transform from the source to target
+   * @return true when the transform is available, false otherwise
    */
-  void lookup_static_transform(
+  bool lookup_static_transform(
     const std::string & target, const std::string & source,
     Eigen::Affine3d & tf_source2target)
   {
+    tf_source2target = Eigen::Affine3d::Identity();
+
     try {
       // transform lookup at current time.
       tf_source2target = tf2::transformToEigen(
         uas->tf2_buffer.lookupTransform(
           target, source, rclcpp::Time(0)));
+      return true;
     } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1, "ODOM: Ex: %s", ex.what());
-      return;
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1,
+        "ODOM: static transform %s -> %s unavailable: %s",
+        source.c_str(), target.c_str(), ex.what());
+      return false;
     }
   }
 
@@ -149,15 +156,18 @@ private:
     /**
      * Required rotations to transform the FCU's odometry msg tto desired parent and child frame
      */
-    Eigen::Affine3d tf_parent2parent_des;
-    Eigen::Affine3d tf_child2child_des;
+    Eigen::Affine3d tf_parent2parent_des = Eigen::Affine3d::Identity();
+    Eigen::Affine3d tf_child2child_des = Eigen::Affine3d::Identity();
 
-    lookup_static_transform(
+    const bool parent_tf_available = lookup_static_transform(
       fcu_map_id_des, fcu_map_id_des + "_ned",
       tf_parent2parent_des);
-    lookup_static_transform(
+    const bool child_tf_available = lookup_static_transform(
       fcu_odom_child_id_des, fcu_odom_child_id_des + "_frd",
       tf_child2child_des);
+    if (!parent_tf_available || !child_tf_available) {
+      return;
+    }
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     Matrix6d cov_pose = Matrix6d::Zero();
@@ -244,15 +254,18 @@ private:
     /**
      * Required affine rotations to apply transforms
      */
-    Eigen::Affine3d tf_parent2parent_des;
-    Eigen::Affine3d tf_child2child_des;
+    Eigen::Affine3d tf_parent2parent_des = Eigen::Affine3d::Identity();
+    Eigen::Affine3d tf_child2child_des = Eigen::Affine3d::Identity();
 
-    lookup_static_transform(
+    const bool parent_tf_available = lookup_static_transform(
       odom->header.frame_id + "_ned", odom->header.frame_id,
       tf_parent2parent_des);
-    lookup_static_transform(
+    const bool child_tf_available = lookup_static_transform(
       odom->child_frame_id + "_frd", odom->child_frame_id,
       tf_child2child_des);
+    if (!parent_tf_available || !child_tf_available) {
+      return;
+    }
 
     //! Build 6x6 pose covariance matrix to be transformed and sent
     ftf::Covariance6d cov_pose = odom->pose.covariance;
