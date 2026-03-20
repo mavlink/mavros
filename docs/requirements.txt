@@ -52,7 +52,7 @@ griffe-fieldz==0.4.0
     # via mavros-tools
 griffe-sphinx==0.2.1
     # via mavros-tools
-griffe-typingdoc==0.2.9
+griffe-typingdoc==0.3.1
     # via mavros-tools
 idna==3.11
     # via requests
