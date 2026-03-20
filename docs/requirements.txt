@@ -2,7 +2,7 @@
 #    uv export --group docs --no-hashes
 alabaster==1.0.0
     # via sphinx
-attrs==25.4.0
+attrs==26.1.0
     # via mavros-tools
 babel==2.18.0
     # via
