@@ -193,7 +193,13 @@ private:
 
     for (auto & tr : ack_waiting_list) {
       if (tr.expected_command == ack.command) {
-        tr.promise.set_value(ack.result);
+        try {
+          tr.promise.set_value(ack.result);
+        } catch (const std::future_error & e) {
+          if (e.code() == std::future_errc::promise_already_satisfied) {
+            RCLCPP_ERROR(get_logger(), "CMD: ACK for command %u already processed", ack.command);
+          }
+        }
         return;
       }
     }
