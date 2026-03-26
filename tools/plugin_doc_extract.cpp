@@ -1002,7 +1002,7 @@ PluginApi parse_plugin(
   }
   std::smatch m;
   if (std::regex_search(plugin_block, m, kPluginNameRe)) {api.plugin = m[1].str();}
-  if (api.plugin.empty()) {return PluginApi{}}
+  if (api.plugin.empty()) {return PluginApi{};}
   if (std::regex_search(plugin_block, m, kPluginBriefRe)) {api.brief = trim(m[1].str());}
   api.description = clean_description(plugin_block);
 
