@@ -147,7 +147,7 @@ pymdown-extensions==10.16.1
     #   mkdocstrings
 pytest==9.0.2
     # via pytest-cov
-pytest-cov==7.0.0
+pytest-cov==7.1.0
 python-dateutil==2.9.0.post0
     # via ghp-import
 python-magic==0.4.24 ; python_full_version < '3.13'
