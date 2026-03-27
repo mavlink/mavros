@@ -48,7 +48,7 @@ griffe==2.0.1
     #   griffe-sphinx
     #   griffe-typingdoc
     #   mkdocstrings-python
-griffe-fieldz==0.4.0
+griffe-fieldz==0.5.0
     # via mavros-tools
 griffe-sphinx==0.2.1
     # via mavros-tools
