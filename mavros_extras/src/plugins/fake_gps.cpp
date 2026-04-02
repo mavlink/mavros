@@ -403,7 +403,7 @@ private:
   /* -*- callbacks -*- */
   void mocap_tf_cb(const geometry_msgs::msg::TransformStamped::SharedPtr trans)
   {
-    Eigen::Affine3d pos_enu; tf2::fromMsg(trans->transform, pos_enu);
+    Eigen::Affine3d pos_enu = tf2::transformToEigen(trans->transform);
 
     send_fake_gps(
       trans->header.stamp,
@@ -441,7 +441,7 @@ private:
 
   void transform_cb(const geometry_msgs::msg::TransformStamped & trans)
   {
-    Eigen::Affine3d pos_enu; tf2::fromMsg(trans.transform, pos_enu);
+    Eigen::Affine3d pos_enu = tf2::transformToEigen(trans.transform);
 
     send_fake_gps(
       trans.header.stamp,
