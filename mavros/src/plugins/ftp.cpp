@@ -595,7 +595,7 @@ private:
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
 
-    if (bytes_to_copy == FTPRequest::DATA_MAXSZ) {
+    if (read_buffer.size() < read_size && hdr->size == FTPRequest::DATA_MAXSZ) {
       // Possibly more data
       read_offset += bytes_to_copy;
       send_read_command();
@@ -736,12 +736,15 @@ private:
 
   void send_read_command()
   {
-    // read operation always try read DATA_MAXSZ block (hdr->size ignored)
+    const auto bytes_to_read = std::min<size_t>(
+      read_size - read_buffer.size(),
+      FTPRequest::DATA_MAXSZ);
     RCLCPP_DEBUG_STREAM(
-      get_logger(), "FTP:m: kCmdReadFile: " << active_session << " off: " << read_offset);
+      get_logger(), "FTP:m: kCmdReadFile: " << active_session << " off: " << read_offset <<
+        " sz: " << bytes_to_read);
     FTPRequest req(FTPRequest::kCmdReadFile, active_session);
     req.header()->offset = read_offset;
-    req.header()->size = 0 /* FTPRequest::DATA_MAXSZ */;
+    req.header()->size = bytes_to_read;
     req.send(uas, last_send_seqnr);
   }
 
