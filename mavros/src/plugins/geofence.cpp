@@ -51,18 +51,27 @@ public:
 
     gf_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/fences", gf_qos);
 
+#ifdef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
     pull_srv =
       node->create_service<mavros_msgs::srv::WaypointPull>(
       "~/pull",
-      std::bind(&GeofencePlugin::pull_cb, this, _1, _2));
+      std::bind(&GeofencePlugin::pull_cb, this, _1, _2),
+      services_qos, srv_cg);
     push_srv =
       node->create_service<mavros_msgs::srv::WaypointPush>(
       "~/push",
-      std::bind(&GeofencePlugin::push_cb, this, _1, _2));
+      std::bind(&GeofencePlugin::push_cb, this, _1, _2),
+      services_qos, srv_cg);
     clear_srv =
       node->create_service<mavros_msgs::srv::WaypointClear>(
       "~/clear",
-      std::bind(&GeofencePlugin::clear_cb, this, _1, _2));
+      std::bind(&GeofencePlugin::clear_cb, this, _1, _2),
+      services_qos, srv_cg);
 
     enable_connection_cb();
     enable_capabilities_cb();
