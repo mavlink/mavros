@@ -443,36 +443,38 @@ public:
       PSN::events,
       event_qos);
 
+    srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     // Custom parameter services
     pull_srv =
       node->create_service<mavros_msgs::srv::ParamPull>(
       "~/pull",
-      std::bind(&ParamPlugin::pull_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::pull_cb, this, _1, _2), qos, srv_cg);
     set_srv =
       node->create_service<mavros_msgs::srv::ParamSetV2>(
       "~/set",
-      std::bind(&ParamPlugin::set_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::set_cb, this, _1, _2), qos, srv_cg);
 
     // Standard parameter services
     get_parameters_srv = node->create_service<rcl_interfaces::srv::GetParameters>(
       PSN::get_parameters,
-      std::bind(&ParamPlugin::get_parameters_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::get_parameters_cb, this, _1, _2), qos, srv_cg);
     get_parameter_types_srv = node->create_service<rcl_interfaces::srv::GetParameterTypes>(
       PSN::get_parameter_types,
-      std::bind(&ParamPlugin::get_parameter_types_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::get_parameter_types_cb, this, _1, _2), qos, srv_cg);
     set_parameters_srv = node->create_service<rcl_interfaces::srv::SetParameters>(
       PSN::set_parameters,
-      std::bind(&ParamPlugin::set_parameters_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::set_parameters_cb, this, _1, _2), qos, srv_cg);
     set_parameters_atomically_srv =
       node->create_service<rcl_interfaces::srv::SetParametersAtomically>(
       PSN::set_parameters_atomically,
-      std::bind(&ParamPlugin::set_parameters_atomically_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::set_parameters_atomically_cb, this, _1, _2), qos, srv_cg);
     describe_parameters_srv = node->create_service<rcl_interfaces::srv::DescribeParameters>(
       PSN::describe_parameters,
-      std::bind(&ParamPlugin::describe_parameters_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::describe_parameters_cb, this, _1, _2), qos, srv_cg);
     list_parameters_srv = node->create_service<rcl_interfaces::srv::ListParameters>(
       PSN::list_parameters,
-      std::bind(&ParamPlugin::list_parameters_cb, this, _1, _2), qos);
+      std::bind(&ParamPlugin::list_parameters_cb, this, _1, _2), qos, srv_cg);
 
     schedule_timer =
       node->create_wall_timer(BOOTUP_TIME, std::bind(&ParamPlugin::schedule_cb, this));
@@ -498,6 +500,7 @@ private:
 
   std::recursive_mutex mutex;
 
+  rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::Service<mavros_msgs::srv::ParamPull>::SharedPtr pull_srv;
   // rclcpp::Service<mavros_msgs::srv::ParamPush>::SharedPtr push_srv;
   rclcpp::Service<mavros_msgs::srv::ParamSetV2>::SharedPtr set_srv;

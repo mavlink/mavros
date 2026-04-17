@@ -80,21 +80,31 @@ public:
     wp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/waypoints", wp_qos);
     wp_reached_pub = node->create_publisher<mavros_msgs::msg::WaypointReached>("~/reached", wp_qos);
 
+#ifdef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
     pull_srv =
       node->create_service<mavros_msgs::srv::WaypointPull>(
       "~/pull",
-      std::bind(&WaypointPlugin::pull_cb, this, _1, _2));
+      std::bind(&WaypointPlugin::pull_cb, this, _1, _2),
+      services_qos, srv_cg);
     push_srv =
       node->create_service<mavros_msgs::srv::WaypointPush>(
       "~/push",
-      std::bind(&WaypointPlugin::push_cb, this, _1, _2));
+      std::bind(&WaypointPlugin::push_cb, this, _1, _2),
+      services_qos, srv_cg);
     clear_srv =
       node->create_service<mavros_msgs::srv::WaypointClear>(
       "~/clear",
-      std::bind(&WaypointPlugin::clear_cb, this, _1, _2));
+      std::bind(&WaypointPlugin::clear_cb, this, _1, _2),
+      services_qos, srv_cg);
     set_cur_srv = node->create_service<mavros_msgs::srv::WaypointSetCurrent>(
       "~/set_current", std::bind(
-        &WaypointPlugin::set_cur_cb, this, _1, _2));
+        &WaypointPlugin::set_cur_cb, this, _1, _2),
+      services_qos, srv_cg);
 
     enable_connection_cb();
     enable_capabilities_cb();

@@ -297,6 +297,7 @@ public:
     WP_TIMEOUT(1s),
     RESCHEDULE_TIME(5s)
   {
+    srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     timeout_timer = node->create_wall_timer(WP_TIMEOUT, std::bind(&MissionBase::timeout_cb, this));
     timeout_timer->cancel();
   }
@@ -361,6 +362,7 @@ protected:
   std::condition_variable list_receiving;
   std::condition_variable list_sending;
 
+  rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::TimerBase::SharedPtr timeout_timer;
   rclcpp::TimerBase::SharedPtr schedule_timer;
 
