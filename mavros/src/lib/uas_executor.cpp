@@ -12,12 +12,40 @@
  */
 
 #include <algorithm>
+#include <charconv>
+#include <cstdlib>
+#include <string_view>
+#include <system_error>
 
 #include "mavros/uas_executor.hpp"
 
 using namespace mavros;                 // NOLINT
 using namespace mavros::uas;            // NOLINT
 using namespace std::chrono_literals;   // NOLINT
+
+namespace
+{
+constexpr size_t kMinExecutorThreads = 2;
+constexpr size_t kMaxExecutorThreads = 16;
+constexpr std::string_view kExecutorThreadsEnv = "MAVROS_UAS_EXECUTOR_THREADS";
+
+size_t configured_number_of_threads()
+{
+  auto value = std::getenv(kExecutorThreadsEnv.data());
+  if (value == nullptr || value[0] == '\0') {
+    return 0;
+  }
+
+  size_t threads = 0;
+  const auto input = std::string_view(value);
+  const auto result = std::from_chars(input.data(), input.data() + input.size(), threads);
+  if (result.ec != std::errc{} || result.ptr != input.data() + input.size() || threads == 0) {
+    return 0;
+  }
+
+  return std::clamp(threads, kMinExecutorThreads, kMaxExecutorThreads);
+}
+}  // namespace
 
 UASExecutor::UASExecutor(const rclcpp::ExecutorOptions & options)
 : MultiThreadedExecutor(options, select_number_of_threads(), true, 1000ms),
@@ -28,6 +56,11 @@ UASExecutor::UASExecutor(const rclcpp::ExecutorOptions & options)
 
 size_t UASExecutor::select_number_of_threads()
 {
+  auto configured_threads = configured_number_of_threads();
+  if (configured_threads > 0) {
+    return configured_threads;
+  }
+
   // return std::max<size_t>(16, std::min<size_t>(std::thread::hardware_concurrency(), 4));
   return std::clamp<size_t>(std::thread::hardware_concurrency(), 4, 16);
 }

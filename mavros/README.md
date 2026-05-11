@@ -109,6 +109,12 @@ Main node. Allow disable GCS proxy by setting empty URL.
 
     ros2 run mavros mavros_node --ros-args --params-file params.yaml
 
+For ROS 2 deployments where the UAS plugin executor consumes too much CPU,
+set `MAVROS_UAS_EXECUTOR_THREADS` to limit its worker count. Values are clamped
+to 2-16 threads; for example:
+
+    MAVROS_UAS_EXECUTOR_THREADS=2 ros2 run mavros mavros_node --ros-args --params-file params.yaml
+
 
 Launch Files
 ------------
