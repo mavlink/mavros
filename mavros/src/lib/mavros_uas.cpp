@@ -31,6 +31,8 @@ using plugin::Plugin;
 using plugin::PluginFactory;
 using utils::enum_value;
 
+static bool pattern_match(const std::string & pattern, const std::string & pl_name);
+
 UAS::UAS(
   const rclcpp::NodeOptions & options_,
   const std::string & name_,
@@ -154,7 +156,35 @@ UAS::UAS(
         plugin_denylist.emplace_back("*");
       }
 
-      for (auto & name : plugin_factory_loader.getDeclaredClasses()) {
+      const auto declared_plugins = plugin_factory_loader.getDeclaredClasses();
+      const auto warn_unmatched_plugin_patterns =
+        [this, &declared_plugins](
+        const StrV & patterns,
+        const std::string & parameter_name)
+        {
+          for (auto & pattern : patterns) {
+            bool matched = false;
+
+            for (auto & plugin : declared_plugins) {
+              if (pattern_match(pattern, plugin)) {
+                matched = true;
+                break;
+              }
+            }
+
+            if (!matched) {
+              RCLCPP_WARN(
+                get_logger(),
+                "%s pattern '%s' does not match any declared plugin",
+                parameter_name.c_str(), pattern.c_str());
+            }
+          }
+        };
+
+      warn_unmatched_plugin_patterns(plugin_allowlist, "plugin_allowlist");
+      warn_unmatched_plugin_patterns(plugin_denylist, "plugin_denylist");
+
+      for (auto & name : declared_plugins) {
         add_plugin(name);
       }
 
