@@ -158,28 +158,28 @@ UAS::UAS(
 
       const auto declared_plugins = plugin_factory_loader.getDeclaredClasses();
       const auto warn_unmatched_plugin_patterns =
-        [this, &declared_plugins](
+      [this, &declared_plugins](
         const StrV & patterns,
         const std::string & parameter_name)
-        {
-          for (auto & pattern : patterns) {
-            bool matched = false;
+      {
+        for (auto & pattern : patterns) {
+          bool matched = false;
 
-            for (auto & plugin : declared_plugins) {
-              if (pattern_match(pattern, plugin)) {
-                matched = true;
-                break;
-              }
-            }
-
-            if (!matched) {
-              RCLCPP_WARN(
-                get_logger(),
-                "%s pattern '%s' does not match any declared plugin",
-                parameter_name.c_str(), pattern.c_str());
+          for (auto & plugin : declared_plugins) {
+            if (pattern_match(pattern, plugin)) {
+              matched = true;
+              break;
             }
           }
-        };
+
+          if (!matched) {
+            RCLCPP_WARN(
+              get_logger(),
+              "%s pattern '%s' does not match any declared plugin",
+              parameter_name.c_str(), pattern.c_str());
+          }
+        }
+      };
 
       warn_unmatched_plugin_patterns(plugin_allowlist, "plugin_allowlist");
       warn_unmatched_plugin_patterns(plugin_denylist, "plugin_denylist");
