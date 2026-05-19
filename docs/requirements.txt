@@ -140,7 +140,7 @@ pygments==2.19.2
     #   sphinx
 pymavlink==2.4.49
     # via mavros-tools
-pymdown-extensions==10.16.1
+pymdown-extensions==10.21.3
     # via
     #   markdown-exec
     #   mkdocs-material
