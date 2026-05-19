@@ -54,7 +54,7 @@ griffe-sphinx==0.2.1
     # via mavros-tools
 griffe-typingdoc==0.3.1
     # via mavros-tools
-idna==3.11
+idna==3.15
     # via requests
 imagesize==2.0.0
     # via sphinx
