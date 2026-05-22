@@ -42,7 +42,7 @@ fieldz==0.2.0
     # via griffe-fieldz
 ghp-import==2.1.0
     # via mkdocs
-griffe==2.0.1
+griffe==2.0.2
     # via
     #   griffe-fieldz
     #   griffe-sphinx
