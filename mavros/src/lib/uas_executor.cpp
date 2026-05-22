@@ -12,22 +12,46 @@
  */
 
 #include <algorithm>
+#include <cstdlib>
 
 #include "mavros/uas_executor.hpp"
 
-using namespace mavros;                 // NOLINT
-using namespace mavros::uas;            // NOLINT
-using namespace std::chrono_literals;   // NOLINT
+using namespace mavros;               // NOLINT
+using namespace mavros::uas;          // NOLINT
+using namespace std::chrono_literals; // NOLINT
 
-UASExecutor::UASExecutor(const rclcpp::ExecutorOptions & options)
-: MultiThreadedExecutor(options, select_number_of_threads(), true, 1000ms),
-  source_system(0),
-  source_component(0)
+UASExecutor::UASExecutor(const rclcpp::ExecutorOptions &options)
+    : MultiThreadedExecutor(options, select_number_of_threads(), true, 1000ms),
+      source_system(0),
+      source_component(0)
 {
 }
 
 size_t UASExecutor::select_number_of_threads()
 {
+  if (const char *env = std::getenv("MAVROS_UAS_EXECUTOR_THREADS"))
+  {
+    try
+    {
+      size_t n = std::stoul(env);
+      if (n >= 2)
+      {
+        RCLCPP_INFO(
+            rclcpp::get_logger("uas_executor"),
+            "UAS executor threads overridden by MAVROS_UAS_EXECUTOR_THREADS: %zu", n);
+        return n;
+      }
+      RCLCPP_WARN(
+          rclcpp::get_logger("uas_executor"),
+          "MAVROS_UAS_EXECUTOR_THREADS must be >= 2, got %zu. Using default.", n);
+    }
+    catch (const std::exception &e)
+    {
+      RCLCPP_WARN(
+          rclcpp::get_logger("uas_executor"),
+          "Invalid MAVROS_UAS_EXECUTOR_THREADS value '%s': %s. Using default.", env, e.what());
+    }
+  }
   // return std::max<size_t>(16, std::min<size_t>(std::thread::hardware_concurrency(), 4));
   return std::clamp<size_t>(std::thread::hardware_concurrency(), 4, 16);
 }
