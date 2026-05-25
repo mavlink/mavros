@@ -1,4 +1,4 @@
-ARG ROS_DISTRO=kilted
+ARG ROS_DISTRO=lyrical
 FROM ros:${ROS_DISTRO}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
