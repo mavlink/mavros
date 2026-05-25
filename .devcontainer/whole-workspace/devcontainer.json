@@ -1,17 +1,17 @@
 {
-  "name": "mavros (ROS 2 kilted, whole workspace; expects /ws/src/mavros)",
+  "name": "mavros (ROS 2 lyrical, whole workspace; expects /ws/src/mavros)",
   "build": {
     "dockerfile": "../Dockerfile",
     "context": "../..",
     "args": {
-      "ROS_DISTRO": "kilted"
+      "ROS_DISTRO": "lyrical"
     }
   },
   "workspaceFolder": "/ws/src/mavros",
   "workspaceMount": "source=${localWorkspaceFolder}/../..,target=/ws,type=bind",
   "remoteUser": "root",
   "containerEnv": {
-    "ROS_DISTRO": "kilted"
+    "ROS_DISTRO": "lyrical"
   },
   "runArgs": [
     "-p",
