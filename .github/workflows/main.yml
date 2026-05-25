@@ -30,6 +30,7 @@ jobs:
           # - {ROS_DISTRO: iron, ROS_REPO: main}
           - {ROS_DISTRO: jazzy, ROS_REPO: main}
           - {ROS_DISTRO: kilted, ROS_REPO: main}
+          - {ROS_DISTRO: lyrical, ROS_REPO: main}
           - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
