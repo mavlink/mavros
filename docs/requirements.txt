@@ -10,7 +10,7 @@ babel==2.18.0
     #   sphinx
 backrefs==7.0
     # via mkdocs-material
-certifi==2026.2.25
+certifi==2026.5.20
     # via requests
 charset-normalizer==3.4.6
     # via requests
