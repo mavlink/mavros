@@ -54,7 +54,7 @@ public:
    * @param[id] bind_port    bind port
    * @param[id] remote_host  remote host (optional)
    * @param[id] remote_port  remote port (optional)
-   * @param[id] shared_io    optional external io_service. If provided, caller owns
+   * @param[id] shared_io    optional external io_context. If provided, caller owns
    *                         its execution/threading lifecycle.
    */
   MAVConnUDP(
@@ -62,7 +62,7 @@ public:
     std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT,
     std::string remote_host = DEFAULT_REMOTE_HOST,
     uint16_t remote_port = DEFAULT_REMOTE_PORT,
-    asio::io_service * shared_io = nullptr);
+    asio::io_context * shared_io = nullptr);
 
   virtual ~MAVConnUDP();
 
@@ -84,7 +84,7 @@ public:
 
 private:
   IoContextRunner io_runner;
-  asio::io_service & io_service;
+  asio::io_context & io_context;
   bool permanent_broadcast;
 
   std::atomic<bool> remote_exists;
@@ -103,7 +103,7 @@ private:
   void do_sendto(bool check_tx_state);
 
   /**
-   * Stop io_service.
+   * Stop io_context.
    */
   void stop();
 };

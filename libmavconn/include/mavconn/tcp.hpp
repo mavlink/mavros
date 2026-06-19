@@ -50,21 +50,21 @@ public:
    * Create generic TCP client (connect to the server)
    * @param[id] server_addr    remote host
    * @param[id] server_port    remote port
-   * @param[id] shared_io      optional external io_service. If provided, caller owns
+   * @param[id] shared_io      optional external io_context. If provided, caller owns
    *                           its execution/threading lifecycle.
    */
   MAVConnTCPClient(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string server_host = DEFAULT_SERVER_HOST,
     uint16_t server_port = DEFAULT_SERVER_PORT,
-    asio::io_service * shared_io = nullptr);
+    asio::io_context * shared_io = nullptr);
 
   /**
    * Special client variation for use in MAVConnTCPServer
    */
   explicit MAVConnTCPClient(
     uint8_t system_id, uint8_t component_id,
-    asio::io_service & server_io);
+    asio::io_context & server_io);
 
   virtual ~MAVConnTCPClient();
 
@@ -85,7 +85,7 @@ public:
 private:
   friend class MAVConnTCPServer;
   IoContextRunner io_runner;
-  asio::io_service & io_service;
+  asio::io_context & io_context;
 
   asio::ip::tcp::socket socket;
   asio::ip::tcp::endpoint server_ep;
@@ -106,7 +106,7 @@ private:
   void do_send(bool check_tx_state);
 
   /**
-   * Stop io_service.
+   * Stop io_context.
    */
   void stop();
 };
@@ -126,13 +126,13 @@ public:
   /**
    * @param[id] server_addr    bind host
    * @param[id] server_port    bind port
-   * @param[id] shared_io      optional external io_service. If provided, caller owns
+   * @param[id] shared_io      optional external io_context. If provided, caller owns
    *                           its execution/threading lifecycle.
    */
   MAVConnTCPServer(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string bind_host = DEFAULT_BIND_HOST, uint16_t bind_port = DEFAULT_BIND_PORT,
-    asio::io_service * shared_io = nullptr);
+    asio::io_context * shared_io = nullptr);
   virtual ~MAVConnTCPServer();
 
   void connect(
@@ -153,7 +153,7 @@ public:
 
 private:
   IoContextRunner io_runner;
-  asio::io_service & io_service;
+  asio::io_context & io_context;
 
   asio::ip::tcp::acceptor acceptor;
   asio::ip::tcp::endpoint bind_ep;

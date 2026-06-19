@@ -30,7 +30,7 @@ namespace mavconn
 {
 
 using asio::buffer;
-using asio::io_service;
+using asio::io_context;
 using mavlink::mavlink_message_t;
 using std::error_code;
 
@@ -39,11 +39,11 @@ using std::error_code;
 
 MAVConnSerial::MAVConnSerial(
   uint8_t system_id, uint8_t component_id,
-  std::string device, unsigned baudrate, bool hwflow, asio::io_service * shared_io)
+  std::string device, unsigned baudrate, bool hwflow, asio::io_context * shared_io)
 : MAVConnInterface(system_id, component_id),
   io_runner(shared_io),
-  io_service(io_runner.io()),
-  serial_dev(io_service),
+  io_context(io_runner.io()),
+  serial_dev(io_context),
   tx_in_progress(false),
   tx_q{},
   rx_buf{}
@@ -123,15 +123,15 @@ void MAVConnSerial::connect(
   message_received_cb = cb_handle_message;
   port_closed_cb = cb_handle_closed_port;
 
-  // give some work to io_service before start
-  io_service.post([this]() {this->do_read();});
+  // give some work to io_context before start
+  asio::post(io_context, [this]() {this->do_read();});
 
   if (io_runner.owns_thread()) {
-    // run io_service for async io
+    // run io_context for async io
     io_runner.start(
       [this]() {
         utils::set_this_thread_name("mserial%zu", conn_id);
-        io_service.run();
+        io_context.run();
       });
   }
 }
@@ -173,7 +173,7 @@ void MAVConnSerial::send_bytes(const uint8_t * bytes, size_t length)
     tx_q.emplace_back(bytes, length);
   }
   auto sthis = shared_from_this();
-  io_service.post([sthis]() {sthis->do_write(true);});
+  asio::post(io_context, [sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t * message)
@@ -197,7 +197,7 @@ void MAVConnSerial::send_message(const mavlink_message_t * message)
     tx_q.emplace_back(message);
   }
   auto sthis = shared_from_this();
-  io_service.post([sthis]() {sthis->do_write(true);});
+  asio::post(io_context, [sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -219,7 +219,7 @@ void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
   auto sthis = shared_from_this();
-  io_service.post([sthis]() {sthis->do_write(true);});
+  asio::post(io_context, [sthis]() {sthis->do_write(true);});
 }
 
 void MAVConnSerial::do_read(void)
@@ -287,7 +287,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
       }
 
       if (continue_send) {
-        sthis->io_service.post([sthis]() {sthis->do_write(false);});
+        asio::post(sthis->io_context, [sthis]() {sthis->do_write(false);});
       }
     });
 }
