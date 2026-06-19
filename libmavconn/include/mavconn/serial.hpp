@@ -47,13 +47,13 @@ public:
    *
    * @param[in] device    TTY device path
    * @param[in] baudrate  serial baudrate
-   * @param[in] shared_io optional external io_service. If provided, caller owns
+   * @param[in] shared_io optional external io_context. If provided, caller owns
    *                      its execution/threading lifecycle.
    */
   MAVConnSerial(
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     std::string device = DEFAULT_DEVICE, unsigned baudrate = DEFAULT_BAUDRATE,
-    bool hwflow = false, asio::io_service * shared_io = nullptr);
+    bool hwflow = false, asio::io_context * shared_io = nullptr);
   virtual ~MAVConnSerial();
 
   void connect(
@@ -72,7 +72,7 @@ public:
 
 private:
   IoContextRunner io_runner;
-  asio::io_service & io_service;
+  asio::io_context & io_context;
   asio::serial_port serial_dev;
 
   std::atomic<bool> tx_in_progress;

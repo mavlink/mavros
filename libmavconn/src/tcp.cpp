@@ -30,7 +30,7 @@ namespace mavconn
 
 using asio::buffer;
 using asio::error_code;
-using asio::io_service;
+using asio::io_context;
 using asio::ip::tcp;
 using mavlink::mavlink_message_t;
 using mavlink::mavlink_status_t;
@@ -39,24 +39,23 @@ using utils::to_string_ss;
 #define PFX "mavconn: tcp"
 #define PFXd PFX "%zu: "
 
-static asio::io_service & get_socket_io_service(tcp::socket & sock)
+static asio::io_context & get_socket_io_context(tcp::socket & sock)
 {
 #if ASIO_VERSION >= 101400
   return static_cast<asio::io_context &>(sock.get_executor().context());
 #else
-  return sock.get_io_service();
+  return sock.get_io_context();
 #endif
 }
 
 static bool resolve_address_tcp(
-  io_service & io, size_t chan, std::string host, uint16_t port,
+  io_context & io, size_t chan, std::string host, uint16_t port,
   tcp::endpoint & ep)
 {
   bool result = false;
   tcp::resolver resolver(io);
   error_code ec;
 
-  tcp::resolver::query query(host, "");
 
   auto fn = [&](const tcp::endpoint & q_ep) {
       ep = q_ep;
@@ -67,11 +66,11 @@ static bool resolve_address_tcp(
     };
 
 #if ASIO_VERSION >= 101200
-  for (auto q_ep : resolver.resolve(query, ec)) {
+  for (auto q_ep : resolver.resolve(host, "", ec)) {
     fn(q_ep);
   }
 #else
-  std::for_each(resolver.resolve(query, ec), tcp::resolver::iterator(), fn);
+  std::for_each(resolver.resolve(host, "", ec), tcp::resolver::iterator(), fn);
 #endif
 
   if (ec) {
@@ -86,17 +85,17 @@ static bool resolve_address_tcp(
 
 MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, uint16_t server_port, asio::io_service * shared_io)
+  std::string server_host, uint16_t server_port, asio::io_context * shared_io)
 : MAVConnInterface(system_id, component_id),
   io_runner(shared_io),
-  io_service(io_runner.io()),
-  socket(io_service),
+  io_context(io_runner.io()),
+  socket(io_context),
   is_destroying(false),
   tx_in_progress(false),
   tx_q{},
   rx_buf{}
 {
-  if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, server_ep)) {
+  if (!resolve_address_tcp(io_context, conn_id, server_host, server_port, server_ep)) {
     throw DeviceError("tcp: resolve", "Bind address resolve failed");
   }
 
@@ -112,11 +111,11 @@ MAVConnTCPClient::MAVConnTCPClient(
 
 MAVConnTCPClient::MAVConnTCPClient(
   uint8_t system_id, uint8_t component_id,
-  asio::io_service & server_io)
+  asio::io_context & server_io)
 : MAVConnInterface(system_id, component_id),
   io_runner(&server_io),
-  io_service(io_runner.io()),
-  socket(io_service),
+  io_context(io_runner.io()),
+  socket(io_context),
   is_destroying(false),
   tx_in_progress(false),
   tx_q{},
@@ -133,7 +132,7 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
 
   // start recv
   auto sthis = shared_from_this();
-  get_socket_io_service(socket).post([sthis]() {sthis->do_recv();});
+  get_socket_io_context(socket).post([sthis]() {sthis->do_recv();});
 }
 
 MAVConnTCPClient::~MAVConnTCPClient()
@@ -141,8 +140,8 @@ MAVConnTCPClient::~MAVConnTCPClient()
   is_destroying = true;
   close();
 
-  // If the client is already disconnected on error (By the io_service thread)
-  // and io_service running
+  // If the client is already disconnected on error (By the io_context thread)
+  // and io_context running
   if (io_runner.owns_thread() && io_runner.is_running()) {
     stop();
   }
@@ -155,18 +154,18 @@ void MAVConnTCPClient::connect(
   message_received_cb = cb_handle_message;
   port_closed_cb = cb_handle_closed_port;
 
-  // give some work to io_service before start
-  io_service.post([this]() {this->do_recv();});
+  // give some work to io_context before start
+  asio::post(io_context, [this]() {this->do_recv();});
 
   if (io_runner.owns_thread()) {
-    // run io_service for async io
+    // run io_context for async io
     io_runner.start(
       [this]() {
         utils::set_this_thread_name("mtcp%zu", conn_id);
         try {
-          io_service.run();
+          io_context.run();
         } catch (std::exception & ex) {
-          CONSOLE_BRIDGE_logError(PFXd "io_service exception: %s", conn_id, ex.what());
+          CONSOLE_BRIDGE_logError(PFXd "io_context exception: %s", conn_id, ex.what());
         }
       });
   }
@@ -225,7 +224,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t * bytes, size_t length)
     tx_q.emplace_back(bytes, length);
   }
   auto sthis = shared_from_this();
-  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t * message)
@@ -249,7 +248,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t * message)
     tx_q.emplace_back(message);
   }
   auto sthis = shared_from_this();
-  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -271,7 +270,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
   auto sthis = shared_from_this();
-  get_socket_io_service(socket).post([sthis]() {sthis->do_send(true);});
+  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::do_recv()
@@ -342,7 +341,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
       }
 
       if (continue_send) {
-        get_socket_io_service(sthis->socket).post([sthis]() {sthis->do_send(false);});
+        get_socket_io_context(sthis->socket).post([sthis]() {sthis->do_send(false);});
       }
     });
 }
@@ -351,14 +350,14 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
 
 MAVConnTCPServer::MAVConnTCPServer(
   uint8_t system_id, uint8_t component_id,
-  std::string server_host, uint16_t server_port, asio::io_service * shared_io)
+  std::string server_host, uint16_t server_port, asio::io_context * shared_io)
 : MAVConnInterface(system_id, component_id),
   io_runner(shared_io),
-  io_service(io_runner.io()),
-  acceptor(io_service),
+  io_context(io_runner.io()),
+  acceptor(io_context),
   is_destroying(false)
 {
-  if (!resolve_address_tcp(io_service, conn_id, server_host, server_port, bind_ep)) {
+  if (!resolve_address_tcp(io_context, conn_id, server_host, server_port, bind_ep)) {
     throw DeviceError("tcp-l: resolve", "Bind address resolve failed");
   }
 
@@ -387,15 +386,15 @@ void MAVConnTCPServer::connect(
   message_received_cb = cb_handle_message;
   port_closed_cb = cb_handle_closed_port;
 
-  // give some work to io_service before start
-  io_service.post([this]() {this->do_accept();});
+  // give some work to io_context before start
+  asio::post(io_context, [this]() {this->do_accept();});
 
   if (io_runner.owns_thread()) {
-    // run io_service for async io
+    // run io_context for async io
     io_runner.start(
       [this]() {
         utils::set_this_thread_name("mtcps%zu", conn_id);
-        io_service.run();
+        io_context.run();
       });
   }
 }
@@ -530,7 +529,7 @@ void MAVConnTCPServer::do_accept()
     return;
   }
   auto sthis = shared_from_this();
-  auto acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_service);
+  auto acceptor_client = std::make_shared<MAVConnTCPClient>(sys_id, comp_id, io_context);
   acceptor.async_accept(
     acceptor_client->socket,
     acceptor_client->server_ep,
