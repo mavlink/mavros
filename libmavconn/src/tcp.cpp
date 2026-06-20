@@ -132,7 +132,7 @@ void MAVConnTCPClient::client_connected(size_t server_channel)
 
   // start recv
   auto sthis = shared_from_this();
-  get_socket_io_context(socket).post([sthis]() {sthis->do_recv();});
+  asio::post(get_socket_io_context(socket), [sthis]() {sthis->do_recv();});
 }
 
 MAVConnTCPClient::~MAVConnTCPClient()
@@ -224,7 +224,7 @@ void MAVConnTCPClient::send_bytes(const uint8_t * bytes, size_t length)
     tx_q.emplace_back(bytes, length);
   }
   auto sthis = shared_from_this();
-  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
+  asio::post(get_socket_io_context(socket), [sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink_message_t * message)
@@ -248,7 +248,7 @@ void MAVConnTCPClient::send_message(const mavlink_message_t * message)
     tx_q.emplace_back(message);
   }
   auto sthis = shared_from_this();
-  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
+  asio::post(get_socket_io_context(socket), [sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -270,7 +270,7 @@ void MAVConnTCPClient::send_message(const mavlink::Message & message, const uint
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
   }
   auto sthis = shared_from_this();
-  get_socket_io_context(socket).post([sthis]() {sthis->do_send(true);});
+  asio::post(get_socket_io_context(socket), [sthis]() {sthis->do_send(true);});
 }
 
 void MAVConnTCPClient::do_recv()
@@ -341,7 +341,7 @@ void MAVConnTCPClient::do_send(bool check_tx_state)
       }
 
       if (continue_send) {
-        get_socket_io_context(sthis->socket).post([sthis]() {sthis->do_send(false);});
+        asio::post(get_socket_io_context(sthis->socket), [sthis]() {sthis->do_send(false);});
       }
     });
 }
