@@ -395,7 +395,7 @@ static void url_parse_query(const std::string & query, uint8_t & sysid, uint8_t 
 
 static MAVConnInterface::Ptr url_parse_serial(
   const std::string & path, const std::string & query,
-  uint8_t system_id, uint8_t component_id, bool hwflow, asio::io_service * shared_io)
+  uint8_t system_id, uint8_t component_id, bool hwflow, asio::io_context * shared_io)
 {
   std::string file_path;
   int baudrate;
@@ -414,7 +414,7 @@ static MAVConnInterface::Ptr url_parse_serial(
 static MAVConnInterface::Ptr url_parse_udp(
   const std::string & hosts, const std::string & query,
   uint8_t system_id, uint8_t component_id, bool is_udpb, bool permanent_broadcast,
-  asio::io_service * shared_io)
+  asio::io_context * shared_io)
 {
   std::string bind_pair, remote_pair;
   std::string bind_host, remote_host;
@@ -450,7 +450,7 @@ static MAVConnInterface::Ptr url_parse_udp(
 
 static MAVConnInterface::Ptr url_parse_tcp_client(
   const std::string & host, const std::string & query,
-  uint8_t system_id, uint8_t component_id, asio::io_service * shared_io)
+  uint8_t system_id, uint8_t component_id, asio::io_context * shared_io)
 {
   std::string server_host;
   int server_port;
@@ -466,7 +466,7 @@ static MAVConnInterface::Ptr url_parse_tcp_client(
 
 static MAVConnInterface::Ptr url_parse_tcp_server(
   const std::string & host, const std::string & query,
-  uint8_t system_id, uint8_t component_id, asio::io_service * shared_io)
+  uint8_t system_id, uint8_t component_id, asio::io_context * shared_io)
 {
   std::string bind_host;
   int bind_port;
@@ -484,7 +484,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url_no_connect(
   std::string url,
   uint8_t system_id,
   uint8_t component_id,
-  asio::io_service * shared_io)
+  asio::io_context * shared_io)
 {
   /* Based on code found here:
    * http://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
@@ -562,7 +562,7 @@ MAVConnInterface::Ptr MAVConnInterface::open_url(
   uint8_t component_id,
   const ReceivedCb & cb_handle_message,
   const ClosedCb & cb_handle_closed_port,
-  asio::io_service * shared_io)
+  asio::io_context * shared_io)
 {
   auto interface_ptr = open_url_no_connect(url, system_id, component_id, shared_io);
   if (interface_ptr) {

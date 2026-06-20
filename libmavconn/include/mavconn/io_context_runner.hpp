@@ -22,20 +22,22 @@ namespace mavconn
 {
 
 /**
- * @brief Small utility to unify owned/shared io_service lifecycle handling.
+ * @brief Small utility to unify owned/shared io_context lifecycle handling.
  */
 class IoContextRunner
 {
 public:
-  explicit IoContextRunner(asio::io_service * shared_io = nullptr)
-  : io_owner_(shared_io ? nullptr : std::make_shared<asio::io_service>()),
+  explicit IoContextRunner(asio::io_context * shared_io = nullptr)
+  : io_owner_(shared_io ? nullptr : std::make_shared<asio::io_context>()),
     io_(shared_io ? *shared_io : *io_owner_),
-    io_work_(shared_io ? nullptr : std::make_unique<asio::io_service::work>(io_)),
+    io_work_(shared_io ? nullptr :
+      std::make_unique<asio::executor_work_guard<asio::io_context::executor_type>>(
+      asio::make_work_guard(io_))),
     owns_thread_(shared_io == nullptr),
     is_running_(false)
   {}
 
-  [[nodiscard]] asio::io_service & io()
+  [[nodiscard]] asio::io_context & io()
   {
     return io_;
   }
@@ -101,7 +103,7 @@ public:
       return;
     }
 
-    io_.reset();
+    io_.restart();
   }
 
   void shutdown_owned()
@@ -112,9 +114,9 @@ public:
   }
 
 private:
-  std::shared_ptr<asio::io_service> io_owner_;
-  asio::io_service & io_;
-  std::unique_ptr<asio::io_service::work> io_work_;
+  std::shared_ptr<asio::io_context> io_owner_;
+  asio::io_context & io_;
+  std::unique_ptr<asio::executor_work_guard<asio::io_context::executor_type>> io_work_;
   bool owns_thread_;
   std::atomic<bool> is_running_;
   std::jthread io_thread_;

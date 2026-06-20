@@ -171,10 +171,12 @@ TEST_F(UDP, send_message)
   EXPECT_EQ(message_id, msgid);
 }
 
-TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
+TEST(IO_THREAD, udp_shared_io_context_stays_running_after_close)
 {
-  asio::io_service shared_io;
-  auto io_work = std::make_unique<asio::io_service::work>(shared_io);
+  asio::io_context shared_io;
+  auto io_work =
+    std::make_unique<asio::executor_work_guard<asio::io_context::executor_type>>(
+    asio::make_work_guard(shared_io));
   std::jthread io_thread([&shared_io]() {shared_io.run();});
 
   std::mutex mutex;
@@ -209,7 +211,7 @@ TEST(IO_THREAD, udp_shared_io_service_stays_running_after_close)
 
   echo->close();
 
-  shared_io.post([&]() {
+  asio::post(shared_io, [&]() {
       std::lock_guard<std::mutex> lock(mutex);
       posted_done = true;
       cond.notify_all();

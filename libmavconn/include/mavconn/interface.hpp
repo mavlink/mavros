@@ -286,7 +286,7 @@ public:
    * @param[in] url           resource locator
    * @param[in] system_id     optional system id
    * @param[in] component_id  optional component id
-   * @param[in] shared_io     optional external io_service. If provided, caller owns
+   * @param[in] shared_io     optional external io_context. If provided, caller owns
    *                          its execution/threading lifecycle.
    * @return @a Ptr to constructed interface class,
    *         or throw @a DeviceError if error occurred.
@@ -296,20 +296,20 @@ public:
     uint8_t system_id = 1, uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
     const ReceivedCb & cb_handle_message = ReceivedCb(),
     const ClosedCb & cb_handle_closed_port = ClosedCb(),
-    asio::io_service * shared_io = nullptr
+    asio::io_context * shared_io = nullptr
   );
 
   /**
    * @brief version of open_url() which do not perform connect()
    *
-   * @param[in] shared_io optional external io_service. If provided, caller owns
+   * @param[in] shared_io optional external io_context. If provided, caller owns
    *                      its execution/threading lifecycle.
    */
   [[nodiscard]] static Ptr open_url_no_connect(
     std::string url,
     uint8_t system_id = 1,
     uint8_t component_id = MAV_COMP_ID_UDP_BRIDGE,
-    asio::io_service * shared_io = nullptr);
+    asio::io_context * shared_io = nullptr);
 
   [[nodiscard]] static std::vector<std::string> get_known_dialects();
 
