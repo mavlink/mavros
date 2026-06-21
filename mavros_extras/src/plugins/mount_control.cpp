@@ -316,7 +316,8 @@ private:
     publish_msg.header.stamp = node->now();
     publish_msg.header.frame_id = std::to_string(ms.target_component);
 
-    auto vec = Eigen::Vector3d(ms.pointing_b, ms.pointing_a, ms.pointing_c) * M_PI / 18000.0;
+    Eigen::Vector3d vec = Eigen::Vector3d(ms.pointing_b, ms.pointing_a,
+          ms.pointing_c) * M_PI / 18000.0;
     tf2::toMsg(vec, publish_msg.vector);
 
     mount_status_pub->publish(publish_msg);
