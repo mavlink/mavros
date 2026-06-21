@@ -313,7 +313,7 @@ private:
     auto q = ftf::transform_orientation_enu_ned(
       ftf::transform_orientation_baselink_aircraft(Eigen::Quaterniond(tr.rotation())));
 
-    Eigen::Vector2f angle;
+    Eigen::Vector2f angle = Eigen::Vector2f::Zero();
     Eigen::Vector2f size_rad;
     Eigen::Vector2f fov(fov_x, fov_y);
 

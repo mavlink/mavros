@@ -172,10 +172,10 @@ private:
     state_quat.ind_airspeed = req->ind_airspeed * 1E2;
     state_quat.true_airspeed = req->true_airspeed * 1E2;
     // WRT world frame
-    auto ang_vel = ftf::transform_frame_enu_ned(
+    Eigen::Vector3d ang_vel = ftf::transform_frame_enu_ned(
       ftf::transform_frame_baselink_aircraft(
         ftf::to_eigen(req->angular_velocity)));
-    auto lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
+    Eigen::Vector3d lin_vel = ftf::transform_frame_enu_ned<Eigen::Vector3d>(
       ftf::to_eigen(req->linear_velocity)) * 1E2;
     // linear acceleration - WRT world frame
     auto lin_acc = ftf::transform_frame_baselink_aircraft(
