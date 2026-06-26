@@ -41,7 +41,7 @@ jobs:
       COMPONENT_FILTER: ${{ matrix.component.source_filter }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ros-tooling/setup-ros@v0.7
         with:
