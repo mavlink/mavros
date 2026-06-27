@@ -342,7 +342,8 @@ private:
 
     // Linear velocity
     tf2::toMsg(
-      Eigen::Vector3d(gpos.vy, gpos.vx, gpos.vz) / 1E2,
+      ftf::transform_frame_ned_enu(
+        Eigen::Vector3d(gpos.vx, gpos.vy, gpos.vz)) / 1E2,
       odom.twist.twist.linear);
 
     // Velocity covariance unknown
