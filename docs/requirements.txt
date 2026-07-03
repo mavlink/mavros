@@ -116,7 +116,7 @@ mkdocstrings-python==2.0.3
 mypy==2.1.0
 mypy-extensions==1.1.0
     # via mypy
-packaging==26.0
+packaging==26.2
     # via
     #   mkdocs
     #   pytest
