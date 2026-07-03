@@ -189,7 +189,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 tomli==2.3.0 ; python_full_version <= '3.11'
     # via coverage
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   fieldz
     #   griffe-typingdoc
