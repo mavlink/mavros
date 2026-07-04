@@ -39,8 +39,15 @@ Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d & rpy)
 
 Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond & q)
 {
-  // YPR - ZYX
-  return q.toRotationMatrix().eulerAngles(2, 1, 0).reverse();
+  // ZYX — atan2-based decomposition avoids Eigen::eulerAngles(2,1,0) clamping
+  // yaw to [0, pi]. All three angles now cover their full atan2/asin range:
+  //   roll  [-pi, pi], pitch [-pi/2, pi/2], yaw [-pi, pi]
+  auto m = q.toRotationMatrix();
+  return Eigen::Vector3d(
+    std::atan2(m(2, 1), m(2, 2)),   // roll
+    std::asin(-m(2, 0)),             // pitch
+    std::atan2(m(1, 0), m(0, 0))    // yaw
+  );
 }
 
 double quaternion_get_yaw(const Eigen::Quaterniond & q)
