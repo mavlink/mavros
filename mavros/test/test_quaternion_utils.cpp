@@ -67,13 +67,37 @@ TEST(FRAME_TF, quaternion_from_rpy__paranoic_check)
 
 TEST(FRAME_TF, quaternion_to_rpy__123)
 {
-  // this test only works on positive rpy: 0..pi
   auto q = ftf::quaternion_from_rpy(1.0, 2.0, 3.0);
   auto rpy = ftf::quaternion_to_rpy(q);
 
   EXPECT_NEAR(1.0, rpy.x(), epsilon);
   EXPECT_NEAR(2.0, rpy.y(), epsilon);
   EXPECT_NEAR(3.0, rpy.z(), epsilon);
+}
+
+// Regression test: quaternion_to_rpy must return the canonical yaw in (-pi, pi]
+// for all headings, not clamp to [0, pi] as Eigen::eulerAngles(2,1,0) does.
+TEST(FRAME_TF, quaternion_to_rpy__yaw_full_circle)
+{
+  const double roll = 0.1, pitch = 0.2;
+
+  for (int yaw_deg = -179; yaw_deg <= 180; ++yaw_deg) {
+    const double yaw = yaw_deg * deg_to_rad;
+
+    std::stringstream ss;
+    ss << "yaw=" << yaw_deg << "deg";
+    SCOPED_TRACE(ss.str());
+
+    auto q = ftf::quaternion_from_rpy(roll, pitch, yaw);
+    auto rpy = ftf::quaternion_to_rpy(q);
+
+    // Canonical yaw recovered by atan2 lives in (-pi, pi].
+    // Allow for floating-point round-trip; the exact recovered value must
+    // equal the input since both sit in (-pi, pi].
+    EXPECT_NEAR(roll,  rpy.x(), epsilon);
+    EXPECT_NEAR(pitch, rpy.y(), epsilon);
+    EXPECT_NEAR(yaw,   rpy.z(), epsilon);
+  }
 }
 
 TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
@@ -106,13 +130,13 @@ TEST(FRAME_TF, quaternion_to_rpy__pm_pi)
         auto rpy = ftf::quaternion_to_rpy(q1);
         auto q2 = ftf::quaternion_from_rpy(rpy);
 
-        // direct assumption is failed at ranges outside 0..pi
+        // Direct angle comparison is still undefined near gimbal-lock (pitch ≈ ±90°)
+        // because ZYX atan2/asin decomposition is not unique there.
+        // The yaw-clamping bug (eulerAngles clamping to [0,pi]) is covered
+        // separately by quaternion_to_rpy__yaw_full_circle above.
         // EXPECT_NEAR(expected.x(), rpy.x(), epsilon);
         // EXPECT_NEAR(expected.y(), rpy.y(), epsilon);
         // EXPECT_NEAR(expected.z(), rpy.z(), epsilon);
-
-        // at -pi..0 we got complimentary q2 to q
-        // EXPECT_QUATERNION(q1, q2, epsilon);
 
         // instead of direct comparison we rotate other quaternion and then compare results
         auto tq1 = q1 * test_orientation * q1.inverse();
