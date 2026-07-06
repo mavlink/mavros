@@ -39,15 +39,31 @@ Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d & rpy)
 
 Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond & q)
 {
-  // ZYX — atan2-based decomposition avoids Eigen::eulerAngles(2,1,0) clamping
-  // yaw to [0, pi]. All three angles now cover their full atan2/asin range:
-  //   roll  [-pi, pi], pitch [-pi/2, pi/2], yaw [-pi, pi]
+  // ZYX decomposition via rotation matrix. Avoids Eigen::eulerAngles(2,1,0)
+  // clamping yaw to [0, pi].
+  //
+  // Normal case (|pitch| < pi/2): roll, pitch, yaw all recovered via atan2/asin.
+  // Gimbal lock (pitch = ±pi/2): roll and yaw are not independently observable;
+  // we set roll = 0 and place the combined degree of freedom in yaw.
   auto m = q.toRotationMatrix();
-  return Eigen::Vector3d(
-    std::atan2(m(2, 1), m(2, 2)),   // roll
-    std::asin(-m(2, 0)),             // pitch
-    std::atan2(m(1, 0), m(0, 0))    // yaw
-  );
+
+  double sin_pitch = std::clamp(-m(2, 0), -1.0, 1.0);
+  double cos_pitch = std::sqrt(m(2, 1) * m(2, 1) + m(2, 2) * m(2, 2));
+
+  if (cos_pitch > 1e-9) {
+    return Eigen::Vector3d(
+      std::atan2(m(2, 1), m(2, 2)),    // roll  ∈ (-π, π]
+      std::atan2(sin_pitch, cos_pitch), // pitch ∈ (-π/2, π/2)
+      std::atan2(m(1, 0), m(0, 0)));   // yaw   ∈ (-π, π]
+  }
+
+  // Gimbal lock
+  if (sin_pitch > 0) {
+    // pitch = +π/2: only (yaw − roll) is observable
+    return Eigen::Vector3d(0.0, M_PI / 2.0, std::atan2(m(1, 2), m(1, 1)));
+  }
+  // pitch = -π/2: only (yaw + roll) is observable
+  return Eigen::Vector3d(0.0, -M_PI / 2.0, std::atan2(-m(1, 2), m(1, 1)));
 }
 
 double quaternion_get_yaw(const Eigen::Quaterniond & q)
