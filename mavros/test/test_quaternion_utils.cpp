@@ -67,11 +67,13 @@ TEST(FRAME_TF, quaternion_from_rpy__paranoic_check)
 
 TEST(FRAME_TF, quaternion_to_rpy__123)
 {
-  auto q = ftf::quaternion_from_rpy(1.0, 2.0, 3.0);
+  // Angles kept within the ZYX unique domain (|pitch| < pi/2) so that the
+  // round-trip rpy->q->rpy recovers the original values exactly.
+  auto q = ftf::quaternion_from_rpy(1.0, 0.5, 3.0);
   auto rpy = ftf::quaternion_to_rpy(q);
 
   EXPECT_NEAR(1.0, rpy.x(), epsilon);
-  EXPECT_NEAR(2.0, rpy.y(), epsilon);
+  EXPECT_NEAR(0.5, rpy.y(), epsilon);
   EXPECT_NEAR(3.0, rpy.z(), epsilon);
 }
 
@@ -94,9 +96,9 @@ TEST(FRAME_TF, quaternion_to_rpy__yaw_full_circle)
     // Canonical yaw recovered by atan2 lives in (-pi, pi].
     // Allow for floating-point round-trip; the exact recovered value must
     // equal the input since both sit in (-pi, pi].
-    EXPECT_NEAR(roll,  rpy.x(), epsilon);
+    EXPECT_NEAR(roll, rpy.x(), epsilon);
     EXPECT_NEAR(pitch, rpy.y(), epsilon);
-    EXPECT_NEAR(yaw,   rpy.z(), epsilon);
+    EXPECT_NEAR(yaw, rpy.z(), epsilon);
   }
 }
 
