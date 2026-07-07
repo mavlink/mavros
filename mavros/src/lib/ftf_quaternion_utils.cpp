@@ -52,9 +52,9 @@ Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond & q)
 
   if (cos_pitch > 1e-9) {
     return Eigen::Vector3d(
-      std::atan2(m(2, 1), m(2, 2)),    // roll  ∈ (-π, π]
-      std::atan2(sin_pitch, cos_pitch), // pitch ∈ (-π/2, π/2)
-      std::atan2(m(1, 0), m(0, 0)));   // yaw   ∈ (-π, π]
+      std::atan2(m(2, 1), m(2, 2)),       // roll  ∈ (-π, π]
+      std::atan2(sin_pitch, cos_pitch),   // pitch ∈ (-π/2, π/2)
+      std::atan2(m(1, 0), m(0, 0)));      // yaw   ∈ (-π, π]
   }
 
   // Gimbal lock
