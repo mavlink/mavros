@@ -1321,9 +1321,11 @@ private:
 
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
       cmdrq->broadcast = do_broadcast;
-      cmdrq->command = enum_value(MAV_CMD::REQUEST_AUTOPILOT_CAPABILITIES);
+      cmdrq->command = enum_value(MAV_CMD::REQUEST_MESSAGE);
       cmdrq->confirmation = false;
-      cmdrq->param1 = 1.0;
+      // Request a single AUTOPILOT_VERSION message from the target system.
+      cmdrq->param1 = mavlink::common::msg::AUTOPILOT_VERSION::MSG_ID;
+      cmdrq->param7 = 1.0;
 
       RCLCPP_DEBUG(
         lg, "VER: Sending %s request.",
