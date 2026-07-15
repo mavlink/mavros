@@ -1324,7 +1324,7 @@ private:
       cmdrq->command = enum_value(MAV_CMD::REQUEST_MESSAGE);
       cmdrq->confirmation = false;
       // Request a single AUTOPILOT_VERSION message from the target system.
-      cmdrq->param1 = mavlink::common::msg::AUTOPILOT_VERSION::MSG_ID;
+      cmdrq->param1 = mavlink::standard::msg::AUTOPILOT_VERSION::MSG_ID;
       cmdrq->param7 = 1.0;
 
       RCLCPP_DEBUG(
