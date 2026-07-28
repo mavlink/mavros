@@ -30,7 +30,10 @@ jobs:
           # - {ROS_DISTRO: iron, ROS_REPO: main}
           - {ROS_DISTRO: jazzy, ROS_REPO: main}
           - {ROS_DISTRO: kilted, ROS_REPO: main}
-          - {ROS_DISTRO: lyrical, ROS_REPO: main}
+          # lyrical has no released ros-lyrical-mavlink apt package yet, so
+          # build mavlink from source via dependencies.rosinstall (upstream ws).
+          # (rolling and lyrical mavlink releases are published together; same code.)
+          - {ROS_DISTRO: lyrical, ROS_REPO: main, UPSTREAM_WORKSPACE: dependencies.rosinstall}
           - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
