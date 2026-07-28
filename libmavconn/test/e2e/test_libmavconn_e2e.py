@@ -18,6 +18,7 @@ without pip stays green.
 """
 
 import ctypes
+import importlib.util
 import os
 import socket
 import struct
@@ -25,8 +26,16 @@ import time
 
 import pytest
 
-pymavlink = pytest.importorskip("pymavlink")
-from pymavlink.dialects.v20 import common as mav_common  # noqa: E402
+# Skip the whole module at collection time when pymavlink is unavailable, but
+# still *collect* the tests so pytest exits 0. pytest.importorskip() at import
+# time collects 0 tests, which makes pytest exit with code 5 ("no tests
+# collected") and ament's run_test.py then reports the test as failed.
+_HAVE_PYMAVLINK = importlib.util.find_spec("pymavlink") is not None
+pytestmark = pytest.mark.skipif(
+    not _HAVE_PYMAVLINK, reason="pymavlink is not installed (pip-only test dep)")
+
+if _HAVE_PYMAVLINK:
+    from pymavlink.dialects.v20 import common as mav_common
 
 
 # --------------------------------------------------------------------------
