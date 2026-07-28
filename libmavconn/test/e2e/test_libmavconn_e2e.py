@@ -21,6 +21,7 @@ import ctypes
 import os
 import socket
 import struct
+import time
 
 import pytest
 
@@ -146,6 +147,10 @@ def link(shim):
     handle = shim.mavconn_udp_create(
         42, 200, bind_port, b"127.0.0.1", remote_port)
     try:
+        # Let the link's io thread post its async receive before any test sends
+        # a datagram. UDP delivers unreceived datagrams to no one, so without
+        # this the first packet can be lost on a loaded/slow CI runner.
+        time.sleep(0.2)
         yield shim, handle, bind_port, remote_sock, remote_port
     finally:
         shim.mavconn_destroy(handle)
