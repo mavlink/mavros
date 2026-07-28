@@ -114,6 +114,15 @@ public:
 
   ~TestRouter()
   {
+    // Break the Endpoint <-> Router reference cycle (router->endpoints holds
+    // endpoints, and each endpoint->parent holds the router), otherwise the
+    // Router node (a DDS participant) is leaked and never destroyed. Leaked
+    // participants from concurrent test processes crash FastDDS discovery.
+    for (auto & router : routers_) {
+      router->endpoints.clear();
+    }
+    routers_.clear();
+
     // NOTE(vooon): required to remove any remaining Nodes
     // std::cout << "kill" << std::endl;
     rclcpp::shutdown();
@@ -123,6 +132,7 @@ public:
   {
     auto router = std::make_shared<Router>("test_mavros_router");
     router->startup_delay_timer->cancel();
+    routers_.push_back(router);
 
     auto make_and_add_mock_endpoint =
       [router](id_t id, const std::string & url, LT type,
@@ -157,6 +167,7 @@ public:
   {
     auto router = std::make_shared<Router>("test_mavros_router");
     router->startup_delay_timer->cancel();
+    routers_.push_back(router);
 
     // Call this manually
     router->param_init_once();
@@ -174,6 +185,10 @@ public:
   {
     return router->endpoints;
   }
+
+  // Routers created via create_node()/create_node_no_endpoints() this test, so
+  // the fixture can break their Endpoint<->Router cycles before shutdown.
+  std::vector<Router::SharedPtr> routers_;
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const addr_t source = 0x0101)
   {
