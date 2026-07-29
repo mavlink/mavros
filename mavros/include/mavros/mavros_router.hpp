@@ -32,6 +32,7 @@
 #include <Eigen/Eigen>      // NOLINT
 
 #include "mavconn/interface.hpp"
+#include "mavconn/io_context_runner.hpp"
 #include "mavconn/mavlink_dialect.hpp"
 #include "mavros/utils.hpp"
 #include "rclcpp/macros.hpp"
@@ -54,7 +55,6 @@ using mavconn::Framing;
 using ::mavlink::mavlink_message_t;
 using ::mavlink::msgid_t;
 
-using namespace std::placeholders;      // NOLINT
 using namespace std::chrono_literals;   // NOLINT
 
 class Router;
@@ -148,6 +148,7 @@ public:
     const std::string & node_name = "mavros_router")
   : rclcpp::Node(node_name,
       options /* rclcpp::NodeOptions(options).use_intra_process_comms(true) */),
+    router_io_runner(),
     endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
     diagnostic_updater(this, 1.0)
   {
@@ -159,18 +160,28 @@ public:
 
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
-      std::bind(&Router::add_endpoint, this, _1, _2));
+      [this](
+        const mavros_msgs::srv::EndpointAdd::Request::SharedPtr request,
+        mavros_msgs::srv::EndpointAdd::Response::SharedPtr response)
+      {
+        this->add_endpoint(request, response);
+      });
     del_service = this->create_service<mavros_msgs::srv::EndpointDel>(
       "~/del_endpoint",
-      std::bind(&Router::del_endpoint, this, _1, _2));
+      [this](
+        const mavros_msgs::srv::EndpointDel::Request::SharedPtr request,
+        mavros_msgs::srv::EndpointDel::Response::SharedPtr response)
+      {
+        this->del_endpoint(request, response);
+      });
 
     // try to reconnect endpoint each 30 seconds
     reconnect_timer =
-      this->create_wall_timer(30s, std::bind(&Router::periodic_reconnect_endpoints, this));
+      this->create_wall_timer(30s, [this]() {this->periodic_reconnect_endpoints();});
 
     // collect garbage addrs each minute
     stale_addrs_timer =
-      this->create_wall_timer(60s, std::bind(&Router::periodic_clear_stale_remote_addrs, this));
+      this->create_wall_timer(60s, [this]() {this->periodic_clear_stale_remote_addrs();});
 
     diagnostic_updater.setHardwareID("none");  // NOTE: router connects several hardwares
     diagnostic_updater.add("MAVROS Router", this, &Router::diag_run);
@@ -185,6 +196,8 @@ public:
     RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
+    router_io_runner.start([this]() {this->router_io_runner.io().run();});
+
     // Delay parameter callback initialization because
     // add/del endpoints calls have to use shared_from_this(),
     // which cannot be used before we leave the constructor.
@@ -195,15 +208,29 @@ public:
       });
   }
 
+  ~Router() override
+  {
+    startup_delay_timer->cancel();
+    reconnect_timer->cancel();
+    stale_addrs_timer->cancel();
+    router_io_runner.shutdown_owned();
+  }
+
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);
+
+  [[nodiscard]] asio::io_context * get_shared_io()
+  {
+    return &router_io_runner.io();
+  }
 
 private:
   friend class Endpoint;
   friend class TestRouter;
 
   static std::atomic<id_t> id_counter;
+  mavconn::IoContextRunner router_io_runner;
 
-  std::shared_timed_mutex mu;
+  std::shared_mutex mu;
 
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
@@ -234,7 +261,10 @@ private:
   void param_init()
   {
     set_parameters_handle_ptr =
-      this->add_on_set_parameters_callback(std::bind(&Router::on_set_parameters_cb, this, _1));
+      this->add_on_set_parameters_callback(
+      [this](const std::vector<rclcpp::Parameter> & parameters) {
+        return this->on_set_parameters_cb(parameters);
+      });
 
     auto params = get_parameters({"fcu_urls", "gcs_urls", "uas_urls"});
     on_set_parameters_cb(params);
@@ -242,7 +272,7 @@ private:
 
   void param_init_once()
   {
-    std::call_once(param_init_flag, std::bind(&Router::param_init, this));
+    std::call_once(param_init_flag, &Router::param_init, this);
   }
 
   rcl_interfaces::msg::SetParametersResult on_set_parameters_cb(

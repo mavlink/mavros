@@ -30,11 +30,18 @@ jobs:
           # - {ROS_DISTRO: iron, ROS_REPO: main}
           - {ROS_DISTRO: jazzy, ROS_REPO: main}
           - {ROS_DISTRO: kilted, ROS_REPO: main}
-          - {ROS_DISTRO: lyrical, ROS_REPO: main}
+          # lyrical has no released ros-lyrical-mavlink apt package yet, so
+          # build mavlink from source via dependencies.rosinstall (upstream ws).
+          # (rolling and lyrical mavlink releases are published together; same code.)
+          - {ROS_DISTRO: lyrical, ROS_REPO: main, UPSTREAM_WORKSPACE: dependencies.rosinstall}
           - {ROS_DISTRO: rolling, ROS_REPO: testing}
     env:
       CCACHE_DIR: /github/home/.ccache
       AFTER_INSTALL_TARGET_DEPENDENCIES: ./mavros/scripts/install_geographiclib_datasets.sh
+      # Enable the libmavconn e2e test dep (python3-pymavlink-pip) and allow
+      # rosdep to pip-install it on PEP 668 distros (jazzy+)
+      TEST_ENABLE_E2E: "1"
+      PIP_BREAK_SYSTEM_PACKAGES: "1"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -43,6 +43,63 @@ Guidance for coding agents in this repository.
   - Mounts `${localWorkspaceFolder}/../..` to `/ws`.
   - Requires repository path `<workspace>/src/mavros`.
 
+## Local Container (Podman)
+
+As an alternative to the devcontainer, use a plain ROS container with full-workspace mount.
+
+### Setup
+
+Container creation (one-time):
+
+    podman run -it --name ros2-<distro> \
+      -v <workspace>:/ws \
+      -v $HOME/.gitconfig:/root/.gitconfig \
+      -v $HOME/.ssh:/root/.ssh \
+      -v $HOME/.gnupg:/root/.gnupg \
+      -v $HOME/.config:/root/.config \
+      -p 14540:14540/udp -p 14545:14545/udp -p 5761:5761 \
+      ros:<distro>
+
+Restart after host reboot:
+
+    podman start ros2-<distro>
+
+First-run dependencies (inside container):
+
+    apt-get update && rosdep update && rosdep install -y -i --from-paths /ws/src
+    ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
+
+Remove system mavlink if building from source (avoids duplicate-package error):
+
+    apt-get remove -y ros-<distro>-mavlink
+
+### Build and Test
+
+Run commands on the host via `podman exec <name> bash -lc '...'`.
+Prepend `source /opt/ros/<distro>/setup.bash` before every command.
+
+Build:
+
+    podman exec ros2-<distro> bash -lc 'source /opt/ros/<distro>/setup.bash && colcon build'
+
+If extra source packages cause duplicate-package errors, scope discovery:
+
+    colcon build --base-paths /ws/src/mavros --packages-up-to mavros
+
+Test (after source of install; `install/setup.bash` includes the system setup):
+
+    podman exec ros2-<distro> bash -lc '\
+      source /ws/install/setup.bash \
+      && cd /ws/build/mavros && ctest --output-on-failure'
+
+`ctest` from the build directory is preferred over `colcon test` — it avoids workspace-scanning issues.
+
+To reformat with uncrustify:
+
+    podman exec ros2-<distro> bash -lc '\
+      source /opt/ros/<distro>/setup.bash \
+      && ament_uncrustify --reformat /ws/src/mavros/mavros'
+
 ## Style And Compatibility
 
 - C++ style is enforced by `ament_uncrustify` (latest/current supported ROS 2 baseline).

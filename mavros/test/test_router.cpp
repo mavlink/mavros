@@ -14,8 +14,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <cstdlib>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <set>
 #include <unordered_map>
@@ -65,6 +68,36 @@ public:
   MOCK_METHOD1(diag_run, void(diagnostic_updater::DiagnosticStatusWrapper &));
 };
 
+class StressEndpoint : public Endpoint
+{
+public:
+  using SharedPtr = std::shared_ptr<StressEndpoint>;
+
+  std::atomic<size_t> send_count {0};
+
+  bool is_open() override
+  {
+    return true;
+  }
+
+  std::pair<bool, std::string> open() override
+  {
+    return {true, ""};
+  }
+
+  void close() override {}
+
+  void send_message(
+    const mavlink_message_t * msg [[maybe_unused]],
+    const Framing framing [[maybe_unused]],
+    id_t src_id [[maybe_unused]]) override
+  {
+    send_count.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat [[maybe_unused]]) override {}
+};
+
 namespace mavros
 {
 namespace router
@@ -81,6 +114,15 @@ public:
 
   ~TestRouter()
   {
+    // Break the Endpoint <-> Router reference cycle (router->endpoints holds
+    // endpoints, and each endpoint->parent holds the router), otherwise the
+    // Router node (a DDS participant) is leaked and never destroyed. Leaked
+    // participants from concurrent test processes crash FastDDS discovery.
+    for (auto & router : routers_) {
+      router->endpoints.clear();
+    }
+    routers_.clear();
+
     // NOTE(vooon): required to remove any remaining Nodes
     // std::cout << "kill" << std::endl;
     rclcpp::shutdown();
@@ -90,6 +132,7 @@ public:
   {
     auto router = std::make_shared<Router>("test_mavros_router");
     router->startup_delay_timer->cancel();
+    routers_.push_back(router);
 
     auto make_and_add_mock_endpoint =
       [router](id_t id, const std::string & url, LT type,
@@ -124,6 +167,7 @@ public:
   {
     auto router = std::make_shared<Router>("test_mavros_router");
     router->startup_delay_timer->cancel();
+    routers_.push_back(router);
 
     // Call this manually
     router->param_init_once();
@@ -141,6 +185,10 @@ public:
   {
     return router->endpoints;
   }
+
+  // Routers created via create_node()/create_node_no_endpoints() this test, so
+  // the fixture can break their Endpoint<->Router cycles before shutdown.
+  std::vector<Router::SharedPtr> routers_;
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const addr_t source = 0x0101)
   {
@@ -190,6 +238,11 @@ public:
   inline size_t get_stat_msg_dropped(Router::SharedPtr router)
   {
     return router->stat_msg_dropped.load();
+  }
+
+  void run_clear_stale_remote_addrs(Router::SharedPtr router)
+  {
+    router->periodic_clear_stale_remote_addrs();
   }
 };
 
@@ -397,6 +450,70 @@ TEST_F(TestRouter, route_targeted_system_component)
   VERIFY_EPS();
 }
 
+TEST_F(TestRouter, route_targeted_miss_falls_back_to_broadcast)
+{
+  using MF = mavlink::common::MAV_MODE_FLAG;
+  using utils::enum_value;
+
+  auto router = this->create_node();
+
+  auto set_mode = mavlink::common::msg::SET_MODE();
+  set_mode.target_system = 0x42;  // unknown target in test topology
+  set_mode.base_mode = enum_value(MF::SAFETY_ARMED) | enum_value(MF::TEST_ENABLED);
+  set_mode.custom_mode = 7;
+
+  auto smmsg = convert_message(set_mode, 0x0101);
+  auto fr = Framing::ok;
+
+  DEFINE_EPS();
+
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*uas2, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs1, send_message(_, fr, _)).Times(1);
+  EXPECT_CALL(*gcs2, send_message(_, fr, _)).Times(1);
+
+  router->route_message(fcu1, &smmsg, fr);
+
+  VERIFY_EPS();
+}
+
+TEST_F(TestRouter, route_drops_when_only_same_link_type_exists)
+{
+  auto router = this->create_node_no_endpoints();
+  auto & endpoints = get_endpoints(router);
+
+  auto make_ep = [router](id_t id, const std::string & url) {
+      auto ep = std::make_shared<MockEndpoint>();
+      ep->parent = router;
+      ep->id = id;
+      ep->link_type = LT::fcu;
+      ep->url = url;
+      ep->remote_addrs = {0x0000, 0x0100, 0x0101};
+      testing::Mock::AllowLeak(&(*ep));
+      return ep;
+    };
+
+  auto fcu1 = make_ep(1000, "mock://fcu1");
+  auto fcu2 = make_ep(1001, "mock://fcu2");
+  endpoints[fcu1->id] = fcu1;
+  endpoints[fcu2->id] = fcu2;
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x0101);
+  auto fr = Framing::ok;
+
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+
+  router->route_message(fcu1, &hbmsg, fr);
+
+  EXPECT_EQ(size_t(1), get_stat_msg_routed(router));
+  EXPECT_EQ(size_t(0), get_stat_msg_sent(router));
+  EXPECT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
 TEST_F(TestRouter, endpoint_recv_message)
 {
   auto router = create_node_no_endpoints();
@@ -432,6 +549,104 @@ TEST_F(TestRouter, endpoint_recv_message)
   ASSERT_EQ(size_t(1), get_stat_msg_routed(router));
   ASSERT_EQ(size_t(0), get_stat_msg_sent(router));
   ASSERT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
+TEST_F(TestRouter, clear_stale_remote_addrs_keeps_active_and_reaps_stale)
+{
+  auto router = this->create_node();
+  auto uas1 = getep(router, 1002);
+
+  // baseline from fixture
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0000));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x0100));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
+
+  // add one stale-only remote address
+  uas1->remote_addrs.emplace(0x1234);
+
+  // pass #1 only primes stale set from current remotes
+  run_clear_stale_remote_addrs(router);
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x1234));
+  ASSERT_NE(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x1234));
+
+  // emulate activity on one address between timer passes
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x01BF);
+  uas1->Endpoint::recv_message(&hbmsg, Framing::ok);
+  ASSERT_EQ(uas1->stale_addrs.end(), uas1->stale_addrs.find(0x01BF));
+
+  // pass #2 removes untouched stale-only address but keeps active one
+  run_clear_stale_remote_addrs(router);
+
+  ASSERT_EQ(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x1234));
+  ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
+}
+
+TEST_F(TestRouter, route_stress_multithreaded_broadcast)
+{
+  if (const char * skip = std::getenv("MAVROS_SKIP_STRESS_TESTS");
+    skip && std::string(skip) == "1")
+  {
+    GTEST_SKIP() << "skipped by MAVROS_SKIP_STRESS_TESTS=1";
+  }
+
+  auto router = create_node_no_endpoints();
+
+  auto make_ep = [router](id_t id, LT type) {
+      auto ep = std::make_shared<StressEndpoint>();
+      ep->parent = router;
+      ep->id = id;
+      ep->link_type = type;
+      ep->remote_addrs = {0x0000};
+      return ep;
+    };
+
+  auto & endpoints = get_endpoints(router);
+
+  auto src = make_ep(1000, LT::fcu);
+  auto dst1 = make_ep(1001, LT::gcs);
+  auto dst2 = make_ep(1002, LT::gcs);
+  auto dst3 = make_ep(1003, LT::uas);
+  auto dst4 = make_ep(1004, LT::uas);
+  endpoints[src->id] = src;
+  endpoints[dst1->id] = dst1;
+  endpoints[dst2->id] = dst2;
+  endpoints[dst3->id] = dst3;
+  endpoints[dst4->id] = dst4;
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x0101);
+  constexpr auto fr = Framing::ok;
+
+  constexpr size_t thread_count = 8;
+  constexpr size_t iterations_per_thread = 2000;
+  const auto expected_routed = thread_count * iterations_per_thread;
+  const auto expected_sent_per_endpoint = expected_routed;
+  const auto expected_sent_total = expected_routed * 4;
+
+  std::vector<std::thread> workers;
+  workers.reserve(thread_count);
+
+  for (size_t i = 0; i < thread_count; i++) {
+    workers.emplace_back([&]() {
+        for (size_t n = 0; n < iterations_per_thread; n++) {
+          router->route_message(src, &hbmsg, fr);
+        }
+    });
+  }
+
+  for (auto & w : workers) {
+    w.join();
+  }
+
+  EXPECT_EQ(get_stat_msg_routed(router), expected_routed);
+  EXPECT_EQ(get_stat_msg_sent(router), expected_sent_total);
+  EXPECT_EQ(get_stat_msg_dropped(router), 0U);
+
+  EXPECT_EQ(dst1->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst2->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst3->send_count.load(), expected_sent_per_endpoint);
+  EXPECT_EQ(dst4->send_count.load(), expected_sent_per_endpoint);
 }
 
 #if 0  // TODO(vooon):
