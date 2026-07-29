@@ -1,0 +1,8 @@
+# Point elevation query (mirrors MAVLink TERRAIN_CHECK / TERRAIN_REPORT)
+# https://mavlink.io/en/messages/common.html#TERRAIN_CHECK
+
+float64 latitude    # WGS-84 degrees
+float64 longitude   # WGS-84 degrees
+---
+bool success
+float32 terrain_height  # meters AMSL

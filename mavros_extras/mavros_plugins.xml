@@ -220,10 +220,21 @@ Published topics (relative to plugin namespace):
 @plugin tdr_radio</description>
   </class>
   <class name="terrain" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TerrainPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
-    <description>@brief Terrain height plugin.
+    <description>@brief Terrain plugin.
 @plugin terrain
 
-This plugin allows publishing of terrain height estimate from FCU to ROS.</description>
+Handles the full MAVLink terrain protocol (TERRAIN_REPORT,
+TERRAIN_REQUEST, TERRAIN_CHECK, TERRAIN_DATA).
+
+Published topics (relative to plugin namespace):
+- ~/report   (mavros_msgs/TerrainReport): terrain height from FCU and check responses
+- ~/request  (mavros_msgs/TerrainRequest): FCU grid data requests
+
+Subscribed topics:
+- ~/data     (mavros_msgs/TerrainData): filled grid blocks from terrain server node
+
+Service clients:
+- ~/check    (mavros_msgs/TerrainCheck): point elevation query</description>
   </class>
   <class name="trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Trajectory plugin to receive planned path from the FCU and
@@ -268,4 +279,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: v8ncmFMJh8) -->
+<!-- [[[end]]] (sum: DX8/hQxBgA) -->

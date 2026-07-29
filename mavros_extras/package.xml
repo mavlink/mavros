@@ -34,7 +34,6 @@
   <build_export_depend>geographiclib</build_export_depend>
   <build_depend>geographiclib-tools</build_depend>
   <build_export_depend>geographiclib-tools</build_export_depend>
-
   <!-- packages -->
   <build_depend>angles</build_depend>
   <depend>diagnostic_updater</depend>
@@ -64,14 +63,17 @@
   <depend>std_srvs</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>gtest</test_depend>
   <test_depend>google-mock</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
