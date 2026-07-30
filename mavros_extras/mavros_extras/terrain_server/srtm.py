@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import array
 from collections import OrderedDict
+from concurrent.futures import Future, ThreadPoolExecutor
 import io
 import logging
 import math
@@ -28,6 +29,8 @@ logger = logging.getLogger(__name__)
 SRTM1_SIDE = 3601
 SRTM3_SIDE = 1201
 SRTM_VOID = -32768
+SRTM1_SIZE = SRTM1_SIDE * SRTM1_SIDE * 2
+SRTM3_SIZE = SRTM3_SIDE * SRTM3_SIDE * 2
 
 RADIUS_OF_EARTH = 6378100.0
 
@@ -48,7 +51,9 @@ _CONTINENTS = (
 )
 
 try:
-    from mavros_extras.srtm_continent_map import lookup_continent as _lookup_continent
+    from mavros_extras.terrain_server.srtm_continent_map import (
+        lookup_continent as _lookup_continent,
+    )
 except ImportError:
     _lookup_continent = None
 
@@ -67,26 +72,60 @@ class SrtmTile:
 
 
 class SrtmManager:
-    """Thread-safe SRTM tile manager with LRU cache and optional auto-download."""
+    """
+    Thread-safe SRTM tile manager with LRU cache and optional auto-download.
+
+    Downloads are performed in a background thread pool so that the caller
+    (typically a ROS timer callback) is never blocked waiting for network I/O.
+    """
 
     def __init__(
         self,
         terrain_data_path: str = '',
         auto_download: bool = False,
-        download_host: str = 'terrain.ardupilot.org',
+        srtm_data_url: str = 'https://terrain.ardupilot.org',
         srtm_source: str = 'SRTM3',
         max_cache_tiles: int = 64,
+        proxy: str = '',
+        download_workers: int = 2,
     ):
         self._terrain_data_path = terrain_data_path
         self._auto_download = auto_download
-        self._download_host = download_host
         self._srtm_source = srtm_source
         self._max_cache_tiles = max_cache_tiles
+
+        # Normalise srtm_data_url to a full base URL with scheme.
+        # Accepts "terrain.ardupilot.org", "https://terrain.ardupilot.org",
+        # or "http://terrain.ardupilot.org" (http for Squid cacheability).
+        self._srtm_data_url = srtm_data_url
+        if '://' not in srtm_data_url:
+            self._srtm_data_url = f'https://{srtm_data_url}'
+        if not self._srtm_data_url.startswith(('http://', 'https://')):
+            raise ValueError(f'srtm_data_url must use http or https scheme: {srtm_data_url}')
 
         self._cache: OrderedDict[int, SrtmTile | None] = OrderedDict()
         self._file_index: dict[str, Path] = {}
         self._download_failed: set[int] = set()
+        self._download_pending: set[int] = set()
         self._lock = threading.Lock()
+
+        # Build URL opener — with explicit proxy if provided, otherwise
+        # environment variables (http_proxy/https_proxy) are honoured.
+        if proxy:
+            proxy_url = proxy if '://' in proxy else f'http://{proxy}'
+            handler = urllib.request.ProxyHandler({'http': proxy_url, 'https': proxy_url})
+            self._opener = urllib.request.build_opener(handler)
+            logger.info('Using proxy: %s', proxy_url)
+        else:
+            self._opener = urllib.request.build_opener()
+
+        # Background thread pool for tile downloads.
+        self._executor: ThreadPoolExecutor | None = None
+        if self._auto_download:
+            self._executor = ThreadPoolExecutor(
+                max_workers=download_workers,
+                thread_name_prefix='srtm-download',
+            )
 
         if not self._terrain_data_path and self._auto_download:
             home = os.environ.get('HOME', '/tmp')
@@ -98,6 +137,10 @@ class SrtmManager:
         if self._terrain_data_path:
             Path(self._terrain_data_path).mkdir(parents=True, exist_ok=True)
             self._build_file_index()
+
+    def __del__(self) -> None:
+        if self._executor is not None:
+            self._executor.shutdown(wait=False)
 
     def _build_file_index(self) -> None:
         root = Path(self._terrain_data_path)
@@ -139,20 +182,17 @@ class SrtmManager:
             self._file_index[filename] = filepath
 
         file_size = filepath.stat().st_size
-        expected_1 = SRTM1_SIDE * SRTM1_SIDE * 2
-        expected_3 = SRTM3_SIDE * SRTM3_SIDE * 2
-
-        if file_size == expected_1:
+        if file_size == SRTM1_SIZE:
             side = SRTM1_SIDE
-        elif file_size == expected_3:
+        elif file_size == SRTM3_SIZE:
             side = SRTM3_SIDE
         else:
             logger.warning(
                 'Unexpected file size for %s: %d bytes (expected %d or %d)',
                 filename,
                 file_size,
-                expected_3,
-                expected_1,
+                SRTM3_SIZE,
+                SRTM1_SIZE,
             )
             return None
 
@@ -172,6 +212,7 @@ class SrtmManager:
         Use the continent lookup table for a direct download when available,
         falling back to trying all continent directories sequentially.
         Only the expected .hgt file is extracted to prevent zip-slip attacks.
+        After extraction the file size is validated strictly.
         """
         filename = self._tile_filename(lat, lon)
         hgt_path = Path(self._terrain_data_path) / filename
@@ -179,7 +220,7 @@ class SrtmManager:
             return True
 
         zip_name = filename + '.zip'
-        base_url = f'https://{self._download_host}/{self._srtm_source}'
+        base_url = f'{self._srtm_data_url}/{self._srtm_source}'
 
         continents: tuple[str, ...] | list[str]
         if _lookup_continent is not None:
@@ -199,9 +240,8 @@ class SrtmManager:
             try:
                 logger.info('Downloading %s', url)
                 # URL scheme is validated above; host is a trusted configuration parameter.
-                with urllib.request.urlopen(  # nosemgrep: dynamic-urllib-use-detected
-                    urllib.request.Request(url), timeout=60
-                ) as resp:
+                req = urllib.request.Request(url)
+                with self._opener.open(req, timeout=60) as resp:
                     zip_bytes = resp.read()
                 break
             except urllib.error.URLError:
@@ -221,19 +261,39 @@ class SrtmManager:
             logger.error('Corrupt zip for %s', filename)
             return False
 
-        if hgt_path.exists():
-            logger.info('Downloaded: %s', filename)
-            with self._lock:
-                self._file_index[filename] = hgt_path
-            return True
+        if not hgt_path.exists():
+            logger.warning('Extraction produced no .hgt for %s', filename)
+            return False
 
-        logger.warning('Extraction produced no .hgt for %s', filename)
-        return False
+        # Strict size validation after extraction.
+        actual_size = hgt_path.stat().st_size
+        if actual_size != SRTM1_SIZE and actual_size != SRTM3_SIZE:
+            logger.error(
+                'Downloaded tile %s has invalid size %d (expected %d or %d), removing',
+                filename,
+                actual_size,
+                SRTM3_SIZE,
+                SRTM1_SIZE,
+            )
+            hgt_path.unlink(missing_ok=True)
+            return False
+
+        logger.info('Downloaded: %s', filename)
+        with self._lock:
+            self._file_index[filename] = hgt_path
+        return True
 
     # ------------------------------------------------------------------ cache
 
     def _get_tile(self, lat: int, lon: int) -> SrtmTile | None:
-        """Return a tile from cache, loading or downloading as needed."""
+        """
+        Return a tile from cache, loading or enqueuing a download as needed.
+
+        If the tile is not yet cached and auto-download is enabled, a
+        background download is enqueued (if not already pending) and None
+        is returned.  The tile will be available on subsequent calls once
+        the download completes.
+        """
         key = self._tile_key(lat, lon)
 
         with self._lock:
@@ -243,12 +303,8 @@ class SrtmManager:
 
         tile = self._load_tile(lat, lon)
 
-        if tile is None and self._auto_download:
-            if key not in self._download_failed:
-                if self._download_tile(lat, lon):
-                    tile = self._load_tile(lat, lon)
-                else:
-                    self._download_failed.add(key)
+        if tile is None and self._auto_download and self._executor is not None:
+            self._enqueue_download(lat, lon, key)
 
         with self._lock:
             if key in self._cache:
@@ -259,6 +315,69 @@ class SrtmManager:
                 self._cache.popitem(last=False)
 
         return tile
+
+    def _enqueue_download(self, lat: int, lon: int, key: int) -> None:
+        """Enqueue a background tile download if not already pending/failed."""
+        if self._executor is None:
+            return
+
+        with self._lock:
+            if key in self._download_failed or key in self._download_pending:
+                return
+            self._download_pending.add(key)
+
+        future = self._executor.submit(self._do_download, lat, lon, key)
+        future.add_done_callback(self._download_done)
+
+    def _do_download(self, lat: int, lon: int, key: int) -> bool:
+        """Worker: download tile, then load it into cache."""
+        try:
+            if not self._download_tile(lat, lon):
+                with self._lock:
+                    self._download_failed.add(key)
+                return False
+            tile = self._load_tile(lat, lon)
+            with self._lock:
+                self._cache[key] = tile
+                while len(self._cache) > self._max_cache_tiles:
+                    self._cache.popitem(last=False)
+            return True
+        except Exception:
+            logger.exception('Unexpected error downloading tile (%d, %d)', lat, lon)
+            with self._lock:
+                self._download_failed.add(key)
+            return False
+        finally:
+            with self._lock:
+                self._download_pending.discard(key)
+
+    def _download_done(self, future: Future) -> None:
+        try:
+            future.result()
+        except Exception:
+            pass
+
+    def is_tile_available(self, lat: int, lon: int) -> bool:
+        """Check whether a tile is cached or available on disk."""
+        key = self._tile_key(lat, lon)
+        with self._lock:
+            if key in self._cache and self._cache[key] is not None:
+                return True
+        filename = self._tile_filename(lat, lon)
+        filepath = self._file_index.get(filename)
+        if filepath is None:
+            filepath = Path(self._terrain_data_path) / filename
+        return filepath.exists()
+
+    def is_tile_pending(self, lat: int, lon: int) -> bool:
+        """Check whether a background download is in progress for this tile."""
+        key = self._tile_key(lat, lon)
+        with self._lock:
+            return key in self._download_pending
+
+    def preload_tile(self, lat: int, lon: int) -> bool:
+        """Download a tile synchronously (blocking). For CLI use."""
+        return self._download_tile(lat, lon)
 
     # ------------------------------------------------------------------ elevation
 

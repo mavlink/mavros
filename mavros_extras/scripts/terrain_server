@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Entry-point for ``ros2 run mavros_extras terrain_server``."""
+
+from mavros_extras.terrain_server.cli import main
+
+main()

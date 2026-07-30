@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'terrain_tile_server = mavros_extras.terrain_server_node:main',
+            'terrain_server = mavros_extras.terrain_server.cli:main',
         ],
     },
 )

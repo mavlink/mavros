@@ -223,18 +223,16 @@ Published topics (relative to plugin namespace):
     <description>@brief Terrain plugin.
 @plugin terrain
 
-Handles the full MAVLink terrain protocol (TERRAIN_REPORT,
-TERRAIN_REQUEST, TERRAIN_CHECK, TERRAIN_DATA).
+Bridges the MAVLink terrain protocol between the FCU and a companion
+terrain_server node that serves SRTM elevation data.
 
-Published topics (relative to plugin namespace):
-- ~/report   (mavros_msgs/TerrainReport): terrain height from FCU and check responses
-- ~/request  (mavros_msgs/TerrainRequest): FCU grid data requests
+Protocol spec: https://mavlink.io/en/services/terrain.html
 
-Subscribed topics:
-- ~/data     (mavros_msgs/TerrainData): filled grid blocks from terrain server node
-
-Service clients:
-- ~/check    (mavros_msgs/TerrainCheck): point elevation query</description>
+TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM
+lookup; the server responds with TERRAIN_DATA blocks that are sent
+back to the FCU.  TERRAIN_CHECK point queries are handled via a
+service call to the server, which responds with elevation data
+that is returned to the FCU as TERRAIN_REPORT.</description>
   </class>
   <class name="trajectory" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TrajectoryPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Trajectory plugin to receive planned path from the FCU and
@@ -279,4 +277,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: DX8/hQxBgA) -->
+<!-- [[[end]]] (sum: JYxk13q3QH) -->

@@ -2,40 +2,41 @@
 """
 ROS 2 terrain server node.
 
-Subscribes to terrain requests from the MAVROS terrain plugin,
-looks up SRTM elevation data, and publishes terrain data blocks back.
-Also provides a service for point elevation queries.
+Subscribes to TERRAIN_REQUEST from the MAVROS terrain plugin, looks up
+SRTM elevation data, and publishes TERRAIN_DATA blocks back.
+Also provides a TERRAIN_CHECK service for point elevation queries.
 """
 
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import dataclass
 import threading
 
-from mavros_extras.srtm import (
+from mavros.base import BaseNode
+from mavros_msgs.msg import TerrainData, TerrainRequest
+from mavros_msgs.srv import TerrainCheck
+from rcl_interfaces.msg import ParameterDescriptor
+import rclpy
+from rclpy.qos import QoSProfile
+
+from .srtm import (
     compute_terrain_data_block,
     GRID_COLS,
     GRID_ROWS,
     SrtmManager,
 )
-from mavros_msgs.msg import TerrainData, TerrainRequest
-from mavros_msgs.srv import TerrainCheck
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile
 
 
+@dataclass
 class _PendingRequest:
     """Tracks which 4x4 blocks have been requested vs already sent."""
 
-    __slots__ = ('lat', 'lon', 'grid_spacing', 'mask', 'sent_mask')
-
-    def __init__(self, lat: int, lon: int, grid_spacing: int, mask: int) -> None:
-        self.lat = lat
-        self.lon = lon
-        self.grid_spacing = grid_spacing
-        self.mask = mask
-        self.sent_mask = 0
+    lat_deg: float
+    lon_deg: float
+    grid_spacing: int
+    mask: int
+    sent_mask: int = 0
 
     @property
     def remaining(self) -> int:
@@ -43,25 +44,75 @@ class _PendingRequest:
         return self.mask & ~self.sent_mask
 
 
-class TerrainServerNode(Node):
+class TerrainServerNode(BaseNode):
     """Serves SRTM elevation data in response to MAVLink terrain requests."""
 
     def __init__(self) -> None:
         super().__init__('terrain_server_node')
 
-        self.declare_parameter('terrain_data_path', '')
-        self.declare_parameter('auto_download', False)
-        self.declare_parameter('download_host', 'terrain.ardupilot.org')
-        self.declare_parameter('srtm_source', 'SRTM3')
-        self.declare_parameter('send_rate_hz', 5.0)
-        self.declare_parameter('max_cache_tiles', 64)
+        self.declare_parameter(
+            'terrain_data_path',
+            '',
+            ParameterDescriptor(
+                description=(
+                    'Directory for .hgt tile cache. '
+                    'Empty defaults to ~/.cache/mavros/terrain/<srtm_source>/'
+                )
+            ),
+        )
+        self.declare_parameter(
+            'auto_download',
+            False,
+            ParameterDescriptor(
+                description='Automatically download missing SRTM tiles in background threads.'
+            ),
+        )
+        self.declare_parameter(
+            'srtm_data_url',
+            'https://terrain.ardupilot.org',
+            ParameterDescriptor(
+                description=(
+                    'SRTM tile download base URL. '
+                    'Use http:// for Squid/nginx cacheability.'
+                )
+            ),
+        )
+        self.declare_parameter(
+            'srtm_source',
+            'SRTM3',
+            ParameterDescriptor(
+                description='SRTM dataset name (SRTM3 = 3 arc-second, SRTM1 = 1 arc-second).'
+            ),
+        )
+        self.declare_parameter(
+            'send_rate_hz',
+            5.0,
+            ParameterDescriptor(
+                description='Rate (Hz) for sending TERRAIN_DATA blocks to the FCU.'
+            ),
+        )
+        self.declare_parameter(
+            'max_cache_tiles',
+            64,
+            ParameterDescriptor(
+                description='Maximum number of tiles to keep in the in-memory LRU cache.'
+            ),
+        )
+        self.declare_parameter(
+            'proxy',
+            '',
+            ParameterDescriptor(
+                description='HTTP/HTTPS proxy for tile downloads (host:port). Empty uses env vars.'
+            ),
+        )
 
         terrain_data_path = self.get_parameter('terrain_data_path').value
         auto_download = self.get_parameter('auto_download').value
-        download_host = self.get_parameter('download_host').value
+        srtm_data_url = self.get_parameter('srtm_data_url').value
         srtm_source = self.get_parameter('srtm_source').value
         rate_hz = self.get_parameter('send_rate_hz').value
         max_cache_tiles = self.get_parameter('max_cache_tiles').value
+        proxy = self.get_parameter('proxy').value
 
         if rate_hz <= 0.0:
             rate_hz = 5.0
@@ -69,9 +120,10 @@ class TerrainServerNode(Node):
         self._mgr = SrtmManager(
             terrain_data_path=terrain_data_path,
             auto_download=auto_download,
-            download_host=download_host,
+            srtm_data_url=srtm_data_url,
             srtm_source=srtm_source,
             max_cache_tiles=max_cache_tiles,
+            proxy=proxy,
         )
 
         self._pending: deque[_PendingRequest] = deque()
@@ -82,20 +134,20 @@ class TerrainServerNode(Node):
 
         self._data_pub = self.create_publisher(
             TerrainData,
-            '/mavros/terrain/data',
+            self.get_topic('terrain', 'data'),
             QoSProfile(depth=64),
         )
 
         self.create_subscription(
             TerrainRequest,
-            '/mavros/terrain/request',
+            self.get_topic('terrain', 'request'),
             self._on_request,
             QoSProfile(depth=10),
         )
 
         self.create_service(
             TerrainCheck,
-            '/mavros/terrain/check',
+            self.get_topic('terrain', 'check'),
             self._on_check,
         )
 
@@ -105,19 +157,20 @@ class TerrainServerNode(Node):
         self.get_logger().info(
             f'Terrain server ready  path={terrain_data_path or "(none)"}'
             f'  auto_download={auto_download}  rate={rate_hz:.1f} Hz'
+            f'  proxy={proxy or "(env)"}'
         )
 
     # ---------------------------------------------------------------- callbacks
 
     def _on_request(self, msg: TerrainRequest) -> None:
-        lat_deg = msg.lat / 1e7
-        lon_deg = msg.lon / 1e7
+        lat_deg = msg.latitude
+        lon_deg = msg.longitude
 
         with self._lock:
             for req in self._pending:
                 if (
-                    req.lat == msg.lat
-                    and req.lon == msg.lon
+                    req.lat_deg == lat_deg
+                    and req.lon_deg == lon_deg
                     and req.grid_spacing == msg.grid_spacing
                 ):
                     req.mask = msg.mask
@@ -128,7 +181,7 @@ class TerrainServerNode(Node):
                     )
                     return
 
-            self._pending.append(_PendingRequest(msg.lat, msg.lon, msg.grid_spacing, msg.mask))
+            self._pending.append(_PendingRequest(lat_deg, lon_deg, msg.grid_spacing, msg.mask))
             self._requests_received += 1
             count = self._requests_received
 
@@ -166,23 +219,27 @@ class TerrainServerNode(Node):
 
             req = self._pending[0]
             needed = req.remaining
+            lat_deg = req.lat_deg
+            lon_deg = req.lon_deg
+            grid_spacing = req.grid_spacing
+
+        # Convert to degE7 for compute_terrain_data_block (MAVLink wire format)
+        lat_e7 = round(lat_deg * 1e7)
+        lon_e7 = round(lon_deg * 1e7)
 
         for bit in range(GRID_COLS * GRID_ROWS):
             if not (needed & (1 << bit)):
                 continue
 
-            data = compute_terrain_data_block(self._mgr, req.lat, req.lon, req.grid_spacing, bit)
+            data = compute_terrain_data_block(self._mgr, lat_e7, lon_e7, grid_spacing, bit)
             if data is None:
-                self.get_logger().debug(
-                    f'No elevation data for bit {bit}'
-                    f' at ({req.lat / 1e7:.7f}, {req.lon / 1e7:.7f})'
-                )
+                # Tile not available yet (may be downloading in background)
                 continue
 
             msg = TerrainData()
-            msg.lat = req.lat
-            msg.lon = req.lon
-            msg.grid_spacing = req.grid_spacing
+            msg.latitude = lat_deg
+            msg.longitude = lon_deg
+            msg.grid_spacing = grid_spacing
             msg.gridbit = bit
             msg.data = data
 
@@ -193,8 +250,8 @@ class TerrainServerNode(Node):
                 self._blocks_served += 1
                 if req.remaining == 0:
                     self.get_logger().info(
-                        f'Completed terrain request lat={req.lat / 1e7:.7f}'
-                        f' lon={req.lon / 1e7:.7f}'
+                        f'Completed terrain request lat={lat_deg:.7f}'
+                        f' lon={lon_deg:.7f}'
                         f' ({self._blocks_served} blocks served total)'
                     )
 

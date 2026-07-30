@@ -1527,7 +1527,7 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 365
+        "line": 366
       }
     ],
     "parameters": [
@@ -1595,7 +1595,7 @@
         "message_name": "COMMAND_LONG",
         "msg_id_expr": "mavlink::common::msg::COMMAND_LONG::MSG_ID",
         "dialect": "common",
-        "line": 353,
+        "line": 354,
         "msg_id": 76
       }
     ]
@@ -1740,7 +1740,7 @@
         "message_name": "ODOMETRY",
         "msg_id_expr": "mavlink::common::msg::ODOMETRY::MSG_ID",
         "dialect": "common",
-        "line": 341,
+        "line": 354,
         "msg_id": 331,
         "description": "send ODOMETRY msg"
       }
@@ -2195,18 +2195,39 @@
     "path": "mavros_extras/src/plugins/terrain.cpp",
     "class_name": "mavros::extra_plugins::TerrainPlugin",
     "namespace": "terrain",
-    "brief": "Terrain height plugin.",
-    "description": "This plugin allows publishing of terrain height estimate from FCU to ROS.",
+    "brief": "Terrain plugin.",
+    "description": "Bridges the MAVLink terrain protocol between the FCU and a companion terrain_server node that serves SRTM elevation data. Protocol spec: https://mavlink.io/en/services/terrain.html TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM lookup; the server responds with TERRAIN_DATA blocks that are sent back to the FCU.  TERRAIN_CHECK point queries are handled via a service call to the server, which responds with elevation data that is returned to the FCU as TERRAIN_REPORT.",
     "publishers": [
       {
         "name": "~/report",
         "type_name": "mavros_msgs::msg::TerrainReport",
-        "line": 43
+        "line": 63,
+        "description": "Terrain height reports from FCU and check-service responses"
+      },
+      {
+        "name": "~/request",
+        "type_name": "mavros_msgs::msg::TerrainRequest",
+        "line": 66,
+        "description": "Grid data requests forwarded from FCU for SRTM lookup"
       }
     ],
-    "subscribers": [],
+    "subscribers": [
+      {
+        "name": "~/data",
+        "type_name": "mavros_msgs::msg::TerrainData",
+        "line": 70,
+        "description": "Filled terrain grid blocks from terrain_server"
+      }
+    ],
     "services": [],
-    "clients": [],
+    "clients": [
+      {
+        "name": "~/check",
+        "type_name": "mavros_msgs::srv::TerrainCheck",
+        "line": 75,
+        "description": "Point elevation query handled by terrain_server"
+      }
+    ],
     "parameters": [],
     "mavlink_subscriptions": [
       {
@@ -2215,11 +2236,48 @@
         "message_name": "TERRAIN_REPORT",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_REPORT::MSG_ID",
         "dialect": "common",
-        "line": 49,
+        "line": 82,
         "msg_id": 136
+      },
+      {
+        "handler": "handle_terrain_request",
+        "message_type": "mavlink::common::msg::TERRAIN_REQUEST",
+        "message_name": "TERRAIN_REQUEST",
+        "msg_id_expr": "mavlink::common::msg::TERRAIN_REQUEST::MSG_ID",
+        "dialect": "common",
+        "line": 83,
+        "msg_id": 133
+      },
+      {
+        "handler": "handle_terrain_check",
+        "message_type": "mavlink::common::msg::TERRAIN_CHECK",
+        "message_name": "TERRAIN_CHECK",
+        "msg_id_expr": "mavlink::common::msg::TERRAIN_CHECK::MSG_ID",
+        "dialect": "common",
+        "line": 84,
+        "msg_id": 135
       }
     ],
-    "mavlink_publications": []
+    "mavlink_publications": [
+      {
+        "argument": "rpt",
+        "message_type": "mavlink::common::msg::TERRAIN_REPORT",
+        "message_name": "TERRAIN_REPORT",
+        "msg_id_expr": "mavlink::common::msg::TERRAIN_REPORT::MSG_ID",
+        "dialect": "common",
+        "line": 164,
+        "msg_id": 136
+      },
+      {
+        "argument": "td",
+        "message_type": "mavlink::common::msg::TERRAIN_DATA",
+        "message_name": "TERRAIN_DATA",
+        "msg_id_expr": "mavlink::common::msg::TERRAIN_DATA::MSG_ID",
+        "dialect": "common",
+        "line": 189,
+        "msg_id": 134
+      }
+    ]
   },
   {
     "plugin": "trajectory",
