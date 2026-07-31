@@ -40,12 +40,18 @@ def _make_manager(
     )
 
 
-@click.group(invoke_without_command=True)
+@click.group(
+    invoke_without_command=True,
+    context_settings={'ignore_unknown_options': True, 'allow_extra_args': True},
+)
 @click.pass_context
 def cli(ctx: click.Context) -> None:
     """Terrain tile server and cache management (MAVLink TERRAIN protocol)."""
     if ctx.invoked_subcommand is None:
-        ctx.invoke(node)
+        # Pass through any extra args (e.g. --ros-args -p key:=val) to the node
+        from .node import main as node_main
+
+        node_main(args=ctx.args)
 
 
 @cli.command()
@@ -132,8 +138,8 @@ def update(
 
     data_path = terrain_data_path
     if not data_path:
-        home = os.environ.get('HOME', '/tmp')
-        data_path = os.path.join(home, '.cache', 'mavros', 'terrain', srtm_source)
+        home = Path(os.environ.get('HOME', '/tmp'))
+        data_path = str(home / '.cache' / 'mavros' / 'terrain' / srtm_source)
 
     root = Path(data_path)
     if not root.exists():
@@ -173,8 +179,8 @@ def validate(terrain_data_path: str, srtm_source: str) -> None:
 
     data_path = terrain_data_path
     if not data_path:
-        home = os.environ.get('HOME', '/tmp')
-        data_path = os.path.join(home, '.cache', 'mavros', 'terrain', srtm_source)
+        home = Path(os.environ.get('HOME', '/tmp'))
+        data_path = str(home / '.cache' / 'mavros' / 'terrain' / srtm_source)
 
     root = Path(data_path)
     if not root.exists():
@@ -205,6 +211,19 @@ def main(args=None) -> None:
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(name)s: %(message)s',
     )
+
+    if args is None:
+        args = sys.argv[1:]
+
+    # If no subcommand or starts with ROS args, run the node directly
+    # (bypass click so rclpy can parse --ros-args -p key:=val)
+    known_commands = {'node', 'preload', 'update', 'validate', '--help', '-h'}
+    if not args or args[0] not in known_commands:
+        from .node import main as node_main
+
+        node_main(args=args)
+        return
+
     cli(args=args, standalone_mode=True)
 
 

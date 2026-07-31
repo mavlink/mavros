@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import struct
 import threading
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -128,9 +129,9 @@ class SrtmManager:
             )
 
         if not self._terrain_data_path and self._auto_download:
-            home = os.environ.get('HOME', '/tmp')
-            self._terrain_data_path = os.path.join(
-                home, '.cache', 'mavros', 'terrain', self._srtm_source
+            home = Path(os.environ.get('HOME', '/tmp'))
+            self._terrain_data_path = str(
+                home / '.cache' / 'mavros' / 'terrain' / self._srtm_source
             )
             logger.info('Auto-download cache: %s', self._terrain_data_path)
 
@@ -237,15 +238,29 @@ class SrtmManager:
             url = f'{base_url}/{continent}{zip_name}'
             if not url.startswith(('https://', 'http://')):
                 raise ValueError(f'Refusing non-HTTP URL: {url}')
-            try:
-                logger.info('Downloading %s', url)
-                # URL scheme is validated above; host is a trusted configuration parameter.
-                req = urllib.request.Request(url)
-                with self._opener.open(req, timeout=60) as resp:
-                    zip_bytes = resp.read()
+
+            # Retry with exponential backoff for transient network errors.
+            for attempt in range(5):
+                try:
+                    logger.info('Downloading %s (attempt %d/5)', url, attempt + 1)
+                    req = urllib.request.Request(url)
+                    with self._opener.open(req, timeout=120) as resp:
+                        zip_bytes = resp.read()
+                    break
+                except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                    if attempt < 4:
+                        backoff = 2**attempt  # 1, 2, 4, 8 seconds
+                        logger.warning(
+                            'Download attempt %d failed (%s), retrying in %ds',
+                            attempt + 1,
+                            exc,
+                            backoff,
+                        )
+                        time.sleep(backoff)
+                    else:
+                        logger.warning('Download failed after 5 attempts: %s', exc)
+            if zip_bytes is not None:
                 break
-            except urllib.error.URLError:
-                continue
 
         if zip_bytes is None:
             logger.warning('Tile %s not found on server', filename)
