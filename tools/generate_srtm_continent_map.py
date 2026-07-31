@@ -140,8 +140,8 @@ def lookup_continent(lat: int, lon: int) -> str | None:
 
 
 def _write_outputs(grid: bytearray, output_dir: Path) -> None:
-    bin_path = output_dir / 'srtm_continent_map.bin'
-    py_path = output_dir / 'srtm_continent_map.py'
+    bin_path = output_dir / "srtm_continent_map.bin"
+    py_path = output_dir / "srtm_continent_map.py"
 
     bin_path.write_bytes(bytes(grid))
     print(f"  Wrote {bin_path} ({len(grid)} bytes)")

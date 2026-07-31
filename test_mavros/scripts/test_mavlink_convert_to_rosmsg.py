@@ -52,7 +52,6 @@ class fifo(object):
 
 
 class MyNode(Node):
-
     def __init__(self) -> None:
         node_name = "mav_writer"
         super().__init__(node_name)

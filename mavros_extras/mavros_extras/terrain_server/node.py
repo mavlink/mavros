@@ -72,8 +72,7 @@ class TerrainServerNode(BaseNode):
             'https://terrain.ardupilot.org',
             ParameterDescriptor(
                 description=(
-                    'SRTM tile download base URL. '
-                    'Use http:// for Squid/nginx cacheability.'
+                    'SRTM tile download base URL. Use http:// for Squid/nginx cacheability.'
                 )
             ),
         )
