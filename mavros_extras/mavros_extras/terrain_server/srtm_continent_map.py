@@ -31,7 +31,7 @@ _LON_MIN = -180
 _LON_RANGE = 360
 _NO_DATA = 0xFF
 
-_MAP: bytes = (files(__name__) / 'srtm_continent_map.bin').read_bytes()
+_MAP: bytes = (files(__package__) / 'srtm_continent_map.bin').read_bytes()
 assert len(_MAP) == _LAT_RANGE * _LON_RANGE, (
     f'srtm_continent_map.bin size mismatch: {len(_MAP)} != {_LAT_RANGE * _LON_RANGE}'
 )
