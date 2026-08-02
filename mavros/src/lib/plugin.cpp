@@ -33,6 +33,7 @@ Plugin::Plugin(
   // e.g. -r __node:=<container>), otherwise every plugin node is renamed.
   rclcpp::NodeOptions node_options(options);
   node_options.use_global_arguments(false);
+  node_options.use_intra_process_comms(true);
   node = rclcpp::Node::make_shared(subnode, uas_->get_fully_qualified_name(), node_options);
 }
 

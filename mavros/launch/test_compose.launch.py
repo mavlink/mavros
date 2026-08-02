@@ -7,15 +7,18 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
-def _build_container(context: LaunchContext, fcu_url, gcs_url):
+def _build_container(context: LaunchContext, fcu_url, gcs_url, executor):
     """Build the composable container once launch arguments are resolved."""
     fcu = context.perform_substitution(fcu_url)
     gcs = context.perform_substitution(gcs_url)
+    exec_type = context.launch_configurations["executor"]
 
-    # Pick a container executable: the Callback Group Events executor is only
-    # available on Lyrical+ (rclcpp >= 30.0.0).
+    # The Callback Group Events executor is only available on Lyrical+
+    # (rclcpp >= 30.0.0); its component-container support is still
+    # upstream-immature (see ros2/rclcpp#3186), so default to MT.
     distro = os.environ.get("ROS_DISTRO", "")
-    if distro in ("lyrical", "rolling"):
+    if exec_type == "events" or (
+      exec_type == "auto" and distro in ("lyrical", "rolling")):
         container_executable = "component_container"
         container_arguments = ["--executor-type", "events-cbg"]
     else:
@@ -71,7 +74,7 @@ def _build_container(context: LaunchContext, fcu_url, gcs_url):
                 extra_arguments=[{"use_intra_process_comms": True}],
             ),
         ],
-        arguments=container_arguments + ["--ros-args", "--log-level", "DEBUG"],
+        arguments=container_arguments + ["--ros-args", "--log-level", "INFO"],
         output="screen",
     )
 
@@ -82,6 +85,7 @@ def generate_launch_description():
     """Generate launch description for MAVROS composable node."""
     fcu_url = LaunchConfiguration("fcu_url")
     gcs_url = LaunchConfiguration("gcs_url")
+    executor = LaunchConfiguration("executor")
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -92,5 +96,9 @@ def generate_launch_description():
             "gcs_url", default_value="udp://127.0.0.1:14555@",
             description="GCS connection URL"
         ),
-        OpaqueFunction(function=_build_container, args=[fcu_url, gcs_url]),
+        DeclareLaunchArgument(
+            "executor", default_value="mt",
+            description="Container executor: mt, events, or auto"
+        ),
+        OpaqueFunction(function=_build_container, args=[fcu_url, gcs_url, executor]),
     ])
