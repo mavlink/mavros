@@ -1,24 +1,40 @@
-from launch import LaunchDescription
+import os
+
+from launch import LaunchContext, LaunchDescription
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
-def generate_launch_description():
-    """Generate launch description for MAVROS composable node."""
+def _build_container(context: LaunchContext, fcu_url, gcs_url):
+    """Build the composable container once launch arguments are resolved."""
+    fcu = context.perform_substitution(fcu_url)
+    gcs = context.perform_substitution(gcs_url)
+
+    # Pick a container executable: the Callback Group Events executor is only
+    # available on Lyrical+ (rclcpp >= 30.0.0).
+    distro = os.environ.get("ROS_DISTRO", "")
+    if distro in ("lyrical", "rolling"):
+        container_executable = "component_container"
+        container_arguments = ["--executor-type", "events-cbg"]
+    else:
+        container_executable = "component_container_mt"
+        container_arguments = []
+
     container = ComposableNodeContainer(
         name="mavros_container",
         namespace="",
         package="rclcpp_components",
-        executable="component_container_mt",
+        executable=container_executable,
         composable_node_descriptions=[
             ComposableNode(
                 package="mavros",
                 plugin="mavros::router::Router",
                 name="mavros_router",
                 parameters=[
-                    # {"fcu_urls": ["tcp://127.0.0.1:5760"]},
-                    {"fcu_urls": ["udp://0.0.0.0:14540@"]},
-                    {"gcs_urls": ["udp://127.0.0.1:14555@"]},
+                    {"fcu_urls": [fcu]},
+                    {"gcs_urls": [gcs]},
                     {"uas_urls": ["/uas1", "/uas2"]},
                     {"fcu_protocol": "v2.0"},
                 ],
@@ -55,8 +71,26 @@ def generate_launch_description():
                 extra_arguments=[{"use_intra_process_comms": True}],
             ),
         ],
+        arguments=container_arguments + ["--ros-args", "--log-level", "DEBUG"],
         output="screen",
-        arguments=["--ros-args", "--log-level", "DEBUG"],
     )
 
-    return LaunchDescription([container])
+    return [container]
+
+
+def generate_launch_description():
+    """Generate launch description for MAVROS composable node."""
+    fcu_url = LaunchConfiguration("fcu_url")
+    gcs_url = LaunchConfiguration("gcs_url")
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            "fcu_url", default_value="udp://0.0.0.0:14540@",
+            description="FCU connection URL"
+        ),
+        DeclareLaunchArgument(
+            "gcs_url", default_value="udp://127.0.0.1:14555@",
+            description="GCS connection URL"
+        ),
+        OpaqueFunction(function=_build_container, args=[fcu_url, gcs_url]),
+    ])

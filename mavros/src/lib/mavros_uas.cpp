@@ -287,7 +287,7 @@ plugin::Plugin::SharedPtr UAS::create_plugin_instance(const std::string & pl_nam
   auto plugin_factory = plugin_factory_loader.createSharedInstance(pl_name);
 
   return
-    plugin_factory->create_plugin_instance(std::static_pointer_cast<UAS>(shared_from_this()));
+    plugin_factory->create_plugin_instance(this);
 }
 
 void UAS::add_plugin(const std::string & pl_name)
