@@ -31,6 +31,9 @@ jobs:
           - name: mavros
             packages: mavros
             source_filter: ".*/mavros/.*"
+          - name: mavros_extras
+            packages: mavros_extras
+            source_filter: ".*/mavros_extras/.*"
 
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
