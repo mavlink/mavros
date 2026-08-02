@@ -15,28 +15,12 @@
  * @addtogroup plugin
  * @{
  *
- * Handles the complete MAVLink terrain protocol:
- *
- * - TERRAIN_REPORT  (FCU → ROS):  publishes terrain height estimates
- * - TERRAIN_REQUEST (FCU → ROS):  forwards grid requests to the terrain
- *                                 server node for SRTM lookup
- * - TERRAIN_CHECK   (FCU → ROS → FCU): point elevation query via service,
- *                                      responds with TERRAIN_REPORT
- * - TERRAIN_DATA    (ROS → FCU):  forwards filled grid blocks back to the FCU
- *
- * All heavy lifting (SRTM tile download, caching, elevation lookup)
- * is handled by a separate terrain_server_node (Python).
- *
- * Published topics:
- * - ~/report   (mavros_msgs/TerrainReport)
- * - ~/request  (mavros_msgs/TerrainRequest)
- *
- * Subscribed topics:
- * - ~/data     (mavros_msgs/TerrainData)
- *
- * Service clients:
- * - ~/check    (mavros_msgs/TerrainCheck)
+ * Handles the MAVLink terrain protocol.  Heavy lifting (SRTM tile
+ * download, caching, elevation lookup) is handled by a separate
+ * terrain_server node (Python, mavros_extras).
  */
+
+#include <cmath>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -58,18 +42,16 @@ using namespace std::placeholders;      // NOLINT
  * @brief Terrain plugin.
  * @plugin terrain
  *
- * Handles the full MAVLink terrain protocol (TERRAIN_REPORT,
- * TERRAIN_REQUEST, TERRAIN_CHECK, TERRAIN_DATA).
+ * Bridges the MAVLink terrain protocol between the FCU and a companion
+ * terrain_server node that serves SRTM elevation data.
  *
- * Published topics (relative to plugin namespace):
- * - ~/report   (mavros_msgs/TerrainReport): terrain height from FCU and check responses
- * - ~/request  (mavros_msgs/TerrainRequest): FCU grid data requests
+ * Protocol spec: https://mavlink.io/en/services/terrain.html
  *
- * Subscribed topics:
- * - ~/data     (mavros_msgs/TerrainData): filled grid blocks from terrain server node
- *
- * Service clients:
- * - ~/check    (mavros_msgs/TerrainCheck): point elevation query
+ * TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM
+ * lookup; the server responds with TERRAIN_DATA blocks that are sent
+ * back to the FCU.  TERRAIN_CHECK point queries are handled via a
+ * service call to the server, which responds with elevation data
+ * that is returned to the FCU as TERRAIN_REPORT.
  */
 class TerrainPlugin : public plugin::Plugin
 {
@@ -84,12 +66,12 @@ public:
     request_pub_ = node->create_publisher<mavros_msgs::msg::TerrainRequest>(
       "~/request", 10);
 
-    // Filled terrain grid blocks from terrain_tile_server
+    // Filled terrain grid blocks from terrain_server
     data_sub_ = node->create_subscription<mavros_msgs::msg::TerrainData>(
       "~/data", 64,
       std::bind(&TerrainPlugin::data_cb, this, _1));
 
-    // Point elevation query handled by terrain_tile_server
+    // Point elevation query handled by terrain_server
     check_client_ = node->create_client<mavros_msgs::srv::TerrainCheck>(
       "~/check");
   }
@@ -136,8 +118,8 @@ private:
     auto ros_msg = mavros_msgs::msg::TerrainRequest();
     ros_msg.header.stamp = node->now();
     ros_msg.header.frame_id = "terrain";
-    ros_msg.lat = request.lat;
-    ros_msg.lon = request.lon;
+    ros_msg.latitude = static_cast<double>(request.lat) / 1e7;
+    ros_msg.longitude = static_cast<double>(request.lon) / 1e7;
     ros_msg.grid_spacing = request.grid_spacing;
     ros_msg.mask = request.mask;
 
@@ -198,8 +180,8 @@ private:
   void data_cb(const mavros_msgs::msg::TerrainData::SharedPtr msg)
   {
     mavlink::common::msg::TERRAIN_DATA td{};
-    td.lat = msg->lat;
-    td.lon = msg->lon;
+    td.lat = std::lround(msg->latitude * 1e7);
+    td.lon = std::lround(msg->longitude * 1e7);
     td.grid_spacing = msg->grid_spacing;
     td.gridbit = msg->gridbit;
     std::copy(msg->data.begin(), msg->data.end(), std::begin(td.data));

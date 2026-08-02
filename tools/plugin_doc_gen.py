@@ -202,8 +202,12 @@ def plugin_to_dict(plugin: PluginApi) -> dict[str, ty.Any]:
         "services": [entry_to_dict(e) for e in plugin.services],
         "clients": [entry_to_dict(e) for e in plugin.clients],
         "parameters": [entry_to_dict(e) for e in plugin.parameters],
-        "mavlink_subscriptions": [mavlink_sub_to_dict(s) for s in plugin.mavlink_subscriptions],
-        "mavlink_publications": [mavlink_pub_to_dict(s) for s in plugin.mavlink_publications],
+        "mavlink_subscriptions": [
+            mavlink_sub_to_dict(s) for s in plugin.mavlink_subscriptions
+        ],
+        "mavlink_publications": [
+            mavlink_pub_to_dict(s) for s in plugin.mavlink_publications
+        ],
     }
 
 
@@ -235,7 +239,9 @@ def plugin_from_dict(item: dict[str, ty.Any]) -> PluginApi:
             for e in entries
         ]
 
-    def load_mavlink_pub_entries(entries: list[dict[str, ty.Any]]) -> list[MavlinkPubEntry]:
+    def load_mavlink_pub_entries(
+        entries: list[dict[str, ty.Any]],
+    ) -> list[MavlinkPubEntry]:
         return [
             MavlinkPubEntry(
                 argument=e.get("argument", ""),
@@ -262,8 +268,12 @@ def plugin_from_dict(item: dict[str, ty.Any]) -> PluginApi:
         services=load_entries(item["services"]),
         clients=load_entries(item["clients"]),
         parameters=load_entries(item["parameters"]),
-        mavlink_subscriptions=load_mavlink_entries(item.get("mavlink_subscriptions", [])),
-        mavlink_publications=load_mavlink_pub_entries(item.get("mavlink_publications", [])),
+        mavlink_subscriptions=load_mavlink_entries(
+            item.get("mavlink_subscriptions", [])
+        ),
+        mavlink_publications=load_mavlink_pub_entries(
+            item.get("mavlink_publications", [])
+        ),
     )
 
 
@@ -382,7 +392,9 @@ def render_plugin_markdown_with_template(
         )
     # This renderer is used only for offline docs generation, not for request/response HTML.
     # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
-    env = Environment(loader=FileSystemLoader(str(template_path.parent)), autoescape=False)
+    env = Environment(
+        loader=FileSystemLoader(str(template_path.parent)), autoescape=False
+    )
     template = env.get_template(template_path.name)
     try:
         shown_path = plugin.path.relative_to(repo_root).as_posix()
@@ -417,7 +429,9 @@ def load_plugins_via_cpp(
     if not cpp_bin.exists():
         raise FileNotFoundError(f"C++ extractor not found: {cpp_bin}")
 
-    with tempfile.NamedTemporaryFile(prefix="plugin-doc-cpp-", suffix=".json", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(
+        prefix="plugin-doc-cpp-", suffix=".json", delete=False
+    ) as tmp:
         tmp_path = pathlib.Path(tmp.name)
 
     cmd = [str(cpp_bin), "--jobs", str(max(1, jobs)), "--output", str(tmp_path)]
@@ -427,12 +441,20 @@ def load_plugins_via_cpp(
         for plugin in sorted(wanted_plugins):
             cmd += ["--plugin", plugin]
 
-    log_event("info", "Starting C++ collection", phase="collect_cpp", jobs=jobs, bin=str(cpp_bin))
+    log_event(
+        "info",
+        "Starting C++ collection",
+        phase="collect_cpp",
+        jobs=jobs,
+        bin=str(cpp_bin),
+    )
     subprocess.run(cmd, check=True)
     payload = json.loads(tmp_path.read_text(encoding="utf-8"))
     tmp_path.unlink(missing_ok=True)
     plugins = [plugin_from_dict(item) for item in payload]
-    log_event("info", "C++ collection finished", phase="collect_cpp", plugins=len(plugins))
+    log_event(
+        "info", "C++ collection finished", phase="collect_cpp", plugins=len(plugins)
+    )
     return sorted(plugins, key=lambda item: item.plugin)
 
 
@@ -501,9 +523,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
     # Accepted for compatibility with old invocations; ignored.
     parser.add_argument("--collector", default="cpp", help=argparse.SUPPRESS)
-    parser.add_argument("--compile-commands", action="append", default=[], help=argparse.SUPPRESS)
-    parser.add_argument("--clang-arg", action="append", default=[], help=argparse.SUPPRESS)
-    parser.add_argument("--no-regex-fallback", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--compile-commands", action="append", default=[], help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--clang-arg", action="append", default=[], help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--no-regex-fallback", action="store_true", help=argparse.SUPPRESS
+    )
 
     return parser.parse_args(argv)
 
@@ -557,8 +585,16 @@ def main(argv: list[str] | None = None) -> int:
         if not template_path.exists():
             raise FileNotFoundError(f"Template not found: {template_path}")
         output_dir = pathlib.Path(args.output_dir)
-        written = write_markdown_files(plugins, output_dir=output_dir, template_path=template_path)
-        log_event("info", "Wrote markdown files", phase="render", files=len(written), path=str(output_dir))
+        written = write_markdown_files(
+            plugins, output_dir=output_dir, template_path=template_path
+        )
+        log_event(
+            "info",
+            "Wrote markdown files",
+            phase="render",
+            files=len(written),
+            path=str(output_dir),
+        )
         return 0
 
     body = render_markdown(plugins)

@@ -32,7 +32,8 @@ import pytest
 # collected") and ament's run_test.py then reports the test as failed.
 _HAVE_PYMAVLINK = importlib.util.find_spec("pymavlink") is not None
 pytestmark = pytest.mark.skipif(
-    not _HAVE_PYMAVLINK, reason="pymavlink is not installed (pip-only test dep)")
+    not _HAVE_PYMAVLINK, reason="pymavlink is not installed (pip-only test dep)"
+)
 
 if _HAVE_PYMAVLINK:
     from pymavlink.dialects.v20 import common as mav_common
@@ -66,25 +67,40 @@ def _load_shim():
     lib = ctypes.CDLL(_SHIM_PATH)
     lib.mavconn_udp_create.restype = ctypes.c_void_p
     lib.mavconn_udp_create.argtypes = [
-        ctypes.c_uint8, ctypes.c_uint8,
-        ctypes.c_uint16, ctypes.c_char_p, ctypes.c_uint16,
+        ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint16,
+        ctypes.c_char_p,
+        ctypes.c_uint16,
     ]
     lib.mavconn_poll_rx.restype = ctypes.c_int
-    lib.mavconn_poll_rx.argtypes = [ctypes.c_void_p, ctypes.POINTER(RxMsg), ctypes.c_int]
+    lib.mavconn_poll_rx.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(RxMsg),
+        ctypes.c_int,
+    ]
     lib.mavconn_send_heartbeat.restype = ctypes.c_int
     lib.mavconn_send_heartbeat.argtypes = [
         ctypes.c_void_p,
-        ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint8,
-        ctypes.c_uint32, ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint32,
+        ctypes.c_uint8,
     ]
     lib.mavconn_send_raw_bytes.restype = ctypes.c_int
     lib.mavconn_send_raw_bytes.argtypes = [
-        ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32,
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_uint8),
+        ctypes.c_uint32,
     ]
     lib.mavconn_setup_signing.restype = ctypes.c_int
     lib.mavconn_setup_signing.argtypes = [
-        ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint8),
-        ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint64,
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_uint8),
+        ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint64,
     ]
     lib.mavconn_destroy.restype = None
     lib.mavconn_destroy.argtypes = [ctypes.c_void_p]
@@ -117,8 +133,8 @@ def _pack_heartbeat(mav, **fields):
     # message *declaration* order, which is NOT the wire (sorted) order.
     msg = mav_common.MAVLink_heartbeat_message(
         custom_mode=fields.get("custom_mode", 0),
-        type=fields.get("type", 18),       # MAV_TYPE_ONBOARD_CONTROLLER
-        autopilot=fields.get("autopilot", 8),   # MAV_AUTOPILOT_INVALID
+        type=fields.get("type", 18),  # MAV_TYPE_ONBOARD_CONTROLLER
+        autopilot=fields.get("autopilot", 8),  # MAV_AUTOPILOT_INVALID
         base_mode=fields.get("base_mode", 192),  # MAV_MODE_MANUAL_ARMED
         system_status=fields.get("system_status", 4),  # MAV_STATE_ACTIVE
         mavlink_version=fields.get("mavlink_version", 3),
@@ -153,8 +169,7 @@ def link(shim):
     remote_sock.bind(("127.0.0.1", 0))
     remote_port = remote_sock.getsockname()[1]
 
-    handle = shim.mavconn_udp_create(
-        42, 200, bind_port, b"127.0.0.1", remote_port)
+    handle = shim.mavconn_udp_create(42, 200, bind_port, b"127.0.0.1", remote_port)
     try:
         # Let the link's io thread post its async receive before any test sends
         # a datagram. UDP delivers unreceived datagrams to no one, so without
@@ -170,6 +185,7 @@ def link(shim):
 # TX: libmavconn -> pymavlink
 # --------------------------------------------------------------------------
 
+
 def test_tx_heartbeat_matches_pymavlink(link):
     shim, handle, bind_port, remote_sock, remote_port = link
 
@@ -179,8 +195,15 @@ def test_tx_heartbeat_matches_pymavlink(link):
 
     # pymavlink reference frame with the same ids/fields. seq starts at 0.
     ref = _mav(src_system=42, src_component=200)
-    ref_msg = _pack_heartbeat(ref, type=18, autopilot=8, base_mode=192,
-                              custom_mode=0, system_status=4, mavlink_version=3)
+    ref_msg = _pack_heartbeat(
+        ref,
+        type=18,
+        autopilot=8,
+        base_mode=192,
+        custom_mode=0,
+        system_status=4,
+        mavlink_version=3,
+    )
     expected = bytes(ref_msg.get_msgbuf())
 
     data, msgs = _recv_parsed(remote_sock, _mav())
@@ -196,13 +219,15 @@ def test_tx_heartbeat_matches_pymavlink(link):
 # RX: pymavlink -> libmavconn
 # --------------------------------------------------------------------------
 
+
 def test_rx_heartbeat_from_pymavlink(link):
     shim, handle, bind_port, remote_sock, remote_port = link
 
     # pymavlink crafts and sends a heartbeat to the libmavconn bind port.
     sender = _mav(src_system=7, src_component=8)
-    msg = _pack_heartbeat(sender, type=2, autopilot=3, base_mode=64,
-                          custom_mode=12345, system_status=4)
+    msg = _pack_heartbeat(
+        sender, type=2, autopilot=3, base_mode=64, custom_mode=12345, system_status=4
+    )
     wire = bytes(msg.get_msgbuf())
 
     out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -261,6 +286,7 @@ def test_rx_sys_status_from_pymavlink(link):
 # Signing
 # --------------------------------------------------------------------------
 
+
 def test_tx_signed_heartbeat_verified_by_pymavlink(link):
     shim, handle, bind_port, remote_sock, remote_port = link
 
@@ -293,10 +319,14 @@ def test_rx_signed_heartbeat_from_pymavlink(link):
     rc = shim.mavconn_setup_signing(handle, key, 1, 3, 1000)
     assert rc == 0
 
-    sender = _mav(src_system=9, src_component=10,
-                  signing={"key": TEST_KEY, "link_id": 3, "timestamp": 1000})
-    msg = _pack_heartbeat(sender, type=18, autopilot=8, base_mode=192,
-                          custom_mode=0, system_status=4)
+    sender = _mav(
+        src_system=9,
+        src_component=10,
+        signing={"key": TEST_KEY, "link_id": 3, "timestamp": 1000},
+    )
+    msg = _pack_heartbeat(
+        sender, type=18, autopilot=8, base_mode=192, custom_mode=0, system_status=4
+    )
     wire = bytes(msg.get_msgbuf())
 
     out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -320,10 +350,14 @@ def test_rx_bad_signature_rejected(link):
 
     # Sender signs with a *different* key.
     bad_key = bytes(b ^ 0xFF for b in TEST_KEY)
-    sender = _mav(src_system=9, src_component=10,
-                  signing={"key": bad_key, "link_id": 3, "timestamp": 1000})
-    msg = _pack_heartbeat(sender, type=18, autopilot=8, base_mode=192,
-                          custom_mode=0, system_status=4)
+    sender = _mav(
+        src_system=9,
+        src_component=10,
+        signing={"key": bad_key, "link_id": 3, "timestamp": 1000},
+    )
+    msg = _pack_heartbeat(
+        sender, type=18, autopilot=8, base_mode=192, custom_mode=0, system_status=4
+    )
     wire = bytes(msg.get_msgbuf())
 
     out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

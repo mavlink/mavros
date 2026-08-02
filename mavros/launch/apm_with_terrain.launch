@@ -1,0 +1,43 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- ArduPilot launch with terrain following server -->
+
+	<arg name="fcu_url" default="/dev/ttyACM0:57600" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="1" />
+	<arg name="log_output" default="screen" />
+	<arg name="fcu_protocol" default="v2.0" />
+	<arg name="respawn_mavros" default="false" />
+	<arg name="namespace" default="mavros"/>
+
+	<!-- Terrain server parameters -->
+	<arg name="terrain_data_path" default="" />
+	<arg name="terrain_auto_download" default="false" />
+	<arg name="terrain_srtm_data_url" default="https://terrain.ardupilot.org" />
+	<arg name="terrain_proxy" default="" />
+	<arg name="terrain_srtm_source" default="SRTM3" />
+	<arg name="terrain_send_rate_hz" default="5.0" />
+	<arg name="terrain_max_cache_tiles" default="64" />
+
+	<include file="$(find-pkg-share mavros)/launch/apm.launch">
+		<arg name="fcu_url" value="$(var fcu_url)" />
+		<arg name="gcs_url" value="$(var gcs_url)" />
+		<arg name="tgt_system" value="$(var tgt_system)" />
+		<arg name="tgt_component" value="$(var tgt_component)" />
+		<arg name="log_output" value="$(var log_output)" />
+		<arg name="fcu_protocol" value="$(var fcu_protocol)" />
+		<arg name="respawn_mavros" value="$(var respawn_mavros)" />
+		<arg name="namespace" value="$(var namespace)"/>
+	</include>
+
+	<node pkg="mavros_extras" exec="terrain_server" output="$(var log_output)">
+		<param name="terrain_data_path" value="$(var terrain_data_path)" />
+		<param name="auto_download" value="$(var terrain_auto_download)" />
+		<param name="srtm_data_url" value="$(var terrain_srtm_data_url)" />
+		<param name="proxy" value="$(var terrain_proxy)" />
+		<param name="srtm_source" value="$(var terrain_srtm_source)" />
+		<param name="send_rate_hz" value="$(var terrain_send_rate_hz)" />
+		<param name="max_cache_tiles" value="$(var terrain_max_cache_tiles)" />
+	</node>
+</launch>

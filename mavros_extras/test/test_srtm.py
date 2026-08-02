@@ -1,11 +1,11 @@
-"""Unit tests for mavros_extras.srtm module."""
+"""Unit tests for mavros_extras.terrain_server.srtm module."""
 
 from __future__ import annotations
 
 import array
 import struct
 
-from mavros_extras.srtm import (
+from mavros_extras.terrain_server.srtm import (
     compute_terrain_data_block,
     gps_newpos,
     gps_offset,
@@ -283,25 +283,25 @@ class TestContinentMap:
     """Test continent lookup table."""
 
     def test_import(self):
-        from mavros_extras.srtm_continent_map import lookup_continent
+        from mavros_extras.terrain_server.srtm_continent_map import lookup_continent
 
         assert callable(lookup_continent)
 
     def test_known_tiles(self):
-        from mavros_extras.srtm_continent_map import lookup_continent
+        from mavros_extras.terrain_server.srtm_continent_map import lookup_continent
 
         result = lookup_continent(47, 11)
         assert result is not None
         assert 'Eurasia' in result
 
     def test_out_of_range(self):
-        from mavros_extras.srtm_continent_map import lookup_continent
+        from mavros_extras.terrain_server.srtm_continent_map import lookup_continent
 
         assert lookup_continent(90, 0) is None
         assert lookup_continent(0, 360) is None
 
     def test_ocean_tile(self):
-        from mavros_extras.srtm_continent_map import lookup_continent
+        from mavros_extras.terrain_server.srtm_continent_map import lookup_continent
 
         result = lookup_continent(0, -30)
         assert result is None

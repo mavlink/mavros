@@ -222,7 +222,7 @@ ament_python_install_package(${PROJECT_NAME}
   SETUP_CFG setup.cfg
 )
 install(PROGRAMS
-  scripts/terrain_tile_server
+  scripts/terrain_server
   DESTINATION lib/${PROJECT_NAME}
 )
 

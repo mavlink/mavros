@@ -22,9 +22,12 @@ Guidance for coding agents in this repository.
 
 ## Build And Test
 
-- Run build/test commands from workspace root (`/ws` in devcontainer), not from `/ws/src/mavros`.
-- Build (workspace root):
+- Run build/test commands from workspace root (`/ws` in devcontainer / podman container), not from `/ws/src/mavros`.
+- Always `cd /ws` before `colcon` so it finds `install/` and `build/` correctly.
+- Build (from `/ws`):
   - `colcon build --packages-up-to mavros mavros_extras mavros_msgs`
+- Do NOT use `--base-paths /ws/src/mavros` — it breaks dependency resolution
+  (mavlink/libmavconn packages live in sibling dirs under `/ws/src/`).
 - Local test runs are not required on every iteration, but are recommended for risky changes:
   - `colcon test --packages-select mavros mavros_extras mavros_msgs`
   - `colcon test-result --verbose`
@@ -77,14 +80,15 @@ Remove system mavlink if building from source (avoids duplicate-package error):
 
 Run commands on the host via `podman exec <name> bash -lc '...'`.
 Prepend `source /opt/ros/<distro>/setup.bash` before every command.
+Always `cd /ws` before `colcon` so it finds `install/` and `build/` correctly.
 
 Build:
 
-    podman exec ros2-<distro> bash -lc 'source /opt/ros/<distro>/setup.bash && colcon build'
+    podman exec ros2-<distro> bash -lc 'source /opt/ros/<distro>/setup.bash && cd /ws && colcon build'
 
 If extra source packages cause duplicate-package errors, scope discovery:
 
-    colcon build --base-paths /ws/src/mavros --packages-up-to mavros
+    colcon build --packages-up-to mavros
 
 Test (after source of install; `install/setup.bash` includes the system setup):
 

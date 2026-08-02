@@ -121,7 +121,6 @@ class BaseNode(rclpy.node.Node):
         return "/".join((self._ns,) + args)
 
     def start_spinner(self) -> threading.Thread:
-
         def run():
             lg = self.get_logger()
             while rclpy.ok():

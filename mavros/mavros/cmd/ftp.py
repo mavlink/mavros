@@ -194,9 +194,11 @@ def download(ctx, client, src, dest, progressbar, verify):
 
     client.verbose_echo(f"Downloading from {src} to {dest.name}", err=True)
 
-    with dest as to_fd, click.ftp.open(src, "r") as from_fd, ProgressBar(
-        not progressbar, "Downloading:", from_fd.size
-    ) as bar:
+    with (
+        dest as to_fd,
+        click.ftp.open(src, "r") as from_fd,
+        ProgressBar(not progressbar, "Downloading:", from_fd.size) as bar,
+    ):
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:
@@ -243,9 +245,11 @@ def upload(ctx, client, src, dest, progressbar, verify, overwrite):
     # for stdin it is 0
     from_size = os.fstat(src.fileno()).st_size
 
-    with src as from_fd, client.ftp.open(str(dest), mode) as to_fd, ProgressBar(
-        not progressbar, "Uploading:", from_size
-    ) as bar:
+    with (
+        src as from_fd,
+        client.ftp.open(str(dest), mode) as to_fd,
+        ProgressBar(not progressbar, "Uploading:", from_size) as bar,
+    ):
         while True:
             buf = from_fd.read(FTP_PAGE_SIZE)
             if len(buf) == 0:

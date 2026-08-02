@@ -245,7 +245,7 @@ def show(ctx, client, accessor, pull_flag, follow):
     "--end-index",
     type=int,
     default=0,
-    help="Waypoint end index for partial update " "(APM only, default: last element)",
+    help="Waypoint end index for partial update (APM only, default: last element)",
 )
 @click.option(
     "--no-mission", "-M", is_flag=True, default=False, help="Don't load mission points"
