@@ -30,7 +30,9 @@ int main(int argc, char * argv[])
   auto exec = mavros::uas::make_executor(rclcpp::ExecutorOptions(), 2);
 
   rclcpp::NodeOptions options;
-  // options.use_intra_process_comms(true);
+  // NOTE(vooon): when router and uas run in the same process the internal
+  // MAVLink bus goes zero-copy; cross-process consumers fall back to DDS.
+  options.use_intra_process_comms(true);
 
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;
