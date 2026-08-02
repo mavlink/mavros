@@ -61,6 +61,11 @@ jobs:
           rosdep update
           rosdep install --from-paths . --ignore-src --rosdistro ${ROS_DISTRO} -y
 
+      - name: Install GeographicLib Datasets
+        shell: bash
+        run: |
+          sudo ./mavros/scripts/install_geographiclib_datasets.sh
+
       - name: Build With Coverage
         shell: bash
         run: |
