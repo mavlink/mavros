@@ -17,6 +17,7 @@
 
 #include "mavros/mavros_router.hpp"
 #include "mavros/mavros_uas.hpp"
+#include "mavros/uas_executor.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 /**
@@ -26,7 +27,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor exec(rclcpp::ExecutorOptions(), 2);
+  auto exec = mavros::uas::make_executor(rclcpp::ExecutorOptions(), 2);
 
   rclcpp::NodeOptions options;
   // options.use_intra_process_comms(true);
@@ -36,7 +37,7 @@ int main(int argc, char * argv[])
   int tgt_system = 1, tgt_component = 1;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
-  exec.add_node(node);
+  exec->add_node(node);
 
   node->declare_parameter("fcu_url", fcu_url);
   node->declare_parameter("gcs_url", gcs_url);
@@ -63,7 +64,7 @@ int main(int argc, char * argv[])
 
   RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
   auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
-  exec.add_node(router_node);
+  exec->add_node(router_node);
 
   {
     std::vector<rclcpp::Parameter> router_params{};
@@ -83,7 +84,7 @@ int main(int argc, char * argv[])
   auto uas_node = std::make_shared<mavros::uas::UAS>(
     options, "mavros", uas_url, tgt_system,
     tgt_component);
-  exec.add_node(uas_node);
+  exec->add_node(uas_node);
 
   {
     std::vector<rclcpp::Parameter> uas_params{};
@@ -102,7 +103,7 @@ int main(int argc, char * argv[])
     uas_node->set_parameters(uas_params);
   }
 
-  exec.spin();
+  exec->spin();
   rclcpp::shutdown();
   return 0;
 }

@@ -94,6 +94,13 @@ if(message_filters_VERSION VERSION_LESS 5.0.0)
   )
 endif()
 
+if(rclcpp_VERSION VERSION_GREATER_EQUAL 30.0.0)
+  # Lyrical and newer: Callback Group Events executor (EventsCBGExecutor)
+  add_definitions(
+    -DMAVROS_HAVE_EVENTS_CBG_EXECUTOR
+  )
+endif()
+
 # [[[cog:
 # import mavros_cog
 # ]]]

@@ -19,13 +19,11 @@
 #ifndef   MAVROS__UAS_EXECUTOR_HPP_
 #define   MAVROS__UAS_EXECUTOR_HPP_
 
-#include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-
-#include "mavros/utils.hpp"
 
 namespace mavros
 {
@@ -34,25 +32,46 @@ namespace uas
 
 /**
  * Executor for UAS Plugin nodes
+ *
+ * Thin wrapper around rclcpp::Executor that lets the user pick the
+ * underlying executor type at runtime (MAVROS_EXECUTOR_TYPE env var).
  */
-class UASExecutor : public rclcpp::executors::MultiThreadedExecutor
+class UASExecutor
 {
 public:
   explicit UASExecutor(const rclcpp::ExecutorOptions & options = rclcpp::ExecutorOptions());
   ~UASExecutor() = default;
 
-  void set_ids(uint8_t sysid, uint8_t compid);
-
-protected:
-  void run(size_t thread_id);
+  void spin();
+  void cancel();
+  void add_node(const std::shared_ptr<rclcpp::Node> & node);
+  size_t get_number_of_threads() const;
 
 private:
   RCLCPP_DISABLE_COPY(UASExecutor)
 
   static size_t select_number_of_threads();
 
-  uint8_t source_system, source_component;
+  std::unique_ptr<rclcpp::Executor> impl_;
+  size_t number_of_threads_;
 };
+
+/**
+ * Factory for executors honoring the MAVROS_EXECUTOR_TYPE env var:
+ *  - "events" (or "cbg"): rclcpp::executors::EventsCBGExecutor (Lyrical+ only)
+ *  - otherwise (default): rclcpp::executors::MultiThreadedExecutor
+ *
+ * \param options common options for all executors
+ * \param number_of_threads number of threads to have in the thread pool
+ * \param yield_before_execute MultiThreadedExecutor option, ignored for
+ *   the events executor
+ * \param timeout maximum time to wait
+ */
+std::unique_ptr<rclcpp::Executor> make_executor(
+  const rclcpp::ExecutorOptions & options,
+  size_t number_of_threads,
+  bool yield_before_execute = false,
+  std::chrono::nanoseconds timeout = std::chrono::nanoseconds(-1));
 
 }   // namespace uas
 }   // namespace mavros
