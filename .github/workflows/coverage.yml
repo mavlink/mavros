@@ -5,8 +5,18 @@ name: Coverage
 on:
   push:
     branches: [master, ros2]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE*'
+      - '.github/dependabot.yml'
   pull_request:
     branches: [master, ros2]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE*'
+      - '.github/dependabot.yml'
 
 permissions:
   contents: read
@@ -40,6 +50,7 @@ jobs:
       COMPONENT_NAME: ${{ matrix.component.name }}
       COMPONENT_PACKAGES: ${{ matrix.component.packages }}
       COMPONENT_FILTER: ${{ matrix.component.source_filter }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
       # Enable the libmavconn e2e test dep (python3-pymavlink-pip) and allow
       # rosdep to pip-install it on PEP 668 distros (jazzy+)
       TEST_ENABLE_E2E: "1"
@@ -55,7 +66,14 @@ jobs:
       - name: Install Coverage Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcovr
+          sudo apt-get install -y gcovr ccache
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: "ccache-cov-${{ runner.os }}-${{ matrix.ros_distro }}-${{ matrix.component.name }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt') }}"
+          restore-keys: |
+            ccache-cov-${{ runner.os }}-${{ matrix.ros_distro }}-${{ matrix.component.name }}-
 
       - name: Install Dependencies
         shell: bash
@@ -76,7 +94,9 @@ jobs:
           colcon build --packages-up-to ${COMPONENT_PACKAGES} --cmake-args \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_FLAGS=--coverage \
-            -DCMAKE_CXX_FLAGS=--coverage
+            -DCMAKE_CXX_FLAGS=--coverage \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Run Tests
         shell: bash
