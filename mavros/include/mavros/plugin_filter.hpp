@@ -32,7 +32,7 @@ namespace filter
 {
 using mavros::plugin::Filter;
 using mavros::uas::UAS;
-using UASPtr = UAS::SharedPtr;
+using UASPtr = UAS *;
 using mavconn::Framing;
 
 

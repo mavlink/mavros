@@ -18,6 +18,24 @@
 
 using  mavros::plugin::Plugin;
 
+Plugin::Plugin(UASPtr uas_)
+: uas(uas_), node(uas_->shared_from_this())
+{
+}
+
+Plugin::Plugin(
+  UASPtr uas_, const std::string & subnode,
+  const rclcpp::NodeOptions & options)
+: uas(uas_)
+{
+  // Dynamically created plugin nodes must not inherit process-global
+  // __node/__ns remap rules (a component container remaps itself with
+  // e.g. -r __node:=<container>), otherwise every plugin node is renamed.
+  rclcpp::NodeOptions node_options(options);
+  node_options.use_global_arguments(false);
+  node = rclcpp::Node::make_shared(subnode, uas_->get_fully_qualified_name(), node_options);
+}
+
 void Plugin::enable_connection_cb()
 {
   uas->add_connection_change_handler(
