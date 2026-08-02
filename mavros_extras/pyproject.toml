@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mavros_extras"
+version = "2.14.0"
+description = "Extra nodes and plugins for MAVROS"
+license = "Triple licensed under GPLv3, LGPLv3 and BSD"
+authors = [
+    {name = "Vladimir Ermakov", email = "vooon341@gmail.com"},
+]
+maintainers = [
+    {name = "Vladimir Ermakov", email = "vooon341@gmail.com"},
+]
+keywords = ["ROS"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+terrain_server = "mavros_extras.terrain_server.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mavros_extras", "mavros_extras.*"]
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 99
