@@ -43,8 +43,15 @@ UAS::UAS(
   data(),
   tf2_buffer(get_clock(), tf2::Duration(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME)),
   tf2_listener(tf2_buffer, true),
+#ifdef USE_OLD_TF2_ROS
   tf2_broadcaster(this),
   tf2_static_broadcaster(this),
+#else
+  // tf2_ros >= Iron removed/deprecated the NodeT constructor; pass the node
+  // via the NodeInterfaces aggregate so it builds on Rolling/Lyrical/Kilted/Jazzy.
+  tf2_broadcaster(*this),
+  tf2_static_broadcaster(*this),
+#endif
   source_system(target_system_),
   source_component(MAV_COMP_ID_ONBOARD_COMPUTER),
   target_system(target_system_),
@@ -92,7 +99,7 @@ UAS::UAS(
       startup_delay_timer->cancel();
 
       std::string fcu_protocol;
-      int tgt_system, tgt_component;
+      int tgt_system = 0, tgt_component = 0;
       this->get_parameter("uas_url", uas_url);
       this->get_parameter("fcu_protocol", fcu_protocol);
       this->get_parameter("system_id", source_system);

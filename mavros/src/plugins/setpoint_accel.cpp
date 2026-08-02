@@ -75,7 +75,7 @@ private:
   {
     using mavlink::common::MAV_FRAME;
 
-    bool send_force;
+    bool send_force = false;
     node->get_parameter("send_force", send_force);
 
     /* Documentation start from bit 1 instead 0.
