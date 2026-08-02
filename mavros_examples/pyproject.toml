@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mavros_examples"
+version = "2.12.0"
+description = "Example scripts demonstrating MAVROS usage"
+license = "Triple licensed under GPLv3, LGPLv3 and BSD"
+authors = [
+    {name = "Haroon Rasheed", email = "haroon300@hotmail.com"},
+]
+maintainers = [
+    {name = "Haroon Rasheed", email = "haroon300@hotmail.com"},
+]
+keywords = ["ROS"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+flight_task_control = "mavros_examples.flight_task_control:main"
+waypoint_mission_manager = "mavros_examples.waypoint_mission_manager:main"
+px4_offboard = "mavros_examples.px4_offboard:main"
+
+[tool.setuptools.packages.find]
+include = ["mavros_examples", "mavros_examples.*"]
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 99
