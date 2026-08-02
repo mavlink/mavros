@@ -524,8 +524,7 @@ std::pair<bool, std::string> ROSEndpoint::open()
   }
 
   try {
-    auto qos = QoS(
-      1000).best_effort().durability_volatile();
+    auto qos = rclcpp::SensorDataQoS();
     this->source =
       nh->create_publisher<mavros_msgs::msg::Mavlink>(
       utils::format(

@@ -48,7 +48,7 @@ size_t UASExecutor::select_number_of_threads()
     }
   }
   // return std::max<size_t>(16, std::min<size_t>(std::thread::hardware_concurrency(), 4));
-  return std::clamp<size_t>(std::thread::hardware_concurrency(), 4, 16);
+  return std::clamp<size_t>(std::thread::hardware_concurrency(), 2, 8);
 }
 
 void UASExecutor::set_ids(uint8_t sysid, uint8_t compid)
