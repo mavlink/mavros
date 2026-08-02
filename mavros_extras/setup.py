@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 package_name = 'mavros_extras'
 
 setup(
     name=package_name,
     version='2.14.0',
-    packages=[package_name],
+    packages=find_packages(include=[package_name, f'{package_name}.*']),
     install_requires=['setuptools'],
     zip_safe=True,
     author='Vladimir Ermakov',
