@@ -61,5 +61,5 @@ jobs:
           key: "ccache-${{ runner.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt') }}"
           restore-keys: |
             ccache-${{ runner.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-
-      - uses: 'ros-industrial/industrial_ci@v0.10.0'  # nosemgrep
+      - uses: 'ros-industrial/industrial_ci@master'  # nosemgrep
         env: ${{matrix.env}}
