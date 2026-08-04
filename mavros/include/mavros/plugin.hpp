@@ -44,8 +44,8 @@ namespace plugin
 {
 
 using mavros::uas::UAS;
-// NOTE(vooon): non-owning pointer to avoid a reference cycle between the
-// UAS node (owns plugin nodes) and plugins (own plugin nodes).
+// NOTE(vooon): non-owning pointer to avoid a reference cycle: the UAS node
+// owns the plugins (loaded_plugins), so the plugins must not own the UAS.
 using UASPtr = UAS *;
 using r_unique_lock = std::unique_lock<std::recursive_mutex>;
 using s_unique_lock = std::unique_lock<std::shared_timed_mutex>;
