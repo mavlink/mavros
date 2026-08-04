@@ -110,6 +110,31 @@ Main node. Allow disable GCS proxy by setting empty URL.
     ros2 run mavros mavros_node --ros-args --params-file params.yaml
 
 
+Executors
+---------
+
+MAVROS builds its executors via a factory that honors two environment variables:
+
+  - `MAVROS_EXECUTOR_TYPE` - executor used by both `mavros_node` container and
+    the UAS plugin executor:
+      - `mt` (default) - `rclcpp::executors::MultiThreadedExecutor`
+      - `events` (alias `cbg`) - the Callback Group Events executor
+        (`rclcpp::executors::EventsCBGExecutor`), available only on Lyrical+
+        (rclcpp >= 30.0.0). On older distros the request is ignored with a
+        warning and `MultiThreadedExecutor` is used.
+  - `MAVROS_UAS_EXECUTOR_THREADS` - number of threads for the UAS plugin
+    executor (default: clamped hardware concurrency, min 4 max 16; must be
+    >= 2 if set).
+
+Example, running `mavros_node` with the events executor:
+
+    MAVROS_EXECUTOR_TYPE=events ros2 run mavros mavros_node
+
+When MAVROS is used as composable nodes inside a component container, the
+container's executor is chosen with the container's own `--executor-type`
+argument instead; see the composable launch below.
+
+
 Launch Files
 ------------
 
@@ -119,6 +144,29 @@ Launch files are provided for use with common FCUs, in particular [Pixhawk](pixh
 
   * [px4.launch](launch/px4.launch) -- for use with the PX4 Autopilot (for VTOL, multicopters and planes)
   * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
+  * [test_compose.launch.py](launch/test_compose.launch.py) -- loads `mavros::router::Router` and one or two
+    `mavros::uas::UAS` nodes as composable nodes into a component container.
+
+`test_compose.launch.py` accepts:
+
+  - `fcu_url` (default `udp://0.0.0.0:14540@`) - FCU connection URL
+  - `gcs_url` (default `udp://127.0.0.1:14555@`) - GCS connection URL
+  - `executor` (default `mt`) - container executor: `mt`, `events`, or `auto`
+    (`events` on Lyrical+, `mt` otherwise). The events (Callback Group
+    Events) executor support inside a component container is still immature
+    upstream (ros2/rclcpp#3186), so the reliable `component_container_mt` is
+    the default.
+
+Example:
+
+    ros2 launch mavros test_compose.launch.py fcu_url:=udp://@192.168.60.192:15000 executor:=events
+
+Components can also be loaded/unloaded at runtime against a running
+container:
+
+    ros2 component load /mavros_container mavros mavros::router::Router
+    ros2 component load /mavros_container mavros mavros::uas::UAS
+    ros2 component unload /mavros_container <component_uid>
 
 Examples:
 
