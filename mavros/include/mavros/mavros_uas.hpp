@@ -262,6 +262,13 @@ public:
 
   ~UAS() override;
 
+  // UAS is not copyable/movable: it owns an executor thread, TF listeners,
+  // subscriptions and plugin nodes.
+  UAS(const UAS &) = delete;
+  UAS & operator=(const UAS &) = delete;
+  UAS(UAS &&) = delete;
+  UAS & operator=(UAS &&) = delete;
+
   /**
    * @brief Mavros diagnostic updater
    */
