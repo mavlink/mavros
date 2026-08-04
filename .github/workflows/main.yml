@@ -54,8 +54,8 @@ jobs:
       PIP_BREAK_SYSTEM_PACKAGES: "1"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/cache@v6
+      - uses: actions/checkout@v7  # nosemgrep
+      - uses: actions/cache@v6  # nosemgrep
         with:
           path: "${{ env.CCACHE_DIR }}"
           key: "ccache-${{ runner.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt') }}"

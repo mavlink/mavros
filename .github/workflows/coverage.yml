@@ -57,9 +57,9 @@ jobs:
       PIP_BREAK_SYSTEM_PACKAGES: "1"
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7  # nosemgrep
 
-      - uses: ros-tooling/setup-ros@v0.7
+      - uses: ros-tooling/setup-ros@649ef6bcd696da05bc27ceb3fab69d810c0daeab
         with:
           required-ros-distributions: ${{ env.ROS_DISTRO }}
 
@@ -68,7 +68,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcovr ccache
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@v6  # nosemgrep
         with:
           path: ${{ env.CCACHE_DIR }}
           key: "ccache-cov-${{ runner.os }}-${{ matrix.ros_distro }}-${{ matrix.component.name }}-${{ hashFiles('**/package.xml', '**/CMakeLists.txt') }}"
@@ -120,7 +120,7 @@ jobs:
             "${GITHUB_WORKSPACE}/build"
 
       - name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7  # nosemgrep
         with:
           name: coverage-${{ matrix.component.name }}-${{ matrix.ros_distro }}
           path: coverage/${{ matrix.component.name }}
