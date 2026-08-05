@@ -123,7 +123,7 @@ MAVROS builds its executors via a factory that honors two environment variables:
         (rclcpp >= 30.0.0). On older distros the request is ignored with a
         warning and `MultiThreadedExecutor` is used.
   - `MAVROS_UAS_EXECUTOR_THREADS` - number of threads for the UAS plugin
-    executor (default: clamped hardware concurrency, min 4 max 16; must be
+    executor (default: clamped hardware concurrency, min 2 max 4; must be
     >= 2 if set).
 
 Example, running `mavros_node` with the events executor:
