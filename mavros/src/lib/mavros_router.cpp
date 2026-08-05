@@ -87,7 +87,7 @@ void Router::route_message(
   }
 
   for (const auto & dest : targets) {
-    dest->send_message(msg, framing, src->id);
+    dest->send_message(msg, framing, src->frame_id());
   }
   const auto sent_cnt = targets.size();
 
@@ -137,7 +137,7 @@ void Router::add_endpoint(
   auto shared_this = shared_from_this();
 
   ep->parent = std::static_pointer_cast<Router>(shared_this);
-  ep->id = id;
+  ep->set_id(id);
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
 
@@ -454,7 +454,7 @@ void MAVConnEndpoint::close()
 
 void MAVConnEndpoint::send_message(
   const mavlink_message_t * msg, const Framing framing,
-  id_t src_id [[maybe_unused]])
+  const std::string & from_frame_id [[maybe_unused]])
 {
   (void)framing;
 
@@ -549,23 +549,27 @@ void ROSEndpoint::close()
   this->sink.reset();
 }
 
-void ROSEndpoint::send_message(const mavlink_message_t * msg, const Framing framing, id_t src_id)
+void ROSEndpoint::send_message(
+  const mavlink_message_t * msg, const Framing framing,
+  const std::string & from_frame_id)
 {
   rcpputils::assert_true(msg, "msg not null");
 
-  auto rmsg = mavros_msgs::msg::Mavlink();
-  auto ok = mavros_msgs::mavlink::convert(*msg, rmsg, utils::enum_value(framing));
+  // NOTE(vooon): unique_ptr publish so intra-process subscribers (the UAS)
+  // get the buffer without a copy.
+  auto rmsg = std::make_unique<mavros_msgs::msg::Mavlink>();
+  auto ok = mavros_msgs::mavlink::convert(*msg, *rmsg, utils::enum_value(framing));
 
   // don't fail if endpoint closed
   if (!this->source) {
     return;
   }
 
-  rmsg.header.stamp = this->parent->now();
-  rmsg.header.frame_id = utils::format("ep:%d", src_id);
+  rmsg->header.stamp = this->parent->now();
+  rmsg->header.frame_id = from_frame_id;
 
   if (ok) {
-    this->source->publish(rmsg);
+    this->source->publish(std::move(rmsg));
   } else if (auto & nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
