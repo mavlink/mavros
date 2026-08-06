@@ -303,6 +303,15 @@ if(BUILD_TESTING)
     TIMEOUT 120
   )
 
+  ament_add_google_benchmark_executable(mavros-router-select-benchmark test/test_router_select_benchmark.cpp)
+  target_link_libraries(mavros-router-select-benchmark
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+  ament_add_google_benchmark_test(mavros-router-select-benchmark
+    TIMEOUT 120
+  )
+
   ament_add_gmock(mavros-uas-test test/test_uas.cpp)
   target_link_libraries(mavros-uas-test
     mavros

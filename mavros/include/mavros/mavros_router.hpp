@@ -247,6 +247,7 @@ private:
   friend class TestRouter;
   friend class E2ERouter;
   friend class BenchmarkRouter;
+  friend class RouterSelectBenchmark;
 
   static std::atomic<id_t> id_counter;
   mavconn::IoContextRunner router_io_runner;
