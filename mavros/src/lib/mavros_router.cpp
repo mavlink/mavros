@@ -64,14 +64,14 @@ void Router::route_message(
   }
 
   // Lazily rebuild the reverse index if the receive path flagged it stale.
-  // Only the thread that wins the CAS clears the flag; losers (and the readers
-  // below) block on index_mutex until the winner publishes the fresh map, so
-  // no reader ever observes a half-built index. The plain load keeps the hot
-  // (already-current) path a read-only cache hit with no RMW.
+  // The flag is cleared only while holding index_mutex, so a thread cannot
+  // observe the flag as clear and read a stale/empty index: any reader that
+  // sees the flag raised waits on index_mutex until the rebuilding thread
+  // publishes the fresh map. The plain load keeps the hot (already-current)
+  // path a read-only cache hit with no lock.
   if (remote_index_dirty.load(std::memory_order_acquire)) {
-    bool expected = true;
-    if (remote_index_dirty.compare_exchange_strong(expected, false)) {
-      std::unique_lock<std::shared_mutex> index_lock(index_mutex);
+    std::unique_lock<std::shared_mutex> index_lock(index_mutex);
+    if (remote_index_dirty.exchange(false)) {
       rebuild_remote_index();
     }
   }
