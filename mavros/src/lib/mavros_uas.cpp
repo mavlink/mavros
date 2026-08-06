@@ -429,14 +429,16 @@ void UAS::send_message(const mavlink::Message & obj, const uint8_t src_compid)
     &msg, source_system, src_compid, &mavlink_status, mi.min_length, mi.length,
     mi.crc_extra);
 
-  mavros_msgs::msg::Mavlink rmsg{};
-  auto ok = mavros_msgs::mavlink::convert(msg, rmsg);
+  // NOTE(vooon): unique_ptr publish so intra-process subscribers (the router)
+  // get the buffer without a copy.
+  auto rmsg = std::make_unique<mavros_msgs::msg::Mavlink>();
+  auto ok = mavros_msgs::mavlink::convert(msg, *rmsg);
 
-  rmsg.header.stamp = this->now();
-  rmsg.header.frame_id = this->get_name();
+  rmsg->header.stamp = this->now();
+  rmsg->header.frame_id = this->get_name();
 
   if (this->sink && ok) {
-    this->sink->publish(rmsg);
+    this->sink->publish(std::move(rmsg));
   }
 }
 

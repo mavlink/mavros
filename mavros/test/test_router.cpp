@@ -61,7 +61,7 @@ public:
 
   MOCK_METHOD3(
     send_message, void(const mavlink_message_t * msg,
-    const Framing framing, id_t src_id));
+    const Framing framing, const std::string & from_frame_id));
   MOCK_METHOD2(
     recv_message, void(const mavlink_message_t * msg,
     const Framing framing));
@@ -90,7 +90,7 @@ public:
   void send_message(
     const mavlink_message_t * msg [[maybe_unused]],
     const Framing framing [[maybe_unused]],
-    id_t src_id [[maybe_unused]]) override
+    const std::string & from_frame_id [[maybe_unused]]) override
   {
     send_count.fetch_add(1, std::memory_order_relaxed);
   }

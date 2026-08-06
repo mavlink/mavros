@@ -287,6 +287,22 @@ if(BUILD_TESTING)
     ${mavros_msgs_TARGETS}
   )
 
+  find_package(ament_cmake_google_benchmark REQUIRED)
+  ament_add_gtest(mavros-router-e2e test/test_router_e2e.cpp)
+  target_link_libraries(mavros-router-e2e
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+
+  ament_add_google_benchmark_executable(mavros-router-benchmark test/test_router_benchmark.cpp)
+  target_link_libraries(mavros-router-benchmark
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+  ament_add_google_benchmark_test(mavros-router-benchmark
+    TIMEOUT 120
+  )
+
   ament_add_gmock(mavros-uas-test test/test_uas.cpp)
   target_link_libraries(mavros-uas-test
     mavros

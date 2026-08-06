@@ -72,7 +72,7 @@ size_t UASExecutor::select_number_of_threads()
         "Invalid MAVROS_UAS_EXECUTOR_THREADS value '%s': %s. Using default.", env, e.what());
     }
   }
-  return std::clamp<size_t>(std::thread::hardware_concurrency(), 4, 16);
+  return std::clamp<size_t>(std::thread::hardware_concurrency(), 2, 4);
 }
 
 std::unique_ptr<rclcpp::Executor> mavros::uas::make_executor(

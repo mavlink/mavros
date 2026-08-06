@@ -33,6 +33,7 @@
 
 #include "mavconn/interface.hpp"
 #include "mavconn/io_context_runner.hpp"
+#include "mavconn/thread_utils.hpp"
 #include "mavconn/mavlink_dialect.hpp"
 #include "mavros/utils.hpp"
 #include "rclcpp/macros.hpp"
@@ -102,17 +103,35 @@ public:
   std::set<addr_t> remote_addrs;         // remotes that we heard there
   std::set<addr_t> stale_addrs;          // temporary storage for stale remote addrs
 
+  // "ep:<id>" string used as the Mavlink message frame_id in the hot path.
+  // Computed once via set_id() before the endpoint is published to the
+  // router, so this is a plain string read with no locking.
+  const std::string & frame_id() const
+  {
+    return frame_id_str_;
+  }
+
+  // Set the endpoint id and memoize its frame_id string.
+  void set_id(id_t id_)
+  {
+    id = id_;
+    frame_id_str_ = mavconn::utils::format("ep:%d", id_);
+  }
+
   virtual bool is_open() = 0;
   virtual std::pair<bool, std::string> open() = 0;
   virtual void close() = 0;
 
   virtual void send_message(
     const mavlink_message_t * msg, const Framing framing = Framing::ok,
-    id_t src_id = 0) = 0;
+    const std::string & from_frame_id = "") = 0;
   virtual void recv_message(const mavlink_message_t * msg, const Framing framing = Framing::ok);
 
   virtual std::string diag_name();
   virtual void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) = 0;
+
+private:
+  std::string frame_id_str_;
 };
 
 /**
@@ -150,7 +169,7 @@ public:
       options /* rclcpp::NodeOptions(options).use_intra_process_comms(true) */),
     router_io_runner(),
     endpoints{}, stat_msg_routed(0), stat_msg_sent(0), stat_msg_dropped(0),
-    diagnostic_updater(this, 1.0)
+    diagnostic_updater(this, 5.0)
   {
     RCLCPP_DEBUG(this->get_logger(), "Start mavros::router::Router initialization...");
 
@@ -226,6 +245,8 @@ public:
 private:
   friend class Endpoint;
   friend class TestRouter;
+  friend class E2ERouter;
+  friend class BenchmarkRouter;
 
   static std::atomic<id_t> id_counter;
   mavconn::IoContextRunner router_io_runner;
@@ -312,7 +333,7 @@ public:
 
   void send_message(
     const mavlink_message_t * msg, const Framing framing = Framing::ok,
-    id_t src_id = 0) override;
+    const std::string & from_frame_id = "") override;
 
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 };
@@ -346,7 +367,7 @@ public:
 
   void send_message(
     const mavlink_message_t * msg, const Framing framing = Framing::ok,
-    id_t src_id = 0) override;
+    const std::string & from_frame_id = "") override;
 
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
