@@ -114,6 +114,16 @@ if(BUILD_TESTING)
     console_bridge::console_bridge
   )
 
+  find_package(ament_cmake_google_benchmark REQUIRED)
+  ament_add_google_benchmark_executable(mavconn-benchmark test/test_mavconn_benchmark.cpp)
+  target_link_libraries(mavconn-benchmark
+    mavconn
+    console_bridge::console_bridge
+  )
+  ament_add_google_benchmark_test(mavconn-benchmark
+    TIMEOUT 120
+  )
+
   # pymavlink-referenced byte-stream e2e test.
   # Small ctypes shim over MAVConnUDP; the pytest skips cleanly when pymavlink
   # (a pip package) is not installed, so CI/buildfarm stays green.
