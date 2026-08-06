@@ -11,6 +11,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <string>
@@ -51,7 +52,7 @@ void Router::route_message(
   this->stat_msg_routed++;
 
   // find message destination target
-  addr_t target_addr = 0;
+  addr_t target_addr = 0x0000;
   auto msg_entry = ::mavlink::mavlink_get_msg_entry(msg->msgid);
   if (msg_entry) {
     if (msg_entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) {
@@ -62,49 +63,60 @@ void Router::route_message(
     }
   }
 
-  // Single pass over the endpoints collecting both the broadcast and the
-  // targeted destinations. If the message was addressed and matched, prefer
-  // the targeted set, otherwise fall back to the broadcast set. This mirrors
-  // the old collect-then-retry logic without a second full scan.
-  TargetList targeted;
-  TargetList broadcast;
-  {
-    shared_lock lock(mu);
-
-    for (const auto & kv : this->endpoints) {
-      const auto & dest = kv.second;
-
-      if (src->id == dest->id) {
-        continue;     // do not echo message
-      }
-      if (src->link_type == dest->link_type) {
-        continue;     // drop messages between same type FCU/GCS/UAS
-      }
-
-      // NOTE(vooon): current router do not allow to speak drone-to-drone.
-      //              if needed, perhaps better to add mavlink-router in front of
-      //              mavros-router.
-      std::shared_lock<std::shared_mutex> ep_lock(dest->remote_addrs_mutex);
-      if (dest->remote_addrs.find(0) != dest->remote_addrs.end()) {
-        broadcast.push_back(dest);
-      }
-      if (target_addr != 0 &&
-        dest->remote_addrs.find(target_addr) != dest->remote_addrs.end())
-      {
-        targeted.push_back(dest);
-      }
+  // Lazily rebuild the reverse index if the receive path flagged it stale.
+  // Only the thread that wins the CAS clears the flag; losers (and the readers
+  // below) block on index_mutex until the winner publishes the fresh map, so
+  // no reader ever observes a half-built index. The plain load keeps the hot
+  // (already-current) path a read-only cache hit with no RMW.
+  if (remote_index_dirty.load(std::memory_order_acquire)) {
+    bool expected = true;
+    if (remote_index_dirty.compare_exchange_strong(expected, false)) {
+      std::unique_lock<std::shared_mutex> index_lock(index_mutex);
+      rebuild_remote_index();
     }
   }
 
-  const TargetList * targets = &broadcast;
-  if (target_addr != 0 && !targeted.empty()) {
-    targets = &targeted;
-  }
+  // Look up matches in the reverse index. Targeted matches win over broadcast;
+  // if an addressed message matched nothing, fall back to the broadcast set.
+  // The broadcast lookup is only done when actually needed.
+  auto collect_from = [&](addr_t addr, TargetList & out) {
+      auto it = remote_index.find(addr);
+      if (it == remote_index.end()) {
+        return;
+      }
+      for (const auto & dest : it->second) {
+        if (src->id == dest->id) {
+          continue;     // do not echo message
+        }
+        if (src->link_type == dest->link_type) {
+          continue;     // drop messages between same type FCU/GCS/UAS
+        }
+        out.push_back(dest);
+      }
+    };
 
-  for (const auto & dest : *targets) {
+  TargetList targets;
+  bool targeted_hit = false;
+  {
+    std::shared_lock<std::shared_mutex> index_lock(index_mutex);
+
+    if (target_addr == 0x0000) {
+      collect_from(0x0000, targets);
+    } else {
+      collect_from(target_addr, targets);
+      if (!targets.empty()) {
+        targeted_hit = true;
+      } else {
+        // targeted message matched nothing: retry as broadcast
+        collect_from(0x0000, targets);
+      }
+    }
+  }   // index_lock released; targets holds SharedPtrs so endpoints stay alive
+
+  for (const auto & dest : targets) {
     dest->send_message(msg, framing, src->frame_id());
   }
-  const auto sent_cnt = targets->size();
+  const auto sent_cnt = targets.size();
 
   // update stats
   this->stat_msg_sent.fetch_add(sent_cnt);
@@ -114,14 +126,39 @@ void Router::route_message(
     auto lg = get_logger();
     auto clock = get_clock();
 
-    // The effective routing target: targeted on hit, 0 (broadcast) on fallback.
-    const addr_t log_addr = (targets == &targeted) ? target_addr : 0;
+    // The effective routing target: targeted on hit, broadcast on fallback.
+    const addr_t log_addr = targeted_hit ? target_addr : 0x0000;
 
     RCLCPP_WARN_THROTTLE(
       lg,
       *clock, 10000, "Message dropped: msgid: %d, source: %d.%d, target: %d.%d", msg->msgid,
       msg->sysid, msg->compid, log_addr >> 8,
       log_addr & 0xff);
+  }
+}
+
+void Router::rebuild_remote_index()
+{
+  // Caller must hold a unique_lock on index_mutex. Lock order: index_mutex ->
+  // mu -> remote_addrs_mutex, matching add/del.
+  remote_index.clear();
+
+  std::shared_lock lock(mu);
+  for (const auto & kv : endpoints) {
+    const auto & ep = kv.second;
+    std::shared_lock ep_lock(ep->remote_addrs_mutex);
+    for (addr_t addr : ep->remote_addrs) {
+      remote_index[addr].push_back(ep);
+    }
+  }
+}
+
+void Router::remove_from_index(const Endpoint::SharedPtr & ep)
+{
+  // Caller must hold a unique_lock on index_mutex.
+  for (auto & kv : remote_index) {
+    auto & vec = kv.second;
+    vec.erase(std::remove(vec.begin(), vec.end(), ep), vec.end());
   }
 }
 
@@ -160,8 +197,12 @@ void Router::add_endpoint(
   ep->url = request->url;
 
   {
+    // Lock order: index_mutex -> mu (matches rebuild_remote_index).
+    std::unique_lock<std::shared_mutex> index_lock(index_mutex);
     unique_lock lock(mu);
     this->endpoints[id] = ep;
+    // New endpoint accepts broadcasts by default (Endpoint ctor seeded {0}).
+    remote_index[0x0000].push_back(ep);
   }
   this->diagnostic_updater.add(
     ep->diag_name(),
@@ -193,12 +234,17 @@ void Router::del_endpoint(
   if (request->id != 0) {
     RCLCPP_INFO(lg, "Requested to del endpoint id: %d", request->id);
     {
+      // Lock order: index_mutex -> mu (matches rebuild_remote_index). The
+      // endpoint must be dropped from the index before its SharedPtr is
+      // released so no route can dereference a dangling pointer.
+      std::unique_lock<std::shared_mutex> index_lock(index_mutex);
       unique_lock lock(mu);
       auto it = this->endpoints.find(request->id);
       if (it != this->endpoints.end() ) {
         endpoint_to_remove = it->second;
         endpoint_diag_name = it->second->diag_name();
         this->endpoints.erase(it);
+        this->remove_from_index(endpoint_to_remove);
         response->successful = true;
       }
     }
@@ -213,6 +259,8 @@ void Router::del_endpoint(
     lg, "Requested to del endpoint type: %d url: %s", request->type,
     request->url.c_str());
   {
+    // Lock order: index_mutex -> mu (matches rebuild_remote_index).
+    std::unique_lock<std::shared_mutex> index_lock(index_mutex);
     unique_lock lock(mu);
     for (auto it = this->endpoints.cbegin(); it != this->endpoints.cend(); it++) {
       if (it->second->url == request->url &&
@@ -221,6 +269,7 @@ void Router::del_endpoint(
         endpoint_to_remove = it->second;
         endpoint_diag_name = it->second->diag_name();
         this->endpoints.erase(it);
+        this->remove_from_index(endpoint_to_remove);
         response->successful = true;
         break;
       }
@@ -345,22 +394,32 @@ void Router::periodic_clear_stale_remote_addrs()
   RCLCPP_DEBUG(lg, "clear stale remotes");
   for (auto & kv : this->endpoints) {
     auto & p = kv.second;
-    std::unique_lock<std::shared_mutex> endpoint_lock(p->remote_addrs_mutex);
+    bool changed = false;
+    {
+      std::unique_lock<std::shared_mutex> endpoint_lock(p->remote_addrs_mutex);
 
-    // Step 1: remove any stale addrs that still there
-    //         (hadn't been removed by Endpoint::recv_message())
-    for (auto addr : p->stale_addrs) {
-      if (addr != 0) {
-        p->remote_addrs.erase(addr);
-        RCLCPP_INFO(
-          lg, "link[%d] removed stale remote address %d.%d", p->id, addr >> 8,
-          addr & 0xff);
+      // Step 1: remove any stale addrs that still there
+      //         (hadn't been removed by Endpoint::recv_message())
+      for (auto addr : p->stale_addrs) {
+        if (addr != 0x0000 && p->remote_addrs.erase(addr) != 0) {
+          changed = true;
+          RCLCPP_INFO(
+            lg, "link[%d] removed stale remote address %d.%d", p->id, addr >> 8,
+            addr & 0xff);
+        }
       }
+
+      // Step 2: re-initiate stale_addrs
+      p->stale_addrs.clear();
+      p->stale_addrs.insert(p->remote_addrs.begin(), p->remote_addrs.end());
     }
 
-    // Step 2: re-initiate stale_addrs
-    p->stale_addrs.clear();
-    p->stale_addrs.insert(p->remote_addrs.begin(), p->remote_addrs.end());
+    // Flag the reverse index for a rebuild only if the reachability set
+    // actually changed. This timer also acts as a self-healing net for any
+    // lost-update missed by the lazy route-side rebuild.
+    if (changed) {
+      remote_index_dirty.store(true, std::memory_order_relaxed);
+    }
   }
 }
 
@@ -407,6 +466,10 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
 
   auto & nh = this->parent;
   if (new_sysid_addr || new_sysid_compid_addr) {
+    // A new remote was learned: flag the router's reverse index so the next
+    // routed message rebuilds. A relaxed store is enough -- the flag is just a
+    // gate; index_mutex provides the real synchronization on rebuild.
+    nh->remote_index_dirty.store(true, std::memory_order_relaxed);
     RCLCPP_INFO(
       nh->get_logger(), "link[%d] detected remote address %d.%d", this->id, msg->sysid,
       msg->compid);
