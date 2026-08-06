@@ -17,6 +17,7 @@
 #include <set>
 #include <utility>
 
+#include "mavros/inline_vector.hpp"
 #include "mavros/mavros_router.hpp"
 #include "rcpputils/asserts.hpp"
 
@@ -25,6 +26,16 @@ using rclcpp::QoS;
 
 using unique_lock = std::unique_lock<std::shared_mutex>;
 using shared_lock = std::shared_lock<std::shared_mutex>;
+
+namespace
+{
+// Routing targets are bounded by the endpoint count (>> the MAVLink 255-system
+// limit), and typically there are only a few, so an inline buffer avoids a heap
+// allocation per routed message.
+constexpr size_t kMaxRoutingTargets = 32;
+using TargetList = mavros::utils::InlineVector<
+  mavros::router::Endpoint::SharedPtr, kMaxRoutingTargets>;
+}   // namespace
 
 std::atomic<id_t> Router::id_counter {1000};
 
@@ -51,45 +62,49 @@ void Router::route_message(
     }
   }
 
-  auto collect_targets = [this, &src](addr_t addr) {
-      std::vector<Endpoint::SharedPtr> targets;
-      shared_lock lock(mu);
-      targets.reserve(this->endpoints.size());
+  // Single pass over the endpoints collecting both the broadcast and the
+  // targeted destinations. If the message was addressed and matched, prefer
+  // the targeted set, otherwise fall back to the broadcast set. This mirrors
+  // the old collect-then-retry logic without a second full scan.
+  TargetList targeted;
+  TargetList broadcast;
+  {
+    shared_lock lock(mu);
 
-      for (const auto & kv : this->endpoints) {
-        const auto & dest = kv.second;
+    for (const auto & kv : this->endpoints) {
+      const auto & dest = kv.second;
 
-        if (src->id == dest->id) {
-          continue;     // do not echo message
-        }
-        if (src->link_type == dest->link_type) {
-          continue;     // drop messages between same type FCU/GCS/UAS
-        }
-
-        // NOTE(vooon): current router do not allow to speak drone-to-drone.
-        //              if needed, perhaps better to add mavlink-router in front of
-        //              mavros-router.
-        {
-          std::shared_lock<std::shared_mutex> ep_lock(dest->remote_addrs_mutex);
-          if (dest->remote_addrs.find(addr) != dest->remote_addrs.end()) {
-            targets.emplace_back(dest);
-          }
-        }
+      if (src->id == dest->id) {
+        continue;     // do not echo message
       }
-      return targets;
-    };
+      if (src->link_type == dest->link_type) {
+        continue;     // drop messages between same type FCU/GCS/UAS
+      }
 
-  auto targets = collect_targets(target_addr);
-  if (targets.empty() && target_addr != 0) {
-    // if targeted message hasn't been sent, retry as broadcast
-    target_addr = 0;
-    targets = collect_targets(target_addr);
+      // NOTE(vooon): current router do not allow to speak drone-to-drone.
+      //              if needed, perhaps better to add mavlink-router in front of
+      //              mavros-router.
+      std::shared_lock<std::shared_mutex> ep_lock(dest->remote_addrs_mutex);
+      if (dest->remote_addrs.find(0) != dest->remote_addrs.end()) {
+        broadcast.push_back(dest);
+      }
+      if (target_addr != 0 &&
+        dest->remote_addrs.find(target_addr) != dest->remote_addrs.end())
+      {
+        targeted.push_back(dest);
+      }
+    }
   }
 
-  for (const auto & dest : targets) {
+  const TargetList * targets = &broadcast;
+  if (target_addr != 0 && !targeted.empty()) {
+    targets = &targeted;
+  }
+
+  for (const auto & dest : *targets) {
     dest->send_message(msg, framing, src->frame_id());
   }
-  const auto sent_cnt = targets.size();
+  const auto sent_cnt = targets->size();
 
   // update stats
   this->stat_msg_sent.fetch_add(sent_cnt);
@@ -99,11 +114,14 @@ void Router::route_message(
     auto lg = get_logger();
     auto clock = get_clock();
 
+    // The effective routing target: targeted on hit, 0 (broadcast) on fallback.
+    const addr_t log_addr = (targets == &targeted) ? target_addr : 0;
+
     RCLCPP_WARN_THROTTLE(
       lg,
       *clock, 10000, "Message dropped: msgid: %d, source: %d.%d, target: %d.%d", msg->msgid,
-      msg->sysid, msg->compid, target_addr >> 8,
-      target_addr & 0xff);
+      msg->sysid, msg->compid, log_addr >> 8,
+      log_addr & 0xff);
   }
 }
 
