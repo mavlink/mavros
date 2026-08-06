@@ -22,6 +22,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstring>
+#include <string>
 #include <thread>
 
 #include "mavconn/interface.hpp"
@@ -33,7 +34,7 @@ using mavlink_message_t = ::mavlink::mavlink_message_t;
 namespace mavconn
 {
 
-class MavconnPairBenchmark : public benchmark::Fixture
+class MavconnUdpBenchmark : public benchmark::Fixture
 {
 public:
   void SetUp(const benchmark::State &) override
@@ -67,7 +68,7 @@ public:
   mavlink_message_t hb_;
 };
 
-BENCHMARK_DEFINE_F(MavconnPairBenchmark, udp_throughput)(benchmark::State & state)
+BENCHMARK_DEFINE_F(MavconnUdpBenchmark, udp_throughput)(benchmark::State & state)
 {
   const size_t batch = static_cast<size_t>(state.range(0));
   size_t total = 0;
@@ -87,7 +88,72 @@ BENCHMARK_DEFINE_F(MavconnPairBenchmark, udp_throughput)(benchmark::State & stat
   state.SetItemsProcessed(static_cast<int64_t>(total));
 }
 
-BENCHMARK_REGISTER_F(MavconnPairBenchmark, udp_throughput)
+BENCHMARK_REGISTER_F(MavconnUdpBenchmark, udp_throughput)
+->Arg(100)
+->Unit(benchmark::kMillisecond)
+->MinTime(5);
+
+class MavconnTcpBenchmark : public benchmark::Fixture
+{
+public:
+  void SetUp(const benchmark::State &) override
+  {
+    received_ = 0;
+    rx_ = MAVConnInterface::open_url(
+      "tcp-l://127.0.0.1:14570", 1, 1,
+      [this](const mavlink_message_t *, Framing) {
+        received_.fetch_add(1, std::memory_order_relaxed);
+      });
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    tx_ = MAVConnInterface::open_url("tcp://127.0.0.1:14570", 2, 2);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    init_hb();
+  }
+
+  void TearDown(const benchmark::State &) override
+  {
+    if (tx_) {tx_->close(); tx_.reset();}
+    if (rx_) {rx_->close(); rx_.reset();}
+  }
+
+  void init_hb()
+  {
+    std::memset(&hb_, 0, sizeof(hb_));
+    hb_.magic = MAVLINK_STX;
+    hb_.msgid = 0;
+    hb_.sysid = 1;
+    hb_.compid = 1;
+    hb_.len = 9;
+  }
+
+  MAVConnInterface::Ptr tx_;
+  MAVConnInterface::Ptr rx_;
+  std::atomic<size_t> received_{0};
+  mavlink_message_t hb_;
+};
+
+BENCHMARK_DEFINE_F(MavconnTcpBenchmark, tcp_throughput)(benchmark::State & state)
+{
+  const size_t batch = static_cast<size_t>(state.range(0));
+  size_t total = 0;
+  for (auto _ : state) {
+    received_ = 0;
+    for (size_t i = 0; i < batch; i++) {
+      tx_->send_message_ignore_drop(&hb_);
+    }
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+    while (received_.load(std::memory_order_relaxed) < batch &&
+      std::chrono::steady_clock::now() < deadline)
+    {
+      std::this_thread::yield();
+    }
+    total += received_.load(std::memory_order_relaxed);
+  }
+  state.SetItemsProcessed(static_cast<int64_t>(total));
+}
+
+BENCHMARK_REGISTER_F(MavconnTcpBenchmark, tcp_throughput)
 ->Arg(100)
 ->Unit(benchmark::kMillisecond)
 ->MinTime(5);
