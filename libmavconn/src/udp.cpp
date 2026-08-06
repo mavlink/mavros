@@ -203,6 +203,7 @@ void MAVConnUDP::send_bytes(const uint8_t * bytes, size_t length)
     return;
   }
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -211,9 +212,15 @@ void MAVConnUDP::send_bytes(const uint8_t * bytes, size_t length)
     }
 
     tx_q.emplace_back(bytes, length);
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_sendto(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_sendto(false);});
+  }
 }
 
 void MAVConnUDP::send_message(const mavlink_message_t * message)
@@ -232,6 +239,7 @@ void MAVConnUDP::send_message(const mavlink_message_t * message)
 
   log_send(PFX, message);
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -240,9 +248,17 @@ void MAVConnUDP::send_message(const mavlink_message_t * message)
     }
 
     tx_q.emplace_back(message);
+    // Only the producer that turns the queue from idle to active posts a send
+    // handler; an in-progress chain drains everything enqueued meanwhile.
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_sendto(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_sendto(false);});
+  }
 }
 
 void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -259,6 +275,7 @@ void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t so
 
   log_send_obj(PFX, message);
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -267,9 +284,15 @@ void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t so
     }
 
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_sendto(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_sendto(false);});
+  }
 }
 
 void MAVConnUDP::do_recvfrom()

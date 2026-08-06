@@ -168,6 +168,7 @@ void MAVConnSerial::send_bytes(const uint8_t * bytes, size_t length)
     return;
   }
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -176,9 +177,15 @@ void MAVConnSerial::send_bytes(const uint8_t * bytes, size_t length)
     }
 
     tx_q.emplace_back(bytes, length);
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_write(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_write(false);});
+  }
 }
 
 void MAVConnSerial::send_message(const mavlink_message_t * message)
@@ -192,6 +199,7 @@ void MAVConnSerial::send_message(const mavlink_message_t * message)
 
   log_send(PFX, message);
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -200,9 +208,15 @@ void MAVConnSerial::send_message(const mavlink_message_t * message)
     }
 
     tx_q.emplace_back(message);
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_write(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_write(false);});
+  }
 }
 
 void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t source_compid)
@@ -214,6 +228,7 @@ void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t
 
   log_send_obj(PFX, message);
 
+  bool start_chain = false;
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -222,9 +237,15 @@ void MAVConnSerial::send_message(const mavlink::Message & message, const uint8_t
     }
 
     tx_q.emplace_back(message, get_status_p(), sys_id, source_compid);
+    if (!tx_in_progress) {
+      tx_in_progress = true;
+      start_chain = true;
+    }
   }
-  auto sthis = shared_from_this();
-  asio::post(io_context, [sthis]() {sthis->do_write(true);});
+  if (start_chain) {
+    auto sthis = shared_from_this();
+    asio::post(io_context, [sthis]() {sthis->do_write(false);});
+  }
 }
 
 void MAVConnSerial::do_read(void)
@@ -258,11 +279,11 @@ void MAVConnSerial::do_write(bool check_tx_state)
   tx_in_progress = true;
   auto sthis = shared_from_this();
   auto & buf_ref = tx_q.front();
-  serial_dev.async_write_some(
-    buffer(buf_ref.dpos(), buf_ref.nbytes()),
-    [sthis, &buf_ref](error_code error, size_t bytes_transferred) {
-      assert(ssize_t(bytes_transferred) <= buf_ref.len);
-
+  // asio::async_write loops over partial writes internally and calls the
+  // handler once the whole buffer is sent, so no manual pos tracking/resend.
+  asio::async_write(
+    serial_dev, buffer(buf_ref.dpos(), buf_ref.nbytes()),
+    [sthis](error_code error, size_t bytes_transferred) {
       if (error) {
         CONSOLE_BRIDGE_logError(PFXd "write: %s", sthis->conn_id, error.message().c_str());
         sthis->close();
@@ -279,10 +300,7 @@ void MAVConnSerial::do_write(bool check_tx_state)
           return;
         }
 
-        buf_ref.pos += bytes_transferred;
-        if (buf_ref.nbytes() == 0) {
-          sthis->tx_q.pop_front();
-        }
+        sthis->tx_q.pop_front();
 
         if (!sthis->tx_q.empty()) {
           continue_send = true;
