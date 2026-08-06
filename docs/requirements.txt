@@ -168,7 +168,7 @@ requests==2.34.2
     #   sphinx
 roman-numerals-py==4.1.0
     # via sphinx
-ruff==0.15.14
+ruff==0.16.0
 six==1.17.0
     # via python-dateutil
 snowballstemmer==3.1.0
