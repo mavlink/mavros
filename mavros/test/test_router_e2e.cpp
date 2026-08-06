@@ -155,7 +155,7 @@ public:
     exit_promise_ = std::make_shared<std::promise<void>>();
     exit_future_ = exit_promise_->get_future().share();
     spin_thread_ = std::thread([this]() {
-      exec_->spin_until_future_complete(exit_future_, 100ms);
+          exec_->spin_until_future_complete(exit_future_, 100ms);
     });
     // wait for the startup_delay_timer to create all endpoints
     const auto deadline = std::chrono::steady_clock::now() + 10s;
