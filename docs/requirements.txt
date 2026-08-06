@@ -77,7 +77,7 @@ markdown==3.10.2
     #   mkdocs-material
     #   mkdocstrings
     #   pymdown-extensions
-markdown-exec==1.12.1
+markdown-exec==1.12.3
     # via mavros-tools
 markdown-include==0.8.1
     # via mavros-tools
