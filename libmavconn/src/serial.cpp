@@ -139,14 +139,19 @@ void MAVConnSerial::connect(
 
 void MAVConnSerial::close()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  if (!is_open()) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (!is_open()) {
+      return;
+    }
+
+    serial_dev.cancel();
+    serial_dev.close();
   }
 
-  serial_dev.cancel();
-  serial_dev.close();
-
+  // Join the io thread without holding mutex: closing the device makes do_read
+  // complete with an error on the io thread, whose handler calls close() again
+  // and would block on mutex held here while we join it.
   if (io_runner.owns_thread()) {
     io_runner.shutdown_owned();
   }
