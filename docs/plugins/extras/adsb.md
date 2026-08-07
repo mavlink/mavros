@@ -6,14 +6,14 @@
 - Brief: ADS-B Vehicle plugin
 
 
-Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.
+Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle. Implements the [MAVLink Traffic Management (UTM/ADS-B)](https://mavlink.io/en/services/traffic_management.html).
 
 ## Publishers
-- `~/vehicle` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html))
+- `~/vehicle` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html)) - Publish received ADSB_VEHICLE messages (MAVLink traffic management).
 
 
 ## Subscribers
-- `~/send` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html))
+- `~/send` ([mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html)) - Subscribe to ADSBVehicle messages to send as ADSB_VEHICLE to the FCU.
 
 
 ## Services

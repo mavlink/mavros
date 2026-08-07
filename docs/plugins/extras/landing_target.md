@@ -6,16 +6,16 @@
 - Brief: Landing Target plugin
 
 
-This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU.
+This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU. Implements the [MAVLink Landing Target Protocol](https://mavlink.io/en/services/landing_target.html).
 
 ## Publishers
-- `~/pose_in` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
-- `~/lt_marker` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
+- `~/pose_in` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Publish landing target pose from MAVLink LANDING_TARGET.
+- `~/lt_marker` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Publish landing target size as Vector3Stamped.
 
 
 ## Subscribers
-- `~/raw` ([mavros_msgs::msg::LandingTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/LandingTarget.html))
-- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/raw` ([mavros_msgs::msg::LandingTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/LandingTarget.html)) - Subscribe to raw LandingTarget messages to send to the FCU.
+- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Subscribe to landing target pose to send as LANDING_TARGET to the FCU.
 
 
 ## Services
@@ -27,22 +27,22 @@ This plugin is intended to publish the location of a landing area captured from 
 
 
 ## Parameters
-- `frame_id` [default: `"landing_target_1"`] - general params
-- `listen_lt` [type: bool, default: `false`]
-- `mav_frame` [default: `"LOCAL_NED"`]
-- `land_target_type` [default: `"VISION_FIDUCIAL"`]
-- `target_size.x` [type: double, default: `1.0`] - target size
-- `target_size.y` [type: double, default: `1.0`]
-- `image.width` [type: integer, default: `640`] - image size
-- `image.height` [type: integer, default: `480`]
-- `camera.fov_x` [type: double, default: `2.0071286398`] - camera field-of-view -> should be precised using the calibrated camera intrinsics
-- `camera.fov_y` [type: double, default: `2.0071286398`]
-- `camera.focal_length` [type: double, default: `2.8`] - camera focal length
-- `tf.rate_limit` [type: double, default: `50.0`] - tf subsection
-- `tf.send` [type: bool, default: `true`]
-- `tf.frame_id` [default: `frame_id`]
-- `tf.child_frame_id` [default: `"camera_center"`]
-- `tf.listen` [type: bool, default: `false`]
+- `frame_id` [default: `"landing_target_1"`] - general params Frame id for published landing target messages.
+- `listen_lt` [type: bool, default: `false`] - Enable listening to raw LandingTarget messages.
+- `mav_frame` [default: `"LOCAL_NED"`] - MAVLink MAV_FRAME used when sending LANDING_TARGET.
+- `land_target_type` [default: `"VISION_FIDUCIAL"`] - MAVLink LANDING_TARGET_TYPE used when sending LANDING_TARGET.
+- `target_size.x` [type: double, default: `1.0`] - target size Landing target size on X axis [m].
+- `target_size.y` [type: double, default: `1.0`] - Landing target size on Y axis [m].
+- `image.width` [type: integer, default: `640`] - image size Image width in pixels.
+- `image.height` [type: integer, default: `480`] - Image height in pixels.
+- `camera.fov_x` [type: double, default: `2.0071286398`] - camera field-of-view -> should be precised using the calibrated camera intrinsics Camera field-of-view on X axis [rad].
+- `camera.fov_y` [type: double, default: `2.0071286398`] - Camera field-of-view on Y axis [rad].
+- `camera.focal_length` [type: double, default: `2.8`] - camera focal length Camera focal length [mm].
+- `tf.rate_limit` [type: double, default: `50.0`] - tf subsection Landing target transform rate limit [Hz].
+- `tf.send` [type: bool, default: `true`] - Enable sending landing target transform to TF.
+- `tf.frame_id` [default: `frame_id`] - TF frame id for landing target.
+- `tf.child_frame_id` [default: `"camera_center"`] - TF child frame id for landing target.
+- `tf.listen` [type: bool, default: `false`] - Listen to landing target pose from TF.
 
 
 ## MAVLink Subscriptions

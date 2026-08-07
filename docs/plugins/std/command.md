@@ -6,7 +6,7 @@
 - Brief: Command plugin.
 
 
-Send any command via COMMAND_LONG
+Send any command via COMMAND_LONG. Implements the [MAVLink Command Protocol](https://mavlink.io/en/services/command.html).
 
 ## Publishers
 - None
@@ -17,17 +17,17 @@ Send any command via COMMAND_LONG
 
 
 ## Services
-- `~/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
-- `~/command_int` ([mavros_msgs::srv::CommandInt](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandInt.html))
-- `~/arming` ([mavros_msgs::srv::CommandBool](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandBool.html))
-- `~/set_home` ([mavros_msgs::srv::CommandHome](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandHome.html))
-- `~/takeoff` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html))
-- `~/takeoff_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html))
-- `~/land` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html))
-- `~/land_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html))
-- `~/trigger_control` ([mavros_msgs::srv::CommandTriggerControl](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerControl.html))
-- `~/trigger_interval` ([mavros_msgs::srv::CommandTriggerInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerInterval.html))
-- `~/vtol_transition` ([mavros_msgs::srv::CommandVtolTransition](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandVtolTransition.html))
+- `~/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)) - Send any MAVLink command via COMMAND_LONG and wait for the ACK.
+- `~/command_int` ([mavros_msgs::srv::CommandInt](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandInt.html)) - Send any MAVLink command via COMMAND_INT (no ACK wait).
+- `~/arming` ([mavros_msgs::srv::CommandBool](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandBool.html)) - Arm or disarm the motors (MAV_CMD_COMPONENT_ARM_DISARM).
+- `~/set_home` ([mavros_msgs::srv::CommandHome](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandHome.html)) - Set the home position (MAV_CMD_DO_SET_HOME).
+- `~/takeoff` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html)) - Take off to a given altitude/location (MAV_CMD_NAV_TAKEOFF).
+- `~/takeoff_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html)) - Take off in local frame (MAV_CMD_NAV_TAKEOFF_LOCAL).
+- `~/land` ([mavros_msgs::srv::CommandTOL](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOL.html)) - Land at a given location (MAV_CMD_NAV_LAND).
+- `~/land_local` ([mavros_msgs::srv::CommandTOLLocal](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTOLLocal.html)) - Land in local frame (MAV_CMD_NAV_LAND_LOCAL).
+- `~/trigger_control` ([mavros_msgs::srv::CommandTriggerControl](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerControl.html)) - Enable/disable/reset the camera trigger (MAV_CMD_DO_TRIGGER_CONTROL).
+- `~/trigger_interval` ([mavros_msgs::srv::CommandTriggerInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandTriggerInterval.html)) - Set the camera trigger interval (MAV_CMD_DO_SET_CAM_TRIGG_INTERVAL).
+- `~/vtol_transition` ([mavros_msgs::srv::CommandVtolTransition](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandVtolTransition.html)) - Request a VTOL transition (MAV_CMD_DO_VTOL_TRANSITION).
 
 
 ## Clients

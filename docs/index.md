@@ -35,6 +35,13 @@ Index data used for generation:
 - `docs/plugins/std/index.json`
 - `docs/plugins/extras/index.json`
 
+Auto-generated per-package C++/Python API reference (published by ROS 2):
+
+- [mavros](https://docs.ros.org/en/rolling/p/mavros/),
+  [mavros_extras](https://docs.ros.org/en/rolling/p/mavros_extras/),
+  [mavros_msgs](https://docs.ros.org/en/rolling/p/mavros_msgs/),
+  [libmavconn](https://docs.ros.org/en/rolling/p/libmavconn/)
+
 
 Build And Test (Workspace)
 --------------------------

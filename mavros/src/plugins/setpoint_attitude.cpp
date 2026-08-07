@@ -55,7 +55,8 @@ using SyncTwistThrust = message_filters::Synchronizer<SyncTwistThrustPolicy>;
  * @brief Setpoint attitude plugin
  * @plugin setpoint_attitude
  *
- * Send setpoint attitude/orientation/thrust to FCU controller.
+ * Send setpoint attitude/orientation/thrust to FCU controller. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointAttitudePlugin : public plugin::Plugin,
   private plugin::SetAttitudeTargetMixin<SetpointAttitudePlugin>
@@ -93,12 +94,14 @@ public:
           /**
            * @brief Use message_filters to sync attitude and thrust msg coming from different topics
            */
+          //! Attitude setpoint as quaternion (SET_ATTITUDE_TARGET).
           pose_sub.subscribe(node, "~/attitude", subscriber_qos);
 
           sync_pose = std::make_unique<SyncPoseThrust>(SyncPoseThrustPolicy(10), pose_sub, th_sub);
           sync_pose->registerCallback(&SetpointAttitudePlugin::attitude_pose_cb, this);
 
         } else {
+          //! Attitude setpoint as angular velocity (SET_ATTITUDE_TARGET).
           twist_sub.subscribe(node, "~/cmd_vel", subscriber_qos);
 
           sync_twist =
@@ -108,6 +111,8 @@ public:
       });
 
     // thrust msg subscriber to sync
+
+    //! Thrust setpoint (SET_ATTITUDE_TARGET).
     th_sub.subscribe(node, "~/thrust", subscriber_qos);
   }
 

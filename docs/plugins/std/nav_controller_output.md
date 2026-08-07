@@ -9,7 +9,7 @@
 Publishes nav_controller_output message https://mavlink.io/en/messages/common.html#NAV_CONTROLLER_OUTPUT
 
 ## Publishers
-- `~/output` ([mavros_msgs::msg::NavControllerOutput](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/NavControllerOutput.html))
+- `~/output` ([mavros_msgs::msg::NavControllerOutput](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/NavControllerOutput.html)) - Publish navigation controller output (NAV_CONTROLLER_OUTPUT).
 
 
 ## Subscribers

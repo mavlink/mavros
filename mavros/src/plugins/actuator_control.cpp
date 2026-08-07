@@ -42,8 +42,10 @@ public:
   {
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish actuator control target (ACTUATOR_CONTROL_TARGET).
     target_actuator_control_pub = node->create_publisher<mavros_msgs::msg::ActuatorControl>(
       "target_actuator_control", sensor_qos);
+    //! Send actuator control commands to FCU (SET_ACTUATOR_CONTROL_TARGET).
     actuator_control_sub = node->create_subscription<mavros_msgs::msg::ActuatorControl>(
       "actuator_control", sensor_qos, std::bind(
         &ActuatorControlPlugin::actuator_control_cb, this, _1));

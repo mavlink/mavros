@@ -43,12 +43,15 @@ public:
   explicit VisionSpeedEstimatePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "vision_speed")
   {
+    //! Subscribe to vision speed as TwistWithCovarianceStamped.
     vision_twist_cov_sub =
       node->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "~/speed_twist_cov", 10, std::bind(&VisionSpeedEstimatePlugin::twist_cov_cb, this, _1));
+    //! Subscribe to vision speed as TwistStamped.
     vision_twist_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
       "~/speed_twist", 10,
       std::bind(&VisionSpeedEstimatePlugin::twist_cb, this, _1));
+    //! Subscribe to vision speed as Vector3Stamped.
     vision_vector_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(
       "~/speed_vector", 10, std::bind(&VisionSpeedEstimatePlugin::vector_cb, this, _1));
   }

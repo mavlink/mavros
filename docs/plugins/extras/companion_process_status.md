@@ -13,7 +13,7 @@ Publishes the status of components running on the companion computer @see status
 
 
 ## Subscribers
-- `~/status` ([mavros_msgs::msg::CompanionProcessStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CompanionProcessStatus.html))
+- `~/status` ([mavros_msgs::msg::CompanionProcessStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CompanionProcessStatus.html)) - Subscribe to CompanionProcessStatus to send as HEARTBEAT to the FCU.
 
 
 ## Services

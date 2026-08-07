@@ -7,15 +7,15 @@
 
 
 ## Publishers
-- `~/debug` (DV) - publishers
-- `~/debug_vector` (DV)
-- `~/debug_float_array` (DV)
-- `~/named_value_float` (DV)
-- `~/named_value_int` (DV)
+- `~/debug` (DV) - publishers Publish DEBUG messages from MAVLink DEBUG.
+- `~/debug_vector` (DV) - Publish DEBUG_VECT messages from MAVLink DEBUG_VECT.
+- `~/debug_float_array` (DV) - Publish DEBUG_FLOAT_ARRAY messages from MAVLink DEBUG_FLOAT_ARRAY.
+- `~/named_value_float` (DV) - Publish NAMED_VALUE_FLOAT messages from MAVLink NAMED_VALUE_FLOAT.
+- `~/named_value_int` (DV) - Publish NAMED_VALUE_INT messages from MAVLink NAMED_VALUE_INT.
 
 
 ## Subscribers
-- `~/send` (DV)
+- `~/send` (DV) - subscribers Subscribe to DebugValue to send MAVLink debug messages to the FCU.
 
 
 ## Services

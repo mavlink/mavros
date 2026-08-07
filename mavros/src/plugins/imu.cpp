@@ -78,26 +78,31 @@ public:
      * transformation from the ENU frame to the base_link frame (ENU <-> base_link).
      * THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft).
      */
+    //! Coordinate frame used for the published IMU topics.
     node_declare_and_watch_parameter(
       "frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Standard deviation of the linear acceleration.
     node_declare_and_watch_parameter(
       "linear_acceleration_stdev", 0.0003, [&](const rclcpp::Parameter & p) {
         auto linear_stdev = p.as_double();
         setup_covariance(linear_acceleration_cov, linear_stdev);
       });
+    //! Standard deviation of the angular velocity.
     node_declare_and_watch_parameter(
       "angular_velocity_stdev", 0.02 * (M_PI / 180.0), [&](const rclcpp::Parameter & p) {
         auto angular_stdev = p.as_double();
         setup_covariance(angular_velocity_cov, angular_stdev);
       });
+    //! Standard deviation of the orientation.
     node_declare_and_watch_parameter(
       "orientation_stdev", 1.0, [&](const rclcpp::Parameter & p) {
         auto orientation_stdev = p.as_double();
         setup_covariance(orientation_cov, orientation_stdev);
       });
+    //! Standard deviation of the magnetic field.
     node_declare_and_watch_parameter(
       "magnetic_stdev", 0.0, [&](const rclcpp::Parameter & p) {
         auto mag_stdev = p.as_double();
@@ -108,18 +113,25 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
     imu_pub = node->create_publisher<sensor_msgs::msg::Imu>("~/data", sensor_qos);
+    //! Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
     imu_raw_pub = node->create_publisher<sensor_msgs::msg::Imu>("~/data_raw", sensor_qos);
+    //! Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
     magn_pub = node->create_publisher<sensor_msgs::msg::MagneticField>("~/mag", sensor_qos);
+    //! Publish IMU temperature (HIGHRES_IMU).
     temp_imu_pub = node->create_publisher<sensor_msgs::msg::Temperature>(
       "~/temperature_imu",
       sensor_qos);
+    //! Publish barometer temperature (SCALED_PRESSURE).
     temp_baro_pub = node->create_publisher<sensor_msgs::msg::Temperature>(
       "~/temperature_baro",
       sensor_qos);
+    //! Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).
     static_press_pub = node->create_publisher<sensor_msgs::msg::FluidPressure>(
       "~/static_pressure",
       sensor_qos);
+    //! Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).
     diff_press_pub = node->create_publisher<sensor_msgs::msg::FluidPressure>(
       "~/diff_pressure",
       sensor_qos);

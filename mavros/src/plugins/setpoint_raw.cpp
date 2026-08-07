@@ -38,7 +38,8 @@ using namespace std::placeholders;      // NOLINT
  * @plugin setpoint_raw
  *
  * Send position setpoints and publish current state (return loop).
- * User can decide what set of filed needed for operation via IGNORE bits.
+ * User can decide what set of filed needed for operation via IGNORE bits. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointRawPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointRawPlugin>,
@@ -52,6 +53,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Scaling factor applied to the thrust setpoint.
     node_declare_and_watch_parameter(
       "thrust_scaling", NAN, [&](const rclcpp::Parameter & p) {
         thrust_scaling = p.as_double();
@@ -59,25 +61,31 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Local position/velocity/accel setpoint (SET_POSITION_TARGET_LOCAL_NED).
     local_sub = node->create_subscription<mavros_msgs::msg::PositionTarget>(
       "~/local", sensor_qos, std::bind(
         &SetpointRawPlugin::local_cb, this,
         _1));
+    //! Global position/velocity/accel setpoint (SET_POSITION_TARGET_GLOBAL_INT).
     global_sub = node->create_subscription<mavros_msgs::msg::GlobalPositionTarget>(
       "~/global",
       sensor_qos, std::bind(
         &SetpointRawPlugin::global_cb, this,
         _1));
+    //! Attitude/thrust setpoint (SET_ATTITUDE_TARGET).
     attitude_sub = node->create_subscription<mavros_msgs::msg::AttitudeTarget>(
       "~/attitude",
       sensor_qos, std::bind(
         &SetpointRawPlugin::attitude_cb, this, _1));
 
+    //! Publish local position target (POSITION_TARGET_LOCAL_NED).
     target_local_pub = node->create_publisher<mavros_msgs::msg::PositionTarget>(
       "~/target_local",
       sensor_qos);
+    //! Publish global position target (POSITION_TARGET_GLOBAL_INT).
     target_global_pub = node->create_publisher<mavros_msgs::msg::GlobalPositionTarget>(
       "~/target_global", sensor_qos);
+    //! Publish attitude target (ATTITUDE_TARGET).
     target_attitude_pub = node->create_publisher<mavros_msgs::msg::AttitudeTarget>(
       "~/target_attitude", sensor_qos);
   }

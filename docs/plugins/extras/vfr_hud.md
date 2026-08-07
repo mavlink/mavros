@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `vfr_hud` ([mavros_msgs::msg::VfrHud](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/VfrHud.html))
+- `vfr_hud` ([mavros_msgs::msg::VfrHud](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/VfrHud.html)) - Publish VFR HUD data from MAVLink VFR_HUD.
 
 
 ## Subscribers

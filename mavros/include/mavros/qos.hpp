@@ -43,6 +43,28 @@ static inline rclcpp::QoS LatchedStateQoS()
   return rclcpp::QoS(10).keep_last(1).reliable().transient_local();
 }
 
+//! Publisher options that opt out of intra-process comms.
+//
+// Latched (transient_local) publishers are not compatible with intra-process
+// delivery; rclcpp throws "intraprocess communication allowed only with
+// volatile durability" when such a publisher is created on an intra-process
+// node (e.g. on humble). Plugin nodes enable intra-process comms, so latched
+// publishers must disable it per-publisher.
+static inline rclcpp::PublisherOptions NonIntraProcessPublisherOptions()
+{
+  rclcpp::PublisherOptions opts;
+  opts.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+  return opts;
+}
+
+//! Subscription options that opt out of intra-process comms (see above).
+static inline rclcpp::SubscriptionOptions NonIntraProcessSubscriptionOptions()
+{
+  rclcpp::SubscriptionOptions opts;
+  opts.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+  return opts;
+}
+
 }       // namespace mavros
 
 #endif  // MAVROS__QOS_HPP_

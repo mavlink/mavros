@@ -6,6 +6,8 @@
 - Brief: FTP plugin.
 
 
+Implements the [MAVLink File Transfer Protocol](https://mavlink.io/en/services/ftp.html).
+
 ## Publishers
 - None
 
@@ -15,18 +17,18 @@
 
 
 ## Services
-- `~/list` ([mavros_msgs::srv::FileList](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileList.html))
-- `~/open` ([mavros_msgs::srv::FileOpen](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileOpen.html))
-- `~/close` ([mavros_msgs::srv::FileClose](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileClose.html))
-- `~/read` ([mavros_msgs::srv::FileRead](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRead.html))
-- `~/write` ([mavros_msgs::srv::FileWrite](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileWrite.html))
-- `~/mkdir` ([mavros_msgs::srv::FileMakeDir](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileMakeDir.html))
-- `~/rmdir` ([mavros_msgs::srv::FileRemoveDir](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRemoveDir.html))
-- `~/remove` ([mavros_msgs::srv::FileRemove](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRemove.html))
-- `~/truncate` ([mavros_msgs::srv::FileTruncate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileTruncate.html))
-- `~/reset` ([std_srvs::srv::Empty](https://docs.ros.org/en/rolling/p/std_srvs/srv/Empty.html))
-- `~/rename` ([mavros_msgs::srv::FileRename](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRename.html))
-- `~/checksum` ([mavros_msgs::srv::FileChecksum](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileChecksum.html))
+- `~/list` ([mavros_msgs::srv::FileList](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileList.html)) - List the contents of a directory on the FCU (FTP).
+- `~/open` ([mavros_msgs::srv::FileOpen](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileOpen.html)) - Open a file on the FCU for reading or writing (FTP).
+- `~/close` ([mavros_msgs::srv::FileClose](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileClose.html)) - Close an open file on the FCU (FTP).
+- `~/read` ([mavros_msgs::srv::FileRead](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRead.html)) - Read data from an open file on the FCU (FTP).
+- `~/write` ([mavros_msgs::srv::FileWrite](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileWrite.html)) - Write data to an open file on the FCU (FTP).
+- `~/mkdir` ([mavros_msgs::srv::FileMakeDir](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileMakeDir.html)) - Create a directory on the FCU (FTP).
+- `~/rmdir` ([mavros_msgs::srv::FileRemoveDir](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRemoveDir.html)) - Remove a directory on the FCU (FTP).
+- `~/remove` ([mavros_msgs::srv::FileRemove](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRemove.html)) - Remove a file on the FCU (FTP).
+- `~/truncate` ([mavros_msgs::srv::FileTruncate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileTruncate.html)) - Truncate a file to a given length on the FCU (FTP).
+- `~/reset` ([std_srvs::srv::Empty](https://docs.ros.org/en/rolling/p/std_srvs/srv/Empty.html)) - Reset the FTP session on both sides (FTP).
+- `~/rename` ([mavros_msgs::srv::FileRename](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileRename.html)) - Rename a file on the FCU (FTP).
+- `~/checksum` ([mavros_msgs::srv::FileChecksum](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/FileChecksum.html)) - Calculate the CRC32 checksum of a file on the FCU (FTP).
 
 
 ## Clients

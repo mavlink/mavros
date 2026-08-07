@@ -39,6 +39,7 @@ public:
   explicit PlayTunePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "play_tune")
   {
+    //! Subscribe to PlayTuneV2 to send as PLAY_TUNE_V2 to the FCU.
     sub =
       node->create_subscription<mavros_msgs::msg::PlayTuneV2>(
       "play_tune", 1,

@@ -43,6 +43,7 @@ public:
   {
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish wind estimation (WIND / WIND_COV).
     wind_pub = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "wind_estimation", sensor_qos);
   }

@@ -31,6 +31,9 @@ using namespace std::placeholders;      // NOLINT
 /**
  * @brief Manual Control plugin
  * @plugin manual_control
+ *
+ * Implements the
+ * [MAVLink Manual Control (Joystick) Protocol](https://mavlink.io/en/services/manual_control.html).
  */
 class ManualControlPlugin : public plugin::Plugin
 {
@@ -38,7 +41,9 @@ public:
   explicit ManualControlPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "manual_control")
   {
+    //! Publish manual control input from FCU (MANUAL_CONTROL).
     control_pub = node->create_publisher<mavros_msgs::msg::ManualControl>("~/control", 10);
+    //! Send manual control commands to FCU (MANUAL_CONTROL).
     send_sub =
       node->create_subscription<mavros_msgs::msg::ManualControl>(
       "~/send", 10,

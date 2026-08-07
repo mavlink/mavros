@@ -43,11 +43,13 @@ public:
   : Plugin(uas_, "mocap")
   {
     /** @note For VICON ROS package, subscribe to TransformStamped topic */
+    //! Subscribe to motion capture pose as TransformStamped (VICON).
     mocap_tf_sub = node->create_subscription<geometry_msgs::msg::TransformStamped>(
       "~/tf", 1, std::bind(
         &MocapPoseEstimatePlugin::mocap_tf_cb, this,
         _1));
     /** @note For Optitrack ROS package, subscribe to PoseStamped topic */
+    //! Subscribe to motion capture pose as PoseStamped (Optitrack).
     mocap_pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
       "~/pose", 1, std::bind(
         &MocapPoseEstimatePlugin::mocap_pose_cb, this,

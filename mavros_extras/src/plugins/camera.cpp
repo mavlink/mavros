@@ -35,7 +35,8 @@ using utils::enum_value;
  * @brief Camera plugin plugin
  * @plugin camera
  *
- * Plugin for interfacing on the mavlink camera protocol
+ * Plugin for interfacing on the mavlink camera protocol. Implements the
+ * [MAVLink Camera Protocol v2](https://mavlink.io/en/services/camera.html).
  * @see command_cb()
  */
 class CameraPlugin : public plugin::Plugin
@@ -44,6 +45,7 @@ public:
   explicit CameraPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "camera")
   {
+    //! Publish camera image capture info from MAVLink CAMERA_IMAGE_CAPTURED.
     camera_image_captured_pub = node->create_publisher<mavros_msgs::msg::CameraImageCaptured>(
       "~/image_captured", 10);
   }

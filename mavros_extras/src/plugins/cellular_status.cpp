@@ -39,6 +39,7 @@ public:
   explicit CellularStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "cellular_status")
   {
+    //! Subscribe to CellularStatus messages to send as CELLULAR_STATUS to the FCU.
     sub_status = node->create_subscription<mavros_msgs::msg::CellularStatus>(
       "~/status", 1, std::bind(
         &CellularStatusPlugin::status_cb, this,

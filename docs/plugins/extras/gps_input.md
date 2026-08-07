@@ -13,7 +13,7 @@ Sends <a href="https://mavlink.io/en/messages/common.html#GPS_INPUT">GPS_INPUT M
 
 
 ## Subscribers
-- `~/gps_input` ([mavros_msgs::msg::GPSINPUT](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSINPUT.html))
+- `~/gps_input` ([mavros_msgs::msg::GPSINPUT](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSINPUT.html)) - Subscribe to GPSINPUT to send as GPS_INPUT to the FCU.
 
 
 ## Services
@@ -25,7 +25,7 @@ Sends <a href="https://mavlink.io/en/messages/common.html#GPS_INPUT">GPS_INPUT M
 
 
 ## Parameters
-- `gps_rate` [type: double, default: `5.0`]
+- `gps_rate` [type: double, default: `5.0`] - Rate at which GPS_INPUT messages are sent [Hz].
 
 
 ## MAVLink Subscriptions

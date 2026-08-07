@@ -11,6 +11,11 @@ Guidance for coding agents in this repository.
 - CI `colcon test` is a merge gate and must pass before merge.
 - Follow generated-code workflows (`cog`, docs extractors/templates); do not hand-edit generated regions.
 - Use commit subject format: `<component>: ...` with short component names (for example: `msgs`, `extras`, `tools`).
+- Never print, echo, export, or otherwise output the value of any token/secret environment variable
+  (e.g. `*_TOKEN`, `*_SECRET`, `*_KEY`, `*_USERNAME`, `*_PASSWORD`, `GH_TOKEN`, `GITHUB_*`, `GITLAB_*`).
+  Reference them only by variable name (e.g. `"$GITHUB_MCP_RO_TOKEN"`) so the value is
+  never captured in tool output, logs, or transcripts. Prefer MCP/tooling that handles auth internally
+  over shelling out with an explicit secret value.
 
 ## Repository Scope
 

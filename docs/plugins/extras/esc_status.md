@@ -7,8 +7,8 @@
 
 
 ## Publishers
-- `~/info` ([mavros_msgs::msg::ESCInfo](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCInfo.html))
-- `~/status` ([mavros_msgs::msg::ESCStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCStatus.html))
+- `~/info` ([mavros_msgs::msg::ESCInfo](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCInfo.html)) - Publish ESC information from MAVLink ESC_INFO.
+- `~/status` ([mavros_msgs::msg::ESCStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCStatus.html)) - Publish ESC status from MAVLink ESC_STATUS.
 
 
 ## Subscribers

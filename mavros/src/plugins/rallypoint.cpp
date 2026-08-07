@@ -26,6 +26,9 @@ using namespace std::chrono_literals;   // NOLINT
 /**
  * @brief Rallypoint manipulation plugin
  * @plugin rallypoint
+ *
+ * Implements the rally point part of the
+ * [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
  */
 class RallypointPlugin : public plugin::MissionBase
 {
@@ -36,11 +39,13 @@ public:
     enable_node_watch_parameters();
 
     // NOTE(vooon): I'm not quite sure that this option would work with mavros router
+    //! Pull rally points from the FCU after GCS connection.
     node_declare_and_watch_parameter(
       "pull_after_gcs", true, [&](const rclcpp::Parameter & p) {
         do_pull_after_gcs = p.as_bool();
       });
 
+    //! Use MISSION_ITEM_INT instead of MISSION_ITEM (MISSION protocol).
     node_declare_and_watch_parameter(
       "use_mission_item_int", true, [&](const rclcpp::Parameter & p) {
         use_mission_item_int = p.as_bool();
@@ -48,7 +53,9 @@ public:
 
     auto rp_qos = mavros::LatchedStateQoS();
 
-    rp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/rallypoints", rp_qos);
+    //! Publish the current rally points (MISSION protocol).
+    rp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>(
+      "~/rallypoints", rp_qos, mavros::NonIntraProcessPublisherOptions());
 
 #ifdef USE_OLD_RMW_QOS
     auto services_qos = rmw_qos_profile_services_default;
@@ -56,16 +63,19 @@ public:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Pull the rally points from the FCU (MISSION_REQUEST_LIST).
     pull_srv =
       node->create_service<mavros_msgs::srv::WaypointPull>(
       "~/pull",
       std::bind(&RallypointPlugin::pull_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Push the rally points to the FCU (MISSION_COUNT).
     push_srv =
       node->create_service<mavros_msgs::srv::WaypointPush>(
       "~/push",
       std::bind(&RallypointPlugin::push_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Clear the rally points on the FCU (MISSION_CLEAR_ALL).
     clear_srv =
       node->create_service<mavros_msgs::srv::WaypointClear>(
       "~/clear",

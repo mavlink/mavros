@@ -1,8 +1,12 @@
 MAVROS
-======
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![CI](https://github.com/mavlink/mavros/actions/workflows/main.yml/badge.svg)](https://github.com/mavlink/mavros/actions/workflows/main.yml)
+=====
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![CI](https://github.com/mavlink/mavros/actions/workflows/main.yml/badge.svg)](https://github.com/mavlink/mavros/actions/workflows/main.yml)  [![Documentation](https://readthedocs.org/projects/mavros/badge/?version=latest)](https://mavros.readthedocs.io/en/latest/)
 
 MAVLink extendable communication node for ROS.
+
+- Full documentation: [https://mavros.readthedocs.io/][rtd]
+- Plugin reference (all ROS API): [Plugin index](docs/plugins/index.md)
+- Per-package C++/Python API reference (auto-generated): [https://docs.ros.org/en/rolling/p/mavros/][api]
 
 - Since 2014-08-11 this repository contains several packages.
 - Since 2014-11-02 hydro support separated from master to hydro-devel branch.
@@ -78,6 +82,8 @@ CI Statuses
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md
+[rtd]: https://mavros.readthedocs.io/en/latest/
+[api]: https://docs.ros.org/en/rolling/p/mavros/
 [exrm]: https://github.com/mavlink/mavros/blob/ros2/mavros_extras/README.md
 [libmc]: https://github.com/mavlink/mavros/blob/ros2/libmavconn/README.md
 [test]: https://github.com/mavlink/mavros/blob/ros2/test_mavros/README.md

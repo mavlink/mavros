@@ -53,13 +53,16 @@ public:
   explicit TrajectoryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "trajectory")
   {
+    //! Subscribe to Trajectory to send as TRAJECTORY to the FCU.
     trajectory_generated_sub = node->create_subscription<mavros_msgs::msg::Trajectory>(
       "~/generated", 10, std::bind(
         &TrajectoryPlugin::trajectory_cb, this, _1));
+    //! Subscribe to nav_msgs/Path to send as TRAJECTORY to the FCU.
     path_sub =
       node->create_subscription<nav_msgs::msg::Path>(
       "~/path", 10,
       std::bind(&TrajectoryPlugin::path_cb, this, _1));
+    //! Publish desired trajectory from MAVLink TRAJECTORY.
     trajectory_desired_pub = node->create_publisher<mavros_msgs::msg::Trajectory>("~/desired", 10);
   }
 

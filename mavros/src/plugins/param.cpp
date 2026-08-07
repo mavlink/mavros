@@ -225,7 +225,7 @@ public:
   //! Make PARAM_SET message. Set target ids manually!
   PARAM_SET to_param_set() const
   {
-    mavlink::mavlink_param_union_t uv;
+    mavlink::mavlink_param_union_t uv{};
     PARAM_SET ret{};
 
     mavlink::set_string(ret.param_id, param_id);
@@ -414,6 +414,9 @@ public:
 /**
  * @brief Parameter manipulation plugin
  * @plugin param
+ *
+ * Implements the
+ * [MAVLink Parameter Protocol](https://mavlink.io/en/services/parameter.html).
  */
 class ParamPlugin : public plugin::Plugin
 {
@@ -422,12 +425,12 @@ public:
   : Plugin(uas_, "param", rclcpp::NodeOptions().start_parameter_services(
         false).start_parameter_event_publisher(false)),
     BOOTUP_TIME(10s),
-    LIST_TIMEOUT(30s),
-    PARAM_TIMEOUT(1s),
-    RETRIES_COUNT(3),
+    param_set_timeout(1s),
+    param_list_timeout(30s),
+    param_retries_count(3),
     param_count(-1),
     param_state(PR::IDLE),
-    param_rx_retries(RETRIES_COUNT),
+    param_rx_retries(param_retries_count),
     is_timedout(false)
   {
     auto event_qos = rclcpp::ParameterEventsQoS();
@@ -438,7 +441,9 @@ public:
     auto qos = rclcpp::ParametersQoS();
 #endif
 
+    //! Parameter change notifications (new/updated/changed).
     param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", event_qos);
+    //! Standard ROS parameter events (on /parameter_events).
     std_event_pub = node->create_publisher<rcl_interfaces::msg::ParameterEvent>(
       PSN::events,
       event_qos);
@@ -446,42 +451,77 @@ public:
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     // Custom parameter services
+    //! Fetch all parameters from the device (PARAM_REQUEST_LIST).
     pull_srv =
       node->create_service<mavros_msgs::srv::ParamPull>(
       "~/pull",
       std::bind(&ParamPlugin::pull_cb, this, _1, _2), qos, srv_cg);
+    //! Set a single parameter value (PARAM_SET).
     set_srv =
       node->create_service<mavros_msgs::srv::ParamSetV2>(
       "~/set",
       std::bind(&ParamPlugin::set_cb, this, _1, _2), qos, srv_cg);
 
     // Standard parameter services
+    //! Get parameter values from the local cache.
     get_parameters_srv = node->create_service<rcl_interfaces::srv::GetParameters>(
       PSN::get_parameters,
       std::bind(&ParamPlugin::get_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! Get parameter types from the local cache.
     get_parameter_types_srv = node->create_service<rcl_interfaces::srv::GetParameterTypes>(
       PSN::get_parameter_types,
       std::bind(&ParamPlugin::get_parameter_types_cb, this, _1, _2), qos, srv_cg);
+    //! Set parameter values (PARAM_SET for each).
     set_parameters_srv = node->create_service<rcl_interfaces::srv::SetParameters>(
       PSN::set_parameters,
       std::bind(&ParamPlugin::set_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! Unsupported: device-side atomic set, always reports failure.
     set_parameters_atomically_srv =
       node->create_service<rcl_interfaces::srv::SetParametersAtomically>(
       PSN::set_parameters_atomically,
       std::bind(&ParamPlugin::set_parameters_atomically_cb, this, _1, _2), qos, srv_cg);
+    //! Describe parameter descriptors from the local cache.
     describe_parameters_srv = node->create_service<rcl_interfaces::srv::DescribeParameters>(
       PSN::describe_parameters,
       std::bind(&ParamPlugin::describe_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! List parameter names from the local cache.
     list_parameters_srv = node->create_service<rcl_interfaces::srv::ListParameters>(
       PSN::list_parameters,
       std::bind(&ParamPlugin::list_parameters_cb, this, _1, _2), qos, srv_cg);
+
+    enable_node_watch_parameters();
+
+    //! Timeout for a single PARAM_SET retry (seconds).
+    node_declare_and_watch_parameter(
+      "param_set_timeout", param_set_timeout.seconds(), [this](const rclcpp::Parameter & p) {
+        param_set_timeout = rclcpp::Duration::from_seconds(p.as_double());
+        // Recreate the retry timer so the new period takes effect for tests.
+        timeout_timer.reset();
+        timeout_timer =
+        node->create_wall_timer(
+          param_set_timeout.to_chrono<std::chrono::nanoseconds>(),
+          std::bind(&ParamPlugin::timeout_cb, this));
+        timeout_timer->cancel();
+      });
+    //! Timeout waiting for a full parameter list pull (seconds).
+    node_declare_and_watch_parameter(
+      "param_list_timeout", param_list_timeout.seconds(), [&](const rclcpp::Parameter & p) {
+        param_list_timeout = rclcpp::Duration::from_seconds(p.as_double());
+      });
+    //! Number of retries before reporting a parameter operation as failed.
+    node_declare_and_watch_parameter(
+      "param_retries", param_retries_count, [&](const rclcpp::Parameter & p) {
+        param_retries_count = p.as_int();
+      });
 
     schedule_timer =
       node->create_wall_timer(BOOTUP_TIME, std::bind(&ParamPlugin::schedule_cb, this));
     schedule_timer->cancel();
 
     timeout_timer =
-      node->create_wall_timer(PARAM_TIMEOUT, std::bind(&ParamPlugin::timeout_cb, this));
+      node->create_wall_timer(
+      param_set_timeout.to_chrono<std::chrono::nanoseconds>(),
+      std::bind(&ParamPlugin::timeout_cb, this));
     timeout_timer->cancel();
 
     enable_connection_cb();
@@ -522,9 +562,9 @@ private:
   rclcpp::TimerBase::SharedPtr timeout_timer;   //!< for timeout resend
 
   const std::chrono::nanoseconds BOOTUP_TIME;
-  const std::chrono::nanoseconds LIST_TIMEOUT;
-  const std::chrono::nanoseconds PARAM_TIMEOUT;
-  const int RETRIES_COUNT;
+  rclcpp::Duration param_set_timeout;
+  rclcpp::Duration param_list_timeout;
+  int param_retries_count;
 
   enum class PR
   {
@@ -653,7 +693,7 @@ private:
         RCLCPP_DEBUG(
           lg, "PR: got a value of a requested param idx=%u, "
           "resetting retries count", pmsg.param_index);
-        param_rx_retries = RETRIES_COUNT;
+        param_rx_retries = param_retries_count;
       } else if (param_state == PR::RXPARAM_TIMEDOUT) {
         RCLCPP_INFO(
           lg, "PR: got an unsolicited param value idx=%u, "
@@ -774,7 +814,7 @@ private:
 
     RCLCPP_DEBUG(get_logger(), "PR: start scheduled pull");
     param_state = PR::RXLIST;
-    param_rx_retries = RETRIES_COUNT;
+    param_rx_retries = param_retries_count;
     clear_all_parameters();
 
     restart_timeout_timer();
@@ -821,7 +861,7 @@ private:
         parameters_missing_idx.pop_front();
         restart_timeout_timer();
         if (!parameters_missing_idx.empty()) {
-          param_rx_retries = RETRIES_COUNT;
+          param_rx_retries = param_retries_count;
           first_miss_idx = parameters_missing_idx.front();
 
           RCLCPP_WARN(
@@ -879,7 +919,8 @@ private:
   {
     std::unique_lock<std::mutex> lock(list_cond_mutex);
 
-    return list_receiving.wait_for(lock, LIST_TIMEOUT) == std::cv_status::no_timeout &&
+    return list_receiving.wait_for(lock,
+          param_list_timeout.to_chrono<std::chrono::nanoseconds>()) == std::cv_status::no_timeout &&
            !is_timedout;
   }
 
@@ -887,7 +928,8 @@ private:
   {
     auto future = opt->promise.get_future();
 
-    auto wres = future.wait_for(PARAM_TIMEOUT * (RETRIES_COUNT + 2));
+    auto wres = future.wait_for(param_set_timeout.to_chrono<std::chrono::nanoseconds>() *
+        (param_retries_count + 2));
     if (wres != std::future_status::ready) {
       return {false, opt->param};
     }
@@ -900,7 +942,7 @@ private:
     unique_lock lock(mutex);
 
     // add to waiting list
-    auto opt = std::make_shared<ParamSetOpt>(param, RETRIES_COUNT);
+    auto opt = std::make_shared<ParamSetOpt>(param, param_retries_count);
     set_parameters[param.param_id] = opt;
 
     param_state = PR::TXPARAM;
@@ -962,7 +1004,7 @@ private:
       }
 
       param_state = PR::RXLIST;
-      param_rx_retries = RETRIES_COUNT;
+      param_rx_retries = param_retries_count;
       clear_all_parameters();
 
       schedule_timer->cancel();

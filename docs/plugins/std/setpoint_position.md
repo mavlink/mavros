@@ -6,18 +6,18 @@
 - Brief: Setpoint position plugin
 
 
-Send setpoint positions to FCU controller.
+Send setpoint positions to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None
 
 
 ## Subscribers
-- `~/local` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
-- `~/global` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html))
-- `~/global_to_local` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html))
-- `global_position/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html))
-- `local_position/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
+- `~/local` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Local position setpoint (SET_POSITION_TARGET_LOCAL_NED).
+- `~/global` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html)) - Global position setpoint (SET_POSITION_TARGET_GLOBAL_INT).
+- `~/global_to_local` ([geographic_msgs::msg::GeoPoseStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPoseStamped.html)) - Global setpoint converted to local setpoint (SET_POSITION_TARGET_LOCAL_NED).
+- `global_position/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - Current global position used for conversion.
+- `local_position/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Current local position used for conversion.
 
 
 ## Services

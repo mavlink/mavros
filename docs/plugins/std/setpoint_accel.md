@@ -6,14 +6,14 @@
 - Brief: Setpoint acceleration/force plugin
 
 
-Send setpoint accelerations/forces to FCU controller.
+Send setpoint accelerations/forces to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None
 
 
 ## Subscribers
-- `~/accel` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
+- `~/accel` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Setpoint acceleration/force (SET_POSITION_TARGET_LOCAL_NED).
 
 
 ## Services

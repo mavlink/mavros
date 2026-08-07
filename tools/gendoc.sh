@@ -35,6 +35,7 @@ STD_INDEX="${MAVROS_REPO}/docs/plugins/std/index.json"
 EXTRAS_INDEX="${MAVROS_REPO}/docs/plugins/extras/index.json"
 STD_MD_DIR="${MAVROS_REPO}/docs/plugins/std"
 EXTRAS_MD_DIR="${MAVROS_REPO}/docs/plugins/extras"
+PLUGINS_INDEX="${MAVROS_REPO}/docs/plugins/index.md"
 
 ensure_cpp_bin() {
   if [[ ! -x "${CPP_BIN}" ]]; then
@@ -79,6 +80,11 @@ run_markdown() {
     --template "${TEMPLATE}" \
     --input-json "${EXTRAS_INDEX}" \
     --output-dir "${EXTRAS_MD_DIR}"
+
+  uv run mr-plugin-doc-gen \
+    --plugin-index "${PLUGINS_INDEX}" \
+    --input-json "${STD_INDEX}" \
+    --input-json "${EXTRAS_INDEX}"
 }
 
 pushd "${TOOLS_DIR}" >/dev/null
@@ -106,3 +112,5 @@ echo "  ${EXTRAS_INDEX}"
 echo "Markdown dirs:"
 echo "  ${STD_MD_DIR}"
 echo "  ${EXTRAS_MD_DIR}"
+echo "Plugin index:"
+echo "  ${PLUGINS_INDEX}"

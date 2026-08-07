@@ -9,11 +9,11 @@
 This plugin allows publishing distance sensor data, which is connected to an offboard/companion computer through USB/Serial, to the FCU or vice-versa.
 
 ## Publishers
-- `topic_name` (Range)
+- `topic_name` (Range) - Publish sensor_msgs/Range from MAVLink DISTANCE_SENSOR.
 
 
 ## Subscribers
-- `topic_name` (Range)
+- `topic_name` (Range) - Subscribe sensor_msgs/Range to send as DISTANCE_SENSOR to the FCU.
 
 
 ## Services
@@ -25,8 +25,8 @@ This plugin allows publishing distance sensor data, which is connected to an off
 
 
 ## Parameters
-- `base_frame_id` [default: `"base_link"`]
-- `config` [type: string, default: `""`]
+- `base_frame_id` [default: `"base_link"`] - Base frame id used for distance sensor transforms.
+- `config` [type: string, default: `""`] - Sensor mapping configuration (YAML: id, topic, orientation, etc).
 
 
 ## MAVLink Subscriptions

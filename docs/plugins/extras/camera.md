@@ -6,10 +6,10 @@
 - Brief: Camera plugin plugin
 
 
-Plugin for interfacing on the mavlink camera protocol @see command_cb()
+Plugin for interfacing on the mavlink camera protocol. Implements the [MAVLink Camera Protocol v2](https://mavlink.io/en/services/camera.html). @see command_cb()
 
 ## Publishers
-- `~/image_captured` ([mavros_msgs::msg::CameraImageCaptured](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CameraImageCaptured.html))
+- `~/image_captured` ([mavros_msgs::msg::CameraImageCaptured](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/CameraImageCaptured.html)) - Publish camera image capture info from MAVLink CAMERA_IMAGE_CAPTURED.
 
 
 ## Subscribers

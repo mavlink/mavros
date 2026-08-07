@@ -6,8 +6,10 @@
 - Brief: Rallypoint manipulation plugin
 
 
+Implements the rally point part of the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
+
 ## Publishers
-- `~/rallypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
+- `~/rallypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html)) - Publish the current rally points (MISSION protocol).
 
 
 ## Subscribers
@@ -15,9 +17,9 @@
 
 
 ## Services
-- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html))
-- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html))
-- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html))
+- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html)) - Pull the rally points from the FCU (MISSION_REQUEST_LIST).
+- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html)) - Push the rally points to the FCU (MISSION_COUNT).
+- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html)) - Clear the rally points on the FCU (MISSION_CLEAR_ALL).
 
 
 ## Clients
@@ -25,8 +27,8 @@
 
 
 ## Parameters
-- `pull_after_gcs` [type: bool, default: `true`] - NOTE(vooon): I'm not quite sure that this option would work with mavros router
-- `use_mission_item_int` [type: bool, default: `true`]
+- `pull_after_gcs` [type: bool, default: `true`] - NOTE(vooon): I'm not quite sure that this option would work with mavros router Pull rally points from the FCU after GCS connection.
+- `use_mission_item_int` [type: bool, default: `true`] - Use MISSION_ITEM_INT instead of MISSION_ITEM (MISSION protocol).
 
 
 ## MAVLink Subscriptions

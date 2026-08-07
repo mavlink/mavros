@@ -43,6 +43,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Rate at which GPS_INPUT messages are sent [Hz].
     node_declare_and_watch_parameter(
       "gps_rate", 5.0, [&](const rclcpp::Parameter & p) {
         rclcpp::Rate rate(p.as_double());
@@ -50,6 +51,7 @@ public:
         rate_period = rate.period();
       });
 
+    //! Subscribe to GPSINPUT to send as GPS_INPUT to the FCU.
     gps_input_sub = node->create_subscription<mavros_msgs::msg::GPSINPUT>(
       "~/gps_input", 1, std::bind(
         &GpsInputPlugin::send_cb, this,

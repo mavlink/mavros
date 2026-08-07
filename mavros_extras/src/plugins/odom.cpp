@@ -64,14 +64,17 @@ public:
     enable_node_watch_parameters();
 
     // frame params:
+    //! Desired parent frame id for odometry from the FCU.
     node_declare_and_watch_parameter(
       "fcu.odom_parent_id_des", uas_->get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_parent_id_des = p.as_string();
       });
+    //! Desired child frame id for odometry from the FCU.
     node_declare_and_watch_parameter(
       "fcu.odom_child_id_des", uas_->get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_odom_child_id_des = p.as_string();
       });
+    //! Desired map frame id for odometry from the FCU.
     node_declare_and_watch_parameter(
       "fcu.map_id_des", uas_->get_map_frame_id(), [&](const rclcpp::Parameter & p) {
         fcu_map_id_des = p.as_string();
@@ -79,9 +82,11 @@ public:
 
 
     // publishers
+    //! Publish odometry from MAVLink ODOMETRY.
     odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/in", 10);
 
     // subscribers
+    //! Subscribe to odometry to send as ODOMETRY to the FCU.
     odom_sub =
       node->create_subscription<nav_msgs::msg::Odometry>(
       "~/out", 1,

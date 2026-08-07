@@ -43,7 +43,8 @@ using mavlink::common::MAV_FRAME;
  * @brief Setpoint TRAJECTORY plugin
  * @plugin setpoint_trajectory
  *
- * Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory.
+ * Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointTrajectoryPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointTrajectoryPlugin>
@@ -54,11 +55,13 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Frame id for the published path.
     node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Coordinate frame of the trajectory setpoints.
     node_declare_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         auto mav_frame_str = p.as_string();
@@ -75,13 +78,16 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Trajectory setpoints (SET_POSITION_TARGET_LOCAL_NED).
     local_sub = node->create_subscription<trajectory_msgs::msg::MultiDOFJointTrajectory>(
       "~/local",
       sensor_qos, std::bind(
         &SetpointTrajectoryPlugin::local_cb, this,
         _1));
+    //! Publish the desired trajectory path.
     desired_pub = node->create_publisher<nav_msgs::msg::Path>("~/desired", sensor_qos);
 
+    //! Reset the current trajectory.
     trajectory_reset_srv =
       node->create_service<std_srvs::srv::Trigger>(
       "~/reset",

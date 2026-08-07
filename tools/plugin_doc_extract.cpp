@@ -147,6 +147,8 @@ static const std::regex kAutoTemplateMavlinkDeclRe(
   R"((?:const\s+)?auto\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*<[\s\S]{0,200}?,\s*(mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+)\s*>\s*\()");
 static const std::regex kIdentifierRe(
   R"([A-Za-z_][A-Za-z0-9_]*)");
+static const std::regex kAssignmentPrefixRe(
+  R"([A-Za-z_][A-Za-z0-9_:]*\s*=\s*)");
 
 std::string trim(std::string s)
 {
@@ -290,6 +292,12 @@ std::string extract_entry_comment(const std::vector<std::string> & lines, int li
 
     if (t.rfind("//", 0) == 0) {
       parts.push_back(strip_comment_markers(t));
+      continue;
+    }
+
+    // Skip an assignment prefix line (e.g. "raw_fix_pub =") so a comment above
+    // it is attributed to the create_<entity>() call on the following line.
+    if (std::regex_match(t, kAssignmentPrefixRe)) {
       continue;
     }
 

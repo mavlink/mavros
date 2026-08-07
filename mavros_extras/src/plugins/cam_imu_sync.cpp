@@ -39,6 +39,7 @@ public:
   explicit CamIMUSyncPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "cam_imu_sync")
   {
+    //! Publish camera IMU trigger timestamp from MAVLink CAMERA_TRIGGER.
     cam_imu_pub = node->create_publisher<mavros_msgs::msg::CamIMUStamp>("~/cam_imu_stamp", 10);
   }
 

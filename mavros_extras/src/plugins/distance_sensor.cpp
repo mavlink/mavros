@@ -144,10 +144,12 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Base frame id used for distance sensor transforms.
     node_declare_and_watch_parameter(
       "base_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         base_frame_id = p.as_string();
       });
+    //! Sensor mapping configuration (YAML: id, topic, orientation, etc).
     node_declare_and_watch_parameter(
       "config", "", [&](const rclcpp::Parameter & p) {
         std::unique_lock lock(mutex);
@@ -447,8 +449,10 @@ DistanceSensorItem::DistanceSensorItem(
   // create topic handles
   auto sensor_qos = rclcpp::SensorDataQoS();
   if (!is_subscriber) {
+    //! Publish sensor_msgs/Range from MAVLink DISTANCE_SENSOR.
     pub = owner->node->create_publisher<Range>(topic_name, sensor_qos);
   } else {
+    //! Subscribe sensor_msgs/Range to send as DISTANCE_SENSOR to the FCU.
     sub =
       owner->node->create_subscription<Range>(
       topic_name, sensor_qos,

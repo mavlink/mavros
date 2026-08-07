@@ -13,7 +13,7 @@ Publishes obstacle distance array to the FCU, in order to assist in an obstacle 
 
 
 ## Subscribers
-- `~/send` ([sensor_msgs::msg::LaserScan](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/LaserScan.html))
+- `~/send` ([sensor_msgs::msg::LaserScan](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/LaserScan.html)) - Subscribe to LaserScan to send as OBSTACLE_DISTANCE to the FCU.
 
 
 ## Services
@@ -25,7 +25,7 @@ Publishes obstacle distance array to the FCU, in order to assist in an obstacle 
 
 
 ## Parameters
-- `mav_frame` [default: `"GLOBAL"`]
+- `mav_frame` [default: `"GLOBAL"`] - MAVLink MAV_FRAME used when sending OBSTACLE_DISTANCE.
 
 
 ## MAVLink Subscriptions

@@ -43,9 +43,13 @@ public:
   explicit GpsStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "gpsstatus")
   {
+    //! Publish GPS raw data from MAVLink GPS_RAW_INT.
     gps1_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~/gps1/raw", 10);
+    //! Publish GPS raw data from MAVLink GPS2_RAW.
     gps2_raw_pub = node->create_publisher<mavros_msgs::msg::GPSRAW>("~/gps2/raw", 10);
+    //! Publish RTK baseline from MAVLink GPS_RTK.
     gps1_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~/gps1/rtk", 10);
+    //! Publish RTK baseline from MAVLink GPS2_RTK.
     gps2_rtk_pub = node->create_publisher<mavros_msgs::msg::GPSRTK>("~/gps2/rtk", 10);
   }
 

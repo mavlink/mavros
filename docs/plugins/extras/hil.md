@@ -7,16 +7,16 @@
 
 
 ## Publishers
-- `~/controls` ([mavros_msgs::msg::HilControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilControls.html))
-- `~/actuator_controls` ([mavros_msgs::msg::HilActuatorControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilActuatorControls.html))
+- `~/controls` ([mavros_msgs::msg::HilControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilControls.html)) - Publish HIL_CONTROLS from the FCU.
+- `~/actuator_controls` ([mavros_msgs::msg::HilActuatorControls](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilActuatorControls.html)) - Publish HIL_ACTUATOR_CONTROLS from the FCU.
 
 
 ## Subscribers
-- `~/state` ([mavros_msgs::msg::HilStateQuaternion](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilStateQuaternion.html))
-- `~/gps` ([mavros_msgs::msg::HilGPS](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilGPS.html))
-- `~/imu_ned` ([mavros_msgs::msg::HilSensor](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilSensor.html))
-- `~/optical_flow` ([mavros_msgs::msg::OpticalFlowRad](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlowRad.html))
-- `~/rc_inputs` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html))
+- `~/state` ([mavros_msgs::msg::HilStateQuaternion](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilStateQuaternion.html)) - Subscribe to receive HIL_STATE_QUATERNION from simulation.
+- `~/gps` ([mavros_msgs::msg::HilGPS](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilGPS.html)) - Subscribe to receive HIL_GPS from simulation.
+- `~/imu_ned` ([mavros_msgs::msg::HilSensor](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HilSensor.html)) - Subscribe to receive HIL_SENSOR from simulation.
+- `~/optical_flow` ([mavros_msgs::msg::OpticalFlowRad](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlowRad.html)) - Subscribe to receive HIL_OPTICAL_FLOW from simulation.
+- `~/rc_inputs` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html)) - Subscribe to receive HIL_RC_INPUTS_RAW from simulation.
 
 
 ## Services

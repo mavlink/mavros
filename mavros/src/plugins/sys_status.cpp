@@ -26,6 +26,7 @@
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
+#include "mavros/qos.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
@@ -480,6 +481,9 @@ private:
  * @plugin sys_status
  *
  * Required by all plugins.
+ *
+ * Implements the
+ * [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
  */
 class SystemStatusPlugin : public plugin::Plugin
 {
@@ -503,6 +507,7 @@ public:
 
     enable_node_watch_parameters();
 
+    //! Connection timeout in seconds before the link is considered lost.
     node_declare_and_watch_parameter(
       "conn_timeout", 10.0, [&](const rclcpp::Parameter & p) {
         auto conn_timeout = rclcpp::Duration::from_seconds(p.as_double());
@@ -513,6 +518,7 @@ public:
           std::bind(&SystemStatusPlugin::timeout_cb, this));
       });
 
+    //! Minimum battery voltage per battery instance before a warning is raised.
     node_declare_and_watch_parameter(
       "min_voltage", std::vector<double>({10.0}), [&](const rclcpp::Parameter & p) {
         min_voltage = p.as_double_array();
@@ -521,6 +527,7 @@ public:
         }
       });
 
+    //! Disable publishing diagnostic updates.
     node_declare_and_watch_parameter(
       "disable_diag", false, [&](const rclcpp::Parameter & p) {
         disable_diag = p.as_bool();
@@ -541,12 +548,14 @@ public:
         }
       });
 
+    //! MAV type of the heartbeat sent by the GCS.
     node_declare_and_watch_parameter(
       "heartbeat_mav_type", utils::enum_to_name(
         conn_heartbeat_mav_type), [&](const rclcpp::Parameter & p) {
         conn_heartbeat_mav_type = utils::mav_type_from_str(p.as_string());
       });
 
+    //! Rate (Hz) at which the GCS heartbeat is sent to the FCU.
     node_declare_and_watch_parameter(
       "heartbeat_rate", 1.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
@@ -570,21 +579,29 @@ public:
     auto state_qos = rclcpp::QoS(10).transient_local();
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish connection, armed and mode state (HEARTBEAT).
     state_pub = node->create_publisher<mavros_msgs::msg::State>(
-      "state", state_qos);
+      "state", state_qos, mavros::NonIntraProcessPublisherOptions());
+    //! Publish VTOL and landed state (EXTENDED_SYS_STATE).
     extended_state_pub = node->create_publisher<mavros_msgs::msg::ExtendedState>(
-      "extended_state", state_qos);
+      "extended_state", state_qos, mavros::NonIntraProcessPublisherOptions());
+    //! Publish system and battery status (SYS_STATUS).
     sys_status_pub = node->create_publisher<mavros_msgs::msg::SysStatus>(
-      "sys_status", state_qos);
+      "sys_status", state_qos, mavros::NonIntraProcessPublisherOptions());
+    //! Publish estimator status flags (ESTIMATOR_STATUS).
     estimator_status_pub = node->create_publisher<mavros_msgs::msg::EstimatorStatus>(
-      "estimator_status", state_qos);
+      "estimator_status", state_qos, mavros::NonIntraProcessPublisherOptions());
+    //! Publish battery state (BATTERY_STATUS).
     batt_pub = node->create_publisher<BatteryMsg>("battery", sensor_qos);
 
+    //! Publish status text received from the FCU (STATUSTEXT).
     statustext_pub = node->create_publisher<mavros_msgs::msg::StatusText>(
       "statustext/recv", sensor_qos);
+    //! Send status text to the FCU (STATUSTEXT).
     statustext_sub = node->create_subscription<mavros_msgs::msg::StatusText>(
       "statustext/send", sensor_qos,
       std::bind(&SystemStatusPlugin::statustext_cb, this, _1));
+    //! Publish status events received from the FCU (EVENT).
     statusevent_pub = node->create_publisher<mavros_msgs::msg::StatusEvent>(
       "status_event", sensor_qos);
 
@@ -596,21 +613,25 @@ public:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).
     mode_srv = node->create_service<mavros_msgs::srv::SetMode>(
       "set_mode",
       std::bind(
         &SystemStatusPlugin::set_mode_cb, this, _1,
         _2), services_qos, srv_cg);
+    //! Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).
     stream_rate_srv = node->create_service<mavros_msgs::srv::StreamRate>(
       "set_stream_rate",
       std::bind(
         &SystemStatusPlugin::set_rate_cb, this, _1,
         _2), services_qos, srv_cg);
+    //! Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).
     message_interval_srv = node->create_service<mavros_msgs::srv::MessageInterval>(
       "set_message_interval",
       std::bind(
         &SystemStatusPlugin::set_message_interval_cb, this, _1,
         _2), services_qos, srv_cg);
+    //! Query information about the FCU and connected vehicles.
     vehicle_info_get_srv = node->create_service<mavros_msgs::srv::VehicleInfoGet>(
       "vehicle_info_get", std::bind(
         &SystemStatusPlugin::vehicle_info_get_cb, this, _1,

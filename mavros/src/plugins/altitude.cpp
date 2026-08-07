@@ -43,6 +43,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Coordinate frame used for the altitude topic headers.
     node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
@@ -51,6 +52,7 @@ public:
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     /// ALTITUDE data
+    //! Publish altitude data (ALTITUDE).
     altitude_pub = node->create_publisher<mavros_msgs::msg::Altitude>("altitude", sensor_qos);
   }
 

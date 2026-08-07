@@ -141,6 +141,9 @@ private:
 /**
  * @brief System time plugin
  * @plugin sys_time
+ *
+ * Implements the
+ * [MAVLink Time Synchronization](https://mavlink.io/en/services/timesync.html).
  */
 class SystemTimePlugin : public plugin::Plugin
 {
@@ -160,11 +163,13 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Source name reported in the time_reference topic.
     node_declare_and_watch_parameter(
       "time_ref_source", "fcu", [&](const rclcpp::Parameter & p) {
         time_ref_source = p.as_string();
       });
 
+    //! Timesync mode: MAVLINK, PASSTHROUGH, NONE or ONBOARD.
     node_declare_and_watch_parameter(
       "timesync_mode", "MAVLINK", [&](const rclcpp::Parameter & p) {
         auto ts_mode = utils::timesync_mode_from_str(p.as_string());
@@ -172,6 +177,7 @@ public:
         RCLCPP_INFO_STREAM(get_logger(), "TM: Timesync mode: " << utils::to_string(ts_mode));
       });
 
+    //! Rate (Hz) at which SYSTEM_TIME is sent to the FCU; 0 disables it.
     node_declare_and_watch_parameter(
       "system_time_rate", 0.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
@@ -191,6 +197,7 @@ public:
         }
       });
 
+    //! Rate (Hz) at which TIMESYNC packets are exchanged; 0 disables it.
     node_declare_and_watch_parameter(
       "timesync_rate", 0.0, [&](const rclcpp::Parameter & p) {
         auto rate_d = p.as_double();
@@ -283,9 +290,11 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish FCU time reference for ntpd (SYSTEM_TIME).
     time_ref_pub = node->create_publisher<sensor_msgs::msg::TimeReference>(
       "time_reference",
       sensor_qos);
+    //! Publish timesync status (TIMESYNC).
     timesync_status_pub = node->create_publisher<mavros_msgs::msg::TimesyncStatus>(
       "timesync_status", sensor_qos);
 

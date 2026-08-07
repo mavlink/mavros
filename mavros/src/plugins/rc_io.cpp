@@ -44,8 +44,11 @@ public:
     raw_rc_out(0),
     has_rc_channels_msg(false)
   {
+    //! Publish RC input (RC_CHANNELS / RC_CHANNELS_RAW).
     rc_in_pub = node->create_publisher<mavros_msgs::msg::RCIn>("~/in", 10);
+    //! Publish RC servo output (SERVO_OUTPUT_RAW).
     rc_out_pub = node->create_publisher<mavros_msgs::msg::RCOut>("~/out", 10);
+    //! Override RC input on the FCU (RC_CHANNELS_OVERRIDE).
     override_sub = node->create_subscription<mavros_msgs::msg::OverrideRCIn>(
       "~/override", 10, std::bind(
         &RCIOPlugin::override_cb, this,

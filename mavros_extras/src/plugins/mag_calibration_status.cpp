@@ -44,7 +44,9 @@ public:
   : Plugin(uas_, "mag_calibration")
   {
     // TODO(vooon): use QoS for "latched" topics
+    //! Publish magnetometer calibration progress from MAVLink MAG_CAL_PROGRESS.
     mcs_pub = node->create_publisher<std_msgs::msg::UInt8>("~/status", 2);
+    //! Publish magnetometer calibration report from MAVLink MAG_CAL_REPORT.
     mcr_pub = node->create_publisher<mavros_msgs::msg::MagnetometerReporter>("~/report", 2);
   }
 

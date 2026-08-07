@@ -6,27 +6,27 @@
 - Brief: System status plugin.
 
 
-Required by all plugins.
+Required by all plugins. Implements the [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
 
 ## Publishers
-- `state` ([mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html))
-- `extended_state` ([mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html))
-- `sys_status` ([mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html))
-- `estimator_status` ([mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html))
-- `battery` (BatteryMsg)
-- `statustext/recv` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html))
-- `status_event` ([mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html))
+- `state` ([mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html)) - Publish connection, armed and mode state (HEARTBEAT).
+- `extended_state` ([mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html)) - Publish VTOL and landed state (EXTENDED_SYS_STATE).
+- `sys_status` ([mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html)) - Publish system and battery status (SYS_STATUS).
+- `estimator_status` ([mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html)) - Publish estimator status flags (ESTIMATOR_STATUS).
+- `battery` (BatteryMsg) - Publish battery state (BATTERY_STATUS).
+- `statustext/recv` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html)) - Publish status text received from the FCU (STATUSTEXT).
+- `status_event` ([mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html)) - Publish status events received from the FCU (EVENT).
 
 
 ## Subscribers
-- `statustext/send` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html))
+- `statustext/send` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html)) - Send status text to the FCU (STATUSTEXT).
 
 
 ## Services
-- `set_mode` ([mavros_msgs::srv::SetMode](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/SetMode.html))
-- `set_stream_rate` ([mavros_msgs::srv::StreamRate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/StreamRate.html))
-- `set_message_interval` ([mavros_msgs::srv::MessageInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MessageInterval.html))
-- `vehicle_info_get` ([mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html))
+- `set_mode` ([mavros_msgs::srv::SetMode](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/SetMode.html)) - Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).
+- `set_stream_rate` ([mavros_msgs::srv::StreamRate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/StreamRate.html)) - Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).
+- `set_message_interval` ([mavros_msgs::srv::MessageInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MessageInterval.html)) - Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).
+- `vehicle_info_get` ([mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html)) - Query information about the FCU and connected vehicles.
 
 
 ## Clients
@@ -34,12 +34,12 @@ Required by all plugins.
 
 
 ## Parameters
-- `conn_timeout` [type: double, default: `10.0`]
-- `min_voltage` [default: `std::vector<double>({10.0})`]
-- `disable_diag` [type: bool, default: `false`]
+- `conn_timeout` [type: double, default: `10.0`] - Connection timeout in seconds before the link is considered lost.
+- `min_voltage` [default: `std::vector<double>({10.0})`] - Minimum battery voltage per battery instance before a warning is raised.
+- `disable_diag` [type: bool, default: `false`] - Disable publishing diagnostic updates.
 - `heartbeat_mav_type` [default: `utils::enum_to_name(
-        conn_heartbeat_mav_type)`]
-- `heartbeat_rate` [type: double, default: `1.0`]
+        conn_heartbeat_mav_type)`] - MAV type of the heartbeat sent by the GCS.
+- `heartbeat_rate` [type: double, default: `1.0`] - Rate (Hz) at which the GCS heartbeat is sent to the FCU.
 
 
 ## MAVLink Subscriptions

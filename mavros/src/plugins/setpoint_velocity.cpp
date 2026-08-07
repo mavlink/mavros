@@ -37,7 +37,8 @@ using mavlink::common::MAV_FRAME;
  * @brief Setpoint velocity plugin
  * @plugin setpoint_velocity
  *
- * Send setpoint velocities to FCU controller.
+ * Send setpoint velocities to FCU controller. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointVelocityPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin>
@@ -48,6 +49,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Coordinate frame of the velocity setpoints.
     node_declare_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         auto mav_frame_str = p.as_string();
@@ -65,10 +67,13 @@ public:
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     // cmd_vel usually is the topic used for velocity control in many controllers / planners
+
+    //! Velocity setpoint (SET_POSITION_TARGET_LOCAL_NED).
     vel_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>(
       "~/cmd_vel", sensor_qos, std::bind(
         &SetpointVelocityPlugin::vel_cb, this,
         _1));
+    //! Velocity setpoint without timestamp (SET_POSITION_TARGET_LOCAL_NED).
     vel_unstamped_sub = node->create_subscription<geometry_msgs::msg::Twist>(
       "~/cmd_vel_unstamped",
       sensor_qos, std::bind(

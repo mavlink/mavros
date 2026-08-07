@@ -35,7 +35,8 @@ using mavlink::common::ADSB_ALTITUDE_TYPE;
  * @brief ADS-B Vehicle plugin
  * @plugin adsb
  *
- * Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.
+ * Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle. Implements the
+ * [MAVLink Traffic Management (UTM/ADS-B)](https://mavlink.io/en/services/traffic_management.html).
  */
 class ADSBPlugin : public plugin::Plugin
 {
@@ -43,7 +44,9 @@ public:
   explicit ADSBPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "adsb")
   {
+    //! Publish received ADSB_VEHICLE messages (MAVLink traffic management).
     adsb_pub = node->create_publisher<mavros_msgs::msg::ADSBVehicle>("~/vehicle", 10);
+    //! Subscribe to ADSBVehicle messages to send as ADSB_VEHICLE to the FCU.
     adsb_sub =
       node->create_subscription<mavros_msgs::msg::ADSBVehicle>(
       "~/send", 10,

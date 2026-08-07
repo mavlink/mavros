@@ -37,6 +37,7 @@ public:
   explicit VfrHudPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "vfr_hud")
   {
+    //! Publish VFR HUD data from MAVLink VFR_HUD.
     vfr_pub = node->create_publisher<mavros_msgs::msg::VfrHud>("vfr_hud", 10);
   }
 

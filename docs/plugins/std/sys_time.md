@@ -6,9 +6,11 @@
 - Brief: System time plugin
 
 
+Implements the [MAVLink Time Synchronization](https://mavlink.io/en/services/timesync.html).
+
 ## Publishers
-- `time_reference` ([sensor_msgs::msg::TimeReference](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/TimeReference.html))
-- `timesync_status` ([mavros_msgs::msg::TimesyncStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TimesyncStatus.html))
+- `time_reference` ([sensor_msgs::msg::TimeReference](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/TimeReference.html)) - Publish FCU time reference for ntpd (SYSTEM_TIME).
+- `timesync_status` ([mavros_msgs::msg::TimesyncStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TimesyncStatus.html)) - Publish timesync status (TIMESYNC).
 
 
 ## Subscribers
@@ -24,10 +26,10 @@
 
 
 ## Parameters
-- `time_ref_source` [default: `"fcu"`]
-- `timesync_mode` [default: `"MAVLINK"`]
-- `system_time_rate` [type: double, default: `0.0`]
-- `timesync_rate` [type: double, default: `0.0`]
+- `time_ref_source` [default: `"fcu"`] - Source name reported in the time_reference topic.
+- `timesync_mode` [default: `"MAVLINK"`] - Timesync mode: MAVLINK, PASSTHROUGH, NONE or ONBOARD.
+- `system_time_rate` [type: double, default: `0.0`] - Rate (Hz) at which SYSTEM_TIME is sent to the FCU; 0 disables it.
+- `timesync_rate` [type: double, default: `0.0`] - Rate (Hz) at which TIMESYNC packets are exchanged; 0 disables it.
 - `timesync_alpha_initial` [type: double, default: `0.05`] - Filter gains Alpha : Used to smooth the overall clock offset estimate. Smaller values will lead to a smoother estimate, but track time drift more slowly, introducing a bias in the estimate. Larger values will cause low-amplitude oscillations. Beta : Used to smooth the clock skew estimate. Smaller values will lead to a tighter estimation of the skew (derivative), but will negatively affect how fast the filter reacts to clock skewing (e.g cause by temperature changes to the oscillator). Larger values will cause large-amplitude oscillations.
 - `timesync_beta_initial` [type: double, default: `0.05`]
 - `timesync_alpha_final` [type: double, default: `0.003`]

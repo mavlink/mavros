@@ -6,18 +6,18 @@
 - Brief: Setpoint RAW plugin
 
 
-Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits.
+Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
-- `~/target_local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html))
-- `~/target_global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html))
-- `~/target_attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html))
+- `~/target_local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html)) - Publish local position target (POSITION_TARGET_LOCAL_NED).
+- `~/target_global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html)) - Publish global position target (POSITION_TARGET_GLOBAL_INT).
+- `~/target_attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html)) - Publish attitude target (ATTITUDE_TARGET).
 
 
 ## Subscribers
-- `~/local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html))
-- `~/global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html))
-- `~/attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html))
+- `~/local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html)) - Local position/velocity/accel setpoint (SET_POSITION_TARGET_LOCAL_NED).
+- `~/global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html)) - Global position/velocity/accel setpoint (SET_POSITION_TARGET_GLOBAL_INT).
+- `~/attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html)) - Attitude/thrust setpoint (SET_ATTITUDE_TARGET).
 
 
 ## Services
@@ -29,7 +29,7 @@ Send position setpoints and publish current state (return loop). User can decide
 
 
 ## Parameters
-- `thrust_scaling` [default: `NAN`]
+- `thrust_scaling` [default: `NAN`] - Scaling factor applied to the thrust setpoint.
 
 
 ## MAVLink Subscriptions

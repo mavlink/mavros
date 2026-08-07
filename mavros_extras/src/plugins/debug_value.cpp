@@ -41,16 +41,22 @@ public:
   : Plugin(uas_, "debug_value")
   {
     // subscribers
+    //! Subscribe to DebugValue to send MAVLink debug messages to the FCU.
     debug_sub =
       node->create_subscription<DV>(
       "~/send", 10,
       std::bind(&DebugValuePlugin::debug_cb, this, _1));
 
     // publishers
+    //! Publish DEBUG messages from MAVLink DEBUG.
     debug_pub = node->create_publisher<DV>("~/debug", 10);
+    //! Publish DEBUG_VECT messages from MAVLink DEBUG_VECT.
     debug_vector_pub = node->create_publisher<DV>("~/debug_vector", 10);
+    //! Publish DEBUG_FLOAT_ARRAY messages from MAVLink DEBUG_FLOAT_ARRAY.
     debug_float_array_pub = node->create_publisher<DV>("~/debug_float_array", 10);
+    //! Publish NAMED_VALUE_FLOAT messages from MAVLink NAMED_VALUE_FLOAT.
     named_value_float_pub = node->create_publisher<DV>("~/named_value_float", 10);
+    //! Publish NAMED_VALUE_INT messages from MAVLink NAMED_VALUE_INT.
     named_value_int_pub = node->create_publisher<DV>("~/named_value_int", 10);
   }
 

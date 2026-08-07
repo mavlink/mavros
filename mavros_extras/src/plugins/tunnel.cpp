@@ -33,6 +33,9 @@ using namespace std::placeholders;      // NOLINT
 /**
  * @brief Tunnel plugin
  * @plugin tunnel
+ *
+ * Implements the
+ * [MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).
  */
 class TunnelPlugin : public plugin::Plugin
 {
@@ -40,10 +43,12 @@ public:
   explicit TunnelPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "tunnel")
   {
+    //! Subscribe to Tunnel to send as TUNNEL to the FCU.
     sub_ =
       node->create_subscription<mavros_msgs::msg::Tunnel>(
       "~/in", 10,
       std::bind(&TunnelPlugin::ros_callback, this, _1));
+    //! Publish TUNNEL messages received from the FCU.
     pub_ = node->create_publisher<mavros_msgs::msg::Tunnel>("~/out", 10);
   }
 

@@ -6,15 +6,15 @@
 - Brief: Setpoint velocity plugin
 
 
-Send setpoint velocities to FCU controller.
+Send setpoint velocities to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None
 
 
 ## Subscribers
-- `~/cmd_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - cmd_vel usually is the topic used for velocity control in many controllers / planners
-- `~/cmd_vel_unstamped` ([geometry_msgs::msg::Twist](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Twist.html))
+- `~/cmd_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Velocity setpoint (SET_POSITION_TARGET_LOCAL_NED).
+- `~/cmd_vel_unstamped` ([geometry_msgs::msg::Twist](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Twist.html)) - Velocity setpoint without timestamp (SET_POSITION_TARGET_LOCAL_NED).
 
 
 ## Services
@@ -26,7 +26,7 @@ Send setpoint velocities to FCU controller.
 
 
 ## Parameters
-- `mav_frame` [default: `"LOCAL_NED"`]
+- `mav_frame` [default: `"LOCAL_NED"`] - Coordinate frame of the velocity setpoints.
 
 
 ## MAVLink Subscriptions

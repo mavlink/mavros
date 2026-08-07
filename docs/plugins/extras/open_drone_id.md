@@ -6,18 +6,18 @@
 - Brief: Open Drone ID plugin
 
 
-Sends Open Drone ID data to the FCU
+Sends Open Drone ID data to the FCU. Implements the [MAVLink Open Drone ID Protocol](https://mavlink.io/en/services/opendroneid.html).
 
 ## Publishers
 - None
 
 
 ## Subscribers
-- `~/basic_id` ([mavros_msgs::msg::OpenDroneIDBasicID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDBasicID.html))
-- `~/operator_id` ([mavros_msgs::msg::OpenDroneIDOperatorID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDOperatorID.html))
-- `~/self_id` ([mavros_msgs::msg::OpenDroneIDSelfID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSelfID.html))
-- `~/system` ([mavros_msgs::msg::OpenDroneIDSystem](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystem.html))
-- `~/system_update` ([mavros_msgs::msg::OpenDroneIDSystemUpdate](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystemUpdate.html))
+- `~/basic_id` ([mavros_msgs::msg::OpenDroneIDBasicID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDBasicID.html)) - Subscribe to send OPEN_DRONE_ID_BASIC_ID to the FCU.
+- `~/operator_id` ([mavros_msgs::msg::OpenDroneIDOperatorID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDOperatorID.html)) - Subscribe to send OPEN_DRONE_ID_OPERATOR_ID to the FCU.
+- `~/self_id` ([mavros_msgs::msg::OpenDroneIDSelfID](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSelfID.html)) - Subscribe to send OPEN_DRONE_ID_SELF_ID to the FCU.
+- `~/system` ([mavros_msgs::msg::OpenDroneIDSystem](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystem.html)) - Subscribe to send OPEN_DRONE_ID_SYSTEM to the FCU.
+- `~/system_update` ([mavros_msgs::msg::OpenDroneIDSystemUpdate](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpenDroneIDSystemUpdate.html)) - Subscribe to send OPEN_DRONE_ID_SYSTEM_UPDATE to the FCU.
 
 
 ## Services
