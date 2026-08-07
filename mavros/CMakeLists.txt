@@ -318,6 +318,24 @@ if(BUILD_TESTING)
     ${mavros_msgs_TARGETS}
   )
 
+  ament_add_gtest(mavros-plugin-mission test/test_mission_flow.cpp)
+  target_link_libraries(mavros-plugin-mission
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+
+  ament_add_gtest(mavros-plugin-param test/test_param.cpp)
+  target_link_libraries(mavros-plugin-param
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+
+  ament_add_gtest(mavros-plugin-command test/test_command.cpp)
+  target_link_libraries(mavros-plugin-command
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+
   ament_add_pytest_test(mavros_py_test test/mavros_py
     PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}"
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
