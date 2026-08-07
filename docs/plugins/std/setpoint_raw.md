@@ -2,27 +2,26 @@
 
 - File: `mavros/src/plugins/setpoint_raw.cpp`
 - Class: `mavros::std_plugins::SetpointRawPlugin`
-- Namespace: `setpoint_raw`
+- Namespace: `mavros::std_plugins`
 - Brief: Setpoint RAW plugin
 
 
-Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
+Send position setpoints and publish current state (return loop).
+User can decide what set of filed needed for operation via IGNORE bits. Uses the
+[MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
-- `~/target_local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html)) - Publish local position target (POSITION_TARGET_LOCAL_NED).
-- `~/target_global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html)) - Publish global position target (POSITION_TARGET_GLOBAL_INT).
-- `~/target_attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html)) - Publish attitude target (ATTITUDE_TARGET).
-
+- `~/target_local` [type: [mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish local position target (POSITION_TARGET_LOCAL_NED).
+- `~/target_global` [type: [mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish global position target (POSITION_TARGET_GLOBAL_INT).
+- `~/target_attitude` [type: [mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish attitude target (ATTITUDE_TARGET).
 
 ## Subscribers
-- `~/local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html)) - Local position/velocity/accel setpoint (SET_POSITION_TARGET_LOCAL_NED).
-- `~/global` ([mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html)) - Global position/velocity/accel setpoint (SET_POSITION_TARGET_GLOBAL_INT).
-- `~/attitude` ([mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html)) - Attitude/thrust setpoint (SET_ATTITUDE_TARGET).
-
+- `~/local` [type: [mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Local position/velocity/accel setpoint (SET_POSITION_TARGET_LOCAL_NED).
+- `~/global` [type: [mavros_msgs::msg::GlobalPositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GlobalPositionTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Global position/velocity/accel setpoint (SET_POSITION_TARGET_GLOBAL_INT).
+- `~/attitude` [type: [mavros_msgs::msg::AttitudeTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/AttitudeTarget.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Attitude/thrust setpoint (SET_ATTITUDE_TARGET).
 
 ## Services
 - None
-
 
 ## Clients
 - None
@@ -39,6 +38,6 @@ Send position setpoints and publish current state (return loop). User can decide
 
 
 ## MAVLink Publications
-- [`SET_POSITION_TARGET_LOCAL_NED`](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) [arg: `sp`, dialect: common, msg_id: 84, id: `mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID`]
-- [`SET_POSITION_TARGET_GLOBAL_INT`](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_GLOBAL_INT) [arg: `sp`, dialect: common, msg_id: 86, id: `mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID`]
-- [`SET_ATTITUDE_TARGET`](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) [arg: `sp`, dialect: common, msg_id: 82, id: `mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID`]
+- [`SET_ATTITUDE_TARGET`](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) [arg: `msg`, dialect: common, msg_id: 82, id: `mavlink::common::msg::SET_ATTITUDE_TARGET::MSG_ID`]
+- [`SET_POSITION_TARGET_GLOBAL_INT`](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_GLOBAL_INT) [arg: `msg`, dialect: common, msg_id: 86, id: `mavlink::common::msg::SET_POSITION_TARGET_GLOBAL_INT::MSG_ID`]
+- [`SET_POSITION_TARGET_LOCAL_NED`](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) [arg: `msg`, dialect: common, msg_id: 84, id: `mavlink::common::msg::SET_POSITION_TARGET_LOCAL_NED::MSG_ID`]

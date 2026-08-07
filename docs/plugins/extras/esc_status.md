@@ -2,22 +2,19 @@
 
 - File: `mavros_extras/src/plugins/esc_status.cpp`
 - Class: `mavros::extra_plugins::ESCStatusPlugin`
-- Namespace: `esc_status`
+- Namespace: `mavros::extra_plugins`
 - Brief: ESC status plugin
 
 
 ## Publishers
-- `~/info` ([mavros_msgs::msg::ESCInfo](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCInfo.html)) - Publish ESC information from MAVLink ESC_INFO.
-- `~/status` ([mavros_msgs::msg::ESCStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCStatus.html)) - Publish ESC status from MAVLink ESC_STATUS.
-
+- `~/info` [type: [mavros_msgs::msg::ESCInfo](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCInfo.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish ESC information from MAVLink ESC_INFO.
+- `~/status` [type: [mavros_msgs::msg::ESCStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCStatus.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish ESC status from MAVLink ESC_STATUS.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

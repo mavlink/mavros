@@ -2,34 +2,31 @@
 
 - File: `mavros/src/plugins/imu.cpp`
 - Class: `mavros::std_plugins::IMUPlugin`
-- Namespace: `imu`
+- Namespace: `mavros::std_plugins`
 - Brief: IMU and attitude data publication plugin
 
 
 ## Publishers
-- `~/data` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html)) - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
-- `~/data_raw` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html)) - Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
-- `~/mag` ([sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html)) - Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
-- `~/temperature_imu` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html)) - Publish IMU temperature (HIGHRES_IMU).
-- `~/temperature_baro` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html)) - Publish barometer temperature (SCALED_PRESSURE).
-- `~/static_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html)) - Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).
-- `~/diff_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html)) - Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).
-
+- `~/data` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
+- `~/data_raw` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
+- `~/mag` [type: [sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
+- `~/temperature_imu` [type: [sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish IMU temperature (HIGHRES_IMU).
+- `~/temperature_baro` [type: [sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish barometer temperature (SCALED_PRESSURE).
+- `~/static_pressure` [type: [sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).
+- `~/diff_pressure` [type: [sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None
 
 
 ## Parameters
-- `frame_id` [default: `"base_link"`] - Coordinate frame used for the published IMU topics.
+- `frame_id` [type: string, default: `"base_link"`] - Coordinate frame used for the published IMU topics.
 - `linear_acceleration_stdev` [type: double, default: `0.0003`] - Standard deviation of the linear acceleration.
 - `angular_velocity_stdev` [default: `0.02 * (M_PI / 180.0)`] - Standard deviation of the angular velocity.
 - `orientation_stdev` [type: double, default: `1.0`] - Standard deviation of the orientation.

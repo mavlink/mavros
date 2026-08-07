@@ -2,30 +2,27 @@
 
 - File: `mavros/src/plugins/altitude.cpp`
 - Class: `mavros::std_plugins::AltitudePlugin`
-- Namespace: `altitude`
+- Namespace: `mavros::std_plugins`
 - Brief: Altitude plugin.
 
 
 Publish altitude data.
 
 ## Publishers
-- `altitude` ([mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html)) - Publish altitude data (ALTITUDE).
-
+- `altitude` [type: [mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish altitude data (ALTITUDE).
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None
 
 
 ## Parameters
-- `frame_id` [default: `"map"`] - Coordinate frame used for the altitude topic headers.
+- `frame_id` [type: string, default: `"map"`] - Coordinate frame used for the altitude topic headers.
 
 
 ## MAVLink Subscriptions

@@ -2,23 +2,20 @@
 
 - File: `mavros_extras/src/plugins/rangefinder.cpp`
 - Class: `mavros::extra_plugins::RangefinderPlugin`
-- Namespace: `rangefinder`
+- Namespace: `mavros::extra_plugins`
 - Brief: Ardupilot Rangefinder plugin.
 
 
 This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.
 
 ## Publishers
-- `~/rangefinder` ([sensor_msgs::msg::Range](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Range.html)) - Publish rangefinder data from MAVLink RANGEFINDER.
-
+- `~/rangefinder` [type: [sensor_msgs::msg::Range](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Range.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish rangefinder data from MAVLink RANGEFINDER.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

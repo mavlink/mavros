@@ -2,21 +2,18 @@
 
 - File: `mavros_extras/src/plugins/vfr_hud.cpp`
 - Class: `mavros::extra_plugins::VfrHudPlugin`
-- Namespace: `vfr_hud`
+- Namespace: `mavros::extra_plugins`
 - Brief: VFR HUD plugin.
 
 
 ## Publishers
-- `vfr_hud` ([mavros_msgs::msg::VfrHud](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/VfrHud.html)) - Publish VFR HUD data from MAVLink VFR_HUD.
-
+- `vfr_hud` [type: [mavros_msgs::msg::VfrHud](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/VfrHud.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish VFR HUD data from MAVLink VFR_HUD.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None
