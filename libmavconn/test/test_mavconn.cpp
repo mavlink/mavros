@@ -31,6 +31,7 @@
 #include "mavconn/interface.hpp"
 #include "mavconn/serial.hpp"
 #include "mavconn/tcp.hpp"
+#include "mavconn/thread_utils.hpp"
 #include "mavconn/udp.hpp"
 
 using namespace mavconn; // NOLINT
@@ -96,6 +97,29 @@ public:
     return true;
   }
 };
+
+TEST(UTILS, format)
+{
+  using mavconn::utils::format;
+
+  EXPECT_EQ("ep:1000", format("ep:%d", 1000));
+  EXPECT_EQ("hello world", format("hello %s", "world"));
+  EXPECT_EQ("a/b", format("%s/%s", "a", "b"));
+  EXPECT_EQ("", format(""));
+  EXPECT_EQ("", format("%s", ""));
+  EXPECT_EQ("123456", format("%zu", size_t(123456)));
+  EXPECT_EQ("AB", format("%2X", 0xAB));
+
+  // larger than the format() stack buffer (256 bytes); must grow correctly
+  const std::string big(500, 'x');
+  EXPECT_EQ("big:" + big, format("big:%s", big.c_str()));
+
+  // boundary: 255 chars fit in the stack buffer, 256 must grow
+  const std::string s255(255, 'a');
+  EXPECT_EQ(s255, format("%s", s255.c_str()));
+  const std::string s256(256, 'b');
+  EXPECT_EQ(s256, format("%s", s256.c_str()));
+}
 
 TEST(IOSTAT, finite_speed_for_subsecond_polling)
 {
