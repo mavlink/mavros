@@ -51,10 +51,15 @@ namespace uas
 class TestUAS : public ::testing::Test
 {
 public:
-  TestUAS()
+  //! Initialize rclcpp once per test binary (idempotent). Call from main().
+  static void Init()
   {
-    rclcpp::init(0, nullptr);
+    if (!rclcpp::ok()) {
+      rclcpp::init(0, nullptr);
+    }
   }
+
+  TestUAS() = default;
 
   ~TestUAS() override
   {
@@ -62,7 +67,6 @@ public:
     exec_.reset();
     nodes_.clear();
     sink_subs_.clear();
-    rclcpp::shutdown();
   }
 
   //! Real UAS node with the outbound sink created and the startup timer stopped
@@ -121,7 +125,8 @@ public:
     auto mtx = std::make_shared<std::mutex>();
     sink_subs_.push_back(
       uas->create_subscription<mavros_msgs::msg::Mavlink>(
-        "/" + name + "/mavlink_sink", rclcpp::QoS(1000).best_effort(),
+        "/" + name + "/mavlink_sink",
+        rclcpp::QoS(1000).best_effort().durability_volatile(),
         [buf, mtx](const mavros_msgs::msg::Mavlink::SharedPtr m) {
           std::lock_guard<std::mutex> lk(*mtx);
           (void)lk;

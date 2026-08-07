@@ -427,5 +427,8 @@ TEST_F(CommandFlowTest, ack_failed_result)
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  mavros::uas::TestUAS::Init();
+  int rc = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return rc;
 }

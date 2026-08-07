@@ -40,6 +40,28 @@ namespace mavros
 namespace uas
 {
 
+// Encode an integer into the MAVLink param union (which is carried in the
+// float `param_value` field).
+float union_float_from_int(int type, int64_t v)
+{
+  mavlink::mavlink_param_union_t uv{};
+  switch (type) {
+    case enum_value(MAV_PARAM_TYPE::INT8): uv.param_int8 = static_cast<int8_t>(v); break;
+    case enum_value(MAV_PARAM_TYPE::UINT8): uv.param_uint8 = static_cast<uint8_t>(v); break;
+    case enum_value(MAV_PARAM_TYPE::INT16): uv.param_int16 = static_cast<int16_t>(v); break;
+    case enum_value(MAV_PARAM_TYPE::UINT16): uv.param_uint16 = static_cast<uint16_t>(v); break;
+    case enum_value(MAV_PARAM_TYPE::INT32): uv.param_int32 = static_cast<int32_t>(v); break;
+    case enum_value(MAV_PARAM_TYPE::UINT32): uv.param_uint32 = static_cast<uint32_t>(v); break;
+    default: uv.param_float = static_cast<float>(v); break;
+  }
+  return uv.param_float;
+}
+
+// Pure conversion tests need no ROS stack.
+class ParameterTest : public ::testing::Test
+{
+};
+
 class ParamFlowTest : public TestUAS
 {
 public:
@@ -107,23 +129,6 @@ public:
     return out;
   }
 
-  // Encode an integer into the MAVLink param union (which is carried in the
-  // float `param_value` field).
-  static float union_float_from_int(int type, int64_t v)
-  {
-    mavlink::mavlink_param_union_t uv{};
-    switch (type) {
-      case enum_value(MAV_PARAM_TYPE::INT8): uv.param_int8 = static_cast<int8_t>(v); break;
-      case enum_value(MAV_PARAM_TYPE::UINT8): uv.param_uint8 = static_cast<uint8_t>(v); break;
-      case enum_value(MAV_PARAM_TYPE::INT16): uv.param_int16 = static_cast<int16_t>(v); break;
-      case enum_value(MAV_PARAM_TYPE::UINT16): uv.param_uint16 = static_cast<uint16_t>(v); break;
-      case enum_value(MAV_PARAM_TYPE::INT32): uv.param_int32 = static_cast<int32_t>(v); break;
-      case enum_value(MAV_PARAM_TYPE::UINT32): uv.param_uint32 = static_cast<uint32_t>(v); break;
-      default: uv.param_float = static_cast<float>(v); break;
-    }
-    return uv.param_float;
-  }
-
   size_t count_msgid(uint32_t msgid) const
   {
     size_t n = 0;
@@ -137,7 +142,7 @@ public:
 };
 
 // Pure conversion: MAVLink PARAM_VALUE -> rclcpp value for every type.
-TEST_F(ParamFlowTest, parameter_set_value_types)
+TEST_F(ParameterTest, parameter_set_value_types)
 {
   mavros::std_plugins::Parameter p("TEST");
 
@@ -173,7 +178,7 @@ TEST_F(ParamFlowTest, parameter_set_value_types)
 }
 
 // Pure conversion: rclcpp value -> PARAM_SET.
-TEST_F(ParamFlowTest, parameter_to_param_set)
+TEST_F(ParameterTest, parameter_to_param_set)
 {
   auto check = [](const rclcpp::ParameterValue & v, int expected_type, float expected_union) {
       mavros::std_plugins::Parameter p("TEST", 0, 0, v);
@@ -193,7 +198,7 @@ TEST_F(ParamFlowTest, parameter_to_param_set)
 }
 
 // Pure conversion: excluded parameter ids.
-TEST_F(ParamFlowTest, parameter_exclude_ids)
+TEST_F(ParameterTest, parameter_exclude_ids)
 {
   EXPECT_TRUE(mavros::std_plugins::Parameter::check_exclude_param_id("CMD_TOTAL"));
   EXPECT_TRUE(mavros::std_plugins::Parameter::check_exclude_param_id("_HASH_CHECK"));
@@ -386,5 +391,8 @@ TEST_F(ParamFlowTest, set_unknown_param)
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  mavros::uas::TestUAS::Init();
+  int rc = RUN_ALL_TESTS();
+  rclcpp::shutdown();
+  return rc;
 }
