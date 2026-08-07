@@ -82,6 +82,7 @@ public:
 
 
     // publishers
+
     //! Publish odometry from MAVLink ODOMETRY.
     odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/in", 10);
 

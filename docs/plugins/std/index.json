@@ -59,8 +59,8 @@
       {
         "name": "altitude",
         "type_name": "mavros_msgs::msg::Altitude",
-        "line": 56,
-        "description": "ALTITUDE data Publish altitude data (ALTITUDE)."
+        "line": 57,
+        "description": "Publish altitude data (ALTITUDE)."
       }
     ],
     "subscribers": [],
@@ -82,7 +82,7 @@
         "message_name": "ALTITUDE",
         "msg_id_expr": "mavlink::common::msg::ALTITUDE::MSG_ID",
         "dialect": "common",
-        "line": 62,
+        "line": 63,
         "msg_id": 141
       }
     ],
@@ -394,19 +394,19 @@
       {
         "name": "~/pull",
         "type_name": "mavros_msgs::srv::WaypointPull",
-        "line": 68,
+        "line": 69,
         "description": "Pull the geofence from the FCU (MISSION_REQUEST_LIST)."
       },
       {
         "name": "~/push",
         "type_name": "mavros_msgs::srv::WaypointPush",
-        "line": 74,
+        "line": 75,
         "description": "Push the geofence to the FCU (MISSION_COUNT)."
       },
       {
         "name": "~/clear",
         "type_name": "mavros_msgs::srv::WaypointClear",
-        "line": 80,
+        "line": 81,
         "description": "Clear the geofence on the FCU (MISSION_CLEAR_ALL)."
       }
     ],
@@ -588,70 +588,70 @@
       {
         "name": "~/raw/fix",
         "type_name": "sensor_msgs::msg::NavSatFix",
-        "line": 126,
-        "description": "gps data Publish raw GPS fix (GPS_RAW_INT)."
+        "line": 127,
+        "description": "Publish raw GPS fix (GPS_RAW_INT)."
       },
       {
         "name": "~/raw/gps_vel",
         "type_name": "geometry_msgs::msg::TwistStamped",
-        "line": 128,
+        "line": 129,
         "description": "Publish raw GPS velocity (GPS_RAW_INT)."
       },
       {
         "name": "~/raw/satellites",
         "type_name": "std_msgs::msg::UInt32",
-        "line": 132,
+        "line": 133,
         "description": "Publish number of visible GPS satellites (GPS_RAW_INT)."
       },
       {
         "name": "~/global",
         "type_name": "sensor_msgs::msg::NavSatFix",
-        "line": 136,
-        "description": "fused global position Publish fused global position fix (GLOBAL_POSITION_INT)."
+        "line": 138,
+        "description": "Publish fused global position fix (GLOBAL_POSITION_INT)."
       },
       {
         "name": "~/local",
         "type_name": "nav_msgs::msg::Odometry",
-        "line": 138,
+        "line": 140,
         "description": "Publish fused local position as odometry (GLOBAL_POSITION_INT)."
       },
       {
         "name": "~/rel_alt",
         "type_name": "std_msgs::msg::Float64",
-        "line": 140,
+        "line": 142,
         "description": "Publish fused relative altitude (GLOBAL_POSITION_INT)."
       },
       {
         "name": "~/compass_hdg",
         "type_name": "std_msgs::msg::Float64",
-        "line": 142,
+        "line": 144,
         "description": "Publish fused compass heading (GLOBAL_POSITION_INT)."
       },
       {
         "name": "~/gp_origin",
         "type_name": "geographic_msgs::msg::GeoPointStamped",
-        "line": 146,
-        "description": "global origin Publish the global origin (GPS_GLOBAL_ORIGIN)."
+        "line": 149,
+        "description": "Publish the global origin (GPS_GLOBAL_ORIGIN)."
       },
       {
         "name": "~/gp_lp_offset",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 164,
-        "description": "offset from local position to the global origin (\"earth\") Publish the offset from the local position to the global origin."
+        "line": 170,
+        "description": "Publish the offset from the local position to the global origin."
       }
     ],
     "subscribers": [
       {
         "name": "~/set_gp_origin",
         "type_name": "geographic_msgs::msg::GeoPointStamped",
-        "line": 150,
+        "line": 153,
         "description": "Set the global origin (SET_GPS_GLOBAL_ORIGIN)."
       },
       {
         "name": "home_position/home",
         "type_name": "mavros_msgs::msg::HomePosition",
-        "line": 157,
-        "description": "home position subscriber to set \"map\" origin TODO(vooon): use UAS Set the \"map\" origin from the home position (HOME_POSITION)."
+        "line": 162,
+        "description": "Set the \"map\" origin from the home position (HOME_POSITION)."
       }
     ],
     "services": [],
@@ -728,7 +728,7 @@
         "message_name": "GPS_RAW_INT",
         "msg_id_expr": "mavlink::common::msg::GPS_RAW_INT::MSG_ID",
         "dialect": "common",
-        "line": 172,
+        "line": 178,
         "msg_id": 24
       },
       {
@@ -737,7 +737,7 @@
         "message_name": "GLOBAL_POSITION_INT",
         "msg_id_expr": "mavlink::standard::msg::GLOBAL_POSITION_INT::MSG_ID",
         "dialect": "standard",
-        "line": 174,
+        "line": 180,
         "msg_id": 33,
         "description": "GPS_STATUS: there no corresponding ROS message, and it is not supported by APM"
       },
@@ -747,7 +747,7 @@
         "message_name": "GPS_GLOBAL_ORIGIN",
         "msg_id_expr": "mavlink::common::msg::GPS_GLOBAL_ORIGIN::MSG_ID",
         "dialect": "common",
-        "line": 175,
+        "line": 181,
         "msg_id": 49
       },
       {
@@ -756,7 +756,7 @@
         "message_name": "LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET",
         "msg_id_expr": "mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET::MSG_ID",
         "dialect": "common",
-        "line": 176,
+        "line": 182,
         "msg_id": 89
       }
     ],
@@ -767,7 +767,7 @@
         "message_name": "SET_GPS_GLOBAL_ORIGIN",
         "msg_id_expr": "mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN::MSG_ID",
         "dialect": "common",
-        "line": 586,
+        "line": 592,
         "msg_id": 48
       }
     ]
@@ -783,7 +783,7 @@
       {
         "name": "~/home",
         "type_name": "mavros_msgs::msg::HomePosition",
-        "line": 53,
+        "line": 54,
         "description": "Publish home position (HOME_POSITION)."
       }
     ],
@@ -791,7 +791,7 @@
       {
         "name": "~/set",
         "type_name": "mavros_msgs::msg::HomePosition",
-        "line": 56,
+        "line": 58,
         "description": "Set home position (SET_HOME_POSITION)."
       }
     ],
@@ -799,7 +799,7 @@
       {
         "name": "~/req_update",
         "type_name": "std_srvs::srv::Trigger",
-        "line": 61,
+        "line": 63,
         "description": "Request home position update (MAV_CMD_GET_HOME_POSITION)."
       }
     ],
@@ -807,7 +807,7 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 97,
+        "line": 99,
         "description": "Client to request home position via command (MAV_CMD_GET_HOME_POSITION)."
       }
     ],
@@ -819,7 +819,7 @@
         "message_name": "HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 76,
+        "line": 78,
         "msg_id": 242
       }
     ],
@@ -830,7 +830,7 @@
         "message_name": "SET_HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::SET_HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 187,
+        "line": 189,
         "msg_id": 243
       }
     ]
@@ -1209,37 +1209,37 @@
       {
         "name": "~/get_parameters",
         "type_name": "rcl_interfaces::srv::GetParameters",
-        "line": 467,
-        "description": "Standard parameter services Get parameter values from the local cache."
+        "line": 468,
+        "description": "Get parameter values from the local cache."
       },
       {
         "name": "~/get_parameter_types",
         "type_name": "rcl_interfaces::srv::GetParameterTypes",
-        "line": 471,
+        "line": 472,
         "description": "Get parameter types from the local cache."
       },
       {
         "name": "~/set_parameters",
         "type_name": "rcl_interfaces::srv::SetParameters",
-        "line": 475,
+        "line": 476,
         "description": "Set parameter values (PARAM_SET for each)."
       },
       {
         "name": "~/set_parameters_atomically",
         "type_name": "rcl_interfaces::srv::SetParametersAtomically",
-        "line": 480,
+        "line": 481,
         "description": "Unsupported: device-side atomic set, always reports failure."
       },
       {
         "name": "~/describe_parameters",
         "type_name": "rcl_interfaces::srv::DescribeParameters",
-        "line": 484,
+        "line": 485,
         "description": "Describe parameter descriptors from the local cache."
       },
       {
         "name": "~/list_parameters",
         "type_name": "rcl_interfaces::srv::ListParameters",
-        "line": 488,
+        "line": 489,
         "description": "List parameter names from the local cache."
       }
     ],
@@ -1248,21 +1248,21 @@
       {
         "name": "param_set_timeout",
         "type_name": "double",
-        "line": 495,
+        "line": 496,
         "default_value": "param_set_timeout.seconds()",
         "description": "Timeout for a single PARAM_SET retry (seconds)."
       },
       {
         "name": "param_list_timeout",
         "type_name": "double",
-        "line": 507,
+        "line": 508,
         "default_value": "param_list_timeout.seconds()",
         "description": "Timeout waiting for a full parameter list pull (seconds)."
       },
       {
         "name": "param_retries",
         "type_name": "",
-        "line": 512,
+        "line": 513,
         "default_value": "param_retries_count",
         "description": "Number of retries before reporting a parameter operation as failed."
       }
@@ -1274,7 +1274,7 @@
         "message_name": "PARAM_VALUE",
         "msg_id_expr": "mavlink::common::msg::PARAM_VALUE::MSG_ID",
         "dialect": "common",
-        "line": 533,
+        "line": 534,
         "msg_id": 22
       }
     ],
@@ -1285,7 +1285,7 @@
         "message_name": "PARAM_REQUEST_LIST",
         "msg_id_expr": "mavlink::common::msg::PARAM_REQUEST_LIST::MSG_ID",
         "dialect": "common",
-        "line": 733,
+        "line": 734,
         "msg_id": 21
       },
       {
@@ -1294,7 +1294,7 @@
         "message_name": "PARAM_REQUEST_READ",
         "msg_id_expr": "mavlink::common::msg::PARAM_REQUEST_READ::MSG_ID",
         "dialect": "common",
-        "line": 750,
+        "line": 751,
         "msg_id": 20
       },
       {
@@ -1303,7 +1303,7 @@
         "message_name": "PARAM_SET",
         "msg_id_expr": "mavlink::common::msg::PARAM_SET::MSG_ID",
         "dialect": "common",
-        "line": 768,
+        "line": 769,
         "msg_id": 23
       }
     ]
@@ -1328,19 +1328,19 @@
       {
         "name": "~/pull",
         "type_name": "mavros_msgs::srv::WaypointPull",
-        "line": 67,
+        "line": 68,
         "description": "Pull the rally points from the FCU (MISSION_REQUEST_LIST)."
       },
       {
         "name": "~/push",
         "type_name": "mavros_msgs::srv::WaypointPush",
-        "line": 73,
+        "line": 74,
         "description": "Push the rally points to the FCU (MISSION_COUNT)."
       },
       {
         "name": "~/clear",
         "type_name": "mavros_msgs::srv::WaypointClear",
-        "line": 79,
+        "line": 80,
         "description": "Clear the rally points on the FCU (MISSION_CLEAR_ALL)."
       }
     ],
@@ -1987,43 +1987,43 @@
       {
         "name": "state",
         "type_name": "mavros_msgs::msg::State",
-        "line": 582,
+        "line": 583,
         "description": "Publish connection, armed and mode state (HEARTBEAT)."
       },
       {
         "name": "extended_state",
         "type_name": "mavros_msgs::msg::ExtendedState",
-        "line": 585,
+        "line": 586,
         "description": "Publish VTOL and landed state (EXTENDED_SYS_STATE)."
       },
       {
         "name": "sys_status",
         "type_name": "mavros_msgs::msg::SysStatus",
-        "line": 588,
+        "line": 589,
         "description": "Publish system and battery status (SYS_STATUS)."
       },
       {
         "name": "estimator_status",
         "type_name": "mavros_msgs::msg::EstimatorStatus",
-        "line": 591,
+        "line": 592,
         "description": "Publish estimator status flags (ESTIMATOR_STATUS)."
       },
       {
         "name": "battery",
         "type_name": "BatteryMsg",
-        "line": 594,
+        "line": 595,
         "description": "Publish battery state (BATTERY_STATUS)."
       },
       {
         "name": "statustext/recv",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 597,
+        "line": 598,
         "description": "Publish status text received from the FCU (STATUSTEXT)."
       },
       {
         "name": "status_event",
         "type_name": "mavros_msgs::msg::StatusEvent",
-        "line": 604,
+        "line": 605,
         "description": "Publish status events received from the FCU (EVENT)."
       }
     ],
@@ -2031,7 +2031,7 @@
       {
         "name": "statustext/send",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 600,
+        "line": 601,
         "description": "Send status text to the FCU (STATUSTEXT)."
       }
     ],
@@ -2039,25 +2039,25 @@
       {
         "name": "set_mode",
         "type_name": "mavros_msgs::srv::SetMode",
-        "line": 616,
+        "line": 617,
         "description": "Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE)."
       },
       {
         "name": "set_stream_rate",
         "type_name": "mavros_msgs::srv::StreamRate",
-        "line": 622,
+        "line": 623,
         "description": "Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM)."
       },
       {
         "name": "set_message_interval",
         "type_name": "mavros_msgs::srv::MessageInterval",
-        "line": 628,
+        "line": 629,
         "description": "Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL)."
       },
       {
         "name": "vehicle_info_get",
         "type_name": "mavros_msgs::srv::VehicleInfoGet",
-        "line": 634,
+        "line": 635,
         "description": "Query information about the FCU and connected vehicles."
       }
     ],
@@ -2065,42 +2065,42 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 1340
+        "line": 1341
       }
     ],
     "parameters": [
       {
         "name": "conn_timeout",
         "type_name": "double",
-        "line": 510,
+        "line": 511,
         "default_value": "10.0",
         "description": "Connection timeout in seconds before the link is considered lost."
       },
       {
         "name": "min_voltage",
         "type_name": "",
-        "line": 521,
+        "line": 522,
         "default_value": "std::vector<double>({10.0})",
         "description": "Minimum battery voltage per battery instance before a warning is raised."
       },
       {
         "name": "disable_diag",
         "type_name": "bool",
-        "line": 530,
+        "line": 531,
         "default_value": "false",
         "description": "Disable publishing diagnostic updates."
       },
       {
         "name": "heartbeat_mav_type",
         "type_name": "",
-        "line": 551,
+        "line": 552,
         "default_value": "utils::enum_to_name(\n        conn_heartbeat_mav_type)",
         "description": "MAV type of the heartbeat sent by the GCS."
       },
       {
         "name": "heartbeat_rate",
         "type_name": "double",
-        "line": 558,
+        "line": 559,
         "default_value": "1.0",
         "description": "Rate (Hz) at which the GCS heartbeat is sent to the FCU."
       }
@@ -2112,7 +2112,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 653,
+        "line": 654,
         "msg_id": 0
       },
       {
@@ -2121,7 +2121,7 @@
         "message_name": "SYS_STATUS",
         "msg_id_expr": "mavlink::common::msg::SYS_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 654,
+        "line": 655,
         "msg_id": 1
       },
       {
@@ -2130,7 +2130,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 655,
+        "line": 656,
         "msg_id": 253
       },
       {
@@ -2139,7 +2139,7 @@
         "message_name": "EVENT",
         "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
         "dialect": "common",
-        "line": 656,
+        "line": 657,
         "msg_id": 410
       },
       {
@@ -2148,7 +2148,7 @@
         "message_name": "MEMINFO",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MEMINFO::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 657,
+        "line": 658,
         "msg_id": 152
       },
       {
@@ -2157,7 +2157,7 @@
         "message_name": "HWSTATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::HWSTATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 658,
+        "line": 659,
         "msg_id": 165
       },
       {
@@ -2166,7 +2166,7 @@
         "message_name": "AUTOPILOT_VERSION",
         "msg_id_expr": "mavlink::standard::msg::AUTOPILOT_VERSION::MSG_ID",
         "dialect": "standard",
-        "line": 659,
+        "line": 660,
         "msg_id": 148
       },
       {
@@ -2175,7 +2175,7 @@
         "message_name": "EXTENDED_SYS_STATE",
         "msg_id_expr": "mavlink::common::msg::EXTENDED_SYS_STATE::MSG_ID",
         "dialect": "common",
-        "line": 660,
+        "line": 661,
         "msg_id": 245
       },
       {
@@ -2184,7 +2184,7 @@
         "message_name": "BATTERY_STATUS",
         "msg_id_expr": "mavlink::common::msg::BATTERY_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 661,
+        "line": 662,
         "msg_id": 147
       },
       {
@@ -2193,7 +2193,7 @@
         "message_name": "ESTIMATOR_STATUS",
         "msg_id_expr": "mavlink::common::msg::ESTIMATOR_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 662,
+        "line": 663,
         "msg_id": 230
       }
     ],
@@ -2204,7 +2204,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 1326,
+        "line": 1327,
         "msg_id": 0
       },
       {
@@ -2213,7 +2213,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 1432,
+        "line": 1433,
         "msg_id": 253
       },
       {
@@ -2222,7 +2222,7 @@
         "message_name": "REQUEST_DATA_STREAM",
         "msg_id_expr": "mavlink::common::msg::REQUEST_DATA_STREAM::MSG_ID",
         "dialect": "common",
-        "line": 1448,
+        "line": 1449,
         "msg_id": 66
       },
       {
@@ -2231,7 +2231,7 @@
         "message_name": "SET_MODE",
         "msg_id_expr": "mavlink::common::msg::SET_MODE::MSG_ID",
         "dialect": "common",
-        "line": 1533,
+        "line": 1534,
         "msg_id": 11
       }
     ]
@@ -2405,7 +2405,7 @@
       {
         "name": "~/reached",
         "type_name": "mavros_msgs::msg::WaypointReached",
-        "line": 88,
+        "line": 89,
         "description": "Notifies when a mission waypoint is reached."
       }
     ],
@@ -2414,25 +2414,25 @@
       {
         "name": "~/pull",
         "type_name": "mavros_msgs::srv::WaypointPull",
-        "line": 98,
+        "line": 100,
         "description": "Pull the mission from the FCU (MISSION_REQUEST_LIST)."
       },
       {
         "name": "~/push",
         "type_name": "mavros_msgs::srv::WaypointPush",
-        "line": 104,
+        "line": 106,
         "description": "Push a mission to the FCU (full or partial)."
       },
       {
         "name": "~/clear",
         "type_name": "mavros_msgs::srv::WaypointClear",
-        "line": 110,
+        "line": 112,
         "description": "Clear the mission on the FCU (MISSION_CLEAR_ALL)."
       },
       {
         "name": "~/set_current",
         "type_name": "mavros_msgs::srv::WaypointSetCurrent",
-        "line": 115,
+        "line": 117,
         "description": "Set the active/current mission waypoint."
       }
     ],

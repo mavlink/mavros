@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `~/debug` (DV) - publishers Publish DEBUG messages from MAVLink DEBUG.
+- `~/debug` (DV) - Publish DEBUG messages from MAVLink DEBUG.
 - `~/debug_vector` (DV) - Publish DEBUG_VECT messages from MAVLink DEBUG_VECT.
 - `~/debug_float_array` (DV) - Publish DEBUG_FLOAT_ARRAY messages from MAVLink DEBUG_FLOAT_ARRAY.
 - `~/named_value_float` (DV) - Publish NAMED_VALUE_FLOAT messages from MAVLink NAMED_VALUE_FLOAT.

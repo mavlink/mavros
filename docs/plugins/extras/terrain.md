@@ -9,12 +9,12 @@
 Bridges the MAVLink terrain protocol between the FCU and a companion terrain_server node that serves SRTM elevation data. Protocol spec: https://mavlink.io/en/services/terrain.html TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM lookup; the server responds with TERRAIN_DATA blocks that are sent back to the FCU.  TERRAIN_CHECK point queries are handled via a service call to the server, which responds with elevation data that is returned to the FCU as TERRAIN_REPORT.
 
 ## Publishers
-- `~/report` ([mavros_msgs::msg::TerrainReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainReport.html)) - Terrain height reports from FCU and check-service responses Publish terrain reports from MAVLink TERRAIN_REPORT.
-- `~/request` ([mavros_msgs::msg::TerrainRequest](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainRequest.html)) - Grid data requests forwarded from FCU for SRTM lookup Publish terrain requests from MAVLink TERRAIN_REQUEST.
+- `~/report` ([mavros_msgs::msg::TerrainReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainReport.html)) - Publish terrain reports from MAVLink TERRAIN_REPORT.
+- `~/request` ([mavros_msgs::msg::TerrainRequest](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainRequest.html)) - Publish terrain requests from MAVLink TERRAIN_REQUEST.
 
 
 ## Subscribers
-- `~/data` ([mavros_msgs::msg::TerrainData](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainData.html)) - Filled terrain grid blocks from terrain_server Subscribe to TerrainData to send as TERRAIN_DATA to the FCU.
+- `~/data` ([mavros_msgs::msg::TerrainData](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainData.html)) - Subscribe to TerrainData to send as TERRAIN_DATA to the FCU.
 
 
 ## Services
@@ -22,7 +22,7 @@ Bridges the MAVLink terrain protocol between the FCU and a companion terrain_ser
 
 
 ## Clients
-- `~/check` ([mavros_msgs::srv::TerrainCheck](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/TerrainCheck.html)) - Point elevation query handled by terrain_server Client to query terrain elevation (terrain/check).
+- `~/check` ([mavros_msgs::srv::TerrainCheck](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/TerrainCheck.html)) - Client to query terrain elevation (terrain/check).
 
 
 ## Parameters

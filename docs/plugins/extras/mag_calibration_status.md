@@ -9,7 +9,7 @@
 Example and "how to" for users.
 
 ## Publishers
-- `~/status` ([std_msgs::msg::UInt8](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt8.html)) - TODO(vooon): use QoS for "latched" topics Publish magnetometer calibration progress from MAVLink MAG_CAL_PROGRESS.
+- `~/status` ([std_msgs::msg::UInt8](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt8.html)) - Publish magnetometer calibration progress from MAVLink MAG_CAL_PROGRESS.
 - `~/report` ([mavros_msgs::msg::MagnetometerReporter](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MagnetometerReporter.html)) - Publish magnetometer calibration report from MAVLink MAG_CAL_REPORT.
 
 

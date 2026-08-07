@@ -9,7 +9,7 @@
 Publish altitude data.
 
 ## Publishers
-- `altitude` ([mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html)) - ALTITUDE data Publish altitude data (ALTITUDE).
+- `altitude` ([mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html)) - Publish altitude data (ALTITUDE).
 
 
 ## Subscribers

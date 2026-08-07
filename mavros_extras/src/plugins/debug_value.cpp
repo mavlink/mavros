@@ -48,6 +48,7 @@ public:
       std::bind(&DebugValuePlugin::debug_cb, this, _1));
 
     // publishers
+
     //! Publish DEBUG messages from MAVLink DEBUG.
     debug_pub = node->create_publisher<DV>("~/debug", 10);
     //! Publish DEBUG_VECT messages from MAVLink DEBUG_VECT.

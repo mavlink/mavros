@@ -20,7 +20,7 @@ Implements the [MAVLink Parameter Protocol](https://mavlink.io/en/services/param
 ## Services
 - `~/pull` ([mavros_msgs::srv::ParamPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamPull.html)) - Custom parameter services Fetch all parameters from the device (PARAM_REQUEST_LIST).
 - `~/set` ([mavros_msgs::srv::ParamSetV2](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamSetV2.html)) - Set a single parameter value (PARAM_SET).
-- `~/get_parameters` ([rcl_interfaces::srv::GetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameters.html)) - Standard parameter services Get parameter values from the local cache.
+- `~/get_parameters` ([rcl_interfaces::srv::GetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameters.html)) - Get parameter values from the local cache.
 - `~/get_parameter_types` ([rcl_interfaces::srv::GetParameterTypes](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameterTypes.html)) - Get parameter types from the local cache.
 - `~/set_parameters` ([rcl_interfaces::srv::SetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParameters.html)) - Set parameter values (PARAM_SET for each).
 - `~/set_parameters_atomically` ([rcl_interfaces::srv::SetParametersAtomically](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParametersAtomically.html)) - Unsupported: device-side atomic set, always reports failure.

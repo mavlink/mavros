@@ -187,31 +187,31 @@
       {
         "name": "~/debug",
         "type_name": "DV",
-        "line": 52,
-        "description": "publishers Publish DEBUG messages from MAVLink DEBUG."
+        "line": 53,
+        "description": "Publish DEBUG messages from MAVLink DEBUG."
       },
       {
         "name": "~/debug_vector",
         "type_name": "DV",
-        "line": 54,
+        "line": 55,
         "description": "Publish DEBUG_VECT messages from MAVLink DEBUG_VECT."
       },
       {
         "name": "~/debug_float_array",
         "type_name": "DV",
-        "line": 56,
+        "line": 57,
         "description": "Publish DEBUG_FLOAT_ARRAY messages from MAVLink DEBUG_FLOAT_ARRAY."
       },
       {
         "name": "~/named_value_float",
         "type_name": "DV",
-        "line": 58,
+        "line": 59,
         "description": "Publish NAMED_VALUE_FLOAT messages from MAVLink NAMED_VALUE_FLOAT."
       },
       {
         "name": "~/named_value_int",
         "type_name": "DV",
-        "line": 60,
+        "line": 61,
         "description": "Publish NAMED_VALUE_INT messages from MAVLink NAMED_VALUE_INT."
       }
     ],
@@ -233,7 +233,7 @@
         "message_name": "DEBUG",
         "msg_id_expr": "mavlink::common::msg::DEBUG::MSG_ID",
         "dialect": "common",
-        "line": 66,
+        "line": 67,
         "msg_id": 254
       },
       {
@@ -242,7 +242,7 @@
         "message_name": "DEBUG_VECT",
         "msg_id_expr": "mavlink::common::msg::DEBUG_VECT::MSG_ID",
         "dialect": "common",
-        "line": 67,
+        "line": 68,
         "msg_id": 250
       },
       {
@@ -251,7 +251,7 @@
         "message_name": "DEBUG_FLOAT_ARRAY",
         "msg_id_expr": "mavlink::common::msg::DEBUG_FLOAT_ARRAY::MSG_ID",
         "dialect": "common",
-        "line": 68,
+        "line": 69,
         "msg_id": 350
       },
       {
@@ -260,7 +260,7 @@
         "message_name": "NAMED_VALUE_FLOAT",
         "msg_id_expr": "mavlink::common::msg::NAMED_VALUE_FLOAT::MSG_ID",
         "dialect": "common",
-        "line": 69,
+        "line": 70,
         "msg_id": 251
       },
       {
@@ -269,7 +269,7 @@
         "message_name": "NAMED_VALUE_INT",
         "msg_id_expr": "mavlink::common::msg::NAMED_VALUE_INT::MSG_ID",
         "dialect": "common",
-        "line": 70,
+        "line": 71,
         "msg_id": 252
       }
     ],
@@ -280,7 +280,7 @@
         "message_name": "DEBUG",
         "msg_id_expr": "mavlink::common::msg::DEBUG::MSG_ID",
         "dialect": "common",
-        "line": 309,
+        "line": 310,
         "msg_id": 254
       },
       {
@@ -289,7 +289,7 @@
         "message_name": "DEBUG_VECT",
         "msg_id_expr": "mavlink::common::msg::DEBUG_VECT::MSG_ID",
         "dialect": "common",
-        "line": 326,
+        "line": 327,
         "msg_id": 250
       },
       {
@@ -298,7 +298,7 @@
         "message_name": "DEBUG_FLOAT_ARRAY",
         "msg_id_expr": "mavlink::common::msg::DEBUG_FLOAT_ARRAY::MSG_ID",
         "dialect": "common",
-        "line": 338,
+        "line": 339,
         "msg_id": 350
       },
       {
@@ -307,7 +307,7 @@
         "message_name": "NAMED_VALUE_FLOAT",
         "msg_id_expr": "mavlink::common::msg::NAMED_VALUE_FLOAT::MSG_ID",
         "dialect": "common",
-        "line": 348,
+        "line": 349,
         "msg_id": 251
       },
       {
@@ -316,7 +316,7 @@
         "message_name": "NAMED_VALUE_INT",
         "msg_id_expr": "mavlink::common::msg::NAMED_VALUE_INT::MSG_ID",
         "dialect": "common",
-        "line": 358,
+        "line": 359,
         "msg_id": 252
       }
     ]
@@ -917,8 +917,8 @@
       {
         "name": "~/rtk_baseline",
         "type_name": "mavros_msgs::msg::RTKBaseline",
-        "line": 54,
-        "description": "TODO(vooon): set QoS for latched topic Publish RTK baseline data from MAVLink GPS_RTK."
+        "line": 55,
+        "description": "Publish RTK baseline data from MAVLink GPS_RTK."
       }
     ],
     "subscribers": [
@@ -939,7 +939,7 @@
         "message_name": "GPS_RTK",
         "msg_id_expr": "mavlink::common::msg::GPS_RTK::MSG_ID",
         "dialect": "common",
-        "line": 60,
+        "line": 61,
         "msg_id": 127
       }
     ],
@@ -950,7 +950,7 @@
         "message_name": "GPS_RTCM_DATA",
         "msg_id_expr": "mavlink::common::msg::GPS_RTCM_DATA::MSG_ID",
         "dialect": "common",
-        "line": 101,
+        "line": 102,
         "msg_id": 233
       },
       {
@@ -959,7 +959,7 @@
         "message_name": "GPS_RTCM_DATA",
         "msg_id_expr": "mavlink::common::msg::GPS_RTCM_DATA::MSG_ID",
         "dialect": "common",
-        "line": 112,
+        "line": 113,
         "msg_id": 233
       }
     ]
@@ -1052,16 +1052,16 @@
       {
         "name": "/move_base_simple/goal",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 67,
-        "description": "Publish targets received from FCU Publish guided target from MAVLink POSITION_TARGET_GLOBAL_INT."
+        "line": 68,
+        "description": "Publish guided target from MAVLink POSITION_TARGET_GLOBAL_INT."
       }
     ],
     "subscribers": [
       {
         "name": "global_position/gp_origin",
         "type_name": "geographic_msgs::msg::GeoPointStamped",
-        "line": 73,
-        "description": "Subscriber for global origin (aka map origin). Subscribe to global position origin (map origin)."
+        "line": 75,
+        "description": "Subscribe to global position origin (map origin)."
       }
     ],
     "services": [],
@@ -1082,7 +1082,7 @@
         "message_name": "POSITION_TARGET_GLOBAL_INT",
         "msg_id_expr": "mavlink::common::msg::POSITION_TARGET_GLOBAL_INT::MSG_ID",
         "dialect": "common",
-        "line": 81,
+        "line": 84,
         "msg_id": 87
       }
     ],
@@ -1506,13 +1506,13 @@
       {
         "name": "~/status",
         "type_name": "std_msgs::msg::UInt8",
-        "line": 48,
-        "description": "TODO(vooon): use QoS for \"latched\" topics Publish magnetometer calibration progress from MAVLink MAG_CAL_PROGRESS."
+        "line": 49,
+        "description": "Publish magnetometer calibration progress from MAVLink MAG_CAL_PROGRESS."
       },
       {
         "name": "~/report",
         "type_name": "mavros_msgs::msg::MagnetometerReporter",
-        "line": 50,
+        "line": 51,
         "description": "Publish magnetometer calibration report from MAVLink MAG_CAL_REPORT."
       }
     ],
@@ -1527,7 +1527,7 @@
         "message_name": "MAG_CAL_PROGRESS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MAG_CAL_PROGRESS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 56,
+        "line": 57,
         "msg_id": 191
       },
       {
@@ -1536,7 +1536,7 @@
         "message_name": "MAG_CAL_REPORT",
         "msg_id_expr": "mavlink::common::msg::MAG_CAL_REPORT::MSG_ID",
         "dialect": "common",
-        "line": 57,
+        "line": 58,
         "msg_id": 192
       }
     ],
@@ -1791,15 +1791,15 @@
       {
         "name": "~/in",
         "type_name": "nav_msgs::msg::Odometry",
-        "line": 86,
-        "description": "publishers Publish odometry from MAVLink ODOMETRY."
+        "line": 87,
+        "description": "Publish odometry from MAVLink ODOMETRY."
       }
     ],
     "subscribers": [
       {
         "name": "~/out",
         "type_name": "nav_msgs::msg::Odometry",
-        "line": 91,
+        "line": 92,
         "description": "subscribers Subscribe to odometry to send as ODOMETRY to the FCU."
       }
     ],
@@ -1835,7 +1835,7 @@
         "message_name": "ODOMETRY",
         "msg_id_expr": "mavlink::common::msg::ODOMETRY::MSG_ID",
         "dialect": "common",
-        "line": 99,
+        "line": 100,
         "msg_id": 331
       }
     ],
@@ -1846,7 +1846,7 @@
         "message_name": "ODOMETRY",
         "msg_id_expr": "mavlink::common::msg::ODOMETRY::MSG_ID",
         "dialect": "common",
-        "line": 359,
+        "line": 360,
         "msg_id": 331,
         "description": "send ODOMETRY msg"
       }
@@ -2220,37 +2220,37 @@
     "class_name": "mavros::extra_plugins::SimStatePlugin",
     "namespace": "sim_state",
     "brief": "SIM_STATE plugin.",
-    "description": "Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics. Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy. Currently verified with ArduCopter SITL. Published topics (relative to plugin namespace): - ~/attitude (sensor_msgs/Imu): orientation (ENU/base_link) and angular velocity - ~/acceleration (geometry_msgs/Vector3Stamped): linear accel (m/s^2) in ENU/map - ~/velocity_body (geometry_msgs/TwistStamped): linear+angular velocity in base_link - ~/velocity_local (geometry_msgs/TwistStamped): linear+angular velocity in ENU/map - ~/global_position (sensor_msgs/NavSatFix): WGS84 lat/lon/alt with optional covariance",
+    "description": "Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics. Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy. Currently verified with ArduCopter SITL.",
     "publishers": [
       {
         "name": "~/attitude",
         "type_name": "sensor_msgs::msg::Imu",
-        "line": 59,
-        "description": "IMU attitude publisher (~/attitude): orientation and angular velocity in ENU/base_link Publish attitude from MAVLink SIM_STATE."
+        "line": 51,
+        "description": "Publish IMU attitude (orientation + angular velocity) in ENU/base_link from MAVLink SIM_STATE."
       },
       {
         "name": "~/acceleration",
         "type_name": "geometry_msgs::msg::Vector3Stamped",
-        "line": 64,
-        "description": "Linear acceleration publisher (~/acceleration): ENU/map, units m/s^2 Publish linear acceleration from MAVLink SIM_STATE."
+        "line": 55,
+        "description": "Publish linear acceleration (m/s^2) in ENU/map from MAVLink SIM_STATE."
       },
       {
         "name": "~/velocity_body",
         "type_name": "geometry_msgs::msg::TwistStamped",
-        "line": 69,
-        "description": "Body-frame twist publisher (~/velocity_body): base_link linear+angular velocity Publish body-frame velocity from MAVLink SIM_STATE."
+        "line": 60,
+        "description": "Publish body-frame velocity (linear + angular) in base_link from MAVLink SIM_STATE."
       },
       {
         "name": "~/velocity_local",
         "type_name": "geometry_msgs::msg::TwistStamped",
-        "line": 74,
-        "description": "Local-frame twist publisher (~/velocity_local): ENU/map linear+angular velocity Publish local-frame velocity from MAVLink SIM_STATE."
+        "line": 65,
+        "description": "Publish local-frame velocity (linear + angular) in ENU/map from MAVLink SIM_STATE."
       },
       {
         "name": "~/global_position",
         "type_name": "sensor_msgs::msg::NavSatFix",
-        "line": 79,
-        "description": "Global position publisher (~/global_position): WGS84 NavSatFix Publish global position from MAVLink SIM_STATE."
+        "line": 69,
+        "description": "Publish global position (WGS84 NavSatFix) from MAVLink SIM_STATE."
       }
     ],
     "subscribers": [],
@@ -2264,7 +2264,7 @@
         "message_name": "SIM_STATE",
         "msg_id_expr": "mavlink::common::msg::SIM_STATE::MSG_ID",
         "dialect": "common",
-        "line": 87,
+        "line": 77,
         "msg_id": 108
       }
     ],
@@ -2330,22 +2330,22 @@
       {
         "name": "~/report",
         "type_name": "mavros_msgs::msg::TerrainReport",
-        "line": 64,
-        "description": "Terrain height reports from FCU and check-service responses Publish terrain reports from MAVLink TERRAIN_REPORT."
+        "line": 65,
+        "description": "Publish terrain reports from MAVLink TERRAIN_REPORT."
       },
       {
         "name": "~/request",
         "type_name": "mavros_msgs::msg::TerrainRequest",
-        "line": 68,
-        "description": "Grid data requests forwarded from FCU for SRTM lookup Publish terrain requests from MAVLink TERRAIN_REQUEST."
+        "line": 70,
+        "description": "Publish terrain requests from MAVLink TERRAIN_REQUEST."
       }
     ],
     "subscribers": [
       {
         "name": "~/data",
         "type_name": "mavros_msgs::msg::TerrainData",
-        "line": 73,
-        "description": "Filled terrain grid blocks from terrain_server Subscribe to TerrainData to send as TERRAIN_DATA to the FCU."
+        "line": 76,
+        "description": "Subscribe to TerrainData to send as TERRAIN_DATA to the FCU."
       }
     ],
     "services": [],
@@ -2353,8 +2353,8 @@
       {
         "name": "~/check",
         "type_name": "mavros_msgs::srv::TerrainCheck",
-        "line": 79,
-        "description": "Point elevation query handled by terrain_server Client to query terrain elevation (terrain/check)."
+        "line": 83,
+        "description": "Client to query terrain elevation (terrain/check)."
       }
     ],
     "parameters": [],
@@ -2365,7 +2365,7 @@
         "message_name": "TERRAIN_REPORT",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_REPORT::MSG_ID",
         "dialect": "common",
-        "line": 86,
+        "line": 90,
         "msg_id": 136
       },
       {
@@ -2374,7 +2374,7 @@
         "message_name": "TERRAIN_REQUEST",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_REQUEST::MSG_ID",
         "dialect": "common",
-        "line": 87,
+        "line": 91,
         "msg_id": 133
       },
       {
@@ -2383,7 +2383,7 @@
         "message_name": "TERRAIN_CHECK",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_CHECK::MSG_ID",
         "dialect": "common",
-        "line": 88,
+        "line": 92,
         "msg_id": 135
       }
     ],
@@ -2394,7 +2394,7 @@
         "message_name": "TERRAIN_REPORT",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_REPORT::MSG_ID",
         "dialect": "common",
-        "line": 168,
+        "line": 172,
         "msg_id": 136
       },
       {
@@ -2403,7 +2403,7 @@
         "message_name": "TERRAIN_DATA",
         "msg_id_expr": "mavlink::common::msg::TERRAIN_DATA::MSG_ID",
         "dialect": "common",
-        "line": 193,
+        "line": 197,
         "msg_id": 134
       }
     ]
