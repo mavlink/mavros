@@ -45,15 +45,21 @@ public:
   explicit LogTransferPlugin(plugin::UASPtr uas_)
   : plugin::Plugin(uas_, "log_transfer")
   {
+    //! Publish log entry from MAVLink LOG_ENTRY.
     log_entry_pub = node->create_publisher<mavros_msgs::msg::LogEntry>("~/raw/log_entry", 1000);
+    //! Publish log data from MAVLink LOG_DATA.
     log_data_pub = node->create_publisher<mavros_msgs::msg::LogData>("~/raw/log_data", 1000);
 
+    //! Request log list (MAVLink LOG_REQUEST_LIST).
     log_request_list_srv = node->create_service<mavros_msgs::srv::LogRequestList>(
       "~/raw/log_request_list", std::bind(&LogTransferPlugin::log_request_list_cb, this, _1, _2));
+    //! Request log data (MAVLink LOG_REQUEST_DATA).
     log_request_data_srv = node->create_service<mavros_msgs::srv::LogRequestData>(
       "~/raw/log_request_data", std::bind(&LogTransferPlugin::log_request_data_cb, this, _1, _2));
+    //! End log download (MAVLink LOG_REQUEST_END).
     log_request_end_srv = node->create_service<mavros_msgs::srv::LogRequestEnd>(
       "~/raw/log_request_end", std::bind(&LogTransferPlugin::log_request_end_cb, this, _1, _2));
+    //! Erase onboard log (MAVLink LOG_ERASE).
     log_request_erase_srv = node->create_service<std_srvs::srv::Trigger>(
       "~/raw/log_request_erase", std::bind(
         &LogTransferPlugin::log_request_erase_cb, this, _1,

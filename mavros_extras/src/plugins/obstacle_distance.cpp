@@ -50,6 +50,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! MAVLink MAV_FRAME used when sending OBSTACLE_DISTANCE.
     node_declare_and_watch_parameter(
       "mav_frame", "GLOBAL", [&](const rclcpp::Parameter & p) {
         auto mav_frame = p.as_string();
@@ -57,6 +58,7 @@ public:
         // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
       });
 
+    //! Subscribe to LaserScan to send as OBSTACLE_DISTANCE to the FCU.
     obstacle_sub =
       node->create_subscription<sensor_msgs::msg::LaserScan>(
       "~/send", 10,

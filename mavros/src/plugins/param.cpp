@@ -441,7 +441,9 @@ public:
     auto qos = rclcpp::ParametersQoS();
 #endif
 
+    //! Parameter change notifications (new/updated/changed).
     param_event_pub = node->create_publisher<mavros_msgs::msg::ParamEvent>("~/event", event_qos);
+    //! Standard ROS parameter events (on /parameter_events).
     std_event_pub = node->create_publisher<rcl_interfaces::msg::ParameterEvent>(
       PSN::events,
       event_qos);
@@ -449,38 +451,47 @@ public:
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     // Custom parameter services
+    //! Fetch all parameters from the device (PARAM_REQUEST_LIST).
     pull_srv =
       node->create_service<mavros_msgs::srv::ParamPull>(
       "~/pull",
       std::bind(&ParamPlugin::pull_cb, this, _1, _2), qos, srv_cg);
+    //! Set a single parameter value (PARAM_SET).
     set_srv =
       node->create_service<mavros_msgs::srv::ParamSetV2>(
       "~/set",
       std::bind(&ParamPlugin::set_cb, this, _1, _2), qos, srv_cg);
 
     // Standard parameter services
+    //! Get parameter values from the local cache.
     get_parameters_srv = node->create_service<rcl_interfaces::srv::GetParameters>(
       PSN::get_parameters,
       std::bind(&ParamPlugin::get_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! Get parameter types from the local cache.
     get_parameter_types_srv = node->create_service<rcl_interfaces::srv::GetParameterTypes>(
       PSN::get_parameter_types,
       std::bind(&ParamPlugin::get_parameter_types_cb, this, _1, _2), qos, srv_cg);
+    //! Set parameter values (PARAM_SET for each).
     set_parameters_srv = node->create_service<rcl_interfaces::srv::SetParameters>(
       PSN::set_parameters,
       std::bind(&ParamPlugin::set_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! Unsupported: device-side atomic set, always reports failure.
     set_parameters_atomically_srv =
       node->create_service<rcl_interfaces::srv::SetParametersAtomically>(
       PSN::set_parameters_atomically,
       std::bind(&ParamPlugin::set_parameters_atomically_cb, this, _1, _2), qos, srv_cg);
+    //! Describe parameter descriptors from the local cache.
     describe_parameters_srv = node->create_service<rcl_interfaces::srv::DescribeParameters>(
       PSN::describe_parameters,
       std::bind(&ParamPlugin::describe_parameters_cb, this, _1, _2), qos, srv_cg);
+    //! List parameter names from the local cache.
     list_parameters_srv = node->create_service<rcl_interfaces::srv::ListParameters>(
       PSN::list_parameters,
       std::bind(&ParamPlugin::list_parameters_cb, this, _1, _2), qos, srv_cg);
 
     enable_node_watch_parameters();
 
+    //! Timeout for a single PARAM_SET retry (seconds).
     node_declare_and_watch_parameter(
       "param_set_timeout", param_set_timeout.seconds(), [this](const rclcpp::Parameter & p) {
         param_set_timeout = rclcpp::Duration::from_seconds(p.as_double());
@@ -492,10 +503,12 @@ public:
           std::bind(&ParamPlugin::timeout_cb, this));
         timeout_timer->cancel();
       });
+    //! Timeout waiting for a full parameter list pull (seconds).
     node_declare_and_watch_parameter(
       "param_list_timeout", param_list_timeout.seconds(), [&](const rclcpp::Parameter & p) {
         param_list_timeout = rclcpp::Duration::from_seconds(p.as_double());
       });
+    //! Number of retries before reporting a parameter operation as failed.
     node_declare_and_watch_parameter(
       "param_retries", param_retries_count, [&](const rclcpp::Parameter & p) {
         param_retries_count = p.as_int();

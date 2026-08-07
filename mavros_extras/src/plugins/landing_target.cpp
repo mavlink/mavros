@@ -69,11 +69,13 @@ public:
     enable_node_watch_parameters();
 
     // general params
+    //! Frame id for published landing target messages.
     node_declare_and_watch_parameter(
       "frame_id", "landing_target_1", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Enable listening to raw LandingTarget messages.
     node_declare_and_watch_parameter(
       "listen_lt", false, [&](const rclcpp::Parameter & p) {
         auto listen_lt = p.as_bool();
@@ -81,6 +83,7 @@ public:
         land_target_sub.reset();
 
         if (listen_lt) {
+          //! Subscribe to raw LandingTarget messages to send to the FCU.
           land_target_sub = node->create_subscription<mavros_msgs::msg::LandingTarget>(
             "~/raw", 10, std::bind(
               &LandingTargetPlugin::landtarget_cb, this,
@@ -88,6 +91,7 @@ public:
         }
       });
 
+    //! MAVLink MAV_FRAME used when sending LANDING_TARGET.
     node_declare_and_watch_parameter(
       "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         mav_frame = p.as_string();
@@ -95,6 +99,7 @@ public:
         // MAV_FRAME index based on given frame name (If unknown, defaults to GENERIC)
       });
 
+    //! MAVLink LANDING_TARGET_TYPE used when sending LANDING_TARGET.
     node_declare_and_watch_parameter(
       "land_target_type", "VISION_FIDUCIAL", [&](const rclcpp::Parameter & p) {
         land_target_type = p.as_string();
@@ -103,45 +108,53 @@ public:
       });
 
     // target size
+    //! Landing target size on X axis [m].
     node_declare_and_watch_parameter(
       "target_size.x", 1.0, [&](const rclcpp::Parameter & p) {
         target_size_x = p.as_double();  // [meters]
       });
 
+    //! Landing target size on Y axis [m].
     node_declare_and_watch_parameter(
       "target_size.y", 1.0, [&](const rclcpp::Parameter & p) {
         target_size_y = p.as_double();
       });
 
     // image size
+    //! Image width in pixels.
     node_declare_and_watch_parameter(
       "image.width", 640, [&](const rclcpp::Parameter & p) {
         image_width = p.as_int();       // [pixels]
       });
 
+    //! Image height in pixels.
     node_declare_and_watch_parameter(
       "image.height", 480, [&](const rclcpp::Parameter & p) {
         image_height = p.as_int();
       });
 
     // camera field-of-view -> should be precised using the calibrated camera intrinsics
+    //! Camera field-of-view on X axis [rad].
     node_declare_and_watch_parameter(
       "camera.fov_x", 2.0071286398, [&](const rclcpp::Parameter & p) {
         fov_x = p.as_double();          // default: 115 degrees in [radians]
       });
 
+    //! Camera field-of-view on Y axis [rad].
     node_declare_and_watch_parameter(
       "camera.fov_y", 2.0071286398, [&](const rclcpp::Parameter & p) {
         fov_y = p.as_double();          // default: 115 degrees in [radians]
       });
 
     // camera focal length
+    //! Camera focal length [mm].
     node_declare_and_watch_parameter(
       "camera.focal_length", 2.8, [&](const rclcpp::Parameter & p) {
         focal_length = p.as_double();   // ex: OpenMV Cam M7: 2.8 [mm]
       });
 
     // tf subsection
+    //! Landing target transform rate limit [Hz].
     node_declare_and_watch_parameter(
       "tf.rate_limit", 50.0, [&](const rclcpp::Parameter & p) {
         // no dynamic update here yet. need to modify the thread in
@@ -149,21 +162,25 @@ public:
         tf_rate = p.as_double();
       });
 
+    //! Enable sending landing target transform to TF.
     node_declare_and_watch_parameter(
       "tf.send", true, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
 
+    //! TF frame id for landing target.
     node_declare_and_watch_parameter(
       "tf.frame_id", frame_id, [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
+    //! TF child frame id for landing target.
     node_declare_and_watch_parameter(
       "tf.child_frame_id", "camera_center", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 
+    //! Listen to landing target pose from TF.
     node_declare_and_watch_parameter(
       "tf.listen", false, [&](const rclcpp::Parameter & p) {
         tf_listen = p.as_bool();
@@ -181,12 +198,15 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Publish landing target pose from MAVLink LANDING_TARGET.
     land_target_pub =
       node->create_publisher<geometry_msgs::msg::PoseStamped>("~/pose_in", sensor_qos);
+    //! Publish landing target size as Vector3Stamped.
     lt_marker_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>(
       "~/lt_marker",
       sensor_qos);
 
+    //! Subscribe to landing target pose to send as LANDING_TARGET to the FCU.
     pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
       "~/pose", 10, std::bind(
         &LandingTargetPlugin::pose_cb, this, _1));

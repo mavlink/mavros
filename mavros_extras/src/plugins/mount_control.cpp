@@ -195,29 +195,35 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Negate the measured roll angle.
     node_declare_and_watch_parameter(
       "negate_measured_roll", false, [&](const rclcpp::Parameter & p) {
         negate_measured_roll = p.as_bool();
       });
+    //! Negate the measured pitch angle.
     node_declare_and_watch_parameter(
       "negate_measured_pitch", false, [&](const rclcpp::Parameter & p) {
         negate_measured_pitch = p.as_bool();
       });
+    //! Negate the measured yaw angle.
     node_declare_and_watch_parameter(
       "negate_measured_yaw", false, [&](const rclcpp::Parameter & p) {
         negate_measured_yaw = p.as_bool();
       });
 
+    //! Mount diagnostic error debounce time [s].
     node_declare_and_watch_parameter(
       "debounce_s", 4.0, [&](const rclcpp::Parameter & p) {
         auto debounce_s = p.as_double();
         mount_diag.set_debounce_s(debounce_s);
       });
+    //! Mount diagnostic angle error threshold [deg].
     node_declare_and_watch_parameter(
       "err_threshold_deg", 10.0, [&](const rclcpp::Parameter & p) {
         auto err_threshold_deg = p.as_double();
         mount_diag.set_err_threshold_deg(err_threshold_deg);
       });
+    //! Disable mount diagnostic updater.
     node_declare_and_watch_parameter(
       "disable_diag", false, [&](const rclcpp::Parameter & p) {
         auto disable_diag = p.as_bool();
@@ -229,16 +235,20 @@ public:
         }
       });
 
+    //! Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.
     command_sub = node->create_subscription<mavros_msgs::msg::MountControl>(
       "~/command", 10, std::bind(
         &MountControlPlugin::command_cb, this,
         _1));
 
+    //! Publish mount orientation as quaternion from MAVLink MOUNT_ORIENTATION.
     mount_orientation_pub = node->create_publisher<geometry_msgs::msg::Quaternion>(
       "~/orientation",
       10);
+    //! Publish mount status from MAVLink MOUNT_STATUS.
     mount_status_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("~/status", 10);
 
+    //! Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
     configure_srv = node->create_service<mavros_msgs::srv::MountConfigure>(
       "~/configure", std::bind(
         &MountControlPlugin::mount_configure_cb,

@@ -42,6 +42,7 @@ public:
   explicit OnboardComputerStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "onboard_computer")
   {
+    //! Subscribe to OnboardComputerStatus to send as ONBOARD_COMPUTER_STATUS.
     status_sub = node->create_subscription<mavros_msgs::msg::OnboardComputerStatus>(
       "~/status", 10, std::bind(
         &OnboardComputerStatusPlugin::status_cb, this,

@@ -43,7 +43,9 @@ public:
     _max_esc_info_index(0),
     _max_esc_status_index(0)
   {
+    //! Publish ESC information from MAVLink ESC_INFO.
     esc_info_pub = node->create_publisher<mavros_msgs::msg::ESCInfo>("~/info", 10);
+    //! Publish ESC status from MAVLink ESC_STATUS.
     esc_status_pub = node->create_publisher<mavros_msgs::msg::ESCStatus>("~/status", 10);
 
     enable_connection_cb();

@@ -45,26 +45,31 @@ public:
   explicit OpenDroneIDPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "open_drone_id")
   {
+    //! Subscribe to send OPEN_DRONE_ID_BASIC_ID to the FCU.
     basic_id_sub = node->create_subscription<mavros_msgs::msg::OpenDroneIDBasicID>(
       "~/basic_id", 1, std::bind(
         &OpenDroneIDPlugin::basic_id_cb, this,
         _1));
 
+    //! Subscribe to send OPEN_DRONE_ID_OPERATOR_ID to the FCU.
     operator_id_sub = node->create_subscription<mavros_msgs::msg::OpenDroneIDOperatorID>(
       "~/operator_id", 1, std::bind(
         &OpenDroneIDPlugin::operator_id_cb, this,
         _1));
 
+    //! Subscribe to send OPEN_DRONE_ID_SELF_ID to the FCU.
     self_id_sub = node->create_subscription<mavros_msgs::msg::OpenDroneIDSelfID>(
       "~/self_id", 1, std::bind(
         &OpenDroneIDPlugin::self_id_cb, this,
         _1));
 
+    //! Subscribe to send OPEN_DRONE_ID_SYSTEM to the FCU.
     system_sub = node->create_subscription<mavros_msgs::msg::OpenDroneIDSystem>(
       "~/system", 1, std::bind(
         &OpenDroneIDPlugin::system_cb, this,
         _1));
 
+    //! Subscribe to send OPEN_DRONE_ID_SYSTEM_UPDATE to the FCU.
     system_update_sub = node->create_subscription<mavros_msgs::msg::OpenDroneIDSystemUpdate>(
       "~/system_update", 1, std::bind(
         &OpenDroneIDPlugin::system_update_cb, this,

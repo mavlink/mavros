@@ -93,60 +93,71 @@ public:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Send any MAVLink command via COMMAND_LONG and wait for the ACK.
     command_long_srv =
       node->create_service<mavros_msgs::srv::CommandLong>(
       "~/command",
       std::bind(
         &CommandPlugin::command_long_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Send any MAVLink command via COMMAND_INT (no ACK wait).
     command_int_srv =
       node->create_service<mavros_msgs::srv::CommandInt>(
       "~/command_int",
       std::bind(
         &CommandPlugin::command_int_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Arm or disarm the motors (MAV_CMD_COMPONENT_ARM_DISARM).
     arming_srv =
       node->create_service<mavros_msgs::srv::CommandBool>(
       "~/arming",
       std::bind(
         &CommandPlugin::arming_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Set the home position (MAV_CMD_DO_SET_HOME).
     set_home_srv =
       node->create_service<mavros_msgs::srv::CommandHome>(
       "~/set_home",
       std::bind(
         &CommandPlugin::set_home_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Take off to a given altitude/location (MAV_CMD_NAV_TAKEOFF).
     takeoff_srv =
       node->create_service<mavros_msgs::srv::CommandTOL>(
       "~/takeoff",
       std::bind(
         &CommandPlugin::takeoff_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Take off in local frame (MAV_CMD_NAV_TAKEOFF_LOCAL).
     takeoff_local_srv =
       node->create_service<mavros_msgs::srv::CommandTOLLocal>(
       "~/takeoff_local",
       std::bind(
         &CommandPlugin::takeoff_local_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Land at a given location (MAV_CMD_NAV_LAND).
     land_srv =
       node->create_service<mavros_msgs::srv::CommandTOL>(
       "~/land",
       std::bind(&CommandPlugin::land_cb, this, _1, _2, _3), services_qos,
       srv_cg);
+    //! Land in local frame (MAV_CMD_NAV_LAND_LOCAL).
     land_local_srv =
       node->create_service<mavros_msgs::srv::CommandTOLLocal>(
       "~/land_local",
       std::bind(&CommandPlugin::land_local_cb, this, _1, _2, _3), services_qos,
       srv_cg);
+    //! Enable/disable/reset the camera trigger (MAV_CMD_DO_TRIGGER_CONTROL).
     trigger_control_srv = node->create_service<mavros_msgs::srv::CommandTriggerControl>(
       "~/trigger_control", std::bind(
         &CommandPlugin::trigger_control_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Set the camera trigger interval (MAV_CMD_DO_SET_CAM_TRIGG_INTERVAL).
     trigger_interval_srv = node->create_service<mavros_msgs::srv::CommandTriggerInterval>(
       "~/trigger_interval", std::bind(
         &CommandPlugin::trigger_interval_cb, this, _1, _2,
         _3), services_qos, srv_cg);
+    //! Request a VTOL transition (MAV_CMD_DO_VTOL_TRANSITION).
     vtol_transition_srv = node->create_service<mavros_msgs::srv::CommandVtolTransition>(
       "~/vtol_transition", std::bind(
         &CommandPlugin::vtol_transition_cb, this, _1, _2,

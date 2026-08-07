@@ -9,11 +9,11 @@
 Implements the [MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).
 
 ## Publishers
-- `~/out` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html))
+- `~/out` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html)) - Publish TUNNEL messages received from the FCU.
 
 
 ## Subscribers
-- `~/in` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html))
+- `~/in` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html)) - Subscribe to Tunnel to send as TUNNEL to the FCU.
 
 
 ## Services

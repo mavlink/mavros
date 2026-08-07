@@ -82,6 +82,7 @@ public:
 
     // Parameter for msg header frame
     enable_node_watch_parameters();
+    //! Frame id used for topic headers.
     node_declare_and_watch_parameter(
       "frame_id", "base_link_frd", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
@@ -89,10 +90,12 @@ public:
 
     // Important tf subsection
     // Report the transform from base_link to gimbal here.
+    //! Enable publishing gimbal pose to TF.
     node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
+    //! TF frame id for gimbal pose.
     node_declare_and_watch_parameter(
       "tf.frame_id", "base_link_frd", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
@@ -100,6 +103,7 @@ public:
 
     // Subscribers
     // --Not successfully validated--
+    //! Set gimbal device attitude (GIMBAL_DEVICE_SET_ATTITUDE).
     set_device_attitude_sub =
       node->create_subscription<mavros_msgs::msg::GimbalDeviceSetAttitude>(
       "~/device/set_attitude", 10, std::bind(
@@ -107,6 +111,7 @@ public:
         _1));
 
     // --Not successfully validated--
+    //! Set gimbal manager attitude (GIMBAL_MANAGER_SET_ATTITUDE).
     set_manager_attitude_sub =
       node->create_subscription<mavros_msgs::msg::GimbalManagerSetAttitude>(
       "~/manager/set_attitude", 10, std::bind(
@@ -114,6 +119,7 @@ public:
         _1));
 
     // --Not successfully validated--
+    //! Set gimbal manager pitch/yaw (GIMBAL_MANAGER_SET_PITCHYAW).
     set_manager_pitchyaw_sub =
       node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
       "~/manager/set_pitchyaw", 10, std::bind(
@@ -122,6 +128,7 @@ public:
 
     // --Not successfully validated--
     // also note that the message is the same as pitchyaw and will likely change
+    //! Set gimbal manager manual control (GIMBAL_MANAGER_SET_PITCHYAW).
     set_manager_manual_control_sub =
       node->create_subscription<mavros_msgs::msg::GimbalManagerSetPitchyaw>(
       "~/manager/set_manual_control", 10, std::bind(
@@ -130,22 +137,26 @@ public:
 
 
     // Publishers
+    //! Publish gimbal device attitude status (GIMBAL_DEVICE_ATTITUDE_STATUS).
     gimbal_attitude_status_pub =
       node->create_publisher<mavros_msgs::msg::GimbalDeviceAttitudeStatus>(
       "~/device/attitude_status",
       10);
 
+    //! Publish gimbal manager status (GIMBAL_MANAGER_STATUS).
     gimbal_manager_status_pub =
       node->create_publisher<mavros_msgs::msg::GimbalManagerStatus>(
       "~/manager/status",
       10);
 
+    //! Publish gimbal manager information (GIMBAL_MANAGER_INFORMATION).
     gimbal_manager_info_pub =
       node->create_publisher<mavros_msgs::msg::GimbalManagerInformation>(
       "~/manager/info",
       10);
 
     // --Not successfully validated--
+    //! Publish gimbal device information (GIMBAL_DEVICE_INFORMATION).
     gimbal_device_info_pub =
       node->create_publisher<mavros_msgs::msg::GimbalDeviceInformation>(
       "~/device/info",
@@ -154,30 +165,35 @@ public:
 
     // Services
     // --Not successfully validated--
+    //! Request gimbal device information (GIMBAL_DEVICE_INFORMATION).
     gimbal_device_info_srv =
       node->create_service<mavros_msgs::srv::GimbalGetInformation>(
       "~/device/get_info", std::bind(
         &GimbalControlPlugin::device_get_info_cb,
         this, _1, _2));
 
+    //! Request gimbal manager information (GIMBAL_MANAGER_INFORMATION).
     gimbal_manager_info_srv =
       node->create_service<mavros_msgs::srv::GimbalGetInformation>(
       "~/manager/get_info", std::bind(
         &GimbalControlPlugin::manager_get_info_cb,
         this, _1, _2));
 
+    //! Configure gimbal manager (MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE).
     gimbal_manager_configure_srv =
       node->create_service<mavros_msgs::srv::GimbalManagerConfigure>(
       "~/manager/configure", std::bind(
         &GimbalControlPlugin::manager_configure_cb,
         this, _1, _2));
 
+    //! Set gimbal manager pitch/yaw (MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW).
     gimbal_manager_pitchyaw_srv =
       node->create_service<mavros_msgs::srv::GimbalManagerPitchyaw>(
       "~/manager/pitchyaw", std::bind(
         &GimbalControlPlugin::manager_pitchyaw_cb,
         this, _1, _2));
 
+    //! Set gimbal manager region of interest (MAV_CMD_DO_SET_ROI_*).
     gimbal_manager_set_roi_srv =
       node->create_service<mavros_msgs::srv::GimbalManagerSetRoi>(
       "~/manager/set_roi", std::bind(
@@ -185,6 +201,7 @@ public:
         this, _1, _2));
 
     // --Not successfully validated--
+    //! Control gimbal camera tracking (MAV_CMD_CAMERA_TRACK_*).
     gimbal_manager_camera_track =
       node->create_service<mavros_msgs::srv::GimbalManagerCameraTrack>(
       "~/manager/camera_track", std::bind(
@@ -256,6 +273,7 @@ private:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Client to send MAVLink commands (mavros/cmd/command).
     cmd_cli = node->create_client<mavros_msgs::srv::CommandLong>(
       "cmd/command", services_qos,
       cb_group);

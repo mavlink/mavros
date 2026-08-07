@@ -9,11 +9,11 @@
 Implements the [MAVLink Manual Control (Joystick) Protocol](https://mavlink.io/en/services/manual_control.html).
 
 ## Publishers
-- `~/control` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html))
+- `~/control` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html)) - Publish manual control input from FCU (MANUAL_CONTROL).
 
 
 ## Subscribers
-- `~/send` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html))
+- `~/send` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html)) - Send manual control commands to FCU (MANUAL_CONTROL).
 
 
 ## Services

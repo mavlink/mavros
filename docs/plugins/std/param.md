@@ -9,8 +9,8 @@
 Implements the [MAVLink Parameter Protocol](https://mavlink.io/en/services/parameter.html).
 
 ## Publishers
-- `~/event` ([mavros_msgs::msg::ParamEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ParamEvent.html))
-- `/parameter_events` ([rcl_interfaces::msg::ParameterEvent](https://docs.ros.org/en/rolling/p/rcl_interfaces/msg/ParameterEvent.html))
+- `~/event` ([mavros_msgs::msg::ParamEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ParamEvent.html)) - Parameter change notifications (new/updated/changed).
+- `/parameter_events` ([rcl_interfaces::msg::ParameterEvent](https://docs.ros.org/en/rolling/p/rcl_interfaces/msg/ParameterEvent.html)) - Standard ROS parameter events (on /parameter_events).
 
 
 ## Subscribers
@@ -18,14 +18,14 @@ Implements the [MAVLink Parameter Protocol](https://mavlink.io/en/services/param
 
 
 ## Services
-- `~/pull` ([mavros_msgs::srv::ParamPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamPull.html))
-- `~/set` ([mavros_msgs::srv::ParamSetV2](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamSetV2.html))
-- `~/get_parameters` ([rcl_interfaces::srv::GetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameters.html)) - Standard parameter services
-- `~/get_parameter_types` ([rcl_interfaces::srv::GetParameterTypes](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameterTypes.html))
-- `~/set_parameters` ([rcl_interfaces::srv::SetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParameters.html))
-- `~/set_parameters_atomically` ([rcl_interfaces::srv::SetParametersAtomically](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParametersAtomically.html))
-- `~/describe_parameters` ([rcl_interfaces::srv::DescribeParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/DescribeParameters.html))
-- `~/list_parameters` ([rcl_interfaces::srv::ListParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/ListParameters.html))
+- `~/pull` ([mavros_msgs::srv::ParamPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamPull.html)) - Custom parameter services Fetch all parameters from the device (PARAM_REQUEST_LIST).
+- `~/set` ([mavros_msgs::srv::ParamSetV2](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/ParamSetV2.html)) - Set a single parameter value (PARAM_SET).
+- `~/get_parameters` ([rcl_interfaces::srv::GetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameters.html)) - Standard parameter services Get parameter values from the local cache.
+- `~/get_parameter_types` ([rcl_interfaces::srv::GetParameterTypes](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/GetParameterTypes.html)) - Get parameter types from the local cache.
+- `~/set_parameters` ([rcl_interfaces::srv::SetParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParameters.html)) - Set parameter values (PARAM_SET for each).
+- `~/set_parameters_atomically` ([rcl_interfaces::srv::SetParametersAtomically](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/SetParametersAtomically.html)) - Unsupported: device-side atomic set, always reports failure.
+- `~/describe_parameters` ([rcl_interfaces::srv::DescribeParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/DescribeParameters.html)) - Describe parameter descriptors from the local cache.
+- `~/list_parameters` ([rcl_interfaces::srv::ListParameters](https://docs.ros.org/en/rolling/p/rcl_interfaces/srv/ListParameters.html)) - List parameter names from the local cache.
 
 
 ## Clients
@@ -33,9 +33,9 @@ Implements the [MAVLink Parameter Protocol](https://mavlink.io/en/services/param
 
 
 ## Parameters
-- `param_set_timeout` [type: double, default: `param_set_timeout.seconds()`]
-- `param_list_timeout` [type: double, default: `param_list_timeout.seconds()`]
-- `param_retries` [default: `param_retries_count`]
+- `param_set_timeout` [type: double, default: `param_set_timeout.seconds()`] - Timeout for a single PARAM_SET retry (seconds).
+- `param_list_timeout` [type: double, default: `param_list_timeout.seconds()`] - Timeout waiting for a full parameter list pull (seconds).
+- `param_retries` [default: `param_retries_count`] - Number of retries before reporting a parameter operation as failed.
 
 
 ## MAVLink Subscriptions

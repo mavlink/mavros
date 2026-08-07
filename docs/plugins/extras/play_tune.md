@@ -11,7 +11,7 @@
 
 
 ## Subscribers
-- `play_tune` ([mavros_msgs::msg::PlayTuneV2](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PlayTuneV2.html))
+- `play_tune` ([mavros_msgs::msg::PlayTuneV2](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PlayTuneV2.html)) - Subscribe to PlayTuneV2 to send as PLAY_TUNE_V2 to the FCU.
 
 
 ## Services

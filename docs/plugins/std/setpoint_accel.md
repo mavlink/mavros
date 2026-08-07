@@ -13,7 +13,7 @@ Send setpoint accelerations/forces to FCU controller. Uses the [MAVLink Offboard
 
 
 ## Subscribers
-- `~/accel` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
+- `~/accel` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Setpoint acceleration/force (SET_POSITION_TARGET_LOCAL_NED).
 
 
 ## Services

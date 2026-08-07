@@ -9,20 +9,20 @@
 Publishes global position. Conversion from GPS LLA to ECEF allows publishing local position to TF and PoseWithCovarianceStamped.
 
 ## Publishers
-- `~/raw/fix` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - gps data
-- `~/raw/gps_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
-- `~/raw/satellites` ([std_msgs::msg::UInt32](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt32.html))
-- `~/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - fused global position
-- `~/local` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
-- `~/rel_alt` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html))
-- `~/compass_hdg` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html))
-- `~/gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - global origin
-- `~/gp_lp_offset` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - offset from local position to the global origin ("earth")
+- `~/raw/fix` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - gps data Publish raw GPS fix (GPS_RAW_INT).
+- `~/raw/gps_vel` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Publish raw GPS velocity (GPS_RAW_INT).
+- `~/raw/satellites` ([std_msgs::msg::UInt32](https://docs.ros.org/en/rolling/p/std_msgs/msg/UInt32.html)) - Publish number of visible GPS satellites (GPS_RAW_INT).
+- `~/global` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - fused global position Publish fused global position fix (GLOBAL_POSITION_INT).
+- `~/local` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - Publish fused local position as odometry (GLOBAL_POSITION_INT).
+- `~/rel_alt` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html)) - Publish fused relative altitude (GLOBAL_POSITION_INT).
+- `~/compass_hdg` ([std_msgs::msg::Float64](https://docs.ros.org/en/rolling/p/std_msgs/msg/Float64.html)) - Publish fused compass heading (GLOBAL_POSITION_INT).
+- `~/gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - global origin Publish the global origin (GPS_GLOBAL_ORIGIN).
+- `~/gp_lp_offset` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - offset from local position to the global origin ("earth") Publish the offset from the local position to the global origin.
 
 
 ## Subscribers
-- `~/set_gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html))
-- `home_position/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html)) - home position subscriber to set "map" origin TODO(vooon): use UAS
+- `~/set_gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - Set the global origin (SET_GPS_GLOBAL_ORIGIN).
+- `home_position/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html)) - home position subscriber to set "map" origin TODO(vooon): use UAS Set the "map" origin from the home position (HOME_POSITION).
 
 
 ## Services
@@ -34,15 +34,15 @@ Publishes global position. Conversion from GPS LLA to ECEF allows publishing loc
 
 
 ## Parameters
-- `frame_id` [default: `"map"`] - general params
-- `child_frame_id` [default: `"base_link"`]
-- `rot_covariance` [type: double, default: `99999.0`]
-- `gps_uere` [type: double, default: `1.0`]
-- `use_relative_alt` [type: bool, default: `true`]
-- `tf.send` [type: bool, default: `false`] - tf subsection
-- `tf.frame_id` [default: `"map"`]
-- `tf.global_frame_id` [default: `"earth"`] - The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
-- `tf.child_frame_id` [default: `"base_link"`]
+- `frame_id` [default: `"map"`] - general params Coordinate frame used for the global position topics.
+- `child_frame_id` [default: `"base_link"`] - Child body-fixed frame used for the global position topics.
+- `rot_covariance` [type: double, default: `99999.0`] - Rotation covariance for the odometry pose.
+- `gps_uere` [type: double, default: `1.0`] - GPS user range error used to approximate position covariance.
+- `use_relative_alt` [type: bool, default: `true`] - Use relative altitude instead of the geocentric altitude.
+- `tf.send` [type: bool, default: `false`] - tf subsection Enable publishing of the global position transform.
+- `tf.frame_id` [default: `"map"`] - Map frame used for the published transform.
+- `tf.global_frame_id` [default: `"earth"`] - The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105) Global reference frame (ECEF) for the transform.
+- `tf.child_frame_id` [default: `"base_link"`] - Child body-fixed frame used for the transform.
 
 
 ## MAVLink Subscriptions

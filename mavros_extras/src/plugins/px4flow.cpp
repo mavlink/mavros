@@ -50,6 +50,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Frame id for published PX4Flow messages.
     node_declare_and_watch_parameter(
       "frame_id", "px4flow", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
@@ -61,26 +62,33 @@ public:
      * but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees
      * at 1 meter
      */
+    //! Default rangefinder field of view [rad].
     node_declare_and_watch_parameter(
       "ranger_fov", 0.119428926, [&](const rclcpp::Parameter & p) {
         ranger_fov = p.as_double();
       });
 
+    //! Minimum rangefinder range [m].
     node_declare_and_watch_parameter(
       "ranger_min_range", 0.3, [&](const rclcpp::Parameter & p) {
         ranger_min_range = p.as_double();
       });
 
+    //! Maximum rangefinder range [m].
     node_declare_and_watch_parameter(
       "ranger_max_range", 5.0, [&](const rclcpp::Parameter & p) {
         ranger_max_range = p.as_double();
       });
 
+    //! Publish optical flow from MAVLink OPTICAL_FLOW_RAD.
     flow_rad_pub = node->create_publisher<mavros_msgs::msg::OpticalFlowRad>(
       "~/raw/optical_flow_rad", 10);
+    //! Publish ground distance as Range from OPTICAL_FLOW_RAD.
     range_pub = node->create_publisher<sensor_msgs::msg::Range>("~/ground_distance", 10);
+    //! Publish optical flow temperature as Temperature.
     temp_pub = node->create_publisher<sensor_msgs::msg::Temperature>("~/temperature", 10);
 
+    //! Subscribe to OpticalFlowRad to send as OPTICAL_FLOW_RAD to the FCU.
     flow_rad_sub = node->create_subscription<mavros_msgs::msg::OpticalFlowRad>(
       "~/raw/send", 1, std::bind(
         &PX4FlowPlugin::send_cb, this,

@@ -9,8 +9,8 @@
 Implements the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
 
 ## Publishers
-- `~/waypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
-- `~/reached` ([mavros_msgs::msg::WaypointReached](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointReached.html))
+- `~/waypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html)) - The current mission waypoint list.
+- `~/reached` ([mavros_msgs::msg::WaypointReached](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointReached.html)) - Notifies when a mission waypoint is reached.
 
 
 ## Subscribers
@@ -18,10 +18,10 @@ Implements the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission
 
 
 ## Services
-- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html))
-- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html))
-- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html))
-- `~/set_current` ([mavros_msgs::srv::WaypointSetCurrent](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointSetCurrent.html))
+- `~/pull` ([mavros_msgs::srv::WaypointPull](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPull.html)) - Pull the mission from the FCU (MISSION_REQUEST_LIST).
+- `~/push` ([mavros_msgs::srv::WaypointPush](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointPush.html)) - Push a mission to the FCU (full or partial).
+- `~/clear` ([mavros_msgs::srv::WaypointClear](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointClear.html)) - Clear the mission on the FCU (MISSION_CLEAR_ALL).
+- `~/set_current` ([mavros_msgs::srv::WaypointSetCurrent](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/WaypointSetCurrent.html)) - Set the active/current mission waypoint.
 
 
 ## Clients
@@ -29,9 +29,9 @@ Implements the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission
 
 
 ## Parameters
-- `pull_after_gcs` [type: bool, default: `true`] - NOTE(vooon): I'm not quite sure that this option would work with mavros router
-- `use_mission_item_int` [type: bool, default: `true`]
-- `enable_partial_push` [type: integer, default: `2`]
+- `pull_after_gcs` [type: bool, default: `true`] - Re-pull the mission automatically after a GCS pushes it.
+- `use_mission_item_int` [type: bool, default: `true`] - Use MISSION_ITEM_INT instead of MISSION_ITEM when supported.
+- `enable_partial_push` [type: integer, default: `2`] - Enable partial mission push (0/off, 1/on, 2/auto-detect).
 
 
 ## MAVLink Subscriptions

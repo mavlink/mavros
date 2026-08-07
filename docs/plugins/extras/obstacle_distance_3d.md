@@ -13,7 +13,7 @@ Subscribes to a mavros_msgs/ObstacleDistance3D message and sends the data to the
 
 
 ## Subscribers
-- `~/send` ([mavros_msgs::msg::ObstacleDistance3D](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ObstacleDistance3D.html))
+- `~/send` ([mavros_msgs::msg::ObstacleDistance3D](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ObstacleDistance3D.html)) - Subscribe to ObstacleDistance3D to send as OBSTACLE_DISTANCE_3D to the FCU.
 
 
 ## Services
@@ -25,7 +25,7 @@ Subscribes to a mavros_msgs/ObstacleDistance3D message and sends the data to the
 
 
 ## Parameters
-- `mav_frame` [default: `"LOCAL_NED"`] - Add a configurable parameter for the MAVLink frame, just like the reference.
+- `mav_frame` [default: `"LOCAL_NED"`] - Add a configurable parameter for the MAVLink frame, just like the reference. MAVLink MAV_FRAME used when sending OBSTACLE_DISTANCE_3D.
 
 
 ## MAVLink Subscriptions

@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `radio_status` ([mavros_msgs::msg::RadioStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RadioStatus.html))
+- `radio_status` ([mavros_msgs::msg::RadioStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RadioStatus.html)) - Publish radio status from MAVLink RADIO_STATUS/RADIO.
 
 
 ## Subscribers
@@ -23,7 +23,7 @@
 
 
 ## Parameters
-- `low_rssi` [type: integer, default: `40`]
+- `low_rssi` [type: integer, default: `40`] - Low RSSI threshold for diagnostics [dB].
 
 
 ## MAVLink Subscriptions

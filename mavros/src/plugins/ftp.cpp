@@ -272,50 +272,62 @@ public:
     FTPRequest r;
     rcpputils::assert_true((r.payload.size() - sizeof(FTPRequest::PayloadHeader)) == r.DATA_MAXSZ);
 
+    //! List the contents of a directory on the FCU (FTP).
     list_srv =
       node->create_service<mavros_msgs::srv::FileList>(
       "~/list",
       std::bind(&FTPPlugin::list_cb, this, _1, _2));
+    //! Open a file on the FCU for reading or writing (FTP).
     open_srv =
       node->create_service<mavros_msgs::srv::FileOpen>(
       "~/open",
       std::bind(&FTPPlugin::open_cb, this, _1, _2));
+    //! Close an open file on the FCU (FTP).
     close_srv =
       node->create_service<mavros_msgs::srv::FileClose>(
       "~/close",
       std::bind(&FTPPlugin::close_cb, this, _1, _2));
+    //! Read data from an open file on the FCU (FTP).
     read_srv =
       node->create_service<mavros_msgs::srv::FileRead>(
       "~/read",
       std::bind(&FTPPlugin::read_cb, this, _1, _2));
+    //! Write data to an open file on the FCU (FTP).
     write_srv =
       node->create_service<mavros_msgs::srv::FileWrite>(
       "~/write",
       std::bind(&FTPPlugin::write_cb, this, _1, _2));
+    //! Create a directory on the FCU (FTP).
     mkdir_srv =
       node->create_service<mavros_msgs::srv::FileMakeDir>(
       "~/mkdir",
       std::bind(&FTPPlugin::mkdir_cb, this, _1, _2));
+    //! Remove a directory on the FCU (FTP).
     rmdir_srv =
       node->create_service<mavros_msgs::srv::FileRemoveDir>(
       "~/rmdir",
       std::bind(&FTPPlugin::rmdir_cb, this, _1, _2));
+    //! Remove a file on the FCU (FTP).
     remove_srv =
       node->create_service<mavros_msgs::srv::FileRemove>(
       "~/remove",
       std::bind(&FTPPlugin::remove_cb, this, _1, _2));
+    //! Truncate a file to a given length on the FCU (FTP).
     truncate_srv =
       node->create_service<mavros_msgs::srv::FileTruncate>(
       "~/truncate",
       std::bind(&FTPPlugin::truncate_cb, this, _1, _2));
+    //! Reset the FTP session on both sides (FTP).
     reset_srv =
       node->create_service<std_srvs::srv::Empty>(
       "~/reset",
       std::bind(&FTPPlugin::reset_cb, this, _1, _2));
+    //! Rename a file on the FCU (FTP).
     rename_srv =
       node->create_service<mavros_msgs::srv::FileRename>(
       "~/rename",
       std::bind(&FTPPlugin::rename_cb, this, _1, _2));
+    //! Calculate the CRC32 checksum of a file on the FCU (FTP).
     checksum_srv =
       node->create_service<mavros_msgs::srv::FileChecksum>(
       "~/checksum",

@@ -44,11 +44,13 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Frame id for published vibration messages.
     node_declare_and_watch_parameter(
       "frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Publish vibration levels from MAVLink VIBRATION.
     vibration_pub = node->create_publisher<mavros_msgs::msg::Vibration>("~/raw/vibration", 10);
   }
 

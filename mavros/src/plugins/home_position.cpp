@@ -49,11 +49,14 @@ public:
   {
     auto state_qos = rclcpp::QoS(10).transient_local();
 
+    //! Publish home position (HOME_POSITION).
     hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>("~/home", state_qos);
+    //! Set home position (SET_HOME_POSITION).
     hp_sub =
       node->create_subscription<mavros_msgs::msg::HomePosition>(
       "~/set", 10,
       std::bind(&HomePositionPlugin::home_position_cb, this, _1));
+    //! Request home position update (MAV_CMD_GET_HOME_POSITION).
     update_srv =
       node->create_service<std_srvs::srv::Trigger>(
       "~/req_update",
@@ -90,6 +93,7 @@ private:
     bool ret = false;
 
     try {
+      //! Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
       auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
 
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();

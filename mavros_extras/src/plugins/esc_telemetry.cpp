@@ -39,6 +39,7 @@ public:
   explicit ESCTelemetryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "esc_telemetry")
   {
+    //! Publish ESC telemetry from MAVLink ESC_TELEMETRY_* messages.
     esc_telemetry_pub = node->create_publisher<mavros_msgs::msg::ESCTelemetry>("~/telemetry", 10);
 
     enable_connection_cb();

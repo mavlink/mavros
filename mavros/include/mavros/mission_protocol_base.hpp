@@ -300,6 +300,7 @@ public:
   {
     enable_node_watch_parameters();
 
+    //! Timeout for a single mission item transfer/retry (seconds).
     node_declare_and_watch_parameter(
       "mission_wp_timeout", mission_wp_timeout.seconds(), [this](const rclcpp::Parameter & p) {
         mission_wp_timeout = rclcpp::Duration::from_seconds(p.as_double());
@@ -311,14 +312,17 @@ public:
           std::bind(&MissionBase::timeout_cb, this));
         timeout_timer->cancel();
       });
+    //! Timeout waiting for the whole mission pull/push to finish (seconds).
     node_declare_and_watch_parameter(
       "mission_list_timeout", mission_list_timeout.seconds(), [&](const rclcpp::Parameter & p) {
         mission_list_timeout = rclcpp::Duration::from_seconds(p.as_double());
       });
+    //! Number of retries before reporting a mission transfer as failed.
     node_declare_and_watch_parameter(
       "mission_retries", mission_retries_count, [&](const rclcpp::Parameter & p) {
         mission_retries_count = p.as_int();
       });
+    //! Delay before re-scheduling a pull when the mission is busy (seconds).
     node_declare_and_watch_parameter(
       "mission_reschedule_time", mission_reschedule_time.seconds(),
       [&](const rclcpp::Parameter & p) {

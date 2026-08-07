@@ -60,18 +60,22 @@ public:
   : Plugin(uas_, "terrain")
   {
     // Terrain height reports from FCU and check-service responses
+    //! Publish terrain reports from MAVLink TERRAIN_REPORT.
     report_pub_ = node->create_publisher<mavros_msgs::msg::TerrainReport>(
       "~/report", 10);
     // Grid data requests forwarded from FCU for SRTM lookup
+    //! Publish terrain requests from MAVLink TERRAIN_REQUEST.
     request_pub_ = node->create_publisher<mavros_msgs::msg::TerrainRequest>(
       "~/request", 10);
 
     // Filled terrain grid blocks from terrain_server
+    //! Subscribe to TerrainData to send as TERRAIN_DATA to the FCU.
     data_sub_ = node->create_subscription<mavros_msgs::msg::TerrainData>(
       "~/data", 64,
       std::bind(&TerrainPlugin::data_cb, this, _1));
 
     // Point elevation query handled by terrain_server
+    //! Client to query terrain elevation (terrain/check).
     check_client_ = node->create_client<mavros_msgs::srv::TerrainCheck>(
       "~/check");
   }

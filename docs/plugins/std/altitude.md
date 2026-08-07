@@ -9,7 +9,7 @@
 Publish altitude data.
 
 ## Publishers
-- `altitude` ([mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html)) - ALTITUDE data
+- `altitude` ([mavros_msgs::msg::Altitude](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Altitude.html)) - ALTITUDE data Publish altitude data (ALTITUDE).
 
 
 ## Subscribers
@@ -25,7 +25,7 @@ Publish altitude data.
 
 
 ## Parameters
-- `frame_id` [default: `"map"`]
+- `frame_id` [default: `"map"`] - Coordinate frame used for the altitude topic headers.
 
 
 ## MAVLink Subscriptions

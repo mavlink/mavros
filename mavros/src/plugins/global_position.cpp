@@ -67,41 +67,50 @@ public:
     enable_node_watch_parameters();
 
     // general params
+    //! Coordinate frame used for the global position topics.
     node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
+    //! Child body-fixed frame used for the global position topics.
     node_declare_and_watch_parameter(
       "child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         child_frame_id = p.as_string();
       });
+    //! Rotation covariance for the odometry pose.
     node_declare_and_watch_parameter(
       "rot_covariance", 99999.0, [&](const rclcpp::Parameter & p) {
         rot_cov = p.as_double();
       });
+    //! GPS user range error used to approximate position covariance.
     node_declare_and_watch_parameter(
       "gps_uere", 1.0, [&](const rclcpp::Parameter & p) {
         gps_uere = p.as_double();
       });
+    //! Use relative altitude instead of the geocentric altitude.
     node_declare_and_watch_parameter(
       "use_relative_alt", true, [&](const rclcpp::Parameter & p) {
         use_relative_alt = p.as_bool();
       });
 
     // tf subsection
+    //! Enable publishing of the global position transform.
     node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
+    //! Map frame used for the published transform.
     node_declare_and_watch_parameter(
       "tf.frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
     // The global_origin should be represented as "earth" coordinate frame (ECEF) (REP 105)
+    //! Global reference frame (ECEF) for the transform.
     node_declare_and_watch_parameter(
       "tf.global_frame_id", "earth", [&](const rclcpp::Parameter & p) {
         tf_global_frame_id = p.as_string();
       });
+    //! Child body-fixed frame used for the transform.
     node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
@@ -113,21 +122,30 @@ public:
     auto origin_qos = mavros::LatchedStateQoS();
 
     // gps data
+    //! Publish raw GPS fix (GPS_RAW_INT).
     raw_fix_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>("~/raw/fix", sensor_qos);
+    //! Publish raw GPS velocity (GPS_RAW_INT).
     raw_vel_pub = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/raw/gps_vel",
       sensor_qos);
+    //! Publish number of visible GPS satellites (GPS_RAW_INT).
     raw_sat_pub = node->create_publisher<std_msgs::msg::UInt32>("~/raw/satellites", sensor_qos);
 
     // fused global position
+    //! Publish fused global position fix (GLOBAL_POSITION_INT).
     gp_fix_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>("~/global", sensor_qos);
+    //! Publish fused local position as odometry (GLOBAL_POSITION_INT).
     gp_odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/local", sensor_qos);
+    //! Publish fused relative altitude (GLOBAL_POSITION_INT).
     gp_rel_alt_pub = node->create_publisher<std_msgs::msg::Float64>("~/rel_alt", sensor_qos);
+    //! Publish fused compass heading (GLOBAL_POSITION_INT).
     gp_hdg_pub = node->create_publisher<std_msgs::msg::Float64>("~/compass_hdg", sensor_qos);
 
     // global origin
+    //! Publish the global origin (GPS_GLOBAL_ORIGIN).
     gp_global_origin_pub = node->create_publisher<geographic_msgs::msg::GeoPointStamped>(
       "~/gp_origin", origin_qos);
+    //! Set the global origin (SET_GPS_GLOBAL_ORIGIN).
     gp_set_global_origin_sub =
       node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
       "~/set_gp_origin", sensor_qos,
@@ -135,12 +153,14 @@ public:
 
     // home position subscriber to set "map" origin
     // TODO(vooon): use UAS
+    //! Set the "map" origin from the home position (HOME_POSITION).
     hp_sub = node->create_subscription<mavros_msgs::msg::HomePosition>(
       "home_position/home",
       sensor_qos,
       std::bind(&GlobalPositionPlugin::home_position_cb, this, _1));
 
     // offset from local position to the global origin ("earth")
+    //! Publish the offset from the local position to the global origin.
     gp_global_offset_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>(
       "~/gp_lp_offset",
       sensor_qos);

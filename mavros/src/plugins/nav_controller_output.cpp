@@ -39,6 +39,7 @@ public:
   explicit NavControllerOutputPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "nav_controller_output")
   {
+    //! Publish navigation controller output (NAV_CONTROLLER_OUTPUT).
     nco_pub = node->create_publisher<mavros_msgs::msg::NavControllerOutput>("~/output", 10);
   }
 

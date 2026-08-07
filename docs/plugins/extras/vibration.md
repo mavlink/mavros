@@ -9,7 +9,7 @@
 This plugin is intended to publish MAV vibration levels and accelerometer clipping from FCU.
 
 ## Publishers
-- `~/raw/vibration` ([mavros_msgs::msg::Vibration](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Vibration.html))
+- `~/raw/vibration` ([mavros_msgs::msg::Vibration](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Vibration.html)) - Publish vibration levels from MAVLink VIBRATION.
 
 
 ## Subscribers
@@ -25,7 +25,7 @@ This plugin is intended to publish MAV vibration levels and accelerometer clippi
 
 
 ## Parameters
-- `frame_id` [default: `"base_link"`]
+- `frame_id` [default: `"base_link"`] - Frame id for published vibration messages.
 
 
 ## MAVLink Subscriptions

@@ -43,12 +43,14 @@ public:
     enable_node_watch_parameters();
 
          // Add a configurable parameter for the MAVLink frame, just like the reference.
+    //! MAVLink MAV_FRAME used when sending OBSTACLE_DISTANCE_3D.
     node_declare_and_watch_parameter(
              "mav_frame", "LOCAL_NED", [&](const rclcpp::Parameter & p) {
         auto mav_frame_str = p.as_string();
         frame = utils::mav_frame_from_str(mav_frame_str);
              });
 
+    //! Subscribe to ObstacleDistance3D to send as OBSTACLE_DISTANCE_3D to the FCU.
     obstacle_sub_ = node->create_subscription<mavros_msgs::msg::ObstacleDistance3D>(
             "~/send", 10, std::bind(&ObstacleDistance3DPlugin::obstacle_cb, this, _1));
   }

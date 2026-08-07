@@ -47,17 +47,19 @@ public:
 
     enable_node_watch_parameters();
 
-    // NOTE(vooon): I'm not quite sure that this option would work with mavros router
+    //! Re-pull the mission automatically after a GCS pushes it.
     node_declare_and_watch_parameter(
       "pull_after_gcs", true, [&](const rclcpp::Parameter & p) {
         do_pull_after_gcs = p.as_bool();
       });
 
+    //! Use MISSION_ITEM_INT instead of MISSION_ITEM when supported.
     node_declare_and_watch_parameter(
       "use_mission_item_int", true, [&](const rclcpp::Parameter & p) {
         use_mission_item_int = p.as_bool();
       });
 
+    //! Enable partial mission push (0/off, 1/on, 2/auto-detect).
     node_declare_and_watch_parameter(
       "enable_partial_push", 2, [&](const rclcpp::Parameter & p) {
         RCLCPP_DEBUG_STREAM(get_logger(), log_prefix << ": enable_partial_push = " << p);
@@ -80,7 +82,9 @@ public:
 
     auto wp_qos = mavros::LatchedStateQoS();
 
+    //! The current mission waypoint list.
     wp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/waypoints", wp_qos);
+    //! Notifies when a mission waypoint is reached.
     wp_reached_pub = node->create_publisher<mavros_msgs::msg::WaypointReached>("~/reached", wp_qos);
 
 #ifdef USE_OLD_RMW_QOS
@@ -89,21 +93,25 @@ public:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Pull the mission from the FCU (MISSION_REQUEST_LIST).
     pull_srv =
       node->create_service<mavros_msgs::srv::WaypointPull>(
       "~/pull",
       std::bind(&WaypointPlugin::pull_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Push a mission to the FCU (full or partial).
     push_srv =
       node->create_service<mavros_msgs::srv::WaypointPush>(
       "~/push",
       std::bind(&WaypointPlugin::push_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Clear the mission on the FCU (MISSION_CLEAR_ALL).
     clear_srv =
       node->create_service<mavros_msgs::srv::WaypointClear>(
       "~/clear",
       std::bind(&WaypointPlugin::clear_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Set the active/current mission waypoint.
     set_cur_srv = node->create_service<mavros_msgs::srv::WaypointSetCurrent>(
       "~/set_current", std::bind(
         &WaypointPlugin::set_cur_cb, this, _1, _2),

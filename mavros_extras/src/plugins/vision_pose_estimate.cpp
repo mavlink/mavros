@@ -55,6 +55,7 @@ public:
     enable_node_watch_parameters();
 
     // tf params
+    //! Listen to vision pose from TF (else subscribe to ~/pose).
     node_declare_and_watch_parameter(
       "tf/listen", false, [&](const rclcpp::Parameter & p) {
         auto tf_listen = p.as_bool();
@@ -65,25 +66,30 @@ public:
               " -> " << tf_child_frame_id);
           tf2_start("VisionPoseTF", &VisionPoseEstimatePlugin::transform_cb);
         } else {
+          //! Subscribe to vision pose as PoseStamped.
           vision_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
             "~/pose", 10, std::bind(
               &VisionPoseEstimatePlugin::vision_cb, this, _1));
+          //! Subscribe to vision pose with covariance as PoseWithCovarianceStamped.
           vision_cov_sub = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "~/pose_cov", 10, std::bind(
               &VisionPoseEstimatePlugin::vision_cov_cb, this, _1));
         }
       });
 
+    //! TF frame id for vision pose source.
     node_declare_and_watch_parameter(
       "tf/frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
+    //! TF child frame id for vision pose source.
     node_declare_and_watch_parameter(
       "tf/child_frame_id", "vision_estimate", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 
+    //! Vision pose send rate limit [Hz].
     node_declare_and_watch_parameter(
       "tf/rate_limit", 10.0, [&](const rclcpp::Parameter & p) {
         tf_rate = p.as_double();

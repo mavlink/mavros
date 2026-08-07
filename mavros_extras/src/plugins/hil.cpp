@@ -56,26 +56,33 @@ public:
   explicit HilPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "hil")
   {
+    //! Subscribe to receive HIL_STATE_QUATERNION from simulation.
     hil_state_quaternion_sub = node->create_subscription<mavros_msgs::msg::HilStateQuaternion>(
       "~/state", 10, std::bind(&HilPlugin::state_quat_cb, this, _1));
+    //! Subscribe to receive HIL_GPS from simulation.
     hil_gps_sub =
       node->create_subscription<mavros_msgs::msg::HilGPS>(
       "~/gps", 10,
       std::bind(&HilPlugin::gps_cb, this, _1));
+    //! Subscribe to receive HIL_SENSOR from simulation.
     hil_sensor_sub = node->create_subscription<mavros_msgs::msg::HilSensor>(
       "~/imu_ned", 10, std::bind(
         &HilPlugin::sensor_cb, this,
         _1));
+    //! Subscribe to receive HIL_OPTICAL_FLOW from simulation.
     hil_flow_sub = node->create_subscription<mavros_msgs::msg::OpticalFlowRad>(
       "~/optical_flow", 10, std::bind(
         &HilPlugin::optical_flow_cb, this,
         _1));
+    //! Subscribe to receive HIL_RC_INPUTS_RAW from simulation.
     hil_rcin_sub =
       node->create_subscription<mavros_msgs::msg::RCIn>(
       "~/rc_inputs", 10,
       std::bind(&HilPlugin::rcin_raw_cb, this, _1));
 
+    //! Publish HIL_CONTROLS from the FCU.
     hil_controls_pub = node->create_publisher<mavros_msgs::msg::HilControls>("~/controls", 10);
+    //! Publish HIL_ACTUATOR_CONTROLS from the FCU.
     hil_actuator_controls_pub = node->create_publisher<mavros_msgs::msg::HilActuatorControls>(
       "~/actuator_controls", 10);
   }

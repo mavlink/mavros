@@ -9,12 +9,12 @@
 This plugin can publish data from OpticalFlow camera to ROS
 
 ## Publishers
-- `~/raw/optical_flow` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html))
-- `~/ground_distance` ([sensor_msgs::msg::Range](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Range.html))
+- `~/raw/optical_flow` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html)) - Publish optical flow from MAVLink OPTICAL_FLOW.
+- `~/ground_distance` ([sensor_msgs::msg::Range](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Range.html)) - Publish ground distance as Range from OPTICAL_FLOW.
 
 
 ## Subscribers
-- `~/raw/send` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html))
+- `~/raw/send` ([mavros_msgs::msg::OpticalFlow](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OpticalFlow.html)) - Subscribe to OpticalFlow to send as OPTICAL_FLOW to the FCU.
 
 
 ## Services
@@ -26,10 +26,10 @@ This plugin can publish data from OpticalFlow camera to ROS
 
 
 ## Parameters
-- `frame_id` [default: `"optical_flow"`]
-- `ranger_fov` [type: double, default: `0.119428926`] - This is a narrow beam (60cm wide at 5 meters, but also at 1 meter). 6.8 degrees at 5 meters, 31 degrees at 1 meter
-- `ranger_min_range` [type: double, default: `0.3`]
-- `ranger_max_range` [type: double, default: `5.0`]
+- `frame_id` [default: `"optical_flow"`] - Frame id for published optical flow messages.
+- `ranger_fov` [type: double, default: `0.119428926`] - Default rangefinder field of view [rad].
+- `ranger_min_range` [type: double, default: `0.3`] - Minimum rangefinder range [m].
+- `ranger_max_range` [type: double, default: `5.0`] - Maximum rangefinder range [m].
 
 
 ## MAVLink Subscriptions

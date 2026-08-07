@@ -47,6 +47,7 @@ public:
   explicit CompanionProcessStatusPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "companion_process")
   {
+    //! Subscribe to CompanionProcessStatus to send as HEARTBEAT to the FCU.
     status_sub = node->create_subscription<mavros_msgs::msg::CompanionProcessStatus>(
       "~/status", 10, std::bind(
         &CompanionProcessStatusPlugin::status_cb, this,

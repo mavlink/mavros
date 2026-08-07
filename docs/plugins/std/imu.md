@@ -7,13 +7,13 @@
 
 
 ## Publishers
-- `~/data` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html))
-- `~/data_raw` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html))
-- `~/mag` ([sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html))
-- `~/temperature_imu` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html))
-- `~/temperature_baro` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html))
-- `~/static_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html))
-- `~/diff_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html))
+- `~/data` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html)) - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
+- `~/data_raw` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html)) - Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
+- `~/mag` ([sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html)) - Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
+- `~/temperature_imu` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html)) - Publish IMU temperature (HIGHRES_IMU).
+- `~/temperature_baro` ([sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html)) - Publish barometer temperature (SCALED_PRESSURE).
+- `~/static_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html)) - Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).
+- `~/diff_pressure` ([sensor_msgs::msg::FluidPressure](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/FluidPressure.html)) - Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).
 
 
 ## Subscribers
@@ -29,11 +29,11 @@
 
 
 ## Parameters
-- `frame_id` [default: `"base_link"`] - Additionally, it is reported the orientation of the vehicle to describe the transformation from the ENU frame to the base_link frame (ENU <-> base_link). THIS ORIENTATION IS NOT THE SAME AS THAT REPORTED BY THE FCU (NED <-> aircraft).
-- `linear_acceleration_stdev` [type: double, default: `0.0003`]
-- `angular_velocity_stdev` [default: `0.02 * (M_PI / 180.0)`]
-- `orientation_stdev` [type: double, default: `1.0`]
-- `magnetic_stdev` [type: double, default: `0.0`]
+- `frame_id` [default: `"base_link"`] - Coordinate frame used for the published IMU topics.
+- `linear_acceleration_stdev` [type: double, default: `0.0003`] - Standard deviation of the linear acceleration.
+- `angular_velocity_stdev` [default: `0.02 * (M_PI / 180.0)`] - Standard deviation of the angular velocity.
+- `orientation_stdev` [type: double, default: `1.0`] - Standard deviation of the orientation.
+- `magnetic_stdev` [type: double, default: `0.0`] - Standard deviation of the magnetic field.
 
 
 ## MAVLink Subscriptions

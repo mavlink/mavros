@@ -9,16 +9,16 @@
 Publishes Mission commands to control the camera or antenna mount. Implements the superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html). @see command_cb()
 
 ## Publishers
-- `~/orientation` ([geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html))
-- `~/status` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html))
+- `~/orientation` ([geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html)) - Publish mount orientation as quaternion from MAVLink MOUNT_ORIENTATION.
+- `~/status` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Publish mount status from MAVLink MOUNT_STATUS.
 
 
 ## Subscribers
-- `~/command` ([mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html))
+- `~/command` ([mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html)) - Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.
 
 
 ## Services
-- `~/configure` ([mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html))
+- `~/configure` ([mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html)) - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
 
 
 ## Clients
@@ -26,12 +26,12 @@ Publishes Mission commands to control the camera or antenna mount. Implements th
 
 
 ## Parameters
-- `negate_measured_roll` [type: bool, default: `false`]
-- `negate_measured_pitch` [type: bool, default: `false`]
-- `negate_measured_yaw` [type: bool, default: `false`]
-- `debounce_s` [type: double, default: `4.0`]
-- `err_threshold_deg` [type: double, default: `10.0`]
-- `disable_diag` [type: bool, default: `false`]
+- `negate_measured_roll` [type: bool, default: `false`] - Negate the measured roll angle.
+- `negate_measured_pitch` [type: bool, default: `false`] - Negate the measured pitch angle.
+- `negate_measured_yaw` [type: bool, default: `false`] - Negate the measured yaw angle.
+- `debounce_s` [type: double, default: `4.0`] - Mount diagnostic error debounce time [s].
+- `err_threshold_deg` [type: double, default: `10.0`] - Mount diagnostic angle error threshold [deg].
+- `disable_diag` [type: bool, default: `false`] - Disable mount diagnostic updater.
 
 
 ## MAVLink Subscriptions

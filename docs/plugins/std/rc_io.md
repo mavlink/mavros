@@ -7,12 +7,12 @@
 
 
 ## Publishers
-- `~/in` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html))
-- `~/out` ([mavros_msgs::msg::RCOut](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCOut.html))
+- `~/in` ([mavros_msgs::msg::RCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCIn.html)) - Publish RC input (RC_CHANNELS / RC_CHANNELS_RAW).
+- `~/out` ([mavros_msgs::msg::RCOut](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RCOut.html)) - Publish RC servo output (SERVO_OUTPUT_RAW).
 
 
 ## Subscribers
-- `~/override` ([mavros_msgs::msg::OverrideRCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OverrideRCIn.html))
+- `~/override` ([mavros_msgs::msg::OverrideRCIn](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OverrideRCIn.html)) - Override RC input on the FCU (RC_CHANNELS_OVERRIDE).
 
 
 ## Services

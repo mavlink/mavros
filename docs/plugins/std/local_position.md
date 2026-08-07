@@ -9,13 +9,13 @@
 Publish local position to TF, PositionStamped, TwistStamped and Odometry
 
 ## Publishers
-- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))
-- `~/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html))
-- `~/velocity_local` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
-- `~/velocity_body` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html))
-- `~/velocity_body_cov` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
-- `~/accel` ([geometry_msgs::msg::AccelWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/AccelWithCovarianceStamped.html))
-- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
+- `~/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Local position (LOCAL_POSITION_NED).
+- `~/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html)) - Local position with covariance (LOCAL_POSITION_NED_COV).
+- `~/velocity_local` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Local velocity in NED frame (LOCAL_POSITION_NED).
+- `~/velocity_body` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Local velocity in body frame (LOCAL_POSITION_NED).
+- `~/velocity_body_cov` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html)) - Local velocity with covariance (LOCAL_POSITION_NED_COV).
+- `~/accel` ([geometry_msgs::msg::AccelWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/AccelWithCovarianceStamped.html)) - Local acceleration with covariance (LOCAL_POSITION_NED_COV).
+- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - Local odometry (LOCAL_POSITION_NED / LOCAL_POSITION_NED_COV).
 
 
 ## Subscribers
@@ -31,10 +31,10 @@ Publish local position to TF, PositionStamped, TwistStamped and Odometry
 
 
 ## Parameters
-- `frame_id` [default: `"map"`] - header frame_id. default to map (world-fixed, ENU as per REP-105).
-- `tf.send` [type: bool, default: `false`] - Important tf subsection Report the transform from world to base_link here.
-- `tf.frame_id` [default: `"map"`]
-- `tf.child_frame_id` [default: `"base_link"`]
+- `frame_id` [default: `"map"`] - header frame_id. default to map (world-fixed, ENU as per REP-105). Set the frame id for the published messages.
+- `tf.send` [type: bool, default: `false`] - Important tf subsection Report the transform from world to base_link here. Enable publishing of the world to base_link TF tree.
+- `tf.frame_id` [default: `"map"`] - World frame id for the published TF.
+- `tf.child_frame_id` [default: `"base_link"`] - Body frame id for the published TF.
 
 
 ## MAVLink Subscriptions

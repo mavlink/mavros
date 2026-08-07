@@ -40,11 +40,13 @@ public:
     enable_node_watch_parameters();
 
     // NOTE(vooon): I'm not quite sure that this option would work with mavros router
+    //! Pull geofence from the FCU after GCS connection.
     node_declare_and_watch_parameter(
       "pull_after_gcs", true, [&](const rclcpp::Parameter & p) {
         do_pull_after_gcs = p.as_bool();
       });
 
+    //! Use MISSION_ITEM_INT instead of MISSION_ITEM (MISSION protocol).
     node_declare_and_watch_parameter(
       "use_mission_item_int", true, [&](const rclcpp::Parameter & p) {
         use_mission_item_int = p.as_bool();
@@ -52,6 +54,7 @@ public:
 
     auto gf_qos = mavros::LatchedStateQoS();
 
+    //! Publish the current geofence (MISSION protocol).
     gf_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/fences", gf_qos);
 
 #ifdef USE_OLD_RMW_QOS
@@ -60,16 +63,19 @@ public:
     auto services_qos = rclcpp::ServicesQoS();
 #endif
 
+    //! Pull the geofence from the FCU (MISSION_REQUEST_LIST).
     pull_srv =
       node->create_service<mavros_msgs::srv::WaypointPull>(
       "~/pull",
       std::bind(&GeofencePlugin::pull_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Push the geofence to the FCU (MISSION_COUNT).
     push_srv =
       node->create_service<mavros_msgs::srv::WaypointPush>(
       "~/push",
       std::bind(&GeofencePlugin::push_cb, this, _1, _2),
       services_qos, srv_cg);
+    //! Clear the geofence on the FCU (MISSION_CLEAR_ALL).
     clear_srv =
       node->create_service<mavros_msgs::srv::WaypointClear>(
       "~/clear",

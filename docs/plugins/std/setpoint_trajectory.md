@@ -9,15 +9,15 @@
 Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
-- `~/desired` ([nav_msgs::msg::Path](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Path.html))
+- `~/desired` ([nav_msgs::msg::Path](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Path.html)) - Publish the desired trajectory path.
 
 
 ## Subscribers
-- `~/local` ([trajectory_msgs::msg::MultiDOFJointTrajectory](https://docs.ros.org/en/rolling/p/trajectory_msgs/msg/MultiDOFJointTrajectory.html))
+- `~/local` ([trajectory_msgs::msg::MultiDOFJointTrajectory](https://docs.ros.org/en/rolling/p/trajectory_msgs/msg/MultiDOFJointTrajectory.html)) - Trajectory setpoints (SET_POSITION_TARGET_LOCAL_NED).
 
 
 ## Services
-- `~/reset` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html))
+- `~/reset` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html)) - Reset the current trajectory.
 
 
 ## Clients
@@ -25,8 +25,8 @@ Receive trajectory setpoints and send setpoint_raw setpoints along the trajector
 
 
 ## Parameters
-- `frame_id` [default: `"map"`]
-- `mav_frame` [default: `"LOCAL_NED"`]
+- `frame_id` [default: `"map"`] - Frame id for the published path.
+- `mav_frame` [default: `"LOCAL_NED"`] - Coordinate frame of the trajectory setpoints.
 
 
 ## MAVLink Subscriptions

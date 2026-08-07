@@ -43,12 +43,14 @@ public:
   explicit GpsRtkPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "gps_rtk")
   {
+    //! Subscribe to RTCM to send as GPS_RTCM_DATA to the FCU.
     gps_rtk_sub =
       node->create_subscription<mavros_msgs::msg::RTCM>(
       "~/send_rtcm", 10,
       std::bind(&GpsRtkPlugin::rtcm_cb, this, _1));
 
     // TODO(vooon): set QoS for latched topic
+    //! Publish RTK baseline data from MAVLink GPS_RTK.
     rtk_baseline_pub = node->create_publisher<mavros_msgs::msg::RTKBaseline>("~/rtk_baseline", 1);
   }
 

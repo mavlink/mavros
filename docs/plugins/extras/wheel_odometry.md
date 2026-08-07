@@ -9,10 +9,10 @@
 This plugin allows computing and publishing wheel odometry coming from FCU wheel encoders. Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).
 
 ## Publishers
-- `~/rpm` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html))
-- `~/distance` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html))
-- `~/velocity` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html))
-- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
+- `~/rpm` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html)) - Publish raw wheel RPM from MAVLink RPM.
+- `~/distance` ([mavros_msgs::msg::WheelOdomStamped](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WheelOdomStamped.html)) - Publish raw wheel distances from MAVLink WHEEL_DISTANCE.
+- `~/velocity` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html)) - Publish computed wheel odometry as TwistWithCovarianceStamped.
+- `~/odom` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - Publish computed wheel odometry as nav_msgs/Odometry.
 
 
 ## Subscribers
@@ -28,16 +28,16 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 
 
 ## Parameters
-- `send_raw` [type: bool, default: `false`] - General params
-- `count` [type: integer, default: `2`]
-- `use_rpm` [type: bool, default: `false`]
-- `send_twist` [type: bool, default: `false`] - Odometry params
-- `frame_id` [default: `uas_->get_odom_frame_id()`]
-- `child_frame_id` [default: `uas_->get_base_link_frame_id()`]
-- `vel_error` [type: double, default: `0.1`]
-- `tf.frame_id` [default: `uas_->get_odom_frame_id()`] - TF subsection
-- `tf.child_frame_id` [default: `uas_->get_base_link_frame_id()`]
-- `tf.send` [type: bool, default: `false`]
+- `send_raw` [type: bool, default: `false`] - General params Publish raw wheel RPM and distance data.
+- `count` [type: integer, default: `2`] - Number of wheels used for odometry computation.
+- `use_rpm` [type: bool, default: `false`] - Use wheel RPM (true) or cumulative distance (false) for odometry.
+- `send_twist` [type: bool, default: `false`] - Odometry params Publish TwistWithCovarianceStamped instead of Odometry.
+- `frame_id` [default: `uas_->get_odom_frame_id()`] - Frame id for published odometry.
+- `child_frame_id` [default: `uas_->get_base_link_frame_id()`] - Child frame id for published odometry.
+- `vel_error` [type: double, default: `0.1`] - Wheel velocity measurement error (std) [m/s].
+- `tf.frame_id` [default: `uas_->get_odom_frame_id()`] - TF subsection TF frame id for published odometry.
+- `tf.child_frame_id` [default: `uas_->get_base_link_frame_id()`] - TF child frame id for published odometry.
+- `tf.send` [type: bool, default: `false`] - Enable publishing odometry transform to TF.
 
 
 ## MAVLink Subscriptions

@@ -9,19 +9,19 @@
 Publishes home position.
 
 ## Publishers
-- `~/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html))
+- `~/home` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html)) - Publish home position (HOME_POSITION).
 
 
 ## Subscribers
-- `~/set` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html))
+- `~/set` ([mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html)) - Set home position (SET_HOME_POSITION).
 
 
 ## Services
-- `~/req_update` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html))
+- `~/req_update` ([std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html)) - Request home position update (MAV_CMD_GET_HOME_POSITION).
 
 
 ## Clients
-- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
+- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)) - Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
 
 
 ## Parameters

@@ -58,6 +58,7 @@ public:
 
     // header frame_id.
     // default to map (world-fixed, ENU as per REP-105).
+    //! Set the frame id for the published messages.
     node_declare_and_watch_parameter(
       "frame_id", "map", [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
@@ -65,14 +66,17 @@ public:
 
     // Important tf subsection
     // Report the transform from world to base_link here.
+    //! Enable publishing of the world to base_link TF tree.
     node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
       });
+    //! World frame id for the published TF.
     node_declare_and_watch_parameter(
       "tf.frame_id", "map", [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
+    //! Body frame id for the published TF.
     node_declare_and_watch_parameter(
       "tf.child_frame_id", "base_link", [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
@@ -80,19 +84,26 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Local position (LOCAL_POSITION_NED).
     local_position = node->create_publisher<geometry_msgs::msg::PoseStamped>("~/pose", sensor_qos);
+    //! Local position with covariance (LOCAL_POSITION_NED_COV).
     local_position_cov = node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "~/pose_cov", sensor_qos);
+    //! Local velocity in NED frame (LOCAL_POSITION_NED).
     local_velocity_local = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_local", sensor_qos);
+    //! Local velocity in body frame (LOCAL_POSITION_NED).
     local_velocity_body = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_body",
       sensor_qos);
+    //! Local velocity with covariance (LOCAL_POSITION_NED_COV).
     local_velocity_cov = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "~/velocity_body_cov", sensor_qos);
+    //! Local acceleration with covariance (LOCAL_POSITION_NED_COV).
     local_accel = node->create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>(
       "~/accel",
       sensor_qos);
+    //! Local odometry (LOCAL_POSITION_NED / LOCAL_POSITION_NED_COV).
     local_odom = node->create_publisher<nav_msgs::msg::Odometry>("~/odom", sensor_qos);
   }
 

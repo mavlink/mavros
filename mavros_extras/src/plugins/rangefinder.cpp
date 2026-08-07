@@ -39,6 +39,7 @@ public:
   explicit RangefinderPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "rangefinder")
   {
+    //! Publish rangefinder data from MAVLink RANGEFINDER.
     rangefinder_pub = node->create_publisher<sensor_msgs::msg::Range>("~/rangefinder", 10);
   }
 

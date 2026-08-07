@@ -49,6 +49,7 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
+    //! Setpoint acceleration/force (SET_POSITION_TARGET_LOCAL_NED).
     accel_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(
       "~/accel", sensor_qos, std::bind(
         &SetpointAccelerationPlugin::accel_cb, this,

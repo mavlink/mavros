@@ -45,6 +45,7 @@ public:
   explicit CameraPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "camera")
   {
+    //! Publish camera image capture info from MAVLink CAMERA_IMAGE_CAPTURED.
     camera_image_captured_pub = node->create_publisher<mavros_msgs::msg::CameraImageCaptured>(
       "~/image_captured", 10);
   }

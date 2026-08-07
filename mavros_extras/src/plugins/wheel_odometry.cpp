@@ -62,12 +62,15 @@ public:
     enable_node_watch_parameters();
 
     // General params
+    //! Publish raw wheel RPM and distance data.
     node_declare_and_watch_parameter(
       "send_raw", false, [&](const rclcpp::Parameter & p) {
         raw_send = p.as_bool();
 
         if (raw_send) {
+          //! Publish raw wheel RPM from MAVLink RPM.
           rpm_pub = node->create_publisher<mavros_msgs::msg::WheelOdomStamped>("~/rpm", 10);
+          //! Publish raw wheel distances from MAVLink WHEEL_DISTANCE.
           dist_pub = node->create_publisher<mavros_msgs::msg::WheelOdomStamped>("~/distance", 10);
         } else {
           rpm_pub.reset();
@@ -75,12 +78,14 @@ public:
         }
       });
 
+    //! Number of wheels used for odometry computation.
     node_declare_and_watch_parameter(
       "count", 2, [&](const rclcpp::Parameter & p) {
         int count_ = p.as_int();
         count = std::max(2, count_);    // bound check
       });
 
+    //! Use wheel RPM (true) or cumulative distance (false) for odometry.
     node_declare_and_watch_parameter(
       "use_rpm", false, [&](const rclcpp::Parameter & p) {
         bool use_rpm = p.as_bool();
@@ -92,21 +97,25 @@ public:
       });
 
     // Odometry params
+    //! Publish TwistWithCovarianceStamped instead of Odometry.
     node_declare_and_watch_parameter(
       "send_twist", false, [&](const rclcpp::Parameter & p) {
         twist_send = p.as_bool();
       });
 
+    //! Frame id for published odometry.
     node_declare_and_watch_parameter(
       "frame_id", uas_->get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Child frame id for published odometry.
     node_declare_and_watch_parameter(
       "child_frame_id", uas_->get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         frame_id = p.as_string();
       });
 
+    //! Wheel velocity measurement error (std) [m/s].
     node_declare_and_watch_parameter(
       "vel_error", 0.1, [&](const rclcpp::Parameter & p) {
         double vel_error = p.as_double();
@@ -114,16 +123,19 @@ public:
       });
 
     // TF subsection
+    //! TF frame id for published odometry.
     node_declare_and_watch_parameter(
       "tf.frame_id", uas_->get_odom_frame_id(), [&](const rclcpp::Parameter & p) {
         tf_frame_id = p.as_string();
       });
 
+    //! TF child frame id for published odometry.
     node_declare_and_watch_parameter(
       "tf.child_frame_id", uas_->get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
         tf_child_frame_id = p.as_string();
       });
 
+    //! Enable publishing odometry transform to TF.
     node_declare_and_watch_parameter(
       "tf.send", false, [&](const rclcpp::Parameter & p) {
         tf_send = p.as_bool();
@@ -142,10 +154,12 @@ public:
         utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][0] = p.as_double();
         });
+      //! Wheel Y offset from vehicle origin [m].
       node_declare_and_watch_parameter(
         utils::format("wheel%i.y", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][1] = p.as_double();
         });
+      //! Wheel radius [m].
       node_declare_and_watch_parameter(
         utils::format("wheel%i.radius", wi), 0.05, [wi, this](const rclcpp::Parameter & p) {
           wheel_radius[wi] = p.as_double();
@@ -193,9 +207,11 @@ public:
     // Advertise topics
     if (odom_mode != OM::NONE) {
       if (twist_send) {
+        //! Publish computed wheel odometry as TwistWithCovarianceStamped.
         twist_pub = node->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
           "~/velocity", 10);
       } else {
+        //! Publish computed wheel odometry as nav_msgs/Odometry.
         odom_pub = node->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
       }
     } else {

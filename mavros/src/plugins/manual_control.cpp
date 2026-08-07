@@ -41,7 +41,9 @@ public:
   explicit ManualControlPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "manual_control")
   {
+    //! Publish manual control input from FCU (MANUAL_CONTROL).
     control_pub = node->create_publisher<mavros_msgs::msg::ManualControl>("~/control", 10);
+    //! Send manual control commands to FCU (MANUAL_CONTROL).
     send_sub =
       node->create_subscription<mavros_msgs::msg::ManualControl>(
       "~/send", 10,

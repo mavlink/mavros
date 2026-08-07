@@ -9,11 +9,11 @@
 Sends odometry data to the FCU estimator and publishes odometry data that comes from FCU. This plugin is following ROS REP 147. Pose is expressed in parent frame. (Quaternion rotates from child to parent) The twist is expressed in the child frame. @see odom_cb()	transforming and sending odometry to fcu @see handle_odom()	receiving and transforming odometry from fcu
 
 ## Publishers
-- `~/in` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - publishers
+- `~/in` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - publishers Publish odometry from MAVLink ODOMETRY.
 
 
 ## Subscribers
-- `~/out` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html))
+- `~/out` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - subscribers Subscribe to odometry to send as ODOMETRY to the FCU.
 
 
 ## Services
@@ -25,9 +25,9 @@ Sends odometry data to the FCU estimator and publishes odometry data that comes 
 
 
 ## Parameters
-- `fcu.odom_parent_id_des` [default: `uas_->get_odom_frame_id()`] - frame params:
-- `fcu.odom_child_id_des` [default: `uas_->get_base_link_frame_id()`]
-- `fcu.map_id_des` [default: `uas_->get_map_frame_id()`]
+- `fcu.odom_parent_id_des` [default: `uas_->get_odom_frame_id()`] - frame params: Desired parent frame id for odometry from the FCU.
+- `fcu.odom_child_id_des` [default: `uas_->get_base_link_frame_id()`] - Desired child frame id for odometry from the FCU.
+- `fcu.map_id_des` [default: `uas_->get_map_frame_id()`] - Desired map frame id for odometry from the FCU.
 
 
 ## MAVLink Subscriptions

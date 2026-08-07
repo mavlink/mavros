@@ -9,11 +9,11 @@
 1. Publish the RTCM messages from ROS to the FCU 2. Publish RTK baseline data from the FCU to ROS
 
 ## Publishers
-- `~/rtk_baseline` ([mavros_msgs::msg::RTKBaseline](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTKBaseline.html)) - TODO(vooon): set QoS for latched topic
+- `~/rtk_baseline` ([mavros_msgs::msg::RTKBaseline](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTKBaseline.html)) - TODO(vooon): set QoS for latched topic Publish RTK baseline data from MAVLink GPS_RTK.
 
 
 ## Subscribers
-- `~/send_rtcm` ([mavros_msgs::msg::RTCM](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTCM.html))
+- `~/send_rtcm` ([mavros_msgs::msg::RTCM](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTCM.html)) - Subscribe to RTCM to send as GPS_RTCM_DATA to the FCU.
 
 
 ## Services

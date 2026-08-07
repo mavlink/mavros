@@ -55,22 +55,27 @@ public:
   : Plugin(uas_, "sim_state")
   {
     // IMU attitude publisher (~/attitude): orientation and angular velocity in ENU/base_link
+    //! Publish attitude from MAVLink SIM_STATE.
     attitude_pub = node->create_publisher<sensor_msgs::msg::Imu>(
       "~/attitude", 10);
 
     // Linear acceleration publisher (~/acceleration): ENU/map, units m/s^2
+    //! Publish linear acceleration from MAVLink SIM_STATE.
     acceleration_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>(
       "~/acceleration", 10);
 
     // Body-frame twist publisher (~/velocity_body): base_link linear+angular velocity
+    //! Publish body-frame velocity from MAVLink SIM_STATE.
     velocity_body_pub = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_body", 10);
 
     // Local-frame twist publisher (~/velocity_local): ENU/map linear+angular velocity
+    //! Publish local-frame velocity from MAVLink SIM_STATE.
     velocity_local_pub = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_local", 10);
 
     // Global position publisher (~/global_position): WGS84 NavSatFix
+    //! Publish global position from MAVLink SIM_STATE.
     global_position_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>(
       "~/global_position", 10);
   }
