@@ -285,7 +285,7 @@ public:
     wp_cur_id(0),
     wp_cur_active(0),
     wp_set_active(0),
-    wp_retries(RETRIES_COUNT),
+    wp_retries(0),
     is_timedout(false),
     reschedule_pull(false),
     do_pull_after_gcs(false),
@@ -293,12 +293,45 @@ public:
     use_mission_item_int(false),
     mission_item_int_support_confirmed(false),
     BOOTUP_TIME(bootup_time_),
-    LIST_TIMEOUT(30s),
-    WP_TIMEOUT(1s),
-    RESCHEDULE_TIME(5s)
+    mission_list_timeout(30s),
+    mission_wp_timeout(1s),
+    mission_reschedule_time(5s),
+    mission_retries_count(3)
   {
+    enable_node_watch_parameters();
+
+    node_declare_and_watch_parameter(
+      "mission_wp_timeout", mission_wp_timeout.seconds(), [this](const rclcpp::Parameter & p) {
+        mission_wp_timeout = rclcpp::Duration::from_seconds(p.as_double());
+        // Recreate the retry timer so the new period takes effect for tests.
+        timeout_timer.reset();
+        timeout_timer =
+        node->create_wall_timer(
+          mission_wp_timeout.to_chrono<std::chrono::nanoseconds>(),
+          std::bind(&MissionBase::timeout_cb, this));
+        timeout_timer->cancel();
+      });
+    node_declare_and_watch_parameter(
+      "mission_list_timeout", mission_list_timeout.seconds(), [&](const rclcpp::Parameter & p) {
+        mission_list_timeout = rclcpp::Duration::from_seconds(p.as_double());
+      });
+    node_declare_and_watch_parameter(
+      "mission_retries", mission_retries_count, [&](const rclcpp::Parameter & p) {
+        mission_retries_count = p.as_int();
+      });
+    node_declare_and_watch_parameter(
+      "mission_reschedule_time", mission_reschedule_time.seconds(),
+      [&](const rclcpp::Parameter & p) {
+        mission_reschedule_time = rclcpp::Duration::from_seconds(p.as_double());
+      });
+
+    wp_retries = mission_retries_count;
+
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    timeout_timer = node->create_wall_timer(WP_TIMEOUT, std::bind(&MissionBase::timeout_cb, this));
+    timeout_timer =
+      node->create_wall_timer(
+      mission_wp_timeout.to_chrono<std::chrono::nanoseconds>(),
+      std::bind(&MissionBase::timeout_cb, this));
     timeout_timer->cancel();
   }
 
@@ -373,11 +406,11 @@ protected:
   bool use_mission_item_int;
   bool mission_item_int_support_confirmed;
 
-  static constexpr int RETRIES_COUNT = 3;
   const std::chrono::nanoseconds BOOTUP_TIME;
-  const std::chrono::nanoseconds LIST_TIMEOUT;
-  const std::chrono::nanoseconds WP_TIMEOUT;
-  const std::chrono::nanoseconds RESCHEDULE_TIME;
+  rclcpp::Duration mission_list_timeout;
+  rclcpp::Duration mission_wp_timeout;
+  rclcpp::Duration mission_reschedule_time;
+  int mission_retries_count;
 
   /* -*- rx handlers -*- */
 
@@ -517,7 +550,7 @@ protected:
     if (wp_state != WP::IDLE) {
       /* try later */
       RCLCPP_DEBUG(get_logger(), "%s: busy, reschedule pull", log_prefix);
-      schedule_pull(RESCHEDULE_TIME);
+      schedule_pull(mission_reschedule_time.to_chrono<std::chrono::nanoseconds>());
       return;
     }
 
@@ -548,7 +581,7 @@ protected:
 
   void restart_timeout_timer(void)
   {
-    wp_retries = RETRIES_COUNT;
+    wp_retries = mission_retries_count;
     restart_timeout_timer_int();
   }
 
@@ -597,7 +630,9 @@ protected:
   {
     std::unique_lock<std::mutex> lock(recv_cond_mutex);
 
-    return list_receiving.wait_for(lock, LIST_TIMEOUT) == std::cv_status::no_timeout &&
+    return list_receiving.wait_for(lock,
+          mission_list_timeout.to_chrono<std::chrono::nanoseconds>()) ==
+           std::cv_status::no_timeout &&
            !is_timedout;
   }
 
@@ -609,7 +644,9 @@ protected:
   {
     std::unique_lock<std::mutex> lock(send_cond_mutex);
 
-    return list_sending.wait_for(lock, LIST_TIMEOUT) == std::cv_status::no_timeout &&
+    return list_sending.wait_for(lock,
+          mission_list_timeout.to_chrono<std::chrono::nanoseconds>()) ==
+           std::cv_status::no_timeout &&
            !is_timedout;
   }
 
