@@ -88,7 +88,7 @@ public:
     remote_addrs{},
     stale_addrs{}
   {
-    const addr_t broadcast_addr = 0;
+    const addr_t broadcast_addr = 0x0000;
 
     // Accept broadcasts by default
     remote_addrs.emplace(broadcast_addr);
@@ -247,6 +247,7 @@ private:
   friend class TestRouter;
   friend class E2ERouter;
   friend class BenchmarkRouter;
+  friend class RouterSelectBenchmark;
 
   static std::atomic<id_t> id_counter;
   mavconn::IoContextRunner router_io_runner;
@@ -255,6 +256,15 @@ private:
 
   // map stores all routing endpoints
   std::unordered_map<id_t, Endpoint::SharedPtr> endpoints;
+
+  // Reverse reachability index: remote address -> endpoints that can receive
+  // on it. Built lazily from `endpoints`/`remote_addrs` in rebuild_remote_index()
+  // and kept in sync synchronously on add/del. Guards: index_mutex.
+  std::shared_mutex index_mutex;
+  std::unordered_map<addr_t, std::vector<Endpoint::SharedPtr>> remote_index;
+  // Set when any endpoint's reachability set changed since the last rebuild.
+  // Cleared only by the thread that wins the CAS in route_message().
+  std::atomic<bool> remote_index_dirty{true};
 
   std::atomic<size_t> stat_msg_routed;      //!< amount of messages came to route_messages()
   std::atomic<size_t> stat_msg_sent;        //!< amount of messages sent
@@ -277,6 +287,13 @@ private:
 
   void periodic_reconnect_endpoints();
   void periodic_clear_stale_remote_addrs();
+
+  // Rebuild remote_index from the current endpoints. Caller must hold a
+  // unique_lock on index_mutex.
+  void rebuild_remote_index();
+  // Remove an endpoint from every remote_index list. Caller must hold a
+  // unique_lock on index_mutex.
+  void remove_from_index(const Endpoint::SharedPtr & ep);
 
   std::once_flag param_init_flag;
   void param_init()

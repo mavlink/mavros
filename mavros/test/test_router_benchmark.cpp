@@ -160,6 +160,7 @@ public:
       spin_thread_.join();
     }
     router_->endpoints.clear();
+    router_->remote_index.clear();
     // Destroy the ROS entities (DDS participants) before shutdown so the
     // middleware does not outlive the global context.
     subs_.clear();

@@ -14,11 +14,13 @@ Guidance for coding agents in this repository.
 
 ## Repository Scope
 
-- Monorepo packages: `mavros`, `mavros_extras`, `mavros_msgs`, `libmavconn`, `tools`.
+- ROS packages (each has `package.xml`): `mavros`, `mavros_extras`, `mavros_msgs`, `libmavconn`, `mavros_examples`, `test_mavros`.
+- `tools/` is NOT a colcon package — it is a standalone `uv`-managed tool dir (`uv tool install ./tools` provides `mr-cog`, `mr-plugin-doc-gen`).
 - Respect package boundaries:
   - runtime/plugins: `mavros`, `mavros_extras`
   - interfaces: `mavros_msgs`
   - transport/link: `libmavconn`
+  - CI covers packages: `libmavconn`, `mavros`, `mavros_extras`
 
 ## Build And Test
 
@@ -110,6 +112,7 @@ To reformat with uncrustify:
 - Python style is enforced with `ruff`, while staying compatible with ROS 2 conventions used here.
 - Avoid style-only edits outside touched scope.
 - Keep compatibility across supported ROS 2 distros; prefer conditional handling over distro-specific breakage.
+- CI matrix runs `humble`, `jazzy`, `kilted`, `lyrical`, `rolling`; build against the oldest to catch regressions.
 - Treat plugin API surface as stable: topic/service/parameter names and defaults should not change unless intentional.
 
 ## Generated Code (Cog)

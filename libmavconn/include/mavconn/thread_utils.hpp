@@ -22,6 +22,7 @@
 
 #include <pthread.h>
 
+#include <array>
 #include <cstdio>
 #include <sstream>
 #include <string>
@@ -36,17 +37,25 @@ namespace utils
 /**
  * @brief Make printf-formatted std::string
  *
+ * Fast path formats into a small stack buffer with a single snprintf; only when
+ * the output would not fit does it compute the exact size and re-format into a
+ * heap string. Returns an empty string on an encoding error.
  */
 template<typename ... Args>
 std::string format(const std::string & fmt, Args... args)
 {
-  // C++11 specify that string store elements continuously
-  std::string ret;
+  std::array<char, 256> stack{};
+  const int written = std::snprintf(stack.data(), stack.size(), fmt.c_str(), args ...);
+  if (written < 0) {
+    return {};   // encoding error in the format or arguments
+  }
+  if (static_cast<size_t>(written) < stack.size()) {
+    return std::string(stack.data(), written);
+  }
 
-  auto sz = std::snprintf(nullptr, 0, fmt.c_str(), args ...);
-  ret.reserve(sz + 1);
-  ret.resize(sz);       // to be sure there have room for \0
-  std::snprintf(&ret.front(), ret.capacity() + 1, fmt.c_str(), args ...);
+  std::string ret;
+  ret.resize(static_cast<size_t>(written));
+  std::snprintf(ret.data(), ret.size() + 1, fmt.c_str(), args ...);
   return ret;
 }
 
