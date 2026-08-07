@@ -30,7 +30,6 @@
 #include <mavconn/interface.hpp>
 #include <mavconn/io_context_runner.hpp>
 #include <mavconn/msgbuffer.hpp>
-#include <mavconn/pool_allocator.hpp>
 
 namespace mavconn
 {
@@ -94,7 +93,7 @@ private:
   std::atomic<bool> is_destroying;
 
   std::atomic<bool> tx_in_progress;
-  std::deque<MsgBuffer, mavconn::MsgBufferAllocator<MsgBuffer>> tx_q;
+  std::deque<MsgBuffer> tx_q;
   std::array<uint8_t, MsgBuffer::MAX_SIZE> rx_buf;
   std::mutex mutex;
 

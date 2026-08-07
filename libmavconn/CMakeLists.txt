@@ -114,12 +114,6 @@ if(BUILD_TESTING)
     console_bridge::console_bridge
   )
 
-  ament_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
-  target_link_libraries(test_pool_allocator
-    mavconn
-    console_bridge::console_bridge
-  )
-
   # pymavlink-referenced byte-stream e2e test.
   # Small ctypes shim over MAVConnUDP; the pytest skips cleanly when pymavlink
   # (a pip package) is not installed, so CI/buildfarm stays green.
