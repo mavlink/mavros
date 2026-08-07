@@ -305,6 +305,54 @@ def _render_api_section(title: str, entries: list[ApiEntry]) -> list[str]:
     return lines
 
 
+def render_plugin_index(
+    std_plugins: list[PluginApi], extras_plugins: list[PluginApi]
+) -> str:
+    """Render a combined index page of all plugins and their ROS API surface."""
+    lines = [
+        "# MAVROS plugins",
+        "",
+        "MAVROS is split into the core plugins shipped in `mavros` and the optional "
+        "plugins shipped in `mavros_extras`. Each plugin page documents its ROS API "
+        "(publishers, subscribers, services, clients, parameters) and the MAVLink "
+        "messages it subscribes to and publishes.",
+        "",
+    ]
+
+    def api_count(plugin: PluginApi, kind: str) -> int | str:
+        if kind == "publishers":
+            return len(plugin.publishers) or "—"
+        if kind == "subscribers":
+            return len(plugin.subscribers) or "—"
+        if kind == "services":
+            return len(plugin.services) or "—"
+        if kind == "clients":
+            return len(plugin.clients) or "—"
+        if kind == "mavlink":
+            return f"{len(plugin.mavlink_subscriptions)}/{len(plugin.mavlink_publications)}"
+        return ""
+
+    def render_group(title: str, subdir: str, plugins: list[PluginApi]) -> None:
+        lines.append(f"## {title}")
+        lines.append("")
+        lines.append("| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |")
+        lines.append("|--------|-------|-----|-----|-----|--------|-----------------|")
+        for p in sorted(plugins, key=lambda x: x.plugin):
+            stem = pathlib.Path(p.path).stem
+            link = f"[`{p.plugin}`]({subdir}/{stem}.md)"
+            brief = (p.brief or "").replace("|", "\\|").replace("\n", " ")
+            lines.append(
+                f"| {link} | {brief} | {api_count(p, 'publishers')} | "
+                f"{api_count(p, 'subscribers')} | {api_count(p, 'services')} | "
+                f"{api_count(p, 'clients')} | {api_count(p, 'mavlink')} |"
+            )
+        lines.append("")
+
+    render_group("Standard plugins (`mavros`)", "std", std_plugins)
+    render_group("Extra plugins (`mavros_extras`)", "extras", extras_plugins)
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_markdown(plugins: list[PluginApi]) -> str:
     repo_root = detect_repo_root()
     lines = [
@@ -489,7 +537,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--input-json",
-        help="Skip collection and render from pre-collected JSON file.",
+        action="append",
+        default=[],
+        help="Skip collection and render from pre-collected JSON file(s). May be repeated.",
+    )
+    parser.add_argument(
+        "--plugin-index",
+        help="Write a combined plugin index page (from collected/index JSON files).",
     )
     parser.add_argument(
         "--format",
@@ -547,8 +601,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.input_json:
-        payload = json.loads(pathlib.Path(args.input_json).read_text(encoding="utf-8"))
-        plugins = [plugin_from_dict(item) for item in payload]
+        plugins = []
+        for input_path in args.input_json:
+            payload = json.loads(pathlib.Path(input_path).read_text(encoding="utf-8"))
+            plugins.extend(plugin_from_dict(item) for item in payload)
         log_event("info", "Loaded input JSON", phase="render", plugins=len(plugins))
     else:
         wanted_plugins = set(args.plugin) if args.plugin else None
@@ -569,6 +625,22 @@ def main(argv: list[str] | None = None) -> int:
                 path=str(collect_path),
                 plugins=len(plugins),
             )
+
+    if args.plugin_index:
+        std_plugins = [p for p in plugins if "mavros_extras" not in p.path.as_posix()]
+        extras_plugins = [p for p in plugins if "mavros_extras" in p.path.as_posix()]
+        idx = pathlib.Path(args.plugin_index)
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(render_plugin_index(std_plugins, extras_plugins), encoding="utf-8")
+        log_event(
+            "info",
+            "Wrote plugin index",
+            phase="render",
+            std=len(std_plugins),
+            extras=len(extras_plugins),
+            path=str(idx),
+        )
+        return 0
 
     if args.format == "json":
         body = render_json(plugins)

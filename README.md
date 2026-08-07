@@ -4,6 +4,9 @@ MAVROS
 
 MAVLink extendable communication node for ROS.
 
+- Full documentation: [https://mavros.readthedocs.io/][rtd]
+- Plugin reference (all ROS API): [Plugin index](docs/plugins/index.md)
+
 - Since 2014-08-11 this repository contains several packages.
 - Since 2014-11-02 hydro support separated from master to hydro-devel branch.
 - Since 2015-03-04 all packages also dual licensed under terms of BSD license.
@@ -78,6 +81,7 @@ CI Statuses
 
 
 [mrrm]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md
+[rtd]: https://mavros.readthedocs.io/en/latest/
 [exrm]: https://github.com/mavlink/mavros/blob/ros2/mavros_extras/README.md
 [libmc]: https://github.com/mavlink/mavros/blob/ros2/libmavconn/README.md
 [test]: https://github.com/mavlink/mavros/blob/ros2/test_mavros/README.md
