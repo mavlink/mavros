@@ -83,9 +83,11 @@ public:
     auto wp_qos = mavros::LatchedStateQoS();
 
     //! The current mission waypoint list.
-    wp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/waypoints", wp_qos);
+    wp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>(
+      "~/waypoints", wp_qos, mavros::NonIntraProcessPublisherOptions());
     //! Notifies when a mission waypoint is reached.
-    wp_reached_pub = node->create_publisher<mavros_msgs::msg::WaypointReached>("~/reached", wp_qos);
+    wp_reached_pub = node->create_publisher<mavros_msgs::msg::WaypointReached>(
+      "~/reached", wp_qos, mavros::NonIntraProcessPublisherOptions());
 
 #ifdef USE_OLD_RMW_QOS
     auto services_qos = rmw_qos_profile_services_default;

@@ -26,6 +26,7 @@
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
+#include "mavros/qos.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 
@@ -580,16 +581,16 @@ public:
 
     //! Publish connection, armed and mode state (HEARTBEAT).
     state_pub = node->create_publisher<mavros_msgs::msg::State>(
-      "state", state_qos);
+      "state", state_qos, mavros::NonIntraProcessPublisherOptions());
     //! Publish VTOL and landed state (EXTENDED_SYS_STATE).
     extended_state_pub = node->create_publisher<mavros_msgs::msg::ExtendedState>(
-      "extended_state", state_qos);
+      "extended_state", state_qos, mavros::NonIntraProcessPublisherOptions());
     //! Publish system and battery status (SYS_STATUS).
     sys_status_pub = node->create_publisher<mavros_msgs::msg::SysStatus>(
-      "sys_status", state_qos);
+      "sys_status", state_qos, mavros::NonIntraProcessPublisherOptions());
     //! Publish estimator status flags (ESTIMATOR_STATUS).
     estimator_status_pub = node->create_publisher<mavros_msgs::msg::EstimatorStatus>(
-      "estimator_status", state_qos);
+      "estimator_status", state_qos, mavros::NonIntraProcessPublisherOptions());
     //! Publish battery state (BATTERY_STATUS).
     batt_pub = node->create_publisher<BatteryMsg>("battery", sensor_qos);
 

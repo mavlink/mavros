@@ -23,6 +23,7 @@
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
+#include "mavros/qos.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
 #include "mavros_msgs/srv/command_long.hpp"
@@ -50,7 +51,8 @@ public:
     auto state_qos = rclcpp::QoS(10).transient_local();
 
     //! Publish home position (HOME_POSITION).
-    hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>("~/home", state_qos);
+    hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>(
+      "~/home", state_qos, mavros::NonIntraProcessPublisherOptions());
     //! Set home position (SET_HOME_POSITION).
     hp_sub =
       node->create_subscription<mavros_msgs::msg::HomePosition>(

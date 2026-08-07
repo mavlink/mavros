@@ -144,7 +144,7 @@ public:
     // global origin
     //! Publish the global origin (GPS_GLOBAL_ORIGIN).
     gp_global_origin_pub = node->create_publisher<geographic_msgs::msg::GeoPointStamped>(
-      "~/gp_origin", origin_qos);
+      "~/gp_origin", origin_qos, mavros::NonIntraProcessPublisherOptions());
     //! Set the global origin (SET_GPS_GLOBAL_ORIGIN).
     gp_set_global_origin_sub =
       node->create_subscription<geographic_msgs::msg::GeoPointStamped>(

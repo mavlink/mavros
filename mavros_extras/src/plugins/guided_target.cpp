@@ -72,7 +72,8 @@ public:
     //! Subscribe to global position origin (map origin).
     gp_origin_sub = node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
       "global_position/gp_origin", mavros::LatchedStateQoS(),
-      std::bind(&GuidedTargetPlugin::gp_origin_cb, this, _1));
+      std::bind(&GuidedTargetPlugin::gp_origin_cb, this, _1),
+      mavros::NonIntraProcessSubscriptionOptions());
   }
 
   Subscriptions get_subscriptions() override

@@ -54,7 +54,8 @@ public:
     auto rp_qos = mavros::LatchedStateQoS();
 
     //! Publish the current rally points (MISSION protocol).
-    rp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/rallypoints", rp_qos);
+    rp_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>(
+      "~/rallypoints", rp_qos, mavros::NonIntraProcessPublisherOptions());
 
 #ifdef USE_OLD_RMW_QOS
     auto services_qos = rmw_qos_profile_services_default;

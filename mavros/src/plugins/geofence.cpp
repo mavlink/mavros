@@ -55,7 +55,8 @@ public:
     auto gf_qos = mavros::LatchedStateQoS();
 
     //! Publish the current geofence (MISSION protocol).
-    gf_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>("~/fences", gf_qos);
+    gf_list_pub = node->create_publisher<mavros_msgs::msg::WaypointList>(
+      "~/fences", gf_qos, mavros::NonIntraProcessPublisherOptions());
 
 #ifdef USE_OLD_RMW_QOS
     auto services_qos = rmw_qos_profile_services_default;
