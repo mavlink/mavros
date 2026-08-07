@@ -43,7 +43,8 @@ using mavlink::common::MAV_FRAME;
  * @brief Setpoint TRAJECTORY plugin
  * @plugin setpoint_trajectory
  *
- * Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory.
+ * Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointTrajectoryPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointTrajectoryPlugin>

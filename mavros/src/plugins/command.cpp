@@ -62,7 +62,8 @@ public:
  * @brief Command plugin.
  * @plugin command
  *
- * Send any command via COMMAND_LONG
+ * Send any command via COMMAND_LONG. Implements the
+ * [MAVLink Command Protocol](https://mavlink.io/en/services/command.html).
  */
 class CommandPlugin : public plugin::Plugin
 {

@@ -55,7 +55,8 @@ using SyncTwistThrust = message_filters::Synchronizer<SyncTwistThrustPolicy>;
  * @brief Setpoint attitude plugin
  * @plugin setpoint_attitude
  *
- * Send setpoint attitude/orientation/thrust to FCU controller.
+ * Send setpoint attitude/orientation/thrust to FCU controller. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointAttitudePlugin : public plugin::Plugin,
   private plugin::SetAttitudeTargetMixin<SetpointAttitudePlugin>

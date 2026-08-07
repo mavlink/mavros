@@ -42,7 +42,8 @@ using mavlink::common::LANDING_TARGET_TYPE;
  * @plugin landing_target
  *
  * This plugin is intended to publish the location of a landing area captured from a downward facing camera
- * to the FCU and/or receive landing target tracking data coming from the FCU.
+ * to the FCU and/or receive landing target tracking data coming from the FCU. Implements the
+ * [MAVLink Landing Target Protocol](https://mavlink.io/en/services/landing_target.html).
  */
 class LandingTargetPlugin : public plugin::Plugin,
   private plugin::TF2ListenerMixin<LandingTargetPlugin>

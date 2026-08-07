@@ -480,6 +480,9 @@ private:
  * @plugin sys_status
  *
  * Required by all plugins.
+ *
+ * Implements the
+ * [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
  */
 class SystemStatusPlugin : public plugin::Plugin
 {

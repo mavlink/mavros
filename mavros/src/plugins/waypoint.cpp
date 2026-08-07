@@ -29,6 +29,9 @@ using namespace std::chrono_literals;   // NOLINT
 /**
  * @brief Mission manipulation plugin
  * @plugin waypoint
+ *
+ * Implements the
+ * [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
  */
 class WaypointPlugin : public plugin::MissionBase
 {

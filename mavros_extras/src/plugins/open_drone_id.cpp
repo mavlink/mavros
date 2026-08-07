@@ -36,7 +36,8 @@ using namespace std::placeholders;      // NOLINT
  * @brief Open Drone ID plugin
  * @plugin open_drone_id
  *
- * Sends Open Drone ID data to the FCU
+ * Sends Open Drone ID data to the FCU. Implements the
+ * [MAVLink Open Drone ID Protocol](https://mavlink.io/en/services/opendroneid.html).
  */
 class OpenDroneIDPlugin : public plugin::Plugin
 {

@@ -35,7 +35,8 @@ using utils::enum_value;
  * @brief Camera plugin plugin
  * @plugin camera
  *
- * Plugin for interfacing on the mavlink camera protocol
+ * Plugin for interfacing on the mavlink camera protocol. Implements the
+ * [MAVLink Camera Protocol v2](https://mavlink.io/en/services/camera.html).
  * @see command_cb()
  */
 class CameraPlugin : public plugin::Plugin

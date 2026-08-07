@@ -58,7 +58,7 @@ using uas::s_shared_lock;
  * @brief Gimbal Control Plugin
  * @plugin gimbal_control
  *
- * Adds support for Mavlink Gimbal Protocol v2.
+ * Implements the [MAVLink Gimbal Protocol v2](https://mavlink.io/en/services/gimbal_v2.html).
  * Also publishes gimbal pose to TF when parameter tf_send==true
  */
 class GimbalControlPlugin : public plugin::Plugin

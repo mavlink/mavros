@@ -33,6 +33,9 @@ using namespace std::placeholders;      // NOLINT
 /**
  * @brief Tunnel plugin
  * @plugin tunnel
+ *
+ * Implements the
+ * [MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).
  */
 class TunnelPlugin : public plugin::Plugin
 {

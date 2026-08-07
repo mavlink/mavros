@@ -37,7 +37,8 @@ using mavlink::common::MAV_FRAME;
  * @brief Setpoint velocity plugin
  * @plugin setpoint_velocity
  *
- * Send setpoint velocities to FCU controller.
+ * Send setpoint velocities to FCU controller. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointVelocityPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointVelocityPlugin>

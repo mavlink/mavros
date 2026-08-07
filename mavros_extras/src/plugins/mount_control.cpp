@@ -182,7 +182,8 @@ private:
  * @brief Mount Control plugin
  * @plugin mount_control
  *
- * Publishes Mission commands to control the camera or antenna mount.
+ * Publishes Mission commands to control the camera or antenna mount. Implements the
+ * superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html).
  * @see command_cb()
  */
 class MountControlPlugin : public plugin::Plugin

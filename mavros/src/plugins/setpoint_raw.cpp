@@ -38,7 +38,8 @@ using namespace std::placeholders;      // NOLINT
  * @plugin setpoint_raw
  *
  * Send position setpoints and publish current state (return loop).
- * User can decide what set of filed needed for operation via IGNORE bits.
+ * User can decide what set of filed needed for operation via IGNORE bits. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointRawPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointRawPlugin>,

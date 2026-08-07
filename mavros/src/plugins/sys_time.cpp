@@ -141,6 +141,9 @@ private:
 /**
  * @brief System time plugin
  * @plugin sys_time
+ *
+ * Implements the
+ * [MAVLink Time Synchronization](https://mavlink.io/en/services/timesync.html).
  */
 class SystemTimePlugin : public plugin::Plugin
 {

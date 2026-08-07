@@ -31,6 +31,9 @@ using namespace std::placeholders;      // NOLINT
 /**
  * @brief Manual Control plugin
  * @plugin manual_control
+ *
+ * Implements the
+ * [MAVLink Manual Control (Joystick) Protocol](https://mavlink.io/en/services/manual_control.html).
  */
 class ManualControlPlugin : public plugin::Plugin
 {

@@ -38,7 +38,8 @@ using mavlink::common::MAV_FRAME;
  * @brief Setpoint position plugin
  * @plugin setpoint_position
  *
- * Send setpoint positions to FCU controller.
+ * Send setpoint positions to FCU controller. Uses the
+ * [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
  */
 class SetpointPositionPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointPositionPlugin>,

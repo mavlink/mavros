@@ -26,6 +26,9 @@ using namespace std::chrono_literals;   // NOLINT
 /**
  * @brief Rallypoint manipulation plugin
  * @plugin rallypoint
+ *
+ * Implements the rally point part of the
+ * [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
  */
 class RallypointPlugin : public plugin::MissionBase
 {

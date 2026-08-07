@@ -244,6 +244,9 @@ public:
 /**
  * @brief FTP plugin.
  * @plugin ftp
+ *
+ * Implements the
+ * [MAVLink File Transfer Protocol](https://mavlink.io/en/services/ftp.html).
  */
 class FTPPlugin : public plugin::Plugin
 {
