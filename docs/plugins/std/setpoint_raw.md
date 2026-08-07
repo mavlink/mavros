@@ -6,7 +6,7 @@
 - Brief: Setpoint RAW plugin
 
 
-Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits.
+Send position setpoints and publish current state (return loop). User can decide what set of filed needed for operation via IGNORE bits. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - `~/target_local` ([mavros_msgs::msg::PositionTarget](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/PositionTarget.html))

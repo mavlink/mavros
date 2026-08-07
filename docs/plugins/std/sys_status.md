@@ -6,7 +6,7 @@
 - Brief: System status plugin.
 
 
-Required by all plugins.
+Required by all plugins. Implements the [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
 
 ## Publishers
 - `state` ([mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html))

@@ -6,7 +6,7 @@
 - Brief: Landing Target plugin
 
 
-This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU.
+This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU. Implements the [MAVLink Landing Target Protocol](https://mavlink.io/en/services/landing_target.html).
 
 ## Publishers
 - `~/pose_in` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html))

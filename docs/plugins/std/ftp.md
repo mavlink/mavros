@@ -6,6 +6,8 @@
 - Brief: FTP plugin.
 
 
+Implements the [MAVLink File Transfer Protocol](https://mavlink.io/en/services/ftp.html).
+
 ## Publishers
 - None
 

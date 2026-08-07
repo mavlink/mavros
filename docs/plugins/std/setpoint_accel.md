@@ -6,7 +6,7 @@
 - Brief: Setpoint acceleration/force plugin
 
 
-Send setpoint accelerations/forces to FCU controller.
+Send setpoint accelerations/forces to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None

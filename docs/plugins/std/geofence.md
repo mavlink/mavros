@@ -6,6 +6,8 @@
 - Brief: Geofence manipulation plugin
 
 
+Implements the geofence part of the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
+
 ## Publishers
 - `~/fences` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
 

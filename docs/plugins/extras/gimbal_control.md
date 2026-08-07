@@ -6,7 +6,7 @@
 - Brief: Gimbal Control Plugin
 
 
-Adds support for Mavlink Gimbal Protocol v2. Also publishes gimbal pose to TF when parameter tf_send==true
+Implements the [MAVLink Gimbal Protocol v2](https://mavlink.io/en/services/gimbal_v2.html). Also publishes gimbal pose to TF when parameter tf_send==true
 
 ## Publishers
 - `~/device/attitude_status` ([mavros_msgs::msg::GimbalDeviceAttitudeStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GimbalDeviceAttitudeStatus.html))

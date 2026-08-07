@@ -6,7 +6,7 @@
 - Brief: Open Drone ID plugin
 
 
-Sends Open Drone ID data to the FCU
+Sends Open Drone ID data to the FCU. Implements the [MAVLink Open Drone ID Protocol](https://mavlink.io/en/services/opendroneid.html).
 
 ## Publishers
 - None

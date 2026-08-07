@@ -6,6 +6,8 @@
 - Brief: Manual Control plugin
 
 
+Implements the [MAVLink Manual Control (Joystick) Protocol](https://mavlink.io/en/services/manual_control.html).
+
 ## Publishers
 - `~/control` ([mavros_msgs::msg::ManualControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ManualControl.html))
 

@@ -6,7 +6,7 @@
 - Brief: Setpoint TRAJECTORY plugin
 
 
-Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory.
+Receive trajectory setpoints and send setpoint_raw setpoints along the trajectory. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - `~/desired` ([nav_msgs::msg::Path](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Path.html))

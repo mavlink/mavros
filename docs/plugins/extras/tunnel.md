@@ -6,6 +6,8 @@
 - Brief: Tunnel plugin
 
 
+Implements the [MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).
+
 ## Publishers
 - `~/out` ([mavros_msgs::msg::Tunnel](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/Tunnel.html))
 

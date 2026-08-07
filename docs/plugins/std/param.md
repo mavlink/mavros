@@ -6,6 +6,8 @@
 - Brief: Parameter manipulation plugin
 
 
+Implements the [MAVLink Parameter Protocol](https://mavlink.io/en/services/parameter.html).
+
 ## Publishers
 - `~/event` ([mavros_msgs::msg::ParamEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ParamEvent.html))
 - `/parameter_events` ([rcl_interfaces::msg::ParameterEvent](https://docs.ros.org/en/rolling/p/rcl_interfaces/msg/ParameterEvent.html))
@@ -31,7 +33,9 @@
 
 
 ## Parameters
-- None
+- `param_set_timeout` [type: double, default: `param_set_timeout.seconds()`]
+- `param_list_timeout` [type: double, default: `param_list_timeout.seconds()`]
+- `param_retries` [default: `param_retries_count`]
 
 
 ## MAVLink Subscriptions

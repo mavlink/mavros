@@ -6,6 +6,8 @@
 - Brief: System time plugin
 
 
+Implements the [MAVLink Time Synchronization](https://mavlink.io/en/services/timesync.html).
+
 ## Publishers
 - `time_reference` ([sensor_msgs::msg::TimeReference](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/TimeReference.html))
 - `timesync_status` ([mavros_msgs::msg::TimesyncStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TimesyncStatus.html))

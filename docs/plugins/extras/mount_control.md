@@ -6,7 +6,7 @@
 - Brief: Mount Control plugin
 
 
-Publishes Mission commands to control the camera or antenna mount. @see command_cb()
+Publishes Mission commands to control the camera or antenna mount. Implements the superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html). @see command_cb()
 
 ## Publishers
 - `~/orientation` ([geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html))

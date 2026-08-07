@@ -6,7 +6,7 @@
 - Brief: Setpoint attitude plugin
 
 
-Send setpoint attitude/orientation/thrust to FCU controller.
+Send setpoint attitude/orientation/thrust to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None

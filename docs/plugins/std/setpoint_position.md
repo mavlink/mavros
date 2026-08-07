@@ -6,7 +6,7 @@
 - Brief: Setpoint position plugin
 
 
-Send setpoint positions to FCU controller.
+Send setpoint positions to FCU controller. Uses the [MAVLink Offboard Control Protocol](https://mavlink.io/en/services/offboard_control.html).
 
 ## Publishers
 - None

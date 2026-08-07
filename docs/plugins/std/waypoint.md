@@ -6,6 +6,8 @@
 - Brief: Mission manipulation plugin
 
 
+Implements the [MAVLink Mission Protocol](https://mavlink.io/en/services/mission.html).
+
 ## Publishers
 - `~/waypoints` ([mavros_msgs::msg::WaypointList](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointList.html))
 - `~/reached` ([mavros_msgs::msg::WaypointReached](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/WaypointReached.html))

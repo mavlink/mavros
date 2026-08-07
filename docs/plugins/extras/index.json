@@ -5,19 +5,19 @@
     "class_name": "mavros::extra_plugins::ADSBPlugin",
     "namespace": "adsb",
     "brief": "ADS-B Vehicle plugin",
-    "description": "Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.",
+    "description": "Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle. Implements the [MAVLink Traffic Management (UTM/ADS-B)](https://mavlink.io/en/services/traffic_management.html).",
     "publishers": [
       {
         "name": "~/vehicle",
         "type_name": "mavros_msgs::msg::ADSBVehicle",
-        "line": 46
+        "line": 47
       }
     ],
     "subscribers": [
       {
         "name": "~/send",
         "type_name": "mavros_msgs::msg::ADSBVehicle",
-        "line": 48
+        "line": 49
       }
     ],
     "services": [],
@@ -30,7 +30,7 @@
         "message_name": "ADSB_VEHICLE",
         "msg_id_expr": "mavlink::common::msg::ADSB_VEHICLE::MSG_ID",
         "dialect": "common",
-        "line": 56,
+        "line": 57,
         "msg_id": 246
       }
     ],
@@ -41,7 +41,7 @@
         "message_name": "ADSB_VEHICLE",
         "msg_id_expr": "mavlink::common::msg::ADSB_VEHICLE::MSG_ID",
         "dialect": "common",
-        "line": 164,
+        "line": 165,
         "msg_id": 246
       }
     ]
@@ -83,12 +83,12 @@
     "class_name": "mavros::extra_plugins::CameraPlugin",
     "namespace": "camera",
     "brief": "Camera plugin plugin",
-    "description": "Plugin for interfacing on the mavlink camera protocol @see command_cb()",
+    "description": "Plugin for interfacing on the mavlink camera protocol. Implements the [MAVLink Camera Protocol v2](https://mavlink.io/en/services/camera.html). @see command_cb()",
     "publishers": [
       {
         "name": "~/image_captured",
         "type_name": "mavros_msgs::msg::CameraImageCaptured",
-        "line": 47
+        "line": 48
       }
     ],
     "subscribers": [],
@@ -102,7 +102,7 @@
         "message_name": "CAMERA_IMAGE_CAPTURED",
         "msg_id_expr": "mavlink::common::msg::CAMERA_IMAGE_CAPTURED::MSG_ID",
         "dialect": "common",
-        "line": 54,
+        "line": 55,
         "msg_id": 263
       }
     ],
@@ -631,7 +631,7 @@
     "class_name": "mavros::extra_plugins::GimbalControlPlugin",
     "namespace": "gimbal_control",
     "brief": "Gimbal Control Plugin",
-    "description": "Adds support for Mavlink Gimbal Protocol v2. Also publishes gimbal pose to TF when parameter tf_send==true",
+    "description": "Implements the [MAVLink Gimbal Protocol v2](https://mavlink.io/en/services/gimbal_v2.html). Also publishes gimbal pose to TF when parameter tf_send==true",
     "publishers": [
       {
         "name": "~/device/attitude_status",
@@ -1151,29 +1151,29 @@
     "class_name": "mavros::extra_plugins::LandingTargetPlugin",
     "namespace": "landing_target",
     "brief": "Landing Target plugin",
-    "description": "This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU.",
+    "description": "This plugin is intended to publish the location of a landing area captured from a downward facing camera to the FCU and/or receive landing target tracking data coming from the FCU. Implements the [MAVLink Landing Target Protocol](https://mavlink.io/en/services/landing_target.html).",
     "publishers": [
       {
         "name": "~/pose_in",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 184
+        "line": 185
       },
       {
         "name": "~/lt_marker",
         "type_name": "geometry_msgs::msg::Vector3Stamped",
-        "line": 185
+        "line": 186
       }
     ],
     "subscribers": [
       {
         "name": "~/raw",
         "type_name": "mavros_msgs::msg::LandingTarget",
-        "line": 83
+        "line": 84
       },
       {
         "name": "~/pose",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 189
+        "line": 190
       }
     ],
     "services": [],
@@ -1182,103 +1182,103 @@
       {
         "name": "frame_id",
         "type_name": "",
-        "line": 71,
+        "line": 72,
         "default_value": "\"landing_target_1\"",
         "description": "general params"
       },
       {
         "name": "listen_lt",
         "type_name": "bool",
-        "line": 76,
+        "line": 77,
         "default_value": "false"
       },
       {
         "name": "mav_frame",
         "type_name": "",
-        "line": 90,
+        "line": 91,
         "default_value": "\"LOCAL_NED\""
       },
       {
         "name": "land_target_type",
         "type_name": "",
-        "line": 97,
+        "line": 98,
         "default_value": "\"VISION_FIDUCIAL\""
       },
       {
         "name": "target_size.x",
         "type_name": "double",
-        "line": 105,
+        "line": 106,
         "default_value": "1.0",
         "description": "target size"
       },
       {
         "name": "target_size.y",
         "type_name": "double",
-        "line": 110,
+        "line": 111,
         "default_value": "1.0"
       },
       {
         "name": "image.width",
         "type_name": "integer",
-        "line": 116,
+        "line": 117,
         "default_value": "640",
         "description": "image size"
       },
       {
         "name": "image.height",
         "type_name": "integer",
-        "line": 121,
+        "line": 122,
         "default_value": "480"
       },
       {
         "name": "camera.fov_x",
         "type_name": "double",
-        "line": 127,
+        "line": 128,
         "default_value": "2.0071286398",
         "description": "camera field-of-view -> should be precised using the calibrated camera intrinsics"
       },
       {
         "name": "camera.fov_y",
         "type_name": "double",
-        "line": 132,
+        "line": 133,
         "default_value": "2.0071286398"
       },
       {
         "name": "camera.focal_length",
         "type_name": "double",
-        "line": 138,
+        "line": 139,
         "default_value": "2.8",
         "description": "camera focal length"
       },
       {
         "name": "tf.rate_limit",
         "type_name": "double",
-        "line": 144,
+        "line": 145,
         "default_value": "50.0",
         "description": "tf subsection"
       },
       {
         "name": "tf.send",
         "type_name": "bool",
-        "line": 151,
+        "line": 152,
         "default_value": "true"
       },
       {
         "name": "tf.frame_id",
         "type_name": "",
-        "line": 156,
+        "line": 157,
         "default_value": "frame_id"
       },
       {
         "name": "tf.child_frame_id",
         "type_name": "",
-        "line": 161,
+        "line": 162,
         "default_value": "\"camera_center\""
       },
       {
         "name": "tf.listen",
         "type_name": "bool",
-        "line": 166,
+        "line": 167,
         "default_value": "false"
       }
     ],
@@ -1289,7 +1289,7 @@
         "message_name": "LANDING_TARGET",
         "msg_id_expr": "mavlink::common::msg::LANDING_TARGET::MSG_ID",
         "dialect": "common",
-        "line": 197,
+        "line": 198,
         "msg_id": 149
       }
     ],
@@ -1300,7 +1300,7 @@
         "message_name": "LANDING_TARGET",
         "msg_id_expr": "mavlink::common::msg::LANDING_TARGET::MSG_ID",
         "dialect": "common",
-        "line": 260,
+        "line": 261,
         "msg_id": 149
       }
     ]
@@ -1496,75 +1496,75 @@
     "class_name": "mavros::extra_plugins::MountControlPlugin",
     "namespace": "mount_control",
     "brief": "Mount Control plugin",
-    "description": "Publishes Mission commands to control the camera or antenna mount. @see command_cb()",
+    "description": "Publishes Mission commands to control the camera or antenna mount. Implements the superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html). @see command_cb()",
     "publishers": [
       {
         "name": "~/orientation",
         "type_name": "geometry_msgs::msg::Quaternion",
-        "line": 236
+        "line": 237
       },
       {
         "name": "~/status",
         "type_name": "geometry_msgs::msg::Vector3Stamped",
-        "line": 239
+        "line": 240
       }
     ],
     "subscribers": [
       {
         "name": "~/command",
         "type_name": "mavros_msgs::msg::MountControl",
-        "line": 231
+        "line": 232
       }
     ],
     "services": [
       {
         "name": "~/configure",
         "type_name": "mavros_msgs::srv::MountConfigure",
-        "line": 241
+        "line": 242
       }
     ],
     "clients": [
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 366
+        "line": 367
       }
     ],
     "parameters": [
       {
         "name": "negate_measured_roll",
         "type_name": "bool",
-        "line": 197,
+        "line": 198,
         "default_value": "false"
       },
       {
         "name": "negate_measured_pitch",
         "type_name": "bool",
-        "line": 201,
+        "line": 202,
         "default_value": "false"
       },
       {
         "name": "negate_measured_yaw",
         "type_name": "bool",
-        "line": 205,
+        "line": 206,
         "default_value": "false"
       },
       {
         "name": "debounce_s",
         "type_name": "double",
-        "line": 210,
+        "line": 211,
         "default_value": "4.0"
       },
       {
         "name": "err_threshold_deg",
         "type_name": "double",
-        "line": 215,
+        "line": 216,
         "default_value": "10.0"
       },
       {
         "name": "disable_diag",
         "type_name": "bool",
-        "line": 220,
+        "line": 221,
         "default_value": "false"
       }
     ],
@@ -1575,7 +1575,7 @@
         "message_name": "MOUNT_ORIENTATION",
         "msg_id_expr": "mavlink::common::msg::MOUNT_ORIENTATION::MSG_ID",
         "dialect": "common",
-        "line": 251,
+        "line": 252,
         "msg_id": 265
       },
       {
@@ -1584,7 +1584,7 @@
         "message_name": "MOUNT_STATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MOUNT_STATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 252,
+        "line": 253,
         "msg_id": 158
       }
     ],
@@ -1595,7 +1595,7 @@
         "message_name": "COMMAND_LONG",
         "msg_id_expr": "mavlink::common::msg::COMMAND_LONG::MSG_ID",
         "dialect": "common",
-        "line": 354,
+        "line": 355,
         "msg_id": 76
       }
     ]
@@ -1783,33 +1783,33 @@
     "class_name": "mavros::extra_plugins::OpenDroneIDPlugin",
     "namespace": "open_drone_id",
     "brief": "Open Drone ID plugin",
-    "description": "Sends Open Drone ID data to the FCU",
+    "description": "Sends Open Drone ID data to the FCU. Implements the [MAVLink Open Drone ID Protocol](https://mavlink.io/en/services/opendroneid.html).",
     "publishers": [],
     "subscribers": [
       {
         "name": "~/basic_id",
         "type_name": "mavros_msgs::msg::OpenDroneIDBasicID",
-        "line": 47
+        "line": 48
       },
       {
         "name": "~/operator_id",
         "type_name": "mavros_msgs::msg::OpenDroneIDOperatorID",
-        "line": 52
+        "line": 53
       },
       {
         "name": "~/self_id",
         "type_name": "mavros_msgs::msg::OpenDroneIDSelfID",
-        "line": 57
+        "line": 58
       },
       {
         "name": "~/system",
         "type_name": "mavros_msgs::msg::OpenDroneIDSystem",
-        "line": 62
+        "line": 63
       },
       {
         "name": "~/system_update",
         "type_name": "mavros_msgs::msg::OpenDroneIDSystemUpdate",
-        "line": 67
+        "line": 68
       }
     ],
     "services": [],
@@ -1823,7 +1823,7 @@
         "message_name": "OPEN_DRONE_ID_BASIC_ID",
         "msg_id_expr": "mavlink::common::msg::OPEN_DRONE_ID_BASIC_ID::MSG_ID",
         "dialect": "common",
-        "line": 96,
+        "line": 97,
         "msg_id": 12900
       },
       {
@@ -1832,7 +1832,7 @@
         "message_name": "OPEN_DRONE_ID_OPERATOR_ID",
         "msg_id_expr": "mavlink::common::msg::OPEN_DRONE_ID_OPERATOR_ID::MSG_ID",
         "dialect": "common",
-        "line": 108,
+        "line": 109,
         "msg_id": 12905
       },
       {
@@ -1841,7 +1841,7 @@
         "message_name": "OPEN_DRONE_ID_SELF_ID",
         "msg_id_expr": "mavlink::common::msg::OPEN_DRONE_ID_SELF_ID::MSG_ID",
         "dialect": "common",
-        "line": 120,
+        "line": 121,
         "msg_id": 12903
       },
       {
@@ -1850,7 +1850,7 @@
         "message_name": "OPEN_DRONE_ID_SYSTEM",
         "msg_id_expr": "mavlink::common::msg::OPEN_DRONE_ID_SYSTEM::MSG_ID",
         "dialect": "common",
-        "line": 142,
+        "line": 143,
         "msg_id": 12904
       },
       {
@@ -1859,7 +1859,7 @@
         "message_name": "OPEN_DRONE_ID_SYSTEM_UPDATE",
         "msg_id_expr": "mavlink::common::msg::OPEN_DRONE_ID_SYSTEM_UPDATE::MSG_ID",
         "dialect": "common",
-        "line": 155,
+        "line": 156,
         "msg_id": 12919
       }
     ]
@@ -2355,19 +2355,19 @@
     "class_name": "mavros::extra_plugins::TunnelPlugin",
     "namespace": "tunnel",
     "brief": "Tunnel plugin",
-    "description": "",
+    "description": "Implements the [MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).",
     "publishers": [
       {
         "name": "~/out",
         "type_name": "mavros_msgs::msg::Tunnel",
-        "line": 47
+        "line": 50
       }
     ],
     "subscribers": [
       {
         "name": "~/in",
         "type_name": "mavros_msgs::msg::Tunnel",
-        "line": 44
+        "line": 47
       }
     ],
     "services": [],
@@ -2380,7 +2380,7 @@
         "message_name": "TUNNEL",
         "msg_id_expr": "mavlink::common::msg::TUNNEL::MSG_ID",
         "dialect": "common",
-        "line": 53,
+        "line": 56,
         "msg_id": 385
       }
     ],
@@ -2391,7 +2391,7 @@
         "message_name": "TUNNEL",
         "msg_id_expr": "mavlink::common::msg::TUNNEL::MSG_ID",
         "dialect": "common",
-        "line": 68,
+        "line": 71,
         "msg_id": 385
       }
     ]
