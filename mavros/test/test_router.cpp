@@ -114,12 +114,13 @@ public:
 
   ~TestRouter()
   {
-    // Break the Endpoint <-> Router reference cycle (router->endpoints holds
-    // endpoints, and each endpoint->parent holds the router), otherwise the
-    // Router node (a DDS participant) is leaked and never destroyed. Leaked
+    // Break the Endpoint <-> Router reference cycle (router->endpoints and
+    // router->remote_index hold endpoints, and each endpoint->parent holds the
+    // router), otherwise the Router node (a DDS participant) is leaked. Leaked
     // participants from concurrent test processes crash FastDDS discovery.
     for (auto & router : routers_) {
       router->endpoints.clear();
+      router->remote_index.clear();
     }
     routers_.clear();
 

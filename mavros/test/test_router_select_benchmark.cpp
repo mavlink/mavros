@@ -108,6 +108,7 @@ public:
   void TearDown(const benchmark::State &) override
   {
     router_->endpoints.clear();
+    router_->remote_index.clear();
     fcu_.reset();
     gcs_.clear();
     router_.reset();
