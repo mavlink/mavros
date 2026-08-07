@@ -45,10 +45,6 @@ class ApiEntry:
     description: str = ""
     qos: dict[str, ty.Any] | None = None
 
-    @property
-    def rendered_type(self) -> str:
-        return self.type_name or "<unknown>"
-
 
 @dataclasses.dataclass(frozen=True)
 class MavlinkSubEntry:
@@ -286,30 +282,6 @@ def render_json(plugins: list[PluginApi]) -> str:
     return json.dumps([plugin_to_dict(p) for p in plugins], indent=2) + "\n"
 
 
-def _render_api_section(title: str, entries: list[ApiEntry]) -> list[str]:
-    lines = [f"### {title}"]
-    if not entries:
-        lines.append("- None")
-        lines.append("")
-        return lines
-    for entry in entries:
-        if title == "Parameters":
-            extras = []
-            if entry.type_name:
-                extras.append(f"type: {entry.type_name}")
-            if entry.default_value:
-                extras.append(f"default: `{entry.default_value}`")
-            if entry.description:
-                extras.append(f"desc: {entry.description}")
-            suffix = f" [{', '.join(extras)}]" if extras else ""
-            lines.append(f"- `{entry.name}`{suffix}")
-        else:
-            extra = f" - {entry.description}" if entry.description else ""
-            lines.append(f"- `{entry.name}` ({entry.rendered_type}){extra}")
-    lines.append("")
-    return lines
-
-
 def parse_qos(qos: dict[str, ty.Any] | str | None) -> dict[str, ty.Any]:
     """Normalize the `qos` field (dict from the extractor, or a JSON string)."""
     if not qos:
@@ -442,84 +414,6 @@ def render_plugin_index(
         std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
         extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
     ).rstrip() + "\n"
-
-
-def render_markdown(plugins: list[PluginApi]) -> str:
-    repo_root = detect_repo_root()
-    lines = [
-        "# MAVROS Plugin API",
-        "",
-        f"_Generated for {len(plugins)} plugins._",
-        "",
-    ]
-    for plugin in plugins:
-        try:
-            shown_path = plugin.path.relative_to(repo_root).as_posix()
-        except ValueError:
-            shown_path = plugin.path.as_posix()
-        lines.extend(
-            [
-                f"## `{plugin.plugin}`",
-                "",
-                f"- File: `{shown_path}`",
-                f"- Class: `{plugin.class_name or '<unknown>'}`",
-                f"- Namespace: `{plugin.namespace or '<unknown>'}`",
-            ]
-        )
-        if plugin.brief:
-            lines.append(f"- Brief: {plugin.brief}")
-        lines.append("")
-        if plugin.description:
-            lines.append(plugin.description)
-            lines.append("")
-        lines.extend(_render_api_section("Publishers", plugin.publishers))
-        lines.extend(_render_api_section("Subscribers", plugin.subscribers))
-        lines.extend(_render_api_section("Services", plugin.services))
-        lines.extend(_render_api_section("Clients", plugin.clients))
-        lines.extend(_render_api_section("Parameters", plugin.parameters))
-        lines.append("### MAVLink Subscriptions")
-        if not plugin.mavlink_subscriptions:
-            lines.append("- None")
-            lines.append("")
-        else:
-            for sub in plugin.mavlink_subscriptions:
-                msg = sub.message_name or "<unknown>"
-                extras = []
-                if sub.handler:
-                    extras.append(f"handler: {sub.handler}")
-                if sub.dialect:
-                    extras.append(f"dialect: {sub.dialect}")
-                if sub.msg_id is not None:
-                    extras.append(f"msg_id: {sub.msg_id}")
-                if sub.msg_id_expr:
-                    extras.append(f"id: `{sub.msg_id_expr}`")
-                if sub.description:
-                    extras.append(f"desc: {sub.description}")
-                suffix = f" [{', '.join(extras)}]" if extras else ""
-                lines.append(f"- `{msg}`{suffix}")
-            lines.append("")
-        lines.append("### MAVLink Publications")
-        if not plugin.mavlink_publications:
-            lines.append("- None")
-            lines.append("")
-        else:
-            for pub in plugin.mavlink_publications:
-                msg = pub.message_name or "<unknown>"
-                extras = []
-                if pub.argument:
-                    extras.append(f"arg: `{pub.argument}`")
-                if pub.dialect:
-                    extras.append(f"dialect: {pub.dialect}")
-                if pub.msg_id is not None:
-                    extras.append(f"msg_id: {pub.msg_id}")
-                if pub.msg_id_expr:
-                    extras.append(f"id: `{pub.msg_id_expr}`")
-                if pub.description:
-                    extras.append(f"desc: {pub.description}")
-                suffix = f" [{', '.join(extras)}]" if extras else ""
-                lines.append(f"- `{msg}`{suffix}")
-            lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_plugin_markdown_with_template(
@@ -682,18 +576,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Write output to file. Defaults to stdout.",
     )
 
-    # Accepted for compatibility with old invocations; ignored.
-    parser.add_argument("--collector", default="cpp", help=argparse.SUPPRESS)
-    parser.add_argument(
-        "--compile-commands", action="append", default=[], help=argparse.SUPPRESS
-    )
-    parser.add_argument(
-        "--clang-arg", action="append", default=[], help=argparse.SUPPRESS
-    )
-    parser.add_argument(
-        "--no-regex-fallback", action="store_true", help=argparse.SUPPRESS
-    )
-
     return parser.parse_args(argv)
 
 
@@ -792,14 +674,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    body = render_markdown(plugins)
-    if args.output:
-        out_path = pathlib.Path(args.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(body, encoding="utf-8")
-    else:
-        sys.stdout.write(body)
-    return 0
+    raise SystemExit("Nothing to do: pass --output-dir, --format json, --plugin-index, or --qos-appendix")
 
 
 if __name__ == "__main__":
