@@ -132,6 +132,11 @@ run_index() {
     --output "${EXTRAS_INDEX}"
 }
 
+# Regenerate the markdown changelogs from each package's CHANGELOG.rst.
+run_changelogs() {
+  python3 "${TOOLS_DIR}/convert_changelogs.py"
+}
+
 run_markdown() {
   if [[ ! -f "${STD_INDEX}" || ! -f "${EXTRAS_INDEX}" ]]; then
     echo "Missing index files, run '$0 index' first (or '$0 all')."
@@ -173,10 +178,12 @@ case "${SUBCMD}" in
     run_index
     ;;
   markdown)
+    run_changelogs
     run_markdown
     ;;
   all)
     run_index
+    run_changelogs
     run_markdown
     ;;
 esac
