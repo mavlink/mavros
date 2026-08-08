@@ -5,10 +5,11 @@ mav CLI
 over the ROS 2 graph and lets you query and control the autopilot from the
 terminal without writing code.
 
-It is installed together with the `mavros` Python package:
+It is installed together with the `mavros` Python package and is run via
+`ros2 run`:
 
 ```shell
-mav --help
+ros2 run mavros mav --help
 ```
 
 ## Global options
