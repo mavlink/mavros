@@ -2,23 +2,29 @@
 
 - File: `mavros_extras/src/plugins/odom.cpp`
 - Class: `mavros::extra_plugins::OdometryPlugin`
-- Namespace: `odometry`
+- Namespace: `mavros::extra_plugins`
 - Brief: Odometry plugin
 
 
-Sends odometry data to the FCU estimator and publishes odometry data that comes from FCU. This plugin is following ROS REP 147. Pose is expressed in parent frame. (Quaternion rotates from child to parent) The twist is expressed in the child frame. @see odom_cb()	transforming and sending odometry to fcu @see handle_odom()	receiving and transforming odometry from fcu
+Sends odometry data to the FCU estimator and
+publishes odometry data that comes from FCU.
+
+
+
+This plugin is following ROS REP 147. Pose is expressed in parent frame.
+(Quaternion rotates from child to parent)
+The twist is expressed in the child frame.
+
+
 
 ## Publishers
-- `~/in` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - publishers Publish odometry from MAVLink ODOMETRY.
-
+- `~/in` [type: [nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish odometry from MAVLink ODOMETRY.
 
 ## Subscribers
-- `~/out` ([nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html)) - subscribers Subscribe to odometry to send as ODOMETRY to the FCU.
-
+- `~/out` [type: [nav_msgs::msg::Odometry](https://docs.ros.org/en/rolling/p/nav_msgs/msg/Odometry.html), qos: [QoS(1)](../qos.md#qos_1_)] - subscribers Subscribe to odometry to send as ODOMETRY to the FCU.
 
 ## Services
 - None
-
 
 ## Clients
 - None
@@ -35,4 +41,4 @@ Sends odometry data to the FCU estimator and publishes odometry data that comes 
 
 
 ## MAVLink Publications
-- [`ODOMETRY`](https://mavlink.io/en/messages/common.html#ODOMETRY) [arg: `msg`, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`] - send ODOMETRY msg
+- [`ODOMETRY`](https://mavlink.io/en/messages/common.html#ODOMETRY) [arg: `msg`, dialect: common, msg_id: 331, id: `mavlink::common::msg::ODOMETRY::MSG_ID`]

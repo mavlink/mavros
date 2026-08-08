@@ -1,0 +1,22 @@
+# MAVROS plugins
+
+MAVROS is split into the core plugins shipped in `mavros` and the optional
+plugins shipped in `mavros_extras`. Each plugin page documents its ROS API
+(publishers, subscribers, services, clients, parameters) and the MAVLink
+messages it subscribes to and publishes.
+
+## Standard plugins (`mavros`)
+
+| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
+|--------|-------|-----|-----|-----|--------|-----------------|
+{% for p in std_plugins -%}
+| [`{{ p.plugin }}`](std/{{ p.path.stem }}.md) | {{ (p.brief or "") | replace("|", "\\|") }} | {{ p.publishers | length or "—" }} | {{ p.subscribers | length or "—" }} | {{ p.services | length or "—" }} | {{ p.clients | length or "—" }} | {{ p.mavlink_subscriptions | length }}/{{ p.mavlink_publications | length }} |
+{% endfor -%}
+
+## Extra plugins (`mavros_extras`)
+
+| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
+|--------|-------|-----|-----|-----|--------|-----------------|
+{% for p in extras_plugins -%}
+| [`{{ p.plugin }}`](extras/{{ p.path.stem }}.md) | {{ (p.brief or "") | replace("|", "\\|") }} | {{ p.publishers | length or "—" }} | {{ p.subscribers | length or "—" }} | {{ p.services | length or "—" }} | {{ p.clients | length or "—" }} | {{ p.mavlink_subscriptions | length }}/{{ p.mavlink_publications | length }} |
+{% endfor -%}

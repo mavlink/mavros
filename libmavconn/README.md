@@ -5,6 +5,10 @@ It is mavlink connection and communication library used in [MAVROS][mr].
 Since 2014-11-02 it adopted to use outside from ROS environment
 by splitting to individual package and removing dependencies to rosconsole.
 
+See the [MAVROS documentation](https://mavros.readthedocs.io/) and the
+[libmavconn API reference](https://docs.ros.org/en/rolling/p/libmavconn/)
+for more details.
+
 
 Connection URL
 --------------

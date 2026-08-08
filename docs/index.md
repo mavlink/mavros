@@ -6,11 +6,12 @@ autopilots.
 
 
 Start Here
-----------
+---------
 
 - Install MAVROS and required datasets: [Installation](installation.md)
 - Try example workflows: [Task control](examples/task_control.md),
   [Waypoint mission](examples/waypoint_mission.md)
+- See what changed: [Changelog](changelog.md), [Project history](history.md)
 
 
 Package Overview
@@ -20,6 +21,7 @@ Package Overview
 - `mavros_extras`: optional plugins
 - `mavros_msgs`: ROS 2 message and service interfaces
 - `libmavconn`: MAVLink transport library
+- `mavros_examples`: beginner example scripts for ROS 2
 
 
 Plugin Reference

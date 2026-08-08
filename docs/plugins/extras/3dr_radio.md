@@ -2,21 +2,18 @@
 
 - File: `mavros_extras/src/plugins/3dr_radio.cpp`
 - Class: `mavros::extra_plugins::TDRRadioPlugin`
-- Namespace: `tdr_radio`
+- Namespace: `mavros::extra_plugins`
 - Brief: 3DR Radio plugin.
 
 
 ## Publishers
-- `radio_status` ([mavros_msgs::msg::RadioStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RadioStatus.html)) - Publish radio status from MAVLink RADIO_STATUS/RADIO.
-
+- `radio_status` [type: [mavros_msgs::msg::RadioStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RadioStatus.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish radio status from MAVLink RADIO_STATUS/RADIO.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

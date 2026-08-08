@@ -2,26 +2,23 @@
 
 - File: `mavros_extras/src/plugins/gps_status.cpp`
 - Class: `mavros::extra_plugins::GpsStatusPlugin`
-- Namespace: `gpsstatus`
+- Namespace: `mavros::extra_plugins`
 - Brief: Mavlink GPS status plugin.
 
 
 This plugin publishes GPS sensor data from a Mavlink compatible FCU to ROS.
 
 ## Publishers
-- `~/gps1/raw` ([mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html)) - Publish GPS raw data from MAVLink GPS_RAW_INT.
-- `~/gps2/raw` ([mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html)) - Publish GPS raw data from MAVLink GPS2_RAW.
-- `~/gps1/rtk` ([mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html)) - Publish RTK baseline from MAVLink GPS_RTK.
-- `~/gps2/rtk` ([mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html)) - Publish RTK baseline from MAVLink GPS2_RTK.
-
+- `~/gps1/raw` [type: [mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish GPS raw data from MAVLink GPS_RAW_INT.
+- `~/gps2/raw` [type: [mavros_msgs::msg::GPSRAW](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRAW.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish GPS raw data from MAVLink GPS2_RAW.
+- `~/gps1/rtk` [type: [mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish RTK baseline from MAVLink GPS_RTK.
+- `~/gps2/rtk` [type: [mavros_msgs::msg::GPSRTK](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/GPSRTK.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish RTK baseline from MAVLink GPS2_RTK.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

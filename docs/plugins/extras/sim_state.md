@@ -2,27 +2,26 @@
 
 - File: `mavros_extras/src/plugins/sim_state.cpp`
 - Class: `mavros::extra_plugins::SimStatePlugin`
-- Namespace: `sim_state`
+- Namespace: `mavros::extra_plugins`
 - Brief: SIM_STATE plugin.
 
 
-Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics. Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy. Currently verified with ArduCopter SITL. Published topics (relative to plugin namespace): - ~/attitude (sensor_msgs/Imu): orientation (ENU/base_link) and angular velocity - ~/acceleration (geometry_msgs/Vector3Stamped): linear accel (m/s^2) in ENU/map - ~/velocity_body (geometry_msgs/TwistStamped): linear+angular velocity in base_link - ~/velocity_local (geometry_msgs/TwistStamped): linear+angular velocity in ENU/map - ~/global_position (sensor_msgs/NavSatFix): WGS84 lat/lon/alt with optional covariance
+Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics.
+Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy.
+Currently verified with ArduCopter SITL.
 
 ## Publishers
-- `~/attitude` ([sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html)) - IMU attitude publisher (~/attitude): orientation and angular velocity in ENU/base_link Publish attitude from MAVLink SIM_STATE.
-- `~/acceleration` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Linear acceleration publisher (~/acceleration): ENU/map, units m/s^2 Publish linear acceleration from MAVLink SIM_STATE.
-- `~/velocity_body` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Body-frame twist publisher (~/velocity_body): base_link linear+angular velocity Publish body-frame velocity from MAVLink SIM_STATE.
-- `~/velocity_local` ([geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html)) - Local-frame twist publisher (~/velocity_local): ENU/map linear+angular velocity Publish local-frame velocity from MAVLink SIM_STATE.
-- `~/global_position` ([sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html)) - Global position publisher (~/global_position): WGS84 NavSatFix Publish global position from MAVLink SIM_STATE.
-
+- `~/attitude` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish IMU attitude (orientation + angular velocity) in ENU/base_link from MAVLink SIM_STATE.
+- `~/acceleration` [type: [geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish linear acceleration (m/s^2) in ENU/map from MAVLink SIM_STATE.
+- `~/velocity_body` [type: [geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish body-frame velocity (linear + angular) in base_link from MAVLink SIM_STATE.
+- `~/velocity_local` [type: [geometry_msgs::msg::TwistStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish local-frame velocity (linear + angular) in ENU/map from MAVLink SIM_STATE.
+- `~/global_position` [type: [sensor_msgs::msg::NavSatFix](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/NavSatFix.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish global position (WGS84 NavSatFix) from MAVLink SIM_STATE.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

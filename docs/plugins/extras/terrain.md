@@ -2,27 +2,37 @@
 
 - File: `mavros_extras/src/plugins/terrain.cpp`
 - Class: `mavros::extra_plugins::TerrainPlugin`
-- Namespace: `terrain`
+- Namespace: `mavros::extra_plugins`
 - Brief: Terrain plugin.
 
 
-Bridges the MAVLink terrain protocol between the FCU and a companion terrain_server node that serves SRTM elevation data. Protocol spec: https://mavlink.io/en/services/terrain.html TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM lookup; the server responds with TERRAIN_DATA blocks that are sent back to the FCU.  TERRAIN_CHECK point queries are handled via a service call to the server, which responds with elevation data that is returned to the FCU as TERRAIN_REPORT.
+Bridges the MAVLink terrain protocol between the FCU and a companion
+terrain_server node that serves SRTM elevation data.
+
+
+
+Protocol spec: https://mavlink.io/en/services/terrain.html
+
+
+
+TERRAIN_REQUEST from the FCU is forwarded to the server for SRTM
+lookup; the server responds with TERRAIN_DATA blocks that are sent
+back to the FCU.  TERRAIN_CHECK point queries are handled via a
+service call to the server, which responds with elevation data
+that is returned to the FCU as TERRAIN_REPORT.
 
 ## Publishers
-- `~/report` ([mavros_msgs::msg::TerrainReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainReport.html)) - Terrain height reports from FCU and check-service responses Publish terrain reports from MAVLink TERRAIN_REPORT.
-- `~/request` ([mavros_msgs::msg::TerrainRequest](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainRequest.html)) - Grid data requests forwarded from FCU for SRTM lookup Publish terrain requests from MAVLink TERRAIN_REQUEST.
-
+- `~/report` [type: [mavros_msgs::msg::TerrainReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainReport.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish terrain reports from MAVLink TERRAIN_REPORT.
+- `~/request` [type: [mavros_msgs::msg::TerrainRequest](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainRequest.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish terrain requests from MAVLink TERRAIN_REQUEST.
 
 ## Subscribers
-- `~/data` ([mavros_msgs::msg::TerrainData](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainData.html)) - Filled terrain grid blocks from terrain_server Subscribe to TerrainData to send as TERRAIN_DATA to the FCU.
-
+- `~/data` [type: [mavros_msgs::msg::TerrainData](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/TerrainData.html), qos: [QoS(64)](../qos.md#qos_64_)] - Subscribe to TerrainData to send as TERRAIN_DATA to the FCU.
 
 ## Services
 - None
 
-
 ## Clients
-- `~/check` ([mavros_msgs::srv::TerrainCheck](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/TerrainCheck.html)) - Point elevation query handled by terrain_server Client to query terrain elevation (terrain/check).
+- `~/check` [type: [mavros_msgs::srv::TerrainCheck](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/TerrainCheck.html)] - Client to query terrain elevation (terrain/check).
 
 
 ## Parameters
@@ -36,5 +46,5 @@ Bridges the MAVLink terrain protocol between the FCU and a companion terrain_ser
 
 
 ## MAVLink Publications
-- [`TERRAIN_REPORT`](https://mavlink.io/en/messages/common.html#TERRAIN_REPORT) [arg: `rpt`, dialect: common, msg_id: 136, id: `mavlink::common::msg::TERRAIN_REPORT::MSG_ID`]
-- [`TERRAIN_DATA`](https://mavlink.io/en/messages/common.html#TERRAIN_DATA) [arg: `td`, dialect: common, msg_id: 134, id: `mavlink::common::msg::TERRAIN_DATA::MSG_ID`]
+- [`TERRAIN_DATA`](https://mavlink.io/en/messages/common.html#TERRAIN_DATA) [arg: `msg`, dialect: common, msg_id: 134, id: `mavlink::common::msg::TERRAIN_DATA::MSG_ID`]
+- [`TERRAIN_REPORT`](https://mavlink.io/en/messages/common.html#TERRAIN_REPORT) [arg: `msg`, dialect: common, msg_id: 136, id: `mavlink::common::msg::TERRAIN_REPORT::MSG_ID`]

@@ -2,23 +2,21 @@
 
 - File: `mavros_extras/src/plugins/gps_rtk.cpp`
 - Class: `mavros::extra_plugins::GpsRtkPlugin`
-- Namespace: `gps_rtk`
+- Namespace: `mavros::extra_plugins`
 - Brief: GPS RTK plugin
 
 
-1. Publish the RTCM messages from ROS to the FCU 2. Publish RTK baseline data from the FCU to ROS
+1. Publish the RTCM messages from ROS to the FCU
+2. Publish RTK baseline data from the FCU to ROS
 
 ## Publishers
-- `~/rtk_baseline` ([mavros_msgs::msg::RTKBaseline](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTKBaseline.html)) - TODO(vooon): set QoS for latched topic Publish RTK baseline data from MAVLink GPS_RTK.
-
+- `~/rtk_baseline` [type: [mavros_msgs::msg::RTKBaseline](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTKBaseline.html), qos: [QoS(1)](../qos.md#qos_1_)] - Publish RTK baseline data from MAVLink GPS_RTK.
 
 ## Subscribers
-- `~/send_rtcm` ([mavros_msgs::msg::RTCM](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTCM.html)) - Subscribe to RTCM to send as GPS_RTCM_DATA to the FCU.
-
+- `~/send_rtcm` [type: [mavros_msgs::msg::RTCM](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/RTCM.html), qos: [QoS(10)](../qos.md#qos_10_)] - Subscribe to RTCM to send as GPS_RTCM_DATA to the FCU.
 
 ## Services
 - None
-
 
 ## Clients
 - None
@@ -33,5 +31,4 @@
 
 
 ## MAVLink Publications
-- [`GPS_RTCM_DATA`](https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA) [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]
-- [`GPS_RTCM_DATA`](https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA) [arg: `rtcm_data`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]
+- [`GPS_RTCM_DATA`](https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA) [arg: `msg`, dialect: common, msg_id: 233, id: `mavlink::common::msg::GPS_RTCM_DATA::MSG_ID`]

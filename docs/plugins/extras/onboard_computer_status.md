@@ -2,23 +2,20 @@
 
 - File: `mavros_extras/src/plugins/onboard_computer_status.cpp`
 - Class: `mavros::extra_plugins::OnboardComputerStatusPlugin`
-- Namespace: `onboard_computer`
+- Namespace: `mavros::extra_plugins`
 - Brief: Onboard Computer Status plugin
 
 
-Publishes the status of the onboard computer @see status_cb()
+Publishes the status of the onboard computer
 
 ## Publishers
 - None
 
-
 ## Subscribers
-- `~/status` ([mavros_msgs::msg::OnboardComputerStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OnboardComputerStatus.html)) - Subscribe to OnboardComputerStatus to send as ONBOARD_COMPUTER_STATUS.
-
+- `~/status` [type: [mavros_msgs::msg::OnboardComputerStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/OnboardComputerStatus.html), qos: [QoS(10)](../qos.md#qos_10_)] - Subscribe to OnboardComputerStatus to send as ONBOARD_COMPUTER_STATUS.
 
 ## Services
 - None
-
 
 ## Clients
 - None
@@ -33,4 +30,4 @@ Publishes the status of the onboard computer @see status_cb()
 
 
 ## MAVLink Publications
-- [`ONBOARD_COMPUTER_STATUS`](https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS) [arg: `status`, dialect: common, msg_id: 390, id: `mavlink::common::msg::ONBOARD_COMPUTER_STATUS::MSG_ID`]
+- [`ONBOARD_COMPUTER_STATUS`](https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS) [arg: `msg`, dialect: common, msg_id: 390, id: `mavlink::common::msg::ONBOARD_COMPUTER_STATUS::MSG_ID`]

@@ -63,12 +63,14 @@ public:
       });
 
     // Publish targets received from FCU
+
     //! Publish guided target from MAVLink POSITION_TARGET_GLOBAL_INT.
     setpointg_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>(
       "/move_base_simple/goal", 10);
 
 
     // Subscriber for global origin (aka map origin).
+
     //! Subscribe to global position origin (map origin).
     gp_origin_sub = node->create_subscription<geographic_msgs::msg::GeoPointStamped>(
       "global_position/gp_origin", mavros::LatchedStateQoS(),

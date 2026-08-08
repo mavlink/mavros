@@ -39,43 +39,33 @@ using namespace std::placeholders;
  * Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics.
  * Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy.
  * Currently verified with ArduCopter SITL.
- *
- * Published topics (relative to plugin namespace):
- *  - ~/attitude (sensor_msgs/Imu): orientation (ENU/base_link) and angular velocity
- *  - ~/acceleration (geometry_msgs/Vector3Stamped): linear accel (m/s^2) in ENU/map
- *  - ~/velocity_body (geometry_msgs/TwistStamped): linear+angular velocity in base_link
- *  - ~/velocity_local (geometry_msgs/TwistStamped): linear+angular velocity in ENU/map
- *  - ~/global_position (sensor_msgs/NavSatFix): WGS84 lat/lon/alt with optional covariance
  */
-
 class SimStatePlugin : public plugin::Plugin
 {
 public:
   explicit SimStatePlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "sim_state")
   {
-    // IMU attitude publisher (~/attitude): orientation and angular velocity in ENU/base_link
-    //! Publish attitude from MAVLink SIM_STATE.
+//! Publish IMU attitude (orientation + angular velocity) in ENU/base_link
+   //! from MAVLink SIM_STATE.
     attitude_pub = node->create_publisher<sensor_msgs::msg::Imu>(
       "~/attitude", 10);
 
-    // Linear acceleration publisher (~/acceleration): ENU/map, units m/s^2
-    //! Publish linear acceleration from MAVLink SIM_STATE.
+   //! Publish linear acceleration (m/s^2) in ENU/map from MAVLink SIM_STATE.
     acceleration_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>(
       "~/acceleration", 10);
 
-    // Body-frame twist publisher (~/velocity_body): base_link linear+angular velocity
-    //! Publish body-frame velocity from MAVLink SIM_STATE.
+   //! Publish body-frame velocity (linear + angular) in base_link from
+   //! MAVLink SIM_STATE.
     velocity_body_pub = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_body", 10);
 
-    // Local-frame twist publisher (~/velocity_local): ENU/map linear+angular velocity
-    //! Publish local-frame velocity from MAVLink SIM_STATE.
+   //! Publish local-frame velocity (linear + angular) in ENU/map from
+   //! MAVLink SIM_STATE.
     velocity_local_pub = node->create_publisher<geometry_msgs::msg::TwistStamped>(
       "~/velocity_local", 10);
 
-    // Global position publisher (~/global_position): WGS84 NavSatFix
-    //! Publish global position from MAVLink SIM_STATE.
+   //! Publish global position (WGS84 NavSatFix) from MAVLink SIM_STATE.
     global_position_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>(
       "~/global_position", 10);
   }

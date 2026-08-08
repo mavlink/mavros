@@ -122,6 +122,7 @@ public:
     auto origin_qos = mavros::LatchedStateQoS();
 
     // gps data
+
     //! Publish raw GPS fix (GPS_RAW_INT).
     raw_fix_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>("~/raw/fix", sensor_qos);
     //! Publish raw GPS velocity (GPS_RAW_INT).
@@ -132,6 +133,7 @@ public:
     raw_sat_pub = node->create_publisher<std_msgs::msg::UInt32>("~/raw/satellites", sensor_qos);
 
     // fused global position
+
     //! Publish fused global position fix (GLOBAL_POSITION_INT).
     gp_fix_pub = node->create_publisher<sensor_msgs::msg::NavSatFix>("~/global", sensor_qos);
     //! Publish fused local position as odometry (GLOBAL_POSITION_INT).
@@ -142,6 +144,7 @@ public:
     gp_hdg_pub = node->create_publisher<std_msgs::msg::Float64>("~/compass_hdg", sensor_qos);
 
     // global origin
+
     //! Publish the global origin (GPS_GLOBAL_ORIGIN).
     gp_global_origin_pub = node->create_publisher<geographic_msgs::msg::GeoPointStamped>(
       "~/gp_origin", origin_qos, mavros::NonIntraProcessPublisherOptions());
@@ -152,7 +155,9 @@ public:
       std::bind(&GlobalPositionPlugin::set_gp_origin_cb, this, _1));
 
     // home position subscriber to set "map" origin
+
     // TODO(vooon): use UAS
+
     //! Set the "map" origin from the home position (HOME_POSITION).
     hp_sub = node->create_subscription<mavros_msgs::msg::HomePosition>(
       "home_position/home",
@@ -160,6 +165,7 @@ public:
       std::bind(&GlobalPositionPlugin::home_position_cb, this, _1));
 
     // offset from local position to the global origin ("earth")
+
     //! Publish the offset from the local position to the global origin.
     gp_global_offset_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>(
       "~/gp_lp_offset",

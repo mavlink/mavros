@@ -2,21 +2,18 @@
 
 - File: `mavros/src/plugins/wind_estimation.cpp`
 - Class: `mavros::std_plugins::WindEstimationPlugin`
-- Namespace: `wind`
+- Namespace: `mavros::std_plugins`
 - Brief: Wind estimation plugin.
 
 
 ## Publishers
-- `wind_estimation` ([geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html)) - Publish wind estimation (WIND / WIND_COV).
-
+- `wind_estimation` [type: [geometry_msgs::msg::TwistWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TwistWithCovarianceStamped.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish wind estimation (WIND / WIND_COV).
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

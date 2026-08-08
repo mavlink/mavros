@@ -52,6 +52,7 @@ public:
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     /// ALTITUDE data
+
     //! Publish altitude data (ALTITUDE).
     altitude_pub = node->create_publisher<mavros_msgs::msg::Altitude>("altitude", sensor_qos);
   }

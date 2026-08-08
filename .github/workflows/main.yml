@@ -1,6 +1,6 @@
 ---
 
-name: CI
+name: Industrial CI
 
 on:
   push:

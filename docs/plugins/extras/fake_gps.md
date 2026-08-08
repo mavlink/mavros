@@ -2,26 +2,26 @@
 
 - File: `mavros_extras/src/plugins/fake_gps.cpp`
 - Class: `mavros::extra_plugins::FakeGPSPlugin`
-- Namespace: `fake_gps`
+- Namespace: `mavros::extra_plugins`
 - Brief: Fake GPS plugin.
 
 
-Sends fake GPS from local position estimation source data (motion capture, vision) to FCU - processed in HIL mode or out of it if parameter MAV_USEHILGPS is set on PX4 Pro Autopilot Firmware; Ardupilot Firmware already supports it without a flag set.
+Sends fake GPS from local position estimation source data (motion capture,
+vision) to FCU - processed in HIL mode or out of it if parameter MAV_USEHILGPS
+is set on PX4 Pro Autopilot Firmware; Ardupilot Firmware already supports it
+without a flag set.
 
 ## Publishers
 - None
 
-
 ## Subscribers
-- `~/mocap/tf` ([geometry_msgs::msg::TransformStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TransformStamped.html)) - MoCap pose source as TransformStamped.
-- `~/mocap/pose_cov` ([geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html)) - MoCap pose source as PoseWithCovarianceStamped.
-- `~/mocap/pose` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - MoCap pose source as PoseStamped.
-- `~/vision` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Vision pose source as PoseStamped.
-
+- `~/mocap/tf` [type: [geometry_msgs::msg::TransformStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/TransformStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - MoCap pose source as TransformStamped.
+- `~/mocap/pose_cov` [type: [geometry_msgs::msg::PoseWithCovarianceStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseWithCovarianceStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - MoCap pose source as PoseWithCovarianceStamped.
+- `~/mocap/pose` [type: [geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - MoCap pose source as PoseStamped.
+- `~/vision` [type: [geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Vision pose source as PoseStamped.
 
 ## Services
 - None
-
 
 ## Clients
 - None
@@ -40,9 +40,13 @@ Sends fake GPS from local position estimation source data (motion capture, visio
 - `geo_origin.lat` [type: double, default: `47.3667`] - default origin/starting point: Zürich geodetic coordinates Geodetic origin latitude [deg].
 - `geo_origin.lon` [type: double, default: `8.5500`] - Geodetic origin longitude [deg].
 - `geo_origin.alt` [type: double, default: `408.0`] - Geodetic origin altitude [m].
+- `use_mocap` [type: bool, default: `true`] - source set params Listen to MoCap source.
+- `mocap_transform` [type: bool, default: `true`] - Use TransformStamped if true, PoseStamped if false.
+- `mocap_withcovariance` [type: bool, default: `false`] - ~mocap/pose uses PoseWithCovarianceStamped Message.
+- `use_vision` [type: bool, default: `false`] - Listen to Vision source.
 - `use_hil_gps` [type: bool, default: `false`] - Send HIL_GPS if true, GPS_INPUT if false.
-- `tf.frame_id` [default: `"map"`] - tf params TF frame id for pose source.
-- `tf.child_frame_id` [default: `"base_link"`] - TF child frame id for pose source.
+- `tf.frame_id` [type: string, default: `"map"`] - tf params TF frame id for pose source.
+- `tf.child_frame_id` [type: string, default: `"base_link"`] - TF child frame id for pose source.
 - `tf.rate_limit` [type: double, default: `10.0`] - TF rate limit [Hz].
 - `tf.listen` [type: bool, default: `false`] - Listen to TF pose source.
 
@@ -52,5 +56,5 @@ Sends fake GPS from local position estimation source data (motion capture, visio
 
 
 ## MAVLink Publications
-- [`HIL_GPS`](https://mavlink.io/en/messages/common.html#HIL_GPS) [arg: `hil_gps`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]
-- [`GPS_INPUT`](https://mavlink.io/en/messages/common.html#GPS_INPUT) [arg: `gps_input`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]
+- [`GPS_INPUT`](https://mavlink.io/en/messages/common.html#GPS_INPUT) [arg: `msg`, dialect: common, msg_id: 232, id: `mavlink::common::msg::GPS_INPUT::MSG_ID`]
+- [`HIL_GPS`](https://mavlink.io/en/messages/common.html#HIL_GPS) [arg: `msg`, dialect: common, msg_id: 113, id: `mavlink::common::msg::HIL_GPS::MSG_ID`]

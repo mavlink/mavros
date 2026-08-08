@@ -2,30 +2,27 @@
 
 - File: `mavros_extras/src/plugins/guided_target.cpp`
 - Class: `mavros::extra_plugins::GuidedTargetPlugin`
-- Namespace: `guided_target`
+- Namespace: `mavros::extra_plugins`
 - Brief: guided target plugin
 
 
 Send and receive setpoint positions from FCU controller.
 
 ## Publishers
-- `/move_base_simple/goal` ([geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html)) - Publish targets received from FCU Publish guided target from MAVLink POSITION_TARGET_GLOBAL_INT.
-
+- `/move_base_simple/goal` [type: [geometry_msgs::msg::PoseStamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/PoseStamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish guided target from MAVLink POSITION_TARGET_GLOBAL_INT.
 
 ## Subscribers
-- `global_position/gp_origin` ([geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html)) - Subscriber for global origin (aka map origin). Subscribe to global position origin (map origin).
-
+- `global_position/gp_origin` [type: [geographic_msgs::msg::GeoPointStamped](https://docs.ros.org/en/rolling/p/geographic_msgs/msg/GeoPointStamped.html), qos: [LatchedStateQoS](../qos.md#latchedstateqos "LatchedStateQoS QoS profile")] - Subscribe to global position origin (map origin).
 
 ## Services
 - None
-
 
 ## Clients
 - None
 
 
 ## Parameters
-- `frame_id` [default: `"map"`] - frame params: Frame id used for the published target.
+- `frame_id` [type: string, default: `"map"`] - frame params: Frame id used for the published target.
 
 
 ## MAVLink Subscriptions

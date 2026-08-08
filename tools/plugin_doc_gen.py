@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -33,6 +34,8 @@ DEFAULT_PLUGIN_DIRS = ("mavros/src/plugins", "mavros_extras/src/plugins")
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 DEFAULT_MARKDOWN_TEMPLATE = SCRIPT_DIR / "templates" / "plugin.md.j2"
+PLUGIN_INDEX_TEMPLATE = SCRIPT_DIR / "templates" / "plugin_index.md.j2"
+QOS_TEMPLATE = SCRIPT_DIR / "templates" / "qos.md.j2"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -42,10 +45,7 @@ class ApiEntry:
     line: int
     default_value: str = ""
     description: str = ""
-
-    @property
-    def rendered_type(self) -> str:
-        return self.type_name or "<unknown>"
+    qos: dict[str, ty.Any] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -158,6 +158,8 @@ def plugin_to_dict(plugin: PluginApi) -> dict[str, ty.Any]:
             out["default_value"] = e.default_value
         if e.description:
             out["description"] = e.description
+        if e.qos:
+            out["qos"] = e.qos
         return out
 
     def mavlink_sub_to_dict(s: MavlinkSubEntry) -> dict[str, ty.Any]:
@@ -220,6 +222,7 @@ def plugin_from_dict(item: dict[str, ty.Any]) -> PluginApi:
                 line=e["line"],
                 default_value=e.get("default_value", ""),
                 description=e.get("description", ""),
+                qos=e.get("qos"),
             )
             for e in entries
         ]
@@ -281,158 +284,236 @@ def render_json(plugins: list[PluginApi]) -> str:
     return json.dumps([plugin_to_dict(p) for p in plugins], indent=2) + "\n"
 
 
-def _render_api_section(title: str, entries: list[ApiEntry]) -> list[str]:
-    lines = [f"### {title}"]
-    if not entries:
-        lines.append("- None")
-        lines.append("")
-        return lines
-    for entry in entries:
-        if title == "Parameters":
-            extras = []
-            if entry.type_name:
-                extras.append(f"type: {entry.type_name}")
-            if entry.default_value:
-                extras.append(f"default: `{entry.default_value}`")
-            if entry.description:
-                extras.append(f"desc: {entry.description}")
-            suffix = f" [{', '.join(extras)}]" if extras else ""
-            lines.append(f"- `{entry.name}`{suffix}")
+def parse_qos(qos: dict[str, ty.Any] | str | None) -> dict[str, ty.Any]:
+    """Normalize the `qos` field (dict from the extractor, or a JSON string)."""
+    if not qos:
+        return {}
+    if isinstance(qos, dict):
+        return qos
+    try:
+        return json.loads(qos)
+    except json.JSONDecodeError:
+        return {}
+
+
+def qos_slug(q: dict[str, ty.Any]) -> str:
+    """Stable, human-readable anchor for a QoS profile."""
+    s = q.get("name", "") if q.get("kind") == "named" else q.get("config", "")
+    out = []
+    for c in s:
+        if c.isalnum() or c == "_":
+            out.append(c.lower())
+        elif c == "/":
+            out.append("-")
         else:
-            extra = f" - {entry.description}" if entry.description else ""
-            lines.append(f"- `{entry.name}` ({entry.rendered_type}){extra}")
-    lines.append("")
-    return lines
+            out.append("_")
+    return "".join(out) or "q"
+
+
+def qos_key(q: dict[str, ty.Any], plugin: str = "") -> str:
+    """Canonical key for deduplicating QoS profiles.
+
+    Named profiles are shared across plugins and deduplicated by name. Inline
+    profiles with a named variable (e.g. `state_qos`) are local to the plugin
+    that declares them, so even identical settings (e.g.
+    `QoS(10).transient_local()`) are kept distinct per plugin unless a common
+    named profile is introduced. Plain inline profiles without a variable are
+    deduplicated by their settings alone.
+    """
+    if q.get("kind") == "named":
+        return "named:" + q.get("name", "")
+    if q.get("var"):
+        return "inline:" + plugin + "/" + q.get("var", "") + "|" + q.get("config", "")
+    return "inline:" + q.get("config", "")
+
+
+def _plugin_link(pl: PluginApi) -> str:
+    sub = "extras" if "mavros_extras" in pl.path.as_posix() else "std"
+    return f"{sub}/{pl.path.stem}.md"
+
+
+def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]:
+    """Collect distinct QoS profiles across all plugins and assign ids/labels."""
+    reg: dict[str, dict[str, ty.Any]] = {}
+    for pl in plugins:
+        for ent in pl.publishers + pl.subscribers + pl.services:
+            q = parse_qos(ent.qos)
+            if not q:
+                continue
+            k = qos_key(q, pl.plugin)
+            if k not in reg:
+                reg[k] = {
+                    "key": k,
+                    "kind": q.get("kind", ""),
+                    "name": q.get("name", ""),
+                    "config": q.get("config", ""),
+                    "uses": [],
+                }
+            reg[k]["uses"].append((pl.plugin, _plugin_link(pl), str(q.get("var", "")) or ""))
+    for k, e in reg.items():
+        if e["kind"] == "named":
+            e["id"] = qos_slug(e)
+            e["label"] = e["name"]
+        else:
+            var_hints = [f"{p}/{v}" for (p, _l, v) in e["uses"] if v]
+            if var_hints:
+                e["id"] = qos_slug({"kind": "inline", "config": var_hints[0]})
+                e["label"] = var_hints[0]
+            else:
+                e["id"] = qos_slug(e)
+                e["label"] = e["config"]
+    return reg
+
+
+# Named QoS profile settings (matches the rclcpp / rmw defaults).
+_QOS_COLS = ["history", "depth", "reliability", "durability", "deadline", "lifespan", "liveliness"]
+_QOS_COLS_TITLE = [
+    "History", "Depth", "Reliability", "Durability", "Deadline", "Lifespan", "Liveliness",
+]
+_QOS_DEFAULT = {
+    "history": "Keep last",
+    "depth": "10",
+    "reliability": "Reliable",
+    "durability": "Volatile",
+    "deadline": "Default",
+    "lifespan": "Default",
+    "liveliness": "System default",
+}
+RCLCPP_QOS_SETTINGS: dict[str, dict[str, str]] = {
+    "SensorDataQoS": {**_QOS_DEFAULT, "depth": "5", "reliability": "Best effort"},
+    "ServicesQoS": {**_QOS_DEFAULT, "depth": "10"},
+    "ParametersQoS": {**_QOS_DEFAULT, "depth": "1000"},
+    "ParameterEventsQoS": {**_QOS_DEFAULT, "depth": "1000"},
+    "RosoutQoS": {**_QOS_DEFAULT, "depth": "1000", "durability": "Transient local", "lifespan": "10 s"},
+    "SystemDefaultQoS": {
+        "history": "System default",
+        "depth": "System default",
+        "reliability": "System default",
+        "durability": "System default",
+        "deadline": "Default",
+        "lifespan": "Default",
+        "liveliness": "System default",
+    },
+    "LatchedStateQoS": {**_QOS_DEFAULT, "depth": "1", "durability": "Transient local"},
+}
+
+
+def parse_inline_qos(config: str) -> dict[str, str]:
+    """Derive settings from an inline QoS(...).chain config string."""
+    s = dict(_QOS_DEFAULT)
+    m = re.search(r"QoS\((\d+)\)", config)
+    if m:
+        s["depth"] = m.group(1)
+    if "keep_all(" in config:
+        s["history"] = "Keep all"
+    if "best_effort(" in config:
+        s["reliability"] = "Best effort"
+    if "reliable(" in config:
+        s["reliability"] = "Reliable"
+    if "transient_local(" in config:
+        s["durability"] = "Transient local"
+    if "volatile(" in config:
+        s["durability"] = "Volatile"
+    return s
+
+
+def qos_settings(q: dict[str, ty.Any]) -> dict[str, str] | None:
+    if q.get("kind") == "named":
+        return RCLCPP_QOS_SETTINGS.get(q.get("name", ""))
+    return parse_inline_qos(q.get("config", ""))
+
+
+def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
+    """Render the QoS appendix page from a Jinja template."""
+    rclcpp_profiles = {
+        "SensorDataQoS",
+        "ServicesQoS",
+        "ParametersQoS",
+        "ParameterEventsQoS",
+        "RosoutQoS",
+        "SystemDefaultQoS",
+    }
+
+    def build_entries(kind: str) -> list[dict[str, ty.Any]]:
+        out: list[dict[str, ty.Any]] = []
+        for e in sorted(
+            (x for x in reg.values() if x["kind"] == kind), key=lambda x: x["label"]
+        ):
+            used: dict[str, str] = {}
+            for p, link, _v in e["uses"]:
+                used.setdefault(p, link)
+            out.append(
+                {
+                    "id": e["id"],
+                    "title": e["name"] if kind == "named" else e["label"],
+                    "rclcpp_link": e["name"]
+                    if kind == "named" and e["name"] in rclcpp_profiles
+                    else None,
+                    "settings": qos_settings(e) or {},
+                    "used_std": sorted(
+                        (p, l) for p, l in used.items() if l.startswith("std/")
+                    ),
+                    "used_extras": sorted(
+                        (p, l) for p, l in used.items() if l.startswith("extras/")
+                    ),
+                }
+            )
+        return out
+
+    named = build_entries("named")
+    inline = build_entries("inline")
+
+    # This renderer is used only for offline docs generation, not web HTML.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    env = Environment(
+        loader=FileSystemLoader(str(QOS_TEMPLATE.parent)), autoescape=False
+    )
+    template = env.get_template(QOS_TEMPLATE.name)
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    body = template.render(named=named, inline=inline)
+    return body.rstrip() + "\n"
+
+
+def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> str:
+    """Markdown for the QoS link of an entity, or empty if none."""
+    q = parse_qos(ent.qos)
+    if not q:
+        return ""
+    e = reg.get(qos_key(q, plugin))
+    if not e:
+        return ""
+    if e["kind"] == "named":
+        return f'[{e["name"]}](../qos.md#{e["id"]} "{e["name"]} QoS profile")'
+    var = q.get("var")
+    if var:
+        return f'[{var}](../qos.md#{e["id"]} "{e["config"]}")'
+    return f"[{e['config']}](../qos.md#{e['id']})"
 
 
 def render_plugin_index(
     std_plugins: list[PluginApi], extras_plugins: list[PluginApi]
 ) -> str:
-    """Render a combined index page of all plugins and their ROS API surface."""
-    lines = [
-        "# MAVROS plugins",
-        "",
-        "MAVROS is split into the core plugins shipped in `mavros` and the optional "
-        "plugins shipped in `mavros_extras`. Each plugin page documents its ROS API "
-        "(publishers, subscribers, services, clients, parameters) and the MAVLink "
-        "messages it subscribes to and publishes.",
-        "",
-    ]
-
-    def api_count(plugin: PluginApi, kind: str) -> int | str:
-        if kind == "publishers":
-            return len(plugin.publishers) or "—"
-        if kind == "subscribers":
-            return len(plugin.subscribers) or "—"
-        if kind == "services":
-            return len(plugin.services) or "—"
-        if kind == "clients":
-            return len(plugin.clients) or "—"
-        if kind == "mavlink":
-            return f"{len(plugin.mavlink_subscriptions)}/{len(plugin.mavlink_publications)}"
-        return ""
-
-    def render_group(title: str, subdir: str, plugins: list[PluginApi]) -> None:
-        lines.append(f"## {title}")
-        lines.append("")
-        lines.append("| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |")
-        lines.append("|--------|-------|-----|-----|-----|--------|-----------------|")
-        for p in sorted(plugins, key=lambda x: x.plugin):
-            stem = pathlib.Path(p.path).stem
-            link = f"[`{p.plugin}`]({subdir}/{stem}.md)"
-            brief = (p.brief or "").replace("|", "\\|").replace("\n", " ")
-            lines.append(
-                f"| {link} | {brief} | {api_count(p, 'publishers')} | "
-                f"{api_count(p, 'subscribers')} | {api_count(p, 'services')} | "
-                f"{api_count(p, 'clients')} | {api_count(p, 'mavlink')} |"
-            )
-        lines.append("")
-
-    render_group("Standard plugins (`mavros`)", "std", std_plugins)
-    render_group("Extra plugins (`mavros_extras`)", "extras", extras_plugins)
-    return "\n".join(lines).rstrip() + "\n"
-
-
-def render_markdown(plugins: list[PluginApi]) -> str:
-    repo_root = detect_repo_root()
-    lines = [
-        "# MAVROS Plugin API",
-        "",
-        f"_Generated for {len(plugins)} plugins._",
-        "",
-    ]
-    for plugin in plugins:
-        try:
-            shown_path = plugin.path.relative_to(repo_root).as_posix()
-        except ValueError:
-            shown_path = plugin.path.as_posix()
-        lines.extend(
-            [
-                f"## `{plugin.plugin}`",
-                "",
-                f"- File: `{shown_path}`",
-                f"- Class: `{plugin.class_name or '<unknown>'}`",
-                f"- Namespace: `{plugin.namespace or '<unknown>'}`",
-            ]
-        )
-        if plugin.brief:
-            lines.append(f"- Brief: {plugin.brief}")
-        lines.append("")
-        if plugin.description:
-            lines.append(plugin.description)
-            lines.append("")
-        lines.extend(_render_api_section("Publishers", plugin.publishers))
-        lines.extend(_render_api_section("Subscribers", plugin.subscribers))
-        lines.extend(_render_api_section("Services", plugin.services))
-        lines.extend(_render_api_section("Clients", plugin.clients))
-        lines.extend(_render_api_section("Parameters", plugin.parameters))
-        lines.append("### MAVLink Subscriptions")
-        if not plugin.mavlink_subscriptions:
-            lines.append("- None")
-            lines.append("")
-        else:
-            for sub in plugin.mavlink_subscriptions:
-                msg = sub.message_name or "<unknown>"
-                extras = []
-                if sub.handler:
-                    extras.append(f"handler: {sub.handler}")
-                if sub.dialect:
-                    extras.append(f"dialect: {sub.dialect}")
-                if sub.msg_id is not None:
-                    extras.append(f"msg_id: {sub.msg_id}")
-                if sub.msg_id_expr:
-                    extras.append(f"id: `{sub.msg_id_expr}`")
-                if sub.description:
-                    extras.append(f"desc: {sub.description}")
-                suffix = f" [{', '.join(extras)}]" if extras else ""
-                lines.append(f"- `{msg}`{suffix}")
-            lines.append("")
-        lines.append("### MAVLink Publications")
-        if not plugin.mavlink_publications:
-            lines.append("- None")
-            lines.append("")
-        else:
-            for pub in plugin.mavlink_publications:
-                msg = pub.message_name or "<unknown>"
-                extras = []
-                if pub.argument:
-                    extras.append(f"arg: `{pub.argument}`")
-                if pub.dialect:
-                    extras.append(f"dialect: {pub.dialect}")
-                if pub.msg_id is not None:
-                    extras.append(f"msg_id: {pub.msg_id}")
-                if pub.msg_id_expr:
-                    extras.append(f"id: `{pub.msg_id_expr}`")
-                if pub.description:
-                    extras.append(f"desc: {pub.description}")
-                suffix = f" [{', '.join(extras)}]" if extras else ""
-                lines.append(f"- `{msg}`{suffix}")
-            lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
+    """Render the combined plugin index page from a Jinja template."""
+    # This renderer is used only for offline docs generation, not for web
+    # request/response HTML.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    env = Environment(
+        loader=FileSystemLoader(str(PLUGIN_INDEX_TEMPLATE.parent)), autoescape=False
+    )
+    template = env.get_template(PLUGIN_INDEX_TEMPLATE.name)
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    body = template.render(
+        std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
+        extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
+    )
+    return body.rstrip() + "\n"
 
 
 def render_plugin_markdown_with_template(
-    plugin: PluginApi, template_path: pathlib.Path, repo_root: pathlib.Path
+    plugin: PluginApi,
+    template_path: pathlib.Path,
+    repo_root: pathlib.Path,
+    qos_reg: dict[str, dict[str, ty.Any]] | None = None,
 ) -> str:
     if Environment is None or FileSystemLoader is None:
         raise RuntimeError(
@@ -449,12 +530,21 @@ def render_plugin_markdown_with_template(
     except ValueError:
         shown_path = plugin.path.as_posix()
     # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
-    body = template.render(plugin=plugin, shown_path=shown_path)
+    body = template.render(
+        plugin=plugin,
+        shown_path=shown_path,
+        qos_link_fn=(lambda ent: qos_link(ent, plugin.plugin, qos_reg))
+        if qos_reg
+        else None,
+    )
     return body.rstrip() + "\n"
 
 
 def write_markdown_files(
-    plugins: list[PluginApi], output_dir: pathlib.Path, template_path: pathlib.Path
+    plugins: list[PluginApi],
+    output_dir: pathlib.Path,
+    template_path: pathlib.Path,
+    qos_reg: dict[str, dict[str, ty.Any]] | None = None,
 ) -> list[pathlib.Path]:
     repo_root = detect_repo_root()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -462,7 +552,9 @@ def write_markdown_files(
     for plugin in plugins:
         stem = pathlib.Path(plugin.path).stem or plugin.plugin
         out_path = output_dir / f"{stem}.md"
-        body = render_plugin_markdown_with_template(plugin, template_path, repo_root)
+        body = render_plugin_markdown_with_template(
+            plugin, template_path, repo_root, qos_reg
+        )
         out_path.write_text(body, encoding="utf-8")
         written.append(out_path)
     return written
@@ -473,6 +565,7 @@ def load_plugins_via_cpp(
     wanted_plugins: set[str] | None,
     jobs: int,
     cpp_bin: pathlib.Path,
+    compile_commands_dir: str = "",
 ) -> list[PluginApi]:
     if not cpp_bin.exists():
         raise FileNotFoundError(f"C++ extractor not found: {cpp_bin}")
@@ -483,6 +576,8 @@ def load_plugins_via_cpp(
         tmp_path = pathlib.Path(tmp.name)
 
     cmd = [str(cpp_bin), "--jobs", str(max(1, jobs)), "--output", str(tmp_path)]
+    if compile_commands_dir:
+        cmd += ["--compile-commands-dir", compile_commands_dir]
     for plugin_dir in plugin_dirs:
         cmd += ["--plugin-dir", str(plugin_dir)]
     if wanted_plugins:
@@ -527,6 +622,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Number of worker processes used by C++ collector.",
     )
     parser.add_argument(
+        "--compile-commands-dir",
+        help="Directory containing compile_commands.json for the clang extractor.",
+    )
+    parser.add_argument(
         "--cpp-bin",
         default="tools/build/plugin_doc_extract",
         help="Path to C++ collector binary.",
@@ -544,6 +643,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--plugin-index",
         help="Write a combined plugin index page (from collected/index JSON files).",
+    )
+    parser.add_argument(
+        "--qos-appendix",
+        help="Write the QoS appendix page (from collected/index JSON files).",
     )
     parser.add_argument(
         "--format",
@@ -575,18 +678,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Write output to file. Defaults to stdout.",
     )
 
-    # Accepted for compatibility with old invocations; ignored.
-    parser.add_argument("--collector", default="cpp", help=argparse.SUPPRESS)
-    parser.add_argument(
-        "--compile-commands", action="append", default=[], help=argparse.SUPPRESS
-    )
-    parser.add_argument(
-        "--clang-arg", action="append", default=[], help=argparse.SUPPRESS
-    )
-    parser.add_argument(
-        "--no-regex-fallback", action="store_true", help=argparse.SUPPRESS
-    )
-
     return parser.parse_args(argv)
 
 
@@ -614,6 +705,7 @@ def main(argv: list[str] | None = None) -> int:
             wanted_plugins=wanted_plugins,
             jobs=max(1, args.jobs),
             cpp_bin=cpp_bin,
+            compile_commands_dir=args.compile_commands_dir,
         )
         if args.collect_output:
             collect_path = pathlib.Path(args.collect_output)
@@ -626,12 +718,16 @@ def main(argv: list[str] | None = None) -> int:
                 plugins=len(plugins),
             )
 
+    qos_reg = build_qos_registry(plugins)
+
     if args.plugin_index:
         std_plugins = [p for p in plugins if "mavros_extras" not in p.path.as_posix()]
         extras_plugins = [p for p in plugins if "mavros_extras" in p.path.as_posix()]
         idx = pathlib.Path(args.plugin_index)
         idx.parent.mkdir(parents=True, exist_ok=True)
-        idx.write_text(render_plugin_index(std_plugins, extras_plugins), encoding="utf-8")
+        idx.write_text(
+            render_plugin_index(std_plugins, extras_plugins), encoding="utf-8"
+        )
         log_event(
             "info",
             "Wrote plugin index",
@@ -639,6 +735,19 @@ def main(argv: list[str] | None = None) -> int:
             std=len(std_plugins),
             extras=len(extras_plugins),
             path=str(idx),
+        )
+        return 0
+
+    if args.qos_appendix:
+        qos_path = pathlib.Path(args.qos_appendix)
+        qos_path.parent.mkdir(parents=True, exist_ok=True)
+        qos_path.write_text(render_qos_appendix(qos_reg), encoding="utf-8")
+        log_event(
+            "info",
+            "Wrote QoS appendix",
+            phase="render",
+            profiles=len(qos_reg),
+            path=str(qos_path),
         )
         return 0
 
@@ -658,7 +767,7 @@ def main(argv: list[str] | None = None) -> int:
             raise FileNotFoundError(f"Template not found: {template_path}")
         output_dir = pathlib.Path(args.output_dir)
         written = write_markdown_files(
-            plugins, output_dir=output_dir, template_path=template_path
+            plugins, output_dir=output_dir, template_path=template_path, qos_reg=qos_reg
         )
         log_event(
             "info",
@@ -669,14 +778,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    body = render_markdown(plugins)
-    if args.output:
-        out_path = pathlib.Path(args.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(body, encoding="utf-8")
-    else:
-        sys.stdout.write(body)
-    return 0
+    raise SystemExit(
+        "Nothing to do: pass --output-dir, --format json, --plugin-index, or --qos-appendix"
+    )
 
 
 if __name__ == "__main__":

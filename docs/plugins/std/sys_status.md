@@ -2,35 +2,38 @@
 
 - File: `mavros/src/plugins/sys_status.cpp`
 - Class: `mavros::std_plugins::SystemStatusPlugin`
-- Namespace: `sys`
+- Namespace: `mavros::std_plugins`
 - Brief: System status plugin.
 
 
-Required by all plugins. Implements the [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
+Required by all plugins.
+
+
+
+Implements the
+[MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
 
 ## Publishers
-- `state` ([mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html)) - Publish connection, armed and mode state (HEARTBEAT).
-- `extended_state` ([mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html)) - Publish VTOL and landed state (EXTENDED_SYS_STATE).
-- `sys_status` ([mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html)) - Publish system and battery status (SYS_STATUS).
-- `estimator_status` ([mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html)) - Publish estimator status flags (ESTIMATOR_STATUS).
-- `battery` (BatteryMsg) - Publish battery state (BATTERY_STATUS).
-- `statustext/recv` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html)) - Publish status text received from the FCU (STATUSTEXT).
-- `status_event` ([mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html)) - Publish status events received from the FCU (EVENT).
-
+- `state` [type: [mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish connection, armed and mode state (HEARTBEAT).
+- `extended_state` [type: [mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish VTOL and landed state (EXTENDED_SYS_STATE).
+- `sys_status` [type: [mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish system and battery status (SYS_STATUS).
+- `estimator_status` [type: [mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish estimator status flags (ESTIMATOR_STATUS).
+- `battery` [type: [sensor_msgs::msg::BatteryState](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/BatteryState.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish battery state (BATTERY_STATUS).
+- `statustext/recv` [type: [mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish status text received from the FCU (STATUSTEXT).
+- `status_event` [type: [mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish status events received from the FCU (EVENT).
 
 ## Subscribers
-- `statustext/send` ([mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html)) - Send status text to the FCU (STATUSTEXT).
-
+- `statustext/send` [type: [mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Send status text to the FCU (STATUSTEXT).
 
 ## Services
-- `set_mode` ([mavros_msgs::srv::SetMode](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/SetMode.html)) - Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).
-- `set_stream_rate` ([mavros_msgs::srv::StreamRate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/StreamRate.html)) - Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).
-- `set_message_interval` ([mavros_msgs::srv::MessageInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MessageInterval.html)) - Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).
-- `vehicle_info_get` ([mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html)) - Query information about the FCU and connected vehicles.
-
+- `set_mode` [type: [mavros_msgs::srv::SetMode](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/SetMode.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).
+- `set_stream_rate` [type: [mavros_msgs::srv::StreamRate](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/StreamRate.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).
+- `set_message_interval` [type: [mavros_msgs::srv::MessageInterval](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MessageInterval.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).
+- `vehicle_info_get` [type: [mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Query information about the FCU and connected vehicles.
 
 ## Clients
-- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
 
 
 ## Parameters
@@ -56,7 +59,7 @@ Required by all plugins. Implements the [MAVLink Heartbeat/Connection Protocol](
 
 
 ## MAVLink Publications
-- [`HEARTBEAT`](https://mavlink.io/en/messages/minimal.html#HEARTBEAT) [arg: `hb`, dialect: minimal, msg_id: 0, id: `mavlink::minimal::msg::HEARTBEAT::MSG_ID`]
-- [`STATUSTEXT`](https://mavlink.io/en/messages/common.html#STATUSTEXT) [arg: `statustext`, dialect: common, msg_id: 253, id: `mavlink::common::msg::STATUSTEXT::MSG_ID`]
-- [`REQUEST_DATA_STREAM`](https://mavlink.io/en/messages/common.html#REQUEST_DATA_STREAM) [arg: `rq`, dialect: common, msg_id: 66, id: `mavlink::common::msg::REQUEST_DATA_STREAM::MSG_ID`]
-- [`SET_MODE`](https://mavlink.io/en/messages/common.html#SET_MODE) [arg: `sm`, dialect: common, msg_id: 11, id: `mavlink::common::msg::SET_MODE::MSG_ID`]
+- [`HEARTBEAT`](https://mavlink.io/en/messages/minimal.html#HEARTBEAT) [arg: `msg`, dialect: minimal, msg_id: 0, id: `mavlink::minimal::msg::HEARTBEAT::MSG_ID`]
+- [`REQUEST_DATA_STREAM`](https://mavlink.io/en/messages/common.html#REQUEST_DATA_STREAM) [arg: `msg`, dialect: common, msg_id: 66, id: `mavlink::common::msg::REQUEST_DATA_STREAM::MSG_ID`]
+- [`SET_MODE`](https://mavlink.io/en/messages/common.html#SET_MODE) [arg: `msg`, dialect: common, msg_id: 11, id: `mavlink::common::msg::SET_MODE::MSG_ID`]
+- [`STATUSTEXT`](https://mavlink.io/en/messages/common.html#STATUSTEXT) [arg: `msg`, dialect: common, msg_id: 253, id: `mavlink::common::msg::STATUSTEXT::MSG_ID`]

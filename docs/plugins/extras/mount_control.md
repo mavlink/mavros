@@ -2,27 +2,25 @@
 
 - File: `mavros_extras/src/plugins/mount_control.cpp`
 - Class: `mavros::extra_plugins::MountControlPlugin`
-- Namespace: `mount_control`
+- Namespace: `mavros::extra_plugins`
 - Brief: Mount Control plugin
 
 
-Publishes Mission commands to control the camera or antenna mount. Implements the superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html). @see command_cb()
+Publishes Mission commands to control the camera or antenna mount. Implements the
+superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html).
 
 ## Publishers
-- `~/orientation` ([geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html)) - Publish mount orientation as quaternion from MAVLink MOUNT_ORIENTATION.
-- `~/status` ([geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html)) - Publish mount status from MAVLink MOUNT_STATUS.
-
+- `~/orientation` [type: [geometry_msgs::msg::Quaternion](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Quaternion.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish mount orientation as quaternion from MAVLink MOUNT_ORIENTATION.
+- `~/status` [type: [geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish mount status from MAVLink MOUNT_STATUS.
 
 ## Subscribers
-- `~/command` ([mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html)) - Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.
-
+- `~/command` [type: [mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html), qos: [QoS(10)](../qos.md#qos_10_)] - Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.
 
 ## Services
-- `~/configure` ([mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html)) - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
-
+- `~/configure` [type: [mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html)] - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
 
 ## Clients
-- `cmd/command` ([mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html))
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
 
 
 ## Parameters
@@ -40,4 +38,4 @@ Publishes Mission commands to control the camera or antenna mount. Implements th
 
 
 ## MAVLink Publications
-- [`COMMAND_LONG`](https://mavlink.io/en/messages/common.html#COMMAND_LONG) [arg: `cmd`, dialect: common, msg_id: 76, id: `mavlink::common::msg::COMMAND_LONG::MSG_ID`]
+- [`COMMAND_LONG`](https://mavlink.io/en/messages/common.html#COMMAND_LONG) [arg: `msg`, dialect: common, msg_id: 76, id: `mavlink::common::msg::COMMAND_LONG::MSG_ID`]

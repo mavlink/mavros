@@ -50,6 +50,7 @@ public:
       std::bind(&GpsRtkPlugin::rtcm_cb, this, _1));
 
     // TODO(vooon): set QoS for latched topic
+
     //! Publish RTK baseline data from MAVLink GPS_RTK.
     rtk_baseline_pub = node->create_publisher<mavros_msgs::msg::RTKBaseline>("~/rtk_baseline", 1);
   }

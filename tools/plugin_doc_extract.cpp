@@ -1,24 +1,61 @@
+/*
+ * Copyright 2026 Vladimir Ermakov.
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
+/**
+ * @brief MAVROS plugin documentation extractor (clang-tooling based).
+ *
+ * Parses each plugin source with the clang AST and extracts the exposed ROS
+ * API (publishers, subscribers, services, clients, parameters) and MAVLink
+ * message traffic, plus the plugin doxygen metadata and per-entity QoS. The
+ * output is a JSON document consumed by plugin_doc_gen.py.
+ *
+ * Dependencies: clang-tooling and yaml-cpp.
+ */
+
 #include <algorithm>
-#include <atomic>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
-#include <functional>
-#include <cstdlib>
+#include <iostream>
 #include <map>
-#include <mutex>
+#include <memory>
 #include <regex>
 #include <set>
 #include <sstream>
 #include <string>
-#include <thread>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <iostream>
 
 #include <yaml-cpp/yaml.h>
 
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Decl.h>
+#include <clang/AST/DeclCXX.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/ExprCXX.h>
+#include <clang/AST/ASTTypeTraits.h>
+#include <clang/AST/ParentMapContext.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Lex/Lexer.h>
+#include <clang/Tooling/CommonOptionsParser.h>
+#include <clang/Tooling/CompilationDatabase.h>
+#include <clang/Tooling/Tooling.h>
+#include <llvm/Support/CommandLine.h>
+
 namespace fs = std::filesystem;
+using namespace clang;
+
+// --------------------------------------------------------------------------
+// Data structures
+// --------------------------------------------------------------------------
 
 struct ApiEntry
 {
@@ -27,23 +64,15 @@ struct ApiEntry
   int line = 0;
   std::string default_value;
   std::string description;
+  std::string qos_kind;    // "named" | "inline" (empty = none)
+  std::string qos_name;    // named helper simple name
+  std::string qos_config;  // inline canonical config
+  std::string qos_var;     // variable name hint (optional)
 };
 
-struct MavlinkSubEntry
+struct MavlinkEntry
 {
-  std::string handler;
-  std::string message_type;
-  std::string message_name;
-  std::string msg_id_expr;
-  std::string dialect;
-  int msg_id = -1;
-  int line = 0;
-  std::string description;
-};
-
-struct MavlinkPubEntry
-{
-  std::string argument;
+  std::string name;         // handler or argument
   std::string message_type;
   std::string message_name;
   std::string msg_id_expr;
@@ -66,89 +95,15 @@ struct PluginApi
   std::vector<ApiEntry> services;
   std::vector<ApiEntry> clients;
   std::vector<ApiEntry> parameters;
-  std::vector<MavlinkSubEntry> mavlink_subscriptions;
-  std::vector<MavlinkPubEntry> mavlink_publications;
+  std::vector<MavlinkEntry> mavlink_subscriptions;
+  std::vector<MavlinkEntry> mavlink_publications;
+  std::vector<std::string> plugin_bases;   // direct base class simple names
+  std::string file;         // absolute source path for mapping
 };
 
-struct Config
-{
-  std::vector<fs::path> plugin_dirs;
-  std::set<std::string> plugin_filter;
-  fs::path output;
-  int jobs = 4;
-};
-
-static const std::regex kRegisterPluginRe(R"(MAVROS_PLUGIN_REGISTER\(([^)]+)\))");
-static const std::regex kPluginNameRe(R"(@plugin\s+([a-z0-9_]+))");
-static const std::regex kPluginBriefRe(R"(@brief\s+([^\n\r]+))");
-static const std::regex kPluginNsRe(
-  R"re(:\s*(?:[A-Za-z_][A-Za-z0-9_:<>]*::)?(?:Plugin|MissionBase)\s*\(\s*[^,]+,\s*"([^"]+)")re");
-static const std::regex kDoxygenBlockRe(R"(/\*\*([\s\S]*?)\*/)");
-
-static const std::regex kPublisherRe(
-  R"(create_publisher<([^>]+)>\s*\(\s*([^,]+)\s*,)");
-static const std::regex kSubscriptionRe(
-  R"(create_subscription<([^>]+)>\s*\(\s*([^,]+)\s*,)");
-static const std::regex kServiceRe(
-  R"(create_service<([^>]+)>\s*\(\s*([^,]+)\s*,)");
-static const std::regex kClientRe(
-  R"(create_client<([^>]+)>\s*\(\s*([^,\)]+)\s*[\),])");
-static const std::regex kParamWatchRe(
-  R"re(node_declare_and_watch_parameter\s*\(\s*"([^"]+)")re");
-static const std::regex kParamDeclareRe(
-  R"re(node->declare_parameter(?:<[^>]+>)?\s*\(\s*"([^"]+)")re");
-static const std::regex kMfDeclRe(
-  R"(message_filters::Subscriber<([^>]+)>\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;)");
-static const std::regex kMfSubscribeRe(
-  R"(([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*subscribe\s*\(\s*[^,]+,\s*([^,\)]+))");
-static const std::regex kConstCharPtrRe(
-  R"re((?:static\s+)?constexpr\s+const\s+char\s*\*\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([^"]*)"\s*;)re");
-static const std::regex kConstCharAutoRe(
-  R"re((?:static\s+)?constexpr\s+auto\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([^"]*)"\s*;)re");
-static const std::regex kParamWatchDefaultRe(
-  R"re(node_declare_and_watch_parameter\s*\(\s*"([^"]+)"\s*,\s*([^,]+)\s*,)re");
-static const std::regex kParamDeclareDefaultRe(
-  R"re(node->declare_parameter(?:<[^>]+>)?\s*\(\s*"([^"]+)"\s*,\s*([^,\)]+))re");
-static const std::regex kMakeHandlerTypedRe(
-  R"(make_handler\s*\(\s*&[a-zA-Z_][a-zA-Z0-9_:]*::([a-zA-Z_][a-zA-Z0-9_]*)\s*\))");
-static const std::regex kMakeHandlerRawRe(
-  R"(make_handler\s*\(\s*([^,]+)\s*,\s*&[a-zA-Z_][a-zA-Z0-9_:]*::([a-zA-Z_][a-zA-Z0-9_]*)\s*\))");
-static const std::regex kFunctionDefRe(
-  R"(void\s+(?:[a-zA-Z_][a-zA-Z0-9_]*::)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^;{}]*)\)\s*(?:const\s*)?\{)");
-static const std::regex kMavlinkParamTypeRe(
-  R"((?:const\s+)?(mavlink::[a-zA-Z0-9_]+::msg::[a-zA-Z0-9_]+)\s*&)");
-static const std::regex kAnyRefParamTypeRe(
-  R"((?:const\s+)?([A-Za-z_][A-Za-z0-9_:]*)\s*&)");
-static const std::regex kUsingAliasMavlinkTypeRe(
-  R"(using\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(mavlink::[a-zA-Z0-9_]+::msg::[a-zA-Z0-9_]+)\s*;)");
-static const std::regex kUsingImportedMavlinkTypeRe(
-  R"(using\s+(mavlink::[a-zA-Z0-9_]+::msg::([A-Za-z0-9_]+))\s*;)");
-static const std::regex kClassInheritRe(
-  R"(class\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))");
-static const std::regex kMsgIdExprTypeRe(
-  R"((mavlink::[a-zA-Z0-9_]+::msg::[a-zA-Z0-9_]+)::MSG_ID)");
-static const std::regex kMavlinkTypeRe(
-  R"(mavlink::([a-zA-Z0-9_]+)::msg::([A-Za-z0-9_]+))");
-static const std::regex kHeaderMsgIdRe(
-  R"(MSG_ID\s*=\s*([0-9]+))");
-static const std::regex kHeaderMsgIdDefineRe(
-  R"(MAVLINK_MSG_ID_[A-Z0-9_]+\s+([0-9]+))");
-static const std::regex kMissionBaseTypeRe(
-  R"re(MissionBase\s*\(\s*[^,]+,\s*"[^"]+"\s*,\s*plugin::MTYPE::([A-Z_]+))re");
-static const std::regex kSendMessageRe(
-  R"(uas_?->send_message(?:_ignore_drop)?\s*\(\s*([^,\)]+))");
-static const std::regex kMavlinkVarDeclRe(
-  R"((mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:[=({;]))");
-static const std::regex kAutoLambdaMavlinkDeclRe(
-  R"(auto\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\([\s\S]{0,256}?->\s*(mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+))");
-static const std::regex kAutoMavlinkDirectDeclRe(
-  R"((?:const\s+)?auto\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+)\s*[({])");
-static const std::regex kAutoTemplateMavlinkDeclRe(
-  R"((?:const\s+)?auto\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*<[\s\S]{0,200}?,\s*(mavlink::[a-zA-Z0-9_]+::msg::[A-Za-z0-9_]+)\s*>\s*\()");
-static const std::regex kIdentifierRe(
-  R"([A-Za-z_][A-Za-z0-9_]*)");
-static const std::regex kAssignmentPrefixRe(
-  R"([A-Za-z_][A-Za-z0-9_:]*\s*=\s*)");
+// --------------------------------------------------------------------------
+// Small helpers
+// --------------------------------------------------------------------------
 
 std::string trim(std::string s)
 {
@@ -164,56 +119,36 @@ std::string to_upper(std::string s)
   return s;
 }
 
+std::string tail_name(const std::string & full)
+{
+  if (const auto p = full.rfind("::"); p != std::string::npos && p + 2 < full.size()) {
+    return full.substr(p + 2);
+  }
+  return full;
+}
+
 std::string strip_quotes(std::string s)
 {
   s = trim(std::move(s));
-  std::smatch m;
-  static const std::regex str_re(R"re("([^"]+)")re");
-  if (std::regex_search(s, m, str_re)) {
-    return m[1].str();
+  if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+    return s.substr(1, s.size() - 2);
   }
   return s;
 }
 
-std::string resolve_symbol(std::string raw, const std::map<std::string, std::string> & symbols)
+std::pair<std::string, std::string> split_mavlink_type(const std::string & type_name)
 {
-  std::string token = trim(std::move(raw));
-  if (auto it = symbols.find(token); it != symbols.end()) {
-    return it->second;
+  auto p1 = type_name.rfind("::msg::");
+  if (p1 == std::string::npos) {
+    return {"", ""};
   }
-  if (auto pos = token.rfind("::"); pos != std::string::npos && pos + 2 < token.size()) {
-    const std::string suffix = token.substr(pos + 2);
-    if (auto it = symbols.find(suffix); it != symbols.end()) {
-      return it->second;
-    }
-  }
-  return strip_quotes(token);
-}
-
-std::string infer_param_type(const std::string & default_expr)
-{
-  const std::string expr = trim(default_expr);
-  if (expr.empty()) {return "";}
-  if (std::regex_match(expr, std::regex(R"(true|false)"))) {return "bool";}
-  if (expr.find('"') != std::string::npos || expr.find("std::string") != std::string::npos) {
-    return "string";
-  }
-  if (std::regex_match(expr, std::regex(R"([-+]?\d+)"))) {return "integer";}
-  if (std::regex_match(expr, std::regex(R"([-+]?\d*\.\d+(?:[eE][-+]?\d+)?[fFlL]?)")) ||
-    std::regex_match(expr, std::regex(R"([-+]?\d+[eE][-+]?\d+[fFlL]?)")))
-  {
-    return "double";
-  }
-  if (expr.find(".seconds()") != std::string::npos || expr.find("Duration") != std::string::npos) {
-    return "double";
-  }
-  return "";
-}
-
-int line_for_offset(const std::string & text, size_t offset)
-{
-  return static_cast<int>(1 + std::count(text.begin(), text.begin() + std::min(offset, text.size()),
-    '\n'));
+  const std::string msg = type_name.substr(p1 + 7);
+  auto lt = msg.find('<');
+  const std::string msg_clean = (lt == std::string::npos) ? msg : msg.substr(0, lt);
+  const std::string prefix = type_name.substr(0, p1);
+  auto p2 = prefix.rfind("::");
+  const std::string dialect = (p2 == std::string::npos) ? prefix : prefix.substr(p2 + 2);
+  return {dialect, msg_clean};
 }
 
 std::string read_file(const fs::path & path)
@@ -224,352 +159,11 @@ std::string read_file(const fs::path & path)
   return ss.str();
 }
 
-std::string read_file_if_exists(const fs::path & path)
-{
-  if (!fs::exists(path) || !fs::is_regular_file(path)) {return "";}
-  return read_file(path);
-}
+// --------------------------------------------------------------------------
+// MAVLink msgid index (read from generated mavlink headers)
+// --------------------------------------------------------------------------
 
-std::vector<std::string> split_lines(const std::string & text)
-{
-  std::vector<std::string> out;
-  std::stringstream ss(text);
-  std::string line;
-  while (std::getline(ss, line)) {
-    out.push_back(line);
-  }
-  if (!text.empty() && text.back() == '\n') {
-    out.push_back("");
-  }
-  return out;
-}
-
-std::string strip_comment_markers(std::string line)
-{
-  line = trim(std::move(line));
-  if (line.rfind("///", 0) == 0) {return trim(line.substr(3));}
-  if (line.rfind("//!", 0) == 0) {return trim(line.substr(3));}
-  if (line.rfind("//", 0) == 0) {return trim(line.substr(2));}
-  if (line.rfind("/**", 0) == 0) {line = line.substr(3);} else if (line.rfind("/*", 0) == 0) {
-    line = line.substr(2);
-  }
-  if (!line.empty() && line.back() == '/') {line.pop_back();}
-  line = trim(line);
-  if (!line.empty() && line[0] == '*') {line = trim(line.substr(1));}
-  if (line.size() >= 2 && line.substr(line.size() - 2) == "*/") {
-    line = trim(line.substr(0, line.size() - 2));
-  }
-  while (!line.empty() && line.back() == '*') {
-    line.pop_back();
-    line = trim(line);
-  }
-  return line;
-}
-
-std::string extract_entry_comment(const std::vector<std::string> & lines, int line_1based)
-{
-  if (line_1based <= 0 || static_cast<size_t>(line_1based) > lines.size()) {return "";}
-  const std::string line = lines[static_cast<size_t>(line_1based - 1)];
-
-  if (const size_t cpos = line.find("//"); cpos != std::string::npos) {
-    const std::string inline_comment = strip_comment_markers(line.substr(cpos));
-    if (!inline_comment.empty()) {return inline_comment;}
-  }
-
-  std::vector<std::string> parts;
-  int cur = line_1based - 2;
-  int blank_lines = 0;
-  for (int i = 0; i < 12 && cur >= 0; ++i, --cur) {
-    const std::string t = trim(lines[static_cast<size_t>(cur)]);
-
-    if (t.empty()) {
-      if (parts.empty()) {
-        if (++blank_lines > 1) {break;}
-        continue;
-      }
-      break;
-    }
-
-    if (t.rfind("//", 0) == 0) {
-      parts.push_back(strip_comment_markers(t));
-      continue;
-    }
-
-    // Skip an assignment prefix line (e.g. "raw_fix_pub =") so a comment above
-    // it is attributed to the create_<entity>() call on the following line.
-    if (std::regex_match(t, kAssignmentPrefixRe)) {
-      continue;
-    }
-
-    // Keep extraction strict: only contiguous // comments above declarations.
-    break;
-  }
-
-  if (parts.empty() && line_1based >= 2) {
-    int end = line_1based - 2;
-    while (end >= 0 && trim(lines[static_cast<size_t>(end)]).empty()) {
-      --end;
-    }
-    if (end >= 0) {
-      const std::string end_line = trim(lines[static_cast<size_t>(end)]);
-      if (end_line.find("*/") != std::string::npos) {
-        std::vector<std::string> block_parts;
-        int start = end;
-        for (int i = 0; i < 20 && start >= 0; ++i, --start) {
-          const std::string bt = trim(lines[static_cast<size_t>(start)]);
-          block_parts.push_back(strip_comment_markers(bt));
-          if (bt.find("/*") != std::string::npos) {break;}
-        }
-        std::reverse(block_parts.begin(), block_parts.end());
-
-        std::string block;
-        int block_lines = 0;
-        bool has_bad = false;
-        bool has_brief = false;
-        for (const auto & p : block_parts) {
-          const std::string t = trim(p);
-          if (t.empty()) {continue;}
-          if (t.rfind("@brief", 0) == 0) {
-            const std::string brief = trim(t.substr(6));
-            if (!brief.empty()) {
-              if (!block.empty()) {block += " ";}
-              block += brief;
-              ++block_lines;
-              has_brief = true;
-            }
-            continue;
-          }
-          if (!t.empty() && t[0] == '@') {
-            continue;
-          }
-          if (t.find("get_subscriptions") != std::string::npos ||
-            t.find("make_handler") != std::string::npos ||
-            t.find('{') != std::string::npos || t.find('}') != std::string::npos)
-          {
-            has_bad = true;
-          }
-          ++block_lines;
-          if (!block.empty()) {block += " ";}
-          block += t;
-        }
-
-        if (!has_bad && !block.empty() && (has_brief || block_lines <= 6)) {
-          return trim(block);
-        }
-      }
-    }
-  }
-
-  std::reverse(parts.begin(), parts.end());
-  std::string out;
-  for (const auto & p : parts) {
-    const std::string t = trim(p);
-    if (t.empty()) {continue;}
-    if (t.find("[[[end]]]") != std::string::npos) {continue;}
-    if (!out.empty()) {out += " ";}
-    out += t;
-  }
-  return trim(out);
-}
-
-void dedup_entries(std::vector<ApiEntry> & entries)
-{
-  std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      if (a.line != b.line) {return a.line < b.line;}
-      if (a.name != b.name) {return a.name < b.name;}
-      return a.type_name < b.type_name;
-  });
-  entries.erase(
-    std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      return a.name == b.name && a.type_name == b.type_name;
-    }),
-    entries.end());
-}
-
-void dedup_mavlink_entries(std::vector<MavlinkSubEntry> & entries)
-{
-  std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      if (a.line != b.line) {return a.line < b.line;}
-      if (a.handler != b.handler) {return a.handler < b.handler;}
-      return a.message_type < b.message_type;
-  });
-  entries.erase(
-    std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      return a.handler == b.handler && a.message_type == b.message_type &&
-             a.msg_id_expr == b.msg_id_expr;
-    }),
-    entries.end());
-}
-
-void dedup_mavlink_publications(std::vector<MavlinkPubEntry> & entries)
-{
-  std::sort(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      if (a.line != b.line) {return a.line < b.line;}
-      if (a.message_type != b.message_type) {return a.message_type < b.message_type;}
-      return a.argument < b.argument;
-  });
-  entries.erase(
-    std::unique(entries.begin(), entries.end(), [](const auto & a, const auto & b) {
-      return a.line == b.line && a.message_type == b.message_type && a.argument == b.argument;
-    }),
-    entries.end());
-}
-
-std::string parse_plugin_block(const std::string & text)
-{
-  std::smatch m;
-  auto begin = text.cbegin();
-  while (std::regex_search(begin, text.cend(), m, kDoxygenBlockRe)) {
-    std::string block = m[1].str();
-    if (block.find("@plugin") != std::string::npos) {
-      return block;
-    }
-    begin = m.suffix().first;
-  }
-  return "";
-}
-
-std::string clean_description(const std::string & block)
-{
-  std::stringstream in(block);
-  std::stringstream out;
-  std::string line;
-  bool first = true;
-  while (std::getline(in, line)) {
-    line = trim(line);
-    if (!line.empty() && line[0] == '*') {
-      line = trim(line.substr(1));
-    }
-    if (line.empty() || line.rfind("@plugin", 0) == 0 || line.rfind("@brief", 0) == 0) {
-      continue;
-    }
-    if (!first) {out << " ";}
-    out << line;
-    first = false;
-  }
-  return out.str();
-}
-
-std::map<std::string, std::string> extract_string_symbols(const std::string & text)
-{
-  std::map<std::string, std::string> out;
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kConstCharPtrRe), end; it != end; ++it) {
-    out[(*it)[1].str()] = (*it)[2].str();
-  }
-  for (std::sregex_iterator it(text.begin(), text.end(), kConstCharAutoRe), end; it != end; ++it) {
-    out[(*it)[1].str()] = (*it)[2].str();
-  }
-
-  return out;
-}
-
-void extract_entries(
-  const std::string & text, const std::regex & re, bool has_type,
-  const std::map<std::string, std::string> & symbols, const std::vector<std::string> & lines,
-  std::vector<ApiEntry> & out)
-{
-  for (std::sregex_iterator it(text.begin(), text.end(), re), end; it != end; ++it) {
-    const auto & m = *it;
-    ApiEntry e;
-    e.type_name = has_type ? trim(m[1].str()) : "";
-    e.name = resolve_symbol(has_type ? m[2].str() : m[1].str(), symbols);
-    const size_t pos = static_cast<size_t>(m.position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    if (!e.name.empty()) {out.push_back(std::move(e));}
-  }
-}
-
-void extract_parameters(
-  const std::string & text, const std::map<std::string, std::string> & symbols,
-  const std::vector<std::string> & lines,
-  std::vector<ApiEntry> & out)
-{
-  for (std::sregex_iterator it(text.begin(), text.end(), kParamWatchDefaultRe), end; it != end;
-    ++it)
-  {
-    ApiEntry e;
-    e.name = (*it)[1].str();
-    e.default_value = trim((*it)[2].str());
-    e.type_name = infer_param_type(resolve_symbol(e.default_value, symbols));
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    out.push_back(std::move(e));
-  }
-  for (std::sregex_iterator it(text.begin(), text.end(), kParamDeclareDefaultRe), end; it != end;
-    ++it)
-  {
-    ApiEntry e;
-    e.name = (*it)[1].str();
-    e.default_value = trim((*it)[2].str());
-    e.type_name = infer_param_type(resolve_symbol(e.default_value, symbols));
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    out.push_back(std::move(e));
-  }
-}
-
-std::map<std::string, std::string> extract_handler_types(const std::string & text)
-{
-  std::map<std::string, std::string> local_mavlink_bases;
-  for (std::sregex_iterator it(text.begin(), text.end(), kClassInheritRe), end; it != end; ++it) {
-    const std::string derived = (*it)[1].str();
-    const std::string base = trim((*it)[2].str());
-    if (base.rfind("mavlink::", 0) == 0) {
-      local_mavlink_bases[derived] = base;
-    }
-  }
-
-  std::map<std::string, std::string> alias_types;
-  for (std::sregex_iterator it(text.begin(), text.end(), kUsingAliasMavlinkTypeRe), end; it != end;
-    ++it)
-  {
-    alias_types[(*it)[1].str()] = trim((*it)[2].str());
-  }
-  for (std::sregex_iterator it(text.begin(), text.end(), kUsingImportedMavlinkTypeRe), end;
-    it != end; ++it)
-  {
-    alias_types[(*it)[2].str()] = trim((*it)[1].str());
-  }
-
-  std::map<std::string, std::string> out;
-  for (std::sregex_iterator it(text.begin(), text.end(), kFunctionDefRe), end; it != end; ++it) {
-    const std::string handler = (*it)[1].str();
-    const std::string params = (*it)[2].str();
-    std::smatch type_m;
-    if (std::regex_search(params, type_m, kMavlinkParamTypeRe)) {
-      out[handler] = trim(type_m[1].str());
-    } else if (std::regex_search(params, type_m, kAnyRefParamTypeRe)) {
-      const std::string any_type = trim(type_m[1].str());
-      if (auto a = alias_types.find(any_type); a != alias_types.end()) {
-        out[handler] = a->second;
-      } else if (auto b = local_mavlink_bases.find(any_type); b != local_mavlink_bases.end()) {
-        out[handler] = b->second;
-      }
-    }
-  }
-  return out;
-}
-
-std::string tail_name(const std::string & full)
-{
-  if (const auto p = full.rfind("::"); p != std::string::npos && p + 2 < full.size()) {
-    return full.substr(p + 2);
-  }
-  return full;
-}
-
-std::pair<std::string, std::string> split_mavlink_type(const std::string & type_name)
-{
-  std::smatch m;
-  if (std::regex_search(type_name, m, kMavlinkTypeRe)) {
-    return {m[1].str(), m[2].str()};
-  }
-  return {"", ""};
-}
+static const std::regex kHeaderMsgIdRe(R"(MSG_ID\s*=\s*([0-9]+))");
 
 std::vector<fs::path> candidate_mavlink_roots(const fs::path & repo_root)
 {
@@ -594,35 +188,20 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
       const std::string dialect = dialect_ent.path().filename().string();
       for (const auto & ent : fs::directory_iterator(dialect_ent.path())) {
         if (!ent.is_regular_file()) {continue;}
-        const auto ext = ent.path().extension().string();
-        if (ext != ".hpp" && ext != ".h") {continue;}
         const std::string fname = ent.path().filename().string();
-        const std::string prefix = "mavlink_msg_";
-        if (fname.rfind(prefix, 0) != 0) {continue;}
+        if (fname.rfind("mavlink_msg_", 0) != 0) {continue;}
         auto suffix_pos = fname.rfind(".hpp");
-        if (suffix_pos == std::string::npos) {
-          suffix_pos = fname.rfind(".h");
+        if (suffix_pos == std::string::npos) {suffix_pos = fname.rfind(".h");}
+        if (suffix_pos == std::string::npos || suffix_pos <= 12) {continue;}
+        std::string msg_snake = fname.substr(12, suffix_pos - 12);
+        std::string msg_upper;
+        for (unsigned char c : msg_snake) {
+          msg_upper += (c == '-') ? '_' : std::toupper(c);
         }
-        if (suffix_pos == std::string::npos || suffix_pos <= prefix.size()) {continue;}
-        const std::string msg_snake = fname.substr(prefix.size(), suffix_pos - prefix.size());
-        std::string msg_upper = msg_snake;
-        std::transform(msg_upper.begin(), msg_upper.end(), msg_upper.begin(), [](unsigned char c) {
-            return c == '-' ? '_' : std::toupper(c);
-        });
-
         const std::string text = read_file(ent.path());
         std::smatch m;
-        if (!std::regex_search(text, m, kHeaderMsgIdRe)) {
-          const std::regex msg_define_re(
-            "MAVLINK_MSG_ID_" + msg_upper + R"(\s+([0-9]+))");
-          if (!std::regex_search(text, m, msg_define_re) &&
-            !std::regex_search(text, m, kHeaderMsgIdDefineRe))
-          {
-            continue;
-          }
-        }
-        const int id = std::stoi(m[1].str());
-        out[dialect + "::" + msg_upper] = id;
+        if (!std::regex_search(text, m, kHeaderMsgIdRe)) {continue;}
+        out[dialect + "::" + msg_upper] = std::stoi(m[1].str());
       }
     }
     if (!out.empty()) {break;}
@@ -630,28 +209,13 @@ std::map<std::string, int> build_mavlink_msgid_index(const fs::path & repo_root)
   return out;
 }
 
-void resolve_mavlink_meta(MavlinkSubEntry & e, const std::map<std::string, int> & idx)
+void resolve_mavlink_meta(MavlinkEntry & e, const std::map<std::string, int> & idx)
 {
   if (!e.message_type.empty()) {
     const auto [dialect, msg_name] = split_mavlink_type(e.message_type);
     if (!dialect.empty()) {e.dialect = dialect;}
     if (!msg_name.empty() && e.message_name.empty()) {e.message_name = msg_name;}
   }
-
-  if (e.msg_id < 0 && !e.msg_id_expr.empty()) {
-    const std::string ex = trim(e.msg_id_expr);
-    if (std::regex_match(ex, std::regex(R"([0-9]+)"))) {
-      e.msg_id = std::stoi(ex);
-    } else {
-      std::smatch idm;
-      if (std::regex_search(ex, idm, kMsgIdExprTypeRe)) {
-        const auto [dialect, msg_name] = split_mavlink_type(idm[1].str());
-        if (e.dialect.empty()) {e.dialect = dialect;}
-        if (e.message_name.empty()) {e.message_name = msg_name;}
-      }
-    }
-  }
-
   if (e.msg_id < 0 && !e.dialect.empty() && !e.message_name.empty()) {
     const std::string key = e.dialect + "::" + to_upper(e.message_name);
     if (auto it = idx.find(key); it != idx.end()) {
@@ -660,445 +224,729 @@ void resolve_mavlink_meta(MavlinkSubEntry & e, const std::map<std::string, int> 
   }
 }
 
-void resolve_mavlink_meta(MavlinkPubEntry & e, const std::map<std::string, int> & idx)
+// --------------------------------------------------------------------------
+// QoS
+// --------------------------------------------------------------------------
+
+static const std::unordered_set<std::string> kNamedQosHelpers = {
+  "LatchedStateQoS", "SensorDataQoS", "ServicesQoS", "ParametersQoS",
+  "ParameterEventsQoS", "SystemDefaultQoS", "RosoutQoS",
+};
+
+struct QosInfo
 {
-  if (!e.message_type.empty()) {
-    const auto [dialect, msg_name] = split_mavlink_type(e.message_type);
-    if (!dialect.empty()) {e.dialect = dialect;}
-    if (!msg_name.empty() && e.message_name.empty()) {e.message_name = msg_name;}
+  bool present = false;
+  std::string kind;      // "named" | "inline"
+  std::string name;      // named helper simple name
+  std::string config;    // canonical config string for inline
+  std::string var;       // variable name hint
+};
+
+// --------------------------------------------------------------------------
+// AST visitor
+// --------------------------------------------------------------------------
+
+class PluginVisitor : public RecursiveASTVisitor<PluginVisitor>
+{
+public:
+  PluginVisitor(ASTContext & ctx, PluginApi & api, const std::map<std::string, int> & idx)
+  : ctx_(ctx), SM_(ctx.getSourceManager()), api_(api), idx_(idx) {}
+
+  bool VisitCXXRecordDecl(CXXRecordDecl * rec)
+  {
+    if (!rec->hasDefinition() || !rec->getIdentifier() ||
+      !SM_.isInMainFile(rec->getBeginLoc()))
+    {
+      return true;
+    }
+    RawComment * raw = rec->getASTContext().getRawCommentForDeclNoCache(rec);
+    if (!raw) {
+      return true;
+    }
+    const std::string text = raw->getRawText(SM_).str();
+    if (text.find("@plugin") == std::string::npos) {
+      return true;
+    }
+    api_.class_name = rec->getQualifiedNameAsString();
+    api_.ns = rec->getQualifiedNameAsString();
+    if (const auto p = api_.ns.rfind("::"); p != std::string::npos) {
+      api_.ns = api_.ns.substr(0, p);
+    }
+    for (const CXXBaseSpecifier & b : rec->bases()) {
+      api_.plugin_bases.push_back(tail_name(b.getType().getAsString()));
+    }
+    parse_plugin_comment(text);
+    return true;
   }
 
-  if (e.msg_id < 0 && !e.msg_id_expr.empty()) {
-    const std::string ex = trim(e.msg_id_expr);
-    if (std::regex_match(ex, std::regex(R"([0-9]+)"))) {
-      e.msg_id = std::stoi(ex);
-    } else {
-      std::smatch idm;
-      if (std::regex_search(ex, idm, kMsgIdExprTypeRe)) {
-        const auto [dialect, msg_name] = split_mavlink_type(idm[1].str());
-        if (e.dialect.empty()) {e.dialect = dialect;}
-        if (e.message_name.empty()) {e.message_name = msg_name;}
+  bool VisitVarDecl(VarDecl * vd)
+  {
+    if (!SM_.isInMainFile(vd->getBeginLoc())) {
+      return true;
+    }
+    const std::string t = vd->getType().getAsString();
+    if (t.find("message_filters::Subscriber<") != std::string::npos) {
+      auto lt = t.find('<');
+      auto gt = t.rfind('>');
+      if (lt != std::string::npos && gt != std::string::npos && gt > lt) {
+        ApiEntry e;
+        e.name = vd->getName().str();
+        e.type_name = clean_type(t.substr(lt + 1, gt - lt - 1));
+        e.line = static_cast<int>(SM_.getSpellingLineNumber(vd->getBeginLoc()));
+        e.description = extract_comment_above(e.line);
+        mf_sub_index_[e.name] = api_.subscribers.size();
+        api_.subscribers.push_back(std::move(e));
       }
     }
+    return true;
   }
 
-  if (e.msg_id < 0 && !e.dialect.empty() && !e.message_name.empty()) {
-    const std::string key = e.dialect + "::" + to_upper(e.message_name);
-    if (auto it = idx.find(key); it != idx.end()) {
-      e.msg_id = it->second;
-    }
-  }
-}
-
-std::string normalize_send_arg(std::string arg)
-{
-  arg = trim(std::move(arg));
-  while (!arg.empty() && (arg[0] == '&' || arg[0] == '*')) {
-    arg.erase(arg.begin());
-    arg = trim(arg);
-  }
-  if (arg.rfind("std::move(", 0) == 0 && arg.back() == ')') {
-    arg = trim(arg.substr(10, arg.size() - 11));
-  }
-  return arg;
-}
-
-std::map<std::string, std::vector<std::pair<int, std::string>>> extract_mavlink_var_decls(
-  const std::string & text)
-{
-  std::map<std::string, std::vector<std::pair<int, std::string>>> out;
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kMavlinkVarDeclRe), end; it != end; ++it) {
-    const auto type_name = trim((*it)[1].str());
-    const auto var_name = (*it)[2].str();
-    const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
-    out[var_name].emplace_back(line, type_name);
-  }
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoLambdaMavlinkDeclRe), end; it != end;
-    ++it)
+  bool VisitFieldDecl(FieldDecl * fd)
   {
-    const auto var_name = (*it)[1].str();
-    const auto type_name = trim((*it)[2].str());
-    const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
-    out[var_name].emplace_back(line, type_name);
-  }
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoMavlinkDirectDeclRe), end; it != end;
-    ++it)
-  {
-    const auto var_name = (*it)[1].str();
-    const auto type_name = trim((*it)[2].str());
-    const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
-    out[var_name].emplace_back(line, type_name);
-  }
-  for (std::sregex_iterator it(text.begin(), text.end(), kAutoTemplateMavlinkDeclRe),
-    end; it != end;
-    ++it)
-  {
-    const auto var_name = (*it)[1].str();
-    const auto type_name = trim((*it)[2].str());
-    const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
-    out[var_name].emplace_back(line, type_name);
-  }
-
-  for (auto & kv : out) {
-    auto & v = kv.second;
-    std::sort(v.begin(), v.end(), [](const auto & a, const auto & b) {return a.first < b.first;});
-  }
-
-  return out;
-}
-
-std::vector<std::pair<int, std::string>> extract_mavlink_class_bases(const std::string & text)
-{
-  std::vector<std::pair<int, std::string>> out;
-  for (std::sregex_iterator it(text.begin(), text.end(), kClassInheritRe), end; it != end; ++it) {
-    const std::string base = trim((*it)[2].str());
-    if (base.rfind("mavlink::", 0) != 0) {continue;}
-    const int line = line_for_offset(text, static_cast<size_t>((*it).position()));
-    out.emplace_back(line, base);
-  }
-  std::sort(out.begin(), out.end(), [](const auto & a, const auto & b) {return a.first < b.first;});
-  return out;
-}
-
-std::string resolve_type_from_var_decls(
-  const std::map<std::string, std::vector<std::pair<int, std::string>>> & decls,
-  const std::string & var_name, int at_line)
-{
-  const auto it = decls.find(var_name);
-  if (it == decls.end()) {return "";}
-  const auto & vec = it->second;
-  std::string best;
-  int best_line = -1;
-  for (const auto & [line, type_name] : vec) {
-    if (line <= at_line && line >= best_line) {
-      best_line = line;
-      best = type_name;
+    if (!SM_.isInMainFile(fd->getBeginLoc())) {
+      return true;
     }
-  }
-  return best;
-}
-
-std::string resolve_type_from_mavlink_class_bases(
-  const std::vector<std::pair<int, std::string>> & bases, int at_line)
-{
-  std::string best;
-  int best_line = -1;
-  for (const auto & [line, base] : bases) {
-    if (line <= at_line && line >= best_line) {
-      best_line = line;
-      best = base;
-    }
-  }
-  return best;
-}
-
-void extract_mavlink_publications(
-  const std::string & text, const std::vector<std::string> & lines,
-  const std::map<std::string, int> & msgid_index, std::vector<MavlinkPubEntry> & out)
-{
-  const auto decls = extract_mavlink_var_decls(text);
-  const auto class_bases = extract_mavlink_class_bases(text);
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kSendMessageRe), end; it != end; ++it) {
-    MavlinkPubEntry e;
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.argument = normalize_send_arg((*it)[1].str());
-    e.description = extract_entry_comment(lines, e.line);
-
-    std::smatch tm;
-    if (std::regex_search(e.argument, tm, kMavlinkTypeRe)) {
-      e.message_type = tm[0].str();
-    } else if (std::regex_match(e.argument, kIdentifierRe)) {
-      e.message_type = resolve_type_from_var_decls(decls, e.argument, e.line);
-      if (e.message_type.empty() && e.argument == "this") {
-        e.message_type = resolve_type_from_mavlink_class_bases(class_bases, e.line);
+    const std::string t = fd->getType().getAsString();
+    if (t.find("message_filters::Subscriber<") != std::string::npos) {
+      auto lt = t.find('<');
+      auto gt = t.rfind('>');
+      if (lt != std::string::npos && gt != std::string::npos && gt > lt) {
+        ApiEntry e;
+        e.name = fd->getName().str();
+        e.type_name = clean_type(t.substr(lt + 1, gt - lt - 1));
+        e.line = static_cast<int>(SM_.getSpellingLineNumber(fd->getBeginLoc()));
+        e.description = extract_comment_above(e.line);
+        mf_sub_index_[e.name] = api_.subscribers.size();
+        api_.subscribers.push_back(std::move(e));
       }
     }
-
-    if (!e.message_type.empty()) {
-      e.message_name = tail_name(e.message_type);
-      e.msg_id_expr = e.message_type + "::MSG_ID";
-    }
-    resolve_mavlink_meta(e, msgid_index);
-    out.push_back(std::move(e));
+    return true;
   }
 
-  dedup_mavlink_publications(out);
-}
-
-void extract_mavlink_subscriptions(
-  const std::string & text, const std::vector<std::string> & lines,
-  const std::map<std::string, int> & msgid_index, std::vector<MavlinkSubEntry> & out)
-{
-  const auto handler_types = extract_handler_types(text);
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kMakeHandlerRawRe), end; it != end; ++it) {
-    MavlinkSubEntry e;
-    e.msg_id_expr = trim((*it)[1].str());
-    e.handler = (*it)[2].str();
-    if (auto p = handler_types.find(e.handler); p != handler_types.end()) {
-      e.message_type = p->second;
-      e.message_name = tail_name(e.message_type);
+  bool VisitCXXMemberCallExpr(CXXMemberCallExpr * call)
+  {
+    if (!SM_.isInMainFile(call->getBeginLoc())) {
+      return true;
     }
-    if (e.message_type.empty()) {
-      std::smatch idm;
-      if (std::regex_search(e.msg_id_expr, idm, kMsgIdExprTypeRe)) {
-        e.message_type = trim(idm[1].str());
-        e.message_name = tail_name(e.message_type);
+    const FunctionDecl * callee = call->getDirectCallee();
+    if (!callee) {
+      return true;
+    }
+    const std::string name = callee->getName().str();
+    if (name == "subscribe" && call->getNumArgs() >= 2) {
+      // message_filters::Subscriber<T>::subscribe(node, topic, qos)
+      if (auto * obj = dyn_cast<DeclRefExpr>(call->getImplicitObjectArgument())) {
+        const std::string var = obj->getDecl()->getName().str();
+        auto it = mf_sub_index_.find(var);
+        if (it != mf_sub_index_.end() && it->second < api_.subscribers.size()) {
+          const std::string topic = resolve_string(call->getArg(1));
+          api_.subscribers[it->second].name = topic.empty() ? var : topic;
+          if (call->getNumArgs() >= 3) {
+            set_qos(api_.subscribers[it->second], resolve_qos(call->getArg(2)));
+          }
+        }
       }
     }
-    resolve_mavlink_meta(e, msgid_index);
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    out.push_back(std::move(e));
-  }
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kMakeHandlerTypedRe), end; it != end;
-    ++it)
-  {
-    MavlinkSubEntry e;
-    e.handler = (*it)[1].str();
-    if (auto p = handler_types.find(e.handler); p != handler_types.end()) {
-      e.message_type = p->second;
-      e.message_name = tail_name(e.message_type);
-      e.msg_id_expr = e.message_type + "::MSG_ID";
+    if (name == "create_publisher") {
+      handle_create(call, api_.publishers);
+    } else if (name == "create_subscription") {
+      handle_create(call, api_.subscribers);
+    } else if (name == "create_service") {
+      handle_service(call, api_.services);
+    } else if (name == "create_client") {
+      handle_create(call, api_.clients);
+    } else if (name == "node_declare_and_watch_parameter") {
+      handle_param_watch(call);
+    } else if (name == "make_handler") {
+      handle_make_handler(call);
+    } else if (name == "send_message" || name == "send_message_ignore_drop") {
+      handle_send_message(call);
     }
-    resolve_mavlink_meta(e, msgid_index);
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    out.push_back(std::move(e));
+    return true;
   }
 
-  dedup_mavlink_entries(out);
-}
+private:
+  ASTContext & ctx_;
+  SourceManager & SM_;
+  PluginApi & api_;
+  const std::map<std::string, int> & idx_;
+  std::vector<std::string> src_lines_;
+  std::map<std::string, size_t> mf_sub_index_;
 
-void extract_mavlink_from_context(
-  const fs::path & path, const std::map<std::string, int> & msgid_index,
-  std::vector<MavlinkSubEntry> * out_subs, std::vector<MavlinkPubEntry> * out_pubs)
-{
-  const std::string text = read_file_if_exists(path);
-  if (text.empty()) {return;}
-  const auto lines = split_lines(text);
-  if (out_subs != nullptr) {
-    extract_mavlink_subscriptions(text, lines, msgid_index, *out_subs);
+  std::string source_text(Expr * e)
+  {
+    if (!e) {return "";}
+    return Lexer::getSourceText(
+      CharSourceRange::getTokenRange(e->getSourceRange()), SM_, ctx_.getLangOpts()).str();
   }
-  if (out_pubs != nullptr) {
-    extract_mavlink_publications(text, lines, msgid_index, *out_pubs);
+
+  //! Whole plugin source lines (loaded lazily) for text-based comment extraction.
+  std::vector<std::string> & src_lines()
+  {
+    if (src_lines_.empty() && !api_.file.empty()) {
+      std::ifstream in(api_.file);
+      std::string line;
+      while (std::getline(in, line)) {
+        src_lines_.push_back(line);
+      }
+    }
+    return src_lines_;
   }
-}
 
-void apply_missionbase_subscription_fallback(
-  std::vector<MavlinkSubEntry> & subs, const std::map<std::string, int> & msgid_index)
-{
-  static const std::map<std::string, std::string> kHandlerType = {
-    {"handle_mission_item", "mavlink::common::msg::MISSION_ITEM"},
-    {"handle_mission_item_int", "mavlink::common::msg::MISSION_ITEM_INT"},
-    {"handle_mission_request", "mavlink::common::msg::MISSION_REQUEST"},
-    {"handle_mission_request_int", "mavlink::common::msg::MISSION_REQUEST_INT"},
-    {"handle_mission_count", "mavlink::common::msg::MISSION_COUNT"},
-    {"handle_mission_ack", "mavlink::common::msg::MISSION_ACK"},
-    {"handle_mission_current", "mavlink::common::msg::MISSION_CURRENT"},
-    {"handle_mission_item_reached", "mavlink::common::msg::MISSION_ITEM_REACHED"},
-  };
-
-  for (auto & e : subs) {
-    if (!e.message_type.empty()) {continue;}
-    const auto it = kHandlerType.find(e.handler);
-    if (it == kHandlerType.end()) {continue;}
-    e.message_type = it->second;
-    e.message_name = tail_name(e.message_type);
-    e.msg_id_expr = e.message_type + "::MSG_ID";
-    resolve_mavlink_meta(e, msgid_index);
-  }
-}
-
-void apply_missionbase_publication_fallback(
-  std::vector<MavlinkPubEntry> & pubs, const std::map<std::string, int> & msgid_index)
-{
-  bool has_unknown_wpi = false;
-  for (const auto & e : pubs) {
-    if (e.argument == "wpi" && e.message_type.empty() && e.message_name.empty()) {
-      has_unknown_wpi = true;
+  //! Comment lines directly above a source line (skips assignment prefixes).
+  std::string extract_comment_above(int decl_line)
+  {
+    auto & lines = src_lines();
+    if (decl_line <= 1 || static_cast<size_t>(decl_line) > lines.size()) {return "";}
+    std::vector<std::string> parts;
+    int cur = decl_line - 2;
+    int blanks = 0;
+    for (int i = 0; i < 12 && cur >= 0; ++i, --cur) {
+      const std::string t = trim(lines[static_cast<size_t>(cur)]);
+      if (t.empty()) {
+        if (parts.empty()) {
+          if (++blanks > 1) {break;}
+          continue;
+        }
+        break;
+      }
+      if (t.rfind("//", 0) == 0) {
+        parts.push_back(strip_comment_marker(t));
+        continue;
+      }
+      // assignment prefix line, e.g. "get_parameters_srv ="
+      if (std::regex_match(t, std::regex(R"([A-Za-z_][A-Za-z0-9_:]*\s*=\s*)"))) {
+        continue;
+      }
       break;
     }
+    std::reverse(parts.begin(), parts.end());
+    std::string out;
+    for (const auto & p : parts) {
+      if (!out.empty()) {out += " ";}
+      out += p;
+    }
+    return out;
   }
-  if (!has_unknown_wpi) {return;}
 
-  auto add_pub = [&](const std::string & message_type, const std::string & argument) {
-      MavlinkPubEntry e;
-      e.argument = argument;
-      e.message_type = message_type;
-      e.message_name = tail_name(message_type);
-      e.msg_id_expr = message_type + "::MSG_ID";
-      resolve_mavlink_meta(e, msgid_index);
-      pubs.push_back(std::move(e));
-    };
-
-  add_pub("mavlink::common::msg::MISSION_ITEM", "wpi");
-  add_pub("mavlink::common::msg::MISSION_ITEM_INT", "wpi");
-
-  pubs.erase(
-    std::remove_if(
-      pubs.begin(), pubs.end(),
-      [](const MavlinkPubEntry & e) {
-        return e.argument == "wpi" && e.message_type.empty() && e.message_name.empty();
-      }),
-    pubs.end());
-}
-
-bool uses_missionbase_context(const fs::path & path)
-{
-  static const std::unordered_set<std::string> kFiles = {
-    "waypoint.cpp",
-    "geofence.cpp",
-    "rallypoint.cpp",
-  };
-  return kFiles.find(path.filename().string()) != kFiles.end();
-}
-
-bool uses_setpoint_mixin_context(const fs::path & path)
-{
-  static const std::unordered_set<std::string> kFiles = {
-    "setpoint_accel.cpp",
-    "setpoint_attitude.cpp",
-    "setpoint_position.cpp",
-    "setpoint_raw.cpp",
-    "setpoint_trajectory.cpp",
-    "setpoint_velocity.cpp",
-  };
-  return kFiles.find(path.filename().string()) != kFiles.end();
-}
-
-std::set<std::string> detect_setpoint_mixin_messages(const std::string & text)
-{
-  std::set<std::string> out;
-  static const std::regex kSetpointMixinBaseRe(
-    R"(plugin::(SetPositionTargetLocalNEDMixin|SetPositionTargetGlobalIntMixin|SetAttitudeTargetMixin)\s*<)");
-
-  for (std::sregex_iterator it(text.begin(), text.end(), kSetpointMixinBaseRe), end; it != end;
-    ++it)
+  static std::string strip_comment_marker(std::string line)
   {
-    const std::string mixin = (*it)[1].str();
-    if (mixin == "SetPositionTargetLocalNEDMixin") {
-      out.insert("SET_POSITION_TARGET_LOCAL_NED");
-    } else if (mixin == "SetPositionTargetGlobalIntMixin") {
-      out.insert("SET_POSITION_TARGET_GLOBAL_INT");
-    } else if (mixin == "SetAttitudeTargetMixin") {
-      out.insert("SET_ATTITUDE_TARGET");
-    }
+    line = trim(std::move(line));
+    if (line.rfind("//", 0) == 0) {line = trim(line.substr(2));}
+    if (line.rfind("*", 0) == 0) {line = trim(line.substr(1));}
+    if (line.rfind("!", 0) == 0) {line = trim(line.substr(1));}
+    return line;
   }
-  return out;
-}
 
-PluginApi parse_plugin(
-  const fs::path & path, const fs::path & repo_root, const std::map<std::string, int> & msgid_index)
-{
-  const std::string text = read_file(path);
-  const auto lines = split_lines(text);
-  const auto symbols = extract_string_symbols(text);
-  PluginApi api;
-  api.path = fs::relative(path, repo_root);
-
-  const std::string plugin_block = parse_plugin_block(text);
-  if (plugin_block.empty()) {
-    return api;
+  //! Normalize a C++ type string to the logical ROS/mavlink type name.
+  static std::string clean_type(std::string t)
+  {
+    t = trim(std::move(t));
+    if (t.rfind("struct ", 0) == 0) {
+      t = trim(t.substr(7));
+    } else if (t.rfind("class ", 0) == 0) {
+      t = trim(t.substr(6));
+    }
+    if (t.rfind("const ", 0) == 0) {
+      t = trim(t.substr(6));
+    }
+    while (!t.empty() && (t.back() == '&' || t.back() == '*')) {
+      t.pop_back();
+    }
+    // strip the generated ROS2 allocator template suffix: Foo_<...>
+    if (const auto lt = t.rfind("_<"); lt != std::string::npos) {
+      t = t.substr(0, lt);
+    }
+    return trim(t);
   }
-  std::smatch m;
-  if (std::regex_search(plugin_block, m, kPluginNameRe)) {api.plugin = m[1].str();}
-  if (api.plugin.empty()) {return PluginApi{};}
-  if (std::regex_search(plugin_block, m, kPluginBriefRe)) {api.brief = trim(m[1].str());}
-  api.description = clean_description(plugin_block);
 
-  if (std::regex_search(text, m, kRegisterPluginRe)) {api.class_name = trim(m[1].str());}
-  if (std::regex_search(text, m, kPluginNsRe)) {api.ns = trim(m[1].str());}
-
-  extract_entries(text, kPublisherRe, true, symbols, lines, api.publishers);
-  extract_entries(text, kSubscriptionRe, true, symbols, lines, api.subscribers);
-  extract_entries(text, kServiceRe, true, symbols, lines, api.services);
-  extract_entries(text, kClientRe, true, symbols, lines, api.clients);
-  extract_parameters(text, symbols, lines, api.parameters);
-  extract_mavlink_subscriptions(text, lines, msgid_index, api.mavlink_subscriptions);
-  extract_mavlink_publications(text, lines, msgid_index, api.mavlink_publications);
-
-  // Pull message metadata from inherited mixins/base classes where handlers/senders are defined.
-  if (uses_missionbase_context(path)) {
-    std::vector<MavlinkSubEntry> mission_subs;
-    std::vector<MavlinkPubEntry> mission_pubs;
-    extract_mavlink_from_context(
-      repo_root / "mavros/include/mavros/mission_protocol_base.hpp",
-      msgid_index, &mission_subs, &mission_pubs);
-    extract_mavlink_from_context(
-      repo_root / "mavros/src/plugins/mission_protocol_base.cpp",
-      msgid_index, nullptr, &mission_pubs);
-    for (auto & e : mission_subs) {
-      api.mavlink_subscriptions.push_back(std::move(e));
-    }
-    for (auto & e : mission_pubs) {
-      api.mavlink_publications.push_back(std::move(e));
-    }
-    dedup_mavlink_entries(api.mavlink_subscriptions);
-    dedup_mavlink_publications(api.mavlink_publications);
-    apply_missionbase_subscription_fallback(api.mavlink_subscriptions, msgid_index);
-    apply_missionbase_publication_fallback(api.mavlink_publications, msgid_index);
-
-    std::smatch mt;
-    std::string mission_type = "MISSION";
-    if (std::regex_search(text, mt, kMissionBaseTypeRe)) {
-      mission_type = mt[1].str();
-    }
-    if (mission_type != "MISSION") {
-      api.mavlink_subscriptions.erase(
-        std::remove_if(
-          api.mavlink_subscriptions.begin(), api.mavlink_subscriptions.end(),
-          [](const MavlinkSubEntry & e) {
-            return e.message_name == "MISSION_CURRENT" || e.message_name == "MISSION_ITEM_REACHED";
-          }),
-        api.mavlink_subscriptions.end());
-    }
-  }
-  if (uses_setpoint_mixin_context(path)) {
-    std::vector<MavlinkPubEntry> mixin_pubs;
-    extract_mavlink_from_context(
-      repo_root / "mavros/include/mavros/setpoint_mixin.hpp",
-      msgid_index, nullptr, &mixin_pubs);
-    const auto allowed_msgs = detect_setpoint_mixin_messages(text);
-    for (auto & e : mixin_pubs) {
-      if (allowed_msgs.empty() || allowed_msgs.find(e.message_name) != allowed_msgs.end()) {
-        api.mavlink_publications.push_back(std::move(e));
+  //! Walk up parents to find the enclosing VarDecl of a statement.
+  VarDecl * enclosing_var(Stmt * s)
+  {
+    DynTypedNode cur = DynTypedNode::create(*s);
+    while (true) {
+      DynTypedNodeList parents = ctx_.getParents(cur);
+      if (parents.empty()) {return nullptr;}
+      cur = parents[0];
+      if (const auto vd = cur.get<VarDecl>()) {
+        return const_cast<VarDecl *>(vd);
+      }
+      if (!cur.get<Stmt>() && !cur.get<Decl>()) {
+        return nullptr;
       }
     }
-    dedup_mavlink_publications(api.mavlink_publications);
   }
 
-  std::map<std::string, std::string> mf_types;
-  for (std::sregex_iterator it(text.begin(), text.end(), kMfDeclRe), end; it != end; ++it) {
-    mf_types[(*it)[2].str()] = trim((*it)[1].str());
+  std::string decl_comment(Stmt * s)
+  {
+    VarDecl * vd = enclosing_var(s);
+    if (!vd) {return "";}
+    RawComment * rc = ctx_.getRawCommentForDeclNoCache(vd);
+    if (!rc) {return "";}
+    return clean_comment(rc->getRawText(SM_).str());
   }
-  for (std::sregex_iterator it(text.begin(), text.end(), kMfSubscribeRe), end; it != end; ++it) {
+
+  static std::string clean_comment(std::string text)
+  {
+    std::stringstream in(text);
+    std::string out;
+    std::string line;
+    while (std::getline(in, line)) {
+      std::string t = trim(line);
+      if (t.rfind("/*", 0) == 0 || t.rfind("*/", 0) == 0) {continue;}
+      if (t.rfind("//", 0) == 0) {t = trim(t.substr(2));}
+      if (t.rfind("*", 0) == 0) {t = trim(t.substr(1));}
+      if (t.empty() || t.rfind("@", 0) == 0) {continue;}
+      if (!out.empty()) {out += " ";}
+      out += t;
+    }
+    return out;
+  }
+
+  std::string resolve_string(Expr * e)
+  {
+    if (!e) {return "";}
+    e = e->IgnoreImplicit();
+    if (auto * sl = dyn_cast<StringLiteral>(e)) {
+      return sl->getString().str();
+    }
+    if (auto * ctor = dyn_cast<CXXConstructExpr>(e)) {
+      if (ctor->getNumArgs() == 1) {
+        return resolve_string(ctor->getArg(0));
+      }
+    }
+    if (auto * dre = dyn_cast<DeclRefExpr>(e)) {
+      if (auto * vd = dyn_cast<VarDecl>(dre->getDecl())) {
+        if (vd->hasInit()) {
+          return resolve_string(vd->getInit());
+        }
+      }
+    }
+    if (auto * me = dyn_cast<MemberExpr>(e)) {
+      if (auto * vd = dyn_cast<VarDecl>(me->getMemberDecl())) {
+        if (vd->hasInit()) {
+          return resolve_string(vd->getInit());
+        }
+      }
+    }
+    return "";
+  }
+
+  //! Reconstruct a QoS expression as a canonical config string from the AST.
+  std::string describe_qos(Expr * e)
+  {
+    if (!e) {return "";}
+    e = e->IgnoreImplicit();
+    if (auto * mc = dyn_cast<CXXMemberCallExpr>(e)) {
+      const std::string obj = describe_qos(mc->getImplicitObjectArgument());
+      const std::string m = mc->getMethodDecl()->getName().str();
+      return obj.empty() ? m + "()" : obj + "." + m + "()";
+    }
+    if (auto * cons = dyn_cast<CXXConstructExpr>(e)) {
+      // If we are constructing a QoS from another QoS expression, return the
+      // inner expression as-is (avoid "QoS(rclcpp::QoS(10).transient_local())").
+      if (cons->getNumArgs() == 1) {
+        const std::string inner = describe_qos(cons->getArg(0));
+        if (inner.find("QoS") != std::string::npos) {
+          return inner;
+        }
+      }
+      std::string base = tail_name(cons->getType().getAsString());
+      std::string args;
+      bool first = true;
+      for (unsigned i = 0; i < cons->getNumArgs(); ++i) {
+        const std::string a = describe_qos(cons->getArg(i));
+        if (a.empty()) {continue;}
+        if (!first) {args += ",";}
+        args += a;
+        first = false;
+      }
+      return base + "(" + args + ")";
+    }
+    if (auto * il = dyn_cast<IntegerLiteral>(e)) {
+      return std::to_string(il->getValue().getZExtValue());
+    }
+    if (auto * sl = dyn_cast<StringLiteral>(e)) {
+      return sl->getString().str();
+    }
+    if (auto * ce = dyn_cast<CallExpr>(e)) {
+      if (const FunctionDecl * d = ce->getDirectCallee()) {
+        return tail_name(d->getName().str()) + "()";
+      }
+    }
+    // fall back to source text
+    std::string t;
+    for (const char c : source_text(e)) {
+      if (!std::isspace(static_cast<unsigned char>(c))) {t += c;}
+    }
+    return t;
+  }
+
+  QosInfo resolve_qos(Expr * e)
+  {
+    QosInfo q;
+    if (!e) {return q;}
+    e = e->IgnoreImplicit();
+    if (auto * dre = dyn_cast<DeclRefExpr>(e)) {
+      if (auto * vd = dyn_cast<VarDecl>(dre->getDecl())) {
+        if (vd->hasInit()) {
+          q = resolve_qos(vd->getInit());
+          if (q.present && q.var.empty()) {
+            q.var = vd->getName().str();
+          }
+          return q;
+        }
+      }
+    }
+    // named helper detection (member call, free call, or construct)
+    std::string callee;
+    if (auto * mc = dyn_cast<CXXMemberCallExpr>(e)) {
+      if (const FunctionDecl * d = mc->getDirectCallee()) {
+        callee = d->getName().str();
+      }
+    } else if (auto * ce = dyn_cast<CallExpr>(e)) {
+      if (const FunctionDecl * d = ce->getDirectCallee()) {
+        callee = d->getName().str();
+      }
+    } else if (auto * cons = dyn_cast<CXXConstructExpr>(e)) {
+      callee = tail_name(cons->getType().getAsString());
+    }
+    if (!callee.empty() && kNamedQosHelpers.count(callee) != 0) {
+      q.present = true;
+      q.kind = "named";
+      q.name = callee;
+      return q;
+    }
+    // Only treat as inline QoS if the expression type is a QoS class.
+    if (e->getType().getAsString().find("QoS") == std::string::npos) {
+      return q;
+    }
+    const std::string cfg = describe_qos(e);
+    if (cfg.empty()) {return q;}
+    q.present = true;
+    q.kind = "inline";
+    q.config = cfg;
+    return q;
+  }
+
+  std::string template_arg_type(CXXMemberCallExpr * call, unsigned idx_arg)
+  {
+    const FunctionDecl * callee = call->getDirectCallee();
+    if (!callee) {return "";}
+    if (auto * tsi = callee->getTemplateSpecializationInfo()) {
+      const TemplateArgumentList & args = *tsi->TemplateArguments;
+      if (idx_arg < args.size() && args[idx_arg].getKind() == TemplateArgument::Type) {
+        return args[idx_arg].getAsType().getAsString();
+      }
+    }
+    return "";
+  }
+
+  void set_qos(ApiEntry & e, const QosInfo & q)
+  {
+    if (!q.present) {return;}
+    e.qos_kind = q.kind;
+    e.qos_name = q.name;
+    e.qos_config = q.config;
+    e.qos_var = q.var;
+  }
+
+  void handle_create(CXXMemberCallExpr * call, std::vector<ApiEntry> & out)
+  {
+    if (call->getNumArgs() < 1) {return;}
     ApiEntry e;
-    const auto var = (*it)[1].str();
-    e.name = resolve_symbol((*it)[2].str(), symbols);
-    if (auto p = mf_types.find(var); p != mf_types.end()) {e.type_name = p->second;}
-    const size_t pos = static_cast<size_t>((*it).position());
-    e.line = line_for_offset(text, pos);
-    e.description = extract_entry_comment(lines, e.line);
-    if (!e.name.empty()) {api.subscribers.push_back(std::move(e));}
+    e.type_name = clean_type(template_arg_type(call, 0));
+    e.name = resolve_string(call->getArg(0));
+    if (e.name.empty()) {
+      Expr * a = call->getArg(0)->IgnoreImplicit();
+      if (isa<DeclRefExpr>(a) || isa<MemberExpr>(a)) {
+        // runtime-configured topic (e.g. per-sensor distance sensor)
+        e.name = "<configurable per sensor>";
+      } else {
+        e.name = strip_quotes(trim(source_text(a)));
+      }
+    }
+    e.line = static_cast<int>(SM_.getSpellingLineNumber(call->getBeginLoc()));
+    if (call->getNumArgs() >= 2) {
+      set_qos(e, resolve_qos(call->getArg(1)));
+    }
+    e.description = extract_comment_above(e.line);
+    out.push_back(std::move(e));
   }
 
-  dedup_entries(api.publishers);
-  dedup_entries(api.subscribers);
-  dedup_entries(api.services);
-  dedup_entries(api.clients);
-  dedup_entries(api.parameters);
-  dedup_mavlink_entries(api.mavlink_subscriptions);
-  dedup_mavlink_publications(api.mavlink_publications);
-  return api;
-}
+  void handle_service(CXXMemberCallExpr * call, std::vector<ApiEntry> & out)
+  {
+    if (call->getNumArgs() < 1) {return;}
+    ApiEntry e;
+    e.type_name = clean_type(template_arg_type(call, 0));
+    e.name = resolve_string(call->getArg(0));
+    if (e.name.empty()) {
+      Expr * a = call->getArg(0)->IgnoreImplicit();
+      if (isa<DeclRefExpr>(a) || isa<MemberExpr>(a)) {
+        // runtime-configured topic (e.g. per-sensor distance sensor)
+        e.name = "<configurable per sensor>";
+      } else {
+        e.name = strip_quotes(trim(source_text(a)));
+      }
+    }
+    e.line = static_cast<int>(SM_.getSpellingLineNumber(call->getBeginLoc()));
+    // create_service<SrvT>(name, cb, qos, cg)
+    if (call->getNumArgs() >= 3) {
+      set_qos(e, resolve_qos(call->getArg(2)));
+    }
+    e.description = extract_comment_above(e.line);
+    out.push_back(std::move(e));
+  }
+
+  void handle_param_watch(CXXMemberCallExpr * call)
+  {
+    if (call->getNumArgs() < 1) {return;}
+    ApiEntry e;
+    e.name = resolve_string(call->getArg(0));
+    if (e.name.empty()) {
+      // fall back to the source text (e.g. a string literal wrapped in a temp)
+      e.name = strip_quotes(trim(source_text(call->getArg(0))));
+    }
+    e.line = static_cast<int>(SM_.getSpellingLineNumber(call->getBeginLoc()));
+    if (call->getNumArgs() >= 2) {
+      e.default_value = trim(source_text(call->getArg(1)));
+      e.type_name = infer_param_type(e.default_value);
+    }
+    e.description = extract_comment_above(e.line);
+    api_.parameters.push_back(std::move(e));
+  }
+
+  void handle_make_handler(CXXMemberCallExpr * call)
+  {
+    if (call->getNumArgs() == 0) {return;}
+    MavlinkEntry e;
+    Expr * arg0 = call->getArg(0)->IgnoreImplicit();
+    FunctionDecl * fd = nullptr;
+    if (auto * uop = dyn_cast<UnaryOperator>(arg0)) {   // &Plugin::fn (typed)
+      if (auto * dre = dyn_cast<DeclRefExpr>(uop->getSubExpr())) {
+        fd = dyn_cast<FunctionDecl>(dre->getDecl());
+        if (fd) {
+          e.name = fd->getName().str();
+          for (const ParmVarDecl * p : fd->parameters()) {
+            std::string t = clean_type(p->getType().getAsString());
+            if (t.find("mavlink::") != std::string::npos &&
+              t.find("::msg::") != std::string::npos)
+            {
+              e.message_type = t;
+              break;
+            }
+            // param may be a class derived from a mavlink message (e.g. FTPRequest
+            // derives from FILE_TRANSFER_PROTOCOL).
+            if (auto * rec = p->getType().getNonReferenceType()->getAsCXXRecordDecl()) {
+              for (const CXXBaseSpecifier & b : rec->bases()) {
+                const std::string bt = clean_type(b.getType().getAsString());
+                if (bt.find("mavlink::") != std::string::npos) {
+                  e.message_type = bt;
+                  break;
+                }
+              }
+              if (!e.message_type.empty()) {break;}
+            }
+          }
+        }
+      }
+    } else {   // raw: make_handler(msgid_expr, &Plugin::fn)
+      // The msgid expr is usually mavlink::...::msg::X::MSG_ID; resolve X from the
+      // enclosing class of the MSG_ID static member.
+      if (auto * dre = dyn_cast<DeclRefExpr>(arg0)) {
+        if (auto * vd = dyn_cast<VarDecl>(dre->getDecl())) {
+          if (auto * ctxt = dyn_cast<CXXRecordDecl>(vd->getDeclContext())) {
+            e.message_type = ctxt->getQualifiedNameAsString();
+          }
+        }
+      }
+      if (e.message_type.empty()) {
+        const std::string id_src = trim(source_text(arg0));
+        if (id_src.size() > 7 && id_src.substr(id_src.size() - 7) == "::MSG_ID") {
+          e.message_type = id_src.substr(0, id_src.size() - 7);
+        }
+      }
+      if (call->getNumArgs() >= 2) {
+        e.name = get_handler_name(call->getArg(1));
+        if (auto * uop2 = dyn_cast<UnaryOperator>(call->getArg(1)->IgnoreImplicit())) {
+          if (auto * dre = dyn_cast<DeclRefExpr>(uop2->getSubExpr())) {
+            fd = dyn_cast<FunctionDecl>(dre->getDecl());
+          }
+        }
+      }
+    }
+    if (!e.message_type.empty()) {
+      e.msg_id_expr = e.message_type + "::MSG_ID";
+    }
+    if (fd) {
+      e.line = static_cast<int>(SM_.getSpellingLineNumber(fd->getBeginLoc()));
+      e.description = extract_comment_above(e.line);
+    }
+    resolve_mavlink_meta(e, idx_);
+    api_.mavlink_subscriptions.push_back(std::move(e));
+  }
+
+  std::string get_handler_name(Expr * e)
+  {
+    e = e->IgnoreImplicit();
+    if (auto * uop = dyn_cast<UnaryOperator>(e)) {
+      if (auto * dre = dyn_cast<DeclRefExpr>(uop->getSubExpr())) {
+        return dre->getDecl()->getName().str();
+      }
+    }
+    return "";
+  }
+
+  void handle_send_message(CXXMemberCallExpr * call)
+  {
+    if (call->getNumArgs() == 0) {return;}
+    Expr * arg = call->getArg(0)->IgnoreImplicit();
+    MavlinkEntry e;
+    e.line = static_cast<int>(SM_.getSpellingLineNumber(call->getBeginLoc()));
+    e.message_type = clean_type(arg->getType().getAsString());
+    // If the argument is a class derived from a mavlink message (e.g. FTPRequest
+    // derives from FILE_TRANSFER_PROTOCOL), resolve to that mavlink base.
+    if (e.message_type.find("mavlink::") == std::string::npos) {
+      if (auto * rec = arg->getType()->getAsCXXRecordDecl()) {
+        for (const CXXBaseSpecifier & b : rec->bases()) {
+          const std::string bt = clean_type(b.getType().getAsString());
+          if (bt.find("mavlink::") != std::string::npos) {
+            e.message_type = bt;
+            break;
+          }
+        }
+      }
+    }
+    e.name = "msg";
+    e.message_name = tail_name(e.message_type);
+    e.msg_id_expr = e.message_type + "::MSG_ID";
+    resolve_mavlink_meta(e, idx_);
+    api_.mavlink_publications.push_back(std::move(e));
+  }
+
+  std::string infer_param_type(const std::string & default_expr)
+  {
+    const std::string expr = trim(default_expr);
+    if (expr.empty()) {return "";}
+    if (expr == "true" || expr == "false") {return "bool";}
+    if (expr.find('"') != std::string::npos || expr.find("std::string") != std::string::npos) {
+      return "string";
+    }
+    if (std::regex_match(expr, std::regex(R"([-+]?\d+)"))) {return "integer";}
+    if (std::regex_match(expr, std::regex(R"([-+]?\d*\.\d+[fFlL]?)")) ||
+      std::regex_match(expr, std::regex(R"([-+]?\d+[eE][-+]?\d+[fFlL]?)")))
+    {
+      return "double";
+    }
+    if (expr.find(".seconds()") != std::string::npos ||
+      expr.find("Duration") != std::string::npos)
+    {
+      return "double";
+    }
+    return "";
+  }
+
+  void parse_plugin_comment(const std::string & text)
+  {
+    std::stringstream in(text);
+    std::string line;
+    std::vector<std::string> desc_lines;
+    while (std::getline(in, line)) {
+      std::string t = trim(line);
+      if (t.rfind("/*", 0) == 0 || t.rfind("*/", 0) == 0) {continue;}
+      if (t.rfind("//", 0) == 0) {t = trim(t.substr(2));}
+      if (t.rfind("*", 0) == 0) {t = trim(t.substr(1));}
+      if (t.rfind("@plugin", 0) == 0) {
+        std::smatch m;
+        if (std::regex_search(t, m, std::regex(R"(@plugin\s+([a-z0-9_]+))"))) {
+          api_.plugin = m[1].str();
+        }
+        continue;
+      }
+      if (t.rfind("@brief", 0) == 0) {
+        api_.brief = trim(t.substr(6));
+        continue;
+      }
+      if (t.empty()) {
+        if (!desc_lines.empty()) {desc_lines.push_back("");}
+        continue;
+      }
+      if (t.rfind("@", 0) == 0) {continue;}
+      desc_lines.push_back(t);
+    }
+    std::string out;
+    for (size_t i = 0; i < desc_lines.size(); ++i) {
+      if (i > 0) {
+        out += (desc_lines[i].empty() || desc_lines[i - 1].empty()) ? "\n\n" : "\n";
+      }
+      out += desc_lines[i];
+    }
+    api_.description = out;
+  }
+};
+
+// --------------------------------------------------------------------------
+// Frontend action
+// --------------------------------------------------------------------------
+
+class PluginAction : public ASTFrontendAction
+{
+public:
+  PluginAction(
+    std::map<std::string, PluginApi *> & file_to_api,
+    const std::map<std::string, int> & idx)
+  : file_to_api_(file_to_api), idx_(idx) {}
+
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(
+    CompilerInstance & CI, StringRef infile) override
+  {
+    PluginApi * api = nullptr;
+    const std::string infile_std = infile.str();
+    auto it = file_to_api_.find(infile_std);
+    if (it != file_to_api_.end()) {
+      api = it->second;
+    } else {
+      // Fall back to the main-file id if the path spelling differs.
+      auto fid = CI.getSourceManager().getMainFileID();
+      auto fe = CI.getSourceManager().getFileEntryRefForID(fid);
+      if (fe) {
+        it = file_to_api_.find(fe->getName().str());
+        if (it != file_to_api_.end()) {
+          api = it->second;
+        }
+      }
+    }
+    if (!api) {
+      api = &fallback_;
+    }
+    return std::make_unique<Consumer>(CI.getASTContext(), *api, idx_);
+  }
+
+private:
+  std::map<std::string, PluginApi *> & file_to_api_;
+  const std::map<std::string, int> & idx_;
+  PluginApi fallback_;
+
+  class Consumer : public ASTConsumer
+  {
+public:
+    Consumer(ASTContext & ctx, PluginApi & api, const std::map<std::string, int> & idx)
+    : visitor_(ctx, api, idx) {}
+
+    void HandleTranslationUnit(ASTContext & ctx) override
+    {
+      visitor_.TraverseDecl(ctx.getTranslationUnitDecl());
+    }
+
+private:
+    PluginVisitor visitor_;
+  };
+};
+
+// --------------------------------------------------------------------------
+// Output (YAML-emitted JSON)
+// --------------------------------------------------------------------------
 
 void emit_kv_str(YAML::Emitter & em, const char * key, const std::string & value)
 {
@@ -1115,12 +963,43 @@ void emit_entries(YAML::Emitter & em, const std::vector<ApiEntry> & entries)
     emit_kv_str(em, "type_name", e.type_name);
     em << YAML::Key << YAML::DoubleQuoted << "line";
     em << YAML::Value << e.line;
-    if (!e.default_value.empty()) {
-      emit_kv_str(em, "default_value", e.default_value);
+    if (!e.qos_kind.empty()) {
+      em << YAML::Key << YAML::DoubleQuoted << "qos" << YAML::BeginMap;
+      emit_kv_str(em, "kind", e.qos_kind);
+      if (e.qos_kind == "named") {
+        emit_kv_str(em, "name", e.qos_name);
+      } else {
+        emit_kv_str(em, "config", e.qos_config);
+      }
+      if (!e.qos_var.empty()) {
+        emit_kv_str(em, "var", e.qos_var);
+      }
+      em << YAML::EndMap;
     }
-    if (!e.description.empty()) {
-      emit_kv_str(em, "description", e.description);
+    if (!e.default_value.empty()) {emit_kv_str(em, "default_value", e.default_value);}
+    if (!e.description.empty()) {emit_kv_str(em, "description", e.description);}
+    em << YAML::EndMap;
+  }
+  em << YAML::EndSeq;
+}
+
+void emit_mavlink(YAML::Emitter & em, const std::vector<MavlinkEntry> & entries, const char * key)
+{
+  em << YAML::Value << YAML::BeginSeq;
+  for (const auto & s : entries) {
+    em << YAML::BeginMap;
+    emit_kv_str(em, key, s.name);
+    emit_kv_str(em, "message_type", s.message_type);
+    emit_kv_str(em, "message_name", s.message_name);
+    emit_kv_str(em, "msg_id_expr", s.msg_id_expr);
+    emit_kv_str(em, "dialect", s.dialect);
+    if (s.msg_id >= 0) {
+      em << YAML::Key << YAML::DoubleQuoted << "msg_id";
+      em << YAML::Value << s.msg_id;
     }
+    em << YAML::Key << YAML::DoubleQuoted << "line";
+    em << YAML::Value << s.line;
+    if (!s.description.empty()) {emit_kv_str(em, "description", s.description);}
     em << YAML::EndMap;
   }
   em << YAML::EndSeq;
@@ -1132,6 +1011,7 @@ void write_json(const std::vector<PluginApi> & items, const fs::path & output)
   em << YAML::Flow;
   em << YAML::BeginSeq;
   for (const auto & p : items) {
+    if (p.plugin.empty()) {continue;}
     em << YAML::BeginMap;
     emit_kv_str(em, "plugin", p.plugin);
     emit_kv_str(em, "path", p.path.generic_string());
@@ -1139,7 +1019,6 @@ void write_json(const std::vector<PluginApi> & items, const fs::path & output)
     emit_kv_str(em, "namespace", p.ns);
     emit_kv_str(em, "brief", p.brief);
     emit_kv_str(em, "description", p.description);
-
     em << YAML::Key << YAML::DoubleQuoted << "publishers";
     emit_entries(em, p.publishers);
     em << YAML::Key << YAML::DoubleQuoted << "subscribers";
@@ -1151,80 +1030,28 @@ void write_json(const std::vector<PluginApi> & items, const fs::path & output)
     em << YAML::Key << YAML::DoubleQuoted << "parameters";
     emit_entries(em, p.parameters);
     em << YAML::Key << YAML::DoubleQuoted << "mavlink_subscriptions";
-    em << YAML::Value << YAML::BeginSeq;
-    for (const auto & s : p.mavlink_subscriptions) {
-      em << YAML::BeginMap;
-      emit_kv_str(em, "handler", s.handler);
-      emit_kv_str(em, "message_type", s.message_type);
-      emit_kv_str(em, "message_name", s.message_name);
-      emit_kv_str(em, "msg_id_expr", s.msg_id_expr);
-      emit_kv_str(em, "dialect", s.dialect);
-      if (s.msg_id >= 0) {
-        em << YAML::Key << YAML::DoubleQuoted << "msg_id";
-        em << YAML::Value << s.msg_id;
-      }
-      em << YAML::Key << YAML::DoubleQuoted << "line";
-      em << YAML::Value << s.line;
-      if (!s.description.empty()) {
-        emit_kv_str(em, "description", s.description);
-      }
-      em << YAML::EndMap;
-    }
-    em << YAML::EndSeq;
+    emit_mavlink(em, p.mavlink_subscriptions, "handler");
     em << YAML::Key << YAML::DoubleQuoted << "mavlink_publications";
-    em << YAML::Value << YAML::BeginSeq;
-    for (const auto & s : p.mavlink_publications) {
-      em << YAML::BeginMap;
-      emit_kv_str(em, "argument", s.argument);
-      emit_kv_str(em, "message_type", s.message_type);
-      emit_kv_str(em, "message_name", s.message_name);
-      emit_kv_str(em, "msg_id_expr", s.msg_id_expr);
-      emit_kv_str(em, "dialect", s.dialect);
-      if (s.msg_id >= 0) {
-        em << YAML::Key << YAML::DoubleQuoted << "msg_id";
-        em << YAML::Value << s.msg_id;
-      }
-      em << YAML::Key << YAML::DoubleQuoted << "line";
-      em << YAML::Value << s.line;
-      if (!s.description.empty()) {
-        emit_kv_str(em, "description", s.description);
-      }
-      em << YAML::EndMap;
-    }
-    em << YAML::EndSeq;
+    emit_mavlink(em, p.mavlink_publications, "argument");
     em << YAML::EndMap;
   }
   em << YAML::EndSeq;
-
   std::ofstream os(output);
   os << em.c_str() << "\n";
 }
 
-Config parse_args(int argc, char ** argv)
-{
-  Config cfg;
-  for (int i = 1; i < argc; ++i) {
-    const std::string a = argv[i];
-    if (a == "--plugin-dir" && i + 1 < argc) {
-      cfg.plugin_dirs.emplace_back(argv[++i]);
-    } else if (a == "--plugin" && i + 1 < argc) {
-      cfg.plugin_filter.insert(argv[++i]);
-    } else if (a == "--output" && i + 1 < argc) {
-      cfg.output = argv[++i];
-    } else if (a == "--jobs" && i + 1 < argc) {
-      cfg.jobs = std::max(1, std::stoi(argv[++i]));
-    } else if (a == "--help") {
-      std::cout
-        << "Usage: plugin_doc_gen_cpp [--plugin-dir DIR] [--plugin NAME] [--jobs N] --output FILE\n";
-      std::exit(0);
-    }
-  }
-  if (cfg.plugin_dirs.empty()) {
-    cfg.plugin_dirs = {fs::path("mavros/src/plugins"), fs::path("mavros_extras/src/plugins")};
-  }
-  if (cfg.output.empty()) {cfg.output = "plugin_api.json";}
-  return cfg;
-}
+// --------------------------------------------------------------------------
+// main
+// --------------------------------------------------------------------------
+
+static llvm::cl::opt<std::string> ClOutput(
+  "output", llvm::cl::desc("Output JSON file"), llvm::cl::init(""));
+static llvm::cl::list<std::string> ClPluginDir("plugin-dir", llvm::cl::desc("Plugin source dir"));
+static llvm::cl::list<std::string> ClPlugin("plugin", llvm::cl::desc("Only these plugins"));
+static llvm::cl::opt<int> ClJobs("jobs", llvm::cl::desc("Worker threads"), llvm::cl::init(4));
+static llvm::cl::opt<std::string> ClCompileCommandsDir(
+  "compile-commands-dir", llvm::cl::desc("Directory containing compile_commands.json"),
+  llvm::cl::init(""));
 
 fs::path detect_repo_root()
 {
@@ -1240,57 +1067,197 @@ fs::path detect_repo_root()
 
 int main(int argc, char ** argv)
 {
-  const Config cfg = parse_args(argc, argv);
+  llvm::cl::ParseCommandLineOptions(argc, argv, "MAVROS plugin documentation extractor");
+  llvm::cl::SetVersionPrinter([](llvm::raw_ostream & os) {
+      os << "plugin_doc_extract (clang-tooling)\n";
+  });
+
   const fs::path repo_root = detect_repo_root();
   const auto msgid_index = build_mavlink_msgid_index(repo_root);
 
-  std::vector<fs::path> files;
-  for (const auto & dir : cfg.plugin_dirs) {
-    const fs::path abs_dir = dir.is_absolute() ? dir : repo_root / dir;
-    if (!fs::exists(abs_dir)) {continue;}
-    for (const auto & ent : fs::directory_iterator(abs_dir)) {
+  std::vector<fs::path> plugin_dirs = {
+    repo_root / "mavros/src/plugins", repo_root / "mavros_extras/src/plugins"};
+  if (!ClPluginDir.empty()) {
+    plugin_dirs.clear();
+    for (const auto & d : ClPluginDir) {
+      plugin_dirs.emplace_back(d);
+    }
+  }
+  std::set<std::string> plugin_filter(ClPlugin.begin(), ClPlugin.end());
+
+  // Collect plugin source files (those with an @plugin comment).
+  std::vector<std::string> files;
+  for (const auto & dir : plugin_dirs) {
+    if (!fs::exists(dir)) {continue;}
+    for (const auto & ent : fs::directory_iterator(dir)) {
       if (!ent.is_regular_file() || ent.path().extension() != ".cpp") {continue;}
-      auto text = read_file(ent.path());
+      const std::string raw = read_file(ent.path());
       std::smatch m;
-      if (!std::regex_search(text, m, kPluginNameRe)) {continue;}
-      const std::string plugin = m[1].str();
-      if (!cfg.plugin_filter.empty() && !cfg.plugin_filter.count(plugin)) {continue;}
-      files.push_back(ent.path());
+      if (!std::regex_search(raw, m, std::regex(R"(@plugin\s+([a-z0-9_]+))"))) {continue;}
+      if (!plugin_filter.empty() && !plugin_filter.count(m[1].str())) {continue;}
+      files.push_back(ent.path().string());
     }
   }
   std::sort(files.begin(), files.end());
 
-  std::vector<PluginApi> out;
-  out.reserve(files.size());
-  std::mutex out_mtx;
-  std::atomic<size_t> index{0};
+  // Load the compilation database (flags per source file).
+  std::string error;
+  std::unique_ptr<tooling::CompilationDatabase> db;
+  if (!ClCompileCommandsDir.empty()) {
+    db = tooling::CompilationDatabase::loadFromDirectory(ClCompileCommandsDir, error);
+  }
+  if (!db) {
+    llvm::errs() << "No compilation database found"
+                 << (error.empty() ? "." : (": " + error)) << "\n";
+    return 1;
+  }
 
-  const int jobs = std::max(1,
-    std::min(cfg.jobs, static_cast<int>(files.size() ? files.size() : 1)));
-  std::vector<std::thread> workers;
-  workers.reserve(jobs);
-  for (int i = 0; i < jobs; ++i) {
-    workers.emplace_back([&]() {
-        while (true) {
-          const size_t idx = index.fetch_add(1);
-          if (idx >= files.size()) {break;}
-          PluginApi parsed = parse_plugin(files[idx], repo_root, msgid_index);
-          if (parsed.plugin.empty()) {continue;}
-          std::lock_guard<std::mutex> lk(out_mtx);
-          out.push_back(std::move(parsed));
+  // Append the MissionBase implementation so MissionBase-derived plugins
+  // (waypoint, geofence, rallypoint) inherit its MAVLink traffic.
+  const fs::path mission_base_cpp = repo_root / "mavros/src/plugins/mission_protocol_base.cpp";
+  if (fs::exists(mission_base_cpp)) {
+    files.push_back(mission_base_cpp.string());
+  }
+
+  std::map<std::string, PluginApi *> file_to_api;
+  std::vector<PluginApi> apis(files.size());
+  for (size_t i = 0; i < files.size(); ++i) {
+    apis[i].file = files[i];
+    apis[i].path = fs::path(files[i]);
+    file_to_api[files[i]] = &apis[i];
+  }
+
+  tooling::ClangTool tool(*db, files);
+
+  class Factory : public tooling::FrontendActionFactory
+  {
+public:
+    Factory(
+      std::map<std::string, PluginApi *> & m, const std::map<std::string, int> & idx)
+    : m_(m), idx_(idx) {}
+
+    std::unique_ptr<FrontendAction> create() override
+    {
+      return std::make_unique<PluginAction>(m_, idx_);
+    }
+
+private:
+    std::map<std::string, PluginApi *> & m_;
+    const std::map<std::string, int> & idx_;
+  };
+
+  Factory factory(file_to_api, msgid_index);
+  const int rc = tool.run(&factory);
+
+  // Post-process: inherit MAVLink traffic from MissionBase and setpoint mixins.
+  PluginApi * base_api = nullptr;
+  if (fs::exists(mission_base_cpp)) {
+    base_api = file_to_api[mission_base_cpp.string()];
+  }
+  for (auto & api : apis) {
+    if (api.plugin.empty()) {continue;}
+    const bool is_mission =
+      std::find(api.plugin_bases.begin(), api.plugin_bases.end(), "MissionBase") !=
+      api.plugin_bases.end();
+    if (is_mission && base_api) {
+      api.mavlink_subscriptions = base_api->mavlink_subscriptions;
+      api.mavlink_publications = base_api->mavlink_publications;
+    }
+    if (is_mission) {
+      // MissionBase handlers are defined inline in the header, so they are not
+      // visible when parsing the .cpp; add the known set here.
+      static const std::map<std::string, std::string> kMissionSubs = {
+        {"handle_mission_item", "mavlink::common::msg::MISSION_ITEM"},
+        {"handle_mission_item_int", "mavlink::common::msg::MISSION_ITEM_INT"},
+        {"handle_mission_request", "mavlink::common::msg::MISSION_REQUEST"},
+        {"handle_mission_request_int", "mavlink::common::msg::MISSION_REQUEST_INT"},
+        {"handle_mission_count", "mavlink::common::msg::MISSION_COUNT"},
+        {"handle_mission_ack", "mavlink::common::msg::MISSION_ACK"},
+        {"handle_mission_current", "mavlink::common::msg::MISSION_CURRENT"},
+        {"handle_mission_item_reached", "mavlink::common::msg::MISSION_ITEM_REACHED"},
+      };
+      const bool not_waypoint = api.plugin != "waypoint";
+      // MISSION_ITEM(_INT) are sent via the inline send_waypoint template.
+      for (const auto & wp_type : {"mavlink::common::msg::MISSION_ITEM",
+          "mavlink::common::msg::MISSION_ITEM_INT"})
+      {
+        MavlinkEntry e;
+        e.message_type = wp_type;
+        e.message_name = tail_name(wp_type);
+        e.msg_id_expr = std::string(wp_type) + "::MSG_ID";
+        e.name = "wpi";
+        resolve_mavlink_meta(e, msgid_index);
+        api.mavlink_publications.push_back(e);
+      }
+      for (const auto & [handler, type] : kMissionSubs) {
+        if (not_waypoint && (handler == "handle_mission_current" ||
+          handler == "handle_mission_item_reached"))
+        {
+          continue;   // geofence/rallypoint mission types have no CURRENT/REACHED
         }
-    });
-  }
-  for (auto & t : workers) {
-    t.join();
+        bool dup = false;
+        for (const auto & s : api.mavlink_subscriptions) {
+          if (s.name == handler) {dup = true; break;}
+        }
+        if (dup) {continue;}
+        MavlinkEntry e;
+        e.name = handler;
+        e.message_type = type;
+        e.message_name = tail_name(type);
+        e.msg_id_expr = type + "::MSG_ID";
+        resolve_mavlink_meta(e, msgid_index);
+        api.mavlink_subscriptions.push_back(std::move(e));
+      }
+    }
+    // Setpoint mixin publications (a plugin may use several mixins).
+    std::vector<std::string> mixin_msgs;
+    for (const auto & b : api.plugin_bases) {
+      if (b.find("SetPositionTargetLocalNEDMixin") != std::string::npos) {
+        mixin_msgs.push_back("SET_POSITION_TARGET_LOCAL_NED");
+      } else if (b.find("SetPositionTargetGlobalIntMixin") != std::string::npos) {
+        mixin_msgs.push_back("SET_POSITION_TARGET_GLOBAL_INT");
+      } else if (b.find("SetAttitudeTargetMixin") != std::string::npos) {
+        mixin_msgs.push_back("SET_ATTITUDE_TARGET");
+      }
+    }
+    for (const auto & mixin_msg : mixin_msgs) {
+      MavlinkEntry e;
+      e.message_type = "mavlink::common::msg::" + mixin_msg;
+      e.message_name = mixin_msg;
+      e.msg_id_expr = e.message_type + "::MSG_ID";
+      e.name = "msg";
+      resolve_mavlink_meta(e, msgid_index);
+      api.mavlink_publications.push_back(e);
+    }
+    // De-duplicate publications by message name.
+    std::sort(
+      api.mavlink_publications.begin(), api.mavlink_publications.end(),
+      [](const MavlinkEntry & a, const MavlinkEntry & b) {
+        return a.message_name < b.message_name;
+      });
+    api.mavlink_publications.erase(
+      std::unique(
+        api.mavlink_publications.begin(), api.mavlink_publications.end(),
+        [](const MavlinkEntry & a, const MavlinkEntry & b) {
+          return a.message_name == b.message_name;
+        }),
+      api.mavlink_publications.end());
   }
 
+  std::vector<PluginApi> out;
+  for (auto & api : apis) {
+    if (!api.plugin.empty()) {
+      out.push_back(std::move(api));
+    }
+  }
   std::sort(out.begin(), out.end(), [](const auto & a, const auto & b) {
       return a.plugin < b.plugin;
   });
 
-  fs::create_directories(cfg.output.parent_path());
-  write_json(out, cfg.output);
-  std::cerr << "Generated " << out.size() << " plugins into " << cfg.output << "\n";
+  fs::path output = ClOutput.empty() ? fs::path("plugin_api.json") : fs::path(ClOutput.getValue());
+  fs::create_directories(output.parent_path());
+  write_json(out, output);
+  std::cerr << "Generated " << out.size() << " plugins into " << output << "\n";
+  (void)rc;
   return 0;
 }

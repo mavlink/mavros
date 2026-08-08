@@ -2,23 +2,20 @@
 
 - File: `mavros_extras/src/plugins/esc_telemetry.cpp`
 - Class: `mavros::extra_plugins::ESCTelemetryPlugin`
-- Namespace: `esc_telemetry`
+- Namespace: `mavros::extra_plugins`
 - Brief: ESC telemetry plugin
 
 
 APM specific plugin.
 
 ## Publishers
-- `~/telemetry` ([mavros_msgs::msg::ESCTelemetry](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCTelemetry.html)) - Publish ESC telemetry from MAVLink ESC_TELEMETRY_* messages.
-
+- `~/telemetry` [type: [mavros_msgs::msg::ESCTelemetry](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ESCTelemetry.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish ESC telemetry from MAVLink ESC_TELEMETRY_* messages.
 
 ## Subscribers
 - None
 
-
 ## Services
 - None
-
 
 ## Clients
 - None

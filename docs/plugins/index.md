@@ -1,6 +1,9 @@
 # MAVROS plugins
 
-MAVROS is split into the core plugins shipped in `mavros` and the optional plugins shipped in `mavros_extras`. Each plugin page documents its ROS API (publishers, subscribers, services, clients, parameters) and the MAVLink messages it subscribes to and publishes.
+MAVROS is split into the core plugins shipped in `mavros` and the optional
+plugins shipped in `mavros_extras`. Each plugin page documents its ROS API
+(publishers, subscribers, services, clients, parameters) and the MAVLink
+messages it subscribes to and publishes.
 
 ## Standard plugins (`mavros`)
 
@@ -27,11 +30,10 @@ MAVROS is split into the core plugins shipped in `mavros` and the optional plugi
 | [`setpoint_raw`](std/setpoint_raw.md) | Setpoint RAW plugin | 3 | 3 | — | — | 3/3 |
 | [`setpoint_trajectory`](std/setpoint_trajectory.md) | Setpoint TRAJECTORY plugin | 1 | 1 | 1 | — | 0/1 |
 | [`setpoint_velocity`](std/setpoint_velocity.md) | Setpoint velocity plugin | — | 2 | — | — | 0/1 |
-| [`sys_status`](std/sys_status.md) | System status plugin. | 7 | 1 | 4 | 1 | 10/4 |
+| [`sys_status`](std/sys_status.md) | System status plugin. | 7 | 1 | 4 | 2 | 10/4 |
 | [`sys_time`](std/sys_time.md) | System time plugin | 2 | — | — | — | 2/2 |
 | [`waypoint`](std/waypoint.md) | Mission manipulation plugin | 2 | — | 4 | — | 8/10 |
 | [`wind_estimation`](std/wind_estimation.md) | Wind estimation plugin. | 1 | — | — | — | 2/0 |
-
 ## Extra plugins (`mavros_extras`)
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
@@ -46,9 +48,9 @@ MAVROS is split into the core plugins shipped in `mavros` and the optional plugi
 | [`esc_status`](extras/esc_status.md) | ESC status plugin | 2 | — | — | — | 2/0 |
 | [`esc_telemetry`](extras/esc_telemetry.md) | ESC telemetry plugin | 1 | — | — | — | 3/0 |
 | [`fake_gps`](extras/fake_gps.md) | Fake GPS plugin. | — | 4 | — | — | 0/2 |
-| [`gimbal_control`](extras/gimbal_control.md) | Gimbal Control Plugin | 4 | 4 | 6 | 1 | 4/4 |
+| [`gimbal_control`](extras/gimbal_control.md) | Gimbal Control Plugin | 4 | 4 | 6 | 1 | 4/3 |
 | [`gps_input`](extras/gps_input.md) | GPS_INPUT GPS plugin. | — | 1 | — | — | 0/1 |
-| [`gps_rtk`](extras/gps_rtk.md) | GPS RTK plugin | 1 | 1 | — | — | 1/2 |
+| [`gps_rtk`](extras/gps_rtk.md) | GPS RTK plugin | 1 | 1 | — | — | 1/1 |
 | [`gps_status`](extras/gps_status.md) | Mavlink GPS status plugin. | 4 | — | — | — | 4/0 |
 | [`guided_target`](extras/guided_target.md) | guided target plugin | 1 | 1 | — | — | 1/0 |
 | [`hil`](extras/hil.md) | Hil plugin | 2 | 5 | — | — | 2/5 |
@@ -69,7 +71,7 @@ MAVROS is split into the core plugins shipped in `mavros` and the optional plugi
 | [`sim_state`](extras/sim_state.md) | SIM_STATE plugin. | 5 | — | — | — | 1/0 |
 | [`tdr_radio`](extras/3dr_radio.md) | 3DR Radio plugin. | 1 | — | — | — | 2/0 |
 | [`terrain`](extras/terrain.md) | Terrain plugin. | 2 | 1 | — | 1 | 3/2 |
-| [`trajectory`](extras/trajectory.md) | Trajectory plugin to receive planned path from the FCU and | 1 | 2 | — | — | 1/3 |
+| [`trajectory`](extras/trajectory.md) | Trajectory plugin to receive planned path from the FCU and | 1 | 2 | — | — | 1/2 |
 | [`tunnel`](extras/tunnel.md) | Tunnel plugin | 1 | 1 | — | — | 1/1 |
 | [`vfr_hud`](extras/vfr_hud.md) | VFR HUD plugin. | 1 | — | — | — | 1/0 |
 | [`vibration`](extras/vibration.md) | Vibration plugin | 1 | — | — | — | 1/0 |

@@ -1,0 +1,39 @@
+# QoS profiles
+
+This page lists every distinct QoS profile used by the MAVROS plugins. If you are
+unfamiliar with QoS in ROS 2, see the
+[ROS 2 QoS documentation](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Quality-of-Service-Settings.html).
+Standard `rclcpp::*` profiles link to the rclcpp API docs.
+
+{% macro render_used(used_std, used_extras) -%}
+Used by: {% if used_std -%}*std*: {% for p, link in used_std -%}[`{{ p }}`]({{ link }}){% if not loop.last %}, {% endif %}{%- endfor %}{%- endif %}{% if used_std and used_extras -%}; {% endif %}{% if used_extras -%}*extras*: {% for p, link in used_extras -%}[`{{ p }}`]({{ link }}){% if not loop.last %}, {% endif %}{%- endfor %}{%- endif %}
+{%- endmacro %}
+
+## Named
+
+{% for e in named %}
+### {{ e.title }} {{ '{#' }}{{ e.id }}{{ '}' }}
+
+{% if e.rclcpp_link %}
+See [rclcpp::{{ e.rclcpp_link }}](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1{{ e.rclcpp_link }}.html).
+
+{% endif %}
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| {{ e.settings.history }} | {{ e.settings.depth }} | {{ e.settings.reliability }} | {{ e.settings.durability }} | {{ e.settings.deadline }} | {{ e.settings.lifespan }} | {{ e.settings.liveliness }} |
+
+{{ render_used(e.used_std, e.used_extras) }}
+
+{% endfor %}
+## Inline
+
+{% for e in inline %}
+### {{ e.title }} {{ '{#' }}{{ e.id }}{{ '}' }}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| {{ e.settings.history }} | {{ e.settings.depth }} | {{ e.settings.reliability }} | {{ e.settings.durability }} | {{ e.settings.deadline }} | {{ e.settings.lifespan }} | {{ e.settings.liveliness }} |
+
+{{ render_used(e.used_std, e.used_extras) }}
+
+{% endfor %}

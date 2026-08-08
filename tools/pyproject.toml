@@ -11,8 +11,8 @@ dependencies = [
     "attrs",
     "comment-parser",
     # docs - `uv tool install` do not have `--group` similar to `uv sync`.
-    "mkdocs",
-    "mkdocs-material",
+    "mkdocs<2",
+    "mkdocs-material>=9",
     "mkdocstrings-python",
     "mkdocs-click",
     "sphinx",
@@ -35,8 +35,8 @@ dev = [
     "pytest-cov",
 ]
 docs = [
-    "mkdocs",
-    "mkdocs-material",
+    "mkdocs<2",
+    "mkdocs-material>=9",
     "mkdocstrings-python",
     "mkdocs-click",
     "sphinx",
