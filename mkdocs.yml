@@ -2,6 +2,20 @@
 site_name: MAVROS a MAVLink to ROS2 bridge
 repo_url: https://github.com/mavlink/mavros
 
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Plugins:
+      - plugins/index.md
+      - Standard plugins (mavros): plugins/std/
+      - Extra plugins (mavros_extras): plugins/extras/
+      - QoS profiles: plugins/qos.md
+  - Examples:
+      - examples/task_control.md
+      - examples/waypoint_mission.md
+  - Changelog: changelog.md
+  - History: history.md
+
 plugins:
   - autorefs
   - markdown-exec
@@ -35,6 +49,12 @@ theme:
     - navigation.indexes
     - navigation.tracking
     - toc.integrate
+
+validation:
+  nav:
+    # Directory nav entries (e.g. `plugins/std/`) expand their children
+    # correctly but mkdocs still logs a spurious "not found" warning.
+    not_found: info
 
 markdown_extensions:
   - mkdocs-click
