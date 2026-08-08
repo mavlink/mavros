@@ -310,10 +310,20 @@ def qos_slug(q: dict[str, ty.Any]) -> str:
     return "".join(out) or "q"
 
 
-def qos_key(q: dict[str, ty.Any]) -> str:
-    """Canonical key for deduplicating QoS profiles."""
+def qos_key(q: dict[str, ty.Any], plugin: str = "") -> str:
+    """Canonical key for deduplicating QoS profiles.
+
+    Named profiles are shared across plugins and deduplicated by name. Inline
+    profiles with a named variable (e.g. `state_qos`) are local to the plugin
+    that declares them, so even identical settings (e.g.
+    `QoS(10).transient_local()`) are kept distinct per plugin unless a common
+    named profile is introduced. Plain inline profiles without a variable are
+    deduplicated by their settings alone.
+    """
     if q.get("kind") == "named":
         return "named:" + q.get("name", "")
+    if q.get("var"):
+        return "inline:" + plugin + "/" + q.get("var", "") + "|" + q.get("config", "")
     return "inline:" + q.get("config", "")
 
 
@@ -330,7 +340,7 @@ def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]
             q = parse_qos(ent.qos)
             if not q:
                 continue
-            k = qos_key(q)
+            k = qos_key(q, pl.plugin)
             if k not in reg:
                 reg[k] = {
                     "key": k,
@@ -469,7 +479,7 @@ def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> s
     q = parse_qos(ent.qos)
     if not q:
         return ""
-    e = reg.get(qos_key(q))
+    e = reg.get(qos_key(q, plugin))
     if not e:
         return ""
     if e["kind"] == "named":

@@ -126,4 +126,13 @@ Used by: *extras*: [`terrain`](extras/terrain.md)
 |---|---|---|---|---|---|---|
 | Keep last | 10 | Reliable | Transient local | Default | Default | System default |
 
-Used by: *std*: [`home_position`](std/home_position.md), [`sys_status`](std/sys_status.md)
+Used by: *std*: [`home_position`](std/home_position.md)
+
+
+### sys_status/state_qos {#sys_status-state_qos}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 10 | Reliable | Transient local | Default | Default | System default |
+
+Used by: *std*: [`sys_status`](std/sys_status.md)
