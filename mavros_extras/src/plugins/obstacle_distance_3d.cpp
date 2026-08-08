@@ -71,7 +71,7 @@ private:
       * Message specification: https://mavlink.io/en/messages/ardupilotmega.html#OBSTACLE_DISTANCE_3D
      * @param msg  The received ObstacleDistance3D message.
      */
-  void obstacle_cb(const mavros_msgs::msg::ObstacleDistance3D::SharedPtr msg)
+  void obstacle_cb(const mavros_msgs::msg::ObstacleDistance3D::ConstSharedPtr msg)
   {
         // --- Data Validation ---
         // Check for invalid floating point numbers before sending.

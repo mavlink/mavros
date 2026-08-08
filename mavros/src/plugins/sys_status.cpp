@@ -1418,7 +1418,7 @@ private:
 
   /* -*- subscription callbacks -*- */
 
-  void statustext_cb(const mavros_msgs::msg::StatusText::SharedPtr req)
+  void statustext_cb(const mavros_msgs::msg::StatusText::ConstSharedPtr req)
   {
     mavlink::common::msg::STATUSTEXT statustext {};
     statustext.severity = req->severity;

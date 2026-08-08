@@ -84,7 +84,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void mocap_pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
+  void mocap_pose_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose)
   {
     Eigen::Quaterniond q_enu;
 
@@ -104,7 +104,7 @@ private:
       position);
   }
 
-  void mocap_tf_cb(const geometry_msgs::msg::TransformStamped::SharedPtr trans)
+  void mocap_tf_cb(const geometry_msgs::msg::TransformStamped::ConstSharedPtr trans)
   {
     Eigen::Quaterniond q_enu;
 

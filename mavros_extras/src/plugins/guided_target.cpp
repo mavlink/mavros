@@ -109,7 +109,7 @@ private:
   /**
    * global origin in LLA
    */
-  void gp_origin_cb(const geographic_msgs::msg::GeoPointStamped::SharedPtr msg)
+  void gp_origin_cb(const geographic_msgs::msg::GeoPointStamped::ConstSharedPtr msg)
   {
     ecef_origin = {msg->position.latitude, msg->position.longitude, msg->position.altitude};
     /**

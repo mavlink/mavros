@@ -426,7 +426,7 @@ private:
   }
 
   /* -*- callbacks -*- */
-  void mocap_tf_cb(const geometry_msgs::msg::TransformStamped::SharedPtr trans)
+  void mocap_tf_cb(const geometry_msgs::msg::TransformStamped::ConstSharedPtr trans)
   {
     Eigen::Affine3d pos_enu = tf2::transformToEigen(trans->transform);
 
@@ -435,7 +435,7 @@ private:
       ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
   }
 
-  void mocap_pose_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr req)
+  void mocap_pose_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d pos_enu; tf2::fromMsg(req->pose.pose, pos_enu);
     horiz_accuracy = (req->pose.covariance[0] + req->pose.covariance[7]) / 2.0f;
@@ -446,7 +446,7 @@ private:
       ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
   }
 
-  void mocap_pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
+  void mocap_pose_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d pos_enu; tf2::fromMsg(req->pose, pos_enu);
 
@@ -455,7 +455,7 @@ private:
       ftf::transform_frame_enu_ecef(Eigen::Vector3d(pos_enu.translation()), map_origin));
   }
 
-  void vision_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
+  void vision_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d pos_enu; tf2::fromMsg(req->pose, pos_enu);
 

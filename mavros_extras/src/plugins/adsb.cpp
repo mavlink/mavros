@@ -130,7 +130,7 @@ private:
     adsb_pub->publish(adsb_msg);
   }
 
-  void adsb_cb(const mavros_msgs::msg::ADSBVehicle::SharedPtr req)
+  void adsb_cb(const mavros_msgs::msg::ADSBVehicle::ConstSharedPtr req)
   {
     mavlink::common::msg::ADSB_VEHICLE adsb{};
 

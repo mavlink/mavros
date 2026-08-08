@@ -89,7 +89,7 @@ private:
   rclcpp::Subscription<mavros_msgs::msg::OpenDroneIDSystemUpdate>::SharedPtr system_update_sub;
 
 
-  void basic_id_cb(const mavros_msgs::msg::OpenDroneIDBasicID::SharedPtr msg)
+  void basic_id_cb(const mavros_msgs::msg::OpenDroneIDBasicID::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_BASIC_ID basic_id{};
 
@@ -102,7 +102,7 @@ private:
     uas->send_message(basic_id);
   }
 
-  void operator_id_cb(const mavros_msgs::msg::OpenDroneIDOperatorID::SharedPtr msg)
+  void operator_id_cb(const mavros_msgs::msg::OpenDroneIDOperatorID::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_OPERATOR_ID operator_id{};
 
@@ -114,7 +114,7 @@ private:
     uas->send_message(operator_id);
   }
 
-  void self_id_cb(const mavros_msgs::msg::OpenDroneIDSelfID::SharedPtr msg)
+  void self_id_cb(const mavros_msgs::msg::OpenDroneIDSelfID::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SELF_ID self_id{};
 
@@ -126,7 +126,7 @@ private:
     uas->send_message(self_id);
   }
 
-  void system_cb(const mavros_msgs::msg::OpenDroneIDSystem::SharedPtr msg)
+  void system_cb(const mavros_msgs::msg::OpenDroneIDSystem::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SYSTEM system{};
 
@@ -148,7 +148,7 @@ private:
     uas->send_message(system);
   }
 
-  void system_update_cb(const mavros_msgs::msg::OpenDroneIDSystemUpdate::SharedPtr msg)
+  void system_update_cb(const mavros_msgs::msg::OpenDroneIDSystemUpdate::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPEN_DRONE_ID_SYSTEM_UPDATE system_update{};
 
@@ -162,7 +162,7 @@ private:
   }
 
   //! ODID timestamp is a 32 bit Unix Timestamp in seconds since 00:00:00 01/01/2019.
-  uint32_t to_timestamp(std_msgs::msg::Header & hdr)
+  uint32_t to_timestamp(const std_msgs::msg::Header & hdr)
   {
     auto s = hdr.stamp.sec;
 

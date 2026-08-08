@@ -60,7 +60,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#CELLULAR_STATUS
    * @param msg	received CellularStatus msg
    */
-  void status_cb(const mavros_msgs::msg::CellularStatus::SharedPtr msg)
+  void status_cb(const mavros_msgs::msg::CellularStatus::ConstSharedPtr msg)
   {
     mavlink::common::msg::CELLULAR_STATUS cs{};
 

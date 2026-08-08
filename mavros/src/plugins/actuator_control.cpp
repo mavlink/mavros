@@ -79,7 +79,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void actuator_control_cb(const mavros_msgs::msg::ActuatorControl::SharedPtr req)
+  void actuator_control_cb(const mavros_msgs::msg::ActuatorControl::ConstSharedPtr req)
   {
     //! about groups, mixing and channels: @p https://pixhawk.org/dev/mixing
     //! message definition here: @p https://mavlink.io/en/messages/common.html#SET_ACTUATOR_CONTROL_TARGET

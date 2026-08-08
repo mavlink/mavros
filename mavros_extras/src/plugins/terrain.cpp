@@ -185,7 +185,7 @@ private:
       });
   }
 
-  void data_cb(const mavros_msgs::msg::TerrainData::SharedPtr msg)
+  void data_cb(const mavros_msgs::msg::TerrainData::ConstSharedPtr msg)
   {
     mavlink::common::msg::TERRAIN_DATA td{};
     td.lat = std::lround(msg->latitude * 1e7);

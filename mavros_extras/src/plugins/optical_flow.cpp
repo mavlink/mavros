@@ -174,7 +174,7 @@ private:
     range_pub->publish(range_msg);
   }
 
-  void send_cb(const mavros_msgs::msg::OpticalFlow::SharedPtr msg)
+  void send_cb(const mavros_msgs::msg::OpticalFlow::ConstSharedPtr msg)
   {
     mavlink::common::msg::OPTICAL_FLOW flow_msg = {};
 

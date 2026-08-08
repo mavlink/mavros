@@ -93,7 +93,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void send_cb(const mavros_msgs::msg::ManualControl::SharedPtr req)
+  void send_cb(const mavros_msgs::msg::ManualControl::ConstSharedPtr req)
   {
     mavlink::common::msg::MANUAL_CONTROL msg = {};
     msg.target = uas->get_tgt_system();

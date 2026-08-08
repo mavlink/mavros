@@ -69,7 +69,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#HEARTBEAT
    * @param req	received CompanionProcessStatus msg
    */
-  void status_cb(const mavros_msgs::msg::CompanionProcessStatus::SharedPtr req)
+  void status_cb(const mavros_msgs::msg::CompanionProcessStatus::ConstSharedPtr req)
   {
     mavlink::minimal::msg::HEARTBEAT heartbeat {};
 

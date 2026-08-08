@@ -205,7 +205,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void local_cb(const mavros_msgs::msg::PositionTarget::SharedPtr req)
+  void local_cb(const mavros_msgs::msg::PositionTarget::ConstSharedPtr req)
   {
     using mavros_msgs::msg::PositionTarget;
 
@@ -251,7 +251,7 @@ private:
       yaw, yaw_rate);
   }
 
-  void global_cb(const mavros_msgs::msg::GlobalPositionTarget::SharedPtr req)
+  void global_cb(const mavros_msgs::msg::GlobalPositionTarget::ConstSharedPtr req)
   {
     Eigen::Vector3d velocity, af;
     float yaw, yaw_rate;
@@ -282,7 +282,7 @@ private:
       yaw, yaw_rate);
   }
 
-  void attitude_cb(const mavros_msgs::msg::AttitudeTarget::SharedPtr req)
+  void attitude_cb(const mavros_msgs::msg::AttitudeTarget::ConstSharedPtr req)
   {
     Eigen::Quaterniond desired_orientation;
     Eigen::Vector3d baselink_angular_rate;

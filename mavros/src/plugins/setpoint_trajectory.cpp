@@ -113,7 +113,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr trajectory_reset_srv;
   rclcpp::TimerBase::SharedPtr sp_timer;
 
-  trajectory_msgs::msg::MultiDOFJointTrajectory::SharedPtr trajectory_target_msg;
+  trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr trajectory_target_msg;
 
   V_Point::const_iterator setpoint_target;
   V_Point::const_iterator next_setpoint_target;
@@ -137,7 +137,7 @@ private:
       node->create_wall_timer(dur, std::bind(&SetpointTrajectoryPlugin::reference_cb, this));
   }
 
-  void publish_path(const trajectory_msgs::msg::MultiDOFJointTrajectory::SharedPtr req)
+  void publish_path(const trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr req)
   {
     nav_msgs::msg::Path msg;
 
@@ -160,7 +160,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void local_cb(const trajectory_msgs::msg::MultiDOFJointTrajectory::SharedPtr req)
+  void local_cb(const trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr req)
   {
     lock_guard lock(mutex);
 

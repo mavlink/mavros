@@ -63,7 +63,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
    * @param req	received OnboardComputerStatus msg
    */
-  void status_cb(const mavros_msgs::msg::OnboardComputerStatus::SharedPtr req)
+  void status_cb(const mavros_msgs::msg::OnboardComputerStatus::ConstSharedPtr req)
   {
     mavlink::common::msg::ONBOARD_COMPUTER_STATUS status {};
     status.time_usec = get_time_usec(req->header.stamp);    //!< [microsecs]

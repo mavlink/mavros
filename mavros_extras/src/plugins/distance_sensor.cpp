@@ -125,7 +125,7 @@ private:
   }
 
   //! sensor_msgs/Range subscription callback
-  void range_cb(const Range::SharedPtr msg);
+  void range_cb(const Range::ConstSharedPtr msg);
 };
 
 
@@ -460,7 +460,7 @@ DistanceSensorItem::DistanceSensorItem(
   }
 }
 
-void DistanceSensorItem::range_cb(const Range::SharedPtr msg)
+void DistanceSensorItem::range_cb(const Range::ConstSharedPtr msg)
 {
   using mavlink::common::MAV_DISTANCE_SENSOR;
 

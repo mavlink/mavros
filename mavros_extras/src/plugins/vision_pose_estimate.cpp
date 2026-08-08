@@ -174,7 +174,7 @@ private:
     send_vision_estimate(transform.header.stamp, tr, cov);
   }
 
-  void vision_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
+  void vision_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d tr;
     tf2::fromMsg(req->pose, tr);
@@ -183,7 +183,7 @@ private:
     send_vision_estimate(req->header.stamp, tr, cov);
   }
 
-  void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr req)
+  void vision_cov_cb(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d tr;
     tf2::fromMsg(req->pose.pose, tr);

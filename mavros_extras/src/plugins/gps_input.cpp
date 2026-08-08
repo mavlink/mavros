@@ -74,7 +74,7 @@ private:
   /**
    * @brief Send GPS coordinates through GPS_INPUT Mavlink message
    */
-  void send_cb(const mavros_msgs::msg::GPSINPUT::SharedPtr ros_msg)
+  void send_cb(const mavros_msgs::msg::GPSINPUT::ConstSharedPtr ros_msg)
   {
     auto now_ = node->now();
 

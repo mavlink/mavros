@@ -77,7 +77,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#GPS_RTCM_DATA
    * @param msg		Received ROS msg
    */
-  void rtcm_cb(const mavros_msgs::msg::RTCM::SharedPtr msg)
+  void rtcm_cb(const mavros_msgs::msg::RTCM::ConstSharedPtr msg)
   {
     mavlink::common::msg::GPS_RTCM_DATA rtcm_data = {};
     const size_t max_frag_len = rtcm_data.data.size();
