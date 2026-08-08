@@ -421,17 +421,19 @@ def render_plugin_index(
     std_plugins: list[PluginApi], extras_plugins: list[PluginApi]
 ) -> str:
     """Render the combined plugin index page from a Jinja template."""
+    # This renderer is used only for offline docs generation, not for web
+    # request/response HTML.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     env = Environment(
         loader=FileSystemLoader(str(PLUGIN_INDEX_TEMPLATE.parent)), autoescape=False
     )
     template = env.get_template(PLUGIN_INDEX_TEMPLATE.name)
-    return (
-        template.render(
-            std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
-            extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
-        ).rstrip()
-        + "\n"
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    body = template.render(
+        std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
+        extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
     )
+    return body.rstrip() + "\n"
 
 
 def render_plugin_markdown_with_template(
