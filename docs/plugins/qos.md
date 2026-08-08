@@ -1,33 +1,127 @@
 # QoS profiles
 
-This page lists every QoS profile used by the MAVROS plugins. Standard `rclcpp::*` profiles link to the rclcpp API docs.
-
-## Inline
-
-| Id | Config | Topics |
-|----|--------|--------|
-| `qos_1_` | `QoS(1)` | `cellular_status`, `gps_input`, `gps_rtk`, `mocap_pose_estimate`, `odometry`, `open_drone_id`, `optical_flow`, `play_tune`, `px4flow` |
-
-| `qos_10_` | `QoS(10)` | `adsb`, `cam_imu_sync`, `camera`, `companion_process_status`, `debug_value`, `esc_status`, `esc_telemetry`, `fake_gps`, `gimbal_control`, `gps_rtk`, `gps_status`, `guided_target`, `hil`, `home_position`, `landing_target`, `manual_control`, `mount_control`, `nav_controller_output`, `obstacle_distance_3d`, `obstacle_distance`, `odometry`, `onboard_computer_status`, `optical_flow`, `px4flow`, `rangefinder`, `rc_io`, `sim_state`, `terrain`, `trajectory`, `tunnel`, `vfr_hud`, `vibration`, `vision_pose`, `vision_speed`, `wheel_odometry` |
-
-| `qos_1000_` | `QoS(1000)` | `log_transfer` |
-
-| `qos_2_` | `QoS(2)` | `mag_calibration_status` |
-
-| `qos_64_` | `QoS(64)` | `terrain` |
-
-| `home_position-state_qos` | `rclcpp::QoS(10).transient_local()` | `home_position`, `sys_status` |
+This page lists every distinct QoS profile used by the MAVROS plugins. If you are
+unfamiliar with QoS in ROS 2, see the
+[ROS 2 QoS documentation](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Quality-of-Service-Settings.html).
+Standard `rclcpp::*` profiles link to the rclcpp API docs.
 
 ## Named
 
-| Id | Profile | Topics |
-|----|---------|--------|
-| `latchedstateqos` | `LatchedStateQoS` | `geofence`, `global_position`, `guided_target`, `rallypoint`, `waypoint` |
 
-| `parametereventsqos` | [`ParameterEventsQoS`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ParameterEventsQoS.html) | `param` |
+### LatchedStateQoS {#latchedstateqos}
 
-| `parametersqos` | [`ParametersQoS`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ParametersQoS.html) | `param` |
 
-| `sensordataqos` | [`SensorDataQoS`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1SensorDataQoS.html) | `actuator_control`, `altitude`, `distance_sensor`, `global_position`, `imu`, `landing_target`, `local_position`, `setpoint_accel`, `setpoint_position`, `setpoint_raw`, `setpoint_trajectory`, `setpoint_velocity`, `sys_status`, `sys_time`, `tdr_radio`, `wind_estimation` |
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 1 | Reliable | Transient local | Default | Default | System default |
 
-| `servicesqos` | [`ServicesQoS`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ServicesQoS.html) | `command`, `geofence`, `rallypoint`, `sys_status`, `waypoint` |
+Used by: [`geofence`](std/geofence.md), [`global_position`](std/global_position.md), [`guided_target`](extras/guided_target.md), [`rallypoint`](std/rallypoint.md), [`waypoint`](std/waypoint.md)
+
+
+### ParameterEventsQoS {#parametereventsqos}
+
+
+See [rclcpp::ParameterEventsQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ParameterEventsQoS.html).
+
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 1000 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`param`](std/param.md)
+
+
+### ParametersQoS {#parametersqos}
+
+
+See [rclcpp::ParametersQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ParametersQoS.html).
+
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 1000 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`param`](std/param.md)
+
+
+### SensorDataQoS {#sensordataqos}
+
+
+See [rclcpp::SensorDataQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1SensorDataQoS.html).
+
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 5 | Best effort | Volatile | Default | Default | System default |
+
+Used by: [`actuator_control`](std/actuator_control.md), [`altitude`](std/altitude.md), [`distance_sensor`](extras/distance_sensor.md), [`global_position`](std/global_position.md), [`imu`](std/imu.md), [`landing_target`](extras/landing_target.md), [`local_position`](std/local_position.md), [`setpoint_accel`](std/setpoint_accel.md), [`setpoint_position`](std/setpoint_position.md), [`setpoint_raw`](std/setpoint_raw.md), [`setpoint_trajectory`](std/setpoint_trajectory.md), [`setpoint_velocity`](std/setpoint_velocity.md), [`sys_status`](std/sys_status.md), [`sys_time`](std/sys_time.md), [`tdr_radio`](extras/3dr_radio.md), [`wind_estimation`](std/wind_estimation.md)
+
+
+### ServicesQoS {#servicesqos}
+
+
+See [rclcpp::ServicesQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1ServicesQoS.html).
+
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 10 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`command`](std/command.md), [`geofence`](std/geofence.md), [`rallypoint`](std/rallypoint.md), [`sys_status`](std/sys_status.md), [`waypoint`](std/waypoint.md)
+
+
+## Inline
+
+
+### QoS(1) {#qos_1_}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 1 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`cellular_status`](extras/cellular_status.md), [`gps_input`](extras/gps_input.md), [`gps_rtk`](extras/gps_rtk.md), [`mocap_pose_estimate`](extras/mocap_pose_estimate.md), [`odometry`](extras/odom.md), [`open_drone_id`](extras/open_drone_id.md), [`optical_flow`](extras/optical_flow.md), [`play_tune`](extras/play_tune.md), [`px4flow`](extras/px4flow.md)
+
+
+### QoS(10) {#qos_10_}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 10 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`adsb`](extras/adsb.md), [`cam_imu_sync`](extras/cam_imu_sync.md), [`camera`](extras/camera.md), [`companion_process_status`](extras/companion_process_status.md), [`debug_value`](extras/debug_value.md), [`esc_status`](extras/esc_status.md), [`esc_telemetry`](extras/esc_telemetry.md), [`fake_gps`](extras/fake_gps.md), [`gimbal_control`](extras/gimbal_control.md), [`gps_rtk`](extras/gps_rtk.md), [`gps_status`](extras/gps_status.md), [`guided_target`](extras/guided_target.md), [`hil`](extras/hil.md), [`home_position`](std/home_position.md), [`landing_target`](extras/landing_target.md), [`manual_control`](std/manual_control.md), [`mount_control`](extras/mount_control.md), [`nav_controller_output`](std/nav_controller_output.md), [`obstacle_distance`](extras/obstacle_distance.md), [`obstacle_distance_3d`](extras/obstacle_distance_3d.md), [`odometry`](extras/odom.md), [`onboard_computer_status`](extras/onboard_computer_status.md), [`optical_flow`](extras/optical_flow.md), [`px4flow`](extras/px4flow.md), [`rangefinder`](extras/rangefinder.md), [`rc_io`](std/rc_io.md), [`sim_state`](extras/sim_state.md), [`terrain`](extras/terrain.md), [`trajectory`](extras/trajectory.md), [`tunnel`](extras/tunnel.md), [`vfr_hud`](extras/vfr_hud.md), [`vibration`](extras/vibration.md), [`vision_pose`](extras/vision_pose_estimate.md), [`vision_speed`](extras/vision_speed_estimate.md), [`wheel_odometry`](extras/wheel_odometry.md)
+
+
+### QoS(1000) {#qos_1000_}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 1000 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`log_transfer`](extras/log_transfer.md)
+
+
+### QoS(2) {#qos_2_}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 2 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`mag_calibration_status`](extras/mag_calibration_status.md)
+
+
+### QoS(64) {#qos_64_}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 64 | Reliable | Volatile | Default | Default | System default |
+
+Used by: [`terrain`](extras/terrain.md)
+
+
+### home_position/state_qos {#home_position-state_qos}
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 10 | Reliable | Transient local | Default | Default | System default |
+
+Used by: [`home_position`](std/home_position.md), [`sys_status`](std/sys_status.md)

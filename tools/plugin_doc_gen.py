@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -34,6 +35,7 @@ SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 DEFAULT_MARKDOWN_TEMPLATE = SCRIPT_DIR / "templates" / "plugin.md.j2"
 PLUGIN_INDEX_TEMPLATE = SCRIPT_DIR / "templates" / "plugin_index.md.j2"
+QOS_TEMPLATE = SCRIPT_DIR / "templates" / "qos.md.j2"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -315,6 +317,11 @@ def qos_key(q: dict[str, ty.Any]) -> str:
     return "inline:" + q.get("config", "")
 
 
+def _plugin_link(pl: PluginApi) -> str:
+    sub = "extras" if "mavros_extras" in pl.path.as_posix() else "std"
+    return f"{sub}/{pl.path.stem}.md"
+
+
 def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]:
     """Collect distinct QoS profiles across all plugins and assign ids/labels."""
     reg: dict[str, dict[str, ty.Any]] = {}
@@ -332,13 +339,13 @@ def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]
                     "config": q.get("config", ""),
                     "uses": [],
                 }
-            reg[k]["uses"].append((pl.plugin, ent.name, str(q.get("var", "")) or ""))
+            reg[k]["uses"].append((pl.plugin, _plugin_link(pl), str(q.get("var", "")) or ""))
     for k, e in reg.items():
         if e["kind"] == "named":
             e["id"] = qos_slug(e)
             e["label"] = e["name"]
         else:
-            var_hints = [f"{p}/{v}" for (p, _n, v) in e["uses"] if v]
+            var_hints = [f"{p}/{v}" for (p, _l, v) in e["uses"] if v]
             if var_hints:
                 e["id"] = qos_slug({"kind": "inline", "config": var_hints[0]})
                 e["label"] = var_hints[0]
@@ -346,6 +353,110 @@ def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]
                 e["id"] = qos_slug(e)
                 e["label"] = e["config"]
     return reg
+
+
+# Named QoS profile settings (matches the rclcpp / rmw defaults).
+_QOS_COLS = ["history", "depth", "reliability", "durability", "deadline", "lifespan", "liveliness"]
+_QOS_COLS_TITLE = [
+    "History", "Depth", "Reliability", "Durability", "Deadline", "Lifespan", "Liveliness",
+]
+_QOS_DEFAULT = {
+    "history": "Keep last",
+    "depth": "10",
+    "reliability": "Reliable",
+    "durability": "Volatile",
+    "deadline": "Default",
+    "lifespan": "Default",
+    "liveliness": "System default",
+}
+RCLCPP_QOS_SETTINGS: dict[str, dict[str, str]] = {
+    "SensorDataQoS": {**_QOS_DEFAULT, "depth": "5", "reliability": "Best effort"},
+    "ServicesQoS": {**_QOS_DEFAULT, "depth": "10"},
+    "ParametersQoS": {**_QOS_DEFAULT, "depth": "1000"},
+    "ParameterEventsQoS": {**_QOS_DEFAULT, "depth": "1000"},
+    "RosoutQoS": {**_QOS_DEFAULT, "depth": "1000", "durability": "Transient local", "lifespan": "10 s"},
+    "SystemDefaultQoS": {
+        "history": "System default",
+        "depth": "System default",
+        "reliability": "System default",
+        "durability": "System default",
+        "deadline": "Default",
+        "lifespan": "Default",
+        "liveliness": "System default",
+    },
+    "LatchedStateQoS": {**_QOS_DEFAULT, "depth": "1", "durability": "Transient local"},
+}
+
+
+def parse_inline_qos(config: str) -> dict[str, str]:
+    """Derive settings from an inline QoS(...).chain config string."""
+    s = dict(_QOS_DEFAULT)
+    m = re.search(r"QoS\((\d+)\)", config)
+    if m:
+        s["depth"] = m.group(1)
+    if "keep_all(" in config:
+        s["history"] = "Keep all"
+    if "best_effort(" in config:
+        s["reliability"] = "Best effort"
+    if "reliable(" in config:
+        s["reliability"] = "Reliable"
+    if "transient_local(" in config:
+        s["durability"] = "Transient local"
+    if "volatile(" in config:
+        s["durability"] = "Volatile"
+    return s
+
+
+def qos_settings(q: dict[str, ty.Any]) -> dict[str, str] | None:
+    if q.get("kind") == "named":
+        return RCLCPP_QOS_SETTINGS.get(q.get("name", ""))
+    return parse_inline_qos(q.get("config", ""))
+
+
+def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
+    """Render the QoS appendix page from a Jinja template."""
+    rclcpp_profiles = {
+        "SensorDataQoS",
+        "ServicesQoS",
+        "ParametersQoS",
+        "ParameterEventsQoS",
+        "RosoutQoS",
+        "SystemDefaultQoS",
+    }
+
+    def build_entries(kind: str) -> list[dict[str, ty.Any]]:
+        out: list[dict[str, ty.Any]] = []
+        for e in sorted(
+            (x for x in reg.values() if x["kind"] == kind), key=lambda x: x["label"]
+        ):
+            used: dict[str, str] = {}
+            for p, link, _v in e["uses"]:
+                used.setdefault(p, link)
+            out.append(
+                {
+                    "id": e["id"],
+                    "title": e["name"] if kind == "named" else e["label"],
+                    "rclcpp_link": e["name"]
+                    if kind == "named" and e["name"] in rclcpp_profiles
+                    else None,
+                    "settings": qos_settings(e) or {},
+                    "used": sorted(used.items()),
+                }
+            )
+        return out
+
+    named = build_entries("named")
+    inline = build_entries("inline")
+
+    # This renderer is used only for offline docs generation, not web HTML.
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    env = Environment(
+        loader=FileSystemLoader(str(QOS_TEMPLATE.parent)), autoescape=False
+    )
+    template = env.get_template(QOS_TEMPLATE.name)
+    # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    body = template.render(named=named, inline=inline)
+    return body.rstrip() + "\n"
 
 
 def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> str:
@@ -362,59 +473,6 @@ def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> s
     if var:
         return f'[{var}](../qos.md#{e["id"]} "{e["config"]}")'
     return f"[{e['config']}](../qos.md#{e['id']})"
-
-
-def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
-    """Render the QoS appendix page listing each distinct profile once."""
-    lines = [
-        "# QoS profiles",
-        "",
-        (
-            "This page lists every QoS profile used by the MAVROS plugins. "
-            "Standard `rclcpp::*` profiles link to the rclcpp API docs."
-        ),
-        "",
-    ]
-    by_kind = sorted(reg.values(), key=lambda e: (e["kind"], e["label"]))
-    cur_kind = None
-    for e in by_kind:
-        if e["kind"] != cur_kind:
-            cur_kind = e["kind"]
-            lines.append(f"## {cur_kind.capitalize()}")
-            lines.append("")
-            if cur_kind == "inline":
-                lines.append("| Id | Config | Topics |")
-                lines.append("|----|--------|--------|")
-            else:
-                lines.append("| Id | Profile | Topics |")
-                lines.append("|----|---------|--------|")
-        if cur_kind == "inline":
-            uses = ", ".join(sorted({f"`{p}`" for p, _n, _v in e["uses"]}))
-            lines.append(f"| `{e['id']}` | `{e['config']}` | {uses} |")
-        else:
-            uses = ", ".join(sorted({f"`{p}`" for p, _n, _v in e["uses"]}))
-            rclcpp = (
-                e["name"]
-                if e["name"].startswith(
-                    (
-                        "SensorDataQoS",
-                        "ServicesQoS",
-                        "ParametersQoS",
-                        "ParameterEventsQoS",
-                        "RosoutQoS",
-                        "SystemDefaultQoS",
-                    )
-                )
-                else ""
-            )
-            name_cell = (
-                f"[`{e['name']}`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1{e['name']}.html)"
-                if rclcpp
-                else f"`{e['name']}`"
-            )
-            lines.append(f"| `{e['id']}` | {name_cell} | {uses} |")
-        lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_plugin_index(
