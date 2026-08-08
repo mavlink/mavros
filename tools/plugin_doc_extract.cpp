@@ -229,7 +229,7 @@ void resolve_mavlink_meta(MavlinkEntry & e, const std::map<std::string, int> & i
 // --------------------------------------------------------------------------
 
 static const std::unordered_set<std::string> kNamedQosHelpers = {
-  "LatchedStateQoS", "SensorDataQoS", "ServicesQoS", "ParametersQoS",
+  "LatchedStateQoS", "StateQoS", "SensorDataQoS", "ServicesQoS", "ParametersQoS",
   "ParameterEventsQoS", "SystemDefaultQoS", "RosoutQoS",
 };
 

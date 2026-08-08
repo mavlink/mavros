@@ -395,6 +395,7 @@ RCLCPP_QOS_SETTINGS: dict[str, dict[str, str]] = {
         "liveliness": "System default",
     },
     "LatchedStateQoS": {**_QOS_DEFAULT, "depth": "1", "durability": "Transient local"},
+    "StateQoS": {**_QOS_DEFAULT, "depth": "10", "durability": "Transient local"},
 }
 
 
