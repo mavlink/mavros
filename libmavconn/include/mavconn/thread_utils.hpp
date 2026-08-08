@@ -44,19 +44,23 @@ namespace utils
 template<typename ... Args>
 std::string format(const std::string & fmt, Args... args)
 {
-  std::array<char, 256> stack{};
-  const int written = std::snprintf(stack.data(), stack.size(), fmt.c_str(), args ...);
-  if (written < 0) {
-    return {};   // encoding error in the format or arguments
-  }
-  if (static_cast<size_t>(written) < stack.size()) {
-    return std::string(stack.data(), written);
-  }
+  if constexpr (sizeof...(Args) == 0) {
+    return fmt;
+  } else {
+    std::array<char, 256> stack{};
+    const int written = std::snprintf(stack.data(), stack.size(), fmt.c_str(), args ...);
+    if (written < 0) {
+      return {};   // encoding error in the format or arguments
+    }
+    if (static_cast<size_t>(written) < stack.size()) {
+      return std::string(stack.data(), written);
+    }
 
-  std::string ret;
-  ret.resize(static_cast<size_t>(written));
-  std::snprintf(ret.data(), ret.size() + 1, fmt.c_str(), args ...);
-  return ret;
+    std::string ret;
+    ret.resize(static_cast<size_t>(written));
+    std::snprintf(ret.data(), ret.size() + 1, fmt.c_str(), args ...);
+    return ret;
+  }
 }
 
 /**
