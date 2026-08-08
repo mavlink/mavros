@@ -110,4 +110,4 @@ Ask questions (not bug reports) on:
 - ROS2 Jazzy: [![Build Status](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/)
 - ROS2 Kilted: [![Build Status](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/)
 - ROS2 Lyrical: [![Build Status](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/badge/icon)](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/)
-- ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/)
+- ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_resolute_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_resolute_amd64/)
