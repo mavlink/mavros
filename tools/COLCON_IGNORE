@@ -1,0 +1,4 @@
+# This directory is NOT a colcon package. It is a uv-managed, standalone tool
+# directory (clang-tooling extractor + doc generators). Its CMakeLists.txt is
+# only used to build the extractor directly; colcon must ignore it, otherwise it
+# tries to build it and fails on the clang/LLVM dependency.
