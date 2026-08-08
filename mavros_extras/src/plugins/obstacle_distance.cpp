@@ -81,7 +81,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#OBSTACLE_DISTANCE
    * @param req	received ObstacleDistance msg
    */
-  void obstacle_cb(const sensor_msgs::msg::LaserScan::SharedPtr req)
+  void obstacle_cb(const sensor_msgs::msg::LaserScan::ConstSharedPtr req)
   {
     mavlink::common::msg::OBSTACLE_DISTANCE obstacle {};
 

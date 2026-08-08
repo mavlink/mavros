@@ -405,7 +405,7 @@ void UAS::connect_to_router()
     std::bind(&UAS::recv_message, this, std::placeholders::_1));
 }
 
-void UAS::recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg)
+void UAS::recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)
 {
   mavlink::mavlink_message_t msg;
 

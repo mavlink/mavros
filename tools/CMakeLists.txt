@@ -62,5 +62,5 @@ target_link_libraries(plugin_doc_extract PRIVATE
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(plugin_doc_extract PRIVATE -O3 -Wall -Wextra -Wpedantic)
+  target_compile_options(plugin_doc_extract PRIVATE -O3 -DNDEBUG -Wall -Wextra -Wpedantic)
 endif()

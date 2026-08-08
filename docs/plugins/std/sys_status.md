@@ -14,10 +14,10 @@ Implements the
 [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
 
 ## Publishers
-- `state` [type: [mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish connection, armed and mode state (HEARTBEAT).
-- `extended_state` [type: [mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish VTOL and landed state (EXTENDED_SYS_STATE).
-- `sys_status` [type: [mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish system and battery status (SYS_STATUS).
-- `estimator_status` [type: [mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html), qos: [state_qos](../qos.md#sys_status-state_qos "rclcpp::QoS(10).transient_local()")] - Publish estimator status flags (ESTIMATOR_STATUS).
+- `state` [type: [mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish connection, armed and mode state (HEARTBEAT).
+- `extended_state` [type: [mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish VTOL and landed state (EXTENDED_SYS_STATE).
+- `sys_status` [type: [mavros_msgs::msg::SysStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/SysStatus.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish system and battery status (SYS_STATUS).
+- `estimator_status` [type: [mavros_msgs::msg::EstimatorStatus](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/EstimatorStatus.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish estimator status flags (ESTIMATOR_STATUS).
 - `battery` [type: [sensor_msgs::msg::BatteryState](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/BatteryState.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish battery state (BATTERY_STATUS).
 - `statustext/recv` [type: [mavros_msgs::msg::StatusText](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusText.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish status text received from the FCU (STATUSTEXT).
 - `status_event` [type: [mavros_msgs::msg::StatusEvent](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/StatusEvent.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish status events received from the FCU (EVENT).

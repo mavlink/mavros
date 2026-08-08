@@ -123,7 +123,7 @@ private:
    *
    * @param req	received geometry_msgs/TwistStamped msg
    */
-  void twist_cb(const geometry_msgs::msg::TwistStamped::SharedPtr req)
+  void twist_cb(const geometry_msgs::msg::TwistStamped::ConstSharedPtr req)
   {
     ftf::Covariance3d cov {};                   // zero initialized
 
@@ -135,7 +135,7 @@ private:
    *
    * @param req	received geometry_msgs/TwistWithCovarianceStamped msg
    */
-  void twist_cov_cb(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr req)
+  void twist_cov_cb(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr req)
   {
     ftf::Covariance3d cov3d {};                 // zero initialized
 
@@ -153,7 +153,7 @@ private:
    *
    * @param req	received geometry_msgs/Vector3Stamped msg
    */
-  void vector_cb(const geometry_msgs::msg::Vector3Stamped::SharedPtr req)
+  void vector_cb(const geometry_msgs::msg::Vector3Stamped::ConstSharedPtr req)
   {
     ftf::Covariance3d cov {};                   // zero initialized
 

@@ -116,6 +116,7 @@ run_extract() {
 
 run_index() {
   ensure_cpp_bin
+  ensure_compile_commands
   local cc_dir
   cc_dir="$(dirname "${COMPILE_COMMANDS}")"
   uv run mr-plugin-doc-gen \

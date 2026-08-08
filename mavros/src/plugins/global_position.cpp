@@ -548,7 +548,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void home_position_cb(const mavros_msgs::msg::HomePosition::SharedPtr req)
+  void home_position_cb(const mavros_msgs::msg::HomePosition::ConstSharedPtr req)
   {
     Eigen::Vector3d new_map_origin;
     Eigen::Vector3d new_ecef_origin;
@@ -578,7 +578,7 @@ private:
     is_map_init = true;
   }
 
-  void set_gp_origin_cb(const geographic_msgs::msg::GeoPointStamped::SharedPtr req)
+  void set_gp_origin_cb(const geographic_msgs::msg::GeoPointStamped::ConstSharedPtr req)
   {
     mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN gpo = {};
 

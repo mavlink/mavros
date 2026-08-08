@@ -297,7 +297,7 @@ private:
    * @brief Debug callbacks
    * @param req     pointer to mavros_msgs/Debug.msg being published
    */
-  void debug_cb(const mavros_msgs::msg::DebugValue::SharedPtr req)
+  void debug_cb(const mavros_msgs::msg::DebugValue::ConstSharedPtr req)
   {
     switch (req->type) {
       case DV::TYPE_DEBUG: {

@@ -43,6 +43,25 @@ static inline rclcpp::QoS LatchedStateQoS()
   return rclcpp::QoS(10).keep_last(1).reliable().transient_local();
 }
 
+/**
+ * QoS for state data that is latched and periodically republished, like
+ * connection/mode state or the home position.
+ *
+ * - History: Keep last,
+ * - Depth: 10,
+ * - Reliability: Reliable,
+ * - Durability: Transient Local,
+ * - Deadline: Default,
+ * - Lifespan: Default,
+ * - Liveliness: System default,
+ * - Liveliness lease duration: default,
+ * - Avoid ros namespace conventions: false
+ */
+static inline rclcpp::QoS StateQoS()
+{
+  return rclcpp::QoS(10).transient_local();
+}
+
 //! Publisher options that opt out of intra-process comms.
 //
 // Latched (transient_local) publishers are not compatible with intra-process

@@ -14,6 +14,16 @@ Start Here
 - See what changed: [Changelog](changelog.md), [Project history](history.md)
 
 
+Guides
+------
+
+- [Connection URLs](connection_urls.md)
+- [Coordinate frames](frames.md)
+- [Nodes and launch](nodes.md)
+- [mav CLI](mav_cli.md)
+- [Troubleshooting](troubleshooting.md)
+
+
 Package Overview
 ----------------
 

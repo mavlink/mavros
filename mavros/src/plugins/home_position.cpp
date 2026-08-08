@@ -48,7 +48,7 @@ public:
   explicit HomePositionPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "home_position")
   {
-    auto state_qos = rclcpp::QoS(10).transient_local();
+    auto state_qos = mavros::StateQoS();
 
     //! Publish home position (HOME_POSITION).
     hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>(
@@ -148,7 +148,7 @@ private:
     hp_pub->publish(hp);
   }
 
-  void home_position_cb(const mavros_msgs::msg::HomePosition::SharedPtr req)
+  void home_position_cb(const mavros_msgs::msg::HomePosition::ConstSharedPtr req)
   {
     mavlink::common::msg::SET_HOME_POSITION hp {};
 

@@ -614,9 +614,7 @@ std::pair<bool, std::string> ROSEndpoint::open()
         "mavlink_source"), qos);
     this->sink = nh->create_subscription<mavros_msgs::msg::Mavlink>(
       utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), qos,
-      [this](const mavros_msgs::msg::Mavlink::SharedPtr rmsg) {
-        this->ros_recv_message(rmsg);
-      });
+      std::bind(&ROSEndpoint::ros_recv_message, this, std::placeholders::_1));
   } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
     return {false, ex.what()};
   }
@@ -656,7 +654,7 @@ void ROSEndpoint::send_message(
   }
 }
 
-void ROSEndpoint::ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg)
+void ROSEndpoint::ros_recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)
 {
   rcpputils::assert_true(!!rmsg, "rmsg not nullptr");
 

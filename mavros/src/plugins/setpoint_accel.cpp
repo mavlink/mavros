@@ -103,7 +103,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void accel_cb(const geometry_msgs::msg::Vector3Stamped::SharedPtr req)
+  void accel_cb(const geometry_msgs::msg::Vector3Stamped::ConstSharedPtr req)
   {
     Eigen::Vector3d accel_enu;
 

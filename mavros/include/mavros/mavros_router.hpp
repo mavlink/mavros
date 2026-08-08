@@ -389,7 +389,7 @@ public:
   void diag_run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
 private:
-  void ros_recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
+  void ros_recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg);
 };
 
 }   // namespace router

@@ -576,7 +576,7 @@ public:
         }
       });
 
-    auto state_qos = rclcpp::QoS(10).transient_local();
+    auto state_qos = mavros::StateQoS();
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     //! Publish connection, armed and mode state (HEARTBEAT).
@@ -1418,7 +1418,7 @@ private:
 
   /* -*- subscription callbacks -*- */
 
-  void statustext_cb(const mavros_msgs::msg::StatusText::SharedPtr req)
+  void statustext_cb(const mavros_msgs::msg::StatusText::ConstSharedPtr req)
   {
     mavlink::common::msg::STATUSTEXT statustext {};
     statustext.severity = req->severity;

@@ -133,7 +133,7 @@ Available configs:
 After container creation, dependencies and tools are bootstrapped automatically by `.devcontainer/post-create.sh`.
 
 
-[kinst]: https://docs.ros.org/en/kilted/Installation.html
+[kinst]: https://docs.ros.org/en/lyrical/Installation.html
 [asio]: https://think-async.com/Asio/
 [eigen]: https://eigen.tuxfamily.org/
 [geolib]: https://geographiclib.sourceforge.io/

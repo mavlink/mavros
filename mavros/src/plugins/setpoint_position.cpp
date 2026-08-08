@@ -179,7 +179,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void setpoint_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
+  void setpoint_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d tr;
     tf2::fromMsg(req->pose, tr);
@@ -190,7 +190,7 @@ private:
   /**
    * Gets setpoint position setpoint and send SET_POSITION_TARGET_GLOBAL_INT
    */
-  void setpointg_cb(const geographic_msgs::msg::GeoPoseStamped::SharedPtr req)
+  void setpointg_cb(const geographic_msgs::msg::GeoPoseStamped::ConstSharedPtr req)
   {
     using mavlink::common::POSITION_TARGET_TYPEMASK;
 
@@ -221,7 +221,7 @@ private:
   /**
    * Gets gps setpoint, converts it to local ENU, and sends it to FCU
    */
-  void setpointg2l_cb(const geographic_msgs::msg::GeoPoseStamped::SharedPtr req)
+  void setpointg2l_cb(const geographic_msgs::msg::GeoPoseStamped::ConstSharedPtr req)
   {
     /**
      * The idea is to convert the change in LLA(goal_gps-current_gps) to change in ENU
@@ -276,7 +276,7 @@ private:
   /**
    * Current GPS coordinates
    */
-  void gps_cb(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+  void gps_cb(const sensor_msgs::msg::NavSatFix::ConstSharedPtr msg)
   {
     current_gps = {msg->latitude, msg->longitude, msg->altitude};
   }
@@ -284,7 +284,7 @@ private:
   /**
    * current local position in ENU
    */
-  void local_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+  void local_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg)
   {
     current_local_pos = ftf::to_eigen(msg->pose.position);
   }

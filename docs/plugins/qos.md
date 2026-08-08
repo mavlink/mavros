@@ -1,8 +1,10 @@
 # QoS profiles
 
-This page lists every distinct QoS profile used by the MAVROS plugins. If you are
-unfamiliar with QoS in ROS 2, see the
-[ROS 2 QoS documentation](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Quality-of-Service-Settings.html).
+This page lists every distinct QoS profile used by the MAVROS plugins.
+
+!!! tip "See also"
+    [ROS 2 QoS documentation](https://docs.ros.org/en/lyrical/Concepts/Intermediate/About-Quality-of-Service-Settings.html)
+
 Standard `rclcpp::*` profiles link to the rclcpp API docs.
 
 
@@ -72,6 +74,16 @@ See [rclcpp::ServicesQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1
 Used by: *std*: [`command`](std/command.md), [`geofence`](std/geofence.md), [`rallypoint`](std/rallypoint.md), [`sys_status`](std/sys_status.md), [`waypoint`](std/waypoint.md)
 
 
+### StateQoS {#stateqos}
+
+
+| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
+|---|---|---|---|---|---|---|
+| Keep last | 10 | Reliable | Transient local | Default | Default | System default |
+
+Used by: *std*: [`home_position`](std/home_position.md), [`sys_status`](std/sys_status.md)
+
+
 ## Inline
 
 
@@ -118,21 +130,3 @@ Used by: *extras*: [`mag_calibration_status`](extras/mag_calibration_status.md)
 | Keep last | 64 | Reliable | Volatile | Default | Default | System default |
 
 Used by: *extras*: [`terrain`](extras/terrain.md)
-
-
-### home_position/state_qos {#home_position-state_qos}
-
-| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
-|---|---|---|---|---|---|---|
-| Keep last | 10 | Reliable | Transient local | Default | Default | System default |
-
-Used by: *std*: [`home_position`](std/home_position.md)
-
-
-### sys_status/state_qos {#sys_status-state_qos}
-
-| History | Depth | Reliability | Durability | Deadline | Lifespan | Liveliness |
-|---|---|---|---|---|---|---|
-| Keep last | 10 | Reliable | Transient local | Default | Default | System default |
-
-Used by: *std*: [`sys_status`](std/sys_status.md)

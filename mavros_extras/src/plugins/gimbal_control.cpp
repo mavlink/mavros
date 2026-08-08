@@ -423,7 +423,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_SET_ATTITUDE
    * @param req	- received GimbalControl msg
    */
-  void device_set_attitude_cb(const mavros_msgs::msg::GimbalDeviceSetAttitude::SharedPtr req)
+  void device_set_attitude_cb(const mavros_msgs::msg::GimbalDeviceSetAttitude::ConstSharedPtr req)
   {
     mavlink::common::msg::GIMBAL_DEVICE_SET_ATTITUDE msg;
     std::array<float, 4UL> new_q;
@@ -449,7 +449,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_SET_ATTITUDE
    * @param req	- received GimbalControl msg
    */
-  void manager_set_attitude_cb(const mavros_msgs::msg::GimbalManagerSetAttitude::SharedPtr req)
+  void manager_set_attitude_cb(const mavros_msgs::msg::GimbalManagerSetAttitude::ConstSharedPtr req)
   {
     mavlink::common::msg::GIMBAL_MANAGER_SET_ATTITUDE msg {};
     std::array<float, 4UL> new_q;
@@ -476,7 +476,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#GIMBAL_MANAGER_SET_PITCHYAW
    * @param req	- received GimbalControl msg
    */
-  void manager_set_pitchyaw_cb(const mavros_msgs::msg::GimbalManagerSetPitchyaw::SharedPtr req)
+  void manager_set_pitchyaw_cb(const mavros_msgs::msg::GimbalManagerSetPitchyaw::ConstSharedPtr req)
   {
     mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW msg {};
     uas->msg_set_target(msg);

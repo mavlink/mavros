@@ -464,7 +464,7 @@ private:
   /**
    * @brief callback for PoseStamped msgs topic
    */
-  void pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr req)
+  void pose_cb(const geometry_msgs::msg::PoseStamped::ConstSharedPtr req)
   {
     Eigen::Affine3d tr;
     tf2::fromMsg(req->pose, tr);
@@ -477,7 +477,7 @@ private:
    * @brief callback for raw LandingTarget msgs topic - useful if one has the
    * data processed in another node
    */
-  void landtarget_cb(const mavros_msgs::msg::LandingTarget::SharedPtr req)
+  void landtarget_cb(const mavros_msgs::msg::LandingTarget::ConstSharedPtr req)
   {
     Eigen::Affine3d tr;
     tf2::fromMsg(req->pose, tr);

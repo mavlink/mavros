@@ -348,7 +348,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOUNT_CONTROL
    * @param req	received MountControl msg
    */
-  void command_cb(const mavros_msgs::msg::MountControl::SharedPtr req)
+  void command_cb(const mavros_msgs::msg::MountControl::ConstSharedPtr req)
   {
     mavlink::common::msg::COMMAND_LONG cmd {};
 

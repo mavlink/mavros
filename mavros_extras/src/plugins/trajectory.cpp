@@ -256,7 +256,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
    * @param req	received Trajectory msg
    */
-  void trajectory_cb(const mavros_msgs::msg::Trajectory::SharedPtr req)
+  void trajectory_cb(const mavros_msgs::msg::Trajectory::ConstSharedPtr req)
   {
     rcpputils::require_true(NUM_POINTS == req->point_valid.size());
 
@@ -341,7 +341,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#TRAJECTORY
    * @param req	received nav_msgs Path msg
    */
-  void path_cb(const nav_msgs::msg::Path::SharedPtr req)
+  void path_cb(const nav_msgs::msg::Path::ConstSharedPtr req)
   {
     mavlink::common::msg::TRAJECTORY_REPRESENTATION_WAYPOINTS trajectory {};
 

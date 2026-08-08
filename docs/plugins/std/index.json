@@ -928,8 +928,8 @@
         "line": 54,
         "description": "Publish home position (HOME_POSITION).",
         "qos": {
-          "kind": "inline",
-          "config": "rclcpp::QoS(10).transient_local()",
+          "kind": "named",
+          "name": "StateQoS",
           "var": "state_qos"
         }
       }
@@ -2374,8 +2374,8 @@
         "line": 583,
         "description": "Publish connection, armed and mode state (HEARTBEAT).",
         "qos": {
-          "kind": "inline",
-          "config": "rclcpp::QoS(10).transient_local()",
+          "kind": "named",
+          "name": "StateQoS",
           "var": "state_qos"
         }
       },
@@ -2385,8 +2385,8 @@
         "line": 586,
         "description": "Publish VTOL and landed state (EXTENDED_SYS_STATE).",
         "qos": {
-          "kind": "inline",
-          "config": "rclcpp::QoS(10).transient_local()",
+          "kind": "named",
+          "name": "StateQoS",
           "var": "state_qos"
         }
       },
@@ -2396,8 +2396,8 @@
         "line": 589,
         "description": "Publish system and battery status (SYS_STATUS).",
         "qos": {
-          "kind": "inline",
-          "config": "rclcpp::QoS(10).transient_local()",
+          "kind": "named",
+          "name": "StateQoS",
           "var": "state_qos"
         }
       },
@@ -2407,8 +2407,8 @@
         "line": 592,
         "description": "Publish estimator status flags (ESTIMATOR_STATUS).",
         "qos": {
-          "kind": "inline",
-          "config": "rclcpp::QoS(10).transient_local()",
+          "kind": "named",
+          "name": "StateQoS",
           "var": "state_qos"
         }
       },

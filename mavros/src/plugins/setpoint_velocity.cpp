@@ -137,7 +137,7 @@ private:
 
   /* -*- callbacks -*- */
 
-  void vel_cb(const geometry_msgs::msg::TwistStamped::SharedPtr req)
+  void vel_cb(const geometry_msgs::msg::TwistStamped::ConstSharedPtr req)
   {
     Eigen::Vector3d vel_enu;
 
@@ -147,7 +147,7 @@ private:
       req->twist.angular.z);
   }
 
-  void vel_unstamped_cb(const geometry_msgs::msg::Twist::SharedPtr req)
+  void vel_unstamped_cb(const geometry_msgs::msg::Twist::ConstSharedPtr req)
   {
     Eigen::Vector3d vel_enu;
 

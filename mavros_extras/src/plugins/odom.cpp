@@ -255,7 +255,7 @@ private:
    * Message specification: https://mavlink.io/en/messages/common.html#ODOMETRY
    * @param req	received Odometry msg
    */
-  void odom_cb(const nav_msgs::msg::Odometry::SharedPtr odom)
+  void odom_cb(const nav_msgs::msg::Odometry::ConstSharedPtr odom)
   {
     /**
      * Required affine rotations to apply transforms

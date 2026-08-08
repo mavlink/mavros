@@ -664,7 +664,7 @@ private:
   void connect_to_router();
 
   //! uas message receive handler
-  void recv_message(const mavros_msgs::msg::Mavlink::SharedPtr rmsg);
+  void recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg);
 
   //! message router
   void plugin_route(const mavlink::mavlink_message_t * mmsg, const mavconn::Framing framing);

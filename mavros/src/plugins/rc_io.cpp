@@ -251,7 +251,7 @@ private:
     has_rc_channels_msg = false;
   }
 
-  void override_cb(const mavros_msgs::msg::OverrideRCIn::SharedPtr req)
+  void override_cb(const mavros_msgs::msg::OverrideRCIn::ConstSharedPtr req)
   {
     if (!uas->is_ardupilotmega() && !uas->is_px4()) {
       RCLCPP_WARN_THROTTLE(
