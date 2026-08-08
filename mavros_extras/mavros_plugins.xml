@@ -9,7 +9,8 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_extras_plugins')
     <description>@brief ADS-B Vehicle plugin
 @plugin adsb
 
-Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle.</description>
+Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehicle. Implements the
+[MAVLink Traffic Management (UTM/ADS-B)](https://mavlink.io/en/services/traffic_management.html).</description>
   </class>
   <class name="cam_imu_sync" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CamIMUSyncPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Camera IMU synchronisation plugin
@@ -23,7 +24,8 @@ camera can be correlated to get the exact shutter trigger time.</description>
     <description>@brief Camera plugin plugin
 @plugin camera
 
-Plugin for interfacing on the mavlink camera protocol
+Plugin for interfacing on the mavlink camera protocol. Implements the
+[MAVLink Camera Protocol v2](https://mavlink.io/en/services/camera.html).
 @see command_cb()</description>
   </class>
   <class name="cellular_status" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::CellularStatusPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
@@ -74,7 +76,7 @@ without a flag set.</description>
     <description>@brief Gimbal Control Plugin
 @plugin gimbal_control
 
-Adds support for Mavlink Gimbal Protocol v2.
+Implements the [MAVLink Gimbal Protocol v2](https://mavlink.io/en/services/gimbal_v2.html).
 Also publishes gimbal pose to TF when parameter tf_send==true</description>
   </class>
   <class name="gps_input" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::GpsInputPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
@@ -111,7 +113,8 @@ Send and receive setpoint positions from FCU controller.</description>
 @plugin landing_target
 
 This plugin is intended to publish the location of a landing area captured from a downward facing camera
-to the FCU and/or receive landing target tracking data coming from the FCU.</description>
+to the FCU and/or receive landing target tracking data coming from the FCU. Implements the
+[MAVLink Landing Target Protocol](https://mavlink.io/en/services/landing_target.html).</description>
   </class>
   <class name="log_transfer" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::LogTransferPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Log Transfer plugin
@@ -133,7 +136,8 @@ Sends motion capture data to FCU.</description>
     <description>@brief Mount Control plugin
 @plugin mount_control
 
-Publishes Mission commands to control the camera or antenna mount.
+Publishes Mission commands to control the camera or antenna mount. Implements the
+superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.html).
 @see command_cb()</description>
   </class>
   <class name="obstacle_distance" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::ObstacleDistancePlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
@@ -176,7 +180,8 @@ Publishes the status of the onboard computer
     <description>@brief Open Drone ID plugin
 @plugin open_drone_id
 
-Sends Open Drone ID data to the FCU</description>
+Sends Open Drone ID data to the FCU. Implements the
+[MAVLink Open Drone ID Protocol](https://mavlink.io/en/services/opendroneid.html).</description>
   </class>
   <class name="optical_flow" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::OpticalFlowPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Optical Flow custom plugin
@@ -206,14 +211,7 @@ This plugin allows publishing rangefinder sensor data from Ardupilot FCU to ROS.
 
 Adds support for MAVLink SIM_STATE (id 108) messages and republishes fields to ROS 2 topics.
 Intended for simulation use as a high-accuracy ground-truth feed when developing autonomy.
-Currently verified with ArduCopter SITL.
-
-Published topics (relative to plugin namespace):
-- ~/attitude (sensor_msgs/Imu): orientation (ENU/base_link) and angular velocity
-- ~/acceleration (geometry_msgs/Vector3Stamped): linear accel (m/s^2) in ENU/map
-- ~/velocity_body (geometry_msgs/TwistStamped): linear+angular velocity in base_link
-- ~/velocity_local (geometry_msgs/TwistStamped): linear+angular velocity in ENU/map
-- ~/global_position (sensor_msgs/NavSatFix): WGS84 lat/lon/alt with optional covariance</description>
+Currently verified with ArduCopter SITL.</description>
   </class>
   <class name="tdr_radio" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TDRRadioPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief 3DR Radio plugin.
@@ -243,7 +241,10 @@ send back to the FCU a corrected path (collision free, smoothed)
   </class>
   <class name="tunnel" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::TunnelPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief Tunnel plugin
-@plugin tunnel</description>
+@plugin tunnel
+
+Implements the
+[MAVLink Tunnel Protocol](https://mavlink.io/en/services/tunnel.html).</description>
   </class>
   <class name="vfr_hud" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::extra_plugins::VfrHudPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
     <description>@brief VFR HUD plugin.
@@ -277,4 +278,4 @@ This plugin allows computing and publishing wheel odometry coming from FCU wheel
 Can use either wheel's RPM or WHEEL_DISTANCE messages (the latter gives better accuracy).</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: JYxk13q3QH) -->
+<!-- [[[end]]] (sum: oo/YfYwrxJ) -->

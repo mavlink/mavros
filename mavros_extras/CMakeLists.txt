@@ -142,7 +142,7 @@ add_library(mavros_extras_plugins SHARED
   src/plugins/vision_pose_estimate.cpp
   src/plugins/vision_speed_estimate.cpp
   src/plugins/wheel_odometry.cpp
-  # [[[end]]] (sum: WzAyzLqsp3)
+  # [[[end]]] (sum: E3zv4+Yl1z)
 )
 target_link_libraries(mavros_extras_plugins PUBLIC
   ${geographic_msgs_TARGETS}
