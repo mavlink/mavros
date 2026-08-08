@@ -440,7 +440,12 @@ def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
                     if kind == "named" and e["name"] in rclcpp_profiles
                     else None,
                     "settings": qos_settings(e) or {},
-                    "used": sorted(used.items()),
+                    "used_std": sorted(
+                        (p, l) for p, l in used.items() if l.startswith("std/")
+                    ),
+                    "used_extras": sorted(
+                        (p, l) for p, l in used.items() if l.startswith("extras/")
+                    ),
                 }
             )
         return out
