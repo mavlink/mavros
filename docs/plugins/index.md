@@ -60,6 +60,7 @@ messages it subscribes to and publishes.
 
 | [`wind_estimation`](std/wind_estimation.md) | Wind estimation plugin. | 1 | — | — | — | 2/0 |
 
+
 ## Extra plugins (`mavros_extras`)
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |

@@ -357,10 +357,10 @@ def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> s
     if not e:
         return ""
     if e["kind"] == "named":
-        return f"[{e['name']}](../qos.md#{e['id']} \"{e['name']} QoS profile\")"
+        return f'[{e["name"]}](../qos.md#{e["id"]} "{e["name"]} QoS profile")'
     var = q.get("var")
     if var:
-        return f"[{var}](../qos.md#{e['id']} \"{e['config']}\")"
+        return f'[{var}](../qos.md#{e["id"]} "{e["config"]}")'
     return f"[{e['config']}](../qos.md#{e['id']})"
 
 
@@ -369,8 +369,10 @@ def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
     lines = [
         "# QoS profiles",
         "",
-        ("This page lists every QoS profile used by the MAVROS plugins. "
-         "Standard `rclcpp::*` profiles link to the rclcpp API docs."),
+        (
+            "This page lists every QoS profile used by the MAVROS plugins. "
+            "Standard `rclcpp::*` profiles link to the rclcpp API docs."
+        ),
         "",
     ]
     by_kind = sorted(reg.values(), key=lambda e: (e["kind"], e["label"]))
@@ -381,22 +383,35 @@ def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
             lines.append(f"## {cur_kind.capitalize()}")
             lines.append("")
             if cur_kind == "inline":
-                lines.append(
-                    "| Id | Config | Topics |"
-                )
+                lines.append("| Id | Config | Topics |")
                 lines.append("|----|--------|--------|")
             else:
                 lines.append("| Id | Profile | Topics |")
                 lines.append("|----|---------|--------|")
         if cur_kind == "inline":
             uses = ", ".join(sorted({f"`{p}`" for p, _n, _v in e["uses"]}))
-            lines.append(
-                f"| `{e['id']}` | `{e['config']}` | {uses} |"
-            )
+            lines.append(f"| `{e['id']}` | `{e['config']}` | {uses} |")
         else:
             uses = ", ".join(sorted({f"`{p}`" for p, _n, _v in e["uses"]}))
-            rclcpp = e["name"] if e["name"].startswith(("SensorDataQoS", "ServicesQoS", "ParametersQoS", "ParameterEventsQoS", "RosoutQoS", "SystemDefaultQoS")) else ""
-            name_cell = f"[`{e['name']}`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1{e['name']}.html)" if rclcpp else f"`{e['name']}`"
+            rclcpp = (
+                e["name"]
+                if e["name"].startswith(
+                    (
+                        "SensorDataQoS",
+                        "ServicesQoS",
+                        "ParametersQoS",
+                        "ParameterEventsQoS",
+                        "RosoutQoS",
+                        "SystemDefaultQoS",
+                    )
+                )
+                else ""
+            )
+            name_cell = (
+                f"[`{e['name']}`](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1_1{e['name']}.html)"
+                if rclcpp
+                else f"`{e['name']}`"
+            )
             lines.append(f"| `{e['id']}` | {name_cell} | {uses} |")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
@@ -410,14 +425,19 @@ def render_plugin_index(
         loader=FileSystemLoader(str(PLUGIN_INDEX_TEMPLATE.parent)), autoescape=False
     )
     template = env.get_template(PLUGIN_INDEX_TEMPLATE.name)
-    return template.render(
-        std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
-        extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
-    ).rstrip() + "\n"
+    return (
+        template.render(
+            std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
+            extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
+        ).rstrip()
+        + "\n"
+    )
 
 
 def render_plugin_markdown_with_template(
-    plugin: PluginApi, template_path: pathlib.Path, repo_root: pathlib.Path,
+    plugin: PluginApi,
+    template_path: pathlib.Path,
+    repo_root: pathlib.Path,
     qos_reg: dict[str, dict[str, ty.Any]] | None = None,
 ) -> str:
     if Environment is None or FileSystemLoader is None:
@@ -436,14 +456,19 @@ def render_plugin_markdown_with_template(
         shown_path = plugin.path.as_posix()
     # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     body = template.render(
-        plugin=plugin, shown_path=shown_path,
-        qos_link_fn=(lambda ent: qos_link(ent, plugin.plugin, qos_reg)) if qos_reg else None,
+        plugin=plugin,
+        shown_path=shown_path,
+        qos_link_fn=(lambda ent: qos_link(ent, plugin.plugin, qos_reg))
+        if qos_reg
+        else None,
     )
     return body.rstrip() + "\n"
 
 
 def write_markdown_files(
-    plugins: list[PluginApi], output_dir: pathlib.Path, template_path: pathlib.Path,
+    plugins: list[PluginApi],
+    output_dir: pathlib.Path,
+    template_path: pathlib.Path,
     qos_reg: dict[str, dict[str, ty.Any]] | None = None,
 ) -> list[pathlib.Path]:
     repo_root = detect_repo_root()
@@ -452,7 +477,9 @@ def write_markdown_files(
     for plugin in plugins:
         stem = pathlib.Path(plugin.path).stem or plugin.plugin
         out_path = output_dir / f"{stem}.md"
-        body = render_plugin_markdown_with_template(plugin, template_path, repo_root, qos_reg)
+        body = render_plugin_markdown_with_template(
+            plugin, template_path, repo_root, qos_reg
+        )
         out_path.write_text(body, encoding="utf-8")
         written.append(out_path)
     return written
@@ -623,7 +650,9 @@ def main(argv: list[str] | None = None) -> int:
         extras_plugins = [p for p in plugins if "mavros_extras" in p.path.as_posix()]
         idx = pathlib.Path(args.plugin_index)
         idx.parent.mkdir(parents=True, exist_ok=True)
-        idx.write_text(render_plugin_index(std_plugins, extras_plugins), encoding="utf-8")
+        idx.write_text(
+            render_plugin_index(std_plugins, extras_plugins), encoding="utf-8"
+        )
         log_event(
             "info",
             "Wrote plugin index",
@@ -674,7 +703,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    raise SystemExit("Nothing to do: pass --output-dir, --format json, --plugin-index, or --qos-appendix")
+    raise SystemExit(
+        "Nothing to do: pass --output-dir, --format json, --plugin-index, or --qos-appendix"
+    )
 
 
 if __name__ == "__main__":

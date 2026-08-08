@@ -255,7 +255,8 @@ public:
   bool VisitCXXRecordDecl(CXXRecordDecl * rec)
   {
     if (!rec->hasDefinition() || !rec->getIdentifier() ||
-      !SM_.isInMainFile(rec->getBeginLoc())) {
+      !SM_.isInMainFile(rec->getBeginLoc()))
+    {
       return true;
     }
     RawComment * raw = rec->getASTContext().getRawCommentForDeclNoCache(rec);
@@ -441,9 +442,14 @@ private:
   static std::string clean_type(std::string t)
   {
     t = trim(std::move(t));
-    if (t.rfind("struct ", 0) == 0) {t = trim(t.substr(7));}
-    else if (t.rfind("class ", 0) == 0) {t = trim(t.substr(6));}
-    if (t.rfind("const ", 0) == 0) {t = trim(t.substr(6));}
+    if (t.rfind("struct ", 0) == 0) {
+      t = trim(t.substr(7));
+    } else if (t.rfind("class ", 0) == 0) {
+      t = trim(t.substr(6));
+    }
+    if (t.rfind("const ", 0) == 0) {
+      t = trim(t.substr(6));
+    }
     while (!t.empty() && (t.back() == '&' || t.back() == '*')) {
       t.pop_back();
     }
@@ -723,7 +729,9 @@ private:
           e.name = fd->getName().str();
           for (const ParmVarDecl * p : fd->parameters()) {
             std::string t = clean_type(p->getType().getAsString());
-            if (t.find("mavlink::") != std::string::npos && t.find("::msg::") != std::string::npos) {
+            if (t.find("mavlink::") != std::string::npos &&
+              t.find("::msg::") != std::string::npos)
+            {
               e.message_type = t;
               break;
             }
@@ -830,7 +838,9 @@ private:
     {
       return "double";
     }
-    if (expr.find(".seconds()") != std::string::npos || expr.find("Duration") != std::string::npos) {
+    if (expr.find(".seconds()") != std::string::npos ||
+      expr.find("Duration") != std::string::npos)
+    {
       return "double";
     }
     return "";
@@ -920,7 +930,7 @@ private:
 
   class Consumer : public ASTConsumer
   {
-  public:
+public:
     Consumer(ASTContext & ctx, PluginApi & api, const std::map<std::string, int> & idx)
     : visitor_(ctx, api, idx) {}
 
@@ -929,7 +939,7 @@ private:
       visitor_.TraverseDecl(ctx.getTranslationUnitDecl());
     }
 
-  private:
+private:
     PluginVisitor visitor_;
   };
 };
@@ -1121,7 +1131,7 @@ int main(int argc, char ** argv)
 
   class Factory : public tooling::FrontendActionFactory
   {
-  public:
+public:
     Factory(
       std::map<std::string, PluginApi *> & m, const std::map<std::string, int> & idx)
     : m_(m), idx_(idx) {}
@@ -1131,7 +1141,7 @@ int main(int argc, char ** argv)
       return std::make_unique<PluginAction>(m_, idx_);
     }
 
-  private:
+private:
     std::map<std::string, PluginApi *> & m_;
     const std::map<std::string, int> & idx_;
   };
@@ -1168,7 +1178,9 @@ int main(int argc, char ** argv)
       };
       const bool not_waypoint = api.plugin != "waypoint";
       // MISSION_ITEM(_INT) are sent via the inline send_waypoint template.
-      for (const auto & wp_type : {"mavlink::common::msg::MISSION_ITEM", "mavlink::common::msg::MISSION_ITEM_INT"}) {
+      for (const auto & wp_type : {"mavlink::common::msg::MISSION_ITEM",
+          "mavlink::common::msg::MISSION_ITEM_INT"})
+      {
         MavlinkEntry e;
         e.message_type = wp_type;
         e.message_name = tail_name(wp_type);
@@ -1179,7 +1191,8 @@ int main(int argc, char ** argv)
       }
       for (const auto & [handler, type] : kMissionSubs) {
         if (not_waypoint && (handler == "handle_mission_current" ||
-          handler == "handle_mission_item_reached")) {
+          handler == "handle_mission_item_reached"))
+        {
           continue;   // geofence/rallypoint mission types have no CURRENT/REACHED
         }
         bool dup = false;
