@@ -1,77 +1,99 @@
-MAVROS
-=====
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![CI](https://github.com/mavlink/mavros/actions/workflows/main.yml/badge.svg)](https://github.com/mavlink/mavros/actions/workflows/main.yml)  [![Documentation](https://readthedocs.org/projects/mavros/badge/?version=latest)](https://mavros.readthedocs.io/en/latest/)
+# MAVROS
 
-MAVLink extendable communication node for ROS.
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/mavlink/mavros)](https://github.com/mavlink/mavros/releases) [![Documentation](https://readthedocs.org/projects/mavros/badge/?version=latest)](https://mavros.readthedocs.io/en/latest/) [![CI](https://github.com/mavlink/mavros/actions/workflows/main.yml/badge.svg)](https://github.com/mavlink/mavros/actions/workflows/main.yml) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/mavros)
 
-- Full documentation: [https://mavros.readthedocs.io/][rtd]
-- Plugin reference (all ROS API): [Plugin index](docs/plugins/index.md)
-- Per-package C++/Python API reference (auto-generated): [https://docs.ros.org/en/rolling/p/mavros/][api]
-- Changelog: [https://mavros.readthedocs.io/en/latest/changelog/][changelog]
+**A MAVLink-to-ROS 2 bridge for drones.**
 
+MAVROS turns a MAVLink autopilot (PX4, ArduPilot, …) into a set of familiar
+ROS 2 topics, services and parameters, so you can program a drone in ROS the
+same way you would program any other robot — no need to speak MAVLink.
 
-mavros package
---------------
+---
 
-It is the main package, please see its [README][mrrm].
-Here you may read [installation instructions][inst].
+## What is it?
 
+MAVLink is the wire protocol most flight controllers speak. ROS 2 is a
+robotics framework for building software. MAVROS is the glue between them:
 
-mavros\_extras package
-----------------------
+```
+   Flight controller         MAVROS                  Your ROS 2 app
+   (PX4 / ArduPilot)  <--MAVLink-->  [bridge]  <--ROS 2-->  nodes
+                                   (UDP/TCP/serial)
+```
 
-This package contains some extra nodes and plugins for mavros, please see its [README][exrm].
+It does the boring, low-level work for you:
 
+- **Telemetry out** — autopilot state, IMU, GPS, attitude, battery, and more
+  arrive as standard ROS 2 `sensor_msgs`/`mavros_msgs` topics.
+- **Commanding in** — arm/disarm, takeoff, land, set mode, upload missions and
+  geofences through familiar ROS 2 services.
+- **Routing** — MAVROS can proxy between a ground station, the FCU and multiple
+  ROS processes over a single link.
 
-libmavconn package
-------------------
+## Why MAVROS?
 
-This package contain mavconn library, see its [README][libmc].
-LibMAVConn may be used outside of ROS environment.
+- **Tested** against PX4 and ArduPilot, including SITL simulation.
+- **Extensible** — a plugin architecture translates each MAVLink message; add
+  behaviour without touching the core.
+- **ROS 2 native** — supports Humble and newer ROS 2 releases.
+- **Flexible transport** — USB/serial, UDP, TCP, or a shared UAS bus.
 
+## Quick start
 
-test\_mavros package
---------------------
+Install the package and its mandatory GeographicLib datasets:
 
-This package contain hand-tests and [manual page][test] for APM and PX4 SITL.
-Please see [README][test] first!
+```shell
+sudo apt install ros-${ROS_DISTRO}-mavros
+sudo ros2 run mavros install_geographiclib_datasets.sh
+```
 
+Launch the bridge against a flight controller (or a simulated one):
 
-mavros\_msgs package
---------------------
+```shell
+ros2 launch mavros node.launch \
+  fcu_url:=udp://127.0.0.1:14550@127.0.0.1:14557
+```
 
-This package contains messages and services used in MAVROS.
+Then inspect the sensor stream:
 
+```shell
+ros2 topic echo /mavros/imu/data
+```
 
-Support forums and chats
-------------------------
+See the [installation guide](docs/installation.md) for binary, source and
+container installs, and the [examples](docs/examples/) for task control and
+waypoint missions.
 
-Please ask your questions not related to bugs/feature or requests on:
+## Packages
 
-- [MAVROS discussion in Gitter IM](https://gitter.im/mavlink/mavros)
-- [PX4 Discuss Forum](https://discuss.px4.io/)
+| Package | Purpose |
+|---------|---------|
+| `mavros` | Core nodes (Router, UAS) and standard plugins |
+| `mavros_extras` | Optional plugins (cameras, gimbals, terrain, …) |
+| `mavros_msgs` | ROS 2 message and service interfaces |
+| `libmavconn` | MAVLink transport library (usable outside ROS) |
+| `test_mavros` | Hand-tests and SITL manual for PX4/ArduPilot |
+
+## Documentation
+
+- [Full documentation](https://mavros.readthedocs.io/)
+- [Plugin reference — every topic/service/parameter](docs/plugins/index.md)
+- [Per-package C++/Python API](https://docs.ros.org/en/rolling/p/mavros/)
+- [Changelog](https://mavros.readthedocs.io/en/latest/changelog/)
+
+## Support
+
+Ask questions (not bug reports) on:
+
+- [MAVROS Gitter](https://gitter.im/mavlink/mavros)
+- [PX4 Discuss](https://discuss.px4.io/)
 - [PX4 Slack](https://slack.px4.io/)
-- [Ardupilot Discuss Forum](https://discuss.ardupilot.org/)
-- [ArduPilot/VisionProjects in Gitter IM](https://gitter.im/ArduPilot/ardupilot/VisionProjects)
+- [ArduPilot Discuss](https://discuss.ardupilot.org/)
 
-We'd like to keep the project bug tracker as free as possible, so please contact via the above methods. You can also PM us via Gitter and the PX4 Slack.
+## CI status
 
-
-CI Statuses
------------
-
-  - ROS2 Humble: [![Build Status](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/)
-  - ROS2 Jazzy: [![Build Status](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/)
-  - ROS2 Kilted: [![Build Status](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/)
-  - ROS2 Lyrical: [![Build Status](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/badge/icon)](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/)
-  - ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/)
-
-
-[mrrm]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md
-[rtd]: https://mavros.readthedocs.io/en/latest/
-[api]: https://docs.ros.org/en/rolling/p/mavros/
-[changelog]: https://mavros.readthedocs.io/en/latest/changelog/
-[exrm]: https://github.com/mavlink/mavros/blob/ros2/mavros_extras/README.md
-[libmc]: https://github.com/mavlink/mavros/blob/ros2/libmavconn/README.md
-[test]: https://github.com/mavlink/mavros/blob/ros2/test_mavros/README.md
-[inst]: https://github.com/mavlink/mavros/blob/ros2/mavros/README.md#installation
+- ROS2 Humble: [![Build Status](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Hdev__mavros__ubuntu_jammy_amd64/)
+- ROS2 Jazzy: [![Build Status](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Jdev__mavros__ubuntu_noble_amd64/)
+- ROS2 Kilted: [![Build Status](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Kdev__mavros__ubuntu_noble_amd64/)
+- ROS2 Lyrical: [![Build Status](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/badge/icon)](https://build.ros2.org/job/Ldev__mavros__ubuntu_resolute_amd64/)
+- ROS2 Rolling: [![Build Status](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mavros__ubuntu_noble_amd64/)
