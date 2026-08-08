@@ -2,6 +2,152 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.15.0 (2026-08-08)
+-------------------
+* Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh
+  docs: refresh, refactor extractor
+* docs: refresh subpackage READMEs
+  - mavros: point the API docs link at readthedocs/plugin reference instead of
+  the dead wiki.ros.org page; fix ROS1 roslaunch examples to ros2 launch; note
+  that up-to-date install instructions live in the readthedocs guide.
+  - mavros_extras: link to the full plugin reference.
+  - libmavconn: link to the docs and API reference.
+  - mavros_msgs: add the missing README (message/service overview + API links).
+  - test_mavros: mark the ROS1-era SITL hand-tests as historical.
+* Merge pull request `#2256 <https://github.com/mavlink/mavros/issues/2256>`_ from mavlink/try-optimize-router
+  Optimize MAVROS router and MAVConn send path
+* libmavconn: speed up utils::format with a stack-buffer fast path
+  The old format() called snprintf twice (once to measure, once to fill) and
+  wrote through &ret.front()/capacity(), which is UB for empty output. Format
+  into a small stack buffer first (single snprintf), re-formatting into a heap
+  string only when the output exceeds it. Handles encoding errors and the
+  empty-output case.
+* libmavconn: skip send post when chain active, use composed async_write
+  Only the producer that turns the tx queue from idle to active posts a send
+  handler; an in-progress chain drains everything enqueued meanwhile. This
+  removes the per-message asio::post handler allocation and shared_from_this
+  churn on the send path in steady state.
+  Use composed asio::async_write for TCP/serial so partial writes are
+  handled internally, deleting the manual MsgBuffer::pos tracking and resend
+  loop (and the fragile capture of a reference into the tx queue).
+* libmavconn: fix serial close deadlock, add serial pair benchmark
+  MAVConnSerial::close() held mutex while joining the io thread, while the
+  io thread (do_read error handler) blocked on that same mutex -> deadlock.
+  Release the mutex before shutdown_owned(), matching UDP/TCP.
+  Add a serial throughput benchmark case over a socat PTY,link=... pair
+  (stable device paths for both ends), now that the close hang is fixed.
+  UDP/TCP/serial pair throughput all benchmark cleanly.
+* libmavconn: add tcp pair benchmark, make benchmark standalone
+  Add a TCP client/server pair throughput case next to the UDP one, and
+  rename the UDP case MavconnUdpBenchmark for naming consistency. The
+  benchmark is kept as a standalone executable (not a CI test) because the
+  MAVConn async close/shutdown race intermittently hangs the TCP case under
+  the test harness; run it manually to check mavconn hot-path regressions.
+  A serial (tty) case was attempted over a socat pty pair but dropped: it
+  works in isolation yet reproduces the same intermittent close() hang, and
+  the pty master has no clean device path for a second MAVConnSerial.
+* libmavconn: add end-to-end transport pair benchmark
+  A sender/receiver MAVConn UDP pair over loopback measuring sustained
+  message throughput through the full send (enqueue + async send) and
+  receive (async recv + parse_buffer + callback) paths, to catch mavconn
+  hot-path regressions.
+* libmavconn: revert pool allocator experiment (benchmark showed it slower)
+  benchmark (deque<MsgBuffer> push/pop, ros2-lyrical, 16-core):
+  PushPopPlain        ~71 ns/op
+  PushPopPool         ~175 ns/op   (~2.5x slower)
+  PushPopPlainInline   ~73 ns/op
+  PushPopPoolInline   ~185 ns/op   (still ~2.5x slower even when the queue
+  fits entirely in the inline chunk)
+  The overhead is intrinsic per-op (chunk_of, free_list\_ vector ops, in_use
+  counters, shrink_if_idle on every release); glibc's tcache malloc/free is
+  faster than the hand-rolled pool even for same-size blocks. Restore plain
+  std::deque<MsgBuffer>.
+* libmavconn: experiment: pool the tx queue MsgBuffer nodes
+  Back std::deque<MsgBuffer> with a chunked pool allocator: the first 32
+  blocks come from one contiguous inline array (zero alloc), further blocks
+  from heap chunks freed when the queue drains back to inline-only. Kept for
+  the record only -- see the next commit for why it was rejected.
+* build: bump cmake_minimum_required to 3.10
+  CMake (4.0+, as shipped on Lyrical/Rolling) emits a deprecation
+  warning for cmake_minimum_required < 3.10:
+  CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version
+  of CMake.
+  Raise the floor to 3.10 for all packages that were below it:
+  - libmavconn, mavros, mavros_msgs, mavros_extras: 3.5 -> 3.10
+  - test_mavros: 2.8.3 -> 3.10
+  - mavros_examples: 3.8 -> 3.10
+  3.10 is the lowest version that silences the warning while remaining
+  compatible with all supported ROS 2 distros (Humble ships CMake 3.22).
+* Merge pull request `#2242 <https://github.com/mavlink/mavros/issues/2242>`_ from mavlink/followup-terrain-protocol
+  extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+* common: reformat py by ruff
+* Merge pull request `#2105 <https://github.com/mavlink/mavros/issues/2105>`_ from mavlink/refactor-router
+  Refactor router
+* libmavconn: skip pymavlink e2e as collected-skip, not import-skip
+  pytest.importorskip() at module import collects 0 tests, and pytest exits
+  with code 5 ('no tests collected') in that case. ament's run_test.py treats a
+  non-zero pytest exit as failure, so on CI runners where pymavlink is not
+  installed the e2e test was reported as Failed even though nothing ran.
+  Use a module-level pytestmark skipif guarded by importlib.util.find_spec so
+  the tests are still collected and then skipped (pytest exits 0). Verified:
+  with pymavlink present 6/6 pass; with it blocked, 6 collected + skipped,
+  exit 0.
+* libmavconn: harden pymavlink e2e against UDP startup race
+  The e2e test sends a UDP datagram to the link immediately after creating it.
+  The link posts its async receive on a worker io thread, so on a loaded or
+  slow CI runner the first datagram can arrive before the receive is posted and
+  be silently lost, failing the test intermittently (observed in industrial_ci).
+  Add a short settle delay in the link fixture so the io thread is up before
+  any test traffic. Verified locally: 6/6 pass, full libmavconn suite green.
+* ci: gate pymavlink e2e dep on TEST_ENABLE_E2E for rosdep
+  The libmavconn e2e test needs pymavlink, which is pip-only. Gate the
+  python3-pymavlink-pip test_depend on TEST_ENABLE_E2E=1 so regular
+  source-based rosdep installs do not pull a global pip package; only CI
+  enables it (TEST_ENABLE_E2E=1 set in both workflows).
+  On PEP 668 distros (jazzy/kilted, Python >= 3.11) rosdep's pip installer is
+  blocked from installing globally, which previously failed the industrial_ci
+  (jazzy) and coverage libmavconn jobs during Install Dependencies. Set
+  PIP_BREAK_SYSTEM_PACKAGES=1 alongside so rosdep may install it there.
+  The e2e test self-skips via pytest.importorskip where pymavlink is absent.
+* libmavconn: add pymavlink-referenced byte-stream e2e test
+  Add an end-to-end test that drives a real MAVConnUDP link through a small
+  ctypes shim and checks libmavconn's wire encoding/decoding against pymavlink
+  as the reference implementation:
+  - TX: libmavconn HEARTBEAT is byte-for-byte identical to pymavlink's frame.
+  - RX: pymavlink HEARTBEAT and SYS_STATUS (extension fields) decode to exact
+  ids/seq/payload.
+  - Signing: signed TX verified by pymavlink, signed RX accepted with
+  Framing::ok, and a wrong key yields Framing::bad_signature.
+  The pytest is guarded by pytest.importorskip("pymavlink") so it skips
+  cleanly where the pip package is absent (CI/buildfarm). Add a setup.cfg so
+  the new Python file uses the same flake8 style as mavros. Plan documented in
+  docs/mavlink-e2e-tests-plan.md.
+* libmavconn: updated deprecated asio API (missed few spots in the patch)
+* libmavconn: refactored deprecated asio API
+* style - apply ament_uncrustify from kilted
+* libmavconn: add MAVLink v2 signing support
+* docs: update docs
+* conn: improve url error handling
+* conn: next c++20 modernization pass 3
+* conn: next c++20 modernization pass
+* conn: fix thread etrmination
+* conn: c++20 modernization pass 1
+* conn: use common io context runner helper
+* conn: resurce usage - use non-recursive mutexes
+* conn: reduce lock time in tcp
+* conn: reduce lock time
+* conn: reduce lock time
+* conn: trigger connected out of lock
+* conn: reduce locking in tcp
+* conn: add test for io-thread
+* conn: fix build
+* conn: allow to use external io service
+* conn: fix almost impossible division by zero
+* docs: correct some more typos and spelling erorors
+* docs: fix some spelling errors
+* Contributors: Tomas Baca, Vladimir Ermakov
+
 2.14.0 (2025-12-23)
 -------------------
 

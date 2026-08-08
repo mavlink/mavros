@@ -2,6 +2,135 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.15.0 (2026-08-08)
+-------------------
+* Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh
+  docs: refresh, refactor extractor
+* cog: re-generate all
+* docs: refresh subpackage READMEs
+  - mavros: point the API docs link at readthedocs/plugin reference instead of
+  the dead wiki.ros.org page; fix ROS1 roslaunch examples to ros2 launch; note
+  that up-to-date install instructions live in the readthedocs guide.
+  - mavros_extras: link to the full plugin reference.
+  - libmavconn: link to the docs and API reference.
+  - mavros_msgs: add the missing README (message/service overview + API links).
+  - test_mavros: mark the ROS1-era SITL hand-tests as historical.
+* docs: remove redundant topic repetitions in plugin docs
+  - sim_state: drop the topic list from the class brief; the generated
+  Publishers section already lists each topic with a description.
+  - Separate section-marker // comments (e.g. "// publishers") from the
+  //! entity description with a blank line, so the extractor no longer
+  concatenates them into verbose descriptions like "publishers Publish
+  DEBUG messages...".
+  - Regenerate docs.
+* Merge pull request `#2258 <https://github.com/mavlink/mavros/issues/2258>`_ from mavlink/plugin-tests
+  Plugin tests
+* mavros: disable intra-process for latched publishers
+  Plugin nodes enable intra-process comms, but rclcpp (e.g. humble) rejects
+  creating a latched (transient_local) publisher or subscription on an
+  intra-process node: "intraprocess communication allowed only with volatile
+  durability". This made the waypoint/geofence/rallypoint/global_position/
+  home_position/sys_status plugins (which publish latched state) fail to start
+  on humble, and the mission plugin test crash in CI.
+  Add NonIntraProcessPublisherOptions()/NonIntraProcessSubscriptionOptions()
+  helpers and pass them to the transient_local publishers and subscriptions, so
+  those entities opt out of intra-process delivery while volatile topics keep
+  the zero-copy path.
+* docs: add ROS API descriptions to all plugins and regenerate docs
+  Add one-line //! descriptions for every exposed publisher, subscriber,
+  service, client and parameter across all mavros and mavros_extras plugins,
+  so the generated per-plugin docs describe what each ROS entity does.
+  Regenerate the plugin docs and index, and add a readthedocs Documentation
+  badge to the README.
+* docs: add mavlink subprotocol references to plugin docs
+  Add a reference to the relevant MAVLink microservice (subprotocol) page in
+  the doxygen description of each plugin that maps to one. The references flow
+  through the existing doc extractor/template pipeline.
+* build: bump cmake_minimum_required to 3.10
+  CMake (4.0+, as shipped on Lyrical/Rolling) emits a deprecation
+  warning for cmake_minimum_required < 3.10:
+  CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version
+  of CMake.
+  Raise the floor to 3.10 for all packages that were below it:
+  - libmavconn, mavros, mavros_msgs, mavros_extras: 3.5 -> 3.10
+  - test_mavros: 2.8.3 -> 3.10
+  - mavros_examples: 3.8 -> 3.10
+  3.10 is the lowest version that silences the warning while remaining
+  compatible with all supported ROS 2 distros (Humble ships CMake 3.22).
+* Merge pull request `#2242 <https://github.com/mavlink/mavros/issues/2242>`_ from mavlink/followup-terrain-protocol
+  extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+* extras: fix importlib.resources.files() on Python 3.10 (humble)
+  files(__name_\_) fails on Python 3.10 because srtm_continent_map is a
+  module, not a package. Python 3.12+ relaxed files() to also accept
+  modules, but humble (3.10) still requires a package.
+  Use __package_\_ (the parent 'terrain_server' package) instead.
+* extras: modernize Python packaging to pyproject.toml
+  - Add pyproject.toml with project metadata, entry points, and ruff config
+  - Simplify setup.py to minimal shim (for legacy/ament compatibility)
+  - Trim setup.cfg to only ament-specific sections (entry_points, flake8, paths)
+  - Delete ruff.toml (merged into pyproject.toml [tool.ruff])
+  - Works on Humble (setuptools>=61) through Lyrical
+* extras: fix CI — add python3-click dep, use find_packages for subpackage
+  - Add python3-click exec_depend to package.xml
+  - Use find_packages() in setup.py so terrain_server/ subpackage gets
+  installed (packages=[name] only installs the top-level package)
+* common: reformat py by ruff
+* extras: terrain_server: retry downloads with backoff, fix --ros-args passthrough
+  - Add exponential backoff retry (5 attempts, 1/2/4/8s) for transient
+  network errors (TimeoutError, URLError, OSError)
+  - Increase download timeout from 60s to 120s
+  - Fix click CLI intercepting --ros-args: bypass click when no known
+  subcommand is given, pass args directly to rclpy.init
+  - Use Path() instead of os.path.join for default cache path
+  - Move time import to module level
+* extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+  Address review comments on merged PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_:
+  - Consolidate terrain Python files into terrain_server/ subpackage
+  with single CLI entrypoint (node|preload|update|validate)
+  - Use mavros.base.BaseNode for topic namespacing (mavros-py integration)
+  - Replace zlib/hex blob with raw srtm_continent_map.bin resource file
+  loaded via importlib.resources (no compression, auditable)
+  - Switch TerrainData/TerrainRequest to float64 latitude/longitude
+  matching TerrainReport/TerrainCheck (ROS convention)
+  - Dedupe doxy blocks in terrain.cpp, add cmath for std::lround
+  - Add proxy support (HTTP/HTTPS) and scheme-configurable srtm_data_url
+  for Squid/nginx cache deployments
+  - Fix concurrency bug: move tile downloads to background ThreadPoolExecutor
+  so the 5Hz timer callback is never blocked
+  - Add strict .hgt size validation after extraction
+  - Add click-based CLI with preload/update/validate cache subcommands
+  - Revert apm.launch to clean state, create apm_with_terrain.launch
+  - Update AGENTS.md: always cd /ws before colcon, don't use --base-paths
+  Co-authored-by: Zeke Sarosi <zeke.sarosi@gmail.com>
+* Merge pull request `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ from zekesarosi/ros2
+  TERRAIN Protocol Integration
+* mavros_extras: Fix dangling pointers and uninitialized memory in Eigen expressions
+  Swapped `auto` for explicit `Eigen::VectorX` types in hil.cpp
+  and mount_control.cpp to prevent expression templates from holding
+  dangling pointers to temporary objects.
+* Update fake_gps.cpp to use libraries in tf2_eigen
+  Without this plugins will fail to load with an undefined symbol:
+  Something like:
+  ```
+  load exception: Failed to load library /tmp/mavros/install/mavros_extras/lib/libmavros_extras_plugins.so. Make sure that you are calling the PLUGINLIB_EXPORT_CLASS macro in the library code, and that names are consistent between this macro and your XML. Error string: Could not load library dlopen error: /tmp/mavros/install/mavros_extras/lib/libmavros_extras_plugins.so: undefined symbol: _ZN3tf27fromMsgIN13geometry_msgs3msg10Transform_ISaIvEEEN5Eigen9TransformIdLi3ELi2ELi0EEEEEvRKT_RT0\_
+  ```
+  I am using ROS2 Jazzy on Ubuntu 24.04
+* when lookup_static_transform fails,  drop that odometry sample instead of calling .linear(), .inverse()
+* more formatting
+* formatting changes
+* samgrep fixes
+* added tests, removed deps. incorportated suggestions
+* fix: Out-of-Bounds Write and Divide-by-Zero Bugs Found in...
+  Fixes `#2115 <https://github.com/mavlink/mavros/issues/2115>`_
+* minor bug fix
+* rework
+* terrain server
+* plugins: re-generate xml
+* docs: correct some more typos and spelling erorors
+* docs: fix some spelling errors
+* Contributors: Tomas Baca, Vladimir Ermakov, Zeke Sarosi, benjaminholdennearearth, jonas, roberthallers
+
 2.14.0 (2025-12-23)
 -------------------
 

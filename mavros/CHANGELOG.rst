@@ -2,6 +2,360 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.15.0 (2026-08-08)
+-------------------
+* Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh
+  docs: refresh, refactor extractor
+* cog: re-generate all
+* mavros: clean up README links
+  Fix the broken inline Pixhawk link, point the mavlink dependency at
+  mavlink.io instead of the dead wiki.ros.org page, drop unused link references
+  (catkin, shadow, boost, iss35, iss856) and upgrade http:// to https://.
+* mavros: replace README install section with a link to the docs
+  The install instructions are maintained in the readthedocs installation guide;
+  point there instead of duplicating (and drifting) binary/source install steps in
+  the package README.
+* docs: refresh subpackage READMEs
+  - mavros: point the API docs link at readthedocs/plugin reference instead of
+  the dead wiki.ros.org page; fix ROS1 roslaunch examples to ros2 launch; note
+  that up-to-date install instructions live in the readthedocs guide.
+  - mavros_extras: link to the full plugin reference.
+  - libmavconn: link to the docs and API reference.
+  - mavros_msgs: add the missing README (message/service overview + API links).
+  - test_mavros: mark the ROS1-era SITL hand-tests as historical.
+* docs: remove redundant topic repetitions in plugin docs
+  - sim_state: drop the topic list from the class brief; the generated
+  Publishers section already lists each topic with a description.
+  - Separate section-marker // comments (e.g. "// publishers") from the
+  //! entity description with a blank line, so the extractor no longer
+  concatenates them into verbose descriptions like "publishers Publish
+  DEBUG messages...".
+  - Regenerate docs.
+* Merge pull request `#2258 <https://github.com/mavlink/mavros/issues/2258>`_ from mavlink/plugin-tests
+  Plugin tests
+* mavros: disable intra-process for latched publishers
+  Plugin nodes enable intra-process comms, but rclcpp (e.g. humble) rejects
+  creating a latched (transient_local) publisher or subscription on an
+  intra-process node: "intraprocess communication allowed only with volatile
+  durability". This made the waypoint/geofence/rallypoint/global_position/
+  home_position/sys_status plugins (which publish latched state) fail to start
+  on humble, and the mission plugin test crash in CI.
+  Add NonIntraProcessPublisherOptions()/NonIntraProcessSubscriptionOptions()
+  helpers and pass them to the transient_local publishers and subscriptions, so
+  those entities opt out of intra-process delivery while volatile topics keep
+  the zero-copy path.
+* mavros: harden plugin tests against CI-only hangs/crashes
+  Fix two classes of failures seen only on the CI runners (not locally):
+  - Initialize rclcpp once per test binary instead of per test. Repeated
+  rclcpp::init()/shutdown() across the integration tests hung on lyrical and
+  rolling CI (FastDDS SHM / context teardown). Add TestUAS::Init() called from
+  main() and stop calling shutdown() in the fixture.
+  - Match the capture subscription QoS to the sink publisher (best_effort +
+  durability_volatile). On humble this avoided the intraprocess-communication
+  exception thrown while subscribing in SetUp, which crashed the mission
+  suite.
+  Also move the pure Parameter conversion tests into a lightweight fixture that
+  does not construct the ROS node stack, reducing node churn.
+* docs: add ROS API descriptions to all plugins and regenerate docs
+  Add one-line //! descriptions for every exposed publisher, subscriber,
+  service, client and parameter across all mavros and mavros_extras plugins,
+  so the generated per-plugin docs describe what each ROS entity does.
+  Regenerate the plugin docs and index, and add a readthedocs Documentation
+  badge to the README.
+* docs: add mavlink subprotocol references to plugin docs
+  Add a reference to the relevant MAVLink microservice (subprotocol) page in
+  the doxygen description of each plugin that maps to one. The references flow
+  through the existing doc extractor/template pipeline.
+* mavros: add service-based plugin tests for command, param, mission
+  Add gmock/gtest suites that exercise the exposed ROS API of the command,
+  param and waypoint (mission) plugins over real ROS interfaces, using a shared
+  TestUAS fixture that captures outbound MAVLink from mavlink_sink and injects
+  inbound messages via plugin_route.
+  - command (mavros-plugin-command): each ~/cmd service, COMMAND_LONG/INT
+  payload, ACK result, ACK timeout, broadcast/non-ACK paths.
+  - param (mavros-plugin-param): set/pull/get flows, Parameter conversion,
+  set/pull timeouts, excluded/unknown-parameter rejections.
+  - mission (mavros-plugin-mission): pull/push/clear/set_current handshakes,
+  item retry, push/pull timeouts, partial-push rejection.
+  The plugin .cpp files are compiled into the test TUs to keep the approach
+  refactor-free where the classes are otherwise internal.
+* mission: make timeouts configurable via parameters
+  Replace the hardcoded WP_TIMEOUT/LIST_TIMEOUT/RETRIES_COUNT/RESCHEDULE_TIME
+  constants in MissionBase with node-declared parameters (mission_wp_timeout,
+  mission_list_timeout, mission_retries, mission_reschedule_time) so the
+  timeout/retry behavior can be tuned and tested. Recreate the retry wall-timer
+  when mission_wp_timeout changes.
+* param: make timeouts configurable via parameters
+  Replace the hardcoded PARAM_TIMEOUT/LIST_TIMEOUT/RETRIES_COUNT constants
+  with node-declared parameters (param_set_timeout, param_list_timeout,
+  param_retries) so the timeout/retry behavior can be tuned and tested.
+  Recreate the retry wall-timer when param_set_timeout changes.
+  Also zero-initialize the mavlink_param_union_t in to_param_set() to avoid
+  undefined-behaviour padding bytes leaking into the PARAM_SET payload.
+* Merge pull request `#2256 <https://github.com/mavlink/mavros/issues/2256>`_ from mavlink/try-optimize-router
+  Optimize MAVROS router and MAVConn send path
+* mavros: break Router<->Endpoint cycle fully in test teardown
+  The reverse-reachability index (remote_index) also holds Endpoint::SharedPtr,
+  so clearing only endpoints left the index keeping the endpoints (and the
+  Router, via each endpoint's parent) alive. That leaked the Router node -- a
+  DDS participant -- which intermittently crashes FastDDS discovery and shows
+  up as flaky router termination. Clear remote_index alongside endpoints in
+  all router test teardowns.
+* mavros: fix lazy index rebuild race, uncrustify select bench
+  Clear remote_index_dirty only while holding index_mutex, closing a window
+  where a thread that lost the CAS could read the still-empty index and drop
+  a message (caught by route_stress_multithreaded_broadcast).
+  Reformat test_router_select_benchmark.cpp with uncrustify.
+* mavros: add router selection micro-benchmark
+  Mock-endpoint benchmark of route_message() in isolation (no DDS publish, no
+  real I/O), used to separate the cost of the routing decision from the
+  libmavconn send path and the ROS publish path.
+* mavros: add reverse reachability index to router
+  Replace the per-message endpoint sweep in route_message with a reverse
+  index (remote address -> reachable endpoints) guarded by index_mutex.
+  The index is rebuilt lazily on use: recv_message and the stale-addr
+  cleanup only raise an atomic dirty flag; route_message rebuilds under a
+  CAS-gated unique_lock, so the hot read path stays a plain load + shared
+  lock with no RMW. add/del keep the index in sync synchronously for
+  pointer-lifetime safety. Broadcast lookup is done only when needed.
+* mavros: optimize router hot path
+  Single-pass target collection removes the second full endpoint scan (and
+  second allocation) on the targeted-miss fallback.
+  InlineVector (mavros::utils::InlineVector<T, N>) replaces the per-message
+  std::vector in route_message with a stack buffer, spilling to heap only for
+  large swarms. It is a portable C++20 stand-in for C++23 std::inplace_vector,
+  which is unavailable across the supported distro/toolchain matrix.
+* Merge pull request `#2250 <https://github.com/mavlink/mavros/issues/2250>`_ from mavlink/try-optimize
+  Try optimize
+* tests: fix uncrustify
+* tests: add router e2e and benchmark suites
+  Replace the gtest benchmark (duplicated mock coverage) with a real UDP
+  e2e test (test_router_e2e.cpp) that exercises GCS broadcast to all FCUs,
+  FCU broadcast to GCS, targeted UAS routing, and UAS broadcast to GCS +
+  FCUs.  The Google Benchmark (test_router_benchmark.cpp) measures sustained
+  throughput (~67k msg/s, 100% delivery) and is gated by the CMake option
+  AMENT_RUN_PERFORMANCE_TESTS.
+  Both use plain asio (matching libmavconn) instead of Boost.Asio, so they
+  build on humble where standalone and Boost asio headers collide.
+  ament_cmake_google_benchmark is now a REQUIRED test dependency.
+* uas: default UAS executor threads to clamp(2, 4)
+  The plugin executor only runs a handful of subscription callbacks per
+  UAS; spinning up one thread per core (up to 16) wastes resources,
+  especially with several UAS nodes. Clamp the default to 2-4 threads
+  (hardware_concurrency still overrides). MAVROS_UAS_EXECUTOR_THREADS
+  keeps working as an explicit override.
+* mavros: zero-copy publish, memoize endpoint frame_id
+  Publish mavros_msgs::msg::Mavlink via unique_ptr so intra-process
+  subscribers (UAS/router) receive the buffer without a copy, and hand the
+  source endpoint's frame_id through the send path.
+  ROSEndpoint::send_message() and UAS::send_message() now publish a
+  message built in-place; the router memoizes each endpoint's "ep:<id>"
+  frame_id once in set_id() instead of formatting it on every message, and
+  passes it down instead of the raw endpoint id. The Endpoint send_message
+  signature changes accordingly (test_router mock updated).
+* mavros: prohibit UAS copy/move semantics
+  UAS owns an executor thread, TF listeners, subscriptions and plugin
+  nodes, so copying it (still implicitly generated because of the
+  user-declared destructor) would be a bug. Delete copy and move (as in
+  PR `#1961 <https://github.com/mavlink/mavros/issues/1961>`_). Nothing in the codebase copies or moves a UAS.
+* mavros: fix ownership comment, document executor flags and composable launch
+  Clarify the plugin<->UAS ownership comment (UAS owns the plugins, so the
+  plugins must not own the UAS). Document MAVROS_EXECUTOR_TYPE and
+  MAVROS_UAS_EXECUTOR_THREADS env vars and the test_compose.launch.py
+  arguments in mavros/README.md.
+* mavros: enable intra-process comms, harden composable launch
+  Enable use_intra_process_comms(true) for the mavros_node container and
+  the dynamically created plugin nodes, so the internal MAVLink bus and
+  co-located subscribers go zero-copy (cross-process consumers fall back
+  to DDS, so this is safe either way).
+  test_compose.launch.py:
+  - fcu_url/gcs_url as launch arguments instead of hardcoded URLs
+  - add an 'executor' argument (mt by default, events/auto opt-in). The
+  Callback Group Events executor's component-container support is still
+  immature upstream (`ros2/rclcpp#3186 <https://github.com/ros2/rclcpp/issues/3186>`_: shutdown double-remove;
+  `ros2/rclcpp#3123 <https://github.com/ros2/rclcpp/issues/3123>`_: container support), so default to the reliable
+  component_container_mt and only use component_container
+  --executor-type events-cbg when asked
+  - resolve URLs in an OpaqueFunction so list parameters keep their type
+  - tone down container log level from DEBUG to INFO
+* mavros: fix composable node ownership cycle and plugin naming
+  Two fixes so mavros::router::Router and mavros::uas::UAS work cleanly as
+  composable nodes in a component container:
+  1. Break the plugin <-> UAS ownership cycle. Plugin held a shared_ptr to
+  the UAS node while the UAS node owned the plugins, so on component
+  unload the nodes were never destroyed (they lingered and got
+  duplicated on reload). Plugin now stores a non-owning UAS*; the UAS
+  still owns the plugins. Verified: unload now removes UAS + all plugin
+  nodes, reload does not duplicate them.
+  2. Dynamically created plugin nodes no longer inherit process-global
+  __node/__ns remap rules. A component container remaps itself with
+  e.g. '-r __node:=<container>', which renamed every plugin node to the
+  container name and caused topic type conflicts. Plugin nodes are now
+  created with use_global_arguments(false), keeping their subnode name
+  and the UAS namespace.
+  Also move the Plugin constructors to plugin.cpp (UAS is an incomplete
+  type at the point plugin.hpp is included) and update the composable test
+  launch: fcu_url/gcs_url as launch arguments (no env-specific URL
+  hardcoded) and the container selected by distro (component_container
+  --executor-type events-cbg on Lyrical+, component_container_mt
+  otherwise).
+* mavros: runtime-selectable executor (MultiThreaded / EventsCBG)
+  Introduce make_executor() factory honoring the MAVROS_EXECUTOR_TYPE env
+  var (default 'mt', 'events'/'cbg' selects rclcpp's new Callback Group
+  Events executor on Lyrical+). The UASExecutor wrapper and mavros_node
+  container now build their executor via the factory, so the new
+  EventsCBGExecutor can be tried without a rebuild.
+  EventsCBGExecutor only exists since Lyrical (rclcpp >= 30.0.0); on older
+  distros the events request warns and falls back to MultiThreadedExecutor.
+  Also drop the now-dead UASExecutor::set_ids()/run() overrides (set_ids
+  had no callers; run() is non-virtual in Lyrical's MultiThreadedExecutor).
+* build: bump cmake_minimum_required to 3.10
+  CMake (4.0+, as shipped on Lyrical/Rolling) emits a deprecation
+  warning for cmake_minimum_required < 3.10:
+  CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version
+  of CMake.
+  Raise the floor to 3.10 for all packages that were below it:
+  - libmavconn, mavros, mavros_msgs, mavros_extras: 3.5 -> 3.10
+  - test_mavros: 2.8.3 -> 3.10
+  - mavros_examples: 3.8 -> 3.10
+  3.10 is the lowest version that silences the warning while remaining
+  compatible with all supported ROS 2 distros (Humble ships CMake 3.22).
+* mavros: fix tf2 broadcaster ctor for Rolling, silence -Wmaybe-uninitialized
+  tf2_ros (Iron+) deprecated/removed the NodeT pointer constructor for
+  TransformBroadcaster and StaticTransformBroadcaster in favour of the
+  rclcpp::node_interfaces::NodeInterfaces aggregate. On Rolling the
+  NodeT overload is gone entirely, so mavros_uas.cpp:46-47 failed to
+  compile:
+  error: no matching function for call to
+  'tf2_ros::TransformBroadcaster::TransformBroadcaster(mavros::uas::UAS*)'
+  Use *this, which implicitly converts to the required NodeInterfaces,
+  behind the existing USE_OLD_TF2_ROS guard so Humble (rclcpp < 17.0.0)
+  keeps the NodeT pointer form.
+  Also initialise locals read from parameters before get_parameter() to
+  silence -Wmaybe-uninitialized on Lyrical/GCC 15:
+  - tgt_system/tgt_component in mavros_uas.cpp
+  - send_force in setpoint_accel.cpp
+* Merge pull request `#2242 <https://github.com/mavlink/mavros/issues/2242>`_ from mavlink/followup-terrain-protocol
+  extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+* common: modernize Python packaging to pyproject.toml for all packages
+  - mavros: add pyproject.toml, simplify setup.py to shim, trim setup.cfg
+  - mavros_examples: add pyproject.toml, simplify setup.py, trim setup.cfg,
+  delete ruff.toml (merged into pyproject.toml)
+  - mavros: ignore CNL100 flake8 rule (class def without blank line)
+* common: reformat py by ruff
+* extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+  Address review comments on merged PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_:
+  - Consolidate terrain Python files into terrain_server/ subpackage
+  with single CLI entrypoint (node|preload|update|validate)
+  - Use mavros.base.BaseNode for topic namespacing (mavros-py integration)
+  - Replace zlib/hex blob with raw srtm_continent_map.bin resource file
+  loaded via importlib.resources (no compression, auditable)
+  - Switch TerrainData/TerrainRequest to float64 latitude/longitude
+  matching TerrainReport/TerrainCheck (ROS convention)
+  - Dedupe doxy blocks in terrain.cpp, add cmath for std::lround
+  - Add proxy support (HTTP/HTTPS) and scheme-configurable srtm_data_url
+  for Squid/nginx cache deployments
+  - Fix concurrency bug: move tile downloads to background ThreadPoolExecutor
+  so the 5Hz timer callback is never blocked
+  - Add strict .hgt size validation after extraction
+  - Add click-based CLI with preload/update/validate cache subcommands
+  - Revert apm.launch to clean state, create apm_with_terrain.launch
+  - Update AGENTS.md: always cd /ws before colcon, don't use --base-paths
+  Co-authored-by: Zeke Sarosi <zeke.sarosi@gmail.com>
+* Merge pull request `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ from zekesarosi/ros2
+  TERRAIN Protocol Integration
+* Merge pull request `#2105 <https://github.com/mavlink/mavros/issues/2105>`_ from mavlink/refactor-router
+  Refactor router
+* router: break Endpoint<->Router ref cycle in test teardown
+  router->endpoints holds each endpoint, and each endpoint->parent holds the
+  Router back, forming a reference cycle. Combined with Mock::AllowLeak, the
+  Router node (a DDS participant) was never destroyed between tests, so leaked
+  participants accumulated and crashed FastDDS when colcon test ran packages in
+  parallel (the default executor).
+  Track created routers in the fixture and clear their endpoints before
+  rclcpp::shutdown(), so each participant is destroyed while rclcpp is still
+  running. Verified: staggered parallel runs 0/48 (was 15/48), full colcon test
+  across all packages 0 failures over repeated rounds.
+* router: cancel startup_delay_timer on destruction
+  ~Router() cancelled reconnect_timer and stale_addrs_timer but not
+  startup_delay_timer. The one-shot 10ms startup timer fires param_init_once()
+  (via shared_from_this()); if the router was destroyed within 10ms of
+  construction, the pending timer could fire on a dying node and crash during
+  teardown. This made mavros-router-test flaky (SIGSEGV after tests passed).
+  Cancel startup_delay_timer alongside the other timers. Verified: router test
+  looped 200x with no failures (previously failed ~1/16).
+* ci: enable coverage job for mavros
+* mavros: add stale-address lifecycle test
+* mavros: add router fallback and drop-path tests
+* mavros: add skippable router stress test
+* mavros: use shared io_context in router endpoints
+* mavros: modernize router for C++20
+* router: reduce critical section
+  mavros: reduce router lock hold time
+* move to standard
+* Replace AUTOPILOT_CAPACITIES (deprecated) by REQUEST_MESSAGE
+* mavros: fix cpplint code style alert
+* fix(frame_tf): handle gimbal lock in quaternion_to_rpy, fix __123 test angles
+  At pitch = ±π/2 the third-row elements m(2,1) and m(2,2) are both zero,
+  making atan2(0, 0) undefined for roll and yaw. Add an explicit gimbal-lock
+  branch: detect cos_pitch < 1e-9 and recover the one observable degree of
+  freedom (yaw−roll at +π/2, yaw+roll at −π/2) while setting roll = 0.
+  Also change the __123 test to use pitch=0.5 rad (≈28°) instead of 2.0 rad
+  (≈114°). ZYX Euler angles are only unique for |pitch| < π/2; the old value
+  was outside that domain and only passed by coincidence with eulerAngles.
+  All 8 quaternion-utils tests pass with the local build.
+  Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+* fix(frame_tf): replace eulerAngles(2,1,0) with atan2-based ZYX decomposition in quaternion_to_rpy
+  Eigen::eulerAngles(2,1,0) clamps the primary (yaw) angle to [0, π].
+  Any NED heading in (π, 2π) is silently remapped to a wrong value,
+  causing vision_pose_estimate to report a frozen yaw of ~3.14 rad when
+  the vehicle crosses the π boundary (MAVROS `#444 <https://github.com/mavlink/mavros/issues/444>`_, `#1472 <https://github.com/mavlink/mavros/issues/1472>`_).
+  Replace with the standard ZYX rotation-matrix decomposition using atan2
+  and asin, which recovers yaw in the full (-π, π] range. Roll and pitch
+  coverage is unchanged: [-π, π] and [-π/2, π/2] respectively. The
+  gimbal-lock singularity at pitch ≈ ±90° is an intrinsic ZYX limitation
+  unrelated to this bug.
+  Also add a regression test (quaternion_to_rpy__yaw_full_circle) that
+  sweeps yaw through all integer degrees in [-179°, 180°] with fixed small
+  roll/pitch and asserts exact round-trip recovery, and update the stale
+  comment in quaternion_to_rpy__pm_pi to reflect the remaining limitation.
+  Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+* global_position: fix velocity conversion to ENU
+* mavros: ignore intentional cmd shadow lint
+* fix uncrustify
+* mavros: make UAS executor threads configurable
+  - Add MAVROS_UAS_EXECUTOR_THREADS env var to control thread count
+  - Log parse results (warnings for invalid values, info for overrides)
+  - Enforce minimum of 2 threads when env var is set
+* mavros: uncrustify plugin list validation
+* mavros: validate plugin list patterns
+* fix: use dedicated callback group for blocking services
+* fixed the bug
+* fix: std::future_error in command.cpp when the set_value() promise called twice
+* style - apply ament_uncrustify from kilted
+* Ensure map_point is init, early return if ECEF conversion fails and only update map_origin, ecef_origin is conversion ok
+* Sys status: add mutex to M_VehicleInfo vehicles unordered map
+* Stop the executor before plugin nodes and subscriptions begin tearing down
+* check if thread joinable before joining
+* mavros_uas change declaration order to ensure the destructor does not throw
+* do not call parameters_missing_idx.front() if list is empty
+* use shared_lock in read-only paths
+* use shared_mutex instead of mutex
+* add missing mutex lock
+* Fix mavros_router segfault with mutex on remote_addrs
+* rework
+* imu: fix missing hPa to Pa conversion in HIGHRES_IMU handler
+  abs_pressure and diff_pressure in HIGHRES_IMU messages are in hPa,
+  but sensor_msgs/FluidPressure.fluid_pressure is in Pascals. MILLIBAR_TO_PASCAL  was already defined but not applied, resulting in pressure values 100 times too small.
+  Also adjusted the handle_scaled_pressure to use MILLIBAR_TO_PASCAL for consistency instead of 100 magic number.
+* plugins: re-generate xml
+* docs: correct some more typos and spelling erorors
+* docs: fix some spelling errors
+* docs: trying to parse using libclang
+* add atomic completion flag to `ParamSetOpt`
+* Contributors: 8to, Alex Bennett, Beniamino Pozzan, Falah Naufal Zaki, Luka Filipović, Vladimir Ermakov, Your Name, Zeke Sarosi, apple, jonas, mitchellecm7, odraudE31, victor
+
 2.14.0 (2025-12-23)
 -------------------
 * fix: update GLOBAL_POSITION_INT message type to standard namespace

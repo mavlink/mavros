@@ -2,6 +2,59 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.15.0 (2026-08-08)
+-------------------
+* Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh
+  docs: refresh, refactor extractor
+* docs: refresh subpackage READMEs
+  - mavros: point the API docs link at readthedocs/plugin reference instead of
+  the dead wiki.ros.org page; fix ROS1 roslaunch examples to ros2 launch; note
+  that up-to-date install instructions live in the readthedocs guide.
+  - mavros_extras: link to the full plugin reference.
+  - libmavconn: link to the docs and API reference.
+  - mavros_msgs: add the missing README (message/service overview + API links).
+  - test_mavros: mark the ROS1-era SITL hand-tests as historical.
+* build: bump cmake_minimum_required to 3.10
+  CMake (4.0+, as shipped on Lyrical/Rolling) emits a deprecation
+  warning for cmake_minimum_required < 3.10:
+  CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version
+  of CMake.
+  Raise the floor to 3.10 for all packages that were below it:
+  - libmavconn, mavros, mavros_msgs, mavros_extras: 3.5 -> 3.10
+  - test_mavros: 2.8.3 -> 3.10
+  - mavros_examples: 3.8 -> 3.10
+  3.10 is the lowest version that silences the warning while remaining
+  compatible with all supported ROS 2 distros (Humble ships CMake 3.22).
+* Merge pull request `#2242 <https://github.com/mavlink/mavros/issues/2242>`_ from mavlink/followup-terrain-protocol
+  extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+* extras: polish terrain protocol integration (PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ followup)
+  Address review comments on merged PR `#2137 <https://github.com/mavlink/mavros/issues/2137>`_:
+  - Consolidate terrain Python files into terrain_server/ subpackage
+  with single CLI entrypoint (node|preload|update|validate)
+  - Use mavros.base.BaseNode for topic namespacing (mavros-py integration)
+  - Replace zlib/hex blob with raw srtm_continent_map.bin resource file
+  loaded via importlib.resources (no compression, auditable)
+  - Switch TerrainData/TerrainRequest to float64 latitude/longitude
+  matching TerrainReport/TerrainCheck (ROS convention)
+  - Dedupe doxy blocks in terrain.cpp, add cmath for std::lround
+  - Add proxy support (HTTP/HTTPS) and scheme-configurable srtm_data_url
+  for Squid/nginx cache deployments
+  - Fix concurrency bug: move tile downloads to background ThreadPoolExecutor
+  so the 5Hz timer callback is never blocked
+  - Add strict .hgt size validation after extraction
+  - Add click-based CLI with preload/update/validate cache subcommands
+  - Revert apm.launch to clean state, create apm_with_terrain.launch
+  - Update AGENTS.md: always cd /ws before colcon, don't use --base-paths
+  Co-authored-by: Zeke Sarosi <zeke.sarosi@gmail.com>
+* Merge pull request `#2137 <https://github.com/mavlink/mavros/issues/2137>`_ from zekesarosi/ros2
+  TERRAIN Protocol Integration
+* added tests, removed deps. incorportated suggestions
+* rework
+* docs: correct some more typos and spelling erorors
+* docs: fix some spelling errors
+* Contributors: Vladimir Ermakov, Zeke Sarosi
+
 2.14.0 (2025-12-23)
 -------------------
 
