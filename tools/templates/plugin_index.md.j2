@@ -9,14 +9,14 @@ messages it subscribes to and publishes.
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
 |--------|-------|-----|-----|-----|--------|-----------------|
-{% for p in std_plugins %}
+{% for p in std_plugins -%}
 | [`{{ p.plugin }}`](std/{{ p.path.stem }}.md) | {{ (p.brief or "") | replace("|", "\\|") }} | {{ p.publishers | length or "—" }} | {{ p.subscribers | length or "—" }} | {{ p.services | length or "—" }} | {{ p.clients | length or "—" }} | {{ p.mavlink_subscriptions | length }}/{{ p.mavlink_publications | length }} |
-{% endfor %}
+{% endfor -%}
 
 ## Extra plugins (`mavros_extras`)
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
 |--------|-------|-----|-----|-----|--------|-----------------|
-{% for p in extras_plugins %}
+{% for p in extras_plugins -%}
 | [`{{ p.plugin }}`](extras/{{ p.path.stem }}.md) | {{ (p.brief or "") | replace("|", "\\|") }} | {{ p.publishers | length or "—" }} | {{ p.subscribers | length or "—" }} | {{ p.services | length or "—" }} | {{ p.clients | length or "—" }} | {{ p.mavlink_subscriptions | length }}/{{ p.mavlink_publications | length }} |
-{% endfor %}
+{% endfor -%}
