@@ -20,6 +20,7 @@ Guides
 - [Connection URLs](connection_urls.md)
 - [Coordinate frames](frames.md)
 - [Nodes and launch](nodes.md)
+- [mav CLI](mav_cli.md)
 - [Troubleshooting](troubleshooting.md)
 
 
