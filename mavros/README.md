@@ -26,7 +26,7 @@ Limitations
 
 Only for Linux.
 
-This package are dependent on [ros-\*-mavlink][mlwiki] build from [mavlink-gbp-release][mlgbp].
+This package depends on the [ros-*-mavlink][ml] MAVLink library (built from [mavlink-gbp-release][mlgbp]).
 It exists in ROS package index and usually updates each month.
 
 Connection URL
@@ -141,7 +141,7 @@ Launch Files
 
 **XXX TODO**! #1564
 
-Launch files are provided for use with common FCUs, in particular [Pixhawk](pixhawk):
+Launch files are provided for use with common FCUs, in particular [Pixhawk](https://pixhawk.org/):
 
   * [px4.launch](launch/px4.launch) -- for use with the PX4 Autopilot (for VTOL, multicopters and planes)
   * [apm.launch](launch/apm.launch) -- for use with APM flight stacks (e.g., all versions of ArduPlane, ArduCopter, etc)
@@ -214,26 +214,20 @@ Links
   - [mavros\_extras][mrext] -- extra plugins & node for mavros
 
 
-[qgc]: http://qgroundcontrol.org/
-[pixhawk]: http://pixhawk.org/
-[px4]: http://px4.io/
-[apm]: http://ardupilot.com/
+[qgc]: https://qgroundcontrol.com/
+[pixhawk]: https://pixhawk.org/
+[px4]: https://px4.io/
+[apm]: https://ardupilot.com/
 [mlros]: https://github.com/mavlink/mavlink_ros
-[boost]: http://www.boost.org/
 [ml]: https://mavlink.io/en/
 [mlgbp]: https://github.com/mavlink/mavlink-gbp-release
-[iss35]: https://github.com/mavlink/mavros/issues/35
 [iss49]: https://github.com/mavlink/mavros/issues/49
 [iss216]: https://github.com/mavlink/mavros/issues/216
 [iss317]: https://github.com/mavlink/mavros/issues/317
 [iss319]: https://github.com/mavlink/mavros/issues/319
 [iss321]: https://github.com/mavlink/mavros/issues/321
 [iss473]: https://github.com/mavlink/mavros/issues/473
-[iss856]: https://github.com/mavlink/mavros/issues/856
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
-[mlwiki]: http://wiki.ros.org/mavlink
-[shadow]: http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-jade-mavlink/
-[catkin]: https://catkin-tools.readthedocs.org/en/latest/
 [iss473rfc]: https://docs.google.com/document/d/1bDhaozrUu9F915T58WGzZeOM-McyU20dwxX-NRum1KA/edit
 [iss473table]: https://docs.google.com/spreadsheets/d/1LnsWTblU92J5_SMinTvBvHJWx6sqvzFa8SKbn8TXlnU/edit#gid=0
 [geolib]: https://geographiclib.sourceforge.io/
