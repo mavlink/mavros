@@ -21,6 +21,7 @@ Package Overview
 - `mavros_extras`: optional plugins
 - `mavros_msgs`: ROS 2 message and service interfaces
 - `libmavconn`: MAVLink transport library
+- `mavros_examples`: beginner example scripts for ROS 2
 
 
 Plugin Reference

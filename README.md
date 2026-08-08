@@ -86,6 +86,7 @@ waypoint missions.
 | `mavros_msgs` | ROS 2 message and service interfaces |
 | `libmavconn` | MAVLink transport library (usable outside ROS) |
 | `test_mavros` | Hand-tests and SITL manual for PX4/ArduPilot |
+| `mavros_examples` | Beginner-friendly ROS 2 example scripts (task control, waypoint missions, offboard) |
 
 ## Documentation
 

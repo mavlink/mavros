@@ -14,7 +14,7 @@ import re
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-PKGS = ["mavros", "mavros_extras", "libmavconn", "mavros_msgs", "test_mavros"]
+PKGS = ["mavros", "mavros_extras", "libmavconn", "mavros_msgs", "test_mavros", "mavros_examples"]
 OUT_DIR = REPO / "docs" / "changelog"
 
 LINK_RE = re.compile(r"([^<\s]+)\s+<((?:https?|standardese)://[^>]+)>")
