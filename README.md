@@ -15,10 +15,23 @@ same way you would program any other robot — no need to speak MAVLink.
 MAVLink is the wire protocol most flight controllers speak. ROS 2 is a
 robotics framework for building software. MAVROS is the glue between them:
 
-```
-   Flight controller         MAVROS                  Your ROS 2 app
-   (PX4 / ArduPilot)  <--MAVLink-->  [bridge]  <--ROS 2-->  nodes
-                                   (UDP/TCP/serial)
+```mermaid
+flowchart LR
+    subgraph FCU["Flight controller"]
+        AP[PX4 / ArduPilot]
+    end
+    subgraph MAV["MAVROS node"]
+        BR[bridge / plugins]
+    end
+    subgraph APP["Your ROS 2 app"]
+        N1[telemetry nodes]
+        N2[command nodes]
+        N3[mission / GCS nodes]
+    end
+    AP -- MAVLink (UDP/TCP/serial) --> BR
+    BR -- ROS 2 topics / services / params --> N1
+    BR --> N2
+    BR --> N3
 ```
 
 It does the boring, low-level work for you:
