@@ -95,7 +95,7 @@ inline const std::string to_string_ss(T & obj)
   return ss.str();
 }
 
-constexpr size_t operator"" _KiB(unsigned long long sz)      // NOLINT
+constexpr size_t operator""_KiB(unsigned long long sz)      // NOLINT
 {
   return sz * 1024;
 }
