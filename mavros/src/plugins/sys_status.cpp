@@ -576,7 +576,7 @@ public:
         }
       });
 
-    auto state_qos = rclcpp::QoS(10).transient_local();
+    auto state_qos = mavros::StateQoS();
     auto sensor_qos = rclcpp::SensorDataQoS();
 
     //! Publish connection, armed and mode state (HEARTBEAT).

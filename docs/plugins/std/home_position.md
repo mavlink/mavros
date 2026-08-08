@@ -9,7 +9,7 @@
 Publishes home position.
 
 ## Publishers
-- `~/home` [type: [mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html), qos: [state_qos](../qos.md#home_position-state_qos "rclcpp::QoS(10).transient_local()")] - Publish home position (HOME_POSITION).
+- `~/home` [type: [mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish home position (HOME_POSITION).
 
 ## Subscribers
 - `~/set` [type: [mavros_msgs::msg::HomePosition](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/HomePosition.html), qos: [QoS(10)](../qos.md#qos_10_)] - Set home position (SET_HOME_POSITION).
