@@ -3,6 +3,10 @@ mavros extras
 
 Some extra plugins and nodes for [mavros][mr].
 
+> The full ROS API of every plugin (topics, services, parameters) is documented
+> in the [plugin reference](https://mavros.readthedocs.io/en/latest/plugins/).
+> The list below is a brief overview.
+
 
 ADSB
 ----

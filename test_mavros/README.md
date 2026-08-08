@@ -1,6 +1,10 @@
 MAVROS test package
 ===================
 
+> **Note:** the instructions below are historical (ROS 1 / catkin era) SITL
+> hand-tests and are kept for reference. The current automated test suite lives
+> in `mavros/test/` and is run by CI.
+
 This package consists hand-tests with FCU SITL environment.
 I hope later we will do automatic tests too.
 

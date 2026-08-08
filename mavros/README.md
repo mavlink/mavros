@@ -3,8 +3,9 @@ MAVROS
 
 MAVLink extendable communication node for ROS2.
 
-
-ROS API documentation moved to [wiki.ros.org][wiki].
+The ROS API (topics, services, parameters) of every plugin is documented in the
+[plugin reference](https://mavros.readthedocs.io/en/latest/plugins/) and the
+[full documentation](https://mavros.readthedocs.io/).
 
 
 Features
@@ -170,12 +171,16 @@ container:
 
 Examples:
 
-    roslaunch mavros px4.launch
-    roslaunch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
+    ros2 launch mavros px4.launch
+    ros2 launch mavros apm.launch fcu_url:=tcp://localhost gcs_url:=udp://@
 
 
 Installation
 ------------
+
+> The up-to-date install instructions (binary, source and container) live in the
+> [installation guide](https://mavros.readthedocs.io/en/latest/installation/).
+> The notes below are kept for reference.
 
 ### Required dependencies
 
@@ -327,7 +332,6 @@ Links
 [iss321]: https://github.com/mavlink/mavros/issues/321
 [iss473]: https://github.com/mavlink/mavros/issues/473
 [iss856]: https://github.com/mavlink/mavros/issues/856
-[wiki]: http://wiki.ros.org/mavros
 [mrext]: https://github.com/mavlink/mavros/tree/master/mavros_extras
 [mlwiki]: http://wiki.ros.org/mavlink
 [shadow]: http://packages.ros.org/ros-shadow-fixed/ubuntu/pool/main/r/ros-jade-mavlink/
