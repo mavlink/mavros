@@ -243,6 +243,14 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
+  ament_add_gtest(mavros-extras-fake-gps-test test/test_fake_gps_utils.cpp)
+  target_include_directories(mavros-extras-fake-gps-test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins
+  )
+  target_link_libraries(mavros-extras-fake-gps-test
+    mavros
+  )
+
   ament_add_pytest_test(test_srtm test/test_srtm.py)
 endif()
 

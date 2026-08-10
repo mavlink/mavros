@@ -29,6 +29,7 @@
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 #include "mavros/setpoint_mixin.hpp"
+#include "fake_gps_utils.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
@@ -83,7 +84,8 @@ public:
     satellites_visible(5),
     fix_type(GPS_FIX_TYPE::NO_GPS),
     tf_rate(10.0),
-    map_origin(0.0, 0.0, 0.0)
+    map_origin(0.0, 0.0, 0.0),
+    has_previous_position(false)
   {
     enable_node_watch_parameters();
 
@@ -302,6 +304,7 @@ private:
   Eigen::Vector3d ecef_origin;          //!< geocentric origin [m]
   Eigen::Vector3d old_ecef;             //!< previous geocentric position [m]
   double old_stamp;                     //!< previous stamp [s]
+  bool has_previous_position;           //!< previous sample is available for velocity
 
   /* -*- mid-level helpers and low-level send -*- */
 
@@ -331,11 +334,16 @@ private:
       RCLCPP_INFO_STREAM(get_logger(), "FGPS: Caught exception: " << e.what());
     }
 
-    Eigen::Vector3d vel = (old_ecef - current_ecef) / (stamp.seconds() - old_stamp);    // [m/s]
+    Eigen::Vector3d vel_ned = Eigen::Vector3d::Zero();
+    if (has_previous_position) {
+      vel_ned = fake_gps::calculate_velocity_ned(
+        current_ecef, old_ecef, stamp.seconds() - old_stamp, map_origin);
+    }
 
     // store old values
     old_stamp = stamp.seconds();
     old_ecef = current_ecef;
+    has_previous_position = true;
 
     if (use_hil_gps) {
       /**
@@ -346,17 +354,8 @@ private:
        */
       mavlink::common::msg::HIL_GPS hil_gps {};
 
-      vel *= 1e2;                   // [cm/s]
-
-      // compute course over ground
-      double cog;
-      if (vel.x() == 0 && vel.y() == 0) {
-        cog = 0;
-      } else if (vel.x() >= 0 && vel.y() < 0) {
-        cog = M_PI * 5 / 2 - atan2(vel.x(), vel.y());
-      } else {
-        cog = M_PI / 2 - atan2(vel.x(), vel.y());
-      }
+      const uint16_t cog = fake_gps::course_over_ground_cdeg(vel_ned);
+      vel_ned *= 1e2;                   // [cm/s]
 
       // Fill in and send message
       hil_gps.time_usec = get_time_usec(stamp);                 // [useconds]
@@ -365,11 +364,11 @@ private:
       hil_gps.alt = uas->data.egm96_5->ConvertHeight(
         geodetic.x(), geodetic.y(), geodetic.z(),
         GeographicLib::Geoid::ELLIPSOIDTOGEOID) * 1e3;          // [meters * 1e3]
-      hil_gps.vel = vel.block<2, 1>(0, 0).norm();               // [cm/s]
-      hil_gps.vn = vel.x();                                     // [cm/s]
-      hil_gps.ve = vel.y();                                     // [cm/s]
-      hil_gps.vd = vel.z();                                     // [cm/s]
-      hil_gps.cog = cog * 1e2;                                  // [degrees * 1e2]
+      hil_gps.vel = vel_ned.block<2, 1>(0, 0).norm();           // [cm/s]
+      hil_gps.vn = vel_ned.x();                                 // [cm/s]
+      hil_gps.ve = vel_ned.y();                                 // [cm/s]
+      hil_gps.vd = vel_ned.z();                                 // [cm/s]
+      hil_gps.cog = cog;                                        // [degrees * 1e2]
       hil_gps.eph = eph * 1e2;                                  // [cm]
       hil_gps.epv = epv * 1e2;                                  // [cm]
       hil_gps.fix_type = utils::enum_value(fix_type);
@@ -396,10 +395,10 @@ private:
       if (epv == 0.0f) {
         gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VDOP);
       }
-      if (fabs(vel.x()) <= 0.01f && fabs(vel.y()) <= 0.01f) {
+      if (fabs(vel_ned.x()) <= 0.01f && fabs(vel_ned.y()) <= 0.01f) {
         gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_HORIZ);
       }
-      if (fabs(vel.z()) <= 0.01f) {
+      if (fabs(vel_ned.z()) <= 0.01f) {
         gps_input.ignore_flags |= utils::enum_value(GPS_INPUT_IGNORE_FLAGS::FLAG_VEL_VERT);
       }
       int64_t tdiff = (gps_input.time_usec / 1000) - UNIX_OFFSET_MSEC;
@@ -413,9 +412,9 @@ private:
       gps_input.alt = uas->data.egm96_5->ConvertHeight(
         geodetic.x(), geodetic.y(), geodetic.z(),
         GeographicLib::Geoid::ELLIPSOIDTOGEOID);            // [meters]
-      gps_input.vn = vel.x();                               // [m/s]
-      gps_input.ve = vel.y();                               // [m/s]
-      gps_input.vd = vel.z();                               // [m/s]
+      gps_input.vn = vel_ned.x();                           // [m/s]
+      gps_input.ve = vel_ned.y();                           // [m/s]
+      gps_input.vd = vel_ned.z();                           // [m/s]
       gps_input.hdop = eph;                                 // [m]
       gps_input.vdop = epv;                                 // [m]
       gps_input.fix_type = utils::enum_value(fix_type);
