@@ -249,6 +249,7 @@ if(BUILD_TESTING)
   )
   target_link_libraries(mavros-extras-fake-gps-test
     mavros
+    rcpputils::rcpputils
   )
 
   ament_add_pytest_test(test_srtm test/test_srtm.py)
