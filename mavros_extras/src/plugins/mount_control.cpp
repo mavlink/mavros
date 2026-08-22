@@ -17,6 +17,7 @@
  */
 
 #include <memory>
+#include <utility>
 
 #include "tf2_eigen/tf2_eigen.hpp"
 #include "rcpputils/asserts.hpp"
@@ -50,8 +51,9 @@ using utils::enum_value;
 class MountStatusDiag : public diagnostic_updater::DiagnosticTask
 {
 public:
-  explicit MountStatusDiag(const std::string & name)
+  MountStatusDiag(const std::string & name, rclcpp::Clock::SharedPtr clock)
   : diagnostic_updater::DiagnosticTask(name),
+    clock(std::move(clock)),
     _last_orientation_update(0, 0),
     _debounce_s(NAN),
     _roll_deg(NAN),
@@ -111,7 +113,7 @@ public:
       return;
     }
 
-    const rclcpp::Time now = clock.now();
+    const rclcpp::Time now = clock->now();
     {
       std::lock_guard<std::mutex> lock(mutex);
       roll_err_deg = _setpoint_roll_deg - _roll_deg;
@@ -163,7 +165,7 @@ public:
 
 private:
   std::mutex mutex;
-  rclcpp::Clock clock;
+  rclcpp::Clock::SharedPtr clock;
   rclcpp::Time _error_started;
   rclcpp::Time _last_orientation_update;
   double _debounce_s;
@@ -191,7 +193,7 @@ class MountControlPlugin : public plugin::Plugin
 public:
   explicit MountControlPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "mount_control"),
-    mount_diag("Mount")
+    mount_diag("Mount", node->get_clock())
   {
     enable_node_watch_parameters();
 
