@@ -11,7 +11,7 @@
 	<arg name="log_output" default="screen" />
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
-	<arg name="namespace" default="mavros"/>
+	<arg name="namespace" default=""/>
 
 	<node pkg="mavros" exec="mavros_node" namespace="$(var namespace)" output="screen">
 		<param name="fcu_url" value="$(var fcu_url)" />

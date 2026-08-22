@@ -9,7 +9,7 @@
 	<arg name="log_output" default="screen" />
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
-	<arg name="namespace" default="mavros"/>
+	<arg name="namespace" default=""/>
 
 	<include file="$(find-pkg-share mavros)/launch/node.launch">
 		<arg name="pluginlists_yaml" value="$(find-pkg-share mavros)/launch/apm_pluginlists.yaml" />
