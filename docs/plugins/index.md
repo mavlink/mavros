@@ -34,6 +34,7 @@ messages it subscribes to and publishes.
 | [`sys_time`](std/sys_time.md) | System time plugin | 2 | — | — | — | 2/2 |
 | [`waypoint`](std/waypoint.md) | Mission manipulation plugin | 2 | — | 4 | — | 8/10 |
 | [`wind_estimation`](std/wind_estimation.md) | Wind estimation plugin. | 1 | — | — | — | 2/0 |
+
 ## Extra plugins (`mavros_extras`)
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |

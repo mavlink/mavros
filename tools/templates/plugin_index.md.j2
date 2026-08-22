@@ -13,6 +13,7 @@ messages it subscribes to and publishes.
 | [`{{ p.plugin }}`](std/{{ p.path.stem }}.md) | {{ (p.brief or "") | replace("|", "\\|") }} | {{ p.publishers | length or "—" }} | {{ p.subscribers | length or "—" }} | {{ p.services | length or "—" }} | {{ p.clients | length or "—" }} | {{ p.mavlink_subscriptions | length }}/{{ p.mavlink_publications | length }} |
 {% endfor -%}
 
+{% set nop = "" %}
 ## Extra plugins (`mavros_extras`)
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |

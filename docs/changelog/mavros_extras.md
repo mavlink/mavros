@@ -1,5 +1,24 @@
 # Changelog for package mavros_extras
 
+## 2.15.1 (2026-08-22)
+
+- extras: fix mount diagnostic clock source
+- extras: fix HIL_GPS over-scaling and expose id/yaw (fix
+  [\#2090](https://github.com/mavlink/mavros/issues/2090))
+- Merge pull request
+  [\#2260](https://github.com/mavlink/mavros/issues/2260) from
+  mavlink/fix-deprecations Fix deprecations
+- mavros: fix deprecated subscription callback signatures rclcpp
+  deprecates callbacks taking non-const std::shared_ptr\<MessageT\>.
+  Convert topic subscription callbacks to MessageT::ConstSharedPtr, and
+  the Mavlink router/UAS bus to MessageT::UniquePtr (matching the
+  zero-copy make_unique publisher).
+- docs: restructure node docs and refresh links Move mavros README
+  content into docs/ (connection URLs, frames, nodes, troubleshooting),
+  reduce package READMEs to GitHub overviews, add mermaid diagrams, and
+  refresh docs.ros.org references to Lyrical.
+- Contributors: Vladimir Ermakov
+
 ## 2.15.0 (2026-08-08)
 
 - Merge pull request

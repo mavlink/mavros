@@ -1,5 +1,29 @@
 # Changelog for package mavros
 
+## 2.15.1 (2026-08-22)
+
+- mavros: fix duplicated namespace in launch files Fix
+  [\#2262](https://github.com/mavlink/mavros/issues/2262) by defaulting
+  the launch namespace to empty, since plugin subnodes now properly
+  inherit the UAS namespace.
+- Merge pull request
+  [\#2260](https://github.com/mavlink/mavros/issues/2260) from
+  mavlink/fix-deprecations Fix deprecations
+- mavros: fix deprecated subscription callback signatures rclcpp
+  deprecates callbacks taking non-const std::shared_ptr\<MessageT\>.
+  Convert topic subscription callbacks to MessageT::ConstSharedPtr, and
+  the Mavlink router/UAS bus to MessageT::UniquePtr (matching the
+  zero-copy make_unique publisher).
+- mavros: add StateQoS and use it for state publications Add a named
+  StateQoS profile (QoS(10).transient_local()) and use it in sys_status
+  and home_position instead of an inline state_qos. Regenerate the
+  plugin docs.
+- docs: restructure node docs and refresh links Move mavros README
+  content into docs/ (connection URLs, frames, nodes, troubleshooting),
+  reduce package READMEs to GitHub overviews, add mermaid diagrams, and
+  refresh docs.ros.org references to Lyrical.
+- Contributors: Vladimir Ermakov
+
 ## 2.15.0 (2026-08-08)
 
 - Merge pull request

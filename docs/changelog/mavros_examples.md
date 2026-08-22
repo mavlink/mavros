@@ -1,5 +1,7 @@
 # Changelog for package mavros_examples
 
+## 2.15.1 (2026-08-22)
+
 ## 2.15.0 (2026-08-08)
 
 - build: bump cmake_minimum_required to 3.10 CMake (4.0+, as shipped on

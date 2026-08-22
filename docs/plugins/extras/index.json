@@ -1368,7 +1368,7 @@
         "message_name": "HIL_GPS",
         "msg_id_expr": "mavlink::common::msg::HIL_GPS::MSG_ID",
         "dialect": "common",
-        "line": 244,
+        "line": 247,
         "msg_id": 113
       },
       {
@@ -1377,7 +1377,7 @@
         "message_name": "HIL_OPTICAL_FLOW",
         "msg_id_expr": "mavlink::common::msg::HIL_OPTICAL_FLOW::MSG_ID",
         "dialect": "common",
-        "line": 335,
+        "line": 338,
         "msg_id": 114
       },
       {
@@ -1386,7 +1386,7 @@
         "message_name": "HIL_RC_INPUTS_RAW",
         "msg_id_expr": "mavlink::common::msg::HIL_RC_INPUTS_RAW::MSG_ID",
         "dialect": "common",
-        "line": 372,
+        "line": 375,
         "msg_id": 92
       },
       {
@@ -1395,7 +1395,7 @@
         "message_name": "HIL_SENSOR",
         "msg_id_expr": "mavlink::common::msg::HIL_SENSOR::MSG_ID",
         "dialect": "common",
-        "line": 291,
+        "line": 294,
         "msg_id": 107
       },
       {
@@ -1832,7 +1832,7 @@
       {
         "name": "~/orientation",
         "type_name": "geometry_msgs::msg::Quaternion",
-        "line": 245,
+        "line": 247,
         "description": "Publish mount orientation as quaternion from MAVLink MOUNT_ORIENTATION.",
         "qos": {
           "kind": "inline",
@@ -1842,7 +1842,7 @@
       {
         "name": "~/status",
         "type_name": "geometry_msgs::msg::Vector3Stamped",
-        "line": 249,
+        "line": 251,
         "description": "Publish mount status from MAVLink MOUNT_STATUS.",
         "qos": {
           "kind": "inline",
@@ -1854,7 +1854,7 @@
       {
         "name": "~/command",
         "type_name": "mavros_msgs::msg::MountControl",
-        "line": 239,
+        "line": 241,
         "description": "Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.",
         "qos": {
           "kind": "inline",
@@ -1866,7 +1866,7 @@
       {
         "name": "~/configure",
         "type_name": "mavros_msgs::srv::MountConfigure",
-        "line": 252,
+        "line": 254,
         "description": "Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE)."
       }
     ],
@@ -1874,49 +1874,49 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 377
+        "line": 379
       }
     ],
     "parameters": [
       {
         "name": "negate_measured_roll",
         "type_name": "bool",
-        "line": 199,
+        "line": 201,
         "default_value": "false",
         "description": "Negate the measured roll angle."
       },
       {
         "name": "negate_measured_pitch",
         "type_name": "bool",
-        "line": 204,
+        "line": 206,
         "default_value": "false",
         "description": "Negate the measured pitch angle."
       },
       {
         "name": "negate_measured_yaw",
         "type_name": "bool",
-        "line": 209,
+        "line": 211,
         "default_value": "false",
         "description": "Negate the measured yaw angle."
       },
       {
         "name": "debounce_s",
         "type_name": "double",
-        "line": 215,
+        "line": 217,
         "default_value": "4.0",
         "description": "Mount diagnostic error debounce time [s]."
       },
       {
         "name": "err_threshold_deg",
         "type_name": "double",
-        "line": 221,
+        "line": 223,
         "default_value": "10.0",
         "description": "Mount diagnostic angle error threshold [deg]."
       },
       {
         "name": "disable_diag",
         "type_name": "bool",
-        "line": 227,
+        "line": 229,
         "default_value": "false",
         "description": "Disable mount diagnostic updater."
       }
@@ -1928,7 +1928,7 @@
         "message_name": "MOUNT_ORIENTATION",
         "msg_id_expr": "mavlink::common::msg::MOUNT_ORIENTATION::MSG_ID",
         "dialect": "common",
-        "line": 287,
+        "line": 289,
         "msg_id": 265
       },
       {
@@ -1937,7 +1937,7 @@
         "message_name": "MOUNT_STATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MOUNT_STATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 320,
+        "line": 322,
         "msg_id": 158
       }
     ],
@@ -1948,7 +1948,7 @@
         "message_name": "COMMAND_LONG",
         "msg_id_expr": "mavlink::common::msg::COMMAND_LONG::MSG_ID",
         "dialect": "common",
-        "line": 365,
+        "line": 367,
         "msg_id": 76
       }
     ]
