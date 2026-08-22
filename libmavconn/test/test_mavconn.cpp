@@ -540,6 +540,38 @@ TEST(URL, open_url_serial)
 }
 #endif
 
+TEST(URL, open_url_serial_baudrate)
+{
+  // regression test for #2265: baudrate must not be limited to uint16.
+  // A parse error is reported as "DeviceError:url:..." while a device open
+  // failure (device path missing) is reported as "DeviceError:serial:...".
+  {
+    // Valid baudrate above uint16 max must pass parsing (reach device open).
+    try {
+      MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:921600");
+      ADD_FAILURE() << "expected DeviceError from device open";
+    } catch (const DeviceError & e) {
+      const std::string msg = e.what();
+      EXPECT_NE(msg.find("DeviceError:serial:"), std::string::npos)
+        << "valid high baudrate rejected during parsing: " << msg;
+    }
+  }
+
+  // Zero baudrate must be rejected by the parser.
+  EXPECT_THROW(
+  {
+    MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:0");
+  },
+    DeviceError);
+
+  // Non-numeric baudrate must be rejected by the parser.
+  EXPECT_THROW(
+  {
+    MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:abc");
+  },
+    DeviceError);
+}
+
 TEST(URL, open_url_udp)
 {
   MAVConnInterface::Ptr udp;
@@ -639,6 +671,12 @@ TEST(URL, open_url_tcp)
   EXPECT_THROW(
   {
     tcp_client = MAVConnInterface::open_url("tcp://localhost:abc");
+  },
+    DeviceError);
+
+  EXPECT_THROW(
+  {
+    tcp_client = MAVConnInterface::open_url("tcp://localhost:65536");
   },
     DeviceError);
 }
