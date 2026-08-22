@@ -2,6 +2,11 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extras: fix HIL_GPS over-scaling and expose id/yaw (fix `#2090 <https://github.com/mavlink/mavros/issues/2090>`_)
+* Contributors: Vladimir Ermakov
+
 2.15.0 (2026-08-08)
 -------------------
 * Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh

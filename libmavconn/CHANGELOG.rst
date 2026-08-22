@@ -2,6 +2,22 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* libmavconn: fix serial baudrate parsing above uint16
+  url_parse_host hardcoded a uint16 port limit and error label, which
+  rejected serial baudrates above 65535 (e.g. 921600) with a misleading
+  'invalid port value' error. Make the value range and field name
+  configurable and allow baudrate to use the full int range.
+  Adds a regression test covering a high valid baudrate and invalid
+  zero/non-numeric baudrates.
+  Fix `#2265 <https://github.com/mavlink/mavros/issues/2265>`_
+* Merge pull request `#2260 <https://github.com/mavlink/mavros/issues/2260>`_ from mavlink/fix-deprecations
+  Fix deprecations
+* libmavconn: fix deprecated literal operator whitespace
+* libmavconn: avoid -Wformat-security in format() with no args
+* Contributors: Vladimir Ermakov
+
 2.15.0 (2026-08-08)
 -------------------
 * Merge pull request `#2259 <https://github.com/mavlink/mavros/issues/2259>`_ from mavlink/docs-refresh
