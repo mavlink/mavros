@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.15.1 (2026-08-22)
+-------------------
 * mavros: fix duplicated namespace in launch files
   Fix `#2262 <https://github.com/mavlink/mavros/issues/2262>`_ by defaulting the launch namespace to empty, since plugin
   subnodes now properly inherit the UAS namespace.

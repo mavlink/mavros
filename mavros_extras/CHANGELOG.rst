@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.15.1 (2026-08-22)
+-------------------
 * extras: fix mount diagnostic clock source
 * extras: fix HIL_GPS over-scaling and expose id/yaw (fix `#2090 <https://github.com/mavlink/mavros/issues/2090>`_)
 * Merge pull request `#2260 <https://github.com/mavlink/mavros/issues/2260>`_ from mavlink/fix-deprecations

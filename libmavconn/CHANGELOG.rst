@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.15.1 (2026-08-22)
+-------------------
 * libmavconn: fix serial baudrate parsing above uint16
   url_parse_host hardcoded a uint16 port limit and error label, which
   rejected serial baudrates above 65535 (e.g. 921600) with a misleading
