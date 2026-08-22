@@ -24,7 +24,7 @@ jobs:
           days-before-pr-stale: -1
           days-before-pr-close: -1
           stale-issue-label: stale
-          close-issue-reason: not planned
+          close-issue-reason: not_planned
           stale-issue-message: >
             This issue has had no activity for 90 days. It will be closed in
             30 days unless there is an update.
