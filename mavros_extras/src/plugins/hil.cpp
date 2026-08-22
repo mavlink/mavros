@@ -228,18 +228,21 @@ private:
     gps.alt = req->geo.altitude * 1E3;
     // [[[cog:
     // for f in (
-    //     'eph', 'epv', 'vel', 'vn', 've', 'vd', 'cog'):
-    //     cog.outl(f"gps.{f} = req->{f} * 1E2;")
+    //     'eph', 'epv', 'vel', 'vn', 've', 'vd', 'cog',
+    //     'satellites_visible', 'id', 'yaw'):
+    //     cog.outl(f"gps.{f} = req->{f};")
     // ]]]
-    gps.eph = req->eph * 1E2;
-    gps.epv = req->epv * 1E2;
-    gps.vel = req->vel * 1E2;
-    gps.vn = req->vn * 1E2;
-    gps.ve = req->ve * 1E2;
-    gps.vd = req->vd * 1E2;
-    gps.cog = req->cog * 1E2;
-    // [[[end]]] (sum: txtOM75FdG)
+    gps.eph = req->eph;
+    gps.epv = req->epv;
+    gps.vel = req->vel;
+    gps.vn = req->vn;
+    gps.ve = req->ve;
+    gps.vd = req->vd;
+    gps.cog = req->cog;
     gps.satellites_visible = req->satellites_visible;
+    gps.id = req->id;
+    gps.yaw = req->yaw;
+    // [[[end]]] (sum: 7jKMh3Vikx)
 
     uas->send_message(gps);
   }

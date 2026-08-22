@@ -15,3 +15,5 @@ int16 ve
 int16 vd
 uint16 cog
 uint8 satellites_visible
+uint8 id
+uint16 yaw
