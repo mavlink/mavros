@@ -4,7 +4,7 @@ name: Close stale issues
 
 on:
   schedule:
-    - cron: "30 2 * * 1"
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 permissions:
