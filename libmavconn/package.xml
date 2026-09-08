@@ -30,6 +30,7 @@
   <depend>libconsole-bridge-dev</depend>
   <build_depend>python3-empy</build_depend>
 
+  <test_depend>ament_cmake_google_benchmark</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
