@@ -78,7 +78,7 @@ ServoStatePublisher::ServoStatePublisher(
     this->create_publisher<sensor_msgs::msg::JointState>("joint_states", sensor_qos);
 }
 
-void ServoStatePublisher::robot_description_cb(const std_msgs::msg::String::SharedPtr msg)
+void ServoStatePublisher::robot_description_cb(const std_msgs::msg::String::ConstSharedPtr msg)
 {
   std::unique_lock lock(mutex);
 
@@ -118,7 +118,7 @@ void ServoStatePublisher::robot_description_cb(const std_msgs::msg::String::Shar
   }
 }
 
-void ServoStatePublisher::rc_out_cb(const mavros_msgs::msg::RCOut::SharedPtr msg)
+void ServoStatePublisher::rc_out_cb(const mavros_msgs::msg::RCOut::ConstSharedPtr msg)
 {
   std::shared_lock lock(mutex);
 
