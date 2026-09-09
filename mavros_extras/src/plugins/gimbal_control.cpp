@@ -500,7 +500,7 @@ private:
    * @param req	- received GimbalControl msg
    */
   void manager_set_manual_control_cb(
-    const mavros_msgs::msg::GimbalManagerSetPitchyaw::SharedPtr req)
+    const mavros_msgs::msg::GimbalManagerSetPitchyaw::ConstSharedPtr req)
   {
     mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW msg {};
     uas->msg_set_target(msg);

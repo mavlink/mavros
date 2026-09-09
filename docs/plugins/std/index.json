@@ -925,7 +925,7 @@
       {
         "name": "~/home",
         "type_name": "mavros_msgs::msg::HomePosition",
-        "line": 54,
+        "line": 62,
         "description": "Publish home position (HOME_POSITION).",
         "qos": {
           "kind": "named",
@@ -938,7 +938,7 @@
       {
         "name": "~/set",
         "type_name": "mavros_msgs::msg::HomePosition",
-        "line": 58,
+        "line": 66,
         "description": "Set home position (SET_HOME_POSITION).",
         "qos": {
           "kind": "inline",
@@ -950,15 +950,20 @@
       {
         "name": "~/req_update",
         "type_name": "std_srvs::srv::Trigger",
-        "line": 63,
-        "description": "Request home position update (MAV_CMD_GET_HOME_POSITION)."
+        "line": 72,
+        "description": "Request home position update (MAV_CMD_GET_HOME_POSITION).",
+        "qos": {
+          "kind": "named",
+          "name": "ServicesQoS",
+          "var": "services_qos"
+        }
       }
     ],
     "clients": [
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 99,
+        "line": 112,
         "description": "Client to request home position via command (MAV_CMD_GET_HOME_POSITION)."
       }
     ],
@@ -970,7 +975,7 @@
         "message_name": "HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 114,
+        "line": 127,
         "msg_id": 242
       }
     ],
@@ -981,7 +986,7 @@
         "message_name": "SET_HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::SET_HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 189,
+        "line": 202,
         "msg_id": 243
       }
     ]

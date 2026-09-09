@@ -54,7 +54,7 @@ public:
 private:
   rclcpp::Subscription<mavros_msgs::msg::PlayTuneV2>::SharedPtr sub;
 
-  void callback(const mavros_msgs::msg::PlayTuneV2::SharedPtr tune)
+  void callback(const mavros_msgs::msg::PlayTuneV2::ConstSharedPtr tune)
   {
     auto msg = mavlink::common::msg::PLAY_TUNE_V2{};
 

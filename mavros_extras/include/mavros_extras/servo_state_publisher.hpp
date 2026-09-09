@@ -139,8 +139,8 @@ private:
   std::shared_mutex mutex;
   std::list<ServoDescription> servos;
 
-  void robot_description_cb(const std_msgs::msg::String::SharedPtr msg);
-  void rc_out_cb(const mavros_msgs::msg::RCOut::SharedPtr msg);
+  void robot_description_cb(const std_msgs::msg::String::ConstSharedPtr msg);
+  void rc_out_cb(const mavros_msgs::msg::RCOut::ConstSharedPtr msg);
 };
 
 }   // namespace extras

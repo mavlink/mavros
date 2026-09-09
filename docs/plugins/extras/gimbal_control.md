@@ -30,7 +30,7 @@ Also publishes gimbal pose to TF when parameter tf_send==true
 - `~/manager/camera_track` [type: [mavros_msgs::srv::GimbalManagerCameraTrack](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/GimbalManagerCameraTrack.html)] - --Not successfully validated-- Control gimbal camera tracking (MAV_CMD_CAMERA_TRACK_*).
 
 ## Clients
-- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html), qos: ] - Client to send MAVLink commands (mavros/cmd/command).
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Client to send MAVLink commands (mavros/cmd/command).
 
 
 ## Parameters

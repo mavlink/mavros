@@ -548,7 +548,8 @@ TEST(URL, open_url_serial_baudrate)
   {
     // Valid baudrate above uint16 max must pass parsing (reach device open).
     try {
-      MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:921600");
+      [[maybe_unused]] auto p =
+        MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:921600");
       ADD_FAILURE() << "expected DeviceError from device open";
     } catch (const DeviceError & e) {
       const std::string msg = e.what();
@@ -560,6 +561,7 @@ TEST(URL, open_url_serial_baudrate)
   // Zero baudrate must be rejected by the parser.
   EXPECT_THROW(
   {
+    [[maybe_unused]] auto p =
     MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:0");
   },
     DeviceError);
@@ -567,6 +569,7 @@ TEST(URL, open_url_serial_baudrate)
   // Non-numeric baudrate must be rejected by the parser.
   EXPECT_THROW(
   {
+    [[maybe_unused]] auto p =
     MAVConnInterface::open_url_no_connect("serial:///non-existent-mavros-test:abc");
   },
     DeviceError);
