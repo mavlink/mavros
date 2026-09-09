@@ -23,23 +23,24 @@ namespace mavconn
 
 /**
  * @brief Small utility to unify owned/shared io_context lifecycle handling.
+ *
+ * When the runner owns its io_context and I/O thread, the worker thread keeps a
+ * reference to the shared state (io_context, work guard, is_running). This lets
+ * a shutdown initiated from the worker thread itself detach safely: the state
+ * survives even if the owning connection is destroyed before the thread exits,
+ * and the io_context is restarted only after run() has returned.
  */
 class IoContextRunner
 {
 public:
   explicit IoContextRunner(asio::io_context * shared_io = nullptr)
-  : io_owner_(shared_io ? nullptr : std::make_shared<asio::io_context>()),
-    io_(shared_io ? *shared_io : *io_owner_),
-    io_work_(shared_io ? nullptr :
-      std::make_unique<asio::executor_work_guard<asio::io_context::executor_type>>(
-      asio::make_work_guard(io_))),
-    owns_thread_(shared_io == nullptr),
-    is_running_(false)
+  : owns_thread_(shared_io == nullptr),
+    state_(std::make_shared<State>(shared_io))
   {}
 
   [[nodiscard]] asio::io_context & io()
   {
-    return io_;
+    return state_->io();
   }
 
   [[nodiscard]] bool owns_thread() const
@@ -49,7 +50,7 @@ public:
 
   [[nodiscard]] bool is_running() const
   {
-    return is_running_.load();
+    return state_->is_running.load();
   }
 
   template<typename Fn>
@@ -59,11 +60,20 @@ public:
       return;
     }
 
+    // The worker captures the shared state so the io_context and is_running
+    // flag outlive the connection when shutdown is initiated from this thread
+    // (self-close) and join_owned() has to detach.
+    auto state = state_;
     io_thread_ = std::jthread(
-      [this, f = std::forward<Fn>(fn)]() mutable {
-        is_running_ = true;
+      [state, f = std::forward<Fn>(fn)]() mutable {
+        state->is_running = true;
         f();
-        is_running_ = false;
+        // io_context::run() has returned, so it is now safe to restart the
+        // context. This handles self-initiated shutdown: shutdown_owned()
+        // cannot restart while run() is still active on this thread, so the
+        // restart is deferred until here.
+        state->restart();
+        state->is_running = false;
       });
   }
 
@@ -74,8 +84,8 @@ public:
     }
 
     io_thread_.request_stop();
-    io_work_.reset();
-    io_.stop();
+    state_->release_work_guard();
+    state_->stop();
   }
 
   void join_owned()
@@ -90,6 +100,7 @@ public:
 
     if (std::this_thread::get_id() == io_thread_.get_id()) {
       // Cannot join from the same thread; detach so destructor can't terminate.
+      // The worker keeps the shared state alive until it completes.
       io_thread_.detach();
       return;
     }
@@ -97,28 +108,56 @@ public:
     io_thread_.join();
   }
 
-  void reset_owned()
-  {
-    if (!owns_thread_) {
-      return;
-    }
-
-    io_.restart();
-  }
-
   void shutdown_owned()
   {
     stop_owned();
     join_owned();
-    reset_owned();
+    // The io_context is restarted by the worker thread once run() has
+    // returned (see start()). On the self-close path join_owned() detaches,
+    // and restarting here while run() is still active on this thread would
+    // be undefined behaviour.
   }
 
 private:
-  std::shared_ptr<asio::io_context> io_owner_;
-  asio::io_context & io_;
-  std::unique_ptr<asio::executor_work_guard<asio::io_context::executor_type>> io_work_;
+  class State
+  {
+public:
+    explicit State(asio::io_context * shared_io)
+    : io_owner_(shared_io ? nullptr : std::make_shared<asio::io_context>()),
+      io_ref_(shared_io ? *shared_io : *io_owner_),
+      io_work_(shared_io ? nullptr :
+        std::make_unique<asio::executor_work_guard<asio::io_context::executor_type>>(
+        asio::make_work_guard(io_ref_)))
+    {}
+
+    [[nodiscard]] asio::io_context & io()
+    {
+      return io_ref_;
+    }
+
+    void release_work_guard()
+    {
+      io_work_.reset();
+    }
+
+    void stop()
+    {
+      io_ref_.stop();
+    }
+
+    void restart()
+    {
+      io_ref_.restart();
+    }
+
+    std::shared_ptr<asio::io_context> io_owner_;
+    asio::io_context & io_ref_;
+    std::unique_ptr<asio::executor_work_guard<asio::io_context::executor_type>> io_work_;
+    std::atomic<bool> is_running{false};
+  };
+
   bool owns_thread_;
-  std::atomic<bool> is_running_;
+  std::shared_ptr<State> state_;
   std::jthread io_thread_;
 };
 
