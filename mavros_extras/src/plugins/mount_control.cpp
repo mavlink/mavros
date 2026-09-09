@@ -250,11 +250,19 @@ public:
     //! Publish mount status from MAVLink MOUNT_STATUS.
     mount_status_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("~/status", 10);
 
+#ifdef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
+    srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     //! Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
     configure_srv = node->create_service<mavros_msgs::srv::MountConfigure>(
       "~/configure", std::bind(
         &MountControlPlugin::mount_configure_cb,
-        this, _1, _2));
+        this, _1, _2), services_qos, srv_cg);
   }
 
 
@@ -273,6 +281,8 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr mount_status_pub;
 
   rclcpp::Service<mavros_msgs::srv::MountConfigure>::SharedPtr configure_srv;
+
+  rclcpp::CallbackGroup::SharedPtr srv_cg;
 
   MountStatusDiag mount_diag;
   bool negate_measured_roll;
