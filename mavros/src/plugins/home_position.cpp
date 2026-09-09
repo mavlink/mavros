@@ -50,6 +50,14 @@ public:
   {
     auto state_qos = mavros::StateQoS();
 
+#ifdef USE_OLD_RMW_QOS
+    auto services_qos = rmw_qos_profile_services_default;
+#else
+    auto services_qos = rclcpp::ServicesQoS();
+#endif
+
+    srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     //! Publish home position (HOME_POSITION).
     hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>(
       "~/home", state_qos, mavros::NonIntraProcessPublisherOptions());
@@ -58,15 +66,18 @@ public:
       node->create_subscription<mavros_msgs::msg::HomePosition>(
       "~/set", 10,
       std::bind(&HomePositionPlugin::home_position_cb, this, _1));
+
     //! Request home position update (MAV_CMD_GET_HOME_POSITION).
     update_srv =
       node->create_service<std_srvs::srv::Trigger>(
       "~/req_update",
-      std::bind(&HomePositionPlugin::req_update_cb, this, _1, _2));
-
+      std::bind(&HomePositionPlugin::req_update_cb, this, _1, _2),
+      services_qos, srv_cg);
 
     poll_timer =
-      node->create_wall_timer(REQUEST_POLL_TIME, std::bind(&HomePositionPlugin::timeout_cb, this));
+      node->create_wall_timer(
+      REQUEST_POLL_TIME, std::bind(&HomePositionPlugin::timeout_cb, this),
+      srv_cg);
     poll_timer->cancel();
 
     enable_connection_cb();
@@ -83,6 +94,8 @@ private:
   rclcpp::Publisher<mavros_msgs::msg::HomePosition>::SharedPtr hp_pub;
   rclcpp::Subscription<mavros_msgs::msg::HomePosition>::SharedPtr hp_sub;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr update_srv;
+
+  rclcpp::CallbackGroup::SharedPtr srv_cg;
 
   rclcpp::TimerBase::SharedPtr poll_timer;
 
