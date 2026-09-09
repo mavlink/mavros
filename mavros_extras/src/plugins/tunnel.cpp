@@ -63,7 +63,7 @@ private:
   rclcpp::Subscription<mavros_msgs::msg::Tunnel>::SharedPtr sub_;
   rclcpp::Publisher<mavros_msgs::msg::Tunnel>::SharedPtr pub_;
 
-  void ros_callback(const mavros_msgs::msg::Tunnel::SharedPtr ros_tunnel)
+  void ros_callback(const mavros_msgs::msg::Tunnel::ConstSharedPtr ros_tunnel)
   {
     try {
       const auto mav_tunnel =
