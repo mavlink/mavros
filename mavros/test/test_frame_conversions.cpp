@@ -244,6 +244,60 @@ TEST(FRAME_TF, transform_frame__covariance6x6)
   }
 }
 
+TEST(FRAME_TF, calculate_velocity_ned__axes)
+{
+  const Eigen::Vector3d map_origin(0.0, 0.0, 0.0);
+  const Eigen::Vector3d previous_ecef = Eigen::Vector3d::Zero();
+
+  const auto north = ftf::calculate_velocity_ned(
+    Eigen::Vector3d(0.0, 0.0, 2.0), previous_ecef, 2.0, map_origin);
+  EXPECT_NEAR(north.x(), 1.0, epsilon);
+  EXPECT_NEAR(north.y(), 0.0, epsilon);
+  EXPECT_NEAR(north.z(), 0.0, epsilon);
+
+  const auto east = ftf::calculate_velocity_ned(
+    Eigen::Vector3d(0.0, 2.0, 0.0), previous_ecef, 2.0, map_origin);
+  EXPECT_NEAR(east.x(), 0.0, epsilon);
+  EXPECT_NEAR(east.y(), 1.0, epsilon);
+  EXPECT_NEAR(east.z(), 0.0, epsilon);
+
+  const auto up = ftf::calculate_velocity_ned(
+    Eigen::Vector3d(2.0, 0.0, 0.0), previous_ecef, 2.0, map_origin);
+  EXPECT_NEAR(up.x(), 0.0, epsilon);
+  EXPECT_NEAR(up.y(), 0.0, epsilon);
+  EXPECT_NEAR(up.z(), -1.0, epsilon);
+}
+
+TEST(FRAME_TF, calculate_velocity_ned__non_increasing_timestamp)
+{
+  const Eigen::Vector3d current_ecef(1.0, 2.0, 3.0);
+  const Eigen::Vector3d previous_ecef = Eigen::Vector3d::Zero();
+  const Eigen::Vector3d map_origin(0.0, 0.0, 0.0);
+
+  EXPECT_TRUE(
+    ftf::calculate_velocity_ned(
+      current_ecef, previous_ecef, 0.0, map_origin).isZero());
+  EXPECT_TRUE(
+    ftf::calculate_velocity_ned(
+      current_ecef, previous_ecef, -1.0, map_origin).isZero());
+}
+
+TEST(FRAME_TF, course_over_ground_clockwise_from_north)
+{
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(0.0, 0.0, 0.0)), 0);
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(1.0, 0.0, 0.0)), 0);
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(1.0, 1.0, 0.0)), 4500);
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(0.0, 1.0, 0.0)), 9000);
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(-1.0, 0.0, 0.0)), 18000);
+  EXPECT_EQ(
+    ftf::course_over_ground_cdeg(Eigen::Vector3d(0.0, -1.0, 0.0)), 27000);
+}
+
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

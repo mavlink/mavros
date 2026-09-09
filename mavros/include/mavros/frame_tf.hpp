@@ -24,6 +24,8 @@
 
 #include <array>
 #include <algorithm>
+#include <cmath>            // NOLINT
+#include <cstdint>          // NOLINT
 #include <Eigen/Eigen>              // NOLINT
 #include <Eigen/Geometry>           // NOLINT
 #include <rcpputils/asserts.hpp>    // NOLINT
@@ -300,6 +302,31 @@ inline T transform_frame_enu_ecef(const T & in, const T & map_origin)
 }
 
 /**
+ * @brief Derive local NED velocity from two ECEF positions.
+ *
+ * @param current_ecef Current ECEF position [m].
+ * @param previous_ecef Previous ECEF position [m].
+ * @param dt Elapsed time [s].
+ * @param map_origin Geodetic map origin [latitude, longitude, altitude].
+ * @return Velocity in the local North-East-Down frame [m/s].
+ */
+inline Eigen::Vector3d calculate_velocity_ned(
+  const Eigen::Vector3d & current_ecef,
+  const Eigen::Vector3d & previous_ecef,
+  const double dt,
+  const Eigen::Vector3d & map_origin)
+{
+  if (dt <= 0.0) {
+    return Eigen::Vector3d::Zero();
+  }
+
+  const Eigen::Vector3d velocity_ecef = (current_ecef - previous_ecef) / dt;
+  const Eigen::Vector3d velocity_enu = transform_frame_ecef_enu(
+    velocity_ecef, map_origin);
+  return transform_frame_enu_ned(velocity_enu);
+}
+
+/**
  * @brief Transform data expressed in aircraft frame to NED frame.
  * Assumes quaternion represents rotation from aircraft frame to NED frame.
  */
@@ -397,6 +424,29 @@ inline void quaternion_to_rpy(
   roll = rpy.x();
   pitch = rpy.y();
   yaw = rpy.z();
+}
+
+/**
+ * @brief Compute course over ground (COG) from a NED velocity vector.
+ *
+ * @param velocity_ned Velocity in the local North-East-Down frame [m/s].
+ * @return Course clockwise from north in centidegrees in the range [0, 35999].
+ */
+inline uint16_t course_over_ground_cdeg(const Eigen::Vector3d & velocity_ned)
+{
+  const double north = velocity_ned.x();
+  const double east = velocity_ned.y();
+
+  if (north == 0.0 && east == 0.0) {
+    return 0;
+  }
+
+  double course_deg = std::atan2(east, north) * 180.0 / M_PI;
+  if (course_deg < 0.0) {
+    course_deg += 360.0;
+  }
+
+  return static_cast<uint16_t>(std::lround(course_deg * 100.0)) % 36000;
 }
 
 /**

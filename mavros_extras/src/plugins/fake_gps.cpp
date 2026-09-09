@@ -25,11 +25,11 @@
 #include <GeographicLib/Geoid.hpp>
 
 #include "rcpputils/asserts.hpp"
+#include "mavros/frame_tf.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin.hpp"
 #include "mavros/plugin_filter.hpp"
 #include "mavros/setpoint_mixin.hpp"
-#include "fake_gps_utils.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
@@ -336,7 +336,7 @@ private:
 
     Eigen::Vector3d vel_ned = Eigen::Vector3d::Zero();
     if (has_previous_position) {
-      vel_ned = fake_gps::calculate_velocity_ned(
+      vel_ned = ftf::calculate_velocity_ned(
         current_ecef, old_ecef, stamp.seconds() - old_stamp, map_origin);
     }
 
@@ -354,7 +354,7 @@ private:
        */
       mavlink::common::msg::HIL_GPS hil_gps {};
 
-      const uint16_t cog = fake_gps::course_over_ground_cdeg(vel_ned);
+      const uint16_t cog = ftf::course_over_ground_cdeg(vel_ned);
       vel_ned *= 1e2;                   // [cm/s]
 
       // Fill in and send message
