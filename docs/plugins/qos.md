@@ -71,7 +71,7 @@ See [rclcpp::ServicesQoS](https://docs.ros.org/en/rolling/p/rclcpp/classrclcpp_1
 |---|---|---|---|---|---|---|
 | Keep last | 10 | Reliable | Volatile | Default | Default | System default |
 
-Used by: *std*: [`command`](std/command.md), [`geofence`](std/geofence.md), [`rallypoint`](std/rallypoint.md), [`sys_status`](std/sys_status.md), [`waypoint`](std/waypoint.md)
+Used by: *std*: [`command`](std/command.md), [`geofence`](std/geofence.md), [`home_position`](std/home_position.md), [`rallypoint`](std/rallypoint.md), [`sys_status`](std/sys_status.md), [`waypoint`](std/waypoint.md); *extras*: [`mount_control`](extras/mount_control.md)
 
 
 ### StateQoS {#stateqos}

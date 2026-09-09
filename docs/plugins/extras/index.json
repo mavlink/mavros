@@ -1866,15 +1866,20 @@
       {
         "name": "~/configure",
         "type_name": "mavros_msgs::srv::MountConfigure",
-        "line": 254,
-        "description": "Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE)."
+        "line": 262,
+        "description": "Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).",
+        "qos": {
+          "kind": "named",
+          "name": "ServicesQoS",
+          "var": "services_qos"
+        }
       }
     ],
     "clients": [
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 379
+        "line": 389
       }
     ],
     "parameters": [
@@ -1928,7 +1933,7 @@
         "message_name": "MOUNT_ORIENTATION",
         "msg_id_expr": "mavlink::common::msg::MOUNT_ORIENTATION::MSG_ID",
         "dialect": "common",
-        "line": 289,
+        "line": 299,
         "msg_id": 265
       },
       {
@@ -1937,7 +1942,7 @@
         "message_name": "MOUNT_STATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MOUNT_STATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 322,
+        "line": 332,
         "msg_id": 158
       }
     ],
@@ -1948,7 +1953,7 @@
         "message_name": "COMMAND_LONG",
         "msg_id_expr": "mavlink::common::msg::COMMAND_LONG::MSG_ID",
         "dialect": "common",
-        "line": 367,
+        "line": 377,
         "msg_id": 76
       }
     ]

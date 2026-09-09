@@ -17,7 +17,7 @@ superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.ht
 - `~/command` [type: [mavros_msgs::msg::MountControl](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/MountControl.html), qos: [QoS(10)](../qos.md#qos_10_)] - Subscribe to MountControl to send as MAV_CMD_DO_MOUNT_CONTROL to the FCU.
 
 ## Services
-- `~/configure` [type: [mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html)] - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
+- `~/configure` [type: [mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
 
 ## Clients
 - `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
