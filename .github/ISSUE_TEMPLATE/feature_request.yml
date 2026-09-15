@@ -1,0 +1,20 @@
+name: Feature request
+description: Request a feature in MAVROS
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is only a bug and feature tracker, please use it to report bugs or request features.
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: Desired feature
+      description: Please describe the feature and what it would be used for.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
