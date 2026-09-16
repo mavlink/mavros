@@ -149,6 +149,14 @@ static const cmode_map px4_cmode_map{{
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_PRECLAND), "AUTO.PRECLAND"},
 }};
 
+// Flix modes
+static const cmode_map flix_cmode_map{{
+  {0, "RAW"},
+  {1, "ACRO"},
+  {2, "STAB"},
+  {3, "AUTO"},
+}};
+
 static inline std::string str_base_mode(int base_mode)
 {
   return utils::format("MODE(0x%2X)", base_mode);
@@ -197,10 +205,6 @@ static inline bool is_apm_copter(uas::MAV_TYPE type)
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
 {
-  if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
-    return str_base_mode(base_mode);
-  }
-
   auto type = get_type();
   auto ap = get_autopilot();
   if (MAV_AUTOPILOT::ARDUPILOTMEGA == ap) {
@@ -223,6 +227,10 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
     }
   } else if (MAV_AUTOPILOT::PX4 == ap) {
     return str_mode_px4(custom_mode);
+  } else if (MAV_AUTOPILOT::FLIX == ap) {
+    return str_mode_cmap(flix_cmode_map, custom_mode);
+  } else if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
+    return str_base_mode(base_mode);
   } else {
     /* TODO(vooon): other autopilot */
     return str_custom_mode(custom_mode);

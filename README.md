@@ -4,7 +4,7 @@
 
 **A MAVLink-to-ROS 2 bridge for drones.**
 
-MAVROS turns a MAVLink autopilot (PX4, ArduPilot, …) into a set of familiar
+MAVROS turns a MAVLink autopilot (PX4, ArduPilot, Flix, …) into a set of familiar
 ROS 2 topics, services and parameters, so you can program a drone in ROS the
 same way you would program any other robot — no need to speak MAVLink.
 
