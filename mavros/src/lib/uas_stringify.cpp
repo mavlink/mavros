@@ -205,10 +205,6 @@ static inline bool is_apm_copter(uas::MAV_TYPE type)
 
 std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
 {
-  if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
-    return str_base_mode(base_mode);
-  }
-
   auto type = get_type();
   auto ap = get_autopilot();
   if (MAV_AUTOPILOT::ARDUPILOTMEGA == ap) {
@@ -233,6 +229,8 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
     return str_mode_px4(custom_mode);
   } else if (MAV_AUTOPILOT::FLIX == ap) {
     return str_mode_cmap(flix_cmode_map, custom_mode);
+  } else if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
+    return str_base_mode(base_mode);
   } else {
     /* TODO(vooon): other autopilot */
     return str_custom_mode(custom_mode);
