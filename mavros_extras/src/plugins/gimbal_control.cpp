@@ -53,6 +53,7 @@ using mavlink::common::GIMBAL_DEVICE_ERROR_FLAGS;
 using mavlink::common::MAV_CMD;
 using utils::enum_value;
 using uas::s_shared_lock;
+using uas::s_unique_lock;
 
 /**
  * @brief Gimbal Control Plugin
@@ -85,6 +86,7 @@ public:
     //! Frame id used for topic headers.
     node_declare_and_watch_parameter(
       "frame_id", "base_link_frd", [&](const rclcpp::Parameter & p) {
+        s_unique_lock lock(mu);
         frame_id = p.as_string();
       });
 
@@ -98,6 +100,7 @@ public:
     //! TF frame id for gimbal pose.
     node_declare_and_watch_parameter(
       "tf.frame_id", "base_link_frd", [&](const rclcpp::Parameter & p) {
+        s_unique_lock lock(mu);
         tf_frame_id = p.as_string();
       });
 
@@ -257,6 +260,21 @@ private:
   std::string tf_frame_id;    // origin frame for TF
   std::atomic<bool> tf_send;  // parameter for enabling TF publishing
 
+  // Frame ids are written by parameter callbacks on the plugin node executor and
+  // read by MAVLink message handlers on the UAS executor. Copy under the shared
+  // lock to avoid a data race on the std::string members.
+  std::string get_frame_id()
+  {
+    s_shared_lock lock(mu);
+    return frame_id;
+  }
+
+  std::string get_tf_frame_id()
+  {
+    s_shared_lock lock(mu);
+    return tf_frame_id;
+  }
+
   // Client used by all services for sending mavros/cmd/command service calls,
   // on a separate callback group to support nested service calls
   rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr get_cmd_cli()
@@ -294,7 +312,7 @@ private:
     if (tf_send) {
       geometry_msgs::msg::TransformStamped transform;
       transform.header.stamp = gimbal_attitude_msg.header.stamp;
-      transform.header.frame_id = tf_frame_id;
+      transform.header.frame_id = get_tf_frame_id();
       // TF child_frame_id with format "gimbal_<component_id>" where
       // the component_id comes from the gimbal_attitude_msg
       transform.child_frame_id = "gimbal_" + std::to_string(gimbal_attitude_msg.target_component);
@@ -317,7 +335,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalDeviceAttitudeStatus gimbal_attitude_msg;
-    gimbal_attitude_msg.header = uas->synchronized_header(frame_id, mo.time_boot_ms);
+    gimbal_attitude_msg.header = uas->synchronized_header(get_frame_id(), mo.time_boot_ms);
     gimbal_attitude_msg.target_system = mo.target_system;
     gimbal_attitude_msg.target_component = mo.target_component;
     gimbal_attitude_msg.flags = mo.flags;
@@ -347,7 +365,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalManagerStatus gimbal_manager_status_msg;
-    gimbal_manager_status_msg.header = uas->synchronized_header(frame_id, ms.time_boot_ms);
+    gimbal_manager_status_msg.header = uas->synchronized_header(get_frame_id(), ms.time_boot_ms);
     gimbal_manager_status_msg.flags = ms.flags;
     gimbal_manager_status_msg.gimbal_device_id = ms.gimbal_device_id;
     gimbal_manager_status_msg.sysid_primary = ms.primary_control_sysid;
@@ -371,7 +389,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalDeviceInformation gimbal_device_information_msg;
-    gimbal_device_information_msg.header = uas->synchronized_header(frame_id, di.time_boot_ms);
+    gimbal_device_information_msg.header = uas->synchronized_header(get_frame_id(), di.time_boot_ms);
     gimbal_device_information_msg.vendor_name = mavlink::to_string(di.vendor_name);
     gimbal_device_information_msg.model_name = mavlink::to_string(di.model_name);
     gimbal_device_information_msg.custom_name = mavlink::to_string(di.custom_name);
@@ -403,7 +421,7 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalManagerInformation gimbal_manager_information_msg;
-    gimbal_manager_information_msg.header = uas->synchronized_header(frame_id, mi.time_boot_ms);
+    gimbal_manager_information_msg.header = uas->synchronized_header(get_frame_id(), mi.time_boot_ms);
     gimbal_manager_information_msg.cap_flags = mi.cap_flags;
     gimbal_manager_information_msg.gimbal_device_id = mi.gimbal_device_id;
     gimbal_manager_information_msg.roll_min = mi.roll_min;
