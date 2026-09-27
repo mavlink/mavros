@@ -389,7 +389,8 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalDeviceInformation gimbal_device_information_msg;
-    gimbal_device_information_msg.header = uas->synchronized_header(get_frame_id(), di.time_boot_ms);
+    gimbal_device_information_msg.header = uas->synchronized_header(get_frame_id(),
+          di.time_boot_ms);
     gimbal_device_information_msg.vendor_name = mavlink::to_string(di.vendor_name);
     gimbal_device_information_msg.model_name = mavlink::to_string(di.model_name);
     gimbal_device_information_msg.custom_name = mavlink::to_string(di.custom_name);
@@ -421,7 +422,8 @@ private:
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     mavros_msgs::msg::GimbalManagerInformation gimbal_manager_information_msg;
-    gimbal_manager_information_msg.header = uas->synchronized_header(get_frame_id(), mi.time_boot_ms);
+    gimbal_manager_information_msg.header = uas->synchronized_header(get_frame_id(),
+          mi.time_boot_ms);
     gimbal_manager_information_msg.cap_flags = mi.cap_flags;
     gimbal_manager_information_msg.gimbal_device_id = mi.gimbal_device_id;
     gimbal_manager_information_msg.roll_min = mi.roll_min;
