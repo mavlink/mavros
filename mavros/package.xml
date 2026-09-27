@@ -49,6 +49,7 @@
   <depend>libconsole-bridge-dev</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_eigen</depend>
+  <depend>rcl</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>rcpputils</depend>

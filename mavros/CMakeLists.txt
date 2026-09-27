@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
 # find mavros dependencies
+find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -131,6 +132,7 @@ target_link_libraries(mavros PUBLIC
   ${diagnostic_msgs_TARGETS}
   diagnostic_updater::diagnostic_updater
   pluginlib::pluginlib
+  rcl::rcl
   rclcpp::rclcpp
   rclcpp_components::component
   rclcpp_components::component_manager
@@ -334,6 +336,16 @@ if(BUILD_TESTING)
   target_link_libraries(mavros-plugin-command
     mavros
     ${mavros_msgs_TARGETS}
+  )
+
+  # Regression test for #2294: plugin sub-nodes must apply process params files.
+  ament_add_gtest(mavros-plugin-params-test test/test_plugin_params.cpp)
+  target_link_libraries(mavros-plugin-params-test
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+  target_compile_definitions(mavros-plugin-params-test PRIVATE
+    TEST_PLUGIN_PARAMS_YAML="${CMAKE_CURRENT_SOURCE_DIR}/test/test_plugin_params.yaml"
   )
 
   ament_add_pytest_test(mavros_py_test test/mavros_py
