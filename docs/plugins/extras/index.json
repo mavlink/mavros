@@ -564,7 +564,7 @@
       {
         "name": "~/mocap/tf",
         "type_name": "geometry_msgs::msg::TransformStamped",
-        "line": 231,
+        "line": 233,
         "description": "MoCap pose source as TransformStamped.",
         "qos": {
           "kind": "inline",
@@ -574,7 +574,7 @@
       {
         "name": "~/mocap/pose_cov",
         "type_name": "geometry_msgs::msg::PoseWithCovarianceStamped",
-        "line": 237,
+        "line": 239,
         "description": "MoCap pose source as PoseWithCovarianceStamped.",
         "qos": {
           "kind": "inline",
@@ -584,7 +584,7 @@
       {
         "name": "~/mocap/pose",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 242,
+        "line": 244,
         "description": "MoCap pose source as PoseStamped.",
         "qos": {
           "kind": "inline",
@@ -594,7 +594,7 @@
       {
         "name": "~/vision",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 249,
+        "line": 251,
         "description": "Vision pose source as PoseStamped.",
         "qos": {
           "kind": "inline",
@@ -608,147 +608,147 @@
       {
         "name": "gps_id",
         "type_name": "integer",
-        "line": 94,
+        "line": 96,
         "default_value": "0",
         "description": "general params GPS receiver id in GPS_INPUT messages."
       },
       {
         "name": "fix_type",
         "type_name": "",
-        "line": 99,
+        "line": 101,
         "default_value": "utils::enum_value(GPS_FIX_TYPE::NO_GPS)",
         "description": "GPS fix type reported in fake GPS messages."
       },
       {
         "name": "gps_rate",
         "type_name": "double",
-        "line": 104,
+        "line": 106,
         "default_value": "5.0",
         "description": "Rate at which fake GPS messages are sent."
       },
       {
         "name": "eph",
         "type_name": "double",
-        "line": 111,
+        "line": 113,
         "default_value": "2.0",
         "description": "Horizontal position error [m]."
       },
       {
         "name": "epv",
         "type_name": "double",
-        "line": 116,
+        "line": 118,
         "default_value": "2.0",
         "description": "Vertical position error [m]."
       },
       {
         "name": "horiz_accuracy",
         "type_name": "double",
-        "line": 121,
+        "line": 123,
         "default_value": "0.0",
         "description": "Horizontal position accuracy [m]."
       },
       {
         "name": "vert_accuracy",
         "type_name": "double",
-        "line": 126,
+        "line": 128,
         "default_value": "0.0",
         "description": "Vertical position accuracy [m]."
       },
       {
         "name": "speed_accuracy",
         "type_name": "double",
-        "line": 131,
+        "line": 133,
         "default_value": "0.0",
         "description": "Speed accuracy [m/s]."
       },
       {
         "name": "satellites_visible",
         "type_name": "integer",
-        "line": 136,
+        "line": 138,
         "default_value": "5",
         "description": "Number of visible satellites reported in fake GPS."
       },
       {
         "name": "geo_origin.lat",
         "type_name": "double",
-        "line": 143,
+        "line": 145,
         "default_value": "47.3667",
         "description": "default origin/starting point: Z\u00fcrich geodetic coordinates Geodetic origin latitude [deg]."
       },
       {
         "name": "geo_origin.lon",
         "type_name": "double",
-        "line": 148,
+        "line": 150,
         "default_value": "8.5500",
         "description": "Geodetic origin longitude [deg]."
       },
       {
         "name": "geo_origin.alt",
         "type_name": "double",
-        "line": 153,
+        "line": 155,
         "default_value": "408.0",
         "description": "Geodetic origin altitude [m]."
       },
       {
         "name": "use_mocap",
         "type_name": "bool",
-        "line": 172,
+        "line": 174,
         "default_value": "true",
         "description": "source set params Listen to MoCap source."
       },
       {
         "name": "mocap_transform",
         "type_name": "bool",
-        "line": 178,
+        "line": 180,
         "default_value": "true",
         "description": "Use TransformStamped if true, PoseStamped if false."
       },
       {
         "name": "mocap_withcovariance",
         "type_name": "bool",
-        "line": 184,
+        "line": 186,
         "default_value": "false",
         "description": "~mocap/pose uses PoseWithCovarianceStamped Message."
       },
       {
         "name": "use_vision",
         "type_name": "bool",
-        "line": 191,
+        "line": 193,
         "default_value": "false",
         "description": "Listen to Vision source."
       },
       {
         "name": "use_hil_gps",
         "type_name": "bool",
-        "line": 197,
+        "line": 199,
         "default_value": "false",
         "description": "Send HIL_GPS if true, GPS_INPUT if false."
       },
       {
         "name": "tf.frame_id",
         "type_name": "string",
-        "line": 206,
+        "line": 208,
         "default_value": "\"map\"",
         "description": "tf params TF frame id for pose source."
       },
       {
         "name": "tf.child_frame_id",
         "type_name": "string",
-        "line": 211,
+        "line": 213,
         "default_value": "\"base_link\"",
         "description": "TF child frame id for pose source."
       },
       {
         "name": "tf.rate_limit",
         "type_name": "double",
-        "line": 216,
+        "line": 218,
         "default_value": "10.0",
         "description": "TF rate limit [Hz]."
       },
       {
         "name": "tf.listen",
         "type_name": "bool",
-        "line": 221,
+        "line": 223,
         "default_value": "false",
         "description": "Listen to TF pose source."
       }
@@ -761,7 +761,7 @@
         "message_name": "GPS_INPUT",
         "msg_id_expr": "mavlink::common::msg::GPS_INPUT::MSG_ID",
         "dialect": "common",
-        "line": 424,
+        "line": 423,
         "msg_id": 232
       },
       {
@@ -770,7 +770,7 @@
         "message_name": "HIL_GPS",
         "msg_id_expr": "mavlink::common::msg::HIL_GPS::MSG_ID",
         "dialect": "common",
-        "line": 378,
+        "line": 377,
         "msg_id": 113
       }
     ]
@@ -786,7 +786,7 @@
       {
         "name": "~/device/attitude_status",
         "type_name": "mavros_msgs::msg::GimbalDeviceAttitudeStatus",
-        "line": 142,
+        "line": 145,
         "description": "Publishers Publish gimbal device attitude status (GIMBAL_DEVICE_ATTITUDE_STATUS).",
         "qos": {
           "kind": "inline",
@@ -796,7 +796,7 @@
       {
         "name": "~/manager/status",
         "type_name": "mavros_msgs::msg::GimbalManagerStatus",
-        "line": 148,
+        "line": 151,
         "description": "Publish gimbal manager status (GIMBAL_MANAGER_STATUS).",
         "qos": {
           "kind": "inline",
@@ -806,7 +806,7 @@
       {
         "name": "~/manager/info",
         "type_name": "mavros_msgs::msg::GimbalManagerInformation",
-        "line": 154,
+        "line": 157,
         "description": "Publish gimbal manager information (GIMBAL_MANAGER_INFORMATION).",
         "qos": {
           "kind": "inline",
@@ -816,7 +816,7 @@
       {
         "name": "~/device/info",
         "type_name": "mavros_msgs::msg::GimbalDeviceInformation",
-        "line": 161,
+        "line": 164,
         "description": "--Not successfully validated-- Publish gimbal device information (GIMBAL_DEVICE_INFORMATION).",
         "qos": {
           "kind": "inline",
@@ -828,7 +828,7 @@
       {
         "name": "~/device/set_attitude",
         "type_name": "mavros_msgs::msg::GimbalDeviceSetAttitude",
-        "line": 108,
+        "line": 111,
         "description": "Subscribers --Not successfully validated-- Set gimbal device attitude (GIMBAL_DEVICE_SET_ATTITUDE).",
         "qos": {
           "kind": "inline",
@@ -838,7 +838,7 @@
       {
         "name": "~/manager/set_attitude",
         "type_name": "mavros_msgs::msg::GimbalManagerSetAttitude",
-        "line": 116,
+        "line": 119,
         "description": "--Not successfully validated-- Set gimbal manager attitude (GIMBAL_MANAGER_SET_ATTITUDE).",
         "qos": {
           "kind": "inline",
@@ -848,7 +848,7 @@
       {
         "name": "~/manager/set_pitchyaw",
         "type_name": "mavros_msgs::msg::GimbalManagerSetPitchyaw",
-        "line": 124,
+        "line": 127,
         "description": "--Not successfully validated-- Set gimbal manager pitch/yaw (GIMBAL_MANAGER_SET_PITCHYAW).",
         "qos": {
           "kind": "inline",
@@ -858,7 +858,7 @@
       {
         "name": "~/manager/set_manual_control",
         "type_name": "mavros_msgs::msg::GimbalManagerSetPitchyaw",
-        "line": 133,
+        "line": 136,
         "description": "--Not successfully validated-- also note that the message is the same as pitchyaw and will likely change Set gimbal manager manual control (GIMBAL_MANAGER_SET_PITCHYAW).",
         "qos": {
           "kind": "inline",
@@ -870,37 +870,37 @@
       {
         "name": "~/device/get_info",
         "type_name": "mavros_msgs::srv::GimbalGetInformation",
-        "line": 170,
+        "line": 173,
         "description": "Services --Not successfully validated-- Request gimbal device information (GIMBAL_DEVICE_INFORMATION)."
       },
       {
         "name": "~/manager/get_info",
         "type_name": "mavros_msgs::srv::GimbalGetInformation",
-        "line": 177,
+        "line": 180,
         "description": "Request gimbal manager information (GIMBAL_MANAGER_INFORMATION)."
       },
       {
         "name": "~/manager/configure",
         "type_name": "mavros_msgs::srv::GimbalManagerConfigure",
-        "line": 184,
+        "line": 187,
         "description": "Configure gimbal manager (MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE)."
       },
       {
         "name": "~/manager/pitchyaw",
         "type_name": "mavros_msgs::srv::GimbalManagerPitchyaw",
-        "line": 191,
+        "line": 194,
         "description": "Set gimbal manager pitch/yaw (MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW)."
       },
       {
         "name": "~/manager/set_roi",
         "type_name": "mavros_msgs::srv::GimbalManagerSetRoi",
-        "line": 198,
+        "line": 201,
         "description": "Set gimbal manager region of interest (MAV_CMD_DO_SET_ROI_*)."
       },
       {
         "name": "~/manager/camera_track",
         "type_name": "mavros_msgs::srv::GimbalManagerCameraTrack",
-        "line": 206,
+        "line": 209,
         "description": "--Not successfully validated-- Control gimbal camera tracking (MAV_CMD_CAMERA_TRACK_*)."
       }
     ],
@@ -908,7 +908,7 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 277,
+        "line": 295,
         "description": "Client to send MAVLink commands (mavros/cmd/command).",
         "qos": {
           "kind": "named",
@@ -921,21 +921,21 @@
       {
         "name": "frame_id",
         "type_name": "string",
-        "line": 86,
+        "line": 87,
         "default_value": "\"base_link_frd\"",
         "description": "Frame id used for topic headers."
       },
       {
         "name": "tf.send",
         "type_name": "bool",
-        "line": 94,
+        "line": 96,
         "default_value": "false",
         "description": "Important tf subsection Report the transform from base_link to gimbal here. Enable publishing gimbal pose to TF."
       },
       {
         "name": "tf.frame_id",
         "type_name": "string",
-        "line": 99,
+        "line": 101,
         "default_value": "\"base_link_frd\"",
         "description": "TF frame id for gimbal pose."
       }
@@ -947,7 +947,7 @@
         "message_name": "GIMBAL_DEVICE_ATTITUDE_STATUS",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_DEVICE_ATTITUDE_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 314,
+        "line": 332,
         "msg_id": 285
       },
       {
@@ -956,7 +956,7 @@
         "message_name": "GIMBAL_MANAGER_STATUS",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_MANAGER_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 344,
+        "line": 362,
         "msg_id": 281
       },
       {
@@ -965,7 +965,7 @@
         "message_name": "GIMBAL_DEVICE_INFORMATION",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_DEVICE_INFORMATION::MSG_ID",
         "dialect": "common",
-        "line": 368,
+        "line": 386,
         "msg_id": 283
       },
       {
@@ -974,7 +974,7 @@
         "message_name": "GIMBAL_MANAGER_INFORMATION",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_MANAGER_INFORMATION::MSG_ID",
         "dialect": "common",
-        "line": 400,
+        "line": 419,
         "msg_id": 280
       }
     ],
@@ -985,7 +985,7 @@
         "message_name": "GIMBAL_DEVICE_SET_ATTITUDE",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_DEVICE_SET_ATTITUDE::MSG_ID",
         "dialect": "common",
-        "line": 443,
+        "line": 463,
         "msg_id": 284
       },
       {
@@ -994,7 +994,7 @@
         "message_name": "GIMBAL_MANAGER_SET_ATTITUDE",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_MANAGER_SET_ATTITUDE::MSG_ID",
         "dialect": "common",
-        "line": 470,
+        "line": 490,
         "msg_id": 282
       },
       {
@@ -1003,7 +1003,7 @@
         "message_name": "GIMBAL_MANAGER_SET_PITCHYAW",
         "msg_id_expr": "mavlink::common::msg::GIMBAL_MANAGER_SET_PITCHYAW::MSG_ID",
         "dialect": "common",
-        "line": 492,
+        "line": 512,
         "msg_id": 287
       }
     ]
