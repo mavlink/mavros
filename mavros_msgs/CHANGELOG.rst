@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.16.0 (2026-09-27)
+-------------------
 * Merge pull request `#2291 <https://github.com/mavlink/mavros/issues/2291>`_ from okalachev/flix-modes
   Add mode parser for Flix autopilot
 * Add mode parser for Flix autopilot

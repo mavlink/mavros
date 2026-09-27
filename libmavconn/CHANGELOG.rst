@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.16.0 (2026-09-27)
+-------------------
 * Merge pull request `#2290 <https://github.com/mavlink/mavros/issues/2290>`_ from mavlink/fix-io-context
   libmavconn: fix IoContextRunner self-close lifetime and restart (fix `#2275 <https://github.com/mavlink/mavros/issues/2275>`_)
 * libmavconn: fix IoContextRunner self-close lifetime and restart (fix `#2275 <https://github.com/mavlink/mavros/issues/2275>`_)

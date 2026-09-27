@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.16.0 (2026-09-27)
+-------------------
 * Merge pull request `#2307 <https://github.com/mavlink/mavros/issues/2307>`_ from webzuweb/fix/respawn-mavros-param
   fix(launch): wire up respawn_mavros arg in node.launch
 * Merge pull request `#2309 <https://github.com/mavlink/mavros/issues/2309>`_ from mavlink/fix/plugin-param-sources-2294

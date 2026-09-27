@@ -1,5 +1,44 @@
 # Changelog for package libmavconn
 
+## 2.16.0 (2026-09-27)
+
+- Merge pull request
+  [\#2290](https://github.com/mavlink/mavros/issues/2290) from
+  mavlink/fix-io-context libmavconn: fix IoContextRunner self-close
+  lifetime and restart (fix
+  [\#2275](https://github.com/mavlink/mavros/issues/2275))
+- libmavconn: fix IoContextRunner self-close lifetime and restart (fix
+  [\#2275](https://github.com/mavlink/mavros/issues/2275)) On a shutdown
+  initiated from the owned I/O thread (self-close), join_owned()
+  detaches the worker thread. The runner then called restart() while
+  run() was still active on that thread (undefined behaviour) and, after
+  the worker detached, could be destroyed while the thread still wrote
+  is_running\_. Move the io_context, work guard, and is_running flag
+  into a heap-shared State that the worker thread also holds. The worker
+  restarts the io_context only after run() returns, and the State (and
+  thus the io_context) survives even if the owning connection is
+  destroyed before the detached thread completes.
+- Merge pull request
+  [\#2289](https://github.com/mavlink/mavros/issues/2289) from
+  mavlink/check-cbg plugins: fix cmd/command service deadlocks and const
+  shared_ptr deprecation warnings
+- libmavconn: consume nodiscard result in baudrate test The serial
+  baudrate regression test calls open_url_no_connect() expecting it to
+  throw DeviceError; the \[\[nodiscard\]\] return was left unconsumed,
+  producing -Wunused-result warnings. Capture it in a
+  \[\[maybe_unused\]\] variable.
+- Merge pull request
+  [\#2287](https://github.com/mavlink/mavros/issues/2287) from
+  christophebedard/christophebedard/fix-libmavconn-missing-ament-cmake-google-benchmark-dep
+- Add missing test_depend on ament_cmake_google_benchmark to libmavconn
+  It's used in tests since
+  [\#2256](https://github.com/mavlink/mavros/issues/2256), but it wasn't
+  declared as a (test) dependency, resulting in build failures on the
+  ROS 2 buildfarm:
+  <https://build.ros2.org/view/Hbin_uJ64/job/Hbin_uJ64__libmavconn__ubuntu_jammy_amd64__binary/160/console>
+  `` ` 23:58:37 CMake Error at CMakeLists.txt:117 (find_package): 23:58:37   By not providing "Findament_cmake_google_benchmark.cmake" in 23:58:37   CMAKE_MODULE_PATH this project has asked CMake to find a package 23:58:37   configuration file provided by "ament_cmake_google_benchmark", but CMake 23:58:37   did not find one. 23:58:37 23:58:37   Could not find a package configuration file provided by 23:58:37   "ament_cmake_google_benchmark" with any of the following names: 23:58:37 23:58:37     ament_cmake_google_benchmarkConfig.cmake 23:58:37     ament_cmake_google_benchmark-config.cmake ``\`
+- Contributors: Christophe Bedard, Vladimir Ermakov
+
 ## 2.15.1 (2026-08-22)
 
 - libmavconn: fix serial baudrate parsing above uint16 url_parse_host

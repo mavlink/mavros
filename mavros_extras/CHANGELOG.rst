@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.16.0 (2026-09-27)
+-------------------
 * Merge pull request `#2308 <https://github.com/mavlink/mavros/issues/2308>`_ from webzuweb/fix/gimbal-control-frame-id-race
   fix(gimbal_control): guard frame_id/tf_frame_id against data race
 * gimbal_control: fix uncrustify

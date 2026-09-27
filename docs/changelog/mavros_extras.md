@@ -1,5 +1,61 @@
 # Changelog for package mavros_extras
 
+## 2.16.0 (2026-09-27)
+
+- Merge pull request
+  [\#2308](https://github.com/mavlink/mavros/issues/2308) from
+  webzuweb/fix/gimbal-control-frame-id-race fix(gimbal_control): guard
+  frame_id/tf_frame_id against data race
+- gimbal_control: fix uncrustify
+- fix(gimbal_control): guard frame_id/tf_frame_id against data race The
+  frame_id and tf_frame_id std::string members are written from
+  parameter callbacks on the plugin node executor and read from MAVLink
+  message handlers on the UAS executor, with no common synchronization.
+  This is a C++ data race (undefined behavior) when parameters change
+  while gimbal messages arrive. Take the existing shared_timed_mutex mu
+  for writes (s_unique_lock) and copy the frame names under a shared
+  lock (s_shared_lock) before use. Fixes
+  [\#2301](https://github.com/mavlink/mavros/issues/2301)
+- Merge pull request
+  [\#2261](https://github.com/mavlink/mavros/issues/2261) from
+  Daniiiil1/codex/fix-fake-gps-ned-velocity Fix fake GPS velocity frame
+  and COG units
+- extras: move fake GPS velocity/course helpers to frame_tf Move
+  calculate_velocity_ned() and course_over_ground_cdeg() into the
+  generic mavros::ftf helpers and drop the fake_gps_utils.hpp shim and
+  its dedicated test target. The fake GPS velocity and course tests now
+  live in the existing libmavros-frame-conversions test.
+- Merge pull request
+  [\#2289](https://github.com/mavlink/mavros/issues/2289) from
+  mavlink/check-cbg plugins: fix cmd/command service deadlocks and const
+  shared_ptr deprecation warnings
+- extras: use const shared_ptr in servo_state_publisher callbacks rclcpp
+  deprecates non-const shared_ptr subscription callbacks in favor of
+  ConstSharedPtr. Both robot_description_cb and rc_out_cb only read the
+  received messages.
+- extras: use const shared_ptr in tunnel callback rclcpp deprecates
+  non-const shared_ptr subscription callbacks in favor of
+  ConstSharedPtr. ros_callback only reads the received message.
+- extras: use const shared_ptr in play_tune callback rclcpp deprecates
+  non-const shared_ptr subscription callbacks in favor of
+  ConstSharedPtr. The tune callback only reads the received message.
+- extras: use const shared_ptr in gimbal manual control callback rclcpp
+  deprecates non-const shared_ptr subscription callbacks in favor of
+  ConstSharedPtr. manager_set_manual_control_cb was the only gimbal
+  callback still taking a non-const pointer; it does not modify the
+  message.
+- extras: run mount configure in a dedicated callback group (fix
+  [\#2286](https://github.com/mavlink/mavros/issues/2286)) The throwaway
+  cmd/command client lands in the node default MutuallyExclusive group.
+  Because configure_srv also ran in that group, mount_configure_cb
+  blocked on future.get() while the client response callback could never
+  be scheduled, deadlocking the ~/configure service. Bind configure_srv
+  to its own callback group so the caller and the client response run in
+  disjoint groups.
+- Fix fake GPS test dependency
+- Fix fake GPS NED velocity and course
+- Contributors: Daniil Mordanov, Vladimir Ermakov, webzuweb
+
 ## 2.15.1 (2026-08-22)
 
 - extras: fix mount diagnostic clock source

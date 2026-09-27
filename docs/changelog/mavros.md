@@ -1,5 +1,67 @@
 # Changelog for package mavros
 
+## 2.16.0 (2026-09-27)
+
+- Merge pull request
+  [\#2307](https://github.com/mavlink/mavros/issues/2307) from
+  webzuweb/fix/respawn-mavros-param fix(launch): wire up respawn_mavros
+  arg in node.launch
+- Merge pull request
+  [\#2309](https://github.com/mavlink/mavros/issues/2309) from
+  mavlink/fix/plugin-param-sources-2294 mavros: re-apply process
+  parameter sources to plugin sub-nodes
+  ([\#2294](https://github.com/mavlink/mavros/issues/2294))
+- mavros: re-apply process parameter sources to plugin sub-nodes Since
+  63f7392 plugin nodes are created with use_global_arguments(false) so
+  that a component container's <span class="title-ref">-r
+  \_\_node:=\<container\></span> remap rule does not rename every
+  plugin. But NodeOptions has no remap-only switch: global arguments
+  also carry the process parameter sources (--params-file / -p), so
+  every <span class="title-ref">/\*\*/\<plugin\>:</span> section of
+  apm_config.yaml / px4_config.yaml was silently dropped and plugins
+  fell back to their compiled-in defaults. Resolve the process parameter
+  overrides for the plugin's fully-qualified name and hand them to the
+  node as local parameter_overrides, which are unaffected by
+  use_global_arguments(false) and carry no remap rules. This mirrors
+  rclcpp's resolve_parameter_overrides() precedence: global sources
+  first, then the caller-provided overrides. Fixes
+  [\#2294](https://github.com/mavlink/mavros/issues/2294).
+- fix(launch): wire up respawn_mavros arg in node.launch The node.launch
+  declares a <span class="title-ref">respawn_mavros</span> argument
+  (default false) but never passes it to the node, so it has no effect.
+  Add respawn="\$(var respawn_mavros)" to the mavros_node node so the
+  argument actually controls respawning. Closes
+  [\#2297](https://github.com/mavlink/mavros/issues/2297)
+- Merge pull request
+  [\#2291](https://github.com/mavlink/mavros/issues/2291) from
+  okalachev/flix-modes Add mode parser for Flix autopilot
+- Change mode parser so CUSTOM_MODE_ENABLED flag is not required for
+  custom mode parsing
+- Add mode parser for Flix autopilot
+- Merge pull request
+  [\#2261](https://github.com/mavlink/mavros/issues/2261) from
+  Daniiiil1/codex/fix-fake-gps-ned-velocity Fix fake GPS velocity frame
+  and COG units
+- extras: move fake GPS velocity/course helpers to frame_tf Move
+  calculate_velocity_ned() and course_over_ground_cdeg() into the
+  generic mavros::ftf helpers and drop the fake_gps_utils.hpp shim and
+  its dedicated test target. The fake GPS velocity and course tests now
+  live in the existing libmavros-frame-conversions test.
+- Merge pull request
+  [\#2289](https://github.com/mavlink/mavros/issues/2289) from
+  mavlink/check-cbg plugins: fix cmd/command service deadlocks and const
+  shared_ptr deprecation warnings
+- mavros: run home position callbacks in a dedicated group (fix
+  [\#2285](https://github.com/mavlink/mavros/issues/2285)) Both
+  req_update_cb (service) and timeout_cb (poll timer) call
+  call_get_home_position(), which blocks on future.get() from a
+  throwaway cmd/command client in the default MutuallyExclusive group.
+  Since the callers also ran in that group, the client response callback
+  could never be scheduled, deadlocking the service and stalling the
+  poll timer. Bind update_srv and poll_timer to their own callback group
+  so the callers and the client response run in disjoint groups.
+- Contributors: Oleg Kalachev, Vladimir Ermakov, webzuweb
+
 ## 2.15.1 (2026-08-22)
 
 - mavros: fix duplicated namespace in launch files Fix
