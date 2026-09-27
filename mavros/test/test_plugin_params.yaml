@@ -1,0 +1,6 @@
+# Test parameters for mavros-plugin-params-test (issue #2294).
+# Mirrors the `/**/<plugin>:` sections of the shipped apm_config.yaml.
+/**/sys:
+  ros__parameters:
+    heartbeat_rate: 7.0
+    conn_timeout: 33.0
