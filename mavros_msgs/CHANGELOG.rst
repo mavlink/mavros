@@ -2,6 +2,13 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#2291 <https://github.com/mavlink/mavros/issues/2291>`_ from okalachev/flix-modes
+  Add mode parser for Flix autopilot
+* Add mode parser for Flix autopilot
+* Contributors: Oleg Kalachev, Vladimir Ermakov
+
 2.15.1 (2026-08-22)
 -------------------
 * extras: fix HIL_GPS over-scaling and expose id/yaw (fix `#2090 <https://github.com/mavlink/mavros/issues/2090>`_)
