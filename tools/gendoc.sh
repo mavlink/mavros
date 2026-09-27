@@ -84,26 +84,57 @@ ensure_cpp_bin() {
   fi
 }
 
+# Return 0 when the compilation database exists and actually contains
+# translation units for both mavros and mavros_extras plugin sources.
+# A plain `colcon build` (without -DCMAKE_EXPORT_COMPILE_COMMANDS=ON) silently
+# drops those entries, leaving a stale aggregate that would make the clang
+# extractor fail to find include paths (fatal error: file not found).
+compile_commands_complete() {
+  [[ -f "${COMPILE_COMMANDS}" ]] || return 1
+  python3 - "${COMPILE_COMMANDS}" <<'PY'
+import json
+import sys
+
+try:
+    entries = json.load(open(sys.argv[1]))
+except (OSError, ValueError):
+    sys.exit(1)
+
+files = {entry.get("file", "") for entry in entries}
+has_std = any("/mavros/src/plugins/" in f for f in files)
+has_extras = any("/mavros_extras/src/plugins/" in f for f in files)
+sys.exit(0 if has_std and has_extras else 1)
+PY
+}
+
 # Ensure a merged compile_commands.json covering both mavros and mavros_extras
 # plugin files exists (build both packages with the export flag).
 ensure_compile_commands() {
-  if [[ -f "${COMPILE_COMMANDS}" ]]; then
+  if compile_commands_complete; then
     return
   fi
-  echo "No ${COMPILE_COMMANDS}; building mavros + mavros_extras with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..."
-  colcon build --packages-up-to mavros_extras \
-    --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  echo "Compilation database missing or incomplete: ${COMPILE_COMMANDS}"
+  echo "Building mavros + mavros_extras with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..."
+  # Run from the workspace root so colcon can discover sibling packages.
+  (cd "${WS_ROOT}" && colcon build --packages-up-to mavros_extras \
+    --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
   MAVROS_CC="${MAVROS_CC}" EXTRAS_CC="${EXTRAS_CC}" \
     COMPILE_COMMANDS="${COMPILE_COMMANDS}" python3 - <<'PY'
-import json, os
+import json, os, sys
 cc = []
 for f in (os.environ["MAVROS_CC"], os.environ["EXTRAS_CC"]):
     try:
         cc += json.load(open(f))
     except FileNotFoundError:
-        pass
+        print(f"WARNING: missing {f}", file=sys.stderr)
 json.dump(cc, open(os.environ["COMPILE_COMMANDS"], "w"), indent=2)
 PY
+  if ! compile_commands_complete; then
+    echo "ERROR: ${COMPILE_COMMANDS} still lacks mavros/mavros_extras plugin" >&2
+    echo "       entries. Run: colcon build --packages-up-to mavros_extras" >&2
+    echo "       --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" >&2
+    exit 1
+  fi
 }
 
 run_extract() {
