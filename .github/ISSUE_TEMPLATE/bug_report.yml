@@ -1,0 +1,102 @@
+name: Bug report
+description: Report a problem in MAVROS
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is only a bug and feature tracker, please use it to report bugs or request features.
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Issue details
+      description: Please describe the problem.
+    validations:
+      required: true
+
+  - type: input
+    id: mavros_version
+    attributes:
+      label: MAVROS version
+      placeholder: "2.15.1 (apt binaries), or ros2 branch at <sha>"
+    validations:
+      required: true
+
+  - type: input
+    id: ros_distro
+    attributes:
+      label: ROS 2 distro
+      placeholder: "Jazzy"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "Ubuntu 24.04"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: autopilot
+    attributes:
+      label: Autopilot type
+      options:
+        - ArduPilot
+        - PX4
+        - Other
+        - Not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: autopilot_version
+    attributes:
+      label: Autopilot version
+      placeholder: "ArduCopter 4.5.7, PX4 v1.15.0, or N/A"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ros2 launch mavros apm.launch fcu_url:=...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Node logs
+      description: Console output of `mavros_node` (the terminal where you ran `ros2 launch` or `ros2 run`).
+      render: shell
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Output of `ros2 topic echo --once /diagnostics`. Leave empty if the problem prevents a connection.
+      render: shell
+
+  - type: textarea
+    id: checkid
+    attributes:
+      label: Check ID
+      description: Output of `ros2 run mavros mav checkid`. Leave empty if the problem prevents a connection.
+      render: shell
