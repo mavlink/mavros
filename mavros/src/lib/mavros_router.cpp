@@ -464,7 +464,10 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
     this->stale_addrs.erase(sysid_compid_addr);
   }
 
-  auto & nh = this->parent;
+  auto nh = this->parent.lock();
+  if (!nh) {
+    return;
+  }
   if (new_sysid_addr || new_sysid_compid_addr) {
     // A new remote was learned: flag the router's reverse index so the next
     // routed message rebuilds. A relaxed store is enough -- the flag is just a
@@ -494,7 +497,7 @@ bool MAVConnEndpoint::is_open()
 
 std::pair<bool, std::string> MAVConnEndpoint::open()
 {
-  auto nh = this->parent;
+  auto nh = this->parent.lock();
   if (!nh) {
     return {false, "parent not set"};
   }
@@ -599,7 +602,7 @@ bool ROSEndpoint::is_open()
 
 std::pair<bool, std::string> ROSEndpoint::open()
 {
-  auto & nh = this->parent;
+  auto nh = this->parent.lock();
   if (!nh) {
     return {false, "parent not set"};
   }
@@ -644,12 +647,16 @@ void ROSEndpoint::send_message(
     return;
   }
 
-  rmsg->header.stamp = this->parent->now();
+  auto nh = this->parent.lock();
+  if (!nh) {
+    return;
+  }
+  rmsg->header.stamp = nh->now();
   rmsg->header.frame_id = from_frame_id;
 
   if (ok) {
     this->source->publish(std::move(rmsg));
-  } else if (auto & nh = this->parent) {
+  } else if (auto nh = this->parent.lock()) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }
@@ -665,7 +672,7 @@ void ROSEndpoint::ros_recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)
 
   if (ok) {
     recv_message(&mmsg, framing);
-  } else if (auto & nh = this->parent) {
+  } else if (auto nh = this->parent.lock()) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }

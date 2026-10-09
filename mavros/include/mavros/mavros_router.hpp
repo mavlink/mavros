@@ -94,7 +94,8 @@ public:
     remote_addrs.emplace(broadcast_addr);
   }
 
-  std::shared_ptr<Router> parent;
+  // Endpoints are owned by Router; the back-reference must not retain it.
+  std::weak_ptr<Router> parent;
 
   uint32_t id;                           // id of the endpoint
   Type link_type;                        // class of the endpoint

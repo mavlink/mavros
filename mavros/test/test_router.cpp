@@ -129,6 +129,20 @@ public:
     rclcpp::shutdown();
   }
 
+  void attach_lifetime_endpoint(Router::SharedPtr router, Endpoint::SharedPtr ep)
+  {
+    router->startup_delay_timer->cancel();
+    ep->parent = router;
+    router->endpoints[1] = ep;
+    router->remote_index[0] = {ep};
+  }
+
+  void clear_lifetime_endpoints(Router::SharedPtr router)
+  {
+    router->endpoints.clear();
+    router->remote_index.clear();
+  }
+
   Router::SharedPtr create_node()
   {
     auto router = std::make_shared<Router>("test_mavros_router");
@@ -246,6 +260,54 @@ public:
     router->periodic_clear_stale_remote_addrs();
   }
 };
+
+TEST_F(TestRouter, endpoint_back_reference_does_not_retain_router)
+{
+  auto router = std::make_shared<Router>("router_lifetime_test");
+  auto endpoint = std::make_shared<StressEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  // Clean up the baseline's cycle if the regression assertion fails.
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+  }
+}
+
+TEST_F(TestRouter, ros_endpoint_rejects_open_after_router_destruction)
+{
+  auto router = std::make_shared<Router>("ros_endpoint_lifetime_test");
+  auto endpoint = std::make_shared<ROSEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+    return;
+  }
+  auto result = endpoint->open();
+  EXPECT_FALSE(result.first);
+  EXPECT_EQ(result.second, "parent not set");
+}
+
+TEST_F(TestRouter, mavconn_endpoint_rejects_open_after_router_destruction)
+{
+  auto router = std::make_shared<Router>("mavconn_endpoint_lifetime_test");
+  auto endpoint = std::make_shared<MAVConnEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+    return;
+  }
+  auto result = endpoint->open();
+  EXPECT_FALSE(result.first);
+  EXPECT_EQ(result.second, "parent not set");
+}
 
 TEST_F(TestRouter, set_parameter)
 {
