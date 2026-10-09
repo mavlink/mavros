@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -258,7 +259,7 @@ TEST_F(TestUAS, synchronise_stamp_negative_offset)
 
   // Scenario: FCU was on boot time, so offset is approx current epoch (e.g. 1.7e9 seconds)
   int64_t offset_ns = 1700000000LL * 1000000000LL;
-  uas->set_time_offset(static_cast<uint64_t>(offset_ns));
+  uas->set_time_offset(offset_ns);
 
   // FCU jumps to GPS time (also approx 1.7e9 seconds)
   // Use uint64_t version of synchronise_stamp
@@ -273,6 +274,40 @@ TEST_F(TestUAS, synchronise_stamp_negative_offset)
       {
         rclcpp::Time stamp = uas->synchronise_stamp(time_usec);
       });
+
+  // ... and must not publish a stamp whose int32 seconds overflow,
+  // it falls back to the current time
+  builtin_interfaces::msg::Time msg = uas->synchronise_stamp(time_usec);
+  EXPECT_GE(msg.sec, 0);
+}
+
+TEST_F(TestUAS, synchronise_stamp_small_negative_offset)
+{
+  auto uas = create_node();
+
+  // Scenario: PX4 SITL in lockstep, the FCU clock is 5 ms ahead of ROS sim time
+  uas->set_time_offset(-5000000);
+
+  EXPECT_EQ(uas->synchronise_stamp(uint32_t{1000}).nanoseconds(), 995000000);
+  EXPECT_EQ(uas->synchronise_stamp(uint64_t{1000000}).nanoseconds(), 995000000);
+}
+
+TEST_F(TestUAS, synchronise_stamp_out_of_range_falls_back_to_now)
+{
+  auto uas = create_node();
+
+  // a stamp below zero (FCU just booted) and one beyond int32 seconds both fall back to now()
+  uas->set_time_offset(-5000000);
+  EXPECT_NEAR(uas->synchronise_stamp(uint32_t{1}).seconds(), uas->now().seconds(), 1.0);
+
+  uas->set_time_offset(INT64_C(3000000000) * 1000000000);
+  EXPECT_NEAR(uas->synchronise_stamp(uint32_t{1000}).seconds(), uas->now().seconds(), 1.0);
+  EXPECT_NEAR(uas->synchronise_stamp(uint64_t{1000000}).seconds(), uas->now().seconds(), 1.0);
+
+  // a corrupt time_usec must not overflow
+  EXPECT_NEAR(
+    uas->synchronise_stamp(std::numeric_limits<uint64_t>::max()).seconds(),
+    uas->now().seconds(), 1.0);
 }
 
 }  // namespace uas

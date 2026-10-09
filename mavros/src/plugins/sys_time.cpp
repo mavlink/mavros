@@ -379,8 +379,11 @@ private:
       return;
     } else if (tsync.tc1 > 0) {
       // Time offset between this system and the remote system is calculated assuming RTT for
-      // the timesync packet is roughly equal both ways.
-      add_timesync_observation((tsync.ts1 + now_ns - tsync.tc1 * 2) / 2, tsync.ts1, tsync.tc1);
+      // the timesync packet is roughly equal both ways. Signed arithmetic: the offset is negative
+      // when the remote clock is ahead (e.g. PX4 SITL in lockstep with ROS sim time).
+      add_timesync_observation(
+        (static_cast<int64_t>(tsync.ts1) + static_cast<int64_t>(now_ns) - tsync.tc1 * 2) / 2,
+        tsync.ts1, tsync.tc1);
     }
   }
 
@@ -408,8 +411,8 @@ private:
       uint64_t monotonic_now_ns = get_monotonic_now();
 
       add_timesync_observation(
-        realtime_now_ns - monotonic_now_ns, realtime_now_ns,
-        monotonic_now_ns);
+        static_cast<int64_t>(realtime_now_ns) - static_cast<int64_t>(monotonic_now_ns),
+        realtime_now_ns, monotonic_now_ns);
     }
   }
 
@@ -469,7 +472,7 @@ private:
         add_sample(offset_ns);
 
         // Save time offset for other components to use
-        uas->set_time_offset(sync_converged() ? time_offset : 0);
+        uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
 
         // Increment sequence counter after filter update
         sequence++;

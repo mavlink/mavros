@@ -425,12 +425,12 @@ public:
 
   /* -*- time sync -*- */
 
-  inline void set_time_offset(uint64_t offset_ns)
+  inline void set_time_offset(int64_t offset_ns)
   {
     time_offset = offset_ns;
   }
 
-  inline uint64_t get_time_offset(void)
+  inline int64_t get_time_offset(void)
   {
     return time_offset;
   }
@@ -652,7 +652,7 @@ private:
   std::vector<ConnectionCb> connection_cb_vec;
   std::vector<CapabilitiesCb> capabilities_cb_vec;
 
-  std::atomic<uint64_t> time_offset;
+  std::atomic<int64_t> time_offset;
   timesync_mode tsync_mode;
 
   // UAS -> Router connection
