@@ -14,8 +14,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <functional>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "rclcpp/executors.hpp"
@@ -132,6 +134,24 @@ public:
     return uas;
   }
 
+  template<typename TimerT>
+  std::function<void()> take_callback(const std::shared_ptr<TimerT> & timer)
+  {
+    timer->reset();
+    // Humble executes timers directly; newer rclcpp separates take and execute.
+    if constexpr (requires {timer->call();}) {
+      auto data = timer->call();
+      return [timer, data]() {timer->execute_callback(data);};
+    } else {
+      return [timer]() {timer->execute_callback();};
+    }
+  }
+
+  std::function<void()> take_startup_callback(MockUAS::SharedPtr uas)
+  {
+    return take_callback(uas->startup_delay_timer);
+  }
+
   void set_lists(MockUAS::SharedPtr p, UAS::StrV denylist, UAS::StrV allowlist)
   {
     p->plugin_denylist = denylist;
@@ -181,6 +201,42 @@ public:
     return hb;
   }
 };
+
+TEST_F(TestUAS, startup_callback_after_context_shutdown)
+{
+  auto uas = create_node();
+  // Keep the baseline path from invoking an unconfigured mock plugin factory.
+  uas->set_parameter(rclcpp::Parameter("plugin_denylist", UAS::StrV{"*"}));
+  auto callback = take_startup_callback(uas);
+  rclcpp::shutdown();
+  EXPECT_NO_THROW(callback());
+}
+
+TEST_F(TestUAS, startup_shutdown_race_does_not_escape)
+{
+  auto uas = create_node();
+  EXPECT_CALL(*uas, create_plugin_instance(_)).WillOnce(
+    ::testing::InvokeWithoutArgs([]() -> plugin::Plugin::SharedPtr {
+      rclcpp::shutdown();
+      throw std::runtime_error("ROS resource creation interrupted by shutdown");
+    }));
+  auto callback = take_startup_callback(uas);
+  EXPECT_NO_THROW(callback());
+}
+
+TEST_F(TestUAS, startup_error_with_valid_context_is_not_hidden)
+{
+  auto uas = create_node();
+  EXPECT_CALL(*uas, create_plugin_instance(_)).WillOnce(
+    ::testing::InvokeWithoutArgs([]() -> plugin::Plugin::SharedPtr {
+      throw std::runtime_error("invalid startup configuration");
+    }));
+  auto callback = take_startup_callback(uas);
+  EXPECT_THROW(callback(), std::runtime_error);
+  EXPECT_TRUE(rclcpp::ok());
+  // Stop the context before local node destruction, even if its thread is still starting.
+  rclcpp::shutdown();
+}
 
 TEST_F(TestUAS, is_plugin_allowed)
 {
