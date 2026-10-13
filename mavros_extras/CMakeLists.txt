@@ -244,6 +244,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_pytest_test(test_srtm test/test_srtm.py)
+  ament_add_gtest(test_wheel_distance test/test_wheel_distance.cpp)
 endif()
 
 #ament_export_dependencies(console_bridge)
