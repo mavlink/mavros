@@ -166,6 +166,17 @@ public:
     return mmsg;
   }
 
+  mavlink::mavlink_message_t fcu_current(uint16_t seq)
+  {
+    mavlink::common::msg::MISSION_CURRENT m{};
+    m.seq = seq;
+    auto mmsg = convert_message(m);
+    mmsg.sysid = 1;
+    mmsg.compid = 1;
+    mmsg.msgid = mavlink::common::msg::MISSION_CURRENT::MSG_ID;
+    return mmsg;
+  }
+
   Waypoint make_wp(uint16_t command, float x = 0, float y = 0, float z = 0)
   {
     Waypoint wp{};
@@ -449,6 +460,89 @@ TEST_F(MissionFlowTest, other_clients_download_schedules_pull)
 
   EXPECT_EQ(
     wait_msgid(*out, MISSION_REQUEST_LIST::MSG_ID, 3s).msgid, MISSION_REQUEST_LIST::MSG_ID);
+}
+
+// A MISSION_CURRENT change during a pull is published right away, with the last
+// complete list; the pulled list then keeps the new current seq.
+TEST_F(MissionFlowTest, current_published_during_pull)
+{
+  std::mutex mtx;
+  mavros_msgs::msg::WaypointList::SharedPtr wpl;
+  auto sub = client->create_subscription<mavros_msgs::msg::WaypointList>(
+    "/test_mavros_uas/mission/waypoints", mavros::LatchedStateQoS(),
+    [&](mavros_msgs::msg::WaypointList::SharedPtr msg) {
+      std::lock_guard<std::mutex> lock(mtx);
+      wpl = msg;
+    });
+  auto wait_list = [&](uint16_t current_seq, size_t size) -> bool {
+      const auto deadline = std::chrono::steady_clock::now() + 5s;
+      while (std::chrono::steady_clock::now() < deadline) {
+        {
+          std::lock_guard<std::mutex> lock(mtx);
+          if (wpl && wpl->current_seq == current_seq && wpl->waypoints.size() == size) {
+            return true;
+          }
+        }
+        std::this_thread::sleep_for(10ms);
+      }
+      return false;
+    };
+  auto count_msgid = [&](uint32_t msgid) {
+      size_t n = 0;
+      for (const auto & m : *out) {
+        n += m.msgid == msgid;
+      }
+      return n;
+    };
+
+  auto pull_client = client->create_client<WaypointPull>("/test_mavros_uas/mission/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+  auto req = std::make_shared<WaypointPull::Request>();
+
+  // first pull: two items
+  {
+    std::promise<WaypointPull::Response::SharedPtr> prom;
+    std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+    EXPECT_EQ(
+      wait_msgid(*out, MISSION_REQUEST_LIST::MSG_ID).msgid, MISSION_REQUEST_LIST::MSG_ID);
+    inject(fcu_count(2));
+    inject(fcu_item_int(0));
+    inject(fcu_item_int(1));
+    auto res = prom.get_future().get();
+    svc.join();
+    ASSERT_NE(res, nullptr);
+    ASSERT_TRUE(res->success);
+  }
+  ASSERT_TRUE(wait_list(0, 2));
+
+  // second pull: three items, MISSION_CURRENT changes halfway through
+  std::promise<WaypointPull::Response::SharedPtr> prom;
+  std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (count_msgid(MISSION_REQUEST_LIST::MSG_ID) < 2 &&
+    std::chrono::steady_clock::now() < deadline)
+  {
+    std::this_thread::sleep_for(5ms);
+  }
+  ASSERT_EQ(count_msgid(MISSION_REQUEST_LIST::MSG_ID), 2u);
+  inject(fcu_count(3));
+  inject(fcu_item_int(0));
+
+  inject(fcu_current(1));
+  ASSERT_TRUE(wait_list(1, 2));
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    EXPECT_FALSE(wpl->waypoints[0].is_current);
+    EXPECT_TRUE(wpl->waypoints[1].is_current);
+  }
+
+  inject(fcu_item_int(1));
+  inject(fcu_item_int(2));
+  auto res = prom.get_future().get();
+  svc.join();
+  ASSERT_NE(res, nullptr);
+  EXPECT_TRUE(res->success);
+  EXPECT_TRUE(wait_list(1, 3));
 }
 
 }   // namespace uas

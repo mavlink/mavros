@@ -368,16 +368,14 @@ void MissionBase::handle_mission_current(
     RCLCPP_DEBUG(get_logger(), "%s: set current #%d done", log_prefix, mcur.seq);
     go_idle();
     wp_cur_active = mcur.seq;
-    set_current_waypoint(wp_cur_active);
 
     lock.unlock();
     list_sending.notify_all();
     publish_waypoints();
-  } else if (wp_state == WP::IDLE && wp_cur_active != mcur.seq) {
-    /* update active */
+  } else if (wp_cur_active != mcur.seq) {
+    /* update active, also during a transfer so the change goes out right away */
     RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
     wp_cur_active = mcur.seq;
-    set_current_waypoint(wp_cur_active);
 
     lock.unlock();
     publish_waypoints();

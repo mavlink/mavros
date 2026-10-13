@@ -679,15 +679,6 @@ protected:
            !is_timedout;
   }
 
-  //! @brief set the FCU current waypoint
-  void set_current_waypoint(size_t seq)
-  {
-    size_t i = 0;
-    for (auto & it : waypoints) {
-      it.is_current = !!(i++ == seq);
-    }
-  }
-
   //! @brief publish the updated waypoint list after operation
   virtual void publish_waypoints() = 0;
 
