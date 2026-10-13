@@ -42,6 +42,9 @@ void MissionBase::handle_mission_item(
 
   // receive item only in RX state
   if (wp_state == WP::RXWP) {
+    if (!is_addressed_to_us(wpi)) {
+      return;
+    }
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -81,6 +84,9 @@ void MissionBase::handle_mission_item_int(
 
   // receive item only in RX state
   if (wp_state == WP::RXWPINT) {
+    if (!is_addressed_to_us(wpi)) {
+      return;
+    }
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -124,6 +130,9 @@ void MissionBase::handle_mission_request(
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP) ||
     (wp_state == WP::TXWPINT))
   {
+    if (!is_addressed_to_us(mreq)) {
+      return;
+    }
     if (sequence_mismatch(mreq)) {
       return;
     }
@@ -167,6 +176,9 @@ void MissionBase::handle_mission_request_int(
     (wp_state == WP::TXLIST && mreq.seq == 0) ||
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWPINT))
   {
+    if (!is_addressed_to_us(mreq)) {
+      return;
+    }
     if (sequence_mismatch(mreq)) {
       return;
     }
@@ -206,7 +218,7 @@ void MissionBase::handle_mission_count(
     return;
   }
 
-  if (wp_state == WP::RXLIST) {
+  if (wp_state == WP::RXLIST && is_addressed_to_us(mcnt)) {
     // FCU report of MISSION_REQUEST_LIST
     RCLCPP_DEBUG(get_logger(), "%s: count %d", log_prefix, mcnt.count);
 
@@ -251,7 +263,7 @@ void MissionBase::handle_mission_ack(
 
   auto ack_type = static_cast<MRES>(mack.type);
 
-  if (filter_message(mack)) {
+  if (filter_message(mack) || !is_addressed_to_us(mack)) {
     return;
   }
 

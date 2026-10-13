@@ -21,6 +21,7 @@
 #include <chrono>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <thread>
 
 #include "test_plugin_helpers.hpp"
@@ -87,19 +88,32 @@ public:
 
   /* -*- FCU-side message builders -*- */
 
+  // Another client sharing the FCU link (arbitrary ids, neither ours nor the
+  // FCU's); its transfers are routed to us as well.
+  static constexpr uint8_t OTHER_SYSTEM = 200;
+  static constexpr uint8_t OTHER_COMPONENT = 100;
+
+  // The FCU addresses its side of a transfer to whoever started it: us, or
+  // (to_us == false) another client.
+  template<class MsgT>
+  void set_target(MsgT & m, bool to_us)
+  {
+    m.target_system = to_us ? uas->get_system_id() : OTHER_SYSTEM;
+    m.target_component = to_us ? uas->get_component_id() : OTHER_COMPONENT;
+  }
+
   void inject(const mavlink::mavlink_message_t & mmsg)
   {
     route(uas, &mmsg, mavconn::Framing::ok);
     std::this_thread::sleep_for(10ms);
   }
 
-  mavlink::mavlink_message_t fcu_count(uint16_t count, uint8_t sysid = 1)
+  mavlink::mavlink_message_t fcu_count(uint16_t count, bool to_us = true, uint8_t sysid = 1)
   {
     MISSION_COUNT m{};
     m.mission_type = enum_value(MAV_MISSION_TYPE::MISSION);
     m.count = count;
-    m.target_system = sysid;
-    m.target_component = 1;
+    set_target(m, to_us);
     auto mmsg = convert_message(m);
     mmsg.sysid = sysid;
     mmsg.compid = 1;
@@ -107,7 +121,7 @@ public:
     return mmsg;
   }
 
-  mavlink::mavlink_message_t fcu_item_int(uint16_t seq, uint8_t sysid = 1)
+  mavlink::mavlink_message_t fcu_item_int(uint16_t seq, bool to_us = true, uint8_t sysid = 1)
   {
     MISSION_ITEM_INT m{};
     m.mission_type = enum_value(MAV_MISSION_TYPE::MISSION);
@@ -115,10 +129,9 @@ public:
     m.frame = enum_value(mavlink::common::MAV_FRAME::GLOBAL_RELATIVE_ALT_INT);
     m.command = enum_value(MAV_CMD::NAV_WAYPOINT);
     m.x = 10000000 * seq;
-    m.y = 20000000;
+    m.y = to_us ? 20000000 : -20000000;
     m.z = 10.0f;
-    m.target_system = sysid;
-    m.target_component = 1;
+    set_target(m, to_us);
     auto mmsg = convert_message(m);
     mmsg.sysid = sysid;
     mmsg.compid = 1;
@@ -126,13 +139,12 @@ public:
     return mmsg;
   }
 
-  mavlink::mavlink_message_t fcu_request_int(uint16_t seq, uint8_t sysid = 1)
+  mavlink::mavlink_message_t fcu_request_int(uint16_t seq, bool to_us = true, uint8_t sysid = 1)
   {
     MISSION_REQUEST_INT m{};
     m.mission_type = enum_value(MAV_MISSION_TYPE::MISSION);
     m.seq = seq;
-    m.target_system = sysid;
-    m.target_component = 1;
+    set_target(m, to_us);
     auto mmsg = convert_message(m);
     mmsg.sysid = sysid;
     mmsg.compid = 1;
@@ -141,13 +153,12 @@ public:
   }
 
   mavlink::mavlink_message_t fcu_ack(
-    MAV_MISSION_RESULT type, uint8_t sysid = 1)
+    MAV_MISSION_RESULT type, bool to_us = true, uint8_t sysid = 1)
   {
     MISSION_ACK m{};
     m.mission_type = enum_value(MAV_MISSION_TYPE::MISSION);
     m.type = enum_value(type);
-    m.target_system = sysid;
-    m.target_component = 1;
+    set_target(m, to_us);
     auto mmsg = convert_message(m);
     mmsg.sysid = sysid;
     mmsg.compid = 1;
@@ -339,6 +350,105 @@ TEST_F(MissionFlowTest, partial_push_out_of_range)
   ASSERT_NE(res, nullptr);
   EXPECT_FALSE(res->success);
   EXPECT_EQ(res->wp_transfered, 0u);
+}
+
+// Another client's download running alongside ours: the FCU's replies to it
+// (count and items addressed to the other client) must not end up in our list.
+TEST_F(MissionFlowTest, pull_ignores_other_clients_replies)
+{
+  auto pull_client = client->create_client<WaypointPull>("/test_mavros_uas/mission/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+
+  auto req = std::make_shared<WaypointPull::Request>();
+  std::promise<WaypointPull::Response::SharedPtr> prom;
+  std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+
+  EXPECT_EQ(
+    wait_msgid(*out, MISSION_REQUEST_LIST::MSG_ID).msgid, MISSION_REQUEST_LIST::MSG_ID);
+
+  inject(fcu_count(5, false));
+  inject(fcu_count(2));
+  inject(fcu_item_int(0, false));
+  inject(fcu_item_int(0));
+  inject(fcu_item_int(1, false));
+  inject(fcu_item_int(1));
+
+  auto res = prom.get_future().get();
+  svc.join();
+
+  ASSERT_NE(res, nullptr);
+  EXPECT_TRUE(res->success);
+  EXPECT_EQ(res->wp_received, 2u);
+
+  std::mutex mtx;
+  mavros_msgs::msg::WaypointList::SharedPtr wpl;
+  auto sub = client->create_subscription<mavros_msgs::msg::WaypointList>(
+    "/test_mavros_uas/mission/waypoints", mavros::LatchedStateQoS(),
+    [&](mavros_msgs::msg::WaypointList::SharedPtr msg) {
+      std::lock_guard<std::mutex> lock(mtx);
+      wpl = msg;
+    });
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (std::chrono::steady_clock::now() < deadline) {
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      if (wpl) {
+        break;
+      }
+    }
+    std::this_thread::sleep_for(10ms);
+  }
+
+  std::lock_guard<std::mutex> lock(mtx);
+  ASSERT_NE(wpl, nullptr);
+  ASSERT_EQ(wpl->waypoints.size(), 2u);
+  for (const auto & wp : wpl->waypoints) {
+    EXPECT_DOUBLE_EQ(wp.y_long, 2.0);
+  }
+}
+
+// An ACK the FCU sends to another client's upload must not end ours.
+TEST_F(MissionFlowTest, push_ignores_other_clients_ack)
+{
+  auto push_client = client->create_client<WaypointPush>("/test_mavros_uas/mission/push");
+  ASSERT_TRUE(push_client->wait_for_service(5s));
+
+  auto req = std::make_shared<WaypointPush::Request>();
+  req->start_index = 0;
+  req->waypoints.push_back(make_wp(enum_value(MAV_CMD::NAV_WAYPOINT), 1, 2, 3));
+  req->waypoints.push_back(make_wp(enum_value(MAV_CMD::NAV_WAYPOINT), 4, 5, 6));
+
+  std::promise<WaypointPush::Response::SharedPtr> prom;
+  std::thread svc([&]() {prom.set_value(call_service(push_client, req, 10s));});
+
+  EXPECT_EQ(wait_msgid(*out, MISSION_COUNT::MSG_ID).msgid, MISSION_COUNT::MSG_ID);
+
+  inject(fcu_request_int(0));
+  EXPECT_EQ(wait_msgid(*out, MISSION_ITEM_INT::MSG_ID).msgid, MISSION_ITEM_INT::MSG_ID);
+
+  inject(fcu_ack(MAV_MISSION_RESULT::ACCEPTED, false));
+
+  inject(fcu_request_int(1));
+  inject(fcu_ack(MAV_MISSION_RESULT::ACCEPTED));
+
+  auto res = prom.get_future().get();
+  svc.join();
+
+  ASSERT_NE(res, nullptr);
+  EXPECT_TRUE(res->success);
+  EXPECT_EQ(res->wp_transfered, 2u);
+}
+
+// Watching other clients while idle is unchanged: another client's download
+// still schedules a pull (pull_after_gcs).
+TEST_F(MissionFlowTest, other_clients_download_schedules_pull)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("mission_reschedule_time", 0.2));
+
+  inject(fcu_count(3, false));
+
+  EXPECT_EQ(
+    wait_msgid(*out, MISSION_REQUEST_LIST::MSG_ID, 3s).msgid, MISSION_REQUEST_LIST::MSG_ID);
 }
 
 }   // namespace uas

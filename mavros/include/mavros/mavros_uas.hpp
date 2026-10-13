@@ -358,6 +358,22 @@ public:
     return target_component;
   }
 
+  /**
+   * @brief Return our own system id (source of sent messages)
+   */
+  inline uint8_t get_system_id()
+  {
+    return source_system;
+  }
+
+  /**
+   * @brief Return our own component id (source of sent messages)
+   */
+  inline uint8_t get_component_id()
+  {
+    return source_component;
+  }
+
   inline void set_tgt(uint8_t sys, uint8_t comp)
   {
     target_system = sys;
