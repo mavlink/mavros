@@ -545,6 +545,86 @@ TEST_F(MissionFlowTest, current_published_during_pull)
   EXPECT_TRUE(wait_list(1, 3));
 }
 
+// A pull that fails part way keeps the last complete list: a later
+// MISSION_CURRENT change publishes it, not the items the failed pull got.
+TEST_F(MissionFlowTest, failed_pull_keeps_last_list)
+{
+  std::mutex mtx;
+  mavros_msgs::msg::WaypointList::SharedPtr wpl;
+  auto sub = client->create_subscription<mavros_msgs::msg::WaypointList>(
+    "/test_mavros_uas/mission/waypoints", mavros::LatchedStateQoS(),
+    [&](mavros_msgs::msg::WaypointList::SharedPtr msg) {
+      std::lock_guard<std::mutex> lock(mtx);
+      wpl = msg;
+    });
+  auto wait_list = [&](uint16_t current_seq, size_t size) -> bool {
+      const auto deadline = std::chrono::steady_clock::now() + 5s;
+      while (std::chrono::steady_clock::now() < deadline) {
+        {
+          std::lock_guard<std::mutex> lock(mtx);
+          if (wpl && wpl->current_seq == current_seq && wpl->waypoints.size() == size) {
+            return true;
+          }
+        }
+        std::this_thread::sleep_for(10ms);
+      }
+      return false;
+    };
+  auto count_msgid = [&](uint32_t msgid) {
+      size_t n = 0;
+      for (const auto & m : *out) {
+        n += m.msgid == msgid;
+      }
+      return n;
+    };
+
+  auto pull_client = client->create_client<WaypointPull>("/test_mavros_uas/mission/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+  auto req = std::make_shared<WaypointPull::Request>();
+
+  // first pull: three items
+  {
+    std::promise<WaypointPull::Response::SharedPtr> prom;
+    std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+    EXPECT_EQ(
+      wait_msgid(*out, MISSION_REQUEST_LIST::MSG_ID).msgid, MISSION_REQUEST_LIST::MSG_ID);
+    inject(fcu_count(3));
+    inject(fcu_item_int(0));
+    inject(fcu_item_int(1));
+    inject(fcu_item_int(2));
+    auto res = prom.get_future().get();
+    svc.join();
+    ASSERT_NE(res, nullptr);
+    ASSERT_TRUE(res->success);
+  }
+  ASSERT_TRUE(wait_list(0, 3));
+
+  // second pull: the FCU stops answering after the first item
+  std::promise<WaypointPull::Response::SharedPtr> prom;
+  std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (count_msgid(MISSION_REQUEST_LIST::MSG_ID) < 2 &&
+    std::chrono::steady_clock::now() < deadline)
+  {
+    std::this_thread::sleep_for(5ms);
+  }
+  ASSERT_EQ(count_msgid(MISSION_REQUEST_LIST::MSG_ID), 2u);
+  inject(fcu_count(3));
+  inject(fcu_item_int(0));
+  auto res = prom.get_future().get();
+  svc.join();
+  ASSERT_NE(res, nullptr);
+  EXPECT_FALSE(res->success);
+  EXPECT_EQ(res->wp_received, 1u);
+
+  inject(fcu_current(2));
+  ASSERT_TRUE(wait_list(2, 3));
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    EXPECT_TRUE(wpl->waypoints[2].is_current);
+  }
+}
+
 }   // namespace uas
 }   // namespace mavros
 

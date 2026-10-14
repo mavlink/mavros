@@ -127,9 +127,6 @@ private:
   rclcpp::Publisher<mavros_msgs::msg::WaypointList>::SharedPtr wp_list_pub;
   rclcpp::Publisher<mavros_msgs::msg::WaypointReached>::SharedPtr wp_reached_pub;
 
-  //! last complete mission list, published while a pull is in progress
-  std::vector<plugin::MissionItem> published_waypoints;
-
   rclcpp::Service<mavros_msgs::srv::WaypointPull>::SharedPtr pull_srv;
   rclcpp::Service<mavros_msgs::srv::WaypointPush>::SharedPtr push_srv;
   rclcpp::Service<mavros_msgs::srv::WaypointClear>::SharedPtr clear_srv;
@@ -179,28 +176,20 @@ private:
     auto wpl = mavros_msgs::msg::WaypointList();
     unique_lock lock(mutex);
 
-    // While a pull is filling `waypoints`, publish the last complete list, so a
-    // MISSION_CURRENT change goes out right away instead of after the pull.
-    const bool receiving =
-      wp_state == WP::RXLIST || wp_state == WP::RXWP || wp_state == WP::RXWPINT;
-    if (!receiving) {
-      published_waypoints = waypoints;
-    }
-
     wpl.current_seq = wp_cur_active;
-    wpl.waypoints.reserve(published_waypoints.size());
+    wpl.waypoints.reserve(waypoints.size());
     size_t i = 0;
-    for (auto & it : published_waypoints) {
+    for (auto & it : waypoints) {
       wpl.waypoints.push_back(it);
       wpl.waypoints.back().is_current = (i++ == wp_cur_active);
     }
 
-    if (!published_waypoints.empty() && wp_cur_active >= published_waypoints.size()) {
+    if (!waypoints.empty() && wp_cur_active >= waypoints.size()) {
       RCLCPP_WARN(
         get_logger(),
         "%s: current #%zu is not in the mission list (%zu items), "
         "likely temporarily out of sync with the FCU", log_prefix,
-        wp_cur_active, published_waypoints.size());
+        wp_cur_active, waypoints.size());
     }
 
     lock.unlock();
@@ -244,7 +233,8 @@ private:
     res->success = wait_fetch_all();
     lock.lock();
 
-    res->wp_received = waypoints.size();
+    // a failed pull leaves `waypoints` as it was; report what it got
+    res->wp_received = res->success ? waypoints.size() : recv_waypoints.size();
     go_idle();  // not necessary, but prevents from blocking
   }
 

@@ -364,7 +364,10 @@ protected:
   using lock_guard = std::lock_guard<std::recursive_mutex>;
 
   std::recursive_mutex mutex;
+  //! last complete list: a pull replaces it only when it finishes
   std::vector<MissionItem> waypoints;
+  //! items of the pull in progress
+  std::vector<MissionItem> recv_waypoints;
   std::vector<MissionItem> send_waypoints;
 
   const MTYPE mission_type;
@@ -596,6 +599,8 @@ protected:
     /* possibly not needed if count == 0 (QGC impl) */
     mission_ack(MRES::ACCEPTED);
 
+    waypoints.swap(recv_waypoints);
+    recv_waypoints.clear();
     go_idle();
     list_receiving.notify_all();
     RCLCPP_INFO(get_logger(), "%s: mission received", log_prefix);

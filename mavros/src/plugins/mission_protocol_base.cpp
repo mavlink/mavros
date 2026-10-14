@@ -49,7 +49,7 @@ void MissionBase::handle_mission_item(
       return;
     }
 
-    auto it = waypoints.emplace(waypoints.end(), wpi);
+    auto it = recv_waypoints.emplace(recv_waypoints.end(), wpi);
     RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
 
     if (++wp_cur_id < wp_count) {
@@ -91,7 +91,7 @@ void MissionBase::handle_mission_item_int(
       return;
     }
 
-    auto it = waypoints.emplace(waypoints.end(), wpi);
+    auto it = recv_waypoints.emplace(recv_waypoints.end(), wpi);
     RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
 
     if (++wp_cur_id < wp_count) {
@@ -225,8 +225,8 @@ void MissionBase::handle_mission_count(
     wp_count = mcnt.count;
     wp_cur_id = 0;
 
-    waypoints.clear();
-    waypoints.reserve(wp_count);
+    recv_waypoints.clear();
+    recv_waypoints.reserve(wp_count);
 
     if (wp_count > 0) {
       if (use_mission_item_int) {
