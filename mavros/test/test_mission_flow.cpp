@@ -108,11 +108,13 @@ public:
     std::this_thread::sleep_for(10ms);
   }
 
-  mavlink::mavlink_message_t fcu_count(uint16_t count, bool to_us = true, uint8_t sysid = 1)
+  mavlink::mavlink_message_t fcu_count(
+    uint16_t count, bool to_us = true, uint8_t sysid = 1, uint32_t opaque_id = 0)
   {
     MISSION_COUNT m{};
     m.mission_type = enum_value(MAV_MISSION_TYPE::MISSION);
     m.count = count;
+    m.opaque_id = opaque_id;
     set_target(m, to_us);
     auto mmsg = convert_message(m);
     mmsg.sysid = sysid;
@@ -166,10 +168,11 @@ public:
     return mmsg;
   }
 
-  mavlink::mavlink_message_t fcu_current(uint16_t seq)
+  mavlink::mavlink_message_t fcu_current(uint16_t seq, uint32_t mission_id = 0)
   {
     mavlink::common::msg::MISSION_CURRENT m{};
     m.seq = seq;
+    m.mission_id = mission_id;
     auto mmsg = convert_message(m);
     mmsg.sysid = 1;
     mmsg.compid = 1;
@@ -220,6 +223,61 @@ public:
   static double seconds(Clock::duration d)
   {
     return std::chrono::duration<double>(d).count();
+  }
+
+  /* -*- published list helpers -*- */
+
+  std::mutex list_mtx;
+  std::vector<mavros_msgs::msg::WaypointList> lists;
+  rclcpp::Subscription<mavros_msgs::msg::WaypointList>::SharedPtr list_sub;
+
+  void watch_lists()
+  {
+    list_sub = client->create_subscription<mavros_msgs::msg::WaypointList>(
+      "/test_mavros_uas/mission/waypoints", mavros::LatchedStateQoS(),
+      [this](mavros_msgs::msg::WaypointList::SharedPtr msg) {
+        std::lock_guard<std::mutex> lock(list_mtx);
+        lists.push_back(*msg);
+      });
+  }
+
+  // Wait for the latest published list to have this current item and size.
+  bool wait_latest(uint16_t current_seq, size_t size)
+  {
+    const auto deadline = Clock::now() + 5s;
+    while (Clock::now() < deadline) {
+      {
+        std::lock_guard<std::mutex> lock(list_mtx);
+        if (!lists.empty() && lists.back().current_seq == current_seq &&
+          lists.back().waypoints.size() == size)
+        {
+          return true;
+        }
+      }
+      std::this_thread::sleep_for(10ms);
+    }
+    return false;
+  }
+
+  // Every list published so far had its current item in it.
+  bool all_lists_consistent()
+  {
+    std::lock_guard<std::mutex> lock(list_mtx);
+    for (const auto & l : lists) {
+      if (l.current_seq >= l.waypoints.size() && !(l.waypoints.empty() && l.current_seq == 0)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Answer a pull the plugin has started with `count` items.
+  void answer_pull(uint16_t count, uint32_t opaque_id = 0)
+  {
+    inject(fcu_count(count, true, 1, opaque_id));
+    for (uint16_t i = 0; i < count; i++) {
+      inject(fcu_item_int(i));
+    }
   }
 };
 
@@ -728,6 +786,105 @@ TEST_F(MissionFlowTest, pull_period_waits_after_failed_pull)
   ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 3, next));
   EXPECT_NEAR(seconds(next - retry), 0.2 + 0.5, 0.15);
   inject(fcu_count(0));
+}
+
+// A current item past the end of the list is not published (the list is out
+// of date); the plugin pulls at once and publishes the new list with it.
+TEST_F(MissionFlowTest, current_past_list_pulls_before_publishing)
+{
+  watch_lists();
+  uas->update_connection_status(true);
+  Clock::time_point when;
+
+  // nothing pulled yet: current #1 is past the (empty) list
+  inject(fcu_current(1));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 1, when));
+  answer_pull(2);
+  ASSERT_TRUE(wait_latest(1, 2));
+
+  // the FCU's mission grew
+  inject(fcu_current(4));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 2, when));
+  EXPECT_TRUE(wait_latest(1, 2));
+
+  answer_pull(5);
+  EXPECT_TRUE(wait_latest(4, 5));
+  EXPECT_TRUE(all_lists_consistent());
+}
+
+// A MISSION_CURRENT plan id other than our list's: the current item is not
+// published with the old list; the plugin pulls and publishes them together.
+TEST_F(MissionFlowTest, changed_plan_id_pulls_before_publishing)
+{
+  watch_lists();
+  uas->update_connection_status(true);
+  Clock::time_point when;
+
+  // nothing pulled yet: current #1 is past the (empty) list
+  inject(fcu_current(1, 7));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 1, when));
+  answer_pull(3, 7);
+  ASSERT_TRUE(wait_latest(1, 3));
+  const auto pulls = count_sent(MISSION_REQUEST_LIST::MSG_ID);
+
+  // new plan: still three items, so seq 2 would index the old list
+  inject(fcu_current(2, 9));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, pulls + 1, when));
+  EXPECT_TRUE(wait_latest(1, 3));
+
+  answer_pull(3, 9);
+  EXPECT_TRUE(wait_latest(2, 3));
+  EXPECT_TRUE(all_lists_consistent());
+}
+
+// Plan ids are only compared when both sides have one.
+TEST_F(MissionFlowTest, plan_ids_compared_only_when_both_known)
+{
+  watch_lists();
+  uas->update_connection_status(true);
+  Clock::time_point when;
+
+  // the FCU reports an id in MISSION_CURRENT but not in MISSION_COUNT
+  inject(fcu_current(1, 7));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 1, when));
+  answer_pull(3, 0);
+  ASSERT_TRUE(wait_latest(1, 3));
+
+  inject(fcu_current(2, 9));
+  EXPECT_TRUE(wait_latest(2, 3));
+  std::this_thread::sleep_for(300ms);
+  EXPECT_EQ(count_sent(MISSION_REQUEST_LIST::MSG_ID), 1u);
+  EXPECT_TRUE(all_lists_consistent());
+}
+
+// The plan changes again while we pull: the pulled list is already out of
+// date, so it is not published and the next MISSION_CURRENT pulls again.
+TEST_F(MissionFlowTest, plan_change_during_pull_pulls_again)
+{
+  watch_lists();
+  uas->update_connection_status(true);
+  Clock::time_point when;
+
+  inject(fcu_current(1, 7));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 1, when));
+  inject(fcu_count(3, true, 1, 7));
+  inject(fcu_item_int(0));
+  inject(fcu_current(2, 9));
+  inject(fcu_item_int(1));
+  inject(fcu_item_int(2));
+
+  // the list of plan 7 is complete, but the FCU is on plan 9
+  std::this_thread::sleep_for(200ms);
+  {
+    std::lock_guard<std::mutex> lock(list_mtx);
+    EXPECT_TRUE(lists.empty());
+  }
+
+  inject(fcu_current(2, 9));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 2, when));
+  answer_pull(3, 9);
+  EXPECT_TRUE(wait_latest(2, 3));
+  EXPECT_TRUE(all_lists_consistent());
 }
 
 }   // namespace uas

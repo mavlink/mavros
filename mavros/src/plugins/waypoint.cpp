@@ -176,20 +176,21 @@ private:
     auto wpl = mavros_msgs::msg::WaypointList();
     unique_lock lock(mutex);
 
+    // Only publish a current item that indexes this list; otherwise subscribers
+    // keep the last consistent list (latched) until a pull brings the new one.
+    if (!current_in_list()) {
+      RCLCPP_DEBUG(
+        get_logger(), "%s: current #%zu does not match the list (%zu items), not publishing",
+        log_prefix, wp_cur_active, waypoints.size());
+      return;
+    }
+
     wpl.current_seq = wp_cur_active;
     wpl.waypoints.reserve(waypoints.size());
     size_t i = 0;
     for (auto & it : waypoints) {
       wpl.waypoints.push_back(it);
       wpl.waypoints.back().is_current = (i++ == wp_cur_active);
-    }
-
-    if (!waypoints.empty() && wp_cur_active >= waypoints.size()) {
-      RCLCPP_WARN(
-        get_logger(),
-        "%s: current #%zu is not in the mission list (%zu items), "
-        "likely temporarily out of sync with the FCU", log_prefix,
-        wp_cur_active, waypoints.size());
     }
 
     lock.unlock();

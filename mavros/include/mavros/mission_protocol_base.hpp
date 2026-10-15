@@ -297,7 +297,10 @@ public:
     mission_wp_timeout(1s),
     mission_reschedule_time(5s),
     mission_retries_count(3),
-    pull_period(0, 0)
+    pull_period(0, 0),
+    waypoints_id(0),
+    recv_waypoints_id(0),
+    fcu_plan_id(0)
   {
     enable_node_watch_parameters();
 
@@ -436,6 +439,13 @@ protected:
   rclcpp::Duration mission_reschedule_time;
   int mission_retries_count;
   rclcpp::Duration pull_period;
+
+  //! plan id of `waypoints` (MISSION_COUNT/MISSION_ACK opaque_id), 0 if unknown
+  uint32_t waypoints_id;
+  //! plan id of the pull in progress
+  uint32_t recv_waypoints_id;
+  //! the FCU's current plan id for our mission type (MISSION_CURRENT), 0 if unknown
+  uint32_t fcu_plan_id;
 
   /* -*- rx handlers -*- */
 
@@ -591,16 +601,35 @@ protected:
   {
     lock_guard lock(mutex);
 
+    // a transfer in progress restarts the countdown when it ends
+    RCLCPP_DEBUG(get_logger(), "%s: periodic pull", log_prefix);
+    pull_now();
+  }
+
+  //! @brief Start a pull, unless a transfer is in progress or the FCU is not connected
+  void pull_now(void)
+  {
     if (wp_state != WP::IDLE || !uas->is_connected()) {
-      // a transfer in progress restarts the countdown when it ends
       return;
     }
 
-    RCLCPP_DEBUG(get_logger(), "%s: start periodic pull", log_prefix);
     wp_state = WP::RXLIST;
     wp_count = 0;
     restart_timeout_timer();
     mission_request_list();
+  }
+
+  //! @brief Is `waypoints` the FCU's current plan, as far as plan ids tell?
+  bool list_is_current_plan(void)
+  {
+    return fcu_plan_id == 0 || waypoints_id == 0 || fcu_plan_id == waypoints_id;
+  }
+
+  //! @brief Can `wp_cur_active` be published with `waypoints`?
+  bool current_in_list(void)
+  {
+    return list_is_current_plan() &&
+           (wp_cur_active < waypoints.size() || (waypoints.empty() && wp_cur_active == 0));
   }
 
   //! @brief Restart the `pull_period` countdown
@@ -619,6 +648,7 @@ protected:
 
     waypoints.swap(recv_waypoints);
     recv_waypoints.clear();
+    waypoints_id = recv_waypoints_id;
     restart_pull_period();
     go_idle();
     list_receiving.notify_all();

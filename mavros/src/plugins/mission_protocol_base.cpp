@@ -224,6 +224,7 @@ void MissionBase::handle_mission_count(
 
     wp_count = mcnt.count;
     wp_cur_id = 0;
+    recv_waypoints_id = mcnt.opaque_id;
 
     recv_waypoints.clear();
     recv_waypoints.reserve(wp_count);
@@ -302,6 +303,7 @@ void MissionBase::handle_mission_ack(
   if (is_tx_done()) {
     go_idle();
     waypoints = send_waypoints;
+    waypoints_id = mack.opaque_id;
     send_waypoints.clear();
     restart_pull_period();
 
@@ -341,6 +343,7 @@ void MissionBase::handle_mission_ack(
         log_prefix << ": clear failed: " << utils::to_string(ack_type));
     } else {
       waypoints.clear();
+      waypoints_id = mack.opaque_id;
       restart_pull_period();
       lock.unlock();
       publish_waypoints();
@@ -365,6 +368,30 @@ void MissionBase::handle_mission_current(
   //   return;
   // }
 
+  // Newer FCUs identify their plans: a plan id other than our list's means the
+  // list is out of date.
+  uint32_t plan_id = 0;
+  switch (mission_type) {
+    case MTYPE::MISSION: plan_id = mcur.mission_id; break;
+    case MTYPE::FENCE: plan_id = mcur.fence_id; break;
+    case MTYPE::RALLY: plan_id = mcur.rally_points_id; break;
+    default: break;
+  }
+  const bool plan_changed = plan_id != fcu_plan_id;
+  fcu_plan_id = plan_id;
+  if (!list_is_current_plan()) {
+    // also when the plan changed again during our last pull
+    if (plan_changed) {
+      RCLCPP_INFO(get_logger(), "%s: FCU plan id changed to %u, pulling", log_prefix, plan_id);
+    }
+    pull_now();
+  }
+
+  // only the mission has a current item
+  if (mission_type != MTYPE::MISSION) {
+    return;
+  }
+
   if (wp_state == WP::SET_CUR) {
     /* MISSION_SET_CURRENT ACK */
     RCLCPP_DEBUG(get_logger(), "%s: set current #%d done", log_prefix, mcur.seq);
@@ -374,13 +401,26 @@ void MissionBase::handle_mission_current(
     lock.unlock();
     list_sending.notify_all();
     publish_waypoints();
-  } else if (wp_cur_active != mcur.seq) {
-    /* update active, also during a transfer so the change goes out right away */
-    RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
+  } else {
+    const bool changed = wp_cur_active != mcur.seq || plan_changed;
     wp_cur_active = mcur.seq;
 
-    lock.unlock();
-    publish_waypoints();
+    if (list_is_current_plan() && !current_in_list()) {
+      // the FCU's mission has more items than our list: it is out of date
+      if (changed) {
+        RCLCPP_INFO(
+          get_logger(), "%s: current #%d is past the list (%zu items), pulling",
+          log_prefix, mcur.seq, waypoints.size());
+      }
+      pull_now();
+    }
+
+    if (changed) {
+      /* update active, also during a transfer so the change goes out right away */
+      RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
+      lock.unlock();
+      publish_waypoints();
+    }
   }
 }
 
