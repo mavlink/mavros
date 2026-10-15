@@ -449,31 +449,6 @@ protected:
   }
 
   /**
-   * @brief checks that a mission message is addressed to us
-   *
-   * The FCU addresses its side of a mission transfer to whoever started it,
-   * but the router delivers replies for other systems/components (e.g. a GCS
-   * on the same link) to us as well. A transfer in progress must not take
-   * those as its own. Broadcast (0) target ids are accepted.
-   */
-  template<class MsgT>
-  bool is_addressed_to_us(const MsgT & m)
-  {
-    const bool system_ok = m.target_system == 0 || m.target_system == uas->get_system_id();
-    const bool component_ok =
-      m.target_component == 0 || m.target_component == uas->get_component_id();
-
-    if (!system_ok || !component_ok) {
-      RCLCPP_DEBUG(
-        get_logger(), "%s: ignoring %s addressed to %d.%d", log_prefix,
-        m.get_name().c_str(), m.target_system, m.target_component);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
    * @brief checks for a sequence mismatch between a
    * MISSION_REQUEST(_INT) sequence and the current
    * waypoint that should be sent.
