@@ -303,6 +303,7 @@ void MissionBase::handle_mission_ack(
     go_idle();
     waypoints = send_waypoints;
     send_waypoints.clear();
+    restart_pull_period();
 
     if (wp_state == WP::TXWPINT) {
       mission_item_int_support_confirmed = true;
@@ -340,6 +341,7 @@ void MissionBase::handle_mission_ack(
         log_prefix << ": clear failed: " << utils::to_string(ack_type));
     } else {
       waypoints.clear();
+      restart_pull_period();
       lock.unlock();
       publish_waypoints();
       RCLCPP_INFO(get_logger(), "%s: mission cleared", log_prefix);
@@ -467,6 +469,8 @@ void MissionBase::timeout_cb()
     RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
     go_idle();
     is_timedout = true;
+    // try again a full period after a failed transfer
+    restart_pull_period();
     // prevent waiting cond var timeout
     lock.unlock();
     list_receiving.notify_all();

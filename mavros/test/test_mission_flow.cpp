@@ -189,6 +189,38 @@ public:
     wp.z_alt = z;
     return wp;
   }
+
+  /* -*- pull_period helpers -*- */
+
+  using Clock = std::chrono::steady_clock;
+
+  size_t count_sent(uint32_t msgid)
+  {
+    size_t n = 0;
+    for (const auto & m : *out) {
+      n += m.msgid == msgid;
+    }
+    return n;
+  }
+
+  // Wait until we have sent `n` messages of `msgid`, and note when that was seen.
+  bool wait_sent(uint32_t msgid, size_t n, Clock::time_point & when)
+  {
+    const auto deadline = Clock::now() + 5s;
+    while (Clock::now() < deadline) {
+      if (count_sent(msgid) >= n) {
+        when = Clock::now();
+        return true;
+      }
+      std::this_thread::sleep_for(5ms);
+    }
+    return false;
+  }
+
+  static double seconds(Clock::duration d)
+  {
+    return std::chrono::duration<double>(d).count();
+  }
 };
 
 // Full pull handshake: FCU answers with a count and all items, plugin publishes
@@ -623,6 +655,79 @@ TEST_F(MissionFlowTest, failed_pull_keeps_last_list)
     std::lock_guard<std::mutex> lock(mtx);
     EXPECT_TRUE(wpl->waypoints[2].is_current);
   }
+}
+
+// pull_period defaults to 0: no pulls besides the one after connecting.
+TEST_F(MissionFlowTest, pull_period_disabled_by_default)
+{
+  EXPECT_EQ(plugin->get_node()->get_parameter("pull_period").as_double(), 0.0);
+
+  uas->update_connection_status(true);
+  std::this_thread::sleep_for(700ms);
+  EXPECT_EQ(count_sent(MISSION_REQUEST_LIST::MSG_ID), 0u);
+}
+
+// With pull_period set, the mission is pulled again once the last complete
+// list is that old.
+TEST_F(MissionFlowTest, pull_period_pulls_when_list_ages)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("pull_period", 0.4));
+  const auto start = Clock::now();
+  uas->update_connection_status(true);
+
+  Clock::time_point first, second;
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 1, first));
+  EXPECT_NEAR(seconds(first - start), 0.4, 0.15);
+  inject(fcu_count(0));
+
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 2, second));
+  EXPECT_NEAR(seconds(second - first), 0.4, 0.15);
+  inject(fcu_count(0));
+}
+
+// A ~/pull resets the countdown. While that service call blocks, the retry
+// timer still runs, so a lost reply does not stall the pull.
+TEST_F(MissionFlowTest, pull_period_pushed_back_by_service_pull)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("pull_period", 0.6));
+  uas->update_connection_status(true);
+  std::this_thread::sleep_for(200ms);
+
+  auto pull_client = client->create_client<WaypointPull>("/test_mavros_uas/mission/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+  auto req = std::make_shared<WaypointPull::Request>();
+  std::promise<WaypointPull::Response::SharedPtr> prom;
+  std::thread svc([&]() {prom.set_value(call_service(pull_client, req, 10s));});
+
+  // the FCU misses the first request: the retry goes out while ~/pull blocks
+  Clock::time_point when;
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 2, when));
+  inject(fcu_count(0));
+  auto res = prom.get_future().get();
+  svc.join();
+  const auto pulled = Clock::now();
+  ASSERT_NE(res, nullptr);
+  ASSERT_TRUE(res->success);
+
+  // the periodic pull, due 0.6 s after the parameter was set, now waits a full
+  // period after ~/pull
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 3, when));
+  EXPECT_NEAR(seconds(when - pulled), 0.6, 0.15);
+  inject(fcu_count(0));
+}
+
+// After a failed pull the next one waits a full period.
+TEST_F(MissionFlowTest, pull_period_waits_after_failed_pull)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("pull_period", 0.5));
+  uas->update_connection_status(true);
+
+  // the FCU answers neither the request nor its retry (mission_wp_timeout 0.2 s)
+  Clock::time_point retry, next;
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 2, retry));
+  ASSERT_TRUE(wait_sent(MISSION_REQUEST_LIST::MSG_ID, 3, next));
+  EXPECT_NEAR(seconds(next - retry), 0.2 + 0.5, 0.15);
+  inject(fcu_count(0));
 }
 
 }   // namespace uas

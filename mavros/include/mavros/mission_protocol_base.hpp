@@ -296,7 +296,8 @@ public:
     mission_list_timeout(30s),
     mission_wp_timeout(1s),
     mission_reschedule_time(5s),
-    mission_retries_count(3)
+    mission_retries_count(3),
+    pull_period(0, 0)
   {
     enable_node_watch_parameters();
 
@@ -327,6 +328,21 @@ public:
       "mission_reschedule_time", mission_reschedule_time.seconds(),
       [&](const rclcpp::Parameter & p) {
         mission_reschedule_time = rclcpp::Duration::from_seconds(p.as_double());
+      });
+    //! Pull again once the last complete list is this old (seconds, 0 disables).
+    node_declare_and_watch_parameter(
+      "pull_period", pull_period.seconds(), [&](const rclcpp::Parameter & p) {
+        lock_guard lock(mutex);
+        pull_period = rclcpp::Duration::from_seconds(p.as_double());
+        if (pull_period_timer) {
+          pull_period_timer->cancel();
+          pull_period_timer.reset();
+        }
+        if (pull_period > rclcpp::Duration(0, 0)) {
+          pull_period_timer = node->create_wall_timer(
+            pull_period.to_chrono<std::chrono::nanoseconds>(),
+            std::bind(&MissionBase::periodic_pull_cb, this));
+        }
       });
 
     wp_retries = mission_retries_count;
@@ -405,6 +421,7 @@ protected:
   rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::TimerBase::SharedPtr timeout_timer;
   rclcpp::TimerBase::SharedPtr schedule_timer;
+  rclcpp::TimerBase::SharedPtr pull_period_timer;
 
   bool reschedule_pull;
 
@@ -418,6 +435,7 @@ protected:
   rclcpp::Duration mission_wp_timeout;
   rclcpp::Duration mission_reschedule_time;
   int mission_retries_count;
+  rclcpp::Duration pull_period;
 
   /* -*- rx handlers -*- */
 
@@ -593,6 +611,31 @@ protected:
     mission_request_list();
   }
 
+  //! @brief Callback for the periodic pull, see `pull_period`
+  void periodic_pull_cb()
+  {
+    lock_guard lock(mutex);
+
+    if (wp_state != WP::IDLE || !uas->is_connected()) {
+      // a transfer in progress restarts the countdown when it ends
+      return;
+    }
+
+    RCLCPP_DEBUG(get_logger(), "%s: start periodic pull", log_prefix);
+    wp_state = WP::RXLIST;
+    wp_count = 0;
+    restart_timeout_timer();
+    mission_request_list();
+  }
+
+  //! @brief Restart the `pull_period` countdown
+  void restart_pull_period(void)
+  {
+    if (pull_period_timer) {
+      pull_period_timer->reset();
+    }
+  }
+
   //! @brief Send ACK back to FCU after pull
   void request_mission_done(void)
   {
@@ -601,6 +644,7 @@ protected:
 
     waypoints.swap(recv_waypoints);
     recv_waypoints.clear();
+    restart_pull_period();
     go_idle();
     list_receiving.notify_all();
     RCLCPP_INFO(get_logger(), "%s: mission received", log_prefix);
