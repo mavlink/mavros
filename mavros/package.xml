@@ -44,6 +44,8 @@
   <depend>message_filters</depend>
   <depend>eigen_stl_containers</depend>
   <depend>libmavconn</depend>
+  <depend>libevents_vendor</depend>
+  <depend>xz_embedded_vendor</depend>
   <depend>pluginlib</depend>
   <!-- XXX <depend>rosconsole_bridge</depend> -->
   <depend>libconsole-bridge-dev</depend>
@@ -75,6 +77,8 @@
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <!-- Existing XZ fixture encoders; runtime decoding uses XZ Embedded. -->
+  <test_depend>liblzma-dev</test_depend>
   <test_depend>gtest</test_depend>
   <test_depend>google-mock</test_depend>
 

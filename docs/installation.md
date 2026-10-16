@@ -15,6 +15,12 @@ Dependencies
 Most of the ROS dependencies are supported and installed by `rosdep`, including external
 libraries such as [ASIO][asio], [Eigen][eigen] and [GeographicLib][geolib].
 
+Source builds include the `libevents_vendor` package from this repository. It
+requires CMake 3.19 or newer and downloads a pinned libevents archive during its
+initial build. Keep this package in the workspace when building MAVROS. See its
+[dependency reference](../libevents_vendor/README.md) for the revision, checksum,
+CMake interface, and license notices.
+
 Since **GeographicLib requires certain datasets** so to fulfill
 certain calculations, these need to be installed manually by the user.
 

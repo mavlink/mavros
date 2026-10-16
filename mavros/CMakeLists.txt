@@ -30,6 +30,8 @@ find_package(message_filters REQUIRED)
 
 find_package(mavlink REQUIRED)
 find_package(libmavconn REQUIRED)
+find_package(libevents_vendor REQUIRED)
+find_package(xz_embedded_vendor REQUIRED)
 find_package(console_bridge REQUIRED)
 #find_package(rosconsole_bridge REQUIRED)  # XXX TODO: connect libmavconn loggers
 
@@ -206,6 +208,14 @@ target_link_libraries(mavros_plugins PUBLIC
   tf2_ros::static_transform_broadcaster_node
   tf2_ros::tf2_ros
 )
+target_sources(mavros_plugins PRIVATE
+  src/plugins/px4_events/acquisition.cpp
+  src/plugins/px4_events/cache.cpp
+  src/plugins/px4_events/decoder.cpp
+  src/plugins/px4_events/discovery.cpp
+  src/plugins/px4_events/metadata.cpp
+  src/plugins/px4_events/xz_metadata.cpp)
+target_link_libraries(mavros_plugins PRIVATE libevents_vendor::parser xz_embedded_vendor::decoder)
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 
 add_executable(mavros_node src/mavros_node.cpp)
@@ -282,6 +292,50 @@ if(BUILD_TESTING)
     mavros
     ${std_srvs_TARGETS}
   )
+
+  # Existing tests still use liblzma's encoder to generate compressed fixtures.
+  find_package(LibLZMA REQUIRED)
+  find_package(Threads REQUIRED)
+  ament_add_gtest(mavros-px4-events-test
+    test/test_px4_events.cpp src/plugins/px4_events/xz_metadata.cpp)
+  target_link_libraries(mavros-px4-events-test
+    libevents_vendor::parser xz_embedded_vendor::decoder LibLZMA::LibLZMA)
+  target_compile_definitions(mavros-px4-events-test PRIVATE
+    TEST_EVENT_METADATA="${CMAKE_CURRENT_SOURCE_DIR}/test/px4_events.json")
+
+  ament_add_gtest(mavros-px4-event-metadata-test
+    test/test_px4_event_metadata.cpp src/plugins/px4_events/metadata.cpp)
+  target_link_libraries(mavros-px4-event-metadata-test libevents_vendor::parser)
+
+  ament_add_gtest(mavros-px4-event-cache-test
+    test/test_px4_event_cache.cpp src/plugins/px4_events/cache.cpp
+    src/plugins/px4_events/metadata.cpp src/plugins/px4_events/decoder.cpp
+    src/plugins/px4_events/xz_metadata.cpp)
+  target_link_libraries(mavros-px4-event-cache-test
+    libevents_vendor::parser xz_embedded_vendor::decoder LibLZMA::LibLZMA Threads::Threads)
+
+  ament_add_gtest(mavros-px4-event-discovery-test
+    test/test_px4_event_discovery.cpp
+    src/plugins/px4_events/discovery.cpp src/plugins/px4_events/metadata.cpp)
+  target_link_libraries(mavros-px4-event-discovery-test mavros libevents_vendor::parser)
+
+  ament_add_gtest(mavros-px4-event-acquisition-test
+    test/test_px4_event_acquisition.cpp
+    src/plugins/px4_events/acquisition.cpp src/plugins/px4_events/cache.cpp
+    src/plugins/px4_events/metadata.cpp src/plugins/px4_events/decoder.cpp
+    src/plugins/px4_events/xz_metadata.cpp)
+  target_link_libraries(mavros-px4-event-acquisition-test
+    mavros libevents_vendor::parser xz_embedded_vendor::decoder LibLZMA::LibLZMA)
+
+  ament_add_gtest(mavros-status-event-test
+    test/test_status_event.cpp src/plugins/px4_events/decoder.cpp
+    src/plugins/px4_events/acquisition.cpp src/plugins/px4_events/cache.cpp
+    src/plugins/px4_events/discovery.cpp src/plugins/px4_events/metadata.cpp
+    src/plugins/px4_events/xz_metadata.cpp)
+  target_link_libraries(mavros-status-event-test
+    mavros libevents_vendor::parser xz_embedded_vendor::decoder LibLZMA::LibLZMA)
+  target_compile_definitions(mavros-status-event-test PRIVATE
+    TEST_EVENT_METADATA="${CMAKE_CURRENT_SOURCE_DIR}/test/px4_events.json")
 
   ament_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
   target_link_libraries(libmavros-sensor-orientation-test mavros)

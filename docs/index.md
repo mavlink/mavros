@@ -20,6 +20,7 @@ Guides
 - [Connection URLs](connection_urls.md)
 - [Coordinate frames](frames.md)
 - [Nodes and launch](nodes.md)
+- [PX4 event decoding](px4_events.md)
 - [mav CLI](mav_cli.md)
 - [Troubleshooting](troubleshooting.md)
 
@@ -31,6 +32,7 @@ Package Overview
 - `mavros_extras`: optional plugins
 - `mavros_msgs`: ROS 2 message and service interfaces
 - `libmavconn`: MAVLink transport library
+- `libevents_vendor`: pinned MAVLink event parser dependency
 - `mavros_examples`: beginner example scripts for ROS 2
 
 
