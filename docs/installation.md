@@ -15,11 +15,15 @@ Dependencies
 Most of the ROS dependencies are supported and installed by `rosdep`, including external
 libraries such as [ASIO][asio], [Eigen][eigen] and [GeographicLib][geolib].
 
-Source builds include the `libevents_vendor` package from this repository. It
-requires CMake 3.19 or newer and downloads a pinned libevents archive during its
-initial build. Keep this package in the workspace when building MAVROS. See its
-[dependency reference](../libevents_vendor/README.md) for the revision, checksum,
-CMake interface, and license notices.
+Source builds include `libevents_vendor` and `xz_embedded_vendor` from this
+repository. Both are required build dependencies, including when event decoding
+is disabled at runtime. Keep both packages in the workspace; `colcon` builds them
+before MAVROS. The initial builds download SHA-256-verified, pinned upstream
+archives and require network access. The libevents build requires CMake 3.19 or
+newer. See the [libevents reference](../libevents_vendor/README.md) and
+[XZ Embedded reference](../xz_embedded_vendor/README.md) for revisions, CMake
+interfaces, and license notices. Runtime XZ decoding uses XZ Embedded;
+`liblzma-dev` is needed only when building the tests that generate XZ fixtures.
 
 Since **GeographicLib requires certain datasets** so to fulfill
 certain calculations, these need to be installed manually by the user.

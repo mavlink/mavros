@@ -33,6 +33,7 @@ Package Overview
 - `mavros_msgs`: ROS 2 message and service interfaces
 - `libmavconn`: MAVLink transport library
 - `libevents_vendor`: pinned MAVLink event parser dependency
+- `xz_embedded_vendor`: pinned XZ metadata decoder dependency
 - `mavros_examples`: beginner example scripts for ROS 2
 
 

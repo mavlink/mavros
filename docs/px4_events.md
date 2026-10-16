@@ -46,15 +46,17 @@ than the EVENT message's 40 argument bytes are rejected before activation.
 An invalid configuration or file produces one setup error and leaves the
 vehicle connection and raw event logging operational. Correct the configuration
 or file and restart MAVROS. Invalid cache settings or persistence failures do
-not disable automatic acquisition/decoding. Successful local loading does not prove the definitions
-match the connected firmware.
+not disable automatic acquisition/decoding. Successful local loading does not
+prove the definitions match the connected firmware.
 
 ## Automatic discovery and retrieval
 
 With `event_decoding_mode: auto` and an empty `event_metadata_file`, the plugin
 requests `COMPONENT_METADATA` from the configured PX4 target using the existing
-command service. An explicit `DENIED` or `UNSUPPORTED` response switches to
-legacy `COMPONENT_INFORMATION`. Each format permits at most three total sends.
+command service. When using a plugin allowlist, include `command` and `ftp`
+alongside `sys_status` for discovery and automatic downloads. An explicit `DENIED`
+or `UNSUPPORTED` response switches to legacy `COMPONENT_INFORMATION`.
+Each format permits at most three total sends.
 Silence never triggers legacy fallback; other terminal failures stop discovery.
 Temporary rejection and ACK timeout consume the current format's attempt budget.
 
@@ -82,9 +84,9 @@ advertisement is available, acquisition checks the general and event caches in
 its callback group. A complete hit activates without FTP services or the download
 delay. A partial hit downloads only the missing file, after the connection-based
 delay; service-wait timeouts do not run while waiting for permission to download.
-JSON/XZ files are bounded,
-checksums are verified, and definitions are parsed before the decoder is
-activated. Only MAVLink FTP locations are supported; no HTTP fallback is used.
+JSON/XZ files are bounded, checksums are verified, and definitions are parsed
+before the decoder is activated. Only MAVLink FTP locations are supported;
+no HTTP fallback is used.
 
 One acquisition is started per connection; duplicate advertisements do not
 restart it. The helper uses one outstanding FTP request, reads up to 239 bytes
@@ -142,6 +144,8 @@ Disabled decoding and unknown IDs do not produce this warning. Diagnostic
 callback failures are contained so they cannot prevent raw fallback.
 
 Messages use libevents' plain-text `dev` profile and omit the longer description.
+Explicit message precision is limited to 0–16 decimal places; definitions outside
+that range are rejected before rendering.
 Named arguments absent from the visible message are appended in brackets.
 An empty message uses its event name. Unknown enum values retain numeric
 information. Bitfields retain named set bits and combine undefined set bits in
@@ -163,9 +167,13 @@ unchanged. Translation uses the full MAVLink event ID before shortening; no
 decoded ROS topic is added.
 
 For development verification, the focused tests are `mavros-px4-events-test`,
-`mavros-px4-event-metadata-test`, `mavros-px4-event-discovery-test`, and
-`mavros-status-event-test`. They cover local JSON/XZ loading, namespace IDs,
+`mavros-px4-event-metadata-test`, `mavros-px4-event-discovery-test`,
+`mavros-px4-event-acquisition-test`, `mavros-px4-event-cache-test`,
+`mavros-status-event-test`, and `mavros-ftp-busy-test`.
+They cover local JSON/XZ loading, namespace IDs,
 argument formatting, resource limits, fallback, severity, read-only parameters,
 raw publication through the system-status plugin, metadata/checksum parsing,
-and discovery retry/fallback/target/reconnect rules. Run builds and tests from
-the ROS workspace root, following the repository build/test instructions.
+discovery retry/fallback/target/reconnect rules, acquisition retries and
+cancellation, cache validation/publication/eviction, and FTP busy responses.
+Run builds and tests from the ROS workspace root, following the repository
+build/test instructions.
