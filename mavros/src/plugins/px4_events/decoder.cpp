@@ -6,6 +6,8 @@
 #include <libevents/parse/parser.h>
 
 #include <algorithm>
+#include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -86,6 +88,36 @@ std::string escape_literal(const std::string & text)
     result += ch;
   }
   return result;
+}
+
+void validate_message_precision(const std::string & message)
+{
+  constexpr int MAX_PRECISION = 16;
+  for (size_t pos = 0; pos < message.size(); ++pos) {
+    if (message[pos] == '\\') {
+      ++pos;
+    } else if (message[pos] == '{') {
+      if (message.find('}', pos) == std::string::npos) {
+        break;
+      }
+      // Match libevents' base-zero numeric syntax without narrowing the index
+      // or rendering a float. Escaped braces remain literal text.
+      char * argument_end = nullptr;
+      std::strtol(message.c_str() + pos + 1, &argument_end, 0);
+      if (argument_end[0] != ':' || argument_end[1] != '.') {
+        continue;
+      }
+      const auto precision_start = argument_end + 2;
+      char * precision_end = nullptr;
+      errno = 0;
+      const auto precision = std::strtol(precision_start, &precision_end, 0);
+      if (precision_end == precision_start || errno == ERANGE ||
+        precision < 0 || precision > MAX_PRECISION)
+      {
+        throw std::runtime_error("event message precision must be an integer between 0 and 16");
+      }
+    }
+  }
 }
 
 // Ask libevents which arguments appear in the dev-profile message. Using marker
@@ -229,6 +261,7 @@ struct Decoder::Impl
           if (definition.message.empty()) {
             definition.message = escape_literal(definition.name);
           }
+          validate_message_precision(definition.message);
           definition.message = with_unprinted_arguments(definition, config);
           if (!definitions.emplace(id, std::move(definition)).second) {
             throw std::runtime_error("duplicate full event ID");

@@ -148,6 +148,61 @@ TEST_F(Px4EventsTest, numeric_arguments_use_libevents_formatting)
   EXPECT_EQ(result->severity, 3);
 }
 
+TEST_F(Px4EventsTest, message_precision_accepts_limit_and_libevents_numeric_syntax)
+{
+  auto json = nlohmann::json::parse(metadata());
+  auto & event = json["components"]["1"]["event_groups"]["default"]["events"]["1"];
+  event["arguments"] = {{{"name", "value"}, {"type", "float"}}};
+  argument<float>(0, 1.25f);
+  for (const std::string precision : {"0", "3", "16", "0x10", "020", "+16", " 16"}) {
+    SCOPED_TRACE(precision);
+    event["message"] = "Value {1:." + precision + "m}";
+    ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+    const auto result = decoder.decode(0x01000001, 6, arguments);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->text, precision == "0" ? "Value 1 m" :
+      precision == "3" ? "Value 1.250 m" : "Value 1.2500000000000000 m");
+  }
+}
+
+TEST_F(Px4EventsTest, unsafe_message_precision_is_rejected_before_activation)
+{
+  auto json = nlohmann::json::parse(metadata());
+  auto & event = json["components"]["1"]["event_groups"]["default"]["events"]["1"];
+  event["arguments"] = {{{"name", "value"}, {"type", "float"}}};
+  for (const std::string precision : {"17", "0x11", "021", "1000000000", "4294967296",
+      "9999999999999999999999999999999999999999", "-1", "-4294967296", "", "invalid"})
+  {
+    SCOPED_TRACE(precision);
+    ASSERT_TRUE(decoder.load_json(metadata()).empty());
+    event["message"] = "Value {1:." + precision + "m}";
+    EXPECT_EQ(decoder.load_json(json.dump()),
+      "event message precision must be an integer between 0 and 16");
+    EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+    EXPECT_FALSE(decoder.decode(1, 6, arguments));
+  }
+}
+
+TEST_F(Px4EventsTest, precision_validation_preserves_escaped_literals_and_profiles)
+{
+  auto json = nlohmann::json::parse(metadata());
+  auto & event = json["components"]["1"]["event_groups"]["default"]["events"]["1"];
+  event["arguments"] = {{{"name", "value"}, {"type", "float"}}};
+  event["message"] =
+    R"(Literal \{1:.1000000000}; <profile name="dev">value {1:.3m}</profile>)"
+    R"(<profile name="normal">Other {1:.2m}</profile>)";
+  ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+  argument<float>(0, 1.25f);
+  const auto result = decoder.decode(0x01000001, 6, arguments);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->text, "Literal {1:.1000000000}; value 1.250 m");
+
+  // An escaped backslash does not escape the following placeholder.
+  event["message"] = R"(Backslash \\{1:.17m})";
+  EXPECT_EQ(decoder.load_json(json.dump()),
+    "event message precision must be an integer between 0 and 16");
+}
+
 TEST_F(Px4EventsTest, enums_bitfields_and_unknown_values_retain_information)
 {
   arguments[0] = 1;
