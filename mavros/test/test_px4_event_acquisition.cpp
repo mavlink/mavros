@@ -255,7 +255,10 @@ protected:
     ASSERT_NE(directory, nullptr);
     cache_directory = directory;
     cache = std::make_shared<MetadataCache>(cache_directory);
+    // Unregister the old callback group before replacing its owner (Humble).
+    executor.remove_node(node);
     acquisition = Acquisition::create(node, {}, cache);
+    executor.add_node(node);
   }
 
   void TearDown() override
@@ -319,7 +322,9 @@ TEST_F(CachedAcquisitionTest, closed_gate_defers_service_timeout_until_downloads
 {
   prepare();
   auto unavailable = std::make_shared<rclcpp::Node>("cache_gate_test", "/cache_gate_unavailable");
+  executor.remove_node(node);
   acquisition = Acquisition::create(unavailable, {}, cache);
+  executor.add_node(node);
   ASSERT_TRUE(acquisition->start(general_file,
     [this](Acquisition::Result value) {result = std::move(value);}, false));
   AcquisitionTestPeer::expire_download(*acquisition);
@@ -465,7 +470,9 @@ TEST_F(CachedAcquisitionTest, persistence_failure_does_not_turn_valid_acquisitio
     file << "existing file";
   }
   cache = std::make_shared<MetadataCache>(blocked);
+  executor.remove_node(node);
   acquisition = Acquisition::create(node, {}, cache);
+  executor.add_node(node);
   start();
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_TRUE(result->error.empty());
