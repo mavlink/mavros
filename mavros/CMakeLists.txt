@@ -277,6 +277,12 @@ if(BUILD_TESTING)
   ament_add_gtest(libmavros-frame-conversions-test test/test_frame_conversions.cpp)
   target_link_libraries(libmavros-frame-conversions-test mavros)
 
+  ament_add_gtest(mavros-ftp-busy-test test/test_ftp_busy.cpp)
+  target_link_libraries(mavros-ftp-busy-test
+    mavros
+    ${std_srvs_TARGETS}
+  )
+
   ament_add_gtest(libmavros-sensor-orientation-test test/test_sensor_orientation.cpp)
   target_link_libraries(libmavros-sensor-orientation-test mavros)
 
