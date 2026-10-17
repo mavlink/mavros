@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cerrno>
+#include <cstring>
 #include <condition_variable>
 #include <string>
 #include <vector>
@@ -158,14 +159,12 @@ public:
     return reinterpret_cast<char *>(data());
   }
 
-  inline const uint32_t * data_u32() const
+  /// @brief First 32-bit value of the data, copied out since the payload has no alignment guarantee
+  inline uint32_t data_u32() const
   {
-    return reinterpret_cast<const uint32_t *>(data());
-  }
-
-  inline uint32_t * data_u32()
-  {
-    return reinterpret_cast<uint32_t *>(data());
+    uint32_t value;
+    memcpy(&value, data(), sizeof(value));
+    return value;
   }
 
   /**
@@ -575,7 +574,7 @@ private:
 
     RCLCPP_DEBUG(get_logger(), "FTP:m: ACK Open OPCODE(%u)", hdr->req_opcode);
     rcpputils::require_true(hdr->size == sizeof(uint32_t));
-    open_size = *req.data_u32();
+    open_size = req.data_u32();
 
     RCLCPP_INFO(
       get_logger(), "FTP:Open %s: success, session %u, size %zu",
@@ -638,7 +637,7 @@ private:
     }
 
     rcpputils::require_true(hdr->size == sizeof(uint32_t));
-    const size_t bytes_written = *req.data_u32();
+    const size_t bytes_written = req.data_u32();
 
     // check that reported size not out of range
     const size_t bytes_left_before_advance = std::distance(write_it, write_buffer.end());
@@ -665,7 +664,7 @@ private:
 
     RCLCPP_DEBUG(lg, "FTP:m: ACK CalcFileCRC32 OPCODE(%u)", hdr->req_opcode);
     rcpputils::assert_true(hdr->size == sizeof(uint32_t));
-    checksum_crc32 = *req.data_u32();
+    checksum_crc32 = req.data_u32();
 
     RCLCPP_DEBUG(lg, "FTP:Checksum: success, crc32: 0x%08x", checksum_crc32);
     go_idle(false);
