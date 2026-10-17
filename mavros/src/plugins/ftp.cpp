@@ -23,6 +23,7 @@
 #include <map>
 #include <utility>
 #include <algorithm>
+#include <type_traits>
 
 #include "rcpputils/asserts.hpp"
 #include "mavros/mavros_uas.hpp"
@@ -73,6 +74,9 @@ public:
     uint8_t padding[2];         ///< 32 bit alignment padding
     uint32_t offset;            ///< Offsets for List and Read commands
   };
+
+  static_assert(sizeof(PayloadHeader) == 12, "PayloadHeader must match the 12-byte wire layout");
+  static_assert(std::is_trivially_copyable_v<PayloadHeader>);
 
   /// @brief Command opcodes
   enum Opcode : uint8_t
@@ -129,14 +133,23 @@ public:
     return payload.data();
   }
 
-  inline const PayloadHeader * header() const
+  /**
+   * @brief Copy of the payload header
+   *
+   * The payload buffer has no alignment guarantee, so the header is copied
+   * out instead of being accessed in place.
+   */
+  inline PayloadHeader header() const
   {
-    return reinterpret_cast<const PayloadHeader *>(payload.data());
+    PayloadHeader hdr;
+    memcpy(&hdr, payload.data(), sizeof(hdr));
+    return hdr;
   }
 
-  inline PayloadHeader * header()
+  /// @brief Write the header back into the payload
+  inline void set_header(const PayloadHeader & hdr)
   {
-    return reinterpret_cast<PayloadHeader *>(payload.data());
+    memcpy(payload.data(), &hdr, sizeof(hdr));
   }
 
   inline const uint8_t * data() const
@@ -180,7 +193,9 @@ public:
 
     memcpy(data_c(), s.c_str(), sz);
     data_c()[sz] = '\0';
-    header()->size = sz;
+    auto hdr = header();
+    hdr.size = sz;
+    set_header(hdr);
   }
 
   uint8_t get_target_system_id() const
@@ -194,11 +209,11 @@ public:
   bool decode_valid([[maybe_unused]] plugin::UASPtr uas)
   {
 #ifdef FTP_LL_DEBUG
-    auto hdr = header();
+    const auto hdr = header();
     RCLCPP_DEBUG(
       rclcpp::get_logger("ftp.request"),
       "FTP:rm: SEQ(%u) SESS(%u) OPCODE(%u) RQOP(%u) SZ(%u) OFF(%u)",
-      hdr->seqNumber, hdr->session, hdr->opcode, hdr->req_opcode, hdr->size, hdr->offset);
+      hdr.seqNumber, hdr.session, hdr.opcode, hdr.req_opcode, hdr.size, hdr.offset);
 #endif
 
     // return uas->get_system_id() == target_system;
@@ -215,13 +230,14 @@ public:
     target_component = uas->get_tgt_component();
 
     auto hdr = header();
-    hdr->seqNumber = seqNumber;
-    hdr->req_opcode = kCmdNone;
+    hdr.seqNumber = seqNumber;
+    hdr.req_opcode = kCmdNone;
+    set_header(hdr);
 
 #ifdef FTP_LL_DEBUG
     RCLCPP_DEBUG(
       rclcpp::get_logger("ftp.request"), "FTP:sm: SEQ(%u) SESS(%u) OPCODE(%u) SZ(%u) OFF(%u)",
-      hdr->seqNumber, hdr->session, hdr->opcode, hdr->size, hdr->offset);
+      hdr.seqNumber, hdr.session, hdr.opcode, hdr.size, hdr.offset);
 #endif
 
     uas->send_message(*this);
@@ -234,8 +250,10 @@ public:
   explicit FTPRequest(Opcode op, uint8_t session = 0)
   : mavlink::common::msg::FILE_TRANSFER_PROTOCOL{}
   {
-    header()->session = session;
-    header()->opcode = op;
+    auto hdr = header();
+    hdr.session = session;
+    hdr.opcode = op;
+    set_header(hdr);
   }
 };
 
@@ -428,7 +446,8 @@ private:
       return;
     }
 
-    const uint16_t incoming_seqnr = req.header()->seqNumber;
+    const auto hdr = req.header();
+    const uint16_t incoming_seqnr = hdr.seqNumber;
     const uint16_t expected_seqnr = last_send_seqnr + 1;
     if (incoming_seqnr != expected_seqnr) {
       RCLCPP_WARN(
@@ -441,12 +460,12 @@ private:
     last_send_seqnr = incoming_seqnr;
 
     // logic from QGCUASFileManager.cc
-    if (req.header()->opcode == FTPRequest::kRspAck) {
+    if (hdr.opcode == FTPRequest::kRspAck) {
       handle_req_ack(req);
-    } else if (req.header()->opcode == FTPRequest::kRspNak) {
+    } else if (hdr.opcode == FTPRequest::kRspNak) {
       handle_req_nack(req);
     } else {
-      RCLCPP_ERROR(get_logger(), "FTP: Unknown request response: %u", req.header()->opcode);
+      RCLCPP_ERROR(get_logger(), "FTP: Unknown request response: %u", hdr.opcode);
       go_idle(true, EBADRQC);
     }
   }
@@ -469,13 +488,13 @@ private:
 
   void handle_req_nack(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
     auto error_code = static_cast<FTPRequest::ErrorCode>(req.data()[0]);
     auto prev_op = op_state;
 
     rcpputils::require_true(
-      hdr->size == 1 ||
-      (error_code == FTPRequest::kErrFailErrno && hdr->size == 2));
+      hdr.size == 1 ||
+      (error_code == FTPRequest::kErrFailErrno && hdr.size == 2));
 
     op_state = OP::IDLE;
     if (error_code == FTPRequest::kErrFailErrno) {
@@ -506,19 +525,19 @@ private:
 
     RCLCPP_ERROR(
       get_logger(), "FTP: NAK: %u Opcode: %u State: %u Errno: %d (%s)",
-      error_code, hdr->req_opcode, enum_value(prev_op), r_errno, strerror(r_errno));
+      error_code, hdr.req_opcode, enum_value(prev_op), r_errno, strerror(r_errno));
     go_idle(true);
   }
 
   void handle_ack_list(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
 
-    RCLCPP_DEBUG(get_logger(), "FTP:m: ACK List SZ(%u) OFF(%u)", hdr->size, hdr->offset);
-    if (hdr->offset != list_offset) {
+    RCLCPP_DEBUG(get_logger(), "FTP:m: ACK List SZ(%u) OFF(%u)", hdr.size, hdr.offset);
+    if (hdr.offset != list_offset) {
       RCLCPP_ERROR(
         get_logger(), "FTP: Wrong list offset, req %u, ret %u",
-        list_offset, hdr->offset);
+        list_offset, hdr.offset);
       go_idle(true, EBADE);
       return;
     }
@@ -526,9 +545,9 @@ private:
     uint8_t off = 0;
     uint32_t n_list_entries = 0;
 
-    while (off < hdr->size) {
+    while (off < hdr.size) {
       const char * ptr = req.data_c() + off;
-      const size_t bytes_left = hdr->size - off;
+      const size_t bytes_left = hdr.size - off;
 
       size_t slen = strnlen(ptr, bytes_left);
       if ((ptr[0] == FTPRequest::DIRENT_SKIP && slen > 1) ||
@@ -557,7 +576,7 @@ private:
       n_list_entries++;
     }
 
-    if (hdr->size == 0) {
+    if (hdr.size == 0) {
       // dir empty, we are done
       list_directory_end();
     } else {
@@ -570,32 +589,32 @@ private:
 
   void handle_ack_open(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
 
-    RCLCPP_DEBUG(get_logger(), "FTP:m: ACK Open OPCODE(%u)", hdr->req_opcode);
-    rcpputils::require_true(hdr->size == sizeof(uint32_t));
+    RCLCPP_DEBUG(get_logger(), "FTP:m: ACK Open OPCODE(%u)", hdr.req_opcode);
+    rcpputils::require_true(hdr.size == sizeof(uint32_t));
     open_size = req.data_u32();
 
     RCLCPP_INFO(
       get_logger(), "FTP:Open %s: success, session %u, size %zu",
-      open_path.c_str(), hdr->session, open_size);
-    session_file_map.insert(std::make_pair(open_path, hdr->session));
+      open_path.c_str(), hdr.session, open_size);
+    session_file_map.insert(std::make_pair(open_path, hdr.session));
     go_idle(false);
   }
 
   void handle_ack_read(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
     auto lg = get_logger();
 
-    RCLCPP_DEBUG(lg, "FTP:m: ACK Read SZ(%u)", hdr->size);
-    if (hdr->session != active_session) {
+    RCLCPP_DEBUG(lg, "FTP:m: ACK Read SZ(%u)", hdr.size);
+    if (hdr.session != active_session) {
       RCLCPP_ERROR(lg, "FTP:Read unexpected session");
       go_idle(true, EBADSLT);
       return;
     }
 
-    if (hdr->offset != read_offset) {
+    if (hdr.offset != read_offset) {
       RCLCPP_ERROR(lg, "FTP:Read different offset");
       go_idle(true, EBADE);
       return;
@@ -605,11 +624,11 @@ private:
     // We requested specific amount of data, that can be smaller,
     // but not larger.
     const size_t bytes_left = read_size - read_buffer.size();
-    const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr->size);
+    const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr.size);
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
 
-    if (read_buffer.size() < read_size && hdr->size == FTPRequest::DATA_MAXSZ) {
+    if (read_buffer.size() < read_size && hdr.size == FTPRequest::DATA_MAXSZ) {
       // Possibly more data
       read_offset += bytes_to_copy;
       send_read_command();
@@ -620,23 +639,23 @@ private:
 
   void handle_ack_write(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
     auto lg = get_logger();
 
-    RCLCPP_DEBUG(lg, "FTP:m: ACK Write SZ(%u)", hdr->size);
-    if (hdr->session != active_session) {
+    RCLCPP_DEBUG(lg, "FTP:m: ACK Write SZ(%u)", hdr.size);
+    if (hdr.session != active_session) {
       RCLCPP_ERROR(lg, "FTP:Write unexpected session");
       go_idle(true, EBADSLT);
       return;
     }
 
-    if (hdr->offset != write_offset) {
+    if (hdr.offset != write_offset) {
       RCLCPP_ERROR(lg, "FTP:Write different offset");
       go_idle(true, EBADE);
       return;
     }
 
-    rcpputils::require_true(hdr->size == sizeof(uint32_t));
+    rcpputils::require_true(hdr.size == sizeof(uint32_t));
     const size_t bytes_written = req.data_u32();
 
     // check that reported size not out of range
@@ -659,11 +678,11 @@ private:
 
   void handle_ack_checksum(const FTPRequest & req)
   {
-    auto hdr = req.header();
+    const auto hdr = req.header();
     auto lg = get_logger();
 
-    RCLCPP_DEBUG(lg, "FTP:m: ACK CalcFileCRC32 OPCODE(%u)", hdr->req_opcode);
-    rcpputils::assert_true(hdr->size == sizeof(uint32_t));
+    RCLCPP_DEBUG(lg, "FTP:m: ACK CalcFileCRC32 OPCODE(%u)", hdr.req_opcode);
+    rcpputils::assert_true(hdr.size == sizeof(uint32_t));
     checksum_crc32 = req.data_u32();
 
     RCLCPP_DEBUG(lg, "FTP:Checksum: success, crc32: 0x%08x", checksum_crc32);
@@ -712,7 +731,9 @@ private:
   {
     RCLCPP_DEBUG_STREAM(get_logger(), "FTP:m: " << debug_msg << path << " off: " << offset);
     FTPRequest req(op);
-    req.header()->offset = offset;
+    auto hdr = req.header();
+    hdr.offset = offset;
+    req.set_header(hdr);
     req.set_data_string(path);
     req.send(uas, last_send_seqnr);
   }
@@ -743,8 +764,10 @@ private:
   {
     RCLCPP_DEBUG_STREAM(get_logger(), "FTP:m: kCmdTerminateSession: " << session);
     FTPRequest req(FTPRequest::kCmdTerminateSession, session);
-    req.header()->offset = 0;
-    req.header()->size = 0;
+    auto hdr = req.header();
+    hdr.offset = 0;
+    hdr.size = 0;
+    req.set_header(hdr);
     req.send(uas, last_send_seqnr);
   }
 
@@ -757,8 +780,10 @@ private:
       get_logger(), "FTP:m: kCmdReadFile: " << active_session << " off: " << read_offset <<
         " sz: " << bytes_to_read);
     FTPRequest req(FTPRequest::kCmdReadFile, active_session);
-    req.header()->offset = read_offset;
-    req.header()->size = bytes_to_read;
+    auto hdr = req.header();
+    hdr.offset = read_offset;
+    hdr.size = bytes_to_read;
+    req.set_header(hdr);
     req.send(uas, last_send_seqnr);
   }
 
@@ -769,8 +794,10 @@ private:
       get_logger(), "FTP:m: kCmdWriteFile: " << active_session << " off: " << write_offset <<
         " sz: " << bytes_to_copy);
     FTPRequest req(FTPRequest::kCmdWriteFile, active_session);
-    req.header()->offset = write_offset;
-    req.header()->size = bytes_to_copy;
+    auto hdr = req.header();
+    hdr.offset = write_offset;
+    hdr.size = bytes_to_copy;
+    req.set_header(hdr);
     std::copy(write_it, write_it + bytes_to_copy, req.data());
     req.send(uas, last_send_seqnr);
   }
