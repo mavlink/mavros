@@ -117,6 +117,11 @@ protected:
   rclcpp::Service<Close>::SharedPtr close_service;
   rclcpp::executors::SingleThreadedExecutor executor;
 
+  virtual std::shared_ptr<Acquisition> make_acquisition()
+  {
+    return Acquisition::create(node);
+  }
+
   void SetUp() override
   {
     node = std::make_shared<rclcpp::Node>("acquisition_test", "/acquisition");
@@ -175,14 +180,16 @@ protected:
         response.r_errno = response.success ? 0 : EIO;
         close_service->send_response(*header, response);
       });
-    acquisition = Acquisition::create(node);
+    acquisition = make_acquisition();
     executor.add_node(node);
   }
 
   void TearDown() override
   {
-    acquisition->cancel();
-    executor.remove_node(node);
+    if (acquisition) {
+      acquisition->cancel();
+      executor.remove_node(node);
+    }
   }
 
   std::string compress(const std::string & bytes)
@@ -249,16 +256,17 @@ protected:
 
   void SetUp() override
   {
-    AcquisitionTest::SetUp();
     char pattern[] = "/tmp/mavros-acquisition-cache-XXXXXX";
     const auto directory = mkdtemp(pattern);
     ASSERT_NE(directory, nullptr);
     cache_directory = directory;
     cache = std::make_shared<MetadataCache>(cache_directory);
-    // Unregister the old callback group before replacing its owner (Humble).
-    executor.remove_node(node);
-    acquisition = Acquisition::create(node, {}, cache);
-    executor.add_node(node);
+    AcquisitionTest::SetUp();
+  }
+
+  std::shared_ptr<Acquisition> make_acquisition() override
+  {
+    return Acquisition::create(node, {}, cache);
   }
 
   void TearDown() override
@@ -321,10 +329,9 @@ TEST_F(CachedAcquisitionTest, cold_download_saves_both_validated_xz_files)
 TEST_F(CachedAcquisitionTest, closed_gate_defers_service_timeout_until_downloads_are_allowed)
 {
   prepare();
-  auto unavailable = std::make_shared<rclcpp::Node>("cache_gate_test", "/cache_gate_unavailable");
-  executor.remove_node(node);
-  acquisition = Acquisition::create(unavailable, {}, cache);
-  executor.add_node(node);
+  open_service.reset();
+  read_service.reset();
+  close_service.reset();
   ASSERT_TRUE(acquisition->start(general_file,
     [this](Acquisition::Result value) {result = std::move(value);}, false));
   AcquisitionTestPeer::expire_download(*acquisition);
@@ -464,15 +471,11 @@ TEST_F(CachedAcquisitionTest, cancellation_after_general_hit_does_not_cache_late
 
 TEST_F(CachedAcquisitionTest, persistence_failure_does_not_turn_valid_acquisition_into_failure)
 {
-  const auto blocked = cache_directory / "not-a-directory";
+  ASSERT_TRUE(std::filesystem::remove(cache_directory));
   {
-    std::ofstream file(blocked);
-    file << "existing file";
+    std::ofstream file(cache_directory);
+    ASSERT_TRUE(file.good());
   }
-  cache = std::make_shared<MetadataCache>(blocked);
-  executor.remove_node(node);
-  acquisition = Acquisition::create(node, {}, cache);
-  executor.add_node(node);
   start();
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_TRUE(result->error.empty());
