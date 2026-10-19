@@ -258,6 +258,14 @@ public:
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+    // NOTE(spurnvoj): one long-lived client in its own group, so the reply is processed
+    // while a srv_cg callback waits for it (see ros2/rmw_zenoh#993).
+    cmd_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    //! Client to send the mount configuration command (MAV_CMD_DO_MOUNT_CONFIGURE).
+    cmd_client = node->create_client<mavros_msgs::srv::CommandLong>(
+      "cmd/command", services_qos, cmd_cg);
+
     //! Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
     configure_srv = node->create_service<mavros_msgs::srv::MountConfigure>(
       "~/configure", std::bind(
@@ -283,6 +291,8 @@ private:
   rclcpp::Service<mavros_msgs::srv::MountConfigure>::SharedPtr configure_srv;
 
   rclcpp::CallbackGroup::SharedPtr srv_cg;
+  rclcpp::CallbackGroup::SharedPtr cmd_cg;
+  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmd_client;
 
   MountStatusDiag mount_diag;
   bool negate_measured_roll;
@@ -386,7 +396,9 @@ private:
     using mavlink::common::MAV_CMD;
 
     try {
-      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
+      if (!cmd_client->service_is_ready()) {
+        throw std::runtime_error("command plugin service not available");
+      }
 
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
 
@@ -402,7 +414,7 @@ private:
       cmdrq->param7 = req->yaw_input;
 
       RCLCPP_DEBUG(get_logger(), "MountConfigure: Request mode %u ", req->mode);
-      auto future = client->async_send_request(cmdrq);
+      auto future = cmd_client->async_send_request(cmdrq);
       auto response = future.get();
       res->success = response->success;
     } catch (std::exception & ex) {
