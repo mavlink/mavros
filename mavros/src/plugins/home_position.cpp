@@ -58,6 +58,14 @@ public:
 
     srv_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+    // NOTE(spurnvoj): one long-lived client in its own group, so the reply is processed
+    // while a srv_cg callback waits for it (see ros2/rmw_zenoh#993).
+    cmd_cg = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    //! Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
+    cmd_client = node->create_client<mavros_msgs::srv::CommandLong>(
+      "cmd/command", services_qos, cmd_cg);
+
     //! Publish home position (HOME_POSITION).
     hp_pub = node->create_publisher<mavros_msgs::msg::HomePosition>(
       "~/home", state_qos, mavros::NonIntraProcessPublisherOptions());
@@ -96,6 +104,8 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr update_srv;
 
   rclcpp::CallbackGroup::SharedPtr srv_cg;
+  rclcpp::CallbackGroup::SharedPtr cmd_cg;
+  rclcpp::Client<mavros_msgs::srv::CommandLong>::SharedPtr cmd_client;
 
   rclcpp::TimerBase::SharedPtr poll_timer;
 
@@ -108,17 +118,18 @@ private:
     bool ret = false;
 
     try {
-      //! Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
-      auto client = node->create_client<mavros_msgs::srv::CommandLong>("cmd/command");
+      if (!cmd_client->service_is_ready()) {
+        throw std::runtime_error("command plugin service not available");
+      }
 
       auto cmdrq = std::make_shared<mavros_msgs::srv::CommandLong::Request>();
       cmdrq->command = utils::enum_value(MAV_CMD::GET_HOME_POSITION);
 
-      auto future = client->async_send_request(cmdrq);
+      auto future = cmd_client->async_send_request(cmdrq);
       auto response = future.get();
       ret = response->success;
     } catch (std::exception & ex) {
-      RCLCPP_ERROR_STREAM(get_logger(), "HP: %s" << ex.what());
+      RCLCPP_ERROR_STREAM(get_logger(), "HP: " << ex.what());
     }
 
     return ret;
