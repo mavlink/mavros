@@ -218,6 +218,13 @@ Launch files are provided for use with common FCUs, in particular
     `mavros::router::Router` and one or two `mavros::uas::UAS` nodes as composable
     nodes into a component container.
 
+`px4.launch` and `apm.launch` accept `namespace` (default empty). The
+`mavros_node`, Router and UAS nodes are placed in that namespace and the plugin
+topics and services stay next to them, so `namespace:=uas1` gives
+`/uas1/imu/data` and `/uas1/param/pull`, while the default gives
+`/mavros/imu/data`. [multi_uas.launch](https://github.com/mavlink/mavros/blob/master/mavros/launch/multi_uas.launch)
+uses this to run one `mavros_node` per vehicle under `/mavros/uas_<tgt_system>`.
+
 `test_compose.launch.py` accepts:
 
   - `fcu_url` (default `udp://0.0.0.0:14540@`) - FCU connection URL
