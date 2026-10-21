@@ -637,15 +637,15 @@ wheels = [
 
 [[package]]
 name = "griffe-typingdoc"
-version = "0.3.1"
+version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffelib" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/26/28182e0c8055842bf3da774dee1d5b789c0f236c078dcbdca1937b5214dc/griffe_typingdoc-0.3.1.tar.gz", hash = "sha256:2ff4703115cb7f8a65b9fdcdd1f3c3a15f813b6554621b52eaad094c4782ce96", size = 31218, upload-time = "2026-02-21T09:38:54.409Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/73/6a6797593f158e9cc0c9fc03546fbb1c1760385eaa7882161152b7903eb3/griffe_typingdoc-0.3.2.tar.gz", hash = "sha256:fea17cbf0334a6b6140979dd0380763967617a64b5da5c9734821e9eae2eaf44", size = 33474, upload-time = "2026-10-06T09:09:42.425Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/c4/cf543fbde49e1ae44830ef0840a4d6ee9f4e4f338138a7766d4e37cf6440/griffe_typingdoc-0.3.1-py3-none-any.whl", hash = "sha256:ecbd457ef6883126b8b6023abf12e08c58e1c152238a2f0e2afdd67a64b07021", size = 10092, upload-time = "2026-02-20T14:53:47.84Z" },
+    { url = "https://files.pythonhosted.org/packages/94/07/31babb8758e738bb6df674e2a0e76324c1a3290460dbe031dba6638744c3/griffe_typingdoc-0.3.2-py3-none-any.whl", hash = "sha256:098bd890cec250a775a8f8e5fd4f6872fa6d1994377469f3285ddbe179893d04", size = 13651, upload-time = "2026-10-06T09:09:41.165Z" },
 ]
 
 [[package]]
