@@ -80,6 +80,23 @@ public:
   // incomplete type at the point plugin.hpp is included (from mavros_uas.hpp).
   explicit Plugin(UASPtr uas_);
 
+  /**
+   * @brief Create a plugin with its own sub-node.
+   *
+   * The node is named @a subnode and lives next to the UAS node when the
+   * process carries a `__ns` remap (`namespace:=uas1` gives `/uas1/<subnode>`),
+   * otherwise under the UAS node's fully qualified name (`/mavros/<subnode>`).
+   * Process-global `__node` remaps are ignored and the process parameter
+   * sources (`--params-file`, `-p`) are applied.
+   *
+   * Intra-process communication is always enabled on the sub-node and @a options
+   * cannot turn it off. rclcpp accepts only keep-last history (and, on humble,
+   * volatile durability) for intra-process publishers and subscriptions, so an
+   * entity that needs KeepAll or transient_local must opt out per entity with
+   * mavros::NonIntraProcessPublisherOptions() or
+   * mavros::NonIntraProcessSubscriptionOptions() from qos.hpp; otherwise its
+   * creation throws std::invalid_argument.
+   */
   explicit Plugin(
     UASPtr uas_, const std::string & subnode,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());

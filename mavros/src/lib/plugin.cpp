@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "rcl/arguments.h"
+#include "rcl/error_handling.h"
+#include "rcl/remap.h"
 #include "rclcpp/parameter_map.hpp"
 #include "rcpputils/scope_exit.hpp"
 
@@ -41,20 +43,39 @@ Plugin::Plugin(
   node_options.use_global_arguments(false);
   node_options.use_intra_process_comms(true);
 
+  auto context = uas_->get_node_base_interface()->get_context()->get_rcl_context();
+
+  // Turning off global arguments also drops the process-wide __ns remap that
+  // launch passes for namespace:=<ns>. Up to 2.14 that remap applied to plugin
+  // nodes as well and placed them next to the UAS node (/uas1/imu, not
+  // /uas1/mavros/imu), so resolve it here and keep that layout (#2310). Only
+  // __ns is re-applied; __node must stay ignored.
+  std::string plugin_ns = uas_->get_fully_qualified_name();
+  {
+    rcl_allocator_t allocator = rcl_get_default_allocator();
+    char * remapped_ns = nullptr;
+    rcl_ret_t ret = rcl_remap_node_namespace(
+      nullptr, &context->global_arguments, subnode.c_str(), allocator, &remapped_ns);
+    if (RCL_RET_OK == ret && nullptr != remapped_ns) {
+      plugin_ns = remapped_ns;
+      allocator.deallocate(remapped_ns, allocator.state);
+    } else if (RCL_RET_OK != ret) {
+      rcl_reset_error();
+    }
+  }
+
   // Turning off global arguments also drops the process's parameter sources
   // (--params-file / -p). Re-apply the overrides that match this plugin's
   // fully-qualified name as node-local parameter overrides, which carry no
   // remap rules. Mirrors rclcpp's own resolve_parameter_overrides(): global
   // sources first, then the caller-provided overrides take precedence.
-  auto context = uas_->get_node_base_interface()->get_context()->get_rcl_context();
   rcl_params_t * global_params = nullptr;
   rcl_ret_t ret = rcl_arguments_get_param_overrides(&context->global_arguments, &global_params);
   if (RCL_RET_OK == ret && nullptr != global_params) {
     auto cleanup = rcpputils::make_scope_exit(
       [global_params]() {rcl_yaml_node_struct_fini(global_params);});
 
-    const std::string fqn =
-      std::string(uas_->get_fully_qualified_name()) + "/" + subnode;
+    const std::string fqn = (plugin_ns == "/" ? "" : plugin_ns) + "/" + subnode;
     auto param_map = rclcpp::parameter_map_from(global_params, fqn.c_str());
 
     std::vector<rclcpp::Parameter> merged{};
@@ -75,7 +96,7 @@ Plugin::Plugin(
     node_options.parameter_overrides(merged);
   }
 
-  node = rclcpp::Node::make_shared(subnode, uas_->get_fully_qualified_name(), node_options);
+  node = rclcpp::Node::make_shared(subnode, plugin_ns, node_options);
 }
 
 void Plugin::enable_connection_cb()

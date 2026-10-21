@@ -114,6 +114,20 @@ The Router forwards MAVLink between endpoints with these rules:
 This node is a plugin container which manages all the protocol plugins. Each
 plugin is a subnode of this node.
 
+Plugin nodes keep their own name (`imu`, `sys`, ...) even when the process is
+renamed with `__node`, and are placed in the launch namespace when there is one:
+`namespace:=uas1` gives `/uas1/imu/data` next to the UAS node `/uas1/mavros`,
+while the default empty namespace gives `/mavros/imu/data`. The `/**/<plugin>:`
+sections of the parameter file apply to them as usual.
+
+Plugin nodes run with intra-process communication enabled. rclcpp allows only
+keep-last history (and, on humble, volatile durability) on intra-process
+publishers and subscriptions, so an out-of-tree plugin that needs `KeepAll` or
+`transient_local` must opt that entity out with
+`mavros::NonIntraProcessPublisherOptions()` /
+`mavros::NonIntraProcessSubscriptionOptions()` from `mavros/qos.hpp`; creating
+it with plain options throws `std::invalid_argument` during plugin construction.
+
 #### Parameters
 
 - `uas_url` (string, default `/uas1`) - UAS link URL used to connect to the Router.

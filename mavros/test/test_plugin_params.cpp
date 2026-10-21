@@ -8,14 +8,16 @@
 //
 
 /**
- * Regression test for issue #2294: dynamically created plugin sub-nodes must
- * still apply the process's parameter sources (--params-file / -p) even though
- * they are created with use_global_arguments(false) to keep process-global
- * __node/__ns remap rules from renaming them (issue #2262).
+ * Regression test for issues #2294 and #2310: dynamically created plugin
+ * sub-nodes are created with use_global_arguments(false) to keep a
+ * process-global __node remap from renaming them (issue #2262), yet they must
+ * still apply the process's parameter sources (--params-file / -p) and the
+ * process-global __ns remap that launch passes for namespace:=<ns>.
  *
- * main() initializes rclcpp with both a global node-name remap and a params
- * file, so a single test covers both halves: the plugin keeps its own name and
- * yet reads the values from the file.
+ * main() initializes rclcpp with a global node-name remap, a global namespace
+ * remap and a params file, so a single test covers all three: the plugin keeps
+ * its own name, lands in the launch namespace and reads the values from the
+ * file.
  */
 
 #include <gtest/gtest.h>
@@ -85,6 +87,11 @@ TEST_F(PluginParamsTest, subnode_applies_process_params_file)
   // plugin sub-node.
   EXPECT_STREQ("sys", node->get_name());
 
+  // #2310: the global `-r __ns:=/uas1` must still place the plugin next to
+  // the UAS node, as it did up to 2.14, not under the UAS node's name.
+  EXPECT_STREQ("/uas1", node->get_namespace());
+  EXPECT_STREQ("/uas1/sys", node->get_fully_qualified_name());
+
   // #2294: values from the process `--params-file` must be applied.
   EXPECT_DOUBLE_EQ(7.0, node->get_parameter("heartbeat_rate").as_double());
   EXPECT_DOUBLE_EQ(33.0, node->get_parameter("conn_timeout").as_double());
@@ -104,6 +111,7 @@ int main(int argc, char ** argv)
     "mavros-plugin-params-test",
     "--ros-args",
     "-r", "__node:=renamed_global",
+    "-r", "__ns:=/uas1",
     "--params-file", TEST_PLUGIN_PARAMS_YAML,
   };
   rclcpp::init(
