@@ -165,6 +165,9 @@ def test_ParamFile_save(file_class, expected_output):
     pf = file_class()
     pf.parameters = SAVE_PARAMS
     pf.tgt_system = 2
+    # save() stamps with now() only when unset; pin it so the test cannot
+    # straddle a second boundary between collection and execution.
+    pf.stamp = SAVE_STAMP
 
     out = io.StringIO()
     pf.save(out)
