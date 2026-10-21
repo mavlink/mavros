@@ -164,7 +164,8 @@ private:
     res->success = wait_fetch_all();
     lock.lock();
 
-    res->wp_received = waypoints.size();
+    // a failed pull leaves `waypoints` as it was; report what it got
+    res->wp_received = res->success ? waypoints.size() : recv_waypoints.size();
     go_idle();  // not necessary, but prevents from blocking
   }
 

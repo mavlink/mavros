@@ -176,10 +176,21 @@ private:
     auto wpl = mavros_msgs::msg::WaypointList();
     unique_lock lock(mutex);
 
+    // Only publish a current item that indexes this list; otherwise subscribers
+    // keep the last consistent list (latched) until a pull brings the new one.
+    if (!current_in_list()) {
+      RCLCPP_DEBUG(
+        get_logger(), "%s: current #%zu does not match the list (%zu items), not publishing",
+        log_prefix, wp_cur_active, waypoints.size());
+      return;
+    }
+
     wpl.current_seq = wp_cur_active;
     wpl.waypoints.reserve(waypoints.size());
+    size_t i = 0;
     for (auto & it : waypoints) {
       wpl.waypoints.push_back(it);
+      wpl.waypoints.back().is_current = (i++ == wp_cur_active);
     }
 
     lock.unlock();
@@ -223,7 +234,8 @@ private:
     res->success = wait_fetch_all();
     lock.lock();
 
-    res->wp_received = waypoints.size();
+    // a failed pull leaves `waypoints` as it was; report what it got
+    res->wp_received = res->success ? waypoints.size() : recv_waypoints.size();
     go_idle();  // not necessary, but prevents from blocking
   }
 

@@ -21,6 +21,7 @@
 #ifndef MAVROS__MISSION_PROTOCOL_BASE_HPP_
 #define MAVROS__MISSION_PROTOCOL_BASE_HPP_
 
+#include <algorithm>
 #include <chrono>
 #include <sstream>
 #include <iomanip>
@@ -55,6 +56,53 @@ using mavlink::common::msg::MISSION_ITEM_INT;
 using MRES = mavlink::common::MAV_MISSION_RESULT;
 using MTYPE = mavlink::common::MAV_MISSION_TYPE;
 using MFilter = plugin::filter::SystemAndOk;
+
+/**
+ * @brief Passes what SystemAndOk passes, if the message is addressed to us or broadcast.
+ *
+ * The FCU addresses its side of a transfer to whoever started it. Another
+ * client's transfer (e.g. a GCS sharing the FCU link) is routed to us as well,
+ * and its items, requests and acks must not drive ours.
+ */
+class AddressedToUsAndOk : public plugin::filter::SystemAndOk
+{
+public:
+  //! Target ids of a raw message are ours or broadcast (0).
+  static bool targets_us(plugin::UASPtr uas, const mavlink::mavlink_message_t * cmsg)
+  {
+    // Look the message up in the common dialect table directly: every message
+    // this plugin handles is in it, and mavconn's mavlink_get_msg_entry() only
+    // works once a MAVConn link has initialised its table, which a UAS running
+    // without a router in the same process never does.
+    const auto & entries = mavlink::common::MESSAGE_ENTRIES;
+    const auto entry = std::lower_bound(
+      entries.begin(), entries.end(), cmsg->msgid,
+      [](const mavlink::mavlink_msg_entry_t & e, uint32_t id) {return e.msgid < id;});
+    if (entry == entries.end() || entry->msgid != cmsg->msgid) {
+      return false;  // unknown here: not a message this filter is meant for
+    }
+
+    uint8_t tgt_system = 0, tgt_component = 0;
+    if (entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) {
+      tgt_system = _MAV_PAYLOAD(cmsg)[entry->target_system_ofs];
+    }
+    if (entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT) {
+      tgt_component = _MAV_PAYLOAD(cmsg)[entry->target_component_ofs];
+    }
+
+    return uas->is_addressed_to_us(tgt_system, tgt_component);
+  }
+
+  inline bool operator()(
+    plugin::UASPtr uas, const mavlink::mavlink_message_t * cmsg,
+    const mavconn::Framing framing) override
+  {
+    return SystemAndOk::operator()(uas, cmsg, framing) && targets_us(uas, cmsg);
+  }
+};
+
+//! Filter for the transfer handlers: only the FCU's side of our own transfer.
+using MTargetedFilter = AddressedToUsAndOk;
 
 // [[[cog:
 //
@@ -296,7 +344,11 @@ public:
     mission_list_timeout(30s),
     mission_wp_timeout(1s),
     mission_reschedule_time(5s),
-    mission_retries_count(3)
+    mission_retries_count(3),
+    pull_period(0, 0),
+    waypoints_id(0),
+    recv_waypoints_id(0),
+    fcu_plan_id(0)
   {
     enable_node_watch_parameters();
 
@@ -327,6 +379,21 @@ public:
       "mission_reschedule_time", mission_reschedule_time.seconds(),
       [&](const rclcpp::Parameter & p) {
         mission_reschedule_time = rclcpp::Duration::from_seconds(p.as_double());
+      });
+    //! Pull again once the last complete list is this old (seconds, 0 disables).
+    node_declare_and_watch_parameter(
+      "pull_period", pull_period.seconds(), [&](const rclcpp::Parameter & p) {
+        lock_guard lock(mutex);
+        pull_period = rclcpp::Duration::from_seconds(p.as_double());
+        if (pull_period_timer) {
+          pull_period_timer->cancel();
+          pull_period_timer.reset();
+        }
+        if (pull_period > rclcpp::Duration(0, 0)) {
+          pull_period_timer = node->create_wall_timer(
+            pull_period.to_chrono<std::chrono::nanoseconds>(),
+            std::bind(&MissionBase::periodic_pull_cb, this));
+        }
       });
 
     wp_retries = mission_retries_count;
@@ -364,7 +431,10 @@ protected:
   using lock_guard = std::lock_guard<std::recursive_mutex>;
 
   std::recursive_mutex mutex;
+  //! last complete list: a pull replaces it only when it finishes
   std::vector<MissionItem> waypoints;
+  //! items of the pull in progress
+  std::vector<MissionItem> recv_waypoints;
   std::vector<MissionItem> send_waypoints;
 
   const MTYPE mission_type;
@@ -402,6 +472,7 @@ protected:
   rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::TimerBase::SharedPtr timeout_timer;
   rclcpp::TimerBase::SharedPtr schedule_timer;
+  rclcpp::TimerBase::SharedPtr pull_period_timer;
 
   bool reschedule_pull;
 
@@ -415,6 +486,14 @@ protected:
   rclcpp::Duration mission_wp_timeout;
   rclcpp::Duration mission_reschedule_time;
   int mission_retries_count;
+  rclcpp::Duration pull_period;
+
+  //! plan id of `waypoints` (MISSION_COUNT/MISSION_ACK opaque_id), 0 if unknown
+  uint32_t waypoints_id;
+  //! plan id of the pull in progress
+  uint32_t recv_waypoints_id;
+  //! the FCU's current plan id for our mission type (MISSION_CURRENT), 0 if unknown
+  uint32_t fcu_plan_id;
 
   /* -*- rx handlers -*- */
 
@@ -456,7 +535,7 @@ protected:
   virtual void handle_mission_item(
     const mavlink::mavlink_message_t * msg,
     MISSION_ITEM & wpi,
-    MFilter filter);
+    MTargetedFilter filter);
 
   /**
    * @brief handle MISSION_ITEM_INT mavlink msg
@@ -467,7 +546,7 @@ protected:
   virtual void handle_mission_item_int(
     const mavlink::mavlink_message_t * msg,
     MISSION_ITEM_INT & wpi,
-    MFilter filter);
+    MTargetedFilter filter);
 
   /**
    * @brief handle MISSION_REQUEST mavlink msg
@@ -478,7 +557,7 @@ protected:
   virtual void handle_mission_request(
     const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_REQUEST & mreq,
-    MFilter filter);
+    MTargetedFilter filter);
 
   /**
    * @brief handle MISSION_REQUEST_INT mavlink msg
@@ -489,7 +568,7 @@ protected:
   virtual void handle_mission_request_int(
     const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-    MFilter filter);
+    MTargetedFilter filter);
 
   /**
    * @brief handle MISSION_COUNT mavlink msg
@@ -512,7 +591,7 @@ protected:
   virtual void handle_mission_ack(
     const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::MISSION_ACK & mack,
-    MFilter filter);
+    MTargetedFilter filter);
 
   /**
    * @brief handle MISSION_CURRENT mavlink msg
@@ -565,12 +644,60 @@ protected:
     mission_request_list();
   }
 
+  //! @brief Callback for the periodic pull, see `pull_period`
+  void periodic_pull_cb()
+  {
+    lock_guard lock(mutex);
+
+    // a transfer in progress restarts the countdown when it ends
+    RCLCPP_DEBUG(get_logger(), "%s: periodic pull", log_prefix);
+    pull_now();
+  }
+
+  //! @brief Start a pull, unless a transfer is in progress or the FCU is not connected
+  void pull_now(void)
+  {
+    if (wp_state != WP::IDLE || !uas->is_connected()) {
+      return;
+    }
+
+    wp_state = WP::RXLIST;
+    wp_count = 0;
+    restart_timeout_timer();
+    mission_request_list();
+  }
+
+  //! @brief Is `waypoints` the FCU's current plan, as far as plan ids tell?
+  bool list_is_current_plan(void)
+  {
+    return fcu_plan_id == 0 || waypoints_id == 0 || fcu_plan_id == waypoints_id;
+  }
+
+  //! @brief Can `wp_cur_active` be published with `waypoints`?
+  bool current_in_list(void)
+  {
+    return list_is_current_plan() &&
+           (wp_cur_active < waypoints.size() || (waypoints.empty() && wp_cur_active == 0));
+  }
+
+  //! @brief Restart the `pull_period` countdown
+  void restart_pull_period(void)
+  {
+    if (pull_period_timer) {
+      pull_period_timer->reset();
+    }
+  }
+
   //! @brief Send ACK back to FCU after pull
   void request_mission_done(void)
   {
     /* possibly not needed if count == 0 (QGC impl) */
     mission_ack(MRES::ACCEPTED);
 
+    waypoints.swap(recv_waypoints);
+    recv_waypoints.clear();
+    waypoints_id = recv_waypoints_id;
+    restart_pull_period();
     go_idle();
     list_receiving.notify_all();
     RCLCPP_INFO(get_logger(), "%s: mission received", log_prefix);
@@ -652,15 +779,6 @@ protected:
           mission_list_timeout.to_chrono<std::chrono::nanoseconds>()) ==
            std::cv_status::no_timeout &&
            !is_timedout;
-  }
-
-  //! @brief set the FCU current waypoint
-  void set_current_waypoint(size_t seq)
-  {
-    size_t i = 0;
-    for (auto & it : waypoints) {
-      it.is_current = !!(i++ == seq);
-    }
   }
 
   //! @brief publish the updated waypoint list after operation

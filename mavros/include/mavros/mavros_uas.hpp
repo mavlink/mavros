@@ -358,6 +358,31 @@ public:
     return target_component;
   }
 
+  /**
+   * @brief Return our own system id (source of sent messages)
+   */
+  inline uint8_t get_system_id()
+  {
+    return source_system;
+  }
+
+  /**
+   * @brief Return our own component id (source of sent messages)
+   */
+  inline uint8_t get_component_id()
+  {
+    return source_component;
+  }
+
+  /**
+   * @brief Check that message target ids are ours (or broadcast, 0)
+   */
+  inline bool is_addressed_to_us(uint8_t tgt_system, uint8_t tgt_component)
+  {
+    return (tgt_system == 0 || tgt_system == get_system_id()) &&
+           (tgt_component == 0 || tgt_component == get_component_id());
+  }
+
   inline void set_tgt(uint8_t sys, uint8_t comp)
   {
     target_system = sys;

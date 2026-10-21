@@ -309,6 +309,24 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   testing::Mock::VerifyAndClearExpectations(&(*plugin2));
 }
 
+// UAS::is_addressed_to_us: target ids are ours or broadcast (0).
+TEST_F(TestUAS, is_addressed_to_us)
+{
+  auto uas = create_node();
+  testing::Mock::AllowLeak(&(*uas));
+
+  const uint8_t sys = uas->get_system_id();
+  const uint8_t comp = uas->get_component_id();
+
+  EXPECT_TRUE(uas->is_addressed_to_us(sys, comp));
+  EXPECT_TRUE(uas->is_addressed_to_us(0, 0));
+  EXPECT_TRUE(uas->is_addressed_to_us(sys, 0));
+  EXPECT_TRUE(uas->is_addressed_to_us(0, comp));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys + 1, comp));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys, comp + 1));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys + 1, 0));
+}
+
 TEST_F(TestUAS, synchronise_stamp_negative_offset)
 {
   auto uas = create_node();

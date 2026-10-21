@@ -32,7 +32,7 @@ std::ostream & mavros::plugin::operator<<(std::ostream & os, const MissionItem &
 void MissionBase::handle_mission_item(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM & wpi,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -46,7 +46,7 @@ void MissionBase::handle_mission_item(
       return;
     }
 
-    auto it = waypoints.emplace(waypoints.end(), wpi);
+    auto it = recv_waypoints.emplace(recv_waypoints.end(), wpi);
     RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
 
     if (++wp_cur_id < wp_count) {
@@ -71,7 +71,7 @@ void MissionBase::handle_mission_item(
 void MissionBase::handle_mission_item_int(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM_INT & wpi,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -85,7 +85,7 @@ void MissionBase::handle_mission_item_int(
       return;
     }
 
-    auto it = waypoints.emplace(waypoints.end(), wpi);
+    auto it = recv_waypoints.emplace(recv_waypoints.end(), wpi);
     RCLCPP_INFO_STREAM(get_logger(), log_prefix << ": item " << *it);
 
     if (++wp_cur_id < wp_count) {
@@ -111,7 +111,7 @@ void MissionBase::handle_mission_item_int(
 void MissionBase::handle_mission_request(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST & mreq,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -155,7 +155,7 @@ void MissionBase::handle_mission_request(
 void MissionBase::handle_mission_request_int(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -196,7 +196,7 @@ void MissionBase::handle_mission_request_int(
 }
 
 void MissionBase::handle_mission_count(
-  const mavlink::mavlink_message_t * msg [[maybe_unused]],
+  const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_COUNT & mcnt,
   MFilter filter [[maybe_unused]])
 {
@@ -206,15 +206,16 @@ void MissionBase::handle_mission_count(
     return;
   }
 
-  if (wp_state == WP::RXLIST) {
+  if (wp_state == WP::RXLIST && MTargetedFilter::targets_us(uas, msg)) {
     // FCU report of MISSION_REQUEST_LIST
     RCLCPP_DEBUG(get_logger(), "%s: count %d", log_prefix, mcnt.count);
 
     wp_count = mcnt.count;
     wp_cur_id = 0;
+    recv_waypoints_id = mcnt.opaque_id;
 
-    waypoints.clear();
-    waypoints.reserve(wp_count);
+    recv_waypoints.clear();
+    recv_waypoints.reserve(wp_count);
 
     if (wp_count > 0) {
       if (use_mission_item_int) {
@@ -245,7 +246,7 @@ void MissionBase::handle_mission_count(
 void MissionBase::handle_mission_ack(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_ACK & mack,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -290,7 +291,9 @@ void MissionBase::handle_mission_ack(
   if (is_tx_done()) {
     go_idle();
     waypoints = send_waypoints;
+    waypoints_id = mack.opaque_id;
     send_waypoints.clear();
+    restart_pull_period();
 
     if (wp_state == WP::TXWPINT) {
       mission_item_int_support_confirmed = true;
@@ -328,6 +331,8 @@ void MissionBase::handle_mission_ack(
         log_prefix << ": clear failed: " << utils::to_string(ack_type));
     } else {
       waypoints.clear();
+      waypoints_id = mack.opaque_id;
+      restart_pull_period();
       lock.unlock();
       publish_waypoints();
       RCLCPP_INFO(get_logger(), "%s: mission cleared", log_prefix);
@@ -351,24 +356,59 @@ void MissionBase::handle_mission_current(
   //   return;
   // }
 
+  // Newer FCUs identify their plans: a plan id other than our list's means the
+  // list is out of date.
+  uint32_t plan_id = 0;
+  switch (mission_type) {
+    case MTYPE::MISSION: plan_id = mcur.mission_id; break;
+    case MTYPE::FENCE: plan_id = mcur.fence_id; break;
+    case MTYPE::RALLY: plan_id = mcur.rally_points_id; break;
+    default: break;
+  }
+  const bool plan_changed = plan_id != fcu_plan_id;
+  fcu_plan_id = plan_id;
+  if (!list_is_current_plan()) {
+    // also when the plan changed again during our last pull
+    if (plan_changed) {
+      RCLCPP_INFO(get_logger(), "%s: FCU plan id changed to %u, pulling", log_prefix, plan_id);
+    }
+    pull_now();
+  }
+
+  // only the mission has a current item
+  if (mission_type != MTYPE::MISSION) {
+    return;
+  }
+
   if (wp_state == WP::SET_CUR) {
     /* MISSION_SET_CURRENT ACK */
     RCLCPP_DEBUG(get_logger(), "%s: set current #%d done", log_prefix, mcur.seq);
     go_idle();
     wp_cur_active = mcur.seq;
-    set_current_waypoint(wp_cur_active);
 
     lock.unlock();
     list_sending.notify_all();
     publish_waypoints();
-  } else if (wp_state == WP::IDLE && wp_cur_active != mcur.seq) {
-    /* update active */
-    RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
+  } else {
+    const bool changed = wp_cur_active != mcur.seq || plan_changed;
     wp_cur_active = mcur.seq;
-    set_current_waypoint(wp_cur_active);
 
-    lock.unlock();
-    publish_waypoints();
+    if (list_is_current_plan() && !current_in_list()) {
+      // the FCU's mission has more items than our list: it is out of date
+      if (changed) {
+        RCLCPP_INFO(
+          get_logger(), "%s: current #%d is past the list (%zu items), pulling",
+          log_prefix, mcur.seq, waypoints.size());
+      }
+      pull_now();
+    }
+
+    if (changed) {
+      /* update active, also during a transfer so the change goes out right away */
+      RCLCPP_DEBUG(get_logger(), "%s: update current #%d", log_prefix, mcur.seq);
+      lock.unlock();
+      publish_waypoints();
+    }
   }
 }
 
@@ -457,6 +497,8 @@ void MissionBase::timeout_cb()
     RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
     go_idle();
     is_timedout = true;
+    // try again a full period after a failed transfer
+    restart_pull_period();
     // prevent waiting cond var timeout
     lock.unlock();
     list_receiving.notify_all();
