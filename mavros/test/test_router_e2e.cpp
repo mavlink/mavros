@@ -106,13 +106,7 @@ public:
   {
     // Stop the executor first so nothing can run during teardown.
     stop_spinner();
-    // Break the Endpoint <-> Router reference cycle (router->endpoints and
-    // router->remote_index hold endpoints, and each endpoint->parent holds the
-    // router), otherwise the Router node (a DDS participant) is leaked.
-    for (auto & router : routers_) {
-      router->endpoints.clear();
-      router->remote_index.clear();
-    }
+    // Release the Router nodes (DDS participants) before rclcpp::shutdown().
     routers_.clear();
   }
 

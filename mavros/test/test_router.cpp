@@ -114,19 +114,27 @@ public:
 
   ~TestRouter()
   {
-    // Break the Endpoint <-> Router reference cycle (router->endpoints and
-    // router->remote_index hold endpoints, and each endpoint->parent holds the
-    // router), otherwise the Router node (a DDS participant) is leaked. Leaked
-    // participants from concurrent test processes crash FastDDS discovery.
-    for (auto & router : routers_) {
-      router->endpoints.clear();
-      router->remote_index.clear();
-    }
+    // Release the Router nodes (DDS participants) before rclcpp::shutdown().
+    // Leaked participants from concurrent test processes crash FastDDS discovery.
     routers_.clear();
 
     // NOTE(vooon): required to remove any remaining Nodes
     // std::cout << "kill" << std::endl;
     rclcpp::shutdown();
+  }
+
+  void attach_lifetime_endpoint(Router::SharedPtr router, Endpoint::SharedPtr ep)
+  {
+    router->startup_delay_timer->cancel();
+    ep->parent = router.get();
+    router->endpoints[1] = ep;
+    router->remote_index[0] = {ep};
+  }
+
+  void clear_lifetime_endpoints(Router::SharedPtr router)
+  {
+    router->endpoints.clear();
+    router->remote_index.clear();
   }
 
   Router::SharedPtr create_node()
@@ -140,7 +148,7 @@ public:
       std::set<addr_t> remotes) {
         auto ep = std::make_shared<MockEndpoint>();
 
-        ep->parent = router;
+        ep->parent = router.get();
         ep->id = id;
         ep->link_type = type;
         ep->url = url;
@@ -246,6 +254,54 @@ public:
     router->periodic_clear_stale_remote_addrs();
   }
 };
+
+TEST_F(TestRouter, endpoint_back_reference_does_not_retain_router)
+{
+  auto router = std::make_shared<Router>("router_lifetime_test");
+  auto endpoint = std::make_shared<StressEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  // Clean up the baseline's cycle if the regression assertion fails.
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+  }
+}
+
+TEST_F(TestRouter, ros_endpoint_rejects_open_after_router_destruction)
+{
+  auto router = std::make_shared<Router>("ros_endpoint_lifetime_test");
+  auto endpoint = std::make_shared<ROSEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+    return;
+  }
+  auto result = endpoint->open();
+  EXPECT_FALSE(result.first);
+  EXPECT_EQ(result.second, "parent not set");
+}
+
+TEST_F(TestRouter, mavconn_endpoint_rejects_open_after_router_destruction)
+{
+  auto router = std::make_shared<Router>("mavconn_endpoint_lifetime_test");
+  auto endpoint = std::make_shared<MAVConnEndpoint>();
+  attach_lifetime_endpoint(router, endpoint);
+  std::weak_ptr<Router> observer = router;
+  router.reset();
+  EXPECT_TRUE(observer.expired());
+  if (auto retained = observer.lock()) {
+    clear_lifetime_endpoints(retained);
+    return;
+  }
+  auto result = endpoint->open();
+  EXPECT_FALSE(result.first);
+  EXPECT_EQ(result.second, "parent not set");
+}
 
 TEST_F(TestRouter, set_parameter)
 {
@@ -487,7 +543,7 @@ TEST_F(TestRouter, route_drops_when_only_same_link_type_exists)
 
   auto make_ep = [router](id_t id, const std::string & url) {
       auto ep = std::make_shared<MockEndpoint>();
-      ep->parent = router;
+      ep->parent = router.get();
       ep->id = id;
       ep->link_type = LT::fcu;
       ep->url = url;
@@ -595,7 +651,7 @@ TEST_F(TestRouter, route_stress_multithreaded_broadcast)
 
   auto make_ep = [router](id_t id, LT type) {
       auto ep = std::make_shared<StressEndpoint>();
-      ep->parent = router;
+      ep->parent = router.get();
       ep->id = id;
       ep->link_type = type;
       ep->remote_addrs = {0x0000};
