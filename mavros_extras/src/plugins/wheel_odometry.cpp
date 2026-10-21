@@ -654,10 +654,7 @@ private:
       return;
     }
 
-    // Clamp the attacker-controlled count to the source array size to avoid
-    // reading past wheel_dist.distance[16] (CWE-125). count is a uint8 taken
-    // verbatim from the wire; same pattern already clamped in
-    // log_transfer.cpp (std::min<size_t>(ld.count, ld.data.max_size())).
+    // count comes from the wire, bound it to the distance array size
     const size_t count = std::min<size_t>(wheel_dist.count, wheel_dist.distance.max_size());
 
     // Get ROS timestamp of the message
