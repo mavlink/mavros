@@ -359,6 +359,8 @@ public:
   }
 
 private:
+  friend class FTPTestPeer;
+
   rclcpp::Service<mavros_msgs::srv::FileList>::SharedPtr list_srv;
   rclcpp::Service<mavros_msgs::srv::FileOpen>::SharedPtr open_srv;
   rclcpp::Service<mavros_msgs::srv::FileClose>::SharedPtr close_srv;
@@ -1062,7 +1064,9 @@ private:
 #define SERVICE_IDLE_CHECK() \
   if (op_state != OP::IDLE) { \
     RCLCPP_ERROR(get_logger(), "FTP: Busy"); \
-    throw std::runtime_error("ftp busy"); \
+    res->success = false; \
+    res->r_errno = EBUSY; \
+    return; \
   }
 
   void list_cb(
@@ -1092,7 +1096,9 @@ private:
       RCLCPP_ERROR(
         get_logger(), "FTP: File %s: already opened",
         req->file_path.c_str());
-      throw std::runtime_error("file already opened");
+      res->success = false;
+      res->r_errno = EBUSY;
+      return;
     }
 
     res->success = open_file(req->file_path, req->mode);

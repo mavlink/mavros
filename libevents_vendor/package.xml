@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>libevents_vendor</name>
+  <version>2.16.0</version>
+  <description>Vendor package for the MAVLink libevents C++ parser.</description>
+
+  <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
+
+  <license>BSD</license>
+  <license>GPLv3</license>
+  <license>LGPLv3</license>
+  <license>MIT</license>
+
+  <url type="repository">https://github.com/mavlink/mavros.git</url>
+  <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_export_depend>ament_cmake</buildtool_export_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

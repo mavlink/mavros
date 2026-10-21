@@ -426,7 +426,7 @@
         "message_name": "FILE_TRANSFER_PROTOCOL",
         "msg_id_expr": "mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID",
         "dialect": "common",
-        "line": 421,
+        "line": 423,
         "msg_id": 110,
         "description": "handler for mavlink::common::msg::FILE_TRANSFER_PROTOCOL"
       }
@@ -2371,12 +2371,12 @@
     "class_name": "mavros::std_plugins::SystemStatusPlugin",
     "namespace": "mavros::std_plugins",
     "brief": "System status plugin.",
-    "description": "Required by all plugins.\n\n\n\nImplements the\n[MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).",
+    "description": "Required by all plugins.\n\n\n\nImplements the\n[MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).\n\n\n\nOptional PX4 EVENT translation is described in\n[PX4 event decoding](../../px4_events.md).",
     "publishers": [
       {
         "name": "state",
         "type_name": "mavros_msgs::msg::State",
-        "line": 583,
+        "line": 631,
         "description": "Publish connection, armed and mode state (HEARTBEAT).",
         "qos": {
           "kind": "named",
@@ -2387,7 +2387,7 @@
       {
         "name": "extended_state",
         "type_name": "mavros_msgs::msg::ExtendedState",
-        "line": 586,
+        "line": 634,
         "description": "Publish VTOL and landed state (EXTENDED_SYS_STATE).",
         "qos": {
           "kind": "named",
@@ -2398,7 +2398,7 @@
       {
         "name": "sys_status",
         "type_name": "mavros_msgs::msg::SysStatus",
-        "line": 589,
+        "line": 637,
         "description": "Publish system and battery status (SYS_STATUS).",
         "qos": {
           "kind": "named",
@@ -2409,7 +2409,7 @@
       {
         "name": "estimator_status",
         "type_name": "mavros_msgs::msg::EstimatorStatus",
-        "line": 592,
+        "line": 640,
         "description": "Publish estimator status flags (ESTIMATOR_STATUS).",
         "qos": {
           "kind": "named",
@@ -2420,7 +2420,7 @@
       {
         "name": "battery",
         "type_name": "sensor_msgs::msg::BatteryState",
-        "line": 595,
+        "line": 643,
         "description": "Publish battery state (BATTERY_STATUS).",
         "qos": {
           "kind": "named",
@@ -2431,7 +2431,7 @@
       {
         "name": "statustext/recv",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 598,
+        "line": 646,
         "description": "Publish status text received from the FCU (STATUSTEXT).",
         "qos": {
           "kind": "named",
@@ -2442,7 +2442,7 @@
       {
         "name": "status_event",
         "type_name": "mavros_msgs::msg::StatusEvent",
-        "line": 605,
+        "line": 653,
         "description": "Publish status events received from the FCU (EVENT).",
         "qos": {
           "kind": "named",
@@ -2455,7 +2455,7 @@
       {
         "name": "statustext/send",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 601,
+        "line": 649,
         "description": "Send status text to the FCU (STATUSTEXT).",
         "qos": {
           "kind": "named",
@@ -2468,7 +2468,7 @@
       {
         "name": "set_mode",
         "type_name": "mavros_msgs::srv::SetMode",
-        "line": 617,
+        "line": 665,
         "description": "Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).",
         "qos": {
           "kind": "named",
@@ -2479,7 +2479,7 @@
       {
         "name": "set_stream_rate",
         "type_name": "mavros_msgs::srv::StreamRate",
-        "line": 623,
+        "line": 671,
         "description": "Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).",
         "qos": {
           "kind": "named",
@@ -2490,7 +2490,7 @@
       {
         "name": "set_message_interval",
         "type_name": "mavros_msgs::srv::MessageInterval",
-        "line": 629,
+        "line": 677,
         "description": "Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).",
         "qos": {
           "kind": "named",
@@ -2501,7 +2501,7 @@
       {
         "name": "vehicle_info_get",
         "type_name": "mavros_msgs::srv::VehicleInfoGet",
-        "line": 635,
+        "line": 683,
         "description": "Query information about the FCU and connected vehicles.",
         "qos": {
           "kind": "named",
@@ -2514,47 +2514,47 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 1341
+        "line": 1613
       },
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 1461
+        "line": 1735
       }
     ],
     "parameters": [
       {
         "name": "conn_timeout",
         "type_name": "double",
-        "line": 511,
+        "line": 559,
         "default_value": "10.0",
         "description": "Connection timeout in seconds before the link is considered lost."
       },
       {
         "name": "min_voltage",
         "type_name": "",
-        "line": 522,
+        "line": 570,
         "default_value": "std::vector<double>({10.0})",
         "description": "Minimum battery voltage per battery instance before a warning is raised."
       },
       {
         "name": "disable_diag",
         "type_name": "bool",
-        "line": 531,
+        "line": 579,
         "default_value": "false",
         "description": "Disable publishing diagnostic updates."
       },
       {
         "name": "heartbeat_mav_type",
         "type_name": "",
-        "line": 552,
+        "line": 600,
         "default_value": "utils::enum_to_name(\n        conn_heartbeat_mav_type)",
         "description": "MAV type of the heartbeat sent by the GCS."
       },
       {
         "name": "heartbeat_rate",
         "type_name": "double",
-        "line": 559,
+        "line": 607,
         "default_value": "1.0",
         "description": "Rate (Hz) at which the GCS heartbeat is sent to the FCU."
       }
@@ -2566,7 +2566,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 918,
+        "line": 1149,
         "msg_id": 0
       },
       {
@@ -2575,7 +2575,7 @@
         "message_name": "SYS_STATUS",
         "msg_id_expr": "mavlink::common::msg::SYS_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 988,
+        "line": 1219,
         "msg_id": 1
       },
       {
@@ -2584,7 +2584,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 1049,
+        "line": 1280,
         "msg_id": 253
       },
       {
@@ -2593,8 +2593,26 @@
         "message_name": "EVENT",
         "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
         "dialect": "common",
-        "line": 1065,
+        "line": 1296,
         "msg_id": 410
+      },
+      {
+        "handler": "handle_component_metadata",
+        "message_type": "mavlink::common::msg::COMPONENT_METADATA",
+        "message_name": "COMPONENT_METADATA",
+        "msg_id_expr": "mavlink::common::msg::COMPONENT_METADATA::MSG_ID",
+        "dialect": "common",
+        "line": 1328,
+        "msg_id": 397
+      },
+      {
+        "handler": "handle_component_information",
+        "message_type": "mavlink::common::msg::COMPONENT_INFORMATION",
+        "message_name": "COMPONENT_INFORMATION",
+        "msg_id_expr": "mavlink::common::msg::COMPONENT_INFORMATION::MSG_ID",
+        "dialect": "common",
+        "line": 1342,
+        "msg_id": 395
       },
       {
         "handler": "handle_meminfo",
@@ -2602,7 +2620,7 @@
         "message_name": "MEMINFO",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MEMINFO::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 1086,
+        "line": 1358,
         "msg_id": 152
       },
       {
@@ -2611,7 +2629,7 @@
         "message_name": "HWSTATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::HWSTATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 1094,
+        "line": 1366,
         "msg_id": 165
       },
       {
@@ -2620,7 +2638,7 @@
         "message_name": "AUTOPILOT_VERSION",
         "msg_id_expr": "mavlink::standard::msg::AUTOPILOT_VERSION::MSG_ID",
         "dialect": "standard",
-        "line": 1102,
+        "line": 1374,
         "msg_id": 148
       },
       {
@@ -2629,7 +2647,7 @@
         "message_name": "EXTENDED_SYS_STATE",
         "msg_id_expr": "mavlink::common::msg::EXTENDED_SYS_STATE::MSG_ID",
         "dialect": "common",
-        "line": 975,
+        "line": 1206,
         "msg_id": 245
       },
       {
@@ -2638,7 +2656,7 @@
         "message_name": "BATTERY_STATUS",
         "msg_id_expr": "mavlink::common::msg::BATTERY_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 1145,
+        "line": 1417,
         "msg_id": 147
       },
       {
@@ -2647,7 +2665,7 @@
         "message_name": "ESTIMATOR_STATUS",
         "msg_id_expr": "mavlink::common::msg::ESTIMATOR_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 1259,
+        "line": 1531,
         "msg_id": 230
       }
     ],
@@ -2658,7 +2676,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 1327,
+        "line": 1599,
         "msg_id": 0
       },
       {
@@ -2667,7 +2685,7 @@
         "message_name": "REQUEST_DATA_STREAM",
         "msg_id_expr": "mavlink::common::msg::REQUEST_DATA_STREAM::MSG_ID",
         "dialect": "common",
-        "line": 1449,
+        "line": 1723,
         "msg_id": 66
       },
       {
@@ -2676,7 +2694,7 @@
         "message_name": "SET_MODE",
         "msg_id_expr": "mavlink::common::msg::SET_MODE::MSG_ID",
         "dialect": "common",
-        "line": 1534,
+        "line": 1808,
         "msg_id": 11
       },
       {
@@ -2685,7 +2703,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 1433,
+        "line": 1707,
         "msg_id": 253
       }
     ]

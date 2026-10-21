@@ -30,7 +30,7 @@ messages it subscribes to and publishes.
 | [`setpoint_raw`](std/setpoint_raw.md) | Setpoint RAW plugin | 3 | 3 | — | — | 3/3 |
 | [`setpoint_trajectory`](std/setpoint_trajectory.md) | Setpoint TRAJECTORY plugin | 1 | 1 | 1 | — | 0/1 |
 | [`setpoint_velocity`](std/setpoint_velocity.md) | Setpoint velocity plugin | — | 2 | — | — | 0/1 |
-| [`sys_status`](std/sys_status.md) | System status plugin. | 7 | 1 | 4 | 2 | 10/4 |
+| [`sys_status`](std/sys_status.md) | System status plugin. | 7 | 1 | 4 | 2 | 12/4 |
 | [`sys_time`](std/sys_time.md) | System time plugin | 2 | — | — | — | 2/2 |
 | [`waypoint`](std/waypoint.md) | Mission manipulation plugin | 2 | — | 4 | — | 8/10 |
 | [`wind_estimation`](std/wind_estimation.md) | Wind estimation plugin. | 1 | — | — | — | 2/0 |

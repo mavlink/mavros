@@ -13,6 +13,11 @@ Required by all plugins.
 Implements the
 [MAVLink Heartbeat/Connection Protocol](https://mavlink.io/en/services/heartbeat.html).
 
+
+
+Optional PX4 EVENT translation is described in
+[PX4 event decoding](../../px4_events.md).
+
 ## Publishers
 - `state` [type: [mavros_msgs::msg::State](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/State.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish connection, armed and mode state (HEARTBEAT).
 - `extended_state` [type: [mavros_msgs::msg::ExtendedState](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ExtendedState.html), qos: [StateQoS](../qos.md#stateqos "StateQoS QoS profile")] - Publish VTOL and landed state (EXTENDED_SYS_STATE).
@@ -50,6 +55,8 @@ Implements the
 - [`SYS_STATUS`](https://mavlink.io/en/messages/common.html#SYS_STATUS) [handler: handle_sys_status, dialect: common, msg_id: 1, id: `mavlink::common::msg::SYS_STATUS::MSG_ID`]
 - [`STATUSTEXT`](https://mavlink.io/en/messages/common.html#STATUSTEXT) [handler: handle_statustext, dialect: common, msg_id: 253, id: `mavlink::common::msg::STATUSTEXT::MSG_ID`]
 - [`EVENT`](https://mavlink.io/en/messages/common.html#EVENT) [handler: handle_event, dialect: common, msg_id: 410, id: `mavlink::common::msg::EVENT::MSG_ID`]
+- [`COMPONENT_METADATA`](https://mavlink.io/en/messages/common.html#COMPONENT_METADATA) [handler: handle_component_metadata, dialect: common, msg_id: 397, id: `mavlink::common::msg::COMPONENT_METADATA::MSG_ID`]
+- [`COMPONENT_INFORMATION`](https://mavlink.io/en/messages/common.html#COMPONENT_INFORMATION) [handler: handle_component_information, dialect: common, msg_id: 395, id: `mavlink::common::msg::COMPONENT_INFORMATION::MSG_ID`]
 - [`MEMINFO`](https://mavlink.io/en/messages/ardupilotmega.html#MEMINFO) [handler: handle_meminfo, dialect: ardupilotmega, msg_id: 152, id: `mavlink::ardupilotmega::msg::MEMINFO::MSG_ID`]
 - [`HWSTATUS`](https://mavlink.io/en/messages/ardupilotmega.html#HWSTATUS) [handler: handle_hwstatus, dialect: ardupilotmega, msg_id: 165, id: `mavlink::ardupilotmega::msg::HWSTATUS::MSG_ID`]
 - [`AUTOPILOT_VERSION`](https://mavlink.io/en/messages/standard.html#AUTOPILOT_VERSION) [handler: handle_autopilot_version, dialect: standard, msg_id: 148, id: `mavlink::standard::msg::AUTOPILOT_VERSION::MSG_ID`]

@@ -85,6 +85,8 @@ waypoint missions.
 | `mavros_extras` | Optional plugins (cameras, gimbals, terrain, …) |
 | `mavros_msgs` | ROS 2 message and service interfaces |
 | `libmavconn` | MAVLink transport library (usable outside ROS) |
+| `libevents_vendor` | Pinned MAVLink event parser dependency |
+| `xz_embedded_vendor` | Pinned XZ metadata decoder dependency |
 | `test_mavros` | Hand-tests and SITL manual for PX4/ArduPilot |
 | `mavros_examples` | Beginner-friendly ROS 2 example scripts (task control, waypoint missions, offboard) |
 
