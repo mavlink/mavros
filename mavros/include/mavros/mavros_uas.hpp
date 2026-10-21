@@ -660,6 +660,9 @@ private:
   rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;    // FCU -> UAS
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;         // UAS -> FCU
 
+  //! delayed startup: read parameters, start the executor, load plugins
+  void startup();
+
   //! initialize connection to the Router
   void connect_to_router();
 
