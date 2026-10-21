@@ -18,7 +18,7 @@ Publishes home position.
 - `~/req_update` [type: [std_srvs::srv::Trigger](https://docs.ros.org/en/rolling/p/std_srvs/srv/Trigger.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Request home position update (MAV_CMD_GET_HOME_POSITION).
 
 ## Clients
-- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)] - Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Client to request home position via command (MAV_CMD_GET_HOME_POSITION).
 
 
 ## Parameters
