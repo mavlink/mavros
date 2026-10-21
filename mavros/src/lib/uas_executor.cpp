@@ -18,8 +18,11 @@
 
 #include "mavros/uas_executor.hpp"
 
-#ifdef MAVROS_HAVE_EVENTS_CBG_EXECUTOR
-#include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+// Callback Group Events executor: Lyrical+, backported to Kilted (rclcpp 29.5.9)
+// and Jazzy (rclcpp 28.1.20)
+#if __has_include("rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp")
+  #include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+  #define MAVROS_HAVE_EVENTS_CBG_EXECUTOR
 #endif
 
 using namespace mavros;               // NOLINT
@@ -104,7 +107,7 @@ std::unique_ptr<rclcpp::Executor> mavros::uas::make_executor(
   if (use_events) {
     RCLCPP_WARN(
       rclcpp::get_logger("uas_executor"),
-      "EventsCBGExecutor requested but not available in this ROS distro. "
+      "EventsCBGExecutor requested but not available in this rclcpp. "
       "Using MultiThreadedExecutor.");
   }
 #endif

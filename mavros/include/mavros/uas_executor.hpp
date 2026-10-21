@@ -58,7 +58,8 @@ private:
 
 /**
  * Factory for executors honoring the MAVROS_EXECUTOR_TYPE env var:
- *  - "events" (or "cbg"): rclcpp::executors::EventsCBGExecutor (Lyrical+ only)
+ *  - "events" (or "cbg"): rclcpp::executors::EventsCBGExecutor (Lyrical+,
+ *    Kilted rclcpp >= 29.5.9, Jazzy rclcpp >= 28.1.20)
  *  - otherwise (default): rclcpp::executors::MultiThreadedExecutor
  *
  * \param options common options for all executors

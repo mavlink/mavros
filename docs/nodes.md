@@ -172,8 +172,8 @@ MAVROS builds its executors via a factory that honors two environment variables:
       - `events` (alias `cbg`) - the Callback Group Events executor
         ([Concept docs](https://docs.ros.org/en/lyrical/Concepts/Intermediate/About-Executors.html#the-callback-group-events-executor),
         [`rclcpp::executors::EventsCBGExecutor`](https://docs.ros.org/en/rolling/p/rclcpp/generated/classrclcpp_1_1executors_1_1EventsCBGExecutor.html)),
-        available only on Lyrical+
-        (rclcpp >= 30.0.0). On older distros the request is ignored with a
+        available on Lyrical+, Kilted (rclcpp >= 29.5.9) and Jazzy
+        (rclcpp >= 28.1.20). With an older rclcpp the request is ignored with a
         warning and `MultiThreadedExecutor` is used.
   - `MAVROS_UAS_EXECUTOR_THREADS` - number of threads for the UAS plugin
     executor (default: clamped hardware concurrency, min 2 max 4; must be
