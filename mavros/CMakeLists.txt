@@ -348,6 +348,14 @@ if(BUILD_TESTING)
     TEST_PLUGIN_PARAMS_YAML="${CMAKE_CURRENT_SOURCE_DIR}/test/test_plugin_params.yaml"
   )
 
+  # Regression test for #2323: FTP plugin alignment-safe header and data accessors.
+  ament_add_gtest(mavros-ftp-test test/test_ftp.cpp)
+  target_link_libraries(mavros-ftp-test
+    mavros
+    ${mavros_msgs_TARGETS}
+    ${std_srvs_TARGETS}
+  )
+
   ament_add_pytest_test(mavros_py_test test/mavros_py
     PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}"
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}

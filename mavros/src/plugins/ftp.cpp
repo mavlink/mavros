@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cerrno>
+#include <cstddef>
 #include <cstring>
 #include <condition_variable>
 #include <string>
@@ -77,6 +78,13 @@ public:
 
   static_assert(sizeof(PayloadHeader) == 12, "PayloadHeader must match the 12-byte wire layout");
   static_assert(std::is_trivially_copyable_v<PayloadHeader>);
+  static_assert(offsetof(PayloadHeader, seqNumber) == 0, "seqNumber offset mismatch");
+  static_assert(offsetof(PayloadHeader, session) == 2, "session offset mismatch");
+  static_assert(offsetof(PayloadHeader, opcode) == 3, "opcode offset mismatch");
+  static_assert(offsetof(PayloadHeader, size) == 4, "size offset mismatch");
+  static_assert(offsetof(PayloadHeader, req_opcode) == 5, "req_opcode offset mismatch");
+  static_assert(offsetof(PayloadHeader, padding) == 6, "padding offset mismatch");
+  static_assert(offsetof(PayloadHeader, offset) == 8, "offset offset mismatch");
 
   /// @brief Command opcodes
   enum Opcode : uint8_t
@@ -250,7 +258,7 @@ public:
   explicit FTPRequest(Opcode op, uint8_t session = 0)
   : mavlink::common::msg::FILE_TRANSFER_PROTOCOL{}
   {
-    auto hdr = header();
+    PayloadHeader hdr{};
     hdr.session = session;
     hdr.opcode = op;
     set_header(hdr);
