@@ -654,6 +654,9 @@ private:
       return;
     }
 
+    // count comes from the wire, bound it to the distance array size
+    const size_t count = std::min<size_t>(wheel_dist.count, wheel_dist.distance.max_size());
+
     // Get ROS timestamp of the message
     auto timestamp = uas->synchronise_stamp(wheel_dist.time_usec);
     // Get internal timestamp of the message
@@ -665,16 +668,16 @@ private:
       auto wheel_dist_msg = mavros_msgs::msg::WheelOdomStamped();
 
       wheel_dist_msg.header.stamp = timestamp;
-      wheel_dist_msg.data.resize(wheel_dist.count);
-      std::copy_n(wheel_dist.distance.begin(), wheel_dist.count, wheel_dist_msg.data.begin());
+      wheel_dist_msg.data.resize(count);
+      std::copy_n(wheel_dist.distance.begin(), count, wheel_dist_msg.data.begin());
 
       dist_pub->publish(wheel_dist_msg);
     }
 
     // Process measurement
     if (odom_mode == OM::DIST) {
-      std::vector<double> measurement(wheel_dist.count);
-      std::copy_n(wheel_dist.distance.begin(), wheel_dist.count, measurement.begin());
+      std::vector<double> measurement(count);
+      std::copy_n(wheel_dist.distance.begin(), count, measurement.begin());
       process_measurement(measurement, false, timestamp_int, timestamp);
     }
   }
