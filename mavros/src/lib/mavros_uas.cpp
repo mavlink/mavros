@@ -101,126 +101,9 @@ UAS::UAS(
       if (!rclcpp::ok(context)) {
         return;
       }
+      startup_delay_timer->cancel();
       try {
-        startup_delay_timer->cancel();
-
-        std::string fcu_protocol;
-        int tgt_system = 0, tgt_component = 0;
-        this->get_parameter("uas_url", uas_url);
-        this->get_parameter("fcu_protocol", fcu_protocol);
-        this->get_parameter("system_id", source_system);
-        this->get_parameter("component_id", source_component);
-        this->get_parameter("target_system_id", tgt_system);
-        this->get_parameter("target_component_id", tgt_component);
-        this->get_parameter("plugin_allowlist", plugin_allowlist);
-        this->get_parameter("plugin_denylist", plugin_denylist);
-        this->get_parameter("base_link_frame_id", base_link_frame_id);
-        this->get_parameter("odom_frame_id", odom_frame_id);
-        this->get_parameter("map_frame_id", map_frame_id);
-
-        exec_spin_thd = thread_ptr(
-          new std::thread(
-            [this]() {
-              utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
-              auto lg = this->get_logger();
-
-              RCLCPP_INFO(
-                lg, "UAS Executor started, threads: %zu",
-                this->exec.get_number_of_threads());
-              this->exec.spin();
-              RCLCPP_WARN(lg, "UAS Executor terminated");
-            }),
-          [this](std::thread * t) {
-            this->exec.cancel();
-            if (t->joinable()) {
-              t->join();
-            }
-            delete t;
-          });
-
-        // setup diag
-        diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
-        diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
-
-        // setup uas link
-        if (fcu_protocol == "v1.0") {
-          set_protocol_version(mavconn::Protocol::V10);
-        } else if (fcu_protocol == "v2.0") {
-          set_protocol_version(mavconn::Protocol::V20);
-        } else {
-          RCLCPP_WARN(
-            get_logger(),
-            "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
-            fcu_protocol.c_str());
-          set_protocol_version(mavconn::Protocol::V20);
-        }
-
-        // setup source and target
-        set_tgt(tgt_system, tgt_component);
-
-        add_connection_change_handler(
-          std::bind(
-            &UAS::log_connect_change, this,
-            std::placeholders::_1));
-
-        // prepare plugin lists
-        // issue #257 2: assume that all plugins blacklisted
-        if (plugin_denylist.empty() && !plugin_allowlist.empty()) {
-          plugin_denylist.emplace_back("*");
-        }
-
-        const auto declared_plugins = plugin_factory_loader.getDeclaredClasses();
-        const auto warn_unmatched_plugin_patterns =
-        [this, &declared_plugins](
-          const StrV & patterns,
-          const std::string & parameter_name)
-        {
-          for (auto & pattern : patterns) {
-            bool matched = false;
-
-            for (auto & plugin : declared_plugins) {
-              if (pattern_match(pattern, plugin)) {
-                matched = true;
-                break;
-              }
-            }
-
-            if (!matched) {
-              RCLCPP_WARN(
-                get_logger(),
-                "%s pattern '%s' does not match any declared plugin",
-                parameter_name.c_str(), pattern.c_str());
-            }
-          }
-        };
-
-        warn_unmatched_plugin_patterns(plugin_allowlist, "plugin_allowlist");
-        warn_unmatched_plugin_patterns(plugin_denylist, "plugin_denylist");
-
-        for (auto & name : declared_plugins) {
-          add_plugin(name);
-        }
-
-        connect_to_router();
-
-        // Publish helper TFs used for frame transformation in the odometry plugin
-        setup_static_tf();
-
-        std::stringstream ss;
-        for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
-          ss << " " << s;
-        }
-
-        RCLCPP_INFO(
-          get_logger(), "Built-in SIMD instructions: %s",
-          Eigen::SimdInstructionSetsInUse());
-        RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
-        RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
-        RCLCPP_INFO(
-          get_logger(), "MAVROS UAS via %s started. MY ID %u.%u, TARGET ID %u.%u",
-          uas_url.c_str(),
-          source_system, source_component,
-          target_system, target_component);
+        startup();
       } catch (const std::runtime_error &) {
         // ROS service/timer creation may report shutdown through RCLError or
         // wrapped runtime errors. Preserve every error while ROS is still valid.
@@ -229,6 +112,127 @@ UAS::UAS(
         }
       }
     });
+}
+
+void UAS::startup()
+{
+  std::string fcu_protocol;
+  int tgt_system = 0, tgt_component = 0;
+  this->get_parameter("uas_url", uas_url);
+  this->get_parameter("fcu_protocol", fcu_protocol);
+  this->get_parameter("system_id", source_system);
+  this->get_parameter("component_id", source_component);
+  this->get_parameter("target_system_id", tgt_system);
+  this->get_parameter("target_component_id", tgt_component);
+  this->get_parameter("plugin_allowlist", plugin_allowlist);
+  this->get_parameter("plugin_denylist", plugin_denylist);
+  this->get_parameter("base_link_frame_id", base_link_frame_id);
+  this->get_parameter("odom_frame_id", odom_frame_id);
+  this->get_parameter("map_frame_id", map_frame_id);
+
+  exec_spin_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
+        auto lg = this->get_logger();
+
+        RCLCPP_INFO(
+          lg, "UAS Executor started, threads: %zu",
+          this->exec.get_number_of_threads());
+        this->exec.spin();
+        RCLCPP_WARN(lg, "UAS Executor terminated");
+      }),
+    [this](std::thread * t) {
+      this->exec.cancel();
+      if (t->joinable()) {
+        t->join();
+      }
+      delete t;
+    });
+
+  // setup diag
+  diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
+  diagnostic_updater.add("MAVROS UAS", this, &UAS::diag_run);
+
+  // setup uas link
+  if (fcu_protocol == "v1.0") {
+    set_protocol_version(mavconn::Protocol::V10);
+  } else if (fcu_protocol == "v2.0") {
+    set_protocol_version(mavconn::Protocol::V20);
+  } else {
+    RCLCPP_WARN(
+      get_logger(),
+      "Unknown FCU protocol: \"%s\", should be: \"v1.0\" or \"v2.0\". Used default v2.0.",
+      fcu_protocol.c_str());
+    set_protocol_version(mavconn::Protocol::V20);
+  }
+
+  // setup source and target
+  set_tgt(tgt_system, tgt_component);
+
+  add_connection_change_handler(
+    std::bind(
+      &UAS::log_connect_change, this,
+      std::placeholders::_1));
+
+  // prepare plugin lists
+  // issue #257 2: assume that all plugins blacklisted
+  if (plugin_denylist.empty() && !plugin_allowlist.empty()) {
+    plugin_denylist.emplace_back("*");
+  }
+
+  const auto declared_plugins = plugin_factory_loader.getDeclaredClasses();
+  const auto warn_unmatched_plugin_patterns =
+    [this, &declared_plugins](
+    const StrV & patterns,
+    const std::string & parameter_name)
+    {
+      for (auto & pattern : patterns) {
+        bool matched = false;
+
+        for (auto & plugin : declared_plugins) {
+          if (pattern_match(pattern, plugin)) {
+            matched = true;
+            break;
+          }
+        }
+
+        if (!matched) {
+          RCLCPP_WARN(
+          get_logger(),
+          "%s pattern '%s' does not match any declared plugin",
+          parameter_name.c_str(), pattern.c_str());
+        }
+      }
+    };
+
+  warn_unmatched_plugin_patterns(plugin_allowlist, "plugin_allowlist");
+  warn_unmatched_plugin_patterns(plugin_denylist, "plugin_denylist");
+
+  for (auto & name : declared_plugins) {
+    add_plugin(name);
+  }
+
+  connect_to_router();
+
+  // Publish helper TFs used for frame transformation in the odometry plugin
+  setup_static_tf();
+
+  std::stringstream ss;
+  for (auto & s : mavconn::MAVConnInterface::get_known_dialects()) {
+    ss << " " << s;
+  }
+
+  RCLCPP_INFO(
+    get_logger(), "Built-in SIMD instructions: %s",
+    Eigen::SimdInstructionSetsInUse());
+  RCLCPP_INFO(get_logger(), "Built-in MAVLink package version: %s", mavlink::version);
+  RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
+  RCLCPP_INFO(
+    get_logger(), "MAVROS UAS via %s started. MY ID %u.%u, TARGET ID %u.%u",
+    uas_url.c_str(),
+    source_system, source_component,
+    target_system, target_component);
 }
 
 UAS::~UAS()
