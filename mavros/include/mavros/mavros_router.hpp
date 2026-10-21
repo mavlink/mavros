@@ -81,7 +81,7 @@ public:
   };
 
   Endpoint()
-  : parent(),
+  : parent(nullptr),
     id(0),
     link_type(Type::fcu),
     url{},
@@ -94,8 +94,13 @@ public:
     remote_addrs.emplace(broadcast_addr);
   }
 
-  // Endpoints are owned by Router; the back-reference must not retain it.
-  std::weak_ptr<Router> parent;
+  // Non-owning back-reference. Endpoints are owned by Router, which detaches
+  // them (close() + parent = nullptr) in its destructor after the shared io
+  // thread has been joined, so no endpoint callback can observe a dangling
+  // pointer. A plain pointer keeps the per-message path free of atomics: a
+  // weak_ptr::lock() here would hit the Router control block from every link
+  // thread on every packet.
+  Router * parent;
 
   uint32_t id;                           // id of the endpoint
   Type link_type;                        // class of the endpoint
@@ -218,9 +223,8 @@ public:
 
     router_io_runner.start([this]() {this->router_io_runner.io().run();});
 
-    // Delay parameter callback initialization because
-    // add/del endpoints calls have to use shared_from_this(),
-    // which cannot be used before we leave the constructor.
+    // Delay parameter callback initialization so that endpoints are not
+    // created before we leave the constructor.
     startup_delay_timer = this->create_wall_timer(
       10ms, [this]() {
         this->startup_delay_timer->cancel();
@@ -234,6 +238,16 @@ public:
     reconnect_timer->cancel();
     stale_addrs_timer->cancel();
     router_io_runner.shutdown_owned();
+
+    // The io thread is joined, so no link callback can run any more. Detach
+    // the endpoints: an endpoint that is still held elsewhere must not keep a
+    // pointer to this Router.
+    for (auto & kv : endpoints) {
+      kv.second->close();
+      kv.second->parent = nullptr;
+    }
+    endpoints.clear();
+    remote_index.clear();
   }
 
   void route_message(Endpoint::SharedPtr src, const mavlink_message_t * msg, const Framing framing);

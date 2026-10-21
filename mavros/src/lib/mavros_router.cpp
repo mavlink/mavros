@@ -188,10 +188,7 @@ void Router::add_endpoint(
     ep = std::make_shared<MAVConnEndpoint>();
   }
 
-  // NOTE(vooon): has type std::shared_ptr<rclcpp::Node>
-  auto shared_this = shared_from_this();
-
-  ep->parent = std::static_pointer_cast<Router>(shared_this);
+  ep->parent = this;
   ep->set_id(id);
   ep->link_type = static_cast<Endpoint::Type>(request->type);
   ep->url = request->url;
@@ -464,7 +461,7 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
     this->stale_addrs.erase(sysid_compid_addr);
   }
 
-  auto nh = this->parent.lock();
+  auto * nh = this->parent;
   if (!nh) {
     return;
   }
@@ -497,7 +494,7 @@ bool MAVConnEndpoint::is_open()
 
 std::pair<bool, std::string> MAVConnEndpoint::open()
 {
-  auto nh = this->parent.lock();
+  auto * nh = this->parent;
   if (!nh) {
     return {false, "parent not set"};
   }
@@ -602,7 +599,7 @@ bool ROSEndpoint::is_open()
 
 std::pair<bool, std::string> ROSEndpoint::open()
 {
-  auto nh = this->parent.lock();
+  auto * nh = this->parent;
   if (!nh) {
     return {false, "parent not set"};
   }
@@ -647,7 +644,7 @@ void ROSEndpoint::send_message(
     return;
   }
 
-  auto nh = this->parent.lock();
+  auto * nh = this->parent;
   if (!nh) {
     return;
   }
@@ -656,7 +653,7 @@ void ROSEndpoint::send_message(
 
   if (ok) {
     this->source->publish(std::move(rmsg));
-  } else if (auto nh = this->parent.lock()) {
+  } else {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }
@@ -672,7 +669,7 @@ void ROSEndpoint::ros_recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)
 
   if (ok) {
     recv_message(&mmsg, framing);
-  } else if (auto nh = this->parent.lock()) {
+  } else if (auto * nh = this->parent) {
     RCLCPP_ERROR(nh->get_logger(), "message conversion error");
   }
 }

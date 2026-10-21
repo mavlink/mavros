@@ -81,7 +81,7 @@ public:
 
     auto make_ep = [this](id_t id, Endpoint::Type type, addr_t addr) {
         auto ep = std::make_shared<SelectEndpoint>();
-        ep->parent = router_;
+        ep->parent = router_.get();
         ep->id = id;
         ep->link_type = type;
         ep->remote_addrs = {0x0000, addr};

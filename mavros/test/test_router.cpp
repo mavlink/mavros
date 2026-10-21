@@ -114,14 +114,8 @@ public:
 
   ~TestRouter()
   {
-    // Break the Endpoint <-> Router reference cycle (router->endpoints and
-    // router->remote_index hold endpoints, and each endpoint->parent holds the
-    // router), otherwise the Router node (a DDS participant) is leaked. Leaked
-    // participants from concurrent test processes crash FastDDS discovery.
-    for (auto & router : routers_) {
-      router->endpoints.clear();
-      router->remote_index.clear();
-    }
+    // Release the Router nodes (DDS participants) before rclcpp::shutdown().
+    // Leaked participants from concurrent test processes crash FastDDS discovery.
     routers_.clear();
 
     // NOTE(vooon): required to remove any remaining Nodes
@@ -132,7 +126,7 @@ public:
   void attach_lifetime_endpoint(Router::SharedPtr router, Endpoint::SharedPtr ep)
   {
     router->startup_delay_timer->cancel();
-    ep->parent = router;
+    ep->parent = router.get();
     router->endpoints[1] = ep;
     router->remote_index[0] = {ep};
   }
@@ -154,7 +148,7 @@ public:
       std::set<addr_t> remotes) {
         auto ep = std::make_shared<MockEndpoint>();
 
-        ep->parent = router;
+        ep->parent = router.get();
         ep->id = id;
         ep->link_type = type;
         ep->url = url;
@@ -549,7 +543,7 @@ TEST_F(TestRouter, route_drops_when_only_same_link_type_exists)
 
   auto make_ep = [router](id_t id, const std::string & url) {
       auto ep = std::make_shared<MockEndpoint>();
-      ep->parent = router;
+      ep->parent = router.get();
       ep->id = id;
       ep->link_type = LT::fcu;
       ep->url = url;
@@ -657,7 +651,7 @@ TEST_F(TestRouter, route_stress_multithreaded_broadcast)
 
   auto make_ep = [router](id_t id, LT type) {
       auto ep = std::make_shared<StressEndpoint>();
-      ep->parent = router;
+      ep->parent = router.get();
       ep->id = id;
       ep->link_type = type;
       ep->remote_addrs = {0x0000};
