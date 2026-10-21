@@ -117,22 +117,6 @@ protected:
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr node_set_parameters_handle_ptr;
 
   /**
-   * Check that a message is addressed to us: its target ids are ours or broadcast (0).
-   *
-   * The FCU addresses a reply to whoever sent the request, but other clients'
-   * replies can reach us too (e.g. a GCS sharing the FCU link). Use this to
-   * ignore them.
-   */
-  template<class MsgT>
-  bool is_addressed_to_us(const MsgT & m)
-  {
-    return is_addressed_to_us(m.get_name(), m.target_system, m.target_component);
-  }
-
-  bool is_addressed_to_us(
-    const std::string & msg_name, uint8_t target_system, uint8_t target_component);
-
-  /**
    * Make subscription to raw message.
    *
    * @param[in] id  message id

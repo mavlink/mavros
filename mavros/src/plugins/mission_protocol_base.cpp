@@ -32,7 +32,7 @@ std::ostream & mavros::plugin::operator<<(std::ostream & os, const MissionItem &
 void MissionBase::handle_mission_item(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM & wpi,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -42,9 +42,6 @@ void MissionBase::handle_mission_item(
 
   // receive item only in RX state
   if (wp_state == WP::RXWP) {
-    if (!is_addressed_to_us(wpi)) {
-      return;
-    }
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -74,7 +71,7 @@ void MissionBase::handle_mission_item(
 void MissionBase::handle_mission_item_int(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   MISSION_ITEM_INT & wpi,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
@@ -84,9 +81,6 @@ void MissionBase::handle_mission_item_int(
 
   // receive item only in RX state
   if (wp_state == WP::RXWPINT) {
-    if (!is_addressed_to_us(wpi)) {
-      return;
-    }
     if (sequence_mismatch(wpi)) {
       return;
     }
@@ -117,7 +111,7 @@ void MissionBase::handle_mission_item_int(
 void MissionBase::handle_mission_request(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST & mreq,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -130,9 +124,6 @@ void MissionBase::handle_mission_request(
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWP) ||
     (wp_state == WP::TXWPINT))
   {
-    if (!is_addressed_to_us(mreq)) {
-      return;
-    }
     if (sequence_mismatch(mreq)) {
       return;
     }
@@ -164,7 +155,7 @@ void MissionBase::handle_mission_request(
 void MissionBase::handle_mission_request_int(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_REQUEST_INT & mreq,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   lock_guard lock(mutex);
 
@@ -176,9 +167,6 @@ void MissionBase::handle_mission_request_int(
     (wp_state == WP::TXLIST && mreq.seq == 0) ||
     (wp_state == WP::TXPARTIAL && mreq.seq == wp_start_id) || (wp_state == WP::TXWPINT))
   {
-    if (!is_addressed_to_us(mreq)) {
-      return;
-    }
     if (sequence_mismatch(mreq)) {
       return;
     }
@@ -208,7 +196,7 @@ void MissionBase::handle_mission_request_int(
 }
 
 void MissionBase::handle_mission_count(
-  const mavlink::mavlink_message_t * msg [[maybe_unused]],
+  const mavlink::mavlink_message_t * msg,
   mavlink::common::msg::MISSION_COUNT & mcnt,
   MFilter filter [[maybe_unused]])
 {
@@ -218,7 +206,7 @@ void MissionBase::handle_mission_count(
     return;
   }
 
-  if (wp_state == WP::RXLIST && is_addressed_to_us(mcnt)) {
+  if (wp_state == WP::RXLIST && MTargetedFilter::targets_us(uas, msg)) {
     // FCU report of MISSION_REQUEST_LIST
     RCLCPP_DEBUG(get_logger(), "%s: count %d", log_prefix, mcnt.count);
 
@@ -258,13 +246,13 @@ void MissionBase::handle_mission_count(
 void MissionBase::handle_mission_ack(
   const mavlink::mavlink_message_t * msg [[maybe_unused]],
   mavlink::common::msg::MISSION_ACK & mack,
-  MFilter filter [[maybe_unused]])
+  MTargetedFilter filter [[maybe_unused]])
 {
   unique_lock lock(mutex);
 
   auto ack_type = static_cast<MRES>(mack.type);
 
-  if (filter_message(mack) || !is_addressed_to_us(mack)) {
+  if (filter_message(mack)) {
     return;
   }
 

@@ -124,16 +124,3 @@ void Plugin::enable_node_watch_parameters()
     std::bind(
       &Plugin::node_on_set_parameters_cb, this, std::placeholders::_1));
 }
-
-bool Plugin::is_addressed_to_us(
-  const std::string & msg_name, uint8_t target_system, uint8_t target_component)
-{
-  if (uas->is_addressed_to_us(target_system, target_component)) {
-    return true;
-  }
-
-  RCLCPP_DEBUG(
-    get_logger(), "ignoring %s addressed to %d.%d", msg_name.c_str(),
-    target_system, target_component);
-  return false;
-}

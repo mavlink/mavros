@@ -101,12 +101,6 @@ public:
     handle_heartbeat_componentandok,
     void(const mavlink_message_t * msg, mavlink::common::msg::HEARTBEAT & hb,
     filter::ComponentAndOk filter));
-
-  template<class MsgT>
-  bool addressed_to_us(const MsgT & m)
-  {
-    return is_addressed_to_us(m);
-  }
 };
 
 namespace mavros
@@ -258,30 +252,22 @@ TEST_F(TestUAS, add_plugin__route_message__filter)
   testing::Mock::VerifyAndClearExpectations(&(*plugin2));
 }
 
-// Plugin::is_addressed_to_us checks a decoded message's target ids.
-TEST_F(TestUAS, plugin_is_addressed_to_us)
+// UAS::is_addressed_to_us: target ids are ours or broadcast (0).
+TEST_F(TestUAS, is_addressed_to_us)
 {
   auto uas = create_node();
-  auto plugin = std::make_shared<MockPlugin>(uas);
   testing::Mock::AllowLeak(&(*uas));
-  testing::Mock::AllowLeak(&(*plugin));
 
   const uint8_t sys = uas->get_system_id();
   const uint8_t comp = uas->get_component_id();
-  auto addressed = [&](uint8_t tgt_sys, uint8_t tgt_comp) {
-      mavlink::common::msg::MISSION_ACK ack{};
-      ack.target_system = tgt_sys;
-      ack.target_component = tgt_comp;
-      return plugin->addressed_to_us(ack);
-    };
 
-  EXPECT_TRUE(addressed(sys, comp));
-  EXPECT_TRUE(addressed(0, 0));
-  EXPECT_TRUE(addressed(sys, 0));
-  EXPECT_TRUE(addressed(0, comp));
-  EXPECT_FALSE(addressed(sys + 1, comp));
-  EXPECT_FALSE(addressed(sys, comp + 1));
-  EXPECT_FALSE(addressed(sys + 1, 0));
+  EXPECT_TRUE(uas->is_addressed_to_us(sys, comp));
+  EXPECT_TRUE(uas->is_addressed_to_us(0, 0));
+  EXPECT_TRUE(uas->is_addressed_to_us(sys, 0));
+  EXPECT_TRUE(uas->is_addressed_to_us(0, comp));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys + 1, comp));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys, comp + 1));
+  EXPECT_FALSE(uas->is_addressed_to_us(sys + 1, 0));
 }
 
 TEST_F(TestUAS, synchronise_stamp_negative_offset)
