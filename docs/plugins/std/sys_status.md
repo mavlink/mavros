@@ -32,8 +32,7 @@ Implements the
 - `vehicle_info_get` [type: [mavros_msgs::srv::VehicleInfoGet](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/VehicleInfoGet.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Query information about the FCU and connected vehicles.
 
 ## Clients
-- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
-- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Client to send MAVLink commands to the command plugin (cmd/command).
 
 
 ## Parameters

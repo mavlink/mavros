@@ -20,7 +20,7 @@ superseded [MAVLink Gimbal Protocol v1](https://mavlink.io/en/services/gimbal.ht
 - `~/configure` [type: [mavros_msgs::srv::MountConfigure](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/MountConfigure.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Configure the mount (MAV_CMD_DO_MOUNT_CONFIGURE).
 
 ## Clients
-- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html)]
+- `cmd/command` [type: [mavros_msgs::srv::CommandLong](https://docs.ros.org/en/rolling/p/mavros_msgs/srv/CommandLong.html), qos: [ServicesQoS](../qos.md#servicesqos "ServicesQoS QoS profile")] - Client to send the mount configuration command (MAV_CMD_DO_MOUNT_CONFIGURE).
 
 
 ## Parameters
