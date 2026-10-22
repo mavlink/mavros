@@ -138,8 +138,10 @@ public:
   std::function<void()> take_callback(const std::shared_ptr<TimerT> & timer)
   {
     timer->reset();
-    // Humble executes timers directly; newer rclcpp separates take and execute.
-    if constexpr (requires {timer->call();}) {
+    // Humble: call() returns bool and execute_callback() takes no arguments.
+    // Newer rclcpp: call() returns the call info that execute_callback() consumes.
+    // Probe the execute_callback() signature, since call() exists on both.
+    if constexpr (requires(std::shared_ptr<void> data) {timer->execute_callback(data);}) {
       auto data = timer->call();
       return [timer, data]() {timer->execute_callback(data);};
     } else {
