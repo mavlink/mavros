@@ -349,6 +349,28 @@ TEST_F(ParamFlowTest, pull_timeout)
 
   ASSERT_NE(res, nullptr);
   EXPECT_FALSE(res->success);
+
+  // After a pull timeout, param_state must return to IDLE (not stay wedged in
+  // RXLIST), allowing subsequent param/set calls to succeed.
+  auto set_client = client->create_client<ParamSetV2>("/test_mavros_uas/param/set");
+  ASSERT_TRUE(set_client->wait_for_service(5s));
+  auto sreq = std::make_shared<ParamSetV2::Request>();
+  sreq->param_id = "AFTER_TIMEOUT";
+  sreq->force_set = true;
+  sreq->value.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+  sreq->value.integer_value = 99;
+  out->clear();
+  std::promise<ParamSetV2::Response::SharedPtr> sprom;
+  std::thread ssvc([&]() {sprom.set_value(call_service(set_client, sreq, 10s));});
+  EXPECT_EQ(wait_msgid(*out, PARAM_SET::MSG_ID).msgid, PARAM_SET::MSG_ID);
+  inject(
+    fcu_param_value(
+      "AFTER_TIMEOUT", enum_value(MAV_PARAM_TYPE::INT32),
+      union_float_from_int(enum_value(MAV_PARAM_TYPE::INT32), 99), 0, 1));
+  auto sres = sprom.get_future().get();
+  ssvc.join();
+  ASSERT_NE(sres, nullptr);
+  EXPECT_TRUE(sres->success);
 }
 
 // Excluded parameter rejected without force_set.
