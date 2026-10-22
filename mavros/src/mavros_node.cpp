@@ -11,10 +11,14 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
+#include <cerrno>
+#include <cstring>
 #include <string>
 #include <memory>
+#include <thread>
 #include <vector>
 
+#include "mavconn/thread_utils.hpp"
 #include "mavros/mavros_router.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/uas_executor.hpp"
@@ -27,7 +31,8 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto exec = mavros::uas::make_executor(rclcpp::ExecutorOptions(), 2);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  rclcpp::executors::SingleThreadedExecutor router_exec;
 
   rclcpp::NodeOptions options;
   // NOTE(vooon): when router and uas run in the same process the internal
@@ -37,9 +42,10 @@ int main(int argc, char * argv[])
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;
   int tgt_system = 1, tgt_component = 1;
+  int rt_sched_fifo_priority = 10;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
-  exec->add_node(node);
+  exec.add_node(node);
 
   node->declare_parameter("fcu_url", fcu_url);
   node->declare_parameter("gcs_url", gcs_url);
@@ -48,6 +54,7 @@ int main(int argc, char * argv[])
   node->declare_parameter("base_link_frame", base_link_frame_id);
   node->declare_parameter("map_frame", map_frame_id);
   node->declare_parameter("odom_frame", odom_frame_id);
+  node->declare_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   node->get_parameter("fcu_url", fcu_url);
   node->get_parameter("gcs_url", gcs_url);
@@ -56,6 +63,7 @@ int main(int argc, char * argv[])
   node->get_parameter("base_link_frame", base_link_frame_id);
   node->get_parameter("map_frame", map_frame_id);
   node->get_parameter("odom_frame", odom_frame_id);
+  node->get_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 
@@ -66,7 +74,7 @@ int main(int argc, char * argv[])
 
   RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
   auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
-  exec->add_node(router_node);
+  router_exec.add_node(router_node);
 
   {
     std::vector<rclcpp::Parameter> router_params{};
@@ -78,6 +86,7 @@ int main(int argc, char * argv[])
       router_params.emplace_back("gcs_urls", std::vector<std::string>{gcs_url});
     }
     router_params.emplace_back("uas_urls", std::vector<std::string>{uas_url});
+    router_params.emplace_back("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
     router_node->set_parameters(router_params);
   }
@@ -86,7 +95,7 @@ int main(int argc, char * argv[])
   auto uas_node = std::make_shared<mavros::uas::UAS>(
     options, "mavros", uas_url, tgt_system,
     tgt_component);
-  exec->add_node(uas_node);
+  exec.add_node(uas_node);
 
   {
     std::vector<rclcpp::Parameter> uas_params{};
@@ -102,10 +111,28 @@ int main(int argc, char * argv[])
     if (map_frame_id != "") {
       uas_params.emplace_back("map_frame_id", map_frame_id);
     }
+    uas_params.emplace_back("rt_sched_fifo_priority", rt_sched_fifo_priority);
     uas_node->set_parameters(uas_params);
   }
 
-  exec->spin();
+  std::thread router_thd(
+    [&router_exec, &node, rt_sched_fifo_priority]() {
+      mavconn::utils::set_this_thread_name("mavros-router");
+      const int rt_prio = rt_sched_fifo_priority;
+      if (rt_prio > 0 && !mavconn::utils::set_this_thread_sched_fifo(rt_prio)) {
+        RCLCPP_WARN(
+          node->get_logger(),
+          "mavros-router: SCHED_FIFO(prio=%d) failed (%s); normal scheduling",
+          rt_prio, std::strerror(errno));
+      }
+      router_exec.spin();
+    });
+
+  exec.spin();
+  router_exec.cancel();
+  if (router_thd.joinable()) {
+    router_thd.join();
+  }
   rclcpp::shutdown();
   return 0;
 }

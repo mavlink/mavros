@@ -14,11 +14,15 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <chrono>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include "rclcpp/executors.hpp"
 #include "mavconn/interface.hpp"
@@ -138,8 +142,10 @@ public:
   std::function<void()> take_callback(const std::shared_ptr<TimerT> & timer)
   {
     timer->reset();
-    // Humble executes timers directly; newer rclcpp separates take and execute.
-    if constexpr (requires {timer->call();}) {
+    // Humble: call() returns bool and execute_callback() takes no arguments.
+    // Newer rclcpp: call() returns the call info that execute_callback() consumes.
+    // Probe the execute_callback() signature, since call() exists on both.
+    if constexpr (requires(std::shared_ptr<void> data) {timer->execute_callback(data);}) {
       auto data = timer->call();
       return [timer, data]() {timer->execute_callback(data);};
     } else {
@@ -171,6 +177,23 @@ public:
   void plugin_route(MockUAS::SharedPtr p, const mavlink_message_t * msg, const Framing framing)
   {
     p->plugin_route(msg, framing);
+  }
+
+  void recv_message(MockUAS::SharedPtr p, const mavlink_message_t & msg, const Framing framing)
+  {
+    auto rmsg = std::make_unique<mavros_msgs::msg::Mavlink>();
+    ASSERT_TRUE(mavros_msgs::mavlink::convert(msg, *rmsg, utils::enum_value(framing)));
+    p->recv_message(std::move(rmsg));
+  }
+
+  void recv_raw_ros_message(MockUAS::SharedPtr p, mavros_msgs::msg::Mavlink::UniquePtr rmsg)
+  {
+    p->recv_message(std::move(rmsg));
+  }
+
+  static bool is_fast_lane_msgid(uint32_t msgid)
+  {
+    return UAS::is_fast_lane_msgid(msgid);
   }
 
   mavlink_message_t convert_message(const mavlink::Message & msg, const uint16_t source = 0x0101)
@@ -382,6 +405,250 @@ TEST_F(TestUAS, synchronise_stamp_out_of_range_falls_back_to_now)
   EXPECT_NEAR(
     uas->synchronise_stamp(std::numeric_limits<uint64_t>::max()).seconds(),
     uas->now().seconds(), 1.0);
+}
+
+TEST_F(TestUAS, fast_lane_bypasses_bulk_queue_and_concurrent_send)
+{
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::SYSTEM_TIME::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::ATTITUDE::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::LOCAL_POSITION_NED_COV::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::COMMAND_ACK::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::TIMESYNC::MSG_ID));
+  EXPECT_TRUE(is_fast_lane_msgid(mavlink::common::msg::ODOMETRY::MSG_ID));
+  EXPECT_FALSE(is_fast_lane_msgid(mavlink::common::msg::HEARTBEAT::MSG_ID));
+  EXPECT_FALSE(is_fast_lane_msgid(mavlink::common::msg::STATUSTEXT::MSG_ID));
+  EXPECT_FALSE(is_fast_lane_msgid(mavlink::common::msg::PARAM_VALUE::MSG_ID));
+
+  struct LanePlugin : public plugin::Plugin
+  {
+    explicit LanePlugin(UAS::SharedPtr uas_)
+    : Plugin(uas_.get()) {}
+
+    Subscriptions get_subscriptions() override
+    {
+      return {
+        make_handler(mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID, &LanePlugin::on_fast),
+        make_handler(mavlink::common::msg::STATUSTEXT::MSG_ID, &LanePlugin::on_bulk),
+      };
+    }
+
+    void on_fast(const mavlink_message_t *, const Framing)
+    {
+      fast_count.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    void on_bulk(const mavlink_message_t *, const Framing)
+    {
+      if (!first_bulk_entered.exchange(true)) {
+        while (!release_bulk.load(std::memory_order_acquire)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+      }
+      bulk_count.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    std::atomic<size_t> fast_count{0};
+    std::atomic<size_t> bulk_count{0};
+    std::atomic<bool> first_bulk_entered{false};
+    std::atomic<bool> release_bulk{false};
+  };
+
+  auto uas = create_node();
+  auto lane_plugin = std::make_shared<LanePlugin>(uas);
+  testing::Mock::AllowLeak(&(*uas));
+
+  uas->set_parameter(rclcpp::Parameter("uas_url", "/uas_test_lane"));
+  uas->set_parameter(rclcpp::Parameter("plugin_allowlist", UAS::StrV{"lane_test"}));
+  uas->set_parameter(rclcpp::Parameter("rt_sched_fifo_priority", 0));
+  EXPECT_CALL(*uas, create_plugin_instance("lane_test")).WillRepeatedly(Return(lane_plugin));
+  auto startup_cb = take_startup_callback(uas);
+  startup_cb();
+  add_plugin(uas, "lane_test");
+
+  mavlink::common::msg::STATUSTEXT stxt{};
+  auto m_bulk = convert_message(stxt, 0x0101);
+  mavlink::common::msg::LOCAL_POSITION_NED lpn{};
+  auto m_fast = convert_message(lpn, 0x0101);
+
+  // Enqueue one bulk message and wait until the bulk worker enters the handler and blocks.
+  recv_message(uas, m_bulk, Framing::ok);
+  const auto enter_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  while (!lane_plugin->first_bulk_entered.load(std::memory_order_acquire)) {
+    if (std::chrono::steady_clock::now() >= enter_deadline) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  ASSERT_TRUE(lane_plugin->first_bulk_entered.load());
+
+  // Flood bulk queue beyond capacity while bulk worker is blocked, and concurrently send outbound
+  // frames from multiple threads.
+  std::vector<std::thread> senders;
+  for (int t = 0; t < 4; ++t) {
+    senders.emplace_back(
+      [&]() {
+        auto hb = make_heartbeat();
+        for (int i = 0; i < 50; ++i) {
+          uas->send_message(hb);
+        }
+      });
+  }
+  for (int i = 0; i < 1200; ++i) {
+    recv_message(uas, m_bulk, Framing::ok);
+  }
+
+  // Fast-lane messages must execute immediately on the caller without waiting for bulk_rx_thd.
+  for (int i = 0; i < 50; ++i) {
+    recv_message(uas, m_fast, Framing::ok);
+  }
+  EXPECT_EQ(lane_plugin->fast_count.load(), 50U);
+  EXPECT_EQ(lane_plugin->bulk_count.load(), 0U);
+
+  // Release bulk worker and join concurrent senders.
+  lane_plugin->release_bulk.store(true, std::memory_order_release);
+  for (auto & th : senders) {
+    th.join();
+  }
+
+  const auto drain_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+  while (lane_plugin->bulk_count.load() < 1025U) {
+    if (std::chrono::steady_clock::now() >= drain_deadline) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  }
+  // 1 in-flight + 1024 queued max capacity.
+  EXPECT_EQ(lane_plugin->bulk_count.load(), 1025U);
+
+  // Malformed Mavlink ROS message (invalid signature size != 13) must be dropped without throwing.
+  auto bad_rmsg = std::make_unique<mavros_msgs::msg::Mavlink>();
+  bad_rmsg->signature.resize(5, 0);
+  EXPECT_NO_THROW(recv_raw_ros_message(uas, std::move(bad_rmsg)));
+  EXPECT_NO_THROW(recv_raw_ros_message(uas, nullptr));
+}
+
+TEST_F(TestUAS, stress_concurrent_fast_bulk_exception_and_state_transitions)
+{
+  struct StressPlugin : public plugin::Plugin
+  {
+    explicit StressPlugin(UAS::SharedPtr uas_)
+    : Plugin(uas_.get())
+    {
+      enable_connection_cb();
+      enable_capabilities_cb();
+    }
+
+    Subscriptions get_subscriptions() override
+    {
+      return {
+        make_handler(mavlink::common::msg::ATTITUDE::MSG_ID, &StressPlugin::on_fast_att),
+        make_handler(mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID, &StressPlugin::on_fast_lpn),
+        make_handler(mavlink::common::msg::HEARTBEAT::MSG_ID, &StressPlugin::on_bulk_hb),
+        make_handler(mavlink::common::msg::DEBUG::MSG_ID, &StressPlugin::on_throwing),
+      };
+    }
+
+    void on_fast_att(const mavlink_message_t *, const Framing)
+    {
+      fast_att.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    void on_fast_lpn(const mavlink_message_t *, const Framing)
+    {
+      fast_lpn.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    void on_bulk_hb(const mavlink_message_t *, const Framing)
+    {
+      bulk_hb.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    void on_throwing(const mavlink_message_t *, const Framing)
+    {
+      throw_calls.fetch_add(1, std::memory_order_relaxed);
+      throw std::runtime_error("simulated plugin handler failure");
+    }
+
+    void connection_cb(bool) override
+    {
+      conn_transitions.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    void capabilities_cb(uas::MAV_CAP) override
+    {
+      cap_transitions.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    std::atomic<size_t> fast_att{0};
+    std::atomic<size_t> fast_lpn{0};
+    std::atomic<size_t> bulk_hb{0};
+    std::atomic<size_t> throw_calls{0};
+    std::atomic<size_t> conn_transitions{0};
+    std::atomic<size_t> cap_transitions{0};
+  };
+
+  auto uas = create_node();
+  auto sp = std::make_shared<StressPlugin>(uas);
+  testing::Mock::AllowLeak(&(*uas));
+
+  uas->set_parameter(rclcpp::Parameter("uas_url", "/uas_test_stress"));
+  uas->set_parameter(rclcpp::Parameter("plugin_allowlist", UAS::StrV{"stress_test"}));
+  uas->set_parameter(rclcpp::Parameter("rt_sched_fifo_priority", 0));
+  EXPECT_CALL(*uas, create_plugin_instance("stress_test")).WillRepeatedly(Return(sp));
+  auto startup_cb = take_startup_callback(uas);
+  startup_cb();
+  add_plugin(uas, "stress_test");
+
+  mavlink::common::msg::ATTITUDE att{};
+  auto m_att = convert_message(att, 0x0101);
+  mavlink::common::msg::LOCAL_POSITION_NED lpn{};
+  auto m_lpn = convert_message(lpn, 0x0101);
+  auto hb = make_heartbeat();
+  auto m_hb = convert_message(hb, 0x0101);
+  mavlink::common::msg::DEBUG dbg{};
+  auto m_dbg = convert_message(dbg, 0x0101);
+
+  constexpr int kThreads = 6;
+  constexpr int kIters = 300;
+  std::vector<std::thread> workers;
+  for (int t = 0; t < kThreads; ++t) {
+    workers.emplace_back(
+      [&, t]() {
+        for (int i = 0; i < kIters; ++i) {
+          recv_message(uas, m_att, Framing::ok);
+          recv_message(uas, m_lpn, Framing::ok);
+          recv_message(uas, m_hb, Framing::ok);
+          if ((i % 10) == 0) {
+            recv_message(uas, m_dbg, Framing::ok);
+          }
+          if ((i % 25) == 0) {
+            uas->send_message(hb, static_cast<uint8_t>(190 + t));
+            uas->update_connection_status((i % 50) == 0);
+            uas->update_capabilities(true, static_cast<uint64_t>(i + 1));
+            (void)uas->synchronise_stamp(static_cast<uint32_t>(i * 10));
+          }
+        }
+      });
+  }
+
+  for (auto & w : workers) {
+    w.join();
+  }
+
+  EXPECT_EQ(sp->fast_att.load(), static_cast<size_t>(kThreads * kIters));
+  EXPECT_EQ(sp->fast_lpn.load(), static_cast<size_t>(kThreads * kIters));
+
+  // Wait for bulk queue to drain.
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+  while (sp->throw_calls.load() == 0 && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+  EXPECT_GT(sp->bulk_hb.load(), 0U);
+  EXPECT_GT(sp->throw_calls.load(), 0U);
+  EXPECT_GT(sp->conn_transitions.load(), 0U);
+  EXPECT_GT(sp->cap_transitions.load(), 0U);
 }
 
 }  // namespace uas

@@ -33,13 +33,14 @@ void UAS::update_heartbeat(uint8_t type_, uint8_t autopilot_, uint8_t base_mode_
 
 void UAS::update_connection_status(bool conn_)
 {
+  s_unique_lock lock(mu);
   if (conn_ != connected) {
     connected = conn_;
-
-    s_shared_lock lock(mu);
+    auto cbs = connection_cb_vec;
+    lock.unlock();
 
     // call all change cb's
-    for (auto & cb : connection_cb_vec) {
+    for (auto & cb : cbs) {
       cb(conn_);
     }
   }
@@ -69,9 +70,9 @@ uint64_t UAS::get_capabilities()
   }
 }
 
-// This function may need a mutex now
 void UAS::update_capabilities(bool known, uint64_t caps)
 {
+  s_unique_lock lock(mu);
   bool process_cb_queue = false;
 
   if (known != fcu_caps_known) {
@@ -87,9 +88,10 @@ void UAS::update_capabilities(bool known, uint64_t caps)
 
   if (process_cb_queue) {
     fcu_capabilities = caps;
+    auto cbs = capabilities_cb_vec;
+    lock.unlock();
 
-    s_shared_lock lock(mu);
-    for (auto & cb : capabilities_cb_vec) {
+    for (auto & cb : cbs) {
       cb(static_cast<MAV_CAP>(caps));
     }
   }

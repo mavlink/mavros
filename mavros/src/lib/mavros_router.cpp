@@ -42,7 +42,7 @@ std::atomic<id_t> Router::id_counter {1000};
 
 static inline uint8_t get_msg_byte(const mavlink_message_t * msg, uint8_t offset)
 {
-  return _MAV_PAYLOAD(msg)[offset];
+  return (offset < msg->len) ? _MAV_PAYLOAD(msg)[offset] : 0;
 }
 
 void Router::route_message(
@@ -349,6 +349,8 @@ rcl_interfaces::msg::SetParametersResult Router::on_set_parameters_cb(
       update_endpoints(parameter, Type::gcs);
     } else if (name == "uas_urls") {
       update_endpoints(parameter, Type::uas);
+    } else if (name == "rt_sched_fifo_priority") {
+      rt_sched_fifo_priority_.store(parameter.as_int(), std::memory_order_relaxed);
     } else {
       result.successful = false;
       result.reason = "unknown parameter";
@@ -447,9 +449,20 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   const addr_t sysid_addr = msg->sysid << 8;
   const addr_t sysid_compid_addr = (msg->sysid << 8) | msg->compid;
 
-  bool new_sysid_addr;
-  bool new_sysid_compid_addr;
+  bool need_write = false;
   {
+    std::shared_lock<std::shared_mutex> rlock(this->remote_addrs_mutex);
+    need_write =
+      this->remote_addrs.find(sysid_addr) == this->remote_addrs.end() ||
+      this->remote_addrs.find(sysid_compid_addr) == this->remote_addrs.end() ||
+      (!this->stale_addrs.empty() && (
+        this->stale_addrs.find(sysid_addr) != this->stale_addrs.end() ||
+        this->stale_addrs.find(sysid_compid_addr) != this->stale_addrs.end()));
+  }
+
+  bool new_sysid_addr = false;
+  bool new_sysid_compid_addr = false;
+  if (need_write) {
     std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
 
     // save source addr to remote_addrs
@@ -612,9 +625,12 @@ std::pair<bool, std::string> ROSEndpoint::open()
       utils::format(
         "%s/%s", this->url.c_str(),
         "mavlink_source"), qos);
+    rclcpp::SubscriptionOptions sub_opts;
+    sub_opts.callback_group = nh->sink_cb_group;
     this->sink = nh->create_subscription<mavros_msgs::msg::Mavlink>(
       utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), qos,
-      std::bind(&ROSEndpoint::ros_recv_message, this, std::placeholders::_1));
+      std::bind(&ROSEndpoint::ros_recv_message, this, std::placeholders::_1),
+      sub_opts);
   } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
     return {false, ex.what()};
   }

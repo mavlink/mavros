@@ -34,7 +34,10 @@
 
 #include <array>
 #include <atomic>
+#include <condition_variable>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -647,6 +650,7 @@ private:
 
   StrV plugin_allowlist;
   StrV plugin_denylist;
+  int rt_sched_fifo_priority;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
   rclcpp::TimerBase::SharedPtr startup_delay_timer;
@@ -656,6 +660,26 @@ private:
   // rclcpp::executors::MultiThreadedExecutor exec;
   UASExecutor exec;
   thread_ptr exec_spin_thd;
+
+  rclcpp::CallbackGroup::SharedPtr source_cb_group;
+  rclcpp::executors::SingleThreadedExecutor source_exec;
+  thread_ptr source_spin_thd;
+
+  struct BulkRxItem
+  {
+    mavlink::mavlink_message_t msg;
+    mavconn::Framing framing;
+  };
+  static constexpr size_t kMaxBulkRxQueueSize = 1024;
+  std::mutex bulk_rx_mutex;
+  std::condition_variable bulk_rx_cv;
+  std::vector<BulkRxItem> bulk_rx_ring;
+  size_t bulk_rx_head{0};
+  size_t bulk_rx_tail{0};
+  size_t bulk_rx_count{0};
+  std::atomic<size_t> bulk_rx_drops{0};
+  bool bulk_rx_stop{false};
+  thread_ptr bulk_rx_thd;
 
   // plugins
   pluginlib::ClassLoader<plugin::PluginFactory> plugin_factory_loader;
@@ -678,9 +702,10 @@ private:
   std::vector<CapabilitiesCb> capabilities_cb_vec;
 
   std::atomic<int64_t> time_offset;
-  timesync_mode tsync_mode;
+  std::atomic<timesync_mode> tsync_mode;
 
   // UAS -> Router connection
+  std::mutex send_mutex;
   mavlink::mavlink_status_t mavlink_status;
   rclcpp::Subscription<mavros_msgs::msg::Mavlink>::SharedPtr source;    // FCU -> UAS
   rclcpp::Publisher<mavros_msgs::msg::Mavlink>::SharedPtr sink;         // UAS -> FCU
@@ -693,6 +718,12 @@ private:
 
   //! uas message receive handler
   void recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg);
+
+  //! background worker for non-realtime inbound MAVLink messages
+  void bulk_rx_loop();
+
+  //! true for latency-critical state/timesync MAVLink message IDs
+  static bool is_fast_lane_msgid(uint32_t msgid);
 
   //! message router
   void plugin_route(const mavlink::mavlink_message_t * mmsg, const mavconn::Framing framing);

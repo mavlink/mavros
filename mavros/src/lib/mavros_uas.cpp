@@ -12,13 +12,16 @@
  */
 
 #include <fnmatch.h>
+#include <cerrno>
 #include <cmath>
+#include <cstring>
 #include <string>
 #include <stdexcept>
 #include <vector>
 #include <Eigen/Eigen>  // NOLINT
 
 #include "rcpputils/asserts.hpp"
+#include "mavconn/thread_utils.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/utils.hpp"
 
@@ -61,6 +64,10 @@ UAS::UAS(
   base_link_frame_id("base_link"),
   odom_frame_id("odom"),
   map_frame_id("map"),
+  rt_sched_fifo_priority(10),
+  source_cb_group(this->create_callback_group(
+      rclcpp::CallbackGroupType::MutuallyExclusive, false)),
+  bulk_rx_ring(kMaxBulkRxQueueSize),
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
   loaded_plugins{},
   plugin_subscriptions{},
@@ -93,6 +100,7 @@ UAS::UAS(
   this->declare_parameter("base_link_frame_id", base_link_frame_id);
   this->declare_parameter("odom_frame_id", odom_frame_id);
   this->declare_parameter("map_frame_id", map_frame_id);
+  this->declare_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
@@ -129,26 +137,9 @@ void UAS::startup()
   this->get_parameter("base_link_frame_id", base_link_frame_id);
   this->get_parameter("odom_frame_id", odom_frame_id);
   this->get_parameter("map_frame_id", map_frame_id);
+  this->get_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
-  exec_spin_thd = thread_ptr(
-    new std::thread(
-      [this]() {
-        utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
-        auto lg = this->get_logger();
-
-        RCLCPP_INFO(
-          lg, "UAS Executor started, threads: %zu",
-          this->exec.get_number_of_threads());
-        this->exec.spin();
-        RCLCPP_WARN(lg, "UAS Executor terminated");
-      }),
-    [this](std::thread * t) {
-      this->exec.cancel();
-      if (t->joinable()) {
-        t->join();
-      }
-      delete t;
-    });
+  source_exec.add_callback_group(source_cb_group, this->get_node_base_interface());
 
   // setup diag
   diagnostic_updater.setHardwareID(utils::format("uas://%s", uas_url.c_str()));
@@ -215,6 +206,65 @@ void UAS::startup()
 
   connect_to_router();
 
+  exec_spin_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-exec/%d.%d", source_system, source_component);
+        auto lg = this->get_logger();
+
+        RCLCPP_INFO(
+          lg, "UAS Executor started, threads: %zu",
+          this->exec.get_number_of_threads());
+        this->exec.spin();
+        RCLCPP_WARN(lg, "UAS Executor terminated");
+      }),
+    [this](std::thread * t) {
+      this->exec.cancel();
+      if (t->joinable()) {
+        t->join();
+      }
+      delete t;
+    });
+
+  bulk_rx_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-bulk/%d.%d", source_system, source_component);
+        this->bulk_rx_loop();
+      }),
+    [this](std::thread * t) {
+      {
+        std::lock_guard<std::mutex> lock(this->bulk_rx_mutex);
+        this->bulk_rx_stop = true;
+      }
+      this->bulk_rx_cv.notify_all();
+      if (t->joinable()) {
+        t->join();
+      }
+      delete t;
+    });
+
+  source_spin_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-rx/%d.%d", source_system, source_component);
+        const int rt_prio = this->rt_sched_fifo_priority;
+        if (rt_prio > 0 && !mavconn::utils::set_this_thread_sched_fifo(rt_prio)) {
+          RCLCPP_WARN(
+            this->get_logger(),
+            "uas-rx: SCHED_FIFO(prio=%d) failed (%s); normal scheduling",
+            rt_prio, std::strerror(errno));
+        }
+        this->source_exec.spin();
+      }),
+    [this](std::thread * t) {
+      this->source_exec.cancel();
+      if (t->joinable()) {
+        t->join();
+      }
+      delete t;
+    });
+
   // Publish helper TFs used for frame transformation in the odometry plugin
   setup_static_tf();
 
@@ -237,7 +287,12 @@ void UAS::startup()
 
 UAS::~UAS()
 {
-  // Stop the executor before plugin nodes and subscriptions begin tearing down.
+  if (startup_delay_timer) {
+    startup_delay_timer->cancel();
+  }
+  // Stop the executors and bulk worker before plugin nodes and subscriptions begin tearing down.
+  source_spin_thd.reset();
+  bulk_rx_thd.reset();
   exec_spin_thd.reset();
 }
 
@@ -249,7 +304,17 @@ void UAS::plugin_route(const mavlink_message_t * mmsg, const Framing framing)
   }
 
   for (auto & info : it->second) {
-    std::get<3>(info)(mmsg, framing);
+    try {
+      std::get<3>(info)(mmsg, framing);
+    } catch (const std::exception & ex) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1000,
+        "UAS: exception in handler for msgid %u: %s", mmsg->msgid, ex.what());
+    } catch (...) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 1000,
+        "UAS: unknown exception in handler for msgid %u", mmsg->msgid);
+    }
   }
 }
 
@@ -374,8 +439,13 @@ void UAS::add_plugin(const std::string & pl_name)
 
     auto pl_node = plugin->get_node();
     if (pl_node && pl_node.get() != this) {
-      RCLCPP_DEBUG_STREAM(lg, "Plugin " << pl_name << " added to executor");
-      exec.add_node(pl_node);
+      if (pl_name == "sys_time") {
+        RCLCPP_DEBUG_STREAM(lg, "Plugin " << pl_name << " added to source_exec");
+        source_exec.add_node(pl_node);
+      } else {
+        RCLCPP_DEBUG_STREAM(lg, "Plugin " << pl_name << " added to executor");
+        exec.add_node(pl_node);
+      }
     }
 
     RCLCPP_INFO_STREAM(lg, "Plugin " << pl_name << " initialized");
@@ -417,21 +487,85 @@ void UAS::connect_to_router()
       "%s/%s", this->uas_url.c_str(),
       "mavlink_sink"), qos);
 
+  rclcpp::SubscriptionOptions sub_opts;
+  sub_opts.callback_group = this->source_cb_group;
   this->source = this->create_subscription<mavros_msgs::msg::Mavlink>(
     utils::format("%s/%s", this->uas_url.c_str(), "mavlink_source"), qos,
-    std::bind(&UAS::recv_message, this, std::placeholders::_1));
+    std::bind(&UAS::recv_message, this, std::placeholders::_1),
+    sub_opts);
+}
+
+bool UAS::is_fast_lane_msgid(uint32_t msgid)
+{
+  switch (msgid) {
+    case mavlink::common::msg::SYSTEM_TIME::MSG_ID:             // 2
+    case mavlink::common::msg::ATTITUDE::MSG_ID:                // 30
+    case mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID:     // 31
+    case mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID:      // 32
+    case mavlink::common::msg::LOCAL_POSITION_NED_COV::MSG_ID:  // 64
+    case mavlink::common::msg::COMMAND_ACK::MSG_ID:             // 77
+    case mavlink::common::msg::TIMESYNC::MSG_ID:                // 111
+    case mavlink::common::msg::ODOMETRY::MSG_ID:                // 331
+      return true;
+    default:
+      return false;
+  }
+}
+
+void UAS::bulk_rx_loop()
+{
+  while (true) {
+    BulkRxItem item{};
+    {
+      std::unique_lock<std::mutex> lock(bulk_rx_mutex);
+      bulk_rx_cv.wait(lock, [this]() {return bulk_rx_stop || bulk_rx_count > 0;});
+      if (bulk_rx_stop && bulk_rx_count == 0) {
+        return;
+      }
+      item = bulk_rx_ring[bulk_rx_head];
+      bulk_rx_head = (bulk_rx_head + 1) % kMaxBulkRxQueueSize;
+      bulk_rx_count--;
+    }
+    plugin_route(&item.msg, item.framing);
+  }
 }
 
 void UAS::recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)
 {
+  if (!rmsg) {
+    return;
+  }
   mavlink::mavlink_message_t msg;
 
   auto ok = mavros_msgs::mavlink::convert(*rmsg, msg);
-  rcpputils::assert_true(ok, "conversion error");
-
-  if (ok) {
-    plugin_route(&msg, static_cast<mavconn::Framing>(rmsg->framing_status));
+  if (!ok) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000, "UAS: message conversion error");
+    return;
   }
+
+  const auto framing = static_cast<mavconn::Framing>(rmsg->framing_status);
+  if (is_fast_lane_msgid(msg.msgid)) {
+    plugin_route(&msg, framing);
+    return;
+  }
+
+  bool dropped = false;
+  {
+    std::lock_guard<std::mutex> lock(bulk_rx_mutex);
+    if (bulk_rx_count >= kMaxBulkRxQueueSize) {
+      bulk_rx_head = (bulk_rx_head + 1) % kMaxBulkRxQueueSize;
+      bulk_rx_count--;
+      dropped = true;
+    }
+    bulk_rx_ring[bulk_rx_tail] = BulkRxItem{msg, framing};
+    bulk_rx_tail = (bulk_rx_tail + 1) % kMaxBulkRxQueueSize;
+    bulk_rx_count++;
+  }
+  if (dropped) {
+    bulk_rx_drops.fetch_add(1, std::memory_order_relaxed);
+  }
+  bulk_rx_cv.notify_one();
 }
 
 void UAS::send_message(const mavlink::Message & obj, const uint8_t src_compid)
@@ -442,14 +576,18 @@ void UAS::send_message(const mavlink::Message & obj, const uint8_t src_compid)
   auto mi = obj.get_message_info();
 
   obj.serialize(map);
-  mavlink::mavlink_finalize_message_buffer(
-    &msg, source_system, src_compid, &mavlink_status, mi.min_length, mi.length,
-    mi.crc_extra);
 
   // NOTE(vooon): unique_ptr publish so intra-process subscribers (the router)
   // get the buffer without a copy.
   auto rmsg = std::make_unique<mavros_msgs::msg::Mavlink>();
-  auto ok = mavros_msgs::mavlink::convert(msg, *rmsg);
+  bool ok = false;
+  {
+    std::lock_guard<std::mutex> lock(send_mutex);
+    mavlink::mavlink_finalize_message_buffer(
+      &msg, source_system, src_compid, &mavlink_status, mi.min_length, mi.length,
+      mi.crc_extra);
+    ok = mavros_msgs::mavlink::convert(msg, *rmsg);
+  }
 
   rmsg->header.stamp = this->now();
   rmsg->header.frame_id = this->get_name();
@@ -461,6 +599,7 @@ void UAS::send_message(const mavlink::Message & obj, const uint8_t src_compid)
 
 void UAS::set_protocol_version(mavconn::Protocol pver)
 {
+  std::lock_guard<std::mutex> lock(send_mutex);
   if (pver == mavconn::Protocol::V10) {
     mavlink_status.flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
   } else {

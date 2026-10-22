@@ -15,6 +15,7 @@
  */
 
 #include <cmath>
+#include <mutex>
 #include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -168,6 +169,7 @@ private:
   std::atomic<bool> has_scaled_imu;
   std::atomic<bool> has_att_quat;
   std::atomic<bool> received_linear_accel;
+  std::mutex linear_accel_mutex;
   Eigen::Vector3d linear_accel_vec_flu;
   Eigen::Vector3d linear_accel_vec_frd;
   ftf::Covariance3d linear_acceleration_cov;
@@ -225,8 +227,11 @@ private:
     tf2::toMsg(gyro_frd, imu_ned_msg.angular_velocity);
 
     // Eigen::Vector3d from HIGHRES_IMU or RAW_IMU, to geometry_msgs::Vector3
-    tf2::toMsg(linear_accel_vec_flu, imu_enu_msg.linear_acceleration);
-    tf2::toMsg(linear_accel_vec_frd, imu_ned_msg.linear_acceleration);
+    {
+      std::lock_guard<std::mutex> lock(linear_accel_mutex);
+      tf2::toMsg(linear_accel_vec_flu, imu_enu_msg.linear_acceleration);
+      tf2::toMsg(linear_accel_vec_frd, imu_ned_msg.linear_acceleration);
+    }
 
     // Pass ENU msg covariances
     imu_enu_msg.orientation_covariance = orientation_cov;
@@ -287,8 +292,11 @@ private:
     tf2::toMsg(accel_flu, imu_msg.linear_acceleration);
 
     // Save readings
-    linear_accel_vec_flu = accel_flu;
-    linear_accel_vec_frd = accel_frd;
+    {
+      std::lock_guard<std::mutex> lock(linear_accel_mutex);
+      linear_accel_vec_flu = accel_flu;
+      linear_accel_vec_frd = accel_frd;
+    }
     received_linear_accel = true;
 
     imu_msg.orientation_covariance = unk_orientation_cov;
@@ -554,6 +562,7 @@ private:
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 60000,
         "IMU: ~imu/data_raw stores unscaled raw acceleration report.");
+      std::lock_guard<std::mutex> lock(linear_accel_mutex);
       linear_accel_vec_flu.setZero();
       linear_accel_vec_frd.setZero();
     }

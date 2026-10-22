@@ -21,6 +21,8 @@
 #define MAVROS__MAVROS_ROUTER_HPP_
 
 #include <array>
+#include <cerrno>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -182,6 +184,9 @@ public:
     this->declare_parameter<StrV>("fcu_urls", StrV());
     this->declare_parameter<StrV>("gcs_urls", StrV());
     this->declare_parameter<StrV>("uas_urls", StrV());
+    rt_sched_fifo_priority_ = this->declare_parameter<int>("rt_sched_fifo_priority", 10);
+
+    sink_cb_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
@@ -221,7 +226,27 @@ public:
     RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
-    router_io_runner.start([this]() {this->router_io_runner.io().run();});
+    router_io_runner.start(
+      [this]() {
+        mavconn::utils::set_this_thread_name("mudp-io");
+        const int rt_prio = this->rt_sched_fifo_priority_.load(std::memory_order_relaxed);
+        if (rt_prio > 0 && !mavconn::utils::set_this_thread_sched_fifo(rt_prio)) {
+          RCLCPP_WARN(
+            this->get_logger(),
+            "mudp-io: SCHED_FIFO(prio=%d) failed (%s); normal scheduling",
+            rt_prio, std::strerror(errno));
+        }
+        while (true) {
+          try {
+            this->router_io_runner.io().run();
+            break;
+          } catch (const std::exception & ex) {
+            RCLCPP_ERROR(this->get_logger(), "mudp-io: exception in io_context: %s", ex.what());
+          } catch (...) {
+            RCLCPP_ERROR(this->get_logger(), "mudp-io: unknown exception in io_context");
+          }
+        }
+      });
 
     // Delay parameter callback initialization so that endpoints are not
     // created before we leave the constructor.
@@ -264,8 +289,12 @@ private:
   friend class BenchmarkRouter;
   friend class RouterSelectBenchmark;
 
+  friend class ROSEndpoint;
+
   static std::atomic<id_t> id_counter;
   mavconn::IoContextRunner router_io_runner;
+  std::atomic<int> rt_sched_fifo_priority_{10};
+  rclcpp::CallbackGroup::SharedPtr sink_cb_group;
 
   std::shared_mutex mu;
 

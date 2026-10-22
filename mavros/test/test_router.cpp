@@ -580,7 +580,7 @@ TEST_F(TestRouter, endpoint_recv_message)
         rclcpp::Parameter("uas_urls", std::vector<std::string>{"/uas1"})
       });
 
-  auto uas1 = getep(router, 1000);
+  auto uas1 = get_endpoints(router)[1000];
 
   uas1->stale_addrs.emplace(0x0100);
   uas1->stale_addrs.emplace(0x01BF);
