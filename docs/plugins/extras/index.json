@@ -10,8 +10,18 @@
       {
         "name": "~/vehicle",
         "type_name": "mavros_msgs::msg::ADSBVehicle",
-        "line": 48,
+        "line": 49,
         "description": "Publish received ADSB_VEHICLE messages (MAVLink traffic management).",
+        "qos": {
+          "kind": "inline",
+          "config": "QoS(10)"
+        }
+      },
+      {
+        "name": "~/transceiver_health",
+        "type_name": "mavros_msgs::msg::ADSBTransceiverHealthReport",
+        "line": 52,
+        "description": "Publish received UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT messages.",
         "qos": {
           "kind": "inline",
           "config": "QoS(10)"
@@ -22,7 +32,7 @@
       {
         "name": "~/send",
         "type_name": "mavros_msgs::msg::ADSBVehicle",
-        "line": 51,
+        "line": 56,
         "description": "Subscribe to ADSBVehicle messages to send as ADSB_VEHICLE to the FCU.",
         "qos": {
           "kind": "inline",
@@ -40,8 +50,17 @@
         "message_name": "ADSB_VEHICLE",
         "msg_id_expr": "mavlink::common::msg::ADSB_VEHICLE::MSG_ID",
         "dialect": "common",
-        "line": 67,
+        "line": 75,
         "msg_id": 246
+      },
+      {
+        "handler": "handle_transceiver_health_report",
+        "message_type": "mavlink::uAvionix::msg::UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT",
+        "message_name": "UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT",
+        "msg_id_expr": "mavlink::uAvionix::msg::UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT::MSG_ID",
+        "dialect": "uAvionix",
+        "line": 141,
+        "msg_id": 10003
       }
     ],
     "mavlink_publications": [
@@ -51,7 +70,7 @@
         "message_name": "ADSB_VEHICLE",
         "msg_id_expr": "mavlink::common::msg::ADSB_VEHICLE::MSG_ID",
         "dialect": "common",
-        "line": 167,
+        "line": 194,
         "msg_id": 246
       }
     ]

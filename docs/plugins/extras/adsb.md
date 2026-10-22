@@ -11,6 +11,7 @@ Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehi
 
 ## Publishers
 - `~/vehicle` [type: [mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish received ADSB_VEHICLE messages (MAVLink traffic management).
+- `~/transceiver_health` [type: [mavros_msgs::msg::ADSBTransceiverHealthReport](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBTransceiverHealthReport.html), qos: [QoS(10)](../qos.md#qos_10_)] - Publish received UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT messages.
 
 ## Subscribers
 - `~/send` [type: [mavros_msgs::msg::ADSBVehicle](https://docs.ros.org/en/rolling/p/mavros_msgs/msg/ADSBVehicle.html), qos: [QoS(10)](../qos.md#qos_10_)] - Subscribe to ADSBVehicle messages to send as ADSB_VEHICLE to the FCU.
@@ -28,6 +29,7 @@ Publish/subscribe Automatic dependent surveillance-broadcast data to/from a vehi
 
 ## MAVLink Subscriptions
 - [`ADSB_VEHICLE`](https://mavlink.io/en/messages/common.html#ADSB_VEHICLE) [handler: handle_adsb, dialect: common, msg_id: 246, id: `mavlink::common::msg::ADSB_VEHICLE::MSG_ID`]
+- [`UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT`](https://mavlink.io/en/messages/uAvionix.html#UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT) [handler: handle_transceiver_health_report, dialect: uAvionix, msg_id: 10003, id: `mavlink::uAvionix::msg::UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT::MSG_ID`]
 
 
 ## MAVLink Publications

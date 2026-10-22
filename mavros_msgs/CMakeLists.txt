@@ -31,6 +31,7 @@ set(msg_files
   # [[[cog:
   # mavros_cog.outl_glob_files('msg', '*.msg')
   # ]]]
+  msg/ADSBTransceiverHealthReport.msg
   msg/ADSBVehicle.msg
   msg/ActuatorControl.msg
   msg/Altitude.msg
@@ -113,7 +114,7 @@ set(msg_files
   msg/WaypointList.msg
   msg/WaypointReached.msg
   msg/WheelOdomStamped.msg
-  # [[[end]]] (sum: WNC7AFvjZ5)
+  # [[[end]]] (sum: lZuwMz8gIO)
 )
 
 set(srv_files
