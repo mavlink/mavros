@@ -701,7 +701,10 @@ private:
           "not resetting retries count %zu", pmsg.param_index, param_rx_retries);
       }
 
-      restart_timeout_timer();
+      // Unsolicited replies must not postpone the current missing parameter's retry.
+      if (param_state != PR::RXPARAM_TIMEDOUT || it_is_first_requested) {
+        restart_timeout_timer();
+      }
 
       /* index starting from 0, receivig done */
       if (parameters_missing_idx.empty()) {
@@ -714,7 +717,7 @@ private:
         go_idle();
         list_receiving.notify_all();
 
-      } else if (param_state == PR::RXPARAM_TIMEDOUT) {
+      } else if (param_state == PR::RXPARAM_TIMEDOUT && it_is_first_requested) {
         uint16_t first_miss_idx = parameters_missing_idx.front();
         RCLCPP_DEBUG(lg, "PR: requesting next timed out parameter idx=%u", first_miss_idx);
         param_request_read("", first_miss_idx);

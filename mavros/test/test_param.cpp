@@ -17,9 +17,13 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
+#include <condition_variable>
 #include <future>
+#include <iterator>
 #include <memory>
+#include <mutex>
 #include <thread>
 
 #include "test_plugin_helpers.hpp"
@@ -30,6 +34,7 @@ using namespace std::chrono_literals;  // NOLINT
 using mavros::utils::enum_value;
 using mavlink::common::MAV_PARAM_TYPE;
 using mavlink::common::msg::PARAM_REQUEST_LIST;
+using mavlink::common::msg::PARAM_REQUEST_READ;
 using mavlink::common::msg::PARAM_SET;
 using mavlink::common::msg::PARAM_VALUE;
 using mavros_msgs::srv::ParamPull;
@@ -69,6 +74,8 @@ public:
   std::shared_ptr<mavros::std_plugins::ParamPlugin> plugin;
   std::shared_ptr<std::vector<mavros_msgs::msg::Mavlink>> out;
   rclcpp::Node::SharedPtr client;
+  std::mutex requests_mutex;
+  std::condition_variable requests_changed;
 
   void SetUp() override
   {
@@ -87,13 +94,37 @@ public:
     add_node(uas);
     add_node(plugin->get_node());
     client = make_client_node("param_client");
-    out = capture_sink(uas);
+    out = std::make_shared<std::vector<mavros_msgs::msg::Mavlink>>();
+    sink_subs_.push_back(
+      uas->create_subscription<mavros_msgs::msg::Mavlink>(
+        "/test_mavros_uas/mavlink_sink", rclcpp::QoS(1000).best_effort(),
+        [this](const mavros_msgs::msg::Mavlink::SharedPtr msg) {
+          std::lock_guard<std::mutex> lock(requests_mutex);
+          out->push_back(*msg);
+          requests_changed.notify_all();
+        }));
     start_spin();
   }
 
   void TearDown() override
   {
     stop_spin();
+  }
+
+  //! Wait for request messages and return a synchronized snapshot of that type.
+  std::vector<mavros_msgs::msg::Mavlink> wait_requests(
+    uint32_t msgid, size_t count, std::chrono::milliseconds timeout = 5s)
+  {
+    std::unique_lock<std::mutex> lock(requests_mutex);
+    auto matches = [msgid](const auto & msg) {return msg.msgid == msgid;};
+    requests_changed.wait_for(
+      lock, timeout, [&]() {
+        const auto received = std::count_if(out->begin(), out->end(), matches);
+        return static_cast<size_t>(received) >= count;
+      });
+    std::vector<mavros_msgs::msg::Mavlink> result;
+    std::copy_if(out->begin(), out->end(), std::back_inserter(result), matches);
+    return result;
   }
 
   void inject(const mavlink::mavlink_message_t & mmsg)
@@ -304,6 +335,75 @@ TEST_F(ParamFlowTest, pull_and_get)
   EXPECT_EQ(gres->values[0].integer_value, 10);
   EXPECT_EQ(gres->values[1].integer_value, 20);
   EXPECT_EQ(gres->values[2].type, rcl_interfaces::msg::ParameterType::PARAMETER_NOT_SET);
+}
+
+// Unsolicited replies must not amplify reads or prevent completing a pull.
+TEST_F(ParamFlowTest, pull_retry_duplicate_burst_and_out_of_order)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("param_set_timeout", 0.4));
+  plugin->get_node()->set_parameter(rclcpp::Parameter("param_list_timeout", 3.0));
+  auto pull_client = client->create_client<ParamPull>("/test_mavros_uas/param/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+  auto future = pull_client->async_send_request(std::make_shared<ParamPull::Request>());
+  ASSERT_EQ(wait_requests(PARAM_REQUEST_LIST::MSG_ID, 1).size(), 1u);
+
+  inject(fcu_param_value("A_0", enum_value(MAV_PARAM_TYPE::REAL32), 10.0f, 0, 4));
+  auto reads = wait_requests(PARAM_REQUEST_READ::MSG_ID, 1);
+  ASSERT_EQ(reads.size(), 1u);
+  EXPECT_EQ(decode<PARAM_REQUEST_READ>(reads.front()).param_index, 1);
+
+  for (int i = 0; i < 8; i++) {
+    inject(fcu_param_value("A_0", enum_value(MAV_PARAM_TYPE::REAL32), 11.0f, 0, 4));
+  }
+  inject(fcu_param_value("A_3", enum_value(MAV_PARAM_TYPE::REAL32), 40.0f, 3, 4));
+  EXPECT_EQ(wait_requests(PARAM_REQUEST_READ::MSG_ID, 0).size(), 1u);
+
+  inject(fcu_param_value("A_1", enum_value(MAV_PARAM_TYPE::REAL32), 20.0f, 1, 4));
+  reads = wait_requests(PARAM_REQUEST_READ::MSG_ID, 2);
+  ASSERT_EQ(reads.size(), 2u);
+  EXPECT_EQ(decode<PARAM_REQUEST_READ>(reads.back()).param_index, 2);
+  inject(fcu_param_value("A_2", enum_value(MAV_PARAM_TYPE::REAL32), 30.0f, 2, 4));
+
+  ASSERT_EQ(future.wait_for(1s), std::future_status::ready);
+  auto res = future.get();
+  ASSERT_NE(res, nullptr);
+  EXPECT_TRUE(res->success);
+  EXPECT_EQ(res->param_received, 4u);
+}
+
+// Retry exhaustion must advance to the next missing index during a duplicate stream.
+TEST_F(ParamFlowTest, pull_retry_duplicates_do_not_postpone_exhaustion)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("param_list_timeout", 3.0));
+  auto pull_client = client->create_client<ParamPull>("/test_mavros_uas/param/pull");
+  ASSERT_TRUE(pull_client->wait_for_service(5s));
+  auto future = pull_client->async_send_request(std::make_shared<ParamPull::Request>());
+  ASSERT_EQ(wait_requests(PARAM_REQUEST_LIST::MSG_ID, 1).size(), 1u);
+
+  inject(fcu_param_value("A_0", enum_value(MAV_PARAM_TYPE::REAL32), 10.0f, 0, 3));
+  auto reads = wait_requests(PARAM_REQUEST_READ::MSG_ID, 1);
+  ASSERT_EQ(reads.size(), 1u);
+  EXPECT_EQ(decode<PARAM_REQUEST_READ>(reads.front()).param_index, 1);
+
+  // Keep duplicates closer together than the 100 ms retry timeout.
+  bool requested_next = false;
+  const auto deadline = std::chrono::steady_clock::now() + 1s;
+  while (!requested_next && std::chrono::steady_clock::now() < deadline) {
+    inject(fcu_param_value("A_0", enum_value(MAV_PARAM_TYPE::REAL32), 10.0f, 0, 3));
+    reads = wait_requests(PARAM_REQUEST_READ::MSG_ID, 0);
+    requested_next = std::any_of(
+      reads.begin(), reads.end(), [this](const auto & msg) {
+        return decode<PARAM_REQUEST_READ>(msg).param_index == 2;
+      });
+  }
+  EXPECT_TRUE(requested_next);
+  EXPECT_EQ(reads.size(), 2u);
+
+  // A late reply for the exhausted index still belongs in the cache.
+  inject(fcu_param_value("A_1", enum_value(MAV_PARAM_TYPE::REAL32), 20.0f, 1, 3));
+  inject(fcu_param_value("A_2", enum_value(MAV_PARAM_TYPE::REAL32), 30.0f, 2, 3));
+  ASSERT_EQ(future.wait_for(1s), std::future_status::ready);
+  EXPECT_TRUE(future.get()->success);
 }
 
 // Set timeout: no FCU echo, retries exhausted, report failure.
