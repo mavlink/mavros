@@ -126,8 +126,13 @@ private:
       cmdrq->command = utils::enum_value(MAV_CMD::GET_HOME_POSITION);
 
       auto future = cmd_client->async_send_request(cmdrq);
-      auto response = future.get();
-      ret = response->success;
+      if (future.wait_for(5s) == std::future_status::ready) {
+        auto response = future.get();
+        ret = response->success;
+      } else {
+        cmd_client->remove_pending_request(future);
+        RCLCPP_WARN(get_logger(), "HP: get_home_position service timeout");
+      }
     } catch (std::exception & ex) {
       RCLCPP_ERROR_STREAM(get_logger(), "HP: " << ex.what());
     }

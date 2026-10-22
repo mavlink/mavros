@@ -52,6 +52,7 @@ class CommandTransaction
 public:
   uint16_t expected_command;
   std::promise<uint8_t> promise;
+  bool fulfilled{false};
 
   explicit CommandTransaction(uint16_t command)
   :    expected_command(command)
@@ -205,11 +206,14 @@ private:
 
     for (auto & tr : ack_waiting_list) {
       if (tr.expected_command == ack.command) {
-        try {
-          tr.promise.set_value(ack.result);
-        } catch (const std::future_error & e) {
-          if (e.code() == std::future_errc::promise_already_satisfied) {
-            RCLCPP_ERROR(get_logger(), "CMD: ACK for command %u already processed", ack.command);
+        if (!tr.fulfilled) {
+          tr.fulfilled = true;
+          try {
+            tr.promise.set_value(ack.result);
+          } catch (const std::future_error & e) {
+            if (e.code() == std::future_errc::promise_already_satisfied) {
+              RCLCPP_ERROR(get_logger(), "CMD: ACK for command %u already processed", ack.command);
+            }
           }
         }
         return;
@@ -264,7 +268,9 @@ private:
         RCLCPP_WARN_THROTTLE(
           get_logger(),
           *get_clock(), 10000, "CMD: Command %u already in progress", command);
-        throw std::logic_error("operation in progress");
+        success = false;
+        result = enum_value(MAV_RESULT::TEMPORARILY_REJECTED);
+        return;
       }
     }
 
