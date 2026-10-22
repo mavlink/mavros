@@ -83,10 +83,14 @@ public:
     }
 
     uint8_t tgt_system = 0, tgt_component = 0;
-    if (entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) {
+    if ((entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) &&
+      entry->target_system_ofs < cmsg->len)
+    {
       tgt_system = _MAV_PAYLOAD(cmsg)[entry->target_system_ofs];
     }
-    if (entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT) {
+    if ((entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT) &&
+      entry->target_component_ofs < cmsg->len)
+    {
       tgt_component = _MAV_PAYLOAD(cmsg)[entry->target_component_ofs];
     }
 
@@ -463,11 +467,13 @@ protected:
   size_t wp_set_active;
   size_t wp_retries;
 
-  bool is_timedout;
+  std::atomic<bool> is_timedout;
   std::mutex recv_cond_mutex;
   std::mutex send_cond_mutex;
   std::condition_variable list_receiving;
   std::condition_variable list_sending;
+  bool recv_active{false};
+  bool send_active{false};
 
   rclcpp::CallbackGroup::SharedPtr srv_cg;
   rclcpp::TimerBase::SharedPtr timeout_timer;
@@ -640,6 +646,7 @@ protected:
     RCLCPP_DEBUG(get_logger(), "%s: start scheduled pull", log_prefix);
     wp_state = WP::RXLIST;
     wp_count = 0;
+    begin_recv();
     restart_timeout_timer();
     mission_request_list();
   }
@@ -663,6 +670,7 @@ protected:
 
     wp_state = WP::RXLIST;
     wp_count = 0;
+    begin_recv();
     restart_timeout_timer();
     mission_request_list();
   }
@@ -703,11 +711,31 @@ protected:
     RCLCPP_INFO(get_logger(), "%s: mission received", log_prefix);
   }
 
+  void begin_recv(void)
+  {
+    std::lock_guard<std::mutex> l(recv_cond_mutex);
+    recv_active = true;
+  }
+
+  void begin_send(void)
+  {
+    std::lock_guard<std::mutex> l(send_cond_mutex);
+    send_active = true;
+  }
+
   void go_idle(void)
   {
     reschedule_pull = false;
     wp_state = WP::IDLE;
     timeout_timer->cancel();
+    {
+      std::lock_guard<std::mutex> l1(recv_cond_mutex);
+      recv_active = false;
+    }
+    {
+      std::lock_guard<std::mutex> l2(send_cond_mutex);
+      send_active = false;
+    }
   }
 
   void restart_timeout_timer(void)
@@ -761,10 +789,10 @@ protected:
   {
     std::unique_lock<std::mutex> lock(recv_cond_mutex);
 
-    return list_receiving.wait_for(lock,
-          mission_list_timeout.to_chrono<std::chrono::nanoseconds>()) ==
-           std::cv_status::no_timeout &&
-           !is_timedout;
+    return list_receiving.wait_for(
+      lock,
+      mission_list_timeout.to_chrono<std::chrono::nanoseconds>(),
+      [this]() {return !recv_active;}) && !is_timedout;
   }
 
   /**
@@ -775,10 +803,10 @@ protected:
   {
     std::unique_lock<std::mutex> lock(send_cond_mutex);
 
-    return list_sending.wait_for(lock,
-          mission_list_timeout.to_chrono<std::chrono::nanoseconds>()) ==
-           std::cv_status::no_timeout &&
-           !is_timedout;
+    return list_sending.wait_for(
+      lock,
+      mission_list_timeout.to_chrono<std::chrono::nanoseconds>(),
+      [this]() {return !send_active;}) && !is_timedout;
   }
 
   //! @brief publish the updated waypoint list after operation
