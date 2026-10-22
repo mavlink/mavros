@@ -8,6 +8,7 @@
 
 ## Publishers
 - `~/data` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
+- `~/euler` [type: [geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.
 - `~/data_raw` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
 - `~/mag` [type: [sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
 - `~/temperature_imu` [type: [sensor_msgs::msg::Temperature](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Temperature.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish IMU temperature (HIGHRES_IMU).

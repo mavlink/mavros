@@ -1007,8 +1007,19 @@
       {
         "name": "~/data",
         "type_name": "sensor_msgs::msg::Imu",
-        "line": 117,
+        "line": 118,
         "description": "Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).",
+        "qos": {
+          "kind": "named",
+          "name": "SensorDataQoS",
+          "var": "sensor_qos"
+        }
+      },
+      {
+        "name": "~/euler",
+        "type_name": "geometry_msgs::msg::Vector3Stamped",
+        "line": 120,
+        "description": "Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.",
         "qos": {
           "kind": "named",
           "name": "SensorDataQoS",
