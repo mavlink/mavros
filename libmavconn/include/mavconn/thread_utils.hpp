@@ -85,6 +85,26 @@ bool set_this_thread_name(const std::string & name, Args && ... args)
 }
 
 /**
+ * @brief Set SCHED_FIFO real-time priority on current thread (Linux only)
+ * @param[in] priority SCHED_FIFO priority (1..99); <= 0 is a no-op
+ * @return true if SCHED_FIFO was applied
+ */
+inline bool set_this_thread_sched_fifo(int priority)
+{
+  if (priority <= 0) {
+    return false;
+  }
+#if defined(__linux__)
+  sched_param sp{};
+  sp.sched_priority = priority;
+  return pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp) == 0;
+#else
+  (void)priority;
+  return false;
+#endif
+}
+
+/**
  * @brief Convert to string objects with operator <<
  */
 template<typename T>

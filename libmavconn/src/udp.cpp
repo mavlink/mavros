@@ -144,7 +144,8 @@ void MAVConnUDP::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_context before start
-  asio::post(io_context, [this]() {this->do_recvfrom();});
+  auto sthis = shared_from_this();
+  asio::post(io_context, [sthis]() {sthis->do_recvfrom();});
 
   if (io_runner.owns_thread()) {
     // run io_context for async io
@@ -295,14 +296,39 @@ void MAVConnUDP::send_message(const mavlink::Message & message, const uint8_t so
   }
 }
 
+static inline bool is_transient_udp_error(const asio::error_code & error)
+{
+  return
+    error == asio::error::connection_refused ||
+    error == asio::error::network_unreachable ||
+    error == asio::error::host_unreachable ||
+    error == asio::error::try_again ||
+    error == asio::error::would_block;
+}
+
 void MAVConnUDP::do_recvfrom()
 {
+  std::lock_guard<std::mutex> lock(mutex);
+  if (!is_open()) {
+    return;
+  }
+
   auto sthis = shared_from_this();
   socket.async_receive_from(
     buffer(rx_buf),
     permanent_broadcast ? recv_ep : remote_ep,
     [sthis](error_code error, size_t bytes_transferred) {
       if (error) {
+        if (error == asio::error::operation_aborted || !sthis->is_open()) {
+          return;
+        }
+        if (is_transient_udp_error(error)) {
+          CONSOLE_BRIDGE_logDebug(
+            PFXd "receive transient error: %s, continuing",
+            sthis->conn_id, error.message().c_str());
+          sthis->do_recvfrom();
+          return;
+        }
         CONSOLE_BRIDGE_logError(PFXd "receive: %s", sthis->conn_id, error.message().c_str());
         sthis->close();
         return;
@@ -328,7 +354,8 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
   }
 
   std::lock_guard<std::mutex> lock(mutex);
-  if (tx_q.empty()) {
+  if (!is_open() || tx_q.empty()) {
+    tx_in_progress = false;
     return;
   }
 
@@ -341,18 +368,26 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
     [sthis, &buf_ref](error_code error, size_t bytes_transferred) {
       assert(ssize_t(bytes_transferred) <= buf_ref.len);
 
-      if (error == asio::error::network_unreachable) {
-        CONSOLE_BRIDGE_logWarn(
-          PFXd "sendto: %s, retrying", sthis->conn_id,
-          error.message().c_str());
-        // do not return, try to resend
-      } else if (error) {
-        CONSOLE_BRIDGE_logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
-        sthis->close();
-        return;
+      bool drop_front = false;
+      if (error) {
+        if (error == asio::error::operation_aborted || !sthis->is_open()) {
+          return;
+        }
+        if (is_transient_udp_error(error)) {
+          CONSOLE_BRIDGE_logWarn(
+            PFXd "sendto: %s, dropping datagram", sthis->conn_id,
+            error.message().c_str());
+          drop_front = true;
+        } else {
+          CONSOLE_BRIDGE_logError(PFXd "sendto: %s", sthis->conn_id, error.message().c_str());
+          sthis->close();
+          return;
+        }
       }
 
-      sthis->iostat_tx_add(bytes_transferred);
+      if (!drop_front) {
+        sthis->iostat_tx_add(bytes_transferred);
+      }
       bool continue_send = false;
       {
         std::lock_guard<std::mutex> lock(sthis->mutex);
@@ -362,9 +397,13 @@ void MAVConnUDP::do_sendto(bool check_tx_state)
           return;
         }
 
-        buf_ref.pos += bytes_transferred;
-        if (buf_ref.nbytes() == 0) {
+        if (drop_front) {
           sthis->tx_q.pop_front();
+        } else {
+          buf_ref.pos += bytes_transferred;
+          if (buf_ref.nbytes() == 0) {
+            sthis->tx_q.pop_front();
+          }
         }
 
         if (!sthis->tx_q.empty()) {
