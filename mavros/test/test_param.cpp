@@ -485,6 +485,46 @@ TEST_F(ParamFlowTest, set_unknown_param)
   EXPECT_FALSE(res->success);
 }
 
+// A scheduled pull must preserve an active set and run after it completes.
+TEST_F(ParamFlowTest, scheduled_pull_waits_for_active_set)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("param_set_timeout", 15.0));
+  inject(fcu_param_value("CACHED", enum_value(MAV_PARAM_TYPE::REAL32), 2.0f, 0, 2));
+  auto set_client = client->create_client<ParamSetV2>("/test_mavros_uas/param/set");
+  ASSERT_TRUE(set_client->wait_for_service(5s));
+  auto req = std::make_shared<ParamSetV2::Request>();
+  req->param_id = "SETTING";
+  req->force_set = true;
+  req->value.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+  req->value.double_value = 3.0;
+  auto set_result = set_client->async_send_request(req);
+  ASSERT_EQ(wait_requests(PARAM_SET::MSG_ID, 1).size(), 1u);
+
+  uas->update_connection_status(true);
+  // The default boot timer expires after 10 s while the set is still pending.
+  std::this_thread::sleep_for(11s);
+  EXPECT_EQ(set_result.wait_for(0s), std::future_status::timeout);
+  EXPECT_EQ(wait_requests(PARAM_REQUEST_LIST::MSG_ID, 0).size(), 0u);
+
+  inject(fcu_param_value("SETTING", enum_value(MAV_PARAM_TYPE::REAL32), 3.0f, 1, 2));
+  ASSERT_EQ(set_result.wait_for(5s), std::future_status::ready);
+  ASSERT_TRUE(set_result.get()->success);
+
+  auto get_client = client->create_client<rcl_interfaces::srv::GetParameters>(
+    "/test_mavros_uas/param/get_parameters");
+  ASSERT_TRUE(get_client->wait_for_service(5s));
+  auto get_req = std::make_shared<rcl_interfaces::srv::GetParameters::Request>();
+  get_req->names = {"CACHED"};
+  auto cached = call_service(get_client, get_req);
+  ASSERT_NE(cached, nullptr);
+  ASSERT_EQ(cached->values.size(), 1u);
+  EXPECT_EQ(cached->values[0].type, rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE);
+  EXPECT_DOUBLE_EQ(cached->values[0].double_value, 2.0);
+
+  ASSERT_EQ(wait_requests(PARAM_REQUEST_LIST::MSG_ID, 1, 15s).size(), 1u);
+  inject(fcu_param_value("FRESH", enum_value(MAV_PARAM_TYPE::REAL32), 4.0f, 0, 1));
+}
+
 }   // namespace uas
 }   // namespace mavros
 

@@ -814,6 +814,7 @@ private:
       // try later
       RCLCPP_DEBUG(get_logger(), "PR: busy, reschedule pull");
       schedule_pull();
+      return;
     }
 
     RCLCPP_DEBUG(get_logger(), "PR: start scheduled pull");
