@@ -28,6 +28,7 @@
 #include "sensor_msgs/msg/temperature.hpp"
 #include "sensor_msgs/msg/fluid_pressure.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
+#include "geometry_msgs/msg/vector3_stamped.hpp"
 
 namespace mavros
 {
@@ -115,6 +116,8 @@ public:
 
     //! Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
     imu_pub = node->create_publisher<sensor_msgs::msg::Imu>("~/data", sensor_qos);
+    //! Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.
+    euler_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("~/euler", sensor_qos);
     //! Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
     imu_raw_pub = node->create_publisher<sensor_msgs::msg::Imu>("~/data_raw", sensor_qos);
     //! Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
@@ -156,6 +159,7 @@ private:
   std::string frame_id;
 
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub;
+  rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr euler_pub;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_raw_pub;
   rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr magn_pub;
   rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr temp_imu_pub;
@@ -204,10 +208,12 @@ private:
    * @param orientation_ned  Orientation in the aircraft NED frame
    * @param gyro_flu         Angular velocity/rate in the base_link Forward-Left-Up frame
    * @param gyro_frd         Angular velocity/rate in the aircraft Forward-Right-Down frame
+   * @param rpy_ned          Roll, pitch, yaw (rad) of aircraft -> NED
    */
   void publish_imu_data(
     uint32_t time_boot_ms, Eigen::Quaterniond & orientation_enu,
-    Eigen::Quaterniond & orientation_ned, Eigen::Vector3d & gyro_flu, Eigen::Vector3d & gyro_frd)
+    Eigen::Quaterniond & orientation_ned, Eigen::Vector3d & gyro_flu, Eigen::Vector3d & gyro_frd,
+    const Eigen::Vector3d & rpy_ned)
   {
     auto imu_ned_msg = sensor_msgs::msg::Imu();
     auto imu_enu_msg = sensor_msgs::msg::Imu();
@@ -265,6 +271,14 @@ private:
     // [pub_enu]
     imu_pub->publish(imu_enu_msg);
     // [pub_enu]
+
+    // Same estimate as MAVLink ATTITUDE: x=roll, y=pitch, z=yaw, aircraft -> NED.
+    auto euler_msg = geometry_msgs::msg::Vector3Stamped();
+    euler_msg.header = imu_ned_msg.header;
+    euler_msg.vector.x = rpy_ned.x();
+    euler_msg.vector.y = rpy_ned.y();
+    euler_msg.vector.z = rpy_ned.z();
+    euler_pub->publish(euler_msg);
   }
 
   /**
@@ -366,9 +380,12 @@ private:
     auto gyro_flu = ftf::transform_frame_aircraft_baselink(gyro_frd);
     // [rotate_gyro]
 
+    // Pass the estimator angles through. Do not recover them from the quaternion:
+    // Eigen::eulerAngles does not preserve the original triple outside 0..pi.
+    const Eigen::Vector3d ned_rpy(att.roll, att.pitch, att.yaw);
     publish_imu_data(
       att.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation, gyro_flu,
-      gyro_frd);
+      gyro_frd, ned_rpy);
   }
 
   /**
@@ -414,9 +431,11 @@ private:
      */
     auto gyro_flu = ftf::transform_frame_aircraft_baselink(gyro_frd);
 
+    // Extract from the NED quaternion, before the ENU / base_link rotation.
+    const auto ned_rpy = ftf::quaternion_to_rpy_zyx(ned_aircraft_orientation);
     publish_imu_data(
       att_q.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation,
-      gyro_flu, gyro_frd);
+      gyro_flu, gyro_frd, ned_rpy);
   }
 
   /**

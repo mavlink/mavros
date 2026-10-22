@@ -414,6 +414,15 @@ inline Eigen::Quaterniond quaternion_from_rpy(
 Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond & q);
 
 /**
+ * @brief ZYX (yaw, pitch, roll) inverse of @a quaternion_from_rpy().
+ *
+ * Roll and yaw are in (-pi, pi], pitch is in [-pi/2, pi/2].
+ * @a quaternion_to_rpy() uses Eigen::eulerAngles and does not preserve the
+ * original triple outside 0..pi.
+ */
+Eigen::Vector3d quaternion_to_rpy_zyx(const Eigen::Quaterniond & q);
+
+/**
  * @brief Convert quaternion to euler angles
  */
 inline void quaternion_to_rpy(

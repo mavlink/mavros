@@ -14,6 +14,8 @@
  * @{
  */
 
+#include <cmath>
+
 #include <mavros/frame_tf.hpp>
 
 namespace mavros
@@ -64,6 +66,40 @@ Eigen::Vector3d quaternion_to_rpy(const Eigen::Quaterniond & q)
   }
   // pitch = -π/2: only (yaw + roll) is observable
   return Eigen::Vector3d(0.0, -M_PI / 2.0, std::atan2(-m(1, 2), m(1, 1)));
+}
+
+Eigen::Vector3d quaternion_to_rpy_zyx(const Eigen::Quaterniond & q)
+{
+  // Inverse of quaternion_from_rpy(): q = Rz(yaw) * Ry(pitch) * Rx(roll).
+  const double n = q.norm();
+  if (n < 1e-12) {
+    return Eigen::Vector3d::Zero();
+  }
+
+  const double w = q.w() / n;
+  const double x = q.x() / n;
+  const double y = q.y() / n;
+  const double z = q.z() / n;
+
+  const double sinp = 2.0 * (w * y - z * x);
+  // At pitch = ±90 deg, roll and yaw are one angle. The general atan2 form
+  // loses the rotation there, including when sinp lands a ulp outside [-1, 1].
+  if (sinp >= 1.0 - 1e-8) {
+    const double r01 = 2.0 * (x * y - w * z);
+    const double r02 = 2.0 * (x * z + w * y);
+    return Eigen::Vector3d(0.0, M_PI / 2.0, -std::atan2(r01, r02));
+  }
+  if (sinp <= -1.0 + 1e-8) {
+    const double r01 = 2.0 * (x * y - w * z);
+    const double r02 = 2.0 * (x * z + w * y);
+    return Eigen::Vector3d(0.0, -M_PI / 2.0, std::atan2(-r01, -r02));
+  }
+
+  const double roll = std::atan2(2.0 * (w * x + y * z), 1.0 - 2.0 * (x * x + y * y));
+  const double pitch = std::asin(sinp);
+  const double yaw = std::atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z));
+
+  return Eigen::Vector3d(roll, pitch, yaw);
 }
 
 double quaternion_get_yaw(const Eigen::Quaterniond & q)
