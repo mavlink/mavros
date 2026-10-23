@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <future>
 #include <memory>
 #include <string>
 #include <thread>
@@ -252,6 +253,25 @@ public:
   void run_clear_stale_remote_addrs(Router::SharedPtr router)
   {
     router->periodic_clear_stale_remote_addrs();
+  }
+
+  void track_node(Router::SharedPtr router)
+  {
+    router->startup_delay_timer->cancel();
+    routers_.push_back(router);
+  }
+
+  int get_io_thread_policy(Router::SharedPtr router)
+  {
+    std::promise<int> policy;
+    asio::post(
+      *router->get_shared_io(), [&policy]() {
+        int pol = -1;
+        sched_param sp{};
+        pthread_getschedparam(pthread_self(), &pol, &sp);
+        policy.set_value(pol);
+      });
+    return policy.get_future().get();
   }
 };
 
@@ -704,6 +724,31 @@ TEST_F(TestRouter, route_stress_multithreaded_broadcast)
   EXPECT_EQ(dst2->send_count.load(), expected_sent_per_endpoint);
   EXPECT_EQ(dst3->send_count.load(), expected_sent_per_endpoint);
   EXPECT_EQ(dst4->send_count.load(), expected_sent_per_endpoint);
+}
+
+TEST_F(TestRouter, rt_sched_fifo_priority_default_off)
+{
+  auto router = std::make_shared<Router>("rt_default_test");
+  track_node(router);
+
+  EXPECT_EQ(0, router->get_parameter("rt_sched_fifo_priority").as_int());
+  EXPECT_FALSE(router->set_parameter(rclcpp::Parameter("rt_sched_fifo_priority", 10)).successful);
+  EXPECT_EQ(SCHED_OTHER, get_io_thread_policy(router));
+}
+
+TEST_F(TestRouter, rt_sched_fifo_priority_applies_to_io_thread)
+{
+  // Expected result depends on whether this process may use SCHED_FIFO at all.
+  int probe = -1;
+  std::thread([&probe]() {probe = mavconn::utils::set_this_thread_sched_fifo(1);}).join();
+
+  auto router = std::make_shared<Router>(
+    rclcpp::NodeOptions().parameter_overrides({{"rt_sched_fifo_priority", 1}}),
+    "rt_override_test");
+  track_node(router);
+
+  EXPECT_EQ(1, router->get_parameter("rt_sched_fifo_priority").as_int());
+  EXPECT_EQ(probe == 0 ? SCHED_FIFO : SCHED_OTHER, get_io_thread_policy(router));
 }
 
 #if 0  // TODO(vooon):

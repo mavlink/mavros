@@ -121,6 +121,31 @@ TEST(UTILS, format)
   EXPECT_EQ(s256, format("%s", s256.c_str()));
 }
 
+#ifdef __linux__
+TEST(UTILS, set_this_thread_sched_fifo)
+{
+  using mavconn::utils::set_this_thread_sched_fifo;
+
+  std::thread(
+    []() {
+      EXPECT_EQ(EINVAL, set_this_thread_sched_fifo(1000));
+
+      // Either applied, or refused without CAP_SYS_NICE / rtprio limit.
+      int ret = set_this_thread_sched_fifo(1);
+      int policy = -1;
+      sched_param sp{};
+      ASSERT_EQ(0, pthread_getschedparam(pthread_self(), &policy, &sp));
+      if (ret == 0) {
+        EXPECT_EQ(SCHED_FIFO, policy);
+        EXPECT_EQ(1, sp.sched_priority);
+      } else {
+        EXPECT_EQ(EPERM, ret);
+        EXPECT_EQ(SCHED_OTHER, policy);
+      }
+    }).join();
+}
+#endif
+
 TEST(IOSTAT, finite_speed_for_subsecond_polling)
 {
   DummyConn conn;
