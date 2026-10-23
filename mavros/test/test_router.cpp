@@ -639,6 +639,64 @@ TEST_F(TestRouter, clear_stale_remote_addrs_keeps_active_and_reaps_stale)
   ASSERT_NE(uas1->remote_addrs.end(), uas1->remote_addrs.find(0x01BF));
 }
 
+TEST_F(TestRouter, endpoint_recv_message_concurrent_with_stale_clear)
+{
+  auto router = create_node_no_endpoints();
+
+  auto make_ep = [router](id_t id, LT type) {
+      auto ep = std::make_shared<StressEndpoint>();
+      ep->parent = router.get();
+      ep->id = id;
+      ep->link_type = type;
+      ep->remote_addrs = {0x0000};
+      return ep;
+    };
+
+  auto & endpoints = get_endpoints(router);
+  auto src = make_ep(1000, LT::fcu);
+  auto dst = make_ep(1001, LT::gcs);
+  endpoints[src->id] = src;
+  endpoints[dst->id] = dst;
+
+  auto hb = make_heartbeat();
+  auto hbmsg = convert_message(hb, 0x0101);
+  constexpr auto fr = Framing::ok;
+
+  constexpr size_t thread_count = 4;
+  constexpr size_t iterations_per_thread = 5000;
+  std::atomic<bool> done{false};
+
+  // Each clear pass marks 1.1 stale; receivers must keep re-learning it via the write path.
+  std::thread clearer([&]() {
+      while (!done.load()) {
+        run_clear_stale_remote_addrs(router);
+        std::this_thread::yield();
+      }
+    });
+
+  std::vector<std::thread> workers;
+  for (size_t i = 0; i < thread_count; i++) {
+    workers.emplace_back(
+      [&]() {
+        for (size_t n = 0; n < iterations_per_thread; n++) {
+          src->recv_message(&hbmsg, fr);
+        }
+      });
+  }
+  for (auto & w : workers) {
+    w.join();
+  }
+  done = true;
+  clearer.join();
+
+  src->recv_message(&hbmsg, fr);
+  run_clear_stale_remote_addrs(router);
+
+  EXPECT_NE(src->remote_addrs.end(), src->remote_addrs.find(0x0100));
+  EXPECT_NE(src->remote_addrs.end(), src->remote_addrs.find(0x0101));
+  EXPECT_EQ(dst->send_count.load(), thread_count * iterations_per_thread + 1);
+}
+
 TEST_F(TestRouter, route_stress_multithreaded_broadcast)
 {
   if (const char * skip = std::getenv("MAVROS_SKIP_STRESS_TESTS");

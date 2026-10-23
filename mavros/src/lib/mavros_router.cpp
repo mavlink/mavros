@@ -447,9 +447,20 @@ void Endpoint::recv_message(const mavlink_message_t * msg, const Framing framing
   const addr_t sysid_addr = msg->sysid << 8;
   const addr_t sysid_compid_addr = (msg->sysid << 8) | msg->compid;
 
-  bool new_sysid_addr;
-  bool new_sysid_compid_addr;
+  // Known, non-stale sources only need a shared lock.
+  bool need_write;
   {
+    std::shared_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
+    need_write =
+      this->remote_addrs.find(sysid_addr) == this->remote_addrs.end() ||
+      this->remote_addrs.find(sysid_compid_addr) == this->remote_addrs.end() ||
+      this->stale_addrs.find(sysid_addr) != this->stale_addrs.end() ||
+      this->stale_addrs.find(sysid_compid_addr) != this->stale_addrs.end();
+  }
+
+  bool new_sysid_addr = false;
+  bool new_sysid_compid_addr = false;
+  if (need_write) {
     std::unique_lock<std::shared_mutex> lock(this->remote_addrs_mutex);
 
     // save source addr to remote_addrs
