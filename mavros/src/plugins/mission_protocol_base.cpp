@@ -312,9 +312,9 @@ void MissionBase::handle_mission_ack(
     // will get to us and seq will sync up.
     RCLCPP_DEBUG(get_logger(), "%s: Received INVALID_SEQUENCE ack", log_prefix);
   } else if (is_tx_failed()) {
-    go_idle();
     // use this flag for failure report
     is_timedout = true;
+    go_idle();
     lock.unlock();
     list_sending.notify_all();
 
@@ -322,14 +322,15 @@ void MissionBase::handle_mission_ack(
       get_logger(), log_prefix << ": upload failed: " << utils::to_string(
         ack_type));
   } else if (wp_state == WP::CLEAR) {
-    go_idle();
     if (ack_type != MRES::ACCEPTED) {
       is_timedout = true;
+      go_idle();
       lock.unlock();
       RCLCPP_ERROR_STREAM(
         get_logger(),
         log_prefix << ": clear failed: " << utils::to_string(ack_type));
     } else {
+      go_idle();
       waypoints.clear();
       waypoints_id = mack.opaque_id;
       restart_pull_period();
@@ -495,8 +496,8 @@ void MissionBase::timeout_cb()
     mission_request(wp_cur_id);
   } else {
     RCLCPP_ERROR(get_logger(), "%s: timed out.", log_prefix);
-    go_idle();
     is_timedout = true;
+    go_idle();
     // try again a full period after a failed transfer
     restart_pull_period();
     // prevent waiting cond var timeout
