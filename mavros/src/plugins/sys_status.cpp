@@ -290,7 +290,7 @@ public:
   // Move constructor, required to dynamically create an array of instances of this class
   // because it contains an unique mutex object
   BatteryStatusDiag(BatteryStatusDiag && other) noexcept
-  : diagnostic_updater::DiagnosticTask(""),
+  : diagnostic_updater::DiagnosticTask(other.getName()),
     voltage(-1.0f),
     current(0.0f),
     remaining(0.0f),
@@ -304,7 +304,12 @@ public:
   BatteryStatusDiag & operator=(BatteryStatusDiag && other) noexcept
   {
     if (this != &other) {
-      *this = std::move(other);
+      std::scoped_lock lock(mutex, other.mutex);
+      voltage = other.voltage;
+      current = other.current;
+      remaining = other.remaining;
+      min_voltage = other.min_voltage;
+      cell_voltage = std::move(other.cell_voltage);
     }
     return *this;
   }
@@ -897,13 +902,13 @@ private:
     // APM uses custom version array[8] as a string
     log_info("%s: Capabilities         0x%016llx", apv.capabilities);
     log_info(
-      "%s: Flight software:     %08x (%*s)",
+      "%s: Flight software:     %08x (%.*s)",
       apv.flight_sw_version, 8, apv.flight_custom_version.data());
     log_info(
-      "%s: Middleware software: %08x (%*s)",
+      "%s: Middleware software: %08x (%.*s)",
       apv.middleware_sw_version, 8, apv.middleware_custom_version.data());
     log_info(
-      "%s: OS software:         %08x (%*s)",
+      "%s: OS software:         %08x (%.*s)",
       apv.os_sw_version, 8, apv.os_custom_version.data());
     log_info("%s: Board hardware:      %08x", apv.board_version);
     log_info("%s: VID/PID:             %04x:%04x", apv.vendor_id, apv.product_id);

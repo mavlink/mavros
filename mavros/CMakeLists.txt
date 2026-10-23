@@ -331,6 +331,12 @@ if(BUILD_TESTING)
     ${mavros_msgs_TARGETS}
   )
 
+  ament_add_gtest(mavros-plugin-sys-status test/test_sys_status.cpp)
+  target_link_libraries(mavros-plugin-sys-status
+    mavros
+    ${mavros_msgs_TARGETS}
+  )
+
   # Regression test for #2294: plugin sub-nodes must apply process params files.
   ament_add_gtest(mavros-plugin-params-test test/test_plugin_params.cpp)
   target_link_libraries(mavros-plugin-params-test
