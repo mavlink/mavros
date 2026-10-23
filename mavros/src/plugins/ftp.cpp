@@ -290,6 +290,9 @@ public:
     read_size(0),
     read_offset(0),
     read_buffer{},
+    read_burst(false),
+    burst_supported(true),
+    burst_resyncs(0),
     write_offset(0),
     write_buffer{},
     write_it{},
@@ -415,12 +418,20 @@ private:
   // FTP:Open / FTP:Close
   std::string open_path;
   size_t open_size;
-  std::map<std::string, uint32_t> session_file_map;
+  struct OpenFile
+  {
+    uint32_t session;
+    size_t size;
+  };
+  std::map<std::string, OpenFile> session_file_map;
 
   // FTP:Read
   size_t read_size;
   uint32_t read_offset;
   V_FileData read_buffer;
+  bool read_burst;
+  bool burst_supported;
+  int burst_resyncs;
 
   // FTP:Write
   uint32_t write_offset;
@@ -436,6 +447,11 @@ private:
   static constexpr int LIST_TIMEOUT_MS = 5000;
   static constexpr int OPEN_TIMEOUT_MS = 1000;
   static constexpr int CHUNK_TIMEOUT_MS = 1000;
+
+  //! Seqnr window of one burst, larger than any FCU burst (ArduPilot: up to 2000 packets)
+  static constexpr uint16_t BURST_SEQ_WINDOW = 4096;
+  //! Burst restarts after lost packets without any data in between
+  static constexpr int MAX_BURST_RESYNCS = 10;
 
   //! Maximum difference between allocated space and used
   static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
@@ -471,9 +487,19 @@ private:
     }
 
     // A late reply to a request that already timed out carries an older seqnr.
+    // Burst replies count up from the expected seqnr, one per packet.
     const uint16_t incoming_seqnr = hdr.seqNumber;
     const uint16_t expected_seqnr = last_send_seqnr + 1;
-    if (incoming_seqnr != expected_seqnr) {
+    if (hdr.req_opcode == FTPRequest::kCmdBurstReadFile) {
+      if (op_state != OP::READ || !read_burst) {
+        return;
+      }
+      if (static_cast<uint16_t>(incoming_seqnr - expected_seqnr) >= BURST_SEQ_WINDOW) {
+        // still streaming an earlier burst, which shows the FCU is alive
+        rx_progress++;
+        return;
+      }
+    } else if (incoming_seqnr != expected_seqnr) {
       RCLCPP_WARN(
         get_logger(), "FTP: Ignoring out of sync reply, seqnr: %u != %u",
         incoming_seqnr, expected_seqnr);
@@ -551,6 +577,15 @@ private:
       (error_code == FTPRequest::kErrFileNotFound ||
       (error_code == FTPRequest::kErrFailErrno &&
       (r_errno == 0 || r_errno == ENOENT || r_errno == ERANGE)));
+
+    if (prev_op == OP::READ && read_burst && error_code == FTPRequest::kErrUnknownCommand) {
+      RCLCPP_WARN(get_logger(), "FTP: FCU does not support burst read, using kCmdReadFile");
+      burst_supported = false;
+      read_burst = false;
+      op_state = OP::READ;
+      send_read_command();
+      return;
+    }
 
     if (prev_op == OP::LIST && (error_code == FTPRequest::kErrEOF || list_errno_end)) {
       /* dir list done */
@@ -655,7 +690,7 @@ private:
     RCLCPP_INFO(
       get_logger(), "FTP:Open %s: success, session %u, size %zu",
       open_path.c_str(), hdr.session, open_size);
-    session_file_map.insert(std::make_pair(open_path, hdr.session));
+    session_file_map.insert(std::make_pair(open_path, OpenFile{hdr.session, open_size}));
     go_idle(false);
   }
 
@@ -668,6 +703,18 @@ private:
     if (hdr.session != active_session) {
       RCLCPP_ERROR(lg, "FTP:Read unexpected session");
       go_idle(true, EBADSLT);
+      return;
+    }
+
+    if (read_burst && hdr.offset > read_offset) {
+      // lost packet(s), restart the burst at the gap
+      if (++burst_resyncs > MAX_BURST_RESYNCS) {
+        RCLCPP_ERROR(lg, "FTP:Read too many lost burst packets");
+        go_idle(true, EIO);
+        return;
+      }
+      RCLCPP_DEBUG(lg, "FTP:Read burst gap at %u, got %u", read_offset, hdr.offset);
+      send_burst_read_command();
       return;
     }
 
@@ -684,10 +731,18 @@ private:
     const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr.size);
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
+    read_offset += bytes_to_copy;
 
-    if (read_buffer.size() < read_size && hdr.size == FTPRequest::DATA_MAXSZ) {
+    if (read_buffer.size() >= read_size) {
+      read_file_end();
+    } else if (read_burst) {
+      // the FCU ends a burst at EOF (NAK) or after its own packet limit
+      burst_resyncs = 0;
+      if (hdr.padding[0]) {
+        send_burst_read_command();
+      }
+    } else if (hdr.size == FTPRequest::DATA_MAXSZ) {
       // Possibly more data
-      read_offset += bytes_to_copy;
       send_read_command();
     } else {
       read_file_end();
@@ -858,6 +913,21 @@ private:
     req.send(uas, ++last_send_seqnr);
   }
 
+  void send_burst_read_command()
+  {
+    RCLCPP_DEBUG_STREAM(
+      get_logger(), "FTP:m: kCmdBurstReadFile: " << active_session << " off: " << read_offset);
+    FTPRequest req(FTPRequest::kCmdBurstReadFile, active_session);
+    auto hdr = req.header();
+    hdr.offset = read_offset;
+    hdr.size = FTPRequest::DATA_MAXSZ;
+    req.set_header(hdr);
+    // Each burst gets its own seqnr window, so packets still streaming from an
+    // earlier burst cannot be taken for this one.
+    last_send_seqnr += BURST_SEQ_WINDOW;
+    req.send(uas, ++last_send_seqnr);
+  }
+
   void send_write_command(const size_t bytes_to_copy)
   {
     // write chunk from write_buffer [write_it..bytes_to_copy]
@@ -1003,7 +1073,7 @@ private:
     }
 
     op_state = OP::ACK;
-    send_terminate_command(it->second);
+    send_terminate_command(it->second.session);
     session_file_map.erase(it);
     return true;
   }
@@ -1024,7 +1094,7 @@ private:
     }
 
     op_state = OP::READ;
-    active_session = it->second;
+    active_session = it->second.session;
     read_size = len;
     read_offset = off;
     read_buffer.clear();
@@ -1035,7 +1105,16 @@ private:
       read_buffer.reserve(len);
     }
 
-    send_read_command();
+    // A burst streams until EOF or the FCU's own limit (ArduPilot 500 or 2000
+    // packets, PX4 ~35 KB) and cannot be stopped. Use it only when the read runs
+    // to EOF, so nothing past the requested range is sent.
+    read_burst = burst_supported && off + len >= it->second.size;
+    burst_resyncs = 0;
+    if (read_burst) {
+      send_burst_read_command();
+    } else {
+      send_read_command();
+    }
     return true;
   }
 
@@ -1055,7 +1134,7 @@ private:
     }
 
     op_state = OP::WRITE;
-    active_session = it->second;
+    active_session = it->second.session;
     write_offset = off;
     write_buffer = std::move(data);
     write_it = write_buffer.begin();
