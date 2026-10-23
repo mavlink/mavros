@@ -253,6 +253,20 @@ public:
   {
     router->periodic_clear_stale_remote_addrs();
   }
+
+  rclcpp::CallbackGroup::SharedPtr get_sink_cb_group(Router::SharedPtr router)
+  {
+    return router->sink_cb_group;
+  }
+
+  void del_endpoint(Router::SharedPtr router, id_t id)
+  {
+    auto req = std::make_shared<mavros_msgs::srv::EndpointDel::Request>();
+    auto resp = std::make_shared<mavros_msgs::srv::EndpointDel::Response>();
+    req->id = id;
+    router->del_endpoint(req, resp);
+    EXPECT_TRUE(resp->successful);
+  }
 };
 
 TEST_F(TestRouter, endpoint_back_reference_does_not_retain_router)
@@ -704,6 +718,37 @@ TEST_F(TestRouter, route_stress_multithreaded_broadcast)
   EXPECT_EQ(dst2->send_count.load(), expected_sent_per_endpoint);
   EXPECT_EQ(dst3->send_count.load(), expected_sent_per_endpoint);
   EXPECT_EQ(dst4->send_count.load(), expected_sent_per_endpoint);
+}
+
+TEST_F(TestRouter, ros_endpoint_sink_in_own_callback_group)
+{
+  auto router = this->create_node_no_endpoints();
+  router->set_parameters(
+    std::vector<rclcpp::Parameter>{
+        rclcpp::Parameter("uas_urls", std::vector<std::string>{"/uas_sink_test"})
+      });
+
+  auto ep = std::dynamic_pointer_cast<ROSEndpoint>(get_endpoints(router).at(1000));
+  ASSERT_TRUE(ep);
+  ASSERT_TRUE(ep->sink);
+
+  auto group = get_sink_cb_group(router);
+  ASSERT_TRUE(group);
+  EXPECT_NE(group, router->get_node_base_interface()->get_default_callback_group());
+  auto sink = ep->sink;
+  EXPECT_EQ(
+    group->find_subscription_ptrs_if(
+      [&sink](const rclcpp::SubscriptionBase::SharedPtr & s) {return s == sink;}),
+    sink);
+
+  // A sink callback already dispatched when del_endpoint() runs must not touch the freed endpoint.
+  std::weak_ptr<Endpoint> observer = ep;
+  ep.reset();
+  del_endpoint(router, 1000);
+  EXPECT_TRUE(observer.expired());
+
+  std::shared_ptr<void> msg = std::make_shared<mavros_msgs::msg::Mavlink>();
+  EXPECT_NO_THROW(sink->handle_message(msg, rclcpp::MessageInfo()));
 }
 
 #if 0  // TODO(vooon):

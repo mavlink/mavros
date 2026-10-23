@@ -13,8 +13,10 @@
 
 #include <string>
 #include <memory>
+#include <thread>
 #include <vector>
 
+#include "mavconn/thread_utils.hpp"
 #include "mavros/mavros_router.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/uas_executor.hpp"
@@ -28,6 +30,9 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto exec = mavros::uas::make_executor(rclcpp::ExecutorOptions(), 2);
+  // Router gets its own executor so UAS -> FCU traffic does not share threads
+  // with UAS node callbacks.
+  auto router_exec = mavros::uas::make_executor(rclcpp::ExecutorOptions(), 2);
 
   rclcpp::NodeOptions options;
   // NOTE(vooon): when router and uas run in the same process the internal
@@ -66,7 +71,7 @@ int main(int argc, char * argv[])
 
   RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
   auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
-  exec->add_node(router_node);
+  router_exec->add_node(router_node);
 
   {
     std::vector<rclcpp::Parameter> router_params{};
@@ -105,7 +110,15 @@ int main(int argc, char * argv[])
     uas_node->set_parameters(uas_params);
   }
 
+  std::thread router_thd(
+    [&router_exec]() {
+      mavconn::utils::set_this_thread_name("mavros-router");
+      router_exec->spin();
+    });
+
   exec->spin();
+  router_exec->cancel();
+  router_thd.join();
   rclcpp::shutdown();
   return 0;
 }

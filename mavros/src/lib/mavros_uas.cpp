@@ -61,6 +61,8 @@ UAS::UAS(
   base_link_frame_id("base_link"),
   odom_frame_id("odom"),
   map_frame_id("map"),
+  source_cb_group(this->create_callback_group(
+      rclcpp::CallbackGroupType::MutuallyExclusive, false)),
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
   loaded_plugins{},
   plugin_subscriptions{},
@@ -215,6 +217,22 @@ void UAS::startup()
 
   connect_to_router();
 
+  // Started only after the plugin routing table is complete.
+  source_exec.add_callback_group(source_cb_group, this->get_node_base_interface());
+  source_spin_thd = thread_ptr(
+    new std::thread(
+      [this]() {
+        utils::set_this_thread_name("uas-rx/%d.%d", source_system, source_component);
+        this->source_exec.spin();
+      }),
+    [this](std::thread * t) {
+      this->source_exec.cancel();
+      if (t->joinable()) {
+        t->join();
+      }
+      delete t;
+    });
+
   // Publish helper TFs used for frame transformation in the odometry plugin
   setup_static_tf();
 
@@ -237,7 +255,8 @@ void UAS::startup()
 
 UAS::~UAS()
 {
-  // Stop the executor before plugin nodes and subscriptions begin tearing down.
+  // Stop the executors before plugin nodes and subscriptions begin tearing down.
+  source_spin_thd.reset();
   exec_spin_thd.reset();
 }
 
@@ -417,9 +436,11 @@ void UAS::connect_to_router()
       "%s/%s", this->uas_url.c_str(),
       "mavlink_sink"), qos);
 
+  rclcpp::SubscriptionOptions sub_opts;
+  sub_opts.callback_group = this->source_cb_group;
   this->source = this->create_subscription<mavros_msgs::msg::Mavlink>(
     utils::format("%s/%s", this->uas_url.c_str(), "mavlink_source"), qos,
-    std::bind(&UAS::recv_message, this, std::placeholders::_1));
+    std::bind(&UAS::recv_message, this, std::placeholders::_1), sub_opts);
 }
 
 void UAS::recv_message(mavros_msgs::msg::Mavlink::UniquePtr rmsg)

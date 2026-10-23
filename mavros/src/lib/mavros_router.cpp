@@ -612,9 +612,18 @@ std::pair<bool, std::string> ROSEndpoint::open()
       utils::format(
         "%s/%s", this->url.c_str(),
         "mavlink_source"), qos);
+    // The sink group runs concurrently with del_endpoint(), so an in-flight
+    // callback must not outlive the endpoint.
+    rclcpp::SubscriptionOptions sub_opts;
+    sub_opts.callback_group = nh->sink_cb_group;
+    auto weak_self = weak_from_this();
     this->sink = nh->create_subscription<mavros_msgs::msg::Mavlink>(
       utils::format("%s/%s", this->url.c_str(), "mavlink_sink"), qos,
-      std::bind(&ROSEndpoint::ros_recv_message, this, std::placeholders::_1));
+      [weak_self](mavros_msgs::msg::Mavlink::UniquePtr rmsg) {
+        if (auto self = std::static_pointer_cast<ROSEndpoint>(weak_self.lock())) {
+          self->ros_recv_message(std::move(rmsg));
+        }
+      }, sub_opts);
   } catch (rclcpp::exceptions::InvalidTopicNameError & ex) {
     return {false, ex.what()};
   }

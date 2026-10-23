@@ -14,11 +14,17 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <pthread.h>
+
+#include <array>
+#include <atomic>
+#include <chrono>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 #include "rclcpp/executors.hpp"
 #include "mavconn/interface.hpp"
@@ -384,6 +390,73 @@ TEST_F(TestUAS, synchronise_stamp_out_of_range_falls_back_to_now)
   EXPECT_NEAR(
     uas->synchronise_stamp(std::numeric_limits<uint64_t>::max()).seconds(),
     uas->now().seconds(), 1.0);
+}
+
+TEST_F(TestUAS, source_runs_on_dedicated_thread)
+{
+  struct RxPlugin : public plugin::Plugin
+  {
+    explicit RxPlugin(UAS::SharedPtr uas_)
+    : Plugin(uas_.get()) {}
+
+    Subscriptions get_subscriptions() override
+    {
+      return {
+        make_handler(mavlink::common::msg::STATUSTEXT::MSG_ID, &RxPlugin::on_msg),
+      };
+    }
+
+    void on_msg(const mavlink_message_t *, const Framing)
+    {
+      if (in_handler.fetch_add(1) != 0) {
+        overlapped = true;
+      }
+      std::array<char, 16> name{};
+      pthread_getname_np(pthread_self(), name.data(), name.size());
+      if (std::string(name.data()).rfind("uas-rx/", 0) != 0) {
+        wrong_thread = true;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      in_handler.fetch_sub(1);
+      count.fetch_add(1);
+    }
+
+    std::atomic<int> in_handler{0};
+    std::atomic<size_t> count{0};
+    std::atomic<bool> overlapped{false};
+    std::atomic<bool> wrong_thread{false};
+  };
+
+  auto uas = create_node();
+  auto rx_plugin = std::make_shared<RxPlugin>(uas);
+  testing::Mock::AllowLeak(&(*uas));
+
+  uas->set_parameter(rclcpp::Parameter("uas_url", "/uas_rx_test"));
+  uas->set_parameter(rclcpp::Parameter("plugin_allowlist", UAS::StrV{"sys_status"}));
+  EXPECT_CALL(*uas, create_plugin_instance("sys_status")).WillOnce(Return(rx_plugin));
+  take_startup_callback(uas)();
+
+  // Nothing spins the UAS node here: only its own uas-rx thread can deliver.
+  auto pub_node = std::make_shared<rclcpp::Node>("test_uas_rx_pub");
+  auto pub = pub_node->create_publisher<mavros_msgs::msg::Mavlink>(
+    "/uas_rx_test/mavlink_source", rclcpp::QoS(1000).best_effort().durability_volatile());
+
+  mavlink::common::msg::STATUSTEXT stxt{};
+  auto mmsg = convert_message(stxt);
+  mavros_msgs::msg::Mavlink rmsg{};
+  ASSERT_TRUE(mavros_msgs::mavlink::convert(mmsg, rmsg, utils::enum_value(Framing::ok)));
+
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+  while (rx_plugin->count.load() < 50 && std::chrono::steady_clock::now() < deadline) {
+    for (int i = 0; i < 10; i++) {
+      pub->publish(rmsg);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  EXPECT_GE(rx_plugin->count.load(), 50U);
+  EXPECT_FALSE(rx_plugin->overlapped.load());
+  EXPECT_FALSE(rx_plugin->wrong_thread.load());
 }
 
 }  // namespace uas

@@ -657,6 +657,12 @@ private:
   UASExecutor exec;
   thread_ptr exec_spin_thd;
 
+  // The FCU -> UAS subscription gets its own thread so plugin handlers are not
+  // queued behind other callbacks of whatever executor spins this node.
+  rclcpp::CallbackGroup::SharedPtr source_cb_group;
+  rclcpp::executors::SingleThreadedExecutor source_exec;
+  thread_ptr source_spin_thd;
+
   // plugins
   pluginlib::ClassLoader<plugin::PluginFactory> plugin_factory_loader;
   std::vector<plugin::Plugin::SharedPtr> loaded_plugins;

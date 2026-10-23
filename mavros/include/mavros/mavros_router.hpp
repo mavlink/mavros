@@ -183,6 +183,8 @@ public:
     this->declare_parameter<StrV>("gcs_urls", StrV());
     this->declare_parameter<StrV>("uas_urls", StrV());
 
+    sink_cb_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
       "~/add_endpoint",
       [this](
@@ -221,7 +223,11 @@ public:
     RCLCPP_INFO(get_logger(), "Known MAVLink dialects:%s", ss.str().c_str());
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
-    router_io_runner.start([this]() {this->router_io_runner.io().run();});
+    router_io_runner.start(
+      [this]() {
+        mavconn::utils::set_this_thread_name("mudp-io");
+        this->router_io_runner.io().run();
+      });
 
     // Delay parameter callback initialization so that endpoints are not
     // created before we leave the constructor.
@@ -259,6 +265,7 @@ public:
 
 private:
   friend class Endpoint;
+  friend class ROSEndpoint;
   friend class TestRouter;
   friend class E2ERouter;
   friend class BenchmarkRouter;
@@ -266,6 +273,10 @@ private:
 
   static std::atomic<id_t> id_counter;
   mavconn::IoContextRunner router_io_runner;
+
+  // UAS -> FCU traffic must not wait behind endpoint add/del/reconnect,
+  // which can block on opening links.
+  rclcpp::CallbackGroup::SharedPtr sink_cb_group;
 
   std::shared_mutex mu;
 
