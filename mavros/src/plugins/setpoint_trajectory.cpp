@@ -164,6 +164,11 @@ private:
   {
     lock_guard lock(mutex);
 
+    if (req->points.empty()) {
+      RCLCPP_WARN(get_logger(), "Empty trajectory received");
+      return;
+    }
+
     if (mav_frame == MAV_FRAME::BODY_NED ||
       mav_frame == MAV_FRAME::BODY_OFFSET_NED)
     {
