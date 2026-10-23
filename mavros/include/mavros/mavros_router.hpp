@@ -21,6 +21,7 @@
 #define MAVROS__MAVROS_ROUTER_HPP_
 
 #include <array>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -183,6 +184,12 @@ public:
     this->declare_parameter<StrV>("gcs_urls", StrV());
     this->declare_parameter<StrV>("uas_urls", StrV());
 
+    // Read-only: the io thread starts below, so later changes would not apply.
+    rcl_interfaces::msg::ParameterDescriptor rt_desc;
+    rt_desc.description = "SCHED_FIFO priority for the router io thread, 0 disables";
+    rt_desc.read_only = true;
+    const int rt_prio = this->declare_parameter<int>("rt_sched_fifo_priority", 0, rt_desc);
+
     sink_cb_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     add_service = this->create_service<mavros_msgs::srv::EndpointAdd>(
@@ -224,8 +231,16 @@ public:
     RCLCPP_INFO(get_logger(), "MAVROS Router started");
 
     router_io_runner.start(
-      [this]() {
+      [this, rt_prio]() {
         mavconn::utils::set_this_thread_name("mudp-io");
+        if (rt_prio > 0) {
+          int ret = mavconn::utils::set_this_thread_sched_fifo(rt_prio);
+          if (ret != 0) {
+            RCLCPP_WARN(
+              this->get_logger(), "mudp-io: SCHED_FIFO priority %d failed: %s",
+              rt_prio, std::strerror(ret));
+          }
+        }
         this->router_io_runner.io().run();
       });
 

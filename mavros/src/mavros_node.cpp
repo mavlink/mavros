@@ -11,6 +11,7 @@
  * @author Vladimir Ermakov <vooon341@gmail.com>
  */
 
+#include <cstring>
 #include <string>
 #include <memory>
 #include <thread>
@@ -42,6 +43,7 @@ int main(int argc, char * argv[])
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;
   int tgt_system = 1, tgt_component = 1;
+  int rt_sched_fifo_priority = 0;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
   exec->add_node(node);
@@ -53,6 +55,7 @@ int main(int argc, char * argv[])
   node->declare_parameter("base_link_frame", base_link_frame_id);
   node->declare_parameter("map_frame", map_frame_id);
   node->declare_parameter("odom_frame", odom_frame_id);
+  node->declare_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   node->get_parameter("fcu_url", fcu_url);
   node->get_parameter("gcs_url", gcs_url);
@@ -61,6 +64,7 @@ int main(int argc, char * argv[])
   node->get_parameter("base_link_frame", base_link_frame_id);
   node->get_parameter("map_frame", map_frame_id);
   node->get_parameter("odom_frame", odom_frame_id);
+  node->get_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   uas_url = mavros::utils::format("/uas%d", tgt_system);
 
@@ -68,6 +72,11 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(node->get_logger(), "FCU URL: %s", fcu_url.c_str());
   RCLCPP_INFO(node->get_logger(), "GCS URL: %s", gcs_url.c_str());
   RCLCPP_INFO(node->get_logger(), "UAS Prefix: %s", uas_url.c_str());
+
+  // Overrides, not set_parameters(): the router starts its io thread in the constructor.
+  if (rt_sched_fifo_priority > 0) {
+    options.parameter_overrides().emplace_back("rt_sched_fifo_priority", rt_sched_fifo_priority);
+  }
 
   RCLCPP_INFO(node->get_logger(), "Starting mavros router node");
   auto router_node = std::make_shared<mavros::router::Router>(options, "mavros_router");
@@ -111,8 +120,16 @@ int main(int argc, char * argv[])
   }
 
   std::thread router_thd(
-    [&router_exec]() {
+    [&router_exec, &node, rt_sched_fifo_priority]() {
       mavconn::utils::set_this_thread_name("mavros-router");
+      if (rt_sched_fifo_priority > 0) {
+        int ret = mavconn::utils::set_this_thread_sched_fifo(rt_sched_fifo_priority);
+        if (ret != 0) {
+          RCLCPP_WARN(
+            node->get_logger(), "mavros-router: SCHED_FIFO priority %d failed: %s",
+            rt_sched_fifo_priority, std::strerror(ret));
+        }
+      }
       router_exec->spin();
     });
 

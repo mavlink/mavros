@@ -647,6 +647,7 @@ private:
 
   StrV plugin_allowlist;
   StrV plugin_denylist;
+  int rt_sched_fifo_priority;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
   rclcpp::TimerBase::SharedPtr startup_delay_timer;

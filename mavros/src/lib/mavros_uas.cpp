@@ -13,6 +13,7 @@
 
 #include <fnmatch.h>
 #include <cmath>
+#include <cstring>
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -61,6 +62,7 @@ UAS::UAS(
   base_link_frame_id("base_link"),
   odom_frame_id("odom"),
   map_frame_id("map"),
+  rt_sched_fifo_priority(0),
   source_cb_group(this->create_callback_group(
       rclcpp::CallbackGroupType::MutuallyExclusive, false)),
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
@@ -95,6 +97,11 @@ UAS::UAS(
   this->declare_parameter("base_link_frame_id", base_link_frame_id);
   this->declare_parameter("odom_frame_id", odom_frame_id);
   this->declare_parameter("map_frame_id", map_frame_id);
+
+  rcl_interfaces::msg::ParameterDescriptor rt_desc;
+  rt_desc.description = "SCHED_FIFO priority for the uas-rx thread, 0 disables";
+  rt_desc.read_only = true;
+  this->declare_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority, rt_desc);
 
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
@@ -131,6 +138,7 @@ void UAS::startup()
   this->get_parameter("base_link_frame_id", base_link_frame_id);
   this->get_parameter("odom_frame_id", odom_frame_id);
   this->get_parameter("map_frame_id", map_frame_id);
+  this->get_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority);
 
   exec_spin_thd = thread_ptr(
     new std::thread(
@@ -223,6 +231,14 @@ void UAS::startup()
     new std::thread(
       [this]() {
         utils::set_this_thread_name("uas-rx/%d.%d", source_system, source_component);
+        if (rt_sched_fifo_priority > 0) {
+          int ret = mavconn::utils::set_this_thread_sched_fifo(rt_sched_fifo_priority);
+          if (ret != 0) {
+            RCLCPP_WARN(
+              get_logger(), "uas-rx: SCHED_FIFO priority %d failed: %s",
+              rt_sched_fifo_priority, std::strerror(ret));
+          }
+        }
         this->source_exec.spin();
       }),
     [this](std::thread * t) {
