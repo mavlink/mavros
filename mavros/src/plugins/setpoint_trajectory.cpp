@@ -185,6 +185,9 @@ private:
     using mavlink::common::POSITION_TARGET_TYPEMASK;
     lock_guard lock(mutex);
 
+    // Only a remaining trajectory point should restart this one-shot timer.
+    sp_timer->cancel();
+
     if (!trajectory_target_msg) {
       return;
     }
@@ -249,7 +252,9 @@ private:
 
     next_setpoint_target = setpoint_target + 1;
     if (next_setpoint_target != trajectory_target_msg->points.cend()) {
-      reset_timer(setpoint_target->time_from_start);
+      reset_timer(
+        (rclcpp::Duration(next_setpoint_target->time_from_start) -
+        rclcpp::Duration(setpoint_target->time_from_start)).to_chrono<std::chrono::nanoseconds>());
       setpoint_target = next_setpoint_target;
     } else {
       trajectory_target_msg.reset();
