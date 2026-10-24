@@ -80,6 +80,9 @@ restart.
   stations, e.g. `["udp://127.0.0.1:14555@"]`.
 - `uas_urls` (list of strings, default `[]`) - UAS link URLs, one per UAS/
   vehicle, e.g. `["/uas1", "/uas2"]`.
+- `rt_sched_fifo_priority` (int, default `0`, read-only) - `SCHED_FIFO` priority
+  (1..99) for the router io thread (`router-io`). `0` keeps the default
+  scheduler. See [Real-time scheduling](#real-time-scheduling).
 
 #### Services
 
@@ -142,6 +145,9 @@ it with plain options throws `std::invalid_argument` during plugin construction.
 - `base_link_frame_id` (string, default `base_link`) - body-fixed tf frame.
 - `odom_frame_id` (string, default `odom`) - odometry tf frame.
 - `map_frame_id` (string, default `map`) - world-fixed tf frame.
+- `rt_sched_fifo_priority` (int, default `0`, read-only) - `SCHED_FIFO` priority
+  (1..99) for the UAS plugin executor threads (`uas-exec/*`). `0` keeps the
+  default scheduler. See [Real-time scheduling](#real-time-scheduling).
 
 #### Topics
 
@@ -200,6 +206,41 @@ Example, running `mavros_node` with the events executor:
 When MAVROS is used as composable nodes inside a component container, the
 container's executor is chosen with the container's own `--executor-type`
 argument instead; see the composable launch below.
+
+Real-time scheduling
+--------------------
+
+The MAVLink receive and dispatch threads can optionally run under `SCHED_FIFO`:
+the router io thread (`router-io`), the `mavros_node` executor and the UAS
+plugin executor (`uas-exec/*`). Executor worker threads inherit the policy of
+the thread that calls `spin()`, so no extra threads are created.
+
+  - `rt_sched_fifo_priority` (int, default `0`) - `SCHED_FIFO` priority, 1..99 on
+    Linux. `0` changes nothing and logs nothing. On the Router and the UAS the
+    parameter is read-only, because the threads start before a parameter could
+    be changed at run time.
+
+`mavros_node` reads its own `rt_sched_fifo_priority` and, when it is non-zero,
+passes it to the Router and the UAS as a parameter override. That value takes
+precedence over a value given for `mavros_router` or `mavros` in a params file.
+With `0` on `mavros_node` the Router and the UAS use their own parameter values.
+
+Switching to a real-time policy needs `CAP_SYS_NICE` or an `RLIMIT_RTPRIO`
+(`ulimit -r`) at least as high as the chosen priority. Otherwise a warning with
+the error is logged for each thread and the default policy is kept.
+
+!!! warning
+    Leave this at `0` unless you have profiled your system. These threads call
+    into rclcpp and the DDS middleware, whose own threads stay `SCHED_OTHER`, so
+    a real-time thread can block on a lock held by a starved normal-priority
+    thread (priority inversion). Real-time threads also take CPU away from
+    everything else on the machine: on a constrained two-CPU test box MAVROS
+    CPU usage went from 26% to 53% while FCU-to-topic p99 latency dropped from
+    about 10 ms to about 4 ms.
+
+Example, priority 10 for all MAVROS threads:
+
+    ros2 run mavros mavros_node --ros-args -p fcu_url:=udp://:14540@ -p rt_sched_fifo_priority:=10
 
 Launch files
 ------------

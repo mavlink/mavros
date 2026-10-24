@@ -21,8 +21,10 @@
 #define MAVCONN__THREAD_UTILS_HPP_
 
 #include <pthread.h>
+#include <sched.h>
 
 #include <array>
+#include <cerrno>
 #include <cstdio>
 #include <sstream>
 #include <string>
@@ -81,6 +83,25 @@ bool set_this_thread_name(const std::string & name, Args && ... args)
 #else
   pthread_t pth = pthread_self();
   return pthread_setname_np(pth, new_name.c_str()) == 0;
+#endif
+}
+
+/**
+ * @brief Switch current thread to SCHED_FIFO
+ * @param[in] priority SCHED_FIFO priority (1..99 on Linux)
+ * @return 0 on success, otherwise the error code from pthread_setschedparam()
+ *
+ * @note Only for Linux target, returns ENOTSUP elsewhere
+ */
+inline int set_this_thread_sched_fifo(int priority)
+{
+#ifdef __linux__
+  sched_param sp{};
+  sp.sched_priority = priority;
+  return pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
+#else
+  (void)priority;
+  return ENOTSUP;
 #endif
 }
 
