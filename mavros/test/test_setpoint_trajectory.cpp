@@ -1,4 +1,4 @@
-/** Check cumulative setpoint times and cancellation of the completed timer. */
+/** Check invalid times, cumulative scheduling, and completed timer cancellation. */
 // Copyright 2026 LostPatrol. See LICENSE.md for license terms.
 #include <gtest/gtest.h>
 
@@ -14,7 +14,7 @@ namespace mavros
 namespace uas
 {
 
-// One zero-start, nonuniform trajectory covers interval scheduling and completion.
+// Rejected messages must not send points or prevent a later valid trajectory.
 TEST_F(TestUAS, trajectory_intervals_and_completion)
 {
   auto uas = create_uas();
@@ -60,6 +60,21 @@ TEST_F(TestUAS, trajectory_intervals_and_completion)
     point.accelerations.resize(1);
     trajectory.points.push_back(point);
   }
+
+  for (const auto & invalid_times : {std::array<double, 3>{0.0, 0.4, 0.2},
+      std::array<double, 3>{-0.1, 0.4, 1.2}})
+  {
+    auto invalid = trajectory;
+    for (size_t i = 0; i < invalid_times.size(); ++i) {
+      invalid.points[i].time_from_start = rclcpp::Duration::from_seconds(invalid_times[i]);
+    }
+    pub->publish(invalid);
+    rclcpp::FutureReturnCode result;
+    ASSERT_NO_THROW(result = exec.spin_until_future_complete(future, 600ms));
+    ASSERT_EQ(rclcpp::FutureReturnCode::TIMEOUT, result);
+    ASSERT_TRUE(sent.empty());
+  }
+
   pub->publish(trajectory);
   ASSERT_EQ(rclcpp::FutureReturnCode::SUCCESS, exec.spin_until_future_complete(future, 5s));
   ASSERT_EQ(times.size(), sent.size());

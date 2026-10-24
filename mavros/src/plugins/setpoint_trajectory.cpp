@@ -50,6 +50,7 @@ class SetpointTrajectoryPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointTrajectoryPlugin>
 {
 public:
+  /** Set up subscriptions; timers are created only when a trajectory arrives. */
   explicit SetpointTrajectoryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "setpoint_trajectory")
   {
@@ -92,8 +93,6 @@ public:
       node->create_service<std_srvs::srv::Trigger>(
       "~/reset",
       std::bind(&SetpointTrajectoryPlugin::reset_cb, this, _1, _2));
-
-    reset_timer(10ms);
   }
 
   Subscriptions get_subscriptions() override
@@ -160,9 +159,25 @@ private:
 
   /* -*- callbacks -*- */
 
+  /** Validate cumulative times before replacing the active trajectory. */
   void local_cb(const trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr req)
   {
     lock_guard lock(mutex);
+
+    rclcpp::Duration previous_time(0, 0);
+    for (size_t i = 0; i < req->points.size(); ++i) {
+      const auto time = rclcpp::Duration(req->points[i].time_from_start);
+      if (time < previous_time) {
+        RCLCPP_ERROR(
+          get_logger(), "Ignoring trajectory: time_from_start is negative or decreases");
+        return;
+      }
+      if (i > 0 && time == previous_time) {
+        RCLCPP_WARN_ONCE(
+          get_logger(), "time_from_start is cumulative; equal times send points back to back");
+      }
+      previous_time = time;
+    }
 
     if (mav_frame == MAV_FRAME::BODY_NED ||
       mav_frame == MAV_FRAME::BODY_OFFSET_NED)
