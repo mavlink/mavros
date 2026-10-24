@@ -50,6 +50,7 @@ class SetpointTrajectoryPlugin : public plugin::Plugin,
   private plugin::SetPositionTargetLocalNEDMixin<SetpointTrajectoryPlugin>
 {
 public:
+  /** Set up subscriptions; timers are created only when a trajectory arrives. */
   explicit SetpointTrajectoryPlugin(plugin::UASPtr uas_)
   : Plugin(uas_, "setpoint_trajectory")
   {
@@ -92,8 +93,6 @@ public:
       node->create_service<std_srvs::srv::Trigger>(
       "~/reset",
       std::bind(&SetpointTrajectoryPlugin::reset_cb, this, _1, _2));
-
-    reset_timer(10ms);
   }
 
   Subscriptions get_subscriptions() override
@@ -160,6 +159,7 @@ private:
 
   /* -*- callbacks -*- */
 
+  /** Validate points and cumulative times before replacing the active trajectory. */
   void local_cb(const trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr req)
   {
     lock_guard lock(mutex);
@@ -167,6 +167,21 @@ private:
     if (req->points.empty()) {
       RCLCPP_WARN(get_logger(), "Empty trajectory received");
       return;
+    }
+
+    rclcpp::Duration previous_time(0, 0);
+    for (size_t i = 0; i < req->points.size(); ++i) {
+      const auto time = rclcpp::Duration(req->points[i].time_from_start);
+      if (time < previous_time) {
+        RCLCPP_ERROR(
+          get_logger(), "Ignoring trajectory: time_from_start is negative or decreases");
+        return;
+      }
+      if (i > 0 && time == previous_time) {
+        RCLCPP_WARN_ONCE(
+          get_logger(), "time_from_start is cumulative; equal times send points back to back");
+      }
+      previous_time = time;
     }
 
     if (mav_frame == MAV_FRAME::BODY_NED ||
@@ -189,6 +204,9 @@ private:
   {
     using mavlink::common::POSITION_TARGET_TYPEMASK;
     lock_guard lock(mutex);
+
+    // Only a remaining trajectory point should restart this one-shot timer.
+    sp_timer->cancel();
 
     if (!trajectory_target_msg) {
       return;
@@ -254,7 +272,9 @@ private:
 
     next_setpoint_target = setpoint_target + 1;
     if (next_setpoint_target != trajectory_target_msg->points.cend()) {
-      reset_timer(setpoint_target->time_from_start);
+      reset_timer(
+        (rclcpp::Duration(next_setpoint_target->time_from_start) -
+        rclcpp::Duration(setpoint_target->time_from_start)).to_chrono<std::chrono::nanoseconds>());
       setpoint_target = next_setpoint_target;
     } else {
       trajectory_target_msg.reset();

@@ -325,6 +325,11 @@ if(BUILD_TESTING)
     ${mavros_msgs_TARGETS}
   )
 
+  ament_add_gtest(mavros-plugin-setpoint-trajectory test/test_setpoint_trajectory.cpp)
+  target_link_libraries(mavros-plugin-setpoint-trajectory
+    mavros ${nav_msgs_TARGETS} ${std_srvs_TARGETS} ${trajectory_msgs_TARGETS}
+  )
+
   ament_add_gtest(mavros-plugin-command test/test_command.cpp)
   target_link_libraries(mavros-plugin-command
     mavros
