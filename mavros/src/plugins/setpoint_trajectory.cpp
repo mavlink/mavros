@@ -159,10 +159,15 @@ private:
 
   /* -*- callbacks -*- */
 
-  /** Validate cumulative times before replacing the active trajectory. */
+  /** Validate points and cumulative times before replacing the active trajectory. */
   void local_cb(const trajectory_msgs::msg::MultiDOFJointTrajectory::ConstSharedPtr req)
   {
     lock_guard lock(mutex);
+
+    if (req->points.empty()) {
+      RCLCPP_WARN(get_logger(), "Empty trajectory received");
+      return;
+    }
 
     rclcpp::Duration previous_time(0, 0);
     for (size_t i = 0; i < req->points.size(); ++i) {

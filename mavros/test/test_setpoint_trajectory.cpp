@@ -1,4 +1,4 @@
-/** Check invalid times, cumulative scheduling, and completed timer cancellation. */
+/** Check rejected trajectories, cumulative scheduling, and timer cancellation. */
 // Copyright 2026 LostPatrol. See LICENSE.md for license terms.
 #include <gtest/gtest.h>
 
@@ -61,10 +61,11 @@ TEST_F(TestUAS, trajectory_intervals_and_completion)
     trajectory.points.push_back(point);
   }
 
-  for (const auto & invalid_times : {std::array<double, 3>{0.0, 0.4, 0.2},
-      std::array<double, 3>{-0.1, 0.4, 1.2}})
+  for (const auto & invalid_times : {std::vector<double>{},
+      std::vector<double>{0.0, 0.4, 0.2}, std::vector<double>{-0.1, 0.4, 1.2}})
   {
     auto invalid = trajectory;
+    invalid.points.resize(invalid_times.size());
     for (size_t i = 0; i < invalid_times.size(); ++i) {
       invalid.points[i].time_from_start = rclcpp::Duration::from_seconds(invalid_times[i]);
     }

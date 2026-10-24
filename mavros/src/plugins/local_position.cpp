@@ -201,7 +201,7 @@ private:
     // velocity in the local frame
     auto twist_local = geometry_msgs::msg::TwistStamped();
     twist_local.header.stamp = twist_body.header.stamp;
-    twist_local.header.frame_id = tf_child_frame_id;
+    twist_local.header.frame_id = frame_id;
     tf2::toMsg(enu_velocity, twist_local.twist.linear);
     tf2::toMsg(
       ftf::transform_frame_baselink_enu(ftf::to_eigen(baselink_angular_msg), enu_orientation),
