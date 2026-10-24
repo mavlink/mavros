@@ -264,7 +264,9 @@ private:
         RCLCPP_WARN_THROTTLE(
           get_logger(),
           *get_clock(), 10000, "CMD: Command %u already in progress", command);
-        throw std::logic_error("operation in progress");
+        success = false;
+        result = enum_value(MAV_RESULT::TEMPORARILY_REJECTED);
+        return;
       }
     }
 
