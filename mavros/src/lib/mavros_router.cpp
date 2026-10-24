@@ -42,7 +42,7 @@ std::atomic<id_t> Router::id_counter {1000};
 
 static inline uint8_t get_msg_byte(const mavlink_message_t * msg, uint8_t offset)
 {
-  return _MAV_PAYLOAD(msg)[offset];
+  return (offset < msg->len) ? _MAV_PAYLOAD(msg)[offset] : 0;
 }
 
 void Router::route_message(

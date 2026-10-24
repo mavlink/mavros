@@ -122,7 +122,8 @@ public:
     kErrEOF,                    ///< Offset past end of file for List and Read commands
     kErrUnknownCommand,         ///< Unknown command opcode
     kErrFailFileExists,         ///< File exists already
-    kErrFailFileProtected       ///< File is write protected
+    kErrFailFileProtected,      ///< File is write protected
+    kErrFileNotFound            ///< File not found
   };
 
   static const char DIRENT_FILE = 'F';
@@ -283,14 +284,19 @@ public:
     active_session(0),
     is_error(false),
     r_errno(0),
+    rx_progress(0),
     list_offset(0),
     open_size(0),
     read_size(0),
     read_offset(0),
     read_buffer{},
+    read_burst(false),
+    burst_supported(true),
+    burst_resyncs(0),
     write_offset(0),
     write_buffer{},
     write_it{},
+    write_chunk_size(0),
     checksum_crc32(0)
   {
     // since C++ generator do not produce field length defs make check explicit.
@@ -402,6 +408,7 @@ private:
   std::condition_variable cond;         //!< wait condvar
   bool is_error;                        //!< error signaling flag (timeout/proto error)
   int r_errno;                          //!< store errno from server
+  uint32_t rx_progress;                 //!< accepted replies, timeouts count from the last one
 
   // FTP:List
   uint32_t list_offset;
@@ -411,27 +418,40 @@ private:
   // FTP:Open / FTP:Close
   std::string open_path;
   size_t open_size;
-  std::map<std::string, uint32_t> session_file_map;
+  struct OpenFile
+  {
+    uint32_t session;
+    size_t size;
+  };
+  std::map<std::string, OpenFile> session_file_map;
 
   // FTP:Read
   size_t read_size;
   uint32_t read_offset;
   V_FileData read_buffer;
+  bool read_burst;
+  bool burst_supported;
+  int burst_resyncs;
 
   // FTP:Write
   uint32_t write_offset;
   V_FileData write_buffer;
   V_FileData::iterator write_it;
+  size_t write_chunk_size;
 
   // FTP:CalcCRC32
   uint32_t checksum_crc32;
 
-  // Timeouts,
-  // computed as x4 time that needed for transmission of
-  // one message at 57600 baud rate
+  // Timeouts, applied per stall (no reply), not per whole operation.
+  // ArduPilot regularly needs more than 200 ms to service a request.
   static constexpr int LIST_TIMEOUT_MS = 5000;
-  static constexpr int OPEN_TIMEOUT_MS = 200;
-  static constexpr int CHUNK_TIMEOUT_MS = 200;
+  static constexpr int OPEN_TIMEOUT_MS = 1000;
+  static constexpr int CHUNK_TIMEOUT_MS = 1000;
+
+  //! Seqnr window of one burst, larger than any FCU burst (ArduPilot: up to 2000 packets)
+  static constexpr uint16_t BURST_SEQ_WINDOW = 4096;
+  //! Burst restarts after lost packets without any data in between
+  static constexpr int MAX_BURST_RESYNCS = 10;
 
   //! Maximum difference between allocated space and used
   static constexpr size_t MAX_RESERVE_DIFF = 0x10000;
@@ -454,18 +474,39 @@ private:
       return;
     }
 
-    const auto hdr = req.header();
-    const uint16_t incoming_seqnr = hdr.seqNumber;
-    const uint16_t expected_seqnr = last_send_seqnr + 1;
-    if (incoming_seqnr != expected_seqnr) {
-      RCLCPP_WARN(
-        get_logger(), "FTP: Lost sync! seqnr: %u != %u",
-        incoming_seqnr, expected_seqnr);
-      go_idle(true, EILSEQ);
+    std::lock_guard<std::mutex> lock(cond_mutex);
+    if (op_state == OP::IDLE) {
       return;
     }
 
-    last_send_seqnr = incoming_seqnr;
+    const auto hdr = req.header();
+    if (hdr.size > FTPRequest::DATA_MAXSZ) {
+      RCLCPP_ERROR(get_logger(), "FTP: payload size %u > %u", hdr.size, FTPRequest::DATA_MAXSZ);
+      go_idle(true, EBADMSG);
+      return;
+    }
+
+    // A late reply to a request that already timed out carries an older seqnr.
+    // Burst replies count up from the expected seqnr, one per packet.
+    const uint16_t incoming_seqnr = hdr.seqNumber;
+    const uint16_t expected_seqnr = last_send_seqnr + 1;
+    if (hdr.req_opcode == FTPRequest::kCmdBurstReadFile) {
+      if (op_state != OP::READ || !read_burst) {
+        return;
+      }
+      if (static_cast<uint16_t>(incoming_seqnr - expected_seqnr) >= BURST_SEQ_WINDOW) {
+        // still streaming an earlier burst, which shows the FCU is alive
+        rx_progress++;
+        return;
+      }
+    } else if (incoming_seqnr != expected_seqnr) {
+      RCLCPP_WARN(
+        get_logger(), "FTP: Ignoring out of sync reply, seqnr: %u != %u",
+        incoming_seqnr, expected_seqnr);
+      return;
+    }
+
+    rx_progress++;
 
     // logic from QGCUASFileManager.cc
     if (hdr.opcode == FTPRequest::kRspAck) {
@@ -481,7 +522,6 @@ private:
   void handle_req_ack(const FTPRequest & req)
   {
     switch (op_state) {
-      case OP::IDLE:          send_reset();                   break;
       case OP::ACK:           go_idle(false);                 break;
       case OP::LIST:          handle_ack_list(req);           break;
       case OP::OPEN:          handle_ack_open(req);           break;
@@ -500,9 +540,11 @@ private:
     auto error_code = static_cast<FTPRequest::ErrorCode>(req.data()[0]);
     auto prev_op = op_state;
 
-    rcpputils::require_true(
-      hdr.size == 1 ||
-      (error_code == FTPRequest::kErrFailErrno && hdr.size == 2));
+    if (!(hdr.size == 1 || (error_code == FTPRequest::kErrFailErrno && hdr.size == 2))) {
+      RCLCPP_ERROR(get_logger(), "FTP: NAK with bad payload size %u", hdr.size);
+      go_idle(true, EBADMSG);
+      return;
+    }
 
     op_state = OP::IDLE;
     if (error_code == FTPRequest::kErrFailErrno) {
@@ -519,9 +561,33 @@ private:
       r_errno = EMFILE;
     } else if (error_code == FTPRequest::kErrUnknownCommand) {
       r_errno = ENOSYS;
+    } else if (error_code == FTPRequest::kErrFailFileExists) {
+      r_errno = EEXIST;
+    } else if (error_code == FTPRequest::kErrFailFileProtected) {
+      r_errno = EACCES;
+    } else if (error_code == FTPRequest::kErrFileNotFound) {
+      r_errno = ENOENT;
+    } else {
+      r_errno = EIO;
     }
 
-    if (prev_op == OP::LIST && error_code == FTPRequest::kErrEOF) {
+    // Some FCUs answer a listing past the last entry with an errno instead of EOF.
+    // At offset 0 that is a real error (e.g. no such directory).
+    const bool list_errno_end = list_offset > 0 &&
+      (error_code == FTPRequest::kErrFileNotFound ||
+      (error_code == FTPRequest::kErrFailErrno &&
+      (r_errno == 0 || r_errno == ENOENT || r_errno == ERANGE)));
+
+    if (prev_op == OP::READ && read_burst && error_code == FTPRequest::kErrUnknownCommand) {
+      RCLCPP_WARN(get_logger(), "FTP: FCU does not support burst read, using kCmdReadFile");
+      burst_supported = false;
+      read_burst = false;
+      op_state = OP::READ;
+      send_read_command();
+      return;
+    }
+
+    if (prev_op == OP::LIST && (error_code == FTPRequest::kErrEOF || list_errno_end)) {
       /* dir list done */
       list_directory_end();
       return;
@@ -550,7 +616,7 @@ private:
       return;
     }
 
-    uint8_t off = 0;
+    size_t off = 0;
     uint32_t n_list_entries = 0;
 
     while (off < hdr.size) {
@@ -558,6 +624,12 @@ private:
       const size_t bytes_left = hdr.size - off;
 
       size_t slen = strnlen(ptr, bytes_left);
+      if (slen == 0) {
+        // ArduPilot terminates each entry with two NULs
+        off++;
+        continue;
+      }
+
       if ((ptr[0] == FTPRequest::DIRENT_SKIP && slen > 1) ||
         (ptr[0] != FTPRequest::DIRENT_SKIP && slen < 2))
       {
@@ -573,7 +645,11 @@ private:
       if (ptr[0] == FTPRequest::DIRENT_FILE ||
         ptr[0] == FTPRequest::DIRENT_DIR)
       {
-        add_dirent(ptr, slen);
+        if (!add_dirent(ptr, slen)) {
+          RCLCPP_ERROR(get_logger(), "FTP: Incorrect list entry: %s", ptr);
+          go_idle(true, ERANGE);
+          return;
+        }
       } else if (ptr[0] == FTPRequest::DIRENT_SKIP) {
         // do nothing
       } else {
@@ -587,8 +663,10 @@ private:
     if (hdr.size == 0) {
       // dir empty, we are done
       list_directory_end();
+    } else if (n_list_entries == 0) {
+      RCLCPP_ERROR(get_logger(), "FTP: List reply without entries");
+      go_idle(true, ERANGE);
     } else {
-      rcpputils::assert_true(n_list_entries > 0, "FTP:List don't parse entries");
       // Possibly more to come, try get more
       list_offset += n_list_entries;
       send_list_command();
@@ -600,13 +678,19 @@ private:
     const auto hdr = req.header();
 
     RCLCPP_DEBUG(get_logger(), "FTP:m: ACK Open OPCODE(%u)", hdr.req_opcode);
-    rcpputils::require_true(hdr.size == sizeof(uint32_t));
-    open_size = req.data_u32();
+    // ArduPilot ACKs OpenFileWO / CreateFile without a size
+    if (hdr.size == sizeof(uint32_t)) {
+      open_size = req.data_u32();
+    } else if (hdr.size != 0) {
+      RCLCPP_ERROR(get_logger(), "FTP:Open %s: bad ACK size %u", open_path.c_str(), hdr.size);
+      go_idle(true, EBADMSG);
+      return;
+    }
 
     RCLCPP_INFO(
       get_logger(), "FTP:Open %s: success, session %u, size %zu",
       open_path.c_str(), hdr.session, open_size);
-    session_file_map.insert(std::make_pair(open_path, hdr.session));
+    session_file_map.insert(std::make_pair(open_path, OpenFile{hdr.session, open_size}));
     go_idle(false);
   }
 
@@ -619,6 +703,18 @@ private:
     if (hdr.session != active_session) {
       RCLCPP_ERROR(lg, "FTP:Read unexpected session");
       go_idle(true, EBADSLT);
+      return;
+    }
+
+    if (read_burst && hdr.offset > read_offset) {
+      // lost packet(s), restart the burst at the gap
+      if (++burst_resyncs > MAX_BURST_RESYNCS) {
+        RCLCPP_ERROR(lg, "FTP:Read too many lost burst packets");
+        go_idle(true, EIO);
+        return;
+      }
+      RCLCPP_DEBUG(lg, "FTP:Read burst gap at %u, got %u", read_offset, hdr.offset);
+      send_burst_read_command();
       return;
     }
 
@@ -635,10 +731,18 @@ private:
     const size_t bytes_to_copy = std::min<size_t>(bytes_left, hdr.size);
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
+    read_offset += bytes_to_copy;
 
-    if (read_buffer.size() < read_size && hdr.size == FTPRequest::DATA_MAXSZ) {
+    if (read_buffer.size() >= read_size) {
+      read_file_end();
+    } else if (read_burst) {
+      // the FCU ends a burst at EOF (NAK) or after its own packet limit
+      burst_resyncs = 0;
+      if (hdr.padding[0]) {
+        send_burst_read_command();
+      }
+    } else if (hdr.size == FTPRequest::DATA_MAXSZ) {
       // Possibly more data
-      read_offset += bytes_to_copy;
       send_read_command();
     } else {
       read_file_end();
@@ -663,13 +767,23 @@ private:
       return;
     }
 
-    rcpputils::require_true(hdr.size == sizeof(uint32_t));
-    const size_t bytes_written = req.data_u32();
+    // ArduPilot ACKs WriteFile without a byte count: it writes the whole chunk or NAKs
+    size_t bytes_written = write_chunk_size;
+    if (hdr.size == sizeof(uint32_t)) {
+      bytes_written = req.data_u32();
+    } else if (hdr.size != 0) {
+      RCLCPP_ERROR(lg, "FTP:Write bad ACK size %u", hdr.size);
+      go_idle(true, EBADMSG);
+      return;
+    }
 
     // check that reported size not out of range
     const size_t bytes_left_before_advance = std::distance(write_it, write_buffer.end());
-    rcpputils::assert_true(bytes_written <= bytes_left_before_advance, "Bad write size");
-    rcpputils::assert_true(bytes_written != 0);
+    if (bytes_written == 0 || bytes_written > bytes_left_before_advance) {
+      RCLCPP_ERROR(lg, "FTP:Write bad write size %zu", bytes_written);
+      go_idle(true, EBADMSG);
+      return;
+    }
 
     // move iterator to written size
     std::advance(write_it, bytes_written);
@@ -690,7 +804,11 @@ private:
     auto lg = get_logger();
 
     RCLCPP_DEBUG(lg, "FTP:m: ACK CalcFileCRC32 OPCODE(%u)", hdr.req_opcode);
-    rcpputils::assert_true(hdr.size == sizeof(uint32_t));
+    if (hdr.size != sizeof(uint32_t)) {
+      RCLCPP_ERROR(lg, "FTP:Checksum bad ACK size %u", hdr.size);
+      go_idle(true, EBADMSG);
+      return;
+    }
     checksum_crc32 = req.data_u32();
 
     RCLCPP_DEBUG(lg, "FTP:Checksum: success, crc32: 0x%08x", checksum_crc32);
@@ -729,7 +847,7 @@ private:
 
     op_state = OP::ACK;
     FTPRequest req(FTPRequest::kCmdResetSessions);
-    req.send(uas, last_send_seqnr);
+    req.send(uas, ++last_send_seqnr);
   }
 
   /// Send any command with string payload (usually file/dir path)
@@ -743,7 +861,7 @@ private:
     hdr.offset = offset;
     req.set_header(hdr);
     req.set_data_string(path);
-    req.send(uas, last_send_seqnr);
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_list_command()
@@ -776,7 +894,7 @@ private:
     hdr.offset = 0;
     hdr.size = 0;
     req.set_header(hdr);
-    req.send(uas, last_send_seqnr);
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_read_command()
@@ -792,7 +910,22 @@ private:
     hdr.offset = read_offset;
     hdr.size = bytes_to_read;
     req.set_header(hdr);
-    req.send(uas, last_send_seqnr);
+    req.send(uas, ++last_send_seqnr);
+  }
+
+  void send_burst_read_command()
+  {
+    RCLCPP_DEBUG_STREAM(
+      get_logger(), "FTP:m: kCmdBurstReadFile: " << active_session << " off: " << read_offset);
+    FTPRequest req(FTPRequest::kCmdBurstReadFile, active_session);
+    auto hdr = req.header();
+    hdr.offset = read_offset;
+    hdr.size = FTPRequest::DATA_MAXSZ;
+    req.set_header(hdr);
+    // Each burst gets its own seqnr window, so packets still streaming from an
+    // earlier burst cannot be taken for this one.
+    last_send_seqnr += BURST_SEQ_WINDOW;
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_write_command(const size_t bytes_to_copy)
@@ -807,7 +940,8 @@ private:
     hdr.size = bytes_to_copy;
     req.set_header(hdr);
     std::copy(write_it, write_it + bytes_to_copy, req.data());
-    req.send(uas, last_send_seqnr);
+    write_chunk_size = bytes_to_copy;
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_remove_command(const std::string & path)
@@ -855,7 +989,7 @@ private:
 
   /* -*- helpers -*- */
 
-  void add_dirent(const char * ptr, size_t slen)
+  bool add_dirent(const char * ptr, size_t slen)
   {
     mavros_msgs::msg::FileEntry ent;
     ent.size = 0;
@@ -876,7 +1010,11 @@ private:
       if (sep_it != name_size.end()) {
         name_size.erase(name_size.begin(), sep_it + 1);
         if (name_size.size() != 0) {
-          ent.size = std::stoi(name_size);
+          try {
+            ent.size = std::stoi(name_size);
+          } catch (const std::logic_error &) {
+            return false;
+          }
         }
       }
 
@@ -884,6 +1022,7 @@ private:
     }
 
     list_entries.push_back(ent);
+    return true;
   }
 
   void list_directory_end()
@@ -934,7 +1073,7 @@ private:
     }
 
     op_state = OP::ACK;
-    send_terminate_command(it->second);
+    send_terminate_command(it->second.session);
     session_file_map.erase(it);
     return true;
   }
@@ -955,7 +1094,7 @@ private:
     }
 
     op_state = OP::READ;
-    active_session = it->second;
+    active_session = it->second.session;
     read_size = len;
     read_offset = off;
     read_buffer.clear();
@@ -966,7 +1105,16 @@ private:
       read_buffer.reserve(len);
     }
 
-    send_read_command();
+    // A burst streams until EOF or the FCU's own limit (ArduPilot 500 or 2000
+    // packets, PX4 ~35 KB) and cannot be stopped. Use it only when the read runs
+    // to EOF, so nothing past the requested range is sent.
+    read_burst = burst_supported && off + len >= it->second.size;
+    burst_resyncs = 0;
+    if (read_burst) {
+      send_burst_read_command();
+    } else {
+      send_read_command();
+    }
     return true;
   }
 
@@ -986,7 +1134,7 @@ private:
     }
 
     op_state = OP::WRITE;
-    active_session = it->second;
+    active_session = it->second.session;
     write_offset = off;
     write_buffer = std::move(data);
     write_it = write_buffer.begin();
@@ -1032,11 +1180,6 @@ private:
     send_calc_file_crc32_command(path);
   }
 
-  static constexpr int compute_rw_timeout(size_t len)
-  {
-    return CHUNK_TIMEOUT_MS * (len / FTPRequest::DATA_MAXSZ + 1);
-  }
-
   size_t write_bytes_to_copy()
   {
     return std::min<size_t>(
@@ -1044,22 +1187,27 @@ private:
       FTPRequest::DATA_MAXSZ);
   }
 
-  bool wait_completion(const int msecs)
+  /**
+   * Wait for go_idle(). Caller holds @a lock since the request was sent,
+   * so a fast reply cannot be missed. Times out after @a msecs without any reply.
+   */
+  bool wait_completion(std::unique_lock<std::mutex> & lock, const int msecs)
   {
-    std::unique_lock<std::mutex> lock(cond_mutex);
+    const auto timeout = std::chrono::milliseconds(msecs);
+    uint32_t last_progress = rx_progress;
 
-    bool is_timedout = cond.wait_for(lock, std::chrono::milliseconds(msecs)) ==
-      std::cv_status::timeout;
-
-    if (is_timedout) {
-      // If timeout occurs don't forget to reset state
-      op_state = OP::IDLE;
-      r_errno = ETIMEDOUT;
-      return false;
-    } else {
-      // if go_idle() occurs before timeout
-      return !is_error;
+    while (op_state != OP::IDLE) {
+      if (cond.wait_for(lock, timeout) == std::cv_status::timeout &&
+        op_state != OP::IDLE && rx_progress == last_progress)
+      {
+        op_state = OP::IDLE;
+        r_errno = ETIMEDOUT;
+        return false;
+      }
+      last_progress = rx_progress;
     }
+
+    return !is_error;
   }
 
   /* -*- service callbacks -*- */
@@ -1068,9 +1216,12 @@ private:
    * Service handler common header code.
    */
 #define SERVICE_IDLE_CHECK() \
+  std::unique_lock<std::mutex> lock(cond_mutex); \
   if (op_state != OP::IDLE) { \
     RCLCPP_ERROR(get_logger(), "FTP: Busy"); \
-    throw std::runtime_error("ftp busy"); \
+    res->success = false; \
+    res->r_errno = EBUSY; \
+    return; \
   }
 
   void list_cb(
@@ -1080,7 +1231,7 @@ private:
     SERVICE_IDLE_CHECK();
 
     list_directory(req->dir_path);
-    res->success = wait_completion(LIST_TIMEOUT_MS);
+    res->success = wait_completion(lock, LIST_TIMEOUT_MS);
     res->r_errno = r_errno;
     if (res->success) {
       res->list = std::move(list_entries);
@@ -1100,12 +1251,14 @@ private:
       RCLCPP_ERROR(
         get_logger(), "FTP: File %s: already opened",
         req->file_path.c_str());
-      throw std::runtime_error("file already opened");
+      res->success = false;
+      res->r_errno = EALREADY;
+      return;
     }
 
     res->success = open_file(req->file_path, req->mode);
     if (res->success) {
-      res->success = wait_completion(OPEN_TIMEOUT_MS);
+      res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
       res->size = open_size;
     }
     res->r_errno = r_errno;
@@ -1119,7 +1272,7 @@ private:
 
     res->success = close_file(req->file_path);
     if (res->success) {
-      res->success = wait_completion(OPEN_TIMEOUT_MS);
+      res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
     }
     res->r_errno = r_errno;
   }
@@ -1132,7 +1285,7 @@ private:
 
     res->success = read_file(req->file_path, req->offset, req->size);
     if (res->success) {
-      res->success = wait_completion(compute_rw_timeout(req->size));
+      res->success = wait_completion(lock, CHUNK_TIMEOUT_MS);
     }
     if (res->success) {
       res->data = std::move(read_buffer);
@@ -1147,10 +1300,9 @@ private:
   {
     SERVICE_IDLE_CHECK();
 
-    const size_t data_size = req->data.size();
     res->success = write_file(req->file_path, req->offset, req->data);
     if (res->success) {
-      res->success = wait_completion(compute_rw_timeout(data_size));
+      res->success = wait_completion(lock, CHUNK_TIMEOUT_MS);
     }
     write_buffer.clear();
     res->r_errno = r_errno;
@@ -1163,7 +1315,7 @@ private:
     SERVICE_IDLE_CHECK();
 
     remove_file(req->file_path);
-    res->success = wait_completion(OPEN_TIMEOUT_MS);
+    res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
     res->r_errno = r_errno;
   }
 
@@ -1175,7 +1327,7 @@ private:
 
     res->success = rename_(req->old_path, req->new_path);
     if (res->success) {
-      res->success = wait_completion(OPEN_TIMEOUT_MS);
+      res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
     }
     res->r_errno = r_errno;
   }
@@ -1188,7 +1340,7 @@ private:
 
     // Note: emulated truncate() can take a while
     truncate_file(req->file_path, req->length);
-    res->success = wait_completion(LIST_TIMEOUT_MS * 5);
+    res->success = wait_completion(lock, LIST_TIMEOUT_MS * 5);
     res->r_errno = r_errno;
   }
 
@@ -1199,7 +1351,7 @@ private:
     SERVICE_IDLE_CHECK();
 
     create_directory(req->dir_path);
-    res->success = wait_completion(OPEN_TIMEOUT_MS);
+    res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
     res->r_errno = r_errno;
   }
 
@@ -1210,7 +1362,7 @@ private:
     SERVICE_IDLE_CHECK();
 
     remove_directory(req->dir_path);
-    res->success = wait_completion(OPEN_TIMEOUT_MS);
+    res->success = wait_completion(lock, OPEN_TIMEOUT_MS);
     res->r_errno = r_errno;
   }
 
@@ -1221,7 +1373,7 @@ private:
     SERVICE_IDLE_CHECK();
 
     checksum_crc32_file(req->file_path);
-    res->success = wait_completion(LIST_TIMEOUT_MS);
+    res->success = wait_completion(lock, LIST_TIMEOUT_MS);
     res->crc32 = checksum_crc32;
     res->r_errno = r_errno;
   }
@@ -1236,8 +1388,10 @@ private:
     const std_srvs::srv::Empty::Request::SharedPtr req [[maybe_unused]],
     std_srvs::srv::Empty::Response::SharedPtr res [[maybe_unused]])
   {
+    std::unique_lock<std::mutex> lock(cond_mutex);
     send_reset();
     session_file_map.clear();
+    wait_completion(lock, OPEN_TIMEOUT_MS);
   }
 };
 

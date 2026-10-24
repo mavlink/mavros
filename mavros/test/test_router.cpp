@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <cstring>
 #include <future>
 #include <memory>
 #include <string>
@@ -589,6 +590,57 @@ TEST_F(TestRouter, route_drops_when_only_same_link_type_exists)
   EXPECT_EQ(size_t(1), get_stat_msg_routed(router));
   EXPECT_EQ(size_t(0), get_stat_msg_sent(router));
   EXPECT_EQ(size_t(1), get_stat_msg_dropped(router));
+}
+
+TEST_F(TestRouter, route_truncated_target)
+{
+  auto router = this->create_node();
+
+  // MAVLink 2 trims trailing zero targets; bytes past len must not be read as a target.
+  auto ping = mavlink::common::msg::PING();
+  ping.target_system = 0x00;
+  ping.target_component = 0x00;
+  ping.seq = 1234;
+  ping.time_usec = 123456789000000ULL;
+
+  auto pmsg = convert_message(ping, 0x0101);
+  pmsg.len = 12;
+  _MAV_PAYLOAD_NON_CONST(&pmsg)[12] = static_cast<char>(0x02);
+  _MAV_PAYLOAD_NON_CONST(&pmsg)[13] = static_cast<char>(0xBF);
+  auto fr = Framing::ok;
+
+  DEFINE_EPS();
+
+  EXPECT_CALL(*fcu1, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*fcu2, send_message(_, fr, _)).Times(0);
+  EXPECT_CALL(*uas1, send_message(_, fr, _));
+  EXPECT_CALL(*uas2, send_message(_, fr, _));
+  EXPECT_CALL(*gcs1, send_message(_, fr, _));
+  EXPECT_CALL(*gcs2, send_message(_, fr, _));
+
+  router->route_message(fcu1, &pmsg, fr);
+
+  VERIFY_EPS();
+}
+
+TEST_F(TestRouter, convert_zero_fills_tail)
+{
+  mavros_msgs::msg::Mavlink rmsg{};
+  rmsg.len = 12;
+  rmsg.payload64 = {0x0102030405060708ULL, 0x0000000011121314ULL};
+
+  mavlink_message_t mmsg;
+  std::memset(&mmsg, 0xA5, sizeof(mmsg));
+
+  ASSERT_TRUE(mavros_msgs::mavlink::convert(rmsg, mmsg));
+
+  const auto * payload = reinterpret_cast<const uint8_t *>(_MAV_PAYLOAD(&mmsg));
+  for (size_t i = 16; i < sizeof(mmsg.payload64); i++) {
+    EXPECT_EQ(0, payload[i]) << "payload byte " << i;
+  }
+  for (size_t i = 0; i < sizeof(mmsg.signature); i++) {
+    EXPECT_EQ(0, mmsg.signature[i]) << "signature byte " << i;
+  }
 }
 
 TEST_F(TestRouter, endpoint_recv_message)

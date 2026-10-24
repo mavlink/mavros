@@ -213,6 +213,7 @@ private:
   Eigen::Vector3d map_origin {};        //!< geodetic origin of map frame [lla]
   Eigen::Vector3d ecef_origin {};       //!< geocentric origin of map frame [m]
   Eigen::Vector3d local_ecef {};        //!< local ECEF coordinates on map frame [m]
+  std::mutex map_origin_mutex;
 
   template<typename MsgT>
   inline void fill_lla(const MsgT & msg, sensor_msgs::msg::NavSatFix & fix)
@@ -402,7 +403,16 @@ private:
       map.Forward(
         fix.latitude, fix.longitude, fix.altitude,
         map_point.x(), map_point.y(), map_point.z());
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what() );
+      gp_fix_pub->publish(fix);
+      gp_rel_alt_pub->publish(relative_alt);
+      gp_hdg_pub->publish(compass_heading);
+      return;
+    }
 
+    {
+      std::lock_guard<std::mutex> lock(map_origin_mutex);
       // Set the current fix as the "map" origin if it's not set
       if (!is_map_init && fix.status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
         map_origin.x() = fix.latitude;
@@ -412,21 +422,15 @@ private:
         ecef_origin = map_point;    // Local position is zero
         is_map_init = true;
       }
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(get_logger(), "GP: Caught exception: " << e.what() );
-      gp_fix_pub->publish(fix);
-      gp_rel_alt_pub->publish(relative_alt);
-      gp_hdg_pub->publish(compass_heading);
-      return;
-    }
 
-    // Compute the local coordinates in ECEF
-    local_ecef = map_point - ecef_origin;
-    // Compute the local coordinates in ENU
-    odom.pose.pose.position = tf2::toMsg(
-      ftf::transform_frame_ecef_enu(
-        local_ecef,
-        map_origin));
+      // Compute the local coordinates in ECEF
+      local_ecef = map_point - ecef_origin;
+      // Compute the local coordinates in ENU
+      odom.pose.pose.position = tf2::toMsg(
+        ftf::transform_frame_ecef_enu(
+          local_ecef,
+          map_origin));
+    }
 
     /**
      * @brief By default, we are using the relative altitude instead of the geocentric
@@ -573,6 +577,7 @@ private:
       return;
     }
 
+    std::lock_guard<std::mutex> lock(map_origin_mutex);
     map_origin = new_map_origin;
     ecef_origin = new_ecef_origin;
     is_map_init = true;
