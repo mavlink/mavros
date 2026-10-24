@@ -124,7 +124,8 @@ void MAVConnSerial::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_context before start
-  asio::post(io_context, [this]() {this->do_read();});
+  auto sthis = shared_from_this();
+  asio::post(io_context, [sthis]() {sthis->do_read();});
 
   if (io_runner.owns_thread()) {
     // run io_context for async io

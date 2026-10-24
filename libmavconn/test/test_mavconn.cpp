@@ -145,6 +145,7 @@ public:
   void recv_message(const mavlink_message_t * message, const Framing framing [[maybe_unused]])
   {
     // printf("Got message %u, len: %u, framing: %d\n", message->msgid, message->len, int(framing));
+    std::lock_guard<std::mutex> lock(mutex);
     message_id = message->msgid;
     cond.notify_one();
   }
@@ -315,6 +316,7 @@ TEST_F(TCP, bind_error)
     conns[1] = std::make_shared<MAVConnTCPServer>(
       42, 200, "localhost",
       57600), DeviceError);
+  conns[0]->close();
 }
 
 TEST_F(TCP, connect_error)
@@ -351,6 +353,9 @@ TEST_F(TCP, send_message)
   send_heartbeat(client.get());
   EXPECT_TRUE(wait_one());
   EXPECT_EQ(message_id, msgid);
+
+  client->close();
+  echo_server->close();
 }
 
 TEST_F(TCP, client_reconnect)
@@ -377,8 +382,19 @@ TEST_F(TCP, client_reconnect)
 
   EXPECT_NO_THROW(
   {
+    if (client1) {
+      client1->close();
+    }
     client1 = std::make_shared<MAVConnTCPClient>(46, 200, "localhost", 57604);
   });
+
+  if (client1) {
+    client1->close();
+  }
+  if (client2) {
+    client2->close();
+  }
+  echo_server->close();
 }
 
 TEST(SERIAL, open_error)
@@ -585,6 +601,7 @@ TEST(URL, open_url_udp)
     udp = MAVConnInterface::open_url("udp://localhost:45004@localhost:45005/?ids=2,241");
     udp_p = dynamic_cast<MAVConnUDP *>(udp.get());
     EXPECT_NE(udp_p, nullptr);
+    udp->close();
   });
 
   EXPECT_NO_THROW(
@@ -592,6 +609,7 @@ TEST(URL, open_url_udp)
     udp = MAVConnInterface::open_url("udp://@localhost:45005");
     udp_p = dynamic_cast<MAVConnUDP *>(udp.get());
     EXPECT_NE(udp_p, nullptr);
+    udp->close();
   });
 
   EXPECT_NO_THROW(
@@ -599,6 +617,7 @@ TEST(URL, open_url_udp)
     udp = MAVConnInterface::open_url("udp://localhost:45006@");
     udp_p = dynamic_cast<MAVConnUDP *>(udp.get());
     EXPECT_NE(udp_p, nullptr);
+    udp->close();
   });
 
   EXPECT_THROW(
@@ -664,6 +683,13 @@ TEST(URL, open_url_tcp)
     tcp_client_p = dynamic_cast<MAVConnTCPClient *>(tcp_client.get());
     EXPECT_NE(tcp_client_p, nullptr);
   });
+
+  if (tcp_client) {
+    tcp_client->close();
+  }
+  if (tcp_server) {
+    tcp_server->close();
+  }
 
   EXPECT_THROW(
   {

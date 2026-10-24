@@ -155,7 +155,8 @@ void MAVConnTCPClient::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_context before start
-  asio::post(io_context, [this]() {this->do_recv();});
+  auto sthis = shared_from_this();
+  asio::post(io_context, [sthis]() {sthis->do_recv();});
 
   if (io_runner.owns_thread()) {
     // run io_context for async io
@@ -405,7 +406,8 @@ void MAVConnTCPServer::connect(
   port_closed_cb = cb_handle_closed_port;
 
   // give some work to io_context before start
-  asio::post(io_context, [this]() {this->do_accept();});
+  auto sthis = shared_from_this();
+  asio::post(io_context, [sthis]() {sthis->do_accept();});
 
   if (io_runner.owns_thread()) {
     // run io_context for async io
