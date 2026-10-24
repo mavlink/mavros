@@ -157,10 +157,11 @@ private:
 
     wp_state = WP::RXLIST;
     wp_count = 0;
+    begin_recv();
     restart_timeout_timer();
+    mission_request_list();
 
     lock.unlock();
-    mission_request_list();
     res->success = wait_fetch_all();
     lock.lock();
 
@@ -199,10 +200,11 @@ private:
     wp_count = send_waypoints.size();
     wp_end_id = wp_count;
     wp_cur_id = 0;
+    begin_send();
     restart_timeout_timer();
+    mission_count(wp_count);
 
     lock.unlock();
-    mission_count(wp_count);
     res->success = wait_push_all();
     lock.lock();
 
@@ -221,10 +223,11 @@ private:
     }
 
     wp_state = WP::CLEAR;
+    begin_send();
     restart_timeout_timer();
+    mission_clear_all();
 
     lock.unlock();
-    mission_clear_all();
     res->success = wait_push_all();
 
     lock.lock();
