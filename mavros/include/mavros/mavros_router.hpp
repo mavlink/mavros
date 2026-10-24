@@ -230,12 +230,12 @@ public:
 
     router_io_runner.start(
       [this, rt_prio]() {
-        mavconn::utils::set_this_thread_name("mudp-io");
+        mavconn::utils::set_this_thread_name("router-io");
         if (rt_prio > 0) {
           int ret = mavconn::utils::set_this_thread_sched_fifo(rt_prio);
           if (ret != 0) {
             RCLCPP_WARN(
-              this->get_logger(), "mudp-io: SCHED_FIFO priority %d failed: %s",
+              this->get_logger(), "router-io: SCHED_FIFO priority %d failed: %s",
               rt_prio, std::strerror(ret));
           }
         }
