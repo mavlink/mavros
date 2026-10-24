@@ -85,8 +85,12 @@ inline bool convert(const Mavlink & rmsg, mavlink_message_t & mmsg)
   mmsg.msgid = rmsg.msgid;
   mmsg.checksum = rmsg.checksum;
   // [[[end]]] (sum: C2bw/BzUbb)
-  std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64);
-  std::copy(rmsg.signature.begin(), rmsg.signature.end(), mmsg.signature);
+  std::fill(
+    std::copy(rmsg.payload64.begin(), rmsg.payload64.end(), mmsg.payload64),
+    mmsg.payload64 + sizeof(mmsg.payload64) / sizeof(mmsg.payload64[0]), 0);
+  std::fill(
+    std::copy(rmsg.signature.begin(), rmsg.signature.end(), mmsg.signature),
+    mmsg.signature + sizeof(mmsg.signature) / sizeof(mmsg.signature[0]), 0);
 
   return true;
 }
