@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
 #include <functional>
 #include <future>
 #include <memory>
@@ -436,6 +437,182 @@ TEST_F(FTPFlowTest, read_multi_chunk)
   ASSERT_NE(rres, nullptr);
   EXPECT_TRUE(rres->success);
   EXPECT_EQ(rres->data, std::vector<uint8_t>(file.begin() + 100, file.begin() + 700));
+}
+
+/**
+ * File server modelled on ArduPilot: a burst streams up to burst_limit packets
+ * (the last one flagged burst_complete) and ends with an EOF NAK at end of file.
+ */
+struct FakeFile
+{
+  std::vector<uint8_t> data;
+  size_t burst_limit{500};
+  bool support_burst{true};
+  //! packet indexes (counted over all bursts) the "link" loses
+  std::vector<size_t> drop;
+  size_t packets{0};
+
+  explicit FakeFile(size_t size)
+  : data(size)
+  {
+    for (size_t i = 0; i < size; i++) {
+      data[i] = i * 7 + (i >> 8);
+    }
+  }
+
+  std::vector<uint8_t> slice(size_t off, size_t len) const
+  {
+    len = std::min(len, data.size() - std::min(off, data.size()));
+    return std::vector<uint8_t>(data.begin() + off, data.begin() + off + len);
+  }
+
+  FTPFlowTest::Replies serve(const FTPRequest & req)
+  {
+    using Replies = FTPFlowTest::Replies;
+    const auto hdr = req.header();
+    if (hdr.opcode == FTPRequest::kCmdOpenFileRO) {
+      return Replies{FTPFlowTest::ack(req, FTPFlowTest::u32(data.size()))};
+    }
+    if (hdr.opcode == FTPRequest::kCmdReadFile) {
+      if (hdr.offset >= data.size()) {
+        return Replies{FTPFlowTest::nak(req, FTPRequest::kErrEOF)};
+      }
+      return Replies{FTPFlowTest::ack(req, slice(hdr.offset, hdr.size))};
+    }
+    if (hdr.opcode != FTPRequest::kCmdBurstReadFile) {
+      return Replies{FTPFlowTest::ack(req)};
+    }
+    if (!support_burst) {
+      return Replies{FTPFlowTest::nak(req, FTPRequest::kErrUnknownCommand)};
+    }
+
+    Replies out;
+    size_t off = hdr.offset;
+    for (size_t i = 0; i <= burst_limit; i++) {
+      FTPRequest r;
+      if (off >= data.size()) {
+        r = FTPFlowTest::nak(req, FTPRequest::kErrEOF);
+      } else if (i == burst_limit) {
+        break;
+      } else {
+        r = FTPFlowTest::ack(req, slice(off, hdr.size));
+      }
+      auto rh = r.header();
+      rh.seqNumber = hdr.seqNumber + 1 + i;
+      rh.offset = off;
+      rh.padding[0] = (i + 1 == burst_limit);
+      r.set_header(rh);
+      if (std::find(drop.begin(), drop.end(), packets++) == drop.end()) {
+        out.push_back(r);
+      }
+      if (off >= data.size()) {
+        break;
+      }
+      off += rh.size;
+    }
+    return out;
+  }
+};
+
+class FTPBurstTest : public FTPFlowTest
+{
+public:
+  bool opened{false};
+
+  std::vector<uint8_t> read(size_t size, size_t offset = 0, bool expect_ok = true)
+  {
+    if (!opened) {
+      auto ores = open("/a.bin", mavros_msgs::srv::FileOpen::Request::MODE_READ);
+      EXPECT_TRUE(ores && ores->success);
+      opened = true;
+    }
+
+    auto rreq = std::make_shared<mavros_msgs::srv::FileRead::Request>();
+    rreq->file_path = "/a.bin";
+    rreq->offset = offset;
+    rreq->size = size;
+    auto rres = call<mavros_msgs::srv::FileRead>("read", rreq);
+    EXPECT_NE(rres, nullptr);
+    if (!rres) {
+      return {};
+    }
+    EXPECT_EQ(rres->success, expect_ok);
+    return rres->data;
+  }
+
+  size_t sent_count(uint8_t opcode)
+  {
+    std::lock_guard<std::mutex> lk(fcu_mutex);
+    return std::count_if(
+      sent.begin(), sent.end(),
+      [opcode](const FTPRequest & r) {return r.header().opcode == opcode;});
+  }
+};
+
+TEST_F(FTPBurstTest, read_to_eof_uses_burst)
+{
+  FakeFile file(2000);
+  file.burst_limit = 3;
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  EXPECT_EQ(read(10000), file.data);
+  // 2000 bytes = 9 packets, 3 per burst, then one more burst for the EOF NAK
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 4U);
+  EXPECT_EQ(sent_count(FTPRequest::kCmdReadFile), 0U);
+}
+
+TEST_F(FTPBurstTest, read_before_eof_does_not_burst)
+{
+  FakeFile file(2000);
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  EXPECT_EQ(read(600, 100), file.slice(100, 600));
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 0U);
+}
+
+TEST_F(FTPBurstTest, lost_packet_restarts_burst_at_gap)
+{
+  FakeFile file(3000);
+  // third packet of the first and of the second burst
+  file.drop = {2, 16};
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  EXPECT_EQ(read(3000), file.data);
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 3U);
+}
+
+TEST_F(FTPBurstTest, stale_burst_packets_are_ignored)
+{
+  FakeFile file(2000);
+  set_fcu(
+    [&file](const FTPRequest & req) {
+      auto out = file.serve(req);
+      if (req.header().opcode == FTPRequest::kCmdBurstReadFile) {
+        // tail of an earlier burst, at a higher offset than this one
+        FakeFile old(5000);
+        auto stale = ack(req, old.slice(4000, FTPRequest::DATA_MAXSZ));
+        auto hdr = stale.header();
+        hdr.seqNumber = req.header().seqNumber - 2000;
+        hdr.offset = 4000;
+        stale.set_header(hdr);
+        out.insert(out.begin(), stale);
+      }
+      return out;
+    });
+
+  EXPECT_EQ(read(2000), file.data);
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 1U);
+}
+
+TEST_F(FTPBurstTest, falls_back_without_burst_support)
+{
+  FakeFile file(1000);
+  file.support_burst = false;
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  EXPECT_EQ(read(1000), file.data);
+  EXPECT_EQ(read(1000), file.data);
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 1U);
 }
 
 }  // namespace uas
