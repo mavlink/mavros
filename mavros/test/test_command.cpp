@@ -54,7 +54,7 @@ class CommandFlowTest : public TestUAS
 public:
   UAS::SharedPtr uas;
   std::shared_ptr<mavros::std_plugins::CommandPlugin> plugin;
-  std::shared_ptr<std::vector<mavros_msgs::msg::Mavlink>> out;
+  std::shared_ptr<CaptureBuffer> out;
   rclcpp::Node::SharedPtr client;
 
   void SetUp() override

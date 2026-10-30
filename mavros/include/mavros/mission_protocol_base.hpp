@@ -57,56 +57,11 @@ using MRES = mavlink::common::MAV_MISSION_RESULT;
 using MTYPE = mavlink::common::MAV_MISSION_TYPE;
 using MFilter = plugin::filter::SystemAndOk;
 
-/**
- * @brief Passes what SystemAndOk passes, if the message is addressed to us or broadcast.
- *
- * The FCU addresses its side of a transfer to whoever started it. Another
- * client's transfer (e.g. a GCS sharing the FCU link) is routed to us as well,
- * and its items, requests and acks must not drive ours.
- */
-class AddressedToUsAndOk : public plugin::filter::SystemAndOk
-{
-public:
-  //! Target ids of a raw message are ours or broadcast (0).
-  static bool targets_us(plugin::UASPtr uas, const mavlink::mavlink_message_t * cmsg)
-  {
-    // Look the message up in the common dialect table directly: every message
-    // this plugin handles is in it, and mavconn's mavlink_get_msg_entry() only
-    // works once a MAVConn link has initialised its table, which a UAS running
-    // without a router in the same process never does.
-    const auto & entries = mavlink::common::MESSAGE_ENTRIES;
-    const auto entry = std::lower_bound(
-      entries.begin(), entries.end(), cmsg->msgid,
-      [](const mavlink::mavlink_msg_entry_t & e, uint32_t id) {return e.msgid < id;});
-    if (entry == entries.end() || entry->msgid != cmsg->msgid) {
-      return false;  // unknown here: not a message this filter is meant for
-    }
-
-    uint8_t tgt_system = 0, tgt_component = 0;
-    if ((entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM) &&
-      entry->target_system_ofs < cmsg->len)
-    {
-      tgt_system = _MAV_PAYLOAD(cmsg)[entry->target_system_ofs];
-    }
-    if ((entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT) &&
-      entry->target_component_ofs < cmsg->len)
-    {
-      tgt_component = _MAV_PAYLOAD(cmsg)[entry->target_component_ofs];
-    }
-
-    return uas->is_addressed_to_us(tgt_system, tgt_component);
-  }
-
-  inline bool operator()(
-    plugin::UASPtr uas, const mavlink::mavlink_message_t * cmsg,
-    const mavconn::Framing framing) override
-  {
-    return SystemAndOk::operator()(uas, cmsg, framing) && targets_us(uas, cmsg);
-  }
-};
-
 //! Filter for the transfer handlers: only the FCU's side of our own transfer.
-using MTargetedFilter = AddressedToUsAndOk;
+// The FCU addresses its side of a transfer to whoever started it. Another
+// client's transfer (e.g. a GCS sharing the FCU link) is routed to us as well,
+// and its items, requests and acks must not drive ours.
+using MTargetedFilter = filter::AddressedToUsAndOk;
 
 // [[[cog:
 //
