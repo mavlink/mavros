@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!-- [[[cog:
+import mavros_cog
+
+mavros_cog.outl_plugins_xml('src/plugins', 'mavros_px4_events_plugins')
+]]] -->
+<library path="mavros_px4_events_plugins">
+  <class name="px4_events" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::px4_events::PX4EventsPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Optional PX4 event decoding plugin.
+@plugin px4_events
+
+Package skeleton; event handling and metadata acquisition are not implemented yet.</description>
+  </class>
+</library>
+<!-- [[[end]]] (sum: JwFDIZdhBs) -->
