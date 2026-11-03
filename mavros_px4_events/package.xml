@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mavros_px4_events</name>
+  <version>2.16.0</version>
+  <description>Optional PX4 event decoding plugin for MAVROS.</description>
+
+  <maintainer email="vooon341@gmail.com">Vladimir Ermakov</maintainer>
+
+  <license>BSD</license>
+  <license>GPLv3</license>
+  <license>LGPLv3</license>
+  <license>MIT</license>
+
+  <url type="repository">https://github.com/mavlink/mavros.git</url>
+  <url type="bugtracker">https://github.com/mavlink/mavros/issues</url>
+
+  <author email="seanhickey.svh@gmail.com">Sean Hickey</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>mavros</depend>
+  <depend>mavros_msgs</depend>
+  <depend>mavlink</depend>
+  <depend>libmavconn</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rcpputils</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_ros</depend>
+  <depend>geographiclib</depend>
+  <depend>liblzma-dev</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <mavros plugin="${prefix}/mavros_plugins.xml" />
+  </export>
+</package>
