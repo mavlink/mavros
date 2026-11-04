@@ -32,6 +32,7 @@ struct MetadataFile
 
 /**
  * Accept PX4's mftp://path and hostless mftp:///path forms.
+ * Preserve the advertised relative or absolute FTP path.
  * Throw on invalid input.
  */
 MetadataFile metadata_file(const std::string & uri, uint32_t crc);
