@@ -63,16 +63,3 @@ sources, and renders the plugin pages, index, QoS appendix and changelog pages.
 cd tools
 uv run mr-plugin-doc-gen --format markdown --input-json ../docs/plugins/std/index.json --output-dir /tmp/std-md
 ```
-## Documentation generator tests
-
-After rebuilding the extractor when its source changes, run the focused tests:
-
-```shell
-cd tools
-uv run python -m unittest discover -s tests -v
-```
-
-The extractor fixture uses a small C++ file without ROS dependencies. It checks
-typed parameter defaults, including symbolic defaults, while preserving extraction
-of `node_declare_and_watch_parameter`. Rendering tests check package grouping and
-links in the plugin index, plugin pages and QoS appendix.
