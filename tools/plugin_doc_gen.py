@@ -30,7 +30,11 @@ except Exception:
     FileSystemLoader = None  # type: ignore[assignment]
 
 
-DEFAULT_PLUGIN_DIRS = ("mavros/src/plugins", "mavros_extras/src/plugins")
+DEFAULT_PLUGIN_DIRS = (
+    "mavros/src/plugins",
+    "mavros_extras/src/plugins",
+    "mavros_px4_events/src/plugins",
+)
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 DEFAULT_MARKDOWN_TEMPLATE = SCRIPT_DIR / "templates" / "plugin.md.j2"
@@ -327,9 +331,16 @@ def qos_key(q: dict[str, ty.Any], plugin: str = "") -> str:
     return "inline:" + q.get("config", "")
 
 
+def _plugin_group(pl: PluginApi) -> str:
+    if "mavros_px4_events" in pl.path.parts:
+        return "px4_events"
+    if "mavros_extras" in pl.path.parts:
+        return "extras"
+    return "std"
+
+
 def _plugin_link(pl: PluginApi) -> str:
-    sub = "extras" if "mavros_extras" in pl.path.as_posix() else "std"
-    return f"{sub}/{pl.path.stem}.md"
+    return f"{_plugin_group(pl)}/{pl.path.stem}.md"
 
 
 def build_qos_registry(plugins: list[PluginApi]) -> dict[str, dict[str, ty.Any]]:
@@ -457,6 +468,9 @@ def render_qos_appendix(reg: dict[str, dict[str, ty.Any]]) -> str:
                     "used_extras": sorted(
                         (p, l) for p, l in used.items() if l.startswith("extras/")
                     ),
+                    "used_px4_events": sorted(
+                        (p, l) for p, l in used.items() if l.startswith("px4_events/")
+                    ),
                 }
             )
         return out
@@ -492,7 +506,9 @@ def qos_link(ent: ApiEntry, plugin: str, reg: dict[str, dict[str, ty.Any]]) -> s
 
 
 def render_plugin_index(
-    std_plugins: list[PluginApi], extras_plugins: list[PluginApi]
+    std_plugins: list[PluginApi],
+    extras_plugins: list[PluginApi],
+    px4_events_plugins: list[PluginApi] | None = None,
 ) -> str:
     """Render the combined plugin index page from a Jinja template."""
     # This renderer is used only for offline docs generation, not for web
@@ -506,6 +522,7 @@ def render_plugin_index(
     body = template.render(
         std_plugins=sorted(std_plugins, key=lambda x: x.plugin),
         extras_plugins=sorted(extras_plugins, key=lambda x: x.plugin),
+        px4_events_plugins=sorted(px4_events_plugins or [], key=lambda x: x.plugin),
     )
     return body.rstrip() + "\n"
 
@@ -534,6 +551,7 @@ def render_plugin_markdown_with_template(
     body = template.render(
         plugin=plugin,
         shown_path=shown_path,
+        plugin_group=_plugin_group(plugin),
         qos_link_fn=(lambda ent: qos_link(ent, plugin.plugin, qos_reg))
         if qos_reg
         else None,
@@ -722,12 +740,13 @@ def main(argv: list[str] | None = None) -> int:
     qos_reg = build_qos_registry(plugins)
 
     if args.plugin_index:
-        std_plugins = [p for p in plugins if "mavros_extras" not in p.path.as_posix()]
-        extras_plugins = [p for p in plugins if "mavros_extras" in p.path.as_posix()]
+        std_plugins = [p for p in plugins if _plugin_group(p) == "std"]
+        extras_plugins = [p for p in plugins if _plugin_group(p) == "extras"]
+        px4_events_plugins = [p for p in plugins if _plugin_group(p) == "px4_events"]
         idx = pathlib.Path(args.plugin_index)
         idx.parent.mkdir(parents=True, exist_ok=True)
         idx.write_text(
-            render_plugin_index(std_plugins, extras_plugins), encoding="utf-8"
+            render_plugin_index(std_plugins, extras_plugins, px4_events_plugins), encoding="utf-8"
         )
         log_event(
             "info",
@@ -735,6 +754,7 @@ def main(argv: list[str] | None = None) -> int:
             phase="render",
             std=len(std_plugins),
             extras=len(extras_plugins),
+            px4_events=len(px4_events_plugins),
             path=str(idx),
         )
         return 0

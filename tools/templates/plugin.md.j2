@@ -75,6 +75,10 @@
 {{ plugin.description }}
 
 {% endif -%}
+{% if plugin_group == "px4_events" %}
+See [package usage and configuration](../../../mavros_px4_events/README.md).
+
+{% endif -%}
 {{ render_api_section("Publishers", plugin.publishers) }}
 {{ render_api_section("Subscribers", plugin.subscribers) }}
 {{ render_api_section("Services", plugin.services) }}

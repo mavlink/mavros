@@ -1,7 +1,7 @@
 # MAVROS plugins
 
 MAVROS is split into the core plugins shipped in `mavros` and the optional
-plugins shipped in `mavros_extras`. Each plugin page documents its ROS API
+plugins shipped in `mavros_extras` and `mavros_px4_events`. Each plugin page documents its ROS API
 (publishers, subscribers, services, clients, parameters) and the MAVLink
 messages it subscribes to and publishes.
 
@@ -79,3 +79,9 @@ messages it subscribes to and publishes.
 | [`vision_pose`](extras/vision_pose_estimate.md) | Vision pose estimate plugin | — | 2 | — | — | 0/1 |
 | [`vision_speed`](extras/vision_speed_estimate.md) | Vision speed estimate plugin | — | 3 | — | — | 0/1 |
 | [`wheel_odometry`](extras/wheel_odometry.md) | Wheel odometry plugin. | 4 | — | — | — | 2/0 |
+
+## PX4 event decoding (`mavros_px4_events`)
+
+| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
+|--------|-------|-----|-----|-----|--------|-----------------|
+| [`px4_events`](px4_events/px4_events.md) | Optional PX4 event decoding plugin. | — | — | — | — | 3/0 |

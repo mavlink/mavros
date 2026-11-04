@@ -23,7 +23,7 @@ Send setpoint accelerations/forces to FCU controller. Uses the
 
 
 ## Parameters
-- None
+- `send_force` [type: bool, default: `false`]
 
 
 ## MAVLink Subscriptions
