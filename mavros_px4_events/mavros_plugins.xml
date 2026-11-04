@@ -9,7 +9,10 @@ mavros_cog.outl_plugins_xml('src/plugins', 'mavros_px4_events_plugins')
     <description>@brief Optional PX4 event decoding plugin.
 @plugin px4_events
 
-Package skeleton; event handling and metadata acquisition are not implemented yet.</description>
+Decode PX4 EVENT messages using local firmware-matching metadata.
+Core sys_status raw event logging and publication remain unchanged.
+Discover automatic metadata locations after PX4 connection.
+Automatic file acquisition is not wired yet.</description>
   </class>
 </library>
-<!-- [[[end]]] (sum: JwFDIZdhBs) -->
+<!-- [[[end]]] (sum: 0PW4mfXsH3) -->
