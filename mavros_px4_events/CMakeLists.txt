@@ -52,6 +52,8 @@ target_include_directories(libevents_parser SYSTEM INTERFACE
 
 add_library(mavros_px4_events_plugins SHARED src/plugins/px4_events.cpp)
 target_sources(mavros_px4_events_plugins PRIVATE
+  src/plugins/px4_events/acquisition.cpp
+  src/plugins/px4_events/cache.cpp
   src/plugins/px4_events/decoder.cpp
   src/plugins/px4_events/discovery.cpp
   src/plugins/px4_events/metadata.cpp
@@ -104,6 +106,8 @@ if(BUILD_TESTING)
 
   ament_add_gtest(mavros-px4-event-plugin-test
     test/test_px4_events_plugin.cpp
+    src/plugins/px4_events/acquisition.cpp
+    src/plugins/px4_events/cache.cpp
     src/plugins/px4_events/decoder.cpp
     src/plugins/px4_events/discovery.cpp
     src/plugins/px4_events/metadata.cpp
