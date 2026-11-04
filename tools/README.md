@@ -34,8 +34,18 @@ tools/build/plugin_doc_extract \
 
 ## Generate docs
 
-From the workspace root (after `colcon build` with
-`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`):
+The generator covers `mavros`, `mavros_extras`, and `mavros_px4_events`, writing
+separate `std`, `extras`, and `px4_events` groups under `docs/plugins/`. Initialize
+the libevents submodule as described in the PX4 events package README first.
+
+From the workspace root, with the ROS environment sourced:
+
+```shell
+colcon build --packages-up-to mavros_extras mavros_px4_events \
+  --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Then generate the documentation:
 
 ```shell
 ./src/mavros/tools/gendoc.sh
@@ -43,7 +53,7 @@ From the workspace root (after `colcon build` with
 ./src/mavros/tools/gendoc.sh markdown
 ```
 
-`gendoc.sh` builds the extractor, (re)builds the compile database if missing,
+`gendoc.sh` builds the extractor if missing, (re)builds the compile database if incomplete,
 extracts the plugin API, regenerates the per-package changelogs from the RST
 sources, and renders the plugin pages, index, QoS appendix and changelog pages.
 
@@ -53,3 +63,16 @@ sources, and renders the plugin pages, index, QoS appendix and changelog pages.
 cd tools
 uv run mr-plugin-doc-gen --format markdown --input-json ../docs/plugins/std/index.json --output-dir /tmp/std-md
 ```
+## Documentation generator tests
+
+After rebuilding the extractor when its source changes, run the focused tests:
+
+```shell
+cd tools
+uv run python -m unittest discover -s tests -v
+```
+
+The extractor fixture uses a small C++ file without ROS dependencies. It checks
+typed parameter defaults, including symbolic defaults, while preserving extraction
+of `node_declare_and_watch_parameter`. Rendering tests check package grouping and
+links in the plugin index, plugin pages and QoS appendix.
