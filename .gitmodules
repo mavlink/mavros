@@ -1,3 +1,3 @@
 [submodule "mavros_px4_events/libevents"]
-	path = mavros_px4_events/libevents
+	path = mavros_px4_events/vendor/libevents
 	url = https://github.com/mavlink/libevents.git

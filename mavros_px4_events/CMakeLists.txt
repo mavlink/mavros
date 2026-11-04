@@ -36,7 +36,7 @@ if(rclcpp_VERSION VERSION_LESS 17.0.0)
   add_compile_definitions(USE_OLD_RMW_QOS USE_OLD_TF2_ROS)
 endif()
 
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libevents/libs/cpp/CMakeLists.txt")
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/libevents/libs/cpp/CMakeLists.txt")
   message(FATAL_ERROR
     "libevents submodule is missing. Run git submodule update --init --recursive.")
 endif()
@@ -45,9 +45,9 @@ endif()
 # EXCLUDE_FROM_ALL excludes unrelated upstream targets and installation rules.
 set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(libevents/libs/cpp libevents_build EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/libevents/libs/cpp libevents_build EXCLUDE_FROM_ALL)
 target_include_directories(libevents_parser SYSTEM INTERFACE
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libevents/libs/cpp>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/libevents/libs/cpp>"
 )
 
 add_library(mavros_px4_events_plugins SHARED src/plugins/px4_events.cpp)
@@ -164,7 +164,7 @@ install(TARGETS mavros_px4_events_plugins
 )
 
 install(FILES README.md DESTINATION share/${PROJECT_NAME})
-install(FILES libevents/LICENSE.md
+install(FILES vendor/libevents/LICENSE.md
   DESTINATION share/${PROJECT_NAME}
   RENAME LICENSE.libevents
 )
