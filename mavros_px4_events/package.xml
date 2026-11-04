@@ -25,6 +25,7 @@
   <depend>libmavconn</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
+  <depend>rcl_interfaces</depend>
   <depend>rcpputils</depend>
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
@@ -33,6 +34,8 @@
   <depend>tf2_ros</depend>
   <depend>geographiclib</depend>
   <depend>liblzma-dev</depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
