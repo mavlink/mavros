@@ -44,6 +44,9 @@ jobs:
           - name: mavros_extras
             packages: mavros_extras
             source_filter: ".*/mavros_extras/.*"
+          - name: mavros_px4_events
+            packages: mavros_px4_events
+            source_filter: ".*/mavros_px4_events/.*"
 
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
@@ -58,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7  # nosemgrep
+        with:
+          submodules: recursive
 
       - uses: ros-tooling/setup-ros@649ef6bcd696da05bc27ceb3fab69d810c0daeab
         with:
@@ -114,6 +119,7 @@ jobs:
           gcovr \
             --root "${GITHUB_WORKSPACE}" \
             --filter "${COMPONENT_FILTER}" \
+            --exclude ".*/mavros_px4_events/vendor/.*" \
             --xml-pretty \
             --output "coverage/${COMPONENT_NAME}/coverage.xml" \
             --html-details "coverage/${COMPONENT_NAME}/coverage.html" \
