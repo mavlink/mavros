@@ -102,6 +102,8 @@ protected:
   std::string hold_close;
   std::string fail_close;
   int open_error{0};
+  bool require_rooted_paths{false};
+  std::vector<std::string> read_paths;
   std::optional<uint32_t> general_size;
   size_t general_padding{0};
   std::vector<uint64_t> offsets;
@@ -117,6 +119,11 @@ protected:
   rclcpp::Service<Close>::SharedPtr close_service;
   rclcpp::executors::SingleThreadedExecutor executor;
 
+  bool is_general(const std::string & path) const
+  {
+    return path == general_path || path == "/" + general_path;
+  }
+
   virtual std::shared_ptr<Acquisition> make_acquisition()
   {
     return Acquisition::create(node);
@@ -129,28 +136,31 @@ protected:
       "ftp/open", [this](Open::Request::SharedPtr request, Open::Response::SharedPtr response) {
         opens.push_back(request->file_path);
         EXPECT_EQ(request->mode, Open::Request::MODE_READ);
-        response->success = open_error == 0;
-        response->r_errno = open_error;
-        response->size = request->file_path == general_path ?
+        const int error = open_error != 0 ? open_error :
+          (require_rooted_paths && request->file_path.front() != '/' ? ENOENT : 0);
+        response->success = error == 0;
+        response->r_errno = error;
+        response->size = is_general(request->file_path) ?
         general_size.value_or(general.size()) : events.size();
       });
     read_service = node->create_service<Read>(
       "ftp/read",
       [this](std::shared_ptr<rmw_request_id_t> header, Read::Request::SharedPtr request) {
         EXPECT_LE(request->size, 239U);
-        if (request->file_path == general_path) {
+        read_paths.push_back(request->file_path);
+        if (is_general(request->file_path)) {
           offsets.push_back(request->offset);
         }
         if (request->file_path == hold_read) {
           held_header = header;
           return;
         }
-        const auto & file = request->file_path == general_path ? general : events;
+        const auto & file = is_general(request->file_path) ? general : events;
         const auto chunk = file.substr(request->offset, request->size);
         Read::Response response;
         response.success = true;
         response.data.assign(chunk.begin(), chunk.end());
-        if (request->file_path == general_path) {
+        if (is_general(request->file_path)) {
           if (read_behavior == ReadBehavior::BusyAlways ||
           (read_behavior == ReadBehavior::BusyOnce && offsets.size() == 1))
           {
@@ -291,6 +301,22 @@ protected:
     }
   }
 };
+
+TEST_F(CachedAcquisitionTest, rooted_fallback_keeps_original_uri_cache_identity)
+{
+  require_rooted_paths = true;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  ASSERT_NE(result->decoder, nullptr);
+  EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
+  EXPECT_EQ(cache->load(event_file(), MetadataRole::Events), events);
+  opens.clear();
+  open_error = ENOENT;
+  start_prepared();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_TRUE(opens.empty());
+}
 
 TEST_F(CachedAcquisitionTest, complete_hit_needs_no_ftp_services_and_leaves_timer_cancelled)
 {
@@ -642,7 +668,7 @@ TEST_F(AcquisitionTest, missing_file_stops_but_confirmed_io_failure_can_retry)
   open_error = ENOENT;
   start();
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
-  EXPECT_EQ(opens.size(), 1U);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path, "/" + general_path}));
   open_error = EIO;
   start();
   ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_retry(*acquisition);}));
@@ -650,6 +676,73 @@ TEST_F(AcquisitionTest, missing_file_stops_but_confirmed_io_failure_can_retry)
   AcquisitionTestPeer::retry(*acquisition);
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_NE(result->decoder, nullptr);
+}
+
+TEST_F(AcquisitionTest, relative_missing_paths_retry_rooted_for_both_files)
+{
+  require_rooted_paths = true;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  ASSERT_NE(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{
+    general_path, "/" + general_path, event_path, "/" + event_path}));
+  EXPECT_EQ(closes, (std::vector<std::string>{"/" + general_path, "/" + event_path}));
+  ASSERT_FALSE(read_paths.empty());
+  for (const auto & path : read_paths) {
+    EXPECT_TRUE(path == "/" + general_path || path == "/" + event_path);
+  }
+  EXPECT_EQ(completions, 1U);
+}
+
+TEST_F(AcquisitionTest, advertised_absolute_paths_are_used_for_open_read_and_close)
+{
+  prepare();
+  const std::string relative_uri = "mftp://events.json";
+  general.replace(general.find(relative_uri), relative_uri.size(), "mftp:///events.json");
+  general_file = metadata_file("mftp:///general.json", metadata_crc32(general));
+  start_prepared();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  ASSERT_NE(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{"/general.json", "/events.json"}));
+  EXPECT_EQ(closes, opens);
+  ASSERT_FALSE(read_paths.empty());
+  for (const auto & path : read_paths) {
+    EXPECT_TRUE(path == "/general.json" || path == "/events.json");
+  }
+}
+
+TEST_F(AcquisitionTest, absolute_and_virtual_missing_paths_do_not_get_rooted_retries)
+{
+  open_error = ENOENT;
+  prepare();
+  for (const std::string path : {"/general.json", "@MAV_LOG/general.json"}) {
+    opens.clear();
+    general_file = metadata_file("mftp://" + path, 0);
+    start_prepared();
+    ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+    EXPECT_EQ(result->decoder, nullptr);
+    EXPECT_EQ(opens, (std::vector<std::string>{path}));
+  }
+}
+
+TEST_F(AcquisitionTest, other_open_errors_do_not_trigger_rooted_fallback)
+{
+  open_error = EACCES;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path}));
+}
+
+TEST_F(AcquisitionTest, rooted_fallback_does_not_exceed_ftp_path_limit)
+{
+  open_error = ENOENT;
+  ASSERT_TRUE(acquisition->start(metadata_file("mftp://" + std::string(238, 'a'), 0),
+    [this](Acquisition::Result value) {result = std::move(value);}));
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_NE(result->error.find("exceeds supported length"), std::string::npos);
+  EXPECT_EQ(opens.size(), 1U);
 }
 
 TEST_F(AcquisitionTest, cancel_discards_late_response_and_allows_a_new_start)

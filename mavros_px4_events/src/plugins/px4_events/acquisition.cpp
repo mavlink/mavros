@@ -297,6 +297,23 @@ bool Acquisition::failed_locked(bool success, int error)
 
 void Acquisition::open_reply_locked(const Open::Response & response)
 {
+  // Older PX4 joins its FTP root and a relative path without a separator.
+  // Retry once with a rooted path, retaining the advertised URI for the cache.
+  // A rooted path also records that this fallback has already been attempted.
+  if (!response.success && response.r_errno == ENOENT &&
+    current_.ftp_path.front() != '/' && current_.ftp_path.front() != '@')
+  {
+    if (current_.ftp_path.size() >= 238) {
+      stop_locked("metadata FTP rooted fallback path exceeds supported length", false);
+      return;
+    }
+    current_.ftp_path.insert(0, "/");
+    busy_retried_ = false;
+    RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata FTP retry with rooted path: %s",
+      current_.ftp_path.c_str());
+    dispatch_locked();
+    return;
+  }
   if (failed_locked(response.success, response.r_errno)) {
     return;
   }

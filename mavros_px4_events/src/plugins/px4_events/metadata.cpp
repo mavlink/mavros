@@ -49,9 +49,6 @@ MetadataFile metadata_file(const std::string & uri, uint32_t crc)
     throw std::runtime_error("only MAVLink FTP metadata URIs are supported");
   }
   auto path = uri.substr(prefix.size());
-  if (!path.empty() && path.front() == '/') {
-    path.erase(0, 1);
-  }
   if (path.empty() || path.find_first_of("?#%\\") != std::string::npos) {
     throw std::runtime_error("invalid MAVLink FTP metadata path");
   }
@@ -60,7 +57,7 @@ MetadataFile metadata_file(const std::string & uri, uint32_t crc)
       throw std::runtime_error("invalid MAVLink FTP metadata path");
     }
   }
-  size_t start = 0;
+  size_t start = path.front() == '/' ? 1 : 0;
   do {
     const auto end = path.find('/', start);
     const auto part = path.substr(start, end == std::string::npos ? end : end - start);

@@ -52,8 +52,19 @@ TEST(Px4EventMetadata, AcceptsHostlessFtpAndZeroChecksum)
 {
   const auto file = metadata_file("mftp:///etc/extras/component_general.json.xz", 0);
   EXPECT_EQ(file.uri, "mftp:///etc/extras/component_general.json.xz");
-  EXPECT_EQ(file.ftp_path, "etc/extras/component_general.json.xz");
+  EXPECT_EQ(file.ftp_path, "/etc/extras/component_general.json.xz");
   EXPECT_EQ(file.crc, 0U);
+}
+
+TEST(Px4EventMetadata, PreservesRelativeAbsoluteAndVirtualPaths)
+{
+  EXPECT_EQ(metadata_file("mftp://etc/events.json", 1).ftp_path, "etc/events.json");
+  EXPECT_EQ(metadata_file("mftp:///etc/events.json", 1).ftp_path, "/etc/events.json");
+  EXPECT_EQ(metadata_file("mftp://@MAV_LOG/events.json", 1).ftp_path,
+    "@MAV_LOG/events.json");
+  auto general = general_metadata();
+  general["metadataTypes"][1]["uri"] = "mftp:///etc/events.json";
+  EXPECT_EQ(event_metadata_file(general.dump()).ftp_path, "/etc/events.json");
 }
 
 TEST(Px4EventMetadata, RejectsUnsupportedTransportWithoutUsingFallback)
@@ -70,7 +81,8 @@ TEST(Px4EventMetadata, RejectsInvalidFtpPaths)
 {
   for (const std::string uri : {"mftp://", "mftp:///", "mftp:////etc/events.json",
       "mftp://etc/../events.json", "mftp://etc/./events.json", "mftp://etc//events.json",
-      "mftp://etc/", "mftp://etc/events.json?query", "mftp://etc/events.json#fragment",
+      "mftp:///etc/../events.json", "mftp:///etc/./events.json", "mftp:///etc//events.json",
+      "mftp:///etc/", "mftp://etc/", "mftp://etc/events.json?query", "mftp://etc/events.json#fragment",
       "mftp://etc/events%20file.json", "mftp://etc/events file.json"})
   {
     EXPECT_THROW(metadata_file(uri, 1), std::runtime_error) << uri;
