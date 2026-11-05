@@ -35,15 +35,12 @@ ros2 run mavros mavros_node --ros-args \
   -p 'fcu_url:=udp://:14540@'
 ```
 
-To omit this optional package from a source build, use
-`colcon build --packages-skip mavros_px4_events`. Building core or extras with
+Building core or extras with (for example):
 `--packages-up-to mavros mavros_extras` also does not select this package.
 
 ## Configuration
 
-Parameters belong to the plugin node (normally `/mavros/px4_events`), rather than
-`/mavros/sys`. They are read-only after startup; restart MAVROS to change them.
-
+Parameters belonging to the plugin: 
 | Parameter | Default | Meaning |
 |---|---|---|
 | `event_decoding_mode` | `auto` | `auto`: acquire definitions from a connected PX4 autopilot; `local`: load a local file; `disabled`: no decoding or metadata acquisition. |
@@ -95,6 +92,7 @@ limit is separate from the output cap. Acquisition or decoding failures leave
 core raw logging available.
 
 ## Check operation
+
 
 Look for `PX4 event metadata ready; decoded logging enabled`, followed by readable
 messages from `mavros.px4_events`. To inspect discovery, cache hits and events at
