@@ -268,7 +268,7 @@
         "message_name": "COMMAND_INT",
         "msg_id_expr": "mavlink::common::msg::COMMAND_INT::MSG_ID",
         "dialect": "common",
-        "line": 395,
+        "line": 397,
         "msg_id": 75
       },
       {
@@ -277,7 +277,7 @@
         "message_name": "COMMAND_LONG",
         "msg_id_expr": "mavlink::common::msg::COMMAND_LONG::MSG_ID",
         "dialect": "common",
-        "line": 368,
+        "line": 370,
         "msg_id": 76
       }
     ]
@@ -347,73 +347,73 @@
       {
         "name": "~/list",
         "type_name": "mavros_msgs::srv::FileList",
-        "line": 302,
+        "line": 308,
         "description": "List the contents of a directory on the FCU (FTP)."
       },
       {
         "name": "~/open",
         "type_name": "mavros_msgs::srv::FileOpen",
-        "line": 307,
+        "line": 313,
         "description": "Open a file on the FCU for reading or writing (FTP)."
       },
       {
         "name": "~/close",
         "type_name": "mavros_msgs::srv::FileClose",
-        "line": 312,
+        "line": 318,
         "description": "Close an open file on the FCU (FTP)."
       },
       {
         "name": "~/read",
         "type_name": "mavros_msgs::srv::FileRead",
-        "line": 317,
+        "line": 323,
         "description": "Read data from an open file on the FCU (FTP)."
       },
       {
         "name": "~/write",
         "type_name": "mavros_msgs::srv::FileWrite",
-        "line": 322,
+        "line": 328,
         "description": "Write data to an open file on the FCU (FTP)."
       },
       {
         "name": "~/mkdir",
         "type_name": "mavros_msgs::srv::FileMakeDir",
-        "line": 327,
+        "line": 333,
         "description": "Create a directory on the FCU (FTP)."
       },
       {
         "name": "~/rmdir",
         "type_name": "mavros_msgs::srv::FileRemoveDir",
-        "line": 332,
+        "line": 338,
         "description": "Remove a directory on the FCU (FTP)."
       },
       {
         "name": "~/remove",
         "type_name": "mavros_msgs::srv::FileRemove",
-        "line": 337,
+        "line": 343,
         "description": "Remove a file on the FCU (FTP)."
       },
       {
         "name": "~/truncate",
         "type_name": "mavros_msgs::srv::FileTruncate",
-        "line": 342,
+        "line": 348,
         "description": "Truncate a file to a given length on the FCU (FTP)."
       },
       {
         "name": "~/reset",
         "type_name": "std_srvs::srv::Empty",
-        "line": 347,
+        "line": 353,
         "description": "Reset the FTP session on both sides (FTP)."
       },
       {
         "name": "~/rename",
         "type_name": "mavros_msgs::srv::FileRename",
-        "line": 352,
+        "line": 358,
         "description": "Rename a file on the FCU (FTP)."
       },
       {
         "name": "~/checksum",
         "type_name": "mavros_msgs::srv::FileChecksum",
-        "line": 357,
+        "line": 363,
         "description": "Calculate the CRC32 checksum of a file on the FCU (FTP)."
       }
     ],
@@ -426,7 +426,7 @@
         "message_name": "FILE_TRANSFER_PROTOCOL",
         "msg_id_expr": "mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID",
         "dialect": "common",
-        "line": 446,
+        "line": 468,
         "msg_id": 110,
         "description": "handler for mavlink::common::msg::FILE_TRANSFER_PROTOCOL"
       }
@@ -438,7 +438,7 @@
         "message_name": "FILE_TRANSFER_PROTOCOL",
         "msg_id_expr": "mavlink::common::msg::FILE_TRANSFER_PROTOCOL::MSG_ID",
         "dialect": "common",
-        "line": 251,
+        "line": 252,
         "msg_id": 110
       }
     ]
@@ -579,7 +579,7 @@
         "message_name": "MISSION_ACK",
         "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
         "dialect": "common",
-        "line": 603,
+        "line": 604,
         "msg_id": 47
       },
       {
@@ -588,7 +588,7 @@
         "message_name": "MISSION_CLEAR_ALL",
         "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
         "dialect": "common",
-        "line": 591,
+        "line": 592,
         "msg_id": 45
       },
       {
@@ -597,7 +597,7 @@
         "message_name": "MISSION_COUNT",
         "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
         "dialect": "common",
-        "line": 565,
+        "line": 566,
         "msg_id": 44
       },
       {
@@ -624,7 +624,7 @@
         "message_name": "MISSION_REQUEST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
         "dialect": "common",
-        "line": 518,
+        "line": 519,
         "msg_id": 40
       },
       {
@@ -633,7 +633,7 @@
         "message_name": "MISSION_REQUEST_INT",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
         "dialect": "common",
-        "line": 530,
+        "line": 531,
         "msg_id": 51
       },
       {
@@ -642,7 +642,7 @@
         "message_name": "MISSION_REQUEST_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
         "dialect": "common",
-        "line": 553,
+        "line": 554,
         "msg_id": 43
       },
       {
@@ -651,7 +651,7 @@
         "message_name": "MISSION_SET_CURRENT",
         "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
         "dialect": "common",
-        "line": 542,
+        "line": 543,
         "msg_id": 41
       },
       {
@@ -660,7 +660,7 @@
         "message_name": "MISSION_WRITE_PARTIAL_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
         "dialect": "common",
-        "line": 580,
+        "line": 581,
         "msg_id": 38
       }
     ]
@@ -871,7 +871,7 @@
         "message_name": "GPS_RAW_INT",
         "msg_id_expr": "mavlink::common::msg::GPS_RAW_INT::MSG_ID",
         "dialect": "common",
-        "line": 234,
+        "line": 235,
         "msg_id": 24
       },
       {
@@ -880,7 +880,7 @@
         "message_name": "GLOBAL_POSITION_INT",
         "msg_id_expr": "mavlink::standard::msg::GLOBAL_POSITION_INT::MSG_ID",
         "dialect": "standard",
-        "line": 325,
+        "line": 326,
         "msg_id": 33
       },
       {
@@ -889,7 +889,7 @@
         "message_name": "GPS_GLOBAL_ORIGIN",
         "msg_id_expr": "mavlink::common::msg::GPS_GLOBAL_ORIGIN::MSG_ID",
         "dialect": "common",
-        "line": 307,
+        "line": 308,
         "msg_id": 49
       },
       {
@@ -898,7 +898,7 @@
         "message_name": "LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET",
         "msg_id_expr": "mavlink::common::msg::LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET::MSG_ID",
         "dialect": "common",
-        "line": 477,
+        "line": 481,
         "msg_id": 89
       }
     ],
@@ -909,7 +909,7 @@
         "message_name": "SET_GPS_GLOBAL_ORIGIN",
         "msg_id_expr": "mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN::MSG_ID",
         "dialect": "common",
-        "line": 592,
+        "line": 597,
         "msg_id": 48
       }
     ]
@@ -980,7 +980,7 @@
         "message_name": "HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 138,
+        "line": 143,
         "msg_id": 242
       }
     ],
@@ -991,7 +991,7 @@
         "message_name": "SET_HOME_POSITION",
         "msg_id_expr": "mavlink::common::msg::SET_HOME_POSITION::MSG_ID",
         "dialect": "common",
-        "line": 213,
+        "line": 218,
         "msg_id": 243
       }
     ]
@@ -1029,7 +1029,7 @@
       {
         "name": "~/data_raw",
         "type_name": "sensor_msgs::msg::Imu",
-        "line": 119,
+        "line": 122,
         "description": "Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1040,7 +1040,7 @@
       {
         "name": "~/mag",
         "type_name": "sensor_msgs::msg::MagneticField",
-        "line": 121,
+        "line": 124,
         "description": "Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1051,7 +1051,7 @@
       {
         "name": "~/temperature_imu",
         "type_name": "sensor_msgs::msg::Temperature",
-        "line": 123,
+        "line": 126,
         "description": "Publish IMU temperature (HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1062,7 +1062,7 @@
       {
         "name": "~/temperature_baro",
         "type_name": "sensor_msgs::msg::Temperature",
-        "line": 127,
+        "line": 130,
         "description": "Publish barometer temperature (SCALED_PRESSURE).",
         "qos": {
           "kind": "named",
@@ -1073,7 +1073,7 @@
       {
         "name": "~/static_pressure",
         "type_name": "sensor_msgs::msg::FluidPressure",
-        "line": 131,
+        "line": 134,
         "description": "Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1084,7 +1084,7 @@
       {
         "name": "~/diff_pressure",
         "type_name": "sensor_msgs::msg::FluidPressure",
-        "line": 135,
+        "line": 138,
         "description": "Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1100,35 +1100,35 @@
       {
         "name": "frame_id",
         "type_name": "string",
-        "line": 82,
+        "line": 83,
         "default_value": "\"base_link\"",
         "description": "Coordinate frame used for the published IMU topics."
       },
       {
         "name": "linear_acceleration_stdev",
         "type_name": "double",
-        "line": 88,
+        "line": 89,
         "default_value": "0.0003",
         "description": "Standard deviation of the linear acceleration."
       },
       {
         "name": "angular_velocity_stdev",
         "type_name": "",
-        "line": 94,
+        "line": 95,
         "default_value": "0.02 * (M_PI / 180.0)",
         "description": "Standard deviation of the angular velocity."
       },
       {
         "name": "orientation_stdev",
         "type_name": "double",
-        "line": 100,
+        "line": 101,
         "default_value": "1.0",
         "description": "Standard deviation of the orientation."
       },
       {
         "name": "magnetic_stdev",
         "type_name": "double",
-        "line": 106,
+        "line": 107,
         "default_value": "0.0",
         "description": "Standard deviation of the magnetic field."
       }
@@ -1140,7 +1140,7 @@
         "message_name": "ATTITUDE",
         "msg_id_expr": "mavlink::common::msg::ATTITUDE::MSG_ID",
         "dialect": "common",
-        "line": 329,
+        "line": 343,
         "msg_id": 30
       },
       {
@@ -1149,7 +1149,7 @@
         "message_name": "ATTITUDE_QUATERNION",
         "msg_id_expr": "mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID",
         "dialect": "common",
-        "line": 380,
+        "line": 397,
         "msg_id": 31
       },
       {
@@ -1158,7 +1158,7 @@
         "message_name": "HIGHRES_IMU",
         "msg_id_expr": "mavlink::common::msg::HIGHRES_IMU::MSG_ID",
         "dialect": "common",
-        "line": 428,
+        "line": 447,
         "msg_id": 105
       },
       {
@@ -1167,7 +1167,7 @@
         "message_name": "RAW_IMU",
         "msg_id_expr": "mavlink::common::msg::RAW_IMU::MSG_ID",
         "dialect": "common",
-        "line": 520,
+        "line": 539,
         "msg_id": 27
       },
       {
@@ -1176,7 +1176,7 @@
         "message_name": "SCALED_IMU",
         "msg_id_expr": "mavlink::common::msg::SCALED_IMU::MSG_ID",
         "dialect": "common",
-        "line": 578,
+        "line": 597,
         "msg_id": 26
       },
       {
@@ -1185,7 +1185,7 @@
         "message_name": "SCALED_PRESSURE",
         "msg_id_expr": "mavlink::common::msg::SCALED_PRESSURE::MSG_ID",
         "dialect": "common",
-        "line": 618,
+        "line": 637,
         "msg_id": 29
       }
     ],
@@ -1578,7 +1578,7 @@
         "message_name": "PARAM_VALUE",
         "msg_id_expr": "mavlink::common::msg::PARAM_VALUE::MSG_ID",
         "dialect": "common",
-        "line": 592,
+        "line": 593,
         "msg_id": 22
       }
     ],
@@ -1589,7 +1589,7 @@
         "message_name": "PARAM_REQUEST_LIST",
         "msg_id_expr": "mavlink::common::msg::PARAM_REQUEST_LIST::MSG_ID",
         "dialect": "common",
-        "line": 734,
+        "line": 738,
         "msg_id": 21
       },
       {
@@ -1598,7 +1598,7 @@
         "message_name": "PARAM_REQUEST_READ",
         "msg_id_expr": "mavlink::common::msg::PARAM_REQUEST_READ::MSG_ID",
         "dialect": "common",
-        "line": 751,
+        "line": 755,
         "msg_id": 20
       },
       {
@@ -1607,7 +1607,7 @@
         "message_name": "PARAM_SET",
         "msg_id_expr": "mavlink::common::msg::PARAM_SET::MSG_ID",
         "dialect": "common",
-        "line": 769,
+        "line": 773,
         "msg_id": 23
       }
     ]
@@ -1748,7 +1748,7 @@
         "message_name": "MISSION_ACK",
         "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
         "dialect": "common",
-        "line": 603,
+        "line": 604,
         "msg_id": 47
       },
       {
@@ -1757,7 +1757,7 @@
         "message_name": "MISSION_CLEAR_ALL",
         "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
         "dialect": "common",
-        "line": 591,
+        "line": 592,
         "msg_id": 45
       },
       {
@@ -1766,7 +1766,7 @@
         "message_name": "MISSION_COUNT",
         "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
         "dialect": "common",
-        "line": 565,
+        "line": 566,
         "msg_id": 44
       },
       {
@@ -1793,7 +1793,7 @@
         "message_name": "MISSION_REQUEST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
         "dialect": "common",
-        "line": 518,
+        "line": 519,
         "msg_id": 40
       },
       {
@@ -1802,7 +1802,7 @@
         "message_name": "MISSION_REQUEST_INT",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
         "dialect": "common",
-        "line": 530,
+        "line": 531,
         "msg_id": 51
       },
       {
@@ -1811,7 +1811,7 @@
         "message_name": "MISSION_REQUEST_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
         "dialect": "common",
-        "line": 553,
+        "line": 554,
         "msg_id": 43
       },
       {
@@ -1820,7 +1820,7 @@
         "message_name": "MISSION_SET_CURRENT",
         "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
         "dialect": "common",
-        "line": 542,
+        "line": 543,
         "msg_id": 41
       },
       {
@@ -1829,7 +1829,7 @@
         "message_name": "MISSION_WRITE_PARTIAL_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
         "dialect": "common",
-        "line": 580,
+        "line": 581,
         "msg_id": 38
       }
     ]
@@ -1942,7 +1942,14 @@
     ],
     "services": [],
     "clients": [],
-    "parameters": [],
+    "parameters": [
+      {
+        "name": "send_force",
+        "type_name": "bool",
+        "line": 48,
+        "default_value": "false"
+      }
+    ],
     "mavlink_subscriptions": [],
     "mavlink_publications": [
       {
@@ -2265,7 +2272,7 @@
       {
         "name": "~/desired",
         "type_name": "nav_msgs::msg::Path",
-        "line": 88,
+        "line": 89,
         "description": "Publish the desired trajectory path.",
         "qos": {
           "kind": "named",
@@ -2278,7 +2285,7 @@
       {
         "name": "~/local",
         "type_name": "trajectory_msgs::msg::MultiDOFJointTrajectory",
-        "line": 82,
+        "line": 83,
         "description": "Trajectory setpoints (SET_POSITION_TARGET_LOCAL_NED).",
         "qos": {
           "kind": "named",
@@ -2291,7 +2298,7 @@
       {
         "name": "~/reset",
         "type_name": "std_srvs::srv::Trigger",
-        "line": 92,
+        "line": 93,
         "description": "Reset the current trajectory."
       }
     ],
@@ -2300,14 +2307,14 @@
       {
         "name": "frame_id",
         "type_name": "string",
-        "line": 59,
+        "line": 60,
         "default_value": "\"map\"",
         "description": "Frame id for the published path."
       },
       {
         "name": "mav_frame",
         "type_name": "string",
-        "line": 65,
+        "line": 66,
         "default_value": "\"LOCAL_NED\"",
         "description": "Coordinate frame of the trajectory setpoints."
       }
@@ -2392,7 +2399,7 @@
       {
         "name": "state",
         "type_name": "mavros_msgs::msg::State",
-        "line": 583,
+        "line": 588,
         "description": "Publish connection, armed and mode state (HEARTBEAT).",
         "qos": {
           "kind": "named",
@@ -2403,7 +2410,7 @@
       {
         "name": "extended_state",
         "type_name": "mavros_msgs::msg::ExtendedState",
-        "line": 586,
+        "line": 591,
         "description": "Publish VTOL and landed state (EXTENDED_SYS_STATE).",
         "qos": {
           "kind": "named",
@@ -2414,7 +2421,7 @@
       {
         "name": "sys_status",
         "type_name": "mavros_msgs::msg::SysStatus",
-        "line": 589,
+        "line": 594,
         "description": "Publish system and battery status (SYS_STATUS).",
         "qos": {
           "kind": "named",
@@ -2425,7 +2432,7 @@
       {
         "name": "estimator_status",
         "type_name": "mavros_msgs::msg::EstimatorStatus",
-        "line": 592,
+        "line": 597,
         "description": "Publish estimator status flags (ESTIMATOR_STATUS).",
         "qos": {
           "kind": "named",
@@ -2436,7 +2443,7 @@
       {
         "name": "battery",
         "type_name": "sensor_msgs::msg::BatteryState",
-        "line": 595,
+        "line": 600,
         "description": "Publish battery state (BATTERY_STATUS).",
         "qos": {
           "kind": "named",
@@ -2447,7 +2454,7 @@
       {
         "name": "statustext/recv",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 598,
+        "line": 603,
         "description": "Publish status text received from the FCU (STATUSTEXT).",
         "qos": {
           "kind": "named",
@@ -2458,7 +2465,7 @@
       {
         "name": "status_event",
         "type_name": "mavros_msgs::msg::StatusEvent",
-        "line": 605,
+        "line": 610,
         "description": "Publish status events received from the FCU (EVENT).",
         "qos": {
           "kind": "named",
@@ -2471,7 +2478,7 @@
       {
         "name": "statustext/send",
         "type_name": "mavros_msgs::msg::StatusText",
-        "line": 601,
+        "line": 606,
         "description": "Send status text to the FCU (STATUSTEXT).",
         "qos": {
           "kind": "named",
@@ -2484,7 +2491,7 @@
       {
         "name": "set_mode",
         "type_name": "mavros_msgs::srv::SetMode",
-        "line": 625,
+        "line": 630,
         "description": "Change the flight mode (MAV_CMD_DO_SET_MODE / SET_MODE).",
         "qos": {
           "kind": "named",
@@ -2495,7 +2502,7 @@
       {
         "name": "set_stream_rate",
         "type_name": "mavros_msgs::srv::StreamRate",
-        "line": 631,
+        "line": 636,
         "description": "Set the stream rate of a MAVLink message (REQUEST_DATA_STREAM).",
         "qos": {
           "kind": "named",
@@ -2506,7 +2513,7 @@
       {
         "name": "set_message_interval",
         "type_name": "mavros_msgs::srv::MessageInterval",
-        "line": 637,
+        "line": 642,
         "description": "Set the interval of a MAVLink message (MAV_CMD_SET_MESSAGE_INTERVAL).",
         "qos": {
           "kind": "named",
@@ -2517,7 +2524,7 @@
       {
         "name": "vehicle_info_get",
         "type_name": "mavros_msgs::srv::VehicleInfoGet",
-        "line": 643,
+        "line": 648,
         "description": "Query information about the FCU and connected vehicles.",
         "qos": {
           "kind": "named",
@@ -2530,7 +2537,7 @@
       {
         "name": "cmd/command",
         "type_name": "mavros_msgs::srv::CommandLong",
-        "line": 621,
+        "line": 626,
         "description": "Client to send MAVLink commands to the command plugin (cmd/command).",
         "qos": {
           "kind": "named",
@@ -2543,35 +2550,35 @@
       {
         "name": "conn_timeout",
         "type_name": "double",
-        "line": 511,
+        "line": 516,
         "default_value": "10.0",
         "description": "Connection timeout in seconds before the link is considered lost."
       },
       {
         "name": "min_voltage",
         "type_name": "",
-        "line": 522,
+        "line": 527,
         "default_value": "std::vector<double>({10.0})",
         "description": "Minimum battery voltage per battery instance before a warning is raised."
       },
       {
         "name": "disable_diag",
         "type_name": "bool",
-        "line": 531,
+        "line": 536,
         "default_value": "false",
         "description": "Disable publishing diagnostic updates."
       },
       {
         "name": "heartbeat_mav_type",
         "type_name": "",
-        "line": 552,
+        "line": 557,
         "default_value": "utils::enum_to_name(\n        conn_heartbeat_mav_type)",
         "description": "MAV type of the heartbeat sent by the GCS."
       },
       {
         "name": "heartbeat_rate",
         "type_name": "double",
-        "line": 559,
+        "line": 564,
         "default_value": "1.0",
         "description": "Rate (Hz) at which the GCS heartbeat is sent to the FCU."
       }
@@ -2583,7 +2590,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 928,
+        "line": 933,
         "msg_id": 0
       },
       {
@@ -2592,7 +2599,7 @@
         "message_name": "SYS_STATUS",
         "msg_id_expr": "mavlink::common::msg::SYS_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 998,
+        "line": 1003,
         "msg_id": 1
       },
       {
@@ -2601,7 +2608,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 1059,
+        "line": 1064,
         "msg_id": 253
       },
       {
@@ -2610,7 +2617,7 @@
         "message_name": "EVENT",
         "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
         "dialect": "common",
-        "line": 1075,
+        "line": 1080,
         "msg_id": 410
       },
       {
@@ -2619,7 +2626,7 @@
         "message_name": "MEMINFO",
         "msg_id_expr": "mavlink::ardupilotmega::msg::MEMINFO::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 1096,
+        "line": 1101,
         "msg_id": 152
       },
       {
@@ -2628,7 +2635,7 @@
         "message_name": "HWSTATUS",
         "msg_id_expr": "mavlink::ardupilotmega::msg::HWSTATUS::MSG_ID",
         "dialect": "ardupilotmega",
-        "line": 1104,
+        "line": 1109,
         "msg_id": 165
       },
       {
@@ -2637,7 +2644,7 @@
         "message_name": "AUTOPILOT_VERSION",
         "msg_id_expr": "mavlink::standard::msg::AUTOPILOT_VERSION::MSG_ID",
         "dialect": "standard",
-        "line": 1112,
+        "line": 1117,
         "msg_id": 148
       },
       {
@@ -2646,7 +2653,7 @@
         "message_name": "EXTENDED_SYS_STATE",
         "msg_id_expr": "mavlink::common::msg::EXTENDED_SYS_STATE::MSG_ID",
         "dialect": "common",
-        "line": 985,
+        "line": 990,
         "msg_id": 245
       },
       {
@@ -2655,7 +2662,7 @@
         "message_name": "BATTERY_STATUS",
         "msg_id_expr": "mavlink::common::msg::BATTERY_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 1155,
+        "line": 1160,
         "msg_id": 147
       },
       {
@@ -2664,7 +2671,7 @@
         "message_name": "ESTIMATOR_STATUS",
         "msg_id_expr": "mavlink::common::msg::ESTIMATOR_STATUS::MSG_ID",
         "dialect": "common",
-        "line": 1269,
+        "line": 1274,
         "msg_id": 230
       }
     ],
@@ -2675,7 +2682,7 @@
         "message_name": "HEARTBEAT",
         "msg_id_expr": "mavlink::minimal::msg::HEARTBEAT::MSG_ID",
         "dialect": "minimal",
-        "line": 1337,
+        "line": 1342,
         "msg_id": 0
       },
       {
@@ -2684,7 +2691,7 @@
         "message_name": "REQUEST_DATA_STREAM",
         "msg_id_expr": "mavlink::common::msg::REQUEST_DATA_STREAM::MSG_ID",
         "dialect": "common",
-        "line": 1462,
+        "line": 1467,
         "msg_id": 66
       },
       {
@@ -2693,7 +2700,7 @@
         "message_name": "SET_MODE",
         "msg_id_expr": "mavlink::common::msg::SET_MODE::MSG_ID",
         "dialect": "common",
-        "line": 1550,
+        "line": 1555,
         "msg_id": 11
       },
       {
@@ -2702,7 +2709,7 @@
         "message_name": "STATUSTEXT",
         "msg_id_expr": "mavlink::common::msg::STATUSTEXT::MSG_ID",
         "dialect": "common",
-        "line": 1446,
+        "line": 1451,
         "msg_id": 253
       }
     ]
@@ -3052,7 +3059,7 @@
         "message_name": "MISSION_ACK",
         "msg_id_expr": "mavlink::common::msg::MISSION_ACK::MSG_ID",
         "dialect": "common",
-        "line": 603,
+        "line": 604,
         "msg_id": 47
       },
       {
@@ -3061,7 +3068,7 @@
         "message_name": "MISSION_CLEAR_ALL",
         "msg_id_expr": "mavlink::common::msg::MISSION_CLEAR_ALL::MSG_ID",
         "dialect": "common",
-        "line": 591,
+        "line": 592,
         "msg_id": 45
       },
       {
@@ -3070,7 +3077,7 @@
         "message_name": "MISSION_COUNT",
         "msg_id_expr": "mavlink::common::msg::MISSION_COUNT::MSG_ID",
         "dialect": "common",
-        "line": 565,
+        "line": 566,
         "msg_id": 44
       },
       {
@@ -3097,7 +3104,7 @@
         "message_name": "MISSION_REQUEST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST::MSG_ID",
         "dialect": "common",
-        "line": 518,
+        "line": 519,
         "msg_id": 40
       },
       {
@@ -3106,7 +3113,7 @@
         "message_name": "MISSION_REQUEST_INT",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_INT::MSG_ID",
         "dialect": "common",
-        "line": 530,
+        "line": 531,
         "msg_id": 51
       },
       {
@@ -3115,7 +3122,7 @@
         "message_name": "MISSION_REQUEST_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_REQUEST_LIST::MSG_ID",
         "dialect": "common",
-        "line": 553,
+        "line": 554,
         "msg_id": 43
       },
       {
@@ -3124,7 +3131,7 @@
         "message_name": "MISSION_SET_CURRENT",
         "msg_id_expr": "mavlink::common::msg::MISSION_SET_CURRENT::MSG_ID",
         "dialect": "common",
-        "line": 542,
+        "line": 543,
         "msg_id": 41
       },
       {
@@ -3133,7 +3140,7 @@
         "message_name": "MISSION_WRITE_PARTIAL_LIST",
         "msg_id_expr": "mavlink::common::msg::MISSION_WRITE_PARTIAL_LIST::MSG_ID",
         "dialect": "common",
-        "line": 580,
+        "line": 581,
         "msg_id": 38
       }
     ]

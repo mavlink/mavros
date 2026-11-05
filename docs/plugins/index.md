@@ -1,7 +1,7 @@
 # MAVROS plugins
 
 MAVROS is split into the core plugins shipped in `mavros` and the optional
-plugins shipped in `mavros_extras`. Each plugin page documents its ROS API
+plugins shipped in `mavros_extras` and `mavros_px4_events`. Each plugin page documents its ROS API
 (publishers, subscribers, services, clients, parameters) and the MAVLink
 messages it subscribes to and publishes.
 
@@ -17,7 +17,7 @@ messages it subscribes to and publishes.
 | [`geofence`](std/geofence.md) | Geofence manipulation plugin | 1 | — | 3 | — | 6/10 |
 | [`global_position`](std/global_position.md) | Global position plugin. | 9 | 2 | — | — | 4/1 |
 | [`home_position`](std/home_position.md) | home position plugin. | 1 | 1 | 1 | 1 | 1/1 |
-| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 7 | — | — | — | 6/0 |
+| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 8 | — | — | — | 6/0 |
 | [`local_position`](std/local_position.md) | Local position plugin. | 7 | — | — | — | 2/0 |
 | [`manual_control`](std/manual_control.md) | Manual Control plugin | 1 | 1 | — | — | 1/1 |
 | [`nav_controller_output`](std/nav_controller_output.md) | nav controller output plugin. | 1 | — | — | — | 1/0 |
@@ -39,7 +39,7 @@ messages it subscribes to and publishes.
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
 |--------|-------|-----|-----|-----|--------|-----------------|
-| [`adsb`](extras/adsb.md) | ADS-B Vehicle plugin | 1 | 1 | — | — | 1/1 |
+| [`adsb`](extras/adsb.md) | ADS-B Vehicle plugin | 2 | 1 | — | — | 2/1 |
 | [`cam_imu_sync`](extras/cam_imu_sync.md) | Camera IMU synchronisation plugin | 1 | — | — | — | 1/0 |
 | [`camera`](extras/camera.md) | Camera plugin plugin | 1 | — | — | — | 1/0 |
 | [`cellular_status`](extras/cellular_status.md) | Cellular status plugin. | — | 1 | — | — | 0/1 |
@@ -79,3 +79,9 @@ messages it subscribes to and publishes.
 | [`vision_pose`](extras/vision_pose_estimate.md) | Vision pose estimate plugin | — | 2 | — | — | 0/1 |
 | [`vision_speed`](extras/vision_speed_estimate.md) | Vision speed estimate plugin | — | 3 | — | — | 0/1 |
 | [`wheel_odometry`](extras/wheel_odometry.md) | Wheel odometry plugin. | 4 | — | — | — | 2/0 |
+
+## PX4 event decoding (`mavros_px4_events`)
+
+| Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
+|--------|-------|-----|-----|-----|--------|-----------------|
+| [`px4_events`](px4_events/px4_events.md) | Optional PX4 event decoding plugin. | — | — | — | — | 3/0 |
