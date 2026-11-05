@@ -433,8 +433,11 @@ private:
   bool read_burst;
   bool burst_supported;
   int burst_resyncs;
+<<<<<<< HEAD
   // Skip the last burst response window before sending an ordinary request.
   bool burst_sequence_reserved;
+=======
+>>>>>>> 0f9953d3 (Removed FTP code)
 
   // FTP:Write
   uint32_t write_offset;
@@ -822,17 +825,6 @@ private:
 
   /* -*- send helpers -*- */
 
-  uint16_t next_request_sequence(bool burst = false)
-  {
-    // Separate new bursts from earlier bursts, and ordinary requests from the
-    // last burst's responses (including an EOF that may still be in flight).
-    if (burst || burst_sequence_reserved) {
-      last_send_seqnr += BURST_SEQ_WINDOW;
-    }
-    burst_sequence_reserved = burst;
-    return ++last_send_seqnr;
-  }
-
   /**
    * @brief Go to IDLE mode
    *
@@ -863,7 +855,7 @@ private:
 
     op_state = OP::ACK;
     FTPRequest req(FTPRequest::kCmdResetSessions);
-    req.send(uas, next_request_sequence());
+    req.send(uas, ++last_send_seqnr);
   }
 
   /// Send any command with string payload (usually file/dir path)
@@ -877,7 +869,7 @@ private:
     hdr.offset = offset;
     req.set_header(hdr);
     req.set_data_string(path);
-    req.send(uas, next_request_sequence());
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_list_command()
@@ -910,7 +902,7 @@ private:
     hdr.offset = 0;
     hdr.size = 0;
     req.set_header(hdr);
-    req.send(uas, next_request_sequence());
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_read_command()
@@ -926,7 +918,7 @@ private:
     hdr.offset = read_offset;
     hdr.size = bytes_to_read;
     req.set_header(hdr);
-    req.send(uas, next_request_sequence());
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_burst_read_command()
@@ -938,7 +930,10 @@ private:
     hdr.offset = read_offset;
     hdr.size = FTPRequest::DATA_MAXSZ;
     req.set_header(hdr);
-    req.send(uas, next_request_sequence(true));
+    // Each burst gets its own seqnr window, so packets still streaming from an
+    // earlier burst cannot be taken for this one.
+    last_send_seqnr += BURST_SEQ_WINDOW;
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_write_command(const size_t bytes_to_copy)
@@ -954,7 +949,7 @@ private:
     req.set_header(hdr);
     std::copy(write_it, write_it + bytes_to_copy, req.data());
     write_chunk_size = bytes_to_copy;
-    req.send(uas, next_request_sequence());
+    req.send(uas, ++last_send_seqnr);
   }
 
   void send_remove_command(const std::string & path)
