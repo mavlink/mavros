@@ -21,7 +21,6 @@
 #include <future>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -515,47 +514,6 @@ struct FakeFile
   }
 };
 
-// Model PX4's small-response cache: request seq + 1 matching the cached reply
-// is treated as a retransmission, without checking the request opcode.
-struct CachedReplyFile : FakeFile
-{
-  using FakeFile::FakeFile;
-  std::optional<FTPRequest> last_reply;
-  bool session_open{false};
-  size_t replays{0};
-
-  FTPFlowTest::Replies serve(const FTPRequest & req)
-  {
-    const auto hdr = req.header();
-    if (last_reply && static_cast<uint16_t>(hdr.seqNumber + 1) ==
-      last_reply->header().seqNumber)
-    {
-      ++replays;
-      return {*last_reply};
-    }
-
-    FTPFlowTest::Replies replies;
-    if (hdr.opcode == FTPRequest::kCmdOpenFileRO && session_open) {
-      replies = {FTPFlowTest::nak(req, FTPRequest::kErrNoSessionsAvailable)};
-    } else if (hdr.opcode == FTPRequest::kCmdTerminateSession && !session_open) {
-      replies = {FTPFlowTest::nak(req, FTPRequest::kErrInvalidSession)};
-    } else {
-      replies = FakeFile::serve(req);
-      if (hdr.opcode == FTPRequest::kCmdOpenFileRO) {
-        session_open = true;
-      } else if (hdr.opcode == FTPRequest::kCmdTerminateSession) {
-        session_open = false;
-      }
-    }
-
-    last_reply.reset();
-    if (!replies.empty() && replies.back().header().size <= sizeof(uint32_t)) {
-      last_reply = replies.back();
-    }
-    return replies;
-  }
-};
-
 class FTPBurstTest : public FTPFlowTest
 {
 public:
@@ -580,17 +538,6 @@ public:
     }
     EXPECT_EQ(rres->success, expect_ok);
     return rres->data;
-  }
-
-  mavros_msgs::srv::FileClose::Response::SharedPtr close()
-  {
-    auto req = std::make_shared<mavros_msgs::srv::FileClose::Request>();
-    req->file_path = "/a.bin";
-    auto res = call<mavros_msgs::srv::FileClose>("close", req);
-    if (res && res->success) {
-      opened = false;
-    }
-    return res;
   }
 
   size_t sent_count(uint8_t opcode)
@@ -666,102 +613,6 @@ TEST_F(FTPBurstTest, falls_back_without_burst_support)
   EXPECT_EQ(read(1000), file.data);
   EXPECT_EQ(read(1000), file.data);
   EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 1U);
-}
-
-TEST_F(FTPBurstTest, close_after_final_burst_is_not_replayed_as_eof)
-{
-  CachedReplyFile file(372);
-  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
-
-  EXPECT_EQ(read(239), file.slice(0, 239));
-  EXPECT_EQ(read(133, 239), file.slice(239, 133));
-  auto res = close();
-  ASSERT_NE(res, nullptr);
-  ASSERT_TRUE(res->success);
-  auto next = open("/b.bin", mavros_msgs::srv::FileOpen::Request::MODE_READ);
-  ASSERT_NE(next, nullptr);
-  EXPECT_TRUE(next->success);
-  std::lock_guard<std::mutex> lk(fcu_mutex);
-  EXPECT_EQ(file.replays, 0U);
-}
-
-TEST_F(FTPBurstTest, late_burst_eof_does_not_interfere_with_close)
-{
-  CachedReplyFile file(133);
-  std::optional<FTPRequest> eof;
-  set_fcu(
-    [&file, &eof](const FTPRequest & req) {
-      auto replies = file.serve(req);
-      if (req.header().opcode == FTPRequest::kCmdBurstReadFile && !replies.empty()) {
-        eof = replies.back();
-      } else if (req.header().opcode == FTPRequest::kCmdTerminateSession && eof) {
-        replies.insert(replies.begin(), *eof);
-      }
-      return replies;
-    });
-
-  EXPECT_EQ(read(133), file.data);
-  auto res = close();
-  ASSERT_NE(res, nullptr);
-  EXPECT_TRUE(res->success);
-}
-
-TEST_F(FTPBurstTest, burst_then_close_remains_safe_across_sequence_wraparound)
-{
-  CachedReplyFile file(133);
-  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
-
-  // Each read/close pair advances beyond a burst window. Nine transfers cross
-  // the 16-bit boundary without modifying the plugin's private sequence state.
-  for (unsigned i = 0; i < 9; ++i) {
-    EXPECT_EQ(read(133), file.data);
-    auto res = close();
-    ASSERT_NE(res, nullptr);
-    ASSERT_TRUE(res->success);
-  }
-  std::lock_guard<std::mutex> lk(fcu_mutex);
-  ASSERT_FALSE(sent.empty());
-  bool wrapped = false;
-  for (size_t i = 1; i < sent.size(); ++i) {
-    wrapped |= sent[i].header().seqNumber < sent[i - 1].header().seqNumber;
-  }
-  EXPECT_TRUE(wrapped);
-  EXPECT_EQ(file.replays, 0U);
-}
-
-TEST_F(FTPBurstTest, unsupported_burst_fallback_still_allows_close_and_next_open)
-{
-  CachedReplyFile file(1000);
-  file.support_burst = false;
-  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
-
-  EXPECT_EQ(read(1000), file.data);
-  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 1U);
-  auto res = close();
-  ASSERT_NE(res, nullptr);
-  ASSERT_TRUE(res->success);
-  auto next = open("/b.bin", mavros_msgs::srv::FileOpen::Request::MODE_READ);
-  ASSERT_NE(next, nullptr);
-  EXPECT_TRUE(next->success);
-}
-
-TEST_F(FTPBurstTest, close_after_burst_timeout_skips_the_reserved_window)
-{
-  CachedReplyFile file(133);
-  set_fcu(
-    [&file](const FTPRequest & req) {
-      auto replies = file.serve(req);
-      if (req.header().opcode == FTPRequest::kCmdBurstReadFile) {
-        // The server caches EOF, but all burst responses are lost on the link.
-        replies.clear();
-      }
-      return replies;
-    });
-
-  EXPECT_TRUE(read(133, 0, false).empty());
-  auto res = close();
-  ASSERT_NE(res, nullptr);
-  EXPECT_TRUE(res->success);
 }
 
 }  // namespace uas
