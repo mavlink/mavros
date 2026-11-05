@@ -13,6 +13,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -450,13 +451,19 @@ void rewrite_xz_dictionary(std::string & bytes, uint32_t dictionary_size)
   ASSERT_EQ(lzma_block_header_decode(&block, nullptr,
       reinterpret_cast<const uint8_t *>(bytes.data() + block_start)), LZMA_OK);
   if (filters[0].id != LZMA_FILTER_LZMA2 || filters[1].id != LZMA_VLI_UNKNOWN) {
-    lzma_filters_free(filters, nullptr);
+    for (auto & filter : filters) {
+      std::free(filter.options);
+      filter.options = nullptr;
+    }
     FAIL() << "expected one LZMA2 filter in the test fixture";
   }
   static_cast<lzma_options_lzma *>(filters[0].options)->dict_size = dictionary_size;
   const auto result = lzma_block_header_encode(&block,
     reinterpret_cast<uint8_t *>(bytes.data() + block_start));
-  lzma_filters_free(filters, nullptr);
+  for (auto & filter : filters) {
+    std::free(filter.options);
+    filter.options = nullptr;
+  }
   ASSERT_EQ(result, LZMA_OK);
 }
 
