@@ -3,6 +3,7 @@
 *.pyc
 core
 .vscode/
+.claude/
 
 # generated
 libmavconn/include/mavconn/mavlink_dialect.hpp
