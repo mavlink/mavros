@@ -362,9 +362,9 @@ TEST_F(SysTimeTest, target_component_zero_accepts_any_component)
 
 TEST_F(SysTimeTest, the_status_says_when_the_estimate_has_converged)
 {
-  // The UAS is given the estimate from the sample after convergence_window
-  // samples have been used: here the second.
-  plugin->get_node()->set_parameter(rclcpp::Parameter("convergence_window", 1));
+  // The UAS is given the estimate once convergence_window samples have been
+  // used: here the second.
+  plugin->get_node()->set_parameter(rclcpp::Parameter("convergence_window", 2));
   auto request = first_request();
   inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
   wait_status_count(1);

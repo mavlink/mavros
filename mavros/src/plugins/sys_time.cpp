@@ -373,7 +373,7 @@ public:
       "convergence_window", 500, [&](const rclcpp::Parameter & p) {
         convergence_window = p.as_int();
         dt_diag.set_progress(
-          sequence, convergence_window, offset_in_use, uas->get_time_offset());
+          sequence, convergence_window, sync_converged(), uas->get_time_offset());
       });
 
     // Outlier rejection and filter reset
@@ -440,8 +440,6 @@ private:
 
   // Filter parameters
   uint32_t sequence;
-  // Whether the estimate is handed to the UAS: FCU timestamps are converted with it.
-  bool offset_in_use = false;
   double filter_alpha;
   double filter_beta;
 
@@ -659,12 +657,12 @@ private:
         // Perform filter update
         add_sample(offset_ns);
 
-        // Save time offset for other components to use
-        offset_in_use = sync_converged();
-        uas->set_time_offset(offset_in_use ? static_cast<int64_t>(time_offset) : 0);
-
         // Increment sequence counter after filter update
         sequence++;
+
+        // Save time offset for other components to use, once convergence_window
+        // samples have been used
+        uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
 
         // Reset high deviation count after filter update
         high_deviation_count = 0;
@@ -694,12 +692,12 @@ private:
     timesync_status.observed_offset_ns = offset_ns;
     timesync_status.estimated_offset_ns = time_offset;
     timesync_status.round_trip_time_ms = static_cast<float>(rtt_ns / 1000000.0);
-    timesync_status.converged = offset_in_use;
+    timesync_status.converged = sync_converged();
 
     timesync_status_pub->publish(timesync_status);
 
     // Update diagnostics
-    dt_diag.set_progress(sequence, convergence_window, offset_in_use, uas->get_time_offset());
+    dt_diag.set_progress(sequence, convergence_window, sync_converged(), uas->get_time_offset());
     dt_diag.tick(rtt_ns, remote_time_ns, time_offset, sample);
   }
 
@@ -727,7 +725,6 @@ private:
   {
     // Do a full reset of all statistics and parameters. FCU timestamps are not
     // converted until the estimate converges again.
-    offset_in_use = false;
     uas->set_time_offset(0);
     sequence = 0;
     time_offset = 0.0;
