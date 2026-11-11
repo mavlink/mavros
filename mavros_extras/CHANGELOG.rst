@@ -2,8 +2,8 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.17.0 (2026-11-11)
+-------------------
 * Merge pull request `#2337 <https://github.com/mavlink/mavros/issues/2337>`_ from zekesarosi/feat/adsb-transceiver-health
   adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health
 * adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health

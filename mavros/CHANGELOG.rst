@@ -2,8 +2,8 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.17.0 (2026-11-11)
+-------------------
 * Merge pull request `#2358 <https://github.com/mavlink/mavros/issues/2358>`_ from agyoungs/sys-time-match-timesync-replies
   sys_time: use only the FCU's replies to our own TIMESYNC requests
 * plugin: move AddressedToUsAndOk back to the mission base

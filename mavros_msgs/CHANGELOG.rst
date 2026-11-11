@@ -2,8 +2,8 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.17.0 (2026-11-11)
+-------------------
 * Merge branch 'ros2' into feat/rt-sched-fifo-upstream
 * Merge pull request `#2346 <https://github.com/mavlink/mavros/issues/2346>`_ from zekesarosi/fix/mavlink-convert-zero-tail
   msgs, mavros: do not read stale bytes past a truncated MAVLink 2 payload

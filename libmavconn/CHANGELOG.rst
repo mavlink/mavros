@@ -2,8 +2,8 @@
 Changelog for package libmavconn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.17.0 (2026-11-11)
+-------------------
 * Merge pull request `#2357 <https://github.com/mavlink/mavros/issues/2357>`_ from zekesarosi/feat/rt-sched-fifo-upstream
   mavros: optional SCHED_FIFO for router io and executor threads
 * Merge branch 'ros2' into feat/rt-sched-fifo-upstream
