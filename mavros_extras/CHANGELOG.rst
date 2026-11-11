@@ -2,6 +2,49 @@
 Changelog for package mavros_extras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#2337 <https://github.com/mavlink/mavros/issues/2337>`_ from zekesarosi/feat/adsb-transceiver-health
+  adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health
+* adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health
+* Merge pull request `#2328 <https://github.com/mavlink/mavros/issues/2328>`_ from ctu-mrs/fix/sys-status-cmd-client-upstream
+  mavros: reuse one cmd/command client instead of one per call
+* Merge pull request `#2318 <https://github.com/mavlink/mavros/issues/2318>`_ from lfvaranda/fix/wheel-distance-oob
+  wheel_odometry: clamp WHEEL_DISTANCE.count to distance array size (fix OOB read, CWE-125)
+* wheel_odometry: drop the standalone clamp test, trim the comment
+  The test only exercised a local std::min wrapper and never touched the
+  plugin, so it would keep passing with the fix reverted. Remove it and
+  its gtest target. Shorten the in-code comment to what matters here: the
+  count comes from the wire and must be bounded by the array size.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* mount_control: reuse one cmd/command client instead of one per call
+  mount_configure_cb() created a new cmd/command client for every
+  request. A request sent before the fresh client discovered the service
+  could be lost, and future.get() (no timeout) then blocked the configure
+  service forever.
+  Create the client once at plugin init, in its own callback group, and
+  fail the request while the command service is not discovered yet, the
+  same as in sys_status.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* wheel_odometry: clamp WHEEL_DISTANCE.count to distance array size (CWE-125)
+  WheelOdometryPlugin::handle_wheel_distance copied WHEEL_DISTANCE.count
+  elements out of the message's distance array without clamping count to
+  the array size (16). count is a uint8 taken verbatim from the wire and
+  was only checked for == 0, so any WHEEL_DISTANCE with count > 16 (up to
+  255) made std::copy_n read up to 239 doubles (~1.9 KB) past distance[16].
+  Those bytes were published on ~/wheel_odometry/distance (information
+  disclosure to ROS subscribers) and/or consumed as odometry; an over-read
+  crossing an unmapped page can also crash the node.
+  This is a memory-safety/robustness defect independent of peer trust: it
+  triggers on malformed input (a malfunctioning or version-mismatched
+  autopilot emitting count > 16) with no attacker, and MAVROS's MAVLink
+  input is commonly an unauthenticated UDP/TCP endpoint into which a frame
+  can be injected. The same class was fixed in this codebase in `#2115 <https://github.com/mavlink/mavros/issues/2115>`_/`#2136 <https://github.com/mavlink/mavros/issues/2136>`_.
+  Clamp count to distance.max_size() before the copies, matching the
+  pattern already used in log_transfer.cpp and esc_status.cpp. Adds a
+  regression test asserting the copy is bounded to 16 elements.
+* Contributors: Luiz Felipe Coelho Varanda, Vladimir Ermakov, Vojtech Spurny, Zeke Sarosi
+
 2.16.0 (2026-09-27)
 -------------------
 * Merge pull request `#2308 <https://github.com/mavlink/mavros/issues/2308>`_ from webzuweb/fix/gimbal-control-frame-id-race

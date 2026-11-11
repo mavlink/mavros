@@ -2,6 +2,410 @@
 Changelog for package mavros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#2358 <https://github.com/mavlink/mavros/issues/2358>`_ from agyoungs/sys-time-match-timesync-replies
+  sys_time: use only the FCU's replies to our own TIMESYNC requests
+* plugin: move AddressedToUsAndOk back to the mission base
+  This reverts commit 1474e415. sys_time was the only other user and now
+  checks the target ids in its handler. The filter knows only the common
+  dialect, so it should not be offered as a generic one.
+  Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+* sys_time: check TIMESYNC target ids in the handler
+  PX4 v1.14 - v1.17 has the target fields in TIMESYNC, but leaves them
+  uninitialised in its replies, so a filter on them may drop the replies
+  to our own requests. Go back to SystemAndOk and check in the handler:
+  - a request is answered only if it is addressed to us or broadcast;
+  - a reply is matched by ts1 only, its target fields are not checked.
+  Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+* Merge pull request `#2366 <https://github.com/mavlink/mavros/issues/2366>`_ from mavlink/ftp-burst-followup
+  ftp: follow-up fixes for burst sequence window (`#2361 <https://github.com/mavlink/mavros/issues/2361>`_)
+* ftp: do not skip a sequence window after an unsupported burst
+  A kErrUnknownCommand NAK is the only reply to a burst request, so there
+  is no stream to separate from. Clear the reservation before falling back
+  to kCmdReadFile, FCUs without burst support keep plain +1 sequencing.
+  Tests, follow-up to `#2361 <https://github.com/mavlink/mavros/issues/2361>`_:
+  - the fallback test asserts the sent sequence numbers and no replays,
+  it passed without the plugin change before;
+  - the late EOF test no longer uses the reply cache, so it does not
+  duplicate close_after_final_burst_is_not_replayed_as_eof;
+  - the wraparound test puts the burst stream on the 16-bit boundary:
+  last data packet at 65535, cached EOF NAK at 0, close past the window.
+  Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+* Merge pull request `#2361 <https://github.com/mavlink/mavros/issues/2361>`_ from AscendEngineering/fix/ftp-burst-failed-close
+  ftp: Standard FTP read after burst FTP read sequence error
+* Fixed Standard FTP read after burst FTP read
+* test: sys_time: check ignored TIMESYNC messages with a valid one after
+  The tests that a request or reply is ignored waited a fixed time and
+  then checked nothing came out, so on a slow machine they could pass
+  without the plugin having acted. The plugin handles an injected message
+  before inject() returns and its replies and statuses arrive in order,
+  so each such check now sends a valid message after the ignored one and
+  checks that the valid one's result is the only one. The fixed sleep in
+  inject() goes, and the positive checks compare the remote timestamp
+  rather than a count.
+  Each check fails when the behaviour it guards is removed: any reply
+  component accepted, ts1 not checked, SystemAndOk instead of
+  AddressedToUsAndOk, or a pending request not removed once used.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* sys_time: address review: clock steps, component 0, test helpers
+  - Record each request's ts1 as sent. Forcing ts1 to increase kept it
+  above an old maximum after our clock stepped back (sim time with a
+  SITL restart, an NTP step), so every RTT underflowed and was rejected
+  until the clock caught up. Duplicate ts1 values are harmless, as each
+  reply takes one pending entry.
+  - Treat target component 0 as any component. Warn (throttled) when a
+  reply to one of our requests comes from another component, the case a
+  misconfigured target component produces.
+  - Test helpers: convert_message() zero-initialises the message and sets
+  msgid and len, so the target-field checks no longer read garbage, and
+  capture_sink() returns a CaptureBuffer read through a locked
+  snapshot().
+  - Note in AddressedToUsAndOk that it only knows common-dialect messages.
+  New tests: target component 0, and sync after the clock steps back;
+  both fail on the previous commit.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* sys_time: use only the FCU's replies to our own TIMESYNC requests
+  Any TIMESYNC with tc1 > 0 from the target system counted as a reply to
+  our request, whatever its component and ts1. When other components also
+  timesync with the FCU (a GCS, companion apps), the FCU's replies to them
+  reach us too, each a sample against another clock: high-deviation
+  rejections and "Time jump detected" resets. A reply now counts only if
+  it comes from the target component and echoes the ts1 of one of our
+  pending requests, each used once.
+  Requests are addressed to the FCU, and replies to the requester, as the
+  TIMESYNC definition asks of responses, so routers do not deliver them to
+  every component. With AddressedToUsAndOk as the handler filter, requests
+  and replies addressed to another component are dropped; untargeted ones
+  (autopilots without the target fields) still pass.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* plugin: move AddressedToUsAndOk to plugin_filter.hpp
+  sys_time needs it too: TIMESYNC requests and replies addressed to
+  another component reach us as well. It moves next to SystemAndOk and
+  ComponentAndOk unchanged; the mission plugin keeps it as
+  MTargetedFilter.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* Merge pull request `#2357 <https://github.com/mavlink/mavros/issues/2357>`_ from zekesarosi/feat/rt-sched-fifo-upstream
+  mavros: optional SCHED_FIFO for router io and executor threads
+* Merge pull request `#2343 <https://github.com/mavlink/mavros/issues/2343>`_ from LostPatrol/codex/trajectory-point-timing
+  setpoint_trajectory: schedule point intervals as one-shot timers
+* mavros: name the router io thread router-io
+  It serves TCP and serial endpoints as well as UDP, so "mudp-io" was
+  misleading next to libmavconn's per-connection "mudpN" threads.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* Merge branch 'ros2' into feat/rt-sched-fifo-upstream
+* Merge pull request `#2356 <https://github.com/mavlink/mavros/issues/2356>`_ from zekesarosi/feat/ftp-burst-read
+  mavros: ftp: use kCmdBurstReadFile for reads that run to EOF
+* Merge pull request `#2355 <https://github.com/mavlink/mavros/issues/2355>`_ from zekesarosi/fix/ftp-hardening
+  mavros: ftp: fix lost wakeup, stale replies and unchecked payloads
+* Merge pull request `#2346 <https://github.com/mavlink/mavros/issues/2346>`_ from zekesarosi/fix/mavlink-convert-zero-tail
+  msgs, mavros: do not read stale bytes past a truncated MAVLink 2 payload
+* Merge pull request `#2354 <https://github.com/mavlink/mavros/issues/2354>`_ from zekesarosi/fix/global-position-origin-race
+  global_position: guard map origin with a mutex
+* Merge pull request `#2353 <https://github.com/mavlink/mavros/issues/2353>`_ from zekesarosi/fix/home-position-timeout
+  home_position: bound the GET_HOME_POSITION command wait
+* Merge pull request `#2352 <https://github.com/mavlink/mavros/issues/2352>`_ from zekesarosi/fix/sys-status-recursion
+  sys_status: fix BatteryStatusDiag move assignment recursion and version string over-read
+* Merge pull request `#2351 <https://github.com/mavlink/mavros/issues/2351>`_ from zekesarosi/fix/command-busy-reject
+  command: reject a duplicate in-flight command instead of throwing
+* Merge pull request `#2350 <https://github.com/mavlink/mavros/issues/2350>`_ from zekesarosi/fix/mission-lost-wakeup
+  mission: fix condition variable lost wakeup and zero-trimmed target offset read
+* Merge pull request `#2349 <https://github.com/mavlink/mavros/issues/2349>`_ from zekesarosi/fix/param-rxlist-lockup
+  param: recover to IDLE and wake waiters on RXLIST/RXPARAM timeout or disconnect
+* setpoint_trajectory: merge ros2 and preserve input checks
+* setpoint_trajectory: validate cumulative point times
+* mavros: optional SCHED_FIFO for router io and executor threads
+  Add mavconn::utils::set_this_thread_sched_fifo(), which returns the error
+  code from pthread_setschedparam(). The new rt_sched_fifo_priority
+  parameter (mavros_node, mavros_router, UAS) defaults to 0, which leaves
+  scheduling untouched and logs nothing.
+  When set, it applies to the router io thread (now named mudp-io), the
+  mavros_node executor and the UAS executor; executor worker threads are
+  spawned by the spinning thread and inherit its policy.
+  The router reads the parameter in its constructor, before it starts the io
+  thread, so it is read-only; mavros_node forwards its value through
+  NodeOptions parameter overrides instead of set_parameters().
+* mavros: ftp: use kCmdBurstReadFile for reads that run to EOF
+  A burst streams from the requested offset until EOF or the FCU's own
+  limit (ArduPilot 4.6: 500 packets, master: 2000, PX4: ~35 KB) and can't
+  be stopped, so it is only used when offset + size reaches the file size
+  reported at open. Page-wise reads keep kCmdReadFile and their link
+  traffic stays linear.
+  - Reassemble by offset; a gap restarts the burst at the first missing
+  byte (at most 10 times without progress).
+  - Each burst request gets its own seqnr window, so packets still
+  streaming from an earlier burst are dropped instead of triggering a
+  resync. Burst packets are ignored outside a burst read.
+  - Fall back to kCmdReadFile if the FCU NAKs the burst as unknown.
+* mavros: ftp: fix lost wakeup, stale replies and unchecked payloads
+  - Hold cond_mutex from sending a request until wait_completion(), so a
+  fast reply can no longer be missed. Timeouts now count from the last
+  reply instead of the whole operation; OPEN/CHUNK timeout 200 -> 1000 ms.
+  - Increment the seqnr on every send and expect last + 1. A late reply to
+  a timed out request no longer matches the next operation and is ignored.
+  - Validate hdr.size and the NAK/Open/Write/Checksum payload sizes instead
+  of throwing (or reading past the payload).
+  - Widen the list offset to size_t, skip the empty strings ArduPilot puts
+  between entries, keep failing malformed entries with ERANGE.
+  - Accept the empty Open/Write ACKs ArduPilot sends for OpenFileWO,
+  CreateFile and WriteFile.
+  - Map the remaining NAK codes (incl. ArduPilot FileNotFound) to errno.
+  - Return EBUSY / EALREADY from services instead of throwing.
+* msgs, mavros: do not read stale bytes past a truncated MAVLink 2 payload
+  convert() now zero-fills the payload64 and signature tails of the
+  destination mavlink_message_t, and the router ignores target offsets
+  beyond msg->len, so a trimmed target_system/target_component resolves to
+  0 instead of whatever was left in the buffer.
+* sys_status: fix BatteryStatusDiag move assignment recursion and version string over-read
+  BatteryStatusDiag move assignment called itself (*this = std::move(other)), recursing until the stack overflowed. Move the fields under both mutexes instead, and keep the task name in the move constructor.
+  AUTOPILOT_VERSION custom version arrays are 8 bytes and not NUL terminated; %*s treated 8 as a field width and read past the array. Use %.*s.
+* global_position: guard map origin with a mutex
+  is_map_init, map_origin, ecef_origin and local_ecef are written by both GLOBAL_POSITION_INT and GPS_GLOBAL_ORIGIN handlers, which can run concurrently under a multi-threaded executor.
+* home_position: bound the GET_HOME_POSITION command wait
+  future.get() on the cmd/command client blocked forever if the command plugin never answered. Wait up to 5 s and drop the pending request on timeout.
+* command: reject a duplicate in-flight command instead of throwing
+  A second request for a command that is still waiting for its ACK threw std::logic_error out of the service callback. Answer success=false, result=TEMPORARILY_REJECTED instead.
+* mission: fix condition variable lost wakeup and zero-trimmed target offset read
+  Send the request (MISSION_REQUEST_LIST, MISSION_COUNT, WRITE_PARTIAL_LIST, CLEAR_ALL, SET_CURRENT) before releasing the state mutex and guard list_receiving / list_sending with recv_active / send_active predicates, so an FCU reply that lands before the service thread starts waiting is not lost. Set is_timedout before go_idle() so the predicate cannot flip first.
+  Bounds-check target_system_ofs / target_component_ofs against cmsg->len in targets_us(): MAVLink v2 trims trailing zero bytes, so the target fields may be past the received payload.
+* param: recover to IDLE and wake waiters on RXLIST/RXPARAM timeout or disconnect
+  When PARAM_REQUEST_LIST ran out of retries the timeout handler had no branch for RXLIST, so the state stayed RXLIST forever and every later pull or set reported busy. Same for the last missing param timing out in RXPARAM_TIMEDOUT and for a disconnect mid-pull. Go idle, flag the timeout and wake fetch waiters in all three cases.
+  Also return after rescheduling a busy pull (it fell through and started anyway) and guard list_receiving with a predicate so a notify before the wait is not lost.
+* Merge pull request `#2342 <https://github.com/mavlink/mavros/issues/2342>`_ from LostPatrol/codex/local-velocity-frame
+  local_position: label local velocity with the world frame
+* Merge pull request `#2334 <https://github.com/mavlink/mavros/issues/2334>`_ from LostPatrol/codex/param-pull-retries
+  param: prevent retry amplification and defer busy pulls
+* Merge pull request `#2341 <https://github.com/mavlink/mavros/issues/2341>`_ from LostPatrol/codex/ros2-empty-trajectory
+  setpoint_trajectory: ignore empty trajectories
+* setpoint_trajectory: schedule point intervals as one-shot timers
+* local_position: label local velocity with the world frame
+* setpoint_trajectory: ignore empty trajectories
+  Backport `#2079 <https://github.com/mavlink/mavros/issues/2079>`_ to ROS 2.
+* Merge pull request `#2338 <https://github.com/mavlink/mavros/issues/2338>`_ from zekesarosi/feat/imu-fcu-euler-attitude
+  imu: publish FCU Euler attitude on ~/euler and add quaternion_to_rpy_zyx
+* imu: publish FCU Euler attitude on ~/euler and add quaternion_to_rpy_zyx
+* param: defer scheduled pulls while busy
+* param: avoid retry amplification from unsolicited replies
+  Only restart the timed-out read timer and request the next missing parameter when the current requested index arrives. Keep duplicate and out-of-order values in the cache without adding reads or extending retry exhaustion.
+  Assisted-by: gpt-6.1-sol
+* Merge pull request `#2333 <https://github.com/mavlink/mavros/issues/2333>`_ from mavlink/fix/test-uas-humble-timer-api
+  mavros: fix test_uas timer helper build on humble
+* mavros: pin the stamp in the ParamFile save test
+  The expected output is rendered once at import time from SAVE_STAMP while
+  save() stamps with now() when it runs, so the test fails whenever a
+  second boundary falls between the two. Seen on the rolling job of `#2333 <https://github.com/mavlink/mavros/issues/2333>`_.
+  Set the stamp the test already expects before saving.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* mavros: fix test_uas timer helper build on humble
+  take_callback() picked the rclcpp timer API by probing for call(), but
+  call() exists on humble too, returning bool, while execute_callback()
+  there takes no arguments. The probe therefore chose the new-API branch on
+  humble and the test failed to compile:
+  error: no matching function for call to
+  'rclcpp::TimerBase::execute_callback(const bool&)'
+  Probe the execute_callback(std::shared_ptr<void>) signature instead,
+  which is what actually differs between the two APIs. Humble CI has been
+  red since `#2314 <https://github.com/mavlink/mavros/issues/2314>`_ merged because of this.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* Merge pull request `#2332 <https://github.com/mavlink/mavros/issues/2332>`_ from mavlink/fix/plugin-subnode-namespace-2310
+  mavros: re-apply the process __ns remap to plugin sub-nodes (`#2310 <https://github.com/mavlink/mavros/issues/2310>`_)
+* mavros: re-apply the process __ns remap to plugin sub-nodes (`#2310 <https://github.com/mavlink/mavros/issues/2310>`_)
+  Since 63f7392 plugin sub-nodes are created with use_global_arguments(false)
+  so a component container's `-r __node:=<container>` does not rename them
+  (`#2262 <https://github.com/mavlink/mavros/issues/2262>`_). That also dropped the process-wide `__ns` remap that launch passes
+  for namespace:=<ns>. Up to 2.14 the remap applied to plugin nodes too and
+  overrode the constructor's namespace argument, which is what placed
+  /uas1/imu/data next to the UAS node /uas1/mavros. Without it the fallback,
+  the UAS fully qualified name, took effect and every plugin topic, service
+  and node moved to /uas1/mavros/...; `#2309 <https://github.com/mavlink/mavros/issues/2309>`_ restored only the parameter
+  sources lost the same way.
+  Resolve the global `__ns` rule for the sub-node with
+  rcl_remap_node_namespace() and use it when a rule matches, otherwise keep
+  the UAS fully qualified name. `__node` stays ignored. The parameter lookup
+  uses the resulting fully qualified name so a specific /uas1/sys: section
+  matches the node that is created.
+  test_plugin_params now also passes `-r __ns:=/uas1` and asserts the plugin
+  lands at /uas1/sys, so one binary covers `#2262 <https://github.com/mavlink/mavros/issues/2262>`_, `#2294 <https://github.com/mavlink/mavros/issues/2294>`_ and `#2310 <https://github.com/mavlink/mavros/issues/2310>`_.
+  Document the sub-node naming rule and the intra-process requirement from
+  `#2311 <https://github.com/mavlink/mavros/issues/2311>`_ in plugin.hpp and docs/nodes.md: intra-process is always on for
+  plugin nodes, so KeepAll or transient_local entities must opt out with
+  mavros::NonIntraProcess*Options() from qos.hpp.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* Merge pull request `#2328 <https://github.com/mavlink/mavros/issues/2328>`_ from ctu-mrs/fix/sys-status-cmd-client-upstream
+  mavros: reuse one cmd/command client instead of one per call
+* Merge pull request `#2319 <https://github.com/mavlink/mavros/issues/2319>`_ from agyoungs/mission-ignore-foreign-transfers
+  Update waypoints plugin to be more responsive, provide periodic updates, and ignore responses for other components
+* mission: filter other clients' replies with a handler filter
+  Express "only the FCU's side of our own transfer" the way the plugin
+  system already selects messages: a Filter class. AddressedToUsAndOk
+  lives in mission_protocol_base.hpp, next to MFilter, until another
+  plugin needs it. It reads the target ids from the raw payload through
+  mavlink::common::MESSAGE_ENTRIES, so it needs no decoded type.
+  It does not use mavconn's mavlink_get_msg_entry(): that looks up a table
+  a MAVConn link fills on construction, so it is empty in a UAS running
+  without a router in the same process (and in the plugin tests).
+  The item, item_int, request, request_int and ack handlers use it as
+  their filter and lose the per-handler checks. MISSION_COUNT keeps both
+  populations on purpose (another client's download schedules
+  pull_after_gcs), so handle_mission_count calls the same check as a
+  condition instead.
+  Drop the generic Plugin::is_addressed_to_us helper; the UAS-level check
+  stays and its test now targets it directly.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* Merge pull request `#2314 <https://github.com/mavlink/mavros/issues/2314>`_ from yeseorizi/fix/uas-startup-shutdown-context-20261009
+  mavros: handle context shutdown during delayed UAS startup
+* mavros: move delayed UAS startup into UAS::startup()
+  Wrapping the whole startup body in try/catch inside the timer lambda
+  re-indented ~100 lines, which hides the actual change in the diff and
+  in blame. Move the body into a private UAS::startup() method and keep
+  the timer callback down to the context guard, the timer cancel and the
+  try/catch around the call. Behaviour is unchanged.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* mavros: handle context shutdown during delayed UAS startup
+* Merge pull request `#2316 <https://github.com/mavlink/mavros/issues/2316>`_ from ctu-mrs/fix/timesync-signed-offset-upstream
+  sys_time: keep the timesync offset signed
+* Merge pull request `#2315 <https://github.com/mavlink/mavros/issues/2315>`_ from yeseorizi/fix/router-endpoint-ownership-20261009
+  mavros: break the Router–Endpoint ownership cycle
+* Merge pull request `#2327 <https://github.com/mavlink/mavros/issues/2327>`_ from ctu-mrs/fix/events-executor-jazzy
+  mavros: enable EventsCBGExecutor where rclcpp ships it
+* Merge pull request `#2326 <https://github.com/mavlink/mavros/issues/2326>`_ from paneendrakumar0/fix-ftp-unaligned-access-2323
+  ftp: add PayloadHeader layout asserts and FTPRequest unit test
+* mavros: keep the Router back-reference a plain pointer
+  Breaking the Router <-> Endpoint cycle is right, but a weak_ptr puts a
+  weak_ptr::lock() (CAS loop on the Router control block) plus a shared_ptr
+  release (atomic decrement) into Endpoint::recv_message() and
+  ROSEndpoint::send_message(), i.e. on every packet of every link. That
+  control block is one cache line shared by all endpoint threads, so the
+  FCU, GCS and UAS links would all contend on it per message. The router
+  hot path is deliberately kept free of locks and atomics on shared state.
+  Use a non-owning Router * instead. Lifetime is already bounded on the
+  endpoint side:
+  - MAVConn callbacks run on the Router's shared io_context, which ~Router
+  stops and joins (shutdown_owned()) before any member is destroyed.
+  - ROSEndpoint already binds a raw `this` into its subscription.
+  ~Router now closes every endpoint and clears its parent after the io
+  thread is joined, so an endpoint that is still held elsewhere sees
+  parent == nullptr and open() keeps returning "parent not set". The
+  regression tests from the previous commit pass unchanged, and the test
+  fixtures no longer need to break the cycle by hand.
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* ftp: add PayloadHeader layout asserts and FTPRequest unit test (`#2323 <https://github.com/mavlink/mavros/issues/2323>`_)
+  Rebased on top of `#2325 <https://github.com/mavlink/mavros/issues/2325>`_, keeping the parts that complement it:
+  - static_assert each PayloadHeader field offset, so the wire layout
+  cannot drift silently (sizeof alone would not catch reordering).
+  - Build the initial header from a zeroed PayloadHeader in the
+  constructor instead of reading back the zeroed payload.
+  - Add mavros-ftp-test covering header layout, header get/set
+  roundtrip and byte placement, data_u32() and set_data_string().
+  Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+* Merge pull request `#2325 <https://github.com/mavlink/mavros/issues/2325>`_ from Debasishhh/ftp-alignment
+  ftp: fix misaligned header and data accesses
+* home_position: reuse one cmd/command client instead of one per call
+  call_get_home_position() created a new cmd/command client for every
+  request. A request sent before the fresh client discovered the service
+  could be lost, and future.get() (no timeout) then blocked srv_cg, the
+  poll timer and ~/req_update forever.
+  Create the client once at plugin init, in its own callback group, and
+  skip the request while the command service is not discovered yet, the
+  same as in sys_status. Also fix the error log, which printed a literal
+  "%s" before the message.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* sys_status: reuse one cmd/command client instead of one per call
+  autopilot_version_cb() and set_message_interval_cb() created a new
+  cmd/command client for every request, waited up to 1 s and destroyed
+  it. Each new client has to discover the service again, so requests can
+  time out, and the version timer blocked for 1 s per retry even without
+  the command plugin. With rmw_zenoh, destroying a client while its reply
+  is in flight also deadlocks (`ros2/rmw_zenoh#993 <https://github.com/ros2/rmw_zenoh/issues/993>`_), after which
+  cmd/command never answers again.
+  Create the client once at plugin init, in its own callback group so
+  its reply is processed while the srv_cg callback waits for it. Skip
+  the request while the command service is not discovered yet and
+  remove the pending request on timeout.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* mavros: enable EventsCBGExecutor where rclcpp ships it
+  The Callback Group Events executor was backported to Kilted (rclcpp
+  29.5.9) and Jazzy (rclcpp 28.1.20), but MAVROS_EXECUTOR_TYPE=events only
+  took effect with rclcpp >= 30 (Lyrical). Check for the executor header
+  with __has_include instead of the rclcpp version, as done for other
+  optional headers, and update the docs.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* ftp: copy the payload header instead of casting the byte buffer
+* ftp: read 32-bit data values without misaligned loads
+* mission: only publish a current item that indexes the published list
+  ~/waypoints could carry a current_seq that is not an index into its
+  waypoints, or that belongs to a different plan: after the FCU's mission
+  changed, until the next pull. Subscribers indexing the list with it could
+  then read the wrong item, or past the end.
+  Publish the list only when its current item matches it, and keep the last
+  matching one latched otherwise:
+  - A current item past the end of the list means the FCU's mission is
+  longer than ours: hold it back and pull at once.
+  - Newer FCUs identify their plans (MISSION_CURRENT mission_id, fence_id,
+  rally_points_id; MISSION_COUNT and MISSION_ACK opaque_id). Remember the
+  id of our list, and when the FCU reports another one, hold the current
+  item back and pull at once. The geofence and rally point plugins pull on
+  their plan ids too. Ids are only compared when both are known (non-zero),
+  as 0 means the FCU does not support them.
+  The pull starts on any MISSION_CURRENT that shows a mismatch while the
+  plugin is idle, so a plan that changed again during a pull is pulled again.
+  The current item is only tracked by the mission plugin now.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* plugin: share is_addressed_to_us with all plugins
+  The mission plugin's check that a reply is addressed to us (target ids
+  ours or broadcast) applies to any request/response exchange that another
+  client's replies can reach, e.g. FTP or COMMAND_ACK. Move it to the
+  plugin base, backed by UAS::is_addressed_to_us(), so other plugins can
+  use it. No change in behavior.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* mission: add pull_period to keep the mission list fresh
+  Without a GCS transfer to react to (pull_after_gcs) or a node calling
+  ~/pull, the list is only pulled once after connecting, so a mission
+  changed by another client is never picked up.
+  Add a pull_period parameter (seconds, 0 disables, the default): once the
+  last complete list is that old, pull it again. The countdown restarts
+  whenever the list is known to be current, i.e. after any successful
+  pull (periodic, ~/pull or pull_after_gcs), push or clear, so the plugin
+  does not pull more often than needed. It also restarts after a failed
+  transfer, so the next attempt waits a full period. The periodic pull is
+  skipped while another transfer is in progress or the FCU is not
+  connected, and like the other scheduled pulls it never blocks.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* mission: keep the last complete list when a pull fails
+* mission: publish MISSION_CURRENT changes during a transfer
+  A MISSION_CURRENT change was only applied while idle, so one arriving
+  during a pull or push was dropped, and the list published at the end of
+  the transfer still carried the old current seq until the next
+  MISSION_CURRENT.
+  Apply the change in any state and publish it right away. While a pull is
+  filling the list, ~/waypoints carries the last complete list with the new
+  current_seq. is_current flags follow current_seq, and a current seq that
+  is not in a known list is logged as a warning
+  (likely a temporarily out-of-sync list).
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* mission: ignore other clients' replies during a transfer
+  The FCU addresses its side of a mission transfer to whoever started it,
+  but the router delivers replies for unknown targets (e.g. a GCS sharing
+  the FCU link) to the plugins as broadcasts. While pulling or pushing,
+  MissionBase took those as its own: another client's MISSION_COUNT or
+  MISSION_ITEM(_INT) could end up in our download, and an ACK for another
+  client's upload ended ours.
+  During a transfer, only accept mission messages addressed to our own
+  system/component (or broadcast). Watching other clients' traffic while
+  idle is unchanged, so pull_after_gcs still re-pulls after a GCS
+  transfer. Add UAS::get_system_id()/get_component_id() for our own ids.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* sys_time: keep the timesync offset signed
+  When the ROS clock is at or behind the FCU clock (PX4 SITL in lockstep
+  with use_sim_time), the observed offset (ts1 + now - 2*tc1)/2 was computed
+  in uint64 and wrapped to ~2^63 ns. The filter converged on such samples
+  and published the garbage offset, so synchronised stamps jumped to huge or
+  negative values (`#1141 <https://github.com/mavlink/mavros/issues/1141>`_).
+  Compute and store the offset as int64, and fall back to now() when a
+  synchronised stamp does not fit builtin_interfaces Time (int32 seconds).
+* mavros: break Router endpoint ownership cycle
+* Contributors: Alex Youngs, Debasish Padhy, LostPatrol, Sean Hickey, Vladimir Ermakov, Vojtech Spurny, Zeke Sarosi, paneendrakumar0, yeseorizi
+
 2.16.0 (2026-09-27)
 -------------------
 * Merge pull request `#2307 <https://github.com/mavlink/mavros/issues/2307>`_ from webzuweb/fix/respawn-mavros-param

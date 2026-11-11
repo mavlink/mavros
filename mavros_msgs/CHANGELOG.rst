@@ -2,6 +2,21 @@
 Changelog for package mavros_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'ros2' into feat/rt-sched-fifo-upstream
+* Merge pull request `#2346 <https://github.com/mavlink/mavros/issues/2346>`_ from zekesarosi/fix/mavlink-convert-zero-tail
+  msgs, mavros: do not read stale bytes past a truncated MAVLink 2 payload
+* msgs, mavros: do not read stale bytes past a truncated MAVLink 2 payload
+  convert() now zero-fills the payload64 and signature tails of the
+  destination mavlink_message_t, and the router ignores target offsets
+  beyond msg->len, so a trimmed target_system/target_component resolves to
+  0 instead of whatever was left in the buffer.
+* Merge pull request `#2337 <https://github.com/mavlink/mavros/issues/2337>`_ from zekesarosi/feat/adsb-transceiver-health
+  adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health
+* adsb: publish UAVIONIX_ADSB_TRANSCEIVER_HEALTH_REPORT on ~/transceiver_health
+* Contributors: Vladimir Ermakov, Zeke Sarosi
+
 2.16.0 (2026-09-27)
 -------------------
 * Merge pull request `#2291 <https://github.com/mavlink/mavros/issues/2291>`_ from okalachev/flix-modes

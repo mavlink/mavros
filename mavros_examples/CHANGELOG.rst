@@ -2,6 +2,9 @@
 Changelog for package mavros_examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.16.0 (2026-09-27)
 -------------------
 
