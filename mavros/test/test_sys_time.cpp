@@ -13,11 +13,15 @@
  * diagnostic and the timesync status report whether the estimate has converged.
  */
 
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "test_plugin_helpers.hpp"
 #include "../src/plugins/sys_time.cpp"  // NOLINT(build/include)
@@ -25,6 +29,19 @@
 using mavros::uas::TestUAS;
 using mavros::uas::UAS;
 using mavlink::common::msg::TIMESYNC;
+using diagnostic_msgs::msg::DiagnosticStatus;
+
+static std::string value_of(
+  const diagnostic_msgs::msg::DiagnosticStatus & status,
+  const std::string & key)
+{
+  for (const auto & kv : status.values) {
+    if (kv.key == key) {
+      return kv.value;
+    }
+  }
+  return "<missing>";
+}
 
 class SysTimeTest : public TestUAS
 {
@@ -41,6 +58,9 @@ public:
   rclcpp::Subscription<mavros_msgs::msg::TimesyncStatus>::SharedPtr status_sub;
   std::mutex status_mutex;
   std::vector<mavros_msgs::msg::TimesyncStatus> statuses;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_sub;
+  std::mutex diag_mutex;
+  std::optional<DiagnosticStatus> time_sync;  // the latest "Time Sync" status
 
   void SetUp() override
   {
@@ -58,6 +78,19 @@ public:
       [this](const mavros_msgs::msg::TimesyncStatus::SharedPtr m) {
         std::lock_guard<std::mutex> lock(status_mutex);
         statuses.push_back(*m);
+      });
+    diag_sub = client->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 10,
+      [this](const diagnostic_msgs::msg::DiagnosticArray::SharedPtr m) {
+        const std::string suffix = "Time Sync";
+        for (const auto & st : m->status) {
+          if (st.name.size() >= suffix.size() &&
+          st.name.compare(st.name.size() - suffix.size(), suffix.size(), suffix) == 0)
+          {
+            std::lock_guard<std::mutex> lock(diag_mutex);
+            time_sync = st;
+          }
+        }
       });
     out = capture_sink(uas);
     start_spin();
@@ -204,6 +237,43 @@ public:
     return false;
   }
 
+  /**
+   * Wait (the updater publishes at 1 Hz) for a "Time Sync" status for which
+   * done() holds, calling meanwhile() every 10 ms; return the latest status.
+   */
+  DiagnosticStatus wait_time_sync(
+    const std::function<bool(const DiagnosticStatus &)> & done,
+    const std::function<void()> & meanwhile = {})
+  {
+    const auto deadline = std::chrono::steady_clock::now() + 6s;
+    while (std::chrono::steady_clock::now() < deadline) {
+      if (meanwhile) {
+        meanwhile();
+      }
+      {
+        std::lock_guard<std::mutex> lock(diag_mutex);
+        if (time_sync && done(*time_sync)) {
+          return *time_sync;
+        }
+      }
+      std::this_thread::sleep_for(10ms);
+    }
+    std::lock_guard<std::mutex> lock(diag_mutex);
+    ADD_FAILURE() << "no matching Time Sync status; last: " <<
+      (time_sync ? time_sync->message : "none");
+    return time_sync.value_or(DiagnosticStatus{});
+  }
+
+  //! Answer each of our requests not answered yet, as an FCU whose clock is offset_ns behind.
+  void answer_requests(std::set<int64_t> & answered, int64_t offset_ns)
+  {
+    for (const auto & m : sent()) {
+      if (m.tc1 == 0 && answered.insert(m.ts1).second) {
+        inject(timesync(m.ts1 + offset_ns, m.ts1), FCU_SYSTEM, FCU_COMPONENT);
+      }
+    }
+  }
+
   void wait_status_count(size_t n)
   {
     const auto deadline = std::chrono::steady_clock::now() + 2s;
@@ -292,18 +362,101 @@ TEST_F(SysTimeTest, target_component_zero_accepts_any_component)
 
 TEST_F(SysTimeTest, the_status_says_when_the_estimate_has_converged)
 {
-  plugin->get_node()->set_parameter(rclcpp::Parameter("convergence_window", 2));
+  // The UAS is given the estimate from the sample after convergence_window
+  // samples have been used: here the second.
+  plugin->get_node()->set_parameter(rclcpp::Parameter("convergence_window", 1));
   auto request = first_request();
   inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  wait_status_count(1);
+  EXPECT_EQ(uas->get_time_offset(), 0);
   auto later = wait_request_after(request.ts1);
   inject(timesync(5'000'000'000 + (later.ts1 - request.ts1), later.ts1), FCU_SYSTEM, FCU_COMPONENT);
-
   wait_status_count(2);
+  EXPECT_NE(uas->get_time_offset(), 0);
+
   std::lock_guard<std::mutex> lock(status_mutex);
   ASSERT_EQ(statuses.size(), 2u);
-  // The first sample starts the estimate; the second completes the window.
   EXPECT_FALSE(statuses[0].converged);
   EXPECT_TRUE(statuses[1].converged);
+}
+
+TEST_F(SysTimeTest, before_the_first_sample_the_diagnostic_is_not_converged)
+{
+  first_request();
+  auto status = wait_time_sync([](const DiagnosticStatus & st) {return !st.values.empty();});
+  EXPECT_EQ(status.level, DiagnosticStatus::ERROR);
+  EXPECT_EQ(status.message, "No events recorded.");
+  EXPECT_EQ(value_of(status, "Converged"), "False");
+  EXPECT_EQ(value_of(status, "Samples (convergence window)"), "0 / 500");
+}
+
+TEST_F(SysTimeTest, the_diagnostic_is_disabled_with_mode_none)
+{
+  first_request();
+  plugin->get_node()->set_parameter(rclcpp::Parameter("timesync_mode", "NONE"));
+  auto status = wait_time_sync(
+    [](const DiagnosticStatus & st) {return st.message == "Disabled (timesync_mode NONE)";});
+  EXPECT_EQ(status.level, DiagnosticStatus::OK);
+}
+
+TEST_F(SysTimeTest, a_reply_beyond_the_rtt_limit_is_counted_as_rejected)
+{
+  auto request = first_request();
+  std::this_thread::sleep_for(30ms);  // max_rtt_sample is 10 ms
+  inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  auto status = wait_time_sync(
+    [](const DiagnosticStatus & st) {
+      return value_of(st, "Rejected samples (high RTT)") == "1";
+    });
+  EXPECT_EQ(status.level, DiagnosticStatus::WARN);
+  EXPECT_EQ(status.message, "No samples accepted.");
+}
+
+TEST_F(SysTimeTest, a_converged_estimate_at_the_request_rate_is_normal)
+{
+  // 20 Hz, above the rate the diagnostic used to call too high.
+  auto node = plugin->get_node();
+  node->set_parameter(rclcpp::Parameter("convergence_window", 1));
+  node->set_parameter(rclcpp::Parameter("max_rtt_sample", 1000));
+  first_request();
+  std::set<int64_t> answered;
+  auto status = wait_time_sync(
+    [](const DiagnosticStatus & st) {return st.message == "Normal";},
+    [&]() {answer_requests(answered, 1'000'000'000);});
+  EXPECT_EQ(status.level, DiagnosticStatus::OK);
+  EXPECT_EQ(value_of(status, "Converged"), "True");
+}
+
+TEST_F(SysTimeTest, a_time_jump_resets_the_filter_and_the_offset_in_use)
+{
+  auto node = plugin->get_node();
+  node->set_parameter(rclcpp::Parameter("convergence_window", 1));
+  node->set_parameter(rclcpp::Parameter("max_rtt_sample", 1000));
+  node->set_parameter(rclcpp::Parameter("max_consecutive_high_deviation", 0));
+  auto request = first_request();
+  const int64_t behind_ns = 1'000'000'000;
+  inject(timesync(request.ts1 + behind_ns, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  auto later = wait_request_after(request.ts1);
+  inject(timesync(later.ts1 + behind_ns, later.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  wait_status_count(2);
+  ASSERT_NE(uas->get_time_offset(), 0);
+
+  // The FCU's clock jumps a second: the filter resets, and FCU timestamps are
+  // no longer converted with the old estimate.
+  auto jump = wait_request_after(later.ts1);
+  inject(timesync(jump.ts1 + 2 * behind_ns, jump.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  wait_status_count(3);
+  EXPECT_EQ(uas->get_time_offset(), 0);
+  {
+    std::lock_guard<std::mutex> lock(status_mutex);
+    ASSERT_EQ(statuses.size(), 3u);
+    EXPECT_FALSE(statuses[2].converged);
+  }
+  auto status = wait_time_sync(
+    [](const DiagnosticStatus & st) {
+      return value_of(st, "Filter resets (time jumps)") == "1";
+    });
+  EXPECT_EQ(value_of(status, "Time offset in use (s)"), "0.000000000");
 }
 
 TEST_F(SysTimeTest, sync_resumes_after_the_clock_steps_back)
@@ -333,23 +486,11 @@ static diagnostic_msgs::msg::DiagnosticStatus run_diagnostic(TimeSyncStatus & di
   return stat;
 }
 
-static std::string value_of(
-  const diagnostic_msgs::msg::DiagnosticStatus & status,
-  const std::string & key)
-{
-  for (const auto & kv : status.values) {
-    if (kv.key == key) {
-      return kv.value;
-    }
-  }
-  return "<missing>";
-}
-
 TEST(TimeSyncStatusTest, a_converging_estimate_is_a_warning_until_converged)
 {
   TimeSyncStatus diag("Time Sync", 10);
   diag.set_mode("MAVLINK", true);
-  diag.set_progress(1, 3);
+  diag.set_progress(1, 3, false, 0);
   diag.tick(1'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
   auto status = run_diagnostic(diag);
   EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
@@ -357,20 +498,21 @@ TEST(TimeSyncStatusTest, a_converging_estimate_is_a_warning_until_converged)
   EXPECT_EQ(value_of(status, "Converged"), "False");
   EXPECT_EQ(value_of(status, "Time offset in use (s)"), "0.000000000");
 
-  diag.set_progress(3, 3);
+  diag.set_progress(3, 3, true, 42);
   diag.tick(1'000'000, 5'100'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
   status = run_diagnostic(diag);
   EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
   EXPECT_EQ(status.message, "Normal");
   EXPECT_EQ(value_of(status, "Converged"), "True");
   EXPECT_EQ(value_of(status, "Samples (convergence window)"), "3 / 3");
+  EXPECT_EQ(value_of(status, "Time offset in use (s)"), "0.000000042");
 }
 
 TEST(TimeSyncStatusTest, a_window_of_rejected_samples_is_a_warning)
 {
   TimeSyncStatus diag("Time Sync", 10);
   diag.set_mode("MAVLINK", true);
-  diag.set_progress(5, 3);  // converged earlier
+  diag.set_progress(5, 3, true, 42);  // converged earlier
   diag.tick(50'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::HIGH_RTT);
   diag.tick(1'000'000, 5'100'000'000, 42, TimeSyncStatus::Sample::HIGH_DEVIATION);
   diag.filter_reset();
@@ -395,6 +537,19 @@ TEST(TimeSyncStatusTest, no_samples_is_an_error_and_mode_none_is_disabled)
   status = run_diagnostic(diag);
   EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
   EXPECT_EQ(status.message, "Disabled (timesync_mode NONE)");
+}
+
+TEST(TimeSyncStatusTest, too_high_a_rate_is_above_the_request_rate)
+{
+  TimeSyncStatus diag("Time Sync", 10);
+  diag.set_mode("MAVLINK", true);
+  diag.set_progress(5, 3, true, 42);
+  diag.set_rate(1.0);
+  for (int i = 0; i < 3; i++) {  // 15 Hz over the 200 ms window
+    diag.tick(1'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
+  }
+  auto status = run_diagnostic(diag);
+  EXPECT_EQ(status.message, "Frequency too high.");
 }
 
 int main(int argc, char ** argv)

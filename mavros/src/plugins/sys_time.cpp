@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <cinttypes>
 #include <deque>
 #include <mutex>
 #include <string>
@@ -67,6 +68,7 @@ public:
     rtt_sum(0),
     last_remote_ts(0),
     offset(0),
+    offset_in_use_(0),
     samples_(0),
     convergence_window_(0),
     rejected_high_rtt_(0),
@@ -120,12 +122,27 @@ public:
     }
   }
 
-  //! Samples the filter has used since its last reset, and how many it needs to converge.
-  void set_progress(uint32_t samples, uint32_t convergence_window)
+  /**
+   * Samples the filter has used since its last reset, how many it needs to
+   * converge, whether FCU timestamps are converted with the estimate yet, and
+   * the offset they are converted with (UAS::get_time_offset()).
+   */
+  void set_progress(
+    uint32_t samples, uint32_t convergence_window, bool in_use,
+    int64_t offset_in_use_ns)
   {
     std::lock_guard<std::mutex> lock(mutex);
     samples_ = samples;
     convergence_window_ = convergence_window;
+    in_use_ = in_use;
+    offset_in_use_ = offset_in_use_ns;
+  }
+
+  //! The rate at which samples are requested: more than that is too high.
+  void set_rate(double rate_hz)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    max_freq_ = rate_hz;
   }
 
   //! Count a filter reset after a time jump.
@@ -164,7 +181,7 @@ public:
     times_[hist_indx_] = curtime;
     hist_indx_ = (hist_indx_ + 1) % window_size_;
 
-    const bool converged = samples_ >= convergence_window_;
+    const bool converged = in_use_;
 
     if (!enabled_) {
       stat.summaryf(0, "Disabled (timesync_mode %s)", mode_.c_str());
@@ -177,7 +194,9 @@ public:
     } else if (accepted_events == 0) {
       stat.summary(1, "No samples accepted.");
     } else if (!converged) {
-      stat.summaryf(1, "Not converged (%u/%u samples).", samples_, convergence_window_);
+      stat.summaryf(
+        1, "Not converged (%" PRIu32 "/%" PRIu32 " samples).", samples_,
+        convergence_window_);
     } else {
       stat.summary(0, "Normal");
     }
@@ -189,12 +208,13 @@ public:
     stat.addf("Last remote time (s)", "%0.9f", last_remote_ts / 1e9);
     stat.addf("Estimated time offset (s)", "%0.9f", offset / 1e9);
     stat.add("Converged", converged);
-    stat.addf("Samples (convergence window)", "%u / %u", samples_, convergence_window_);
-    // The offset FCU timestamps are converted with: 0 until converged.
-    stat.addf("Time offset in use (s)", "%0.9f", converged ? offset / 1e9 : 0.0);
-    stat.addf("Rejected samples (high RTT)", "%u", rejected_high_rtt_);
-    stat.addf("Rejected samples (high deviation)", "%u", rejected_high_deviation_);
-    stat.addf("Filter resets (time jumps)", "%u", filter_resets_);
+    stat.addf(
+      "Samples (convergence window)", "%" PRIu32 " / %" PRIu32, samples_,
+      convergence_window_);
+    stat.addf("Time offset in use (s)", "%0.9f", offset_in_use_ / 1e9);
+    stat.addf("Rejected samples (high RTT)", "%" PRIu32, rejected_high_rtt_);
+    stat.addf("Rejected samples (high deviation)", "%" PRIu32, rejected_high_deviation_);
+    stat.addf("Filter resets (time jumps)", "%" PRIu32, filter_resets_);
   }
 
 private:
@@ -208,17 +228,19 @@ private:
   std::mutex mutex;
   const size_t window_size_;
   const double min_freq_;
-  const double max_freq_;
+  double max_freq_;
   const double tolerance_;
   int64_t last_rtt;
   int64_t rtt_sum;
   uint64_t last_remote_ts;
   int64_t offset;
+  int64_t offset_in_use_;
   uint32_t samples_;
   uint32_t convergence_window_;
   uint32_t rejected_high_rtt_;
   uint32_t rejected_high_deviation_;
   uint32_t filter_resets_;
+  bool in_use_ = false;
   bool enabled_;
   std::string mode_;
 };
@@ -305,6 +327,7 @@ public:
             rate.period(),
             std::bind(&SystemTimePlugin::timesync_cb, this));
 
+          dt_diag.set_rate(rate_d);
           uas->diagnostic_updater.add(dt_diag);
         }
       });
@@ -349,6 +372,8 @@ public:
     node_declare_and_watch_parameter(
       "convergence_window", 500, [&](const rclcpp::Parameter & p) {
         convergence_window = p.as_int();
+        dt_diag.set_progress(
+          sequence, convergence_window, offset_in_use, uas->get_time_offset());
       });
 
     // Outlier rejection and filter reset
@@ -415,6 +440,8 @@ private:
 
   // Filter parameters
   uint32_t sequence;
+  // Whether the estimate is handed to the UAS: FCU timestamps are converted with it.
+  bool offset_in_use = false;
   double filter_alpha;
   double filter_beta;
 
@@ -633,7 +660,8 @@ private:
         add_sample(offset_ns);
 
         // Save time offset for other components to use
-        uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
+        offset_in_use = sync_converged();
+        uas->set_time_offset(offset_in_use ? static_cast<int64_t>(time_offset) : 0);
 
         // Increment sequence counter after filter update
         sequence++;
@@ -666,12 +694,12 @@ private:
     timesync_status.observed_offset_ns = offset_ns;
     timesync_status.estimated_offset_ns = time_offset;
     timesync_status.round_trip_time_ms = static_cast<float>(rtt_ns / 1000000.0);
-    timesync_status.converged = sync_converged();
+    timesync_status.converged = offset_in_use;
 
     timesync_status_pub->publish(timesync_status);
 
     // Update diagnostics
-    dt_diag.set_progress(sequence, convergence_window);
+    dt_diag.set_progress(sequence, convergence_window, offset_in_use, uas->get_time_offset());
     dt_diag.tick(rtt_ns, remote_time_ns, time_offset, sample);
   }
 
@@ -697,7 +725,10 @@ private:
 
   void reset_filter()
   {
-    // Do a full reset of all statistics and parameters
+    // Do a full reset of all statistics and parameters. FCU timestamps are not
+    // converted until the estimate converges again.
+    offset_in_use = false;
+    uas->set_time_offset(0);
     sequence = 0;
     time_offset = 0.0;
     time_skew = 0.0;
