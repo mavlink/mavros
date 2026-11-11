@@ -380,22 +380,26 @@ private:
 
   void handle_timesync(
     const mavlink::mavlink_message_t * msg,
-    mavlink::common::msg::TIMESYNC & tsync,
-    plugin::filter::AddressedToUsAndOk filter [[maybe_unused]])
+    mavlink::common::msg::TIMESYNC & tsync, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
-    // The filter drops requests and replies addressed to another component
-    // (untargeted ones, e.g. from autopilots without the target fields, pass).
     uint64_t now_ns = node->now().nanoseconds();
 
     if (tsync.tc1 == 0) {
-      // A request: reply to the requester, so routers do not deliver the
-      // reply to everyone.
+      // A request: answer it only if it is addressed to us or to everyone
+      // (autopilots without the target fields send 0).
+      if (!uas->is_addressed_to_us(tsync.target_system, tsync.target_component)) {
+        return;
+      }
+      // Reply to the requester, so routers do not deliver the reply to everyone.
       send_timesync_msg(now_ns, tsync.ts1, msg->sysid, msg->compid);
       return;
     } else if (tsync.tc1 > 0) {
       // A reply: use it only if it comes from the FCU and answers one of our
       // requests. The filter has already checked the system id; target
       // component 0 accepts any component.
+      // The reply's own target fields are not checked: PX4 v1.14 - v1.17 has
+      // them in the message, but leaves them uninitialised. The ts1 match
+      // tells whose reply it is.
       const uint8_t tgt_component = uas->get_tgt_component();
       if (tgt_component != 0 && msg->compid != tgt_component) {
         if (is_pending_request(tsync.ts1)) {

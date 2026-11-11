@@ -269,14 +269,11 @@ TEST_F(SysTimeTest, only_the_fcus_reply_to_our_request_is_used)
   EXPECT_EQ(stamps[1], 7'000'000'000u);
 }
 
-TEST_F(SysTimeTest, replies_addressed_to_another_component_are_ignored)
+TEST_F(SysTimeTest, reply_target_fields_are_not_checked)
 {
+  // PX4 v1.14 - v1.17 leaves the target fields of its replies uninitialised.
   auto request = first_request();
-  inject(
-    timesync(1'000'000'000, request.ts1, FCU_SYSTEM, OTHER_COMPONENT),
-    FCU_SYSTEM, FCU_COMPONENT);
-  // Had the first been used, it would have taken the pending request.
-  inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  inject(timesync(5'000'000'000, request.ts1, 0x5a, 0xa5), FCU_SYSTEM, FCU_COMPONENT);
 
   auto stamps = wait_status_stamps(1);
   ASSERT_EQ(stamps.size(), 1u);
