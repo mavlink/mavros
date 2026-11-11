@@ -8,13 +8,14 @@
 //
 
 /**
- * Tests for sys_time TIMESYNC: requests and replies are addressed, only the
- * FCU's replies to our own requests feed the offset estimate, and the timesync
- * status says when the estimate has converged.
+ * Tests for sys_time TIMESYNC: requests and replies are addressed, and only the
+ * FCU's replies to our own requests feed the offset estimate; the "Time Sync"
+ * diagnostic and the timesync status report whether the estimate has converged.
  */
 
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "rosgraph_msgs/msg/clock.hpp"
@@ -319,6 +320,81 @@ TEST_F(SysTimeTest, sync_resumes_after_the_clock_steps_back)
   const int64_t ts1 = 50'000'000'000;
   inject(timesync(5'000'000'000, ts1), FCU_SYSTEM, FCU_COMPONENT);
   EXPECT_EQ(wait_status_stamps(1), std::vector<uint64_t>{5'000'000'000u});
+}
+
+using mavros::std_plugins::TimeSyncStatus;
+
+//! The diagnostic's status, a moment after its window started so the rate is in range.
+static diagnostic_msgs::msg::DiagnosticStatus run_diagnostic(TimeSyncStatus & diag)
+{
+  std::this_thread::sleep_for(200ms);
+  diagnostic_updater::DiagnosticStatusWrapper stat;
+  diag.run(stat);
+  return stat;
+}
+
+static std::string value_of(
+  const diagnostic_msgs::msg::DiagnosticStatus & status,
+  const std::string & key)
+{
+  for (const auto & kv : status.values) {
+    if (kv.key == key) {
+      return kv.value;
+    }
+  }
+  return "<missing>";
+}
+
+TEST(TimeSyncStatusTest, a_converging_estimate_is_a_warning_until_converged)
+{
+  TimeSyncStatus diag("Time Sync", 10);
+  diag.set_mode("MAVLINK", true);
+  diag.set_progress(1, 3);
+  diag.tick(1'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
+  auto status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(status.message, "Not converged (1/3 samples).");
+  EXPECT_EQ(value_of(status, "Converged"), "False");
+  EXPECT_EQ(value_of(status, "Time offset in use (s)"), "0.000000000");
+
+  diag.set_progress(3, 3);
+  diag.tick(1'000'000, 5'100'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
+  status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
+  EXPECT_EQ(status.message, "Normal");
+  EXPECT_EQ(value_of(status, "Converged"), "True");
+  EXPECT_EQ(value_of(status, "Samples (convergence window)"), "3 / 3");
+}
+
+TEST(TimeSyncStatusTest, a_window_of_rejected_samples_is_a_warning)
+{
+  TimeSyncStatus diag("Time Sync", 10);
+  diag.set_mode("MAVLINK", true);
+  diag.set_progress(5, 3);  // converged earlier
+  diag.tick(50'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::HIGH_RTT);
+  diag.tick(1'000'000, 5'100'000'000, 42, TimeSyncStatus::Sample::HIGH_DEVIATION);
+  diag.filter_reset();
+  auto status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(status.message, "No samples accepted.");
+  EXPECT_EQ(value_of(status, "Rejected samples (high RTT)"), "1");
+  EXPECT_EQ(value_of(status, "Rejected samples (high deviation)"), "1");
+  EXPECT_EQ(value_of(status, "Filter resets (time jumps)"), "1");
+}
+
+TEST(TimeSyncStatusTest, no_samples_is_an_error_and_mode_none_is_disabled)
+{
+  TimeSyncStatus diag("Time Sync", 10);
+  diag.set_mode("MAVLINK", true);
+  auto status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::ERROR);
+  EXPECT_EQ(status.message, "No events recorded.");
+
+  // With mode NONE nothing is requested: no samples is expected, not an error.
+  diag.set_mode("NONE", false);
+  status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
+  EXPECT_EQ(status.message, "Disabled (timesync_mode NONE)");
 }
 
 int main(int argc, char ** argv)

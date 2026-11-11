@@ -38,15 +38,27 @@ using namespace std::chrono_literals;   // NOLINT
 /**
  * Time synchronization status publisher
  *
- * Based on diagnostic_updater::FrequencyStatus
+ * Based on diagnostic_updater::FrequencyStatus. Besides the rate of timesync
+ * samples, it reports whether the estimate has converged: until then FCU
+ * timestamps are not converted (UAS::synchronise_stamp() returns the receive
+ * time), so it is a warning, as is a window in which every sample was rejected.
  */
 class TimeSyncStatus : public diagnostic_updater::DiagnosticTask
 {
 public:
+  //! What the filter did with a sample.
+  enum class Sample
+  {
+    ACCEPTED,
+    HIGH_RTT,
+    HIGH_DEVIATION,
+  };
+
   TimeSyncStatus(const std::string & name, size_t win_size)
   : diagnostic_updater::DiagnosticTask(name),
     times_(win_size),
     seq_nums_(win_size),
+    accepted_nums_(win_size),
     window_size_(win_size),
     min_freq_(0.01),
     max_freq_(10),
@@ -54,7 +66,13 @@ public:
     last_rtt(0),
     rtt_sum(0),
     last_remote_ts(0),
-    offset(0)
+    offset(0),
+    samples_(0),
+    convergence_window_(0),
+    rejected_high_rtt_(0),
+    rejected_high_deviation_(0),
+    filter_resets_(0),
+    enabled_(true)
   {
     clear();
   }
@@ -65,17 +83,21 @@ public:
 
     auto curtime = clock.now();
     count_ = 0;
+    accepted_ = 0;
     rtt_sum = 0;
 
     for (size_t i = 0; i < window_size_; i++) {
       times_[i] = curtime;
       seq_nums_[i] = count_;
+      accepted_nums_[i] = accepted_;
     }
 
     hist_indx_ = 0;
   }
 
-  void tick(int64_t rtt_ns, uint64_t remote_timestamp_ns, int64_t time_offset_ns)
+  void tick(
+    int64_t rtt_ns, uint64_t remote_timestamp_ns, int64_t time_offset_ns,
+    Sample sample)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -84,6 +106,41 @@ public:
     rtt_sum += rtt_ns;
     last_remote_ts = remote_timestamp_ns;
     offset = time_offset_ns;
+
+    switch (sample) {
+      case Sample::ACCEPTED:
+        accepted_++;
+        break;
+      case Sample::HIGH_RTT:
+        rejected_high_rtt_++;
+        break;
+      case Sample::HIGH_DEVIATION:
+        rejected_high_deviation_++;
+        break;
+    }
+  }
+
+  //! Samples the filter has used since its last reset, and how many it needs to converge.
+  void set_progress(uint32_t samples, uint32_t convergence_window)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    samples_ = samples;
+    convergence_window_ = convergence_window;
+  }
+
+  //! Count a filter reset after a time jump.
+  void filter_reset()
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    filter_resets_++;
+  }
+
+  //! The timesync mode; with NONE or PASSTHROUGH there is nothing to synchronise.
+  void set_mode(const std::string & mode, bool enabled)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    mode_ = mode;
+    enabled_ = enabled;
   }
 
   void set_timestamp(uint64_t remote_timestamp_ns)
@@ -99,18 +156,28 @@ public:
     auto curtime = clock.now();
     int curseq = count_;
     int events = curseq - seq_nums_[hist_indx_];
+    int accepted_events = accepted_ - accepted_nums_[hist_indx_];
     double window = (curtime - times_[hist_indx_]).seconds();
     double freq = events / window;
     seq_nums_[hist_indx_] = curseq;
+    accepted_nums_[hist_indx_] = accepted_;
     times_[hist_indx_] = curtime;
     hist_indx_ = (hist_indx_ + 1) % window_size_;
 
-    if (events == 0) {
+    const bool converged = samples_ >= convergence_window_;
+
+    if (!enabled_) {
+      stat.summaryf(0, "Disabled (timesync_mode %s)", mode_.c_str());
+    } else if (events == 0) {
       stat.summary(2, "No events recorded.");
     } else if (freq < min_freq_ * (1 - tolerance_)) {
       stat.summary(1, "Frequency too low.");
     } else if (freq > max_freq_ * (1 + tolerance_)) {
       stat.summary(1, "Frequency too high.");
+    } else if (accepted_events == 0) {
+      stat.summary(1, "No samples accepted.");
+    } else if (!converged) {
+      stat.summaryf(1, "Not converged (%u/%u samples).", samples_, convergence_window_);
     } else {
       stat.summary(0, "Normal");
     }
@@ -121,13 +188,22 @@ public:
     stat.addf("Mean RTT (ms)", "%0.6f", (count_) ? rtt_sum / count_ / 1e6 : 0.0);
     stat.addf("Last remote time (s)", "%0.9f", last_remote_ts / 1e9);
     stat.addf("Estimated time offset (s)", "%0.9f", offset / 1e9);
+    stat.add("Converged", converged);
+    stat.addf("Samples (convergence window)", "%u / %u", samples_, convergence_window_);
+    // The offset FCU timestamps are converted with: 0 until converged.
+    stat.addf("Time offset in use (s)", "%0.9f", converged ? offset / 1e9 : 0.0);
+    stat.addf("Rejected samples (high RTT)", "%u", rejected_high_rtt_);
+    stat.addf("Rejected samples (high deviation)", "%u", rejected_high_deviation_);
+    stat.addf("Filter resets (time jumps)", "%u", filter_resets_);
   }
 
 private:
   rclcpp::Clock clock;
   int count_;
+  int accepted_;
   std::vector<rclcpp::Time> times_;
   std::vector<int> seq_nums_;
+  std::vector<int> accepted_nums_;
   int hist_indx_;
   std::mutex mutex;
   const size_t window_size_;
@@ -138,6 +214,13 @@ private:
   int64_t rtt_sum;
   uint64_t last_remote_ts;
   int64_t offset;
+  uint32_t samples_;
+  uint32_t convergence_window_;
+  uint32_t rejected_high_rtt_;
+  uint32_t rejected_high_deviation_;
+  uint32_t filter_resets_;
+  bool enabled_;
+  std::string mode_;
 };
 
 
@@ -177,6 +260,9 @@ public:
       "timesync_mode", "MAVLINK", [&](const rclcpp::Parameter & p) {
         auto ts_mode = utils::timesync_mode_from_str(p.as_string());
         uas->set_timesync_mode(ts_mode);
+        dt_diag.set_mode(
+          utils::to_string(ts_mode),
+          ts_mode == TSM::MAVLINK || ts_mode == TSM::ONBOARD);
         RCLCPP_INFO_STREAM(get_logger(), "TM: Timesync mode: " << utils::to_string(ts_mode));
       });
 
@@ -506,9 +592,12 @@ private:
 
     // Calculate the difference of this sample from the current estimate
     uint64_t deviation = llabs(int64_t(time_offset) - offset_ns);
+    auto sample = TimeSyncStatus::Sample::ACCEPTED;
 
     if (rtt_ns < max_rtt_sample * 1000000ULL) {                 // Only use samples with low RTT
       if (sync_converged() && (deviation > max_deviation_sample * 1000000ULL)) {
+        sample = TimeSyncStatus::Sample::HIGH_DEVIATION;
+
         // Increment the counter if we have a good estimate and are
         // getting samples far from the estimate
         high_deviation_count++;
@@ -525,6 +614,7 @@ private:
           // Reset diagnostics
           dt_diag.clear();
           dt_diag.set_timestamp(remote_time_ns);
+          dt_diag.filter_reset();
         }
       } else {
         // Filter gain scheduling
@@ -555,6 +645,8 @@ private:
         high_rtt_count = 0;
       }
     } else {
+      sample = TimeSyncStatus::Sample::HIGH_RTT;
+
       // Increment counter if round trip time is too high for accurate timesync
       high_rtt_count++;
 
@@ -579,7 +671,8 @@ private:
     timesync_status_pub->publish(timesync_status);
 
     // Update diagnostics
-    dt_diag.tick(rtt_ns, remote_time_ns, time_offset);
+    dt_diag.set_progress(sequence, convergence_window);
+    dt_diag.tick(rtt_ns, remote_time_ns, time_offset, sample);
   }
 
   void add_sample(int64_t offset_ns)
