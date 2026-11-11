@@ -293,6 +293,7 @@ public:
     read_burst(false),
     burst_supported(true),
     burst_resyncs(0),
+    burst_sequence_reserved(false),
     write_offset(0),
     write_buffer{},
     write_it{},
@@ -433,7 +434,7 @@ private:
   bool burst_supported;
   int burst_resyncs;
   // Skip the last burst response window before sending an ordinary request.
-  bool burst_sequence_reserved{false};
+  bool burst_sequence_reserved;
 
   // FTP:Write
   uint32_t write_offset;
@@ -584,6 +585,8 @@ private:
       RCLCPP_WARN(get_logger(), "FTP: FCU does not support burst read, using kCmdReadFile");
       burst_supported = false;
       read_burst = false;
+      // the NAK is the only reply to that request, there is no stream to skip
+      burst_sequence_reserved = false;
       op_state = OP::READ;
       send_read_command();
       return;

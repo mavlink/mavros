@@ -687,15 +687,19 @@ TEST_F(FTPBurstTest, close_after_final_burst_is_not_replayed_as_eof)
 
 TEST_F(FTPBurstTest, late_burst_eof_does_not_interfere_with_close)
 {
-  CachedReplyFile file(133);
+  // No reply cache here: only the delayed packet itself is under test.
+  FakeFile file(133);
   std::optional<FTPRequest> eof;
+  bool injected = false;
   set_fcu(
-    [&file, &eof](const FTPRequest & req) {
+    [&file, &eof, &injected](const FTPRequest & req) {
       auto replies = file.serve(req);
       if (req.header().opcode == FTPRequest::kCmdBurstReadFile && !replies.empty()) {
         eof = replies.back();
       } else if (req.header().opcode == FTPRequest::kCmdTerminateSession && eof) {
+        // the burst's EOF NAK is delayed and overtakes the close ACK
         replies.insert(replies.begin(), *eof);
+        injected = true;
       }
       return replies;
     });
@@ -704,29 +708,74 @@ TEST_F(FTPBurstTest, late_burst_eof_does_not_interfere_with_close)
   auto res = close();
   ASSERT_NE(res, nullptr);
   EXPECT_TRUE(res->success);
+  std::lock_guard<std::mutex> lk(fcu_mutex);
+  ASSERT_TRUE(eof.has_value());
+  EXPECT_EQ(eof->header().opcode, FTPRequest::kRspNak);
+  EXPECT_TRUE(injected);
 }
 
 TEST_F(FTPBurstTest, burst_then_close_remains_safe_across_sequence_wraparound)
 {
+  // mirrors FTPPlugin::BURST_SEQ_WINDOW
+  constexpr uint32_t WINDOW = 4096;
+
   CachedReplyFile file(133);
+  // one uninterrupted stream, like PX4
+  file.burst_limit = 2 * WINDOW;
   set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
 
-  // Each read/close pair advances beyond a burst window. Nine transfers cross
-  // the 16-bit boundary without modifying the plugin's private sequence state.
-  for (unsigned i = 0; i < 9; ++i) {
+  auto last_seq = [this]() -> uint32_t {
+      std::lock_guard<std::mutex> lk(fcu_mutex);
+      return sent.empty() ? 0 : sent.back().header().seqNumber;
+    };
+
+  // Advance the sequence with the public API only, until the next burst is
+  // requested less than a window below the 16-bit boundary.
+  for (unsigned i = 0; i < 32 && last_seq() + 2 * (WINDOW + 1) < 0x10000; ++i) {
     EXPECT_EQ(read(133), file.data);
     auto res = close();
     ASSERT_NE(res, nullptr);
     ASSERT_TRUE(res->success);
   }
-  std::lock_guard<std::mutex> lk(fcu_mutex);
-  ASSERT_FALSE(sent.empty());
-  bool wrapped = false;
-  for (size_t i = 1; i < sent.size(); ++i) {
-    wrapped |= sent[i].header().seqNumber < sent[i - 1].header().seqNumber;
+
+  // open takes the next number, the burst request skips a window after it
+  const uint32_t burst_seq = last_seq() + 1 + WINDOW + 1;
+  ASSERT_LT(burst_seq, 0xffffU);
+  ASSERT_GT(burst_seq + WINDOW, 0x10000U);
+
+  // Size the file so that the last data packet has seqNumber 65535 and the
+  // EOF NAK, which the FCU caches, wraps to 0.
+  const size_t data_packets = 0xffff - burst_seq;
+  {
+    std::lock_guard<std::mutex> lk(fcu_mutex);
+    file.data = FakeFile(data_packets * FTPRequest::DATA_MAXSZ).data;
   }
-  EXPECT_TRUE(wrapped);
+  const auto bursts_before = sent_count(FTPRequest::kCmdBurstReadFile);
+
+  EXPECT_EQ(read(file.data.size()), file.data);
+  auto res = close();
+  ASSERT_NE(res, nullptr);
+  ASSERT_TRUE(res->success);
+  auto next = open("/b.bin", mavros_msgs::srv::FileOpen::Request::MODE_READ);
+  ASSERT_NE(next, nullptr);
+  EXPECT_TRUE(next->success);
+
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), bursts_before + 1);
+  std::lock_guard<std::mutex> lk(fcu_mutex);
   EXPECT_EQ(file.replays, 0U);
+  ASSERT_TRUE(file.last_reply.has_value());
+  const auto burst = std::find_if(
+    sent.rbegin(), sent.rend(),
+    [](const FTPRequest & r) {return r.header().opcode == FTPRequest::kCmdBurstReadFile;});
+  const auto term = std::find_if(
+    sent.rbegin(), sent.rend(),
+    [](const FTPRequest & r) {return r.header().opcode == FTPRequest::kCmdTerminateSession;});
+  ASSERT_NE(burst, sent.rend());
+  ASSERT_NE(term, sent.rend());
+  EXPECT_EQ(burst->header().seqNumber, burst_seq);
+  // the close is numbered past the burst window, on the other side of the wrap
+  EXPECT_EQ(term->header().seqNumber, static_cast<uint16_t>(burst_seq + WINDOW + 1));
+  EXPECT_LT(term->header().seqNumber, burst->header().seqNumber);
 }
 
 TEST_F(FTPBurstTest, unsupported_burst_fallback_still_allows_close_and_next_open)
@@ -743,6 +792,20 @@ TEST_F(FTPBurstTest, unsupported_burst_fallback_still_allows_close_and_next_open
   auto next = open("/b.bin", mavros_msgs::srv::FileOpen::Request::MODE_READ);
   ASSERT_NE(next, nullptr);
   EXPECT_TRUE(next->success);
+
+  std::lock_guard<std::mutex> lk(fcu_mutex);
+  EXPECT_EQ(file.replays, 0U);
+  // The NAK proves that no burst stream exists, so no sequence window is
+  // skipped: the fallback and the requests after it count on from the burst.
+  const auto burst = std::find_if(
+    sent.begin(), sent.end(),
+    [](const FTPRequest & r) {return r.header().opcode == FTPRequest::kCmdBurstReadFile;});
+  ASSERT_NE(burst, sent.end());
+  ASSERT_NE(burst + 1, sent.end());
+  EXPECT_EQ((burst + 1)->header().opcode, FTPRequest::kCmdReadFile);
+  for (auto it = burst + 1; it != sent.end(); ++it) {
+    EXPECT_EQ(it->header().seqNumber, static_cast<uint16_t>((it - 1)->header().seqNumber + 1));
+  }
 }
 
 TEST_F(FTPBurstTest, close_after_burst_timeout_skips_the_reserved_window)
