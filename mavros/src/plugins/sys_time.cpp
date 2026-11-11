@@ -281,7 +281,16 @@ public:
     node_declare_and_watch_parameter(
       "timesync_mode", "MAVLINK", [&](const rclcpp::Parameter & p) {
         auto ts_mode = utils::timesync_mode_from_str(p.as_string());
+        std::lock_guard<std::mutex> lock(filter_mutex);
+        const bool changed = ts_mode != uas->get_timesync_mode();
         uas->set_timesync_mode(ts_mode);
+        if (changed) {
+          // An estimate from another mode does not apply: NONE would keep converting
+          // with it, and PASSTHROUGH would add it to FCU timestamps. Replies to the
+          // requests of the previous mode must not start a new one.
+          clear_pending_requests();
+          reset_filter();
+        }
         dt_diag.set_mode(
           utils::to_string(ts_mode),
           ts_mode == TSM::MAVLINK || ts_mode == TSM::ONBOARD);
@@ -328,6 +337,8 @@ public:
             std::bind(&SystemTimePlugin::timesync_cb, this));
 
           dt_diag.set_rate(rate_d);
+          // A rate change must not register the diagnostic twice.
+          uas->diagnostic_updater.removeByName(dt_diag.getName());
           uas->diagnostic_updater.add(dt_diag);
         }
       });
@@ -344,21 +355,25 @@ public:
     // Larger values will cause large-amplitude oscillations.
     node_declare_and_watch_parameter(
       "timesync_alpha_initial", 0.05, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         filter_alpha_initial = p.as_double();
         reset_filter();
       });
     node_declare_and_watch_parameter(
       "timesync_beta_initial", 0.05, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         filter_beta_initial = p.as_double();
         reset_filter();
       });
     node_declare_and_watch_parameter(
       "timesync_alpha_final", 0.003, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         filter_alpha_final = p.as_double();
         reset_filter();
       });
     node_declare_and_watch_parameter(
       "timesync_beta_final", 0.003, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         filter_beta_final = p.as_double();
         reset_filter();
       });
@@ -371,7 +386,10 @@ public:
     // offset and skew estimates.
     node_declare_and_watch_parameter(
       "convergence_window", 500, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         convergence_window = p.as_int();
+        // The UAS converts FCU timestamps with the estimate exactly while it has converged.
+        uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
         dt_diag.set_progress(
           sequence, convergence_window, sync_converged(), uas->get_time_offset());
       });
@@ -387,18 +405,22 @@ public:
     // on the remote system.
     node_declare_and_watch_parameter(
       "max_rtt_sample", 10, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         max_rtt_sample = p.as_int();        // in ms
       });
     node_declare_and_watch_parameter(
       "max_deviation_sample", 10, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         max_deviation_sample = p.as_int();  // in ms
       });
     node_declare_and_watch_parameter(
       "max_consecutive_high_rtt", 10, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         max_cons_high_rtt = p.as_int();
       });
     node_declare_and_watch_parameter(
       "max_consecutive_high_deviation", 10, [&](const rclcpp::Parameter & p) {
+        std::lock_guard<std::mutex> lock(filter_mutex);
         max_cons_high_deviation = p.as_int();
       });
 
@@ -412,6 +434,7 @@ public:
     timesync_status_pub = node->create_publisher<mavros_msgs::msg::TimesyncStatus>(
       "timesync_status", sensor_qos);
 
+    std::lock_guard<std::mutex> lock(filter_mutex);
     reset_filter();
   }
 
@@ -438,17 +461,22 @@ private:
   double time_offset;
   double time_skew;
 
+  // The filter's state and settings. The TIMESYNC handler (on the UAS node) and
+  // the parameter callbacks (on this plugin's node) run on different executor
+  // threads; reset_filter() and the sample path expect it held.
+  std::mutex filter_mutex;
+
   // Filter parameters
   uint32_t sequence;
   double filter_alpha;
   double filter_beta;
 
   // Filter settings
-  float filter_alpha_initial;
-  float filter_beta_initial;
-  float filter_alpha_final;
-  float filter_beta_final;
-  int convergence_window;
+  float filter_alpha_initial = 0;
+  float filter_beta_initial = 0;
+  float filter_alpha_final = 0;
+  float filter_beta_final = 0;
+  int convergence_window = 0;
 
   // Outlier rejection
   int max_rtt_sample;
@@ -588,6 +616,13 @@ private:
     }
   }
 
+  //! Forget our pending requests: their replies are not used.
+  void clear_pending_requests()
+  {
+    std::lock_guard<std::mutex> lock(pending_mutex);
+    pending_ts1.clear();
+  }
+
   //! True if ts1 is one of our pending requests.
   bool is_pending_request(uint64_t ts1)
   {
@@ -609,6 +644,13 @@ private:
 
   void add_timesync_observation(int64_t offset_ns, uint64_t local_time_ns, uint64_t remote_time_ns)
   {
+    std::lock_guard<std::mutex> lock(filter_mutex);
+    // A reply taken just before a switch to NONE or PASSTHROUGH (the mode is set
+    // under the same lock) must not start an estimate.
+    const auto ts_mode = uas->get_timesync_mode();
+    if (ts_mode != TSM::MAVLINK && ts_mode != TSM::ONBOARD) {
+      return;
+    }
     uint64_t now_ns = node->now().nanoseconds();
 
     // Calculate the round trip time (RTT) it took the timesync

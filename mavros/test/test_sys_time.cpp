@@ -61,6 +61,7 @@ public:
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_sub;
   std::mutex diag_mutex;
   std::optional<DiagnosticStatus> time_sync;  // the latest "Time Sync" status
+  std::vector<size_t> time_sync_counts;  // "Time Sync" statuses in each diagnostics array
 
   void SetUp() override
   {
@@ -83,13 +84,18 @@ public:
       "/diagnostics", 10,
       [this](const diagnostic_msgs::msg::DiagnosticArray::SharedPtr m) {
         const std::string suffix = "Time Sync";
+        std::lock_guard<std::mutex> lock(diag_mutex);
+        size_t count = 0;
         for (const auto & st : m->status) {
           if (st.name.size() >= suffix.size() &&
           st.name.compare(st.name.size() - suffix.size(), suffix.size(), suffix) == 0)
           {
-            std::lock_guard<std::mutex> lock(diag_mutex);
             time_sync = st;
+            count++;
           }
+        }
+        if (count > 0) {
+          time_sync_counts.push_back(count);
         }
       });
     out = capture_sink(uas);
@@ -262,6 +268,21 @@ public:
     ADD_FAILURE() << "no matching Time Sync status; last: " <<
       (time_sync ? time_sync->message : "none");
     return time_sync.value_or(DiagnosticStatus{});
+  }
+
+  //! Converge (convergence_window 1, two replies) and return the last request answered.
+  TIMESYNC converge()
+  {
+    auto node = plugin->get_node();
+    node->set_parameter(rclcpp::Parameter("convergence_window", 1));
+    node->set_parameter(rclcpp::Parameter("max_rtt_sample", 1000));
+    auto request = first_request();
+    inject(timesync(request.ts1 + 1'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+    auto later = wait_request_after(request.ts1);
+    inject(timesync(later.ts1 + 1'000'000'000, later.ts1), FCU_SYSTEM, FCU_COMPONENT);
+    wait_status_count(2);
+    EXPECT_NE(uas->get_time_offset(), 0);
+    return later;
   }
 
   //! Answer each of our requests not answered yet, as an FCU whose clock is offset_ns behind.
@@ -457,6 +478,59 @@ TEST_F(SysTimeTest, a_time_jump_resets_the_filter_and_the_offset_in_use)
       return value_of(st, "Filter resets (time jumps)") == "1";
     });
   EXPECT_EQ(value_of(status, "Time offset in use (s)"), "0.000000000");
+}
+
+TEST_F(SysTimeTest, a_rate_change_keeps_one_diagnostic)
+{
+  first_request();
+  plugin->get_node()->set_parameter(rclcpp::Parameter("timesync_rate", 10.0));
+  size_t seen;
+  {
+    std::lock_guard<std::mutex> lock(diag_mutex);
+    seen = time_sync_counts.size();
+  }
+  // Two diagnostics arrays after the change (the updater publishes at 1 Hz).
+  wait_time_sync(
+    [&](const DiagnosticStatus &) {
+      return time_sync_counts.size() >= seen + 2;
+    });
+  std::lock_guard<std::mutex> lock(diag_mutex);
+  EXPECT_EQ(time_sync_counts.back(), 1u);
+}
+
+TEST_F(SysTimeTest, a_mode_change_drops_the_estimate)
+{
+  converge();
+  // Setting the same mode again keeps it.
+  plugin->get_node()->set_parameter(rclcpp::Parameter("timesync_mode", "MAVLINK"));
+  EXPECT_NE(uas->get_time_offset(), 0);
+  // PASSTHROUGH would add it to FCU timestamps.
+  plugin->get_node()->set_parameter(rclcpp::Parameter("timesync_mode", "PASSTHROUGH"));
+  EXPECT_EQ(uas->get_time_offset(), 0);
+}
+
+TEST_F(SysTimeTest, replies_to_requests_before_a_mode_change_are_ignored)
+{
+  auto request = first_request();
+  auto node = plugin->get_node();
+  node->set_parameter(rclcpp::Parameter("timesync_mode", "NONE"));
+  node->set_parameter(rclcpp::Parameter("timesync_mode", "MAVLINK"));
+  inject(timesync(1'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  // A request sent after the change is answered and used; it is the only one.
+  auto later = wait_request_after(request.ts1);
+  inject(timesync(5'000'000'000, later.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  EXPECT_EQ(wait_status_stamps(1), std::vector<uint64_t>{5'000'000'000u});
+}
+
+TEST_F(SysTimeTest, a_convergence_window_change_applies_at_once)
+{
+  converge();
+  const auto offset = uas->get_time_offset();
+  auto node = plugin->get_node();
+  node->set_parameter(rclcpp::Parameter("convergence_window", 100));
+  EXPECT_EQ(uas->get_time_offset(), 0);
+  node->set_parameter(rclcpp::Parameter("convergence_window", 1));
+  EXPECT_EQ(uas->get_time_offset(), offset);
 }
 
 TEST_F(SysTimeTest, sync_resumes_after_the_clock_steps_back)
