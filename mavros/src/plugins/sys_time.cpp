@@ -574,6 +574,7 @@ private:
     timesync_status.observed_offset_ns = offset_ns;
     timesync_status.estimated_offset_ns = time_offset;
     timesync_status.round_trip_time_ms = static_cast<float>(rtt_ns / 1000000.0);
+    timesync_status.converged = sync_converged();
 
     timesync_status_pub->publish(timesync_status);
 

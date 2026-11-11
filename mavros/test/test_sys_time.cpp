@@ -8,8 +8,9 @@
 //
 
 /**
- * Tests for sys_time TIMESYNC: requests and replies are addressed, and only the
- * FCU's replies to our own requests feed the offset estimate.
+ * Tests for sys_time TIMESYNC: requests and replies are addressed, only the
+ * FCU's replies to our own requests feed the offset estimate, and the timesync
+ * status says when the estimate has converged.
  */
 
 #include <memory>
@@ -286,6 +287,22 @@ TEST_F(SysTimeTest, target_component_zero_accepts_any_component)
   auto request = first_request();
   inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
   EXPECT_EQ(wait_status_stamps(1), std::vector<uint64_t>{5'000'000'000u});
+}
+
+TEST_F(SysTimeTest, the_status_says_when_the_estimate_has_converged)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("convergence_window", 2));
+  auto request = first_request();
+  inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  auto later = wait_request_after(request.ts1);
+  inject(timesync(5'000'000'000 + (later.ts1 - request.ts1), later.ts1), FCU_SYSTEM, FCU_COMPONENT);
+
+  wait_status_count(2);
+  std::lock_guard<std::mutex> lock(status_mutex);
+  ASSERT_EQ(statuses.size(), 2u);
+  // The first sample starts the estimate; the second completes the window.
+  EXPECT_FALSE(statuses[0].converged);
+  EXPECT_TRUE(statuses[1].converged);
 }
 
 TEST_F(SysTimeTest, sync_resumes_after_the_clock_steps_back)
