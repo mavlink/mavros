@@ -533,6 +533,18 @@ TEST_F(SysTimeTest, a_convergence_window_change_applies_at_once)
   EXPECT_EQ(uas->get_time_offset(), offset);
 }
 
+TEST_F(SysTimeTest, too_few_replies_is_a_warning_when_enabled)
+{
+  plugin->get_node()->set_parameter(rclcpp::Parameter("timesync_min_reply_ratio", 0.5));
+  auto request = first_request();
+  // One reply; the plugin keeps requesting at 20 Hz.
+  inject(timesync(5'000'000'000, request.ts1), FCU_SYSTEM, FCU_COMPONENT);
+  auto status = wait_time_sync(
+    [](const DiagnosticStatus & st) {return st.message.rfind("Too few replies (", 0) == 0;});
+  EXPECT_EQ(status.level, DiagnosticStatus::WARN);
+  EXPECT_NE(value_of(status, "Replies per request"), "<missing>");
+}
+
 TEST_F(SysTimeTest, sync_resumes_after_the_clock_steps_back)
 {
   // With sim time a SITL restart steps our clock back; an NTP step can too.
@@ -624,6 +636,29 @@ TEST(TimeSyncStatusTest, too_high_a_rate_is_above_the_request_rate)
   }
   auto status = run_diagnostic(diag);
   EXPECT_EQ(status.message, "Frequency too high.");
+}
+
+TEST(TimeSyncStatusTest, the_reply_ratio_check_is_off_by_default)
+{
+  TimeSyncStatus diag("Time Sync", 10);
+  diag.set_mode("MAVLINK", true);
+  diag.set_progress(5, 3, true, 42);
+  for (int i = 0; i < 4; i++) {
+    diag.request_sent();
+  }
+  diag.tick(1'000'000, 5'000'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
+  auto status = run_diagnostic(diag);
+  EXPECT_EQ(status.message, "Normal");
+  EXPECT_EQ(value_of(status, "Replies per request"), "0.25");
+
+  diag.set_min_reply_ratio(0.5);
+  for (int i = 0; i < 4; i++) {
+    diag.request_sent();
+  }
+  diag.tick(1'000'000, 5'100'000'000, 42, TimeSyncStatus::Sample::ACCEPTED);
+  status = run_diagnostic(diag);
+  EXPECT_EQ(status.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(status.message, "Too few replies (2/8).");
 }
 
 int main(int argc, char ** argv)

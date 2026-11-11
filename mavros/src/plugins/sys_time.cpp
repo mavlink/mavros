@@ -60,6 +60,7 @@ public:
     times_(win_size),
     seq_nums_(win_size),
     accepted_nums_(win_size),
+    request_nums_(win_size),
     window_size_(win_size),
     min_freq_(0.01),
     max_freq_(10),
@@ -86,12 +87,14 @@ public:
     auto curtime = clock.now();
     count_ = 0;
     accepted_ = 0;
+    requests_ = 0;
     rtt_sum = 0;
 
     for (size_t i = 0; i < window_size_; i++) {
       times_[i] = curtime;
       seq_nums_[i] = count_;
       accepted_nums_[i] = accepted_;
+      request_nums_[i] = requests_;
     }
 
     hist_indx_ = 0;
@@ -138,6 +141,20 @@ public:
     offset_in_use_ = offset_in_use_ns;
   }
 
+  //! Count a TIMESYNC request sent.
+  void request_sent()
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    requests_++;
+  }
+
+  //! Fewer replies per request than this is a warning; 0 disables the check.
+  void set_min_reply_ratio(double ratio)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    min_reply_ratio_ = ratio;
+  }
+
   //! The rate at which samples are requested: more than that is too high.
   void set_rate(double rate_hz)
   {
@@ -174,10 +191,14 @@ public:
     int curseq = count_;
     int events = curseq - seq_nums_[hist_indx_];
     int accepted_events = accepted_ - accepted_nums_[hist_indx_];
+    int request_events = requests_ - request_nums_[hist_indx_];
     double window = (curtime - times_[hist_indx_]).seconds();
     double freq = events / window;
+    // Replies to requests sent just before the window can push this above 1.
+    double reply_ratio = request_events > 0 ? static_cast<double>(events) / request_events : 0.0;
     seq_nums_[hist_indx_] = curseq;
     accepted_nums_[hist_indx_] = accepted_;
+    request_nums_[hist_indx_] = requests_;
     times_[hist_indx_] = curtime;
     hist_indx_ = (hist_indx_ + 1) % window_size_;
 
@@ -191,6 +212,8 @@ public:
       stat.summary(1, "Frequency too low.");
     } else if (freq > max_freq_ * (1 + tolerance_)) {
       stat.summary(1, "Frequency too high.");
+    } else if (min_reply_ratio_ > 0 && request_events > 0 && reply_ratio < min_reply_ratio_) {
+      stat.summaryf(1, "Too few replies (%d/%d).", events, request_events);
     } else if (accepted_events == 0) {
       stat.summary(1, "No samples accepted.");
     } else if (!converged) {
@@ -207,6 +230,9 @@ public:
     stat.addf("Mean RTT (ms)", "%0.6f", (count_) ? rtt_sum / count_ / 1e6 : 0.0);
     stat.addf("Last remote time (s)", "%0.9f", last_remote_ts / 1e9);
     stat.addf("Estimated time offset (s)", "%0.9f", offset / 1e9);
+    if (request_events > 0) {
+      stat.addf("Replies per request", "%0.2f", reply_ratio);
+    }
     stat.add("Converged", converged);
     stat.addf(
       "Samples (convergence window)", "%" PRIu32 " / %" PRIu32, samples_,
@@ -224,6 +250,8 @@ private:
   std::vector<rclcpp::Time> times_;
   std::vector<int> seq_nums_;
   std::vector<int> accepted_nums_;
+  int requests_;
+  std::vector<int> request_nums_;
   int hist_indx_;
   std::mutex mutex;
   const size_t window_size_;
@@ -241,6 +269,7 @@ private:
   uint32_t rejected_high_deviation_;
   uint32_t filter_resets_;
   bool in_use_ = false;
+  double min_reply_ratio_ = 0.0;
   bool enabled_;
   std::string mode_;
 };
@@ -392,6 +421,17 @@ public:
         uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
         dt_diag.set_progress(
           sequence, convergence_window, sync_converged(), uas->get_time_offset());
+      });
+
+    // Reply loss
+    //
+    // Fewer replies per request than timesync_min_reply_ratio in the diagnostic's
+    // window is a warning ("Too few replies"); 0 disables the check. The estimate
+    // models clock skew, so it tolerates loss, but converges and tracks drift more
+    // slowly with fewer samples.
+    node_declare_and_watch_parameter(
+      "timesync_min_reply_ratio", 0.0, [&](const rclcpp::Parameter & p) {
+        dt_diag.set_min_reply_ratio(p.as_double());
       });
 
     // Outlier rejection and filter reset
@@ -582,6 +622,7 @@ private:
       const uint64_t now_ns = node->now().nanoseconds();
       add_pending_request(now_ns);
       send_timesync_msg(0, now_ns, uas->get_tgt_system(), uas->get_tgt_component());
+      dt_diag.request_sent();
     } else if (ts_mode == TSM::ONBOARD) {
       // Calculate offset between CLOCK_REALTIME (ros::WallTime) and CLOCK_MONOTONIC
       uint64_t realtime_now_ns = node->now().nanoseconds();
