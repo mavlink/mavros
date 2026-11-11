@@ -55,7 +55,7 @@ class MissionFlowTest : public TestUAS
 public:
   UAS::SharedPtr uas;
   std::shared_ptr<mavros::std_plugins::WaypointPlugin> plugin;
-  std::shared_ptr<std::vector<mavros_msgs::msg::Mavlink>> out;
+  std::shared_ptr<CaptureBuffer> out;
   rclcpp::Node::SharedPtr client;
 
   void SetUp() override
@@ -200,7 +200,7 @@ public:
   size_t count_sent(uint32_t msgid)
   {
     size_t n = 0;
-    for (const auto & m : *out) {
+    for (const auto & m : out->snapshot()) {
       n += m.msgid == msgid;
     }
     return n;
@@ -579,7 +579,7 @@ TEST_F(MissionFlowTest, current_published_during_pull)
     };
   auto count_msgid = [&](uint32_t msgid) {
       size_t n = 0;
-      for (const auto & m : *out) {
+      for (const auto & m : out->snapshot()) {
         n += m.msgid == msgid;
       }
       return n;
@@ -662,7 +662,7 @@ TEST_F(MissionFlowTest, failed_pull_keeps_last_list)
     };
   auto count_msgid = [&](uint32_t msgid) {
       size_t n = 0;
-      for (const auto & m : *out) {
+      for (const auto & m : out->snapshot()) {
         n += m.msgid == msgid;
       }
       return n;

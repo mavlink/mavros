@@ -14,6 +14,9 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <algorithm>
+#include <deque>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -344,6 +347,13 @@ private:
   int high_rtt_count;
   int high_deviation_count;
 
+  // ts1 of our TIMESYNC requests still awaiting a reply, oldest first. A reply
+  // counts only if it echoes one: other components' requests and their replies
+  // reach us too, and their ts1 comes from another clock.
+  std::deque<uint64_t> pending_ts1;
+  std::mutex pending_mutex;
+  static constexpr size_t MAX_PENDING_REQUESTS = 64;
+
   void handle_system_time(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::SYSTEM_TIME & mtime, plugin::filter::SystemAndOk filter [[maybe_unused]])
@@ -369,15 +379,41 @@ private:
   }
 
   void handle_timesync(
-    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    const mavlink::mavlink_message_t * msg,
     mavlink::common::msg::TIMESYNC & tsync, plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
     uint64_t now_ns = node->now().nanoseconds();
 
     if (tsync.tc1 == 0) {
-      send_timesync_msg(now_ns, tsync.ts1);
+      // A request: answer it only if it is addressed to us or to everyone
+      // (autopilots without the target fields send 0).
+      if (!uas->is_addressed_to_us(tsync.target_system, tsync.target_component)) {
+        return;
+      }
+      // Reply to the requester, so routers do not deliver the reply to everyone.
+      send_timesync_msg(now_ns, tsync.ts1, msg->sysid, msg->compid);
       return;
     } else if (tsync.tc1 > 0) {
+      // A reply: use it only if it comes from the FCU and answers one of our
+      // requests. The filter has already checked the system id; target
+      // component 0 accepts any component.
+      // The reply's own target fields are not checked: PX4 v1.14 - v1.17 has
+      // them in the message, but leaves them uninitialised. The ts1 match
+      // tells whose reply it is.
+      const uint8_t tgt_component = uas->get_tgt_component();
+      if (tgt_component != 0 && msg->compid != tgt_component) {
+        if (is_pending_request(tsync.ts1)) {
+          RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 10000,
+            "TM: Reply to our TIMESYNC request from component %d, not the target %d; ignored.",
+            msg->compid, tgt_component);
+        }
+        return;
+      }
+      if (!take_pending_request(tsync.ts1)) {
+        RCLCPP_DEBUG(get_logger(), "TM: TIMESYNC reply to another request; ignored.");
+        return;
+      }
       // Time offset between this system and the remote system is calculated assuming RTT for
       // the timesync packet is roughly equal both ways. Signed arithmetic: the offset is negative
       // when the remote clock is ahead (e.g. PX4 SITL in lockstep with ROS sim time).
@@ -404,7 +440,9 @@ private:
     if (ts_mode == TSM::NONE || ts_mode == TSM::PASSTHROUGH) {
       // NOTE(vooon): nothing to do. keep timer running for possible mode change
     } else if (ts_mode == TSM::MAVLINK) {
-      send_timesync_msg(0, node->now().nanoseconds());
+      const uint64_t now_ns = node->now().nanoseconds();
+      add_pending_request(now_ns);
+      send_timesync_msg(0, now_ns, uas->get_tgt_system(), uas->get_tgt_component());
     } else if (ts_mode == TSM::ONBOARD) {
       // Calculate offset between CLOCK_REALTIME (ros::WallTime) and CLOCK_MONOTONIC
       uint64_t realtime_now_ns = node->now().nanoseconds();
@@ -416,13 +454,46 @@ private:
     }
   }
 
-  void send_timesync_msg(uint64_t tc1, uint64_t ts1)
+  void send_timesync_msg(
+    uint64_t tc1, uint64_t ts1, uint8_t target_system,
+    uint8_t target_component)
   {
     mavlink::common::msg::TIMESYNC tsync {};
     tsync.tc1 = tc1;
     tsync.ts1 = ts1;
+    tsync.target_system = target_system;
+    tsync.target_component = target_component;
 
     uas->send_message(tsync);
+  }
+
+  //! Record a request's ts1. Duplicates are harmless: each reply takes one.
+  void add_pending_request(uint64_t ts1)
+  {
+    std::lock_guard<std::mutex> lock(pending_mutex);
+    pending_ts1.push_back(ts1);
+    while (pending_ts1.size() > MAX_PENDING_REQUESTS) {
+      pending_ts1.pop_front();
+    }
+  }
+
+  //! True if ts1 is one of our pending requests.
+  bool is_pending_request(uint64_t ts1)
+  {
+    std::lock_guard<std::mutex> lock(pending_mutex);
+    return std::find(pending_ts1.begin(), pending_ts1.end(), ts1) != pending_ts1.end();
+  }
+
+  //! True if ts1 is one of our pending requests, which it then removes.
+  bool take_pending_request(uint64_t ts1)
+  {
+    std::lock_guard<std::mutex> lock(pending_mutex);
+    auto it = std::find(pending_ts1.begin(), pending_ts1.end(), ts1);
+    if (it == pending_ts1.end()) {
+      return false;
+    }
+    pending_ts1.erase(it);
+    return true;
   }
 
   void add_timesync_observation(int64_t offset_ns, uint64_t local_time_ns, uint64_t remote_time_ns)

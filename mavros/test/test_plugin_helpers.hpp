@@ -108,28 +108,51 @@ public:
     uas->plugin_route(mmsg, framing);
   }
 
-  //! Serialize a mavlink message into a mavlink_message_t.
+  //! Serialize a mavlink message into a mavlink_message_t, with its msgid and
+  //  payload length set as a received message would have them.
   mavlink::mavlink_message_t convert_message(const mavlink::Message & msg)
   {
-    mavlink::mavlink_message_t ret;
+    mavlink::mavlink_message_t ret{};
     mavlink::MsgMap map(ret);
     msg.serialize(map);
+    const auto info = msg.get_message_info();
+    ret.msgid = info.id;
+    ret.len = info.length;
     return ret;
   }
 
+  //! Messages captured from the UAS outbound sink. The executor thread appends
+  //  to it, so read it through snapshot().
+  class CaptureBuffer
+  {
+public:
+    void push_back(const mavros_msgs::msg::Mavlink & m)
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      msgs_.push_back(m);
+    }
+
+    std::vector<mavros_msgs::msg::Mavlink> snapshot() const
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      return msgs_;
+    }
+
+private:
+    mutable std::mutex mutex_;
+    std::vector<mavros_msgs::msg::Mavlink> msgs_;
+  };
+
   //! Subscribe to the UAS outbound sink and return a shared capture buffer.
-  std::shared_ptr<std::vector<mavros_msgs::msg::Mavlink>> capture_sink(
+  std::shared_ptr<CaptureBuffer> capture_sink(
     const UAS::SharedPtr & uas, const std::string & name = "test_mavros_uas")
   {
-    auto buf = std::make_shared<std::vector<mavros_msgs::msg::Mavlink>>();
-    auto mtx = std::make_shared<std::mutex>();
+    auto buf = std::make_shared<CaptureBuffer>();
     sink_subs_.push_back(
       uas->create_subscription<mavros_msgs::msg::Mavlink>(
         "/" + name + "/mavlink_sink",
         rclcpp::QoS(1000).best_effort().durability_volatile(),
-        [buf, mtx](const mavros_msgs::msg::Mavlink::SharedPtr m) {
-          std::lock_guard<std::mutex> lk(*mtx);
-          (void)lk;
+        [buf](const mavros_msgs::msg::Mavlink::SharedPtr m) {
           buf->push_back(*m);
         }));
     return buf;
@@ -208,6 +231,23 @@ public:
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (std::chrono::steady_clock::now() < deadline) {
       for (const auto & m : buf) {
+        if (m.msgid == msgid) {
+          return m;
+        }
+      }
+      std::this_thread::sleep_for(5ms);
+    }
+    return mavros_msgs::msg::Mavlink{};
+  }
+
+  //! Wait for a message with the given msgid in a capture buffer.
+  static mavros_msgs::msg::Mavlink wait_msgid(
+    const CaptureBuffer & buf, const uint32_t msgid,
+    const std::chrono::milliseconds timeout = 5s)
+  {
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+      for (const auto & m : buf.snapshot()) {
         if (m.msgid == msgid) {
           return m;
         }
