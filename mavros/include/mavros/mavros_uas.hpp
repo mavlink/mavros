@@ -392,7 +392,6 @@ public:
   /* -*- transform -*- */
 
   tf2_ros::Buffer tf2_buffer;
-  tf2_ros::TransformListener tf2_listener;
   tf2_ros::TransformBroadcaster tf2_broadcaster;
   tf2_ros::StaticTransformBroadcaster tf2_static_broadcaster;
 
@@ -431,6 +430,13 @@ public:
   inline void set_map_frame_id(const std::string frame_id)
   {
     map_frame_id = frame_id;
+  }
+  /**
+   * @brief True when tf2_buffer gets only /tf_static (tf.static_only parameter)
+   */
+  inline bool is_tf_static_only() const
+  {
+    return tf_static_only;
   }
   inline std::string get_base_link_frame_id()
   {
@@ -648,6 +654,12 @@ private:
   StrV plugin_allowlist;
   StrV plugin_denylist;
   int rt_sched_fifo_priority;
+  bool tf_static_only;
+  //! Fills tf2_buffer from /tf and /tf_static; null with tf.static_only, see setup_tf_listener()
+  std::unique_ptr<tf2_ros::TransformListener> tf2_listener;
+  //! with tf.static_only: fills tf2_buffer from /tf_static instead of tf2_listener
+  rclcpp::CallbackGroup::SharedPtr tf2_static_cbg;
+  rclcpp::SubscriptionBase::SharedPtr tf2_static_sub;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_ptr;
   rclcpp::TimerBase::SharedPtr startup_delay_timer;
@@ -688,6 +700,8 @@ private:
 
   //! delayed startup: read parameters, start the executor, load plugins
   void startup();
+  //! Create tf2_listener, or with tf.static_only the /tf_static subscription
+  void setup_tf_listener();
 
   //! initialize connection to the Router
   void connect_to_router();

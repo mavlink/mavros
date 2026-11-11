@@ -14,11 +14,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 #include "rclcpp/executors.hpp"
 #include "mavconn/interface.hpp"
@@ -132,6 +134,79 @@ public:
     auto uas = std::make_shared<MockUAS>("test_mavros_uas");
     uas->startup_delay_timer->cancel();
     return uas;
+  }
+
+  UAS::SharedPtr create_tf_node(bool static_only)
+  {
+    auto uas = std::make_shared<UAS>(
+      // intra-process as in mavros_node (Humble rejects it for a transient_local subscription)
+      rclcpp::NodeOptions()
+      .use_intra_process_comms(true)
+      .parameter_overrides({{"tf.static_only", static_only}}),
+      "test_mavros_uas_tf");
+    uas->startup_delay_timer->cancel();
+    return uas;
+  }
+
+  bool has_tf_listener(UAS::SharedPtr uas)
+  {
+    return uas->tf2_listener != nullptr;
+  }
+
+  struct ReceivedTf
+  {
+    bool static_frame;
+    bool dynamic_frame;
+  };
+
+  //! Publish a static map -> static_frame and a dynamic map -> dynamic_frame while spinning the
+  //! UAS node, until the expected frames reached its tf2 buffer (5 s at most). Without an expected
+  //! dynamic frame it keeps publishing for 1 s more, to give it the chance to arrive.
+  ReceivedTf receive_transforms(UAS::SharedPtr uas, bool expect_dynamic)
+  {
+    using namespace std::chrono_literals;
+    auto pub_node = std::make_shared<rclcpp::Node>("test_tf_publisher");
+#ifdef USE_OLD_TF2_ROS
+    tf2_ros::StaticTransformBroadcaster static_br(pub_node);
+    tf2_ros::TransformBroadcaster br(pub_node);
+#else
+    tf2_ros::StaticTransformBroadcaster static_br(*pub_node);
+    tf2_ros::TransformBroadcaster br(*pub_node);
+#endif
+
+    geometry_msgs::msg::TransformStamped tf;
+    tf.header.frame_id = "map";
+    tf.transform.rotation.w = 1.0;
+    tf.child_frame_id = "static_frame";
+    tf.header.stamp = pub_node->now();
+    static_br.sendTransform(tf);
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(uas);
+    exec.add_node(pub_node);
+
+    ReceivedTf ret{};
+    tf.child_frame_id = "dynamic_frame";
+    auto deadline = std::chrono::steady_clock::now() + 5s;
+    bool settling = false;
+    while (std::chrono::steady_clock::now() < deadline) {
+      tf.header.stamp = pub_node->now();
+      br.sendTransform(tf);
+      exec.spin_some();
+      std::this_thread::sleep_for(10ms);
+
+      ret.static_frame = uas->tf2_buffer.canTransform("map", "static_frame", tf2::TimePointZero);
+      ret.dynamic_frame = uas->tf2_buffer.canTransform("map", "dynamic_frame", tf2::TimePointZero);
+      if (!settling && ret.static_frame && (ret.dynamic_frame || !expect_dynamic)) {
+        if (expect_dynamic) {
+          break;
+        }
+        settling = true;
+        deadline = std::chrono::steady_clock::now() + 1s;
+      }
+    }
+
+    return ret;
   }
 
   template<typename TimerT>
@@ -384,6 +459,51 @@ TEST_F(TestUAS, synchronise_stamp_out_of_range_falls_back_to_now)
   EXPECT_NEAR(
     uas->synchronise_stamp(std::numeric_limits<uint64_t>::max()).seconds(),
     uas->now().seconds(), 1.0);
+}
+
+TEST_F(TestUAS, tf_static_only)
+{
+  auto uas = create_tf_node(true);
+  EXPECT_TRUE(uas->is_tf_static_only());
+
+  auto received = receive_transforms(uas, false);
+  EXPECT_TRUE(received.static_frame);
+  EXPECT_FALSE(received.dynamic_frame);
+  // no TransformListener, so no listener node or thread
+  EXPECT_FALSE(has_tf_listener(uas));
+}
+
+TEST_F(TestUAS, tf_static_only_receives_own_static_tf)
+{
+  using namespace std::chrono_literals;
+  auto uas = create_tf_node(true);
+  // normally sent by startup(), whose timer create_tf_node() cancels; the odometry plugin uses them
+  uas->setup_static_tf();
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(uas);
+  auto received = [&uas]() {
+      return uas->tf2_buffer.canTransform("map", "map_ned", tf2::TimePointZero) &&
+             uas->tf2_buffer.canTransform("odom", "odom_ned", tf2::TimePointZero) &&
+             uas->tf2_buffer.canTransform("base_link", "base_link_frd", tf2::TimePointZero);
+    };
+  auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (!received() && std::chrono::steady_clock::now() < deadline) {
+    exec.spin_some();
+    std::this_thread::sleep_for(10ms);
+  }
+  EXPECT_TRUE(received());
+}
+
+TEST_F(TestUAS, tf_default_listens_to_tf)
+{
+  auto uas = create_tf_node(false);
+  EXPECT_FALSE(uas->is_tf_static_only());
+
+  auto received = receive_transforms(uas, true);
+  EXPECT_TRUE(received.static_frame);
+  EXPECT_TRUE(received.dynamic_frame);
+  EXPECT_TRUE(has_tf_listener(uas));
 }
 
 }  // namespace uas

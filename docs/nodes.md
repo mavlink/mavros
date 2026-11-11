@@ -145,6 +145,20 @@ it with plain options throws `std::invalid_argument` during plugin construction.
 - `base_link_frame_id` (string, default `base_link`) - body-fixed tf frame.
 - `odom_frame_id` (string, default `odom`) - odometry tf frame.
 - `map_frame_id` (string, default `map`) - world-fixed tf frame.
+- `tf.static_only` (bool, default `false`, read-only) - fill the tf2 buffer
+  only from `/tf_static`, through a subscription of the UAS node instead of a
+  tf2 listener: no `/tf` subscription and no listener node or thread. Enough
+  for the odometry plugin with the default frame ids, which needs only static
+  transforms the UAS publishes. Plugins listening to tf (`fake_gps`,
+  `landing_target`, `vision_pose_estimate`) then get only static transforms.
+  The subscription is served by the executor that spins the UAS node: a
+  `tf2_buffer` lookup with a timeout in a callback of the UAS node (e.g. a
+  MAVLink message handler) blocks it, and with a single-threaded executor
+  waits the whole timeout. In-tree plugins do no such lookups. Being a
+  subscription of the UAS node, it also follows the UAS node's remap rules
+  (e.g. `mavros:/tf_static:=...`), which the listener's own node ignores;
+  it allows the same QoS overrides as the listener (depth, history,
+  reliability).
 - `rt_sched_fifo_priority` (int, default `0`, read-only) - `SCHED_FIFO` priority
   (1..99) for the UAS plugin executor threads (`uas-exec/*`). `0` keeps the
   default scheduler. See [Real-time scheduling](#real-time-scheduling).
