@@ -17,7 +17,7 @@ messages it subscribes to and publishes.
 | [`geofence`](std/geofence.md) | Geofence manipulation plugin | 1 | — | 3 | — | 6/10 |
 | [`global_position`](std/global_position.md) | Global position plugin. | 9 | 2 | — | — | 4/1 |
 | [`home_position`](std/home_position.md) | home position plugin. | 1 | 1 | 1 | 1 | 1/1 |
-| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 7 | — | — | — | 6/0 |
+| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 8 | — | — | — | 6/0 |
 | [`local_position`](std/local_position.md) | Local position plugin. | 7 | — | — | — | 2/0 |
 | [`manual_control`](std/manual_control.md) | Manual Control plugin | 1 | 1 | — | — | 1/1 |
 | [`nav_controller_output`](std/nav_controller_output.md) | nav controller output plugin. | 1 | — | — | — | 1/0 |
@@ -39,7 +39,7 @@ messages it subscribes to and publishes.
 
 | Plugin | Brief | Pub | Sub | Srv | Client | MAVLink sub/pub |
 |--------|-------|-----|-----|-----|--------|-----------------|
-| [`adsb`](extras/adsb.md) | ADS-B Vehicle plugin | 1 | 1 | — | — | 1/1 |
+| [`adsb`](extras/adsb.md) | ADS-B Vehicle plugin | 2 | 1 | — | — | 2/1 |
 | [`cam_imu_sync`](extras/cam_imu_sync.md) | Camera IMU synchronisation plugin | 1 | — | — | — | 1/0 |
 | [`camera`](extras/camera.md) | Camera plugin plugin | 1 | — | — | — | 1/0 |
 | [`cellular_status`](extras/cellular_status.md) | Cellular status plugin. | — | 1 | — | — | 0/1 |
