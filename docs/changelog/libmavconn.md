@@ -1,5 +1,37 @@
 # Changelog for package libmavconn
 
+## 2.17.0 (2026-11-11)
+
+- Merge pull request
+  [\#2357](https://github.com/mavlink/mavros/issues/2357) from
+  zekesarosi/feat/rt-sched-fifo-upstream mavros: optional SCHED_FIFO for
+  router io and executor threads
+- Merge branch 'ros2' into feat/rt-sched-fifo-upstream
+- Merge pull request
+  [\#2348](https://github.com/mavlink/mavros/issues/2348) from
+  zekesarosi/fix/mavconn-lifecycle libmavconn: harden UDP/TCP/serial
+  lifecycle
+- mavros: optional SCHED_FIFO for router io and executor threads Add
+  mavconn::utils::set_this_thread_sched_fifo(), which returns the error
+  code from pthread_setschedparam(). The new rt_sched_fifo_priority
+  parameter (mavros_node, mavros_router, UAS) defaults to 0, which
+  leaves scheduling untouched and logs nothing. When set, it applies to
+  the router io thread (now named mudp-io), the mavros_node executor and
+  the UAS executor; executor worker threads are spawned by the spinning
+  thread and inherit its policy. The router reads the parameter in its
+  constructor, before it starts the io thread, so it is read-only;
+  mavros_node forwards its value through NodeOptions parameter overrides
+  instead of set_parameters().
+- libmavconn: harden UDP/TCP/serial lifecycle
+  \- capture shared_from_this() in the initial asio::post so the first
+  read/accept cannot run on a destroyed object
+  \- UDP: keep receiving on transient errors (ECONNREFUSED, ENETUNREACH,
+  EHOSTUNREACH, EAGAIN) instead of closing the link
+  \- UDP: drop a datagram that fails to send with a transient error
+  instead of retrying it forever and wedging tx_q
+  - tests: close connections explicitly and lock the test fixture mutex
+- Contributors: Vladimir Ermakov, Zeke Sarosi
+
 ## 2.16.0 (2026-09-27)
 
 - Merge pull request
