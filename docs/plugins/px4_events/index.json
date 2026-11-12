@@ -61,7 +61,7 @@
         "message_name": "EVENT",
         "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
         "dialect": "common",
-        "line": 307,
+        "line": 312,
         "msg_id": 410
       },
       {
@@ -70,7 +70,7 @@
         "message_name": "COMPONENT_METADATA",
         "msg_id_expr": "mavlink::common::msg::COMPONENT_METADATA::MSG_ID",
         "dialect": "common",
-        "line": 278,
+        "line": 282,
         "msg_id": 397
       },
       {
@@ -79,7 +79,7 @@
         "message_name": "COMPONENT_INFORMATION",
         "msg_id_expr": "mavlink::common::msg::COMPONENT_INFORMATION::MSG_ID",
         "dialect": "common",
-        "line": 292,
+        "line": 296,
         "msg_id": 395
       }
     ],
