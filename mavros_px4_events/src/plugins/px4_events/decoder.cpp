@@ -92,7 +92,7 @@ std::string escape_literal(const std::string & text)
   return result;
 }
 
-void validate_message_precision(const std::string & message)
+std::string validate_message_precision(const std::string & message)
 {
   constexpr int MAX_PRECISION = 16;
   for (size_t pos = 0; pos < message.size(); ++pos) {
@@ -116,10 +116,11 @@ void validate_message_precision(const std::string & message)
       if (precision_end == precision_start || errno == ERANGE ||
         precision < 0 || precision > MAX_PRECISION)
       {
-        throw std::runtime_error("event message precision must be an integer between 0 and 16");
+        return "event message precision must be an integer between 0 and 16";
       }
     }
   }
+  return {};
 }
 
 // Ask libevents which arguments appear in the dev-profile message. Using marker
@@ -212,6 +213,7 @@ struct Decoder::Impl
   Parser parser;
   Config config;
   std::map<uint32_t, EventDefinition> definitions;
+  std::map<uint32_t, std::string> skipped_definitions;
   std::mutex diagnostic_mutex;
   std::set<uint32_t> reported_failures;
 
@@ -227,6 +229,7 @@ struct Decoder::Impl
     }
     parser.setProfile("dev");
     config.profile = "dev";
+    std::set<uint32_t> seen_ids;
     for (const auto & component : json.at("components").items()) {
       const auto namespace_id = metadata_id(component.key(), 255);
       const auto & body = component.value();
@@ -240,36 +243,48 @@ struct Decoder::Impl
         }
         for (const auto & entry : group_events.items()) {
           const auto id = (namespace_id << 24) | metadata_id(entry.key(), 0x00ffffff);
+          if (!seen_ids.insert(id).second) {
+            definitions.erase(id);
+            skipped_definitions[id] = "skipping event definition: duplicate full event ID";
+            continue;
+          }
           events::EventType event{};
           event.id = id;
           const auto parsed = parser.parse(event);
           if (!parsed) {
-            throw std::runtime_error("event contains unsupported argument types");
+            skipped_definitions[id] = "skipping event definition: unsupported argument types";
+            continue;
           }
           EventDefinition definition{};
           definition.id = id;
           definition.name = parsed->name();
           definition.message = entry.value().at("message").get<std::string>();
           size_t argument_bytes = 0;
+          std::string error;
           for (int i = 0; i < parsed->numArguments(); ++i) {
             const auto & argument = parsed->argument(static_cast<size_t>(i));
             if (argument.isEnum() && argument.type == BaseType::float_t) {
-              throw std::runtime_error("event enums require an integer argument type");
+              error = "event enums require an integer argument type";
+              break;
             }
             argument_bytes += static_cast<size_t>(events::parser::baseTypeSize(argument.type));
             definition.arguments.push_back(argument);
           }
-          if (argument_bytes > sizeof(event.arguments)) {
-            throw std::runtime_error("event arguments exceed the MAVLink payload");
+          if (error.empty() && argument_bytes > sizeof(event.arguments)) {
+            error = "event arguments exceed the MAVLink payload";
           }
           if (definition.message.empty()) {
             definition.message = escape_literal(definition.name);
           }
-          validate_message_precision(definition.message);
-          definition.message = with_unprinted_arguments(definition, config);
-          if (!definitions.emplace(id, std::move(definition)).second) {
-            throw std::runtime_error("duplicate full event ID");
+          if (error.empty()) {
+            error = validate_message_precision(definition.message);
           }
+          if (!error.empty()) {
+            skipped_definitions[id] = "skipping event definition: " + error;
+            continue;
+          }
+          definition.message = with_unprinted_arguments(definition, config);
+          definitions.emplace(id, std::move(definition));
         }
       }
     }
@@ -307,6 +322,10 @@ std::string Decoder::load_json(const std::string & json)
     return ex.what();
   } catch (...) {
     return "unknown event metadata loading exception";
+  }
+  const auto skipped = std::move(impl_->skipped_definitions);
+  for (const auto & entry : skipped) {
+    report_failure(entry.first, entry.second.c_str());
   }
   return {};
 }

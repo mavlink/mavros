@@ -31,7 +31,7 @@ public:
   static constexpr size_t MAX_COMPRESSED_BYTES = 1024 * 1024;
   static constexpr size_t MAX_JSON_BYTES = 8 * 1024 * 1024;
 
-  // Report decoding exceptions once per full event ID for each metadata load.
+  // Report skipped definitions or decoding exceptions once per full ID per metadata load.
   using ErrorCallback = std::function<void (uint32_t, const char *)>;
 
   explicit Decoder(ErrorCallback report_error = {});
@@ -41,7 +41,7 @@ public:
   std::string configure(const std::string & mode, const std::string & path);
   // Shared bounded JSON/XZ loading for local files and downloaded metadata.
   static std::string unpack_metadata(std::string_view bytes, bool compressed);
-  // A failed load leaves decoding inactive; no partially parsed definitions are exposed.
+  // Skip unsupported event definitions; a file-level failure leaves decoding inactive.
   std::string load_json(const std::string & json);
 
   std::optional<DecodedEvent> decode(

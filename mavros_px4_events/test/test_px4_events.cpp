@@ -166,8 +166,13 @@ TEST_F(Px4EventsTest, message_precision_accepts_limit_and_libevents_numeric_synt
   }
 }
 
-TEST_F(Px4EventsTest, unsafe_message_precision_is_rejected_before_activation)
+TEST_F(Px4EventsTest, unsafe_message_precision_skips_only_the_affected_event)
 {
+  std::vector<std::string> reports;
+  Decoder reporting_decoder([&reports](uint32_t id, const char * reason) {
+      EXPECT_EQ(id, 0x01000001u);
+      reports.emplace_back(reason);
+    });
   auto json = nlohmann::json::parse(metadata());
   auto & event = json["components"]["1"]["event_groups"]["default"]["events"]["1"];
   event["arguments"] = {{{"name", "value"}, {"type", "float"}}};
@@ -175,12 +180,14 @@ TEST_F(Px4EventsTest, unsafe_message_precision_is_rejected_before_activation)
       "9999999999999999999999999999999999999999", "-1", "-4294967296", "", "invalid"})
   {
     SCOPED_TRACE(precision);
-    ASSERT_TRUE(decoder.load_json(metadata()).empty());
+    reports.clear();
     event["message"] = "Value {1:." + precision + "m}";
-    EXPECT_EQ(decoder.load_json(json.dump()),
-      "event message precision must be an integer between 0 and 16");
-    EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
-    EXPECT_FALSE(decoder.decode(1, 6, arguments));
+    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(reporting_decoder.decode(0x01000001, 6, arguments));
+    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
+    ASSERT_EQ(reports.size(), 1u);
+    EXPECT_EQ(reports.front(),
+      "skipping event definition: event message precision must be an integer between 0 and 16");
   }
 }
 
@@ -200,8 +207,9 @@ TEST_F(Px4EventsTest, precision_validation_preserves_escaped_literals_and_profil
 
   // An escaped backslash does not escape the following placeholder.
   event["message"] = R"(Backslash \\{1:.17m})";
-  EXPECT_EQ(decoder.load_json(json.dump()),
-    "event message precision must be an integer between 0 and 16");
+  ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+  EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+  EXPECT_TRUE(decoder.decode(1, 6, arguments));
 }
 
 TEST_F(Px4EventsTest, enums_bitfields_and_unknown_values_retain_information)
@@ -640,28 +648,86 @@ TEST_F(Px4EventsTest, malformed_metadata_cannot_activate_partial_definitions)
   TemporaryMetadata future(json.dump());
   EXPECT_FALSE(decoder.configure("local", future.path).empty());
   json["version"] = 2;
-  json["components"]["1"]["event_groups"]["default"]["events"]["1"]["arguments"][0]["type"] =
-    "invalid";
+  json["components"]["1"]["event_groups"]["default"]["events"]["1"].erase("message");
   TemporaryMetadata invalid(json.dump());
   EXPECT_FALSE(decoder.configure("local", invalid.path).empty());
   EXPECT_FALSE(decoder.decode(1, 6, arguments));
 }
 
-TEST_F(Px4EventsTest, oversized_argument_payload_and_duplicate_full_id_are_rejected)
+TEST_F(Px4EventsTest, unsupported_types_and_oversized_arguments_skip_only_the_affected_event)
+{
+  for (const std::string type : {"invalid", "float_enum", "uint64_t"}) {
+    SCOPED_TRACE(type);
+    auto json = nlohmann::json::parse(metadata());
+    auto & component = json["components"]["1"];
+    component["enums"]["float_enum"] = {{"type", "float"}};
+    auto & event = component["event_groups"]["default"]["events"]["6"];
+    event["arguments"] = nlohmann::json::array();
+    for (int i = 0; i < 6; ++i) {
+      event["arguments"].push_back({{"name", "wide"}, {"type", type}});
+    }
+    std::vector<uint32_t> reports;
+    Decoder reporting_decoder([&reports](uint32_t id, const char *) {reports.push_back(id);});
+    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(reporting_decoder.decode(0x01000006, 6, arguments));
+    EXPECT_TRUE(reporting_decoder.decode(0x01000007, 6, arguments));
+    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
+    EXPECT_EQ(reports, (std::vector<uint32_t>{0x01000006u}));
+  }
+}
+
+TEST_F(Px4EventsTest, duplicate_ids_are_excluded_even_when_the_first_definition_is_invalid)
+{
+  for (const bool invalid_first : {false, true}) {
+    SCOPED_TRACE(invalid_first);
+    auto json = nlohmann::json::parse(metadata());
+    auto & groups = json["components"]["1"]["event_groups"];
+    if (invalid_first) {
+      groups["default"]["events"]["7"]["message"] = "Unsafe {1:.17m}";
+    }
+    for (const std::string group : {"duplicate", "third"}) {
+      groups[group]["events"]["7"] =
+      {{"name", "duplicate"}, {"message", "Conflicting definition"}};
+    }
+    std::vector<std::string> reports;
+    Decoder reporting_decoder([&reports](uint32_t id, const char * reason) {
+        EXPECT_EQ(id, 0x01000007u);
+        reports.emplace_back(reason);
+      });
+    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(reporting_decoder.decode(0x01000007, 6, arguments));
+    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
+    ASSERT_EQ(reports.size(), 1u);
+    EXPECT_EQ(reports.front(), "skipping event definition: duplicate full event ID");
+  }
+}
+
+TEST_F(Px4EventsTest, metadata_without_usable_events_is_rejected)
 {
   auto json = nlohmann::json::parse(metadata());
+  json["components"].erase("0");
   auto & events = json["components"]["1"]["event_groups"]["default"]["events"];
-  events["6"]["arguments"] = nlohmann::json::array();
-  for (int i = 0; i < 6; ++i) {
-    events["6"]["arguments"].push_back({{"name", "wide"}, {"type", "uint64_t"}});
-  }
-  TemporaryMetadata oversized(json.dump());
-  EXPECT_FALSE(decoder.configure("local", oversized.path).empty());
-  json = nlohmann::json::parse(metadata());
-  json["components"]["1"]["event_groups"]["duplicate"]["events"]["7"] =
-  {{"name", "duplicate"}, {"message", "Conflicting definition"}};
-  TemporaryMetadata duplicate(json.dump());
-  EXPECT_FALSE(decoder.configure("local", duplicate.path).empty());
+  const auto invalid = events["1"];
+  events = {{"1", invalid}};
+  events["1"]["message"] = "Unsafe {2:.17m}";
+  EXPECT_EQ(decoder.load_json(json.dump()), "metadata contains no event definitions");
+  EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+}
+
+TEST_F(Px4EventsTest, skipped_definition_diagnostics_cannot_prevent_activation)
+{
+  auto json = nlohmann::json::parse(metadata());
+  json["components"]["1"]["event_groups"]["default"]["events"]["1"]["message"] =
+    "Unsafe {2:.17m}";
+  int reports = 0;
+  Decoder reporting_decoder([&reports](uint32_t, const char *) {
+      ++reports;
+      throw std::runtime_error("injected diagnostic failure");
+    });
+  ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
+  EXPECT_EQ(reports, 1);
+  EXPECT_FALSE(reporting_decoder.decode(0x01000001, 6, arguments));
+  EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
 }
 
 TEST_F(Px4EventsTest, file_and_decompression_limits_are_enforced)

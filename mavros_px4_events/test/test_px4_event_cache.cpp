@@ -142,6 +142,30 @@ TEST_F(MetadataCacheTest, general_and_event_files_round_trip_with_role_specific_
   }
 }
 
+TEST_F(MetadataCacheTest, skipped_event_definitions_do_not_prevent_cache_round_trip)
+{
+  auto json = nlohmann::json::parse(events);
+  auto & definitions = json["components"]["0"]["event_groups"]["default"]["events"];
+  definitions["2"] = {{"name", "invalid"}, {"message", "Unsafe {1:.17m}"},
+    {"arguments", {{{"name", "value"}, {"type", "float"}}}}};
+  MetadataCache cache(directory);
+  for (const bool compressed : {false, true}) {
+    const auto bytes = compressed ? compress(json.dump()) : json.dump();
+    const auto file = metadata_file(compressed ? "mftp://mixed.json.xz" : "mftp://mixed.json",
+            metadata_crc32(bytes));
+    ASSERT_TRUE(cache.save(file, MetadataRole::Events, bytes).empty());
+    EXPECT_EQ(cache.load(file, MetadataRole::Events), bytes);
+    auto changed = file;
+    ++changed.crc;
+    EXPECT_FALSE(cache.load(changed, MetadataRole::Events));
+  }
+
+  definitions.erase("1");
+  const auto unusable = json.dump();
+  const auto file = metadata_file("mftp://unusable.json", metadata_crc32(unusable));
+  EXPECT_FALSE(cache.save(file, MetadataRole::Events, unusable).empty());
+}
+
 TEST_F(MetadataCacheTest, corrupt_truncated_and_forged_identity_entries_are_misses)
 {
   MetadataCache cache(directory);
