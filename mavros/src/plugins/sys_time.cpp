@@ -17,7 +17,9 @@
 #include <algorithm>
 #include <cinttypes>
 #include <deque>
+#include <limits>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -55,6 +57,25 @@ public:
     HIGH_DEVIATION,
   };
 
+  /**
+   * The filter's progress, and what FCU timestamps are converted with. The
+   * plugin passes a snapshot whenever its filter changes, so the diagnostic
+   * never shows an estimate the UAS no longer uses.
+   */
+  struct Progress
+  {
+    //! Samples the filter has used since its last reset.
+    uint32_t samples = 0;
+    //! Samples it needs to converge.
+    uint32_t convergence_window = 0;
+    //! Whether FCU timestamps are converted with the estimate yet.
+    bool in_use = false;
+    //! The offset they are converted with (UAS::get_time_offset()).
+    int64_t offset_in_use_ns = 0;
+    //! The filter's running estimate, in use or not.
+    int64_t estimated_offset_ns = 0;
+  };
+
   TimeSyncStatus(const std::string & name, size_t win_size)
   : diagnostic_updater::DiagnosticTask(name),
     times_(win_size),
@@ -68,10 +89,6 @@ public:
     last_rtt(0),
     rtt_sum(0),
     last_remote_ts(0),
-    offset(0),
-    offset_in_use_(0),
-    samples_(0),
-    convergence_window_(0),
     rejected_high_rtt_(0),
     rejected_high_deviation_(0),
     filter_resets_(0),
@@ -83,26 +100,12 @@ public:
   void clear()
   {
     std::lock_guard<std::mutex> lock(mutex);
-
-    auto curtime = clock.now();
-    count_ = 0;
-    accepted_ = 0;
-    requests_ = 0;
-    rtt_sum = 0;
-
-    for (size_t i = 0; i < window_size_; i++) {
-      times_[i] = curtime;
-      seq_nums_[i] = count_;
-      accepted_nums_[i] = accepted_;
-      request_nums_[i] = requests_;
-    }
-
-    hist_indx_ = 0;
+    clear_locked();
   }
 
   void tick(
-    int64_t rtt_ns, uint64_t remote_timestamp_ns, int64_t time_offset_ns,
-    Sample sample)
+    int64_t rtt_ns, uint64_t remote_timestamp_ns, Sample sample,
+    const Progress & progress)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -110,7 +113,7 @@ public:
     last_rtt = rtt_ns;
     rtt_sum += rtt_ns;
     last_remote_ts = remote_timestamp_ns;
-    offset = time_offset_ns;
+    progress_ = progress;
 
     switch (sample) {
       case Sample::ACCEPTED:
@@ -125,20 +128,11 @@ public:
     }
   }
 
-  /**
-   * Samples the filter has used since its last reset, how many it needs to
-   * converge, whether FCU timestamps are converted with the estimate yet, and
-   * the offset they are converted with (UAS::get_time_offset()).
-   */
-  void set_progress(
-    uint32_t samples, uint32_t convergence_window, bool in_use,
-    int64_t offset_in_use_ns)
+  //! The filter changed without a sample: a reset, or a new convergence_window.
+  void set_progress(const Progress & progress)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    samples_ = samples;
-    convergence_window_ = convergence_window;
-    in_use_ = in_use;
-    offset_in_use_ = offset_in_use_ns;
+    progress_ = progress;
   }
 
   //! Count a TIMESYNC request sent.
@@ -155,17 +149,30 @@ public:
     min_reply_ratio_ = ratio;
   }
 
-  //! The rate at which samples are requested: more than that is too high.
+  /**
+   * The rate at which samples are requested: more than that is too high. The
+   * window restarts, as it holds counts from the old rate, or from before the
+   * diagnostic was removed with rate 0.
+   */
   void set_rate(double rate_hz)
   {
     std::lock_guard<std::mutex> lock(mutex);
     max_freq_ = rate_hz;
+    const auto curtime = clock.now();
+    for (size_t i = 0; i < window_size_; i++) {
+      times_[i] = curtime;
+      seq_nums_[i] = count_;
+      accepted_nums_[i] = accepted_;
+      request_nums_[i] = requests_;
+    }
   }
 
-  //! Count a filter reset after a time jump.
-  void filter_reset()
+  //! A filter reset after a time jump: count it and start a new window.
+  void filter_reset(uint64_t remote_timestamp_ns)
   {
     std::lock_guard<std::mutex> lock(mutex);
+    clear_locked();
+    last_remote_ts = remote_timestamp_ns;
     filter_resets_++;
   }
 
@@ -175,12 +182,6 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     mode_ = mode;
     enabled_ = enabled;
-  }
-
-  void set_timestamp(uint64_t remote_timestamp_ns)
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    last_remote_ts = remote_timestamp_ns;
   }
 
   void run(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -202,7 +203,13 @@ public:
     times_[hist_indx_] = curtime;
     hist_indx_ = (hist_indx_ + 1) % window_size_;
 
-    const bool converged = in_use_;
+    // The window holds whole replies, so at low rates one more than the rate
+    // allows is rounding, not too many: allow one.
+    const bool too_many = events > max_freq_ * (1 + tolerance_) * window + 1;
+    // Likewise the reply to the window's last request can arrive in the next.
+    const bool too_few_replies = min_reply_ratio_ > 0 && request_events > 0 &&
+      events + 1 < min_reply_ratio_ * request_events;
+    const bool converged = progress_.in_use;
 
     if (!enabled_) {
       stat.summaryf(0, "Disabled (timesync_mode %s)", mode_.c_str());
@@ -210,16 +217,16 @@ public:
       stat.summary(2, "No events recorded.");
     } else if (freq < min_freq_ * (1 - tolerance_)) {
       stat.summary(1, "Frequency too low.");
-    } else if (freq > max_freq_ * (1 + tolerance_)) {
+    } else if (too_many) {
       stat.summary(1, "Frequency too high.");
-    } else if (min_reply_ratio_ > 0 && request_events > 0 && reply_ratio < min_reply_ratio_) {
+    } else if (too_few_replies) {
       stat.summaryf(1, "Too few replies (%d/%d).", events, request_events);
     } else if (accepted_events == 0) {
       stat.summary(1, "No samples accepted.");
     } else if (!converged) {
       stat.summaryf(
-        1, "Not converged (%" PRIu32 "/%" PRIu32 " samples).", samples_,
-        convergence_window_);
+        1, "Not converged (%" PRIu32 "/%" PRIu32 " samples).", progress_.samples,
+        progress_.convergence_window);
     } else {
       stat.summary(0, "Normal");
     }
@@ -229,21 +236,39 @@ public:
     stat.addf("Last RTT (ms)", "%0.6f", last_rtt / 1e6);
     stat.addf("Mean RTT (ms)", "%0.6f", (count_) ? rtt_sum / count_ / 1e6 : 0.0);
     stat.addf("Last remote time (s)", "%0.9f", last_remote_ts / 1e9);
-    stat.addf("Estimated time offset (s)", "%0.9f", offset / 1e9);
+    stat.addf("Estimated time offset (s)", "%0.9f", progress_.estimated_offset_ns / 1e9);
     if (request_events > 0) {
       stat.addf("Replies per request", "%0.2f", reply_ratio);
     }
     stat.add("Converged", converged);
     stat.addf(
-      "Samples (convergence window)", "%" PRIu32 " / %" PRIu32, samples_,
-      convergence_window_);
-    stat.addf("Time offset in use (s)", "%0.9f", offset_in_use_ / 1e9);
+      "Samples (convergence window)", "%" PRIu32 " / %" PRIu32, progress_.samples,
+      progress_.convergence_window);
+    stat.addf("Time offset in use (s)", "%0.9f", progress_.offset_in_use_ns / 1e9);
     stat.addf("Rejected samples (high RTT)", "%" PRIu32, rejected_high_rtt_);
     stat.addf("Rejected samples (high deviation)", "%" PRIu32, rejected_high_deviation_);
     stat.addf("Filter resets (time jumps)", "%" PRIu32, filter_resets_);
   }
 
 private:
+  void clear_locked()
+  {
+    auto curtime = clock.now();
+    count_ = 0;
+    accepted_ = 0;
+    requests_ = 0;
+    rtt_sum = 0;
+
+    for (size_t i = 0; i < window_size_; i++) {
+      times_[i] = curtime;
+      seq_nums_[i] = count_;
+      accepted_nums_[i] = accepted_;
+      request_nums_[i] = requests_;
+    }
+
+    hist_indx_ = 0;
+  }
+
   rclcpp::Clock clock;
   int count_;
   int accepted_;
@@ -261,14 +286,10 @@ private:
   int64_t last_rtt;
   int64_t rtt_sum;
   uint64_t last_remote_ts;
-  int64_t offset;
-  int64_t offset_in_use_;
-  uint32_t samples_;
-  uint32_t convergence_window_;
+  Progress progress_;
   uint32_t rejected_high_rtt_;
   uint32_t rejected_high_deviation_;
   uint32_t filter_resets_;
-  bool in_use_ = false;
   double min_reply_ratio_ = 0.0;
   bool enabled_;
   std::string mode_;
@@ -311,15 +332,15 @@ public:
       "timesync_mode", "MAVLINK", [&](const rclcpp::Parameter & p) {
         auto ts_mode = utils::timesync_mode_from_str(p.as_string());
         std::lock_guard<std::mutex> lock(filter_mutex);
-        const bool changed = ts_mode != uas->get_timesync_mode();
-        uas->set_timesync_mode(ts_mode);
-        if (changed) {
+        if (ts_mode != uas->get_timesync_mode()) {
           // An estimate from another mode does not apply: NONE would keep converting
-          // with it, and PASSTHROUGH would add it to FCU timestamps. Replies to the
-          // requests of the previous mode must not start a new one.
+          // with it, and PASSTHROUGH would add it to FCU timestamps. So it is dropped
+          // before other plugins see the new mode. Replies to the requests of the
+          // previous mode must not start a new one.
           clear_pending_requests();
           reset_filter();
         }
+        uas->set_timesync_mode(ts_mode);
         dt_diag.set_mode(
           utils::to_string(ts_mode),
           ts_mode == TSM::MAVLINK || ts_mode == TSM::ONBOARD);
@@ -412,27 +433,31 @@ public:
     // The filter interpolates between the initial and final gains while the number of
     // exchanged timesync packets is less than convergence_window. A lower value will
     // allow the timesync to converge faster, but with potentially less accurate initial
-    // offset and skew estimates.
+    // offset and skew estimates. It is at least 1.
     node_declare_and_watch_parameter(
       "convergence_window", 500, [&](const rclcpp::Parameter & p) {
         std::lock_guard<std::mutex> lock(filter_mutex);
-        convergence_window = p.as_int();
+        convergence_window = static_cast<int>(p.as_int());
         // The UAS converts FCU timestamps with the estimate exactly while it has converged.
         uas->set_time_offset(sync_converged() ? static_cast<int64_t>(time_offset) : 0);
-        dt_diag.set_progress(
-          sequence, convergence_window, sync_converged(), uas->get_time_offset());
-      });
+        dt_diag.set_progress(filter_progress());
+      }, int_range(1, std::numeric_limits<int>::max()));
 
     // Reply loss
     //
-    // Fewer replies per request than timesync_min_reply_ratio in the diagnostic's
-    // window is a warning ("Too few replies"); 0 disables the check. The estimate
+    // Fewer replies per request than timesync_min_reply_ratio (0 to 1) in the
+    // diagnostic's window, allowing one reply still in flight, is a warning
+    // ("Too few replies"); 0 disables the check. The estimate
     // models clock skew, so it tolerates loss, but converges and tracks drift more
     // slowly with fewer samples.
     node_declare_and_watch_parameter(
       "timesync_min_reply_ratio", 0.0, [&](const rclcpp::Parameter & p) {
-        dt_diag.set_min_reply_ratio(p.as_double());
-      });
+        const double ratio = p.as_double();
+        if (!(ratio >= 0.0 && ratio <= 1.0)) {  // the range does not reject NaN
+          throw std::invalid_argument("timesync_min_reply_ratio must be in [0, 1]");
+        }
+        dt_diag.set_min_reply_ratio(ratio);
+      }, double_range(0.0, 1.0));
 
     // Outlier rejection and filter reset
     //
@@ -487,6 +512,28 @@ public:
   }
 
 private:
+  //! A parameter descriptor that rejects integers outside [from, to].
+  static rcl_interfaces::msg::ParameterDescriptor int_range(int64_t from, int64_t to)
+  {
+    rcl_interfaces::msg::ParameterDescriptor desc;
+    rcl_interfaces::msg::IntegerRange range;
+    range.from_value = from;
+    range.to_value = to;
+    desc.integer_range.push_back(range);
+    return desc;
+  }
+
+  //! A parameter descriptor that rejects doubles outside [from, to].
+  static rcl_interfaces::msg::ParameterDescriptor double_range(double from, double to)
+  {
+    rcl_interfaces::msg::ParameterDescriptor desc;
+    rcl_interfaces::msg::FloatingPointRange range;
+    range.from_value = from;
+    range.to_value = to;
+    desc.floating_point_range.push_back(range);
+    return desc;
+  }
+
   rclcpp::Publisher<sensor_msgs::msg::TimeReference>::SharedPtr time_ref_pub;
   rclcpp::Publisher<mavros_msgs::msg::TimesyncStatus>::SharedPtr timesync_status_pub;
 
@@ -597,6 +644,7 @@ private:
       // the timesync packet is roughly equal both ways. Signed arithmetic: the offset is negative
       // when the remote clock is ahead (e.g. PX4 SITL in lockstep with ROS sim time).
       add_timesync_observation(
+        TSM::MAVLINK,
         (static_cast<int64_t>(tsync.ts1) + static_cast<int64_t>(now_ns) - tsync.tc1 * 2) / 2,
         tsync.ts1, tsync.tc1);
     }
@@ -629,6 +677,7 @@ private:
       uint64_t monotonic_now_ns = get_monotonic_now();
 
       add_timesync_observation(
+        TSM::ONBOARD,
         static_cast<int64_t>(realtime_now_ns) - static_cast<int64_t>(monotonic_now_ns),
         realtime_now_ns, monotonic_now_ns);
     }
@@ -683,13 +732,14 @@ private:
     return true;
   }
 
-  void add_timesync_observation(int64_t offset_ns, uint64_t local_time_ns, uint64_t remote_time_ns)
+  void add_timesync_observation(
+    TSM mode, int64_t offset_ns, uint64_t local_time_ns,
+    uint64_t remote_time_ns)
   {
-    std::lock_guard<std::mutex> lock(filter_mutex);
-    // A reply taken just before a switch to NONE or PASSTHROUGH (the mode is set
-    // under the same lock) must not start an estimate.
-    const auto ts_mode = uas->get_timesync_mode();
-    if (ts_mode != TSM::MAVLINK && ts_mode != TSM::ONBOARD) {
+    std::unique_lock<std::mutex> lock(filter_mutex);
+    // A sample taken just before a mode change (the mode is set under the same
+    // lock) is from another clock pair: it must not start the new mode's estimate.
+    if (uas->get_timesync_mode() != mode) {
       return;
     }
     uint64_t now_ns = node->now().nanoseconds();
@@ -701,6 +751,8 @@ private:
     // Calculate the difference of this sample from the current estimate
     uint64_t deviation = llabs(int64_t(time_offset) - offset_ns);
     auto sample = TimeSyncStatus::Sample::ACCEPTED;
+    bool time_jump = false;
+    bool rtt_too_high = false;
 
     if (rtt_ns < max_rtt_sample * 1000000ULL) {                 // Only use samples with low RTT
       if (sync_converged() && (deviation > max_deviation_sample * 1000000ULL)) {
@@ -714,15 +766,13 @@ private:
         // which violate our present estimate.
         // This is most likely due to a time jump on the offboard system.
         if (high_deviation_count > max_cons_high_deviation) {
-          RCLCPP_ERROR(get_logger(), "TM: Time jump detected. Resetting time synchroniser.");
+          time_jump = true;
 
           // Reset the filter
           reset_filter();
 
           // Reset diagnostics
-          dt_diag.clear();
-          dt_diag.set_timestamp(remote_time_ns);
-          dt_diag.filter_reset();
+          dt_diag.filter_reset(remote_time_ns);
         }
       } else {
         // Filter gain scheduling
@@ -761,7 +811,7 @@ private:
 
       if (high_rtt_count > max_cons_high_rtt) {
         // Issue a warning to the user if the RTT is constantly high
-        RCLCPP_WARN(get_logger(), "TM: RTT too high for timesync: %0.2f ms.", rtt_ns / 1000000.0);
+        rtt_too_high = true;
 
         // Reset counter
         high_rtt_count = 0;
@@ -777,11 +827,19 @@ private:
     timesync_status.round_trip_time_ms = static_cast<float>(rtt_ns / 1000000.0);
     timesync_status.converged = sync_converged();
 
-    timesync_status_pub->publish(timesync_status);
+    // Update diagnostics under the lock, so a concurrent reset's progress is not
+    // overwritten with this sample's.
+    dt_diag.tick(rtt_ns, remote_time_ns, sample, filter_progress());
 
-    // Update diagnostics
-    dt_diag.set_progress(sequence, convergence_window, sync_converged(), uas->get_time_offset());
-    dt_diag.tick(rtt_ns, remote_time_ns, time_offset, sample);
+    lock.unlock();
+
+    if (time_jump) {
+      RCLCPP_ERROR(get_logger(), "TM: Time jump detected. Resetting time synchroniser.");
+    }
+    if (rtt_too_high) {
+      RCLCPP_WARN(get_logger(), "TM: RTT too high for timesync: %0.2f ms.", rtt_ns / 1000000.0);
+    }
+    timesync_status_pub->publish(timesync_status);
   }
 
   void add_sample(int64_t offset_ns)
@@ -816,6 +874,19 @@ private:
     filter_beta = filter_beta_initial;
     high_deviation_count = 0;
     high_rtt_count = 0;
+    dt_diag.set_progress(filter_progress());
+  }
+
+  //! The filter's progress for the diagnostic. Expects filter_mutex held.
+  TimeSyncStatus::Progress filter_progress()
+  {
+    TimeSyncStatus::Progress p;
+    p.samples = sequence;
+    p.convergence_window = static_cast<uint32_t>(convergence_window);
+    p.in_use = sync_converged();
+    p.offset_in_use_ns = uas->get_time_offset();
+    p.estimated_offset_ns = static_cast<int64_t>(time_offset);
+    return p;
   }
 
   inline bool sync_converged()
