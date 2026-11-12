@@ -1942,7 +1942,14 @@
     ],
     "services": [],
     "clients": [],
-    "parameters": [],
+    "parameters": [
+      {
+        "name": "send_force",
+        "type_name": "bool",
+        "line": 48,
+        "default_value": "false"
+      }
+    ],
     "mavlink_subscriptions": [],
     "mavlink_publications": [
       {

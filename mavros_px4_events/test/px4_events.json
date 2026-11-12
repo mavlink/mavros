@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "components": {
+    "0": {
+      "namespace": "common",
+      "event_groups": {
+        "default": {
+          "events": {
+            "1": {"name": "common_event", "message": "Common namespace"}
+          }
+        }
+      }
+    },
+    "1": {
+      "namespace": "px4",
+      "enums": {
+        "mode_t": {
+          "type": "uint8_t",
+          "entries": {"1": {"name": "ready", "description": "Ready"}}
+        },
+        "flags_t": {
+          "type": "uint8_t",
+          "is_bitfield": true,
+          "entries": {
+            "1": {"name": "gps", "description": "GPS"},
+            "2": {"name": "imu", "description": "IMU"}
+          }
+        }
+      },
+      "event_groups": {
+        "default": {
+          "events": {
+            "1": {
+              "name": "numeric", "message": "Count {1}; height {2:.2m}",
+              "arguments": [{"name": "count", "type": "int16_t"}, {"name": "height", "type": "float"}]
+            },
+            "2": {
+              "name": "enum_event", "message": "Mode {1}; flags {2}",
+              "arguments": [{"name": "mode", "type": "mode_t"}, {"name": "flags", "type": "flags_t"}]
+            },
+            "3": {
+              "name": "protocol_summary", "message": "",
+              "arguments": [{"name": "version", "type": "uint8_t"}, {"name": "checks", "type": "uint32_t"}]
+            },
+            "4": {
+              "name": "profile", "message": "<profile name=\"dev\">Developer {1}</profile><profile name=\"normal\">Normal {2}</profile> <param>TEST_PARAM</param> <a href=\"https://example.invalid\">Guide</a>",
+              "arguments": [{"name": "visible", "type": "uint8_t"}, {"name": "hidden", "type": "uint8_t"}]
+            },
+            "5": {
+              "name": "escaped", "message": "Literal \\{1}; value {2}",
+              "arguments": [{"name": "first", "type": "uint8_t"}, {"name": "second", "type": "int8_t"}]
+            },
+            "6": {
+              "name": "wide", "message": "Summary",
+              "arguments": [{"name": "signed", "type": "int64_t"}, {"name": "unsigned", "type": "uint64_t"}]
+            },
+            "7": {"name": "warning", "message": "Warning\nnext line", "description": "Do not log this description"}
+          }
+        }
+      }
+    }
+  }
+}

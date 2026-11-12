@@ -46,11 +46,14 @@ TEMPLATE="${TEMPLATE:-${TOOLS_DIR}/templates/plugin.md.j2}"
 COMPILE_COMMANDS="${COMPILE_COMMANDS:-${WS_ROOT}/build/compile_commands.json}"
 MAVROS_CC="${WS_ROOT}/build/mavros/compile_commands.json"
 EXTRAS_CC="${WS_ROOT}/build/mavros_extras/compile_commands.json"
+PX4_EVENTS_CC="${WS_ROOT}/build/mavros_px4_events/compile_commands.json"
 
 STD_INDEX="${MAVROS_REPO}/docs/plugins/std/index.json"
 EXTRAS_INDEX="${MAVROS_REPO}/docs/plugins/extras/index.json"
+PX4_EVENTS_INDEX="${MAVROS_REPO}/docs/plugins/px4_events/index.json"
 STD_MD_DIR="${MAVROS_REPO}/docs/plugins/std"
 EXTRAS_MD_DIR="${MAVROS_REPO}/docs/plugins/extras"
+PX4_EVENTS_MD_DIR="${MAVROS_REPO}/docs/plugins/px4_events"
 PLUGINS_INDEX="${MAVROS_REPO}/docs/plugins/index.md"
 QOS_APPENDIX="${MAVROS_REPO}/docs/plugins/qos.md"
 
@@ -85,7 +88,7 @@ ensure_cpp_bin() {
 }
 
 # Return 0 when the compilation database exists and actually contains
-# translation units for both mavros and mavros_extras plugin sources.
+# translation units for mavros, mavros_extras and mavros_px4_events plugins.
 # A plain `colcon build` (without -DCMAKE_EXPORT_COMPILE_COMMANDS=ON) silently
 # drops those entries, leaving a stale aggregate that would make the clang
 # extractor fail to find include paths (fatal error: file not found).
@@ -103,26 +106,27 @@ except (OSError, ValueError):
 files = {entry.get("file", "") for entry in entries}
 has_std = any("/mavros/src/plugins/" in f for f in files)
 has_extras = any("/mavros_extras/src/plugins/" in f for f in files)
-sys.exit(0 if has_std and has_extras else 1)
+has_px4_events = any("/mavros_px4_events/src/plugins/" in f for f in files)
+sys.exit(0 if has_std and has_extras and has_px4_events else 1)
 PY
 }
 
-# Ensure a merged compile_commands.json covering both mavros and mavros_extras
-# plugin files exists (build both packages with the export flag).
+# Ensure a merged compile_commands.json covering all three plugin packages
+# exists (build the packages with the export flag).
 ensure_compile_commands() {
   if compile_commands_complete; then
     return
   fi
   echo "Compilation database missing or incomplete: ${COMPILE_COMMANDS}"
-  echo "Building mavros + mavros_extras with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..."
+  echo "Building mavros + mavros_extras + mavros_px4_events with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..."
   # Run from the workspace root so colcon can discover sibling packages.
-  (cd "${WS_ROOT}" && colcon build --packages-up-to mavros_extras \
+  (cd "${WS_ROOT}" && colcon build --packages-up-to mavros_extras mavros_px4_events \
     --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
-  MAVROS_CC="${MAVROS_CC}" EXTRAS_CC="${EXTRAS_CC}" \
+  MAVROS_CC="${MAVROS_CC}" EXTRAS_CC="${EXTRAS_CC}" PX4_EVENTS_CC="${PX4_EVENTS_CC}" \
     COMPILE_COMMANDS="${COMPILE_COMMANDS}" python3 - <<'PY'
 import json, os, sys
 cc = []
-for f in (os.environ["MAVROS_CC"], os.environ["EXTRAS_CC"]):
+for f in (os.environ["MAVROS_CC"], os.environ["EXTRAS_CC"], os.environ["PX4_EVENTS_CC"]):
     try:
         cc += json.load(open(f))
     except FileNotFoundError:
@@ -130,8 +134,8 @@ for f in (os.environ["MAVROS_CC"], os.environ["EXTRAS_CC"]):
 json.dump(cc, open(os.environ["COMPILE_COMMANDS"], "w"), indent=2)
 PY
   if ! compile_commands_complete; then
-    echo "ERROR: ${COMPILE_COMMANDS} still lacks mavros/mavros_extras plugin" >&2
-    echo "       entries. Run: colcon build --packages-up-to mavros_extras" >&2
+    echo "ERROR: ${COMPILE_COMMANDS} still lacks entries for all three plugin packages" >&2
+    echo "       Run: colcon build --packages-up-to mavros_extras mavros_px4_events" >&2
     echo "       --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" >&2
     exit 1
   fi
@@ -162,6 +166,12 @@ run_index() {
     --format json \
     --plugin-dir "${MAVROS_REPO}/mavros_extras/src/plugins" \
     --output "${EXTRAS_INDEX}"
+  uv run mr-plugin-doc-gen \
+    --compile-commands-dir "${cc_dir}" \
+    --cpp-bin "${CPP_BIN}" \
+    --format json \
+    --plugin-dir "${MAVROS_REPO}/mavros_px4_events/src/plugins" \
+    --output "${PX4_EVENTS_INDEX}"
 }
 
 # Regenerate the markdown changelogs from each package's CHANGELOG.rst.
@@ -170,7 +180,7 @@ run_changelogs() {
 }
 
 run_markdown() {
-  if [[ ! -f "${STD_INDEX}" || ! -f "${EXTRAS_INDEX}" ]]; then
+  if [[ ! -f "${STD_INDEX}" || ! -f "${EXTRAS_INDEX}" || ! -f "${PX4_EVENTS_INDEX}" ]]; then
     echo "Missing index files, run '$0 index' first (or '$0 all')."
     exit 1
   fi
@@ -192,14 +202,22 @@ run_markdown() {
     --output-dir "${EXTRAS_MD_DIR}"
 
   uv run mr-plugin-doc-gen \
+    --format markdown \
+    --template "${TEMPLATE}" \
+    --input-json "${PX4_EVENTS_INDEX}" \
+    --output-dir "${PX4_EVENTS_MD_DIR}"
+
+  uv run mr-plugin-doc-gen \
     --plugin-index "${PLUGINS_INDEX}" \
     --input-json "${STD_INDEX}" \
-    --input-json "${EXTRAS_INDEX}"
+    --input-json "${EXTRAS_INDEX}" \
+    --input-json "${PX4_EVENTS_INDEX}"
 
   uv run mr-plugin-doc-gen \
     --qos-appendix "${QOS_APPENDIX}" \
     --input-json "${STD_INDEX}" \
-    --input-json "${EXTRAS_INDEX}"
+    --input-json "${EXTRAS_INDEX}" \
+    --input-json "${PX4_EVENTS_INDEX}"
 }
 
 pushd "${TOOLS_DIR}" >/dev/null
@@ -225,9 +243,11 @@ echo "Done: ${SUBCMD}"
 echo "Indexes:"
 echo "  ${STD_INDEX}"
 echo "  ${EXTRAS_INDEX}"
+echo "  ${PX4_EVENTS_INDEX}"
 echo "Markdown dirs:"
 echo "  ${STD_MD_DIR}"
 echo "  ${EXTRAS_MD_DIR}"
+echo "  ${PX4_EVENTS_MD_DIR}"
 echo "Plugin index:"
 echo "  ${PLUGINS_INDEX}"
 echo "QoS appendix:"

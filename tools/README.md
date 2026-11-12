@@ -34,8 +34,18 @@ tools/build/plugin_doc_extract \
 
 ## Generate docs
 
-From the workspace root (after `colcon build` with
-`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`):
+The generator covers `mavros`, `mavros_extras`, and `mavros_px4_events`, writing
+separate `std`, `extras`, and `px4_events` groups under `docs/plugins/`. Initialize
+the libevents submodule as described in the PX4 events package README first.
+
+From the workspace root, with the ROS environment sourced:
+
+```shell
+colcon build --packages-up-to mavros_extras mavros_px4_events \
+  --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Then generate the documentation:
 
 ```shell
 ./src/mavros/tools/gendoc.sh
@@ -43,7 +53,7 @@ From the workspace root (after `colcon build` with
 ./src/mavros/tools/gendoc.sh markdown
 ```
 
-`gendoc.sh` builds the extractor, (re)builds the compile database if missing,
+`gendoc.sh` builds the extractor if missing, (re)builds the compile database if incomplete,
 extracts the plugin API, regenerates the per-package changelogs from the RST
 sources, and renders the plugin pages, index, QoS appendix and changelog pages.
 

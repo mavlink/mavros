@@ -29,6 +29,7 @@ Package Overview
 
 - `mavros`: core ROS 2 nodes (Router, UAS, standard plugins)
 - `mavros_extras`: optional plugins
+- [`mavros_px4_events`](../mavros_px4_events/README.md): optional PX4 event decoding
 - `mavros_msgs`: ROS 2 message and service interfaces
 - `libmavconn`: MAVLink transport library
 - `mavros_examples`: beginner example scripts for ROS 2
@@ -41,11 +42,13 @@ Generated plugin reference is available in:
 
 - `docs/plugins/std/*.md` (standard plugins)
 - `docs/plugins/extras/*.md` (extra plugins)
+- `docs/plugins/px4_events/*.md` (PX4 event decoding)
 
 Index data used for generation:
 
 - `docs/plugins/std/index.json`
 - `docs/plugins/extras/index.json`
+- `docs/plugins/px4_events/index.json`
 
 Auto-generated per-package C++/Python API reference (published by ROS 2):
 
