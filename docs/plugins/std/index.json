@@ -2718,7 +2718,7 @@
       {
         "name": "time_reference",
         "type_name": "sensor_msgs::msg::TimeReference",
-        "line": 297,
+        "line": 495,
         "description": "Publish FCU time reference for ntpd (SYSTEM_TIME).",
         "qos": {
           "kind": "named",
@@ -2729,7 +2729,7 @@
       {
         "name": "timesync_status",
         "type_name": "mavros_msgs::msg::TimesyncStatus",
-        "line": 301,
+        "line": 499,
         "description": "Publish timesync status (TIMESYNC).",
         "qos": {
           "kind": "named",
@@ -2745,86 +2745,93 @@
       {
         "name": "time_ref_source",
         "type_name": "string",
-        "line": 170,
+        "line": 325,
         "default_value": "\"fcu\"",
         "description": "Source name reported in the time_reference topic."
       },
       {
         "name": "timesync_mode",
         "type_name": "string",
-        "line": 176,
+        "line": 331,
         "default_value": "\"MAVLINK\"",
         "description": "Timesync mode: MAVLINK, PASSTHROUGH, NONE or ONBOARD."
       },
       {
         "name": "system_time_rate",
         "type_name": "double",
-        "line": 184,
+        "line": 351,
         "default_value": "0.0",
         "description": "Rate (Hz) at which SYSTEM_TIME is sent to the FCU; 0 disables it."
       },
       {
         "name": "timesync_rate",
         "type_name": "double",
-        "line": 204,
+        "line": 371,
         "default_value": "0.0",
         "description": "Rate (Hz) at which TIMESYNC packets are exchanged; 0 disables it."
       },
       {
         "name": "timesync_alpha_initial",
         "type_name": "double",
-        "line": 236,
+        "line": 406,
         "default_value": "0.05",
         "description": "Filter gains  Alpha : Used to smooth the overall clock offset estimate. Smaller values will lead to a smoother estimate, but track time drift more slowly, introducing a bias in the estimate. Larger values will cause low-amplitude oscillations.  Beta : Used to smooth the clock skew estimate. Smaller values will lead to a tighter estimation of the skew (derivative), but will negatively affect how fast the filter reacts to clock skewing (e.g cause by temperature changes to the oscillator). Larger values will cause large-amplitude oscillations."
       },
       {
         "name": "timesync_beta_initial",
         "type_name": "double",
-        "line": 241,
+        "line": 412,
         "default_value": "0.05"
       },
       {
         "name": "timesync_alpha_final",
         "type_name": "double",
-        "line": 246,
+        "line": 418,
         "default_value": "0.003"
       },
       {
         "name": "timesync_beta_final",
         "type_name": "double",
-        "line": 251,
+        "line": 424,
         "default_value": "0.003"
       },
       {
         "name": "convergence_window",
         "type_name": "integer",
-        "line": 263,
+        "line": 437,
         "default_value": "500",
-        "description": "Filter gain scheduling  The filter interpolates between the initial and final gains while the number of exchanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates."
+        "description": "Filter gain scheduling  The filter interpolates between the initial and final gains while the number of exchanged timesync packets is less than convergence_window. A lower value will allow the timesync to converge faster, but with potentially less accurate initial offset and skew estimates. It is at least 1."
+      },
+      {
+        "name": "timesync_min_reply_ratio",
+        "type_name": "double",
+        "line": 453,
+        "default_value": "0.0",
+        "description": "Reply loss  Fewer replies per request than timesync_min_reply_ratio (0 to 1) in the diagnostic's window, allowing one reply still in flight, is a warning (\"Too few replies\"); 0 disables the check. The estimate models clock skew, so it tolerates loss, but converges and tracks drift more slowly with fewer samples."
       },
       {
         "name": "max_rtt_sample",
         "type_name": "integer",
-        "line": 277,
+        "line": 471,
         "default_value": "10",
         "description": "Outlier rejection and filter reset  Samples with round-trip time higher than max_rtt_sample are not used to update the filter. More than max_consecutive_high_rtt number of such events in a row will throw a warning but not reset the filter. Samples whose calculated clock offset is more than max_deviation_sample off from the current estimate are not used to update the filter. More than max_consecutive_high_deviation number of such events in a row will reset the filter. This usually happens only due to a time jump on the remote system."
       },
       {
         "name": "max_deviation_sample",
         "type_name": "integer",
-        "line": 281,
+        "line": 476,
         "default_value": "10"
       },
       {
         "name": "max_consecutive_high_rtt",
         "type_name": "integer",
-        "line": 285,
+        "line": 481,
         "default_value": "10"
       },
       {
         "name": "max_consecutive_high_deviation",
         "type_name": "integer",
-        "line": 289,
+        "line": 486,
         "default_value": "10"
       }
     ],
@@ -2835,7 +2842,7 @@
         "message_name": "SYSTEM_TIME",
         "msg_id_expr": "mavlink::common::msg::SYSTEM_TIME::MSG_ID",
         "dialect": "common",
-        "line": 357,
+        "line": 583,
         "msg_id": 2
       },
       {
@@ -2844,7 +2851,7 @@
         "message_name": "TIMESYNC",
         "msg_id_expr": "mavlink::common::msg::TIMESYNC::MSG_ID",
         "dialect": "common",
-        "line": 381,
+        "line": 607,
         "msg_id": 111
       }
     ],
@@ -2855,7 +2862,7 @@
         "message_name": "SYSTEM_TIME",
         "msg_id_expr": "mavlink::common::msg::SYSTEM_TIME::MSG_ID",
         "dialect": "common",
-        "line": 434,
+        "line": 661,
         "msg_id": 2
       },
       {
@@ -2864,7 +2871,7 @@
         "message_name": "TIMESYNC",
         "msg_id_expr": "mavlink::common::msg::TIMESYNC::MSG_ID",
         "dialect": "common",
-        "line": 467,
+        "line": 696,
         "msg_id": 111
       }
     ]
