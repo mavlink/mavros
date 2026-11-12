@@ -312,7 +312,7 @@ private:
   void handle_event(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::EVENT & event,
-    plugin::filter::SystemAndOk filter [[maybe_unused]])
+    plugin::filter::ComponentAndOk filter [[maybe_unused]])
   {
     std::shared_ptr<Decoder> decoder;
     {
