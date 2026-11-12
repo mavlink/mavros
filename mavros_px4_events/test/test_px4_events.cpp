@@ -492,7 +492,7 @@ TEST(Px4XzTest, decoder_memory_limit_rejects_large_dictionaries_before_decoding)
   }
 }
 
-TEST(Px4XzTest, truncated_corrupt_and_extra_input_are_rejected)
+TEST(Px4XzTest, truncated_corrupt_and_garbage_input_are_rejected)
 {
   const std::string plain(32, 'z');
   const auto bytes = compress(plain);
@@ -509,8 +509,57 @@ TEST(Px4XzTest, truncated_corrupt_and_extra_input_are_rejected)
     corrupt[pos] ^= 1;
     EXPECT_THROW(unpack_xz_metadata(corrupt, plain.size()), std::runtime_error);
   }
-  EXPECT_THROW(unpack_xz_metadata(bytes + std::string(4, '\0'), plain.size()), std::runtime_error);
-  EXPECT_THROW(unpack_xz_metadata(bytes + bytes, plain.size() * 2), std::runtime_error);
+  EXPECT_THROW(unpack_xz_metadata(bytes + "garbage", plain.size()), std::runtime_error);
+  for (const auto padding : {1, 2, 3}) {
+    SCOPED_TRACE(padding);
+    EXPECT_THROW(unpack_xz_metadata(bytes + std::string(padding, '\0'), plain.size()),
+      std::runtime_error);
+  }
+}
+
+TEST(Px4XzTest, valid_stream_padding_is_accepted)
+{
+  const std::string plain(32, 'z');
+  const auto bytes = compress(plain);
+  for (const auto padding : {4, 8}) {
+    SCOPED_TRACE(padding);
+    EXPECT_EQ(unpack_xz_metadata(bytes + std::string(padding, '\0'), plain.size()), plain);
+  }
+}
+
+TEST(Px4XzTest, concatenated_streams_share_one_output_budget)
+{
+  const std::string first(32, 'a');
+  const std::string second(32, 'b');
+  const auto a = compress(first);
+  const auto b = compress(second);
+  const auto expected = first + second;
+  EXPECT_EQ(unpack_xz_metadata(a + b, expected.size()), expected);
+  EXPECT_EQ(unpack_xz_metadata(a + std::string(4, '\0') + b + std::string(8, '\0'),
+      expected.size()), expected);
+  EXPECT_THROW(unpack_xz_metadata(a + b, expected.size() - 1), std::runtime_error);
+  EXPECT_THROW(unpack_xz_metadata(a + b.substr(0, b.size() - 1), expected.size()),
+    std::runtime_error);
+  auto corrupt = b;
+  corrupt[corrupt.size() - 12] ^= 1;
+  EXPECT_THROW(unpack_xz_metadata(a + corrupt, expected.size()), std::runtime_error);
+  EXPECT_THROW(unpack_xz_metadata(a + b + "garbage", expected.size()), std::runtime_error);
+}
+
+TEST(Px4XzTest, zero_output_budget_accepts_only_empty_output)
+{
+  EXPECT_EQ(unpack_xz_metadata(compress(""), 0), "");
+  EXPECT_THROW(unpack_xz_metadata(compress("x"), 0), std::runtime_error);
+}
+
+TEST(Px4XzTest, output_limit_is_enforced_across_multiple_chunks)
+{
+  const std::string plain(8193, 'z');
+  const auto bytes = compress(plain);
+  EXPECT_EQ(unpack_xz_metadata(bytes, plain.size()), plain);
+  EXPECT_THROW(unpack_xz_metadata(bytes, plain.size() - 1), std::runtime_error);
+  const std::string exact_chunk(4096, 'z');
+  EXPECT_EQ(unpack_xz_metadata(compress(exact_chunk), exact_chunk.size()), exact_chunk);
 }
 
 TEST(Px4XzTest, dishonest_output_sizes_with_valid_index_crc_are_rejected)

@@ -13,6 +13,8 @@
 
 #include "metadata.hpp"
 
+#include <lzma.h>
+
 #include <limits>
 #include <optional>
 #include <stdexcept>
@@ -105,14 +107,8 @@ MetadataFile event_metadata_file(const std::string & general_json)
 
 uint32_t metadata_crc32(std::string_view bytes) noexcept
 {
-  uint32_t crc = 0;
-  for (const auto ch : bytes) {
-    crc ^= static_cast<uint8_t>(ch);
-    for (unsigned bit = 0; bit < 8; ++bit) {
-      crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320U : 0U);
-    }
-  }
-  return crc;
+  return ~lzma_crc32(
+    reinterpret_cast<const uint8_t *>(bytes.data()), bytes.size(), 0xFFFFFFFFU);
 }
 
 }  // namespace px4_events

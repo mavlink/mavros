@@ -24,7 +24,7 @@ namespace mavros
 namespace px4_events
 {
 
-// Validate the single-stream index before allocating exact-sized output.
+// Decode XZ streams and padding, growing output only up to the supplied limit.
 // liblzma decoder memory is separately capped at 128 MiB, excluding output.
 // Throws on malformed input, unsupported compression, or an exceeded limit.
 std::string unpack_xz_metadata(std::string_view bytes, size_t output_limit);
