@@ -20,7 +20,9 @@
 #include <Eigen/Eigen>  // NOLINT
 
 #include "rcpputils/asserts.hpp"
+#include "tf2_msgs/msg/tf_message.hpp"
 #include "mavros/mavros_uas.hpp"
+#include "mavros/qos.hpp"
 #include "mavros/utils.hpp"
 
 using namespace mavros;                 // NOLINT
@@ -44,7 +46,6 @@ UAS::UAS(
   diagnostic_updater(this, 1.0),
   data(),
   tf2_buffer(get_clock(), tf2::Duration(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME)),
-  tf2_listener(tf2_buffer, true),
 #ifdef USE_OLD_TF2_ROS
   tf2_broadcaster(this),
   tf2_static_broadcaster(this),
@@ -63,6 +64,7 @@ UAS::UAS(
   odom_frame_id("odom"),
   map_frame_id("map"),
   rt_sched_fifo_priority(0),
+  tf_static_only(false),
   plugin_factory_loader("mavros", "mavros::plugin::PluginFactory"),
   loaded_plugins{},
   plugin_subscriptions{},
@@ -101,6 +103,13 @@ UAS::UAS(
   rt_desc.read_only = true;
   this->declare_parameter("rt_sched_fifo_priority", rt_sched_fifo_priority, rt_desc);
 
+  rcl_interfaces::msg::ParameterDescriptor tf_static_only_desc;
+  tf_static_only_desc.description =
+    "Fill the tf2 buffer only from /tf_static, without a listener node and thread";
+  tf_static_only_desc.read_only = true;
+  tf_static_only = this->declare_parameter("tf.static_only", tf_static_only, tf_static_only_desc);
+  setup_tf_listener();
+
   // NOTE(vooon): we couldn't add_plugin() in constructor because it needs shared_from_this()
   startup_delay_timer = this->create_wall_timer(
     10ms, [this]() {
@@ -119,6 +128,44 @@ UAS::UAS(
         }
       }
     });
+}
+
+void UAS::setup_tf_listener()
+{
+  if (!tf_static_only) {
+    tf2_listener = std::make_unique<tf2_ros::TransformListener>(tf2_buffer, true);
+    return;
+  }
+
+  // /tf_static only. Received by this node instead of a TransformListener, which would add its own
+  // node and thread, and whose static_only option is not available on all distros.
+  //
+  // Lookups with a timeout need another thread that fills the buffer (TF2ListenerMixin does not
+  // wait in this mode). The subscription below has its own callback group, so it is not blocked by
+  // the MAVLink handlers, which run on this node. A timeout lookup inside a MAVLink handler still
+  // waits the whole timeout when this node's executor is single-threaded, see docs/nodes.md.
+  tf2_buffer.setUsingDedicatedThread(true);
+  tf2_static_cbg = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  // transient_local: no intra-process (Humble rejects it)
+  auto sub_opts = NonIntraProcessSubscriptionOptions();
+  sub_opts.callback_group = tf2_static_cbg;
+  // the QoS overrides TransformListener allows for /tf_static
+  sub_opts.qos_overriding_options = rclcpp::QosOverridingOptions{
+    rclcpp::QosPolicyKind::Depth,
+    rclcpp::QosPolicyKind::History,
+    rclcpp::QosPolicyKind::Reliability};
+
+  tf2_static_sub = this->create_subscription<tf2_msgs::msg::TFMessage>(
+    "/tf_static", tf2_ros::StaticListenerQoS(),
+    [this](tf2_msgs::msg::TFMessage::ConstSharedPtr msg) {
+      // setTransform() logs the transforms it rejects; as in tf2_ros::TransformListener, a
+      // subscription does not know the publisher
+      for (const auto & transform : msg->transforms) {
+        tf2_buffer.setTransform(transform, "Authority undetectable", true);
+      }
+    },
+    sub_opts);
 }
 
 void UAS::startup()
