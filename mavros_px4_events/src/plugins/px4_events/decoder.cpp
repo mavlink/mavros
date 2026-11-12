@@ -11,6 +11,8 @@
 #include <fstream>
 #include <iomanip>
 #include <map>
+#include <mutex>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -210,6 +212,8 @@ struct Decoder::Impl
   Parser parser;
   Config config;
   std::map<uint32_t, EventDefinition> definitions;
+  std::mutex diagnostic_mutex;
+  std::set<uint32_t> reported_failures;
 
   explicit Impl(const std::string & metadata)
   {
@@ -311,6 +315,12 @@ void Decoder::report_failure(uint32_t full_id, const char * reason) const noexce
 {
   try {
     if (report_error_) {
+      {
+        std::lock_guard<std::mutex> lock(impl_->diagnostic_mutex);
+        if (!impl_->reported_failures.insert(full_id).second) {
+          return;
+        }
+      }
       report_error_(full_id, reason);
     }
   } catch (...) {

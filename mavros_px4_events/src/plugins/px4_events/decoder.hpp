@@ -31,6 +31,7 @@ public:
   static constexpr size_t MAX_COMPRESSED_BYTES = 1024 * 1024;
   static constexpr size_t MAX_JSON_BYTES = 8 * 1024 * 1024;
 
+  // Report decoding exceptions once per full event ID for each metadata load.
   using ErrorCallback = std::function<void (uint32_t, const char *)>;
 
   explicit Decoder(ErrorCallback report_error = {});

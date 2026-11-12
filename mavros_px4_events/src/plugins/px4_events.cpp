@@ -146,7 +146,7 @@ private:
   Decoder::ErrorCallback decoding_error_callback() const
   {
     return [logger = get_logger()](uint32_t id, const char * reason) {
-             RCLCPP_WARN_ONCE(logger,
+             RCLCPP_WARN(logger,
               "PX4 event decoding failed for ID %u: %s; retaining core raw event logging",
           static_cast<unsigned int>(id), reason);
            };

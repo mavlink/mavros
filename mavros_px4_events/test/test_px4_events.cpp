@@ -386,9 +386,36 @@ TEST_F(Px4EventsTest, decoding_exception_reports_details_and_preserves_fallback)
   EXPECT_EQ(reported_reason, "injected formatting failure");
 
   // Even an exception from diagnostics must still produce raw fallback.
+  ASSERT_TRUE(reporting_decoder.configure("local", TEST_EVENT_METADATA).empty());
+  DecoderTestPeer::throw_on_formatting(reporting_decoder);
   diagnostic_throws = true;
   EXPECT_FALSE(reporting_decoder.decode(0x01000007, 4, arguments));
   EXPECT_EQ(reports, 2);
+}
+
+TEST_F(Px4EventsTest, decoding_exceptions_report_once_per_id_and_reset_with_metadata)
+{
+  std::vector<uint32_t> reports;
+  const auto report = [&reports](uint32_t id, const char *) {reports.push_back(id);};
+  Decoder reporting_decoder(report);
+  ASSERT_TRUE(reporting_decoder.configure("local", TEST_EVENT_METADATA).empty());
+  DecoderTestPeer::throw_on_formatting(reporting_decoder);
+
+  for (const auto id : {0x01000007u, 0x01000007u, 0x01000001u, 0x01000001u}) {
+    EXPECT_FALSE(reporting_decoder.decode(id, 4, arguments));
+  }
+  EXPECT_EQ(reports, (std::vector<uint32_t>{0x01000007u, 0x01000001u}));
+
+  ASSERT_TRUE(reporting_decoder.configure("local", TEST_EVENT_METADATA).empty());
+  DecoderTestPeer::throw_on_formatting(reporting_decoder);
+  EXPECT_FALSE(reporting_decoder.decode(0x01000007, 4, arguments));
+  EXPECT_EQ(reports.size(), 3u);
+
+  Decoder replacement(report);
+  ASSERT_TRUE(replacement.configure("local", TEST_EVENT_METADATA).empty());
+  DecoderTestPeer::throw_on_formatting(replacement);
+  EXPECT_FALSE(replacement.decode(0x01000007, 4, arguments));
+  EXPECT_EQ(reports.size(), 4u);
 }
 
 TEST_F(Px4EventsTest, json_and_xz_load_identically_and_corrupt_xz_is_rejected)
