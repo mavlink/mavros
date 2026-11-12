@@ -22,6 +22,21 @@ colcon build --packages-up-to mavros_px4_events
 source install/setup.bash
 ```
 
+If the submodule is missing, configuration prints a warning and skips building
+and registering the optional plugin and its tests. Other workspace packages can
+still build. CMake does not download libevents. After initializing a previously
+missing submodule, rerun configuration to enable decoding:
+
+```sh
+cd /ws
+colcon build --packages-up-to mavros_px4_events --cmake-force-configure
+```
+
+Source archives without submodule content also skip the plugin. To build it, use
+a recursive Git checkout or a source archive that includes libevents. When testing
+the skipped path, use fresh build/install directories to avoid loading a plugin
+left over from an earlier build.
+
 MAVROS discovers the installed plugin through pluginlib. If you use a plugin
 allowlist, add `px4_events` to it. Automatic mode also needs `command` and `ftp`;
 keep `sys_status` enabled for normal connection tracking and raw event output.

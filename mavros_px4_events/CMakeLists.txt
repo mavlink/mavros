@@ -12,6 +12,16 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(ament_cmake REQUIRED)
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/libevents/libs/cpp/CMakeLists.txt")
+  message(WARNING
+    "Skipping mavros_px4_events: libevents submodule is missing. "
+    "Run git submodule update --init --recursive "
+    "mavros_px4_events/vendor/libevents from the repository root, then rebuild.")
+  ament_package()
+  return()
+endif()
+
 find_package(mavros REQUIRED)
 find_package(mavros_msgs REQUIRED)
 find_package(mavlink REQUIRED)
@@ -34,11 +44,6 @@ find_package(GeographicLib REQUIRED)
 if(rclcpp_VERSION VERSION_LESS 17.0.0)
   # Humble and older use the legacy service QoS overload and tf2_ros headers.
   add_compile_definitions(USE_OLD_RMW_QOS USE_OLD_TF2_ROS)
-endif()
-
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/libevents/libs/cpp/CMakeLists.txt")
-  message(FATAL_ERROR
-    "libevents submodule is missing. Run git submodule update --init --recursive.")
 endif()
 
 # Keep upstream libraries static and suitable for the plugin shared library.

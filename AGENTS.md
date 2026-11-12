@@ -19,13 +19,13 @@ Guidance for coding agents in this repository.
 
 ## Repository Scope
 
-- ROS packages (each has `package.xml`): `mavros`, `mavros_extras`, `mavros_msgs`, `libmavconn`, `mavros_examples`, `test_mavros`.
+- ROS packages (each has `package.xml`): `mavros`, `mavros_extras`, `mavros_msgs`, `libmavconn`, `mavros_examples`, `test_mavros`, `mavros_px4_events`.
 - `tools/` is NOT a colcon package — it is a standalone `uv`-managed tool dir (`uv tool install ./tools` provides `mr-cog`, `mr-plugin-doc-gen`).
 - Respect package boundaries:
-  - runtime/plugins: `mavros`, `mavros_extras`
+  - runtime/plugins: `mavros`, `mavros_extras`, optional `mavros_px4_events`
   - interfaces: `mavros_msgs`
   - transport/link: `libmavconn`
-  - CI covers packages: `libmavconn`, `mavros`, `mavros_extras`
+  - CI covers packages: `libmavconn`, `mavros`, `mavros_extras`, `mavros_px4_events`
 
 ## Build And Test
 
@@ -33,6 +33,15 @@ Guidance for coding agents in this repository.
 - Always `cd /ws` before `colcon` so it finds `install/` and `build/` correctly.
 - Build (from `/ws`):
   - `colcon build --packages-up-to mavros mavros_extras mavros_msgs`
+- To build optional PX4 event decoding, initialize libevents from the repository root:
+  - `git submodule update --init --recursive mavros_px4_events/vendor/libevents`
+  - Then, from `/ws`: `colcon build --packages-up-to mavros_px4_events`
+- If libevents is missing, `mavros_px4_events` configures with a warning but does
+  not build or register its plugin or tests; other workspace packages can build.
+  No dependency is downloaded during CMake configuration. After initializing a
+  previously missing submodule, rebuild with `--cmake-force-configure` to enable
+  decoding. Use fresh build/install directories when checking the missing-submodule
+  path so old plugin artifacts do not mask the result.
 - Do NOT use `--base-paths /ws/src/mavros` — it breaks dependency resolution
   (mavlink/libmavconn packages live in sibling dirs under `/ws/src/`).
 - Local test runs are not required on every iteration, but are recommended for risky changes:
