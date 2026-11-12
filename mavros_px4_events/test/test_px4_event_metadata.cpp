@@ -82,7 +82,8 @@ TEST(Px4EventMetadata, RejectsInvalidFtpPaths)
   for (const std::string uri : {"mftp://", "mftp:///", "mftp:////etc/events.json",
       "mftp://etc/../events.json", "mftp://etc/./events.json", "mftp://etc//events.json",
       "mftp:///etc/../events.json", "mftp:///etc/./events.json", "mftp:///etc//events.json",
-      "mftp:///etc/", "mftp://etc/", "mftp://etc/events.json?query", "mftp://etc/events.json#fragment",
+      "mftp:///etc/", "mftp://etc/", "mftp://etc/events.json?query",
+      "mftp://etc/events.json#fragment",
       "mftp://etc/events%20file.json", "mftp://etc/events file.json"})
   {
     EXPECT_THROW(metadata_file(uri, 1), std::runtime_error) << uri;

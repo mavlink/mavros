@@ -71,6 +71,21 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(Threads REQUIRED)
 
+  find_package(ament_lint_auto REQUIRED)
+
+  # Match the repository's exception for the custom triple-license.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
+
+  # This C++ package's only Python sources belong to vendored libevents.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_pep257)
+
+  # Old releases use a different uncrustify configuration, as in core/extras.
+  if(rclcpp_VERSION VERSION_LESS 22.0.0)
+    list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
+  endif()
+
+  ament_lint_auto_find_test_dependencies()
+
   # This test includes decoder.cpp to exercise its private formatting state.
   ament_add_gtest(mavros-px4-events-test
     test/test_px4_events.cpp

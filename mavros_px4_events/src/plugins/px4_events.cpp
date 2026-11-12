@@ -146,10 +146,10 @@ private:
   Decoder::ErrorCallback decoding_error_callback() const
   {
     return [logger = get_logger()](uint32_t id, const char * reason) {
-        RCLCPP_WARN_ONCE(logger,
+             RCLCPP_WARN_ONCE(logger,
               "PX4 event decoding failed for ID %u: %s; retaining core raw event logging",
           static_cast<unsigned int>(id), reason);
-      };
+           };
   }
 
   void event_acquisition_complete(uint64_t generation, Acquisition::Result result)
@@ -262,7 +262,8 @@ private:
       const auto generation = event_generation;
       const std::weak_ptr<PX4EventsPlugin> weak =
         std::static_pointer_cast<PX4EventsPlugin>(shared_from_this());
-      event_start_timer = node->create_wall_timer(std::chrono::milliseconds(250), [weak, generation]() {
+      event_start_timer = node->create_wall_timer(std::chrono::milliseconds(250),
+          [weak, generation]() {
             if (const auto self = weak.lock()) {
               self->event_download_delay_cb(generation, EventClock::now());
             }
@@ -301,7 +302,8 @@ private:
     if (event_discovery && event_connected && uas->is_connected() && uas->is_px4()) {
       event_discovery->advertisement(
         msg->sysid, msg->compid,
-        std::string_view(metadata.general_metadata_uri.data(), metadata.general_metadata_uri.size()),
+        std::string_view(metadata.general_metadata_uri.data(),
+            metadata.general_metadata_uri.size()),
         metadata.general_metadata_file_crc);
       event_download_delay_cb(event_generation, EventClock::now());
     }

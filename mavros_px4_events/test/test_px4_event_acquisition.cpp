@@ -158,11 +158,12 @@ protected:
   {
     node = std::make_shared<rclcpp::Node>("acquisition_test", "/acquisition");
     open_service = node->create_service<Open>(
-      "ftp/open", [this](std::shared_ptr<rmw_request_id_t> header, Open::Request::SharedPtr request) {
+      "ftp/open",
+      [this](std::shared_ptr<rmw_request_id_t> header, Open::Request::SharedPtr request) {
         opens.push_back(request->file_path);
         EXPECT_EQ(request->mode, Open::Request::MODE_READ);
         int error = open_error != 0 ? open_error :
-          (require_rooted_paths && request->file_path.front() != '/' ? ENOENT : 0);
+        (require_rooted_paths && request->file_path.front() != '/' ? ENOENT : 0);
         if (error == 0 && unavailable_once.erase(request->file_path) != 0) {
           error = EMFILE;
         }
@@ -728,7 +729,7 @@ TEST_F(AcquisitionTest, relative_missing_paths_retry_rooted_for_both_files)
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   ASSERT_NE(result->decoder, nullptr);
   EXPECT_EQ(opens, (std::vector<std::string>{
-    general_path, "/" + general_path, event_path, "/" + event_path}));
+          general_path, "/" + general_path, event_path, "/" + event_path}));
   EXPECT_EQ(closes, (std::vector<std::string>{"/" + general_path, "/" + event_path}));
   ASSERT_FALSE(read_paths.empty());
   for (const auto & path : read_paths) {

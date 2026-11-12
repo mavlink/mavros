@@ -16,7 +16,7 @@
 #include <thread>
 #include <vector>
 
-#include "../src/plugins/px4_events.cpp"
+#include "../src/plugins/px4_events.cpp"  // NOLINT(build/include)
 #include "px4_events_test_helpers.hpp"
 
 namespace mavros
@@ -102,7 +102,6 @@ public:
   {
     return plugin.event_acquisition;
   }
-
 };
 
 class DiscoveryTestPeer
@@ -331,7 +330,8 @@ TEST_F(InvalidPluginDiscoveryTest, invalid_configuration_does_not_start_discover
   EXPECT_FALSE(Peer::decodes(*instance));
 }
 
-std::string integration_cache_directory;
+// Borrowed from cache_location in main(), which outlives all tests.
+const char * integration_cache_directory = nullptr;
 using Open = mavros_msgs::srv::FileOpen;
 using Read = mavros_msgs::srv::FileRead;
 using Close = mavros_msgs::srv::FileClose;
@@ -667,9 +667,9 @@ TEST_F(InvalidCacheLimitPluginTest, nonpositive_cache_limit_disables_only_persis
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  mavros::px4_events::TemporaryMetadata cache_location("", ".cache-dir");
+  const mavros::px4_events::TemporaryMetadata cache_location("", ".cache-dir");
   std::filesystem::remove(cache_location.path);
-  mavros::px4_events::integration_cache_directory = cache_location.path;
+  mavros::px4_events::integration_cache_directory = cache_location.path.c_str();
   const std::string parameters =
     "/test_px4_events_auto/px4_events:\n"
     "  ros__parameters:\n"
