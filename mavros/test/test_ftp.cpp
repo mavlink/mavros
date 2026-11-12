@@ -21,6 +21,7 @@
 #include <future>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -514,6 +515,47 @@ struct FakeFile
   }
 };
 
+// Model PX4's small-response cache: request seq + 1 matching the cached reply
+// is treated as a retransmission, without checking the request opcode.
+struct CachedReplyFile : FakeFile
+{
+  using FakeFile::FakeFile;
+  std::optional<FTPRequest> last_reply;
+  bool session_open{false};
+  size_t replays{0};
+
+  FTPFlowTest::Replies serve(const FTPRequest & req)
+  {
+    const auto hdr = req.header();
+    if (last_reply && static_cast<uint16_t>(hdr.seqNumber + 1) ==
+      last_reply->header().seqNumber)
+    {
+      ++replays;
+      return {*last_reply};
+    }
+
+    FTPFlowTest::Replies replies;
+    if (hdr.opcode == FTPRequest::kCmdOpenFileRO && session_open) {
+      replies = {FTPFlowTest::nak(req, FTPRequest::kErrNoSessionsAvailable)};
+    } else if (hdr.opcode == FTPRequest::kCmdTerminateSession && !session_open) {
+      replies = {FTPFlowTest::nak(req, FTPRequest::kErrInvalidSession)};
+    } else {
+      replies = FakeFile::serve(req);
+      if (hdr.opcode == FTPRequest::kCmdOpenFileRO) {
+        session_open = true;
+      } else if (hdr.opcode == FTPRequest::kCmdTerminateSession) {
+        session_open = false;
+      }
+    }
+
+    last_reply.reset();
+    if (!replies.empty() && replies.back().header().size <= sizeof(uint32_t)) {
+      last_reply = replies.back();
+    }
+    return replies;
+  }
+};
+
 class FTPBurstTest : public FTPFlowTest
 {
 public:
@@ -538,6 +580,17 @@ public:
     }
     EXPECT_EQ(rres->success, expect_ok);
     return rres->data;
+  }
+
+  mavros_msgs::srv::FileClose::Response::SharedPtr close()
+  {
+    auto req = std::make_shared<mavros_msgs::srv::FileClose::Request>();
+    req->file_path = "/a.bin";
+    auto res = call<mavros_msgs::srv::FileClose>("close", req);
+    if (res && res->success) {
+      opened = false;
+    }
+    return res;
   }
 
   size_t sent_count(uint8_t opcode)
@@ -615,7 +668,6 @@ TEST_F(FTPBurstTest, falls_back_without_burst_support)
   EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 1U);
 }
 
-<<<<<<< HEAD
 TEST_F(FTPBurstTest, close_after_final_burst_is_not_replayed_as_eof)
 {
   CachedReplyFile file(372);
@@ -775,8 +827,6 @@ TEST_F(FTPBurstTest, close_after_burst_timeout_skips_the_reserved_window)
   EXPECT_TRUE(res->success);
 }
 
-=======
->>>>>>> 0f9953d3 (Removed FTP code)
 }  // namespace uas
 }  // namespace mavros
 
