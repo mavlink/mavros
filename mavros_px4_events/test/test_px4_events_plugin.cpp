@@ -344,6 +344,9 @@ protected:
   std::vector<std::string> opens;
   int open_error{0};
   bool hold_reads{false};
+  bool hold_closes{false};
+  unsigned close_requests{0};
+  std::shared_ptr<rmw_request_id_t> held_close;
   std::shared_ptr<rmw_request_id_t> held_read;
   rclcpp::Service<Open>::SharedPtr open_service;
   rclcpp::Service<Read>::SharedPtr read_service;
@@ -385,8 +388,15 @@ protected:
       });
     close_service = server->create_service<Close>(
       "/" + name() + "/ftp/close",
-      [](Close::Request::SharedPtr, Close::Response::SharedPtr response) {
-        response->success = true;
+      [this](std::shared_ptr<rmw_request_id_t> header, Close::Request::SharedPtr) {
+        ++close_requests;
+        if (hold_closes) {
+          held_close = header;
+          return;
+        }
+        Close::Response response;
+        response.success = true;
+        close_service->send_response(*header, response);
       });
   }
 
@@ -560,6 +570,32 @@ TEST_F(PluginAcquisitionTest, disconnect_discards_late_reply_and_reconnect_can_a
   ASSERT_TRUE(spin_until([this]() {return Peer::decodes(*instance);}));
   vehicle->update_connection_status(false);
   EXPECT_FALSE(Peer::decodes(*instance));
+}
+
+TEST_F(PluginAcquisitionTest, reconnect_waits_for_previous_session_cleanup_before_acquisition)
+{
+  hold_reads = true;
+  hold_closes = true;
+  connect_and_advertise();
+  Peer::release_downloads(*instance);
+  ASSERT_TRUE(spin_until([this]() {return held_read != nullptr;}));
+  vehicle->update_connection_status(false);
+  ASSERT_TRUE(spin_until([this]() {return held_close != nullptr;}));
+  const auto old_close = held_close;
+  hold_reads = false;
+  connect_and_advertise();
+  Peer::release_downloads(*instance);
+  EXPECT_FALSE(Peer::timer_cancelled(*instance));
+  EXPECT_FALSE(Peer::decodes(*instance));
+  EXPECT_EQ(opens.size(), 1U);
+  hold_closes = false;
+  Close::Response response;
+  response.success = true;
+  close_service->send_response(*old_close, response);
+  ASSERT_TRUE(spin_until([this]() {return Peer::decodes(*instance);}));
+  EXPECT_EQ(opens.size(), 3U);
+  EXPECT_EQ(close_requests, 3U);
+  EXPECT_TRUE(Peer::timer_cancelled(*instance));
 }
 
 TEST_F(PluginAcquisitionTest, old_connection_completion_cannot_activate_new_connection)

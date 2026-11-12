@@ -60,7 +60,8 @@ public:
   bool start(const MetadataFile & general, Callback callback, bool downloads_allowed = true);
   // Release the owner's connection-based startup gate; performs no I/O inline.
   void allow_downloads();
-  // Ignores late service replies and sends no cleanup/recovery requests.
+  // Stops acquisition and attempts bounded cleanup of our opened session.
+  // An in-flight open may complete only to close the resulting session.
   void cancel();
 
 private:
@@ -74,6 +75,7 @@ private:
   struct Completion { Callback callback; Result result; };
   static constexpr auto WAIT_TIMEOUT = std::chrono::seconds(10);
   static constexpr auto BUSY_BACKOFF = std::chrono::seconds(2);
+  static constexpr auto SESSION_BACKOFF = std::chrono::seconds(10);
   static constexpr size_t CHUNK_SIZE = 239;
 
   Acquisition(
@@ -119,7 +121,10 @@ private:
   std::optional<int64_t> pending_;
   Clock::time_point deadline_{};
   bool busy_retried_{false};
+  bool session_retried_{false};
   bool opened_{false};
+  bool stopping_{false};
+  bool stop_uncertain_{false};
   bool retryable_{false};
   bool from_cache_{false};
   bool downloads_allowed_{true};

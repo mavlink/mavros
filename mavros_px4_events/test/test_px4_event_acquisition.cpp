@@ -25,6 +25,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -59,6 +60,24 @@ public:
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
     return acquisition.busy_retried_ && !acquisition.pending_ &&
            acquisition.phase_ != Acquisition::Phase::Retry;
+  }
+
+  static bool waiting_session(Acquisition & acquisition)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.session_retried_ && !acquisition.pending_ &&
+           acquisition.phase_ == Acquisition::Phase::Open;
+  }
+
+  static Acquisition::Clock::time_point before_retry(Acquisition & acquisition)
+  {
+    Acquisition::Clock::time_point next;
+    {
+      std::lock_guard<std::mutex> lock(acquisition.mutex_);
+      next = acquisition.next_request_;
+    }
+    acquisition.tick(next - std::chrono::nanoseconds(1));
+    return next;
   }
 
   static void retry(Acquisition & acquisition)
@@ -98,11 +117,15 @@ protected:
   MetadataFile general_file{};
   std::string general_path = "general.json";
   std::string event_path = "events.json";
+  std::string hold_open;
   std::string hold_read;
   std::string hold_close;
   std::string fail_close;
   int open_error{0};
+  std::set<std::string> unavailable_once;
   bool require_rooted_paths{false};
+  bool track_sessions{false};
+  std::set<std::string> open_sessions;
   std::vector<std::string> read_paths;
   std::optional<uint32_t> general_size;
   size_t general_padding{0};
@@ -111,6 +134,8 @@ protected:
   std::vector<std::string> closes;
   unsigned completions{0};
   std::shared_ptr<rmw_request_id_t> held_header;
+  std::shared_ptr<rmw_request_id_t> held_open;
+  Open::Response held_open_response;
   std::optional<Acquisition::Result> result;
   rclcpp::Node::SharedPtr node;
   std::shared_ptr<Acquisition> acquisition;
@@ -133,15 +158,31 @@ protected:
   {
     node = std::make_shared<rclcpp::Node>("acquisition_test", "/acquisition");
     open_service = node->create_service<Open>(
-      "ftp/open", [this](Open::Request::SharedPtr request, Open::Response::SharedPtr response) {
+      "ftp/open", [this](std::shared_ptr<rmw_request_id_t> header, Open::Request::SharedPtr request) {
         opens.push_back(request->file_path);
         EXPECT_EQ(request->mode, Open::Request::MODE_READ);
-        const int error = open_error != 0 ? open_error :
+        int error = open_error != 0 ? open_error :
           (require_rooted_paths && request->file_path.front() != '/' ? ENOENT : 0);
-        response->success = error == 0;
-        response->r_errno = error;
-        response->size = is_general(request->file_path) ?
+        if (error == 0 && unavailable_once.erase(request->file_path) != 0) {
+          error = EMFILE;
+        }
+        if (error == 0 && track_sessions && open_sessions.count(request->file_path) != 0) {
+          error = EALREADY;
+        }
+        Open::Response response;
+        response.success = error == 0;
+        response.r_errno = error;
+        response.size = is_general(request->file_path) ?
         general_size.value_or(general.size()) : events.size();
+        if (response.success && track_sessions) {
+          open_sessions.insert(request->file_path);
+        }
+        if (request->file_path == hold_open) {
+          held_open = header;
+          held_open_response = response;
+          return;
+        }
+        open_service->send_response(*header, response);
       });
     read_service = node->create_service<Read>(
       "ftp/read",
@@ -181,13 +222,15 @@ protected:
       "ftp/close",
       [this](std::shared_ptr<rmw_request_id_t> header, Close::Request::SharedPtr request) {
         closes.push_back(request->file_path);
+        // MAVROS removes the local session before waiting for the FCU's ACK.
+        const bool owned = !track_sessions || open_sessions.erase(request->file_path) != 0;
         if (request->file_path == hold_close) {
           held_header = header;
           return;
         }
         Close::Response response;
-        response.success = request->file_path != fail_close;
-        response.r_errno = response.success ? 0 : EIO;
+        response.success = owned && request->file_path != fail_close;
+        response.r_errno = response.success ? 0 : (owned ? EIO : EBADF);
         close_service->send_response(*header, response);
       });
     acquisition = make_acquisition();
@@ -447,13 +490,13 @@ TEST_F(CachedAcquisitionTest, successful_general_file_is_saved_even_when_event_r
   start();
   ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
   AcquisitionTestPeer::expire_download(*acquisition);
-  ASSERT_TRUE(result);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_TRUE(result->transport_uncertain);
   EXPECT_EQ(result->decoder, nullptr);
   EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
   EXPECT_FALSE(cache->load(event_file(), MetadataRole::Events));
   EXPECT_EQ(opens.size(), 2U);
-  EXPECT_EQ(closes, (std::vector<std::string>{general_path}));
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path, event_path}));
 }
 
 TEST_F(CachedAcquisitionTest, whole_attempt_retry_rechecks_entries_saved_by_another_instance)
@@ -481,7 +524,7 @@ TEST_F(CachedAcquisitionTest, cancellation_after_general_hit_does_not_cache_late
   start_prepared();
   ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
   acquisition->cancel();
-  ASSERT_TRUE(result);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(result->decoder, nullptr);
   const auto before = completions;
   Read::Response late;
@@ -492,7 +535,7 @@ TEST_F(CachedAcquisitionTest, cancellation_after_general_hit_does_not_cache_late
   EXPECT_EQ(completions, before);
   EXPECT_FALSE(cache->load(event_file(), MetadataRole::Events));
   EXPECT_EQ(opens, (std::vector<std::string>{event_path}));
-  EXPECT_TRUE(closes.empty());
+  EXPECT_EQ(closes, (std::vector<std::string>{event_path}));
 }
 
 TEST_F(CachedAcquisitionTest, persistence_failure_does_not_turn_valid_acquisition_into_failure)
@@ -747,12 +790,15 @@ TEST_F(AcquisitionTest, rooted_fallback_does_not_exceed_ftp_path_limit)
 
 TEST_F(AcquisitionTest, cancel_discards_late_response_and_allows_a_new_start)
 {
+  track_sessions = true;
   hold_read = "general.json";
   start();
   ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
   acquisition->cancel();
-  ASSERT_TRUE(result);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(completions, 1U);
+  EXPECT_TRUE(open_sessions.empty());
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path}));
   Read::Response late;
   late.success = true;
   late.data.assign(general.begin(), general.end());
@@ -762,6 +808,229 @@ TEST_F(AcquisitionTest, cancel_discards_late_response_and_allows_a_new_start)
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(completions, 2U);
   EXPECT_NE(result->decoder, nullptr);
+  EXPECT_TRUE(open_sessions.empty());
+}
+
+TEST_F(AcquisitionTest, no_free_session_waits_ten_seconds_then_retries_same_open)
+{
+  open_error = EMFILE;
+  const auto started = std::chrono::steady_clock::now();
+  start();
+  ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_session(*acquisition);}));
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path}));
+  EXPECT_TRUE(closes.empty());
+  EXPECT_FALSE(result);
+  // Tick immediately before the scheduled retry, then at the retry itself.
+  const auto scheduled = AcquisitionTestPeer::before_retry(*acquisition);
+  EXPECT_GE(scheduled, started + 10s);
+  EXPECT_LE(scheduled, std::chrono::steady_clock::now() + 10s);
+  executor.spin_some();
+  EXPECT_EQ(opens.size(), 1U);
+  EXPECT_FALSE(result);
+  open_error = 0;
+  AcquisitionTestPeer::retry(*acquisition);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path, general_path, event_path}));
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path, event_path}));
+}
+
+TEST_F(AcquisitionTest, repeated_no_free_session_fails_after_one_retry_without_close)
+{
+  open_error = EMFILE;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_session(*acquisition);}));
+  AcquisitionTestPeer::retry(*acquisition);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path, general_path}));
+  EXPECT_TRUE(closes.empty());
+  EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
+  EXPECT_EQ(completions, 1U);
+}
+
+TEST_F(AcquisitionTest, cancellation_during_session_backoff_prevents_retry)
+{
+  open_error = EMFILE;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_session(*acquisition);}));
+  acquisition->cancel();
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  AcquisitionTestPeer::retry(*acquisition);
+  executor.spin_some();
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path}));
+  EXPECT_TRUE(closes.empty());
+  EXPECT_EQ(completions, 1U);
+  EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
+}
+
+TEST_F(AcquisitionTest, each_file_has_its_own_session_retry_allowance)
+{
+  unavailable_once = {"general.json", "events.json"};
+  start();
+  ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_session(*acquisition);}));
+  AcquisitionTestPeer::retry(*acquisition);
+  ASSERT_TRUE(spin_until([this]() {
+      return opens.size() == 3 && AcquisitionTestPeer::waiting_session(*acquisition);
+    }));
+  EXPECT_FALSE(result);
+  AcquisitionTestPeer::retry(*acquisition);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path, general_path, event_path, event_path}));
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path, event_path}));
+}
+
+TEST_F(AcquisitionTest, already_open_after_session_backoff_is_not_closed_or_retried)
+{
+  track_sessions = true;
+  open_sessions.insert("general.json");
+  open_error = EMFILE;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_session(*acquisition);}));
+  open_error = 0;
+  AcquisitionTestPeer::retry(*acquisition);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path, general_path}));
+  EXPECT_TRUE(closes.empty());
+  EXPECT_EQ(open_sessions.count(general_path), 1U);
+}
+
+TEST_F(AcquisitionTest, cancellation_waits_for_late_open_success_and_closes_without_reading)
+{
+  track_sessions = true;
+  hold_open = "general.json";
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_open != nullptr;}));
+  acquisition->cancel();
+  EXPECT_FALSE(result);
+  EXPECT_FALSE(acquisition->start(general_file, [](Acquisition::Result) {}));
+  open_service->send_response(*held_open, held_open_response);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  EXPECT_TRUE(read_paths.empty());
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path}));
+  EXPECT_TRUE(open_sessions.empty());
+  EXPECT_EQ(completions, 1U);
+  hold_open.clear();
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+}
+
+TEST_F(AcquisitionTest, cancellation_does_not_close_a_failed_open)
+{
+  hold_open = "general.json";
+  open_error = EALREADY;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_open != nullptr;}));
+  acquisition->cancel();
+  open_service->send_response(*held_open, held_open_response);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(closes.empty());
+  EXPECT_TRUE(read_paths.empty());
+  EXPECT_EQ(opens.size(), 1U);
+}
+
+TEST_F(AcquisitionTest, already_open_by_another_consumer_is_not_closed_or_retried)
+{
+  track_sessions = true;
+  open_sessions.insert("general.json");
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_EQ(opens, (std::vector<std::string>{general_path}));
+  EXPECT_TRUE(closes.empty());
+  EXPECT_EQ(open_sessions.count(general_path), 1U);
+}
+
+TEST_F(AcquisitionTest, cancelled_open_without_response_finishes_at_existing_deadline)
+{
+  hold_open = "general.json";
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_open != nullptr;}));
+  acquisition->cancel();
+  EXPECT_FALSE(result);
+  AcquisitionTestPeer::expire_download(*acquisition);
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->transport_uncertain);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
+  EXPECT_TRUE(closes.empty());
+}
+
+TEST_F(AcquisitionTest, cancellation_waits_for_close_before_allowing_another_start)
+{
+  track_sessions = true;
+  hold_read = "general.json";
+  hold_close = "general.json";
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  acquisition->cancel();
+  ASSERT_TRUE(spin_until([this]() {return !closes.empty();}));
+  EXPECT_FALSE(result);
+  EXPECT_FALSE(acquisition->start(general_file, [](Acquisition::Result) {}));
+  acquisition->cancel();
+  EXPECT_EQ(closes.size(), 1U);
+  Close::Response response;
+  response.success = true;
+  close_service->send_response(*held_header, response);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(open_sessions.empty());
+  EXPECT_EQ(completions, 1U);
+  hold_read.clear();
+  hold_close.clear();
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+}
+
+TEST_F(AcquisitionTest, cancelled_close_timeout_cannot_finish_a_new_transfer)
+{
+  track_sessions = true;
+  hold_close = "general.json";
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  acquisition->cancel();
+  EXPECT_FALSE(result);
+  AcquisitionTestPeer::expire_download(*acquisition);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(result->transport_uncertain);
+  EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
+  EXPECT_EQ(closes.size(), 1U);
+  EXPECT_TRUE(open_sessions.empty());
+  const auto old_close = held_header;
+  hold_close.clear();
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  ASSERT_NE(result->decoder, nullptr);
+  const auto before = completions;
+  Close::Response late;
+  late.success = true;
+  close_service->send_response(*old_close, late);
+  executor.spin_some();
+  EXPECT_EQ(completions, before);
+  EXPECT_NE(result->decoder, nullptr);
+}
+
+TEST_F(AcquisitionTest, cancellation_closes_the_rooted_fallback_path)
+{
+  track_sessions = true;
+  require_rooted_paths = true;
+  hold_read = "/general.json";
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  acquisition->cancel();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(closes, (std::vector<std::string>{"/general.json"}));
+  EXPECT_TRUE(open_sessions.empty());
 }
 
 TEST_F(AcquisitionTest, chunks_in_order_and_completion_can_reenter_and_throw)
@@ -856,8 +1125,9 @@ TEST(AcquisitionAvailability, unavailable_services_finish_without_opening)
   EXPECT_FALSE(result->transport_uncertain);
 }
 
-TEST_F(AcquisitionTest, explicit_read_timeout_stops_without_retry_or_close)
+TEST_F(AcquisitionTest, explicit_read_timeout_closes_without_retry)
 {
+  track_sessions = true;
   read_behavior = ReadBehavior::Timeout;
   start();
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
@@ -865,7 +1135,13 @@ TEST_F(AcquisitionTest, explicit_read_timeout_stops_without_retry_or_close)
   EXPECT_EQ(result->decoder, nullptr);
   EXPECT_EQ(offsets.size(), 1U);
   EXPECT_EQ(opens.size(), 1U);
-  EXPECT_TRUE(closes.empty());
+  EXPECT_EQ(closes, (std::vector<std::string>{general_path}));
+  EXPECT_TRUE(open_sessions.empty());
+  read_behavior = ReadBehavior::Normal;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_TRUE(open_sessions.empty());
 }
 
 }  // namespace

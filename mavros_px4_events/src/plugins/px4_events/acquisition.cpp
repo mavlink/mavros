@@ -133,7 +133,10 @@ void Acquisition::allow_downloads()
 void Acquisition::begin_file_locked(const MetadataFile & file)
 {
   opened_ = false;
+  stopping_ = false;
+  stop_uncertain_ = false;
   busy_retried_ = false;
+  session_retried_ = false;
   retryable_ = false;
   from_cache_ = false;
   bytes_.clear();
@@ -165,10 +168,15 @@ void Acquisition::cancel()
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (phase_ != Phase::Idle) {
-      if (opened_) {
-        RCLCPP_WARN(node_->get_logger(), "PX4 metadata session cleanup skipped after cancellation");
+      stopping_ = true;
+      stop_uncertain_ = stop_uncertain_ || opened_ || pending_.has_value();
+      retryable_ = false;
+      error_ = "metadata acquisition cancelled";
+      // Retain an open response to clean up a late success. An existing close
+      // keeps its original deadline; repeated cancellation must not extend it.
+      if (!(phase_ == Phase::Open && pending_) && phase_ != Phase::Close) {
+        stop_locked(error_, stop_uncertain_);
       }
-      finish_locked({nullptr, "metadata acquisition cancelled", false});
     }
   }
   deliver();
@@ -297,6 +305,18 @@ bool Acquisition::failed_locked(bool success, int error)
 
 void Acquisition::open_reply_locked(const Open::Response & response)
 {
+  if (stopping_) {
+    opened_ = response.success;
+    stop_locked(error_, stop_uncertain_);
+    return;
+  }
+  if (!response.success && response.r_errno == EMFILE && !session_retried_) {
+    session_retried_ = true;
+    next_request_ = Clock::now() + SESSION_BACKOFF;
+    RCLCPP_WARN(node_->get_logger(),
+      "PX4 metadata FTP has no free session; retrying open once in 10 seconds");
+    return;
+  }
   // Older PX4 joins its FTP root and a relative path without a separator.
   // Retry once with a rooted path, retaining the advertised URI for the cache.
   // A rooted path also records that this fallback has already been attempted.
@@ -350,7 +370,7 @@ void Acquisition::close_reply_locked(const Close::Response & response)
 {
   if (!failed_locked(response.success, response.r_errno)) {
     opened_ = false;
-    file_finished_locked();
+    file_finished_locked({}, stop_uncertain_);
   }
 }
 
@@ -360,18 +380,19 @@ void Acquisition::stop_locked(const std::string & reason, bool uncertain)
     return;
   }
   if (phase_ == Phase::Close) {
-    file_finished_locked(reason, uncertain);
+    file_finished_locked(reason, uncertain || stop_uncertain_);
     return;
   }
+  stopping_ = true;
+  stop_uncertain_ = stop_uncertain_ || uncertain;
   error_ = reason;
   clear_pending_locked();
-  if (opened_ && !uncertain) {
+  if (opened_) {
     busy_retried_ = false;
     phase_ = Phase::Close;
     dispatch_locked();
   } else {
-    file_finished_locked(opened_ ? "session cleanup skipped after uncertain failure" : "",
-          uncertain);
+    file_finished_locked({}, stop_uncertain_);
   }
 }
 
@@ -461,6 +482,9 @@ void Acquisition::finish_locked(Result result)
 {
   clear_pending_locked();
   phase_ = Phase::Idle;
+  opened_ = false;
+  stopping_ = false;
+  stop_uncertain_ = false;
   timer_->cancel();
   bytes_.clear();
   error_.clear();

@@ -203,8 +203,11 @@ private:
         }
         }, event_download_ready))
     {
-      RCLCPP_WARN(get_logger(),
-            "PX4 event metadata acquisition already active; retaining raw logging");
+      event_acquisition_started = false;
+      // Wait for the previous connection's cleanup before starting this one.
+      if (event_start_timer) {
+        event_start_timer->reset();
+      }
     }
   }
 
