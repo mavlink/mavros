@@ -803,6 +803,10 @@ private:
   {
     using mavlink::common::MAV_SEVERITY;
 
+    // 'Protocol' log level: events that should not be displayed to users,
+    // see https://mavlink.io/en/services/events.html#event-definitions-and-metadata
+    constexpr uint8_t LOG_LEVEL_PROTOCOL = 8;
+
     std::string arg_str = "-";
     for (const uint8_t & arg : arguments) {
       arg_str += std::to_string(arg) + "-";
@@ -840,6 +844,11 @@ private:
             "FCU: EVENT " << px4_id << " with args " << arg_str);
         break;
       // [[[end]]] (sum: g/XqtqiYn5)
+      case LOG_LEVEL_PROTOCOL:
+        RCLCPP_DEBUG_STREAM(
+          node->get_logger(),
+          "FCU: EVENT " << px4_id << " (protocol) with args " << arg_str);
+        break;
       default:
         RCLCPP_WARN_STREAM(
           node->get_logger(),
