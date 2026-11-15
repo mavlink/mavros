@@ -57,6 +57,7 @@ find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(tf2_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 include_directories(
@@ -123,6 +124,7 @@ target_link_libraries(mavros PUBLIC
   ${mavros_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
   ${diagnostic_msgs_TARGETS}
+  ${tf2_msgs_TARGETS}
   diagnostic_updater::diagnostic_updater
   pluginlib::pluginlib
   rcl::rcl

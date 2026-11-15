@@ -210,17 +210,27 @@ public:
     D * base = static_cast<D *>(this);
     auto tf_transform_cb = std::bind(cbp, base, std::placeholders::_1);
 
-    auto timer_callback = [this, base, tf_transform_cb]() -> void {
+    // Wait up to 3 s for the transform. With tf.static_only nothing arrives while waiting for a
+    // dynamic transform, so do not wait: a static transform is either in the buffer or not.
+    auto timeout = tf2::durationFromSec(3.0);
+    if (base->uas->is_tf_static_only()) {
+      RCLCPP_WARN(
+        base->get_logger(),
+        "%s: the UAS has tf.static_only set, the tf listener gets no dynamic transforms",
+        _thd_name);
+      timeout = tf2::durationFromSec(0.0);
+    }
+
+    auto timer_callback = [this, base, tf_transform_cb, timeout]() -> void {
         plugin::UASPtr _uas = base->uas;
         std::string & _frame_id = base->tf_frame_id;
         std::string & _child_frame_id = base->tf_child_frame_id;
         if (_uas->tf2_buffer.canTransform(
-            _frame_id, _child_frame_id, tf2::TimePoint(),
-            tf2::durationFromSec(3.0)))
+            _frame_id, _child_frame_id, tf2::TimePoint(), timeout))
         {
           try {
             auto transform = _uas->tf2_buffer.lookupTransform(
-              _frame_id, _child_frame_id, tf2::TimePoint(), tf2::durationFromSec(3.0));
+              _frame_id, _child_frame_id, tf2::TimePoint(), timeout);
             tf_transform_cb(transform);
           } catch (tf2::LookupException & ex) {
             RCLCPP_ERROR(
