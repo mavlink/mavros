@@ -1,0 +1,88 @@
+[
+  {
+    "plugin": "px4_events",
+    "path": "mavros_px4_events/src/plugins/px4_events.cpp",
+    "class_name": "mavros::px4_events::PX4EventsPlugin",
+    "namespace": "mavros::px4_events",
+    "brief": "Optional PX4 event decoding plugin.",
+    "description": "Decode PX4 EVENT messages using local or automatically acquired metadata.\nAutomatic acquisition reuses validated cached files before downloading over FTP.\nCore sys_status raw event logging and publication remain unchanged.",
+    "publishers": [],
+    "subscribers": [],
+    "services": [],
+    "clients": [],
+    "parameters": [
+      {
+        "name": "event_decoding_mode",
+        "type_name": "string",
+        "line": 59,
+        "default_value": "\"auto\"",
+        "description": "PX4 event logging: auto (default), local, or disabled; changes require restart."
+      },
+      {
+        "name": "event_metadata_file",
+        "type_name": "string",
+        "line": 62,
+        "default_value": "\"\"",
+        "description": "Firmware-matching local JSON or JSON.xz definitions; valid only in local mode."
+      },
+      {
+        "name": "event_metadata_download_delay",
+        "type_name": "double",
+        "line": 65,
+        "default_value": "30.0",
+        "description": "Automatic metadata download delay from FCU connection, in seconds."
+      },
+      {
+        "name": "event_metadata_cache_enabled",
+        "type_name": "bool",
+        "line": 68,
+        "default_value": "true",
+        "description": "Reuse validated persistent definitions in automatic mode."
+      },
+      {
+        "name": "event_metadata_cache_dir",
+        "type_name": "string",
+        "line": 71,
+        "default_value": "\"\"",
+        "description": "Empty selects $HOME/.cache/mavros/px4_events; otherwise use this directory."
+      },
+      {
+        "name": "event_metadata_cache_max_bytes",
+        "type_name": "integer",
+        "line": 74,
+        "default_value": "MetadataCache::DEFAULT_MAX_BYTES",
+        "description": "Best-effort finalized cache size limit; nonpositive values disable persistence."
+      }
+    ],
+    "mavlink_subscriptions": [
+      {
+        "handler": "handle_event",
+        "message_type": "mavlink::common::msg::EVENT",
+        "message_name": "EVENT",
+        "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
+        "dialect": "common",
+        "line": 312,
+        "msg_id": 410
+      },
+      {
+        "handler": "handle_component_metadata",
+        "message_type": "mavlink::common::msg::COMPONENT_METADATA",
+        "message_name": "COMPONENT_METADATA",
+        "msg_id_expr": "mavlink::common::msg::COMPONENT_METADATA::MSG_ID",
+        "dialect": "common",
+        "line": 282,
+        "msg_id": 397
+      },
+      {
+        "handler": "handle_component_information",
+        "message_type": "mavlink::common::msg::COMPONENT_INFORMATION",
+        "message_name": "COMPONENT_INFORMATION",
+        "msg_id_expr": "mavlink::common::msg::COMPONENT_INFORMATION::MSG_ID",
+        "dialect": "common",
+        "line": 296,
+        "msg_id": 395
+      }
+    ],
+    "mavlink_publications": []
+  }
+]

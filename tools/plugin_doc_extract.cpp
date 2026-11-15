@@ -356,7 +356,14 @@ public:
     } else if (name == "create_client") {
       handle_create(call, api_.clients);
     } else if (name == "node_declare_and_watch_parameter") {
-      handle_param_watch(call);
+      handle_param(call);
+    } else if (name == "declare_parameter" && callee->getTemplateSpecializationArgs() &&
+      call->getNumArgs() >= 2 && ctx_.hasSameUnqualifiedType(
+        call->getType().getNonReferenceType(),
+        call->getArg(1)->getType().getNonReferenceType()))
+    {
+      // Typed overload with a default value, rather than a ParameterDescriptor.
+      handle_param(call);
     } else if (name == "make_handler") {
       handle_make_handler(call);
     } else if (name == "send_message" || name == "send_message_ignore_drop") {
@@ -698,7 +705,7 @@ private:
     out.push_back(std::move(e));
   }
 
-  void handle_param_watch(CXXMemberCallExpr * call)
+  void handle_param(CXXMemberCallExpr * call)
   {
     if (call->getNumArgs() < 1) {return;}
     ApiEntry e;
@@ -711,6 +718,16 @@ private:
     if (call->getNumArgs() >= 2) {
       e.default_value = trim(source_text(call->getArg(1)));
       e.type_name = infer_param_type(e.default_value);
+      if (call->getMethodDecl()->getName() == "declare_parameter") {
+        const auto type = call->getType().getNonReferenceType();
+        if (type->isBooleanType()) {
+          e.type_name = "bool";
+        } else if (type->isIntegerType()) {
+          e.type_name = "integer";
+        } else if (type->isRealFloatingType()) {
+          e.type_name = "double";
+        }
+      }
     }
     e.description = extract_comment_above(e.line);
     api_.parameters.push_back(std::move(e));
@@ -1076,7 +1093,8 @@ int main(int argc, char ** argv)
   const auto msgid_index = build_mavlink_msgid_index(repo_root);
 
   std::vector<fs::path> plugin_dirs = {
-    repo_root / "mavros/src/plugins", repo_root / "mavros_extras/src/plugins"};
+    repo_root / "mavros/src/plugins", repo_root / "mavros_extras/src/plugins",
+    repo_root / "mavros_px4_events/src/plugins"};
   if (!ClPluginDir.empty()) {
     plugin_dirs.clear();
     for (const auto & d : ClPluginDir) {

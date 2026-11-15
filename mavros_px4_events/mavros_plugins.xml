@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- [[[cog:
+import mavros_cog
+
+mavros_cog.outl_plugins_xml('src/plugins', 'mavros_px4_events_plugins')
+]]] -->
+<library path="mavros_px4_events_plugins">
+  <class name="px4_events" type="mavros::plugin::PluginFactoryTemplate&lt;mavros::px4_events::PX4EventsPlugin&gt;" base_class_type="mavros::plugin::PluginFactory">
+    <description>@brief Optional PX4 event decoding plugin.
+@plugin px4_events
+
+Decode PX4 EVENT messages using local or automatically acquired metadata.
+Automatic acquisition reuses validated cached files before downloading over FTP.
+Core sys_status raw event logging and publication remain unchanged.</description>
+  </class>
+</library>
+<!-- [[[end]]] (sum: 4LJQ35vJND) -->
