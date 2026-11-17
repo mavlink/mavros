@@ -18,6 +18,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "mavros/utils.hpp"
@@ -112,9 +113,9 @@ bool Acquisition::start(const MetadataFile & general, Callback callback, bool do
     }
   }
   // Cache access belongs to the acquisition callback group, not the caller's
-  // advertisement handler. Without cache, preserve immediate FTP dispatch.
+  // advertisement handler. The inline tick only performs immediate FTP dispatch.
   if (!cache_) {
-    tick(Clock::now());
+    tick(Clock::now(), false);
   } else if (setup_failed) {
     deliver();
   }
@@ -138,7 +139,7 @@ void Acquisition::begin_file_locked(const MetadataFile & file)
   busy_retried_ = false;
   session_retried_ = false;
   retryable_ = false;
-  from_cache_ = false;
+  validation_uncertain_ = false;
   bytes_.clear();
   error_.clear();
   current_ = metadata_file(file.uri, file.crc);
@@ -182,7 +183,7 @@ void Acquisition::cancel()
   deliver();
 }
 
-void Acquisition::tick(Clock::time_point now)
+void Acquisition::tick(Clock::time_point now, bool process_files)
 {
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -191,19 +192,18 @@ void Acquisition::tick(Clock::time_point now)
         file_ = File::General;
         begin_file_locked(general_);
       }
-      // At most the general and event file can hit consecutively. A miss
-      // enters the owner's download gate before checking FTP service readiness.
-      while (phase_ == Phase::Cache) {
-        const auto role = file_ == File::General ? MetadataRole::General : MetadataRole::Events;
-        if (auto cached = cache_->load(current_, role)) {
-          bytes_ = std::move(*cached);
-          from_cache_ = true;
-          RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", current_.uri.c_str());
-          file_finished_locked();
-        } else {
-          begin_download_locked();
-        }
-      }
+    } catch (const std::exception & ex) {
+      stop_locked(ex.what(), true);
+    } catch (...) {
+      stop_locked("unknown metadata FTP exception", true);
+    }
+  }
+  if (process_files) {
+    process_work();
+  }
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    try {
       if (phase_ == Phase::Services) {
         if (open_->service_is_ready() && read_->service_is_ready() && close_->service_is_ready()) {
           phase_ = Phase::Open;
@@ -225,6 +225,10 @@ void Acquisition::tick(Clock::time_point now)
     } catch (...) {
       stop_locked("unknown metadata FTP exception", true);
     }
+  }
+  // A close timeout can make a completed file ready for validation on this tick.
+  if (process_files) {
+    process_work();
   }
   deliver();
 }
@@ -255,6 +259,7 @@ void Acquisition::send_locked(
             self->stop_locked("unknown metadata FTP response exception", true);
           }
         }
+        self->process_work();
         self->deliver();
       }
     });
@@ -413,51 +418,128 @@ void Acquisition::file_finished_locked(const std::string & close_error, bool unc
     fail_locked("general metadata close unresolved", false, true, now);
     return;
   }
-  const bool compressed = current_.ftp_path.size() >= 3 &&
-    current_.ftp_path.substr(current_.ftp_path.size() - 3) == ".xz";
+  // FTP close has already completed or failed; validation owns no active request.
+  opened_ = false;
+  validation_uncertain_ = uncertain;
+  phase_ = Phase::Validate;
+}
+
+std::optional<Acquisition::MetadataWork> Acquisition::take_work_locked()
+{
+  if (phase_ != Phase::Cache && phase_ != Phase::Validate) {
+    return std::nullopt;
+  }
+  MetadataWork work{++work_serial_, current_, file_, phase_ == Phase::Cache,
+    validation_uncertain_, std::move(bytes_)};
+  phase_ = Phase::Processing;
+  return work;
+}
+
+Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
+{
+  MetadataResult result;
   try {
-    // General CRC covers uncompressed JSON; event CRC covers transferred bytes.
-    if (file_ == File::Events && metadata_crc32(bytes_) != current_.crc) {
-      fail_locked("event metadata checksum mismatch", true, uncertain, now);
-      return;
+    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+    std::optional<std::string> cached;
+    if (work.lookup) {
+      cached = cache_->load(work.file, role);
+      if (!cached) {
+        result.cache_miss = true;
+        return result;
+      }
+      RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
     }
-    const auto json = Decoder::unpack_metadata(bytes_, compressed);
-    if (file_ == File::General) {
-      if (metadata_crc32(json) != current_.crc) {
-        fail_locked("general metadata checksum mismatch", true, false, now);
-        return;
+    const std::string_view bytes = cached ? std::string_view(*cached) :
+      std::string_view(work.bytes);
+    const auto & path = work.file.ftp_path;
+    const bool compressed = path.size() >= 3 && path.substr(path.size() - 3) == ".xz";
+    // General CRC covers uncompressed JSON; event CRC covers transferred bytes.
+    if (work.role == File::Events && metadata_crc32(bytes) != work.file.crc) {
+      result.error = "event metadata checksum mismatch";
+      result.retryable = true;
+      return result;
+    }
+    const auto json = Decoder::unpack_metadata(bytes, compressed);
+    if (work.role == File::General) {
+      if (metadata_crc32(json) != work.file.crc) {
+        result.error = "general metadata checksum mismatch";
+        result.retryable = true;
+        return result;
       }
-      const auto events = event_metadata_file(json);
-      save_cache_locked();
-      file_ = File::Events;
-      begin_file_locked(events);
+      result.events = event_metadata_file(json);
     } else {
-      auto decoder = std::make_unique<Decoder>(report_error_);
-      const auto error = decoder->load_json(json);
-      if (!error.empty()) {
-        throw std::runtime_error(error);
+      result.decoder = std::make_unique<Decoder>(report_error_);
+      result.error = result.decoder->load_json(json);
+      if (!result.error.empty()) {
+        return result;
       }
-      save_cache_locked();
-      finish_locked({std::move(decoder), {}, uncertain});
+    }
+    if (cache_ && !work.lookup) {
+      const auto error = cache_->save(work.file, role, bytes);
+      if (!error.empty()) {
+        RCLCPP_WARN(node_->get_logger(),
+          "PX4 metadata cache save failed: %s; retaining validated metadata", error.c_str());
+      }
     }
   } catch (const std::exception & ex) {
-    fail_locked(ex.what(), false, uncertain, now);
+    result.error = ex.what();
   } catch (...) {
-    fail_locked("unknown metadata validation exception", false, uncertain, now);
+    result.error = "unknown metadata validation exception";
+  }
+  return result;
+}
+
+void Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResult result)
+{
+  if (phase_ != Phase::Processing || work.serial != work_serial_) {
+    return;
+  }
+  if (result.cache_miss) {
+    begin_download_locked();
+  } else if (!result.error.empty()) {
+    fail_locked(result.error, result.retryable, work.uncertain, Clock::now());
+  } else if (work.role == File::General) {
+    file_ = File::Events;
+    begin_file_locked(*result.events);
+  } else {
+    finish_locked({std::move(result.decoder), {}, work.uncertain});
   }
 }
 
-void Acquisition::save_cache_locked() const
+void Acquisition::process_work()
 {
-  if (!cache_ || from_cache_) {
-    return;
-  }
-  const auto role = file_ == File::General ? MetadataRole::General : MetadataRole::Events;
-  const auto error = cache_->save(current_, role, bytes_);
-  if (!error.empty()) {
-    RCLCPP_WARN(node_->get_logger(),
-          "PX4 metadata cache save failed: %s; retaining validated metadata",
-      error.c_str());
+  // Cache access, validation, and persistence run in the existing callback group.
+  // At most the general and event file can hit consecutively.
+  while (true) {
+    std::optional<MetadataWork> work;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      try {
+        work = take_work_locked();
+      } catch (const std::exception & ex) {
+        stop_locked(ex.what(), true);
+      } catch (...) {
+        stop_locked("unknown metadata validation setup exception", true);
+      }
+    }
+    if (!work) {
+      return;
+    }
+    auto result = process_metadata(*work);
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      // Cancellation may finish this operation and start a newer one during processing.
+      if (phase_ != Phase::Processing || work->serial != work_serial_) {
+        return;
+      }
+      try {
+        apply_metadata_locked(*work, std::move(result));
+      } catch (const std::exception & ex) {
+        stop_locked(ex.what(), true);
+      } catch (...) {
+        stop_locked("unknown metadata validation result exception", true);
+      }
+    }
   }
 }
 
@@ -480,6 +562,7 @@ void Acquisition::fail_locked(
 
 void Acquisition::finish_locked(Result result)
 {
+  ++work_serial_;  // Invalidate metadata processing that may still be running.
   clear_pending_locked();
   phase_ = Phase::Idle;
   opened_ = false;

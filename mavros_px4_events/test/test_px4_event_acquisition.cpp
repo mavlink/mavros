@@ -43,6 +43,26 @@ namespace px4_events
 class AcquisitionTestPeer
 {
 public:
+  static auto take_work(Acquisition & acquisition)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.take_work_locked();
+  }
+
+  static void complete_work(Acquisition & acquisition, const Acquisition::MetadataWork & work)
+  {
+    auto result = acquisition.process_metadata(work);
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    acquisition.apply_metadata_locked(work, std::move(result));
+  }
+
+  static bool processing(Acquisition & acquisition, const Acquisition::MetadataWork & work)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.phase_ == Acquisition::Phase::Processing &&
+           acquisition.work_serial_ == work.serial;
+  }
+
   static bool idle(Acquisition & acquisition)
   {
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
@@ -345,6 +365,33 @@ protected:
     }
   }
 };
+
+TEST_F(CachedAcquisitionTest, cancelled_metadata_work_cannot_change_a_new_acquisition)
+{
+  prepare();
+  seed(true, true);
+  start_prepared();
+  const auto old_work = AcquisitionTestPeer::take_work(*acquisition);
+  ASSERT_TRUE(old_work);
+  acquisition->cancel();
+  ASSERT_TRUE(result);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  EXPECT_EQ(completions, 1U);
+
+  start_prepared();
+  const auto new_work = AcquisitionTestPeer::take_work(*acquisition);
+  ASSERT_TRUE(new_work);
+  AcquisitionTestPeer::complete_work(*acquisition, *old_work);
+  EXPECT_FALSE(result);
+  EXPECT_EQ(completions, 1U);
+  EXPECT_TRUE(AcquisitionTestPeer::processing(*acquisition, *new_work));
+  AcquisitionTestPeer::complete_work(*acquisition, *new_work);
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(completions, 2U);
+  EXPECT_TRUE(result->error.empty());
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_TRUE(opens.empty());
+}
 
 TEST_F(CachedAcquisitionTest, rooted_fallback_keeps_original_uri_cache_identity)
 {

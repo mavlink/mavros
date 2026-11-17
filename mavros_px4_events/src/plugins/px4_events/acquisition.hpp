@@ -70,9 +70,27 @@ private:
   using Open = mavros_msgs::srv::FileOpen;
   using Read = mavros_msgs::srv::FileRead;
   using Close = mavros_msgs::srv::FileClose;
-  enum class Phase { Idle, Cache, DownloadWait, Services, Open, Read, Close, Retry };
+  enum class Phase { Idle, Cache, Validate, Processing, DownloadWait, Services, Open, Read, Close,
+    Retry };
   enum class File { General, Events };
   struct Completion { Callback callback; Result result; };
+  struct MetadataWork
+  {
+    uint64_t serial;
+    MetadataFile file;
+    File role;
+    bool lookup;
+    bool uncertain;
+    std::string bytes;
+  };
+  struct MetadataResult
+  {
+    std::optional<MetadataFile> events;
+    std::unique_ptr<Decoder> decoder;
+    std::string error;
+    bool cache_miss{false};
+    bool retryable{false};
+  };
   static constexpr auto WAIT_TIMEOUT = std::chrono::seconds(10);
   static constexpr auto BUSY_BACKOFF = std::chrono::seconds(2);
   static constexpr auto SESSION_BACKOFF = std::chrono::seconds(10);
@@ -82,8 +100,8 @@ private:
     const rclcpp::Node::SharedPtr & node, Decoder::ErrorCallback report_error,
     std::shared_ptr<const MetadataCache> cache);
   void initialize();
-  void tick(Clock::time_point now);
-  // State helpers require mutex_; the sole owner callback runs outside it.
+  void tick(Clock::time_point now, bool process_files = true);
+  // State helpers require mutex_; metadata processing and the owner callback do not.
   void begin_file_locked(const MetadataFile & file);
   void begin_download_locked();
   void dispatch_locked();
@@ -98,7 +116,10 @@ private:
   void close_reply_locked(const Close::Response & response);
   void stop_locked(const std::string & reason, bool uncertain);
   void file_finished_locked(const std::string & close_error = "", bool uncertain = false);
-  void save_cache_locked() const;
+  std::optional<MetadataWork> take_work_locked();
+  MetadataResult process_metadata(const MetadataWork & work) const;
+  void apply_metadata_locked(const MetadataWork & work, MetadataResult result);
+  void process_work();
   void clear_pending_locked();
   void fail_locked(
     const std::string & reason, bool retryable, bool uncertain,
@@ -118,6 +139,7 @@ private:
   Phase phase_{Phase::Idle};
   File file_{File::General};
   uint64_t serial_{0};
+  uint64_t work_serial_{0};
   std::optional<int64_t> pending_;
   Clock::time_point deadline_{};
   bool busy_retried_{false};
@@ -126,7 +148,7 @@ private:
   bool stopping_{false};
   bool stop_uncertain_{false};
   bool retryable_{false};
-  bool from_cache_{false};
+  bool validation_uncertain_{false};
   bool downloads_allowed_{true};
   size_t limit_{0};
   size_t size_{0};
