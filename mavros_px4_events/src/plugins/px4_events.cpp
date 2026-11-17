@@ -84,6 +84,8 @@ public:
       event_decoder.reset();
       RCLCPP_ERROR(get_logger(),
             "PX4 event decoding inactive: %s; retaining core raw event logging", error.c_str());
+    } else {
+      log_skipped_definitions(*event_decoder);
     }
     if (mode == "auto" && error.empty()) {
       event_download_delay = download_delay;
@@ -152,6 +154,21 @@ private:
            };
   }
 
+  void log_skipped_definitions(const Decoder & decoder) const
+  {
+    const auto & skipped = decoder.skipped_definitions();
+    if (skipped.empty()) {
+      return;
+    }
+    RCLCPP_WARN(get_logger(),
+      "Skipped %zu unsupported PX4 event definitions; "
+      "retaining core raw logging for those events", skipped.size());
+    for (const auto & [id, reason] : skipped) {
+      RCLCPP_DEBUG(get_logger(), "Skipped PX4 event definition ID %u: %s",
+        static_cast<unsigned int>(id), reason.c_str());
+    }
+  }
+
   void event_acquisition_complete(uint64_t generation, Acquisition::Result result)
   {
     std::lock_guard<std::recursive_mutex> lock(event_mutex);
@@ -167,6 +184,7 @@ private:
       return;
     }
     event_decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
+    log_skipped_definitions(*event_decoder);
     RCLCPP_INFO(get_logger(), "PX4 event metadata ready; decoded logging enabled");
   }
 

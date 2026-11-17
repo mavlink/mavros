@@ -168,11 +168,6 @@ TEST_F(Px4EventsTest, message_precision_accepts_limit_and_libevents_numeric_synt
 
 TEST_F(Px4EventsTest, unsafe_message_precision_skips_only_the_affected_event)
 {
-  std::vector<std::string> reports;
-  Decoder reporting_decoder([&reports](uint32_t id, const char * reason) {
-      EXPECT_EQ(id, 0x01000001u);
-      reports.emplace_back(reason);
-    });
   auto json = nlohmann::json::parse(metadata());
   auto & event = json["components"]["1"]["event_groups"]["default"]["events"]["1"];
   event["arguments"] = {{{"name", "value"}, {"type", "float"}}};
@@ -180,14 +175,13 @@ TEST_F(Px4EventsTest, unsafe_message_precision_skips_only_the_affected_event)
       "9999999999999999999999999999999999999999", "-1", "-4294967296", "", "invalid"})
   {
     SCOPED_TRACE(precision);
-    reports.clear();
     event["message"] = "Value {1:." + precision + "m}";
-    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
-    EXPECT_FALSE(reporting_decoder.decode(0x01000001, 6, arguments));
-    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
-    ASSERT_EQ(reports.size(), 1u);
-    EXPECT_EQ(reports.front(),
-      "skipping event definition: event message precision must be an integer between 0 and 16");
+    ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+    EXPECT_TRUE(decoder.decode(1, 6, arguments));
+    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
+    EXPECT_EQ(decoder.skipped_definitions().at(0x01000001u),
+      "event message precision must be an integer between 0 and 16");
   }
 }
 
@@ -666,13 +660,12 @@ TEST_F(Px4EventsTest, unsupported_types_and_oversized_arguments_skip_only_the_af
     for (int i = 0; i < 6; ++i) {
       event["arguments"].push_back({{"name", "wide"}, {"type", type}});
     }
-    std::vector<uint32_t> reports;
-    Decoder reporting_decoder([&reports](uint32_t id, const char *) {reports.push_back(id);});
-    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
-    EXPECT_FALSE(reporting_decoder.decode(0x01000006, 6, arguments));
-    EXPECT_TRUE(reporting_decoder.decode(0x01000007, 6, arguments));
-    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
-    EXPECT_EQ(reports, (std::vector<uint32_t>{0x01000006u}));
+    ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(decoder.decode(0x01000006, 6, arguments));
+    EXPECT_TRUE(decoder.decode(0x01000007, 6, arguments));
+    EXPECT_TRUE(decoder.decode(1, 6, arguments));
+    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
+    EXPECT_EQ(decoder.skipped_definitions().count(0x01000006u), 1u);
   }
 }
 
@@ -689,16 +682,12 @@ TEST_F(Px4EventsTest, duplicate_ids_are_excluded_even_when_the_first_definition_
       groups[group]["events"]["7"] =
       {{"name", "duplicate"}, {"message", "Conflicting definition"}};
     }
-    std::vector<std::string> reports;
-    Decoder reporting_decoder([&reports](uint32_t id, const char * reason) {
-        EXPECT_EQ(id, 0x01000007u);
-        reports.emplace_back(reason);
-      });
-    ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
-    EXPECT_FALSE(reporting_decoder.decode(0x01000007, 6, arguments));
-    EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
-    ASSERT_EQ(reports.size(), 1u);
-    EXPECT_EQ(reports.front(), "skipping event definition: duplicate full event ID");
+    ASSERT_TRUE(decoder.load_json(json.dump()).empty());
+    EXPECT_FALSE(decoder.decode(0x01000007, 6, arguments));
+    EXPECT_TRUE(decoder.decode(1, 6, arguments));
+    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
+    EXPECT_EQ(decoder.skipped_definitions().at(0x01000007u),
+      "duplicate full event ID");
   }
 }
 
@@ -714,20 +703,28 @@ TEST_F(Px4EventsTest, metadata_without_usable_events_is_rejected)
   EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
 }
 
-TEST_F(Px4EventsTest, skipped_definition_diagnostics_cannot_prevent_activation)
+TEST_F(Px4EventsTest, skipped_definitions_are_collected_without_callbacks_and_reset_on_reload)
 {
   auto json = nlohmann::json::parse(metadata());
   json["components"]["1"]["event_groups"]["default"]["events"]["1"]["message"] =
     "Unsafe {2:.17m}";
+  json["components"]["1"]["event_groups"]["default"]["events"]["7"]["message"] =
+    "Unsafe {1:.17m}";
   int reports = 0;
   Decoder reporting_decoder([&reports](uint32_t, const char *) {
       ++reports;
-      throw std::runtime_error("injected diagnostic failure");
     });
+  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
   ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
-  EXPECT_EQ(reports, 1);
+  EXPECT_EQ(reports, 0);
+  EXPECT_EQ(reporting_decoder.skipped_definitions().size(), 2u);
   EXPECT_FALSE(reporting_decoder.decode(0x01000001, 6, arguments));
   EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
+  ASSERT_TRUE(reporting_decoder.load_json(metadata()).empty());
+  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
+  EXPECT_TRUE(reporting_decoder.decode(0x01000001, 6, arguments));
+  EXPECT_FALSE(reporting_decoder.load_json("invalid JSON").empty());
+  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
 }
 
 TEST_F(Px4EventsTest, file_and_decompression_limits_are_enforced)

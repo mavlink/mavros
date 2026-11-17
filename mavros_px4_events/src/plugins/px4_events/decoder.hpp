@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,7 +32,7 @@ public:
   static constexpr size_t MAX_COMPRESSED_BYTES = 1024 * 1024;
   static constexpr size_t MAX_JSON_BYTES = 8 * 1024 * 1024;
 
-  // Report skipped definitions or decoding exceptions once per full ID per metadata load.
+  // Report runtime decoding exceptions once per full ID per metadata load.
   using ErrorCallback = std::function<void (uint32_t, const char *)>;
 
   explicit Decoder(ErrorCallback report_error = {});
@@ -43,6 +44,8 @@ public:
   static std::string unpack_metadata(std::string_view bytes, bool compressed);
   // Skip unsupported event definitions; a file-level failure leaves decoding inactive.
   std::string load_json(const std::string & json);
+  // Load-time diagnostics; the reference remains valid until metadata is replaced.
+  const std::map<uint32_t, std::string> & skipped_definitions() const;
 
   std::optional<DecodedEvent> decode(
     uint32_t full_id, uint8_t log_levels, const std::array<uint8_t, 40> & arguments) const;
