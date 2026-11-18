@@ -58,11 +58,11 @@ public:
     return acquisition.take_work_locked();
   }
 
-  static void complete_work(Acquisition & acquisition, const Acquisition::MetadataWork & work)
+  static bool complete_work(Acquisition & acquisition, const Acquisition::MetadataWork & work)
   {
     auto result = acquisition.process_metadata(work);
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
-    acquisition.apply_metadata_locked(work, std::move(result));
+    return acquisition.apply_metadata_locked(work, std::move(result));
   }
 
   static bool processing(Acquisition & acquisition, const Acquisition::MetadataWork & work)
@@ -390,11 +390,11 @@ TEST_F(CachedAcquisitionTest, cancelled_metadata_work_cannot_change_a_new_acquis
   start_prepared();
   const auto new_work = AcquisitionTestPeer::take_work(*acquisition);
   ASSERT_TRUE(new_work);
-  AcquisitionTestPeer::complete_work(*acquisition, *old_work);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *old_work));
   EXPECT_FALSE(result);
   EXPECT_EQ(completions, 1U);
   EXPECT_TRUE(AcquisitionTestPeer::processing(*acquisition, *new_work));
-  AcquisitionTestPeer::complete_work(*acquisition, *new_work);
+  ASSERT_TRUE(AcquisitionTestPeer::complete_work(*acquisition, *new_work));
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(completions, 2U);
   EXPECT_TRUE(result->error.empty());
@@ -417,14 +417,14 @@ TEST_F(CachedAcquisitionTest, cancelled_download_work_cannot_save_or_change_a_ne
   start_prepared();
   const auto new_work = AcquisitionTestPeer::take_work(*acquisition);
   ASSERT_TRUE(new_work);
-  AcquisitionTestPeer::complete_work(*acquisition, *old_work);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *old_work));
   EXPECT_TRUE(std::filesystem::is_empty(cache_directory));
   EXPECT_FALSE(result);
   EXPECT_EQ(completions, 1U);
   EXPECT_TRUE(AcquisitionTestPeer::processing(*acquisition, *new_work));
 
   hold_close.clear();
-  AcquisitionTestPeer::complete_work(*acquisition, *new_work);
+  ASSERT_TRUE(AcquisitionTestPeer::complete_work(*acquisition, *new_work));
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_TRUE(result->error.empty());
   EXPECT_NE(result->decoder, nullptr);

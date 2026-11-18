@@ -118,7 +118,8 @@ private:
   void file_finished_locked(const std::string & close_error = "", bool uncertain = false);
   std::optional<MetadataWork> take_work_locked();
   MetadataResult process_metadata(const MetadataWork & work) const;
-  void apply_metadata_locked(const MetadataWork & work, MetadataResult result);
+  // False rejects stale work; true means current work was handled, not necessarily successful.
+  bool apply_metadata_locked(const MetadataWork & work, MetadataResult result);
   void process_work();
   void clear_pending_locked();
   void fail_locked(

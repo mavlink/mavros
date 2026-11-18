@@ -484,19 +484,19 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
   return result;
 }
 
-void Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResult result)
+bool Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResult result)
 {
   if (phase_ != Phase::Processing || work.serial != work_serial_) {
-    return;
+    return false;
   }
   if (result.cache_lookup_missed) {
     // End this cache lookup; downloaded bytes return later as separate validation work.
     begin_download_locked();
-    return;
+    return true;
   }
   if (!result.error.empty()) {
     fail_locked(result.error, result.retryable, work.uncertain, Clock::now());
-    return;
+    return true;
   }
   // Serialize publication with cancellation; content validation is already complete.
   if (cache_ && !work.lookup) {
@@ -513,6 +513,7 @@ void Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResul
   } else {
     finish_locked({std::move(result.decoder), {}, work.uncertain});
   }
+  return true;
 }
 
 void Acquisition::process_work()
@@ -537,12 +538,11 @@ void Acquisition::process_work()
     auto result = process_metadata(*work);
     {
       std::lock_guard<std::mutex> lock(mutex_);
-      // Cancellation may finish this operation and start a newer one during processing.
-      if (phase_ != Phase::Processing || work->serial != work_serial_) {
-        continue;
-      }
       try {
-        apply_metadata_locked(*work, std::move(result));
+        // Cancellation may finish this operation and start a newer one during processing.
+        if (!apply_metadata_locked(*work, std::move(result))) {
+          continue;
+        }
       } catch (const std::exception & ex) {
         fail_locked(ex.what(), false, work->uncertain, Clock::now());
       } catch (...) {
