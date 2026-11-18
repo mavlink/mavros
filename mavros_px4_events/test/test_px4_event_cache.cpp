@@ -128,8 +128,8 @@ TEST_F(MetadataCacheTest, general_and_event_files_round_trip_with_role_specific_
             metadata_crc32(event_bytes));
     const auto descriptor = metadata_file(std::string("mftp://general") + suffix,
             metadata_crc32(general));
-    ASSERT_TRUE(cache.save(event, MetadataRole::Events, event_bytes).empty());
-    ASSERT_TRUE(cache.save(descriptor, MetadataRole::General, general_bytes).empty());
+    ASSERT_TRUE(cache.save_validated(event, MetadataRole::Events, event_bytes).empty());
+    ASSERT_TRUE(cache.save_validated(descriptor, MetadataRole::General, general_bytes).empty());
     EXPECT_EQ(cache.load(event, MetadataRole::Events), event_bytes);
     EXPECT_EQ(cache.load(descriptor, MetadataRole::General), general_bytes);
     EXPECT_FALSE(cache.load(event, MetadataRole::General));
@@ -153,7 +153,7 @@ TEST_F(MetadataCacheTest, skipped_event_definitions_do_not_prevent_cache_round_t
     const auto bytes = compressed ? compress(json.dump()) : json.dump();
     const auto file = metadata_file(compressed ? "mftp://mixed.json.xz" : "mftp://mixed.json",
             metadata_crc32(bytes));
-    ASSERT_TRUE(cache.save(file, MetadataRole::Events, bytes).empty());
+    ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, bytes).empty());
     EXPECT_EQ(cache.load(file, MetadataRole::Events), bytes);
     auto changed = file;
     ++changed.crc;
@@ -163,14 +163,16 @@ TEST_F(MetadataCacheTest, skipped_event_definitions_do_not_prevent_cache_round_t
   definitions.erase("1");
   const auto unusable = json.dump();
   const auto file = metadata_file("mftp://unusable.json", metadata_crc32(unusable));
-  EXPECT_FALSE(cache.save(file, MetadataRole::Events, unusable).empty());
+  // Deliberately bypass the writer's precondition to simulate invalid disk content.
+  ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, unusable).empty());
+  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
 }
 
 TEST_F(MetadataCacheTest, corrupt_truncated_and_forged_identity_entries_are_misses)
 {
   MetadataCache cache(directory);
   const auto file = event_file();
-  ASSERT_TRUE(cache.save(file, MetadataRole::Events, events).empty());
+  ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, events).empty());
   ASSERT_EQ(entries().size(), 1U);
   const auto path = entries().front();
   EXPECT_EQ(
@@ -196,19 +198,17 @@ TEST_F(MetadataCacheTest, corrupt_truncated_and_forged_identity_entries_are_miss
   EXPECT_FALSE(cache.load(file, MetadataRole::Events));
 }
 
-TEST_F(MetadataCacheTest, invalid_saves_preserve_good_entry_and_oversized_entries_are_not_written)
+TEST_F(MetadataCacheTest, oversized_saves_preserve_good_entry_and_are_not_written)
 {
   MetadataCache cache(directory);
   const auto file = event_file();
-  ASSERT_TRUE(cache.save(file, MetadataRole::Events, events).empty());
-  EXPECT_FALSE(cache.save(file, MetadataRole::Events, "incomplete").empty());
+  ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, events).empty());
+  const std::string oversized(8 * 1024 * 1024 + 1, 'x');
+  EXPECT_FALSE(cache.save_validated(file, MetadataRole::Events, oversized).empty());
   EXPECT_EQ(cache.load(file, MetadataRole::Events), events);
-  const std::string unsupported = R"({"version":99,"components":{}})";
-  const auto bad = metadata_file("mftp://bad.json", metadata_crc32(unsupported));
-  EXPECT_FALSE(cache.save(bad, MetadataRole::Events, unsupported).empty());
   EXPECT_EQ(entries().size(), 1U);
   MetadataCache small(directory, 1);
-  EXPECT_FALSE(small.save(file, MetadataRole::Events, events).empty());
+  EXPECT_FALSE(small.save_validated(file, MetadataRole::Events, events).empty());
   EXPECT_FALSE(small.load(file, MetadataRole::Events));
   EXPECT_EQ(cache.load(file, MetadataRole::Events), events);
 }
@@ -220,32 +220,32 @@ TEST_F(MetadataCacheTest, partial_temporary_files_are_ignored_and_failed_publica
   const auto partial = directory / ".px4-events-active";
   write(partial, "partial download");
   EXPECT_FALSE(cache.load(event_file(), MetadataRole::Events));
-  ASSERT_TRUE(cache.save(event_file(), MetadataRole::Events, events).empty());
+  ASSERT_TRUE(cache.save_validated(event_file(), MetadataRole::Events, events).empty());
   ASSERT_EQ(entries().size(), 1U);
   const auto final = entries().front();
   fs::remove(final);
   fs::create_directory(final);  // Force rename to fail after writing the temporary file.
-  EXPECT_FALSE(cache.save(event_file(), MetadataRole::Events, events).empty());
+  EXPECT_FALSE(cache.save_validated(event_file(), MetadataRole::Events, events).empty());
   EXPECT_TRUE(fs::exists(partial));
   EXPECT_EQ(std::distance(fs::directory_iterator(directory), fs::directory_iterator()), 2);
   const auto blocked = root / "not-a-directory";
   write(blocked, "existing file");
   MetadataCache unavailable(blocked);
-  EXPECT_FALSE(unavailable.save(event_file(), MetadataRole::Events, events).empty());
+  EXPECT_FALSE(unavailable.save_validated(event_file(), MetadataRole::Events, events).empty());
 }
 
 TEST_F(MetadataCacheTest, eviction_removes_oldest_saved_entry_and_preserves_unrelated_files)
 {
   MetadataCache cache(directory);
-  ASSERT_TRUE(cache.save(event_file('a'), MetadataRole::Events, events).empty());
+  ASSERT_TRUE(cache.save_validated(event_file('a'), MetadataRole::Events, events).empty());
   const auto oldest = entries().front();
   fs::last_write_time(oldest, fs::file_time_type::clock::now() - std::chrono::hours(2));
-  ASSERT_TRUE(cache.save(event_file('b'), MetadataRole::Events, events).empty());
+  ASSERT_TRUE(cache.save_validated(event_file('b'), MetadataRole::Events, events).empty());
   const auto one_entry_size = fs::file_size(oldest);
   write(directory / "unrelated.txt", "do not remove");
   write(directory / ".px4-events-active", "another writer");
   MetadataCache limited(directory, static_cast<int64_t>(one_entry_size * 2));
-  ASSERT_TRUE(limited.save(event_file('c'), MetadataRole::Events, events).empty());
+  ASSERT_TRUE(limited.save_validated(event_file('c'), MetadataRole::Events, events).empty());
   EXPECT_FALSE(limited.load(event_file('a'), MetadataRole::Events));
   EXPECT_EQ(limited.load(event_file('b'), MetadataRole::Events), events);
   EXPECT_EQ(limited.load(event_file('c'), MetadataRole::Events), events);
@@ -259,7 +259,7 @@ TEST_F(MetadataCacheTest, separate_cache_instances_publish_without_exposing_part
   MetadataCache writer(directory);
   MetadataCache reader(directory);
   const auto file = event_file();
-  ASSERT_TRUE(writer.save(file, MetadataRole::Events, events).empty());
+  ASSERT_TRUE(writer.save_validated(file, MetadataRole::Events, events).empty());
   std::atomic<bool> done{false};
   std::atomic<bool> failed{false};
   std::thread reading([&]() {
@@ -270,7 +270,7 @@ TEST_F(MetadataCacheTest, separate_cache_instances_publish_without_exposing_part
       } while (!done.load());
     });
   for (int i = 0; i < 20; ++i) {
-    if (!writer.save(file, MetadataRole::Events, events).empty()) {
+    if (!writer.save_validated(file, MetadataRole::Events, events).empty()) {
       failed = true;
     }
   }

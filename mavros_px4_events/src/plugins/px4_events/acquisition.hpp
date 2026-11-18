@@ -88,7 +88,7 @@ private:
     std::optional<MetadataFile> events;
     std::unique_ptr<Decoder> decoder;
     std::string error;
-    bool cache_miss{false};
+    bool cache_lookup_missed{false};
     bool retryable{false};
   };
   static constexpr auto WAIT_TIMEOUT = std::chrono::seconds(10);

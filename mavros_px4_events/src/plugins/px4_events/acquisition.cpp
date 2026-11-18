@@ -444,7 +444,7 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
     if (work.lookup) {
       cached = cache_->load(work.file, role);
       if (!cached) {
-        result.cache_miss = true;
+        result.cache_lookup_missed = true;
         return result;
       }
       RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
@@ -474,13 +474,6 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
         return result;
       }
     }
-    if (cache_ && !work.lookup) {
-      const auto error = cache_->save(work.file, role, bytes);
-      if (!error.empty()) {
-        RCLCPP_WARN(node_->get_logger(),
-          "PX4 metadata cache save failed: %s; retaining validated metadata", error.c_str());
-      }
-    }
   } catch (const std::exception & ex) {
     result.error = ex.what();
   } catch (...) {
@@ -494,11 +487,25 @@ void Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResul
   if (phase_ != Phase::Processing || work.serial != work_serial_) {
     return;
   }
-  if (result.cache_miss) {
+  if (result.cache_lookup_missed) {
+    // End this cache lookup; downloaded bytes return later as separate validation work.
     begin_download_locked();
-  } else if (!result.error.empty()) {
+    return;
+  }
+  if (!result.error.empty()) {
     fail_locked(result.error, result.retryable, work.uncertain, Clock::now());
-  } else if (work.role == File::General) {
+    return;
+  }
+  // Serialize publication with cancellation; content validation is already complete.
+  if (cache_ && !work.lookup) {
+    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+    const auto error = cache_->save_validated(work.file, role, work.bytes);
+    if (!error.empty()) {
+      RCLCPP_WARN(node_->get_logger(),
+        "PX4 metadata cache save failed: %s; retaining validated metadata", error.c_str());
+    }
+  }
+  if (work.role == File::General) {
     file_ = File::Events;
     begin_file_locked(*result.events);
   } else {

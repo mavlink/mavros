@@ -459,8 +459,8 @@ TEST_F(PluginAcquisitionTest, cold_download_waits_then_activates_and_saves_both_
 
 TEST_F(PluginAcquisitionTest, complete_cache_hit_bypasses_delay_and_needs_no_ftp_services)
 {
-  ASSERT_TRUE(cache().save(general_file(), MetadataRole::General, general).empty());
-  ASSERT_TRUE(cache().save(events_file(), MetadataRole::Events, definitions).empty());
+  ASSERT_TRUE(cache().save_validated(general_file(), MetadataRole::General, general).empty());
+  ASSERT_TRUE(cache().save_validated(events_file(), MetadataRole::Events, definitions).empty());
   open_service.reset();
   read_service.reset();
   close_service.reset();
@@ -472,7 +472,7 @@ TEST_F(PluginAcquisitionTest, complete_cache_hit_bypasses_delay_and_needs_no_ftp
 
 TEST_F(PluginAcquisitionTest, cached_general_downloads_only_events_after_delay)
 {
-  ASSERT_TRUE(cache().save(general_file(), MetadataRole::General, general).empty());
+  ASSERT_TRUE(cache().save_validated(general_file(), MetadataRole::General, general).empty());
   connect_and_advertise();
   ASSERT_TRUE(spin_until([this]() {return waiting_for_delay();}));
   EXPECT_TRUE(opens.empty());
@@ -483,7 +483,7 @@ TEST_F(PluginAcquisitionTest, cached_general_downloads_only_events_after_delay)
 
 TEST_F(PluginAcquisitionTest, cached_events_downloads_only_general)
 {
-  ASSERT_TRUE(cache().save(events_file(), MetadataRole::Events, definitions).empty());
+  ASSERT_TRUE(cache().save_validated(events_file(), MetadataRole::Events, definitions).empty());
   connect_and_advertise();
   Peer::release_downloads(*instance);
   ASSERT_TRUE(spin_until([this]() {return Peer::decodes(*instance);}));
@@ -492,8 +492,8 @@ TEST_F(PluginAcquisitionTest, cached_events_downloads_only_general)
 
 TEST_F(PluginAcquisitionTest, corrupt_cache_entries_fall_back_to_download)
 {
-  ASSERT_TRUE(cache().save(general_file(), MetadataRole::General, general).empty());
-  ASSERT_TRUE(cache().save(events_file(), MetadataRole::Events, definitions).empty());
+  ASSERT_TRUE(cache().save_validated(general_file(), MetadataRole::General, general).empty());
+  ASSERT_TRUE(cache().save_validated(events_file(), MetadataRole::Events, definitions).empty());
   for (const auto & entry : std::filesystem::directory_iterator(integration_cache_directory)) {
     std::ofstream(entry.path(), std::ios::trunc) << "corrupt";
   }
@@ -631,8 +631,8 @@ class DisabledCachePluginTest : public PluginAcquisitionTest
 
 TEST_F(DisabledCachePluginTest, disabled_cache_downloads_without_reading_or_writing_entries)
 {
-  ASSERT_TRUE(cache().save(general_file(), MetadataRole::General, general).empty());
-  ASSERT_TRUE(cache().save(events_file(), MetadataRole::Events, definitions).empty());
+  ASSERT_TRUE(cache().save_validated(general_file(), MetadataRole::General, general).empty());
+  ASSERT_TRUE(cache().save_validated(events_file(), MetadataRole::Events, definitions).empty());
   const auto stamp = std::filesystem::file_time_type::clock::now() - 24h;
   for (const auto & entry : std::filesystem::directory_iterator(integration_cache_directory)) {
     std::filesystem::last_write_time(entry.path(), stamp);
