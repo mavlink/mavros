@@ -535,9 +535,9 @@ void Acquisition::process_work()
       try {
         apply_metadata_locked(*work, std::move(result));
       } catch (const std::exception & ex) {
-        stop_locked(ex.what(), true);
+        fail_locked(ex.what(), false, work->uncertain, Clock::now());
       } catch (...) {
-        stop_locked("unknown metadata validation result exception", true);
+        fail_locked("unknown metadata validation exception", false, work->uncertain, Clock::now());
       }
     }
   }
