@@ -161,8 +161,9 @@ private:
       return;
     }
     RCLCPP_WARN(get_logger(),
-      "Skipped %zu unsupported PX4 event definitions; "
-      "retaining core raw logging for those events", skipped.size());
+      "Skipped %zu PX4 event definitions; "
+      "retaining core raw logging for those events."
+      "Enable mavros.px4_events DEBUG logging for details.", skipped.size());
     for (const auto & [id, reason] : skipped) {
       RCLCPP_DEBUG(get_logger(), "Skipped PX4 event definition ID %u: %s",
         static_cast<unsigned int>(id), reason.c_str());
@@ -171,20 +172,24 @@ private:
 
   void event_acquisition_complete(uint64_t generation, Acquisition::Result result)
   {
-    std::lock_guard<std::recursive_mutex> lock(event_mutex);
-    if (generation != event_generation || !event_connected ||
-      !uas->is_connected() || !uas->is_px4())
+    std::shared_ptr<Decoder> decoder;
     {
-      return;
+      std::lock_guard<std::recursive_mutex> lock(event_mutex);
+      if (generation != event_generation || !event_connected ||
+        !uas->is_connected() || !uas->is_px4())
+      {
+        return;
+      }
+      if (event_start_timer) {
+        event_start_timer->cancel();
+      }
+      if (!result.decoder) {
+        return;
+      }
+      decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
+      event_decoder = decoder;
     }
-    if (event_start_timer) {
-      event_start_timer->cancel();
-    }
-    if (!result.decoder) {
-      return;
-    }
-    event_decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
-    log_skipped_definitions(*event_decoder);
+    log_skipped_definitions(*decoder);
     RCLCPP_INFO(get_logger(), "PX4 event metadata ready; decoded logging enabled");
   }
 
