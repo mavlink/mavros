@@ -179,8 +179,9 @@ TEST_F(Px4EventsTest, unsafe_message_precision_skips_only_the_affected_event)
     ASSERT_TRUE(decoder.load_json(json.dump()).empty());
     EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
     EXPECT_TRUE(decoder.decode(1, 6, arguments));
-    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
-    EXPECT_EQ(decoder.skipped_definitions().at(0x01000001u),
+    const auto skipped = decoder.take_skipped_definitions();
+    ASSERT_EQ(skipped.size(), 1u);
+    EXPECT_EQ(skipped.at(0x01000001u),
       "event message precision must be an integer between 0 and 16");
   }
 }
@@ -664,8 +665,9 @@ TEST_F(Px4EventsTest, unsupported_types_and_oversized_arguments_skip_only_the_af
     EXPECT_FALSE(decoder.decode(0x01000006, 6, arguments));
     EXPECT_TRUE(decoder.decode(0x01000007, 6, arguments));
     EXPECT_TRUE(decoder.decode(1, 6, arguments));
-    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
-    EXPECT_EQ(decoder.skipped_definitions().count(0x01000006u), 1u);
+    const auto skipped = decoder.take_skipped_definitions();
+    ASSERT_EQ(skipped.size(), 1u);
+    EXPECT_EQ(skipped.count(0x01000006u), 1u);
   }
 }
 
@@ -685,8 +687,9 @@ TEST_F(Px4EventsTest, duplicate_ids_are_excluded_even_when_the_first_definition_
     ASSERT_TRUE(decoder.load_json(json.dump()).empty());
     EXPECT_FALSE(decoder.decode(0x01000007, 6, arguments));
     EXPECT_TRUE(decoder.decode(1, 6, arguments));
-    ASSERT_EQ(decoder.skipped_definitions().size(), 1u);
-    EXPECT_EQ(decoder.skipped_definitions().at(0x01000007u),
+    const auto skipped = decoder.take_skipped_definitions();
+    ASSERT_EQ(skipped.size(), 1u);
+    EXPECT_EQ(skipped.at(0x01000007u),
       "duplicate full event ID");
   }
 }
@@ -703,7 +706,7 @@ TEST_F(Px4EventsTest, metadata_without_usable_events_is_rejected)
   EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
 }
 
-TEST_F(Px4EventsTest, skipped_definitions_are_collected_without_callbacks_and_reset_on_reload)
+TEST_F(Px4EventsTest, skipped_definitions_are_consumed_without_callbacks_and_reset_on_reload)
 {
   auto json = nlohmann::json::parse(metadata());
   json["components"]["1"]["event_groups"]["default"]["events"]["1"]["message"] =
@@ -714,17 +717,20 @@ TEST_F(Px4EventsTest, skipped_definitions_are_collected_without_callbacks_and_re
   Decoder reporting_decoder([&reports](uint32_t, const char *) {
       ++reports;
     });
-  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
+  EXPECT_TRUE(reporting_decoder.take_skipped_definitions().empty());
   ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
   EXPECT_EQ(reports, 0);
-  EXPECT_EQ(reporting_decoder.skipped_definitions().size(), 2u);
+  const auto skipped = reporting_decoder.take_skipped_definitions();
+  EXPECT_EQ(skipped.size(), 2u);
+  EXPECT_TRUE(reporting_decoder.take_skipped_definitions().empty());
   EXPECT_FALSE(reporting_decoder.decode(0x01000001, 6, arguments));
   EXPECT_TRUE(reporting_decoder.decode(1, 6, arguments));
+  ASSERT_TRUE(reporting_decoder.load_json(json.dump()).empty());
   ASSERT_TRUE(reporting_decoder.load_json(metadata()).empty());
-  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
+  EXPECT_TRUE(reporting_decoder.take_skipped_definitions().empty());
   EXPECT_TRUE(reporting_decoder.decode(0x01000001, 6, arguments));
   EXPECT_FALSE(reporting_decoder.load_json("invalid JSON").empty());
-  EXPECT_TRUE(reporting_decoder.skipped_definitions().empty());
+  EXPECT_TRUE(reporting_decoder.take_skipped_definitions().empty());
 }
 
 TEST_F(Px4EventsTest, file_and_decompression_limits_are_enforced)

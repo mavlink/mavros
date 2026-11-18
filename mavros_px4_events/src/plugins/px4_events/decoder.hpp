@@ -44,8 +44,8 @@ public:
   static std::string unpack_metadata(std::string_view bytes, bool compressed);
   // Skip unsupported event definitions; a file-level failure leaves decoding inactive.
   std::string load_json(const std::string & json);
-  // Load-time diagnostics; the reference remains valid until metadata is replaced.
-  const std::map<uint32_t, std::string> & skipped_definitions() const;
+  // Consume load-time diagnostics before sharing the decoder with event handlers.
+  std::map<uint32_t, std::string> take_skipped_definitions();
 
   std::optional<DecodedEvent> decode(
     uint32_t full_id, uint8_t log_levels, const std::array<uint8_t, 40> & arguments) const;

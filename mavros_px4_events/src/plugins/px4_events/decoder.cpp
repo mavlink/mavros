@@ -326,10 +326,12 @@ std::string Decoder::load_json(const std::string & json)
   return {};
 }
 
-const std::map<uint32_t, std::string> & Decoder::skipped_definitions() const
+std::map<uint32_t, std::string> Decoder::take_skipped_definitions()
 {
-  static const std::map<uint32_t, std::string> empty;
-  return impl_ ? impl_->skipped_definitions : empty;
+  if (!impl_) {
+    return {};
+  }
+  return std::exchange(impl_->skipped_definitions, {});
 }
 
 void Decoder::report_failure(uint32_t full_id, const char * reason) const noexcept

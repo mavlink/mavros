@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstdint>
 #include <exception>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -85,7 +86,7 @@ public:
       RCLCPP_ERROR(get_logger(),
             "PX4 event decoding inactive: %s; retaining core raw event logging", error.c_str());
     } else {
-      log_skipped_definitions(*event_decoder);
+      log_skipped_definitions(event_decoder->take_skipped_definitions());
     }
     if (mode == "auto" && error.empty()) {
       event_download_delay = download_delay;
@@ -154,9 +155,8 @@ private:
            };
   }
 
-  void log_skipped_definitions(const Decoder & decoder) const
+  void log_skipped_definitions(const std::map<uint32_t, std::string> & skipped) const
   {
-    const auto & skipped = decoder.skipped_definitions();
     if (skipped.empty()) {
       return;
     }
@@ -172,7 +172,7 @@ private:
 
   void event_acquisition_complete(uint64_t generation, Acquisition::Result result)
   {
-    std::shared_ptr<Decoder> decoder;
+    std::map<uint32_t, std::string> skipped;
     {
       std::lock_guard<std::recursive_mutex> lock(event_mutex);
       if (generation != event_generation || !event_connected ||
@@ -186,10 +186,10 @@ private:
       if (!result.decoder) {
         return;
       }
-      decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
-      event_decoder = decoder;
+      skipped = result.decoder->take_skipped_definitions();
+      event_decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
     }
-    log_skipped_definitions(*decoder);
+    log_skipped_definitions(skipped);
     RCLCPP_INFO(get_logger(), "PX4 event metadata ready; decoded logging enabled");
   }
 
