@@ -200,6 +200,7 @@ void Acquisition::tick(Clock::time_point now, bool process_files)
   }
   if (process_files) {
     process_work();
+    now = Clock::now();
   }
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -537,7 +538,7 @@ void Acquisition::process_work()
       std::lock_guard<std::mutex> lock(mutex_);
       // Cancellation may finish this operation and start a newer one during processing.
       if (phase_ != Phase::Processing || work->serial != work_serial_) {
-        return;
+        continue;
       }
       try {
         apply_metadata_locked(*work, std::move(result));

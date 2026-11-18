@@ -121,7 +121,7 @@ public:
 
   static void expire_download(Acquisition & acquisition)
   {
-    acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11));
+    acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11), false);
   }
 };
 
