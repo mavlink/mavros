@@ -170,7 +170,7 @@ void Acquisition::cancel()
     std::lock_guard<std::mutex> lock(mutex_);
     if (phase_ != Phase::Idle) {
       stopping_ = true;
-      stop_uncertain_ = stop_uncertain_ || opened_ || pending_.has_value();
+      stop_uncertain_ = stop_uncertain_ || opened_ || validation_uncertain_ || pending_.has_value();
       retryable_ = false;
       error_ = "metadata acquisition cancelled";
       // Retain an open response to clean up a late success. An existing close
