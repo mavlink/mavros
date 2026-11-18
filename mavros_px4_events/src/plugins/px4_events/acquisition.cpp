@@ -432,6 +432,7 @@ std::optional<Acquisition::MetadataWork> Acquisition::take_work_locked()
   }
   MetadataWork work{++work_serial_, current_, file_, phase_ == Phase::Cache,
     validation_uncertain_, std::move(bytes_)};
+  bytes_.clear();
   phase_ = Phase::Processing;
   return work;
 }
