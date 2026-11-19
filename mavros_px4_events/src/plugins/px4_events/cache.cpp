@@ -45,26 +45,6 @@ const char * role_name(MetadataRole role)
   return role == MetadataRole::General ? "general" : "events";
 }
 
-void validate(const MetadataFile & file, MetadataRole role, std::string_view bytes)
-{
-  const auto location = metadata_file(file.uri, file.crc);
-  const bool compressed = location.ftp_path.size() >= 3 &&
-    location.ftp_path.compare(location.ftp_path.size() - 3, 3, ".xz") == 0;
-  const auto json = Decoder::unpack_metadata(bytes, compressed);
-  if (metadata_crc32(role == MetadataRole::General ? std::string_view(json) : bytes) != file.crc) {
-    throw std::runtime_error("cached metadata checksum mismatch");
-  }
-  if (role == MetadataRole::General) {
-    event_metadata_file(json);
-  } else {
-    Decoder decoder;
-    const auto error = decoder.load_json(json);
-    if (!error.empty()) {
-      throw std::runtime_error(error);
-    }
-  }
-}
-
 // Only our versioned final filenames are eligible for eviction. Temporary
 // files, unrelated files, subdirectories, and symlinks are left alone.
 bool managed_name(const std::string & name)
@@ -188,9 +168,7 @@ std::optional<std::string> MetadataCache::load(const MetadataFile & file, Metada
     {
       return std::nullopt;
     }
-    auto bytes = entry.substr(split + 1);
-    validate(file, role, bytes);
-    return bytes;
+    return entry.substr(split + 1);
   } catch (const std::exception &) {
     return std::nullopt;
   }

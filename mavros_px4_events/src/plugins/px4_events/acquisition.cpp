@@ -437,22 +437,11 @@ std::optional<Acquisition::MetadataWork> Acquisition::take_work_locked()
   return work;
 }
 
-Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
+Acquisition::MetadataResult Acquisition::validate_metadata(
+  const MetadataWork & work, std::string_view bytes) const
 {
   MetadataResult result;
   try {
-    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
-    std::optional<std::string> cached;
-    if (work.lookup) {
-      cached = cache_->load(work.file, role);
-      if (!cached) {
-        result.cache_lookup_missed = true;
-        return result;
-      }
-      RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
-    }
-    const std::string_view bytes = cached ? std::string_view(*cached) :
-      std::string_view(work.bytes);
     const auto & path = work.file.ftp_path;
     const bool compressed = path.size() >= 3 && path.substr(path.size() - 3) == ".xz";
     // General CRC covers uncompressed JSON; event CRC covers transferred bytes.
@@ -472,14 +461,43 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
     } else {
       result.decoder = std::make_unique<Decoder>(report_error_);
       result.error = result.decoder->load_json(json);
-      if (!result.error.empty()) {
-        return result;
-      }
     }
   } catch (const std::exception & ex) {
     result.error = ex.what();
   } catch (...) {
     result.error = "unknown metadata validation exception";
+  }
+  return result;
+}
+
+Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
+{
+  MetadataResult result;
+  try {
+    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+    std::optional<std::string> cached;
+    if (work.lookup) {
+      cached = cache_->load(work.file, role);
+      if (!cached) {
+        result.cache_lookup_missed = true;
+        return result;
+      }
+    }
+    const std::string_view bytes = cached ? std::string_view(*cached) :
+      std::string_view(work.bytes);
+    result = validate_metadata(work, bytes);
+    if (work.lookup && result.error.empty()) {
+      RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
+    }
+  } catch (const std::exception & ex) {
+    result.error = ex.what();
+  } catch (...) {
+    result.error = "unknown metadata validation exception";
+  }
+  if (work.lookup && !result.error.empty()) {
+    // Invalid cached content falls back to FTP without spending retry budget.
+    result = {};
+    result.cache_lookup_missed = true;
   }
   return result;
 }

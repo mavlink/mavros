@@ -32,6 +32,8 @@
 #include <utility>
 #include <vector>
 
+#include <parse/nlohmann/json.hpp>
+
 #include "../src/plugins/px4_events/acquisition.hpp"
 #include "../src/plugins/px4_events/cache.hpp"
 
@@ -74,6 +76,12 @@ public:
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
     return acquisition.phase_ == Acquisition::Phase::Processing &&
            acquisition.work_serial_ == work.serial;
+  }
+
+  static unsigned attempts(Acquisition & acquisition)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.attempts_;
   }
 
   static bool idle(Acquisition & acquisition)
@@ -499,8 +507,12 @@ TEST_F(CachedAcquisitionTest, complete_hit_needs_no_ftp_services_and_leaves_time
   open_service.reset();
   read_service.reset();
   close_service.reset();
+  auto json = nlohmann::json::parse(definitions);
+  json["components"]["0"]["event_groups"]["default"]["events"]["2"] = {
+    {"name", "invalid"}, {"message", "Unsafe {1:.17m}"},
+    {"arguments", {{{"name", "value"}, {"type", "float"}}}}};
   for (const bool compressed : {false, true}) {
-    events = definitions;
+    events = json.dump();
     prepare(compressed);
     seed(true, true);
     start_prepared();
@@ -510,6 +522,7 @@ TEST_F(CachedAcquisitionTest, complete_hit_needs_no_ftp_services_and_leaves_time
     const auto decoded = result->decoder->decode(1, 6, {});
     ASSERT_TRUE(decoded);
     EXPECT_EQ(decoded->text, "Decoded event");
+    EXPECT_EQ(result->decoder->take_skipped_definitions().count(2u), 1u);
     EXPECT_TRUE(opens.empty());
     EXPECT_TRUE(closes.empty());
     EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
@@ -581,20 +594,26 @@ TEST_F(CachedAcquisitionTest, partial_hits_download_only_the_missing_file)
 
 TEST_F(CachedAcquisitionTest, corrupt_entries_are_downloaded_again_without_spending_retry_budget)
 {
-  prepare();
+  prepare(true);
   seed(true, true);
   for (const bool corrupt_general : {true, false}) {
     const std::string prefix = corrupt_general ? "v1-g-" : "v1-e-";
     for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
       if (entry.path().filename().string().compare(0, prefix.size(), prefix) == 0) {
+        std::ifstream input(entry.path(), std::ios::binary);
+        std::string header;
+        ASSERT_TRUE(static_cast<bool>(std::getline(input, header)));
+        input.close();
         std::ofstream broken(entry.path(), std::ios::binary);
-        broken << "corrupt cache";
+        broken << header << '\n' << "corrupt cache";
+        ASSERT_TRUE(broken.good());
       }
     }
     opens.clear();
     start_prepared();
     ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
     EXPECT_TRUE(result->error.empty());
+    EXPECT_EQ(AcquisitionTestPeer::attempts(*acquisition), 1U);
     EXPECT_NE(result->decoder, nullptr);
     EXPECT_EQ(opens, (std::vector<std::string>{corrupt_general ? general_path : event_path}));
     EXPECT_TRUE(AcquisitionTestPeer::idle(*acquisition));
@@ -761,25 +780,53 @@ TEST_F(AcquisitionTest, general_checksum_failure_never_downloads_events)
 
 TEST_F(CachedAcquisitionTest, malformed_or_unsupported_metadata_stops_without_retry)
 {
-  events = "not JSON";
-  start();
-  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
-  EXPECT_EQ(opens.size(), 2U);
-  EXPECT_FALSE(result->error.empty());
-  EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
-  for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
-    EXPECT_EQ(entry.path().filename().string().substr(0, 5), "v1-g-");
+  for (const std::string invalid : {"not JSON", R"({"version":99,"components":{}})",
+      R"({"version":2,"components":{}})"})
+  {
+    SCOPED_TRACE(invalid);
+    for (const bool cached : {false, true}) {
+      SCOPED_TRACE(cached);
+      std::filesystem::remove_all(cache_directory);
+      opens.clear();
+      events = invalid;
+      prepare();
+      if (cached) {
+        // Seed invalid disk content with a matching advertised checksum.
+        seed(true, true);
+      }
+      start_prepared();
+      ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+      EXPECT_EQ(opens, cached ? std::vector<std::string>{event_path} :
+        (std::vector<std::string>{general_path, event_path}));
+      EXPECT_FALSE(result->error.empty());
+      EXPECT_EQ(AcquisitionTestPeer::attempts(*acquisition), 1U);
+      EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
+      if (!cached) {
+        for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
+          EXPECT_EQ(entry.path().filename().string().substr(0, 5), "v1-g-");
+        }
+      }
+    }
   }
-  std::filesystem::remove_all(cache_directory);
-  general = R"({"version":1,"metadataTypes":[{"type":4,"uri":"https://host/events","fileCrc":0}]})";
-  result.reset();
-  opens.clear();
-  ASSERT_TRUE(acquisition->start(metadata_file("mftp://general.json", metadata_crc32(general)),
-    [this](Acquisition::Result value) {result = std::move(value);}));
-  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
-  EXPECT_EQ(opens.size(), 1U);
-  EXPECT_FALSE(result->error.empty());
-  EXPECT_FALSE(std::filesystem::exists(cache_directory));
+  for (const bool cached : {false, true}) {
+    SCOPED_TRACE(cached);
+    std::filesystem::remove_all(cache_directory);
+    general =
+      R"({"version":1,"metadataTypes":[{"type":4,"uri":"https://host/events","fileCrc":0}]})";
+    general_file = metadata_file("mftp://general.json", metadata_crc32(general));
+    if (cached) {
+      seed(true, false);
+    }
+    opens.clear();
+    start_prepared();
+    ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+    EXPECT_EQ(opens, (std::vector<std::string>{general_path}));
+    EXPECT_FALSE(result->error.empty());
+    EXPECT_EQ(AcquisitionTestPeer::attempts(*acquisition), 1U);
+    if (!cached) {
+      EXPECT_FALSE(std::filesystem::exists(cache_directory));
+    }
+  }
 }
 
 TEST_F(AcquisitionTest, unresolved_general_read_or_close_stops_before_event_download)
