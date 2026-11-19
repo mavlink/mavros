@@ -49,12 +49,16 @@ public:
     return acquisition.take_work_locked();
   }
 
-  static auto complete_close_and_take_work(Acquisition & acquisition)
+  static auto complete_close_and_take_work(Acquisition & acquisition, bool timeout = false)
   {
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
-    mavros_msgs::srv::FileClose::Response response;
-    response.success = true;
-    acquisition.close_reply_locked(response);
+    if (timeout) {
+      acquisition.stop_locked("metadata FTP service response timeout", true);
+    } else {
+      mavros_msgs::srv::FileClose::Response response;
+      response.success = true;
+      acquisition.close_reply_locked(response);
+    }
     return acquisition.take_work_locked();
   }
 
@@ -105,7 +109,7 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next - std::chrono::nanoseconds(1));
+    acquisition.tick(next - std::chrono::nanoseconds(1), false);
     return next;
   }
 
@@ -116,12 +120,17 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next);
+    acquisition.tick(next, false);
+    acquisition.process_work();
+    acquisition.deliver();
   }
 
   static void expire_download(Acquisition & acquisition)
   {
+    acquisition.process_work();
     acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11), false);
+    acquisition.process_work();
+    acquisition.deliver();
   }
 };
 
@@ -431,6 +440,42 @@ TEST_F(CachedAcquisitionTest, cancelled_download_work_cannot_save_or_change_a_ne
   EXPECT_EQ(completions, 2U);
   EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
   EXPECT_EQ(cache->load(event_file(), MetadataRole::Events), events);
+}
+
+TEST_F(CachedAcquisitionTest, cancellation_preserves_unresolved_close_during_validation)
+{
+  hold_close = event_path;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  const auto work = AcquisitionTestPeer::complete_close_and_take_work(*acquisition, true);
+  ASSERT_TRUE(work);
+  ASSERT_TRUE(work->uncertain);
+
+  acquisition->cancel();
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->transport_uncertain);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *work));
+}
+
+TEST_F(CachedAcquisitionTest, cached_oversized_events_path_is_not_transport_uncertain)
+{
+  general =
+    "{\"version\":1,\"metadataTypes\":[{\"type\":4,\"uri\":\"mftp://" +
+    std::string(239, 'a') + "\",\"fileCrc\":0}]}";
+  general_file = metadata_file("mftp://general.json", metadata_crc32(general));
+  seed(true, false);
+
+  start_prepared();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+
+  EXPECT_NE(result->error.find("FTP path exceeds supported length"), std::string::npos);
+  EXPECT_FALSE(result->transport_uncertain);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(opens.empty());
+  EXPECT_TRUE(closes.empty());
 }
 
 TEST_F(CachedAcquisitionTest, rooted_fallback_keeps_original_uri_cache_identity)

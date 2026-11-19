@@ -162,7 +162,7 @@ private:
     }
     RCLCPP_WARN(get_logger(),
       "Skipped %zu PX4 event definitions; "
-      "retaining core raw logging for those events."
+      "retaining core raw logging for those events. "
       "Enable mavros.px4_events DEBUG logging for details.", skipped.size());
     for (const auto & [id, reason] : skipped) {
       RCLCPP_DEBUG(get_logger(), "Skipped PX4 event definition ID %u: %s",
