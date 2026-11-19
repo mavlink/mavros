@@ -21,6 +21,8 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "rclcpp/executors.hpp"
 #include "mavconn/interface.hpp"
@@ -504,6 +506,62 @@ TEST_F(TestUAS, tf_default_listens_to_tf)
   EXPECT_TRUE(received.static_frame);
   EXPECT_TRUE(received.dynamic_frame);
   EXPECT_TRUE(has_tf_listener(uas));
+}
+
+TEST_F(TestUAS, px4_mode_strings)
+{
+  auto uas = create_node();
+  testing::Mock::AllowLeak(&(*uas));
+
+  uas->update_heartbeat(
+    utils::enum_value(MAV_TYPE::QUADROTOR), utils::enum_value(MAV_AUTOPILOT::PX4),
+    utils::enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED));
+
+  // PX4 custom_mode layout (src/modules/commander/px4_custom_mode.h):
+  // main_mode in bits 16-23, sub_mode in bits 24-31.
+  auto px4_mode = [](uint32_t main_mode, uint32_t sub_mode) -> uint32_t {
+      return (main_mode << 16) | (sub_mode << 24);
+    };
+
+  const std::vector<std::pair<uint32_t, std::string>> modes{
+    {px4_mode(1, 0), "MANUAL"},
+    {px4_mode(2, 0), "ALTCTL"},
+    {px4_mode(3, 0), "POSCTL"},
+    {px4_mode(3, 1), "POSCTL.ORBIT"},
+    {px4_mode(3, 2), "POSCTL.SLOW"},
+    {px4_mode(4, 1), "AUTO.READY"},
+    {px4_mode(4, 2), "AUTO.TAKEOFF"},
+    {px4_mode(4, 3), "AUTO.LOITER"},
+    {px4_mode(4, 4), "AUTO.MISSION"},
+    {px4_mode(4, 5), "AUTO.RTL"},
+    {px4_mode(4, 6), "AUTO.LAND"},
+    {px4_mode(4, 8), "AUTO.FOLLOW_TARGET"},
+    {px4_mode(4, 9), "AUTO.PRECLAND"},
+    {px4_mode(4, 10), "AUTO.VTOL_TAKEOFF"},
+    {px4_mode(4, 11), "AUTO.EXTERNAL1"},
+    {px4_mode(4, 12), "AUTO.EXTERNAL2"},
+    {px4_mode(4, 13), "AUTO.EXTERNAL3"},
+    {px4_mode(4, 14), "AUTO.EXTERNAL4"},
+    {px4_mode(4, 15), "AUTO.EXTERNAL5"},
+    {px4_mode(4, 16), "AUTO.EXTERNAL6"},
+    {px4_mode(4, 17), "AUTO.EXTERNAL7"},
+    {px4_mode(4, 18), "AUTO.EXTERNAL8"},
+    {px4_mode(4, 19), "AUTO.GUIDED_COURSE"},
+    {px4_mode(5, 0), "ACRO"},
+    {px4_mode(6, 0), "OFFBOARD"},
+    {px4_mode(7, 0), "STABILIZED"},
+    {px4_mode(10, 0), "TERMINATION"},
+    {px4_mode(11, 0), "ALTITUDE_CRUISE"},
+  };
+
+  const uint8_t base_mode = utils::enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
+  for (const auto & mode : modes) {
+    EXPECT_EQ(uas->str_mode_v10(base_mode, mode.first), mode.second);
+
+    uint32_t custom_mode = 0;
+    EXPECT_TRUE(uas->cmode_from_str(mode.second, custom_mode)) << mode.second;
+    EXPECT_EQ(custom_mode, mode.first) << mode.second;
+  }
 }
 
 }  // namespace uas

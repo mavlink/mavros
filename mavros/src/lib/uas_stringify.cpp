@@ -135,9 +135,17 @@ static const cmode_map px4_cmode_map{{
   {px4::define_mode(px4::custom_mode::MAIN_MODE_ACRO), "ACRO"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_ALTCTL), "ALTCTL"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_POSCTL), "POSCTL"},
+  {px4::define_mode(
+      px4::custom_mode::MAIN_MODE_POSCTL,
+      px4::custom_mode::SUB_MODE_POSCTL_ORBIT), "POSCTL.ORBIT"},
+  {px4::define_mode(
+      px4::custom_mode::MAIN_MODE_POSCTL,
+      px4::custom_mode::SUB_MODE_POSCTL_SLOW), "POSCTL.SLOW"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_OFFBOARD), "OFFBOARD"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_STABILIZED), "STABILIZED"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_RATTITUDE), "RATTITUDE"},
+  {px4::define_mode(px4::custom_mode::MAIN_MODE_TERMINATION), "TERMINATION"},
+  {px4::define_mode(px4::custom_mode::MAIN_MODE_ALTITUDE_CRUISE), "ALTITUDE_CRUISE"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_MISSION), "AUTO.MISSION"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_LOITER), "AUTO.LOITER"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_RTL), "AUTO.RTL"},
@@ -147,6 +155,16 @@ static const cmode_map px4_cmode_map{{
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_TAKEOFF), "AUTO.TAKEOFF"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_FOLLOW_TARGET), "AUTO.FOLLOW_TARGET"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_PRECLAND), "AUTO.PRECLAND"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_VTOL_TAKEOFF), "AUTO.VTOL_TAKEOFF"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL1), "AUTO.EXTERNAL1"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL2), "AUTO.EXTERNAL2"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL3), "AUTO.EXTERNAL3"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL4), "AUTO.EXTERNAL4"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL5), "AUTO.EXTERNAL5"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL6), "AUTO.EXTERNAL6"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL7), "AUTO.EXTERNAL7"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL8), "AUTO.EXTERNAL8"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_GUIDED_COURSE), "AUTO.GUIDED_COURSE"},
 }};
 
 // Flix modes
@@ -183,7 +201,9 @@ static inline std::string str_mode_px4(uint32_t custom_mode_int)
 
   // clear fields
   custom_mode.mode.reserved = 0;
-  if (custom_mode.mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
+  if (custom_mode.mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO &&
+    custom_mode.mode.main_mode != px4::custom_mode::MAIN_MODE_POSCTL)
+  {
     RCLCPP_WARN_EXPRESSION(
       rclcpp::get_logger("uas"),
       custom_mode.mode.sub_mode != 0, "PX4: Unknown sub-mode %d.%d",

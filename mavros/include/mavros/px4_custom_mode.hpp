@@ -66,7 +66,10 @@ union custom_mode {
     MAIN_MODE_ACRO,
     MAIN_MODE_OFFBOARD,
     MAIN_MODE_STABILIZED,
-    MAIN_MODE_RATTITUDE
+    MAIN_MODE_RATTITUDE,
+    MAIN_MODE_SIMPLE,  // reserved in PX4, not used
+    MAIN_MODE_TERMINATION,
+    MAIN_MODE_ALTITUDE_CRUISE
   };
 
   enum SUB_MODE_AUTO : uint8_t
@@ -79,7 +82,24 @@ union custom_mode {
     SUB_MODE_AUTO_LAND,
     SUB_MODE_AUTO_RTGS,
     SUB_MODE_AUTO_FOLLOW_TARGET,
-    SUB_MODE_AUTO_PRECLAND
+    SUB_MODE_AUTO_PRECLAND,
+    SUB_MODE_AUTO_VTOL_TAKEOFF,
+    SUB_MODE_AUTO_EXTERNAL1,
+    SUB_MODE_AUTO_EXTERNAL2,
+    SUB_MODE_AUTO_EXTERNAL3,
+    SUB_MODE_AUTO_EXTERNAL4,
+    SUB_MODE_AUTO_EXTERNAL5,
+    SUB_MODE_AUTO_EXTERNAL6,
+    SUB_MODE_AUTO_EXTERNAL7,
+    SUB_MODE_AUTO_EXTERNAL8,
+    SUB_MODE_AUTO_GUIDED_COURSE
+  };
+
+  enum SUB_MODE_POSCTL : uint8_t
+  {
+    SUB_MODE_POSCTL_POSCTL = 0,
+    SUB_MODE_POSCTL_ORBIT,
+    SUB_MODE_POSCTL_SLOW
   };
 
   struct mode_type
@@ -109,7 +129,7 @@ union custom_mode {
  * @brief helper function to define any mode as uint32_t constant
  *
  * @param mm main mode
- * @param sm sub mode (currently used only in auto mode)
+ * @param sm sub mode (used in auto and position control modes)
  * @return uint32_t representation
  */
 constexpr uint32_t define_mode(enum custom_mode::MAIN_MODE mm, uint8_t sm = 0)
