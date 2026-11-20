@@ -702,8 +702,25 @@ TEST_F(Px4EventsTest, metadata_without_usable_events_is_rejected)
   const auto invalid = events["1"];
   events = {{"1", invalid}};
   events["1"]["message"] = "Unsafe {2:.17m}";
-  EXPECT_EQ(decoder.load_json(json.dump()), "metadata contains no event definitions");
-  EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+  for (const bool local : {false, true}) {
+    SCOPED_TRACE(local);
+    if (local) {
+      TemporaryMetadata file(json.dump());
+      EXPECT_EQ(decoder.configure("local", file.path),
+        "metadata contains no valid event definitions");
+    } else {
+      EXPECT_EQ(decoder.load_json(json.dump()), "metadata contains no valid event definitions");
+    }
+    EXPECT_FALSE(decoder.decode(0x01000001, 6, arguments));
+    const auto skipped = decoder.take_skipped_definitions();
+    ASSERT_EQ(skipped.size(), 1u);
+    EXPECT_EQ(skipped.at(0x01000001u),
+      "event message precision must be an integer between 0 and 16");
+    EXPECT_TRUE(decoder.take_skipped_definitions().empty());
+    ASSERT_TRUE(decoder.load_json(metadata()).empty());
+    EXPECT_TRUE(decoder.take_skipped_definitions().empty());
+    EXPECT_TRUE(decoder.decode(0x01000001, 6, arguments));
+  }
 }
 
 TEST_F(Px4EventsTest, skipped_definitions_are_consumed_without_callbacks_and_reset_on_reload)

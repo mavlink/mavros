@@ -461,6 +461,12 @@ Acquisition::MetadataResult Acquisition::validate_metadata(
     } else {
       result.decoder = std::make_unique<Decoder>(report_error_);
       result.error = result.decoder->load_json(json);
+      if (!result.error.empty()) {
+        for (const auto & [id, reason] : result.decoder->take_skipped_definitions()) {
+          RCLCPP_DEBUG(node_->get_logger(), "Skipped PX4 event definition ID %u: %s",
+            static_cast<unsigned int>(id), reason.c_str());
+        }
+      }
     }
   } catch (const std::exception & ex) {
     result.error = ex.what();
@@ -495,6 +501,8 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
     result.error = "unknown metadata validation exception";
   }
   if (work.lookup && !result.error.empty()) {
+    RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache rejected: %s: %s; falling back to FTP",
+      work.file.uri.c_str(), result.error.c_str());
     // Invalid cached content falls back to FTP without spending retry budget.
     result = {};
     result.cache_lookup_missed = true;
