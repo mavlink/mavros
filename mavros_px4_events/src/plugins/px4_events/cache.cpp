@@ -196,11 +196,13 @@ std::optional<std::string> MetadataCache::load(const MetadataFile & file, Metada
   }
 }
 
-std::string MetadataCache::save(
+std::string MetadataCache::save_validated(
   const MetadataFile & file, MetadataRole role, std::string_view bytes) const
 {
   try {
-    validate(file, role, bytes);
+    if (bytes.size() > Decoder::MAX_JSON_BYTES) {
+      throw std::runtime_error("metadata cache payload exceeds size limit");
+    }
     const auto header = nlohmann::json{
       {"version", 1}, {"role", role_name(role)}, {"uri", file.uri}, {"crc", file.crc}}.dump();
     if (header.size() > MAX_HEADER_BYTES) {

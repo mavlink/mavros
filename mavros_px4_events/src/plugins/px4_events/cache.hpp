@@ -38,7 +38,7 @@ public:
   static constexpr int64_t DEFAULT_MAX_BYTES = 16 * 1024 * 1024;
 
   // Empty directory selects $HOME/.cache/mavros/px4_events. No directory is
-  // created until save(). Invalid limits or an unavailable home throw.
+  // created until save_validated(). Invalid limits or an unavailable home throw.
   explicit MetadataCache(
     std::filesystem::path directory = {}, int64_t max_bytes = DEFAULT_MAX_BYTES);
 
@@ -46,9 +46,11 @@ public:
   // Returned bytes retain their original JSON/XZ representation.
   std::optional<std::string> load(const MetadataFile & file, MetadataRole role) const;
 
-  // Revalidate before publication. Empty result means success; errors leave
-  // the caller's in-memory definitions untouched. No interprocess lock.
-  std::string save(const MetadataFile & file, MetadataRole role, std::string_view bytes) const;
+  // The caller must validate these exact bytes against this file identity and
+  // role before publication. Size limits, atomic writing, and eviction remain
+  // enforced here. Empty result means success. No interprocess lock.
+  std::string save_validated(
+    const MetadataFile & file, MetadataRole role, std::string_view bytes) const;
 
 private:
   std::filesystem::path directory_;

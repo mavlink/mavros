@@ -14,42 +14,42 @@
       {
         "name": "event_decoding_mode",
         "type_name": "string",
-        "line": 59,
+        "line": 60,
         "default_value": "\"auto\"",
         "description": "PX4 event logging: auto (default), local, or disabled; changes require restart."
       },
       {
         "name": "event_metadata_file",
         "type_name": "string",
-        "line": 62,
+        "line": 63,
         "default_value": "\"\"",
         "description": "Firmware-matching local JSON or JSON.xz definitions; valid only in local mode."
       },
       {
         "name": "event_metadata_download_delay",
         "type_name": "double",
-        "line": 65,
+        "line": 66,
         "default_value": "30.0",
         "description": "Automatic metadata download delay from FCU connection, in seconds."
       },
       {
         "name": "event_metadata_cache_enabled",
         "type_name": "bool",
-        "line": 68,
+        "line": 69,
         "default_value": "true",
         "description": "Reuse validated persistent definitions in automatic mode."
       },
       {
         "name": "event_metadata_cache_dir",
         "type_name": "string",
-        "line": 71,
+        "line": 72,
         "default_value": "\"\"",
         "description": "Empty selects $HOME/.cache/mavros/px4_events; otherwise use this directory."
       },
       {
         "name": "event_metadata_cache_max_bytes",
         "type_name": "integer",
-        "line": 74,
+        "line": 75,
         "default_value": "MetadataCache::DEFAULT_MAX_BYTES",
         "description": "Best-effort finalized cache size limit; nonpositive values disable persistence."
       }
@@ -61,7 +61,7 @@
         "message_name": "EVENT",
         "msg_id_expr": "mavlink::common::msg::EVENT::MSG_ID",
         "dialect": "common",
-        "line": 312,
+        "line": 335,
         "msg_id": 410
       },
       {
@@ -70,7 +70,7 @@
         "message_name": "COMPONENT_METADATA",
         "msg_id_expr": "mavlink::common::msg::COMPONENT_METADATA::MSG_ID",
         "dialect": "common",
-        "line": 282,
+        "line": 305,
         "msg_id": 397
       },
       {
@@ -79,7 +79,7 @@
         "message_name": "COMPONENT_INFORMATION",
         "msg_id_expr": "mavlink::common::msg::COMPONENT_INFORMATION::MSG_ID",
         "dialect": "common",
-        "line": 296,
+        "line": 319,
         "msg_id": 395
       }
     ],

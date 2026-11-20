@@ -43,6 +43,39 @@ namespace px4_events
 class AcquisitionTestPeer
 {
 public:
+  static auto take_work(Acquisition & acquisition)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.take_work_locked();
+  }
+
+  static auto complete_close_and_take_work(Acquisition & acquisition, bool timeout = false)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    if (timeout) {
+      acquisition.stop_locked("metadata FTP service response timeout", true);
+    } else {
+      mavros_msgs::srv::FileClose::Response response;
+      response.success = true;
+      acquisition.close_reply_locked(response);
+    }
+    return acquisition.take_work_locked();
+  }
+
+  static bool complete_work(Acquisition & acquisition, const Acquisition::MetadataWork & work)
+  {
+    auto result = acquisition.process_metadata(work);
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.apply_metadata_locked(work, std::move(result));
+  }
+
+  static bool processing(Acquisition & acquisition, const Acquisition::MetadataWork & work)
+  {
+    std::lock_guard<std::mutex> lock(acquisition.mutex_);
+    return acquisition.phase_ == Acquisition::Phase::Processing &&
+           acquisition.work_serial_ == work.serial;
+  }
+
   static bool idle(Acquisition & acquisition)
   {
     std::lock_guard<std::mutex> lock(acquisition.mutex_);
@@ -76,7 +109,7 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next - std::chrono::nanoseconds(1));
+    acquisition.tick(next - std::chrono::nanoseconds(1), false);
     return next;
   }
 
@@ -87,12 +120,17 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next);
+    acquisition.tick(next, false);
+    acquisition.process_work();
+    acquisition.deliver();
   }
 
   static void expire_download(Acquisition & acquisition)
   {
-    acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11));
+    acquisition.process_work();
+    acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11), false);
+    acquisition.process_work();
+    acquisition.deliver();
   }
 };
 
@@ -338,13 +376,107 @@ protected:
   void seed(bool with_general, bool with_events)
   {
     if (with_general) {
-      ASSERT_TRUE(cache->save(general_file, MetadataRole::General, general).empty());
+      ASSERT_TRUE(cache->save_validated(general_file, MetadataRole::General, general).empty());
     }
     if (with_events) {
-      ASSERT_TRUE(cache->save(event_file(), MetadataRole::Events, events).empty());
+      ASSERT_TRUE(cache->save_validated(event_file(), MetadataRole::Events, events).empty());
     }
   }
 };
+
+TEST_F(CachedAcquisitionTest, cancelled_metadata_work_cannot_change_a_new_acquisition)
+{
+  prepare();
+  seed(true, true);
+  start_prepared();
+  const auto old_work = AcquisitionTestPeer::take_work(*acquisition);
+  ASSERT_TRUE(old_work);
+  acquisition->cancel();
+  ASSERT_TRUE(result);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  EXPECT_EQ(completions, 1U);
+
+  start_prepared();
+  const auto new_work = AcquisitionTestPeer::take_work(*acquisition);
+  ASSERT_TRUE(new_work);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *old_work));
+  EXPECT_FALSE(result);
+  EXPECT_EQ(completions, 1U);
+  EXPECT_TRUE(AcquisitionTestPeer::processing(*acquisition, *new_work));
+  ASSERT_TRUE(AcquisitionTestPeer::complete_work(*acquisition, *new_work));
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_EQ(completions, 2U);
+  EXPECT_TRUE(result->error.empty());
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_TRUE(opens.empty());
+}
+
+TEST_F(CachedAcquisitionTest, cancelled_download_work_cannot_save_or_change_a_new_acquisition)
+{
+  prepare();
+  hold_close = general_path;
+  start_prepared();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  const auto old_work = AcquisitionTestPeer::complete_close_and_take_work(*acquisition);
+  ASSERT_TRUE(old_work);
+  acquisition->cancel();
+  ASSERT_TRUE(result);
+  EXPECT_EQ(completions, 1U);
+
+  start_prepared();
+  const auto new_work = AcquisitionTestPeer::take_work(*acquisition);
+  ASSERT_TRUE(new_work);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *old_work));
+  EXPECT_TRUE(std::filesystem::is_empty(cache_directory));
+  EXPECT_FALSE(result);
+  EXPECT_EQ(completions, 1U);
+  EXPECT_TRUE(AcquisitionTestPeer::processing(*acquisition, *new_work));
+
+  hold_close.clear();
+  ASSERT_TRUE(AcquisitionTestPeer::complete_work(*acquisition, *new_work));
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+  EXPECT_TRUE(result->error.empty());
+  EXPECT_NE(result->decoder, nullptr);
+  EXPECT_EQ(completions, 2U);
+  EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
+  EXPECT_EQ(cache->load(event_file(), MetadataRole::Events), events);
+}
+
+TEST_F(CachedAcquisitionTest, cancellation_preserves_unresolved_close_during_validation)
+{
+  hold_close = event_path;
+  start();
+  ASSERT_TRUE(spin_until([this]() {return held_header != nullptr;}));
+  const auto work = AcquisitionTestPeer::complete_close_and_take_work(*acquisition, true);
+  ASSERT_TRUE(work);
+  ASSERT_TRUE(work->uncertain);
+
+  acquisition->cancel();
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->transport_uncertain);
+  EXPECT_NE(result->error.find("cancelled"), std::string::npos);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_FALSE(AcquisitionTestPeer::complete_work(*acquisition, *work));
+}
+
+TEST_F(CachedAcquisitionTest, cached_oversized_events_path_is_not_transport_uncertain)
+{
+  general =
+    "{\"version\":1,\"metadataTypes\":[{\"type\":4,\"uri\":\"mftp://" +
+    std::string(239, 'a') + "\",\"fileCrc\":0}]}";
+  general_file = metadata_file("mftp://general.json", metadata_crc32(general));
+  seed(true, false);
+
+  start_prepared();
+  ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
+
+  EXPECT_NE(result->error.find("FTP path exceeds supported length"), std::string::npos);
+  EXPECT_FALSE(result->transport_uncertain);
+  EXPECT_EQ(result->decoder, nullptr);
+  EXPECT_TRUE(opens.empty());
+  EXPECT_TRUE(closes.empty());
+}
 
 TEST_F(CachedAcquisitionTest, rooted_fallback_keeps_original_uri_cache_identity)
 {
@@ -506,8 +638,8 @@ TEST_F(CachedAcquisitionTest, whole_attempt_retry_rechecks_entries_saved_by_anot
   start();
   ASSERT_TRUE(spin_until([this]() {return AcquisitionTestPeer::waiting_retry(*acquisition);}));
   MetadataCache other_instance(cache_directory);
-  ASSERT_TRUE(other_instance.save(general_file, MetadataRole::General, general).empty());
-  ASSERT_TRUE(other_instance.save(event_file(), MetadataRole::Events, events).empty());
+  ASSERT_TRUE(other_instance.save_validated(general_file, MetadataRole::General, general).empty());
+  ASSERT_TRUE(other_instance.save_validated(event_file(), MetadataRole::Events, events).empty());
   AcquisitionTestPeer::retry(*acquisition);
   ASSERT_TRUE(result);
   EXPECT_TRUE(result->error.empty());
@@ -627,13 +759,18 @@ TEST_F(AcquisitionTest, general_checksum_failure_never_downloads_events)
   EXPECT_EQ(opens, (std::vector<std::string>{general_path, general_path, general_path}));
 }
 
-TEST_F(AcquisitionTest, malformed_or_unsupported_metadata_stops_without_retry)
+TEST_F(CachedAcquisitionTest, malformed_or_unsupported_metadata_stops_without_retry)
 {
   events = "not JSON";
   start();
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(opens.size(), 2U);
   EXPECT_FALSE(result->error.empty());
+  EXPECT_EQ(cache->load(general_file, MetadataRole::General), general);
+  for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
+    EXPECT_EQ(entry.path().filename().string().substr(0, 5), "v1-g-");
+  }
+  std::filesystem::remove_all(cache_directory);
   general = R"({"version":1,"metadataTypes":[{"type":4,"uri":"https://host/events","fileCrc":0}]})";
   result.reset();
   opens.clear();
@@ -642,6 +779,7 @@ TEST_F(AcquisitionTest, malformed_or_unsupported_metadata_stops_without_retry)
   ASSERT_TRUE(spin_until([this]() {return result.has_value();}));
   EXPECT_EQ(opens.size(), 1U);
   EXPECT_FALSE(result->error.empty());
+  EXPECT_FALSE(std::filesystem::exists(cache_directory));
 }
 
 TEST_F(AcquisitionTest, unresolved_general_read_or_close_stops_before_event_download)

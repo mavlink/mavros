@@ -245,14 +245,14 @@ struct Decoder::Impl
           const auto id = (namespace_id << 24) | metadata_id(entry.key(), 0x00ffffff);
           if (!seen_ids.insert(id).second) {
             definitions.erase(id);
-            skipped_definitions[id] = "skipping event definition: duplicate full event ID";
+            skipped_definitions[id] = "duplicate full event ID";
             continue;
           }
           events::EventType event{};
           event.id = id;
           const auto parsed = parser.parse(event);
           if (!parsed) {
-            skipped_definitions[id] = "skipping event definition: unsupported argument types";
+            skipped_definitions[id] = "unsupported argument types";
             continue;
           }
           EventDefinition definition{};
@@ -280,7 +280,7 @@ struct Decoder::Impl
             error = validate_message_precision(definition.message);
           }
           if (!error.empty()) {
-            skipped_definitions[id] = "skipping event definition: " + error;
+            skipped_definitions[id] = std::move(error);
             continue;
           }
           definition.message = with_unprinted_arguments(definition, config);
@@ -323,11 +323,15 @@ std::string Decoder::load_json(const std::string & json)
   } catch (...) {
     return "unknown event metadata loading exception";
   }
-  const auto skipped = std::move(impl_->skipped_definitions);
-  for (const auto & entry : skipped) {
-    report_failure(entry.first, entry.second.c_str());
-  }
   return {};
+}
+
+std::map<uint32_t, std::string> Decoder::take_skipped_definitions()
+{
+  if (!impl_) {
+    return {};
+  }
+  return std::exchange(impl_->skipped_definitions, {});
 }
 
 void Decoder::report_failure(uint32_t full_id, const char * reason) const noexcept
