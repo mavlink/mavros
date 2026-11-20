@@ -67,8 +67,7 @@ public:
   static bool complete_work(Acquisition & acquisition, const Acquisition::MetadataWork & work)
   {
     auto result = acquisition.process_metadata(work);
-    std::lock_guard<std::mutex> lock(acquisition.mutex_);
-    return acquisition.apply_metadata_locked(work, std::move(result));
+    return acquisition.apply_metadata(work, std::move(result));
   }
 
   static bool processing(Acquisition & acquisition, const Acquisition::MetadataWork & work)
@@ -419,7 +418,7 @@ TEST_F(CachedAcquisitionTest, cancelled_metadata_work_cannot_change_a_new_acquis
   EXPECT_TRUE(opens.empty());
 }
 
-TEST_F(CachedAcquisitionTest, cancelled_download_work_cannot_save_or_change_a_new_acquisition)
+TEST_F(CachedAcquisitionTest, download_cancelled_before_save_cannot_write_or_change_new_acquisition)
 {
   prepare();
   hold_close = general_path;

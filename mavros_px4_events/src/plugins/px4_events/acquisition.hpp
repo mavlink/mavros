@@ -120,8 +120,9 @@ private:
   std::optional<MetadataWork> take_work_locked();
   MetadataResult validate_metadata(const MetadataWork & work, std::string_view bytes) const;
   MetadataResult process_metadata(const MetadataWork & work) const;
+  // Owns mutex_, releasing it for cache I/O and rechecking staleness afterward.
   // False rejects stale work; true means current work was handled, not necessarily successful.
-  bool apply_metadata_locked(const MetadataWork & work, MetadataResult result);
+  bool apply_metadata(const MetadataWork & work, MetadataResult result);
   void process_work();
   void clear_pending_locked();
   void fail_locked(
