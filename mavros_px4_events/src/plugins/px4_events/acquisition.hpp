@@ -68,6 +68,7 @@ public:
 private:
   friend class AcquisitionTestPeer;
   using Clock = std::chrono::steady_clock;
+  using ReadClock = std::function<Clock::time_point()>;
   using Open = mavros_msgs::srv::FileOpen;
   using Read = mavros_msgs::srv::FileRead;
   using Close = mavros_msgs::srv::FileClose;
@@ -101,7 +102,7 @@ private:
     const rclcpp::Node::SharedPtr & node, Decoder::ErrorCallback report_error,
     std::shared_ptr<const MetadataCache> cache);
   void initialize();
-  void tick(Clock::time_point now, bool process_files = true);
+  void tick(const ReadClock & read_clock, bool process_files = true);
   // State helpers require mutex_; metadata processing and the owner callback do not.
   void begin_file_locked(const MetadataFile & file);
   void begin_download_locked();

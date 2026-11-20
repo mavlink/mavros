@@ -116,7 +116,7 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next - std::chrono::nanoseconds(1), false);
+    acquisition.tick([next]() {return next - std::chrono::nanoseconds(1);});
     return next;
   }
 
@@ -127,17 +127,28 @@ public:
       std::lock_guard<std::mutex> lock(acquisition.mutex_);
       next = acquisition.next_request_;
     }
-    acquisition.tick(next, false);
-    acquisition.process_work();
-    acquisition.deliver();
+    acquisition.tick([next]() {return next;});
   }
 
   static void expire_download(Acquisition & acquisition)
   {
-    acquisition.process_work();
-    acquisition.tick(Acquisition::Clock::now() + std::chrono::seconds(11), false);
-    acquisition.process_work();
-    acquisition.deliver();
+    const auto expired = Acquisition::Clock::now() + std::chrono::seconds(11);
+    acquisition.tick([expired]() {return expired;});
+  }
+
+  static unsigned expire_after_processing(Acquisition & acquisition)
+  {
+    Acquisition::Clock::time_point deadline;
+    {
+      std::lock_guard<std::mutex> lock(acquisition.mutex_);
+      deadline = acquisition.deadline_;
+    }
+    unsigned reads = 0;
+    acquisition.tick([&]() {
+        ++reads;
+        return reads == 1 ? deadline - std::chrono::nanoseconds(1) : deadline;
+      });
+    return reads;
   }
 };
 
@@ -1304,7 +1315,8 @@ TEST(AcquisitionAvailability, unavailable_services_finish_without_opening)
   ASSERT_TRUE(acquisition->start(metadata_file("mftp://general.json", 0),
     [&result](Acquisition::Result value) {result = std::move(value);}));
   EXPECT_FALSE(result);
-  AcquisitionTestPeer::expire_download(*acquisition);
+  // The deadline expires only on the clock read after metadata processing.
+  EXPECT_EQ(AcquisitionTestPeer::expire_after_processing(*acquisition), 2U);
   ASSERT_TRUE(result);
   EXPECT_NE(result->error.find("services unavailable"), std::string::npos);
   EXPECT_FALSE(result->transport_uncertain);

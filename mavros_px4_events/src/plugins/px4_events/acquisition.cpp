@@ -59,7 +59,7 @@ void Acquisition::initialize()
   const std::weak_ptr<Acquisition> weak = shared_from_this();
   timer_ = node_->create_wall_timer(std::chrono::milliseconds(250), [weak]() {
         if (const auto self = weak.lock()) {
-          self->tick(Clock::now());
+          self->tick(Clock::now);
         }
     }, group_);
   timer_->cancel();
@@ -115,7 +115,7 @@ bool Acquisition::start(const MetadataFile & general, Callback callback, bool do
   // Cache access belongs to the acquisition callback group, not the caller's
   // advertisement handler. The inline tick only performs immediate FTP dispatch.
   if (!cache_) {
-    tick(Clock::now(), false);
+    tick(Clock::now, false);
   } else if (setup_failed) {
     deliver();
   }
@@ -183,8 +183,9 @@ void Acquisition::cancel()
   deliver();
 }
 
-void Acquisition::tick(Clock::time_point now, bool process_files)
+void Acquisition::tick(const ReadClock & read_clock, bool process_files)
 {
+  auto now = read_clock();
   {
     std::lock_guard<std::mutex> lock(mutex_);
     try {
@@ -200,7 +201,7 @@ void Acquisition::tick(Clock::time_point now, bool process_files)
   }
   if (process_files) {
     process_work();
-    now = Clock::now();
+    now = read_clock();
   }
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -479,26 +480,20 @@ Acquisition::MetadataResult Acquisition::validate_metadata(
 Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
 {
   MetadataResult result;
-  try {
-    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
-    std::optional<std::string> cached;
-    if (work.lookup) {
-      cached = cache_->load(work.file, role);
-      if (!cached) {
-        result.cache_lookup_missed = true;
-        return result;
-      }
+  const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+  std::optional<std::string> cached;
+  if (work.lookup) {
+    cached = cache_->load(work.file, role);
+    if (!cached) {
+      result.cache_lookup_missed = true;
+      return result;
     }
-    const std::string_view bytes = cached ? std::string_view(*cached) :
-      std::string_view(work.bytes);
-    result = validate_metadata(work, bytes);
-    if (work.lookup && result.error.empty()) {
-      RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
-    }
-  } catch (const std::exception & ex) {
-    result.error = ex.what();
-  } catch (...) {
-    result.error = "unknown metadata validation exception";
+  }
+  const std::string_view bytes = cached ? std::string_view(*cached) :
+    std::string_view(work.bytes);
+  result = validate_metadata(work, bytes);
+  if (work.lookup && result.error.empty()) {
+    RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
   }
   if (work.lookup && !result.error.empty()) {
     RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache rejected: %s: %s; falling back to FTP",
