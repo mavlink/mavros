@@ -82,6 +82,7 @@ public:
       error = "event_metadata_download_delay must be finite and nonnegative";
     }
     if (!error.empty()) {
+      log_skipped_definitions(event_decoder->take_skipped_definitions(), false);
       event_decoder.reset();
       RCLCPP_ERROR(get_logger(),
             "PX4 event decoding inactive: %s; retaining core raw event logging", error.c_str());
@@ -155,15 +156,18 @@ private:
            };
   }
 
-  void log_skipped_definitions(const std::map<uint32_t, std::string> & skipped) const
+  void log_skipped_definitions(
+    const std::map<uint32_t, std::string> & skipped, bool summarize = true) const
   {
     if (skipped.empty()) {
       return;
     }
-    RCLCPP_WARN(get_logger(),
-      "Skipped %zu PX4 event definitions; "
-      "retaining core raw logging for those events. "
-      "Enable mavros.px4_events DEBUG logging for details.", skipped.size());
+    if (summarize) {
+      RCLCPP_WARN(get_logger(),
+        "Skipped %zu PX4 event definitions; "
+        "retaining core raw logging for those events. "
+        "Enable %s DEBUG logging for details.", skipped.size(), get_logger().get_name());
+    }
     for (const auto & [id, reason] : skipped) {
       RCLCPP_DEBUG(get_logger(), "Skipped PX4 event definition ID %u: %s",
         static_cast<unsigned int>(id), reason.c_str());
@@ -190,7 +194,7 @@ private:
       event_decoder = std::shared_ptr<Decoder>(std::move(result.decoder));
     }
     log_skipped_definitions(skipped);
-    RCLCPP_INFO(get_logger(), "PX4 event metadata ready; decoded logging enabled");
+    RCLCPP_INFO(get_logger(), "Loaded PX4 event metadata");
   }
 
   // event_mutex serializes start with disconnect/cancel; no intermediate result queue.

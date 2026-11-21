@@ -59,7 +59,7 @@ void Acquisition::initialize()
   const std::weak_ptr<Acquisition> weak = shared_from_this();
   timer_ = node_->create_wall_timer(std::chrono::milliseconds(250), [weak]() {
         if (const auto self = weak.lock()) {
-          self->tick(Clock::now());
+          self->tick(Clock::now);
         }
     }, group_);
   timer_->cancel();
@@ -115,7 +115,7 @@ bool Acquisition::start(const MetadataFile & general, Callback callback, bool do
   // Cache access belongs to the acquisition callback group, not the caller's
   // advertisement handler. The inline tick only performs immediate FTP dispatch.
   if (!cache_) {
-    tick(Clock::now(), false);
+    tick(Clock::now, false);
   } else if (setup_failed) {
     deliver();
   }
@@ -183,8 +183,9 @@ void Acquisition::cancel()
   deliver();
 }
 
-void Acquisition::tick(Clock::time_point now, bool process_files)
+void Acquisition::tick(const ReadClock & read_clock, bool process_files)
 {
+  auto now = read_clock();
   {
     std::lock_guard<std::mutex> lock(mutex_);
     try {
@@ -200,7 +201,7 @@ void Acquisition::tick(Clock::time_point now, bool process_files)
   }
   if (process_files) {
     process_work();
-    now = Clock::now();
+    now = read_clock();
   }
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -437,22 +438,11 @@ std::optional<Acquisition::MetadataWork> Acquisition::take_work_locked()
   return work;
 }
 
-Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
+Acquisition::MetadataResult Acquisition::validate_metadata(
+  const MetadataWork & work, std::string_view bytes) const
 {
   MetadataResult result;
   try {
-    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
-    std::optional<std::string> cached;
-    if (work.lookup) {
-      cached = cache_->load(work.file, role);
-      if (!cached) {
-        result.cache_lookup_missed = true;
-        return result;
-      }
-      RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
-    }
-    const std::string_view bytes = cached ? std::string_view(*cached) :
-      std::string_view(work.bytes);
     const auto & path = work.file.ftp_path;
     const bool compressed = path.size() >= 3 && path.substr(path.size() - 3) == ".xz";
     // General CRC covers uncompressed JSON; event CRC covers transferred bytes.
@@ -473,7 +463,10 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
       result.decoder = std::make_unique<Decoder>(report_error_);
       result.error = result.decoder->load_json(json);
       if (!result.error.empty()) {
-        return result;
+        for (const auto & [id, reason] : result.decoder->take_skipped_definitions()) {
+          RCLCPP_DEBUG(node_->get_logger(), "Skipped PX4 event definition ID %u: %s",
+            static_cast<unsigned int>(id), reason.c_str());
+        }
       }
     }
   } catch (const std::exception & ex) {
@@ -484,34 +477,86 @@ Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & w
   return result;
 }
 
-bool Acquisition::apply_metadata_locked(const MetadataWork & work, MetadataResult result)
+Acquisition::MetadataResult Acquisition::process_metadata(const MetadataWork & work) const
 {
+  MetadataResult result;
+  const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+  std::optional<std::string> cached;
+  if (work.lookup) {
+    cached = cache_->load(work.file, role);
+    if (!cached) {
+      result.cache_lookup_missed = true;
+      return result;
+    }
+  }
+  const std::string_view bytes = cached ? std::string_view(*cached) :
+    std::string_view(work.bytes);
+  result = validate_metadata(work, bytes);
+  if (work.lookup && result.error.empty()) {
+    RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache hit: %s", work.file.uri.c_str());
+  }
+  if (work.lookup && !result.error.empty()) {
+    RCLCPP_DEBUG(node_->get_logger(), "PX4 metadata cache rejected: %s: %s; falling back to FTP",
+      work.file.uri.c_str(), result.error.c_str());
+    // Invalid cached content falls back to FTP without spending retry budget.
+    result = {};
+    result.cache_lookup_missed = true;
+  }
+  return result;
+}
+
+bool Acquisition::apply_metadata(const MetadataWork & work, MetadataResult result)
+{
+  std::unique_lock<std::mutex> lock(mutex_);
   if (phase_ != Phase::Processing || work.serial != work_serial_) {
     return false;
   }
-  if (result.cache_lookup_missed) {
-    // End this cache lookup; downloaded bytes return later as separate validation work.
-    begin_download_locked();
-    return true;
-  }
-  if (!result.error.empty()) {
-    fail_locked(result.error, result.retryable, work.uncertain, Clock::now());
-    return true;
-  }
-  // Serialize publication with cancellation; content validation is already complete.
-  if (cache_ && !work.lookup) {
-    const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
-    const auto error = cache_->save_validated(work.file, role, work.bytes);
-    if (!error.empty()) {
-      RCLCPP_WARN(node_->get_logger(),
-        "PX4 metadata cache save failed: %s; retaining validated metadata", error.c_str());
+  try {
+    if (result.cache_lookup_missed) {
+      // End this cache lookup; downloaded bytes return later as separate validation work.
+      begin_download_locked();
+      return true;
     }
-  }
-  if (work.role == File::General) {
-    file_ = File::Events;
-    begin_file_locked(*result.events);
-  } else {
-    finish_locked({std::move(result.decoder), {}, work.uncertain});
+    if (!result.error.empty()) {
+      fail_locked(result.error, result.retryable, work.uncertain, Clock::now());
+      return true;
+    }
+    if (cache_ && !work.lookup) {
+      const auto role = work.role == File::General ? MetadataRole::General : MetadataRole::Events;
+      // A started save may finish after cancellation, but must not apply stale results.
+      lock.unlock();
+      const auto error = cache_->save_validated(work.file, role, work.bytes);
+      lock.lock();
+      if (phase_ != Phase::Processing || work.serial != work_serial_) {
+        return false;
+      }
+      if (!error.empty()) {
+        RCLCPP_WARN(node_->get_logger(),
+          "PX4 metadata cache save failed: %s; retaining validated metadata", error.c_str());
+      }
+    }
+    if (work.role == File::General) {
+      file_ = File::Events;
+      begin_file_locked(*result.events);
+    } else {
+      finish_locked({std::move(result.decoder), {}, work.uncertain});
+    }
+  } catch (const std::exception & ex) {
+    if (!lock.owns_lock()) {
+      lock.lock();
+    }
+    if (phase_ != Phase::Processing || work.serial != work_serial_) {
+      return false;
+    }
+    fail_locked(ex.what(), false, work.uncertain, Clock::now());
+  } catch (...) {
+    if (!lock.owns_lock()) {
+      lock.lock();
+    }
+    if (phase_ != Phase::Processing || work.serial != work_serial_) {
+      return false;
+    }
+    fail_locked("unknown metadata validation exception", false, work.uncertain, Clock::now());
   }
   return true;
 }
@@ -536,18 +581,8 @@ void Acquisition::process_work()
       return;
     }
     auto result = process_metadata(*work);
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      try {
-        // Cancellation may finish this operation and start a newer one during processing.
-        if (!apply_metadata_locked(*work, std::move(result))) {
-          continue;
-        }
-      } catch (const std::exception & ex) {
-        fail_locked(ex.what(), false, work->uncertain, Clock::now());
-      } catch (...) {
-        fail_locked("unknown metadata validation exception", false, work->uncertain, Clock::now());
-      }
+    if (!apply_metadata(*work, std::move(result))) {
+      continue;
     }
   }
 }

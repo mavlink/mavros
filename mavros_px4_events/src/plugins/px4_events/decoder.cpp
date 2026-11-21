@@ -288,9 +288,6 @@ struct Decoder::Impl
         }
       }
     }
-    if (definitions.empty()) {
-      throw std::runtime_error("metadata contains no event definitions");
-    }
   }
 };
 
@@ -318,6 +315,9 @@ std::string Decoder::load_json(const std::string & json)
       throw std::runtime_error("metadata exceeds JSON size limit");
     }
     impl_ = std::make_unique<Impl>(json);
+    if (impl_->definitions.empty()) {
+      return "metadata contains no valid event definitions";
+    }
   } catch (const std::exception & ex) {
     return ex.what();
   } catch (...) {

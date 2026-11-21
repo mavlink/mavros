@@ -142,33 +142,7 @@ TEST_F(MetadataCacheTest, general_and_event_files_round_trip_with_role_specific_
   }
 }
 
-TEST_F(MetadataCacheTest, skipped_event_definitions_do_not_prevent_cache_round_trip)
-{
-  auto json = nlohmann::json::parse(events);
-  auto & definitions = json["components"]["0"]["event_groups"]["default"]["events"];
-  definitions["2"] = {{"name", "invalid"}, {"message", "Unsafe {1:.17m}"},
-    {"arguments", {{{"name", "value"}, {"type", "float"}}}}};
-  MetadataCache cache(directory);
-  for (const bool compressed : {false, true}) {
-    const auto bytes = compressed ? compress(json.dump()) : json.dump();
-    const auto file = metadata_file(compressed ? "mftp://mixed.json.xz" : "mftp://mixed.json",
-            metadata_crc32(bytes));
-    ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, bytes).empty());
-    EXPECT_EQ(cache.load(file, MetadataRole::Events), bytes);
-    auto changed = file;
-    ++changed.crc;
-    EXPECT_FALSE(cache.load(changed, MetadataRole::Events));
-  }
-
-  definitions.erase("1");
-  const auto unusable = json.dump();
-  const auto file = metadata_file("mftp://unusable.json", metadata_crc32(unusable));
-  // Deliberately bypass the writer's precondition to simulate invalid disk content.
-  ASSERT_TRUE(cache.save_validated(file, MetadataRole::Events, unusable).empty());
-  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
-}
-
-TEST_F(MetadataCacheTest, corrupt_truncated_and_forged_identity_entries_are_misses)
+TEST_F(MetadataCacheTest, invalid_headers_and_forged_identity_entries_are_misses)
 {
   MetadataCache cache(directory);
   const auto file = event_file();
@@ -179,15 +153,14 @@ TEST_F(MetadataCacheTest, corrupt_truncated_and_forged_identity_entries_are_miss
     fs::status(path).permissions() & (fs::perms::group_all | fs::perms::others_all),
     fs::perms::none);
   const auto original = read(path);
-  auto corrupt = original;
-  corrupt.back() ^= 1;
-  write(path, corrupt);
-  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
-  write(path, original.substr(0, original.size() - 1));
-  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
-
   const auto split = original.find('\n');
+  write(path, original.substr(0, split));  // Truncated header with no separator.
+  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
   auto header = nlohmann::json::parse(original.substr(0, split));
+  header["version"] = 2;
+  write(path, header.dump() + original.substr(split));
+  EXPECT_FALSE(cache.load(file, MetadataRole::Events));
+  header["version"] = 1;
   header["uri"] = "mftp://another-vehicle.json";
   write(path, header.dump() + original.substr(split));
   EXPECT_FALSE(cache.load(file, MetadataRole::Events));

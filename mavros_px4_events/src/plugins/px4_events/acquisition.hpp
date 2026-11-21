@@ -22,6 +22,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "decoder.hpp"
 #include "metadata.hpp"
@@ -67,6 +68,7 @@ public:
 private:
   friend class AcquisitionTestPeer;
   using Clock = std::chrono::steady_clock;
+  using ReadClock = std::function<Clock::time_point()>;
   using Open = mavros_msgs::srv::FileOpen;
   using Read = mavros_msgs::srv::FileRead;
   using Close = mavros_msgs::srv::FileClose;
@@ -100,7 +102,7 @@ private:
     const rclcpp::Node::SharedPtr & node, Decoder::ErrorCallback report_error,
     std::shared_ptr<const MetadataCache> cache);
   void initialize();
-  void tick(Clock::time_point now, bool process_files = true);
+  void tick(const ReadClock & read_clock, bool process_files = true);
   // State helpers require mutex_; metadata processing and the owner callback do not.
   void begin_file_locked(const MetadataFile & file);
   void begin_download_locked();
@@ -117,9 +119,11 @@ private:
   void stop_locked(const std::string & reason, bool uncertain);
   void file_finished_locked(const std::string & close_error = "", bool uncertain = false);
   std::optional<MetadataWork> take_work_locked();
+  MetadataResult validate_metadata(const MetadataWork & work, std::string_view bytes) const;
   MetadataResult process_metadata(const MetadataWork & work) const;
+  // Owns mutex_, releasing it for cache I/O and rechecking staleness afterward.
   // False rejects stale work; true means current work was handled, not necessarily successful.
-  bool apply_metadata_locked(const MetadataWork & work, MetadataResult result);
+  bool apply_metadata(const MetadataWork & work, MetadataResult result);
   void process_work();
   void clear_pending_locked();
   void fail_locked(

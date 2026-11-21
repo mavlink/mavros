@@ -42,8 +42,9 @@ public:
   explicit MetadataCache(
     std::filesystem::path directory = {}, int64_t max_bytes = DEFAULT_MAX_BYTES);
 
-  // Missing, unreadable, mismatched, or invalid entries are cache misses.
-  // Returned bytes retain their original JSON/XZ representation.
+  // Missing, unreadable, or mismatched storage/header entries are cache misses.
+  // Returned bytes retain their original JSON/XZ representation; the caller
+  // must validate their content against the advertised checksum and metadata role.
   std::optional<std::string> load(const MetadataFile & file, MetadataRole role) const;
 
   // The caller must validate these exact bytes against this file identity and

@@ -109,7 +109,7 @@ core raw logging available.
 ## Check operation
 
 
-Look for `PX4 event metadata ready; decoded logging enabled`, followed by readable
+Look for `Loaded PX4 event metadata`, followed by readable
 messages from `mavros.px4_events`. To inspect discovery, cache hits and events at
 DEBUG severity without enabling every plugin's debug logs, append:
 
