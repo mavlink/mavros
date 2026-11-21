@@ -21,11 +21,14 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "rclcpp/executors.hpp"
 #include "mavconn/interface.hpp"
 #include "mavros/mavros_uas.hpp"
 #include "mavros/plugin_filter.hpp"
+#include "mavros_msgs/msg/state.hpp"
 
 using ::testing::_;
 using ::testing::Return;
@@ -504,6 +507,94 @@ TEST_F(TestUAS, tf_default_listens_to_tf)
   EXPECT_TRUE(received.static_frame);
   EXPECT_TRUE(received.dynamic_frame);
   EXPECT_TRUE(has_tf_listener(uas));
+}
+
+TEST_F(TestUAS, px4_mode_strings)
+{
+  auto uas = create_node();
+  testing::Mock::AllowLeak(&(*uas));
+
+  uas->update_heartbeat(
+    utils::enum_value(MAV_TYPE::QUADROTOR), utils::enum_value(MAV_AUTOPILOT::PX4),
+    utils::enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED));
+
+  // PX4 custom_mode layout (src/modules/commander/px4_custom_mode.h):
+  // main_mode in bits 16-23, sub_mode in bits 24-31.
+  auto px4_mode = [](uint32_t main_mode, uint32_t sub_mode) -> uint32_t {
+      return (main_mode << 16) | (sub_mode << 24);
+    };
+
+  using State = mavros_msgs::msg::State;
+
+  // Modes that can also be set by name.
+  const std::vector<std::pair<uint32_t, std::string>> modes{
+    {px4_mode(1, 0), "MANUAL"},
+    {px4_mode(2, 0), "ALTCTL"},
+    {px4_mode(3, 0), "POSCTL"},
+    {px4_mode(3, 2), State::MODE_PX4_POSITION_SLOW},
+    {px4_mode(4, 1), "AUTO.READY"},
+    {px4_mode(4, 2), "AUTO.TAKEOFF"},
+    {px4_mode(4, 3), "AUTO.LOITER"},
+    {px4_mode(4, 4), "AUTO.MISSION"},
+    {px4_mode(4, 5), "AUTO.RTL"},
+    {px4_mode(4, 6), "AUTO.LAND"},
+    {px4_mode(4, 7), "AUTO.RTGS"},
+    {px4_mode(4, 8), "AUTO.FOLLOW_TARGET"},
+    {px4_mode(4, 9), "AUTO.PRECLAND"},
+    {px4_mode(4, 11), State::MODE_PX4_EXTERNAL1},
+    {px4_mode(4, 12), State::MODE_PX4_EXTERNAL2},
+    {px4_mode(4, 13), State::MODE_PX4_EXTERNAL3},
+    {px4_mode(4, 14), State::MODE_PX4_EXTERNAL4},
+    {px4_mode(4, 15), State::MODE_PX4_EXTERNAL5},
+    {px4_mode(4, 16), State::MODE_PX4_EXTERNAL6},
+    {px4_mode(4, 17), State::MODE_PX4_EXTERNAL7},
+    {px4_mode(4, 18), State::MODE_PX4_EXTERNAL8},
+    {px4_mode(4, 19), State::MODE_PX4_GUIDED_COURSE},
+    {px4_mode(5, 0), "ACRO"},
+    {px4_mode(6, 0), "OFFBOARD"},
+    {px4_mode(7, 0), "STABILIZED"},
+    {px4_mode(8, 0), "RATTITUDE"},
+    {px4_mode(11, 0), State::MODE_PX4_ALTITUDE_CRUISE},
+    {px4_mode(12, 0), State::MODE_PX4_MANUAL_PARKING},
+  };
+
+  const uint8_t base_mode = utils::enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED);
+  for (const auto & mode : modes) {
+    EXPECT_EQ(uas->str_mode_v10(base_mode, mode.first), mode.second);
+
+    uint32_t custom_mode = 0;
+    EXPECT_TRUE(uas->cmode_from_str(mode.second, custom_mode)) << mode.second;
+    EXPECT_EQ(custom_mode, mode.first) << mode.second;
+  }
+
+  // Modes that PX4 reports but does not accept in a set mode command.
+  const std::vector<std::pair<uint32_t, std::string>> report_only_modes{
+    {px4_mode(3, 1), State::MODE_PX4_ORBIT},
+    {px4_mode(4, 10), State::MODE_PX4_VTOL_TAKEOFF},
+    {px4_mode(4, 20), State::MODE_PX4_DESCEND},
+    {px4_mode(10, 0), State::MODE_PX4_TERMINATION},
+  };
+
+  for (const auto & mode : report_only_modes) {
+    EXPECT_EQ(uas->str_mode_v10(base_mode, mode.first), mode.second);
+
+    uint32_t custom_mode = 0;
+    EXPECT_FALSE(uas->cmode_from_str(mode.second, custom_mode)) << mode.second;
+  }
+
+  // Unknown sub modes fall back to the main mode name, if it has one.
+  const std::vector<std::pair<uint32_t, std::string>> unknown_modes{
+    {px4_mode(2, 1), "ALTCTL"},
+    {px4_mode(3, 3), "POSCTL"},
+    {px4_mode(3, 0) | 0x1234, "POSCTL"},  // reserved bits are ignored
+    {px4_mode(4, 21), "CMODE(" + std::to_string(px4_mode(4, 21)) + ")"},
+    {px4_mode(4, 0), "CMODE(" + std::to_string(px4_mode(4, 0)) + ")"},
+    {px4_mode(13, 0), "CMODE(" + std::to_string(px4_mode(13, 0)) + ")"},
+  };
+
+  for (const auto & mode : unknown_modes) {
+    EXPECT_EQ(uas->str_mode_v10(base_mode, mode.first), mode.second);
+  }
 }
 
 }  // namespace uas

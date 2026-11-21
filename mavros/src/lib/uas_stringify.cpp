@@ -129,15 +129,20 @@ static const cmode_map ardusub_cmode_map{{
   {19, "MANUAL"}
 }};
 
-//! PX4 custom mode -> string
+//! PX4 custom mode <-> string, for modes that can be set by name
 static const cmode_map px4_cmode_map{{
   {px4::define_mode(px4::custom_mode::MAIN_MODE_MANUAL), "MANUAL"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_ACRO), "ACRO"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_ALTCTL), "ALTCTL"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_POSCTL), "POSCTL"},
+  {px4::define_mode(
+      px4::custom_mode::MAIN_MODE_POSCTL,
+      px4::custom_mode::SUB_MODE_POSCTL_SLOW), "POSCTL.SLOW"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_OFFBOARD), "OFFBOARD"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_STABILIZED), "STABILIZED"},
   {px4::define_mode(px4::custom_mode::MAIN_MODE_RATTITUDE), "RATTITUDE"},
+  {px4::define_mode(px4::custom_mode::MAIN_MODE_ALTITUDE_CRUISE), "ALTITUDE_CRUISE"},
+  {px4::define_mode(px4::custom_mode::MAIN_MODE_MANUAL_PARKING), "MANUAL_PARKING"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_MISSION), "AUTO.MISSION"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_LOITER), "AUTO.LOITER"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_RTL), "AUTO.RTL"},
@@ -147,6 +152,29 @@ static const cmode_map px4_cmode_map{{
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_TAKEOFF), "AUTO.TAKEOFF"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_FOLLOW_TARGET), "AUTO.FOLLOW_TARGET"},
   {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_PRECLAND), "AUTO.PRECLAND"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL1), "AUTO.EXTERNAL1"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL2), "AUTO.EXTERNAL2"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL3), "AUTO.EXTERNAL3"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL4), "AUTO.EXTERNAL4"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL5), "AUTO.EXTERNAL5"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL6), "AUTO.EXTERNAL6"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL7), "AUTO.EXTERNAL7"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_EXTERNAL8), "AUTO.EXTERNAL8"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_GUIDED_COURSE), "AUTO.GUIDED_COURSE"},
+}};
+
+/**
+ * PX4 custom mode -> string, for modes that PX4 reports but does not accept
+ * in a set mode command: it rejects Termination, VTOL Takeoff and Descend,
+ * and switches to plain Position mode for Orbit (use MAV_CMD_DO_ORBIT).
+ */
+static const cmode_map px4_cmode_map_report_only{{
+  {px4::define_mode(
+      px4::custom_mode::MAIN_MODE_POSCTL,
+      px4::custom_mode::SUB_MODE_POSCTL_ORBIT), "POSCTL.ORBIT"},
+  {px4::define_mode(px4::custom_mode::MAIN_MODE_TERMINATION), "TERMINATION"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_VTOL_TAKEOFF), "AUTO.VTOL_TAKEOFF"},
+  {px4::define_mode_auto(px4::custom_mode::SUB_MODE_AUTO_DESCEND), "AUTO.DESCEND"},
 }};
 
 // Flix modes
@@ -177,21 +205,45 @@ static std::string str_mode_cmap(const cmode_map & cmap, uint32_t custom_mode)
   }
 }
 
-static inline std::string str_mode_px4(uint32_t custom_mode_int)
+static bool find_px4_mode(uint32_t custom_mode, std::string & name)
+{
+  for (const auto * cmap : {&px4_cmode_map, &px4_cmode_map_report_only}) {
+    auto it = cmap->find(custom_mode);
+    if (it != cmap->end()) {
+      name = it->second;
+      return true;
+    }
+  }
+  return false;
+}
+
+static std::string str_mode_px4(
+  uint32_t custom_mode_int, const rclcpp::Logger & logger,
+  rclcpp::Clock & clock)
 {
   px4::custom_mode custom_mode(custom_mode_int);
 
   // clear fields
   custom_mode.mode.reserved = 0;
-  if (custom_mode.mode.main_mode != px4::custom_mode::MAIN_MODE_AUTO) {
-    RCLCPP_WARN_EXPRESSION(
-      rclcpp::get_logger("uas"),
-      custom_mode.mode.sub_mode != 0, "PX4: Unknown sub-mode %d.%d",
-      custom_mode.mode.main_mode, custom_mode.mode.sub_mode);
-    custom_mode.mode.sub_mode = 0;
+
+  std::string name;
+  if (find_px4_mode(custom_mode.data, name)) {
+    return name;
   }
 
-  return str_mode_cmap(px4_cmode_map, custom_mode.data);
+  if (custom_mode.mode.sub_mode != 0) {
+    // Unknown sub mode: fall back to the main mode name, if it has one.
+    RCLCPP_WARN_THROTTLE(
+      logger, clock, 30000, "PX4: Unknown sub-mode %d.%d",
+      custom_mode.mode.main_mode, custom_mode.mode.sub_mode);
+
+    const px4::custom_mode main_mode_only(custom_mode.mode.main_mode, 0);
+    if (find_px4_mode(main_mode_only.data, name)) {
+      return name;
+    }
+  }
+
+  return str_custom_mode(custom_mode.data);
 }
 
 static inline bool is_apm_copter(uas::MAV_TYPE type)
@@ -226,7 +278,7 @@ std::string UAS::str_mode_v10(uint8_t base_mode, uint32_t custom_mode)
       return str_custom_mode(custom_mode);
     }
   } else if (MAV_AUTOPILOT::PX4 == ap) {
-    return str_mode_px4(custom_mode);
+    return str_mode_px4(custom_mode, get_logger(), *get_clock());
   } else if (MAV_AUTOPILOT::FLIX == ap) {
     return str_mode_cmap(flix_cmode_map, custom_mode);
   } else if (!(base_mode & enum_value(MAV_MODE_FLAG::CUSTOM_MODE_ENABLED))) {
