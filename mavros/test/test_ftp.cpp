@@ -634,6 +634,34 @@ TEST_F(FTPBurstTest, lost_packet_restarts_burst_at_gap)
   EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 3U);
 }
 
+TEST_F(FTPBurstTest, lost_last_data_packet_before_eof_is_not_silently_short)
+{
+  FakeFile file(2000);
+  // 2000 bytes = 9 data packets; lose the last one, keep the EOF NAK.
+  file.drop = {8};
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  auto data = read(10000);
+  EXPECT_EQ(data.size(), file.data.size());
+  EXPECT_EQ(data, file.data);
+}
+
+TEST_F(FTPBurstTest, duplicate_burst_packet_does_not_abort_read)
+{
+  FakeFile file(2000);
+  set_fcu(
+    [&file](const FTPRequest & req) {
+      auto out = file.serve(req);
+      if (req.header().opcode == FTPRequest::kCmdBurstReadFile && out.size() > 2) {
+        // duplicate a data packet in the middle of the burst
+        out.insert(out.begin() + 2, out[1]);
+      }
+      return out;
+    });
+
+  EXPECT_EQ(read(10000), file.data);
+}
+
 TEST_F(FTPBurstTest, stale_burst_packets_are_ignored)
 {
   FakeFile file(2000);

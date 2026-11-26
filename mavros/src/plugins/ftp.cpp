@@ -289,6 +289,7 @@ public:
     open_size(0),
     read_size(0),
     read_offset(0),
+    read_expected(0),
     read_buffer{},
     read_burst(false),
     burst_supported(true),
@@ -429,6 +430,8 @@ private:
   // FTP:Read
   size_t read_size;
   uint32_t read_offset;
+  //! Bytes expected from this read, capped by the opened file size (0 if unknown).
+  size_t read_expected;
   V_FileData read_buffer;
   bool read_burst;
   bool burst_supported;
@@ -597,6 +600,23 @@ private:
       list_directory_end();
       return;
     } else if (prev_op == OP::READ && error_code == FTPRequest::kErrEOF) {
+      if (read_burst && read_expected > 0 && read_buffer.size() < read_expected) {
+        // The last data packet was lost, but the EOF NAK still arrived. Restart
+        // the burst at the gap instead of returning a silently short read.
+        if (++burst_resyncs > MAX_BURST_RESYNCS) {
+          RCLCPP_ERROR(
+            get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes",
+            read_buffer.size(), read_expected);
+          go_idle(true, EIO);
+          return;
+        }
+        RCLCPP_WARN(
+          get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes, restarting at %u",
+          read_buffer.size(), read_expected, read_offset);
+        op_state = OP::READ;
+        send_burst_read_command();
+        return;
+      }
       /* read done */
       read_file_end();
       return;
@@ -708,6 +728,13 @@ private:
     if (hdr.session != active_session) {
       RCLCPP_ERROR(lg, "FTP:Read unexpected session");
       go_idle(true, EBADSLT);
+      return;
+    }
+
+    if (read_burst && hdr.offset < read_offset) {
+      // Duplicate or reordered packet already covered by the data in hand.
+      RCLCPP_DEBUG(lg, "FTP:Read duplicate burst packet at %u, expected %u", hdr.offset,
+            read_offset);
       return;
     }
 
@@ -1110,6 +1137,8 @@ private:
     active_session = it->second.session;
     read_size = len;
     read_offset = off;
+    read_expected = (it->second.size > off) ?
+      std::min<size_t>(len, it->second.size - off) : 0;
     read_buffer.clear();
     if (read_buffer.capacity() < len ||
       read_buffer.capacity() > len + MAX_RESERVE_DIFF)
