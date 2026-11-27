@@ -281,11 +281,11 @@ wheels = [
 
 [[package]]
 name = "cogapp"
-version = "3.6.0"
+version = "3.6.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/64/ea/4ffa8095e0b675e9961cbdcad002c09d35d4ab76ff99d61a014e9e6bcd53/cogapp-3.6.0.tar.gz", hash = "sha256:ec2a9170bfa644bf0d91996fdb5576c13d7e5e848bb2378a6f92727b48f92604", size = 59742, upload-time = "2025-09-21T15:54:13.553Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/d0/27e6f75da2566cbd1de24def03e035b619a5ab4fc41e9a8dbfa6b5d4f5e0/cogapp-3.6.1.tar.gz", hash = "sha256:e32bc61abe21406bfc1be6559ba97cebcedf99f290742914bd0817b6e3d80bb1", size = 61955, upload-time = "2026-11-15T20:47:14.092Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/1c/23b5110b7cb305f0fe3a5d6809d6804c1cb57d57b59516dbb5e24aaf95fc/cogapp-3.6.0-py3-none-any.whl", hash = "sha256:6ea11c63221f92978d37d8d76208eadeae2a6e4641d323f165738a5464a19d32", size = 30550, upload-time = "2025-09-21T15:54:12.205Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/d8/a95786b38de4c53324b6fc2a3c09cc2c8fd683cdff28abcd47b0b2bcbeda/cogapp-3.6.1-py3-none-any.whl", hash = "sha256:34cf222288b43a1338298a7f5c293c744bf5a1e7ef5f278c0a5ee9bbda6a9b70", size = 32203, upload-time = "2026-11-15T20:47:12.996Z" },
 ]
 
 [[package]]
