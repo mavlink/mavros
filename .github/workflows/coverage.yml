@@ -64,7 +64,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ros-tooling/setup-ros@649ef6bcd696da05bc27ceb3fab69d810c0daeab
+      - uses: ros-tooling/setup-ros@84ebd5f659d27fbad40e8def02c80ab958cf0de7
         with:
           required-ros-distributions: ${{ env.ROS_DISTRO }}
 
