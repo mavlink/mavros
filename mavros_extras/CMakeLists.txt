@@ -244,6 +244,38 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_pytest_test(test_srtm test/test_srtm.py)
+
+  # Plugin tests reuse the TestUAS fixture from mavros/test, so they need the
+  # mavros source tree next to this package (as in this repository).
+  set(MAVROS_TEST_HELPERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../mavros/test")
+  if(EXISTS "${MAVROS_TEST_HELPERS_DIR}/test_plugin_helpers.hpp")
+    function(mavros_extras_add_plugin_test name source)
+      ament_add_gtest(${name} ${source})
+      target_include_directories(${name} PRIVATE ${MAVROS_TEST_HELPERS_DIR})
+      target_link_libraries(${name}
+        ${geometry_msgs_TARGETS}
+        ${mavros_msgs_TARGETS}
+        ${sensor_msgs_TARGETS}
+        ${std_msgs_TARGETS}
+        diagnostic_updater::diagnostic_updater
+        message_filters::message_filters
+        pluginlib::pluginlib
+        rclcpp::rclcpp
+        rcpputils::rcpputils
+        tf2_eigen::tf2_eigen
+        tf2_ros::tf2_ros
+        ${mavros_LIBRARIES}
+        ${libmavconn_LIBRARIES}
+        ${GeographicLib_LIBRARIES}
+      )
+    endfunction()
+
+    mavros_extras_add_plugin_test(mavros-extras-plugin-optical-flow test/test_optical_flow.cpp)
+    mavros_extras_add_plugin_test(mavros-extras-plugin-vision-pose
+      test/test_vision_pose_estimate.cpp)
+  else()
+    message(STATUS "mavros test helpers not found, skipping mavros_extras plugin tests")
+  endif()
 endif()
 
 #ament_export_dependencies(console_bridge)
