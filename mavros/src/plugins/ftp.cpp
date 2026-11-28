@@ -292,6 +292,7 @@ public:
     read_expected(0),
     read_buffer{},
     read_burst(false),
+    read_retry_pending(false),
     burst_supported(true),
     burst_resyncs(0),
     burst_sequence_reserved(false),
@@ -434,6 +435,8 @@ private:
   size_t read_expected;
   V_FileData read_buffer;
   bool read_burst;
+  //! A restarted burst has not delivered any data yet.
+  bool read_retry_pending;
   bool burst_supported;
   int burst_resyncs;
   // Skip the last burst response window before sending an ordinary request.
@@ -601,6 +604,15 @@ private:
       return;
     } else if (prev_op == OP::READ && error_code == FTPRequest::kErrEOF) {
       if (read_burst && read_expected > 0 && read_buffer.size() < read_expected) {
+        if (read_retry_pending) {
+          // The restarted burst ended at EOF without new data. The size from the
+          // open ACK was an estimate (ArduPilot virtual files), so this is EOF.
+          RCLCPP_DEBUG(
+            get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes, end of file",
+            read_buffer.size(), read_expected);
+          read_file_end();
+          return;
+        }
         // The last data packet was lost, but the EOF NAK still arrived. Restart
         // the burst at the gap instead of returning a silently short read.
         if (++burst_resyncs > MAX_BURST_RESYNCS) {
@@ -610,9 +622,10 @@ private:
           go_idle(true, EIO);
           return;
         }
-        RCLCPP_WARN(
+        RCLCPP_DEBUG(
           get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes, restarting at %u",
           read_buffer.size(), read_expected, read_offset);
+        read_retry_pending = true;
         op_state = OP::READ;
         send_burst_read_command();
         return;
@@ -764,6 +777,7 @@ private:
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
     read_offset += bytes_to_copy;
+    read_retry_pending = false;
 
     if (read_buffer.size() >= read_size) {
       read_file_end();
@@ -1152,6 +1166,7 @@ private:
     // to EOF, so nothing past the requested range is sent.
     read_burst = burst_supported && off + len >= it->second.size;
     burst_resyncs = 0;
+    read_retry_pending = false;
     if (read_burst) {
       send_burst_read_command();
     } else {
