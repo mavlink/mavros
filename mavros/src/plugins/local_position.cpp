@@ -16,6 +16,8 @@
  * @{
  */
 
+#include <mutex>
+#include <optional>
 #include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -55,6 +57,7 @@ public:
     has_local_position_ned_cov(false)
   {
     enable_node_watch_parameters();
+    enable_connection_cb();
 
     // header frame_id.
     // default to map (world-fixed, ENU as per REP-105).
@@ -111,7 +114,8 @@ public:
   {
     return {
       make_handler(&LocalPositionPlugin::handle_local_position_ned),
-      make_handler(&LocalPositionPlugin::handle_local_position_ned_cov)
+      make_handler(&LocalPositionPlugin::handle_local_position_ned_cov),
+      make_handler(&LocalPositionPlugin::handle_attitude_quaternion_cov),
     };
   }
 
@@ -130,6 +134,10 @@ private:
   std::atomic<bool> tf_send;
   std::atomic<bool> has_local_position_ned;
   std::atomic<bool> has_local_position_ned_cov;
+
+  std::mutex fcu_cov_mutex;
+  //! Last valid ATTITUDE_QUATERNION_COV attitude covariance, in base_link axes
+  std::optional<ftf::Covariance3d> fcu_orientation_cov_flu;
 
   void publish_tf(nav_msgs::msg::Odometry & odom)
   {
@@ -213,6 +221,31 @@ private:
     publish_tf(odom);
   }
 
+  /**
+   * @brief Keep the attitude covariance of ATTITUDE_QUATERNION_COV for the odometry.
+   * Message specification: https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION_COV
+   */
+  void handle_attitude_quaternion_cov(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::ATTITUDE_QUATERNION_COV & att_q,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
+  {
+    auto cov_frd = ftf::mavlink_to_attitude_covariance(att_q.covariance);
+
+    std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+    if (cov_frd) {
+      fcu_orientation_cov_flu = ftf::transform_frame_aircraft_baselink(*cov_frd);
+    } else {
+      fcu_orientation_cov_flu.reset();
+    }
+  }
+
+  void connection_cb([[maybe_unused]] bool connected) override
+  {
+    std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+    fcu_orientation_cov_flu.reset();
+  }
+
   void handle_local_position_ned_cov(
     const mavlink::mavlink_message_t * msg [[maybe_unused]],
     mavlink::common::msg::LOCAL_POSITION_NED_COV & pos_ned,
@@ -249,7 +282,21 @@ private:
     odom.twist.covariance[0] = pos_ned.covariance[24];                 // vx
     odom.twist.covariance[7] = pos_ned.covariance[30];                 // vy
     odom.twist.covariance[14] = pos_ned.covariance[35];                // vz
-    // TODO(vooon): orientation + angular velocity covariances from ATTITUDE_QUATERION_COV
+
+    // Orientation covariance only when the FCU reports it (ATTITUDE_QUATERNION_COV),
+    // rotated from base_link to the world frame of the pose. Otherwise the block
+    // stays zero. MAVLink attitude messages carry no angular velocity covariance.
+    std::optional<ftf::Covariance3d> orientation_cov_flu;
+    {
+      std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+      orientation_cov_flu = fcu_orientation_cov_flu;
+    }
+    if (orientation_cov_flu) {
+      const auto world_cov = ftf::transform_frame_baselink_enu(
+        *orientation_cov_flu, enu_orientation);
+      ftf::EigenMapCovariance6d pose_cov6(odom.pose.covariance.data());
+      pose_cov6.block<3, 3>(3, 3) = ftf::EigenMapConstCovariance3d(world_cov.data());
+    }
 
     // publish odom always
     local_odom->publish(odom);
