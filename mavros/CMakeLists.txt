@@ -344,6 +344,15 @@ if(BUILD_TESTING)
     ${mavros_msgs_TARGETS}
   )
 
+  ament_add_gtest(mavros-plugin-attitude-covariance test/test_attitude_covariance.cpp)
+  target_link_libraries(mavros-plugin-attitude-covariance
+    mavros
+    ${geometry_msgs_TARGETS}
+    ${mavros_msgs_TARGETS}
+    ${nav_msgs_TARGETS}
+    ${sensor_msgs_TARGETS}
+  )
+
   ament_add_gtest(mavros-plugin-sys-time test/test_sys_time.cpp)
   target_link_libraries(mavros-plugin-sys-time
     mavros

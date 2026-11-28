@@ -7,7 +7,7 @@
 
 
 ## Publishers
-- `~/data` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
+- `~/data` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION / ATTITUDE_QUATERNION_COV).
 - `~/euler` [type: [geometry_msgs::msg::Vector3Stamped](https://docs.ros.org/en/rolling/p/geometry_msgs/msg/Vector3Stamped.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.
 - `~/data_raw` [type: [sensor_msgs::msg::Imu](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/Imu.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
 - `~/mag` [type: [sensor_msgs::msg::MagneticField](https://docs.ros.org/en/rolling/p/sensor_msgs/msg/MagneticField.html), qos: [SensorDataQoS](../qos.md#sensordataqos "SensorDataQoS QoS profile")] - Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).
@@ -37,6 +37,7 @@
 ## MAVLink Subscriptions
 - [`ATTITUDE`](https://mavlink.io/en/messages/common.html#ATTITUDE) [handler: handle_attitude, dialect: common, msg_id: 30, id: `mavlink::common::msg::ATTITUDE::MSG_ID`]
 - [`ATTITUDE_QUATERNION`](https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION) [handler: handle_attitude_quaternion, dialect: common, msg_id: 31, id: `mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID`]
+- [`ATTITUDE_QUATERNION_COV`](https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION_COV) [handler: handle_attitude_quaternion_cov, dialect: common, msg_id: 61, id: `mavlink::common::msg::ATTITUDE_QUATERNION_COV::MSG_ID`]
 - [`HIGHRES_IMU`](https://mavlink.io/en/messages/common.html#HIGHRES_IMU) [handler: handle_highres_imu, dialect: common, msg_id: 105, id: `mavlink::common::msg::HIGHRES_IMU::MSG_ID`]
 - [`RAW_IMU`](https://mavlink.io/en/messages/common.html#RAW_IMU) [handler: handle_raw_imu, dialect: common, msg_id: 27, id: `mavlink::common::msg::RAW_IMU::MSG_ID`]
 - [`SCALED_IMU`](https://mavlink.io/en/messages/common.html#SCALED_IMU) [handler: handle_scaled_imu, dialect: common, msg_id: 26, id: `mavlink::common::msg::SCALED_IMU::MSG_ID`]

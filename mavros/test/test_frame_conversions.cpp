@@ -12,7 +12,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <array>
 #include <cmath>
+#include <limits>
 
 #include "rclcpp/rclcpp.hpp"
 #include "mavros/frame_tf.hpp"
@@ -296,6 +298,37 @@ TEST(FRAME_TF, course_over_ground_clockwise_from_north)
     ftf::course_over_ground_cdeg(Eigen::Vector3d(-1.0, 0.0, 0.0)), 18000);
   EXPECT_EQ(
     ftf::course_over_ground_cdeg(Eigen::Vector3d(0.0, -1.0, 0.0)), 27000);
+}
+
+TEST(FRAME_TF, mavlink_to_attitude_covariance__valid)
+{
+  const std::array<float, 9> msg = {
+    0.01f, 0.004f, 0.0f, 0.004f, 0.02f, 0.005f, 0.0f, 0.005f, 0.03f};
+  const auto cov = ftf::mavlink_to_attitude_covariance(msg);
+  ASSERT_TRUE(cov.has_value());
+  for (size_t i = 0; i < msg.size(); ++i) {
+    EXPECT_FLOAT_EQ((*cov)[i], msg[i]) << "index " << i;
+  }
+}
+
+TEST(FRAME_TF, mavlink_to_attitude_covariance__unknown)
+{
+  std::array<float, 9> msg = {0.01f, 0.0f, 0.0f, 0.0f, 0.02f, 0.0f, 0.0f, 0.0f, 0.03f};
+
+  auto nan_first = msg;
+  nan_first[0] = std::numeric_limits<float>::quiet_NaN();
+  EXPECT_FALSE(ftf::mavlink_to_attitude_covariance(nan_first).has_value());
+
+  std::array<float, 9> zeros{};
+  EXPECT_FALSE(ftf::mavlink_to_attitude_covariance(zeros).has_value());
+
+  auto negative_yaw = msg;
+  negative_yaw[8] = -0.03f;
+  EXPECT_FALSE(ftf::mavlink_to_attitude_covariance(negative_yaw).has_value());
+
+  auto inf_pitch = msg;
+  inf_pitch[4] = std::numeric_limits<float>::infinity();
+  EXPECT_FALSE(ftf::mavlink_to_attitude_covariance(inf_pitch).has_value());
 }
 
 int main(int argc, char ** argv)

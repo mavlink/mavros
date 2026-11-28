@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cmath>            // NOLINT
 #include <cstdint>          // NOLINT
+#include <optional>         // NOLINT
 #include <Eigen/Eigen>              // NOLINT
 #include <Eigen/Geometry>           // NOLINT
 #include <rcpputils/asserts.hpp>    // NOLINT
@@ -538,6 +539,35 @@ inline void mavlink_urt_to_covariance_matrix(const std::array<float, ARR_SIZE> &
       covmat(y, x) = covmat(x, y);
     }
   }
+}
+
+/**
+ * @brief Convert a MAVLink attitude covariance to Covariance3d.
+ *
+ * MAVLink (e.g. ATTITUDE_QUATERNION_COV.covariance) sends a row-major 3x3 matrix
+ * over roll, pitch, yaw. sensor_msgs/Imu wants rotations about the x, y, z axes.
+ * The two agree near level attitude (small roll and pitch), not only for small
+ * errors, so the result is only an approximation in steep attitudes.
+ *
+ * @return nullopt if the covariance is unknown: NaN in element 0 (MAVLink
+ *         convention), or a non-finite or non-positive diagonal element.
+ */
+inline std::optional<Covariance3d> mavlink_to_attitude_covariance(
+  const std::array<float, 9> & covmsg)
+{
+  if (std::isnan(covmsg[0])) {
+    return std::nullopt;
+  }
+  for (std::size_t i = 0; i < 3; i++) {
+    const float d = covmsg[i * 3 + i];
+    if (!std::isfinite(d) || d <= 0.0f) {
+      return std::nullopt;
+    }
+  }
+
+  Covariance3d cov;
+  std::copy(covmsg.cbegin(), covmsg.cend(), cov.begin());
+  return cov;
 }
 
 // [[[cog:

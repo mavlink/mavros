@@ -15,6 +15,8 @@
  */
 
 #include <cmath>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -66,6 +68,7 @@ public:
     has_hr_imu(false),
     has_raw_imu(false),
     has_scaled_imu(false),
+    has_att(false),
     has_att_quat(false),
     received_linear_accel(false),
     linear_accel_vec_flu(Eigen::Vector3d::Zero()),
@@ -114,7 +117,7 @@ public:
 
     auto sensor_qos = rclcpp::SensorDataQoS();
 
-    //! Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).
+    //! Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION / ATTITUDE_QUATERNION_COV).
     imu_pub = node->create_publisher<sensor_msgs::msg::Imu>("~/data", sensor_qos);
     //! Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.
     euler_pub = node->create_publisher<geometry_msgs::msg::Vector3Stamped>("~/euler", sensor_qos);
@@ -148,6 +151,7 @@ public:
     return {
       make_handler(&IMUPlugin::handle_attitude),
       make_handler(&IMUPlugin::handle_attitude_quaternion),
+      make_handler(&IMUPlugin::handle_attitude_quaternion_cov),
       make_handler(&IMUPlugin::handle_highres_imu),
       make_handler(&IMUPlugin::handle_raw_imu),
       make_handler(&IMUPlugin::handle_scaled_imu),
@@ -170,8 +174,14 @@ private:
   std::atomic<bool> has_hr_imu;
   std::atomic<bool> has_raw_imu;
   std::atomic<bool> has_scaled_imu;
+  std::atomic<bool> has_att;
   std::atomic<bool> has_att_quat;
   std::atomic<bool> received_linear_accel;
+
+  std::mutex fcu_cov_mutex;
+  //! Last attitude covariance from ATTITUDE_QUATERNION_COV (aircraft axes), if valid
+  std::optional<ftf::Covariance3d> fcu_orientation_cov_frd;
+
   Eigen::Vector3d linear_accel_vec_flu;
   Eigen::Vector3d linear_accel_vec_frd;
   ftf::Covariance3d linear_acceleration_cov;
@@ -203,15 +213,19 @@ private:
 
   /**
    * @brief Fill and publish IMU data message.
-   * @param time_boot_ms     Message timestamp (not synchronized)
+   * @param fcu_time         Message timestamp (not synchronized): time_boot_ms or time_usec
    * @param orientation_enu  Orientation in the base_link ENU frame
    * @param orientation_ned  Orientation in the aircraft NED frame
    * @param gyro_flu         Angular velocity/rate in the base_link Forward-Left-Up frame
    * @param gyro_frd         Angular velocity/rate in the aircraft Forward-Right-Down frame
    * @param rpy_ned          Roll, pitch, yaw (rad) of aircraft -> NED
+   *
+   * The orientation covariance is the last one reported by ATTITUDE_QUATERNION_COV,
+   * or the ~orientation_stdev parameter if the FCU does not report it.
    */
+  template<typename FcuTimeT>
   void publish_imu_data(
-    uint32_t time_boot_ms, Eigen::Quaterniond & orientation_enu,
+    const FcuTimeT fcu_time, Eigen::Quaterniond & orientation_enu,
     Eigen::Quaterniond & orientation_ned, Eigen::Vector3d & gyro_flu, Eigen::Vector3d & gyro_frd,
     const Eigen::Vector3d & rpy_ned)
   {
@@ -219,8 +233,8 @@ private:
     auto imu_enu_msg = sensor_msgs::msg::Imu();
 
     // Fill message header
-    imu_enu_msg.header = uas->synchronized_header(frame_id, time_boot_ms);
-    imu_ned_msg.header = uas->synchronized_header("aircraft", time_boot_ms);
+    imu_enu_msg.header = uas->synchronized_header(frame_id, fcu_time);
+    imu_ned_msg.header = uas->synchronized_header("aircraft", fcu_time);
 
     // Convert from Eigen::Quaternond to geometry_msgs::Quaternion
     imu_enu_msg.orientation = tf2::toMsg(orientation_enu);
@@ -243,6 +257,18 @@ private:
     imu_ned_msg.orientation_covariance = orientation_cov;
     imu_ned_msg.angular_velocity_covariance = angular_velocity_cov;
     imu_ned_msg.linear_acceleration_covariance = linear_acceleration_cov;
+
+    std::optional<ftf::Covariance3d> orientation_cov_frd;
+    {
+      std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+      orientation_cov_frd = fcu_orientation_cov_frd;
+    }
+    if (orientation_cov_frd) {
+      // FCU attitude covariance: aircraft axes for NED msg, base_link axes for ENU msg
+      imu_ned_msg.orientation_covariance = *orientation_cov_frd;
+      imu_enu_msg.orientation_covariance =
+        ftf::transform_frame_aircraft_baselink(*orientation_cov_frd);
+    }
 
     if (!received_linear_accel) {
       // Set element 0 of covariance matrix to -1
@@ -345,6 +371,7 @@ private:
     mavlink::common::msg::ATTITUDE & att,
     plugin::filter::SystemAndOk filter [[maybe_unused]])
   {
+    has_att = true;
     if (has_att_quat) {
       return;
     }
@@ -435,6 +462,44 @@ private:
     const auto ned_rpy = ftf::quaternion_to_rpy_zyx(ned_aircraft_orientation);
     publish_imu_data(
       att_q.time_boot_ms, enu_baselink_orientation, ned_aircraft_orientation,
+      gyro_flu, gyro_frd, ned_rpy);
+  }
+
+  /**
+   * @brief Handle ATTITUDE_QUATERNION_COV MAVlink message.
+   * Message specification: https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION_COV
+   * @param msg		Received Mavlink msg
+   * @param att_q		ATTITUDE_QUATERNION_COV msg
+   */
+  void handle_attitude_quaternion_cov(
+    const mavlink::mavlink_message_t * msg [[maybe_unused]],
+    mavlink::common::msg::ATTITUDE_QUATERNION_COV & att_q,
+    plugin::filter::SystemAndOk filter [[maybe_unused]])
+  {
+    // Keep the covariance for the data published from ATTITUDE / ATTITUDE_QUATERNION,
+    // which may be streamed faster. Unknown (NaN, non-positive diagonal) clears it.
+    {
+      std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+      fcu_orientation_cov_frd = ftf::mavlink_to_attitude_covariance(att_q.covariance);
+    }
+
+    // Publish from this message only if no other attitude message is streamed.
+    if (has_att || has_att_quat) {
+      return;
+    }
+
+    // Same conventions as ATTITUDE_QUATERNION: aircraft -> NED, w x y z
+    auto ned_aircraft_orientation = Eigen::Quaterniond(
+      att_q.q[0], att_q.q[1], att_q.q[2], att_q.q[3]);
+    auto gyro_frd = Eigen::Vector3d(att_q.rollspeed, att_q.pitchspeed, att_q.yawspeed);
+
+    auto enu_baselink_orientation = ftf::transform_orientation_aircraft_baselink(
+      ftf::transform_orientation_ned_enu(ned_aircraft_orientation));
+    auto gyro_flu = ftf::transform_frame_aircraft_baselink(gyro_frd);
+
+    const auto ned_rpy = ftf::quaternion_to_rpy_zyx(ned_aircraft_orientation);
+    publish_imu_data(
+      att_q.time_usec, enu_baselink_orientation, ned_aircraft_orientation,
       gyro_flu, gyro_frd, ned_rpy);
   }
 
@@ -667,7 +732,11 @@ private:
     has_hr_imu = false;
     has_raw_imu = false;
     has_scaled_imu = false;
+    has_att = false;
     has_att_quat = false;
+
+    std::lock_guard<std::mutex> lock(fcu_cov_mutex);
+    fcu_orientation_cov_frd.reset();
   }
 };
 
