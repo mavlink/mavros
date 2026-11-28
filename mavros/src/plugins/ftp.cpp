@@ -289,8 +289,10 @@ public:
     open_size(0),
     read_size(0),
     read_offset(0),
+    read_expected(0),
     read_buffer{},
     read_burst(false),
+    read_retry_pending(false),
     burst_supported(true),
     burst_resyncs(0),
     burst_sequence_reserved(false),
@@ -429,8 +431,12 @@ private:
   // FTP:Read
   size_t read_size;
   uint32_t read_offset;
+  //! Bytes expected from this read, capped by the opened file size (0 if unknown).
+  size_t read_expected;
   V_FileData read_buffer;
   bool read_burst;
+  //! A restarted burst has not delivered any data yet.
+  bool read_retry_pending;
   bool burst_supported;
   int burst_resyncs;
   // Skip the last burst response window before sending an ordinary request.
@@ -597,6 +603,33 @@ private:
       list_directory_end();
       return;
     } else if (prev_op == OP::READ && error_code == FTPRequest::kErrEOF) {
+      if (read_burst && read_expected > 0 && read_buffer.size() < read_expected) {
+        if (read_retry_pending) {
+          // The restarted burst ended at EOF without new data. The size from the
+          // open ACK was an estimate (ArduPilot virtual files), so this is EOF.
+          RCLCPP_DEBUG(
+            get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes, end of file",
+            read_buffer.size(), read_expected);
+          read_file_end();
+          return;
+        }
+        // The last data packet was lost, but the EOF NAK still arrived. Restart
+        // the burst at the gap instead of returning a silently short read.
+        if (++burst_resyncs > MAX_BURST_RESYNCS) {
+          RCLCPP_ERROR(
+            get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes",
+            read_buffer.size(), read_expected);
+          go_idle(true, EIO);
+          return;
+        }
+        RCLCPP_DEBUG(
+          get_logger(), "FTP:Read short burst at EOF: %zu of %zu bytes, restarting at %u",
+          read_buffer.size(), read_expected, read_offset);
+        read_retry_pending = true;
+        op_state = OP::READ;
+        send_burst_read_command();
+        return;
+      }
       /* read done */
       read_file_end();
       return;
@@ -711,6 +744,13 @@ private:
       return;
     }
 
+    if (read_burst && hdr.offset < read_offset) {
+      // Duplicate or reordered packet already covered by the data in hand.
+      RCLCPP_DEBUG(lg, "FTP:Read duplicate burst packet at %u, expected %u", hdr.offset,
+            read_offset);
+      return;
+    }
+
     if (read_burst && hdr.offset > read_offset) {
       // lost packet(s), restart the burst at the gap
       if (++burst_resyncs > MAX_BURST_RESYNCS) {
@@ -737,6 +777,7 @@ private:
 
     read_buffer.insert(read_buffer.end(), req.data(), req.data() + bytes_to_copy);
     read_offset += bytes_to_copy;
+    read_retry_pending = false;
 
     if (read_buffer.size() >= read_size) {
       read_file_end();
@@ -1110,6 +1151,8 @@ private:
     active_session = it->second.session;
     read_size = len;
     read_offset = off;
+    read_expected = (it->second.size > off) ?
+      std::min<size_t>(len, it->second.size - off) : 0;
     read_buffer.clear();
     if (read_buffer.capacity() < len ||
       read_buffer.capacity() > len + MAX_RESERVE_DIFF)
@@ -1123,6 +1166,7 @@ private:
     // to EOF, so nothing past the requested range is sent.
     read_burst = burst_supported && off + len >= it->second.size;
     burst_resyncs = 0;
+    read_retry_pending = false;
     if (read_burst) {
       send_burst_read_command();
     } else {

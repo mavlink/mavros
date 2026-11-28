@@ -449,6 +449,8 @@ struct FakeFile
   std::vector<uint8_t> data;
   size_t burst_limit{500};
   bool support_burst{true};
+  //! Size reported in the open ACK, when larger than the real data.
+  size_t advertised_size{0};
   //! packet indexes (counted over all bursts) the "link" loses
   std::vector<size_t> drop;
   size_t packets{0};
@@ -472,7 +474,8 @@ struct FakeFile
     using Replies = FTPFlowTest::Replies;
     const auto hdr = req.header();
     if (hdr.opcode == FTPRequest::kCmdOpenFileRO) {
-      return Replies{FTPFlowTest::ack(req, FTPFlowTest::u32(data.size()))};
+      const size_t size = advertised_size ? advertised_size : data.size();
+      return Replies{FTPFlowTest::ack(req, FTPFlowTest::u32(size))};
     }
     if (hdr.opcode == FTPRequest::kCmdReadFile) {
       if (hdr.offset >= data.size()) {
@@ -632,6 +635,45 @@ TEST_F(FTPBurstTest, lost_packet_restarts_burst_at_gap)
 
   EXPECT_EQ(read(3000), file.data);
   EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 3U);
+}
+
+TEST_F(FTPBurstTest, lost_last_data_packet_before_eof_is_not_silently_short)
+{
+  FakeFile file(2000);
+  // 2000 bytes = 9 data packets; lose the last one, keep the EOF NAK.
+  file.drop = {8};
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  auto data = read(10000);
+  EXPECT_EQ(data.size(), file.data.size());
+  EXPECT_EQ(data, file.data);
+}
+
+TEST_F(FTPBurstTest, advertised_size_above_data_ends_at_eof)
+{
+  FakeFile file(2000);
+  // ArduPilot @SYS files report 100000 regardless of the real size.
+  file.advertised_size = 100000;
+  set_fcu([&file](const FTPRequest & req) {return file.serve(req);});
+
+  EXPECT_EQ(read(100000), file.data);
+  EXPECT_EQ(sent_count(FTPRequest::kCmdBurstReadFile), 2U);
+}
+
+TEST_F(FTPBurstTest, duplicate_burst_packet_does_not_abort_read)
+{
+  FakeFile file(2000);
+  set_fcu(
+    [&file](const FTPRequest & req) {
+      auto out = file.serve(req);
+      if (req.header().opcode == FTPRequest::kCmdBurstReadFile && out.size() > 2) {
+        // duplicate a data packet in the middle of the burst
+        out.insert(out.begin() + 2, out[1]);
+      }
+      return out;
+    });
+
+  EXPECT_EQ(read(10000), file.data);
 }
 
 TEST_F(FTPBurstTest, stale_burst_packets_are_ignored)
