@@ -1007,8 +1007,8 @@
       {
         "name": "~/data",
         "type_name": "sensor_msgs::msg::Imu",
-        "line": 118,
-        "description": "Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION).",
+        "line": 121,
+        "description": "Publish fused IMU data (ATTITUDE / ATTITUDE_QUATERNION / ATTITUDE_QUATERNION_COV).",
         "qos": {
           "kind": "named",
           "name": "SensorDataQoS",
@@ -1018,7 +1018,7 @@
       {
         "name": "~/euler",
         "type_name": "geometry_msgs::msg::Vector3Stamped",
-        "line": 120,
+        "line": 123,
         "description": "Publish FCU Euler attitude (roll, pitch, yaw rad), aircraft -> NED. Not ~/data.",
         "qos": {
           "kind": "named",
@@ -1029,7 +1029,7 @@
       {
         "name": "~/data_raw",
         "type_name": "sensor_msgs::msg::Imu",
-        "line": 122,
+        "line": 125,
         "description": "Publish raw IMU and acceleration data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1040,7 +1040,7 @@
       {
         "name": "~/mag",
         "type_name": "sensor_msgs::msg::MagneticField",
-        "line": 124,
+        "line": 127,
         "description": "Publish filtered magnetic field data (RAW_IMU / SCALED_IMU / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1051,7 +1051,7 @@
       {
         "name": "~/temperature_imu",
         "type_name": "sensor_msgs::msg::Temperature",
-        "line": 126,
+        "line": 129,
         "description": "Publish IMU temperature (HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1062,7 +1062,7 @@
       {
         "name": "~/temperature_baro",
         "type_name": "sensor_msgs::msg::Temperature",
-        "line": 130,
+        "line": 133,
         "description": "Publish barometer temperature (SCALED_PRESSURE).",
         "qos": {
           "kind": "named",
@@ -1073,7 +1073,7 @@
       {
         "name": "~/static_pressure",
         "type_name": "sensor_msgs::msg::FluidPressure",
-        "line": 134,
+        "line": 137,
         "description": "Publish absolute (static) pressure (SCALED_PRESSURE / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1084,7 +1084,7 @@
       {
         "name": "~/diff_pressure",
         "type_name": "sensor_msgs::msg::FluidPressure",
-        "line": 138,
+        "line": 141,
         "description": "Publish differential pressure (SCALED_PRESSURE / HIGHRES_IMU).",
         "qos": {
           "kind": "named",
@@ -1100,35 +1100,35 @@
       {
         "name": "frame_id",
         "type_name": "string",
-        "line": 83,
+        "line": 86,
         "default_value": "\"base_link\"",
         "description": "Coordinate frame used for the published IMU topics."
       },
       {
         "name": "linear_acceleration_stdev",
         "type_name": "double",
-        "line": 89,
+        "line": 92,
         "default_value": "0.0003",
         "description": "Standard deviation of the linear acceleration."
       },
       {
         "name": "angular_velocity_stdev",
         "type_name": "",
-        "line": 95,
+        "line": 98,
         "default_value": "0.02 * (M_PI / 180.0)",
         "description": "Standard deviation of the angular velocity."
       },
       {
         "name": "orientation_stdev",
         "type_name": "double",
-        "line": 101,
+        "line": 104,
         "default_value": "1.0",
         "description": "Standard deviation of the orientation."
       },
       {
         "name": "magnetic_stdev",
         "type_name": "double",
-        "line": 107,
+        "line": 110,
         "default_value": "0.0",
         "description": "Standard deviation of the magnetic field."
       }
@@ -1140,7 +1140,7 @@
         "message_name": "ATTITUDE",
         "msg_id_expr": "mavlink::common::msg::ATTITUDE::MSG_ID",
         "dialect": "common",
-        "line": 343,
+        "line": 369,
         "msg_id": 30
       },
       {
@@ -1149,8 +1149,17 @@
         "message_name": "ATTITUDE_QUATERNION",
         "msg_id_expr": "mavlink::common::msg::ATTITUDE_QUATERNION::MSG_ID",
         "dialect": "common",
-        "line": 397,
+        "line": 424,
         "msg_id": 31
+      },
+      {
+        "handler": "handle_attitude_quaternion_cov",
+        "message_type": "mavlink::common::msg::ATTITUDE_QUATERNION_COV",
+        "message_name": "ATTITUDE_QUATERNION_COV",
+        "msg_id_expr": "mavlink::common::msg::ATTITUDE_QUATERNION_COV::MSG_ID",
+        "dialect": "common",
+        "line": 474,
+        "msg_id": 61
       },
       {
         "handler": "handle_highres_imu",
@@ -1158,7 +1167,7 @@
         "message_name": "HIGHRES_IMU",
         "msg_id_expr": "mavlink::common::msg::HIGHRES_IMU::MSG_ID",
         "dialect": "common",
-        "line": 447,
+        "line": 512,
         "msg_id": 105
       },
       {
@@ -1167,7 +1176,7 @@
         "message_name": "RAW_IMU",
         "msg_id_expr": "mavlink::common::msg::RAW_IMU::MSG_ID",
         "dialect": "common",
-        "line": 539,
+        "line": 604,
         "msg_id": 27
       },
       {
@@ -1176,7 +1185,7 @@
         "message_name": "SCALED_IMU",
         "msg_id_expr": "mavlink::common::msg::SCALED_IMU::MSG_ID",
         "dialect": "common",
-        "line": 597,
+        "line": 662,
         "msg_id": 26
       },
       {
@@ -1185,7 +1194,7 @@
         "message_name": "SCALED_PRESSURE",
         "msg_id_expr": "mavlink::common::msg::SCALED_PRESSURE::MSG_ID",
         "dialect": "common",
-        "line": 637,
+        "line": 702,
         "msg_id": 29
       }
     ],
@@ -1202,7 +1211,7 @@
       {
         "name": "~/pose",
         "type_name": "geometry_msgs::msg::PoseStamped",
-        "line": 88,
+        "line": 91,
         "description": "Local position (LOCAL_POSITION_NED).",
         "qos": {
           "kind": "named",
@@ -1213,7 +1222,7 @@
       {
         "name": "~/pose_cov",
         "type_name": "geometry_msgs::msg::PoseWithCovarianceStamped",
-        "line": 90,
+        "line": 93,
         "description": "Local position with covariance (LOCAL_POSITION_NED_COV).",
         "qos": {
           "kind": "named",
@@ -1224,7 +1233,7 @@
       {
         "name": "~/velocity_local",
         "type_name": "geometry_msgs::msg::TwistStamped",
-        "line": 93,
+        "line": 96,
         "description": "Local velocity in NED frame (LOCAL_POSITION_NED).",
         "qos": {
           "kind": "named",
@@ -1235,7 +1244,7 @@
       {
         "name": "~/velocity_body",
         "type_name": "geometry_msgs::msg::TwistStamped",
-        "line": 96,
+        "line": 99,
         "description": "Local velocity in body frame (LOCAL_POSITION_NED).",
         "qos": {
           "kind": "named",
@@ -1246,7 +1255,7 @@
       {
         "name": "~/velocity_body_cov",
         "type_name": "geometry_msgs::msg::TwistWithCovarianceStamped",
-        "line": 100,
+        "line": 103,
         "description": "Local velocity with covariance (LOCAL_POSITION_NED_COV).",
         "qos": {
           "kind": "named",
@@ -1257,7 +1266,7 @@
       {
         "name": "~/accel",
         "type_name": "geometry_msgs::msg::AccelWithCovarianceStamped",
-        "line": 103,
+        "line": 106,
         "description": "Local acceleration with covariance (LOCAL_POSITION_NED_COV).",
         "qos": {
           "kind": "named",
@@ -1268,7 +1277,7 @@
       {
         "name": "~/odom",
         "type_name": "nav_msgs::msg::Odometry",
-        "line": 107,
+        "line": 110,
         "description": "Local odometry (LOCAL_POSITION_NED / LOCAL_POSITION_NED_COV).",
         "qos": {
           "kind": "named",
@@ -1284,28 +1293,28 @@
       {
         "name": "frame_id",
         "type_name": "string",
-        "line": 62,
+        "line": 65,
         "default_value": "\"map\"",
         "description": "header frame_id. default to map (world-fixed, ENU as per REP-105). Set the frame id for the published messages."
       },
       {
         "name": "tf.send",
         "type_name": "bool",
-        "line": 70,
+        "line": 73,
         "default_value": "false",
         "description": "Important tf subsection Report the transform from world to base_link here. Enable publishing of the world to base_link TF tree."
       },
       {
         "name": "tf.frame_id",
         "type_name": "string",
-        "line": 75,
+        "line": 78,
         "default_value": "\"map\"",
         "description": "World frame id for the published TF."
       },
       {
         "name": "tf.child_frame_id",
         "type_name": "string",
-        "line": 80,
+        "line": 83,
         "default_value": "\"base_link\"",
         "description": "Body frame id for the published TF."
       }
@@ -1317,7 +1326,7 @@
         "message_name": "LOCAL_POSITION_NED",
         "msg_id_expr": "mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID",
         "dialect": "common",
-        "line": 149,
+        "line": 157,
         "msg_id": 32
       },
       {
@@ -1326,8 +1335,17 @@
         "message_name": "LOCAL_POSITION_NED_COV",
         "msg_id_expr": "mavlink::common::msg::LOCAL_POSITION_NED_COV::MSG_ID",
         "dialect": "common",
-        "line": 216,
+        "line": 249,
         "msg_id": 64
+      },
+      {
+        "handler": "handle_attitude_quaternion_cov",
+        "message_type": "mavlink::common::msg::ATTITUDE_QUATERNION_COV",
+        "message_name": "ATTITUDE_QUATERNION_COV",
+        "msg_id_expr": "mavlink::common::msg::ATTITUDE_QUATERNION_COV::MSG_ID",
+        "dialect": "common",
+        "line": 228,
+        "msg_id": 61
       }
     ],
     "mavlink_publications": []

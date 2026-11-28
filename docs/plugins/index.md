@@ -17,8 +17,8 @@ messages it subscribes to and publishes.
 | [`geofence`](std/geofence.md) | Geofence manipulation plugin | 1 | — | 3 | — | 6/10 |
 | [`global_position`](std/global_position.md) | Global position plugin. | 9 | 2 | — | — | 4/1 |
 | [`home_position`](std/home_position.md) | home position plugin. | 1 | 1 | 1 | 1 | 1/1 |
-| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 8 | — | — | — | 6/0 |
-| [`local_position`](std/local_position.md) | Local position plugin. | 7 | — | — | — | 2/0 |
+| [`imu`](std/imu.md) | IMU and attitude data publication plugin | 8 | — | — | — | 7/0 |
+| [`local_position`](std/local_position.md) | Local position plugin. | 7 | — | — | — | 3/0 |
 | [`manual_control`](std/manual_control.md) | Manual Control plugin | 1 | 1 | — | — | 1/1 |
 | [`nav_controller_output`](std/nav_controller_output.md) | nav controller output plugin. | 1 | — | — | — | 1/0 |
 | [`param`](std/param.md) | Parameter manipulation plugin | 2 | — | 8 | — | 1/3 |

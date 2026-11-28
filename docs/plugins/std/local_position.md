@@ -38,6 +38,7 @@ and Odometry
 ## MAVLink Subscriptions
 - [`LOCAL_POSITION_NED`](https://mavlink.io/en/messages/common.html#LOCAL_POSITION_NED) [handler: handle_local_position_ned, dialect: common, msg_id: 32, id: `mavlink::common::msg::LOCAL_POSITION_NED::MSG_ID`]
 - [`LOCAL_POSITION_NED_COV`](https://mavlink.io/en/messages/common.html#LOCAL_POSITION_NED_COV) [handler: handle_local_position_ned_cov, dialect: common, msg_id: 64, id: `mavlink::common::msg::LOCAL_POSITION_NED_COV::MSG_ID`]
+- [`ATTITUDE_QUATERNION_COV`](https://mavlink.io/en/messages/common.html#ATTITUDE_QUATERNION_COV) [handler: handle_attitude_quaternion_cov, dialect: common, msg_id: 61, id: `mavlink::common::msg::ATTITUDE_QUATERNION_COV::MSG_ID`]
 
 
 ## MAVLink Publications
