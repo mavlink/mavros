@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,8 @@ public:
   : Plugin(uas_, "wheel_odometry"),
     odom_mode(OM::NONE),
     count(0),
+    wheels_declared(false),
+    geometry_valid(false),
     raw_send(false),
     twist_send(false),
     tf_send(false),
@@ -83,6 +86,7 @@ public:
       "count", 2, [&](const rclcpp::Parameter & p) {
         int count_ = p.as_int();
         count = std::max(2, count_);    // bound check
+        check_wheel_geometry();
       });
 
     //! Use wheel RPM (true) or cumulative distance (false) for odometry.
@@ -112,7 +116,7 @@ public:
     //! Child frame id for published odometry.
     node_declare_and_watch_parameter(
       "child_frame_id", uas_->get_base_link_frame_id(), [&](const rclcpp::Parameter & p) {
-        frame_id = p.as_string();
+        child_frame_id = p.as_string();
       });
 
     //! Wheel velocity measurement error (std) [m/s].
@@ -153,56 +157,28 @@ public:
       node_declare_and_watch_parameter(
         utils::format("wheel%i.x", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][0] = p.as_double();
+          check_wheel_geometry();
         });
       //! Wheel Y offset from vehicle origin [m].
       node_declare_and_watch_parameter(
         utils::format("wheel%i.y", wi), 0.0, [wi, this](const rclcpp::Parameter & p) {
           wheel_offset[wi][1] = p.as_double();
+          check_wheel_geometry();
         });
       //! Wheel radius [m].
       node_declare_and_watch_parameter(
         utils::format("wheel%i.radius", wi), 0.05, [wi, this](const rclcpp::Parameter & p) {
           wheel_radius[wi] = p.as_double();
+          check_wheel_geometry();
         });
     }
 
-#if 0  // TODO(vooon): port this
-    // Check for all wheels specified
-    if (wheel_offset.size() >= count) {
-      // Duplicate 1st wheel if only one is available.
-      // This generalizes odometry computations for 1- and 2-wheels configurations.
-      if (wheel_radius.size() == 1) {
-        wheel_offset.resize(2);
-        wheel_radius.resize(2);
-        wheel_offset[1].x() = wheel_offset[0].x();
-        // make separation non-zero to avoid div-by-zero
-        wheel_offset[1].y() = wheel_offset[0].y() + 1.0;
-        wheel_radius[1] = wheel_radius[0];
-      }
-
-      // Check for non-zero wheel separation (first two wheels)
-      double separation = std::abs(wheel_offset[1].y() - wheel_offset[0].y());
-      if (separation < 1.e-5) {
-        odom_mode = OM::NONE;
-        ROS_WARN_NAMED(
-          "wo", "WO: Separation between the first two wheels is too small (%f).",
-          separation);
-      }
-
-      // Check for reasonable radiuses
-      for (int i = 0; i < wheel_radius.size(); i++) {
-        if (wheel_radius[i] <= 1.e-5) {
-          odom_mode = OM::NONE;
-          ROS_WARN_NAMED("wo", "WO: Wheel #%i has incorrect radius (%f).", i, wheel_radius[i]);
-        }
-      }
-    } else {
-      odom_mode = OM::NONE;
-      ROS_WARN_NAMED(
-        "wo", "WO: Not all wheels have parameters specified (%lu/%i).",
-        wheel_offset.size(), count);
+    // All wheels are declared now: validate the geometry, and again on every change.
+    wheels_declared = true;
+    check_wheel_geometry();
+    if (!geometry_valid) {
+      RCLCPP_WARN(get_logger(), "WO: No odometry computations will be performed.");
     }
-#endif
 
     // Advertise topics
     if (odom_mode != OM::NONE) {
@@ -244,6 +220,8 @@ private:
   OM odom_mode;       //!< odometry computation mode
 
   int count;                    //!< requested number of wheels to compute odometry
+  bool wheels_declared;         //!< all wheelX.* parameters are declared
+  bool geometry_valid;          //!< wheel geometry is usable for odometry computation
   bool raw_send;                //!< send wheel's RPM and cumulative distance
   std::vector<Eigen::Vector2d> wheel_offset;       //!< wheel x,y offsets (m,NED)
   std::vector<double> wheel_radius;       //!< wheel radiuses (m)
@@ -279,6 +257,52 @@ private:
     // ]]]
     return a.w() == b.w() && a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
     // [[[end]]] (sum: rzxUyfLFJc)
+  }
+
+  /**
+   * @brief Check that the wheel geometry can be used for odometry.
+   * Every used wheel must have its parameters declared, the first two wheels
+   * (used by the differential drive model) need a non-zero y separation, and
+   * every radius must be positive. Odometry is not computed until this passes.
+   */
+  void check_wheel_geometry()
+  {
+    if (!wheels_declared) {
+      return;
+    }
+
+    bool valid = true;
+    if (wheel_offset.size() < static_cast<size_t>(count) || wheel_offset.size() < 2) {
+      valid = false;
+      RCLCPP_WARN(
+        get_logger(), "WO: Not all wheels have parameters specified (%zu/%i).",
+        wheel_offset.size(), count);
+    } else {
+      // Check for non-zero wheel separation (first two wheels)
+      const double separation = std::abs(wheel_offset[1].y() - wheel_offset[0].y());
+      if (separation < 1.e-5) {
+        valid = false;
+        RCLCPP_WARN(
+          get_logger(), "WO: Separation between the first two wheels is too small (%f).",
+          separation);
+      }
+
+      // Check for reasonable radiuses
+      for (size_t i = 0; i < wheel_radius.size(); i++) {
+        if (wheel_radius[i] <= 1.e-5) {
+          valid = false;
+          RCLCPP_WARN(
+            get_logger(), "WO: Wheel #%zu has incorrect radius (%f).", i, wheel_radius[i]);
+        }
+      }
+    }
+
+    if (!valid && geometry_valid) {
+      RCLCPP_WARN(get_logger(), "WO: Odometry computation is disabled until fixed.");
+    } else if (valid && !geometry_valid) {
+      RCLCPP_INFO(get_logger(), "WO: Wheel geometry is valid, odometry enabled.");
+    }
+    geometry_valid = valid;
   }
 
   /**
@@ -591,11 +615,13 @@ private:
         distance[1] = distance[0];
       }
 
-      // Update odometry
-      update_odometry(distance, dt);
-
-      // Publish odometry
-      publish_odometry(time_pub);
+      // Update and publish odometry, unless the wheel geometry is invalid
+      // (it would divide by the wheel separation). The measurement is still
+      // stored below, so a later fix does not integrate one big jump.
+      if (geometry_valid) {
+        update_odometry(distance, dt);
+        publish_odometry(time_pub);
+      }
     }
 
     // Time step
